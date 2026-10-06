@@ -48,6 +48,14 @@ for s in "${sessions[@]}"; do
     esac
     sleep 3
     docker exec d1gate "$here/sessions/enter.sh" "$s" python3 "$here/gate.py" "$s" "${steps[@]}" || true
+    if [ "$s" = sway ] && [ ${#steps[@]} -eq 0 ]; then
+        # Cross-window focus again with focus_on_window_activation focus
+        # (sway's default, urgent, refuses activation): a fresh session, as
+        # step outputs removed HEADLESS-2. Evidence in sway-activate/.
+        docker exec d1gate "$here/sessions/sway-start.sh"
+        sleep 3
+        docker exec d1gate "$here/sessions/enter.sh" sway python3 "$here/gate.py" sway-activate f6 fullscreen tests outputs || true
+    fi
 done
 docker exec d1gate sh -c 'pacman -Q sway wlroots0.20 kwin mutter xorg-server-xvfb openbox orca at-spi2-core libei mesa' \
     > "$wt/out/native-gate-evidence/versions.txt"

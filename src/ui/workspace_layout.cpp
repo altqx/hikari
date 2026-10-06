@@ -187,6 +187,8 @@ bool WorkspaceLayoutController::restorePayload(const QByteArray &payload)
     if (!restored && !m_default.isEmpty())
         KDDockWidgets::LayoutSaver().restoreLayout(m_default); // rebuild a known arrangement
     m_restoring = false;
+    // D3: the panels' minimum sizes now, not the ones it was saved with.
+    hikari::ui::refreshDockConstraints();
     // A layout saved with another set of screens may place a floating panel
     // where none shows it.
     hikari::ui::keepFloatingPanelsOnScreen();
@@ -195,6 +197,7 @@ bool WorkspaceLayoutController::restorePayload(const QByteArray &payload)
 
 bool WorkspaceLayoutController::restoreSaved()
 {
+    m_loaded = true;
     if (m_file.isEmpty())
         return false;
     const auto bytes = readFile(m_file);
@@ -226,7 +229,7 @@ bool WorkspaceLayoutController::restoreSaved()
 
 bool WorkspaceLayoutController::save()
 {
-    if (m_file.isEmpty() || m_restoring)
+    if (m_file.isEmpty() || m_restoring || !m_loaded)
         return false;
     const QByteArray current = KDDockWidgets::LayoutSaver().serializeLayout();
     if (current == m_lastSaved)

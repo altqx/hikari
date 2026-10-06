@@ -14,7 +14,7 @@ def walk(n, output=None):
         r = n["rect"]; wr = n["window_rect"]
         print(f'{n["type"]:12} id={n["id"]} {n.get("app_id")} {n["name"]!r} {r["x"]},{r["y"]} {r["width"]}x{r["height"]} client={r["x"]+wr["x"]},{r["y"]+wr["y"]} {wr["width"]}x{wr["height"]}'
               f' output={output} fullscreen={n.get("fullscreen_mode")} {"FOCUSED" if n.get("focused") else ""}'
-              f' visible={n.get("visible")}')
+              f' visible={n.get("visible")} border={n.get("border")}{" URGENT" if n.get("urgent") else ""}')
     for c in n.get("nodes", []) + n.get("floating_nodes", []):
         walk(c, output)
 

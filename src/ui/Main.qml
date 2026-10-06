@@ -160,10 +160,27 @@ ApplicationWindow {
     // so the difference is moved across the dock's bottom edge.
     function fitAudioBox() {
         // With audio open the box fills the panel's body (the search bar and
-        // button rows appear then), so the body is what gets 170 px.
-        const deficit = Math.round(170 - audioPanel.bodyHeight)
-        if (deficit !== 0)
+        // button rows appear then), so the body is what gets 170 px: the
+        // group's height in the layout less its header (35) and the body's
+        // margins.
+        const chrome = audioDock.isOpen ? Math.round(root.workspaceLayout.panelSize(audioDock).height - audioPanel.bodyHeight) : 0
+        // D3: the Line editor below keeps its minimum (Panel). When it has
+        // no room to give, the first move of the separator between them
+        // grows the top row instead (the engine takes the room from the
+        // Grid's row and gives it to the editor), and the next one gives it
+        // to the audio box. The default arrangement shows the editor's rows
+        // whole, so while it is fitted that minimum is their height (with
+        // the body's margins); a dock squeezed later scrolls them.
+        Docking.setMinimumSize("Editor", Qt.size(editorPanel.minimumSize.width,
+                                                 Math.ceil(editorColumn.implicitHeight) + 8))
+        for (let pass = 0; pass < 3; ++pass) {
+            const body = root.workspaceLayout.panelSize(audioDock).height - chrome
+            const deficit = Math.round(170 - body)
+            if (deficit === 0 || !audioDock.isOpen)
+                break
             Docking.resizeInLayout("Audio", 0, 0, 0, deficit)
+        }
+        editorPanel.reportMinimumSize()
     }
 
     function defaultLayout() {
@@ -206,6 +223,9 @@ ApplicationWindow {
     // A preset is the Editing arrangement with the panels it leaves closed
     // (Timing: Video; Translation and Typesetting: Audio).
     function applyPreset(name) {
+        // Before the first frame the default arrangement and the saved
+        // layout are not in place yet: settle them first.
+        root.settleArrangement()
         root.workspaceLayout.resetLayout()
         if (name === "Timing")
             videoDock.close()
@@ -281,12 +301,104 @@ ApplicationWindow {
         root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
     }
 
+    // The panel an item belongs to; a dock header (DockTabBar.qml) belongs
+    // to its current panel.
     function panelOf(item) {
-        for (let p = item; p; p = p.parent)
+        for (let p = item; p; p = p.parent) {
             for (const panel of panels)
                 if (p === panel)
                     return panel
+            if (p.objectName === "dockHeader") {
+                const i = dockList.findIndex(d => d.uniqueName === p.currentName)
+                if (i >= 0)
+                    return panels[i]
+            }
+        }
         return null
+    }
+
+    // D3: a panel's "⋯" menu (MuseScore's DockPanelMenuModel,
+    // docs/research/musescore-docking.md §1): the panel's own items, then
+    // Move panel…, Undock (Dock while it floats) and Close, each disabled
+    // where the panel cannot do it (its dock's options: not closable, not
+    // dockable). Its header asks for it (Docking.requestMenu: the "⋯"
+    // button, a right click on the header, Space or Enter on the button).
+    // A panel's own items are settings that have no place in its body or
+    // its header's toolbar, never a copy of them: no panel has any yet (the
+    // Reference tray's commands are its toolbar's). The Reference tray's
+    // Close closes the reference, the tray with it (legacy's close mark,
+    // DestroyPreview), so the header holds one close, not two.
+    function panelOwnItems(dock) {
+        return []
+    }
+    function closePanel(dock) {
+        if (dock === referenceDock)
+            root.app.closeReference()
+        else
+            dock.close()
+    }
+    Connections {
+        target: Docking
+        function onMenuRequested(name, anchor) {
+            const dock = root.dockList.find(d => d.uniqueName === name)
+            if (dock && anchor)
+                panelOptionsMenu.openFor(dock, anchor)
+        }
+    }
+    ShellMenu {
+        id: panelOptionsMenu
+        objectName: "panelOptionsMenu"
+        property var dock: null
+        readonly property var ownItems: dock ? root.panelOwnItems(dock) : []
+        readonly property bool closable: dock !== null
+                                         && (dock.options & KDDW.KDDockWidgets.DockWidgetOption_NotClosable) === 0
+        readonly property bool dockable: dock !== null
+                                         && (dock.options & KDDW.KDDockWidgets.DockWidgetOption_NotDockable) === 0
+        function openFor(target, anchor) {
+            dock = target
+            // inside a floating panel's frame, not over its drawn shadow
+            margins = anchor.Window.window !== root ? Docking.floatingShadow + 1 : 0
+            popup(anchor, 0, anchor.height)
+        }
+        onAboutToShow: Docking.openMenu = dock ? dock.uniqueName : ""
+        onAboutToHide: Docking.openMenu = ""
+        Instantiator {
+            model: panelOptionsMenu.ownItems
+            delegate: ShellMenuItem {
+                required property var modelData
+                objectName: "panelOptions_" + modelData.name
+                text: modelData.text
+                checkable: modelData.checkable === true
+                checked: modelData.checked === true
+                enabled: modelData.enabled !== false
+                onTriggered: modelData.run()
+            }
+            onObjectAdded: (index, object) => panelOptionsMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
+        }
+        MenuSeparator {
+            objectName: "panelOptionsSeparator"
+            visible: panelOptionsMenu.ownItems.length > 0
+            height: visible ? implicitHeight : 0
+        }
+        ShellMenuItem {
+            objectName: "panelOptionsMove"
+            text: qsTr("Move panel…")
+            enabled: panelOptionsMenu.dockable
+            onTriggered: placementWindow.openFor(panelOptionsMenu.dock)
+        }
+        ShellMenuItem {
+            objectName: "panelOptionsFloat"
+            text: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? qsTr("Dock") : qsTr("Undock")
+            enabled: panelOptionsMenu.dock !== null && (!panelOptionsMenu.dock.isFloating || panelOptionsMenu.dockable)
+            onTriggered: root.setPanelFloating(panelOptionsMenu.dock, !panelOptionsMenu.dock.isFloating)
+        }
+        ShellMenuItem {
+            objectName: "panelOptionsClose"
+            text: panelOptionsMenu.dock === referenceDock ? qsTr("Close reference") : qsTr("Close")
+            enabled: panelOptionsMenu.closable
+            onTriggered: root.closePanel(panelOptionsMenu.dock)
+        }
     }
 
     function cyclePanels(step) {
@@ -403,6 +515,18 @@ ApplicationWindow {
         context: Qt.ApplicationShortcut
         enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes("Shift+F6")
         onActivated: root.cyclePanels(-1)
+    }
+    // Windows hands Shift+F10 to the system when no shortcut wants it; the
+    // system then asks for a context menu but also puts the window in its
+    // menu mode, which takes the next keys (native gate,
+    // header-menu-undock-dock-keyboard). Claimed here, the key reaches the
+    // focused control first (a panel header takes it); elsewhere it asks the
+    // focused control for its context menu, as Windows would.
+    Shortcut {
+        sequences: ["Shift+F10"]
+        context: Qt.ApplicationShortcut
+        enabled: Qt.platform.os === "windows" && !root.hotkeys.globalSequences.includes("Shift+F10")
+        onActivated: Docking.requestKeyboardContextMenu()
     }
     // P6: a tab closed from the tab bar (its close mark or a middle click).
     function closeTab(index) {
@@ -1621,10 +1745,10 @@ ApplicationWindow {
         }
     }
 
-    // A panel's body. Its dock's title bar (DockTitleBar.qml) is its only
-    // visible header: the user dropped the in-panel title row on 2026-10-05,
-    // since with docking it repeated the dock's title. The title stays the
-    // panel's name for assistive technology.
+    // A panel's body. Its dock's header (DockTabBar.qml: a title bar or its
+    // tab) is its only visible header: the user dropped the in-panel title
+    // row on 2026-10-05, since with docking it repeated the dock's title. The
+    // title stays the panel's name for assistive technology.
     component Panel: FocusScope {
         id: panel
         property string title
@@ -1633,6 +1757,20 @@ ApplicationWindow {
         property string accessibleName: title
         default property alias content: body.data
         readonly property real bodyHeight: body.height
+        // D3: the dock's uniqueName, and the smallest body its content takes
+        // unclipped. The docking engine keeps the panel at least that big
+        // (with the body's margins), so dragging a separator cannot squeeze
+        // it into clipping its controls.
+        property string dockName
+        property size minimumBodySize: Qt.size(0, 0)
+        readonly property size minimumSize: Qt.size(Math.ceil(minimumBodySize.width) + 2 * body.anchors.margins,
+                                                    Math.ceil(minimumBodySize.height) + 2 * body.anchors.margins)
+        function reportMinimumSize() {
+            if (dockName.length > 0)
+                Docking.setMinimumSize(dockName, minimumSize)
+        }
+        onMinimumSizeChanged: reportMinimumSize()
+        Component.onCompleted: Qt.callLater(reportMinimumSize)
         activeFocusOnTab: false
         // A panel squeezed below its content's size cuts it off rather than
         // draw over the next panel (the focus ring keeps the margin's room).
@@ -1641,13 +1779,13 @@ ApplicationWindow {
         Accessible.name: accessibleName
         Accessible.description: accessibleName !== title ? title : ""
 
-        // K2 (visual-language.md, "Keyboard focus"): the boundary stays
-        // `line`; the panel holding the focus is ringed on its dock header
-        // (DockTitleBar.qml) in the focus role, not bordered in the accent.
+        // K2 (visual-language.md, "Keyboard focus"): the panel holding the
+        // focus is ringed on its dock header (DockTabBar.qml) in the focus
+        // role. D3: no frame of its own; the docking engine's 1-pixel
+        // separators are the boundaries between panels (MuseScore's).
         Rectangle {
             anchors.fill: parent
             color: panel.palette.base
-            border.color: panel.palette.mid
         }
         Item {
             id: body
@@ -1723,6 +1861,11 @@ ApplicationWindow {
                 id: videoPanel
                 anchors.fill: parent
                 objectName: "videoPanel"
+                dockName: "Video"
+                // The controls below the video at their narrowest (the
+                // follow choices wrap), above two rail buttons' height.
+                minimumBodySize: Qt.size(Math.max(videoTransport.implicitWidth, videoFollow.minimumWidth),
+                                         videoControls.implicitHeight + 72)
                 title: qsTr("Video")
                 // Frame stepping is the Global bindings GLOBAL_PREVIOUS_FRAME /
                 // GLOBAL_NEXT_FRAME (Left / Right by default), from the shell's
@@ -1866,8 +2009,9 @@ ApplicationWindow {
                     }
                     VisualToolReadout { tools: root.visualTools } // T1: the tool's read-only values
                 }
-                VideoFollowChoices { Layout.fillWidth: true; settings: root.app.settings } // V6
+                VideoFollowChoices { id: videoFollow; Layout.fillWidth: true; settings: root.app.settings } // V6
                 RowLayout {
+                    id: videoTransport
                     Layout.fillWidth: true
                     // Legacy VideoBox's bitmap buttons (VIDEO_PLAY_PAUSE,
                     // GLOBAL_PLAY_ACTUAL_LINE, VIDEO_STOP): the binding in the
@@ -1968,6 +2112,11 @@ ApplicationWindow {
                 id: audioPanel
                 anchors.fill: parent
                 objectName: "audioPanel"
+                dockName: "Audio"
+                // With audio open: the button row under a short display.
+                minimumBodySize: audioButtons.visible
+                                 ? Qt.size(audioButtons.implicitWidth, 64 + audioScroll.implicitHeight + 4 + audioButtons.implicitHeight)
+                                 : Qt.size(audioStatus.implicitWidth, audioStatus.implicitHeight)
                 title: qsTr("Audio")
                 // The audio box in legacy AudioBox's layout: the display with
                 // the search bar below it (DisplaySizer), the horizontal zoom
@@ -2090,6 +2239,7 @@ ApplicationWindow {
                     }
                 }
                 Label {
+                    id: audioStatus
                     objectName: "audioStatus"
                     anchors.centerIn: parent
                     visible: !root.audio.loaded
@@ -2397,6 +2547,17 @@ ApplicationWindow {
                 id: editorPanel
                 anchors.fill: parent
                 objectName: "editorPanel"
+                dockName: "Editor"
+                // The rows that do not wrap; the Line inspector's fields
+                // wrap onto two rows below 850 (and its narrow layout fits
+                // these), so its width-dependent implicit width is not used,
+                // nor the translation buttons' (they wrap too). In height,
+                // the tag buttons and a line of each text field shown: the
+                // rest scrolls.
+                minimumBodySize: Qt.size(Math.max(tagRow.implicitWidth, editorCounters.implicitWidth),
+                                         tagRow.implicitHeight + editorColumn.spacing + lineText.Layout.minimumHeight
+                                         + (translationText.visible ? editorColumn.spacing
+                                            + translationText.Layout.minimumHeight : 0))
                 title: shell.hasEditingTarget ? qsTr("Line editor: %1").arg(shell.editingTitle)
                                               : qsTr("Line editor")
                 // O2: EditBox's accelerator table covers the whole Line editor
@@ -2419,17 +2580,6 @@ ApplicationWindow {
                     root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
                     event.accepted = true
                 }
-                // The dock keeps room for the tag buttons and a line of each
-                // text field shown (with the body's margins); the docking
-                // engine stops a separator there. The rest scrolls.
-                readonly property int minimumHeight: Math.ceil(8 + tagRow.implicitHeight + editorColumn.spacing
-                                                               + lineText.Layout.minimumHeight
-                                                               + (translationText.visible ? editorColumn.spacing
-                                                                  + translationText.Layout.minimumHeight : 0))
-                function reportMinimumHeight() { Docking.setMinimumSize("Editor", 0, minimumHeight) }
-                onMinimumHeightChanged: reportMinimumHeight()
-                Component.onCompleted: Qt.callLater(reportMinimumHeight)
-
                 // A dock shorter than the Line editor's rows (translation mode
                 // in the default 1280 x 800 layout) scrolls them, with a thin
                 // bar beside them; nothing is cut off below the dock's edge.
@@ -2692,6 +2842,7 @@ ApplicationWindow {
 
                         // E4: Wraps, characters per second and Time/Frames (legacy BoxSizer5).
                         LineCounters {
+                            id: editorCounters
                             editor: root.editor
                             Layout.fillWidth: true
                         }
@@ -2793,6 +2944,8 @@ ApplicationWindow {
                 id: gridPanel
                 anchors.fill: parent
                 objectName: "gridPanel"
+                dockName: "Grid"
+                minimumBodySize: Qt.size(240, grid.rowHeight * 3) // the header and two Lines
                 title: shell.hasEditingTarget ? qsTr("Editing: %1").arg(shell.editingTitle) : qsTr("No document open")
                 accessibleName: qsTr("Grid")
                 focus: true
@@ -3150,6 +3303,8 @@ ApplicationWindow {
                 id: referencePanel
                 anchors.fill: parent
                 objectName: "referencePanel"
+                dockName: "Reference"
+                minimumBodySize: Qt.size(240, referenceTray.grid.rowHeight * 3)
                 visible: shell.hasReference
                 title: qsTr("Reference (protected, read-only): %1").arg(shell.referenceTitle)
                 // R2: its own navigation, linked matching and legacy's preview menu.
@@ -3177,6 +3332,8 @@ ApplicationWindow {
             Panel {
                 id: timingPanel
                 objectName: "timingPanel"
+                dockName: "Timing"
+                minimumBodySize: Qt.size(shiftForm.implicitWidth + 20, 120) // the form scrolls
                 anchors.fill: parent
                 title: qsTr("Shift times")
                 ScrollView {
@@ -3386,6 +3543,8 @@ ApplicationWindow {
             Panel {
                 id: searchPanel
                 objectName: "searchPanel"
+                dockName: "Search"
+                minimumBodySize: searchTool.minimumSize
                 anchors.fill: parent
                 title: qsTr("Find and replace")
                 onActiveFocusChanged: if (activeFocus) searchTool.activated()
@@ -3398,17 +3557,35 @@ ApplicationWindow {
         }
 
         Component.onCompleted: {
+            // D3: the horizontal panels keep a one-tab header even alone;
+            // the Reference tray's toolbar sits in its header.
+            Docking.setPanelHeader("Grid", true, null)
+            Docking.setPanelHeader("Reference", true, referenceTray.toolbar)
+            Docking.setPanelHeader("Search", true, null)
             root.defaultLayout()
-            // Once the arrangement is laid out, give the audio box legacy's
-            // height whatever this platform's fonts make the panel chrome,
-            // then keep that as the default (Reset layout) before a saved
-            // layout replaces it.
-            Qt.callLater(function() {
-                root.fitAudioBox()
-                root.workspaceLayout.captureDefault()
-                root.workspaceLayout.restoreSaved()
-            })
         }
+    }
+    // Once the arrangement is laid out (its first frame), give the audio box
+    // legacy's height whatever this platform's fonts make the panel chrome,
+    // then keep that as the default (Reset layout) before a saved layout
+    // replaces it. D3: the panels' minimum sizes come first, from their
+    // laid-out content (Panel), so the default arrangement holds them.
+    property bool arrangementSettled: false
+    function settleArrangement() {
+        if (root.arrangementSettled)
+            return
+        root.arrangementSettled = true
+        for (const panel of root.panels)
+            panel.reportMinimumSize()
+        root.fitAudioBox()
+        root.workspaceLayout.captureDefault()
+        root.workspaceLayout.restoreSaved()
+    }
+    onFrameSwapped: settleArrangement()
+    Timer { // without frames (a hidden window)
+        interval: 1000
+        running: !root.arrangementSettled
+        onTriggered: root.settleArrangement()
     }
     // Completed layout operations are saved, not every drag (D1): a cheap
     // periodic check writes only when the arrangement changed.

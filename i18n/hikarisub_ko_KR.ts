@@ -333,69 +333,28 @@ and the color selection window on right-click.</source>
     </message>
 </context>
 <context>
+    <name>DockMenuButton</name>
+    <message>
+        <source>%1 options</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>DockTabBar</name>
     <message>
         <source>Panels</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Float %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>DockTitleBar</name>
     <message>
-        <source>Minimize %1</source>
+        <source>Dock</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Minimize tab group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Dock %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Dock tab group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Float %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Float tab group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Restore %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Restore tab group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Maximize %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Maximize tab group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close tab group</source>
-        <translation type="unfinished"></translation>
+        <source>Close</source>
+        <translation type="unfinished">닫기</translation>
     </message>
 </context>
 <context>
@@ -2825,6 +2784,18 @@ please save with different name or change file attribute.</source>
         <translation>닫기</translation>
     </message>
     <message>
+        <source>Move panel…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Automation scripts (*.lua *.moon)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3873,10 +3844,6 @@ in all tabs</source>
     </message>
     <message>
         <source>Next match</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close reference</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

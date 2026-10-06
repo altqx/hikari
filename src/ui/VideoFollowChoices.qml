@@ -10,13 +10,28 @@ import Hikari.Ui
 // Options.SetInt and SaveOptions did; the application reads it when the
 // active Line changes (EditBox::SetLine), on a Grid click or double click
 // (SetVideoLineTime) and after an edit (ShowEditOnVideo).
-RowLayout {
+//
+// D3: a Video panel too narrow for the two side by side puts them on two
+// rows (each caption beside its list), so neither list is cut off; the
+// narrowest is `minimumWidth` (the panel's reported minimum,
+// docs/qt/docking.md).
+GridLayout {
     id: choices
     objectName: "videoFollowChoices"
     required property SettingsStore settings
-    spacing: 4
+    readonly property real oneRowWidth: seekLabel.implicitWidth + seekLabel.Layout.leftMargin + seekAfter.implicitWidth
+                                        + playLabel.implicitWidth + 10 + playAfter.implicitWidth + 4 * columnSpacing
+    readonly property real minimumWidth: 6 + Math.max(seekLabel.implicitWidth, playLabel.implicitWidth)
+                                         + Math.max(seekAfter.implicitWidth, playAfter.implicitWidth) + columnSpacing
+    // The column's width, not the layout's own: laid out at its minimum, a
+    // row too wide for the column would only overflow it.
+    readonly property real available: parent ? parent.width : width
+    readonly property bool wrapped: available > 0 && available < oneRowWidth
+    columns: wrapped ? 2 : 5
+    columnSpacing: 4
+    rowSpacing: 2
 
-    Item { Layout.fillWidth: true } // legacy draws the lists at the toolbar's right end
+    Item { Layout.fillWidth: true; visible: !choices.wrapped } // legacy draws the lists at the toolbar's right end
     // Each list shows its widest choice when the panel has the room and
     // narrows, its text cut, when it has not: the lists must not set the
     // controls column's minimum width, which would widen the transport row
@@ -27,6 +42,7 @@ RowLayout {
     // label is its tooltip and accessible name): "Nothing" alone said
     // nothing out of context.
     Label {
+        id: seekLabel
         text: qsTr("Seek on")
         color: Theme.muted
         Layout.leftMargin: 6
@@ -50,9 +66,10 @@ RowLayout {
         onActivated: index => choices.settings.setValue("video.moveToActiveLine", index)
     }
     Label {
+        id: playLabel
         text: qsTr("Then play")
         color: Theme.muted
-        Layout.leftMargin: 10
+        Layout.leftMargin: choices.wrapped ? 6 : 10
     }
     ComboBox {
         id: playAfter

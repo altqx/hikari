@@ -9,13 +9,15 @@ $out = Join-Path $root 'out\native-gate-win\tests'
 New-Item -ItemType Directory -Force $out | Out-Null
 $env:QT_QPA_PLATFORM = 'windows'
 $env:PATH = "$root\out\sdk\qt-6.11.2-windows\6.11.2\msvc2022_64\bin;$env:PATH"
-# The D1 functions of hikari_ui_shell_tests (as tools/native-gate/gate.py runs them).
+# The D1 and D3 functions of hikari_ui_shell_tests (as tools/native-gate/gate.py runs them).
 $runs = @(
     @{ exe = 'hikari_ui_shell_tests'; fns = @('f6AndShortcutsReachAFloatingPanel', 'panelsFloatDockHideAndKeepTheirState',
             'placementWindowMovesTabsAndResizes', 'floatF6AndShowActivateTheFloatingPanelsWindow',
             'placementWindowShowsItsDefaultsAndKeyboardChanges', 'fileDropAreaLeavesPanelDragsToTheDockingEngine',
             'dockingControlsAndTheGridAreAccessible', 'floatingPanelsOffEveryScreenComeBack',
-            'menuArrowsOpenAndCloseSubmenus') },
+            'menuArrowsOpenAndCloseSubmenus', 'panelMenuHoldsMoveUndockAndClose',
+            'keyboardReachesThePanelHeaderAndItsMenu', 'doubleClickOnAHeaderFloatsAndDocks',
+            'bottomPanelsKeepATabAndTheTrayToolbar', 'panelsKeepTheirMinimumSizes') },
     @{ exe = 'hikari_ui_line_grid_a11y_tests'; fns = @() },
     @{ exe = 'hikari_ui_docking_qualification_tests'; fns = @() },
     @{ exe = 'hikari_ui_workspace_layout_tests'; fns = @() }

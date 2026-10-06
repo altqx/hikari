@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""D1 native gate scenarios against HikariSub in one running compositor session.
+"""D1/D3 native gate scenarios against HikariSub in one running compositor session.
 
   gate.py SESSION [STEP...]      SESSION: sway | kwin | mutter | x11
 
@@ -50,6 +50,26 @@ def verdict(item, status, detail, evidence=()):
                      "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
     json.dump(results, open(RESULTS_FILE, "w"), indent=1)
     log(f"== {item}: {status} - {detail}")
+
+
+def focus_verdict(item, ok, detail, evidence=(), targets=(), urgent=None):
+    """A cross-window focus item. On sway with its default
+    focus_on_window_activation (urgent), a window that asks for activation
+    is marked urgent instead of focused: when the item failed and one of
+    TARGETS is marked so, the app asked and sway refused, which this session
+    cannot observe further (step sway-activate observes it)."""
+    if ok:
+        verdict(item, "observed", detail, evidence)
+        return
+    if B.name == "sway":
+        # urgent: as the step saw it at the time, or now
+        urgent = urgent if urgent is not None else [t for t in targets if B.urgent(t)]
+        if urgent:
+            verdict(item, "not-observable",
+                    f"sway's focus_on_window_activation urgent policy: {urgent} asked for activation and were marked "
+                    f"urgent instead of focused (observed under gate.py sway-activate). {detail}", evidence)
+            return
+    verdict(item, "failed", detail, evidence)
 
 
 # ---------------------------------------------------------------- AT-SPI
@@ -187,19 +207,41 @@ class Sway(EiBackend):
             args += ["-m", m]
         sh(args)
 
+    def extent(self):
+        """The layout's bounding box now: the virtual pointer's absolute
+        positions are fractions of it (outputs come and go in step
+        outputs; a restarted vpointer starts at its default)."""
+        outs = [o["rect"] for o in json.loads(self.msg("-t", "get_outputs") or "[]") if o.get("active")]
+        if not outs:
+            return 2400, 1000
+        return max(r["x"] + r["width"] for r in outs), max(r["y"] + r["height"] for r in outs)
+
     def pointer(self, *cmds):
+        w, h = self.extent()
         with open(os.path.join(os.environ["XDG_RUNTIME_DIR"], "vpointer.in"), "w") as f:
-            f.write("\n".join(cmds) + "\n")
+            f.write(f"extent {w} {h}\n" + "\n".join(cmds) + "\n")
         for c in cmds:
             if c.startswith("wait"):
                 time.sleep(int(c.split()[1]) / 1000)
         time.sleep(0.2)
 
     def shot(self, path):
-        sh(["grim", path])
+        # In layout coordinates: grim otherwise captures the whole layout at
+        # the highest output scale (2 with HEADLESS-2), and the pixel checks
+        # aim by layout position. The scale-2 output's own capture is in
+        # step outputs.
+        sh(["grim", "-s", "1", path])
 
     def windows(self):
         return sh(["python3", f"{GATE}/swaytree.py"])
+
+    def urgent(self, title):
+        """Whether sway marked the window urgent: it asked for activation
+        (xdg_activation_v1) and sway's focus_on_window_activation urgent
+        policy refused the focus."""
+        # the main window is titled "<document> - HikariSub" with a Document open
+        rx = re.compile(r"'(.* - )?" + re.escape(title) + "'")
+        return any(rx.search(l) and "URGENT" in l for l in self.windows().splitlines())
 
     def client_rect(self, title):
         for line in self.windows().splitlines():
@@ -449,7 +491,7 @@ def f6_walk(n=5, key="f6"):
 def panel_of(path):
     if not path:
         return None
-    for name in ["Video", "Audio", "Line editor", "Grid", "Editing:", "No document open", "Reference", "Timing",
+    for name in ["Video", "Audio", "Line editor", "Grid", "Editing:", "No document open", "Reference", "Timing", "Shift times",
                  "Search"]:
         if f"panel:'{name}" in path or f"panel:\"{name}" in path:
             return "Grid" if name in ("Grid", "Editing:", "No document open") else name
@@ -461,6 +503,160 @@ def dismiss_notices():
     the private profile); press its OK so keys reach the shell."""
     sh(["python3", f"{GATE}/atspi_tool.py", "press-showing", "OK"])
     time.sleep(0.5)
+
+
+# ---------------------------------------------------------------- D3 chrome
+# docs/qt/docking.md "Chrome": one 35-pixel header per group (a lone panel's
+# title bar, or tabs), its "⋯" button named "<panel> options" opening the
+# panel's menu (Move panel…, Undock or Dock, Close); floating panels are
+# borderless with a drawn 8-pixel shadow, resized from it through the window
+# system; on Wayland the header's title docks (the engine's drag-and-drop)
+# and its free part moves the window through the compositor.
+SHADOW = 8
+HEADER = 35
+ACCENT = "#9CDBC9"  # the dark theme's default (green) accent: only the drop highlight uses it
+WAYLAND = sys.argv[1] in ("sway", "sway-activate", "kwin", "mutter")
+
+
+def where(role, name, frame=None):
+    """Showing objects with that role and name, in window coordinates."""
+    try:
+        hits = json.loads(sh(["python3", f"{GATE}/atspi_tool.py", "where", role, name]) or "[]")
+    except ValueError:
+        return []
+    return [h for h in hits if frame is None or h["frame"] == frame]
+
+
+def raw_pixels(path):
+    """(width, height, RGB bytes) of a screenshot."""
+    w, h = (int(v) for v in sh(["magick", "identify", "-format", "%w %h", path]).split())
+    raw = subprocess.run(["magick", path, "-alpha", "off", "-depth", "8", "rgb:-"], capture_output=True).stdout
+    return w, h, raw
+
+
+def locate_floating(title, scale=1, x_from=0, path=None):
+    """mutter publishes no window geometry: find the floating panel's frame
+    (its boundary, as big as AT-SPI says the window is less the shadow, in
+    pixels of a monitor at SCALE) in a screenshot, from image column X_FROM
+    on (mutter_shot puts the monitors side by side). Returns (x, y, w, h,
+    "screenshot") of the whole window, shadow included, in image pixels, or
+    None."""
+    fr = frames().get(title)
+    if not fr:
+        return None
+    if path is None:
+        path = os.path.join(EVID, "locate.png")
+        B.shot(path)
+    iw, ih, raw = raw_pixels(path)
+    fw, fh = (fr["w"] - 2 * SHADOW) * scale, (fr["h"] - 2 * SHADOW) * scale
+    for y in range(ih - fh + 1):
+        row = raw[y * iw * 3:(y + 1) * iw * 3]
+        x = x_from
+        while x < iw:
+            c = row[3 * x:3 * x + 3]
+            e = x + 1
+            while e < iw and row[3 * e:3 * e + 3] == c:
+                e += 1
+            run = e - x
+            if fw - 10 * scale <= run <= fw - 2:
+                left = x - (fw - run) // 2
+                # the left boundary: the same colour down the frame's side
+                ok = 0 <= left < iw
+                for k in range(1, 9):
+                    yy = y + k * fh // 9
+                    if not ok or yy >= ih:
+                        ok = False
+                        break
+                    ok = raw[(yy * iw + left) * 3:(yy * iw + left) * 3 + 3] == c
+                if ok:
+                    return (left - SHADOW * scale, y - SHADOW * scale, fr["w"] * scale, fr["h"] * scale, "screenshot")
+            x = e
+    return None
+
+
+def origin(frame):
+    """A window's position on the screen and size (x, y, w, h, output)."""
+    r = B.client_rect(frame)
+    if r is None and B.name == "mutter" and frame != "HikariSub":
+        r = locate_floating(frame)
+    return r
+
+
+def click(x, y, double=False, wait=900):
+    cmds = [f"move {x} {y}", "wait 250", "down", "wait 50", "up"]
+    if double:
+        cmds += ["wait 60", "down", "wait 40", "up"]
+    B.pointer(*cmds, f"wait {wait}")
+
+
+def drag(sx, sy, ex, ey, steps=30, release=True):
+    cmds = [f"move {sx} {sy}", "wait 250", "down", "wait 250"]
+    for i in range(1, steps + 1):
+        cmds += [f"move {sx + (ex - sx) * i // steps} {sy + (ey - sy) * i // steps}", "wait 40"]
+    cmds += [f"move {ex + 3} {ey + 3}", "wait 300", f"move {ex} {ey}", "wait 700"]
+    if release:
+        cmds += ["up", "wait 1200"]
+    B.pointer(*cmds)
+
+
+def accent_pixels(png, box=None):
+    """Pixels of the accent colour in a screenshot (in box: x, y, w, h) and
+    their bounding box."""
+    args = ["magick", os.path.join(EVID, png), "-alpha", "off"]
+    if box:
+        args += ["-crop", f"{box[2]}x{box[3]}+{box[0]}+{box[1]}", "+repage"]
+    args += ["-fuzz", "4%", "-fill", "black", "+opaque", ACCENT, "-fill", "white", "-opaque", ACCENT,
+             "-colorspace", "gray", "-format", "%[fx:round(mean*w*h)] %@", "info:"]
+    out = sh(args).split()
+    try:
+        return int(out[0]), (out[1] if len(out) > 1 else "")
+    except (ValueError, IndexError):
+        return 0, ""
+
+
+def shadow_probe(png, r):
+    """The drawn shadow around a floating window r (x, y, w, h): where the
+    window system composites, its outermost rings show what is behind
+    (almost transparent); without compositing they come out opaque black.
+    Each edge's outermost ring is black or not, where the background 3
+    pixels outside it is not itself black."""
+    iw, ih, raw = raw_pixels(os.path.join(EVID, png))
+
+    def px(x, y):
+        if not (0 <= x < iw and 0 <= y < ih):
+            return None
+        i = (y * iw + x) * 3
+        return tuple(raw[i:i + 3])
+
+    x, y, w, h = r[:4]
+    samples = []
+    for k in range(1, 8):
+        fx, fy = x + w * k // 8, y + h * k // 8
+        samples += [((fx, y + 1), (fx, y - 3)), ((fx, y + h - 2), (fx, y + h + 2)),
+                    ((x + 1, fy), (x - 3, fy)), ((x + w - 2, fy), (x + w + 2, fy))]
+    see_through, opaque, unknown = 0, 0, 0
+    for inner, outer in samples:
+        a, b = px(*inner), px(*outer)
+        if a is None or b is None or max(b) < 16:
+            unknown += 1
+        elif max(a) < 16:
+            opaque += 1  # black where the background is not: the margin is not see-through
+        else:
+            see_through += 1
+    # the inner rings darken what is behind: the ring next to the frame
+    inner_ring = [px(x + w // 2, y + SHADOW - 1), px(x + w // 2, y - 3)]
+    return {"see-through": see_through, "black": opaque, "background black or off screen": unknown,
+            "ring next to the frame vs outside (top middle)": inner_ring}
+
+
+def header_point(r, part="title"):
+    """A point on a floating panel's header: its title (the engine's drag)
+    or, on Wayland, its free part right of the title (the compositor's
+    move), keeping clear of the "⋯" button."""
+    top = r[1] + SHADOW + 1
+    if part == "title":
+        return r[0] + SHADOW + 1 + 22, top + HEADER // 2
+    return r[0] + r[2] - SHADOW - 1 - 12 - 20 - 2 - 24, top + HEADER // 2
 
 
 # ---------------------------------------------------------------- steps
@@ -542,6 +738,7 @@ def step_f6_floating():
     # (a) F6 straight after Float, from wherever the shell left the focus.
     walk_a = f6_walk(4)
     ev1, _ = B.snap("f6-1-after-f6-from-float")
+    urgent_a = [t for t in ("HikariSub",) if B.name == "sway" and B.urgent(t)]
     # (b) From the Grid of the main window (focused through the compositor and the Grid's own action).
     focus_main_compositor()
     st = atspi()
@@ -559,11 +756,12 @@ def step_f6_floating():
     verdict("focus-after-float", "observed" if after_float["focus"] else "failed",
             f"floated by {how}; then active windows {after_float['active']}, focused object {after_float['focus']}",
             ev0)
-    verdict("f6-from-floating-panel", "observed" if any(x and x != "Line editor" for x in reached_a) else "failed",
-            f"F6 x4 right after Float reached {reached_a} (active {[w['active'] for w in walk_a]})", ev1)
-    verdict("f6-into-floating-panel", "observed" if "Line editor" in reached_b and float_active_b else "failed",
+    focus_verdict("f6-from-floating-panel", any(x and x != "Line editor" for x in reached_a),
+                  f"F6 x4 right after Float reached {reached_a} (active {[w['active'] for w in walk_a]})", ev1,
+                  targets=("HikariSub",), urgent=urgent_a)
+    focus_verdict("f6-into-floating-panel", "Line editor" in reached_b and float_active_b,
             f"main window focused by the compositor (focus {start_b['focus']}); F6 x5 reached {reached_b} (active {[w['active'] for w in walk_b]}); "
-            f"Shift+F6 x3 {[panel_of(w['path']) for w in back]}", ev2 + ["f6-floating.json"])
+            f"Shift+F6 x3 {[panel_of(w['path']) for w in back]}", ev2 + ["f6-floating.json"], targets=("Line editor",))
     # Ctrl+Shift+H from the floating panel opens History.
     for _ in range(6):
         if panel_of(atspi()["focusPath"]) == "Line editor":
@@ -575,16 +773,25 @@ def step_f6_floating():
     st = wait_for(lambda s: any(f["name"].startswith("History") for f in s["frames"]))
     ev3, st = B.snap("ctrl-shift-h-from-floating")
     hist = any(f["name"].startswith("History") for f in st["frames"])
-    verdict("shortcut-from-floating-panel", ("observed" if hist else "failed") if in_float else "not-observable",
-            f"focus in the floating Line editor: {in_float}; Ctrl+Shift+H opened History: {hist}", ev3)
+    if in_float or B.name != "sway":
+        verdict("shortcut-from-floating-panel", ("observed" if hist else "failed") if in_float else "failed",
+                f"focus in the floating Line editor: {in_float}; Ctrl+Shift+H opened History: {hist}", ev3)
+    else:
+        focus_verdict("shortcut-from-floating-panel", False,
+                      f"the focus never reached the floating Line editor by F6; Ctrl+Shift+H opened History: {hist}",
+                      ev3, targets=("Line editor",))
     B.keys("escape")
 
 
-def combo_texts():
-    """The displayed text of each showing combo box (its text child)."""
+def combo_texts(frame="Move panel"):
+    """The displayed text of each showing combo box (its text child) of a
+    window (the placement window: the Line editor's own combo boxes are empty
+    without a Document)."""
     code = ("import sys; sys.argv=['x','dump']\n"
             f"exec(open('{GATE}/atspi_tool.py').read().split('def main')[0])\n"
-            "for o in all_objects(app()):\n"
+            "a = app()\n"
+            f"f = [a.get_child_at_index(i) for i in range(a.get_child_count()) if a.get_child_at_index(i).get_name() == {frame!r}]\n"
+            "for o in (all_objects(f[0]) if f else []):\n"
             "    if o.get_role_name()=='combo box' and o.get_state_set().contains(Atspi.StateType.SHOWING):\n"
             "        print(o.get_name() + '=' + repr(text_of(o.get_child_at_index(0))))\n")
     return sh(["python3", "-c", code]).strip().replace("\n", "; ")
@@ -610,77 +817,330 @@ def step_move_panel():
     ev1, st = B.snap("move-panel-1-left-of-grid", extra="# combo boxes before Move\n" + combos_set)
     pos = {p["id"]: p for p in st["panels"]}
     a, g = pos.get("Audio"), pos.get("Grid")
-    ok = a and g and a["frame"] == g["frame"] == "HikariSub" and a["x"] < g["x"] and abs(a["y"] - g["y"]) < 3
+    # D3: side by side their headers share a row (Audio's a title bar, the
+    # Grid's a tab bar, whose content starts 8 lower).
+    ah, gh = where("text", "Audio", "HikariSub"), where("page tab", "Grid", "HikariSub")
+    ok = a and g and a["frame"] == g["frame"] == "HikariSub" and a["x"] < g["x"] and ah and gh \
+        and abs(ah[0]["y"] - gh[0]["y"]) < 3
     verdict("keyboard-move-panel", "observed" if ok else "failed",
-            f"Move panel ({combos_set}) -> Audio {a and (a['x'], a['y'], a['w'], a['h'])}, "
-            f"Grid {g and (g['x'], g['y'], g['w'], g['h'])}; focus {st['focusPath']}", ev0 + ev1)
+            f"Move panel ({combos_set}) -> Audio {a and (a['x'], a['y'], a['w'], a['h'])} header {ah[:1]}, "
+            f"Grid {g and (g['x'], g['y'], g['w'], g['h'])} header {gh[:1]}; focus {st['focusPath']}", ev0 + ev1)
     close_window("Move panel")
 
 
 def step_pointer():
-    """Float button, double-click on title bars and drag-to-dock with real compositor input."""
+    """D3 with real compositor input: the "⋯" button and its menu's Undock,
+    double-click on headers (float, dock), and a floating panel dragged by
+    its title onto the Grid, with the drop highlight, docking there."""
     fresh()
-    rect = B.client_rect("HikariSub")
-    if rect is None:
-        verdict("pointer-float-button", "not-observable", f"{B.name}: no window geometry to aim real pointer input")
+    main = origin("HikariSub")
+    if main is None:
+        for item in ("pointer-menu-undock", "pointer-dblclick-float-redock", "pointer-drag-dock",
+                     "drop-highlight"):
+            verdict(item, "not-observable", f"{B.name}: no window geometry to aim real pointer input")
         return
-    x0, y0 = rect[0], rect[1]
-    st = atspi()
-    audio = panel(st, "Audio")
-    # The KDDW title bar sits above the panel body: float button 30 px from the right edge.
-    tx, ty = x0 + audio["x"] + audio["w"] - 22, y0 + audio["y"] - 16
-    B.pointer(f"move {tx} {ty}", "wait 200", "down", "wait 60", "up", "wait 1200")
+    x0, y0 = main[0], main[1]
+    # 1. Audio's "⋯" button, then Undock in its menu, both by the pointer.
+    btn = where("button", "Audio options", "HikariSub")
+    ev = []
+    menu = []
+    if btn:
+        b = btn[0]
+        click(x0 + b["x"] + b["w"] // 2, y0 + b["y"] + b["h"] // 2)
+        menu = [n for n in ("Move panel…", "Undock", "Dock", "Close") if where("menu item", n)]
+        ev, _ = B.snap("ptr-1-menu")
+        und = where("menu item", "Undock", "HikariSub")
+        if und:
+            u = und[0]
+            click(x0 + u["x"] + 30, y0 + u["y"] + u["h"] // 2, wait=1200)
     st = wait_for(lambda s: "Audio" in frames(s))
-    ev, st = B.snap("ptr-1-float-button")
-    verdict("pointer-float-button", "observed" if "Audio" in frames(st) else "failed",
-            f"click on Audio's float button at {tx},{ty}: own window={'Audio' in frames(st)}", ev)
-    # Double-click the docked Video title bar: floats; double-click its floating title bar: docks.
+    ev1, st = B.snap("ptr-2-undocked")
+    floated = "Audio" in frames(st)
+    verdict("pointer-menu-undock",
+            "observed" if btn and menu == ["Move panel…", "Undock", "Close"] and floated else "failed",
+            f"click on 'Audio options' {btn[:1]}: menu {menu}; click on Undock -> own window={floated}", ev + ev1)
+    # 2. Double-click the docked Video header: floats; double-click its
+    # floating header (the title): docks.
     video = panel(st, "Video")
-    vx, vy = x0 + video["x"] + 120, y0 + video["y"] - 16
-    B.pointer(f"move {vx} {vy}", "wait 300", "down", "wait 40", "up", "wait 60", "down", "wait 40", "up", "wait 1500")
+    vx, vy = x0 + video["x"] + 30, y0 + video["y"] - HEADER // 2
+    click(vx, vy, double=True, wait=1500)
     st = wait_for(lambda s: "Video" in frames(s))
-    ev1, st = B.snap("ptr-2-dblclick-float")
+    ev2, st = B.snap("ptr-3-dblclick-float")
     dfloat = "Video" in frames(st)
-    redock = False
-    ev2 = []
+    redock, ev3, r = False, [], None
     if dfloat:
-        r = B.client_rect("Video")
+        r = origin("Video")
         if r:
-            B.pointer(f"move {r[0] + 120} {r[1] + 14}", "wait 300", "down", "wait 40", "up", "wait 60", "down", "wait 40",
-                      "up", "wait 1500")
+            click(*header_point(r), double=True, wait=1500)
             st = wait_for(lambda s: "Video" not in frames(s))
-            ev2, st = B.snap("ptr-3-dblclick-redock")
+            ev3, st = B.snap("ptr-4-dblclick-redock")
             redock = "Video" not in frames(st)
-    if dfloat and not ev2:
+    if dfloat and r is None:
         verdict("pointer-dblclick-float-redock", "not-observable",
-                f"double-click docked Video title floated it ({dfloat}); the floating window cannot be located on "
-                f"{B.name} to double-click its title", ev1)
+                f"double-click on the docked Video header floated it ({dfloat}); the floating window cannot be "
+                f"located on {B.name} to double-click its header", ev2)
     else:
         verdict("pointer-dblclick-float-redock", "observed" if dfloat and redock else "failed",
-                f"double-click docked Video title: floated={dfloat}; double-click its floating title: redocked={redock}",
-                ev1 + ev2)
-    # Drag the floating Audio panel by its own (KDDW) title bar onto the Grid's centre.
-    r = B.client_rect("Audio")
+                f"double-click on the docked Video header at {vx},{vy}: floated={dfloat}; double-click on its "
+                f"floating header's title {r and header_point(r)}: docked={redock}", ev2 + ev3)
+    # 3. Drag the floating Audio panel by its title onto the Grid's centre:
+    # the accent highlight covers the Grid's group, and the release docks it.
+    r = origin("Audio")
     st = atspi()
     grid = panel(st, "Grid")
     if not r or not grid:
-        verdict("pointer-drag-dock", "not-observable", "could not locate the floating Audio window or the Grid")
+        for item in ("pointer-drag-dock", "drop-highlight"):
+            verdict(item, "not-observable", f"could not locate the floating Audio window ({r}) or the Grid")
         return
-    sx, sy = r[0] + 150, r[1] + 14
+    sx, sy = header_point(r)
     gx, gy = x0 + grid["x"] + grid["w"] // 2, y0 + grid["y"] + grid["h"] // 2 - 15
-    cmds = [f"move {sx} {sy}", "wait 250", "down", "wait 250"]
-    for i in range(1, 31):
-        cmds += [f"move {sx + (gx - sx) * i // 30} {sy + (gy - sy) * i // 30}", "wait 40"]
-    cmds += [f"move {gx + 3} {gy + 3}", "wait 300", f"move {gx} {gy}", "wait 700"]
-    B.pointer(*cmds)
-    ev3, _ = B.snap("ptr-4-drag-over-grid")
+    ev4, _ = B.snap("ptr-5-before-drag")
+    base, _ = accent_pixels("ptr-5-before-drag.png")
+    drag(sx, sy, gx, gy, release=False)
+    ev5, _ = B.snap("ptr-6-drag-over-grid")
+    box = (x0 + grid["x"] - 4, y0 + grid["y"] - HEADER - 12, grid["w"] + 8, grid["h"] + HEADER + 16)
+    lit, bbox = accent_pixels("ptr-6-drag-over-grid.png", box)
+    total, _ = accent_pixels("ptr-6-drag-over-grid.png")
     B.pointer("up", "wait 1500", f"move {gx + 5} {gy + 5}", "wait 300")
     st = atspi()
-    ev4, st = B.snap("ptr-5-dropped")
+    ev6, st = B.snap("ptr-7-dropped")
     docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == "HikariSub"
+    verdict("drop-highlight", "observed" if lit > 400 and total - base > 400 else "failed",
+            f"accent ({ACCENT}) pixels: {base} before the drag, {total} while over the Grid, {lit} of them over "
+            f"the Grid's group {box} (bounding box {bbox} in it)", ev4 + ev5)
     verdict("pointer-drag-dock", "observed" if docked else "failed",
-            f"drag floating Audio by its title bar from {sx},{sy} to the Grid centre {gx},{gy} and release: "
-            f"docked={docked}, windows {list(frames(st))}", ev3 + ev4)
+            f"drag floating Audio by its title from {sx},{sy} to the Grid centre {gx},{gy} and release: "
+            f"docked={docked}, windows {list(frames(st))}", ev5 + ev6)
+
+
+def step_floating():
+    """D3's floating window: the same header, the drawn shadow, moved (X11:
+    the engine's drag by the header; Wayland: the compositor's move from the
+    header's free part) and resized from the shadow through the window
+    system."""
+    fresh(env={"QT_LOGGING_RULES": "hikari.decorations.debug=true"})
+    how = float_panel("Audio", "floating")
+    st = wait_for(lambda s: "Audio" in frames(s))
+    r = origin("Audio")
+    if r is None:
+        for item in ("floating-header", "floating-shadow", "floating-move", "floating-resize"):
+            verdict(item, "not-observable", f"the floating Audio window (floated by {how}) cannot be located on "
+                                            f"{B.name}")
+        return
+    # X11 here runs no compositing manager (openbox alone): no transparency,
+    # so no shadow (Docking.floatingShadow 0); a picom run below checks it.
+    shadow = 0 if B.name == "x11" else SHADOW
+    floating_frame(r, shadow, "float-0-window")
+    floating_decoration("Audio", r)
+    # Move.
+    if WAYLAND:
+        px, py = header_point(r, part="free")
+        how_move = "the header's free part (the compositor's move, startSystemMove)"
+    else:
+        px, py = header_point(r)
+        how_move = "the header's title (the engine's drag)"
+    # somewhere no drop is offered: away from the main window where there is room
+    main = origin("HikariSub")
+    dx, dy = -160, 120
+    if main and not WAYLAND:
+        dx = (main[0] - 40 - r[2]) - r[0] if main[0] - 40 - r[2] > 0 else (main[0] + main[2] + 40) - r[0]
+        dy = 60
+    drag(px, py, px + dx, py + dy)
+    st = wait_for(lambda s: "Audio" in frames(s), timeout=3)
+    r2 = origin("Audio")
+    ev1, st = B.snap("float-1-moved")
+    still = "Audio" in frames(st)
+    # Wayland: the compositor takes over once the pointer has moved the
+    # drag distance (about 10 pixels), which the window does not follow
+    moved = r2 is not None and abs((r2[0] - r[0]) - dx) <= 16 and abs((r2[1] - r[1]) - dy) <= 16
+    verdict("floating-move", "observed" if still and moved else "failed",
+            f"dragged {how_move} from {px},{py} by {dx},{dy}: window {r[:2]} -> {r2 and r2[:2]}, still floating "
+            f"{still}", ev1)
+    if WAYLAND and still and r2:
+        fx, fy = header_point(r2, part="free")
+        click(fx, fy, double=True, wait=1500)
+        st = wait_for(lambda s: "Audio" not in frames(s))
+        ev, st = B.snap("float-2-free-part-dblclick")
+        docked = "Audio" not in frames(st)
+        verdict("wayland-free-part-dblclick-docks", "observed" if docked else "failed",
+                f"double-click on the header's free part at {fx},{fy}: docked={docked}", ev)
+        if docked:
+            float_panel("Audio", "floating")
+            wait_for(lambda s: "Audio" in frames(s))
+    # Resize from the bottom-right corner of the shadow.
+    r = origin("Audio")
+    st = atspi()
+    fr = frames(st).get("Audio")
+    if not r or not fr:
+        verdict("floating-resize", "not-observable", f"the floating Audio window could not be located again ({r})")
+        return
+    w0, h0 = fr["w"], fr["h"]
+    cx, cy = r[0] + r[2] - 2, r[1] + r[3] - 2
+    drag(cx, cy, cx + 90, cy + 70)
+    st = wait_for(lambda s: frames(s).get("Audio", {}).get("w", 0) > w0, timeout=3)
+    fr = frames(st).get("Audio", {})
+    ev2, st = B.snap("float-3-resized")
+    grew = fr.get("w", 0) >= w0 + 60 and fr.get("h", 0) >= h0 + 40
+    verdict("floating-resize", "observed" if grew else "failed",
+            f"dragged the window's bottom-right corner {cx},{cy} ({'the shadow' if shadow else 'the band inside the frame'}) "
+            f"by 90,70: {w0}x{h0} -> {fr.get('w')}x{fr.get('h')}", ev2)
+    if B.name.startswith("sway"):
+        floating_forced_frame()
+    if B.name == "x11":
+        # With a compositing manager the drawn shadow comes back (Qt follows
+        # the _NET_WM_CM_S0 selection; a window floated now reads it).
+        # An empty configuration: Arch's /etc/xdg/picom.conf draws picom's
+        # own shadows, which would darken what this compares against.
+        comp = subprocess.Popen(["picom", "--config", "/dev/null", "--backend", "xrender", "--no-fading-openclose"],
+                                stdout=subprocess.DEVNULL, stderr=open(os.path.join(EVID, "picom.log"), "w"))
+        time.sleep(2)
+        try:
+            focus_main_compositor()
+            panel_menu("Audio", "Dock")
+            wait_for(lambda s: "Audio" not in frames(s))
+            focus_main_compositor()
+            float_panel("Audio", "floating-composited")
+            wait_for(lambda s: "Audio" in frames(s))
+            time.sleep(1)
+            # over the main window, so the shadow has something to show through
+            main = origin("HikariSub")
+            for wid in sh("xdotool search --onlyvisible --name '^Audio$'").split():
+                sh(["xdotool", "windowmove", wid, str(main[0] + 300), str(main[1] + 200)])
+            time.sleep(1)
+            r = origin("Audio")
+            if r is None:
+                verdict("floating-shadow", "not-observable", "the floating Audio window could not be located with picom")
+            else:
+                floating_frame(r, SHADOW, "float-4-composited", suffix="-composited")
+        finally:
+            comp.terminate()
+            comp.wait(10)
+            time.sleep(1)
+
+
+def floating_decoration(title, r):
+    """D3: a floating panel is a borderless tool window; the window system
+    adds no frame or title bar of its own."""
+    fr = frames().get(title, {})
+    if B.name.startswith("sway"):
+        line = next((l for l in B.windows().splitlines() if f"'{title}'" in l), "")
+        border = re.search(r"border=(\S+)", line)
+        border = border.group(1) if border else "?"
+        verdict("floating-borderless", "observed" if border in ("none", "csd") else "failed",
+                f"sway's container border for the floating {title}: {border!r} ({line.strip()}); the window asks "
+                f"for client-side decorations through xdg-decoration ({decoration_log()})", ["float-0-window.png"])
+    elif B.name == "kwin":
+        line = next((l for l in B.windows().splitlines() if f'"{title}"' in l), "")
+        m = re.search(r"(\d+)x(\d+) output", line)
+        same = m and (int(m.group(1)), int(m.group(2))) == (fr.get("w"), fr.get("h"))
+        verdict("floating-borderless", "observed" if same else "failed",
+                f"KWin's frame geometry {m and m.group(0)} vs the window's own size {fr.get('w')}x{fr.get('h')} "
+                f"({line.strip()})", ["float-0-window.png"])
+    elif B.name == "x11":
+        wid = sh(f"xdotool search --onlyvisible --name '^{title}$'").split()
+        ext = sh(["xprop", "-id", wid[0], "_NET_FRAME_EXTENTS"]).strip() if wid else "no window"
+        none = "= 0, 0, 0, 0" in ext or "not found" in ext
+        verdict("floating-borderless", "observed" if none else "failed",
+                f"openbox's frame extents for the floating {title}: {ext}", ["float-0-window.png"])
+    else:
+        verdict("floating-borderless", "observed" if r and r[4] == "screenshot" else "not-observable",
+                f"mutter draws no frame for Wayland clients without xdg-decoration; the floating {title}'s own "
+                f"1-pixel frame was found in the screenshot where the window's size puts it: {r}",
+                ["float-0-window.png"])
+
+
+def decoration_log():
+    """What the app logged of the compositor's decoration answers
+    (hikari.decorations, enabled by step floating)."""
+    try:
+        with open(os.path.join(os.environ["XDG_RUNTIME_DIR"], "app.log"), errors="replace") as f:
+            lines = [l.strip() for l in f if "decorat" in l]
+    except OSError:
+        return "no app log"
+    return "; ".join(lines[-3:]) or "nothing logged"
+
+
+def title_ink(png, box):
+    """Pixels in box (x, y, w, h) of a screenshot that stand out from the
+    box's most common colour: the drawn title's letters."""
+    iw, ih, raw = raw_pixels(os.path.join(EVID, png))
+    x, y, w, h = box
+    pixels = [tuple(raw[(py * iw + px) * 3:(py * iw + px) * 3 + 3])
+              for py in range(max(0, y), min(ih, y + h)) for px in range(max(0, x), min(iw, x + w))]
+    if not pixels:
+        return 0
+    ground = max(set(pixels), key=pixels.count)
+    return sum(1 for p in pixels if sum(abs(a - b) for a, b in zip(p, ground)) > 120)
+
+
+def floating_forced_frame():
+    """sway: a border rule frames the floating panel anyway (server-side
+    decorations, sent through xdg-decoration). sway's title bar names the
+    window, so the header drops its own title and keeps the "⋯" button;
+    border csd gives the title back."""
+    def look(tag):
+        ev, st = B.snap(f"float-4-{tag}")
+        r = origin("Audio")
+        hdr = where("text", "Audio", "Audio")
+        btn = where("button", "Audio options", "Audio")
+        if not r or not hdr:
+            return ev, r, None, bool(btn), ""
+        box = (r[0] + hdr[0]["x"] + 8, r[1] + hdr[0]["y"] + 6, 70, HEADER - 12)
+        line = next((l for l in B.windows().splitlines() if "'Audio'" in l), "")
+        border = re.search(r"border=(\S+)", line)
+        return ev, r, title_ink(ev[0], box), bool(btn), border.group(1) if border else "?"
+
+    ev0, r0, ink0, btn0, border0 = look("own-title")
+    B.msg('[app_id="hikarisub" floating] border normal')
+    time.sleep(1.5)
+    ev1, r1, ink1, btn1, border1 = look("forced-frame")
+    log1 = decoration_log()
+    B.msg('[app_id="hikarisub" floating] border csd')
+    time.sleep(1.5)
+    ev2, r2, ink2, btn2, border2 = look("frame-gone")
+    ok = (border0 == "csd" and ink0 and ink0 >= 20 and border1 == "normal" and ink1 is not None and ink1 <= 2
+          and btn1 and "server-side" in log1 and border2 == "csd" and ink2 and ink2 >= 20 and btn2)
+    verdict("floating-forced-frame", "observed" if ok else "failed",
+            f"border {border0} -> 'border normal' -> {border1} -> 'border csd' -> {border2}; title ink in the header "
+            f"{ink0} -> {ink1} -> {ink2}; '⋯' shown {btn0} -> {btn1} -> {btn2}; app log: {log1}", ev0 + ev1 + ev2)
+
+
+def floating_frame(r, shadow, shot, suffix=""):
+    """The floating Audio window's header inside its frame, and around the
+    frame the drawn shadow (shadow > 0: the outermost rings show what is
+    behind) or, without one, no margin at all (its edge is the frame's
+    boundary, not black)."""
+    ev0, st = B.snap(shot)
+    hdr = where("text", "Audio", "Audio")
+    btn = where("button", "Audio options", "Audio")
+    fr = frames(st).get("Audio", {})
+    ok = hdr and btn and hdr[0]["h"] == HEADER and hdr[0]["x"] == shadow + 1 and hdr[0]["y"] == shadow + 1
+    verdict("floating-header" + suffix, "observed" if ok else "failed",
+            f"floating Audio ({fr.get('w')}x{fr.get('h')} at {r[:2]}): header {hdr[:1]}, button {btn[:1]} "
+            f"(expected the {HEADER}-pixel header inside a {shadow}-pixel shadow and the 1-pixel frame)", ev0)
+    if shadow:
+        probe = shadow_probe(shot + ".png", r)
+        if probe["see-through"] + probe["black"] == 0:
+            verdict("floating-shadow", "not-observable", f"nothing but black behind the shadow to compare with: {probe}",
+                    ev0)
+        else:
+            verdict("floating-shadow", "observed" if probe["black"] == 0 and probe["see-through"] >= 4
+                    else "failed", f"outermost shadow ring (black or showing what is behind) where the background 3 "
+                                   f"pixels outside is not black, per edge sample: {probe}",
+                    ev0)
+        return
+    iw, ih, raw = raw_pixels(os.path.join(EVID, shot + ".png"))
+    x, y, w, h = r[:4]
+    edge = []
+    for k in range(1, 8):
+        for px, py in ((x + w * k // 8, y), (x + w * k // 8, y + h - 1), (x, y + h * k // 8), (x + w - 1, y + h * k // 8)):
+            if 0 <= px < iw and 0 <= py < ih:
+                i = (py * iw + px) * 3
+                edge.append(tuple(raw[i:i + 3]))
+    black = [c for c in edge if max(c) < 16]
+    verdict("floating-no-compositor-frame", "observed" if edge and not black and len(set(edge)) <= 2 else "failed",
+            f"X11 without a compositing manager: the window's outermost pixels {sorted(set(edge))} "
+            f"({len(black)} of {len(edge)} black); the frame fills the window", ev0)
 
 
 def video_labels():
@@ -813,10 +1273,17 @@ def step_fullscreen():
     elif B.name == "kwin":
         B.script('for (const w of workspace.windowList()) if (/HikariSub$/.test(w.caption)) w.fullScreen = true;')
     else:
-        verdict("fullscreen-coexistence", "not-observable",
-                "mutter without gnome-shell has no fullscreen request path for another client here (no Shell.Eval, "
-                "no default toggle-fullscreen binding), and HikariSub has no fullscreen command")
-        return
+        # mutter's own toggle-fullscreen keybinding (unbound by default),
+        # bound in this session's settings, on the focused main window
+        sh(["gsettings", "set", "org.gnome.desktop.wm.keybindings", "toggle-fullscreen", "['<Super>f']"])
+        time.sleep(0.5)
+        focus_main_compositor()
+        B.keys("super+f", 1.5)
+        main = frames().get("HikariSub", {})
+        if (main.get("w"), main.get("h")) != (1600, 1000):
+            verdict("fullscreen-coexistence", "failed",
+                    f"Super+F (mutter's toggle-fullscreen) did not make the main window fill Meta-0: {main}")
+            return
     time.sleep(1.5)
     ev0, st = B.snap("fullscreen-0-main-fullscreen")
     focus_main()
@@ -825,10 +1292,10 @@ def step_fullscreen():
     reached = [panel_of(w["path"]) for w in walk]
     float_active = any("Line editor" in w["active"] for w in walk)
     open(os.path.join(EVID, "fullscreen-f6.json"), "w").write(json.dumps(walk, indent=1))
-    verdict("fullscreen-coexistence", "observed" if "Line editor" in reached and float_active else "failed",
+    focus_verdict("fullscreen-coexistence", "Line editor" in reached and float_active,
             f"main window fullscreen by the compositor with Line editor floating; F6 reached {reached}, "
             f"floating window active at some step: {float_active} (see screenshots: is the floating panel visible "
-            f"above the fullscreen window?)", ev0 + ev1 + ["fullscreen-f6.json"])
+            f"above the fullscreen window?)", ev0 + ev1 + ["fullscreen-f6.json"], targets=("Line editor",))
 
 
 def step_menu_from_text():
@@ -857,11 +1324,22 @@ def step_test_executables():
                                        "placementWindowShowsItsDefaultsAndKeyboardChanges",
                                        "fileDropAreaLeavesPanelDragsToTheDockingEngine",
                                        "dockingControlsAndTheGridAreAccessible",
-                                       "floatingPanelsOffEveryScreenComeBack"]),
+                                       "floatingPanelsOffEveryScreenComeBack",
+                                       # D3
+                                       "panelMenuHoldsMoveUndockAndClose", "keyboardReachesThePanelHeaderAndItsMenu",
+                                       "doubleClickOnAHeaderFloatsAndDocks", "bottomPanelsKeepATabAndTheTrayToolbar",
+                                       "panelsKeepTheirMinimumSizes"]),
             ("hikari_ui_docking_qualification_tests", []),
             ("hikari_ui_workspace_layout_tests", [])]
+    # The tests open their own windows: none of this session's HikariSub
+    # over them (step fullscreen leaves it fullscreen).
+    app("kill")
     out = []
     ok = True
+    # sway: the virtual pointer's own hover events would mix with the
+    # tests' synthetic ones (the header's cursor test); none while they run.
+    if B.name.startswith("sway"):
+        sh("pkill -x vpointer; sleep 0.5")
     for exe, fns in runs:
         r = subprocess.run([os.path.join(ui, exe), *fns], capture_output=True, text=True, timeout=300)
         text = r.stdout + r.stderr
@@ -870,11 +1348,22 @@ def step_test_executables():
         totals = re.findall(r"Totals: .*", text)
         skips = re.findall(r"SKIP.*", text)
         log(exe, totals, skips)
+    if B.name.startswith("sway"):
+        rt = os.environ["XDG_RUNTIME_DIR"]
+        subprocess.Popen(f"exec /tmp/vpointer < {rt}/vpointer.in > /tmp/vpointer.log 2>&1", shell=True,
+                         start_new_session=True)
+        time.sleep(0.5)
     open(os.path.join(EVID, "test-executables.txt"), "w").write("\n".join(out))
     summary = "; ".join(re.findall(r"Totals: [^,]+, [^,]+, [^,]+", "\n".join(out)))
     skips = re.findall(r"SKIP\s*:.*", "\n".join(out))
-    # Expected on Wayland: the compositor places windows, so the shell does not move them.
-    unexpected = [k for k in skips if "the compositor places windows" not in k]
+    # Skips the tests declare as platform limits, each observed for real by
+    # another gate item: Wayland compositors place windows (outputs); a
+    # synthetic drag between windows needs the offscreen platform (pointer);
+    # a window manager's focus-stealing policy (the F6 items; on sway, the
+    # sway-activate pass runs these tests again).
+    known = ("the compositor places windows", "a synthetic drag between windows needs the offscreen platform",
+             "refused the shell's activation request", "did not activate the main window")
+    unexpected = [k for k in skips if not any(reason in k for reason in known)]
     verdict("test-executables", "observed" if ok and not unexpected else "failed",
             f"{summary}; skips: {skips}", ["test-executables.txt"])
 
@@ -897,6 +1386,12 @@ def step_orca():
     B.keys("down", 0.6, "right", 0.6, "down", 0.6, "down", 0.6, "right", 0.6, "down", 0.6, "down", 0.6,
            "return", 2.0)
     f6_walk(3)
+    # D3: the Grid's header from the keyboard, its "⋯" button and menu.
+    B.keys("escape", "escape")
+    focus_main_compositor()
+    f6_to("Grid")
+    shift_tab_to("page tab", "Grid")
+    B.keys("right", 0.8, "space", 1.0, "down", 0.8, "escape", 0.8)
     time.sleep(2)
     orca.terminate()
     try:
@@ -906,7 +1401,8 @@ def step_orca():
     text = open(log_path, errors="replace").read() if os.path.exists(log_path) else ""
     speech = [l.strip() for l in text.splitlines() if "SPEECH OUTPUT" in l]
     open(os.path.join(EVID, "orca-speech.txt"), "w").write("\n".join(speech) + "\n")
-    spoke_panels = [p for p in ("Video", "Audio", "Line editor", "Grid", "Panels", "Float")
+    spoke_panels = [p for p in ("Video", "Audio", "Line editor", "Grid", "Panels", "Float", "Grid options",
+                                "Move panel", "page tab")
                     if any(p in l for l in speech)]
     verdict("orca", "observed" if speech else "failed",
             f"{len(speech)} speech lines; panel/menu names spoken: {spoke_panels} (orca-speech.txt; full log "
@@ -959,11 +1455,18 @@ def step_outputs():
         sh("gdctl set --logical-monitor --primary --monitor Meta-0 --scale 1 "
            "--logical-monitor --monitor Meta-1 --scale 2 --right-of Meta-0")
         time.sleep(1.5)
-        B.keys("super+shift+right" if "super" in KEYS else "f6", 1.5)
+        # mutter's own keybinding (move-to-monitor-right) with the floating
+        # panel focused; the screenshot puts Meta-1 (its physical pixels, 2x)
+        # right of Meta-0's 1600
+        B.keys("super+shift+right", 1.5)
         ev0, st = B.snap("outputs-0-on-scale2", extra="# gdctl show\n" + sh("gdctl show"))
-        verdict("mixed-dpi", "not-observable",
-                "Meta-1 set to scale 2 beside Meta-0 at 1 (see outputs-0-*.txt), but mutter without gnome-shell "
-                "gives this harness no way to place or locate a client window on a chosen monitor", ev0)
+        where2 = locate_floating(title, scale=2, x_from=1600, path=os.path.join(EVID, "outputs-0-on-scale2.png"))
+        B.type_text(" hidpi")
+        time.sleep(0.8)
+        txt = atspi()["texts"].get("Line text")
+        verdict("mixed-dpi", "observed" if where2 and txt and " hidpi" in txt else "failed",
+                f"floating Line editor (floated by {how}) moved by Super+Shift+Right to Meta-1 (scale 2; Meta-0 at "
+                f"1): its frame found at 2x on Meta-1 in the screenshot at {where2}; typing there gives {txt!r}", ev0)
         sh("gdctl set --logical-monitor --primary --monitor Meta-0 --scale 1")
         time.sleep(2)
     else:
@@ -1000,27 +1503,34 @@ def step_outputs():
     if B.name == "x11" and rect is not None:
         back = present and rect[0] + 40 < 1600  # the remaining RandR monitor spans x 0..1600
     if B.name == "mutter":
-        verdict("monitor-removal", "not-observable",
-                f"Meta-1 removed from the layout; the floating Line editor is still a window ({present}) but mutter "
-                f"without gnome-shell gives no window geometry to tell where it went", ev1 + ev2)
+        # the screenshot now holds Meta-0 alone
+        found = locate_floating(title, path=os.path.join(EVID, "outputs-1-after-removal.png")) if present else None
+        verdict("monitor-removal", "observed" if found else "failed",
+                f"Meta-1 removed from the layout: the floating Line editor still a window ({present}), its frame "
+                f"found on Meta-0 in the screenshot at {found}", ev1 + ev2)
     else:
         verdict("monitor-removal", "observed" if back else "failed",
                 f"after removing the output holding the floating Line editor: window present={present}, "
                 f"geometry/output {rect}", ev1)
-    verdict("monitor-removal-show-focus", "observed" if focused_in == title else "failed",
-            f"then View > Panels > Line editor > Show gives the focus to {focused_in!r} "
-            f"(active windows {[f['id'] for f in st['frames'] if f['active']]})", ev2)
+    focus_verdict("monitor-removal-show-focus", focused_in == title,
+                  f"then View > Panels > Line editor > Show gives the focus to {focused_in!r} "
+                  f"(active windows {[f['id'] for f in st['frames'] if f['active']]})", ev2, targets=(title,))
 
 
 def atspi_find(role, name):
     return [l for l in sh(["python3", f"{GATE}/atspi_tool.py", "find", role, name]).splitlines() if l.strip()]
 
 
+def menu_items():
+    return [n for n in ("Move panel…", "Undock", "Dock", "Close") if where("menu item", n)]
+
+
 def step_a11y():
-    """What a screen reader finds of the docking controls and the Grid:
-    named title-bar buttons, named tabs with their own Float and Close, the
-    Grid's table inside the panel named Grid; the buttons pressed through
-    AT-SPI float and dock a panel."""
+    """What a screen reader finds of the D3 headers and the Grid: each
+    header named after its panel (a title bar, or a page tab list of page
+    tabs checked when selected) with its "<panel> options" button; the
+    menu's items pressed through AT-SPI float and dock a panel, a tab
+    pressed selects it."""
     path = episode()
     fresh(path)
     dismiss_notices()
@@ -1031,49 +1541,173 @@ def step_a11y():
     in_grid = bool(table) and "panel:'Grid'" in table[0]
     verdict("grid-accessible", "observed" if in_grid and grid_panel else "failed",
             f"table 'Subtitle lines': {table[:1]}; panel 'Grid': {grid_panel[:1]}", ["a11y-tree.txt"])
-    names = ["Float Audio", "Close Audio", "Float Video", "Close Video", "Float Line editor", "Close Line editor",
-             "Float Grid", "Close Grid"]
-    found = {n: bool(atspi_find("button", n)) for n in names}
-    press = [l for n in ("Float Audio",) for l in atspi_find("button", n)]
-    out = sh(["python3", f"{GATE}/atspi_tool.py", "do", "button", "Float Audio"])
+    # Headers: a lone panel's title bar (Qt's AT-SPI bridge gives
+    # QAccessible::TitleBar the role "text"), the Grid's tab bar.
+    headers = {}
+    for name in ("Video", "Audio", "Line editor"):
+        hits = [l for l in atspi_find("text", name) if "frame:'" in l]
+        headers[name] = hits[:1]
+    tabs_grid = atspi_find("page tab", "Grid")
+    buttons = {n: atspi_find("button", f"{n} options")[:1] for n in ("Video", "Audio", "Line editor", "Grid")}
+    named = all(headers.values()) and tabs_grid and all(buttons.values()) \
+        and all(f"text:'{n}' > button:'{n} options'" in buttons[n][0] for n in ("Video", "Audio", "Line editor"))
+    # The menu by AT-SPI: Undock floats, then Dock docks.
+    atspi_do("button", "Audio options")
+    time.sleep(1)
+    m1 = menu_items()
+    atspi_do("menu item", "Undock")
     st = wait_for(lambda s: "Audio" in frames(s))
     floated = "Audio" in frames(st)
-    ev0, st = B.snap("a11y-0-float-audio-by-atspi")
-    dock_btn = atspi_find("button", "Dock Audio")
-    sh(["python3", f"{GATE}/atspi_tool.py", "do", "button", "Dock Audio"])
+    ev0, st = B.snap("a11y-0-undock-audio-by-atspi")
+    atspi_do("button", "Audio options")
+    time.sleep(1)
+    m2 = menu_items()
+    atspi_do("menu item", "Dock")
     st = wait_for(lambda s: "Audio" not in frames(s))
     docked = "Audio" not in frames(st)
-    verdict("title-bar-buttons-accessible",
-            "observed" if all(found.values()) and press and "Press" in press[0] and floated and dock_btn and docked
-            else "failed",
-            f"named buttons {found}; {press[:1]}; pressed 'Float Audio' -> own window={floated} ({out.strip()!r}); "
-            f"then 'Dock Audio' {dock_btn[:1]} -> docked={docked}", ["a11y-tree.txt"] + ev0)
-    # Timing opens as a tab beside the Line editor.
+    verdict("header-controls-accessible",
+            "observed" if named and m1 == ["Move panel…", "Undock", "Close"] and floated
+            and m2 == ["Move panel…", "Dock", "Close"] and docked else "failed",
+            f"title bars {headers}; Grid's tab {tabs_grid[:1]}; buttons {buttons}; 'Audio options' pressed: menu "
+            f"{m1}, Undock -> own window={floated}; again: menu {m2}, Dock -> docked={docked}",
+            ["a11y-tree.txt"] + ev0)
+    # Timing (titled Shift times) opens as a tab beside the Line editor.
     focus_main()
     panel_menu("Timing", "Show")
     time.sleep(1)
-    tabs = {n: atspi_find("page tab", n) for n in ("Line editor", "Timing")}
-    tab_buttons = {n: bool(atspi_find("button", n)) for n in ("Float Timing", "Close Timing", "Float Line editor",
-                                                                "Close Line editor")}
+    tabs = {n: atspi_find("page tab", n) for n in ("Line editor", "Shift times")}
+    checked0 = [n for n, hits in tabs.items() if hits and "checked" in hits[0].split("> @")[0]]
+    opts0 = [n for n in ("Line editor", "Shift times") if where("button", f"{n} options")]
     ev1, st = B.snap("a11y-1-tabs")
-    selected = [n for n, hits in tabs.items() if hits and ("selected" in hits[0] or "checked" in hits[0])]
-    sh(["python3", f"{GATE}/atspi_tool.py", "do", "button", "Float Timing"])
-    st = wait_for(lambda s: "Timing" in frames(s))
-    tab_floated = "Timing" in frames(st)
-    ev2, st = B.snap("a11y-2-float-timing-tab")
-    open(os.path.join(EVID, "a11y-tabs.txt"), "w").write(
-        json.dumps({"tabs": tabs, "buttons": tab_buttons, "selected": selected}, indent=1))
+    atspi_do("page tab", "Line editor", "Press")
+    time.sleep(0.8)
+    tabs1 = {n: atspi_find("page tab", n) for n in ("Line editor", "Shift times")}
+    checked1 = [n for n, hits in tabs1.items() if hits and "checked" in hits[0].split("> @")[0]]
+    opts1 = [n for n in ("Line editor", "Shift times") if where("button", f"{n} options")]
+    atspi_do("page tab", "Shift times", "Press")
+    time.sleep(0.8)
+    atspi_do("button", "Shift times options")
+    time.sleep(1)
+    m3 = menu_items()
+    atspi_do("menu item", "Undock")
+    st = wait_for(lambda s: "Shift times" in frames(s))
+    tab_floated = "Shift times" in frames(st)
+    ev2, st = B.snap("a11y-2-undock-timing-tab")
+    open(os.path.join(EVID, "a11y-tabs.txt"), "w").write(json.dumps(
+        {"tabs": tabs, "checked": checked0, "options buttons": opts0, "after pressing Line editor": tabs1,
+         "checked then": checked1, "options buttons then": opts1, "Timing menu": m3}, indent=1))
     verdict("tabs-accessible",
-            "observed" if all(tabs.values()) and all(tab_buttons.values()) and tab_floated else "failed",
-            f"page tabs { {n: bool(h) for n, h in tabs.items()} }: {[h[:1] for h in tabs.values()]}; "
-            f"tab buttons {tab_buttons}; pressed 'Float Timing' -> own window={tab_floated}",
-            ev1 + ev2 + ["a11y-tabs.txt"])
+            "observed" if all(tabs.values()) and checked0 == ["Shift times"] and opts0 == ["Shift times"]
+            and checked1 == ["Line editor"] and opts1 == ["Line editor"] and tab_floated else "failed",
+            f"page tabs {[h[:1] for h in tabs.values()]}; checked {checked0}, options button on {opts0}; Line editor "
+            f"tab pressed: checked {checked1}, options button on {opts1}; Shift times selected again, its menu {m3}, "
+            f"Undock -> own window={tab_floated}", ev1 + ev2 + ["a11y-tabs.txt"])
+
+
+def focused_is(role, name):
+    st = atspi()
+    return bool(st["focus"]) and st["focus"].startswith(f"[{role}] {name!r}"), st["focus"]
+
+
+def f6_to(name, tries=7):
+    """F6 until the keyboard focus is in panel NAME (F6 focuses the panel)."""
+    for _ in range(tries):
+        if panel_of(atspi()["focusPath"]) == name:
+            return True
+        B.combo("f6")
+        time.sleep(0.8)
+    return panel_of(atspi()["focusPath"]) == name
+
+
+def shift_tab_to(role, name, tries=3):
+    """Shift+Tab from inside a panel until its header control (role, name)
+    has the focus; how many presses it took (0: never)."""
+    for n in range(1, tries + 1):
+        B.keys("shift+tab", 0.5)
+        if focused_is(role, name)[0]:
+            return n
+    return 0
+
+
+def step_header_keys():
+    """The header from the keyboard (docs/qt/docking.md, Keyboard and
+    names): Shift+Tab from inside the Grid reaches its selected tab, Right
+    its "⋯" button, Space opens the menu, Escape closes it; the menu's
+    Undock floats the Grid and, from the floating Grid, Dock docks it. A
+    title bar's one Tab stop is its "⋯" button."""
+    path = episode()
+    fresh(path)
+    dismiss_notices()
+    focus_main_compositor()
+    in_grid = f6_to("Grid")
+    start = atspi()["focus"]
+    n_tab = shift_tab_to("page tab", "Grid")
+    B.keys("right", 0.5)
+    on_btn, f_btn = focused_is("button", "Grid options")
+    B.keys("space", 0.8)
+    m1 = menu_items()
+    ev0, _ = B.snap("keys-0-menu")
+    B.keys("escape", 0.6)
+    closed = not menu_items()
+    back, f_back = focused_is("button", "Grid options")
+    verdict("header-keyboard-menu", "observed" if in_grid and n_tab and on_btn and
+            m1 == ["Move panel…", "Undock", "Close"] and closed and back else "failed",
+            f"F6 to the Grid ({start}); Shift+Tab x{n_tab or 'never'} -> its tab; Right -> {f_btn}; Space -> menu "
+            f"{m1}; Escape -> closed {closed}, focus {f_back}", ev0)
+    # Undock from the menu, then Dock from the floating Grid's own menu.
+    B.keys("space", 0.8, "down", "down", "return", 1.5)
+    st = wait_for(lambda s: "Grid" in frames(s))
+    floated = "Grid" in frames(st)
+    ev1, st = B.snap("keys-1-undocked")
+    docked, m2, f2, n2 = False, [], None, 0
+    if floated:
+        f6_to("Grid")
+        n2 = shift_tab_to("page tab", "Grid")
+        B.keys("right", 0.5)
+        f2 = atspi()["focus"]
+        B.keys("space", 0.8)
+        m2 = menu_items()
+        B.keys("down", "down", "return", 1.5)
+        st = wait_for(lambda s: "Grid" not in frames(s))
+        docked = "Grid" not in frames(st)
+    ev2, st = B.snap("keys-2-docked")
+    verdict("header-keyboard-undock-dock", "observed" if floated and docked and m2 == ["Move panel…", "Dock", "Close"]
+            else "failed",
+            f"Space, Down, Down, Return on 'Grid options' -> own window={floated}; in the floating Grid Shift+Tab "
+            f"x{n2 or 'never'}, Right -> {f2}; its menu {m2}; Down, Down, Return -> docked={docked}", ev1 + ev2)
+    # A title bar: Shift+Tab from the Video panel's first control reaches
+    # its button (docs/qt/docking.md). F6 focuses the panel itself, whose
+    # place in the Tab chain is not its content's (pre-D3 already: Tab from
+    # there leaves the panel), so where Shift+Tab goes from there is noted.
+    focus_main()
+    in_video = f6_to("Video")
+    B.keys("shift+tab", 0.5)
+    from_f6 = atspi()["focus"]
+    atspi_do("button", "Video options", "SetFocus")
+    time.sleep(0.4)
+    B.keys("tab", 0.5)
+    first = atspi()["focusPath"]
+    in_first = panel_of(first) == "Video"
+    B.keys("shift+tab", 0.5)
+    on_vbtn, f = focused_is("button", "Video options")
+    B.keys("return", 0.8)
+    m3 = menu_items()
+    ev3, _ = B.snap("keys-3-title-bar-menu")
+    B.keys("escape", 0.4)
+    verdict("header-keyboard-title-bar", "observed" if in_first and on_vbtn and m3 == ["Move panel…", "Undock", "Close"]
+            else "failed",
+            f"Tab from 'Video options' into the panel's first control ({first and first.split(chr(62))[-1]}); "
+            f"Shift+Tab -> {f}; Return -> menu {m3}. (F6 to Video {in_video}, then Shift+Tab from the panel itself "
+            f"-> {from_f6})", ev3)
 
 
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "menutext": step_menu_from_text, "tests": step_test_executables, "orca": step_orca,
-         "outputs": step_outputs, "a11y": step_a11y}
+         "a11y": step_a11y, "floating": step_floating, "header": step_header_keys,
+         # last: it removes an output, after which sway's virtual pointer
+         # still maps absolute positions over the old layout
+         "outputs": step_outputs}
 
 if __name__ == "__main__":
     wanted = sys.argv[2:] or list(STEPS)

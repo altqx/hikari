@@ -186,7 +186,6 @@ Window {
             id: note
             objectName: "simpleDropperUnavailable"
             Layout.maximumWidth: 240
-            Layout.preferredHeight: Math.max(implicitIndicatorHeight, contentItem.implicitHeight) + topPadding + bottomPadding
             wrapMode: Text.WordWrap
             visible: text.length > 0
             text: window.sampler.available ? window.portalNote : window.sampler.unavailableReason
@@ -198,6 +197,7 @@ Window {
             Component.onCompleted: if (contentItem && contentItem.wrapMode !== undefined) contentItem.wrapMode = Text.Wrap
             Layout.fillWidth: true
             Layout.maximumWidth: 240
+            Layout.preferredHeight: Math.max(implicitIndicatorHeight, contentItem.implicitHeight) + topPadding + bottomPadding
             checked: true
             // The portal reports no location.
             enabled: window.sampler.route === "grab"

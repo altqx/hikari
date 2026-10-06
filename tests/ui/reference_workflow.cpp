@@ -3,8 +3,9 @@
 // to the editing Line; Next match steps between the candidates; the editing
 // Grid's Down arrow moves the linked reference (legacy NewSeeking); a click
 // on "Follow the editing Line" makes the tray independent, and its Down
-// arrow then moves only the reference; Ctrl+V there is refused; the close
-// mark ends the reference and its tab stays. Neither file is written.
+// arrow then moves only the reference; Ctrl+V there is refused; Close
+// reference in the tray's header menu (D3: a right click on its toolbar)
+// ends the reference and its tab stays. Neither file is written.
 
 #include "hikari/app/application.h"
 #include "docking.h"
@@ -89,7 +90,9 @@ protected:
             enterKey("mainWindow/editingGrid", Qt::Key_Down, spix::KeyModifiers::None);
             wait(300ms);
             observed.push_back(referenceRow()); // 9: 3, not followed
-            mouseClick("mainWindow/referenceClose");
+            mouseClick("mainWindow/referenceMatchStatus", spix::MouseButtons::Right);
+            wait(300ms);
+            mouseClick("mainWindow/panelOptionsClose");
             wait(500ms);
             observed.push_back(referenceRow());                                                          // 10: none
             observed.push_back(existsAndVisible("mainWindow/documentTab1") ? "tab kept" : "tab gone"); // 11
@@ -178,7 +181,7 @@ int main(int argc, char **argv)
         expect(o[7] == "3", "the tray's Down arrow moves the reference");
         expect(o[8].find("Reference (protected, read-only): ref.ass") != std::string::npos, "the tray names the reference");
         expect(o[9] == "3", "an independent reference does not follow the editing Line");
-        expect(o[10] == "none", "the close mark ends the reference");
+        expect(o[10] == "none", "Close reference ends the reference");
         expect(o[11] == "tab kept", "the previewed tab stays");
     }
     expect(read(edit) == editBefore && read(ref) == refBefore, "neither file was written");

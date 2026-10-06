@@ -10,6 +10,7 @@
   atspi_tool.py text ROLE NAME                         the text of that object (Text interface)
   atspi_tool.py json                                   frames, panels, focus and texts as JSON
   atspi_tool.py press-showing NAME                     press every showing button with that name
+  atspi_tool.py where ROLE NAME                        showing objects with that role and name, window coordinates (JSON)
 
 Every line names the role, the accessible name, the states that matter for
 the gate (focused, active, showing, visible) and the screen extents.
@@ -32,6 +33,8 @@ INTERESTING = [
     Atspi.StateType.VISIBLE,
     Atspi.StateType.SELECTED,
     Atspi.StateType.FOCUSABLE,
+    Atspi.StateType.CHECKED,
+    Atspi.StateType.ENABLED,
 ]
 
 
@@ -235,6 +238,26 @@ def main():
             out["focus"] = describe(fo)
             out["focusPath"] = path_of(fo)
         print(json.dumps(out, indent=1))
+    elif cmd == "where":
+        # Showing objects with that role and name, in their window's
+        # coordinates (Wayland clients know no screen position), with the
+        # window they are in.
+        import json
+        role, name = sys.argv[2], sys.argv[3]
+        out = []
+        for i in range(a.get_child_count()):
+            f = a.get_child_at_index(i)
+            for o in all_objects(f):
+                try:
+                    if o.get_role_name() != role or (o.get_name() or "") != name or \
+                            not o.get_state_set().contains(Atspi.StateType.SHOWING):
+                        continue
+                    e = o.get_extents(Atspi.CoordType.WINDOW)
+                except GLib.Error:
+                    continue
+                out.append({"frame": frame_id(f.get_name()), "x": e.x, "y": e.y, "w": e.width, "h": e.height,
+                            "states": states(o)})
+        print(json.dumps(out))
     elif cmd == "press-showing":
         for o in all_objects(a):
             try:
@@ -246,6 +269,8 @@ def main():
     elif cmd in ("find", "do"):
         role, name = sys.argv[2], sys.argv[3]
         hits = [o for o in all_objects(a) if o.get_role_name() == role and (o.get_name() or "") == name]
+        # Showing objects first: a menu bar keeps hidden items of the same name.
+        hits.sort(key=lambda o: not o.get_state_set().contains(Atspi.StateType.SHOWING))
         for o in hits:
             print(describe(o), "| path:", path_of(o))
         if cmd == "do":

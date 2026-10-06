@@ -23,6 +23,8 @@ qt_add_qml_module(hikari_ui
 # E6: the Line editor's tag list.
 qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
 target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE Qt6::QuickControls2 KDAB::kddockwidgets)
+# D3: whether X11 composites (QPlatformNativeInterface, ui/docking.cpp).
+target_link_libraries(hikari_ui PRIVATE Qt6::GuiPrivate)
 # Some engine headers include their siblings relative to the kddockwidgets directory.
 get_target_property(hikari_kddw_include KDAB::kddockwidgets INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidgets")
@@ -97,4 +99,25 @@ if(UNIX AND NOT APPLE)
     find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS DBus)
     target_link_libraries(hikari_ui PRIVATE Qt6::DBus)
     target_compile_definitions(hikari_ui PRIVATE HIKARI_SCREEN_PORTAL)
+endif()
+# D3: the dock chrome after MuseScore 4 (docs/qt/docking.md, "Chrome"): the
+# panel header's "⋯" button and the drop highlight.
+qt_target_qml_sources(hikari_ui QML_FILES DockMenuButton.qml DockDropHighlight.qml)
+# D3: floating panels ask the window system for no frame
+# (window_decorations.cpp). On Wayland that is the xdg-decoration protocol,
+# vendored in wayland/ with xdg-shell, whose xdg_toplevel interface it names
+# (Qt keeps its own copy private to its xdg-shell plugin).
+target_sources(hikari_ui PRIVATE window_decorations.cpp window_decorations.h)
+if(UNIX AND NOT APPLE)
+    find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS WaylandClient)
+    find_package(WaylandScanner REQUIRED)
+    qt6_generate_wayland_protocol_client_sources(hikari_ui PRIVATE_CODE
+        FILES "${CMAKE_CURRENT_SOURCE_DIR}/wayland/xdg-decoration-unstable-v1.xml")
+    set(hikari_xdg_shell_code "${CMAKE_CURRENT_BINARY_DIR}/wayland-xdg-shell-protocol.c")
+    add_custom_command(OUTPUT "${hikari_xdg_shell_code}"
+        COMMAND Wayland::Scanner private-code < "${CMAKE_CURRENT_SOURCE_DIR}/wayland/xdg-shell.xml" > "${hikari_xdg_shell_code}"
+        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/wayland/xdg-shell.xml" Wayland::Scanner)
+    target_sources(hikari_ui PRIVATE "${hikari_xdg_shell_code}")
+    target_link_libraries(hikari_ui PRIVATE Qt6::WaylandClient Wayland::Client)
+    target_compile_definitions(hikari_ui PRIVATE HIKARI_WAYLAND_DECORATIONS)
 endif()

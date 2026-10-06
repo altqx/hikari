@@ -331,7 +331,6 @@ private slots:
         QCOMPARE(accessibleName("referenceLinked"), QStringLiteral("Follow the editing Line"));
         QCOMPARE(accessibleName("referencePreviousMatch"), QStringLiteral("Previous match"));
         QCOMPARE(accessibleName("referenceNextMatch"), QStringLiteral("Next match"));
-        QCOMPARE(accessibleName("referenceClose"), QStringLiteral("Close reference"));
         QCOMPARE(accessibleName("referenceMatchStatus"), QStringLiteral("Match 1 of 2"));
         QCOMPARE(accessibleName("referenceGrid"), QStringLiteral("Reference Lines (protected, read-only)"));
     }
@@ -431,13 +430,20 @@ private slots:
         QCOMPARE(hash(ref), before);
     }
 
-    // The tray's close mark (legacy DestroyPreview): the tab stays; a later
-    // reference starts independent again.
+    // Close reference, the tray header menu's Close (legacy's close mark,
+    // DestroyPreview; D3): the tab stays; a later reference starts
+    // independent again. The header has no close button of its own.
     void closingTheReferenceKeepsItsTab()
     {
         showPreviewByKey();
         QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
-        click(item("referenceClose"));
+        QVERIFY(!item("referenceClose"));
+        QObject *menu = named("panelOptionsMenu");
+        click(item("referenceMatchStatus"), Qt::RightButton); // the header's menu, from its toolbar
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QObject *close = named("panelOptionsClose");
+        QCOMPARE(close->property("text").toString(), QStringLiteral("Close reference"));
+        QVERIFY(QMetaObject::invokeMethod(close, "triggered"));
         QVERIFY(!application->workspace().reference());
         QVERIFY(!shell().referenceLinked());
         QCOMPARE(application->workspace().tabs().size(), std::size_t(3));

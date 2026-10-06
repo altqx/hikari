@@ -6,7 +6,8 @@
 #                       an earlier run is ended first (the harness ends its own with `winix ui kill`)
 #   -Action restore     GATE_PROFILE_FROM: put a set-aside profile back (the current one is set aside)
 #   -Action status      ALIVE yes|no, the layout files
-#   -Action fullscreen  GATE_FULLSCREEN=on|off: the main window borderless over the whole monitor, or back
+#   -Action fullscreen  GATE_FULLSCREEN=on|left|off: the main window borderless over the whole monitor,
+#                       on the left GATE_LEFT_WIDTH pixels of its work area (frame kept), or back
 #   -Action dpi         GATE_DPI_PERCENT: the display scale of the primary monitor, live (DPI_RESULT line)
 # The app's profile: Qt finds %LOCALAPPDATA% and %APPDATA% through the shell's
 # known folders, not the environment, so `winix ui launch --fresh-profile`
@@ -56,6 +57,7 @@ public static class GateWin {
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")] public static extern IntPtr SetWindowLongPtr(IntPtr h, int i, IntPtr v);
     [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int w, int hh, uint f);
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
+    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int c);
     [DllImport("user32.dll")] public static extern IntPtr MonitorFromWindow(IntPtr h, uint f);
     [DllImport("user32.dll")] public static extern IntPtr MonitorFromPoint(POINT p, uint f);
     [DllImport("user32.dll")] public static extern bool GetMonitorInfo(IntPtr m, ref MONITORINFO mi);
@@ -184,6 +186,23 @@ switch ($Action) {
             [void][GateWin]::SetWindowLongPtr($h, $GWL_STYLE, [IntPtr]($style -band -bnot ($WS_CAPTION -bor $WS_THICKFRAME)))
             $m = $mi.rcMonitor
             [void][GateWin]::SetWindowPos($h, [IntPtr]::Zero, $m.Left, $m.Top, $m.Right - $m.Left, $m.Bottom - $m.Top, $SWP_FRAMECHANGED -bor $SWP_SHOWWINDOW)
+        } elseif ($env:GATE_FULLSCREEN -eq 'left') {
+            # The main window on the left of the monitor's work area, so a
+            # floating panel can be moved over bare desktop (D3's move).
+            $style = [GateWin]::GetWindowLongPtr($h, $GWL_STYLE).ToInt64()
+            $r = New-Object GateWin+RECT
+            [void][GateWin]::GetWindowRect($h, [ref]$r)
+            if (-not (Test-Path $stateFile)) {
+                @{ style = $style; x = $r.Left; y = $r.Top; w = $r.Right - $r.Left; h = $r.Bottom - $r.Top } |
+                    ConvertTo-Json -Compress | Set-Content -Encoding UTF8 $stateFile
+            }
+            $mi = New-Object GateWin+MONITORINFO
+            $mi.cbSize = [Runtime.InteropServices.Marshal]::SizeOf($mi)
+            [void][GateWin]::GetMonitorInfo([GateWin]::MonitorFromWindow($h, 2), [ref]$mi)
+            $m = $mi.rcWork
+            $width = if ($env:GATE_LEFT_WIDTH) { [int]$env:GATE_LEFT_WIDTH } else { [int](($m.Right - $m.Left) / 2) }
+            [void][GateWin]::ShowWindow($h, 9) # SW_RESTORE: out of maximized first
+            [void][GateWin]::SetWindowPos($h, [IntPtr]::Zero, $m.Left, $m.Top, $width, $m.Bottom - $m.Top, $SWP_SHOWWINDOW -bor $SWP_NOZORDER)
         } elseif (Test-Path $stateFile) {
             $s = Get-Content -Raw $stateFile | ConvertFrom-Json
             [void][GateWin]::SetWindowLongPtr($h, $GWL_STYLE, [IntPtr][int64]$s.style)
