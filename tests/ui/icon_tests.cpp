@@ -261,7 +261,8 @@ private slots:
                                  "commit", "tag-bold", "colour-shadow", "tag-font", "tab-close", "tab-new",
                                  "document-modified", "search", "find-replace", "history", "styles", "settings",
                                  "select-lines", "automation", "tool-crosshair", "tool-all-tags", "font-collector",
-                                 "vector-line", "clip-invert"})
+                                 "vector-line", "clip-invert", "shift-position", "shift-origins", "tag-list",
+                                 "tag-change-option", "tag-edit"})
             QVERIFY2(referenced.contains(QLatin1String(role)), role);
         static const QRegularExpression card(QStringLiteral(R"(^[A-Z]\d+ #\d+(, [A-Z]\d+ #\d+)*$)"));
         int pending = 0;
@@ -276,7 +277,7 @@ private slots:
                 QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        QCOMPARE(pending, 12);
+        QCOMPARE(pending, 6); // D2's
     }
 
     void svgsAreMonochromeOnTheGrid_data()

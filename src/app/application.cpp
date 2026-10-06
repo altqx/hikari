@@ -4,6 +4,7 @@
 #include "hikari/backends/legacy_text_file.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/simulated_output.h"
+#include "hikari/application/hotkeys.h"
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_filtering.h"
@@ -565,6 +566,22 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // Config/ShapesSettings.txt); none without a settings file.
     if (!m_settingsFile.isEmpty())
         m_visualTools->setShapesFile(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ShapesSettings.txt"));
+    // T6: the all-tags tool's definitions beside them (legacy
+    // Config/AllTagsSettings.txt); the shifter and the all-tags tool edit
+    // only the selected Lines the Grid shows (SubsFile::GetSelections), and
+    // the all-tags tool takes the Line editor's "Insert difference" keys.
+    if (!m_settingsFile.isEmpty())
+        m_visualTools->setAllTagsFile(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/AllTagsSettings.txt"));
+    m_visualTools->setLineShown([this](core::LineId id) {
+        const auto shown = m_shell->displayedLines();
+        return std::find(shown.begin(), shown.end(), id) != shown.end();
+    });
+    m_visualTools->setEditorHotkey([this](int id) {
+        if (!m_hotkeys)
+            return application::defaultHotkey({id, application::EditorHotkey});
+        return m_hotkeys->accelOf(QString::fromUtf8(std::string(application::hotkeySymbol(id))), application::EditorHotkey)
+            .toStdString();
+    });
     m_visualTools->setEdited([this] {
         m_editor->reloadFromSession();
         refreshViews();

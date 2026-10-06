@@ -317,9 +317,9 @@ icon("audio-from-video", "Open audio from video", ["OpenAudioFromVideo.png"], [A
 icon("close-audio", "Close audio", ["CloseAudio.png"], [AUDIO], note(6.5) + cross_badge())
 
 # Audio box
-icon("audio-previous-line", "Previous line", ["button_prev.png"], [AUDIOBOX],
+icon("audio-previous-line", "Previous line", ["button_prev.png"], [AUDIOBOX, "reference-tray"],
      solid("M7.5 3.5v9L2 8z") + solid("M14 3.5v9L8.5 8z"))
-icon("audio-next-line", "Next line", ["button_next.png"], [AUDIOBOX],
+icon("audio-next-line", "Next line", ["button_next.png"], [AUDIOBOX, "reference-tray"],
      solid("M8.5 3.5v9L14 8z") + solid("M2 3.5v9L7.5 8z"))
 icon("audio-play", "Play", ["button_PlayLine.png"], [AUDIOBOX],
      triangle(6, 3, 7.5, 10) + accent(stroke("M3 2.5v11")))
@@ -359,7 +359,7 @@ icon("spectrum", "Spectrum mode", ["button_spectrum.png"], [AUDIOBOX],
 icon("spectrum-nonlinear", "Non-linear spectrum", ["SpectrumNonLinear.png"], [AUDIOBOX],
      stroke("M2.5 13.5v-3M5 13.5v-7M7.5 13.5v-10M10 13.5v-6M12.5 13.5v-8")
      + accent(stroke("M1.5 12.5C6 12.5 11 9 14.5 2.5")))
-icon("link", "Link", ["button_link.png", "ScaleLink.png"], [AUDIOBOX, VISUAL, "script-properties"],
+icon("link", "Link", ["button_link.png", "ScaleLink.png"], [AUDIOBOX, VISUAL, "script-properties", "reference-tray"],
      stroke("M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8")
      + stroke("M6.5 9.5l3-3"))
 
@@ -509,6 +509,15 @@ icon("shift-drawings", "Move drawings", ["MoveDrawings.png"], [VISUAL],
      stroke("M2 2.5l7 1.5-1 6-5.5-1z") + accent(stroke("M8 12.5h6.5M12.5 10.5l2 2-2 2")))
 icon("shift-origins", "Move \\org points", ["MoveOrgs.png"], [VISUAL],
      accent(circle(4.5, 11.5, 2.5), stroke("M4.5 8.5v6M1.5 11.5h6")) + stroke("M6.5 8C7.5 5 10 3.5 13.5 3.5M11.5 1.5l2 2-2 2"))
+# The all-tags tool's row (legacy's tag list, change options and Edit
+# button, text controls in the row: VideoToolbar.cpp:737-799; icons with
+# their menus since T6, as the drawing's shape list)
+icon("tag-list", "Tag list", [], [VISUAL],
+     stroke("M7.5 4.5h6M7.5 8h6M7.5 11.5h4") + accent(stroke("M2 2.5l3 11")))
+icon("tag-change-option", "Tag change options", [], [VISUAL],
+     stroke("M1.5 13.5h13l-13-6z") + accent(stroke("M11.5 1.5v5M9 4h5")))
+icon("tag-edit", "Edit the tag list", [], [VISUAL],
+     stroke("M2.5 13.5l1-3.5 7.5-7.5 2.5 2.5-7.5 7.5z") + stroke("M9.5 4l2.5 2.5") + accent(stroke("M2 2l2 5")))
 icon("two-points", "Set angle from 2 points", ["TwoPoints.png"], [VISUAL],
      stroke("M3.5 12.5l9-8") + stroke("M1.5 12.5h13") + stroke("M8.5 12.5a5 5 0 0 0-1.25-3.25")
      + accent(dot(3.5, 12.5, 1.5), dot(12.5, 4.5, 1.5)))
@@ -526,7 +535,7 @@ icon("original-frame", "Set a custom rectangle for the current scale", ["Origina
 icon("eyedropper", "Pick a colour from the screen", ["eyedropper.png"], [PICKER],
      stroke("M10.5 3.5l1.75-1.75a1.75 1.75 0 0 1 2.5 2.5L13 6") + stroke("M9 3l4 4")
      + stroke("M10 4l-6.5 6.5-1 3 3-1L12 6") + accent(stroke("M4.75 11.25l3.25-3.25")))
-icon("tab-close", "Close tab", [], [TABS], stroke("M4.5 4.5l7 7M11.5 4.5l-7 7"))
+icon("tab-close", "Close tab", [], [TABS, "reference-tray"], stroke("M4.5 4.5l7 7M11.5 4.5l-7 7"))
 icon("tab-new", "Open new tab", [], [TABS], stroke("M8 3v10M3 8h10"))
 icon("document-modified", "Modified", [], [TABS], accent(dot(8, 8, 3)))
 
@@ -556,21 +565,6 @@ NOT_REPLACED = {
 # other role to be named by the QML, and a pending role not to be).
 PENDING = {}
 for card, roles in {
-    "T1 #176": ["tool-crosshair"],
-    "T2 #177": ["tool-position", "tool-move"],
-    "T3 #178": ["tool-scale", "tool-rotate-z", "tool-rotate-xy", "two-points", "frame-to-scale", "scale-x", "scale-y",
-                "original-frame"],
-    "T4 #179": ["tool-clip-rect", "tool-clip-vector", "clip-invert"],
-    "T4 #179, T5 #180": ["vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete"],
-    "T5 #180": ["tool-drawing"],
-    "T6 #181": ["tool-move-all", "tool-all-tags", "tool-scale-rotation", "shift-position", "shift-move-start",
-                "shift-move-end", "shift-clips", "shift-drawings", "shift-origins"],
-    "V3 #182": ["recent-video", "recent-keyframes", "media-previous-file", "media-next-file"],
-    "V4 #183": ["zoom"],
-    "V6 #185": ["set-start-time", "set-end-time"],
-    "E4 #186": ["alignment"],
-    "Y7 #190": ["eyedropper"],
-    "Y8 #191": ["font-collector"],
     "D2 #201": ["editor", "view-all", "view-video-subs", "view-audio-subs", "view-only-video", "view-only-subs"],
 }.items():
     for role in roles:

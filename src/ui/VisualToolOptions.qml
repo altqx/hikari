@@ -17,7 +17,11 @@ import Hikari.Ui
 // 1013-1016): a modal box in the window, closed by OK. T5: the drawing's
 // point modes (not usable while a shape is chosen) and its shape list
 // ("Choose", the presets, "Edit", which opens the "Vector shape editing"
-// dialog), an icon with its menu; a choice without an icon is a list.
+// dialog), an icon with its menu; a choice without an icon is a list. T6:
+// the Position shifter's six kinds (MoveAllItem) and the all-tags tool's
+// tag list, change options and Edit (AllTagsItem: legacy's two text choices
+// and a text button, icons with their menus here), which opens the "Tag
+// editing" dialog.
 RowLayout {
     id: optionsRow
     objectName: "visualToolOptions"
@@ -38,7 +42,7 @@ RowLayout {
                 IconToolButton {
                     objectName: "visualOption_" + option.modelData.name
                     // The roles the families' options show (one line: icon_tests reads the roles from it).
-                    iconRole: ["frame-to-scale", "scale-x", "link", "scale-y", "original-frame", "tool-scale-rotation", "resample", "two-points", "vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete", "clip-invert"].includes(option.modelData.iconRole) ? option.modelData.iconRole : ""
+                    iconRole: ["frame-to-scale", "scale-x", "link", "scale-y", "original-frame", "tool-scale-rotation", "resample", "two-points", "vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete", "clip-invert", "shift-position", "shift-move-start", "shift-move-end", "shift-clips", "shift-drawings", "shift-origins", "tag-edit"].includes(option.modelData.iconRole) ? option.modelData.iconRole : ""
                     text: option.modelData.tooltip.split("\n")[0]
                     tip: option.modelData.tooltip
                     checkable: option.modelData.kind === "toggle"
@@ -58,25 +62,29 @@ RowLayout {
                 id: choiceComponent
                 // A choice is an icon with its menu, as the row's other
                 // options (the tool strip is icon-only; T5 review): legacy's
-                // shape list (HikariChoice, VideoToolbar.cpp:503-512) as a
-                // ShellMenu of its entries, the chosen one checked. Its last
-                // entry ("Edit") is an action: after a separator, with no
-                // check. The button shows itself on while an entry other
-                // than the first ("Choose", no shape) is chosen; the tooltip
-                // names it.
+                // HikariChoice (the shape list, VideoToolbar.cpp:503-512; the
+                // tag list and change options, 737-799) as a ShellMenu of its
+                // entries, the chosen one checked; the tooltip and the
+                // accessible description name it. The shape list's
+                // (listEnds) first entry ("Choose") is no shape, the button
+                // on while another is chosen, and its last ("Edit") an
+                // action after a separator, with no check.
                 IconToolButton {
                     id: choice
                     objectName: "visualOption_" + option.modelData.name
                     readonly property var model: option.modelData.choices
                     readonly property int currentIndex: option.modelData.index
+                    readonly property bool listEnds: option.modelData.listEnds
+                    readonly property string current: currentIndex >= 0 && currentIndex < model.length ? model[currentIndex] : ""
                     signal activated(int index)
                     // The K1 roles the choices name (on one line: icon_tests reads them from it).
-                    iconRole: ["shape-presets"].indexOf(option.modelData.iconRole) >= 0 ? option.modelData.iconRole : ""
+                    iconRole: ["shape-presets", "tag-list", "tag-change-option"].indexOf(option.modelData.iconRole) >= 0 ? option.modelData.iconRole : ""
                     text: option.modelData.tooltip.split("\n")[0]
-                    tip: (currentIndex > 0 && currentIndex < model.length ? qsTr("Shape: %1").arg(model[currentIndex]) + "\n" : "")
+                    tip: (listEnds ? (currentIndex > 0 && current.length > 0 ? qsTr("Shape: %1").arg(current) + "\n" : "")
+                                   : (current.length > 0 ? current + "\n" : ""))
                          + option.modelData.tooltip
-                    Accessible.description: currentIndex >= 0 && currentIndex < model.length ? model[currentIndex] : ""
-                    checked: currentIndex > 0
+                    Accessible.description: current
+                    checked: listEnds && currentIndex > 0
                     down: pressed || choiceMenu.visible
                     enabled: option.modelData.enabled && optionsRow.tools.railEnabled
                     focusPolicy: Qt.NoFocus
@@ -97,7 +105,7 @@ RowLayout {
                         // it takes the button's (the theme's, live).
                         palette: choice.palette
                         MenuSeparator {
-                            visible: choice.model.length > 1
+                            visible: choice.listEnds && choice.model.length > 1
                             height: visible ? implicitHeight : 0
                         }
                         Instantiator {
@@ -105,7 +113,7 @@ RowLayout {
                             delegate: ShellMenuItem {
                                 required property int index
                                 required property string modelData
-                                readonly property bool isAction: index === choice.model.length - 1 && index > 0
+                                readonly property bool isAction: choice.listEnds && index === choice.model.length - 1 && index > 0
                                 objectName: choice.objectName + "_" + index
                                 text: modelData
                                 checkable: !isAction
@@ -169,6 +177,11 @@ RowLayout {
         id: shapesDialog
         editor: optionsRow.tools.shapeEditor
     }
+    // T6: the all-tags tool's Edit.
+    AllTagsEditionDialog {
+        id: tagsDialog
+        editor: optionsRow.tools.tagsEditor
+    }
     Connections {
         target: optionsRow.tools
         function onChanged() {
@@ -184,6 +197,12 @@ RowLayout {
                 shapesDialog.open()
             else if (shapesDialog.visible)
                 shapesDialog.close()
+        }
+        function onTagsEditorChanged() {
+            if (optionsRow.tools.tagsEditor)
+                tagsDialog.open()
+            else if (tagsDialog.visible)
+                tagsDialog.close()
         }
     }
 }

@@ -9,10 +9,12 @@
 // owns the one open gesture (Esc cancels it), the batch picker, the
 // warnings (VIDEO_VISUAL_WARNINGS_OFF) and VIDEO_COPY_COORDS.
 
+#include "hikari/application/all_tags.h"
 #include "hikari/application/shape_presets.h"
 #include "hikari/application/visual_tools.h"
 #include "automation_services_qt.h"
 #include "settings_store.h"
+#include "all_tags_editor.h"
 #include "shape_editor.h"
 
 #include <QFont>
@@ -74,6 +76,8 @@ class VisualToolsController : public QObject, public application::visual::Visual
     // T5: the "Vector shape editing" dialog while the drawing's shape list's
     // "Edit" has it open (null otherwise).
     Q_PROPERTY(hikari::ui::ShapeEditor *shapeEditor READ shapeEditor NOTIFY shapeEditorChanged)
+    // T6: the "Tag editing" dialog while the all-tags tool's Edit has it open.
+    Q_PROPERTY(hikari::ui::AllTagsEditor *tagsEditor READ tagsEditor NOTIFY tagsEditorChanged)
 public:
     using SessionProvider = std::function<application::EditSession *()>;
     VisualToolsController(VideoController &video, SettingsStore &settings, SessionProvider session,
@@ -105,6 +109,15 @@ public:
     void setShapesFile(const QString &path) { m_shapesFile = path; }
     const QString &shapesFile() const { return m_shapesFile; }
     ShapeEditor *shapeEditor() const { return m_shapeEditor; }
+    // T6: the all-tags tool's definitions' file (legacy Config/
+    // AllTagsSettings.txt beside the settings; without one they are kept in
+    // memory), which Lines the Grid shows, and the Line editor's hotkeys
+    // (the "Insert difference" keys the tool takes).
+    void setAllTagsFile(const QString &path) { m_tagsFile = path; }
+    const QString &allTagsFile() const { return m_tagsFile; }
+    AllTagsEditor *tagsEditor() const { return m_tagsEditor; }
+    void setLineShown(std::function<bool(core::LineId)> shown) { m_lineShown = std::move(shown); }
+    void setEditorHotkey(std::function<std::string(int)> accel) { m_editorHotkey = std::move(accel); }
     // Replaces a family's tool (tests; T2-T6 use makeVisualTool).
     void setTool(application::visual::Family family, std::unique_ptr<application::visual::VisualTool> tool);
     application::visual::VisualTool *tool() const;
@@ -190,6 +203,9 @@ public:
     void bell() override;
     void notice(std::u16string_view text) override;
     const std::vector<application::visual::ShapePreset> *shapePresets() const override;
+    bool lineShown(core::LineId line) const override { return !m_lineShown || m_lineShown(line); }
+    const std::vector<application::visual::AllTagsSetting> *allTagsSettings() const override;
+    std::string editorHotkey(int id) const override;
 
     // The shared view (tests and V4's zoom commands).
     application::visual::VideoView &videoView() { return m_view; }
@@ -210,6 +226,7 @@ signals:
     void geometryChanged();
     void optionsChanged();
     void shapeEditorChanged();
+    void tagsEditorChanged();
 
 private:
     application::EditSession *editingSession() const { return m_session ? m_session() : nullptr; }
@@ -220,6 +237,8 @@ private:
     void refreshOptions();
     void openShapeEditor();
     void saveShapes() const;
+    void openTagsEditor();
+    void saveAllTags() const;
 
     VideoController &m_video;
     SettingsStore &m_settings;
@@ -257,6 +276,11 @@ private:
     QString m_shapesFile;
     mutable std::vector<application::visual::ShapePreset> m_shapes; // VideoToolbar::shapes
     QPointer<ShapeEditor> m_shapeEditor;
+    QString m_tagsFile;
+    mutable std::vector<application::visual::AllTagsSetting> m_allTags; // VideoToolbar::tags
+    QPointer<AllTagsEditor> m_tagsEditor;
+    std::function<bool(core::LineId)> m_lineShown;
+    std::function<std::string(int)> m_editorHotkey;
 };
 
 } // namespace hikari::ui
