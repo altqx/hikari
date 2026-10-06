@@ -33,12 +33,16 @@ Rectangle {
     readonly property color warningColour: Theme.warning
 
     // The status text role (visual-language.md: 10 against the 13 body),
-    // kept legible on small base fonts.
+    // kept legible on small base fonts. From the window's font, which
+    // follows the program font live (PROGRAM_FONT, O5); Qt.application.font
+    // is read once.
     readonly property font statusFont: {
-        const base = Qt.application.font
+        const base = fontSource.font
         const f = Qt.font({family: base.family})
-        if (base.pointSizeF > 0)
-            f.pointSizeF = Math.max(base.pointSizeF * 10 / 13, 8)
+        // A QML font's pointSize is QFont's pointSizeF (a real); it has no
+        // pointSizeF.
+        if (base.pointSize > 0)
+            f.pointSize = Math.max(base.pointSize * 10 / 13, 8)
         else
             f.pixelSize = Math.max(Math.round(base.pixelSize * 10 / 13), 11)
         return f
@@ -48,6 +52,11 @@ Rectangle {
     color: palette.window
     Accessible.role: Accessible.StatusBar
     Accessible.name: qsTr("Status bar")
+
+    Label {
+        id: fontSource
+        visible: false
+    }
 
     Rectangle {
         anchors { left: parent.left; right: parent.right; top: parent.top }

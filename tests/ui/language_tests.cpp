@@ -32,6 +32,8 @@
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
+#include <algorithm>
+
 #include <memory>
 #include <optional>
 
@@ -798,14 +800,18 @@ private slots:
         start();
         QCOMPARE(QGuiApplication::font().families().value(0), QStringLiteral("Tahoma"));
         QCOMPARE(QGuiApplication::font().pointSize(), 10);
+        // The status bar's fields (P10) take the status text role, 10/13 of
+        // the program font and at least 8 points (visual-language.md).
+        const auto statusSize = [](qreal points) { return std::max(points * 10 / 13, 8.0); };
         auto *label = item("selectionStatus");
         QVERIFY(label);
-        QTRY_COMPARE(label->property("font").value<QFont>().pointSize(), 10);
+        QTRY_COMPARE(label->property("font").value<QFont>().pointSizeF(), statusSize(10));
+        QCOMPARE(label->property("font").value<QFont>().families().value(0), QStringLiteral("Tahoma"));
         application->settingsStore()->set("program.fontSize", 14);
         application->settingsStore()->set("program.font", QStringLiteral("DejaVu Sans"));
         QCOMPARE(QGuiApplication::font().pointSize(), 14);
         QCOMPARE(QGuiApplication::font().families().value(0), QStringLiteral("DejaVu Sans"));
-        QTRY_COMPARE(label->property("font").value<QFont>().pointSize(), 14);
+        QTRY_COMPARE(label->property("font").value<QFont>().pointSizeF(), statusSize(14));
         // A control in a window made with the main one (the History window).
         QCOMPARE(item("historyOk")->property("font").value<QFont>().pointSize(), 14);
         QTRY_COMPARE(label->property("font").value<QFont>().families().value(0), QStringLiteral("DejaVu Sans"));
