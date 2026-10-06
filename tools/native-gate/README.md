@@ -24,7 +24,8 @@ tools/native-gate/run.sh kwin -- video   # one session, chosen steps
 ```
 
 `GATE_CONTAINER` names the container (default `d1gate`), so a gate of
-another worktree can run beside one already up. `HIKARI_TREE` names the checkout whose build is tested (default
+another worktree can run beside one already up; `GATE_EVIDENCE` names the
+evidence directory (default `out/native-gate-evidence`). `HIKARI_TREE` names the checkout whose build is tested (default
 `/home/altq/Work/hikari-qt`; `HIKARI_TREE=$PWD tools/native-gate/run.sh` tests
 this worktree's build). `run.sh` builds the `hikari-d1-gate` image (Arch Linux, the host's distro, so
 the host-built binaries and the Qt SDK under `out/sdk` run unchanged), starts
@@ -61,6 +62,7 @@ recorded as a pass.
 | `tests` | `hikari_ui_shell_tests` (D1 and D3 functions), `hikari_ui_docking_qualification_tests`, `hikari_ui_workspace_layout_tests` under the real platform |
 | `views` | D2 (#201): View > Only subtitles, Only video, Video and subs, Audio and subs and All from the keyboard (with `ep1.mkv` and blank audio from Audio > Open blank 2h30m audio): the core panels each shows, the focus on a shown panel, the Line editor's draft kept, All back to the panels' places |
 | `editor` | D2: Ctrl+E (GLOBAL_EDITOR) through the compositor: only the Video panel, with the focus; Ctrl+E again: the arrangement back at its places, the focus on the Grid, the draft kept |
+| `videofs` | V5 (#184): F in the Video panel shows the video fullscreen on the main window's output, Space and Right work there, Esc leaves with the main window's geometry and the focus restored; the context menu's "Open in full screen on monitor 2" puts it on the second output (scale 2 on sway, KWin and mutter; two RandR monitors on X11) and Esc brings the docked video back; then the `hikari_ui_video_fullscreen_workflow --monitors 2` Spix workflow under the session |
 | `a11y` | what AT-SPI exposes of the D3 headers: each lone panel's title bar named after it (Qt's AT-SPI bridge gives a title bar the role `text`) with its "<panel> options" button, the Grid's page tab; the menu's Undock and Dock pressed through AT-SPI float and dock Audio; a tab group's page tabs checked when selected, the options button on the selected one, a tab pressed selects it, and Undock floats Shift times; the Grid's table in the panel named Grid |
 
 ## Other tools

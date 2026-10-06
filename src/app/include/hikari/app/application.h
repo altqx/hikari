@@ -48,6 +48,7 @@
 #include "visual_tools_controller.h"
 #include "video_view_controller.h"
 #include "status_bar_controller.h"
+#include "video_fullscreen_controller.h"
 #include "settings_store.h"
 #include "shell_controller.h"
 #include "video_controller.h"
@@ -226,7 +227,10 @@ public:
     Q_INVOKABLE QVariantMap openVideoFile(const QString &path);
     Q_INVOKABLE QVariantMap openVideoFileUrl(const QUrl &url) { return openVideoFile(url.toLocalFile()); }
     Q_INVOKABLE void openVideo(const QString &path);
-    Q_INVOKABLE QVariantMap reviewOpenWithVideo(const QString &subtitles, const QString &video);
+    // V5: `fullscreen` (video.fullScreenOnStart) shows the video fullscreen
+    // once it is shown, when it opens.
+    Q_INVOKABLE QVariantMap reviewOpenWithVideo(const QString &subtitles, const QString &video,
+                                                bool fullscreen = false);
     // P9: a recent file's entry clicked; with Ctrl alone held (legacy
     // OnRecent's wxMOD_CONTROL) it is shown in its folder instead of opened:
     // true then.
@@ -628,6 +632,17 @@ public:
     // GLOBAL_SNAP_WITH_START / _END; each false when legacy does nothing.
     Q_INVOKABLE bool setTimeFromVideo(bool end);
     Q_INVOKABLE bool selectLineFromVideo();
+    // V5: leaving fullscreen with a double click on the video selects the
+    // Line shown at the video's time when GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN
+    // is on and the Document has a file, after the Line editor's change is
+    // sent (VideoBox.cpp:555-559: Send(EDITBOX_LINE_EDITION, false), then
+    // SelVideoLine).
+    Q_INVOKABLE bool selectVisibleLineAfterFullScreen();
+    // V5: the fullscreen context menu's "Open editor" (GLOBAL_EDITOR in
+    // fullscreen, VideoBox::OpenEditor, VideoBox.cpp:1116-1130): pauses,
+    // turns the editor on (EDITOR_ON), selects the Line shown at the video's
+    // time when the Document has a file, and leaves fullscreen.
+    Q_INVOKABLE bool openEditorFromFullScreen();
     Q_INVOKABLE bool selectLinesVisibleOnVideo();
     Q_INVOKABLE bool snapToKeyframe(bool start);
     // EDITBOX_COMMIT_GO_NEXT_LINE (Enter): the editor's commit and advance,
@@ -669,6 +684,8 @@ public:
     ui::VideoViewController &videoView() { return *m_videoView; }
     // P10: the status bar's video and subtitle fields.
     ui::StatusBarController &statusBar() { return *m_statusBar; }
+    // V5: video fullscreen (VideoBox::SetFullscreen) and its monitor choice.
+    ui::VideoFullscreenController &videoFullscreen() { return *m_videoFullscreen; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
     // Properties for Main.qml.
@@ -880,6 +897,7 @@ private:
     QString tabVideo(application::DocumentId document) const;
     std::optional<application::DocumentId> documentOf(qulonglong id) const;
     QString m_videoAfterOpen; // reviewOpenWithVideo: the video once the subtitles loaded
+    bool m_videoAfterOpenFullscreen = false; // V5: and fullscreen once shown
     bool m_openFromVideo = false; // the open is a video's same-named subtitles: no question
     void closeAllTabs();
     struct PendingFiles {
@@ -1002,6 +1020,7 @@ private:
     void applyReferenceSelection(application::Selection next);
     std::unique_ptr<ui::VisualToolsController> m_visualTools;
     std::unique_ptr<ui::VideoViewController> m_videoView; // V4
+    std::unique_ptr<ui::VideoFullscreenController> m_videoFullscreen; // V5
     // E5: each Document's legacy SubsGrid::showOriginal, with the file
     // generation it was set up for (a reload is a new LoadSubtitles).
     struct OriginalColumnsEntry {

@@ -285,8 +285,8 @@ private slots:
                 QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        // T6's position shifter options and V5's full screen.
-        QCOMPARE(pending, 8);
+        // T6's position shifter options.
+        QCOMPARE(pending, 6);
     }
 
     // The glyphs that stood in for icons, alone or as a prefix before words.

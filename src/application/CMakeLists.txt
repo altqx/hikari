@@ -76,6 +76,8 @@ set_source_files_properties(video_sources.cpp PROPERTIES COMPILE_OPTIONS
 target_sources(hikari_application PRIVATE video_controls.cpp video_snapshot.cpp video_matrix.cpp)
 set_source_files_properties(video_controls.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
+# V5: fullscreen's monitor choice, panel and progress bar.
+target_sources(hikari_application PRIVATE video_fullscreen.cpp)
 # V6: timing and selecting Lines from the video, and the video following the active Line.
 target_sources(hikari_application PRIVATE video_timing.cpp)
 # E5: translation mode controls (Translator mode, Not confirmed, Moving tags,

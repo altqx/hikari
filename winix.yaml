@@ -94,6 +94,12 @@ tasks:
     # I1's Spix workflow in a real window (the windows platform and its RHI backend).
     script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_video_workflow.exe out/build/windows-x64-release | Select-Object -First 1; Write-Output "running $($exe.FullName)"; $ErrorActionPreference = 'Continue'; & $exe.FullName 2>&1 | ForEach-Object { "$_" }; exit $LASTEXITCODE
     timeoutSeconds: 300
+  video-fullscreen-window:
+    # V5's Spix workflow on the interactive desktop (the windows platform): fullscreen on the main window's
+    # monitor and, through the context menu, on the second (MONITORS, default 2; display-layout first).
+    script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_video_fullscreen_workflow.exe out/build/windows-x64-release | Select-Object -First 1; $m = if ($env:MONITORS) { $env:MONITORS } else { '2' }; Write-Output "running $($exe.FullName) --monitors $m"; $ErrorActionPreference = 'Continue'; & $exe.FullName --monitors $m 2>&1 | ForEach-Object { "$_" }; exit $LASTEXITCODE
+    visualStudio: false
+    timeoutSeconds: 300
   fonts:
     # Font identity (N4) through DirectWrite, verbose for the provider line.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(FontIdentity|DirectWriteIdentity|FontCollection)[.]" -V

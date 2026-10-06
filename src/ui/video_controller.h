@@ -96,6 +96,9 @@ public:
     Q_INVOKABLE void loadFromDirectory();
     Q_INVOKABLE void dismissOffer();
     Q_INVOKABLE void openVideo(const QString &path);
+    // Counts openVideo calls: each call is a new request, and a later one
+    // drops what an earlier one had not yet opened.
+    std::uint64_t openRequest() const { return m_openRequest; }
     Q_INVOKABLE void openVideoUrl(const QUrl &url) { openVideo(url.toLocalFile()); }
     Q_INVOKABLE bool stepFrames(int frames);
     // V1: legacy Play / Pause (VIDEO_PLAY_PAUSE, Space) and Stop.

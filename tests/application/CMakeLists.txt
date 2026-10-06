@@ -160,6 +160,9 @@ target_compile_definitions(hikari_application_visual_clip_tests PRIVATE
 # V4: the video view's zoom, aspect, volume, snapshot and matrix arithmetic.
 hikari_add_gtest(hikari_application_video_view_tests SOURCES video_view_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# V5: fullscreen's monitor choice, panel and progress bar arithmetic.
+hikari_add_gtest(hikari_application_video_fullscreen_tests SOURCES video_fullscreen_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 # V6: timing and selecting Lines from the video and the video following the
 # active Line, with the legacy probe's observations.
 hikari_add_gtest(hikari_application_video_timing_tests SOURCES video_timing_tests.cpp

@@ -578,6 +578,17 @@
    ]
   },
   {
+   "role": "show-toolbar",
+   "file": "show-toolbar.svg",
+   "label": "Show toolbar",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-fullscreen"
+   ]
+  },
+  {
    "role": "open-audio",
    "file": "open-audio.svg",
    "label": "Open audio",
@@ -2171,8 +2182,7 @@
    "legacy": [],
    "surfaces": [
     "video-context-menu"
-   ],
-   "pending": "V5 #184"
+   ]
   },
   {
    "role": "fullscreen-exit",
@@ -2184,8 +2194,7 @@
    "surfaces": [
     "video-context-menu",
     "video-fullscreen"
-   ],
-   "pending": "V5 #184"
+   ]
   },
   {
    "role": "frame-snapshot",

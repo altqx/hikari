@@ -9,6 +9,8 @@
 #include "docking.h"
 #include "icon_theme.h"
 #include "theme.h"
+#include "video_view_controller.h"
+#include "visual_tools_controller.h"
 #include "workspace_layout.h"
 
 #include <QFile>
@@ -191,8 +193,11 @@ class ViewArrangementsTest : public QObject {
             if (type.startsWith("VisualToolValues")) {
                 if (item->property("shownInLayout").toBool() == shown)
                     ++n;
-            } else if ((type.startsWith("VisualToolRail") || type.startsWith("VisualOverlay")) &&
-                       item->isVisible() == shown) {
+            } else if (type.startsWith("VisualOverlay")) {
+                // It stays for the view's pointer commands (V4, V5).
+                if (item->property("toolsShown").toBool() == shown)
+                    ++n;
+            } else if (type.startsWith("VisualToolRail") && item->isVisible() == shown) {
                 ++n;
             }
             for (QQuickItem *child : item->childItems())
@@ -614,6 +619,20 @@ private slots:
         QTest::keyClick(window, Qt::Key_E, Qt::ControlModifier);
         QCoreApplication::processEvents();
         QVERIFY(!application->editorOn());
+        // No visual tool takes the pointer (not even the crosshair), but the
+        // video still opens its context menu (V4) and goes fullscreen on a
+        // double click (V5), as legacy's VideoBox without a Visual.
+        QTRY_VERIFY(application->videoView().toolsOff());
+        {
+            QTRY_VERIFY(!application->visualTools().videoRect().isEmpty());
+            const QPointF at = application->visualTools().videoRect().center();
+            auto &view = application->videoView();
+            QCOMPARE(view.pointer(4, at.x(), at.y(), Qt::RightButton, Qt::NoButton, 0),
+                     int(ui::VideoViewController::ContextMenuRequest));
+            QCOMPARE(view.pointer(6, at.x(), at.y(), Qt::LeftButton, Qt::LeftButton, 0),
+                     int(ui::VideoViewController::FullScreenRequest));
+            QVERIFY(application->visualTools().overlay().isEmpty());
+        }
 
         // The switch back on, as a DirectShow video (W1) allows: the
         // subtitles over the video again (ChangeVobsub) and the Line's ms.

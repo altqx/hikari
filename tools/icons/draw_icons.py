@@ -308,6 +308,11 @@ icon("media-previous-file", "Previous file", ["backward.png", "backward1.png"], 
      circle(8, 8, 6.5) + stroke("M5.5 5.5v5") + triangle(7, 5.5, 4, 5, right=False))
 icon("media-next-file", "Next file", ["forward.png", "forward1.png"], [TRANSPORT, FULLSCREEN],
      circle(8, 8, 6.5) + stroke("M10.5 5.5v5") + triangle(5, 5.5, 4, 5))
+# V5 #184: the fullscreen panel's "Show toolbar" (legacy a check box,
+# VideoFullscreen.cpp:68): the window with its toolbar row.
+icon("show-toolbar", "Show toolbar", [], [FULLSCREEN],
+     layout(stroke("M1.5 9.5h13"), frect(3.5, 10.75, 2, 1.5, 0.25), frect(7, 10.75, 2, 1.5, 0.25),
+            frect(10.5, 10.75, 2, 1.5, 0.25)))
 
 # Audio menu
 icon("open-audio", "Open audio", ["OpenAudio.png"], [AUDIO], note(6.5) + plus_badge())
@@ -674,7 +679,6 @@ PENDING = {}
 for card, roles in {
     "T6 #181": ["shift-position", "shift-move-start", "shift-move-end", "shift-clips", "shift-drawings",
                 "shift-origins"],
-    "V5 #184": ["fullscreen", "fullscreen-exit"],
 }.items():
     for role in roles:
         PENDING[role] = card

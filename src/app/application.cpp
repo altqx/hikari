@@ -598,6 +598,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // general player takes the video volume.
     m_videoView = std::make_unique<ui::VideoViewController>(*m_video, *m_visualTools, *m_settings);
     m_videoView->setPlayer(m_generalPlayer.get());
+    m_videoFullscreen = std::make_unique<ui::VideoFullscreenController>(*m_video, *m_videoView); // V5
     // HikariLog(_("Cannot change YCbCr matrix")) (ProviderFFMS2.cpp:402, 408, 979).
     m_video->session().setLog([this](const std::string &) { m_log->log(tr("Cannot change YCbCr matrix")); });
     setUpTranslationControls(); // E5
@@ -1559,6 +1560,7 @@ QVariantList Application::reviewClose(const QString &then)
         m_pendingOpen.reset();
         m_pendingOpenPath.clear();
         m_videoAfterOpen.clear(); // P9
+        m_videoAfterOpenFullscreen = false;
         m_openFromVideo = false;
     }
     if (then != QLatin1String("files"))
@@ -1714,6 +1716,7 @@ void Application::finishClose()
         if (m_pendingOpen)
             id = publish(std::move(*m_pendingOpen), m_pendingOpenPath, false);
         const QString videoAfter = std::exchange(m_videoAfterOpen, QString());
+        const bool fullscreenAfter = std::exchange(m_videoAfterOpenFullscreen, false);
         const bool fromVideo = std::exchange(m_openFromVideo, false);
         if (id) {
             replaceTarget(*id); // P6: loaded into the same tab (legacy OpenFile)
@@ -1726,6 +1729,10 @@ void Application::finishClose()
                 offerAssociations(*id);
                 showAssociationOffer();
             } else if (!videoAfter.isEmpty()) {
+                // V5: OpenFile(path, fulls) reaches LoadVideo's SetFullscreen
+                // only now; a cancelled review or a failed load never does.
+                if (fullscreenAfter)
+                    m_videoFullscreen->enterWhenShown(videoAfter);
                 m_video->openVideo(videoAfter);
             }
             QTimer::singleShot(0, this, [this] { checkResolution(); });
@@ -1764,6 +1771,7 @@ void Application::cancelClose()
     m_pendingSession.reset(); // P6
     m_closingTab.reset();
     m_videoAfterOpen.clear(); // P9: OpenFile returned before LoadVideo
+    m_videoAfterOpenFullscreen = false;
     m_openFromVideo = false;
     endFindOpen(false);
     // P9: a cancelled review of the first dropped subtitles skips them only
@@ -4550,6 +4558,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("visualTools"), QVariant::fromValue(m_visualTools.get())},
             {QStringLiteral("videoView"), QVariant::fromValue(m_videoView.get())},
             {QStringLiteral("statusBar"), QVariant::fromValue(m_statusBar.get())},
+            {QStringLiteral("videoFullscreen"), QVariant::fromValue(m_videoFullscreen.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
             {QStringLiteral("settingsImport"), QVariant::fromValue(static_cast<QObject *>(m_settingsImport.get()))},
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},

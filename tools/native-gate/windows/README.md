@@ -40,7 +40,7 @@ the `build` task run, plus the `test` task once (the `video` step needs its
 `pointer` step runs: its own pointer moves the same cursor. `nvda-setup` runs
 the first time the `nvda` step needs it.
 
-Evidence goes to `out/native-gate-evidence/windows/`: one PNG and one TXT
+Evidence goes to `out/native-gate-evidence/windows/` (or `GATE_EVIDENCE_WIN`): one PNG and one TXT
 (`winix ui windows --pid` and the UI Automation view as JSON) per observation,
 `steps.log`, and `results.json` with a verdict per gate item: `observed`,
 `failed` or `not-observable` with the reason. A failed item is never
@@ -66,6 +66,7 @@ recorded as a pass.
 | `header` | the "⋯" menu from the keyboard: F6 to the Grid, Shift+Tab to its tab, Right to "⋯", Space (Move panel…, Undock, Close); Shift+F10 on the tab; a lone panel's "⋯" (Return), Undock and, in the floating window, Dock |
 | `views` | D2 (#201): View > Only subtitles, Only video, Video and subs, Audio and subs and All from the keyboard (with `ep1.mkv` and blank audio): the core panels each shows, the focus on a shown panel, the draft kept, All back to the panels' places. `view_to()` presses Down until the item has the UIA focus (the arrangements come first and Down skips disabled ones) |
 | `editor` | D2: Ctrl+E (GLOBAL_EDITOR) through SendInput: only the Video panel, with the focus; Ctrl+E again: the arrangement back, the focus on the Grid, the draft kept |
+| `videofs` | V5 (#184): F in the Video panel shows the video fullscreen on the main window's monitor, Space and Left work there, Esc leaves with the main window's geometry and the focus restored; the context menu's "Open in full screen on monitor 2" (the menu key, the item through UI Automation) puts it on the second monitor, at 100 % and at 150 % (GetDpiForWindow), and Esc brings the docked video back |
 | `dpi` | only with `--dpi`: the one monitor's scale 100 -> 150 % live (`SPI_SETLOGICALDPIOVERRIDE`, no sign-out) with a floating panel, typing there, then back to 100 %. Not observable if the guest does not change scale without signing out |
 
 Submenus: the first Float from View > Panels opens the submenus with Right

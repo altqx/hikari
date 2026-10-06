@@ -122,6 +122,7 @@ KEYS = {
     "tab": (15, "Tab", "Tab"), "space": (57, "space", "space"), "f6": (64, "F6", "F6"),
     "end": (107, "End", "End"), "home": (102, "Home", "Home"), "f11": (87, "F11", "F11"),
     "f4": (62, "F4", "F4"), "super": (125, "super", "Super_L"),
+    "menu": (127, "Menu", "Menu"),
 }
 LETTERS = "qwertyuiop asdfghjkl zxcvbnm"
 CODES = {"q": 16, "w": 17, "e": 18, "r": 19, "t": 20, "y": 21, "u": 22, "i": 23, "o": 24, "p": 25,
@@ -1851,11 +1852,282 @@ def step_editor():
             f"focus on {focus_on}; Line text {draft!r} -> {text!r}", evidence)
 
 
+# ---------------------------------------------------------------- V5 (#184)
+def video_document():
+    """cfr.mkv (barcode frames) as ep1.mkv beside ep1.ass naming it."""
+    shutil.copy(os.path.join(FIXTURES, "cfr.mkv"), os.path.join(HOME, "ep1.mkv"))
+    subs = os.path.join(HOME, "ep1.ass")
+    with open(subs, "w") as f:
+        f.write("[Script Info]\r\nScriptType: v4.00+\r\nPlayResX: 320\r\nPlayResY: 240\r\nVideo File: ep1.mkv\r\n\r\n"
+                "[Events]\r\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
+                "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,overlay\r\n")
+    return subs
+
+
+def fs_state():
+    out = sh(["python3", f"{GATE}/atspi_tool.py", "fsjson"], timeout=60)
+    try:
+        st = json.loads(out)
+    except ValueError:
+        return {"frames": [], "focusPath": None}, None, None
+    full = next((f for f in st["frames"] if f["fullscreen"]), None)
+    main = next((f for f in st["frames"] if not f["fullscreen"] and f["name"].endswith("HikariSub")), None)
+    return st, full, main
+
+
+def fs_wait(pred, timeout=8.0):
+    end = time.time() + timeout
+    while True:
+        st, full, main = fs_state()
+        if pred(full, main) or time.time() > end:
+            return st, full, main
+        time.sleep(0.4)
+
+
+# Each session's outputs (logical sizes and scale), the second at scale 2
+# where the compositor has per-output scales; on X11 two RandR monitors.
+FS_OUTPUTS = {"sway": {"HEADLESS-1": (1600, 1000, 1), "HEADLESS-2": (800, 500, 2)},
+              "kwin": {"Virtual-0": (1600, 1000, 1), "Virtual-1": (800, 500, 2)},
+              "mutter": {"Meta-0": (1600, 1000, 1), "Meta-1": (800, 500, 2)},
+              "x11": {"left": (1600, 1000, 1), "right": (1600, 1000, 1)}}
+FS_OUTPUTS["sway-activate"] = FS_OUTPUTS["sway"]
+
+
+def fs_outputs_setup():
+    if B.name == "kwin":
+        sh("kscreen-doctor output.Virtual-0.scale.1 output.Virtual-1.scale.2")
+    elif B.name == "mutter":
+        sh("gdctl set --logical-monitor --primary --monitor Meta-0 --scale 1 "
+           "--logical-monitor --monitor Meta-1 --scale 2 --right-of Meta-0")
+    elif B.name == "x11":
+        # Two RandR monitors on Xvfb's 3200x1000 screen (Qt's xcb screens).
+        sh("xrandr --setmonitor left 1600/400x1000/250+0+0 none")
+        sh("xrandr --setmonitor right 1600/400x1000/250+1600+0 none")
+    time.sleep(1.5)
+    return {"sway": lambda: sh(["swaymsg", "-t", "get_outputs"]), "kwin": lambda: sh("kscreen-doctor -o"),
+            "mutter": lambda: sh("gdctl show"), "x11": lambda: sh("xrandr --listmonitors")}.get(
+                B.name.split("-")[0], lambda: "")()
+
+
+def fs_outputs_reset():
+    if B.name == "x11":
+        sh("xrandr --delmonitor right; xrandr --delmonitor left")
+    elif B.name == "kwin":
+        sh("kscreen-doctor output.Virtual-1.scale.1")
+    elif B.name == "mutter":
+        sh("gdctl set --logical-monitor --primary --monitor Meta-0 --scale 1 "
+           "--logical-monitor --monitor Meta-1 --scale 1 --right-of Meta-0")
+
+
+def fs_window_output(fullscreen=True):
+    """The compositor's output for the fullscreen window (or the main window),
+    where the compositor says (sway, KWin; X11 from the frame's position)."""
+    if B.name.startswith("sway"):
+        for line in B.windows().splitlines():
+            if "HikariSub" in line and (("fullscreen=1" in line or "fullscreen=2" in line) == fullscreen):
+                m = re.search(r"output=(\S+)", line)
+                return m.group(1) if m else None
+    if B.name == "kwin":
+        for line in B.windows().splitlines():
+            if "HikariSub" in line and (("fullscreen=true" in line) == fullscreen):
+                m = re.search(r"output=(\S+)", line)
+                return m.group(1) if m else None
+    if B.name == "x11":
+        _, full, main = fs_state()
+        f = full if fullscreen else main
+        return None if f is None else ("left" if f["x"] + f["w"] / 2 < 1600 else "right")
+    return None
+
+
+def fs_move_main(output):
+    """The main window onto OUTPUT the way a user would with the compositor."""
+    if B.name.startswith("sway"):
+        B.msg(f'[title="HikariSub$"] move to output {output}')
+        B.msg('[title="HikariSub$"] focus')
+    elif B.name == "kwin":
+        B.script(f'const o = workspace.screens.find(s => s.name === "{output}"); '
+                 'for (const w of workspace.windowList()) if (/HikariSub$/.test(w.caption)) '
+                 '{ workspace.sendClientToScreen(w, o); workspace.activeWindow = w; }')
+    elif B.name == "x11":
+        x = 100 if output == "left" else 1700
+        sh(f"xdotool search --onlyvisible --name 'HikariSub$' windowmove {x} 100 windowactivate")
+    time.sleep(1.5)
+
+
+def fs_covers(full, name):
+    """The fullscreen frame covers output NAME (its size on Wayland, where a
+    client does not know its position; the rectangle on X11)."""
+    if not full or name not in FS_OUTPUTS[B.name]:
+        return False
+    w, h, _ = FS_OUTPUTS[B.name][name]
+    if (full["w"], full["h"]) != (w, h):
+        return False
+    if B.name == "x11":
+        return (full["x"], full["y"]) == ((0 if name == "left" else 1600), 0)
+    return True
+
+
+def fs_focus_video():
+    """The Video panel takes the keyboard (F6 through the panels)."""
+    for _ in range(8):
+        if panel_of(atspi()["focusPath"]) == "Video":
+            return True
+        B.combo("f6")
+        time.sleep(0.8)
+    return panel_of(atspi()["focusPath"]) == "Video"
+
+
+def step_video_fullscreen():
+    """V5 (#184): F in the Video panel shows the video fullscreen on the main
+    window's output; Space and Right work there; Esc leaves with the main
+    window's geometry and the keyboard focus as they were; the context menu's
+    "Open in full screen on monitor 2" puts it on Qt's second monitor (primary
+    first, as legacy's MonitorEnumProc1; the main window is put on the primary
+    first so that this is another output), at that output's scale (2 on sway,
+    KWin and mutter), and Esc brings the docked video back. Real compositor
+    keys; the menu item is pressed through AT-SPI. Then the Spix workflow."""
+    outputs_text = fs_outputs_setup()
+    # The Spix workflow first: it prints Qt's screens (primary marked).
+    ui = os.environ["UI_TESTS"]
+    r = subprocess.run([os.path.join(ui, "hikari_ui_video_fullscreen_workflow"), "--monitors", "2"],
+                       capture_output=True, text=True, timeout=300)
+    text = r.stdout + r.stderr
+    open(os.path.join(EVID, "videofs-workflow.txt"), "w").write(text)
+    failed = [l for l in text.splitlines() if l.startswith("FAILED")]
+    verdict("videofs-spix-workflow", "observed" if r.returncode == 0 else "failed",
+            f"hikari_ui_video_fullscreen_workflow --monitors 2 exit {r.returncode}; failed checks: {failed}",
+            ["videofs-workflow.txt"])
+    screens = re.findall(r"^screen (\S+) .*?( primary)?$", text, re.M)
+    order = [n for n, p in screens if p] + [n for n, p in screens if not p]
+    log("Qt's monitors, primary first:", order)
+
+    subs = video_document()
+    fresh(subs)
+    dismiss_notices()
+    sh(["python3", f"{GATE}/atspi_tool.py", "press-showing", "Load associated"])
+    time.sleep(5)
+    focus_main()
+    st0, full0, main0 = fs_state()
+    main_out = fs_window_output(fullscreen=False)
+    in_video = fs_focus_video()
+    ev0, _ = B.snap("videofs-0-docked", extra="# outputs\n" + outputs_text + f"\n# Qt's monitors {order}\n# fsjson\n"
+                    + json.dumps(st0, indent=1))
+    B.combo("f")
+    st1, full1, main1 = fs_wait(lambda f, m: f is not None and f["active"])
+    time.sleep(1.0)
+    st1, full1, main1 = fs_state()
+    where1 = fs_window_output()
+    ev1, _ = B.snap("videofs-1-fullscreen", extra="# fsjson\n" + json.dumps(st1, indent=1)
+                    + f"\n# compositor output of the fullscreen window: {where1}; of the main window before: {main_out}")
+    if B.name.startswith("sway") and where1:
+        sh(["grim", "-o", where1, os.path.join(EVID, "videofs-1-output.png")])
+        ev1.append("videofs-1-output.png")
+    if main_out:
+        on1 = fs_covers(full1, main_out) and where1 == main_out
+    else:  # mutter: the main window's output is not published; the size tells which
+        on1 = any(fs_covers(full1, n) for n in FS_OUTPUTS[B.name])
+    # Transport keys in the fullscreen window.
+    B.combo("space")
+    stp, fp, _ = fs_wait(lambda f, m: f is not None and "Pause" in f["buttons"], timeout=5)
+    playing = fp is not None and "Pause" in fp["buttons"]
+    time.sleep(0.6)
+    B.combo("space")
+    sts, fs_, _ = fs_wait(lambda f, m: f is not None and "Play" in f["buttons"], timeout=5)
+    paused = fs_ is not None and "Play" in fs_["buttons"]
+    # The fullscreen seek bar's value is the frame shown.
+    before = fs_["position"] if fs_ else None
+    B.combo("right")
+    str_, fr_, _ = fs_wait(lambda f, m: f is not None and f["position"] != before, timeout=5)
+    after = fr_["position"] if fr_ else None
+    stepped = before is not None and after is not None and after == before + 1
+    B.combo("escape")
+    st2, full2, main2 = fs_wait(lambda f, m: f is None and m is not None and m["active"])
+    time.sleep(1.0)
+    st2, full2, main2 = fs_state()
+    ev2, _ = B.snap("videofs-2-left", extra="# fsjson\n" + json.dumps(st2, indent=1))
+    keys = ("x", "y", "w", "h")
+    same = main0 is not None and main2 is not None and all(main0[k] == main2[k] for k in keys)
+    focus_back = panel_of(st2["focusPath"]) == "Video"
+    verdict("videofs-enter-leave", "observed" if in_video and on1 and full1 and full1["active"] and full2 is None
+            and main2 and main2["active"] and same and focus_back else "failed",
+            f"F in the Video panel (focus there: {in_video}): fullscreen frame "
+            f"{full1 and {k: full1[k] for k in keys + ('active',)}} on {where1 or 'an output of that size'}, the main "
+            f"window's output {main_out}: {on1}; Esc: fullscreen gone {full2 is None}, main window active "
+            f"{main2 and main2['active']}, geometry before {main0 and {k: main0[k] for k in keys}} after "
+            f"{main2 and {k: main2[k] for k in keys}} same {same}; focus back in the Video panel: {focus_back} "
+            f"({st2['focusPath']})", ev0 + ev1 + ev2)
+    verdict("videofs-transport-keys", "observed" if playing and paused and stepped else "failed",
+            f"in fullscreen Space played (Pause button shown: {playing}) and paused (Play shown again: {paused}); "
+            f"Right stepped the seek bar's frame {before!r} -> {after!r}", ev1)
+
+    # The second monitor through the context menu (menu key, then the item).
+    primary = order[0] if order else None
+    second = order[1] if len(order) > 1 else None
+    moved = None
+    if primary and main_out and main_out != primary:
+        fs_move_main(primary)
+        moved = fs_window_output(fullscreen=False)
+        fs_focus_video()
+    _, _, main3a = fs_state()
+    B.combo("menu")
+    time.sleep(1.0)
+    item = sh(["python3", f"{GATE}/atspi_tool.py", "find", "menu item", "Open in full screen on monitor 2"])
+    offered = "Open in full screen on monitor 2" in item
+    # Down to the item, then Return (real keys: the activation request that
+    # follows carries their input serial, which Wayland compositors want).
+    how = None
+    if offered:
+        for _ in range(8):
+            line = sh(["python3", f"{GATE}/atspi_tool.py", "find", "menu item", "Open in full screen on monitor 2"])
+            log("menu item:", line.strip(), "| focus:", atspi()["focus"])
+            if re.search(r"<[^>]*\b(focused|selected)\b", line):
+                B.combo("return")
+                how = "keys"
+                break
+            B.combo("down")
+            time.sleep(0.4)
+        else:
+            sh(["python3", f"{GATE}/atspi_tool.py", "do", "menu item", "Open in full screen on monitor 2"])
+            how = "AT-SPI action"
+    else:
+        B.keys("escape")
+    st3, full3, main3 = fs_wait(lambda f, m: f is not None, timeout=8)
+    time.sleep(1.5)
+    st3, full3, main3 = fs_state()
+    where3 = fs_window_output()
+    ev3, _ = B.snap("videofs-3-monitor2", extra="# menu item\n" + item + "\n# fsjson\n" + json.dumps(st3, indent=1)
+                    + f"\n# compositor output of the fullscreen window: {where3}; main window moved to {moved}")
+    if B.name.startswith("sway") and where3:
+        sh(["grim", "-o", where3, os.path.join(EVID, "videofs-3-output.png")])
+        ev3.append("videofs-3-output.png")
+    on2 = second is not None and fs_covers(full3, second) and (where3 is None or where3 == second)
+    elsewhere = (moved or main_out) != second
+    dock_hidden = main3 is not None and "Video" not in main3["panels"]
+    B.combo("escape")
+    st4, full4, main4 = fs_wait(lambda f, m: f is None and m is not None and "Video" in m["panels"])
+    time.sleep(1.0)
+    st4, full4, main4 = fs_state()
+    ev4, _ = B.snap("videofs-4-left-monitor2", extra="# fsjson\n" + json.dumps(st4, indent=1))
+    dock_back = main4 is not None and "Video" in main4["panels"]
+    same4 = main3a is not None and main4 is not None and all(main3a[k] == main4[k] for k in keys)
+    focus4 = panel_of(st4["focusPath"]) == "Video"
+    scale = FS_OUTPUTS[B.name].get(second or "", (0, 0, 0))[2]
+    verdict("videofs-monitor-choice", "observed" if offered and on2 and elsewhere and dock_hidden and full4 is None
+            and dock_back and same4 and focus4 else "failed",
+            f"Qt's monitors {order}; main window on {moved or main_out}; menu key in the Video panel offered 'Open in "
+            f"full screen on monitor 2': {offered} (chosen by {how}); fullscreen frame {full3 and {k: full3[k] for k in keys + ('active',)}} "
+            f"on {where3 or 'an output of that size'}, expected {second} (scale {scale}): {on2}, another output than "
+            f"the main window's: {elsewhere}; docked Video hidden meanwhile: {dock_hidden}; Esc: fullscreen gone "
+            f"{full4 is None}, docked Video back {dock_back}, main geometry unchanged {same4}, focus back in the Video "
+            f"panel {focus4}", ev3 + ev4)
+    app("kill")
+    fs_outputs_reset()
+
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "menutext": step_menu_from_text, "tests": step_test_executables, "orca": step_orca,
          "a11y": step_a11y, "floating": step_floating, "header": step_header_keys,
-         "views": step_views, "editor": step_editor,
+         "views": step_views, "editor": step_editor, "videofs": step_video_fullscreen,
          # last: it removes an output, after which sway's virtual pointer
          # still maps absolute positions over the old layout
          "outputs": step_outputs}
