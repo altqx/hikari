@@ -42,15 +42,17 @@ KDDWViews.TabBarBase {
     implicitHeight: headerHeight
 
     // Panel names per tab, read again when the tabs or the header
-    // descriptions change.
+    // descriptions change. (Docking.headerRevision is compared, not just
+    // read: a compiled binding drops a read whose value it does not use,
+    // and the dependency with it.)
     function nameAt(index: int): string {
         return root.tabBarCpp && index >= 0 && index < root.count ? Docking.dockNameAt(root.tabBarCpp, index) : ""
     }
-    readonly property string currentName: (Docking.headerRevision, root.count, nameAt(root.currentTabIndex))
+    readonly property string currentName: Docking.headerRevision >= 0 ? nameAt(root.currentTabIndex) : ""
     readonly property Item currentTab: root.currentTabIndex >= 0 && root.currentTabIndex < tabRepeater.count
                                        ? tabRepeater.itemAt(root.currentTabIndex) : null
     readonly property string currentTitle: currentTab ? currentTab.text : ""
-    readonly property bool titleMode: root.count === 1 && !(Docking.headerRevision, Docking.isHorizontal(nameAt(0)))
+    readonly property bool titleMode: root.count === 1 && Docking.headerRevision >= 0 && !Docking.isHorizontal(nameAt(0))
     readonly property bool floating: Window.window !== null && Window.window.transientParent !== null
     // A compositor that frames the floating window although it asked for
     // no frame (Docking.windowSystemTitle) names it in its own title bar.
@@ -335,7 +337,7 @@ KDDWViews.TabBarBase {
     Item {
         id: toolbarSlot
         objectName: "dockToolbarSlot"
-        readonly property Item toolbar: !root.titleMode ? (Docking.headerRevision, Docking.toolbar(root.currentName)) : null
+        readonly property Item toolbar: !root.titleMode && Docking.headerRevision >= 0 ? Docking.toolbar(root.currentName) : null
         property Item hosted: null
         z: root.mouseAreaZ + 2
         visible: toolbar !== null

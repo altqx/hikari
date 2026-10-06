@@ -395,6 +395,58 @@ private slots:
         QTRY_VERIFY(onOther.contains(groupMenu->mapRectToItem(group, QRectF(0, 0, 20, 20))));
     }
 
+    // D3: a header follows its panel's description when it changes after the
+    // header is up (Docking.setPanelHeader, as Main.qml calls it): a lone
+    // panel turned horizontal shows its tab and its toolbar, and back; a
+    // horizontal panel given another toolbar hosts that one. Neither its
+    // name nor its tabs change, so only the description's revision tells
+    // the bindings to read it again.
+    void headerFollowsThePanelsDescription()
+    {
+        restoreInitial();
+        auto *gridToolbar = window->findChild<QQuickItem *>(QStringLiteral("gridToolbar"));
+        QVERIFY(gridToolbar);
+        QQuickItem videoToolbar;
+        videoToolbar.setImplicitWidth(40);
+        QQuickItem otherGridToolbar;
+        otherGridToolbar.setImplicitWidth(40);
+        const auto restore = qScopeGuard([this, gridToolbar] {
+            docking()->setPanelHeader(QStringLiteral("Video"), false, nullptr);
+            docking()->setPanelHeader(QStringLiteral("Grid"), true, gridToolbar);
+        });
+
+        QQuickItem *video = header(QStringLiteral("Video"));
+        QVERIFY(video);
+        QQuickItem *videoSlot = childNamed(video, QStringLiteral("dockToolbarSlot"));
+        QVERIFY(videoSlot);
+        QVERIFY(video->property("titleMode").toBool());
+        QVERIFY(!videoSlot->isVisible());
+        docking()->setPanelHeader(QStringLiteral("Video"), true, &videoToolbar);
+        QTRY_VERIFY(!video->property("titleMode").toBool());
+        QCOMPARE(video->property("currentName").toString(), QStringLiteral("Video"));
+        QVERIFY(childNamed(video, QStringLiteral("dockTab0"))->isVisible());
+        QTRY_COMPARE(videoSlot->property("toolbar").value<QQuickItem *>(), &videoToolbar);
+        QCOMPARE(videoToolbar.parentItem(), videoSlot);
+        QVERIFY(videoSlot->isVisible());
+        docking()->setPanelHeader(QStringLiteral("Video"), false, nullptr);
+        QTRY_VERIFY(video->property("titleMode").toBool());
+        QVERIFY(!videoSlot->isVisible());
+        QVERIFY(!videoToolbar.parentItem());
+
+        QQuickItem *grid = header(QStringLiteral("Grid"));
+        QVERIFY(grid);
+        QQuickItem *gridSlot = childNamed(grid, QStringLiteral("dockToolbarSlot"));
+        QTRY_COMPARE(gridToolbar->parentItem(), gridSlot);
+        docking()->setPanelHeader(QStringLiteral("Grid"), true, &otherGridToolbar);
+        QTRY_COMPARE(gridSlot->property("toolbar").value<QQuickItem *>(), &otherGridToolbar);
+        QCOMPARE(otherGridToolbar.parentItem(), gridSlot);
+        QVERIFY(!gridToolbar->parentItem());
+        QVERIFY(!grid->property("titleMode").toBool());
+        docking()->setPanelHeader(QStringLiteral("Grid"), true, gridToolbar);
+        QTRY_COMPARE(gridToolbar->parentItem(), gridSlot);
+        QVERIFY(!otherGridToolbar.parentItem());
+    }
+
     // D3: the header names itself, its tabs and its button for assistive
     // technology: a title bar by its panel, the tabs as page tabs with their
     // selection, the button "<panel> options".
