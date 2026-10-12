@@ -23,6 +23,7 @@
 #include "HikariTextCtrl.h"
 #include "MappedButton.h"
 #include "SemVer.h"
+#include "UpdatePolicy.h"
 #include "VersionHikariSub.h"
 #include "config.h"
 #include <wx/sizer.h>
@@ -63,11 +64,12 @@ namespace
 		if (root.GetType() != JsonValue::Type::Array)
 			return false;
 
+		bool skipPrereleases = update_policy::SkipsPrereleases(stableOnly, VersionHikariSub);
 		for (const JsonValue &release : root.Items()) {
 			if (release.GetBool("draft"))
 				continue;
 			wxString tag = release.GetString("tag_name");
-			if (stableOnly && (release.GetBool("prerelease") || UpdateChecker::IsPrerelease(tag)))
+			if (skipPrereleases && (release.GetBool("prerelease") || UpdateChecker::IsPrerelease(tag)))
 				continue;
 			if (tag.empty() || !UpdateChecker::IsNewerVersion(tag, VersionHikariSub))
 				continue;
