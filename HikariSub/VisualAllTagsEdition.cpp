@@ -318,6 +318,11 @@ void AllTagsEdition::Save(int id)
 		return;
 	}
 	tags[selection] = currentTag;
+	//put a new name in the list, keeping its choice that can be
+	//already another item when saving after a list change
+	int listSelection = tagList->GetSelection();
+	tagList->ChangeListElementName(selection, currentTag.name);
+	tagList->SetSelection(listSelection);
 
 	if (id == ID_BUTTON_OK) {
 		SaveSettings(&tags);

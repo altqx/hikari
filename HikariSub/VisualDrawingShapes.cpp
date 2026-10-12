@@ -280,6 +280,11 @@ void ShapesEdition::Save(int id)
 		return;
 	}
 	shapes[selection] = currentShape;
+	//put a new name in the list, keeping its choice that can be
+	//already another item when saving after a list change
+	int listSelection = shapeList->GetSelection();
+	shapeList->ChangeListElementName(selection, currentShape.name);
+	shapeList->SetSelection(listSelection);
 
 	if (id == ID_BUTTON_OK) {
 		SaveSettings(&shapes);
