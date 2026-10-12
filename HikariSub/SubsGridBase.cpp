@@ -327,7 +327,7 @@ void SubsGrid::CommitEditBoxForSave(bool loadFromEditbox)
 	}
 }
 
-bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFromEditbox, bool commitEditBox)
+bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFromEditbox, bool commitEditBox, bool privateCopy)
 {
 	wxMutexLocker lock(editionMutex);
 
@@ -350,7 +350,7 @@ bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 
 	//the old file is replaced only when everything was written
 	OpenWrite ow;
-	if (!ow.OpenTemp(filename))
+	if (!ow.OpenTemp(filename, privateCopy))
 		return false;
 
 	//the header puts the active line and the media paths in the script info
@@ -1921,9 +1921,11 @@ void SubsGrid::OnBackupTimer(wxTimerEvent &event)
 	path << Options.pathfull << L"/Subs/" << tab->SubsName.BeforeLast(L'.')
 		<< L"_" << Notebook::GetTabs()->FindPanel(tab) << L"_" << numsave << L"." << ext;
 
+	//the autosaves are copies of the subtitles that only the user may read
+	MakePrivateFolder(Options.pathfull + L"/Subs");
 	//a failed autosave keeps the oldest autosave file for the next one to
 	//replace, and says so in the log, not "Autosave" on the status bar
-	bool saved = SaveFile(path, false);
+	bool saved = SaveFile(path, false, false, true, true);
 	//the next edit starts the timer again; not the edit box commit SaveFile
 	//makes, which this autosave holds
 	makebackup = true;

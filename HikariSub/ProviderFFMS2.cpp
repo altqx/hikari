@@ -24,6 +24,7 @@
 #include "ListControls.h"
 #include "Stylelistbox.h"
 #include "SubsGrid.h"
+#include "OpennWrite.h"
 #include <wx/dir.h>
 #include <wx/filename.h>
 #include <algorithm>
@@ -37,6 +38,12 @@
 #include <vector>
 #include "UtilsWindows.h"
 #include "Provider.h"
+#ifndef _WIN32
+#include <fcntl.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
 
 namespace
 {
@@ -879,7 +886,8 @@ bool ProviderFFMS2::DiskCache(bool newIndex)
 	bool good = true;
 	wxFileName discCacheFile;
 	discCacheFile.Assign(m_diskCacheFilename);
-	if (!discCacheFile.DirExists()) { discCacheFile.Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL); }
+	//the cache holds the audio of the user's media: for the user only
+	MakePrivateFolder(discCacheFile.GetPath());
 	bool fileExists = discCacheFile.FileExists();
 	if (!newIndex && fileExists) {
 		SetCacheInUse(m_diskCacheFilename, true);
@@ -897,7 +905,18 @@ bool ProviderFFMS2::DiskCache(bool newIndex)
 		m_diskCacheFilename << L".part";
 		SetCacheInUse(m_diskCacheFilename, true);
 		m_diskCacheInUse = true;
+#ifndef _WIN32
+		//made, or a .part left before narrowed, so only the user may read it
+		int cacheFd = ::open(m_diskCacheFilename.fn_str(), O_RDWR | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC, 0600);
+		if (cacheFd >= 0 && ::fchmod(cacheFd, 0600) == 0) {
+			m_fp = ::fdopen(cacheFd, "w+b");
+		}
+		if (cacheFd >= 0 && !m_fp) {
+			::close(cacheFd);
+		}
+#else
 		m_fp = _wfopen(m_diskCacheFilename.wc_str(), L"w+b");
+#endif
 		if (!m_fp)
 			return false;
 	}

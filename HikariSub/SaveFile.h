@@ -87,7 +87,9 @@ struct SaveTargetFacts {
 	nlink_t links = 0;
 	uid_t uid = 0;
 	gid_t gid = 0;
-	mode_t mode = 0;  // the target's permission bits, 07777
+	// the target's permission bits, 07777, without those of its group and
+	// others for a private save: the mode the saved file gets
+	mode_t mode = 0;
 	dev_t device = 0;
 	bool tempMade = false;
 	uid_t tempUid = 0;
@@ -146,6 +148,10 @@ public:
 	// also when it then failed: the target's time of change is then the
 	// save's, though the save may have failed.
 	bool TargetTouched() const { return touched; }
+	// Saves a file only its user may open, such as an autosave: a new file
+	// stays 0600 and an existing one loses the permissions of its group and
+	// others. Set before Open.
+	void SetPrivate(bool on) { privateFile = on; }
 	// for tests: replaces write(2) for the target
 	void SetTargetWriter(Writer writer) { targetWriter = writer; }
 	// for tests: runs in Commit after the target was looked at and the
@@ -160,8 +166,9 @@ private:
 	// takeFinalMetadata, the temporary file first takes the group and mode it
 	// is renamed with, when it can be renamed over the target
 	SaveTargetFacts ReadFacts(bool takeFinalMetadata);
-	// gives the temporary file the target's group and then its mode
-	void TakeTargetMetadata(const struct stat &targetStat);
+	// gives the temporary file the target's group and then the mode it is
+	// saved with
+	void TakeTargetMetadata(gid_t gid, mode_t mode);
 	// gives the temporary file the mode and ACL of a new file in its folder
 	void TakeNewFileMetadata();
 	// whether the target's name still leads to the file Open found there,
@@ -203,6 +210,7 @@ private:
 	bool stageNextToTarget = false;
 	// the temporary file was given a mode other than 0600 for a rename
 	bool tookFinalMetadata = false;
+	bool privateFile = false;
 	bool failed = false;
 	bool touched = false;
 	SaveMethod method = SaveMethod::Refuse;

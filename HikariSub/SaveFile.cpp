@@ -662,7 +662,8 @@ SaveTargetFacts SaveFile::ReadFacts(bool takeFinalMetadata)
 			facts.links = targetStat.st_nlink;
 			facts.uid = targetStat.st_uid;
 			facts.gid = targetStat.st_gid;
-			facts.mode = targetStat.st_mode & 07777;
+			// a private file keeps no permission of its group or others
+			facts.mode = targetStat.st_mode & (privateFile ? 07700 : 07777);
 			facts.device = targetStat.st_dev;
 			facts.lockedByOthers = S_ISREG(targetStat.st_mode) && InodeIsLocked(targetStat.st_ino);
 			struct stat folderStat;
@@ -696,8 +697,8 @@ SaveTargetFacts SaveFile::ReadFacts(bool takeFinalMetadata)
 		takesTargets = takesTargets && facts.sameExtendedAttributes;
 		if (takeFinalMetadata && (!facts.exists || takesTargets)) {
 			if (facts.exists)
-				TakeTargetMetadata(targetStat);
-			else
+				TakeTargetMetadata(targetStat.st_gid, facts.mode);
+			else if (!privateFile)
 				TakeNewFileMetadata();
 			if (fstat(stageFd, &tempStat) != 0)
 				return facts;
@@ -719,7 +720,7 @@ SaveTargetFacts SaveFile::ReadFacts(bool takeFinalMetadata)
 	return facts;
 }
 
-void SaveFile::TakeTargetMetadata(const struct stat &targetStat)
+void SaveFile::TakeTargetMetadata(gid_t gid, mode_t mode)
 {
 	// The group first, while the file is still 0600: with another group, the
 	// target's group bits would open it to that group. A group that cannot be
@@ -727,12 +728,11 @@ void SaveFile::TakeTargetMetadata(const struct stat &targetStat)
 	struct stat now;
 	if (fstat(stageFd, &now) != 0)
 		return;
-	if (now.st_gid != targetStat.st_gid &&
-		(fchown(stageFd, static_cast<uid_t>(-1), targetStat.st_gid) != 0 || fstat(stageFd, &now) != 0 ||
-		now.st_gid != targetStat.st_gid))
+	if (now.st_gid != gid &&
+		(fchown(stageFd, static_cast<uid_t>(-1), gid) != 0 || fstat(stageFd, &now) != 0 || now.st_gid != gid))
 		return;
 	tookFinalMetadata = true;
-	(void)!fchmod(stageFd, targetStat.st_mode & 07777);
+	(void)!fchmod(stageFd, mode);
 }
 
 void SaveFile::TakeNewFileMetadata()
@@ -996,6 +996,12 @@ bool SaveFile::Rewrite()
 		return false;
 	struct stat outStat;
 	if (fstat(out, &outStat) != 0 || !S_ISREG(outStat.st_mode)) {
+		close(out);
+		return false;
+	}
+	// a private file loses the permissions of its group and others before
+	// the new contents are in it
+	if (privateFile && (outStat.st_mode & 077) && fchmod(out, outStat.st_mode & 07700) != 0) {
 		close(out);
 		return false;
 	}

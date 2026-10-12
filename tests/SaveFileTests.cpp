@@ -1160,6 +1160,53 @@ TEST(a_new_file_gets_the_mode_the_umask_gives_and_an_existing_file_keeps_its_own
 	umask(old);
 }
 
+TEST(a_private_save_leaves_the_file_to_its_user_only)
+{
+	SaveScratchDir dir;
+	mode_t mask = umask(022);
+	fs::path file = dir.path / "autosave.ass";
+	fs::path other = dir.path / "other.ass";
+
+	// a new file stays as the temporary file was made
+	SaveFile made;
+	made.SetPrivate(true);
+	CHECK(Save(made, file, "first"));
+	CHECK(made.Method() == SaveMethod::Replace);
+	CHECK((StatOf(file).st_mode & 07777) == 0600);
+
+	// an existing file loses its group's and others' permissions, by a rename
+	CHECK(chmod(file.c_str(), 0664) == 0);
+	SaveFile renamed;
+	renamed.SetPrivate(true);
+	CHECK(Save(renamed, file, "second"));
+	CHECK(renamed.Method() == SaveMethod::Replace);
+	CHECK(ReadText(file) == "second");
+	CHECK((StatOf(file).st_mode & 07777) == 0600);
+
+	// and by a rewrite, before the new contents are in it
+	CHECK(chmod(file.c_str(), 0644) == 0);
+	fs::create_hard_link(file, other);
+	SaveFile rewritten;
+	rewritten.SetPrivate(true);
+	CHECK(OpenAt(rewritten, file));
+	CHECK(rewritten.Write("third", 5));
+	static mode_t modeWhileWritten;
+	modeWhileWritten = 0;
+	rewritten.SetTargetWriter([](int fd, const void *data, size_t size) -> ssize_t {
+		struct stat now {};
+		fstat(fd, &now);
+		modeWhileWritten = now.st_mode & 07777;
+		return write(fd, data, size);
+	});
+	CHECK(rewritten.Commit());
+	CHECK(rewritten.Method() == SaveMethod::Rewrite);
+	CHECK(modeWhileWritten == 0600);
+	CHECK(ReadText(other) == "third");
+	CHECK((StatOf(other).st_mode & 07777) == 0600);
+	CHECK(Names(dir.path) == (std::set<std::string>{ "autosave.ass", "other.ass" }));
+	umask(mask);
+}
+
 #ifdef __linux__
 namespace {
 // A POSIX ACL as the system.posix_acl_* attributes hold it.

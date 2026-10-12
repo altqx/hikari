@@ -73,7 +73,9 @@ public:
 	WindowsSaveFile(const WindowsSaveFile &) = delete;
 	WindowsSaveFile &operator=(const WindowsSaveFile &) = delete;
 	~WindowsSaveFile() { Discard(); }
-	bool Open(const wxString &target);
+	// with privateFile, a new file is made with a DACL that lets only this
+	// user open it, see MakeTempFileNear
+	bool Open(const wxString &target, bool privateFile = false);
 	bool IsOpened() const { return file.IsOpened(); }
 	bool Write(const wxString &text, const wxMBConv &conv) { return file.Write(text, conv); }
 	bool Commit();
@@ -110,6 +112,12 @@ private:
 };
 #endif
 
+// Makes the folder at path, or narrows the one there, so that only its user
+// may open it: on POSIX, mode 0700 for a folder the user owns that is no
+// link. For the application's own folders that hold copies of subtitles or
+// media, such as the autosaves. On Windows the folder is only made.
+void MakePrivateFolder(const wxString &path);
+
 class OpenWrite
 {
 public:
@@ -124,13 +132,15 @@ public:
 	//how it is put in place: a file whose folder takes no temporary file is
 	//rewritten in place with a backup of its old contents, which is not
 	//atomic. On Windows see WindowsSaveFile; a file whose folder takes no
-	//temporary file is not written there.
-	bool FileWrite(const wxString &filename, const wxString &alltext, bool utf = true);
+	//temporary file is not written there. With privateFile, only the user
+	//may open the saved file, see SaveFile::SetPrivate and
+	//WindowsSaveFile::Open.
+	bool FileWrite(const wxString &filename, const wxString &alltext, bool utf = true, bool privateFile = false);
 	void PartFileWrite(const wxString &parttext);
 	// PartFileWrite then writes to a temporary file and CommitTemp puts it in
 	// place of filename as FileWrite does, so a failed save keeps the old file;
 	// when filename is a symbolic link its target is saved and the link kept
-	bool OpenTemp(const wxString &filename);
+	bool OpenTemp(const wxString &filename, bool privateFile = false);
 	bool CommitTemp();
 	// after CommitTemp: whether it changed the file, or what its name leads
 	// to, also when it failed

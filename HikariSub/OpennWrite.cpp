@@ -37,6 +37,9 @@ struct ResolvedSave
 
 #ifndef _WIN32
 #include "SaveTarget.h"
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 //the file a save to fileName writes, see ResolveSaveTarget
 static bool ResolveSaveTarget(const wxString &fileName, ResolvedSave *target)
@@ -347,7 +350,7 @@ static HANDLE OpenFolder(const wxString &path, DWORD access, DWORD share)
 	return ::CreateFileW(path.wc_str(), access, share, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
 }
 
-bool WindowsSaveFile::Open(const wxString &name)
+bool WindowsSaveFile::Open(const wxString &name, bool privateFile)
 {
 	Discard();
 	keptBackup.clear();
@@ -397,8 +400,8 @@ bool WindowsSaveFile::Open(const wxString &name)
 	//file. A new file's temporary file is the new file, which keeps the ACL
 	//it is made with when it is moved to the name: the ACEs its folder passes
 	//on, as a file made there by any other program gets, no more than the
-	//saved file has.
-	temp = MakeTempFileNear(target, &file, &tempId, targetExisted);
+	//saved file has; a private new file keeps the DACL of this user only.
+	temp = MakeTempFileNear(target, &file, &tempId, targetExisted || privateFile);
 	if (temp.empty()) {
 		Discard();
 		return false;
@@ -597,6 +600,26 @@ static wxString DecodeCodePage(unsigned int codePage, const char *buf, size_t si
 #endif
 
 
+void MakePrivateFolder(const wxString &path)
+{
+	wxString folder = path;
+	while (folder.length() > 1 && (folder.EndsWith(L"/") || folder.EndsWith(L"\\"))) { folder.RemoveLast(); }
+#ifndef _WIN32
+	if (!wxFileName::DirExists(folder)) { wxFileName::Mkdir(folder, 0700, wxPATH_MKDIR_FULL); }
+	//a folder made before, or by an older version, with the umask's mode;
+	//a link there, or another user's folder, is left as it is
+	int fd = ::open(folder.fn_str(), O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+	if (fd < 0) { return; }
+	struct stat folderStat;
+	if (::fstat(fd, &folderStat) == 0 && folderStat.st_uid == ::geteuid() && (folderStat.st_mode & 077)) {
+		(void)!::fchmod(fd, folderStat.st_mode & 07700);
+	}
+	::close(fd);
+#else
+	if (!wxFileName::DirExists(folder)) { wxFileName::Mkdir(folder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL); }
+#endif
+}
+
 OpenWrite::OpenWrite()
 {
 
@@ -705,7 +728,7 @@ bool OpenWrite::FileOpen(const wxString &filename, wxString *riddenText, bool te
 	return true;
 }
 
-bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bool utf)
+bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bool utf, bool privateFile)
 {
 
 	wxFileName fname;
@@ -742,6 +765,7 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 	//the file's links, owner, group, mode and extended attributes, and else
 	//rewrites the file in place with a backup it puts back on a failure
 	SaveFile saveFile;
+	saveFile.SetPrivate(privateFile);
 	if (!OpenSaveFile(saveFile, target) || !WriteText(saveFile, textToWrite, conv) || !saveFile.Commit()){
 		LogSaveFailure(saveFile);
 		return false;
@@ -752,7 +776,7 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 	bool tempOpened = false;
 	{
 		wxLogNull noLog;
-		tempOpened = saveFile.Open(target.path);
+		tempOpened = saveFile.Open(target.path, privateFile);
 	}
 	//without a temporary file, in a folder that is not writable, the file is
 	//not written either: writing it in place truncates it first, and a failed
@@ -791,7 +815,7 @@ void OpenWrite::PartFileWrite(const wxString &parttext)
 	if (!file.Write(parttext/*,wxConvUTF8*/)){ HikariLog(_("Cannot save to file.")); };
 }
 
-bool OpenWrite::OpenTemp(const wxString &fileName)
+bool OpenWrite::OpenTemp(const wxString &fileName, bool privateFile)
 {
 	wxFileName fname;
 	fname.Assign(fileName);
@@ -806,9 +830,12 @@ bool OpenWrite::OpenTemp(const wxString &fileName)
 	}
 	fname.Assign(target.path);
 	//a file that cannot be written must not be replaced either
+#ifndef _WIN32
+	tempFile.SetPrivate(privateFile);
+#endif
 	writeFailed = (fname.FileExists() && (!fname.IsFileReadable() || !fname.IsFileWritable())) ||
 #ifdef _WIN32
-		!tempFile.Open(target.path);
+		!tempFile.Open(target.path, privateFile);
 #else
 		!OpenSaveFile(tempFile, target);
 #endif

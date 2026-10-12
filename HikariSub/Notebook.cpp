@@ -1410,6 +1410,9 @@ void Notebook::SaveLastSession(bool beforeClose, bool recovery, const wxString &
 		result << L"[Close session]\r\n";
 	int numtab = 0;
 	wxString recoveryPath = Options.pathfull + L"/Recovery/";
+	//the recovery copies of the subtitles are for the user only
+	if (recovery)
+		MakePrivateFolder(recoveryPath);
 	
 	for (std::vector<TabPanel*>::iterator it = sthis->Pages.begin(); it != sthis->Pages.end(); it++){
 		TabPanel *tab = *it;
@@ -1420,7 +1423,7 @@ void Notebook::SaveLastSession(bool beforeClose, bool recovery, const wxString &
 		if (recovery){
 			wxString ext = (tab->grid->subsFormat < SRT) ? L"ass" : (tab->grid->subsFormat == SRT) ? L"srt" : L"txt";
 			wxString fullPath = recoveryPath + tab->SubsName.BeforeLast(L'.') + L"." + ext;
-			tab->grid->SaveFile(fullPath);
+			tab->grid->SaveFile(fullPath, true, false, true, true);
 			//recovery path for crash close
 			result << fullPath;
 		}
@@ -1442,7 +1445,9 @@ void Notebook::SaveLastSession(bool beforeClose, bool recovery, const wxString &
 	}
 	OpenWrite op;
 	wxString sessionPath = externalPath.empty() ? Options.configPath + L"/LastSession.txt" : externalPath;
-	op.FileWrite(sessionPath, result);
+	//the paths and positions of the subtitles and videos the user works on;
+	//a session file the user exports is saved as any other file
+	op.FileWrite(sessionPath, result, true, externalPath.empty());
 
 }
 

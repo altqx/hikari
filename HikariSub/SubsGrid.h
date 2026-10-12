@@ -97,8 +97,9 @@ public:
 	void Convert(char type);
 
 	// commitEditBox false: the caller committed the edit box with
-	// CommitEditBoxForSave before it changed the document for the save
-	bool SaveFile(const wxString &filename, bool cstat = true, bool loadFromEditbox = false, bool commitEditBox = true);
+	// CommitEditBoxForSave before it changed the document for the save;
+	// privateCopy saves a copy only the user may open, such as an autosave
+	bool SaveFile(const wxString &filename, bool cstat = true, bool loadFromEditbox = false, bool commitEditBox = true, bool privateCopy = false);
 	// commits what the edit box holds, as a save does before it writes, when
 	// typing is not committed at once (GRID_SAVE_AFTER_CHARACTER_COUNT > 1)
 	void CommitEditBoxForSave(bool loadFromEditbox = false);
