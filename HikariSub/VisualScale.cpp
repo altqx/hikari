@@ -677,22 +677,20 @@ void Scale::SortPoints()
 
 void Scale::SetScale()
 {
-	if (originalRectangleVisible) {
-		scale.x = originalScale.x * ((fabs(sizingRectangle[1].x - sizingRectangle[0].x) - border.x) /
-			(fabs(sizingRectangle[3].x - sizingRectangle[2].x) - border.x));
-		if (preserveAspectRatio)
-			scale.y = scale.x;
-		else
-			scale.y = originalScale.y * ((fabs(sizingRectangle[1].y - sizingRectangle[0].y) - border.y) /
-				(fabs(sizingRectangle[3].y - sizingRectangle[2].y) - border.y));
-	}
-	else {
-		scale.x = originalScale.x * ((fabs(sizingRectangle[1].x - sizingRectangle[0].x) - border.x) / originalSize.x);
-		if (preserveAspectRatio)
-			scale.y = scale.x;
-		else
-			scale.y = originalScale.y * ((fabs(sizingRectangle[1].y - sizingRectangle[0].y) - border.y) / originalSize.y);
-	}
+	float sizex = originalRectangleVisible ?
+		(fabs(sizingRectangle[3].x - sizingRectangle[2].x) - border.x) : originalSize.x;
+	float sizey = originalRectangleVisible ?
+		(fabs(sizingRectangle[3].y - sizingRectangle[2].y) - border.y) : originalSize.y;
+	//no size (an empty Line) cannot be scaled, keep the scale
+	scale.x = (sizex != 0.f) ?
+		originalScale.x * ((fabs(sizingRectangle[1].x - sizingRectangle[0].x) - border.x) / sizex) :
+		originalScale.x;
+	if (preserveAspectRatio)
+		scale.y = scale.x;
+	else
+		scale.y = (sizey != 0.f) ?
+			originalScale.y * ((fabs(sizingRectangle[1].y - sizingRectangle[0].y) - border.y) / sizey) :
+			originalScale.y;
 	if (scale.x < 0.f)
 		scale.x = 0.f;
 	if (scale.y < 0.f)

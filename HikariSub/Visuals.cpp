@@ -969,8 +969,18 @@ D3DXVECTOR2 Visuals::GetTextSize(Dialogue* dial, D3DXVECTOR2* border, Styles* st
 		L"bord", L"xbord", L"ybord", L"b", L"i", L"shad", L"xshad", L"yshad" };
 	D3DXVECTOR2 result = D3DXVECTOR2(0.f, 0.f);
 	const wxString& text = dial->GetTextNoCopy();
-	if (!text.length())
+	if (!text.length()) {
+		//nothing to measure, but do not leave the outputs as they were
+		if (border)
+			*border = result;
+		if (extralead)
+			*extralead = result;
+		if (drawingPosition)
+			*drawingPosition = result;
+		if (bordshad)
+			bordshad[0] = bordshad[1] = result;
 		return result;
+	}
 
 	Styles* measuringStyle = nullptr;
 	if (style)
