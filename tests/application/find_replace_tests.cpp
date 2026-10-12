@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstring>
 #include <deque>
 #include <functional>
@@ -837,6 +838,32 @@ TEST_F(Find, ReplaceInAllOpenDocumentsIsOneStepEach)
     EXPECT_EQ(session->history().back().name, "Replace all");
     EXPECT_EQ(second.history().back().name, "Replace all");
     EXPECT_EQ(str(second.document().lines()[0]->text), "bye again");
+}
+
+// R2-reference-tray: a tab shown as the protected reference is searched, as
+// legacy searched the previewed tab, but neither "Replace in all open
+// subtitles" nor Replace checked writes it, and its matches are not counted.
+TEST_F(Find, AllTabsReplacementsNeverWriteTheProtectedReference)
+{
+    auto &reference = host.add(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,hello again\n",
+                               u8"b.ass");
+    reference.setProtected(true);
+    window.tab = S::Tab::Replace;
+    window.find = u8"hello";
+    window.replace = u8"bye";
+    fr.replaceInAllOpened(window);
+    EXPECT_EQ(str(host.questions.back().text), "Replaced 4 times.");
+    EXPECT_EQ(session->history().back().name, "Replace all");
+    EXPECT_EQ(reference.historySize(), 1u);
+    EXPECT_FALSE(reference.isDirty());
+    EXPECT_EQ(str(reference.document().lines()[0]->text), "hello again");
+    window = {};
+    window.find = u8"again";
+    fr.findInAllOpened(window);
+    ASSERT_TRUE(std::ranges::any_of(fr.results(), [](const FindResult &r) { return r.document == DocumentId{2}; }));
+    fr.replaceChecked(u8"bye");
+    EXPECT_EQ(reference.historySize(), 1u);
+    EXPECT_EQ(str(reference.document().lines()[0]->text), "hello again");
 }
 
 TEST_F(Find, FindAllListsOverlappingMatchesWithShownRowNumbers)

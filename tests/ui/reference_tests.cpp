@@ -21,6 +21,7 @@
 #include <QClipboard>
 #include <QCryptographicHash>
 #include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
@@ -29,6 +30,8 @@
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
+
+#include <algorithm>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -155,6 +158,56 @@ class ReferenceTest : public QObject {
     {
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Q, Qt::ControlModifier); // GRID_SHOW_PREVIEW's default Ctrl-Q
+    }
+
+    // Every all-tabs writer runs with the reference shown; it keeps its
+    // Lines, history, saved state and file while third.ass is written.
+    void allTabsLeaveTheReference(const QString &path, bool searched)
+    {
+        const auto refId = *application->workspace().reference();
+        const QByteArray before = hash(path);
+        const auto history = session(refId).historySize();
+        const auto texts = [&] {
+            QStringList out;
+            for (const auto *line : session(refId).document().lines())
+                out << QString::fromUtf8(reinterpret_cast<const char *>(line->text.data()), qsizetype(line->text.size()));
+            return out;
+        };
+        const QStringList lines = texts();
+        const auto unchanged = [&] {
+            QCOMPARE(texts(), lines);
+            QCOMPARE(session(refId).historySize(), history);
+            QVERIFY(!session(refId).isDirty());
+            QCOMPARE(hash(path), before);
+        };
+        application->setFindQuestionHandler([](int, const QString &) { return 0; });
+        auto replace = application->findReplaceSettings(1);
+        replace[QStringLiteral("find")] = QStringLiteral("0");
+        replace[QStringLiteral("replace")] = QStringLiteral("X");
+        application->runFindReplace(QStringLiteral("replaceAllTabs"), replace);
+        unchanged();
+        const auto thirdId = tab(2);
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session(thirdId).document().lines()[0]->text.data())),
+                 QStringLiteral("tX"));
+        // Find in all open subtitles (its groups headed by the tabs' names),
+        // then Replace checked.
+        application->runFindReplace(QStringLiteral("findAllTabs"),
+                                    {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("r")}});
+        bool listed = false;
+        for (const QVariant &row : application->findResults())
+            listed = listed || (row.toMap().value(QStringLiteral("header")).toBool() &&
+                                row.toMap().value(QStringLiteral("text")).toString() == QFileInfo(path).fileName());
+        QCOMPARE(listed, searched);
+        application->replaceFindResults(QStringLiteral("Y"));
+        unchanged();
+        // Select lines in all tabs with Delete.
+        application->selectLines({{QStringLiteral("find"), QStringLiteral("r")},
+                                  {QStringLiteral("field"), 0},
+                                  {QStringLiteral("mode"), 0},
+                                  {QStringLiteral("action"), 6}},
+                                 true);
+        unchanged();
+        QCOMPARE(application->workspace().reference(), std::optional(refId));
     }
 
 private slots:
@@ -423,6 +476,30 @@ private slots:
         QCOMPARE(session(refId).historySize(), history);
         QVERIFY(!session(refId).isDirty());
         QCOMPARE(hash(ref), before);
+    }
+
+    // R2-reference-tray: Find and Replace's "Replace in all open subtitles",
+    // Replace checked after "Find in all open subtitles" and Select lines in
+    // all tabs never write the protected reference. Legacy replaced in every
+    // tab, the previewed one too (findreplace.cpp:1140-1141), but its preview
+    // was not protected. A tab shown as the reference is still searched, as
+    // legacy searched every tab.
+    void allTabsReplaceNeverWritesATabReference()
+    {
+        showPreviewByKey();
+        QCOMPARE(application->workspace().reference(), std::optional(tab(1)));
+        allTabsLeaveTheReference(ref, true);
+    }
+    // A reference that is not a tab is not an open subtitle: not searched either.
+    void allTabsReplaceNeverWritesAnOpenedReference()
+    {
+        const QString opened = write(dir, "opened.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,r0\n");
+        QVERIFY(application->openReference(opened));
+        const auto reference = application->workspace().reference();
+        QVERIFY(reference);
+        const auto tabs = application->workspace().tabs();
+        QVERIFY(std::ranges::find(tabs, *reference) == tabs.end());
+        allTabsLeaveTheReference(opened, false);
     }
 
     // Close reference, the tray header menu's Close (legacy's close mark,

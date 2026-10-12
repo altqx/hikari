@@ -99,7 +99,10 @@ public:
     // Undo and Redo are refused. Selection still moves.
     void setReadOnly(bool readOnly) { m_readOnly = readOnly; }
     bool isReadOnly() const { return m_readOnly; }
-    // A protected reference refuses every command (CommandRefusal::Protected).
+    // A protected reference refuses every command (CommandRefusal::Protected),
+    // drafts, Undo and Redo. The workspace protects whichever Document is the
+    // reference while it is (R2-reference-tray).
+    void setProtected(bool protectedReference) { m_protected = protectedReference; }
     bool isProtected() const { return m_protected; }
 
     // Selection changes are not history steps.

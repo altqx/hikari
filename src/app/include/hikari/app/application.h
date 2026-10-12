@@ -907,6 +907,9 @@ private:
     // Line with "Ignore filtering in some actions" (legacy ignoreFiltered).
     application::LineVisible actionLines(const application::EditSession &session) const;
     void rememberColumns(bool paste, int columns);
+    // R2-reference-tray: the reference's session refuses every write while it
+    // is the reference (a reloaded session starts unprotected).
+    void protectReference();
     void refreshViews();
     // The Video panel follows the editing target: its association when the
     // target changes, its committed content and its active Line.

@@ -158,10 +158,15 @@ public:
         const auto target = m_app.m_workspace.editingTarget();
         return target ? tab(*target) : std::nullopt;
     }
+    // The open tabs, as legacy's Notebook pages: a tab shown as the reference
+    // (Ctrl+Q) is searched, as legacy searched the previewed tab, but its
+    // session refuses the replacements; a reference that is not a tab is not
+    // an open subtitle.
     std::vector<application::FindTab> tabs() override
     {
+        m_app.protectReference();
         std::vector<application::FindTab> out;
-        for (const auto id : m_app.m_workspace.documents())
+        for (const auto id : m_app.m_workspace.tabs())
             if (auto t = tab(id))
                 out.push_back(*t);
         return out;
@@ -659,9 +664,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         StyleManagerController::Hooks hooks;
         hooks.target = [this] { return targetSession(); };
         hooks.documents = [this] {
+            // Every Document but the reference, which is never written (R2-reference-tray).
             std::vector<application::EditSession *> out;
             for (const auto id : m_workspace.documents())
-                if (auto *session = m_files->session(id))
+                if (auto *session = m_files->session(id); session && id != m_workspace.reference())
                     out.push_back(session);
             return out;
         };
@@ -1428,8 +1434,17 @@ void Application::reportGroupBreak()
     emit groupBreakRefused(description, description ? groupTitle(description) : QString());
 }
 
+void Application::protectReference()
+{
+    const auto reference = m_workspace.reference();
+    for (const auto id : m_workspace.documents())
+        if (auto *session = m_files->session(id))
+            session->setProtected(id == reference);
+}
+
 void Application::refreshViews()
 {
+    protectReference();
     // F3: legacy creates the spell checker when the Grid first paints a Line.
     if (m_workspace.editingTarget())
         spellChecker();
@@ -3008,7 +3023,10 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
     const application::TextFold fold = unicodeFold;
     std::vector<application::EditSession *> sessions;
     if (allTabs) {
-        for (const auto id : m_workspace.documents())
+        // A tab shown as the reference is selected in, as legacy's previewed
+        // tab was, but refuses Cut, Delete, Move and Set as comment.
+        protectReference();
+        for (const auto id : m_workspace.tabs())
             if (auto *session = m_files->session(id))
                 sessions.push_back(session);
     } else if (auto *session = targetSession()) {
