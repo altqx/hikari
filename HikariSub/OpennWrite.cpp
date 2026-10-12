@@ -820,7 +820,7 @@ static wxString DecodeCodePage(unsigned int codePage, const char *buf, size_t si
 #endif
 
 
-void MakePrivateFolder(const wxString &path)
+bool MakePrivateFolder(const wxString &path)
 {
 	wxString folder = path;
 	while (folder.length() > 1 && (folder.EndsWith(L"/") || folder.EndsWith(L"\\"))) { folder.RemoveLast(); }
@@ -830,7 +830,7 @@ void MakePrivateFolder(const wxString &path)
 		wxFileName::Mkdir(parent, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 	}
 #ifndef _WIN32
-	MakePrivateFolderAt(std::string(folder.fn_str().data()));
+	return MakePrivateFolderAt(std::string(folder.fn_str().data()));
 #else
 	//Made with the DACL of PrivateSecurity, which what is made in it
 	//inherits; on a volume that refuses that, it is given it below. A folder
@@ -839,7 +839,8 @@ void MakePrivateFolder(const wxString &path)
 	//ACEs, such as the autosaves an older version made. Without traverse
 	//checking, the files in a folder could still be opened by their paths, so
 	//the folder's ACL alone would not keep them private. A link or junction
-	//at the name, and another user's folder, are left as they are.
+	//at the name, and another user's folder, are left as they are and not
+	//used; a volume that keeps no ACLs, as FAT, can do no more and is used.
 	if (!wxFileName::DirExists(folder)) {
 		PrivateSecurity security(true);
 		SECURITY_ATTRIBUTES attributes = { static_cast<DWORD>(sizeof(SECURITY_ATTRIBUTES)), security.Get(), FALSE };
@@ -850,13 +851,13 @@ void MakePrivateFolder(const wxString &path)
 	HANDLE handle = ::CreateFileW(folder.wc_str(), READ_CONTROL | WRITE_DAC | FILE_READ_ATTRIBUTES,
 		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
 		FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
-	if (handle == INVALID_HANDLE_VALUE) { return; }
+	if (handle == INVALID_HANDLE_VALUE) { return false; }
 	BY_HANDLE_FILE_INFORMATION info;
-	if (::GetFileInformationByHandle(handle, &info) && (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-		!(info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) {
+	bool narrowed = ::GetFileInformationByHandle(handle, &info) &&
+		(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && !(info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
 		NarrowSecurity(handle, true, true);
-	}
 	::CloseHandle(handle);
+	return narrowed;
 #endif
 }
 

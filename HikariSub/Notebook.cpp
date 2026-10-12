@@ -1410,9 +1410,14 @@ void Notebook::SaveLastSession(bool beforeClose, bool recovery, const wxString &
 		result << L"[Close session]\r\n";
 	int numtab = 0;
 	wxString recoveryPath = Options.pathfull + L"/Recovery/";
-	//the recovery copies of the subtitles are for the user only
-	if (recovery)
-		MakePrivateFolder(recoveryPath);
+	//the recovery copies of the subtitles are for the user only; without a
+	//private folder for them, the session names the saved files as at a
+	//normal close
+	if (recovery && !MakePrivateFolder(recoveryPath)) {
+		HikariLogSilent(wxString::Format(L"The recovery folder is not private, no recovery copies are made: %s",
+			recoveryPath));
+		recovery = false;
+	}
 	
 	for (std::vector<TabPanel*>::iterator it = sthis->Pages.begin(); it != sthis->Pages.end(); it++){
 		TabPanel *tab = *it;

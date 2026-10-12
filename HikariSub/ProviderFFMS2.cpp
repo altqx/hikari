@@ -302,7 +302,14 @@ done:
 	m_indexPath = Options.pathfull + sep + L"Indices" + sep + baseName +
 		wxString::Format(L"_%i.ffindex", audiotrack);
 
-	bool indexUsable = wxFileExists(m_indexPath);
+	//the indices are named after the user's media and hold what is in it:
+	//for the user only; one in a folder another user could put files in is
+	//neither read nor written
+	bool privateIndices = MakePrivateFolder(wxFileName(m_indexPath).GetPath());
+	if (!privateIndices)
+		HikariLogSilent(wxString::Format(L"The index folder is not private, no index is read or saved: %s",
+			wxFileName(m_indexPath).GetPath()));
+	bool indexUsable = privateIndices && wxFileExists(m_indexPath);
 	if (indexUsable) {
 		// FFMS2 matches an index only by size and a hash of the file's ends, so a
 		// file completed after indexing, like a torrent filling in pieces, still matches
@@ -341,11 +348,7 @@ done:
 			//FFMS_CancelIndexing(Indexer);
 			return 0;
 		}
-		//the indices are named after the user's media and hold what is in it:
-		//for the user only
-		wxFileName indexFile(m_indexPath);
-		MakePrivateFolder(indexFile.GetPath());
-		if (FFMS_WriteIndex(m_indexPath.utf8_str(), m_index, &m_errInfo))
+		if (privateIndices && FFMS_WriteIndex(m_indexPath.utf8_str(), m_index, &m_errInfo))
 		{
 			HikariLogDebug(wxString::Format(_("Cannot save index, error %s occurred"), wxString::FromUTF8(m_errInfo.Buffer)));
 			//FFMS_DestroyIndex(index);
@@ -879,8 +882,12 @@ bool ProviderFFMS2::DiskCache(bool newIndex)
 	bool good = true;
 	wxFileName discCacheFile;
 	discCacheFile.Assign(m_diskCacheFilename);
-	//the cache holds the audio of the user's media: for the user only
-	MakePrivateFolder(discCacheFile.GetPath());
+	//the cache holds the audio of the user's media: for the user only; one
+	//in a folder another user could swap files in is neither read nor made
+	if (!MakePrivateFolder(discCacheFile.GetPath())) {
+		HikariLogSilent(wxString::Format(L"The audio cache folder is not private: %s", discCacheFile.GetPath()));
+		return false;
+	}
 	bool fileExists = discCacheFile.FileExists();
 	if (!newIndex && fileExists) {
 		SetCacheInUse(m_diskCacheFilename, true);

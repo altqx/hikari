@@ -206,8 +206,13 @@ void FindReplace::ReplaceChecked()
 		wxString path;
 		wxString oldPath;
 		wxString copyPath = Options.pathfull + L"/ReplaceBackup/";
-		//the backups are copies of the user's subtitles: for the user only
-		MakePrivateFolder(copyPath);
+		//the backups are copies of the user's subtitles: for the user only, and
+		//not made in a folder another user could read or swap files in
+		if (!MakePrivateFolder(copyPath)) {
+			HikariLogSilent(wxString::Format(L"The replace backup folder is not private, no backups are made: %s",
+				copyPath));
+			copyPath.clear();
+		}
 		int numChanges = 0;
 		std::vector<SeekResults*> results;
 
@@ -836,7 +841,8 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 			token.clear();
 		}//while
 		if (SubsAllReplacements){
-			CopyToPrivateFile(subsPath, HikariPathJoin(fr->CopyPath, HikariPathName(subsPath)));
+			if (!fr->CopyPath.empty())
+				CopyToPrivateFile(subsPath, HikariPathJoin(fr->CopyPath, HikariPathName(subsPath)));
 			//count only the replacements that reached the file
 			if (ow.FileWrite(subsPath, replacedText))
 				fr->AllReplacements.fetch_add(SubsAllReplacements);
@@ -877,9 +883,15 @@ void FindReplace::FindReplaceInSubs(TabWindow *window)
 	if (!paths.size())
 		return;
 
-	//the backups are copies of the user's subtitles: for the user only
+	//the backups are copies of the user's subtitles: for the user only, and
+	//not made in a folder another user could read or swap files in
 	if (!find){
-		MakePrivateFolder(CopyPath);
+		CopyPath = Options.pathfull + L"/ReplaceBackup/";
+		if (!MakePrivateFolder(CopyPath)) {
+			HikariLogSilent(wxString::Format(L"The replace backup folder is not private, no backups are made: %s",
+				CopyPath));
+			CopyPath.clear();
+		}
 	}
 	//bool plainText = false;//(window->CollumnTextOriginal->GetValue());
 	//no tlmode here
@@ -1795,7 +1807,8 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 	}
 
 	if (numOfChanges){
-		CopyToPrivateFile(path, HikariPathJoin(copyPath, HikariPathName(path)));
+		if (!copyPath.empty())
+			CopyToPrivateFile(path, HikariPathJoin(copyPath, HikariPathName(path)));
 		//count only the replacements that reached the file
 		if (!ow.FileWrite(path, replacedText))
 			numOfChanges = 0;

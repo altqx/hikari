@@ -131,8 +131,11 @@ private:
 // On Windows, a protected DACL that lets in only the user, SYSTEM and
 // Administrators and is passed on to the files in it, for a folder the user
 // owns that is no link or junction. The folders on the way are made as any
-// other folder.
-void MakePrivateFolder(const wxString &path);
+// other folder. Returns whether the folder now lets in only the user, so
+// that it may be used: false for a link, another user's folder or a folder
+// that could not be made, which another user may have put there and could
+// swap the files in, so nothing is written into it or read from it.
+bool MakePrivateFolder(const wxString &path);
 
 // Opens a new file at path for reading and writing that only its user may
 // open, for the application's own files such as the audio cache. Whatever
