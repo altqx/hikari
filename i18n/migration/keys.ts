@@ -1448,6 +1448,46 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>L.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vert.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Text without tags</source>
         <translation type="unfinished"></translation>
     </message>

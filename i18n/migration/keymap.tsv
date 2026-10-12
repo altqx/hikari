@@ -400,6 +400,7 @@ exact	\N	Options	\N	HikariSub.ScriptProperties	Options		no	\N
 obsolete	\N	Save to video / subtitles folder.	\N	\N	\N	\N	\N	\N
 obsolete	\N	Saves to the video folder\nwhen demuxing fonts from an MKV file.	\N	\N	\N	\N	\N	\N
 obsolete	\N	Demux fonts from loaded MKV file	\N	\N	\N	\N	\N	\N
+exact	\N	Start	\N	HikariSub.Grid	Start		no	\N
 exact	\N	Start	\N	HikariSub.MainWindow	Start		no	\N
 obsolete	\N	Start on tabs	\N	\N	\N	\N	\N	\N
 obsolete	\N	Save folder	\N	\N	\N	\N	\N	\N
@@ -1360,6 +1361,7 @@ exact	\N	Backward	\N	HikariSub.TimeShift	Backward		no	\N
 exact	\N	Tag times	\N	HikariSub.TimeShift	Tag times		no	\N
 exact	\N	Shift by video / audio	\N	HikariSub.TimeShift	Shift by video / audio		no	\N
 exact	\N	Beginning	\N	HikariSub.TimeShift	Beginning		no	\N
+exact	\N	End	\N	HikariSub.Grid	End		no	\N
 exact	\N	End	\N	HikariSub.TimeShift	End		no	\N
 obsolete	\N	Move the marker\nto video time	\N	\N	\N	\N	\N	\N
 obsolete	\N	Move the marker\nto audio time	\N	\N	\N	\N	\N	\N
@@ -1602,13 +1604,15 @@ exact	\N	Tree description	\N	HikariSub.Grid	Tree description		no	\N
 exact	\N	Change tree name	\N	HikariSub.Grid	Change tree name		no	\N
 exact	\N	Set tree name	\N	HikariSub.Grid	Set tree name		no	\N
 obsolete	\N	Disable confirmation	\N	\N	\N	\N	\N	\N
-obsolete	\N	L.	\N	\N	\N	\N	\N	\N
-obsolete	\N	Left	\N	\N	\N	\N	\N	\N
-obsolete	\N	Right	\N	\N	\N	\N	\N	\N
-obsolete	\N	Vert.	\N	\N	\N	\N	\N	\N
-obsolete	\N	CPS	\N	\N	\N	\N	\N	\N
-obsolete	\N	Wraps	\N	\N	\N	\N	\N	\N
+exact	\N	L.	\N	HikariSub.Grid	L.		no	\N
+exact	\N	Left	\N	HikariSub.Grid	Left		no	\N
+exact	\N	Right	\N	HikariSub.Grid	Right		no	\N
+exact	\N	Vert.	\N	HikariSub.Grid	Vert.		no	\N
+exact	\N	CPS	\N	HikariSub.Grid	CPS		no	\N
+exact	\N	Wraps	\N	HikariSub.Grid	Wraps		no	\N
 exact	\N	Original text	\N	HikariSub.Editor	Original text		no	\N
+exact	\N	Original text	\N	HikariSub.Grid	Original text		no	\N
+exact	\N	Translation	\N	HikariSub.Grid	Translation		no	\N
 exact	\N	Translation	\N	HikariSub.MainWindow	Translation		no	\N
 exact	\N	Translation	\N	HikariSub.Translation	Translation		no	\N
 obsolete	\N	Cannot show preview cause grid height is too low	\N	\N	\N	\N	\N	\N

@@ -2589,43 +2589,43 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Original text</source>
-        <translation type="unfinished">원본</translation>
+        <translation>원본</translation>
     </message>
     <message>
         <source>L.</source>
-        <translation type="unfinished"></translation>
+        <translation>L.</translation>
     </message>
     <message>
         <source>Start</source>
-        <translation type="unfinished">시작 시간</translation>
+        <translation>시작 시간</translation>
     </message>
     <message>
         <source>End</source>
-        <translation type="unfinished">종료 시간</translation>
+        <translation>종료 시간</translation>
     </message>
     <message>
         <source>Left</source>
-        <translation type="unfinished"></translation>
+        <translation>좌측.</translation>
     </message>
     <message>
         <source>Right</source>
-        <translation type="unfinished"></translation>
+        <translation>우측</translation>
     </message>
     <message>
         <source>Vert.</source>
-        <translation type="unfinished"></translation>
+        <translation>세로.</translation>
     </message>
     <message>
         <source>CPS</source>
-        <translation type="unfinished"></translation>
+        <translation>초당 문자</translation>
     </message>
     <message>
         <source>Wraps</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 수</translation>
     </message>
     <message>
         <source>Translation</source>
-        <translation type="unfinished">번역본</translation>
+        <translation>번역본</translation>
     </message>
 </context>
 <context>

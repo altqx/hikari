@@ -492,11 +492,15 @@ TEST(CheckedIn, KeyMapIsTheCandidateMapOfTheRecordedInputs)
         ++counts[row.status];
     // O6 moved the keys to semantic contexts (i18n/migration/contexts.tsv):
     // a key whose calls now belong to several surfaces is one key in each, so
-    // O4's 785 exact and 321 new rows are 802 and 332 (report.md).
-    EXPECT_EQ(counts.value(MapStatus::Exact), 802);
+    // O4's 785 exact and 321 new rows are 802 and 332 (report.md). The Grid's
+    // ten column headings, a table O4's extraction never read, were then
+    // added to keys.ts under HikariSub.Grid: ten more exact rows, six of them
+    // legacy ids counted obsolete before ("L.", "Left", "Right", "Vert.",
+    // "CPS", "Wraps").
+    EXPECT_EQ(counts.value(MapStatus::Exact), 812);
     EXPECT_EQ(counts.value(MapStatus::Placeholder), 22);
     EXPECT_EQ(counts.value(MapStatus::New), 332);
-    EXPECT_EQ(counts.value(MapStatus::Obsolete), 1138);
+    EXPECT_EQ(counts.value(MapStatus::Obsolete), 1132);
 }
 
 // The conversion reproduces the checked-in gettext catalogs and report, and

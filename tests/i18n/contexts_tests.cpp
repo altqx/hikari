@@ -257,7 +257,10 @@ TEST(CheckedIn, CatalogsUseTheRegisteredContexts)
 // legacy SubsGridWindow.cpp:310-330) are HikariSub.Grid keys in every
 // catalog. They were a table of plain literals translated at run time, which
 // lupdate never extracted, so no catalog had "Vert.", "CPS" or "Wraps". "#"
-// is not a key: legacy never translates it.
+// is not a key: legacy never translates it. The headings O4 had no key for
+// carry legacy's translation of the same id (keymap.tsv's exact rows, which
+// CheckedIn.ConversionReproducesTheCatalogs checks), finished: every
+// language's PO translates each of them.
 TEST(CheckedIn, CatalogsHoldTheGridHeadings)
 {
     const QStringList headings{QStringLiteral("L."),     QStringLiteral("Start"), QStringLiteral("End"),
@@ -271,10 +274,14 @@ TEST(CheckedIn, CatalogsHoldTheGridHeadings)
         ASSERT_TRUE(catalog.has_value()) << file;
         const auto grid = std::ranges::find(catalog->contexts, QStringLiteral("HikariSub.Grid"), &TsContext::name);
         ASSERT_NE(grid, catalog->contexts.end()) << file;
-        for (const QString &heading : headings)
-            EXPECT_TRUE(std::ranges::any_of(grid->messages, [&](const TsMessage &m) {
+        for (const QString &heading : headings) {
+            const auto key = std::ranges::find_if(grid->messages, [&](const TsMessage &m) {
                 return m.source == heading && m.comment.isEmpty() && !m.numerus;
-            })) << file << ": HikariSub.Grid \"" << heading.toStdString() << '"';
+            });
+            ASSERT_NE(key, grid->messages.end()) << file << ": HikariSub.Grid \"" << heading.toStdString() << '"';
+            EXPECT_EQ(key->state, TsState::Finished) << file << ": HikariSub.Grid \"" << heading.toStdString() << '"';
+            EXPECT_FALSE(key->translations.value(0).isEmpty()) << file << ": " << heading.toStdString();
+        }
         EXPECT_FALSE(std::ranges::any_of(grid->messages, [](const TsMessage &m) { return m.source == u"#"; })) << file;
     }
 }

@@ -2589,43 +2589,43 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Original text</source>
-        <translation type="unfinished">ข้อความต้นฉบับ</translation>
+        <translation>ข้อความต้นฉบับ</translation>
     </message>
     <message>
         <source>L.</source>
-        <translation type="unfinished"></translation>
+        <translation>ชั้น</translation>
     </message>
     <message>
         <source>Start</source>
-        <translation type="unfinished">เริ่มต้น</translation>
+        <translation>เริ่มต้น</translation>
     </message>
     <message>
         <source>End</source>
-        <translation type="unfinished">สิ้นสุด</translation>
+        <translation>สิ้นสุด</translation>
     </message>
     <message>
         <source>Left</source>
-        <translation type="unfinished"></translation>
+        <translation>ซ้าย</translation>
     </message>
     <message>
         <source>Right</source>
-        <translation type="unfinished"></translation>
+        <translation>ขวา</translation>
     </message>
     <message>
         <source>Vert.</source>
-        <translation type="unfinished"></translation>
+        <translation>แนวตั้ง</translation>
     </message>
     <message>
         <source>CPS</source>
-        <translation type="unfinished"></translation>
+        <translation>CPS</translation>
     </message>
     <message>
         <source>Wraps</source>
-        <translation type="unfinished"></translation>
+        <translation>การแบ่งบรรทัด</translation>
     </message>
     <message>
         <source>Translation</source>
-        <translation type="unfinished">ข้อความแปล</translation>
+        <translation>ข้อความแปล</translation>
     </message>
 </context>
 <context>

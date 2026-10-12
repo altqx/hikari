@@ -656,7 +656,11 @@ private slots:
         const QSet<QString> allowed{QStringLiteral("OK")};
         QStringList stale;
         for (const auto &[o, text] : shownTexts())
-            if (sources.contains(text) && !allowed.contains(text))
+            // A menu item's binding (menuItemKeys) is the hotkey's key names
+            // (hotkeys.cpp's legacy names: "Left" for Previous frame), never
+            // a catalog string, though "Left" and "Right" are also Grid
+            // headings since they took legacy's translations (keys.ts).
+            if (sources.contains(text) && !allowed.contains(text) && o && o->objectName() != u"menuItemKeys")
             {
                 QString chain;
                 for (QObject *p = o; p; p = p->parent())
