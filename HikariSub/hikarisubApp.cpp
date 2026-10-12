@@ -45,6 +45,7 @@
 #include <wx/translation.h>
 #ifndef _WIN32
 #include <clocale>
+#include <cstring>
 #include <cstdlib>
 #include <wx/tokenzr.h>
 #include <wx/tooltip.h>
@@ -373,6 +374,16 @@ bool hikarisubApp::OnInit()
 
 		//on x64 it makes not working unicode toupper tolower conversion
 		//setlocale(LC_CTYPE, "C");
+		//without a wxLocale (English, or when it failed) LC_CTYPE stays "C",
+		//then case-insensitive matching folds only A-Z
+		const char *ctype = setlocale(LC_CTYPE, nullptr);
+		if (!ctype || !strcmp(ctype, "C") || !strcmp(ctype, "POSIX")){
+			ctype = setlocale(LC_CTYPE, "");
+#ifndef _WIN32
+			if (!ctype || !strcmp(ctype, "C") || !strcmp(ctype, "POSIX"))
+				setlocale(LC_CTYPE, "C.UTF-8");
+#endif
+		}
 		//locale numbers changes here cause of it is set with wxlocale, I have to change it back
 		setlocale(LC_NUMERIC, "C");
 
