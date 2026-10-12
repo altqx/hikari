@@ -267,6 +267,7 @@ void MisspellReplacer::FillRulesList()
 	if (rulesText.empty()){
 		FillWithDefaultRules(rulesText);
 	}
+	rulesText.Replace(L"\r\n", L"\n");
 	wxStringTokenizer tokenizer(rulesText, L"\n", wxTOKEN_STRTOK);
 	wxString headertoken = tokenizer.GetNextToken();
 	if (headertoken.StartsWith(L"#HikariSub rules file"))
