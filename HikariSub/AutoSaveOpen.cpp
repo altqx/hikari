@@ -18,6 +18,7 @@
 #include "HikariSubFrame.h"
 #include "TabPanel.h"
 #include "HikariStaticBoxSizer.h"
+#include "OpennWrite.h"
 #include <wx/dir.h>
 #include <wx/tokenzr.h>
 
@@ -124,6 +125,14 @@ void AutoSaveOpen::FindFiles()
 void AutoSaveOpen::GenerateList()
 {
 	wxString path = Options.pathfull + L"/Subs/*";
+	//the autosaves are listed only from a folder that only the user may
+	//open, as MakePrivateFolder makes them in, and not from one another user
+	//could have put or swapped files in
+	if (wxDir::Exists(Options.pathfull + L"/Subs") && !MakePrivateFolder(Options.pathfull + L"/Subs")) {
+		HikariLog(_("Cannot open auto save folder"));
+		HikariLogSilent(wxString::Format(L"The autosave folder is not private: %s", Options.pathfull + L"/Subs"));
+		return;
+	}
 
 	TIME_ZONE_INFORMATION timeZoneInfo;
 	GetTimeZoneInformation(&timeZoneInfo);
