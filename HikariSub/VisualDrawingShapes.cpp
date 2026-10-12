@@ -190,7 +190,7 @@ void ShapesEdition::OnListChanged(wxCommandEvent& evt)
 {
 	if (CheckModified()) {
 		if (HikariMessageBox(wxString::Format(_("Save changes to shape \"%s\"?"),
-			currentShape.shape), _("Confirmation"), wxYES_NO, this) == wxYES) {
+			currentShape.name), _("Confirmation"), wxYES_NO, this) == wxYES) {
 			Save(ID_BUTTON_COMMIT);
 		}
 	}
