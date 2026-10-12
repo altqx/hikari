@@ -17,8 +17,8 @@ namespace hikari::application {
 // SubsGrid::SetTlMode(true) on a Document: without "TLMode" in Script Info
 // a copy of the Default Style (the first Style when there is none) named
 // TLmode, TLmode1, ... (the first free name) with alignment 8 is added and
-// named in "TLMode Style"; then "TLMode: Yes". False without a Script Info
-// section.
+// named in "TLMode Style"; then "TLMode: Yes". An ASS Document without a
+// Script Info section gets one; false for the other formats.
 bool turnOnTranslationMode(core::Document &document);
 
 // SubsGrid::SetTlMode(false) ("Turning off translator mode", as Save
@@ -38,7 +38,8 @@ std::expected<void, CommandRefusal> turnOffTranslationMode(EditSession &session)
 // line ("\r", Linux) follows it; an ".ass" file gives its Dialogue lines;
 // other files give every non-empty line (a Linux "\r" line included).
 // Translation mode is turned on and the original shown ("TLMode Showtl:
-// Yes"). Refused for the line formats.
+// Yes"). Refused for the line formats and PlainText
+// (E5-tlmode-needs-script-info).
 std::expected<void, CommandRefusal> pasteTranslation(EditSession &session, std::u8string_view fileText,
                                                      std::u8string_view extension, const LineVisible &visible = {},
                                                      const core::PasteConversion &conversion = {});

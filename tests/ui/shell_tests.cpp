@@ -6387,6 +6387,68 @@ private slots:
         QVERIFY(!application->turnOnTranslationMode());
     }
 
+    // E5-tlmode-needs-script-info: an ASS file without a [Script Info]
+    // section turns the mode on and saves the section at the top (legacy
+    // AddSInfo and SaveFile's header); a plain-text Document leaves the check
+    // box and Paste translation disabled, and both say why.
+    void translatorModeNeedsScriptInfo()
+    {
+        const QString ass = dir.filePath(QStringLiteral("e5-sectionless.ass"));
+        const QByteArray body = "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,A\n";
+        {
+            QFile f(ass);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(body);
+        }
+        QVERIFY(application->openFile(ass));
+        auto *check = item("translatorMode");
+        QTRY_VERIFY(check->isEnabled());
+        QVERIFY(application->translationHint().isEmpty());
+        QCOMPARE(QQmlProperty(check, QStringLiteral("ToolTip.text"), qmlContext(check)).read().toString(),
+                 QStringLiteral("Translator mode displays and saves both foreign text and translation text"));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(check));
+        QTRY_VERIFY(application->editor().translationMode());
+        QVERIFY(check->property("checked").toBool());
+        QVERIFY(application->editor().save());
+        application->waitForWrites();
+        QFile saved(ass);
+        QVERIFY(saved.open(QIODevice::ReadOnly));
+        QCOMPARE(saved.readAll(), QByteArray("[Script Info]\nTLMode: Yes\n\n") + body);
+
+        const QString text = dir.filePath(QStringLiteral("e5-plain.txt"));
+        {
+            QFile f(text);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("first line\nsecond line\n");
+        }
+        application->addPage(); // the empty tab takes the file
+        QVERIFY(application->openFile(text));
+        auto *session = targetSession();
+        QCOMPARE(session->document().format(), core::SubtitleFormat::PlainText);
+        QTRY_VERIFY(!check->isEnabled());
+        QVERIFY(!application->translatorModeAvailable());
+        QVERIFY(!application->turnOnTranslationMode());
+        const QString hint = application->translationHint();
+        QCOMPARE(hint, QStringLiteral("Translation needs an ASS file: plain text cannot store it."));
+        QCOMPARE(QQmlProperty(check, QStringLiteral("ToolTip.text"), qmlContext(check)).read().toString(), hint);
+        QVERIFY(check->property("hoverEnabled").toBool()); // the tooltip reaches it while disabled
+        QVERIFY(!application->canPasteTranslation());
+        auto *grid = item("editingGrid");
+        grid->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, grid->mapToScene(QPointF(grid->width() / 2, 30)).toPoint());
+        auto *menu = grid->findChild<QObject *>(QStringLiteral("gridMenu"));
+        QVERIFY(menu);
+        QTRY_VERIFY(menu->property("visible").toBool());
+        auto *paste = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("pasteTranslation"));
+        QVERIFY(paste);
+        QVERIFY(!paste->property("enabled").toBool());
+        QCOMPARE(paste->property("help").toString(), hint); // the status bar's text over it
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QVERIFY(!session->document().scriptInfo(u8"TLMode"));
+    }
+
     // E5: an ASS Document needs a file too (HikariSubFrame.cpp:2401,
     // SubsPath != ""): an Untitled one leaves the check box disabled.
     void translatorModeNeedsAFile()

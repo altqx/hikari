@@ -298,10 +298,15 @@ public:
     // HikariSubFrame.cpp:2401); turning it on is one "Turning on translator
     // mode" step; turning it off (after QML's confirmation) is
     // turnOffTranslationMode. "Moving tags" writes AUTO_MOVE_TAGS_FROM_ORIGINAL.
+    // E5-tlmode-needs-script-info: a PlainText Document has no Script Info to
+    // hold the mode, so the check box and Paste translation are disabled and
+    // translationHint says why (empty for every other Document).
     Q_PROPERTY(bool translatorModeAvailable READ translatorModeAvailable NOTIFY tabsChanged)
+    Q_PROPERTY(QString translationHint READ translationHint NOTIFY tabsChanged)
     // W1: DirectShow plays the video (Windows, video.playbackPlayer 1).
     Q_PROPERTY(bool directShowPlayback READ directShowPlayback NOTIFY playbackPlayerChanged)
     bool translatorModeAvailable() const;
+    QString translationHint() const;
     Q_INVOKABLE bool turnOnTranslationMode();
     Q_INVOKABLE void setMoveTags(bool on);
     // GLOBAL_SAVE_WITH_VIDEO_NAME (legacy SUBS_AUTONAMING, subtitles.saveWithVideoName).
@@ -369,7 +374,8 @@ public:
     // G4: "Split lines": "videoTime" (GRID_SPLIT_BY_VIDEO_TIME) or "frames"
     // (GRID_SPLIT_BY_FRAME), against the open video's timebase.
     Q_INVOKABLE bool splitLines(const QString &kind);
-    // E3: GRID_PASTE_TRANSLATION from a file (ASS Documents with a file), and
+    // E3: GRID_PASTE_TRANSLATION from a file (ASS Documents with a file; not
+    // PlainText, E5-tlmode-needs-script-info), and
     // the "Dialogue shifting window" moves (TLDialog, legacy MoveTextTL modes 0-5).
     Q_INVOKABLE bool canPasteTranslation() const;
     Q_INVOKABLE QUrl targetFolder() const;

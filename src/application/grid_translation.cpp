@@ -144,7 +144,7 @@ std::expected<void, CommandRefusal> pasteTranslation(EditSession &session, std::
                                                      const core::PasteConversion &conversion)
 {
     const auto format = session.document().format();
-    if (format != core::SubtitleFormat::Ass && format != core::SubtitleFormat::PlainText)
+    if (format != core::SubtitleFormat::Ass) // E5-tlmode-needs-script-info: PlainText has no Script Info
         return std::unexpected(CommandRefusal::Invalid);
     // The text is as OpenWrite::FileOpen read it (backends::readLegacyTextFile,
     // R5-per-platform): on Windows CRLF is already LF; on Linux each line

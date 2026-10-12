@@ -125,6 +125,45 @@ TEST(TranslatorMode, OnlyForAss)
     EXPECT_EQ(turnOnTranslationModeStep(session).error(), CommandRefusal::Invalid);
 }
 
+// E5-tlmode-needs-script-info: an ASS file without a [Script Info] section
+// gets one at the top, as legacy's AddSInfo and SaveFile header give it
+// (SubsFile.cpp:1020-1045, SubsGridBase.cpp:1490); Undo takes it away again.
+TEST(TranslatorMode, AnAssFileWithoutScriptInfoGetsTheSection)
+{
+    const std::string sectionless = std::string(kStyles) + kPlain.substr(kPlain.find("[Events]"));
+    EditSession session{load(sectionless)};
+    ASSERT_TRUE(turnOnTranslationModeStep(session));
+    EXPECT_EQ(session.document().scriptInfo(u8"TLMode"), u8"Yes");
+    const std::string file = saved(session.document());
+    EXPECT_EQ(file.substr(0, file.find("[V4+ Styles]")), "[Script Info]\nTLMode Style: TLmode\nTLMode: Yes\n\n");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(saved(session.document()), sectionless);
+
+    // E3's Paste translation turns the mode on there too.
+    EditSession pasted{load(sectionless)};
+    ASSERT_TRUE(pasteTranslation(pasted, u8"a\nb\n", u8"txt"));
+    EXPECT_EQ(pasted.document().scriptInfo(u8"TLMode Showtl"), u8"Yes");
+    EXPECT_EQ(pasted.document().lines()[0]->translation, u8"a");
+    EXPECT_TRUE(saved(pasted.document()).starts_with("[Script Info]\nTLMode Style: TLmode\nTLMode: Yes\nTLMode Showtl: Yes\n\n"));
+}
+
+// E5-tlmode-needs-script-info: a PlainText Document (legacy LoadTXT kept it
+// ASS) has no Script Info for the mode: both are refused and nothing changes.
+TEST(TranslatorMode, PlainTextIsRefused)
+{
+    const auto text = core::loadSubtitle(bytesOf("first line\nsecond line\n"), u8"txt");
+    ASSERT_TRUE(text);
+    ASSERT_EQ(text->document.format(), core::SubtitleFormat::PlainText);
+    EditSession session{text->document};
+    const auto steps = session.historySize();
+    EXPECT_EQ(turnOnTranslationModeStep(session).error(), CommandRefusal::Invalid);
+    EXPECT_EQ(pasteTranslation(session, u8"a\nb\n", u8"txt").error(), CommandRefusal::Invalid);
+    EXPECT_EQ(session.historySize(), steps);
+    EXPECT_FALSE(session.document().scriptInfo(u8"TLMode"));
+    core::Document plain = text->document;
+    EXPECT_FALSE(plain.setScriptInfo(u8"TLMode", u8"Yes"));
+}
+
 TEST(TranslatorMode, TurningOffAndOnRoundTripsTheTLModeFile)
 {
     // C87-unconfirmed-roundtrip: the "\fD" original loads Unconfirmed.

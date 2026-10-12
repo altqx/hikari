@@ -1,7 +1,9 @@
 // E5: the Line editor's "Translator mode" check box (legacy EditBox TlMode,
 // EditBox.cpp:215-217, 1072-1078 and 1200). Turning it on is one "Turning on
 // translator mode" step; turning it off asks first, as SubsGrid::SetTlMode
-// (SubsGridBase.cpp:1339-1342) does, with No as the default answer.
+// (SubsGridBase.cpp:1339-1342) does, with No as the default answer. For a
+// PlainText Document it is disabled and its tooltip says why
+// (E5-tlmode-needs-script-info); hover reaches it while disabled.
 import QtQuick
 import QtQuick.Controls
 
@@ -14,8 +16,10 @@ CheckBox {
     focusPolicy: Qt.NoFocus
     enabled: app.translatorModeAvailable
     checked: editor.translationMode
+    hoverEnabled: true
     ToolTip.visible: hovered
-    ToolTip.text: qsTr("Translator mode displays and saves both foreign text and translation text")
+    ToolTip.text: app.translationHint.length > 0 ? app.translationHint
+        : qsTr("Translator mode displays and saves both foreign text and translation text")
     function rebind() {
         checked = Qt.binding(() => check.editor.translationMode)
     }

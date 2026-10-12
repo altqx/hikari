@@ -63,7 +63,7 @@ std::expected<void, CommandRefusal> turnOnTranslationModeStep(EditSession &sessi
 {
     const auto &document = session.document();
     const auto format = document.format();
-    if (translationModeOn(document) || (format != core::SubtitleFormat::Ass && format != core::SubtitleFormat::PlainText))
+    if (translationModeOn(document) || format != core::SubtitleFormat::Ass)
         return std::unexpected(CommandRefusal::Invalid);
     return session.run(Command{"Turning on translator mode", session.revision(), {},
                                [](core::Document &d) { return turnOnTranslationMode(d); }});
