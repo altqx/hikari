@@ -44,6 +44,10 @@ protected:
                 wait(300ms);
                 observed.push_back(getStringProperty("mainWindow/hotkeyList", "selectedRow")); // 1: the first row
                 mouseClick("mainWindow/hotkeyMap");
+                // The mapping window exists before the click shows it for the
+                // selected action (capture), so wait until it is shown.
+                for (int i = 0; i < 100 && getStringProperty("settingsHotkeyMapping", "visible") != "true"; ++i)
+                    wait(100ms);
                 if (waitForItem("settingsHotkeyMapping/hotkeyMappingText", 5s)) {
                     observed.push_back(getStringProperty("settingsHotkeyMapping/hotkeyMappingText", "text")); // 2
                     enterKey("settingsHotkeyMapping/hotkeyMappingKeys", Qt::Key_J,
