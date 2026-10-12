@@ -496,11 +496,14 @@ TEST(CheckedIn, KeyMapIsTheCandidateMapOfTheRecordedInputs)
     // ten column headings, a table O4's extraction never read, were then
     // added to keys.ts under HikariSub.Grid: ten more exact rows, six of them
     // legacy ids counted obsolete before ("L.", "Left", "Right", "Vert.",
-    // "CPS", "Wraps").
-    EXPECT_EQ(counts.value(MapStatus::Exact), 812);
-    EXPECT_EQ(counts.value(MapStatus::Placeholder), 22);
-    EXPECT_EQ(counts.value(MapStatus::New), 332);
-    EXPECT_EQ(counts.value(MapStatus::Obsolete), 1132);
+    // "CPS", "Wraps"). keys.ts was then extracted again from the sources
+    // (hikari_i18n_keymap, O4-post-keys-carried): the keys added after O4
+    // whose text is a legacy id are mapped too, so 812 exact, 22 placeholder,
+    // 332 new and 1132 obsolete rows became the counts below.
+    EXPECT_EQ(counts.value(MapStatus::Exact), 1253);
+    EXPECT_EQ(counts.value(MapStatus::Placeholder), 61);
+    EXPECT_EQ(counts.value(MapStatus::New), 551);
+    EXPECT_EQ(counts.value(MapStatus::Obsolete), 716);
 }
 
 // The conversion reproduces the checked-in gettext catalogs and report, and
