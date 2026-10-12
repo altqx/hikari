@@ -1835,6 +1835,18 @@ void HikariSubFrame::InsertTab(bool refresh/*=true*/)
 	Tabs->AddPage(refresh);
 }
 
+bool HikariSubFrame::OpenFileInNewTab(const wxString &filename)
+{
+	int previousTab = Tabs->GetSelection();
+	InsertTab();
+	TabPanel *tab = GetTab();
+	bool opened = OpenFile(filename);
+	//RemoveUnusedPage keeps the tab when part of the file was opened in it
+	if (!opened)
+		Tabs->RemoveUnusedPage(Tabs->FindPanel(tab, false), previousTab);
+	return opened;
+}
+
 bool comp(wxString first, wxString second)
 {
 	const std::collate<wchar_t>& f = std::use_facet<std::collate<wchar_t>>(HikariSubFrame::GetLocale());

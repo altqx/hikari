@@ -50,7 +50,11 @@ void DragnDrop::OnDropTimer(wxTimerEvent & evt)
 			if (y >= h - Hikari->Tabs->GetHeight()) {
 				int pixels;
 				int tab = Hikari->Tabs->FindTab(x, &pixels);
-				if (tab < 0) { Hikari->InsertTab(); }
+				if (tab < 0) {
+					//dropped on the tab bar but on no tab
+					Hikari->OpenFileInNewTab(files[0]);
+					return;
+				}
 				else if (Hikari->Tabs->iter != tab) { Hikari->Tabs->ChangePage(tab); }
 			}
 			else {

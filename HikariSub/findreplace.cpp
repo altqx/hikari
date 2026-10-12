@@ -163,11 +163,14 @@ void FindReplace::ShowResult(TabPanel *tab, const wxString &path, int keyLine, c
 		}
 		if (!foundSubs){
 			if (!Hikari->GetTab()->SubsPath.empty())
-				Hikari->InsertTab();
-
-			Hikari->OpenFile(path);
+				Hikari->OpenFileInNewTab(path);
+			else
+				Hikari->OpenFile(path);
 		}
 		TabPanel *ntab = Hikari->GetTab();
+		//the subtitles could not be opened, and a tab made for them is gone
+		if (ntab->SubsPath != path)
+			return;
 		if (keyLine < ntab->grid->file->GetCount()){
 			ntab->edit->SetLine(keyLine);
 			ntab->grid->SelectRow(keyLine);

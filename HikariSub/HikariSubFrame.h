@@ -84,6 +84,9 @@ public:
 	TabPanel* GetTab();
 
 	void InsertTab(bool refresh = true);
+	//opens a file in a new tab and removes that tab again when nothing of
+	//the file could be opened in it
+	bool OpenFileInNewTab(const wxString &filename);
 	void OpenFiles(wxArrayString &files, bool intab = false, bool nofreeze = false, bool newtab = false);
 	void OpenAudioInTab(TabPanel *pan, int id, const wxString &path);
 	void HideEditor(bool save = true);
