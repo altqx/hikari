@@ -78,6 +78,43 @@ static void LogSaveFailure(const WindowsSaveFile &file)
 	}
 }
 
+//The path a save to fileName writes. ReplaceFileW on a symbolic link
+//replaces the link with a plain file and leaves its target as it was, so a
+//link, or a junction, is followed to the file it leads to. A link that leads
+//to no file is refused, as on POSIX. Other reparse points, such as cloud
+//placeholders, are saved under their own name.
+static bool ResolveSaveTarget(const wxString &fileName, wxString *target)
+{
+	*target = fileName;
+	WIN32_FIND_DATAW found;
+	HANDLE find = ::FindFirstFileW(fileName.wc_str(), &found);
+	if (find == INVALID_HANDLE_VALUE) { return true; }
+	::FindClose(find);
+	if (!(found.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) || !IsReparseTagNameSurrogate(found.dwReserved0)) {
+		return true;
+	}
+	HANDLE handle = ::CreateFileW(fileName.wc_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+		nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
+	if (handle == INVALID_HANDLE_VALUE) { return false; }
+	std::vector<wchar_t> path(MAX_PATH + 1);
+	DWORD length = ::GetFinalPathNameByHandleW(handle, path.data(), static_cast<DWORD>(path.size()),
+		FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+	if (length >= path.size()) {
+		path.resize(length + 1);
+		length = ::GetFinalPathNameByHandleW(handle, path.data(), static_cast<DWORD>(path.size()),
+			FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+	}
+	::CloseHandle(handle);
+	if (length == 0 || length >= path.size()) { return false; }
+	//"\\?\C:\dir\file" or "\\?\UNC\server\share\file"
+	wxString resolved(path.data(), length);
+	wxString rest;
+	if (resolved.StartsWith(L"\\\\?\\UNC\\", &rest)) { resolved = L"\\\\" + rest; }
+	else if (resolved.StartsWith(L"\\\\?\\", &rest)) { resolved = rest; }
+	*target = resolved;
+	return true;
+}
+
 static bool PathExists(const wxString &path)
 {
 	return ::GetFileAttributesW(path.wc_str()) != INVALID_FILE_ATTRIBUTES;
@@ -381,13 +418,11 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 	//write a temporary file and replace the file with it only when all of it
 	//was written, so a failed or short write leaves the file as it was
 	wxString target = fileName;
-#ifndef _WIN32
 	if (!ResolveSaveTarget(fileName, &target)){
 		HikariLog(_("Cannot save to file."));
 		return false;
 	}
 	fname.Assign(target);
-#endif
 	//a file that cannot be written must not be replaced either; on POSIX a
 	//rename needs only a writable folder and would replace it
 	if (fname.FileExists() && !fname.IsFileWritable()){
@@ -456,14 +491,12 @@ bool OpenWrite::OpenTemp(const wxString &fileName)
 	useTemp = true;
 	isfirst = true;
 	wxString target = fileName;
-#ifndef _WIN32
 	if (!ResolveSaveTarget(fileName, &target)){
 		writeFailed = true;
 		HikariLog(_("Cannot open file."));
 		return false;
 	}
 	fname.Assign(target);
-#endif
 	//a file that cannot be written must not be replaced either
 	writeFailed = (fname.FileExists() && (!fname.IsFileReadable() || !fname.IsFileWritable())) ||
 #ifdef _WIN32
