@@ -741,7 +741,9 @@ void Dialogue::SetRaw(const wxString &ldial)
 			MarginR = wxAtoi(assdal.GetNextToken());
 			MarginV = wxAtoi(assdal.GetNextToken());
 			Effect = assdal.GetNextToken();
-			Effect.Trim(false);
+			//keep the form feed of the TLMode Unconfirmed marker \fD
+			if (!Effect->StartsWith(L"\f"))
+				Effect.Trim(false);
 			Effect.Trim(true);
 			Text = ldial.Mid(assdal.GetPosition());
 			Text.Trim(false);
