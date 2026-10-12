@@ -96,7 +96,12 @@ public:
 	void Clearing(bool setup = true);
 	void Convert(char type);
 
-	bool SaveFile(const wxString &filename, bool cstat = true, bool loadFromEditbox = false);
+	// commitEditBox false: the caller committed the edit box with
+	// CommitEditBoxForSave before it changed the document for the save
+	bool SaveFile(const wxString &filename, bool cstat = true, bool loadFromEditbox = false, bool commitEditBox = true);
+	// commits what the edit box holds, as a save does before it writes, when
+	// typing is not committed at once (GRID_SAVE_AFTER_CHARACTER_COUNT > 1)
+	void CommitEditBoxForSave(bool loadFromEditbox = false);
 	void ChangeTimes(const ShiftTimesSettings &settings, bool byFrame = false);
 
 	void SortIt(short what, bool all = true);
@@ -123,6 +128,15 @@ public:
 	void SetStartTime(int stime);
 	void SetEndTime(int etime);
 	bool SetTlMode(bool turnOn, bool dontShowDialog = false);
+	// takes translation mode out of the working copy: the TLMode script info
+	// and style go and the translations take the place of the original text;
+	// no step is recorded, see RecordTlModeOff
+	void RemoveTlMode();
+	// turns the mode off in the grid and records the step RemoveTlMode began
+	void RecordTlModeOff();
+	// drops the changes no step holds yet, as RemoveTlMode's before
+	// RecordTlModeOff, and shows the document as the current step has it
+	void DropUnrecordedChanges();
 	void LoadDefault(bool line = true, bool sav = true, bool endload = true);
 	void GetASSRes(int *x, int *y);
 	void GetLayoutRes(int* x, int* y);

@@ -317,16 +317,22 @@ void SubsGrid::Convert(char type)
 	RefreshColumns();
 }
 
-bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFromEditbox)
+void SubsGrid::CommitEditBoxForSave(bool loadFromEditbox)
 {
-	wxMutexLocker lock(editionMutex);
-
 	int saveAfterCharacterCount = Options.GetInt(GRID_SAVE_AFTER_CHARACTER_COUNT);
-	bool showOriginalOnVideo = !Options.GetBool(TL_MODE_HIDE_ORIGINAL_ON_VIDEO);
 	bool dummyEditboxChanges = (loadFromEditbox && !saveAfterCharacterCount);
 	if (dummyEditboxChanges || saveAfterCharacterCount > 1){
 		edit->Send(EDITBOX_LINE_EDITION, false, dummyEditboxChanges, true);
 	}
+}
+
+bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFromEditbox, bool commitEditBox)
+{
+	wxMutexLocker lock(editionMutex);
+
+	bool showOriginalOnVideo = !Options.GetBool(TL_MODE_HIDE_ORIGINAL_ON_VIDEO);
+	if (commitEditBox)
+		CommitEditBoxForSave(loadFromEditbox);
 	wxString txt;
 	const wxString &tlmode = file->GetSInfo(L"TLMode");
 	bool translated = tlmode == L"Translated";
@@ -1561,43 +1567,76 @@ bool SubsGrid::SetTlMode(bool mode, bool dontShowDialog/* = false*/)
 			return true;
 		}
 
-		int iinf = -1;
-		file->GetSInfo(L"TLMode", &iinf);
-		if (iinf >= 0){
-			file->DeleteSInfo(iinf);
-		}
-		iinf = -1;
-		const wxString &vall = file->GetSInfo(L"TLMode Style", &iinf);
-		if (iinf >= 0){
-			int g = file->FindStyle(vall);
-			if (g >= 0){ file->DeleteStyle(g); }
-			file->DeleteSInfo(iinf);
-		}
-
-		for (size_t i = 0; i < file->GetCount(); i++)
-		{
-			Dialogue *dial = file->GetDialogue(i);
-			Dialogue *dialc = nullptr;
-			if (dial->TextTl != emptyString)
-			{
-				dialc = file->CopyDialogueF(i);
-				dialc->Text = dialc->TextTl;
-				dialc->TextTl = emptyString;
-			}
-			if (dial->IsDoubtful()){
-				if (!dialc){ dialc = CopyDialogue(i); }
-				dialc->ChangeState(4);
-			}
-		}
-
-		hasTLMode = false;
-		showOriginal = false;
-		Hikari->Menubar->Enable(GLOBAL_SAVE_TRANSLATION, false);
+		RemoveTlMode();
+		RecordTlModeOff();
+		return false;
 	}
 	edit->RefreshStyle();
 	Refresh(false);
-	SetModified((mode) ? GRID_TURN_ON_TLMODE : GRID_TURN_OFF_TLMODE);
+	SetModified(GRID_TURN_ON_TLMODE);
 	return false;
+}
+
+void SubsGrid::RemoveTlMode()
+{
+	int iinf = -1;
+	file->GetSInfo(L"TLMode", &iinf);
+	if (iinf >= 0){
+		file->DeleteSInfo(iinf);
+	}
+	iinf = -1;
+	const wxString &vall = file->GetSInfo(L"TLMode Style", &iinf);
+	if (iinf >= 0){
+		int g = file->FindStyle(vall);
+		if (g >= 0){ file->DeleteStyle(g); }
+		file->DeleteSInfo(iinf);
+	}
+
+	for (size_t i = 0; i < file->GetCount(); i++)
+	{
+		Dialogue *dial = file->GetDialogue(i);
+		Dialogue *dialc = nullptr;
+		if (dial->TextTl != emptyString)
+		{
+			dialc = file->CopyDialogueF(i);
+			dialc->Text = dialc->TextTl;
+			dialc->TextTl = emptyString;
+		}
+		if (dial->IsDoubtful()){
+			if (!dialc){ dialc = CopyDialogue(i); }
+			dialc->ChangeState(4);
+		}
+	}
+}
+
+void SubsGrid::RecordTlModeOff()
+{
+	hasTLMode = false;
+	showOriginal = false;
+	Hikari->Menubar->Enable(GLOBAL_SAVE_TRANSLATION, false);
+	edit->RefreshStyle();
+	Refresh(false);
+	SetModified(GRID_TURN_OFF_TLMODE);
+}
+
+void SubsGrid::DropUnrecordedChanges()
+{
+	//the working copy comes back from the current step with the selection
+	//that step was recorded with; the one shown now stays
+	std::set<int> selected = file->GetSelectionsAsKeys();
+	file->DummyUndoF();
+	file->ClearSelections();
+	for (int sel : selected)
+		file->InsertSelection(sel);
+	SpellErrors.clear();
+	edit->RefreshStyle();
+	edit->SetLine(currentLine, false, false);
+	RefreshColumns();
+	VideoBox *vb = tab->video;
+	if (vb->GetState() != None){
+		vb->OpenSubs(OPEN_DUMMY);
+		vb->Render();
+	}
 }
 
 //this method should have different name

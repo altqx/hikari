@@ -701,9 +701,7 @@ void HikariSubFrame::OnMenuSelected(wxCommandEvent& event)
 		SaveAll();
 	}
 	else if (id == GLOBAL_SAVE_TRANSLATION){
-		GetTab()->grid->SetTlMode(false, true);
-		GetTab()->edit->SetTlMode(false);
-		Save(true, -1, true);
+		SaveTranslation();
 	}
 	else if (id == GLOBAL_REMOVE_SUBS){
 		if (SavePrompt(3)){ event.SetInt(-1); return; }
@@ -1266,10 +1264,22 @@ bool HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 	if (!atab)
 		return false;
 
-	//the tab takes a new name, and the recent files list it, once the
-	//subtitles are saved under it
-	wxString savePath = atab->SubsPath;
+	wxString savePath;
 	bool nameWasChanged = false;
+	if (!ChooseSavePath(atab, showDialog, &savePath, &nameWasChanged))
+		return false;
+	return SaveTo(atab, tabToSave, savePath, nameWasChanged, changeLabel);
+}
+
+//the file Save writes: the tab's own, or one picked in the Save As dialog when
+//the tab has none, its format or, with autonaming, its name changes, or
+//showDialog asks for it; false when the dialog is cancelled
+bool HikariSubFrame::ChooseSavePath(TabPanel *atab, bool showDialog, wxString *savePath, bool *nameWasChanged)
+{
+	//the tab takes a new name, and the recent files list it, once the
+	//subtitles are saved under it, see SaveTo
+	*savePath = atab->SubsPath;
+	*nameWasChanged = false;
 	if (atab->grid->originalFormat != atab->grid->subsFormat
 		|| (Options.GetBool(SUBS_AUTONAMING)
 		&& atab->SubsName.BeforeLast(L'.') != atab->VideoName.BeforeLast(L'.') && atab->VideoName != emptyString)
@@ -1297,10 +1307,10 @@ bool HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 				goto repeatOpening;
 			}
 
-			savePath = path;
+			*savePath = path;
 			wxString ext = (atab->grid->subsFormat < SRT) ? L"ass" : (atab->grid->subsFormat == SRT) ? L"srt" : L"txt";
-			if (!savePath.EndsWith(ext)){ savePath << L"." << ext; }
-			nameWasChanged = true;
+			if (!savePath->EndsWith(ext)){ *savePath << L"." << ext; }
+			*nameWasChanged = true;
 		}
 		else{ return false; }
 	}
@@ -1311,11 +1321,28 @@ bool HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 			goto repeatOpening;
 		}
 	}
+	return true;
+}
+
+bool HikariSubFrame::SaveTo(TabPanel *atab, int tabToSave, const wxString &savePath, bool nameWasChanged, bool changeLabel,
+	bool translationOnly)
+{
+	SubsGrid *grid = atab->grid;
+	//what the edit box holds is committed, as its own step, before the save
+	//changes the document below, so that step holds none of those changes;
+	//it stays when the save fails
+	grid->CommitEditBoxForSave();
 	//the properties SwapAssProperties puts in stay only when they are saved
-	SubsFile::SInfoState sinfoBeforeSave = atab->grid->file->GetSInfoState();
-	if (atab->grid->SwapAssProperties()){ return false; }
-	if (!atab->grid->SaveFile(savePath)){
-		atab->grid->file->RestoreSInfo(sinfoBeforeSave);
+	SubsFile::SInfoState sinfoBeforeSave = grid->file->GetSInfoState();
+	if (grid->SwapAssProperties()){ return false; }
+	//translation mode goes from the working copy only; the caller records the
+	//step once the file holds the translation
+	if (translationOnly)
+		grid->RemoveTlMode();
+	if (!grid->SaveFile(savePath, true, false, false)){
+		grid->file->RestoreSInfo(sinfoBeforeSave);
+		if (translationOnly)
+			grid->DropUnrecordedChanges();
 		return false;
 	}
 	if (nameWasChanged) {
@@ -1335,6 +1362,32 @@ bool HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 #if _DEBUG
 	wxBell();
 #endif
+	return true;
+}
+
+//Save As with translation mode turned off, so that the translation alone is
+//saved. The step that turns the mode off is recorded, and marked saved, only
+//once the file holds the translation: a cancelled dialog or a failed save
+//leaves the document, the steps to redo and the saved step as they were.
+bool HikariSubFrame::SaveTranslation()
+{
+	TabPanel *atab = GetTab();
+	if (!atab)
+		return false;
+	wxString savePath;
+	bool nameWasChanged = false;
+	if (!ChooseSavePath(atab, true, &savePath, &nameWasChanged))
+		return false;
+	if (!SaveTo(atab, -1, savePath, nameWasChanged, false, true))
+		return false;
+
+	SubsGrid *grid = atab->grid;
+	grid->RecordTlModeOff();
+	atab->edit->SetTlMode(false);
+	grid->file->SetLastSave();
+	Toolbar->UpdateId(GLOBAL_SAVE_SUBS, false);
+	Menubar->Enable(GLOBAL_SAVE_SUBS, false);
+	Label();
 	return true;
 }
 

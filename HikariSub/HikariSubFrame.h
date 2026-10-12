@@ -56,6 +56,7 @@ public:
 	//wxBoxSizer *mains;
 	bool Save(bool dial, int wtab = -1, bool changeLabel = true);
 	void SaveAll();
+	bool SaveTranslation();
 
 	bool OpenFile(const wxString &filename, bool fulls = false, bool freeze = true);
 	void Label(int iter = 0, bool video = false, int wtab = -1, bool onlyTabs = false);
@@ -121,7 +122,10 @@ public:
 	MisspellReplacer *MR = nullptr;
 	wxRect borders;
 private:
-
+	bool ChooseSavePath(TabPanel *atab, bool showDialog, wxString *savePath, bool *nameWasChanged);
+	// translationOnly: saves with translation mode taken out, see SaveTranslation
+	bool SaveTo(TabPanel *atab, int tabToSave, const wxString &savePath, bool nameWasChanged, bool changeLabel,
+		bool translationOnly = false);
 
 	void OnConversion(char form);
 	void OnAssProps();
