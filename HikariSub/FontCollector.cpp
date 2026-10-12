@@ -185,6 +185,7 @@ FontCollectorDialog::FontCollectorDialog(wxWindow *parent, FontCollector *_fc)
 	fromMKV->SetValue(Options.GetBool(FONT_COLLECTOR_FROM_MKV));
 
 	Connect(7998, wxEVT_COMMAND_CHECKBOX_CLICKED, (wxObjectEventFunction)&FontCollectorDialog::OnChangeOpt);
+	Connect(7991, wxEVT_COMMAND_CHECKBOX_CLICKED, (wxObjectEventFunction)&FontCollectorDialog::OnChangeOpt);
 	console = new HikariTextCtrl(this, -1, emptyString, wxDefaultPosition, wxSize(500, 400), wxTE_MULTILINE | wxTE_READONLY);
 	console->Bind(wxEVT_LEFT_DCLICK, &FontCollectorDialog::OnConsoleDoubleClick, this);
 	//console->SetBackgroundColour(Options.GetColour(WINDOW_BACKGROUND));
@@ -455,7 +456,7 @@ void FontCollectorDialog::OnButtonStart(wxCommandEvent &event)
 		if (bOpenFontFolder->IsEnabled())
 			bOpenFontFolder->Enable(false);
 
-		bool subsfromMkv = fromMKV->GetValue();
+		bool subsfromMkv = fromMKV->GetValue() && fromMKV->IsEnabled();
 		bool subsDirectory = subsdir->GetValue();
 		Options.SetString(FONT_COLLECTOR_DIRECTORY, path->GetValue());
 		if (opts->GetSelection() == 3 && (Notebook::GetTab()->VideoPath == emptyString || Notebook::GetTab()->SubsPath == emptyString)){
@@ -554,6 +555,7 @@ void FontCollectorDialog::OnChangeOpt(wxCommandEvent &event)
 	fromMKV->Enable(opts->GetSelection() != 0 && Notebook::GetTab()->VideoPath.Lower().EndsWith(L".mkv"));
 	Options.SetInt(FONT_COLLECTOR_ACTION, opts->GetSelection());
 	Options.SetBool(FONT_COLLECTOR_USE_SUBS_DIRECTORY, subsdir->GetValue());
+	Options.SetBool(FONT_COLLECTOR_FROM_MKV, fromMKV->GetValue());
 	Options.SaveOptions(true, false);
 }
 
