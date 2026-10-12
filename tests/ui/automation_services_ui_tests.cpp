@@ -198,6 +198,33 @@ private slots:
 #endif
     }
 
+    // The point size found for a face is kept for the face the font resolves
+    // to: a face measured before it is added (another face answering for it)
+    // is searched again once it is there.
+    void textExtentsOfAFaceAddedAfterAMeasure()
+    {
+#ifdef _WIN32
+        QSKIP("GDI makes the font on every measure; the point size search and its cache are the Linux measure's");
+#else
+        if (QFontDatabase::families().contains(QStringLiteral("OCRA")))
+            QSKIP("OCR A is installed here, so no other face answers for it before it is added");
+        std::vector<std::string> st = style("OCRA");
+        st[2] = "60";
+        QtTextMeasurePort measure;
+        const auto before = measure.measure(st, "Hello world");
+        QVERIFY(before);
+        QVERIFY(QFontDatabase::addApplicationFont(QStringLiteral(HIKARI_LATE_TEST_FONT)) >= 0);
+        const auto after = measure.measure(st, "Hello world");
+        const auto fresh = QtTextMeasurePort().measure(st, "Hello world");
+        QVERIFY(after && fresh);
+        QCOMPARE(after->width, fresh->width);
+        QCOMPARE(after->height, fresh->height);
+        QCOMPARE(after->descent, fresh->descent);
+        QCOMPARE(after->height, 60.0);
+        QVERIFY(after->width != before->width);
+#endif
+    }
+
     void wildcardsBecomeNameFilters()
     {
         QCOMPARE(hikari::ui::nameFiltersOf("Text files (*.txt)|*.txt|All files|*.*;*"),

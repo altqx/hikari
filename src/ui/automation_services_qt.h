@@ -26,15 +26,16 @@ public:
 // Legacy GetLineTextExtents: GDI on Windows (the legacy code), elsewhere the
 // font legacy's wx made for the style's size, a line that high (wxFont of a
 // pixel height). Results are scaled by the style's ScaleX/ScaleY; Spacing
-// adds per character.
+// adds per character. Used on the GUI thread only (QFont, and the cache).
 class QtTextMeasurePort : public application::TextMeasurePort {
 public:
     std::optional<application::TextExtents> measure(const std::vector<std::string> &style,
                                                     const std::string &text) override;
 
 private:
-    // The point size found for a face and a pixel height (the search below).
-    std::map<std::tuple<std::string, bool, bool, int>, int> m_points;
+    // The point size found for a resolved face (family and style), the
+    // requested bold and italic, and a pixel height (the search in measure).
+    std::map<std::tuple<std::string, std::string, bool, bool, int>, int> m_points;
 };
 
 // The legacy wx wildcard ("Label|*.a;*.b|...") as Qt name filters.

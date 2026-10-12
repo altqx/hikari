@@ -3,6 +3,7 @@
 #include <QClipboard>
 #include <QDir>
 #include <QFont>
+#include <QFontInfo>
 #include <QFontMetrics>
 #include <QGuiApplication>
 #include <QImage>
@@ -135,7 +136,11 @@ std::optional<application::TextExtents> QtTextMeasurePort::measure(const std::ve
         font.setPointSize(points);
         return QFontMetrics(font, &device).height();
     };
-    const auto key = std::tuple{field(style, Fontname), font.bold(), font.italic(), pixelHeight};
+    // Keyed on the face the font resolves to, so a face added after a
+    // measure that fell back to another one is searched again.
+    const QFontInfo face(font);
+    const auto key = std::tuple{face.family().toStdString(), face.styleName().toStdString(), font.bold(),
+                                font.italic(), pixelHeight};
     auto found = m_points.find(key);
     if (found == m_points.end()) {
         // From the size a line of the em's height would have, by whole points.
