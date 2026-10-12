@@ -23,6 +23,7 @@ add_executable(hikarisub_tests
     PlaybackTests.cpp
     SaveTargetTests.cpp
     SemVerTests.cpp
+    SrtTagsTests.cpp
     TimebaseTests.cpp
     UndoHistoryTests.cpp
     TextComparisonTests.cpp

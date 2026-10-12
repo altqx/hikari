@@ -166,6 +166,7 @@ private:
 	wxBoxSizer* TagButtonsSizer = nullptr;
 
 	void PutinNonass(const wxString& tag, const wxString& pattern);
+	void SetSrtTag(const wxString& name, bool on);
 	void ChangeFont(Styles *retStyle, Styles *editedStyle);
 	void OnCommit(wxCommandEvent& event);
 	void OnNewline(wxCommandEvent& event);

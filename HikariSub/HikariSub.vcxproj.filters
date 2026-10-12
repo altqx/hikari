@@ -873,6 +873,9 @@
     <ClInclude Include="TagFindReplace.h">
       <Filter>T</Filter>
     </ClInclude>
+    <ClInclude Include="SrtTags.h">
+      <Filter>S</Filter>
+    </ClInclude>
     <ClInclude Include="TextEditorTagList.h">
       <Filter>T</Filter>
     </ClInclude>

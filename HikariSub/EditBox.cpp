@@ -32,6 +32,7 @@
 #include "Toolbar.h"
 #include "RendererVideo.h"
 #include "AudioBox.h"
+#include "SrtTags.h"
 
 
 ComboBoxCtrl::ComboBoxCtrl(wxWindow *parent, int id, const wxSize &size, const wxString &desc, const wxValidator &validator)
@@ -739,6 +740,46 @@ void EditBox::PutinNonass(const wxString &tag, const wxString &pattern)
 
 }
 
+// Turns an SRT tag such as <b> on or off for the font dialog: on writes it
+// like the toolbar buttons, off removes the pairs of that tag around the
+// selection, or in every selected Line when several are selected.
+void EditBox::SetSrtTag(const wxString &name, bool on)
+{
+	if (on){
+		PutinNonass(name, name);
+		return;
+	}
+	if (grid->file->SelectionsSize() < 2){
+		long from, to;
+		TextEdit->GetSelection(&from, &to);
+		SrtTagRemoval removal = RemoveSrtTagPairs(TextEdit->GetValue().ToStdWstring(), name.ToStdWstring(),
+			(size_t)from, (size_t)to);
+		if (!removal.changed)
+			return;
+		TextEdit->SetTextS(wxString(removal.text), true);
+		TextEdit->SetFocus();
+		TextEdit->SetSelection((int)removal.from, (int)removal.to);
+	}
+	else{
+		wxArrayInt sels;
+		grid->file->GetSelections(sels);
+		bool changed = false;
+		for (size_t i = 0; i < sels.size(); i++)
+		{
+			wxString txt = grid->file->GetDialogue(sels[i])->Text;
+			std::wstring text = txt.ToStdWstring();
+			SrtTagRemoval removal = RemoveSrtTagPairs(text, name.ToStdWstring(), 0, text.size());
+			if (!removal.changed)
+				continue;
+			Dialogue *dialc = grid->file->CopyDialogueF(sels[i]);
+			dialc->Text = wxString(removal.text);
+			changed = true;
+		}
+		if (changed)
+			grid->SetModified(EDITBOX_MULTILINE_EDITION);
+	}
+}
+
 void EditBox::OnFontClick(wxCommandEvent& event)
 {
 	char form = grid->subsFormat;
@@ -834,7 +875,7 @@ void EditBox::ChangeFont(Styles *retStyle, Styles *editedStyle)
 			FindTag(L"b(0|1)", emptyString, 0, true);
 			PutTagInText(L"\\b" + bld, L"\\b" + bld1, false);
 		}
-		else if (form == SRT){ PutinNonass(L"b", L"b"); }
+		else if (form == SRT){ SetSrtTag(L"b", retStyle->Bold); }
 		else if (form == MDVD){ PutinNonass((retStyle->Bold) ? wxString(L"Y:b") : emptyString, L"y:b"); }
 	}
 	if (retStyle->Italic != editedStyle->Italic)
@@ -845,7 +886,7 @@ void EditBox::ChangeFont(Styles *retStyle, Styles *editedStyle)
 			FindTag(L"i(0|1)", emptyString, 0, true);
 			PutTagInText(L"\\i" + ital, L"\\i" + ital1, false);
 		}
-		else if (form == SRT){ PutinNonass(L"i", L"i"); }
+		else if (form == SRT){ SetSrtTag(L"i", retStyle->Italic); }
 		else if (form == MDVD){ PutinNonass((retStyle->Italic) ? wxString(L"Y:i") : emptyString, L"y:i"); }
 	}
 	if (retStyle->Underline != editedStyle->Underline)
@@ -856,7 +897,7 @@ void EditBox::ChangeFont(Styles *retStyle, Styles *editedStyle)
 			wxString under1 = (actualStyle.Underline) ? L"1" : L"0";
 			PutTagInText(L"\\u" + under, L"\\u" + under1, false);
 		}
-		else if (form == SRT){ PutinNonass(L"u", L"u"); }
+		else if (form == SRT){ SetSrtTag(L"u", retStyle->Underline); }
 	}
 	if (retStyle->StrikeOut != editedStyle->StrikeOut)
 	{
@@ -866,7 +907,7 @@ void EditBox::ChangeFont(Styles *retStyle, Styles *editedStyle)
 			wxString strike1 = (actualStyle.StrikeOut) ? L"1" : L"0";
 			PutTagInText(L"\\s" + strike, L"\\s" + strike1, false);
 		}
-		else if (form == SRT){ PutinNonass(L"s", L"s"); }
+		else if (form == SRT){ SetSrtTag(L"s", retStyle->StrikeOut); }
 	}
 }
 
