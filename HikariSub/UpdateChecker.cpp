@@ -174,7 +174,13 @@ namespace
 
 	void Check(wxWindow *parent, bool interactive)
 	{
-		wxWebRequest request = wxWebSession::GetDefault().CreateRequest(parent, kReleasesUrl);
+		// Each check's handler stays bound to the parent, and the one bound
+		// last takes every event it matches without passing it on. A request
+		// id of its own keeps a reply to its own check: with wxID_ANY, a
+		// startup check still waiting when the menu check starts was answered
+		// as the menu check, with its messages.
+		const int id = wxWindow::NewControlId();
+		wxWebRequest request = wxWebSession::GetDefault().CreateRequest(parent, kReleasesUrl, id);
 		if (!request.IsOk()) {
 			if (interactive)
 				HikariMessageBox(_("Cannot check for updates"), _("Update"));
@@ -228,7 +234,7 @@ namespace
 					HikariMessageBox(_("You already have the latest version"), _("Update"));
 				break;
 			}
-		});
+		}, id);
 
 		request.Start();
 	}
