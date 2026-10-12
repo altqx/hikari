@@ -752,17 +752,17 @@ void DialogColorPicker::AddRecent(const AssColor color)
 		Options.SetString(COLORPICKER_RECENT_COLORS, DCP->recent_box->StoreToString());
 	}
 	else{
-		wxString recentString = Options.GetString(COLORPICKER_RECENT_COLORS);
+		// the new colour first, then the stored ones without duplicates, at most 32
 		wxString stringColor = color.GetAss(true);
-		size_t reps = recentString.Replace(stringColor, emptyString);
-		if (reps){
-			recentString.Replace(L"  ", L" ");
+		wxArrayString recent;
+		recent.Add(stringColor);
+		wxStringTokenizer tokens(Options.GetString(COLORPICKER_RECENT_COLORS), L" ", wxTOKEN_STRTOK);
+		while (tokens.HasMoreTokens() && recent.GetCount() < 32){
+			wxString token = tokens.GetNextToken();
+			if (recent.Index(token, false) == wxNOT_FOUND)
+				recent.Add(token);
 		}
-		recentString = stringColor + L" " + recentString;
-		while (recentString.Freq(L' ') > 31){
-			recentString = recentString.BeforeLast(L' ');
-		}
-		Options.SetString(COLORPICKER_RECENT_COLORS, recentString);
+		Options.SetString(COLORPICKER_RECENT_COLORS, wxJoin(recent, L' ', 0));
 	}
 }
 
