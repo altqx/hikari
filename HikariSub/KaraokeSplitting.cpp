@@ -73,10 +73,20 @@ void Karaoke::Split()
 			if (i == len - 1){
 				res << ch;
 				syls.Add(res);
-				if (!syltimes.size()) {
+				if (kpart) {
+					// the text ends inside a \k tag, whose time is still pending
+					stime += (wxAtoi(kres) * 10);
+					syltimes.Add(stime);
+				}
+				else if (!syltimes.size()) {
 					syltimes.Add(dial->End.mstime);
 					ktags.Add(L"k");
 				}
+				// every syllable needs a time and a tag
+				while (syltimes.size() < syls.size())
+					syltimes.Add(dial->End.mstime);
+				while (ktags.size() < syls.size())
+					ktags.Add(L"k");
 				return;
 			}
 			if (ch == L'{')
