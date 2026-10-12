@@ -86,6 +86,21 @@ void DirectSoundPlayer2Thread::Run()
 		linuxState->cv.notify_all();
 	};
 
+	// the text of an error or warning message, with its debug detail
+	auto messageText = [](const wchar_t *what, const GError *e, const gchar *dbg) {
+		wxString text = what;
+		if (e && e->message) {
+			text += L": ";
+			text += wxString::FromUTF8(e->message);
+		}
+		if (dbg && *dbg) {
+			text += L" (";
+			text += wxString::FromUTF8(dbg);
+			text += L")";
+		}
+		return text;
+	};
+
 	if (!provider) { fail(L"Audio player: no provider"); return; }
 
 	const int rate = std::max(1, provider->GetSampleRate());
@@ -148,7 +163,8 @@ void DirectSoundPlayer2Thread::Run()
 			if (GstMessage *em = gst_bus_pop_filtered(errBus, GST_MESSAGE_ERROR)) {
 				GError *e = nullptr; gchar *dbg = nullptr;
 				gst_message_parse_error(em, &e, &dbg);
-				if (e) { detail += L": "; detail += wxString::FromUTF8(e->message); g_error_free(e); }
+				detail = messageText(L"Cannot start GStreamer audio pipeline", e, dbg);
+				if (e) g_error_free(e);
 				g_free(dbg);
 				gst_message_unref(em);
 			}
@@ -188,6 +204,11 @@ void DirectSoundPlayer2Thread::Run()
 		linuxState->playing = false;
 		linuxState->cv.notify_all();
 	};
+	// Warnings, such as clock or device trouble before a failure, go to the
+	// log without opening the log window; a sink that keeps warning is not
+	// logged past this many.
+	const int maxLoggedWarnings = 10;
+	int loggedWarnings = 0;
 	// the pipeline holds data of the current playback
 	bool active = false;
 	// everything up to the end frame is pushed; the EOS message ends playback
@@ -324,18 +345,17 @@ void DirectSoundPlayer2Thread::Run()
 					// not a failure, and the producer just ends.
 					gst_message_parse_error(m, &e, &dbg);
 					std::lock_guard<std::mutex> lock(linuxState->mutex);
-					if (linuxState->running) {
-						wxString detail = L"Audio playback stopped, GStreamer reported an error";
-						if (e && e->message) {
-							detail += L": ";
-							detail += wxString::FromUTF8(e->message);
-						}
-						failPlayback(detail);
-					}
+					if (linuxState->running)
+						failPlayback(messageText(L"Audio playback stopped, GStreamer reported an error", e, dbg));
 					producerEnds = true;
 				}
 				else {
 					gst_message_parse_warning(m, &e, &dbg);
+					if (loggedWarnings < maxLoggedWarnings) {
+						HikariLogSilent(messageText(L"GStreamer audio warning", e, dbg));
+						if (++loggedWarnings == maxLoggedWarnings)
+							HikariLogSilent(L"Further GStreamer audio warnings are not logged");
+					}
 				}
 				if (e) g_error_free(e);
 				g_free(dbg);
