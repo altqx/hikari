@@ -235,6 +235,9 @@ bool Karaoke::GetSylAtX(int x, int *result)
 
 void Karaoke::Join(int line)
 {
+	// the last boundary is the Line's end, there is nothing to join it with
+	if (line < 0 || line + 1 >= (int)syls.size())
+		return;
 	syls[line] << syls[line + 1];
 	syls[line].Replace(L"{}", emptyString);
 	syls.RemoveAt(line + 1);
