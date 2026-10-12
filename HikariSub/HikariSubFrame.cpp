@@ -2149,8 +2149,9 @@ void HikariSubFrame::SaveAll()
 	for (size_t i = 0; i < Tabs->Size(); i++)
 	{
 		if (!Tabs->Page(i)->grid->file->IsModified()){ continue; }
-		Save(false, i, false);
-		Label(0, false, i);
+		//a tab that was not saved keeps its count of unsaved changes
+		if (Save(false, i, false))
+			Label(0, false, i);
 	}
 }
 
