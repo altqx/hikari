@@ -1037,6 +1037,8 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 			}
 			Thaw();
 			tab->Show();
+			//a video paused for a tab that was removed again plays once shown
+			Tabs->ResumePausedTab();
 		}
 		FileDialog1->Destroy();
 	}
@@ -2003,6 +2005,8 @@ void HikariSubFrame::OpenFiles(wxArrayString &files, bool intab, bool nofreeze, 
 	//this order fixes bug of disappearing tabs bar
 	Tabs->RefreshBar();
 	GetTab()->Show();
+	//a video paused for a tab that was removed again plays once shown
+	Tabs->ResumePausedTab();
 	UpdateToolbar();
 	Tabs->GetTab()->video->DeleteAudioCache();
 	Options.SaveOptions(true, false);

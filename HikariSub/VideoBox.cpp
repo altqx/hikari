@@ -210,6 +210,9 @@ VideoBox::~VideoBox()
 
 bool VideoBox::Play()
 {
+	//a page removed later must not play this video again
+	if (Notebook *tabs = Notebook::GetTabs())
+		tabs->ForgetPausedTab(tab);
 	if (!renderer)
 		return false;
 
@@ -223,6 +226,9 @@ bool VideoBox::Play()
 
 void VideoBox::PlayLine(int start, int end)
 {
+	//a page removed later must not play this video again
+	if (Notebook *tabs = Notebook::GetTabs())
+		tabs->ForgetPausedTab(tab);
 	if (!renderer)
 		return;
 	//wxMutexLocker lock(vbmutex);
@@ -234,6 +240,9 @@ void VideoBox::PlayLine(int start, int end)
 
 bool VideoBox::Pause(bool skipWhenOnEnd)
 {
+	//a page removed later must not play this video again
+	if (Notebook *tabs = Notebook::GetTabs())
+		tabs->ForgetPausedTab(tab);
 	wxMutexLocker lock(vbmutex);
 
 	if (!renderer){
@@ -266,6 +275,9 @@ bool VideoBox::Pause(bool skipWhenOnEnd)
 
 bool VideoBox::Stop()
 {
+	//a page removed later must not play this video again
+	if (Notebook *tabs = Notebook::GetTabs())
+		tabs->ForgetPausedTab(tab);
 	if (!renderer)
 		return false;
 
@@ -284,6 +296,9 @@ bool VideoBox::Stop()
 bool VideoBox::LoadVideo(const wxString& fileName, int subsFlag, bool fulls /*= false*/, 
 	bool changeAudio, int customFFMS2, bool dontPlayOnStart)
 {
+	//a page removed later must not play this video again
+	if (Notebook *tabs = Notebook::GetTabs())
+		tabs->ForgetPausedTab(tab);
 	prevchap = -1;
 	bool curentFFMS2 = !m_IsDirectShow;
 	bool byFFMS2;

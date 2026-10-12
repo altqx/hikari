@@ -154,10 +154,14 @@ TabPanel *Notebook::GetPage()
 
 void Notebook::AddPage(bool refresh, bool saveLastSession)
 {
-	pausedByAddPage = nullptr;
-	if (iter < Pages.size() && Pages[iter]->video->GetState() == Playing){
-		Pages[iter]->video->Pause();
-		pausedByAddPage = Pages[iter];
+	TabPanel *active = (iter < Pages.size()) ? Pages[iter] : nullptr;
+	//a tab that an earlier AddPage paused and RemoveUnusedPage made active
+	//again while a batch of files hides it still waits to play again
+	if (!active || active != pausedByAddPage || active->video->GetState() != Paused)
+		pausedByAddPage = nullptr;
+	if (active && active->video->GetState() == Playing){
+		active->video->Pause();
+		pausedByAddPage = active;
 	}
 	int w, h;
 	GetClientSize(&w, &h);
@@ -371,13 +375,37 @@ void Notebook::RemoveUnusedPage(int page, int pageToSelect)
 	Thaw();
 	Refresh(false);
 	if (removeActive){
-		//AddPage paused the video of this tab only to show the removed one
-		if (showSelected && selected == pausedTab && selected->video->GetState() == Paused)
-			selected->video->Play();
+		//AddPage paused the video of this tab only for the removed page; a
+		//batch of files that hides the tab calls ResumePausedTab when it
+		//shows the active tab at its end
+		if (selected == pausedTab){
+			pausedByAddPage = pausedTab;
+			ResumePausedTab();
+		}
 		//update the title, status bar and menus as a tab change does
 		wxCommandEvent choiceSelectedEvent(wxEVT_COMMAND_CHOICE_SELECTED, GetId());
 		AddPendingEvent(choiceSelectedEvent);
 	}
+}
+
+void Notebook::ResumePausedTab()
+{
+	TabPanel *tab = pausedByAddPage;
+	//a batch of files still hides the active tab and calls this again once
+	//it shows it
+	if (!tab || iter >= Pages.size() || !Pages[iter]->IsShown())
+		return;
+
+	pausedByAddPage = nullptr;
+	//another tab shown as the active one leaves it paused, as a tab change does
+	if (Pages[iter] == tab && tab->video->GetState() == Paused)
+		tab->video->Play();
+}
+
+void Notebook::ForgetPausedTab(TabPanel *tab)
+{
+	if (tab == pausedByAddPage)
+		pausedByAddPage = nullptr;
 }
 
 void Notebook::CalcSizes(bool makeActiveVisible)
@@ -1180,6 +1208,7 @@ void Notebook::ChangeActive()
 		Pages[iter]->lastFocusedWindowId = win->GetId();
 	}
 	else{ Pages[iter]->lastFocusedWindowId = 0; }
+	pausedByAddPage = nullptr;
 	int tmp = iter;
 	iter = splititer;
 	splititer = tmp;
