@@ -49,8 +49,9 @@ class StatusBarController : public QObject {
     // The nine fields' texts; field 0 is the shell's statusText, so it is
     // always empty here.
     Q_PROPERTY(QStringList fields READ fields NOTIFY changed)
-    // Legacy's tooltips (HikariSubFrame.cpp:153-154), field 0 has none.
-    Q_PROPERTY(QStringList tooltips READ tooltips CONSTANT)
+    // Legacy's tooltips (HikariSubFrame.cpp:153-154), field 0 has none; they
+    // follow a language switch (retranslate).
+    Q_PROPERTY(QStringList tooltips READ tooltips NOTIFY tooltipsChanged)
     // Fields 5 and 7 in the warning colour: the subtitles' resolution is not
     // the video's (legacy badResolution).
     Q_PROPERTY(bool resolutionMismatch READ resolutionMismatch NOTIFY changed)
@@ -109,9 +110,12 @@ public:
 
     // The editing target or its content changed (the shell's refresh).
     void refresh();
+    // The language changed: the tooltips are read again.
+    void retranslate() { emit tooltipsChanged(); }
 
 signals:
     void changed();
+    void tooltipsChanged();
 
 private:
     VideoController &m_video;
