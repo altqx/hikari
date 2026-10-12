@@ -404,11 +404,38 @@ namespace update_policy
 
 		bool HasEnded() const { return ended; }
 
+		// The handler of a check that ended without its request's last
+		// event (GiveUp) is kept until that event comes, and then
+		// released. It cannot go while the check's result shows, as the
+		// dialog runs the event loop with the handler's code still on the
+		// stack; an event that comes then releases it once the result has
+		// been shown.
+		void ReportBegins() { reporting = true; }
+
+		// The result has been shown. Whether the request's last event came
+		// meanwhile, so that the handler is released now.
+		bool ReportEnds()
+		{
+			reporting = false;
+			return lastEventCame;
+		}
+
+		// A state event that ended a request came after the check had
+		// ended (PageEnded() gave nothing). Whether the handler is
+		// released now; while the result shows, ReportEnds() says so.
+		bool LateEventReleases()
+		{
+			lastEventCame = true;
+			return !reporting;
+		}
+
 	private:
 		bool deadlinePassed = false;
 		bool cancelledAtDeadline = false;
 		bool cutOff = false;
 		bool ended = false;
+		bool reporting = false;
+		bool lastEventCame = false;
 	};
 
 	// Whether a startup check keeps quiet about offered, as the user closed

@@ -283,7 +283,8 @@ namespace
 		// the read in flight is aborted. wx 3.3.3's WinHTTP backend sends
 		// nothing if the cancel comes while it takes in a piece of the
 		// reply; the check then ends on the timer's second firing, and the
-		// handler is kept, as such a request may still send it an event.
+		// handler is kept, as such a request may still send it an event,
+		// until that event comes (CheckRun::LateEventReleases()).
 		// curl's backend changes the state on the main thread, where it is
 		// read here; WinHTTP's on its own, and a cancel of a request that
 		// has just ended there only closes its handle.
@@ -300,7 +301,12 @@ namespace
 				deadline.StartOnce(static_cast<int>(update_policy::kCancelWaitSeconds * 1000));
 				break;
 			case update_policy::CheckRun::Fired::GiveUp:
-				Finish(update_policy::Ending::TimedOut);
+				// The handler waits for the request's last event; what it
+				// took in of the reply is not kept meanwhile.
+				body.clear();
+				body.shrink_to_fit();
+				if (Finish(update_policy::Ending::TimedOut))
+					Release();
 				break;
 			}
 		}
@@ -329,8 +335,12 @@ namespace
 				state == wxWebRequest::State_Completed ? update_policy::RequestEnd::Completed :
 				state == wxWebRequest::State_Cancelled ? update_policy::RequestEnd::Cancelled :
 				update_policy::RequestEnd::Failed);
-			if (!pageEnding)
+			if (!pageEnding) {
+				// The last event of a check that has ended without it.
+				if (run.LateEventReleases())
+					Release();
 				return;
+			}
 
 			update_policy::Ending ending = *pageEnding;
 			if (ending == update_policy::Ending::Answered)
@@ -357,20 +367,32 @@ namespace
 			run.Finish();
 			Finish(ending);
 			// Last, as nothing of this object may be used after it.
-			wxTheApp->ScheduleForDestruction(this);
+			Release();
 		}
 
 		// Records how the check ended, and shows it. The timer is stopped
 		// before Report(), whose dialogs run the event loop, so that it
 		// does not fire while one shows; a state event that comes then is
-		// ignored, as the check has ended (CheckRun).
-		void Finish(update_policy::Ending ending)
+		// ignored, as the check has ended (CheckRun). Whether the request's
+		// last event came while the result showed.
+		bool Finish(update_policy::Ending ending)
 		{
 			deadline.Stop();
 			tracker.End(Now(), ending);
+			run.ReportBegins();
 			if (IsParentOpen())
 				Report(ending);
 			tracker.Done();
+			return run.ReportEnds();
+		}
+
+		// Deletes this handler once the event loop is idle, once only.
+		void Release()
+		{
+			if (released)
+				return;
+			released = true;
+			wxTheApp->ScheduleForDestruction(this);
 		}
 
 		static std::string ReplyUrl(const wxWebRequestEvent &evt)
@@ -449,6 +471,7 @@ namespace
 		update_policy::ChosenDetails<ReleaseInfo> chosen;
 		// Stopped by its destructor, so it never fires at a deleted check.
 		wxTimer deadline;
+		bool released = false;
 	};
 
 	void Check(wxWindow *parent, bool interactive)

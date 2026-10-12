@@ -601,6 +601,47 @@ TEST(update_check_whose_cancel_never_comes_back_ends_without_it)
 	CHECK(!ended.PageEnded(RequestEnd::Completed).has_value());
 }
 
+TEST(update_handler_kept_for_a_lost_event_goes_when_it_comes)
+{
+	// The event comes after the result was shown: the handler goes then.
+	for (RequestEnd end : kRequestEnds) {
+		CheckRun run;
+		CHECK(run.Fire(true) == CheckRun::Fired::Cancel);
+		CHECK(run.Fire(true) == CheckRun::Fired::GiveUp);
+		run.ReportBegins();
+		CHECK(!run.ReportEnds());
+		CHECK(!run.PageEnded(end).has_value());
+		CHECK(run.LateEventReleases());
+	}
+
+	// The event comes while the result shows: the handler's code is still
+	// on the stack, so it goes once the result has been shown.
+	CheckRun showing;
+	CHECK(showing.Fire(true) == CheckRun::Fired::Cancel);
+	CHECK(showing.Fire(true) == CheckRun::Fired::GiveUp);
+	showing.ReportBegins();
+	CHECK(!showing.PageEnded(RequestEnd::Cancelled).has_value());
+	CHECK(!showing.LateEventReleases());
+	CHECK(showing.ReportEnds());
+
+	// No event: the handler is kept, as one may still come.
+	CheckRun lost;
+	CHECK(lost.Fire(false) == CheckRun::Fired::Wait);
+	CHECK(lost.Fire(false) == CheckRun::Fired::GiveUp);
+	lost.ReportBegins();
+	CHECK(!lost.ReportEnds());
+
+	// A check that ended with its event reports as before; a second event
+	// during its dialog does not release the handler under it.
+	CheckRun answered;
+	CHECK(answered.PageEnded(RequestEnd::Completed) == Ending::Answered);
+	answered.Finish();
+	answered.ReportBegins();
+	CHECK(!answered.PageEnded(RequestEnd::Cancelled).has_value());
+	CHECK(!answered.LateEventReleases());
+	CHECK(answered.ReportEnds());
+}
+
 TEST(update_cut_off_reply_ends_as_cut_off_whatever_comes)
 {
 	// The reply was thrown away as it passed the cap, so a request that
