@@ -152,6 +152,11 @@ void Karaoke::Split()
 			}
 
 		}
+		// an unclosed { hides the sentinel, so the last split never happens
+		if (start < (int)Text.length()){
+			syls.Add(Text.Mid(start));
+			ktags.Add(L"k");
+		}
 		int dur = dial->End.mstime - dial->Start.mstime;
 		int times = (float)dur / (float)syls.size();
 		if (syls.size() == 0){
