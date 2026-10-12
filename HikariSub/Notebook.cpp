@@ -1387,6 +1387,7 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 
 		//}
 		sthis->Freeze();
+		SubsGrid::RemoveComparison();
 		for (std::vector<TabPanel*>::iterator i = sthis->Pages.begin(); i != sthis->Pages.end(); i++)
 		{
 			(*i)->Destroy();
