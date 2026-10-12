@@ -146,7 +146,9 @@ FontCollectorDialog::FontCollectorDialog(wxWindow *parent, FontCollector *_fc)
 
 	HikariTextValidator valid(wxFILTER_EXCLUDE_CHAR_LIST);
 	wxArrayString excludes;
+#ifdef _WIN32
 	excludes.Add(L"/");
+#endif
 	excludes.Add(L"*");
 	excludes.Add(L"?");
 	excludes.Add(L"\"");
