@@ -1004,6 +1004,7 @@ ApplicationWindow {
                         text: qsTr("Ask whether to load the last session at program startup")
                         checkable: true
                         checked: root.app.sessionRestore === 1
+                        keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (HikariSubFrame.cpp:171)
                         onToggled: root.app.sessionRestore = checked ? 1 : 0
                     }
                     ShellMenuItem {
@@ -1012,6 +1013,7 @@ ApplicationWindow {
                         text: qsTr("Load last session after program start")
                         checkable: true
                         checked: root.app.sessionRestore === 2
+                        keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (HikariSubFrame.cpp:175)
                         onToggled: root.app.sessionRestore = checked ? 2 : 0
                     }
                 }
@@ -1657,6 +1659,7 @@ ApplicationWindow {
                         text: modelData.label
                         checkable: true
                         checked: root.workspaceLayout.preset === modelData.name
+                        keepsMenuOpen: false // one choice of several
                         onTriggered: root.applyPreset(modelData.name)
                     }
                     onObjectAdded: (index, object) => presetMenu.insertItem(index, object)
@@ -1950,6 +1953,7 @@ ApplicationWindow {
                 text: qsTr("Spellchecker")
                 checkable: true
                 checked: root.app.spellingOn
+                keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (DialogueTextEditor.cpp:2326)
                 visible: field.spelled
                 height: visible ? implicitHeight : 0
                 onTriggered: root.app.spellingOn = checked
@@ -1972,6 +1976,7 @@ ApplicationWindow {
                             checkable: true
                             // Legacy marks the entry whose name is the chosen language's.
                             checked: modelData.name === root.app.dictionaryName(root.app.dictionaryLanguage)
+                            keepsMenuOpen: false // ITEM_RADIO
                             onTriggered: root.app.dictionaryLanguage = modelData.symbol
                         }
                         onObjectAdded: (index, object) => languagesMenu.insertItem(index, object)

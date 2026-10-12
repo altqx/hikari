@@ -6103,6 +6103,96 @@ private slots:
         application->shell().setHiddenColumns(0);
     }
 
+    // R1-check-items-close: a check item keeps its menus open when switched,
+    // by the pointer, Enter or Space, as legacy's ITEM_CHECK did
+    // (MenuDialog::SendEvent, Menu.cpp:662-670), and the status bar keeps
+    // its help. (A Shift+click closes them: hotkeyGestureOnMenus.)
+    void checkItemsKeepTheirMenuOpen()
+    {
+        QStyleHints *hints = QGuiApplication::styleHints();
+        const bool hoverHint = hints->useHoverEffects();
+        auto restoreHover = qScopeGuard([&] { hints->setUseHoverEffects(hoverHint); });
+        hints->setUseHoverEffects(true);
+        QVERIFY(application->openFile(episode));
+        auto *root = engine->rootObjects().first();
+        auto &shell = application->shell();
+        const bool savedWithVideoName = application->saveWithVideoName();
+        auto restore = qScopeGuard([&] { application->setSaveWithVideoName(savedWithVideoName); });
+
+        // The File menu's "Save subtitles using the video name" (HikariSubFrame.cpp:192-194).
+        auto *barItem = root->findChild<QQuickItem *>(QStringLiteral("fileMenuBarItem"));
+        auto *fileMenu = barItem->property("menu").value<QObject *>();
+        QVERIFY(QMetaObject::invokeMethod(fileMenu, "popup", Q_ARG(QQuickItem *, barItem),
+                                          Q_ARG(QPointF, QPointF(0, barItem->height()))));
+        QTRY_VERIFY(fileMenu->property("opened").toBool());
+        auto *videoName = qobject_cast<QQuickItem *>(named("saveWithVideoNameMenuItem"));
+        QTRY_VERIFY(videoName->isVisible() && videoName->width() > 0);
+        QTest::mouseMove(window, videoName->mapToScene(QPointF(videoName->width() / 2, videoName->height() / 2)).toPoint());
+        QTRY_VERIFY(videoName->property("hovered").toBool());
+        QTRY_COMPARE(shell.statusText(), QStringLiteral("Save subtitles using the video name"));
+        clickWith(videoName, Qt::NoModifier);
+        QCOMPARE(application->saveWithVideoName(), !savedWithVideoName);
+        QTest::qWait(50);
+        QVERIFY(fileMenu->property("visible").toBool());
+        QCOMPARE(videoName->property("checked").toBool(), !savedWithVideoName);
+        QCOMPARE(shell.statusText(), QStringLiteral("Save subtitles using the video name"));
+        QVERIFY(videoName->property("highlighted").toBool()); // the keyboard's item too
+        press(Qt::Key_Return);
+        QCOMPARE(application->saveWithVideoName(), savedWithVideoName);
+        press(Qt::Key_Space);
+        QCOMPARE(application->saveWithVideoName(), !savedWithVideoName);
+        QTest::qWait(50);
+        QVERIFY(fileMenu->property("visible").toBool());
+        QCOMPARE(videoName->property("checked").toBool(), !savedWithVideoName);
+        QVERIFY(QMetaObject::invokeMethod(fileMenu, "close"));
+        QTRY_VERIFY(!fileMenu->property("visible").toBool());
+
+        // The Grid's Hide columns and Filtering (SubsGrid.cpp:190-200, 228-236).
+        auto *grid = item("editingGrid");
+        auto *table = QAccessible::queryAccessibleInterface(grid)->tableInterface();
+        QCOMPARE(table->columnCount(), 13);
+        auto *gridMenu = named("gridMenu");
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, grid->mapToScene(QPointF(grid->width() / 2, 30)).toPoint());
+        QTRY_VERIFY(gridMenu->property("opened").toBool());
+        auto *hideColumns = named("hideColumnsMenu");
+        QVERIFY(QMetaObject::invokeMethod(hideColumns, "open"));
+        auto *hideCps = qobject_cast<QQuickItem *>(named("hideColumn512"));
+        auto *hideWraps = qobject_cast<QQuickItem *>(named("hideColumn8192"));
+        QTRY_VERIFY(hideCps->isVisible() && hideCps->width() > 0);
+        clickWith(hideCps, Qt::NoModifier);
+        QCOMPARE(shell.hiddenColumns(), 512);
+        // (a second click soon after the first would be a double click)
+        QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50);
+        QVERIFY(hideColumns->property("visible").toBool());
+        QVERIFY(gridMenu->property("visible").toBool());
+        clickWith(hideWraps, Qt::NoModifier);
+        QCOMPARE(shell.hiddenColumns(), 512 | 8192);
+        QTRY_COMPARE(table->columnCount(), 11);
+        QVERIFY(hideColumns->property("visible").toBool());
+        QVERIFY(hideCps->property("checked").toBool() && hideWraps->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(hideColumns, "close"));
+        auto *filtering = named("filteringMenu");
+        QVERIFY(QMetaObject::invokeMethod(filtering, "open"));
+        auto *invert = qobject_cast<QQuickItem *>(named("filterInvert"));
+        auto *doNotReset = qobject_cast<QQuickItem *>(named("filterDoNotReset"));
+        QTRY_VERIFY(invert->isVisible() && invert->width() > 0);
+        const bool inverted = application->gridFilter().inverted();
+        const bool addToFilter = application->gridFilter().addToFilter();
+        clickWith(invert, Qt::NoModifier);
+        QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50);
+        clickWith(doNotReset, Qt::NoModifier);
+        QCOMPARE(application->gridFilter().inverted(), !inverted);
+        QCOMPARE(application->gridFilter().addToFilter(), !addToFilter);
+        QTest::qWait(50);
+        QVERIFY(filtering->property("visible").toBool());
+        QVERIFY(gridMenu->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(gridMenu, "dismiss"));
+        QTRY_VERIFY(!gridMenu->property("visible").toBool());
+        application->gridFilter().setInverted(inverted);
+        application->gridFilter().setAddToFilter(addToFilter);
+        shell.setHiddenColumns(0);
+    }
+
     void hiddenLinesLeaveTheGridAndMarksReopenThem()
     {
         const QString path = writeFile(dir, "g8.ass",
@@ -9450,7 +9540,9 @@ private slots:
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_OPEN_STYLE_MANAGER"), 0), QStringLiteral("Alt-Ctrl-K"));
         QVERIFY(application->settingsStore()->list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_OPEN_STYLE_MANAGER G=Alt-Ctrl-K")));
-        // The Grid's checkable "Reverse filtering": mapped, not switched.
+        // The Grid's checkable "Reverse filtering": mapped, not switched, and
+        // the menus close as for any item (R1-check-items-close: legacy sends
+        // a Shift+click on a check item as a plain item's, Menu.cpp:662, 682).
         auto *grid = item("editingGrid");
         const QPoint centre = grid->mapToScene(QPointF(grid->width() / 2, 30)).toPoint();
         QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centre);
@@ -9462,6 +9554,7 @@ private slots:
         QVERIFY(!application->gridFilter().inverted());
         clickWith(invert, Qt::ShiftModifier);
         QTRY_VERIFY(mapping->isVisible());
+        QTRY_VERIFY(!named("gridMenu")->property("visible").toBool());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 1);
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_R, Qt::ControlModifier | Qt::AltModifier);
         QTRY_VERIFY(!mapping->isVisible());

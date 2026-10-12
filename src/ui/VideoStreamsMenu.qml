@@ -24,6 +24,7 @@ ShellMenu {
             text: modelData.label
             checkable: true
             checked: modelData.checked
+            keepsMenuOpen: false // ITEM_RADIO
             onTriggered: {
                 menu.video.selectStream(index)
                 menu.rows = menu.video.streams()

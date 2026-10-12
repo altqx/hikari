@@ -422,7 +422,8 @@ private slots:
     // The menu through the pointer, as a user reaches it: a right click on
     // the other tab, "Subtitle comparison", "Compare by selected styles" (a
     // checked item that opens the styles, Notebook.cpp:936), a style, then
-    // Compare.
+    // Compare in the same opening: a check item keeps the menus open, as
+    // legacy's ITEM_CHECK did (Menu.cpp:662-670, R1-check-items-close).
     void rightClickOnATabComparesIt()
     {
         click(findItem(window->contentItem(), QStringLiteral("documentTab1")), Qt::RightButton);
@@ -443,16 +444,24 @@ private slots:
         QTest::qWait(300);
         click(qobject_cast<QQuickItem *>(named("compareStyle_Sign")));
         QCOMPARE(application->settingsStore()->list("comparison.styles"), QStringList{"Sign"});
+        QTest::qWait(100);
+        QVERIFY(tabMenu->property("visible").toBool());
+        QVERIFY(menu->property("visible").toBool());
+        QVERIFY(stylesMenu->property("visible").toBool());
+        QVERIFY(named("compareStyle_Sign")->property("checked").toBool());
+        QVERIFY(styles->property("checked").toBool());
+        click(qobject_cast<QQuickItem *>(named("compareSubtitles")));
+        QTRY_VERIFY(application->comparison().active());
+        QCOMPARE(states(), QStringLiteral(".x."));
         QTRY_VERIFY(!tabMenu->property("visible").toBool());
-        // Again from the tab: the style stays checked, then Compare.
+        QTRY_VERIFY(!stylesMenu->property("visible").toBool());
+        // Again from the tab: the style stays checked.
         click(findItem(window->contentItem(), QStringLiteral("documentTab1")), Qt::RightButton);
         QTRY_VERIFY(tabMenu->property("opened").toBool());
         click(entryOf(menu));
         QTRY_VERIFY(menu->property("opened").toBool());
         QVERIFY(named("compareByChosenStyles")->property("checked").toBool());
-        click(qobject_cast<QQuickItem *>(named("compareSubtitles")));
-        QTRY_VERIFY(application->comparison().active());
-        QCOMPARE(states(), QStringLiteral(".x."));
+        QVERIFY(QMetaObject::invokeMethod(tabMenu, "close"));
     }
 
     // Loading other subtitles into a compared tab (legacy OpenFile into the

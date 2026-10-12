@@ -118,6 +118,7 @@ RowLayout {
                                 text: modelData
                                 checkable: !isAction
                                 checked: index === choice.currentIndex
+                                keepsMenuOpen: false // one choice of several
                                 onTriggered: {
                                     choice.activated(index)
                                     checked = Qt.binding(() => index === choice.currentIndex)

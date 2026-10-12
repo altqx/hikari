@@ -23,6 +23,7 @@ ShellMenu {
             text: modelData.label + "  " + modelData.time
             checkable: true
             checked: modelData.checked
+            keepsMenuOpen: false // ITEM_RADIO
             onTriggered: menu.video.seekChapter(index)
         }
         onObjectAdded: (index, object) => menu.insertItem(index, object)

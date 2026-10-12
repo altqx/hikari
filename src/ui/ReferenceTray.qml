@@ -171,6 +171,7 @@ FocusScope {
                 text: modelData.text
                 checkable: true
                 checked: modelData.checked
+                keepsMenuOpen: false // ITEM_RADIO (SubsGridPreview.cpp:947)
                 onTriggered: tray.app.chooseReferenceOccurrence(index)
             }
             onObjectAdded: (index, object) => occurrenceMenu.insertItem(index, object)

@@ -195,6 +195,7 @@ RowLayout {
                 text: modelData
                 checkable: true
                 checked: bar.catalogs.isFontInCatalog(modelData, addMenu.targetFont)
+                keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (FontCatalogList.cpp:687)
                 onTriggered: bar.catalogs.toggleFontInCatalog(modelData, addMenu.targetFont, checked)
             }
             onObjectAdded: (index, object) => addMenu.insertItem(index + 1, object)

@@ -131,6 +131,7 @@ Popup {
             text: qsTr("Show description")
             checkable: true
             checked: (popup.controller.options & 4) !== 0
+            keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (TextEditorTagList.cpp:133-135)
             onTriggered: popup.controller.toggleOption(4)
         }
         ShellMenuItem {
@@ -138,6 +139,7 @@ Popup {
             text: qsTr("Show all tags")
             checkable: true
             checked: (popup.controller.options & 1) !== 0
+            keepsMenuOpen: false
             onTriggered: popup.controller.toggleOption(1)
         }
         ShellMenuItem {
@@ -145,6 +147,7 @@ Popup {
             text: qsTr("Show VSFiltermod tags")
             checkable: true
             checked: (popup.controller.options & 2) !== 0
+            keepsMenuOpen: false
             onTriggered: popup.controller.toggleOption(2)
         }
         onClosed: if (!popup.field.activeFocus) popup.field.forceActiveFocus()
