@@ -97,8 +97,8 @@ bool sorteffect(Dialogue *i, Dialogue *j)
 {
 	if (i->Effect != j->Effect){
 		const std::collate<wchar_t>& f = std::use_facet<std::collate<wchar_t>>(HikariSubFrame::GetLocale());
-		const wchar_t* s1 = (&i->Actor).wc_str();
-		const wchar_t* s2 = (&j->Actor).wc_str();
+		const wchar_t* s1 = (&i->Effect).wc_str();
+		const wchar_t* s2 = (&j->Effect).wc_str();
 		return (f.compare(&s1[0], &s1[0] + wcslen(s1),
 			&s2[0], &s2[0] + wcslen(s2)) < 0);
 
