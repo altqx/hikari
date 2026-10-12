@@ -1039,9 +1039,13 @@ void Notebook::OnTabSel(int id)
 		tabSizes[wtab] = tmp2;
 		tabSizes[firstVisibleTab] += xWidth;
 
-		olditer = iter;
+		//the page-changed handler reads the previous tab from olditer,
+		//so point it at where the previous page sits after the swap
+		olditer = (iter == firstVisibleTab) ? wtab : (iter == wtab) ? firstVisibleTab : iter;
 		iter = firstVisibleTab;
 		RefreshBar();
+		wxCommandEvent choiceSelectedEvent(wxEVT_COMMAND_CHOICE_SELECTED, GetId());
+		AddPendingEvent(choiceSelectedEvent);
 	}
 }
 
