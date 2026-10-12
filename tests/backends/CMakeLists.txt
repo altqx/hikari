@@ -301,9 +301,12 @@ hikari_add_gtest(hikari_backends_visual_drawing_render_tests SOURCES visual_draw
     LIBRARIES hikari_backends hikari_application Qt6::Core LABELS backends)
 target_compile_definitions(hikari_backends_visual_drawing_render_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
-# P9: legacy SelectInFolder (D-Bus file manager with a folder fallback on Linux).
+# P9: legacy SelectInFolder (D-Bus file manager with a folder fallback on Linux;
+# on Windows the Explorer window read back through the Shell automation objects).
 hikari_add_qttest(hikari_backends_show_in_folder_tests SOURCES show_in_folder_tests.cpp LIBRARIES hikari_backends)
-if(NOT WIN32)
+if(WIN32)
+    target_link_libraries(hikari_backends_show_in_folder_tests PRIVATE Qt6::Gui ole32 oleaut32 uuid)
+else()
     target_link_libraries(hikari_backends_show_in_folder_tests PRIVATE Qt6::DBus)
 endif()
 

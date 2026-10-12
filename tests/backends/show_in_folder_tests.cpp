@@ -3,8 +3,9 @@
 // use it. On Linux the desktop's file manager is asked over D-Bus
 // (org.freedesktop.FileManager1.ShowItems) and the folder opens when none
 // answers; these tests run a private session bus with a fake file manager.
-// Windows uses SHOpenFolderAndSelectItems as legacy did (observed on
-// Windows, not here).
+// Windows uses SHOpenFolderAndSelectItems as legacy did; the Explorer window
+// it opens is read back through the Shell automation objects, on an
+// interactive desktop only (winix task show-in-folder-explorer).
 
 #include "hikari/backends/show_in_folder.h"
 
@@ -14,9 +15,158 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
-#ifndef _WIN32
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#include <exdisp.h>
+#include <shldisp.h>
+#include <wrl/client.h>
+
+#include <QImage>
+#else
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
+#endif
+
+#ifdef _WIN32
+namespace {
+
+using Microsoft::WRL::ComPtr;
+
+// Why Explorer cannot open a window for this process, or empty: a service
+// (session 0, or a window station without a desktop) shows nothing, and
+// without Explorer as the shell the call would start one.
+QString noExplorerReason()
+{
+    DWORD session = 0;
+    if (ProcessIdToSessionId(GetCurrentProcessId(), &session) && session == 0)
+        return QStringLiteral("no interactive desktop: the test runs in a service session (session 0)");
+    USEROBJECTFLAGS flags{};
+    if (GetUserObjectInformationW(GetProcessWindowStation(), UOI_FLAGS, &flags, sizeof flags, nullptr)
+        && !(flags.dwFlags & WSF_VISIBLE))
+        return QStringLiteral("no interactive desktop: the window station is not visible (a service)");
+    if (!GetShellWindow())
+        return QStringLiteral("Explorer is not the desktop's shell, so no folder window can open");
+    return {};
+}
+
+// The long form of an existing path (the temporary folder may be named
+// with 8.3 parts; Explorer reports long names).
+QString longPath(const QString &path)
+{
+    const std::wstring in = QDir::toNativeSeparators(path).toStdWString();
+    std::wstring out(GetLongPathNameW(in.c_str(), nullptr, 0), L'\0');
+    if (out.empty())
+        return QDir::toNativeSeparators(path);
+    out.resize(GetLongPathNameW(in.c_str(), out.data(), DWORD(out.size())));
+    return QString::fromStdWString(out);
+}
+
+bool samePath(const QString &a, const QString &b)
+{
+    return QString::compare(longPath(a), longPath(b), Qt::CaseInsensitive) == 0;
+}
+
+QString pathOf(FolderItem *item)
+{
+    BSTR path = nullptr;
+    if (FAILED(item->get_Path(&path)) || !path)
+        return {};
+    const QString text = QString::fromWCharArray(path, SysStringLen(path));
+    SysFreeString(path);
+    return text;
+}
+
+// An open Explorer window (or tab) as IShellWindows lists it: its folder
+// and the items selected in its view (IShellFolderViewDual::SelectedItems).
+struct ExplorerWindow {
+    ComPtr<IWebBrowser2> browser;
+    QString folder;
+    QStringList selected;
+};
+
+QList<ExplorerWindow> explorerWindowsOn(const QString &folder)
+{
+    QList<ExplorerWindow> found;
+    ComPtr<IShellWindows> windows;
+    if (FAILED(CoCreateInstance(CLSID_ShellWindows, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&windows))))
+        return found;
+    LONG count = 0;
+    windows->get_Count(&count);
+    for (LONG i = 0; i < count; ++i) {
+        VARIANT index;
+        VariantInit(&index);
+        index.vt = VT_I4;
+        index.lVal = i;
+        ComPtr<IDispatch> item;
+        ComPtr<IDispatch> document;
+        ComPtr<IShellFolderViewDual> view;
+        ComPtr<Folder> shown;
+        ComPtr<Folder2> shown2;
+        ComPtr<FolderItem> self;
+        ExplorerWindow window;
+        if (windows->Item(index, &item) != S_OK || !item || FAILED(item.As(&window.browser))
+            || FAILED(window.browser->get_Document(&document)) || !document || FAILED(document.As(&view))
+            || FAILED(view->get_Folder(&shown)) || !shown || FAILED(shown.As(&shown2))
+            || FAILED(shown2->get_Self(&self)) || !self)
+            continue;
+        window.folder = pathOf(self.Get());
+        if (!samePath(window.folder, folder))
+            continue;
+        ComPtr<FolderItems> selection;
+        LONG selectedCount = 0;
+        if (SUCCEEDED(view->SelectedItems(&selection)) && selection)
+            selection->get_Count(&selectedCount);
+        for (LONG k = 0; k < selectedCount; ++k) {
+            VARIANT at;
+            VariantInit(&at);
+            at.vt = VT_I4;
+            at.lVal = k;
+            ComPtr<FolderItem> selected;
+            if (SUCCEEDED(selection->Item(at, &selected)) && selected)
+                window.selected << pathOf(selected.Get());
+        }
+        found << window;
+    }
+    return found;
+}
+
+// The whole desktop (every monitor) with the window raised, to a PNG.
+bool saveDesktop(const QString &file, HWND window)
+{
+    SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    SetWindowPos(window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+    SetForegroundWindow(window);
+    QTest::qWait(1000); // the raised window and its selection painted
+    const int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    const int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    const int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    const int height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+    HDC screen = GetDC(nullptr);
+    HDC memory = CreateCompatibleDC(screen);
+    BITMAPINFO info{};
+    info.bmiHeader = {sizeof(BITMAPINFOHEADER), width, -height, 1, 32, BI_RGB};
+    void *bits = nullptr;
+    HBITMAP bitmap = CreateDIBSection(screen, &info, DIB_RGB_COLORS, &bits, nullptr, 0);
+    QImage image;
+    if (bitmap) {
+        HGDIOBJ previous = SelectObject(memory, bitmap);
+        if (BitBlt(memory, 0, 0, width, height, screen, x, y, SRCCOPY | CAPTUREBLT)) {
+            GdiFlush();
+            image = QImage(static_cast<const uchar *>(bits), width, height, width * 4, QImage::Format_RGB32).copy();
+        }
+        SelectObject(memory, previous);
+        DeleteObject(bitmap);
+    }
+    DeleteDC(memory);
+    ReleaseDC(nullptr, screen);
+    SetWindowPos(window, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    return !image.isNull() && image.save(file);
+}
+
+} // namespace
 #endif
 
 // moc does not see the compiler's _WIN32, so the classes and slots it reads
@@ -114,6 +264,55 @@ private slots:
         QDBusConnection none = QDBusConnection(QStringLiteral("p9-none"));
         hikari::backends::selectInFolder(file, none, [&](const QString &folder) { fallbacks << folder; });
         QCOMPARE(fallbacks.size(), 2);
+#endif
+    }
+
+    // Windows: the folder opens in Explorer with exactly that file selected
+    // (legacy SelectInFolder, config.cpp:1050-1058), read back from the
+    // window through the Shell automation objects and then closed. With
+    // HIKARI_SHOW_IN_FOLDER_SHOT set, the desktop is saved there first.
+    void explorerShowsTheFileSelected()
+    {
+#ifndef _WIN32
+        QSKIP("Explorer is Windows only");
+#else
+        if (const QString reason = noExplorerReason(); !reason.isEmpty())
+            QSKIP(qPrintable(reason));
+        const HRESULT com = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+        QVERIFY2(SUCCEEDED(com), "COM is not available on this thread");
+        auto uninitialize = qScopeGuard([] { CoUninitialize(); });
+
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        // A neighbour sorted first, so a view that selects its first item is not taken for the file.
+        QVERIFY(QFile(dir.filePath(QStringLiteral("ep 00.mkv"))).open(QIODevice::WriteOnly));
+        const QString file = dir.filePath(QStringLiteral("ep 01 (ä).mkv"));
+        QVERIFY(QFile(file).open(QIODevice::WriteOnly));
+        QVERIFY(explorerWindowsOn(dir.path()).isEmpty());
+        auto close = qScopeGuard([&] {
+            for (const ExplorerWindow &window : explorerWindowsOn(dir.path()))
+                window.browser->Quit();
+        });
+
+        hikari::backends::selectInFolder(file);
+        // Explorer opens the window, then selects the file in its view.
+        QList<ExplorerWindow> shown;
+        QTRY_VERIFY_WITH_TIMEOUT(!(shown = explorerWindowsOn(dir.path())).isEmpty() && !shown[0].selected.isEmpty(),
+                                 30000);
+        qInfo().noquote() << "Explorer shows" << shown[0].folder << "with" << shown[0].selected.join(u'|')
+                          << "selected";
+        QCOMPARE(shown.size(), 1);
+        QCOMPARE(shown[0].selected.size(), 1);
+        QVERIFY2(samePath(shown[0].selected[0], file), qPrintable(shown[0].selected[0]));
+
+        if (const QString shot = qEnvironmentVariable("HIKARI_SHOW_IN_FOLDER_SHOT"); !shot.isEmpty()) {
+            SHANDLE_PTR window = 0;
+            QVERIFY(SUCCEEDED(shown[0].browser->get_HWND(&window)) && window);
+            QVERIFY2(saveDesktop(shot, reinterpret_cast<HWND>(window)), qPrintable(shot));
+        }
+        close.dismiss();
+        QVERIFY(SUCCEEDED(shown[0].browser->Quit()));
+        QTRY_VERIFY_WITH_TIMEOUT(explorerWindowsOn(dir.path()).isEmpty(), 10000);
 #endif
     }
 };
