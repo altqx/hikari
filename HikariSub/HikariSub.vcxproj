@@ -613,6 +613,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="Toolbar.h" />
     <ClInclude Include="UtilsWindows.h" />
     <ClInclude Include="SemVer.h" />
+    <ClInclude Include="JsonLimits.h" />
     <ClInclude Include="UpdatePolicy.h" />
     <ClInclude Include="VersionHikariSub.h" />
     <ClInclude Include="Hotkeys.h" />
