@@ -603,7 +603,9 @@ void SubsGrid::OnPaste(int id)
 		Dialogue* dialb = file->GetDialogue(row - 1);
 		if (dialb) {
 			treeBefore = dialb->treeState;
-			visibleBefore = isVisible;
+			// a hidden line before the paste must not hide the pasted lines
+			if (dialb->isVisible != NOT_VISIBLE)
+				visibleBefore = dialb->isVisible;
 		}
 		treeState = (treeBefore > TREE_DESCRIPTION && treeAfter > TREE_DESCRIPTION) ? treeBefore :
 			treeAfter > TREE_DESCRIPTION ? treeAfter : 0;
