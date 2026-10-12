@@ -206,10 +206,8 @@ void FindReplace::ReplaceChecked()
 		wxString path;
 		wxString oldPath;
 		wxString copyPath = Options.pathfull + L"/ReplaceBackup/";
-		DWORD ftyp = GetFileAttributesW(copyPath.wc_str());
-		if (ftyp == INVALID_FILE_ATTRIBUTES){
-			wxMkDir(copyPath, 0777);
-		}
+		//the backups are copies of the user's subtitles: for the user only
+		MakePrivateFolder(copyPath);
 		int numChanges = 0;
 		std::vector<SeekResults*> results;
 
@@ -838,7 +836,7 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 			token.clear();
 		}//while
 		if (SubsAllReplacements){
-			wxCopyFile(subsPath, HikariPathJoin(fr->CopyPath, HikariPathName(subsPath)));
+			CopyToPrivateFile(subsPath, HikariPathJoin(fr->CopyPath, HikariPathName(subsPath)));
 			//count only the replacements that reached the file
 			if (ow.FileWrite(subsPath, replacedText))
 				fr->AllReplacements.fetch_add(SubsAllReplacements);
@@ -879,11 +877,9 @@ void FindReplace::FindReplaceInSubs(TabWindow *window)
 	if (!paths.size())
 		return;
 
+	//the backups are copies of the user's subtitles: for the user only
 	if (!find){
-		DWORD ftyp = GetFileAttributesW(CopyPath.wc_str());
-		if (ftyp == INVALID_FILE_ATTRIBUTES){
-			wxMkDir(CopyPath, 0777);
-		}
+		MakePrivateFolder(CopyPath);
 	}
 	//bool plainText = false;//(window->CollumnTextOriginal->GetValue());
 	//no tlmode here
@@ -1799,7 +1795,7 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 	}
 
 	if (numOfChanges){
-		wxCopyFile(path, HikariPathJoin(copyPath, HikariPathName(path)));
+		CopyToPrivateFile(path, HikariPathJoin(copyPath, HikariPathName(path)));
 		//count only the replacements that reached the file
 		if (!ow.FileWrite(path, replacedText))
 			numOfChanges = 0;

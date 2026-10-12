@@ -142,6 +142,11 @@ void MakePrivateFolder(const wxString &path);
 // failure.
 FILE *OpenPrivateFile(const wxString &path);
 
+// Copies the file at from to to, a file in one of the application's
+// private folders, as a private save to: it is replaced only when all of it
+// is written, and only its user may open it. A link at to is not followed.
+bool CopyToPrivateFile(const wxString &from, const wxString &to);
+
 class OpenWrite
 {
 public:

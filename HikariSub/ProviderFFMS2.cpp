@@ -341,11 +341,10 @@ done:
 			//FFMS_CancelIndexing(Indexer);
 			return 0;
 		}
+		//the indices are named after the user's media and hold what is in it:
+		//for the user only
 		wxFileName indexFile(m_indexPath);
-		if (!indexFile.DirExists())
-		{
-			indexFile.Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
-		}
+		MakePrivateFolder(indexFile.GetPath());
 		if (FFMS_WriteIndex(m_indexPath.utf8_str(), m_index, &m_errInfo))
 		{
 			HikariLogDebug(wxString::Format(_("Cannot save index, error %s occurred"), wxString::FromUTF8(m_errInfo.Buffer)));

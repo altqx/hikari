@@ -38,6 +38,7 @@ struct ResolvedSave
 #ifndef _WIN32
 #include "PrivateFolder.h"
 #include "SaveTarget.h"
+#include <sys/stat.h>
 
 //the file a save to fileName writes, see ResolveSaveTarget
 static bool ResolveSaveTarget(const wxString &fileName, ResolvedSave *target)
@@ -1055,6 +1056,40 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 	}
 	return true;
 #endif
+}
+
+bool CopyToPrivateFile(const wxString &from, const wxString &to)
+{
+	wxFile source;
+	{
+		wxLogNull noLog;
+		if (!source.Open(from, wxFile::read)){ return false; }
+	}
+#ifndef _WIN32
+	//a link at to, which a save would follow to its target, is refused
+	struct stat named;
+	if (::lstat(to.fn_str(), &named) == 0 && S_ISLNK(named.st_mode)){ return false; }
+	ResolvedSave target;
+	if (!ResolveSaveTarget(to, &target)){ return false; }
+	SaveFile saveFile;
+	saveFile.SetPrivate(true);
+	if (!OpenSaveFile(saveFile, target)){ return false; }
+#else
+	//Open refuses a link or junction at the name
+	WindowsSaveFile saveFile;
+	{
+		wxLogNull noLog;
+		if (!saveFile.Open(to, true)){ return false; }
+	}
+#endif
+	std::vector<char> buffer(1 << 16);
+	for (;;){
+		ssize_t got = source.Read(buffer.data(), buffer.size());
+		if (got < 0){ return false; }
+		if (got == 0){ break; }
+		if (!saveFile.Write(buffer.data(), static_cast<size_t>(got))){ return false; }
+	}
+	return saveFile.Commit();
 }
 
 void OpenWrite::PartFileWrite(const wxString &parttext)
