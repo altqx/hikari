@@ -342,7 +342,7 @@ bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 
 			if (tlmodeOn){
 				bool hasTextTl = dial->TextTl != emptyString;
-				if (!translated && (hasTextTl || dial->IsDoubtful())){
+				if (!translated && (hasTextTl || dial->IsDoubtful() || dial->tlPair)){
 					if (showOriginalOnVideo)
 						dial->GetRaw(&raw, false, txt);
 
@@ -372,7 +372,7 @@ bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 
 			if (tlmodeOn){
 				bool hasTextTl = dial->TextTl != emptyString;
-				if (!translated && (hasTextTl || dial->IsDoubtful())){
+				if (!translated && (hasTextTl || dial->IsDoubtful() || dial->tlPair)){
 					dial->GetRaw(&raw, false, txt, !showOriginalOnVideo);
 					dial->GetRaw(&raw, true);
 				}

@@ -147,6 +147,7 @@ bool SubsLoader::LoadASS(const wxString &text)
 				}
 				tl->TextTl = tl->Text;
 				tl->Text = dl->Text;
+				tl->tlPair = true;
 				if (dl->Effect == L"\fD"){
 					tl->ChangeState(4);
 				}

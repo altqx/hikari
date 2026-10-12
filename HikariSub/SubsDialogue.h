@@ -338,6 +338,9 @@ public:
 	short MarginL, MarginR, MarginV;
 	char Format, treeState = 0;
 	bool NonDialogue, IsComment;
+	//a translation mode line read as an original and translation pair is
+	//saved as a pair even with no translation
+	bool tlPair = false;
 	Visibility isVisible;
 
 	char GetState();
