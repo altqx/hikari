@@ -399,7 +399,7 @@ void MisspellReplacer::SeekOnTab(TabPanel *tab)
 		Dialogue *Dial = Subs->GetDialogue(tabLinePosition);
 		if (!Dial->isVisible || (tab->grid->ignoreFiltered && Dial->NonDialogue)){ tabLinePosition++; continue; }
 
-		if ((!selectedOption) ||
+		if ((!selectedOption) || selectedOption == 2 ||
 			(selectedOption == 3 && stylesAsText.Find(L"," + Dial->Style + L",") != -1) ||
 			(selectedOption == 1 && tab->grid->file->IsSelected(tabLinePosition))){
 			const wxString & lineText = (Dial->TextTl != emptyString) ? Dial->TextTl : Dial->Text;
@@ -524,7 +524,7 @@ void MisspellReplacer::ReplaceOnTab(TabPanel *tab)
 		Dialogue *Dial = Subs->GetDialogue(tabLinePosition);
 		if (!Dial->isVisible || (tab->grid->ignoreFiltered && Dial->NonDialogue)){ tabLinePosition++; continue; }
 
-		if ((!selectedOption) ||
+		if ((!selectedOption) || selectedOption == 2 ||
 			(selectedOption == 3 && stylesAsText.Find(L"," + Dial->Style + L",") != -1) ||
 			(selectedOption == 1 && tab->grid->file->IsSelected(tabLinePosition))){
 			const wxString & lineText = Dial->Text.CheckTl(Dial->TextTl, Dial->TextTl != emptyString);
