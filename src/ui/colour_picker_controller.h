@@ -77,10 +77,11 @@ public:
     void loadFromString(const QString &text);
 
     // The picker opens for `owner` (legacy DialogColorPicker::Get with the
-    // window it belongs to: the tab's Line editor). Legacy creates the picker
-    // once and keeps it while it is opened for the same window; opened for
-    // another one, it is created again from the option.
-    void opened(const QString &owner);
+    // window it belongs to: the tab's Line editor or the Style editor).
+    // Legacy creates the picker once and keeps it while it is opened for the
+    // same window; opened for another one, it is created again from the
+    // option.
+    Q_INVOKABLE void opened(const QString &owner);
     // After "Set default": the list takes the reset option unless a picker
     // exists, which keeps its recent colours and writes them at its next
     // colour.

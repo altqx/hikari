@@ -5408,13 +5408,11 @@ ApplicationWindow {
     }
     ColourPickerDialog {
         id: colourDialog
-        editor: root.editor
         picker: root.colourPicker
         anchors.centerIn: parent
     }
     SimpleColourPicker {
         id: simpleColourPicker
-        editor: root.editor
         picker: root.colourPicker
     }
     // Y7: EditBox::AllColorClick (EditBox.cpp:862-919): a left click and the
@@ -5423,10 +5421,15 @@ ApplicationWindow {
     function colourClick(number, leftClick, field) {
         if (root.colourPicker.switchClicks)
             leftClick = !leftClick
-        if (!leftClick)
-            simpleColourPicker.openFor(number, field.role, field.selectionStart, field.selectionEnd)
-        else if (colourDialog.openFor(number, field.role, field.selectionStart, field.selectionEnd))
+        const c = root.editor.beginColour(number, field.role, field.selectionStart, field.selectionEnd)
+        if (c.r === undefined)
+            return
+        if (!leftClick) {
+            simpleColourPicker.openFor(root.editor, number, c)
+        } else {
+            colourDialog.openFor(root.editor, number, c)
             root.app.colourPickerOpened()
+        }
     }
 
     // Legacy TagButtonDialog ("Enter ASS tag").
