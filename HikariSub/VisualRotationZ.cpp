@@ -470,7 +470,8 @@ void RotationZ::ChangeClipRotationZ(wxString* txt, const D3DXVECTOR2& orgPivot, 
 			float xy[4] = { 0,0,0,0 };
 			int counter = 0;
 			bool isBad = false;
-			while (tokenzr.HasMoreTokens()) {
+			//a rectangle has four values, the rest would write past xy
+			while (tokenzr.HasMoreTokens() && counter < 4) {
 				wxString token = tokenzr.GetNextToken();
 				if (token.ToDouble(&value)) {
 					xy[counter] = value;
