@@ -403,8 +403,6 @@ bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 			ow.PartFileWrite(raw);
 			raw.Empty();
 
-			if (normalSave && dial->GetState() & 1){ dial->ChangeDialogueState(2); }
-
 		}
 	}
 	if (subsFormat < SRT && !file->GetEmbeddedSections().empty()) {
@@ -415,6 +413,13 @@ bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 	if (!ow.CommitTemp())
 		return false;
 	if (normalSave){
+		//edited lines show as saved only once the file holds them
+		if (!loadFromEditbox){
+			for (size_t i = 0; i < file->GetCount(); i++){
+				Dialogue *dial = file->GetDialogue(i);
+				if (dial->GetState() & 1){ dial->ChangeDialogueState(2); }
+			}
+		}
 		file->SetLastSave();
 		tab->SetLastSaveTime();
 		Refresh(false);
