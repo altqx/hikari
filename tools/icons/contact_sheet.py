@@ -3,16 +3,17 @@
 
 Writes one self-contained page (default out/k1/index.html) showing every
 icon of src/ui/icons/manifest.json in the four themes (Light, Dark, High
-contrast white and High contrast black) at 16 and 32 px, with its hover/pressed and disabled colours,
+contrast white and High contrast black) at 16 and 32 px, with its disabled colour,
 beside the legacy bitmap it replaces (HikariSub/Bitmaps, embedded), its
 label, the surfaces using it and whether it mirrors in right-to-left
 layouts. The page links the PNG sheets hikari_ui_icon_tests writes into the
 same folder (k1-<theme>-<percent>.png, rendered by the app's Icon item).
 
 The colours are the theme layer's (K2, src/ui/theme.cpp), as IconTheme
-takes them: the icon in the theme's text colour, the accent layer and the
-hover/pressed state in its accent (Light and Dark with the default accent
-preset), the disabled state in its disabled colour. The inline SVGs take
+takes them: the icon in the theme's text colour, the accent layer in its
+accent (Light and Dark with the default accent preset), the disabled state
+in its disabled colour. Hover and press keep these colours (the button's
+panel shows them), so the sheet has no hover column. The inline SVGs take
 them through CSS `color`, as currentColor does in the app.
 
 Run:  python3 tools/icons/contact_sheet.py [output.html]
@@ -38,7 +39,7 @@ APPEARANCES = [
     ("highContrastWhite", "High contrast white", "HighContrastWhite"),
     ("highContrastBlack", "High contrast black", "HighContrastBlack"),
 ]
-SLOTS = ["normal", "accent", "active", "disabled"]
+SLOTS = ["normal", "accent", "disabled"]
 RGB = r'rgb\(0x([0-9A-Fa-f]{6})\)'
 
 
@@ -68,8 +69,7 @@ def theme_colours():
             roles["accent"] = "#" + preset.group(1).upper()
         out[aid] = {
             "background": roles["background"], "text": roles["text"],
-            "normal": roles["text"], "accent": roles["accent"], "active": roles["accent"],
-            "disabled": roles["disabled"],
+            "normal": roles["text"], "accent": roles["accent"], "disabled": roles["disabled"],
         }
     return out
 
@@ -89,10 +89,9 @@ def main():
         bg, fg = c["background"], c["text"]
         css.append(
             ".%(a)s{background:%(bg)s;color:%(n)s}.%(a)s .accent{color:%(ac)s}"
-            ".%(a)s .hover,.%(a)s .hover .accent{color:%(act)s}"
             ".%(a)s .off,.%(a)s .off .accent{color:%(dis)s}"
             ".%(a)s .lbl{color:%(fg)s}"
-            % {"a": aid, "bg": bg, "fg": fg, "n": c["normal"], "ac": c["accent"], "act": c["active"],
+            % {"a": aid, "bg": bg, "fg": fg, "n": c["normal"], "ac": c["accent"],
                "dis": c["disabled"]})
     rows = []
     for icon in manifest["icons"]:
@@ -100,9 +99,8 @@ def main():
         cells = []
         for aid, _, _ in APPEARANCES:
             cells.append(
-                '<td class="sw %s"><span>%s</span><span>%s</span><span class="hover">%s</span>'
-                '<span class="off">%s</span></td>' % (aid, inline(svg, 16), inline(svg, 32), inline(svg, 16),
-                                                      inline(svg, 16)))
+                '<td class="sw %s"><span>%s</span><span>%s</span><span class="off">%s</span></td>'
+                % (aid, inline(svg, 16), inline(svg, 32), inline(svg, 16)))
         legacy = []
         for name in icon["legacy"]:
             path = os.path.join(BITMAPS, name)
@@ -149,7 +147,7 @@ td.sw svg{display:block}
 </style></head><body>
 <h1>HikariSub icon set (K1)</h1>
 <p>%d icons drawn in house on a 16-unit grid (docs/qt/ux/icons.md). Each appearance column shows the icon
-at 16 and 32 px, then hover/pressed and disabled at 16 px, in the theme layer's colours (Light and Dark
+at 16 and 32 px, then disabled at 16 px, in the theme layer's colours (Light and Dark
 with the default accent); the accent layer is the second colour. The legacy bitmap each one replaces is shown on white at 2x. PNG sheets rendered by the
 application's Icon item: <span class=sheets>%s</span></p>
 %s

@@ -81,8 +81,6 @@ Frame {
                         objectName: "visualToolIcon" + familyButton.index
                         // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
                         iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags"][familyButton.index] ?? ""
-                        hovered: familyButton.hovered
-                        pressed: familyButton.down
                     }
                     ToolTip.visible: hovered || visualFocus
                     ToolTip.text: modelData.available ? modelData.name

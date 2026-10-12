@@ -24,8 +24,6 @@ ToolButton {
     contentItem: Icon {
         iconRole: "panel-menu"
         size: 16
-        hovered: button.hovered
-        pressed: button.down || button.menuOpen
     }
     Accessible.role: Accessible.Button
     Accessible.name: text

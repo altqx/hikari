@@ -444,7 +444,6 @@ Dialog {
                         size: 24
                         // Legacy clears the bitmap while the dropper holds the pointer.
                         visible: !dialog.dropping
-                        hovered: dropperArea.containsMouse
                     }
                     MouseArea {
                         id: dropperArea

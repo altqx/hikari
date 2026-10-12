@@ -13002,7 +13002,7 @@ private slots:
         auto *root = engine->rootObjects().first();
         const QString normal = ui::IconTheme::colours()[0].name().mid(1);
         const QString accent = ui::IconTheme::colours()[1].name().mid(1);
-        const QString disabled = ui::IconTheme::colours()[3].name().mid(1);
+        const QString disabled = ui::IconTheme::colours()[2].name().mid(1);
         for (const Expected &e : {Expected{"settingsMenuItem", "settings", ""}, Expected{"aboutMenuItem", "about", ""},
                                   Expected{"openAudioMenuItem", "open-audio", ""}, Expected{"recentSubtitlesMenu", "recent-subtitles", ""},
                                   Expected{"loadLastSessionMenuItem", "last-session", ""}}) {

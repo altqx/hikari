@@ -4,8 +4,8 @@
 // monochrome SVG on a 16-unit grid painted with currentColor, with at most
 // one accent layer (<g id="accent">). The set is tinted at run time from the
 // theme layer (K2, theme.h), live: the theme's text colour, its accent (the
-// accent layer, and the whole icon while hovered or pressed) and its
-// disabled colour. There are no icon colour settings: in high contrast the
+// accent layer) and its disabled colour. Hover and press keep the icon's
+// colours; the button's panel shows them. There are no icon colour settings: in high contrast the
 // "Text and icons" and accent pickers recolour them with the text.
 
 #include <QByteArray>
@@ -63,7 +63,6 @@ class IconTheme : public QObject {
     QML_SINGLETON
     Q_PROPERTY(QColor normal READ normal NOTIFY changed FINAL)
     Q_PROPERTY(QColor accent READ accent NOTIFY changed FINAL)
-    Q_PROPERTY(QColor active READ active NOTIFY changed FINAL)
     Q_PROPERTY(QColor disabled READ disabled NOTIFY changed FINAL)
 public:
     // (Not default-constructible, so the engine makes it through create().)
@@ -72,8 +71,7 @@ public:
 
     QColor normal() const { return m_colours[0]; }
     QColor accent() const { return m_colours[1]; }
-    QColor active() const { return m_colours[2]; }
-    QColor disabled() const { return m_colours[3]; }
+    QColor disabled() const { return m_colours[2]; }
 
     Q_INVOKABLE bool exists(const QString &role) const { return icons::exists(role); }
     Q_INVOKABLE bool mirrors(const QString &role) const { return icons::mirrors(role); }
@@ -87,9 +85,8 @@ public:
     // appearance's colours and kept in them while the window lives.
     Q_INVOKABLE void setWindowIcon(QObject *window, const QString &role);
 
-    // The theme's icon colours: its text, accent, the hover/pressed colour
-    // (the accent) and disabled colour.
-    static std::array<QColor, 4> colours();
+    // The theme's icon colours: its text, accent and disabled colour.
+    static std::array<QColor, 3> colours();
 
 signals:
     void changed();
@@ -98,7 +95,7 @@ private:
     void refresh();
     void applyWindowIcon(QWindow *window, const QString &role) const;
 
-    std::array<QColor, 4> m_colours;
+    std::array<QColor, 3> m_colours;
     QList<std::pair<QPointer<QWindow>, QString>> m_windows;
 };
 
