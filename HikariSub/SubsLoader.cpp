@@ -102,14 +102,20 @@ bool SubsLoader::LoadASS(const wxString &text)
 	wxString tlstyle;
 
 
-	// embedded fonts and pictures are uuencoded lines, kept as they are
+	// embedded fonts and pictures are uuencoded lines, kept as they are,
+	// and so are sections this loader does not know
 	bool embedded = false;
+	// lines before the first section header count as script info
+	bool scriptInfo = true;
 	while (tokenizer.HasMoreTokens())
 	{
 		wxString token = tokenizer.GetNextToken().Trim(false);
 		if (token.empty()){ continue; }
-		if (token[0] == L'[')
-			embedded = token.StartsWith(L"[Fonts]") || token.StartsWith(L"[Graphics]");
+		if (token[0] == L'['){
+			wxString header = token.Lower();
+			scriptInfo = header.StartsWith(L"[script info]");
+			embedded = !scriptInfo && !header.StartsWith(L"[v4") && !header.StartsWith(L"[events]");
+		}
 		if (embedded) {
 			grid->file->AddEmbeddedSectionLine(token.Trim(true));
 			continue;
@@ -153,7 +159,7 @@ bool SubsLoader::LoadASS(const wxString &text)
 			//need to send to constructor of styles 2 as format SSA, SRT has 3 to avoid bugs
 			section = 1;
 		}
-		else if (token[0] != L';' && token[0] != L'[' && token.Find(L':') != wxNOT_FOUND && !token.StartsWith(L"Format")){
+		else if (scriptInfo && token[0] != L';' && token[0] != L'[' && token.Find(L':') != wxNOT_FOUND && !token.StartsWith(L"Format")){
 			grid->file->AddSInfo(token);
 		}
 		else if (token.StartsWith(L"[Eve")){
