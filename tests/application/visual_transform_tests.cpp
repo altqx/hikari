@@ -533,6 +533,7 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
     ASSERT_EQ(cases.size(), observations.size());
     int states = 0;
     std::size_t departed = 0;
+    std::vector<std::string> unchangedReleases; // legacy's commits left out
     for (const Case &c : cases) {
         SCOPED_TRACE(c.name);
         ASSERT_TRUE(observations.contains(c.name));
@@ -674,12 +675,21 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
                 // 408-417) and SetModified saves the undo state
                 // (SubsGridBase.cpp:1125-1157). The rewrite cancels a gesture
                 // whose release changes no Line's text (T3-release-no-change):
-                // those commits are left out.
+                // those commits are left out. On one Line the commit is a
+                // Send (`sent`); on several it is SetModified (`history`).
+                // This capture's three such releases (rotz-two-points steps
+                // 1 and 5, scale-rectangle step 4) are all on one Line, so
+                // noStepHistory stays 0 here; it is kept so a several-Line
+                // release that changes nothing is left out by the same rule.
                 auto legacySent = strings(o[QStringLiteral("sent")]);
                 auto legacyHistory = strings(o[QStringLiteral("history")]);
                 if (step > 1 && lines == previousLines) {
-                    noStepSends += legacySent.size() - previousSent;
-                    noStepHistory += legacyHistory.size() - previousHistory;
+                    const std::size_t sends = legacySent.size() - previousSent;
+                    const std::size_t marks = legacyHistory.size() - previousHistory;
+                    if (sends + marks > 0)
+                        unchangedReleases.push_back(c.name + " step " + std::to_string(step - 1));
+                    noStepSends += sends;
+                    noStepHistory += marks;
                 }
                 previousLines = lines;
                 previousSent = legacySent.size();
@@ -735,6 +745,9 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
     }
     EXPECT_GT(states, 70);
     EXPECT_EQ(departed, departures().size());
+    // T3-release-no-change: the releases whose unchanged commit was left out.
+    EXPECT_EQ(unchangedReleases, (std::vector<std::string>{"scale-rectangle step 4", "rotz-two-points step 1",
+                                                           "rotz-two-points step 5"}));
 }
 
 // A commit the session refuses (a stale revision, a draft that cannot
