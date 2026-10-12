@@ -37,6 +37,34 @@ static bool ResolveSaveTarget(const wxString &fileName, wxString *target)
 	if (!resolved.empty()){ *target = wxString(resolved.c_str(), *wxConvFileName); }
 	return true;
 }
+
+//the bytes wxFile::Write(text, conv) writes
+static bool WriteText(SaveFile &file, const wxString &text, const wxMBConv &conv)
+{
+	if (text.empty()){ return true; }
+	const wxCharBuffer bytes = text.mb_str(conv);
+	if (!bytes.length()){ return false; }
+	return file.Write(bytes.data(), bytes.length());
+}
+
+static bool OpenSaveFile(SaveFile &file, const wxString &target)
+{
+	return file.Open(std::string(target.fn_str().data()));
+}
+
+static void LogSaveFailure(const SaveFile &file)
+{
+	HikariLog(_("Cannot save to file."));
+	if (!file.KeptBackup().empty()){
+		HikariLog(wxString::Format(_("The old contents of the file are kept in %s."),
+			wxString(file.KeptBackup().c_str(), *wxConvFileName)));
+	}
+}
+#else
+static bool WriteText(wxTempFile &file, const wxString &text, const wxMBConv &conv)
+{
+	return file.Write(text, conv);
+}
 #endif
 #ifdef _WIN32
 // wx's wrapper for windows.h, it keeps min and max from becoming macros
@@ -217,12 +245,23 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 	}
 	fname.Assign(target);
 #endif
-	//a file that cannot be written must not be replaced either; on POSIX the
-	//rename in Commit needs only a writable folder and would replace it
+	//a file that cannot be written must not be replaced either; on POSIX a
+	//rename needs only a writable folder and would replace it
 	if (fname.FileExists() && !fname.IsFileWritable()){
 		HikariLog(_("Cannot save to file."));
 		return false;
 	}
+#ifndef _WIN32
+	//SaveFile renames the temporary file over the file only when that keeps
+	//the file's links, owner, group, mode and extended attributes, and else
+	//rewrites the file in place with a backup it puts back on a failure
+	SaveFile saveFile;
+	if (!OpenSaveFile(saveFile, target) || !WriteText(saveFile, textToWrite, conv) || !saveFile.Commit()){
+		LogSaveFailure(saveFile);
+		return false;
+	}
+	return true;
+#else
 	wxTempFile tempFile;
 	bool tempOpened = false;
 	{
@@ -247,13 +286,14 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 		return false;
 	}
 	return true;
+#endif
 }
 void OpenWrite::PartFileWrite(const wxString &parttext)
 {
 	if (useTemp){
 		if (writeFailed){ return; }
 		wchar_t bom = 0xFEFF;
-		if (!tempFile.Write((isfirst) ? wxString(bom) + parttext : parttext)){
+		if (!WriteText(tempFile, (isfirst) ? wxString(bom) + parttext : parttext, wxMBConvUTF8())){
 			HikariLog(_("Cannot save to file."));
 			writeFailed = true;
 		}
@@ -288,7 +328,11 @@ bool OpenWrite::OpenTemp(const wxString &fileName)
 #endif
 	//a file that cannot be written must not be replaced either
 	writeFailed = (fname.FileExists() && (!fname.IsFileReadable() || !fname.IsFileWritable())) ||
+#ifdef _WIN32
 		!tempFile.Open(target);
+#else
+		!OpenSaveFile(tempFile, target);
+#endif
 	if (writeFailed){ HikariLog(_("Cannot open file.")); }
 	return !writeFailed;
 }
@@ -297,9 +341,13 @@ bool OpenWrite::CommitTemp()
 {
 	//on failure the temporary file is removed with tempFile
 	if (writeFailed || !tempFile.IsOpened()){ return false; }
-	//Commit logs its own error
 	if (!tempFile.Commit()){
 		writeFailed = true;
+#ifdef _WIN32
+		//Commit logs its own error
+#else
+		LogSaveFailure(tempFile);
+#endif
 		return false;
 	}
 	return true;

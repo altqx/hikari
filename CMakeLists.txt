@@ -251,6 +251,7 @@ add_executable(hikarisub
     HikariSub/NewCatalog.cpp
     HikariSub/NumCtrl.cpp
     HikariSub/OpennWrite.cpp
+    HikariSub/SaveFile.cpp
     HikariSub/OptionsDialog.cpp
     HikariSub/ProgressDialog.cpp
     HikariSub/ScriptInfo.cpp

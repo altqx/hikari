@@ -17,6 +17,9 @@
 
 #include <wx/file.h>
 #include <wx/thread.h>
+#ifndef _WIN32
+#include "SaveFile.h"
+#endif
 
 class OpenWrite
 {
@@ -26,14 +29,16 @@ public:
 	~OpenWrite();
 	void CloseFile();
 	bool FileOpen(const wxString &filename, wxString *riddenText, bool test = true);
-	//writes a temporary file next to filename and replaces filename with it;
-	//returns false and keeps the file as it was when it cannot be written,
-	//also when it is read-only or its folder takes no temporary file
+	//writes a temporary file and puts it in place of filename only when all
+	//of it was written; returns false and keeps the file as it was when it
+	//cannot be written, also when it is read-only. On POSIX see SaveFile for
+	//how it is put in place; on Windows it replaces filename, and a file whose
+	//folder takes no temporary file is not written.
 	bool FileWrite(const wxString &filename, const wxString &alltext, bool utf = true);
 	void PartFileWrite(const wxString &parttext);
-	// PartFileWrite then writes to a temporary file next to filename and
-	// CommitTemp replaces filename with it, so a failed save keeps the old file;
-	// when filename is a symbolic link its target is replaced and the link kept
+	// PartFileWrite then writes to a temporary file and CommitTemp puts it in
+	// place of filename as FileWrite does, so a failed save keeps the old file;
+	// when filename is a symbolic link its target is saved and the link kept
 	bool OpenTemp(const wxString &filename);
 	bool CommitTemp();
 	bool IsUTF8withoutBOM(char* buf, size_t size);
@@ -42,7 +47,11 @@ public:
 private:
 
 	bool isfirst;
+#ifdef _WIN32
 	wxTempFile tempFile;
+#else
+	SaveFile tempFile;
+#endif
 	bool useTemp = false;
 	bool writeFailed = false;
 };
