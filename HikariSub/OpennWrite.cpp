@@ -77,9 +77,19 @@ static void LogSaveFailure(const SaveFile &file)
 // wx's wrapper for windows.h, it keeps min and max from becoming macros
 #include <wx/msw/wrapwin.h>
 
+//why a save made no temporary file, when it is that one would let in users
+//the file keeps out
+static void LogTempNotPrivate(const WindowsSaveFile &file)
+{
+	if (file.TempNotPrivate()){
+		HikariLog(_("A temporary file in its folder would let in users the file keeps out."));
+	}
+}
+
 static void LogSaveFailure(const WindowsSaveFile &file)
 {
 	HikariLog(_("Cannot save to file."));
+	LogTempNotPrivate(file);
 	if (!file.KeptBackup().empty()){
 		HikariLog(wxString::Format(_("The old contents of the file are kept in %s."),
 			wxString(file.KeptBackup().c_str())));
@@ -351,6 +361,7 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 	//or short write would then lose it
 	if (!tempOpened){
 		HikariLog(_("Cannot save to file."));
+		LogTempNotPrivate(saveFile);
 		return false;
 	}
 	//the destructor removes the temporary file
@@ -442,7 +453,12 @@ bool OpenWrite::OpenTemp(const wxString &fileName, bool privateFile)
 #else
 		!OpenSaveFile(tempFile, target);
 #endif
-	if (writeFailed){ HikariLog(_("Cannot open file.")); }
+	if (writeFailed){
+		HikariLog(_("Cannot open file."));
+#ifdef _WIN32
+		LogTempNotPrivate(tempFile);
+#endif
+	}
 	return !writeFailed;
 }
 

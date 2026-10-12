@@ -213,6 +213,7 @@ TEST(windowsPrivateTargetIsNotSavedWhenTheStageCannotBeMadePrivate)
 	Refuse refuse(true, true);
 	WindowsSaveFile save;
 	CHECK(!save.Open(target));
+	CHECK(save.TempNotPrivate());
 	CHECK(!save.IsOpened());
 	CHECK(!save.Write("new", 3));
 	CHECK(!save.Commit());
@@ -243,7 +244,11 @@ TEST(windowsSharedTargetIsSavedWhenTheStageCannotBeMadePrivate)
 	std::wstring target = folder / L"shared.ass";
 	CHECK(MakeFileWith(target, "old", std::wstring()));
 	Refuse refuse(true, true);
-	CHECK(Save(target, "new"));
+	WindowsSaveFile save;
+	CHECK(save.Open(target));
+	CHECK(save.Write("new", 3));
+	CHECK(save.Commit());
+	CHECK(!save.TempNotPrivate());
 	CHECK(Contents(target) == "new");
 	CHECK_EQ(folder.Stages(), static_cast<size_t>(0));
 }
@@ -282,6 +287,7 @@ TEST(windowsPrivateTargetIsNotReplacedWhenTheBackupNameCannotBeMadePrivate)
 	CHECK(save.Write("new", 3));
 	Refuse refuse(true, true);
 	CHECK(!save.Commit());
+	CHECK(save.TempNotPrivate());
 	CHECK(!save.TargetTouched());
 	CHECK(save.KeptBackup().empty());
 	CHECK(Contents(target) == "old");

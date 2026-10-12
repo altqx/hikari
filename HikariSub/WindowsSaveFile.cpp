@@ -493,58 +493,53 @@ bool NarrowFolder(HANDLE handle)
 }
 
 // Gives the file readable is open on, with READ_CONTROL, the DACL of
-// PrivateSecurity unless it lets nobody else in already, through a handle of
-// its own with WRITE_DAC only: a file whose owner is another user may let
-// this user write it but not change its DACL. Returns whether it lets nobody
-// else in now, read again after the change. With kept, the file was there
-// before the save, and one whose owner is not trusted, see Privacy, is not
-// private whatever its DACL says; a file this process has just made is its
-// own, whatever owner a network share reports for it.
+// PrivateSecurity unless it lets nobody else in already: through readable
+// when changesDacl says it has WRITE_DAC too, or else through a handle of its
+// own with WRITE_DAC only, as a file whose owner is another user may let this
+// user write it but not change its DACL. READ_CONTROL and WRITE_DAC are no
+// access a share mode keeps out, so this works on a file open shared with
+// nobody. Returns whether it lets nobody else in now, read again after the
+// change. With kept, the file was there before the save, and one whose owner
+// is not trusted, see Privacy, is not private whatever its DACL says; a file
+// this process has just made is its own, whatever owner a network share
+// reports for it.
 // A file in a private folder takes its ACEs from that folder, whose DACL is
 // protected, so its own need not be. One on a volume that keeps no ACLs is
 // taken to be private, as on POSIX, where the 0600 a save makes a file with
 // is not checked: on such a volume only MakePrivateFolder refuses, and each
 // private file that holds more than a session's paths is in a folder it made.
-bool NarrowFile(HANDLE readable, bool kept)
+bool NarrowFile(HANDLE readable, bool kept, bool changesDacl = false)
 {
 	if (!KeepsAcls(readable)) { return true; }
 	Privacy now = ReadPrivacy(readable);
 	if (kept && !now.trustedOwner) { return false; }
 	if (now.narrow) { return true; }
-	HANDLE writable = ::ReOpenFile(readable, WRITE_DAC, shareAll, 0);
-	if (writable == INVALID_HANDLE_VALUE) { return false; }
-	bool narrowed = GivePrivateDacl(writable, false);
-	::CloseHandle(writable);
+	bool narrowed = false;
+	if (changesDacl) {
+		narrowed = GivePrivateDacl(readable, false);
+	}
+	else {
+		HANDLE writable = ::ReOpenFile(readable, WRITE_DAC, shareAll, 0);
+		if (writable == INVALID_HANDLE_VALUE) { return false; }
+		narrowed = GivePrivateDacl(writable, false);
+		::CloseHandle(writable);
+	}
 	return narrowed && ReadPrivacy(readable).narrow;
 }
 
-// NarrowFile for the file handle is open on. READ_CONTROL and WRITE_DAC are
-// no access a share mode keeps out, so this works on a file open shared
-// with nobody.
-bool NarrowOpenFile(HANDLE handle)
-{
-	HANDLE readable = ::ReOpenFile(handle, READ_CONTROL, shareAll, 0);
-	if (readable == INVALID_HANDLE_VALUE) { return !KeepsAcls(handle); }
-	bool narrowed = NarrowFile(readable, false);
-	::CloseHandle(readable);
-	return narrowed;
-}
-
-// Whether the file handle is open on lets in no one the DACL of the security
-// descriptor reference keeps out; an empty reference keeps nobody out.
+// Whether the file handle is open on, with READ_CONTROL, lets in no one the
+// DACL of the security descriptor reference keeps out; an empty reference
+// keeps nobody out.
 bool LetsInNoMoreThan(HANDLE handle, const std::vector<unsigned char> &reference)
 {
 	if (reference.empty()) { return true; }
 	PACL referenceDacl = nullptr;
 	if (!DaclOf(const_cast<unsigned char *>(reference.data()), &referenceDacl)) { return false; }
-	HANDLE readable = ::ReOpenFile(handle, READ_CONTROL, shareAll, 0);
-	if (readable == INVALID_HANDLE_VALUE) { return false; }
 	PACL dacl = nullptr;
 	PSECURITY_DESCRIPTOR current = nullptr;
-	bool narrow = ::GetSecurityInfo(readable, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, nullptr, nullptr, &dacl,
+	bool narrow = ::GetSecurityInfo(handle, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, nullptr, nullptr, &dacl,
 		nullptr, &current) == ERROR_SUCCESS && DaclLetsInNoMoreThan(dacl, referenceDacl);
 	if (current) { ::LocalFree(current); }
-	::CloseHandle(readable);
 	return narrow;
 }
 
@@ -606,17 +601,25 @@ namespace {
 // written into it; one that takes it but makes the file with other ACEs is
 // caught by the same check. A file that lets others in then is kept only for
 // NoWiderThanTarget, when they are let in to the file that is saved too, see
-// LetsInNoMoreThan; otherwise it is deleted again and not made.
+// LetsInNoMoreThan; otherwise it is deleted again and not made, and
+// notPrivate is set.
+// The file is opened with WRITE_DAC too, which a volume gives the user who
+// makes a file, so its DACL is read, given and read again through this
+// handle; GENERIC_READ takes READ_CONTROL in. A volume that refuses that
+// makes it without, and the DACL is given through a handle ReOpenFile opens.
 // INVALID_HANDLE_VALUE on a failure, with GetLastError set.
-HANDLE MakeFile(const std::wstring &name, DWORD share, FileAccess access, const std::vector<unsigned char> &target)
+HANDLE MakeFile(const std::wstring &name, DWORD share, FileAccess access, const std::vector<unsigned char> &target,
+	bool *notPrivate = nullptr)
 {
+	if (notPrivate) { *notPrivate = false; }
 	const DWORD rights = GENERIC_READ | GENERIC_WRITE | DELETE;
+	DWORD asked = access == FileAccess::Folder ? rights : rights | WRITE_DAC;
 	HANDLE handle = INVALID_HANDLE_VALUE;
 	if (access != FileAccess::Folder && !refusals.securityAtCreate) {
 		PrivateSecurity security(false);
 		SECURITY_ATTRIBUTES attributes = { static_cast<DWORD>(sizeof(SECURITY_ATTRIBUTES)), security.Get(), FALSE };
 		if (security.Get()) {
-			handle = ::CreateFileW(name.c_str(), rights, share, &attributes, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
+			handle = ::CreateFileW(name.c_str(), asked, share, &attributes, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
 				nullptr);
 			if (handle == INVALID_HANDLE_VALUE) {
 				DWORD error = ::GetLastError();
@@ -625,14 +628,20 @@ HANDLE MakeFile(const std::wstring &name, DWORD share, FileAccess access, const 
 		}
 	}
 	if (handle == INVALID_HANDLE_VALUE) {
-		handle = ::CreateFileW(name.c_str(), rights, share, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
+		handle = ::CreateFileW(name.c_str(), asked, share, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (handle == INVALID_HANDLE_VALUE && asked != rights && ::GetLastError() == ERROR_ACCESS_DENIED) {
+			asked = rights;
+			handle = ::CreateFileW(name.c_str(), asked, share, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
+		}
 	}
 	if (handle == INVALID_HANDLE_VALUE || access == FileAccess::Folder) { return handle; }
-	if (NarrowOpenFile(handle) || (access == FileAccess::NoWiderThanTarget && LetsInNoMoreThan(handle, target))) {
+	if (NarrowFile(handle, false, (asked & WRITE_DAC) != 0) ||
+		(access == FileAccess::NoWiderThanTarget && LetsInNoMoreThan(handle, target))) {
 		return handle;
 	}
 	DeleteByHandle(handle);
 	::CloseHandle(handle);
+	if (notPrivate) { *notPrivate = true; }
 	::SetLastError(ERROR_ACCESS_DENIED);
 	return INVALID_HANDLE_VALUE;
 }
@@ -645,7 +654,7 @@ HANDLE MakeFile(const std::wstring &name, DWORD share, FileAccess access, const 
 // opened the name again without O_EXCL, which followed a link put there in
 // between.
 std::wstring MakeTempFileNear(const std::wstring &target, HANDLE *file, WindowsFileId *id, FileAccess access,
-	const std::vector<unsigned char> &targetSecurity)
+	const std::vector<unsigned char> &targetSecurity, bool *notPrivate)
 {
 	//target is absolute, see Open
 	size_t separator = target.find_last_of(L"\\/");
@@ -658,7 +667,7 @@ std::wstring MakeTempFileNear(const std::wstring &target, HANDLE *file, WindowsF
 		std::wstring name = folder + L"hks";
 		for (int shift = 28; shift >= 0; shift -= 4) { name += digits[(value >> shift) & 0xF]; }
 		name += L".tmp";
-		HANDLE handle = MakeFile(name, 0, access, targetSecurity);
+		HANDLE handle = MakeFile(name, 0, access, targetSecurity, notPrivate);
 		if (handle == INVALID_HANDLE_VALUE) {
 			DWORD error = ::GetLastError();
 			if (error == ERROR_FILE_EXISTS || error == ERROR_ALREADY_EXISTS) { continue; }
@@ -696,6 +705,7 @@ bool WindowsSaveFile::Open(const std::wstring &name, bool privateFile)
 	Discard();
 	keptBackup.clear();
 	touched = false;
+	tempNotPrivate = false;
 	privateSave = privateFile;
 	targetSecurityKnown = false;
 	targetSecurity.clear();
@@ -771,10 +781,12 @@ FileAccess WindowsSaveFile::TempAccess() const
 	return targetSecurityKnown ? FileAccess::NoWiderThanTarget : FileAccess::Private;
 }
 
-std::wstring WindowsSaveFile::MakeTemp(void **handle, WindowsFileId *id) const
+std::wstring WindowsSaveFile::MakeTemp(void **handle, WindowsFileId *id)
 {
 	HANDLE made = INVALID_HANDLE_VALUE;
-	std::wstring name = MakeTempFileNear(target, &made, id, TempAccess(), targetSecurity);
+	bool notPrivate = false;
+	std::wstring name = MakeTempFileNear(target, &made, id, TempAccess(), targetSecurity, &notPrivate);
+	tempNotPrivate = tempNotPrivate || notPrivate;
 	*handle = name.empty() ? nullptr : made;
 	return name;
 }

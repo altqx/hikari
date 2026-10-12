@@ -100,6 +100,9 @@ public:
 	// whether Commit wrote into the file or put another one at its name,
 	// also when it then failed, see SaveFile::TargetTouched
 	bool TargetTouched() const { return touched; }
+	// whether Open or Commit failed because a temporary file in the folder
+	// would have let in someone the file keeps out, see Open
+	bool TempNotPrivate() const { return tempNotPrivate; }
 
 private:
 	bool Replace();
@@ -107,7 +110,7 @@ private:
 	// who may open the temporary files: see Open
 	FileAccess TempAccess() const;
 	// makes a temporary file next to the target, see MakeTempFileNear
-	std::wstring MakeTemp(void **handle, WindowsFileId *id) const;
+	std::wstring MakeTemp(void **handle, WindowsFileId *id);
 	// gives the private file that is there the DACL of a new one
 	bool NarrowSaved();
 	// whether the path of the target's folder still leads to the folder
@@ -139,6 +142,7 @@ private:
 	WindowsFileId tempId;
 	std::wstring keptBackup;
 	bool touched = false;
+	bool tempNotPrivate = false;
 	bool privateSave = false;
 };
 
