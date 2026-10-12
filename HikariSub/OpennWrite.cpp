@@ -61,14 +61,157 @@ static void LogSaveFailure(const SaveFile &file)
 	}
 }
 #else
-static bool WriteText(wxTempFile &file, const wxString &text, const wxMBConv &conv)
+// wx's wrapper for windows.h, it keeps min and max from becoming macros
+#include <wx/msw/wrapwin.h>
+#include <io.h>
+
+static bool WriteText(WindowsSaveFile &file, const wxString &text, const wxMBConv &conv)
 {
 	return file.Write(text, conv);
 }
-#endif
-#ifdef _WIN32
-// wx's wrapper for windows.h, it keeps min and max from becoming macros
-#include <wx/msw/wrapwin.h>
+
+static void LogSaveFailure(const WindowsSaveFile &file)
+{
+	HikariLog(_("Cannot save to file."));
+	if (!file.KeptBackup().empty()){
+		HikariLog(wxString::Format(_("The old contents of the file are kept in %s."), file.KeptBackup()));
+	}
+}
+
+static bool PathExists(const wxString &path)
+{
+	return ::GetFileAttributesW(path.wc_str()) != INVALID_FILE_ATTRIBUTES;
+}
+
+// the number of names the file at path has, 0 when it cannot be read
+static DWORD LinkCount(const wxString &path)
+{
+	HANDLE handle = ::CreateFileW(path.wc_str(), FILE_READ_ATTRIBUTES,
+		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+		FILE_FLAG_BACKUP_SEMANTICS, nullptr);
+	if (handle == INVALID_HANDLE_VALUE) { return 0; }
+	BY_HANDLE_FILE_INFORMATION info;
+	DWORD links = ::GetFileInformationByHandle(handle, &info) ? info.nNumberOfLinks : 0;
+	::CloseHandle(handle);
+	return links;
+}
+
+// copies all of from, from its start, to the current offset of to
+static bool CopyContents(wxFile &from, wxFile &to)
+{
+	if (from.Seek(0) != 0) { return false; }
+	std::vector<char> buffer(1 << 16);
+	for (;;) {
+		ssize_t got = from.Read(buffer.data(), buffer.size());
+		if (got < 0) { return false; }
+		if (got == 0) { return true; }
+		if (to.Write(buffer.data(), static_cast<size_t>(got)) != static_cast<size_t>(got)) { return false; }
+	}
+}
+
+bool WindowsSaveFile::Open(const wxString &name)
+{
+	Discard();
+	keptBackup.clear();
+	//an absolute name puts the temporary file next to the file, see wxTempFile::Open
+	wxFileName fn(name);
+	if (!fn.IsAbsolute()) { fn.Normalize(wxPATH_NORM_ABSOLUTE); }
+	target = fn.GetFullPath();
+	temp = wxFileName::CreateTempFileName(target, &file);
+	return !temp.empty();
+}
+
+void WindowsSaveFile::Discard()
+{
+	if (file.IsOpened()) { file.Close(); }
+	if (!temp.empty()) {
+		::DeleteFileW(temp.wc_str());
+		temp.clear();
+	}
+}
+
+bool WindowsSaveFile::Commit()
+{
+	if (!file.IsOpened()) { return false; }
+	wxLogNull noLog;
+	//the new contents are on disk before the file is touched
+	bool saved = file.Flush();
+	if (saved) {
+		if (!PathExists(target)) {
+			//a new file; one another program made in the meantime is not replaced
+			file.Close();
+			saved = ::MoveFileExW(temp.wc_str(), target.wc_str(), MOVEFILE_WRITE_THROUGH) != 0;
+			if (saved) { temp.clear(); }
+		}
+		else if (LinkCount(target) > 1) {
+			//a replace would put the new contents under this one name only
+			saved = Rewrite();
+		}
+		else {
+			saved = Replace();
+		}
+	}
+	Discard();
+	return saved;
+}
+
+bool WindowsSaveFile::Replace()
+{
+	file.Close();
+	//the old file is moved to this name while it is replaced, so a replace
+	//that stops half way can be undone
+	wxString backup = temp + L".old";
+	if (PathExists(backup)) { return false; }
+	if (::ReplaceFileW(target.wc_str(), temp.wc_str(), backup.wc_str(), REPLACEFILE_IGNORE_MERGE_ERRORS,
+		nullptr, nullptr)) {
+		temp.clear();
+		::DeleteFileW(backup.wc_str());
+		return true;
+	}
+	if (PathExists(backup)) {
+		//ERROR_UNABLE_TO_MOVE_REPLACEMENT_2: the old file was moved away and
+		//the new one was not moved in; the old one goes back
+		if (PathExists(target) ||
+			!::MoveFileExW(backup.wc_str(), target.wc_str(), MOVEFILE_WRITE_THROUGH)) {
+			keptBackup = backup;
+		}
+		return false;
+	}
+	//Nothing was changed, mostly because another program has the file open
+	//without letting it be deleted. wxRenameFile then copied the new file
+	//over it, which truncates it first; the contents are copied in with a
+	//backup instead.
+	return PathExists(target) && Rewrite();
+}
+
+bool WindowsSaveFile::Rewrite()
+{
+	if (!file.IsOpened() && !file.Open(temp, wxFile::read)) { return false; }
+	wxFileOffset newLength = file.Length();
+	wxFile out;
+	//a program that has the file open without sharing writes keeps it as it is
+	if (newLength < 0 || !out.Open(target, wxFile::read_write)) { return false; }
+	wxFileOffset oldLength = out.Length();
+	if (oldLength < 0) { return false; }
+	//a backup of the old contents, on disk before the file is touched
+	wxFile backup;
+	wxString backupName = wxFileName::CreateTempFileName(target, &backup);
+	if (backupName.empty()) { return false; }
+	bool saved = CopyContents(out, backup) && backup.Flush();
+	if (saved) {
+		saved = out.Seek(0) == 0 && CopyContents(file, out) && _chsize_s(out.fd(), newLength) == 0 &&
+			out.Flush();
+		if (!saved) {
+			bool restored = out.Seek(0) == 0 && CopyContents(backup, out) &&
+				_chsize_s(out.fd(), oldLength) == 0 && out.Flush();
+			if (!restored) { keptBackup = backupName; }
+		}
+	}
+	backup.Close();
+	out.Close();
+	if (keptBackup.empty()) { ::DeleteFileW(backupName.wc_str()); }
+	return saved;
+}
 
 // wx has no Windows converter for these uchardet charsets and would copy the
 // bytes as Latin-1, so they are decoded with their Windows code page instead
@@ -262,11 +405,11 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 	}
 	return true;
 #else
-	wxTempFile tempFile;
+	WindowsSaveFile saveFile;
 	bool tempOpened = false;
 	{
 		wxLogNull noLog;
-		tempOpened = tempFile.Open(target);
+		tempOpened = saveFile.Open(target);
 	}
 	//without a temporary file, in a folder that is not writable, the file is
 	//not written either: writing it in place truncates it first, and a failed
@@ -275,14 +418,9 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 		HikariLog(_("Cannot save to file."));
 		return false;
 	}
-	if (!tempFile.Write(textToWrite, conv)){
-		HikariLog(_("Cannot save to file."));
-		//the destructor removes the temporary file
-		return false;
-	}
-	if (!tempFile.Commit()){
-		tempFile.Discard();
-		HikariLog(_("Cannot save to file."));
+	//the destructor removes the temporary file
+	if (!saveFile.Write(textToWrite, conv) || !saveFile.Commit()){
+		LogSaveFailure(saveFile);
 		return false;
 	}
 	return true;
@@ -343,11 +481,7 @@ bool OpenWrite::CommitTemp()
 	if (writeFailed || !tempFile.IsOpened()){ return false; }
 	if (!tempFile.Commit()){
 		writeFailed = true;
-#ifdef _WIN32
-		//Commit logs its own error
-#else
 		LogSaveFailure(tempFile);
-#endif
 		return false;
 	}
 	return true;

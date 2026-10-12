@@ -21,6 +21,42 @@
 #include "SaveFile.h"
 #endif
 
+#ifdef _WIN32
+// One save of a file on Windows: Open makes a temporary file next to the
+// file, Write appends to it and Commit puts it in place. The temporary file
+// replaces the file with ReplaceFileW, which keeps the file's attributes and
+// ACLs; a file with several hard links, or one ReplaceFileW cannot replace
+// because another program has it open, gets the new contents copied into it
+// instead, with a backup of the old contents put back when that fails. Unlike
+// wxTempFile, a failed replace is never followed by a copy over the file
+// without a backup. A file that is not committed is left as it was.
+class WindowsSaveFile
+{
+public:
+	WindowsSaveFile() = default;
+	WindowsSaveFile(const WindowsSaveFile &) = delete;
+	WindowsSaveFile &operator=(const WindowsSaveFile &) = delete;
+	~WindowsSaveFile() { Discard(); }
+	bool Open(const wxString &target);
+	bool IsOpened() const { return file.IsOpened(); }
+	bool Write(const wxString &text, const wxMBConv &conv) { return file.Write(text, conv); }
+	bool Commit();
+	void Discard();
+	// After a save failed half way and the old contents could not be put
+	// back, they are kept under this name.
+	const wxString &KeptBackup() const { return keptBackup; }
+
+private:
+	bool Replace();
+	bool Rewrite();
+
+	wxFile file;
+	wxString target;
+	wxString temp;
+	wxString keptBackup;
+};
+#endif
+
 class OpenWrite
 {
 public:
@@ -34,8 +70,8 @@ public:
 	//cannot be written, also when it is read-only. On POSIX see SaveFile for
 	//how it is put in place: a file whose folder takes no temporary file is
 	//rewritten in place with a backup of its old contents, which is not
-	//atomic. On Windows it replaces filename, and a file whose folder takes
-	//no temporary file is not written.
+	//atomic. On Windows see WindowsSaveFile; a file whose folder takes no
+	//temporary file is not written there.
 	bool FileWrite(const wxString &filename, const wxString &alltext, bool utf = true);
 	void PartFileWrite(const wxString &parttext);
 	// PartFileWrite then writes to a temporary file and CommitTemp puts it in
@@ -50,7 +86,7 @@ private:
 
 	bool isfirst;
 #ifdef _WIN32
-	wxTempFile tempFile;
+	WindowsSaveFile tempFile;
 #else
 	SaveFile tempFile;
 #endif
