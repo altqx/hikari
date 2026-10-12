@@ -359,9 +359,12 @@ namespace Auto{
 			e->adial->Start = Start;
 			e->adial->End = End;
 			if (laf->subsFormat != ASS){
+				//MDVD frames need the frame rate of this tab's video, if there is one
+				TabPanel *tab = Notebook::GetTab();
+				float fps = (tab->video->GetState() != None) ? tab->video->GetFPS() : 0.f;
 				e->adial->Format = laf->subsFormat;
-				e->adial->Start.ChangeFormat(laf->subsFormat, 25.f);
-				e->adial->End.ChangeFormat(laf->subsFormat, 25.f);
+				e->adial->Start.ChangeFormat(laf->subsFormat, fps);
+				e->adial->End.ChangeFormat(laf->subsFormat, fps);
 			}
 			e->adial->Style = Style;
 			e->adial->Actor = Actor;

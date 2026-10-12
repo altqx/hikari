@@ -21,8 +21,10 @@
 class SubsTime
 {
 private:
-	static float FPS;
+	//MicroDVD frame rate this time was read or synced with, 0 when not known yet
+	float fps;
 	char form;
+	float GetMDVDFPS();
 
 public:
 	int orgframe;

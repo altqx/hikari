@@ -267,7 +267,7 @@ SubsTime TimeCtrl::GetTime(char opt)
 		return cpy;
 	}
 	else{
-		mTime.ChangeFormat(form, 25.f);
+		mTime.ChangeFormat(form);
 	}
 	return mTime;
 }
