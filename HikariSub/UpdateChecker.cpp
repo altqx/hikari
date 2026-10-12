@@ -286,7 +286,7 @@ namespace
 
 			JsonValue root;
 			std::vector<update_policy::Release> releases;
-			update_policy::Ending ending = Read(state, &root, &releases);
+			update_policy::Ending ending = Read(state, ReplyUrl(evt), &root, &releases);
 			tracker.End(Now(), ending);
 			if (IsParentOpen())
 				Report(ending, root, releases);
@@ -295,7 +295,15 @@ namespace
 			wxTheApp->ScheduleForDestruction(this);
 		}
 
-		update_policy::Ending Read(wxWebRequest::State state, JsonValue *root,
+		static std::string ReplyUrl(const wxWebRequestEvent &evt)
+		{
+			const wxWebResponse &response = evt.GetResponse();
+			if (evt.GetState() != wxWebRequest::State_Completed || !response.IsOk())
+				return std::string();
+			return response.GetURL().utf8_string();
+		}
+
+		update_policy::Ending Read(wxWebRequest::State state, const std::string &url, JsonValue *root,
 			std::vector<update_policy::Release> *releases)
 		{
 			if (tooLarge)
@@ -304,6 +312,8 @@ namespace
 				return update_policy::Ending::Cancelled;
 			if (state != wxWebRequest::State_Completed)
 				return update_policy::Ending::Failed;
+			if (!update_policy::IsApiReplyUrl(url))
+				return update_policy::Ending::NotFromApi;
 
 			*root = JsonValue::Parse(body);
 			body.clear();

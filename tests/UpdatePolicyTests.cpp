@@ -405,7 +405,7 @@ struct FakeNextCheck : NextCheckStore
 };
 
 const Ending kEndings[] = { Ending::NoRequest, Ending::Failed, Ending::Cancelled, Ending::CutOff,
-	Ending::NotAList, Ending::Answered };
+	Ending::NotFromApi, Ending::NotAList, Ending::Answered };
 
 } // namespace
 
@@ -433,8 +433,9 @@ TEST(update_every_ending_of_a_check_is_recorded_once)
 			CHECK(store.value == now + 30 + kDay);
 		}
 		else {
-			// No session or request, a failure, a cancel, a reply cut off
-			// or not a release list: the hour from the start stands.
+			// No session or request, a failure, a cancel, a reply cut
+			// off, from elsewhere or not a release list: the hour from the
+			// start stands.
 			CHECK(store.saves == 1);
 			CHECK(store.value == now + kHour);
 		}
@@ -519,4 +520,24 @@ TEST(update_request_times_out)
 	CHECK(kConnectTimeoutMs > 0);
 	CHECK(kDataTimeoutMs > 0);
 	CHECK(kConnectTimeoutMs + kDataTimeoutMs <= 5 * 60 * 1000);
+}
+
+TEST(update_reply_is_read_only_from_the_api_over_https)
+{
+	CHECK(IsApiReplyUrl(ReleasesApiUrl()));
+	CHECK(IsApiReplyUrl("https://api.github.com/repos/altqx/hikari/releases?per_page=50"));
+	// GitHub's redirect for a renamed repository.
+	CHECK(IsApiReplyUrl("https://api.github.com/repositories/123456/releases?per_page=50"));
+	CHECK(IsApiReplyUrl("HTTPS://API.GitHub.com/repos/altqx/hikari/releases"));
+
+	// A redirect to plain http, as the curl backend follows.
+	CHECK(!IsApiReplyUrl("http://api.github.com/repos/altqx/hikari/releases?per_page=50"));
+	CHECK(!IsApiReplyUrl("https://api.github.com.evil.example/repos/altqx/hikari/releases"));
+	CHECK(!IsApiReplyUrl("https://api.github.com@evil.example/"));
+	CHECK(!IsApiReplyUrl("https://api.github.com:443/repos/altqx/hikari/releases"));
+	CHECK(!IsApiReplyUrl("https://evil.example/https://api.github.com/"));
+	CHECK(!IsApiReplyUrl("https://github.com/altqx/hikari/releases"));
+	CHECK(!IsApiReplyUrl("https://api.github.com"));
+	CHECK(!IsApiReplyUrl(""));
+	static_assert(IsApiReplyUrl("https://api.github.com/"));
 }

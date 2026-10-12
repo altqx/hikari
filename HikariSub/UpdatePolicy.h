@@ -66,6 +66,26 @@ namespace update_policy
 		return received <= kMaxResponseBytes && piece <= kMaxResponseBytes - received;
 	}
 
+	// Whether a reply's final URL, after any redirects, is GitHub's API over
+	// https. The request asks for https, but a backend may follow a
+	// redirect to plain http, as wx's curl one does, and a reply from
+	// there could show a made-up version and notes. The scheme and host
+	// are compared without case; a port, even 443, or user info fails.
+	constexpr bool IsApiReplyUrl(std::string_view url)
+	{
+		constexpr std::string_view kApi = "https://api.github.com/";
+		if (url.size() < kApi.size())
+			return false;
+		for (size_t i = 0; i < kApi.size(); i++) {
+			char c = url[i];
+			if (c >= 'A' && c <= 'Z')
+				c = static_cast<char>(c - 'A' + 'a');
+			if (c != kApi[i])
+				return false;
+		}
+		return true;
+	}
+
 	// The page a release is opened at, built from its tag and never taken
 	// from the reply, so that a reply cannot have the browser open another
 	// site or a file: or custom-scheme link. Empty when the tag holds a
@@ -166,6 +186,8 @@ namespace update_policy
 		Cancelled,
 		// The reply passed kMaxResponseBytes and was cut off.
 		CutOff,
+		// The reply came from somewhere other than IsApiReplyUrl().
+		NotFromApi,
 		// The reply is not a release list.
 		NotAList,
 		// A release list came, whether or not the window that asked was
