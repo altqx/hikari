@@ -17,8 +17,10 @@
 
 #ifndef _WIN32
 
+#include <fcntl.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <string>
 
 // The file a save to path replaces. A save writes a temporary file and renames
@@ -27,12 +29,25 @@
 // instead. When path resolves, resolved is set to the target's absolute path.
 // A path that does not exist yet and is not a link leaves resolved empty and is
 // saved under its own name. Returns false for a link that leads to no file,
-// which is not replaced either.
+// which is not replaced either: a file is not made at a name the user never
+// gave, the pattern of a link planted to make another user's program create
+// a file. Returns false as well for a link the kernel would not follow, such
+// as another user's link in a sticky world-writable folder like /tmp under
+// fs.protected_symlinks: realpath reads links without following them, so the
+// kernel's check is made by opening the path.
 inline bool ResolveSaveTarget(const char *path, std::string *resolved)
 {
 	resolved->clear();
 	char *target = realpath(path, nullptr);
 	if (target) {
+#ifdef O_PATH
+		int followed = open(path, O_PATH | O_CLOEXEC);
+		if (followed < 0) {
+			free(target);
+			return false;
+		}
+		close(followed);
+#endif
 		*resolved = target;
 		free(target);
 		return true;
