@@ -52,6 +52,8 @@ public:
 	int textPosition;
 	int findstart;
 	int findend;
+	//text of the last match, Replace checks it is still there
+	wxString foundText;
 	int lastActive;
 	wxString oldfind;
 	bool fnext = false;

@@ -419,6 +419,7 @@ seekFromStart:
 				textPosition = foundPosition + foundLength;
 				findstart = foundPosition;
 				findend = textPosition;
+				foundText = txt.Mid(findstart, foundLength);
 				lastActive = reprow = linePosition;
 				if (!selectedLines){ tab->grid->SelectRow(linePosition, false, true); }
 				tab->edit->SetLine(linePosition);
@@ -466,6 +467,8 @@ seekFromStart:
 		}
 	}
 	if (!foundsome){
+		//nothing is found, Replace must not use the previous match
+		findstart = findend = -1;
 		blockTextChange = true;
 		linePosition = 0;
 		fromstart = true;
@@ -1092,7 +1095,18 @@ void FindReplace::Replace(TabWindow *window)
 	else if (window->CollumnEffect->GetValue()){ wrep = EFFECT; }
 
 	wxString find1 = window->FindText->GetValue();
-	if (find1 != oldfind || findstart == -1 || findend == -1){ 
+	//the match may have been replaced or edited since it was found
+	bool matchChanged = true;
+	if (findstart != -1 && findend != -1){
+		Dialogue *foundDial = tab->grid->file->GetDialogue(reprow);
+		if (foundDial){
+			wxString foundLine;
+			foundDial->GetTextElement(wrep, &foundLine, tab->grid->hasTLMode);
+			matchChanged = findstart > findend || (size_t)findend > foundLine.length() ||
+				foundLine.Mid(findstart, findend - findstart) != foundText;
+		}
+	}
+	if (find1 != oldfind || matchChanged){ 
 		fromstart = true; 
 		fnext = false; 
 		oldfind = find1; 
@@ -1146,6 +1160,7 @@ void FindReplace::Replace(TabWindow *window)
 	Dialc->SetTextElement(wrep, replacedText, tab->grid->hasTLMode);
 	grid->SetModified(REPLACE_SINGLE);
 	textPosition = findstart + rep.length();
+	findstart = findend = -1;
 	Find(window);
 }
 
