@@ -40,11 +40,11 @@ namespace update_policy
 	// page keeps a page of the largest releases, the qt-metadata-* ones,
 	// two to a Qt update, at half kMaxResponseBytes. kMaxPages bounds the
 	// rest: a check reads 200 releases, makes four requests, receives four
-	// times kMaxResponseBytes and waits four times kConnectTimeoutMs and
-	// kDataTimeoutMs at most, and leaves any further releases unread. As a
-	// higher version may be among those, a check that finds nothing newer
-	// in kMaxPages full pages fails rather than say so (GetEnding()), and
-	// kMaxPages has to grow before the repository lists that many.
+	// times kMaxResponseBytes at most, all within kCheckDeadlineSeconds,
+	// and leaves any further releases unread. As a higher version may be
+	// among those, a check that finds nothing newer in kMaxPages full
+	// pages fails rather than say so (GetEnding()), and kMaxPages has to
+	// grow before the repository lists that many.
 	constexpr size_t kReleasesPerPage = 50;
 	constexpr int kMaxPages = 4;
 
@@ -170,10 +170,30 @@ namespace update_policy
 		return NextCheck(now, nextCheck, false);
 	}
 
-	// How long a request may take to connect, and then to bring the whole
-	// reply. A check that hung would keep any other from starting.
+	// How long a request may take to connect, and then wait for the reply.
+	// Neither bounds the whole reply on every backend: WinHTTP applies the
+	// data timeout to each read, so a server or proxy that sends a few
+	// bytes a minute keeps a request going for as long as the reply cap
+	// takes to fill, years at that rate. kCheckDeadlineSeconds does.
 	constexpr long kConnectTimeoutMs = 30 * 1000;
 	constexpr long kDataTimeoutMs = 60 * 1000;
+
+	// How long a whole check, every page of it, may take. The application
+	// then cancels the request, on every platform, and the check fails as
+	// TimedOut (CheckRun). It bounds the check rather than each page, as a
+	// check that hung would keep any other from starting and a check from
+	// the menu has the user wait for all of its pages; a deadline for each
+	// page would have to be a quarter of it to keep kMaxPages pages as
+	// short, and fail a slow page that the whole check has time for. A
+	// check takes seconds; two minutes leaves room for a slow connection.
+	constexpr long long kCheckDeadlineSeconds = 2 * 60;
+
+	// How long the check waits, after the deadline, for the request's
+	// last event. A backend can lose it: wx 3.3.3's WinHTTP one sends
+	// none when the cancel comes while it takes in a piece of the reply.
+	// The check then ends without it (CheckRun::Fire()), so that it does
+	// not keep every later check from starting.
+	constexpr long long kCancelWaitSeconds = 60;
 
 	// Where the next automatic check's time is kept: UPDATER_NEXT_CHECK,
 	// written out at once, in the application, and a variable in the tests.
@@ -194,8 +214,13 @@ namespace update_policy
 		NoRequest,
 		// The request failed or timed out.
 		Failed,
-		// The request was cancelled other than by the cut-off.
+		// The request was cancelled other than by the cut-off or the
+		// deadline.
 		Cancelled,
+		// The check passed kCheckDeadlineSeconds: its request was
+		// cancelled, or never ended, or the page that came had more after
+		// it (CheckRun).
+		TimedOut,
 		// The reply passed kMaxResponseBytes and was cut off.
 		CutOff,
 		// The reply came from somewhere other than IsApiReplyUrl().
@@ -284,6 +309,98 @@ namespace update_policy
 		bool running = false;
 		bool ended = false;
 		bool reports = false;
+	};
+
+	// How the request of a page ended, as its last state event says.
+	enum class RequestEnd
+	{
+		Completed,
+		Cancelled,
+		// Failed, or any other state that ends it.
+		Failed,
+	};
+
+	// One check's way through its pages to its ending, apart from wx's
+	// requests and timer so that the tests can make it: what the
+	// deadline, the cut-off and each state event of a request do, and
+	// which of them decides how the check ends. The check's timer fires
+	// at kCheckDeadlineSeconds and, if the check has not ended then,
+	// again kCancelWaitSeconds later.
+	class CheckRun
+	{
+	public:
+		// What to do when the timer fires.
+		enum class Fired
+		{
+			// The check has ended, and the timer is left stopped.
+			Nothing,
+			// Cancel the request, and wait kCancelWaitSeconds for its
+			// last event.
+			Cancel,
+			// Wait kCancelWaitSeconds for the last event of a request
+			// that has already ended.
+			Wait,
+			// End the check now, as TimedOut, without the request's last
+			// event, and keep the handler that would get it.
+			GiveUp,
+		};
+
+		// The timer has fired. Only a request still active is cancelled:
+		// wx sets the state of one that has ended before its event comes,
+		// and that event decides how the check ends.
+		Fired Fire(bool requestActive)
+		{
+			if (ended)
+				return Fired::Nothing;
+			if (deadlinePassed) {
+				ended = true;
+				return Fired::GiveUp;
+			}
+			deadlinePassed = true;
+			cancelledAtDeadline = requestActive;
+			return requestActive ? Fired::Cancel : Fired::Wait;
+		}
+
+		// The reply has passed kMaxResponseBytes, and its request is
+		// cancelled.
+		void CutOff() { cutOff = true; }
+
+		// Whether pieces of the reply are still taken in.
+		bool TakesData() const { return !cutOff; }
+
+		// A state event has ended the request of a page. How the check
+		// ends, Answered when the reply is to be read, or nothing when it
+		// has already ended and the event is ignored. A reply that came
+		// whole is read even when the deadline came at the same moment.
+		std::optional<Ending> PageEnded(RequestEnd end) const
+		{
+			if (ended)
+				return std::nullopt;
+			if (cutOff)
+				return Ending::CutOff;
+			if (end == RequestEnd::Completed)
+				return Ending::Answered;
+			if (cancelledAtDeadline)
+				return Ending::TimedOut;
+			if (end == RequestEnd::Cancelled)
+				return Ending::Cancelled;
+			return Ending::Failed;
+		}
+
+		// Whether the next page can be asked for. Past the deadline it is
+		// not, and the check ends as TimedOut.
+		bool AsksNextPage() const { return !ended && !deadlinePassed; }
+
+		// The check ends with a state event, and the timer is stopped.
+		void Finish() { ended = true; }
+
+		bool HasEnded() const { return ended; }
+
+	private:
+		bool deadlinePassed = false;
+		bool cancelledAtDeadline = false;
+		bool cutOff = false;
+		bool ended = false;
 	};
 
 	// Whether a startup check keeps quiet about offered, as the user closed

@@ -19,6 +19,7 @@
 #include "../HikariSub/VersionHikariSub.h"
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -404,8 +405,10 @@ struct FakeNextCheck : NextCheckStore
 	}
 };
 
-const Ending kEndings[] = { Ending::NoRequest, Ending::Failed, Ending::Cancelled, Ending::CutOff,
-	Ending::NotFromApi, Ending::NotAList, Ending::NotReadToEnd, Ending::Answered };
+const Ending kEndings[] = { Ending::NoRequest, Ending::Failed, Ending::Cancelled, Ending::TimedOut,
+	Ending::CutOff, Ending::NotFromApi, Ending::NotAList, Ending::NotReadToEnd, Ending::Answered };
+
+const RequestEnd kRequestEnds[] = { RequestEnd::Completed, RequestEnd::Cancelled, RequestEnd::Failed };
 
 } // namespace
 
@@ -433,9 +436,9 @@ TEST(update_every_ending_of_a_check_is_recorded_once)
 			CHECK(store.value == now + 30 + kDay);
 		}
 		else {
-			// No session or request, a failure, a cancel, a reply cut
-			// off, from elsewhere, not a release list or one not read to
-			// its end: the hour from the start stands.
+			// No session or request, a failure, a cancel, the deadline,
+			// a reply cut off, from elsewhere, not a release list or one
+			// not read to its end: the hour from the start stands.
 			CHECK(store.saves == 1);
 			CHECK(store.value == now + kHour);
 		}
@@ -514,12 +517,139 @@ TEST(update_one_check_runs_at_a_time)
 	CHECK(!tracker.Reports());
 }
 
+TEST(update_check_ends_as_its_request_did)
+{
+	// Before the deadline and the cut-off, a completed request's reply is
+	// read, and the next page is asked for when there is one.
+	for (RequestEnd end : kRequestEnds) {
+		CheckRun run;
+		CHECK(run.TakesData());
+		CHECK(run.AsksNextPage());
+		std::optional<Ending> ending = run.PageEnded(end);
+		CHECK(ending.has_value());
+		if (end == RequestEnd::Completed)
+			CHECK(*ending == Ending::Answered);
+		else if (end == RequestEnd::Cancelled)
+			CHECK(*ending == Ending::Cancelled);
+		else
+			CHECK(*ending == Ending::Failed);
+	}
+}
+
+TEST(update_deadline_cancels_the_request_and_the_check_times_out)
+{
+	for (RequestEnd end : { RequestEnd::Cancelled, RequestEnd::Failed }) {
+		CheckRun run;
+		CHECK(run.Fire(true) == CheckRun::Fired::Cancel);
+		CHECK(!run.HasEnded());
+		CHECK(run.PageEnded(end) == Ending::TimedOut);
+		// A page that came whole before the cancel took is read, but the
+		// next one is not asked for: the check ends as TimedOut.
+		CHECK(run.PageEnded(RequestEnd::Completed) == Ending::Answered);
+		CHECK(!run.AsksNextPage());
+		run.Finish();
+		CHECK(run.HasEnded());
+		// The timer, if it fired again, and a further state event do
+		// nothing.
+		CHECK(run.Fire(false) == CheckRun::Fired::Nothing);
+		for (RequestEnd later : kRequestEnds)
+			CHECK(!run.PageEnded(later).has_value());
+	}
+}
+
+TEST(update_request_that_ended_at_the_deadline_keeps_its_ending)
+{
+	// wx sets the state before its event comes: a request that is no
+	// longer active at the deadline is not cancelled, and its event,
+	// on the way, decides how the check ends. A reply that came whole
+	// is read, and a failure stays one.
+	for (RequestEnd end : kRequestEnds) {
+		CheckRun run;
+		CHECK(run.Fire(false) == CheckRun::Fired::Wait);
+		std::optional<Ending> ending = run.PageEnded(end);
+		CHECK(ending.has_value());
+		if (end == RequestEnd::Completed)
+			CHECK(*ending == Ending::Answered);
+		else if (end == RequestEnd::Cancelled)
+			CHECK(*ending == Ending::Cancelled);
+		else
+			CHECK(*ending == Ending::Failed);
+		// Past the deadline, though, no further page is asked for.
+		CHECK(!run.AsksNextPage());
+	}
+}
+
+TEST(update_check_whose_cancel_never_comes_back_ends_without_it)
+{
+	// A backend that loses the cancel's event does not keep every later
+	// check from starting: the timer's second firing ends the check.
+	CheckRun run;
+	CHECK(run.Fire(true) == CheckRun::Fired::Cancel);
+	CHECK(run.Fire(true) == CheckRun::Fired::GiveUp);
+	CHECK(run.HasEnded());
+	CHECK(!run.AsksNextPage());
+	// The event, should it come after all, ends nothing more.
+	for (RequestEnd end : kRequestEnds)
+		CHECK(!run.PageEnded(end).has_value());
+	CHECK(run.Fire(false) == CheckRun::Fired::Nothing);
+
+	// The same when the request had ended at the deadline but its event
+	// was lost.
+	CheckRun ended;
+	CHECK(ended.Fire(false) == CheckRun::Fired::Wait);
+	CHECK(ended.Fire(false) == CheckRun::Fired::GiveUp);
+	CHECK(!ended.PageEnded(RequestEnd::Completed).has_value());
+}
+
+TEST(update_cut_off_reply_ends_as_cut_off_whatever_comes)
+{
+	// The reply was thrown away as it passed the cap, so a request that
+	// completed after all, or that the deadline cancelled, is cut off
+	// still.
+	for (bool deadline : { false, true }) {
+		for (RequestEnd end : kRequestEnds) {
+			CheckRun run;
+			run.CutOff();
+			CHECK(!run.TakesData());
+			if (deadline)
+				CHECK(run.Fire(true) == CheckRun::Fired::Cancel);
+			CHECK(run.PageEnded(end) == Ending::CutOff);
+		}
+	}
+}
+
+TEST(update_check_that_ended_ignores_its_timer_and_events)
+{
+	// The check ends once: a state event after the one that ended it,
+	// as a cancelled request's second one would be, and the timer, were
+	// it not stopped, while a dialog shows, change nothing.
+	CheckRun run;
+	CHECK(run.PageEnded(RequestEnd::Completed) == Ending::Answered);
+	run.Finish();
+	for (RequestEnd end : kRequestEnds)
+		CHECK(!run.PageEnded(end).has_value());
+	CHECK(run.Fire(true) == CheckRun::Fired::Nothing);
+	CHECK(run.Fire(true) == CheckRun::Fired::Nothing);
+	CHECK(!run.AsksNextPage());
+}
+
 TEST(update_request_times_out)
 {
 	// A request that hung would keep every later check from starting.
 	CHECK(kConnectTimeoutMs > 0);
 	CHECK(kDataTimeoutMs > 0);
 	CHECK(kConnectTimeoutMs + kDataTimeoutMs <= 5 * 60 * 1000);
+	// The backends' timeouts do not bound the whole check on WinHTTP; the
+	// deadline does, and leaves a page time to connect.
+	CHECK(kCheckDeadlineSeconds * 1000 > kConnectTimeoutMs);
+	CHECK(kCheckDeadlineSeconds <= 5 * 60);
+	CHECK(kCancelWaitSeconds > 0);
+	// A wxTimer takes an int of milliseconds.
+	CHECK(kCheckDeadlineSeconds * 1000 <= 2147483647LL);
+	CHECK(kCancelWaitSeconds * 1000 <= 2147483647LL);
+	// Even a check whose cancel never comes back ends well before the
+	// hour's back-off.
+	CHECK(kCheckDeadlineSeconds + kCancelWaitSeconds < kHour);
 }
 
 TEST(update_reply_is_read_only_from_the_api_over_https)

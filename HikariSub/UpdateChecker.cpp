@@ -28,6 +28,7 @@
 #include "config.h"
 #include <wx/app.h>
 #include <wx/sizer.h>
+#include <wx/timer.h>
 #include <wx/utils.h>
 #include <wx/weakref.h>
 #include <wx/webrequest.h>
@@ -223,7 +224,9 @@ namespace
 	// One check: the request's handler, separate from the frame so that it
 	// can be unbound with it. It asks for a page of the release list at a
 	// time, keeps the details of only the releases chosen so far, and
-	// deletes itself once the last request has ended.
+	// deletes itself once the last request has ended. Its timer, started
+	// with the first page, cancels the request in flight at
+	// kCheckDeadlineSeconds, and CheckRun decides how the check ends.
 	// The frame is held weakly. A reply that comes while it is closing, or
 	// after, is still recorded, as the options outlive the frame and the
 	// event loop that brings the reply is still running; only what it
@@ -234,9 +237,11 @@ namespace
 		explicit UpdateRequest(wxWindow *parent)
 			: parent(parent)
 			, pages(VersionHikariSub, Options.GetBool(UPDATER_CHECK_FOR_STABLE))
+			, deadline(this)
 		{
 			Bind(wxEVT_WEBREQUEST_DATA, &UpdateRequest::OnData, this);
 			Bind(wxEVT_WEBREQUEST_STATE, &UpdateRequest::OnState, this);
+			Bind(wxEVT_TIMER, &UpdateRequest::OnDeadline, this, deadline.GetId());
 		}
 
 		// Asks for a page of the release list, from 1.
@@ -248,7 +253,6 @@ namespace
 			if (!session.IsOpened())
 				return false;
 			body.clear();
-			tooLarge = false;
 			request = session.CreateRequest(this, wxString::FromUTF8(update_policy::ReleasesApiUrl(page)));
 			if (!request.IsOk())
 				return false;
@@ -262,6 +266,9 @@ namespace
 			// cut off at kMaxResponseBytes.
 			request.SetStorage(wxWebRequest::Storage_None);
 			request.SetTimeouts(update_policy::kConnectTimeoutMs, update_policy::kDataTimeoutMs);
+			// Once for the check, not again for each page.
+			if (page == 1)
+				deadline.StartOnce(static_cast<int>(update_policy::kCheckDeadlineSeconds * 1000));
 			// A request that cannot start still ends in State_Failed,
 			// which OnState handles.
 			request.Start();
@@ -269,13 +276,42 @@ namespace
 		}
 
 	private:
+		// The backends' timeouts do not bound the whole check, as
+		// WinHTTP's data timeout is a read's, so the check does. A cancel
+		// ends the request in State_Cancelled, and OnState() ends the check
+		// as TimedOut: curl's backend sets it at once, and WinHTTP's when
+		// the read in flight is aborted. wx 3.3.3's WinHTTP backend sends
+		// nothing if the cancel comes while it takes in a piece of the
+		// reply; the check then ends on the timer's second firing, and the
+		// handler is kept, as such a request may still send it an event.
+		// curl's backend changes the state on the main thread, where it is
+		// read here; WinHTTP's on its own, and a cancel of a request that
+		// has just ended there only closes its handle.
+		void OnDeadline(wxTimerEvent &)
+		{
+			bool active = request.IsOk() && request.GetState() == wxWebRequest::State_Active;
+			switch (run.Fire(active)) {
+			case update_policy::CheckRun::Fired::Nothing:
+				break;
+			case update_policy::CheckRun::Fired::Cancel:
+				request.Cancel();
+				wxFALLTHROUGH;
+			case update_policy::CheckRun::Fired::Wait:
+				deadline.StartOnce(static_cast<int>(update_policy::kCancelWaitSeconds * 1000));
+				break;
+			case update_policy::CheckRun::Fired::GiveUp:
+				Finish(update_policy::Ending::TimedOut);
+				break;
+			}
+		}
+
 		void OnData(wxWebRequestEvent &evt)
 		{
-			if (tooLarge)
+			if (!run.TakesData())
 				return;
 			size_t size = evt.GetDataSize();
 			if (!update_policy::FitsReply(body.size(), size)) {
-				tooLarge = true;
+				run.CutOff();
 				body.clear();
 				body.shrink_to_fit();
 				request.Cancel();
@@ -289,30 +325,52 @@ namespace
 			wxWebRequest::State state = evt.GetState();
 			if (state == wxWebRequest::State_Active || state == wxWebRequest::State_Idle)
 				return;
+			std::optional<update_policy::Ending> pageEnding = run.PageEnded(
+				state == wxWebRequest::State_Completed ? update_policy::RequestEnd::Completed :
+				state == wxWebRequest::State_Cancelled ? update_policy::RequestEnd::Cancelled :
+				update_policy::RequestEnd::Failed);
+			if (!pageEnding)
+				return;
 
-			update_policy::Ending ending = ReadPage(state, ReplyUrl(evt));
+			update_policy::Ending ending = *pageEnding;
+			if (ending == update_policy::Ending::Answered)
+				ending = ReadPage(ReplyUrl(evt));
 			if (ending == update_policy::Ending::Answered) {
 				// The next page only while the window is open, as nothing
 				// would be shown; a check that so stops short of the end
 				// of the list is no answer (GetEnding()). A page that
-				// cannot be asked for fails the check, as one that fails
-				// to come does, rather than have it choose from part of
-				// the list.
+				// cannot be asked for, past the deadline too, fails the
+				// check, as one that fails to come does, rather than have
+				// it choose from part of the list.
 				if (pages.ReadsNextPage() && IsParentOpen()) {
-					if (Start(pages.NextPage()))
+					if (!run.AsksNextPage())
+						ending = update_policy::Ending::TimedOut;
+					else if (Start(pages.NextPage()))
 						return;
-					ending = update_policy::Ending::NoRequest;
+					else
+						ending = update_policy::Ending::NoRequest;
 				}
 				else {
 					ending = pages.GetEnding();
 				}
 			}
+			run.Finish();
+			Finish(ending);
+			// Last, as nothing of this object may be used after it.
+			wxTheApp->ScheduleForDestruction(this);
+		}
+
+		// Records how the check ended, and shows it. The timer is stopped
+		// before Report(), whose dialogs run the event loop, so that it
+		// does not fire while one shows; a state event that comes then is
+		// ignored, as the check has ended (CheckRun).
+		void Finish(update_policy::Ending ending)
+		{
+			deadline.Stop();
 			tracker.End(Now(), ending);
 			if (IsParentOpen())
 				Report(ending);
 			tracker.Done();
-			// Last, as nothing of this object may be used after it.
-			wxTheApp->ScheduleForDestruction(this);
 		}
 
 		static std::string ReplyUrl(const wxWebRequestEvent &evt)
@@ -323,16 +381,10 @@ namespace
 			return response.GetURL().utf8_string();
 		}
 
-		// Reads a page of the reply into pages, and the details of any
-		// release chosen from it.
-		update_policy::Ending ReadPage(wxWebRequest::State state, const std::string &url)
+		// Reads the page of a request that completed into pages, and the
+		// details of any release chosen from it.
+		update_policy::Ending ReadPage(const std::string &url)
 		{
-			if (tooLarge)
-				return update_policy::Ending::CutOff;
-			if (state == wxWebRequest::State_Cancelled)
-				return update_policy::Ending::Cancelled;
-			if (state != wxWebRequest::State_Completed)
-				return update_policy::Ending::Failed;
 			if (!update_policy::IsApiReplyUrl(url))
 				return update_policy::Ending::NotFromApi;
 
@@ -392,9 +444,11 @@ namespace
 		wxWeakRef<wxWindow> parent;
 		wxWebRequest request;
 		std::string body;
-		bool tooLarge = false;
+		update_policy::CheckRun run;
 		update_policy::ReleasePages pages;
 		update_policy::ChosenDetails<ReleaseInfo> chosen;
+		// Stopped by its destructor, so it never fires at a deleted check.
+		wxTimer deadline;
 	};
 
 	void Check(wxWindow *parent, bool interactive)
