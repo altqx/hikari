@@ -252,7 +252,9 @@ int FindReplace::ReplaceCheckedLine(wxString *line, const wxPoint &pos, int *rep
 	int reps = 1;
 	if (regEx){
 		wxString foundString = line->Mid(pos.x - (*replacementDiff), pos.y);
-		reps = findReplaceRegEx.Replace(&foundString, replaceString);
+		//foundString is the match itself; without a limit wxRegEx::Replace
+		//never gets past an empty match (x*) and hangs
+		reps = findReplaceRegEx.Replace(&foundString, replaceString, 1);
 		if (reps > 0){
 			line->replace(pos.x - (*replacementDiff), pos.y, foundString);
 			*replacementDiff += pos.y - foundString.length();
@@ -1000,7 +1002,9 @@ int FindReplace::ReplaceInSubsLine(wxString *onlyString)
 			
 			if (regEx){
 				wxString match = onlyString->Mid(textPos, flen);
-				findReplaceRegEx.Replace(&match, replaceString);
+				//match is the match itself; without a limit wxRegEx::Replace
+				//never gets past an empty match (x*) and hangs
+				findReplaceRegEx.Replace(&match, replaceString, 1);
 				onlyString->replace(textPos, flen, match);
 				repsDiff += match.length() - flen;
 			}
