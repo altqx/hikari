@@ -59,7 +59,8 @@ struct WindowsFileId
 // because another program has it open, gets the new contents copied into it
 // instead, with a backup of the old contents put back when that fails. Unlike
 // wxTempFile, a failed replace is never followed by a copy over the file
-// without a backup. A file that is not committed is left as it was.
+// without a backup. A file that is not committed keeps its contents; a
+// private one may keep the private DACL Commit gave it, see Open.
 // Open notes which file is at the name, looked at without following a link
 // there, and refuses a file whose volume gives no file id; Commit saves only
 // while the name still leads to that file, and the copy writes only into it.
@@ -67,7 +68,12 @@ struct WindowsFileId
 // cannot be renamed, removed or replaced; Commit also checks that the folder's
 // path still leads to it. The temporary files and the old file a replace moves
 // aside are deleted through a handle checked to be on them, never by a name
-// looked up again.
+// looked up again. A new file's temporary file is moved to its name through
+// the handle it was written through. ReplaceFileW takes the temporary file
+// by its name once that handle is closed: a program that may delete or rename
+// files in the folder could put another file there in that moment, as it
+// could put one at the file's name right after the save. The private folders
+// let no other user do either.
 // Every file a save puts contents into, the temporary file and a rewrite's
 // backup, is open to no other program while it is written, and lets in no
 // one the saved file keeps out: it is made with a DACL that lets in only the
@@ -75,8 +81,8 @@ struct WindowsFileId
 // written into it. Where a volume refuses both, as some network shares do, it
 // keeps its folder's ACEs only when those let in no one the file that is
 // there does not; a new file's temporary file always has them, as the new file
-// gets them. A save that cannot make such a file is not made, and the file is
-// left as it was.
+// gets them. A save that cannot make such a file is not made, and the file
+// keeps its contents.
 class WindowsSaveFile
 {
 public:
@@ -87,8 +93,13 @@ public:
 	// With privateFile, the saved file lets in only this user, SYSTEM and
 	// Administrators: a new one is made so, and one that is there is given
 	// that DACL in Commit before the new contents are in it, or is not
-	// saved when it cannot be given it. The temporary files are made so
-	// too, or not at all.
+	// saved when it cannot be given it or another user owns it. It keeps
+	// that DACL when the save fails after it, which leaves no one out who
+	// should be let in. The temporary files are made so too, or not at all.
+	// On a volume that keeps no ACLs, as FAT, every user may open every
+	// file, and a private file is as private as the volume lets it be, as on
+	// POSIX. MakePrivateFolder refuses such a folder: a caller whose file
+	// must be kept from other users saves only into a folder it accepted.
 	bool Open(const std::wstring &target, bool privateFile = false);
 	bool IsOpened() const { return file != nullptr; }
 	bool Write(const void *data, size_t size);
@@ -98,7 +109,9 @@ public:
 	// back, they are kept under this name.
 	const std::wstring &KeptBackup() const { return keptBackup; }
 	// whether Commit wrote into the file or put another one at its name,
-	// also when it then failed, see SaveFile::TargetTouched
+	// also when it then failed, see SaveFile::TargetTouched; the private DACL
+	// Commit gives a file before that is not counted, as it changes neither
+	// the contents nor the time of the last write
 	bool TargetTouched() const { return touched; }
 	// whether Open or Commit failed because a temporary file in the folder
 	// would have let in someone the file keeps out, see Open
@@ -107,6 +120,8 @@ public:
 private:
 	bool Replace();
 	bool Rewrite();
+	// moves the temporary file of a new file to its name, see Commit
+	bool MoveIntoPlace();
 	// who may open the temporary files: see Open
 	FileAccess TempAccess() const;
 	// makes a temporary file next to the target, see MakeTempFileNear

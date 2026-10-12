@@ -151,6 +151,23 @@ bool DeleteSameFile(const std::wstring &path, const WindowsFileId &id)
 	return deleted;
 }
 
+// Moves the file handle is open on, with DELETE, to the absolute path to,
+// through that handle: a file another program put at its old name meanwhile
+// is not the one moved. A path that is taken fails, also one taken after a
+// look at it.
+bool RenameOpenFile(HANDLE handle, const std::wstring &to)
+{
+	size_t pathBytes = to.size() * sizeof(wchar_t);
+	//zeros, which end the path too
+	std::vector<unsigned char> buffer(sizeof(FILE_RENAME_INFO) + pathBytes);
+	FILE_RENAME_INFO *info = reinterpret_cast<FILE_RENAME_INFO *>(buffer.data());
+	info->ReplaceIfExists = FALSE;
+	info->RootDirectory = nullptr;
+	info->FileNameLength = static_cast<DWORD>(pathBytes);
+	memcpy(info->FileName, to.data(), pathBytes);
+	return ::SetFileInformationByHandle(handle, FileRenameInfo, info, static_cast<DWORD>(buffer.size())) != 0;
+}
+
 // writes all of data at the file's offset
 bool WriteAll(HANDLE handle, const void *data, size_t size)
 {
@@ -845,12 +862,9 @@ bool WindowsSaveFile::Commit()
 		NameLeadsTo now = LookAtName(target, targetExisted, targetId, &links);
 		if (!targetExisted) {
 			//a new file; one another program made in the meantime is not
-			//replaced, and MoveFileExW without MOVEFILE_REPLACE_EXISTING fails
-			//on a name made after this look too
-			CloseFile();
-			saved = now == NameLeadsTo::Nothing &&
-				::MoveFileExW(temp.c_str(), target.c_str(), MOVEFILE_WRITE_THROUGH) != 0;
-			if (saved) { temp.clear(); touched = true; }
+			//replaced, and the rename fails on a name made after this look too
+			saved = now == NameLeadsTo::Nothing && MoveIntoPlace();
+			if (saved) { touched = true; }
 		}
 		else if (now != NameLeadsTo::TheSameFile) {
 			//another program removed the file or put another one, a link or a
@@ -871,6 +885,37 @@ bool WindowsSaveFile::Commit()
 	}
 	Discard();
 	return saved;
+}
+
+bool WindowsSaveFile::MoveIntoPlace()
+{
+	//The temporary file is moved through the handle its contents were
+	//written through, still shared with nobody, so a file another program
+	//put at its name is never the one moved to the target's name.
+	if (RenameOpenFile(file, target)) {
+		//the new name on disk before the save ends, as MOVEFILE_WRITE_THROUGH
+		::FlushFileBuffers(file);
+		CloseFile();
+		temp.clear();
+		return true;
+	}
+	//A redirector that cannot rename through a handle, or a Windows that
+	//takes no Win32 path there: the file is moved by its name, while that
+	//still leads to the file Open made. Another error, as a name that is
+	//taken, fails the save.
+	DWORD error = ::GetLastError();
+	if (error != ERROR_INVALID_PARAMETER && error != ERROR_NOT_SUPPORTED && error != ERROR_INVALID_FUNCTION &&
+		error != ERROR_INVALID_NAME && error != ERROR_PATH_NOT_FOUND) {
+		return false;
+	}
+	CloseFile();
+	DWORD links = 0;
+	if (LookAtName(temp, true, tempId, &links) != NameLeadsTo::TheSameFile ||
+		!::MoveFileExW(temp.c_str(), target.c_str(), MOVEFILE_WRITE_THROUGH)) {
+		return false;
+	}
+	temp.clear();
+	return true;
 }
 
 bool WindowsSaveFile::NarrowSaved()
