@@ -361,9 +361,10 @@ seekFromStart:
 
 	bool foundsome = false;
 	if (fromstart){
-		linePosition = tab->grid->file->FirstSelection();
-		//is it possible to get it -1 if id exists, key also should exist
-		linePosition = (!allLines && linePosition != -1) ? linePosition : 0;
+		//FirstSelection gives -1 when only hidden lines are selected,
+		//the search starts at the first selected key anyway and skips hidden lines
+		const std::set<int> &selections = tab->grid->file->GetSelectionsAsKeys();
+		linePosition = (!allLines && !selections.empty()) ? *selections.begin() : 0;
 		textPosition = 0;
 	}
 	if (window && CheckStyles(window, tab))
@@ -533,9 +534,12 @@ unsigned long FindReplace::FindAllInTab(void *data)
 		wxString subsPath = tab->SubsName;
 		bool isfirst = true;
 
-		size_t firstSelectedId = 0;
-		int tabLinePosition = tab->grid->file->FirstSelection(&firstSelectedId);
-		tabLinePosition = (!window->AllLines->GetValue() && tabLinePosition != -1) ? tabLinePosition : 0;
+		//FirstSelection gives -1 when only hidden lines are selected,
+		//the search starts at the first selected key anyway and skips hidden lines
+		const std::set<int> &selections = tab->grid->file->GetSelectionsAsKeys();
+		int tabLinePosition = (!window->AllLines->GetValue() && !selections.empty()) ? *selections.begin() : 0;
+		//visible lines before the start key, the id of the first visible line from it
+		size_t firstSelectedId = tab->grid->file->GetElementByKey(tabLinePosition);
 		if (tabLinePosition > 0 && firstSelectedId != -1)
 			positionId = firstSelectedId;
 
@@ -1212,11 +1216,14 @@ int FindReplace::ReplaceAllInTab(TabPanel *tab, TabWindow *window)
 
 	bool onlysel = window->SelectedLines->GetValue();
 
-	size_t firstSelection = tab->grid->file->FirstSelection();
+	//FirstSelection gives -1 when only hidden lines are selected,
+	//replacing starts at the first selected key anyway
+	const std::set<int> &selections = tab->grid->file->GetSelectionsAsKeys();
+	size_t firstSelection = (!window->AllLines->GetValue() && !selections.empty()) ? *selections.begin() : 0;
 	bool skipFiltered = !tab->grid->ignoreFiltered;
 	bool hasTlMode = tab->grid->hasTLMode;
 
-	for (size_t i = (!window->AllLines->GetValue() && firstSelection != -1) ? firstSelection : 0; i < tab->grid->file->GetCount(); i++)
+	for (size_t i = firstSelection; i < tab->grid->file->GetCount(); i++)
 	{
 		Dialogue *Dial = tab->grid->file->GetDialogue(i);
 		if (skipFiltered && !Dial->isVisible || Dial->NonDialogue || (skipComments && Dial->IsComment)){ continue; }
