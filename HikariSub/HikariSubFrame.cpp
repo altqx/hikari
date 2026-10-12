@@ -2570,13 +2570,14 @@ void HikariSubFrame::OnAudioSnap(wxCommandEvent& event)
 			int end = shade->End.mstime;
 			int startDiff = abs(time - start);
 			int endDiff = abs(time - end);
-			if (startDiff < lastDifferents && startDiff>0){
-				if ((snapStartTime && start >= time2) || (!snapStartTime && start <= time2)){ continue; }
+			//a boundary on the wrong side of the other time only rules out itself
+			if (startDiff < lastDifferents && startDiff>0 &&
+				!((snapStartTime && start >= time2) || (!snapStartTime && start <= time2))){
 				snaptime = start;
 				lastDifferents = startDiff;
 			}
-			if (endDiff < lastDifferents && endDiff>0){
-				if ((snapStartTime && end >= time2) || (!snapStartTime && end <= time2)){ continue; }
+			if (endDiff < lastDifferents && endDiff>0 &&
+				!((snapStartTime && end >= time2) || (!snapStartTime && end <= time2))){
 				snaptime = end;
 				lastDifferents = endDiff;
 			}
