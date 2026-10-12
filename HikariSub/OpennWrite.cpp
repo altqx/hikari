@@ -28,6 +28,47 @@
 #ifndef _WIN32
 #include <stdlib.h>
 #endif
+#ifdef _WIN32
+// wx's wrapper for windows.h, it keeps min and max from becoming macros
+#include <wx/msw/wrapwin.h>
+
+// wx has no Windows converter for these uchardet charsets and would copy the
+// bytes as Latin-1, so they are decoded with their Windows code page instead
+static unsigned int CharsetCodePage(const wxString &charset)
+{
+	static const struct { const wchar_t *name; unsigned int codePage; } codePages[] = {
+		{ L"UHC", 949 },
+		{ L"TIS-620", 874 },
+		{ L"IBM852", 852 },
+		{ L"IBM855", 855 },
+		{ L"IBM862", 862 },
+		{ L"IBM865", 865 },
+		{ L"IBM866", 866 },
+		{ L"MAC-CENTRALEUROPE", 10029 },
+		{ L"MAC-CYRILLIC", 10007 },
+		{ L"GB18030", 54936 },
+		{ L"HZ-GB-2312", 52936 },
+		{ L"ISO-2022-CN", 50227 },
+		{ L"ISO-2022-KR", 50225 },
+	};
+	for (const auto &entry : codePages) {
+		if (charset == entry.name)
+			return IsValidCodePage(entry.codePage) ? entry.codePage : 0;
+	}
+	return 0;
+}
+
+static wxString DecodeCodePage(unsigned int codePage, const char *buf, size_t size)
+{
+	if (size > static_cast<size_t>(std::numeric_limits<int>::max())) { return wxString(); }
+	int length = MultiByteToWideChar(codePage, 0, buf, static_cast<int>(size), nullptr, 0);
+	if (length <= 0) { return wxString(); }
+	std::vector<wchar_t> wide(static_cast<size_t>(length));
+	length = MultiByteToWideChar(codePage, 0, buf, static_cast<int>(size), wide.data(), length);
+	if (length <= 0) { return wxString(); }
+	return wxString(wide.data(), static_cast<size_t>(length));
+}
+#endif
 
 
 OpenWrite::OpenWrite()
@@ -60,6 +101,7 @@ bool OpenWrite::FileOpen(const wxString &filename, wxString *riddenText, bool te
 
 	bool utf8 = true;
 	wxMBConv *conv = NULL;
+	unsigned int codePage = 0;
 	wxFileName fname;
 	fname.Assign(filename);
 
@@ -94,7 +136,18 @@ bool OpenWrite::FileOpen(const wxString &filename, wxString *riddenText, bool te
 					if (result == L"SHIFT_JIS")
 						result = L"CP932";
 #endif
-					conv = new wxCSConv(result);
+					wxCSConv *csconv = new wxCSConv(result);
+					if (!csconv->IsOk()){
+						delete csconv;
+						csconv = NULL;
+#ifdef _WIN32
+						codePage = CharsetCodePage(result);
+#endif
+						//without a converter wxCSConv copies the bytes as Latin-1
+						if (!codePage)
+							return false;
+					}
+					conv = csconv;
 				}
 			}
 		}
@@ -103,6 +156,11 @@ bool OpenWrite::FileOpen(const wxString &filename, wxString *riddenText, bool te
 	if (utf8){
 		*riddenText = wxString(buff.data(), wxConvAuto(), buff.size());
 	}
+#ifdef _WIN32
+	else if (codePage){
+		*riddenText = DecodeCodePage(codePage, buff.data(), buff.size());
+	}
+#endif
 	else{ *riddenText = wxString(buff.data(), conv ? *conv : convl, buff.size()); }
 	if (conv)
 		delete conv;
