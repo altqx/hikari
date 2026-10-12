@@ -434,8 +434,8 @@ void VectorItem::OnMouseEvent(wxMouseEvent &evt, int w, int h, VideoToolbar *vt)
 		if (vt->blockScroll){ evt.Skip(); return; }
 		int step = evt.GetWheelRotation() / evt.GetWheelDelta();
 		toggled -= step;
-		if (toggled < 0){ toggled = numIcons - 1; }
-		else if (toggled >= numIcons){ toggled = 0; }
+		if (toggled < 0){ toggled = GetNumTools() - 1; }
+		else if (toggled >= GetNumTools()){ toggled = 0; }
 		vt->Refresh(false);
 		return;
 	}
