@@ -68,6 +68,17 @@ if(HIKARI_PLATFORM STREQUAL "windows")
         list(JOIN _hikari_missing " " _hikari_missing)
         message(FATAL_ERROR "Missing declared host tools: ${_hikari_missing}. Run from a Visual Studio x64 developer environment with Git for Windows on PATH.")
     endif()
+    # Every executable lands in the build root (qt_standard_project_setup's
+    # runtime output directory on Windows), and vcpkg's toolchain copies the
+    # DLLs each one needs there after its link (z-applocal). Two links ending
+    # together copy the same DLL at once, and one fails with "The process
+    # cannot access the file because it is being used by another process".
+    # The copy is part of the link's Ninja edge (POST_BUILD), so a link pool
+    # of one takes the links one at a time; compiles stay parallel. (vcpkg's
+    # X_VCPKG_APPLOCAL_DEPS_SERIALIZED adds USES_TERMINAL, which a target's
+    # POST_BUILD command does not carry into a Ninja pool.)
+    set_property(GLOBAL APPEND PROPERTY JOB_POOLS hikari_link=1)
+    set(CMAKE_JOB_POOL_LINK hikari_link)
 endif()
 
 set(HIKARI_LOCK_DIR "${CMAKE_CURRENT_LIST_DIR}/../locks")
