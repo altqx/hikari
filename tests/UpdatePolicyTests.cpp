@@ -253,6 +253,36 @@ TEST(update_next_check_keeps_remind_me_in_a_week)
 	CHECK(NextCheck(now, now + 365 * kDay, false) == now + kHour);
 }
 
+TEST(update_check_that_never_ends_backs_off_an_hour)
+{
+	// UpdateChecker records NextCheckAtStart before it makes the request,
+	// and nothing more when the check ends without a word: no web session,
+	// a request that cannot be made, a reply dropped as the window closes.
+	const long long now = 2000000000;
+	long long next = NextCheckAtStart(now, now - kDay);
+	CHECK(next == now + kHour);
+	// The next starts within the hour do not check again; the first after
+	// it does.
+	CHECK(!IsCheckDue(now + 1, next));
+	CHECK(!IsCheckDue(now + kHour - 1, next));
+	CHECK(IsCheckDue(now + kHour, next));
+	// A check that was never recorded would be due at every start.
+	CHECK(IsCheckDue(now + 1, now - kDay));
+
+	// A reply after the start moves it to a day, a failure keeps the hour
+	// from when the request failed.
+	CHECK(NextCheck(now + 5, next, true) == now + 5 + kDay);
+	CHECK(NextCheck(now + 5, next, false) == now + 5 + kHour);
+
+	// "Remind me in a week" is kept by a check from the menu that fails or
+	// never ends.
+	const long long snoozed = now + 3 * kDay;
+	CHECK(NextCheckAtStart(now, snoozed) == snoozed);
+	// A time set before the clock was turned back is not.
+	CHECK(NextCheckAtStart(now, now + kWeek + 1) == now + kHour);
+	CHECK(NextCheckAtStart(now, 0) == now + kHour);
+}
+
 TEST(update_check_is_due)
 {
 	const long long now = 2000000000;

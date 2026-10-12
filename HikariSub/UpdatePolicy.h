@@ -87,6 +87,17 @@ namespace update_policy
 		return next;
 	}
 
+	// The next automatic check, recorded as a check starts and before
+	// anything of it can fail: the check counts as failed until a reply
+	// says otherwise. A check that ends with no word of how, as when no
+	// request can be made, the window closes first or the program is
+	// killed, so puts the next one off an hour like any other failure,
+	// and a reply then moves it to a day.
+	constexpr long long NextCheckAtStart(long long now, long long nextCheck)
+	{
+		return NextCheck(now, nextCheck, false);
+	}
+
 	// Whether a startup check keeps quiet about offered, as the user closed
 	// the dialog that offered declined or a later version. A check from the
 	// menu offers it anyway.

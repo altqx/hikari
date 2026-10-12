@@ -93,11 +93,15 @@ namespace
 
 	// Sets the next automatic check and writes it out at once, so that a
 	// crash or a kill does not leave the next start to check again.
-	void RecordCheck(bool answered)
+	void SaveNextCheck(long long next)
 	{
-		long long next = update_policy::NextCheck(time(nullptr), Options.GetInt(UPDATER_NEXT_CHECK), answered);
 		Options.SetInt(UPDATER_NEXT_CHECK, static_cast<int>(next));
 		Options.SaveOptions(true, false);
+	}
+
+	void RecordCheck(bool answered)
+	{
+		SaveNextCheck(update_policy::NextCheck(time(nullptr), Options.GetInt(UPDATER_NEXT_CHECK), answered));
 	}
 
 	// Says that only a prerelease is newer, and offers to open its page.
@@ -200,7 +204,8 @@ namespace
 	// can be unbound with it. It deletes itself once the request has ended.
 	// The frame is held weakly; a reply that comes while it is closing, or
 	// after, is dropped without a message or a write to the options, which
-	// have been saved for the last time by then.
+	// have been saved for the last time by then; the hour's back-off that
+	// Check() recorded stands.
 	class UpdateRequest : public wxEvtHandler
 	{
 	public:
@@ -214,8 +219,12 @@ namespace
 
 		bool Start()
 		{
-			request = wxWebSession::GetDefault().CreateRequest(this,
-				wxString::FromUTF8(update_policy::ReleasesApiUrl()));
+			// The session is not opened when the platform's backend cannot
+			// start, and CreateRequest() would then assert.
+			wxWebSession &session = wxWebSession::GetDefault();
+			if (!session.IsOpened())
+				return false;
+			request = session.CreateRequest(this, wxString::FromUTF8(update_policy::ReleasesApiUrl()));
 			if (!request.IsOk())
 				return false;
 
@@ -227,6 +236,8 @@ namespace
 			// The reply comes in pieces through OnData, so that it can be
 			// cut off at kMaxResponseBytes.
 			request.SetStorage(wxWebRequest::Storage_None);
+			// A request that cannot start still ends in State_Failed,
+			// which OnState handles.
 			request.Start();
 			return true;
 		}
@@ -324,6 +335,11 @@ namespace
 
 	void Check(wxWindow *parent, bool interactive)
 	{
+		// Recorded as failed first, so that no way out of the check skips
+		// the back-off: no web session or request, a reply dropped as the
+		// window closes, a kill. Fail() and Finish() record it again when
+		// the request ends.
+		SaveNextCheck(update_policy::NextCheckAtStart(time(nullptr), Options.GetInt(UPDATER_NEXT_CHECK)));
 		UpdateRequest *check = new UpdateRequest(parent, interactive);
 		if (!check->Start()) {
 			delete check;
