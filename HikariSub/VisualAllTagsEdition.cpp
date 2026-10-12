@@ -411,7 +411,8 @@ void LoadSettings(std::vector<AllTagsSetting>* tags)
 			if (!tkzer.HasMoreTokens())
 				continue;
 			tmp.tagMode = wxAtoi(tkzer.GetNextToken().Trim(false));
-			for (int i = 1; tkzer.HasMoreTokens(); i++) {
+			//a tag has at most four values, the rest would write past values
+			for (int i = 1; tkzer.HasMoreTokens() && i < 4; i++) {
 				if (tkzer.GetNextToken().Trim(false).ToCDouble(&tmpval)) {
 					tmp.values[i] = tmpval;
 					tmp.numOfValues = i + 1;
