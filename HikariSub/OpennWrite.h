@@ -28,12 +28,19 @@ public:
 	bool FileOpen(const wxString &filename, wxString *riddenText, bool test = true);
 	void FileWrite(const wxString &filename, const wxString &alltext, bool utf = true);
 	void PartFileWrite(const wxString &parttext);
+	// PartFileWrite then writes to a temporary file next to filename and
+	// CommitTemp replaces filename with it, so a failed save keeps the old file
+	bool OpenTemp(const wxString &filename);
+	bool CommitTemp();
 	bool IsUTF8withoutBOM(char* buf, size_t size);
 	bool CheckCharSet(char* buf, size_t size, wxString *result);
 	wxFile file;
 private:
 
 	bool isfirst;
+	wxTempFile tempFile;
+	bool useTemp = false;
+	bool writeFailed = false;
 };
 
 

@@ -1252,11 +1252,11 @@ void HikariSubFrame::OnAssProps()
 	}
 }
 
-void HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
+bool HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 {
 	TabPanel* atab = (tabToSave < 0) ? GetTab() : Tabs->Page(tabToSave);
 	if (!atab)
-		return;
+		return false;
 
 	bool nameWasChanged = false;
 	if (atab->grid->originalFormat != atab->grid->subsFormat
@@ -1293,7 +1293,7 @@ void HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 			nameWasChanged = true;
 			SetRecent(0, tabToSave);
 		}
-		else{ return; }
+		else{ return false; }
 	}
 	else{
 		DWORD attributes = ::GetFileAttributesW(atab->SubsPath.wc_str());
@@ -1302,8 +1302,8 @@ void HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 			goto repeatOpening;
 		}
 	}
-	if (atab->grid->SwapAssProperties()){ return; }
-	atab->grid->SaveFile(atab->SubsPath);
+	if (atab->grid->SwapAssProperties()){ return false; }
+	if (!atab->grid->SaveFile(atab->SubsPath)){ return false; }
 	atab->grid->originalFormat = atab->grid->subsFormat;
 	if (changeLabel){
 		Toolbar->UpdateId(GLOBAL_SAVE_SUBS, false);
@@ -1316,6 +1316,7 @@ void HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 #if _DEBUG
 	wxBell();
 #endif
+	return true;
 }
 
 bool HikariSubFrame::OpenFile(const wxString &filename, bool fulls/*=false*/, bool freeze /*= true*/)
@@ -2133,9 +2134,8 @@ bool HikariSubFrame::SavePrompt(char mode, int wtab)
 			_("removing subtitles")),
 			_("Confirmation"), wxYES_NO | wxCANCEL, atab->video->GetMessageWindowParent());
 		if (answer == wxCANCEL){ return true; }
-		if (answer == wxYES){
-			Save(false, wtab);
-		}
+		//a cancelled Save As or a failed write cancels too
+		if (answer == wxYES && !Save(false, wtab)){ return true; }
 	}
 	return false;
 }

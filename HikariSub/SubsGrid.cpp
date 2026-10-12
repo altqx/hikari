@@ -1145,7 +1145,7 @@ void SubsGrid::OnMkvSubs(wxCommandEvent &event)
 	if (file->IsModified()){
 		int wbutton = HikariMessageBox(_("Save the file before loading subtitles from the MKV?"),
 			_("Confirmation"), wxICON_QUESTION | wxYES_NO | wxCANCEL, this);
-		if (wbutton == wxYES){ Hikari->Save(false); }
+		if (wbutton == wxYES){ if (!Hikari->Save(false)){ return; } }
 		else if (wbutton == wxCANCEL){ return; }
 	}
 	wxString mkvpath = (idd == GRID_SUBS_FROM_MKV) ? tab->VideoPath : event.GetString();

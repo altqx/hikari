@@ -139,6 +139,16 @@ void OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 }
 void OpenWrite::PartFileWrite(const wxString &parttext)
 {
+	if (useTemp){
+		if (writeFailed){ return; }
+		wchar_t bom = 0xFEFF;
+		if (!tempFile.Write((isfirst) ? wxString(bom) + parttext : parttext)){
+			HikariLog(_("Cannot save to file."));
+			writeFailed = true;
+		}
+		isfirst = false;
+		return;
+	}
 	if (!file.IsOpened()){ HikariLog(_("The file was not opened.")); return; }
 	if (isfirst){
 		wchar_t bom = 0xFEFF;
@@ -147,6 +157,32 @@ void OpenWrite::PartFileWrite(const wxString &parttext)
 		return;
 	}
 	if (!file.Write(parttext/*,wxConvUTF8*/)){ HikariLog(_("Cannot save to file.")); };
+}
+
+bool OpenWrite::OpenTemp(const wxString &fileName)
+{
+	wxFileName fname;
+	fname.Assign(fileName);
+	if (!fname.DirExists()){ wxFileName::Mkdir(HikariPathDir(fileName), 511, wxPATH_MKDIR_FULL); }
+	useTemp = true;
+	isfirst = true;
+	//a file that cannot be written must not be replaced either
+	writeFailed = (fname.FileExists() && (!fname.IsFileReadable() || !fname.IsFileWritable())) ||
+		!tempFile.Open(fileName);
+	if (writeFailed){ HikariLog(_("Cannot open file.")); }
+	return !writeFailed;
+}
+
+bool OpenWrite::CommitTemp()
+{
+	//on failure the temporary file is removed with tempFile
+	if (writeFailed || !tempFile.IsOpened()){ return false; }
+	//Commit logs its own error
+	if (!tempFile.Commit()){
+		writeFailed = true;
+		return false;
+	}
+	return true;
 }
 
 void OpenWrite::CloseFile()

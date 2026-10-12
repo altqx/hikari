@@ -95,7 +95,7 @@ public:
 	void Clearing(bool setup = true);
 	void Convert(char type);
 
-	void SaveFile(const wxString &filename, bool cstat = true, bool loadFromEditbox = false);
+	bool SaveFile(const wxString &filename, bool cstat = true, bool loadFromEditbox = false);
 	void ChangeTimes(const ShiftTimesSettings &settings, bool byFrame = false);
 
 	void SortIt(short what, bool all = true);

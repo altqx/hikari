@@ -305,7 +305,7 @@ void SubsGrid::Convert(char type)
 	RefreshColumns();
 }
 
-void SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFromEditbox)
+bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFromEditbox)
 {
 	wxMutexLocker lock(editionMutex);
 
@@ -320,7 +320,10 @@ void SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 	bool translated = tlmode == L"Translated";
 	bool tlmodeOn = tlmode != emptyString;
 
-	OpenWrite ow(filename, true);
+	//the old file is replaced only when everything was written
+	OpenWrite ow;
+	if (!ow.OpenTemp(filename))
+		return false;
 
 	if (subsFormat < SRT)
 		GetAssHeader(&txt, true, translated, normalSave);
@@ -397,12 +400,14 @@ void SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 		ow.PartFileWrite(embedded);
 	}
 
-	ow.CloseFile();
+	if (!ow.CommitTemp())
+		return false;
 	if (normalSave){
 		file->SetLastSave();
 		tab->SetLastSaveTime();
 		Refresh(false);
 	}
+	return true;
 }
 
 class compare { // simple comparison function

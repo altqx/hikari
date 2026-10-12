@@ -54,7 +54,7 @@ public:
 	Notebook* Tabs;
 
 	//wxBoxSizer *mains;
-	void Save(bool dial, int wtab = -1, bool changeLabel = true);
+	bool Save(bool dial, int wtab = -1, bool changeLabel = true);
 	void SaveAll();
 
 	bool OpenFile(const wxString &filename, bool fulls = false, bool freeze = true);
