@@ -34,6 +34,7 @@
 #include "VisualClips.h"
 #include "Visuals.h"
 #include "SubtitlesProviderManager.h"
+#include "TextComparison.h"
 #include <algorithm>
 #include <wx/tokenzr.h>
 #include <wx/event.h>
@@ -1841,84 +1842,23 @@ void SubsGrid::CompareTexts(compareData &firstCompare, compareData &secondCompar
 	firstCompare.push_back(1);
 	secondCompare.push_back(1);
 
-
-	size_t l1 = first.length(), l2 = second.length();
-	if (l1 == std::numeric_limits<size_t>::max() || l2 == std::numeric_limits<size_t>::max() ||
-		(l1 + 1) > std::numeric_limits<size_t>::max() / (l2 + 1)) {
+	// matched by code point so a surrogate pair on Windows is one character,
+	// as it is on Linux; the ranges are wxString indexes into each text
+	const std::wstring firstUnits = first.ToStdWstring();
+	const std::wstring secondUnits = second.ToStdWstring();
+	std::vector<int> firstRanges, secondRanges;
+	TextComparisonResult result = CompareTextUnits(firstUnits.data(), firstUnits.size(),
+		secondUnits.data(), secondUnits.size(), firstRanges, secondRanges);
+	if (result == TextComparisonResult::TooLarge){
 		HikariLog(L"text comparison is too large");
 		return;
 	}
-	size_t cellCount = (l1 + 1) * (l2 + 1);
-	size_t w = l2 + 1;
-	size_t i1, i2;
-	std::vector<size_t> dpt;
-	if (cellCount > dpt.max_size()) {
+	if (result == TextComparisonResult::OutOfMemory){
 		HikariLog(L"memory allocation failed");
 		return;
 	}
-	try {
-		dpt.assign(cellCount, 0);
-	}
-	catch (const std::bad_alloc&) {
-		HikariLog(L"memory allocation failed");
-		return;
-	}
-
-	for (i1 = 1; i1 <= l1; i1++){
-		for (i2 = 1; i2 <= l2; i2++)
-		{
-			if (first[l1 - i1] == second[l2 - i2])
-			{
-				dpt[w * i1 + i2] = dpt[w * (i1 - 1) + (i2 - 1)] + 1;
-			}
-			else if (dpt[w * (i1 - 1) + i2] > dpt[w * i1 + (i2 - 1)])
-			{
-				dpt[w * i1 + i2] = dpt[w * (i1 - 1) + i2];
-			}
-			else
-			{
-				dpt[w * i1 + i2] = dpt[w * i1 + (i2 - 1)];
-			}
-		}
-	}
-
-	int sfirst = -1, ssecond = -1;
-	i1 = l1; i2 = l2;
-	for (;;){
-		if ((i1 > 0) && (i2 > 0) && (first[l1 - i1] == second[l2 - i2])){
-			if (sfirst >= 0){
-				firstCompare.push_back(sfirst);
-				firstCompare.push_back((l1 - i1) - 1);
-				sfirst = -1;
-			}
-			if (ssecond >= 0){
-				secondCompare.push_back(ssecond);
-				secondCompare.push_back((l2 - i2) - 1);
-				ssecond = -1;
-			}
-			i1--; i2--; continue;
-		}
-		else{
-			if (i1 > 0 && (i2 == 0 || dpt[w * (i1 - 1) + i2] >= dpt[w * i1 + (i2 - 1)])){
-				if (sfirst == -1){ sfirst = l1 - i1; }
-				i1--; continue;
-			}
-			else if (i2 > 0 && (i1 == 0 || dpt[w * (i1 - 1) + i2] < dpt[w * i1 + (i2 - 1)])){
-				if (ssecond == -1){ ssecond = l2 - i2; }
-				i2--; continue;
-			}
-		}
-
-		break;
-	}
-	if (sfirst >= 0){
-		firstCompare.push_back(sfirst);
-		firstCompare.push_back((l1 - i1) - 1);
-	}
-	if (ssecond >= 0){
-		secondCompare.push_back(ssecond);
-		secondCompare.push_back((l2 - i2) - 1);
-	}
+	for (int position : firstRanges){ firstCompare.push_back(position); }
+	for (int position : secondRanges){ secondCompare.push_back(position); }
 }
 
 void SubsGrid::RemoveComparison()

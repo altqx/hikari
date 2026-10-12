@@ -424,6 +424,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClCompile Include="SubtitlesLibass.cpp" />
     <ClCompile Include="SubtitlesProviderManager.cpp" />
     <ClCompile Include="SubtitlesVSFilter.cpp" />
+    <ClCompile Include="TextComparison.cpp" />
     <ClCompile Include="TextEditorTagList.cpp" />
     <ClCompile Include="UtilsWindows.cpp" />
     <ClCompile Include="VideoToolbar.cpp" />
@@ -602,6 +603,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="SubtitlesProvider.h" />
     <ClInclude Include="SubtitlesProviderManager.h" />
     <ClInclude Include="TagFindReplace.h" />
+    <ClInclude Include="TextComparison.h" />
     <ClInclude Include="TextEditorTagList.h" />
     <ClInclude Include="Toolbar.h" />
     <ClInclude Include="UtilsWindows.h" />

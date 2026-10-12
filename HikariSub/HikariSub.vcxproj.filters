@@ -421,6 +421,9 @@
     <ClCompile Include="TagFindReplace.cpp">
       <Filter>T</Filter>
     </ClCompile>
+    <ClCompile Include="TextComparison.cpp">
+      <Filter>T</Filter>
+    </ClCompile>
     <ClCompile Include="TextEditorTagList.cpp">
       <Filter>T</Filter>
     </ClCompile>
@@ -856,6 +859,9 @@
       <Filter>S</Filter>
     </ClInclude>
     <ClInclude Include="TabPanel.h">
+      <Filter>T</Filter>
+    </ClInclude>
+    <ClInclude Include="TextComparison.h">
       <Filter>T</Filter>
     </ClInclude>
     <ClInclude Include="TagFindReplace.h">

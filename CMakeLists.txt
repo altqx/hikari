@@ -131,6 +131,7 @@ add_executable(hikarisub
     HikariSub/FrameQueue.cpp
     HikariSub/Playback.cpp
     HikariSub/WaveformPeaks.cpp
+    HikariSub/TextComparison.cpp
     HikariSub/Provider.cpp
     HikariSub/ProviderDummy.cpp
     HikariSub/ProviderFFMS2.cpp

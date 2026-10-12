@@ -14,10 +14,12 @@ add_executable(hikarisub_tests
     SemVerTests.cpp
     TimebaseTests.cpp
     UndoHistoryTests.cpp
+    TextComparisonTests.cpp
     WaveformPeaksTests.cpp
     ../HikariSub/AssBlend.cpp
     ../HikariSub/FrameQueue.cpp
     ../HikariSub/Playback.cpp
+    ../HikariSub/TextComparison.cpp
     ../HikariSub/Timebase.cpp
     ../HikariSub/WaveformPeaks.cpp
 )
