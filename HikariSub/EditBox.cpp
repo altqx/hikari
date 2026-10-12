@@ -1964,6 +1964,8 @@ void EditBox::OnDoubtfulTl(wxCommandEvent& event)
 		Dialogue *dial = grid->file->CopyDialogueF(sels[i]);
 		dial->ChangeState(4);
 	}
+	// record the toggle as its own undo step; keep the edit box text as typed
+	grid->SetModified(EDITBOX_MULTILINE_EDITION, false);
 	if (event.GetId() == EDITBOX_SET_DOUBTFUL){
 		grid->NextLine();
 	}
