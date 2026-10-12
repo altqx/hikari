@@ -1374,10 +1374,11 @@ bool HikariSubFrame::OpenFile(const wxString &filename, bool fulls/*=false*/, bo
 	if (issubs || found){
 		const wxString &fname = (found && !issubs) ? secondFileName : filename;
 		if (nonewtab){
+			//report Cancel as not opened, so a batch of files stops
 			if (SavePrompt(2)){
 				if (freeze)
 					tab->Thaw();
-				return true;
+				return false;
 			}
 		}
 		tab->video->RemoveVisual(true);
@@ -1868,8 +1869,10 @@ void HikariSubFrame::OpenFiles(wxArrayString &files, bool intab, bool nofreeze, 
 	for (size_t i = 0; i < maxx; i++)
 	{
 
+		//a tab with unsaved changes is in use even without a path
 		if ((i >= Tabs->Size() || Tabs->Page(Tabs->iter)->SubsPath != emptyString ||
-			Tabs->Page(Tabs->iter)->VideoPath != emptyString) && !intab){
+			Tabs->Page(Tabs->iter)->VideoPath != emptyString ||
+			Tabs->Page(Tabs->iter)->grid->file->IsModified()) && !intab){
 			InsertTab(false);
 		}
 		TabPanel *tab = GetTab();
@@ -1887,7 +1890,7 @@ void HikariSubFrame::OpenFiles(wxArrayString &files, bool intab, bool nofreeze, 
 			continue;
 		}
 		if (i < subsSize){
-			if (!Tabs->LoadSubtitles(tab, subs[i])){
+			if (SavePrompt(2) || !Tabs->LoadSubtitles(tab, subs[i])){
 				break;
 			}
 			
