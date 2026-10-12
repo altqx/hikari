@@ -542,7 +542,7 @@ void SubsGrid::ChangeTimes(const ShiftTimesSettings &settings, bool byFrame)
 	}
 	else if ((moveTimeOptions & 8) && edit->ABox && edit->ABox->audioDisplay->hasMark){
 		if (byFrame){
-			frame += timebase.FrameAt(edit->ABox->audioDisplay->curMarkMS - difftime);
+			frame += timebase.FrameAt(edit->ABox->audioDisplay->curMarkMS) - timebase.FrameAt(difftime);
 		}
 		else{
 			int addedTimes = edit->ABox->audioDisplay->curMarkMS - difftime;
