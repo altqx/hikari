@@ -754,6 +754,7 @@ void Visuals::SetVisual(bool dummy)
 		int _time = tab->video->Tell();
 		int moveLength = 0;
 		const wxString &tlStyle = tab->grid->file->GetSInfo(L"TLMode Style");
+		bool changed = false;
 		for (size_t i = 0; i < sels.size(); i++){
 
 			Dialogue *Dial = grid->file->GetDialogue(sels[i]);
@@ -762,7 +763,10 @@ void Visuals::SetVisual(bool dummy)
 			wxString txt = Dial->GetTextNoCopy();
 			ChangeVisual(&txt, Dial, selsSize);
 			if (!dummy){
-				grid->CopyDialogue(sels[i])->SetText(txt);
+				if (txt != Dial->GetTextNoCopy()){
+					grid->CopyDialogue(sels[i])->SetText(txt);
+					changed = true;
+				}
 			}
 			else{
 				Dialogue Cpy = Dialogue(*Dial);
@@ -789,6 +793,7 @@ void Visuals::SetVisual(bool dummy)
 		}
 
 		if (!dummy){
+			if (!changed){ return; }
 			SetModified((Visual == MOVE) ? VISUAL_MOVE :
 				(Visual == SCALE) ? VISUAL_SCALE : 
 				(Visual == ROTATEZ) ? VISUAL_ROTATION_Z :
@@ -819,6 +824,7 @@ void Visuals::SetVisual(bool dummy)
 		RenderSubs(dtxt);
 	}
 	else{
+		if (editor->GetValue() == currentLineText){ return; }
 		editor->SetModified();
 		currentLineText = editor->GetValue();
 		tab->video->SetVisualEdition(true);
