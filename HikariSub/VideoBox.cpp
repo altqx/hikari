@@ -687,7 +687,7 @@ void VideoBox::NextFile(bool next)
 	if (tab->VideoPath != emptyString){
 		path = tab->VideoPath;
 	}
-	
+	else if (Hikari->videorec.empty()){ return; }
 	else{ path = Hikari->videorec[Hikari->videorec.size() - 1]; }
 	wxFileName videoFileName(path);
 	wxString pathwn = videoFileName.GetPath();
