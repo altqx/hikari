@@ -17,14 +17,18 @@
 
 #ifndef _WIN32
 
+#include <fcntl.h>
 #include <stddef.h>
+#include <sys/stat.h>
 #include <sys/types.h>
+#include <functional>
 #include <string>
 
 // How a save puts its new contents into the file it saves to.
 enum class SaveMethod {
 	// Nothing is written: the target is a folder, a socket or a block device,
-	// a file that cannot be written, or a new file that cannot be made.
+	// a file that cannot be written, or a new file that cannot be made; or
+	// the target's name no longer leads to the file the save started with.
 	Refuse,
 	// A temporary file next to the target is renamed over it. This is atomic,
 	// but it gives the path a new inode, so it is used only when the new file
@@ -41,6 +45,9 @@ enum class SaveMethod {
 // What a save knows about the file it saves to and about the temporary file
 // it made next to it, after giving that file the target's group and mode.
 struct SaveTargetFacts {
+	// the target's name leads to another file than when the save started, or
+	// to a file now where there was none
+	bool changed = false;
 	bool exists = false;
 	mode_t type = 0;  // the target's S_IFMT bits
 	bool writable = true;
@@ -66,14 +73,16 @@ struct SaveTargetFacts {
 // lock that the renamed file would match in owner, group, permission bits,
 // extended attributes and file system; any other regular file is rewritten in
 // place.
-// A file that cannot be written is refused.
+// A file that cannot be written is refused, and so is a changed target.
 SaveMethod ChooseSaveMethod(const SaveTargetFacts &facts);
 
 // One save of a file on POSIX: Open picks the method and makes the
-// temporary file, Write appends to it and Commit puts it in place. Commit
-// looks at the target again and picks the method anew for the file that is
-// there then. A file that is not committed is left as it was; the destructor
-// removes the temporary file.
+// temporary file, Write appends to it and Commit puts it in place. Open
+// looks the target up once and keeps it open, without following a link at
+// its name; Commit picks the method anew from that file as it is then, and
+// refuses the save when the name no longer leads to that file. A rewrite or a
+// write-through writes only into that file. A file that is not committed is
+// left as it was; the destructor removes the temporary file.
 class SaveFile
 {
 public:
@@ -97,17 +106,38 @@ public:
 	const std::string &KeptBackup() const { return keptBackup; }
 	// for tests: replaces write(2) for the target
 	void SetTargetWriter(Writer writer) { targetWriter = writer; }
+	// for tests: runs in Commit after the target was looked at and the
+	// method picked, before anything is written
+	void SetBeforeWrite(std::function<void()> hook) { beforeWrite = std::move(hook); }
 
 private:
 	// the facts about the target and the temporary file as they are now
 	SaveTargetFacts ReadFacts();
+	// whether the target's name still leads to the file Open found there,
+	// or still to nothing
+	bool TargetUnchanged() const;
+	// opens the file Open found with flags, never another one
+	int ReopenTarget(int flags) const;
+	// the path of file, a name relative to at
+	std::string PathOf(int at, const std::string &file) const;
 	bool Replace();
 	bool Rewrite();
 	bool WriteThrough();
 
 	std::string target;
-	std::string stagePath;
-	// where the temporary files of this save are made, with a name prefix
+	// the target's name in its folder
+	std::string name;
+	// the target's folder, opened once in Open
+	int folderFd = -1;
+	// the target as Open found it, opened without following a link; -1 for
+	// a new file
+	int pinFd = -1;
+	struct stat pinned {};
+	// the temporary file, a name relative to stageAt: the target's folder or,
+	// as an absolute path, the temporary folder
+	std::string stageName;
+	int stageAt = AT_FDCWD;
+	// the name prefix the temporary files of this save are made with
 	std::string tempPrefix;
 	std::string keptBackup;
 	int stageFd = -1;
@@ -116,6 +146,7 @@ private:
 	bool failed = false;
 	SaveMethod method = SaveMethod::Refuse;
 	Writer targetWriter = nullptr;
+	std::function<void()> beforeWrite;
 };
 
 #endif

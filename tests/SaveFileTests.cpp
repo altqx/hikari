@@ -218,6 +218,20 @@ TEST(fifos_and_character_devices_are_written_through_and_other_files_refused)
 	CHECK(ChooseSaveMethod(facts) == SaveMethod::Refuse);
 }
 
+TEST(a_target_whose_name_leads_to_another_file_is_refused)
+{
+	for (mode_t type : { S_IFREG, S_IFIFO, S_IFCHR }) {
+		SaveTargetFacts facts = PlainFile();
+		facts.type = type;
+		facts.changed = true;
+		CHECK(ChooseSaveMethod(facts) == SaveMethod::Refuse);
+	}
+	SaveTargetFacts taken;
+	taken.tempMade = true;
+	taken.changed = true;
+	CHECK(ChooseSaveMethod(taken) == SaveMethod::Refuse);
+}
+
 TEST(saving_a_plain_file_renames_over_it_and_keeps_its_mode)
 {
 	SaveScratchDir dir;
@@ -398,7 +412,8 @@ TEST(the_method_is_picked_again_for_the_file_that_is_there_at_commit)
 	CHECK(ReadText(file) == "newer");
 	CHECK(Names(dir.path) == std::set<std::string>{ "subs.ass" });
 
-	// a file another program put in place of the target, with a second link
+	// a file another program put in place of the target, with a second link,
+	// is not the file the save started with and is not written
 	SaveFile replaced;
 	CHECK(replaced.Open(file.string()));
 	CHECK(replaced.Method() == SaveMethod::Replace);
@@ -408,10 +423,10 @@ TEST(the_method_is_picked_again_for_the_file_that_is_there_at_commit)
 	fs::create_hard_link(theirs, other);
 	CHECK(std::rename(theirs.c_str(), file.c_str()) == 0);
 	ino_t theirInode = StatOf(file).st_ino;
-	CHECK(replaced.Commit());
-	CHECK(replaced.Method() == SaveMethod::Rewrite);
-	CHECK(ReadText(file) == "ours");
-	CHECK(ReadText(other) == "ours");
+	CHECK(!replaced.Commit());
+	CHECK(replaced.Method() == SaveMethod::Refuse);
+	CHECK(ReadText(file) == "theirs");
+	CHECK(ReadText(other) == "theirs");
 	CHECK(StatOf(file).st_ino == theirInode);
 	CHECK(Names(dir.path) == (std::set<std::string>{ "subs.ass", "other.ass" }));
 
@@ -423,7 +438,7 @@ TEST(the_method_is_picked_again_for_the_file_that_is_there_at_commit)
 		chmod(file.c_str(), 0444);
 		CHECK(!readOnly.Commit());
 		CHECK(readOnly.Method() == SaveMethod::Refuse);
-		CHECK(ReadText(file) == "ours");
+		CHECK(ReadText(file) == "theirs");
 		CHECK(Names(dir.path) == (std::set<std::string>{ "subs.ass", "other.ass" }));
 		chmod(file.c_str(), 0644);
 	}
@@ -645,5 +660,221 @@ TEST(a_fifo_that_no_program_reads_fails_the_save_instead_of_waiting)
 	CHECK(Names(dir.path) == std::set<std::string>{ "pipe.ass" });
 	CHECK(Names(temp.path).empty());
 }
+
+#ifdef __linux__
+namespace {
+
+// What another user who can change the entries of the subtitle folder puts
+// at the target's name while a save runs; the attack is made in this
+// process, which holds the lock the other user would hold.
+enum class Swap { LinkToVictim, HardLinkOfVictim, Folder };
+
+// A file the user can write but that is not the subtitle file: what an
+// attacker wants the save to write into. A shared flock on it, as another
+// user would hold, made the save rewrite whatever file the name led to.
+struct Victim {
+	fs::path path;
+	int holder = -1;
+	ino_t inode = 0;
+	explicit Victim(const fs::path &folder)
+	{
+		path = folder / "victim.txt";
+		WriteText(path, "the victim's data");
+		inode = StatOf(path).st_ino;
+		holder = open(path.c_str(), O_RDONLY | O_CLOEXEC);
+		if (holder >= 0)
+			flock(holder, LOCK_SH);
+	}
+	~Victim()
+	{
+		if (holder >= 0)
+			close(holder);
+	}
+	bool Untouched() const
+	{
+		return ReadText(path) == "the victim's data" && StatOf(path).st_ino == inode;
+	}
+};
+
+// Moves the target aside to moved.ass and puts swap at its name.
+void SwapTarget(const fs::path &file, const Victim &victim, Swap swap)
+{
+	if (fs::exists(fs::symlink_status(file)))
+		fs::rename(file, file.parent_path() / "moved.ass");
+	switch (swap) {
+	case Swap::LinkToVictim: fs::create_symlink(victim.path, file); break;
+	case Swap::HardLinkOfVictim: fs::create_hard_link(victim.path, file); break;
+	case Swap::Folder: fs::create_directory(file); break;
+	}
+}
+
+bool StillSwapped(const fs::path &file, const Victim &victim, Swap swap)
+{
+	switch (swap) {
+	case Swap::LinkToVictim: return fs::is_symlink(file) && fs::read_symlink(file) == victim.path;
+	case Swap::HardLinkOfVictim: return StatOf(file).st_ino == victim.inode;
+	case Swap::Folder: return fs::is_directory(file) && fs::is_empty(file);
+	}
+	return false;
+}
+
+} // namespace
+
+TEST(a_target_swapped_before_commit_is_refused_and_nothing_is_written)
+{
+	for (Swap swap : { Swap::LinkToVictim, Swap::HardLinkOfVictim, Swap::Folder }) {
+		// a plain file, a hard linked file, which is rewritten, and a locked
+		// file, which is rewritten too
+		for (int original = 0; original < 3; ++original) {
+			SaveScratchDir dir, victimDir;
+			Victim victim(victimDir.path);
+			CHECK(victim.holder >= 0);
+			fs::path file = dir.path / "subs.ass";
+			WriteText(file, "old");
+			if (original == 1)
+				fs::create_hard_link(file, dir.path / "other.ass");
+			int lock = -1;
+			if (original == 2) {
+				lock = open(file.c_str(), O_RDONLY | O_CLOEXEC);
+				CHECK(flock(lock, LOCK_SH) == 0);
+			}
+
+			SaveFile save;
+			CHECK(save.Open(file.string()));
+			CHECK(save.Method() == (original == 0 ? SaveMethod::Replace : SaveMethod::Rewrite));
+			CHECK(save.Write("ours", 4));
+			SwapTarget(file, victim, swap);
+			CHECK(!save.Commit());
+			CHECK(save.Method() == SaveMethod::Refuse);
+			CHECK(victim.Untouched());
+			CHECK(StillSwapped(file, victim, swap));
+			CHECK(ReadText(dir.path / "moved.ass") == "old");
+			std::set<std::string> names{ "subs.ass", "moved.ass" };
+			if (original == 1) {
+				names.insert("other.ass");
+				CHECK(ReadText(dir.path / "other.ass") == "old");
+			}
+			CHECK(Names(dir.path) == names);
+			if (lock >= 0)
+				close(lock);
+		}
+	}
+}
+
+TEST(a_new_file_whose_name_is_taken_before_commit_is_refused)
+{
+	for (Swap swap : { Swap::LinkToVictim, Swap::HardLinkOfVictim, Swap::Folder }) {
+		SaveScratchDir dir, victimDir;
+		Victim victim(victimDir.path);
+		fs::path file = dir.path / "new.ass";
+		SaveFile save;
+		CHECK(save.Open(file.string()));
+		CHECK(save.Method() == SaveMethod::Replace);
+		CHECK(save.Write("ours", 4));
+		SwapTarget(file, victim, swap);
+		CHECK(!save.Commit());
+		CHECK(save.Method() == SaveMethod::Refuse);
+		CHECK(victim.Untouched());
+		CHECK(StillSwapped(file, victim, swap));
+		CHECK(Names(dir.path) == std::set<std::string>{ "new.ass" });
+	}
+}
+
+TEST(a_fifo_swapped_before_commit_is_refused)
+{
+	SaveScratchDir dir, victimDir, temp;
+	TempFolderOverride tempFolder(temp.path);
+	Victim victim(victimDir.path);
+	fs::path fifo = dir.path / "pipe.ass";
+	CHECK(mkfifo(fifo.c_str(), 0600) == 0);
+	SaveFile save;
+	CHECK(save.Open(fifo.string()));
+	CHECK(save.Method() == SaveMethod::WriteThrough);
+	CHECK(save.Write("ours", 4));
+	fs::remove(fifo);
+	fs::create_symlink(victim.path, fifo);
+	CHECK(!save.Commit());
+	CHECK(save.Method() == SaveMethod::Refuse);
+	CHECK(victim.Untouched());
+	CHECK(fs::is_symlink(fifo));
+	CHECK(Names(temp.path).empty());
+}
+
+TEST(a_link_at_the_resolved_name_is_refused_when_the_save_opens)
+{
+	SaveScratchDir dir, victimDir;
+	Victim victim(victimDir.path);
+	fs::path link = dir.path / "subs.ass";
+	fs::create_symlink(victim.path, link);
+	SaveFile save;
+	CHECK(!save.Open(link.string()));
+	CHECK(victim.Untouched());
+	CHECK(Names(dir.path) == std::set<std::string>{ "subs.ass" });
+}
+
+// A swap in the moment between Commit's check and its write. A rename puts
+// the new file at the name and writes into nothing that was there; a rewrite
+// or a write-through writes into the file the save started with, wherever it
+// was moved: a swap there is the same as one right after the save.
+TEST(a_target_swapped_after_the_check_is_never_written_through_its_new_name)
+{
+	for (Swap swap : { Swap::LinkToVictim, Swap::HardLinkOfVictim, Swap::Folder }) {
+		for (bool locked : { false, true }) {
+			SaveScratchDir dir, victimDir;
+			Victim victim(victimDir.path);
+			fs::path file = dir.path / "subs.ass";
+			WriteText(file, "old");
+			int lock = -1;
+			if (locked) {
+				lock = open(file.c_str(), O_RDONLY | O_CLOEXEC);
+				CHECK(flock(lock, LOCK_SH) == 0);
+			}
+			SaveFile save;
+			CHECK(save.Open(file.string()));
+			CHECK(save.Write("ours", 4));
+			save.SetBeforeWrite([&] { SwapTarget(file, victim, swap); });
+			bool saved = save.Commit();
+			CHECK(save.Method() == (locked ? SaveMethod::Rewrite : SaveMethod::Replace));
+			CHECK(victim.Untouched());
+			if (locked) {
+				// into the locked file, now at moved.ass
+				CHECK(saved);
+				CHECK(ReadText(dir.path / "moved.ass") == "ours");
+				CHECK(StillSwapped(file, victim, swap));
+			}
+			else if (swap == Swap::Folder) {
+				// a file is not renamed over a folder
+				CHECK(!saved);
+				CHECK(StillSwapped(file, victim, swap));
+				CHECK(ReadText(dir.path / "moved.ass") == "old");
+			}
+			else {
+				// the link or the victim's name is renamed over, not written
+				CHECK(saved);
+				CHECK(!fs::is_symlink(file));
+				CHECK(ReadText(file) == "ours");
+				CHECK(StatOf(file).st_ino != victim.inode);
+				CHECK(ReadText(dir.path / "moved.ass") == "old");
+			}
+			CHECK(Names(dir.path) == (std::set<std::string>{ "subs.ass", "moved.ass" }));
+			if (lock >= 0)
+				close(lock);
+		}
+	}
+
+	// a new file's name taken in that moment is not renamed over
+	SaveScratchDir dir, victimDir;
+	Victim victim(victimDir.path);
+	fs::path file = dir.path / "new.ass";
+	SaveFile save;
+	CHECK(save.Open(file.string()));
+	CHECK(save.Write("ours", 4));
+	save.SetBeforeWrite([&] { SwapTarget(file, victim, Swap::LinkToVictim); });
+	CHECK(!save.Commit());
+	CHECK(victim.Untouched());
+	CHECK(fs::is_symlink(file));
+	CHECK(Names(dir.path) == std::set<std::string>{ "new.ass" });
+}
+#endif
 
 #endif

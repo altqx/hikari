@@ -33,19 +33,31 @@
 
 namespace {
 
-// Makes a new file named prefix and six random letters, created as a new
-// file is, so the umask and a folder's default ACL apply to mode.
-int MakeTempFile(const std::string &prefix, mode_t mode, std::string *path)
+// The flags the target is opened with to pin it: without following a link at
+// its name, and on Linux as a path only, which neither reads nor writes it and
+// so opens a FIFO or a device without the effects of opening them.
+#ifdef O_PATH
+const int pinFlags = O_PATH | O_NOFOLLOW | O_CLOEXEC;
+const int folderFlags = O_PATH | O_DIRECTORY | O_CLOEXEC;
+#else
+const int pinFlags = O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC | O_NOCTTY;
+const int folderFlags = O_RDONLY | O_DIRECTORY | O_CLOEXEC;
+#endif
+
+// Makes a new file named prefix and six random letters, relative to at,
+// created as a new file is, so the umask and a folder's default ACL apply to
+// mode. O_EXCL makes a link or any other file at the name fail the open.
+int MakeTempFile(int at, const std::string &prefix, mode_t mode, std::string *name)
 {
 	static const char letters[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 	thread_local std::mt19937_64 random{ std::random_device{}() };
 	for (int attempt = 0; attempt < 100; ++attempt) {
-		std::string name = prefix;
+		std::string candidate = prefix;
 		for (int i = 0; i < 6; ++i)
-			name += letters[random() % (sizeof(letters) - 1)];
-		int fd = open(name.c_str(), O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC | O_NOCTTY, mode);
+			candidate += letters[random() % (sizeof(letters) - 1)];
+		int fd = openat(at, candidate.c_str(), O_RDWR | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC | O_NOCTTY, mode);
 		if (fd >= 0) {
-			*path = name;
+			*name = candidate;
 			return fd;
 		}
 		if (errno != EEXIST)
@@ -61,17 +73,24 @@ std::string FolderOf(const std::string &path)
 	return slash == std::string::npos ? "." : slash == 0 ? "/" : path.substr(0, slash);
 }
 
+// The last part of path, after its last slash.
+std::string NameOf(const std::string &path)
+{
+	size_t slash = path.rfind('/');
+	return slash == std::string::npos ? path : path.substr(slash + 1);
+}
+
 // MakeTempFile with prefix, or with a short name in the same folder when
 // prefix and the six letters make a name longer than the file system takes.
-int MakeTempFileNear(const std::string &prefix, const char *shortName, mode_t mode, std::string *path,
+int MakeTempFileNear(int at, const std::string &prefix, const char *shortName, mode_t mode, std::string *name,
 	std::string *usedPrefix)
 {
 	*usedPrefix = prefix;
-	int fd = MakeTempFile(prefix, mode, path);
+	int fd = MakeTempFile(at, prefix, mode, name);
 	if (fd < 0 && errno == ENAMETOOLONG) {
 		std::string folder = FolderOf(prefix);
-		*usedPrefix = (folder == "/" ? "" : folder) + "/" + shortName;
-		fd = MakeTempFile(*usedPrefix, mode, path);
+		*usedPrefix = folder == "." ? shortName : (folder == "/" ? "" : folder) + "/" + shortName;
+		fd = MakeTempFile(at, *usedPrefix, mode, name);
 	}
 	return fd;
 }
@@ -80,6 +99,31 @@ std::string TempFolder()
 {
 	const char *folder = getenv("TMPDIR");
 	return (folder && *folder) ? folder : "/tmp";
+}
+
+// The name under /proc that opens the very file fd is open on, whatever the
+// names that lead to it are now.
+std::string ProcPathOf(int fd)
+{
+	return "/proc/self/fd/" + std::to_string(fd);
+}
+
+// Whether the file fd is open on can be written, as access(2) says for it.
+bool CanWrite(int fd)
+{
+	if (access(ProcPathOf(fd).c_str(), W_OK) == 0)
+		return true;
+#ifdef AT_EMPTY_PATH
+	// without /proc
+	if (errno == ENOENT)
+		return faccessat(fd, "", W_OK, AT_EMPTY_PATH) == 0;
+#endif
+	return false;
+}
+
+bool SameFile(const struct stat &a, const struct stat &b)
+{
+	return a.st_dev == b.st_dev && a.st_ino == b.st_ino;
 }
 
 bool WriteAll(int fd, const char *data, size_t size, SaveFile::Writer writer)
@@ -121,14 +165,30 @@ bool CopyAll(int from, int to, SaveFile::Writer writer)
 	}
 }
 
-// Writes the folder's entries to disk after a rename or a new file in it.
-void SyncFolderOf(const std::string &path)
+// Writes the entries of the folder at, or of the folder name is in when at is
+// AT_FDCWD, to disk after a rename or a new file in it.
+void SyncFolder(int at, const std::string &name)
 {
-	int fd = open(FolderOf(path).c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+	int fd = at == AT_FDCWD ? open(FolderOf(name).c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC)
+		: openat(at, ".", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
 	if (fd >= 0) {
 		fsync(fd);
 		close(fd);
 	}
+}
+
+// Renames from over to, both in the folder at, failing when to is taken.
+int RenameNoReplace(int at, const char *from, const char *to)
+{
+#if defined(__linux__) && defined(RENAME_NOREPLACE)
+	if (renameat2(at, from, at, to, RENAME_NOREPLACE) == 0)
+		return 0;
+	if (errno != EINVAL && errno != ENOSYS)
+		return -1;
+#endif
+	// A file system without RENAME_NOREPLACE: a file put at the name in the
+	// meantime is renamed over, which writes nothing into it.
+	return renameat(at, from, at, to);
 }
 
 #ifdef __linux__
@@ -181,11 +241,18 @@ bool ReadAttributes(const char *path, int fd, std::map<std::string, std::string>
 	return true;
 }
 
-bool SameExtendedAttributes(const std::string &target, int tempFd)
+// The attributes of the file targetFd is open on, which may be an O_PATH
+// descriptor that the f*xattr calls do not take, and of the temporary file.
+bool SameExtendedAttributes(int targetFd, int tempFd)
 {
 	std::map<std::string, std::string> targetAttributes, tempAttributes;
-	return ReadAttributes(target.c_str(), -1, &targetAttributes) &&
-		ReadAttributes(nullptr, tempFd, &tempAttributes) && targetAttributes == tempAttributes;
+	bool read = ReadAttributes(ProcPathOf(targetFd).c_str(), -1, &targetAttributes);
+	if (!read && errno == ENOENT) {
+		// without /proc
+		targetAttributes.clear();
+		read = ReadAttributes(nullptr, targetFd, &targetAttributes);
+	}
+	return read && ReadAttributes(nullptr, tempFd, &tempAttributes) && targetAttributes == tempAttributes;
 }
 // Whether /proc/locks lists a lock of any kind (flock, POSIX, OFD, lease) on
 // an inode with this number. The device in /proc/locks is the super block's,
@@ -220,7 +287,7 @@ bool InodeIsLocked(ino_t inode)
 }
 #else
 // The application is built for Linux and Windows only.
-bool SameExtendedAttributes(const std::string &, int) { return true; }
+bool SameExtendedAttributes(int, int) { return true; }
 bool InodeIsLocked(ino_t) { return false; }
 #endif
 
@@ -228,6 +295,8 @@ bool InodeIsLocked(ino_t) { return false; }
 
 SaveMethod ChooseSaveMethod(const SaveTargetFacts &facts)
 {
+	if (facts.changed)
+		return SaveMethod::Refuse;
 	if (!facts.exists)
 		return facts.tempMade ? SaveMethod::Replace : SaveMethod::Refuse;
 	if (!facts.writable)
@@ -249,26 +318,71 @@ SaveFile::~SaveFile()
 	Discard();
 }
 
+bool SaveFile::TargetUnchanged() const
+{
+	if (folderFd < 0)
+		return false;
+	struct stat now;
+	if (fstatat(folderFd, name.c_str(), &now, AT_SYMLINK_NOFOLLOW) != 0)
+		return pinFd < 0 && errno == ENOENT;
+	// pinFd keeps the inode, so its number cannot be given to another file
+	return pinFd >= 0 && SameFile(now, pinned) && (now.st_mode & S_IFMT) == (pinned.st_mode & S_IFMT);
+}
+
+int SaveFile::ReopenTarget(int flags) const
+{
+	if (pinFd < 0) {
+		errno = ENOENT;
+		return -1;
+	}
+	int fd = open(ProcPathOf(pinFd).c_str(), flags | O_CLOEXEC | O_NOCTTY);
+	if (fd < 0 && errno == ENOENT) {
+		// without /proc: the name once more, which must still be the file
+		fd = openat(folderFd, name.c_str(), flags | O_NOFOLLOW | O_CLOEXEC | O_NOCTTY);
+	}
+	if (fd < 0)
+		return -1;
+	struct stat now;
+	if (fstat(fd, &now) != 0 || !SameFile(now, pinned)) {
+		close(fd);
+		errno = ESTALE;
+		return -1;
+	}
+	return fd;
+}
+
+std::string SaveFile::PathOf(int at, const std::string &file) const
+{
+	if (at == AT_FDCWD)
+		return file;
+	std::string folder = FolderOf(target);
+	return (folder == "/" ? "" : folder) + "/" + file;
+}
+
 SaveTargetFacts SaveFile::ReadFacts()
 {
 	SaveTargetFacts facts;
+	facts.changed = !TargetUnchanged();
 	struct stat targetStat;
-	if (stat(target.c_str(), &targetStat) == 0) {
+	if (pinFd >= 0) {
 		facts.exists = true;
-		facts.type = targetStat.st_mode & S_IFMT;
-		facts.writable = access(target.c_str(), W_OK) == 0;
-		facts.links = targetStat.st_nlink;
-		facts.uid = targetStat.st_uid;
-		facts.gid = targetStat.st_gid;
-		facts.mode = targetStat.st_mode & 07777;
-		facts.device = targetStat.st_dev;
-		facts.lockedByOthers = S_ISREG(targetStat.st_mode) && InodeIsLocked(targetStat.st_ino);
+		if (fstat(pinFd, &targetStat) == 0) {
+			facts.type = targetStat.st_mode & S_IFMT;
+			facts.writable = CanWrite(pinFd);
+			facts.links = targetStat.st_nlink;
+			facts.uid = targetStat.st_uid;
+			facts.gid = targetStat.st_gid;
+			facts.mode = targetStat.st_mode & 07777;
+			facts.device = targetStat.st_dev;
+			facts.lockedByOthers = S_ISREG(targetStat.st_mode) && InodeIsLocked(targetStat.st_ino);
+		}
+		else {
+			// a target that cannot be looked at is not saved to
+			facts.writable = false;
+		}
 	}
-	else if (errno != ENOENT) {
-		// a target that cannot be looked at is not saved to
-		facts.exists = true;
-		facts.writable = false;
-	}
+	if (facts.changed)
+		return facts;
 
 	if (stageNextToTarget && stageFd >= 0) {
 		if (facts.exists && S_ISREG(facts.type)) {
@@ -284,7 +398,7 @@ SaveTargetFacts SaveFile::ReadFacts()
 			facts.tempGid = tempStat.st_gid;
 			facts.tempMode = tempStat.st_mode & 07777;
 			facts.tempDevice = tempStat.st_dev;
-			facts.sameExtendedAttributes = !facts.exists || SameExtendedAttributes(target, stageFd);
+			facts.sameExtendedAttributes = !facts.exists || SameExtendedAttributes(pinFd, stageFd);
 		}
 	}
 	return facts;
@@ -299,16 +413,33 @@ bool SaveFile::Open(const std::string &path)
 	method = SaveMethod::Refuse;
 	stageNextToTarget = false;
 
-	struct stat targetStat;
-	bool exists = stat(path.c_str(), &targetStat) == 0;
-	if (!exists && errno != ENOENT)
+	// The folder and the file are looked up here, once. Everything later
+	// reaches them through these descriptors, so a name another program
+	// changes in the meantime cannot lead the save to another file; a link
+	// the user saved through was resolved before, see ResolveSaveTarget, and
+	// a link at the resolved name now is refused.
+	name = NameOf(path);
+	if (name.empty() || name == "." || name == "..")
 		return false;
-	// a file that cannot be written is not replaced either
-	if (exists && access(path.c_str(), W_OK) != 0)
+	folderFd = open(FolderOf(path).c_str(), folderFlags);
+	if (folderFd < 0)
 		return false;
-	if (!exists || S_ISREG(targetStat.st_mode)) {
-		stageFd = MakeTempFileNear(path + ".", ".hikarisub-save.", 0666, &stagePath, &tempPrefix);
+	pinFd = openat(folderFd, name.c_str(), pinFlags);
+	bool exists = pinFd >= 0;
+	if (exists && (fstat(pinFd, &pinned) != 0 || S_ISLNK(pinned.st_mode) || !CanWrite(pinFd))) {
+		// a file that cannot be written is not replaced either
+		Discard();
+		return false;
+	}
+	if (!exists && errno != ENOENT) {
+		Discard();
+		return false;
+	}
+	if (!exists || S_ISREG(pinned.st_mode)) {
+		stageFd = MakeTempFileNear(folderFd, name + ".", ".hikarisub-save.", 0666, &stageName, &tempPrefix);
 		stageNextToTarget = stageFd >= 0;
+		if (stageNextToTarget)
+			stageAt = folderFd;
 	}
 
 	method = ChooseSaveMethod(ReadFacts());
@@ -320,9 +451,12 @@ bool SaveFile::Open(const std::string &path)
 		// The target's folder takes no temporary file, or the target is no
 		// regular file: the new contents wait in the temporary folder.
 		tempPrefix = TempFolder() + "/hikarisub-save.";
-		stageFd = MakeTempFile(tempPrefix, 0600, &stagePath);
-		if (stageFd < 0)
+		stageAt = AT_FDCWD;
+		stageFd = MakeTempFile(AT_FDCWD, tempPrefix, 0600, &stageName);
+		if (stageFd < 0) {
+			Discard();
 			return false;
+		}
 	}
 	return true;
 }
@@ -343,9 +477,14 @@ bool SaveFile::Commit()
 	bool saved = false;
 	if (!failed) {
 		// While the contents were written, another program may have linked,
-		// locked, replaced, chmodded or removed the target: the method is
-		// picked again for the file that is there now.
+		// locked, chmodded or removed the target, or put another file, a link
+		// or a folder at its name. The method is picked again from the file
+		// the save started with, read through the descriptor Open keeps; a
+		// name that no longer leads to that file, or a new file's name that
+		// is taken now, refuses the save, which then writes nothing.
 		method = ChooseSaveMethod(ReadFacts());
+		if (beforeWrite)
+			beforeWrite();
 		switch (method) {
 		case SaveMethod::Replace: saved = Replace(); break;
 		case SaveMethod::Rewrite: saved = Rewrite(); break;
@@ -363,27 +502,41 @@ void SaveFile::Discard()
 		close(stageFd);
 		stageFd = -1;
 	}
-	if (!stagePath.empty()) {
-		unlink(stagePath.c_str());
-		stagePath.clear();
+	if (!stageName.empty()) {
+		unlinkat(stageAt, stageName.c_str(), 0);
+		stageName.clear();
+	}
+	stageAt = AT_FDCWD;
+	if (pinFd >= 0) {
+		close(pinFd);
+		pinFd = -1;
+	}
+	if (folderFd >= 0) {
+		close(folderFd);
+		folderFd = -1;
 	}
 }
 
 bool SaveFile::Replace()
 {
+	// the temporary file is in the target's folder, see ChooseSaveMethod
 	if (fsync(stageFd) != 0)
 		return false;
-	if (rename(stagePath.c_str(), target.c_str()) == 0) {
-		stagePath.clear();
-		SyncFolderOf(target);
+	// A rename puts the new file under the name and writes nothing into what
+	// was there: a file or link put at the name after the check above only
+	// loses that name. A new file's name taken in the meantime fails it.
+	int renamed = pinFd >= 0 ? renameat(folderFd, stageName.c_str(), folderFd, name.c_str())
+		: RenameNoReplace(folderFd, stageName.c_str(), name.c_str());
+	if (renamed == 0) {
+		stageName.clear();
+		SyncFolder(folderFd, name);
 		return true;
 	}
 	// A file mounted over the path, or a folder that lets only a file's owner
 	// replace it, still takes the contents in place.
 	int error = errno;
-	struct stat targetStat;
-	if ((error == EBUSY || error == EXDEV || error == EPERM || error == EACCES) &&
-		stat(target.c_str(), &targetStat) == 0 && S_ISREG(targetStat.st_mode)) {
+	if ((error == EBUSY || error == EXDEV || error == EPERM || error == EACCES) && pinFd >= 0 &&
+		S_ISREG(pinned.st_mode) && TargetUnchanged()) {
 		method = SaveMethod::Rewrite;
 		return Rewrite();
 	}
@@ -396,7 +549,8 @@ bool SaveFile::Rewrite()
 	struct stat stageStat;
 	if (fsync(stageFd) != 0 || fstat(stageFd, &stageStat) != 0)
 		return false;
-	int out = open(target.c_str(), O_RDWR | O_CLOEXEC | O_NOCTTY);
+	// the file the save started with, not what its name leads to now
+	int out = ReopenTarget(O_RDWR);
 	if (out < 0)
 		return false;
 	struct stat outStat;
@@ -407,13 +561,13 @@ bool SaveFile::Rewrite()
 
 	// a backup of the old contents, also on disk before the target is touched
 	// and its name in its folder, so the backup outlasts a crash
-	std::string backupPath, backupPrefix;
-	int backup = MakeTempFileNear(tempPrefix + "old.", ".hikarisub-old.", 0600, &backupPath, &backupPrefix);
+	std::string backupName, backupPrefix;
+	int backup = MakeTempFileNear(stageAt, tempPrefix + "old.", ".hikarisub-old.", 0600, &backupName, &backupPrefix);
 	struct stat backupStat;
 	bool saved = backup >= 0 && CopyAll(out, backup, nullptr) && fsync(backup) == 0 &&
 		fstat(backup, &backupStat) == 0;
 	if (saved)
-		SyncFolderOf(backupPath);
+		SyncFolder(stageAt, backupName);
 	if (saved) {
 		saved = lseek(out, 0, SEEK_SET) == 0 && CopyAll(stageFd, out, targetWriter) &&
 			ftruncate(out, stageStat.st_size) == 0 && fsync(out) == 0;
@@ -421,15 +575,15 @@ bool SaveFile::Rewrite()
 			bool restored = lseek(out, 0, SEEK_SET) == 0 && CopyAll(backup, out, nullptr) &&
 				ftruncate(out, backupStat.st_size) == 0 && fsync(out) == 0;
 			if (!restored) {
-				keptBackup = backupPath;
-				backupPath.clear();
+				keptBackup = PathOf(stageAt, backupName);
+				backupName.clear();
 			}
 		}
 	}
 	if (backup >= 0)
 		close(backup);
-	if (!backupPath.empty())
-		unlink(backupPath.c_str());
+	if (!backupName.empty())
+		unlinkat(stageAt, backupName.c_str(), 0);
 	close(out);
 	return saved;
 }
@@ -438,7 +592,7 @@ bool SaveFile::WriteThrough()
 {
 	// Without O_NONBLOCK, opening a FIFO that no program reads waits for a
 	// reader, which would hang the save; with it the open fails with ENXIO.
-	int out = open(target.c_str(), O_WRONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
+	int out = ReopenTarget(O_WRONLY | O_NONBLOCK);
 	if (out < 0)
 		return false;
 	// The writes block again as a plain write does: a reader that is there

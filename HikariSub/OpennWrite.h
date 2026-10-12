@@ -22,6 +22,19 @@
 #endif
 
 #ifdef _WIN32
+// The volume serial number and file index GetFileInformationByHandle gives,
+// which tell one file from another on a volume.
+struct WindowsFileId
+{
+	unsigned long volume = 0;
+	unsigned long indexHigh = 0;
+	unsigned long indexLow = 0;
+	bool operator==(const WindowsFileId &other) const
+	{
+		return volume == other.volume && indexHigh == other.indexHigh && indexLow == other.indexLow;
+	}
+};
+
 // One save of a file on Windows: Open makes a temporary file next to the
 // file, Write appends to it and Commit puts it in place. The temporary file
 // replaces the file with ReplaceFileW, which keeps the file's attributes and
@@ -30,6 +43,9 @@
 // instead, with a backup of the old contents put back when that fails. Unlike
 // wxTempFile, a failed replace is never followed by a copy over the file
 // without a backup. A file that is not committed is left as it was.
+// Open notes which file is at the name, looked at without following a link
+// there; Commit saves only while the name still leads to that file, and the
+// copy writes only into it.
 class WindowsSaveFile
 {
 public:
@@ -52,6 +68,9 @@ private:
 
 	wxFile file;
 	wxString target;
+	// a file was at target when Open ran, and its id
+	bool targetExisted = false;
+	WindowsFileId targetId;
 	wxString temp;
 	wxString keptBackup;
 };

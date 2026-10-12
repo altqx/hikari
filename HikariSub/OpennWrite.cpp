@@ -63,6 +63,7 @@ static void LogSaveFailure(const SaveFile &file)
 #else
 // wx's wrapper for windows.h, it keeps min and max from becoming macros
 #include <wx/msw/wrapwin.h>
+#include <fcntl.h>
 #include <io.h>
 
 static bool WriteText(WindowsSaveFile &file, const wxString &text, const wxMBConv &conv)
@@ -120,17 +121,81 @@ static bool PathExists(const wxString &path)
 	return ::GetFileAttributesW(path.wc_str()) != INVALID_FILE_ATTRIBUTES;
 }
 
-// the number of names the file at path has, 0 when it cannot be read
-static DWORD LinkCount(const wxString &path)
+// Opens the file at path itself, not what a link or junction there leads to,
+// for its attributes only; such a handle keeps no other program from
+// reading, writing, renaming or deleting the file.
+static HANDLE OpenNoFollow(const wxString &path)
 {
-	HANDLE handle = ::CreateFileW(path.wc_str(), FILE_READ_ATTRIBUTES,
-		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-		FILE_FLAG_BACKUP_SEMANTICS, nullptr);
-	if (handle == INVALID_HANDLE_VALUE) { return 0; }
+	return ::CreateFileW(path.wc_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+		nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+}
+
+// The id of the file handle is open on, the number of names it has, and
+// whether it is a file that is saved to: no folder, and no link or junction,
+// which ResolveSaveTarget has followed before.
+static bool ReadFileFacts(HANDLE handle, WindowsFileId *id, DWORD *links, bool *savable)
+{
 	BY_HANDLE_FILE_INFORMATION info;
-	DWORD links = ::GetFileInformationByHandle(handle, &info) ? info.nNumberOfLinks : 0;
+	if (!::GetFileInformationByHandle(handle, &info)) { return false; }
+	id->volume = info.dwVolumeSerialNumber;
+	id->indexHigh = info.nFileIndexHigh;
+	id->indexLow = info.nFileIndexLow;
+	if (links) { *links = info.nNumberOfLinks; }
+	if (savable) {
+		FILE_ATTRIBUTE_TAG_INFO tag;
+		*savable = !(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+			(!(info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) ||
+			(::GetFileInformationByHandleEx(handle, FileAttributeTagInfo, &tag, sizeof(tag)) &&
+			!IsReparseTagNameSurrogate(tag.ReparseTag)));
+	}
+	return true;
+}
+
+enum class NameLeadsTo { Nothing, TheSameFile, AnotherFile };
+
+// What path leads to, looked at without following a link there: nothing, the
+// file with id when existed, or another file; links is set to the number of
+// names of the file it leads to.
+static NameLeadsTo LookAtName(const wxString &path, bool existed, const WindowsFileId &id, DWORD *links)
+{
+	*links = 0;
+	HANDLE handle = OpenNoFollow(path);
+	if (handle == INVALID_HANDLE_VALUE) {
+		return ::GetLastError() == ERROR_FILE_NOT_FOUND ? NameLeadsTo::Nothing : NameLeadsTo::AnotherFile;
+	}
+	WindowsFileId now;
+	bool same = ReadFileFacts(handle, &now, links, nullptr) && existed && now == id;
 	::CloseHandle(handle);
-	return links;
+	return same ? NameLeadsTo::TheSameFile : NameLeadsTo::AnotherFile;
+}
+
+// Opens the file with id at path, as the save saw it before, with access and
+// share into out. The name is opened without following a link there and
+// must lead to that file; ReOpenFile then opens the very file that look
+// found, so a link, junction or other file put at the name since is never
+// read or written.
+static bool OpenSameFile(const wxString &path, const WindowsFileId &id, DWORD access, DWORD share, wxFile *out)
+{
+	HANDLE seen = OpenNoFollow(path);
+	if (seen == INVALID_HANDLE_VALUE) { return false; }
+	WindowsFileId now;
+	HANDLE handle = INVALID_HANDLE_VALUE;
+	if (ReadFileFacts(seen, &now, nullptr, nullptr) && now == id) {
+		handle = ::ReOpenFile(seen, access, share, 0);
+	}
+	::CloseHandle(seen);
+	if (handle == INVALID_HANDLE_VALUE) { return false; }
+	if (!ReadFileFacts(handle, &now, nullptr, nullptr) || !(now == id)) {
+		::CloseHandle(handle);
+		return false;
+	}
+	int fd = _open_osfhandle(reinterpret_cast<intptr_t>(handle), _O_BINARY);
+	if (fd == -1) {
+		::CloseHandle(handle);
+		return false;
+	}
+	out->Attach(fd);
+	return true;
 }
 
 // copies all of from, from its start, to the current offset of to
@@ -154,6 +219,18 @@ bool WindowsSaveFile::Open(const wxString &name)
 	wxFileName fn(name);
 	if (!fn.IsAbsolute()) { fn.Normalize(wxPATH_NORM_ABSOLUTE); }
 	target = fn.GetFullPath();
+	//the file at the name now; Commit saves only while the name leads to it
+	targetExisted = false;
+	HANDLE handle = OpenNoFollow(target);
+	if (handle != INVALID_HANDLE_VALUE) {
+		bool savable = false;
+		bool known = ReadFileFacts(handle, &targetId, nullptr, &savable);
+		::CloseHandle(handle);
+		//a folder, or a link or junction at the resolved name, is not saved to
+		if (!known || !savable) { return false; }
+		targetExisted = true;
+	}
+	else if (::GetLastError() != ERROR_FILE_NOT_FOUND) { return false; }
 	temp = wxFileName::CreateTempFileName(target, &file);
 	return !temp.empty();
 }
@@ -174,13 +251,23 @@ bool WindowsSaveFile::Commit()
 	//the new contents are on disk before the file is touched
 	bool saved = file.Flush();
 	if (saved) {
-		if (!PathExists(target)) {
-			//a new file; one another program made in the meantime is not replaced
+		DWORD links = 0;
+		NameLeadsTo now = LookAtName(target, targetExisted, targetId, &links);
+		if (!targetExisted) {
+			//a new file; one another program made in the meantime is not
+			//replaced, and MoveFileExW without MOVEFILE_REPLACE_EXISTING fails
+			//on a name made after this look too
 			file.Close();
-			saved = ::MoveFileExW(temp.wc_str(), target.wc_str(), MOVEFILE_WRITE_THROUGH) != 0;
+			saved = now == NameLeadsTo::Nothing &&
+				::MoveFileExW(temp.wc_str(), target.wc_str(), MOVEFILE_WRITE_THROUGH) != 0;
 			if (saved) { temp.clear(); }
 		}
-		else if (LinkCount(target) > 1) {
+		else if (now != NameLeadsTo::TheSameFile) {
+			//another program removed the file or put another one, a link or a
+			//folder at its name: nothing is written
+			saved = false;
+		}
+		else if (links > 1) {
 			//a replace would put the new contents under this one name only
 			saved = Rewrite();
 		}
@@ -226,8 +313,12 @@ bool WindowsSaveFile::Rewrite()
 	if (!file.IsOpened() && !file.Open(temp, wxFile::read)) { return false; }
 	wxFileOffset newLength = file.Length();
 	wxFile out;
-	//a program that has the file open without sharing writes keeps it as it is
-	if (newLength < 0 || !out.Open(target, wxFile::read_write)) { return false; }
+	//the file Open found, not what its name leads to now; a program that has
+	//the file open without sharing writes keeps it as it is
+	if (newLength < 0 || !targetExisted ||
+		!OpenSameFile(target, targetId, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &out)) {
+		return false;
+	}
 	wxFileOffset oldLength = out.Length();
 	if (oldLength < 0) { return false; }
 	//a backup of the old contents, on disk before the file is touched
