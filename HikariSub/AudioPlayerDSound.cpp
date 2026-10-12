@@ -194,6 +194,14 @@ void DirectSoundPlayer2Thread::Run()
 		g_object_get(src, "current-level-bytes", &level, nullptr);
 		return level >= maxQueuedBytes;
 	};
+	// the frame the sink plays now, from the pipeline position
+	auto queryAudibleFrame = [&](long long &audible) {
+		gint64 position = 0;
+		if (!gst_element_query_position(pipeline, GST_FORMAT_TIME, &position) || position < 0)
+			return false;
+		audible = (long long)gst_util_uint64_scale_round(position, rate, GST_SECOND);
+		return true;
+	};
 	// Playback cannot go on, and the producer ends: the player is dead from
 	// here, so IsDead reports it, the display sees playback stopped and the
 	// next Play opens a new player.  Called with linuxState->mutex held.
@@ -243,6 +251,14 @@ void DirectSoundPlayer2Thread::Run()
 				eosSent = false;
 				active = true;
 			}
+			if (linuxState->playing && active && linuxState->currentFrame > end_frame && !seekFailed) {
+				// The end moved back into the frames already queued: they play on
+				// up to the new end, and playback then stops and drops the rest.
+				// Without a position it stops at once.
+				long long audible = 0;
+				if (!queryAudibleFrame(audible) || audible >= end_frame)
+					linuxState->playing = false;
+			}
 			if (!linuxState->playing && active && !seekFailed) {
 				// Playback stopped: drop queued audio so it goes silent at once.
 				seekFailed = !seekTo(linuxState->currentFrame);
@@ -254,11 +270,10 @@ void DirectSoundPlayer2Thread::Run()
 				// The end moved past the frames already queued, but appsrc takes
 				// no data after EOS until a flush: start again from the audible
 				// frame, so playback goes on to the new end.
-				gint64 position = 0;
 				long long resumeFrame = linuxState->currentFrame;
-				if (gst_element_query_position(pipeline, GST_FORMAT_TIME, &position) && position >= 0)
-					resumeFrame = std::clamp((long long)gst_util_uint64_scale_round(position, rate, GST_SECOND),
-						start_frame.load(), linuxState->currentFrame);
+				long long audible = 0;
+				if (queryAudibleFrame(audible))
+					resumeFrame = std::clamp(audible, start_frame.load(), linuxState->currentFrame);
 				linuxState->currentFrame = resumeFrame;
 				seekFailed = !seekTo(resumeFrame);
 				generation++;
@@ -476,9 +491,9 @@ void DirectSoundPlayer2Thread::SetEndFrame(long long new_end_frame)
 {
 	CheckError();
 	std::lock_guard<std::mutex> lock(linuxState->mutex);
+	// The producer stops playback when the audible frame reaches the new end:
+	// frames up to the end may still be queued and not yet heard.
 	end_frame = new_end_frame;
-	if (linuxState->currentFrame >= end_frame)
-		linuxState->playing = false;
 	linuxState->cv.notify_all();
 }
 
