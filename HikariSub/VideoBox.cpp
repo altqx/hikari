@@ -1399,14 +1399,36 @@ void VideoBox::RefreshTime()
 
 void VideoBox::OnCopyCoords(const wxPoint &pos)
 {
-	int w, h;
-	GetClientSize(&w, &h);
+	//the crosshair's mapping (Cross::SetCurVisual and OnMouseEvent),
+	//the video without its bars and the zoom
+	int w = 0, h = 0;
+	int diffW = 1, diffH = 1;
+	RECT videoRect = GetVideoRect();
+	if (HasVideo()) {
+		w = videoRect.right - videoRect.left;
+		h = videoRect.bottom - videoRect.top;
+		if (videoRect.left)
+			diffW = 0;
+		if (videoRect.top)
+			diffH = 0;
+	}
+	else {
+		GetClientSize(&w, &h);
+		h -= m_PanelHeight;
+	}
 	int nx = 0, ny = 0;
 	tab->grid->GetASSRes(&nx, &ny);
-	float coeffX = (float)nx / (float)(w - 1);
-	float coeffY = (float)ny / (float)(h - m_PanelHeight - 1);
-	int posx = (float)pos.x * coeffX;
-	int posy = (float)pos.y * coeffY;
+	float coeffX = (float)nx / (float)(w - diffW);
+	float coeffY = (float)ny / (float)(h - diffH);
+	float zx = (float)pos.x - videoRect.left;
+	float zy = (float)pos.y - videoRect.top;
+	Visuals *visual = renderer ? renderer->GetVisual() : nullptr;
+	if (visual) {
+		zx = (pos.x / visual->zoomScale.x) + visual->zoomMove.x;
+		zy = (pos.y / visual->zoomScale.y) + visual->zoomMove.y;
+	}
+	int posx = zx * coeffX;
+	int posy = zy * coeffY;
 	wxString poss;
 	poss << posx << L"," << posy;
 	if (wxTheClipboard->Open())
