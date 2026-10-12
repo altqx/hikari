@@ -596,7 +596,10 @@ Item {
         property bool answered: true
         function push(id, k, t, caption) {
             queue.push({id: id, kind: k, text: t, title: caption})
-            next()
+            // After the click that answered the last one: its button box
+            // closes the dialog as well (each answer has a role), which
+            // would close a question the answer asked at once.
+            Qt.callLater(next)
         }
         function next() {
             if (visible || queue.length === 0)
@@ -621,28 +624,33 @@ Item {
         }
         Label { id: questionText; objectName: "findQuestionText" }
         footer: DialogButtonBox {
+            alignment: Qt.AlignRight
             FooterButton {
                 objectName: "findAnswerOk"
                 text: question.kind === 2 ? qsTr("Remove nonexistent styles") : qsTr("OK")
                 visible: question.kind === 0 || question.kind === 2
+                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                 onClicked: question.answer(0)
             }
             FooterButton {
                 objectName: "findAnswerYes"
                 text: question.kind === 2 || question.kind === 3 ? qsTr("Remove styles") : qsTr("Yes")
                 visible: question.kind !== 0
+                DialogButtonBox.buttonRole: DialogButtonBox.YesRole
                 onClicked: question.answer(1)
             }
             FooterButton {
                 objectName: "findAnswerNo"
                 text: question.kind === 2 ? qsTr("Ignore") : qsTr("No")
                 visible: question.kind === 1 || question.kind === 2 || question.kind === 4
+                DialogButtonBox.buttonRole: DialogButtonBox.NoRole
                 onClicked: question.answer(2)
             }
             FooterButton {
                 objectName: "findAnswerCancel"
                 text: qsTr("Cancel")
                 visible: question.kind === 2 || question.kind === 3
+                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                 onClicked: question.answer(3)
             }
         }

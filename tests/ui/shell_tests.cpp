@@ -5934,6 +5934,26 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Replace all"));
         QVERIFY(!application->canReplaceFindResults());
         QVERIFY(!item("replaceCheckedButton")->isEnabled());
+        // An answer that asks again at once: Yes to "Reached end" finds
+        // nothing from the beginning either, and "Could not find" stays open
+        // after the click (whose button box closes the dialog as well).
+        application->setFindQuestionHandler({});
+        const QVariantMap zzz{{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("zzz")}};
+        application->runFindReplace(QStringLiteral("find"), zzz); // from the beginning (the last search wrapped)
+        QTRY_VERIFY(question->property("visible").toBool());
+        QCOMPARE(question->property("text").toString(), QStringLiteral("Could not find the specified phrase \"zzz\"."));
+        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerOk")), "click"));
+        QTRY_VERIFY(!question->property("visible").toBool());
+        application->runFindReplace(QStringLiteral("find"), zzz);
+        QTRY_VERIFY(question->property("visible").toBool());
+        QCOMPARE(question->property("text").toString(), QStringLiteral("Reached end. Search from the beginning?"));
+        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerYes")), "click"));
+        QTRY_COMPARE(question->property("text").toString(), QStringLiteral("Could not find the specified phrase \"zzz\"."));
+        QTRY_VERIFY(question->property("visible").toBool());
+        QTest::qWait(50);
+        QVERIFY(question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerOk")), "click"));
+        QTRY_VERIFY(!question->property("visible").toBool());
         // Ctrl+F again on the Find tab with the focus in the tool hides it.
         item("findText")->forceActiveFocus();
         press(Qt::Key_F, Qt::ControlModifier);
@@ -6497,29 +6517,67 @@ private slots:
                         return item;
             return nullptr;
         };
-        const std::vector<std::pair<const char *, const char *>> footers{
-            {"historyWindow", "historyOk"},           {"closeReview", "closeCancel"},
-            {"automationProgress", "automationCancel"}, {"fpsWindow", "fpsOk"},
-            {"columnsWindow", "columnsOk"},            {"groupBreakDialog", "groupBreakCancel"},
-            {"automationHotkeysWindow", "automationHotkeysOk"}, {"reloadPrompt", "reloadYes"},
-            {"styleManager", "styleManagerClose"},     {"hotkeyQuestion", "hotkeyCancel"},
+        // QPlatformDialogHelper::ButtonRole, read from the button's
+        // DialogButtonBox attached object (a child of the button).
+        enum Role { Accept = 0, Reject = 1, Destructive = 2, Action = 3, Yes = 5, No = 6, Apply = 8, Unset = -1 };
+        const auto roleOf = [](QQuickItem *button) {
+            for (QObject *child : button->children())
+                if (child->inherits("QQuickDialogButtonBoxAttached"))
+                    return child->property("buttonRole").toInt();
+            return int(Unset);
         };
-        for (const auto &[windowName, buttonName] : footers) {
-            auto *w = root->findChild<QQuickWindow *>(QLatin1String(windowName));
-            QVERIFY2(w, windowName);
-            auto *button = w->findChild<QQuickItem *>(QLatin1String(buttonName));
-            QVERIFY2(button, buttonName);
-            auto *box = boxOf(button);
-            QVERIFY2(box, buttonName);
+        // Every footer's buttons (by name, else by text) and their roles;
+        // the first is named.
+        using Buttons = std::vector<std::pair<const char *, Role>>;
+        const std::vector<Buttons> footers{
+            {{"historySet", Apply}, {"historyOk", Accept}, {"historyCancel", Reject}},
+            {{"closeSaveAll", Accept}, {"closeDiscardAll", Destructive}, {"closeContinue", Action}, {"closeCancel", Reject}},
+            {{"automationForceStop", Destructive}, {"automationCancel", Reject}},
+            {{"fpsOk", Accept}, {"fpsCancel", Reject}},
+            {{"columnsOk", Accept}, {"columnsCancel", Reject}},
+            {{"groupBreakRemove", Destructive}, {"groupBreakCancel", Reject}},
+            {{"automationHotkeysOk", Accept}, {"mapHotkey", Action}, {"deleteHotkey", Action},
+             {"importLegacyHotkeys", Action}, {"automationHotkeysCancel", Reject}},
+            {{"reloadYes", Yes}, {"reloadNo", No}},
+            {{"styleEditorOk", Accept}, {"styleManagerOk", Accept}, {"styleEditorApply", Apply},
+             {"styleEditorCancel", Reject}, {"styleManagerClose", Reject}},
+            {{"hotkeySwitch", Accept}, {"hotkeyDelete", Destructive}, {"hotkeySetAnyway", Action}, {"hotkeyCancel", Reject}},
+            {{"conversionAccept", Accept}, {"Cancel", Reject}},
+            {{"resampleOk", Accept}, {"Cancel", Reject}},
+            {{"mismatchChange", Accept}, {"Do not change", Reject}, {"mismatchDisable", Action}},
+            {{"groupDescriptionOk", Accept}, {"groupDescriptionCancel", Reject}},
+            {{"saveTag", Accept}, {"cancelTag", Reject}},
+            {{"updateRemind", No}, {"Open the download page", Accept}, {"Close", Reject}},
+            {{"selectRun", Accept}, {"selectRunAllTabs", Accept}, {"Close", Reject}},
+            {{"fontCollectorStart", Accept}, {"fontCollectorStartOnTabs", Accept}, {"fontCollectorSaveFolder", Action},
+             {"fontCollectorCancel", Reject}, {"fontCollectorClose", Reject}},
+            {{"mkvSaveYes", Yes}, {"mkvSaveNo", No}, {"mkvSaveCancel", Reject}},
+            {{"findAnswerOk", Accept}, {"findAnswerYes", Yes}, {"findAnswerNo", No}, {"findAnswerCancel", Reject}},
+            {{"replaceYesToAll", Yes}, {"replaceYes", Yes}, {"replaceNo", No}, {"Cancel", Reject}},
+        };
+        // The find question lives in the Search tool's dock: open it.
+        press(Qt::Key_F, Qt::ControlModifier);
+        QTRY_VERIFY(item<QObject>("searchDock")->property("isOpen").toBool());
+        for (const Buttons &buttons : footers) {
+            const char *first = buttons.front().first;
+            QObject *found = named(first);
+            auto *anchor = qobject_cast<QQuickItem *>(found ? found : item<QObject>(first));
+            QVERIFY2(anchor, first);
+            auto *box = boxOf(anchor);
+            QVERIFY2(box, first);
             QCOMPARE(box->property("alignment").toInt(), int(Qt::AlignRight));
-        }
-        for (const char *buttonName : {"conversionAccept", "resampleOk", "mismatchChange", "groupDescriptionOk",
-                                       "saveTag", "updateRemind", "selectRun", "fontCollectorClose", "mkvSaveYes"}) {
-            auto *button = qobject_cast<QQuickItem *>(named(buttonName));
-            QVERIFY2(button, buttonName);
-            auto *box = boxOf(button);
-            QVERIFY2(box, buttonName);
-            QCOMPARE(box->property("alignment").toInt(), int(Qt::AlignRight));
+            const int count = box->property("count").toInt();
+            QCOMPARE(count, int(buttons.size()));
+            for (int i = 0; i < count; ++i) {
+                QQuickItem *button = nullptr;
+                QVERIFY(QMetaObject::invokeMethod(box, "itemAt", Q_RETURN_ARG(QQuickItem *, button), Q_ARG(int, i)));
+                const QString name = button->objectName().isEmpty() ? button->property("text").toString() : button->objectName();
+                const auto expected = std::find_if(buttons.begin(), buttons.end(),
+                                                   [&](const auto &b) { return name == QLatin1String(b.first); });
+                QVERIFY2(expected != buttons.end(), qPrintable(QStringLiteral("%1 in %2").arg(name, QLatin1String(first))));
+                QVERIFY2(roleOf(button) == expected->second,
+                         qPrintable(QStringLiteral("%1: role %2").arg(name).arg(roleOf(button))));
+            }
         }
 
         // History: Set (apply), OK (accept), Cancel (reject), at the right edge.
@@ -6543,10 +6601,12 @@ private slots:
             return names;
         };
         const QVariant platformLayout = box->property("buttonLayout");
-        QTRY_COMPARE(order(0), (QStringList{"OK", "Cancel", "Set"})); // WinLayout
-        QTRY_COMPARE(order(2), (QStringList{"OK", "Set", "Cancel"})); // KdeLayout
-        QTRY_COMPARE(order(3), (QStringList{"Set", "Cancel", "OK"})); // GnomeLayout
-        box->setProperty("buttonLayout", platformLayout);
+        {
+            auto restoreLayout = qScopeGuard([&] { box->setProperty("buttonLayout", platformLayout); });
+            QTRY_COMPARE(order(0), (QStringList{"OK", "Cancel", "Set"})); // WinLayout
+            QTRY_COMPARE(order(2), (QStringList{"OK", "Set", "Cancel"})); // KdeLayout
+            QTRY_COMPARE(order(3), (QStringList{"Set", "Cancel", "OK"})); // GnomeLayout
+        }
         qreal right = 0;
         for (QQuickItem *b : {set, ok, cancel})
             right = std::max(right, left(b) + b->width());
@@ -6554,6 +6614,32 @@ private slots:
         const QPointF boxRight = box->mapToItem(history->contentItem(), QPointF(box->width(), 0));
         QVERIFY(boxRight.x() > history->width() - 20); // the window's margin, not centred
         history->close();
+
+        // The find question's answers in the platform's order: the styles
+        // question on Windows (Yes, OK, No, Cancel by their roles).
+        auto *question = item<QObject>("findQuestion");
+        emit application->findQuestion(0, 2, QStringLiteral("Styles named \"X\" do not exist."), QStringLiteral("Confirmation"));
+        QTRY_VERIFY(question->property("visible").toBool());
+        auto *answerBox = boxOf(question->findChild<QQuickItem *>(QStringLiteral("findAnswerOk")));
+        const QVariant answerLayout = answerBox->property("buttonLayout");
+        {
+            auto restoreLayout = qScopeGuard([&] { answerBox->setProperty("buttonLayout", answerLayout); });
+            answerBox->setProperty("buttonLayout", 0); // WinLayout
+            const auto answers = [&] {
+                std::vector<std::pair<qreal, QString>> xs;
+                for (QQuickItem *b : answerBox->findChildren<QQuickItem *>())
+                    if (b->inherits("QQuickAbstractButton") && b->isVisible())
+                        xs.emplace_back(b->mapToItem(answerBox, QPointF()).x(), b->property("text").toString());
+                std::sort(xs.begin(), xs.end());
+                QStringList names;
+                for (const auto &x : xs)
+                    names << x.second;
+                return names;
+            };
+            QTRY_COMPARE(answers(), (QStringList{"Remove styles", "Remove nonexistent styles", "Ignore", "Cancel"}));
+        }
+        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerCancel")), "click"));
+        QTRY_VERIFY(!question->property("visible").toBool());
 
         // Line group: the Cancel alone when there is no group to remove.
         auto *breakDialog = root->findChild<QQuickWindow *>(QStringLiteral("groupBreakDialog"));
