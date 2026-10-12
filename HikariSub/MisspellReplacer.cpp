@@ -528,7 +528,7 @@ void MisspellReplacer::ReplaceOnTab(TabPanel *tab)
 			for (size_t k = 0; k < rxrules.size(); k++){
 				int textPos = 0;
 				//int replaceDiff = 0;
-				wxString text = lineText;
+				wxString text = stringChanged;
 				wxRegEx *r = rxrules[k].first;
 
 				while (r->Matches(text)) {
