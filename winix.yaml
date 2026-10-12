@@ -202,6 +202,25 @@ tasks:
     visualStudio: false
     timeoutSeconds: 120
     environment: {GATE_DPI_PERCENT: '100'}
+  gate-win-theme:
+    # The appearance in the gate's fresh profile before HikariSub starts (GATE_THEME, GATE_FOLLOW; step dark).
+    script: ./tools/native-gate/windows/gate.ps1 -Action theme
+    visualStudio: false
+    timeoutSeconds: 120
+    environment: {GATE_THEME: dark, GATE_FOLLOW: 'false'}
+  gate-win-system-theme:
+    # The system's app colour scheme, live (GATE_APPS_LIGHT 1|0|status; step dark puts the first value back).
+    script: ./tools/native-gate/windows/gate.ps1 -Action systemtheme
+    visualStudio: false
+    timeoutSeconds: 120
+    environment: {GATE_APPS_LIGHT: status}
+  title-bar-window:
+    # K2: hikari_ui_title_bar_tests windowsTitleBarFollowsTheTheme on the interactive desktop (the windows
+    # platform): the main window's and dialogs' title bars read back through DwmGetWindowAttribute while the
+    # theme switches. A skip fails the task: no desktop window manager was reached.
+    script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_title_bar_tests.exe out/build/windows-x64-release | Select-Object -First 1; if (-not $exe) { Write-Output 'no hikari_ui_title_bar_tests.exe'; exit 2 }; $out = "$env:TEMP/title-bar-window.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "-o `"$out,txt`"" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/title-bar-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(120000)) { $p.Kill(); Write-Output 'TIMED OUT'; exit 1 }; $code = $p.ExitCode; Write-Output "exit $code"; if (-not (Test-Path $out)) { Write-Output 'no QtTest output'; Get-Content "$env:TEMP/title-bar-err.txt" -ErrorAction SilentlyContinue; exit 1 }; Get-Content $out; if (Select-String -Quiet -Pattern '^SKIP.*windowsTitleBarFollowsTheTheme' $out) { Write-Output 'skipped, so not on an interactive desktop'; exit 1 }; exit $code
+    visualStudio: false
+    timeoutSeconds: 300
   gate-win-tests:
     # hikari_ui_shell_tests (D1 functions), docking qualification and workspace layout under the windows platform.
     script: ./tools/native-gate/windows/tests.ps1

@@ -9,10 +9,15 @@
 #   -Action fullscreen  GATE_FULLSCREEN=on|left|off: the main window borderless over the whole monitor,
 #                       on the left GATE_LEFT_WIDTH pixels of its work area (frame kept), or back
 #   -Action dpi         GATE_DPI_PERCENT: the display scale of the primary monitor, live (DPI_RESULT line)
+#   -Action theme       GATE_THEME (light|dark|highContrastWhite|highContrastBlack), GATE_FOLLOW (true|false):
+#                       the appearance in the profile's hikari.ini, before HikariSub starts (THEME_RESULT line)
+#   -Action systemtheme GATE_APPS_LIGHT=1|0|status: the system's app colour scheme (Settings > Personalization >
+#                       Colors, AppsUseLightTheme), announced as Settings does (WM_SETTINGCHANGE
+#                       "ImmersiveColorSet"); prints APPS_LIGHT=<value before> and APPS_LIGHT_NOW=<value>
 # The app's profile: Qt finds %LOCALAPPDATA% and %APPDATA% through the shell's
 # known folders, not the environment, so `winix ui launch --fresh-profile`
 # does not reach it (its APPDATA/LOCALAPPDATA variables are ignored).
-param([Parameter(Mandatory)][ValidateSet('prepare', 'fresh', 'restore', 'status', 'fullscreen', 'dpi')][string]$Action)
+param([Parameter(Mandatory)][ValidateSet('prepare', 'fresh', 'restore', 'status', 'fullscreen', 'dpi', 'theme', 'systemtheme')][string]$Action)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $root = $PWD.Path
@@ -243,5 +248,36 @@ switch ($Action) {
                 ForEach-Object { "$($_.PSChildName) DpiValue=$((Get-ItemProperty $_.PSPath).DpiValue)" })
         $result.screen = (Get-CimInstance Win32_VideoController | Select-Object -First 1 | ForEach-Object { "$($_.CurrentHorizontalResolution)x$($_.CurrentVerticalResolution)" })
         Write-Output ('DPI_RESULT ' + ($result | ConvertTo-Json -Compress))
+    }
+    'theme' {
+        # The rewrite's settings file (src/ui/settings_store.cpp): [profile] values, the registry schema.
+        $theme = if ($env:GATE_THEME) { $env:GATE_THEME } else { 'dark' }
+        $follow = if ($env:GATE_FOLLOW) { $env:GATE_FOLLOW } else { 'false' }
+        $ini = Join-Path $profileDirs.local 'hikari.ini'
+        New-Item -ItemType Directory -Force $profileDirs.local | Out-Null
+        $lines = @('[profile]', "appearance.followSystem=$follow", "appearance.theme=$theme", '', '[registry]', 'schema=1')
+        [IO.File]::WriteAllLines($ini, [string[]]$lines, $utf8)
+        Write-Output ('THEME_RESULT ' + (@{ theme = $theme; followSystem = $follow; ini = $ini } | ConvertTo-Json -Compress))
+    }
+    'systemtheme' {
+        $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
+        $before = (Get-ItemProperty $key -ErrorAction SilentlyContinue).AppsUseLightTheme
+        Write-Output "APPS_LIGHT=$before"
+        if ($env:GATE_APPS_LIGHT -in '0', '1') {
+            Set-ItemProperty $key -Name AppsUseLightTheme -Value ([int]$env:GATE_APPS_LIGHT) -Type DWord
+            Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class GateTheme {
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    public static extern IntPtr SendMessageTimeout(IntPtr h, uint msg, UIntPtr w, string l, uint flags, uint timeout, out UIntPtr result);
+}
+'@
+            $r = [UIntPtr]::Zero
+            # HWND_BROADCAST, WM_SETTINGCHANGE, SMTO_ABORTIFHUNG
+            [void][GateTheme]::SendMessageTimeout([IntPtr]0xffff, 0x001A, [UIntPtr]::Zero, 'ImmersiveColorSet', 0x0002, 5000, [ref]$r)
+            Start-Sleep -Seconds 2
+        }
+        Write-Output "APPS_LIGHT_NOW=$((Get-ItemProperty $key -ErrorAction SilentlyContinue).AppsUseLightTheme)"
     }
 }
