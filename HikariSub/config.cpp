@@ -128,6 +128,10 @@ bool config::SetRawOptions(const wxString &textconfig)
 	while (cfg.HasMoreTokens())
 	{
 		token = cfg.NextToken();
+		// The file is written with "\r\n" and only Windows drops the "\r"
+		// when reading, so "}\r" would never close a table elsewhere.
+		if (token.EndsWith(L"\r"))
+			token.RemoveLast();
 		if (token.EndsWith(L"{")){
 			block = true;
 			textBlock << token << L"\n";
@@ -148,6 +152,12 @@ bool config::SetRawOptions(const wxString &textconfig)
 		token.Trim(false);
 		token.Trim(true);
 		if (token.length() > 0){ CatchValsLabs(token); g++; }
+	}
+	if (block){
+		// a table without its closing brace keeps the entries it has
+		textBlock << L"}";
+		CatchValsLabs(textBlock);
+		g++;
 	}
 	if (g > 10){ return true; };
 	return false;
