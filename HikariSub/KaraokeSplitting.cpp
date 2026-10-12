@@ -343,17 +343,18 @@ void Karaoke::GetLetters(int line, int nletters, wxString &first, wxString &seco
 	int charsCounter = 0;
 	for (size_t i = 0; i < len; i++){
 		const wxUniChar & ch = sylText[i];
-		if (charsCounter == nletters){
-			first = sylText.Mid(0, i);
-			second = sylText.Mid(i);
-			return;
-		}
 		if (ch == L'{'){
 			block = true;
 		}
 		else if (ch == L'}'){ block = false; }
 		else if (!block){
 			charsCounter++;
+			// split right after the letter, also when it is the last one
+			if (charsCounter == nletters){
+				first = sylText.Mid(0, i + 1);
+				second = sylText.Mid(i + 1);
+				return;
+			}
 		}
 	}
 	first = sylText.Mid(0, nletters);
