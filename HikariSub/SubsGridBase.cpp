@@ -1915,18 +1915,24 @@ bool SubsGrid::IsLineVisible(bool visibleOnPlay/* = true*/)
 
 void SubsGrid::OnBackupTimer(wxTimerEvent &event)
 {
-	Hikari->SetStatusText(_("Autosave"), 0);
 	wxString path;
 	wxString ext = (subsFormat < SRT) ? L"ass" : (subsFormat == SRT) ? L"srt" : L"txt";
 
 	path << Options.pathfull << L"/Subs/" << tab->SubsName.BeforeLast(L'.')
 		<< L"_" << Notebook::GetTabs()->FindPanel(tab) << L"_" << numsave << L"." << ext;
 
-	SaveFile(path, false);
+	//a failed autosave keeps the oldest autosave file for the next one to
+	//replace, and says so in the log, not "Autosave" on the status bar
+	bool saved = SaveFile(path, false);
+	//the next edit starts the timer again; not the edit box commit SaveFile
+	//makes, which this autosave holds
+	makebackup = true;
+	if (!saved)
+		return;
+	Hikari->SetStatusText(_("Autosave"), 0);
 	int maxFiles = Options.GetInt(AUTOSAVE_MAX_FILES);
 	if (maxFiles > 1 && numsave >= maxFiles){ numsave = 0; }
 	numsave++;
-	makebackup = true;
 	nullifyTimer.Start(5000, true);
 }
 
