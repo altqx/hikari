@@ -956,6 +956,9 @@ void VideoBox::ContextMenu(const wxPoint &pos)
 			if (!wxFileExists(Hikari->subsrec[i])){ continue; }
 			menu1->Append(30000 + i, HikariPathName(Hikari->subsrec[i]));
 		}
+	}
+	for (size_t i = 0; i < 20; i++)
+	{
 		if (i < Hikari->videorec.size()){
 			if (!wxFileExists(Hikari->videorec[i])){ continue; }
 			menu2->Append(30020 + i, HikariPathName(Hikari->videorec[i]));
