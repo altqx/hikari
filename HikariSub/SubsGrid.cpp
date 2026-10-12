@@ -413,6 +413,11 @@ void SubsGrid::OnDuplicate()
 		else
 			rw1++;
 	}
+	// the copy of a description that ends the selection goes after its tree,
+	// as Insert after does, and becomes an ordinary line there; right after
+	// the description it would join the tree and be hidden in a closed one
+	if (rw1 > 0 && file->CheckIfIsTree(rw1 - 1))
+		rw1 = file->RowAfterLineGroup(rw1 - 1);
 
 	if (dupl.size() > 0){
 		InsertRows(rw1, dupl);
@@ -805,7 +810,9 @@ void SubsGrid::InsertWithVideoTime(bool before, bool frameTime /*= false*/)
 
 		int rw = selections[0];
 		int rw1 = rw;
-		int rw2 = (before) ? rw : selections[selections.size() - 1] + 1;
+		int last = selections[selections.size() - 1];
+		// after a description, as in OnDuplicate: after its tree
+		int rw2 = (before) ? rw : (int)file->RowAfterLineGroup(last);
 		size_t i = 0;
 		std::vector<Dialogue*> dupl;
 		int time = tab->video->GetFrameTime();

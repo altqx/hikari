@@ -130,8 +130,17 @@ std::vector<Change> PlaceNewRows(const std::vector<Row> &before, const std::vect
 			continue;
 		}
 		if (row.tree == DESCRIPTION) {
-			inGroup = true;
-			state = 0;
+			// a copy of a description with no lines of its own after it, such
+			// as a duplicated description, is an ordinary line, not a second,
+			// empty tree
+			if (i + 1 < count && IsMember(rows[i + 1].tree)) {
+				inGroup = true;
+				state = 0;
+			}
+			else {
+				Set(changes, rows, i, ORDINARY, Shown(row.visible));
+				inGroup = false;
+			}
 		}
 		else if (IsMember(row.tree)) {
 			if (inGroup) {
@@ -148,6 +157,18 @@ std::vector<Change> PlaceNewRows(const std::vector<Row> &before, const std::vect
 		}
 	}
 	return changes;
+}
+
+size_t RowAfterGroup(const std::vector<Row> &rows, size_t row)
+{
+	if (row >= rows.size())
+		return rows.size();
+	size_t next = row + 1;
+	if (rows[row].tree != DESCRIPTION)
+		return next;
+	while (next < rows.size() && IsMember(rows[next].tree))
+		next++;
+	return next;
 }
 
 Verdict Check(const std::vector<Row> &before, const std::vector<Row> &after,

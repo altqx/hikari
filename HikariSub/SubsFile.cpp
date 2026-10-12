@@ -817,6 +817,11 @@ std::vector<size_t> SubsFile::RemoveLineGroups(const std::vector<uint64_t> &desc
 	return removal.deleted;
 }
 
+size_t SubsFile::RowAfterLineGroup(size_t row)
+{
+	return LineGroups::RowAfterGroup(LineGroupRows(subs->dialogues), row);
+}
+
 size_t SubsFile::FindLineById(uint64_t id)
 {
 	for (size_t i = 0; i < subs->dialogues.size(); i++) {

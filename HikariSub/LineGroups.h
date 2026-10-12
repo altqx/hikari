@@ -63,8 +63,17 @@ std::vector<Change> Repair(const std::vector<Row> &rows);
 // After an edit: the lines that are new (their id is not in before) take
 // the place they were put in. A new line put between two lines of a group
 // joins it; a new member right after a group extends it; any other new
-// member becomes an ordinary shown line. Existing lines are not changed.
+// member becomes an ordinary shown line. A new description outside a group
+// stays one only when members follow it (a copied whole group); otherwise,
+// like a duplicated description, it becomes an ordinary shown line.
+// Existing lines are not changed.
 std::vector<Change> PlaceNewRows(const std::vector<Row> &before, const std::vector<Row> &after);
+
+// Where a line put after row goes so that it is outside the group row
+// describes: after the group's last member when row is a description,
+// otherwise row + 1. A copy of a description goes there, as a line inserted
+// after a closed group's description goes after its hidden lines.
+size_t RowAfterGroup(const std::vector<Row> &rows, size_t row);
 
 struct Verdict {
 	// false when the edit leaves a member out of every group, or splits,

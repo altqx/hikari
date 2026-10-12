@@ -47,6 +47,15 @@ const Change *ChangeOf(const std::vector<Change> &changes, size_t row)
 	return nullptr;
 }
 
+std::vector<Row> Applied(std::vector<Row> rows, const std::vector<Change> &changes)
+{
+	for (const Change &change : changes) {
+		rows[change.row].tree = change.tree;
+		rows[change.row].visible = change.visible;
+	}
+	return rows;
+}
+
 bool Breaks(const Verdict &verdict, uint64_t description)
 {
 	return std::find(verdict.broken.begin(), verdict.broken.end(), description) != verdict.broken.end();
@@ -142,6 +151,90 @@ TEST(new_whole_group_is_kept)
 	std::vector<Row> before = { X(1), D(2), O(3) };
 	CHECK(PlaceNewRows(before, { X(1), D(8), C(9), D(2), O(3) }).empty());
 	CHECK(PlaceNewRows(before, { X(1), D(2), O(3), D(8), C(9) }).empty());
+}
+
+TEST(a_line_put_after_a_description_goes_after_its_tree)
+{
+	std::vector<Row> closed = { X(1), D(2), C(3), C(4), X(5) };
+	CHECK_EQ(RowAfterGroup(closed, 1), 4u);
+	std::vector<Row> open = { X(1), D(2), O(3), O(4), X(5) };
+	CHECK_EQ(RowAfterGroup(open, 1), 4u);
+	// a tree at the end of the file, an empty tree, a tree right before another
+	CHECK_EQ(RowAfterGroup({ D(2), C(3) }, 0), 2u);
+	CHECK_EQ(RowAfterGroup({ D(2), X(5) }, 0), 1u);
+	CHECK_EQ(RowAfterGroup({ D(2), O(3), D(6), O(7) }, 0), 2u);
+	// any other line: right after it
+	CHECK_EQ(RowAfterGroup(closed, 0), 1u);
+	CHECK_EQ(RowAfterGroup(open, 2), 3u);
+}
+
+TEST(a_duplicated_description_is_an_ordinary_line_after_a_closed_tree)
+{
+	std::vector<Row> before = { X(1), D(2), C(3), C(4), X(5) };
+	size_t at = RowAfterGroup(before, 1);
+	std::vector<Row> after = before;
+	after.insert(after.begin() + at, D(9));
+	std::vector<Change> changes = PlaceNewRows(before, after);
+	CHECK_EQ(changes.size(), 1u);
+	const Change *copy = ChangeOf(changes, at);
+	CHECK(copy && copy->tree == ORDINARY && copy->visible == SHOWN);
+	// the tree keeps its lines, closed and hidden
+	CHECK(Check(before, Applied(after, changes)).ok);
+}
+
+TEST(a_duplicated_description_is_an_ordinary_line_after_an_open_tree)
+{
+	std::vector<Row> before = { X(1), D(2), O(3), O(4), X(5) };
+	size_t at = RowAfterGroup(before, 1);
+	std::vector<Row> after = before;
+	after.insert(after.begin() + at, D(9));
+	std::vector<Change> changes = PlaceNewRows(before, after);
+	CHECK_EQ(changes.size(), 1u);
+	const Change *copy = ChangeOf(changes, at);
+	CHECK(copy && copy->tree == ORDINARY && copy->visible == SHOWN);
+	CHECK(Check(before, Applied(after, changes)).ok);
+}
+
+TEST(a_duplicated_description_next_to_trees_is_an_ordinary_line)
+{
+	// before the original description, at the end of the file, and between
+	// a closed tree and the next tree
+	std::vector<Row> before = { D(2), C(3), D(6), O(7) };
+	std::vector<Row> after = { D(9), D(2), C(3), D(6), O(7) };
+	std::vector<Change> changes = PlaceNewRows(before, after);
+	const Change *first = ChangeOf(changes, 0);
+	CHECK(changes.size() == 1u && first && first->tree == ORDINARY && first->visible == SHOWN);
+	CHECK(Check(before, Applied(after, changes)).ok);
+
+	after = { D(2), C(3), D(9), D(6), O(7) };
+	changes = PlaceNewRows(before, after);
+	const Change *between = ChangeOf(changes, 2);
+	CHECK(changes.size() == 1u && between && between->tree == ORDINARY && between->visible == SHOWN);
+	CHECK(Check(before, Applied(after, changes)).ok);
+
+	after = { D(2), C(3), D(6), O(7), D(9) };
+	changes = PlaceNewRows(before, after);
+	const Change *last = ChangeOf(changes, 4);
+	CHECK(changes.size() == 1u && last && last->tree == ORDINARY && last->visible == SHOWN);
+	CHECK(Check(before, Applied(after, changes)).ok);
+}
+
+TEST(a_line_inserted_after_a_description_next_to_a_tree)
+{
+	// Insert after a closed tree's description: an ordinary line after the
+	// hidden lines stays ordinary and shown
+	std::vector<Row> closed = { D(2), C(3), C(4), X(5) };
+	std::vector<Row> after = closed;
+	after.insert(after.begin() + RowAfterGroup(closed, 0), X(9));
+	CHECK(PlaceNewRows(closed, after).empty());
+	CHECK(Check(closed, after).ok);
+	// after an open tree's description it is a line of the tree, shown
+	std::vector<Row> open = { D(2), O(3), X(5) };
+	after = { D(2), X(9), O(3), X(5) };
+	std::vector<Change> changes = PlaceNewRows(open, after);
+	const Change *joined = ChangeOf(changes, 1);
+	CHECK(changes.size() == 1u && joined && joined->tree == OPENED && joined->visible == SHOWN);
+	CHECK(Check(open, Applied(after, changes)).ok);
 }
 
 TEST(new_lines_leave_existing_lines_alone)

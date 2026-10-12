@@ -235,6 +235,9 @@ public:
 	// removes these groups like Remove tree: deletes their descriptions and
 	// ungroups and shows their members; returns the deleted rows, ascending
 	std::vector<size_t> RemoveLineGroups(const std::vector<uint64_t> &descriptions);
+	// the row a line put after row goes to so that it is outside the tree
+	// row describes (LineGroups::RowAfterGroup)
+	size_t RowAfterLineGroup(size_t row);
 	// the row of the line with this id, or -1
 	size_t FindLineById(uint64_t id);
 	void GetURStatus(bool *_undo, bool *_redo);
