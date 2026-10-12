@@ -817,8 +817,9 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 		}//while
 		if (SubsAllReplacements){
 			wxCopyFile(subsPath, HikariPathJoin(fr->CopyPath, HikariPathName(subsPath)));
-			ow.FileWrite(subsPath, replacedText);
-			fr->AllReplacements.fetch_add(SubsAllReplacements);
+			//count only the replacements that reached the file
+			if (ow.FileWrite(subsPath, replacedText))
+				fr->AllReplacements.fetch_add(SubsAllReplacements);
 		}
 	}
 	delete actualData;
@@ -1763,7 +1764,9 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 
 	if (numOfChanges){
 		wxCopyFile(path, HikariPathJoin(copyPath, HikariPathName(path)));
-		ow.FileWrite(path, replacedText);
+		//count only the replacements that reached the file
+		if (!ow.FileWrite(path, replacedText))
+			numOfChanges = 0;
 	}
 
 	return numOfChanges;

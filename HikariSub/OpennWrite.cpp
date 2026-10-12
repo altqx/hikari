@@ -25,6 +25,9 @@
 #include <uchardet.h>
 #include <limits>
 #include <vector>
+#ifndef _WIN32
+#include <stdlib.h>
+#endif
 
 
 OpenWrite::OpenWrite()
@@ -105,7 +108,7 @@ bool OpenWrite::FileOpen(const wxString &filename, wxString *riddenText, bool te
 	return true;
 }
 
-void OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bool utf)
+bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bool utf)
 {
 
 	wxFileName fname;
@@ -113,9 +116,49 @@ void OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 	if (!fname.DirExists()){ wxFileName::Mkdir(HikariPathDir(fileName), 511, wxPATH_MKDIR_FULL); }
 	if (fname.FileExists() && !fname.IsFileReadable()){
 		HikariLog(_("Cannot read the file."));
-		return;
+		return false;
 	}
 
+	wxString textToWrite = textfile;
+	if (utf){
+		wchar_t bom = 0xFEFF;
+		textToWrite.Prepend(wxString(bom));
+	}
+	const wxMBConv &conv = (utf) ? (const wxMBConv &)wxConvUTF8 : (const wxMBConv &)wxConvLocal;
+
+	//write a temporary file and replace the file with it only when all of it
+	//was written, so a failed or short write leaves the file as it was
+	wxString target = fileName;
+#ifndef _WIN32
+	//replacing a symbolic link would turn it into a plain file
+	char *resolved = realpath(fileName.fn_str(), nullptr);
+	if (resolved){
+		target = wxString(resolved, *wxConvFileName);
+		free(resolved);
+	}
+#endif
+	wxTempFile tempFile;
+	bool tempOpened = false;
+	{
+		wxLogNull noLog;
+		tempOpened = tempFile.Open(target);
+	}
+	if (tempOpened){
+		if (!tempFile.Write(textToWrite, conv)){
+			HikariLog(_("Cannot save to file."));
+			//the destructor removes the temporary file
+			return false;
+		}
+		if (!tempFile.Commit()){
+			tempFile.Discard();
+			HikariLog(_("Cannot save to file."));
+			return false;
+		}
+		return true;
+	}
+
+	//no temporary file can be made in a folder that is not writable,
+	//then the file itself is written
 	wxFile file;
 	if (!file.Exists(fileName)){
 		file.Create(fileName, false, wxS_DEFAULT);
@@ -123,15 +166,16 @@ void OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 	else{
 		file.Open(fileName, wxFile::write, wxS_DEFAULT);
 	}
-	if (file.IsOpened()){
-		if (utf){
-			wchar_t bom = 0xFEFF;
-			file.Write(wxString(bom) + textfile, wxConvUTF8);
-		}
-		else{ file.Write(textfile, wxConvLocal); }
-		file.Close();
+	if (!file.IsOpened()){
+		HikariLog(_("Cannot save to file."));
+		return false;
 	}
-
+	bool written = file.Write(textToWrite, conv);
+	if (!file.Close() || !written){
+		HikariLog(_("Cannot save to file."));
+		return false;
+	}
+	return true;
 }
 void OpenWrite::PartFileWrite(const wxString &parttext)
 {
