@@ -1207,11 +1207,11 @@ bool FontCollector::CheckPathAndGlyphs(int *found, int *notFound, int *notCopied
 						if (ext == L"pfm" || ext == L"pfb"){
 							wxString repl = (ext == L"pfm") ? L"pfb" : L"pfm";
 							if (fullpath[fullpath.length() - 1] < L'Z'){ repl = repl.Upper(); }
-							wxString secondPath = fullpath.RemoveLast(3) + repl;
+							wxString secondPath = fullpath.Left(fullpath.length() - 3) + repl;
 							fontnames.Add(secondPath);
 							flc->AppendInfo(wxString::Format(_("Found \"%s\" font file."), secondPath));
 							if (operation & COPY_FONTS){
-								if (!SaveFont(fullpath, flc))
+								if (!SaveFont(secondPath, flc))
 									(*notCopied)++;
 								else
 									(*found)++;
