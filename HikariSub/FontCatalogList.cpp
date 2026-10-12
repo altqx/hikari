@@ -738,6 +738,9 @@ void FontCatalogManagement::AddCatalog(const wxString& catalog, std::map<wxStrin
 
 bool FontCatalogManagement::ChangeCatalogName(wxWindow* messagesParent, const wxString& oldCatalog, const wxString& newCatalog)
 {
+	if (oldCatalog == newCatalog)
+		return false;
+
 	wxArrayString* fontTable = nullptr;
 	auto itn = fontCatalogs.find(newCatalog);
 	if (itn != fontCatalogs.end()) {
