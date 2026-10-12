@@ -374,6 +374,16 @@ int TagFindReplace::ReplaceAllByChar(const wxString& pattern, const wxString& ta
 			i += ReplaceValue(text, changedValue, res);
 			//prevent to go as normal character
 			i++;
+			//step over a whole \h, \N or \n after the block, not onto its letter,
+			//the block's tag takes the next visible character as at the start
+			if (i + 1 < text->length() && (*text)[i] == L'\\') {
+				wxUniChar nch = (*text)[i + 1];
+				if (nch == L'h' || nch == L'N' || nch == L'n') {
+					i++;
+					if (i + 1 < text->length() && (*text)[i + 1] != L'{' && (*text)[i + 1] != L'\\')
+						i++;
+				}
+			}
 		}
 		else if (ch == L'\\' && !block) {
 			if (i < text->length() - 1) {
