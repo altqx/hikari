@@ -72,16 +72,9 @@ void AllTagsSlider::OnMouseEvent(wxMouseEvent& evt)
 		if (firstThumbValue != thumbValue) {
 			onThumb = true;
 			onSlider = false;
-			//set holding before us to know what value use
+			//set holding to know what value use,
+			//AllTags commits every slider's step at once and resets it
 			holding = true;
-			if (parent->tab->edit->IsCursorOnStart()) {
-				parent->SetVisual(false);
-			}
-			else {
-				parent->SetVisual(true);
-				parent->SetVisual(false);
-			}
-			holding = false;
 		}
 		return;
 	}
