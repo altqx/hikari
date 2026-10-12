@@ -215,7 +215,14 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 		HikariLog(_("Cannot save to file."));
 		return false;
 	}
+	fname.Assign(target);
 #endif
+	//a file that cannot be written must not be replaced either; on POSIX the
+	//rename in Commit needs only a writable folder and would replace it
+	if (fname.FileExists() && !fname.IsFileWritable()){
+		HikariLog(_("Cannot save to file."));
+		return false;
+	}
 	wxTempFile tempFile;
 	bool tempOpened = false;
 	{
