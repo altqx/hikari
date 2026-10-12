@@ -1,0 +1,184 @@
+# E5 "Moving tags" cases for legacy_tag_move_capture (tag_move_capture.cpp
+# documents the format). Fields are tab-separated. The first seven are the texts
+# of MovingTags.SplitsTheOverrideBlocksFromTheText; state: hasTLMode, Moving tags,
+# Visual (0 CROSS), Original field shown, video PlaybackState (3 None, 1 Paused).
+case leading-block
+line	{\i1}Gate keeper
+state	1	1	0	1	3
+call	0
+end
+case inner-blocks
+line	Gate {\i1}keeper{\i0}
+state	1	1	0	1	3
+call	0
+end
+case joined-blocks
+line	{\b1}{\i1}A}{B
+state	1	1	0	1	3
+call	0
+end
+case close-without-open
+line	a}b
+state	1	1	0	1	3
+call	0
+end
+case open-after-close
+line	a}b{c}
+state	1	1	0	1	3
+call	0
+end
+case unclosed-after-last
+line	{\an8}top {open
+state	1	1	0	1	3
+call	0
+end
+case leading-astral
+line	{\fn𝐀}x
+state	1	1	0	1	3
+call	0
+end
+case empty
+line	
+state	1	1	0	1	3
+call	0
+end
+case no-close
+line	Gate keeper
+state	1	1	0	1	3
+call	0
+end
+case never-closed
+line	{\i1 never closed
+state	1	1	0	1	3
+call	0
+end
+case only-joint
+line	}{
+state	1	1	0	1	3
+call	0
+end
+case joint-in-text
+line	x}{y
+state	1	1	0	1	3
+call	0
+end
+case joint-then-close
+line	a}{b}c
+state	1	1	0	1	3
+call	0
+end
+case close-first
+line	}a{b}
+state	1	1	0	1	3
+call	0
+end
+case close-alone
+line	}
+state	1	1	0	1	3
+call	0
+end
+case empty-block
+line	{}
+state	1	1	0	1	3
+call	0
+end
+case block-only
+line	{\i1}
+state	1	1	0	1	3
+call	0
+end
+case block-then-close
+line	{\i1}}x
+state	1	1	0	1	3
+call	0
+end
+case nested
+line	{a{b}c}d
+state	1	1	0	1	3
+call	0
+end
+case nested-inner
+line	x{a{b}c}d
+state	1	1	0	1	3
+call	0
+end
+case adjacent-three
+line	{\b1}{\i1}{\u1}text
+state	1	1	0	1	3
+call	0
+end
+case alternating
+line	{\i1}a{\i0}b{\b1}c
+state	1	1	0	1	3
+call	0
+end
+case trailing-block
+line	text{\i1}
+state	1	1	0	1	3
+call	0
+end
+case astral-around-blocks
+line	😀{\i1}😀x{\b1}😀
+state	1	1	0	1	3
+call	0
+end
+case leading-two-astral
+line	{\fn😀😁}x😂
+state	1	1	0	1	3
+call	0
+end
+case astral-before-close
+line	😀}a{b}
+state	1	1	0	1	3
+call	0
+end
+case astral-in-inner-block
+line	a{\fn𝐀}b
+state	1	1	0	1	3
+call	0
+end
+case line-break
+line	{\an8}top\Nbottom{\i1}
+state	1	1	0	1	3
+call	0
+end
+# Conditions (EditBox.cpp:1811) and the path back to the whole text.
+case translated
+line	{\i1}Gate keeper	Odźwierny
+state	1	1	0	1	3
+call	0
+end
+case no-translation-mode
+line	{\i1}Gate keeper
+state	0	1	0	0	3
+call	0
+end
+case moving-tags-off
+line	{\i1}Gate keeper
+state	1	0	0	1	3
+call	0
+end
+case visual-tool
+line	{\i1}Gate keeper
+state	1	1	1	1	3
+call	0
+state	1	1	10	1	3
+call	0
+state	1	1	0	1	3
+call	0
+end
+# OnAutoMoveTags: toggled off then on again (SetTextWithTags(true)), video open.
+case toggle
+line	Gate {\i1}keeper
+state	1	1	0	1	1
+call	1
+state	1	0	0	1	1
+call	1
+state	1	1	0	1	1
+call	1
+end
+case refresh-without-video
+line	{\i1}Gate keeper
+state	1	1	0	1	3
+call	1
+end
