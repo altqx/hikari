@@ -237,7 +237,13 @@ inline void hikarisub_tm_to_system(const std::tm& tm, SYSTEMTIME* st) {
 inline void hikarisub_time_t_to_system(std::time_t t, SYSTEMTIME* st) {
     std::tm tm{}; gmtime_r(&t, &tm); hikarisub_tm_to_system(tm, st);
 }
-inline void GetSystemTime(SYSTEMTIME* st) { hikarisub_time_t_to_system(std::time(nullptr), st); }
+// with milliseconds like Windows: file times have them, and a save time
+// without them reads as older than the file it just wrote
+inline void GetSystemTime(SYSTEMTIME* st) {
+    timespec now{}; clock_gettime(CLOCK_REALTIME, &now);
+    hikarisub_time_t_to_system(now.tv_sec, st);
+    st->wMilliseconds = static_cast<WORD>(now.tv_nsec / 1000000L);
+}
 inline void GetLocalTime(SYSTEMTIME* st) {
     std::time_t t=std::time(nullptr); std::tm tm{}; localtime_r(&t,&tm);
     st->wYear=tm.tm_year+1900; st->wMonth=tm.tm_mon+1; st->wDay=tm.tm_mday; st->wDayOfWeek=tm.tm_wday; st->wHour=tm.tm_hour; st->wMinute=tm.tm_min; st->wSecond=tm.tm_sec; st->wMilliseconds=0;
