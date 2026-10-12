@@ -114,7 +114,9 @@ public:
 	//records an undo step for the changes made since the last one and repaints the grid
 	void SetModified(unsigned char editionType, bool redit = true, bool dummy = false, int SetEditBoxLine = -1, bool Scroll = true);
 	void UpdateUR(bool tolbar = true);
-	void GetAssHeader(wxString* header, bool forFile = false, bool translated = false, bool normalSave = true);
+	// savePath: the file the header is saved to, or nullptr for the header
+	// the video renders with
+	void GetAssHeader(wxString* header, const wxString *savePath = nullptr, bool translated = false, bool normalSave = true);
 	void SwapRows(int frst, int scnd, bool sav = false);
 	bool LoadSubtitles(const wxString &str, wxString &ext);
 	bool MoveRows(int step, bool keyStep = false);

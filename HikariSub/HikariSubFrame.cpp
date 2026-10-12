@@ -1266,6 +1266,9 @@ bool HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 	if (!atab)
 		return false;
 
+	//the tab takes a new name, and the recent files list it, once the
+	//subtitles are saved under it
+	wxString savePath = atab->SubsPath;
 	bool nameWasChanged = false;
 	if (atab->grid->originalFormat != atab->grid->subsFormat
 		|| (Options.GetBool(SUBS_AUTONAMING)
@@ -1294,12 +1297,10 @@ bool HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 				goto repeatOpening;
 			}
 
-			atab->SubsPath = path;
+			savePath = path;
 			wxString ext = (atab->grid->subsFormat < SRT) ? L"ass" : (atab->grid->subsFormat == SRT) ? L"srt" : L"txt";
-			if (!atab->SubsPath.EndsWith(ext)){ atab->SubsPath << L"." << ext; }
-			atab->SubsName = HikariPathName(atab->SubsPath);
+			if (!savePath.EndsWith(ext)){ savePath << L"." << ext; }
 			nameWasChanged = true;
-			SetRecent(0, tabToSave);
 		}
 		else{ return false; }
 	}
@@ -1313,9 +1314,14 @@ bool HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 	//the properties SwapAssProperties puts in stay only when they are saved
 	SubsFile::SInfoState sinfoBeforeSave = atab->grid->file->GetSInfoState();
 	if (atab->grid->SwapAssProperties()){ return false; }
-	if (!atab->grid->SaveFile(atab->SubsPath)){
+	if (!atab->grid->SaveFile(savePath)){
 		atab->grid->file->RestoreSInfo(sinfoBeforeSave);
 		return false;
+	}
+	if (nameWasChanged) {
+		atab->SubsPath = savePath;
+		atab->SubsName = HikariPathName(savePath);
+		SetRecent(0, tabToSave);
 	}
 	atab->grid->originalFormat = atab->grid->subsFormat;
 	if (changeLabel){

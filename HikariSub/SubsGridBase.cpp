@@ -341,7 +341,7 @@ bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 	SubsFile::SInfoState sinfoBeforeSave = file->GetSInfoState();
 
 	if (subsFormat < SRT)
-		GetAssHeader(&txt, true, translated, normalSave);
+		GetAssHeader(&txt, &filename, translated, normalSave);
 	
 	ow.PartFileWrite(txt);
 
@@ -1690,11 +1690,14 @@ Dialogue * SubsGrid::GetDialogueWithOffset(size_t i, int offset)
 	return nullptr;
 }
 
-void SubsGrid::GetAssHeader(wxString* header, bool forFile, bool translated, bool normalSave)
+void SubsGrid::GetAssHeader(wxString* header, const wxString *savePath, bool translated, bool normalSave)
 {
+	bool forFile = savePath != nullptr;
 	if (forFile) {
 		file->AddSInfo(L"Active Line", std::to_wstring(currentLine), false);
-		wxString subsPath = HikariPathDir(tab->SubsPath);
+		//media next to the file it is saved to, which is not yet the tab's
+		//file on Save As, are named relative to it
+		wxString subsPath = HikariPathDir(*savePath);
 		if (edit->ABox) {
 			wxString path = (edit->ABox->audioName.StartsWith(subsPath) && normalSave) ?
 				HikariPathName(edit->ABox->audioName) : edit->ABox->audioName;
