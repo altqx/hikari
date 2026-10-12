@@ -930,12 +930,10 @@ void Visuals::ChangeOrg(wxString *txt, Dialogue *_dial, float coordx, float coor
 			strPos.x += posTag.length() + append;
 			PutinBrackets = false;
 		}
-		else
-		{
-			strPos.y = 0;
-		}
+		//insert at strPos.x, ChangeText erases nothing when the end is before the start
+		strPos.y = strPos.x - 1;
 	}
-	strPos.y += strPos.x - 1;
+	//FindTag already gives the found \org's start and its last character
 	ChangeText(txt, L"\\org(" + getfloat(orgx + coordx) + L"," + getfloat(orgy + coordy) + L")", !PutinBrackets, strPos);
 }
 
