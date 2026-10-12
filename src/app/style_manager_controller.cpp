@@ -319,7 +319,7 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
     std::optional<StyleList> doc;
     auto *styles = list(m_edit->store, doc);
     if (!styles)
-        return QCoreApplication::translate("HikariSub.Styles", "The Document has no styles to edit.");
+        return QCoreApplication::translate("HikariSub.Styles", "The document has no styles to edit.");
     application::StyleEdit edit;
     edit.row = m_edit->row;
     edit.style = styleOf(values, m_edit->opened);

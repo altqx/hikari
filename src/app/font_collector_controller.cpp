@@ -557,7 +557,7 @@ void FontCollectorController::logRenderer(const CollectorReview &review)
     QString problems;
     for (const int t : review.unrendered)
         problems += QCoreApplication::translate("HikariSub.Fonts",
-                                                "Tab %1: the renderer could not read this Document; it was not checked.\n").arg(t + 1);
+                                                "Tab %1: the renderer could not read this document; it was not checked.\n").arg(t + 1);
     if (!missing.isEmpty())
         problems += QCoreApplication::translate("HikariSub.Fonts", "Families the renderer did not find: %1.\n")
                         .arg(missing.join(QStringLiteral(", ")));

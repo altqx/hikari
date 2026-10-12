@@ -347,7 +347,7 @@ private slots:
         QCOMPARE(activeRow(session(tab(0))), 2);
         QVERIFY(shell().referenceNoMatch());
         QCOMPARE(referenceRow(), 2); // left where it was, no substitute
-        QCOMPARE(status(), QStringLiteral("No matching Line"));
+        QCOMPARE(status(), QStringLiteral("No matching line"));
         QVERIFY(shell().referenceHasNearest());
         QTRY_VERIFY(item("referenceNearest")->isVisible());
         click(item("referenceNearest"));
@@ -387,11 +387,11 @@ private slots:
         click(item("referencePreviousMatch"));
         QCOMPARE(referenceRow(), 0);
         QCOMPARE(status(), QStringLiteral("Match 1 of 2"));
-        QCOMPARE(accessibleName("referenceLinked"), QStringLiteral("Follow the editing Line"));
+        QCOMPARE(accessibleName("referenceLinked"), QStringLiteral("Follow the editing line"));
         QCOMPARE(accessibleName("referencePreviousMatch"), QStringLiteral("Previous match"));
         QCOMPARE(accessibleName("referenceNextMatch"), QStringLiteral("Next match"));
         QCOMPARE(accessibleName("referenceMatchStatus"), QStringLiteral("Match 1 of 2"));
-        QCOMPARE(accessibleName("referenceGrid"), QStringLiteral("Reference Lines (protected, read-only)"));
+        QCOMPARE(accessibleName("referenceGrid"), QStringLiteral("Reference lines (protected, read-only)"));
     }
 
     // translation-comparison.md: navigation starts independent; linking is

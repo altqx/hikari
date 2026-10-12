@@ -77,6 +77,15 @@ private slots:
                                "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a note\n"
                                "Dialogue: 0,0:00:05.00,0:00:05.50,Default,,0,0,0,,much too fast here\n"));
         QCOMPARE(model.headerData(LineTableModel::LayerColumn, Qt::Horizontal).toString(), QStringLiteral("L."));
+        // An abbreviated heading's hover text is its full name; a word has none.
+        QCOMPARE(model.headerData(LineTableModel::LayerColumn, Qt::Horizontal, Qt::ToolTipRole).toString(),
+                 QStringLiteral("Layer"));
+        QCOMPARE(model.headerData(LineTableModel::MarginVerticalColumn, Qt::Horizontal, Qt::ToolTipRole).toString(),
+                 QStringLiteral("Vertical margin"));
+        QCOMPARE(model.headerData(LineTableModel::CpsColumn, Qt::Horizontal, Qt::ToolTipRole).toString(),
+                 QStringLiteral("Characters per second"));
+        QCOMPARE(model.headerData(LineTableModel::StartColumn, Qt::Horizontal, Qt::ToolTipRole).toString(), QString());
+        QCOMPARE(model.headerData(LineTableModel::NumberColumn, Qt::Horizontal, Qt::ToolTipRole).toString(), QString());
         QCOMPARE(model.index(0, LineTableModel::LayerColumn).data().toString(), QStringLiteral("3"));
         // Times are shown from their values, as legacy SubsTime::raw does: the
         // positional parse reads "0:0:1.5" as 0 ms, so legacy shows 0:00:00.00.

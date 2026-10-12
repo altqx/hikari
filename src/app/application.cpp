@@ -1673,9 +1673,9 @@ void Application::resolveClose(const QVariantList &choices)
                 m_closing.clear();
                 emit closeFinished(false, plan.error() == application::SaveRefusal::NoDestination
                                               ? QCoreApplication::translate("HikariSub.Documents",
-                                                                            "Choose where to save the Untitled Document.")
+                                                                            "Choose where to save the untitled document.")
                                               : QCoreApplication::translate("HikariSub.Documents",
-                                                                            "A Document could not be saved; nothing was closed."));
+                                                                            "A document could not be saved; nothing was closed."));
                 return;
             }
             c.revision = plan->revision;
@@ -1683,7 +1683,7 @@ void Application::resolveClose(const QVariantList &choices)
             if (!permit) {
                 m_closing.clear();
                 emit closeFinished(false, QCoreApplication::translate("HikariSub.Documents",
-                                                                      "A Document could not be saved; nothing was closed."));
+                                                                      "A document could not be saved; nothing was closed."));
                 return;
             }
             c.permit = *permit;
@@ -4277,7 +4277,7 @@ QVariantMap Application::previewConversion(const QString &targetName)
     if (!session || !target || !conversionTargets().contains(targetName))
         return {{QStringLiteral("ok"), false},
                 {QStringLiteral("problem"),
-                 QCoreApplication::translate("HikariSub.Conversion", "This Document can't be converted to that format.")}};
+                 QCoreApplication::translate("HikariSub.Conversion", "This document can't be converted to that format.")}};
     const QVariantMap o = conversionOptions();
     core::ConversionOptions options;
     const auto &video = m_video->session();
@@ -4312,7 +4312,7 @@ QVariantMap Application::previewConversion(const QString &targetName)
     if (!result)
         return {{QStringLiteral("ok"), false},
                 {QStringLiteral("problem"),
-                 QCoreApplication::translate("HikariSub.Conversion", "This Document can't be converted to that format.")}};
+                 QCoreApplication::translate("HikariSub.Conversion", "This document can't be converted to that format.")}};
     const auto &r = result->report;
     QStringList losses;
     if (r.headerDropped)

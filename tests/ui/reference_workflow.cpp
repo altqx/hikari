@@ -2,7 +2,7 @@
 // legacy GRID_SHOW_PREVIEW) shows the next tab in the reference tray, linked
 // to the editing Line; Next match steps between the candidates; the editing
 // Grid's Down arrow moves the linked reference (legacy NewSeeking); a click
-// on "Follow the editing Line" makes the tray independent, and its Down
+// on "Follow the editing line" makes the tray independent, and its Down
 // arrow then moves only the reference; Ctrl+V there is refused; Close
 // reference in the tray's header menu (D3: a right click on its toolbar)
 // ends the reference and its tab stays. Neither file is written.

@@ -203,37 +203,41 @@ Dialog {
                 onClicked: dialog.collector.apply(acknowledge.checked)
             }
         }
-        RowLayout {
-            Layout.alignment: Qt.AlignHCenter
+        WindowFooter {
             Button {
                 id: startButton
                 objectName: "fontCollectorStart"
                 text: qsTr("Start")
                 enabled: !dialog.working
+                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                 onClicked: dialog.start(false)
             }
             Button {
                 objectName: "fontCollectorStartOnTabs"
                 text: qsTr("Start on tabs")
                 enabled: !dialog.working
+                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                 onClicked: dialog.start(true)
             }
             Button {
                 objectName: "fontCollectorSaveFolder"
                 text: qsTr("Save folder")
                 enabled: dialog.collector.canSaveFolder && !dialog.working
+                DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
                 onClicked: dialog.collector.saveFolder()
             }
-            Button {
+            FooterButton {
                 objectName: "fontCollectorCancel"
                 text: qsTr("Cancel")
                 visible: dialog.working
+                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                 onClicked: dialog.collector.cancel()
             }
             Button {
                 objectName: "fontCollectorClose"
                 text: qsTr("Close")
                 enabled: !dialog.working
+                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                 onClicked: dialog.close()
             }
         }

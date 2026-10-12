@@ -52,6 +52,11 @@ class LineGrid : public QQuickPaintedItem {
     Q_PROPERTY(int lastPaintedRowCount READ lastPaintedRowCount NOTIFY painted)
     // R2: the table's name for assistive technology ("Subtitle lines" when empty).
     Q_PROPERTY(QString accessibleName MEMBER m_accessibleName NOTIFY accessibleNameChanged)
+    // The full name of the abbreviated heading under the pointer ("Layer"
+    // over "L."), empty elsewhere, and that heading's cell: the hover text
+    // the QML shows below it (GridHeaderToolTip.qml).
+    Q_PROPERTY(QString headerToolTip READ headerToolTip NOTIFY headerToolTipChanged)
+    Q_PROPERTY(QRectF headerToolTipCell READ headerToolTipCell NOTIFY headerToolTipChanged)
 
 public:
     explicit LineGrid(QQuickItem *parent = nullptr);
@@ -99,6 +104,10 @@ public:
     // Width of the hidden-block mark column (legacy posX 11 while filtered).
     double markWidth() const { return m_markWidth; }
     QString accessibleName() const { return m_accessibleName; }
+    QString headerToolTip() const { return m_headerToolTip; }
+    QRectF headerToolTipCell() const { return m_headerToolTipCell; }
+    // The display column at x in item coordinates, or -1 (the mark column, past the last).
+    int columnAt(qreal x) const;
 
 signals:
     // A +/- mark was clicked: the hidden block after this Document row (-1:
@@ -132,6 +141,7 @@ signals:
     void rowHeightChanged();
     void painted();
     void accessibleNameChanged();
+    void headerToolTipChanged();
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -141,6 +151,8 @@ protected:
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;
     void focusOutEvent(QFocusEvent *event) override;
+    void hoverMoveEvent(QHoverEvent *event) override;
+    void hoverLeaveEvent(QHoverEvent *event) override;
 
 private:
     void modelLayoutChanged();
@@ -168,6 +180,9 @@ private:
     std::vector<int> m_columns;
     double m_markWidth = 0;
     QString m_accessibleName;
+    QString m_headerToolTip;
+    QRectF m_headerToolTipCell;
+    void setHeaderToolTip(int column); // -1: none
     void updateColumns();
     std::optional<core::LineId> m_dragLine; // the Line under a held button
     std::optional<core::LineId> m_announcedActive;

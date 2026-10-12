@@ -4,6 +4,7 @@
 // comparison), and the checked-in registry, map and catalogs.
 
 #include "hikari/i18n/contexts.h"
+#include "hikari/i18n/migration.h"
 
 #include <gtest/gtest.h>
 
@@ -320,6 +321,41 @@ TEST(CheckedIn, CatalogsHoldTheGridHeadings)
         }
         EXPECT_FALSE(std::ranges::any_of(grid->messages, [](const TsMessage &m) { return m.source == u"#"; })) << file;
     }
+}
+
+// The rewrite's own copy is in sentence case (docs/qt/ux/visual-language.md,
+// "Sentence case"): "line", "document" and "untitled" are ordinary words
+// inside a sentence ("1 line selected", "Follow the editing line"), not the
+// glossary's capitalized terms. Legacy's own ids (keymap.tsv's exact and
+// placeholder rows) keep their text: their translations depend on it.
+TEST(CheckedIn, InterfaceCopyIsSentenceCase)
+{
+    const auto map = readKeyMap(readSource(QStringLiteral("i18n/migration/keymap.tsv")));
+    ASSERT_TRUE(map.has_value()) << map.error().toStdString();
+    QSet<QString> legacy;
+    for (const KeyMapRow &row : map->rows)
+        if ((row.status == MapStatus::Exact || row.status == MapStatus::Placeholder) && row.context)
+            legacy.insert(*row.context + QChar(0x1f) + row.source);
+    const auto catalog = readTs(readSource(QStringLiteral("i18n/hikarisub_pl.ts")));
+    ASSERT_TRUE(catalog.has_value());
+    static const QRegularExpression noun(QStringLiteral("\\b(Lines?|Documents?|Untitled)\\b"));
+    int checked = 0;
+    for (const TsContext &context : catalog->contexts)
+        for (const TsMessage &m : context.messages) {
+            if (m.state == TsState::Vanished || m.state == TsState::Obsolete
+                || legacy.contains(context.name + QChar(0x1f) + m.source))
+                continue;
+            ++checked;
+            for (auto it = noun.globalMatch(m.source); it.hasNext();) {
+                const auto match = it.next();
+                QString before = m.source.left(match.capturedStart());
+                while (before.endsWith(u' '))
+                    before.chop(1);
+                const bool sentenceStart = before.isEmpty() || QStringLiteral(".!?:\n").contains(before.back());
+                EXPECT_TRUE(sentenceStart) << context.name.toStdString() << ": \"" << m.source.toStdString() << '"';
+            }
+        }
+    EXPECT_GT(checked, 300);
 }
 
 // The DirectShow adapter (Windows only, so no lupdate run on Linux reads its

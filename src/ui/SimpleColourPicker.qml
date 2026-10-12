@@ -204,16 +204,17 @@ Window {
             // The portal reports no location.
             enabled: window.sampler.route === "grab"
         }
-        RowLayout {
-            Layout.alignment: Qt.AlignHCenter
+        WindowFooter {
             Button {
                 objectName: "simpleOk"
                 text: qsTr("OK")
+                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                 onClicked: window.accept()
             }
             Button {
                 objectName: "simpleCancel"
                 text: qsTr("Cancel")
+                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                 onClicked: window.reject()
             }
         }

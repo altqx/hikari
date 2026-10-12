@@ -430,6 +430,63 @@ private slots:
         QCOMPARE(clicked[2].at(3).toBool(), true);
     }
 
+    // The abbreviated headings name their column in full under the pointer
+    // (legacy's names in Paste columns and Hide columns, SubsGrid.cpp:199-200
+    // and 501-508); a heading that is a word, and the rows, have none.
+    void abbreviatedHeadingsNameTheirColumnOnHover()
+    {
+        struct Grid : LineGrid {
+            using LineGrid::hoverLeaveEvent;
+            using LineGrid::hoverMoveEvent;
+        };
+        LineTableModel model;
+        model.setDocument(generate(3));
+        Grid grid;
+        grid.setSize(QSizeF(1000, 300));
+        grid.setModel(&model);
+        QSignalSpy changed(&grid, &LineGrid::headerToolTipChanged);
+        const auto hover = [&](QPointF at) {
+            QHoverEvent event(QEvent::HoverMove, at, at, at);
+            grid.hoverMoveEvent(&event);
+            return grid.headerToolTip();
+        };
+        const qreal headerY = grid.rowHeight() / 2;
+        QHash<QString, QString> tips;
+        int vert = -1;
+        for (int c = 0; c < grid.columnCount(); ++c) {
+            tips.insert(grid.columnTitle(c), hover(QPointF(grid.cellRect(0, c).center().x(), headerY)));
+            if (grid.columnTitle(c) == QLatin1String("Vert."))
+                vert = c;
+        }
+        QCOMPARE(tips.value(QStringLiteral("L.")), QStringLiteral("Layer"));
+        QCOMPARE(tips.value(QStringLiteral("Left")), QStringLiteral("Left margin"));
+        QCOMPARE(tips.value(QStringLiteral("Right")), QStringLiteral("Right margin"));
+        QCOMPARE(tips.value(QStringLiteral("Vert.")), QStringLiteral("Vertical margin"));
+        QCOMPARE(tips.value(QStringLiteral("CPS")), QStringLiteral("Characters per second"));
+        QCOMPARE(tips.value(QStringLiteral("Wraps")), QStringLiteral("Line wraps"));
+        for (const char *word : {"#", "Start", "End", "Styles", "Actor", "Effect", "Text"}) {
+            QVERIFY2(tips.contains(QLatin1String(word)), word);
+            QVERIFY2(tips.value(QLatin1String(word)).isEmpty(), word);
+        }
+        // The tip sits under its heading's cell.
+        QCOMPARE(hover(QPointF(grid.cellRect(0, vert).center().x(), headerY)), QStringLiteral("Vertical margin"));
+        QCOMPARE(grid.headerToolTipCell().x(), grid.cellRect(0, vert).x());
+        QCOMPARE(grid.headerToolTipCell().width(), grid.cellRect(0, vert).width());
+        QCOMPARE(grid.headerToolTipCell().bottom(), grid.rowHeight());
+        // Over a row, and after the pointer leaves: nothing.
+        QCOMPARE(hover(grid.cellRect(1, vert).center()), QString());
+        hover(QPointF(grid.cellRect(0, vert).center().x(), headerY));
+        QHoverEvent leave(QEvent::HoverLeave, QPointF(-1, -1), QPointF(-1, -1), QPointF());
+        grid.hoverLeaveEvent(&leave);
+        QCOMPARE(grid.headerToolTip(), QString());
+        QVERIFY(changed.size() >= 4);
+        // A heading the model hides (GRID_HIDE_COLUMNS) takes its tip with it.
+        hover(QPointF(grid.cellRect(0, vert).center().x(), headerY));
+        QCOMPARE(grid.headerToolTip(), QStringLiteral("Vertical margin"));
+        model.setHiddenColumns(LineTableModel::hideBit(LineTableModel::MarginVerticalColumn));
+        QCOMPARE(grid.headerToolTip(), QString());
+    }
+
     // E6: the number cell in its label colour by State (SubsGridWindow.cpp:
     // 478-479, 495), selected or not, with a dot for a changed Line and a
     // ring for a changed and saved one; the state named for assistive

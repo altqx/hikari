@@ -47,11 +47,11 @@ Item {
         // then loads, No loads, Cancel does nothing.
         ColumnLayout {
             Label { text: qsTr("Save the file before loading subtitles from the MKV?") }
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
+            WindowFooter {
                 Button {
                     objectName: "mkvSaveYes"
                     text: qsTr("Yes")
+                    DialogButtonBox.buttonRole: DialogButtonBox.YesRole
                     onClicked: {
                         saveQuestion.close()
                         if (flow.save())
@@ -63,6 +63,7 @@ Item {
                 Button {
                     objectName: "mkvSaveNo"
                     text: qsTr("No")
+                    DialogButtonBox.buttonRole: DialogButtonBox.NoRole
                     onClicked: {
                         saveQuestion.close()
                         flow.matroska.start()
@@ -71,6 +72,7 @@ Item {
                 Button {
                     objectName: "mkvSaveCancel"
                     text: qsTr("Cancel")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                     onClicked: saveQuestion.close()
                 }
             }

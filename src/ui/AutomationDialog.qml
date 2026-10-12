@@ -247,8 +247,10 @@ Window {
             }
         }
 
+        // The script's buttons in its order (legacy centres them,
+        // AutomationDialog.cpp:480-509), at the trailing edge as every footer.
         RowLayout {
-            Layout.alignment: Qt.AlignHCenter
+            Layout.alignment: Qt.AlignRight
             Repeater {
                 id: buttonRepeater
                 model: window.controller.buttons

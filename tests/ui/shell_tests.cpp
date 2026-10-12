@@ -1996,6 +1996,183 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(window, "closeManager"));
     }
 
+    // The Style manager fits the screen's free area, and the Style editor's
+    // geometry is one grid: each label over its field, the colours' columns
+    // over the geometry's, no control cut off or past the editor's right
+    // edge, the closing row inside the window. Also registered on a
+    // 1280 x 800 screen at 100 % and 150 % (CMakeLists.txt); the default
+    // offscreen screen is 800 x 600.
+    void styleEditorFitsTheScreen()
+    {
+        QVERIFY(application->openFile(fontAss("style-fit.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
+        auto *root = engine->rootObjects().first();
+        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        QVERIFY(QTest::qWaitForWindowExposed(manager));
+        const QRect available = manager->screen()->availableGeometry();
+        QVERIFY2(manager->width() <= available.width() && manager->height() <= available.height(),
+                 qPrintable(QStringLiteral("%1x%2 in %3x%4").arg(manager->width()).arg(manager->height())
+                                .arg(available.width()).arg(available.height())));
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *content = manager->contentItem();
+        auto *scroll = findItem(content, QStringLiteral("styleEditorScroll"));
+        auto *editor = findItem(content, QStringLiteral("styleEditor"));
+        QVERIFY(scroll && editor);
+        QTRY_VERIFY(editor->isVisible() && editor->width() > 0);
+        QTest::qWait(50); // the layouts settle
+
+        // Nothing past the editor's right edge, and no check box, radio
+        // button or label narrower than its text. A screen narrower than
+        // 1280 x 800 at 150 % (853 pixels) scrolls the editor sideways, its
+        // bar shown; a wider one does not.
+        const qreal right = scroll->property("contentWidth").toReal();
+        const qreal view = scroll->property("availableWidth").toReal();
+        QQuickItem *sideways = nullptr;
+        for (QQuickItem *bar : scroll->findChildren<QQuickItem *>())
+            if (bar->inherits("QQuickScrollBar") && bar->property("orientation").toInt() == Qt::Horizontal)
+                sideways = bar;
+        QVERIFY(sideways);
+        if (manager->screen()->geometry().width() >= 853)
+            QVERIFY2(right <= view + 0.5, qPrintable(QStringLiteral("%1 in %2").arg(right).arg(view)));
+        else if (right > view + 0.5)
+            QTRY_VERIFY(sideways->isVisible() && sideways->property("size").toReal() < 1);
+        std::function<void(QQuickItem *)> check = [&](QQuickItem *item) {
+            for (QQuickItem *child : item->childItems()) {
+                if (!child->isVisible())
+                    continue;
+                const QString type = QString::fromLatin1(child->metaObject()->className());
+                const bool control = child->inherits("QQuickControl") || child->inherits("QQuickText");
+                if (control && child->width() > 0) {
+                    const QRectF r = child->mapRectToItem(editor, QRectF(0, 0, child->width(), child->height()));
+                    QVERIFY2(r.left() >= -0.5 && r.right() <= right + 0.5,
+                             qPrintable(QStringLiteral("%1 \"%2\" at %3..%4 of %5").arg(type, child->property("text").toString())
+                                            .arg(r.left()).arg(r.right()).arg(right)));
+                    if (child->inherits("QQuickCheckBox") || child->inherits("QQuickRadioButton")
+                        || (child->inherits("QQuickLabel") && !child->property("text").toString().isEmpty()))
+                        QVERIFY2(child->width() >= child->implicitWidth() - 0.5,
+                                 qPrintable(QStringLiteral("%1 \"%2\" %3 of %4").arg(type, child->property("text").toString())
+                                                .arg(child->width()).arg(child->implicitWidth())));
+                }
+                if (!child->inherits("QQuickControl") || child->inherits("QQuickPane") || child->inherits("QQuickGroupBox"))
+                    check(child);
+            }
+        };
+        check(editor);
+        if (QTest::currentTestFailed())
+            return;
+
+        // The geometry grid: every label over the field or box below it, and
+        // the colour columns over the geometry's.
+        const auto at = [&](const char *name) {
+            auto *item = findItem(editor, QLatin1String(name));
+            return item ? item->mapRectToItem(editor, QRectF(0, 0, item->width(), item->height())) : QRectF();
+        };
+        const QList<const char *> columns{"styleOutline", "styleShadow", "styleScaleX", "styleScaleY"};
+        const QList<QList<const char *>> below{{"styleAngle", "styleMarginLeft"}, {"styleSpacing", "styleMarginRight"},
+                                               {"styleOpaqueBox", "styleMarginVertical"}, {"styleAlignment"}};
+        for (int c = 0; c < 4; ++c) {
+            const QRectF top = at(columns[c]);
+            QVERIFY2(top.width() > 0, columns[c]);
+            for (const char *name : below[c])
+                QCOMPARE(at(name).left(), top.left());
+            const QRectF colour = at(qPrintable(QStringLiteral("styleColour%1").arg(c + 1)));
+            QCOMPARE(colour.left(), top.left());
+            if (c < 3)
+                QCOMPARE(colour.width(), top.width());
+        }
+        auto *geometry = findItem(editor, QStringLiteral("styleGeometry"));
+        QVERIFY(geometry);
+        for (QQuickItem *label : geometry->childItems()) {
+            if (!label->inherits("QQuickLabel"))
+                continue;
+            const QRectF l = label->mapRectToItem(editor, QRectF(0, 0, label->width(), label->height()));
+            bool over = false;
+            for (QQuickItem *field : geometry->childItems())
+                if (!field->inherits("QQuickLabel") && field->isVisible()) {
+                    const QRectF f = field->mapRectToItem(editor, QRectF(0, 0, field->width(), field->height()));
+                    over |= qAbs(f.left() - l.left()) < 0.5 && f.top() >= l.bottom() - 0.5 && f.top() - l.bottom() < 8;
+                }
+            QVERIFY2(over, qPrintable(label->property("text").toString()));
+        }
+
+        // The lists' commands beside the editor above the closing row (the
+        // move arrows take a column of their own in a short window), each
+        // inside its box.
+        auto *cancelButton = findItem(content, QStringLiteral("styleEditorCancel"));
+        auto *footer = cancelButton->parentItem();
+        while (footer && !footer->inherits("QQuickDialogButtonBox"))
+            footer = footer->parentItem();
+        QVERIFY(footer);
+        const qreal footerTop = footer->mapToItem(content, QPointF()).y();
+        std::function<void(QQuickItem *, QQuickItem *)> inBox = [&](QQuickItem *item, QQuickItem *box) {
+            for (QQuickItem *child : item->childItems()) {
+                if (!child->isVisible() || child == scroll || child == footer)
+                    continue;
+                QQuickItem *within = child->inherits("QQuickGroupBox") ? child : box;
+                if (child->inherits("QQuickAbstractButton")) {
+                    const QRectF r = child->mapRectToItem(content, QRectF(0, 0, child->width(), child->height()));
+                    const QRectF b = within ? within->mapRectToItem(content, QRectF(0, 0, within->width(), within->height()))
+                                            : QRectF(0, 0, manager->width(), footerTop);
+                    QVERIFY2(b.adjusted(-0.5, -0.5, 0.5, 0.5).contains(r) && r.bottom() <= footerTop + 0.5,
+                             qPrintable(QStringLiteral("%1 \"%2\" at %3,%4 %5x%6").arg(QString::fromLatin1(child->metaObject()->className()),
+                                            child->property("text").toString()).arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height())));
+                }
+                inBox(child, within);
+            }
+        };
+        inBox(content, nullptr);
+        if (QTest::currentTestFailed())
+            return;
+        // Each strip keeps its two groups apart: the arrows under the
+        // commands with the separator between, or in a column of their own
+        // right of them with the separator between; never a separator
+        // inside a column of commands.
+        for (const char *name : {"storeCommands", "assCommands"}) {
+            auto *strip = findItem(content, QLatin1String(name));
+            QVERIFY2(strip, name);
+            const auto parts = strip->childItems(); // commands, across, down, moves
+            QCOMPARE(parts.size(), 4);
+            const auto bounds = [&](QQuickItem *group) {
+                QRectF r;
+                for (QQuickItem *b : group->childItems())
+                    r |= b->mapRectToItem(content, QRectF(0, 0, b->width(), b->height()));
+                return r;
+            };
+            const QRectF commands = bounds(parts[0]);
+            const QRectF moves = bounds(parts[3]);
+            QVERIFY2(parts[1]->isVisible() != parts[2]->isVisible(), name);
+            QQuickItem *separator = parts[1]->isVisible() ? parts[1] : parts[2];
+            const QRectF between = separator->mapRectToItem(content, QRectF(0, 0, separator->width(), separator->height()));
+            const bool stacked = between.top() >= commands.bottom() - 0.5 && moves.top() >= between.bottom() - 0.5
+                                 && qAbs(moves.left() - commands.left()) < 0.5;
+            const bool beside = between.left() >= commands.right() - 0.5 && moves.left() >= between.right() - 0.5
+                                && qAbs(moves.top() - commands.top()) < 0.5;
+            QVERIFY2(parts[1]->isVisible() ? stacked : beside,
+                     qPrintable(QStringLiteral("%1: commands %2,%3 %4x%5, separator %6,%7, arrows %8,%9")
+                                    .arg(QLatin1String(name)).arg(commands.x()).arg(commands.y()).arg(commands.width())
+                                    .arg(commands.height()).arg(between.x()).arg(between.y()).arg(moves.x()).arg(moves.y())));
+        }
+
+        // The closing row in the window: the editor's OK, Apply and Cancel,
+        // not the manager's OK and Close (one button rejects).
+        for (const char *name : {"styleEditorOk", "styleEditorApply", "styleEditorCancel"}) {
+            auto *button = findItem(content, QLatin1String(name));
+            QVERIFY2(button && button->isVisible(), name);
+            const QRectF r = button->mapRectToItem(content, QRectF(0, 0, button->width(), button->height()));
+            QVERIFY2(r.left() >= 0 && r.right() <= manager->width() && r.bottom() <= manager->height(), name);
+        }
+        QVERIFY(!findItem(content, QStringLiteral("styleManagerOk"))->isVisible());
+        QVERIFY(!findItem(content, QStringLiteral("styleManagerClose"))->isVisible());
+        QTRY_COMPARE(footer->implicitWidth(), findItem(content, QStringLiteral("styleEditorOk"))->width()
+                                                  + findItem(content, QStringLiteral("styleEditorApply"))->width()
+                                                  + cancelButton->width() + 2 * footer->property("spacing").toReal()
+                                                  + footer->property("leftPadding").toReal()
+                                                  + footer->property("rightPadding").toReal());
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+    }
+
     // Y6: the Style editor does not keep its choice within the list
     // (StyleChange.cpp:98-104): SetSelection past the end is ignored, so the
     // choice stays where PutArray(names) moved it before "All fonts" and
@@ -5757,6 +5934,26 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Replace all"));
         QVERIFY(!application->canReplaceFindResults());
         QVERIFY(!item("replaceCheckedButton")->isEnabled());
+        // An answer that asks again at once: Yes to "Reached end" finds
+        // nothing from the beginning either, and "Could not find" stays open
+        // after the click (whose button box closes the dialog as well).
+        application->setFindQuestionHandler({});
+        const QVariantMap zzz{{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("zzz")}};
+        application->runFindReplace(QStringLiteral("find"), zzz); // from the beginning (the last search wrapped)
+        QTRY_VERIFY(question->property("visible").toBool());
+        QCOMPARE(question->property("text").toString(), QStringLiteral("Could not find the specified phrase \"zzz\"."));
+        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerOk")), "click"));
+        QTRY_VERIFY(!question->property("visible").toBool());
+        application->runFindReplace(QStringLiteral("find"), zzz);
+        QTRY_VERIFY(question->property("visible").toBool());
+        QCOMPARE(question->property("text").toString(), QStringLiteral("Reached end. Search from the beginning?"));
+        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerYes")), "click"));
+        QTRY_COMPARE(question->property("text").toString(), QStringLiteral("Could not find the specified phrase \"zzz\"."));
+        QTRY_VERIFY(question->property("visible").toBool());
+        QTest::qWait(50);
+        QVERIFY(question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerOk")), "click"));
+        QTRY_VERIFY(!question->property("visible").toBool());
         // Ctrl+F again on the Find tab with the focus in the tool hides it.
         item("findText")->forceActiveFocus();
         press(Qt::Key_F, Qt::ControlModifier);
@@ -6247,6 +6444,220 @@ private slots:
         QTRY_COMPARE(table->columnCount(), 12);
         QVERIFY(hideCps->property("checked").toBool());
         application->shell().setHiddenColumns(0);
+    }
+
+    // The Grid's abbreviated headings name their column on hover (legacy's
+    // Hide columns names, SubsGrid.cpp:199-200 and 501-508): the pointer over
+    // "L." shows "Layer" below it, in the interface language; a heading that
+    // is a word shows nothing.
+    void gridHeadingsNameTheirColumnOnHover()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        auto *tip = named("editingGridHeaderToolTip");
+        QVERIFY(tip);
+        // The heading's centre, the header being the Grid's first row.
+        const auto heading = [&](const QString &title) {
+            for (int c = 0; c < grid->columnCount(); ++c)
+                if (grid->columnTitle(c) == title)
+                    return grid->mapToScene(QPointF(grid->cellRect(0, c).center().x(), grid->rowHeight() / 2)).toPoint();
+            return QPoint(-1, -1);
+        };
+        QVERIFY(heading(QStringLiteral("L.")).x() >= 0);
+        QVERIFY(heading(QStringLiteral("Vert.")).x() >= 0);
+        // Over a row first, then the heading, aimed afresh on every try: the
+        // docks settle a frame after the file opens (xcb), moving the Grid
+        // under a pointer that stays where it was.
+        const auto hovering = [&](const QString &title, const QString &name) {
+            const QPoint at = heading(title);
+            QTest::mouseMove(window, at + QPoint(0, int(grid->rowHeight() * 3)));
+            QTest::mouseMove(window, at);
+            return grid->property("headerToolTip").toString() == name;
+        };
+        QTRY_VERIFY(hovering(QStringLiteral("L."), QStringLiteral("Layer")));
+        QTRY_VERIFY(tip->property("visible").toBool()); // after the tooltip's delay
+        QCOMPARE(tip->property("text").toString(), QStringLiteral("Layer"));
+        QTRY_VERIFY(hovering(QStringLiteral("Vert."), QStringLiteral("Vertical margin")));
+        QTRY_COMPARE(tip->property("text").toString(), QStringLiteral("Vertical margin"));
+        QTRY_VERIFY(hovering(QStringLiteral("Start"), QString()));
+        QTRY_VERIFY(!tip->property("visible").toBool());
+
+        class Polish final : public QTranslator {
+        public:
+            bool isEmpty() const override { return false; }
+            QString translate(const char *context, const char *source, const char *, int) const override
+            {
+                return QByteArray(context) == "HikariSub.Grid" && QByteArray(source) == "Layer"
+                           ? QStringLiteral("Warstwa")
+                           : QString();
+            }
+        } polish;
+        QVERIFY(QCoreApplication::installTranslator(&polish));
+        auto removePolish = qScopeGuard([&] { QCoreApplication::removeTranslator(&polish); });
+        QTRY_VERIFY(hovering(QStringLiteral("L."), QStringLiteral("Warstwa")));
+        QTRY_VERIFY(tip->property("visible").toBool());
+        QCOMPARE(tip->property("text").toString(), QStringLiteral("Warstwa"));
+        QTest::mouseMove(window, QPoint(2, 2));
+        QTRY_VERIFY(!tip->property("visible").toBool());
+    }
+
+    // A window's closing row is a DialogButtonBox at its trailing edge, as
+    // the Settings dialog's: the buttons in the platform's order by their
+    // roles (OK before Cancel on Windows and KDE, after it on GNOME), none
+    // centred under the content, and a hidden button leaves no gap.
+    void windowFootersSitAtTheTrailingEdgeInThePlatformOrder()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *root = engine->rootObjects().first();
+        const auto boxOf = [](QQuickItem *item) -> QQuickItem * {
+            for (; item; item = item->parentItem())
+                for (const QMetaObject *m = item->metaObject(); m; m = m->superClass())
+                    if (qstrcmp(m->className(), "QQuickDialogButtonBox") == 0)
+                        return item;
+            return nullptr;
+        };
+        // QPlatformDialogHelper::ButtonRole, read from the button's
+        // DialogButtonBox attached object (a child of the button).
+        enum Role { Accept = 0, Reject = 1, Destructive = 2, Action = 3, Yes = 5, No = 6, Apply = 8, Unset = -1 };
+        const auto roleOf = [](QQuickItem *button) {
+            for (QObject *child : button->children())
+                if (child->inherits("QQuickDialogButtonBoxAttached"))
+                    return child->property("buttonRole").toInt();
+            return int(Unset);
+        };
+        // Every footer's buttons (by name, else by text) and their roles;
+        // the first is named.
+        using Buttons = std::vector<std::pair<const char *, Role>>;
+        const std::vector<Buttons> footers{
+            {{"historySet", Apply}, {"historyOk", Accept}, {"historyCancel", Reject}},
+            {{"closeSaveAll", Accept}, {"closeDiscardAll", Destructive}, {"closeContinue", Action}, {"closeCancel", Reject}},
+            {{"automationForceStop", Destructive}, {"automationCancel", Reject}},
+            {{"fpsOk", Accept}, {"fpsCancel", Reject}},
+            {{"columnsOk", Accept}, {"columnsCancel", Reject}},
+            {{"groupBreakRemove", Destructive}, {"groupBreakCancel", Reject}},
+            {{"automationHotkeysOk", Accept}, {"mapHotkey", Action}, {"deleteHotkey", Action},
+             {"importLegacyHotkeys", Action}, {"automationHotkeysCancel", Reject}},
+            {{"reloadYes", Yes}, {"reloadNo", No}},
+            {{"styleEditorOk", Accept}, {"styleManagerOk", Accept}, {"styleEditorApply", Apply},
+             {"styleEditorCancel", Reject}, {"styleManagerClose", Reject}},
+            {{"hotkeySwitch", Accept}, {"hotkeyDelete", Destructive}, {"hotkeySetAnyway", Action}, {"hotkeyCancel", Reject}},
+            {{"conversionAccept", Accept}, {"Cancel", Reject}},
+            {{"resampleOk", Accept}, {"Cancel", Reject}},
+            {{"mismatchChange", Accept}, {"Do not change", Reject}, {"mismatchDisable", Action}},
+            {{"groupDescriptionOk", Accept}, {"groupDescriptionCancel", Reject}},
+            {{"saveTag", Accept}, {"cancelTag", Reject}},
+            {{"updateRemind", No}, {"Open the download page", Accept}, {"Close", Reject}},
+            {{"selectRun", Accept}, {"selectRunAllTabs", Accept}, {"Close", Reject}},
+            {{"fontCollectorStart", Accept}, {"fontCollectorStartOnTabs", Accept}, {"fontCollectorSaveFolder", Action},
+             {"fontCollectorCancel", Reject}, {"fontCollectorClose", Reject}},
+            {{"mkvSaveYes", Yes}, {"mkvSaveNo", No}, {"mkvSaveCancel", Reject}},
+            {{"findAnswerOk", Accept}, {"findAnswerYes", Yes}, {"findAnswerNo", No}, {"findAnswerCancel", Reject}},
+            {{"replaceYesToAll", Yes}, {"replaceYes", Yes}, {"replaceNo", No}, {"Cancel", Reject}},
+        };
+        // The find question lives in the Search tool's dock: open it.
+        press(Qt::Key_F, Qt::ControlModifier);
+        QTRY_VERIFY(item<QObject>("searchDock")->property("isOpen").toBool());
+        for (const Buttons &buttons : footers) {
+            const char *first = buttons.front().first;
+            QObject *found = named(first);
+            auto *anchor = qobject_cast<QQuickItem *>(found ? found : item<QObject>(first));
+            QVERIFY2(anchor, first);
+            auto *box = boxOf(anchor);
+            QVERIFY2(box, first);
+            QCOMPARE(box->property("alignment").toInt(), int(Qt::AlignRight));
+            const int count = box->property("count").toInt();
+            QCOMPARE(count, int(buttons.size()));
+            for (int i = 0; i < count; ++i) {
+                QQuickItem *button = nullptr;
+                QVERIFY(QMetaObject::invokeMethod(box, "itemAt", Q_RETURN_ARG(QQuickItem *, button), Q_ARG(int, i)));
+                const QString name = button->objectName().isEmpty() ? button->property("text").toString() : button->objectName();
+                const auto expected = std::find_if(buttons.begin(), buttons.end(),
+                                                   [&](const auto &b) { return name == QLatin1String(b.first); });
+                QVERIFY2(expected != buttons.end(), qPrintable(QStringLiteral("%1 in %2").arg(name, QLatin1String(first))));
+                QVERIFY2(roleOf(button) == expected->second,
+                         qPrintable(QStringLiteral("%1: role %2").arg(name).arg(roleOf(button))));
+            }
+        }
+
+        // History: Set (apply), OK (accept), Cancel (reject), at the right edge.
+        auto *history = root->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
+        history->show();
+        QVERIFY(QTest::qWaitForWindowExposed(history));
+        auto *set = history->findChild<QQuickItem *>(QStringLiteral("historySet"));
+        auto *ok = history->findChild<QQuickItem *>(QStringLiteral("historyOk"));
+        auto *cancel = history->findChild<QQuickItem *>(QStringLiteral("historyCancel"));
+        auto *box = boxOf(ok);
+        const auto left = [&](QQuickItem *item) { return item->mapToItem(box, QPointF()).x(); };
+        const auto order = [&](int layout) {
+            box->setProperty("buttonLayout", layout); // laid out at the next polish: QTRY_COMPARE asks again
+            std::vector<std::pair<qreal, QString>> xs;
+            for (QQuickItem *b : {set, ok, cancel})
+                xs.emplace_back(left(b), b->property("text").toString());
+            std::sort(xs.begin(), xs.end());
+            QStringList names;
+            for (const auto &x : xs)
+                names << x.second;
+            return names;
+        };
+        const QVariant platformLayout = box->property("buttonLayout");
+        {
+            auto restoreLayout = qScopeGuard([&] { box->setProperty("buttonLayout", platformLayout); });
+            QTRY_COMPARE(order(0), (QStringList{"OK", "Cancel", "Set"})); // WinLayout
+            QTRY_COMPARE(order(2), (QStringList{"OK", "Set", "Cancel"})); // KdeLayout
+            QTRY_COMPARE(order(3), (QStringList{"Set", "Cancel", "OK"})); // GnomeLayout
+        }
+        qreal right = 0;
+        for (QQuickItem *b : {set, ok, cancel})
+            right = std::max(right, left(b) + b->width());
+        QTRY_COMPARE(right, box->width());
+        const QPointF boxRight = box->mapToItem(history->contentItem(), QPointF(box->width(), 0));
+        QVERIFY(boxRight.x() > history->width() - 20); // the window's margin, not centred
+        history->close();
+
+        // The find question's answers in the platform's order: the styles
+        // question on Windows (Yes, OK, No, Cancel by their roles).
+        auto *question = item<QObject>("findQuestion");
+        emit application->findQuestion(0, 2, QStringLiteral("Styles named \"X\" do not exist."), QStringLiteral("Confirmation"));
+        QTRY_VERIFY(question->property("visible").toBool());
+        auto *answerBox = boxOf(question->findChild<QQuickItem *>(QStringLiteral("findAnswerOk")));
+        const QVariant answerLayout = answerBox->property("buttonLayout");
+        {
+            auto restoreLayout = qScopeGuard([&] { answerBox->setProperty("buttonLayout", answerLayout); });
+            answerBox->setProperty("buttonLayout", 0); // WinLayout
+            const auto answers = [&] {
+                std::vector<std::pair<qreal, QString>> xs;
+                for (QQuickItem *b : answerBox->findChildren<QQuickItem *>())
+                    if (b->inherits("QQuickAbstractButton") && b->isVisible())
+                        xs.emplace_back(b->mapToItem(answerBox, QPointF()).x(), b->property("text").toString());
+                std::sort(xs.begin(), xs.end());
+                QStringList names;
+                for (const auto &x : xs)
+                    names << x.second;
+                return names;
+            };
+            QTRY_COMPARE(answers(), (QStringList{"Remove styles", "Remove nonexistent styles", "Ignore", "Cancel"}));
+        }
+        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerCancel")), "click"));
+        QTRY_VERIFY(!question->property("visible").toBool());
+
+        // Line group: the Cancel alone when there is no group to remove.
+        auto *breakDialog = root->findChild<QQuickWindow *>(QStringLiteral("groupBreakDialog"));
+        breakDialog->setProperty("description", 0);
+        breakDialog->show();
+        QVERIFY(QTest::qWaitForWindowExposed(breakDialog));
+        auto *remove = breakDialog->findChild<QQuickItem *>(QStringLiteral("groupBreakRemove"));
+        auto *breakCancel = breakDialog->findChild<QQuickItem *>(QStringLiteral("groupBreakCancel"));
+        auto *breakBox = boxOf(breakCancel);
+        QVERIFY(!remove->isVisible());
+        QTRY_COMPARE(breakBox->implicitWidth(), breakCancel->width());
+        QTRY_COMPARE(breakCancel->mapToItem(breakBox, QPointF(breakCancel->width(), 0)).x(), breakBox->width());
+        breakDialog->setProperty("description", 7);
+        QTRY_VERIFY(remove->isVisible());
+        QTRY_COMPARE(breakBox->implicitWidth(),
+                     remove->width() + breakBox->property("spacing").toReal() + breakCancel->width());
+        breakDialog->close();
+        breakDialog->setProperty("description", 0);
     }
 
     // R1-check-items-close: a check item keeps its menus open when switched,
