@@ -236,14 +236,18 @@ namespace
 			Bind(wxEVT_WEBREQUEST_STATE, &UpdateRequest::OnState, this);
 		}
 
-		bool Start()
+		// Asks for a page of the release list, from 1.
+		bool Start(int page = 1)
 		{
 			// The session is not opened when the platform's backend cannot
 			// start, and CreateRequest() would then assert.
 			wxWebSession &session = wxWebSession::GetDefault();
 			if (!session.IsOpened())
 				return false;
-			request = session.CreateRequest(this, wxString::FromUTF8(update_policy::ReleasesApiUrl()));
+			this->page = page;
+			body.clear();
+			tooLarge = false;
+			request = session.CreateRequest(this, wxString::FromUTF8(update_policy::ReleasesApiUrl(page)));
 			if (!request.IsOk())
 				return false;
 
@@ -287,6 +291,12 @@ namespace
 			JsonValue root;
 			std::vector<update_policy::Release> releases;
 			update_policy::Ending ending = Read(state, ReplyUrl(evt), &root, &releases);
+			if (ending == update_policy::Ending::Answered && update_policy::NeedsNextPage(releases)) {
+				// Only while the window is open, as nothing would be shown.
+				if (page < update_policy::kMaxPages && IsParentOpen() && Start(page + 1))
+					return;
+				ending = update_policy::Ending::NoVersionListed;
+			}
 			tracker.End(Now(), ending);
 			if (IsParentOpen())
 				Report(ending, root, releases);
@@ -367,6 +377,7 @@ namespace
 
 		wxWeakRef<wxWindow> parent;
 		wxWebRequest request;
+		int page = 1;
 		std::string body;
 		bool tooLarge = false;
 	};

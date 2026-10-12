@@ -37,13 +37,19 @@ namespace update_policy
 	// release but by the page size. With ten, a run of other releases, such
 	// as the qt-metadata-* ones, two to a Qt update, could push every
 	// version off the page; fifty leaves room for 24 Qt updates in a row
-	// and keeps the page well under kMaxResponseBytes.
+	// and keeps the page well under kMaxResponseBytes. A full page with no
+	// version on it at all is followed by the next, up to kMaxPages.
 	constexpr size_t kReleasesPerPage = 50;
+	constexpr int kMaxPages = 4;
 
-	inline std::string ReleasesApiUrl()
+	// The page of the release list, from 1.
+	inline std::string ReleasesApiUrl(int page = 1)
 	{
-		return "https://api.github.com/repos/" + std::string(kRepository) + "/releases?per_page=" +
+		std::string url = "https://api.github.com/repos/" + std::string(kRepository) + "/releases?per_page=" +
 			std::to_string(kReleasesPerPage);
+		if (page > 1)
+			url += "&page=" + std::to_string(page);
+		return url;
 	}
 
 	// The largest kind of release in the list, with room to spare: a
@@ -190,6 +196,9 @@ namespace update_policy
 		NotFromApi,
 		// The reply is not a release list.
 		NotAList,
+		// kMaxPages full pages came with no version on them, so the newest
+		// version, if any, is further down than the check reads.
+		NoVersionListed,
 		// A release list came, whether or not the window that asked was
 		// still open to show what it holds.
 		Answered,
@@ -364,6 +373,22 @@ namespace update_policy
 			}
 		}
 		return choice;
+	}
+
+	// Whether the newest version can be on a later page than releases: the
+	// page is full and holds no version at all, only drafts and other
+	// tags. One version on the page is enough to stop, as every later page
+	// lists older releases, and ChooseRelease() offers nothing from a page
+	// with none, so the next page's choice is the whole list's.
+	inline bool NeedsNextPage(const std::vector<Release> &releases)
+	{
+		if (releases.size() < kReleasesPerPage)
+			return false;
+		for (const Release &release : releases) {
+			if (!release.draft && ParseSemVer(release.tag))
+				return false;
+		}
+		return true;
 	}
 
 	constexpr Outcome GetOutcome(const Choice &choice)

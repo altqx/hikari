@@ -405,7 +405,7 @@ struct FakeNextCheck : NextCheckStore
 };
 
 const Ending kEndings[] = { Ending::NoRequest, Ending::Failed, Ending::Cancelled, Ending::CutOff,
-	Ending::NotFromApi, Ending::NotAList, Ending::Answered };
+	Ending::NotFromApi, Ending::NotAList, Ending::NoVersionListed, Ending::Answered };
 
 } // namespace
 
@@ -434,8 +434,8 @@ TEST(update_every_ending_of_a_check_is_recorded_once)
 		}
 		else {
 			// No session or request, a failure, a cancel, a reply cut
-			// off, from elsewhere or not a release list: the hour from the
-			// start stands.
+			// off, from elsewhere, not a release list or with no version
+			// on any page read: the hour from the start stands.
 			CHECK(store.saves == 1);
 			CHECK(store.value == now + kHour);
 		}
@@ -540,4 +540,50 @@ TEST(update_reply_is_read_only_from_the_api_over_https)
 	CHECK(!IsApiReplyUrl("https://api.github.com"));
 	CHECK(!IsApiReplyUrl(""));
 	static_assert(IsApiReplyUrl("https://api.github.com/"));
+}
+
+namespace {
+
+// A full page of qt-metadata releases, with what else is given at the end.
+std::vector<Release> MetadataPage(std::vector<Release> tail = {})
+{
+	std::vector<Release> page;
+	while (page.size() + tail.size() < kReleasesPerPage)
+		page.push_back(Pre("qt-metadata-linux-6.11.2-20261002"));
+	page.insert(page.end(), tail.begin(), tail.end());
+	return page;
+}
+
+} // namespace
+
+TEST(update_reads_the_next_page_when_a_full_one_holds_no_version)
+{
+	CHECK(ReleasesApiUrl(1) == ReleasesApiUrl());
+	CHECK(ReleasesApiUrl(2) == "https://api.github.com/repos/altqx/hikari/releases?per_page=50&page=2");
+	CHECK(IsApiReplyUrl(ReleasesApiUrl(kMaxPages)));
+	CHECK(kMaxPages >= 2);
+
+	// 25 Qt updates in a row, and no version on the page: before, the
+	// check said "up to date" and pointed nowhere.
+	std::vector<Release> page = MetadataPage();
+	CHECK(page.size() == kReleasesPerPage);
+	CHECK(OutcomeOf(page, "0.0.1-rc.3", true) == Outcome::UpToDate);
+	CHECK(NeedsNextPage(page));
+	// Drafts and other tags are not versions either.
+	CHECK(NeedsNextPage(MetadataPage({ Draft("v0.0.2"), Stable("nightly") })));
+
+	// One version on the page, even an older one, is enough to stop.
+	CHECK(!NeedsNextPage(MetadataPage({ Pre("v0.0.1-rc.1") })));
+	CHECK(!NeedsNextPage(MetadataPage({ Stable("v0.0.2") })));
+	// A page that is not full is the end of the list.
+	page.pop_back();
+	CHECK(!NeedsNextPage(page));
+	CHECK(!NeedsNextPage({}));
+
+	// The next page's choice is the whole list's, since nothing on a page
+	// with no version can be offered.
+	std::vector<Release> next = { Pre("qt-metadata-windows-6.11.2-20261002"), Pre("v0.0.1-rc.4"),
+		Pre("v0.0.1-rc.3") };
+	CHECK(!NeedsNextPage(next));
+	CHECK(Offered(next, "0.0.1-rc.3", true) == "v0.0.1-rc.4");
 }
