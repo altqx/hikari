@@ -166,6 +166,16 @@ add_dependencies(hikari_ui_automation_workflow hikari_media_helper hikari_media_
 # D1: the pinned docking engine (KDDockWidgets, QtQuick frontend) qualified with the provisioned Qt.
 hikari_add_qttest(hikari_ui_docking_qualification_tests SOURCES docking_qualification_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin KDAB::kddockwidgets Qt6::Quick Qt6::QuickControls2)
+# D3: the floating header's split at the scales Windows offers.
+foreach(scale 125 150 175 200)
+    math(EXPR whole "${scale} / 100")
+    math(EXPR part "${scale} % 100")
+    add_test(NAME hikari_ui_docking_qualification_tests.scale${scale}
+        COMMAND $<TARGET_FILE:hikari_ui_docking_qualification_tests> floatingHeaderDocksByItsTitleAndMovesByTheRest
+            floatingTabBarMovesRightOfItsTabs floatingTitleKeepsItsRoom)
+    set_tests_properties(hikari_ui_docking_qualification_tests.scale${scale} PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
+endforeach()
 hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp LIBRARIES hikari_composition)
 # D2: the View menu's arrangements and the editor switch through the composition.
 hikari_add_qttest(hikari_ui_view_arrangements_tests SOURCES view_arrangements_tests.cpp LIBRARIES hikari_composition)

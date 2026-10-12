@@ -184,12 +184,25 @@ class DockingQualification : public QObject {
         QTRY_VERIFY(header(QStringLiteral("Video")) && header(QStringLiteral("Grid")));
     }
     // A mouse event at a global point, to the window that holds it, with the
-    // cursor there (the engine reads the cursor while dragging).
+    // cursor there (the engine reads the cursor while dragging). A move
+    // names no button: Qt Quick drops a later move that names one.
+    // Whether a window's position is `expected` within a pixel each way (at
+    // a fractional scale the position is rounded to the device's pixels).
+    static bool near(QPoint position, QPoint expected)
+    {
+        return qAbs(position.x() - expected.x()) <= 1 && qAbs(position.y() - expected.y()) <= 1;
+    }
+    // How far window `w` has moved from `before`, for a failure's message.
+    static QString moved(const QWindow *w, QPoint before)
+    {
+        return QStringLiteral("moved by %1,%2").arg(w->x() - before.x()).arg(w->y() - before.y());
+    }
     static void sendMouse(QWindow *w, QEvent::Type type, QPoint global, Qt::MouseButtons buttons)
     {
         QCursor::setPos(global);
         const QPointF local = QPointF(global - w->position());
-        QMouseEvent event(type, local, local, QPointF(global), Qt::LeftButton, buttons, Qt::NoModifier);
+        const Qt::MouseButton button = type == QEvent::MouseMove ? Qt::NoButton : Qt::LeftButton;
+        QMouseEvent event(type, local, local, QPointF(global), button, buttons, Qt::NoModifier);
         QCoreApplication::sendEvent(w, &event);
         QCoreApplication::processEvents();
     }
@@ -823,20 +836,37 @@ private slots:
         QTRY_VERIFY(audioGroup->mapToScene(QPointF()).x() < gridGroup->mapToScene(QPointF()).x() + 2);
     }
 
-    // D3, Wayland (forced here: Docking.setSystemMove): a floating lone
-    // panel's header keeps both gestures. Its title is the engine's drag,
-    // which shows the drop highlight and docks; the header right of it
-    // moves the window through the compositor, only once the pointer has
-    // moved, so a click there does not hand the pointer over and a
-    // double-click there docks the panel.
-    void waylandHeaderDocksByItsTitleAndMovesByTheRest()
+    // D3: a floating window's header splits on every window system (the
+    // user's choice of 2026-10-12): its title or tabs are the engine's
+    // drag, which docks, and the rest moves the window through the window
+    // system. The offscreen and minimal platforms keep the engine's drag
+    // over the whole header unless a test splits it.
+    void headerSplitsOnEveryWindowSystem()
+    {
+        using hikari::ui::Docking;
+        for (const char *platform : {"wayland", "wayland-egl", "xcb", "windows"})
+            QVERIFY2(Docking::platformUsesSystemMove(QString::fromLatin1(platform)), platform);
+        for (const char *platform : {"offscreen", "minimal", "eglfs"})
+            QVERIFY2(!Docking::platformUsesSystemMove(QString::fromLatin1(platform)), platform);
+        QCOMPARE(Docking::platformUsesSystemMove(), Docking::platformUsesSystemMove(QGuiApplication::platformName()));
+        QCOMPARE(docking()->systemMove(), Docking::platformUsesSystemMove());
+    }
+
+    // D3 (split here with Docking.setSystemMove, as on every window
+    // system): a floating lone panel's header keeps both gestures. Its
+    // title is the engine's drag, which shows the drop highlight and docks;
+    // the header right of it moves the window through the window system,
+    // only once the pointer has moved, so a click there does not hand the
+    // pointer over and a double-click there docks the panel. Offscreen
+    // declines the system move, so the window follows the pointer itself.
+    void floatingHeaderDocksByItsTitleAndMovesByTheRest()
     {
         if (QGuiApplication::platformName() != QLatin1String("offscreen"))
             QSKIP("a synthetic drag between windows needs the offscreen platform (the native gate drags for real)");
         restoreInitial();
         hikari::ui::Docking *d = docking();
         d->setSystemMove(true);
-        const auto restore = qScopeGuard([d] { d->setSystemMove(hikari::ui::Docking::platformNeedsSystemMove()); });
+        const auto restore = qScopeGuard([d] { d->setSystemMove(hikari::ui::Docking::platformUsesSystemMove()); });
         QSignalSpy moves(d, &hikari::ui::Docking::systemMoveRequested);
         auto *audio = dock("Audio");
         QVERIFY(audio->setProperty("isFloating", true));
@@ -860,12 +890,19 @@ private slots:
         QTest::mouseClick(floating, Qt::LeftButton, {}, free);
         QCOMPARE(moves.count(), 0);
         QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50); // not a double-click
-        // A press and a move there: the compositor's move, the panel still floating.
-        QTest::mousePress(floating, Qt::LeftButton, {}, free);
-        QTest::mouseMove(floating, free + QPoint(30, 4));
+        // A press and a move there: the window system's move, the panel
+        // still floating. Offscreen declines it, so the window follows.
+        const QPoint before = floating->position();
+        const QPoint pressed = floating->mapToGlobal(free);
+        sendMouse(floating, QEvent::MouseButtonPress, pressed, Qt::LeftButton);
+        sendMouse(floating, QEvent::MouseMove, pressed + QPoint(30, 4), Qt::LeftButton);
         QTRY_COMPARE(moves.count(), 1);
         QCOMPARE(moves.first().first().value<QWindow *>(), floating);
-        QTest::mouseRelease(floating, Qt::LeftButton, {}, free + QPoint(30, 4));
+        QTRY_VERIFY2(near(floating->position(), before + QPoint(30, 4)), qPrintable(moved(floating, before)));
+        sendMouse(floating, QEvent::MouseMove, pressed + QPoint(50, 24), Qt::LeftButton);
+        QTRY_VERIFY2(near(floating->position(), before + QPoint(50, 24)), qPrintable(moved(floating, before)));
+        sendMouse(floating, QEvent::MouseButtonRelease, pressed + QPoint(50, 24), Qt::NoButton);
+        QCOMPARE(moves.count(), 1);
         QVERIFY(audio->property("isFloating").toBool());
         // A double-click there docks it.
         QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50);
@@ -897,6 +934,169 @@ private slots:
         QCOMPARE(moves.count(), 1); // the title never moved the window itself
         QQuickItem *audioGroup = groupOf(header(QStringLiteral("Audio")));
         QTRY_VERIFY(audioGroup->mapToScene(QPointF()).x() < gridGroup->mapToScene(QPointF()).x() + 2);
+    }
+
+    // D3, the split header (forced as above): a floating tab bar's free
+    // part lies right of its tabs, up to the toolbar, and moves the window
+    // through the window system; the tabs and the toolbar keep theirs.
+    void floatingTabBarMovesRightOfItsTabs()
+    {
+        if (QGuiApplication::platformName() != QLatin1String("offscreen"))
+            QSKIP("the window follows a declined system move only where the platform declines it (offscreen)");
+        restoreInitial();
+        hikari::ui::Docking *d = docking();
+        d->setSystemMove(true);
+        const auto restore = qScopeGuard([d] { d->setSystemMove(hikari::ui::Docking::platformUsesSystemMove()); });
+        QSignalSpy moves(d, &hikari::ui::Docking::systemMoveRequested);
+        auto *grid = dock("Grid");
+        QVERIFY(grid->setProperty("isFloating", true));
+        QQuickItem *bar = nullptr;
+        QTRY_VERIFY((bar = header(QStringLiteral("Grid"))) && bar->window() != window);
+        QWindow *floating = bar->window();
+        QTRY_VERIFY(floating->isExposed());
+        QVERIFY(!bar->property("titleMode").toBool());
+        QQuickItem *tab = childNamed(bar, QStringLiteral("dockTab0"));
+        QQuickItem *slot = childNamed(bar, QStringLiteral("dockToolbarSlot"));
+        QQuickItem *moveArea = childNamed(bar, QStringLiteral("dockSystemMoveArea"));
+        QVERIFY(tab && slot && moveArea);
+        QTRY_VERIFY(moveArea->isVisible() && moveArea->width() > 0);
+        const QRectF t = tab->mapRectToItem(bar, QRectF(0, 0, tab->width(), tab->height()));
+        const QRectF s = slot->mapRectToItem(bar, QRectF(0, 0, slot->width(), slot->height()));
+        QVERIFY2(moveArea->x() >= t.right() - 0.5 && moveArea->x() + moveArea->width() <= s.left() + 0.5,
+                 qPrintable(QStringLiteral("tab ..%1, move %2..%3, toolbar %4..")
+                                .arg(t.right()).arg(moveArea->x()).arg(moveArea->x() + moveArea->width()).arg(s.left())));
+        const QPoint pressed = floating->mapToGlobal(moveArea->mapToScene(QPointF(moveArea->width() / 2, moveArea->height() / 2)).toPoint());
+        const QPoint before = floating->position();
+        sendMouse(floating, QEvent::MouseButtonPress, pressed, Qt::LeftButton);
+        sendMouse(floating, QEvent::MouseMove, pressed + QPoint(-20, 30), Qt::LeftButton);
+        QTRY_COMPARE(moves.count(), 1);
+        QTRY_VERIFY2(near(floating->position(), before + QPoint(-20, 30)), qPrintable(moved(floating, before)));
+        sendMouse(floating, QEvent::MouseButtonRelease, pressed + QPoint(-20, 30), Qt::NoButton);
+        QVERIFY(grid->property("isFloating").toBool());
+        restoreInitial();
+    }
+
+    // D3, the split header at the scales Windows offers (125-200 %, the
+    // .scale runs): a lone panel's title keeps its drag and the free part
+    // its room. At the window's width the whole title is left of the free
+    // part; a long title gives way to keep the free part 48 pixels wide but
+    // keeps 48 itself; and so does a window too narrow for both. The title,
+    // elided or not, ends before the free part. The title bar of a floating
+    // window of several groups is split by the same rule.
+    void floatingTitleKeepsItsRoom()
+    {
+        restoreInitial();
+        hikari::ui::Docking *d = docking();
+        d->setSystemMove(true);
+        const auto restore = qScopeGuard([d] { d->setSystemMove(hikari::ui::Docking::platformUsesSystemMove()); });
+        auto *audio = dock("Audio");
+        const QString title = audio->property("title").toString();
+        const auto retitle = qScopeGuard([audio, title] { audio->setProperty("title", title); });
+        QVERIFY(audio->setProperty("isFloating", true));
+        QQuickItem *bar = nullptr;
+        QTRY_VERIFY((bar = header(QStringLiteral("Audio"))) && bar->window() != window);
+        QWindow *floating = bar->window();
+        QTRY_VERIFY(floating->isExposed());
+        QQuickItem *text = childNamed(bar, QStringLiteral("dockTitleText"));
+        QQuickItem *moveArea = childNamed(bar, QStringLiteral("dockSystemMoveArea"));
+        QQuickItem *button = childNamed(bar, QStringLiteral("dockMenuButton"));
+        QVERIFY(text && moveArea && button);
+        const auto split = [&] {
+            return QStringLiteral("header %1: title %2+%3, move %4..%5, button %6")
+                .arg(bar->width()).arg(text->x()).arg(text->property("contentWidth").toReal())
+                .arg(moveArea->x()).arg(moveArea->x() + moveArea->width()).arg(button->x());
+        };
+        // the title whole, then the free part, then the button
+        QTRY_VERIFY(moveArea->isVisible());
+        QVERIFY2(moveArea->x() >= text->x() + text->property("contentWidth").toReal() && moveArea->width() >= 48
+                     && moveArea->x() + moveArea->width() <= button->x(),
+                 qPrintable(split()));
+        // a title longer than the header
+        QVERIFY(audio->setProperty("title", QStringLiteral("Audio waveform, spectrum, karaoke syllables and the keyframes of the current video, with every audio track")));
+        QTRY_VERIFY2(text->property("truncated").toBool(), qPrintable(split()));
+        QTRY_VERIFY2(qAbs(moveArea->width() - 48) < 0.5 && moveArea->x() - text->x() >= 48, qPrintable(split()));
+        QVERIFY2(moveArea->x() + moveArea->width() <= button->x(), qPrintable(split()));
+        QVERIFY2(text->x() + text->width() <= moveArea->x(), qPrintable(split()));
+        // a window too narrow for both
+        const qreal wide = bar->width();
+        floating->resize(150, floating->height());
+        QTRY_VERIFY2(bar->width() < wide - 100, qPrintable(split()));
+        QVERIFY2(moveArea->x() - text->x() >= qMin(48.0, button->x() - text->x()), qPrintable(split()));
+        QVERIFY2(button->x() - 2 - text->x() < 96 || moveArea->width() >= 48, qPrintable(split()));
+        QVERIFY2(text->x() + text->width() <= moveArea->x(), qPrintable(split()));
+        QVERIFY(audio->setProperty("title", title));
+        QVERIFY(audio->setProperty("isFloating", false));
+        QTRY_VERIFY(!audio->property("isFloating").toBool());
+
+        // The title bar of a floating window of two groups.
+        auto *video = dock("Video");
+        QVERIFY(video->setProperty("isFloating", true));
+        QQuickItem *videoBar = nullptr;
+        QTRY_VERIFY((videoBar = header(QStringLiteral("Video"))) && videoBar->window() != window);
+        auto *pair = qobject_cast<QQuickWindow *>(videoBar->window());
+        QVERIFY(QMetaObject::invokeMethod(window, "pairFloating"));
+        QTRY_VERIFY(header(QStringLiteral("Audio")) && header(QStringLiteral("Audio"))->window() == pair);
+        QTRY_VERIFY(!itemsNamed(pair, QStringLiteral("dockTitleBar")).isEmpty());
+        bar = itemsNamed(pair, QStringLiteral("dockTitleBar")).first();
+        text = childNamed(bar, QStringLiteral("dockTitleText"));
+        button = childNamed(bar, QStringLiteral("dockMenuButton"));
+        moveArea = nullptr;
+        for (QQuickItem *c : bar->childItems())
+            if (c->objectName() == QLatin1String("dockSystemMoveArea"))
+                moveArea = c;
+        QVERIFY(text && moveArea && button);
+        QTRY_VERIFY(moveArea->isVisible());
+        QVERIFY2(moveArea->x() >= text->x() + text->property("contentWidth").toReal() && moveArea->width() >= 48
+                     && moveArea->x() + moveArea->width() <= button->x(),
+                 qPrintable(split()));
+        if (QGuiApplication::platformName() == QLatin1String("offscreen")) {
+            // a press and a move there: the window system's move of the pair's window
+            QSignalSpy moves(d, &hikari::ui::Docking::systemMoveRequested);
+            const QPoint pressed = pair->mapToGlobal(moveArea->mapToScene(QPointF(moveArea->width() / 2, moveArea->height() / 2)).toPoint());
+            const QPoint before = pair->position();
+            sendMouse(pair, QEvent::MouseButtonPress, pressed, Qt::LeftButton);
+            sendMouse(pair, QEvent::MouseMove, pressed + QPoint(25, 10), Qt::LeftButton);
+            QTRY_COMPARE(moves.count(), 1);
+            QCOMPARE(moves.first().first().value<QWindow *>(), pair);
+            QTRY_VERIFY2(near(pair->position(), before + QPoint(25, 10)), qPrintable(moved(pair, before)));
+            sendMouse(pair, QEvent::MouseButtonRelease, pressed + QPoint(25, 10), Qt::NoButton);
+        }
+        restoreInitial();
+    }
+
+    // D3 on X11 (the .xvfb run): the header splits without a test asking.
+    // A press and a move on the free part of a floating panel's header
+    // asks the window system to move it. An X server without a window
+    // manager that moves windows (xvfb-run's) declines, and the window then
+    // follows the pointer itself; one with a window manager moves it.
+    void x11HeaderMovesThroughTheWindowSystem()
+    {
+        if (QGuiApplication::platformName() != QLatin1String("xcb"))
+            QSKIP("X11 only (the .xvfb run)");
+        restoreInitial();
+        QVERIFY(docking()->systemMove());
+        QSignalSpy moves(docking(), &hikari::ui::Docking::systemMoveRequested);
+        auto *audio = dock("Audio");
+        QVERIFY(audio->setProperty("isFloating", true));
+        QQuickItem *bar = nullptr;
+        QTRY_VERIFY((bar = header(QStringLiteral("Audio"))) && bar->window() != window);
+        QWindow *floating = bar->window();
+        QTRY_VERIFY(floating->isExposed());
+        QQuickItem *moveArea = childNamed(bar, QStringLiteral("dockSystemMoveArea"));
+        QVERIFY(moveArea && moveArea->isVisible() && moveArea->width() >= 48);
+        const QPoint free = moveArea->mapToScene(QPointF(moveArea->width() / 2, moveArea->height() / 2)).toPoint();
+        const QPoint before = floating->position();
+        QTest::mousePress(floating, Qt::LeftButton, {}, free);
+        QTest::mouseMove(floating, free + QPoint(30, 4));
+        QTRY_COMPARE(moves.count(), 1);
+        QCOMPARE(moves.first().first().value<QWindow *>(), floating);
+        QTest::qWait(200);
+        const QPoint moved = floating->position() - before;
+        QVERIFY2(moved.isNull() || near(moved, QPoint(30, 4)),
+                 qPrintable(QStringLiteral("moved by %1,%2").arg(moved.x()).arg(moved.y())));
+        QTest::mouseRelease(floating, Qt::LeftButton, {}, free + QPoint(30, 4) - moved);
+        QVERIFY(audio->property("isFloating").toBool());
+        restoreInitial();
     }
 
     // D3: a floating window holding several groups shows the engine's title
