@@ -2097,10 +2097,11 @@ private slots:
             QVERIFY2(over, qPrintable(label->property("text").toString()));
         }
 
-        // The lists' commands beside the editor above the closing row (they
-        // wrap into a second column in a short window), each inside its box.
-        auto *closeButton = findItem(content, QStringLiteral("styleManagerClose"));
-        auto *footer = closeButton->parentItem();
+        // The lists' commands beside the editor above the closing row (the
+        // move arrows take a column of their own in a short window), each
+        // inside its box.
+        auto *cancelButton = findItem(content, QStringLiteral("styleEditorCancel"));
+        auto *footer = cancelButton->parentItem();
         while (footer && !footer->inherits("QQuickDialogButtonBox"))
             footer = footer->parentItem();
         QVERIFY(footer);
@@ -2124,15 +2125,51 @@ private slots:
         inBox(content, nullptr);
         if (QTest::currentTestFailed())
             return;
+        // Each strip keeps its two groups apart: the arrows under the
+        // commands with the separator between, or in a column of their own
+        // right of them with the separator between; never a separator
+        // inside a column of commands.
+        for (const char *name : {"storeCommands", "assCommands"}) {
+            auto *strip = findItem(content, QLatin1String(name));
+            QVERIFY2(strip, name);
+            const auto parts = strip->childItems(); // commands, across, down, moves
+            QCOMPARE(parts.size(), 4);
+            const auto bounds = [&](QQuickItem *group) {
+                QRectF r;
+                for (QQuickItem *b : group->childItems())
+                    r |= b->mapRectToItem(content, QRectF(0, 0, b->width(), b->height()));
+                return r;
+            };
+            const QRectF commands = bounds(parts[0]);
+            const QRectF moves = bounds(parts[3]);
+            QVERIFY2(parts[1]->isVisible() != parts[2]->isVisible(), name);
+            QQuickItem *separator = parts[1]->isVisible() ? parts[1] : parts[2];
+            const QRectF between = separator->mapRectToItem(content, QRectF(0, 0, separator->width(), separator->height()));
+            const bool stacked = between.top() >= commands.bottom() - 0.5 && moves.top() >= between.bottom() - 0.5
+                                 && qAbs(moves.left() - commands.left()) < 0.5;
+            const bool beside = between.left() >= commands.right() - 0.5 && moves.left() >= between.right() - 0.5
+                                && qAbs(moves.top() - commands.top()) < 0.5;
+            QVERIFY2(parts[1]->isVisible() ? stacked : beside,
+                     qPrintable(QStringLiteral("%1: commands %2,%3 %4x%5, separator %6,%7, arrows %8,%9")
+                                    .arg(QLatin1String(name)).arg(commands.x()).arg(commands.y()).arg(commands.width())
+                                    .arg(commands.height()).arg(between.x()).arg(between.y()).arg(moves.x()).arg(moves.y())));
+        }
 
-        // The closing row in the window.
-        for (const char *name : {"styleEditorOk", "styleEditorApply", "styleEditorCancel", "styleManagerClose"}) {
+        // The closing row in the window: the editor's OK, Apply and Cancel,
+        // not the manager's OK and Close (one button rejects).
+        for (const char *name : {"styleEditorOk", "styleEditorApply", "styleEditorCancel"}) {
             auto *button = findItem(content, QLatin1String(name));
             QVERIFY2(button && button->isVisible(), name);
             const QRectF r = button->mapRectToItem(content, QRectF(0, 0, button->width(), button->height()));
             QVERIFY2(r.left() >= 0 && r.right() <= manager->width() && r.bottom() <= manager->height(), name);
         }
-        QVERIFY(!findItem(content, QStringLiteral("styleManagerOk"))->isVisible()); // the editor's OK instead
+        QVERIFY(!findItem(content, QStringLiteral("styleManagerOk"))->isVisible());
+        QVERIFY(!findItem(content, QStringLiteral("styleManagerClose"))->isVisible());
+        QTRY_COMPARE(footer->implicitWidth(), findItem(content, QStringLiteral("styleEditorOk"))->width()
+                                                  + findItem(content, QStringLiteral("styleEditorApply"))->width()
+                                                  + cancelButton->width() + 2 * footer->property("spacing").toReal()
+                                                  + footer->property("leftPadding").toReal()
+                                                  + footer->property("rightPadding").toReal());
         QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
     }
 

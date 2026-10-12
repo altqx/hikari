@@ -186,6 +186,52 @@ Window {
         Layout.fillWidth: true
         Layout.minimumWidth: 40
     }
+    // A list's commands beside it: an icon-only column of 22-pixel buttons
+    // (legacy's text buttons and arrow bitmaps), the name in the tooltip and
+    // as the accessible name, the move arrows under a separator. A list
+    // shorter than that column (a small screen) puts the arrows in a column
+    // of their own, the separator between the two groups; the commands
+    // take a second column only when they alone are taller than the list.
+    component ListCommands: Item {
+        id: strip
+        default property alias commands: commandColumn.data
+        property alias moves: moveColumn.data
+        readonly property real unit: commandColumn.children.length > 0 ? commandColumn.children[0].implicitHeight : 22
+        readonly property int rows: Math.max(1, Math.floor(height / unit))
+        readonly property bool split: (commandColumn.children.length + moveColumn.children.length) * unit
+                                      + across.implicitHeight > height
+        // As few rows as the columns a group needs take, evenly filled.
+        function balanced(count) { return Math.ceil(count / Math.ceil(count / rows)) }
+        implicitWidth: split ? commandColumn.width + down.width + moveColumn.width
+                             : Math.max(commandColumn.width, moveColumn.width)
+        Grid {
+            id: commandColumn
+            flow: Grid.TopToBottom
+            rows: strip.split ? strip.balanced(children.length) : children.length
+        }
+        ToolSeparator {
+            id: across
+            visible: !strip.split
+            orientation: Qt.Horizontal
+            padding: 0
+            y: commandColumn.height
+            width: commandColumn.width
+        }
+        ToolSeparator {
+            id: down
+            visible: strip.split
+            orientation: Qt.Vertical
+            x: commandColumn.width
+            height: Math.max(commandColumn.height, moveColumn.height)
+        }
+        Grid {
+            id: moveColumn
+            flow: Grid.TopToBottom
+            rows: strip.split ? strip.balanced(children.length) : children.length
+            x: strip.split ? down.x + down.width : 0
+            y: strip.split ? 0 : across.y + across.height
+        }
+    }
     component StyleList: ListView {
         id: list
         required property var names
@@ -292,26 +338,21 @@ Window {
                         onPicked: (rows) => manager.storeSelected = rows
                         onEdit: manager.beginEditing(manager.styles.beginEdit(true, manager.storeSelected[0]), true)
                     }
-                    // The list's commands, an icon-only column of 22-pixel
-                    // buttons (legacy's text buttons and arrow bitmaps): the
-                    // name in the tooltip and as the accessible name. A list
-                    // shorter than them (a small screen) wraps them into a
-                    // second column.
-                    Flow {
-                        flow: Flow.TopToBottom
+                    ListCommands {
+                        objectName: "storeCommands"
                         Layout.fillHeight: true
-                        spacing: 0
                         IconToolButton { padding: 3; objectName: "storeNew"; iconRole: "add"; text: qsTr("New"); tip: qsTr("Create new style in storage"); onClicked: manager.beginEditing(manager.styles.beginNew(true), true) }
                         IconToolButton { padding: 3; objectName: "storeCopy"; iconRole: "duplicate"; text: qsTr("Copy"); tip: qsTr("Copy the selected style"); enabled: manager.storeSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginCopy(true, manager.storeSelected[0]), true) }
                         IconToolButton { padding: 3; objectName: "storeEdit"; iconRole: "edit"; text: qsTr("Edit"); tip: qsTr("Edit the selected style"); enabled: manager.storeSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginEdit(true, manager.storeSelected[0]), true) }
                         IconToolButton { padding: 3; iconRole: "import"; text: qsTr("Load"); tip: qsTr("Load style from external ASS file to storage"); onClicked: { loadDialog.toStore = true; loadDialog.open() } }
                         IconToolButton { padding: 3; objectName: "storeDelete"; iconRole: "delete"; text: qsTr("Delete"); tip: qsTr("Delete the selected styles"); enabled: manager.storeSelected.length > 0; onClicked: manager.storeSelected = manager.styles.removeStyles(true, manager.storeSelected) }
                         IconToolButton { padding: 3; iconRole: "sort"; text: qsTr("Sort"); tip: qsTr("Sort the styles by name"); onClicked: { manager.styles.sortStyles(true); manager.storeSelected = [0] } }
-                        ToolSeparator { orientation: Qt.Horizontal; width: 22; padding: 0 }
-                        IconToolButton { padding: 3; iconRole: "move-to-top"; text: qsTr("Move selected styles to beginning"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 0) }
-                        IconToolButton { padding: 3; iconRole: "move-up"; text: qsTr("Move selected styles up"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 1) }
-                        IconToolButton { padding: 3; iconRole: "move-down"; text: qsTr("Move selected styles down"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 2) }
-                        IconToolButton { padding: 3; iconRole: "move-to-bottom"; text: qsTr("Move selected styles to end"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 3) }
+                        moves: [
+                            IconToolButton { padding: 3; iconRole: "move-to-top"; text: qsTr("Move selected styles to beginning"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 0) },
+                            IconToolButton { padding: 3; iconRole: "move-up"; text: qsTr("Move selected styles up"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 1) },
+                            IconToolButton { padding: 3; iconRole: "move-down"; text: qsTr("Move selected styles down"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 2) },
+                            IconToolButton { padding: 3; iconRole: "move-to-bottom"; text: qsTr("Move selected styles to end"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 3) }
+                        ]
                     }
                 }
             }
@@ -377,10 +418,9 @@ Window {
                         onPicked: (rows) => manager.assSelected = rows
                         onEdit: manager.beginEditing(manager.styles.beginEdit(false, manager.assSelected[0]), false)
                     }
-                    Flow { // as the stored styles' commands
-                        flow: Flow.TopToBottom
+                    ListCommands { // as the stored styles'
+                        objectName: "assCommands"
                         Layout.fillHeight: true
-                        spacing: 0
                         IconToolButton { padding: 3; objectName: "assNew"; iconRole: "add"; text: qsTr("New"); tip: qsTr("Create new ASS style"); onClicked: manager.beginEditing(manager.styles.beginNew(false), false) }
                         IconToolButton { padding: 3; objectName: "assCopy"; iconRole: "duplicate"; text: qsTr("Copy"); tip: qsTr("Copy the selected style"); enabled: manager.assSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginCopy(false, manager.assSelected[0]), false) }
                         IconToolButton { padding: 3; objectName: "assEdit"; iconRole: "edit"; text: qsTr("Edit"); tip: qsTr("Edit the selected style"); enabled: manager.assSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginEdit(false, manager.assSelected[0]), false) }
@@ -395,11 +435,12 @@ Window {
                             tip: qsTr("Delete unused ASS styles")
                             onClicked: { message.title = qsTr("Status of deleted styles"); message.text = manager.styles.cleanStyles(); message.open() }
                         }
-                        ToolSeparator { orientation: Qt.Horizontal; width: 22; padding: 0 }
-                        IconToolButton { padding: 3; iconRole: "move-to-top"; text: qsTr("Move selected styles to beginning"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 0) }
-                        IconToolButton { padding: 3; iconRole: "move-up"; text: qsTr("Move selected styles up"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 1) }
-                        IconToolButton { padding: 3; iconRole: "move-down"; text: qsTr("Move selected styles down"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 2) }
-                        IconToolButton { padding: 3; iconRole: "move-to-bottom"; text: qsTr("Move selected styles to end"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 3) }
+                        moves: [
+                            IconToolButton { padding: 3; iconRole: "move-to-top"; text: qsTr("Move selected styles to beginning"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 0) },
+                            IconToolButton { padding: 3; iconRole: "move-up"; text: qsTr("Move selected styles up"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 1) },
+                            IconToolButton { padding: 3; iconRole: "move-down"; text: qsTr("Move selected styles down"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 2) },
+                            IconToolButton { padding: 3; iconRole: "move-to-bottom"; text: qsTr("Move selected styles to end"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 3) }
+                        ]
                     }
                 }
             }
@@ -707,7 +748,8 @@ Window {
     // One closing row under the manager and the editor beside it: the
     // editor's OK, Apply and Cancel while a Style is edited (StyleChange's
     // buttons, which close the editor; the manager's OK did the editor's),
-    // then the manager's OK and Close (StyleStore's Close).
+    // the manager's OK and Close (StyleStore's Close) otherwise, so one
+    // button rejects at a time.
     WindowFooter {
         id: managerFooter
         anchors.left: parent.left
@@ -742,9 +784,10 @@ Window {
             DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
             onClicked: manager.endEditing()
         }
-        Button {
+        FooterButton {
             objectName: "styleManagerClose"
             text: qsTr("Close")
+            visible: !manager.editing
             DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
             onClicked: manager.closeManager()
         }
