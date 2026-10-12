@@ -154,7 +154,11 @@ TabPanel *Notebook::GetPage()
 
 void Notebook::AddPage(bool refresh, bool saveLastSession)
 {
-	if (iter < Pages.size() && Pages[iter]->video->GetState() == Playing){ Pages[iter]->video->Pause(); }
+	pausedByAddPage = nullptr;
+	if (iter < Pages.size() && Pages[iter]->video->GetState() == Playing){
+		Pages[iter]->video->Pause();
+		pausedByAddPage = Pages[iter];
+	}
 	int w, h;
 	GetClientSize(&w, &h);
 	if(refresh){Freeze();}
@@ -229,6 +233,7 @@ void Notebook::DeletePage(int page)
 		return;
 	}
 
+	pausedByAddPage = nullptr;
 	Freeze();
 	block = true;
 	if (Hikari->SavePrompt(1, page)){
@@ -319,6 +324,8 @@ void Notebook::DeletePage(int page)
 
 void Notebook::RemoveUnusedPage(int page, int pageToSelect)
 {
+	TabPanel *pausedTab = pausedByAddPage;
+	pausedByAddPage = nullptr;
 	int pagesSize = Size();
 	if (page < 0 || page >= pagesSize || pagesSize < 2)
 		return;
@@ -334,13 +341,12 @@ void Notebook::RemoveUnusedPage(int page, int pageToSelect)
 		pageToSelect = (page > 0) ? page - 1 : 1;
 
 	Freeze();
+	TabPanel *selected = (removeActive) ? Pages[pageToSelect] : nullptr;
+	bool showSelected = removeActive && removed->IsShown();
 	if (removeActive){
 		//AddPage gave the new page the place of the page that was active
-		TabPanel *selected = Pages[pageToSelect];
 		selected->SetPosition(removed->GetPosition());
 		selected->SetSize(removed->GetSize());
-		if (removed->IsShown())
-			selected->Show();
 		iter = pageToSelect;
 	}
 	removed->Destroy();
@@ -354,11 +360,20 @@ void Notebook::RemoveUnusedPage(int page, int pageToSelect)
 	olditer = iter;
 	int rsize = Size() - 1;
 	if (firstVisibleTab > rsize){ firstVisibleTab = tabScrollDestination = rsize; }
+	if (removeActive){
+		//as when a tab is shown again after a tab change or close
+		selected->ReloadSubsIfModified();
+		if (showSelected)
+			selected->Show();
+	}
 
 	CalcSizes(true);
 	Thaw();
 	Refresh(false);
 	if (removeActive){
+		//AddPage paused the video of this tab only to show the removed one
+		if (showSelected && selected == pausedTab && selected->video->GetState() == Paused)
+			selected->video->Play();
 		//update the title, status bar and menus as a tab change does
 		wxCommandEvent choiceSelectedEvent(wxEVT_COMMAND_CHOICE_SELECTED, GetId());
 		AddPendingEvent(choiceSelectedEvent);
@@ -1022,6 +1037,7 @@ void Notebook::ContextMenu(const wxPoint &pos, int i)
 void Notebook::OnTabSel(int id)
 {
 	int wtab = id - MENU_CHOOSE;
+	pausedByAddPage = nullptr;
 	if (Pages[iter]->video->GetState() == Playing){ Pages[iter]->video->Pause(); }
 	if (wtab < -1){
 		wtab = abs(wtab + 2);
@@ -1464,6 +1480,7 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 			(*i)->Destroy();
 		}
 		sthis->Pages.clear();
+		sthis->pausedByAddPage = nullptr;
 		sthis->tabSizes.Clear();
 		sthis->tabNames.Clear();
 		sthis->iter = 0;
@@ -1680,6 +1697,7 @@ void Notebook::ChangePage(int page, bool makeActiveVisible /*= false*/)
 		return;
 
 	olditer = iter;
+	pausedByAddPage = nullptr;
 	if (split && splititer == page){
 		ChangeActive(); return;
 	}

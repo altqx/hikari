@@ -46,7 +46,9 @@ public:
 	void DeletePage(int page);
 	//removes a page added for a file that then could not be opened, and makes
 	//pageToSelect active again when the removed page was the active one;
-	//a page that holds subtitles, video, audio or changes is kept
+	//a page that holds subtitles, video, audio or changes is kept; the page
+	//shown again gets the reload check of a tab change and, when AddPage
+	//paused its video for the removed page, plays again
 	void RemoveUnusedPage(int page, int pageToSelect);
 	void Split(size_t page);
 	int FindTab(int x, int *num);
@@ -127,6 +129,9 @@ private:
 	HHOOK Hook;
 	HikariSubFrame *Hikari;
 	wxMutex closeTabMutex;
+	//the tab whose playing video the last AddPage paused, so that
+	//RemoveUnusedPage can play it again
+	TabPanel *pausedByAddPage = nullptr;
 
 	static LRESULT __stdcall PauseOnMinimalize(int code, WPARAM wParam, LPARAM lParam);
 

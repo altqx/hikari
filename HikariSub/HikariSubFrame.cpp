@@ -2012,7 +2012,9 @@ void HikariSubFrame::OnPageChanged(wxCommandEvent& event)
 			cur->shiftTimes->RefVals(Tabs->Page(Tabs->GetOldSelection())->shiftTimes);
 		}
 
-		if (Options.GetBool(AUTO_SELECT_LINES_FROM_LAST_TAB)){
+		//there is no other tab to take lines from when a removed tab gives
+		//the active one back or the last tab is closed
+		if (Tabs->iter != Tabs->GetOldSelection() && Options.GetBool(AUTO_SELECT_LINES_FROM_LAST_TAB)){
 			SubsGrid *old = Tabs->Page(Tabs->GetOldSelection())->grid;
 			if (old->file->FirstSelection() > -1){
 				cur->grid->SelVideoLine(old->file->GetDialogue(old->file->FirstSelection())->Start.mstime);
