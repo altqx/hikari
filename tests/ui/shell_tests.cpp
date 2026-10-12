@@ -6249,6 +6249,62 @@ private slots:
         application->shell().setHiddenColumns(0);
     }
 
+    // The Grid's abbreviated headings name their column on hover (legacy's
+    // Hide columns names, SubsGrid.cpp:199-200 and 501-508): the pointer over
+    // "L." shows "Layer" below it, in the interface language; a heading that
+    // is a word shows nothing.
+    void gridHeadingsNameTheirColumnOnHover()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        auto *tip = named("editingGridHeaderToolTip");
+        QVERIFY(tip);
+        // The heading's centre, the header being the Grid's first row.
+        const auto heading = [&](const QString &title) {
+            for (int c = 0; c < grid->columnCount(); ++c)
+                if (grid->columnTitle(c) == title)
+                    return grid->mapToScene(QPointF(grid->cellRect(0, c).center().x(), grid->rowHeight() / 2)).toPoint();
+            return QPoint(-1, -1);
+        };
+        QVERIFY(heading(QStringLiteral("L.")).x() >= 0);
+        QVERIFY(heading(QStringLiteral("Vert.")).x() >= 0);
+        // Over a row first, then the heading, aimed afresh on every try: the
+        // docks settle a frame after the file opens (xcb), moving the Grid
+        // under a pointer that stays where it was.
+        const auto hovering = [&](const QString &title, const QString &name) {
+            const QPoint at = heading(title);
+            QTest::mouseMove(window, at + QPoint(0, int(grid->rowHeight() * 3)));
+            QTest::mouseMove(window, at);
+            return grid->property("headerToolTip").toString() == name;
+        };
+        QTRY_VERIFY(hovering(QStringLiteral("L."), QStringLiteral("Layer")));
+        QTRY_VERIFY(tip->property("visible").toBool()); // after the tooltip's delay
+        QCOMPARE(tip->property("text").toString(), QStringLiteral("Layer"));
+        QTRY_VERIFY(hovering(QStringLiteral("Vert."), QStringLiteral("Vertical margin")));
+        QTRY_COMPARE(tip->property("text").toString(), QStringLiteral("Vertical margin"));
+        QTRY_VERIFY(hovering(QStringLiteral("Start"), QString()));
+        QTRY_VERIFY(!tip->property("visible").toBool());
+
+        class Polish final : public QTranslator {
+        public:
+            bool isEmpty() const override { return false; }
+            QString translate(const char *context, const char *source, const char *, int) const override
+            {
+                return QByteArray(context) == "HikariSub.Grid" && QByteArray(source) == "Layer"
+                           ? QStringLiteral("Warstwa")
+                           : QString();
+            }
+        } polish;
+        QVERIFY(QCoreApplication::installTranslator(&polish));
+        auto removePolish = qScopeGuard([&] { QCoreApplication::removeTranslator(&polish); });
+        QTRY_VERIFY(hovering(QStringLiteral("L."), QStringLiteral("Warstwa")));
+        QTRY_VERIFY(tip->property("visible").toBool());
+        QCOMPARE(tip->property("text").toString(), QStringLiteral("Warstwa"));
+        QTest::mouseMove(window, QPoint(2, 2));
+        QTRY_VERIFY(!tip->property("visible").toBool());
+    }
+
     // R1-check-items-close: a check item keeps its menus open when switched,
     // by the pointer, Enter or Space, as legacy's ITEM_CHECK did
     // (MenuDialog::SendEvent, Menu.cpp:662-670), and the status bar keeps

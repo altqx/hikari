@@ -3371,6 +3371,7 @@ ApplicationWindow {
                     onLineDragged: id => root.app.dragSelection(id)
                     onSelectAllRequested: root.app.selectAllLines()
                     onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
+                    GridHeaderToolTip { grid: grid }
                     onHiddenBlockToggleRequested: row => root.app.toggleHiddenBlock(row)
                     onGroupToggleRequested: id => root.app.toggleGroup(id)
                     onGroupMenuRequested: (id, x, y) => {

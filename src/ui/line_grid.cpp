@@ -49,6 +49,7 @@ LineGrid::LineGrid(QQuickItem *parent) : QQuickPaintedItem(parent)
     setOpaquePainting(true);
     setActiveFocusOnTab(true);
     setAcceptedMouseButtons(Qt::LeftButton | Qt::RightButton); // selection gestures (G1), context menu (G3)
+    setAcceptHoverEvents(true); // the headings' full names
     setFlag(ItemIsFocusScope, false);
     installGridAccessibility();
     updateRowHeight();
@@ -86,6 +87,7 @@ void LineGrid::setModel(QAbstractItemModel *model)
             connect(m_model, &QAbstractItemModel::layoutChanged, this, relayout),
             connect(m_model, &QAbstractItemModel::headerDataChanged, this, [this] {
                 updateColumns();
+                setHeaderToolTip(-1);
                 update();
             }),
             connect(m_model, &QAbstractItemModel::dataChanged, this,
@@ -402,14 +404,49 @@ void LineGrid::mouseDoubleClickEvent(QMouseEvent *event)
 
 bool LineGrid::inEndColumn(qreal x) const
 {
+    return modelColumn(columnAt(x)) == LineTableModel::EndColumn;
+}
+
+int LineGrid::columnAt(qreal x) const
+{
     const auto widths = columnWidths(width() - m_markWidth);
     double left = m_markWidth;
     for (std::size_t c = 0; c < widths.size(); ++c) {
         if (x >= left && x < left + widths[c])
-            return modelColumn(static_cast<int>(c)) == LineTableModel::EndColumn;
+            return static_cast<int>(c);
         left += widths[c];
     }
-    return false;
+    return -1;
+}
+
+// The hover text of the heading under the pointer: an abbreviated heading's
+// full name (the model's Qt::ToolTipRole), nothing over the rows.
+void LineGrid::hoverMoveEvent(QHoverEvent *event)
+{
+    setHeaderToolTip(event->position().y() < m_geometry.headerHeight ? columnAt(event->position().x()) : -1);
+}
+
+void LineGrid::hoverLeaveEvent(QHoverEvent *event)
+{
+    setHeaderToolTip(-1);
+    QQuickPaintedItem::hoverLeaveEvent(event);
+}
+
+void LineGrid::setHeaderToolTip(int column)
+{
+    const QString tip = m_model && column >= 0
+                            ? m_model->headerData(modelColumn(column), Qt::Horizontal, Qt::ToolTipRole).toString()
+                            : QString();
+    QRectF cell;
+    if (!tip.isEmpty()) {
+        const QRectF first = cellRect(0, column);
+        cell = QRectF(first.x(), 0, first.width(), m_geometry.headerHeight);
+    }
+    if (tip == m_headerToolTip && cell == m_headerToolTipCell)
+        return;
+    m_headerToolTip = tip;
+    m_headerToolTipCell = cell;
+    emit headerToolTipChanged();
 }
 
 void LineGrid::mouseMoveEvent(QMouseEvent *event)

@@ -38,6 +38,8 @@ qt_target_qml_sources(hikari_ui QML_FILES AutomationNotices.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTabMenu.qml)
 # R2: the reference tray (navigation, linked matching, the preview menu).
 qt_target_qml_sources(hikari_ui QML_FILES ReferenceTray.qml)
+# The Grids' hover text for their abbreviated headings.
+qt_target_qml_sources(hikari_ui QML_FILES GridHeaderToolTip.qml)
 # P9: the association question, the tab commands' questions and the legacy autosaves.
 qt_target_qml_sources(hikari_ui QML_FILES AssociationOffer.qml TabCommands.qml LegacyAutosaveList.qml)
 # Y8: the font collector's window.

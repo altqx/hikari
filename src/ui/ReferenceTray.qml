@@ -99,6 +99,7 @@ FocusScope {
             Accessible.role: Accessible.Table // in the accessibility tree, as the Grid
             accessibleName: qsTr("Reference Lines (protected, read-only)")
             model: tray.shell.referenceLines
+            GridHeaderToolTip { grid: referenceGrid }
             // The tray's own navigation: every gesture is a request for the
             // reference's selection (G1), never its content.
             onActiveLineRequested: id => tray.app.selectReferenceLine(id)

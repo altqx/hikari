@@ -2627,6 +2627,14 @@ Failed to copy %2 fonts.</source>
         <source>Translation</source>
         <translation>번역본</translation>
     </message>
+    <message>
+        <source>Characters per second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Hotkeys</name>

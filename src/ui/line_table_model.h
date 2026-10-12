@@ -96,6 +96,9 @@ public:
     static int labelSlot(int state);
     // GRID_HIDE_COLUMNS bits (legacy LAYER=1 ... EFFECT=256, CPS=512, WRAPS=8192).
     static int hideBit(Column column);
+    // The heading's full name for its hover text (headerData's
+    // Qt::ToolTipRole), empty when the heading is not abbreviated.
+    static QString headerToolTip(int section);
 
     explicit LineTableModel(QObject *parent = nullptr);
 

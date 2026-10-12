@@ -455,6 +455,8 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
         return QVariantList(m_comparisonColours.begin(), m_comparisonColours.end());
     if (role == LabelColoursRole)
         return QVariantList(m_labelColours.begin(), m_labelColours.end());
+    if (role == Qt::ToolTipRole)
+        return headerToolTip(section);
     if (role != Qt::DisplayRole)
         return {};
     // Legacy headings (SubsGridWindow.cpp:310-330). "#" is the one legacy
@@ -479,6 +481,25 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
                                         QT_TRANSLATE_NOOP("HikariSub.Grid", "Translation")};
     static_assert(std::size(names) == ColumnCount);
     return QCoreApplication::translate("HikariSub.Grid", names[section]);
+}
+
+// An abbreviated heading's full name, the Grid's hover text; empty for a
+// heading that is already a word ("Start", "Styles", "Text"), so no name is
+// said twice. Legacy names these columns in its Paste columns choices
+// (SubsGrid.cpp:501-508: "Layer", "Left margin", "Right margin", "Vertical
+// margin") and its Hide columns menu (SubsGrid.cpp:199-200: "characters per
+// second", "line wraps").
+QString LineTableModel::headerToolTip(int section)
+{
+    switch (section) {
+    case LayerColumn: return QCoreApplication::translate("HikariSub.Grid", "Layer");
+    case MarginLeftColumn: return QCoreApplication::translate("HikariSub.Grid", "Left margin");
+    case MarginRightColumn: return QCoreApplication::translate("HikariSub.Grid", "Right margin");
+    case MarginVerticalColumn: return QCoreApplication::translate("HikariSub.Grid", "Vertical margin");
+    case CpsColumn: return QCoreApplication::translate("HikariSub.Grid", "Characters per second");
+    case WrapsColumn: return QCoreApplication::translate("HikariSub.Grid", "Line wraps");
+    default: return {};
+    }
 }
 
 QHash<int, QByteArray> LineTableModel::roleNames() const
