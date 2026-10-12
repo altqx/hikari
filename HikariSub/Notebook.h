@@ -56,7 +56,10 @@ public:
 	int GetHeight();
 	void ChangeActive();
 	void RefreshBar(bool checkSizes = false);
-	bool LoadSubtitles(TabPanel *tab, const wxString & path, int active = -1, int scroll = -1);
+	//a file that cannot be read is reported with a message, or added to
+	//unreadable when it is given
+	bool LoadSubtitles(TabPanel *tab, const wxString & path, int active = -1, int scroll = -1,
+		wxArrayString *unreadable = nullptr);
 	int LoadVideo(TabPanel *tab, const wxString & path, int position = -1, 
 		bool isFFMS2 = true, bool hasEditor = true, bool fullscreen = false, bool loadPrompt = false, bool dontLoadAudio = false);
 	bool SetFont(const wxFont &font);

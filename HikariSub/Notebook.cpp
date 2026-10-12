@@ -1201,14 +1201,18 @@ void Notebook::RefreshBar(bool checkSizes)
 	RefreshRect(wxRect(0, h - TabHeight, w, TabHeight), false);
 }
 
-bool Notebook::LoadSubtitles(TabPanel *tab, const wxString & path, int active /*= -1*/, int scroll /*= -1*/)
+bool Notebook::LoadSubtitles(TabPanel *tab, const wxString & path, int active /*= -1*/, int scroll /*= -1*/,
+	wxArrayString *unreadable /*= nullptr*/)
 {
 	wxString ext = path.AfterLast(L'.').Lower();
 	OpenWrite ow;
 	wxString s;
 	if (!ow.FileOpen(path, &s)){
 		//missing, unreadable, empty or in a charset that cannot be converted
-		HikariMessageBox(wxString::Format(_("Cannot read the subtitle file:\n%s"), path), _("Warning"));
+		if (unreadable)
+			unreadable->Add(path);
+		else
+			HikariMessageBox(wxString::Format(_("Cannot read the subtitle file:\n%s"), path), _("Warning"));
 		return false;
 	}
 	else{
@@ -1495,6 +1499,8 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 		bool hasEditor = true;
 		wxString rest;
 		std::vector<TabPanel*> failedTabs;
+		//reported in one message once the session is loaded
+		wxArrayString unreadableSubtitles;
 		while (true)
 		{
 			wxString token = tokenizer.GetNextToken();
@@ -1530,7 +1536,7 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 						if (loadCrashSession) {
 							wxString orgSubtitles = subtitles;
 							FindAutoSaveSubstitute(&subtitles, lastTab);
-							subtitlesFailed = !sthis->LoadSubtitles(tab, subtitles);
+							subtitlesFailed = !sthis->LoadSubtitles(tab, subtitles, -1, -1, &unreadableSubtitles);
 							if (!subtitlesFailed && orgSubtitles != subtitles) {
 								tab->SubsPath = orgSubtitles;
 								tab->SubsName = HikariPathName(tab->SubsPath);
@@ -1538,7 +1544,8 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 								tab->grid->UpdateUR(true);
 							}
 						}else
-							subtitlesFailed = !sthis->LoadSubtitles(tab, subtitles, activeLine, scrollPosition);
+							subtitlesFailed = !sthis->LoadSubtitles(tab, subtitles, activeLine, scrollPosition,
+								&unreadableSubtitles);
 
 						if (!subtitlesFailed)
 							sthis->Hikari->SetRecent();
@@ -1592,6 +1599,14 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 		sthis->Hikari->UpdateToolbar();
 		Options.SaveOptions(true, false);
 		SaveLastSession();
+		if (unreadableSubtitles.size() == 1){
+			HikariMessageBox(wxString::Format(_("Cannot read the subtitle file:\n%s"),
+				unreadableSubtitles[0]), _("Warning"));
+		}
+		else if (unreadableSubtitles.size() > 1){
+			HikariMessageBox(_("Cannot read the subtitle files:\n") +
+				wxJoin(unreadableSubtitles, L'\n', L'\0'), _("Warning"));
+		}
 	}
 }
 
