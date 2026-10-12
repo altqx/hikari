@@ -1191,6 +1191,8 @@ bool Notebook::LoadSubtitles(TabPanel *tab, const wxString & path, int active /*
 	OpenWrite ow;
 	wxString s;
 	if (!ow.FileOpen(path, &s)){
+		//missing, unreadable, empty or in a charset that cannot be converted
+		HikariMessageBox(wxString::Format(_("Cannot read the subtitle file:\n%s"), path), _("Warning"));
 		return false;
 	}
 	else{
