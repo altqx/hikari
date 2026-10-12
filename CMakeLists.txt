@@ -46,7 +46,6 @@ find_package(wxWidgets 3.3.3 EXACT REQUIRED COMPONENTS core base adv aui html xm
 include(${wxWidgets_USE_FILE})
 pkg_check_modules(LIBASS REQUIRED IMPORTED_TARGET libass)
 pkg_check_modules(FFMS2 REQUIRED IMPORTED_TARGET ffms2)
-pkg_check_modules(LUA REQUIRED IMPORTED_TARGET luajit)
 pkg_check_modules(HUNSPELL REQUIRED IMPORTED_TARGET hunspell)
 pkg_check_modules(UCHARDET REQUIRED IMPORTED_TARGET uchardet)
 pkg_check_modules(LIBCURL REQUIRED IMPORTED_TARGET libcurl)
@@ -59,6 +58,9 @@ pkg_check_modules(FONTCONFIG REQUIRED IMPORTED_TARGET fontconfig)
 # frames the app composites (libass subtitles + progress bar) and presents through
 # the shared wx paint path, and gstreamer-audio provides linear volume.
 pkg_check_modules(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0 gstreamer-app-1.0)
+# LuaJIT is the vendored one, built as the Windows build builds it (Lua 5.2
+# extensions on, string.buffer off), not the distribution's: see the module.
+include(${CMAKE_SOURCE_DIR}/cmake/VendoredLuaJIT.cmake)
 
 # Link Boost statically on Linux so the built binary does not depend on the
 # exact distro Boost shared-library SONAME, e.g. libboost_filesystem.so.1.83.0.
@@ -263,7 +265,7 @@ add_custom_target(hikarisub_gitparams ALL
     VERBATIM
 )
 add_dependencies(hikarisub hikarisub_gitparams)
-target_link_libraries(hikarisub PRIVATE ${wxWidgets_LIBRARIES} PkgConfig::LIBASS PkgConfig::FFMS2 PkgConfig::LUA PkgConfig::HUNSPELL PkgConfig::UCHARDET PkgConfig::LIBCURL PkgConfig::ICU_UC PkgConfig::ICU_I18N PkgConfig::FFMPEG PkgConfig::FONTCONFIG PkgConfig::GSTREAMER Boost::filesystem Boost::locale Boost::regex $<$<BOOL:${Boost_SYSTEM_FOUND}>:Boost::system> $<$<BOOL:${Boost_THREAD_FOUND}>:Boost::thread> GL ${CMAKE_DL_LIBS})
+target_link_libraries(hikarisub PRIVATE ${wxWidgets_LIBRARIES} PkgConfig::LIBASS PkgConfig::FFMS2 hikarisub_luajit PkgConfig::HUNSPELL PkgConfig::UCHARDET PkgConfig::LIBCURL PkgConfig::ICU_UC PkgConfig::ICU_I18N PkgConfig::FFMPEG PkgConfig::FONTCONFIG PkgConfig::GSTREAMER Boost::filesystem Boost::locale Boost::regex $<$<BOOL:${Boost_SYSTEM_FOUND}>:Boost::system> $<$<BOOL:${Boost_THREAD_FOUND}>:Boost::thread> GL ${CMAKE_DL_LIBS})
 set_target_properties(hikarisub PROPERTIES
     BUILD_RPATH "$ORIGIN"
     INSTALL_RPATH "$ORIGIN"

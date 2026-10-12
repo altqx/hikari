@@ -6,7 +6,8 @@ The two builds source dependencies very differently:
 
 - **Linux** (`CMakeLists.txt`) resolves everything through `pkg-config` against the
   distribution's packages. It reads nothing here except `luabins`,
-  `DependencyControl` and the `ffms2` headers.
+  `DependencyControl`, the `ffms2` headers and `luajit`/`LuaJIT`, which it
+  builds as the Windows build does (`cmake/VendoredLuaJIT.cmake`).
 - **Windows** (`HikariSub.sln`) builds its dependencies from source, using the MSVC
   project files under `Thirdparty/Build/`.
 
@@ -135,7 +136,8 @@ generate:
 | `luabins` | Three small fixes for modern LuaJIT (`luaL_reg` → `luaL_Reg`, `LUA_LIB`, `LUAI_BITSINT`); upstream is unmaintained |
 | `uchardet` | Tracks upstream *master*, which is ahead of the 0.0.8 release by seven language models HikariSub compiles; pinning the release would lose them |
 | `BaseClasses` | DirectShow base classes from the Windows SDK samples, locally patched |
-| `DirectX9`, `karahelper`, `DependencyControl`, `LuaJIT`/`luajit` | Windows-only support code |
+| `LuaJIT`/`luajit` | Both builds compile it with `LUAJIT_ENABLE_LUA52COMPAT` and `LUAJIT_DISABLE_BUFFER`: Windows through `Build/LuaJit`, Linux through `cmake/VendoredLuaJIT.cmake`, which merges the two directories into one tree in the build directory |
+| `DirectX9`, `karahelper`, `DependencyControl` | Windows-only support code |
 
 > `Thirdparty/luajit` and `Thirdparty/LuaJIT` are two directories that differ only
 > in case. They hold disjoint file sets and merge into one directory on Windows
