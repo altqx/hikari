@@ -128,6 +128,13 @@ struct RuntimeFolders {
 	}
 };
 
+// UserRuntimeSocketPath for hikarisub.ipc with no /run/user/<uid> and no
+// /tmp to fall back to, so that only the folders a test gives are tried
+std::string SocketPath(const fs::path &loginRuntime = fs::path(), const fs::path &temp = fs::path())
+{
+	return UserRuntimeSocketPathIn("hikarisub.ipc", loginRuntime.string(), temp.string());
+}
+
 std::string ReadAll(const fs::path &file)
 {
 	std::ifstream in(file, std::ios::binary);
@@ -183,24 +190,24 @@ TEST(the_runtime_socket_is_in_xdg_runtime_dir_only_when_it_is_private)
 	fs::path own = temp / OwnFolderName();
 	{
 		EnvOverride xdg("XDG_RUNTIME_DIR", runtime.c_str());
-		CHECK(UserRuntimeSocketPath("hikarisub.ipc") == (runtime / "hikarisub.ipc").string());
+		CHECK(SocketPath() == (runtime / "hikarisub.ipc").string());
 
 		// a runtime folder others may open is not used, nor narrowed
 		CHECK(chmod(runtime.c_str(), 0755) == 0);
-		CHECK(UserRuntimeSocketPath("hikarisub.ipc") == (own / "hikarisub.ipc").string());
+		CHECK(SocketPath() == (own / "hikarisub.ipc").string());
 		CHECK(ModeOf(runtime) == 0755);
 		CHECK(ModeOf(own) == 0700);
 	}
 	// one made with another mode before is narrowed
 	CHECK(chmod(own.c_str(), 0777) == 0);
-	CHECK(UserRuntimeSocketPath("hikarisub.ipc") == (own / "hikarisub.ipc").string());
+	CHECK(SocketPath() == (own / "hikarisub.ipc").string());
 	CHECK(ModeOf(own) == 0700);
 
 	// a link at its name, as another user could put there, is not used: the
 	// cache folder is
 	fs::remove(own);
 	fs::create_directory_symlink(runtime, own);
-	std::string socket = UserRuntimeSocketPath("hikarisub.ipc");
+	std::string socket = SocketPath();
 	CHECK(socket.rfind((cache / "hikarisub-").string(), 0) == 0);
 	CHECK(fs::is_directory(fs::path(socket).parent_path()));
 	CHECK(ModeOf(fs::path(socket).parent_path()) == 0700);
@@ -223,7 +230,7 @@ TEST(no_runtime_folder_is_used_where_another_user_could_rename_it)
 	CHECK(chmod(shared.c_str(), 0777) == 0);
 	{
 		RuntimeFolders folders(shared, cache);
-		std::string socket = UserRuntimeSocketPath("hikarisub.ipc");
+		std::string socket = SocketPath();
 		CHECK(socket.rfind(cache.string() + "/", 0) == 0);
 		CHECK(!fs::exists(shared / OwnFolderName()));
 	}
@@ -231,7 +238,7 @@ TEST(no_runtime_folder_is_used_where_another_user_could_rename_it)
 	CHECK(chmod(shared.c_str(), 0770) == 0);
 	{
 		RuntimeFolders folders(shared, cache);
-		CHECK(UserRuntimeSocketPath("hikarisub.ipc").rfind(cache.string() + "/", 0) == 0);
+		CHECK(SocketPath().rfind(cache.string() + "/", 0) == 0);
 		CHECK(!fs::exists(shared / OwnFolderName()));
 	}
 	// nor below such a folder, which lets the folders in it be renamed
@@ -241,7 +248,7 @@ TEST(no_runtime_folder_is_used_where_another_user_could_rename_it)
 	CHECK(chmod(shared.c_str(), 0777) == 0);
 	{
 		RuntimeFolders folders(inner, cache);
-		CHECK(UserRuntimeSocketPath("hikarisub.ipc").rfind(cache.string() + "/", 0) == 0);
+		CHECK(SocketPath().rfind(cache.string() + "/", 0) == 0);
 		CHECK(!fs::exists(inner / OwnFolderName()));
 	}
 	{
@@ -251,20 +258,20 @@ TEST(no_runtime_folder_is_used_where_another_user_could_rename_it)
 		CHECK(chmod(runtime.c_str(), 0700) == 0);
 		RuntimeFolders folders(inner, cache);
 		EnvOverride xdg("XDG_RUNTIME_DIR", runtime.c_str());
-		CHECK(UserRuntimeSocketPath("hikarisub.ipc").rfind(cache.string() + "/", 0) == 0);
+		CHECK(SocketPath().rfind(cache.string() + "/", 0) == 0);
 	}
 	// a sticky folder lets only the owner of hikarisub-<uid> rename it, as /tmp
 	CHECK(chmod(shared.c_str(), 01777) == 0);
 	{
 		RuntimeFolders folders(inner, cache);
-		CHECK(UserRuntimeSocketPath("hikarisub.ipc") == (inner / OwnFolderName() / "hikarisub.ipc").string());
+		CHECK(SocketPath() == (inner / OwnFolderName() / "hikarisub.ipc").string());
 	}
 	// when no folder is safe, there is no socket
 	CHECK(chmod(shared.c_str(), 0777) == 0);
 	CHECK(chmod(cache.c_str(), 0777) == 0);
 	{
 		RuntimeFolders folders(inner, cache);
-		CHECK(UserRuntimeSocketPath("hikarisub.ipc").empty());
+		CHECK(SocketPath().empty());
 	}
 	CHECK(chmod(cache.c_str(), 0700) == 0);
 	CHECK(chmod(shared.c_str(), 0755) == 0);
@@ -278,7 +285,7 @@ TEST(no_runtime_folder_is_used_where_another_user_could_rename_it)
 	fs::create_directory_symlink(real, link);
 	{
 		RuntimeFolders folders(link, cache);
-		CHECK(UserRuntimeSocketPath("hikarisub.ipc") == (real / OwnFolderName() / "hikarisub.ipc").string());
+		CHECK(SocketPath() == (real / OwnFolderName() / "hikarisub.ipc").string());
 	}
 
 	// a socket path too long for a socket address, which would be cut short
@@ -291,8 +298,110 @@ TEST(no_runtime_folder_is_used_where_another_user_could_rename_it)
 	}
 	{
 		RuntimeFolders folders(deep, cache);
-		CHECK(UserRuntimeSocketPath("hikarisub.ipc").rfind(cache.string() + "/", 0) == 0);
+		CHECK(SocketPath().rfind(cache.string() + "/", 0) == 0);
+		// and the folder is not made there to be left unused
+		CHECK(!fs::exists(deep / OwnFolderName()));
 	}
+}
+
+TEST(the_login_s_runtime_folder_is_used_when_xdg_runtime_dir_is_not_set)
+{
+	PrivateScratchDir dir(SteadyBase());
+	fs::path login = dir.path / "login";
+	fs::create_directory(login);
+	CHECK(chmod(login.c_str(), 0700) == 0);
+	fs::path temp = dir.path / "tmp";
+	fs::create_directory(temp);
+	CHECK(chmod(temp.c_str(), 0755) == 0);
+	RuntimeFolders folders(temp, dir.path / "cache");
+	// as from su or cron, which do not set it: the same folder as the login's
+	CHECK(SocketPath(login) == (login / "hikarisub.ipc").string());
+	{
+		EnvOverride xdg("XDG_RUNTIME_DIR", login.c_str());
+		CHECK(SocketPath(login) == (login / "hikarisub.ipc").string());
+	}
+	// one others may open is not used, nor narrowed
+	CHECK(chmod(login.c_str(), 0755) == 0);
+	CHECK(SocketPath(login) == (temp / OwnFolderName() / "hikarisub.ipc").string());
+	CHECK(ModeOf(login) == 0755);
+	// nor one that is not there
+	CHECK(SocketPath(dir.path / "none") == (temp / OwnFolderName() / "hikarisub.ipc").string());
+}
+
+TEST(the_temporary_folder_is_tried_when_tmpdir_cannot_be_used)
+{
+	PrivateScratchDir dir(SteadyBase());
+	fs::path cache = dir.path / "cache";
+	fs::create_directory(cache);
+	CHECK(chmod(cache.c_str(), 0700) == 0);
+	fs::path temp = dir.path / "tmp";
+	fs::create_directory(temp);
+	CHECK(chmod(temp.c_str(), 01777) == 0);
+	fs::path expected = temp / OwnFolderName() / "hikarisub.ipc";
+
+	// a $TMPDIR too long for the socket's path
+	fs::path deep = dir.path;
+	while (deep.string().size() < 120) {
+		deep /= "deeper";
+		fs::create_directory(deep);
+		CHECK(chmod(deep.c_str(), 0755) == 0);
+	}
+	{
+		RuntimeFolders folders(deep, cache);
+		CHECK(SocketPath(fs::path(), temp) == expected.string());
+		CHECK(!fs::exists(deep / OwnFolderName()));
+	}
+	// one others may write in
+	fs::path shared = dir.path / "shared";
+	fs::create_directory(shared);
+	CHECK(chmod(shared.c_str(), 0777) == 0);
+	{
+		RuntimeFolders folders(shared, cache);
+		CHECK(SocketPath(fs::path(), temp) == expected.string());
+		CHECK(!fs::exists(shared / OwnFolderName()));
+	}
+	// and with no $TMPDIR
+	{
+		RuntimeFolders folders(temp, cache);
+		EnvOverride tmpdir("TMPDIR", nullptr);
+		CHECK(SocketPath(fs::path(), temp) == expected.string());
+	}
+}
+
+TEST(a_cache_folder_that_is_not_there_is_made_for_the_socket)
+{
+	PrivateScratchDir dir(SteadyBase());
+	fs::path temp = dir.path / "shared";
+	fs::create_directory(temp);
+	CHECK(chmod(temp.c_str(), 0777) == 0);
+	fs::path home = dir.path / "home";
+	fs::create_directory(home);
+	CHECK(chmod(home.c_str(), 0755) == 0);
+	fs::path cache = home / ".cache";
+	{
+		RuntimeFolders folders(temp, cache);
+		std::string socket = SocketPath();
+		CHECK(socket.rfind((cache / "hikarisub-").string(), 0) == 0);
+		CHECK(fs::is_directory(cache));
+		CHECK(ModeOf(cache) == 0700);
+		CHECK(ModeOf(fs::path(socket).parent_path()) == 0700);
+	}
+	// from $HOME too, and not in a folder others may write in
+	fs::remove_all(cache);
+	{
+		RuntimeFolders folders(temp, fs::path());
+		EnvOverride cacheHome("XDG_CACHE_HOME", nullptr);
+		EnvOverride homeEnv("HOME", home.c_str());
+		CHECK(SocketPath().rfind((cache / "hikarisub-").string(), 0) == 0);
+	}
+	fs::remove_all(cache);
+	CHECK(chmod(home.c_str(), 0777) == 0);
+	{
+		RuntimeFolders folders(temp, cache);
+		CHECK(SocketPath().empty());
+		CHECK(!fs::exists(cache));
+	}
+	CHECK(chmod(home.c_str(), 0755) == 0);
 }
 
 TEST(the_socket_made_is_narrowed_in_the_folder_that_was_checked)
@@ -302,7 +411,7 @@ TEST(the_socket_made_is_narrowed_in_the_folder_that_was_checked)
 	fs::create_directory(temp);
 	CHECK(chmod(temp.c_str(), 0755) == 0);
 	RuntimeFolders folders(temp, dir.path / "cache");
-	std::string path = UserRuntimeSocketPath("hikarisub.ipc");
+	std::string path = SocketPath();
 	CHECK(path == (temp / OwnFolderName() / "hikarisub.ipc").string());
 
 	// made as a careless umask would make it
@@ -325,7 +434,7 @@ TEST(a_socket_in_a_folder_that_is_not_private_is_not_used)
 	fs::create_directory(temp);
 	CHECK(chmod(temp.c_str(), 0755) == 0);
 	RuntimeFolders folders(temp, dir.path / "cache");
-	std::string path = UserRuntimeSocketPath("hikarisub.ipc");
+	std::string path = SocketPath();
 	fs::path own = temp / OwnFolderName();
 	CHECK(path == (own / "hikarisub.ipc").string());
 

@@ -31,16 +31,23 @@ bool MakePrivateFolderAt(const std::string &path);
 // program runs, such as the socket a second instance passes files to the
 // first through, in a folder only the user may open that no other user can
 // rename or put another folder in the place of. The folders tried are
-// $XDG_RUNTIME_DIR, as the login makes it, used as it is; hikarisub-<uid> in
-// the temporary folder ($TMPDIR, or /tmp); and hikarisub-<host> in
-// $XDG_CACHE_HOME, or ~/.cache; the last two made or narrowed as
-// MakePrivateFolderAt does. A folder is used only when it, and every folder
-// above it, is root's or the user's and lets no one else write in it unless
-// it is sticky, so that no other user can rename any folder on the way after
-// it is checked; and only when the socket's path fits a socket address, which
-// would otherwise be cut short. The path is given with no link in it. Empty
-// when there is no such folder, as when another user made that name first.
+// $XDG_RUNTIME_DIR, then /run/user/<uid>, as the login makes them, used as
+// they are; hikarisub-<uid> in $TMPDIR, then in /tmp; and hikarisub-<host> in
+// $XDG_CACHE_HOME, or ~/.cache, which is made 0700 when it is not there. The
+// hikarisub folders are made or narrowed as MakePrivateFolderAt does. A
+// folder is used only when it, and every folder above it, is root's or the
+// user's and lets no one else write in it unless it is sticky, so that no
+// other user can rename any folder on the way after it is checked; and only
+// when the socket's path fits a socket address, which would otherwise be cut
+// short, which is known before a hikarisub folder is made. The path is given
+// with no link in it. Empty when there is no such folder, as when another
+// user made that name first.
 std::string UserRuntimeSocketPath(const std::string &name);
+
+// UserRuntimeSocketPath with loginRuntime in place of /run/user/<uid> and
+// temp in place of /tmp, either skipped when empty, for the tests.
+std::string UserRuntimeSocketPathIn(const std::string &name, const std::string &loginRuntime,
+	const std::string &temp);
 
 // Whether the socket at path, as UserRuntimeSocketPath gives it, is the
 // user's own socket that no one else may open, in a folder that is still

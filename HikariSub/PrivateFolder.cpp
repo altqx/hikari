@@ -129,38 +129,73 @@ int MakePrivateFolderIn(int at, const std::string &name)
 	return fd;
 }
 
-// $XDG_RUNTIME_DIR with no link in it when it is a private folder that no
-// other user can rename; it is not narrowed, as it is not this program's
-std::string SteadyPrivateFolder(const char *path)
+// the path of the socket called name in folder, a path with no link in it;
+// empty when it is longer than a socket address holds, as it would then be
+// cut short and the socket made at another name, possibly in the folder above
+std::string SocketPathIn(const std::string &folder, const std::string &name)
 {
-	if (!path || path[0] != '/')
+	if (folder.empty() || folder.size() + 1 + name.size() >= sizeof(sockaddr_un{}.sun_path))
+		return std::string();
+	return folder + (folder.back() == '/' ? "" : "/") + name;
+}
+
+// The path of the socket called name in the runtime folder at path, as the
+// login makes $XDG_RUNTIME_DIR, with no link in it, when the folder is
+// private and no other user can rename it or a folder above it; it is not
+// narrowed, as it is not this program's.
+std::string SocketInRuntimeFolder(const std::string &path, const std::string &name)
+{
+	if (path.empty() || path[0] != '/')
 		return std::string();
 	std::string folder = RealPath(path);
 	int fd = OpenSteadyFolder(folder);
 	bool usable = fd >= 0 && IsPrivateFolder(fd);
 	if (fd >= 0)
 		close(fd);
-	return usable ? folder : std::string();
+	return usable ? SocketPathIn(folder, name) : std::string();
 }
 
-// the folder name in parent, made or narrowed, with no link in its path, when
-// it is private and no other user can rename it or a folder above it
-std::string SteadyPrivateFolderIn(const std::string &parent, const std::string &name)
+// The path of the socket called name in the folder called folderName in
+// parent, with no link in it, the folder made or narrowed, when it is private
+// and no other user can rename it or a folder above it. A socket path too
+// long for a socket address is refused before the folder is made. With
+// makeParent, parent is made with mode 0700 when it is not there and the
+// folder above it keeps its names, as a new user's cache folder.
+std::string SocketInPrivateFolderIn(const std::string &parent, const std::string &folderName,
+	const std::string &name, bool makeParent)
 {
 	if (parent.empty() || parent[0] != '/')
 		return std::string();
 	std::string folder = RealPath(parent);
+	if (folder.empty() && makeParent) {
+		std::string trimmed = parent;
+		while (trimmed.size() > 1 && trimmed.back() == '/')
+			trimmed.pop_back();
+		size_t slash = trimmed.rfind('/');
+		std::string last = trimmed.substr(slash + 1);
+		int aboveFd = last.empty() || last == "." || last == ".." ? -1 :
+			OpenSteadyFolder(RealPath(slash ? trimmed.substr(0, slash) : std::string("/")));
+		if (aboveFd < 0)
+			return std::string();
+		bool made = mkdirat(aboveFd, last.c_str(), 0700) == 0 || errno == EEXIST;
+		close(aboveFd);
+		if (made)
+			folder = RealPath(parent);
+	}
+	if (folder.empty())
+		return std::string();
+	std::string socket = SocketPathIn(folder + (folder.back() == '/' ? "" : "/") + folderName, name);
+	if (socket.empty())
+		return std::string();
 	int parentFd = OpenSteadyFolder(folder);
 	if (parentFd < 0)
 		return std::string();
-	int fd = MakePrivateFolderIn(parentFd, name);
+	int fd = MakePrivateFolderIn(parentFd, folderName);
 	close(parentFd);
 	if (fd < 0)
 		return std::string();
 	close(fd);
-	if (folder.back() != '/')
-		folder += '/';
-	return folder + name;
+	return socket;
 }
 
 // the host's name with only letters, digits, '.', '-' and '_' in it
@@ -218,19 +253,31 @@ bool MakePrivateFolderAt(const std::string &path)
 
 std::string UserRuntimeSocketPath(const std::string &name)
 {
-	// a longer path would be cut short in the socket address, and the
-	// socket made at another name, possibly in the folder above
-	auto socketIn = [&name](const std::string &folder) {
-		if (folder.empty() || folder.size() + 1 + name.size() >= sizeof(sockaddr_un{}.sun_path))
-			return std::string();
-		return folder + (folder.back() == '/' ? "" : "/") + name;
-	};
-	std::string socket = socketIn(SteadyPrivateFolder(getenv("XDG_RUNTIME_DIR")));
+	return UserRuntimeSocketPathIn(name, "/run/user/" + std::to_string(static_cast<unsigned long>(geteuid())),
+		"/tmp");
+}
+
+std::string UserRuntimeSocketPathIn(const std::string &name, const std::string &loginRuntime,
+	const std::string &temp)
+{
+	const char *runtime = getenv("XDG_RUNTIME_DIR");
+	std::string socket = SocketInRuntimeFolder(runtime ? runtime : "", name);
 	if (!socket.empty())
 		return socket;
-	const char *temp = getenv("TMPDIR");
-	socket = socketIn(SteadyPrivateFolderIn(temp && temp[0] == '/' ? temp : "/tmp",
-		"hikarisub-" + std::to_string(static_cast<unsigned long>(geteuid()))));
+	// the folder the login makes for $XDG_RUNTIME_DIR, so that a program
+	// started without it, as from su or cron, finds the same socket
+	socket = SocketInRuntimeFolder(loginRuntime, name);
+	if (!socket.empty())
+		return socket;
+	// $TMPDIR, and /tmp when $TMPDIR cannot be used, as when it is too long
+	const std::string own = "hikarisub-" + std::to_string(static_cast<unsigned long>(geteuid()));
+	const char *tempEnv = getenv("TMPDIR");
+	if (tempEnv && tempEnv[0] == '/') {
+		socket = SocketInPrivateFolderIn(tempEnv, own, name, false);
+		if (!socket.empty())
+			return socket;
+	}
+	socket = SocketInPrivateFolderIn(temp, own, name, false);
 	if (!socket.empty())
 		return socket;
 	// the home folder may be shared by several hosts, which each have a
@@ -239,7 +286,7 @@ std::string UserRuntimeSocketPath(const std::string &name)
 	const char *home = getenv("HOME");
 	std::string cacheFolder = cache && cache[0] == '/' ? std::string(cache) :
 		home && home[0] == '/' ? std::string(home) + "/.cache" : std::string();
-	return socketIn(SteadyPrivateFolderIn(cacheFolder, "hikarisub-" + SafeHostName()));
+	return SocketInPrivateFolderIn(cacheFolder, "hikarisub-" + SafeHostName(), name, true);
 }
 
 bool IsUserRuntimeSocket(const std::string &path)
