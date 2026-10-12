@@ -1372,6 +1372,9 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 	wxString sessionPath = externalPath.empty() ? Options.configPath + L"/LastSession.txt" : externalPath;
 	OpenWrite op;
 	if (op.FileOpen(sessionPath, &riddenSession, false) && !riddenSession.empty()){
+		//the session is written with CRLF and only Windows drops the CR on read
+		riddenSession.Replace(L"\r\n", L"\n");
+		riddenSession.Replace(L"\r", L"\n");
 		wxStringTokenizer tokenizer(riddenSession, L"\n", wxTOKEN_STRTOK);
 		wxString header = tokenizer.GetNextToken();
 		if (!header.StartsWith(L"[HikariSub")){
