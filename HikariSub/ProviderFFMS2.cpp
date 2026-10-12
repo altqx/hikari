@@ -609,6 +609,18 @@ void ProviderFFMS2::AudioLoad(ProviderFFMS2* vf, bool newIndex, int audiotrack)
 		vf->m_diskCacheFilename << Options.pathfull << sep << L"AudioCache" << sep <<
 			baseName << L"_track" << audiotrack << L"_" << vf->m_channels << L"ch_" <<
 			vf->m_delayFrames << L".w64";
+		//the cache holds the audio of the user's media: for the user only.
+		//Without a private folder for it, as on a FAT or exFAT stick that
+		//keeps no ACLs, the audio is kept in memory as with AUDIO_RAM_CACHE;
+		//audioNotInitialized, set after this, keeps readers off the cache
+		wxString cacheFolder = wxFileName(vf->m_diskCacheFilename).GetPath();
+		if (!MakePrivateFolder(cacheFolder)) {
+			HikariLogSilent(wxString::Format(L"The audio cache folder is not private, the audio is kept in memory: %s",
+				cacheFolder));
+			vf->m_discCache = false;
+		}
+	}
+	if (vf->m_discCache) {
 		if (!vf->DiskCache(newIndex)) { goto done; }
 	}
 	else {
@@ -898,12 +910,7 @@ bool ProviderFFMS2::DiskCache(bool newIndex)
 	bool good = true;
 	wxFileName discCacheFile;
 	discCacheFile.Assign(m_diskCacheFilename);
-	//the cache holds the audio of the user's media: for the user only; one
-	//in a folder another user could swap files in is neither read nor made
-	if (!MakePrivateFolder(discCacheFile.GetPath())) {
-		HikariLogSilent(wxString::Format(L"The audio cache folder is not private: %s", discCacheFile.GetPath()));
-		return false;
-	}
+	//AudioLoad made the folder private, or keeps the audio in memory
 	bool fileExists = discCacheFile.FileExists();
 	if (!newIndex && fileExists) {
 		SetCacheInUse(m_diskCacheFilename, true);
