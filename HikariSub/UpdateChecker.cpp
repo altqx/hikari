@@ -41,11 +41,7 @@ namespace
 		kNumVersion[2] == kVersion->patch && kNumVersion[3] == 0,
 		"NumVersionHikariSub does not match VersionHikariSub");
 
-	// One place for a fork to change. GitHub lists a hundred at most on a
-	// page; with ten, a run of other releases, such as the qt-metadata-*
-	// ones, could push every version off the page.
-	const wxString kReleasesUrl =
-		L"https://api.github.com/repos/altqx/hikari/releases?per_page=100";
+	const wxString kReleasesUrl = wxString::FromUTF8(update_policy::ReleasesApiUrl());
 
 	constexpr time_t kDay  = 24 * 60 * 60;
 	constexpr time_t kWeek = 7 * kDay;
@@ -79,7 +75,8 @@ namespace
 			ReleaseInfo info;
 			info.tag = tag;
 			info.name = release.GetString("name", tag);
-			info.url = release.GetString("html_url");
+			// Built from the tag; the reply's html_url is not used.
+			info.url = wxString::FromUTF8(update_policy::ReleasePageUrl(tag.utf8_string()));
 			info.notes = release.GetString("body");
 			infos->push_back(info);
 		}

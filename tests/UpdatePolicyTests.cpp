@@ -202,3 +202,28 @@ TEST(update_rc2_config_turns_the_check_on_and_sees_the_next_candidate)
 	CHECK(!ReadOption("false", kAutoCheckDefault));
 	CHECK(!ReadOption("false", kStableOnlyDefault));
 }
+
+TEST(update_release_page_is_built_from_the_tag)
+{
+	CHECK(ReleasePageUrl("v0.0.1-rc.3") == "https://github.com/altqx/hikari/releases/tag/v0.0.1-rc.3");
+	CHECK(ReleasePageUrl("v1.2.3+build.4") == "https://github.com/altqx/hikari/releases/tag/v1.2.3+build.4");
+	CHECK(ReleasePageUrl("").empty());
+	CHECK(ReleasePageUrl(".").empty());
+	CHECK(ReleasePageUrl("..").empty());
+	CHECK(ReleasePageUrl("../../evil").empty());
+	CHECK(ReleasePageUrl("v1.0.0/../../../evil").empty());
+	CHECK(ReleasePageUrl("v1.0.0?x=1").empty());
+	CHECK(ReleasePageUrl("v1.0.0#x").empty());
+	CHECK(ReleasePageUrl("v1.0.0 x").empty());
+	CHECK(ReleasePageUrl("file:///etc/passwd").empty());
+	CHECK(ReleasePageUrl("https://evil.example/").empty());
+	CHECK(ReleasePageUrl("v1.0.0\"").empty());
+	CHECK(ReleasePageUrl("v1.0.0%2F").empty());
+	CHECK(ReleasesApiUrl() == "https://api.github.com/repos/altqx/hikari/releases?per_page=100");
+
+	// Every tag ChooseRelease can pick is a version, and so has a page.
+	for (const char *tag : { "v0.0.1-rc.2", "0.0.1", "V2.0.0-beta.1+exp.sha.5114f85" }) {
+		CHECK(ParseSemVer(tag));
+		CHECK(!ReleasePageUrl(tag).empty());
+	}
+}

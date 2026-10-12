@@ -27,6 +27,36 @@
 
 namespace update_policy
 {
+	// One place for a fork to change.
+	constexpr std::string_view kRepository = "altqx/hikari";
+
+	// GitHub lists a hundred at most on a page; with ten, a run of other
+	// releases, such as the qt-metadata-* ones, could push every version off
+	// the page.
+	inline std::string ReleasesApiUrl()
+	{
+		return "https://api.github.com/repos/" + std::string(kRepository) + "/releases?per_page=100";
+	}
+
+	// The page a release is opened at, built from its tag and never taken
+	// from the reply, so that a reply cannot have the browser open another
+	// site or a file: or custom-scheme link. Empty when the tag holds a
+	// character a version tag does not.
+	inline std::string ReleasePageUrl(std::string_view tag)
+	{
+		if (tag.empty())
+			return std::string();
+		for (char c : tag) {
+			bool safe = (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+				c == '-' || c == '.' || c == '+';
+			if (!safe)
+				return std::string();
+		}
+		if (tag == "." || tag == "..")
+			return std::string();
+		return "https://github.com/" + std::string(kRepository) + "/releases/tag/" + std::string(tag);
+	}
+
 	// UPDATER_AUTO_CHECK and UPDATER_CHECK_FOR_STABLE when Config.txt does
 	// not hold them.
 	constexpr bool kAutoCheckDefault = true;
