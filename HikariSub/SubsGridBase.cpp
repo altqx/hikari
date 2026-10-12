@@ -337,6 +337,9 @@ bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 	if (!ow.OpenTemp(filename))
 		return false;
 
+	//the header puts the active line and the media paths in the script info
+	SubsFile::SInfoState sinfoBeforeSave = file->GetSInfoState();
+
 	if (subsFormat < SRT)
 		GetAssHeader(&txt, true, translated, normalSave);
 	
@@ -410,8 +413,10 @@ bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 		ow.PartFileWrite(embedded);
 	}
 
-	if (!ow.CommitTemp())
+	if (!ow.CommitTemp()){
+		file->RestoreSInfo(sinfoBeforeSave);
 		return false;
+	}
 	if (normalSave){
 		//edited lines show as saved only once the file holds them
 		if (!loadFromEditbox){

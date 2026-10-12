@@ -203,6 +203,16 @@ public:
 	void AddSInfo(const wxString &SI, wxString val = emptyString, bool save = true);
 	void GetSInfos(wxString &textSinfo, bool addTlMode = false);
 	size_t SInfoSize();
+	// The script info as it is now, for RestoreSInfo to put back when what
+	// changed it does not happen after all, as a save that fails.
+	struct SInfoState {
+		std::vector<SInfo*> sinfo;
+		std::vector<wxString> values;
+		bool edited = false;
+		const File *step = nullptr;
+	};
+	SInfoState GetSInfoState() const;
+	void RestoreSInfo(const SInfoState &state);
 	void SaveSelectionsF(bool clear, int currentLine, int markedLine, int scrollPos);
 	size_t FirstSelection(size_t *id = nullptr);
 	void GetSelections(wxArrayInt &selections, bool deselect=false, bool checkVisible = true);

@@ -1310,8 +1310,13 @@ bool HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 			goto repeatOpening;
 		}
 	}
+	//the properties SwapAssProperties puts in stay only when they are saved
+	SubsFile::SInfoState sinfoBeforeSave = atab->grid->file->GetSInfoState();
 	if (atab->grid->SwapAssProperties()){ return false; }
-	if (!atab->grid->SaveFile(atab->SubsPath)){ return false; }
+	if (!atab->grid->SaveFile(atab->SubsPath)){
+		atab->grid->file->RestoreSInfo(sinfoBeforeSave);
+		return false;
+	}
 	atab->grid->originalFormat = atab->grid->subsFormat;
 	if (changeLabel){
 		Toolbar->UpdateId(GLOBAL_SAVE_SUBS, false);

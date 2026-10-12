@@ -1135,6 +1135,30 @@ void SubsFile::AddSInfo(const wxString &SI, wxString val, bool save)
 	}
 }
 
+SubsFile::SInfoState SubsFile::GetSInfoState() const
+{
+	SInfoState state;
+	state.sinfo = subs->sinfo;
+	for (SInfo *info : subs->sinfo)
+		state.values.push_back(info->Val);
+	state.edited = edited;
+	state.step = m_history.Current();
+	return state;
+}
+
+void SubsFile::RestoreSInfo(const SInfoState &state)
+{
+	// AddSInfo without save changes an entry in place, and the recorded
+	// steps share it, so its value goes back as well as the list
+	subs->sinfo = state.sinfo;
+	for (size_t i = 0; i < state.sinfo.size(); i++)
+		state.sinfo[i]->Val = state.values[i];
+	// a step recorded meanwhile holds the changed script info, so the working
+	// copy now differs from it
+	edited = (m_history.Current() == state.step) ? state.edited : true;
+	++version;
+}
+
 void SubsFile::GetSInfos(wxString &textSinfo, bool tld/* = false*/)
 {
 	for (std::vector<SInfo*>::iterator cur = subs->sinfo.begin(); cur != subs->sinfo.end(); cur++) {
