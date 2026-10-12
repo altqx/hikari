@@ -19,9 +19,12 @@ import Hikari.Ui
 // `menu`: inside a delegate that name is the MenuItem's own `menu` property
 // (the submenu holding it), which shadows an id of the outer context.
 //
-// W1 adds DirectShow's "Filters" after the separator. Left to its card: V3
-// adds "Remove video" as "Unload video" (VIDEO_DELETE_FILE) after the
-// separator, then the streams and the chapters.
+// V3 (VideoBox.cpp:977-1016): after the separator, "Remove video" as
+// "Unload video" (VIDEO_DELETE_FILE, V3-unload-video), W1's DirectShow
+// "Filters", then each stream as a flat item, a separator before each new
+// stream kind, and after a separator each chapter as "<name>\t[<time>]",
+// the time in the binding column. The Video menu has them too
+// (V3-video-menu-entries).
 ShellMenu {
     id: videoMenu
     objectName: "videoContextMenu"
@@ -42,10 +45,15 @@ ShellMenu {
 
     // W1: the DirectShow graph's filters (empty unless DirectShow plays the video).
     property var filters: []
+    // V3: the video's streams and chapters when it opened.
+    property var streams: []
+    property var chapters: []
     onAboutToShow: {
         recent = shell.videoView.recentFiles()
         monitors = shell.videoFullscreen.monitorCount()
         filters = shell.app.playerFilters()
+        streams = shell.video.hasVideo ? shell.video.streams() : []
+        chapters = shell.video.hasVideo ? shell.video.chapters() : []
     }
 
     function keys(symbol) {
@@ -209,6 +217,14 @@ ShellMenu {
         onTriggered: if (!videoMenu.gesture("VIDEO_COPY_FRAME_TO_CLIPBOARD")) videoMenu.shell.videoView.snapshot("VIDEO_COPY_FRAME_TO_CLIPBOARD")
     }
     MenuSeparator {}
+    ShellMenuItem {
+        id: unloadItem
+        objectName: videoMenu.itemPrefix + "UnloadVideo"
+        iconRole: "close-video"
+        text: qsTr("Unload video") + videoMenu.keys("VIDEO_DELETE_FILE")
+        enabled: videoMenu.shell.video.loaded
+        onTriggered: if (!videoMenu.gesture("VIDEO_DELETE_FILE")) videoMenu.shell.video.unloadVideo()
+    }
     // W1: legacy "Filters" (VideoBox.cpp:981-990, 1049-1052): while
     // DirectShow plays the loaded video, the graph's filters in order, each
     // enabled when it has property pages; choosing one opens them where the
@@ -241,7 +257,63 @@ ShellMenu {
                 onObjectRemoved: (index, object) => filtersMenu.removeItem(object)
             }
         }
-        onObjectAdded: (index, object) => videoMenu.addMenu(object)
+        onObjectAdded: (index, object) => videoMenu.insertMenu(videoMenu.indexOfItem(unloadItem) + 1, object)
         onObjectRemoved: (index, object) => videoMenu.removeMenu(object)
+    }
+    // The streams (VideoBox.cpp:997-1008, EnableStream at 1042-1045): the
+    // video's audio tracks, the one general playback plays checked. The
+    // rewrite always has the editor, so no subtitle stream is listed (legacy
+    // stopped at the first with the editor on). One kind: one separator.
+    // The entries are made per row and keep across openings, reading the
+    // rows each opening takes.
+    MenuSeparator {
+        id: streamsSeparator
+        objectName: videoMenu.itemPrefix + "StreamsSeparator"
+        visible: videoMenu.streams.length > 0
+        height: visible ? implicitHeight : 0
+    }
+    Instantiator {
+        model: videoMenu.streams.length
+        delegate: ShellMenuItem {
+            required property int index
+            readonly property var row: videoMenu.streams[index] ?? ({})
+            objectName: videoMenu.itemPrefix + "Stream" + index
+            text: row.label ?? ""
+            checkable: true
+            checked: row.checked === true
+            keepsMenuOpen: false // ITEM_RADIO
+            onTriggered: {
+                videoMenu.shell.video.selectStream(index)
+                checked = Qt.binding(() => row.checked === true)
+            }
+        }
+        onObjectAdded: (index, object) => videoMenu.insertItem(videoMenu.indexOfItem(streamsSeparator) + 1 + index, object)
+        onObjectRemoved: (index, object) => videoMenu.removeItem(object)
+    }
+    // The chapters (VideoBox.cpp:1009-1016, Seek at 1046-1047), the current
+    // one checked.
+    MenuSeparator {
+        id: chaptersSeparator
+        objectName: videoMenu.itemPrefix + "ChaptersSeparator"
+        visible: videoMenu.chapters.length > 0
+        height: visible ? implicitHeight : 0
+    }
+    Instantiator {
+        model: videoMenu.chapters.length
+        delegate: ShellMenuItem {
+            required property int index
+            readonly property var row: videoMenu.chapters[index] ?? ({})
+            objectName: videoMenu.itemPrefix + "Chapter" + index
+            text: (row.label ?? "") + "\t" + (row.time ?? "")
+            checkable: true
+            checked: row.checked === true
+            keepsMenuOpen: false // ITEM_RADIO
+            onTriggered: {
+                videoMenu.shell.video.seekChapter(index)
+                checked = Qt.binding(() => row.checked === true)
+            }
+        }
+        onObjectAdded: (index, object) => videoMenu.insertItem(videoMenu.indexOfItem(chaptersSeparator) + 1 + index, object)
+        onObjectRemoved: (index, object) => videoMenu.removeItem(object)
     }
 }

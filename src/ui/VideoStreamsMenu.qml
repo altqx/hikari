@@ -6,8 +6,8 @@ import Hikari.Ui
 // VideoBox.cpp:997-1008, and EnableStream, :1042-1045): the video's audio
 // tracks, the one general playback plays marked; choosing one switches it.
 // The rewrite always has the editor, so subtitle streams are never listed
-// (legacy stops at the first one with the editor on). Its own submenu here;
-// the video context menu (V4) can show the same entries.
+// (legacy stops at the first one with the editor on). Its own submenu in
+// the Video menu; the video context menu lists the same entries flat.
 ShellMenu {
     id: menu
     required property VideoController video

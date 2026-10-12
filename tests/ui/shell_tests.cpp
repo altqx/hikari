@@ -14647,7 +14647,7 @@ private slots:
         auto *menu = named("videoChaptersMenu");
         QVERIFY(menu && menu->property("enabled").toBool());
         // V3-video-menu-entries: Unload video, the streams and the chapters
-        // sit in the Video menu until V4's context menu hosts them
+        // in the Video menu too (the context menu's below)
         {
             auto *videoMenu = named("videoMenu");
             QVERIFY(videoMenu);
@@ -14696,6 +14696,108 @@ private slots:
         QVERIFY(video.selectStream(0));
         QTRY_COMPARE_WITH_TIMEOUT(application->generalPlayer().description().activeAudio, 0, 20000);
         QVERIFY(video.pause());
+
+        // V3-video-menu-entries: the video's context menu lists them in
+        // legacy's form and order (VideoBox.cpp:977-1016), docked and in
+        // fullscreen, each instance with its own names: after the separator
+        // Unload video, then a separator and each stream, a separator and
+        // each chapter, "<name>" with "[<time>]" in the binding column, the
+        // current one checked. A stream or a chapter closes the menu (legacy's
+        // radio items); Shift+click on Unload video maps VIDEO_DELETE_FILE
+        // for the Video window.
+        const auto entriesAfterSnapshots = [](QObject *contextMenu, const QString &prefix) {
+            QStringList out;
+            bool after = false;
+            for (QQuickItem *entry : menuItems(contextMenu)) {
+                after = after || (entry && entry->objectName() == prefix + QStringLiteral("CopyFrame"));
+                if (after && entry && entry->isVisible())
+                    out << entry->objectName();
+            }
+            return out;
+        };
+        const auto order = [](const QString &prefix) {
+            return QStringList{prefix + QStringLiteral("CopyFrame"), QString(), prefix + QStringLiteral("UnloadVideo"),
+                               prefix + QStringLiteral("StreamsSeparator"), prefix + QStringLiteral("Stream0"),
+                               prefix + QStringLiteral("Stream1"), prefix + QStringLiteral("ChaptersSeparator"),
+                               prefix + QStringLiteral("Chapter0"), prefix + QStringLiteral("Chapter1")};
+        };
+        QVERIFY(video.showFrameAt(0));
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(0));
+        auto *context = named("videoContextMenu");
+        QVERIFY(QMetaObject::invokeMethod(context, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
+        QTRY_VERIFY(context->property("opened").toBool());
+        QTRY_COMPARE(entriesAfterSnapshots(context, QStringLiteral("videoMenu")), order(QStringLiteral("videoMenu")));
+        QCOMPARE(named("videoMenuUnloadVideo")->property("labelText").toString(), QStringLiteral("Unload video"));
+        QVERIFY(named("videoMenuUnloadVideo")->property("enabled").toBool());
+        QCOMPARE(named("videoMenuStream0")->property("text").toString(), QStringLiteral("A: Main [eng] (pcm_s16le)"));
+        QCOMPARE(named("videoMenuStream1")->property("text").toString(), QStringLiteral("A: Commentary [jpn] (pcm_s16le)"));
+        QVERIFY(named("videoMenuStream0")->property("checked").toBool());
+        QVERIFY(!named("videoMenuStream1")->property("checked").toBool());
+        QCOMPARE(named("videoMenuChapter1")->property("labelText").toString(), QStringLiteral("Second"));
+        QCOMPARE(named("videoMenuChapter1")->property("keysText").toString(), QStringLiteral("[0:00:01.00]"));
+        QVERIFY(named("videoMenuChapter0")->property("checked").toBool());
+        QVERIFY(!named("videoMenuChapter1")->property("checked").toBool());
+        // (the entries made as the menu opens are placed by its list's next
+        // layout, below the snapshots)
+        const auto placed = [&](const char *name, const char *above) {
+            auto *entry = qobject_cast<QQuickItem *>(named(name));
+            auto *anchor = qobject_cast<QQuickItem *>(named(above));
+            return entry && anchor && entry->isVisible() && entry->width() > 0 && entry->y() > anchor->y();
+        };
+        auto *chapterItem = qobject_cast<QQuickItem *>(named("videoMenuChapter1"));
+        QTRY_VERIFY(placed("videoMenuChapter1", "videoMenuCopyFrame"));
+        clickWith(chapterItem, Qt::NoModifier);
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(24));
+        QTRY_VERIFY(!context->property("visible").toBool());
+        // (a second click soon after the first would be a double click)
+        const auto clickApart = [] { QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50); };
+        clickApart();
+        QVERIFY(QMetaObject::invokeMethod(context, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
+        QTRY_VERIFY(context->property("opened").toBool());
+        QTRY_VERIFY(named("videoMenuChapter1")->property("checked").toBool());
+        auto *streamItem = qobject_cast<QQuickItem *>(named("videoMenuStream1"));
+        QTRY_VERIFY(placed("videoMenuStream1", "videoMenuCopyFrame"));
+        clickWith(streamItem, Qt::NoModifier);
+        QVERIFY(video.streams()[1].toMap().value(QStringLiteral("checked")).toBool());
+        QTRY_VERIFY(!context->property("visible").toBool());
+        {
+            auto *mapping = mappingWindow("hotkeyMapping");
+            clickApart();
+            QVERIFY(QMetaObject::invokeMethod(context, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
+            QTRY_VERIFY(context->property("opened").toBool());
+            auto *unload = qobject_cast<QQuickItem *>(named("videoMenuUnloadVideo"));
+            QTRY_VERIFY(placed("videoMenuUnloadVideo", "videoMenuCopyFrame"));
+            clickWith(unload, Qt::ShiftModifier);
+            QTRY_VERIFY(mapping->isVisible());
+            QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
+                     QStringLiteral("Please enter a hotkey for \"Unload video\"."));
+            QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
+            keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_Escape);
+            QTRY_VERIFY(!mapping->isVisible());
+            QVERIFY(video.loaded()); // mapped, not run
+            QTRY_VERIFY(window->isActive());
+        }
+        // In fullscreen, its own instance.
+        auto &fs = application->videoFullscreen();
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        auto &tools = application->visualTools();
+        QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier,
+                          item("visualOverlay")->mapToScene(tools.videoRect().center()).toPoint());
+        auto *fsMenu = named("videoFullscreenMenu");
+        QTRY_VERIFY(fsMenu->property("opened").toBool());
+        QTRY_COMPARE(entriesAfterSnapshots(fsMenu, QStringLiteral("fullscreenMenu")), order(QStringLiteral("fullscreenMenu")));
+        QVERIFY(named("fullscreenMenuChapter1")->property("checked").toBool());
+        QVERIFY(named("fullscreenMenuStream1")->property("checked").toBool());
+        auto *fsChapter = qobject_cast<QQuickItem *>(named("fullscreenMenuChapter0"));
+        QTRY_VERIFY(placed("fullscreenMenuChapter0", "fullscreenMenuCopyFrame"));
+        clickWith(fsChapter, Qt::NoModifier);
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(0));
+        QTRY_VERIFY(!fsMenu->property("visible").toBool());
+        QTest::keyClick(fsWindow, Qt::Key_Escape);
+        QTRY_VERIFY(!fs.active());
+
         // a new video: no chapters until its own arrive, prevchap again
         video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), nativeFixture("cfr.mkv"), 20000);

@@ -1441,8 +1441,9 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_MARK_FROM_VIDEO")) root.app.setAudioFromVideo(true)
                 }
             }
-            // V3: legacy's video context menu entries (VideoBox.cpp:979-1016)
-            // in the Video menu too: Unload video (VIDEO_DELETE_FILE,
+            // V3: legacy's video context menu entries (VideoBox.cpp:979-1016),
+            // which the context menu has in legacy's form, in the Video menu
+            // too (V3-video-menu-entries): Unload video (VIDEO_DELETE_FILE,
             // V3-unload-video), the streams and the chapters.
             MenuSeparator {}
             ShellMenuItem {

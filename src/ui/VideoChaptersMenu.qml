@@ -6,7 +6,7 @@ import Hikari.Ui
 // VideoBox.cpp:1010-1016 and 1046-1047): "<name>  [H:MM:SS.CC]", the first
 // chapter whose next one starts after the shown time marked (legacy's radio
 // dot, Menu.cpp:764-767); choosing one seeks to its start. Its own submenu
-// here; the video context menu (V4) can show the same entries.
+// in the Video menu; the video context menu lists the same entries flat.
 ShellMenu {
     id: menu
     required property VideoController video
