@@ -9,14 +9,18 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 
+#include <string>
+
 namespace hikari::app {
 
 #ifdef _WIN32
 namespace {
 
-// Legacy's HR messages in DShowPlayer::OpenFile / InitializeGraph, for the
-// translation catalogs.
-[[maybe_unused]] constexpr const char *kOpenMessages[] = {
+// Legacy's HR messages in DShowPlayer::OpenFile / InitializeGraph, marked
+// for the catalogs: the adapter reports these texts (directshow_player.cpp's
+// W1_HR and error assignments; CheckedIn.DirectShowOpenMessagesAreMarked
+// checks every one is here), and openMessage looks them up in this table.
+constexpr const char *kOpenMessages[] = {
     QT_TRANSLATE_NOOP("HikariSub.Video", "Failed to initialize DirectShow"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot create filters interface"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot create controller"),
@@ -41,6 +45,16 @@ namespace {
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot enumerate splitter pins"),
     QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot connect source pin to video2 renderer"),
 };
+
+// The failed step as the log shows it: translated through the table, and a
+// message the table does not hold as it came.
+QString openMessage(const std::string &message)
+{
+    for (const char *known : kOpenMessages)
+        if (message == known)
+            return QCoreApplication::translate("HikariSub.Video", known);
+    return QString::fromStdString(message);
+}
 
 } // namespace
 #endif
@@ -71,7 +85,7 @@ void Application::choosePlayer()
             // Legacy: HR's HikariLogSilent for the failed step, then
             // VideoBox::LoadVideo's warning box.
             m_directShow->setOpenFailed([this](const std::string &message) {
-                m_log->log(QCoreApplication::translate("HikariSub.Video", message.c_str()), true);
+                m_log->log(openMessage(message), true);
                 emit playerNotice(QCoreApplication::translate("HikariSub.Video",
                                                               "The file is not a valid video file or is corrupted,\n"
                                                               "or codecs or a splitter may be missing"));

@@ -33,7 +33,10 @@ struct SourceFile {
 // when it was run with -locations) gives a message is registered; every
 // literal context a source names (qsTranslate, QT_TRANSLATE_NOOP*,
 // translate, pragma Translator) is registered, also one only used at run time
-// with a computed source text; and no C++ source uses tr(), QT_TR_NOOP or
+// with a computed source text; a file that looks up a computed text
+// (translate or qsTranslate with a non-literal source) marks texts for that
+// context too (QT_TRANSLATE_NOOP*, qsTranslateNoOp), since lupdate extracts
+// nothing from the lookup; and no C++ source uses tr(), QT_TR_NOOP or
 // QT_TR_N_NOOP, whose context is the enclosing class at run time. Returns one
 // line per problem, naming the file (and line) and the context.
 QStringList lintContexts(const ContextRegistry &registry, const TsCatalog &extracted, const QList<SourceFile> &sources);

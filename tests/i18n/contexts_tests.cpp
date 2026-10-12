@@ -8,6 +8,8 @@
 #include <gtest/gtest.h>
 
 #include <QFile>
+#include <QRegularExpression>
+#include <QSet>
 
 #include <algorithm>
 
@@ -90,7 +92,7 @@ TEST(ContextLint, ChecksTheContextsSourcesName)
          QStringLiteral("// made with tr() before O6\n/* QT_TR_NOOP(\"x\") */\nconst char *n = QT_TRANSLATE_NOOP(\"HikariSub.Grid\", "
                         "\"Start\");\nQString s = QCoreApplication::translate(\"HikariSub.Grid\", n) + attr(1) + "
                         "QStringLiteral(\"tr(\");\nint n = 1'000'000; char c = u8'0';\n"
-                        "const char *r = R\"x(tr(\"y\") )\" )x\"; QString t = QObject::translate(\"HikariSub.Editor\", r);\n")}};
+                        "const char *r = R\"x(tr(\"y\") )\" )x\"; QString t = QObject::translate(\"HikariSub.Editor\", \"t\");\n")}};
     EXPECT_TRUE(lintContexts(registry, {}, clean).isEmpty()) << lintContexts(registry, {}, clean).join(u'\n').toStdString();
 
     const QList<SourceFile> bad{
@@ -99,13 +101,47 @@ TEST(ContextLint, ChecksTheContextsSourcesName)
          QStringLiteral("QString a = tr(\"x\");\nQString b = QObject::tr(\"y\");\nconst char *c = QT_TR_NOOP(\"z\");\n"
                         "QString d = QCoreApplication::translate(\"DirectShowPlayer\", text);\n")}};
     const QStringList problems = lintContexts(registry, {}, bad);
-    EXPECT_EQ(problems.size(), 6) << problems.join(u'\n').toStdString();
+    EXPECT_EQ(problems.size(), 7) << problems.join(u'\n').toStdString();
     EXPECT_TRUE(mentions(problems, QStringLiteral("src/ui/B.qml:1: pragma Translator names the unregistered context \"Editor\"")));
     EXPECT_TRUE(mentions(problems, QStringLiteral("src/ui/B.qml:3: qsTranslate names the unregistered context \"Main\"")));
     EXPECT_TRUE(mentions(problems, QStringLiteral("src/ui/b.cpp:1: tr()")));
     EXPECT_TRUE(mentions(problems, QStringLiteral("src/ui/b.cpp:2: tr()")));
     EXPECT_TRUE(mentions(problems, QStringLiteral("src/ui/b.cpp:3: QT_TR_NOOP()")));
     EXPECT_TRUE(mentions(problems, QStringLiteral("src/ui/b.cpp:4: translate names the unregistered context \"DirectShowPlayer\"")));
+    EXPECT_TRUE(mentions(problems, QStringLiteral("src/ui/b.cpp:4: translate looks up a computed text in \"DirectShowPlayer\"")));
+}
+
+// A lookup of a computed text (translate or qsTranslate with a non-literal
+// source) needs its texts marked for the same context in the same file:
+// lupdate extracts nothing from the lookup itself, so an unmarked table never
+// reaches the catalogs (as the Grid's headings did not before O6).
+TEST(ContextLint, AComputedTextNeedsItsContextMarkedInTheFile)
+{
+    const QList<SourceFile> clean{
+        {QStringLiteral("src/ui/table.cpp"),
+         QStringLiteral("static const char *const names[] = {QT_TRANSLATE_NOOP(\"HikariSub.Grid\", \"L.\")};\n"
+                        "QString a = QCoreApplication::translate(\"HikariSub.Grid\", names[0]);\n"
+                        "QString b = QCoreApplication::translate(\"HikariSub.Editor\",\n    \"a\" \"b\");\n"
+                        "QString c = QCoreApplication::translate(\"HikariSub.Editor\", \"%n\", nullptr, 2);\n"
+                        "// QCoreApplication::translate(\"HikariSub.Editor\", text) in a comment\n"
+                        "QString d = QStringLiteral(\"translate(\\\"HikariSub.Editor\\\", text)\");\n")},
+        {QStringLiteral("src/ui/T.qml"),
+         QStringLiteral("import QtQuick\nText {\n    readonly property var names: [qsTranslateNoOp(\"HikariSub.Grid\", \"End\")]\n"
+                        "    // qsTranslate(\"HikariSub.Editor\", names[0])\n"
+                        "    text: qsTranslate(\"HikariSub.Grid\", names[0]) + qsTranslate(\"HikariSub.Editor\", \"x\")\n}\n")}};
+    EXPECT_TRUE(lintContexts(registry, {}, clean).isEmpty()) << lintContexts(registry, {}, clean).join(u'\n').toStdString();
+
+    const QList<SourceFile> bad{
+        {QStringLiteral("src/app/player.cpp"),
+         QStringLiteral("static const char *const kMessages[] = {QT_TRANSLATE_NOOP(\"HikariSub.Editor\", \"Cannot open\")};\n"
+                        "void failed(const std::string &message)\n{\n"
+                        "    log(QCoreApplication::translate(\"HikariSub.Grid\", message.c_str()));\n}\n")},
+        {QStringLiteral("src/ui/U.qml"),
+         QStringLiteral("import QtQuick\nText { text: qsTranslate(\"HikariSub.Grid\", model.name) }\n")}};
+    const QStringList problems = lintContexts(registry, {}, bad);
+    EXPECT_EQ(problems.size(), 2) << problems.join(u'\n').toStdString();
+    EXPECT_TRUE(mentions(problems, QStringLiteral("src/app/player.cpp:4: translate looks up a computed text in \"HikariSub.Grid\"")));
+    EXPECT_TRUE(mentions(problems, QStringLiteral("src/ui/U.qml:2: qsTranslate looks up a computed text in \"HikariSub.Grid\"")));
 }
 
 // Calls pair by file and line order; a key now used by two surfaces moves to
@@ -284,4 +320,29 @@ TEST(CheckedIn, CatalogsHoldTheGridHeadings)
         }
         EXPECT_FALSE(std::ranges::any_of(grid->messages, [](const TsMessage &m) { return m.source == u"#"; })) << file;
     }
+}
+
+// The DirectShow adapter (Windows only, so no lupdate run on Linux reads its
+// sources) reports a failed open step as legacy's HR text, and the
+// application translates it through its HikariSub.Video table
+// (application_directshow.cpp's kOpenMessages). Every text the adapter can
+// report must be marked there, or it would stay untranslated.
+TEST(CheckedIn, DirectShowOpenMessagesAreMarked)
+{
+    const QString adapter = QString::fromUtf8(readSource(QStringLiteral("src/backends/directshow/directshow_player.cpp")));
+    const QString app = QString::fromUtf8(readSource(QStringLiteral("src/app/application_directshow.cpp")));
+    QSet<QString> reported;
+    static const QRegularExpression hr(QStringLiteral(R"re(W1_HR\([^;]*?,\s*"([^"\\]+)"\s*\)\s*;)re"),
+                                       QRegularExpression::DotMatchesEverythingOption);
+    static const QRegularExpression assigned(QStringLiteral(R"re(\berror\s*=\s*"([^"\\]+)")re"));
+    for (const auto *pattern : {&hr, &assigned})
+        for (auto it = pattern->globalMatch(adapter); it.hasNext();)
+            reported.insert(it.next().captured(1));
+    EXPECT_GE(reported.size(), 20);
+    QSet<QString> marked;
+    static const QRegularExpression mark(QStringLiteral(R"re(QT_TRANSLATE_NOOP\("HikariSub\.Video",\s*"([^"\\]+)"\))re"));
+    for (auto it = mark.globalMatch(app); it.hasNext();)
+        marked.insert(it.next().captured(1));
+    for (const QString &text : reported)
+        EXPECT_TRUE(marked.contains(text)) << "\"" << text.toStdString() << "\" is not marked in application_directshow.cpp";
 }

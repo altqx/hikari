@@ -230,6 +230,13 @@ QStringList lintContexts(const ContextRegistry &registry, const TsCatalog &extra
     // Calls whose context is the enclosing class (or QObject) at run time.
     static const QRegularExpression classContext(
         QStringLiteral(R"((?<![\w])(?:\w+::)?(tr|trUtf8|QT_TR_NOOP|QT_TR_N_NOOP|QT_TR_NOOP_UTF8)\s*\()"));
+    // A run-time lookup and the marks that put its possible texts in the
+    // catalogs (the marking calls of literalContext).
+    static const QRegularExpression lookup(
+        QStringLiteral(R"re((?<![\w.])(qsTranslate|translate)\s*\(\s*"([^"\\]*)"\s*,\s*)re"));
+    static const QRegularExpression mark(
+        QStringLiteral(R"re((?<![\w.])(?:qsTranslateNoOp|QT_TRANSLATE_NOOP3?|QT_TRANSLATE_N_NOOP3?|)re"
+                       R"re(QT_TRANSLATE_NOOP_UTF8)\s*\(\s*"([^"\\]*)")re"));
     for (const SourceFile &file : sources) {
         const bool cpp = !file.path.endsWith(QStringLiteral(".qml")) && !file.path.endsWith(QStringLiteral(".js")) &&
                          !file.path.endsWith(QStringLiteral(".mjs"));
@@ -239,6 +246,23 @@ QStringList lintContexts(const ContextRegistry &registry, const TsCatalog &extra
             if (!registry.contains(match.captured(2)))
                 problems << QStringLiteral("%1:%2: %3 names the unregistered context \"%4\"")
                                 .arg(file.path).arg(lineAt(text, match.capturedStart())).arg(match.captured(1), match.captured(2));
+        }
+        // A computed source text: lupdate extracts nothing from the call, so
+        // its texts reach the catalogs only through marks with the same
+        // context. The lint cannot follow the text to its marks; it asks for
+        // at least one in the same file (the table it is looked up in).
+        const QString uncommented = cpp ? text : withoutCppComments(file.text);
+        QSet<QString> marked;
+        for (auto it = mark.globalMatch(uncommented); it.hasNext();)
+            marked.insert(it.next().captured(1));
+        for (auto it = lookup.globalMatch(uncommented); it.hasNext();) {
+            const auto match = it.next();
+            if (uncommented.mid(match.capturedEnd(), 1) == u"\"" || marked.contains(match.captured(2)))
+                continue;
+            problems << QStringLiteral("%1:%2: %3 looks up a computed text in \"%4\", which lupdate cannot extract; "
+                                       "mark its possible texts in this file (QT_TRANSLATE_NOOP or qsTranslateNoOp "
+                                       "with \"%4\")")
+                            .arg(file.path).arg(lineAt(uncommented, match.capturedStart())).arg(match.captured(1), match.captured(2));
         }
         if (!cpp) {
             for (auto it = pragma.globalMatch(text); it.hasNext();) {
