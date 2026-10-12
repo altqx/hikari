@@ -348,7 +348,7 @@ public:
 	int numElem;
 	int elemsToMove;
 	byte selectedTags;
-	wxPoint diffs;
+	D3DXVECTOR2 diffs;
 	wxPoint dumplaced;
 	D3DXVECTOR2 beforeMove;
 	D3DXVECTOR2 drawingPos = D3DXVECTOR2(0, 0);

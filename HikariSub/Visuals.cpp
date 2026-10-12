@@ -98,6 +98,8 @@ Visuals::Visuals()
 	blockevents = false;
 	zoomScale = D3DXVECTOR2(1.0f, 1.0f);
 	dummytext = nullptr;
+	for (int i = 0; i < 7; i++)
+		moveValues[i] = 0.;
 }
 
 Visuals::~Visuals()
@@ -537,7 +539,7 @@ void Visuals::DrawWarning(bool comment)
 
 	LPD3DXFONT warningFont;
 	HRN(D3DXCreateFontW(device, (VideoSize.width - VideoSize.x) / 20, 0, FW_BOLD, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Tahoma"), &warningFont), _("Cannot create D3DX font"));
-	RECT rt = { 0, 0, VideoSize.width, VideoSize.height };
+	RECT rt = { VideoSize.x, VideoSize.y, VideoSize.width, VideoSize.height };
 	wxString text = (comment) ? _("Visual editing tools\ndo not work on comments") :
 		_("Line is not visible on video\nor has zero duration");
 	DRAWOUTTEXT(warningFont, text, rt, DT_CENTER | DT_VCENTER, 0xFFFF0000);
@@ -641,6 +643,11 @@ D3DXVECTOR2 Visuals::GetPosnScale(D3DXVECTOR2 *scale, byte *AN, double *tbl)
 
 	Styles *currentStyle = grid->file->GetStyle(0, edit->line->Style);
 	bool foundpos = false;
+	//values not in this Line's \pos or \move are 0, not the previous Line's
+	if (tbl) {
+		for (int i = 0; i < 7; i++)
+			tbl[i] = 0.;
+	}
 	wxRegEx pos(L"\\\\(pos|move)\\(([^\\)]+)\\)", wxRE_ADVANCED);
 	if (pos.Matches(txt) && tbl){
 		wxString type = pos.GetMatch(txt, 1);
@@ -666,7 +673,8 @@ D3DXVECTOR2 Visuals::GetPosnScale(D3DXVECTOR2 *scale, byte *AN, double *tbl)
 		ppos.y += additional.y;
 	}
 
-	if (tbl && tbl[6] < 4){
+	//no times, a \move without them moves for the whole Line
+	if (tbl && tbl[6] < 6){
 		int startTime = ZEROIT(edit->line->Start.mstime);
 		int start, end;
 		GetMoveTimes(&start, &end);
@@ -754,6 +762,7 @@ void Visuals::SetVisual(bool dummy)
 		int _time = tab->video->Tell();
 		int moveLength = 0;
 		const wxString &tlStyle = tab->grid->file->GetSInfo(L"TLMode Style");
+		bool changed = false;
 		for (size_t i = 0; i < sels.size(); i++){
 
 			Dialogue *Dial = grid->file->GetDialogue(sels[i]);
@@ -762,7 +771,10 @@ void Visuals::SetVisual(bool dummy)
 			wxString txt = Dial->GetTextNoCopy();
 			ChangeVisual(&txt, Dial, selsSize);
 			if (!dummy){
-				grid->CopyDialogue(sels[i])->SetText(txt);
+				if (txt != Dial->GetTextNoCopy()){
+					grid->CopyDialogue(sels[i])->SetText(txt);
+					changed = true;
+				}
 			}
 			else{
 				Dialogue Cpy = Dialogue(*Dial);
@@ -789,6 +801,7 @@ void Visuals::SetVisual(bool dummy)
 		}
 
 		if (!dummy){
+			if (!changed){ return; }
 			SetModified((Visual == MOVE) ? VISUAL_MOVE :
 				(Visual == SCALE) ? VISUAL_SCALE : 
 				(Visual == ROTATEZ) ? VISUAL_ROTATION_Z :
@@ -819,6 +832,7 @@ void Visuals::SetVisual(bool dummy)
 		RenderSubs(dtxt);
 	}
 	else{
+		if (editor->GetValue() == currentLineText){ return; }
 		editor->SetModified();
 		currentLineText = editor->GetValue();
 		tab->video->SetVisualEdition(true);
@@ -924,12 +938,10 @@ void Visuals::ChangeOrg(wxString *txt, Dialogue *_dial, float coordx, float coor
 			strPos.x += posTag.length() + append;
 			PutinBrackets = false;
 		}
-		else
-		{
-			strPos.y = 0;
-		}
+		//insert at strPos.x, ChangeText erases nothing when the end is before the start
+		strPos.y = strPos.x - 1;
 	}
-	strPos.y += strPos.x - 1;
+	//FindTag already gives the found \org's start and its last character
 	ChangeText(txt, L"\\org(" + getfloat(orgx + coordx) + L"," + getfloat(orgy + coordy) + L")", !PutinBrackets, strPos);
 }
 
@@ -957,8 +969,18 @@ D3DXVECTOR2 Visuals::GetTextSize(Dialogue* dial, D3DXVECTOR2* border, Styles* st
 		L"bord", L"xbord", L"ybord", L"b", L"i", L"shad", L"xshad", L"yshad" };
 	D3DXVECTOR2 result = D3DXVECTOR2(0.f, 0.f);
 	const wxString& text = dial->GetTextNoCopy();
-	if (!text.length())
+	if (!text.length()) {
+		//nothing to measure, but do not leave the outputs as they were
+		if (border)
+			*border = result;
+		if (extralead)
+			*extralead = result;
+		if (drawingPosition)
+			*drawingPosition = result;
+		if (bordshad)
+			bordshad[0] = bordshad[1] = result;
 		return result;
+	}
 
 	Styles* measuringStyle = nullptr;
 	if (style)

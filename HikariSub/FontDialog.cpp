@@ -350,7 +350,7 @@ void FontList::Delete(int i)
 
 int FontList::FindString(const wxString& text, bool caseSensitive)
 {
-	return 0;
+	return fonts->Index(text, caseSensitive);
 }
 
 void FontList::Scroll(int step)
@@ -440,6 +440,8 @@ FontDialog::FontDialog(wxWindow *parent, Styles *acst, bool changePointToPixel)
 		wxString cat = FCManagement.AddToCatalog(font, wxPoint(pos.x, pos.y + size.y), this);
 		if (!cat.empty()) {
 			fontCatalog->PutArray(FCManagement.GetCatalogNames());
+			fontCatalog->Insert(_("All fonts"), 0);
+			fontCatalog->Insert(_("Without catalog"), 1);
 			int sel = fontCatalog->FindString(cat);
 			fontCatalog->SetSelection(sel);
 			ChangeCatalog();

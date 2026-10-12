@@ -21,10 +21,14 @@
 class SubsLoader{
 public:
 	SubsLoader(SubsGrid *grid, const wxString &text, wxString &ext);
+	bool Succeeded() const { return succeeded; }
+	bool PlainTextAsAss() const { return plainTextAsAss; }
 private:
 	bool LoadASS(const wxString &text);
 	bool LoadSRT(const wxString &text);
 	bool LoadTXT(const wxString &text);
 	void TrimLastNumber(wxString* text);
 	SubsGrid *grid;
+	bool succeeded = false;
+	bool plainTextAsAss = false;
 };

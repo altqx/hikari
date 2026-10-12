@@ -941,7 +941,8 @@ namespace Auto{
 		lua_pushcclosure(L, add_stack_trace, 0);
 
 		GetFeatureFunction("validate");
-		auto subsobj = new AutoToFile(L, c->grid->file, true, c->grid->subsFormat);
+		// validation only reads; an edit made here would have no undo step
+		auto subsobj = new AutoToFile(L, c->grid->file, false, c->grid->subsFormat);
 
 		push_value(L, selected_rows(c));
 		push_value(L, c->grid->currentLine + c->grid->file->SInfoSize() + c->grid->file->StylesSize() + 1);

@@ -6,7 +6,11 @@ The two builds source dependencies very differently:
 
 - **Linux** (`CMakeLists.txt`) resolves everything through `pkg-config` against the
   distribution's packages. It reads nothing here except `luabins`,
-  `DependencyControl` and the `ffms2` headers.
+  `DependencyControl`, the `ffms2` headers, `luajit`/`LuaJIT` and
+  `SubInspector`. It builds LuaJIT and DependencyControl's native modules as
+  the Windows build does (`cmake/VendoredLuaJIT.cmake`,
+  `cmake/DependencyControlModules.cmake`), and SubInspector as the automation
+  library's `libSubInspector.so`.
 - **Windows** (`HikariSub.sln`) builds its dependencies from source, using the MSVC
   project files under `Thirdparty/Build/`.
 
@@ -57,12 +61,24 @@ libraries are listed in `AdditionalDependencies`.
 | `wxWidgets` | [wxWidgets/wxWidgets](https://github.com/wxWidgets/wxWidgets) | `v3.3.3` |
 | `ffms2` | **[altqx/ffms2](https://github.com/altqx/ffms2)** | branch `hikarisub` |
 | `xy-VSFilter-xy_sub_filter_rc5` | **[altqx/xy-VSFilter](https://github.com/altqx/xy-VSFilter)** | branch `hikarisub` |
+| `SubInspector` | [TypesettingTools/SubInspector](https://github.com/TypesettingTools/SubInspector) | `51c4c7a` (0.5.2) |
 
 The first five are stock upstream at a release tag, so they point straight at
-upstream. The last two carry HikariSub's own changes, so they point at forks whose
+upstream. `ffms2` and `xy-VSFilter` carry HikariSub's own changes, so they point at forks whose
 `hikarisub` branch is upstream plus those changes — see [`PATCHES.md`](PATCHES.md).
 
-All seven are marked `shallow = true` in `.gitmodules`, so `--recurse-submodules`
+`SubInspector` is Linux-only: the automation tree ships its Windows build as
+`Automation/automation/Include/SubInspector/Inspector/SubInspector.dll`
+(`si_getVersion` 0x000501, the `v0.5.1` tag), and `CMakeLists.txt` builds the
+same library from this checkout against the app's libass for the Linux package.
+It is pinned at the first commit after `v0.5.2`, the one that dropped the old
+build's nested submodules: the `v0.5.1` and `v0.5.2` tags still carry them, and
+their fontconfig URLs (`git://anongit.freedesktop.org/fontconfig`,
+`github.com/freedesktop/fontconfig`) no longer exist, so a recursive checkout of
+either tag fails. Its `src/` is `v0.5.2`'s, which differs from `v0.5.1` only in
+bounding libass's caches.
+
+All eight are marked `shallow = true` in `.gitmodules`, so `--recurse-submodules`
 fetches depth-1 rather than full history.
 
 wxWidgets keeps several of its own third-party libraries (zlib, png, pcre,
@@ -135,7 +151,9 @@ generate:
 | `luabins` | Three small fixes for modern LuaJIT (`luaL_reg` → `luaL_Reg`, `LUA_LIB`, `LUAI_BITSINT`); upstream is unmaintained |
 | `uchardet` | Tracks upstream *master*, which is ahead of the 0.0.8 release by seven language models HikariSub compiles; pinning the release would lose them |
 | `BaseClasses` | DirectShow base classes from the Windows SDK samples, locally patched |
-| `DirectX9`, `karahelper`, `DependencyControl`, `LuaJIT`/`luajit` | Windows-only support code |
+| `LuaJIT`/`luajit` | Both builds compile it with `LUAJIT_ENABLE_LUA52COMPAT` and `LUAJIT_DISABLE_BUFFER`: Windows through `Build/LuaJit`, Linux through `cmake/VendoredLuaJIT.cmake`, which merges the two directories into one tree in the build directory |
+| `DependencyControl` | The ffi-experiments sources of DependencyControl's native modules (BadMutex, PreciseTimer, DownloadManager). Windows builds them through the solution's projects, Linux through `cmake/DependencyControlModules.cmake`; both write them under `Automation/automation/Include/BM`, `PT` and `DM`, where `requireffi` loads them. One local fix: `CDlM_getStringSHA1`/`CDlM_getFileSHA1` returned the buffer of a freed local `std::string` |
+| `DirectX9`, `karahelper` | Windows-only support code |
 
 > `Thirdparty/luajit` and `Thirdparty/LuaJIT` are two directories that differ only
 > in case. They hold disjoint file sets and merge into one directory on Windows

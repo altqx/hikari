@@ -54,8 +54,9 @@ public:
 	Notebook* Tabs;
 
 	//wxBoxSizer *mains;
-	void Save(bool dial, int wtab = -1, bool changeLabel = true);
+	bool Save(bool dial, int wtab = -1, bool changeLabel = true);
 	void SaveAll();
+	bool SaveTranslation();
 
 	bool OpenFile(const wxString &filename, bool fulls = false, bool freeze = true);
 	void Label(int iter = 0, bool video = false, int wtab = -1, bool onlyTabs = false);
@@ -84,6 +85,9 @@ public:
 	TabPanel* GetTab();
 
 	void InsertTab(bool refresh = true);
+	//opens a file in a new tab and removes that tab again when nothing of
+	//the file could be opened in it
+	bool OpenFileInNewTab(const wxString &filename);
 	void OpenFiles(wxArrayString &files, bool intab = false, bool nofreeze = false, bool newtab = false);
 	void OpenAudioInTab(TabPanel *pan, int id, const wxString &path);
 	void HideEditor(bool save = true);
@@ -118,7 +122,10 @@ public:
 	MisspellReplacer *MR = nullptr;
 	wxRect borders;
 private:
-
+	bool ChooseSavePath(TabPanel *atab, bool showDialog, wxString *savePath, bool *nameWasChanged);
+	// translationOnly: saves with translation mode taken out, see SaveTranslation
+	bool SaveTo(TabPanel *atab, int tabToSave, const wxString &savePath, bool nameWasChanged, bool changeLabel,
+		bool translationOnly = false);
 
 	void OnConversion(char form);
 	void OnAssProps();

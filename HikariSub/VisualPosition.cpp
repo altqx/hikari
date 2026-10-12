@@ -425,13 +425,13 @@ void Position::SetCurVisual()
 		//fix to work with editbox changes
 		Dialogue *dial = (sels[i] == tab->grid->currentLine) ? tab->edit->line : tab->grid->file->GetDialogue(sels[i]);
 		if (dial->IsComment){ continue; }
-		double moveTable[5];
-		moveTable[4] = 0.;
+		double moveTable[5] = { 0., 0., 0., 0., 0. };
 		D3DXVECTOR2 pos = GetPosition(dial, &putInBracket, &textPosition, moveTable);
 		pos.x = GetCalculatedInPosX(pos.x);
 		pos.y = GetCalculatedInPosY(pos.y);
-		//calculate position from move
-		bool hasMove = moveTable[4] != 0.;
+		//calculate position from move,
+		//a move without both end coordinates is not a move
+		bool hasMove = moveTable[4] >= 2.;
 		if (hasMove) {
 			moveTable[0] = GetCalculatedInPosX(moveTable[0]);
 			moveTable[1] = GetCalculatedInPosY(moveTable[1]);
@@ -448,6 +448,9 @@ void Position::SetCurVisual()
 			SortPoints();
 			SetPosition();
 			ChangeMultiline(true, true);
+			//the commit changed the text, read positions again,
+			//the alignment is the same now, so it does not commit again
+			SetCurVisual();
 		}
 	}
 }

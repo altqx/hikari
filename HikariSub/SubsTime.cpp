@@ -16,20 +16,40 @@
 #include "SubsTime.h"
 #include "config.h"
 #include "SubsDialogue.h"
+#include "Notebook.h"
 #include <wx/log.h>
-
-float SubsTime::FPS = 23.976f;
 
 SubsTime::SubsTime(){
 	mstime = 0;
 	form = ASS;
 	orgframe = 0;
+	fps = 0;
 }
 
 SubsTime::SubsTime(int ms, int orgFrame){
 	mstime = ms;
 	form = ASS;
 	orgframe = orgFrame;
+	fps = 0;
+}
+
+float SubsTime::GetMDVDFPS()
+{
+	if (fps >= 1)
+		return fps;
+	//times created or loaded after the video was opened use the rate
+	//of the video in the tab that is edited
+	if (Notebook::sthis && (size_t)Notebook::sthis->iter < Notebook::sthis->Size()){
+		VideoBox *video = Notebook::GetTab()->video;
+		if (video && video->GetState() != None){
+			float videoFPS = video->GetFPS();
+			if (videoFPS >= 1)
+				return videoFPS;
+		}
+	}
+	//no video, use frame rate from conversion options
+	float convertFPS = Options.GetFloat(CONVERT_FPS);
+	return (convertFPS >= 1) ? convertFPS : 23.976f;
 }
 
 SubsTime::~SubsTime(){
@@ -73,7 +93,7 @@ void SubsTime::ParseMS(wxString raw)
 		}
 		else if (form == MDVD){
 			orgframe = result;
-			mstime = (result / 23.976f)*(1000.f);
+			mstime = (result / GetMDVDFPS())*(1000.f);
 			if (orgframe < 0){ orgframe = 0; }
 		}
 		else{ mstime = result * 100; }
@@ -107,7 +127,7 @@ wxString SubsTime::raw(char ft)//,float custfps
 	}
 	else{
 		if (ft == MDVD && !orgframe && mstime){
-			orgframe = ceil(mstime * (25.f / 1000.f));
+			orgframe = ceil(mstime * (GetMDVDFPS() / 1000.f));
 		}
 		rawtxt = wxString::Format(L"%i", (ft != MPL2) ? orgframe : (int)ceil(mstime * (10.0f / 1000.0f)));
 	}
@@ -121,7 +141,7 @@ void SubsTime::Change(int ms)
 	if (mstime < 0){ mstime = 0; }
 	if (form == MDVD){
 		//MDVD format need to video FPS
-		orgframe = ceil(mstime * (FPS / 1000.f));
+		orgframe = ceil(mstime * (GetMDVDFPS() / 1000.f));
 	}
 }
 void SubsTime::ChangeFrame(int frame)
@@ -134,7 +154,7 @@ void SubsTime::NewTime(int ms)
 	mstime = ms; if (mstime < 0){ mstime = 0; }
 	if (form == MDVD){
 		//MDVD format need to video FPS
-		orgframe = ceil(mstime * (FPS / 1000.f));
+		orgframe = ceil(mstime * (GetMDVDFPS() / 1000.f));
 	}
 
 }
@@ -156,9 +176,8 @@ void SubsTime::ChangeFormat(char format, float fps)
 	if (format == ASS){ mstime = ZEROIT(mstime); }
 	//do not convert to MDVD cause MDVD have mstime updated to video
 	if (format == MDVD && form != FRAME){
-		/*float fpsa = (fps) ? fps : Options.GetFloat(CONVERT_FPS);
-		if (fpsa < 1) { fpsa = FPS; }*/
-		orgframe = ceil(mstime * (FPS/*fpsa*/ / 1000));
+		if (fps >= 1){ this->fps = fps; }
+		orgframe = ceil(mstime * (GetMDVDFPS() / 1000));
 	}
 	form = format;
 }
@@ -170,43 +189,42 @@ wxString SubsTime::GetFormatted(char format)
 
 void SubsTime::SetMDVDTime(float fps)
 {
-	if (FPS != fps)
-		FPS = fps;
+	this->fps = fps;
 
 	mstime = (orgframe / fps) * 1000;
 }
 
 void SubsTime::SetMDVDFPS(float fps)
 {
-	FPS = fps;
+	this->fps = fps;
 }
 
-bool SubsTime::operator> (const SubsTime &comp)
+bool SubsTime::operator> (const SubsTime &comp) const
 {
 	return mstime > comp.mstime;
 }
 
-bool SubsTime::operator< (const SubsTime &comp)
+bool SubsTime::operator< (const SubsTime &comp) const
 {
 	return mstime < comp.mstime;
 }
 
-bool SubsTime::operator>= (const SubsTime &comp)
+bool SubsTime::operator>= (const SubsTime &comp) const
 {
-	return mstime > comp.mstime;
+	return mstime >= comp.mstime;
 }
 
-bool SubsTime::operator<= (const SubsTime &comp)
+bool SubsTime::operator<= (const SubsTime &comp) const
 {
-	return mstime < comp.mstime;
+	return mstime <= comp.mstime;
 }
 
-bool SubsTime::operator== (const SubsTime &comp)
+bool SubsTime::operator== (const SubsTime &comp) const
 {
 	return mstime == comp.mstime;
 }
 
-bool SubsTime::operator!= (const SubsTime &comp)
+bool SubsTime::operator!= (const SubsTime &comp) const
 {
 	return mstime != comp.mstime;
 }

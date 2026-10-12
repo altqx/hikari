@@ -307,7 +307,15 @@ int SelectLines::SelectOnTab(TabPanel *tab, bool *refreshTabLabel)
 	for (size_t i = 0; i < Subs->GetCount(); i++)
 	{
 		Dialogue *Dial = Subs->GetDialogue(i);
-		if (skipFiltered && !Dial->isVisible || Dial->NonDialogue){ continue; }
+		if (skipFiltered && !Dial->isVisible || Dial->NonDialogue){
+			// lines the search skips are still deleted by Cut and Move when selected,
+			// so copy them too or they are lost
+			if (action > 0 && action < 5 && tab->grid->file->IsSelected(i)){
+				if (action < 3){ Dial->GetRaw(&whatcopy, tab->grid->hasTLMode && Dial->TextTl != emptyString); }
+				else{ mdial.push_back(Dial->Copy()); }
+			}
+			continue;
+		}
 
 		if (selectColumn == STYLE){
 			txt = Dial->Style;
@@ -413,7 +421,7 @@ int SelectLines::SelectOnTab(TabPanel *tab, bool *refreshTabLabel)
 			firstSelected = gridGetCount - 1;
 		}
 	}
-	if (action > 1 && allSelections){
+	if (action > 1 && Subs->HasChangesToRecord()){
 		tab->grid->SetModified(SELECT_LINES, true, false, firstSelected);
 		*refreshTabLabel = true;
 	}
@@ -453,6 +461,9 @@ void SelectLines::AddRecent(){
 void SelectLines::OnChooseStyles(wxCommandEvent& event)
 {
 	wxString styles = GetCheckedElements(Hikari);
+	// Cancel (or no style checked) leaves the search as it is
+	if (styles.empty())
+		return;
 	styles.Replace(L"\\", L"\\\\");
 	styles.Replace(L"|", L"\\|");
 	int numreps = styles.Replace(L",", L"|");

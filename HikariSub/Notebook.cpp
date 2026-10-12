@@ -101,12 +101,13 @@ Notebook::Notebook(wxWindow *parent, int id)
 
 			wxString &name = item->label;
 			bool found = false;
-			for (size_t i = 0; i < SubsGrid::compareStyles.size(); i++){
+			for (size_t i = 0; i < SubsGrid::compareStyles.size();){
 				if (SubsGrid::compareStyles[i] == name){
-					if (!item->check){ SubsGrid::compareStyles.RemoveAt(i); }
 					found = true;
+					if (!item->check){ SubsGrid::compareStyles.RemoveAt(i); continue; }
 					break;
 				}
+				i++;
 			}
 			if (!found && item->check){ SubsGrid::compareStyles.Add(name); }
 			Options.SetTable(SUBS_COMPARISON_STYLES, SubsGrid::compareStyles);
@@ -153,7 +154,15 @@ TabPanel *Notebook::GetPage()
 
 void Notebook::AddPage(bool refresh, bool saveLastSession)
 {
-	if (iter < Pages.size() && Pages[iter]->video->GetState() == Playing){ Pages[iter]->video->Pause(); }
+	TabPanel *active = (iter < Pages.size()) ? Pages[iter] : nullptr;
+	//a tab that an earlier AddPage paused and RemoveUnusedPage made active
+	//again while a batch of files hides it still waits to play again
+	if (!active || active != pausedByAddPage || active->video->GetState() != Paused)
+		pausedByAddPage = nullptr;
+	if (active && active->video->GetState() == Playing){
+		active->video->Pause();
+		pausedByAddPage = active;
+	}
 	int w, h;
 	GetClientSize(&w, &h);
 	if(refresh){Freeze();}
@@ -228,6 +237,7 @@ void Notebook::DeletePage(int page)
 		return;
 	}
 
+	pausedByAddPage = nullptr;
 	Freeze();
 	block = true;
 	if (Hikari->SavePrompt(1, page)){
@@ -314,6 +324,88 @@ void Notebook::DeletePage(int page)
 	//RefreshRect(wxRect(0,h-TabHeight,w,TabHeight),false);
 	Refresh(false);
 	SaveLastSession();
+}
+
+void Notebook::RemoveUnusedPage(int page, int pageToSelect)
+{
+	TabPanel *pausedTab = pausedByAddPage;
+	pausedByAddPage = nullptr;
+	int pagesSize = Size();
+	if (page < 0 || page >= pagesSize || pagesSize < 2)
+		return;
+
+	TabPanel *removed = Pages[page];
+	if (removed->SubsPath != emptyString || removed->VideoPath != emptyString ||
+		removed->AudioPath != emptyString || removed->KeyframesPath != emptyString ||
+		removed->grid->file->IsModified() || removed->video->GetState() != None)
+		return;
+
+	bool removeActive = page == iter;
+	if (removeActive && (pageToSelect < 0 || pageToSelect >= pagesSize || pageToSelect == page))
+		pageToSelect = (page > 0) ? page - 1 : 1;
+
+	Freeze();
+	TabPanel *selected = (removeActive) ? Pages[pageToSelect] : nullptr;
+	bool showSelected = removeActive && removed->IsShown();
+	if (removeActive){
+		//AddPage gave the new page the place of the page that was active
+		selected->SetPosition(removed->GetPosition());
+		selected->SetSize(removed->GetSize());
+		iter = pageToSelect;
+	}
+	removed->Destroy();
+	Pages.erase(Pages.begin() + page);
+	tabNames.RemoveAt(page);
+	tabSizes.RemoveAt(page);
+	if (iter > page){ iter--; }
+	if (split && splititer > page){ splititer--; }
+	//nothing was shown in the removed page, so the page-changed handler has
+	//no previous tab to take values from
+	olditer = iter;
+	int rsize = Size() - 1;
+	if (firstVisibleTab > rsize){ firstVisibleTab = tabScrollDestination = rsize; }
+	if (removeActive){
+		//as when a tab is shown again after a tab change or close
+		selected->ReloadSubsIfModified();
+		if (showSelected)
+			selected->Show();
+	}
+
+	CalcSizes(true);
+	Thaw();
+	Refresh(false);
+	if (removeActive){
+		//AddPage paused the video of this tab only for the removed page; a
+		//batch of files that hides the tab calls ResumePausedTab when it
+		//shows the active tab at its end
+		if (selected == pausedTab){
+			pausedByAddPage = pausedTab;
+			ResumePausedTab();
+		}
+		//update the title, status bar and menus as a tab change does
+		wxCommandEvent choiceSelectedEvent(wxEVT_COMMAND_CHOICE_SELECTED, GetId());
+		AddPendingEvent(choiceSelectedEvent);
+	}
+}
+
+void Notebook::ResumePausedTab()
+{
+	TabPanel *tab = pausedByAddPage;
+	//a batch of files still hides the active tab and calls this again once
+	//it shows it
+	if (!tab || iter >= Pages.size() || !Pages[iter]->IsShown())
+		return;
+
+	pausedByAddPage = nullptr;
+	//another tab shown as the active one leaves it paused, as a tab change does
+	if (Pages[iter] == tab && tab->video->GetState() == Paused)
+		tab->video->Play();
+}
+
+void Notebook::ForgetPausedTab(TabPanel *tab)
+{
+	if (tab == pausedByAddPage)
+		pausedByAddPage = nullptr;
 }
 
 void Notebook::CalcSizes(bool makeActiveVisible)
@@ -923,7 +1015,8 @@ void Notebook::ContextMenu(const wxPoint &pos, int i)
 			MenuItem * styleItem = styleComparisonMenu->Append(4448, availableStyles[i], emptyString, true, nullptr, nullptr, ITEM_CHECK);
 			if (optionsCompareStyles.Index(availableStyles[i]) != -1){ 
 				styleItem->Check(); 
-				SubsGrid::compareStyles.Add(availableStyles[i]); 
+				if (SubsGrid::compareStyles.Index(availableStyles[i]) == -1)
+					SubsGrid::compareStyles.Add(availableStyles[i]);
 			}
 		}
 	}
@@ -945,6 +1038,7 @@ void Notebook::ContextMenu(const wxPoint &pos, int i)
 		OnTabSel(id);
 	}
 	else if (id == MENU_COMPARE){
+		SubsGrid::RemoveComparison();
 		SubsGrid::CG1 = Pages[iter]->grid;
 		SubsGrid::CG2 = Pages[i]->grid;
 		SubsGrid::SubsComparison();
@@ -971,6 +1065,7 @@ void Notebook::ContextMenu(const wxPoint &pos, int i)
 void Notebook::OnTabSel(int id)
 {
 	int wtab = id - MENU_CHOOSE;
+	pausedByAddPage = nullptr;
 	if (Pages[iter]->video->GetState() == Playing){ Pages[iter]->video->Pause(); }
 	if (wtab < -1){
 		wtab = abs(wtab + 2);
@@ -981,12 +1076,16 @@ void Notebook::OnTabSel(int id)
 			wxYES_NO, Hikari, wxDefaultPosition, wxNO) == wxNO)
 			return;
 
+		//ask about every tab before closing any, so Cancel keeps them all
+		for (size_t i = 0; i < Pages.size(); i++)
+		{
+			if (Hikari->SavePrompt(1, i)){ return; }
+		}
 		int tmpiter = iter;
 		Pages[iter]->Hide();
 		for (int i = (int)Pages.size() - 1; i >= 0; i--)
 		{
 			iter = i;
-			if (Hikari->SavePrompt()){ break; }
 			SubsGrid::RemoveComparison();
 			Pages[i]->Destroy();
 			Pages.pop_back();
@@ -1032,9 +1131,13 @@ void Notebook::OnTabSel(int id)
 		tabSizes[wtab] = tmp2;
 		tabSizes[firstVisibleTab] += xWidth;
 
-		olditer = iter;
+		//the page-changed handler reads the previous tab from olditer,
+		//so point it at where the previous page sits after the swap
+		olditer = (iter == firstVisibleTab) ? wtab : (iter == wtab) ? firstVisibleTab : iter;
 		iter = firstVisibleTab;
 		RefreshBar();
+		wxCommandEvent choiceSelectedEvent(wxEVT_COMMAND_CHOICE_SELECTED, GetId());
+		AddPendingEvent(choiceSelectedEvent);
 	}
 }
 
@@ -1105,6 +1208,7 @@ void Notebook::ChangeActive()
 		Pages[iter]->lastFocusedWindowId = win->GetId();
 	}
 	else{ Pages[iter]->lastFocusedWindowId = 0; }
+	pausedByAddPage = nullptr;
 	int tmp = iter;
 	iter = splititer;
 	splititer = tmp;
@@ -1126,17 +1230,25 @@ void Notebook::RefreshBar(bool checkSizes)
 	RefreshRect(wxRect(0, h - TabHeight, w, TabHeight), false);
 }
 
-bool Notebook::LoadSubtitles(TabPanel *tab, const wxString & path, int active /*= -1*/, int scroll /*= -1*/)
+bool Notebook::LoadSubtitles(TabPanel *tab, const wxString & path, int active /*= -1*/, int scroll /*= -1*/,
+	wxArrayString *unreadable /*= nullptr*/)
 {
 	wxString ext = path.AfterLast(L'.').Lower();
 	OpenWrite ow;
 	wxString s;
 	if (!ow.FileOpen(path, &s)){
+		//missing, unreadable, empty or in a charset that cannot be converted
+		if (unreadable)
+			unreadable->Add(path);
+		else
+			HikariMessageBox(wxString::Format(_("Cannot read the subtitle file:\n%s"), path), _("Warning"));
 		return false;
 	}
 	else{
 		tab->grid->ClosePreviewWindows();
-		tab->grid->LoadSubtitles(s, ext);
+		//subtitles that cannot be read keep the current ones and their path
+		if (!tab->grid->LoadSubtitles(s, ext))
+			return false;
 	}
 
 	tab->SubsPath = path;
@@ -1327,6 +1439,14 @@ void Notebook::SaveLastSession(bool beforeClose, bool recovery, const wxString &
 		result << L"[Close session]\r\n";
 	int numtab = 0;
 	wxString recoveryPath = Options.pathfull + L"/Recovery/";
+	//the recovery copies of the subtitles are for the user only; without a
+	//private folder for them, the session names the saved files as at a
+	//normal close
+	if (recovery && !MakePrivateFolder(recoveryPath)) {
+		HikariLogSilent(wxString::Format(L"The recovery folder is not private, no recovery copies are made: %s",
+			recoveryPath));
+		recovery = false;
+	}
 	
 	for (std::vector<TabPanel*>::iterator it = sthis->Pages.begin(); it != sthis->Pages.end(); it++){
 		TabPanel *tab = *it;
@@ -1337,7 +1457,7 @@ void Notebook::SaveLastSession(bool beforeClose, bool recovery, const wxString &
 		if (recovery){
 			wxString ext = (tab->grid->subsFormat < SRT) ? L"ass" : (tab->grid->subsFormat == SRT) ? L"srt" : L"txt";
 			wxString fullPath = recoveryPath + tab->SubsName.BeforeLast(L'.') + L"." + ext;
-			tab->grid->SaveFile(fullPath);
+			tab->grid->SaveFile(fullPath, true, false, true, true);
 			//recovery path for crash close
 			result << fullPath;
 		}
@@ -1359,7 +1479,9 @@ void Notebook::SaveLastSession(bool beforeClose, bool recovery, const wxString &
 	}
 	OpenWrite op;
 	wxString sessionPath = externalPath.empty() ? Options.configPath + L"/LastSession.txt" : externalPath;
-	op.FileWrite(sessionPath, result);
+	//the paths and positions of the subtitles and videos the user works on;
+	//a session file the user exports is saved as any other file
+	op.FileWrite(sessionPath, result, true, externalPath.empty());
 
 }
 
@@ -1369,6 +1491,9 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 	wxString sessionPath = externalPath.empty() ? Options.configPath + L"/LastSession.txt" : externalPath;
 	OpenWrite op;
 	if (op.FileOpen(sessionPath, &riddenSession, false) && !riddenSession.empty()){
+		//the session is written with CRLF and only Windows drops the CR on read
+		riddenSession.Replace(L"\r\n", L"\n");
+		riddenSession.Replace(L"\r", L"\n");
 		wxStringTokenizer tokenizer(riddenSession, L"\n", wxTOKEN_STRTOK);
 		wxString header = tokenizer.GetNextToken();
 		if (!header.StartsWith(L"[HikariSub")){
@@ -1385,15 +1510,26 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 		//else{
 
 		//}
+		//the session replaces every open tab, so ask about unsaved changes first
+		for (size_t i = 0; i < sthis->Pages.size(); i++)
+		{
+			if (sthis->Hikari->SavePrompt(1, i))
+				return;
+		}
 		sthis->Freeze();
+		SubsGrid::RemoveComparison();
 		for (std::vector<TabPanel*>::iterator i = sthis->Pages.begin(); i != sthis->Pages.end(); i++)
 		{
 			(*i)->Destroy();
 		}
 		sthis->Pages.clear();
+		sthis->pausedByAddPage = nullptr;
 		sthis->tabSizes.Clear();
 		sthis->tabNames.Clear();
 		sthis->iter = 0;
+		//the split pages are gone with the others
+		sthis->split = false;
+		sthis->splititer = 0;
 		wxString video;
 		int videoPosition = 0;
 		wxString subtitles;
@@ -1404,6 +1540,9 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 		bool isFFMS2 = true;
 		bool hasEditor = true;
 		wxString rest;
+		std::vector<TabPanel*> failedTabs;
+		//reported in one message once the session is loaded
+		wxArrayString unreadableSubtitles;
 		while (true)
 		{
 			wxString token = tokenizer.GetNextToken();
@@ -1433,32 +1572,36 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 					int lastTab = sthis->Size() - 1;
 					TabPanel *tab = sthis->Pages[lastTab];
 					
+					bool subtitlesFailed = false;
 					if (!subtitles.empty()){
 						//when load crash session better use active line from subtitles
 						if (loadCrashSession) {
 							wxString orgSubtitles = subtitles;
 							FindAutoSaveSubstitute(&subtitles, lastTab);
-							sthis->LoadSubtitles(tab, subtitles);
-							if (orgSubtitles != subtitles) {
+							subtitlesFailed = !sthis->LoadSubtitles(tab, subtitles, -1, -1, &unreadableSubtitles);
+							if (!subtitlesFailed && orgSubtitles != subtitles) {
 								tab->SubsPath = orgSubtitles;
 								tab->SubsName = HikariPathName(tab->SubsPath);
 								tab->grid->file->RemoveLastIterSave();
 								tab->grid->UpdateUR(true);
 							}
 						}else
-							sthis->LoadSubtitles(tab, subtitles, activeLine, scrollPosition);
+							subtitlesFailed = !sthis->LoadSubtitles(tab, subtitles, activeLine, scrollPosition,
+								&unreadableSubtitles);
 
-						sthis->Hikari->SetRecent();
+						if (!subtitlesFailed)
+							sthis->Hikari->SetRecent();
 					}
 					if (!keyframes.empty()) {
 						tab->video->OpenKeyframes(keyframes);
 						tab->KeyframesPath = keyframes;
 					}
+					bool videoFailed = false;
 					if (!video.empty()){
 						if (!hasEditor)
 							sthis->Hikari->HideEditor();
 	
-						sthis->LoadVideo(tab, video, videoPosition, isFFMS2, hasEditor, false, false, audio != emptyString);
+						videoFailed = !sthis->LoadVideo(tab, video, videoPosition, isFFMS2, hasEditor, false, false, audio != emptyString);
 					}
 					if (!audio.empty()) {
 						sthis->Hikari->OpenAudioInTab(tab, 30040, audio);
@@ -1466,6 +1609,13 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 					
 					sthis->Hikari->Label();
 					tab->shiftTimes->Contents();
+					if (subtitlesFailed || videoFailed){
+						//keyframes wait for a video or audio and are no content of
+						//their own when nothing else of the tab was loaded
+						if (tab->SubsPath.empty() && tab->VideoPath.empty() && tab->AudioPath.empty())
+							tab->KeyframesPath.clear();
+						failedTabs.push_back(tab);
+					}
 					video = emptyString;
 					videoPosition = 0;
 					subtitles = emptyString;
@@ -1474,10 +1624,16 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 					isFFMS2 = true;
 					hasEditor = true;
 					keyframes = emptyString;
+					audio = emptyString;
 				}
 			}
 			if (hasnotMoreTokens)
 				break;
+		}
+		//a tab is not restored empty when its subtitles or video cannot be
+		//loaded and it has nothing else
+		for (TabPanel *failedTab : failedTabs){
+			sthis->RemoveUnusedPage(sthis->FindPanel(failedTab, false), sthis->iter);
 		}
 		if (sthis->Pages.size() < 1)
 			sthis->AddPage(true);
@@ -1490,6 +1646,14 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 		sthis->Hikari->UpdateToolbar();
 		Options.SaveOptions(true, false);
 		SaveLastSession();
+		if (unreadableSubtitles.size() == 1){
+			HikariMessageBox(wxString::Format(_("Cannot read the subtitle file:\n%s"),
+				unreadableSubtitles[0]), _("Warning"));
+		}
+		else if (unreadableSubtitles.size() > 1){
+			HikariMessageBox(_("Cannot read the subtitle files:\n") +
+				wxJoin(unreadableSubtitles, L'\n', L'\0'), _("Warning"));
+		}
 	}
 }
 
@@ -1596,6 +1760,7 @@ void Notebook::ChangePage(int page, bool makeActiveVisible /*= false*/)
 		return;
 
 	olditer = iter;
+	pausedByAddPage = nullptr;
 	if (split && splititer == page){
 		ChangeActive(); return;
 	}

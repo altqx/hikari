@@ -51,7 +51,8 @@ public:
 	wxString replaceRule;
 	wxString findRule;
 	wxString description;
-	int options;
+	int options = 0;
+	bool isValid = true;
 };
 
 class MisspellReplacer : public HikariDialog

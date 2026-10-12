@@ -204,6 +204,7 @@ public:
 			delete *it;
 		}
 		historyList.clear();
+		iter = 0;
 		delete itemList;
 		itemList = new List();
 		filteredList.clear();

@@ -34,11 +34,13 @@
 #include "VisualClips.h"
 #include "Visuals.h"
 #include "SubtitlesProviderManager.h"
+#include "TextComparison.h"
 #include <algorithm>
 #include <wx/tokenzr.h>
 #include <wx/event.h>
 #include <wx/regex.h>
 #include <wx/ffile.h>
+#include <wx/filename.h>
 #include <wx/window.h>
 #include <locale>
 #include <limits>
@@ -97,8 +99,8 @@ bool sorteffect(Dialogue *i, Dialogue *j)
 {
 	if (i->Effect != j->Effect){
 		const std::collate<wchar_t>& f = std::use_facet<std::collate<wchar_t>>(HikariSubFrame::GetLocale());
-		const wchar_t* s1 = (&i->Actor).wc_str();
-		const wchar_t* s2 = (&j->Actor).wc_str();
+		const wchar_t* s1 = (&i->Effect).wc_str();
+		const wchar_t* s2 = (&j->Effect).wc_str();
 		return (f.compare(&s1[0], &s1[0] + wcslen(s1),
 			&s2[0], &s2[0] + wcslen(s2)) < 0);
 
@@ -215,6 +217,17 @@ void SubsGrid::Convert(char type)
 	int endt = Options.GetInt(CONVERT_TIME_PER_CHARACTER);
 	const wxString & prefix = Options.GetString(CONVERT_ASS_TAGS_TO_INSERT_IN_LINE);
 
+	if ((type > ASS) && (subsFormat < SRT)){
+		// other formats have no trees: the descriptions go with the other
+		// comments and the tree lines become ordinary shown lines
+		std::vector<uint64_t> trees;
+		for (size_t k = 0; k < file->GetCount(); k++){
+			Dialogue *dial = file->GetDialogue(k);
+			if (dial->treeState == TREE_DESCRIPTION){ trees.push_back(dial->lineId); }
+		}
+		if (trees.size()){ file->RemoveLineGroups(trees); }
+	}
+
 	size_t i = 0;
 	Dialogue *lastDialc = nullptr;
 	while (i < file->GetCount())
@@ -305,25 +318,46 @@ void SubsGrid::Convert(char type)
 	RefreshColumns();
 }
 
-void SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFromEditbox)
+void SubsGrid::CommitEditBoxForSave(bool loadFromEditbox)
 {
-	wxMutexLocker lock(editionMutex);
-
 	int saveAfterCharacterCount = Options.GetInt(GRID_SAVE_AFTER_CHARACTER_COUNT);
-	bool showOriginalOnVideo = !Options.GetBool(TL_MODE_HIDE_ORIGINAL_ON_VIDEO);
 	bool dummyEditboxChanges = (loadFromEditbox && !saveAfterCharacterCount);
 	if (dummyEditboxChanges || saveAfterCharacterCount > 1){
 		edit->Send(EDITBOX_LINE_EDITION, false, dummyEditboxChanges, true);
 	}
+}
+
+bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFromEditbox, bool commitEditBox, bool privateCopy)
+{
+	wxMutexLocker lock(editionMutex);
+
+	bool showOriginalOnVideo = !Options.GetBool(TL_MODE_HIDE_ORIGINAL_ON_VIDEO);
+	if (commitEditBox)
+		CommitEditBoxForSave(loadFromEditbox);
 	wxString txt;
 	const wxString &tlmode = file->GetSInfo(L"TLMode");
 	bool translated = tlmode == L"Translated";
 	bool tlmodeOn = tlmode != emptyString;
 
-	OpenWrite ow(filename, true);
+	//A save into the tab's file that fails after it wrote into the file, or
+	//put the new one at its name, changed the file's time; that is no change
+	//another program made for ReloadSubsIfModified to report, unless one was
+	//made before. Save As can name the tab's file in another way, through a
+	//link or with other case on Windows, which SameAs sees.
+	bool savesTabFile = normalSave && !tab->SubsPath.empty() &&
+		wxFileName(filename).SameAs(wxFileName(tab->SubsPath));
+	bool changedOutside = savesTabFile && tab->SubsChangedOutside();
+
+	//the old file is replaced only when everything was written
+	OpenWrite ow;
+	if (!ow.OpenTemp(filename, privateCopy))
+		return false;
+
+	//the header puts the active line and the media paths in the script info
+	SubsFile::SInfoState sinfoBeforeSave = file->GetSInfoState();
 
 	if (subsFormat < SRT)
-		GetAssHeader(&txt, true, translated, normalSave);
+		GetAssHeader(&txt, &filename, translated, normalSave);
 	
 	ow.PartFileWrite(txt);
 
@@ -339,7 +373,7 @@ void SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 
 			if (tlmodeOn){
 				bool hasTextTl = dial->TextTl != emptyString;
-				if (!translated && (hasTextTl || dial->IsDoubtful())){
+				if (!translated && (hasTextTl || dial->IsDoubtful() || dial->tlPair)){
 					if (showOriginalOnVideo)
 						dial->GetRaw(&raw, false, txt);
 
@@ -369,7 +403,7 @@ void SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 
 			if (tlmodeOn){
 				bool hasTextTl = dial->TextTl != emptyString;
-				if (!translated && (hasTextTl || dial->IsDoubtful())){
+				if (!translated && (hasTextTl || dial->IsDoubtful() || dial->tlPair)){
 					dial->GetRaw(&raw, false, txt, !showOriginalOnVideo);
 					dial->GetRaw(&raw, true);
 				}
@@ -388,8 +422,6 @@ void SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 			ow.PartFileWrite(raw);
 			raw.Empty();
 
-			if (normalSave && dial->GetState() & 1){ dial->ChangeDialogueState(2); }
-
 		}
 	}
 	if (subsFormat < SRT && !file->GetEmbeddedSections().empty()) {
@@ -397,12 +429,25 @@ void SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 		ow.PartFileWrite(embedded);
 	}
 
-	ow.CloseFile();
+	if (!ow.CommitTemp()){
+		file->RestoreSInfo(sinfoBeforeSave);
+		if (savesTabFile && !changedOutside && ow.TempTargetTouched())
+			tab->SetLastSaveTime();
+		return false;
+	}
 	if (normalSave){
+		//edited lines show as saved only once the file holds them
+		if (!loadFromEditbox){
+			for (size_t i = 0; i < file->GetCount(); i++){
+				Dialogue *dial = file->GetDialogue(i);
+				if (dial->GetState() & 1){ dial->ChangeDialogueState(2); }
+			}
+		}
 		file->SetLastSave();
 		tab->SetLastSaveTime();
 		Refresh(false);
 	}
+	return true;
 }
 
 class compare { // simple comparison function
@@ -482,6 +527,12 @@ void SubsGrid::ChangeTimes(const ShiftTimesSettings &settings, bool byFrame)
 		KeyframeBeforeEnd = settings.keyframeBeforeEnd;
 		KeyframeAfterEnd = settings.keyframeAfterEnd;
 	}
+	// end time correction and the postprocessor need FFMS2 timing;
+	// reject before any line is copied so nothing changes without an undo step
+	if (!hasFFMS2 && (PostprocessorOptions ? PostprocessorOptions > 16 : correctEndTimes > 0)){
+		HikariLog(_("Video was not loaded using FFMS2"));
+		return;
+	}
 	wxString styles = settings.styles;
 	if (styles.empty() && whichLines == 5){
 		HikariMessageBox(_("No styles selected for time shifting"), _("Warning"));
@@ -531,7 +582,7 @@ void SubsGrid::ChangeTimes(const ShiftTimesSettings &settings, bool byFrame)
 	}
 	else if ((moveTimeOptions & 8) && edit->ABox && edit->ABox->audioDisplay->hasMark){
 		if (byFrame){
-			frame += timebase.FrameAt(edit->ABox->audioDisplay->curMarkMS - difftime);
+			frame += timebase.FrameAt(edit->ABox->audioDisplay->curMarkMS) - timebase.FrameAt(difftime);
 		}
 		else{
 			int addedTimes = edit->ABox->audioDisplay->curMarkMS - difftime;
@@ -613,10 +664,6 @@ void SubsGrid::ChangeTimes(const ShiftTimesSettings &settings, bool byFrame)
 		bool isEndGreater = false;
 		bool previousIsKeyFrame = true;
 		bool isPreviousEndEdited = false;
-		if (!hasFFMS2) {
-			HikariLog(_("Video was not loaded using FFMS2"));
-			return;
-		}
 
 		wxArrayInt keyFramesStart;
 		for (int keyMS : timebase.Keyframes())
@@ -783,18 +830,20 @@ void SubsGrid::ChangeTimes(const ShiftTimesSettings &settings, bool byFrame)
 
 void SubsGrid::SortIt(short what, bool all)
 {
-	SaveSelections();
-	if (all){
-		file->SortAll((what == 0) ? sortstart : (what == 1) ? sortend : (what == 2) ? sortstyle :
-			(what == 3) ? sortactor : (what == 4) ? sorteffect : sortlayer);
-	}
-	else{
-		file->SortSelected((what == 0) ? sortstart : (what == 1) ? sortend : (what == 2) ? sortstyle :
-			(what == 3) ? sortactor : (what == 4) ? sorteffect : sortlayer);
-	}
+	RunKeepingTrees([this, what, all]{
+		SaveSelections();
+		if (all){
+			file->SortAll((what == 0) ? sortstart : (what == 1) ? sortend : (what == 2) ? sortstyle :
+				(what == 3) ? sortactor : (what == 4) ? sorteffect : sortlayer);
+		}
+		else{
+			file->SortSelected((what == 0) ? sortstart : (what == 1) ? sortend : (what == 2) ? sortstyle :
+				(what == 3) ? sortactor : (what == 4) ? sorteffect : sortlayer);
+		}
 
-	//edited = true;
-	SetModified(GRID_SORT_LINES);
+		//edited = true;
+		SetModified(GRID_SORT_LINES);
+	});
 }
 
 
@@ -808,15 +857,19 @@ void SubsGrid::DeleteRow(int rw, int len)
 
 void SubsGrid::DeleteRows()
 {
-	Freeze();
-	file->DeleteSelectedDialogues();
-	int sel = file->FirstSelection();
-	SpellErrors.clear();
-	SaveSelections(true);
-	if (file->GetCount() < 1){ file->AddLine(new Dialogue()); }
-	SetModified(GRID_DELETE_LINES, true, false, sel);
-	Thaw();
-	RefreshColumns();
+	RunKeepingTrees([this]{
+		if (file->FirstSelection() == -1)
+			return;
+		Freeze();
+		file->DeleteSelectedDialogues();
+		int sel = file->FirstSelection();
+		SpellErrors.clear();
+		SaveSelections(true);
+		if (file->GetCount() < 1){ file->AddLine(new Dialogue()); }
+		SetModified(GRID_DELETE_LINES, true, false, sel);
+		Thaw();
+		RefreshColumns();
+	});
 }
 
 bool SubsGrid::MoveRows(int step, bool keyStep /*= false*/)
@@ -997,7 +1050,7 @@ void SubsGrid::DoUndo(bool redo, int iter)
 		showOriginal = (file->GetSInfo(L"TLMode Showtl") == L"Yes" || (hasTLMode && Options.GetBool(TL_MODE_SHOW_ORIGINAL) != 0));
 		edit->SetTlMode(hasTLMode);
 	}
-	if (Comparison){
+	if (Comparison && (CG1 == this || CG2 == this)){
 		SubsComparison();
 	}
 
@@ -1125,6 +1178,10 @@ void SubsGrid::ShowEditedLine(int newActive, bool scroll)
 void SubsGrid::SetModified(unsigned char editionType, bool redit, bool dummy, int SetEditBoxLine, bool Scroll)
 {
 	if (file->HasChangesToRecord()){
+		if (!KeepsTrees(editionType)){
+			Refresh(false);
+			return;
+		}
 		// an edit box commit already cleared the rows it changed through CopyDialogue
 		if (editionType != EDITBOX_LINE_EDITION)
 			SpellErrors.clear();
@@ -1133,7 +1190,7 @@ void SubsGrid::SetModified(unsigned char editionType, bool redit, bool dummy, in
 			Hikari->Toolbar->UpdateId(GLOBAL_SAVE_SUBS, true);
 			Hikari->Menubar->Enable(GLOBAL_SAVE_SUBS, true);
 		}
-		if (Comparison){
+		if (Comparison && (CG1 == this || CG2 == this)){
 			SubsComparison();
 		}
 		if (!savedSelections){
@@ -1159,6 +1216,159 @@ void SubsGrid::SetModified(unsigned char editionType, bool redit, bool dummy, in
 		ShowEditedLine(SetEditBoxLine, Scroll);
 	}
 	Refresh(false);
+}
+
+// the edits that add, delete or move lines, and so can break a tree
+static bool ChangesLineOrder(unsigned char editionType)
+{
+	switch (editionType){
+	case GRID_DUPLICATE:
+	case GRID_JOIN:
+	case GRID_JOIN_WITH_PREVIOUS:
+	case GRID_JOIN_WITH_NEXT:
+	case GRID_JOIN_TO_FIRST:
+	case GRID_JOIN_TO_LAST:
+	case GRID_PASTE_LINES:
+	case GRID_PASTE_TRANSLATION_TO_SUBS:
+	case GRID_TRANSLATION_TEXT_MOVE:
+	case GRID_SWAP:
+	case GRID_CONVERT:
+	case GRID_SORT_LINES:
+	case GRID_DELETE_LINES:
+	case GRID_APPEND_LINE:
+	case GRID_INSERT_ROW:
+	case SELECT_LINES:
+	case TREE_ADD:
+	case TREE_ADD_LINES:
+	case TREE_REMOVE:
+	case AUTOMATION_SCRIPT:
+	case GRID_SPLIT_LINES:
+		return true;
+	default:
+		return false;
+	}
+}
+
+bool SubsGrid::KeepsTrees(unsigned char editionType)
+{
+	if (!ChangesLineOrder(editionType)){
+		linesMovedIntoTree.clear();
+		return true;
+	}
+	// Make tree builds its tree from a new description itself
+	LineGroups::Verdict verdict = file->CheckLineGroups(linesMovedIntoTree, editionType != TREE_ADD);
+	linesMovedIntoTree.clear();
+	if (verdict.ok)
+		return true;
+
+	// undo the edit before it is recorded: the lines, the selection and the
+	// active line are as they were and nothing is marked modified
+	file->DummyUndoF();
+	if (treeGuard.active){
+		file->ClearSelections();
+		for (int sel : treeGuard.selections)
+			file->InsertSelection(sel);
+		currentLine = treeGuard.currentLine;
+		markedLine = treeGuard.markedLine;
+		scrollPosition = treeGuard.scrollPosition;
+	}
+	else{
+		currentLine = file->GetActiveLine();
+		markedLine = file->GetMarkerLine();
+	}
+	size_t count = file->GetCount();
+	if (currentLine >= (int)count){ currentLine = count - 1; }
+	if (markedLine >= (int)count){ markedLine = count - 1; }
+	if (scrollPosition >= (int)count){ scrollPosition = count - 1; }
+	scrollPositionId = file->GetElementByKey(scrollPosition);
+	savedSelections = false;
+	SpellErrors.clear();
+	edit->SetLine(currentLine, false, false);
+	RefreshColumns();
+
+	if (treeGuard.active){
+		treeGuard.rejected = true;
+		treeGuard.verdict = verdict;
+	}
+	else{
+		AskToRemoveTrees(verdict);
+	}
+	return false;
+}
+
+void SubsGrid::RunKeepingTrees(const std::function<void()> &edit)
+{
+	if (treeGuard.active){
+		edit();
+		return;
+	}
+	treeGuard.active = true;
+	treeGuard.rejected = false;
+	treeGuard.selections = file->GetSelectionsAsKeys();
+	treeGuard.currentLine = currentLine;
+	treeGuard.markedLine = markedLine;
+	treeGuard.scrollPosition = scrollPosition;
+	edit();
+	treeGuard.active = false;
+	if (!treeGuard.rejected)
+		return;
+	treeGuard.rejected = false;
+	// removing the trees is its own step; the edit is not made again here,
+	// the user repeats it once the trees are gone
+	AskToRemoveTrees(treeGuard.verdict);
+}
+
+void SubsGrid::AskToRemoveTrees(const LineGroups::Verdict &verdict)
+{
+	if (verdict.broken.empty()){
+		HikariMessageBox(_("This edit would leave lines of a tree outside it, so it was not made."),
+			_("Trees"), wxOK, this);
+		return;
+	}
+	wxString trees;
+	for (uint64_t description : verdict.broken){
+		size_t row = file->FindLineById(description);
+		if (row == (size_t)-1)
+			continue;
+		wxString text = file->GetDialogue(row)->Text;
+		if (text.Len() > 60){ text = text.Left(60) + L"..."; }
+		if (!trees.empty()){ trees << L"\n"; }
+		trees << wxString::Format(_("Line %d: %s"), (int)GetDialoguePosition(row) + 1, text);
+	}
+	wxString message = wxString::Format(wxPLURAL(
+		"This edit would split a tree, leave some of its lines outside it or move them into another tree, "
+		"so it was not made:\n%s\n\nRemoving the tree deletes its description line and shows its lines as ordinary lines.",
+		"This edit would split trees, leave some of their lines outside them or move them into another tree, "
+		"so it was not made:\n%s\n\nRemoving the trees deletes their description lines and shows their lines as ordinary lines.",
+		(int)verdict.broken.size()), trees);
+	message << L"\n" << _("Make the edit again after removing.");
+	HikariMessageDialog dialog(this, message, _("Trees"), wxYES | wxCANCEL);
+	dialog.SetYesLabel(wxPLURAL("Remove the tree", "Remove the trees", (int)verdict.broken.size()));
+	if (dialog.ShowModal() != wxYES)
+		return;
+	RemoveTrees(verdict.broken);
+}
+
+void SubsGrid::RemoveTrees(const std::vector<uint64_t> &descriptions)
+{
+	SaveSelections();
+	std::vector<size_t> deleted = file->RemoveLineGroups(descriptions);
+	// rows after a deleted description move up; a deleted description's row
+	// goes to the line that took its place
+	auto shift = [&deleted](int row){
+		if (row < 0)
+			return row;
+		return row - (int)(std::lower_bound(deleted.begin(), deleted.end(), (size_t)row) - deleted.begin());
+	};
+	int count = file->GetCount();
+	currentLine = MID(0, shift(currentLine), count - 1);
+	markedLine = MID(0, shift(markedLine), count - 1);
+	scrollPosition = MID(0, shift(scrollPosition), count - 1);
+	scrollPositionId = file->GetElementByKey(scrollPosition);
+	SpellErrors.clear();
+	SetModified(TREE_REMOVE, false);
+	edit->SetLine(currentLine, false, false);
+	RefreshColumns();
 }
 
 //shows the edited subtitles and, if the options say so, seeks to the active line
@@ -1200,12 +1410,32 @@ void SubsGrid::SwapRows(int frst, int scnd, bool sav)
 	if (sav){ SetModified(GRID_SWAP); }
 }
 
-void SubsGrid::LoadSubtitles(const wxString &str, wxString &ext)
+bool SubsGrid::LoadSubtitles(const wxString &str, wxString &ext)
 {
 	bool oldHasTlMode = hasTLMode;
 	int active = 0;
 
+	//load into a new file, so subtitles that cannot be read keep the current ones
+	SubsFile *oldFile = file;
+	char oldSubsFormat = subsFormat;
+	char oldOriginalFormat = originalFormat;
+	file = new SubsFile();
+	file->SetMutex(&editionMutex);
 	SubsLoader SL(this, str, ext);
+	if (!SL.Succeeded()){
+		delete file;
+		file = oldFile;
+		subsFormat = oldSubsFormat;
+		originalFormat = oldOriginalFormat;
+		hasTLMode = oldHasTlMode;
+		Refresh(false);
+		HikariMessageBox(_("Invalid format (file may be corrupted or contain errors)"));
+		return false;
+	}
+	//only now the comparison, spell errors, original view and scroll of the
+	//old file are dropped
+	Clearing(false);
+	delete oldFile;
 
 	if (oldHasTlMode != hasTLMode){
 		edit->SetTlMode(hasTLMode);
@@ -1274,6 +1504,9 @@ void SubsGrid::LoadSubtitles(const wxString &str, wxString &ext)
 	ScrollTo(active, false, -4);
 	if (subsFormat == SRT)
 		edit->ResizeTimeControls(true);
+	if (SL.PlainTextAsAss())
+		HikariMessageBox(_("This subtitle file is plain text and will be opened as ASS subtitles"));
+	return true;
 }
 
 void SubsGrid::SetStartTime(int stime)
@@ -1281,13 +1514,17 @@ void SubsGrid::SetStartTime(int stime)
 	edit->Send(EDITBOX_LINE_EDITION, false, false, true);
 	wxArrayInt sels;
 	file->GetSelections(sels);
+	bool changed = false;
 	for (size_t i = 0; i < sels.size(); i++){
+		Dialogue *dial = file->GetDialogue(sels[i]);
+		// copy only lines whose times change, so a no-op records no step
+		if (!dial || (dial->Start.mstime == std::max(stime, 0) && dial->End.mstime >= std::max(stime, 0))){ continue; }
 		Dialogue *dialc = CopyDialogue(sels[i]);
-		if (!dialc){ continue; }
 		dialc->Start.NewTime(stime);
 		if (dialc->End < stime){ dialc->End.NewTime(stime); }
+		changed = true;
 	}
-	if (sels.size()){
+	if (changed){
 		SetModified(GRID_SET_START_TIME);
 	}
 }
@@ -1297,13 +1534,17 @@ void SubsGrid::SetEndTime(int etime)
 	edit->Send(EDITBOX_LINE_EDITION, false, false, true);
 	wxArrayInt sels;
 	file->GetSelections(sels);
+	bool changed = false;
 	for (size_t i = 0; i < sels.size(); i++){
+		Dialogue *dial = file->GetDialogue(sels[i]);
+		// copy only lines whose times change, so a no-op records no step
+		if (!dial || (dial->End.mstime == std::max(etime, 0) && dial->Start.mstime <= std::max(etime, 0))){ continue; }
 		Dialogue *dialc = CopyDialogue(sels[i]);
-		if (!dialc){ continue; }
 		dialc->End.NewTime(etime);
 		if (dialc->Start > etime){ dialc->Start.NewTime(etime); }
+		changed = true;
 	}
-	if (sels.size()){
+	if (changed){
 		SetModified(GRID_SET_END_TIME);
 	}
 }
@@ -1338,43 +1579,76 @@ bool SubsGrid::SetTlMode(bool mode, bool dontShowDialog/* = false*/)
 			return true;
 		}
 
-		int iinf = -1;
-		file->GetSInfo(L"TLMode", &iinf);
-		if (iinf >= 0){
-			file->DeleteSInfo(iinf);
-		}
-		iinf = -1;
-		const wxString &vall = file->GetSInfo(L"TLMode Style", &iinf);
-		if (iinf >= 0){
-			int g = file->FindStyle(vall);
-			if (g >= 0){ file->DeleteStyle(g); }
-			file->DeleteSInfo(iinf);
-		}
-
-		for (size_t i = 0; i < file->GetCount(); i++)
-		{
-			Dialogue *dial = file->GetDialogue(i);
-			Dialogue *dialc = nullptr;
-			if (dial->TextTl != emptyString)
-			{
-				dialc = file->CopyDialogueF(i);
-				dialc->Text = dialc->TextTl;
-				dialc->TextTl = emptyString;
-			}
-			if (dial->IsDoubtful()){
-				if (!dialc){ dialc = CopyDialogue(i); }
-				dialc->ChangeState(4);
-			}
-		}
-
-		hasTLMode = false;
-		showOriginal = false;
-		Hikari->Menubar->Enable(GLOBAL_SAVE_TRANSLATION, false);
+		RemoveTlMode();
+		RecordTlModeOff();
+		return false;
 	}
 	edit->RefreshStyle();
 	Refresh(false);
-	SetModified((mode) ? GRID_TURN_ON_TLMODE : GRID_TURN_OFF_TLMODE);
+	SetModified(GRID_TURN_ON_TLMODE);
 	return false;
+}
+
+void SubsGrid::RemoveTlMode()
+{
+	int iinf = -1;
+	file->GetSInfo(L"TLMode", &iinf);
+	if (iinf >= 0){
+		file->DeleteSInfo(iinf);
+	}
+	iinf = -1;
+	const wxString &vall = file->GetSInfo(L"TLMode Style", &iinf);
+	if (iinf >= 0){
+		int g = file->FindStyle(vall);
+		if (g >= 0){ file->DeleteStyle(g); }
+		file->DeleteSInfo(iinf);
+	}
+
+	for (size_t i = 0; i < file->GetCount(); i++)
+	{
+		Dialogue *dial = file->GetDialogue(i);
+		Dialogue *dialc = nullptr;
+		if (dial->TextTl != emptyString)
+		{
+			dialc = file->CopyDialogueF(i);
+			dialc->Text = dialc->TextTl;
+			dialc->TextTl = emptyString;
+		}
+		if (dial->IsDoubtful()){
+			if (!dialc){ dialc = CopyDialogue(i); }
+			dialc->ChangeState(4);
+		}
+	}
+}
+
+void SubsGrid::RecordTlModeOff()
+{
+	hasTLMode = false;
+	showOriginal = false;
+	Hikari->Menubar->Enable(GLOBAL_SAVE_TRANSLATION, false);
+	edit->RefreshStyle();
+	Refresh(false);
+	SetModified(GRID_TURN_OFF_TLMODE);
+}
+
+void SubsGrid::DropUnrecordedChanges()
+{
+	//the working copy comes back from the current step with the selection
+	//that step was recorded with; the one shown now stays
+	std::set<int> selected = file->GetSelectionsAsKeys();
+	file->DummyUndoF();
+	file->ClearSelections();
+	for (int sel : selected)
+		file->InsertSelection(sel);
+	SpellErrors.clear();
+	edit->RefreshStyle();
+	edit->SetLine(currentLine, false, false);
+	RefreshColumns();
+	VideoBox *vb = tab->video;
+	if (vb->GetState() != None){
+		vb->OpenSubs(OPEN_DUMMY);
+		vb->Render();
+	}
 }
 
 //this method should have different name
@@ -1390,6 +1664,9 @@ void SubsGrid::NextLine(int direction)
 
 		size_t lastvisible = file->GetElementByKey(size - 1);
 		Dialogue *tmp = file->GetDialogue(lastvisible)->Copy();
+		// a new line, which joins a tree only where it is put
+		tmp->RenewLineId();
+		if (tmp->treeState == TREE_DESCRIPTION){ tmp->treeState = 0; }
 		int eend = tmp->End.mstime;
 		tmp->Start.NewTime(eend);
 		tmp->End.NewTime(eend + 5000);
@@ -1464,11 +1741,14 @@ Dialogue * SubsGrid::GetDialogueWithOffset(size_t i, int offset)
 	return nullptr;
 }
 
-void SubsGrid::GetAssHeader(wxString* header, bool forFile, bool translated, bool normalSave)
+void SubsGrid::GetAssHeader(wxString* header, const wxString *savePath, bool translated, bool normalSave)
 {
+	bool forFile = savePath != nullptr;
 	if (forFile) {
 		file->AddSInfo(L"Active Line", std::to_wstring(currentLine), false);
-		wxString subsPath = HikariPathDir(tab->SubsPath);
+		//media next to the file it is saved to, which is not yet the tab's
+		//file on Save As, are named relative to it
+		wxString subsPath = HikariPathDir(*savePath);
 		if (edit->ABox) {
 			wxString path = (edit->ABox->audioName.StartsWith(subsPath) && normalSave) ?
 				HikariPathName(edit->ABox->audioName) : edit->ABox->audioName;
@@ -1635,18 +1915,33 @@ bool SubsGrid::IsLineVisible(bool visibleOnPlay/* = true*/)
 
 void SubsGrid::OnBackupTimer(wxTimerEvent &event)
 {
-	Hikari->SetStatusText(_("Autosave"), 0);
 	wxString path;
 	wxString ext = (subsFormat < SRT) ? L"ass" : (subsFormat == SRT) ? L"srt" : L"txt";
 
 	path << Options.pathfull << L"/Subs/" << tab->SubsName.BeforeLast(L'.')
 		<< L"_" << Notebook::GetTabs()->FindPanel(tab) << L"_" << numsave << L"." << ext;
 
-	SaveFile(path, false);
+	//the autosaves are copies of the subtitles that only the user may read;
+	//none is made in a folder another user could read or swap files in, and
+	//the next edit tries again
+	if (!MakePrivateFolder(Options.pathfull + L"/Subs")) {
+		HikariLogSilent(wxString::Format(L"The autosave folder is not private, no autosave is made: %s",
+			Options.pathfull + L"/Subs"));
+		makebackup = true;
+		return;
+	}
+	//a failed autosave keeps the oldest autosave file for the next one to
+	//replace, and says so in the log, not "Autosave" on the status bar
+	bool saved = SaveFile(path, false, false, true, true);
+	//the next edit starts the timer again; not the edit box commit SaveFile
+	//makes, which this autosave holds
+	makebackup = true;
+	if (!saved)
+		return;
+	Hikari->SetStatusText(_("Autosave"), 0);
 	int maxFiles = Options.GetInt(AUTOSAVE_MAX_FILES);
 	if (maxFiles > 1 && numsave >= maxFiles){ numsave = 0; }
 	numsave++;
-	makebackup = true;
 	nullifyTimer.Start(5000, true);
 }
 
@@ -1803,84 +2098,23 @@ void SubsGrid::CompareTexts(compareData &firstCompare, compareData &secondCompar
 	firstCompare.push_back(1);
 	secondCompare.push_back(1);
 
-
-	size_t l1 = first.length(), l2 = second.length();
-	if (l1 == std::numeric_limits<size_t>::max() || l2 == std::numeric_limits<size_t>::max() ||
-		(l1 + 1) > std::numeric_limits<size_t>::max() / (l2 + 1)) {
+	// matched by code point so a surrogate pair on Windows is one character,
+	// as it is on Linux; the ranges are wxString indexes into each text
+	const std::wstring firstUnits = first.ToStdWstring();
+	const std::wstring secondUnits = second.ToStdWstring();
+	std::vector<int> firstRanges, secondRanges;
+	TextComparisonResult result = CompareTextUnits(firstUnits.data(), firstUnits.size(),
+		secondUnits.data(), secondUnits.size(), firstRanges, secondRanges);
+	if (result == TextComparisonResult::TooLarge){
 		HikariLog(L"text comparison is too large");
 		return;
 	}
-	size_t cellCount = (l1 + 1) * (l2 + 1);
-	size_t w = l2 + 1;
-	size_t i1, i2;
-	std::vector<size_t> dpt;
-	if (cellCount > dpt.max_size()) {
+	if (result == TextComparisonResult::OutOfMemory){
 		HikariLog(L"memory allocation failed");
 		return;
 	}
-	try {
-		dpt.assign(cellCount, 0);
-	}
-	catch (const std::bad_alloc&) {
-		HikariLog(L"memory allocation failed");
-		return;
-	}
-
-	for (i1 = 1; i1 <= l1; i1++){
-		for (i2 = 1; i2 <= l2; i2++)
-		{
-			if (first[l1 - i1] == second[l2 - i2])
-			{
-				dpt[w * i1 + i2] = dpt[w * (i1 - 1) + (i2 - 1)] + 1;
-			}
-			else if (dpt[w * (i1 - 1) + i2] > dpt[w * i1 + (i2 - 1)])
-			{
-				dpt[w * i1 + i2] = dpt[w * (i1 - 1) + i2];
-			}
-			else
-			{
-				dpt[w * i1 + i2] = dpt[w * i1 + (i2 - 1)];
-			}
-		}
-	}
-
-	int sfirst = -1, ssecond = -1;
-	i1 = l1; i2 = l2;
-	for (;;){
-		if ((i1 > 0) && (i2 > 0) && (first[l1 - i1] == second[l2 - i2])){
-			if (sfirst >= 0){
-				firstCompare.push_back(sfirst);
-				firstCompare.push_back((l1 - i1) - 1);
-				sfirst = -1;
-			}
-			if (ssecond >= 0){
-				secondCompare.push_back(ssecond);
-				secondCompare.push_back((l2 - i2) - 1);
-				ssecond = -1;
-			}
-			i1--; i2--; continue;
-		}
-		else{
-			if (i1 > 0 && (i2 == 0 || dpt[w * (i1 - 1) + i2] >= dpt[w * i1 + (i2 - 1)])){
-				if (sfirst == -1){ sfirst = l1 - i1; }
-				i1--; continue;
-			}
-			else if (i2 > 0 && (i1 == 0 || dpt[w * (i1 - 1) + i2] < dpt[w * i1 + (i2 - 1)])){
-				if (ssecond == -1){ ssecond = l2 - i2; }
-				i2--; continue;
-			}
-		}
-
-		break;
-	}
-	if (sfirst >= 0){
-		firstCompare.push_back(sfirst);
-		firstCompare.push_back((l1 - i1) - 1);
-	}
-	if (ssecond >= 0){
-		secondCompare.push_back(ssecond);
-		secondCompare.push_back((l2 - i2) - 1);
-	}
+	for (int position : firstRanges){ firstCompare.push_back(position); }
+	for (int position : secondRanges){ secondCompare.push_back(position); }
 }
 
 void SubsGrid::RemoveComparison()

@@ -117,10 +117,12 @@ public:
 	void SetItemToggled(int *item){ 
 		toggled = *item;
 		if (toggled < 0)
-			toggled = (*item) = numIcons - 1;
-		else if (toggled >= numIcons)
+			toggled = (*item) = GetNumTools() - 1;
+		else if (toggled >= GetNumTools())
 			toggled = (*item) = 0;
 	};
+	//clip invert (last icon) is a normal button, not a tool that can be toggled
+	int GetNumTools(){ return isDrawing ? numIcons : numIcons - 1; };
 	void HideContols() override;
 	void ShowContols(VideoToolbar* vt) override;
 	void OnSize(VideoToolbar* vt) override;

@@ -437,7 +437,7 @@ void MappedButton::OnMouseEvent(wxMouseEvent &event)
 		//maybe it will be slower but, it prevents to remove hotkeys
 		int id = GetId();
 		if (event.ControlDown()){ id -= 10; }
-		Hkeys.OnMapHkey(GetId(), emptyString, this, Window, false);
+		Hkeys.OnMapHkey(id, emptyString, this, Window, false);
 		SetToolTip();
 		SetFocus();
 		return;

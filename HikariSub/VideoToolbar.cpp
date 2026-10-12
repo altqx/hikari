@@ -434,8 +434,8 @@ void VectorItem::OnMouseEvent(wxMouseEvent &evt, int w, int h, VideoToolbar *vt)
 		if (vt->blockScroll){ evt.Skip(); return; }
 		int step = evt.GetWheelRotation() / evt.GetWheelDelta();
 		toggled -= step;
-		if (toggled < 0){ toggled = numIcons - 1; }
-		else if (toggled >= numIcons){ toggled = 0; }
+		if (toggled < 0){ toggled = GetNumTools() - 1; }
+		else if (toggled >= GetNumTools()){ toggled = 0; }
 		vt->Refresh(false);
 		return;
 	}
@@ -516,7 +516,8 @@ void VectorItem::ShowContols(VideoToolbar* vt)
 		auto sendItemToggled = [=, this](wxCommandEvent& evt) {
 			int listSelection = shapeList->GetSelection();
 			if (listSelection > shapes->size()) {
-				ShapesEdition se(Notebook::GetTab(), wxPoint(), shapes, shapeListSelection);
+				//list starts from 1, 0 is "Choose"
+				ShapesEdition se(Notebook::GetTab(), wxPoint(), shapes, shapeListSelection - 1);
 				bool isOK = se.ShowModal() == wxID_OK;
 				if (isOK) {
 					auto *shapes = se.GetShapes();

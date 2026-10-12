@@ -120,6 +120,9 @@ AudioDisplay::AudioDisplay(wxWindow *parent)
 		if (!provider->AudioNotInitialized()){
 			UpdateImage(); ProgressTimer.Stop();
 		}
+		else if (provider->AudioLoadFailed()){
+			Refresh(false); ProgressTimer.Stop();
+		}
 		else if (provider->GetAudioProgress() != lastProgress){
 			Refresh(false);
 		}
@@ -1152,7 +1155,8 @@ void AudioDisplay::DrawProgress()
 	textParcent.right = w - 20;
 	textParcent.top = halfY - 20;
 	textParcent.bottom = halfY + 20;
-	wxString txt = wxString::Format(L"%d%%", (int)(provider->GetAudioProgress() * 100.f));
+	wxString txt = provider->AudioLoadFailed() ? wxString(_("Audio could not be loaded")) :
+		wxString::Format(L"%d%%", (int)(provider->GetAudioProgress() * 100.f));
 
 	d3dLine->SetWidth(1);
 	d3dLine->Begin();
@@ -1669,6 +1673,8 @@ void AudioDisplay::SetDialogue(Dialogue *diag, int n, bool moveToEnd) {
 	dialogue = diag;
 	NeedCommit = false;
 	currentSyllable = 0;
+	// a boundary grabbed on the previous Line may not exist on this one
+	Grabbed = -1;
 	// Set flags
 	// Set times
 	if (Options.GetBool(AUDIO_GRAB_TIMES_ON_SELECT)) {
@@ -1682,8 +1688,9 @@ void AudioDisplay::SetDialogue(Dialogue *diag, int n, bool moveToEnd) {
 		}
 		else{
 			size_t prevPos = grid->GetKeyFromPosition(line_n, -1);
-			if (isNextLine && line_n != prevPos){
-				Dialogue *pdial = grid->file->GetDialogue(prevPos);
+			// no shown row before it gives no Line
+			Dialogue *pdial = (isNextLine && line_n != prevPos) ? grid->file->GetDialogue(prevPos) : nullptr;
+			if (pdial){
 				curStartMS = pdial->End.mstime;
 			}
 			else
@@ -1794,8 +1801,9 @@ void AudioDisplay::DrawWithWx(wxDC& dc, bool weak)
 		dc.DrawLine(left + 2, halfY, progressRight, halfY);
 		dc.SetFont(tahoma13);
 		dc.SetTextForeground(*wxWHITE);
-		dc.DrawLabel(wxString::Format(L"%d%%", (int)(provider->GetAudioProgress() * 100.f)),
-			wxRect(left, halfY - 20, right - left, 40), wxALIGN_CENTER);
+		wxString txt = provider->AudioLoadFailed() ? wxString(_("Audio could not be loaded")) :
+			wxString::Format(L"%d%%", (int)(provider->GetAudioProgress() * 100.f));
+		dc.DrawLabel(txt, wxRect(left, halfY - 20, right - left, 40), wxALIGN_CENTER);
 		return;
 	}
 
@@ -2261,6 +2269,7 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 			// Dragging
 			// Release
 			if (buttonUP) {
+				bool neighbourChanged = false;
 				// Prevent negative times
 				if (Grabbed == -1)
 				{
@@ -2277,6 +2286,7 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 						if (dialc){
 							dialc->Start.NewTime(curEndMS);
 							if (dialc->End < dialc->Start){ dialc->End.NewTime(curEndMS + 5000); }
+							neighbourChanged = true;
 						}
 					}
 					else if ((hold == 1 || hold == 3) && event.AltDown()){
@@ -2284,12 +2294,13 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 						if (dialc){
 							dialc->End.NewTime(curStartMS);
 							if (dialc->End < dialc->Start){ dialc->Start.NewTime(curStartMS - 5000); }
+							neighbourChanged = true;
 						}
 					}
 				}
 
 
-				if (hasKara && Grabbed != -1)
+				if (hasKara && Grabbed >= 0 && Grabbed < (int)karaoke->syltimes.size())
 				{
 					int newpos = ZEROIT(GetMSAtX(x));
 					int prev = (Grabbed == 0) ? curStartMS : karaoke->syltimes[Grabbed - 1];
@@ -2300,10 +2311,15 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 				if (hold != 4){
 					Commit(hold == 2);
 				}
+				// an auto-commit above records it with the Line; otherwise the
+				// change would join whatever step is recorded next
+				if (neighbourChanged)
+					grid->SetModified(AUDIO_CHANGE_TIME, false);
 
 				// Update stuff
 
 				hold = 0;
+				Grabbed = -1;
 
 				return;
 			}
@@ -2382,7 +2398,7 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 					}
 				}
 				//drag karaoke
-				if (hold == 5 && Grabbed != -1){
+				if (hold == 5 && Grabbed >= 0 && Grabbed < (int)karaoke->syltimes.size()){
 					int newpos = ZEROIT(GetMSAtX(x));
 					int sizes = karaoke->syls.size() - 1;
 					int prev = (Grabbed == 0) ? curStartMS : karaoke->syltimes[Grabbed - 1];
@@ -2420,7 +2436,7 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 
 			if (!playingToEnd) {
 				long long slend;
-				if (hasKara && Grabbed >= 0){
+				if (hasKara && Grabbed >= 0 && Grabbed < (int)karaoke->syltimes.size()){
 					slend = GetSampleAtMS(karaoke->syltimes[Grabbed]);
 				}
 				else{
@@ -2535,8 +2551,10 @@ int AudioDisplay::GetBoundarySnap(int ms, int rangeX, bool shiftHeld, bool start
 
 		for (int j = shadeFrom; j <= shadeTo; j++) {
 			if (j == line_n) continue;
+			// with every row filtered out the range starts at -1
+			if (j < 0 || j >= grid->file->GetCount()) continue;
 			shade = grid->file->GetDialogue(j);
-			if (!shade->isVisible)
+			if (!shade || !shade->isVisible)
 				continue;
 
 			// Get coordinates

@@ -128,6 +128,10 @@ bool config::SetRawOptions(const wxString &textconfig)
 	while (cfg.HasMoreTokens())
 	{
 		token = cfg.NextToken();
+		// The file is written with "\r\n" and only Windows drops the "\r"
+		// when reading, so "}\r" would never close a table elsewhere.
+		if (token.EndsWith(L"\r"))
+			token.RemoveLast();
 		if (token.EndsWith(L"{")){
 			block = true;
 			textBlock << token << L"\n";
@@ -148,6 +152,12 @@ bool config::SetRawOptions(const wxString &textconfig)
 		token.Trim(false);
 		token.Trim(true);
 		if (token.length() > 0){ CatchValsLabs(token); g++; }
+	}
+	if (block){
+		// a table without its closing brace keeps the entries it has
+		textBlock << L"}";
+		CatchValsLabs(textBlock);
+		g++;
 	}
 	if (g > 10){ return true; };
 	return false;
@@ -318,14 +328,12 @@ void config::DelStyle(int i)
 	assstore.erase(assstore.begin() + i);
 }
 
-void config::SaveOptions(bool cfg, bool style, bool crashed)
+void config::SaveOptions(bool cfg, bool style)
 {
 	OpenWrite ow;
 	if (cfg){
 		wxString textfile;
 		GetRawOptions(textfile);
-		if (crashed)
-			textfile << L"___Program Crashed___";
 
 		wxString path;
 		path << configPath << wxFileName::GetPathSeparator() << L"Config.txt";
@@ -553,9 +561,8 @@ int config::LoadOptions()
 	}
 	else{
 		wxString ver = txt.BeforeFirst(L']').Mid(1);
-		if (txt.EndsWith(L"___Program Crashed___", &txt)){
-			hasCrashed = true;
-		}
+		// older builds could end the file with a crash marker
+		txt.EndsWith(L"___Program Crashed___", &txt);
 		if (ver != progname){ LoadDefaultConfig(); diffVersions = true; }
 		txt = txt.AfterFirst(L'\n');
 		if (ConfigNeedToConvert(ver)){

@@ -49,6 +49,9 @@ public:
 	void SetVideoWindowSizes(int w, int h, bool allTabs);
 	bool SetFont(const wxFont &font);
 	void SetLastSaveTime();
+	// whether another program changed the subtitle file since it was loaded
+	// or saved, as ReloadSubsIfModified finds it
+	bool SubsChangedOutside();
 	void ReloadSubsIfModified();
 	// catches up with what the options dialog changed
 	void ApplyOptionChanges(bool gridFont, bool gridColours, bool audio);

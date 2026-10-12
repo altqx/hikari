@@ -32,6 +32,7 @@
 #include "Toolbar.h"
 #include "RendererVideo.h"
 #include "AudioBox.h"
+#include "SrtTags.h"
 
 
 ComboBoxCtrl::ComboBoxCtrl(wxWindow *parent, int id, const wxSize &size, const wxString &desc, const wxValidator &validator)
@@ -574,7 +575,9 @@ void EditBox::Send(unsigned char editionType, bool gotoNextLine, bool dummy, boo
 		EndEdit->SetModified(dummy);
 	}
 	if (DurEdit->IsModified()){
-		line->End = EndEdit->GetTime();
+		// without live editing OnEdit never turned the typed duration into End
+		line->End = line->Start + DurEdit->GetTime();
+		EndEdit->SetTime(line->End, false, 2);
 		cellm |= END;
 		DurEdit->SetModified(dummy);
 	}
@@ -642,8 +645,9 @@ void EditBox::Send(unsigned char editionType, bool gotoNextLine, bool dummy, boo
 }
 
 
-void EditBox::PutinNonass(const wxString &text, const wxString &tag)
+void EditBox::PutinNonass(const wxString &tag, const wxString &pattern)
 {
+	// tag is the text written inside the brackets, pattern the regex that finds an existing one
 	if (grid->subsFormat == TMP) return;
 	long from, to;
 	size_t start = 0, len = 0;
@@ -655,7 +659,7 @@ void EditBox::PutinNonass(const wxString &text, const wxString &tag)
 	if (oneline){//Changing only in editbox
 		if (grid->subsFormat == SRT){
 
-			wxRegEx srttag(L"\\</?" + text + L"\\>", wxRE_ADVANCED | wxRE_ICASE);
+			wxRegEx srttag(L"\\</?" + pattern + L"\\>", wxRE_ADVANCED | wxRE_ICASE);
 			if (srttag.Matches(txt.SubString(from - 4, from + 4))){
 				srttag.GetMatch(&start, &len, 0);
 				if (len + start >= 4 && start <= 4)
@@ -687,7 +691,7 @@ void EditBox::PutinNonass(const wxString &text, const wxString &tag)
 		else if (grid->subsFormat == MDVD){
 
 
-			wxRegEx srttag(L"\\{" + text + L"}", wxRE_ADVANCED | wxRE_ICASE);
+			wxRegEx srttag(L"\\{" + pattern + L"}", wxRE_ADVANCED | wxRE_ICASE);
 			int wheres = txt.SubString(0, from).Find(L'|', true);
 			if (wheres == -1){ wheres = 0; }
 			if (srttag.Matches(txt.Mid(wheres))){
@@ -722,18 +726,58 @@ void EditBox::PutinNonass(const wxString &text, const wxString &tag)
 			wxString txt = dialc->Text;
 			if (txt.StartsWith(chars))
 			{
-				wxRegEx rex(chars + tag + chare, wxRE_ADVANCED | wxRE_ICASE);
+				wxRegEx rex(chars + pattern + chare, wxRE_ADVANCED | wxRE_ICASE);
 				rex.ReplaceAll(&txt, emptyString);
-				dialc->Text = chars + text + chare + txt;
+				dialc->Text = chars + tag + chare + txt;
 			}
 			else
 			{
-				dialc->Text->Prepend(chars + text + chare);
+				dialc->Text->Prepend(chars + tag + chare);
 			}
 		}
 		grid->SetModified(EDITBOX_MULTILINE_EDITION);
 	}
 
+}
+
+// Turns an SRT tag such as <b> on or off for the font dialog: on writes it
+// like the toolbar buttons, off removes the pairs of that tag around the
+// selection, or in every selected Line when several are selected.
+void EditBox::SetSrtTag(const wxString &name, bool on)
+{
+	if (on){
+		PutinNonass(name, name);
+		return;
+	}
+	if (grid->file->SelectionsSize() < 2){
+		long from, to;
+		TextEdit->GetSelection(&from, &to);
+		SrtTagRemoval removal = RemoveSrtTagPairs(TextEdit->GetValue().ToStdWstring(), name.ToStdWstring(),
+			(size_t)from, (size_t)to);
+		if (!removal.changed)
+			return;
+		TextEdit->SetTextS(wxString(removal.text), true);
+		TextEdit->SetFocus();
+		TextEdit->SetSelection((int)removal.from, (int)removal.to);
+	}
+	else{
+		wxArrayInt sels;
+		grid->file->GetSelections(sels);
+		bool changed = false;
+		for (size_t i = 0; i < sels.size(); i++)
+		{
+			wxString txt = grid->file->GetDialogue(sels[i])->Text;
+			std::wstring text = txt.ToStdWstring();
+			SrtTagRemoval removal = RemoveSrtTagPairs(text, name.ToStdWstring(), 0, text.size());
+			if (!removal.changed)
+				continue;
+			Dialogue *dialc = grid->file->CopyDialogueF(sels[i]);
+			dialc->Text = wxString(removal.text);
+			changed = true;
+		}
+		if (changed)
+			grid->SetModified(EDITBOX_MULTILINE_EDITION);
+	}
 }
 
 void EditBox::OnFontClick(wxCommandEvent& event)
@@ -813,7 +857,7 @@ void EditBox::ChangeFont(Styles *retStyle, Styles *editedStyle)
 			FindTag(L"fn(.*)", emptyString, 0, true);
 			PutTagInText(L"\\fn" + retStyle->Fontname, L"\\fn" + actualStyle.Fontname, false);
 		}
-		else{ PutinNonass(L"F:" + retStyle->Fontname, L"f:([^}]*)"); }
+		else if (form == MDVD){ PutinNonass(L"F:" + retStyle->Fontname, L"f:([^}]*)"); }
 	}
 	if (retStyle->Fontsize != editedStyle->Fontsize)
 	{
@@ -821,7 +865,7 @@ void EditBox::ChangeFont(Styles *retStyle, Styles *editedStyle)
 			FindTag(L"fs([0-9]+)", emptyString, 0, true);
 			PutTagInText(L"\\fs" + retStyle->Fontsize, L"\\fs" + actualStyle.Fontsize, false);
 		}
-		else{ PutinNonass(L"S:" + retStyle->Fontname, L"s:([^}]*)"); }
+		else if (form == MDVD){ PutinNonass(L"S:" + retStyle->Fontsize, L"s:([^}]*)"); }
 	}
 	if (retStyle->Bold != editedStyle->Bold)
 	{
@@ -831,7 +875,8 @@ void EditBox::ChangeFont(Styles *retStyle, Styles *editedStyle)
 			FindTag(L"b(0|1)", emptyString, 0, true);
 			PutTagInText(L"\\b" + bld, L"\\b" + bld1, false);
 		}
-		else{ PutinNonass(L"y:b", (retStyle->Bold) ? wxString(L"Y:b") : emptyString); }
+		else if (form == SRT){ SetSrtTag(L"b", retStyle->Bold); }
+		else if (form == MDVD){ PutinNonass((retStyle->Bold) ? wxString(L"Y:b") : emptyString, L"y:b"); }
 	}
 	if (retStyle->Italic != editedStyle->Italic)
 	{
@@ -841,21 +886,28 @@ void EditBox::ChangeFont(Styles *retStyle, Styles *editedStyle)
 			FindTag(L"i(0|1)", emptyString, 0, true);
 			PutTagInText(L"\\i" + ital, L"\\i" + ital1, false);
 		}
-		else{ PutinNonass(L"y:i", (retStyle->Italic) ? wxString(L"Y:i") : emptyString); }
+		else if (form == SRT){ SetSrtTag(L"i", retStyle->Italic); }
+		else if (form == MDVD){ PutinNonass((retStyle->Italic) ? wxString(L"Y:i") : emptyString, L"y:i"); }
 	}
 	if (retStyle->Underline != editedStyle->Underline)
 	{
-		FindTag(L"u(0|1)", emptyString, 0, true);
-		wxString under = (retStyle->Underline) ? L"1" : L"0";
-		wxString under1 = (actualStyle.Underline) ? L"1" : L"0";
-		PutTagInText(L"\\u" + under, L"\\u" + under1, false);
+		if (form < SRT){
+			FindTag(L"u(0|1)", emptyString, 0, true);
+			wxString under = (retStyle->Underline) ? L"1" : L"0";
+			wxString under1 = (actualStyle.Underline) ? L"1" : L"0";
+			PutTagInText(L"\\u" + under, L"\\u" + under1, false);
+		}
+		else if (form == SRT){ SetSrtTag(L"u", retStyle->Underline); }
 	}
 	if (retStyle->StrikeOut != editedStyle->StrikeOut)
 	{
-		FindTag(L"s(0|1)", emptyString, 0, true);
-		wxString strike = (retStyle->StrikeOut) ? L"1" : L"0";
-		wxString strike1 = (actualStyle.StrikeOut) ? L"1" : L"0";
-		PutTagInText(L"\\s" + strike, L"\\s" + strike1, false);
+		if (form < SRT){
+			FindTag(L"s(0|1)", emptyString, 0, true);
+			wxString strike = (retStyle->StrikeOut) ? L"1" : L"0";
+			wxString strike1 = (actualStyle.StrikeOut) ? L"1" : L"0";
+			PutTagInText(L"\\s" + strike, L"\\s" + strike1, false);
+		}
+		else if (form == SRT){ SetSrtTag(L"s", retStyle->StrikeOut); }
 	}
 }
 
@@ -906,9 +958,9 @@ void EditBox::AllColorClick(int numColor, bool leftClick /*= true*/)
 		int spcdId = scpd->GetId();
 		scpd->Bind(COLOR_CHANGED, &EditBox::OnColorChange, this, spcdId);
 		scpd->Bind(COLOR_TYPE_CHANGED, [=, this](wxCommandEvent &evt){
-			AssColor col;
-			GetColor(&col, evt.GetInt());
-			scpd->SetColor(col);
+			GetColor(&actualColor, evt.GetInt());
+			actualColorstr = actualColor.GetAss(false, true);
+			scpd->SetColor(actualColor);
 		}, spcdId);
 
 		AssColor ret;
@@ -1013,7 +1065,7 @@ void EditBox::OnBoldClick(wxCommandEvent& event)
 		PutTagInText(L"\\b" + nvalue, L"\\b" + value);
 	}
 	else if (grid->subsFormat == SRT){ PutinNonass(L"b", L"b"); }
-	else { PutinNonass(L"y:b", L"Y:b"); }
+	else { PutinNonass(L"Y:b", L"y:b"); }
 }
 
 void EditBox::OnItalicClick(wxCommandEvent& event)
@@ -1029,7 +1081,7 @@ void EditBox::OnItalicClick(wxCommandEvent& event)
 		PutTagInText(L"\\i" + nvalue, L"\\i" + value);
 	}
 	else if (grid->subsFormat == SRT){ PutinNonass(L"i", L"i"); }
-	else if (grid->subsFormat == MDVD){ PutinNonass(L"y:i", L"Y:i"); }
+	else if (grid->subsFormat == MDVD){ PutinNonass(L"Y:i", L"y:i"); }
 	else{ PutinNonass(L"/", L"/"); }
 }
 
@@ -1641,7 +1693,7 @@ void EditBox::OnColorChange(ColorEvent& event)
 		}
 
 	}
-	else{ PutinNonass(L"C:" + choosenColorAsString.Mid(2), L"C:([^}]*)"); }
+	else if (grid->subsFormat == MDVD){ PutinNonass(L"C:$" + choosenColorAsString.Mid(2), L"C:([^}]*)"); }
 }
 
 void EditBox::OnButtonTag(wxCommandEvent& event)
@@ -1953,6 +2005,8 @@ void EditBox::OnDoubtfulTl(wxCommandEvent& event)
 		Dialogue *dial = grid->file->CopyDialogueF(sels[i]);
 		dial->ChangeState(4);
 	}
+	// record the toggle as its own undo step; keep the edit box text as typed
+	grid->SetModified(EDITBOX_MULTILINE_EDITION, false);
 	if (event.GetId() == EDITBOX_SET_DOUBTFUL){
 		grid->NextLine();
 	}

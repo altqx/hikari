@@ -250,6 +250,9 @@
     <ClCompile Include="KeyframesLoader.cpp">
       <Filter>K</Filter>
     </ClCompile>
+    <ClCompile Include="LineGroups.cpp">
+      <Filter>L</Filter>
+    </ClCompile>
     <ClCompile Include="LineParse.cpp">
       <Filter>L</Filter>
     </ClCompile>
@@ -308,6 +311,9 @@
       <Filter>F</Filter>
     </ClCompile>
     <ClCompile Include="WaveformPeaks.cpp">
+      <Filter>W</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowsSaveFile.cpp">
       <Filter>W</Filter>
     </ClCompile>
     <ClCompile Include="Playback.cpp">
@@ -419,6 +425,9 @@
       <Filter>T</Filter>
     </ClCompile>
     <ClCompile Include="TagFindReplace.cpp">
+      <Filter>T</Filter>
+    </ClCompile>
+    <ClCompile Include="TextComparison.cpp">
       <Filter>T</Filter>
     </ClCompile>
     <ClCompile Include="TextEditorTagList.cpp">
@@ -624,6 +633,9 @@
     <ClInclude Include="Hotkeys.h">
       <Filter>H</Filter>
     </ClInclude>
+    <ClInclude Include="HotkeysFile.h">
+      <Filter>H</Filter>
+    </ClInclude>
     <ClInclude Include="HotkeysNaming.h">
       <Filter>H</Filter>
     </ClInclude>
@@ -690,6 +702,9 @@
     <ClInclude Include="KeyframesLoader.h">
       <Filter>K</Filter>
     </ClInclude>
+    <ClInclude Include="LineGroups.h">
+      <Filter>L</Filter>
+    </ClInclude>
     <ClInclude Include="LineParse.h">
       <Filter>L</Filter>
     </ClInclude>
@@ -754,6 +769,9 @@
       <Filter>S</Filter>
     </ClInclude>
     <ClInclude Include="WaveformPeaks.h">
+      <Filter>W</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowsSaveFile.h">
       <Filter>W</Filter>
     </ClInclude>
     <ClInclude Include="Playback.h">
@@ -855,8 +873,14 @@
     <ClInclude Include="TabPanel.h">
       <Filter>T</Filter>
     </ClInclude>
+    <ClInclude Include="TextComparison.h">
+      <Filter>T</Filter>
+    </ClInclude>
     <ClInclude Include="TagFindReplace.h">
       <Filter>T</Filter>
+    </ClInclude>
+    <ClInclude Include="SrtTags.h">
+      <Filter>S</Filter>
     </ClInclude>
     <ClInclude Include="TextEditorTagList.h">
       <Filter>T</Filter>

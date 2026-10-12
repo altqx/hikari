@@ -73,10 +73,20 @@ void Karaoke::Split()
 			if (i == len - 1){
 				res << ch;
 				syls.Add(res);
-				if (!syltimes.size()) {
+				if (kpart) {
+					// the text ends inside a \k tag, whose time is still pending
+					stime += (wxAtoi(kres) * 10);
+					syltimes.Add(stime);
+				}
+				else if (!syltimes.size()) {
 					syltimes.Add(dial->End.mstime);
 					ktags.Add(L"k");
 				}
+				// every syllable needs a time and a tag
+				while (syltimes.size() < syls.size())
+					syltimes.Add(dial->End.mstime);
+				while (ktags.size() < syls.size())
+					ktags.Add(L"k");
 				return;
 			}
 			if (ch == L'{')
@@ -152,6 +162,11 @@ void Karaoke::Split()
 			}
 
 		}
+		// an unclosed { hides the sentinel, so the last split never happens
+		if (start < (int)Text.length()){
+			syls.Add(Text.Mid(start));
+			ktags.Add(L"k");
+		}
 		int dur = dial->End.mstime - dial->Start.mstime;
 		int times = (float)dur / (float)syls.size();
 		if (syls.size() == 0){
@@ -220,6 +235,9 @@ bool Karaoke::GetSylAtX(int x, int *result)
 
 void Karaoke::Join(int line)
 {
+	// the last boundary is the Line's end, there is nothing to join it with
+	if (line < 0 || line + 1 >= (int)syls.size())
+		return;
 	syls[line] << syls[line + 1];
 	syls[line].Replace(L"{}", emptyString);
 	syls.RemoveAt(line + 1);
@@ -338,17 +356,18 @@ void Karaoke::GetLetters(int line, int nletters, wxString &first, wxString &seco
 	int charsCounter = 0;
 	for (size_t i = 0; i < len; i++){
 		const wxUniChar & ch = sylText[i];
-		if (charsCounter == nletters){
-			first = sylText.Mid(0, i);
-			second = sylText.Mid(i);
-			return;
-		}
 		if (ch == L'{'){
 			block = true;
 		}
 		else if (ch == L'}'){ block = false; }
 		else if (!block){
 			charsCounter++;
+			// split right after the letter, also when it is the last one
+			if (charsCounter == nletters){
+				first = sylText.Mid(0, i + 1);
+				second = sylText.Mid(i + 1);
+				return;
+			}
 		}
 	}
 	first = sylText.Mid(0, nletters);

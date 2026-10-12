@@ -210,6 +210,9 @@ VideoBox::~VideoBox()
 
 bool VideoBox::Play()
 {
+	//a page removed later must not play this video again
+	if (Notebook *tabs = Notebook::GetTabs())
+		tabs->ForgetPausedTab(tab);
 	if (!renderer)
 		return false;
 
@@ -223,6 +226,9 @@ bool VideoBox::Play()
 
 void VideoBox::PlayLine(int start, int end)
 {
+	//a page removed later must not play this video again
+	if (Notebook *tabs = Notebook::GetTabs())
+		tabs->ForgetPausedTab(tab);
 	if (!renderer)
 		return;
 	//wxMutexLocker lock(vbmutex);
@@ -234,6 +240,9 @@ void VideoBox::PlayLine(int start, int end)
 
 bool VideoBox::Pause(bool skipWhenOnEnd)
 {
+	//a page removed later must not play this video again
+	if (Notebook *tabs = Notebook::GetTabs())
+		tabs->ForgetPausedTab(tab);
 	wxMutexLocker lock(vbmutex);
 
 	if (!renderer){
@@ -266,6 +275,9 @@ bool VideoBox::Pause(bool skipWhenOnEnd)
 
 bool VideoBox::Stop()
 {
+	//a page removed later must not play this video again
+	if (Notebook *tabs = Notebook::GetTabs())
+		tabs->ForgetPausedTab(tab);
 	if (!renderer)
 		return false;
 
@@ -284,6 +296,9 @@ bool VideoBox::Stop()
 bool VideoBox::LoadVideo(const wxString& fileName, int subsFlag, bool fulls /*= false*/, 
 	bool changeAudio, int customFFMS2, bool dontPlayOnStart)
 {
+	//a page removed later must not play this video again
+	if (Notebook *tabs = Notebook::GetTabs())
+		tabs->ForgetPausedTab(tab);
 	prevchap = -1;
 	bool curentFFMS2 = !m_IsDirectShow;
 	bool byFFMS2;
@@ -687,7 +702,7 @@ void VideoBox::NextFile(bool next)
 	if (tab->VideoPath != emptyString){
 		path = tab->VideoPath;
 	}
-	
+	else if (Hikari->videorec.empty()){ return; }
 	else{ path = Hikari->videorec[Hikari->videorec.size() - 1]; }
 	wxFileName videoFileName(path);
 	wxString pathwn = videoFileName.GetPath();
@@ -956,6 +971,9 @@ void VideoBox::ContextMenu(const wxPoint &pos)
 			if (!wxFileExists(Hikari->subsrec[i])){ continue; }
 			menu1->Append(30000 + i, HikariPathName(Hikari->subsrec[i]));
 		}
+	}
+	for (size_t i = 0; i < 20; i++)
+	{
 		if (i < Hikari->videorec.size()){
 			if (!wxFileExists(Hikari->videorec[i])){ continue; }
 			menu2->Append(30020 + i, HikariPathName(Hikari->videorec[i]));
@@ -1124,6 +1142,8 @@ void VideoBox::OpenEditor(bool esc)
 
 		SetFullscreen();
 		HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+		//the option alone does not turn the editor on for this tab
+		if (!tab->editor && Hikari->GetTab() == tab){ Hikari->HideEditor(); }
 		if (!esc){ ShowWindow(Hikari->GetHWND(), SW_MINIMIZE); }
 	}
 
@@ -1394,14 +1414,36 @@ void VideoBox::RefreshTime()
 
 void VideoBox::OnCopyCoords(const wxPoint &pos)
 {
-	int w, h;
-	GetClientSize(&w, &h);
+	//the crosshair's mapping (Cross::SetCurVisual and OnMouseEvent),
+	//the video without its bars and the zoom
+	int w = 0, h = 0;
+	int diffW = 1, diffH = 1;
+	RECT videoRect = GetVideoRect();
+	if (HasVideo()) {
+		w = videoRect.right - videoRect.left;
+		h = videoRect.bottom - videoRect.top;
+		if (videoRect.left)
+			diffW = 0;
+		if (videoRect.top)
+			diffH = 0;
+	}
+	else {
+		GetClientSize(&w, &h);
+		h -= m_PanelHeight;
+	}
 	int nx = 0, ny = 0;
 	tab->grid->GetASSRes(&nx, &ny);
-	float coeffX = (float)nx / (float)(w - 1);
-	float coeffY = (float)ny / (float)(h - m_PanelHeight - 1);
-	int posx = (float)pos.x * coeffX;
-	int posy = (float)pos.y * coeffY;
+	float coeffX = (float)nx / (float)(w - diffW);
+	float coeffY = (float)ny / (float)(h - diffH);
+	float zx = (float)pos.x - videoRect.left;
+	float zy = (float)pos.y - videoRect.top;
+	Visuals *visual = renderer ? renderer->GetVisual() : nullptr;
+	if (visual) {
+		zx = (pos.x / visual->zoomScale.x) + visual->zoomMove.x;
+		zy = (pos.y / visual->zoomScale.y) + visual->zoomMove.y;
+	}
+	int posx = zx * coeffX;
+	int posy = zy * coeffY;
 	wxString poss;
 	poss << posx << L"," << posy;
 	if (wxTheClipboard->Open())

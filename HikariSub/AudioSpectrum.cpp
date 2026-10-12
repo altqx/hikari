@@ -248,10 +248,12 @@ void AudioSpectrum::RenderRange(long long range_start, long long range_end, unsi
 				// can also happen with exactly one sample per pixel, but how often is that?
 
 				// Iterate over pixels, picking the nearest power values
+				// the top row maps to maxband, one past the last band
+				const int lastBand = signed(line_length - 1);
 				for (int y = 0; y < imgheight; ++y) {
 					float ideal = (float)(y + 1.)/imgheight * maxband;
-					float sample1 = line[(int)floor(ideal) + minband]/* * upscale*/;
-					float sample2 = line[(int)ceil(ideal) + minband]/* * upscale*/;
+					float sample1 = line[MIN((int)floor(ideal) + minband, lastBand)]/* * upscale*/;
+					float sample2 = line[MIN((int)ceil(ideal) + minband, lastBand)]/* * upscale*/;
 					float frac = ideal - floor(ideal);
 					int intensity = int(((1 - frac) * sample1 + frac * sample2) * upscale / maxpower * 256);
 					WRITE_PIXEL

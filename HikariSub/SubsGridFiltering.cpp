@@ -20,6 +20,7 @@
 #include "SubsGrid.h"
 #include "RendererVideo.h"
 #include "config.h"
+#include "HikariMessageBox.h"
 
 SubsGridFiltering::SubsGridFiltering(SubsGrid *_grid, int _activeLine)
 	:grid(_grid)
@@ -165,6 +166,29 @@ void SubsGridFiltering::MakeTree()
 {
 	grid->file->GetSelections(keySelections);
 	int selssize = keySelections.size();
+	// a tree is one run of lines, so hidden lines between selected lines
+	// would split it
+	bool inRun = false;
+	bool skipped = false;
+	for (int i = 0, j = 0; i < grid->file->GetCount() && j < selssize; i++){
+		Dialogue *dial = grid->file->GetDialogue(i);
+		if (dial->NonDialogue || !dial->isVisible){
+			if (inRun){ skipped = true; }
+			continue;
+		}
+		if (keySelections[j] != i){
+			inRun = false;
+			continue;
+		}
+		j++;
+		if (inRun && skipped){
+			HikariMessageBox(_("Hidden lines lie between the selected lines, so they cannot make one tree.\n"
+				"Show the hidden lines or select only lines that are next to each other."), _("Trees"), wxOK, grid);
+			return;
+		}
+		inRun = true;
+		skipped = false;
+	}
 	int j = 0;
 	int treeDiff = 0;
 	bool startSelection = true;

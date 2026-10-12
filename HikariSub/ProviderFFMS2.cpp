@@ -24,19 +24,49 @@
 #include "ListControls.h"
 #include "Stylelistbox.h"
 #include "SubsGrid.h"
+#include "OpennWrite.h"
 #include <wx/dir.h>
 #include <wx/filename.h>
+#include <wx/log.h>
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
 #include <cmath>
 #include <limits>
+#include <mutex>
+#include <new>
+#include <set>
 #include <vector>
 #include "UtilsWindows.h"
 #include "Provider.h"
 
 namespace
 {
+	// names of the disk caches that providers have open; the trim must not
+	// delete them, as Linux unlinks an open file and the .part then cannot be renamed
+	std::mutex openCachesMutex;
+	std::multiset<wxString> openCaches;
+
+	void SetCacheInUse(const wxString& path, bool inUse)
+	{
+		std::lock_guard<std::mutex> lock(openCachesMutex);
+		wxString name = wxFileName(path).GetFullName();
+		if (inUse) {
+			openCaches.insert(name);
+		}
+		else {
+			auto it = openCaches.find(name);
+			if (it != openCaches.end())
+				openCaches.erase(it);
+		}
+	}
+
+	bool IsCacheInUse(const wxString& path)
+	{
+		std::lock_guard<std::mutex> lock(openCachesMutex);
+		return openCaches.count(wxFileName(path).GetFullName()) > 0;
+	}
+
 	void CopyBgraFrameToBuffer(const FFMS_Frame* frame, unsigned char* dst, int width, int height)
 	{
 		if (!frame || !dst || width <= 0 || height <= 0 || !frame->Data[0])
@@ -273,7 +303,14 @@ done:
 	m_indexPath = Options.pathfull + sep + L"Indices" + sep + baseName +
 		wxString::Format(L"_%i.ffindex", audiotrack);
 
-	bool indexUsable = wxFileExists(m_indexPath);
+	//the indices are named after the user's media and hold what is in it:
+	//for the user only; one in a folder another user could put files in is
+	//neither read nor written
+	bool privateIndices = MakePrivateFolder(wxFileName(m_indexPath).GetPath());
+	if (!privateIndices)
+		HikariLogSilent(wxString::Format(L"The index folder is not private, no index is read or saved: %s",
+			wxFileName(m_indexPath).GetPath()));
+	bool indexUsable = privateIndices && wxFileExists(m_indexPath);
 	if (indexUsable) {
 		// FFMS2 matches an index only by size and a hash of the file's ends, so a
 		// file completed after indexing, like a torrent filling in pieces, still matches
@@ -312,13 +349,23 @@ done:
 			//FFMS_CancelIndexing(Indexer);
 			return 0;
 		}
-		wxFileName indexFile(m_indexPath);
-		if (!indexFile.DirExists())
+		//FFMS2 writes into a file that is there, which keeps its own DACL on
+		//Windows, and makes one that is not with whatever its folder passes
+		//on, which a share may not apply: the file is made private first,
+		//or the index is not saved, see OpenPrivateFile
+		FILE *indexFile = privateIndices ? OpenPrivateFile(m_indexPath) : nullptr;
+		if (privateIndices && !indexFile)
+			HikariLogSilent(wxString::Format(L"The index file cannot be made private, no index is saved: %s",
+				m_indexPath));
+		if (indexFile)
+			fclose(indexFile);
+		if (indexFile && FFMS_WriteIndex(m_indexPath.utf8_str(), m_index, &m_errInfo))
 		{
-			indexFile.Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
-		}
-		if (FFMS_WriteIndex(m_indexPath.utf8_str(), m_index, &m_errInfo))
-		{
+			{
+				//an empty or partly written index is not left to be read
+				wxLogNull noLog;
+				wxRemoveFile(m_indexPath);
+			}
 			HikariLogDebug(wxString::Format(_("Cannot save index, error %s occurred"), wxString::FromUTF8(m_errInfo.Buffer)));
 			//FFMS_DestroyIndex(index);
 			//FFMS_CancelIndexing(Indexer);
@@ -395,9 +442,11 @@ done:
 			bool changeMatrix = false;
 			if (m_CS == FFMS_CS_UNSPECIFIED) {
 				m_CS = m_width > 1024 || m_height >= 600 ? FFMS_CS_BT709 : FFMS_CS_BT470BG;
+				//FFMS2 converts an untagged frame as BT.601, set the guess too
+				changeMatrix = true;
 			}
 			m_colorSpace = m_realColorSpace = ColorMatrixDescription(m_CS, m_CR);
-			if (m_CS == FFMS_CS_BT709 && colormatrix == L"TV.709") {
+			if (m_CS == FFMS_CS_BT709 && (colormatrix == L"TV.709" || changeMatrix)) {
 				if (FFMS_SetInputFormatV(m_videoSource, FFMS_CS_BT709, m_CR, FFMS_GetPixFmt(""), &m_errInfo)) {
 					HikariLog(_("Cannot change YCbCr matrix"));
 				}
@@ -538,6 +587,8 @@ ProviderFFMS2::~ProviderFFMS2()
 			_wremove(m_diskCacheFilename.wc_str());
 		}
 	}
+	if (m_diskCacheInUse)
+		SetCacheInUse(m_diskCacheFilename, false);
 }
 
 
@@ -558,6 +609,18 @@ void ProviderFFMS2::AudioLoad(ProviderFFMS2* vf, bool newIndex, int audiotrack)
 		vf->m_diskCacheFilename << Options.pathfull << sep << L"AudioCache" << sep <<
 			baseName << L"_track" << audiotrack << L"_" << vf->m_channels << L"ch_" <<
 			vf->m_delayFrames << L".w64";
+		//the cache holds the audio of the user's media: for the user only.
+		//Without a private folder for it, as on a FAT or exFAT stick that
+		//keeps no ACLs, the audio is kept in memory as with AUDIO_RAM_CACHE;
+		//audioNotInitialized, set after this, keeps readers off the cache
+		wxString cacheFolder = wxFileName(vf->m_diskCacheFilename).GetPath();
+		if (!MakePrivateFolder(cacheFolder)) {
+			HikariLogSilent(wxString::Format(L"The audio cache folder is not private, the audio is kept in memory: %s",
+				cacheFolder));
+			vf->m_discCache = false;
+		}
+	}
+	if (vf->m_discCache) {
 		if (!vf->DiskCache(newIndex)) { goto done; }
 	}
 	else {
@@ -565,6 +628,13 @@ void ProviderFFMS2::AudioLoad(ProviderFFMS2* vf, bool newIndex, int audiotrack)
 	}
 	vf->audioNotInitialized = false;
 done:
+	if (vf->audioNotInitialized && !vf->m_stopLoadingAudio) {
+		// without this the audio box waits for the cache forever
+		vf->m_audioLoadFailed = true;
+		HikariLog(vf->m_discCache ?
+			wxString::Format(_("Cannot create the audio cache %s"), vf->m_diskCacheFilename) :
+			wxString(_("Not enough memory for the audio cache")));
+	}
 	if (vf->m_audioSource) { FFMS_DestroyAudioSource(vf->m_audioSource); vf->m_audioSource = nullptr; }
 	vf->m_lockGetFrame = false;
 	SetEvent(vf->m_eventAudioComplete);
@@ -665,17 +735,15 @@ void ProviderFFMS2::GetAudio(void* buf, long long start, long long count)
 		count = m_numSamples - start;
 		if (count < 0) count = 0;
 
-		// Fill beyond with zero
-
-		short* temp = (short*)buf;
-		for (long long i = count; i < oldcount; i++) {
-			temp[i] = 0;
-		}
+		// Fill beyond with zero, whole frames of every channel
+		memset((char*)buf + count * FrameBytes(), 0, (oldcount - count) * FrameBytes());
 
 	}
 	wxCriticalSectionLocker lock(m_blockAudio);
 	if (FFMS_GetAudio(m_audioSource, buf, start, count, &m_errInfo)) {
 		HikariLogDebug(L"error audio" + wxString::FromUTF8(m_errInfo.Buffer));
+		// a failed decode leaves the buffer as it was allocated
+		memset(buf, 0, count * FrameBytes());
 	}
 
 }
@@ -691,16 +759,22 @@ void ProviderFFMS2::ReadCache(void* buf, long long start, long long count)
 	if (count <= 0)
 		return;
 
+	const size_t bytes = (size_t)(count * frameBytes);
 	if (m_discCache) {
+		size_t read = 0;
 		if (m_fp) {
 			wxCriticalSectionLocker lock(m_blockAudio);
-			_fseeki64(m_fp, start * frameBytes, SEEK_SET);
-			fread(buf, 1, count * frameBytes, m_fp);
+			if (_fseeki64(m_fp, start * frameBytes, SEEK_SET) == 0)
+				read = fread(buf, 1, bytes, m_fp);
 		}
+		// what a short read leaves out plays as silence, not as old samples
+		memset((char*)buf + read, 0, bytes - read);
 		return;
 	}
-	if (!m_cache)
+	if (!m_cache) {
+		memset(buf, 0, bytes);
 		return;
+	}
 	char* tmpbuf = (char*)buf;
 	const int blsize = (1 << 22);
 	long long byte = start * frameBytes;
@@ -730,14 +804,24 @@ static void ApplyVolume(short* samples, long long count, double volume)
 
 void ProviderFFMS2::GetPlaybackBuffer(void* buf, long long start, long long count, double volume)
 {
-	if (audioNotInitialized) { return; }
+	if (audioNotInitialized) {
+		// playback during loading gets silence, not the player's old buffer
+		if (count > 0)
+			memset(buf, 0, count * FrameBytes());
+		return;
+	}
 	ReadCache(buf, start, count);
 	ApplyVolume((short*)buf, count * m_channels, volume);
 }
 
 void ProviderFFMS2::GetBuffer(void* buf, long long start, long long count, double volume)
 {
-	if (audioNotInitialized) { return; }
+	if (audioNotInitialized) {
+		// without audio the caller still reads count samples, so give it silence
+		if (count > 0)
+			memset(buf, 0, (size_t)count * sizeof(short));
+		return;
+	}
 	if (m_channels == 1) {
 		GetPlaybackBuffer(buf, start, count, volume);
 		return;
@@ -770,13 +854,22 @@ bool ProviderFFMS2::RAMCache()
 
 	const long long blsize = (1 << 22);
 	m_blockNum = (int)(end / blsize) + 1;
-	m_cache = new char* [m_blockNum];
+	// blocks not allocated yet stay null, so a failure can free the rest
+	m_cache = new (std::nothrow) char* [m_blockNum]();
+	if (!m_cache) {
+		m_blockNum = 0;
+		return false;
+	}
 
 	long long written = 0;
 	for (int i = 0; i < m_blockNum; i++)
 	{
 		long long size = std::min(blsize, end - written);
-		m_cache[i] = new char[std::max(1LL, size)];
+		m_cache[i] = new (std::nothrow) char[std::max(1LL, size)]();
+		if (!m_cache[i]) {
+			ClearRAMCache();
+			return false;
+		}
 		long long frames = size / frameBytes;
 		long long silentFrames = std::clamp(silence - written / frameBytes, 0LL, frames);
 		memset(m_cache[i], 0, silentFrames * frameBytes);
@@ -817,9 +910,11 @@ bool ProviderFFMS2::DiskCache(bool newIndex)
 	bool good = true;
 	wxFileName discCacheFile;
 	discCacheFile.Assign(m_diskCacheFilename);
-	if (!discCacheFile.DirExists()) { discCacheFile.Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL); }
+	//AudioLoad made the folder private, or keeps the audio in memory
 	bool fileExists = discCacheFile.FileExists();
 	if (!newIndex && fileExists) {
+		SetCacheInUse(m_diskCacheFilename, true);
+		m_diskCacheInUse = true;
 		m_fp = _wfopen(m_diskCacheFilename.wc_str(), L"rb");
 		if (m_fp)
 			return true;
@@ -831,7 +926,10 @@ bool ProviderFFMS2::DiskCache(bool newIndex)
 			_wremove(m_diskCacheFilename.wc_str());
 		}
 		m_diskCacheFilename << L".part";
-		m_fp = _wfopen(m_diskCacheFilename.wc_str(), L"w+b");
+		SetCacheInUse(m_diskCacheFilename, true);
+		m_diskCacheInUse = true;
+		//only the user may open it, also a .part left from before, see OpenPrivateFile
+		m_fp = OpenPrivateFile(m_diskCacheFilename);
 		if (!m_fp)
 			return false;
 	}
@@ -843,18 +941,26 @@ bool ProviderFFMS2::DiskCache(bool newIndex)
 	try {
 		if (m_delayFrames > 0) {
 			std::vector<char> silence((size_t)(m_delayFrames * frameBytes));
-			fwrite(silence.data(), 1, silence.size(), m_fp);
+			good = fwrite(silence.data(), 1, silence.size(), m_fp) == silence.size();
 		}
 		std::vector<char> data((size_t)(block * frameBytes));
-		while (sourceFrame < sourceEnd) {
+		while (good && sourceFrame < sourceEnd) {
 			long long frames = std::min(block, sourceEnd - sourceFrame);
 			GetAudio(data.data(), sourceFrame, frames);
-			fwrite(data.data(), 1, frames * frameBytes, m_fp);
+			size_t bytes = (size_t)(frames * frameBytes);
+			// a full disk writes short, and such a cache must not be kept
+			if (fwrite(data.data(), 1, bytes, m_fp) != bytes) {
+				good = false;
+				break;
+			}
 			sourceFrame += frames;
 			m_audioProgress = ((float)sourceFrame / (float)sourceEnd);
 			if (m_stopLoadingAudio) break;
 		}
-		m_diskCacheComplete = sourceFrame >= sourceEnd;
+		// the buffered tail reaches the disk here, rewind would hide its error
+		if (good && fflush(m_fp) != 0)
+			good = false;
+		m_diskCacheComplete = good && sourceFrame >= sourceEnd;
 		rewind(m_fp);
 	}
 	catch (...) {
@@ -905,6 +1011,8 @@ void ProviderFFMS2::DeleteOldAudioCache()
 	const size_t diff = audioCaches.size() - maxAudio;
 	for (auto cur = dates.begin(); cur != dates.end(); cur++) {
 		if (count >= diff) { break; }
+		if (IsCacheInUse(audioCaches[cur->second]))
+			continue;
 		if (_wremove(audioCaches[cur->second].wchar_str()) == 0)
 			count++;
 	}

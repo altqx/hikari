@@ -27,6 +27,7 @@
 #include "TabPanel.h"
 #include "HikariStaticText.h"
 #include "Notebook.h"
+#include "HotkeysFile.h"
 #include <wx/regex.h>
 #include <wx/log.h>
 #include <wx/msgdlg.h>
@@ -246,28 +247,21 @@ int Hotkeys::LoadHkeys(bool Audio)
 		return 1; 
 	}
 
-	wxStringTokenizer hk(acctxt, L"\n", wxTOKEN_STRTOK);
-
-	bool checkVer = false;
-	if (acctxt.StartsWith(L"[")){
-		wxString token = hk.NextToken();
-		wxString ver = token.BeforeFirst(L']').Mid(1);
-		/*if (ver != Options.progname){
-			LoadDefault(hkeys, Audio);
-		}*/
-		int first = token.find(L".");//0.8.0.build
-		if (first > -1){
-			wxString ver = token.Mid(first + 5).BeforeFirst(L' ');
-			int version = wxAtoi(ver);
-			checkVer = (version > 487);
-			if (version < 1141){
-				acctxt = acctxt.AfterFirst(L'\n');
-				ConfigConverter::Get()->ConvertHotkeys(&acctxt);
-				ow.FileWrite(Options.configPath + hkpath, acctxt);
-			}
-		}
+	// HikariSub writes "HikariSub v<semver>", which is current; only the old
+	// four-part headers carry a build number. A pre-1141 file is rewritten by
+	// ConfigConverter, and its bindings are read from the rewritten lines.
+	HotkeysFileText file = ReadHotkeysText(acctxt.ToStdWstring(), [](std::wstring &lines){
+		wxString converted(lines);
+		ConfigConverter::Get()->ConvertHotkeys(&converted);
+		lines = converted.ToStdWstring();
+	});
+	const HotkeysFileHeader &header = file.header;
+	if (header.convert){
+		ow.FileWrite(Options.configPath + hkpath, wxString(file.rewritten));
 	}
-	if (!checkVer){
+	wxStringTokenizer hk(wxString(file.bindings), L"\n", wxTOKEN_STRTOK);
+
+	if (header.version == HotkeysFileVersion::Outdated){
 		HikariMessageBox(_("The shortcuts file is outdated and will be replaced with the default one"));
 		LoadDefault(hkeys, Audio);
 		SaveHkeys(Audio);
@@ -294,6 +288,8 @@ int Hotkeys::LoadHkeys(bool Audio)
 
 		wxString Values = token.AfterFirst(L' ').Trim(false).Trim(true);
 		int type = wxString(L"GSEVA").find(Values[0]);
+		// a window letter other than G, S, E, V or A has no hotkey type
+		if (type < 0){ continue; }
 		Values = Values.Remove(0, 2);
 		wxString Labels = token.BeforeFirst(L' ').Trim(false).Trim(true);
 		if (Values != emptyString){
@@ -306,13 +302,23 @@ int Hotkeys::LoadHkeys(bool Audio)
 			g++;
 		}
 	}
-	if (g > 10){ 
-		if (Audio){ AudioKeys = true; }
-		return 1; 
+	if (HotkeysNeedDefaultFill(header.version, g)){
+		// A short old-build file keeps its bindings and gets only the
+		// default ids it does not set. A short current file is kept as
+		// it is: the ids it leaves out are shortcuts the user removed.
+		std::map<idAndType, hdata> defaults;
+		LoadDefault(defaults, Audio);
+		size_t filled = FillMissingHotkeys(hkeys, defaults);
+		if (hkeys.size() <= 10){ return 0; }
+		if (HotkeysNeedWriteBack(header, filled > 0)){
+			// the converted file on disk now has a current header and only
+			// its own bindings; save the filled set so the next start
+			// reads what this one shows
+			SaveHkeys(Audio);
+		}
 	}
-	LoadDefault(hkeys, Audio);
-	if (hkeys.size() > 10){ return 1; }
-	return 0;
+	if (Audio){ AudioKeys = true; }
+	return 1;
 
 }
 
@@ -323,7 +329,8 @@ void Hotkeys::SaveHkeys(bool Audio)
 	for (std::map<idAndType, hdata>::iterator cur = hkeys.begin(); cur != hkeys.end(); cur++) {
 		if ((!Audio && cur->first.Type == AUDIO_HOTKEY) ||
 			(Audio && !(cur->first.Type == AUDIO_HOTKEY)) ||
-			cur->first.id < 100 || cur->second.Accel.empty()) {
+			cur->first.id < 100 || cur->second.Accel.empty() ||
+			cur->first.Type < GLOBAL_HOTKEY || cur->first.Type > AUDIO_HOTKEY) {
 			continue;
 		}
 		if (cur->first >= 30100){ Texthk << cur->second.Name << L"=" << cur->second.Accel << L"\r\n"; }

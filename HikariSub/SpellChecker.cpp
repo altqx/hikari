@@ -86,17 +86,16 @@ void SpellChecker::Cleaning()
 void SpellChecker::AvailableDics(wxArrayString &dics, wxArrayString &symbols)
 {
 	wxArrayString dic;
-	wxArrayString aff;
 	wxString dictionaryPath = Options.pathfull + L"/Dictionary";
 	wxDir kat(dictionaryPath);
 	if (kat.IsOpened()){
 
 		kat.GetAllFiles(dictionaryPath, &dic, L"*.dic", wxDIR_FILES);
-		kat.GetAllFiles(dictionaryPath, &aff, L"*.aff", wxDIR_FILES);
 	}
 
 	for (size_t i = 0; i < dic.size(); i++){
-		if (dic[i].BeforeLast(L'.') == aff[i].BeforeLast(L'.')){
+		// each .dic needs its own .aff, the two listings do not pair by index
+		if (wxFileExists(dic[i].BeforeLast(L'.') + L".aff")){
 			wxString symbolName = wxFileName(dic[i]).GetName();
 			symbols.Add(symbolName);
 			const wxString fullName = Options.FindLanguage(symbolName);
@@ -143,6 +142,8 @@ bool SpellChecker::Initialize()
 				if (curLine.IsEmpty() || curLine.IsNumber()) continue;
 
 				wxCharBuffer curLineBuf = curLine.mb_str(*conv);
+				// a word the dictionary charset cannot hold converts to null
+				if (!curLineBuf) continue;
 				hunspell->add(std::string(curLineBuf.data()));
 			}
 
@@ -212,6 +213,7 @@ bool SpellChecker::AddWord(const wxString& word)
 	if (!hunspell || !conv) return false;
 
 	wxCharBuffer wordBuf = word.mb_str(*conv);
+	if (!wordBuf) return false;
 	hunspell->add(std::string(wordBuf.data()));//.mb_str(*conv))
 	ForgetWordResults();
 	//wxString pathhh = Options.pathfull + L"\\Dictionary\\UserDic.udic";
@@ -249,7 +251,9 @@ bool SpellChecker::RemoveWords(const wxArrayString &words)
 			if (foundWord != -1){
 				found = true;
 				wxCharBuffer foundWordBuf = words[foundWord].mb_str(*conv);
-				succeded = hunspell->remove(std::string(foundWordBuf.data()));
+				// an unconvertible word was never loaded, so only the file drops it
+				if (foundWordBuf)
+					succeded = hunspell->remove(std::string(foundWordBuf.data()));
 				ForgetWordResults();
 				continue;
 			}

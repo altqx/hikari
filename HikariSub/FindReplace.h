@@ -43,7 +43,7 @@ class FindReplace
 public:
 
 	FindReplace(HikariSubFrame* kfparent, FindReplaceDialog *FRD);
-	~FindReplace(){};
+	~FindReplace();
 	void ShowResult(TabPanel *tab, const wxString &path, int keyLine, const wxPoint &pos, const wxString & text);
 	void ReplaceChecked();
 	HikariSubFrame *Hikari;
@@ -52,6 +52,8 @@ public:
 	int textPosition;
 	int findstart;
 	int findend;
+	//text of the last match, Replace checks it is still there
+	wxString foundText;
 	int lastActive;
 	wxString oldfind;
 	bool fnext = false;
@@ -124,7 +126,7 @@ private:
 	bool GetNextBlock(wxString *text, wxString *block);
 	bool UpdateValues(TabWindow *window);
 	int ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const wxString &copyPath);
-	int ReplaceCheckedLine(wxString *line, const wxPoint &pos, int *replacementDiff);
+	int ReplaceCheckedLine(wxString *line, const wxPoint &pos, int *replacementDiff, int *lastEnd);
 	FindReplaceDialog *FRD = nullptr;
 	FindReplaceResultsDialog *FRRD = nullptr;
 	std::atomic<int> AllReplacements = 0;

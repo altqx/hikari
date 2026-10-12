@@ -25,6 +25,12 @@
 #include <boost/locale/boundary/index.hpp>
 
 std::atomic<unsigned> Visibility::s_Epoch{ 0 };
+
+uint64_t Dialogue::NextLineId()
+{
+	static std::atomic<uint64_t> lastId{ 0 };
+	return ++lastId;
+}
 #include <boost/locale/boundary/segment.hpp>
 #include <boost/locale/boundary/types.hpp>
 
@@ -741,7 +747,9 @@ void Dialogue::SetRaw(const wxString &ldial)
 			MarginR = wxAtoi(assdal.GetNextToken());
 			MarginV = wxAtoi(assdal.GetNextToken());
 			Effect = assdal.GetNextToken();
-			Effect.Trim(false);
+			//keep the form feed of the TLMode Unconfirmed marker \fD
+			if (!Effect->StartsWith(L"\f"))
+				Effect.Trim(false);
 			Effect.Trim(true);
 			Text = ldial.Mid(assdal.GetPosition());
 			Text.Trim(false);
@@ -758,7 +766,11 @@ void Dialogue::SetRaw(const wxString &ldial)
 		wxString eend;
 		wxString ttext;
 		Format = SRT;
-		Start.SetRaw(ldial.BeforeFirst(L' ', &eend), Format);
+		//the times are on the line with the arrow, a line before it
+		//(a cue number that was not removed) must not be read as the start
+		size_t timesLine = ldial.rfind(L'\n', ldial.find(L" --> "));
+		wxString times = (timesLine == wxString::npos) ? ldial : ldial.Mid(timesLine + 1);
+		Start.SetRaw(times.BeforeFirst(L' ', &eend), Format);
 		eend = eend.AfterFirst(L' ');
 		End.SetRaw(eend.BeforeFirst(L'\n', &ttext).Trim(), Format);
 		Text = ttext;
@@ -1075,6 +1087,8 @@ Dialogue *Dialogue::Copy(bool keepstate, bool copyIsVisible)
 	dial->Text = Text;
 	dial->TextTl = TextTl;
 	dial->treeState = treeState;
+	dial->tlPair = tlPair;
+	dial->lineId = lineId;
 	// the copy is in no file yet, so no file's row numbering changes
 	dial->isVisible.Init(isVisible);
 	dial->parseData = nullptr;

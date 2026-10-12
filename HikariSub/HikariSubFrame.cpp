@@ -701,29 +701,25 @@ void HikariSubFrame::OnMenuSelected(wxCommandEvent& event)
 		SaveAll();
 	}
 	else if (id == GLOBAL_SAVE_TRANSLATION){
-		GetTab()->grid->SetTlMode(false, true);
-		GetTab()->edit->SetTlMode(false);
-		Save(true, -1, true);
+		SaveTranslation();
 	}
 	else if (id == GLOBAL_REMOVE_SUBS){
 		if (SavePrompt(3)){ event.SetInt(-1); return; }
-		if (tab->SubsPath != emptyString){
-			tab->SubsName = _("Untitled");
-			tab->SubsPath = emptyString;
-			Label();
+		tab->SubsName = _("Untitled");
+		tab->SubsPath = emptyString;
+		Label();
 
-			tab->grid->Clearing();
-			tab->grid->LoadDefault();
-			tab->edit->RefreshStyle(true);
-			tab->grid->RefreshColumns();
+		tab->grid->Clearing();
+		tab->grid->LoadDefault();
+		tab->edit->RefreshStyle(true);
+		tab->grid->RefreshColumns();
 
-			if (tab->video->GetState() != None){
-				if (tab->video->RemoveVisual()){
-					tab->video->OpenSubs(CLOSE_SUBTITLES, true, true);
-				}
+		if (tab->video->GetState() != None){
+			if (tab->video->RemoveVisual()){
+				tab->video->OpenSubs(CLOSE_SUBTITLES, true, true);
 			}
-			SetSubsResolution(false);
 		}
+		SetSubsResolution(false);
 	}
 	else if (id == GLOBAL_UNDO){
 		tab->grid->DoUndo(false);
@@ -1018,10 +1014,13 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 			Freeze();
 			tab->Hide();
 			for (auto &file : paths){
+				int previousTab = Tabs->GetSelection();
+				bool newTab = false;
 				if (tab->SubsPath != emptyString) {
 					InsertTab(false); 
 					//set new tab
 					tab = GetTab();
+					newTab = true;
 				}
 				if (file.AfterLast(L'.') == L"mkv"){
 					event.SetString(file);
@@ -1030,9 +1029,16 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 				else{
 					OpenFile(file, false, false);
 				}
+				//do not leave the tab made for this file empty behind
+				if (newTab && tab->SubsPath == emptyString){
+					Tabs->RemoveUnusedPage(Tabs->FindPanel(tab, false), previousTab);
+					tab = GetTab();
+				}
 			}
 			Thaw();
 			tab->Show();
+			//a video paused for a tab that was removed again plays once shown
+			Tabs->ResumePausedTab();
 		}
 		FileDialog1->Destroy();
 	}
@@ -1254,13 +1260,28 @@ void HikariSubFrame::OnAssProps()
 	}
 }
 
-void HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
+bool HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 {
 	TabPanel* atab = (tabToSave < 0) ? GetTab() : Tabs->Page(tabToSave);
 	if (!atab)
-		return;
+		return false;
 
+	wxString savePath;
 	bool nameWasChanged = false;
+	if (!ChooseSavePath(atab, showDialog, &savePath, &nameWasChanged))
+		return false;
+	return SaveTo(atab, tabToSave, savePath, nameWasChanged, changeLabel);
+}
+
+//the file Save writes: the tab's own, or one picked in the Save As dialog when
+//the tab has none, its format or, with autonaming, its name changes, or
+//showDialog asks for it; false when the dialog is cancelled
+bool HikariSubFrame::ChooseSavePath(TabPanel *atab, bool showDialog, wxString *savePath, bool *nameWasChanged)
+{
+	//the tab takes a new name, and the recent files list it, once the
+	//subtitles are saved under it, see SaveTo
+	*savePath = atab->SubsPath;
+	*nameWasChanged = false;
 	if (atab->grid->originalFormat != atab->grid->subsFormat
 		|| (Options.GetBool(SUBS_AUTONAMING)
 		&& atab->SubsName.BeforeLast(L'.') != atab->VideoName.BeforeLast(L'.') && atab->VideoName != emptyString)
@@ -1288,14 +1309,12 @@ void HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 				goto repeatOpening;
 			}
 
-			atab->SubsPath = path;
+			*savePath = path;
 			wxString ext = (atab->grid->subsFormat < SRT) ? L"ass" : (atab->grid->subsFormat == SRT) ? L"srt" : L"txt";
-			if (!atab->SubsPath.EndsWith(ext)){ atab->SubsPath << L"." << ext; }
-			atab->SubsName = HikariPathName(atab->SubsPath);
-			nameWasChanged = true;
-			SetRecent(0, tabToSave);
+			if (!savePath->EndsWith(ext)){ *savePath << L"." << ext; }
+			*nameWasChanged = true;
 		}
-		else{ return; }
+		else{ return false; }
 	}
 	else{
 		DWORD attributes = ::GetFileAttributesW(atab->SubsPath.wc_str());
@@ -1304,8 +1323,35 @@ void HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 			goto repeatOpening;
 		}
 	}
-	if (atab->grid->SwapAssProperties()){ return; }
-	atab->grid->SaveFile(atab->SubsPath);
+	return true;
+}
+
+bool HikariSubFrame::SaveTo(TabPanel *atab, int tabToSave, const wxString &savePath, bool nameWasChanged, bool changeLabel,
+	bool translationOnly)
+{
+	SubsGrid *grid = atab->grid;
+	//what the edit box holds is committed, as its own step, before the save
+	//changes the document below, so that step holds none of those changes;
+	//it stays when the save fails
+	grid->CommitEditBoxForSave();
+	//the properties SwapAssProperties puts in stay only when they are saved
+	SubsFile::SInfoState sinfoBeforeSave = grid->file->GetSInfoState();
+	if (grid->SwapAssProperties()){ return false; }
+	//translation mode goes from the working copy only; the caller records the
+	//step once the file holds the translation
+	if (translationOnly)
+		grid->RemoveTlMode();
+	if (!grid->SaveFile(savePath, true, false, false)){
+		grid->file->RestoreSInfo(sinfoBeforeSave);
+		if (translationOnly)
+			grid->DropUnrecordedChanges();
+		return false;
+	}
+	if (nameWasChanged) {
+		atab->SubsPath = savePath;
+		atab->SubsName = HikariPathName(savePath);
+		SetRecent(0, tabToSave);
+	}
 	atab->grid->originalFormat = atab->grid->subsFormat;
 	if (changeLabel){
 		Toolbar->UpdateId(GLOBAL_SAVE_SUBS, false);
@@ -1318,6 +1364,33 @@ void HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 #if _DEBUG
 	wxBell();
 #endif
+	return true;
+}
+
+//Save As with translation mode turned off, so that the translation alone is
+//saved. The step that turns the mode off is recorded, and marked saved, only
+//once the file holds the translation: a cancelled dialog or a failed save
+//leaves the document, the steps to redo and the saved step as they were.
+bool HikariSubFrame::SaveTranslation()
+{
+	TabPanel *atab = GetTab();
+	if (!atab)
+		return false;
+	wxString savePath;
+	bool nameWasChanged = false;
+	if (!ChooseSavePath(atab, true, &savePath, &nameWasChanged))
+		return false;
+	if (!SaveTo(atab, -1, savePath, nameWasChanged, false, true))
+		return false;
+
+	SubsGrid *grid = atab->grid;
+	grid->RecordTlModeOff();
+	atab->edit->SetTlMode(false);
+	grid->file->SetLastSave();
+	Toolbar->UpdateId(GLOBAL_SAVE_SUBS, false);
+	Menubar->Enable(GLOBAL_SAVE_SUBS, false);
+	Label();
+	return true;
 }
 
 bool HikariSubFrame::OpenFile(const wxString &filename, bool fulls/*=false*/, bool freeze /*= true*/)
@@ -1360,6 +1433,7 @@ bool HikariSubFrame::OpenFile(const wxString &filename, bool fulls/*=false*/, bo
 		}
 	}
 
+	int previousTab = Tabs->GetSelection();
 	if (Options.GetBool(OPEN_SUBS_IN_NEW_TAB) && tab->SubsPath != emptyString &&
 		!tab->video->IsFullScreen() && issubs){
 		Tabs->AddPage(true);
@@ -1375,31 +1449,39 @@ bool HikariSubFrame::OpenFile(const wxString &filename, bool fulls/*=false*/, bo
 	if (issubs || found){
 		const wxString &fname = (found && !issubs) ? secondFileName : filename;
 		if (nonewtab){
+			//report Cancel as not opened, so a batch of files stops
 			if (SavePrompt(2)){
 				if (freeze)
 					tab->Thaw();
-				return true;
+				return false;
 			}
 		}
 		tab->video->RemoveVisual(true);
 
 		
-		if (!Tabs->LoadSubtitles(tab, fname)){
+		bool subsLoaded = Tabs->LoadSubtitles(tab, fname);
+		//a video still opens when the subtitles found next to it cannot be loaded
+		if (!subsLoaded && issubs){
 			if (freeze)
 				tab->Thaw();
+			//do not leave the tab made for these subtitles empty behind
+			if (!nonewtab)
+				Tabs->RemoveUnusedPage(Tabs->FindPanel(tab, false), previousTab);
 			return false;
 		}
-		//remove comparison after every subs load or delete 
-		else if (nonewtab && tab->grid->Comparison){
-			SubsGrid::RemoveComparison();
-		}
+		if (subsLoaded){
+			//remove comparison after every subs load or delete 
+			if (nonewtab && tab->grid->Comparison){
+				SubsGrid::RemoveComparison();
+			}
 
-		SetRecent();
-		//set texts on window title and tab
-		Label();
-		SetSubsResolution(!Options.GetBool(DONT_ASK_FOR_BAD_RESOLUTION));
-		//turn on editor
-		if (!tab->editor && !fulls && !tab->video->IsFullScreen()){ HideEditor(); }
+			SetRecent();
+			//set texts on window title and tab
+			Label();
+			SetSubsResolution(!Options.GetBool(DONT_ASK_FOR_BAD_RESOLUTION));
+			//turn on editor
+			if (!tab->editor && !fulls && !tab->video->IsFullScreen()){ HideEditor(); }
+		}
 	}
 
 	//pass empty string for path to check if paths of subs are valid
@@ -1819,6 +1901,18 @@ void HikariSubFrame::InsertTab(bool refresh/*=true*/)
 	Tabs->AddPage(refresh);
 }
 
+bool HikariSubFrame::OpenFileInNewTab(const wxString &filename)
+{
+	int previousTab = Tabs->GetSelection();
+	InsertTab();
+	TabPanel *tab = GetTab();
+	bool opened = OpenFile(filename);
+	//RemoveUnusedPage keeps the tab when part of the file was opened in it
+	if (!opened)
+		Tabs->RemoveUnusedPage(Tabs->FindPanel(tab, false), previousTab);
+	return opened;
+}
+
 bool comp(wxString first, wxString second)
 {
 	const std::collate<wchar_t>& f = std::use_facet<std::collate<wchar_t>>(HikariSubFrame::GetLocale());
@@ -1869,47 +1963,50 @@ void HikariSubFrame::OpenFiles(wxArrayString &files, bool intab, bool nofreeze, 
 	for (size_t i = 0; i < maxx; i++)
 	{
 
+		int previousTab = Tabs->GetSelection();
+		bool newTab = false;
+		//a tab with unsaved changes is in use even without a path
 		if ((i >= Tabs->Size() || Tabs->Page(Tabs->iter)->SubsPath != emptyString ||
-			Tabs->Page(Tabs->iter)->VideoPath != emptyString) && !intab){
+			Tabs->Page(Tabs->iter)->VideoPath != emptyString ||
+			Tabs->Page(Tabs->iter)->grid->file->IsModified()) && !intab){
 			InsertTab(false);
+			newTab = true;
 		}
 		TabPanel *tab = GetTab();
 		tab->video->RemoveVisual();
+		bool opened = true;
 		if (i >= videosSize){
-			if (!OpenFile(subs[i], false, false))
-				break;
-
-			continue;
+			opened = OpenFile(subs[i], false, false);
 		}
 		else if (i >= subsSize){
-			if (!OpenFile(videos[i], false, false))
-				break;
-
-			continue;
+			opened = OpenFile(videos[i], false, false);
 		}
-		if (i < subsSize){
-			if (!Tabs->LoadSubtitles(tab, subs[i])){
-				break;
+		else{
+			opened = !SavePrompt(2) && Tabs->LoadSubtitles(tab, subs[i]);
+			if (opened){
+				if (!tab->editor){ HideEditor(); }
+				SetRecent();
+				Label();
+				SetSubsResolution(askForRes);
+				opened = Tabs->LoadVideo(tab, videos[i], -1, false, true) != 0;
 			}
-			
-			if (!tab->editor){ HideEditor(); }
-			SetRecent();
-			Label();
-			SetSubsResolution(askForRes);
+			if (opened)
+				tab->shiftTimes->Contents();
 		}
-		if (i < videosSize){
-			if (!Tabs->LoadVideo(tab, videos[i], -1, false, true)){
-				break;
-			}
+		if (!opened){
+			//do not leave the tab made for this file empty behind
+			if (newTab)
+				Tabs->RemoveUnusedPage(Tabs->FindPanel(tab, false), previousTab);
+			break;
 		}
-		tab->shiftTimes->Contents();
-
 	}
 
 	Thaw();
 	//this order fixes bug of disappearing tabs bar
 	Tabs->RefreshBar();
 	GetTab()->Show();
+	//a video paused for a tab that was removed again plays once shown
+	Tabs->ResumePausedTab();
 	UpdateToolbar();
 	Tabs->GetTab()->video->DeleteAudioCache();
 	Options.SaveOptions(true, false);
@@ -1995,7 +2092,9 @@ void HikariSubFrame::OnPageChanged(wxCommandEvent& event)
 			cur->shiftTimes->RefVals(Tabs->Page(Tabs->GetOldSelection())->shiftTimes);
 		}
 
-		if (Options.GetBool(AUTO_SELECT_LINES_FROM_LAST_TAB)){
+		//there is no other tab to take lines from when a removed tab gives
+		//the active one back or the last tab is closed
+		if (Tabs->iter != Tabs->GetOldSelection() && Options.GetBool(AUTO_SELECT_LINES_FROM_LAST_TAB)){
 			SubsGrid *old = Tabs->Page(Tabs->GetOldSelection())->grid;
 			if (old->file->FirstSelection() > -1){
 				cur->grid->SelVideoLine(old->file->GetDialogue(old->file->FirstSelection())->Start.mstime);
@@ -2107,8 +2206,9 @@ void HikariSubFrame::SaveAll()
 	for (size_t i = 0; i < Tabs->Size(); i++)
 	{
 		if (!Tabs->Page(i)->grid->file->IsModified()){ continue; }
-		Save(false, i, false);
-		Label(0, false, i);
+		//a tab that was not saved keeps its count of unsaved changes
+		if (Save(false, i, false))
+			Label(0, false, i);
 	}
 }
 
@@ -2135,9 +2235,8 @@ bool HikariSubFrame::SavePrompt(char mode, int wtab)
 			_("removing subtitles")),
 			_("Confirmation"), wxYES_NO | wxCANCEL, atab->video->GetMessageWindowParent());
 		if (answer == wxCANCEL){ return true; }
-		if (answer == wxYES){
-			Save(false, wtab);
-		}
+		//a cancelled Save As or a failed write cancels too
+		if (answer == wxYES && !Save(false, wtab)){ return true; }
 	}
 	return false;
 }
@@ -2561,10 +2660,10 @@ void HikariSubFrame::OnAudioSnap(wxCommandEvent& event)
 		}
 		else {
 			shadeFrom = 0;
-			shadeTo = tab->grid->file->GetCount();
+			shadeTo = tab->grid->file->GetCount() - 1;
 		}
 
-		for (int j = shadeFrom; j < shadeTo; j++) {
+		for (int j = shadeFrom; j <= shadeTo; j++) {
 			shade = tab->grid->file->GetDialogue(j);
 			if (!shade->isVisible || j == tab->grid->currentLine) continue;
 
@@ -2572,13 +2671,14 @@ void HikariSubFrame::OnAudioSnap(wxCommandEvent& event)
 			int end = shade->End.mstime;
 			int startDiff = abs(time - start);
 			int endDiff = abs(time - end);
-			if (startDiff < lastDifferents && startDiff>0){
-				if ((snapStartTime && start >= time2) || (!snapStartTime && start <= time2)){ continue; }
+			//a boundary on the wrong side of the other time only rules out itself
+			if (startDiff < lastDifferents && startDiff>0 &&
+				!((snapStartTime && start >= time2) || (!snapStartTime && start <= time2))){
 				snaptime = start;
 				lastDifferents = startDiff;
 			}
-			if (endDiff < lastDifferents && endDiff>0){
-				if ((snapStartTime && end >= time2) || (!snapStartTime && end <= time2)){ continue; }
+			if (endDiff < lastDifferents && endDiff>0 &&
+				!((snapStartTime && end >= time2) || (!snapStartTime && end <= time2))){
 				snaptime = end;
 				lastDifferents = endDiff;
 			}

@@ -299,8 +299,8 @@ void RotationZ::ChangeVisual(wxString *txt, Dialogue *dial, size_t numOfSelectio
 		return;
 
 	if (isOrg){
-		ChangeOrg(txt, dial, (((org.x - lastOrg.x) / zoomScale.x) + zoomMove.x) * coeffW,
-			(((org.y - lastOrg.y) / zoomScale.y) + zoomMove.y) * coeffH);
+		ChangeOrg(txt, dial, ((org.x - lastOrg.x) / zoomScale.x) * coeffW,
+			((org.y - lastOrg.y) / zoomScale.y) * coeffH);
 		return;
 	}
 
@@ -425,16 +425,19 @@ void RotationZ::ChangeTool(int _tool, bool blockSetCurVisual) {
 	changeAllTags = (_tool & 2) != 0;
 	replaceTagsInCursorPosition = !changeAllTags;
 	preserveProportions = (_tool & 4) != 0;
+	bool twoPointsChanged = twoPointsTool != hasTwoPoints;
+	if (twoPointsChanged) {
+		hasTwoPoints = twoPointsTool;
+		visibility[0] = false;
+		visibility[1] = false;
+	}
 	if (oldChangeAllTags != changeAllTags) {
 		if (!blockSetCurVisual) {
 			SetCurVisual();
 			tab->video->Render(false);
 		}
 	}
-	else if (twoPointsTool != hasTwoPoints) {
-		hasTwoPoints = twoPointsTool;
-		visibility[0] = false;
-		visibility[1] = false;
+	else if (twoPointsChanged) {
 		if (!blockSetCurVisual)
 			tab->video->Render(false);
 	}
@@ -467,7 +470,8 @@ void RotationZ::ChangeClipRotationZ(wxString* txt, const D3DXVECTOR2& orgPivot, 
 			float xy[4] = { 0,0,0,0 };
 			int counter = 0;
 			bool isBad = false;
-			while (tokenzr.HasMoreTokens()) {
+			//a rectangle has four values, the rest would write past xy
+			while (tokenzr.HasMoreTokens() && counter < 4) {
 				wxString token = tokenzr.GetNextToken();
 				if (token.ToDouble(&value)) {
 					xy[counter] = value;
@@ -477,7 +481,6 @@ void RotationZ::ChangeClipRotationZ(wxString* txt, const D3DXVECTOR2& orgPivot, 
 					isBad = true;
 			}
 			if (!isBad) {
-				xy[3] += 2;
 				points.push_back(ClipPoint(xy[0], xy[1], "m", true));
 				points.push_back(ClipPoint(xy[2], xy[1], "l", true));
 				points.push_back(ClipPoint(xy[2], xy[3], "l", true));
@@ -504,7 +507,9 @@ void RotationZ::ChangeClipRotationZ(wxString* txt, const D3DXVECTOR2& orgPivot, 
 			wxString lasttype;
 			int countB = 0;
 			bool spline = false;
+			//vector clip points are in 1 / 2^(scale - 1) pixels
 			int vscale = pow(2, (vectorScale - 1));
+			D3DXVECTOR2 pivot(orgPivot.x * vscale, orgPivot.y * vscale);
 			if (vectorScale > 1) {
 				newclip << vectorScale << L",";
 			}
@@ -512,7 +517,7 @@ void RotationZ::ChangeClipRotationZ(wxString* txt, const D3DXVECTOR2& orgPivot, 
 			{
 				ClipPoint pos = points[i];
 				D3DXVECTOR2 posxy = D3DXVECTOR2(pos.x, pos.y);
-				RotateZ(&posxy, sinus, cosinus, orgPivot);
+				RotateZ(&posxy, sinus, cosinus, pivot);
 				float x = posxy.x + 0.5, 
 					  y = posxy.y + 0.5;
 

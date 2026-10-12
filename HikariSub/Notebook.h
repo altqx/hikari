@@ -44,13 +44,30 @@ public:
 	size_t Size();
 	TabPanel *Page(size_t i);
 	void DeletePage(int page);
+	//removes a page added for a file that then could not be opened, and makes
+	//pageToSelect active again when the removed page was the active one;
+	//a page that holds subtitles, video, audio or changes is kept; the page
+	//shown again gets the reload check of a tab change and, when AddPage
+	//paused its video for the removed page, plays again once it is shown as
+	//the active tab, also when a batch of files hid it until the batch ends
+	void RemoveUnusedPage(int page, int pageToSelect);
+	//the video of tab was played, paused, stopped or loaded, so a removed
+	//page must not play it again
+	void ForgetPausedTab(TabPanel *tab);
+	//plays the video AddPage paused once its tab is shown as the active tab
+	//again; a batch of files that hides the active tab calls it when it
+	//shows the tab at its end, and another active tab leaves it paused
+	void ResumePausedTab();
 	void Split(size_t page);
 	int FindTab(int x, int *num);
 	int FindPanel(TabPanel* pan, bool safe = true);
 	int GetHeight();
 	void ChangeActive();
 	void RefreshBar(bool checkSizes = false);
-	bool LoadSubtitles(TabPanel *tab, const wxString & path, int active = -1, int scroll = -1);
+	//a file that cannot be read is reported with a message, or added to
+	//unreadable when it is given
+	bool LoadSubtitles(TabPanel *tab, const wxString & path, int active = -1, int scroll = -1,
+		wxArrayString *unreadable = nullptr);
 	int LoadVideo(TabPanel *tab, const wxString & path, int position = -1, 
 		bool isFFMS2 = true, bool hasEditor = true, bool fullscreen = false, bool loadPrompt = false, bool dontLoadAudio = false);
 	bool SetFont(const wxFont &font);
@@ -123,6 +140,10 @@ private:
 	HHOOK Hook;
 	HikariSubFrame *Hikari;
 	wxMutex closeTabMutex;
+	//the tab whose playing video the last AddPage paused, so that
+	//RemoveUnusedPage can play it again; cleared by a tab change, a tab
+	//close, a session load and any play, pause or load of that video
+	TabPanel *pausedByAddPage = nullptr;
 
 	static LRESULT __stdcall PauseOnMinimalize(int code, WPARAM wParam, LPARAM lParam);
 

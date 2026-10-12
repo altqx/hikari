@@ -2416,6 +2416,9 @@ void TextEditor::ContextMenu(wxPoint mpos, int error)
 			if (item){
 				SpellCheckerOnOff = item->IsChecked();
 				Options.SetBool(SPELLCHECKER_ON, SpellCheckerOnOff);
+				//a checker made while spelling was off has no dictionary loaded
+				if (SpellCheckerOnOff)
+					SpellChecker::Destroy();
 				EB->ClearErrs(true, SpellCheckerOnOff);
 			}
 		}

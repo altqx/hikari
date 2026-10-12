@@ -416,8 +416,9 @@ void SubsGrid::OnPaint(wxPaintEvent& event)
 				if (showOriginal){ strings.push_back(txttl); }
 
 				isSelected = file->IsSelected(key);
-				comparison = (Comparison && Comparison->at(key).size() > 0);
-				bool comparisonMatch = (Comparison && !Comparison->at(key).differences);
+				bool hasComparisonData = (Comparison && (size_t)key < Comparison->size());
+				comparison = (hasComparisonData && Comparison->at(key).size() > 0);
+				bool comparisonMatch = (hasComparisonData && !Comparison->at(key).differences);
 				bool visibleLine = (Dial->Start.mstime <= VideoPos && Dial->End.mstime > VideoPos);
 				kol = (comparison) ? ComparisonBG :
 					(comparisonMatch) ? ComparisonBGMatch :
@@ -809,8 +810,9 @@ void SubsGrid::PaintD2D(GraphicsContext *gc, int firstNumber, int w, int h, int 
 			if (showOriginal){ strings.push_back(txttl); }
 
 			isSelected = file->IsSelected(key);
-			comparison = (Comparison && Comparison->at(key).size() > 0);
-			bool comparisonMatch = (Comparison && !Comparison->at(key).differences);
+			bool hasComparisonData = (Comparison && (size_t)key < Comparison->size());
+			comparison = (hasComparisonData && Comparison->at(key).size() > 0);
+			bool comparisonMatch = (hasComparisonData && !Comparison->at(key).differences);
 			bool visibleLine = (Dial->Start.mstime <= VideoPos && Dial->End.mstime > VideoPos);
 			col = (comparison) ? ComparisonBG :
 				(comparisonMatch) ? ComparisonBGMatch :
@@ -1486,6 +1488,7 @@ void SubsGrid::OnMouseEvent(wxMouseEvent &event) {
 					else
 						edit->SetLine(firstSel);
 				}
+				SetModified(FILTERING_CHANGE, false, false, -1, false);
 			}
 			else if (right){
 				ContextMenuTree(event.GetPosition(), row);
@@ -1538,11 +1541,12 @@ void SubsGrid::OnMouseEvent(wxMouseEvent &event) {
 
 	if (left_up && holding) {
 		holding = false;
-		//Save swap lines after alt release 
-		if (event.AltDown() && file->HasChangesToRecord()){ 
+		ReleaseMouse();
+		//Save swap lines after the drag, even when alt was released first,
+		//so a drag that breaks a tree is undone instead of kept unrecorded
+		if (file->HasChangesToRecord()){ 
 			SetModified(GRID_SWAP); 
 		}
-		ReleaseMouse();
 		if (oldX != -1){ return; }
 	}
 
@@ -1878,12 +1882,14 @@ void SubsGrid::OnKeyPress(wxKeyEvent &event) {
 
 		// Move selected
 		else if (alt && !shift) {
-			if (file->FirstSelection() != -1){
-				SaveSelections();
-				if (MoveRows(dir)){
-					SetModified(GRID_SWAP);
+			RunKeepingTrees([this, dir]{
+				if (file->FirstSelection() != -1){
+					SaveSelections();
+					if (MoveRows(dir)){
+						SetModified(GRID_SWAP);
+					}
 				}
-			}
+			});
 			return;
 		}
 
@@ -1986,13 +1992,16 @@ void SubsGrid::SelVideoLine(int curtime)
 	int time = (curtime < 0) ? tab->video->Tell() : curtime;
 	int prevtime = 0;
 	int durtime = (curtime < 0) ? tab->video->GetDuration() : 36000000;
-	int idr = 0, ip = 0;
+	// fallbacks start at the first shown line, not at a hidden row 0
+	int idr = -1, ip = -1, firstShown = -1;
 
 	for (size_t i = 0; i < file->GetCount(); i++)
 	{
 		Dialogue *dial = file->GetDialogue(i);
 		if (!dial->isVisible)
 			continue;
+
+		if (firstShown < 0){ firstShown = i; }
 
 		if (!dial->IsComment && (dial->Text != emptyString || dial->TextTl != emptyString)){
 			if (time >= dial->Start.mstime && time <= dial->End.mstime)
@@ -2008,6 +2017,10 @@ void SubsGrid::SelVideoLine(int curtime)
 		}
 		
 	}
+	// no line is shown
+	if (firstShown < 0){ return; }
+	if (idr < 0){ idr = firstShown; }
+	if (ip < 0){ ip = firstShown; }
 	
 	if ((time - prevtime) > (durtime - time)){
 		edit->SetLine(idr);

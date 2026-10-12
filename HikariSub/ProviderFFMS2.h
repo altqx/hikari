@@ -68,6 +68,8 @@ public:
 	FILE* m_fp = nullptr;
 	// the disk cache was written to the end, so it can be kept under its final name
 	std::atomic<bool> m_diskCacheComplete{ false };
+	// m_diskCacheFilename is registered as open, so the cache trim skips it
+	bool m_diskCacheInUse = false;
 	std::vector<chapter> m_chapters;
 	std::thread* m_audioLoadThread = nullptr;
 private:

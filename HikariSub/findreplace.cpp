@@ -29,6 +29,64 @@
 #include "UtilsWindows.h"
 #include "Notebook.h"
 #include "EditBox.h"
+#include <set>
+#ifndef _WIN32
+#include <sys/stat.h>
+#include <stdlib.h>
+#endif
+
+namespace {
+//wxDir follows symbolic links and junctions, so a folder linking back up
+//the tree is walked again and again until the paths get too long
+bool IsLinkPath(const wxString &path)
+{
+#ifdef _WIN32
+	DWORD attributes = GetFileAttributesW(path.wc_str());
+	return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT);
+#else
+	struct stat st;
+	return lstat(path.fn_str(), &st) == 0 && S_ISLNK(st.st_mode);
+#endif
+}
+
+wxString RealPath(const wxString &path)
+{
+#ifndef _WIN32
+	char *resolved = realpath(path.fn_str(), nullptr);
+	if (resolved){
+		wxString result(resolved, *wxConvFileName);
+		free(resolved);
+		return result;
+	}
+#endif
+	return path;
+}
+
+//collects every file once, by its real path, and skips links and already
+//visited folders; a linked file would be replaced through another path
+class SubsFilesTraverser : public wxDirTraverser
+{
+public:
+	SubsFilesTraverser(wxArrayString *_paths, std::set<wxString> *_foundFiles)
+		: paths(_paths), foundFiles(_foundFiles){}
+	wxDirTraverseResult OnFile(const wxString &filename) override
+	{
+		if (!IsLinkPath(filename) && foundFiles->insert(RealPath(filename)).second)
+			paths->Add(filename);
+		return wxDIR_CONTINUE;
+	}
+	wxDirTraverseResult OnDir(const wxString &dirname) override
+	{
+		if (IsLinkPath(dirname) || !visitedDirs.insert(RealPath(dirname)).second)
+			return wxDIR_IGNORE;
+		return wxDIR_CONTINUE;
+	}
+private:
+	wxArrayString *paths;
+	std::set<wxString> *foundFiles;
+	std::set<wxString> visitedDirs;
+};
+}
 
 FindReplace::FindReplace(HikariSubFrame* kfparent, FindReplaceDialog *_FRD)
 	:FRD(_FRD)
@@ -67,6 +125,14 @@ FindReplace::FindReplace(HikariSubFrame* kfparent, FindReplaceDialog *_FRD)
 	CopyPath = Options.pathfull + L"/ReplaceBackup/";
 }
 
+FindReplace::~FindReplace()
+{
+	// the results window is parented to the main frame, so it would
+	// otherwise outlive this tool and keep a pointer to it
+	if (FRRD)
+		FRRD->Destroy();
+}
+
 void FindReplace::ShowResult(TabPanel *tab, const wxString &path, int keyLine, const wxPoint &pos, const wxString & text)
 {
 	if (tab){
@@ -97,11 +163,14 @@ void FindReplace::ShowResult(TabPanel *tab, const wxString &path, int keyLine, c
 		}
 		if (!foundSubs){
 			if (!Hikari->GetTab()->SubsPath.empty())
-				Hikari->InsertTab();
-
-			Hikari->OpenFile(path);
+				Hikari->OpenFileInNewTab(path);
+			else
+				Hikari->OpenFile(path);
 		}
 		TabPanel *ntab = Hikari->GetTab();
+		//the subtitles could not be opened, and a tab made for them is gone
+		if (ntab->SubsPath != path)
+			return;
 		if (keyLine < ntab->grid->file->GetCount()){
 			ntab->edit->SetLine(keyLine);
 			ntab->grid->SelectRow(keyLine);
@@ -137,9 +206,12 @@ void FindReplace::ReplaceChecked()
 		wxString path;
 		wxString oldPath;
 		wxString copyPath = Options.pathfull + L"/ReplaceBackup/";
-		DWORD ftyp = GetFileAttributesW(copyPath.wc_str());
-		if (ftyp == INVALID_FILE_ATTRIBUTES){
-			wxMkDir(copyPath, 0777);
+		//the backups are copies of the user's subtitles: for the user only, and
+		//not made in a folder another user could read or swap files in
+		if (!MakePrivateFolder(copyPath)) {
+			HikariLogSilent(wxString::Format(L"The replace backup folder is not private, no backups are made: %s",
+				copyPath));
+			copyPath.clear();
 		}
 		int numChanges = 0;
 		std::vector<SeekResults*> results;
@@ -171,7 +243,9 @@ void FindReplace::ReplaceChecked()
 		TabPanel *oldtab = nullptr;
 		TabPanel *tab = nullptr;
 		int oldKeyLine = -1;
-		int numOfChanges = 0;
+		//replacements of every tab, each tab records its own step after the loop
+		std::vector<std::pair<TabPanel *, int>> tabChanges;
+		int lastEnd = 0;
 		bool skipLine = false;
 		bool lastIsTextTl = false;
 		size_t size = List->GetCount();
@@ -193,12 +267,14 @@ void FindReplace::ReplaceChecked()
 			if (SeekResult->keyLine >= tab->grid->file->GetCount())
 				continue;
 
-			Dialogue *Dialc = tab->grid->file->CopyDialogueF(SeekResult->keyLine, true, false);
-
-			wxString & lineText = Dialc->Text.CheckTlRef(Dialc->TextTl, SeekResult->isTextTL);
+			//the line is copied only when it is changed,
+			//an unchanged copy would end up in a later step
+			Dialogue *Dial = tab->grid->file->GetDialogue(SeekResult->keyLine);
+			wxString lineText = Dial->Text.CheckTl(Dial->TextTl, SeekResult->isTextTL);
 			//skip lines with different texts
 			if (oldKeyLine != SeekResult->keyLine || SeekResult->isTextTL != lastIsTextTl){
 				replacementDiff = 0;
+				lastEnd = 0;
 				if (lineText != SeekResult->name){
 					HikariLog(wxString::Format(_("Line %i cannot be replaced,\ncause it was edited."),
 						SeekResult->idLine));
@@ -210,11 +286,17 @@ void FindReplace::ReplaceChecked()
 			if (skipLine)
 				continue;
 
-			numOfChanges += ReplaceCheckedLine(&lineText, SeekResult->findPosition, &replacementDiff);
-
-			if (tab != oldtab && oldtab && numOfChanges){
-				oldtab->grid->SetModified(REPLACE_ALL);
-				numOfChanges = 0;
+			int reps = ReplaceCheckedLine(&lineText, SeekResult->findPosition, &replacementDiff, &lastEnd);
+			if (reps > 0){
+				Dialogue *Dialc = tab->grid->file->CopyDialogueF(SeekResult->keyLine, true, false);
+				Dialc->Text.CheckTlRef(Dialc->TextTl, SeekResult->isTextTL) = lineText;
+				size_t t = 0;
+				while (t < tabChanges.size() && tabChanges[t].first != tab)
+					t++;
+				if (t < tabChanges.size())
+					tabChanges[t].second += reps;
+				else
+					tabChanges.push_back(std::make_pair(tab, reps));
 			}
 
 
@@ -223,19 +305,28 @@ void FindReplace::ReplaceChecked()
 			lastIsTextTl = SeekResult->isTextTL;
 		}
 
-		if (tab && numOfChanges){
-			tab->grid->SetModified(REPLACE_ALL);
+		for (auto &tabChange : tabChanges){
+			tabChange.first->grid->SetModified(REPLACE_ALL);
 		}
 	}
 
 }
 
-int FindReplace::ReplaceCheckedLine(wxString *line, const wxPoint &pos, int *replacementDiff)
+int FindReplace::ReplaceCheckedLine(wxString *line, const wxPoint &pos, int *replacementDiff, int *lastEnd)
 {
+	int start = pos.x - (*replacementDiff);
+	//skip a result that overlaps the previous replacement or no longer fits the line,
+	//wxString::replace throws std::out_of_range past its end
+	if (pos.x < *lastEnd || start < 0 || pos.y < 0 || (size_t)(start + pos.y) > line->length())
+		return 0;
+
+	*lastEnd = pos.x + pos.y;
 	int reps = 1;
 	if (regEx){
 		wxString foundString = line->Mid(pos.x - (*replacementDiff), pos.y);
-		reps = findReplaceRegEx.Replace(&foundString, replaceString);
+		//foundString is the match itself; without a limit wxRegEx::Replace
+		//never gets past an empty match (x*) and hangs
+		reps = findReplaceRegEx.Replace(&foundString, replaceString, 1);
 		if (reps > 0){
 			line->replace(pos.x - (*replacementDiff), pos.y, foundString);
 			*replacementDiff += pos.y - foundString.length();
@@ -276,9 +367,10 @@ seekFromStart:
 
 	bool foundsome = false;
 	if (fromstart){
-		linePosition = tab->grid->file->FirstSelection();
-		//is it possible to get it -1 if id exists, key also should exist
-		linePosition = (!allLines && linePosition != -1) ? linePosition : 0;
+		//FirstSelection gives -1 when only hidden lines are selected,
+		//the search starts at the first selected key anyway and skips hidden lines
+		const std::set<int> &selections = tab->grid->file->GetSelectionsAsKeys();
+		linePosition = (!allLines && !selections.empty()) ? *selections.begin() : 0;
 		textPosition = 0;
 	}
 	if (window && CheckStyles(window, tab))
@@ -332,7 +424,8 @@ seekFromStart:
 						textPosition = 0;
 					}
 				}
-				else{
+				//Beginning of text matches only at the start
+				else if (!startLine){
 					foundPosition = ltext.find(lfind, textPosition);
 				}
 				foundLength = lfind.length();
@@ -342,6 +435,7 @@ seekFromStart:
 				textPosition = foundPosition + foundLength;
 				findstart = foundPosition;
 				findend = textPosition;
+				foundText = txt.Mid(findstart, foundLength);
 				lastActive = reprow = linePosition;
 				if (!selectedLines){ tab->grid->SelectRow(linePosition, false, true); }
 				tab->edit->SetLine(linePosition);
@@ -389,6 +483,8 @@ seekFromStart:
 		}
 	}
 	if (!foundsome){
+		//nothing is found, Replace must not use the previous match
+		findstart = findend = -1;
 		blockTextChange = true;
 		linePosition = 0;
 		fromstart = true;
@@ -444,9 +540,12 @@ unsigned long FindReplace::FindAllInTab(void *data)
 		wxString subsPath = tab->SubsName;
 		bool isfirst = true;
 
-		size_t firstSelectedId = 0;
-		int tabLinePosition = tab->grid->file->FirstSelection(&firstSelectedId);
-		tabLinePosition = (!window->AllLines->GetValue() && tabLinePosition != -1) ? tabLinePosition : 0;
+		//FirstSelection gives -1 when only hidden lines are selected,
+		//the search starts at the first selected key anyway and skips hidden lines
+		const std::set<int> &selections = tab->grid->file->GetSelectionsAsKeys();
+		int tabLinePosition = (!window->AllLines->GetValue() && !selections.empty()) ? *selections.begin() : 0;
+		//visible lines before the start key, the id of the first visible line from it
+		size_t firstSelectedId = tab->grid->file->GetElementByKey(tabLinePosition);
 		if (tabLinePosition > 0 && firstSelectedId != -1)
 			positionId = firstSelectedId;
 
@@ -576,12 +675,13 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 	OpenWrite ow;
 	bool plainText = false;
 	wxString subsPath;
-	int SubsAllReplacements = 0;
 
 	for (size_t i = 0; i < paths->size(); i++){
 		
 		wxString subsText;
 		subsPath = (*paths)[i];
+		//replacements of this file only, a file without any is not rewritten
+		int SubsAllReplacements = 0;
 
 		//we must not remove files from table
 		//every thread need to get about the same number of files +-1
@@ -593,7 +693,12 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 		//else if (ext != L"ass"/* && ext == "ssa"*/ && ext != L"srt" && ext != L"mpl2" && ext != L"sub" && ext != L"txt")
 		//	continue;
 
-		ow.FileOpen(subsPath, &subsText);
+		//an unreadable or empty file has nothing to find or replace
+		if (!ow.FileOpen(subsPath, &subsText))
+			continue;
+		//on Linux the CRs of CRLF files are still there, the text is written
+		//back with CRLF line ends
+		subsText.Replace(L"\r\n", L"\n");
 
 		wxString replacedText;
 		int tabLinePosition = 0; int positionId = 0;
@@ -627,7 +732,9 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 			}
 		}
 
-		wxStringTokenizer tokenizer(subsText, L"\n", wxTOKEN_STRTOK);
+		//SRT cues are put together from their lines; in other files blank
+		//lines are kept and written back
+		wxStringTokenizer tokenizer(subsText, L"\n", (isSRT) ? wxTOKEN_STRTOK : wxTOKEN_RET_EMPTY);
 		wxString token;
 		wxString dialtxt;
 		Dialogue *dial = nullptr;
@@ -661,7 +768,15 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 			}
 			else{
 				token = tokenizer.GetNextToken();
-				token.Trim();
+				//remove only the line end, an unchanged line is written back as it is
+				if (token.EndsWith(L"\r"))
+					token.RemoveLast();
+				//blank lines are not Lines, the loader skips them too
+				if (wxString(token).Trim(false).empty()){
+					if (!fr->find)
+						replacedText << token << L"\r\n";
+					continue;
+				}
 				if (!plainText)
 					dial = new Dialogue(token);
 			}
@@ -679,6 +794,10 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 					positionId++;
 				}
 				if (notTlStyle) {
+					//a skipped Comment is written back as it is
+					if (!fr->find)
+						replacedText << token << L"\r\n";
+					token.clear();
 					delete dial;
 					continue;
 				}
@@ -722,9 +841,11 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 			token.clear();
 		}//while
 		if (SubsAllReplacements){
-			wxCopyFile(subsPath, HikariPathJoin(fr->CopyPath, HikariPathName(subsPath)));
-			ow.FileWrite(subsPath, replacedText);
-			fr->AllReplacements.fetch_add(SubsAllReplacements);
+			if (!fr->CopyPath.empty())
+				CopyToPrivateFile(subsPath, HikariPathJoin(fr->CopyPath, HikariPathName(subsPath)));
+			//count only the replacements that reached the file
+			if (ow.FileWrite(subsPath, replacedText))
+				fr->AllReplacements.fetch_add(SubsAllReplacements);
 		}
 	}
 	delete actualData;
@@ -762,10 +883,14 @@ void FindReplace::FindReplaceInSubs(TabWindow *window)
 	if (!paths.size())
 		return;
 
+	//the backups are copies of the user's subtitles: for the user only, and
+	//not made in a folder another user could read or swap files in
 	if (!find){
-		DWORD ftyp = GetFileAttributesW(CopyPath.wc_str());
-		if (ftyp == INVALID_FILE_ATTRIBUTES){
-			wxMkDir(CopyPath, 0777);
+		CopyPath = Options.pathfull + L"/ReplaceBackup/";
+		if (!MakePrivateFolder(CopyPath)) {
+			HikariLogSilent(wxString::Format(L"The replace backup folder is not private, no backups are made: %s",
+				CopyPath));
+			CopyPath.clear();
 		}
 	}
 	//bool plainText = false;//(window->CollumnTextOriginal->GetValue());
@@ -864,7 +989,8 @@ void FindReplace::FindInSubsLine(wxString *onlyString, Dialogue *dial, TabPanel 
 					tabTextPosition = 0;
 				}
 			}
-			else{
+			//Beginning of text matches only at the start
+			else if (!startLine){
 				foundPosition = ltext.find(lfind, tabTextPosition);
 			}
 			foundLength = lfind.length();
@@ -900,12 +1026,15 @@ void FindReplace::FindInSubsLine(wxString *onlyString, Dialogue *dial, TabPanel 
 				}
 			}
 
-			if ((size_t)tabTextPosition >= onlyString->length() || startLine){
+			//Beginning and End of text have one result per line,
+			//the End of text branch restarts from 0 on every pass
+			if ((size_t)tabTextPosition >= onlyString->length() || startLine || endLine){
 				tabTextPosition = 0;
 				break;
 			}
 			else
-				tabTextPosition = foundPosition + 1;
+				//skip the whole match, results must not overlap
+				tabTextPosition = foundPosition + ((foundLength) ? foundLength : 1);
 
 		}
 		else{
@@ -925,7 +1054,8 @@ int FindReplace::ReplaceInSubsLine(wxString *onlyString)
 		}
 		else{ return 0; }
 	}
-	else if (startLine || endLine){
+	//with regex the pattern already has ^ or $, it is matched below
+	else if (!regEx && (startLine || endLine)){
 
 		wxString ltext = (!matchCase) ? onlyString->Lower() : *onlyString;
 		wxString lfind = (!matchCase) ? findString.Lower() : findString;
@@ -962,7 +1092,9 @@ int FindReplace::ReplaceInSubsLine(wxString *onlyString)
 	// should be faster than generate text blocks and replace it within
 	while (1){
 		if (regEx){
-			if (!findReplaceRegEx.Matches(ltext.Mid(newpos)) || !findReplaceRegEx.GetMatch(&textPos, &flen))
+			//^ must match only at the start of the line, not of the rest of it
+			if (!findReplaceRegEx.Matches(ltext.Mid(newpos), (newpos) ? wxRE_NOTBOL : 0) ||
+				!findReplaceRegEx.GetMatch(&textPos, &flen))
 				break;
 
 			textPos += newpos;
@@ -971,7 +1103,11 @@ int FindReplace::ReplaceInSubsLine(wxString *onlyString)
 			textPos = ltext.find(lfind, newpos);
 
 		
-		newpos = textPos + lfind.length();
+		//go on after the match, lfind is the pattern with regex;
+		//after an empty match go on one character further
+		newpos = textPos + ((regEx) ? flen : lfind.length());
+		if (regEx && !flen)
+			newpos++;
 		//diff for replacing and checking function
 		if (textPos == -1 || (textPos + repsDiff) >= onlyString->length()){ break; }
 		textPos += repsDiff;
@@ -980,7 +1116,9 @@ int FindReplace::ReplaceInSubsLine(wxString *onlyString)
 			
 			if (regEx){
 				wxString match = onlyString->Mid(textPos, flen);
-				findReplaceRegEx.Replace(&match, replaceString);
+				//match is the match itself; without a limit wxRegEx::Replace
+				//never gets past an empty match (x*) and hangs
+				findReplaceRegEx.Replace(&match, replaceString, 1);
 				onlyString->replace(textPos, flen, match);
 				repsDiff += match.length() - flen;
 			}
@@ -1010,21 +1148,40 @@ void FindReplace::Replace(TabWindow *window)
 	else if (window->CollumnEffect->GetValue()){ wrep = EFFECT; }
 
 	wxString find1 = window->FindText->GetValue();
-	if (find1 != oldfind || findstart == -1 || findend == -1){ 
+	//the match may have been replaced or edited since it was found
+	bool matchChanged = true;
+	if (findstart != -1 && findend != -1){
+		Dialogue *foundDial = tab->grid->file->GetDialogue(reprow);
+		if (foundDial){
+			wxString foundLine;
+			foundDial->GetTextElement(wrep, &foundLine, tab->grid->hasTLMode);
+			matchChanged = findstart > findend || (size_t)findend > foundLine.length() ||
+				foundLine.Mid(findstart, findend - findstart) != foundText;
+		}
+	}
+	if (find1 != oldfind || matchChanged){ 
 		fromstart = true; 
 		fnext = false; 
 		oldfind = find1; 
 		Find(window); 
 	}
 	if (findstart == -1 || findend == -1){ return; }
+	SubsGrid *grid = tab->grid;
+	wxString replacedText;
+	Dialogue *Dial = grid->file->GetDialogue(reprow);
+	if (Dial)
+		Dial->GetTextElement(wrep, &replacedText, tab->grid->hasTLMode);
+	//the line may have been shortened since the match was found,
+	//wxString::replace throws std::out_of_range past its end
+	if (!Dial || findstart > findend || (size_t)findend > replacedText.length()){
+		findstart = findend = -1;
+		return;
+	}
 	fnext = true;
 	wxString rep = window->ReplaceText->GetValue();
-	SubsGrid *grid = tab->grid;
 
 	Dialogue *Dialc = grid->CopyDialogue(reprow);
 	bool hasRegEx = window->RegEx->GetValue();
-	wxString replacedText;
-	Dialc->GetTextElement(wrep, &replacedText, tab->grid->hasTLMode);
 	if (hasRegEx && findReplaceRegEx.IsValid()){
 		wxString place = replacedText.Mid(findstart, findend - findstart);
 		int reps = findReplaceRegEx.Replace(&place, rep, 1);
@@ -1056,6 +1213,7 @@ void FindReplace::Replace(TabWindow *window)
 	Dialc->SetTextElement(wrep, replacedText, tab->grid->hasTLMode);
 	grid->SetModified(REPLACE_SINGLE);
 	textPosition = findstart + rep.length();
+	findstart = findend = -1;
 	Find(window);
 }
 
@@ -1069,11 +1227,14 @@ int FindReplace::ReplaceAllInTab(TabPanel *tab, TabWindow *window)
 
 	bool onlysel = window->SelectedLines->GetValue();
 
-	size_t firstSelection = tab->grid->file->FirstSelection();
+	//FirstSelection gives -1 when only hidden lines are selected,
+	//replacing starts at the first selected key anyway
+	const std::set<int> &selections = tab->grid->file->GetSelectionsAsKeys();
+	size_t firstSelection = (!window->AllLines->GetValue() && !selections.empty()) ? *selections.begin() : 0;
 	bool skipFiltered = !tab->grid->ignoreFiltered;
 	bool hasTlMode = tab->grid->hasTLMode;
 
-	for (size_t i = (!window->AllLines->GetValue() && firstSelection != -1) ? firstSelection : 0; i < tab->grid->file->GetCount(); i++)
+	for (size_t i = firstSelection; i < tab->grid->file->GetCount(); i++)
 	{
 		Dialogue *Dial = tab->grid->file->GetDialogue(i);
 		if (skipFiltered && !Dial->isVisible || Dial->NonDialogue || (skipComments && Dial->IsComment)){ continue; }
@@ -1280,9 +1441,12 @@ void FindReplace::GetFolderFiles(const wxString &path, const wxString &filters, 
 		flags |= wxDIR_HIDDEN;
 
 	if (subsDir.IsOpened()){
+		//filters can overlap, every file must be replaced only once
+		std::set<wxString> foundFiles;
 		wxStringTokenizer tokenizer(filters, L";");
 		while (tokenizer.HasMoreTokens()){
-			subsDir.GetAllFiles(path, paths, tokenizer.NextToken(), flags);
+			SubsFilesTraverser traverser(paths, &foundFiles);
+			subsDir.Traverse(traverser, tokenizer.NextToken(), flags);
 		}
 	}
 	else{
@@ -1488,6 +1652,7 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 	wxString subsText;
 	int numOfChanges = 0;
 	int replacementDiff = 0;
+	int lastEnd = 0;
 	size_t numOfResult = 0;
 
 	SeekResults *SeekResult = results[0];
@@ -1496,10 +1661,25 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 	OpenWrite ow;
 	if (!ow.FileOpen(path, &subsText))
 		return 0;
+	//on Linux the CRs of CRLF files are still there, the text is written
+	//back with CRLF line ends
+	subsText.Replace(L"\r\n", L"\n");
 
 	bool isSRT = (ext == L"srt");
+	wxString TlModeStyle;
+	bool hasTlMode = false;
 
 	if ((ext == L"ass"/* || ext == "ssa"*/)){
+		//keys of Find in files results count a TLMode pair as one Line
+		size_t tlModeStylePos = subsText.find(L"TLMode Style:");
+		if (tlModeStylePos != -1){
+			hasTlMode = true;
+			size_t nposition = subsText.find(L"\n", tlModeStylePos + 13);
+			if (nposition != -1){
+				TlModeStyle = subsText.Mid(tlModeStylePos + 13, nposition - (tlModeStylePos + 13));
+				TlModeStyle.Trim(true).Trim(false);
+			}
+		}
 		size_t result = subsText.find(/*(ext == "ass") ? */L"Dialogue:"/* : L"Marked="*/);
 		size_t result1 = subsText.find(/*(ext == "ass") ? */L"Comment:"/* : L"Marked="*/);
 		if (result == -1 && result1 == -1)// no dialogues;
@@ -1515,7 +1695,9 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 		}
 	}
 
-	wxStringTokenizer tokenizer(subsText, L"\n", wxTOKEN_STRTOK);
+	//SRT cues are put together from their lines; in other files blank
+	//lines are kept and written back
+	wxStringTokenizer tokenizer(subsText, L"\n", (isSRT) ? wxTOKEN_STRTOK : wxTOKEN_RET_EMPTY);
 	wxString token;
 	wxString dialtxt;
 	Dialogue *dial = nullptr;
@@ -1545,10 +1727,43 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 		}
 		else{
 			token = tokenizer.GetNextToken();
-			token.Trim();
+			//remove only the line end, an unchanged line is written back as it is
+			if (token.EndsWith(L"\r"))
+				token.RemoveLast();
+			//blank lines are not Lines, Find in files does not count them
+			if (wxString(token).Trim(false).empty()){
+				replacedText << token << L"\r\n";
+				continue;
+			}
 		}
-		if (SeekResult->keyLine != lineNum){
-
+		//the original line of a TLMode pair has the key of its translation
+		bool tlOriginal = false;
+		if (hasTlMode){
+			Dialogue tlCheck(token);
+			tlOriginal = tlCheck.Style == TlModeStyle;
+		}
+		dial = nullptr;
+		if (numOfResult < results.size() && SeekResult->keyLine == lineNum){
+			dial = new Dialogue(token);
+			dial->GetTextElement(dialogueColumn, &dialtxt);
+			//need checks
+			if (dialtxt != SeekResult->name){
+				//in a TLMode pair the results can belong to the translation
+				if (!tlOriginal){
+					HikariLog(wxString::Format(_("Line %i cannot be replaced,\ncause it was edited."),
+						SeekResult->idLine));
+					while (numOfResult < results.size() && SeekResult->keyLine == lineNum){
+						numOfResult++;
+						if (numOfResult < results.size())
+							SeekResult = results[numOfResult];
+					}
+				}
+				delete dial;
+				dial = nullptr;
+			}
+		}
+		if (!dial){
+			//unchanged or edited lines are written back as they are
 			if (isSRT)
 				replacedText << int(lineNum + 1) << L"\r\n";
 
@@ -1557,27 +1772,18 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 			if (isSRT)
 				replacedText << L"\r\n";
 
-			lineNum++;
+			if (!tlOriginal)
+				lineNum++;
 			token = emptyString;
 			continue;
 		}
-		
-		dial = new Dialogue(token);
 		token = emptyString;
-		if (!dial){
-			continue;
-		}
 
-		dial->GetTextElement(dialogueColumn, &dialtxt);
 		replacementDiff = 0;
-		//need checks
-		if (dialtxt != SeekResult->name){
-			HikariLog(wxString::Format(_("Line %i cannot be replaced,\ncause it was edited."),
-				SeekResult->idLine));
-			continue;
-		}
-		while (SeekResult->keyLine == lineNum){
-			int numOfReps = ReplaceCheckedLine(&dialtxt, SeekResult->findPosition, &replacementDiff);
+		lastEnd = 0;
+		wxString lineText = dialtxt;
+		while (numOfResult < results.size() && SeekResult->keyLine == lineNum && SeekResult->name == lineText){
+			int numOfReps = ReplaceCheckedLine(&dialtxt, SeekResult->findPosition, &replacementDiff, &lastEnd);
 
 			numOfChanges += numOfReps;
 
@@ -1585,8 +1791,6 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 			numOfResult++;
 			if (numOfResult < results.size())
 				SeekResult = results[numOfResult];
-			else
-				break;
 		}
 		if (isSRT)
 			replacedText << int(lineNum + 1) << L"\r\n";
@@ -1597,13 +1801,17 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 		dial->GetRaw(&replacedText);
 		delete dial;
 
-		lineNum++;
+		if (!tlOriginal)
+			lineNum++;
 		
 	}
 
 	if (numOfChanges){
-		wxCopyFile(path, HikariPathJoin(copyPath, HikariPathName(path)));
-		ow.FileWrite(path, replacedText);
+		if (!copyPath.empty())
+			CopyToPrivateFile(path, HikariPathJoin(copyPath, HikariPathName(path)));
+		//count only the replacements that reached the file
+		if (!ow.FileWrite(path, replacedText))
+			numOfChanges = 0;
 	}
 
 	return numOfChanges;

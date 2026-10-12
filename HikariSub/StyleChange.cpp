@@ -563,6 +563,8 @@ void StyleChange::OnCatalogAdd(wxCommandEvent& event)
 	wxString cat = FCManagement.AddToCatalog(styleFont->GetValue(), wxPoint(pos.x, pos.y + size.y), this);
 	if (!cat.empty()) {
 		fontCatalog->PutArray(FCManagement.GetCatalogNames());
+		fontCatalog->Insert(_("All fonts"), 0);
+		fontCatalog->Insert(_("Without catalog"), 1);
 		int sel = fontCatalog->FindString(cat);
 		fontCatalog->SetSelection(sel);
 		ChangeCatalog();

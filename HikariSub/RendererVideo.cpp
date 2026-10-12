@@ -735,6 +735,14 @@ void RendererVideo::SetZoom(float percent, const wxPoint& mousePos)
 		m_MainStreamRect.right = (m_ZoomRect.width - m_BackBufferRect.left) / videoToScreenXX;
 		m_MainStreamRect.bottom = (m_ZoomRect.height - m_BackBufferRect.top) / videoToScreenYY;
 		m_ZoomPercent = x / (m_ZoomRect.width - m_ZoomRect.x);
+		if (m_Visual) {
+			SetVisualZoom();
+			if (m_Visual && (m_Visual->Visual < CLIPRECT || m_Visual->Visual > VECTORDRAW)) {
+				SAFE_DELETE(m_Visual->dummytext);
+				m_Visual->SetCurVisual();
+				m_HasVisualEdition = true;
+			}
+		}
 		ZoomChanged();
 		videoControl->SetScaleAndZoom();
 	}
@@ -758,6 +766,14 @@ void RendererVideo::SetZoom(float percent, const wxPoint& mousePos)
 			m_MainStreamRect.right = (m_ZoomRect.width - m_BackBufferRect.left) / videoToScreenXX;
 			m_MainStreamRect.bottom = (m_ZoomRect.height - m_BackBufferRect.top) / videoToScreenYY;
 			m_ZoomPercent = x / (m_ZoomRect.width - m_ZoomRect.x);
+			if (m_Visual) {
+				SetVisualZoom();
+				if (m_Visual && (m_Visual->Visual < CLIPRECT || m_Visual->Visual > VECTORDRAW)) {
+					SAFE_DELETE(m_Visual->dummytext);
+					m_Visual->SetCurVisual();
+					m_HasVisualEdition = true;
+				}
+			}
 			ZoomChanged();
 			videoControl->SetScaleAndZoom();
 		}
@@ -770,12 +786,11 @@ void RendererVideo::ResetZoom()
 	if (m_State == None){ return; }
 	m_ZoomRect = FloatRect(m_BackBufferRect.left, m_BackBufferRect.top, m_BackBufferRect.right, m_BackBufferRect.bottom);
 	wxSize size(m_BackBufferRect.right - m_BackBufferRect.left, m_BackBufferRect.bottom - m_BackBufferRect.top);
-	float videoToScreenXX = size.x / (float)m_Width;
-	float videoToScreenYY = size.y / (float)m_Height;
-	m_MainStreamRect.left = (m_ZoomRect.x - m_BackBufferRect.left) / videoToScreenXX;
-	m_MainStreamRect.top = (m_ZoomRect.y - m_BackBufferRect.top) / videoToScreenYY;
-	m_MainStreamRect.right = (m_ZoomRect.width - m_BackBufferRect.left) / videoToScreenXX;
-	m_MainStreamRect.bottom = (m_ZoomRect.height - m_BackBufferRect.top) / videoToScreenYY;
+	//the whole frame, dividing by the float scale truncates a row or column away
+	m_MainStreamRect.left = 0;
+	m_MainStreamRect.top = 0;
+	m_MainStreamRect.right = m_Width;
+	m_MainStreamRect.bottom = m_Height;
 	m_ZoomPercent = size.x / (m_ZoomRect.width - m_ZoomRect.x);
 	if (videoControl->m_IsFullscreen) { UpdateRects(false); }
 	if (m_Visual) {
@@ -1235,15 +1250,19 @@ void RendererVideo::SaveFrame(int id)
 		if (kat.IsOpened()) {
 			kat.GetAllFiles(dirpath, &paths, filespec.BeforeLast(L'.') << L"_*_*.png", wxDIR_FILES);
 		}
-		wxRegEx findNum("_([0-9]+)_", wxRE_ADVANCED);
+		wxRegEx findNum("^_([0-9]+)_", wxRE_ADVANCED);
 		std::vector<int> nums;
+		size_t baseNameLen = filespec.BeforeLast(L'.').length();
 		for (wxString& file : paths) {
 			//if (file.find(L"_" + std::to_string(num) + L"_") == wxNOT_FOUND) {
 				//break;
 			//}
 			//num++;
-			if (findNum.Matches(file)) {
-				wxString stringnum = findNum.GetMatch(file, 1);
+			//read the number right after the video name, a "_N_" in the
+			//folder or in the video name itself is not the snapshot number
+			wxString rest = HikariPathName(file).Mid(baseNameLen);
+			if (findNum.Matches(rest)) {
+				wxString stringnum = findNum.GetMatch(rest, 1);
 				int filenum = wxAtoi(stringnum);
 				nums.push_back(filenum);
 			}

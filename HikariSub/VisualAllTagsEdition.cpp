@@ -318,6 +318,11 @@ void AllTagsEdition::Save(int id)
 		return;
 	}
 	tags[selection] = currentTag;
+	//put a new name in the list, keeping its choice that can be
+	//already another item when saving after a list change
+	int listSelection = tagList->GetSelection();
+	tagList->ChangeListElementName(selection, currentTag.name);
+	tagList->SetSelection(listSelection);
 
 	if (id == ID_BUTTON_OK) {
 		SaveSettings(&tags);
@@ -330,89 +335,98 @@ void LoadSettings(std::vector<AllTagsSetting>* tags)
 	wxString path = Options.pathfull + L"/Config/AllTagsSettings.txt";
 	OpenWrite ow;
 	wxString txtSettings;
+	//write entire setings in plain text
+	//Tag: name, tag, min, max, value, step, num digits after dot, paste mode, tag mode, [valuey], [valuex1],[valuex1]
+	const wxString defaultSettings = L"HYDRA2.0\n"\
+				L"Tag: blur, blur,       0, 100,  0,  0.5,  1, 0, 1\n"\
+				L"Tag: border, bord,     0, 50,   0,  1,    1, 0, 0\n"\
+				L"Tag: blur edge, be,    0, 100,  0,  1,    1, 0, 1\n"\
+				L"Tag: alpha, alpha,     0, 255,  0,  1,    0, 0, 1\n"\
+				L"Tag: 1a, 1a,           0, 255,  0,  1,    0, 0, 1\n"\
+				L"Tag: 3a, 3a,           0, 255,  0,  1,    0, 0, 1\n"\
+				L"Tag: 4a, 4a,           0, 255,  0,  1,    0, 0, 1\n"\
+				L"Tag: color1, 1c,       0, 255,  0,  1,    0, 0, 1, 0, 0\n"\
+				L"Tag: color3, 3c,       0, 255,  0,  1,    0, 0, 1, 0, 0\n"\
+				L"Tag: color4, 4c,       0, 255,  0,  1,    0, 0, 1, 0, 0\n"\
+				L"Tag: fading, fad,      0, 2000, 0,  5,    0, 1, 1, 0\n"\
+				L"Tag: fax, fax,       -10, 10,   0,  0.01, 3, 0, 0\n"\
+				L"Tag: fay, fay,       -10, 10,   0,  0.01, 3, 0, 0\n"\
+				L"Tag: font size, fs,   20, 300,  70, 1,    1, 0, 0\n"\
+				L"Tag: spacing, fsp,  -100, 100,  0,  1,    1, 0, 1\n"\
+				L"Tag: shadow, shad,     0, 80,   0,  1,    1, 0, 0\n"\
+				L"Tag: xborder, xbord,   0, 80,   0,  1,    1, 0, 0\n"\
+				L"Tag: yborder, ybord,   0, 80,   0,  1,    1, 0, 0\n"\
+				L"Tag: xshadow, xshad, -80, 80,   0,  1,    1, 0, 0\n"\
+				L"Tag: yshadow, yshad, -80, 80,   0,  1,    1, 0, 0\n"\
+				L"Tag: position, pos,    0, 100,  0,  0.1,  3, 1, 2, 0\n"\
+				L"Tag: tanimation, t,    0, 9999, 0,  10,   0, 1, 1, 0\n";
 	//go inside when used pravious version of hydra
 	if (!ow.FileOpen(path, &txtSettings, false) || !txtSettings.StartsWith(L"HYDRA2.0")) {
 		bool writeSettings = !txtSettings.empty();
-		//write entire setings in plain text
-		//Tag: name, tag, min, max, value, step, num digits after dot, paste mode, tag mode, [valuey], [valuex1],[valuex1]
-		txtSettings = L"HYDRA2.0\n"\
-					L"Tag: blur, blur,       0, 100,  0,  0.5,  1, 0, 1\n"\
-					L"Tag: border, bord,     0, 50,   0,  1,    1, 0, 0\n"\
-					L"Tag: blur edge, be,    0, 100,  0,  1,    1, 0, 1\n"\
-					L"Tag: alpha, alpha,     0, 255,  0,  1,    0, 0, 1\n"\
-					L"Tag: 1a, 1a,           0, 255,  0,  1,    0, 0, 1\n"\
-					L"Tag: 3a, 3a,           0, 255,  0,  1,    0, 0, 1\n"\
-					L"Tag: 4a, 4a,           0, 255,  0,  1,    0, 0, 1\n"\
-					L"Tag: color1, 1c,       0, 255,  0,  1,    0, 0, 1, 0, 0\n"\
-					L"Tag: color3, 3c,       0, 255,  0,  1,    0, 0, 1, 0, 0\n"\
-					L"Tag: color4, 4c,       0, 255,  0,  1,    0, 0, 1, 0, 0\n"\
-					L"Tag: fading, fad,      0, 2000, 0,  5,    0, 1, 1, 0\n"\
-					L"Tag: fax, fax,       -10, 10,   0,  0.01, 3, 0, 0\n"\
-					L"Tag: fay, fay,       -10, 10,   0,  0.01, 3, 0, 0\n"\
-					L"Tag: font size, fs,   20, 300,  70, 1,    1, 0, 0\n"\
-					L"Tag: spacing, fsp,  -100, 100,  0,  1,    1, 0, 1\n"\
-					L"Tag: shadow, shad,     0, 80,   0,  1,    1, 0, 0\n"\
-					L"Tag: xborder, xbord,   0, 80,   0,  1,    1, 0, 0\n"\
-					L"Tag: yborder, ybord,   0, 80,   0,  1,    1, 0, 0\n"\
-					L"Tag: xshadow, xshad, -80, 80,   0,  1,    1, 0, 0\n"\
-					L"Tag: yshadow, yshad, -80, 80,   0,  1,    1, 0, 0\n"\
-					L"Tag: position, pos,    0, 100,  0,  0.1,  3, 1, 2, 0\n"\
-					L"Tag: tanimation, t,    0, 9999, 0,  10,   0, 1, 1, 0\n";
+		txtSettings = defaultSettings;
 
 		if (writeSettings) {
 			ow.FileWrite(path, txtSettings);
 		}
 	}
-	wxStringTokenizer tokenzer(txtSettings, "\n", wxTOKEN_STRTOK);
-	tokenzer.GetNextToken();
-	// no need to check version of hydra again just skip first token
-	while (tokenzer.HasMoreTokens()) {
-		wxString token = tokenzer.GetNextToken();
-		wxString tagtxt;
-		if (token.StartsWith(L"Tag: ", &tagtxt)) {
-			wxStringTokenizer tkzer(tagtxt, ",", wxTOKEN_STRTOK);
-			AllTagsSetting tmp;
-			tmp.name = tkzer.GetNextToken();
-			if (!tkzer.HasMoreTokens())
-				continue;
-			tmp.tag = tkzer.GetNextToken().Trim(false);
-			double tmpval = 0;
-			if (!tkzer.HasMoreTokens())
-				continue;
-			if (!tkzer.GetNextToken().Trim(false).ToCDouble(&tmpval))
-				continue;
-			tmp.rangeMin = tmpval;
-			if (!tkzer.HasMoreTokens())
-				continue;
-			if (!tkzer.GetNextToken().Trim(false).ToCDouble(&tmpval))
-				continue;
-			tmp.rangeMax = tmpval;
-			if (!tkzer.HasMoreTokens())
-				continue;
-			if (!tkzer.GetNextToken().Trim(false).ToCDouble(&tmpval))
-				continue;
-			tmp.values[0] = tmpval;
-			if (!tkzer.HasMoreTokens())
-				continue;
-			if (!tkzer.GetNextToken().Trim(false).ToCDouble(&tmpval))
-				continue;
-			tmp.step = tmpval;
-			if (!tkzer.HasMoreTokens())
-				continue;
-			tmp.digitsAfterDot = wxAtoi(tkzer.GetNextToken().Trim(false));
-			if (!tkzer.HasMoreTokens())
-				continue;
-			tmp.mode = wxAtoi(tkzer.GetNextToken().Trim(false));
-			if (!tkzer.HasMoreTokens())
-				continue;
-			tmp.tagMode = wxAtoi(tkzer.GetNextToken().Trim(false));
-			for (int i = 1; tkzer.HasMoreTokens(); i++) {
-				if (tkzer.GetNextToken().Trim(false).ToCDouble(&tmpval)) {
-					tmp.values[i] = tmpval;
-					tmp.numOfValues = i + 1;
+	//a file without any valid tag falls back to the defaults
+	size_t oldSize = tags->size();
+	for (int pass = 0; pass < 2 && tags->size() == oldSize; pass++) {
+		if (pass == 1)
+			txtSettings = defaultSettings;
+
+		wxStringTokenizer tokenzer(txtSettings, "\n", wxTOKEN_STRTOK);
+		tokenzer.GetNextToken();
+		// no need to check version of hydra again just skip first token
+		while (tokenzer.HasMoreTokens()) {
+			wxString token = tokenzer.GetNextToken();
+			wxString tagtxt;
+			if (token.StartsWith(L"Tag: ", &tagtxt)) {
+				wxStringTokenizer tkzer(tagtxt, ",", wxTOKEN_STRTOK);
+				AllTagsSetting tmp;
+				tmp.name = tkzer.GetNextToken();
+				if (!tkzer.HasMoreTokens())
+					continue;
+				tmp.tag = tkzer.GetNextToken().Trim(false);
+				double tmpval = 0;
+				if (!tkzer.HasMoreTokens())
+					continue;
+				if (!tkzer.GetNextToken().Trim(false).ToCDouble(&tmpval))
+					continue;
+				tmp.rangeMin = tmpval;
+				if (!tkzer.HasMoreTokens())
+					continue;
+				if (!tkzer.GetNextToken().Trim(false).ToCDouble(&tmpval))
+					continue;
+				tmp.rangeMax = tmpval;
+				if (!tkzer.HasMoreTokens())
+					continue;
+				if (!tkzer.GetNextToken().Trim(false).ToCDouble(&tmpval))
+					continue;
+				tmp.values[0] = tmpval;
+				if (!tkzer.HasMoreTokens())
+					continue;
+				if (!tkzer.GetNextToken().Trim(false).ToCDouble(&tmpval))
+					continue;
+				tmp.step = tmpval;
+				if (!tkzer.HasMoreTokens())
+					continue;
+				tmp.digitsAfterDot = wxAtoi(tkzer.GetNextToken().Trim(false));
+				if (!tkzer.HasMoreTokens())
+					continue;
+				tmp.mode = wxAtoi(tkzer.GetNextToken().Trim(false));
+				if (!tkzer.HasMoreTokens())
+					continue;
+				tmp.tagMode = wxAtoi(tkzer.GetNextToken().Trim(false));
+				//a tag has at most four values, the rest would write past values
+				for (int i = 1; tkzer.HasMoreTokens() && i < 4; i++) {
+					if (tkzer.GetNextToken().Trim(false).ToCDouble(&tmpval)) {
+						tmp.values[i] = tmpval;
+						tmp.numOfValues = i + 1;
+					}
 				}
+				tags->push_back(tmp);
 			}
-			tags->push_back(tmp);
 		}
 	}
 }

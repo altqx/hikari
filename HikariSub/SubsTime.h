@@ -21,8 +21,10 @@
 class SubsTime
 {
 private:
-	static float FPS;
+	//MicroDVD frame rate this time was read or synced with, 0 when not known yet
+	float fps;
 	char form;
+	float GetMDVDFPS();
 
 public:
 	int orgframe;
@@ -43,12 +45,12 @@ public:
 	void SetMDVDFPS(float fps);
 	void Change(int ms);
 	void ChangeFrame(int ms);
-	bool operator> (const SubsTime &comp);
-	bool operator< (const SubsTime &comp);
-	bool operator>= (const SubsTime &comp);
-	bool operator<= (const SubsTime &comp);
-	bool operator== (const SubsTime &comp);
-	bool operator!= (const SubsTime &comp);
+	bool operator> (const SubsTime &comp) const;
+	bool operator< (const SubsTime &comp) const;
+	bool operator>= (const SubsTime &comp) const;
+	bool operator<= (const SubsTime &comp) const;
+	bool operator== (const SubsTime &comp) const;
+	bool operator!= (const SubsTime &comp) const;
 	SubsTime operator- (const SubsTime &comp);
 	SubsTime operator+ (const SubsTime &comp);
 };

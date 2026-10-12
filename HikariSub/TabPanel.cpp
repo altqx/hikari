@@ -327,6 +327,11 @@ void TabPanel::SetLastSaveTime()
 	GetSystemTime(&lastSave);
 }
 
+bool TabPanel::SubsChangedOutside()
+{
+	return !SubsPath.empty() && ModifChecker.NeedReload(SubsPath, &lastSave) == 1;
+}
+
 void TabPanel::ReloadSubsIfModified()
 {
 	if (SubsPath.empty())
@@ -334,15 +339,19 @@ void TabPanel::ReloadSubsIfModified()
 
 	int needReload = ModifChecker.NeedReload(SubsPath, &lastSave);
 	if (needReload == 1) {
-		int result = HikariMessageBox(_("Subtitles were modified by another program. Reload?"), _("Reloading"), wxYES | wxNO);
+		//a reload replaces the document and its history, unsaved changes included
+		bool modified = grid->file->IsModified();
+		int result = (modified) ?
+			HikariMessageBox(_("Subtitles were modified by another program.\nReload and discard the unsaved changes in this tab?"),
+				_("Reloading"), wxYES | wxNO, nullptr, wxDefaultPosition, wxNO) :
+			HikariMessageBox(_("Subtitles were modified by another program. Reload?"), _("Reloading"), wxYES | wxNO);
 		if (result == wxYES) {
 			wxString ext = SubsPath.AfterLast(L'.');
 			OpenWrite ow;
 			wxString s;
 			if (ow.FileOpen(SubsPath, &s)) {
 				grid->ClosePreviewWindows();
-				grid->LoadSubtitles(s, ext);
-				if (video->GetState() != None) {
+				if (grid->LoadSubtitles(s, ext) && video->GetState() != None) {
 					//OPEN_DUMMY
 					video->OpenSubs(1);
 					video->Render();

@@ -27,10 +27,9 @@
 SubsLoader::SubsLoader(SubsGrid *_grid, const wxString &text, wxString &ext)
 {
 	grid = _grid;
-	grid->Clearing();
+	//the grid hands over a new file and keeps its own state until this succeeds
 	grid->originalFormat = 0;
 	grid->hasTLMode = false;
-	bool succeeded = false;
 	bool validFormat = false;
 	if (ext == L"ass" || ext == L"ssa"){
 		succeeded = LoadASS(text);
@@ -60,31 +59,28 @@ SubsLoader::SubsLoader(SubsGrid *_grid, const wxString &text, wxString &ext)
 		succeeded = LoadTXT(text);
 		grid->SetSubsFormat();
 		if (grid->subsFormat == SRT){
-			grid->Clearing();
+			grid->file->Clear();
 			succeeded = LoadSRT(text);
 			if (succeeded) ext = L"srt";
 		}
 		else if (grid->subsFormat == ASS){
-			grid->Clearing();
+			grid->file->Clear();
 			succeeded = LoadASS(text);
 			ext = L"ass";
 			if (!succeeded){
 				grid->LoadDefault(false, false, false);
 				succeeded = LoadTXT(text);
-				HikariMessageBox(_("This subtitle file is plain text and will be opened as ASS subtitles"));
+				//told by the grid once the file is loaded, so no window is
+				//painted with this file and the old file's state
+				plainTextAsAss = true;
 			}
 		}
 		else{ validFormat = true; }
 	}
 	//WARNING! table can not be empty
 	//text helper class will crash when gets nullptr in = operator
-	if (!succeeded){ 
-		grid->LoadDefault(); 
-		HikariMessageBox(_("Invalid format (file may be corrupted or contain errors)"));
-		grid->subsFormat = ASS; 
-		ext = "ass"; 
-	}
-	else{
+	//on failure the grid puts its previous subtitles back
+	if (succeeded){
 		grid->SetSubsFormat();
 		if (validFormat)
 			grid->originalFormat = grid->subsFormat;
@@ -102,14 +98,23 @@ bool SubsLoader::LoadASS(const wxString &text)
 	wxString tlstyle;
 
 
-	// embedded fonts and pictures are uuencoded lines, kept as they are
+	// embedded fonts and pictures are uuencoded lines, kept as they are,
+	// and so are sections this loader does not know
 	bool embedded = false;
-	while (tokenizer.HasMoreTokens())
+	// lines before the first section header count as script info
+	bool scriptInfo = true;
+	// a line read after a translation original that is not its translation
+	wxString nextToken;
+	while (!nextToken.empty() || tokenizer.HasMoreTokens())
 	{
-		wxString token = tokenizer.GetNextToken().Trim(false);
+		wxString token = (nextToken.empty()) ? tokenizer.GetNextToken().Trim(false) : nextToken;
+		nextToken.clear();
 		if (token.empty()){ continue; }
-		if (token[0] == L'[')
-			embedded = token.StartsWith(L"[Fonts]") || token.StartsWith(L"[Graphics]");
+		if (token[0] == L'['){
+			wxString header = token.Lower();
+			scriptInfo = header.StartsWith(L"[script info]");
+			embedded = !scriptInfo && !header.StartsWith(L"[v4") && !header.StartsWith(L"[events]");
+		}
 		if (embedded) {
 			grid->file->AddEmbeddedSectionLine(token.Trim(true));
 			continue;
@@ -124,10 +129,27 @@ bool SubsLoader::LoadASS(const wxString &text)
 				grid->file->AddLine(dl);
 			}
 			else if (tlmode && dl->Style == tlstyle){
-				wxString ntoken = tokenizer.GetNextToken();
-				Dialogue *tl = new Dialogue(ntoken);
+				// the translation is the next dialogue or comment line in another style,
+				// anything else is read on its own and the original stays alone
+				wxString ntoken;
+				while (ntoken.empty() && tokenizer.HasMoreTokens())
+					ntoken = tokenizer.GetNextToken().Trim(false);
+				Dialogue *tl = nullptr;
+				if (ntoken.StartsWith(L"Dial") || ntoken.StartsWith(L"Comm")){
+					tl = new Dialogue(ntoken);
+					if (tl->Format != ASS || tl->NonDialogue || tl->Style == tlstyle){
+						delete tl;
+						tl = nullptr;
+					}
+				}
+				if (!tl){
+					nextToken = ntoken;
+					grid->file->AddLine(dl);
+					continue;
+				}
 				tl->TextTl = tl->Text;
 				tl->Text = dl->Text;
+				tl->tlPair = true;
 				if (dl->Effect == L"\fD"){
 					tl->ChangeState(4);
 				}
@@ -153,7 +175,7 @@ bool SubsLoader::LoadASS(const wxString &text)
 			//need to send to constructor of styles 2 as format SSA, SRT has 3 to avoid bugs
 			section = 1;
 		}
-		else if (token[0] != L';' && token[0] != L'[' && token.Find(L':') != wxNOT_FOUND && !token.StartsWith(L"Format")){
+		else if (scriptInfo && token[0] != L';' && token[0] != L'[' && token.Find(L':') != wxNOT_FOUND && !token.StartsWith(L"Format")){
 			grid->file->AddSInfo(token);
 		}
 		else if (token.StartsWith(L"[Eve")){
@@ -164,8 +186,6 @@ bool SubsLoader::LoadASS(const wxString &text)
 	}
 	grid->hasTLMode = tlmode;
 	grid->file->SetFiltered(hasFiltering);
-	const wxString &matrix = grid->file->GetSInfo(L"YCbCr Matrix");
-	if (matrix == emptyString || matrix == L"None"){ grid->file->AddSInfo(L"YCbCr Matrix", L"TV.601"); }
 	return grid->file->GetCount() > 0;
 }
 
@@ -176,6 +196,8 @@ bool SubsLoader::LoadSRT(const wxString &srttext)
 	
 	while (tokenizer.HasMoreTokens()){
 		wxString text = tokenizer.GetNextToken().Trim();
+		//a CRLF blank line is a lone \r token, skip it like an LF blank line
+		if (text.empty()){ continue; }
 		//seek for every times line
 		if (text.find(L" --> ") != -1){
 			//trim number of next line 

@@ -51,11 +51,12 @@ namespace {
 }
 
 // PCM is pushed into a GStreamer appsrc -> audioconvert -> audioresample ->
-// autoaudiosink pipeline (PulseAudio/PipeWire).  appsrc with block=TRUE paces
-// the producer thread to the sink clock, the same role SDL_QueueAudio +
-// SDL_GetQueuedAudioSize played before.  Volume is still applied by the
-// provider when filling the PCM buffer, and the playback position stays on the
-// backend-independent wall-clock model below.
+// autoaudiosink pipeline (PulseAudio/PipeWire).  Each buffer carries the time
+// of its first frame and the sink plays it on the clock, so the pipeline
+// position is the audible frame and EOS arrives when the sound has ended.
+// Playback starts with a flushing seek to its first frame; the producer keeps
+// at most max-bytes queued in appsrc.  Volume is still applied by the provider
+// when filling the PCM buffer.
 struct DirectSoundPlayer2Thread::LinuxAudioState {
 	std::thread thread;
 	std::mutex mutex;
@@ -65,8 +66,8 @@ struct DirectSoundPlayer2Thread::LinuxAudioState {
 	bool failed = false;
 	bool playing = false;
 	bool restart = false;
+	// the next frame to push, ahead of the audible one by what is queued
 	long long currentFrame = 0;
-	std::chrono::steady_clock::time_point playbackStart;
 	GstElement *pipeline = nullptr;
 	GstElement *appsrc = nullptr;
 	wxString failMessage;
@@ -83,6 +84,21 @@ void DirectSoundPlayer2Thread::Run()
 		linuxState->failed = true;
 		linuxState->initialized = true;
 		linuxState->cv.notify_all();
+	};
+
+	// the text of an error or warning message, with its debug detail
+	auto messageText = [](const wchar_t *what, const GError *e, const gchar *dbg) {
+		wxString text = what;
+		if (e && e->message) {
+			text += L": ";
+			text += wxString::FromUTF8(e->message);
+		}
+		if (dbg && *dbg) {
+			text += L" (";
+			text += wxString::FromUTF8(dbg);
+			text += L")";
+		}
+		return text;
 	};
 
 	if (!provider) { fail(L"Audio player: no provider"); return; }
@@ -120,28 +136,26 @@ void DirectSoundPlayer2Thread::Run()
 		return;
 	}
 
-	g_signal_connect(sink, "deep-element-added",
-		G_CALLBACK(+[](GstBin *, GstBin *, GstElement *el, gpointer) {
-			if (g_object_class_find_property(G_OBJECT_GET_CLASS(el), "sync"))
-				g_object_set(el, "sync", FALSE, nullptr);
-		}), nullptr);
-
 	GstCaps *caps = gst_caps_new_simple("audio/x-raw",
 		"format", G_TYPE_STRING, GST_AUDIO_NE(S16),
 		"layout", G_TYPE_STRING, "interleaved",
 		"rate", G_TYPE_INT, rate,
 		"channels", G_TYPE_INT, channels,
 		nullptr);
+	const guint64 maxQueuedBytes = (guint64)std::max<long long>(bytesPerFrame, maxQueuedFrames * bytesPerFrame);
+	// a blocked push is not woken by a flushing seek, so the producer paces
+	// itself on current-level-bytes instead
 	g_object_set(src,
 		"caps", caps,
 		"format", GST_FORMAT_TIME,
-		"stream-type", GST_APP_STREAM_TYPE_STREAM,
-		"is-live", TRUE,
-		"do-timestamp", TRUE,
-		"block", TRUE,
-		"max-bytes", (guint64)std::max<long long>(bytesPerFrame, maxQueuedFrames * bytesPerFrame),
+		"stream-type", GST_APP_STREAM_TYPE_SEEKABLE,
+		"block", FALSE,
+		"max-bytes", maxQueuedBytes,
 		nullptr);
 	gst_caps_unref(caps);
+	// the buffers are timestamped from the frame numbers, so a seek needs no work here
+	g_signal_connect(src, "seek-data",
+		G_CALLBACK(+[](GstAppSrc *, guint64, gpointer) -> gboolean { return TRUE; }), nullptr);
 
 	if (gst_element_set_state(pipeline, GST_STATE_PLAYING) == GST_STATE_CHANGE_FAILURE) {
 		wxString detail = L"Cannot start GStreamer audio pipeline";
@@ -149,7 +163,8 @@ void DirectSoundPlayer2Thread::Run()
 			if (GstMessage *em = gst_bus_pop_filtered(errBus, GST_MESSAGE_ERROR)) {
 				GError *e = nullptr; gchar *dbg = nullptr;
 				gst_message_parse_error(em, &e, &dbg);
-				if (e) { detail += L": "; detail += wxString::FromUTF8(e->message); g_error_free(e); }
+				detail = messageText(L"Cannot start GStreamer audio pipeline", e, dbg);
+				if (e) g_error_free(e);
 				g_free(dbg);
 				gst_message_unref(em);
 			}
@@ -168,58 +183,140 @@ void DirectSoundPlayer2Thread::Run()
 		linuxState->cv.notify_all();
 	}
 
+	// a flushing seek drops what is queued, and the stream then starts at frame
+	auto seekTo = [&](long long frame) {
+		return gst_element_seek_simple(pipeline, GST_FORMAT_TIME,
+			(GstSeekFlags)(GST_SEEK_FLAG_FLUSH | GST_SEEK_FLAG_ACCURATE),
+			gst_util_uint64_scale_round(frame, GST_SECOND, rate)) != FALSE;
+	};
+	auto queueFull = [&] {
+		guint64 level = 0;
+		g_object_get(src, "current-level-bytes", &level, nullptr);
+		return level >= maxQueuedBytes;
+	};
+	// the frame the sink plays now, from the pipeline position
+	auto queryAudibleFrame = [&](long long &audible) {
+		gint64 position = 0;
+		if (!gst_element_query_position(pipeline, GST_FORMAT_TIME, &position) || position < 0)
+			return false;
+		audible = (long long)gst_util_uint64_scale_round(position, rate, GST_SECOND);
+		return true;
+	};
+	// Playback cannot go on, and the producer ends: the player is dead from
+	// here, so IsDead reports it, the display sees playback stopped and the
+	// next Play opens a new player.  Called with linuxState->mutex held.
+	auto failPlayback = [this](const wxString &msg) {
+		HikariLog(msg);
+		linuxState->failMessage = msg;
+		linuxState->failed = true;
+		linuxState->playing = false;
+		linuxState->cv.notify_all();
+	};
+	// Warnings, such as clock or device trouble before a failure, go to the
+	// log without opening the log window; a sink that keeps warning is not
+	// logged past this many.
+	const int maxLoggedWarnings = 10;
+	int loggedWarnings = 0;
+	// the pipeline holds data of the current playback
 	bool active = false;
+	// everything up to the end frame is pushed; the EOS message ends playback
+	bool eosSent = false;
+	// changes with every seek, so a buffer filled before one is not pushed after it
+	long long generation = 0;
+	// A sink can stop taking data without an error, when the device hangs or
+	// is suspended: appsrc then stays full, or the EOS is never answered, and
+	// playback would never end.  The audible frame is watched while data
+	// waits, and playback fails when it has not moved for this long.
+	const auto stallTimeout = std::chrono::seconds(10);
+	long long watchedGeneration = -1;
+	long long lastAudible = -1;
+	auto progressAt = std::chrono::steady_clock::now();
 	while (true) {
-		long long requestEnd = 0;
-		bool restartPlayback = false;
-		bool goIdle = false;
-		{
-			std::unique_lock<std::mutex> lock(linuxState->mutex);
-			linuxState->cv.wait_for(lock, std::chrono::milliseconds(10), [&] {
-				return !linuxState->running || linuxState->playing || linuxState->restart;
-			});
-			if (!linuxState->running)
-				break;
-			if (!linuxState->playing) {
-				goIdle = true;
-			}
-			else {
-				restartPlayback = linuxState->restart;
-				linuxState->restart = false;
-				requestEnd = end_frame;
-				if (restartPlayback) {
-					linuxState->currentFrame = start_frame;
-					linuxState->playbackStart = std::chrono::steady_clock::now();
-				}
-			}
-		}
-
-		if (goIdle) {
-			// Playback stopped: drop queued audio so it goes silent at once.
-			if (active) {
-				gst_element_send_event(pipeline, gst_event_new_flush_start());
-				gst_element_send_event(pipeline, gst_event_new_flush_stop(TRUE));
-				active = false;
-			}
-			continue;
-		}
-		const bool wasActive = active;
-		active = true;
-
-		// Only flush when restarting over an already-running stream (switching selections mid-playback).
-		if (restartPlayback && wasActive) {
-			gst_element_send_event(pipeline, gst_event_new_flush_start());
-			gst_element_send_event(pipeline, gst_event_new_flush_stop(TRUE));
-		}
-
 		long long frame = 0;
 		long long framesToWrite = 0;
+		long long bufferGeneration = 0;
 		double playbackVolume = 1.0;
 		{
-			std::lock_guard<std::mutex> lock(linuxState->mutex);
-			frame = linuxState->currentFrame;
-			framesToWrite = std::min<long long>(chunkFrames, std::max<long long>(0, requestEnd - frame));
-			playbackVolume = volume;
+			std::unique_lock<std::mutex> lock(linuxState->mutex);
+			auto hasWork = [&] {
+				if (!linuxState->running || linuxState->restart)
+					return true;
+				if (!linuxState->playing)
+					return active;
+				if (eosSent)
+					return linuxState->currentFrame < end_frame;
+				return linuxState->currentFrame >= end_frame || !queueFull();
+			};
+			linuxState->cv.wait_for(lock, std::chrono::milliseconds(10), hasWork);
+			if (!linuxState->running)
+				break;
+			bool seekFailed = false;
+			if (linuxState->restart) {
+				linuxState->restart = false;
+				linuxState->currentFrame = start_frame;
+				seekFailed = !seekTo(start_frame);
+				generation++;
+				eosSent = false;
+				active = true;
+			}
+			if (linuxState->playing && active && linuxState->currentFrame > end_frame && !seekFailed) {
+				// The end moved back into the frames already queued: they play on
+				// up to the new end, and playback then stops and drops the rest.
+				// Without a position it stops at once.
+				long long audible = 0;
+				if (!queryAudibleFrame(audible) || audible >= end_frame)
+					linuxState->playing = false;
+			}
+			if (!linuxState->playing && active && !seekFailed) {
+				// Playback stopped: drop queued audio so it goes silent at once.
+				seekFailed = !seekTo(linuxState->currentFrame);
+				generation++;
+				eosSent = false;
+				active = false;
+			}
+			if (linuxState->playing && eosSent && linuxState->currentFrame < end_frame && !seekFailed) {
+				// The end moved past the frames already queued, but appsrc takes
+				// no data after EOS until a flush: start again from the audible
+				// frame, so playback goes on to the new end.
+				long long resumeFrame = linuxState->currentFrame;
+				long long audible = 0;
+				if (queryAudibleFrame(audible))
+					resumeFrame = std::clamp(audible, start_frame.load(), linuxState->currentFrame);
+				linuxState->currentFrame = resumeFrame;
+				seekFailed = !seekTo(resumeFrame);
+				generation++;
+				eosSent = false;
+			}
+			if (seekFailed) {
+				failPlayback(L"Audio playback stopped, the GStreamer audio pipeline cannot seek");
+				break;
+			}
+			if (linuxState->playing && active) {
+				const auto now = std::chrono::steady_clock::now();
+				long long audible = -1;
+				queryAudibleFrame(audible);
+				if (watchedGeneration != generation || audible != lastAudible || !(eosSent || queueFull())) {
+					watchedGeneration = generation;
+					lastAudible = audible;
+					progressAt = now;
+				}
+				else if (now - progressAt >= stallTimeout) {
+					failPlayback(L"Audio playback stopped, the audio device stopped playing and reported no error");
+					break;
+				}
+			}
+			if (linuxState->playing && !eosSent) {
+				if (linuxState->currentFrame >= end_frame) {
+					gst_app_src_end_of_stream(GST_APP_SRC(src));
+					eosSent = true;
+				}
+				else if (!queueFull()) {
+					frame = linuxState->currentFrame;
+					framesToWrite = std::min<long long>(chunkFrames, end_frame - frame);
+					bufferGeneration = generation;
+					playbackVolume = volume;
+				}
+			}
 		}
 
 		if (framesToWrite > 0) {
@@ -227,59 +324,84 @@ void DirectSoundPlayer2Thread::Run()
 			GstBuffer *buf = gst_buffer_new_allocate(nullptr, bytes, nullptr);
 			if (!buf) {
 				std::lock_guard<std::mutex> lock(linuxState->mutex);
-				linuxState->failed = true;
-				linuxState->playing = false;
-				linuxState->failMessage = L"GStreamer could not allocate an audio buffer";
+				failPlayback(L"Audio playback stopped, GStreamer could not allocate an audio buffer");
 				break;
 			}
 			// Let the provider decode straight into the GstBuffer memory (no
-			// intermediate copy), then hand it off; block=TRUE paces to the clock.
+			// intermediate copy), then hand it off.
 			GstMapInfo map{};
 			if (!gst_buffer_map(buf, &map, GST_MAP_WRITE)) {
 				gst_buffer_unref(buf);
 				std::lock_guard<std::mutex> lock(linuxState->mutex);
-				linuxState->failed = true;
-				linuxState->playing = false;
-				linuxState->failMessage = L"GStreamer could not map an audio buffer";
+				failPlayback(L"Audio playback stopped, GStreamer could not map an audio buffer");
 				break;
 			}
 			provider->GetPlaybackBuffer(map.data, frame, framesToWrite, playbackVolume);
 			gst_buffer_unmap(buf, &map);
-			const GstFlowReturn flow = gst_app_src_push_buffer(GST_APP_SRC(src), buf);
+			GST_BUFFER_PTS(buf) = gst_util_uint64_scale_round(frame, GST_SECOND, rate);
+			GST_BUFFER_DURATION(buf) = gst_util_uint64_scale_round(frame + framesToWrite, GST_SECOND, rate) -
+				GST_BUFFER_PTS(buf);
 			std::lock_guard<std::mutex> lock(linuxState->mutex);
-			if (flow == GST_FLOW_OK) {
-				linuxState->currentFrame += framesToWrite;
+			if (bufferGeneration != generation || !linuxState->playing) {
+				gst_buffer_unref(buf);
 			}
-			else if (linuxState->running) {
-				linuxState->failed = true;
-				linuxState->playing = false;
-				linuxState->failMessage = L"GStreamer audio pipeline stopped accepting data";
-			}
-		}
-		else {
-			guint64 level = 0;
-			g_object_get(src, "current-level-bytes", &level, nullptr);
-			if (level == 0) {
-				std::lock_guard<std::mutex> lock(linuxState->mutex);
-				linuxState->playing = false;
+			else {
+				const GstFlowReturn flow = gst_app_src_push_buffer(GST_APP_SRC(src), buf);
+				if (flow == GST_FLOW_OK) {
+					linuxState->currentFrame += framesToWrite;
+				}
+				else if (linuxState->running) {
+					failPlayback(L"Audio playback stopped, the GStreamer audio pipeline stopped accepting data");
+					break;
+				}
 			}
 		}
 
+		bool producerEnds = false;
 		if (GstBus *bus = gst_element_get_bus(pipeline)) {
 			GstMessage *m;
-			while ((m = gst_bus_pop_filtered(bus,
-				(GstMessageType)(GST_MESSAGE_ERROR | GST_MESSAGE_WARNING)))) {
+			while (!producerEnds && (m = gst_bus_pop_filtered(bus,
+				(GstMessageType)(GST_MESSAGE_EOS | GST_MESSAGE_ERROR | GST_MESSAGE_WARNING)))) {
+				if (GST_MESSAGE_TYPE(m) == GST_MESSAGE_EOS) {
+					// the sink has played everything, the sound has ended
+					std::lock_guard<std::mutex> lock(linuxState->mutex);
+					if (eosSent) {
+						linuxState->playing = false;
+						active = false;
+					}
+					gst_message_unref(m);
+					continue;
+				}
 				GError *e = nullptr; gchar *dbg = nullptr;
-				if (GST_MESSAGE_TYPE(m) == GST_MESSAGE_ERROR)
+				if (GST_MESSAGE_TYPE(m) == GST_MESSAGE_ERROR) {
+					// An error after the start, such as the device failing or
+					// going away, leaves a pipeline that takes no more data:
+					// appsrc stays full and playback would never end.  While
+					// the player closes, the flush and the state change to
+					// NULL can make the sink post an error too: that one is
+					// not a failure, and the producer just ends.
 					gst_message_parse_error(m, &e, &dbg);
-				else
+					std::lock_guard<std::mutex> lock(linuxState->mutex);
+					if (linuxState->running)
+						failPlayback(messageText(L"Audio playback stopped, GStreamer reported an error", e, dbg));
+					producerEnds = true;
+				}
+				else {
 					gst_message_parse_warning(m, &e, &dbg);
+					if (loggedWarnings < maxLoggedWarnings) {
+						HikariLogSilent(messageText(L"GStreamer audio warning", e, dbg));
+						if (++loggedWarnings == maxLoggedWarnings)
+							HikariLogSilent(L"Further GStreamer audio warnings are not logged");
+					}
+				}
 				if (e) g_error_free(e);
 				g_free(dbg);
 				gst_message_unref(m);
 			}
 			gst_object_unref(bus);
 		}
+		if (producerEnds)
+			break;
 	}
 
 	gst_element_set_state(pipeline, GST_STATE_NULL);
@@ -372,7 +494,6 @@ void DirectSoundPlayer2Thread::Play(long long start, long long count)
 	start_frame = start;
 	end_frame = start + count;
 	linuxState->currentFrame = start;
-	linuxState->playbackStart = std::chrono::steady_clock::now();
 	linuxState->playing = true;
 	linuxState->restart = true;
 	last_playback_restart = static_cast<int>(timeGetTime());
@@ -392,9 +513,9 @@ void DirectSoundPlayer2Thread::SetEndFrame(long long new_end_frame)
 {
 	CheckError();
 	std::lock_guard<std::mutex> lock(linuxState->mutex);
+	// The producer stops playback when the audible frame reaches the new end:
+	// frames up to the end may still be queued and not yet heard.
 	end_frame = new_end_frame;
-	if (linuxState->currentFrame >= end_frame)
-		linuxState->playing = false;
 	linuxState->cv.notify_all();
 }
 
@@ -432,10 +553,13 @@ long long DirectSoundPlayer2Thread::GetCurrentFrame()
 	CheckError();
 	std::lock_guard<std::mutex> lock(linuxState->mutex);
 	if (!linuxState->playing) return 0;
-	const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-		std::chrono::steady_clock::now() - linuxState->playbackStart).count();
-	long long audibleFrame = start_frame + elapsed * provider->GetSampleRate() / 1000;
-	return std::min(audibleFrame, end_frame.load());
+	// until the seek to the start is done the pipeline still reports the old position
+	gint64 position = 0;
+	if (linuxState->restart || !linuxState->pipeline ||
+		!gst_element_query_position(linuxState->pipeline, GST_FORMAT_TIME, &position) || position < 0)
+		return start_frame;
+	long long audibleFrame = (long long)gst_util_uint64_scale_round(position, provider->GetSampleRate(), GST_SECOND);
+	return std::clamp(audibleFrame, start_frame.load(), end_frame.load());
 }
 
 long long DirectSoundPlayer2Thread::GetEndFrame()
@@ -566,6 +690,17 @@ void DirectSoundPlayer2Thread::Run()
 	bool playback_should_be_running = false;
 	int current_latency = wanted_latency;
 	const DWORD wanted_latency_bytes = wanted_latency * waveFormat.nAvgBytesPerSec / 1000;
+	// an unplugged device fails every call; the thread then ends and the next
+	// Play opens a new player on the current default device
+	bool device_lost = false;
+	auto lose_device = [&](HRESULT res) {
+		HikariLog(wxString::Format(L"The audio device was lost (0x%08X), playback stopped.", (unsigned)res));
+		audioBuffer->Stop();
+		SetStopped();
+		playback_should_be_running = false;
+		device_lost = true;
+		running = false;
+	};
 
 	while (running)
 	{
@@ -594,9 +729,7 @@ void DirectSoundPlayer2Thread::Run()
 					res = audioBuffer->Lock(buffer_offset, 0, (void **)&buf, &buf_size, 0, 0, DSBLOCK_ENTIREBUFFER);
 				if (FAILED(res))
 				{
-					HikariLogSilent("Could not lock buffer for playback.");
-					SetStopped();
-					playback_should_be_running = false;
+					lose_device(res);
 					break;
 				}
 
@@ -615,15 +748,21 @@ void DirectSoundPlayer2Thread::Run()
 						// Very short playback length, do without streaming playback
 						current_latency = (bytes_filled * 1000) / waveFormat.nAvgBytesPerSec;
 						current_latency = (bytes_filled * 1000) / waveFormat.nAvgBytesPerSec;
-						if (FAILED(audioBuffer->Play(0, 0, 0)))
-							HikariLogSilent("Could not start single-buffer playback.");
+						res = audioBuffer->Play(0, 0, 0);
+						if (FAILED(res)) {
+							lose_device(res);
+							break;
+						}
 					}
 					else
 					{
 						// We filled the entire buffer so there's reason to do streaming playback
 						current_latency = wanted_latency;
-						if (FAILED(audioBuffer->Play(0, 0, DSBPLAY_LOOPING)))
-							HikariLogSilent("Could not start looping playback.");
+						res = audioBuffer->Play(0, 0, DSBPLAY_LOOPING);
+						if (FAILED(res)) {
+							lose_device(res);
+							break;
+						}
 					}
 
 					SetWritten(next_input_frame, buffer_offset, bytes_filled >= wanted_latency_bytes, true);
@@ -688,9 +827,12 @@ do_fill_buffer:
 				if (!playback_should_be_running)
 					break;
 
-				DWORD status;
-				if (FAILED(audioBuffer->GetStatus(&status)))
-					HikariLogDebug("Could not get playback buffer status");
+				DWORD status = 0;
+				HRESULT res = audioBuffer->GetStatus(&status);
+				if (FAILED(res)) {
+					lose_device(res);
+					break;
+				}
 
 					if (!(status & DSBSTATUS_LOOPING))
 					{
@@ -702,9 +844,12 @@ do_fill_buffer:
 						break;
 					}
 
-					DWORD play_cursor;
-					if (FAILED(audioBuffer->GetCurrentPosition(&play_cursor, 0)))
-						HikariLogDebug("Could not get play cursor position for filling buffer.");
+					DWORD play_cursor = 0;
+					res = audioBuffer->GetCurrentPosition(&play_cursor, 0);
+					if (FAILED(res)) {
+						lose_device(res);
+						break;
+					}
 
 						int bytes_needed = (int)play_cursor - (int)buffer_offset;
 					if (bytes_needed < 0) bytes_needed += (int)bufSize;
@@ -722,7 +867,7 @@ do_fill_buffer:
 					//assert(buffer_offset < bufSize);
 					//assert((unsigned long)bytes_needed <= bufSize);
 
-					HRESULT res = audioBuffer->Lock(buffer_offset, bytes_needed, (void** )&buf1, &buf1sz, (void** )&buf2, &buf2sz, 0);
+					res = audioBuffer->Lock(buffer_offset, bytes_needed, (void** )&buf1, &buf1sz, (void** )&buf2, &buf2sz, 0);
 					if (res == DSERR_BUFFERLOST)
 					{
 						// the contents went with the buffer, so start filling it over
@@ -735,7 +880,7 @@ do_fill_buffer:
 					}
 					if (FAILED(res))
 					{
-						HikariLogDebug(wxString::Format(L"Could not lock the playback buffer (0x%08X).", (unsigned)res));
+						lose_device(res);
 						break;
 					}
 
@@ -778,6 +923,9 @@ do_fill_buffer:
 	}
 	audioBuffer->Release();
 	defaultPlayback->Release();
+	// IsDead now reports the thread gone, so the player is opened again
+	if (device_lost)
+		ResetEvent(thread_running);
 }
 
 void DirectSoundPlayer2Thread::SetWritten(long long frame, unsigned long offset, bool refills, bool started)

@@ -186,7 +186,7 @@ bool ProviderDummy::ParseDummyData(const wxString& data)
 	wxString strpattern = tokenzr.GetNextToken();
 
 	double dfps = 0;
-	if (!strfps.ToCDouble(&dfps))
+	if (!strfps.ToCDouble(&dfps) || !(dfps > 0))
 		return false;
 	m_FPS = dfps;
 	int nframes = wxAtoi(strnumframes);
@@ -198,7 +198,8 @@ bool ProviderDummy::ParseDummyData(const wxString& data)
 	m_duration = (nframes * frametime) / 1000.;
 	int width = wxAtoi(strwidth);
 	int height = wxAtoi(strheight);
-	if (!width || !height)
+	//the frame plane is width * height * 4 bytes in an int
+	if (width < 1 || height < 1 || width > 16384 || height > 16384)
 		return false;
 
 	m_width = width;

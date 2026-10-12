@@ -446,6 +446,18 @@ void ColorPickerScreenDropper::DropFromScreenXY(int x, int y)
 
 void ColorPickerScreenDropper::SendGetColorEvent(int x, int y)
 {
+#ifndef _WIN32
+	// DropFromScreenXY cannot read the screen on Wayland, so the capture still
+	// holds its initial white; report the failure instead of picking it
+	if (HikariSubIsWayland()){
+		static bool reported = false;
+		if (!reported){
+			reported = true;
+			HikariLog(_("Picking a color from the screen is not supported on Wayland"));
+		}
+		return;
+	}
+#endif
 	wxColour color;
 	wxMemoryDC capdc(capture);
 	capdc.GetPixel(x, y, &color);
@@ -752,17 +764,17 @@ void DialogColorPicker::AddRecent(const AssColor color)
 		Options.SetString(COLORPICKER_RECENT_COLORS, DCP->recent_box->StoreToString());
 	}
 	else{
-		wxString recentString = Options.GetString(COLORPICKER_RECENT_COLORS);
+		// the new colour first, then the stored ones without duplicates, at most 32
 		wxString stringColor = color.GetAss(true);
-		size_t reps = recentString.Replace(stringColor, emptyString);
-		if (reps){
-			recentString.Replace(L"  ", L" ");
+		wxArrayString recent;
+		recent.Add(stringColor);
+		wxStringTokenizer tokens(Options.GetString(COLORPICKER_RECENT_COLORS), L" ", wxTOKEN_STRTOK);
+		while (tokens.HasMoreTokens() && recent.GetCount() < 32){
+			wxString token = tokens.GetNextToken();
+			if (recent.Index(token, false) == wxNOT_FOUND)
+				recent.Add(token);
 		}
-		recentString = stringColor + L" " + recentString;
-		while (recentString.Freq(L' ') > 31){
-			recentString = recentString.BeforeLast(L' ');
-		}
-		Options.SetString(COLORPICKER_RECENT_COLORS, recentString);
+		Options.SetString(COLORPICKER_RECENT_COLORS, wxJoin(recent, L' ', 0));
 	}
 }
 
@@ -1383,7 +1395,6 @@ SimpleColorPickerDialog::SimpleColorPickerDialog(wxWindow *parent, const AssColo
 	else
 		colorType->SetSelection(colorNum - 1);
 	Bind(wxEVT_COMMAND_CHOICE_SELECTED, [=, this](wxCommandEvent &evt){
-		AddRecent();
 		wxCommandEvent ctcevt(COLOR_TYPE_CHANGED, GetId());
 		//selections starts from 0, colors from 1
 		ctcevt.SetInt(colorType->GetSelection() + 1);

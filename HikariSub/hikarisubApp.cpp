@@ -44,7 +44,9 @@
 #include <wx/weakref.h>
 #include <wx/translation.h>
 #ifndef _WIN32
+#include "PrivateFolder.h"
 #include <clocale>
+#include <cstring>
 #include <cstdlib>
 #include <wx/tokenzr.h>
 #include <wx/tooltip.h>
@@ -91,30 +93,34 @@ const wxString HikariSubIpcTopic()
 	return L"HikariSubOpenFiles";
 }
 
+// The socket a second instance passes the files to open to the first
+// through, in a folder only the user may open that no other user can rename
+// or replace, see UserRuntimeSocketPath: in the shared temporary folder,
+// another user could take its name first and be sent the paths, or connect
+// to it and have files opened. Found once, so the socket removed at the end
+// is the one made at the start. Empty when there is no such folder; files
+// are then not passed on.
 wxString HikariSubIpcServiceName()
 {
-	wxString user = wxGetUserId();
-	if (user.empty()){
-		user = L"user";
-	}
-	wxString safeUser;
-	for (size_t i = 0; i < user.length(); ++i){
-		const wxUniChar ch = user[i];
-		if ((ch >= L'0' && ch <= L'9') || (ch >= L'A' && ch <= L'Z') ||
-			(ch >= L'a' && ch <= L'z') || ch == L'_' || ch == L'-'){
-			safeUser += ch;
+	static const wxString name = []() {
+		std::string socket = UserRuntimeSocketPath("hikarisub.ipc");
+		if (socket.empty()){
+			HikariLogSilent(L"No folder only this user can open for the socket that passes files to a running instance");
+			return wxString();
 		}
-		else{
-			safeUser += L'_';
-		}
-	}
-	return wxFileName::GetTempDir() + wxFileName::GetPathSeparator() + L"hikarisub-" + safeUser + L".ipc";
+		return wxString(socket.c_str(), *wxConvFileName);
+	}();
+	return name;
 }
 
 void RemoveHikariSubIpcSocket()
 {
+	wxString name = HikariSubIpcServiceName();
+	if (name.empty()){
+		return;
+	}
 	wxLogNull noLog;
-	wxRemoveFile(HikariSubIpcServiceName());
+	wxRemoveFile(name);
 }
 
 class HikariSubIpcConnection : public wxConnection
@@ -151,12 +157,16 @@ public:
 
 bool SendOpenPathsToRunningInstance(const wxString& packedPaths)
 {
-	if (packedPaths.empty()){
+	wxString service = HikariSubIpcServiceName();
+	if (packedPaths.empty() || service.empty()){
 		return false;
 	}
 	wxClient client;
 	for (int attempt = 0; attempt < 100; ++attempt){
-		wxConnectionBase *connection = client.MakeConnection(L"localhost", HikariSubIpcServiceName(), HikariSubIpcTopic());
+		//the socket must still be the user's own in a private folder, so the
+		//paths are sent to no other user's socket
+		wxConnectionBase *connection = IsUserRuntimeSocket(std::string(service.fn_str().data())) ?
+			client.MakeConnection(L"localhost", service, HikariSubIpcTopic()) : nullptr;
 		if (connection){
 			const bool sent = connection->Execute(packedPaths);
 			connection->Disconnect();
@@ -267,7 +277,11 @@ bool hikarisubApp::OnInit()
 #ifndef _WIN32
 		RemoveHikariSubIpcSocket();
 		m_ipcServer = new HikariSubIpcServer();
-		if (!m_ipcServer->Create(HikariSubIpcServiceName())){
+		wxString service = HikariSubIpcServiceName();
+		//wxServer makes the socket under umask 077; it is used only when it
+		//is then the user's socket, 0600, in the folder that was checked
+		if (service.empty() || !m_ipcServer->Create(service) ||
+			!NarrowUserRuntimeSocket(std::string(service.fn_str().data()))){
 			delete m_ipcServer;
 			m_ipcServer = nullptr;
 			HikariLogSilent(L"Cannot create HikariSub IPC server for opening files in a running instance");
@@ -362,9 +376,7 @@ bool hikarisubApp::OnInit()
 				}
 #endif
 				if (!locale->AddCatalog(HIKARISUB_CATALOG_DOMAIN, wxLANGUAGE_ENGLISH, L"UTF-8")){
-#ifdef _WIN32
 					HikariMessageBox(_("Cannot find translation, language change failed"));
-#endif
 				}
 			}
 		}
@@ -375,6 +387,16 @@ bool hikarisubApp::OnInit()
 
 		//on x64 it makes not working unicode toupper tolower conversion
 		//setlocale(LC_CTYPE, "C");
+		//without a wxLocale (English, or when it failed) LC_CTYPE stays "C",
+		//then case-insensitive matching folds only A-Z
+		const char *ctype = setlocale(LC_CTYPE, nullptr);
+		if (!ctype || !strcmp(ctype, "C") || !strcmp(ctype, "POSIX")){
+			ctype = setlocale(LC_CTYPE, "");
+#ifndef _WIN32
+			if (!ctype || !strcmp(ctype, "C") || !strcmp(ctype, "POSIX"))
+				setlocale(LC_CTYPE, "C.UTF-8");
+#endif
+		}
 		//locale numbers changes here cause of it is set with wxlocale, I have to change it back
 		setlocale(LC_NUMERIC, "C");
 
@@ -505,7 +527,7 @@ bool hikarisubApp::OnInit()
 		bool loadSession = true;
 #else
 		int session = Options.GetInt(LAST_SESSION_CONFIG);
-		bool loadSession = (session == 2 || Options.HasCrashed()) && !hasPaths;
+		bool loadSession = session == 2 && !hasPaths;
 		if (session == 1 && !hasPaths){
 			if (HikariMessageBox(_("Load last session?"), _("Prompt"), wxYES_NO, Frame) == wxYES){
 				loadSession = true;

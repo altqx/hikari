@@ -179,8 +179,18 @@ void SpellCheckerDialog::Replace(wxCommandEvent &evt)
 		}
 	}
 	wxString replaceTxt = replaceWord->GetValue();
-	if (replaceTxt.IsEmpty() || !errors.size()){ return; }
+	// past the end of the list once the walk is over
+	if (replaceTxt.IsEmpty() || lastMisspell >= errors.size()){ return; }
 	tab = Hikari->GetTab();
+	// commit unsent Line editor typing, the row reload after the change would drop it
+	tab->edit->Send(EDITBOX_LINE_EDITION, false);
+	const wxString &editedText = (tab->grid->hasTLMode) ? tab->edit->line->TextTl : tab->edit->line->Text;
+	if (editedText != lastText){
+		// the misspell positions belong to the old text, look again
+		lastMisspell = 0;
+		SetNextMisspell();
+		return;
+	}
 	Dialogue *Dial = tab->grid->CopyDialogue(lastLine);
 	wxString &Text = Dial->Text.CheckTlRef(Dial->TextTl, tab->grid->hasTLMode);
 	SpellChecker::Get()->ReplaceMisspell(errors[lastMisspell].misspell, replaceTxt, 
@@ -188,7 +198,7 @@ void SpellCheckerDialog::Replace(wxCommandEvent &evt)
 	tab->grid->SetModified(SPELL_CHECKER);
 	int oldPos = errors[lastMisspell].posStart;
 	SetNextMisspell();
-	if (errors[lastMisspell].posStart == oldPos) {
+	if (lastMisspell < errors.size() && errors[lastMisspell].posStart == oldPos) {
 		lastMisspell++;
 		SetNextMisspell();
 	}
@@ -201,6 +211,8 @@ void SpellCheckerDialog::ReplaceAll(wxCommandEvent &evt)
 	wxString misspellTxtLower = misspellTxt.Lower();
 	if (replaceTxt.IsEmpty() || misspellTxt.IsEmpty()){ return; }
 	tab = Hikari->GetTab();
+	// commit unsent Line editor typing, the row reload after the change would drop it
+	tab->edit->Send(EDITBOX_LINE_EDITION, false);
 	bool noComments = ignoreComments->GetValue();
 
 	wxString text;

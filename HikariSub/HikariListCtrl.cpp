@@ -1070,7 +1070,7 @@ void HikariListCtrl::ScrollTo(int row){
 
 void HikariListCtrl::PushHistory()
 {
-	if (iter != historyList.size()){
+	if (iter + 1 < (int)historyList.size()){
 		for (auto it = historyList.begin() + iter + 1; it != historyList.end(); it++)
 		{
 			delete (*it);
@@ -1090,7 +1090,7 @@ void HikariListCtrl::StartEdition()
 
 void HikariListCtrl::Undo(wxCommandEvent &evt)
 {
-	if (iter > 0){
+	if (iter > 0 && iter <= (int)historyList.size()){
 		iter--;
 		List * actual = historyList[iter]->Copy();
 		for (size_t i = 0; i < itemList->size(); i++){

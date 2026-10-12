@@ -46,7 +46,6 @@ find_package(wxWidgets 3.3.3 EXACT REQUIRED COMPONENTS core base adv aui html xm
 include(${wxWidgets_USE_FILE})
 pkg_check_modules(LIBASS REQUIRED IMPORTED_TARGET libass)
 pkg_check_modules(FFMS2 REQUIRED IMPORTED_TARGET ffms2)
-pkg_check_modules(LUA REQUIRED IMPORTED_TARGET luajit)
 pkg_check_modules(HUNSPELL REQUIRED IMPORTED_TARGET hunspell)
 pkg_check_modules(UCHARDET REQUIRED IMPORTED_TARGET uchardet)
 pkg_check_modules(LIBCURL REQUIRED IMPORTED_TARGET libcurl)
@@ -59,6 +58,15 @@ pkg_check_modules(FONTCONFIG REQUIRED IMPORTED_TARGET fontconfig)
 # frames the app composites (libass subtitles + progress bar) and presents through
 # the shared wx paint path, and gstreamer-audio provides linear volume.
 pkg_check_modules(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0 gstreamer-app-1.0)
+# LuaJIT is the vendored one, built as the Windows build builds it (Lua 5.2
+# extensions on, string.buffer off), not the distribution's: see the module.
+include(${CMAKE_SOURCE_DIR}/cmake/VendoredLuaJIT.cmake)
+# DependencyControl's native modules, written where requireffi looks for them
+# next to the executable (as the Windows build writes its DLLs) and packaged.
+include(${CMAKE_SOURCE_DIR}/cmake/DependencyControlModules.cmake)
+set(HIKARISUB_DEPCTRL_DIR "${CMAKE_BINARY_DIR}/Automation/automation/Include")
+hikarisub_add_dependencycontrol_modules("${HIKARISUB_DEPCTRL_DIR}")
+string(REPLACE ";" "|" HIKARISUB_DEPCTRL_MODULE_LIST "${HIKARISUB_DEPCTRL_MODULES}")
 
 # Link Boost statically on Linux so the built binary does not depend on the
 # exact distro Boost shared-library SONAME, e.g. libboost_filesystem.so.1.83.0.
@@ -80,6 +88,35 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/Thirdparty/ffms2/src/core/indexing.h")
         "Thirdparty/ffms2 is empty -- the git submodules have not been checked out.\n"
         "Run:  git submodule update --init --recursive")
 endif()
+
+# ASSFoundation measures rendered lines through SubInspector, which
+# Automation/automation/Include/SubInspector/Inspector.moon loads with requireffi
+# from Include/SubInspector/Inspector/.  The automation tree carries only the
+# Windows SubInspector.dll, so Linux builds libSubInspector.so from the pinned
+# Thirdparty/SubInspector submodule against the libass the app links, and
+# cmake/PackageLinuxRuntime.cmake installs it beside that DLL.
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/Thirdparty/SubInspector/src/SubInspector.c")
+    message(FATAL_ERROR
+        "Thirdparty/SubInspector is empty -- the git submodules have not been checked out.\n"
+        "Run:  git submodule update --init --recursive")
+endif()
+add_library(subinspector SHARED Thirdparty/SubInspector/src/SubInspector.c)
+# NO_ZLIB selects SubInspector's own crc32, as the shipped Windows DLL was built.
+target_compile_definitions(subinspector PRIVATE NO_ZLIB)
+target_link_libraries(subinspector PRIVATE PkgConfig::LIBASS)
+# The package copies this build-tree file to
+# Automation/automation/Include/SubInspector/Inspector/, five levels below the
+# executable and the libass it bundles there; old-style DT_RPATH, as the
+# executable uses, so that bundled libass is the one it resolves.
+set_target_properties(subinspector PROPERTIES
+    OUTPUT_NAME SubInspector
+    C_STANDARD 99
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/subinspector"
+    BUILD_RPATH "$ORIGIN/../../../../.."
+    # Not wxWidgets' link directory, which would otherwise land in its RPATH.
+    LINK_DIRECTORIES ""
+)
+target_link_options(subinspector PRIVATE "-Wl,--disable-new-dtags")
 
 add_compile_definitions(_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING _CRT_SECURE_NO_WARNINGS HAVE_DLL_EXPORT LINUX_BUILD HIKARISUB_LINUX_BUILD)
 add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-include> $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_SOURCE_DIR}/HikariSub/platform.h> -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
@@ -126,11 +163,13 @@ add_executable(hikarisub
     HikariSub/FontCatalogList.cpp
     HikariSub/HikariGauge.cpp
     HikariSub/HikariPanel.cpp
+    HikariSub/LineGroups.cpp
     HikariSub/LineParse.cpp
     HikariSub/AssBlend.cpp
     HikariSub/FrameQueue.cpp
     HikariSub/Playback.cpp
     HikariSub/WaveformPeaks.cpp
+    HikariSub/TextComparison.cpp
     HikariSub/Provider.cpp
     HikariSub/ProviderDummy.cpp
     HikariSub/ProviderFFMS2.cpp
@@ -212,6 +251,8 @@ add_executable(hikarisub
     HikariSub/NewCatalog.cpp
     HikariSub/NumCtrl.cpp
     HikariSub/OpennWrite.cpp
+    HikariSub/SaveFile.cpp
+    HikariSub/PrivateFolder.cpp
     HikariSub/OptionsDialog.cpp
     HikariSub/ProgressDialog.cpp
     HikariSub/ScriptInfo.cpp
@@ -260,8 +301,9 @@ add_custom_target(hikarisub_gitparams ALL
     COMMENT "Generating gitparams.h from git HEAD"
     VERBATIM
 )
-add_dependencies(hikarisub hikarisub_gitparams)
-target_link_libraries(hikarisub PRIVATE ${wxWidgets_LIBRARIES} PkgConfig::LIBASS PkgConfig::FFMS2 PkgConfig::LUA PkgConfig::HUNSPELL PkgConfig::UCHARDET PkgConfig::LIBCURL PkgConfig::ICU_UC PkgConfig::ICU_I18N PkgConfig::FFMPEG PkgConfig::FONTCONFIG PkgConfig::GSTREAMER Boost::filesystem Boost::locale Boost::regex $<$<BOOL:${Boost_SYSTEM_FOUND}>:Boost::system> $<$<BOOL:${Boost_THREAD_FOUND}>:Boost::thread> GL ${CMAKE_DL_LIBS})
+add_dependencies(hikarisub hikarisub_gitparams
+    hikarisub_depctrl_badmutex hikarisub_depctrl_precisetimer hikarisub_depctrl_downloadmanager)
+target_link_libraries(hikarisub PRIVATE ${wxWidgets_LIBRARIES} PkgConfig::LIBASS PkgConfig::FFMS2 hikarisub_luajit PkgConfig::HUNSPELL PkgConfig::UCHARDET PkgConfig::LIBCURL PkgConfig::ICU_UC PkgConfig::ICU_I18N PkgConfig::FFMPEG PkgConfig::FONTCONFIG PkgConfig::GSTREAMER Boost::filesystem Boost::locale Boost::regex $<$<BOOL:${Boost_SYSTEM_FOUND}>:Boost::system> $<$<BOOL:${Boost_THREAD_FOUND}>:Boost::thread> GL ${CMAKE_DL_LIBS})
 set_target_properties(hikarisub PROPERTIES
     BUILD_RPATH "$ORIGIN"
     INSTALL_RPATH "$ORIGIN"
@@ -361,8 +403,12 @@ add_custom_target(hikarisub_linux_package
             -D PACKAGING_DIR=${CMAKE_SOURCE_DIR}/packaging/linux
             -D DESKTOP_GEN_DIR=${CMAKE_BINARY_DIR}/packaging
             -D SYSTEM_DICTIONARY_DIR=${HIKARISUB_SYSTEM_DICTIONARY_DIR}
+            -D DEPCTRL_MODULE_DIR=${HIKARISUB_DEPCTRL_DIR}
+            -D DEPCTRL_MODULES=${HIKARISUB_DEPCTRL_MODULE_LIST}
+            -D SUBINSPECTOR_LIBRARY=$<TARGET_FILE:subinspector>
             -P "${CMAKE_SOURCE_DIR}/cmake/PackageLinuxRuntime.cmake"
-    DEPENDS hikarisub
+    DEPENDS hikarisub subinspector
+            hikarisub_depctrl_badmutex hikarisub_depctrl_precisetimer hikarisub_depctrl_downloadmanager
     BYPRODUCTS
         "${HIKARISUB_PACKAGE_ARCHIVE}"
         "${HIKARISUB_PACKAGE_ARCHIVE}.sha256"

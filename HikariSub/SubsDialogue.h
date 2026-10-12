@@ -26,6 +26,7 @@
 #include <wx/colour.h>
 #include <vector>
 #include <atomic>
+#include <cstdint>
 
 enum {
 	LAYER = 1,
@@ -338,7 +339,15 @@ public:
 	short MarginL, MarginR, MarginV;
 	char Format, treeState = 0;
 	bool NonDialogue, IsComment;
+	//a translation mode line read as an original and translation pair is
+	//saved as a pair even with no translation
+	bool tlPair = false;
 	Visibility isVisible;
+	// identity of the line for keeping Line groups whole: Copy keeps it, so a
+	// moved or edited line is still the same line; a new line gets a new one
+	uint64_t lineId = NextLineId();
+	void RenewLineId() { lineId = NextLineId(); }
+	static uint64_t NextLineId();
 
 	char GetState();
 	//it works like XOR

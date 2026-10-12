@@ -358,12 +358,14 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClCompile Include="FontCatalogList.cpp" />
     <ClCompile Include="HikariGauge.cpp" />
     <ClCompile Include="HikariPanel.cpp" />
+    <ClCompile Include="LineGroups.cpp" />
     <ClCompile Include="LineParse.cpp" />
     <ClCompile Include="AssBlend.cpp" />
     <ClCompile Include="D3D9Device.cpp" />
     <ClCompile Include="FrameQueue.cpp" />
     <ClCompile Include="Playback.cpp" />
     <ClCompile Include="WaveformPeaks.cpp" />
+    <ClCompile Include="WindowsSaveFile.cpp" />
     <ClCompile Include="Provider.cpp" />
     <ClCompile Include="ProviderDummy.cpp" />
     <ClCompile Include="ProviderFFMS2.cpp" />
@@ -424,6 +426,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClCompile Include="SubtitlesLibass.cpp" />
     <ClCompile Include="SubtitlesProviderManager.cpp" />
     <ClCompile Include="SubtitlesVSFilter.cpp" />
+    <ClCompile Include="TextComparison.cpp" />
     <ClCompile Include="TextEditorTagList.cpp" />
     <ClCompile Include="UtilsWindows.cpp" />
     <ClCompile Include="VideoToolbar.cpp" />
@@ -527,6 +530,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="HikariGauge.h" />
     <ClInclude Include="HikariSubFrame.h" />
     <ClInclude Include="HikariPanel.h" />
+    <ClInclude Include="LineGroups.h" />
     <ClInclude Include="LineParse.h" />
     <ClInclude Include="Notebook.h" />
     <ClInclude Include="AssBlend.h" />
@@ -535,6 +539,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="ParsedScripts.h" />
     <ClInclude Include="Playback.h" />
     <ClInclude Include="WaveformPeaks.h" />
+    <ClInclude Include="WindowsSaveFile.h" />
     <ClInclude Include="Provider.h" />
     <ClInclude Include="ProviderDummy.h" />
     <ClInclude Include="ProviderFFMS2.h" />
@@ -601,13 +606,16 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="SubsResampleDialog.h" />
     <ClInclude Include="SubtitlesProvider.h" />
     <ClInclude Include="SubtitlesProviderManager.h" />
+    <ClInclude Include="SrtTags.h" />
     <ClInclude Include="TagFindReplace.h" />
+    <ClInclude Include="TextComparison.h" />
     <ClInclude Include="TextEditorTagList.h" />
     <ClInclude Include="Toolbar.h" />
     <ClInclude Include="UtilsWindows.h" />
     <ClInclude Include="SemVer.h" />
     <ClInclude Include="VersionHikariSub.h" />
     <ClInclude Include="Hotkeys.h" />
+    <ClInclude Include="HotkeysFile.h" />
     <ClInclude Include="KaraokeSplitting.h" />
     <ClInclude Include="NewCatalog.h" />
     <ClInclude Include="NumCtrl.h" />

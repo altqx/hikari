@@ -158,6 +158,10 @@ MisspellReplacer::~MisspellReplacer()
 {
 	if (rules.size())
 		SaveRules();
+	// the results window is parented to the main frame, so it would
+	// otherwise outlive this tool and keep a pointer to it
+	if (resultDialog)
+		resultDialog->Destroy();
 }
 
 void MisspellReplacer::ReplaceChecked()
@@ -173,7 +177,7 @@ void MisspellReplacer::ReplaceChecked()
 		if (!rule->IsValid()){
 			//HikariLog(wxString::Format("Szablon wyrażeń regularnych \"%s\" jest nieprawidłowy", rules[checkedRules[i]].first));
 			delete rule;
-			continue;
+			rule = nullptr;
 		}
 		rxrules.push_back(rule);
 	}
@@ -263,6 +267,7 @@ void MisspellReplacer::FillRulesList()
 	if (rulesText.empty()){
 		FillWithDefaultRules(rulesText);
 	}
+	rulesText.Replace(L"\r\n", L"\n");
 	wxStringTokenizer tokenizer(rulesText, L"\n", wxTOKEN_STRTOK);
 	wxString headertoken = tokenizer.GetNextToken();
 	if (headertoken.StartsWith(L"#HikariSub rules file"))
@@ -274,6 +279,8 @@ void MisspellReplacer::FillRulesList()
 		wxString token = tokenizer.GetNextToken();
 		wxString OnOff = (tokenizerOnOff.HasMoreTokens()) ? tokenizerOnOff.GetNextToken() : wxString(L"0");
 		Rule newRule(token);
+		if (!newRule.isValid)
+			continue;
 		rules.push_back(newRule);
 
 		int row = RulesList->AppendItem(new ItemCheckBox(OnOff == L"1", emptyString));
@@ -369,7 +376,7 @@ void MisspellReplacer::SeekOnTab(TabPanel *tab)
 			delete rule;
 			continue;
 		}
-		rxrules.push_back(std::make_pair(rule, actualRule.options));
+		rxrules.push_back(std::make_pair(rule, checkedRules[i]));
 	}
 
 	//0-all lines 1-selected lines 2-from selected 3-by styles
@@ -392,7 +399,7 @@ void MisspellReplacer::SeekOnTab(TabPanel *tab)
 		Dialogue *Dial = Subs->GetDialogue(tabLinePosition);
 		if (!Dial->isVisible || (tab->grid->ignoreFiltered && Dial->NonDialogue)){ tabLinePosition++; continue; }
 
-		if ((!selectedOption) ||
+		if ((!selectedOption) || selectedOption == 2 ||
 			(selectedOption == 3 && stylesAsText.Find(L"," + Dial->Style + L",") != -1) ||
 			(selectedOption == 1 && tab->grid->file->IsSelected(tabLinePosition))){
 			const wxString & lineText = (Dial->TextTl != emptyString) ? Dial->TextTl : Dial->Text;
@@ -409,7 +416,7 @@ void MisspellReplacer::SeekOnTab(TabPanel *tab)
 					if (r->GetMatch(&matchstart, &matchlen)){
 						if (matchlen == 0)
 							matchlen++;
-						int options = rxrules[k].second;
+						int options = rules[rxrules[k].second].options;
 						if ((options < 16) || KeepFinding(lineText, matchstart + textPos, options)){
 
 							if (isfirst){
@@ -418,13 +425,15 @@ void MisspellReplacer::SeekOnTab(TabPanel *tab)
 							}
 
 							resultDialog->SetResults(lineText, wxPoint(matchstart + textPos, matchlen),
-								tab, tabLinePosition, positionId + 1, checkedRules[k]);
+								tab, tabLinePosition, positionId + 1, rxrules[k].second);
 						}
 					}
 					else
 						break;
 
 					textPos += (matchstart + matchlen);
+					if (textPos >= (int)lineText.length())
+						break;
 					text = lineText.Mid(textPos);
 				}
 
@@ -515,7 +524,7 @@ void MisspellReplacer::ReplaceOnTab(TabPanel *tab)
 		Dialogue *Dial = Subs->GetDialogue(tabLinePosition);
 		if (!Dial->isVisible || (tab->grid->ignoreFiltered && Dial->NonDialogue)){ tabLinePosition++; continue; }
 
-		if ((!selectedOption) ||
+		if ((!selectedOption) || selectedOption == 2 ||
 			(selectedOption == 3 && stylesAsText.Find(L"," + Dial->Style + L",") != -1) ||
 			(selectedOption == 1 && tab->grid->file->IsSelected(tabLinePosition))){
 			const wxString & lineText = Dial->Text.CheckTl(Dial->TextTl, Dial->TextTl != emptyString);
@@ -524,7 +533,7 @@ void MisspellReplacer::ReplaceOnTab(TabPanel *tab)
 			for (size_t k = 0; k < rxrules.size(); k++){
 				int textPos = 0;
 				//int replaceDiff = 0;
-				wxString text = lineText;
+				wxString text = stringChanged;
 				wxRegEx *r = rxrules[k].first;
 
 				while (r->Matches(text)) {
@@ -538,7 +547,7 @@ void MisspellReplacer::ReplaceOnTab(TabPanel *tab)
 						if ((options < 16) || KeepFinding(text, matchstart, options)){
 							wxString replacedResult;
 							wxString matchResult = replacedResult = stringChanged.Mid(matchstart + textPos, matchlen);
-							int reps = r->Replace(&replacedResult, actualrule.replaceRule);
+							int reps = r->Replace(&replacedResult, actualrule.replaceRule, 1);
 
 							MoveCase(matchResult, &replacedResult, actualrule.options);
 
@@ -553,6 +562,8 @@ void MisspellReplacer::ReplaceOnTab(TabPanel *tab)
 						break;
 
 					textPos += (matchstart + matchlen);
+					if (textPos >= (int)stringChanged.length())
+						break;
 					text = stringChanged.Mid(textPos);
 				}
 
@@ -607,12 +618,16 @@ bool MisspellReplacer::ReplaceBlock(std::vector<ReplacerSeekResults *> &results,
 	bool somethingChanged = false;
 	for (auto & SeekResult : results){
 
+		if (SeekResult->numOfRule < 0 || SeekResult->numOfRule >= (int)rxrules.size() ||
+			!rxrules[SeekResult->numOfRule])
+			continue;
+
 		size_t pos = SeekResult->findPosition.x;
 		size_t len = SeekResult->findPosition.y;
 		const Rule & actualrule = rules[SeekResult->numOfRule];
 		wxString replacedResult;
 		wxString matchResult = replacedResult = lineText.Mid(pos, len);
-		int reps = rxrules[SeekResult->numOfRule]->Replace(&replacedResult, actualrule.replaceRule);
+		int reps = rxrules[SeekResult->numOfRule]->Replace(&replacedResult, actualrule.replaceRule, 1);
 		if (reps > 0){
 			MoveCase(matchResult, &replacedResult, actualrule.options);
 
@@ -765,5 +780,6 @@ Rule::Rule(const wxString & stringRule)
 	return;
 
 fail:
+	isValid = false;
 	HikariLog(wxString::Format(_("Rule \"%s\" is invalid."), stringRule));
 }

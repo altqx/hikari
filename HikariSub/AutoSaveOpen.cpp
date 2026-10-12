@@ -16,7 +16,9 @@
 
 #include "AutoSaveOpen.h"
 #include "HikariSubFrame.h"
+#include "TabPanel.h"
 #include "HikariStaticBoxSizer.h"
+#include "OpennWrite.h"
 #include <wx/dir.h>
 #include <wx/tokenzr.h>
 
@@ -123,6 +125,14 @@ void AutoSaveOpen::FindFiles()
 void AutoSaveOpen::GenerateList()
 {
 	wxString path = Options.pathfull + L"/Subs/*";
+	//the autosaves are listed only from a folder that only the user may
+	//open, as MakePrivateFolder makes them in, and not from one another user
+	//could have put or swapped files in
+	if (wxDir::Exists(Options.pathfull + L"/Subs") && !MakePrivateFolder(Options.pathfull + L"/Subs")) {
+		HikariLog(_("Cannot open auto save folder"));
+		HikariLogSilent(wxString::Format(L"The autosave folder is not private: %s", Options.pathfull + L"/Subs"));
+		return;
+	}
 
 	TIME_ZONE_INFORMATION timeZoneInfo;
 	GetTimeZoneInformation(&timeZoneInfo);
@@ -131,7 +141,9 @@ void AutoSaveOpen::GenerateList()
 	HANDLE h = FindFirstFileW(path.wc_str(), &data);
 	if (h == INVALID_HANDLE_VALUE)
 	{
-		HikariLog(_("Cannot open auto save folder"));
+		//there is no Subs folder until the first autosave, the list is just empty
+		if (wxDir::Exists(Options.pathfull + L"/Subs"))
+			HikariLog(_("Cannot open auto save folder"));
 		return;
 	}
 
@@ -238,6 +250,16 @@ void AutoSaveOpen::OnOkClick(wxCommandEvent& evt)
 	if (it != verList->end()) {
 		wxString filePath = Options.pathfull + L"/Subs/" + it->second;
 		Hikari->OpenFile(filePath);
+		//the autosave is a recovery copy, so the first save asks where to write
+		//instead of overwriting it
+		TabPanel *tab = Hikari->GetTab();
+		if (tab && tab->SubsPath == filePath && (size_t)selFile < paths.size()) {
+			tab->SubsPath = emptyString;
+			tab->SubsName = paths[selFile];
+			tab->grid->file->RemoveLastIterSave();
+			tab->grid->UpdateUR(true);
+			Hikari->Label(tab->grid->file->GetActualHistoryIter());
+		}
 		EndModal(wxOK);
 		return;
 	}

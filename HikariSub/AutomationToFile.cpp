@@ -359,9 +359,12 @@ namespace Auto{
 			e->adial->Start = Start;
 			e->adial->End = End;
 			if (laf->subsFormat != ASS){
+				//MDVD frames need the frame rate of this tab's video, if there is one
+				TabPanel *tab = Notebook::GetTab();
+				float fps = (tab->video->GetState() != None) ? tab->video->GetFPS() : 0.f;
 				e->adial->Format = laf->subsFormat;
-				e->adial->Start.ChangeFormat(laf->subsFormat, 25.f);
-				e->adial->End.ChangeFormat(laf->subsFormat, 25.f);
+				e->adial->Start.ChangeFormat(laf->subsFormat, fps);
+				e->adial->End.ChangeFormat(laf->subsFormat, fps);
 			}
 			e->adial->Style = Style;
 			e->adial->Actor = Actor;
@@ -626,7 +629,14 @@ namespace Auto{
 				}
 				else if (i < dials && e->lclass == L"dialogue")
 				{
-					Subs->SetDialogue(i - styles, e->adial->Copy(false, false), true);
+					// the line is the same line changed: scripts do not see tree
+					// markers, so it keeps its place in a tree and its visibility
+					Dialogue *replaced = Subs->GetDialogue(i - styles);
+					Dialogue *dial = e->adial->Copy(false, false);
+					dial->treeState = replaced->treeState;
+					dial->isVisible.Init(replaced->isVisible);
+					dial->lineId = replaced->lineId;
+					Subs->SetDialogue(i - styles, dial, true);
 				}
 				else
 				{
@@ -1108,14 +1118,15 @@ namespace Auto{
 		}
 		TabPanel *tab = Notebook::GetTab();
 		Provider* FFMS2 = tab->video->GetFFMS2();
-		if (!FFMS2){
+		// a video without audio has no samples to analyse
+		if (!FFMS2 || FFMS2->AudioNotInitialized()){
 			if (!tab->edit->ABox){
 				lua_pushstring(L, "get_frequency_peaks needs loaded audio by FFMS2");
 				lua_error(L);
 				return 0;
 			}
 			FFMS2 = tab->edit->ABox->audioDisplay->provider;
-			if (!FFMS2){
+			if (!FFMS2 || FFMS2->AudioNotInitialized()){
 				lua_pushstring(L, "get_frequency_peaks cannot get audio provider");
 				lua_error(L);
 				return 0;

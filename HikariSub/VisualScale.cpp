@@ -677,22 +677,20 @@ void Scale::SortPoints()
 
 void Scale::SetScale()
 {
-	if (originalRectangleVisible) {
-		scale.x = originalScale.x * ((fabs(sizingRectangle[1].x - sizingRectangle[0].x) - border.x) /
-			(fabs(sizingRectangle[3].x - sizingRectangle[2].x) - border.x));
-		if (preserveAspectRatio)
-			scale.y = scale.x;
-		else
-			scale.y = originalScale.y * ((fabs(sizingRectangle[1].y - sizingRectangle[0].y) - border.y) /
-				(fabs(sizingRectangle[3].y - sizingRectangle[2].y) - border.y));
-	}
-	else {
-		scale.x = originalScale.x * ((fabs(sizingRectangle[1].x - sizingRectangle[0].x) - border.x) / originalSize.x);
-		if (preserveAspectRatio)
-			scale.y = scale.x;
-		else
-			scale.y = originalScale.y * ((fabs(sizingRectangle[1].y - sizingRectangle[0].y) - border.y) / originalSize.y);
-	}
+	float sizex = originalRectangleVisible ?
+		(fabs(sizingRectangle[3].x - sizingRectangle[2].x) - border.x) : originalSize.x;
+	float sizey = originalRectangleVisible ?
+		(fabs(sizingRectangle[3].y - sizingRectangle[2].y) - border.y) : originalSize.y;
+	//no size (an empty Line) cannot be scaled, keep the scale
+	scale.x = (sizex != 0.f) ?
+		originalScale.x * ((fabs(sizingRectangle[1].x - sizingRectangle[0].x) - border.x) / sizex) :
+		originalScale.x;
+	if (preserveAspectRatio)
+		scale.y = scale.x;
+	else
+		scale.y = (sizey != 0.f) ?
+			originalScale.y * ((fabs(sizingRectangle[1].y - sizingRectangle[0].y) - border.y) / sizey) :
+			originalScale.y;
 	if (scale.x < 0.f)
 		scale.x = 0.f;
 	if (scale.y < 0.f)
@@ -753,7 +751,8 @@ void Scale::ChangeClipScale(wxString* txt, const D3DXVECTOR2& activeLinePos, flo
 			float xy[4] = { 0,0,0,0 };
 			int counter = 0;
 			bool isBad = false;
-			while (tokenzr.HasMoreTokens()) {
+			//a rectangle has four values, the rest would write past xy
+			while (tokenzr.HasMoreTokens() && counter < 4) {
 				wxString token = tokenzr.GetNextToken();
 				if (token.ToDouble(&value)) {
 					xy[counter] = value;
@@ -774,10 +773,13 @@ void Scale::ChangeClipScale(wxString* txt, const D3DXVECTOR2& activeLinePos, flo
 		}
 		else {
 			if (clipFreq >= 1) {
-				wxString vscale = clip.BeforeFirst(L',', &clip);
+				wxString rest;
+				wxString vscale = clip.BeforeFirst(L',', &rest);
 				int vscaleint = wxAtoi(vscale);
 				if (vscaleint > 0)
 					vectorScale = vscaleint;
+
+				clip = rest;
 			}
 			GetVectorPoints(clip, &points);
 		}
@@ -787,14 +789,17 @@ void Scale::ChangeClipScale(wxString* txt, const D3DXVECTOR2& activeLinePos, flo
 			wxString lasttype;
 			int countB = 0;
 			bool spline = false;
+			//vector clip points are in 1 / 2^(scale - 1) pixels
+			int vscale = pow(2, (vectorScale - 1));
+			D3DXVECTOR2 pivot(activeLinePos.x * vscale, activeLinePos.y * vscale);
 			if (vectorScale > 1) {
 				newclip << vectorScale << L",";
 			}
 			for (size_t i = 0; i < psize; i++)
 			{
 				ClipPoint pos = points[i];
-				float x = activeLinePos.x + ((pos.x - activeLinePos.x) * Scalex) + 0.5f;
-				float y = activeLinePos.y + ((pos.y - activeLinePos.y) * Scaley) + 0.5f;
+				float x = pivot.x + ((pos.x - pivot.x) * Scalex) + 0.5f;
+				float y = pivot.y + ((pos.y - pivot.y) * Scaley) + 0.5f;
 
 				if (countB && !pos.start) {
 					newclip << getfloat(x, format) << L" " << getfloat(y, format) << L" ";

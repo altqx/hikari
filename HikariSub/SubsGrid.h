@@ -28,6 +28,7 @@
 #include <vector>
 #include <memory>
 #include <set>
+#include <functional>
 
 class EditBox;
 class HikariSubFrame;
@@ -95,7 +96,13 @@ public:
 	void Clearing(bool setup = true);
 	void Convert(char type);
 
-	void SaveFile(const wxString &filename, bool cstat = true, bool loadFromEditbox = false);
+	// commitEditBox false: the caller committed the edit box with
+	// CommitEditBoxForSave before it changed the document for the save;
+	// privateCopy saves a copy only the user may open, such as an autosave
+	bool SaveFile(const wxString &filename, bool cstat = true, bool loadFromEditbox = false, bool commitEditBox = true, bool privateCopy = false);
+	// commits what the edit box holds, as a save does before it writes, when
+	// typing is not committed at once (GRID_SAVE_AFTER_CHARACTER_COUNT > 1)
+	void CommitEditBoxForSave(bool loadFromEditbox = false);
 	void ChangeTimes(const ShiftTimesSettings &settings, bool byFrame = false);
 
 	void SortIt(short what, bool all = true);
@@ -113,13 +120,24 @@ public:
 	//records an undo step for the changes made since the last one and repaints the grid
 	void SetModified(unsigned char editionType, bool redit = true, bool dummy = false, int SetEditBoxLine = -1, bool Scroll = true);
 	void UpdateUR(bool tolbar = true);
-	void GetAssHeader(wxString* header, bool forFile = false, bool translated = false, bool normalSave = true);
+	// savePath: the file the header is saved to, or nullptr for the header
+	// the video renders with
+	void GetAssHeader(wxString* header, const wxString *savePath = nullptr, bool translated = false, bool normalSave = true);
 	void SwapRows(int frst, int scnd, bool sav = false);
-	void LoadSubtitles(const wxString &str, wxString &ext);
+	bool LoadSubtitles(const wxString &str, wxString &ext);
 	bool MoveRows(int step, bool keyStep = false);
 	void SetStartTime(int stime);
 	void SetEndTime(int etime);
 	bool SetTlMode(bool turnOn, bool dontShowDialog = false);
+	// takes translation mode out of the working copy: the TLMode script info
+	// and style go and the translations take the place of the original text;
+	// no step is recorded, see RecordTlModeOff
+	void RemoveTlMode();
+	// turns the mode off in the grid and records the step RemoveTlMode began
+	void RecordTlModeOff();
+	// drops the changes no step holds yet, as RemoveTlMode's before
+	// RecordTlModeOff, and shows the document as the current step has it
+	void DropUnrecordedChanges();
 	void LoadDefault(bool line = true, bool sav = true, bool endload = true);
 	void GetASSRes(int *x, int *y);
 	void GetLayoutRes(int* x, int* y);
@@ -189,6 +207,13 @@ public:
 	void ContextMenuTree(const wxPoint &pos, int treeLine);
 	bool SwapAssProperties();
 	void RefreshSubsOnVideo(int newActiveLine, bool scroll = true);
+	// Runs an edit that moves, adds or deletes lines. If it would break a
+	// tree (Line group) it is undone before it is recorded, and the user can
+	// remove the trees it breaks as a step of its own and then make the edit
+	// again; the edit is never run again by itself.
+	void RunKeepingTrees(const std::function<void()> &edit);
+	// lines the next recorded edit puts into a tree on purpose
+	std::vector<uint64_t> linesMovedIntoTree;
 
 	// the subtitles this grid shows and edits
 	SubsFile *file = nullptr;
@@ -216,6 +241,22 @@ public:
 	wxMutex &GetMutex() { return editionMutex; }
 
 private:
+	// SetModified checks that a structural edit keeps the trees whole; when it
+	// does not, the edit is undone and false returned
+	bool KeepsTrees(unsigned char editionType);
+	// asks whether to remove the trees an edit would break, and removes them
+	void AskToRemoveTrees(const LineGroups::Verdict &verdict);
+	void RemoveTrees(const std::vector<uint64_t> &descriptions);
+	// the state RunKeepingTrees restores when the edit is undone
+	struct TreeGuard {
+		bool active = false;
+		bool rejected = false;
+		LineGroups::Verdict verdict;
+		std::set<int> selections;
+		int currentLine = 0;
+		int markedLine = 0;
+		int scrollPosition = 0;
+	} treeGuard;
 	// sets the edit box line and scrolls to it after an edit
 	void ShowEditedLine(int newActive, bool scroll);
 	void ShowEditOnVideo(bool afterUndo);
@@ -241,6 +282,8 @@ private:
 	void OnPaste(int id);
 	void OnPasteTextTl();
 	void OnJoinToFirst(int id);
+	void JoinLines(int id);
+	void MoveTranslationText(char mode);
 	void InsertWithVideoTime(bool before, bool frameTime = false);
 	void OnSetFPSFromVideo();
 	void OnSetNewFPS();

@@ -76,8 +76,37 @@ void AllTags::OnMouseEvent(wxMouseEvent& event)
 		rholding = false;
 	}
 
+	bool wheel = event.GetWheelRotation() != 0;
+	if (wheel && shift) {
+		//one wheel step changes the tag once
+		if (actualTag.numOfValues)
+			slider[0].OnMouseEvent(event);
+		return;
+	}
+
 	for (size_t i = 0; i < actualTag.numOfValues; i++) {
 		slider[i].OnMouseEvent(event);
+	}
+
+	if (wheel) {
+		//sliders only take the wheel step, commit them as one step
+		bool changed = false;
+		for (size_t i = 0; i < actualTag.numOfValues; i++) {
+			if (slider[i].GetHolding())
+				changed = true;
+		}
+		if (changed) {
+			if (tab->edit->IsCursorOnStart()) {
+				SetVisual(false);
+			}
+			else {
+				SetVisual(true);
+				SetVisual(false);
+			}
+		}
+		for (size_t i = 0; i < actualTag.numOfValues; i++) {
+			slider[i].SetHolding(false);
+		}
 	}
 }
 

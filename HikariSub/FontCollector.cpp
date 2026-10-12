@@ -146,7 +146,9 @@ FontCollectorDialog::FontCollectorDialog(wxWindow *parent, FontCollector *_fc)
 
 	HikariTextValidator valid(wxFILTER_EXCLUDE_CHAR_LIST);
 	wxArrayString excludes;
+#ifdef _WIN32
 	excludes.Add(L"/");
+#endif
 	excludes.Add(L"*");
 	excludes.Add(L"?");
 	excludes.Add(L"\"");
@@ -179,10 +181,11 @@ FontCollectorDialog::FontCollectorDialog(wxWindow *parent, FontCollector *_fc)
 
 
 	fromMKV = new HikariCheckBox(this, 7991, _("Demux fonts from loaded MKV file"));
-	fromMKV->Enable(Notebook::GetTab()->VideoPath.Lower().EndsWith(L".mkv"));
+	fromMKV->Enable(Options.GetInt(FONT_COLLECTOR_ACTION) != 0 && Notebook::GetTab()->VideoPath.Lower().EndsWith(L".mkv"));
 	fromMKV->SetValue(Options.GetBool(FONT_COLLECTOR_FROM_MKV));
 
 	Connect(7998, wxEVT_COMMAND_CHECKBOX_CLICKED, (wxObjectEventFunction)&FontCollectorDialog::OnChangeOpt);
+	Connect(7991, wxEVT_COMMAND_CHECKBOX_CLICKED, (wxObjectEventFunction)&FontCollectorDialog::OnChangeOpt);
 	console = new HikariTextCtrl(this, -1, emptyString, wxDefaultPosition, wxSize(500, 400), wxTE_MULTILINE | wxTE_READONLY);
 	console->Bind(wxEVT_LEFT_DCLICK, &FontCollectorDialog::OnConsoleDoubleClick, this);
 	//console->SetBackgroundColour(Options.GetColour(WINDOW_BACKGROUND));
@@ -427,6 +430,9 @@ void FontCollectorDialog::OnButtonPath(wxCommandEvent &event)
 			(path->GetValue().EndsWith(L"zip")) ? HikariPathName(path->GetValue()) : emptyString,
 			L"zip", _("Archive files (*.zip)|*.zip"), wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	}
+	if (destdir.empty())
+		return;
+
 	Options.SetString(FONT_COLLECTOR_DIRECTORY, destdir);
 	Options.SaveOptions(true, false);
 	path->SetValue(destdir);
@@ -437,7 +443,7 @@ void FontCollectorDialog::OnButtonStart(wxCommandEvent &event)
 	console->SetValue(emptyString);
 	EnableControls(false);
 	
-	int operation = (fromMKV->GetValue() && fromMKV->IsEnabled()) ? FontCollector::COPY_MKV_FONTS :
+	int operation = (opts->GetSelection() != 0 && fromMKV->GetValue() && fromMKV->IsEnabled()) ? FontCollector::COPY_MKV_FONTS :
 		/*(opts->GetSelection() == 3) ? FontCollector::MUX_VIDEO_WITH_SUBS : */
 		(opts->GetSelection() == 0) ? FontCollector::CHECK_FONTS: FontCollector::COPY_FONTS;
 	if (event.GetId() == 9880){
@@ -450,7 +456,7 @@ void FontCollectorDialog::OnButtonStart(wxCommandEvent &event)
 		if (bOpenFontFolder->IsEnabled())
 			bOpenFontFolder->Enable(false);
 
-		bool subsfromMkv = fromMKV->GetValue();
+		bool subsfromMkv = fromMKV->GetValue() && fromMKV->IsEnabled();
 		bool subsDirectory = subsdir->GetValue();
 		Options.SetString(FONT_COLLECTOR_DIRECTORY, path->GetValue());
 		if (opts->GetSelection() == 3 && (Notebook::GetTab()->VideoPath == emptyString || Notebook::GetTab()->SubsPath == emptyString)){
@@ -479,7 +485,7 @@ void FontCollectorDialog::OnButtonStart(wxCommandEvent &event)
 		if (subsDirectory){
 			wxString sourcePath = (subsfromMkv) ? Notebook::GetTab()->VideoPath : Notebook::GetTab()->SubsPath;
 			wxString rest = HikariPathName(sourcePath);
-			wxString fontDir = HikariPathJoin(HikariPathDir(sourcePath), L"Czcionki");
+			wxString fontDir = HikariPathJoin(HikariPathDir(sourcePath), L"Fonts");
 			copypath = (opts->GetSelection() == 2) ? HikariPathJoin(fontDir, rest.BeforeLast(L'.') + L".zip") : fontDir + wxFileName::GetPathSeparator();
 		}
 		else{
@@ -549,6 +555,7 @@ void FontCollectorDialog::OnChangeOpt(wxCommandEvent &event)
 	fromMKV->Enable(opts->GetSelection() != 0 && Notebook::GetTab()->VideoPath.Lower().EndsWith(L".mkv"));
 	Options.SetInt(FONT_COLLECTOR_ACTION, opts->GetSelection());
 	Options.SetBool(FONT_COLLECTOR_USE_SUBS_DIRECTORY, subsdir->GetValue());
+	Options.SetBool(FONT_COLLECTOR_FROM_MKV, fromMKV->GetValue());
 	Options.SaveOptions(true, false);
 }
 
@@ -1207,11 +1214,11 @@ bool FontCollector::CheckPathAndGlyphs(int *found, int *notFound, int *notCopied
 						if (ext == L"pfm" || ext == L"pfb"){
 							wxString repl = (ext == L"pfm") ? L"pfb" : L"pfm";
 							if (fullpath[fullpath.length() - 1] < L'Z'){ repl = repl.Upper(); }
-							wxString secondPath = fullpath.RemoveLast(3) + repl;
+							wxString secondPath = fullpath.Left(fullpath.length() - 3) + repl;
 							fontnames.Add(secondPath);
 							flc->AppendInfo(wxString::Format(_("Found \"%s\" font file."), secondPath));
 							if (operation & COPY_FONTS){
-								if (!SaveFont(fullpath, flc))
+								if (!SaveFont(secondPath, flc))
 									(*notCopied)++;
 								else
 									(*found)++;
@@ -1228,7 +1235,6 @@ bool FontCollector::CheckPathAndGlyphs(int *found, int *notFound, int *notCopied
 			if (!succeeded){
 				flc->AppendWarnings(wxString::Format(_("Cannot find \"%s\" font in Fonts folder."), fn));
 				(*notFound)++;
-				(*found)--;
 			}
 				
 		} else if (isNewFont)

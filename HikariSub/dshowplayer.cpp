@@ -117,9 +117,15 @@ bool DShowPlayer::OpenFile(wxString sFileName, bool vobsub)
 		}
 	}*/
 	//
-	HR(CoCreateInstance(CLSID_DSoundRender, nullptr, CLSCTX_INPROC, IID_IBaseFilter, (LPVOID*)&pAudioRenderer.obj), _("Cannot create audio renderer instance"));
-
-	HR(m_pGraph->AddFilter(pAudioRenderer.obj, L"Direct Sound Renderer"), _("Cannot add Direct Sound renderer"));
+	//without an audio device the renderer cannot be created, play the video silent
+	if (FAILED(CoCreateInstance(CLSID_DSoundRender, nullptr, CLSCTX_INPROC, IID_IBaseFilter, (LPVOID*)&pAudioRenderer.obj))){
+		HikariLogSilent(_("Cannot create audio renderer instance"));
+		SAFE_RELEASE(pAudioRenderer.obj);
+	}
+	else if (FAILED(m_pGraph->AddFilter(pAudioRenderer.obj, L"Direct Sound Renderer"))){
+		HikariLogSilent(_("Cannot add Direct Sound renderer"));
+		SAFE_RELEASE(pAudioRenderer.obj);
+	}
 
 	bool hasstream = false;
 	hasVobsub = false;
@@ -175,7 +181,9 @@ bool DShowPlayer::OpenFile(wxString sFileName, bool vobsub)
 		//HR(LAVVideo->EnumPins(&Enumlav.obj),L"Nie można wyliczyć pinów lav");
 		HR(pSource->EnumPins(&Enumsrc.obj), _("Cannot enumerate source pins"));
 		HR(frend->EnumPins(&Enumrend.obj), _("Cannot enumerate renderer pins"));
-		HR(pAudioRenderer->EnumPins(&Enumaud.obj), _("Cannot enumerate Direct Sound pins"));
+		if (pAudioRenderer.obj){
+			HR(pAudioRenderer->EnumPins(&Enumaud.obj), _("Cannot enumerate Direct Sound pins"));
+		}
 
 
 		Selfdest<IPin> spin;
@@ -185,7 +193,9 @@ bool DShowPlayer::OpenFile(wxString sFileName, bool vobsub)
 		Selfdest<IEnumMediaTypes> mtypes;
 
 		HR(Enumrend->Next(1, &rpin.obj, 0), _("Cannot get renderer pin"));
-		HR(Enumaud->Next(1, &apin.obj, 0), _("Cannot get dsound pin"));
+		if (Enumaud.obj){
+			HR(Enumaud->Next(1, &apin.obj, 0), _("Cannot get dsound pin"));
+		}
 		/*PIN_INFO pinfo;
 
 		while(Enumaud->Next(1,&lpin.obj,0)==S_OK){
@@ -207,7 +217,9 @@ bool DShowPlayer::OpenFile(wxString sFileName, bool vobsub)
 			}
 			else if (info->majortype == MEDIATYPE_Audio){
 
-				HR(m_pGraph->Connect(spin.obj, apin.obj), _("Cannot connect source pin to audio renderer"));
+				if (apin.obj){
+					HR(m_pGraph->Connect(spin.obj, apin.obj), _("Cannot connect source pin to audio renderer"));
+				}
 			}
 			else if (info->majortype == MEDIATYPE_Stream){
 
@@ -226,7 +238,9 @@ bool DShowPlayer::OpenFile(wxString sFileName, bool vobsub)
 					HR(spin->EnumMediaTypes(&mtypes.obj), _("No IMediaTypes"));
 					HR(mtypes->Next(1, &info, 0), _("No track type info"));
 					if (info->majortype == MEDIATYPE_Audio){
-						HR(m_pGraph->Connect(spin.obj, apin.obj), _("Cannot connect source pin to video2 renderer"));
+						if (apin.obj){
+							HR(m_pGraph->Connect(spin.obj, apin.obj), _("Cannot connect source pin to video2 renderer"));
+						}
 						break;
 					}
 					//DeleteMediaType(info);info=0;

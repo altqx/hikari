@@ -312,7 +312,7 @@ done:
 
 void FontCatalogList::OnLoadCatalogs(wxCommandEvent& evt)
 {
-	wxFileDialog* FileDialog = new wxFileDialog(this, _("Choose video file"), emptyString,
+	wxFileDialog* FileDialog = new wxFileDialog(this, _("Choose font catalogs file"), emptyString,
 		emptyString, _("Text files (*.txt)|*.txt"),
 		wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	if (FileDialog->ShowModal() == wxID_OK) {
@@ -738,6 +738,9 @@ void FontCatalogManagement::AddCatalog(const wxString& catalog, std::map<wxStrin
 
 bool FontCatalogManagement::ChangeCatalogName(wxWindow* messagesParent, const wxString& oldCatalog, const wxString& newCatalog)
 {
+	if (oldCatalog == newCatalog)
+		return false;
+
 	wxArrayString* fontTable = nullptr;
 	auto itn = fontCatalogs.find(newCatalog);
 	if (itn != fontCatalogs.end()) {
@@ -771,6 +774,8 @@ bool FontCatalogManagement::ChangeCatalogName(wxWindow* messagesParent, const wx
 	}
 	
 	fontCatalogs[newCatalog] = (fontTable) ? fontTable : new wxArrayString();
+	if (fontCatalogsNames.Index(newCatalog) == -1)
+		fontCatalogsNames.Add(newCatalog);
 	FontCatalogList::StartEditionTimer(saveInterval);
 	return true;
 }

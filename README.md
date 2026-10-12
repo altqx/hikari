@@ -202,7 +202,7 @@ library directories live in `HikariSub\HikariSub.vcxproj` under
 
 ### Linux build
 
-The Linux build uses CMake and system packages for most dependencies. wxGTK is built from the same pinned wxWidgets 3.3.3 submodule as the Windows build. It requires GCC, LuaJIT 2.1 (Lua 5.1-compatible), FFMS2, FFmpeg, libass, Hunspell, uchardet, libcurl, ICU, Boost, GStreamer 1.x, and OpenGL development packages.
+The Linux build uses CMake and system packages for most dependencies. wxGTK is built from the same pinned wxWidgets 3.3.3 submodule as the Windows build. It requires GCC, FFMS2, FFmpeg, libass, Hunspell, uchardet, libcurl, ICU, Boost, GStreamer 1.x, and OpenGL development packages.
 
 #### 1. Install dependencies on Ubuntu/Debian
 
@@ -219,7 +219,6 @@ sudo apt install --no-install-recommends -y \
   libgtk-3-dev \
   libass-dev \
   libffms2-dev \
-  libluajit-5.1-dev \
   libhunspell-dev \
   hunspell-en-us \
   libuchardet-dev \
@@ -266,7 +265,6 @@ The exact package names vary by distribution. Install the equivalent development
 - GTK 3 and OpenGL development packages for the pinned wxWidgets 3.3.3 build
 - libass
 - FFMS2
-- LuaJIT 2.1 development headers and library (the `luajit` pkg-config module)
 - Hunspell
 - A Hunspell dictionary (the runtime copy step looks for `en_US.aff` and `en_US.dic`)
 - GNU gettext (`msgfmt`) for compiling translations
@@ -287,7 +285,7 @@ For Fedora-like systems, the package set is approximately:
 ```bash
 sudo dnf install \
   gcc gcc-c++ make cmake ninja-build gzip tar git pkgconf-pkg-config \
-  libass-devel ffms2-devel luajit-devel hunspell-devel hunspell-en-US uchardet-devel \
+  libass-devel ffms2-devel hunspell-devel hunspell-en-US uchardet-devel \
   libcurl-devel libicu-devel boost-devel ffmpeg-devel mesa-libGL-devel gtk3-devel \
   gstreamer1-devel gstreamer1-plugins-base-devel \
   gstreamer1-plugins-base gstreamer1-plugins-good gettext
@@ -297,12 +295,12 @@ For Arch-like systems, the package set is approximately:
 
 ```bash
 sudo pacman -S --needed \
-  base-devel cmake ninja gzip tar git pkgconf libass ffms2 luajit \
+  base-devel cmake ninja gzip tar git pkgconf libass ffms2 \
   hunspell hunspell-en_us uchardet curl icu boost ffmpeg mesa gtk3 \
   gstreamer gst-plugins-base gst-plugins-good gettext
 ```
 
-HikariSub requires LuaJIT rather than the standard Lua interpreter: its Automation subsystem uses LuaJIT's FFI as well as Lua 5.1 APIs. The CMake configuration therefore checks for the `luajit` pkg-config module.
+LuaJIT is not taken from the distribution. The build compiles the copy in `Thirdparty/luajit` and `Thirdparty/LuaJIT` with GNU make and links it statically, with the same options as the Windows build: the Lua 5.2 extensions on (`LUAJIT_ENABLE_LUA52COMPAT`: `table.pack`, `__pairs`, `__ipairs` and others, which DependencyControl's Functional, ASSFoundation and many other automation libraries use) and `string.buffer` off (`LUAJIT_DISABLE_BUFFER`). Distribution LuaJIT packages are built without the Lua 5.2 extensions.
 
 #### 3. Verify dependency discovery
 
@@ -312,7 +310,6 @@ Before configuring HikariSub, confirm that pkg-config can find the required libr
 pkg-config --modversion \
   libass \
   ffms2 \
-  luajit \
   hunspell \
   uchardet \
   libcurl \
@@ -363,11 +360,23 @@ cmake --build build-linux --target hikarisub_linux_package
 The archive and its SHA-256 file are written under `build-linux/dist/`. The
 package target uses an explicit allowlist: it includes the executable,
 manifest-recorded runtime libraries, freshly compiled translations, bitmap
-resources, the project license, and the configured English dictionary when one
-is available. It deliberately excludes CMake internals and any Config,
+resources, the bundled Automation tree with DependencyControl's native modules
+(`libBadMutex.so`, `libPreciseTimer.so` and `libDownloadManager.so` under
+`Automation/automation/Include/BM`, `PT` and `DM`), the project license, and the
+configured English dictionary when one is available. It deliberately excludes CMake internals and any Config,
 Automation, or Themes files created by local runs. Host graphics/windowing
 libraries, codec libraries excluded for licensing reasons, and GStreamer
 plugins remain system requirements; this archive is not a universal AppImage.
+
+The package also carries `libSubInspector.so`, which ASSFoundation scripts use
+to measure rendered lines. To check that the automation's `Inspector.moon`
+loads it and gets bounds from it (needs `luajit` and a font), extract the
+archive and run:
+
+```bash
+tar -xzf build-linux/dist/hikarisub-linux-x86_64.tar.gz -C /tmp
+tests/subinspector/check-package.sh /tmp/hikarisub-linux-x86_64
+```
 
 #### 5. Run HikariSub
 
@@ -413,8 +422,8 @@ Media backends (Windows uses DirectShow / DirectSound / Direct3D):
   shared wxWidgets paint path. The frame-accurate FFMS2 path used for
   typesetting, timing, and visual editing is unchanged.
 - Audio plays through **GStreamer** (`appsrc → audioconvert → audioresample →
-  autoaudiosink`); the playback position is tracked on a wall-clock model. There
-  is no DirectSound path.
+  autoaudiosink`); the playback position is read from the pipeline, so it
+  follows the audio that is heard. There is no DirectSound path.
 - GStreamer discovers plugins from the runtime system registry and standard
   plugin paths. The base and good plugin sets (and an audio sink) must be
   installed on the machine that runs HikariSub.
