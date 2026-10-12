@@ -280,6 +280,8 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 	: HikariDialog(parent, -1, _("Options"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER | wxFULL_REPAINT_ON_RESIZE)
 {
 	windowNames = new wxString[5]{ _("Global"), _("Subtitles"), _("Editor"), _("Video"), _("Audio") };
+	// edits start from the current hotkeys, not from a dialog cancelled earlier
+	hotkeysCopy.clear();
 	OptionsTree = new HikariTreebook(this, -1);
 
 	Stylelist = nullptr;
@@ -1391,6 +1393,7 @@ void OptionsDialog::ResetDefault()
 	}
 	
 	Hkeys.ResetDefaults();
+	hotkeysCopy.clear();
 	Shortcuts->ClearList();
 	AddHotkeysOnList();
 }
