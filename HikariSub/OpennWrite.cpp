@@ -229,35 +229,20 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 		wxLogNull noLog;
 		tempOpened = tempFile.Open(target);
 	}
-	if (tempOpened){
-		if (!tempFile.Write(textToWrite, conv)){
-			HikariLog(_("Cannot save to file."));
-			//the destructor removes the temporary file
-			return false;
-		}
-		if (!tempFile.Commit()){
-			tempFile.Discard();
-			HikariLog(_("Cannot save to file."));
-			return false;
-		}
-		return true;
-	}
-
-	//no temporary file can be made in a folder that is not writable,
-	//then the file itself is written
-	wxFile file;
-	if (!file.Exists(fileName)){
-		file.Create(fileName, false, wxS_DEFAULT);
-	}
-	else{
-		file.Open(fileName, wxFile::write, wxS_DEFAULT);
-	}
-	if (!file.IsOpened()){
+	//without a temporary file, in a folder that is not writable, the file is
+	//not written either: writing it in place truncates it first, and a failed
+	//or short write would then lose it
+	if (!tempOpened){
 		HikariLog(_("Cannot save to file."));
 		return false;
 	}
-	bool written = file.Write(textToWrite, conv);
-	if (!file.Close() || !written){
+	if (!tempFile.Write(textToWrite, conv)){
+		HikariLog(_("Cannot save to file."));
+		//the destructor removes the temporary file
+		return false;
+	}
+	if (!tempFile.Commit()){
+		tempFile.Discard();
 		HikariLog(_("Cannot save to file."));
 		return false;
 	}

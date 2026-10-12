@@ -26,7 +26,9 @@ public:
 	~OpenWrite();
 	void CloseFile();
 	bool FileOpen(const wxString &filename, wxString *riddenText, bool test = true);
-	//returns false and keeps the file as it was when it cannot be written
+	//writes a temporary file next to filename and replaces filename with it;
+	//returns false and keeps the file as it was when it cannot be written,
+	//also when it is read-only or its folder takes no temporary file
 	bool FileWrite(const wxString &filename, const wxString &alltext, bool utf = true);
 	void PartFileWrite(const wxString &parttext);
 	// PartFileWrite then writes to a temporary file next to filename and
