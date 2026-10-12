@@ -87,8 +87,8 @@ struct SaveTargetFacts {
 	nlink_t links = 0;
 	uid_t uid = 0;
 	gid_t gid = 0;
-	// the target's permission bits, 07777, without those of its group and
-	// others for a private save: the mode the saved file gets
+	// the target's permission bits, 07777, or for a private save only those
+	// of its owner, 0700: the mode the saved file gets
 	mode_t mode = 0;
 	dev_t device = 0;
 	bool tempMade = false;
@@ -100,12 +100,15 @@ struct SaveTargetFacts {
 	// security labels, as the target, apart from the ACL permissions its mode
 	// sets
 	bool sameExtendedAttributes = true;
+	// the save is a private one, see SaveFile::SetPrivate: the saved file is
+	// the user's own, and its owner, group and ACL need not be the target's
+	bool privateFile = false;
 };
 
 // A rename is used only for a new file or a regular file with one link and no
 // lock that the renamed file would match in owner, group, permission bits,
-// extended attributes and file system; any other regular file is rewritten in
-// place.
+// extended attributes and file system, or for a private save in permission
+// bits and file system; any other regular file is rewritten in place.
 // A file that cannot be written is refused, and so is a changed target and
 // another user's file in a shared sticky folder.
 SaveMethod ChooseSaveMethod(const SaveTargetFacts &facts);
@@ -149,8 +152,11 @@ public:
 	// save's, though the save may have failed.
 	bool TargetTouched() const { return touched; }
 	// Saves a file only its user may open, such as an autosave: a new file
-	// stays 0600 and an existing one loses the permissions of its group and
-	// others. Set before Open.
+	// stays 0600, and an existing one keeps only its owner's permissions. It
+	// is renamed over by a file of the user's own, also when it was another
+	// user's or had an ACL; a file that is rewritten in place loses the other
+	// permissions first, and one that cannot lose them is not saved. Set
+	// before Open.
 	void SetPrivate(bool on) { privateFile = on; }
 	// for tests: replaces write(2) for the target
 	void SetTargetWriter(Writer writer) { targetWriter = writer; }

@@ -601,9 +601,14 @@ SaveMethod ChooseSaveMethod(const SaveTargetFacts &facts)
 		return SaveMethod::Refuse;
 	if (!facts.tempMade)
 		return SaveMethod::Rewrite;
-	bool renameKeepsTheFile = facts.links == 1 && !facts.lockedByOthers && facts.uid == facts.tempUid &&
-		facts.gid == facts.tempGid && facts.mode == facts.tempMode && facts.device == facts.tempDevice &&
-		facts.sameExtendedAttributes;
+	// A private file is to be the user's own, with no permission for anybody
+	// else: a rename that gives the user a file of the user's own group, with
+	// the user's permissions only and without the old file's ACL, saves it
+	// as it should be.
+	bool sameOwnerAndAcl = facts.privateFile ||
+		(facts.uid == facts.tempUid && facts.gid == facts.tempGid && facts.sameExtendedAttributes);
+	bool renameKeepsTheFile = facts.links == 1 && !facts.lockedByOthers && sameOwnerAndAcl &&
+		facts.mode == facts.tempMode && facts.device == facts.tempDevice;
 	return renameKeepsTheFile ? SaveMethod::Replace : SaveMethod::Rewrite;
 }
 
@@ -652,6 +657,7 @@ std::string SaveFile::PathOf(const std::string &file) const
 SaveTargetFacts SaveFile::ReadFacts(bool takeFinalMetadata)
 {
 	SaveTargetFacts facts;
+	facts.privateFile = privateFile;
 	facts.changed = !TargetUnchanged();
 	struct stat targetStat;
 	if (pinFd >= 0) {
@@ -662,8 +668,9 @@ SaveTargetFacts SaveFile::ReadFacts(bool takeFinalMetadata)
 			facts.links = targetStat.st_nlink;
 			facts.uid = targetStat.st_uid;
 			facts.gid = targetStat.st_gid;
-			// a private file keeps no permission of its group or others
-			facts.mode = targetStat.st_mode & (privateFile ? 07700 : 07777);
+			// a private file keeps no permission of its group or others, and
+			// no set-ID or sticky bit
+			facts.mode = targetStat.st_mode & (privateFile ? 0700 : 07777);
 			facts.device = targetStat.st_dev;
 			facts.lockedByOthers = S_ISREG(targetStat.st_mode) && InodeIsLocked(targetStat.st_ino);
 			struct stat folderStat;
@@ -690,11 +697,14 @@ SaveTargetFacts SaveFile::ReadFacts(bool takeFinalMetadata)
 		// file of the user's with one link, no lock and the same extended
 		// attributes; so never the set-user-ID bit or the open mode of another
 		// user's file, nor the mode of a file whose other links or ACL keep
-		// readers out that the mode lets in.
+		// readers out that the mode lets in. A private file takes only the
+		// user's permissions of the target, which keep everybody else out, so
+		// it is renamed over another user's file or one with an ACL too, and
+		// becomes the user's own.
 		bool takesTargets = facts.exists && S_ISREG(facts.type) && facts.writable && !facts.othersFileInSharedFolder &&
-			facts.uid == tempStat.st_uid && facts.links == 1 && !facts.lockedByOthers;
+			facts.links == 1 && !facts.lockedByOthers && (privateFile || facts.uid == tempStat.st_uid);
 		facts.sameExtendedAttributes = !facts.exists || SameExtendedAttributes(pinFd, stageFd);
-		takesTargets = takesTargets && facts.sameExtendedAttributes;
+		takesTargets = takesTargets && (privateFile || facts.sameExtendedAttributes);
 		if (takeFinalMetadata && (!facts.exists || takesTargets)) {
 			if (facts.exists)
 				TakeTargetMetadata(targetStat.st_gid, facts.mode);
@@ -708,7 +718,11 @@ SaveTargetFacts SaveFile::ReadFacts(bool takeFinalMetadata)
 		facts.tempGid = tempStat.st_gid;
 		facts.tempMode = tempStat.st_mode & 07777;
 		facts.tempDevice = tempStat.st_dev;
-		if (!takeFinalMetadata && takesTargets) {
+		if (!takeFinalMetadata && takesTargets && privateFile) {
+			// a private file keeps the user's group and takes the mode as it is
+			facts.tempMode = facts.mode;
+		}
+		else if (!takeFinalMetadata && takesTargets) {
 			// what the temporary file would get: the group of a file can be
 			// changed to a group its owner is in, and a chmod by a user outside
 			// the file's group drops the set-group-ID bit
@@ -724,11 +738,12 @@ void SaveFile::TakeTargetMetadata(gid_t gid, mode_t mode)
 {
 	// The group first, while the file is still 0600: with another group, the
 	// target's group bits would open it to that group. A group that cannot be
-	// set leaves the file 0600, and the facts then pick a rewrite.
+	// set leaves the file 0600, and the facts then pick a rewrite. A private
+	// file, which gives its group no permission, keeps the user's group.
 	struct stat now;
 	if (fstat(stageFd, &now) != 0)
 		return;
-	if (now.st_gid != gid &&
+	if (!privateFile && now.st_gid != gid &&
 		(fchown(stageFd, static_cast<uid_t>(-1), gid) != 0 || fstat(stageFd, &now) != 0 || now.st_gid != gid))
 		return;
 	tookFinalMetadata = true;
@@ -999,9 +1014,12 @@ bool SaveFile::Rewrite()
 		close(out);
 		return false;
 	}
-	// a private file loses the permissions of its group and others before
-	// the new contents are in it
-	if (privateFile && (outStat.st_mode & 077) && fchmod(out, outStat.st_mode & 07700) != 0) {
+	// A private file loses the permissions of its group and others before
+	// the new contents are in it. A file that cannot be narrowed, as another
+	// user's that is not renamed over (it has other links, a lock, or a
+	// folder that takes no rename), is not written: its readers would read
+	// the new contents.
+	if (privateFile && (outStat.st_mode & 07077) && fchmod(out, outStat.st_mode & 0700) != 0) {
 		close(out);
 		return false;
 	}

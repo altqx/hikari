@@ -197,6 +197,31 @@ TEST(a_file_a_rename_would_change_is_rewritten_in_place)
 	CHECK(ChooseSaveMethod(facts) == SaveMethod::Rewrite);
 }
 
+TEST(a_private_file_is_renamed_over_whoever_owned_it_and_whatever_acl_it_had)
+{
+	SaveTargetFacts facts = PlainFile();
+	facts.privateFile = true;
+	facts.mode = facts.tempMode = 0600;
+	facts.uid = 0;
+	facts.gid = 100;
+	facts.sameExtendedAttributes = false;
+	CHECK(ChooseSaveMethod(facts) == SaveMethod::Replace);
+
+	// what still needs the inode, or another file system, is rewritten
+	SaveTargetFacts linked = facts;
+	linked.links = 2;
+	CHECK(ChooseSaveMethod(linked) == SaveMethod::Rewrite);
+	SaveTargetFacts locked = facts;
+	locked.lockedByOthers = true;
+	CHECK(ChooseSaveMethod(locked) == SaveMethod::Rewrite);
+	SaveTargetFacts elsewhere = facts;
+	elsewhere.device = 43;
+	CHECK(ChooseSaveMethod(elsewhere) == SaveMethod::Rewrite);
+	SaveTargetFacts widerMode = facts;
+	widerMode.tempMode = 0644;
+	CHECK(ChooseSaveMethod(widerMode) == SaveMethod::Rewrite);
+}
+
 TEST(a_file_that_cannot_be_written_is_refused)
 {
 	SaveTargetFacts facts = PlainFile();
@@ -1232,6 +1257,36 @@ std::string AclOf(const fs::path &file)
 	return size < 0 ? std::string() : std::string(buffer, static_cast<size_t>(size));
 }
 } // namespace
+
+TEST(a_private_save_drops_the_acl_and_attributes_that_let_others_in)
+{
+	SaveScratchDir dir;
+	fs::path file = dir.path / "autosave.ass";
+	WriteText(file, "old");
+	CHECK(chmod(file.c_str(), 0640) == 0);
+	const unsigned undefinedId = 0xFFFFFFFFu;
+	// the owner rw, user 54321 r, the group r, the mask r and others nothing
+	std::string acl = AclValue({ { 0x01, 6, undefinedId }, { 0x02, 4, 54321 }, { 0x04, 4, undefinedId },
+		{ 0x10, 4, undefinedId }, { 0x20, 0, undefinedId } });
+	if (setxattr(file.c_str(), "system.posix_acl_access", acl.data(), acl.size(), 0) != 0) {
+		CHECK(errno == ENOTSUP || errno == EOPNOTSUPP);
+		return; // the file system takes no ACLs
+	}
+	bool userAttribute = setxattr(file.c_str(), "user.hikarisub.test", "kept", 4, 0) == 0;
+
+	SaveFile save;
+	save.SetPrivate(true);
+	CHECK(Save(save, file, "new"));
+	CHECK(save.Method() == SaveMethod::Replace);
+	CHECK(ReadText(file) == "new");
+	CHECK((StatOf(file).st_mode & 07777) == 0600);
+	CHECK(AclOf(file).empty());
+	if (userAttribute) {
+		char value[16] = {};
+		CHECK(getxattr(file.c_str(), "user.hikarisub.test", value, sizeof(value)) < 0);
+	}
+	CHECK(Names(dir.path) == std::set<std::string>{ "autosave.ass" });
+}
 
 TEST(a_new_file_in_a_folder_with_a_default_acl_gets_the_acl_a_new_file_gets_there)
 {
