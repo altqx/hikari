@@ -237,7 +237,8 @@ void FindReplace::ReplaceChecked()
 		TabPanel *oldtab = nullptr;
 		TabPanel *tab = nullptr;
 		int oldKeyLine = -1;
-		int numOfChanges = 0;
+		//replacements of every tab, each tab records its own step after the loop
+		std::vector<std::pair<TabPanel *, int>> tabChanges;
 		int lastEnd = 0;
 		bool skipLine = false;
 		bool lastIsTextTl = false;
@@ -260,9 +261,10 @@ void FindReplace::ReplaceChecked()
 			if (SeekResult->keyLine >= tab->grid->file->GetCount())
 				continue;
 
-			Dialogue *Dialc = tab->grid->file->CopyDialogueF(SeekResult->keyLine, true, false);
-
-			wxString & lineText = Dialc->Text.CheckTlRef(Dialc->TextTl, SeekResult->isTextTL);
+			//the line is copied only when it is changed,
+			//an unchanged copy would end up in a later step
+			Dialogue *Dial = tab->grid->file->GetDialogue(SeekResult->keyLine);
+			wxString lineText = Dial->Text.CheckTl(Dial->TextTl, SeekResult->isTextTL);
 			//skip lines with different texts
 			if (oldKeyLine != SeekResult->keyLine || SeekResult->isTextTL != lastIsTextTl){
 				replacementDiff = 0;
@@ -278,11 +280,17 @@ void FindReplace::ReplaceChecked()
 			if (skipLine)
 				continue;
 
-			numOfChanges += ReplaceCheckedLine(&lineText, SeekResult->findPosition, &replacementDiff, &lastEnd);
-
-			if (tab != oldtab && oldtab && numOfChanges){
-				oldtab->grid->SetModified(REPLACE_ALL);
-				numOfChanges = 0;
+			int reps = ReplaceCheckedLine(&lineText, SeekResult->findPosition, &replacementDiff, &lastEnd);
+			if (reps > 0){
+				Dialogue *Dialc = tab->grid->file->CopyDialogueF(SeekResult->keyLine, true, false);
+				Dialc->Text.CheckTlRef(Dialc->TextTl, SeekResult->isTextTL) = lineText;
+				size_t t = 0;
+				while (t < tabChanges.size() && tabChanges[t].first != tab)
+					t++;
+				if (t < tabChanges.size())
+					tabChanges[t].second += reps;
+				else
+					tabChanges.push_back(std::make_pair(tab, reps));
 			}
 
 
@@ -291,8 +299,8 @@ void FindReplace::ReplaceChecked()
 			lastIsTextTl = SeekResult->isTextTL;
 		}
 
-		if (tab && numOfChanges){
-			tab->grid->SetModified(REPLACE_ALL);
+		for (auto &tabChange : tabChanges){
+			tabChange.first->grid->SetModified(REPLACE_ALL);
 		}
 	}
 
