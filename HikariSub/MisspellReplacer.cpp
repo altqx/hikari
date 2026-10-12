@@ -177,7 +177,7 @@ void MisspellReplacer::ReplaceChecked()
 		if (!rule->IsValid()){
 			//HikariLog(wxString::Format("Szablon wyrażeń regularnych \"%s\" jest nieprawidłowy", rules[checkedRules[i]].first));
 			delete rule;
-			continue;
+			rule = nullptr;
 		}
 		rxrules.push_back(rule);
 	}
@@ -374,7 +374,7 @@ void MisspellReplacer::SeekOnTab(TabPanel *tab)
 			delete rule;
 			continue;
 		}
-		rxrules.push_back(std::make_pair(rule, actualRule.options));
+		rxrules.push_back(std::make_pair(rule, checkedRules[i]));
 	}
 
 	//0-all lines 1-selected lines 2-from selected 3-by styles
@@ -414,7 +414,7 @@ void MisspellReplacer::SeekOnTab(TabPanel *tab)
 					if (r->GetMatch(&matchstart, &matchlen)){
 						if (matchlen == 0)
 							matchlen++;
-						int options = rxrules[k].second;
+						int options = rules[rxrules[k].second].options;
 						if ((options < 16) || KeepFinding(lineText, matchstart + textPos, options)){
 
 							if (isfirst){
@@ -423,7 +423,7 @@ void MisspellReplacer::SeekOnTab(TabPanel *tab)
 							}
 
 							resultDialog->SetResults(lineText, wxPoint(matchstart + textPos, matchlen),
-								tab, tabLinePosition, positionId + 1, checkedRules[k]);
+								tab, tabLinePosition, positionId + 1, rxrules[k].second);
 						}
 					}
 					else
@@ -615,6 +615,10 @@ bool MisspellReplacer::ReplaceBlock(std::vector<ReplacerSeekResults *> &results,
 
 	bool somethingChanged = false;
 	for (auto & SeekResult : results){
+
+		if (SeekResult->numOfRule < 0 || SeekResult->numOfRule >= (int)rxrules.size() ||
+			!rxrules[SeekResult->numOfRule])
+			continue;
 
 		size_t pos = SeekResult->findPosition.x;
 		size_t len = SeekResult->findPosition.y;
