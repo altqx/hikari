@@ -27,7 +27,7 @@
 #include "TabPanel.h"
 #include "HikariStaticText.h"
 #include "Notebook.h"
-#include "SemVer.h"
+#include "HotkeysFile.h"
 #include <wx/regex.h>
 #include <wx/log.h>
 #include <wx/msgdlg.h>
@@ -249,32 +249,19 @@ int Hotkeys::LoadHkeys(bool Audio)
 
 	wxStringTokenizer hk(acctxt, L"\n", wxTOKEN_STRTOK);
 
-	bool checkVer = false;
+	HotkeysFileHeader header;
 	if (acctxt.StartsWith(L"[")){
 		wxString token = hk.NextToken();
-		wxString ver = token.BeforeFirst(L']').Mid(1);
-		/*if (ver != Options.progname){
-			LoadDefault(hkeys, Audio);
-		}*/
-		int first = token.find(L".");//0.8.0.build
 		// HikariSub writes "HikariSub v<semver>", which is current; only the
 		// old four-part headers carry a build number.
-		if (ver.StartsWith(L"HikariSub v") &&
-			ParseSemVer(ver.AfterFirst(L'v').BeforeFirst(L' ').ToStdString())){
-			checkVer = true;
-		}
-		else if (first > -1){
-			wxString ver = token.Mid(first + 5).BeforeFirst(L' ');
-			int version = wxAtoi(ver);
-			checkVer = (version > 487);
-			if (version < 1141){
-				acctxt = acctxt.AfterFirst(L'\n');
-				ConfigConverter::Get()->ConvertHotkeys(&acctxt);
-				ow.FileWrite(Options.configPath + hkpath, acctxt);
-			}
+		header = ReadHotkeysHeader(token.ToStdWstring());
+		if (header.convert){
+			acctxt = acctxt.AfterFirst(L'\n');
+			ConfigConverter::Get()->ConvertHotkeys(&acctxt);
+			ow.FileWrite(Options.configPath + hkpath, acctxt);
 		}
 	}
-	if (!checkVer){
+	if (header.version == HotkeysFileVersion::Outdated){
 		HikariMessageBox(_("The shortcuts file is outdated and will be replaced with the default one"));
 		LoadDefault(hkeys, Audio);
 		SaveHkeys(Audio);
@@ -315,9 +302,10 @@ int Hotkeys::LoadHkeys(bool Audio)
 			g++;
 		}
 	}
-	if (g <= 10){
-		// A short file is still a current file: keep its bindings and
-		// add only the default ids it does not set.
+	if (HotkeysNeedDefaultFill(header.version, g)){
+		// A short old-build file keeps its bindings and gets only the
+		// default ids it does not set. A short current file is kept as
+		// it is: the ids it leaves out are shortcuts the user removed.
 		std::map<idAndType, hdata> defaults;
 		LoadDefault(defaults, Audio);
 		hkeys.insert(defaults.begin(), defaults.end());

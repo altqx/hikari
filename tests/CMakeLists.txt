@@ -8,6 +8,7 @@ add_executable(hikarisub_tests
     check_main.cpp
     AssBlendTests.cpp
     FrameQueueTests.cpp
+    HotkeysFileTests.cpp
     ParsedScriptsTests.cpp
     PlaybackTests.cpp
     SemVerTests.cpp

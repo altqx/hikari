@@ -624,6 +624,9 @@
     <ClInclude Include="Hotkeys.h">
       <Filter>H</Filter>
     </ClInclude>
+    <ClInclude Include="HotkeysFile.h">
+      <Filter>H</Filter>
+    </ClInclude>
     <ClInclude Include="HotkeysNaming.h">
       <Filter>H</Filter>
     </ClInclude>
