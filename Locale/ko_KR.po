@@ -69,7 +69,7 @@ msgstr "다음 줄 재생"
 
 #: HikariSub/AudioBox.cpp:159
 msgid "Play the current syllable / line"
-msgstr "다음 음절 재생(노래방)"
+msgstr "현재 음절 / 줄 재생"
 
 #: HikariSub/AudioBox.cpp:163 HikariSub/VideoBox.cpp:161
 #: HikariSub/VideoFullscreen.cpp:62
@@ -161,7 +161,7 @@ msgstr "D3D9 장치를 만들 수 없음"
 
 #: HikariSub/AudioDisplay.cpp:328 HikariSub/RendererVideo.cpp:376
 msgid "Cannot create swap chain"
-msgstr ""
+msgstr "스왑 체인을 만들 수 없음"
 
 #: HikariSub/AudioDisplay.cpp:349
 msgid "One of the DirectX settings failed"
@@ -169,11 +169,11 @@ msgstr "DirectX 설정에 오류가 있습니다"
 
 #: HikariSub/AudioDisplay.cpp:353 HikariSub/VisualRotationXY.cpp:164
 msgid "Cannot set world matrix"
-msgstr "매트릭스보기를 설정할 수 없음"
+msgstr "월드 매트릭스를 설정할 수 없음"
 
 #: HikariSub/AudioDisplay.cpp:354 HikariSub/VisualRotationXY.cpp:165
 msgid "Cannot set view matrix"
-msgstr "매트릭스 월드를 설정할 수 없음"
+msgstr "뷰 매트릭스를 설정할 수 없음"
 
 #: HikariSub/AudioDisplay.cpp:356 HikariSub/RendererDirectShow.cpp:100
 #: HikariSub/RendererFFMS2.cpp:723 HikariSub/RendererVideo.cpp:378
@@ -182,7 +182,7 @@ msgstr "표면을 만들 수 없음"
 
 #: HikariSub/AudioDisplay.cpp:359 HikariSub/RendererVideo.cpp:394
 msgid "Cannot create D3DX line"
-msgstr "D3DX 줄을 열 수 없습니다"
+msgstr "D3DX 선을 만들 수 없음"
 
 #: HikariSub/AudioDisplay.cpp:363 HikariSub/AudioDisplay.cpp:364
 #: HikariSub/AudioDisplay.cpp:365 HikariSub/ContextDX9.cpp:196
@@ -214,7 +214,7 @@ msgstr "스펙트럼 표면은 자체적으로 중첩 될 수 없음"
 
 #: HikariSub/AudioDisplay.cpp:1158 HikariSub/AudioDisplay.cpp:1804
 msgid "Audio could not be loaded"
-msgstr ""
+msgstr "소리를 불러올 수 없음"
 
 #: HikariSub/AutoSaveOpen.cpp:26
 msgid "Open auto save file"
@@ -278,11 +278,11 @@ msgstr "자동 저장 폴더가 비어 있음"
 
 #: HikariSub/AutoSaveOpen.cpp:267
 msgid "Failed to load autosave"
-msgstr "자동 저장 폴더를 열 수 없습니다"
+msgstr "자동 저장 파일을 불러오지 못했습니다"
 
 #: HikariSub/AutoSavesRemoving.cpp:29 HikariSub/HikariSubFrame.cpp:197
 msgid "Remove temporary files"
-msgstr "저장 파일 삭제"
+msgstr "임시 파일 삭제"
 
 #: HikariSub/AutoSavesRemoving.cpp:36
 msgid "Remove files older than"
@@ -342,7 +342,7 @@ msgstr "모든 폴더에서 삭제"
 
 #: HikariSub/AutoSavesRemoving.cpp:90
 msgid "Remove all files"
-msgstr "모든 파일 제거"
+msgstr "모든 파일 삭제"
 
 #: HikariSub/AutoSavesRemoving.cpp:92
 msgid "Remove all older files"
@@ -362,7 +362,7 @@ msgstr "모든 자동 저장 파일 삭제"
 
 #: HikariSub/AutoSavesRemoving.cpp:107
 msgid "Remove older auto save files"
-msgstr "오래된 자동 저장 파일 제거"
+msgstr "오래된 자동 저장 파일 삭제"
 
 #: HikariSub/AutoSavesRemoving.cpp:114
 msgid "FFMS2 index"
@@ -434,7 +434,7 @@ msgstr "자동화 3 스크립트를 자동화 4 스크립트로 불러오려고�
 #: HikariSub/Automation.cpp:689
 #, c-format
 msgid "Macro named '%s' is already defined in the script '%s'"
-msgstr "'%s'인 매크로가 이미 스크립트 '%s'에 정의되어 있습니다.'"
+msgstr "'%s'인 매크로가 이미 스크립트 '%s'에 정의되어 있습니다."
 
 #: HikariSub/Automation.cpp:806
 msgid "An error occurred while executing the Lua script:\n"
@@ -477,7 +477,7 @@ msgstr "스크립트 편집기 선택"
 
 #: HikariSub/Automation.cpp:1315
 msgid "Programs (*.exe)|*.exe|All files (*.*)|*.*"
-msgstr "프로그램 (* .exe) | * .exe | All Files (*. *) | *. *"
+msgstr "프로그램 (*.exe)|*.exe|모든 파일 (*.*)|*.*"
 
 #: HikariSub/Automation.cpp:1327
 msgid "Automation error"
@@ -671,7 +671,7 @@ msgstr "첫 번째 단축키 설정 / 쉬프트 + 클릭"
 
 #: HikariSub/ColorPicker.cpp:456
 msgid "Picking a color from the screen is not supported on Wayland"
-msgstr ""
+msgstr "Wayland에서는 화면에서 색상을 선택할 수 없습니다"
 
 #: HikariSub/ColorPicker.cpp:487
 msgid "Choose color"
@@ -679,7 +679,7 @@ msgstr "색상 선택"
 
 #: HikariSub/ColorPicker.cpp:519
 msgid "Spectrum color"
-msgstr "색상 선택"
+msgstr "스펙트럼 색상"
 
 #: HikariSub/ColorPicker.cpp:529
 msgid "RGB color"
@@ -717,11 +717,12 @@ msgid "Shadow color"
 msgstr "그림자 색상"
 
 #: HikariSub/ColorPicker.cpp:575
-#, fuzzy
 msgid ""
 "Swap shortcuts between the color picker\n"
 "and the color selection window"
-msgstr "마우스 설정 변경(우클릭 색상 선택창/좌클릭 색상 선택기)"
+msgstr ""
+"색상 선택기와 색상 선택 창의\n"
+"클릭 단축키 서로 바꾸기"
 
 #: HikariSub/ColorPicker.cpp:577
 msgid ""
@@ -800,16 +801,16 @@ msgstr "제안 수정"
 #: HikariSub/DialogueTextEditor.cpp:2307 HikariSub/HikariListCtrl.cpp:118
 #: HikariSub/HikariTextCtrl.cpp:1475
 msgid "&Copy"
-msgstr "복사"
+msgstr "복사[&C]"
 
 #: HikariSub/DialogueTextEditor.cpp:2308 HikariSub/HikariTextCtrl.cpp:1476
 msgid "Cu&t"
-msgstr "잘라내기"
+msgstr "잘라내기[&T]"
 
 #: HikariSub/DialogueTextEditor.cpp:2309 HikariSub/HikariListCtrl.cpp:119
 #: HikariSub/HikariTextCtrl.cpp:1477
 msgid "&Paste"
-msgstr "붙여넣기"
+msgstr "붙여넣기[&P]"
 
 #: HikariSub/DialogueTextEditor.cpp:2312
 msgid "Search word translation on ling.pl"
@@ -838,11 +839,11 @@ msgstr "설치된 언어(철자 확인용)"
 #: HikariSub/DialogueTextEditor.cpp:2335
 #, c-format
 msgid "&Add word \"%s\" to dictionary"
-msgstr "사전에 \"%s\" 단어 추가"
+msgstr "사전에 \"%s\" 단어 추가[&A]"
 
 #: HikariSub/DialogueTextEditor.cpp:2338 HikariSub/HikariTextCtrl.cpp:1484
 msgid "&Delete"
-msgstr "삭제"
+msgstr "삭제[&D]"
 
 #: HikariSub/DialogueTextEditor.cpp:2339
 msgid "Show status bar"
@@ -1151,7 +1152,7 @@ msgstr "상용구 등록버튼 개수 지정"
 
 #: HikariSub/EditBox.cpp:2035
 msgid "No unconfirmed lines found"
-msgstr "검토 할 수 없음"
+msgstr "확인되지 않은 줄이 없음"
 
 #: HikariSub/EditBox.cpp:2057
 msgid "No untranslated lines found"
@@ -1236,7 +1237,7 @@ msgstr "글자 마지막"
 
 #: HikariSub/FindReplaceDialog.cpp:111
 msgid "Include comments"
-msgstr "주석"
+msgstr "주석 포함"
 
 #: HikariSub/FindReplaceDialog.cpp:113
 msgid "Skip tags"
@@ -1463,7 +1464,7 @@ msgstr "자동 저장"
 
 #: HikariSub/FontCatalogList.cpp:315
 msgid "Choose font catalogs file"
-msgstr ""
+msgstr "글꼴 목록 파일 선택"
 
 #: HikariSub/FontCatalogList.cpp:316
 msgid "Text files (*.txt)|*.txt"
@@ -1490,28 +1491,25 @@ msgstr ""
 "새 목록를 만듭니다."
 
 #: HikariSub/FontCatalogList.cpp:682 HikariSub/FontCatalogList.cpp:849
-#, fuzzy
 msgid "Add fonts from subtitles"
-msgstr "Subtitles에서 글꼴 추가"
+msgstr "자막에서 글꼴 추가"
 
 #: HikariSub/FontCatalogList.cpp:747
 #, c-format
 msgid "Catalog named \"%s\" already exists. What to do?"
-msgstr "\"%s\"라는 이름이 있습니다?"
+msgstr "\"%s\" 목록이 이미 있습니다. 어떻게 할까요?"
 
 #: HikariSub/FontCatalogList.cpp:748
 msgid "Merge"
 msgstr "병합"
 
 #: HikariSub/FontCatalogList.cpp:869
-#, fuzzy
 msgid "Remove all contents of catalog"
-msgstr "카탈로그의 모든 내용 제거"
+msgstr "목록의 모든 내용 제거"
 
 #: HikariSub/FontCatalogList.cpp:870
-#, fuzzy
 msgid "Add fonts from all open subtitles"
-msgstr "모든 오픈 ASS 파일에서 글꼴 추가"
+msgstr "열려 있는 모든 자막에서 글꼴 추가"
 
 #: HikariSub/FontCollector.cpp:100
 msgid "In styles:\n"
@@ -1520,7 +1518,7 @@ msgstr "스타일:\n"
 #: HikariSub/FontCollector.cpp:105 HikariSub/FontCollector.cpp:331
 #: HikariSub/FontCollector.cpp:378
 msgid " tabs: "
-msgstr " 색인: "
+msgstr " 탭: "
 
 #: HikariSub/FontCollector.cpp:114
 msgid "In lines: "
@@ -1555,7 +1553,7 @@ msgstr "선택"
 
 #: HikariSub/FontCollector.cpp:177
 msgid "Save to video / subtitles folder."
-msgstr "영상 저장 / 자막 폴더."
+msgstr "영상 / 자막 폴더에 저장."
 
 #: HikariSub/FontCollector.cpp:178
 msgid ""
@@ -1582,7 +1580,7 @@ msgstr "탭으로 시작"
 
 #: HikariSub/FontCollector.cpp:195
 msgid "Save folder"
-msgstr "폴더 저장"
+msgstr "저장 폴더"
 
 #: HikariSub/FontCollector.cpp:428
 msgid "Select the name of the archive"
@@ -1667,8 +1665,8 @@ msgid ""
 "Font \"%s\" belongs to a style\n"
 "that is not used."
 msgstr ""
-"\"%s\" 글꼴은\n"
-"사용되지 않음."
+"\"%s\" 글꼴은 사용되지 않는\n"
+"스타일에 속합니다."
 
 #: HikariSub/FontCollector.cpp:851
 msgid "Some fonts do not contain all glyphs used in the text.\n"
@@ -1677,36 +1675,34 @@ msgstr "일부 글꼴은 모든 글자가 포함되지 않을 수 있음.\n"
 #: HikariSub/FontCollector.cpp:858
 #, c-format
 msgid "Finished, %s %s.\n"
-msgstr "완료, %s %s.\n"
+msgstr "완료, %s: %s.\n"
 
 #: HikariSub/FontCollector.cpp:858 HikariSub/FontCollector.cpp:877
 msgid "copied"
-msgstr "복사"
+msgstr "복사함"
 
 #: HikariSub/FontCollector.cpp:858 HikariSub/FontCollector.cpp:877
 msgid "found"
-msgstr "찾기"
+msgstr "찾음"
 
 #: HikariSub/FontCollector.cpp:860 HikariSub/FontCollector.cpp:879
 #, c-format
 msgctxt "found or copied"
 msgid "%d font"
 msgid_plural "%d fonts"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "글꼴 %d개"
 
 #: HikariSub/FontCollector.cpp:862
 #, c-format
 msgid "Not found %s.\n"
-msgstr "%s 를 찾을 수 없습니다.\n"
+msgstr "%s을(를) 찾을 수 없습니다.\n"
 
 #: HikariSub/FontCollector.cpp:864 HikariSub/FontCollector.cpp:869
 #, c-format
 msgctxt "not found or not copied"
 msgid "%d font"
 msgid_plural "%d fonts"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "글꼴 %d개"
 
 #: HikariSub/FontCollector.cpp:867
 #, c-format
@@ -1716,7 +1712,7 @@ msgstr "%s를(을) 복사 할 수 없음\n"
 #: HikariSub/FontCollector.cpp:876
 #, c-format
 msgid "Completed Successfully, %s %s.\n"
-msgstr "성공적으로 완료되었습니다. %s %s.\n"
+msgstr "성공적으로 완료되었습니다. %s: %s.\n"
 
 #: HikariSub/FontCollector.cpp:894
 #, c-format
@@ -1752,9 +1748,8 @@ msgid "This video is not an MKV file."
 msgstr "MKV 파일이 아닙니다."
 
 #: HikariSub/FontCollector.cpp:950
-#, fuzzy
 msgid "Cannot open MKV file"
-msgstr "MKV 파일을 열 수 없음."
+msgstr "MKV 파일을 열 수 없음"
 
 #: HikariSub/FontCollector.cpp:956
 msgid "Loaded MKV file does not have any fonts."
@@ -1805,8 +1800,8 @@ msgid ""
 "Font \"%s\" belongs to a style\n"
 "that is not used.%s"
 msgstr ""
-"글꼴 \"%s\"을(를) 스타일에서 가져옴,\n"
-"%s은(는) 사용되지 않습니다"
+"\"%s\" 글꼴은 사용되지 않는\n"
+"스타일에 속합니다.%s"
 
 #: HikariSub/FontCollector.cpp:1111
 #, c-format
@@ -1915,7 +1910,7 @@ msgstr "글꼴 목록창"
 
 #: HikariSub/FontDialog.cpp:430
 msgid "Manages font catalogs"
-msgstr "스타일 목록을 관리 할 수 있습니다"
+msgstr "글꼴 목록을 관리합니다"
 
 #: HikariSub/FontDialog.cpp:432 HikariSub/HotkeysNaming.cpp:121
 #: HikariSub/StyleChange.cpp:87 HikariSub/SubsGrid.cpp:237
@@ -1936,28 +1931,24 @@ msgstr "글꼴 폴더에 대한 알림 처리기를 만들 수 없습니다."
 
 #: HikariSub/FontEnumerator.cpp:426 HikariSub/FontEnumerator.cpp:452
 #: HikariSub/FontEnumerator.cpp:665
-#, fuzzy
 msgid "Loading external fonts"
-msgstr "외부 글꼴 적재"
+msgstr "외부 글꼴 불러오는 중"
 
 #: HikariSub/FontEnumerator.cpp:467
 msgid "Cannot create next notification handler for fonts folder."
 msgstr "글꼴 폴더에 대한 다음 알림 처리기를 만들 수 없습니다."
 
 #: HikariSub/FontEnumerator.cpp:579
-#, fuzzy
 msgid "Removing fonts from external folder"
-msgstr "외부 폴더에서 글꼴 제거"
+msgstr "외부 폴더의 글꼴 제거 중"
 
 #: HikariSub/FontEnumerator.cpp:587
-#, fuzzy
 msgid "Loading fonts from external folder"
-msgstr "외부 폴더에서 글꼴로드"
+msgstr "외부 폴더에서 글꼴 불러오는 중"
 
 #: HikariSub/FontEnumerator.cpp:613
-#, fuzzy
 msgid "Cannot load external font folder"
-msgstr "외부 글꼴 폴더를로드 할 수 없습니다"
+msgstr "외부 글꼴 폴더를 불러올 수 없음"
 
 #: HikariSub/HikariMessageBox.cpp:39
 msgid "Apply to All"
@@ -2074,7 +2065,7 @@ msgstr "현재 파일 저장"
 
 #: HikariSub/HikariSubFrame.cpp:182
 msgid "Save &all"
-msgstr "모두 저장"
+msgstr "모두 저장[&A]"
 
 #: HikariSub/HikariSubFrame.cpp:183 HikariSub/HotkeysNaming.cpp:234
 msgid "Save all subtitles"
@@ -2090,7 +2081,7 @@ msgstr "다른 이름으로 저장"
 
 #: HikariSub/HikariSubFrame.cpp:186
 msgid "Save &translation"
-msgstr "번역본 저장"
+msgstr "번역본 저장[&T]"
 
 #: HikariSub/HikariSubFrame.cpp:187 HikariSub/HotkeysNaming.cpp:237
 msgid "Save translation"
@@ -2098,7 +2089,7 @@ msgstr "번역 저장"
 
 #: HikariSub/HikariSubFrame.cpp:188
 msgid "Recently opened &subtitles"
-msgstr "열었던 자막"
+msgstr "열었던 자막[&S]"
 
 #: HikariSub/HikariSubFrame.cpp:189 HikariSub/VideoBox.cpp:983
 msgid "Recently opened subtitles"
@@ -2106,7 +2097,7 @@ msgstr "열었던 자막"
 
 #: HikariSub/HikariSubFrame.cpp:190
 msgid "Remove subtitles from the &editor"
-msgstr "내용 삭제 후 새 파일 만들기"
+msgstr "편집기에서 자막 제거[&E]"
 
 #: HikariSub/HikariSubFrame.cpp:191 HikariSub/HotkeysNaming.cpp:232
 msgid "Remove subtitles from the editor"
@@ -2279,7 +2270,7 @@ msgstr "선택 줄 정렬 / ASS 파일"
 
 #: HikariSub/HikariSubFrame.cpp:241 HikariSub/HotkeysNaming.cpp:216
 msgid "Fix minor errors (experimental)"
-msgstr "자동 바꾸기 [책임 못 짐]"
+msgstr "사소한 오류 수정 (실험적)"
 
 #: HikariSub/HikariSubFrame.cpp:242
 msgid "Turns on multireplacer"
@@ -2366,7 +2357,7 @@ msgstr "시작 시간으로"
 
 #: HikariSub/HikariSubFrame.cpp:268
 msgid "Moves video to start time"
-msgstr "영상를 시작 시간으로 이동"
+msgstr "영상을 시작 시간으로 이동"
 
 #: HikariSub/HikariSubFrame.cpp:271 HikariSub/HotkeysNaming.cpp:248
 msgid "Go to end time of line"
@@ -2374,7 +2365,7 @@ msgstr "종료 시간으로"
 
 #: HikariSub/HikariSubFrame.cpp:271
 msgid "Moves video to end time"
-msgstr "영상를 종료 시간으로 이동"
+msgstr "영상을 종료 시간으로 이동"
 
 #: HikariSub/HikariSubFrame.cpp:273 HikariSub/Hotkeys.cpp:160
 #: HikariSub/Hotkeys.cpp:178 HikariSub/HotkeysNaming.cpp:225
@@ -2404,14 +2395,12 @@ msgid "Set audio marker to video time"
 msgstr "영상지점 소리 표시선 설정"
 
 #: HikariSub/HikariSubFrame.cpp:283 HikariSub/HotkeysNaming.cpp:206
-#, fuzzy
 msgid "Zoom video"
 msgstr "영상 확대"
 
 #: HikariSub/HikariSubFrame.cpp:284 HikariSub/HotkeysNaming.cpp:207
-#, fuzzy
 msgid "Turn off video zoom"
-msgstr "비디오 줌"
+msgstr "영상 확대 해제"
 
 #: HikariSub/HikariSubFrame.cpp:286 HikariSub/HotkeysNaming.cpp:205
 msgid "Open video with FFMS2"
@@ -2589,7 +2578,7 @@ msgstr "다른 자막 형식으로 변환"
 
 #: HikariSub/HikariSubFrame.cpp:336
 msgid "Shift &times...\tCtrl-I"
-msgstr "시간 조정... Ctrl-I"
+msgstr "시간 조정...[&T]\tCtrl-I"
 
 #: HikariSub/HikariSubFrame.cpp:337
 msgid "Shifting subtitle times"
@@ -2659,11 +2648,11 @@ msgstr "HikariSub 이슈 트래커를 엽니다"
 
 #: HikariSub/HikariSubFrame.cpp:364
 msgid "Check for &updates"
-msgstr ""
+msgstr "업데이트 확인[&U]"
 
 #: HikariSub/HikariSubFrame.cpp:365
 msgid "Checks whether a newer version is available"
-msgstr ""
+msgstr "새 버전이 있는지 확인합니다"
 
 #: HikariSub/HikariSubFrame.cpp:366
 msgid "&About"
@@ -2715,7 +2704,7 @@ msgstr "자막 파일 선택"
 
 #: HikariSub/HikariSubFrame.cpp:1009
 msgid "Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm"
-msgstr "자막 파일(*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*. txt|자막이 있는 영상(*.mkv),(*.ogm)|*.mkv;*.ogm"
+msgstr "자막 파일(*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|자막이 있는 영상(*.mkv),(*.ogm)|*.mkv;*.ogm"
 
 #: HikariSub/HikariSubFrame.cpp:1046 HikariSub/HikariSubFrame.cpp:1062
 #: HikariSub/VideoBox.cpp:1106
@@ -2803,11 +2792,11 @@ msgstr ""
 
 #: HikariSub/HikariSubFrame.cpp:1148
 msgid "- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n"
-msgstr "- Devilkan (문자 설정 도구를 설정하는데 도움을 주고,\n"
+msgstr "- Devilkan (크래시 헌터. 그의 시스템과 사용 습관 덕분에 HikariSub가 자주 충돌했고,\n"
 
 #: HikariSub/HikariSubFrame.cpp:1149
 msgid "helped with typesetting tools and came up with many more improvements).\n"
-msgstr "그의 시스템과 습관으로 인해 많은 버그를 추적하고 오류를 수정할 수 있었습니다).\n"
+msgstr "타입세팅 도구 작업을 돕고 많은 개선 사항을 제안했습니다).\n"
 
 #: HikariSub/HikariSubFrame.cpp:1150
 msgid "- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n"
@@ -2878,7 +2867,7 @@ msgstr "없음"
 #: HikariSub/HikariSubFrame.cpp:2231
 #, c-format
 msgid "Save subtitles named \"%s\" before %s?"
-msgstr "\"%s\"로 저장 후에 %s?"
+msgstr "\"%s\" 자막을 저장하시겠습니까? (%s 전)"
 
 #: HikariSub/HikariSubFrame.cpp:2232
 msgid "exiting program"
@@ -2890,11 +2879,11 @@ msgstr "탭 닫기"
 
 #: HikariSub/HikariSubFrame.cpp:2234
 msgid "loading new subtitles"
-msgstr "자막을 불러올까요"
+msgstr "새 자막 불러오기"
 
 #: HikariSub/HikariSubFrame.cpp:2235
 msgid "removing subtitles"
-msgstr "내용 삭제"
+msgstr "자막 제거"
 
 #: HikariSub/HikariSubFrame.cpp:2270 HikariSub/OptionsDialog.cpp:692
 msgid "Cannot load audio hotkeys"
@@ -2915,7 +2904,7 @@ msgstr "영상 및 소리 파일"
 
 #: HikariSub/HikariSubFrame.cpp:2280
 msgid "All files"
-msgstr "모든 파이"
+msgstr "모든 파일"
 
 #: HikariSub/HikariSubFrame.cpp:2439
 msgid "Undo to "
@@ -3208,7 +3197,7 @@ msgstr "종결부 추가"
 
 #: HikariSub/Hotkeys.cpp:265
 msgid "The shortcuts file is outdated and will be replaced with the default one"
-msgstr "단축키 설정 파일은 더 이상 할 수 없으며 기본값으로 대체됩니다"
+msgstr "단축키 설정 파일이 오래되어 기본값으로 대체됩니다"
 
 #: HikariSub/Hotkeys.cpp:381
 #, c-format
@@ -3242,7 +3231,7 @@ msgstr "편집 박스 단축키"
 
 #: HikariSub/Hotkeys.cpp:609
 msgid "Video hotkey"
-msgstr "영상 단축ㅋ"
+msgstr "영상 단축키"
 
 #: HikariSub/Hotkeys.cpp:616
 #, c-format
@@ -3263,7 +3252,7 @@ msgstr "프로그램 닫기에는 단축키를 지정할 수 없음."
 
 #: HikariSub/HotkeysNaming.cpp:90
 msgid "First tag button"
-msgstr "태크 버튼 1"
+msgstr "태그 버튼 1"
 
 #: HikariSub/HotkeysNaming.cpp:91
 msgid "Second tag button"
@@ -3279,7 +3268,7 @@ msgstr "태그 버튼 4"
 
 #: HikariSub/HotkeysNaming.cpp:94
 msgid "5th tag button"
-msgstr "태크 버튼 5"
+msgstr "태그 버튼 5"
 
 #: HikariSub/HotkeysNaming.cpp:95
 msgid "6th tag button"
@@ -3319,7 +3308,7 @@ msgstr "태그 버튼 14"
 
 #: HikariSub/HotkeysNaming.cpp:104
 msgid "15th tag button"
-msgstr "태크 버튼 15"
+msgstr "태그 버튼 15"
 
 #: HikariSub/HotkeysNaming.cpp:105
 msgid "16th tag button"
@@ -3439,9 +3428,8 @@ msgid "Make tree"
 msgstr "트리구조 만듦"
 
 #: HikariSub/HotkeysNaming.cpp:137 HikariSub/SubsGrid.cpp:265
-#, fuzzy
 msgid "Select all lines visible on video"
-msgstr "동영상에 표시된 모든 줄 선택"
+msgstr "영상에 보이는 모든 줄 선택"
 
 #: HikariSub/HotkeysNaming.cpp:139
 msgid "Insert after"
@@ -3501,33 +3489,28 @@ msgid "Set new FPS"
 msgstr "새 프레임"
 
 #: HikariSub/HotkeysNaming.cpp:155 HikariSub/SubsGrid.cpp:204
-#, fuzzy
 msgid "Split line at video time"
-msgstr "현재 영상지점으로 줄 이동"
+msgstr "영상 시간에서 줄 분할"
 
 #: HikariSub/HotkeysNaming.cpp:156 HikariSub/SubsGrid.cpp:206
-#, fuzzy
 msgid "Split lines into frames"
-msgstr "프레임에 분할 라인"
+msgstr "프레임 단위로 줄 분할"
 
 #: HikariSub/HotkeysNaming.cpp:157 HikariSub/SubsGrid.cpp:208
-#, fuzzy
 msgid "Split lines into characters"
-msgstr "줄 복사"
+msgstr "글자 단위로 줄 분할"
 
 #: HikariSub/HotkeysNaming.cpp:158 HikariSub/SubsGrid.cpp:209
-#, fuzzy
 msgid "Split lines into words"
-msgstr "단어로 줄을 분할"
+msgstr "단어 단위로 줄 분할"
 
 #: HikariSub/HotkeysNaming.cpp:159 HikariSub/SubsGrid.cpp:210
-#, fuzzy
 msgid "Split lines by wraps"
-msgstr "연락처"
+msgstr "줄 바꿈 기준으로 줄 분할"
 
 #: HikariSub/HotkeysNaming.cpp:161
 msgid "Check for updates"
-msgstr ""
+msgstr "업데이트 확인"
 
 #: HikariSub/HotkeysNaming.cpp:162
 msgid "About"
@@ -3817,11 +3800,11 @@ msgstr "두 번 띄어쓰기 제거"
 
 #: HikariSub/MisspellReplacer.cpp:724
 msgid "Replace more then three dots to suspension point"
-msgstr "세 개 이상의 점을 정지 지점으로 변경"
+msgstr "세 개 이상의 점을 말줄임표로 변경"
 
 #: HikariSub/MisspellReplacer.cpp:725
 msgid "Replace two dots to suspension point"
-msgstr "두 개의 점을 정지 지점으로 변경"
+msgstr "두 개의 점을 말줄임표로 변경"
 
 #: HikariSub/MisspellReplacer.cpp:726
 msgid "Replace missing spaces after dot or comma"
@@ -3942,6 +3925,8 @@ msgid ""
 "Cannot read the subtitle file:\n"
 "%s"
 msgstr ""
+"자막 파일을 읽을 수 없음:\n"
+"%s"
 
 #: HikariSub/Notebook.cpp:1307
 msgid "Video: "
@@ -3977,7 +3962,7 @@ msgstr "잘못된 파일 세션"
 
 #: HikariSub/Notebook.cpp:1654
 msgid "Cannot read the subtitle files:\n"
-msgstr ""
+msgstr "자막 파일을 읽을 수 없음:\n"
 
 #: HikariSub/OpennWrite.cpp:70 HikariSub/OpennWrite.cpp:91
 #: HikariSub/OpennWrite.cpp:331 HikariSub/OpennWrite.cpp:338
@@ -3989,11 +3974,11 @@ msgstr "파일을 저장할 수 없습니다."
 #: HikariSub/OpennWrite.cpp:72 HikariSub/OpennWrite.cpp:94
 #, c-format
 msgid "The old contents of the file are kept in %s."
-msgstr ""
+msgstr "파일의 이전 내용은 %s에 보관되어 있습니다."
 
 #: HikariSub/OpennWrite.cpp:85
 msgid "A temporary file in its folder would let in users the file keeps out."
-msgstr ""
+msgstr "파일이 있는 폴더에 임시 파일을 만들면 이 파일에 접근할 수 없는 사용자도 접근할 수 있게 됩니다."
 
 #: HikariSub/OpennWrite.cpp:213
 msgid "Cannot create file."
@@ -4025,8 +4010,8 @@ msgid ""
 "Select the line with the time line\n"
 "of the previous active tab"
 msgstr ""
-"종료 전\n"
-"마지막 탭의 번호 선택"
+"이전 활성 탭의 시간에 해당하는\n"
+"줄 선택"
 
 #: HikariSub/OptionsDialog.cpp:314
 msgid "Always open subtitles in a new tab"
@@ -4110,23 +4095,23 @@ msgstr "맞춤법 검사 (\"Dictionary\" 폴더)"
 
 #: HikariSub/OptionsDialog.cpp:369
 msgid "Updates"
-msgstr ""
+msgstr "업데이트"
 
 #: HikariSub/OptionsDialog.cpp:370 HikariSub/UpdateChecker.cpp:141
 msgid "Check for updates automatically"
-msgstr ""
+msgstr "자동으로 업데이트 확인"
 
 #: HikariSub/OptionsDialog.cpp:372
 msgid "When the program starts: once a day, or an hour after a check that failed"
-msgstr ""
+msgstr "프로그램 시작 시: 하루에 한 번, 또는 확인에 실패한 경우 1시간 후"
 
 #: HikariSub/OptionsDialog.cpp:374 HikariSub/UpdateChecker.cpp:145
 msgid "Stable versions only"
-msgstr ""
+msgstr "안정 버전만"
 
 #: HikariSub/OptionsDialog.cpp:376
 msgid "A release candidate is still told about newer release candidates"
-msgstr ""
+msgstr "릴리스 후보 버전을 사용 중이면 더 새로운 릴리스 후보는 계속 알립니다"
 
 #: HikariSub/OptionsDialog.cpp:396
 msgid "0 turns off saving while editing"
@@ -4177,14 +4162,12 @@ msgid "Program font:"
 msgstr "프로그램 글꼴:"
 
 #: HikariSub/OptionsDialog.cpp:454
-#, fuzzy
 msgid "Calculate spaces and punctation characters for wraps"
-msgstr "포장을 위한 공간과 punctation 문자 계산"
+msgstr "글자 수 계산 시 공백 및 문장 부호 포함"
 
 #: HikariSub/OptionsDialog.cpp:457
-#, fuzzy
 msgid "Calculate spaces and punctation characters for CPS"
-msgstr "공간 계산 및 CPS에 대한 음성"
+msgstr "초당 문자 수(CPS) 계산 시 공백 및 문장 부호 포함"
 
 #: HikariSub/OptionsDialog.cpp:462
 msgid "Autoload loading method"
@@ -4192,11 +4175,11 @@ msgstr "스크립트 자동 불러오기 방법"
 
 #: HikariSub/OptionsDialog.cpp:463
 msgid "After open menu"
-msgstr "자동화 메뉴 클릭 후 모두"
+msgstr "자동화 메뉴를 연 후"
 
 #: HikariSub/OptionsDialog.cpp:463
 msgid "After open menu asynchronously"
-msgstr "자동화 메뉴 클릭 후 순차적으로"
+msgstr "자동화 메뉴를 연 후 (비동기)"
 
 #: HikariSub/OptionsDialog.cpp:463
 msgid "After program start"
@@ -4204,12 +4187,11 @@ msgstr "프로그램 시작과 동시에"
 
 #: HikariSub/OptionsDialog.cpp:463
 msgid "After program start asynchronously"
-msgstr "프로그램 시작 후"
+msgstr "프로그램 시작 후 (비동기)"
 
 #: HikariSub/OptionsDialog.cpp:469
-#, fuzzy
 msgid "Folder with external fonts"
-msgstr "외부 글꼴로 폴더"
+msgstr "외부 글꼴 폴더"
 
 #: HikariSub/OptionsDialog.cpp:472 HikariSub/VideoToolbar.cpp:509
 #: HikariSub/VideoToolbar.cpp:527
@@ -4217,9 +4199,8 @@ msgid "Choose"
 msgstr "선택"
 
 #: HikariSub/OptionsDialog.cpp:474
-#, fuzzy
 msgid "Choose choose external font folder"
-msgstr "외부 글꼴 폴더를 선택하십시오"
+msgstr "외부 글꼴 폴더 선택"
 
 #: HikariSub/OptionsDialog.cpp:503
 msgid "Choose catalog"
@@ -4284,7 +4265,7 @@ msgstr "전체 화면의 컨텍스트 메뉴에서 영상 열기"
 
 #: HikariSub/OptionsDialog.cpp:605
 msgid "Convert video colours on the GPU (requires reloading)"
-msgstr ""
+msgstr "GPU에서 영상 색상 변환 (다시 불러오기 필요)"
 
 #: HikariSub/OptionsDialog.cpp:605
 msgid "Open video with time of active line"
@@ -4303,9 +4284,8 @@ msgid "Subtitle display filter"
 msgstr "자막 필터"
 
 #: HikariSub/OptionsDialog.cpp:608
-#, fuzzy
 msgid "Start video zoom in percent."
-msgstr "비디오 줌을 퍼센트로 시작합니다."
+msgstr "영상 확대 시작 배율(퍼센트)."
 
 #: HikariSub/OptionsDialog.cpp:627
 msgid "Linear"
@@ -5076,7 +5056,7 @@ msgstr "파일 연결"
 
 #: HikariSub/OptionsDialog.cpp:1036
 msgid "Subtitle properties"
-msgstr "ASS 파일 정보"
+msgstr "자막 속성"
 
 #: HikariSub/OptionsDialog.cpp:1045
 msgid "Set default"
@@ -5132,12 +5112,11 @@ msgstr "영상 색인"
 #: HikariSub/ProviderFFMS2.cpp:146
 #, c-format
 msgid "Cannot get frame %i: %s"
-msgstr ""
+msgstr "%i 프레임을 가져올 수 없음: %s"
 
 #: HikariSub/ProviderFFMS2.cpp:169
-#, fuzzy
 msgid "Video frame size is too large"
-msgstr "영상 구조 크기는 너무 크다"
+msgstr "영상 프레임 크기가 너무 큼"
 
 #: HikariSub/ProviderFFMS2.cpp:282
 msgid "Choose the track"
@@ -5154,7 +5133,7 @@ msgstr "영상 소스를 만들 수 없음."
 
 #: HikariSub/ProviderFFMS2.cpp:435 HikariSub/ProviderFFMS2.cpp:654
 msgid "Cannot convert video to RGBA"
-msgstr "영상를 RGBA로 변환할 수 없음"
+msgstr "영상을 RGBA로 변환할 수 없음"
 
 #: HikariSub/ProviderFFMS2.cpp:451 HikariSub/ProviderFFMS2.cpp:457
 #: HikariSub/ProviderFFMS2.cpp:1087
@@ -5186,16 +5165,15 @@ msgstr "지연 실패, 소리 길이 초과"
 #: HikariSub/ProviderFFMS2.cpp:635
 #, c-format
 msgid "Cannot create the audio cache %s"
-msgstr ""
+msgstr "소리 임시 저장 파일 %s을(를) 만들 수 없음"
 
 #: HikariSub/ProviderFFMS2.cpp:636
 msgid "Not enough memory for the audio cache"
-msgstr ""
+msgstr "소리 임시 저장에 필요한 메모리가 부족함"
 
 #: HikariSub/RendererDirectShow.cpp:102
-#, fuzzy
 msgid "Cannot create DXVA processor service"
-msgstr "DXVA 프로세서 서비스를 생성 할 수 없음"
+msgstr "DXVA 프로세서 서비스를 만들 수 없음"
 
 #: HikariSub/RendererDirectShow.cpp:122
 msgid "Cannot get DXVA GUIDs"
@@ -5259,24 +5237,21 @@ msgid "Chapter %i"
 msgstr "장 %i"
 
 #: HikariSub/RendererGStreamer.cpp:196
-#, fuzzy
 msgid "Video file does not contain a video stream"
-msgstr "Video file는 비디오 스트림을 포함하지 않습니다"
+msgstr "영상 파일에 영상 스트림이 없음"
 
 #: HikariSub/RendererGStreamer.cpp:278
-#, fuzzy
 msgid "Cannot create GStreamer pipeline (playbin)"
-msgstr "컨트롤러를 만들 수 없음"
+msgstr "GStreamer 파이프라인(playbin)을 만들 수 없음"
 
 #: HikariSub/RendererGStreamer.cpp:308
-#, fuzzy
 msgid "Cannot create GStreamer video display module"
-msgstr "프로세스를 만들 수 없음. Muxing은 취소됨"
+msgstr "GStreamer 영상 표시 모듈을 만들 수 없음"
 
 #: HikariSub/RendererGStreamer.cpp:340
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot open video file: %s"
-msgstr "\"%s\" 파일을 열 수 없습니다."
+msgstr "영상 파일을 열 수 없음: %s"
 
 #: HikariSub/RendererGStreamer.cpp:681
 #, c-format
@@ -5292,9 +5267,8 @@ msgid "From video"
 msgstr "영상에서"
 
 #: HikariSub/ScriptInfo.cpp:106
-#, fuzzy
 msgid "Layout"
-msgstr "제품정보"
+msgstr "레이아웃"
 
 #: HikariSub/ScriptInfo.cpp:129
 msgid "YCbCr matrix"
@@ -5642,15 +5616,14 @@ msgid "Shift times by time / frames"
 msgstr "시간 / 프레임"
 
 #: HikariSub/ShiftTimes.cpp:563
-#, fuzzy
 msgid ""
 "Shifts \\move, \\t, and \\fad tag times\n"
 "so their positions on video do not change\n"
 "(slows down time shifting)"
 msgstr ""
-"\"\\move\", \"\\t\", \"\\fad\" 태그는\n"
-"자막 재생 시간에 영향을 미치지 않음.\n"
-"(시간 이동을 느리게 함)"
+"\\move, \\t, \\fad 태그 시간도 이동하여\n"
+"영상에서의 위치가 바뀌지 않게 합니다\n"
+"(시간 이동이 느려짐)"
 
 #: HikariSub/ShiftTimes.cpp:564
 msgid "The choice of times to move"
@@ -5934,7 +5907,7 @@ msgstr "186 - 발트어"
 
 #: HikariSub/StyleChange.cpp:255
 msgid "204 - Russian"
-msgstr "204 - 러시아러"
+msgstr "204 - 러시아어"
 
 #: HikariSub/StyleChange.cpp:256
 msgid "222 - Thai"
@@ -6084,8 +6057,7 @@ msgstr "선택까지 되돌리기"
 #, c-format
 msgid "%d element"
 msgid_plural "%d elements"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "항목 %d개"
 
 #: HikariSub/SubsFile.cpp:195
 msgid "Opening subtitles"
@@ -6241,7 +6213,7 @@ msgstr "이동 도구"
 
 #: HikariSub/SubsFile.cpp:234
 msgid "Visual scaling tool"
-msgstr "도구 크기 조정"
+msgstr "크기 조정 도구"
 
 #: HikariSub/SubsFile.cpp:235
 msgid "Visual Z-axis rotation tool"
@@ -6277,7 +6249,7 @@ msgstr "비주얼 도구 히드라"
 
 #: HikariSub/SubsFile.cpp:245
 msgid "Fixing minor errors"
-msgstr "다중 교체기"
+msgstr "사소한 오류 수정"
 
 #: HikariSub/SubsFile.cpp:246
 msgid "Adding tree"
@@ -6304,20 +6276,18 @@ msgid "Filtering"
 msgstr "필터"
 
 #: HikariSub/SubsFile.cpp:252
-#, fuzzy
 msgid "Removing filtering"
-msgstr "줄 삭제 중"
+msgstr "필터링 해제"
 
 #: HikariSub/SubsFile.cpp:253
-#, fuzzy
 msgid "Splitting lines"
-msgstr "줄 복사"
+msgstr "줄 분할"
 
 #: HikariSub/SubsFile.cpp:628
 #, c-format
 msgid "Fixed the tree markers of %d line: lines with no tree description are now ordinary lines and every tree is open or closed as a whole."
 msgid_plural "Fixed the tree markers of %d lines: lines with no tree description are now ordinary lines and every tree is open or closed as a whole."
-msgstr[0] ""
+msgstr[0] "줄 %d개의 트리 표시를 수정했습니다: 트리 설명이 없는 줄은 이제 일반 줄이며, 모든 트리는 전체가 함께 열리거나 닫힙니다."
 
 #: HikariSub/SubsFile.cpp:839
 #, c-format
@@ -6330,15 +6300,15 @@ msgstr "글자 수"
 
 #: HikariSub/SubsGrid.cpp:228
 msgid "Do not include selected lines"
-msgstr "선택한 라인은 병합 할 수 없습니다"
+msgstr "선택한 줄 제외"
 
 #: HikariSub/SubsGrid.cpp:242
 msgid "Insert &before"
-msgstr "이전에 빈 줄 추가"
+msgstr "이전에 빈 줄 추가[&B]"
 
 #: HikariSub/SubsGrid.cpp:243
 msgid "Insert &after"
-msgstr "이후에 빈 줄 추가"
+msgstr "이후에 빈 줄 추가[&A]"
 
 #: HikariSub/SubsGrid.cpp:245
 msgid "Insert before with &video time"
@@ -6349,7 +6319,6 @@ msgid "Insert &after with video time"
 msgstr "영상 시간을 뒤에 추가(빈 줄) +4초[&A]"
 
 #: HikariSub/SubsGrid.cpp:249
-#, fuzzy
 msgid "Insert lines"
 msgstr "줄 삽입"
 
@@ -6359,16 +6328,15 @@ msgstr "줄 복사[&D]"
 
 #: HikariSub/SubsGrid.cpp:253
 msgid "&Swap"
-msgstr "바꿈"
+msgstr "서로 바꾸기[&S]"
 
 #: HikariSub/SubsGrid.cpp:255
 msgid "Join &lines"
 msgstr "줄 병합[&J]"
 
 #: HikariSub/SubsGrid.cpp:264
-#, fuzzy
 msgid "Split lines"
-msgstr "줄 복사"
+msgstr "줄 분할"
 
 #: HikariSub/SubsGrid.cpp:266
 msgid "Copy\tCtrl-C"
@@ -6469,17 +6437,17 @@ msgstr "이동할 줄이 없습니다"
 
 #: HikariSub/SubsGridBase.cpp:1324
 msgid "This edit would leave lines of a tree outside it, so it was not made."
-msgstr ""
+msgstr "이 편집은 트리의 줄을 트리 밖에 남기게 되므로 적용하지 않았습니다."
 
 #: HikariSub/SubsGridBase.cpp:1325 HikariSub/SubsGridBase.cpp:1345
 #: HikariSub/SubsGridFiltering.cpp:186
 msgid "Trees"
-msgstr ""
+msgstr "트리"
 
 #: HikariSub/SubsGridBase.cpp:1336
 #, c-format
 msgid "Line %d: %s"
-msgstr ""
+msgstr "%d 줄: %s"
 
 #: HikariSub/SubsGridBase.cpp:1339
 #, c-format
@@ -6494,15 +6462,19 @@ msgid_plural ""
 "\n"
 "Removing the trees deletes their description lines and shows their lines as ordinary lines."
 msgstr[0] ""
+"이 편집은 트리를 나누거나, 일부 줄을 트리 밖에 남기거나, 다른 트리로 옮기게 되므로 적용하지 않았습니다:\n"
+"%s\n"
+"\n"
+"트리를 제거하면 트리 설명 줄이 삭제되고 그 줄들은 일반 줄로 표시됩니다."
 
 #: HikariSub/SubsGridBase.cpp:1344
 msgid "Make the edit again after removing."
-msgstr ""
+msgstr "트리를 제거한 후 다시 편집하십시오."
 
 #: HikariSub/SubsGridBase.cpp:1346
 msgid "Remove the tree"
 msgid_plural "Remove the trees"
-msgstr[0] ""
+msgstr[0] "트리 제거"
 
 #: HikariSub/SubsGridBase.cpp:1432
 msgid "Invalid format (file may be corrupted or contain errors)"
@@ -6561,6 +6533,8 @@ msgid ""
 "Hidden lines lie between the selected lines, so they cannot make one tree.\n"
 "Show the hidden lines or select only lines that are next to each other."
 msgstr ""
+"선택한 줄 사이에 숨겨진 줄이 있어 하나의 트리로 만들 수 없습니다.\n"
+"숨겨진 줄을 표시하거나 서로 붙어 있는 줄만 선택하십시오."
 
 #: HikariSub/SubsGridWindow.cpp:313 HikariSub/SubsGridWindow.cpp:701
 #: HikariSub/SubsGridWindow.cpp:1132 HikariSub/SubsGridWindow.cpp:1301
@@ -6608,9 +6582,8 @@ msgid "Change resolution"
 msgstr "자막해상도 변경"
 
 #: HikariSub/SubsResampleDialog.cpp:33
-#, fuzzy
 msgid "Target resolution"
-msgstr "변경할 해상도"
+msgstr "대상 해상도"
 
 #: HikariSub/SubsResampleDialog.cpp:37
 msgid "From subtitles"
@@ -6718,7 +6691,7 @@ msgstr ""
 #: HikariSub/TLDialog.cpp:33 HikariSub/TLDialog.cpp:41
 #: HikariSub/VideoToolbar.cpp:62
 msgid "Add line"
-msgstr "제어점 추가"
+msgstr "줄 추가"
 
 #: HikariSub/TLDialog.cpp:34
 msgid ""
@@ -6782,16 +6755,16 @@ msgid ""
 "Subtitles were modified by another program.\n"
 "Reload and discard the unsaved changes in this tab?"
 msgstr ""
+"다른 프로그램에서 자막이 수정되었습니다.\n"
+"이 탭의 저장하지 않은 변경 사항을 버리고 다시 불러오시겠습니까?"
 
 #: HikariSub/TabPanel.cpp:346 HikariSub/TabPanel.cpp:347
-#, fuzzy
 msgid "Reloading"
-msgstr "새로고침하는 중"
+msgstr "다시 불러오기"
 
 #: HikariSub/TabPanel.cpp:347
-#, fuzzy
 msgid "Subtitles were modified by another program. Reload?"
-msgstr "Subtiltes는 다른 프로그램에 의해 수정되었습니다, 다시로드?"
+msgstr "다른 프로그램에서 자막이 수정되었습니다. 다시 불러오시겠습니까?"
 
 #: HikariSub/TextEditorTagList.cpp:133
 msgid "Show description"
@@ -6823,51 +6796,51 @@ msgstr "그림자 색상 투명도"
 
 #: HikariSub/TextEditorTagList.cpp:348
 msgid "PNG mask of primary color"
-msgstr "PNG mask 기본 색상"
+msgstr "첫 번째 색상 PNG 마스크"
 
 #: HikariSub/TextEditorTagList.cpp:349
 msgid "PNG mask of secondary color"
-msgstr "PNG mask 두번째 색상"
+msgstr "두 번째 색상 PNG 마스크"
 
 #: HikariSub/TextEditorTagList.cpp:350
 msgid "PNG mask of border color"
-msgstr "PNG mask 테두리 색상"
+msgstr "테두리 색상 PNG 마스크"
 
 #: HikariSub/TextEditorTagList.cpp:351
 msgid "PNG mask of shadow color"
-msgstr "‪PNG mask 그림자 색상"
+msgstr "그림자 색상 PNG 마스크"
 
 #: HikariSub/TextEditorTagList.cpp:352
 msgid "Transparency gradient of primary color"
-msgstr "그라데이션 첫 번째 색상 투명도"
+msgstr "첫 번째 색상 투명도 그라데이션"
 
 #: HikariSub/TextEditorTagList.cpp:353
 msgid "Transparency gradient of secondary color"
-msgstr "그라데이션 두 번째 색상 투명도"
+msgstr "두 번째 색상 투명도 그라데이션"
 
 #: HikariSub/TextEditorTagList.cpp:354
 msgid "Transparency gradient of border color"
-msgstr "그라데이션 테두리 투명도"
+msgstr "테두리 색상 투명도 그라데이션"
 
 #: HikariSub/TextEditorTagList.cpp:355
 msgid "Transparency gradient of shadow color"
-msgstr "그라데이션 그림자 투명도"
+msgstr "그림자 색상 투명도 그라데이션"
 
 #: HikariSub/TextEditorTagList.cpp:356
 msgid "Gradient of primary color"
-msgstr "그라데이션 첫 번째 색상"
+msgstr "첫 번째 색상 그라데이션"
 
 #: HikariSub/TextEditorTagList.cpp:357
 msgid "Gradient of secondary color"
-msgstr "그라데이션 첫 번째 색상"
+msgstr "두 번째 색상 그라데이션"
 
 #: HikariSub/TextEditorTagList.cpp:358
 msgid "Gradient of border color"
-msgstr "그라데이션 테두리"
+msgstr "테두리 색상 그라데이션"
 
 #: HikariSub/TextEditorTagList.cpp:359
 msgid "Gradient of shadow color"
-msgstr "그라데이션 그림자"
+msgstr "그림자 색상 그라데이션"
 
 #: HikariSub/TextEditorTagList.cpp:360
 msgid "Text alignment (SSA)"
@@ -6991,11 +6964,11 @@ msgstr "원형 글자 이동"
 
 #: HikariSub/TextEditorTagList.cpp:394
 msgid "Text movement along a curve (3 points)"
-msgstr "글자 곡선 이동 (3 points)"
+msgstr "글자 곡선 이동 (3개 지점)"
 
 #: HikariSub/TextEditorTagList.cpp:395
 msgid "Text movement along a curve (4 points)"
-msgstr "글자 곡선 이동 (4 points)"
+msgstr "글자 곡선 이동 (4개 지점)"
 
 #: HikariSub/TextEditorTagList.cpp:396
 msgid "Vector drawing movement"
@@ -7023,23 +6996,23 @@ msgstr "태그 재설정"
 
 #: HikariSub/TextEditorTagList.cpp:403
 msgid "Font point randomness"
-msgstr "임의의 글꼴 지저"
+msgstr "글꼴 윤곽점 무작위화"
 
 #: HikariSub/TextEditorTagList.cpp:404
 msgid "Font point randomness seed"
-msgstr "임의의 글꼴 지점 seed[?]"
+msgstr "글꼴 윤곽점 무작위화 시드"
 
 #: HikariSub/TextEditorTagList.cpp:405
 msgid "Font point randomness on X axis"
-msgstr "임의의 글꼴 지점 X 축"
+msgstr "X 축 글꼴 윤곽점 무작위화"
 
 #: HikariSub/TextEditorTagList.cpp:406
 msgid "Font point randomness on Y axis"
-msgstr "임의의 글꼴 지점 Y 축"
+msgstr "Y 축 글꼴 윤곽점 무작위화"
 
 #: HikariSub/TextEditorTagList.cpp:407
 msgid "Font point randomness on Z axis"
-msgstr "임의의 글꼴 지점 Z 축"
+msgstr "Z 축 글꼴 윤곽점 무작위화"
 
 #: HikariSub/TextEditorTagList.cpp:408
 msgid "Text strikethrough"
@@ -7109,37 +7082,37 @@ msgstr "도구 모음 정렬"
 #: HikariSub/UpdateChecker.cpp:107
 #, c-format
 msgid "You have the latest stable version. A newer prerelease, %s, is available."
-msgstr ""
+msgstr "최신 안정 버전을 사용 중입니다. 더 새로운 시험판 %s을(를) 사용할 수 있습니다."
 
 #: HikariSub/UpdateChecker.cpp:108 HikariSub/UpdateChecker.cpp:273
 #: HikariSub/UpdateChecker.cpp:313 HikariSub/UpdateChecker.cpp:331
 msgid "Update"
-msgstr ""
+msgstr "업데이트"
 
 #: HikariSub/UpdateChecker.cpp:109 HikariSub/UpdateChecker.cpp:152
 msgid "Open the download page"
-msgstr ""
+msgstr "다운로드 페이지 열기"
 
 #: HikariSub/UpdateChecker.cpp:119
 msgid "A new version is available"
-msgstr ""
+msgstr "새 버전을 사용할 수 있습니다"
 
 #: HikariSub/UpdateChecker.cpp:129
 #, c-format
 msgid "You have version %s; version %s is available"
-msgstr ""
+msgstr "현재 버전은 %s이며, %s 버전을 사용할 수 있습니다"
 
 #: HikariSub/UpdateChecker.cpp:153
 msgid "Remind me in a week"
-msgstr ""
+msgstr "1주일 후에 다시 알림"
 
 #: HikariSub/UpdateChecker.cpp:273 HikariSub/UpdateChecker.cpp:331
 msgid "Cannot check for updates"
-msgstr ""
+msgstr "업데이트를 확인할 수 없음"
 
 #: HikariSub/UpdateChecker.cpp:313
 msgid "You already have the latest version"
-msgstr ""
+msgstr "이미 최신 버전을 사용 중입니다"
 
 #: HikariSub/UtilsWindows.cpp:63
 msgid "Unable to retrieve information about the monitor"
@@ -7180,12 +7153,12 @@ msgstr "전체 화면\tF"
 
 #: HikariSub/VideoBox.cpp:952
 msgid "Exit full screen\tEscape"
-msgstr "전체 화면 종료\tESC"
+msgstr "전체 화면 종료\tEscape"
 
 #: HikariSub/VideoBox.cpp:960
 #, c-format
 msgid "Switch full screen to monitor %i"
-msgstr "%i을(를) 전체 화면으로 전환"
+msgstr "모니터 %i(으)로 전체 화면 전환"
 
 #: HikariSub/VideoBox.cpp:961
 #, c-format
@@ -7377,7 +7350,7 @@ msgstr "비율을 유지"
 
 #: HikariSub/VideoToolbar.cpp:86
 msgid "Scale height"
-msgstr "새로 크기"
+msgstr "세로 크기"
 
 #: HikariSub/VideoToolbar.cpp:87
 msgid ""
@@ -7421,7 +7394,6 @@ msgid "Positioning in Y axis"
 msgstr "Y축에 위치 지정"
 
 #: HikariSub/VideoToolbar.cpp:97
-#, fuzzy
 msgid ""
 "Set movement using 2 points and the video position.\n"
 "After placing the first point before the moving text,\n"
@@ -7430,11 +7402,12 @@ msgid ""
 "for which the start point was set remains visible.\n"
 "Movement is generated by placing the second point."
 msgstr ""
-"2개 지점에서 이동 및 영상 위치를 설정합니다.\n"
-"텍스트가 이동하기 전에 비디오에 첫 번째 지점을 설정한 후,\n"
-"프레임이 끝나도록 비디오를 설정합니다.\n"
-"첫 번째 설정점은 계속 표시됩니다.\n"
-"이동하면 두 번째 지점이 생성됩니다."
+"2개 지점과 영상 위치로 이동을 설정합니다.\n"
+"움직이는 글자 앞에 첫 번째 지점을 놓은 후,\n"
+"시작 지점을 지정한 영상 속 대상이\n"
+"계속 보이는 범위 안에서\n"
+"영상을 충분한 프레임만큼 진행합니다.\n"
+"두 번째 지점을 놓으면 이동이 생성됩니다."
 
 #: HikariSub/VideoToolbar.cpp:100
 msgid "Changing all X/Y-rotation tags"
@@ -7442,7 +7415,7 @@ msgstr "X / Y의 모든 회전 태그 변경"
 
 #: HikariSub/VideoToolbar.cpp:130
 msgid "Double-clicking a line (always on)"
-msgstr "두 번 클릭으로 이동 ()"
+msgstr "줄 두 번 클릭 시 (항상 켜짐)"
 
 #: HikariSub/VideoToolbar.cpp:130
 msgid "Every line change"
@@ -7450,15 +7423,15 @@ msgstr "항상 영상도 이동"
 
 #: HikariSub/VideoToolbar.cpp:131
 msgid "Clicking a line or editing"
-msgstr "줄 또는 에디션을 클릭[?]"
+msgstr "줄 클릭 또는 편집 시"
 
 #: HikariSub/VideoToolbar.cpp:131
 msgid "Clicking a line or editing when paused"
-msgstr "줄 클릭으로 정지[?]"
+msgstr "일시 정지 중 줄 클릭 또는 편집 시"
 
 #: HikariSub/VideoToolbar.cpp:132
 msgid "Editing line when paused"
-msgstr "일시 중지 된 경우 줄 편집[?]"
+msgstr "일시 정지 중 줄 편집 시"
 
 #: HikariSub/VideoToolbar.cpp:133
 msgid "Audio to the line end time"
@@ -7499,9 +7472,8 @@ msgid "List of tags that can edit visual tool"
 msgstr "시각적 도구를 편집할 수 있는 태그 목록"
 
 #: HikariSub/VideoToolbar.cpp:749 HikariSub/VisualAllTagsEdition.cpp:87
-#, fuzzy
 msgid "Gradient text increasing"
-msgstr "Gradient 텍스트 증가"
+msgstr "그라데이션 글자 증가"
 
 #: HikariSub/VideoToolbar.cpp:749 HikariSub/VisualAllTagsEdition.cpp:87
 msgid "Insert"
@@ -7509,30 +7481,26 @@ msgstr "삽입"
 
 #: HikariSub/VideoToolbar.cpp:749 HikariSub/VisualAllTagsEdition.cpp:87
 msgid "Multiply"
-msgstr "다중"
+msgstr "곱하기"
 
 #: HikariSub/VideoToolbar.cpp:749 HikariSub/VideoToolbar.cpp:751
 #: HikariSub/VideoToolbar.cpp:810 HikariSub/VisualAllTagsEdition.cpp:87
 msgid "Multiply+"
-msgstr "다중+"
+msgstr "곱하기+"
 
 #: HikariSub/VideoToolbar.cpp:750 HikariSub/VisualAllTagsEdition.cpp:88
-#, fuzzy
 msgid "Gradient line decreasing"
-msgstr "Gradient 선 감소"
+msgstr "그라데이션 줄 감소"
 
 #: HikariSub/VideoToolbar.cpp:750 HikariSub/VisualAllTagsEdition.cpp:88
-#, fuzzy
 msgid "Gradient line increasing"
-msgstr "Gradient 선 증가"
+msgstr "그라데이션 줄 증가"
 
 #: HikariSub/VideoToolbar.cpp:750 HikariSub/VisualAllTagsEdition.cpp:88
-#, fuzzy
 msgid "Gradient text decreasing"
-msgstr "Gradient 텍스트 감소"
+msgstr "그라데이션 글자 감소"
 
 #: HikariSub/VideoToolbar.cpp:753
-#, fuzzy
 msgid ""
 "Tag change options:\n"
 "Add - changes all tags by adding the slider value.\n"
@@ -7545,20 +7513,16 @@ msgid ""
 "Gradient line increasing - inserts a tag in selected lines, increasing the value.\n"
 "Gradient line decreasing - inserts a tag in selected lines, decreasing the value."
 msgstr ""
-"태그 변경의 옵션 :\n"
-"추가 - 변경 모든 태그 슬라이더에 이동.\n"
-"인서트 - 한 줄 때 커서 위치에 삽입 태그\n"
-"또는 멀티 라인의 시작에.\n"
-"Multiply - 선택된 번호 od에 의하여 slider의 곱하기 이동\n"
-"첫번째 선은 변화하지 않습니다. 캐스케이드에 대 한 만든.\n"
-"Gradient 텍스트 증가 - 모든 문자에 태그를 넣어\n"
-"슬라이더의 수 증가\n"
-"Gradient text decreasing - 모든 문자에 태그를 넣어\n"
-"슬라이더의 수에서 감소\n"
-"Gradient 라인 증가 - 모든 라인에 태그를 넣어\n"
-"슬라이더의 수 증가\n"
-"Gradient 라인 감소 - 모든 라인에 태그를 넣어\n"
-"슬라이더의 수에서 감소"
+"태그 변경 옵션:\n"
+"추가 - 슬라이더 값을 더해 모든 태그를 변경합니다.\n"
+"삽입 - 한 줄이면 커서 위치에, 여러 줄이면\n"
+"시작 부분에 태그를 삽입합니다.\n"
+"곱하기 - 슬라이더 값에 선택한 줄 번호를 곱합니다.\n"
+"첫 번째 줄은 변경되지 않습니다.\n"
+"그라데이션 글자 증가 - 글자마다 값을 늘려 가며 태그를 삽입합니다.\n"
+"그라데이션 글자 감소 - 글자마다 값을 줄여 가며 태그를 삽입합니다.\n"
+"그라데이션 줄 증가 - 선택한 줄마다 값을 늘려 가며 태그를 삽입합니다.\n"
+"그라데이션 줄 감소 - 선택한 줄마다 값을 줄여 가며 태그를 삽입합니다."
 
 #: HikariSub/VideoToolbar.cpp:783
 msgid "Edit listed tags and create new ones"
@@ -7673,19 +7637,16 @@ msgid "No additional values"
 msgstr "추가 값 없음"
 
 #: HikariSub/VisualAllTagsEdition.cpp:90
-#, fuzzy
 msgid "One additional value"
-msgstr "한 개 추가 값"
+msgstr "추가 값 1개"
 
 #: HikariSub/VisualAllTagsEdition.cpp:91
-#, fuzzy
 msgid "Two additional values"
-msgstr "추가 값 없음"
+msgstr "추가 값 2개"
 
 #: HikariSub/VisualAllTagsEdition.cpp:92
-#, fuzzy
 msgid "Three additional values"
-msgstr "세 개의 추가 값"
+msgstr "추가 값 3개"
 
 #: HikariSub/VisualAllTagsEdition.cpp:94
 msgid "Used only when tag have 2 values or more"
@@ -7742,11 +7703,8 @@ msgstr ""
 "\"최소값\" 필드보다 큽니다."
 
 #: HikariSub/VisualAllTagsEdition.cpp:309
-#, fuzzy
 msgid "Field \"Step\" must contain a value greater than zero."
-msgstr ""
-"\"최대값\" 필드에는 값이 포함되어야 합니다.\n"
-"\"최소값\" 필드보다 큽니다."
+msgstr "\"단계\" 필드에는 0보다 큰 값을 입력해야 합니다."
 
 #: HikariSub/VisualAllTagsEdition.cpp:313
 msgid "Field \"Step\" contains a number too large for the current min-max range."
@@ -7819,7 +7777,7 @@ msgstr "목록에서 모든 모양을 제거할 수 없습니다"
 #: HikariSub/VisualDrawingShapes.cpp:192
 #, c-format
 msgid "Save changes to shape \"%s\"?"
-msgstr "\"%s\" 모양 에디션을 저장하시겠습니까?"
+msgstr "\"%s\" 모양의 변경 사항을 저장하시겠습니까?"
 
 #: HikariSub/VisualDrawingShapes.cpp:271
 msgid "Field \"shape\" cannot be empty."
@@ -8011,7 +7969,7 @@ msgid ""
 "What would you like to do?"
 msgstr ""
 "선택한 스타일이 모두 존재하지 않으며 아무 것도 찾을 수 없습니다.\n"
-"어떻게 할까ㅇ?"
+"어떻게 하시겠습니까?"
 
 #: HikariSub/findreplace.cpp:1483 HikariSub/findreplace.cpp:1488
 msgid "Remove styles"
@@ -8044,15 +8002,15 @@ msgstr "설정을 읽을 수 없습니다. 프로그램이 종료됩니다."
 
 #: HikariSub/hikarisubApp.cpp:361
 msgid "Cannot find language, language change failed"
-msgstr ""
+msgstr "언어를 찾을 수 없어 언어를 변경하지 못했습니다"
 
 #: HikariSub/hikarisubApp.cpp:366
 msgid "wxLocale cannot initialize, language change failed"
-msgstr ""
+msgstr "wxLocale을 초기화할 수 없어 언어를 변경하지 못했습니다"
 
 #: HikariSub/hikarisubApp.cpp:379
 msgid "Cannot find translation, language change failed"
-msgstr ""
+msgstr "번역을 찾을 수 없어 언어를 변경하지 못했습니다"
 
 #: HikariSub/hikarisubApp.cpp:404
 msgid ""
@@ -8175,7 +8133,7 @@ msgstr ""
 
 #: HikariSub/stylestore.cpp:775
 msgid "Status of deleted styles"
-msgstr "글꼴 초기화"
+msgstr "삭제된 스타일 상태"
 
 #: HikariSub/stylestore.cpp:781
 msgid "Style catalog"
@@ -8199,7 +8157,7 @@ msgstr "스타일 복사"
 
 #: HikariSub/stylestore.cpp:786
 msgid "Load style from external ASS file to storage"
-msgstr "ASS자막에서 가져오기"
+msgstr "외부 ASS 파일에서 목록으로 스타일 불러오기"
 
 #: HikariSub/stylestore.cpp:787
 msgid "Delete style from storage"
@@ -8223,7 +8181,7 @@ msgstr "스타일 복사"
 
 #: HikariSub/stylestore.cpp:792
 msgid "Load style from external ASS file"
-msgstr "ASS자막에서 가져오기"
+msgstr "외부 ASS 파일에서 스타일 불러오기"
 
 #: HikariSub/stylestore.cpp:793
 msgid "Delete style from ASS"
