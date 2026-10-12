@@ -16,16 +16,15 @@
  **************************************************************/
 
 #include "JsonValue.h"
+#include "JsonLimits.h"
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
 
 namespace
 {
-	// Both caps exist because the input comes off the network: a hostile or
-	// broken response must not be able to exhaust the stack or memory.
-	constexpr size_t kMaxDepth = 64;
-	constexpr size_t kMaxInput = 4u * 1024u * 1024u;
+	using json_limits::kMaxDepth;
+	using json_limits::kMaxInput;
 
 	void AppendUtf8(std::string &out, unsigned int cp)
 	{

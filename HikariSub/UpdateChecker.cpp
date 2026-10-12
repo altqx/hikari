@@ -248,7 +248,7 @@ namespace
 			if (tooLarge)
 				return;
 			size_t size = evt.GetDataSize();
-			if (size > update_policy::kMaxResponseBytes - body.size()) {
+			if (!update_policy::FitsReply(body.size(), size)) {
 				tooLarge = true;
 				body.clear();
 				body.shrink_to_fit();

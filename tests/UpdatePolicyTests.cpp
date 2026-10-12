@@ -14,9 +14,11 @@
 //  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "check.h"
+#include "../HikariSub/JsonLimits.h"
 #include "../HikariSub/UpdatePolicy.h"
 #include "../HikariSub/VersionHikariSub.h"
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -219,7 +221,7 @@ TEST(update_release_page_is_built_from_the_tag)
 	CHECK(ReleasePageUrl("https://evil.example/").empty());
 	CHECK(ReleasePageUrl("v1.0.0\"").empty());
 	CHECK(ReleasePageUrl("v1.0.0%2F").empty());
-	CHECK(ReleasesApiUrl() == "https://api.github.com/repos/altqx/hikari/releases?per_page=100");
+	CHECK(ReleasesApiUrl() == "https://api.github.com/repos/altqx/hikari/releases?per_page=50");
 
 	// Every tag ChooseRelease can pick is a version, and so has a page.
 	for (const char *tag : { "v0.0.1-rc.2", "0.0.1", "V2.0.0-beta.1+exp.sha.5114f85" }) {
@@ -308,9 +310,59 @@ TEST(update_startup_check_keeps_quiet_about_a_declined_version)
 	CHECK(!WasDeclined("garbage", "v0.0.1-rc.3"));
 }
 
-TEST(update_response_limit_holds_a_full_page)
+namespace {
+
+// What UpdateRequest::OnData keeps of a reply of total bytes that comes in
+// pieces of piece bytes: the bytes kept, or 0 once it was cut off.
+size_t ReceiveReply(size_t total, size_t piece)
 {
-	// A hundred releases at the size of the qt-metadata ones, 18 assets
-	// and about 40 KB each.
-	CHECK(kMaxResponseBytes >= 100 * 40 * 1024);
+	size_t received = 0;
+	while (received < total) {
+		size_t size = total - received < piece ? total - received : piece;
+		if (!FitsReply(received, size))
+			return 0;
+		received += size;
+	}
+	return received;
+}
+
+} // namespace
+
+TEST(update_reply_cap_is_the_json_parsers)
+{
+	// JsonValue::Parse() refuses input over json_limits::kMaxInput, so a
+	// reply the request keeps can always be parsed, and one it would parse
+	// is never cut off.
+	static_assert(kMaxResponseBytes == json_limits::kMaxInput);
+	CHECK(kMaxResponseBytes == json_limits::kMaxInput);
+	// A page of the largest releases is half the cap at most.
+	CHECK(kReleasesPerPage * kLargestReleaseBytes <= kMaxResponseBytes / 2);
+	// The qt-metadata releases measured on GitHub: 29836 and 29808 bytes.
+	CHECK(kLargestReleaseBytes >= 29836);
+	CHECK(kReleasesPerPage <= 100);
+}
+
+TEST(update_reply_between_the_old_caps_is_cut_off_as_it_comes)
+{
+	const size_t mib = 1024 * 1024;
+	// The cap was 8 MiB and the parser's 4 MiB: a 6 MiB reply was kept
+	// whole, then refused by the parser. It is now cut off at the first
+	// piece past 4 MiB.
+	CHECK(ReceiveReply(6 * mib, 16 * 1024) == 0);
+	CHECK(ReceiveReply(4 * mib + 1, 16 * 1024) == 0);
+	CHECK(ReceiveReply(8 * mib, 16 * 1024) == 0);
+	CHECK(ReceiveReply(6 * mib, 6 * mib) == 0);
+	CHECK(!FitsReply(4 * mib, 1));
+	CHECK(!FitsReply(0, 4 * mib + 1));
+	// Up to the parser's limit, it is kept whole, in pieces of any size.
+	CHECK(ReceiveReply(json_limits::kMaxInput, 16 * 1024) == json_limits::kMaxInput);
+	CHECK(ReceiveReply(json_limits::kMaxInput, 1000) == json_limits::kMaxInput);
+	CHECK(ReceiveReply(json_limits::kMaxInput, json_limits::kMaxInput) == json_limits::kMaxInput);
+	CHECK(FitsReply(4 * mib - 1, 1));
+	// A full page of the largest releases.
+	CHECK(ReceiveReply(kReleasesPerPage * kLargestReleaseBytes, 16 * 1024) ==
+		kReleasesPerPage * kLargestReleaseBytes);
+	// No overflow when a piece is larger than what is left.
+	CHECK(!FitsReply(json_limits::kMaxInput, static_cast<size_t>(-1)));
+	CHECK(!FitsReply(json_limits::kMaxInput + 1, 0));
 }

@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "JsonLimits.h"
 #include "SemVer.h"
 
 #include <cstddef>
@@ -31,18 +32,38 @@ namespace update_policy
 	// One place for a fork to change.
 	constexpr std::string_view kRepository = "altqx/hikari";
 
-	// GitHub lists a hundred at most on a page; with ten, a run of other
-	// releases, such as the qt-metadata-* ones, could push every version off
-	// the page.
+	// GitHub lists the newest first, and can leave nothing out of a
+	// release but by the page size. With ten, a run of other releases, such
+	// as the qt-metadata-* ones, two to a Qt update, could push every
+	// version off the page; fifty leaves room for 24 Qt updates in a row
+	// and keeps the page well under kMaxResponseBytes.
+	constexpr size_t kReleasesPerPage = 50;
+
 	inline std::string ReleasesApiUrl()
 	{
-		return "https://api.github.com/repos/" + std::string(kRepository) + "/releases?per_page=100";
+		return "https://api.github.com/repos/" + std::string(kRepository) + "/releases?per_page=" +
+			std::to_string(kReleasesPerPage);
 	}
 
-	// A page of a hundred releases the size of the qt-metadata ones, with 18
-	// assets each, is about 3.5 MB. A reply past this is cut off and read as
-	// a failed check.
-	constexpr size_t kMaxResponseBytes = 8 * 1024 * 1024;
+	// The largest kind of release in the list, with room to spare: a
+	// qt-metadata one, with 18 assets, is about 30 KB. A version's own,
+	// with three assets and its notes, is about 13 KB.
+	constexpr size_t kLargestReleaseBytes = 40 * 1024;
+
+	// JsonValue::Parse() reads nothing longer, so a reply is cut off as it
+	// comes once it passes this, rather than downloaded whole to be
+	// refused, and the check fails.
+	constexpr size_t kMaxResponseBytes = json_limits::kMaxInput;
+
+	// A page of the largest releases fills half the cap at most.
+	static_assert(kReleasesPerPage * kLargestReleaseBytes <= kMaxResponseBytes / 2,
+		"a page of releases can come near the reply cap");
+
+	// Whether a piece of the reply fits after the bytes already received.
+	constexpr bool FitsReply(size_t received, size_t piece)
+	{
+		return received <= kMaxResponseBytes && piece <= kMaxResponseBytes - received;
+	}
 
 	// The page a release is opened at, built from its tag and never taken
 	// from the reply, so that a reply cannot have the browser open another
