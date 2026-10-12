@@ -21,6 +21,7 @@ add_executable(hikarisub_tests
     LuaJitTests.cpp
     ParsedScriptsTests.cpp
     PlaybackTests.cpp
+    SaveTargetTests.cpp
     SemVerTests.cpp
     TimebaseTests.cpp
     UndoHistoryTests.cpp

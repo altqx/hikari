@@ -30,7 +30,8 @@ public:
 	bool FileWrite(const wxString &filename, const wxString &alltext, bool utf = true);
 	void PartFileWrite(const wxString &parttext);
 	// PartFileWrite then writes to a temporary file next to filename and
-	// CommitTemp replaces filename with it, so a failed save keeps the old file
+	// CommitTemp replaces filename with it, so a failed save keeps the old file;
+	// when filename is a symbolic link its target is replaced and the link kept
 	bool OpenTemp(const wxString &filename);
 	bool CommitTemp();
 	bool IsUTF8withoutBOM(char* buf, size_t size);

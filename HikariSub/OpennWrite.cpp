@@ -26,7 +26,17 @@
 #include <limits>
 #include <vector>
 #ifndef _WIN32
-#include <stdlib.h>
+#include "SaveTarget.h"
+
+//the path a save to fileName writes, see ResolveSaveTarget
+static bool ResolveSaveTarget(const wxString &fileName, wxString *target)
+{
+	*target = fileName;
+	std::string resolved;
+	if (!ResolveSaveTarget(fileName.fn_str(), &resolved)){ return false; }
+	if (!resolved.empty()){ *target = wxString(resolved.c_str(), *wxConvFileName); }
+	return true;
+}
 #endif
 #ifdef _WIN32
 // wx's wrapper for windows.h, it keeps min and max from becoming macros
@@ -201,11 +211,9 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 	//was written, so a failed or short write leaves the file as it was
 	wxString target = fileName;
 #ifndef _WIN32
-	//replacing a symbolic link would turn it into a plain file
-	char *resolved = realpath(fileName.fn_str(), nullptr);
-	if (resolved){
-		target = wxString(resolved, *wxConvFileName);
-		free(resolved);
+	if (!ResolveSaveTarget(fileName, &target)){
+		HikariLog(_("Cannot save to file."));
+		return false;
 	}
 #endif
 	wxTempFile tempFile;
@@ -277,9 +285,18 @@ bool OpenWrite::OpenTemp(const wxString &fileName)
 	if (!fname.DirExists()){ wxFileName::Mkdir(HikariPathDir(fileName), 511, wxPATH_MKDIR_FULL); }
 	useTemp = true;
 	isfirst = true;
+	wxString target = fileName;
+#ifndef _WIN32
+	if (!ResolveSaveTarget(fileName, &target)){
+		writeFailed = true;
+		HikariLog(_("Cannot open file."));
+		return false;
+	}
+	fname.Assign(target);
+#endif
 	//a file that cannot be written must not be replaced either
 	writeFailed = (fname.FileExists() && (!fname.IsFileReadable() || !fname.IsFileWritable())) ||
-		!tempFile.Open(fileName);
+		!tempFile.Open(target);
 	if (writeFailed){ HikariLog(_("Cannot open file.")); }
 	return !writeFailed;
 }
