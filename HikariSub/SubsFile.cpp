@@ -718,7 +718,7 @@ int SubsFile::FindEndOfTree(size_t i)
 }
 
 int SubsFile::OpenCloseTree(size_t i){
-	size_t endOfTree = -1;
+	size_t endOfTree = subs->dialogues.size() - 1;
 	int visibility = NOT_VISIBLE;
 	for (size_t k = i + 1; k < subs->dialogues.size(); k++){
 		Dialogue *dial = subs->dialogues[k];
@@ -726,6 +726,8 @@ int SubsFile::OpenCloseTree(size_t i){
 			endOfTree = k - 1;
 			break;
 		}
+		// copy the line so earlier history steps keep their state
+		dial = CopyDialogueF(k, true, true);
 		if (dial->treeState == TREE_CLOSED){
 			dial->isVisible = visibility = VISIBLE;
 			dial->treeState = TREE_OPENED;
@@ -734,9 +736,6 @@ int SubsFile::OpenCloseTree(size_t i){
 			dial->isVisible = visibility;
 			dial->treeState = TREE_CLOSED;
 		}
-	}
-	if (endOfTree < 0){
-		endOfTree = subs->dialogues.size() - 1;
 	}
 	if (i + 1 < endOfTree){
 		int diff = endOfTree - (i + 1);

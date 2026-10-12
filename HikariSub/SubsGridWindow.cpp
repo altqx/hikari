@@ -1488,6 +1488,7 @@ void SubsGrid::OnMouseEvent(wxMouseEvent &event) {
 					else
 						edit->SetLine(firstSel);
 				}
+				SetModified(FILTERING_CHANGE, false, false, -1, false);
 			}
 			else if (right){
 				ContextMenuTree(event.GetPosition(), row);

@@ -621,6 +621,7 @@ void SubsGridPreview::OnMouseEvent(wxMouseEvent &event)
 					else
 						tab->edit->SetLine(firstSel);
 				}
+				previewGrid->SetModified(FILTERING_CHANGE, false, false, -1, false);
 			}
 			else if (right){
 				previewGrid->ContextMenuTree(event.GetPosition(), row);
