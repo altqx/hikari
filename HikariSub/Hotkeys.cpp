@@ -301,6 +301,8 @@ int Hotkeys::LoadHkeys(bool Audio)
 
 		wxString Values = token.AfterFirst(L' ').Trim(false).Trim(true);
 		int type = wxString(L"GSEVA").find(Values[0]);
+		// a window letter other than G, S, E, V or A has no hotkey type
+		if (type < 0){ continue; }
 		Values = Values.Remove(0, 2);
 		wxString Labels = token.BeforeFirst(L' ').Trim(false).Trim(true);
 		if (Values != emptyString){
@@ -333,7 +335,8 @@ void Hotkeys::SaveHkeys(bool Audio)
 	for (std::map<idAndType, hdata>::iterator cur = hkeys.begin(); cur != hkeys.end(); cur++) {
 		if ((!Audio && cur->first.Type == AUDIO_HOTKEY) ||
 			(Audio && !(cur->first.Type == AUDIO_HOTKEY)) ||
-			cur->first.id < 100 || cur->second.Accel.empty()) {
+			cur->first.id < 100 || cur->second.Accel.empty() ||
+			cur->first.Type < GLOBAL_HOTKEY || cur->first.Type > AUDIO_HOTKEY) {
 			continue;
 		}
 		if (cur->first >= 30100){ Texthk << cur->second.Name << L"=" << cur->second.Accel << L"\r\n"; }
