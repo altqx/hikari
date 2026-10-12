@@ -82,20 +82,26 @@ protected:
             // layout has placed Text below Layer, and until the click has
             // checked it before OK reads the choice (Spix posts a click's
             // press and release).
-            for (int i = 0; i < 100 && getStringProperty("columnsWindow/column9", "y") ==
-                                           getStringProperty("columnsWindow/column0", "y");
-                 ++i)
+            // Each wait's condition is observed after it, so a wait that
+            // ran out fails the step it guards instead of the paste.
+            const auto placed = [this] {
+                return getStringProperty("columnsWindow/column9", "y") != getStringProperty("columnsWindow/column0", "y");
+            };
+            for (int i = 0; i < 100 && !placed(); ++i)
                 wait(50ms);
+            observed.push_back(placed() ? "Text placed" : "Text not placed"); // 4
             mouseClick("columnsWindow/column9"); // Text
-            for (int i = 0; i < 100 && getStringProperty("columnsWindow/column9", "checked") != "true"; ++i)
+            const auto checked = [this] { return getStringProperty("columnsWindow/column9", "checked") == "true"; };
+            for (int i = 0; i < 100 && !checked(); ++i)
                 wait(50ms);
+            observed.push_back(checked() ? "Text checked" : "Text not checked"); // 5
             mouseClick("columnsWindow/columnsOk");
             // The paste lands after the window closes; under load that can
             // take longer than a fixed wait, so poll for it (up to 5 s).
             for (int i = 0; i < 100 && texts().find("pasted text") == std::string::npos; ++i)
                 wait(50ms);
-            observed.push_back(texts()); // 4
-            observed.push_back(getStringProperty("mainWindow/lineText", "text")); // 5
+            observed.push_back(texts()); // 6
+            observed.push_back(getStringProperty("mainWindow/lineText", "text")); // 7
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -158,14 +164,16 @@ int main(int argc, char **argv)
     const auto &o = test.observed;
     for (std::size_t i = 0; i < o.size(); ++i)
         std::printf("observed[%zu] = %s\n", i, o[i].c_str());
-    expect(o.size() == 6, "every step observed");
-    if (o.size() == 6) {
+    expect(o.size() == 8, "every step observed");
+    if (o.size() == 8) {
         expect(o[0] == "a;a;b;c;", "Ctrl+C then Ctrl+V pastes the copy before the next Line");
         expect(o[1] == "1 Line selected", "the pasted Line is selected");
         expect(o[2] == "a;b;c;", "Ctrl+X cuts it");
         expect(o[3] == "columns", "Paste columns asks which columns");
-        expect(o[4] == "a;b;pasted text;", "only the Text column is pasted");
-        expect(o[5] == "pasted text", "the editor shows the pasted text");
+        expect(o[4] == "Text placed", "the layout places Text below Layer before the click (5 s)");
+        expect(o[5] == "Text checked", "the click checks Text before OK (5 s)");
+        expect(o[6] == "a;b;pasted text;", "only the Text column is pasted");
+        expect(o[7] == "pasted text", "the editor shows the pasted text");
     }
     return failures == 0 ? 0 : 1;
 }
