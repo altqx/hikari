@@ -448,6 +448,9 @@ void Position::SetCurVisual()
 			SortPoints();
 			SetPosition();
 			ChangeMultiline(true, true);
+			//the commit changed the text, read positions again,
+			//the alignment is the same now, so it does not commit again
+			SetCurVisual();
 		}
 	}
 }
