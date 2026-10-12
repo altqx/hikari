@@ -2269,6 +2269,7 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 			// Dragging
 			// Release
 			if (buttonUP) {
+				bool neighbourChanged = false;
 				// Prevent negative times
 				if (Grabbed == -1)
 				{
@@ -2285,6 +2286,7 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 						if (dialc){
 							dialc->Start.NewTime(curEndMS);
 							if (dialc->End < dialc->Start){ dialc->End.NewTime(curEndMS + 5000); }
+							neighbourChanged = true;
 						}
 					}
 					else if ((hold == 1 || hold == 3) && event.AltDown()){
@@ -2292,6 +2294,7 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 						if (dialc){
 							dialc->End.NewTime(curStartMS);
 							if (dialc->End < dialc->Start){ dialc->Start.NewTime(curStartMS - 5000); }
+							neighbourChanged = true;
 						}
 					}
 				}
@@ -2308,6 +2311,10 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 				if (hold != 4){
 					Commit(hold == 2);
 				}
+				// an auto-commit above records it with the Line; otherwise the
+				// change would join whatever step is recorded next
+				if (neighbourChanged)
+					grid->SetModified(AUDIO_CHANGE_TIME, false);
 
 				// Update stuff
 
