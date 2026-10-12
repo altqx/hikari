@@ -52,6 +52,28 @@ int MakeTempFile(const std::string &prefix, mode_t mode, std::string *path)
 	return -1;
 }
 
+// The folder path is in, without a trailing slash.
+std::string FolderOf(const std::string &path)
+{
+	size_t slash = path.rfind('/');
+	return slash == std::string::npos ? "." : slash == 0 ? "/" : path.substr(0, slash);
+}
+
+// MakeTempFile with prefix, or with a short name in the same folder when
+// prefix and the six letters make a name longer than the file system takes.
+int MakeTempFileNear(const std::string &prefix, const char *shortName, mode_t mode, std::string *path,
+	std::string *usedPrefix)
+{
+	*usedPrefix = prefix;
+	int fd = MakeTempFile(prefix, mode, path);
+	if (fd < 0 && errno == ENAMETOOLONG) {
+		std::string folder = FolderOf(prefix);
+		*usedPrefix = (folder == "/" ? "" : folder) + "/" + shortName;
+		fd = MakeTempFile(*usedPrefix, mode, path);
+	}
+	return fd;
+}
+
 std::string TempFolder()
 {
 	const char *folder = getenv("TMPDIR");
@@ -97,12 +119,10 @@ bool CopyAll(int from, int to, SaveFile::Writer writer)
 	}
 }
 
-// Writes the folder's entries to disk after a rename into it.
+// Writes the folder's entries to disk after a rename or a new file in it.
 void SyncFolderOf(const std::string &path)
 {
-	size_t slash = path.rfind('/');
-	std::string folder = slash == std::string::npos ? "." : slash == 0 ? "/" : path.substr(0, slash);
-	int fd = open(folder.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+	int fd = open(FolderOf(path).c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC);
 	if (fd >= 0) {
 		fsync(fd);
 		close(fd);
@@ -219,8 +239,7 @@ bool SaveFile::Open(const std::string &path)
 	}
 
 	if (!facts.exists || S_ISREG(targetStat.st_mode)) {
-		tempPrefix = path + ".";
-		stageFd = MakeTempFile(tempPrefix, 0666, &stagePath);
+		stageFd = MakeTempFileNear(path + ".", ".hikarisub-save.", 0666, &stagePath, &tempPrefix);
 		if (stageFd >= 0) {
 			if (facts.exists) {
 				// The group first, since changing it clears the set-group-ID
@@ -331,11 +350,14 @@ bool SaveFile::Rewrite()
 	}
 
 	// a backup of the old contents, also on disk before the target is touched
-	std::string backupPath;
-	int backup = MakeTempFile(tempPrefix + "old.", 0600, &backupPath);
+	// and its name in its folder, so the backup outlasts a crash
+	std::string backupPath, backupPrefix;
+	int backup = MakeTempFileNear(tempPrefix + "old.", ".hikarisub-old.", 0600, &backupPath, &backupPrefix);
 	struct stat backupStat;
 	bool saved = backup >= 0 && CopyAll(out, backup, nullptr) && fsync(backup) == 0 &&
 		fstat(backup, &backupStat) == 0;
+	if (saved)
+		SyncFolderOf(backupPath);
 	if (saved) {
 		saved = lseek(out, 0, SEEK_SET) == 0 && CopyAll(stageFd, out, targetWriter) &&
 			ftruncate(out, stageStat.st_size) == 0 && fsync(out) == 0;

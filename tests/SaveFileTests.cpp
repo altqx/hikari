@@ -304,6 +304,54 @@ TEST(a_failed_rewrite_puts_the_old_contents_back_into_the_same_inode)
 	}
 }
 
+TEST(a_long_file_name_still_gets_its_temporary_files_next_to_it)
+{
+	SaveScratchDir dir;
+	long nameMax = pathconf(dir.path.c_str(), _PC_NAME_MAX);
+	if (nameMax <= 0 || nameMax > 1024)
+		return; // no fixed limit
+	SaveScratchDir temp;
+	TempFolderOverride tempFolder(temp.path);
+	// The name plus ".XXXXXX" fits, the name plus ".old.XXXXXX" does not: the
+	// backup of a Rewrite takes a short name.
+	fs::path file = dir.path / (std::string(static_cast<size_t>(nameMax - 7), 'a'));
+	fs::path other = dir.path / "other.ass";
+	WriteText(file, "old");
+	fs::create_hard_link(file, other);
+	ino_t before = StatOf(file).st_ino;
+	SaveFile rewrite;
+	CHECK(Save(rewrite, file, "new"));
+	CHECK(rewrite.Method() == SaveMethod::Rewrite);
+	CHECK(ReadText(file) == "new");
+	CHECK(ReadText(other) == "new");
+	CHECK(StatOf(file).st_ino == before);
+	CHECK(Names(dir.path) == (std::set<std::string>{ file.filename().string(), "other.ass" }));
+	CHECK(Names(temp.path).empty());
+
+	// The name plus ".XXXXXX" does not fit either: the temporary file takes a
+	// short name in the same folder and is still renamed over the file.
+	fs::path longer = dir.path / (std::string(static_cast<size_t>(nameMax - 3), 'b'));
+	WriteText(longer, "old");
+	chmod(longer.c_str(), 0640);
+	SaveFile replace;
+	CHECK(Save(replace, longer, "new"));
+	CHECK(replace.Method() == SaveMethod::Replace);
+	CHECK(ReadText(longer) == "new");
+	CHECK((StatOf(longer).st_mode & 07777) == 0640);
+	CHECK(Names(dir.path) ==
+		(std::set<std::string>{ file.filename().string(), longer.filename().string(), "other.ass" }));
+	CHECK(Names(temp.path).empty());
+
+	// the same through a Rewrite, with a link
+	fs::create_hard_link(longer, dir.path / "third.ass");
+	SaveFile rewriteLonger;
+	CHECK(Save(rewriteLonger, longer, "newer"));
+	CHECK(rewriteLonger.Method() == SaveMethod::Rewrite);
+	CHECK(ReadText(dir.path / "third.ass") == "newer");
+	CHECK(Names(dir.path).size() == 4);
+	CHECK(Names(temp.path).empty());
+}
+
 TEST(a_save_that_is_not_committed_leaves_the_file_and_no_temporary_file)
 {
 	SaveScratchDir dir;

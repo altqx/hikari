@@ -32,8 +32,10 @@ public:
 	//writes a temporary file and puts it in place of filename only when all
 	//of it was written; returns false and keeps the file as it was when it
 	//cannot be written, also when it is read-only. On POSIX see SaveFile for
-	//how it is put in place; on Windows it replaces filename, and a file whose
-	//folder takes no temporary file is not written.
+	//how it is put in place: a file whose folder takes no temporary file is
+	//rewritten in place with a backup of its old contents, which is not
+	//atomic. On Windows it replaces filename, and a file whose folder takes
+	//no temporary file is not written.
 	bool FileWrite(const wxString &filename, const wxString &alltext, bool utf = true);
 	void PartFileWrite(const wxString &parttext);
 	// PartFileWrite then writes to a temporary file and CommitTemp puts it in
