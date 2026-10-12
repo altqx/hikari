@@ -1527,6 +1527,9 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 		sthis->tabSizes.Clear();
 		sthis->tabNames.Clear();
 		sthis->iter = 0;
+		//the split pages are gone with the others
+		sthis->split = false;
+		sthis->splititer = 0;
 		wxString video;
 		int videoPosition = 0;
 		wxString subtitles;
