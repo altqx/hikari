@@ -57,6 +57,8 @@ const int folderFlags = O_RDONLY | O_DIRECTORY | O_CLOEXEC;
 // Makes a new file named prefix and six random letters, relative to at,
 // created as a new file is, so the umask and a folder's default ACL apply to
 // mode. O_EXCL makes a link or any other file at the name fail the open.
+// Every file a save writes contents into is made with mode 0600, so no other
+// user can open it while it is written; see SaveFile::TakeFinalMetadata.
 int MakeTempFile(int at, const std::string &prefix, mode_t mode, std::string *name)
 {
 	static const char letters[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -103,6 +105,30 @@ int MakeTempFileNear(int at, const std::string &prefix, const char *shortName, m
 		fd = MakeTempFile(at, *usedPrefix, mode, name);
 	}
 	return fd;
+}
+
+// The mode every file a save writes contents into is made with: the user's
+// own, which no other user can open.
+const mode_t privateMode = 0600;
+
+// The umask of this process, read without changing it, as another thread may
+// be making a file meanwhile; 077 when it cannot be read.
+mode_t CurrentUmask()
+{
+#ifdef __linux__
+	FILE *status = fopen("/proc/self/status", "re");
+	if (status) {
+		char line[256];
+		unsigned mask = 0;
+		bool found = false;
+		while (!found && fgets(line, sizeof(line), status))
+			found = sscanf(line, "Umask: %o", &mask) == 1;
+		fclose(status);
+		if (found)
+			return static_cast<mode_t>(mask & 0777);
+	}
+#endif
+	return 077;
 }
 
 // The temporary folder TMPDIR names, or /tmp, as an absolute path with no
@@ -292,6 +318,8 @@ private:
 };
 
 #ifdef __linux__
+const char aclAttribute[] = "system.posix_acl_access";
+
 // Reads one list or value of extended attributes, from path or else from fd.
 template <typename Read>
 bool ReadAttributeBuffer(Read read, std::string *out)
@@ -341,19 +369,76 @@ bool ReadAttributes(const char *path, int fd, std::map<std::string, std::string>
 	return true;
 }
 
+// An access ACL, as the posix_acl_access attribute holds it, without the
+// permissions a chmod sets: the owner's, the others' and the mask's, or the
+// owning group's in an ACL without a mask. An ACL of only the owner, the
+// owning group and others says no more than the mode and is empty.
+std::string AclWithoutMode(const std::string &value)
+{
+	// a little-endian 32-bit version, then entries of a 16-bit tag, 16-bit
+	// permissions and a 32-bit id
+	const unsigned userObj = 0x01, groupObj = 0x04, mask = 0x10, other = 0x20;
+	if (value.size() < 4 || (value.size() - 4) % 8 != 0)
+		return value;
+	auto tagAt = [&](size_t entry) {
+		return static_cast<unsigned>(static_cast<unsigned char>(value[entry])) |
+			static_cast<unsigned>(static_cast<unsigned char>(value[entry + 1])) << 8;
+	};
+	// an ACL with named users or groups has a mask
+	bool hasMask = false;
+	for (size_t entry = 4; entry < value.size(); entry += 8)
+		hasMask = hasMask || tagAt(entry) == mask;
+	if (!hasMask)
+		return std::string();
+	std::string out = value;
+	for (size_t entry = 4; entry < out.size(); entry += 8) {
+		unsigned tag = tagAt(entry);
+		if (tag == userObj || tag == other || tag == mask || (tag == groupObj && !hasMask))
+			out[entry + 2] = out[entry + 3] = 0;
+	}
+	return out;
+}
+
+// The attributes of fd, or of the file at path, as a save compares them: the
+// access ACL without what the mode says, see AclWithoutMode.
+bool ReadComparedAttributes(const char *path, int fd, std::map<std::string, std::string> *attributes)
+{
+	if (!ReadAttributes(path, fd, attributes))
+		return false;
+	auto acl = attributes->find(aclAttribute);
+	if (acl != attributes->end()) {
+		acl->second = AclWithoutMode(acl->second);
+		if (acl->second.empty())
+			attributes->erase(acl);
+	}
+	return true;
+}
+
 // The attributes of the file targetFd is open on, which may be an O_PATH
-// descriptor that the f*xattr calls do not take, and of the temporary file.
+// descriptor that the f*xattr calls do not take, and of the temporary file,
+// apart from the permissions in their ACLs that the temporary file takes with
+// the target's mode.
 bool SameExtendedAttributes(int targetFd, int tempFd)
 {
 	std::map<std::string, std::string> targetAttributes, tempAttributes;
-	bool read = ReadAttributes(ProcPathOf(targetFd).c_str(), -1, &targetAttributes);
+	bool read = ReadComparedAttributes(ProcPathOf(targetFd).c_str(), -1, &targetAttributes);
 	if (!read && errno == ENOENT) {
 		// without /proc
 		targetAttributes.clear();
-		read = ReadAttributes(nullptr, targetFd, &targetAttributes);
+		read = ReadComparedAttributes(nullptr, targetFd, &targetAttributes);
 	}
-	return read && ReadAttributes(nullptr, tempFd, &tempAttributes) && targetAttributes == tempAttributes;
+	return read && ReadComparedAttributes(nullptr, tempFd, &tempAttributes) && targetAttributes == tempAttributes;
 }
+
+// The access ACL of the file fd is open on into acl; false when it has none
+// or it cannot be read, with errno ENODATA for none.
+bool ReadAcl(int fd, std::string *acl)
+{
+	return ReadAttributeBuffer([&](char *buffer, size_t size) {
+		return fgetxattr(fd, aclAttribute, buffer, size);
+	}, acl);
+}
+
 // Whether /proc/locks lists a lock of any kind (flock, POSIX, OFD, lease) on
 // an inode with this number. The device in /proc/locks is the super block's,
 // which on btrfs is not the st_dev of a file in a subvolume, so only the
@@ -388,8 +473,26 @@ bool InodeIsLocked(ino_t inode)
 #else
 // The application is built for Linux and Windows only.
 bool SameExtendedAttributes(int, int) { return true; }
+bool ReadAcl(int, std::string *) { errno = ENOTSUP; return false; }
 bool InodeIsLocked(ino_t) { return false; }
 #endif
+
+// Whether this process is in group gid, and so may give its files that
+// group and keep their set-group-ID bit.
+bool InGroup(gid_t gid)
+{
+	if (geteuid() == 0 || getegid() == gid)
+		return true;
+	int count = getgroups(0, nullptr);
+	if (count <= 0)
+		return false;
+	std::vector<gid_t> groups(static_cast<size_t>(count));
+	count = getgroups(count, groups.data());
+	for (int i = 0; i < count; ++i)
+		if (groups[static_cast<size_t>(i)] == gid)
+			return true;
+	return false;
+}
 
 } // namespace
 
@@ -546,7 +649,7 @@ std::string SaveFile::PathOf(const std::string &file) const
 	return Join(stageFolder, file);
 }
 
-SaveTargetFacts SaveFile::ReadFacts()
+SaveTargetFacts SaveFile::ReadFacts(bool takeFinalMetadata)
 {
 	SaveTargetFacts facts;
 	facts.changed = !TargetUnchanged();
@@ -577,30 +680,95 @@ SaveTargetFacts SaveFile::ReadFacts()
 
 	if (stageNextToTarget && stageFd >= 0) {
 		struct stat tempStat;
-		bool seen = fstat(stageFd, &tempStat) == 0;
-		// The temporary file takes the target's group and mode only when it
-		// can be renamed over it: a file of the user's with one link and no
-		// lock. Else it keeps the mode it was made with, and so never the
-		// set-user-ID bit or the open mode of another user's file while it
-		// waits to be copied from.
-		if (seen && facts.exists && S_ISREG(facts.type) && facts.uid == tempStat.st_uid && facts.links == 1 &&
-			!facts.lockedByOthers) {
-			// The group first, since changing it clears the set-group-ID bit.
-			// A group or mode that cannot be set shows in the facts.
-			(void)!fchown(stageFd, static_cast<uid_t>(-1), targetStat.st_gid);
-			(void)!fchmod(stageFd, facts.mode);
-			seen = fstat(stageFd, &tempStat) == 0;
+		if (fstat(stageFd, &tempStat) != 0)
+			return facts;
+		// The temporary file is renamed over a target only when it is the same
+		// apart from its contents, so it takes the target's group and mode, or
+		// a new file's mode, before the rename; until then it stays 0600. It
+		// takes the target's only when it can be renamed over it: a writable
+		// file of the user's with one link, no lock and the same extended
+		// attributes; so never the set-user-ID bit or the open mode of another
+		// user's file, nor the mode of a file whose other links or ACL keep
+		// readers out that the mode lets in.
+		bool takesTargets = facts.exists && S_ISREG(facts.type) && facts.writable && !facts.othersFileInSharedFolder &&
+			facts.uid == tempStat.st_uid && facts.links == 1 && !facts.lockedByOthers;
+		facts.sameExtendedAttributes = !facts.exists || SameExtendedAttributes(pinFd, stageFd);
+		takesTargets = takesTargets && facts.sameExtendedAttributes;
+		if (takeFinalMetadata && (!facts.exists || takesTargets)) {
+			if (facts.exists)
+				TakeTargetMetadata(targetStat);
+			else
+				TakeNewFileMetadata();
+			if (fstat(stageFd, &tempStat) != 0)
+				return facts;
 		}
-		if (seen) {
-			facts.tempMade = true;
-			facts.tempUid = tempStat.st_uid;
-			facts.tempGid = tempStat.st_gid;
-			facts.tempMode = tempStat.st_mode & 07777;
-			facts.tempDevice = tempStat.st_dev;
-			facts.sameExtendedAttributes = !facts.exists || SameExtendedAttributes(pinFd, stageFd);
+		facts.tempMade = true;
+		facts.tempUid = tempStat.st_uid;
+		facts.tempGid = tempStat.st_gid;
+		facts.tempMode = tempStat.st_mode & 07777;
+		facts.tempDevice = tempStat.st_dev;
+		if (!takeFinalMetadata && takesTargets) {
+			// what the temporary file would get: the group of a file can be
+			// changed to a group its owner is in, and a chmod by a user outside
+			// the file's group drops the set-group-ID bit
+			bool canTakeGroup = tempStat.st_gid == targetStat.st_gid || InGroup(targetStat.st_gid);
+			facts.tempGid = canTakeGroup ? targetStat.st_gid : tempStat.st_gid;
+			facts.tempMode = InGroup(facts.tempGid) ? facts.mode : facts.mode & ~static_cast<mode_t>(S_ISGID);
 		}
 	}
 	return facts;
+}
+
+void SaveFile::TakeTargetMetadata(const struct stat &targetStat)
+{
+	// The group first, while the file is still 0600: with another group, the
+	// target's group bits would open it to that group. A group that cannot be
+	// set leaves the file 0600, and the facts then pick a rewrite.
+	struct stat now;
+	if (fstat(stageFd, &now) != 0)
+		return;
+	if (now.st_gid != targetStat.st_gid &&
+		(fchown(stageFd, static_cast<uid_t>(-1), targetStat.st_gid) != 0 || fstat(stageFd, &now) != 0 ||
+		now.st_gid != targetStat.st_gid))
+		return;
+	tookFinalMetadata = true;
+	(void)!fchmod(stageFd, targetStat.st_mode & 07777);
+}
+
+void SaveFile::TakeNewFileMetadata()
+{
+	// A new file gets what a file made in its folder with mode 0666 gets, as
+	// before the contents were made private: the umask, or a default ACL of
+	// the folder, applies. That is learned from such a file, made empty and
+	// removed again; without it, the umask applies.
+	mode_t mode = 0666 & ~CurrentUmask();
+	std::string acl;
+	bool hasAcl = false, learned = false;
+	std::string probeName;
+	int probe = MakeTempFile(stageAt, tempPrefix, 0666, &probeName);
+	if (probe >= 0) {
+		unlinkat(stageAt, probeName.c_str(), 0);
+		struct stat probeStat;
+		if (fstat(probe, &probeStat) == 0) {
+			hasAcl = ReadAcl(probe, &acl);
+			learned = hasAcl || errno == ENODATA || errno == ENOTSUP;
+			if (learned)
+				mode = probeStat.st_mode & 07777;
+		}
+		close(probe);
+	}
+	tookFinalMetadata = true;
+#ifdef __linux__
+	// Setting the ACL sets the mode it holds too, in one step from the
+	// private file to the new file's. A new file without an ACL has none,
+	// also when the folder's default ACL left one on the private file.
+	std::string stageAcl;
+	if (learned && hasAcl)
+		(void)!fsetxattr(stageFd, aclAttribute, acl.data(), acl.size(), 0);
+	else if (learned && ReadAcl(stageFd, &stageAcl))
+		(void)!fremovexattr(stageFd, aclAttribute);
+#endif
+	(void)!fchmod(stageFd, mode);
 }
 
 bool SaveFile::Open(const SaveTarget &resolved)
@@ -610,6 +778,7 @@ bool SaveFile::Open(const SaveTarget &resolved)
 	target = path;
 	failed = false;
 	touched = false;
+	tookFinalMetadata = false;
 	keptBackup.clear();
 	method = SaveMethod::Refuse;
 	stageNextToTarget = false;
@@ -645,7 +814,7 @@ bool SaveFile::Open(const SaveTarget &resolved)
 		return false;
 	}
 	if (!exists || S_ISREG(pinned.st_mode)) {
-		stageFd = MakeTempFileNear(folderFd, name + ".", ".hikarisub-save.", 0666, &stageName, &tempPrefix);
+		stageFd = MakeTempFileNear(folderFd, name + ".", ".hikarisub-save.", privateMode, &stageName, &tempPrefix);
 		stageNextToTarget = stageFd >= 0;
 		if (stageNextToTarget) {
 			stageAt = folderFd;
@@ -653,7 +822,7 @@ bool SaveFile::Open(const SaveTarget &resolved)
 		}
 	}
 
-	method = ChooseSaveMethod(ReadFacts());
+	method = ChooseSaveMethod(ReadFacts(false));
 	if (method == SaveMethod::Refuse) {
 		Discard();
 		return false;
@@ -667,7 +836,7 @@ bool SaveFile::Open(const SaveTarget &resolved)
 		tempFolderFd = stageFolder.empty() ? -1 : open(stageFolder.c_str(), folderFlags);
 		tempPrefix = "hikarisub-save.";
 		stageAt = tempFolderFd;
-		stageFd = tempFolderFd < 0 ? -1 : MakeTempFile(stageAt, tempPrefix, 0600, &stageName);
+		stageFd = tempFolderFd < 0 ? -1 : MakeTempFile(stageAt, tempPrefix, privateMode, &stageName);
 		if (stageFd < 0) {
 			Discard();
 			return false;
@@ -696,8 +865,10 @@ bool SaveFile::Commit()
 		// or a folder at its name. The method is picked again from the file
 		// the save started with, read through the descriptor Open keeps; a
 		// name that no longer leads to that file, or a new file's name that
-		// is taken now, refuses the save, which then writes nothing.
-		method = ChooseSaveMethod(ReadFacts());
+		// is taken now, refuses the save, which then writes nothing. Only now,
+		// with all of the contents written, does the temporary file take the
+		// group and mode it is renamed with.
+		method = ChooseSaveMethod(ReadFacts(true));
 		if (beforeWrite)
 			beforeWrite();
 		switch (method) {
@@ -808,6 +979,13 @@ bool SaveFile::FinishExchange()
 
 bool SaveFile::Rewrite()
 {
+	// The contents go into the target, which keeps its own mode; the
+	// temporary file is the user's own again when it took the target's mode
+	// for a rename that was not made or was taken back.
+	if (tookFinalMetadata) {
+		(void)!fchmod(stageFd, privateMode);
+		tookFinalMetadata = false;
+	}
 	// the new contents are on disk before the target is touched
 	struct stat stageStat;
 	if (fsync(stageFd) != 0 || fstat(stageFd, &stageStat) != 0)
@@ -825,7 +1003,8 @@ bool SaveFile::Rewrite()
 	// a backup of the old contents, also on disk before the target is touched
 	// and its name in its folder, so the backup outlasts a crash
 	std::string backupName, backupPrefix;
-	int backup = MakeTempFileNear(stageAt, tempPrefix + "old.", ".hikarisub-old.", 0600, &backupName, &backupPrefix);
+	int backup = MakeTempFileNear(stageAt, tempPrefix + "old.", ".hikarisub-old.", privateMode, &backupName,
+		&backupPrefix);
 	struct stat backupStat;
 	bool saved = backup >= 0 && CopyAll(out, backup, nullptr) && fsync(backup) == 0 &&
 		fstat(backup, &backupStat) == 0;

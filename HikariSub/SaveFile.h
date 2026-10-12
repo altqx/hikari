@@ -66,7 +66,9 @@ struct SaveTarget {
 int OpenFolderWithoutLinks(const char *path);
 
 // What a save knows about the file it saves to and about the temporary file
-// it made next to it, after giving that file the target's group and mode.
+// it made next to it, with the group and mode that file is renamed with. The
+// temporary file is made 0600 and takes them only in Commit, when all of the
+// contents are written; before, the facts say what it would take.
 struct SaveTargetFacts {
 	// the target's name leads to another file than when the save started, or
 	// to a file now where there was none
@@ -93,7 +95,8 @@ struct SaveTargetFacts {
 	mode_t tempMode = 0;
 	dev_t tempDevice = 0;
 	// the temporary file has the same extended attributes, and so ACLs and
-	// security labels, as the target
+	// security labels, as the target, apart from the ACL permissions its mode
+	// sets
 	bool sameExtendedAttributes = true;
 };
 
@@ -106,7 +109,11 @@ struct SaveTargetFacts {
 SaveMethod ChooseSaveMethod(const SaveTargetFacts &facts);
 
 // One save of a file on POSIX: Open picks the method and makes the
-// temporary file, Write appends to it and Commit puts it in place. Open
+// temporary file, Write appends to it and Commit puts it in place. Every
+// file a save writes contents into, the temporary file and a rewrite's
+// backup, is made with mode 0600 and never has a wider one while it is
+// written; the temporary file takes the target's group and mode, or a new
+// file's mode and ACL, only right before it is renamed over the target. Open
 // looks the target's folder and file up once, without following a link, checks
 // that they are the ones ResolveSaveTarget found, and keeps them open; Commit
 // picks the method anew from that file as it is then, and refuses the save
@@ -149,8 +156,14 @@ public:
 	void SetStallTimeout(int milliseconds) { stallTimeout = milliseconds; }
 
 private:
-	// the facts about the target and the temporary file as they are now
-	SaveTargetFacts ReadFacts();
+	// the facts about the target and the temporary file as they are now; with
+	// takeFinalMetadata, the temporary file first takes the group and mode it
+	// is renamed with, when it can be renamed over the target
+	SaveTargetFacts ReadFacts(bool takeFinalMetadata);
+	// gives the temporary file the target's group and then its mode
+	void TakeTargetMetadata(const struct stat &targetStat);
+	// gives the temporary file the mode and ACL of a new file in its folder
+	void TakeNewFileMetadata();
 	// whether the target's name still leads to the file Open found there,
 	// or still to nothing
 	bool TargetUnchanged() const;
@@ -188,6 +201,8 @@ private:
 	int stageFd = -1;
 	// the temporary file is in the target's folder and can be renamed over it
 	bool stageNextToTarget = false;
+	// the temporary file was given a mode other than 0600 for a rename
+	bool tookFinalMetadata = false;
 	bool failed = false;
 	bool touched = false;
 	SaveMethod method = SaveMethod::Refuse;

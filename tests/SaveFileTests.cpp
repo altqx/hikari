@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <filesystem>
@@ -33,6 +34,8 @@
 #include <set>
 #include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 #ifdef __linux__
 #include <sys/file.h>
 #include <sys/xattr.h>
@@ -980,7 +983,7 @@ TEST(another_user_s_file_in_a_shared_sticky_folder_is_refused)
 	chmod(dir.path.c_str(), 0700);
 }
 
-TEST(the_temporary_file_takes_the_target_s_mode_only_when_it_can_be_renamed_over_it)
+TEST(the_temporary_file_never_takes_the_mode_of_a_file_it_is_not_renamed_over)
 {
 	SaveScratchDir dir;
 	fs::path file = dir.path / "subs.ass";
@@ -996,7 +999,7 @@ TEST(the_temporary_file_takes_the_target_s_mode_only_when_it_can_be_renamed_over
 		if (name == "subs.ass" || name == "other.ass")
 			continue;
 		seen = true;
-		CHECK((StatOf(dir.path / name).st_mode & 07777) == 0644);
+		CHECK((StatOf(dir.path / name).st_mode & 07777) == 0600);
 	}
 	CHECK(seen);
 	CHECK(save.Write("new", 3));
@@ -1004,6 +1007,227 @@ TEST(the_temporary_file_takes_the_target_s_mode_only_when_it_can_be_renamed_over
 	CHECK(ReadText(dir.path / "other.ass") == "new");
 	umask(mask);
 }
+
+namespace {
+
+// The files in folder other than the ones named in kept: a save's temporary
+// files, with their modes.
+std::vector<std::pair<std::string, mode_t>> TempFiles(const fs::path &folder, const std::set<std::string> &kept)
+{
+	std::vector<std::pair<std::string, mode_t>> found;
+	for (const std::string &name : Names(folder))
+		if (!kept.count(name))
+			found.emplace_back(name, StatOf(folder / name).st_mode & 07777);
+	return found;
+}
+
+// What the target writer saw of the temporary files while a rewrite wrote
+// into the target.
+fs::path watchedFolder;
+std::set<std::string> watchedKept;
+std::vector<std::pair<std::string, mode_t>> seenWhileRewriting;
+ssize_t WatchingWriter(int fd, const void *data, size_t size)
+{
+	if (seenWhileRewriting.empty())
+		seenWhileRewriting = TempFiles(watchedFolder, watchedKept);
+	return write(fd, data, size);
+}
+
+// Saves text to file in two parts and checks that every temporary file is
+// 0600 while the parts are written and while a rewrite copies them into the
+// target, and that the method is expected; returns the modes the temporary
+// file had right before it was put in place.
+std::vector<mode_t> SaveWatched(const fs::path &file, const std::set<std::string> &kept, SaveMethod expected)
+{
+	fs::path folder = file.parent_path();
+	SaveFile save;
+	CHECK(OpenAt(save, file));
+	for (const std::string &part : { std::string("first part, "), std::string("second part") }) {
+		CHECK(save.Write(part.data(), part.size()));
+		auto temps = TempFiles(folder, kept);
+		CHECK(temps.size() == 1);
+		for (auto &temp : temps)
+			CHECK(temp.second == 0600);
+	}
+	std::vector<mode_t> beforeCommit;
+	save.SetBeforeWrite([&] {
+		for (auto &temp : TempFiles(folder, kept))
+			beforeCommit.push_back(temp.second);
+	});
+	watchedFolder = folder;
+	watchedKept = kept;
+	seenWhileRewriting.clear();
+	save.SetTargetWriter(WatchingWriter);
+	CHECK(save.Commit());
+	CHECK(save.Method() == expected);
+	CHECK(ReadText(file) == "first part, second part");
+	if (expected == SaveMethod::Rewrite) {
+		// the temporary file and the backup of the old contents
+		CHECK(seenWhileRewriting.size() == 2);
+		bool backupSeen = false;
+		for (auto &temp : seenWhileRewriting) {
+			CHECK(temp.second == 0600);
+			backupSeen = backupSeen || temp.first.find(".old.") != std::string::npos;
+		}
+		CHECK(backupSeen);
+	}
+	CHECK(Names(folder) == kept);
+	return beforeCommit;
+}
+
+} // namespace
+
+TEST(the_temporary_file_is_private_while_the_contents_are_written)
+{
+	SaveScratchDir dir;
+	fs::path file = dir.path / "subs.ass";
+	fs::path other = dir.path / "other.ass";
+	mode_t mask = umask(022);
+
+	// a private file with a second link: rewritten, and the temporary file
+	// never takes a mode from it
+	WriteText(file, "old");
+	CHECK(chmod(file.c_str(), 0600) == 0);
+	fs::create_hard_link(file, other);
+	auto modes = SaveWatched(file, { "subs.ass", "other.ass" }, SaveMethod::Rewrite);
+	CHECK(modes == std::vector<mode_t>{ 0600 });
+	CHECK((StatOf(file).st_mode & 07777) == 0600);
+	CHECK(ReadText(other) == "first part, second part");
+	fs::remove(other);
+
+#ifdef __linux__
+	// a locked private file: rewritten the same way
+	WriteText(file, "old");
+	int holder = open(file.c_str(), O_RDONLY | O_CLOEXEC);
+	CHECK(holder >= 0 && flock(holder, LOCK_SH) == 0);
+	modes = SaveWatched(file, { "subs.ass" }, SaveMethod::Rewrite);
+	CHECK(modes == std::vector<mode_t>{ 0600 });
+	CHECK((StatOf(file).st_mode & 07777) == 0600);
+	close(holder);
+#endif
+
+	// a file its group may write: renamed over, and the temporary file takes
+	// its mode only once all of the contents are written
+	WriteText(file, "old");
+	CHECK(chmod(file.c_str(), 0660) == 0);
+	modes = SaveWatched(file, { "subs.ass" }, SaveMethod::Replace);
+	CHECK(modes == std::vector<mode_t>{ 0660 });
+	CHECK((StatOf(file).st_mode & 07777) == 0660);
+
+	// a group-writable file with a second link: rewritten, and the temporary
+	// file stays 0600
+	fs::create_hard_link(file, other);
+	modes = SaveWatched(file, { "subs.ass", "other.ass" }, SaveMethod::Rewrite);
+	CHECK(modes == std::vector<mode_t>{ 0600 });
+	CHECK((StatOf(other).st_mode & 07777) == 0660);
+	fs::remove(other);
+	fs::remove(file);
+
+	// a new file
+	modes = SaveWatched(file, { "subs.ass" }, SaveMethod::Replace);
+	CHECK(modes == std::vector<mode_t>{ 0644 });
+	CHECK((StatOf(file).st_mode & 07777) == 0644);
+	umask(mask);
+}
+
+TEST(a_new_file_gets_the_mode_the_umask_gives_and_an_existing_file_keeps_its_own)
+{
+	SaveScratchDir dir;
+	for (mode_t mask : { 022, 077, 002, 027, 0 }) {
+		mode_t old = umask(mask);
+		fs::path file = dir.path / ("new" + std::to_string(mask) + ".ass");
+		SaveFile save;
+		CHECK(Save(save, file, "fresh"));
+		CHECK(save.Method() == SaveMethod::Replace);
+		CHECK((StatOf(file).st_mode & 07777) == (0666 & ~mask));
+		umask(old);
+		fs::remove(file);
+	}
+	mode_t old = umask(022);
+	fs::path file = dir.path / "subs.ass";
+	for (mode_t mode : { 0600, 0640, 0664, 0444 | 0200, 0700, 02750 }) {
+		WriteText(file, "old");
+		CHECK(chmod(file.c_str(), mode) == 0);
+		bool groupKept = (StatOf(file).st_mode & 07777) == mode;
+		SaveFile save;
+		CHECK(Save(save, file, "new"));
+		CHECK(ReadText(file) == "new");
+		if (groupKept)
+			CHECK((StatOf(file).st_mode & 07777) == mode);
+		CHECK(Names(dir.path) == std::set<std::string>{ "subs.ass" });
+		fs::remove(file);
+	}
+	umask(old);
+}
+
+#ifdef __linux__
+namespace {
+// A POSIX ACL as the system.posix_acl_* attributes hold it.
+std::string AclValue(std::initializer_list<std::array<unsigned, 3>> entries)
+{
+	std::string value = { 2, 0, 0, 0 };
+	for (auto &entry : entries) {
+		unsigned tag = entry[0], perm = entry[1], id = entry[2];
+		value += static_cast<char>(tag & 0xFF);
+		value += static_cast<char>(tag >> 8);
+		value += static_cast<char>(perm & 0xFF);
+		value += static_cast<char>(perm >> 8);
+		for (int i = 0; i < 4; ++i)
+			value += static_cast<char>((id >> (8 * i)) & 0xFF);
+	}
+	return value;
+}
+
+std::string AclOf(const fs::path &file)
+{
+	char buffer[256];
+	ssize_t size = getxattr(file.c_str(), "system.posix_acl_access", buffer, sizeof(buffer));
+	return size < 0 ? std::string() : std::string(buffer, static_cast<size_t>(size));
+}
+} // namespace
+
+TEST(a_new_file_in_a_folder_with_a_default_acl_gets_the_acl_a_new_file_gets_there)
+{
+	SaveScratchDir dir;
+	const unsigned undefinedId = 0xFFFFFFFFu;
+	// the owner rw, user 54321 rw, the group r, the mask rw and others r
+	std::string defaults = AclValue({ { 0x01, 6, undefinedId }, { 0x02, 6, 54321 }, { 0x04, 4, undefinedId },
+		{ 0x10, 6, undefinedId }, { 0x20, 4, undefinedId } });
+	if (setxattr(dir.path.c_str(), "system.posix_acl_default", defaults.data(), defaults.size(), 0) != 0) {
+		CHECK(errno == ENOTSUP || errno == EOPNOTSUPP);
+		return; // the file system takes no ACLs
+	}
+	mode_t mask = umask(077);
+	fs::path reference = dir.path / "reference";
+	int made = open(reference.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0666);
+	CHECK(made >= 0);
+	close(made);
+	CHECK(!AclOf(reference).empty());
+
+	fs::path file = dir.path / "new.ass";
+	SaveFile save;
+	CHECK(OpenAt(save, file));
+	CHECK(save.Write("private", 7));
+	// while it is written the temporary file grants nobody else anything:
+	// its mask is empty
+	auto temps = TempFiles(dir.path, { "reference" });
+	CHECK(temps.size() == 1);
+	for (auto &temp : temps)
+		CHECK((temp.second & 077) == 0);
+	CHECK(save.Commit());
+	CHECK(ReadText(file) == "private");
+	CHECK(AclOf(file) == AclOf(reference));
+	CHECK((StatOf(file).st_mode & 07777) == (StatOf(reference).st_mode & 07777));
+
+	// an existing file there is renamed over with the same ACL
+	SaveFile again;
+	CHECK(Save(again, file, "again"));
+	CHECK(again.Method() == SaveMethod::Replace);
+	CHECK(AclOf(file) == AclOf(reference));
+	CHECK((StatOf(file).st_mode & 07777) == (StatOf(reference).st_mode & 07777));
+	umask(mask);
+}
+#endif
 
 #ifdef __linux__
 namespace {
