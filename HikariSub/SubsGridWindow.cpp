@@ -1989,13 +1989,16 @@ void SubsGrid::SelVideoLine(int curtime)
 	int time = (curtime < 0) ? tab->video->Tell() : curtime;
 	int prevtime = 0;
 	int durtime = (curtime < 0) ? tab->video->GetDuration() : 36000000;
-	int idr = 0, ip = 0;
+	// fallbacks start at the first shown line, not at a hidden row 0
+	int idr = -1, ip = -1, firstShown = -1;
 
 	for (size_t i = 0; i < file->GetCount(); i++)
 	{
 		Dialogue *dial = file->GetDialogue(i);
 		if (!dial->isVisible)
 			continue;
+
+		if (firstShown < 0){ firstShown = i; }
 
 		if (!dial->IsComment && (dial->Text != emptyString || dial->TextTl != emptyString)){
 			if (time >= dial->Start.mstime && time <= dial->End.mstime)
@@ -2011,6 +2014,10 @@ void SubsGrid::SelVideoLine(int curtime)
 		}
 		
 	}
+	// no line is shown
+	if (firstShown < 0){ return; }
+	if (idr < 0){ idr = firstShown; }
+	if (ip < 0){ ip = firstShown; }
 	
 	if ((time - prevtime) > (durtime - time)){
 		edit->SetLine(idr);
