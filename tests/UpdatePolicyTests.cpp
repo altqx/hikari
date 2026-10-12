@@ -228,6 +228,56 @@ TEST(update_release_page_is_built_from_the_tag)
 	}
 }
 
+TEST(update_next_check_backs_off_a_day_after_a_reply_and_an_hour_after_a_failure)
+{
+	const long long now = 2000000000;
+	CHECK(NextCheck(now, 0, true) == now + kDay);
+	CHECK(NextCheck(now, 0, false) == now + kHour);
+	CHECK(NextCheck(now, now - kWeek, true) == now + kDay);
+	CHECK(NextCheck(now, now, false) == now + kHour);
+}
+
+TEST(update_next_check_keeps_remind_me_in_a_week)
+{
+	const long long now = 2000000000;
+	// "Remind me in a week" two days ago: four days and more are left.
+	const long long snoozed = now - 2 * kDay + kWeek;
+	CHECK(NextCheck(now, snoozed, true) == snoozed);
+	CHECK(NextCheck(now, snoozed, false) == snoozed);
+	CHECK(NextCheck(now, now + kWeek, true) == now + kWeek);
+	// A back-off shorter than the new one is replaced.
+	CHECK(NextCheck(now, now + kHour, true) == now + kDay);
+	CHECK(NextCheck(now, now + 10, false) == now + kHour);
+	// Past a week ahead, the clock was turned back since it was set.
+	CHECK(NextCheck(now, now + kWeek + 1, true) == now + kDay);
+	CHECK(NextCheck(now, now + 365 * kDay, false) == now + kHour);
+}
+
+TEST(update_check_is_due)
+{
+	const long long now = 2000000000;
+	CHECK(IsCheckDue(now, 0));
+	CHECK(IsCheckDue(now, now));
+	CHECK(IsCheckDue(now, now - 1));
+	CHECK(!IsCheckDue(now, now + 1));
+	CHECK(!IsCheckDue(now, now + kDay));
+	CHECK(!IsCheckDue(now, now + kWeek));
+	CHECK(IsCheckDue(now, now + kWeek + 1));
+	CHECK(IsCheckDue(now, now + 365 * kDay));
+}
+
+TEST(update_startup_check_keeps_quiet_about_a_declined_version)
+{
+	CHECK(WasDeclined("v0.0.1-rc.3", "v0.0.1-rc.3"));
+	CHECK(WasDeclined("v0.0.1-rc.3", "0.0.1-rc.3"));
+	CHECK(WasDeclined("v0.0.1-rc.3", "v0.0.1-rc.4"));
+	CHECK(!WasDeclined("v0.0.1-rc.4", "v0.0.1-rc.3"));
+	CHECK(!WasDeclined("v0.0.1", "v0.0.1-rc.9"));
+	CHECK(!WasDeclined("v0.0.1-rc.3", ""));
+	CHECK(!WasDeclined("v0.0.1-rc.3", "garbage"));
+	CHECK(!WasDeclined("garbage", "v0.0.1-rc.3"));
+}
+
 TEST(update_response_limit_holds_a_full_page)
 {
 	// A hundred releases at the size of the qt-metadata ones, 18 assets

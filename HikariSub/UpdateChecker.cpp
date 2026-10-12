@@ -44,8 +44,8 @@ namespace
 		kNumVersion[2] == kVersion->patch && kNumVersion[3] == 0,
 		"NumVersionHikariSub does not match VersionHikariSub");
 
-	constexpr time_t kDay  = 24 * 60 * 60;
-	constexpr time_t kWeek = 7 * kDay;
+	constexpr int kOpenId = 20001;
+	constexpr int kRemindId = 20002;
 
 	struct ReleaseInfo
 	{
@@ -91,6 +91,15 @@ namespace
 			wxLaunchDefaultBrowser(url);
 	}
 
+	// Sets the next automatic check and writes it out at once, so that a
+	// crash or a kill does not leave the next start to check again.
+	void RecordCheck(bool answered)
+	{
+		long long next = update_policy::NextCheck(time(nullptr), Options.GetInt(UPDATER_NEXT_CHECK), answered);
+		Options.SetInt(UPDATER_NEXT_CHECK, static_cast<int>(next));
+		Options.SaveOptions(true, false);
+	}
+
 	// Says that only a prerelease is newer, and offers to open its page.
 	void ShowNewerPrerelease(wxWindow *parent, const ReleaseInfo &release)
 	{
@@ -108,6 +117,7 @@ namespace
 	public:
 		UpdateAvailableDialog(wxWindow *parent, const ReleaseInfo &release)
 			: HikariDialog(parent, -1, _("A new version is available"))
+			, tag(release.tag)
 		{
 			wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -139,22 +149,21 @@ namespace
 			wxBoxSizer *buttons = new wxBoxSizer(wxHORIZONTAL);
 			// A MappedButton rather than wxHyperlinkCtrl: nothing else in the
 			// UI is a stock control, so a stock one ignores the theme.
-			MappedButton *open = new MappedButton(this, 20001, _("Open the download page"));
-			MappedButton *later = new MappedButton(this, 20002, _("Remind me in a week"));
+			MappedButton *open = new MappedButton(this, kOpenId, _("Open the download page"));
+			MappedButton *later = new MappedButton(this, kRemindId, _("Remind me in a week"));
 			MappedButton *close = new MappedButton(this, wxID_CLOSE, _("Close"));
 			buttons->Add(open, 1, wxALL, 2);
 			buttons->Add(later, 1, wxALL, 2);
 			buttons->Add(close, 1, wxALL, 2);
 			sizer->Add(buttons, 0, wxEXPAND | wxALL, 2);
 
-			url = release.url;
-			Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent &) {
+			wxString url = release.url;
+			Bind(wxEVT_COMMAND_BUTTON_CLICKED, [url](wxCommandEvent &) {
 				OpenReleasePage(url);
-			}, 20001);
+			}, kOpenId);
 			Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent &) {
-				Options.SetInt(UPDATER_NEXT_CHECK, (int)(time(nullptr) + kWeek));
-				EndModal(wxID_CLOSE);
-			}, 20002);
+				EndModal(kRemindId);
+			}, kRemindId);
 			Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent &) {
 				EndModal(wxID_CLOSE);
 			}, wxID_CLOSE);
@@ -163,8 +172,19 @@ namespace
 			SetSizerAndFit(sizer);
 		}
 
-		void SaveChoices()
+		// "Remind me in a week" puts the next automatic check off a week.
+		// Closing the dialog any other way declines this version: the
+		// startup check keeps quiet about it and offers the next one, and a
+		// check from the menu still offers it.
+		void SaveChoices(int result)
 		{
+			if (result == kRemindId) {
+				Options.SetInt(UPDATER_NEXT_CHECK, static_cast<int>(time(nullptr) + update_policy::kWeek));
+				Options.SetString(UPDATER_DECLINED_VERSION, wxString());
+			}
+			else {
+				Options.SetString(UPDATER_DECLINED_VERSION, tag);
+			}
 			Options.SetBool(UPDATER_AUTO_CHECK, autoCheck->GetValue());
 			Options.SetBool(UPDATER_CHECK_FOR_STABLE, stableOnly->GetValue());
 			Options.SaveOptions(true, false);
@@ -173,7 +193,7 @@ namespace
 	private:
 		HikariCheckBox *autoCheck;
 		HikariCheckBox *stableOnly;
-		wxString url;
+		wxString tag;
 	};
 
 	// One check: the request's handler, separate from the frame so that it
@@ -233,12 +253,8 @@ namespace
 			if (state == wxWebRequest::State_Active || state == wxWebRequest::State_Idle)
 				return;
 
-			if (IsParentOpen()) {
-				// An automatic check backs off a day whatever happened, so a
-				// server that is down does not mean a request on every start.
-				Options.SetInt(UPDATER_NEXT_CHECK, (int)(time(nullptr) + kDay));
+			if (IsParentOpen())
 				Finish(state == wxWebRequest::State_Completed && !tooLarge);
-			}
 			// Last, as nothing of this object may be used after it.
 			wxTheApp->ScheduleForDestruction(this);
 		}
@@ -252,6 +268,7 @@ namespace
 
 		void Fail()
 		{
+			RecordCheck(false);
 			if (interactive)
 				HikariMessageBox(_("Cannot check for updates"), _("Update"));
 		}
@@ -271,14 +288,20 @@ namespace
 				Fail();
 				return;
 			}
+			RecordCheck(true);
 
 			update_policy::Choice choice = update_policy::ChooseRelease(releases, VersionHikariSub,
 				Options.GetBool(UPDATER_CHECK_FOR_STABLE));
 			switch (update_policy::GetOutcome(choice)) {
 			case update_policy::Outcome::Offer: {
-				UpdateAvailableDialog dialog(parent, GetReleaseInfo(root.Items()[choice.offer]));
-				dialog.ShowModal();
-				dialog.SaveChoices();
+				ReleaseInfo release = GetReleaseInfo(root.Items()[choice.offer]);
+				if (!interactive && update_policy::WasDeclined(release.tag.utf8_string(),
+					Options.GetString(UPDATER_DECLINED_VERSION).utf8_string()))
+				{
+					break;
+				}
+				UpdateAvailableDialog dialog(parent, release);
+				dialog.SaveChoices(dialog.ShowModal());
 				break;
 			}
 			case update_policy::Outcome::OnlyPrereleaseNewer:
@@ -314,7 +337,7 @@ void UpdateChecker::CheckOnStartup(wxWindow *parent)
 {
 	if (!Options.GetBool(UPDATER_AUTO_CHECK))
 		return;
-	if (time(nullptr) < (time_t)Options.GetInt(UPDATER_NEXT_CHECK))
+	if (!update_policy::IsCheckDue(time(nullptr), Options.GetInt(UPDATER_NEXT_CHECK)))
 		return;
 
 	Check(parent, false);

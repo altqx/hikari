@@ -28,7 +28,8 @@ class UpdateChecker
 {
 public:
 	// Honours the auto-check option and the next-check time, and stays silent
-	// on error or when already current. Safe to call with no network.
+	// on error, when already current, and about a version the user closed
+	// the dialog on. Safe to call with no network.
 	static void CheckOnStartup(wxWindow *parent);
 
 	// Menu entry: always checks, and reports being up to date and any failure.

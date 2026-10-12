@@ -63,6 +63,40 @@ namespace update_policy
 		return "https://github.com/" + std::string(kRepository) + "/releases/tag/" + std::string(tag);
 	}
 
+	constexpr long long kHour = 60 * 60;
+	constexpr long long kDay = 24 * kHour;
+	constexpr long long kWeek = 7 * kDay;
+
+	// UPDATER_NEXT_CHECK is never set more than a week ahead, so a time
+	// further off was set before the clock was turned back, and the check
+	// is due rather than put off for as long as the clock moved.
+	constexpr bool IsCheckDue(long long now, long long nextCheck)
+	{
+		return now >= nextCheck || nextCheck > now + kWeek;
+	}
+
+	// The next automatic check after one that has just ended, automatic or
+	// from the menu. A day after a reply, an hour after a failure, so that
+	// starting offline does not put the check off for a day. A later time
+	// already set, as "Remind me in a week" sets it, is kept.
+	constexpr long long NextCheck(long long now, long long nextCheck, bool answered)
+	{
+		long long next = now + (answered ? kDay : kHour);
+		if (nextCheck > next && !IsCheckDue(now, nextCheck))
+			return nextCheck;
+		return next;
+	}
+
+	// Whether a startup check keeps quiet about offered, as the user closed
+	// the dialog that offered declined or a later version. A check from the
+	// menu offers it anyway.
+	constexpr bool WasDeclined(std::string_view offered, std::string_view declined)
+	{
+		std::optional<SemVer> offeredVersion = ParseSemVer(offered);
+		std::optional<SemVer> declinedVersion = ParseSemVer(declined);
+		return offeredVersion && declinedVersion && CompareSemVer(*offeredVersion, *declinedVersion) <= 0;
+	}
+
 	// UPDATER_AUTO_CHECK and UPDATER_CHECK_FOR_STABLE when Config.txt does
 	// not hold them.
 	constexpr bool kAutoCheckDefault = true;

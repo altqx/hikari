@@ -369,7 +369,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		HikariStaticBoxSizer* updatesSizer = new HikariStaticBoxSizer(wxVERTICAL, GLOBAL_EDITOR, _("Updates"));
 		HikariCheckBox* autoCheck = new HikariCheckBox(GLOBAL_EDITOR, -1, _("Check for updates automatically"));
 		autoCheck->SetValue(Options.GetBool(UPDATER_AUTO_CHECK));
-		autoCheck->SetToolTip(_("Once a day at most, when the program starts"));
+		autoCheck->SetToolTip(_("When the program starts: once a day, or an hour after a check that failed"));
 		ConOpt(autoCheck, UPDATER_AUTO_CHECK);
 		HikariCheckBox* stableOnly = new HikariCheckBox(GLOBAL_EDITOR, -1, _("Stable versions only"));
 		stableOnly->SetValue(Options.GetBool(UPDATER_CHECK_FOR_STABLE));
