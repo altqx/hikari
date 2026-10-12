@@ -878,7 +878,7 @@ ApplicationWindow {
                     objectName: "openVideoMenuItem"
                     action: Action {
                         id: openVideoAction
-                        text: qsTr("Open &Video…")
+                        text: qsTr("Open &video…")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.show()
                     }
                 }
@@ -4262,7 +4262,7 @@ ApplicationWindow {
             anchors.fill: parent
             anchors.margins: 8
             Label {
-                text: qsTranslate("HikariSub.Documents", "These Documents have unsaved changes:")
+                text: qsTranslate("HikariSub.Documents", "These documents have unsaved changes:")
             }
             Repeater {
                 model: closeReview.rows
@@ -5621,8 +5621,8 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: groupBreakDialog.description
-                      ? qsTranslate("HikariSub.Grid", "This would break the Line group “%1”. Nothing was changed. Remove the group (its description Line is deleted) and try again, or cancel.").arg(groupBreakDialog.title2)
-                      : qsTranslate("HikariSub.Grid", "This would leave group members outside a Line group. Nothing was changed.")
+                      ? qsTranslate("HikariSub.Grid", "This would break the line group “%1”. Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel.").arg(groupBreakDialog.title2)
+                      : qsTranslate("HikariSub.Grid", "This would leave group members outside a line group. Nothing was changed.")
             }
             WindowFooter {
                 FooterButton {

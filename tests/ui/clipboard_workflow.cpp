@@ -167,7 +167,7 @@ int main(int argc, char **argv)
     expect(o.size() == 8, "every step observed");
     if (o.size() == 8) {
         expect(o[0] == "a;a;b;c;", "Ctrl+C then Ctrl+V pastes the copy before the next Line");
-        expect(o[1] == "1 Line selected", "the pasted Line is selected");
+        expect(o[1] == "1 line selected", "the pasted Line is selected");
         expect(o[2] == "a;b;c;", "Ctrl+X cuts it");
         expect(o[3] == "columns", "Paste columns asks which columns");
         expect(o[4] == "Text placed", "the layout places Text below Layer before the click (5 s)");

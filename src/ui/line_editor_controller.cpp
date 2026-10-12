@@ -703,7 +703,7 @@ bool LineEditorController::save()
     if (!plan) {
         fail(plan.error() == application::SaveRefusal::InvalidDraft
                  ? problemText()
-                 : QCoreApplication::translate("HikariSub.Editor", "This Document can't be saved here."));
+                 : QCoreApplication::translate("HikariSub.Editor", "This document can't be saved here."));
         return false;
     }
     committed(); // Save committed the draft first
@@ -715,10 +715,10 @@ bool LineEditorController::save()
                                              "The file changed on disk since it was opened. Reload it, or save elsewhere."));
             break;
         case application::SaveRefusal::Collision:
-            fail(QCoreApplication::translate("HikariSub.Editor", "Another open Document uses that file."));
+            fail(QCoreApplication::translate("HikariSub.Editor", "Another open document uses that file."));
             break;
         default:
-            fail(QCoreApplication::translate("HikariSub.Editor", "The Document can't be saved right now."));
+            fail(QCoreApplication::translate("HikariSub.Editor", "The document can't be saved right now."));
             break;
         }
         return false;

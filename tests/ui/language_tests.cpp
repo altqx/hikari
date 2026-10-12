@@ -528,7 +528,7 @@ private slots:
         QVERIFY(model);
         application->shell().selectLine(application->files().session(*application->workspace().editingTarget())
                                             ->document().lines()[0]->id.value);
-        QTRY_COMPARE(item("selectionStatus")->property("text").toString(), QStringLiteral("1 Line selected"));
+        QTRY_COMPARE(item("selectionStatus")->property("text").toString(), QStringLiteral("1 line selected"));
         const QString video = application->video().status();
         const QString audio = item("audioStatus")->property("text").toString();
         const QString heading = model->headerData(2, Qt::Horizontal).toString();
@@ -541,7 +541,7 @@ private slots:
         QVERIFY(headers.count() >= 1);
         const auto pseudo = [](const QString &s) { return QStringLiteral("[") + s; };
         QCOMPARE(model->headerData(2, Qt::Horizontal).toString(), QStringLiteral("[Šţåŕţ~~]"));
-        QTRY_VERIFY(item("selectionStatus")->property("text").toString().startsWith(pseudo(QStringLiteral("1 Ļîñé"))));
+        QTRY_VERIFY(item("selectionStatus")->property("text").toString().startsWith(pseudo(QStringLiteral("1 ļîñé"))));
         QVERIFY(application->video().status() != video);
         QVERIFY(application->video().status().startsWith(QLatin1Char('[')));
         QTRY_VERIFY(item("audioStatus")->property("text").toString() != audio);
@@ -549,7 +549,7 @@ private slots:
         QVERIFY(a->text(QAccessible::Name).startsWith(QLatin1Char('[')));
         // And back.
         application->localisation().setPseudo(app::Localisation::Pseudo::None);
-        QTRY_COMPARE(item("selectionStatus")->property("text").toString(), QStringLiteral("1 Line selected"));
+        QTRY_COMPARE(item("selectionStatus")->property("text").toString(), QStringLiteral("1 line selected"));
         QCOMPARE(model->headerData(2, Qt::Horizontal).toString(), heading);
         QCOMPARE(application->video().status(), video);
         QTRY_COMPARE(item("audioStatus")->property("text").toString(), audio);

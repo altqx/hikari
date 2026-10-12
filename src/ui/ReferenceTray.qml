@@ -45,7 +45,7 @@ FocusScope {
         IconToolButton {
             objectName: "referenceLinked"
             iconRole: "link"
-            text: qsTr("Follow the editing Line")
+            text: qsTr("Follow the editing line")
             checkable: true
             checked: tray.shell.referenceLinked
             onToggled: tray.app.setReferenceLinked(checked)
@@ -57,7 +57,7 @@ FocusScope {
             Layout.fillWidth: true
             elide: Text.ElideRight
             text: !tray.shell.referenceLinked ? qsTr("Independent navigation")
-                : tray.shell.referenceNoMatch ? qsTr("No matching Line")
+                : tray.shell.referenceNoMatch ? qsTr("No matching line")
                 : tray.shell.referenceMatchCount > 0
                   ? qsTr("Match %1 of %2").arg(tray.shell.referenceMatchIndex + 1).arg(tray.shell.referenceMatchCount)
                 : ""
@@ -68,7 +68,7 @@ FocusScope {
             objectName: "referenceNearest"
             iconRole: "go-to-selection"
             visible: tray.shell.referenceHasNearest
-            text: qsTr("Show nearest Line")
+            text: qsTr("Show nearest line")
             onClicked: tray.app.showNearestReferenceLine()
         }
         IconToolButton {
@@ -97,7 +97,7 @@ FocusScope {
             Layout.fillHeight: true
             focus: true
             Accessible.role: Accessible.Table // in the accessibility tree, as the Grid
-            accessibleName: qsTr("Reference Lines (protected, read-only)")
+            accessibleName: qsTr("Reference lines (protected, read-only)")
             model: tray.shell.referenceLines
             GridHeaderToolTip { grid: referenceGrid }
             // The tray's own navigation: every gesture is a request for the

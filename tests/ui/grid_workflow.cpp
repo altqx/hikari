@@ -102,11 +102,11 @@ int main(int argc, char **argv)
         std::printf("observed[%zu] = %s\n", i, o[i].c_str());
     expect(o.size() == 5, "every step observed");
     if (o.size() == 5) {
-        expect(o[0] == "1 Line selected", "Home selects one Line");
-        expect(o[1] == "3 Lines selected", "Shift+Down twice extends to three");
+        expect(o[0] == "1 line selected", "Home selects one Line");
+        expect(o[1] == "3 lines selected", "Shift+Down twice extends to three");
         expect(o[2] == "c", "the active Line moved with the range");
-        expect(o[3] == "5 Lines selected", "Ctrl+A selects all");
-        expect(o[4] == "1 Line selected", "a plain arrow returns to one Line");
+        expect(o[3] == "5 lines selected", "Ctrl+A selects all");
+        expect(o[4] == "1 line selected", "a plain arrow returns to one Line");
     }
     return failures == 0 ? 0 : 1;
 }

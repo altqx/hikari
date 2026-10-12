@@ -172,7 +172,7 @@ QString refusalText(const application::MacroApplyFailure &failure)
 {
     switch (failure.refusal.value_or(application::CommandRefusal::Invalid)) {
     case application::CommandRefusal::StaleRevision:
-        return QCoreApplication::translate("HikariSub.Automation", "The Document changed while the macro ran; nothing was changed.");
+        return QCoreApplication::translate("HikariSub.Automation", "The document changed while the macro ran; nothing was changed.");
     case application::CommandRefusal::Protected:
         return QCoreApplication::translate("HikariSub.Automation", "The protected reference can't be changed.");
     default: return QCoreApplication::translate("HikariSub.Automation", "The macro's changes could not be applied; nothing was changed.");
@@ -474,7 +474,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     const auto target = m_workspace.editingTarget();
     auto *s = target ? session(*target) : nullptr;
     if (!s) {
-        m_lastMessage = QCoreApplication::translate("HikariSub.Automation", "Open a Document to run a macro on.");
+        m_lastMessage = QCoreApplication::translate("HikariSub.Automation", "Open a document to run a macro on.");
         emit progressChanged();
         return false;
     }
@@ -488,7 +488,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     m_editor.reloadFromSession();
     if (!snapshot) {
         m_lastMessage = QCoreApplication::translate("HikariSub.Automation",
-                                                    "The Line being edited can't be committed, so the macro can't start.");
+                                                    "The line being edited can't be committed, so the macro can't start.");
         emit progressChanged();
         return false;
     }

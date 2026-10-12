@@ -383,10 +383,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The Document changed while the macro ran; nothing was changed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>The protected reference can&apos;t be changed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -420,14 +416,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Open a Document to run a macro on.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The Line being edited can&apos;t be committed, so the macro can&apos;t start.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>The macro was cancelled; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -437,6 +425,18 @@
     </message>
     <message>
         <source>The script&apos;s helper ended; reload the script to use it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The document changed while the macro ran; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a document to run a macro on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line being edited can&apos;t be committed, so the macro can&apos;t start.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -796,7 +796,7 @@ in tag &apos;%3&apos;</source>
         <translation type="unfinished">ไม่สามารถปรับขนาดบรรทัด %1 ด้วยขนาด &apos;%2&apos; ในแท็ก &apos;%3&apos;</translation>
     </message>
     <message>
-        <source>This Document can&apos;t be converted to that format.</source>
+        <source>This document can&apos;t be converted to that format.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -907,7 +907,7 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>These Documents have unsaved changes:</source>
+        <source>These documents have unsaved changes:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -979,11 +979,11 @@ please save with different name or change file attribute.</source>
         <translation>ไม่มีชื่อ</translation>
     </message>
     <message>
-        <source>Choose where to save the Untitled Document.</source>
+        <source>Choose where to save the untitled document.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>A Document could not be saved; nothing was closed.</source>
+        <source>A document could not be saved; nothing was closed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1442,19 +1442,7 @@ Should not exceed 15 characters per second</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>This Document can&apos;t be saved here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>The file changed on disk since it was opened. Reload it, or save elsewhere.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Another open Document uses that file.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The Document can&apos;t be saved right now.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1479,6 +1467,18 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Unconfirmed applies in translation mode only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This document can&apos;t be saved here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Another open document uses that file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The document can&apos;t be saved right now.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1998,7 +1998,7 @@ Will not be copied.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Tab %1: the renderer could not read this Document; it was not checked.
+        <source>Tab %1: the renderer could not read this document; it was not checked.
 </source>
         <translation type="unfinished"></translation>
     </message>
@@ -2488,11 +2488,11 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>This would break the Line group “%1”. Nothing was changed. Remove the group (its description Line is deleted) and try again, or cancel.</source>
+        <source>This would break the line group “%1”. Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>This would leave group members outside a Line group. Nothing was changed.</source>
+        <source>This would leave group members outside a line group. Nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2783,10 +2783,6 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>&amp;Close</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open &amp;Video…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4575,15 +4571,7 @@ and will be changed to the default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Follow the editing Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Independent navigation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No matching Line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4591,7 +4579,15 @@ and will be changed to the default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show nearest Line</source>
+        <source>Follow the editing line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show nearest line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4603,7 +4599,7 @@ and will be changed to the default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Reference Lines (protected, read-only)</source>
+        <source>Reference lines (protected, read-only)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5718,11 +5714,11 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>1 Line selected</source>
+        <source>1 line selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 Lines selected</source>
+        <source>%1 lines selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6177,7 +6173,7 @@ Spell checking will be disabled</source>
         <translation>สำเนาของ </translation>
     </message>
     <message>
-        <source>The Document has no styles to edit.</source>
+        <source>The document has no styles to edit.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
