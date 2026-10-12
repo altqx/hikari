@@ -192,8 +192,9 @@ public:
 	void RefreshSubsOnVideo(int newActiveLine, bool scroll = true);
 	// Runs an edit that moves, adds or deletes lines. If it would break a
 	// tree (Line group) it is undone before it is recorded, and the user can
-	// remove the trees it breaks; with retry the edit then runs again.
-	void RunKeepingTrees(const std::function<void()> &edit, bool retry = true);
+	// remove the trees it breaks as a step of its own and then make the edit
+	// again; the edit is never run again by itself.
+	void RunKeepingTrees(const std::function<void()> &edit);
 	// lines the next recorded edit puts into a tree on purpose
 	std::vector<uint64_t> linesMovedIntoTree;
 
@@ -227,7 +228,7 @@ private:
 	// does not, the edit is undone and false returned
 	bool KeepsTrees(unsigned char editionType);
 	// asks whether to remove the trees an edit would break, and removes them
-	bool AskToRemoveTrees(const LineGroups::Verdict &verdict, bool retry);
+	void AskToRemoveTrees(const LineGroups::Verdict &verdict);
 	void RemoveTrees(const std::vector<uint64_t> &descriptions);
 	// the state RunKeepingTrees restores when the edit is undone
 	struct TreeGuard {

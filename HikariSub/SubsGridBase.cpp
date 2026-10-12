@@ -1263,40 +1263,39 @@ bool SubsGrid::KeepsTrees(unsigned char editionType)
 		treeGuard.verdict = verdict;
 	}
 	else{
-		AskToRemoveTrees(verdict, false);
+		AskToRemoveTrees(verdict);
 	}
 	return false;
 }
 
-void SubsGrid::RunKeepingTrees(const std::function<void()> &edit, bool retry)
+void SubsGrid::RunKeepingTrees(const std::function<void()> &edit)
 {
 	if (treeGuard.active){
 		edit();
 		return;
 	}
-	while (true){
-		treeGuard.active = true;
-		treeGuard.rejected = false;
-		treeGuard.selections = file->GetSelectionsAsKeys();
-		treeGuard.currentLine = currentLine;
-		treeGuard.markedLine = markedLine;
-		treeGuard.scrollPosition = scrollPosition;
-		edit();
-		treeGuard.active = false;
-		if (!treeGuard.rejected)
-			return;
-		treeGuard.rejected = false;
-		if (!AskToRemoveTrees(treeGuard.verdict, retry) || !retry)
-			return;
-	}
+	treeGuard.active = true;
+	treeGuard.rejected = false;
+	treeGuard.selections = file->GetSelectionsAsKeys();
+	treeGuard.currentLine = currentLine;
+	treeGuard.markedLine = markedLine;
+	treeGuard.scrollPosition = scrollPosition;
+	edit();
+	treeGuard.active = false;
+	if (!treeGuard.rejected)
+		return;
+	treeGuard.rejected = false;
+	// removing the trees is its own step; the edit is not made again here,
+	// the user repeats it once the trees are gone
+	AskToRemoveTrees(treeGuard.verdict);
 }
 
-bool SubsGrid::AskToRemoveTrees(const LineGroups::Verdict &verdict, bool retry)
+void SubsGrid::AskToRemoveTrees(const LineGroups::Verdict &verdict)
 {
 	if (verdict.broken.empty()){
 		HikariMessageBox(_("This edit would leave lines of a tree outside it, so it was not made."),
 			_("Trees"), wxOK, this);
-		return false;
+		return;
 	}
 	wxString trees;
 	for (uint64_t description : verdict.broken){
@@ -1314,15 +1313,12 @@ bool SubsGrid::AskToRemoveTrees(const LineGroups::Verdict &verdict, bool retry)
 		"This edit would split trees, leave some of their lines outside them or move them into another tree, "
 		"so it was not made:\n%s\n\nRemoving the trees deletes their description lines and shows their lines as ordinary lines.",
 		(int)verdict.broken.size()), trees);
-	if (!retry)
-		message << L"\n" << _("Make the edit again after removing.");
+	message << L"\n" << _("Make the edit again after removing.");
 	HikariMessageDialog dialog(this, message, _("Trees"), wxYES | wxCANCEL);
-	dialog.SetYesLabel(retry ? wxString(wxPLURAL("Remove the tree and edit", "Remove the trees and edit", (int)verdict.broken.size())) :
-		wxString(wxPLURAL("Remove the tree", "Remove the trees", (int)verdict.broken.size())));
+	dialog.SetYesLabel(wxPLURAL("Remove the tree", "Remove the trees", (int)verdict.broken.size()));
 	if (dialog.ShowModal() != wxYES)
-		return false;
+		return;
 	RemoveTrees(verdict.broken);
-	return true;
 }
 
 void SubsGrid::RemoveTrees(const std::vector<uint64_t> &descriptions)
