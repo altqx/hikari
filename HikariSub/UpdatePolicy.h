@@ -361,9 +361,17 @@ namespace update_policy
 			return requestActive ? Fired::Cancel : Fired::Wait;
 		}
 
-		// The reply has passed kMaxResponseBytes, and its request is
-		// cancelled.
-		void CutOff() { cutOff = true; }
+		// The reply has passed kMaxResponseBytes. Whether to cancel its
+		// request: as at the deadline, only one still active. The pieces
+		// of a reply come before its state event, so the request may have
+		// completed by the time one passes the cap, and wx 3.3.3's curl
+		// backend ends a completed request a second time if it is
+		// cancelled, in State_Cancelled, and releases it twice.
+		bool CutOff(bool requestActive)
+		{
+			cutOff = true;
+			return requestActive;
+		}
 
 		// Whether pieces of the reply are still taken in.
 		bool TakesData() const { return !cutOff; }

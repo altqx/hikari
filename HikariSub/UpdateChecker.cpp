@@ -311,10 +311,10 @@ namespace
 				return;
 			size_t size = evt.GetDataSize();
 			if (!update_policy::FitsReply(body.size(), size)) {
-				run.CutOff();
 				body.clear();
 				body.shrink_to_fit();
-				request.Cancel();
+				if (run.CutOff(request.GetState() == wxWebRequest::State_Active))
+					request.Cancel();
 				return;
 			}
 			body.append(static_cast<const char *>(evt.GetDataBuffer()), size);

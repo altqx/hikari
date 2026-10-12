@@ -609,13 +609,25 @@ TEST(update_cut_off_reply_ends_as_cut_off_whatever_comes)
 	for (bool deadline : { false, true }) {
 		for (RequestEnd end : kRequestEnds) {
 			CheckRun run;
-			run.CutOff();
+			CHECK(run.CutOff(true));
 			CHECK(!run.TakesData());
 			if (deadline)
 				CHECK(run.Fire(true) == CheckRun::Fired::Cancel);
 			CHECK(run.PageEnded(end) == Ending::CutOff);
 		}
 	}
+}
+
+TEST(update_cut_off_cancels_only_an_active_request)
+{
+	// The pieces of a reply come before its state event, and the one
+	// that passes the cap can come after the request completed: it is
+	// not cancelled then, as wx's curl backend would end it a second
+	// time. Its Completed event ends the check as CutOff.
+	CheckRun run;
+	CHECK(!run.CutOff(false));
+	CHECK(!run.TakesData());
+	CHECK(run.PageEnded(RequestEnd::Completed) == Ending::CutOff);
 }
 
 TEST(update_check_that_ended_ignores_its_timer_and_events)
