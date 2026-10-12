@@ -98,6 +98,8 @@ Visuals::Visuals()
 	blockevents = false;
 	zoomScale = D3DXVECTOR2(1.0f, 1.0f);
 	dummytext = nullptr;
+	for (int i = 0; i < 7; i++)
+		moveValues[i] = 0.;
 }
 
 Visuals::~Visuals()
@@ -641,6 +643,11 @@ D3DXVECTOR2 Visuals::GetPosnScale(D3DXVECTOR2 *scale, byte *AN, double *tbl)
 
 	Styles *currentStyle = grid->file->GetStyle(0, edit->line->Style);
 	bool foundpos = false;
+	//values not in this Line's \pos or \move are 0, not the previous Line's
+	if (tbl) {
+		for (int i = 0; i < 7; i++)
+			tbl[i] = 0.;
+	}
 	wxRegEx pos(L"\\\\(pos|move)\\(([^\\)]+)\\)", wxRE_ADVANCED);
 	if (pos.Matches(txt) && tbl){
 		wxString type = pos.GetMatch(txt, 1);
@@ -666,7 +673,8 @@ D3DXVECTOR2 Visuals::GetPosnScale(D3DXVECTOR2 *scale, byte *AN, double *tbl)
 		ppos.y += additional.y;
 	}
 
-	if (tbl && tbl[6] < 4){
+	//no times, a \move without them moves for the whole Line
+	if (tbl && tbl[6] < 6){
 		int startTime = ZEROIT(edit->line->Start.mstime);
 		int start, end;
 		GetMoveTimes(&start, &end);
