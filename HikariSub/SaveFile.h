@@ -34,6 +34,7 @@ enum class SaveMethod {
 	// of the old contents is copied back when that fails.
 	Rewrite,
 	// The new contents are written straight into a FIFO or character device.
+	// A FIFO that no program reads fails the save instead of waiting for one.
 	WriteThrough,
 };
 

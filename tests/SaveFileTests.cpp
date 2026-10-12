@@ -412,25 +412,55 @@ TEST(a_fifo_is_written_through_and_stays_a_fifo)
 	fs::path fifo = dir.path / "pipe.ass";
 	CHECK(mkfifo(fifo.c_str(), 0600) == 0);
 
-	std::string received;
-	std::atomic<bool> readerDone{ false };
-	std::thread reader([&] {
-		received = ReadText(fifo);
-		readerDone = true;
-	});
+	// The reader is there before the save; the contents fit in the pipe's
+	// buffer, so the save does not wait for them to be read.
+	int reader = open(fifo.c_str(), O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+	CHECK(reader >= 0);
 	SaveFile save;
 	bool saved = Save(save, fifo, "through the pipe");
-	// a save that never opened the FIFO would leave the reader waiting
-	while (!readerDone) {
-		int fd = open(fifo.c_str(), O_WRONLY | O_NONBLOCK);
-		if (fd >= 0)
-			close(fd);
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	}
-	reader.join();
+	std::string received;
+	char buffer[64];
+	for (ssize_t got; (got = read(reader, buffer, sizeof(buffer))) > 0;)
+		received.append(buffer, static_cast<size_t>(got));
+	close(reader);
 	CHECK(saved);
 	CHECK(save.Method() == SaveMethod::WriteThrough);
 	CHECK(received == "through the pipe");
+	CHECK(fs::is_fifo(fifo));
+	CHECK(Names(dir.path) == std::set<std::string>{ "pipe.ass" });
+	CHECK(Names(temp.path).empty());
+}
+
+TEST(a_fifo_that_no_program_reads_fails_the_save_instead_of_waiting)
+{
+	SaveScratchDir dir;
+	SaveScratchDir temp;
+	TempFolderOverride tempFolder(temp.path);
+	fs::path fifo = dir.path / "pipe.ass";
+	CHECK(mkfifo(fifo.c_str(), 0600) == 0);
+
+	std::atomic<bool> done{ false };
+	bool saved = true;
+	SaveFile save;
+	std::thread saver([&] {
+		saved = Save(save, fifo, "nobody reads this");
+		done = true;
+	});
+	for (int waited = 0; !done && waited < 500; ++waited)
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	bool finishedAlone = done;
+	if (!finishedAlone) {
+		// a save that waits for a reader: give it one so the test can end
+		int fd = open(fifo.c_str(), O_RDONLY | O_NONBLOCK);
+		while (!done)
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		if (fd >= 0)
+			close(fd);
+	}
+	saver.join();
+	CHECK(finishedAlone);
+	CHECK(!saved);
+	CHECK(save.Method() == SaveMethod::WriteThrough);
 	CHECK(fs::is_fifo(fifo));
 	CHECK(Names(dir.path) == std::set<std::string>{ "pipe.ass" });
 	CHECK(Names(temp.path).empty());

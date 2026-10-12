@@ -358,10 +358,17 @@ bool SaveFile::Rewrite()
 
 bool SaveFile::WriteThrough()
 {
-	int out = open(target.c_str(), O_WRONLY | O_CLOEXEC | O_NOCTTY);
+	// Without O_NONBLOCK, opening a FIFO that no program reads waits for a
+	// reader, which would hang the save; with it the open fails with ENXIO.
+	int out = open(target.c_str(), O_WRONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
 	if (out < 0)
 		return false;
-	bool saved = CopyAll(stageFd, out, targetWriter);
+	// The writes block again as a plain write does: a reader that is there
+	// takes the contents at its own pace.
+	struct stat outStat;
+	int flags = fcntl(out, F_GETFL);
+	bool saved = fstat(out, &outStat) == 0 && (S_ISFIFO(outStat.st_mode) || S_ISCHR(outStat.st_mode)) &&
+		flags != -1 && fcntl(out, F_SETFL, flags & ~O_NONBLOCK) == 0 && CopyAll(stageFd, out, targetWriter);
 	if (close(out) != 0)
 		saved = false;
 	return saved;
