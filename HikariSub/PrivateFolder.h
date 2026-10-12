@@ -27,13 +27,32 @@
 // link, the user's own, and with no permission for its group or others.
 bool MakePrivateFolderAt(const std::string &path);
 
-// A folder only the user may open, for files that live as long as the
+// The path of the socket called name for files that live as long as the
 // program runs, such as the socket a second instance passes files to the
-// first through: $XDG_RUNTIME_DIR when it is such a folder, as the login
-// makes it, or else hikarisub-<uid> in the temporary folder ($TMPDIR, or
-// /tmp), made or narrowed by MakePrivateFolderAt. Empty when neither is
-// such a folder, as when another user made that name first.
-std::string UserRuntimeFolder();
+// first through, in a folder only the user may open that no other user can
+// rename or put another folder in the place of. The folders tried are
+// $XDG_RUNTIME_DIR, as the login makes it, used as it is; hikarisub-<uid> in
+// the temporary folder ($TMPDIR, or /tmp); and hikarisub-<host> in
+// $XDG_CACHE_HOME, or ~/.cache; the last two made or narrowed as
+// MakePrivateFolderAt does. A folder is used only when it, and every folder
+// above it, is root's or the user's and lets no one else write in it unless
+// it is sticky, so that no other user can rename any folder on the way after
+// it is checked; and only when the socket's path fits a socket address, which
+// would otherwise be cut short. The path is given with no link in it. Empty
+// when there is no such folder, as when another user made that name first.
+std::string UserRuntimeSocketPath(const std::string &name);
+
+// Whether the socket at path, as UserRuntimeSocketPath gives it, is the
+// user's own socket that no one else may open, in a folder that is still
+// private and that no other user can rename, so that a second instance
+// does not pass its files to a socket that is not the user's.
+bool IsUserRuntimeSocket(const std::string &path);
+
+// For the program that made the socket at path, as UserRuntimeSocketPath
+// gives it: narrows it to mode 0600 when it is a socket of the user's in a
+// folder that is still private and that no other user can rename, and
+// returns whether it is.
+bool NarrowUserRuntimeSocket(const std::string &path);
 
 // Opens the file at path for reading and writing, new or emptied, so that
 // only the user may open it: a new file is made 0600, and an existing one is
