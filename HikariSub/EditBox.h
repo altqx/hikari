@@ -165,7 +165,7 @@ private:
 	wxBoxSizer* BoxSizer6 = nullptr;
 	wxBoxSizer* TagButtonsSizer = nullptr;
 
-	void PutinNonass(const wxString& text, const wxString& tag);
+	void PutinNonass(const wxString& tag, const wxString& pattern);
 	void ChangeFont(Styles *retStyle, Styles *editedStyle);
 	void OnCommit(wxCommandEvent& event);
 	void OnNewline(wxCommandEvent& event);
