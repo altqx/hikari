@@ -1493,6 +1493,7 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 					isFFMS2 = true;
 					hasEditor = true;
 					keyframes = emptyString;
+					audio = emptyString;
 				}
 			}
 			if (hasnotMoreTokens)
