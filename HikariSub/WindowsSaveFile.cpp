@@ -448,18 +448,20 @@ bool GivePrivateDacl(HANDLE handle, bool folder)
 		nullptr) == ERROR_SUCCESS;
 }
 
-// Gives the file or folder handle is open on, with READ_CONTROL and
-// WRITE_DAC, the DACL of PrivateSecurity unless the DACL it has lets nobody
-// else in already. With ownOnly, one whose owner is neither the user nor the
-// owner this process gives what it makes is left as it is. Returns whether
-// it lets nobody else in now; one on a volume that keeps no ACLs is taken to,
-// as nothing more can be done there.
-bool NarrowSecurity(HANDLE handle, bool folder, bool ownOnly)
+// Gives the folder handle is open on, with READ_CONTROL and WRITE_DAC, the
+// inheritable DACL of PrivateSecurity unless the DACL it has lets nobody else
+// in already. With ownOnly, one whose owner is neither the user nor the owner
+// this process gives what it makes is left as it is. Returns whether it lets
+// nobody else in now, read again after the change. One on a volume that
+// keeps no ACLs, as FAT, lets in every user of the computer, and is not
+// private: on POSIX a folder whose mode keeps others out is used, and a FAT
+// mount's mode does not.
+bool NarrowFolder(HANDLE handle, bool ownOnly)
 {
-	if (!KeepsAcls(handle)) { return true; }
+	if (!KeepsAcls(handle)) { return false; }
 	bool own = false;
 	if (IsPrivate(handle, &own)) { return true; }
-	return (!ownOnly || own) && GivePrivateDacl(handle, folder) && IsPrivate(handle, &own);
+	return (!ownOnly || own) && GivePrivateDacl(handle, true) && IsPrivate(handle, &own);
 }
 
 // Gives the file readable is open on, with READ_CONTROL, the DACL of
@@ -931,7 +933,7 @@ bool MakePrivateFolderOnWindows(const std::wstring &folder)
 	//checking, the files in a folder could still be opened by their paths, so
 	//the folder's ACL alone would not keep them private. A link or junction
 	//at the name, and another user's folder, are left as they are and not
-	//used; a volume that keeps no ACLs, as FAT, can do no more and is used.
+	//used, nor a folder on a volume that keeps no ACLs, as FAT.
 	DWORD attributes = ::GetFileAttributesW(folder.c_str());
 	if (attributes == INVALID_FILE_ATTRIBUTES) {
 		PrivateSecurity security(true);
@@ -946,7 +948,7 @@ bool MakePrivateFolderOnWindows(const std::wstring &folder)
 	BY_HANDLE_FILE_INFORMATION info;
 	bool narrowed = ::GetFileInformationByHandle(handle, &info) &&
 		(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && !(info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
-		NarrowSecurity(handle, true, true);
+		NarrowFolder(handle, true);
 	::CloseHandle(handle);
 	return narrowed;
 }

@@ -30,11 +30,12 @@
 // 0700 for a folder the user owns that is no link, see MakePrivateFolderAt.
 // On Windows, a protected DACL that lets in only the user, SYSTEM and
 // Administrators and is passed on to the files in it, for a folder the user
-// owns that is no link or junction. The folders on the way are made as any
-// other folder. Returns whether the folder now lets in only the user, so
-// that it may be used: false for a link, another user's folder or a folder
-// that could not be made, which another user may have put there and could
-// swap the files in, so nothing is written into it or read from it.
+// owns that is no link or junction, on a volume that keeps ACLs, which FAT
+// does not. The folders on the way are made as any other folder. Returns
+// whether the folder now lets in only the user, so that it may be used:
+// false for a link, another user's folder or a folder that could not be
+// made, which another user may have put there and could swap the files in,
+// so nothing is written into it or read from it.
 bool MakePrivateFolder(const wxString &path);
 
 // Opens a new file at path for reading and writing that only its user may
