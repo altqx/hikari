@@ -77,7 +77,18 @@ protected:
             (void)getStringProperty("mainWindow/selectionStatus", "text");
             invokeMethod("columnsWindow", "choose", {true});
             observed.push_back(waitForItem("columnsWindow/column9", 5s) ? "columns" : "no columns"); // 3
+            // The rows exist as soon as choose() sets them; Spix clicks where
+            // an item is when the click runs, so wait until the window's
+            // layout has placed Text below Layer, and until the click has
+            // checked it before OK reads the choice (Spix posts a click's
+            // press and release).
+            for (int i = 0; i < 100 && getStringProperty("columnsWindow/column9", "y") ==
+                                           getStringProperty("columnsWindow/column0", "y");
+                 ++i)
+                wait(50ms);
             mouseClick("columnsWindow/column9"); // Text
+            for (int i = 0; i < 100 && getStringProperty("columnsWindow/column9", "checked") != "true"; ++i)
+                wait(50ms);
             mouseClick("columnsWindow/columnsOk");
             // The paste lands after the window closes; under load that can
             // take longer than a fixed wait, so poll for it (up to 5 s).
