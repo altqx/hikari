@@ -516,7 +516,8 @@ void VectorItem::ShowContols(VideoToolbar* vt)
 		auto sendItemToggled = [=, this](wxCommandEvent& evt) {
 			int listSelection = shapeList->GetSelection();
 			if (listSelection > shapes->size()) {
-				ShapesEdition se(Notebook::GetTab(), wxPoint(), shapes, shapeListSelection);
+				//list starts from 1, 0 is "Choose"
+				ShapesEdition se(Notebook::GetTab(), wxPoint(), shapes, shapeListSelection - 1);
 				bool isOK = se.ShowModal() == wxID_OK;
 				if (isOK) {
 					auto *shapes = se.GetShapes();
