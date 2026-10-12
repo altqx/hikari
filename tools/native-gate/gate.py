@@ -680,8 +680,8 @@ def shadow_probe(png, r):
 
 def header_point(r, part="title"):
     """A point on a floating panel's header: its title (the engine's drag)
-    or, on Wayland, its free part right of the title (the compositor's
-    move), keeping clear of the "⋯" button."""
+    or its free part right of the title (the window system's move), keeping
+    clear of the "⋯" button."""
     top = r[1] + SHADOW + 1
     if part == "title":
         return r[0] + SHADOW + 1 + 22, top + HEADER // 2
@@ -943,16 +943,17 @@ def step_pointer():
 
 
 def step_floating():
-    """D3's floating window: the same header, the drawn shadow, moved (X11:
-    the engine's drag by the header; Wayland: the compositor's move from the
-    header's free part) and resized from the shadow through the window
-    system."""
+    """D3's floating window: the same header, the drawn shadow, moved by the
+    header's free part through the window system (startSystemMove, on every
+    window system since 2026-10-12) and, on X11, by its title (the engine's
+    drag; on Wayland pointer-drag-dock drags the title), and resized from the
+    shadow through the window system."""
     fresh(env={"QT_LOGGING_RULES": "hikari.decorations.debug=true"})
     how = float_panel("Audio", "floating")
     st = wait_for(lambda s: "Audio" in frames(s))
     r = origin("Audio")
     if r is None:
-        for item in ("floating-header", "floating-shadow", "floating-move", "floating-resize"):
+        for item in ("floating-header", "floating-shadow", "floating-system-move", "floating-move", "floating-resize"):
             verdict(item, "not-observable", f"the floating Audio window (floated by {how}) cannot be located on "
                                             f"{B.name}")
         return
@@ -961,37 +962,40 @@ def step_floating():
     shadow = 0 if B.name == "x11" else SHADOW
     floating_frame(r, shadow, "float-0-window")
     floating_decoration("Audio", r)
-    # Move.
-    if WAYLAND:
-        px, py = header_point(r, part="free")
-        how_move = "the header's free part (the compositor's move, startSystemMove)"
-    else:
-        px, py = header_point(r)
-        how_move = "the header's title (the engine's drag)"
-    # somewhere no drop is offered: away from the main window where there is room
+    # Move, somewhere no drop is offered: away from the main window where
+    # there is room.
     main = origin("HikariSub")
-    dx, dy = -160, 120
-    if main and not WAYLAND:
-        dx = (main[0] - 40 - r[2]) - r[0] if main[0] - 40 - r[2] > 0 else (main[0] + main[2] + 40) - r[0]
-        dy = 60
-    drag(px, py, px + dx, py + dy)
-    st = wait_for(lambda s: "Audio" in frames(s), timeout=3)
+    moves = [("floating-system-move", "free", "the header's free part (the window system's move, startSystemMove)")]
+    if not WAYLAND:
+        moves.append(("floating-move", "title", "the header's title (the engine's drag)"))
+    for item, part, how_move in moves:
+        r = origin("Audio") or r
+        px, py = header_point(r, part=part)
+        dx, dy = -160, 120
+        if main and not WAYLAND:
+            dx = (main[0] - 40 - r[2]) - r[0] if main[0] - 40 - r[2] > 0 else (main[0] + main[2] + 40) - r[0]
+            dy = 60 if part == "title" else 100
+        drag(px, py, px + dx, py + dy)
+        st = wait_for(lambda s: "Audio" in frames(s), timeout=3)
+        r2 = origin("Audio")
+        ev1, st = B.snap(f"float-1-moved-{part}")
+        still = "Audio" in frames(st)
+        # A system move starts once the pointer has moved the drag distance
+        # (about 10 pixels), which the window does not follow
+        moved = r2 is not None and abs((r2[0] - r[0]) - dx) <= 16 and abs((r2[1] - r[1]) - dy) <= 16
+        verdict(item, "observed" if still and moved else "failed",
+                f"dragged {how_move} from {px},{py} by {dx},{dy}: window {r[:2]} -> {r2 and r2[:2]}, still floating "
+                f"{still}", ev1)
+        if not still:
+            break
     r2 = origin("Audio")
-    ev1, st = B.snap("float-1-moved")
-    still = "Audio" in frames(st)
-    # Wayland: the compositor takes over once the pointer has moved the
-    # drag distance (about 10 pixels), which the window does not follow
-    moved = r2 is not None and abs((r2[0] - r[0]) - dx) <= 16 and abs((r2[1] - r[1]) - dy) <= 16
-    verdict("floating-move", "observed" if still and moved else "failed",
-            f"dragged {how_move} from {px},{py} by {dx},{dy}: window {r[:2]} -> {r2 and r2[:2]}, still floating "
-            f"{still}", ev1)
-    if WAYLAND and still and r2:
+    if r2 and "Audio" in frames(atspi()):
         fx, fy = header_point(r2, part="free")
         click(fx, fy, double=True, wait=1500)
         st = wait_for(lambda s: "Audio" not in frames(s))
         ev, st = B.snap("float-2-free-part-dblclick")
         docked = "Audio" not in frames(st)
-        verdict("wayland-free-part-dblclick-docks", "observed" if docked else "failed",
+        verdict("free-part-dblclick-docks", "observed" if docked else "failed",
                 f"double-click on the header's free part at {fx},{fy}: docked={docked}", ev)
         if docked:
             float_panel("Audio", "floating")
