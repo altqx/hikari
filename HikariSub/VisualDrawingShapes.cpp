@@ -617,22 +617,19 @@ void Shapes::GetVisual(wxString* drawing)
 void Shapes::SetScale(wxString* txt, size_t position, int* diff)
 {
 	if (currentShape.scalingMode == ShapesSetting::CHANGE_SCALE && shapeScale.x > 0.f) {
+		//the tags are before the drawing, it moves by what they add to the text
+		int oldLength = txt->length();
 		SetFromTo(0, position);
 		FindTag(L"fscx([0-9.-]+)", *txt, 3);
-		wxPoint textPos = GetPositionInText();
 		wxString newTag = L"\\fscx" + getfloat(shapeScale.x * 100);
 		Replace(newTag, txt);
-		if (diff) {
-			*diff = (textPos.y - textPos.x + 1) - newTag.length();
-		}
 		if (currentShape.mode != ShapesSetting::ONLY_SCALE_X) {
 			FindTag(L"fscy([0-9.-]+)", *txt, 3);
-			wxPoint textPos = GetPositionInText();
 			wxString newTag = L"\\fscy" + getfloat(shapeScale.y * 100);
 			Replace(newTag, txt);
-			if (diff) {
-				*diff += (textPos.y - textPos.x + 1) - newTag.length();
-			}
+		}
+		if (diff) {
+			*diff = (int)txt->length() - oldLength;
 		}
 	}
 }
