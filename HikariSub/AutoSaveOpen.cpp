@@ -132,7 +132,9 @@ void AutoSaveOpen::GenerateList()
 	HANDLE h = FindFirstFileW(path.wc_str(), &data);
 	if (h == INVALID_HANDLE_VALUE)
 	{
-		HikariLog(_("Cannot open auto save folder"));
+		//there is no Subs folder until the first autosave, the list is just empty
+		if (wxDir::Exists(Options.pathfull + L"/Subs"))
+			HikariLog(_("Cannot open auto save folder"));
 		return;
 	}
 
