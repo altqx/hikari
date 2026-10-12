@@ -44,6 +44,9 @@ struct SaveTargetFacts {
 	bool exists = false;
 	mode_t type = 0;  // the target's S_IFMT bits
 	bool writable = true;
+	// a program holds a lock (flock, fcntl or a lease) on the target; the lock
+	// stays with the inode and would not cover a file renamed over the path
+	bool lockedByOthers = false;
 	nlink_t links = 0;
 	uid_t uid = 0;
 	gid_t gid = 0;
@@ -59,9 +62,10 @@ struct SaveTargetFacts {
 	bool sameExtendedAttributes = true;
 };
 
-// A rename is used only for a new file or a regular file with one link that
-// the renamed file would match in owner, group, permission bits, extended
-// attributes and file system; any other regular file is rewritten in place.
+// A rename is used only for a new file or a regular file with one link and no
+// lock that the renamed file would match in owner, group, permission bits,
+// extended attributes and file system; any other regular file is rewritten in
+// place.
 // A file that cannot be written is refused.
 SaveMethod ChooseSaveMethod(const SaveTargetFacts &facts);
 

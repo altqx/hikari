@@ -19,7 +19,9 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <map>
@@ -185,9 +187,41 @@ bool SameExtendedAttributes(const std::string &target, int tempFd)
 	return ReadAttributes(target.c_str(), -1, &targetAttributes) &&
 		ReadAttributes(nullptr, tempFd, &tempAttributes) && targetAttributes == tempAttributes;
 }
+// Whether /proc/locks lists a lock of any kind (flock, POSIX, OFD, lease) on
+// an inode with this number. The device in /proc/locks is the super block's,
+// which on btrfs is not the st_dev of a file in a subvolume, so only the
+// inode number is matched; a lock on a file elsewhere with the same number
+// makes a save rewrite the file, which is safe.
+bool InodeIsLocked(ino_t inode)
+{
+	FILE *locks = fopen("/proc/locks", "re");
+	if (!locks)
+		return false;
+	bool locked = false;
+	char *line = nullptr;
+	size_t size = 0;
+	while (!locked && getline(&line, &size, locks) > 0) {
+		// "1: FLOCK  ADVISORY  WRITE 1234 08:01:131 0 EOF"; a waiting lock
+		// has "->" after the number
+		char *save = nullptr;
+		for (char *word = strtok_r(line, " \t\n", &save); word; word = strtok_r(nullptr, " \t\n", &save)) {
+			unsigned major, minor;
+			unsigned long long number;
+			char after;
+			if (sscanf(word, "%x:%x:%llu%c", &major, &minor, &number, &after) == 3) {
+				locked = number == static_cast<unsigned long long>(inode);
+				break;
+			}
+		}
+	}
+	free(line);
+	fclose(locks);
+	return locked;
+}
 #else
 // The application is built for Linux and Windows only.
 bool SameExtendedAttributes(const std::string &, int) { return true; }
+bool InodeIsLocked(ino_t) { return false; }
 #endif
 
 } // namespace
@@ -204,8 +238,9 @@ SaveMethod ChooseSaveMethod(const SaveTargetFacts &facts)
 		return SaveMethod::Refuse;
 	if (!facts.tempMade)
 		return SaveMethod::Rewrite;
-	bool renameKeepsTheFile = facts.links == 1 && facts.uid == facts.tempUid && facts.gid == facts.tempGid &&
-		facts.mode == facts.tempMode && facts.device == facts.tempDevice && facts.sameExtendedAttributes;
+	bool renameKeepsTheFile = facts.links == 1 && !facts.lockedByOthers && facts.uid == facts.tempUid &&
+		facts.gid == facts.tempGid && facts.mode == facts.tempMode && facts.device == facts.tempDevice &&
+		facts.sameExtendedAttributes;
 	return renameKeepsTheFile ? SaveMethod::Replace : SaveMethod::Rewrite;
 }
 
@@ -227,6 +262,7 @@ SaveTargetFacts SaveFile::ReadFacts()
 		facts.gid = targetStat.st_gid;
 		facts.mode = targetStat.st_mode & 07777;
 		facts.device = targetStat.st_dev;
+		facts.lockedByOthers = S_ISREG(targetStat.st_mode) && InodeIsLocked(targetStat.st_ino);
 	}
 	else if (errno != ENOENT) {
 		// a target that cannot be looked at is not saved to

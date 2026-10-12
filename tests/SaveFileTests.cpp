@@ -32,6 +32,7 @@
 #include <string>
 #include <thread>
 #ifdef __linux__
+#include <sys/file.h>
 #include <sys/xattr.h>
 #endif
 
@@ -177,6 +178,10 @@ TEST(a_file_a_rename_would_change_is_rewritten_in_place)
 
 	facts = PlainFile();
 	facts.tempMade = false;
+	CHECK(ChooseSaveMethod(facts) == SaveMethod::Rewrite);
+
+	facts = PlainFile();
+	facts.lockedByOthers = true;
 	CHECK(ChooseSaveMethod(facts) == SaveMethod::Rewrite);
 }
 
@@ -436,6 +441,48 @@ TEST(the_method_is_picked_again_for_the_file_that_is_there_at_commit)
 	CHECK((StatOf(file).st_mode & 07777) == 0600);
 	CHECK(Names(dir.path) == std::set<std::string>{ "subs.ass" });
 }
+
+#ifdef __linux__
+TEST(a_locked_file_is_rewritten_so_the_lock_still_covers_it)
+{
+	SaveScratchDir dir;
+	fs::path file = dir.path / "subs.ass";
+	for (int kind = 0; kind < 2; ++kind) {
+		WriteText(file, "old");
+		ino_t before = StatOf(file).st_ino;
+		// another program's lock, here held by this process through its own
+		// descriptor; fcntl locks of this process would go with any close
+		// of the file, so the fcntl lock is an open file description lock
+		int holder = open(file.c_str(), O_RDWR | O_CLOEXEC);
+		CHECK(holder >= 0);
+		if (kind == 0) {
+			CHECK(flock(holder, LOCK_SH) == 0);
+		}
+		else {
+			struct flock lock {};
+			lock.l_type = F_RDLCK;
+			lock.l_whence = SEEK_SET;
+			CHECK(fcntl(holder, F_OFD_SETLK, &lock) == 0);
+		}
+
+		SaveFile save;
+		CHECK(Save(save, file, "new"));
+		CHECK(save.Method() == SaveMethod::Rewrite);
+		CHECK(ReadText(file) == "new");
+		CHECK(StatOf(file).st_ino == before);
+		struct stat held {};
+		CHECK(fstat(holder, &held) == 0 && held.st_nlink == 1);
+		CHECK(Names(dir.path) == std::set<std::string>{ "subs.ass" });
+		close(holder);
+
+		// without the lock the file is renamed over
+		SaveFile unlocked;
+		CHECK(Save(unlocked, file, "newer"));
+		CHECK(unlocked.Method() == SaveMethod::Replace);
+		CHECK(ReadText(file) == "newer");
+	}
+}
+#endif
 
 TEST(a_save_that_is_not_committed_leaves_the_file_and_no_temporary_file)
 {
