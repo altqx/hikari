@@ -202,6 +202,29 @@ TEST(EditSessionProtected, ReferenceRefusesEdits)
               CommandRefusal::Protected);
 }
 
+// R2-reference-tray: a tab becomes the reference and stops being one, so its
+// session is protected only meanwhile; Undo and Redo are writes too.
+TEST(EditSessionProtected, ProtectionFollowsTheReference)
+{
+    EditSession tab(load(kThreeLines));
+    const auto setX = [&] {
+        return tab.run(Command{"x", tab.revision(), {core::LineId{1}}, [](core::Document &d) {
+                                   return d.editLine(core::LineId{1}, [](core::LineRecord &l) { l.text = u8"x"; });
+                               }});
+    };
+    ASSERT_TRUE(setX());
+    ASSERT_TRUE(tab.undo());
+    tab.setProtected(true);
+    EXPECT_EQ(setX().error(), CommandRefusal::Protected);
+    EXPECT_FALSE(tab.redo());
+    EXPECT_FALSE(tab.goTo(1));
+    EXPECT_FALSE(tab.editDraftText(core::LineId{1}, u8"y"));
+    EXPECT_EQ(tab.historySize(), 2u);
+    tab.setProtected(false);
+    EXPECT_TRUE(tab.redo());
+    EXPECT_TRUE(tab.undo());
+}
+
 // E63-invalid-commit: blocked by default, legacy behaviour as a preference.
 
 TEST_F(SessionTest, FieldDraftsCommitTogetherAsOneStep)

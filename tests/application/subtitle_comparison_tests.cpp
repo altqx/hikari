@@ -467,9 +467,9 @@ TEST_F(ComparisonTest, CommonStyles)
 }
 
 // Notebook.cpp:922-928 and 97-123: the menu shows the shared styles checked
-// as SUBS_COMPARISON_STYLES has them and adds those to compareStyles each
-// time it opens; legacy never clears the list.
-TEST(ComparisonMenu, OpeningTheMenuAddsTheCheckedStylesAgain)
+// as SUBS_COMPARISON_STYLES has them and adds those to compareStyles when it
+// opens; legacy never clears the list.
+TEST(ComparisonMenu, OpeningTheMenuAddsTheCheckedStyles)
 {
     SubtitleComparison c;
     const std::vector<std::u8string> common{u8"Default", u8"Sign"};
@@ -488,15 +488,16 @@ TEST(ComparisonMenu, OpeningTheMenuAddsTheCheckedStylesAgain)
     EXPECT_EQ(c.chosenStyles(), (std::vector<std::u8string>{u8"Default"}));
     EXPECT_EQ(type, compare_by::ChosenStyles);
 
-    // Opened twice, the style is in the list twice; unchecking removes one,
-    // so it stays chosen (and is written back to SUBS_COMPARISON_STYLES).
+    // Opened twice, the style is listed once, so one uncheck takes it out
+    // (R1-stuck-style: legacy listed it twice, removed one copy and kept it
+    // chosen and in SUBS_COMPARISON_STYLES).
     SubtitleComparison twice;
     twice.openMenu(common, {u8"Sign"});
     twice.openMenu(common, {u8"Sign"});
-    EXPECT_EQ(twice.chosenStyles(), (std::vector<std::u8string>{u8"Sign", u8"Sign"}));
-    type = twice.toggleStyle(compare_by::ChosenStyles | compare_by::Times, u8"Sign", false);
     EXPECT_EQ(twice.chosenStyles(), (std::vector<std::u8string>{u8"Sign"}));
-    EXPECT_EQ(type, compare_by::ChosenStyles | compare_by::Times);
+    type = twice.toggleStyle(compare_by::ChosenStyles | compare_by::Times, u8"Sign", false);
+    EXPECT_TRUE(twice.chosenStyles().empty());
+    EXPECT_EQ(type, compare_by::Times);
 
     // A style from another pair of tabs stays in the list (never cleared).
     SubtitleComparison kept;

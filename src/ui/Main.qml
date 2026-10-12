@@ -2617,8 +2617,6 @@ ApplicationWindow {
                             display: AbstractButton.IconOnly
                             contentItem: Icon {
                                 iconRole: "link"
-                                hovered: audioLink.hovered
-                                pressed: audioLink.down
                             }
                             checkable: true
                             checked: root.audio.linked
@@ -2680,8 +2678,6 @@ ApplicationWindow {
                         display: AbstractButton.IconOnly
                         contentItem: Icon {
                             iconRole: audioButton.iconRole
-                            hovered: audioButton.hovered
-                            pressed: audioButton.down
                         }
                         implicitHeight: 22
                         implicitWidth: 22

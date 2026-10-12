@@ -389,7 +389,7 @@ bool EditSession::canRedo() const
 
 bool EditSession::undo()
 {
-    if (m_readOnly)
+    if (m_protected || m_readOnly)
         return false;
     if (m_draft && draftProblem() && m_policy == InvalidCommitPolicy::Block)
         return false;
@@ -405,7 +405,7 @@ bool EditSession::undo()
 
 bool EditSession::redo()
 {
-    if (m_readOnly || m_draft || !canRedo())
+    if (m_protected || m_readOnly || m_draft || !canRedo())
         return false;
     ++m_cursor;
     m_selection = m_states[m_cursor].selection;
@@ -439,7 +439,7 @@ std::optional<std::size_t> EditSession::savedStep() const
 
 bool EditSession::goTo(std::size_t step)
 {
-    if (m_readOnly)
+    if (m_protected || m_readOnly)
         return false;
     if (m_draft) {
         if (draftProblem() && m_policy == InvalidCommitPolicy::Block)

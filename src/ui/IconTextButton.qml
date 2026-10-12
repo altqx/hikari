@@ -1,7 +1,7 @@
 // K1: a push button with an icon of the set beside its text (legacy
 // buttons with a bitmap beside the label, e.g. the Style manager's
 // transfer buttons, stylestore.cpp:86-88), in the appearance's colours
-// (hover/pressed while hovered or pressed, disabled while disabled). The
+// (disabled while disabled; hover and press shade the button). The
 // style draws the button; the icon is its image source from IconTheme's
 // image provider. Directional icons mirror in right-to-left layouts.
 import QtQuick
@@ -12,10 +12,9 @@ Button {
     id: button
     property string iconRole
     property string tip
-    readonly property bool iconActive: enabled && (hovered || down)
     icon.source: iconRole.length === 0 ? ""
-        : IconTheme.image(iconRole, !enabled ? IconTheme.disabled : iconActive ? IconTheme.active : IconTheme.normal,
-                          !enabled ? IconTheme.disabled : iconActive ? IconTheme.active : IconTheme.accent,
+        : IconTheme.image(iconRole, enabled ? IconTheme.normal : IconTheme.disabled,
+                          enabled ? IconTheme.accent : IconTheme.disabled,
                           mirrored && IconTheme.mirrors(iconRole))
     icon.color: "transparent"
     icon.width: 16

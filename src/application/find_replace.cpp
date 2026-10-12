@@ -1343,7 +1343,9 @@ void FindReplace::replaceInAllOpened(const FindReplaceSettings &window)
             return finish();
         int all = 0;
         for (const auto &tab : m_host.tabs()) {
-            if (!tab.session)
+            // The protected reference is never written (R2-reference-tray);
+            // legacy replaced in the previewed tab too.
+            if (!tab.session || tab.session->isProtected())
                 continue;
             if (updateValues(m_window))
                 return finish();
@@ -1783,7 +1785,7 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
         if (r.header || !r.checked || !r.document)
             continue;
         const auto tab = std::ranges::find_if(tabs, [&](const FindTab &t) { return t.id == *r.document; });
-        if (tab == tabs.end() || !tab->session)
+        if (tab == tabs.end() || !tab->session || tab->session->isProtected()) // R2-reference-tray
             continue;
         if (*r.document != oldTab) {
             oldKeyLine = -1;

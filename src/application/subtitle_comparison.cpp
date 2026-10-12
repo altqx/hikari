@@ -258,12 +258,14 @@ std::vector<std::u8string> commonStyles(const core::Document &first, const core:
 std::vector<SubtitleComparison::MenuStyle> SubtitleComparison::openMenu(const std::vector<std::u8string> &common,
                                                                         const std::vector<std::u8string> &optionStyles)
 {
-    // Notebook.cpp:922-928.
+    // Notebook.cpp:922-928, which appended each checked style again at every
+    // opening, so after two openings an uncheck removed one copy and the
+    // style stayed chosen (R1-stuck-style): a style is listed once here.
     std::vector<MenuStyle> items;
     for (const auto &name : common) {
         const bool checked = contains(optionStyles, name);
         items.push_back({name, checked});
-        if (checked)
+        if (checked && !contains(m_chosenStyles, name))
             m_chosenStyles.push_back(name);
     }
     return items;

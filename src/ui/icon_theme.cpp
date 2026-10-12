@@ -169,10 +169,10 @@ void IconTheme::applyWindowIcon(QWindow *window, const QString &role) const
     window->setIcon(icon);
 }
 
-std::array<QColor, 4> IconTheme::colours()
+std::array<QColor, 3> IconTheme::colours()
 {
     const auto &roles = theme::current().roles;
-    return {roles.text, roles.accent, roles.accent, roles.disabled};
+    return {roles.text, roles.accent, roles.disabled};
 }
 
 void IconTheme::refresh()

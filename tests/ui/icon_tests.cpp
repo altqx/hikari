@@ -32,6 +32,7 @@
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlExpression>
+#include <QQmlProperty>
 #include <QQmlEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -558,16 +559,15 @@ private slots:
             const QString id = ui::theme::codeName(code);
             const auto hex = [](const QColor &c) { return c.name(QColor::HexRgb).toUpper(); };
             const QString css = QStringLiteral(".%1{background:%2;color:%3}.%1 .accent{color:%4}"
-                                               ".%1 .hover,.%1 .hover .accent{color:%4}"
                                                ".%1 .off,.%1 .off .accent{color:%5}")
                                     .arg(id, hex(r.background), hex(r.text), hex(r.accent), hex(r.disabled));
             QVERIFY2(html.contains(css), qPrintable(id + QStringLiteral(": expected ") + css));
         }
+        QVERIFY(!html.contains(QStringLiteral(".hover"))); // K1-hover-one-colour: hover keeps the colours
     }
 
     // The icon colours are the theme's (K2): its text, accent (the accent
-    // layer, and the whole icon while hovered or pressed) and disabled
-    // colours. In every theme, with every accent preset, they meet WCAG
+    // layer) and disabled colours. In every theme, with every accent preset, they meet WCAG
     // 1.4.11's 3:1 against the theme's surfaces (visual-language.md's bg,
     // panel, raised and field), and a disabled icon looks unlike an enabled
     // one. There are no icon colour settings any more.
@@ -590,8 +590,7 @@ private slots:
                 const auto &r = themeRoles();
                 QCOMPARE(colours[0], r.text);
                 QCOMPARE(colours[1], r.accent);
-                QCOMPARE(colours[2], r.accent);
-                QCOMPARE(colours[3], r.disabled);
+                QCOMPARE(colours[2], r.disabled);
                 const QString what = ui::theme::codeName(code) + QLatin1Char(' ') + extra.values().value(0).toString();
                 for (const QColor &colour : colours)
                     for (const QColor &surface : {r.background, r.panel, r.raised, r.field})
@@ -605,8 +604,8 @@ private slots:
     }
 
     // The Icon item and IconButton take the theme layer's colours live (its
-    // text, accent and disabled colours), in every state: a theme change, an
-    // accent preset and a high-contrast pick repaint them at once.
+    // text, accent and disabled colours): a theme change, an accent preset
+    // and a high-contrast pick repaint them at once.
     void iconsFollowTheThemeLive()
     {
         auto restore = qScopeGuard([] { ui::theme::endPreview(); });
@@ -617,7 +616,6 @@ import Hikari.Ui
 Row {
     Icon { objectName: "plain"; iconRole: "save-as" }
     Icon { objectName: "off"; iconRole: "save-as"; enabled: false }
-    Icon { objectName: "over"; iconRole: "save-as"; hovered: true }
     Icon { objectName: "mirrored"; iconRole: "undo"; LayoutMirroring.enabled: true }
     Icon { objectName: "media"; iconRole: "media-play"; LayoutMirroring.enabled: true }
     IconButton { objectName: "button"; iconRole: "media-stop"; text: "Stop" }
@@ -633,8 +631,6 @@ Row {
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#145c4c"));
         QCOMPARE(colour("off"), QStringLiteral("#74808b"));
         QCOMPARE(colour("off", "accentColor"), QStringLiteral("#74808b"));
-        QCOMPARE(colour("over"), QStringLiteral("#145c4c"));
-        QCOMPARE(colour("over", "accentColor"), QStringLiteral("#145c4c"));
         // directional icons mirror in right-to-left layouts, media symbols do not
         QVERIFY(item("mirrored")->property("mirrored").toBool());
         QVERIFY(!item("media")->property("mirrored").toBool());
@@ -645,11 +641,10 @@ Row {
         QCOMPARE(QAccessible::queryAccessibleInterface(button)->text(QAccessible::Name), QStringLiteral("Stop"));
         auto *buttonIcon = button->property("contentItem").value<QQuickItem *>();
         QCOMPARE(buttonIcon->property("iconRole").toString(), QStringLiteral("media-stop"));
-        // Another accent preset: the accent layer and the hover colour follow.
+        // Another accent preset: the accent layer follows.
         useTheme(Code::Light, {{QStringLiteral("appearance.lightAccent"), QStringLiteral("blue")}});
         QCOMPARE(colour("plain"), QStringLiteral("#202832"));
         QCOMPARE(colour("plain", "accentColor"), ui::theme::accent(false, QStringLiteral("blue")).accent.name());
-        QCOMPARE(colour("over"), ui::theme::accent(false, QStringLiteral("blue")).accent.name());
         // Dark.
         useTheme(Code::Dark);
         QCOMPARE(colour("plain"), QStringLiteral("#e8edf2"));
@@ -661,7 +656,6 @@ Row {
         useTheme(Code::HighContrastBlack);
         QCOMPARE(colour("plain"), QStringLiteral("#ffffff"));
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#ffff00"));
-        QCOMPARE(colour("over"), QStringLiteral("#ffff00"));
         QCOMPARE(colour("off"), QStringLiteral("#8c8c8c"));
         useTheme(Code::HighContrastBlack, {{QStringLiteral("appearance.highContrastBlack.text"), QStringLiteral("#FFD000")},
                                            {QStringLiteral("appearance.highContrastBlack.accent"), QStringLiteral("#FF00FF")}});
@@ -678,6 +672,55 @@ Row {
         // An unknown role draws nothing.
         item("plain")->setProperty("iconRole", QStringLiteral("no-such-icon"));
         QVERIFY(!item("plain")->property("valid").toBool());
+    }
+
+    // K1-hover-one-colour: hover and press leave an icon-only button's icon in its
+    // colours, accent layer included; the style's panel (Fusion's
+    // ButtonPanel) shows them, as legacy MappedButton showed them only in its
+    // background and border (MappedButton.cpp:374-383).
+    void hoverAndPressShadeThePanelOnly()
+    {
+        auto restore = qScopeGuard([] { ui::theme::endPreview(); });
+        useTheme(Code::Light);
+        auto shown = show(R"(
+import QtQuick
+import Hikari.Ui
+Row {
+    spacing: 20
+    IconButton { objectName: "button"; iconRole: "save-as"; text: "Save as"; hoverEnabled: true }
+    IconToolButton { objectName: "tool"; iconRole: "save-as"; text: "Save as"; hoverEnabled: true }
+}
+)", QSize(200, 60));
+        QVERIFY(shown.root);
+        QVERIFY(QTest::qWaitForWindowExposed(shown.window.get()));
+        auto *window = shown.window.get();
+        for (const char *name : {"button", "tool"}) {
+            auto *button = shown.root->findChild<QQuickItem *>(QLatin1String(name));
+            QVERIFY(button);
+            auto *icon = button->property("contentItem").value<QQuickItem *>();
+            auto *panel = button->property("background").value<QQuickItem *>();
+            QVERIFY(icon && panel);
+            const auto colours = [&] {
+                return std::pair{icon->property("color").value<QColor>(), icon->property("accentColor").value<QColor>()};
+            };
+            const std::pair normal{QColor(QStringLiteral("#202832")), QColor(QStringLiteral("#145c4c"))};
+            QCOMPARE(colours(), normal);
+            const QPoint centre = button->mapToScene(QPointF(button->width() / 2, button->height() / 2)).toPoint();
+            QTest::mouseMove(window, centre);
+            QTRY_VERIFY(button->property("hovered").toBool());
+            QVERIFY(panel->isVisible());
+            QCOMPARE(colours(), normal);
+            QTest::mousePress(window, Qt::LeftButton, {}, centre);
+            QTRY_VERIFY(button->property("down").toBool());
+            QVERIFY(panel->isVisible());
+            QCOMPARE(colours(), normal);
+            QTest::mouseRelease(window, Qt::LeftButton, {}, centre);
+            QTest::mouseMove(window, QPoint(195, 55));
+            QTRY_VERIFY(!button->property("hovered").toBool());
+        }
+        QVERIFY(!QQmlProperty(shown.root->findChild<QQuickItem *>(QStringLiteral("button"))->property("contentItem")
+                                  .value<QQuickItem *>(), QStringLiteral("hovered"))
+                     .isValid()); // the Icon item has no hover state any more
     }
 
     // The controls that draw an image source (menu items, submenus, tab

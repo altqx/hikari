@@ -545,7 +545,9 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
         ASSERT_EQ(host.v.zoomScale(), c.zoomScale);
         std::unique_ptr<VisualTool> tool;
         std::size_t step = 0;
-        std::size_t noStepSends = 0; // below
+        std::size_t noStepSends = 0, noStepHistory = 0; // below
+        QJsonArray previousLines;
+        std::size_t previousSent = 0, previousHistory = 0;
         host.edited = [&] {
             if (!tool->keepsStateAfterCommit())
                 tool->reset(host);
@@ -663,20 +665,28 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
                     return out;
                 };
                 // Legacy committed on every release (RotationZ::OnMouseEvent,
-                // VisualRotationZ.cpp:150-152), so the release after the
-                // two-point angle's first point and after a click off both
-                // points sent the unchanged text, and that made an undo step:
-                // CopyDialogue marks the file edited (SubsFile.cpp:408-417)
-                // and SetModified saves the undo state (SubsGridBase.cpp:
-                // 1125-1157). The rewrite opens no gesture there, and a
-                // release with nothing staged records nothing (visual-tools.md,
-                // the gesture rule): those steps are left out here, a
-                // difference named in the report.
-                if (c.name == "rotz-two-points" && (step - 1 == 1 || step - 1 == 5))
-                    ++noStepSends;
+                // VisualRotationZ.cpp:150-152; Scale's, VisualScale.cpp:
+                // 279-281), so a release that left every Line as it was (the
+                // two-point angle's first point and a click off both points
+                // in rotz-two-points, a drag inside Scale's rectangle in
+                // scale-rectangle) sent the unchanged text, and that made an
+                // undo step: CopyDialogue marks the file edited (SubsFile.cpp:
+                // 408-417) and SetModified saves the undo state
+                // (SubsGridBase.cpp:1125-1157). The rewrite cancels a gesture
+                // whose release changes no Line's text (T3-release-no-change):
+                // those commits are left out.
                 auto legacySent = strings(o[QStringLiteral("sent")]);
+                auto legacyHistory = strings(o[QStringLiteral("history")]);
+                if (step > 1 && lines == previousLines) {
+                    noStepSends += legacySent.size() - previousSent;
+                    noStepHistory += legacyHistory.size() - previousHistory;
+                }
+                previousLines = lines;
+                previousSent = legacySent.size();
+                previousHistory = legacyHistory.size();
                 legacySent.resize(legacySent.size() - noStepSends);
-                EXPECT_EQ(host.history, strings(o[QStringLiteral("history")]));
+                legacyHistory.resize(legacyHistory.size() - noStepHistory);
+                EXPECT_EQ(host.history, legacyHistory);
                 EXPECT_EQ(host.sent, legacySent);
                 std::vector<std::string> logged;
                 for (const auto &l : host.logged)
@@ -789,6 +799,77 @@ TEST(VisualTransformEdit, ARefusedCommitLeavesTheCaretAndTheText)
         EXPECT_TRUE(host.sent.empty());
         EXPECT_EQ(host.caret, (std::pair<long, long>{7, 7})); // not put at the unwritten tag
         EXPECT_EQ(handles(), before);                         // the unchanged text read again
+    }
+}
+
+// T3-release-no-change: a release that changes no Line's text records no
+// step and leaves the Document unmodified, on the several-Line path too,
+// where every target's text is staged on release (legacy's SetVisual(false)
+// ran SetModified on every release, Visuals.cpp:791-796, and that made an
+// undo step of the unchanged text; T6-no-change-no-step is the same rule).
+// Each several-Line case is played to its end and its last release repeated
+// as a click without a move, which writes every target's text as it is.
+TEST(VisualTransformEdit, AReleaseThatChangesNoLineRecordsNothing)
+{
+    for (const char *name : {"scale-several-lines", "rotz-org-several", "rotxy-several"}) {
+        SCOPED_TRACE(name);
+        const auto cases = readCases();
+        const auto it = std::find_if(cases.begin(), cases.end(), [&](const Case &c) { return c.name == name; });
+        ASSERT_NE(it, cases.end());
+        const Case &c = *it;
+        TestHost host;
+        setUp(host, c);
+        std::unique_ptr<VisualTool> tool;
+        std::string lastRelease;
+        for (const std::string &op : c.ops) {
+            std::istringstream in(op);
+            std::string kind;
+            in >> kind;
+            if (kind == "tool") {
+                std::string tool_;
+                int bits;
+                in >> tool_ >> bits;
+                if (tool_ == "scale") {
+                    auto t = std::make_unique<ScaleTool>();
+                    t->setToggled(bits);
+                    tool = std::move(t);
+                } else if (tool_ == "rotz") {
+                    auto t = std::make_unique<RotationZTool>();
+                    t->setToggled(bits);
+                    tool = std::move(t);
+                } else {
+                    auto t = std::make_unique<RotationXYTool>();
+                    t->setToggled(bits);
+                    tool = std::move(t);
+                }
+                tool->selected(host);
+                tool->reset(host);
+            } else if (kind == "press" || kind == "move" || kind == "release") {
+                tool->pointer(pointerOf(kind, in), host);
+                if (kind == "release")
+                    lastRelease = op.substr(op.find(' '));
+            }
+        }
+        ASSERT_FALSE(host.history.empty()); // the case's own release changed the Lines
+        const auto texts = [&] {
+            std::vector<std::u8string> out;
+            for (const auto id : ids(*host.s))
+                out.push_back(lineOf(*host.s, id)->text);
+            return out;
+        };
+        const auto before = texts();
+        const std::size_t steps = host.s->historySize();
+        const auto recorded = host.history;
+        host.s->markSaved(host.s->contentId());
+        for (const char *kind : {"press", "release"}) {
+            std::istringstream in(lastRelease);
+            tool->pointer(pointerOf(kind, in), host);
+        }
+        EXPECT_FALSE(host.g);
+        EXPECT_EQ(texts(), before);
+        EXPECT_EQ(host.s->historySize(), steps);
+        EXPECT_EQ(host.history, recorded);
+        EXPECT_FALSE(host.s->isDirty());
     }
 }
 

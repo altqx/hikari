@@ -53,12 +53,12 @@ struct AllTagsSetting {
     bool operator==(const AllTagsSetting &) const = default;
 };
 
-// LoadSettings' defaults (VisualAllTagsEdition.cpp:467-489), as the text it
+// LoadSettings' defaults (VisualAllTagsEdition.cpp:338-360), as the text it
 // parses, and the 22 definitions it gives.
 std::u16string_view defaultAllTagsText();
 std::vector<AllTagsSetting> defaultAllTags();
 
-// LoadSettings (VisualAllTagsEdition.cpp:457-547) on the file's text (empty:
+// LoadSettings (VisualAllTagsEdition.cpp:328-417) on the file's text (empty:
 // no file or an empty one; a UTF-8 BOM already dropped). A text that does
 // not start "HYDRA2.0" (an older version's, or none) gives the defaults, and
 // `writeDefaults` says the defaults replace a text that was there. The lines
@@ -71,7 +71,7 @@ std::vector<AllTagsSetting> defaultAllTags();
 // last that read). A line missing a field or a number that does not read is
 // skipped.
 std::vector<AllTagsSetting> parseAllTags(std::u16string_view text, bool *writeDefaults = nullptr);
-// SaveSettings (VisualAllTagsEdition.cpp:557-575): "HYDRA2.0\n" before the
+// SaveSettings (VisualAllTagsEdition.cpp:428-446): "HYDRA2.0\n" before the
 // first, then "Tag: " and the fields joined by ", ", the numbers as
 // wxString's << writes a float ("%f"), the more values when there are any.
 // The file gets a UTF-8 BOM first; no definitions write nothing.
