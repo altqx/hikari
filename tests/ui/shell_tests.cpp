@@ -9775,12 +9775,17 @@ private slots:
         // AUDIO_STOP (H): while playing it stops and remembers where; again,
         // it plays from there to the last end
         press(Qt::Key_T);
-        QTRY_VERIFY_WITH_TIMEOUT(audio.playback()->lastPositionMs() == 0 && audio.cursor(), 3000);
+        // (the cursor shows any position past the start, which is still
+        // 1000 ms until it is a whole millisecond past it: GetMSAtSample
+        // truncates; so wait until it shows 1001)
+        QTRY_VERIFY_WITH_TIMEOUT(audio.playback()->lastPositionMs() == 0 && audio.cursor() &&
+                                     *audio.cursor() >= audio.view().xAtSample(1001 * 48),
+                                 3000);
         press(Qt::Key_H);
         QVERIFY(!audio.playing());
         QVERIFY(!audio.cursor());
         const int at = audio.playback()->lastPositionMs();
-        QVERIFY(at > 1000);
+        QVERIFY2(at > 1000, qPrintable(QString::number(at)));
         press(Qt::Key_H);
         QVERIFY(audio.playing());
         QCOMPARE(range(), (PlayRange{at * 48, 96255 - at * 48}));
