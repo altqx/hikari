@@ -362,9 +362,7 @@ bool hikarisubApp::OnInit()
 				}
 #endif
 				if (!locale->AddCatalog(HIKARISUB_CATALOG_DOMAIN, wxLANGUAGE_ENGLISH, L"UTF-8")){
-#ifdef _WIN32
 					HikariMessageBox(_("Cannot find translation, language change failed"));
-#endif
 				}
 			}
 		}
