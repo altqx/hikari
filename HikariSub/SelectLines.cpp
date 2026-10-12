@@ -461,6 +461,9 @@ void SelectLines::AddRecent(){
 void SelectLines::OnChooseStyles(wxCommandEvent& event)
 {
 	wxString styles = GetCheckedElements(Hikari);
+	// Cancel (or no style checked) leaves the search as it is
+	if (styles.empty())
+		return;
 	styles.Replace(L"\\", L"\\\\");
 	styles.Replace(L"|", L"\\|");
 	int numreps = styles.Replace(L",", L"|");
