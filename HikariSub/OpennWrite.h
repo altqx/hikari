@@ -81,6 +81,9 @@ public:
 	// After a save failed half way and the old contents could not be put
 	// back, they are kept under this name.
 	const wxString &KeptBackup() const { return keptBackup; }
+	// whether Commit wrote into the file or put another one at its name,
+	// also when it then failed, see SaveFile::TargetTouched
+	bool TargetTouched() const { return touched; }
 
 private:
 	bool Replace();
@@ -103,6 +106,7 @@ private:
 	wxString temp;
 	WindowsFileId tempId;
 	wxString keptBackup;
+	bool touched = false;
 };
 #endif
 
@@ -128,6 +132,9 @@ public:
 	// when filename is a symbolic link its target is saved and the link kept
 	bool OpenTemp(const wxString &filename);
 	bool CommitTemp();
+	// after CommitTemp: whether it changed the file, or what its name leads
+	// to, also when it failed
+	bool TempTargetTouched() const { return useTemp && tempFile.TargetTouched(); }
 	bool IsUTF8withoutBOM(char* buf, size_t size);
 	bool CheckCharSet(char* buf, size_t size, wxString *result);
 	wxFile file;

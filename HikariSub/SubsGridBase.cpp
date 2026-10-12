@@ -40,6 +40,7 @@
 #include <wx/event.h>
 #include <wx/regex.h>
 #include <wx/ffile.h>
+#include <wx/filename.h>
 #include <wx/window.h>
 #include <locale>
 #include <limits>
@@ -338,6 +339,15 @@ bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 	bool translated = tlmode == L"Translated";
 	bool tlmodeOn = tlmode != emptyString;
 
+	//A save into the tab's file that fails after it wrote into the file, or
+	//put the new one at its name, changed the file's time; that is no change
+	//another program made for ReloadSubsIfModified to report, unless one was
+	//made before. Save As can name the tab's file in another way, through a
+	//link or with other case on Windows, which SameAs sees.
+	bool savesTabFile = normalSave && !tab->SubsPath.empty() &&
+		wxFileName(filename).SameAs(wxFileName(tab->SubsPath));
+	bool changedOutside = savesTabFile && tab->SubsChangedOutside();
+
 	//the old file is replaced only when everything was written
 	OpenWrite ow;
 	if (!ow.OpenTemp(filename))
@@ -421,6 +431,8 @@ bool SubsGrid::SaveFile(const wxString &filename, bool normalSave, bool loadFrom
 
 	if (!ow.CommitTemp()){
 		file->RestoreSInfo(sinfoBeforeSave);
+		if (savesTabFile && !changedOutside && ow.TempTargetTouched())
+			tab->SetLastSaveTime();
 		return false;
 	}
 	if (normalSave){

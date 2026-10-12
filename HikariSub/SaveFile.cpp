@@ -609,6 +609,7 @@ bool SaveFile::Open(const SaveTarget &resolved)
 	const std::string &path = resolved.path;
 	target = path;
 	failed = false;
+	touched = false;
 	keptBackup.clear();
 	method = SaveMethod::Refuse;
 	stageNextToTarget = false;
@@ -758,6 +759,7 @@ bool SaveFile::Replace()
 		renamed = exchanged == 0 ? renameat(folderFd, stageName.c_str(), folderFd, name.c_str()) : -1;
 	}
 	if (renamed == 0) {
+		touched = true;
 		stageName.clear();
 		SyncFolder(folderFd);
 		return true;
@@ -782,6 +784,7 @@ bool SaveFile::FinishExchange()
 	bool same = fstatat(folderFd, stageName.c_str(), &old, AT_SYMLINK_NOFOLLOW) == 0 && SameFile(old, pinned) &&
 		S_ISREG(old.st_mode);
 	if (same && old.st_nlink == 1 && !InodeIsLocked(old.st_ino)) {
+		touched = true;
 		unlinkat(folderFd, stageName.c_str(), 0);
 		stageName.clear();
 		SyncFolder(folderFd);
@@ -791,6 +794,7 @@ bool SaveFile::FinishExchange()
 		// The names cannot be swapped back: the new contents stay at the
 		// name, and what was there is kept, not removed with the temporary
 		// file.
+		touched = true;
 		keptBackup = PathOf(stageName);
 		stageName.clear();
 		return false;
@@ -828,6 +832,7 @@ bool SaveFile::Rewrite()
 	if (saved)
 		SyncFolder(stageAt);
 	if (saved) {
+		touched = true;
 		saved = lseek(out, 0, SEEK_SET) == 0 && CopyAll(stageFd, out, targetWriter) &&
 			ftruncate(out, stageStat.st_size) == 0 && fsync(out) == 0;
 		if (!saved) {
@@ -862,6 +867,7 @@ bool SaveFile::WriteThrough()
 	bool saved = fstat(out, &outStat) == 0 && (S_ISFIFO(outStat.st_mode) || S_ISCHR(outStat.st_mode));
 	if (saved) {
 		SigpipeHeld noSigpipe;
+		touched = true;
 		saved = CopyAll(stageFd, out, targetWriter, stallTimeout);
 	}
 	if (close(out) != 0)

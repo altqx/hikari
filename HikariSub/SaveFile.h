@@ -135,6 +135,10 @@ public:
 	// After a Rewrite failed and the old contents could not be put back
 	// either, the backup with the old contents is kept at this path.
 	const std::string &KeptBackup() const { return keptBackup; }
+	// Whether Commit wrote into the target, or put the new file at its name,
+	// also when it then failed: the target's time of change is then the
+	// save's, though the save may have failed.
+	bool TargetTouched() const { return touched; }
 	// for tests: replaces write(2) for the target
 	void SetTargetWriter(Writer writer) { targetWriter = writer; }
 	// for tests: runs in Commit after the target was looked at and the
@@ -185,6 +189,7 @@ private:
 	// the temporary file is in the target's folder and can be renamed over it
 	bool stageNextToTarget = false;
 	bool failed = false;
+	bool touched = false;
 	SaveMethod method = SaveMethod::Refuse;
 	Writer targetWriter = nullptr;
 	std::function<void()> beforeWrite;

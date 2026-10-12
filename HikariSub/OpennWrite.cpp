@@ -308,6 +308,7 @@ bool WindowsSaveFile::Open(const wxString &name)
 {
 	Discard();
 	keptBackup.clear();
+	touched = false;
 	//an absolute name puts the temporary file next to the file, see wxTempFile::Open
 	wxFileName fn(name);
 	if (!fn.IsAbsolute()) { fn.Normalize(wxPATH_NORM_ABSOLUTE); }
@@ -402,7 +403,7 @@ bool WindowsSaveFile::Commit()
 			file.Close();
 			saved = now == NameLeadsTo::Nothing &&
 				::MoveFileExW(temp.wc_str(), target.wc_str(), MOVEFILE_WRITE_THROUGH) != 0;
-			if (saved) { temp.clear(); }
+			if (saved) { temp.clear(); touched = true; }
 		}
 		else if (now != NameLeadsTo::TheSameFile) {
 			//another program removed the file or put another one, a link or a
@@ -439,6 +440,7 @@ bool WindowsSaveFile::Replace()
 	//file, which keeps all of them.
 	if (::ReplaceFileW(target.wc_str(), temp.wc_str(), backup.wc_str(), 0, nullptr, nullptr)) {
 		temp.clear();
+		touched = true;
 		//the old file; a file another program put at the name in the moment
 		//before the replace is not the old file and is left at that name
 		DeleteSameFile(backup, targetId);
@@ -451,6 +453,7 @@ bool WindowsSaveFile::Replace()
 		if (LookAtName(target, false, targetId, &links) != NameLeadsTo::Nothing ||
 			!::MoveFileExW(backup.wc_str(), target.wc_str(), MOVEFILE_WRITE_THROUGH)) {
 			keptBackup = backup;
+			touched = true;
 		}
 		return false;
 	}
@@ -487,6 +490,7 @@ bool WindowsSaveFile::Rewrite()
 	if (backupName.empty()) { return false; }
 	bool saved = CopyContents(out, backup) && backup.Flush();
 	if (saved) {
+		touched = true;
 		saved = out.Seek(0) == 0 && CopyContents(file, out) && _chsize_s(out.fd(), newLength) == 0 &&
 			out.Flush();
 		if (!saved) {

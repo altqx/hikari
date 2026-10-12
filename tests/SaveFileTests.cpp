@@ -253,6 +253,7 @@ TEST(saving_a_plain_file_renames_over_it_and_keeps_its_mode)
 	SaveFile save;
 	CHECK(Save(save, file, "new"));
 	CHECK(save.Method() == SaveMethod::Replace);
+	CHECK(save.TargetTouched());
 	CHECK(ReadText(file) == "new");
 	CHECK((StatOf(file).st_mode & 07777) == 0640);
 	CHECK(StatOf(file).st_ino != before);
@@ -332,6 +333,8 @@ TEST(a_failed_rewrite_puts_the_old_contents_back_into_the_same_inode)
 			save.SetTargetWriter(FailingWriter);
 			CHECK(!Save(save, file, text));
 			CHECK(save.Method() == SaveMethod::Rewrite);
+			// the old contents went back, but the file was written
+			CHECK(save.TargetTouched());
 			CHECK(save.KeptBackup().empty());
 			CHECK(ReadText(file) == old);
 			CHECK(ReadText(other) == old);
@@ -517,6 +520,7 @@ TEST(a_save_that_is_not_committed_leaves_the_file_and_no_temporary_file)
 		SaveFile save;
 		CHECK(OpenAt(save, file));
 		CHECK(save.Write("new", 3));
+		CHECK(!save.TargetTouched());
 	}
 	CHECK(ReadText(file) == "old");
 	CHECK(Names(dir.path) == std::set<std::string>{ "subs.ass" });
@@ -755,6 +759,7 @@ TEST(a_target_swapped_before_commit_is_refused_and_nothing_is_written)
 			SwapTarget(file, victim, swap);
 			CHECK(!save.Commit());
 			CHECK(save.Method() == SaveMethod::Refuse);
+			CHECK(!save.TargetTouched());
 			CHECK(victim.Untouched());
 			CHECK(StillSwapped(file, victim, swap));
 			CHECK(ReadText(dir.path / "moved.ass") == "old");

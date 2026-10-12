@@ -327,6 +327,11 @@ void TabPanel::SetLastSaveTime()
 	GetSystemTime(&lastSave);
 }
 
+bool TabPanel::SubsChangedOutside()
+{
+	return !SubsPath.empty() && ModifChecker.NeedReload(SubsPath, &lastSave) == 1;
+}
+
 void TabPanel::ReloadSubsIfModified()
 {
 	if (SubsPath.empty())
