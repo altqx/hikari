@@ -74,7 +74,7 @@ AllTagsSetting AllTagsSetting::named(std::u16string name)
 
 std::u16string_view defaultAllTagsText()
 {
-    // VisualAllTagsEdition.cpp:467-489, unchanged.
+    // VisualAllTagsEdition.cpp:338-360, unchanged.
     return u"HYDRA2.0\n"
            u"Tag: blur, blur,       0, 100,  0,  0.5,  1, 0, 1\n"
            u"Tag: border, bord,     0, 50,   0,  1,    1, 0, 0\n"
@@ -107,7 +107,7 @@ std::vector<AllTagsSetting> defaultAllTags()
 
 std::vector<AllTagsSetting> parseAllTags(std::u16string_view text, bool *writeDefaults)
 {
-    // LoadSettings (VisualAllTagsEdition.cpp:457-547).
+    // LoadSettings (VisualAllTagsEdition.cpp:328-417).
     u16v settings = text;
     if (writeDefaults)
         *writeDefaults = false;
@@ -157,8 +157,9 @@ std::vector<AllTagsSetting> parseAllTags(std::u16string_view text, bool *writeDe
         if (!more())
             continue;
         tmp.tagMode = transform::atoi(trimStart(fields[f++]));
-        // Legacy wrote a fifth and later value past the four it holds; they
-        // are not read here.
+        // Legacy wrote a fourth and later additional value past the four it
+        // holds (VisualAllTagsEdition.cpp:409-414); they are not read here
+        // (T6-tags-extra-values).
         for (int i = 1; more(); i++) {
             float value = 0;
             if (number(value) && i < 4) {
@@ -173,7 +174,7 @@ std::vector<AllTagsSetting> parseAllTags(std::u16string_view text, bool *writeDe
 
 std::u16string writeAllTags(const std::vector<AllTagsSetting> &tags)
 {
-    // SaveSettings (VisualAllTagsEdition.cpp:557-575).
+    // SaveSettings (VisualAllTagsEdition.cpp:428-446).
     u16 out;
     for (std::size_t i = 0; i < tags.size(); i++) {
         const AllTagsSetting &tag = tags[i];

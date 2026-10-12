@@ -384,11 +384,11 @@ void VisualToolsController::saveShapes() const
 const std::vector<application::visual::AllTagsSetting> *VisualToolsController::allTagsSettings() const
 {
     // VideoToolbar::GetTagsSettings: LoadSettings while there are none
-    // (VisualAllTagsEdition.cpp:457-547): the file, read as UTF-8 (BOM
+    // (VisualAllTagsEdition.cpp:328-417): the file, read as UTF-8 (BOM
     // dropped; the Windows build's text-mode read made CRLF LF), else
     // legacy's defaults, which replace a file of an older version. An empty
-    // list (a file with the version alone) is legacy's defaults too: legacy
-    // read past the end of it.
+    // list (a file with the version alone) is legacy's defaults too, the file
+    // left as it is: legacy read past the end of it (T6-tags-version-only).
     if (m_allTags.empty()) {
         QFile f(m_tagsFile);
         QString text;
@@ -419,7 +419,7 @@ const std::vector<application::visual::AllTagsSetting> *VisualToolsController::a
 
 void VisualToolsController::saveAllTags() const
 {
-    // SaveSettings (VisualAllTagsEdition.cpp:557-575): UTF-8 with a BOM, the
+    // SaveSettings (VisualAllTagsEdition.cpp:428-446): UTF-8 with a BOM, the
     // folder made when missing (OpenWrite).
     if (m_tagsFile.isEmpty())
         return;
