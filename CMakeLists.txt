@@ -126,6 +126,7 @@ add_executable(hikarisub
     HikariSub/FontCatalogList.cpp
     HikariSub/HikariGauge.cpp
     HikariSub/HikariPanel.cpp
+    HikariSub/LineGroups.cpp
     HikariSub/LineParse.cpp
     HikariSub/AssBlend.cpp
     HikariSub/FrameQueue.cpp

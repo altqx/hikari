@@ -250,6 +250,9 @@
     <ClCompile Include="KeyframesLoader.cpp">
       <Filter>K</Filter>
     </ClCompile>
+    <ClCompile Include="LineGroups.cpp">
+      <Filter>L</Filter>
+    </ClCompile>
     <ClCompile Include="LineParse.cpp">
       <Filter>L</Filter>
     </ClCompile>
@@ -695,6 +698,9 @@
     </ClInclude>
     <ClInclude Include="KeyframesLoader.h">
       <Filter>K</Filter>
+    </ClInclude>
+    <ClInclude Include="LineGroups.h">
+      <Filter>L</Filter>
     </ClInclude>
     <ClInclude Include="LineParse.h">
       <Filter>L</Filter>

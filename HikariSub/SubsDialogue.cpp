@@ -25,6 +25,12 @@
 #include <boost/locale/boundary/index.hpp>
 
 std::atomic<unsigned> Visibility::s_Epoch{ 0 };
+
+uint64_t Dialogue::NextLineId()
+{
+	static std::atomic<uint64_t> lastId{ 0 };
+	return ++lastId;
+}
 #include <boost/locale/boundary/segment.hpp>
 #include <boost/locale/boundary/types.hpp>
 
@@ -1082,6 +1088,7 @@ Dialogue *Dialogue::Copy(bool keepstate, bool copyIsVisible)
 	dial->TextTl = TextTl;
 	dial->treeState = treeState;
 	dial->tlPair = tlPair;
+	dial->lineId = lineId;
 	// the copy is in no file yet, so no file's row numbering changes
 	dial->isVisible.Init(isVisible);
 	dial->parseData = nullptr;

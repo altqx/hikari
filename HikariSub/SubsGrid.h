@@ -28,6 +28,7 @@
 #include <vector>
 #include <memory>
 #include <set>
+#include <functional>
 
 class EditBox;
 class HikariSubFrame;
@@ -189,6 +190,12 @@ public:
 	void ContextMenuTree(const wxPoint &pos, int treeLine);
 	bool SwapAssProperties();
 	void RefreshSubsOnVideo(int newActiveLine, bool scroll = true);
+	// Runs an edit that moves, adds or deletes lines. If it would break a
+	// tree (Line group) it is undone before it is recorded, and the user can
+	// remove the trees it breaks; with retry the edit then runs again.
+	void RunKeepingTrees(const std::function<void()> &edit, bool retry = true);
+	// lines the next recorded edit puts into a tree on purpose
+	std::vector<uint64_t> linesMovedIntoTree;
 
 	// the subtitles this grid shows and edits
 	SubsFile *file = nullptr;
@@ -216,6 +223,22 @@ public:
 	wxMutex &GetMutex() { return editionMutex; }
 
 private:
+	// SetModified checks that a structural edit keeps the trees whole; when it
+	// does not, the edit is undone and false returned
+	bool KeepsTrees(unsigned char editionType);
+	// asks whether to remove the trees an edit would break, and removes them
+	bool AskToRemoveTrees(const LineGroups::Verdict &verdict, bool retry);
+	void RemoveTrees(const std::vector<uint64_t> &descriptions);
+	// the state RunKeepingTrees restores when the edit is undone
+	struct TreeGuard {
+		bool active = false;
+		bool rejected = false;
+		LineGroups::Verdict verdict;
+		std::set<int> selections;
+		int currentLine = 0;
+		int markedLine = 0;
+		int scrollPosition = 0;
+	} treeGuard;
 	// sets the edit box line and scrolls to it after an edit
 	void ShowEditedLine(int newActive, bool scroll);
 	void ShowEditOnVideo(bool afterUndo);
@@ -241,6 +264,8 @@ private:
 	void OnPaste(int id);
 	void OnPasteTextTl();
 	void OnJoinToFirst(int id);
+	void JoinLines(int id);
+	void MoveTranslationText(char mode);
 	void InsertWithVideoTime(bool before, bool frameTime = false);
 	void OnSetFPSFromVideo();
 	void OnSetNewFPS();

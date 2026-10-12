@@ -358,6 +358,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClCompile Include="FontCatalogList.cpp" />
     <ClCompile Include="HikariGauge.cpp" />
     <ClCompile Include="HikariPanel.cpp" />
+    <ClCompile Include="LineGroups.cpp" />
     <ClCompile Include="LineParse.cpp" />
     <ClCompile Include="AssBlend.cpp" />
     <ClCompile Include="D3D9Device.cpp" />
@@ -528,6 +529,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="HikariGauge.h" />
     <ClInclude Include="HikariSubFrame.h" />
     <ClInclude Include="HikariPanel.h" />
+    <ClInclude Include="LineGroups.h" />
     <ClInclude Include="LineParse.h" />
     <ClInclude Include="Notebook.h" />
     <ClInclude Include="AssBlend.h" />

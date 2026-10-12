@@ -20,6 +20,7 @@
 #include "SubsDialogue.h"
 #include "HikariDialog.h"
 #include "UndoHistory.h"
+#include "LineGroups.h"
 #include <vector>
 #include <set>
 #include <functional>
@@ -136,6 +137,7 @@ private:
 	bool typing = false;
 	bool lastStepTyping = false;
 	void LoadCurrentStep();
+	void ApplyLineGroupChanges(const std::vector<LineGroups::Change> &changes);
 
 public:
 	SubsFile();
@@ -223,6 +225,18 @@ public:
 	bool CheckIfIsTree(size_t i);
 	int FindEndOfTree(size_t i);
 	int OpenCloseTree(size_t i);
+	// Line groups (trees) across a structural edit: the new lines since the
+	// last step join or leave the groups they were put in, then the edit is
+	// checked against the last step. movedIn: lines put into a group on
+	// purpose; placeNewLines is false for an edit that builds a group itself.
+	LineGroups::Verdict CheckLineGroups(const std::vector<uint64_t> &movedIn = {}, bool placeNewLines = true);
+	// fixes the groups of the lines just read, returns how many lines changed
+	size_t RepairLineGroups();
+	// removes these groups like Remove tree: deletes their descriptions and
+	// ungroups and shows their members; returns the deleted rows, ascending
+	std::vector<size_t> RemoveLineGroups(const std::vector<uint64_t> &descriptions);
+	// the row of the line with this id, or -1
+	size_t FindLineById(uint64_t id);
 	void GetURStatus(bool *_undo, bool *_redo);
 	// something changed since the last recorded step
 	bool HasChangesToRecord() const { return edited; }

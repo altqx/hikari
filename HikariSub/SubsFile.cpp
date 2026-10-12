@@ -19,6 +19,7 @@
 #include "HikariListCtrl.h"
 #include "MappedButton.h"
 #include "config.h"
+#include "LogHandler.h"
 #include <unordered_set>
 
 
@@ -410,8 +411,12 @@ Dialogue * SubsFile::CopyDialogueF(size_t i, bool push /*= true*/, bool keepstat
 	Dialogue *dial = subs->dialogues[i]->Copy(keepstate, !push);
 	subs->deleteDialogues.push_back(dial);
 	MarkEdited();
-	if (push){ 
+	if (push){
 		subs->dialogues[i] = dial;
+	}
+	else{
+		// a copy that is not put in place is a new line, not the same line moved
+		dial->RenewLineId();
 	}
 	return dial;
 }
@@ -616,6 +621,15 @@ void SubsFile::EndLoad(unsigned char editionType, int activeLine, bool initialSa
 {
 	//subs->activeLine = activeLine;
 	//subs->markerLine = activeLine;
+	// a file can hold tree markers that do not make whole trees; every edit
+	// keeps the trees whole from here on
+	size_t repaired = RepairLineGroups();
+	if (repaired) {
+		HikariLog(wxString::Format(wxPLURAL("Fixed the tree markers of %d line: lines with no tree description "
+			"are now ordinary lines and every tree is open or closed as a whole.",
+			"Fixed the tree markers of %d lines: lines with no tree description "
+			"are now ordinary lines and every tree is open or closed as a whole.", (int)repaired), (int)repaired));
+	}
 	subs->editionType = editionType;
 	m_history.Record(subs);
 	if (initialSave)
@@ -742,6 +756,74 @@ int SubsFile::OpenCloseTree(size_t i){
 		return (visibility) ? diff : -diff;
 	}
 	return 0;
+}
+
+static std::vector<LineGroups::Row> LineGroupRows(const std::vector<Dialogue*> &dialogues)
+{
+	std::vector<LineGroups::Row> rows;
+	rows.reserve(dialogues.size());
+	for (Dialogue *dial : dialogues) {
+		rows.push_back({ dial->lineId, (unsigned char)dial->treeState, (unsigned char)dial->isVisible });
+	}
+	return rows;
+}
+
+void SubsFile::ApplyLineGroupChanges(const std::vector<LineGroups::Change> &changes)
+{
+	for (const LineGroups::Change &change : changes) {
+		// copy the line so earlier history steps keep their state
+		Dialogue *dial = CopyDialogueF(change.row, true, true);
+		dial->treeState = change.tree;
+		dial->isVisible = change.visible;
+	}
+}
+
+LineGroups::Verdict SubsFile::CheckLineGroups(const std::vector<uint64_t> &movedIn, bool placeNewLines)
+{
+	File *last = m_history.Current();
+	if (!last)
+		return LineGroups::Verdict();
+	std::vector<LineGroups::Row> before = LineGroupRows(last->dialogues);
+	if (placeNewLines)
+		ApplyLineGroupChanges(LineGroups::PlaceNewRows(before, LineGroupRows(subs->dialogues)));
+	return LineGroups::Check(before, LineGroupRows(subs->dialogues), movedIn);
+}
+
+size_t SubsFile::RepairLineGroups()
+{
+	std::vector<LineGroups::Change> changes = LineGroups::Repair(LineGroupRows(subs->dialogues));
+	ApplyLineGroupChanges(changes);
+	return changes.size();
+}
+
+std::vector<size_t> SubsFile::RemoveLineGroups(const std::vector<uint64_t> &descriptions)
+{
+	LineGroups::Removal removal = LineGroups::PlanRemove(LineGroupRows(subs->dialogues), descriptions);
+	ApplyLineGroupChanges(removal.ungrouped);
+	if (removal.deleted.empty())
+		return removal.deleted;
+
+	for (auto it = removal.deleted.rbegin(); it != removal.deleted.rend(); it++) {
+		subs->dialogues.erase(subs->dialogues.begin() + *it);
+	}
+	MarkEdited();
+	std::set<int> selections;
+	for (int sel : subs->Selections) {
+		size_t row = LineGroups::RowAfterDelete(removal.deleted, sel);
+		if (row != (size_t)-1)
+			selections.insert(row);
+	}
+	subs->Selections.swap(selections);
+	return removal.deleted;
+}
+
+size_t SubsFile::FindLineById(uint64_t id)
+{
+	for (size_t i = 0; i < subs->dialogues.size(); i++) {
+		if (subs->dialogues[i]->lineId == id)
+			return i;
+	}
+	return -1;
 }
 
 void SubsFile::GetHistoryTable(wxArrayString *history)

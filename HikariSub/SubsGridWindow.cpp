@@ -1541,11 +1541,12 @@ void SubsGrid::OnMouseEvent(wxMouseEvent &event) {
 
 	if (left_up && holding) {
 		holding = false;
-		//Save swap lines after alt release 
-		if (event.AltDown() && file->HasChangesToRecord()){ 
+		ReleaseMouse();
+		//Save swap lines after the drag, even when alt was released first,
+		//so a drag that breaks a tree is undone instead of kept unrecorded
+		if (file->HasChangesToRecord()){ 
 			SetModified(GRID_SWAP); 
 		}
-		ReleaseMouse();
 		if (oldX != -1){ return; }
 	}
 
@@ -1881,12 +1882,14 @@ void SubsGrid::OnKeyPress(wxKeyEvent &event) {
 
 		// Move selected
 		else if (alt && !shift) {
-			if (file->FirstSelection() != -1){
-				SaveSelections();
-				if (MoveRows(dir)){
-					SetModified(GRID_SWAP);
+			RunKeepingTrees([this, dir]{
+				if (file->FirstSelection() != -1){
+					SaveSelections();
+					if (MoveRows(dir)){
+						SetModified(GRID_SWAP);
+					}
 				}
-			}
+			});
 			return;
 		}
 

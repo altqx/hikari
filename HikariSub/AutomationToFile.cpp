@@ -629,7 +629,14 @@ namespace Auto{
 				}
 				else if (i < dials && e->lclass == L"dialogue")
 				{
-					Subs->SetDialogue(i - styles, e->adial->Copy(false, false), true);
+					// the line is the same line changed: scripts do not see tree
+					// markers, so it keeps its place in a tree and its visibility
+					Dialogue *replaced = Subs->GetDialogue(i - styles);
+					Dialogue *dial = e->adial->Copy(false, false);
+					dial->treeState = replaced->treeState;
+					dial->isVisible.Init(replaced->isVisible);
+					dial->lineId = replaced->lineId;
+					Subs->SetDialogue(i - styles, dial, true);
 				}
 				else
 				{

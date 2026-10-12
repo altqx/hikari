@@ -216,6 +216,17 @@ void SubsGrid::Convert(char type)
 	int endt = Options.GetInt(CONVERT_TIME_PER_CHARACTER);
 	const wxString & prefix = Options.GetString(CONVERT_ASS_TAGS_TO_INSERT_IN_LINE);
 
+	if ((type > ASS) && (subsFormat < SRT)){
+		// other formats have no trees: the descriptions go with the other
+		// comments and the tree lines become ordinary shown lines
+		std::vector<uint64_t> trees;
+		for (size_t k = 0; k < file->GetCount(); k++){
+			Dialogue *dial = file->GetDialogue(k);
+			if (dial->treeState == TREE_DESCRIPTION){ trees.push_back(dial->lineId); }
+		}
+		if (trees.size()){ file->RemoveLineGroups(trees); }
+	}
+
 	size_t i = 0;
 	Dialogue *lastDialc = nullptr;
 	while (i < file->GetCount())
@@ -791,18 +802,20 @@ void SubsGrid::ChangeTimes(const ShiftTimesSettings &settings, bool byFrame)
 
 void SubsGrid::SortIt(short what, bool all)
 {
-	SaveSelections();
-	if (all){
-		file->SortAll((what == 0) ? sortstart : (what == 1) ? sortend : (what == 2) ? sortstyle :
-			(what == 3) ? sortactor : (what == 4) ? sorteffect : sortlayer);
-	}
-	else{
-		file->SortSelected((what == 0) ? sortstart : (what == 1) ? sortend : (what == 2) ? sortstyle :
-			(what == 3) ? sortactor : (what == 4) ? sorteffect : sortlayer);
-	}
+	RunKeepingTrees([this, what, all]{
+		SaveSelections();
+		if (all){
+			file->SortAll((what == 0) ? sortstart : (what == 1) ? sortend : (what == 2) ? sortstyle :
+				(what == 3) ? sortactor : (what == 4) ? sorteffect : sortlayer);
+		}
+		else{
+			file->SortSelected((what == 0) ? sortstart : (what == 1) ? sortend : (what == 2) ? sortstyle :
+				(what == 3) ? sortactor : (what == 4) ? sorteffect : sortlayer);
+		}
 
-	//edited = true;
-	SetModified(GRID_SORT_LINES);
+		//edited = true;
+		SetModified(GRID_SORT_LINES);
+	});
 }
 
 
@@ -816,15 +829,19 @@ void SubsGrid::DeleteRow(int rw, int len)
 
 void SubsGrid::DeleteRows()
 {
-	Freeze();
-	file->DeleteSelectedDialogues();
-	int sel = file->FirstSelection();
-	SpellErrors.clear();
-	SaveSelections(true);
-	if (file->GetCount() < 1){ file->AddLine(new Dialogue()); }
-	SetModified(GRID_DELETE_LINES, true, false, sel);
-	Thaw();
-	RefreshColumns();
+	RunKeepingTrees([this]{
+		if (file->FirstSelection() == -1)
+			return;
+		Freeze();
+		file->DeleteSelectedDialogues();
+		int sel = file->FirstSelection();
+		SpellErrors.clear();
+		SaveSelections(true);
+		if (file->GetCount() < 1){ file->AddLine(new Dialogue()); }
+		SetModified(GRID_DELETE_LINES, true, false, sel);
+		Thaw();
+		RefreshColumns();
+	});
 }
 
 bool SubsGrid::MoveRows(int step, bool keyStep /*= false*/)
@@ -1133,6 +1150,10 @@ void SubsGrid::ShowEditedLine(int newActive, bool scroll)
 void SubsGrid::SetModified(unsigned char editionType, bool redit, bool dummy, int SetEditBoxLine, bool Scroll)
 {
 	if (file->HasChangesToRecord()){
+		if (!KeepsTrees(editionType)){
+			Refresh(false);
+			return;
+		}
 		// an edit box commit already cleared the rows it changed through CopyDialogue
 		if (editionType != EDITBOX_LINE_EDITION)
 			SpellErrors.clear();
@@ -1167,6 +1188,163 @@ void SubsGrid::SetModified(unsigned char editionType, bool redit, bool dummy, in
 		ShowEditedLine(SetEditBoxLine, Scroll);
 	}
 	Refresh(false);
+}
+
+// the edits that add, delete or move lines, and so can break a tree
+static bool ChangesLineOrder(unsigned char editionType)
+{
+	switch (editionType){
+	case GRID_DUPLICATE:
+	case GRID_JOIN:
+	case GRID_JOIN_WITH_PREVIOUS:
+	case GRID_JOIN_WITH_NEXT:
+	case GRID_JOIN_TO_FIRST:
+	case GRID_JOIN_TO_LAST:
+	case GRID_PASTE_LINES:
+	case GRID_PASTE_TRANSLATION_TO_SUBS:
+	case GRID_TRANSLATION_TEXT_MOVE:
+	case GRID_SWAP:
+	case GRID_CONVERT:
+	case GRID_SORT_LINES:
+	case GRID_DELETE_LINES:
+	case GRID_APPEND_LINE:
+	case GRID_INSERT_ROW:
+	case SELECT_LINES:
+	case TREE_ADD:
+	case TREE_ADD_LINES:
+	case TREE_REMOVE:
+	case AUTOMATION_SCRIPT:
+	case GRID_SPLIT_LINES:
+		return true;
+	default:
+		return false;
+	}
+}
+
+bool SubsGrid::KeepsTrees(unsigned char editionType)
+{
+	if (!ChangesLineOrder(editionType)){
+		linesMovedIntoTree.clear();
+		return true;
+	}
+	// Make tree builds its tree from a new description itself
+	LineGroups::Verdict verdict = file->CheckLineGroups(linesMovedIntoTree, editionType != TREE_ADD);
+	linesMovedIntoTree.clear();
+	if (verdict.ok)
+		return true;
+
+	// undo the edit before it is recorded: the lines, the selection and the
+	// active line are as they were and nothing is marked modified
+	file->DummyUndoF();
+	if (treeGuard.active){
+		file->ClearSelections();
+		for (int sel : treeGuard.selections)
+			file->InsertSelection(sel);
+		currentLine = treeGuard.currentLine;
+		markedLine = treeGuard.markedLine;
+		scrollPosition = treeGuard.scrollPosition;
+	}
+	else{
+		currentLine = file->GetActiveLine();
+		markedLine = file->GetMarkerLine();
+	}
+	size_t count = file->GetCount();
+	if (currentLine >= (int)count){ currentLine = count - 1; }
+	if (markedLine >= (int)count){ markedLine = count - 1; }
+	if (scrollPosition >= (int)count){ scrollPosition = count - 1; }
+	scrollPositionId = file->GetElementByKey(scrollPosition);
+	savedSelections = false;
+	SpellErrors.clear();
+	edit->SetLine(currentLine, false, false);
+	RefreshColumns();
+
+	if (treeGuard.active){
+		treeGuard.rejected = true;
+		treeGuard.verdict = verdict;
+	}
+	else{
+		AskToRemoveTrees(verdict, false);
+	}
+	return false;
+}
+
+void SubsGrid::RunKeepingTrees(const std::function<void()> &edit, bool retry)
+{
+	if (treeGuard.active){
+		edit();
+		return;
+	}
+	while (true){
+		treeGuard.active = true;
+		treeGuard.rejected = false;
+		treeGuard.selections = file->GetSelectionsAsKeys();
+		treeGuard.currentLine = currentLine;
+		treeGuard.markedLine = markedLine;
+		treeGuard.scrollPosition = scrollPosition;
+		edit();
+		treeGuard.active = false;
+		if (!treeGuard.rejected)
+			return;
+		treeGuard.rejected = false;
+		if (!AskToRemoveTrees(treeGuard.verdict, retry) || !retry)
+			return;
+	}
+}
+
+bool SubsGrid::AskToRemoveTrees(const LineGroups::Verdict &verdict, bool retry)
+{
+	if (verdict.broken.empty()){
+		HikariMessageBox(_("This edit would leave lines of a tree outside it, so it was not made."),
+			_("Trees"), wxOK, this);
+		return false;
+	}
+	wxString trees;
+	for (uint64_t description : verdict.broken){
+		size_t row = file->FindLineById(description);
+		if (row == (size_t)-1)
+			continue;
+		wxString text = file->GetDialogue(row)->Text;
+		if (text.Len() > 60){ text = text.Left(60) + L"..."; }
+		if (!trees.empty()){ trees << L"\n"; }
+		trees << wxString::Format(_("Line %d: %s"), (int)GetDialoguePosition(row) + 1, text);
+	}
+	wxString message = wxString::Format(wxPLURAL(
+		"This edit would split a tree, leave some of its lines outside it or move them into another tree, "
+		"so it was not made:\n%s\n\nRemoving the tree deletes its description line and shows its lines as ordinary lines.",
+		"This edit would split trees, leave some of their lines outside them or move them into another tree, "
+		"so it was not made:\n%s\n\nRemoving the trees deletes their description lines and shows their lines as ordinary lines.",
+		(int)verdict.broken.size()), trees);
+	if (!retry)
+		message << L"\n" << _("Make the edit again after removing.");
+	HikariMessageDialog dialog(this, message, _("Trees"), wxYES | wxCANCEL);
+	dialog.SetYesLabel(retry ? wxString(wxPLURAL("Remove the tree and edit", "Remove the trees and edit", (int)verdict.broken.size())) :
+		wxString(wxPLURAL("Remove the tree", "Remove the trees", (int)verdict.broken.size())));
+	if (dialog.ShowModal() != wxYES)
+		return false;
+	RemoveTrees(verdict.broken);
+	return true;
+}
+
+void SubsGrid::RemoveTrees(const std::vector<uint64_t> &descriptions)
+{
+	SaveSelections();
+	std::vector<size_t> deleted = file->RemoveLineGroups(descriptions);
+	// rows after a deleted description move up; a deleted description's row
+	// goes to the line that took its place
+	auto shift = [&deleted](int row){
+		if (row < 0)
+			return row;
+		return row - (int)(std::lower_bound(deleted.begin(), deleted.end(), (size_t)row) - deleted.begin());
+	};
+	int count = file->GetCount();
+	currentLine = MID(0, shift(currentLine), count - 1);
+	markedLine = MID(0, shift(markedLine), count - 1);
+	scrollPosition = MID(0, shift(scrollPosition), count - 1);
+	scrollPositionId = file->GetElementByKey(scrollPosition);
+	SpellErrors.clear();
+	SetModified(TREE_REMOVE, false);
+	edit->SetLine(currentLine, false, false);
+	RefreshColumns();
 }
 
 //shows the edited subtitles and, if the options say so, seeks to the active line
@@ -1429,6 +1607,9 @@ void SubsGrid::NextLine(int direction)
 
 		size_t lastvisible = file->GetElementByKey(size - 1);
 		Dialogue *tmp = file->GetDialogue(lastvisible)->Copy();
+		// a new line, which joins a tree only where it is put
+		tmp->RenewLineId();
+		if (tmp->treeState == TREE_DESCRIPTION){ tmp->treeState = 0; }
 		int eend = tmp->End.mstime;
 		tmp->Start.NewTime(eend);
 		tmp->End.NewTime(eend + 5000);
