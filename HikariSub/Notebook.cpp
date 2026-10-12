@@ -1606,8 +1606,13 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 					
 					sthis->Hikari->Label();
 					tab->shiftTimes->Contents();
-					if (subtitlesFailed || videoFailed)
+					if (subtitlesFailed || videoFailed){
+						//keyframes wait for a video or audio and are no content of
+						//their own when nothing else of the tab was loaded
+						if (tab->SubsPath.empty() && tab->VideoPath.empty() && tab->AudioPath.empty())
+							tab->KeyframesPath.clear();
 						failedTabs.push_back(tab);
+					}
 					video = emptyString;
 					videoPosition = 0;
 					subtitles = emptyString;
