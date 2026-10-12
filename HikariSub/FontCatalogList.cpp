@@ -312,7 +312,7 @@ done:
 
 void FontCatalogList::OnLoadCatalogs(wxCommandEvent& evt)
 {
-	wxFileDialog* FileDialog = new wxFileDialog(this, _("Choose video file"), emptyString,
+	wxFileDialog* FileDialog = new wxFileDialog(this, _("Choose font catalogs file"), emptyString,
 		emptyString, _("Text files (*.txt)|*.txt"),
 		wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	if (FileDialog->ShowModal() == wxID_OK) {
