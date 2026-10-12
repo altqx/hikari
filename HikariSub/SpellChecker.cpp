@@ -143,6 +143,8 @@ bool SpellChecker::Initialize()
 				if (curLine.IsEmpty() || curLine.IsNumber()) continue;
 
 				wxCharBuffer curLineBuf = curLine.mb_str(*conv);
+				// a word the dictionary charset cannot hold converts to null
+				if (!curLineBuf) continue;
 				hunspell->add(std::string(curLineBuf.data()));
 			}
 
@@ -212,6 +214,7 @@ bool SpellChecker::AddWord(const wxString& word)
 	if (!hunspell || !conv) return false;
 
 	wxCharBuffer wordBuf = word.mb_str(*conv);
+	if (!wordBuf) return false;
 	hunspell->add(std::string(wordBuf.data()));//.mb_str(*conv))
 	ForgetWordResults();
 	//wxString pathhh = Options.pathfull + L"\\Dictionary\\UserDic.udic";
@@ -249,7 +252,9 @@ bool SpellChecker::RemoveWords(const wxArrayString &words)
 			if (foundWord != -1){
 				found = true;
 				wxCharBuffer foundWordBuf = words[foundWord].mb_str(*conv);
-				succeded = hunspell->remove(std::string(foundWordBuf.data()));
+				// an unconvertible word was never loaded, so only the file drops it
+				if (foundWordBuf)
+					succeded = hunspell->remove(std::string(foundWordBuf.data()));
 				ForgetWordResults();
 				continue;
 			}
