@@ -23,6 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # DependencyControl's DownloadManager module links libcurl.
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pkg-config libcurl4-openssl-dev
+
       - name: Configure
         run: cmake -S tests -B build-tests -DCMAKE_BUILD_TYPE=Release
 
@@ -355,6 +361,9 @@ jobs:
           test -f "$package/libwx_gtk3u_core-3.3.so.3"
           test -f "$package/HikariSub/Bitmaps/HideTags.png"
           test -f "$package/Automation/automation/Autoload/strip-tags.lua"
+          test -f "$package/Automation/automation/Include/BM/BadMutex/libBadMutex.so"
+          test -f "$package/Automation/automation/Include/PT/PreciseTimer/libPreciseTimer.so"
+          test -f "$package/Automation/automation/Include/DM/DownloadManager/libDownloadManager.so"
           test -f "$package/Themes/DeepDark.txt"
           (cd "$package" && sha256sum -c SHA256SUMS)
           (cd build/dist && sha256sum -c hikarisub-linux-x86_64.tar.gz.sha256)

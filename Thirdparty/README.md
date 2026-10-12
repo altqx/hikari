@@ -7,7 +7,8 @@ The two builds source dependencies very differently:
 - **Linux** (`CMakeLists.txt`) resolves everything through `pkg-config` against the
   distribution's packages. It reads nothing here except `luabins`,
   `DependencyControl`, the `ffms2` headers and `luajit`/`LuaJIT`, which it
-  builds as the Windows build does (`cmake/VendoredLuaJIT.cmake`).
+  builds as the Windows build does (`cmake/VendoredLuaJIT.cmake`,
+  `cmake/DependencyControlModules.cmake`).
 - **Windows** (`HikariSub.sln`) builds its dependencies from source, using the MSVC
   project files under `Thirdparty/Build/`.
 
@@ -137,7 +138,8 @@ generate:
 | `uchardet` | Tracks upstream *master*, which is ahead of the 0.0.8 release by seven language models HikariSub compiles; pinning the release would lose them |
 | `BaseClasses` | DirectShow base classes from the Windows SDK samples, locally patched |
 | `LuaJIT`/`luajit` | Both builds compile it with `LUAJIT_ENABLE_LUA52COMPAT` and `LUAJIT_DISABLE_BUFFER`: Windows through `Build/LuaJit`, Linux through `cmake/VendoredLuaJIT.cmake`, which merges the two directories into one tree in the build directory |
-| `DirectX9`, `karahelper`, `DependencyControl` | Windows-only support code |
+| `DependencyControl` | The ffi-experiments sources of DependencyControl's native modules (BadMutex, PreciseTimer, DownloadManager). Windows builds them through the solution's projects, Linux through `cmake/DependencyControlModules.cmake`; both write them under `Automation/automation/Include/BM`, `PT` and `DM`, where `requireffi` loads them. One local fix: `CDlM_getStringSHA1`/`CDlM_getFileSHA1` returned the buffer of a freed local `std::string` |
+| `DirectX9`, `karahelper` | Windows-only support code |
 
 > `Thirdparty/luajit` and `Thirdparty/LuaJIT` are two directories that differ only
 > in case. They hold disjoint file sets and merge into one directory on Windows

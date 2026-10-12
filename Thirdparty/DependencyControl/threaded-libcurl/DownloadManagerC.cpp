@@ -69,7 +69,10 @@ extern "C" {
 		if (filename == nullptr)
 			return nullptr;
 
-		auto result = DownloadManager::getFileSHA1( std::string( filename ) );
+		// The caller reads the string after this returns (ffi.string), so
+		// it must not be the buffer of a local that is freed on return.
+		static thread_local std::string result;
+		result = DownloadManager::getFileSHA1( std::string( filename ) );
 		if (result == "")
 			return nullptr;
 
@@ -80,7 +83,10 @@ extern "C" {
 		if (string == nullptr)
 			return nullptr;
 
-		auto result = DownloadManager::getStringSHA1( std::string( string ) );
+		// The caller reads the string after this returns (ffi.string), so
+		// it must not be the buffer of a local that is freed on return.
+		static thread_local std::string result;
+		result = DownloadManager::getStringSHA1( std::string( string ) );
 		if (result == "")
 			return nullptr;
 

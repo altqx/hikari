@@ -360,8 +360,10 @@ cmake --build build-linux --target hikarisub_linux_package
 The archive and its SHA-256 file are written under `build-linux/dist/`. The
 package target uses an explicit allowlist: it includes the executable,
 manifest-recorded runtime libraries, freshly compiled translations, bitmap
-resources, the project license, and the configured English dictionary when one
-is available. It deliberately excludes CMake internals and any Config,
+resources, the bundled Automation tree with DependencyControl's native modules
+(`libBadMutex.so`, `libPreciseTimer.so` and `libDownloadManager.so` under
+`Automation/automation/Include/BM`, `PT` and `DM`), the project license, and the
+configured English dictionary when one is available. It deliberately excludes CMake internals and any Config,
 Automation, or Themes files created by local runs. Host graphics/windowing
 libraries, codec libraries excluded for licensing reasons, and GStreamer
 plugins remain system requirements; this archive is not a universal AppImage.

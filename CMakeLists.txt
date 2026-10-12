@@ -61,6 +61,12 @@ pkg_check_modules(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0 gstreamer-vid
 # LuaJIT is the vendored one, built as the Windows build builds it (Lua 5.2
 # extensions on, string.buffer off), not the distribution's: see the module.
 include(${CMAKE_SOURCE_DIR}/cmake/VendoredLuaJIT.cmake)
+# DependencyControl's native modules, written where requireffi looks for them
+# next to the executable (as the Windows build writes its DLLs) and packaged.
+include(${CMAKE_SOURCE_DIR}/cmake/DependencyControlModules.cmake)
+set(HIKARISUB_DEPCTRL_DIR "${CMAKE_BINARY_DIR}/Automation/automation/Include")
+hikarisub_add_dependencycontrol_modules("${HIKARISUB_DEPCTRL_DIR}")
+string(REPLACE ";" "|" HIKARISUB_DEPCTRL_MODULE_LIST "${HIKARISUB_DEPCTRL_MODULES}")
 
 # Link Boost statically on Linux so the built binary does not depend on the
 # exact distro Boost shared-library SONAME, e.g. libboost_filesystem.so.1.83.0.
@@ -264,7 +270,8 @@ add_custom_target(hikarisub_gitparams ALL
     COMMENT "Generating gitparams.h from git HEAD"
     VERBATIM
 )
-add_dependencies(hikarisub hikarisub_gitparams)
+add_dependencies(hikarisub hikarisub_gitparams
+    hikarisub_depctrl_badmutex hikarisub_depctrl_precisetimer hikarisub_depctrl_downloadmanager)
 target_link_libraries(hikarisub PRIVATE ${wxWidgets_LIBRARIES} PkgConfig::LIBASS PkgConfig::FFMS2 hikarisub_luajit PkgConfig::HUNSPELL PkgConfig::UCHARDET PkgConfig::LIBCURL PkgConfig::ICU_UC PkgConfig::ICU_I18N PkgConfig::FFMPEG PkgConfig::FONTCONFIG PkgConfig::GSTREAMER Boost::filesystem Boost::locale Boost::regex $<$<BOOL:${Boost_SYSTEM_FOUND}>:Boost::system> $<$<BOOL:${Boost_THREAD_FOUND}>:Boost::thread> GL ${CMAKE_DL_LIBS})
 set_target_properties(hikarisub PROPERTIES
     BUILD_RPATH "$ORIGIN"
@@ -365,8 +372,11 @@ add_custom_target(hikarisub_linux_package
             -D PACKAGING_DIR=${CMAKE_SOURCE_DIR}/packaging/linux
             -D DESKTOP_GEN_DIR=${CMAKE_BINARY_DIR}/packaging
             -D SYSTEM_DICTIONARY_DIR=${HIKARISUB_SYSTEM_DICTIONARY_DIR}
+            -D DEPCTRL_MODULE_DIR=${HIKARISUB_DEPCTRL_DIR}
+            -D DEPCTRL_MODULES=${HIKARISUB_DEPCTRL_MODULE_LIST}
             -P "${CMAKE_SOURCE_DIR}/cmake/PackageLinuxRuntime.cmake"
     DEPENDS hikarisub
+            hikarisub_depctrl_badmutex hikarisub_depctrl_precisetimer hikarisub_depctrl_downloadmanager
     BYPRODUCTS
         "${HIKARISUB_PACKAGE_ARCHIVE}"
         "${HIKARISUB_PACKAGE_ARCHIVE}.sha256"

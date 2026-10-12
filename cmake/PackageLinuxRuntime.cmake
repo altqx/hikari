@@ -1,7 +1,8 @@
 foreach(required_var IN ITEMS
         HIKARISUB_EXE RUNTIME_DIR SOURCE_DIR BINARY_DIR STAGING_PARENT
         PACKAGE_BASENAME ARCHIVE_PATH MSGFMT_EXECUTABLE Python3_EXECUTABLE
-        TAR_EXECUTABLE GZIP_EXECUTABLE PACKAGING_DIR DESKTOP_GEN_DIR)
+        TAR_EXECUTABLE GZIP_EXECUTABLE PACKAGING_DIR DESKTOP_GEN_DIR
+        DEPCTRL_MODULE_DIR DEPCTRL_MODULES)
     if(NOT DEFINED ${required_var} OR "${${required_var}}" STREQUAL "")
         message(FATAL_ERROR "${required_var} is required")
     endif()
@@ -89,6 +90,20 @@ foreach(runtime_data_dir IN ITEMS Automation Themes)
     endif()
     file(COPY "${SOURCE_DIR}/${runtime_data_dir}"
          DESTINATION "${package_root}")
+endforeach()
+
+# DependencyControl's native modules (cmake/DependencyControlModules.cmake), at
+# the paths requireffi loads them from: Automation/automation/Include/BM/BadMutex/
+# libBadMutex.so and so on. DEPCTRL_MODULES is "|"-separated.
+string(REPLACE "|" ";" depctrl_modules "${DEPCTRL_MODULES}")
+foreach(depctrl_module IN LISTS depctrl_modules)
+    if(NOT EXISTS "${DEPCTRL_MODULE_DIR}/${depctrl_module}")
+        message(FATAL_ERROR "DependencyControl module is missing: ${DEPCTRL_MODULE_DIR}/${depctrl_module}")
+    endif()
+    get_filename_component(depctrl_module_dir "${depctrl_module}" DIRECTORY)
+    file(MAKE_DIRECTORY "${package_root}/Automation/automation/Include/${depctrl_module_dir}")
+    file(COPY_FILE "${DEPCTRL_MODULE_DIR}/${depctrl_module}"
+                   "${package_root}/Automation/automation/Include/${depctrl_module}")
 endforeach()
 
 # Recompile catalogs instead of using stale runtime copies; a release archive
