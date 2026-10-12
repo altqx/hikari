@@ -553,3 +553,24 @@ target_compile_options(legacy_comparison_capture PRIVATE ${wx_cflags}
     -include "${LEGACY_SOURCE}/HikariSub/platform.h"
     -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result -Wno-return-type)
 target_link_libraries(legacy_comparison_capture PRIVATE ${wx_libs})
+
+# E5: the legacy "Moving tags" split. EditBox::SetTextWithTags (EditBox.cpp)
+# and the Line's StoreTextHelper (SubsDialogue.h) are copied out of their files
+# unchanged; the editor's fields, toggle, grid and video are stood in for by
+# tag_move/standins.h.
+set(tag_move_gen "${CMAKE_CURRENT_BINARY_DIR}/tag_move")
+file(MAKE_DIRECTORY "${tag_move_gen}")
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/EditBox.cpp" "${tag_move_gen}/tag_move.inc"
+    "void EditBox::SetTextWithTags(bool RefreshVideo)" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.h" "${tag_move_gen}/dialogue_helpers.inc"
+    "class StoreTextHelper" COMMAND_ERROR_IS_FATAL ANY)
+add_executable(legacy_tag_move_capture tag_move_capture.cpp)
+target_include_directories(legacy_tag_move_capture PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/tag_move" "${tag_move_gen}" "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
+target_compile_definitions(legacy_tag_move_capture PRIVATE
+    _SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING _CRT_SECURE_NO_WARNINGS HAVE_DLL_EXPORT
+    LINUX_BUILD HIKARISUB_LINUX_BUILD)
+target_compile_options(legacy_tag_move_capture PRIVATE ${wx_cflags}
+    -include "${LEGACY_SOURCE}/HikariSub/platform.h"
+    -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
+target_link_libraries(legacy_tag_move_capture PRIVATE ${wx_libs})

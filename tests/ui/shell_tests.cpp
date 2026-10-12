@@ -2044,6 +2044,150 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(editor, "closeManager"));
     }
 
+    // Y7: the Style editor's colour buttons (StyleChange::OnAllCols,
+    // StyleChange.cpp:335-399): a left click opens "Choose color" at the
+    // colour and its transparency, a right click the simple "Color picker",
+    // COLORPICKER_SWITCH_CLICKS swaps them; each change sets the button, the
+    // transparency and the preview at once; the type choice moves to another
+    // of the four colours; Cancel puts back the colour shown (lastColor), OK
+    // keeps the changes and adds the colour to the recent ones.
+    void styleEditorColoursUseTheLegacyPickers()
+    {
+        const QString path = dir.filePath(QStringLiteral("style-colours.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H40302010,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *root = engine->rootObjects().first();
+        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *content = manager->contentItem();
+        const auto swatch = [&](int n) { return findItem(content, QStringLiteral("styleColour%1").arg(n)); };
+        const auto colour = [&](int n) {
+            const QVariantMap c = swatch(n)->parentItem()->property("colour").toMap();
+            return QList<int>{c.value(QStringLiteral("r")).toInt(), c.value(QStringLiteral("g")).toInt(),
+                              c.value(QStringLiteral("b")).toInt(), c.value(QStringLiteral("a")).toInt()};
+        };
+        auto *dialog = manager->findChild<QObject *>(QStringLiteral("styleColourDialog"));
+        QVERIFY(dialog);
+        auto *dialogContent = dialog->property("contentItem").value<QQuickItem *>();
+        auto &picker = application->colourPicker();
+        picker.setSwitchClicks(false);
+        QCOMPARE(colour(1), (QList<int>{0x10, 0x20, 0x30, 0x40}));
+
+        // Left click: "Choose color" at the colour and its transparency.
+        QVERIFY(QMetaObject::invokeMethod(swatch(1), "click"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(!named("colourDialog")->property("visible").toBool());
+        QCOMPARE(dialog->property("red").toInt(), 0x10);
+        QCOMPARE(dialog->property("green").toInt(), 0x20);
+        QCOMPARE(dialog->property("blue").toInt(), 0x30);
+        QCOMPARE(dialog->property("alpha").toInt(), 0x40);
+        QCOMPARE(findItem(dialogContent, QStringLiteral("colourType"))->property("currentIndex").toInt(), 0);
+        // COLOR_CHANGED: the button, the transparency and the preview at once.
+        const int key = application->styleManager().previewKey();
+        QVERIFY(QMetaObject::invokeMethod(dialog, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
+        QTRY_COMPARE(colour(1), (QList<int>{255, 0, 0, 0x40}));
+        QVERIFY(application->styleManager().previewKey() > key);
+        auto *alpha = findItem(dialogContent, QStringLiteral("alpha"));
+        alpha->setProperty("value", 0x60);
+        QVERIFY(QMetaObject::invokeMethod(alpha, "valueModified"));
+        QTRY_COMPARE(findItem(content, QStringLiteral("styleAlpha1"))->property("value").toInt(), 0x60);
+        // COLOR_TYPE_CHANGED: the border colour with its transparency.
+        choose(findItem(dialogContent, QStringLiteral("colourType")), 2);
+        QCOMPARE(dialog->property("red").toInt(), 0);
+        QCOMPARE(dialog->property("alpha").toInt(), 0);
+        QVERIFY(QMetaObject::invokeMethod(dialog, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 255), Q_ARG(QVariant, 0)));
+        QTRY_COMPARE(colour(3), (QList<int>{0, 255, 0, 0}));
+        // Cancel puts back lastColor, the border's since the switch: the
+        // primary keeps its change.
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QTRY_COMPARE(colour(3), (QList<int>{0, 0, 0, 0}));
+        QCOMPARE(colour(1), (QList<int>{255, 0, 0, 0x60}));
+        // OK keeps the change and adds the colour to the recent ones.
+        QVERIFY(QMetaObject::invokeMethod(swatch(4), "click"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("alpha").toInt(), 0x80);
+        QVERIFY(QMetaObject::invokeMethod(dialog, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 0), Q_ARG(QVariant, 255)));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(colour(4), (QList<int>{0, 0, 255, 0x80}));
+        const QVariantMap recent = picker.recent().first().toMap();
+        QCOMPARE(recent.value(QStringLiteral("b")).toInt(), 255);
+        QCOMPARE(recent.value(QStringLiteral("a")).toInt(), 0x80);
+
+        // Right click: the simple "Color picker" at the button's colour and
+        // the alpha the button was last given (0 at load), not the 0x50
+        // typed since (StyleChange.cpp:374); a pick sets the colour at once
+        // with that alpha.
+        auto *alpha2 = findItem(content, QStringLiteral("styleAlpha2"));
+        alpha2->setProperty("value", 0x50);
+        QVERIFY(QMetaObject::invokeMethod(alpha2, "valueModified"));
+        QCOMPARE(colour(2), (QList<int>{255, 0, 0, 0x50}));
+        auto &sampler = *picker.sampler();
+        sampler.setRoute({QStringLiteral("grab"), {}});
+        sampler.setSource([](QPoint) {
+            QImage image(7, 7, QImage::Format_RGB32);
+            image.fill(qRgb(0x10, 0x20, 0x30));
+            return image;
+        });
+        QTest::mouseClick(manager, Qt::RightButton, Qt::NoModifier, centreOf(swatch(2)));
+        QQuickWindow *simple = shellWindow("styleSimpleColourPicker");
+        QVERIFY(simple);
+        QTRY_VERIFY(simple->isVisible());
+        QVERIFY(!dialog->property("visible").toBool());
+        auto *hex = findItem(simple->contentItem(), QStringLiteral("hexColour"));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H0000FF&"));
+        QCOMPARE(findItem(simple->contentItem(), QStringLiteral("simpleColourType"))->property("currentIndex").toInt(), 1);
+        sendMouse(simple, QEvent::MouseButtonPress, QPoint(-40, 10), Qt::RightButton, Qt::RightButton);
+        QTRY_COMPARE(colour(2), (QList<int>{0x10, 0x20, 0x30, 0}));
+        sendMouse(simple, QEvent::MouseButtonRelease, QPoint(-40, 10), Qt::RightButton, Qt::NoButton);
+        // The type choice: the primary colour with its transparency, then a
+        // pick sets it.
+        QVERIFY(QMetaObject::invokeMethod(findItem(simple->contentItem(), QStringLiteral("simpleColourType")), "activated",
+                                          Q_ARG(int, 0)));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H0000FF&"));
+        sendMouse(simple, QEvent::MouseMove, QPoint(-40, 12), Qt::NoButton, Qt::RightButton);
+        QTRY_COMPARE(colour(1), (QList<int>{0x10, 0x20, 0x30, 0x60}));
+        // Cancel puts back the primary (lastColor); the secondary keeps its
+        // pick.
+        QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
+        QTRY_VERIFY(!simple->isVisible());
+        QVERIFY(!sampler.tracking());
+        QCOMPARE(colour(1), (QList<int>{255, 0, 0, 0x60}));
+        QCOMPARE(colour(2), (QList<int>{0x10, 0x20, 0x30, 0}));
+
+        // Swapped: the left click opens the simple picker, the right click
+        // "Choose color".
+        picker.setSwitchClicks(true);
+        QVERIFY(QMetaObject::invokeMethod(swatch(1), "click"));
+        QTRY_VERIFY(simple->isVisible());
+        QVERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
+        QTRY_VERIFY(!simple->isVisible());
+        QTest::mouseClick(manager, Qt::RightButton, Qt::NoModifier, centreOf(swatch(1)));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(findItem(dialogContent, QStringLiteral("switchClicks"))->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        picker.setSwitchClicks(false);
+        QCOMPARE(colour(1), (QList<int>{255, 0, 0, 0x60}));
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+    }
+
     // Y6: EXTERNAL_FONTS_DIRECTORY loads with the settings change and lists
     // with the installed fonts; refreshFonts and a font folder change make a
     // new font environment generation (F47-refresh).

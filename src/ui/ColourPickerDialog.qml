@@ -1,6 +1,6 @@
-// E1: the editor's colour picker (legacy DialogColorPicker "Choose color"):
-// a spectrum with a hue strip, RGB and alpha values, ASS and HTML text and
-// the recent colours. Each change is applied to the edited text at once, as
+// E1: the colour picker (legacy DialogColorPicker "Choose color"): a
+// spectrum with a hue strip, RGB and alpha values, ASS and HTML text and
+// the recent colours. Each change is applied to its target at once, as
 // legacy's COLOR_CHANGED does; Cancel takes every change back, OK adds the
 // colour to the recent ones.
 //
@@ -9,6 +9,12 @@
 // UpdateFrom* (ColorPicker.cpp:770-907) through its integer colour spaces
 // (colorspace.cpp): the spectrum is saturation across and value down from
 // black at the top (MakeSVSpectrum), the hue strip hue down, all 0-255.
+//
+// The colour belongs to its `target`, given at each opening: the Line
+// editor (EditBox::AllColorClick) or the Style editor (StyleChange::OnAllCols).
+// The target answers switchColour(number) with that colour (COLOR_TYPE_CHANGED),
+// takes each change at changeColour(colour) (COLOR_CHANGED) and the end at
+// endDialog(accepted), Cancel taking the changes back.
 pragma Translator: "HikariSub.Colours"
 import QtQuick
 import QtQuick.Controls
@@ -18,7 +24,7 @@ import Hikari.Ui
 Dialog {
     id: dialog
     objectName: "colourDialog"
-    required property LineEditorController editor
+    property var target: null
     required property ColourPickerController picker
     title: qsTr("Choose color")
     // K1: the title with its icon, as the other dialogs show theirs.
@@ -45,14 +51,13 @@ Dialog {
     readonly property color shown: Qt.rgba(red / 255, green / 255, blue / 255, 1)
     readonly property ScreenSampler sampler: picker.sampler
 
-    function openFor(number, role, selectionStart, selectionEnd) {
-        const c = editor.beginColour(number, role, selectionStart, selectionEnd)
-        if (c.r === undefined)
-            return false
+    // `c` is the target's colour `number` (1 primary, 2 secondary, 3 border,
+    // 4 shadow) as {r, g, b, a}.
+    function openFor(owner, number, c) {
+        target = owner
         typeBox.currentIndex = number - 1
         setColour(c)
         open()
-        return true
     }
     function colour() {
         return { r: red, g: green, b: blue, a: alpha }
@@ -132,7 +137,7 @@ Dialog {
     Timer {
         id: changeTimer
         interval: 50
-        onTriggered: dialog.editor.changeColour(dialog.colour())
+        onTriggered: dialog.target.changeColour(dialog.colour())
     }
     Connections {
         target: dialog.sampler
@@ -183,14 +188,14 @@ Dialog {
     onAccepted: {
         if (changeTimer.running) {
             changeTimer.stop()
-            editor.changeColour(colour())
+            target.changeColour(colour())
         }
         picker.addRecent(colour())
-        editor.endDialog(true)
+        target.endDialog(true)
     }
     onRejected: {
         changeTimer.stop()
-        editor.endDialog(false)
+        target.endDialog(false)
     }
 
     RowLayout {
@@ -210,7 +215,7 @@ Dialog {
                     // picker shows the new colour.
                     changeTimer.stop()
                     dialog.picker.addRecent(dialog.colour())
-                    dialog.setColour(dialog.editor.switchColour(index + 1))
+                    dialog.setColour(dialog.target.switchColour(index + 1))
                 }
             }
             GroupBox {

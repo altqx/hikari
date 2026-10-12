@@ -189,9 +189,13 @@ target_compile_definitions(hikari_application_video_timing_tests PRIVATE
     HIKARI_VIDEO_TIMING_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/video-timing-cases.txt"
     HIKARI_VIDEO_TIMING_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-v6-video-timing-20261005/observations.jsonl")
 # E5: translation mode controls (Translator mode, Not confirmed, Moving tags,
-# the Grid's Original text / Translation columns).
+# the Grid's Original text / Translation columns), with the legacy probe's
+# Moving tags observations.
 hikari_add_gtest(hikari_application_translation_mode_tests SOURCES translation_mode_tests.cpp
-    LIBRARIES hikari_application LABELS application)
+    LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_translation_mode_tests PRIVATE
+    HIKARI_TAG_MOVE_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/tag-move-cases.txt"
+    HIKARI_TAG_MOVE_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-e5-tag-move-20261012/observations.jsonl")
 # P9: associated-file discovery and the legacy Subs/ autosaves.
 hikari_add_gtest(hikari_application_associated_files_tests SOURCES associated_files_tests.cpp legacy_autosaves_tests.cpp
     LIBRARIES hikari_application LABELS application)

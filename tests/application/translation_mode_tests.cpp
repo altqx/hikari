@@ -11,9 +11,18 @@
 
 #include <gtest/gtest.h>
 
+#include <QByteArray>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+
 #include <cstring>
+#include <fstream>
+#include <map>
 #include <string>
 #include <string_view>
+#include <vector>
 
 using namespace hikari;
 using namespace hikari::application;
@@ -65,6 +74,12 @@ core::Document load(std::string_view text)
 std::string str(const std::u8string &s)
 {
     return std::string(s.begin(), s.end());
+}
+
+std::u8string str8(const QString &s)
+{
+    const QByteArray utf8 = s.toUtf8();
+    return std::u8string(utf8.begin(), utf8.end());
 }
 
 std::string saved(const core::Document &d)
@@ -315,7 +330,8 @@ TEST(NotConfirmed, OnlyInTranslationMode)
 }
 
 // Legacy SetTextWithTags (EditBox.cpp:1811-1858), worked through by hand on
-// wxString: Replace("}{", ""), Find('}'), find("{"), Mid and SubString.
+// wxString: Replace("}{", ""), Find('}'), find("{"), Mid and SubString. The
+// legacy capture agrees (MovingTagsCapture below).
 TEST(MovingTags, SplitsTheOverrideBlocksFromTheText)
 {
     struct Case {
@@ -350,6 +366,120 @@ TEST(MovingTags, SplitsTheOverrideBlocksFromTheText)
     EXPECT_FALSE(moveTagsFromOriginal(u8"Gate keeper"));
     EXPECT_FALSE(moveTagsFromOriginal(u8"{\\i1 never closed"));
     EXPECT_FALSE(moveTagsFromOriginal(u8""));
+}
+
+namespace {
+
+// A call of tools/legacy-capture/inputs/tag-move-cases.txt: the state it ran
+// under (the case file's last "state" line before it).
+struct TagMoveCall {
+    bool tl = true, move = true;
+    int visual = 0;
+};
+
+struct TagMoveCase {
+    std::string name;
+    std::u8string text, translation;
+    std::vector<TagMoveCall> calls;
+};
+
+std::vector<TagMoveCase> readTagMoveCases(const char *path)
+{
+    std::ifstream in(path, std::ios::binary);
+    std::vector<TagMoveCase> cases;
+    TagMoveCall state;
+    std::string line;
+    while (std::getline(in, line)) {
+        if (line.empty() || line[0] == '#')
+            continue;
+        std::vector<std::string> fields;
+        for (std::size_t from = 0;;) {
+            const auto at = line.find('\t', from);
+            fields.push_back(line.substr(from, at == std::string::npos ? std::string::npos : at - from));
+            if (at == std::string::npos)
+                break;
+            from = at + 1;
+        }
+        if (line.starts_with("case ")) {
+            cases.push_back({line.substr(5), {}, {}, {}});
+            state = {};
+        } else if (fields[0] == "line") {
+            cases.back().text = std::u8string(fields.at(1).begin(), fields.at(1).end());
+            if (fields.size() > 2)
+                cases.back().translation = std::u8string(fields[2].begin(), fields[2].end());
+        } else if (fields[0] == "state") {
+            state = {fields.at(1) == "1", fields.at(2) == "1", std::stoi(fields.at(3))};
+        } else if (fields[0] == "call") {
+            cases.back().calls.push_back(state);
+        }
+    }
+    return cases;
+}
+
+} // namespace
+
+// Every call of the legacy probe (EditBox::SetTextWithTags compiled from the
+// legacy source unchanged, tools/legacy-capture/tag_move_capture.cpp)
+// replayed through moveTagsFromOriginal under the call's conditions
+// (EditBox.cpp:1811; LineEditorController::evaluateSplit checks them): the
+// split, both fields and the caret. Both legacy builds put the caret on the
+// same character, after a leading block; they count it in their own wchar_t
+// (wxGTK code points, wxMSW UTF-16 units). The rewrite's caret is that
+// character in UTF-16 units, Qt's text position, on every platform.
+TEST(MovingTagsCapture, ReplaysTheLegacyObservations)
+{
+    const auto cases = readTagMoveCases(HIKARI_TAG_MOVE_CASES);
+    ASSERT_GE(cases.size(), 34u);
+    QFile file(QStringLiteral(HIKARI_TAG_MOVE_OBSERVATIONS));
+    ASSERT_TRUE(file.open(QIODevice::ReadOnly));
+    std::map<std::string, QJsonObject> observed;
+    for (const QByteArray &line : file.readAll().split('\n'))
+        if (!line.trimmed().isEmpty()) {
+            const auto object = QJsonDocument::fromJson(line).object();
+            observed[object["case"].toString().toStdString()] = object;
+        }
+    ASSERT_EQ(observed.size(), cases.size());
+
+    int splits = 0, widthsDiffer = 0;
+    for (const auto &c : cases) {
+        SCOPED_TRACE(c.name);
+        const QJsonObject &legacy = observed.at(c.name);
+        ASSERT_EQ(str8(legacy["text"].toString()), c.text);
+        ASSERT_EQ(str8(legacy["translation"].toString()), c.translation);
+        const QJsonArray onLinux = legacy["linux"].toArray();
+        const QJsonArray onWindows = legacy["windows"].isString() ? onLinux : legacy["windows"].toArray();
+        widthsDiffer += legacy["windows"].isString() ? 0 : 1;
+        ASSERT_EQ(onLinux.size(), qsizetype(c.calls.size()));
+        ASSERT_EQ(onWindows.size(), qsizetype(c.calls.size()));
+        for (std::size_t n = 0; n < c.calls.size(); ++n) {
+            SCOPED_TRACE("call " + std::to_string(n));
+            const TagMoveCall &call = c.calls[n];
+            const bool eligible = call.tl && call.move && call.visual <= 0 && c.translation.empty();
+            const auto moved = eligible ? moveTagsFromOriginal(c.text) : std::nullopt;
+            for (const auto &[utf16Units, build] : {std::pair{false, onLinux[qsizetype(n)].toObject()},
+                                                    std::pair{true, onWindows[qsizetype(n)].toObject()}}) {
+                SCOPED_TRACE(utf16Units ? "windows" : "linux");
+                ASSERT_EQ(build["split"].toBool(), moved.has_value());
+                if (!moved)
+                    continue;
+                ++splits;
+                const QString edit = build["edit"].toString();
+                EXPECT_EQ(str(moved->translation), str(str8(edit)));
+                EXPECT_EQ(str(moved->original), str(str8(build["orig"].toString())));
+                EXPECT_TRUE(build["focus"].toBool());
+                const QJsonArray selection = build["selection"].toArray();
+                ASSERT_EQ(selection.size(), 2);
+                EXPECT_EQ(selection[0].toInt(), selection[1].toInt());
+                // The same character: the rewrite's caret in UTF-16 units is
+                // legacy's count in the build's wchar_t.
+                const QString before = edit.left(qsizetype(moved->caret));
+                EXPECT_EQ(selection[1].toInt(), utf16Units ? before.size() : before.toUcs4().size());
+            }
+        }
+    }
+    EXPECT_GE(splits, 50);
+    // Only the leading blocks outside the BMP differ, and only in the count.
+    EXPECT_EQ(widthsDiffer, 2);
 }
 
 TEST(OriginalColumns, LoadTakesTheDocumentAndTheOption)

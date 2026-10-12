@@ -1,11 +1,14 @@
 // Y7: legacy SimpleColorPickerDialog "Color picker" (ColorPicker.cpp:1374-1533
-// at 20d647c4), the colour buttons' right click (EditBox::AllColorClick,
-// EditBox.cpp:903-918). It opens at the pointer and takes the pointer
-// (OnShow); outside the window a held left or right button captures the 7x7
-// pixels around it, a held right button picks their centre into the edited
-// text at once (COLOR_CHANGED), and a release moves the window to the pointer
-// when "Move the window to the color selection location" is checked
-// (OnLeaveWindow). Over the window the pointer works its controls. OK adds
+// at 20d647c4), the colour buttons' right click in the Line editor
+// (EditBox::AllColorClick, EditBox.cpp:903-918) and the Style editor
+// (StyleChange::OnAllCols, StyleChange.cpp:372-398). The colour belongs to its
+// `target`, as in ColourPickerDialog, which also answers
+// simplePickerColour(number) for the type choice. It opens at the pointer and
+// takes the pointer (OnShow); outside the window a held left or right button
+// captures the 7x7 pixels around it, a held right button picks their centre
+// into the target at once (COLOR_CHANGED), and a release moves the window to
+// the pointer when "Move the window to the color selection location" is
+// checked (OnLeaveWindow). Over the window the pointer works its controls. OK adds
 // the colour to the recent ones; Cancel, closing or losing the pointer takes
 // every change back.
 pragma Translator: "HikariSub.Colours"
@@ -17,7 +20,7 @@ import Hikari.Ui
 Window {
     id: window
     objectName: "simpleColourPicker"
-    required property LineEditorController editor
+    property var target: null
     required property ColourPickerController picker
     readonly property ScreenSampler sampler: picker.sampler
     title: qsTr("Color picker")
@@ -34,10 +37,9 @@ Window {
     property string portalNote: ""
     readonly property bool tracking: picking && sampler.tracking
 
-    function openFor(number, role, selectionStart, selectionEnd) {
-        const c = editor.beginColour(number, role, selectionStart, selectionEnd)
-        if (c.r === undefined)
-            return false
+    // `c` is the target's colour `number` as {r, g, b, a}.
+    function openFor(owner, number, c) {
+        target = owner
         typeBox.currentIndex = number - 1
         moveWindow.checked = true
         colour = c
@@ -50,7 +52,6 @@ Window {
         // OnShow: CaptureMouse with the eyedropper cursor.
         if (sampler.route === "grab")
             sampler.startTracking(window, true)
-        return true
     }
     // MoveToMousePosition (config.cpp:1379-1400), frame included.
     function moveToPointer(px, py) {
@@ -61,7 +62,7 @@ Window {
     function pick(c) {
         colour = { r: c.r, g: c.g, b: c.b, a: colour.a }
         hexColour.text = picker.assText(c, false)
-        editor.changeColour(colour)
+        target.changeColour(colour)
     }
     function finish(accepted, closing) {
         if (!picking)
@@ -73,7 +74,7 @@ Window {
         // EditBox: scpd->AddRecent() after OK, DummyUndo otherwise.
         if (accepted)
             picker.addRecentFromSimplePicker(colour)
-        editor.endDialog(accepted)
+        target.endDialog(accepted)
         if (!closing)
             close()
     }
@@ -142,7 +143,7 @@ Window {
                 // AddRecent, then COLOR_TYPE_CHANGED: SetColor with that
                 // colour, alpha included, and no change to the text.
                 window.picker.addRecentFromSimplePicker(window.colour)
-                const c = window.editor.simplePickerColour(index + 1)
+                const c = window.target.simplePickerColour(index + 1)
                 window.colour = c
                 hexColour.text = window.picker.assText(c, false)
             }

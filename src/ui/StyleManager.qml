@@ -17,6 +17,7 @@ Window {
     Component.onCompleted: IconTheme.setWindowIcon(manager, "styles")
     required property var styles   // StyleManagerController
     required property var catalogs // Y6: FontCatalogsController
+    required property ColourPickerController colourPicker
     required property var app
     title: qsTr("Style manager")
     // Tall enough for the editor and its preview above the buttons; a
@@ -437,10 +438,10 @@ Window {
                         italicBox.checked = m.italic
                         underlineBox.checked = m.underline
                         strikeBox.checked = m.strikeOut
-                        colours.itemAt(0).colour = m.primary
-                        colours.itemAt(1).colour = m.secondary
-                        colours.itemAt(2).colour = m.outline
-                        colours.itemAt(3).colour = m.back
+                        colours.itemAt(0).setColour(m.primary)
+                        colours.itemAt(1).setColour(m.secondary)
+                        colours.itemAt(2).setColour(m.outline)
+                        colours.itemAt(3).setColour(m.back)
                         outlineField.text = m.outlineWidth
                         shadowField.text = m.shadow
                         scaleXField.text = m.scaleX
@@ -532,11 +533,21 @@ Window {
                                 model: [qsTr("First"), qsTr("Second"), qsTr("Border"), qsTr("Shadow")]
                                 ColumnLayout {
                                     required property string modelData
+                                    required property int index
                                     property var colour: ({ r: 0, g: 0, b: 0, a: 0 })
+                                    // The alpha the button was last given (its background
+                                    // wxColour's, UpdateValues and UpdateColor); a typed
+                                    // transparency does not change it.
+                                    property int buttonAlpha: 0
+                                    function setColour(c) {
+                                        colour = c
+                                        buttonAlpha = c.a
+                                    }
                                     // The colour's name above its swatch (a label drawn on the
                                     // swatch was unreadable on light or dark colours).
                                     Label { text: modelData }
                                     Button {
+                                        objectName: "styleColour" + (index + 1)
                                         Accessible.name: modelData
                                         implicitWidth: 56
                                         implicitHeight: 24
@@ -547,9 +558,15 @@ Window {
                                             border.color: Theme.line
                                             radius: 2
                                         }
-                                        onClicked: { colourPicker.target = parent; colourPicker.selectedColor = Qt.rgba(colour.r / 255, colour.g / 255, colour.b / 255, 1); colourPicker.open() }
+                                        onClicked: manager.colourClick(index + 1, true)
+                                        // Y7: the right click (wxEVT_RIGHT_UP, StyleChange.cpp:144-151).
+                                        TapHandler {
+                                            acceptedButtons: Qt.RightButton
+                                            onTapped: manager.colourClick(index + 1, false)
+                                        }
                                     }
                                     SpinBox {
+                                        objectName: "styleAlpha" + (index + 1)
                                         from: 0; to: 255; editable: true
                                         value: colour.a
                                         Accessible.name: modelData + " " + qsTr("transparency")
@@ -663,15 +680,65 @@ Window {
         }
     }
 
-    ColorDialog {
-        id: colourPicker
-        property var target: null
-        title: qsTr("Choose color")
-        onAccepted: {
-            const c = selectedColor
-            target.colour = { r: Math.round(c.r * 255), g: Math.round(c.g * 255), b: Math.round(c.b * 255), a: target.colour.a }
-            manager.updatePreview()
+    // Y7: StyleChange::OnAllCols (StyleChange.cpp:335-399). A left click
+    // opens "Choose color" at the button's colour and transparency, a right
+    // click the simple "Color picker"; COLORPICKER_SWITCH_CLICKS swaps them.
+    function colourClick(number, leftClick) {
+        if (colourPicker.switchClicks)
+            leftClick = !leftClick
+        if (leftClick) {
+            colourPicker.opened("styleEditor") // DialogColorPicker::Get(this, ...)
+            styleColourDialog.openFor(styleColours, number, styleColours.begin(number))
+        } else {
+            styleSimplePicker.openFor(styleColours, number, styleColours.beginSimple(number))
         }
+    }
+    // The pickers' target: the four colours of the edited Style.
+    QtObject {
+        id: styleColours
+        property int number: 1
+        // lastColor: what Cancel puts back, the colour of the type shown.
+        property var lastColour: ({ r: 0, g: 0, b: 0, a: 0 })
+        function begin(n) {
+            number = n
+            const c = colours.itemAt(n - 1).colour
+            lastColour = { r: c.r, g: c.g, b: c.b, a: c.a }
+            return lastColour
+        }
+        // SimpleColorPicker(this, actualColor, ...) (374): the button's
+        // colour with the alpha it was last given.
+        function beginSimple(n) {
+            const c = begin(n)
+            return { r: c.r, g: c.g, b: c.b, a: colours.itemAt(n - 1).buttonAlpha }
+        }
+        // COLOR_TYPE_CHANGED (351-357, 385-391): that colour with its
+        // transparency becomes lastColor; the colour shown before keeps
+        // its changes.
+        function switchColour(n) { return begin(n) }
+        function simplePickerColour(n) { return begin(n) }
+        // COLOR_CHANGED: UpdateColor (737-746) sets the button, the
+        // transparency and the preview.
+        function changeColour(c) {
+            colours.itemAt(number - 1).setColour({ r: c.r, g: c.g, b: c.b, a: c.a })
+            manager.updatePreview()
+            return true
+        }
+        // Cancel: UpdateColor(lastColor) (368-371, 395-398).
+        function endDialog(accepted) {
+            if (!accepted)
+                changeColour(lastColour)
+        }
+    }
+    ColourPickerDialog {
+        id: styleColourDialog
+        objectName: "styleColourDialog"
+        picker: manager.colourPicker
+        anchors.centerIn: parent
+    }
+    SimpleColourPicker {
+        id: styleSimplePicker
+        objectName: "styleSimpleColourPicker"
+        picker: manager.colourPicker
     }
     Dialog {
         id: newCatalog
