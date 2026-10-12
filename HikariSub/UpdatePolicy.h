@@ -21,6 +21,7 @@
 #include "JsonLimits.h"
 #include "SemVer.h"
 
+#include <charconv>
 #include <cstddef>
 #include <optional>
 #include <string>
@@ -87,6 +88,26 @@ namespace update_policy
 	constexpr long long kHour = 60 * 60;
 	constexpr long long kDay = 24 * kHour;
 	constexpr long long kWeek = 7 * kDay;
+
+	// UPDATER_NEXT_CHECK as Config.txt holds it: seconds since 1970, in
+	// decimal. It is kept as a string, as an int would wrap in January 2038
+	// and every check after would be due; an int written by an earlier
+	// build reads the same. Anything that is not a whole number reads as 0,
+	// so the check is due.
+	inline long long ParseNextCheck(std::string_view stored)
+	{
+		long long value = 0;
+		const char *end = stored.data() + stored.size();
+		std::from_chars_result result = std::from_chars(stored.data(), end, value);
+		if (stored.empty() || result.ec != std::errc() || result.ptr != end)
+			return 0;
+		return value;
+	}
+
+	inline std::string FormatNextCheck(long long nextCheck)
+	{
+		return std::to_string(nextCheck);
+	}
 
 	// UPDATER_NEXT_CHECK is never set more than a week ahead, so a time
 	// further off was set before the clock was turned back, and the check

@@ -91,17 +91,32 @@ namespace
 			wxLaunchDefaultBrowser(url);
 	}
 
+	long long Now()
+	{
+		return static_cast<long long>(time(nullptr));
+	}
+
+	long long LoadNextCheck()
+	{
+		return update_policy::ParseNextCheck(Options.GetString(UPDATER_NEXT_CHECK).utf8_string());
+	}
+
+	void SetNextCheck(long long next)
+	{
+		Options.SetString(UPDATER_NEXT_CHECK, wxString::FromUTF8(update_policy::FormatNextCheck(next)));
+	}
+
 	// Sets the next automatic check and writes it out at once, so that a
 	// crash or a kill does not leave the next start to check again.
 	void SaveNextCheck(long long next)
 	{
-		Options.SetInt(UPDATER_NEXT_CHECK, static_cast<int>(next));
+		SetNextCheck(next);
 		Options.SaveOptions(true, false);
 	}
 
 	void RecordCheck(bool answered)
 	{
-		SaveNextCheck(update_policy::NextCheck(time(nullptr), Options.GetInt(UPDATER_NEXT_CHECK), answered));
+		SaveNextCheck(update_policy::NextCheck(Now(), LoadNextCheck(), answered));
 	}
 
 	// Says that only a prerelease is newer, and offers to open its page.
@@ -183,7 +198,7 @@ namespace
 		void SaveChoices(int result)
 		{
 			if (result == kRemindId) {
-				Options.SetInt(UPDATER_NEXT_CHECK, static_cast<int>(time(nullptr) + update_policy::kWeek));
+				SetNextCheck(Now() + update_policy::kWeek);
 				Options.SetString(UPDATER_DECLINED_VERSION, wxString());
 			}
 			else {
@@ -339,7 +354,7 @@ namespace
 		// the back-off: no web session or request, a reply dropped as the
 		// window closes, a kill. Fail() and Finish() record it again when
 		// the request ends.
-		SaveNextCheck(update_policy::NextCheckAtStart(time(nullptr), Options.GetInt(UPDATER_NEXT_CHECK)));
+		SaveNextCheck(update_policy::NextCheckAtStart(Now(), LoadNextCheck()));
 		UpdateRequest *check = new UpdateRequest(parent, interactive);
 		if (!check->Start()) {
 			delete check;
@@ -353,7 +368,7 @@ void UpdateChecker::CheckOnStartup(wxWindow *parent)
 {
 	if (!Options.GetBool(UPDATER_AUTO_CHECK))
 		return;
-	if (!update_policy::IsCheckDue(time(nullptr), Options.GetInt(UPDATER_NEXT_CHECK)))
+	if (!update_policy::IsCheckDue(Now(), LoadNextCheck()))
 		return;
 
 	Check(parent, false);

@@ -366,3 +366,27 @@ TEST(update_reply_between_the_old_caps_is_cut_off_as_it_comes)
 	CHECK(!FitsReply(json_limits::kMaxInput, static_cast<size_t>(-1)));
 	CHECK(!FitsReply(json_limits::kMaxInput + 1, 0));
 }
+
+TEST(update_next_check_outlasts_2038)
+{
+	// 2038-01-19T03:14:08Z, one past what an int holds, and 2100.
+	const long long past2038 = 2147483648LL;
+	const long long in2100 = 4102444800LL;
+	CHECK(FormatNextCheck(past2038) == "2147483648");
+	CHECK(ParseNextCheck(FormatNextCheck(past2038)) == past2038);
+	CHECK(ParseNextCheck(FormatNextCheck(in2100)) == in2100);
+	// A check set after 2038 is not due before it, and the back-off holds.
+	CHECK(!IsCheckDue(in2100, ParseNextCheck(FormatNextCheck(NextCheck(in2100, 0, false)))));
+	CHECK(IsCheckDue(in2100 + kHour, ParseNextCheck(FormatNextCheck(NextCheck(in2100, 0, false)))));
+	CHECK(ParseNextCheck(FormatNextCheck(NextCheck(in2100, 0, true))) == in2100 + kDay);
+
+	// What an earlier build wrote as an int reads the same.
+	CHECK(ParseNextCheck("2000003600") == 2000003600LL);
+	// Nothing, or anything else, is due.
+	CHECK(ParseNextCheck("") == 0);
+	CHECK(ParseNextCheck("soon") == 0);
+	CHECK(ParseNextCheck("12x") == 0);
+	CHECK(ParseNextCheck(" 12") == 0);
+	CHECK(ParseNextCheck("99999999999999999999") == 0);
+	CHECK(IsCheckDue(in2100, ParseNextCheck("")));
+}
