@@ -1226,10 +1226,15 @@ def step_persistence():
     app_start()
     st = wait_for(lambda s: "Audio" in frames(s))
     ev1, st = snap("persist-1-after-restart", extra="# layout files\n" + cfg)
-    ok = "Audio" in frames(st)
+    floating = "Audio" in frames(st)
+    # The panels left docked come back docked too (the layout saved at the
+    # close had them closed until 2026-10-12: an empty main window).
+    docked = {p["id"]: p["frame"] for p in st["panels"] if p["id"] in ("Video", "Line editor", "Grid")}
+    in_main = len(docked) == 3 and all(v == MAIN for v in docked.values())
+    ok = floating and in_main
     verdict("layout-persistence", "observed" if ok else "failed",
             f"main window closed with Alt+F4 (process ended: {gone}); layout files: {cfg.strip()!r}; "
-            f"after restart Audio floating: {ok}", ev0 + ev1)
+            f"after restart Audio floating: {floating}; docked in the main window: {docked}", ev0 + ev1)
 
 
 def fullscreen(mode, width=None):
