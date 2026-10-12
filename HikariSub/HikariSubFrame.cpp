@@ -2559,10 +2559,10 @@ void HikariSubFrame::OnAudioSnap(wxCommandEvent& event)
 		}
 		else {
 			shadeFrom = 0;
-			shadeTo = tab->grid->file->GetCount();
+			shadeTo = tab->grid->file->GetCount() - 1;
 		}
 
-		for (int j = shadeFrom; j < shadeTo; j++) {
+		for (int j = shadeFrom; j <= shadeTo; j++) {
 			shade = tab->grid->file->GetDialogue(j);
 			if (!shade->isVisible || j == tab->grid->currentLine) continue;
 
