@@ -9,6 +9,7 @@
 #include <charconv>
 #include <cmath>
 #include <cstdlib>
+#include <limits>
 
 // Built without floating-point contraction, as visual_view.cpp: legacy's
 // float steps must round as its build did.
@@ -717,15 +718,20 @@ std::pair<int, int> moveTimes(const ScriptState &state, const core::LineRecord &
 
 std::pair<int, int> moveInterval(const double *tbl, const core::LineRecord &editLine)
 {
-    // ass_parse.c (\move): the times are whole numbers (argtoi32), swapped
-    // when t1 > t2; `t1 <= 0 && t2 <= 0` moves over the event's Duration.
+    // ass_parse.c (\move): the times, relative to the event's start, are
+    // whole numbers (argtoi32 truncates them), swapped when t1 > t2;
+    // `t1 <= 0 && t2 <= 0` moves over the event's Duration. The table holds
+    // them made absolute, so the start comes off before they are truncated.
     const int start = startMs(editLine);
     const int count = static_cast<int>(tbl[6]);
     const double t1 = std::trunc(tbl[4] - start), t2 = std::trunc(tbl[5] - start);
     if (count == 4 || (count >= 6 && t1 <= 0 && t2 <= 0))
         return {start, endMs(editLine)};
-    const int a = static_cast<int>(tbl[4]), b = static_cast<int>(tbl[5]);
-    return {std::min(a, b), std::max(a, b)};
+    auto absolute = [start](double t) {
+        constexpr double lo = std::numeric_limits<int>::min(), hi = std::numeric_limits<int>::max();
+        return static_cast<int>(std::clamp(start + t, lo, hi));
+    };
+    return {absolute(std::min(t1, t2)), absolute(std::max(t1, t2))};
 }
 
 PointF calcMovePosition(PointF point, const double *moveTable, int time)

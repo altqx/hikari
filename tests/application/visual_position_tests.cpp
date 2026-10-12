@@ -1023,6 +1023,10 @@ TEST(VisualMoveTimes, AMoveWithoutTimesOrWithBothAtMostZeroRunsOverTheWholeLine)
     EXPECT_EQ(interval(u8"{\\move(1,2,3,4,0,500)}x"), (I{1000, 1500}));
     EXPECT_EQ(interval(u8"{\\move(1,2,3,4,1500,300)}x"), (I{1300, 2500}));
     EXPECT_EQ(interval(u8"{\\move(1,2,3,4,-200,500)}x"), (I{800, 1500}));
+    // Fractional own times truncate relative to the start (argtoi32), not
+    // once made absolute: -200.5 is -200 (800), not 799.5 cut to 799.
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4,-200.5,500.7)}x"), (I{800, 1500}));
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4,500.7,-200.5)}x"), (I{800, 1500}));
     // No \move: GetMoveTimes, the Line's first and last frames (CFR 25).
     EXPECT_EQ(interval(u8"{\\pos(1,2)}x"), (I{1000, 2960}));
     EXPECT_EQ(interval(u8"x"), (I{1000, 2960}));
