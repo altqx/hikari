@@ -179,7 +179,8 @@ void SpellCheckerDialog::Replace(wxCommandEvent &evt)
 		}
 	}
 	wxString replaceTxt = replaceWord->GetValue();
-	if (replaceTxt.IsEmpty() || !errors.size()){ return; }
+	// past the end of the list once the walk is over
+	if (replaceTxt.IsEmpty() || lastMisspell >= errors.size()){ return; }
 	tab = Hikari->GetTab();
 	// commit unsent Line editor typing, the row reload after the change would drop it
 	tab->edit->Send(EDITBOX_LINE_EDITION, false);
@@ -197,7 +198,7 @@ void SpellCheckerDialog::Replace(wxCommandEvent &evt)
 	tab->grid->SetModified(SPELL_CHECKER);
 	int oldPos = errors[lastMisspell].posStart;
 	SetNextMisspell();
-	if (errors[lastMisspell].posStart == oldPos) {
+	if (lastMisspell < errors.size() && errors[lastMisspell].posStart == oldPos) {
 		lastMisspell++;
 		SetNextMisspell();
 	}
