@@ -429,6 +429,8 @@ void MisspellReplacer::SeekOnTab(TabPanel *tab)
 						break;
 
 					textPos += (matchstart + matchlen);
+					if (textPos >= (int)lineText.length())
+						break;
 					text = lineText.Mid(textPos);
 				}
 
@@ -542,7 +544,7 @@ void MisspellReplacer::ReplaceOnTab(TabPanel *tab)
 						if ((options < 16) || KeepFinding(text, matchstart, options)){
 							wxString replacedResult;
 							wxString matchResult = replacedResult = stringChanged.Mid(matchstart + textPos, matchlen);
-							int reps = r->Replace(&replacedResult, actualrule.replaceRule);
+							int reps = r->Replace(&replacedResult, actualrule.replaceRule, 1);
 
 							MoveCase(matchResult, &replacedResult, actualrule.options);
 
@@ -557,6 +559,8 @@ void MisspellReplacer::ReplaceOnTab(TabPanel *tab)
 						break;
 
 					textPos += (matchstart + matchlen);
+					if (textPos >= (int)stringChanged.length())
+						break;
 					text = stringChanged.Mid(textPos);
 				}
 
@@ -616,7 +620,7 @@ bool MisspellReplacer::ReplaceBlock(std::vector<ReplacerSeekResults *> &results,
 		const Rule & actualrule = rules[SeekResult->numOfRule];
 		wxString replacedResult;
 		wxString matchResult = replacedResult = lineText.Mid(pos, len);
-		int reps = rxrules[SeekResult->numOfRule]->Replace(&replacedResult, actualrule.replaceRule);
+		int reps = rxrules[SeekResult->numOfRule]->Replace(&replacedResult, actualrule.replaceRule, 1);
 		if (reps > 0){
 			MoveCase(matchResult, &replacedResult, actualrule.options);
 
