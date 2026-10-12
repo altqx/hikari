@@ -44,6 +44,7 @@
 #include <wx/weakref.h>
 #include <wx/translation.h>
 #ifndef _WIN32
+#include "PrivateFolder.h"
 #include <clocale>
 #include <cstring>
 #include <cstdlib>
@@ -92,30 +93,28 @@ const wxString HikariSubIpcTopic()
 	return L"HikariSubOpenFiles";
 }
 
+// The socket a second instance passes the files to open to the first
+// through, in a folder only the user may open, see UserRuntimeFolder: in the
+// shared temporary folder, another user could take its name first and be
+// sent the paths, or connect to it and have files opened. Empty when there is
+// no such folder; files are then not passed on.
 wxString HikariSubIpcServiceName()
 {
-	wxString user = wxGetUserId();
-	if (user.empty()){
-		user = L"user";
+	std::string folder = UserRuntimeFolder();
+	if (folder.empty()){
+		return wxString();
 	}
-	wxString safeUser;
-	for (size_t i = 0; i < user.length(); ++i){
-		const wxUniChar ch = user[i];
-		if ((ch >= L'0' && ch <= L'9') || (ch >= L'A' && ch <= L'Z') ||
-			(ch >= L'a' && ch <= L'z') || ch == L'_' || ch == L'-'){
-			safeUser += ch;
-		}
-		else{
-			safeUser += L'_';
-		}
-	}
-	return wxFileName::GetTempDir() + wxFileName::GetPathSeparator() + L"hikarisub-" + safeUser + L".ipc";
+	return wxString(folder.c_str(), *wxConvFileName) + L"/hikarisub.ipc";
 }
 
 void RemoveHikariSubIpcSocket()
 {
+	wxString name = HikariSubIpcServiceName();
+	if (name.empty()){
+		return;
+	}
 	wxLogNull noLog;
-	wxRemoveFile(HikariSubIpcServiceName());
+	wxRemoveFile(name);
 }
 
 class HikariSubIpcConnection : public wxConnection
@@ -152,12 +151,13 @@ public:
 
 bool SendOpenPathsToRunningInstance(const wxString& packedPaths)
 {
-	if (packedPaths.empty()){
+	wxString service = HikariSubIpcServiceName();
+	if (packedPaths.empty() || service.empty()){
 		return false;
 	}
 	wxClient client;
 	for (int attempt = 0; attempt < 100; ++attempt){
-		wxConnectionBase *connection = client.MakeConnection(L"localhost", HikariSubIpcServiceName(), HikariSubIpcTopic());
+		wxConnectionBase *connection = client.MakeConnection(L"localhost", service, HikariSubIpcTopic());
 		if (connection){
 			const bool sent = connection->Execute(packedPaths);
 			connection->Disconnect();
@@ -268,7 +268,8 @@ bool hikarisubApp::OnInit()
 #ifndef _WIN32
 		RemoveHikariSubIpcSocket();
 		m_ipcServer = new HikariSubIpcServer();
-		if (!m_ipcServer->Create(HikariSubIpcServiceName())){
+		wxString service = HikariSubIpcServiceName();
+		if (service.empty() || !m_ipcServer->Create(service)){
 			delete m_ipcServer;
 			m_ipcServer = nullptr;
 			HikariLogSilent(L"Cannot create HikariSub IPC server for opening files in a running instance");

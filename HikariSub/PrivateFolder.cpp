@@ -57,6 +57,27 @@ bool MakePrivateFolderAt(const std::string &path)
 	return made;
 }
 
+std::string UserRuntimeFolder()
+{
+	// The login makes $XDG_RUNTIME_DIR the user's own and 0700; one that is
+	// not is not narrowed here, as it is not this program's.
+	const char *runtime = getenv("XDG_RUNTIME_DIR");
+	if (runtime && runtime[0] == '/') {
+		int fd = open(runtime, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+		bool usable = fd >= 0 && IsPrivateFolder(fd);
+		if (fd >= 0)
+			close(fd);
+		if (usable)
+			return runtime;
+	}
+	const char *temp = getenv("TMPDIR");
+	std::string folder = temp && temp[0] == '/' ? temp : "/tmp";
+	while (folder.size() > 1 && folder.back() == '/')
+		folder.pop_back();
+	folder += "/hikarisub-" + std::to_string(static_cast<unsigned long>(geteuid()));
+	return MakePrivateFolderAt(folder) ? folder : std::string();
+}
+
 FILE *OpenPrivateFileAt(const std::string &path)
 {
 	// O_NONBLOCK keeps a FIFO at the name from holding the open; anything but

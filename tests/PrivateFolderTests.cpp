@@ -47,6 +47,31 @@ struct PrivateScratchDir {
 	}
 };
 
+// Sets an environment variable, or unsets it for nullptr, for the length of
+// a test.
+struct EnvOverride {
+	std::string name, old;
+	bool had;
+	EnvOverride(const char *variable, const char *value) : name(variable)
+	{
+		const char *now = getenv(variable);
+		had = now != nullptr;
+		if (had)
+			old = now;
+		if (value)
+			setenv(variable, value, 1);
+		else
+			unsetenv(variable);
+	}
+	~EnvOverride()
+	{
+		if (had)
+			setenv(name.c_str(), old.c_str(), 1);
+		else
+			unsetenv(name.c_str());
+	}
+};
+
 mode_t ModeOf(const fs::path &path)
 {
 	struct stat st {};
@@ -91,6 +116,41 @@ TEST(a_link_at_a_private_folder_s_name_is_left_as_it_is)
 	CHECK(!MakePrivateFolderAt(link.string()));
 	CHECK(ModeOf(shared) == 0755);
 	CHECK(fs::is_symlink(link));
+}
+
+TEST(the_runtime_folder_is_xdg_runtime_dir_only_when_it_is_private)
+{
+	PrivateScratchDir dir;
+	fs::path runtime = dir.path / "run";
+	fs::create_directory(runtime);
+	CHECK(chmod(runtime.c_str(), 0700) == 0);
+	fs::path temp = dir.path / "tmp";
+	fs::create_directory(temp);
+	EnvOverride tmpdir("TMPDIR", temp.c_str());
+	{
+		EnvOverride xdg("XDG_RUNTIME_DIR", runtime.c_str());
+		CHECK(UserRuntimeFolder() == runtime.string());
+
+		// a runtime folder others may open is not used, nor narrowed
+		CHECK(chmod(runtime.c_str(), 0755) == 0);
+		fs::path own = temp / ("hikarisub-" + std::to_string(static_cast<unsigned long>(geteuid())));
+		CHECK(UserRuntimeFolder() == own.string());
+		CHECK(ModeOf(runtime) == 0755);
+		CHECK(ModeOf(own) == 0700);
+	}
+	{
+		EnvOverride xdg("XDG_RUNTIME_DIR", nullptr);
+		fs::path own = temp / ("hikarisub-" + std::to_string(static_cast<unsigned long>(geteuid())));
+		// one made with another mode before is narrowed
+		CHECK(chmod(own.c_str(), 0777) == 0);
+		CHECK(UserRuntimeFolder() == own.string());
+		CHECK(ModeOf(own) == 0700);
+
+		// a link at its name, as another user could put there, is not used
+		fs::remove(own);
+		fs::create_directory_symlink(runtime, own);
+		CHECK(UserRuntimeFolder().empty());
+	}
 }
 
 TEST(a_private_file_is_made_0600_and_one_there_is_narrowed_before_it_is_emptied)

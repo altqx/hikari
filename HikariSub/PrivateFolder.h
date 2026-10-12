@@ -27,6 +27,14 @@
 // link, the user's own, and with no permission for its group or others.
 bool MakePrivateFolderAt(const std::string &path);
 
+// A folder only the user may open, for files that live as long as the
+// program runs, such as the socket a second instance passes files to the
+// first through: $XDG_RUNTIME_DIR when it is such a folder, as the login
+// makes it, or else hikarisub-<uid> in the temporary folder ($TMPDIR, or
+// /tmp), made or narrowed by MakePrivateFolderAt. Empty when neither is
+// such a folder, as when another user made that name first.
+std::string UserRuntimeFolder();
+
 // Opens the file at path for reading and writing, new or emptied, so that
 // only the user may open it: a new file is made 0600, and an existing one is
 // narrowed to 0600 before it is emptied. A link at path is not followed, and
