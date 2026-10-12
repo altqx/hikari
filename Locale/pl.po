@@ -8108,3 +8108,61 @@ msgstr "Dodaj do napisów styl z magazynu"
 #: HikariSub/stylestore.cpp:797
 msgid "Delete unused ASS styles"
 msgstr "Oczyść napisy z nieużywanych stylów"
+
+#: HikariSub/UpdateChecker.cpp:107
+#, c-format
+msgid "You have the latest stable version. A newer prerelease, %s, is available."
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:109 HikariSub/UpdateChecker.cpp:152
+msgid "Open the download page"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:119
+msgid "A new version is available"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:129
+#, c-format
+msgid "You have version %s; version %s is available"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:141 HikariSub/OptionsDialog.cpp:370
+msgid "Check for updates automatically"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:145 HikariSub/OptionsDialog.cpp:374
+msgid "Stable versions only"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:153
+msgid "Remind me in a week"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:273 HikariSub/UpdateChecker.cpp:331
+msgid "Cannot check for updates"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:313
+msgid "You already have the latest version"
+msgstr ""
+
+#: HikariSub/OptionsDialog.cpp:369
+msgid "Updates"
+msgstr ""
+
+#: HikariSub/OptionsDialog.cpp:372
+msgid "When the program starts: once a day, or an hour after a check that failed"
+msgstr ""
+
+#: HikariSub/OptionsDialog.cpp:376
+msgid "A release candidate is still told about newer release candidates"
+msgstr ""
+
+#: HikariSub/HotkeysNaming.cpp:161
+msgid "Check for updates"
+msgstr ""
+
+#: HikariSub/HikariSubFrame.cpp:364
+msgid "Check for &updates"
+msgstr ""
