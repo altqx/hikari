@@ -1207,12 +1207,29 @@ void SubsGrid::SwapRows(int frst, int scnd, bool sav)
 	if (sav){ SetModified(GRID_SWAP); }
 }
 
-void SubsGrid::LoadSubtitles(const wxString &str, wxString &ext)
+bool SubsGrid::LoadSubtitles(const wxString &str, wxString &ext)
 {
 	bool oldHasTlMode = hasTLMode;
 	int active = 0;
 
+	//load into a new file, so subtitles that cannot be read keep the current ones
+	SubsFile *oldFile = file;
+	char oldSubsFormat = subsFormat;
+	char oldOriginalFormat = originalFormat;
+	file = new SubsFile();
+	file->SetMutex(&editionMutex);
 	SubsLoader SL(this, str, ext);
+	if (!SL.Succeeded()){
+		delete file;
+		file = oldFile;
+		subsFormat = oldSubsFormat;
+		originalFormat = oldOriginalFormat;
+		hasTLMode = oldHasTlMode;
+		Refresh(false);
+		HikariMessageBox(_("Invalid format (file may be corrupted or contain errors)"));
+		return false;
+	}
+	delete oldFile;
 
 	if (oldHasTlMode != hasTLMode){
 		edit->SetTlMode(hasTLMode);
@@ -1281,6 +1298,7 @@ void SubsGrid::LoadSubtitles(const wxString &str, wxString &ext)
 	ScrollTo(active, false, -4);
 	if (subsFormat == SRT)
 		edit->ResizeTimeControls(true);
+	return true;
 }
 
 void SubsGrid::SetStartTime(int stime)

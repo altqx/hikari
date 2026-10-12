@@ -1139,7 +1139,9 @@ bool Notebook::LoadSubtitles(TabPanel *tab, const wxString & path, int active /*
 	}
 	else{
 		tab->grid->ClosePreviewWindows();
-		tab->grid->LoadSubtitles(s, ext);
+		//subtitles that cannot be read keep the current ones and their path
+		if (!tab->grid->LoadSubtitles(s, ext))
+			return false;
 	}
 
 	tab->SubsPath = path;

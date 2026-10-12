@@ -115,7 +115,7 @@ public:
 	void UpdateUR(bool tolbar = true);
 	void GetAssHeader(wxString* header, bool forFile = false, bool translated = false, bool normalSave = true);
 	void SwapRows(int frst, int scnd, bool sav = false);
-	void LoadSubtitles(const wxString &str, wxString &ext);
+	bool LoadSubtitles(const wxString &str, wxString &ext);
 	bool MoveRows(int step, bool keyStep = false);
 	void SetStartTime(int stime);
 	void SetEndTime(int etime);

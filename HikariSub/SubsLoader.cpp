@@ -30,7 +30,6 @@ SubsLoader::SubsLoader(SubsGrid *_grid, const wxString &text, wxString &ext)
 	grid->Clearing();
 	grid->originalFormat = 0;
 	grid->hasTLMode = false;
-	bool succeeded = false;
 	bool validFormat = false;
 	if (ext == L"ass" || ext == L"ssa"){
 		succeeded = LoadASS(text);
@@ -78,13 +77,8 @@ SubsLoader::SubsLoader(SubsGrid *_grid, const wxString &text, wxString &ext)
 	}
 	//WARNING! table can not be empty
 	//text helper class will crash when gets nullptr in = operator
-	if (!succeeded){ 
-		grid->LoadDefault(); 
-		HikariMessageBox(_("Invalid format (file may be corrupted or contain errors)"));
-		grid->subsFormat = ASS; 
-		ext = "ass"; 
-	}
-	else{
+	//on failure the grid puts its previous subtitles back
+	if (succeeded){
 		grid->SetSubsFormat();
 		if (validFormat)
 			grid->originalFormat = grid->subsFormat;
