@@ -298,39 +298,47 @@ void LoadSettings(std::vector<ShapesSetting>* shapes)
 	wxString path = Options.pathfull + L"/Config/ShapesSettings.txt";
 	OpenWrite ow;
 	wxString txtSettings;
+	//write entire setings in plain text
+	//Shape: name, shape, shape mode, scale mode
+	const wxString defaultSettings = L"Shape: rectangle; m 0 0 l 100 0 100 100 0 100; 0; 0\n"\
+		L"Shape: circle; m -100 -100 b -45 -155 45 -155 100 -100 b 155 -45 155 45 100 100 b 46 155 -45 155 -100 100 b -155 45 -155 -45 -100 -100; 1; 0\n"\
+		L"Shape: rounded square 1; m -100 -25 b -100 -92 -92 -100 -25 -100 l 25 -100 b 92 -100 100 -92 100 -25 l 100 25 b 100 92 92 100 25 100 l -25 100 b -92 100 -100 92 -100 25 l -100 -25; 1; 0\n"\
+		L"Shape: rounded square 2; m -100 -60 b -100 -92 -92 -100 -60 -100 l 60 -100 b 92 -100 100 -92 100 -60 l 100 60 b 100 92 92 100 60 100 l -60 100 b -92 100 -100 92 -100 60 l -100 -60; 1; 0\n"\
+		L"Shape: rounded square 3; m -100 -85 b -100 -96 -96 -100 -85 -100 l 85 -100 b 96 -100 100 -96 100 -85 l 100 85 b 100 96 96 100 85 100 l -85 100 b -96 100 -100 96 -100 85 l -100 -85; 1; 0\n";
 	if (!ow.FileOpen(path, &txtSettings, false)) {
-		//write entire setings in plain text
-		//Shape: name, shape, shape mode, scale mode
-		txtSettings = L"Shape: rectangle; m 0 0 l 100 0 100 100 0 100; 0; 0\n"\
-			L"Shape: circle; m -100 -100 b -45 -155 45 -155 100 -100 b 155 -45 155 45 100 100 b 46 155 -45 155 -100 100 b -155 45 -155 -45 -100 -100; 1; 0\n"\
-			L"Shape: rounded square 1; m -100 -25 b -100 -92 -92 -100 -25 -100 l 25 -100 b 92 -100 100 -92 100 -25 l 100 25 b 100 92 92 100 25 100 l -25 100 b -92 100 -100 92 -100 25 l -100 -25; 1; 0\n"\
-			L"Shape: rounded square 2; m -100 -60 b -100 -92 -92 -100 -60 -100 l 60 -100 b 92 -100 100 -92 100 -60 l 100 60 b 100 92 92 100 60 100 l -60 100 b -92 100 -100 92 -100 60 l -100 -60; 1; 0\n"\
-			L"Shape: rounded square 3; m -100 -85 b -100 -96 -96 -100 -85 -100 l 85 -100 b 96 -100 100 -96 100 -85 l 100 85 b 100 96 96 100 85 100 l -85 100 b -96 100 -100 96 -100 85 l -100 -85; 1; 0\n";
+		txtSettings = defaultSettings;
 	}
-	wxStringTokenizer tokenzer(txtSettings, "\n", wxTOKEN_STRTOK);
-	while (tokenzer.HasMoreTokens()) {
-		wxString token = tokenzer.GetNextToken();
-		wxString shapetxt;
-		if (token.StartsWith(L"Shape: ", &shapetxt)) {
-			wxStringTokenizer tkzer(shapetxt, ";", wxTOKEN_STRTOK);
-			ShapesSetting tmp;
-			tmp.name = tkzer.GetNextToken();
-			if (!tkzer.HasMoreTokens())
-				continue;
-			tmp.shape = tkzer.GetNextToken().Trim(false);
-			long tmpval = 0;
-			if (!tkzer.HasMoreTokens())
-				continue;
-			if (!tkzer.GetNextToken().Trim(false).ToLong(&tmpval))
-				continue;
-			tmp.mode = tmpval;
-			if (!tkzer.HasMoreTokens())
-				continue;
-			if (!tkzer.GetNextToken().Trim(false).ToLong(&tmpval))
-				continue;
-			tmp.scalingMode = tmpval;
+	//a file without any valid shape falls back to the defaults
+	size_t oldSize = shapes->size();
+	for (int pass = 0; pass < 2 && shapes->size() == oldSize; pass++) {
+		if (pass == 1)
+			txtSettings = defaultSettings;
 
-			shapes->push_back(tmp);
+		wxStringTokenizer tokenzer(txtSettings, "\n", wxTOKEN_STRTOK);
+		while (tokenzer.HasMoreTokens()) {
+			wxString token = tokenzer.GetNextToken();
+			wxString shapetxt;
+			if (token.StartsWith(L"Shape: ", &shapetxt)) {
+				wxStringTokenizer tkzer(shapetxt, ";", wxTOKEN_STRTOK);
+				ShapesSetting tmp;
+				tmp.name = tkzer.GetNextToken();
+				if (!tkzer.HasMoreTokens())
+					continue;
+				tmp.shape = tkzer.GetNextToken().Trim(false);
+				long tmpval = 0;
+				if (!tkzer.HasMoreTokens())
+					continue;
+				if (!tkzer.GetNextToken().Trim(false).ToLong(&tmpval))
+					continue;
+				tmp.mode = tmpval;
+				if (!tkzer.HasMoreTokens())
+					continue;
+				if (!tkzer.GetNextToken().Trim(false).ToLong(&tmpval))
+					continue;
+				tmp.scalingMode = tmpval;
+
+				shapes->push_back(tmp);
+			}
 		}
 	}
 }
