@@ -227,3 +227,10 @@ TEST(update_release_page_is_built_from_the_tag)
 		CHECK(!ReleasePageUrl(tag).empty());
 	}
 }
+
+TEST(update_response_limit_holds_a_full_page)
+{
+	// A hundred releases at the size of the qt-metadata ones, 18 assets
+	// and about 40 KB each.
+	CHECK(kMaxResponseBytes >= 100 * 40 * 1024);
+}

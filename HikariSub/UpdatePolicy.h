@@ -20,6 +20,7 @@
 
 #include "SemVer.h"
 
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -37,6 +38,11 @@ namespace update_policy
 	{
 		return "https://api.github.com/repos/" + std::string(kRepository) + "/releases?per_page=100";
 	}
+
+	// A page of a hundred releases the size of the qt-metadata ones, with 18
+	// assets each, is about 3.5 MB. A reply past this is cut off and read as
+	// a failed check.
+	constexpr size_t kMaxResponseBytes = 8 * 1024 * 1024;
 
 	// The page a release is opened at, built from its tag and never taken
 	// from the reply, so that a reply cannot have the browser open another

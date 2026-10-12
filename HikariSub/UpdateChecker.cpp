@@ -26,10 +26,13 @@
 #include "UpdatePolicy.h"
 #include "VersionHikariSub.h"
 #include "config.h"
+#include <wx/app.h>
 #include <wx/sizer.h>
 #include <wx/utils.h>
+#include <wx/weakref.h>
 #include <wx/webrequest.h>
 #include <ctime>
+#include <string>
 #include <vector>
 
 namespace
@@ -40,8 +43,6 @@ namespace
 	static_assert(kNumVersion[0] == kVersion->major && kNumVersion[1] == kVersion->minor &&
 		kNumVersion[2] == kVersion->patch && kNumVersion[3] == 0,
 		"NumVersionHikariSub does not match VersionHikariSub");
-
-	const wxString kReleasesUrl = wxString::FromUTF8(update_policy::ReleasesApiUrl());
 
 	constexpr time_t kDay  = 24 * 60 * 60;
 	constexpr time_t kWeek = 7 * kDay;
@@ -56,31 +57,38 @@ namespace
 
 	// The list endpoint is used rather than /releases/latest because latest
 	// hides prereleases outright, which would leave the "stable only" option
-	// with nothing to do. False when the body is not a release list.
-	bool ReadReleases(const wxString &body, std::vector<update_policy::Release> *releases,
-		std::vector<ReleaseInfo> *infos)
+	// with nothing to do. False when the reply is not a release list.
+	bool ReadReleases(const JsonValue &root, std::vector<update_policy::Release> *releases)
 	{
-		JsonValue root = JsonValue::Parse(std::string(body.utf8_str()));
 		if (root.GetType() != JsonValue::Type::Array)
 			return false;
 
 		for (const JsonValue &release : root.Items()) {
-			wxString tag = release.GetString("tag_name");
 			update_policy::Release entry;
-			entry.tag = tag.utf8_string();
+			entry.tag = release.GetString("tag_name").utf8_string();
 			entry.draft = release.GetBool("draft");
 			entry.prerelease = release.GetBool("prerelease");
 			releases->push_back(entry);
-
-			ReleaseInfo info;
-			info.tag = tag;
-			info.name = release.GetString("name", tag);
-			// Built from the tag; the reply's html_url is not used.
-			info.url = wxString::FromUTF8(update_policy::ReleasePageUrl(tag.utf8_string()));
-			info.notes = release.GetString("body");
-			infos->push_back(info);
 		}
 		return true;
+	}
+
+	// Only the release that is shown is read in full. The page is built
+	// from the tag; the reply's html_url is not used.
+	ReleaseInfo GetReleaseInfo(const JsonValue &release)
+	{
+		ReleaseInfo info;
+		info.tag = release.GetString("tag_name");
+		info.name = release.GetString("name", info.tag);
+		info.url = wxString::FromUTF8(update_policy::ReleasePageUrl(info.tag.utf8_string()));
+		info.notes = release.GetString("body");
+		return info;
+	}
+
+	void OpenReleasePage(const wxString &url)
+	{
+		if (!url.empty())
+			wxLaunchDefaultBrowser(url);
 	}
 
 	// Says that only a prerelease is newer, and offers to open its page.
@@ -91,8 +99,8 @@ namespace
 				release.tag), _("Update"), wxYES_NO);
 		message.SetYesLabel(_("Open the download page"));
 		message.SetNoLabel(_("Close"));
-		if ((message.ShowModal() & wxYES) && !release.url.empty())
-			wxLaunchDefaultBrowser(release.url);
+		if (message.ShowModal() & wxYES)
+			OpenReleasePage(release.url);
 	}
 
 	class UpdateAvailableDialog : public HikariDialog
@@ -141,8 +149,7 @@ namespace
 
 			url = release.url;
 			Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent &) {
-				if (!url.empty())
-					wxLaunchDefaultBrowser(url);
+				OpenReleasePage(url);
 			}, 20001);
 			Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent &) {
 				Options.SetInt(UPDATER_NEXT_CHECK, (int)(time(nullptr) + kWeek));
@@ -169,47 +176,99 @@ namespace
 		wxString url;
 	};
 
-	void Check(wxWindow *parent, bool interactive)
+	// One check: the request's handler, separate from the frame so that it
+	// can be unbound with it. It deletes itself once the request has ended.
+	// The frame is held weakly; a reply that comes while it is closing, or
+	// after, is dropped without a message or a write to the options, which
+	// have been saved for the last time by then.
+	class UpdateRequest : public wxEvtHandler
 	{
-		// Each check's handler stays bound to the parent, and the one bound
-		// last takes every event it matches without passing it on. A request
-		// id of its own keeps a reply to its own check: with wxID_ANY, a
-		// startup check still waiting when the menu check starts was answered
-		// as the menu check, with its messages.
-		const int id = wxWindow::NewControlId();
-		wxWebRequest request = wxWebSession::GetDefault().CreateRequest(parent, kReleasesUrl, id);
-		if (!request.IsOk()) {
-			if (interactive)
-				HikariMessageBox(_("Cannot check for updates"), _("Update"));
-			return;
+	public:
+		UpdateRequest(wxWindow *parent, bool interactive)
+			: parent(parent)
+			, interactive(interactive)
+		{
+			Bind(wxEVT_WEBREQUEST_DATA, &UpdateRequest::OnData, this);
+			Bind(wxEVT_WEBREQUEST_STATE, &UpdateRequest::OnState, this);
 		}
 
-		request.SetHeader(L"Accept", L"application/vnd.github+json");
-		request.SetHeader(L"X-GitHub-Api-Version", L"2022-11-28");
-		request.SetHeader(L"User-Agent", wxString::Format(L"HikariSub/%s", VersionHikariSub));
+		bool Start()
+		{
+			request = wxWebSession::GetDefault().CreateRequest(this,
+				wxString::FromUTF8(update_policy::ReleasesApiUrl()));
+			if (!request.IsOk())
+				return false;
 
-		parent->Bind(wxEVT_WEBREQUEST_STATE, [parent, interactive](wxWebRequestEvent &evt) {
-			if (evt.GetState() == wxWebRequest::State_Active ||
-				evt.GetState() == wxWebRequest::State_Idle)
-			{
+			request.SetHeader(L"Accept", L"application/vnd.github+json");
+			request.SetHeader(L"X-GitHub-Api-Version", L"2022-11-28");
+			// GitHub refuses a request without one. The version is left
+			// out: the server has no use for it.
+			request.SetHeader(L"User-Agent", L"HikariSub");
+			// The reply comes in pieces through OnData, so that it can be
+			// cut off at kMaxResponseBytes.
+			request.SetStorage(wxWebRequest::Storage_None);
+			request.Start();
+			return true;
+		}
+
+	private:
+		void OnData(wxWebRequestEvent &evt)
+		{
+			if (tooLarge)
+				return;
+			size_t size = evt.GetDataSize();
+			if (size > update_policy::kMaxResponseBytes - body.size()) {
+				tooLarge = true;
+				body.clear();
+				body.shrink_to_fit();
+				request.Cancel();
+				return;
+			}
+			body.append(static_cast<const char *>(evt.GetDataBuffer()), size);
+		}
+
+		void OnState(wxWebRequestEvent &evt)
+		{
+			wxWebRequest::State state = evt.GetState();
+			if (state == wxWebRequest::State_Active || state == wxWebRequest::State_Idle)
+				return;
+
+			if (IsParentOpen()) {
+				// An automatic check backs off a day whatever happened, so a
+				// server that is down does not mean a request on every start.
+				Options.SetInt(UPDATER_NEXT_CHECK, (int)(time(nullptr) + kDay));
+				Finish(state == wxWebRequest::State_Completed && !tooLarge);
+			}
+			// Last, as nothing of this object may be used after it.
+			wxTheApp->ScheduleForDestruction(this);
+		}
+
+		bool IsParentOpen() const
+		{
+			wxWindow *window = parent;
+			return window && !window->IsBeingDeleted() &&
+				!wxTheApp->IsScheduledForDestruction(window);
+		}
+
+		void Fail()
+		{
+			if (interactive)
+				HikariMessageBox(_("Cannot check for updates"), _("Update"));
+		}
+
+		void Finish(bool received)
+		{
+			if (!received) {
+				Fail();
 				return;
 			}
 
-			// An automatic check backs off a day whatever happened, so a
-			// server that is down does not mean a request on every start.
-			Options.SetInt(UPDATER_NEXT_CHECK, (int)(time(nullptr) + kDay));
-
-			if (evt.GetState() != wxWebRequest::State_Completed) {
-				if (interactive)
-					HikariMessageBox(_("Cannot check for updates"), _("Update"));
-				return;
-			}
-
+			JsonValue root = JsonValue::Parse(body);
+			body.clear();
+			body.shrink_to_fit();
 			std::vector<update_policy::Release> releases;
-			std::vector<ReleaseInfo> infos;
-			if (!ReadReleases(evt.GetResponse().AsString(), &releases, &infos)) {
-				if (interactive)
-					HikariMessageBox(_("Cannot check for updates"), _("Update"));
+			if (!ReadReleases(root, &releases)) {
+				Fail();
 				return;
 			}
 
@@ -217,23 +276,37 @@ namespace
 				Options.GetBool(UPDATER_CHECK_FOR_STABLE));
 			switch (update_policy::GetOutcome(choice)) {
 			case update_policy::Outcome::Offer: {
-				UpdateAvailableDialog dialog(parent, infos[choice.offer]);
+				UpdateAvailableDialog dialog(parent, GetReleaseInfo(root.Items()[choice.offer]));
 				dialog.ShowModal();
 				dialog.SaveChoices();
 				break;
 			}
 			case update_policy::Outcome::OnlyPrereleaseNewer:
 				if (interactive)
-					ShowNewerPrerelease(parent, infos[choice.skippedPrerelease]);
+					ShowNewerPrerelease(parent, GetReleaseInfo(root.Items()[choice.skippedPrerelease]));
 				break;
 			case update_policy::Outcome::UpToDate:
 				if (interactive)
 					HikariMessageBox(_("You already have the latest version"), _("Update"));
 				break;
 			}
-		}, id);
+		}
 
-		request.Start();
+		wxWeakRef<wxWindow> parent;
+		bool interactive;
+		wxWebRequest request;
+		std::string body;
+		bool tooLarge = false;
+	};
+
+	void Check(wxWindow *parent, bool interactive)
+	{
+		UpdateRequest *check = new UpdateRequest(parent, interactive);
+		if (!check->Start()) {
+			delete check;
+			if (interactive)
+				HikariMessageBox(_("Cannot check for updates"), _("Update"));
+		}
 	}
 }
 
