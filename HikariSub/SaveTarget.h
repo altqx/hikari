@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <functional>
 #include <string>
 
 // The file a save to path replaces. A save writes a temporary file and renames
@@ -34,19 +35,28 @@
 // a file. Returns false as well for a link the kernel would not follow, such
 // as another user's link in a sticky world-writable folder like /tmp under
 // fs.protected_symlinks: realpath reads links without following them, so the
-// kernel's check is made by opening the path.
-inline bool ResolveSaveTarget(const char *path, std::string *resolved)
+// kernel's check is made by opening the path. The file that open finds must
+// be the one at the resolved path, so a link changed between the two looks
+// is refused too. afterResolve is for tests and runs between them.
+inline bool ResolveSaveTarget(const char *path, std::string *resolved,
+	const std::function<void()> &afterResolve = nullptr)
 {
 	resolved->clear();
 	char *target = realpath(path, nullptr);
+	if (afterResolve)
+		afterResolve();
 	if (target) {
 #ifdef O_PATH
 		int followed = open(path, O_PATH | O_CLOEXEC);
-		if (followed < 0) {
+		struct stat opened, named;
+		bool same = followed >= 0 && fstat(followed, &opened) == 0 && lstat(target, &named) == 0 &&
+			opened.st_dev == named.st_dev && opened.st_ino == named.st_ino;
+		if (followed >= 0)
+			close(followed);
+		if (!same) {
 			free(target);
 			return false;
 		}
-		close(followed);
 #endif
 		*resolved = target;
 		free(target);

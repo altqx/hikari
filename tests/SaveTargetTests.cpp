@@ -149,4 +149,37 @@ TEST(a_plain_file_resolves_to_itself)
 	CHECK(resolved == file.string());
 }
 
+TEST(a_link_changed_while_it_is_resolved_is_refused)
+{
+	ScratchDir dir, victimDir;
+	fs::path victim = victimDir.path / "victim.txt";
+	WriteText(victim, "the victim's data");
+	fs::path link = dir.path / "subs.ass";
+
+	// realpath follows a link to the victim, then the link becomes a plain
+	// file: the kernel's open, which makes the protected_symlinks check,
+	// never sees the link the resolved path came from
+	fs::create_symlink(victim, link);
+	std::string resolved = "stale";
+	CHECK(!ResolveSaveTarget(link.c_str(), &resolved, [&] {
+		fs::remove(link);
+		WriteText(link, "a plain file");
+	}));
+	CHECK(resolved.empty());
+
+	// a plain file that becomes a link to the victim
+	fs::remove(link);
+	WriteText(link, "a plain file");
+	CHECK(!ResolveSaveTarget(link.c_str(), &resolved, [&] {
+		fs::remove(link);
+		fs::create_symlink(victim, link);
+	}));
+	CHECK(resolved.empty());
+	CHECK(ReadText(victim) == "the victim's data");
+
+	// a link that stays as it was resolves
+	CHECK(ResolveSaveTarget(link.c_str(), &resolved, [] {}));
+	CHECK(resolved == victim.string());
+}
+
 #endif
