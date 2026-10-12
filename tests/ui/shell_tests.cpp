@@ -13840,6 +13840,197 @@ private slots:
         application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), false);
     }
 
+    // E4: legacy TimeCtrl's masked field (TimeCtrl.cpp at 20d647c4): Start,
+    // End and Duration never hold text outside their form, so typing reaches
+    // no refusal message. Digits replace the next ones and skip ':' and '.',
+    // a digit after ':' is at most 5, a digit over a selection zeroes it
+    // first, Backspace zeroes digits, Delete does nothing, paste takes only a
+    // whole time; separators, letters, typing past the end and a refused
+    // paste ring the bell.
+    void timeFieldsKeepTheirForm()
+    {
+        QVERIFY(application->openFile(writeStyled("mask.ass", "Dialogue: 0,0:00:01.00,9:00:00.00,Default,,0,0,0,,first\n")));
+        auto *session = targetSession();
+        application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), true);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *start = item("startField");
+        QCOMPARE(start->property("form").toInt(), 0);
+        QSignalSpy bells(start, SIGNAL(bell()));
+        const auto text = [&] { return start->property("text").toString(); };
+        const auto caret = [&] { return start->property("cursorPosition").toInt(); };
+        const auto select = [&](int from, int to) {
+            QVERIFY(QMetaObject::invokeMethod(start, "select", Q_ARG(int, from), Q_ARG(int, to)));
+        };
+        start->forceActiveFocus();
+
+        // Overwrite typing from the start; the separators typed ring the bell.
+        select(0, 0);
+        typeText(QStringLiteral("0:00:03.25"));
+        QCOMPARE(text(), QStringLiteral("0:00:03.25"));
+        QCOMPARE(caret(), 10);
+        QCOMPARE(bells.count(), 3);
+        QCOMPARE(session->draftRecord()->start.value.microseconds(), 3'250'000); // NUMBER_CHANGED: live
+        // Past the end: the bell, nothing changes.
+        typeText(QStringLiteral("1"));
+        QCOMPARE(text(), QStringLiteral("0:00:03.25"));
+        QCOMPARE(bells.count(), 4);
+        // The tens after ':' are at most 5 (:190-191), from before the ':' too.
+        select(4, 4);
+        typeText(QStringLiteral("9"));
+        QCOMPARE(text(), QStringLiteral("0:00:53.25"));
+        QCOMPARE(caret(), 6);
+        // A digit over a selection zeroes the selected digits first (:212-223).
+        select(2, 7);
+        typeText(QStringLiteral("1"));
+        QCOMPARE(text(), QStringLiteral("0:10:00.25"));
+        QCOMPARE(caret(), 3);
+        // Backspace zeroes the digit before the caret, stepping over a separator (:113-137).
+        select(10, 10);
+        press(Qt::Key_Backspace);
+        QCOMPARE(text(), QStringLiteral("0:10:00.20"));
+        QCOMPARE(caret(), 9);
+        press(Qt::Key_Backspace);
+        QCOMPARE(text(), QStringLiteral("0:10:00.00"));
+        QCOMPARE(caret(), 7);
+        select(2, 4);
+        press(Qt::Key_Backspace);
+        QCOMPARE(text(), QStringLiteral("0:00:00.00"));
+        QCOMPARE(caret(), 1);
+        // Delete does nothing in a time (:138-143).
+        select(0, 0);
+        press(Qt::Key_Delete);
+        select(2, 7);
+        press(Qt::Key_Delete);
+        QCOMPARE(text(), QStringLiteral("0:00:00.00"));
+        QCOMPARE(bells.count(), 4);
+
+        // Paste: a whole time of the form, all of it selected; else the bell.
+        select(3, 3);
+        QGuiApplication::clipboard()->setText(QStringLiteral("1:02:03.04"));
+        press(Qt::Key_V, Qt::ControlModifier);
+        QCOMPARE(text(), QStringLiteral("1:02:03.04"));
+        QCOMPARE(start->property("selectedText").toString(), QStringLiteral("1:02:03.04"));
+        QCOMPARE(session->draftRecord()->start.value.microseconds(), 3'723'040'000);
+        for (const char *refused : {"1:02:03", "01:02:03,040", "1:62:03.04", "soon"}) {
+            QGuiApplication::clipboard()->setText(QString::fromLatin1(refused));
+            press(Qt::Key_V, Qt::ControlModifier);
+            QCOMPARE(text(), QStringLiteral("1:02:03.04"));
+        }
+        QCOMPARE(bells.count(), 8);
+        // Ctrl+C copies the whole time (:108-112); Ctrl+X too, removing nothing.
+        select(2, 4);
+        press(Qt::Key_C, Qt::ControlModifier);
+        QCOMPARE(QGuiApplication::clipboard()->text(), QStringLiteral("1:02:03.04"));
+        QGuiApplication::clipboard()->clear();
+        select(2, 4);
+        press(Qt::Key_X, Qt::ControlModifier);
+        QCOMPARE(QGuiApplication::clipboard()->text(), QStringLiteral("1:02:03.04"));
+        QCOMPARE(text(), QStringLiteral("1:02:03.04"));
+        // An edit the mask does not make goes back with the bell (Ctrl+Backspace).
+        select(10, 10);
+        press(Qt::Key_Backspace, Qt::ControlModifier);
+        QCOMPARE(text(), QStringLiteral("1:02:03.04"));
+        QCOMPARE(bells.count(), 9);
+
+        // Enter sends it; nothing was refused along the way.
+        press(Qt::Key_Return);
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 3'723'040'000);
+        QVERIFY(item<QObject>("editorProblem")->property("text").toString().isEmpty());
+        QVERIFY(application->editor().attempted().isEmpty());
+        application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), false);
+    }
+
+    // E4: every format's field keeps its own form: SRT and TMPlayer as
+    // clocks, MPL2 and MicroDVD as numbers (digits only, an empty field 0,
+    // SubsTime::ParseMS); paste takes the form's value only.
+    void timeFieldsMaskEachFormat_data()
+    {
+        QTest::addColumn<QString>("file");
+        QTest::addColumn<QByteArray>("content");
+        QTest::addColumn<int>("form");
+        QTest::addColumn<QString>("shown");
+        QTest::addColumn<int>("from");
+        QTest::addColumn<QString>("keys");
+        QTest::addColumn<QString>("typed");
+        QTest::addColumn<int>("bells");
+        QTest::addColumn<QString>("goodPaste");
+        QTest::addColumn<QString>("badPaste");
+        QTest::newRow("srt") << "mask.srt" << QByteArray("1\r\n00:00:01,234 --> 09:00:00,000\r\nfirst\r\n\r\n") << 1
+                             << "00:00:01,234" << 3 << "12:34,5x67" << "00:12:34,567" << 3 << "01:02:03,456"
+                             << "1:02:03.04";
+        QTest::newRow("tmp") << "mask.tmp.txt" << QByteArray("00:00:01:first\r\n") << 2 << "00:00:01" << 0
+                             << "0109x99" << "01:09:59" << 1 << "02:03:04" << "02:03:04,000";
+        QTest::newRow("mpl2") << "mask.mpl2.txt" << QByteArray("[12][99999]first\r\n") << 3 << "12" << 2 << "3a" << "123"
+                              << 1 << "45" << "4.5";
+        QTest::newRow("microdvd") << "mask.mdvd.txt" << QByteArray("{25}{99999}first\r\n") << 3 << "25" << 2 << "3:" << "253"
+                                  << 1 << "7" << "-7";
+    }
+    void timeFieldsMaskEachFormat()
+    {
+        QFETCH(QString, file);
+        QFETCH(QByteArray, content);
+        const QString path = dir.filePath(file);
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(content);
+        }
+        QVERIFY(application->openFile(path));
+        application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), true);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *start = item("startField");
+        QFETCH(int, form);
+        QFETCH(QString, shown);
+        QCOMPARE(start->property("form").toInt(), form);
+        QCOMPARE(start->property("text").toString(), shown);
+        QSignalSpy rings(start, SIGNAL(bell()));
+        start->forceActiveFocus();
+        QFETCH(int, from);
+        QVERIFY(QMetaObject::invokeMethod(start, "select", Q_ARG(int, from), Q_ARG(int, from)));
+        QFETCH(QString, keys);
+        QFETCH(QString, typed);
+        QFETCH(int, bells);
+        typeText(keys);
+        QCOMPARE(start->property("text").toString(), typed);
+        QCOMPARE(rings.count(), bells);
+        // Enter applies it with no field refusing it; the field shows the same text.
+        press(Qt::Key_Return);
+        QVERIFY(application->editor().attempted().isEmpty()); // no field refused it
+        QCOMPARE(start->property("text").toString(), typed);
+
+        QFETCH(QString, badPaste);
+        QGuiApplication::clipboard()->setText(badPaste);
+        QMetaObject::invokeMethod(start, "selectAll");
+        press(Qt::Key_V, Qt::ControlModifier);
+        QCOMPARE(start->property("text").toString(), typed);
+        QCOMPARE(rings.count(), bells + 1);
+        QFETCH(QString, goodPaste);
+        QGuiApplication::clipboard()->setText(goodPaste);
+        QMetaObject::invokeMethod(start, "selectAll");
+        press(Qt::Key_V, Qt::ControlModifier);
+        QCOMPARE(start->property("text").toString(), goodPaste);
+        if (form == 3) {
+            // A number empties as text does; empty is 0, sent without a message.
+            QMetaObject::invokeMethod(start, "selectAll");
+            press(Qt::Key_Backspace);
+            QCOMPARE(start->property("text").toString(), QString());
+            press(Qt::Key_Return);
+            QVERIFY(application->editor().attempted().isEmpty());
+            QCOMPARE(start->property("text").toString(), QStringLiteral("0"));
+        } else {
+            // Delete does nothing in a clock form.
+            QVERIFY(QMetaObject::invokeMethod(start, "select", Q_ARG(int, 0), Q_ARG(int, 0)));
+            press(Qt::Key_Delete);
+            QCOMPARE(start->property("text").toString(), goodPaste);
+        }
+        application->editor().discard();
+        application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), false);
+    }
+
     // EditBox::UpdateChars against legacy TextData: "Wraps: <counts>/43" and
     // "Characters per second: <n><=15", warned over 43 characters a wrap and
     // over 15 per second; the translation's counts in translation mode.
@@ -14033,6 +14224,15 @@ private slots:
         QCOMPARE(item<QObject>("startField")->property("text").toString(), start);
         QCOMPARE(item<QObject>("endField")->property("text").toString(), end);
         QCOMPARE(item<QObject>("durationField")->property("text").toString(), duration);
+        // E4: frames are a number in the masked field: digits only (TimeCtrl's validator).
+        auto *startField = item("startField");
+        QCOMPARE(startField->property("form").toInt(), 3);
+        QSignalSpy rings(startField, SIGNAL(bell()));
+        startField->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(startField, "select", Q_ARG(int, 0), Q_ARG(int, 0)));
+        typeText(QStringLiteral(":x"));
+        QCOMPARE(startField->property("text").toString(), start);
+        QCOMPARE(rings.count(), 2);
         auto *model = item("editingGrid")->property("model").value<QAbstractItemModel *>();
         QCOMPARE(model->index(0, ui::LineTableModel::StartColumn).data().toString(), start);
         QCOMPARE(model->index(0, ui::LineTableModel::EndColumn).data().toString(), end);

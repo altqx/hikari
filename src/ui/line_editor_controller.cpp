@@ -1454,6 +1454,13 @@ bool LineEditorController::hasEnd() const
     return s && s->document().format() != core::SubtitleFormat::TMPlayer;
 }
 
+int LineEditorController::timeForm() const
+{
+    auto *s = session();
+    return static_cast<int>(s ? application::timeFieldForm(s->document().format(), frameTimebase())
+                              : application::TimeFieldForm::Ass);
+}
+
 bool LineEditorController::comment() const
 {
     const auto r = record();

@@ -45,23 +45,43 @@ ColumnLayout {
     component Field: TextField {
         id: field
         property string value
-        property bool timeField: false
+        property string tip
+        signal applied(string text)
+        text: value
+        selectByMouse: true
+        Layout.preferredWidth: 90
+        onValueChanged: text = value
+        // Only a changed field is sent (legacy IsModified).
+        function apply() {
+            if (text !== value)
+                applied(text)
+        }
+        onEditingFinished: apply()
+        Keys.onPressed: event => event.accepted = inspector.commitKey(event, field, false)
+        ToolTip.visible: hovered && tip.length > 0
+        ToolTip.text: tip
+        ToolTip.delay: 500
+    }
+
+    // Start, End and Duration: legacy TimeCtrl's masked field (TimeField),
+    // in the form the Document and the Time/Frames switch give it.
+    component TimeBox: TimeField {
+        id: time
+        property string value
         property int timeRole: -1 // TimeFieldRole: 0 Duration, 1 Start, 2 End
         property bool warning: false
         property bool typing: false
         property string tip
         signal applied(string text)
+        form: inspector.editor.timeForm
         text: value
-        selectByMouse: true
         Layout.preferredWidth: 90
         // Legacy WINDOW_WARNING_ELEMENTS: the theme layer's warning role.
         color: warning ? Theme.warning : palette.text
         // A live edit leaves the typed text as it is (OnEdit sets the other
         // fields, not the focused one).
         onValueChanged: if (!typing) text = value
-        onTextEdited: {
-            if (!timeField)
-                return
+        onTyped: {
             typing = true
             inspector.editor.timeTyped(timeRole, text)
             typing = false
@@ -71,11 +91,11 @@ ColumnLayout {
         function apply() {
             if (text !== value)
                 applied(text)
-            if (timeField && inspector.editor.attempted.length === 0)
+            if (inspector.editor.attempted.length === 0)
                 text = value
         }
         onEditingFinished: apply()
-        Keys.onPressed: event => event.accepted = inspector.commitKey(event, field, field.timeField)
+        otherKey: event => inspector.commitKey(event, time, true)
         ToolTip.visible: hovered && tip.length > 0
         ToolTip.text: tip
         ToolTip.delay: 500
@@ -198,36 +218,33 @@ ColumnLayout {
             tip: qsTr("Line layer. Higher layers are on top")
             onApplied: text => inspector.editor.setLayerText(text)
         }
-        Field {
+        TimeBox {
             id: startField
             objectName: "startField"
             value: inspector.editor.startText
             enabled: inspector.editor.editable
-            timeField: true
             timeRole: 1
             warning: inspector.editor.startWarning
             Accessible.name: qsTr("Start")
             tip: qsTr("Line start time")
             onApplied: text => inspector.editor.setStartText(text)
         }
-        Field {
+        TimeBox {
             id: endField
             objectName: "endField"
             value: inspector.editor.endText
             enabled: inspector.editor.editable && inspector.editor.hasEnd
-            timeField: true
             timeRole: 2
             warning: inspector.editor.endWarning
             Accessible.name: qsTr("End")
             tip: qsTr("Line end time")
             onApplied: text => inspector.editor.setEndText(text)
         }
-        Field {
+        TimeBox {
             id: duration
             objectName: "durationField"
             value: inspector.editor.durationText
             enabled: inspector.editor.editable && inspector.editor.hasEnd
-            timeField: true
             timeRole: 0
             Accessible.name: qsTr("Duration")
             tip: qsTr("Line duration")
