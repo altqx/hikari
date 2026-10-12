@@ -28,17 +28,12 @@ class UpdateChecker
 {
 public:
 	// Honours the auto-check option and the next-check time, and stays silent
-	// on error or when already current. Safe to call with no network.
+	// on error, when already current, and about a version the user closed
+	// the dialog on. Safe to call with no network.
 	static void CheckOnStartup(wxWindow *parent);
 
-	// Menu entry: always checks, and reports being up to date and any failure.
+	// Menu entry: checks whatever the options say, and reports being up to
+	// date and any failure. While a check runs, it has that one report
+	// instead of starting another.
 	static void CheckNow(wxWindow *parent);
-
-	// Semantic version precedence, with or without a leading "v". False when
-	// either side is not a semantic version, such as the old four-part tags.
-	static bool IsNewerVersion(const wxString &tag, const wxString &current);
-
-	// "v1.2.0-rc.1" and the like, so a prerelease tag published without
-	// GitHub's prerelease flag still stays out of "stable only".
-	static bool IsPrerelease(const wxString &tag);
 };

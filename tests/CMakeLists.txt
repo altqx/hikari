@@ -45,6 +45,7 @@ add_executable(hikarisub_tests
     SrtTagsTests.cpp
     TimebaseTests.cpp
     UndoHistoryTests.cpp
+    UpdatePolicyTests.cpp
     TextComparisonTests.cpp
     WaveformPeaksTests.cpp
     ../HikariSub/AssBlend.cpp

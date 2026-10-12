@@ -16,6 +16,7 @@
 
 
 #include "SemVer.h"
+#include "UpdatePolicy.h"
 #include "VersionHikariSub.h"
 #include "OpennWrite.h"
 #include "HikariMessageBox.h"
@@ -394,7 +395,8 @@ void config::LoadDefaultConfig(wxString * defaultOptions)
 	configTable[AUTOMATION_TRACE_LEVEL] = L"3";
 	configTable[AUTOSAVE_MAX_FILES] = L"3";
 	configTable[GRID_CHANGE_ACTIVE_ON_SELECTION] = L"true";
-	configTable[UPDATER_CHECK_FOR_STABLE] = L"true";
+	configTable[UPDATER_AUTO_CHECK] = update_policy::kAutoCheckDefault ? L"true" : L"false";
+	configTable[UPDATER_CHECK_FOR_STABLE] = update_policy::kStableOnlyDefault ? L"true" : L"false";
 }
 
 //remember, create table[colorsSize] without this size it will crash
@@ -582,6 +584,13 @@ int config::LoadOptions()
 			// destroying the existing config file (pre-PR behavior).
 		}
 	}
+
+	// A file saved by this same version is read without the defaults under
+	// it, so an update option it does not hold would read as off.
+	SetBool(UPDATER_AUTO_CHECK, update_policy::ReadOption(
+		GetString(UPDATER_AUTO_CHECK).utf8_string(), update_policy::kAutoCheckDefault));
+	SetBool(UPDATER_CHECK_FOR_STABLE, update_policy::ReadOption(
+		GetString(UPDATER_CHECK_FOR_STABLE).utf8_string(), update_policy::kStableOnlyDefault));
 
 	actualStyleDir = L"Default";
 	path = emptyString;

@@ -29,7 +29,8 @@ HikariSub will stay actively maintained rather than go dormant, and its dependen
 * **Hotkeys**: every action can be remapped, with separate global, grid, editor, audio and video scopes, and automation macros can have hotkeys too.
 * **Themes**: every colour in the interface can be themed. The bundled themes can be copied and edited in the settings.
 * **Localisation**: the interface is available in English, Polish, Korean, Thai and Tamil.
-* **Windows integration**: registers file associations for subtitle types, and checks for updates.
+* **Windows integration**: registers file associations for subtitle types.
+* **Update check**: when the program starts, once a day at most, it asks GitHub (api.github.com) for the list of HikariSub releases and says when a newer one is out. If GitHub could not be reached, it asks again at a start an hour later. It downloads and installs nothing; its dialog opens the release page in the browser. GitHub sees your IP address and "HikariSub" as the user agent, and nothing about the build. The check is on by default; turn it off in File > Settings, on the Editor page, under Updates. Help > Check for updates checks at any time.
 
 ### Subtitle grid
 
