@@ -1475,6 +1475,7 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 		bool isFFMS2 = true;
 		bool hasEditor = true;
 		wxString rest;
+		std::vector<TabPanel*> failedTabs;
 		while (true)
 		{
 			wxString token = tokenizer.GetNextToken();
@@ -1504,22 +1505,24 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 					int lastTab = sthis->Size() - 1;
 					TabPanel *tab = sthis->Pages[lastTab];
 					
+					bool subtitlesFailed = false;
 					if (!subtitles.empty()){
 						//when load crash session better use active line from subtitles
 						if (loadCrashSession) {
 							wxString orgSubtitles = subtitles;
 							FindAutoSaveSubstitute(&subtitles, lastTab);
-							sthis->LoadSubtitles(tab, subtitles);
-							if (orgSubtitles != subtitles) {
+							subtitlesFailed = !sthis->LoadSubtitles(tab, subtitles);
+							if (!subtitlesFailed && orgSubtitles != subtitles) {
 								tab->SubsPath = orgSubtitles;
 								tab->SubsName = HikariPathName(tab->SubsPath);
 								tab->grid->file->RemoveLastIterSave();
 								tab->grid->UpdateUR(true);
 							}
 						}else
-							sthis->LoadSubtitles(tab, subtitles, activeLine, scrollPosition);
+							subtitlesFailed = !sthis->LoadSubtitles(tab, subtitles, activeLine, scrollPosition);
 
-						sthis->Hikari->SetRecent();
+						if (!subtitlesFailed)
+							sthis->Hikari->SetRecent();
 					}
 					if (!keyframes.empty()) {
 						tab->video->OpenKeyframes(keyframes);
@@ -1537,6 +1540,8 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 					
 					sthis->Hikari->Label();
 					tab->shiftTimes->Contents();
+					if (subtitlesFailed)
+						failedTabs.push_back(tab);
 					video = emptyString;
 					videoPosition = 0;
 					subtitles = emptyString;
@@ -1550,6 +1555,11 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 			}
 			if (hasnotMoreTokens)
 				break;
+		}
+		//a tab is not restored empty when its subtitles cannot be loaded
+		//and it has nothing else
+		for (TabPanel *failedTab : failedTabs){
+			sthis->RemoveUnusedPage(sthis->FindPanel(failedTab, false), sthis->iter);
 		}
 		if (sthis->Pages.size() < 1)
 			sthis->AddPage(true);
