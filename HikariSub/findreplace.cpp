@@ -917,7 +917,9 @@ void FindReplace::FindInSubsLine(wxString *onlyString, Dialogue *dial, TabPanel 
 				}
 			}
 
-			if ((size_t)tabTextPosition >= onlyString->length() || startLine){
+			//Beginning and End of text have one result per line,
+			//the End of text branch restarts from 0 on every pass
+			if ((size_t)tabTextPosition >= onlyString->length() || startLine || endLine){
 				tabTextPosition = 0;
 				break;
 			}
