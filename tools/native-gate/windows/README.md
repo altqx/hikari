@@ -67,7 +67,7 @@ recorded as a pass.
 | `views` | D2 (#201): View > Only subtitles, Only video, Video and subs, Audio and subs and All from the keyboard (with `ep1.mkv` and blank audio): the core panels each shows, the focus on a shown panel, the draft kept, All back to the panels' places. `view_to()` presses Down until the item has the UIA focus (the arrangements come first and Down skips disabled ones) |
 | `editor` | D2: Ctrl+E (GLOBAL_EDITOR) through SendInput: only the Video panel, with the focus; Ctrl+E again: the arrangement back, the focus on the Grid, the draft kept |
 | `videofs` | V5 (#184): F in the Video panel shows the video fullscreen on the main window's monitor, Space and Left work there, Esc leaves with the main window's geometry and the focus restored; the context menu's "Open in full screen on monitor 2" (the menu key, the item through UI Automation) puts it on the second monitor, at 100 % and at 150 % (GetDpiForWindow), and Esc brings the docked video back |
-| `dpi` | only with `--dpi`: the one monitor's scale 100 -> 150 % live (`SPI_SETLOGICALDPIOVERRIDE`, no sign-out) with a floating panel, typing there, then back to 100 %. Not observable if the guest does not change scale without signing out |
+| `dpi` | only with `--dpi`: the one monitor's scale 100 -> 150 % live (`SPI_SETLOGICALDPIOVERRIDE`, no sign-out) with a floating panel, typing there, then back to 100 %. Windows stops a 1024x768 monitor at 125 %, so on the VM's primary the step observes the change at 125 % and says so. Not observable if the guest does not change scale without signing out |
 
 Submenus: the first Float from View > Panels opens the submenus with Right
 and records `submenu-right-arrow`; should Right not open them, it records the

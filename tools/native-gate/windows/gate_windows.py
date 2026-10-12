@@ -1078,11 +1078,14 @@ def pointer_floating_move_resize():
             return
         # The header's free part, just left of its ⋯: the window system's move
         # (SC_DRAGMOVE), which starts once the pointer has moved the drag
-        # distance, so the window lags the pointer by that much.
+        # distance, so the window lags the pointer by that much. It goes left
+        # and down: the ⋯ sits a few pixels inside the primary monitor's right
+        # edge after the move above, and the tablet reaches the primary only, so
+        # a move to the right would put the ⋯ the next item clicks out of reach.
         btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == "Audio"), None)
         if btn:
             sx, sy = btn["x"] - 24, btn["y"] + btn["h"] // 2
-            tx, ty = sx + 40, sy + 160
+            tx, ty = sx - 40, sy + 160
             try:
                 pointer([(sx, sy)], hold=True)
                 time.sleep(0.25)
@@ -1093,10 +1096,10 @@ def pointer_floating_move_resize():
                 time.sleep(1.2)
             st = uia()
             fs = frames(st).get("Audio")
-            moved = bool(fs) and abs(fs["x"] - (fb["x"] + 40)) <= 16 and abs(fs["y"] - (fb["y"] + 160)) <= 16
+            moved = bool(fs) and abs(fs["x"] - (fb["x"] - 40)) <= 16 and abs(fs["y"] - (fb["y"] + 160)) <= 16
             ev, st = snap("ptr-9-floating-system-moved")
             verdict("floating-system-move", "observed" if moved else "failed",
-                    f"tablet drag of the floating Audio header's free part from {sx},{sy} by 40,160: window "
+                    f"tablet drag of the floating Audio header's free part from {sx},{sy} by -40,160: window "
                     f"{fb['x']},{fb['y']} -> {fs and (fs['x'], fs['y'])}, still floating {bool(fs)}", ev)
             fb = fs or fb
         else:
@@ -1294,10 +1297,13 @@ def step_test_executables():
     skips = re.findall(r"SKIP\s*:.*", text)
     # Skips declared as platform limits, each observed for real by another
     # item (as in the Linux gate): a synthetic drag between windows needs the
-    # offscreen platform (pointer). D2's screenshots run only with
-    # HIKARI_SURFACE_SHOT_DIR.
+    # offscreen platform (pointer); the window follows the pointer itself only
+    # where the platform declines a system move, which Windows does not
+    # (floating-system-move); the X11 system move is the Linux gate's. D2's
+    # screenshots run only with HIKARI_SURFACE_SHOT_DIR.
     known = ("the compositor places windows", "a synthetic drag between windows needs the offscreen platform",
-             "HIKARI_SURFACE_SHOT_DIR is not set")
+             "the window follows a declined system move only where the platform declines it",
+             "X11 only (the .xvfb run)", "HIKARI_SURFACE_SHOT_DIR is not set")
     unexpected = [k for k in skips if not any(reason in k for reason in known)]
     log("tests", exits, summary, skips)
     verdict("test-executables", "observed" if ok and not unexpected else "failed",
@@ -1497,19 +1503,22 @@ def dpi_set(percent):
 
 def step_dpi():
     """The one monitor's display scale changed to 150 % live (a guest setting)
-    with a floating panel, then restored to 100 %."""
+    with a floating panel, then restored to 100 %. Windows offers 150 % only
+    from about 1920x1200 and stops a 1024x768 monitor at 125 %: the step then
+    observes the live change at the scale the guest took and says so."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
     how = float_panel("Line editor", "dpi")
     ev0, st0 = snap("dpi-0-at-100")
     res = dpi_set(150)
     try:
-        if res.get("after") != 150:
+        after = res.get("after")
+        if not isinstance(after, int) or after <= 100:
             verdict("dpi-scale-change", "not-observable",
-                    f"the guest did not change its scale to 150 % without signing out: {res}", ev0)
+                    f"the guest did not change its scale without signing out: {res}", ev0)
             return
         time.sleep(3)
-        ev1, st = snap("dpi-1-at-150", extra="# DPI_RESULT\n" + json.dumps(res))
+        ev1, st = snap(f"dpi-1-at-{after}", extra="# DPI_RESULT\n" + json.dumps(res))
         set_focus("Line text")
         keys("end")
         type_text(" hidpi")
@@ -1518,7 +1527,9 @@ def step_dpi():
         both = MAIN in frames(st) and "Line editor" in frames(st)
         verdict("dpi-scale-change", "observed" if both and txt and txt.endswith(" hidpi") else "failed",
                 f"scale 100 -> {res.get('after')} % live ({res}); floating Line editor (floated by {how}) and main "
-                f"window still shown: {both}; typing there gives {txt!r} (dpi-1-at-150*.png)",
+                f"window still shown: {both}; typing there gives {txt!r} (dpi-1-at-{after}*.png)"
+                + ("" if after == 150 else f"; 150 % asked, the guest took {after} % (the most it offers at this "
+                                           "resolution)"),
                 ev0 + ev1)
     finally:
         back = dpi_set(100)
