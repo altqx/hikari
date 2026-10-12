@@ -1016,10 +1016,13 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 			Freeze();
 			tab->Hide();
 			for (auto &file : paths){
+				int previousTab = Tabs->GetSelection();
+				bool newTab = false;
 				if (tab->SubsPath != emptyString) {
 					InsertTab(false); 
 					//set new tab
 					tab = GetTab();
+					newTab = true;
 				}
 				if (file.AfterLast(L'.') == L"mkv"){
 					event.SetString(file);
@@ -1027,6 +1030,11 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 				}
 				else{
 					OpenFile(file, false, false);
+				}
+				//do not leave the tab made for this file empty behind
+				if (newTab && tab->SubsPath == emptyString){
+					Tabs->RemoveUnusedPage(Tabs->FindPanel(tab, false), previousTab);
+					tab = GetTab();
 				}
 			}
 			Thaw();
@@ -1873,43 +1881,42 @@ void HikariSubFrame::OpenFiles(wxArrayString &files, bool intab, bool nofreeze, 
 	for (size_t i = 0; i < maxx; i++)
 	{
 
+		int previousTab = Tabs->GetSelection();
+		bool newTab = false;
 		//a tab with unsaved changes is in use even without a path
 		if ((i >= Tabs->Size() || Tabs->Page(Tabs->iter)->SubsPath != emptyString ||
 			Tabs->Page(Tabs->iter)->VideoPath != emptyString ||
 			Tabs->Page(Tabs->iter)->grid->file->IsModified()) && !intab){
 			InsertTab(false);
+			newTab = true;
 		}
 		TabPanel *tab = GetTab();
 		tab->video->RemoveVisual();
+		bool opened = true;
 		if (i >= videosSize){
-			if (!OpenFile(subs[i], false, false))
-				break;
-
-			continue;
+			opened = OpenFile(subs[i], false, false);
 		}
 		else if (i >= subsSize){
-			if (!OpenFile(videos[i], false, false))
-				break;
-
-			continue;
+			opened = OpenFile(videos[i], false, false);
 		}
-		if (i < subsSize){
-			if (SavePrompt(2) || !Tabs->LoadSubtitles(tab, subs[i])){
-				break;
+		else{
+			opened = !SavePrompt(2) && Tabs->LoadSubtitles(tab, subs[i]);
+			if (opened){
+				if (!tab->editor){ HideEditor(); }
+				SetRecent();
+				Label();
+				SetSubsResolution(askForRes);
+				opened = Tabs->LoadVideo(tab, videos[i], -1, false, true) != 0;
 			}
-			
-			if (!tab->editor){ HideEditor(); }
-			SetRecent();
-			Label();
-			SetSubsResolution(askForRes);
+			if (opened)
+				tab->shiftTimes->Contents();
 		}
-		if (i < videosSize){
-			if (!Tabs->LoadVideo(tab, videos[i], -1, false, true)){
-				break;
-			}
+		if (!opened){
+			//do not leave the tab made for this file empty behind
+			if (newTab)
+				Tabs->RemoveUnusedPage(Tabs->FindPanel(tab, false), previousTab);
+			break;
 		}
-		tab->shiftTimes->Contents();
-
 	}
 
 	Thaw();
