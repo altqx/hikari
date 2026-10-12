@@ -629,6 +629,11 @@ int MoveAll::DrawCurve(int i, std::vector<ClipPoint>* vectorPoints, bool bspline
 		}
 		delete[] v2;
 	}
+	else if (i + 2 >= (int)vectorPoints->size()) {
+		//incomplete Bezier at the end, there are no points for the curve,
+		//draw only the points it has
+		pts = vectorPoints->size() - i;
+	}
 	else {
 		ClipPoint tmp = vectorPoints->at(i - 1);
 		if (tmp.type == L"s") {
@@ -644,7 +649,8 @@ int MoveAll::DrawCurve(int i, std::vector<ClipPoint>* vectorPoints, bool bspline
 		Curve(i - 1, vectorPoints, &v4, false);
 		vectorPoints->at(i - 1) = tmp;
 	}
-	line->Draw(&v4[0], v4.size(), 0xFFBB0000);
+	if (v4.size())
+		line->Draw(&v4[0], v4.size(), 0xFFBB0000);
 	line->End();
 	return pts;
 }

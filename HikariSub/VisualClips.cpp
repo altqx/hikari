@@ -791,6 +791,11 @@ int DrawingAndClip::DrawCurve(int i, bool bspline)
 		}
 		delete[] v2;
 	}
+	else if (i + 2 >= (int)Points.size()) {
+		//incomplete Bezier at the end, there are no points for the curve,
+		//draw only the points it has
+		pts = Points.size() - i;
+	}
 	else {
 		ClipPoint tmp = Points[i - 1];
 		if (Points[i - 1].type == L"s") {
@@ -810,7 +815,8 @@ int DrawingAndClip::DrawCurve(int i, bool bspline)
 		line->Draw(&v2[2], 2, 0xFF0000FF);
 		Points[i - 1] = tmp;
 	}
-	line->Draw(&v4[0], v4.size(), 0xFFBB0000);
+	if (v4.size())
+		line->Draw(&v4[0], v4.size(), 0xFFBB0000);
 	line->End();
 	if (i > 1) { DrawRect(i - 1); }
 	for (int j = 1; j < pts; j++) { DrawCircle(i + j - 1); }
@@ -1400,8 +1406,14 @@ void DrawingAndClip::RemovePoints(int selectedPoint, bool fromKeyboard)
 				if (Points[removei].start) { break; }
 				// first point is m it should find start if not table is corrupted
 			}
+			size_t bezierEnd = removei + 1;
+			while (bezierEnd < Points.size() && !Points[bezierEnd].start) { bezierEnd++; }
 			numOfRemoved = 2;
-			if (removei + 2 == j) {
+			//incomplete Bezier, remove all its points, there is no third to change
+			if (bezierEnd - removei < 3) {
+				numOfRemoved = bezierEnd - removei;
+			}
+			else if (removei + 2 == j) {
 				numOfRemoved = 3;
 			}
 			else {
