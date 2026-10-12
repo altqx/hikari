@@ -7,8 +7,8 @@
 // did, "Cannot create audio renderer instance"); and each fixture needs a
 // system decoder for its codec. The GitHub Windows runners (Windows Server,
 // no sound card) may lack either; the Winix VM has both. A test that needs
-// the graph skips naming what is missing instead of failing or running into
-// its timeout.
+// the graph skips naming what it needs and is missing, instead of failing or
+// running into its timeout; one whose fixtures need nothing missing runs.
 
 #ifdef _WIN32
 
@@ -48,13 +48,45 @@ inline constexpr DWORD fourcc(char a, char b, char c, char d)
     return DWORD(BYTE(a)) | (DWORD(BYTE(b)) << 8) | (DWORD(BYTE(c)) << 16) | (DWORD(BYTE(d)) << 24);
 }
 
-// What this host lacks for legacy's graph over video in `codecs` (FOURCC,
-// name); empty when nothing is missing.
-inline std::string directShowGraphMissing(const std::vector<std::pair<DWORD, const char *>> &codecs)
+// What this host lacks for legacy's graph, each piece recorded on its own:
+// the audio renderer every graph adds, the filter mapper the decoder lookup
+// uses, and a decoder for each FOURCC asked about. A test skips only for the
+// pieces its fixtures need.
+struct DirectShowGaps {
+    std::string audioRenderer;                               // empty: it can be created
+    std::string filterMapper;                                // empty: it can be created
+    std::vector<std::pair<std::string, std::string>> codecs; // (name, what is missing), missing ones only
+
+    // What a graph over video in the named codecs lacks here (empty: nothing).
+    std::string missing(const std::vector<std::string> &codecNames) const
+    {
+        std::string out;
+        const auto add = [&out](const std::string &what) {
+            if (!what.empty())
+                out += (out.empty() ? "" : "; ") + what;
+        };
+        add(audioRenderer);
+        add(filterMapper);
+        for (const auto &[name, what] : codecs)
+            for (const auto &wanted : codecNames)
+                if (name == wanted)
+                    add(what);
+        return out;
+    }
+    // Everything missing (empty: nothing).
+    std::string all() const
+    {
+        std::vector<std::string> names;
+        for (const auto &[name, what] : codecs)
+            names.push_back(name);
+        return missing(names);
+    }
+};
+
+inline DirectShowGaps directShowGaps(const std::vector<std::pair<DWORD, const char *>> &codecs)
 {
     const HRESULT com = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-    std::string missing;
-    const auto add = [&missing](const std::string &what) { missing += (missing.empty() ? "" : "; ") + what; };
+    DirectShowGaps gaps;
 
     IBaseFilter *audio = nullptr;
     const HRESULT created =
@@ -62,9 +94,10 @@ inline std::string directShowGraphMissing(const std::vector<std::pair<DWORD, con
     if (audio)
         audio->Release();
     if (FAILED(created))
-        add("DirectShow's audio renderer cannot be created (" + hresultText(created) +
-            (created == VFW_E_NO_AUDIO_HARDWARE ? " VFW_E_NO_AUDIO_HARDWARE" : "") + ", " +
-            std::to_string(waveOutGetNumDevs()) + " audio output devices), and legacy's graph adds it to every video");
+        gaps.audioRenderer = "DirectShow's audio renderer cannot be created (" + hresultText(created) +
+                             (created == VFW_E_NO_AUDIO_HARDWARE ? " VFW_E_NO_AUDIO_HARDWARE" : "") + ", " +
+                             std::to_string(waveOutGetNumDevs()) +
+                             " audio output devices), and legacy's graph adds it to every video";
 
     // The decoders the graph's intelligent connect could insert (DMOs included).
     IFilterMapper2 *mapper = nullptr;
@@ -83,15 +116,23 @@ inline std::string directShowGraphMissing(const std::vector<std::pair<DWORD, con
                 found->Release();
             }
             if (!any)
-                add(std::string("no DirectShow decoder takes ") + name + " video (IFilterMapper2 lists none)");
+                gaps.codecs.emplace_back(name, std::string("no DirectShow decoder takes ") + name +
+                                                   " video (IFilterMapper2 lists none)");
         }
         mapper->Release();
     } else {
-        add("the DirectShow filter mapper cannot be created");
+        gaps.filterMapper = "the DirectShow filter mapper cannot be created";
     }
     if (SUCCEEDED(com))
         CoUninitialize();
-    return missing;
+    return gaps;
+}
+
+// What this host lacks for legacy's graph over video in `codecs` (FOURCC,
+// name); empty when nothing is missing.
+inline std::string directShowGraphMissing(const std::vector<std::pair<DWORD, const char *>> &codecs)
+{
+    return directShowGaps(codecs).all();
 }
 
 } // namespace hikari::testing

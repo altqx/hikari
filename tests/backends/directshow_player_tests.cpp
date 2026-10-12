@@ -100,6 +100,15 @@ struct Delivered {
 
 } // namespace
 
+// Skips the running test when legacy's graph over video in the named codecs
+// cannot be built here (the audio renderer every graph adds, or a decoder).
+#define REQUIRE_GRAPH(...)                                                                                          \
+    do {                                                                                                           \
+        if (const std::string gap = m_gaps.missing({__VA_ARGS__}); !gap.empty())                                    \
+            QSKIP(qPrintable(QStringLiteral("legacy's DirectShow graph cannot be built here: ") +                  \
+                             QString::fromStdString(gap)));                                                        \
+    } while (false)
+
 class DirectShowPlayerTests : public QObject {
     Q_OBJECT
 
@@ -116,8 +125,20 @@ class DirectShowPlayerTests : public QObject {
         return **result;
     }
 
-    // What this host lacks for legacy's graph over the fixtures (empty: nothing).
-    std::string m_missing;
+    // What this host lacks for legacy's graph over the fixtures, piece by piece.
+    hikari::testing::DirectShowGaps m_gaps;
+
+    // The decoder a fixture's video needs beside DirectShow's own: XVID in
+    // dshow-cfr.avi, WMV2 in dshow-vfr.wmv (dshow-mpg.mpg's MPEG-1 decoder is
+    // DirectShow's own).
+    static std::string codecOf(const QString &fixture)
+    {
+        if (fixture.endsWith(QLatin1String(".avi")))
+            return "XVID";
+        if (fixture.endsWith(QLatin1String(".wmv")))
+            return "WMV2";
+        return {};
+    }
 
     void watch(DirectShowPlayer &player, Delivered &delivered)
     {
@@ -181,19 +202,13 @@ class DirectShowPlayerTests : public QObject {
 private slots:
     void initTestCase()
     {
-        // XVID in dshow-cfr.avi, WMV2 in dshow-vfr.wmv (dshow-mpg.mpg's
-        // MPEG-1 decoder is DirectShow's own).
-        m_missing = hikari::testing::directShowGraphMissing(
+        // The audio renderer, XVID and WMV2 are recorded separately; each
+        // test skips only for what its fixtures' graphs need (codecOf), and
+        // the frame conversion needs no graph.
+        m_gaps = hikari::testing::directShowGaps(
             {{hikari::testing::fourcc('X', 'V', 'I', 'D'), "XVID"}, {hikari::testing::fourcc('W', 'M', 'V', '2'), "WMV2"}});
-        if (!m_missing.empty())
-            std::fprintf(stderr, "DirectShow on this host: %s\n", m_missing.c_str());
-    }
-    // Every test but the frame conversion opens a fixture through the graph.
-    void init()
-    {
-        if (!m_missing.empty() && qstrcmp(QTest::currentTestFunction(), "framesConvertWithTheScriptsMatrix") != 0)
-            QSKIP(qPrintable(QStringLiteral("legacy's DirectShow graph cannot be built here: ") +
-                             QString::fromStdString(m_missing)));
+        if (const std::string all = m_gaps.all(); !all.empty())
+            std::fprintf(stderr, "DirectShow on this host: %s\n", all.c_str());
     }
 
     void opensWithTheLegacyGraph_data()
@@ -210,6 +225,7 @@ private slots:
         QFETCH(QString, name);
         QFETCH(qint64, durationUs);
         QFETCH(double, fps);
+        REQUIRE_GRAPH(codecOf(name));
         DirectShowPlayer player(post);
         const auto d = open(player, name.toUtf8().constData());
         QVERIFY(d);
@@ -265,6 +281,7 @@ private slots:
     {
         QFETCH(QString, name);
         QFETCH(qint64, requestedUs);
+        REQUIRE_GRAPH(codecOf(name));
         const bool vfr = name.contains(QLatin1String("vfr"));
         const QByteArray file = name.toUtf8();
         DirectShowPlayer player(post);
@@ -300,6 +317,7 @@ private slots:
 
     void playbackDeliversFramesInOrderAndAnchorsTheClock()
     {
+        REQUIRE_GRAPH("XVID", "WMV2");
         for (const char *name : {"dshow-cfr.avi", "dshow-vfr.wmv"}) {
             const bool vfr = std::string_view(name).find("vfr") != std::string_view::npos;
             DirectShowPlayer player(post);
@@ -335,6 +353,7 @@ private slots:
 
     void playsToTheEnd()
     {
+        REQUIRE_GRAPH("XVID");
         DirectShowPlayer player(post);
         Delivered delivered;
         watch(player, delivered);
@@ -355,6 +374,7 @@ private slots:
 
     void replacedRequestsResolveStaleAndFailuresAreExplicit()
     {
+        REQUIRE_GRAPH("XVID", "WMV2");
         DirectShowPlayer player(post);
         std::optional<std::expected<SeekResult, PlayerError>> early;
         player.seek(0, [&](auto r) { early = std::move(r); });
@@ -394,6 +414,7 @@ private slots:
     // a dB on IBasicAudio.
     void volumeIsLegacysHundredthsOfADecibel()
     {
+        REQUIRE_GRAPH("XVID");
         DirectShowPlayer player(post);
         player.setVolume(std::pow(10.0, -1.0 / 20.0)); // -1 dB: legacy pos 10
         if (!open(player, "dshow-cfr.avi"))
@@ -411,6 +432,7 @@ private slots:
     // graphs' DMO wrappers have none, so the menu lists them disabled.
     void filterPropertyPagesOpen()
     {
+        REQUIRE_GRAPH("XVID"); // and dshow-mpg.mpg, DirectShow's own decoder
         {
             DirectShowPlayer avi(post);
             QVERIFY(open(avi, "dshow-cfr.avi"));
