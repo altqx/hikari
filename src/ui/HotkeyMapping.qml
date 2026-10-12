@@ -127,7 +127,7 @@ Window {
             Label { id: refusalText; objectName: "hotkeyRefusalText"; Layout.fillWidth: true; wrapMode: Text.Wrap }
             Button {
                 objectName: "hotkeyRefusalOk"
-                Layout.alignment: Qt.AlignHCenter
+                Layout.alignment: Qt.AlignRight
                 text: qsTr("OK")
                 onClicked: {
                     refusal.close()
@@ -171,28 +171,31 @@ Window {
                 wrapMode: Text.Wrap
                 text: question.conflict.message ?? ""
             }
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                Button {
+            WindowFooter {
+                FooterButton {
                     objectName: "hotkeySwitch"
                     text: qsTr("Switch hotkeys")
                     visible: question.conflict.canSwitch === true
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                     onClicked: question.answer("switch")
                 }
                 Button {
                     objectName: "hotkeyDelete"
                     text: qsTr("Delete hotkey")
+                    DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole
                     onClicked: question.answer("delete")
                 }
-                Button {
+                FooterButton {
                     objectName: "hotkeySetAnyway"
                     text: qsTr("Set anyway")
                     visible: question.conflict.canSetAnyway === true
+                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
                     onClicked: question.answer("anyway")
                 }
                 Button {
                     objectName: "hotkeyCancel"
                     text: qsTr("Cancel")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                     onClicked: question.answer("cancel")
                 }
             }

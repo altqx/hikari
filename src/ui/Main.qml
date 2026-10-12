@@ -4100,21 +4100,23 @@ ApplicationWindow {
                     onDoubleClicked: root.editor.goToHistory(index)
                 }
             }
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
+            WindowFooter {
                 Button {
                     objectName: "historySet"
                     text: qsTr("Set")
+                    DialogButtonBox.buttonRole: DialogButtonBox.ApplyRole
                     onClicked: root.editor.goToHistory(historyList.currentIndex)
                 }
                 Button {
                     objectName: "historyOk"
                     text: qsTr("OK")
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                     onClicked: { root.editor.goToHistory(historyList.currentIndex); historyWindow.close() }
                 }
                 Button {
                     objectName: "historyCancel"
                     text: qsTr("Cancel")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                     onClicked: historyWindow.close()
                 }
             }
@@ -4303,26 +4305,29 @@ ApplicationWindow {
                 Layout.fillWidth: true
             }
             Item { Layout.fillHeight: true }
-            RowLayout {
-                Layout.alignment: Qt.AlignRight
+            WindowFooter {
                 Button {
                     objectName: "closeSaveAll"
                     text: qsTranslate("HikariSub.Documents", "Save all")
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                     onClicked: { closeReview.choices.forEach(c => c.save = true); closeReview.proceed() }
                 }
                 Button {
                     objectName: "closeDiscardAll"
                     text: qsTranslate("HikariSub.Documents", "Discard all")
+                    DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole
                     onClicked: { closeReview.choices.forEach(c => c.save = false); closeReview.proceed() }
                 }
                 Button {
                     objectName: "closeContinue"
                     text: qsTranslate("HikariSub.Documents", "Continue")
+                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
                     onClicked: closeReview.proceed()
                 }
                 Button {
                     objectName: "closeCancel"
                     text: qsTranslate("HikariSub.Documents", "Cancel")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                     onClicked: { root.app.cancelClose(); closeReview.close() }
                 }
             }
@@ -4402,17 +4407,18 @@ ApplicationWindow {
                     text: root.automation.log
                 }
             }
-            RowLayout {
-                Layout.alignment: Qt.AlignRight
-                Button {
+            WindowFooter {
+                FooterButton {
                     objectName: "automationForceStop"
                     text: qsTranslate("HikariSub.Automation", "Force stop")
                     visible: root.automation.forceStopOffered
+                    DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole
                     onClicked: root.automation.forceStopRun()
                 }
                 Button {
                     objectName: "automationCancel"
                     text: root.automation.running ? qsTranslate("HikariSub.Automation", "Cancel") : qsTranslate("HikariSub.Automation", "Close")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                     onClicked: {
                         if (root.automation.running)
                             root.automation.cancelRun()
@@ -4560,12 +4566,12 @@ ApplicationWindow {
                 validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
                 Accessible.name: qsTranslate("HikariSub.Conversion", "New FPS")
             }
-            RowLayout {
+            WindowFooter {
                 Layout.columnSpan: 2
-                Layout.alignment: Qt.AlignRight
                 Button {
                     objectName: "fpsOk"
                     text: qsTranslate("HikariSub.Conversion", "OK")
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                     onClicked: {
                         if (root.app.setNewFps(oldFps.editText, newFps.editText))
                             fpsWindow.close()
@@ -4574,6 +4580,7 @@ ApplicationWindow {
                 Button {
                     objectName: "fpsCancel"
                     text: qsTranslate("HikariSub.Conversion", "Cancel")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                     onClicked: fpsWindow.close()
                 }
             }
@@ -4620,11 +4627,11 @@ ApplicationWindow {
                 }
             }
             Item { Layout.fillHeight: true }
-            RowLayout {
-                Layout.alignment: Qt.AlignRight
+            WindowFooter {
                 Button {
                     objectName: "columnsOk"
                     text: qsTranslate("HikariSub.Grid", "OK")
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                     onClicked: {
                         const bits = columnsWindow.chosen()
                         columnsWindow.close()
@@ -4637,6 +4644,7 @@ ApplicationWindow {
                 Button {
                     objectName: "columnsCancel"
                     text: qsTranslate("HikariSub.Grid", "Cancel")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                     onClicked: columnsWindow.close()
                 }
             }
@@ -4680,7 +4688,7 @@ ApplicationWindow {
             Item { Layout.fillHeight: !root.log.full }
             Button {
                 objectName: "logClose"
-                Layout.alignment: Qt.AlignHCenter
+                Layout.alignment: Qt.AlignRight
                 text: qsTr("Close")
                 onClicked: root.log.close()
             }
@@ -4977,10 +4985,10 @@ ApplicationWindow {
                 checked: root.updates.stableOnly
                 onToggled: root.updates.stableOnly = checked
             }
-            RowLayout {
-                Button { text: qsTr("Open the download page"); onClicked: root.updates.openReleasePage(updateAvailable.release.url || "") }
-                Button { objectName: "updateRemind"; text: qsTr("Remind me in a week"); onClicked: { root.updates.remindInAWeek(); updateAvailable.close() } }
-                Button { text: qsTr("Close"); onClicked: updateAvailable.close() }
+            WindowFooter {
+                Button { text: qsTr("Open the download page"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole; onClicked: root.updates.openReleasePage(updateAvailable.release.url || "") }
+                Button { objectName: "updateRemind"; text: qsTr("Remind me in a week"); DialogButtonBox.buttonRole: DialogButtonBox.NoRole; onClicked: { root.updates.remindInAWeek(); updateAvailable.close() } }
+                Button { text: qsTr("Close"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: updateAvailable.close() }
             }
         }
     }
@@ -5118,12 +5126,12 @@ ApplicationWindow {
                 Accessible.name: qsTranslate("HikariSub.Conversion", "What the conversion changes")
                 delegate: Label { required property string modelData; text: "• " + modelData; Accessible.name: modelData }
             }
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
+            WindowFooter {
                 Button {
                     objectName: "conversionAccept"
                     text: qsTranslate("HikariSub.Conversion", "Convert")
                     enabled: conversionDialog.preview.ok === true
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                     onClicked: {
                         if (!root.app.acceptConversion())
                             conversionDialog.refresh() // stale: show the new preview
@@ -5131,7 +5139,7 @@ ApplicationWindow {
                             conversionDialog.close()
                     }
                 }
-                Button { text: qsTranslate("HikariSub.Conversion", "Cancel"); onClicked: conversionDialog.close() }
+                Button { text: qsTranslate("HikariSub.Conversion", "Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: conversionDialog.close() }
             }
         }
     }
@@ -5198,11 +5206,11 @@ ApplicationWindow {
                     RadioButton { id: stretch; objectName: "resampleStretch"; text: qsTranslate("HikariSub.Conversion", "Stretch") }
                 }
             }
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
+            WindowFooter {
                 Button {
                     objectName: "resampleOk"
                     text: qsTranslate("HikariSub.Conversion", "OK")
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                     onClicked: {
                         if (subsWidth.value === targetWidth.value && subsHeight.value === targetHeight.value)
                             return
@@ -5211,7 +5219,7 @@ ApplicationWindow {
                         resampleDialog.close()
                     }
                 }
-                Button { text: qsTranslate("HikariSub.Conversion", "Cancel"); onClicked: resampleDialog.close() }
+                Button { text: qsTranslate("HikariSub.Conversion", "Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: resampleDialog.close() }
             }
         }
     }
@@ -5249,20 +5257,21 @@ ApplicationWindow {
                     RadioButton { id: mismatchStretch; objectName: "mismatchStretch"; text: qsTranslate("HikariSub.Conversion", "Resample subtitles (stretch)"); visible: mismatchDialog.canStretch }
                 }
             }
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
+            WindowFooter {
                 Button {
                     objectName: "mismatchChange"
                     text: qsTranslate("HikariSub.Conversion", "Change")
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                     onClicked: {
                         root.app.matchVideoResolution(mismatchOnly.checked ? 0 : mismatchStretch.checked ? 2 : 1)
                         mismatchDialog.close()
                     }
                 }
-                Button { text: qsTranslate("HikariSub.Conversion", "Do not change"); onClicked: mismatchDialog.close() }
+                Button { text: qsTranslate("HikariSub.Conversion", "Do not change"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: mismatchDialog.close() }
                 Button {
                     objectName: "mismatchDisable"
                     text: qsTranslate("HikariSub.Conversion", "Disable warning")
+                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
                     onClicked: { root.app.askForBadResolution = false; mismatchDialog.close() }
                 }
             }
@@ -5497,15 +5506,17 @@ ApplicationWindow {
                 Accessible.name: qsTranslate("HikariSub.Editor", "Button tag")
                 onAccepted: tagButtonDialog.saveTag()
             }
-            RowLayout {
+            WindowFooter {
                 Button {
                     objectName: "saveTag"
                     text: qsTranslate("HikariSub.Editor", "Save tag")
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                     onClicked: tagButtonDialog.saveTag()
                 }
                 Button {
                     objectName: "cancelTag"
                     text: qsTranslate("HikariSub.Editor", "Cancel")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                     onClicked: tagButtonDialog.close()
                 }
             }
@@ -5565,16 +5576,17 @@ ApplicationWindow {
                 Accessible.name: qsTranslate("HikariSub.Grid", "Tree description")
                 onAccepted: groupDescriptionDialog.accept()
             }
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
+            WindowFooter {
                 Button {
                     objectName: "groupDescriptionOk"
                     text: root.app.groupTitle(groupDescriptionDialog.description).length === 0 ? qsTranslate("HikariSub.Grid", "Set tree name") : qsTranslate("HikariSub.Grid", "Change tree name")
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                     onClicked: groupDescriptionDialog.accept()
                 }
                 Button {
                     objectName: "groupDescriptionCancel"
                     text: qsTranslate("HikariSub.Grid", "Cancel")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                     onClicked: groupDescriptionDialog.close()
                 }
             }
@@ -5612,12 +5624,12 @@ ApplicationWindow {
                       ? qsTranslate("HikariSub.Grid", "This would break the Line group “%1”. Nothing was changed. Remove the group (its description Line is deleted) and try again, or cancel.").arg(groupBreakDialog.title2)
                       : qsTranslate("HikariSub.Grid", "This would leave group members outside a Line group. Nothing was changed.")
             }
-            RowLayout {
-                Layout.alignment: Qt.AlignRight
-                Button {
+            WindowFooter {
+                FooterButton {
                     objectName: "groupBreakRemove"
                     visible: groupBreakDialog.description
                     text: qsTranslate("HikariSub.Grid", "Remove group")
+                    DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole
                     onClicked: {
                         root.app.removeGroup(groupBreakDialog.description)
                         groupBreakDialog.close()
@@ -5626,6 +5638,7 @@ ApplicationWindow {
                 Button {
                     objectName: "groupBreakCancel"
                     text: qsTranslate("HikariSub.Grid", "Cancel")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                     onClicked: groupBreakDialog.close()
                 }
             }
@@ -6314,11 +6327,11 @@ ApplicationWindow {
                     }
                 }
             }
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
+            WindowFooter {
                 Button {
                     objectName: "automationHotkeysOk"
                     text: qsTranslate("HikariSub.Automation", "OK")
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                     onClicked: {
                         root.automationHotkeys.commit()
                         automationHotkeysWindow.close()
@@ -6328,22 +6341,26 @@ ApplicationWindow {
                     objectName: "mapHotkey"
                     text: qsTranslate("HikariSub.Automation", "Map hotkey")
                     enabled: automationHotkeysWindow.selectedName().length > 0
+                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
                     onClicked: hotkeyCapture.capture(automationHotkeysWindow.selectedName())
                 }
                 Button {
                     objectName: "deleteHotkey"
                     text: qsTranslate("HikariSub.Automation", "Delete hotkey")
                     enabled: automationHotkeysWindow.selectedName().length > 0
+                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
                     onClicked: root.automationHotkeys.clearKeys(automationHotkeysWindow.selectedName())
                 }
                 Button {
                     objectName: "importLegacyHotkeys"
                     text: qsTranslate("HikariSub.Automation", "Import legacy hotkeys…")
+                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
                     onClicked: legacyHotkeysDialog.open()
                 }
                 Button {
                     objectName: "automationHotkeysCancel"
                     text: qsTranslate("HikariSub.Automation", "Cancel")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
                     onClicked: {
                         root.automationHotkeys.cancel()
                         automationHotkeysWindow.close()
@@ -6438,11 +6455,11 @@ ApplicationWindow {
                 wrapMode: Text.Wrap
                 text: qsTranslate("HikariSub.Documents", "Subtitles were modified by another program. Reload?")
             }
-            RowLayout {
-                Layout.alignment: Qt.AlignRight
+            WindowFooter {
                 Button {
                     objectName: "reloadYes"
                     text: qsTranslate("HikariSub.Documents", "Yes")
+                    DialogButtonBox.buttonRole: DialogButtonBox.YesRole
                     onClicked: {
                         reloadPrompt.close()
                         root.app.reloadTarget()
@@ -6451,6 +6468,7 @@ ApplicationWindow {
                 Button {
                     objectName: "reloadNo"
                     text: qsTranslate("HikariSub.Documents", "No")
+                    DialogButtonBox.buttonRole: DialogButtonBox.NoRole
                     onClicked: reloadPrompt.close()
                 }
             }

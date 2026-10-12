@@ -140,11 +140,10 @@ Dialog {
                 }
             }
         }
-        RowLayout {
-            Layout.alignment: Qt.AlignHCenter
-            Button { objectName: "selectRun"; text: qsTr("Select"); onClicked: dialog.run(false) }
-            Button { objectName: "selectRunAllTabs"; text: qsTr("Select in all tabs"); onClicked: dialog.run(true) }
-            Button { text: qsTr("Close"); onClicked: dialog.close() }
+        WindowFooter {
+            Button { objectName: "selectRun"; text: qsTr("Select"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole; onClicked: dialog.run(false) }
+            Button { objectName: "selectRunAllTabs"; text: qsTr("Select in all tabs"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole; onClicked: dialog.run(true) }
+            Button { text: qsTr("Close"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: dialog.close() }
         }
     }
 

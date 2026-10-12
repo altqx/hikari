@@ -621,25 +621,25 @@ Item {
         }
         Label { id: questionText; objectName: "findQuestionText" }
         footer: DialogButtonBox {
-            Button {
+            FooterButton {
                 objectName: "findAnswerOk"
                 text: question.kind === 2 ? qsTr("Remove nonexistent styles") : qsTr("OK")
                 visible: question.kind === 0 || question.kind === 2
                 onClicked: question.answer(0)
             }
-            Button {
+            FooterButton {
                 objectName: "findAnswerYes"
                 text: question.kind === 2 || question.kind === 3 ? qsTr("Remove styles") : qsTr("Yes")
                 visible: question.kind !== 0
                 onClicked: question.answer(1)
             }
-            Button {
+            FooterButton {
                 objectName: "findAnswerNo"
                 text: question.kind === 2 ? qsTr("Ignore") : qsTr("No")
                 visible: question.kind === 1 || question.kind === 2 || question.kind === 4
                 onClicked: question.answer(2)
             }
-            Button {
+            FooterButton {
                 objectName: "findAnswerCancel"
                 text: qsTr("Cancel")
                 visible: question.kind === 2 || question.kind === 3

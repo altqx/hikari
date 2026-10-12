@@ -72,7 +72,9 @@ Window {
     function answer(a) {
         replaceQuestion.close()
         pendingAnswers = pendingAnswers.concat([a])
-        nextQuestion()
+        // After the click: the question's button box closes the dialog
+        // too (each answer has a role), which would close the next one.
+        Qt.callLater(nextQuestion)
     }
     Dialog {
         id: replaceQuestion
@@ -82,11 +84,11 @@ Window {
         modal: true
         anchors.centerIn: parent
         Label { text: qsTr("Style named \"%1\" already exists. Replace?").arg(replaceQuestion.name) }
-        footer: RowLayout {
-            Button { objectName: "replaceYesToAll"; text: qsTr("Yes to all"); onClicked: manager.answer("yesToAll") }
-            Button { objectName: "replaceYes"; text: qsTr("Yes"); onClicked: manager.answer("yes") }
-            Button { objectName: "replaceNo"; text: qsTr("No"); onClicked: manager.answer("no") }
-            Button { text: qsTr("Cancel"); onClicked: manager.answer("cancel") }
+        footer: DialogButtonBox {
+            Button { objectName: "replaceYesToAll"; text: qsTr("Yes to all"); DialogButtonBox.buttonRole: DialogButtonBox.YesRole; onClicked: manager.answer("yesToAll") }
+            Button { objectName: "replaceYes"; text: qsTr("Yes"); DialogButtonBox.buttonRole: DialogButtonBox.YesRole; onClicked: manager.answer("yes") }
+            Button { objectName: "replaceNo"; text: qsTr("No"); DialogButtonBox.buttonRole: DialogButtonBox.NoRole; onClicked: manager.answer("no") }
+            Button { text: qsTr("Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: manager.answer("cancel") }
         }
     }
     Dialog {
@@ -248,6 +250,7 @@ Window {
     RowLayout {
         anchors.fill: parent
         anchors.margins: 6
+        anchors.bottomMargin: 6 + managerFooter.height + 6
         ColumnLayout {
             // As wide as its transfer row (Add to all open ASS files): the
             // editor beside it takes the rest.
@@ -403,11 +406,6 @@ Window {
                         IconToolButton { padding: 3; iconRole: "move-to-bottom"; text: qsTr("Move selected styles to end"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 3) }
                     }
                 }
-            }
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                Button { objectName: "styleManagerOk"; text: qsTr("OK"); onClicked: { if (manager.editing) manager.commit(true); else manager.closeManager() } }
-                Button { objectName: "styleManagerClose"; text: qsTr("Close"); onClicked: manager.closeManager() }
             }
         }
 
@@ -671,12 +669,52 @@ Window {
                     }
                 }
             }
-            RowLayout {
-                Layout.alignment: Qt.AlignHCenter
-                Button { objectName: "styleEditorOk"; text: qsTr("OK"); onClicked: manager.commit(true) }
-                Button { objectName: "styleEditorApply"; text: qsTr("Apply"); onClicked: manager.commit(false) }
-                Button { text: qsTr("Cancel"); onClicked: manager.endEditing() }
-            }
+        }
+    }
+
+    // One closing row under the manager and the editor beside it: the
+    // editor's OK, Apply and Cancel while a Style is edited (StyleChange's
+    // buttons, which close the editor; the manager's OK did the editor's),
+    // then the manager's OK and Close (StyleStore's Close).
+    WindowFooter {
+        id: managerFooter
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: 6
+        FooterButton {
+            objectName: "styleEditorOk"
+            text: qsTr("OK")
+            visible: manager.editing
+            DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+            onClicked: manager.commit(true)
+        }
+        FooterButton {
+            objectName: "styleManagerOk"
+            text: qsTr("OK")
+            visible: !manager.editing
+            DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+            onClicked: manager.closeManager()
+        }
+        FooterButton {
+            objectName: "styleEditorApply"
+            text: qsTr("Apply")
+            visible: manager.editing
+            DialogButtonBox.buttonRole: DialogButtonBox.ApplyRole
+            onClicked: manager.commit(false)
+        }
+        FooterButton {
+            objectName: "styleEditorCancel"
+            text: qsTr("Cancel")
+            visible: manager.editing
+            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            onClicked: manager.endEditing()
+        }
+        Button {
+            objectName: "styleManagerClose"
+            text: qsTr("Close")
+            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            onClicked: manager.closeManager()
         }
     }
 

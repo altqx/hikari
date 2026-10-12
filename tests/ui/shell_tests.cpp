@@ -6305,6 +6305,98 @@ private slots:
         QTRY_VERIFY(!tip->property("visible").toBool());
     }
 
+    // A window's closing row is a DialogButtonBox at its trailing edge, as
+    // the Settings dialog's: the buttons in the platform's order by their
+    // roles (OK before Cancel on Windows and KDE, after it on GNOME), none
+    // centred under the content, and a hidden button leaves no gap.
+    void windowFootersSitAtTheTrailingEdgeInThePlatformOrder()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *root = engine->rootObjects().first();
+        const auto boxOf = [](QQuickItem *item) -> QQuickItem * {
+            for (; item; item = item->parentItem())
+                for (const QMetaObject *m = item->metaObject(); m; m = m->superClass())
+                    if (qstrcmp(m->className(), "QQuickDialogButtonBox") == 0)
+                        return item;
+            return nullptr;
+        };
+        const std::vector<std::pair<const char *, const char *>> footers{
+            {"historyWindow", "historyOk"},           {"closeReview", "closeCancel"},
+            {"automationProgress", "automationCancel"}, {"fpsWindow", "fpsOk"},
+            {"columnsWindow", "columnsOk"},            {"groupBreakDialog", "groupBreakCancel"},
+            {"automationHotkeysWindow", "automationHotkeysOk"}, {"reloadPrompt", "reloadYes"},
+            {"styleManager", "styleManagerClose"},     {"hotkeyQuestion", "hotkeyCancel"},
+        };
+        for (const auto &[windowName, buttonName] : footers) {
+            auto *w = root->findChild<QQuickWindow *>(QLatin1String(windowName));
+            QVERIFY2(w, windowName);
+            auto *button = w->findChild<QQuickItem *>(QLatin1String(buttonName));
+            QVERIFY2(button, buttonName);
+            auto *box = boxOf(button);
+            QVERIFY2(box, buttonName);
+            QCOMPARE(box->property("alignment").toInt(), int(Qt::AlignRight));
+        }
+        for (const char *buttonName : {"conversionAccept", "resampleOk", "mismatchChange", "groupDescriptionOk",
+                                       "saveTag", "updateRemind", "selectRun", "fontCollectorClose", "mkvSaveYes"}) {
+            auto *button = qobject_cast<QQuickItem *>(named(buttonName));
+            QVERIFY2(button, buttonName);
+            auto *box = boxOf(button);
+            QVERIFY2(box, buttonName);
+            QCOMPARE(box->property("alignment").toInt(), int(Qt::AlignRight));
+        }
+
+        // History: Set (apply), OK (accept), Cancel (reject), at the right edge.
+        auto *history = root->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
+        history->show();
+        QVERIFY(QTest::qWaitForWindowExposed(history));
+        auto *set = history->findChild<QQuickItem *>(QStringLiteral("historySet"));
+        auto *ok = history->findChild<QQuickItem *>(QStringLiteral("historyOk"));
+        auto *cancel = history->findChild<QQuickItem *>(QStringLiteral("historyCancel"));
+        auto *box = boxOf(ok);
+        const auto left = [&](QQuickItem *item) { return item->mapToItem(box, QPointF()).x(); };
+        const auto order = [&](int layout) {
+            box->setProperty("buttonLayout", layout); // laid out at the next polish: QTRY_COMPARE asks again
+            std::vector<std::pair<qreal, QString>> xs;
+            for (QQuickItem *b : {set, ok, cancel})
+                xs.emplace_back(left(b), b->property("text").toString());
+            std::sort(xs.begin(), xs.end());
+            QStringList names;
+            for (const auto &x : xs)
+                names << x.second;
+            return names;
+        };
+        const QVariant platformLayout = box->property("buttonLayout");
+        QTRY_COMPARE(order(0), (QStringList{"OK", "Cancel", "Set"})); // WinLayout
+        QTRY_COMPARE(order(2), (QStringList{"OK", "Set", "Cancel"})); // KdeLayout
+        QTRY_COMPARE(order(3), (QStringList{"Set", "Cancel", "OK"})); // GnomeLayout
+        box->setProperty("buttonLayout", platformLayout);
+        qreal right = 0;
+        for (QQuickItem *b : {set, ok, cancel})
+            right = std::max(right, left(b) + b->width());
+        QTRY_COMPARE(right, box->width());
+        const QPointF boxRight = box->mapToItem(history->contentItem(), QPointF(box->width(), 0));
+        QVERIFY(boxRight.x() > history->width() - 20); // the window's margin, not centred
+        history->close();
+
+        // Line group: the Cancel alone when there is no group to remove.
+        auto *breakDialog = root->findChild<QQuickWindow *>(QStringLiteral("groupBreakDialog"));
+        breakDialog->setProperty("description", 0);
+        breakDialog->show();
+        QVERIFY(QTest::qWaitForWindowExposed(breakDialog));
+        auto *remove = breakDialog->findChild<QQuickItem *>(QStringLiteral("groupBreakRemove"));
+        auto *breakCancel = breakDialog->findChild<QQuickItem *>(QStringLiteral("groupBreakCancel"));
+        auto *breakBox = boxOf(breakCancel);
+        QVERIFY(!remove->isVisible());
+        QTRY_COMPARE(breakBox->implicitWidth(), breakCancel->width());
+        QTRY_COMPARE(breakCancel->mapToItem(breakBox, QPointF(breakCancel->width(), 0)).x(), breakBox->width());
+        breakDialog->setProperty("description", 7);
+        QTRY_VERIFY(remove->isVisible());
+        QTRY_COMPARE(breakBox->implicitWidth(),
+                     remove->width() + breakBox->property("spacing").toReal() + breakCancel->width());
+        breakDialog->close();
+        breakDialog->setProperty("description", 0);
+    }
+
     // R1-check-items-close: a check item keeps its menus open when switched,
     // by the pointer, Enter or Space, as legacy's ITEM_CHECK did
     // (MenuDialog::SendEvent, Menu.cpp:662-670), and the status bar keeps
