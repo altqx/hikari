@@ -223,6 +223,14 @@ void DirectSoundPlayer2Thread::Run()
 	bool eosSent = false;
 	// changes with every seek, so a buffer filled before one is not pushed after it
 	long long generation = 0;
+	// A sink can stop taking data without an error, when the device hangs or
+	// is suspended: appsrc then stays full, or the EOS is never answered, and
+	// playback would never end.  The audible frame is watched while data
+	// waits, and playback fails when it has not moved for this long.
+	const auto stallTimeout = std::chrono::seconds(10);
+	long long watchedGeneration = -1;
+	long long lastAudible = -1;
+	auto progressAt = std::chrono::steady_clock::now();
 	while (true) {
 		long long frame = 0;
 		long long framesToWrite = 0;
@@ -282,6 +290,20 @@ void DirectSoundPlayer2Thread::Run()
 			if (seekFailed) {
 				failPlayback(L"Audio playback stopped, the GStreamer audio pipeline cannot seek");
 				break;
+			}
+			if (linuxState->playing && active) {
+				const auto now = std::chrono::steady_clock::now();
+				long long audible = -1;
+				queryAudibleFrame(audible);
+				if (watchedGeneration != generation || audible != lastAudible || !(eosSent || queueFull())) {
+					watchedGeneration = generation;
+					lastAudible = audible;
+					progressAt = now;
+				}
+				else if (now - progressAt >= stallTimeout) {
+					failPlayback(L"Audio playback stopped, the audio device stopped playing and reported no error");
+					break;
+				}
 			}
 			if (linuxState->playing && !eosSent) {
 				if (linuxState->currentFrame >= end_frame) {
