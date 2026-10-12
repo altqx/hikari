@@ -1097,6 +1097,9 @@ void OptionsDialog::SetOptions(bool saveall)
 				Options.SetBool(OB.option, value);
 				if (config::IsAudioOption(OB.option)) { audio = true; }
 				if (OB.option == SPELLCHECKER_ON) {
+					//a checker made while spelling was off has no dictionary loaded
+					if (value)
+						SpellChecker::Destroy();
 					Notebook::GetTab()->edit->ClearErrs(true, value);
 				}
 			}
