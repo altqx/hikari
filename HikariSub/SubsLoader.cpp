@@ -194,6 +194,8 @@ bool SubsLoader::LoadSRT(const wxString &srttext)
 	
 	while (tokenizer.HasMoreTokens()){
 		wxString text = tokenizer.GetNextToken().Trim();
+		//a CRLF blank line is a lone \r token, skip it like an LF blank line
+		if (text.empty()){ continue; }
 		//seek for every times line
 		if (text.find(L" --> ") != -1){
 			//trim number of next line 
