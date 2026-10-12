@@ -1547,11 +1547,12 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 						tab->video->OpenKeyframes(keyframes);
 						tab->KeyframesPath = keyframes;
 					}
+					bool videoFailed = false;
 					if (!video.empty()){
 						if (!hasEditor)
 							sthis->Hikari->HideEditor();
 	
-						sthis->LoadVideo(tab, video, videoPosition, isFFMS2, hasEditor, false, false, audio != emptyString);
+						videoFailed = !sthis->LoadVideo(tab, video, videoPosition, isFFMS2, hasEditor, false, false, audio != emptyString);
 					}
 					if (!audio.empty()) {
 						sthis->Hikari->OpenAudioInTab(tab, 30040, audio);
@@ -1559,7 +1560,7 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 					
 					sthis->Hikari->Label();
 					tab->shiftTimes->Contents();
-					if (subtitlesFailed)
+					if (subtitlesFailed || videoFailed)
 						failedTabs.push_back(tab);
 					video = emptyString;
 					videoPosition = 0;
@@ -1575,8 +1576,8 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 			if (hasnotMoreTokens)
 				break;
 		}
-		//a tab is not restored empty when its subtitles cannot be loaded
-		//and it has nothing else
+		//a tab is not restored empty when its subtitles or video cannot be
+		//loaded and it has nothing else
 		for (TabPanel *failedTab : failedTabs){
 			sthis->RemoveUnusedPage(sthis->FindPanel(failedTab, false), sthis->iter);
 		}
