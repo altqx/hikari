@@ -366,7 +366,7 @@ jobs:
           test -f "$package/Automation/automation/Include/DM/DownloadManager/libDownloadManager.so"
           test -f "$package/Automation/automation/Include/SubInspector/Inspector/libSubInspector.so"
           # Inspector.moon must load the packaged library and measure lines.
-          sudo apt-get install -y --no-install-recommends luajit fonts-dejavu-core
+          sudo apt-get install -y --no-install-recommends luajit libluajit-5.1-dev pkg-config fonts-dejavu-core
           tests/subinspector/check-package.sh "$package"
           test -f "$package/Themes/DeepDark.txt"
           (cd "$package" && sha256sum -c SHA256SUMS)
