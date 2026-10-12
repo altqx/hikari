@@ -413,8 +413,8 @@ Media backends (Windows uses DirectShow / DirectSound / Direct3D):
   shared wxWidgets paint path. The frame-accurate FFMS2 path used for
   typesetting, timing, and visual editing is unchanged.
 - Audio plays through **GStreamer** (`appsrc → audioconvert → audioresample →
-  autoaudiosink`); the playback position is tracked on a wall-clock model. There
-  is no DirectSound path.
+  autoaudiosink`); the playback position is read from the pipeline, so it
+  follows the audio that is heard. There is no DirectSound path.
 - GStreamer discovers plugins from the runtime system registry and standard
   plugin paths. The base and good plugin sets (and an audio sink) must be
   installed on the machine that runs HikariSub.
