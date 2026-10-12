@@ -101,9 +101,12 @@ bool SubsLoader::LoadASS(const wxString &text)
 	bool embedded = false;
 	// lines before the first section header count as script info
 	bool scriptInfo = true;
-	while (tokenizer.HasMoreTokens())
+	// a line read after a translation original that is not its translation
+	wxString nextToken;
+	while (!nextToken.empty() || tokenizer.HasMoreTokens())
 	{
-		wxString token = tokenizer.GetNextToken().Trim(false);
+		wxString token = (nextToken.empty()) ? tokenizer.GetNextToken().Trim(false) : nextToken;
+		nextToken.clear();
 		if (token.empty()){ continue; }
 		if (token[0] == L'['){
 			wxString header = token.Lower();
@@ -124,8 +127,24 @@ bool SubsLoader::LoadASS(const wxString &text)
 				grid->file->AddLine(dl);
 			}
 			else if (tlmode && dl->Style == tlstyle){
-				wxString ntoken = tokenizer.GetNextToken();
-				Dialogue *tl = new Dialogue(ntoken);
+				// the translation is the next dialogue or comment line in another style,
+				// anything else is read on its own and the original stays alone
+				wxString ntoken;
+				while (ntoken.empty() && tokenizer.HasMoreTokens())
+					ntoken = tokenizer.GetNextToken().Trim(false);
+				Dialogue *tl = nullptr;
+				if (ntoken.StartsWith(L"Dial") || ntoken.StartsWith(L"Comm")){
+					tl = new Dialogue(ntoken);
+					if (tl->Format != ASS || tl->NonDialogue || tl->Style == tlstyle){
+						delete tl;
+						tl = nullptr;
+					}
+				}
+				if (!tl){
+					nextToken = ntoken;
+					grid->file->AddLine(dl);
+					continue;
+				}
 				tl->TextTl = tl->Text;
 				tl->Text = dl->Text;
 				if (dl->Effect == L"\fD"){
