@@ -677,6 +677,9 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 		//an unreadable or empty file has nothing to find or replace
 		if (!ow.FileOpen(subsPath, &subsText))
 			continue;
+		//on Linux the CRs of CRLF files are still there, the text is written
+		//back with CRLF line ends
+		subsText.Replace(L"\r\n", L"\n");
 
 		wxString replacedText;
 		int tabLinePosition = 0; int positionId = 0;
@@ -1623,6 +1626,9 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 	OpenWrite ow;
 	if (!ow.FileOpen(path, &subsText))
 		return 0;
+	//on Linux the CRs of CRLF files are still there, the text is written
+	//back with CRLF line ends
+	subsText.Replace(L"\r\n", L"\n");
 
 	bool isSRT = (ext == L"srt");
 	wxString TlModeStyle;
