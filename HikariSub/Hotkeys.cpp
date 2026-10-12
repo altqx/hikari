@@ -306,13 +306,16 @@ int Hotkeys::LoadHkeys(bool Audio)
 			g++;
 		}
 	}
-	if (g > 10){ 
-		if (Audio){ AudioKeys = true; }
-		return 1; 
+	if (g <= 10){
+		// A short file is still a current file: keep its bindings and
+		// add only the default ids it does not set.
+		std::map<idAndType, hdata> defaults;
+		LoadDefault(defaults, Audio);
+		hkeys.insert(defaults.begin(), defaults.end());
+		if (hkeys.size() <= 10){ return 0; }
 	}
-	LoadDefault(hkeys, Audio);
-	if (hkeys.size() > 10){ return 1; }
-	return 0;
+	if (Audio){ AudioKeys = true; }
+	return 1;
 
 }
 
