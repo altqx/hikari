@@ -657,6 +657,9 @@ PointF posnScale(const ScriptState &state, Family visual, const core::LineRecord
     const auto &pos = posMoveRegex();
     if (pos.matches(txt) && tbl) {
         const u16 txtpos = group(pos, txt, 2);
+        // T2-move-untimed: a \move without times reads 0 for them; legacy
+        // kept the previous read's and added the Line's start once more.
+        tbl[4] = tbl[5] = 0;
         int ipos = 0;
         for (const u16 &token : tokenize(txtpos, u',', false)) {
             if (ipos >= 6)
@@ -710,6 +713,19 @@ std::pair<int, int> moveTimes(const ScriptState &state, const core::LineRecord &
     const int msend = timebase.msAt(timebase.frameAt(endTime) - 1);
     const int diff = endTime - startTime;
     return {std::abs(msstart - startTime), (diff - std::abs(endTime - msend))};
+}
+
+std::pair<int, int> moveInterval(const double *tbl, const core::LineRecord &editLine)
+{
+    // ass_parse.c (\move): the times are whole numbers (argtoi32), swapped
+    // when t1 > t2; `t1 <= 0 && t2 <= 0` moves over the event's Duration.
+    const int start = startMs(editLine);
+    const int count = static_cast<int>(tbl[6]);
+    const double t1 = std::trunc(tbl[4] - start), t2 = std::trunc(tbl[5] - start);
+    if (count == 4 || (count >= 6 && t1 <= 0 && t2 <= 0))
+        return {start, endMs(editLine)};
+    const int a = static_cast<int>(tbl[4]), b = static_cast<int>(tbl[5]);
+    return {std::min(a, b), std::max(a, b)};
 }
 
 PointF calcMovePosition(PointF point, const double *moveTable, int time)

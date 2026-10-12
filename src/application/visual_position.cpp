@@ -8,6 +8,7 @@
 #include <charconv>
 #include <cmath>
 #include <cstdlib>
+#include <tuple>
 
 // Built without floating-point contraction, as visual_view.cpp: legacy's
 // float steps must round as its build did.
@@ -991,13 +992,12 @@ void MoveTool::setCurVisual(VisualHost &host)
     if (m_moveValues[6] > 3)
         m_to = view.scriptToView({static_cast<float>(m_moveValues[2]), static_cast<float>(m_moveValues[3])});
     m_moveDistance = sub(m_to, m_from);
-    int startIter = 4, endIter = 5;
-    if (m_moveValues[4] > m_moveValues[5]) {
-        startIter = 5;
-        endIter = 4;
-    }
-    m_moveStart = static_cast<int>(m_moveValues[startIter]);
-    m_moveEnd = static_cast<int>(m_moveValues[endIter]);
+    // The \move's times, the earlier first, as libass moves the text: over
+    // the whole Line for a \move without times or with both 0 or less
+    // (T2-move-untimed; legacy had the Line's start as both). The cross,
+    // the two-point extrapolation and the end's arrival read these; the
+    // written \move keeps the text's own times (m_moveValues).
+    std::tie(m_moveStart, m_moveEnd) = moveInterval(m_moveValues, edit);
     host.toolChanged();
 }
 
