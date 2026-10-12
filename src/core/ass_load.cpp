@@ -67,8 +67,18 @@ bool Document::setScriptInfo(std::u8string_view key, std::u8string value)
         }
         return true;
     }
-    if (!infoSection)
-        return false;
+    if (!infoSection) {
+        // E5-tlmode-needs-script-info: legacy AddSInfo pushes onto the sinfo
+        // list whether or not the file had the section, and SaveFile writes
+        // a fresh "[Script Info]" at the top (SubsFile.cpp:1020-1045,
+        // SubsGridBase.cpp:1490). An ASS Document gets the section there,
+        // with no source span (encodeAss writes its header); a PlainText one
+        // has no place for it.
+        if (m_format != SubtitleFormat::Ass)
+            return false;
+        infoSection = &*m_sections.insert(m_sections.begin(),
+                                          Section{SectionKind::ScriptInfo, u8"[Script Info]", std::nullopt, {}});
+    }
     // After the section's last property (blank lines and comments after it stay after it).
     std::size_t at = 0;
     for (std::size_t i = 0; i < infoSection->records.size(); ++i)
