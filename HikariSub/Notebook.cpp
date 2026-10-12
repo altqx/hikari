@@ -984,12 +984,16 @@ void Notebook::OnTabSel(int id)
 			wxYES_NO, Hikari, wxDefaultPosition, wxNO) == wxNO)
 			return;
 
+		//ask about every tab before closing any, so Cancel keeps them all
+		for (size_t i = 0; i < Pages.size(); i++)
+		{
+			if (Hikari->SavePrompt(1, i)){ return; }
+		}
 		int tmpiter = iter;
 		Pages[iter]->Hide();
 		for (int i = (int)Pages.size() - 1; i >= 0; i--)
 		{
 			iter = i;
-			if (Hikari->SavePrompt()){ break; }
 			SubsGrid::RemoveComparison();
 			Pages[i]->Destroy();
 			Pages.pop_back();
