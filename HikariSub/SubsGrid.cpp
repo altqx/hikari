@@ -286,7 +286,7 @@ void SubsGrid::ContextMenu(const wxPoint &pos)
 	menu->SetAccMenu(GLOBAL_REMOVE_LINES, _("Delete"))->Enable(isEnabled);
 	menu->AppendSeparator();
 	menu->SetAccMenu(GLOBAL_OPEN_FONT_COLLECTOR, _("Font collector"))->Enable(subsFormat < SRT);
-	menu->SetAccMenu(GRID_SUBS_FROM_MKV, _("Load subtitles from an MKV/OGM file"))->Enable(tab->VideoName.EndsWith(L".mkv") || tab->VideoName.EndsWith(L".ogm"));
+	menu->SetAccMenu(GRID_SUBS_FROM_MKV, _("Load subtitles from an MKV/OGM file"))->Enable(tab->VideoName.Lower().EndsWith(L".mkv") || tab->VideoName.Lower().EndsWith(L".ogm"));
 
 	int Modifiers = 0;
 	int id = menu->GetPopupMenuSelection(pos, this, &Modifiers);
@@ -885,7 +885,7 @@ void SubsGrid::OnAccelerator(wxCommandEvent &event)
 			OnPasteTextTl();
 		break;
 	case GRID_SUBS_FROM_MKV: 
-		if (tab->VideoName.EndsWith(L".mkv") || tab->VideoName.EndsWith(L".ogm")) 
+		if (tab->VideoName.Lower().EndsWith(L".mkv") || tab->VideoName.Lower().EndsWith(L".ogm")) 
 			OnMkvSubs(event); 
 		break;
 	case GRID_SET_NEW_FPS: OnSetNewFPS(); break;
