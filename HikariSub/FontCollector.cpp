@@ -485,7 +485,7 @@ void FontCollectorDialog::OnButtonStart(wxCommandEvent &event)
 		if (subsDirectory){
 			wxString sourcePath = (subsfromMkv) ? Notebook::GetTab()->VideoPath : Notebook::GetTab()->SubsPath;
 			wxString rest = HikariPathName(sourcePath);
-			wxString fontDir = HikariPathJoin(HikariPathDir(sourcePath), L"Czcionki");
+			wxString fontDir = HikariPathJoin(HikariPathDir(sourcePath), L"Fonts");
 			copypath = (opts->GetSelection() == 2) ? HikariPathJoin(fontDir, rest.BeforeLast(L'.') + L".zip") : fontDir + wxFileName::GetPathSeparator();
 		}
 		else{
