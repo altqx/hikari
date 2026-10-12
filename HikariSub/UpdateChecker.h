@@ -32,6 +32,8 @@ public:
 	// the dialog on. Safe to call with no network.
 	static void CheckOnStartup(wxWindow *parent);
 
-	// Menu entry: always checks, and reports being up to date and any failure.
+	// Menu entry: checks whatever the options say, and reports being up to
+	// date and any failure. While a check runs, it has that one report
+	// instead of starting another.
 	static void CheckNow(wxWindow *parent);
 };

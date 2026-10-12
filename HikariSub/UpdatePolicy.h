@@ -131,14 +131,122 @@ namespace update_policy
 
 	// The next automatic check, recorded as a check starts and before
 	// anything of it can fail: the check counts as failed until a reply
-	// says otherwise. A check that ends with no word of how, as when no
-	// request can be made, the window closes first or the program is
-	// killed, so puts the next one off an hour like any other failure,
-	// and a reply then moves it to a day.
+	// says otherwise. Any ending but a reply, a kill included, so puts the
+	// next one off an hour, and a reply then moves it to a day.
 	constexpr long long NextCheckAtStart(long long now, long long nextCheck)
 	{
 		return NextCheck(now, nextCheck, false);
 	}
+
+	// How long a request may take to connect, and then to bring the whole
+	// reply. A check that hung would keep any other from starting.
+	constexpr long kConnectTimeoutMs = 30 * 1000;
+	constexpr long kDataTimeoutMs = 60 * 1000;
+
+	// Where the next automatic check's time is kept: UPDATER_NEXT_CHECK,
+	// written out at once, in the application, and a variable in the tests.
+	class NextCheckStore
+	{
+	public:
+		virtual long long Load() const = 0;
+		virtual void Save(long long nextCheck) = 0;
+
+	protected:
+		~NextCheckStore() = default;
+	};
+
+	// How a check ended.
+	enum class Ending
+	{
+		// There was no web session, or no request could be made.
+		NoRequest,
+		// The request failed or timed out.
+		Failed,
+		// The request was cancelled other than by the cut-off.
+		Cancelled,
+		// The reply passed kMaxResponseBytes and was cut off.
+		CutOff,
+		// The reply is not a release list.
+		NotAList,
+		// A release list came, whether or not the window that asked was
+		// still open to show what it holds.
+		Answered,
+	};
+
+	// What came of asking for a check.
+	enum class Start
+	{
+		// The check was started, and its back-off saved.
+		Started,
+		// A check was running, and now reports what it finds, failure and
+		// "up to date" too, as a check from the menu does.
+		Joined,
+		// A check was running, or showing what it found, and nothing more
+		// is done.
+		Ignored,
+	};
+
+	// The one check that runs at a time, and what it saves. A check counts
+	// as failed from its start, before anything of it can fail, so that no
+	// way out of it, a kill included, skips the hour's back-off; only a
+	// reply moves the next check to a day, and it is the only ending that
+	// saves anything more. A second check asked for while one runs does not
+	// start: from the menu it joins the running one, and an automatic one
+	// is ignored, so there is one reply, one record and one dialog.
+	class CheckTracker
+	{
+	public:
+		explicit CheckTracker(NextCheckStore &store)
+			: store(store)
+		{
+		}
+
+		Start Begin(long long now, bool interactive)
+		{
+			if (running) {
+				if (!interactive || ended)
+					return Start::Ignored;
+				reports = true;
+				return Start::Joined;
+			}
+			store.Save(NextCheckAtStart(now, store.Load()));
+			running = true;
+			ended = false;
+			reports = interactive;
+			return Start::Started;
+		}
+
+		// Records how the running check ended. Only the first call for a
+		// check counts.
+		void End(long long now, Ending ending)
+		{
+			if (!running || ended)
+				return;
+			ended = true;
+			if (ending == Ending::Answered)
+				store.Save(NextCheck(now, store.Load(), true));
+		}
+
+		// The running check has shown all it will, and another can start.
+		void Done()
+		{
+			running = false;
+			ended = false;
+			reports = false;
+		}
+
+		bool IsRunning() const { return running; }
+
+		// Whether the running check tells the user what it found, and that
+		// it failed.
+		bool Reports() const { return reports; }
+
+	private:
+		NextCheckStore &store;
+		bool running = false;
+		bool ended = false;
+		bool reports = false;
+	};
 
 	// Whether a startup check keeps quiet about offered, as the user closed
 	// the dialog that offered declined or a later version. A check from the

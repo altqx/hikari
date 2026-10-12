@@ -257,9 +257,8 @@ TEST(update_next_check_keeps_remind_me_in_a_week)
 
 TEST(update_check_that_never_ends_backs_off_an_hour)
 {
-	// UpdateChecker records NextCheckAtStart before it makes the request,
-	// and nothing more when the check ends without a word: no web session,
-	// a request that cannot be made, a reply dropped as the window closes.
+	// CheckTracker::Begin() records NextCheckAtStart before the request is
+	// made, and only a reply records more.
 	const long long now = 2000000000;
 	long long next = NextCheckAtStart(now, now - kDay);
 	CHECK(next == now + kHour);
@@ -271,10 +270,8 @@ TEST(update_check_that_never_ends_backs_off_an_hour)
 	// A check that was never recorded would be due at every start.
 	CHECK(IsCheckDue(now + 1, now - kDay));
 
-	// A reply after the start moves it to a day, a failure keeps the hour
-	// from when the request failed.
+	// A reply after the start moves it to a day.
 	CHECK(NextCheck(now + 5, next, true) == now + 5 + kDay);
-	CHECK(NextCheck(now + 5, next, false) == now + 5 + kHour);
 
 	// "Remind me in a week" is kept by a check from the menu that fails or
 	// never ends.
@@ -389,4 +386,137 @@ TEST(update_next_check_outlasts_2038)
 	CHECK(ParseNextCheck(" 12") == 0);
 	CHECK(ParseNextCheck("99999999999999999999") == 0);
 	CHECK(IsCheckDue(in2100, ParseNextCheck("")));
+}
+
+namespace {
+
+// UPDATER_NEXT_CHECK, and how often it was written out.
+struct FakeNextCheck : NextCheckStore
+{
+	long long value = 0;
+	int saves = 0;
+
+	long long Load() const override { return value; }
+	void Save(long long nextCheck) override
+	{
+		value = nextCheck;
+		saves++;
+	}
+};
+
+const Ending kEndings[] = { Ending::NoRequest, Ending::Failed, Ending::Cancelled, Ending::CutOff,
+	Ending::NotAList, Ending::Answered };
+
+} // namespace
+
+TEST(update_every_ending_of_a_check_is_recorded_once)
+{
+	const long long now = 2000000000;
+	for (Ending ending : kEndings) {
+		FakeNextCheck store;
+		store.value = now - kDay;
+		CheckTracker tracker(store);
+		CHECK(tracker.Begin(now, false) == Start::Started);
+		// Saved before the request is made, so a kill from here on still
+		// backs off the hour.
+		CHECK(store.saves == 1);
+		CHECK(store.value == now + kHour);
+
+		tracker.End(now + 30, ending);
+		// A second word of the same check, as a state event after the
+		// cut-off's cancel would be, changes nothing.
+		tracker.End(now + 40, Ending::Answered);
+		tracker.End(now + 40, Ending::Failed);
+		tracker.Done();
+		if (ending == Ending::Answered) {
+			CHECK(store.saves == 2);
+			CHECK(store.value == now + 30 + kDay);
+		}
+		else {
+			// No session or request, a failure, a cancel, a reply cut off
+			// or not a release list: the hour from the start stands.
+			CHECK(store.saves == 1);
+			CHECK(store.value == now + kHour);
+		}
+		CHECK(!tracker.IsRunning());
+	}
+}
+
+TEST(update_check_ended_without_a_word_keeps_the_hour)
+{
+	// Done() with no End(), as when the request's handler went first.
+	const long long now = 2000000000;
+	FakeNextCheck store;
+	CheckTracker tracker(store);
+	CHECK(tracker.Begin(now, true) == Start::Started);
+	tracker.Done();
+	CHECK(store.saves == 1);
+	CHECK(store.value == now + kHour);
+	// An End() after it is not this check's, and records nothing.
+	tracker.End(now + 5, Ending::Answered);
+	CHECK(store.saves == 1);
+}
+
+TEST(update_check_keeps_remind_me_in_a_week_whatever_the_ending)
+{
+	const long long now = 2000000000;
+	const long long snoozed = now + 3 * kDay;
+	for (Ending ending : kEndings) {
+		FakeNextCheck store;
+		store.value = snoozed;
+		CheckTracker tracker(store);
+		// A check from the menu during the week.
+		CHECK(tracker.Begin(now, true) == Start::Started);
+		tracker.End(now + 5, ending);
+		tracker.Done();
+		CHECK(store.value == snoozed);
+	}
+}
+
+TEST(update_one_check_runs_at_a_time)
+{
+	const long long now = 2000000000;
+	FakeNextCheck store;
+	CheckTracker tracker(store);
+
+	// The startup check is running when the menu asks: the menu's check
+	// joins it, so that it reports, and no second request, record or
+	// dialog follows.
+	CHECK(tracker.Begin(now, false) == Start::Started);
+	CHECK(!tracker.Reports());
+	CHECK(tracker.Begin(now + 1, true) == Start::Joined);
+	CHECK(tracker.Reports());
+	CHECK(tracker.Begin(now + 2, true) == Start::Joined);
+	CHECK(tracker.Begin(now + 2, false) == Start::Ignored);
+	CHECK(tracker.Reports());
+	CHECK(store.saves == 1);
+
+	// Once it has ended and while it shows what it found, nothing starts
+	// or joins.
+	tracker.End(now + 3, Ending::Answered);
+	CHECK(store.saves == 2);
+	CHECK(tracker.Begin(now + 4, true) == Start::Ignored);
+	CHECK(tracker.Begin(now + 4, false) == Start::Ignored);
+	CHECK(tracker.Reports());
+	CHECK(store.saves == 2);
+	tracker.Done();
+
+	// Then the next check starts, and reports only if asked from the menu.
+	CHECK(tracker.Begin(now + 5, true) == Start::Started);
+	CHECK(tracker.Reports());
+	CHECK(store.saves == 3);
+	tracker.End(now + 6, Ending::Failed);
+	tracker.Done();
+	CHECK(tracker.Begin(now + 7, false) == Start::Started);
+	CHECK(!tracker.Reports());
+	tracker.Done();
+	CHECK(!tracker.Reports());
+}
+
+TEST(update_request_times_out)
+{
+	// A request that hung would keep every later check from starting.
+	CHECK(kConnectTimeoutMs > 0);
+	CHECK(kDataTimeoutMs > 0);
+	CHECK(kConnectTimeoutMs + kDataTimeoutMs <= 5 * 60 * 1000);
 }

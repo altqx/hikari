@@ -114,10 +114,15 @@ namespace
 		Options.SaveOptions(true, false);
 	}
 
-	void RecordCheck(bool answered)
+	class OptionsNextCheck : public update_policy::NextCheckStore
 	{
-		SaveNextCheck(update_policy::NextCheck(Now(), LoadNextCheck(), answered));
-	}
+	public:
+		long long Load() const override { return LoadNextCheck(); }
+		void Save(long long nextCheck) override { SaveNextCheck(nextCheck); }
+	};
+
+	OptionsNextCheck optionsNextCheck;
+	update_policy::CheckTracker tracker(optionsNextCheck);
 
 	// Says that only a prerelease is newer, and offers to open its page.
 	void ShowNewerPrerelease(wxWindow *parent, const ReleaseInfo &release)
@@ -217,16 +222,15 @@ namespace
 
 	// One check: the request's handler, separate from the frame so that it
 	// can be unbound with it. It deletes itself once the request has ended.
-	// The frame is held weakly; a reply that comes while it is closing, or
-	// after, is dropped without a message or a write to the options, which
-	// have been saved for the last time by then; the hour's back-off that
-	// Check() recorded stands.
+	// The frame is held weakly. A reply that comes while it is closing, or
+	// after, is still recorded, as the options outlive the frame and the
+	// event loop that brings the reply is still running; only what it
+	// found is not shown.
 	class UpdateRequest : public wxEvtHandler
 	{
 	public:
-		UpdateRequest(wxWindow *parent, bool interactive)
+		explicit UpdateRequest(wxWindow *parent)
 			: parent(parent)
-			, interactive(interactive)
 		{
 			Bind(wxEVT_WEBREQUEST_DATA, &UpdateRequest::OnData, this);
 			Bind(wxEVT_WEBREQUEST_STATE, &UpdateRequest::OnState, this);
@@ -251,6 +255,7 @@ namespace
 			// The reply comes in pieces through OnData, so that it can be
 			// cut off at kMaxResponseBytes.
 			request.SetStorage(wxWebRequest::Storage_None);
+			request.SetTimeouts(update_policy::kConnectTimeoutMs, update_policy::kDataTimeoutMs);
 			// A request that cannot start still ends in State_Failed,
 			// which OnState handles.
 			request.Start();
@@ -279,10 +284,33 @@ namespace
 			if (state == wxWebRequest::State_Active || state == wxWebRequest::State_Idle)
 				return;
 
+			JsonValue root;
+			std::vector<update_policy::Release> releases;
+			update_policy::Ending ending = Read(state, &root, &releases);
+			tracker.End(Now(), ending);
 			if (IsParentOpen())
-				Finish(state == wxWebRequest::State_Completed && !tooLarge);
+				Report(ending, root, releases);
+			tracker.Done();
 			// Last, as nothing of this object may be used after it.
 			wxTheApp->ScheduleForDestruction(this);
+		}
+
+		update_policy::Ending Read(wxWebRequest::State state, JsonValue *root,
+			std::vector<update_policy::Release> *releases)
+		{
+			if (tooLarge)
+				return update_policy::Ending::CutOff;
+			if (state == wxWebRequest::State_Cancelled)
+				return update_policy::Ending::Cancelled;
+			if (state != wxWebRequest::State_Completed)
+				return update_policy::Ending::Failed;
+
+			*root = JsonValue::Parse(body);
+			body.clear();
+			body.shrink_to_fit();
+			if (!ReadReleases(*root, releases))
+				return update_policy::Ending::NotAList;
+			return update_policy::Ending::Answered;
 		}
 
 		bool IsParentOpen() const
@@ -292,29 +320,15 @@ namespace
 				!wxTheApp->IsScheduledForDestruction(window);
 		}
 
-		void Fail()
+		void Report(update_policy::Ending ending, const JsonValue &root,
+			const std::vector<update_policy::Release> &releases)
 		{
-			RecordCheck(false);
-			if (interactive)
-				HikariMessageBox(_("Cannot check for updates"), _("Update"));
-		}
-
-		void Finish(bool received)
-		{
-			if (!received) {
-				Fail();
+			bool interactive = tracker.Reports();
+			if (ending != update_policy::Ending::Answered) {
+				if (interactive)
+					HikariMessageBox(_("Cannot check for updates"), _("Update"));
 				return;
 			}
-
-			JsonValue root = JsonValue::Parse(body);
-			body.clear();
-			body.shrink_to_fit();
-			std::vector<update_policy::Release> releases;
-			if (!ReadReleases(root, &releases)) {
-				Fail();
-				return;
-			}
-			RecordCheck(true);
 
 			update_policy::Choice choice = update_policy::ChooseRelease(releases, VersionHikariSub,
 				Options.GetBool(UPDATER_CHECK_FOR_STABLE));
@@ -342,7 +356,6 @@ namespace
 		}
 
 		wxWeakRef<wxWindow> parent;
-		bool interactive;
 		wxWebRequest request;
 		std::string body;
 		bool tooLarge = false;
@@ -350,16 +363,16 @@ namespace
 
 	void Check(wxWindow *parent, bool interactive)
 	{
-		// Recorded as failed first, so that no way out of the check skips
-		// the back-off: no web session or request, a reply dropped as the
-		// window closes, a kill. Fail() and Finish() record it again when
-		// the request ends.
-		SaveNextCheck(update_policy::NextCheckAtStart(Now(), LoadNextCheck()));
-		UpdateRequest *check = new UpdateRequest(parent, interactive);
+		if (tracker.Begin(Now(), interactive) != update_policy::Start::Started)
+			return;
+
+		UpdateRequest *check = new UpdateRequest(parent);
 		if (!check->Start()) {
 			delete check;
-			if (interactive)
+			tracker.End(Now(), update_policy::Ending::NoRequest);
+			if (tracker.Reports())
 				HikariMessageBox(_("Cannot check for updates"), _("Update"));
+			tracker.Done();
 		}
 	}
 }
