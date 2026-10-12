@@ -178,6 +178,16 @@ void DirectSoundPlayer2Thread::Run()
 		g_object_get(src, "current-level-bytes", &level, nullptr);
 		return level >= maxQueuedBytes;
 	};
+	// Playback cannot go on, and the producer ends: the player is dead from
+	// here, so IsDead reports it, the display sees playback stopped and the
+	// next Play opens a new player.  Called with linuxState->mutex held.
+	auto failPlayback = [this](const wxString &msg) {
+		HikariLog(msg);
+		linuxState->failMessage = msg;
+		linuxState->failed = true;
+		linuxState->playing = false;
+		linuxState->cv.notify_all();
+	};
 	// the pipeline holds data of the current playback
 	bool active = false;
 	// everything up to the end frame is pushed; the EOS message ends playback
@@ -234,9 +244,7 @@ void DirectSoundPlayer2Thread::Run()
 				eosSent = false;
 			}
 			if (seekFailed) {
-				linuxState->failed = true;
-				linuxState->playing = false;
-				linuxState->failMessage = L"GStreamer audio pipeline cannot seek";
+				failPlayback(L"Audio playback stopped, the GStreamer audio pipeline cannot seek");
 				break;
 			}
 			if (linuxState->playing && !eosSent) {
@@ -258,9 +266,7 @@ void DirectSoundPlayer2Thread::Run()
 			GstBuffer *buf = gst_buffer_new_allocate(nullptr, bytes, nullptr);
 			if (!buf) {
 				std::lock_guard<std::mutex> lock(linuxState->mutex);
-				linuxState->failed = true;
-				linuxState->playing = false;
-				linuxState->failMessage = L"GStreamer could not allocate an audio buffer";
+				failPlayback(L"Audio playback stopped, GStreamer could not allocate an audio buffer");
 				break;
 			}
 			// Let the provider decode straight into the GstBuffer memory (no
@@ -269,9 +275,7 @@ void DirectSoundPlayer2Thread::Run()
 			if (!gst_buffer_map(buf, &map, GST_MAP_WRITE)) {
 				gst_buffer_unref(buf);
 				std::lock_guard<std::mutex> lock(linuxState->mutex);
-				linuxState->failed = true;
-				linuxState->playing = false;
-				linuxState->failMessage = L"GStreamer could not map an audio buffer";
+				failPlayback(L"Audio playback stopped, GStreamer could not map an audio buffer");
 				break;
 			}
 			provider->GetPlaybackBuffer(map.data, frame, framesToWrite, playbackVolume);
@@ -289,9 +293,8 @@ void DirectSoundPlayer2Thread::Run()
 					linuxState->currentFrame += framesToWrite;
 				}
 				else if (linuxState->running) {
-					linuxState->failed = true;
-					linuxState->playing = false;
-					linuxState->failMessage = L"GStreamer audio pipeline stopped accepting data";
+					failPlayback(L"Audio playback stopped, the GStreamer audio pipeline stopped accepting data");
+					break;
 				}
 			}
 		}
@@ -315,21 +318,15 @@ void DirectSoundPlayer2Thread::Run()
 				if (GST_MESSAGE_TYPE(m) == GST_MESSAGE_ERROR) {
 					// An error after the start, such as the device failing or
 					// going away, leaves a pipeline that takes no more data:
-					// appsrc stays full and playback would never end.  The
-					// player is then dead, so the display sees playback stopped
-					// and the next Play opens a new player.
+					// appsrc stays full and playback would never end.
 					gst_message_parse_error(m, &e, &dbg);
 					wxString detail = L"Audio playback stopped, GStreamer reported an error";
 					if (e && e->message) {
 						detail += L": ";
 						detail += wxString::FromUTF8(e->message);
 					}
-					HikariLog(detail);
 					std::lock_guard<std::mutex> lock(linuxState->mutex);
-					linuxState->failed = true;
-					linuxState->playing = false;
-					linuxState->failMessage = detail;
-					linuxState->cv.notify_all();
+					failPlayback(detail);
 					pipelineFailed = true;
 				}
 				else {
