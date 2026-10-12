@@ -416,8 +416,9 @@ void SubsGrid::OnPaint(wxPaintEvent& event)
 				if (showOriginal){ strings.push_back(txttl); }
 
 				isSelected = file->IsSelected(key);
-				comparison = (Comparison && Comparison->at(key).size() > 0);
-				bool comparisonMatch = (Comparison && !Comparison->at(key).differences);
+				bool hasComparisonData = (Comparison && (size_t)key < Comparison->size());
+				comparison = (hasComparisonData && Comparison->at(key).size() > 0);
+				bool comparisonMatch = (hasComparisonData && !Comparison->at(key).differences);
 				bool visibleLine = (Dial->Start.mstime <= VideoPos && Dial->End.mstime > VideoPos);
 				kol = (comparison) ? ComparisonBG :
 					(comparisonMatch) ? ComparisonBGMatch :
@@ -809,8 +810,9 @@ void SubsGrid::PaintD2D(GraphicsContext *gc, int firstNumber, int w, int h, int 
 			if (showOriginal){ strings.push_back(txttl); }
 
 			isSelected = file->IsSelected(key);
-			comparison = (Comparison && Comparison->at(key).size() > 0);
-			bool comparisonMatch = (Comparison && !Comparison->at(key).differences);
+			bool hasComparisonData = (Comparison && (size_t)key < Comparison->size());
+			comparison = (hasComparisonData && Comparison->at(key).size() > 0);
+			bool comparisonMatch = (hasComparisonData && !Comparison->at(key).differences);
 			bool visibleLine = (Dial->Start.mstime <= VideoPos && Dial->End.mstime > VideoPos);
 			col = (comparison) ? ComparisonBG :
 				(comparisonMatch) ? ComparisonBGMatch :

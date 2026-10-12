@@ -997,7 +997,7 @@ void SubsGrid::DoUndo(bool redo, int iter)
 		showOriginal = (file->GetSInfo(L"TLMode Showtl") == L"Yes" || (hasTLMode && Options.GetBool(TL_MODE_SHOW_ORIGINAL) != 0));
 		edit->SetTlMode(hasTLMode);
 	}
-	if (Comparison){
+	if (Comparison && (CG1 == this || CG2 == this)){
 		SubsComparison();
 	}
 
@@ -1133,7 +1133,7 @@ void SubsGrid::SetModified(unsigned char editionType, bool redit, bool dummy, in
 			Hikari->Toolbar->UpdateId(GLOBAL_SAVE_SUBS, true);
 			Hikari->Menubar->Enable(GLOBAL_SAVE_SUBS, true);
 		}
-		if (Comparison){
+		if (Comparison && (CG1 == this || CG2 == this)){
 			SubsComparison();
 		}
 		if (!savedSelections){

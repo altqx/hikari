@@ -945,6 +945,7 @@ void Notebook::ContextMenu(const wxPoint &pos, int i)
 		OnTabSel(id);
 	}
 	else if (id == MENU_COMPARE){
+		SubsGrid::RemoveComparison();
 		SubsGrid::CG1 = Pages[iter]->grid;
 		SubsGrid::CG2 = Pages[i]->grid;
 		SubsGrid::SubsComparison();
