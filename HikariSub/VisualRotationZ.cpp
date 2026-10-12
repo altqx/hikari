@@ -299,8 +299,8 @@ void RotationZ::ChangeVisual(wxString *txt, Dialogue *dial, size_t numOfSelectio
 		return;
 
 	if (isOrg){
-		ChangeOrg(txt, dial, (((org.x - lastOrg.x) / zoomScale.x) + zoomMove.x) * coeffW,
-			(((org.y - lastOrg.y) / zoomScale.y) + zoomMove.y) * coeffH);
+		ChangeOrg(txt, dial, ((org.x - lastOrg.x) / zoomScale.x) * coeffW,
+			((org.y - lastOrg.y) / zoomScale.y) * coeffH);
 		return;
 	}
 
