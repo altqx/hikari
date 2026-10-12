@@ -482,6 +482,12 @@ void SubsGrid::ChangeTimes(const ShiftTimesSettings &settings, bool byFrame)
 		KeyframeBeforeEnd = settings.keyframeBeforeEnd;
 		KeyframeAfterEnd = settings.keyframeAfterEnd;
 	}
+	// end time correction and the postprocessor need FFMS2 timing;
+	// reject before any line is copied so nothing changes without an undo step
+	if (!hasFFMS2 && (PostprocessorOptions ? PostprocessorOptions > 16 : correctEndTimes > 0)){
+		HikariLog(_("Video was not loaded using FFMS2"));
+		return;
+	}
 	wxString styles = settings.styles;
 	if (styles.empty() && whichLines == 5){
 		HikariMessageBox(_("No styles selected for time shifting"), _("Warning"));
@@ -613,10 +619,6 @@ void SubsGrid::ChangeTimes(const ShiftTimesSettings &settings, bool byFrame)
 		bool isEndGreater = false;
 		bool previousIsKeyFrame = true;
 		bool isPreviousEndEdited = false;
-		if (!hasFFMS2) {
-			HikariLog(_("Video was not loaded using FFMS2"));
-			return;
-		}
 
 		wxArrayInt keyFramesStart;
 		for (int keyMS : timebase.Keyframes())
