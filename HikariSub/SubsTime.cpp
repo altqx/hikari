@@ -181,32 +181,32 @@ void SubsTime::SetMDVDFPS(float fps)
 	FPS = fps;
 }
 
-bool SubsTime::operator> (const SubsTime &comp)
+bool SubsTime::operator> (const SubsTime &comp) const
 {
 	return mstime > comp.mstime;
 }
 
-bool SubsTime::operator< (const SubsTime &comp)
+bool SubsTime::operator< (const SubsTime &comp) const
 {
 	return mstime < comp.mstime;
 }
 
-bool SubsTime::operator>= (const SubsTime &comp)
+bool SubsTime::operator>= (const SubsTime &comp) const
 {
-	return mstime > comp.mstime;
+	return mstime >= comp.mstime;
 }
 
-bool SubsTime::operator<= (const SubsTime &comp)
+bool SubsTime::operator<= (const SubsTime &comp) const
 {
-	return mstime < comp.mstime;
+	return mstime <= comp.mstime;
 }
 
-bool SubsTime::operator== (const SubsTime &comp)
+bool SubsTime::operator== (const SubsTime &comp) const
 {
 	return mstime == comp.mstime;
 }
 
-bool SubsTime::operator!= (const SubsTime &comp)
+bool SubsTime::operator!= (const SubsTime &comp) const
 {
 	return mstime != comp.mstime;
 }

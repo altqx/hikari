@@ -43,12 +43,12 @@ public:
 	void SetMDVDFPS(float fps);
 	void Change(int ms);
 	void ChangeFrame(int ms);
-	bool operator> (const SubsTime &comp);
-	bool operator< (const SubsTime &comp);
-	bool operator>= (const SubsTime &comp);
-	bool operator<= (const SubsTime &comp);
-	bool operator== (const SubsTime &comp);
-	bool operator!= (const SubsTime &comp);
+	bool operator> (const SubsTime &comp) const;
+	bool operator< (const SubsTime &comp) const;
+	bool operator>= (const SubsTime &comp) const;
+	bool operator<= (const SubsTime &comp) const;
+	bool operator== (const SubsTime &comp) const;
+	bool operator!= (const SubsTime &comp) const;
 	SubsTime operator- (const SubsTime &comp);
 	SubsTime operator+ (const SubsTime &comp);
 };
