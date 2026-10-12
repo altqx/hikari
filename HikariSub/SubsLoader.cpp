@@ -184,8 +184,6 @@ bool SubsLoader::LoadASS(const wxString &text)
 	}
 	grid->hasTLMode = tlmode;
 	grid->file->SetFiltered(hasFiltering);
-	const wxString &matrix = grid->file->GetSInfo(L"YCbCr Matrix");
-	if (matrix == emptyString || matrix == L"None"){ grid->file->AddSInfo(L"YCbCr Matrix", L"TV.601"); }
 	return grid->file->GetCount() > 0;
 }
 
