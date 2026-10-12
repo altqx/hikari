@@ -9,11 +9,11 @@ import Hikari.Ui
 // floating window that holds several groups side by side: the window's
 // title in bold and a "⋯" menu that docks or closes the whole window, in
 // the header's look (docs/research/musescore-docking.md §1), with the move
-// cursor. Dragging it moves the window and docks it where the highlight
-// shows, double-clicking docks it. On Wayland, as on a panel's header
-// (DockTabBar.qml), the title stays the engine's drag (it docks) and the
-// rest of the bar moves the window through the compositor. Loaded through
-// the adapter's view factory (ui/docking.cpp).
+// cursor. Dragging its title moves the window and docks it where the
+// highlight shows, double-clicking docks it. As on a panel's header
+// (DockTabBar.qml), the rest of the bar moves the window through the
+// window system. Loaded through the adapter's view factory
+// (ui/docking.cpp).
 KDDWViews.TitleBarBase {
     id: root
     objectName: "dockTitleBar"
@@ -42,7 +42,7 @@ KDDWViews.TitleBarBase {
         objectName: "dockTitleText"
         visible: !root.systemTitle
         x: 12
-        width: Math.max(0, menuButton.x - x - 4)
+        width: Math.max(0, (systemMoveArea.enabled ? systemMoveArea.x : menuButton.x) - x - 4)
         anchors.verticalCenter: parent.verticalCenter
         text: root.title
         color: Theme.text
@@ -85,35 +85,17 @@ KDDWViews.TitleBarBase {
         cursorShape: Qt.SizeAllCursor
     }
 
-    // Wayland: right of the title (keeping at least 48 pixels), the
-    // compositor moves the window once the pointer has moved; a
-    // double-click there docks it.
-    MouseArea {
+    // Right of the title the window system moves the window; a
+    // double-click there docks it. The title and that part keep 48 pixels
+    // each, as on a panel's header.
+    DockSystemMoveArea {
         id: systemMoveArea
-        objectName: "dockSystemMoveArea"
         z: 1
         enabled: Docking.systemMove
         visible: enabled
-        x: Math.min(titleText.x + titleText.contentWidth + 8, Math.max(0, menuButton.x - 2 - 48))
+        x: Math.max(titleText.x + 48, Math.min(titleText.x + titleText.implicitWidth + 8, menuButton.x - 2 - 48))
         width: Math.max(0, menuButton.x - 2 - x)
         height: parent.height
-        cursorShape: Qt.SizeAllCursor
-        property point pressedAt
-        property bool moving: false
-        onPressed: mouse => {
-            pressedAt = Qt.point(mouse.x, mouse.y)
-            moving = false
-        }
-        onPositionChanged: mouse => {
-            if (moving || !pressed)
-                return
-            if (Math.abs(mouse.x - pressedAt.x) + Math.abs(mouse.y - pressedAt.y) >= Application.styleHints.startDragDistance) {
-                moving = true
-                Docking.startSystemMove(systemMoveArea)
-            }
-        }
-        onReleased: moving = false
-        onCanceled: moving = false
         onDoubleClicked: root.floatButtonClicked()
     }
 

@@ -54,7 +54,8 @@ ITEMS = ["default-arrangement", "keyboard-float", "keyboard-float-move-panel", "
          "test-executables", "grid-accessible", "header-controls-accessible", "tabs-accessible",
          # D3: the floating window and the header from the keyboard
          "floating-borderless", "floating-header", "floating-shadow", "floating-no-compositor-frame",
-         "floating-header-composited", "floating-move", "wayland-free-part-dblclick-docks", "floating-resize",
+         "floating-header-composited", "floating-system-move", "floating-move", "free-part-dblclick-docks",
+         "floating-resize",
          "floating-forced-frame",
          "header-keyboard-menu", "header-keyboard-undock-dock", "header-keyboard-title-bar"]
 SESSIONS = ["sway", "sway-activate", "kwin", "mutter", "x11"]

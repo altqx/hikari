@@ -923,9 +923,11 @@ def step_pointer():
             f"double-click on the docked Video title at {pt}: floated={dfloat} (by {how1}); double-click its "
             f"floating title: redocked={redock} (by {how2}); tablet attempts, seconds between the two clicks' "
             f"calls: {gaps}", ev1 + ev2)
-    # Drag the floating Audio panel by its title bar onto the Grid's centre.
+    # Drag the floating Audio panel by its title onto the Grid's centre (the
+    # title is the engine's drag; the header's free part, 48 px in, logical,
+    # is the window system's move, which does not dock).
     st = uia()
-    src = title_point(st, "Audio", "Audio", dx=150)
+    src = title_point(st, "Audio", "Audio", dx=30)
     grid = panel(st, "Grid")
     if not src or not grid or grid["frame"] != MAIN:
         verdict("pointer-drag-dock", "not-observable", f"could not locate the floating Audio window ({src}) or the Grid")
@@ -1013,8 +1015,10 @@ def shadow_check(png, f, mons):
 
 def pointer_floating_move_resize():
     """D3: a floating panel is a borderless tool window (no caption or system
-    frame) with a drawn shadow; dragging its header moves it (the engine's
-    drag on Windows), dragging the shadow resizes it (startSystemResize)."""
+    frame) with a drawn shadow; dragging its header's title moves it (the
+    engine's drag), dragging the header's free part moves it through the
+    window system (startSystemMove, since 2026-10-12), dragging the shadow
+    resizes it (startSystemResize)."""
     placed = fullscreen("left", width=480)
     log("main window on the left:", placed)
     try:
@@ -1026,7 +1030,8 @@ def pointer_floating_move_resize():
         st = uia(dpi=True)
         fa = frames(st).get("Audio")
         if not fa:
-            for item in ("floating-borderless", "floating-shadow", "floating-move", "floating-resize"):
+            for item in ("floating-borderless", "floating-shadow", "floating-move", "floating-system-move",
+                         "floating-resize"):
                 verdict(item, "not-observable", "Audio did not float")
             return
         styles = next((w for w in st["windowInfo"] if w["hwnd"] == fa["hwnd"]), {})
@@ -1038,8 +1043,9 @@ def pointer_floating_move_resize():
         verdict("floating-borderless", "observed" if not caption and not thick and tool and not system_bar else "failed",
                 f"floating Audio window style {style:#x} (WS_CAPTION {caption}, WS_THICKFRAME {thick}), ex style "
                 f"{ex:#x} (WS_EX_TOOLWINDOW {tool}); system title bars in UIA: {system_bar}", ev0)
-        # Move: the header dragged over bare desktop, right of the main window.
-        src = title_point(st, "Audio", "Audio", dx=60)
+        # Move: the header's title (the engine's drag; the free part starts
+        # 48 px in, logical) dragged over bare desktop, right of the main window.
+        src = title_point(st, "Audio", "Audio", dx=30)
         main = frames(st).get(MAIN)
         prim = next(m for m in mons if m["primary"])
         left = (main["x"] + main["w"] if main else prim["x"] + 480) + 30
@@ -1070,6 +1076,31 @@ def pointer_floating_move_resize():
         if not fb:
             verdict("floating-resize", "not-observable", "the floating Audio window is gone after the move")
             return
+        # The header's free part, just left of its ⋯: the window system's move
+        # (SC_DRAGMOVE), which starts once the pointer has moved the drag
+        # distance, so the window lags the pointer by that much.
+        btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == "Audio"), None)
+        if btn:
+            sx, sy = btn["x"] - 24, btn["y"] + btn["h"] // 2
+            tx, ty = sx + 40, sy + 160
+            try:
+                pointer([(sx, sy)], hold=True)
+                time.sleep(0.25)
+                pointer([(sx, sy), (tx + 3, ty + 3), (tx, ty)], button="none", steps=25, delayMs=40)
+                time.sleep(0.5)
+            finally:
+                release()
+                time.sleep(1.2)
+            st = uia()
+            fs = frames(st).get("Audio")
+            moved = bool(fs) and abs(fs["x"] - (fb["x"] + 40)) <= 16 and abs(fs["y"] - (fb["y"] + 160)) <= 16
+            ev, st = snap("ptr-9-floating-system-moved")
+            verdict("floating-system-move", "observed" if moved else "failed",
+                    f"tablet drag of the floating Audio header's free part from {sx},{sy} by 40,160: window "
+                    f"{fb['x']},{fb['y']} -> {fs and (fs['x'], fs['y'])}, still floating {bool(fs)}", ev)
+            fb = fs or fb
+        else:
+            verdict("floating-system-move", "not-observable", "the floating Audio header's ⋯ is not in UIA")
         # The floating header's ⋯ by the tablet: its menu (Main.qml's, in the
         # main window) opens under the button, in the floating panel's place.
         btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == "Audio"), None)
@@ -1371,7 +1402,7 @@ def step_outputs():
         sec = next(m for m in mons if not m["primary"])
         st = uia()
         moved_by = None
-        src = title_point(st, "Audio", "Audio", dx=100)
+        src = title_point(st, "Audio", "Audio", dx=30)
         if src and before:
             sx, sy, _ = src
             tx, ty = sec["x"] + sec["w"] // 3, sec["y"] + 120

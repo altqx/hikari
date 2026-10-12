@@ -70,9 +70,10 @@ class Docking : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
-    // Wayland: the free part of a floating panel's header moves its window
-    // through the compositor (startSystemMove); the engine cannot place
-    // windows there. Tests set it elsewhere (setSystemMove).
+    // The free part of a floating panel's header moves its window through
+    // the window system (startSystemMove) while its title or tabs stay the
+    // engine's drag: on Wayland, X11 and Windows (platformUsesSystemMove).
+    // Tests set it on the offscreen platform (setSystemMove).
     Q_PROPERTY(bool systemMove READ systemMove NOTIFY systemMoveChanged FINAL)
     // The width of the floating window's drawn shadow.
     Q_PROPERTY(int floatingShadow READ floatingShadow CONSTANT FINAL)
@@ -88,10 +89,13 @@ class Docking : public QObject {
 public:
     explicit Docking(QObject *parent = nullptr);
 
-    // Whether the platform needs the compositor to move windows (Wayland).
-    static bool platformNeedsSystemMove();
+    // Whether a floating panel's header splits on the platform named
+    // `platformName` (QGuiApplication::platformName(), the running one by
+    // default): on the window systems, not on offscreen or minimal.
+    static bool platformUsesSystemMove(QStringView platformName);
+    static bool platformUsesSystemMove();
     bool systemMove() const { return m_systemMove; }
-    // Tests: the Wayland header on another platform.
+    // Tests: the split header, or the engine's drag over the whole header.
     void setSystemMove(bool on);
     static int floatingShadow() { return dockchrome::floatingShadow(); }
     static int resizeGrip() { return dockchrome::kResizeGrip; }
@@ -134,11 +138,12 @@ public:
     // `uniqueName`'s menu, below `anchor`; Main.qml owns the menu.
     Q_INVOKABLE void requestMenu(const QString &uniqueName, QQuickItem *anchor);
     // Floats panel `uniqueName`, or docks it when it floats (a double-click
-    // on a header the engine does not see: Wayland's moving header).
+    // on a header the engine does not see: a floating header's free part).
     Q_INVOKABLE bool toggleFloating(const QString &uniqueName);
-    // Has the compositor move the window holding `from` (Wayland's moving
-    // header); whether the platform took it. systemMoveRequested says so to
-    // tests on platforms that do not.
+    // Has the window system move the window holding `from` (the free part
+    // of a floating header); whether the platform took it (X11 without a
+    // window manager that moves windows, and offscreen, do not).
+    // systemMoveRequested says so to tests on platforms that do not.
     Q_INVOKABLE bool startSystemMove(QQuickItem *from);
     // Asks the focused control for its context menu, as the keyboard does
     // (a QContextMenuEvent with the Keyboard reason to the focus window).
@@ -160,7 +165,7 @@ private:
     };
     QHash<QString, Header> m_headers;
     int m_revision = 0;
-    bool m_systemMove = platformNeedsSystemMove();
+    bool m_systemMove = platformUsesSystemMove();
     QString m_openMenu;
     int m_windowTitleRevision = 0;
 };
