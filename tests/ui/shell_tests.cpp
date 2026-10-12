@@ -6432,7 +6432,16 @@ private slots:
         const QString hint = application->translationHint();
         QCOMPARE(hint, QStringLiteral("Translation needs an ASS file: plain text cannot store it."));
         QCOMPARE(QQmlProperty(check, QStringLiteral("ToolTip.text"), qmlContext(check)).read().toString(), hint);
-        QVERIFY(check->property("hoverEnabled").toBool()); // the tooltip reaches it while disabled
+        // The hint shows over the disabled box.
+        const QQmlProperty tipVisible(check, QStringLiteral("ToolTip.visible"), qmlContext(check));
+        const QPoint away(window->width() - 5, window->height() - 5);
+        QTest::mouseMove(window, away);
+        QTRY_VERIFY(!tipVisible.read().toBool());
+        QTest::mouseMove(window, centreOf(check) - QPoint(0, 1));
+        QTest::mouseMove(window, centreOf(check));
+        QTRY_VERIFY(tipVisible.read().toBool());
+        QTest::mouseMove(window, away);
+        QTRY_VERIFY(!tipVisible.read().toBool());
         QVERIFY(!application->canPasteTranslation());
         auto *grid = item("editingGrid");
         grid->forceActiveFocus();

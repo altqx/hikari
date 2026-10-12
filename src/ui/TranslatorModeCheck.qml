@@ -3,7 +3,8 @@
 // translator mode" step; turning it off asks first, as SubsGrid::SetTlMode
 // (SubsGridBase.cpp:1339-1342) does, with No as the default answer. For a
 // PlainText Document it is disabled and its tooltip says why
-// (E5-tlmode-needs-script-info); hover reaches it while disabled.
+// (E5-tlmode-needs-script-info); with hoverEnabled the disabled control
+// still takes hover, so the tooltip shows.
 import QtQuick
 import QtQuick.Controls
 
