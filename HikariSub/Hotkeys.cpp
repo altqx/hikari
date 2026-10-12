@@ -259,6 +259,11 @@ int Hotkeys::LoadHkeys(bool Audio)
 			acctxt = acctxt.AfterFirst(L'\n');
 			ConfigConverter::Get()->ConvertHotkeys(&acctxt);
 			ow.FileWrite(Options.configPath + hkpath, acctxt);
+			// the tokenizer holds a copy of the old text, whose names
+			// GetIdValue does not know; read the converted lines instead,
+			// past the header ConvertHotkeys puts first
+			hk.SetString(acctxt, L"\n", wxTOKEN_STRTOK);
+			hk.NextToken();
 		}
 	}
 	if (header.version == HotkeysFileVersion::Outdated){
@@ -308,8 +313,14 @@ int Hotkeys::LoadHkeys(bool Audio)
 		// it is: the ids it leaves out are shortcuts the user removed.
 		std::map<idAndType, hdata> defaults;
 		LoadDefault(defaults, Audio);
-		hkeys.insert(defaults.begin(), defaults.end());
+		FillMissingHotkeys(hkeys, defaults);
 		if (hkeys.size() <= 10){ return 0; }
+		if (HotkeysNeedWriteBack(header, true)){
+			// the converted file on disk now has a current header and only
+			// its own bindings; save the filled set so the next start
+			// reads what this one shows
+			SaveHkeys(Audio);
+		}
 	}
 	if (Audio){ AudioKeys = true; }
 	return 1;

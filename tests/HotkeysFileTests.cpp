@@ -16,6 +16,9 @@
 #include "check.h"
 #include "../HikariSub/HotkeysFile.h"
 
+#include <map>
+#include <string>
+
 namespace {
 
 bool IsVersion(const wchar_t *line, HotkeysFileVersion version)
@@ -70,4 +73,42 @@ TEST(hotkeys_short_old_build_file_is_filled)
 	CHECK(HotkeysNeedDefaultFill(HotkeysFileVersion::OldBuild, 0));
 	CHECK(HotkeysNeedDefaultFill(HotkeysFileVersion::OldBuild, 10));
 	CHECK(!HotkeysNeedDefaultFill(HotkeysFileVersion::OldBuild, 11));
+}
+
+TEST(hotkeys_fill_keeps_the_file_bindings)
+{
+	std::map<int, std::wstring> keys{{1, L"Ctrl-K"}, {3, L"F5"}};
+	const std::map<int, std::wstring> defaults{{1, L"Ctrl-A"}, {2, L"Ctrl-B"}, {3, L"F3"}};
+	FillMissingHotkeys(keys, defaults);
+	CHECK(keys.size() == 3);
+	CHECK(keys[1] == L"Ctrl-K");
+	CHECK(keys[2] == L"Ctrl-B");
+	CHECK(keys[3] == L"F5");
+}
+
+TEST(hotkeys_converted_filled_file_is_written_back)
+{
+	// first start: a short pre-1141 file is converted and filled
+	HotkeysFileHeader first = ReadHotkeysHeader(L"[Kainote v0.9.0.1100 Release]\r");
+	bool filled = HotkeysNeedDefaultFill(first.version, 3);
+	CHECK(filled);
+	CHECK(HotkeysNeedWriteBack(first, filled));
+
+	// next start: ConvertHotkeys left a current header, which is never
+	// filled, so only the write-back keeps the defaults
+	HotkeysFileHeader next = ReadHotkeysHeader(L"[HikariSub v0.0.1-rc.2]\r");
+	CHECK(next.version == HotkeysFileVersion::Current);
+	CHECK(!HotkeysNeedDefaultFill(next.version, 3));
+	CHECK(!HotkeysNeedWriteBack(next, false));
+}
+
+TEST(hotkeys_write_back_only_after_convert_and_fill)
+{
+	HotkeysFileHeader converted = ReadHotkeysHeader(L"[Kainote v0.9.0.1100 Release]");
+	CHECK(!HotkeysNeedWriteBack(converted, HotkeysNeedDefaultFill(converted.version, 11)));
+
+	// a 1141+ file keeps its old header on disk, so the next start fills it again
+	HotkeysFileHeader recent = ReadHotkeysHeader(L"[Kainote v0.9.0.1525  master 1234567]");
+	CHECK(HotkeysNeedDefaultFill(recent.version, 3));
+	CHECK(!HotkeysNeedWriteBack(recent, true));
 }

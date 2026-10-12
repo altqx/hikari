@@ -82,3 +82,20 @@ inline bool HotkeysNeedDefaultFill(HotkeysFileVersion version, int bindings)
 {
 	return version == HotkeysFileVersion::OldBuild && bindings <= 10;
 }
+
+// The fill adds only the default ids the file does not set: a binding the
+// file holds is never replaced by its default.
+template <class Map>
+void FillMissingHotkeys(Map &keys, const Map &defaults)
+{
+	keys.insert(defaults.begin(), defaults.end());
+}
+
+// ConfigConverter rewrites a pre-1141 file with a current "HikariSub v<semver>"
+// header and only the file's own bindings. When the defaults were filled in,
+// the filled set has to be saved once: the next start reads the rewritten file
+// as current, and a current file never gets the defaults back.
+inline bool HotkeysNeedWriteBack(const HotkeysFileHeader &header, bool filled)
+{
+	return header.convert && filled;
+}
