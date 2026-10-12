@@ -17,11 +17,14 @@
 
 #include <wx/file.h>
 #include <wx/thread.h>
+#include <stdio.h>
 #ifndef _WIN32
 #include "SaveFile.h"
 #endif
 
 #ifdef _WIN32
+enum class FileAccess;
+
 // The volume serial number and the 128-bit file id FileIdInfo gives, which
 // tell one file from another on a volume; on a volume or a Windows without
 // it, the 64-bit file index in its low half.
@@ -73,11 +76,15 @@ public:
 	WindowsSaveFile(const WindowsSaveFile &) = delete;
 	WindowsSaveFile &operator=(const WindowsSaveFile &) = delete;
 	~WindowsSaveFile() { Discard(); }
-	// with privateFile, a new file is made with a DACL that lets only this
-	// user open it, see MakeTempFileNear
+	// With privateFile, the saved file lets in only this user, SYSTEM and
+	// Administrators: a new one is made so, and one that is there is given
+	// that DACL in Commit before the new contents are in it, or is not
+	// saved when it cannot be given it. The temporary files are made so
+	// too, or not at all.
 	bool Open(const wxString &target, bool privateFile = false);
 	bool IsOpened() const { return file.IsOpened(); }
 	bool Write(const wxString &text, const wxMBConv &conv) { return file.Write(text, conv); }
+	bool Write(const void *data, size_t size) { return file.Write(data, size) == size; }
 	bool Commit();
 	void Discard();
 	// After a save failed half way and the old contents could not be put
@@ -90,6 +97,10 @@ public:
 private:
 	bool Replace();
 	bool Rewrite();
+	// who may open the temporary files: see Open
+	FileAccess TempAccess() const;
+	// gives the private file that is there the DACL of a new one
+	bool NarrowSaved();
 	// whether the path of the target's folder still leads to the folder
 	// Open kept open
 	bool FolderUnchanged() const;
@@ -109,14 +120,27 @@ private:
 	WindowsFileId tempId;
 	wxString keptBackup;
 	bool touched = false;
+	bool privateSave = false;
 };
 #endif
 
 // Makes the folder at path, or narrows the one there, so that only its user
-// may open it: on POSIX, mode 0700 for a folder the user owns that is no
-// link. For the application's own folders that hold copies of subtitles or
-// media, such as the autosaves. On Windows the folder is only made.
+// may open it, for the application's own folders that hold copies of
+// subtitles or of what is in media, such as the autosaves. On POSIX, mode
+// 0700 for a folder the user owns that is no link, see MakePrivateFolderAt.
+// On Windows, a protected DACL that lets in only the user, SYSTEM and
+// Administrators and is passed on to the files in it, for a folder the user
+// owns that is no link or junction. The folders on the way are made as any
+// other folder.
 void MakePrivateFolder(const wxString &path);
+
+// Opens a new file at path for reading and writing that only its user may
+// open, for the application's own files such as the audio cache. Whatever
+// was at path is not followed and is not written into: on POSIX see
+// OpenPrivateFileAt; on Windows a file or link there is deleted and the
+// file made anew with the DACL MakePrivateFolder gives. nullptr on a
+// failure.
+FILE *OpenPrivateFile(const wxString &path);
 
 class OpenWrite
 {

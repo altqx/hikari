@@ -21,6 +21,7 @@ add_executable(hikarisub_tests
     LuaJitTests.cpp
     ParsedScriptsTests.cpp
     PlaybackTests.cpp
+    PrivateFolderTests.cpp
     SaveFileTests.cpp
     SaveTargetTests.cpp
     SemVerTests.cpp
@@ -34,6 +35,7 @@ add_executable(hikarisub_tests
     ../HikariSub/LineGroups.cpp
     ../HikariSub/Playback.cpp
     ../HikariSub/SaveFile.cpp
+    ../HikariSub/PrivateFolder.cpp
     ../HikariSub/TextComparison.cpp
     ../HikariSub/Timebase.cpp
     ../HikariSub/WaveformPeaks.cpp

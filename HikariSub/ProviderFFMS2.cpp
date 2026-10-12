@@ -38,12 +38,6 @@
 #include <vector>
 #include "UtilsWindows.h"
 #include "Provider.h"
-#ifndef _WIN32
-#include <fcntl.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#endif
 
 namespace
 {
@@ -905,18 +899,8 @@ bool ProviderFFMS2::DiskCache(bool newIndex)
 		m_diskCacheFilename << L".part";
 		SetCacheInUse(m_diskCacheFilename, true);
 		m_diskCacheInUse = true;
-#ifndef _WIN32
-		//made, or a .part left before narrowed, so only the user may read it
-		int cacheFd = ::open(m_diskCacheFilename.fn_str(), O_RDWR | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC, 0600);
-		if (cacheFd >= 0 && ::fchmod(cacheFd, 0600) == 0) {
-			m_fp = ::fdopen(cacheFd, "w+b");
-		}
-		if (cacheFd >= 0 && !m_fp) {
-			::close(cacheFd);
-		}
-#else
-		m_fp = _wfopen(m_diskCacheFilename.wc_str(), L"w+b");
-#endif
+		//only the user may open it, also a .part left from before, see OpenPrivateFile
+		m_fp = OpenPrivateFile(m_diskCacheFilename);
 		if (!m_fp)
 			return false;
 	}
