@@ -574,7 +574,9 @@ void EditBox::Send(unsigned char editionType, bool gotoNextLine, bool dummy, boo
 		EndEdit->SetModified(dummy);
 	}
 	if (DurEdit->IsModified()){
-		line->End = EndEdit->GetTime();
+		// without live editing OnEdit never turned the typed duration into End
+		line->End = line->Start + DurEdit->GetTime();
+		EndEdit->SetTime(line->End, false, 2);
 		cellm |= END;
 		DurEdit->SetModified(dummy);
 	}
