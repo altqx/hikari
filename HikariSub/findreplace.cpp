@@ -707,7 +707,9 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 			}
 		}
 
-		wxStringTokenizer tokenizer(subsText, L"\n", wxTOKEN_STRTOK);
+		//SRT cues are put together from their lines; in other files blank
+		//lines are kept and written back
+		wxStringTokenizer tokenizer(subsText, L"\n", (isSRT) ? wxTOKEN_STRTOK : wxTOKEN_RET_EMPTY);
 		wxString token;
 		wxString dialtxt;
 		Dialogue *dial = nullptr;
@@ -741,7 +743,15 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 			}
 			else{
 				token = tokenizer.GetNextToken();
-				token.Trim();
+				//remove only the line end, an unchanged line is written back as it is
+				if (token.EndsWith(L"\r"))
+					token.RemoveLast();
+				//blank lines are not Lines, the loader skips them too
+				if (wxString(token).Trim(false).empty()){
+					if (!fr->find)
+						replacedText << token << L"\r\n";
+					continue;
+				}
 				if (!plainText)
 					dial = new Dialogue(token);
 			}
@@ -759,6 +769,10 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 					positionId++;
 				}
 				if (notTlStyle) {
+					//a skipped Comment is written back as it is
+					if (!fr->find)
+						replacedText << token << L"\r\n";
+					token.clear();
 					delete dial;
 					continue;
 				}
@@ -1624,7 +1638,9 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 		}
 	}
 
-	wxStringTokenizer tokenizer(subsText, L"\n", wxTOKEN_STRTOK);
+	//SRT cues are put together from their lines; in other files blank
+	//lines are kept and written back
+	wxStringTokenizer tokenizer(subsText, L"\n", (isSRT) ? wxTOKEN_STRTOK : wxTOKEN_RET_EMPTY);
 	wxString token;
 	wxString dialtxt;
 	Dialogue *dial = nullptr;
@@ -1654,7 +1670,14 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 		}
 		else{
 			token = tokenizer.GetNextToken();
-			token.Trim();
+			//remove only the line end, an unchanged line is written back as it is
+			if (token.EndsWith(L"\r"))
+				token.RemoveLast();
+			//blank lines are not Lines, Find in files does not count them
+			if (wxString(token).Trim(false).empty()){
+				replacedText << token << L"\r\n";
+				continue;
+			}
 		}
 		if (SeekResult->keyLine != lineNum){
 
