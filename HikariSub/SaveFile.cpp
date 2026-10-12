@@ -16,19 +16,29 @@
 #ifndef _WIN32
 
 #include "SaveFile.h"
+#include "SaveTarget.h"
 
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
+#include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 #include <map>
 #include <random>
 #include <vector>
 #ifdef __linux__
+#include <sys/syscall.h>
 #include <sys/xattr.h>
+#if defined(SYS_openat2) && __has_include(<linux/openat2.h>)
+#include <linux/openat2.h>
+#define HIKARISUB_HAVE_OPENAT2 1
+#endif
 #endif
 
 namespace {
@@ -95,10 +105,24 @@ int MakeTempFileNear(int at, const std::string &prefix, const char *shortName, m
 	return fd;
 }
 
+// The temporary folder TMPDIR names, or /tmp, as an absolute path with no
+// link in it, so that a later change of the current folder does not move it;
+// empty when it does not resolve.
 std::string TempFolder()
 {
 	const char *folder = getenv("TMPDIR");
-	return (folder && *folder) ? folder : "/tmp";
+	char *resolved = realpath((folder && *folder) ? folder : "/tmp", nullptr);
+	if (!resolved)
+		return std::string();
+	std::string path = resolved;
+	free(resolved);
+	return path;
+}
+
+// path and name joined with one slash
+std::string Join(const std::string &folder, const std::string &name)
+{
+	return (folder == "/" ? "" : folder) + "/" + name;
 }
 
 // The name under /proc that opens the very file fd is open on, whatever the
@@ -126,13 +150,28 @@ bool SameFile(const struct stat &a, const struct stat &b)
 	return a.st_dev == b.st_dev && a.st_ino == b.st_ino;
 }
 
-bool WriteAll(int fd, const char *data, size_t size, SaveFile::Writer writer)
+// Writes all of data to fd. With waitMs of 0 or more, fd does not block, and
+// a write that would block waits for fd to take more; when it takes nothing
+// for waitMs, the write fails with ETIMEDOUT.
+bool WriteAll(int fd, const char *data, size_t size, SaveFile::Writer writer, int waitMs = -1)
 {
 	while (size) {
 		ssize_t written = writer ? writer(fd, data, size) : write(fd, data, size);
 		if (written < 0) {
 			if (errno == EINTR)
 				continue;
+			if ((errno == EAGAIN || errno == EWOULDBLOCK) && waitMs >= 0) {
+				struct pollfd wait = { fd, POLLOUT, 0 };
+				int ready;
+				do
+					ready = poll(&wait, 1, waitMs);
+				while (ready < 0 && errno == EINTR);
+				if (ready == 0)
+					errno = ETIMEDOUT;
+				if (ready <= 0)
+					return false;
+				continue;
+			}
 			return false;
 		}
 		if (written == 0) {
@@ -145,8 +184,9 @@ bool WriteAll(int fd, const char *data, size_t size, SaveFile::Writer writer)
 	return true;
 }
 
-// Copies all of from, from its start, to the current offset of to.
-bool CopyAll(int from, int to, SaveFile::Writer writer)
+// Copies all of from, from its start, to the current offset of to; see
+// WriteAll for waitMs.
+bool CopyAll(int from, int to, SaveFile::Writer writer, int waitMs = -1)
 {
 	std::vector<char> buffer(1 << 16);
 	off_t offset = 0;
@@ -159,18 +199,17 @@ bool CopyAll(int from, int to, SaveFile::Writer writer)
 		}
 		if (got == 0)
 			return true;
-		if (!WriteAll(to, buffer.data(), static_cast<size_t>(got), writer))
+		if (!WriteAll(to, buffer.data(), static_cast<size_t>(got), writer, waitMs))
 			return false;
 		offset += got;
 	}
 }
 
-// Writes the entries of the folder at, or of the folder name is in when at is
-// AT_FDCWD, to disk after a rename or a new file in it.
-void SyncFolder(int at, const std::string &name)
+// Writes the entries of the folder at to disk after a rename or a new file in
+// it.
+void SyncFolder(int at)
 {
-	int fd = at == AT_FDCWD ? open(FolderOf(name).c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC)
-		: openat(at, ".", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+	int fd = openat(at, ".", O_RDONLY | O_DIRECTORY | O_CLOEXEC);
 	if (fd >= 0) {
 		fsync(fd);
 		close(fd);
@@ -186,10 +225,71 @@ int RenameNoReplace(int at, const char *from, const char *to)
 	if (errno != EINVAL && errno != ENOSYS)
 		return -1;
 #endif
-	// A file system without RENAME_NOREPLACE: a file put at the name in the
-	// meantime is renamed over, which writes nothing into it.
+	// Without RENAME_NOREPLACE: the file gets the name as a second link,
+	// which fails on a name that is taken, and loses the temporary name.
+	if (linkat(at, from, at, to, 0) == 0) {
+		unlinkat(at, from, 0);
+		return 0;
+	}
+	if (errno == EEXIST)
+		return -1;
+	// A file system without either: a file put at the name in the meantime
+	// is renamed over, which writes nothing into it.
 	return renameat(at, from, at, to);
 }
+
+// Swaps the names from and to, both in the folder at: 1 when they were
+// swapped, 0 when the file system cannot do that and -1 on another failure.
+int ExchangeNames(int at, const char *from, const char *to)
+{
+#if defined(__linux__) && defined(RENAME_EXCHANGE)
+	if (renameat2(at, from, at, to, RENAME_EXCHANGE) == 0)
+		return 1;
+	return errno == EINVAL || errno == ENOSYS ? 0 : -1;
+#else
+	(void)at;
+	(void)from;
+	(void)to;
+	return 0;
+#endif
+}
+
+// Keeps SIGPIPE from the thread while it lives: a write into a FIFO whose
+// reader went away then fails with EPIPE instead of ending the program, as no
+// handler or ignore of SIGPIPE is set. A SIGPIPE raised meanwhile is taken off
+// before the thread's mask is put back.
+class SigpipeHeld
+{
+public:
+	SigpipeHeld()
+	{
+		sigemptyset(&pipeOnly);
+		sigaddset(&pipeOnly, SIGPIPE);
+		sigset_t pending;
+		wasPending = sigpending(&pending) == 0 && sigismember(&pending, SIGPIPE) == 1;
+		held = pthread_sigmask(SIG_BLOCK, &pipeOnly, &old) == 0;
+	}
+	~SigpipeHeld()
+	{
+		if (!held)
+			return;
+		sigset_t pending;
+		if (!wasPending && sigpending(&pending) == 0 && sigismember(&pending, SIGPIPE) == 1) {
+			struct timespec now = {};
+			while (sigtimedwait(&pipeOnly, nullptr, &now) < 0 && errno == EINTR) {
+			}
+		}
+		pthread_sigmask(SIG_SETMASK, &old, nullptr);
+	}
+	SigpipeHeld(const SigpipeHeld &) = delete;
+	SigpipeHeld &operator=(const SigpipeHeld &) = delete;
+
+private:
+	sigset_t pipeOnly;
+	sigset_t old;
+	bool wasPending = false;
+	bool held = false;
+};
 
 #ifdef __linux__
 // Reads one list or value of extended attributes, from path or else from fd.
@@ -293,13 +393,104 @@ bool InodeIsLocked(ino_t) { return false; }
 
 } // namespace
 
+int OpenFolderWithoutLinks(const char *path)
+{
+#ifdef HIKARISUB_HAVE_OPENAT2
+	struct open_how how = {};
+	how.flags = folderFlags;
+	how.resolve = RESOLVE_NO_SYMLINKS;
+	int fd;
+	do
+		fd = static_cast<int>(syscall(SYS_openat2, AT_FDCWD, path, &how, sizeof(how)));
+	while (fd < 0 && errno == EINTR);
+	// ENOSYS before Linux 5.6; EPERM where a seccomp filter denies it
+	if (fd >= 0 || (errno != ENOSYS && errno != EPERM && errno != EINVAL && errno != E2BIG))
+		return fd;
+#endif
+	return open(path, folderFlags);
+}
+
+bool ResolveSaveTarget(const char *path, SaveTarget *target, const std::function<void()> &afterResolve)
+{
+	*target = SaveTarget();
+	char *real = realpath(path, nullptr);
+	std::string resolved, name;
+	struct stat opened;
+	bool exists = real != nullptr;
+	if (exists) {
+		resolved = real;
+		free(real);
+		name = NameOf(resolved);
+		if (afterResolve)
+			afterResolve();
+		// the kernel's checks, such as fs.protected_symlinks, are made by
+		// opening the path the user gave
+		int followed = open(path, O_PATH | O_CLOEXEC);
+		bool seen = followed >= 0 && fstat(followed, &opened) == 0;
+		if (followed >= 0)
+			close(followed);
+		if (!seen)
+			return false;
+		resolved = FolderOf(resolved);
+	}
+	else {
+		// No file at path. A link there leads to no file and is refused, and
+		// so is a path that cannot be looked at.
+		struct stat linkStat;
+		if (lstat(path, &linkStat) == 0 || errno != ENOENT)
+			return false;
+		// A new file: its folder is resolved as a file is, and the name kept.
+		std::string given = path;
+		name = NameOf(given);
+		if (name.empty() || name == "." || name == "..")
+			return false;
+		std::string folder = FolderOf(given);
+		real = realpath(folder.c_str(), nullptr);
+		if (!real)
+			return false;
+		resolved = real;
+		free(real);
+		if (afterResolve)
+			afterResolve();
+		int followed = open(folder.c_str(), folderFlags);
+		bool seen = followed >= 0 && fstat(followed, &opened) == 0;
+		if (followed >= 0)
+			close(followed);
+		if (!seen)
+			return false;
+	}
+	// resolved is now the folder: what was opened must be found again there,
+	// with no link followed on the way. Where links cannot be refused on the
+	// way, the folder must at least be no link itself.
+	int folder = OpenFolderWithoutLinks(resolved.c_str());
+	if (folder < 0)
+		return false;
+	struct stat folderStat, folderName, named;
+	bool same = fstat(folder, &folderStat) == 0 && lstat(resolved.c_str(), &folderName) == 0 &&
+		SameFile(folderStat, folderName) &&
+		(exists ? fstatat(folder, name.c_str(), &named, AT_SYMLINK_NOFOLLOW) == 0 && SameFile(opened, named)
+			: SameFile(opened, folderStat));
+	close(folder);
+	if (!same)
+		return false;
+	target->path = Join(resolved, name);
+	target->folderDevice = folderStat.st_dev;
+	target->folderInode = folderStat.st_ino;
+	target->exists = exists;
+	if (exists) {
+		target->device = named.st_dev;
+		target->inode = named.st_ino;
+	}
+	return true;
+}
+
 SaveMethod ChooseSaveMethod(const SaveTargetFacts &facts)
 {
 	if (facts.changed)
 		return SaveMethod::Refuse;
 	if (!facts.exists)
 		return facts.tempMade ? SaveMethod::Replace : SaveMethod::Refuse;
-	if (!facts.writable)
+	if (!facts.writable || facts.othersFileInSharedFolder)
 		return SaveMethod::Refuse;
 	if (S_ISFIFO(facts.type) || S_ISCHR(facts.type))
 		return SaveMethod::WriteThrough;
@@ -335,11 +526,10 @@ int SaveFile::ReopenTarget(int flags) const
 		errno = ENOENT;
 		return -1;
 	}
+	// Without /proc this fails, and so does the save: opening the name once
+	// more would open whatever is at the name now, a device or a FIFO too,
+	// before it could be checked.
 	int fd = open(ProcPathOf(pinFd).c_str(), flags | O_CLOEXEC | O_NOCTTY);
-	if (fd < 0 && errno == ENOENT) {
-		// without /proc: the name once more, which must still be the file
-		fd = openat(folderFd, name.c_str(), flags | O_NOFOLLOW | O_CLOEXEC | O_NOCTTY);
-	}
 	if (fd < 0)
 		return -1;
 	struct stat now;
@@ -351,12 +541,9 @@ int SaveFile::ReopenTarget(int flags) const
 	return fd;
 }
 
-std::string SaveFile::PathOf(int at, const std::string &file) const
+std::string SaveFile::PathOf(const std::string &file) const
 {
-	if (at == AT_FDCWD)
-		return file;
-	std::string folder = FolderOf(target);
-	return (folder == "/" ? "" : folder) + "/" + file;
+	return Join(stageFolder, file);
 }
 
 SaveTargetFacts SaveFile::ReadFacts()
@@ -375,6 +562,10 @@ SaveTargetFacts SaveFile::ReadFacts()
 			facts.mode = targetStat.st_mode & 07777;
 			facts.device = targetStat.st_dev;
 			facts.lockedByOthers = S_ISREG(targetStat.st_mode) && InodeIsLocked(targetStat.st_ino);
+			struct stat folderStat;
+			facts.othersFileInSharedFolder = fstat(folderFd, &folderStat) != 0 ||
+				((folderStat.st_mode & (S_ISVTX | S_IWOTH)) == (S_ISVTX | S_IWOTH) &&
+				targetStat.st_uid != geteuid() && targetStat.st_uid != folderStat.st_uid);
 		}
 		else {
 			// a target that cannot be looked at is not saved to
@@ -385,14 +576,22 @@ SaveTargetFacts SaveFile::ReadFacts()
 		return facts;
 
 	if (stageNextToTarget && stageFd >= 0) {
-		if (facts.exists && S_ISREG(facts.type)) {
+		struct stat tempStat;
+		bool seen = fstat(stageFd, &tempStat) == 0;
+		// The temporary file takes the target's group and mode only when it
+		// can be renamed over it: a file of the user's with one link and no
+		// lock. Else it keeps the mode it was made with, and so never the
+		// set-user-ID bit or the open mode of another user's file while it
+		// waits to be copied from.
+		if (seen && facts.exists && S_ISREG(facts.type) && facts.uid == tempStat.st_uid && facts.links == 1 &&
+			!facts.lockedByOthers) {
 			// The group first, since changing it clears the set-group-ID bit.
 			// A group or mode that cannot be set shows in the facts.
 			(void)!fchown(stageFd, static_cast<uid_t>(-1), targetStat.st_gid);
 			(void)!fchmod(stageFd, facts.mode);
+			seen = fstat(stageFd, &tempStat) == 0;
 		}
-		struct stat tempStat;
-		if (fstat(stageFd, &tempStat) == 0) {
+		if (seen) {
 			facts.tempMade = true;
 			facts.tempUid = tempStat.st_uid;
 			facts.tempGid = tempStat.st_gid;
@@ -404,42 +603,53 @@ SaveTargetFacts SaveFile::ReadFacts()
 	return facts;
 }
 
-bool SaveFile::Open(const std::string &path)
+bool SaveFile::Open(const SaveTarget &resolved)
 {
 	Discard();
+	const std::string &path = resolved.path;
 	target = path;
 	failed = false;
 	keptBackup.clear();
 	method = SaveMethod::Refuse;
 	stageNextToTarget = false;
 
-	// The folder and the file are looked up here, once. Everything later
-	// reaches them through these descriptors, so a name another program
-	// changes in the meantime cannot lead the save to another file; a link
-	// the user saved through was resolved before, see ResolveSaveTarget, and
-	// a link at the resolved name now is refused.
+	// The folder and the file are looked up here, once, and must be the ones
+	// ResolveSaveTarget found. Everything later reaches them through these
+	// descriptors, so a name another program changes in the meantime cannot
+	// lead the save to another folder or file; a link the user saved through
+	// was resolved before, and a link at the resolved path now, in any of its
+	// parts, is refused.
 	name = NameOf(path);
 	if (name.empty() || name == "." || name == "..")
 		return false;
-	folderFd = open(FolderOf(path).c_str(), folderFlags);
-	if (folderFd < 0)
-		return false;
-	pinFd = openat(folderFd, name.c_str(), pinFlags);
-	bool exists = pinFd >= 0;
-	if (exists && (fstat(pinFd, &pinned) != 0 || S_ISLNK(pinned.st_mode) || !CanWrite(pinFd))) {
-		// a file that cannot be written is not replaced either
+	folderFd = OpenFolderWithoutLinks(FolderOf(path).c_str());
+	struct stat folderStat;
+	if (folderFd < 0 || fstat(folderFd, &folderStat) != 0 || folderStat.st_dev != resolved.folderDevice ||
+		folderStat.st_ino != resolved.folderInode) {
 		Discard();
 		return false;
 	}
+	pinFd = openat(folderFd, name.c_str(), pinFlags);
+	bool exists = pinFd >= 0;
 	if (!exists && errno != ENOENT) {
+		Discard();
+		return false;
+	}
+	// a file where ResolveSaveTarget found none, or another file than it found
+	if (exists != resolved.exists ||
+		(exists && (fstat(pinFd, &pinned) != 0 || S_ISLNK(pinned.st_mode) || pinned.st_dev != resolved.device ||
+		pinned.st_ino != resolved.inode || !CanWrite(pinFd)))) {
+		// a file that cannot be written is not replaced either
 		Discard();
 		return false;
 	}
 	if (!exists || S_ISREG(pinned.st_mode)) {
 		stageFd = MakeTempFileNear(folderFd, name + ".", ".hikarisub-save.", 0666, &stageName, &tempPrefix);
 		stageNextToTarget = stageFd >= 0;
-		if (stageNextToTarget)
+		if (stageNextToTarget) {
 			stageAt = folderFd;
+			stageFolder = FolderOf(path);
+		}
 	}
 
 	method = ChooseSaveMethod(ReadFacts());
@@ -449,10 +659,14 @@ bool SaveFile::Open(const std::string &path)
 	}
 	if (stageFd < 0) {
 		// The target's folder takes no temporary file, or the target is no
-		// regular file: the new contents wait in the temporary folder.
-		tempPrefix = TempFolder() + "/hikarisub-save.";
-		stageAt = AT_FDCWD;
-		stageFd = MakeTempFile(AT_FDCWD, tempPrefix, 0600, &stageName);
+		// regular file: the new contents wait in the temporary folder, which
+		// is opened now, so that its files are where they were made for the
+		// rest of the save.
+		stageFolder = TempFolder();
+		tempFolderFd = stageFolder.empty() ? -1 : open(stageFolder.c_str(), folderFlags);
+		tempPrefix = "hikarisub-save.";
+		stageAt = tempFolderFd;
+		stageFd = tempFolderFd < 0 ? -1 : MakeTempFile(stageAt, tempPrefix, 0600, &stageName);
 		if (stageFd < 0) {
 			Discard();
 			return false;
@@ -506,7 +720,12 @@ void SaveFile::Discard()
 		unlinkat(stageAt, stageName.c_str(), 0);
 		stageName.clear();
 	}
-	stageAt = AT_FDCWD;
+	stageAt = -1;
+	stageFolder.clear();
+	if (tempFolderFd >= 0) {
+		close(tempFolderFd);
+		tempFolderFd = -1;
+	}
 	if (pinFd >= 0) {
 		close(pinFd);
 		pinFd = -1;
@@ -522,14 +741,25 @@ bool SaveFile::Replace()
 	// the temporary file is in the target's folder, see ChooseSaveMethod
 	if (fsync(stageFd) != 0)
 		return false;
-	// A rename puts the new file under the name and writes nothing into what
-	// was there: a file or link put at the name after the check above only
-	// loses that name. A new file's name taken in the meantime fails it.
-	int renamed = pinFd >= 0 ? renameat(folderFd, stageName.c_str(), folderFd, name.c_str())
-		: RenameNoReplace(folderFd, stageName.c_str(), name.c_str());
+	// A new file's name taken since the check above fails the rename. An
+	// existing file swaps names with the new file, and then what was at the
+	// name is checked, see FinishExchange: whatever another program put there
+	// since the check gets its name back. A file system that cannot swap
+	// names gets a plain rename, which writes nothing into what was there; a
+	// file put at the name in that moment loses the name.
+	int renamed;
+	if (pinFd < 0) {
+		renamed = RenameNoReplace(folderFd, stageName.c_str(), name.c_str());
+	}
+	else {
+		int exchanged = ExchangeNames(folderFd, stageName.c_str(), name.c_str());
+		if (exchanged > 0)
+			return FinishExchange();
+		renamed = exchanged == 0 ? renameat(folderFd, stageName.c_str(), folderFd, name.c_str()) : -1;
+	}
 	if (renamed == 0) {
 		stageName.clear();
-		SyncFolder(folderFd, name);
+		SyncFolder(folderFd);
 		return true;
 	}
 	// A file mounted over the path, or a folder that lets only a file's owner
@@ -541,6 +771,35 @@ bool SaveFile::Replace()
 		return Rewrite();
 	}
 	return false;
+}
+
+bool SaveFile::FinishExchange()
+{
+	// The new file is at the name, and what was there at stageName. It must
+	// be the file the save started with, still with one link and no lock: a
+	// link made or a lock taken since the check means a rewrite instead.
+	struct stat old;
+	bool same = fstatat(folderFd, stageName.c_str(), &old, AT_SYMLINK_NOFOLLOW) == 0 && SameFile(old, pinned) &&
+		S_ISREG(old.st_mode);
+	if (same && old.st_nlink == 1 && !InodeIsLocked(old.st_ino)) {
+		unlinkat(folderFd, stageName.c_str(), 0);
+		stageName.clear();
+		SyncFolder(folderFd);
+		return true;
+	}
+	if (ExchangeNames(folderFd, stageName.c_str(), name.c_str()) <= 0) {
+		// The names cannot be swapped back: the new contents stay at the
+		// name, and what was there is kept, not removed with the temporary
+		// file.
+		keptBackup = PathOf(stageName);
+		stageName.clear();
+		return false;
+	}
+	SyncFolder(folderFd);
+	if (!same || !TargetUnchanged())
+		return false;
+	method = SaveMethod::Rewrite;
+	return Rewrite();
 }
 
 bool SaveFile::Rewrite()
@@ -567,7 +826,7 @@ bool SaveFile::Rewrite()
 	bool saved = backup >= 0 && CopyAll(out, backup, nullptr) && fsync(backup) == 0 &&
 		fstat(backup, &backupStat) == 0;
 	if (saved)
-		SyncFolder(stageAt, backupName);
+		SyncFolder(stageAt);
 	if (saved) {
 		saved = lseek(out, 0, SEEK_SET) == 0 && CopyAll(stageFd, out, targetWriter) &&
 			ftruncate(out, stageStat.st_size) == 0 && fsync(out) == 0;
@@ -575,7 +834,7 @@ bool SaveFile::Rewrite()
 			bool restored = lseek(out, 0, SEEK_SET) == 0 && CopyAll(backup, out, nullptr) &&
 				ftruncate(out, backupStat.st_size) == 0 && fsync(out) == 0;
 			if (!restored) {
-				keptBackup = PathOf(stageAt, backupName);
+				keptBackup = PathOf(backupName);
 				backupName.clear();
 			}
 		}
@@ -595,12 +854,16 @@ bool SaveFile::WriteThrough()
 	int out = ReopenTarget(O_WRONLY | O_NONBLOCK);
 	if (out < 0)
 		return false;
-	// The writes block again as a plain write does: a reader that is there
-	// takes the contents at its own pace.
+	// The writes stay non-blocking: a reader that is there takes the
+	// contents at its own pace, and one that takes nothing for stallTimeout
+	// fails the save instead of holding the program. A reader that goes away
+	// fails it too, with EPIPE and no SIGPIPE.
 	struct stat outStat;
-	int flags = fcntl(out, F_GETFL);
-	bool saved = fstat(out, &outStat) == 0 && (S_ISFIFO(outStat.st_mode) || S_ISCHR(outStat.st_mode)) &&
-		flags != -1 && fcntl(out, F_SETFL, flags & ~O_NONBLOCK) == 0 && CopyAll(stageFd, out, targetWriter);
+	bool saved = fstat(out, &outStat) == 0 && (S_ISFIFO(outStat.st_mode) || S_ISCHR(outStat.st_mode));
+	if (saved) {
+		SigpipeHeld noSigpipe;
+		saved = CopyAll(stageFd, out, targetWriter, stallTimeout);
+	}
 	if (close(out) != 0)
 		saved = false;
 	return saved;

@@ -27,8 +27,9 @@
 // How a save puts its new contents into the file it saves to.
 enum class SaveMethod {
 	// Nothing is written: the target is a folder, a socket or a block device,
-	// a file that cannot be written, or a new file that cannot be made; or
-	// the target's name no longer leads to the file the save started with.
+	// a file that cannot be written, another user's file in a shared sticky
+	// folder, or a new file that cannot be made; or the target's name no
+	// longer leads to the file the save started with.
 	Refuse,
 	// A temporary file next to the target is renamed over it. This is atomic,
 	// but it gives the path a new inode, so it is used only when the new file
@@ -38,9 +39,31 @@ enum class SaveMethod {
 	// of the old contents is copied back when that fails.
 	Rewrite,
 	// The new contents are written straight into a FIFO or character device.
-	// A FIFO that no program reads fails the save instead of waiting for one.
+	// A FIFO that no program reads, or one whose reader stops reading or
+	// goes away, fails the save instead of waiting or ending the program.
 	WriteThrough,
 };
+
+// The file a save writes, as ResolveSaveTarget found it: its path, which has
+// no link in it, and the folder and the file at that path then. SaveFile::Open
+// opens that folder and file once more and refuses the save when either is
+// another one now, so a folder or file swapped for a link, or for another
+// folder or file, in between is not saved to.
+struct SaveTarget {
+	std::string path;
+	dev_t folderDevice = 0;
+	ino_t folderInode = 0;
+	// a file was at path; for a new file there was none
+	bool exists = false;
+	dev_t device = 0;
+	ino_t inode = 0;
+};
+
+// Opens the folder at path, an absolute path with no link in it, for lookups
+// only (O_PATH), failing when a part of path is a link now. Without openat2,
+// or where it is not allowed, the folder is opened following links; a caller
+// then compares what it opened with what it expects.
+int OpenFolderWithoutLinks(const char *path);
 
 // What a save knows about the file it saves to and about the temporary file
 // it made next to it, after giving that file the target's group and mode.
@@ -51,6 +74,11 @@ struct SaveTargetFacts {
 	bool exists = false;
 	mode_t type = 0;  // the target's S_IFMT bits
 	bool writable = true;
+	// the target is in a sticky folder that everybody can write, such as
+	// /tmp, and belongs neither to the user nor to the folder's owner: the
+	// file another user put at the name, as fs.protected_regular and
+	// fs.protected_fifos keep an O_CREAT open from writing
+	bool othersFileInSharedFolder = false;
 	// a program holds a lock (flock, fcntl or a lease) on the target; the lock
 	// stays with the inode and would not cover a file renamed over the path
 	bool lockedByOthers = false;
@@ -73,16 +101,19 @@ struct SaveTargetFacts {
 // lock that the renamed file would match in owner, group, permission bits,
 // extended attributes and file system; any other regular file is rewritten in
 // place.
-// A file that cannot be written is refused, and so is a changed target.
+// A file that cannot be written is refused, and so is a changed target and
+// another user's file in a shared sticky folder.
 SaveMethod ChooseSaveMethod(const SaveTargetFacts &facts);
 
 // One save of a file on POSIX: Open picks the method and makes the
 // temporary file, Write appends to it and Commit puts it in place. Open
-// looks the target up once and keeps it open, without following a link at
-// its name; Commit picks the method anew from that file as it is then, and
-// refuses the save when the name no longer leads to that file. A rewrite or a
-// write-through writes only into that file. A file that is not committed is
-// left as it was; the destructor removes the temporary file.
+// looks the target's folder and file up once, without following a link, checks
+// that they are the ones ResolveSaveTarget found, and keeps them open; Commit
+// picks the method anew from that file as it is then, and refuses the save
+// when the name no longer leads to that file. A rename swaps the new file in
+// and puts back whatever else it took out; a rewrite or a write-through writes
+// only into that file. A file that is not committed is left as it was; the
+// destructor removes the temporary file.
 class SaveFile
 {
 public:
@@ -94,8 +125,8 @@ public:
 	SaveFile &operator=(const SaveFile &) = delete;
 	~SaveFile();
 
-	// target is the resolved path, see ResolveSaveTarget
-	bool Open(const std::string &target);
+	// target is what ResolveSaveTarget found
+	bool Open(const SaveTarget &target);
 	bool IsOpened() const { return stageFd >= 0; }
 	bool Write(const void *data, size_t size);
 	bool Commit();
@@ -109,6 +140,9 @@ public:
 	// for tests: runs in Commit after the target was looked at and the
 	// method picked, before anything is written
 	void SetBeforeWrite(std::function<void()> hook) { beforeWrite = std::move(hook); }
+	// for tests: how long a write-through waits for a FIFO or device that
+	// takes nothing before the save fails, in milliseconds
+	void SetStallTimeout(int milliseconds) { stallTimeout = milliseconds; }
 
 private:
 	// the facts about the target and the temporary file as they are now
@@ -118,9 +152,12 @@ private:
 	bool TargetUnchanged() const;
 	// opens the file Open found with flags, never another one
 	int ReopenTarget(int flags) const;
-	// the path of file, a name relative to at
-	std::string PathOf(int at, const std::string &file) const;
+	// the path of file, a name in the folder of the temporary file
+	std::string PathOf(const std::string &file) const;
 	bool Replace();
+	// after the new file and the target swapped names: keeps the swap when
+	// the target was the file the save started with, as it was
+	bool FinishExchange();
 	bool Rewrite();
 	bool WriteThrough();
 
@@ -133,10 +170,14 @@ private:
 	// a new file
 	int pinFd = -1;
 	struct stat pinned {};
-	// the temporary file, a name relative to stageAt: the target's folder or,
-	// as an absolute path, the temporary folder
+	// the temporary folder, opened in Open when the temporary file is made
+	// there
+	int tempFolderFd = -1;
+	// the temporary file, a name in the folder stageAt, which is folderFd or
+	// tempFolderFd, at the absolute path stageFolder
 	std::string stageName;
-	int stageAt = AT_FDCWD;
+	int stageAt = -1;
+	std::string stageFolder;
 	// the name prefix the temporary files of this save are made with
 	std::string tempPrefix;
 	std::string keptBackup;
@@ -147,6 +188,7 @@ private:
 	SaveMethod method = SaveMethod::Refuse;
 	Writer targetWriter = nullptr;
 	std::function<void()> beforeWrite;
+	int stallTimeout = 10000;
 };
 
 #endif

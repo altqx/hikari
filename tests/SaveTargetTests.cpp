@@ -18,6 +18,7 @@
 #include "check.h"
 #include "../HikariSub/SaveTarget.h"
 
+#include <sys/stat.h>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -77,11 +78,11 @@ TEST(a_save_through_a_link_replaces_the_target_and_keeps_the_link)
 	WriteText(target, "old");
 	fs::create_symlink("subs.ass", link);
 
-	std::string resolved;
+	SaveTarget resolved;
 	CHECK(ResolveSaveTarget(link.c_str(), &resolved));
-	CHECK(resolved == target.string());
+	CHECK(resolved.path == target.string());
 
-	CHECK(ReplaceLikeTempFile(resolved, "new"));
+	CHECK(ReplaceLikeTempFile(resolved.path, "new"));
 	CHECK(fs::is_symlink(link));
 	CHECK(fs::read_symlink(link) == fs::path("subs.ass"));
 	CHECK(ReadText(target) == "new");
@@ -112,9 +113,9 @@ TEST(a_link_in_another_folder_and_a_chain_of_links_resolve_to_the_last_target)
 	fs::create_symlink("../real/subs.ass", dir.path / "links" / "first.ass");
 	fs::create_symlink("first.ass", dir.path / "links" / "second.ass");
 
-	std::string resolved;
+	SaveTarget resolved;
 	CHECK(ResolveSaveTarget((dir.path / "links" / "second.ass").c_str(), &resolved));
-	CHECK(resolved == target.string());
+	CHECK(resolved.path == target.string());
 }
 
 TEST(a_link_that_leads_to_no_file_is_refused)
@@ -123,19 +124,72 @@ TEST(a_link_that_leads_to_no_file_is_refused)
 	fs::path link = dir.path / "dangling.ass";
 	fs::create_symlink("missing.ass", link);
 
-	std::string resolved = "stale";
+	SaveTarget resolved;
+	resolved.path = "stale";
 	CHECK(!ResolveSaveTarget(link.c_str(), &resolved));
-	CHECK(resolved.empty());
+	CHECK(resolved.path.empty());
 	CHECK(fs::is_symlink(link));
 	CHECK(!fs::exists(dir.path / "missing.ass"));
 }
 
-TEST(a_new_file_is_saved_under_its_own_name)
+TEST(a_new_file_is_saved_under_its_own_name_in_its_resolved_folder)
 {
 	ScratchDir dir;
-	std::string resolved = "stale";
+	SaveTarget resolved;
 	CHECK(ResolveSaveTarget((dir.path / "new.ass").c_str(), &resolved));
-	CHECK(resolved.empty());
+	CHECK(resolved.path == (dir.path / "new.ass").string());
+	CHECK(!resolved.exists);
+	struct stat folder {};
+	CHECK(stat(dir.path.c_str(), &folder) == 0);
+	CHECK(resolved.folderDevice == folder.st_dev && resolved.folderInode == folder.st_ino);
+
+	// through a link to its folder, which the path saved to has no more
+	fs::create_directory(dir.path / "real");
+	fs::create_directory_symlink("real", dir.path / "linked");
+	CHECK(ResolveSaveTarget((dir.path / "linked" / "new.ass").c_str(), &resolved));
+	CHECK(resolved.path == (dir.path / "real" / "new.ass").string());
+	CHECK(stat((dir.path / "real").c_str(), &folder) == 0);
+	CHECK(resolved.folderDevice == folder.st_dev && resolved.folderInode == folder.st_ino);
+}
+
+TEST(a_resolved_file_notes_its_folder_and_itself)
+{
+	ScratchDir dir;
+	fs::path file = dir.path / "subs.ass";
+	WriteText(file, "old");
+	SaveTarget resolved;
+	CHECK(ResolveSaveTarget(file.c_str(), &resolved));
+	struct stat folder {}, target {};
+	CHECK(stat(dir.path.c_str(), &folder) == 0 && stat(file.c_str(), &target) == 0);
+	CHECK(resolved.exists);
+	CHECK(resolved.folderDevice == folder.st_dev && resolved.folderInode == folder.st_ino);
+	CHECK(resolved.device == target.st_dev && resolved.inode == target.st_ino);
+}
+
+TEST(a_folder_link_changed_while_a_new_file_is_resolved_is_refused)
+{
+	ScratchDir dir, victimDir;
+	fs::create_directory(dir.path / "real");
+	fs::path folder = dir.path / "subs";
+	fs::create_directory_symlink(dir.path / "real", folder);
+
+	// realpath follows the folder link, then the link leads elsewhere
+	SaveTarget resolved;
+	CHECK(!ResolveSaveTarget((folder / "new.ass").c_str(), &resolved, [&] {
+		fs::remove(folder);
+		fs::create_directory_symlink(victimDir.path, folder);
+	}));
+	CHECK(resolved.path.empty());
+
+	// a plain folder that becomes a link
+	fs::remove(folder);
+	fs::create_directory(folder);
+	CHECK(!ResolveSaveTarget((folder / "new.ass").c_str(), &resolved, [&] {
+		fs::rename(folder, dir.path / "moved");
+		fs::create_directory_symlink(victimDir.path, folder);
+	}));
+	CHECK(resolved.path.empty());
+	CHECK(fs::is_empty(victimDir.path));
 }
 
 TEST(a_plain_file_resolves_to_itself)
@@ -144,9 +198,9 @@ TEST(a_plain_file_resolves_to_itself)
 	fs::path file = dir.path / "subs.ass";
 	WriteText(file, "old");
 
-	std::string resolved;
+	SaveTarget resolved;
 	CHECK(ResolveSaveTarget(file.c_str(), &resolved));
-	CHECK(resolved == file.string());
+	CHECK(resolved.path == file.string());
 }
 
 TEST(a_link_changed_while_it_is_resolved_is_refused)
@@ -160,12 +214,13 @@ TEST(a_link_changed_while_it_is_resolved_is_refused)
 	// file: the kernel's open, which makes the protected_symlinks check,
 	// never sees the link the resolved path came from
 	fs::create_symlink(victim, link);
-	std::string resolved = "stale";
+	SaveTarget resolved;
+	resolved.path = "stale";
 	CHECK(!ResolveSaveTarget(link.c_str(), &resolved, [&] {
 		fs::remove(link);
 		WriteText(link, "a plain file");
 	}));
-	CHECK(resolved.empty());
+	CHECK(resolved.path.empty());
 
 	// a plain file that becomes a link to the victim
 	fs::remove(link);
@@ -174,12 +229,12 @@ TEST(a_link_changed_while_it_is_resolved_is_refused)
 		fs::remove(link);
 		fs::create_symlink(victim, link);
 	}));
-	CHECK(resolved.empty());
+	CHECK(resolved.path.empty());
 	CHECK(ReadText(victim) == "the victim's data");
 
 	// a link that stays as it was resolves
 	CHECK(ResolveSaveTarget(link.c_str(), &resolved, [] {}));
-	CHECK(resolved == victim.string());
+	CHECK(resolved.path == victim.string());
 }
 
 #endif
