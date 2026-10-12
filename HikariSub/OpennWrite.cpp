@@ -88,6 +88,12 @@ bool OpenWrite::FileOpen(const wxString &filename, wxString *riddenText, bool te
 				wxString result;
 				if (CheckCharSet(buff.data(), buff.size(), &result)) {
 					result.MakeUpper();
+#ifndef _WIN32
+					//glibc's SHIFT_JIS turns 5C into a yen sign and 7E into an
+					//overline; CP932, what Windows uses, keeps them ASCII
+					if (result == L"SHIFT_JIS")
+						result = L"CP932";
+#endif
 					conv = new wxCSConv(result);
 				}
 			}
