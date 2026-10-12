@@ -707,23 +707,21 @@ void HikariSubFrame::OnMenuSelected(wxCommandEvent& event)
 	}
 	else if (id == GLOBAL_REMOVE_SUBS){
 		if (SavePrompt(3)){ event.SetInt(-1); return; }
-		if (tab->SubsPath != emptyString){
-			tab->SubsName = _("Untitled");
-			tab->SubsPath = emptyString;
-			Label();
+		tab->SubsName = _("Untitled");
+		tab->SubsPath = emptyString;
+		Label();
 
-			tab->grid->Clearing();
-			tab->grid->LoadDefault();
-			tab->edit->RefreshStyle(true);
-			tab->grid->RefreshColumns();
+		tab->grid->Clearing();
+		tab->grid->LoadDefault();
+		tab->edit->RefreshStyle(true);
+		tab->grid->RefreshColumns();
 
-			if (tab->video->GetState() != None){
-				if (tab->video->RemoveVisual()){
-					tab->video->OpenSubs(CLOSE_SUBTITLES, true, true);
-				}
+		if (tab->video->GetState() != None){
+			if (tab->video->RemoveVisual()){
+				tab->video->OpenSubs(CLOSE_SUBTITLES, true, true);
 			}
-			SetSubsResolution(false);
 		}
+		SetSubsResolution(false);
 	}
 	else if (id == GLOBAL_UNDO){
 		tab->grid->DoUndo(false);
