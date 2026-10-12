@@ -368,6 +368,16 @@ Automation, or Themes files created by local runs. Host graphics/windowing
 libraries, codec libraries excluded for licensing reasons, and GStreamer
 plugins remain system requirements; this archive is not a universal AppImage.
 
+The package also carries `libSubInspector.so`, which ASSFoundation scripts use
+to measure rendered lines. To check that the automation's `Inspector.moon`
+loads it and gets bounds from it (needs `luajit` and a font), extract the
+archive and run:
+
+```bash
+tar -xzf build-linux/dist/hikarisub-linux-x86_64.tar.gz -C /tmp
+tests/subinspector/check-package.sh /tmp/hikarisub-linux-x86_64
+```
+
 #### 5. Run HikariSub
 
 On a normal desktop session:

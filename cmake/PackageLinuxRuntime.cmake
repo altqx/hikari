@@ -2,7 +2,7 @@ foreach(required_var IN ITEMS
         HIKARISUB_EXE RUNTIME_DIR SOURCE_DIR BINARY_DIR STAGING_PARENT
         PACKAGE_BASENAME ARCHIVE_PATH MSGFMT_EXECUTABLE Python3_EXECUTABLE
         TAR_EXECUTABLE GZIP_EXECUTABLE PACKAGING_DIR DESKTOP_GEN_DIR
-        DEPCTRL_MODULE_DIR DEPCTRL_MODULES)
+        DEPCTRL_MODULE_DIR DEPCTRL_MODULES SUBINSPECTOR_LIBRARY)
     if(NOT DEFINED ${required_var} OR "${${required_var}}" STREQUAL "")
         message(FATAL_ERROR "${required_var} is required")
     endif()
@@ -105,6 +105,25 @@ foreach(depctrl_module IN LISTS depctrl_modules)
     file(COPY_FILE "${DEPCTRL_MODULE_DIR}/${depctrl_module}"
                    "${package_root}/Automation/automation/Include/${depctrl_module}")
 endforeach()
+
+# The tree carries SubInspector only as a Windows DLL; requireffi loads
+# lib<name>.so from the same directory on Linux.
+set(subinspector_dir
+    "${package_root}/Automation/automation/Include/SubInspector/Inspector")
+if(NOT EXISTS "${SUBINSPECTOR_LIBRARY}")
+    message(FATAL_ERROR "SubInspector library is missing: ${SUBINSPECTOR_LIBRARY}")
+endif()
+if(NOT IS_DIRECTORY "${subinspector_dir}")
+    message(FATAL_ERROR "SubInspector's automation directory is missing: ${subinspector_dir}")
+endif()
+if(NOT EXISTS "${SOURCE_DIR}/Thirdparty/SubInspector/COPYING")
+    message(FATAL_ERROR "SubInspector's licence is missing from Thirdparty/SubInspector")
+endif()
+file(COPY_FILE "${SUBINSPECTOR_LIBRARY}"
+               "${subinspector_dir}/libSubInspector.so")
+# MIT: the notice travels with the binary.
+file(COPY_FILE "${SOURCE_DIR}/Thirdparty/SubInspector/COPYING"
+               "${subinspector_dir}/libSubInspector.COPYING")
 
 # Recompile catalogs instead of using stale runtime copies; a release archive
 # ships every locale or none.

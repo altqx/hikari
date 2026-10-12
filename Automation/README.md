@@ -41,7 +41,9 @@ makes to the ones upstream has too, came from that package; the noteworthy ones:
 The modules we build ourselves (`BM/BadMutex.dll`, `PT/PreciseTimer.dll`,
 `DM/DownloadManager.dll`) are not tracked here; packaging takes them from the
 build output. `SubInspector.dll` and `packages/karahelper.dll` are, because this
-solution does not build them.
+solution does not build them. The Linux package adds
+`SubInspector/Inspector/libSubInspector.so`, built by `CMakeLists.txt` from
+`Thirdparty/SubInspector`.
 
 ## Refreshing from upstream
 

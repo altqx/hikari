@@ -27,3 +27,7 @@
 [submodule "Thirdparty/wxWidgets"]
 	path = Thirdparty/wxWidgets
 	url = https://github.com/wxWidgets/wxWidgets.git
+[submodule "Thirdparty/SubInspector"]
+	path = Thirdparty/SubInspector
+	url = https://github.com/TypesettingTools/SubInspector.git
+	shallow = true

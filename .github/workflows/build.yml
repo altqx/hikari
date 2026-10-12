@@ -364,6 +364,10 @@ jobs:
           test -f "$package/Automation/automation/Include/BM/BadMutex/libBadMutex.so"
           test -f "$package/Automation/automation/Include/PT/PreciseTimer/libPreciseTimer.so"
           test -f "$package/Automation/automation/Include/DM/DownloadManager/libDownloadManager.so"
+          test -f "$package/Automation/automation/Include/SubInspector/Inspector/libSubInspector.so"
+          # Inspector.moon must load the packaged library and measure lines.
+          sudo apt-get install -y --no-install-recommends luajit fonts-dejavu-core
+          tests/subinspector/check-package.sh "$package"
           test -f "$package/Themes/DeepDark.txt"
           (cd "$package" && sha256sum -c SHA256SUMS)
           (cd build/dist && sha256sum -c hikarisub-linux-x86_64.tar.gz.sha256)

@@ -89,6 +89,35 @@ if(NOT EXISTS "${CMAKE_SOURCE_DIR}/Thirdparty/ffms2/src/core/indexing.h")
         "Run:  git submodule update --init --recursive")
 endif()
 
+# ASSFoundation measures rendered lines through SubInspector, which
+# Automation/automation/Include/SubInspector/Inspector.moon loads with requireffi
+# from Include/SubInspector/Inspector/.  The automation tree carries only the
+# Windows SubInspector.dll, so Linux builds libSubInspector.so from the pinned
+# Thirdparty/SubInspector submodule against the libass the app links, and
+# cmake/PackageLinuxRuntime.cmake installs it beside that DLL.
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/Thirdparty/SubInspector/src/SubInspector.c")
+    message(FATAL_ERROR
+        "Thirdparty/SubInspector is empty -- the git submodules have not been checked out.\n"
+        "Run:  git submodule update --init --recursive")
+endif()
+add_library(subinspector SHARED Thirdparty/SubInspector/src/SubInspector.c)
+# NO_ZLIB selects SubInspector's own crc32, as the shipped Windows DLL was built.
+target_compile_definitions(subinspector PRIVATE NO_ZLIB)
+target_link_libraries(subinspector PRIVATE PkgConfig::LIBASS)
+# The package copies this build-tree file to
+# Automation/automation/Include/SubInspector/Inspector/, five levels below the
+# executable and the libass it bundles there; old-style DT_RPATH, as the
+# executable uses, so that bundled libass is the one it resolves.
+set_target_properties(subinspector PROPERTIES
+    OUTPUT_NAME SubInspector
+    C_STANDARD 99
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/subinspector"
+    BUILD_RPATH "$ORIGIN/../../../../.."
+    # Not wxWidgets' link directory, which would otherwise land in its RPATH.
+    LINK_DIRECTORIES ""
+)
+target_link_options(subinspector PRIVATE "-Wl,--disable-new-dtags")
+
 add_compile_definitions(_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING _CRT_SECURE_NO_WARNINGS HAVE_DLL_EXPORT LINUX_BUILD HIKARISUB_LINUX_BUILD)
 add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-include> $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_SOURCE_DIR}/HikariSub/platform.h> -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
 add_executable(hikarisub
@@ -374,8 +403,9 @@ add_custom_target(hikarisub_linux_package
             -D SYSTEM_DICTIONARY_DIR=${HIKARISUB_SYSTEM_DICTIONARY_DIR}
             -D DEPCTRL_MODULE_DIR=${HIKARISUB_DEPCTRL_DIR}
             -D DEPCTRL_MODULES=${HIKARISUB_DEPCTRL_MODULE_LIST}
+            -D SUBINSPECTOR_LIBRARY=$<TARGET_FILE:subinspector>
             -P "${CMAKE_SOURCE_DIR}/cmake/PackageLinuxRuntime.cmake"
-    DEPENDS hikarisub
+    DEPENDS hikarisub subinspector
             hikarisub_depctrl_badmutex hikarisub_depctrl_precisetimer hikarisub_depctrl_downloadmanager
     BYPRODUCTS
         "${HIKARISUB_PACKAGE_ARCHIVE}"
