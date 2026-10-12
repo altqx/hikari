@@ -758,7 +758,11 @@ void Dialogue::SetRaw(const wxString &ldial)
 		wxString eend;
 		wxString ttext;
 		Format = SRT;
-		Start.SetRaw(ldial.BeforeFirst(L' ', &eend), Format);
+		//the times are on the line with the arrow, a line before it
+		//(a cue number that was not removed) must not be read as the start
+		size_t timesLine = ldial.rfind(L'\n', ldial.find(L" --> "));
+		wxString times = (timesLine == wxString::npos) ? ldial : ldial.Mid(timesLine + 1);
+		Start.SetRaw(times.BeforeFirst(L' ', &eend), Format);
 		eend = eend.AfterFirst(L' ');
 		End.SetRaw(eend.BeforeFirst(L'\n', &ttext).Trim(), Format);
 		Text = ttext;
