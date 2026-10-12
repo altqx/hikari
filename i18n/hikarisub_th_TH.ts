@@ -2591,6 +2591,42 @@ Failed to copy %2 fonts.</source>
         <source>Original text</source>
         <translation type="unfinished">ข้อความต้นฉบับ</translation>
     </message>
+    <message>
+        <source>L.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished">เริ่มต้น</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation type="unfinished">สิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vert.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translation</source>
+        <translation type="unfinished">ข้อความแปล</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Hotkeys</name>

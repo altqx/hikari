@@ -9,6 +9,8 @@
 
 #include <QFile>
 
+#include <algorithm>
+
 using namespace hikari::i18n;
 
 namespace {
@@ -248,5 +250,31 @@ TEST(CheckedIn, CatalogsUseTheRegisteredContexts)
         ASSERT_TRUE(catalog.has_value()) << file;
         for (const TsContext &c : catalog->contexts)
             EXPECT_TRUE(contexts->contains(c.name)) << file << ": " << c.name.toStdString();
+    }
+}
+
+// The Grid's column headings (line_table_model.cpp's QT_TRANSLATE_NOOP table,
+// legacy SubsGridWindow.cpp:310-330) are HikariSub.Grid keys in every
+// catalog. They were a table of plain literals translated at run time, which
+// lupdate never extracted, so no catalog had "Vert.", "CPS" or "Wraps". "#"
+// is not a key: legacy never translates it.
+TEST(CheckedIn, CatalogsHoldTheGridHeadings)
+{
+    const QStringList headings{QStringLiteral("L."),     QStringLiteral("Start"), QStringLiteral("End"),
+                               QStringLiteral("Styles"), QStringLiteral("Actor"), QStringLiteral("Left"),
+                               QStringLiteral("Right"),  QStringLiteral("Vert."), QStringLiteral("Effect"),
+                               QStringLiteral("CPS"),    QStringLiteral("Wraps"), QStringLiteral("Text"),
+                               QStringLiteral("Original text"), QStringLiteral("Translation")};
+    for (const char *file : {"i18n/hikarisub_pl.ts", "i18n/hikarisub_ko_KR.ts", "i18n/hikarisub_th_TH.ts",
+                             "i18n/hikarisub_ta.ts"}) {
+        const auto catalog = readTs(readSource(QLatin1String(file)));
+        ASSERT_TRUE(catalog.has_value()) << file;
+        const auto grid = std::ranges::find(catalog->contexts, QStringLiteral("HikariSub.Grid"), &TsContext::name);
+        ASSERT_NE(grid, catalog->contexts.end()) << file;
+        for (const QString &heading : headings)
+            EXPECT_TRUE(std::ranges::any_of(grid->messages, [&](const TsMessage &m) {
+                return m.source == heading && m.comment.isEmpty() && !m.numerus;
+            })) << file << ": HikariSub.Grid \"" << heading.toStdString() << '"';
+        EXPECT_FALSE(std::ranges::any_of(grid->messages, [](const TsMessage &m) { return m.source == u"#"; })) << file;
     }
 }

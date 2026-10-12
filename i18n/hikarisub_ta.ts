@@ -2602,6 +2602,42 @@ Failed to copy %2 fonts.</source>
         <source>Original text</source>
         <translation type="unfinished">அசல் உரை</translation>
     </message>
+    <message>
+        <source>L.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished">தொடங்கு</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation type="unfinished">முடிவு</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vert.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translation</source>
+        <translation type="unfinished">மொழிபெயர்ப்பு</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Hotkeys</name>

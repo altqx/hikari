@@ -12,6 +12,7 @@
 #include <QString>
 
 #include <cmath>
+#include <iterator>
 
 namespace hikari::ui {
 
@@ -456,11 +457,27 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
         return QVariantList(m_labelColours.begin(), m_labelColours.end());
     if (role != Qt::DisplayRole)
         return {};
-    // Legacy headings.
-    static const char *names[] = {"#",     "L.",   "Start", "End",    "Styles", "Actor", "Left",
-                                  "Right", "Vert.", "Effect", "CPS", "Wraps",  "Text", "Translation"};
+    // Legacy headings (SubsGridWindow.cpp:310-330). "#" is the one legacy
+    // never translates (L"#").
+    if (section == NumberColumn)
+        return QStringLiteral("#");
     if (section == TextColumn && m_showOriginal)
         return QCoreApplication::translate("HikariSub.Grid", "Original text"); // SubsGridWindow.cpp:329
+    static const char *const names[] = {nullptr,
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "L."),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Start"),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "End"),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Styles"),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Actor"),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Left"),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Right"),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Vert."),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Effect"),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "CPS"),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Wraps"),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"),
+                                        QT_TRANSLATE_NOOP("HikariSub.Grid", "Translation")};
+    static_assert(std::size(names) == ColumnCount);
     return QCoreApplication::translate("HikariSub.Grid", names[section]);
 }
 

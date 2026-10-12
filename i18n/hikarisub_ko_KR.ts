@@ -2591,6 +2591,42 @@ Failed to copy %2 fonts.</source>
         <source>Original text</source>
         <translation type="unfinished">원본</translation>
     </message>
+    <message>
+        <source>L.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished">시작 시간</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation type="unfinished">종료 시간</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vert.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translation</source>
+        <translation type="unfinished">번역본</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Hotkeys</name>
