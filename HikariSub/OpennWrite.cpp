@@ -125,6 +125,13 @@ bool OpenWrite::FileOpen(const wxString &filename, wxString *riddenText, bool te
 			static_cast<unsigned char>(buff[1]) == 0xBB &&
 			static_cast<unsigned char>(buff[2]) == 0xBF;
 		if (!utf8){
+			//uchardet only says UTF-16 or UTF-32, and wxCSConv then keeps the
+			//BOM and guesses the byte order; wxConvAuto takes both from the BOM
+			wxBOM bom = wxConvAuto::DetectBOM(buff.data(), buff.size());
+			utf8 = bom == wxBOM_UTF16LE || bom == wxBOM_UTF16BE ||
+				bom == wxBOM_UTF32LE || bom == wxBOM_UTF32BE;
+		}
+		if (!utf8){
 			utf8 = IsUTF8withoutBOM(buff.data(), buff.size());
 			if (!utf8) {
 				wxString result;
