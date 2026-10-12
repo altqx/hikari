@@ -37,11 +37,7 @@ public:
     std::vector<std::string> fontDirectories() override;
 
 private:
-    // DirectWrite: check the system collection for installed and removed
-    // fonts on the next listing. A new service's first listing checks too:
-    // without the check the shared factory may answer with the font cache's
-    // earlier view, which can lack a font installed just before.
-    std::atomic<bool> m_checkForUpdates{true};
+    std::atomic<bool> m_checkForUpdates{false}; // DirectWrite: rescan the system collection
 };
 
 } // namespace hikari::backends
