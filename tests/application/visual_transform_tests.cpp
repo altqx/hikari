@@ -545,6 +545,34 @@ TEST(VisualTransformText, ClipRewritesKeepTheScaleAndTheRectangle)
     EXPECT_EQ(rect, u"{\\clip(m 100 50 l 300 50 300 150 100 150)}A");
 }
 
+// T3-rect-clip-extra-values: a rectangle clip's values past the fourth wrote
+// past legacy's `float xy[4]` (VisualScale.cpp:750-765,
+// VisualRotationZ.cpp:464-476); the first four make the rectangle and the
+// rest are dropped. A value that is not a number leaves the clip as it was,
+// with nothing logged (legacy's "Cannot read clip rectangle values." is not
+// kept).
+TEST(VisualTransformText, RectangleClipDropsValuesPastTheFourth)
+{
+    transform::TagFind find;
+    std::u16string scaled = u"{\\clip(100,50,300,150,7,9)}A";
+    transform::changeClipScale(find, scaled, {0, 0}, 1.f, 1.f);
+    EXPECT_EQ(scaled, u"{\\clip(m 100 50 l 300 50 300 150 100 150)}A");
+    std::u16string doubled = u"{\\iclip(100,50,300,150,7,9,11)}A";
+    transform::changeClipScale(find, doubled, {100, 50}, 2.f, 2.f);
+    EXPECT_EQ(doubled, u"{\\iclip(m 100 50 l 500 50 500 250 100 250)}A");
+    std::u16string turned = u"{\\clip(100,50,300,150,7)}A";
+    transform::changeClipRotationZ(find, turned, {0, 0}, 0.f, 1.f);
+    EXPECT_EQ(turned, u"{\\clip(m 100 50 l 300 50 300 150 100 150)}A");
+
+    for (const std::u16string bad : {u"{\\clip(100,50,x,150)}A", u"{\\clip(100,50,300,150,x)}A"}) {
+        std::u16string text = bad;
+        transform::changeClipScale(find, text, {0, 0}, 2.f, 2.f);
+        EXPECT_EQ(text, bad);
+        transform::changeClipRotationZ(find, text, {0, 0}, 1.f, 0.f);
+        EXPECT_EQ(text, bad);
+    }
+}
+
 // T3-change-org-end: ChangeOrg replaces an \org that is not the block's
 // first tag and keeps what follows it (legacy: `{\an7\org(40,50)30}`).
 TEST(VisualTransformText, ChangeOrgReplacesALaterOrgExactly)
