@@ -506,7 +506,9 @@ void RotationZ::ChangeClipRotationZ(wxString* txt, const D3DXVECTOR2& orgPivot, 
 			wxString lasttype;
 			int countB = 0;
 			bool spline = false;
+			//vector clip points are in 1 / 2^(scale - 1) pixels
 			int vscale = pow(2, (vectorScale - 1));
+			D3DXVECTOR2 pivot(orgPivot.x * vscale, orgPivot.y * vscale);
 			if (vectorScale > 1) {
 				newclip << vectorScale << L",";
 			}
@@ -514,7 +516,7 @@ void RotationZ::ChangeClipRotationZ(wxString* txt, const D3DXVECTOR2& orgPivot, 
 			{
 				ClipPoint pos = points[i];
 				D3DXVECTOR2 posxy = D3DXVECTOR2(pos.x, pos.y);
-				RotateZ(&posxy, sinus, cosinus, orgPivot);
+				RotateZ(&posxy, sinus, cosinus, pivot);
 				float x = posxy.x + 0.5, 
 					  y = posxy.y + 0.5;
 

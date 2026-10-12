@@ -774,10 +774,13 @@ void Scale::ChangeClipScale(wxString* txt, const D3DXVECTOR2& activeLinePos, flo
 		}
 		else {
 			if (clipFreq >= 1) {
-				wxString vscale = clip.BeforeFirst(L',', &clip);
+				wxString rest;
+				wxString vscale = clip.BeforeFirst(L',', &rest);
 				int vscaleint = wxAtoi(vscale);
 				if (vscaleint > 0)
 					vectorScale = vscaleint;
+
+				clip = rest;
 			}
 			GetVectorPoints(clip, &points);
 		}
@@ -787,14 +790,17 @@ void Scale::ChangeClipScale(wxString* txt, const D3DXVECTOR2& activeLinePos, flo
 			wxString lasttype;
 			int countB = 0;
 			bool spline = false;
+			//vector clip points are in 1 / 2^(scale - 1) pixels
+			int vscale = pow(2, (vectorScale - 1));
+			D3DXVECTOR2 pivot(activeLinePos.x * vscale, activeLinePos.y * vscale);
 			if (vectorScale > 1) {
 				newclip << vectorScale << L",";
 			}
 			for (size_t i = 0; i < psize; i++)
 			{
 				ClipPoint pos = points[i];
-				float x = activeLinePos.x + ((pos.x - activeLinePos.x) * Scalex) + 0.5f;
-				float y = activeLinePos.y + ((pos.y - activeLinePos.y) * Scaley) + 0.5f;
+				float x = pivot.x + ((pos.x - pivot.x) * Scalex) + 0.5f;
+				float y = pivot.y + ((pos.y - pivot.y) * Scaley) + 0.5f;
 
 				if (countB && !pos.start) {
 					newclip << getfloat(x, format) << L" " << getfloat(y, format) << L" ";
