@@ -9,6 +9,13 @@
 // and ParseData classes and the definitions they call (listed in
 // CMakeLists.txt). The stand-ins they run against are in visual_t3/standins.h.
 //
+// Built with PROBE_LEGACY_MEASURE (target legacy_visual_t3_measure_capture)
+// the text measure is legacy's own GetLineTextExtents (UtilsWindows.cpp:233-
+// 342, copied unchanged: the Linux build's wxMemoryDC branch) instead of the
+// fixed one, on the font files given as arguments (added to fontconfig
+// before wx starts, as installed fonts), and every "state" also lists the
+// GetLineTextExtents calls made since the last one.
+//
 // Case file lines:
 //   case <name>
 //   client <width> <height> <panel>   the VideoBox client size and m_PanelHeight (GetWindowSize)
@@ -19,6 +26,7 @@
 //   fps <fps>                          the video's Timebase (Timebase::FromFps, 100000 frames)
 //   tlmode                             the grid's hasTLMode
 //   style <name> <fontsize> <scaleX> <scaleY> <angle> <outline> <shadow> <alignment> <marginL> <marginR> <marginV>
+//   stylefont <bold 0|1> <italic 0|1> <spacing> <fontname...>   the last style's font (default Garamond, 0 0 0)
 //   line <start> <end> <style> <marginL> <marginR> <marginV> <comment 0|1>|<text>|<translation>
 //   active <index>                     the Line in the editor (tab->edit->line, grid->currentLine)
 //   select <index>...                  the Grid's selection (default: the active Line)
@@ -40,8 +48,10 @@
 #include "EditBox.h"
 #include "TabPanel.h"
 
+#include <cstring>
 #include <iostream>
 #include <memory>
+#include <new>
 #include <sstream>
 
 ProbeOptions Options;
@@ -49,6 +59,42 @@ std::vector<std::string> probeLog;
 
 #include "extracted_t3.inc"
 
+#ifdef PROBE_LEGACY_MEASURE
+#include <wx/app.h>
+#include <wx/bitmap.h>
+#include <wx/dcmemory.h>
+#include <wx/font.h>
+
+#include <fontconfig/fontconfig.h>
+
+#define GetLineTextExtents legacyGetLineTextExtents
+#include "measure.inc"
+#undef GetLineTextExtents
+
+// One GetLineTextExtents call: what it was given (the measuring Style's
+// fields it reads) and what it answered.
+struct MeasureCall {
+    wxString text, fontname, fontsize, scaleX, scaleY, spacing;
+    bool bold, italic, ok;
+    float width = 0, height = 0, descent = 0, extlead = 0;
+};
+std::vector<MeasureCall> probeMeasures;
+
+bool GetLineTextExtents(const wxString &text, Styles *style, float *width, float *height, float *descent, float *extlead)
+{
+    MeasureCall call{text, style->Fontname, style->Fontsize, style->ScaleX, style->ScaleY, style->Spacing,
+                     style->Bold, style->Italic, false};
+    call.ok = legacyGetLineTextExtents(text, style, &call.width, &call.height, &call.descent, &call.extlead);
+    *width = call.width;
+    *height = call.height;
+    if (descent)
+        *descent = call.descent;
+    if (extlead)
+        *extlead = call.extlead;
+    probeMeasures.push_back(call);
+    return call.ok;
+}
+#else
 bool GetLineTextExtents(const wxString &text, Styles *style, float *width, float *height, float *descent, float *extlead)
 {
     const double fs = style->GetFontSizeDouble();
@@ -62,6 +108,7 @@ bool GetLineTextExtents(const wxString &text, Styles *style, float *width, float
         *extlead = static_cast<float>(fs * 0.1 * sy);
     return true;
 }
+#endif
 
 namespace {
 
@@ -82,6 +129,9 @@ std::string json(const wxString &s)
 
 std::string num(double v)
 {
+    // Scale's rectangle on an empty Line divides by an original size of 0.
+    if (!std::isfinite(v))
+        return std::isnan(v) ? "\"nan\"" : v > 0 ? "\"inf\"" : "\"-inf\"";
     char buffer[40];
     std::snprintf(buffer, sizeof buffer, "%.9g", v);
     return buffer;
@@ -146,16 +196,34 @@ struct World {
             file.selections = {active};
     }
 
+    // Legacy's tools leave members unset until they are read (Visuals::
+    // moveValues[2..3] without a \move, GetPosnScale; Scale's AN and
+    // changeAllTags before the first SetCurVisual). The measure probe makes
+    // its tools in zeroed memory, so what it prints does not depend on what
+    // the heap held (wx's GUI start leaves it dirty). The fixed-measure
+    // probe keeps plain new: its reviewed capture
+    // (local-t3-visual-20261005) was made that way.
+    template <class T> static T *zeroed()
+    {
+#ifdef PROBE_LEGACY_MEASURE
+        void *memory = ::operator new(sizeof(T));
+        std::memset(memory, 0, sizeof(T));
+        return new (memory) T();
+#else
+        return new T();
+#endif
+    }
+
     // RendererVideo::SetVisual (RendererVideo.cpp:1096-1120).
     void setVisual()
     {
         if (!visual) {
             if (toolName == "scale")
-                visual = new Scale();
+                visual = zeroed<Scale>();
             else if (toolName == "rotz")
-                visual = new RotationZ();
+                visual = zeroed<RotationZ>();
             else
-                visual = new RotationXY();
+                visual = zeroed<RotationXY>();
             visual->tab = &tab;
             visual->Visual = toolName == "scale" ? SCALE : toolName == "rotz" ? ROTATEZ : ROTATEXY;
             visual->SetTabPanel(&tab);
@@ -223,13 +291,46 @@ void printState(World &w, const std::string &caseName, int step)
                   << vec(xy->oldAngle) << ",\"firstmove\":" << vec(xy->firstmove) << ",\"type\":" << int(xy->type)
                   << ",\"an\":" << int(xy->AN);
     }
+#ifdef PROBE_LEGACY_MEASURE
+    std::cout << ",\"extents\":[";
+    for (size_t i = 0; i < probeMeasures.size(); i++) {
+        const MeasureCall &m = probeMeasures[i];
+        std::cout << (i ? "," : "") << "{\"text\":" << json(m.text) << ",\"fontname\":" << json(m.fontname)
+                  << ",\"fontsize\":" << json(m.fontsize) << ",\"bold\":" << (m.bold ? "true" : "false")
+                  << ",\"italic\":" << (m.italic ? "true" : "false") << ",\"scaleX\":" << json(m.scaleX)
+                  << ",\"scaleY\":" << json(m.scaleY) << ",\"spacing\":" << json(m.spacing)
+                  << ",\"ok\":" << (m.ok ? "true" : "false") << ",\"width\":" << num(m.width)
+                  << ",\"height\":" << num(m.height) << ",\"descent\":" << num(m.descent)
+                  << ",\"extlead\":" << num(m.extlead) << "}";
+    }
+    std::cout << "]";
+    probeMeasures.clear();
+#endif
     std::cout << "}\n";
 }
 
 } // namespace
 
-int main()
+int main(int argc, char **argv)
 {
+#ifdef PROBE_LEGACY_MEASURE
+    // The fonts the cases measure, as if installed; then wx's GUI (the
+    // memory DC measures through GTK's Pango).
+    for (int i = 1; i < argc; i++)
+        if (!FcConfigAppFontAddFile(FcConfigGetCurrent(), reinterpret_cast<const FcChar8 *>(argv[i]))) {
+            std::cerr << "cannot add font " << argv[i] << "\n";
+            return 1;
+        }
+    wxApp::SetInstance(new wxApp());
+    int wxArgc = 1;
+    if (!wxEntryStart(wxArgc, argv)) {
+        std::cerr << "wx did not start\n";
+        return 1;
+    }
+#else
+    (void)argc;
+    (void)argv;
+#endif
     std::unique_ptr<World> w;
     std::string caseName;
     int step = 0;
@@ -243,6 +344,9 @@ int main()
             in >> caseName;
             w = std::make_unique<World>();
             probeLog.clear();
+#ifdef PROBE_LEGACY_MEASURE
+            probeMeasures.clear();
+#endif
             step = 0;
         } else if (key == "client") {
             in >> w->video.clientWidth >> w->video.clientHeight >> w->video.panelHeight;
@@ -279,6 +383,16 @@ int main()
             s->MarginV = mv;
             w->file.styles.push_back(s.get());
             w->styles.push_back(std::move(s));
+        } else if (key == "stylefont") {
+            Styles *s = w->styles.back().get();
+            int bold = 0, italic = 0;
+            std::string spacing, name;
+            in >> bold >> italic >> spacing;
+            std::getline(in >> std::ws, name);
+            s->Bold = bold != 0;
+            s->Italic = italic != 0;
+            s->Spacing = wxString::FromUTF8(spacing);
+            s->Fontname = wxString::FromUTF8(name);
         } else if (key == "line") {
             auto d = std::make_unique<Dialogue>();
             int comment = 0;
@@ -362,5 +476,9 @@ int main()
             printState(*w, caseName, step++);
         }
     }
+#ifdef PROBE_LEGACY_MEASURE
+    w.reset();
+    wxEntryCleanup();
+#endif
     return 0;
 }
