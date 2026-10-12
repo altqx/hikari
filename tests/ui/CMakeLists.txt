@@ -261,6 +261,18 @@ target_compile_definitions(hikari_ui_icon_tests PRIVATE
 # following the system, the high-contrast pickers, content colours, the live
 # preview and the Theme singleton; the swatch sheet with HIKARI_THEME_SHEET_DIR.
 hikari_add_qttest(hikari_ui_theme_tests SOURCES theme_tests.cpp LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2 OFFSCREEN_ONLY)
+# K2 on Windows: the window system's title bar of every framed window follows
+# the theme (title_bars.h); on Windows also read back from the window system
+# in real windows (the .windows entry, the windows platform).
+hikari_add_qttest(hikari_ui_title_bar_tests SOURCES title_bar_tests.cpp
+    LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2)
+if(WIN32)
+    add_test(NAME hikari_ui_title_bar_tests.windows
+        COMMAND $<TARGET_FILE:hikari_ui_title_bar_tests> windowsTitleBarFollowsTheTheme
+            -o "${CMAKE_BINARY_DIR}/qttest-hikari_ui_title_bar_tests-windows.txt,txt" -o "-,txt")
+    set_tests_properties(hikari_ui_title_bar_tests.windows PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=windows" LABELS "qttest;windows" TIMEOUT 120)
+endif()
 foreach(scale 150 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")
