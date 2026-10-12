@@ -114,8 +114,9 @@ if(UNIX AND NOT APPLE)
     target_compile_definitions(hikari_ui PRIVATE HIKARI_SCREEN_PORTAL)
 endif()
 # D3: the dock chrome after MuseScore 4 (docs/qt/docking.md, "Chrome"): the
-# panel header's "⋯" button and the drop highlight.
-qt_target_qml_sources(hikari_ui QML_FILES DockMenuButton.qml DockDropHighlight.qml)
+# panel header's "⋯" button, the drop highlight and the floating header's
+# system-move area.
+qt_target_qml_sources(hikari_ui QML_FILES DockMenuButton.qml DockDropHighlight.qml DockSystemMoveArea.qml)
 # D3: floating panels ask the window system for no frame
 # (window_decorations.cpp). On Wayland that is the xdg-decoration protocol,
 # vendored in wayland/ with xdg-shell, whose xdg_toplevel interface it names

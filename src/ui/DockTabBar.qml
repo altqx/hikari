@@ -22,12 +22,11 @@ import Hikari.Ui
 // to move or dock, double-click to float or dock. The "⋯" button, a right
 // click anywhere on the header and the keyboard (Right from the selected
 // tab, then Space or Enter; the menu key or Shift+F10 on a tab) open the
-// panel's menu, which Main.qml owns (Docking.requestMenu). On Wayland the
-// engine cannot place windows, so a floating panel's header has two parts:
-// its title or tabs stay the engine's drag, which docks (a drag-and-drop
-// with the drop highlight), and the rest of the header moves the window
-// through the compositor (startSystemMove) once the pointer has moved, so
-// a double-click there still docks.
+// panel's menu, which Main.qml owns (Docking.requestMenu). A floating
+// panel's header has two parts: its title or tabs stay the engine's drag,
+// which docks with the drop highlight (on Wayland a drag-and-drop), and the
+// rest of the header moves the window through the window system
+// (DockSystemMoveArea.qml), so a double-click there still docks.
 //
 // The header's focus ring (K2, visual-language.md "Keyboard focus") marks
 // the group holding the keyboard focus. Loaded through the adapter's view
@@ -142,13 +141,14 @@ KDDWViews.TabBarBase {
         color: Theme.line
     }
 
-    // A lone panel's title: bold, 12 from the left, up to the "⋯" button.
+    // A lone panel's title: bold, 12 from the left, up to the "⋯" button
+    // or, floating, up to the header's free part.
     Text {
         id: titleText
         objectName: "dockTitleText"
         visible: root.titleMode && !root.systemTitle
         x: 12
-        width: Math.max(0, menuButton.x - x - 4)
+        width: Math.max(0, (systemMoveArea.enabled ? systemMoveArea.x : menuButton.x) - x - 4)
         anchors.verticalCenter: parent.verticalCenter
         text: root.currentTitle
         color: Theme.text
@@ -384,42 +384,23 @@ KDDWViews.TabBarBase {
         }
     }
 
-    // Wayland, a floating panel: the header's free part moves the window
-    // through the compositor (right of a lone panel's title, keeping at
-    // least 48 pixels; right of the tabs, up to the toolbar). The title and
-    // the tabs stay the engine's drag, which docks. The move starts once
-    // the pointer has moved, so a click or a double-click (to dock) never
-    // hands the pointer to the compositor.
-    MouseArea {
+    // A floating panel: the header's free part moves the window through
+    // the window system (right of a lone panel's title, up to the "⋯"
+    // button; right of the tabs, up to the toolbar). The title and the tabs
+    // stay the engine's drag, which docks. Short of room, a long title
+    // gives way to keep the free part 48 pixels wide, but keeps 48 itself.
+    DockSystemMoveArea {
         id: systemMoveArea
-        objectName: "dockSystemMoveArea"
         z: root.mouseAreaZ + 2
         enabled: root.floating && Docking.systemMove
         visible: enabled
         readonly property real start: root.titleMode
-                                      ? Math.min(titleText.x + titleText.contentWidth + 8, Math.max(0, menuButton.x - 2 - 48))
+                                      ? Math.max(titleText.x + 48, Math.min(titleText.x + titleText.implicitWidth + 8, menuButton.x - 2 - 48))
                                       : tabRow.width
         readonly property real end: root.titleMode ? menuButton.x - 2 : root.width - root.slotWidth
         x: start
         width: Math.max(0, end - start)
         height: parent.height
-        cursorShape: Qt.SizeAllCursor
-        property point pressedAt
-        property bool moving: false
-        onPressed: mouse => {
-            pressedAt = Qt.point(mouse.x, mouse.y)
-            moving = false
-        }
-        onPositionChanged: mouse => {
-            if (moving || !pressed)
-                return
-            if (Math.abs(mouse.x - pressedAt.x) + Math.abs(mouse.y - pressedAt.y) >= Application.styleHints.startDragDistance) {
-                moving = true
-                Docking.startSystemMove(systemMoveArea)
-            }
-        }
-        onReleased: moving = false
-        onCanceled: moving = false
         onDoubleClicked: Docking.toggleFloating(root.currentName)
     }
 

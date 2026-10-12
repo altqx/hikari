@@ -210,15 +210,16 @@ public:
 //
 // Floating windows, on every platform: borderless tool windows,
 // transparent around a drawn shadow (DockFloatingWindow.qml), resized
-// through the window system (startSystemResize from the shadow). Dragging a
-// header moves them by the engine's drag, which tracks the pointer to show
-// the drop highlight and dock; a system move would hand the pointer to the
-// window system and lose the drop. Only on Wayland, where the engine cannot
-// place windows, does the header's free part move its window through the
-// compositor (startSystemMove, DockTabBar.qml), while its title and tabs
-// stay the engine's drag (a drag-and-drop there). The engine's Aero-snap
-// frame (Flag_AeroSnapWithClientDecos) is not used: it keeps the system's
-// frame, which the borderless window has not.
+// through the window system (startSystemResize from the shadow). A
+// header's title or tabs move them by the engine's drag, which tracks the
+// pointer to show the drop highlight and dock (on Wayland, where the engine
+// cannot place windows, a drag-and-drop). The rest of the header moves the
+// window through the window system (startSystemMove,
+// DockSystemMoveArea.qml), so its snapping and tiling apply there; a system
+// move hands the pointer to the window system, so that part does not dock
+// (the user's choice of 2026-10-12, docs/qt/docking.md). The engine's
+// Aero-snap frame (Flag_AeroSnapWithClientDecos) is not used: it keeps the
+// system's frame, which the borderless window has not.
 void configureEngine()
 {
     using KDDockWidgets::Config;
@@ -362,9 +363,14 @@ bool Docking::windowSystemTitle(QWindow *window) const
     return windowdecorations::hasSystemTitleBar(window);
 }
 
-bool Docking::platformNeedsSystemMove()
+bool Docking::platformUsesSystemMove(QStringView platformName)
 {
-    return QGuiApplication::platformName().startsWith(QLatin1String("wayland"));
+    return platformName.startsWith(u"wayland") || platformName == u"xcb" || platformName == u"windows";
+}
+
+bool Docking::platformUsesSystemMove()
+{
+    return platformUsesSystemMove(QGuiApplication::platformName());
 }
 
 void Docking::setSystemMove(bool on)
