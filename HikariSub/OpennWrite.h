@@ -72,6 +72,7 @@ private:
 	bool targetExisted = false;
 	WindowsFileId targetId;
 	wxString temp;
+	WindowsFileId tempId;
 	wxString keptBackup;
 };
 #endif

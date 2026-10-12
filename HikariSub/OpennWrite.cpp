@@ -65,6 +65,7 @@ static void LogSaveFailure(const SaveFile &file)
 #include <wx/msw/wrapwin.h>
 #include <fcntl.h>
 #include <io.h>
+#include <random>
 
 static bool WriteText(WindowsSaveFile &file, const wxString &text, const wxMBConv &conv)
 {
@@ -198,6 +199,41 @@ static bool OpenSameFile(const wxString &path, const WindowsFileId &id, DWORD ac
 	return true;
 }
 
+// Makes a new file in the folder of target and opens it for reading and
+// writing into file; id is set to its id. CREATE_NEW fails on a name that is
+// taken, by a link too, so it never opens a file another program put there.
+// wxFileName::CreateTempFileName made the file with GetTempFileName and then
+// opened the name again without O_EXCL, which followed a link put there in
+// between.
+static wxString MakeTempFileNear(const wxString &target, wxFile *file, WindowsFileId *id)
+{
+	//target is absolute, see Open
+	size_t separator = target.find_last_of(L"\\/");
+	if (separator == wxString::npos) { return wxString(); }
+	wxString folder = target.substr(0, separator + 1);
+	thread_local std::mt19937 random{ std::random_device{}() };
+	for (int attempt = 0; attempt < 100; ++attempt) {
+		wxString name = folder + wxString::Format(L"hks%08x.tmp", static_cast<unsigned int>(random()));
+		HANDLE handle = ::CreateFileW(name.wc_str(), GENERIC_READ | GENERIC_WRITE,
+			FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
+		if (handle == INVALID_HANDLE_VALUE) {
+			DWORD error = ::GetLastError();
+			if (error == ERROR_FILE_EXISTS || error == ERROR_ALREADY_EXISTS) { continue; }
+			return wxString();
+		}
+		int fd = ReadFileFacts(handle, id, nullptr, nullptr) ?
+			_open_osfhandle(reinterpret_cast<intptr_t>(handle), _O_BINARY) : -1;
+		if (fd == -1) {
+			::CloseHandle(handle);
+			::DeleteFileW(name.wc_str());
+			return wxString();
+		}
+		file->Attach(fd);
+		return name;
+	}
+	return wxString();
+}
+
 // copies all of from, from its start, to the current offset of to
 static bool CopyContents(wxFile &from, wxFile &to)
 {
@@ -231,7 +267,7 @@ bool WindowsSaveFile::Open(const wxString &name)
 		targetExisted = true;
 	}
 	else if (::GetLastError() != ERROR_FILE_NOT_FOUND) { return false; }
-	temp = wxFileName::CreateTempFileName(target, &file);
+	temp = MakeTempFileNear(target, &file, &tempId);
 	return !temp.empty();
 }
 
@@ -310,7 +346,11 @@ bool WindowsSaveFile::Replace()
 
 bool WindowsSaveFile::Rewrite()
 {
-	if (!file.IsOpened() && !file.Open(temp, wxFile::read)) { return false; }
+	//the temporary file Open made, not what its name leads to now
+	if (!file.IsOpened() &&
+		!OpenSameFile(temp, tempId, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, &file)) {
+		return false;
+	}
 	wxFileOffset newLength = file.Length();
 	wxFile out;
 	//the file Open found, not what its name leads to now; a program that has
@@ -323,7 +363,8 @@ bool WindowsSaveFile::Rewrite()
 	if (oldLength < 0) { return false; }
 	//a backup of the old contents, on disk before the file is touched
 	wxFile backup;
-	wxString backupName = wxFileName::CreateTempFileName(target, &backup);
+	WindowsFileId backupId;
+	wxString backupName = MakeTempFileNear(target, &backup, &backupId);
 	if (backupName.empty()) { return false; }
 	bool saved = CopyContents(out, backup) && backup.Flush();
 	if (saved) {
