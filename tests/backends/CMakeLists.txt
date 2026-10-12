@@ -301,6 +301,14 @@ hikari_add_gtest(hikari_backends_visual_drawing_render_tests SOURCES visual_draw
     LIBRARIES hikari_backends hikari_application Qt6::Core LABELS backends)
 target_compile_definitions(hikari_backends_visual_drawing_render_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+
+# T2: Move's handles against libass's render of a \move and a \pos, at three
+# video / script ratios.
+hikari_add_gtest(hikari_backends_visual_move_render_tests SOURCES visual_move_render_tests.cpp
+    LIBRARIES hikari_backends hikari_application Qt6::Gui LABELS backends)
+target_compile_definitions(hikari_backends_visual_move_render_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
+    HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/visual-t2")
 # P9: legacy SelectInFolder (D-Bus file manager with a folder fallback on Linux).
 hikari_add_qttest(hikari_backends_show_in_folder_tests SOURCES show_in_folder_tests.cpp LIBRARIES hikari_backends)
 if(NOT WIN32)
