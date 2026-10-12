@@ -704,17 +704,15 @@ void ProviderFFMS2::GetAudio(void* buf, long long start, long long count)
 		count = m_numSamples - start;
 		if (count < 0) count = 0;
 
-		// Fill beyond with zero
-
-		short* temp = (short*)buf;
-		for (long long i = count; i < oldcount; i++) {
-			temp[i] = 0;
-		}
+		// Fill beyond with zero, whole frames of every channel
+		memset((char*)buf + count * FrameBytes(), 0, (oldcount - count) * FrameBytes());
 
 	}
 	wxCriticalSectionLocker lock(m_blockAudio);
 	if (FFMS_GetAudio(m_audioSource, buf, start, count, &m_errInfo)) {
 		HikariLogDebug(L"error audio" + wxString::FromUTF8(m_errInfo.Buffer));
+		// a failed decode leaves the buffer as it was allocated
+		memset(buf, 0, count * FrameBytes());
 	}
 
 }
@@ -730,16 +728,22 @@ void ProviderFFMS2::ReadCache(void* buf, long long start, long long count)
 	if (count <= 0)
 		return;
 
+	const size_t bytes = (size_t)(count * frameBytes);
 	if (m_discCache) {
+		size_t read = 0;
 		if (m_fp) {
 			wxCriticalSectionLocker lock(m_blockAudio);
-			_fseeki64(m_fp, start * frameBytes, SEEK_SET);
-			fread(buf, 1, count * frameBytes, m_fp);
+			if (_fseeki64(m_fp, start * frameBytes, SEEK_SET) == 0)
+				read = fread(buf, 1, bytes, m_fp);
 		}
+		// what a short read leaves out plays as silence, not as old samples
+		memset((char*)buf + read, 0, bytes - read);
 		return;
 	}
-	if (!m_cache)
+	if (!m_cache) {
+		memset(buf, 0, bytes);
 		return;
+	}
 	char* tmpbuf = (char*)buf;
 	const int blsize = (1 << 22);
 	long long byte = start * frameBytes;
@@ -769,7 +773,12 @@ static void ApplyVolume(short* samples, long long count, double volume)
 
 void ProviderFFMS2::GetPlaybackBuffer(void* buf, long long start, long long count, double volume)
 {
-	if (audioNotInitialized) { return; }
+	if (audioNotInitialized) {
+		// playback during loading gets silence, not the player's old buffer
+		if (count > 0)
+			memset(buf, 0, count * FrameBytes());
+		return;
+	}
 	ReadCache(buf, start, count);
 	ApplyVolume((short*)buf, count * m_channels, volume);
 }
@@ -825,7 +834,7 @@ bool ProviderFFMS2::RAMCache()
 	for (int i = 0; i < m_blockNum; i++)
 	{
 		long long size = std::min(blsize, end - written);
-		m_cache[i] = new (std::nothrow) char[std::max(1LL, size)];
+		m_cache[i] = new (std::nothrow) char[std::max(1LL, size)]();
 		if (!m_cache[i]) {
 			ClearRAMCache();
 			return false;
