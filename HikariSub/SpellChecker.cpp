@@ -86,17 +86,16 @@ void SpellChecker::Cleaning()
 void SpellChecker::AvailableDics(wxArrayString &dics, wxArrayString &symbols)
 {
 	wxArrayString dic;
-	wxArrayString aff;
 	wxString dictionaryPath = Options.pathfull + L"/Dictionary";
 	wxDir kat(dictionaryPath);
 	if (kat.IsOpened()){
 
 		kat.GetAllFiles(dictionaryPath, &dic, L"*.dic", wxDIR_FILES);
-		kat.GetAllFiles(dictionaryPath, &aff, L"*.aff", wxDIR_FILES);
 	}
 
 	for (size_t i = 0; i < dic.size(); i++){
-		if (dic[i].BeforeLast(L'.') == aff[i].BeforeLast(L'.')){
+		// each .dic needs its own .aff, the two listings do not pair by index
+		if (wxFileExists(dic[i].BeforeLast(L'.') + L".aff")){
 			wxString symbolName = wxFileName(dic[i]).GetName();
 			symbols.Add(symbolName);
 			const wxString fullName = Options.FindLanguage(symbolName);
