@@ -180,6 +180,15 @@ TEST(a_file_a_rename_would_change_is_rewritten_in_place)
 	CHECK(ChooseSaveMethod(facts) == SaveMethod::Rewrite);
 }
 
+TEST(a_file_that_cannot_be_written_is_refused)
+{
+	SaveTargetFacts facts = PlainFile();
+	facts.writable = false;
+	CHECK(ChooseSaveMethod(facts) == SaveMethod::Refuse);
+	facts.type = S_IFIFO;
+	CHECK(ChooseSaveMethod(facts) == SaveMethod::Refuse);
+}
+
 TEST(a_new_file_is_made_by_a_rename_or_refused_without_a_temporary_file)
 {
 	SaveTargetFacts facts;
@@ -350,6 +359,82 @@ TEST(a_long_file_name_still_gets_its_temporary_files_next_to_it)
 	CHECK(ReadText(dir.path / "third.ass") == "newer");
 	CHECK(Names(dir.path).size() == 4);
 	CHECK(Names(temp.path).empty());
+}
+
+TEST(the_method_is_picked_again_for_the_file_that_is_there_at_commit)
+{
+	SaveScratchDir dir;
+	fs::path file = dir.path / "subs.ass";
+	fs::path other = dir.path / "other.ass";
+
+	// a link made while the contents were written
+	WriteText(file, "old");
+	ino_t before = StatOf(file).st_ino;
+	SaveFile linked;
+	CHECK(linked.Open(file.string()));
+	CHECK(linked.Method() == SaveMethod::Replace);
+	CHECK(linked.Write("new", 3));
+	fs::create_hard_link(file, other);
+	CHECK(linked.Commit());
+	CHECK(linked.Method() == SaveMethod::Rewrite);
+	CHECK(ReadText(file) == "new");
+	CHECK(ReadText(other) == "new");
+	CHECK(StatOf(file).st_ino == before);
+	CHECK(Names(dir.path) == (std::set<std::string>{ "subs.ass", "other.ass" }));
+
+	// a link removed while the contents were written
+	SaveFile unlinked;
+	CHECK(unlinked.Open(file.string()));
+	CHECK(unlinked.Method() == SaveMethod::Rewrite);
+	CHECK(unlinked.Write("newer", 5));
+	fs::remove(other);
+	CHECK(unlinked.Commit());
+	CHECK(unlinked.Method() == SaveMethod::Replace);
+	CHECK(ReadText(file) == "newer");
+	CHECK(Names(dir.path) == std::set<std::string>{ "subs.ass" });
+
+	// a file another program put in place of the target, with a second link
+	SaveFile replaced;
+	CHECK(replaced.Open(file.string()));
+	CHECK(replaced.Method() == SaveMethod::Replace);
+	CHECK(replaced.Write("ours", 4));
+	fs::path theirs = dir.path / "theirs.tmp";
+	WriteText(theirs, "theirs");
+	fs::create_hard_link(theirs, other);
+	CHECK(std::rename(theirs.c_str(), file.c_str()) == 0);
+	ino_t theirInode = StatOf(file).st_ino;
+	CHECK(replaced.Commit());
+	CHECK(replaced.Method() == SaveMethod::Rewrite);
+	CHECK(ReadText(file) == "ours");
+	CHECK(ReadText(other) == "ours");
+	CHECK(StatOf(file).st_ino == theirInode);
+	CHECK(Names(dir.path) == (std::set<std::string>{ "subs.ass", "other.ass" }));
+
+	// a file made read-only while the contents were written
+	if (geteuid() != 0) {
+		SaveFile readOnly;
+		CHECK(readOnly.Open(file.string()));
+		CHECK(readOnly.Write("never", 5));
+		chmod(file.c_str(), 0444);
+		CHECK(!readOnly.Commit());
+		CHECK(readOnly.Method() == SaveMethod::Refuse);
+		CHECK(ReadText(file) == "ours");
+		CHECK(Names(dir.path) == (std::set<std::string>{ "subs.ass", "other.ass" }));
+		chmod(file.c_str(), 0644);
+	}
+
+	// a mode changed while the contents were written is kept by the rename
+	fs::remove(other);
+	chmod(file.c_str(), 0644);
+	SaveFile chmodded;
+	CHECK(chmodded.Open(file.string()));
+	CHECK(chmodded.Write("last", 4));
+	chmod(file.c_str(), 0600);
+	CHECK(chmodded.Commit());
+	CHECK(chmodded.Method() == SaveMethod::Replace);
+	CHECK(ReadText(file) == "last");
+	CHECK((StatOf(file).st_mode & 07777) == 0600);
+	CHECK(Names(dir.path) == std::set<std::string>{ "subs.ass" });
 }
 
 TEST(a_save_that_is_not_committed_leaves_the_file_and_no_temporary_file)

@@ -196,6 +196,8 @@ SaveMethod ChooseSaveMethod(const SaveTargetFacts &facts)
 {
 	if (!facts.exists)
 		return facts.tempMade ? SaveMethod::Replace : SaveMethod::Refuse;
+	if (!facts.writable)
+		return SaveMethod::Refuse;
 	if (S_ISFIFO(facts.type) || S_ISCHR(facts.type))
 		return SaveMethod::WriteThrough;
 	if (!S_ISREG(facts.type))
@@ -212,6 +214,46 @@ SaveFile::~SaveFile()
 	Discard();
 }
 
+SaveTargetFacts SaveFile::ReadFacts()
+{
+	SaveTargetFacts facts;
+	struct stat targetStat;
+	if (stat(target.c_str(), &targetStat) == 0) {
+		facts.exists = true;
+		facts.type = targetStat.st_mode & S_IFMT;
+		facts.writable = access(target.c_str(), W_OK) == 0;
+		facts.links = targetStat.st_nlink;
+		facts.uid = targetStat.st_uid;
+		facts.gid = targetStat.st_gid;
+		facts.mode = targetStat.st_mode & 07777;
+		facts.device = targetStat.st_dev;
+	}
+	else if (errno != ENOENT) {
+		// a target that cannot be looked at is not saved to
+		facts.exists = true;
+		facts.writable = false;
+	}
+
+	if (stageNextToTarget && stageFd >= 0) {
+		if (facts.exists && S_ISREG(facts.type)) {
+			// The group first, since changing it clears the set-group-ID bit.
+			// A group or mode that cannot be set shows in the facts.
+			(void)!fchown(stageFd, static_cast<uid_t>(-1), targetStat.st_gid);
+			(void)!fchmod(stageFd, facts.mode);
+		}
+		struct stat tempStat;
+		if (fstat(stageFd, &tempStat) == 0) {
+			facts.tempMade = true;
+			facts.tempUid = tempStat.st_uid;
+			facts.tempGid = tempStat.st_gid;
+			facts.tempMode = tempStat.st_mode & 07777;
+			facts.tempDevice = tempStat.st_dev;
+			facts.sameExtendedAttributes = !facts.exists || SameExtendedAttributes(target, stageFd);
+		}
+	}
+	return facts;
+}
+
 bool SaveFile::Open(const std::string &path)
 {
 	Discard();
@@ -219,47 +261,21 @@ bool SaveFile::Open(const std::string &path)
 	failed = false;
 	keptBackup.clear();
 	method = SaveMethod::Refuse;
+	stageNextToTarget = false;
 
-	SaveTargetFacts facts;
 	struct stat targetStat;
-	if (stat(path.c_str(), &targetStat) == 0) {
-		facts.exists = true;
-		facts.type = targetStat.st_mode & S_IFMT;
-		facts.links = targetStat.st_nlink;
-		facts.uid = targetStat.st_uid;
-		facts.gid = targetStat.st_gid;
-		facts.mode = targetStat.st_mode & 07777;
-		facts.device = targetStat.st_dev;
-		// a file that cannot be written is not replaced either
-		if (access(path.c_str(), W_OK) != 0)
-			return false;
-	}
-	else if (errno != ENOENT) {
+	bool exists = stat(path.c_str(), &targetStat) == 0;
+	if (!exists && errno != ENOENT)
 		return false;
-	}
-
-	if (!facts.exists || S_ISREG(targetStat.st_mode)) {
+	// a file that cannot be written is not replaced either
+	if (exists && access(path.c_str(), W_OK) != 0)
+		return false;
+	if (!exists || S_ISREG(targetStat.st_mode)) {
 		stageFd = MakeTempFileNear(path + ".", ".hikarisub-save.", 0666, &stagePath, &tempPrefix);
-		if (stageFd >= 0) {
-			if (facts.exists) {
-				// The group first, since changing it clears the set-group-ID
-				// bit. A group or mode that cannot be set shows in the facts.
-				(void)!fchown(stageFd, static_cast<uid_t>(-1), targetStat.st_gid);
-				(void)!fchmod(stageFd, facts.mode);
-			}
-			struct stat tempStat;
-			if (fstat(stageFd, &tempStat) == 0) {
-				facts.tempMade = true;
-				facts.tempUid = tempStat.st_uid;
-				facts.tempGid = tempStat.st_gid;
-				facts.tempMode = tempStat.st_mode & 07777;
-				facts.tempDevice = tempStat.st_dev;
-				facts.sameExtendedAttributes = !facts.exists || SameExtendedAttributes(path, stageFd);
-			}
-		}
+		stageNextToTarget = stageFd >= 0;
 	}
 
-	method = ChooseSaveMethod(facts);
+	method = ChooseSaveMethod(ReadFacts());
 	if (method == SaveMethod::Refuse) {
 		Discard();
 		return false;
@@ -290,6 +306,10 @@ bool SaveFile::Commit()
 		return false;
 	bool saved = false;
 	if (!failed) {
+		// While the contents were written, another program may have linked,
+		// locked, replaced, chmodded or removed the target: the method is
+		// picked again for the file that is there now.
+		method = ChooseSaveMethod(ReadFacts());
 		switch (method) {
 		case SaveMethod::Replace: saved = Replace(); break;
 		case SaveMethod::Rewrite: saved = Rewrite(); break;

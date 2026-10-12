@@ -24,7 +24,7 @@
 // How a save puts its new contents into the file it saves to.
 enum class SaveMethod {
 	// Nothing is written: the target is a folder, a socket or a block device,
-	// or a new file that cannot be made.
+	// a file that cannot be written, or a new file that cannot be made.
 	Refuse,
 	// A temporary file next to the target is renamed over it. This is atomic,
 	// but it gives the path a new inode, so it is used only when the new file
@@ -43,6 +43,7 @@ enum class SaveMethod {
 struct SaveTargetFacts {
 	bool exists = false;
 	mode_t type = 0;  // the target's S_IFMT bits
+	bool writable = true;
 	nlink_t links = 0;
 	uid_t uid = 0;
 	gid_t gid = 0;
@@ -61,12 +62,14 @@ struct SaveTargetFacts {
 // A rename is used only for a new file or a regular file with one link that
 // the renamed file would match in owner, group, permission bits, extended
 // attributes and file system; any other regular file is rewritten in place.
+// A file that cannot be written is refused.
 SaveMethod ChooseSaveMethod(const SaveTargetFacts &facts);
 
 // One save of a file on POSIX: Open picks the method and makes the
-// temporary file, Write appends to it and Commit puts it in place. A file
-// that is not committed is left as it was; the destructor removes the
-// temporary file.
+// temporary file, Write appends to it and Commit puts it in place. Commit
+// looks at the target again and picks the method anew for the file that is
+// there then. A file that is not committed is left as it was; the destructor
+// removes the temporary file.
 class SaveFile
 {
 public:
@@ -92,6 +95,8 @@ public:
 	void SetTargetWriter(Writer writer) { targetWriter = writer; }
 
 private:
+	// the facts about the target and the temporary file as they are now
+	SaveTargetFacts ReadFacts();
 	bool Replace();
 	bool Rewrite();
 	bool WriteThrough();
@@ -102,6 +107,8 @@ private:
 	std::string tempPrefix;
 	std::string keptBackup;
 	int stageFd = -1;
+	// the temporary file is in the target's folder and can be renamed over it
+	bool stageNextToTarget = false;
 	bool failed = false;
 	SaveMethod method = SaveMethod::Refuse;
 	Writer targetWriter = nullptr;
