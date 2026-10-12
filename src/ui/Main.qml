@@ -5259,6 +5259,7 @@ ApplicationWindow {
         id: styleManagerWindow
         styles: root.styleManager
         catalogs: root.fontCatalogs
+        colourPicker: root.colourPicker
         app: root.app
     }
     SettingsImportDialog {
