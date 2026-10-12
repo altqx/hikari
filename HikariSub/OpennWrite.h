@@ -29,9 +29,11 @@
 // subtitles or of what is in media, such as the autosaves. On POSIX, mode
 // 0700 for a folder the user owns that is no link, see MakePrivateFolderAt.
 // On Windows, a protected DACL that lets in only the user, SYSTEM and
-// Administrators and is passed on to the files in it, for a folder the user
-// owns that is no link or junction, on a volume that keeps ACLs, which FAT
-// does not. The folders on the way are made as any other folder. Returns
+// Administrators and is passed on to the files in it, for a folder the user,
+// SYSTEM or Administrators own that is no link or junction, on a volume that
+// keeps ACLs, which FAT does not; a folder another user owns is not used
+// even when its DACL lets only this user in, as its owner may change that.
+// The folders on the way are made as any other folder. Returns
 // whether the folder now lets in only the user, so that it may be used:
 // false for a link, another user's folder or a folder that could not be
 // made, which another user may have put there and could swap the files in,

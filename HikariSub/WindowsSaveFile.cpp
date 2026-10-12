@@ -418,23 +418,39 @@ bool KeepsAcls(HANDLE handle)
 	return (flags & FILE_PERSISTENT_ACLS) != 0;
 }
 
-// Whether the file or folder handle is open on, with READ_CONTROL, lets
-// nobody else in, see IsPrivateDacl; own is set to whether its owner is the
-// user or the owner this process gives what it makes.
-bool IsPrivate(HANDLE handle, bool *own)
+// Whom the file or folder a handle is open on lets in, see ReadPrivacy.
+struct Privacy
 {
+	// its DACL lets nobody else in, see IsPrivateDacl
+	bool narrow = false;
+	// its DACL is protected, so it takes no ACE from its folder
+	bool protectedDacl = false;
+	// Its owner, who may read and change its DACL whatever the DACL says, is
+	// the user, the owner this process gives what it makes, SYSTEM or
+	// Administrators, all of whom a private DACL lets in.
+	bool trustedOwner = false;
+};
+
+// Privacy of the file or folder handle is open on, with READ_CONTROL; all
+// false when it cannot be read.
+Privacy ReadPrivacy(HANDLE handle)
+{
+	Privacy privacy;
 	PSID owner = nullptr;
 	PACL dacl = nullptr;
 	PSECURITY_DESCRIPTOR current = nullptr;
-	*own = false;
 	if (::GetSecurityInfo(handle, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION, &owner,
 		nullptr, &dacl, nullptr, &current) != ERROR_SUCCESS) {
-		return false;
+		return privacy;
 	}
-	bool narrow = IsPrivateDacl(dacl);
-	*own = ProcessUser::Get().Is(owner);
+	SECURITY_DESCRIPTOR_CONTROL control = 0;
+	DWORD revision = 0;
+	privacy.narrow = IsPrivateDacl(dacl);
+	privacy.protectedDacl = ::GetSecurityDescriptorControl(current, &control, &revision) &&
+		(control & SE_DACL_PROTECTED);
+	privacy.trustedOwner = owner && (ProcessUser::Get().Is(owner) || IsPrivateSid(owner));
 	::LocalFree(current);
-	return narrow;
+	return privacy;
 }
 
 // Gives the file or folder handle is open on, with WRITE_DAC, the DACL of
@@ -455,36 +471,51 @@ bool GivePrivateDacl(HANDLE handle, bool folder)
 
 // Gives the folder handle is open on, with READ_CONTROL and WRITE_DAC, the
 // inheritable DACL of PrivateSecurity unless the DACL it has lets nobody else
-// in already. With ownOnly, one whose owner is neither the user nor the owner
-// this process gives what it makes is left as it is. Returns whether it lets
-// nobody else in now, read again after the change. One on a volume that
-// keeps no ACLs, as FAT, lets in every user of the computer, and is not
-// private: on POSIX a folder whose mode keeps others out is used, and a FAT
-// mount's mode does not.
-bool NarrowFolder(HANDLE handle, bool ownOnly)
+// in already and is protected. An unprotected DACL takes the ACEs of the
+// folder above again when that folder's ACL changes, and passes them on to
+// the files in it. Returns whether it lets nobody else in now, read again
+// after the change; a volume that does not keep the protection is taken as
+// it is then.
+// A folder whose owner is not trusted, see Privacy, is left as it is and is
+// not private, whatever its DACL says: its owner could give itself the right
+// to list, delete or replace the files in it at any time. On POSIX,
+// MakePrivateFolderAt uses only a folder the user owns.
+// One on a volume that keeps no ACLs, as FAT, lets in every user of the
+// computer, and is not private: on POSIX a folder whose mode keeps others out
+// is used, and a FAT mount's mode does not.
+bool NarrowFolder(HANDLE handle)
 {
 	if (!KeepsAcls(handle)) { return false; }
-	bool own = false;
-	if (IsPrivate(handle, &own)) { return true; }
-	return (!ownOnly || own) && GivePrivateDacl(handle, true) && IsPrivate(handle, &own);
+	Privacy now = ReadPrivacy(handle);
+	if (!now.trustedOwner) { return false; }
+	if (now.narrow && now.protectedDacl) { return true; }
+	return GivePrivateDacl(handle, true) && ReadPrivacy(handle).narrow;
 }
 
 // Gives the file readable is open on, with READ_CONTROL, the DACL of
 // PrivateSecurity unless it lets nobody else in already, through a handle of
 // its own with WRITE_DAC only: a file whose owner is another user may let
 // this user write it but not change its DACL. Returns whether it lets nobody
-// else in now, read again after the change; one on a volume that keeps no
-// ACLs is taken to.
-bool NarrowFile(HANDLE readable)
+// else in now, read again after the change. With kept, the file was there
+// before the save, and one whose owner is not trusted, see Privacy, is not
+// private whatever its DACL says; a file this process has just made is its
+// own, whatever owner a network share reports for it.
+// A file in a private folder takes its ACEs from that folder, whose DACL is
+// protected, so its own need not be. One on a volume that keeps no ACLs is
+// taken to be private, as on POSIX, where the 0600 a save makes a file with
+// is not checked: on such a volume only MakePrivateFolder refuses, and each
+// private file that holds more than a session's paths is in a folder it made.
+bool NarrowFile(HANDLE readable, bool kept)
 {
 	if (!KeepsAcls(readable)) { return true; }
-	bool own = false;
-	if (IsPrivate(readable, &own)) { return true; }
+	Privacy now = ReadPrivacy(readable);
+	if (kept && !now.trustedOwner) { return false; }
+	if (now.narrow) { return true; }
 	HANDLE writable = ::ReOpenFile(readable, WRITE_DAC, shareAll, 0);
 	if (writable == INVALID_HANDLE_VALUE) { return false; }
 	bool narrowed = GivePrivateDacl(writable, false);
 	::CloseHandle(writable);
-	return narrowed && IsPrivate(readable, &own);
+	return narrowed && ReadPrivacy(readable).narrow;
 }
 
 // NarrowFile for the file handle is open on. READ_CONTROL and WRITE_DAC are
@@ -494,7 +525,7 @@ bool NarrowOpenFile(HANDLE handle)
 {
 	HANDLE readable = ::ReOpenFile(handle, READ_CONTROL, shareAll, 0);
 	if (readable == INVALID_HANDLE_VALUE) { return !KeepsAcls(handle); }
-	bool narrowed = NarrowFile(readable);
+	bool narrowed = NarrowFile(readable, false);
 	::CloseHandle(readable);
 	return narrowed;
 }
@@ -837,7 +868,7 @@ bool WindowsSaveFile::NarrowSaved()
 	//or that took a folder's ACEs, lets others in that a private file must not.
 	HANDLE handle = OpenSameHandle(target, targetId, READ_CONTROL, shareAll);
 	if (handle == INVALID_HANDLE_VALUE) { return false; }
-	bool narrowed = NarrowFile(handle);
+	bool narrowed = NarrowFile(handle, true);
 	::CloseHandle(handle);
 	return narrowed;
 }
@@ -935,12 +966,13 @@ bool MakePrivateFolderOnWindows(const std::wstring &folder)
 	//Made with the DACL of PrivateSecurity, which what is made in it
 	//inherits; on a volume that refuses that, it is given it below. A folder
 	//that was there, the user's own, is given it too unless it lets nobody
-	//else in already, and passes it on to the files in it that inherit their
-	//ACEs, such as the autosaves an older version made. Without traverse
-	//checking, the files in a folder could still be opened by their paths, so
-	//the folder's ACL alone would not keep them private. A link or junction
-	//at the name, and another user's folder, are left as they are and not
-	//used, nor a folder on a volume that keeps no ACLs, as FAT.
+	//else in already with a protected DACL, and passes it on to the files in
+	//it that inherit their ACEs, such as the autosaves an older version made.
+	//Without traverse checking, the files in a folder could still be opened
+	//by their paths, so the folder's ACL alone would not keep them private.
+	//A link or junction at the name, and a folder another user owns, also one
+	//whose DACL lets only this user in, are left as they are and not used,
+	//nor a folder on a volume that keeps no ACLs, as FAT; see NarrowFolder.
 	DWORD attributes = ::GetFileAttributesW(folder.c_str());
 	if (attributes == INVALID_FILE_ATTRIBUTES) {
 		PrivateSecurity security(true);
@@ -955,7 +987,7 @@ bool MakePrivateFolderOnWindows(const std::wstring &folder)
 	BY_HANDLE_FILE_INFORMATION info;
 	bool narrowed = ::GetFileInformationByHandle(handle, &info) &&
 		(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && !(info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
-		NarrowFolder(handle, true);
+		NarrowFolder(handle);
 	::CloseHandle(handle);
 	return narrowed;
 }

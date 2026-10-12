@@ -176,6 +176,22 @@ bool IsPrivateAt(const std::wstring &path)
 	return narrow;
 }
 
+// whether the DACL of the file or folder at path is protected, so that it
+// takes no ACE from its folder
+bool IsProtectedAt(const std::wstring &path)
+{
+	PSECURITY_DESCRIPTOR current = nullptr;
+	if (::GetNamedSecurityInfoW(path.c_str(), SE_FILE_OBJECT, DACL_SECURITY_INFORMATION, nullptr, nullptr, nullptr,
+		nullptr, &current) != ERROR_SUCCESS) {
+		return false;
+	}
+	SECURITY_DESCRIPTOR_CONTROL control = 0;
+	DWORD revision = 0;
+	bool isProtected = ::GetSecurityDescriptorControl(current, &control, &revision) && (control & SE_DACL_PROTECTED);
+	::LocalFree(current);
+	return isProtected;
+}
+
 // one save of contents to path, as OpenWrite::FileWrite makes it
 bool Save(const std::wstring &path, const std::string &contents, bool privateFile = false)
 {
@@ -342,6 +358,7 @@ TEST(windowsPrivateFolderIsNotUsedWhenItCannotBeMadePrivate)
 	}
 	CHECK(MakePrivateFolderOnWindows(folder / L"Refused"));
 	CHECK(IsPrivateAt(folder / L"Refused"));
+	CHECK(IsProtectedAt(folder / L"Refused"));
 	::RemoveDirectoryW((folder / L"Refused").c_str());
 	{
 		Refuse refuse(true, false);
@@ -349,6 +366,31 @@ TEST(windowsPrivateFolderIsNotUsedWhenItCannotBeMadePrivate)
 	}
 	CHECK(IsPrivateAt(folder / L"Narrowed"));
 	::RemoveDirectoryW((folder / L"Narrowed").c_str());
+}
+
+TEST(windowsPrivateFolderThatTakesItsAcesFromAboveIsProtected)
+{
+	// A folder whose ACEs, taken from the folder above, let only the user in
+	// would take others again when that folder's ACL changes, and pass them
+	// on to the files in it: it is private only once its DACL is protected.
+	SharedFolder folder;
+	std::wstring above = folder / L"Above";
+	std::wstring inside = above + L"\\Inside";
+	Descriptor security(PrivateSddl(true));
+	SECURITY_ATTRIBUTES attributes = { static_cast<DWORD>(sizeof(SECURITY_ATTRIBUTES)), security.descriptor, FALSE };
+	CHECK(::CreateDirectoryW(above.c_str(), &attributes) != 0);
+	CHECK(::CreateDirectoryW(inside.c_str(), nullptr) != 0);
+	CHECK(IsPrivateAt(inside));
+	CHECK(!IsProtectedAt(inside));
+	{
+		Refuse refuse(false, true);
+		CHECK(!MakePrivateFolderOnWindows(inside));
+	}
+	CHECK(MakePrivateFolderOnWindows(inside));
+	CHECK(IsPrivateAt(inside));
+	CHECK(IsProtectedAt(inside));
+	::RemoveDirectoryW(inside.c_str());
+	::RemoveDirectoryW(above.c_str());
 }
 
 TEST(windowsPrivateFileIsNotOpenedWhenItCannotBeMadePrivate)
