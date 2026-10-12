@@ -299,10 +299,10 @@ void DirectSoundPlayer2Thread::Run()
 			}
 		}
 
-		bool pipelineFailed = false;
+		bool producerEnds = false;
 		if (GstBus *bus = gst_element_get_bus(pipeline)) {
 			GstMessage *m;
-			while (!pipelineFailed && (m = gst_bus_pop_filtered(bus,
+			while (!producerEnds && (m = gst_bus_pop_filtered(bus,
 				(GstMessageType)(GST_MESSAGE_EOS | GST_MESSAGE_ERROR | GST_MESSAGE_WARNING)))) {
 				if (GST_MESSAGE_TYPE(m) == GST_MESSAGE_EOS) {
 					// the sink has played everything, the sound has ended
@@ -318,16 +318,21 @@ void DirectSoundPlayer2Thread::Run()
 				if (GST_MESSAGE_TYPE(m) == GST_MESSAGE_ERROR) {
 					// An error after the start, such as the device failing or
 					// going away, leaves a pipeline that takes no more data:
-					// appsrc stays full and playback would never end.
+					// appsrc stays full and playback would never end.  While
+					// the player closes, the flush and the state change to
+					// NULL can make the sink post an error too: that one is
+					// not a failure, and the producer just ends.
 					gst_message_parse_error(m, &e, &dbg);
-					wxString detail = L"Audio playback stopped, GStreamer reported an error";
-					if (e && e->message) {
-						detail += L": ";
-						detail += wxString::FromUTF8(e->message);
-					}
 					std::lock_guard<std::mutex> lock(linuxState->mutex);
-					failPlayback(detail);
-					pipelineFailed = true;
+					if (linuxState->running) {
+						wxString detail = L"Audio playback stopped, GStreamer reported an error";
+						if (e && e->message) {
+							detail += L": ";
+							detail += wxString::FromUTF8(e->message);
+						}
+						failPlayback(detail);
+					}
+					producerEnds = true;
 				}
 				else {
 					gst_message_parse_warning(m, &e, &dbg);
@@ -338,7 +343,7 @@ void DirectSoundPlayer2Thread::Run()
 			}
 			gst_object_unref(bus);
 		}
-		if (pipelineFailed)
+		if (producerEnds)
 			break;
 	}
 
