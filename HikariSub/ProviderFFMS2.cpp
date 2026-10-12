@@ -31,13 +31,40 @@
 #include <cstdlib>
 #include <cmath>
 #include <limits>
+#include <mutex>
 #include <new>
+#include <set>
 #include <vector>
 #include "UtilsWindows.h"
 #include "Provider.h"
 
 namespace
 {
+	// names of the disk caches that providers have open; the trim must not
+	// delete them, as Linux unlinks an open file and the .part then cannot be renamed
+	std::mutex openCachesMutex;
+	std::multiset<wxString> openCaches;
+
+	void SetCacheInUse(const wxString& path, bool inUse)
+	{
+		std::lock_guard<std::mutex> lock(openCachesMutex);
+		wxString name = wxFileName(path).GetFullName();
+		if (inUse) {
+			openCaches.insert(name);
+		}
+		else {
+			auto it = openCaches.find(name);
+			if (it != openCaches.end())
+				openCaches.erase(it);
+		}
+	}
+
+	bool IsCacheInUse(const wxString& path)
+	{
+		std::lock_guard<std::mutex> lock(openCachesMutex);
+		return openCaches.count(wxFileName(path).GetFullName()) > 0;
+	}
+
 	void CopyBgraFrameToBuffer(const FFMS_Frame* frame, unsigned char* dst, int width, int height)
 	{
 		if (!frame || !dst || width <= 0 || height <= 0 || !frame->Data[0])
@@ -541,6 +568,8 @@ ProviderFFMS2::~ProviderFFMS2()
 			_wremove(m_diskCacheFilename.wc_str());
 		}
 	}
+	if (m_diskCacheInUse)
+		SetCacheInUse(m_diskCacheFilename, false);
 }
 
 
@@ -844,6 +873,8 @@ bool ProviderFFMS2::DiskCache(bool newIndex)
 	if (!discCacheFile.DirExists()) { discCacheFile.Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL); }
 	bool fileExists = discCacheFile.FileExists();
 	if (!newIndex && fileExists) {
+		SetCacheInUse(m_diskCacheFilename, true);
+		m_diskCacheInUse = true;
 		m_fp = _wfopen(m_diskCacheFilename.wc_str(), L"rb");
 		if (m_fp)
 			return true;
@@ -855,6 +886,8 @@ bool ProviderFFMS2::DiskCache(bool newIndex)
 			_wremove(m_diskCacheFilename.wc_str());
 		}
 		m_diskCacheFilename << L".part";
+		SetCacheInUse(m_diskCacheFilename, true);
+		m_diskCacheInUse = true;
 		m_fp = _wfopen(m_diskCacheFilename.wc_str(), L"w+b");
 		if (!m_fp)
 			return false;
@@ -937,6 +970,8 @@ void ProviderFFMS2::DeleteOldAudioCache()
 	const size_t diff = audioCaches.size() - maxAudio;
 	for (auto cur = dates.begin(); cur != dates.end(); cur++) {
 		if (count >= diff) { break; }
+		if (IsCacheInUse(audioCaches[cur->second]))
+			continue;
 		if (_wremove(audioCaches[cur->second].wchar_str()) == 0)
 			count++;
 	}
