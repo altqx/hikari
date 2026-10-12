@@ -478,7 +478,7 @@ void AudioBox::OnKaraoke(wxCommandEvent &event) {
 	if (value > -1){
 		audioDisplay->SetSamplesPercent(value);
 		HorizontalZoom->SetValue(value);
-		Options.SetInt(AUDIO_VERTICAL_ZOOM, value);
+		Options.SetInt(AUDIO_HORIZONTAL_ZOOM, value);
 	}
 
 	audioDisplay->MakeDialogueVisible();
