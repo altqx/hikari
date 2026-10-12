@@ -35,9 +35,6 @@ public:
                                  const std::u32string &characters) override;
     void refresh() override;
     std::vector<std::string> fontDirectories() override;
-
-private:
-    std::atomic<bool> m_checkForUpdates{false}; // DirectWrite: rescan the system collection
 };
 
 } // namespace hikari::backends

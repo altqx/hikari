@@ -428,9 +428,13 @@ std::vector<SystemFace> LibassFontService::systemFaces()
                                    reinterpret_cast<IUnknown **>(&factory))))
         return out;
     IDWriteFontCollection *collection = nullptr;
-    // Y6 (F47-refresh): after refresh() the shared factory's collection is
-    // checked for installed and removed fonts.
-    if (SUCCEEDED(factory->GetSystemFontCollection(&collection, m_checkForUpdates.exchange(false) ? TRUE : FALSE))) {
+    // Every listing asks DirectWrite to check for installed and removed fonts
+    // first. Without the check the shared factory answers with the font cache
+    // service's view, which lags behind installs and can be older than a
+    // checked listing made before it; the collector names and copies the
+    // files of this listing, which legacy read from the font folders at that
+    // moment (FontCollector::CheckOrCopyFonts, FindFirstFileW).
+    if (SUCCEEDED(factory->GetSystemFontCollection(&collection, TRUE))) {
         auto utf8 = [](const wchar_t *w) { return QString::fromWCharArray(w).toStdString(); };
         auto strings = [&](IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID id) {
             std::vector<std::string> values;
@@ -923,11 +927,10 @@ std::vector<bool> LibassFontService::facesCover(const std::vector<SystemFace> &f
 
 void LibassFontService::refresh()
 {
-#ifdef _WIN32
-    m_checkForUpdates = true;
-#else
+#ifndef _WIN32
     // The listing's configuration reads the font folders again; libass makes
-    // its own configuration for each renderer.
+    // its own configuration for each renderer. (On Windows every listing
+    // checks DirectWrite's system collection for changes.)
     FcInitReinitialize();
 #endif
 }
