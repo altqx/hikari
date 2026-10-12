@@ -14606,6 +14606,73 @@ private slots:
         application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), false);
     }
 
+    // E4-time-field-mask-reverts (User, 2026-10-13): an edit that does not
+    // go through the mask is put back with the bell when it leaves the form.
+    // The text field's context menu triggers Qt's CutAction, DeleteAction and
+    // PasteAction (editor.cut(), editor.remove(selectionStart, selectionEnd),
+    // editor.paste()); a middle click pastes the X11 selection with
+    // TextInput's insert. Legacy's text control took them and broke the form.
+    void timeFieldsPutBackEditsTheMaskDoesNotMake()
+    {
+        QVERIFY(application->openFile(writeStyled("revert.ass", "Dialogue: 0,0:00:01.00,9:00:00.00,Default,,0,0,0,,first\n")));
+        auto *session = targetSession();
+        application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), true);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *start = item("startField");
+        QCOMPARE(start->property("text").toString(), QStringLiteral("0:00:01.00"));
+        QSignalSpy bells(start, SIGNAL(bell()));
+        QSignalSpy typed(start, SIGNAL(typed()));
+        const auto text = [&] { return start->property("text").toString(); };
+        const auto select = [&](int from, int to) {
+            QVERIFY(QMetaObject::invokeMethod(start, "select", Q_ARG(int, from), Q_ARG(int, to)));
+        };
+        start->forceActiveFocus();
+        // Context menu: Cut.
+        select(2, 4);
+        QVERIFY(QMetaObject::invokeMethod(start, "cut"));
+        QCOMPARE(text(), QStringLiteral("0:00:01.00"));
+        QCOMPARE(bells.count(), 1);
+        // Context menu: Delete.
+        select(5, 10);
+        QVERIFY(QMetaObject::invokeMethod(start, "remove", Q_ARG(int, 5), Q_ARG(int, 10)));
+        QCOMPARE(text(), QStringLiteral("0:00:01.00"));
+        QCOMPARE(bells.count(), 2);
+        // Context menu: Paste of part of a time over a selection.
+        QGuiApplication::clipboard()->setText(QStringLiteral("7"));
+        select(0, 4);
+        QVERIFY(QMetaObject::invokeMethod(start, "paste"));
+        QCOMPARE(text(), QStringLiteral("0:00:01.00"));
+        QCOMPARE(bells.count(), 3);
+        // A middle-click paste of the selection.
+        if (QGuiApplication::clipboard()->supportsSelection()) {
+            QGuiApplication::clipboard()->setText(QStringLiteral("12"), QClipboard::Selection);
+            QTest::mouseClick(window, Qt::MiddleButton, Qt::NoModifier, fieldPoint(start, 4));
+            QCoreApplication::processEvents();
+            QCOMPARE(text(), QStringLiteral("0:00:01.00"));
+            QCOMPARE(bells.count(), 4);
+        } else {
+            // No selection clipboard here (Windows, offscreen): the same insert.
+            QVERIFY(QMetaObject::invokeMethod(start, "insert", Q_ARG(int, 4), Q_ARG(QString, QStringLiteral("12"))));
+            QCOMPARE(text(), QStringLiteral("0:00:01.00"));
+            QCOMPARE(bells.count(), 4);
+        }
+        // None of them reached the Line; an edit that keeps the form is kept
+        // (a whole time pasted over all of it).
+        QCOMPARE(typed.count(), 0);
+        QVERIFY(!session->draftLine());
+        QGuiApplication::clipboard()->setText(QStringLiteral("0:00:02.50"));
+        QMetaObject::invokeMethod(start, "selectAll");
+        QVERIFY(QMetaObject::invokeMethod(start, "paste"));
+        QCOMPARE(text(), QStringLiteral("0:00:02.50"));
+        QCOMPARE(bells.count(), 4);
+        QCOMPARE(typed.count(), 1);
+        QCOMPARE(session->draftRecord()->start.value.microseconds(), 2'500'000);
+        application->editor().discard();
+        application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), false);
+    }
+
     // E4: every format's field keeps its own form: SRT and TMPlayer as
     // clocks, MPL2 and MicroDVD as numbers (digits only, an empty field 0,
     // SubsTime::ParseMS); paste takes the form's value only.

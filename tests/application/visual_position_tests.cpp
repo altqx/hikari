@@ -990,6 +990,105 @@ TEST(VisualPositionTags, AShortMoveEndsAtZero)
     EXPECT_EQ(*tool.data()[0].move, (std::array<double, 4>{30, 0, 1000, 3000}));
 }
 
+TEST(VisualMoveTimes, AMoveWithoutTimesOrWithBothAtMostZeroRunsOverTheWholeLine)
+{
+    // T2-move-untimed: Move takes the \move's interval as libass does
+    // (ass_parse.c: t1 <= 0 && t2 <= 0 is t1 = 0, t2 = the event's
+    // Duration; t1 > t2 swapped), not legacy's Line start as both times
+    // (GetPosnScale, Visuals.cpp:648-675). The Line runs from 1 s to 3 s.
+    TestHost host;
+    standard(host);
+    const ScriptState state = scriptState(host);
+    core::LineRecord line = *lineOf(*host.s, ids(*host.s)[2]);
+    double table[7] = {0, 0, 0, 0, 0, 0, 0};
+    auto interval = [&](std::u8string_view t) {
+        line.text = std::u8string(t);
+        (void)posnScale(state, Family::Move, line, lineText(line), nullptr, table);
+        return moveInterval(table, line);
+    };
+    using I = std::pair<int, int>;
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4)}x"), (I{1000, 3000}));
+    // The text's own times stay in the table (0 made absolute), however
+    // often it is read: legacy added the Line's start again on each read.
+    EXPECT_EQ(table[4], 1000);
+    EXPECT_EQ(table[5], 1000);
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4)}x"), (I{1000, 3000}));
+    EXPECT_EQ(table[4], 1000);
+    EXPECT_EQ(table[5], 1000);
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4,0,0)}x"), (I{1000, 3000}));
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4,-200,0)}x"), (I{1000, 3000}));
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4,-300,-100)}x"), (I{1000, 3000}));
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4,0.5,0.9)}x"), (I{1000, 3000})); // whole numbers, as argtoi32
+    // Times of their own: relative to the start, the earlier first.
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4,0,500)}x"), (I{1000, 1500}));
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4,1500,300)}x"), (I{1300, 2500}));
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4,-200,500)}x"), (I{800, 1500}));
+    // Fractional own times truncate relative to the start (argtoi32), not
+    // once made absolute: -200.5 is -200 (800), not 799.5 cut to 799.
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4,-200.5,500.7)}x"), (I{800, 1500}));
+    EXPECT_EQ(interval(u8"{\\move(1,2,3,4,500.7,-200.5)}x"), (I{800, 1500}));
+    // No \move: GetMoveTimes, the Line's first and last frames (CFR 25).
+    EXPECT_EQ(interval(u8"{\\pos(1,2)}x"), (I{1000, 2960}));
+    EXPECT_EQ(interval(u8"x"), (I{1000, 2960}));
+}
+
+TEST(VisualMoveTimes, MoveKeepsAnUntimedMoveUntimedOverRepeatedReads)
+{
+    // The tool reads the Line again after each commit (as the shell does).
+    // Its times stay the whole Line's, and a drag writes the text's own
+    // 0,0, which libass reads as the whole Line too; legacy's second read
+    // had the start twice and wrote `1000,1000`.
+    std::string script(kScript);
+    script.replace(script.find("{\\move(30,60,90,120,0,2000)}y"), 29, "{\\move(30,60,90,120)}y");
+    TestHost host;
+    standard(host, 1);
+    host.s = std::make_unique<EditSession>(load(script));
+    const auto rows = ids(*host.s);
+    host.s->setSelection({rows[1], {rows[1]}, rows[1], std::nullopt});
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    tool.reset(host); // read twice
+    EXPECT_EQ(tool.moveStart(), 1000);
+    EXPECT_EQ(tool.moveEnd(), 3000);
+    auto values = tool.values(host);
+    ASSERT_EQ(values.size(), 6u);
+    EXPECT_EQ(values[4].text, u"0");
+    EXPECT_EQ(values[5].text, u"0");
+    // Drag the start (view 10,20) twice.
+    tool.pointer(at(Pointer::Kind::Press, 10, 20, Pointer::Button::Left, true), host);
+    tool.pointer(at(Pointer::Kind::Move, 12, 20, Pointer::Button::None, true), host);
+    tool.pointer(at(Pointer::Kind::Release, 12, 20, Pointer::Button::Left), host);
+    EXPECT_EQ(text(host, 1), u8"{\\move(36,60,90,120,0,0)}y");
+    EXPECT_EQ(tool.moveStart(), 1000);
+    EXPECT_EQ(tool.moveEnd(), 3000);
+    // The refresh after the tool's own commit keeps its state (the first
+    // reset); the next one reads the Line again.
+    tool.reset(host);
+    tool.reset(host);
+    tool.pointer(at(Pointer::Kind::Press, 12, 20, Pointer::Button::Left, true), host);
+    tool.pointer(at(Pointer::Kind::Move, 14, 20, Pointer::Button::None, true), host);
+    tool.pointer(at(Pointer::Kind::Release, 14, 20, Pointer::Button::Left), host);
+    EXPECT_EQ(text(host, 1), u8"{\\move(42,60,90,120,0,0)}y");
+    EXPECT_EQ(tool.moveStart(), 1000);
+    EXPECT_EQ(tool.moveEnd(), 3000);
+    // Halfway through the Line the cross is halfway along the \move, where
+    // libass draws the text: view (14,20) to (30,40) at 2 s.
+    host.time = 2000;
+    const Overlay o = tool.overlay(host);
+    std::optional<float> crossX, crossY;
+    for (const auto &l : o.lines) {
+        if (l.from.y == l.to.y && std::abs(l.to.x - l.from.x - 30.f) < 0.01f)
+            crossY = l.from.y;
+        else if (l.from.x == l.to.x && std::abs(l.to.y - l.from.y - 30.f) < 0.01f)
+            crossX = l.from.x;
+    }
+    ASSERT_TRUE(crossX && crossY);
+    EXPECT_FLOAT_EQ(*crossX, 22.f);
+    EXPECT_FLOAT_EQ(*crossY, 30.f);
+}
+
 TEST(VisualPositionValues, TypedPointWritesTheActiveLineAndMovesTheOthers)
 {
     TestHost host;

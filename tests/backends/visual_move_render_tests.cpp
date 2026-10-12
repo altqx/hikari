@@ -11,10 +11,11 @@
 // here. Each case runs at three video / script ratios, the view at the
 // frame's size, at half of it and pillarboxed at about twice it. The
 // renders, with the overlay drawn over them, are written to the artifact
-// directory. Not covered: a \move without times or with 0,0, which libass
-// moves over the whole Line while GetPosnScale gives Move the Line's start
-// as both times (and adds it again on each later read; Visuals.cpp:648-675),
-// so its cross is not where libass draws.
+// directory. A \move without times or with 0,0 moves over the whole Line in
+// libass (ass_parse.c: t1 <= 0 && t2 <= 0), and Move's cross follows it
+// there (approved departure T2-move-untimed: legacy's GetPosnScale gave
+// Move the Line's start as both times and added it again on each later
+// read, Visuals.cpp:648-675).
 
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_tools.h"
@@ -316,6 +317,53 @@ TEST(VisualMoveRender, APosHoldsEveryHandleOnTheAnchor)
             expectAt(h.cross, *ink.centre, "cross");
             if (t == 2000)
                 save(ink.image, o, host, QStringLiteral("pos-%1").arg(QString::fromUtf8(r.name)));
+        }
+    }
+}
+
+TEST(VisualMoveRender, AMoveWithoutTimesOrWithZeroTimesFollowsLibassOverTheWholeLine)
+{
+    // T2-move-untimed: \move(x1,y1,x2,y2) and \move(x1,y1,x2,y2,0,0) on the
+    // Line from 1 s to 3 s move from its first to its last millisecond in
+    // libass. Move's cross on the painted square's centroid at its start,
+    // inside it and at its last millisecond, read twice (legacy added the
+    // Line's start again on the second read); the start's square on it at
+    // the Line's start.
+    const std::int64_t times[] = {1000, 1040, 1333, 1777, 2000, 2500, 2960, 2999};
+    for (const Ratio &r : kRatios) {
+        SCOPED_TRACE(r.name);
+        const int x1 = r.scriptWidth / 4, y1 = r.scriptHeight * 3 / 10;
+        const int x2 = r.scriptWidth * 7 / 10, y2 = r.scriptHeight * 13 / 20;
+        for (const char *times6 : {"", ",0,0"}) {
+            SCOPED_TRACE(times6);
+            const std::string text = squareLine(r, std::format("\\move({},{},{},{}{})", x1, y1, x2, y2, times6));
+            Host host(r, text);
+            MoveTool tool;
+            tool.selected(host);
+            tool.reset(host);
+            tool.reset(host);
+            ASSERT_EQ(tool.moveStart(), 1000);
+            ASSERT_EQ(tool.moveEnd(), 3000);
+            for (const std::int64_t t : times) {
+                SCOPED_TRACE(t);
+                host.time = t;
+                const Ink ink = render(r, text, t);
+                ASSERT_TRUE(ink.centre);
+                const Overlay o = tool.overlay(host);
+                const Handles h = handlesOf(o, host);
+                expectAt(h.cross, *ink.centre, "cross");
+                if (t == 1000)
+                    expectAt(h.start, *ink.centre, "start");
+                if (t > 1100 && t < 2900) {
+                    ASSERT_TRUE(h.start && h.end);
+                    EXPECT_GT(std::hypot(h.start->x() - ink.centre->x(), h.start->y() - ink.centre->y()), 2.0);
+                    EXPECT_GT(std::hypot(h.end->x() - ink.centre->x(), h.end->y() - ink.centre->y()), 2.0);
+                }
+                if (t == 2000)
+                    save(ink.image, o, host,
+                         QStringLiteral("move-%1-%2").arg(QString::fromUtf8(r.name),
+                                                          *times6 ? QStringLiteral("zero") : QStringLiteral("untimed")));
+            }
         }
     }
 }

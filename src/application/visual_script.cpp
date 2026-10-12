@@ -9,6 +9,7 @@
 #include <charconv>
 #include <cmath>
 #include <cstdlib>
+#include <limits>
 
 // Built without floating-point contraction, as visual_view.cpp: legacy's
 // float steps must round as its build did.
@@ -657,6 +658,9 @@ PointF posnScale(const ScriptState &state, Family visual, const core::LineRecord
     const auto &pos = posMoveRegex();
     if (pos.matches(txt) && tbl) {
         const u16 txtpos = group(pos, txt, 2);
+        // T2-move-untimed: a \move without times reads 0 for them; legacy
+        // kept the previous read's and added the Line's start once more.
+        tbl[4] = tbl[5] = 0;
         int ipos = 0;
         for (const u16 &token : tokenize(txtpos, u',', false)) {
             if (ipos >= 6)
@@ -710,6 +714,24 @@ std::pair<int, int> moveTimes(const ScriptState &state, const core::LineRecord &
     const int msend = timebase.msAt(timebase.frameAt(endTime) - 1);
     const int diff = endTime - startTime;
     return {std::abs(msstart - startTime), (diff - std::abs(endTime - msend))};
+}
+
+std::pair<int, int> moveInterval(const double *tbl, const core::LineRecord &editLine)
+{
+    // ass_parse.c (\move): the times, relative to the event's start, are
+    // whole numbers (argtoi32 truncates them), swapped when t1 > t2;
+    // `t1 <= 0 && t2 <= 0` moves over the event's Duration. The table holds
+    // them made absolute, so the start comes off before they are truncated.
+    const int start = startMs(editLine);
+    const int count = static_cast<int>(tbl[6]);
+    const double t1 = std::trunc(tbl[4] - start), t2 = std::trunc(tbl[5] - start);
+    if (count == 4 || (count >= 6 && t1 <= 0 && t2 <= 0))
+        return {start, endMs(editLine)};
+    auto absolute = [start](double t) {
+        constexpr double lo = std::numeric_limits<int>::min(), hi = std::numeric_limits<int>::max();
+        return static_cast<int>(std::clamp(start + t, lo, hi));
+    };
+    return {absolute(std::min(t1, t2)), absolute(std::max(t1, t2))};
 }
 
 PointF calcMovePosition(PointF point, const double *moveTable, int time)

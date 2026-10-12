@@ -80,9 +80,19 @@ PointF additionalPosition(const ScriptState &state, const core::LineRecord &line
 // Visuals::GetPosnScale (Visuals.cpp:624-722) for a family that does not ask
 // for the scale: the editor text's first \pos or \move (or the default
 // position), its alignment and the table `tbl` (7 values, kept by the caller
-// between calls, as legacy's moveValues member).
+// between calls, as legacy's moveValues member). The \move's times are the
+// text's own made absolute, 0 when it has none: legacy left the previous
+// read's there and added the Line's start again (T2-move-untimed).
 PointF posnScale(const ScriptState &state, Family visual, const core::LineRecord &editLine,
                  std::u16string_view editorText, int *an, double *table);
+
+// The interval, in absolute ms, over which libass moves the text of the
+// \move that posnScale read into `table` (ass_parse.c, the \move tag): a
+// \move without times, or whose two times are both 0 or less, moves over the
+// whole Line (t1 = 0, t2 = the Line's duration); otherwise its own times, the
+// earlier first. Legacy gave Move the Line's start as both times there
+// (GetPosnScale, Visuals.cpp:648-675); approved departure T2-move-untimed.
+std::pair<int, int> moveInterval(const double *table, const core::LineRecord &editLine);
 
 // Visuals::GetMoveTimes (Visuals.cpp:607-622): the \move times relative to
 // the Line's start, from the first and last frame the Line shows.
