@@ -269,15 +269,19 @@ bool NarrowUserRuntimeSocket(const std::string &path)
 
 FILE *OpenPrivateFileAt(const std::string &path)
 {
-	// O_NONBLOCK keeps a FIFO at the name from holding the open; anything but
-	// a regular file is then refused
-	int fd = open(path.c_str(), O_RDWR | O_CREAT | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC, 0600);
+	// O_NONBLOCK keeps a FIFO at the name from holding the open, and
+	// O_NOCTTY a terminal from becoming this program's; anything but a
+	// regular file is then refused
+	int fd = open(path.c_str(), O_RDWR | O_CREAT | O_NOFOLLOW | O_NONBLOCK | O_NOCTTY | O_CLOEXEC, 0600);
 	if (fd < 0)
 		return nullptr;
-	// a file that was there is narrowed first and only then emptied
+	// a file that was there is narrowed first and only then emptied; one with
+	// another name too, as a hard link to another of the user's files put at
+	// this name, or another user's file, is left as it is
 	struct stat fileStat;
-	if (fstat(fd, &fileStat) != 0 || !S_ISREG(fileStat.st_mode) ||
-		((fileStat.st_mode & 07077) && fchmod(fd, 0600) != 0) || ftruncate(fd, 0) != 0 ||
+	if (fstat(fd, &fileStat) != 0 || !S_ISREG(fileStat.st_mode) || fileStat.st_nlink != 1 ||
+		fileStat.st_uid != geteuid() || ((fileStat.st_mode & 07077) && fchmod(fd, 0600) != 0) ||
+		ftruncate(fd, 0) != 0 ||
 		fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~O_NONBLOCK) != 0) {
 		close(fd);
 		return nullptr;

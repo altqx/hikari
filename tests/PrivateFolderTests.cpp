@@ -410,6 +410,14 @@ TEST(a_link_at_a_private_file_s_name_is_not_followed)
 	fs::path folder = dir.path / "folder.part";
 	fs::create_directory(folder);
 	CHECK(OpenPrivateFileAt(folder.string()) == nullptr);
+
+	// nor a hard link to another of the user's files, which would be
+	// narrowed and emptied with it
+	fs::path hard = dir.path / "hard.part";
+	fs::create_hard_link(elsewhere, hard);
+	CHECK(OpenPrivateFileAt(hard.string()) == nullptr);
+	CHECK(ReadAll(elsewhere) == "kept");
+	CHECK(ModeOf(elsewhere) == 0644);
 }
 
 #endif

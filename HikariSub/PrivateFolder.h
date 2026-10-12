@@ -57,8 +57,8 @@ bool NarrowUserRuntimeSocket(const std::string &path);
 // Opens the file at path for reading and writing, new or emptied, so that
 // only the user may open it: a new file is made 0600, and an existing one is
 // narrowed to 0600 before it is emptied. A link at path is not followed, and
-// a file that cannot be narrowed, as another user's, or that is no regular
-// file, is not opened. nullptr on a failure.
+// another user's file, a file with another name too, as a hard link, or
+// what is no regular file, is not opened. nullptr on a failure.
 FILE *OpenPrivateFileAt(const std::string &path);
 
 #endif
