@@ -3,8 +3,10 @@
 #include <QClipboard>
 #include <QDir>
 #include <QFont>
-#include <QFontMetricsF>
+#include <QFontInfo>
+#include <QFontMetrics>
 #include <QGuiApplication>
+#include <QImage>
 
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -13,6 +15,7 @@
 #include <windows.h>
 #endif
 
+#include <algorithm>
 #include <cstdlib>
 
 namespace hikari::ui {
@@ -113,14 +116,44 @@ std::optional<application::TextExtents> QtTextMeasurePort::measure(const std::ve
     DeleteDC(dc);
     DeleteObject(font);
 #else
-    // Legacy Linux: a font at pixel height round(size), extents scaled by 64.
+    // Legacy Linux (UtilsWindows.cpp:300-330): wxFont(wxSize(0, round(size)))
+    // and a memory DC's whole-pixel extents, scaled by 64. wxGTK makes a font
+    // of a pixel height as wxFontBase::SetPixelSize does: the largest whole
+    // point size whose line height is at most that height, at the screen's 96
+    // dots per inch. So the style's size is the line's height, as GDI's
+    // positive lfHeight makes it on Windows, not the em (Titillium Web's em is
+    // two thirds of its line).
+    const int pixelHeight = std::max(1, static_cast<int>((fontsize / 64.f) + 0.5f));
+    QImage device(1, 1, QImage::Format_ARGB32);
+    device.setDotsPerMeterX(3780); // 96 dpi
+    device.setDotsPerMeterY(3780);
     QFont font(qs(field(style, Fontname)));
-    font.setPixelSize(std::max(1, static_cast<int>((fontsize / 64.f) + 0.5f)));
     font.setBold(flag(style, Bold));
     font.setItalic(flag(style, Italic));
     font.setUnderline(flag(style, Underline));
     font.setStrikeOut(flag(style, StrikeOut));
-    const QFontMetricsF metrics(font);
+    const auto heightAt = [&](int points) {
+        font.setPointSize(points);
+        return QFontMetrics(font, &device).height();
+    };
+    // Keyed on the face the font resolves to, so a face added after a
+    // measure that fell back to another one is searched again.
+    const QFontInfo face(font);
+    const auto key = std::tuple{face.family().toStdString(), face.styleName().toStdString(), font.bold(),
+                                font.italic(), pixelHeight};
+    auto found = m_points.find(key);
+    if (found == m_points.end()) {
+        // From the size a line of the em's height would have, by whole points.
+        int points = std::max(1, pixelHeight * 3 / 4);
+        points = std::max(1, static_cast<int>(points * static_cast<double>(pixelHeight) / heightAt(points)));
+        while (points > 1 && heightAt(points) > pixelHeight)
+            --points;
+        while (heightAt(points + 1) <= pixelHeight)
+            ++points;
+        found = m_points.emplace(key, points).first;
+    }
+    font.setPointSize(found->second);
+    const QFontMetrics metrics(font, &device);
     if (spacing != 0) {
         for (const QChar c : string) {
             fwidth += static_cast<float>(metrics.horizontalAdvance(c)) * 64.f + spacing;

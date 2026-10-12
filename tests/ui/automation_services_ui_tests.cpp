@@ -5,6 +5,13 @@
 #include "hikari/backends/lua_script_host.h"
 
 #include <QClipboard>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QSet>
 #include <QFontDatabase>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -13,6 +20,7 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <cstdlib>
 #include <optional>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
@@ -24,6 +32,28 @@ using hikari::ui::QtClipboardPort;
 using hikari::ui::QtTextMeasurePort;
 
 namespace {
+
+// Every GetLineTextExtents call the T3 measure probe recorded, once each.
+std::vector<QJsonObject> legacyExtents()
+{
+    QFile f(QStringLiteral(HIKARI_VISUAL_T3_MEASURE_OBSERVATIONS));
+    if (!f.open(QIODevice::ReadOnly))
+        return {};
+    std::vector<QJsonObject> out;
+    QSet<QByteArray> seen;
+    for (const QByteArray &l : f.readAll().split('\n')) {
+        if (l.trimmed().isEmpty())
+            continue;
+        for (const QJsonValue &v : QJsonDocument::fromJson(l).object()[QStringLiteral("extents")].toArray()) {
+            const QByteArray key = QJsonDocument(v.toObject()).toJson(QJsonDocument::Compact);
+            if (!seen.contains(key)) {
+                seen.insert(key);
+                out.push_back(v.toObject());
+            }
+        }
+    }
+    return out;
+}
 
 std::vector<std::string> style(const std::string &font, const std::string &scaleX = "100",
                                const std::string &scaleY = "100", const std::string &spacing = "0")
@@ -46,6 +76,9 @@ private slots:
         QVERIFY(id >= 0);
         family = QFontDatabase::applicationFontFamilies(id).value(0);
         QVERIFY(!family.isEmpty());
+        // The bold face beside it, as the T3 measure probe had it.
+        const QString bold = QFileInfo(QStringLiteral(HIKARI_TEST_FONT)).dir().filePath(QStringLiteral("TitilliumWeb-Bold.ttf"));
+        QVERIFY(QFontDatabase::addApplicationFont(bold) >= 0);
     }
 
     void clipboardRoundTrips()
@@ -111,6 +144,88 @@ private slots:
         QVERIFY(spaced);
         QVERIFY2(qAbs(spaced->width - (perCharacter + 5 * 2)) < 1e-2,
                  qPrintable(QStringLiteral("%1 vs %2").arg(spaced->width).arg(perCharacter + 10)));
+    }
+
+    // T3: the measure Scale's rectangle mode runs on, against legacy's
+    // (the measure probe's capture, local-t3-measure-20261012: the Linux
+    // build's GetLineTextExtents through wxGTK's memory DC, Titillium Web
+    // given to fontconfig). Every piece legacy measured, with the measuring
+    // Style it had, goes through QtTextMeasurePort. The font is legacy's (the
+    // line as high as the style's size, by whole points); what remains is the
+    // two engines' hinting. Before the scale, the gaps measured are at most 3
+    // pixels in 211 for a whole piece, 5 in 10 characters for a spaced one
+    // (each character is measured and rounded alone), 2 in the line's height
+    // and 1 in the descent. So a width agrees within 1.5 percent and a pixel,
+    // or half a pixel a character and a pixel when spaced, a height within 2
+    // pixels and a descent within 1, all times the style's scale.
+    void textExtentsAgainstTheLegacyLinuxMeasure()
+    {
+#ifdef _WIN32
+        QSKIP("legacy's Windows measure is GDI (UtilsWindows.cpp:254-300), which QtTextMeasurePort runs unchanged; "
+              "the capture is the Linux build's wx measure");
+#else
+        QtTextMeasurePort measure;
+        int pieces = 0;
+        for (const QJsonObject &e : legacyExtents()) {
+            const QString text = e[QStringLiteral("text")].toString();
+            if (text.isEmpty())
+                continue;
+            ++pieces;
+            const auto str = [&](const char *name) { return e[QLatin1StringView(name)].toString().toStdString(); };
+            std::vector<std::string> st = style(str("fontname"), str("scaleX"), str("scaleY"), str("spacing"));
+            st[2] = str("fontsize");
+            st[7] = e[QStringLiteral("bold")].toBool() ? "-1" : "0";
+            st[8] = e[QStringLiteral("italic")].toBool() ? "-1" : "0";
+            const auto got = measure.measure(st, text.toStdString());
+            QVERIFY(got);
+            const double sx = std::atof(st[11].c_str()) / 100, sy = std::atof(st[12].c_str()) / 100;
+            const double width = e[QStringLiteral("width")].toDouble();
+            const QString what = QStringLiteral("%1 (size %2, bold %3, italic %4, scale %5 %6, spacing %7): legacy %8 %9 %10, "
+                                                "rewrite %11 %12 %13")
+                                     .arg(text, QString::fromStdString(st[2]), QString::fromStdString(st[7]),
+                                          QString::fromStdString(st[8]), QString::fromStdString(st[11]),
+                                          QString::fromStdString(st[12]), QString::fromStdString(st[13]))
+                                     .arg(width)
+                                     .arg(e[QStringLiteral("height")].toDouble())
+                                     .arg(e[QStringLiteral("descent")].toDouble())
+                                     .arg(got->width)
+                                     .arg(got->height)
+                                     .arg(got->descent);
+            const double slack = st[13] != "0" ? 0.5 * text.size() : 0.015 * width / sx;
+            QVERIFY2(qAbs(got->width - width) <= (slack + 1) * sx + 1e-3, qPrintable(what));
+            QVERIFY2(qAbs(got->height - e[QStringLiteral("height")].toDouble()) <= 2 * sy + 1e-3, qPrintable(what));
+            QVERIFY2(qAbs(got->descent - e[QStringLiteral("descent")].toDouble()) <= sy + 1e-3, qPrintable(what));
+            QCOMPARE(got->externalLeading, e[QStringLiteral("extlead")].toDouble());
+        }
+        QCOMPARE(pieces, 38);
+#endif
+    }
+
+    // The point size found for a face is kept for the face the font resolves
+    // to: a face measured before it is added (another face answering for it)
+    // is searched again once it is there.
+    void textExtentsOfAFaceAddedAfterAMeasure()
+    {
+#ifdef _WIN32
+        QSKIP("GDI makes the font on every measure; the point size search and its cache are the Linux measure's");
+#else
+        if (QFontDatabase::families().contains(QStringLiteral("OCRA")))
+            QSKIP("OCR A is installed here, so no other face answers for it before it is added");
+        std::vector<std::string> st = style("OCRA");
+        st[2] = "60";
+        QtTextMeasurePort measure;
+        const auto before = measure.measure(st, "Hello world");
+        QVERIFY(before);
+        QVERIFY(QFontDatabase::addApplicationFont(QStringLiteral(HIKARI_LATE_TEST_FONT)) >= 0);
+        const auto after = measure.measure(st, "Hello world");
+        const auto fresh = QtTextMeasurePort().measure(st, "Hello world");
+        QVERIFY(after && fresh);
+        QCOMPARE(after->width, fresh->width);
+        QCOMPARE(after->height, fresh->height);
+        QCOMPARE(after->descent, fresh->descent);
+        QCOMPARE(after->height, 60.0);
+        QVERIFY(after->width != before->width);
+#endif
     }
 
     void wildcardsBecomeNameFilters()

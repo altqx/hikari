@@ -254,16 +254,28 @@ execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/Visua
 file(WRITE "${t3_gen}/extracted_t3.inc"
     "#include \"styles.inc\"\n#include \"dialogue.inc\"\n#include \"tagfind.inc\"\n#include \"clippoint.inc\"\n"
     "#include \"vertex.inc\"\n#include \"config.inc\"\n#include \"visuals.inc\"\n")
-add_executable(legacy_visual_t3_capture visual_t3_capture.cpp
-    "${t3_gen}/copy/VisualScale.cpp" "${t3_gen}/copy/VisualRotationZ.cpp" "${t3_gen}/copy/VisualRotationXY.cpp"
-    "${legacy_hs}/Timebase.cpp")
-target_include_directories(legacy_visual_t3_capture PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/visual_t3" "${t3_gen}" "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
-target_compile_definitions(legacy_visual_t3_capture PRIVATE LINUX_BUILD HIKARISUB_LINUX_BUILD)
-target_compile_options(legacy_visual_t3_capture PRIVATE ${wx_cflags}
-    -include "${LEGACY_SOURCE}/HikariSub/platform.h"
-    -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
-target_link_libraries(legacy_visual_t3_capture PRIVATE ${wx_libs})
+# The measure probe's GetLineTextExtents, the Linux build's (wx) branch.
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/UtilsWindows.cpp" "${t3_gen}/measure.inc"
+    "bool GetLineTextExtents(const wxString& text, Styles* style, float* width, float* height, float* descent, float* extlead)"
+    COMMAND_ERROR_IS_FATAL ANY)
+foreach(probe legacy_visual_t3_capture legacy_visual_t3_measure_capture)
+    add_executable(${probe} visual_t3_capture.cpp
+        "${t3_gen}/copy/VisualScale.cpp" "${t3_gen}/copy/VisualRotationZ.cpp" "${t3_gen}/copy/VisualRotationXY.cpp"
+        "${legacy_hs}/Timebase.cpp")
+    target_include_directories(${probe} PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/visual_t3" "${t3_gen}" "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
+    target_compile_definitions(${probe} PRIVATE LINUX_BUILD HIKARISUB_LINUX_BUILD)
+    target_compile_options(${probe} PRIVATE ${wx_cflags}
+        -include "${LEGACY_SOURCE}/HikariSub/platform.h"
+        -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
+    target_link_libraries(${probe} PRIVATE ${wx_libs})
+endforeach()
+# T3's rectangle mode on legacy's own text measure (wxGTK's memory DC) and
+# the fonts fontconfig is given.
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(probe_fontconfig REQUIRED IMPORTED_TARGET fontconfig)
+target_compile_definitions(legacy_visual_t3_measure_capture PRIVATE PROBE_LEGACY_MEASURE)
+target_link_libraries(legacy_visual_t3_measure_capture PRIVATE PkgConfig::probe_fontconfig)
 
 # T6: the legacy Position shifter and all-tags tool (VisualMoveAll.cpp,
 # VisualAllTags.cpp, VisualAllTagsControls.cpp and Timebase.cpp, unchanged)
