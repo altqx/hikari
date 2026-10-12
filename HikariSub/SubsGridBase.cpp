@@ -1283,13 +1283,17 @@ void SubsGrid::SetStartTime(int stime)
 	edit->Send(EDITBOX_LINE_EDITION, false, false, true);
 	wxArrayInt sels;
 	file->GetSelections(sels);
+	bool changed = false;
 	for (size_t i = 0; i < sels.size(); i++){
+		Dialogue *dial = file->GetDialogue(sels[i]);
+		// copy only lines whose times change, so a no-op records no step
+		if (!dial || (dial->Start.mstime == std::max(stime, 0) && dial->End.mstime >= std::max(stime, 0))){ continue; }
 		Dialogue *dialc = CopyDialogue(sels[i]);
-		if (!dialc){ continue; }
 		dialc->Start.NewTime(stime);
 		if (dialc->End < stime){ dialc->End.NewTime(stime); }
+		changed = true;
 	}
-	if (sels.size()){
+	if (changed){
 		SetModified(GRID_SET_START_TIME);
 	}
 }
@@ -1299,13 +1303,17 @@ void SubsGrid::SetEndTime(int etime)
 	edit->Send(EDITBOX_LINE_EDITION, false, false, true);
 	wxArrayInt sels;
 	file->GetSelections(sels);
+	bool changed = false;
 	for (size_t i = 0; i < sels.size(); i++){
+		Dialogue *dial = file->GetDialogue(sels[i]);
+		// copy only lines whose times change, so a no-op records no step
+		if (!dial || (dial->End.mstime == std::max(etime, 0) && dial->Start.mstime <= std::max(etime, 0))){ continue; }
 		Dialogue *dialc = CopyDialogue(sels[i]);
-		if (!dialc){ continue; }
 		dialc->End.NewTime(etime);
 		if (dialc->Start > etime){ dialc->Start.NewTime(etime); }
+		changed = true;
 	}
-	if (sels.size()){
+	if (changed){
 		SetModified(GRID_SET_END_TIME);
 	}
 }
