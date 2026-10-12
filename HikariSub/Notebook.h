@@ -44,6 +44,10 @@ public:
 	size_t Size();
 	TabPanel *Page(size_t i);
 	void DeletePage(int page);
+	//removes a page added for a file that then could not be opened, and makes
+	//pageToSelect active again when the removed page was the active one;
+	//a page that holds subtitles, video, audio or changes is kept
+	void RemoveUnusedPage(int page, int pageToSelect);
 	void Split(size_t page);
 	int FindTab(int x, int *num);
 	int FindPanel(TabPanel* pan, bool safe = true);

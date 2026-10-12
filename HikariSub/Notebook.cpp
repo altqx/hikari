@@ -317,6 +317,54 @@ void Notebook::DeletePage(int page)
 	SaveLastSession();
 }
 
+void Notebook::RemoveUnusedPage(int page, int pageToSelect)
+{
+	int pagesSize = Size();
+	if (page < 0 || page >= pagesSize || pagesSize < 2)
+		return;
+
+	TabPanel *removed = Pages[page];
+	if (removed->SubsPath != emptyString || removed->VideoPath != emptyString ||
+		removed->AudioPath != emptyString || removed->KeyframesPath != emptyString ||
+		removed->grid->file->IsModified() || removed->video->GetState() != None)
+		return;
+
+	bool removeActive = page == iter;
+	if (removeActive && (pageToSelect < 0 || pageToSelect >= pagesSize || pageToSelect == page))
+		pageToSelect = (page > 0) ? page - 1 : 1;
+
+	Freeze();
+	if (removeActive){
+		//AddPage gave the new page the place of the page that was active
+		TabPanel *selected = Pages[pageToSelect];
+		selected->SetPosition(removed->GetPosition());
+		selected->SetSize(removed->GetSize());
+		if (removed->IsShown())
+			selected->Show();
+		iter = pageToSelect;
+	}
+	removed->Destroy();
+	Pages.erase(Pages.begin() + page);
+	tabNames.RemoveAt(page);
+	tabSizes.RemoveAt(page);
+	if (iter > page){ iter--; }
+	if (split && splititer > page){ splititer--; }
+	//nothing was shown in the removed page, so the page-changed handler has
+	//no previous tab to take values from
+	olditer = iter;
+	int rsize = Size() - 1;
+	if (firstVisibleTab > rsize){ firstVisibleTab = tabScrollDestination = rsize; }
+
+	CalcSizes(true);
+	Thaw();
+	Refresh(false);
+	if (removeActive){
+		//update the title, status bar and menus as a tab change does
+		wxCommandEvent choiceSelectedEvent(wxEVT_COMMAND_CHOICE_SELECTED, GetId());
+		AddPendingEvent(choiceSelectedEvent);
+	}
+}
+
 void Notebook::CalcSizes(bool makeActiveVisible)
 {
 	int all = 2;

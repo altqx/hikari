@@ -1359,6 +1359,7 @@ bool HikariSubFrame::OpenFile(const wxString &filename, bool fulls/*=false*/, bo
 		}
 	}
 
+	int previousTab = Tabs->GetSelection();
 	if (Options.GetBool(OPEN_SUBS_IN_NEW_TAB) && tab->SubsPath != emptyString &&
 		!tab->video->IsFullScreen() && issubs){
 		Tabs->AddPage(true);
@@ -1387,6 +1388,9 @@ bool HikariSubFrame::OpenFile(const wxString &filename, bool fulls/*=false*/, bo
 		if (!Tabs->LoadSubtitles(tab, fname)){
 			if (freeze)
 				tab->Thaw();
+			//do not leave the tab made for these subtitles empty behind
+			if (!nonewtab)
+				Tabs->RemoveUnusedPage(Tabs->FindPanel(tab, false), previousTab);
 			return false;
 		}
 		//remove comparison after every subs load or delete 
