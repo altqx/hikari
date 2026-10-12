@@ -100,6 +100,14 @@ tasks:
     script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_video_fullscreen_workflow.exe out/build/windows-x64-release | Select-Object -First 1; $m = if ($env:MONITORS) { $env:MONITORS } else { '2' }; Write-Output "running $($exe.FullName) --monitors $m"; $ErrorActionPreference = 'Continue'; & $exe.FullName --monitors $m 2>&1 | ForEach-Object { "$_" }; exit $LASTEXITCODE
     visualStudio: false
     timeoutSeconds: 300
+  show-in-folder-explorer:
+    # P9 on the interactive desktop: show_in_folder_tests explorerShowsTheFileSelected (Explorer opens the folder
+    # with exactly the file selected, read back through the Shell automation objects) with the whole desktop saved
+    # while that window is open (p9-explorer/explorer-selection.png). A skip fails the task: no desktop was reached.
+    script: $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_backends_show_in_folder_tests.exe out/build/windows-x64-release | Select-Object -First 1; if (-not $exe) { Write-Output 'no hikari_backends_show_in_folder_tests.exe'; exit 2 }; $dir = "$PWD/out/build/windows-x64-release/p9-explorer"; Remove-Item -Recurse $dir -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force $dir | Out-Null; $env:HIKARI_SHOW_IN_FOLDER_SHOT = "$dir/explorer-selection.png"; $out = "$dir/explorerShowsTheFileSelected.txt"; $p = Start-Process -FilePath $exe.FullName -ArgumentList "explorerShowsTheFileSelected -o $out,txt" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$dir/stderr.txt"; $null = $p.Handle; if (-not $p.WaitForExit(120000)) { $p.Kill(); Write-Output 'TIMED OUT'; exit 1 }; $code = $p.ExitCode; Write-Output "exit $code"; if (-not (Test-Path $out)) { Write-Output 'no QtTest output'; Get-Content "$dir/stderr.txt" -ErrorAction SilentlyContinue; exit 1 }; Get-Content $out; if (Select-String -Quiet -Pattern '^SKIP' $out) { Write-Output 'skipped, so not on an interactive desktop'; exit 1 }; if ($code -eq 0 -and -not (Test-Path $env:HIKARI_SHOW_IN_FOLDER_SHOT)) { Write-Output 'no screenshot'; exit 1 }; exit $code
+    visualStudio: false
+    timeoutSeconds: 300
+    artifacts: [out/build/windows-x64-release/p9-explorer]
   fonts:
     # Font identity (N4), collection (I5) and the collector (Y8) through DirectWrite, verbose for the provider line.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(FontIdentity|DirectWriteIdentity|FontCollection|FontCollectorRenderer|FontFixtureFiles)[.]" -V
