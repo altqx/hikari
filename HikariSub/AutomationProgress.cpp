@@ -157,8 +157,10 @@ namespace Auto{
 
 	void LuaProgressSink::ShowDialog(wxString Title)
 	{
-		SafeQueue(EVT_SHOW_PRGS_DIAL, lpd);
 		SafeQueue(EVT_TITLE, Title);
+		// runs the dialog's loop until the script ends or is cancelled, so the
+		// dialogs the script asks for are shown while the script waits for them
+		lpd->ShowModal();
 	}
 
 
@@ -251,6 +253,13 @@ namespace Auto{
 		}
 
 
+		// after a cancel nothing shows the dialog any more
+		if (ps->lpd->cancelled) {
+			lua_pushstring(L, "cancelled");
+			lua_error(L);
+			return 0;
+		}
+
 		wxSemaphore sema(0, 1);
 		ps->SafeQueue(EVT_SHOW_CFG_DIAL, &sema);
 
@@ -262,6 +271,13 @@ namespace Auto{
 
 	int LuaProgressSink::LuaDisplayOpenDialog(lua_State *L)
 	{
+		// after a cancel nothing shows the dialog any more
+		if (ps->lpd->cancelled) {
+			lua_pushstring(L, "cancelled");
+			lua_error(L);
+			return 0;
+		}
+
 		wxSemaphore sema(0, 1);
 		ps->SafeQueue(EVT_SHOW_OPEN_DIAL, &sema);
 
@@ -272,6 +288,13 @@ namespace Auto{
 
 	int LuaProgressSink::LuaDisplaySaveDialog(lua_State *L)
 	{
+		// after a cancel nothing shows the dialog any more
+		if (ps->lpd->cancelled) {
+			lua_pushstring(L, "cancelled");
+			lua_error(L);
+			return 0;
+		}
+
 		wxSemaphore sema(0, 1);
 		ps->SafeQueue(EVT_SHOW_SAVE_DIAL, &sema);
 
