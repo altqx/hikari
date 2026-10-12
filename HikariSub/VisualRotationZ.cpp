@@ -477,7 +477,6 @@ void RotationZ::ChangeClipRotationZ(wxString* txt, const D3DXVECTOR2& orgPivot, 
 					isBad = true;
 			}
 			if (!isBad) {
-				xy[3] += 2;
 				points.push_back(ClipPoint(xy[0], xy[1], "m", true));
 				points.push_back(ClipPoint(xy[2], xy[1], "l", true));
 				points.push_back(ClipPoint(xy[2], xy[3], "l", true));
