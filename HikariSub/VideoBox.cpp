@@ -1127,6 +1127,8 @@ void VideoBox::OpenEditor(bool esc)
 
 		SetFullscreen();
 		HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+		//the option alone does not turn the editor on for this tab
+		if (!tab->editor && Hikari->GetTab() == tab){ Hikari->HideEditor(); }
 		if (!esc){ ShowWindow(Hikari->GetHWND(), SW_MINIMIZE); }
 	}
 
