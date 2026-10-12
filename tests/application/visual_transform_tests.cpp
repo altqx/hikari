@@ -88,6 +88,45 @@ public:
     }
 };
 
+// Legacy's own GetLineTextExtents as the measure probe recorded it
+// (visual_t3_capture.cpp with PROBE_LEGACY_MEASURE; tests/fixtures/
+// legacy-observations/local-t3-measure-20261012): each call's answer for the
+// text and the measuring Style's fields it reads. The calls the rewrite makes
+// are kept, so that every state can compare them with legacy's.
+class CapturedMeasure : public TextMeasurePort {
+public:
+    // "text|font|size|bold|italic|scaleX|scaleY|spacing"
+    static std::string key(const std::string &text, const std::string &font, const std::string &size, bool bold,
+                           bool italic, const std::string &scaleX, const std::string &scaleY, const std::string &spacing)
+    {
+        return text + "|" + font + "|" + size + "|" + (bold ? "b" : "") + "|" + (italic ? "i" : "") + "|" + scaleX +
+               "|" + scaleY + "|" + spacing;
+    }
+    static std::string key(const QJsonObject &e)
+    {
+        const auto str = [&](const char *name) { return e[QLatin1StringView(name)].toString().toStdString(); };
+        return key(str("text"), str("fontname"), str("fontsize"), e[QStringLiteral("bold")].toBool(),
+                   e[QStringLiteral("italic")].toBool(), str("scaleX"), str("scaleY"), str("spacing"));
+    }
+
+    std::map<std::string, TextExtents> answers;
+    std::vector<std::string> calls;
+
+    std::optional<TextExtents> measure(const std::vector<std::string> &style, const std::string &text) override
+    {
+        // The fields are Styles::GetRaw's; Bold and Italic are -1 or 0.
+        const std::string k = key(text, style[1], style[2], std::atoi(style[7].c_str()) != 0,
+                                  std::atoi(style[8].c_str()) != 0, style[11], style[12], style[13]);
+        calls.push_back(k);
+        const auto it = answers.find(k);
+        if (it == answers.end()) {
+            ADD_FAILURE() << "legacy never measured " << k;
+            return std::nullopt;
+        }
+        return it->second;
+    }
+};
+
 class TestHost : public VisualHost {
 public:
     VideoView v;
@@ -160,7 +199,8 @@ public:
     void toolChanged() override {}
     std::int64_t videoTimeMs() const override { return time; }
     LegacyTimebase timebase() const override { return base; }
-    TextMeasurePort *textMeasure() const override { return &measure; }
+    TextMeasurePort *textMeasure() const override { return measurePort ? measurePort : &measure; }
+    TextMeasurePort *measurePort = nullptr; // the fixed measure when null
     std::pair<long, long> editorSelection() const override { return caret; }
     void setEditorSelection(long from, long to) override { caret = {from, to}; }
     void log(std::u16string_view text) override { logged.emplace_back(text); }
@@ -186,7 +226,21 @@ struct Case {
     int time = 0;
     double fps = 0;
     bool tl = false;
-    std::vector<std::string> styles, lines;
+    // Styles() but for these fields (styles.cpp:249-275).
+    struct Style {
+        std::string name, fontname = "Garamond", fontsize, scaleX, scaleY, spacing = "0", angle, outline, shadow,
+                                     alignment, marginL, marginR, marginV;
+        bool bold = false, italic = false;
+        std::string line() const
+        {
+            return "Style: " + name + "," + fontname + "," + fontsize +
+                   ",&H00FFFFFF,&H00000000,&H00FF0000,&H00000000," + (bold ? "-1" : "0") + "," +
+                   (italic ? "-1" : "0") + ",0,0," + scaleX + "," + scaleY + "," + spacing + "," + angle + ",0," +
+                   outline + "," + shadow + "," + alignment + "," + marginL + "," + marginR + "," + marginV + ",1";
+        }
+    };
+    std::vector<Style> styles;
+    std::vector<std::string> lines;
     std::vector<std::string> translations;
     int active = 0;
     std::vector<int> select;
@@ -194,9 +248,9 @@ struct Case {
     std::vector<std::string> ops; // tool and later
 };
 
-std::vector<Case> readCases()
+std::vector<Case> readCases(const char *path = HIKARI_VISUAL_T3_CASES)
 {
-    std::ifstream in(HIKARI_VISUAL_T3_CASES);
+    std::ifstream in(path);
     std::vector<Case> out;
     Case c;
     std::string text;
@@ -234,12 +288,17 @@ std::vector<Case> readCases()
         } else if (key == "tlmode") {
             c.tl = true;
         } else if (key == "style") {
-            std::string name, fs, sx, sy, angle, outline, shadow, an, ml, mr, mv;
-            line >> name >> fs >> sx >> sy >> angle >> outline >> shadow >> an >> ml >> mr >> mv;
-            // Styles() but for these fields (styles.cpp:249-275).
-            c.styles.push_back("Style: " + name + ",Garamond," + fs + ",&H00FFFFFF,&H00000000,&H00FF0000,&H00000000,0,0,0,0," +
-                               sx + "," + sy + ",0," + angle + ",0," + outline + "," + shadow + "," + an + "," + ml + "," + mr +
-                               "," + mv + ",1");
+            Case::Style st;
+            line >> st.name >> st.fontsize >> st.scaleX >> st.scaleY >> st.angle >> st.outline >> st.shadow >>
+                st.alignment >> st.marginL >> st.marginR >> st.marginV;
+            c.styles.push_back(st);
+        } else if (key == "stylefont") {
+            int bold = 0, italic = 0;
+            Case::Style &st = c.styles.back();
+            line >> bold >> italic >> st.spacing;
+            std::getline(line >> std::ws, st.fontname);
+            st.bold = bold != 0;
+            st.italic = italic != 0;
         } else if (key == "line") {
             int start, end, ml, mr, mv, comment;
             std::string style;
@@ -264,9 +323,9 @@ std::vector<Case> readCases()
     return out;
 }
 
-std::map<std::string, std::vector<QJsonObject>> readObservations()
+std::map<std::string, std::vector<QJsonObject>> readObservations(const char *path = HIKARI_VISUAL_T3_OBSERVATIONS)
 {
-    QFile f(QStringLiteral(HIKARI_VISUAL_T3_OBSERVATIONS));
+    QFile f(QString::fromUtf8(path));
     EXPECT_TRUE(f.open(QIODevice::ReadOnly));
     std::map<std::string, std::vector<QJsonObject>> out;
     for (const QByteArray &l : f.readAll().split('\n')) {
@@ -278,8 +337,11 @@ std::map<std::string, std::vector<QJsonObject>> readObservations()
     return out;
 }
 
+// A number of the capture; the probe writes infinities as "inf".
 float f(const QJsonValue &v)
 {
+    if (v.isString())
+        return std::strtof(v.toString().toStdString().c_str(), nullptr);
     return static_cast<float>(v.toDouble());
 }
 
@@ -314,7 +376,7 @@ void setUp(TestHost &host, const Case &c)
                          "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, "
                          "MarginV, Encoding\n";
     for (const auto &s : c.styles)
-        script += s + "\n";
+        script += s.line() + "\n";
     script += "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
     for (const auto &l : c.lines)
         script += l + "\n";
@@ -526,19 +588,39 @@ TEST(VisualTransformEdit, TwoPointsHoldWithChangeAll)
     EXPECT_TRUE(tool.hasTwoPoints());
 }
 
-TEST(VisualCapture, ReplaysTheLegacyT3Probe)
-{
-    const auto observations = readObservations();
-    const auto cases = readCases();
-    ASSERT_EQ(cases.size(), observations.size());
+namespace {
+
+// What a replay of a T3 capture adds up to.
+struct ReplayTotals {
     int states = 0;
-    std::size_t departed = 0;
+    std::size_t departed = 0;                    // Line states in departures()
     std::vector<std::string> unchangedReleases; // legacy's commits left out
+};
+
+// What a capture's replay needs beyond the cases and the observations.
+struct ReplayHooks {
+    // The host's text measure (null: the probe's fixed one).
+    TextMeasurePort *measure = nullptr;
+    // At every state, after the Lines, before the handles: true when the
+    // hook checked this step's handles itself (an approved departure).
+    std::function<bool(const Case &, std::size_t step, const QJsonObject &, const VisualTool &)> atState;
+};
+
+// Replays the cases through the tools and compares every "state" with the
+// capture: the Lines, the editor, the commits, the log and the handles.
+void replay(const std::vector<Case> &cases, const std::map<std::string, std::vector<QJsonObject>> &observations,
+            const ReplayHooks &hooks, ReplayTotals &totals)
+{
+    ASSERT_EQ(cases.size(), observations.size());
+    int &states = totals.states;
+    std::size_t &departed = totals.departed;
+    std::vector<std::string> &unchangedReleases = totals.unchangedReleases;
     for (const Case &c : cases) {
         SCOPED_TRACE(c.name);
         ASSERT_TRUE(observations.contains(c.name));
         const auto &steps = observations.at(c.name);
         TestHost host;
+        host.measurePort = hooks.measure;
         setUp(host, c);
         // The view as legacy's renderer had it.
         ASSERT_EQ(host.v.videoRect(), c.rect);
@@ -587,6 +669,13 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
                     z->setToggled(bits, &host);
                 else
                     dynamic_cast<RotationXYTool *>(tool.get())->setToggled(bits, &host);
+            } else if (kind == "active") {
+                // The editor takes another Line (the next setvisual reads it).
+                int i;
+                in >> i;
+                const core::LineId id = ids(*host.s)[static_cast<std::size_t>(i)];
+                host.s->setSelection({id, {id}, id, std::nullopt});
+                host.targets = {id};
             } else if (kind == "setvisual") {
                 // RendererVideo::SetVisual after the editor took the Line again.
                 host.caret = {c.caretFrom, c.caretTo};
@@ -703,6 +792,8 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
                     logged.push_back(QString::fromStdU16String(l).toStdString());
                 EXPECT_EQ(logged, strings(o[QStringLiteral("log")]));
                 // The handles.
+                if (hooks.atState && hooks.atState(c, step - 1, o, *tool))
+                    continue;
                 if (const auto *s = dynamic_cast<const ScaleTool *>(tool.get())) {
                     EXPECT_EQ(s->from(), pair(o[QStringLiteral("from")]));
                     EXPECT_EQ(s->to(), pair(o[QStringLiteral("to")]));
@@ -743,11 +834,88 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
         }
         EXPECT_EQ(step, steps.size());
     }
-    EXPECT_GT(states, 70);
-    EXPECT_EQ(departed, departures().size());
+}
+
+} // namespace
+
+TEST(VisualCapture, ReplaysTheLegacyT3Probe)
+{
+    ReplayTotals totals;
+    replay(readCases(), readObservations(), {}, totals);
+    EXPECT_GT(totals.states, 70);
+    EXPECT_EQ(totals.departed, departures().size());
     // T3-release-no-change: the releases whose unchanged commit was left out.
-    EXPECT_EQ(unchangedReleases, (std::vector<std::string>{"scale-rectangle step 4", "rotz-two-points step 1",
+    EXPECT_EQ(totals.unchangedReleases, (std::vector<std::string>{"scale-rectangle step 4", "rotz-two-points step 1",
                                                            "rotz-two-points step 5"}));
+}
+
+// Scale's rectangle mode on legacy's own text measure: the measure probe
+// (visual_t3_capture.cpp with PROBE_LEGACY_MEASURE, inputs/visual-t3-
+// measure-cases.txt) ran Scale over the Linux build's GetLineTextExtents
+// (wxGTK's memory DC) and Titillium Web. The replay answers each measure with
+// legacy's extents for the same text and measuring Style, so it compares
+// how the rewrite's GetTextSize walks the text (the pieces it measures, in
+// order, with the Style the tags made), the original rectangle drawn from
+// the size and border, and the scale written from a drawn rectangle. The
+// rewrite's own measure (QtTextMeasurePort) is compared with the same
+// extents in hikari_ui_automation_services_tests.
+TEST(VisualCapture, ReplaysTheLegacyT3MeasureProbe)
+{
+    const auto observations = readObservations(HIKARI_VISUAL_T3_MEASURE_OBSERVATIONS);
+    CapturedMeasure measure;
+    for (const auto &[name, steps] : observations)
+        for (const QJsonObject &o : steps)
+            for (const QJsonValue &v : o[QStringLiteral("extents")].toArray()) {
+                const QJsonObject e = v.toObject();
+                ASSERT_TRUE(e[QStringLiteral("ok")].toBool());
+                measure.answers[CapturedMeasure::key(e)] = {e[QStringLiteral("width")].toDouble(),
+                                                            e[QStringLiteral("height")].toDouble(),
+                                                            e[QStringLiteral("descent")].toDouble(),
+                                                            e[QStringLiteral("extlead")].toDouble()};
+            }
+    int borderDeparture = 0;
+    ReplayHooks hooks;
+    hooks.measure = &measure;
+    hooks.atState = [&](const Case &c, std::size_t step, const QJsonObject &o, const VisualTool &tool) {
+        // The pieces measured since the last state, in order. An empty piece
+        // never reaches the measure in the rewrite: legacy's
+        // GetLineTextExtents answers 0 for it before touching the font
+        // (UtilsWindows.cpp:241-250), and lineTextExtents does the same.
+        std::vector<std::string> legacy;
+        for (const QJsonValue &v : o[QStringLiteral("extents")].toArray())
+            if (!v.toObject()[QStringLiteral("text")].toString().isEmpty())
+                legacy.push_back(CapturedMeasure::key(v.toObject()));
+        EXPECT_EQ(measure.calls, legacy) << "the pieces measured";
+        measure.calls.clear();
+        // T3-empty-line-border (User, 2026-10-12): GetTextSize returned at
+        // once for an empty Line without writing the border
+        // (Visuals.cpp:959-961), so Scale kept the previous Line's (13, 13
+        // from {\bord5\shad3}) and drew the original rectangle that much
+        // wider about the position; the rewrite's border is 0.
+        if (c.name != "measure-empty-line" || step != 1)
+            return false;
+        ++borderDeparture;
+        const auto &s = dynamic_cast<const ScaleTool &>(tool);
+        const PointF legacyBorder = pair(o[QStringLiteral("border")]);
+        EXPECT_EQ(legacyBorder, (PointF{13, 13})) << "legacy's border is the previous Line's";
+        EXPECT_EQ(s.border(), (PointF{0, 0}));
+        EXPECT_EQ(s.originalSize(), pair(o[QStringLiteral("originalSize")]));
+        EXPECT_EQ(s.from(), pair(o[QStringLiteral("from")]));
+        EXPECT_EQ(s.scale(), pair(o[QStringLiteral("scale")]));
+        const QJsonArray r = o[QStringLiteral("sizingRectangle")].toArray();
+        const PointF half{legacyBorder.x / 2, legacyBorder.y / 2};
+        const PointF topLeft = pair(r[2]), bottomRight = pair(r[3]);
+        EXPECT_EQ(s.sizingRectangle()[2], (PointF{topLeft.x + half.x, topLeft.y + half.y}));
+        EXPECT_EQ(s.sizingRectangle()[3], (PointF{bottomRight.x - half.x, bottomRight.y - half.y}));
+        EXPECT_EQ(s.originalRectangleVisible(), o[QStringLiteral("originalRectangleVisible")].toBool());
+        return true;
+    };
+    ReplayTotals totals;
+    replay(readCases(HIKARI_VISUAL_T3_MEASURE_CASES), observations, hooks, totals);
+    EXPECT_EQ(totals.states, 65);
+    EXPECT_EQ(borderDeparture, 1);
+    EXPECT_EQ(totals.departed, 0u);
+    EXPECT_TRUE(totals.unchangedReleases.empty());
 }
 
 // A commit the session refuses (a stale revision, a draft that cannot
