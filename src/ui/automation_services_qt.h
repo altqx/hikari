@@ -11,6 +11,10 @@
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
 
+#include <map>
+#include <string>
+#include <tuple>
+
 namespace hikari::ui {
 
 class QtClipboardPort : public application::ClipboardPort {
@@ -19,13 +23,18 @@ public:
     bool setText(const std::string &text) override;
 };
 
-// Legacy GetLineTextExtents: GDI on Windows (the legacy code), the font's
-// metrics at the style's pixel size elsewhere (legacy used wx there). Results
-// are scaled by the style's ScaleX/ScaleY; Spacing adds per character.
+// Legacy GetLineTextExtents: GDI on Windows (the legacy code), elsewhere the
+// font legacy's wx made for the style's size, a line that high (wxFont of a
+// pixel height). Results are scaled by the style's ScaleX/ScaleY; Spacing
+// adds per character.
 class QtTextMeasurePort : public application::TextMeasurePort {
 public:
     std::optional<application::TextExtents> measure(const std::vector<std::string> &style,
                                                     const std::string &text) override;
+
+private:
+    // The point size found for a face and a pixel height (the search below).
+    std::map<std::tuple<std::string, bool, bool, int>, int> m_points;
 };
 
 // The legacy wx wildcard ("Label|*.a;*.b|...") as Qt name filters.

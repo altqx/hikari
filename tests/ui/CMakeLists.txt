@@ -84,7 +84,9 @@ target_compile_definitions(hikari_ui_automation_services_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
-    HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include")
+    HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include"
+    HIKARI_VISUAL_T3_MEASURE_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-t3-measure-cases.txt"
+    HIKARI_VISUAL_T3_MEASURE_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t3-measure-20261012/observations.jsonl")
 add_dependencies(hikari_ui_automation_services_tests hikari_lua_helper)
 # I1: indexed video in the Classic shell (Spix workflow).
 hikari_add_spix_test(hikari_ui_video_workflow SOURCES video_workflow.cpp LIBRARIES hikari_composition
