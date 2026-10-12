@@ -56,11 +56,11 @@ msgstr "செங்குத்து நீட்சி"
 
 #: HikariSub/AudioBox.cpp:115
 msgid "Volume"
-msgstr "தொகுதி"
+msgstr "ஒலியளவு"
 
 #: HikariSub/AudioBox.cpp:124
 msgid "Link the volume and stretch sliders"
-msgstr "தொகுதி மற்றும் நீட்டிப்பின் ச்லைடரை இணைக்கவும்"
+msgstr "ஒலியளவு மற்றும் நீட்சி ச்லைடர்களை இணைக்கவும்"
 
 #: HikariSub/AudioBox.cpp:151
 msgid "Play the previous line"
@@ -72,7 +72,7 @@ msgstr "அடுத்த வரியை விளையாடுங்கள�
 
 #: HikariSub/AudioBox.cpp:159
 msgid "Play the current syllable / line"
-msgstr "அடுத்த எழுத்துக்கள் / வரியை விளையாடுங்கள்"
+msgstr "தற்போதைய அசை / வரியை இயக்கவும்"
 
 #: HikariSub/AudioBox.cpp:163 HikariSub/VideoBox.cpp:161
 #: HikariSub/VideoFullscreen.cpp:62
@@ -93,19 +93,19 @@ msgstr "குறிச்சொல்லுக்குப் பிறகு �
 
 #: HikariSub/AudioBox.cpp:173
 msgid "Play 500ms before the start time"
-msgstr "தொடக்க நேரத்திற்கு முன் 500 மீ"
+msgstr "தொடக்க நேரத்திற்கு முன் 500 மி.வி. இயக்கவும்"
 
 #: HikariSub/AudioBox.cpp:175
 msgid "Play 500 ms after the start time"
-msgstr "தொடக்க நேரத்திற்குப் பிறகு 500 எம்.எச்"
+msgstr "தொடக்க நேரத்திற்குப் பிறகு 500 மி.வி. இயக்கவும்"
 
 #: HikariSub/AudioBox.cpp:177
 msgid "Play 500ms before the end time"
-msgstr "இறுதி நேரத்திற்கு முன் 500 மீ"
+msgstr "இறுதி நேரத்திற்கு முன் 500 மி.வி. இயக்கவும்"
 
 #: HikariSub/AudioBox.cpp:179
 msgid "Play 500ms after the end time"
-msgstr "இறுதி நேரத்திற்குப் பிறகு 500 மீ"
+msgstr "இறுதி நேரத்திற்குப் பிறகு 500 மி.வி. இயக்கவும்"
 
 #: HikariSub/AudioBox.cpp:181 HikariSub/Hotkeys.cpp:221
 #: HikariSub/HotkeysNaming.cpp:67
@@ -164,7 +164,7 @@ msgstr "D3D9 சாதனத்தை உருவாக்க முடிய�
 
 #: HikariSub/AudioDisplay.cpp:328 HikariSub/RendererVideo.cpp:376
 msgid "Cannot create swap chain"
-msgstr ""
+msgstr "இடமாற்றுச் சங்கிலியை (swap chain) உருவாக்க முடியாது"
 
 #: HikariSub/AudioDisplay.cpp:349
 msgid "One of the DirectX settings failed"
@@ -172,11 +172,11 @@ msgstr "டைரக்ட்எக்ச் அமைப்புகளில�
 
 #: HikariSub/AudioDisplay.cpp:353 HikariSub/VisualRotationXY.cpp:164
 msgid "Cannot set world matrix"
-msgstr "மேட்ரிக்ச் பார்வையை அமைக்க முடியாது"
+msgstr "உலக மேட்ரிக்சை அமைக்க முடியாது"
 
 #: HikariSub/AudioDisplay.cpp:354 HikariSub/VisualRotationXY.cpp:165
 msgid "Cannot set view matrix"
-msgstr "மேட்ரிக்ச் உலகத்தை அமைக்க முடியாது"
+msgstr "பார்வை மேட்ரிக்சை அமைக்க முடியாது"
 
 #: HikariSub/AudioDisplay.cpp:356 HikariSub/RendererDirectShow.cpp:100
 #: HikariSub/RendererFFMS2.cpp:723 HikariSub/RendererVideo.cpp:378
@@ -185,7 +185,7 @@ msgstr "மேற்பரப்பை உருவாக்க முடிய�
 
 #: HikariSub/AudioDisplay.cpp:359 HikariSub/RendererVideo.cpp:394
 msgid "Cannot create D3DX line"
-msgstr "D3DX வரியைத் திறக்க முடியாது"
+msgstr "D3DX வரியை உருவாக்க முடியாது"
 
 #: HikariSub/AudioDisplay.cpp:363 HikariSub/AudioDisplay.cpp:364
 #: HikariSub/AudioDisplay.cpp:365 HikariSub/ContextDX9.cpp:196
@@ -201,7 +201,7 @@ msgstr "வெற்று மேற்பரப்பை உருவாக்�
 
 #: HikariSub/AudioDisplay.cpp:390 HikariSub/RendererVideo.cpp:371
 msgid "Cannot reset Direct3D"
-msgstr "நேரடி 3 டி மீட்டமைக்க முடியாது"
+msgstr "Direct3D-ஐ மீட்டமைக்க முடியாது"
 
 #: HikariSub/AudioDisplay.cpp:643
 msgid "Modified"
@@ -217,7 +217,7 @@ msgstr "ச்பெக்ட்ரம் மேற்பரப்புகள�
 
 #: HikariSub/AudioDisplay.cpp:1158 HikariSub/AudioDisplay.cpp:1804
 msgid "Audio could not be loaded"
-msgstr ""
+msgstr "ஆடியோவை ஏற்ற முடியவில்லை"
 
 #: HikariSub/AutoSaveOpen.cpp:26
 msgid "Open auto save file"
@@ -281,7 +281,7 @@ msgstr "ஆட்டோ சேமி கோப்புறை காலியா
 
 #: HikariSub/AutoSaveOpen.cpp:267
 msgid "Failed to load autosave"
-msgstr "ஆட்டோ சேமிப்பு கோப்புறையைத் திறக்க முடியவில்லை"
+msgstr "தானியங்கு சேமிப்பை ஏற்ற முடியவில்லை"
 
 #: HikariSub/AutoSavesRemoving.cpp:29 HikariSub/HikariSubFrame.cpp:197
 msgid "Remove temporary files"
@@ -401,11 +401,11 @@ msgstr "பழைய ஆடியோ கேச் கோப்புகளை �
 
 #: HikariSub/AutoSavesRemoving.cpp:178
 msgid "Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt"
-msgstr "வசன வரிகள் (*.ஆச்), (*. எச்.எச்.ஏ), (*. எச்.ஆர்.டி), (*. துணை), (*. txt"
+msgstr "வசன கோப்புகள் (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt"
 
 #: HikariSub/AutoSavesRemoving.cpp:179
 msgid "Index files (*.ffindex)|*.ffindex"
-msgstr "குறியீட்டு கோப்புகள் (*.FFINDEX) |*.fffindex"
+msgstr "குறியீட்டு கோப்புகள் (*.ffindex)|*.ffindex"
 
 #: HikariSub/AutoSavesRemoving.cpp:180
 msgid "Audio cache files (*.w64)|*.w64"
@@ -480,7 +480,7 @@ msgstr "ச்கிரிப்ட் எடிட்டரைத் தேர�
 
 #: HikariSub/Automation.cpp:1315
 msgid "Programs (*.exe)|*.exe|All files (*.*)|*.*"
-msgstr "நிரல்கள் (* .exe) | * .exe | எல்லா கோப்புகளும் ( *. *) | *. *"
+msgstr "நிரல்கள் (*.exe)|*.exe|அனைத்து கோப்புகளும் (*.*)|*.*"
 
 #: HikariSub/Automation.cpp:1327
 msgid "Automation error"
@@ -666,7 +666,7 @@ msgstr "வகுப்பின் வரியைச் சேர்க்க 
 
 #: HikariSub/AutomationToFile.cpp:1171
 msgid "Missing subtitles pointer"
-msgstr "வசன வரிகள் சுட்டிக்காட்டுகின்றன"
+msgstr "வசன வரிகள் சுட்டி இல்லை"
 
 #: HikariSub/BitmapButton.cpp:134 HikariSub/MappedButton.cpp:272
 msgid "Shortcut can be set using Shift + Click"
@@ -674,7 +674,7 @@ msgstr "சிப்ட் + சொடுக்கு பயன்படுத�
 
 #: HikariSub/ColorPicker.cpp:456
 msgid "Picking a color from the screen is not supported on Wayland"
-msgstr ""
+msgstr "Wayland-இல் திரையிலிருந்து வண்ணத்தைத் தேர்ந்தெடுப்பது ஆதரிக்கப்படவில்லை"
 
 #: HikariSub/ColorPicker.cpp:487
 msgid "Choose color"
@@ -720,11 +720,12 @@ msgid "Shadow color"
 msgstr "நிழல் நிறம்"
 
 #: HikariSub/ColorPicker.cpp:575
-#, fuzzy
 msgid ""
 "Swap shortcuts between the color picker\n"
 "and the color selection window"
-msgstr "கலர் பிக்கர் மற்றும் வண்ணத்தின் குறுக்குவழிகளை மாற்றவும் சாளரத்தைத் தேர்வுசெய்க"
+msgstr ""
+"வண்ணத் தேர்வாளருக்கும் வண்ணத் தேர்வுச் சாளரத்துக்கும் இடையே\n"
+"குறுக்குவழிகளை இடமாற்றவும்"
 
 #: HikariSub/ColorPicker.cpp:577
 msgid ""
@@ -803,16 +804,16 @@ msgstr "பரிந்துரைகளை சரிசெய்யவும�
 #: HikariSub/DialogueTextEditor.cpp:2307 HikariSub/HikariListCtrl.cpp:118
 #: HikariSub/HikariTextCtrl.cpp:1475
 msgid "&Copy"
-msgstr "நகலெடு"
+msgstr "நகலெடு (&c)"
 
 #: HikariSub/DialogueTextEditor.cpp:2308 HikariSub/HikariTextCtrl.cpp:1476
 msgid "Cu&t"
-msgstr "வெட்டு"
+msgstr "வெட்டு (&t)"
 
 #: HikariSub/DialogueTextEditor.cpp:2309 HikariSub/HikariListCtrl.cpp:119
 #: HikariSub/HikariTextCtrl.cpp:1477
 msgid "&Paste"
-msgstr "ஒட்டு"
+msgstr "ஒட்டு (&p)"
 
 #: HikariSub/DialogueTextEditor.cpp:2312
 msgid "Search word translation on ling.pl"
@@ -832,7 +833,7 @@ msgstr "Synonimy.net இல் ஒத்த சொற்களைத் தே�
 
 #: HikariSub/DialogueTextEditor.cpp:2325 HikariSub/SpellCheckerDialog.cpp:33
 msgid "Spellchecker"
-msgstr "தோல்வி காசோலைகள்"
+msgstr "எழுத்துப்பிழை சரிபார்ப்பி"
 
 #: HikariSub/DialogueTextEditor.cpp:2331
 msgid "Installed languages"
@@ -841,11 +842,11 @@ msgstr "நிறுவப்பட்ட மொழிகள்"
 #: HikariSub/DialogueTextEditor.cpp:2335
 #, c-format
 msgid "&Add word \"%s\" to dictionary"
-msgstr "அகராதியில் \"%s\" என்ற வார்த்தையைச் சேர்க்கவும்"
+msgstr "அகராதியில் \"%s\" என்ற சொல்லைச் சேர்க்கவும் (&a)"
 
 #: HikariSub/DialogueTextEditor.cpp:2338 HikariSub/HikariTextCtrl.cpp:1484
 msgid "&Delete"
-msgstr "நீக்கு"
+msgstr "நீக்கு (&d)"
 
 #: HikariSub/DialogueTextEditor.cpp:2339
 msgid "Show status bar"
@@ -891,11 +892,11 @@ msgstr "காலம்:"
 
 #: HikariSub/DummyVideo.cpp:120 HikariSub/DummyVideo.cpp:124
 msgid "Invalid FPS value."
-msgstr "மோசமான எஃப்.பி.எச்."
+msgstr "தவறான FPS மதிப்பு."
 
 #: HikariSub/EditBox.cpp:79
 msgid "Enter ASS tag"
-msgstr "கழுதை குறிச்சொல்லை உள்ளிடவும்"
+msgstr "ASS குறிச்சொல்லை உள்ளிடவும்"
 
 #: HikariSub/EditBox.cpp:83
 msgid "Insert Tag at text beginning"
@@ -923,7 +924,7 @@ msgstr "குறிச்சொல்லைச் சேமிக்கவு�
 
 #: HikariSub/EditBox.cpp:163 HikariSub/VideoToolbar.cpp:1098
 msgid "Bottom-center"
-msgstr "சென்டர்-கீழ்"
+msgstr "மையம்-கீழ்"
 
 #: HikariSub/EditBox.cpp:163 HikariSub/VideoToolbar.cpp:1098
 msgid "Bottom-left"
@@ -999,7 +1000,7 @@ msgstr "வரி: 0"
 
 #: HikariSub/EditBox.cpp:220
 msgid "Wraps: 0/86"
-msgstr "மறைப்புகள்: 0/86"
+msgstr "மடக்குகள்: 0/86"
 
 #: HikariSub/EditBox.cpp:221
 msgid "Characters per second: 0<=15"
@@ -1060,7 +1061,7 @@ msgstr "வரி: %i"
 
 #: HikariSub/EditBox.cpp:514
 msgid "Wraps: "
-msgstr "மறைப்புகள்: "
+msgstr "மடக்குகள்: "
 
 #: HikariSub/EditBox.cpp:517
 #, c-format
@@ -1154,7 +1155,7 @@ msgstr "பொத்தான்களின் அளவை மாற்றவ�
 
 #: HikariSub/EditBox.cpp:2035
 msgid "No unconfirmed lines found"
-msgstr "காணப்படவில்லை என்பதை உறுதிப்படுத்தவில்லை"
+msgstr "உறுதிப்படுத்தப்படாத வரிகள் எதுவும் கிடைக்கவில்லை"
 
 #: HikariSub/EditBox.cpp:2057
 msgid "No untranslated lines found"
@@ -1166,23 +1167,23 @@ msgstr "குறிச்சொல் பொத்தான்களை நி�
 
 #: HikariSub/FileTypes.h:53
 msgid "ASS subtitles"
-msgstr "வசன வரிகள் கழுதை"
+msgstr "ASS வசன வரிகள்"
 
 #: HikariSub/FileTypes.h:54
 msgid "SSA subtitles"
-msgstr "வசன வரிகள் எச்.எச்.ஏ"
+msgstr "SSA வசன வரிகள்"
 
 #: HikariSub/FileTypes.h:55
 msgid "SRT subtitles"
-msgstr "வசன வரிகள் எச்.ஆர்.டி"
+msgstr "SRT வசன வரிகள்"
 
 #: HikariSub/FileTypes.h:56
 msgid "SUB subtitles"
-msgstr "வசன வரிகள் துணை"
+msgstr "SUB வசன வரிகள்"
 
 #: HikariSub/FileTypes.h:57
 msgid "TXT subtitles"
-msgstr "வசன வரிகள் txt"
+msgstr "TXT வசன வரிகள்"
 
 #: HikariSub/FindReplaceDialog.cpp:45 HikariSub/FindReplaceDialog.cpp:48
 #: HikariSub/SelectLines.cpp:55
@@ -1223,7 +1224,7 @@ msgstr "பட்டியல்:"
 #: HikariSub/FindReplaceDialog.cpp:99 HikariSub/MisspellReplacer.cpp:50
 #: HikariSub/SelectLines.cpp:61
 msgid "Match case"
-msgstr "போட்டி வழக்கு"
+msgstr "பெரிய/சிறிய எழுத்தைப் பொருத்து"
 
 #: HikariSub/FindReplaceDialog.cpp:101 HikariSub/SelectLines.cpp:63
 msgid "Regular expressions"
@@ -1305,8 +1306,8 @@ msgid ""
 "Replace in all open\n"
 "subtitles"
 msgstr ""
-"திறக்கப்பட்ட அனைத்திலும் காண்க \n"
-"வசன வரிகள்"
+"திறந்துள்ள அனைத்து\n"
+"வசன வரிகளிலும் மாற்று"
 
 #: HikariSub/FindReplaceDialog.cpp:206 HikariSub/FindReplaceDialog.cpp:414
 #: HikariSub/FindReplaceDialog.cpp:429
@@ -1365,7 +1366,7 @@ msgstr "அனைத்தையும் சரிபார்க்கவு�
 #: HikariSub/FindReplaceResultsDialog.cpp:48
 #: HikariSub/MispellReplacerDialog.cpp:214
 msgid "Uncheck all"
-msgstr "அனைத்தையும் தேர்வு செய்யவும்"
+msgstr "அனைத்தையும் தேர்வுநீக்கு"
 
 #: HikariSub/FindReplaceResultsDialog.cpp:49
 #: HikariSub/MispellReplacerDialog.cpp:215 HikariSub/SpellCheckerDialog.cpp:56
@@ -1431,7 +1432,7 @@ msgstr "நீக்கு"
 #: HikariSub/FontCatalogList.cpp:111 HikariSub/stylestore.cpp:90
 #: HikariSub/stylestore.cpp:143
 msgid "Load"
-msgstr "சுமை"
+msgstr "ஏற்று"
 
 #: HikariSub/FontCatalogList.cpp:118
 msgid "Save filter"
@@ -1446,11 +1447,11 @@ msgstr "இந்த பட்டியலை நீக்க விரும்
 #: HikariSub/hikarisubApp.cpp:532 HikariSub/hikarisubApp.cpp:538
 #: HikariSub/stylestore.cpp:568
 msgid "Prompt"
-msgstr "உடனடி"
+msgstr "கேள்வி"
 
 #: HikariSub/FontCatalogList.cpp:169
 msgid "The catalog list has autosave; files are stored in the \"Config\" folder."
-msgstr "அட்டவணை பட்டியலில் ஆட்டோசேவ் உள்ளது, கோப்புகளை \"கட்டமைப்பு\" கோப்புறையில் காணலாம்."
+msgstr "பட்டியல்களுக்குத் தானியங்கு சேமிப்பு உள்ளது; கோப்புகள் \"Config\" கோப்புறையில் சேமிக்கப்படும்."
 
 #: HikariSub/FontCatalogList.cpp:171 HikariSub/FontCatalogList.cpp:865
 msgid "Catalogs:"
@@ -1466,7 +1467,7 @@ msgstr "தானிசேமி"
 
 #: HikariSub/FontCatalogList.cpp:315
 msgid "Choose font catalogs file"
-msgstr ""
+msgstr "எழுத்துரு பட்டியல்கள் கோப்பைத் தேர்வுசெய்க"
 
 #: HikariSub/FontCatalogList.cpp:316
 msgid "Text files (*.txt)|*.txt"
@@ -1493,9 +1494,8 @@ msgstr ""
 "புதிய பட்டியலை உருவாக்க."
 
 #: HikariSub/FontCatalogList.cpp:682 HikariSub/FontCatalogList.cpp:849
-#, fuzzy
 msgid "Add fonts from subtitles"
-msgstr "வசன வரிகள் கட்டம் எழுத்துரு:"
+msgstr "வசன வரிகளிலிருந்து எழுத்துருக்களைச் சேர்க்கவும்"
 
 #: HikariSub/FontCatalogList.cpp:747
 #, c-format
@@ -1507,14 +1507,12 @@ msgid "Merge"
 msgstr "ஒன்றிணைக்கவும்"
 
 #: HikariSub/FontCatalogList.cpp:869
-#, fuzzy
 msgid "Remove all contents of catalog"
 msgstr "பட்டியலின் அனைத்து உள்ளடக்கங்களையும் அகற்று"
 
 #: HikariSub/FontCatalogList.cpp:870
-#, fuzzy
 msgid "Add fonts from all open subtitles"
-msgstr "திறந்த அனைத்து கழுதை கோப்புகளிலும் சேர்க்கவும்"
+msgstr "திறந்துள்ள அனைத்து வசன வரிகளிலிருந்தும் எழுத்துருக்களைச் சேர்க்கவும்"
 
 #: HikariSub/FontCollector.cpp:100
 msgid "In styles:\n"
@@ -1613,7 +1611,7 @@ msgstr "காப்பகத்திற்கு ஒரு பெயரைத�
 
 #: HikariSub/FontCollector.cpp:499
 msgid "The save path is not valid."
-msgstr "சேமி ஒட்டு செல்லுபடியாகாது."
+msgstr "சேமிப்புப் பாதை செல்லுபடியாகாது."
 
 #: HikariSub/FontCollector.cpp:520 HikariSub/HikariSubFrame.cpp:1427
 #: HikariSub/HikariSubFrame.cpp:2236 HikariSub/Notebook.cpp:1324
@@ -1695,8 +1693,8 @@ msgstr "காணப்பட்டது"
 msgctxt "found or copied"
 msgid "%d font"
 msgid_plural "%d fonts"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d எழுத்துரு"
+msgstr[1] "%d எழுத்துருக்கள்"
 
 #: HikariSub/FontCollector.cpp:862
 #, c-format
@@ -1708,8 +1706,8 @@ msgstr "%s காணப்படவில்லை.\n"
 msgctxt "not found or not copied"
 msgid "%d font"
 msgid_plural "%d fonts"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d எழுத்துரு"
+msgstr[1] "%d எழுத்துருக்கள்"
 
 #: HikariSub/FontCollector.cpp:867
 #, c-format
@@ -1755,9 +1753,8 @@ msgid "This video is not an MKV file."
 msgstr "இந்த வீடியோ எம்.கே.வி கோப்பு அல்ல."
 
 #: HikariSub/FontCollector.cpp:950
-#, fuzzy
 msgid "Cannot open MKV file"
-msgstr "எம்.கே.வி கோப்பைத் திறக்க முடியாது."
+msgstr "MKV கோப்பைத் திறக்க முடியாது"
 
 #: HikariSub/FontCollector.cpp:956
 msgid "Loaded MKV file does not have any fonts."
@@ -1792,7 +1789,7 @@ msgstr "கோப்புறையை உருவாக்க முடிய�
 #: HikariSub/FontCollector.cpp:1095
 #, c-format
 msgid "Found font \"%s\"."
-msgstr "\"%s\" எழுத்துருக்களைக் கண்டறியவும் \"."
+msgstr "\"%s\" எழுத்துரு கண்டறியப்பட்டது."
 
 #: HikariSub/FontCollector.cpp:1103
 msgid ""
@@ -1824,7 +1821,7 @@ msgstr "\"%s\" எழுத்துருவில் தடிமன் சா
 #: HikariSub/FontCollector.cpp:1117
 #, c-format
 msgid "Font \"%s\" is missing bold."
-msgstr "எழுத்துரு \"%s\" தைரியத்தைக் காணவில்லை."
+msgstr "\"%s\" எழுத்துருவில் தடித்த வடிவம் இல்லை."
 
 #: HikariSub/FontCollector.cpp:1120
 #, c-format
@@ -1839,12 +1836,12 @@ msgstr "எழுத்துரு \"%s\" எழுத்துக்களை 
 #: HikariSub/FontCollector.cpp:1138
 #, c-format
 msgid "Font \"%s\" does not contain characters: \"%s\"."
-msgstr "\"%s\" எழுத்துருக்களில் \"%s\"எழுத்துக்கள் இல்லை\"."
+msgstr "\"%s\" எழுத்துருவில் இந்த எழுத்துகள் இல்லை: \"%s\"."
 
 #: HikariSub/FontCollector.cpp:1150
 #, c-format
 msgid "Cannot get the contents of font \"%s\"."
-msgstr "\"%s\" எழுத்துருக்களின் உள்ளடக்கத்தைப் பெற முடியாது \"."
+msgstr "\"%s\" எழுத்துருவின் உள்ளடக்கத்தைப் பெற முடியாது."
 
 #: HikariSub/FontCollector.cpp:1175
 #, c-format
@@ -1939,7 +1936,6 @@ msgstr "எழுத்துருக்கள் கோப்புறைக�
 
 #: HikariSub/FontEnumerator.cpp:426 HikariSub/FontEnumerator.cpp:452
 #: HikariSub/FontEnumerator.cpp:665
-#, fuzzy
 msgid "Loading external fonts"
 msgstr "வெளிப்புற எழுத்துருக்களை ஏற்றுகிறது"
 
@@ -1948,19 +1944,16 @@ msgid "Cannot create next notification handler for fonts folder."
 msgstr "எழுத்துருக்கள் கோப்புறைக்கு அடுத்த அறிவிப்பு கையாளுபவரை உருவாக்க முடியாது."
 
 #: HikariSub/FontEnumerator.cpp:579
-#, fuzzy
 msgid "Removing fonts from external folder"
 msgstr "வெளிப்புற கோப்புறையிலிருந்து எழுத்துருக்களை நீக்குகிறது"
 
 #: HikariSub/FontEnumerator.cpp:587
-#, fuzzy
 msgid "Loading fonts from external folder"
 msgstr "வெளிப்புற கோப்புறையிலிருந்து எழுத்துருக்களை ஏற்றுகிறது"
 
 #: HikariSub/FontEnumerator.cpp:613
-#, fuzzy
 msgid "Cannot load external font folder"
-msgstr "ஆடியோ உள்ளமைவை ஏற்ற முடியாது"
+msgstr "வெளிப்புற எழுத்துரு கோப்புறையை ஏற்ற முடியாது"
 
 #: HikariSub/HikariMessageBox.cpp:39
 msgid "Apply to All"
@@ -2037,11 +2030,11 @@ msgstr "சேமித்த அமர்வு கோப்பிலிரு�
 
 #: HikariSub/HikariSubFrame.cpp:166
 msgid "Save session to file"
-msgstr "அமர்வை தாக்கல் செய்ய சேமிக்கவும்"
+msgstr "அமர்வைக் கோப்பில் சேமிக்கவும்"
 
 #: HikariSub/HikariSubFrame.cpp:166
 msgid "Saves session to file"
-msgstr "தாக்கல் செய்ய அமர்வை சேமிக்கிறது"
+msgstr "அமர்வைக் கோப்பில் சேமிக்கிறது"
 
 #: HikariSub/HikariSubFrame.cpp:169
 msgid "Ask whether to load the last session at program startup"
@@ -2061,11 +2054,11 @@ msgstr "நிரல் தொடக்கத்திற்குப் பி�
 
 #: HikariSub/HikariSubFrame.cpp:178
 msgid "&Open subtitles"
-msgstr "வசன வரிகள் திற"
+msgstr "வசன வரிகளைத் திற (&o)"
 
 #: HikariSub/HikariSubFrame.cpp:179
 msgid "Open subtitle file"
-msgstr "திறந்த வசன கோப்பு"
+msgstr "வசனக் கோப்பைத் திற"
 
 #: HikariSub/HikariSubFrame.cpp:180
 msgid "&Save"
@@ -2077,7 +2070,7 @@ msgstr "தற்போதைய கோப்பை சேமிக்கவு�
 
 #: HikariSub/HikariSubFrame.cpp:182
 msgid "Save &all"
-msgstr "அனைத்தையும் சேமி"
+msgstr "அனைத்தையும் சேமி (&a)"
 
 #: HikariSub/HikariSubFrame.cpp:183 HikariSub/HotkeysNaming.cpp:234
 msgid "Save all subtitles"
@@ -2085,7 +2078,7 @@ msgstr "அனைத்து வசனங்களையும் சேமி�
 
 #: HikariSub/HikariSubFrame.cpp:184
 msgid "Save &as..."
-msgstr "எனச் சேமி..."
+msgstr "எனச் சேமி (&a)..."
 
 #: HikariSub/HikariSubFrame.cpp:185
 msgid "Save as"
@@ -2093,7 +2086,7 @@ msgstr "என சேமி"
 
 #: HikariSub/HikariSubFrame.cpp:186
 msgid "Save &translation"
-msgstr "மொழிபெயர்ப்பைச் சேமிக்கவும்"
+msgstr "மொழிபெயர்ப்பைச் சேமிக்கவும் (&t)"
 
 #: HikariSub/HikariSubFrame.cpp:187 HikariSub/HotkeysNaming.cpp:237
 msgid "Save translation"
@@ -2101,7 +2094,7 @@ msgstr "மொழிபெயர்ப்பைச் சேமிக்கவ�
 
 #: HikariSub/HikariSubFrame.cpp:188
 msgid "Recently opened &subtitles"
-msgstr "அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள்"
+msgstr "அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள் (&s)"
 
 #: HikariSub/HikariSubFrame.cpp:189 HikariSub/VideoBox.cpp:983
 msgid "Recently opened subtitles"
@@ -2109,7 +2102,7 @@ msgstr "அண்மைக் காலத்தில் திறக்கப�
 
 #: HikariSub/HikariSubFrame.cpp:190
 msgid "Remove subtitles from the &editor"
-msgstr "எடிட்டரிடமிருந்து வசன வரிகள் அகற்றவும்"
+msgstr "எடிட்டரிலிருந்து வசன வரிகளை அகற்றவும் (&e)"
 
 #: HikariSub/HikariSubFrame.cpp:191 HikariSub/HotkeysNaming.cpp:232
 msgid "Remove subtitles from the editor"
@@ -2122,7 +2115,7 @@ msgstr "வீடியோவின் பெயருடன் வசன வர
 
 #: HikariSub/HikariSubFrame.cpp:196 HikariSub/HotkeysNaming.cpp:185
 msgid "Open auto save"
-msgstr "திறந்த ஆட்டோ சேமிப்பு"
+msgstr "தானியங்கு சேமிப்பைத் திற"
 
 #: HikariSub/HikariSubFrame.cpp:196
 msgid "Opens the selected autosave from the list"
@@ -2154,7 +2147,7 @@ msgstr "நிரல் அமைப்புகள்"
 
 #: HikariSub/HikariSubFrame.cpp:204
 msgid "&Exit\tAlt-F4"
-msgstr "& Alt-f4 வெளியேறு"
+msgstr "வெளியேறு (&e)\tAlt-F4"
 
 #: HikariSub/HikariSubFrame.cpp:205
 msgid "Exit the program"
@@ -2175,7 +2168,7 @@ msgstr "செயல்தவிர்"
 
 #: HikariSub/HikariSubFrame.cpp:212 HikariSub/HotkeysNaming.cpp:204
 msgid "Undo to last save"
-msgstr "செயல்தவிர் பெறுநர் last சேமி"
+msgstr "கடைசியாகச் சேமித்த நிலைக்குச் செயல்தவிர்"
 
 #: HikariSub/HikariSubFrame.cpp:214 HikariSub/HikariSubFrame.cpp:2458
 msgid "&Redo"
@@ -2188,7 +2181,7 @@ msgstr "மீண்டும்செய்"
 
 #: HikariSub/HikariSubFrame.cpp:216
 msgid "&History"
-msgstr "& வரலாறு"
+msgstr "வரலாறு (&h)"
 
 #: HikariSub/HikariSubFrame.cpp:217 HikariSub/Hotkeys.cpp:152
 #: HikariSub/HotkeysNaming.cpp:181 HikariSub/SubsFile.cpp:27
@@ -2198,7 +2191,7 @@ msgstr "வரலாறு"
 
 #: HikariSub/HikariSubFrame.cpp:218
 msgid "Find and re&place"
-msgstr "கண்டுபிடித்து மாற்று"
+msgstr "கண்டுபிடித்து மாற்று (&p)"
 
 #: HikariSub/HikariSubFrame.cpp:219
 msgid "Searches for the specified text phrases and replaces them"
@@ -2266,23 +2259,23 @@ msgstr "அடுக்கு மூலம் வரிசைப்படுத�
 
 #: HikariSub/HikariSubFrame.cpp:237
 msgid "So&rt all lines"
-msgstr "எனவே & rt அனைத்து வரிகளும்"
+msgstr "அனைத்து வரிகளையும் வரிசைப்படுத்து (&r)"
 
 #: HikariSub/HikariSubFrame.cpp:238
 msgid "Sorts all lines in ASS file"
-msgstr "கழுதை கோப்பில் அனைத்து வரிகளையும் வரிசைப்படுத்துகிறது"
+msgstr "ASS கோப்பில் அனைத்து வரிகளையும் வரிசைப்படுத்துகிறது"
 
 #: HikariSub/HikariSubFrame.cpp:239
 msgid "So&rt selected lines"
-msgstr "எனவே & ஆர்டி தேர்ந்தெடுக்கப்பட்ட கோடுகள்"
+msgstr "தேர்ந்தெடுத்த வரிகளை வரிசைப்படுத்து (&r)"
 
 #: HikariSub/HikariSubFrame.cpp:240
 msgid "Sorts selected lines in ASS file"
-msgstr "கழுதை கோப்பில் தேர்ந்தெடுக்கப்பட்ட வரிகளை வரிசைப்படுத்துகிறது"
+msgstr "ASS கோப்பில் தேர்ந்தெடுக்கப்பட்ட வரிகளை வரிசைப்படுத்துகிறது"
 
 #: HikariSub/HikariSubFrame.cpp:241 HikariSub/HotkeysNaming.cpp:216
 msgid "Fix minor errors (experimental)"
-msgstr "மல்டிர்பிளாசர் (சோதனை)"
+msgstr "சிறு பிழைகளைச் சரிசெய் (சோதனை)"
 
 #: HikariSub/HikariSubFrame.cpp:242
 msgid "Turns on multireplacer"
@@ -2290,7 +2283,7 @@ msgstr "மல்டி மாற்றியை இயக்கவும்"
 
 #: HikariSub/HikariSubFrame.cpp:243
 msgid "Select &lines"
-msgstr "தேர்ந்தெடு & கோடுகள்"
+msgstr "வரிகளைத் தேர்ந்தெடு (&l)"
 
 #: HikariSub/HikariSubFrame.cpp:243
 msgid "Selects lines by expressions"
@@ -2303,7 +2296,7 @@ msgstr "திருத்து (&e)"
 #: HikariSub/HikariSubFrame.cpp:247 HikariSub/Hotkeys.cpp:147
 #: HikariSub/HotkeysNaming.cpp:224 HikariSub/VideoBox.cpp:985
 msgid "Open video"
-msgstr "வீடியோ திறந்த வீடியோ"
+msgstr "வீடியோவைத் திற"
 
 #: HikariSub/HikariSubFrame.cpp:248
 msgid "Opens video file"
@@ -2325,7 +2318,7 @@ msgstr "அண்மைக் காலத்தில் திறக்கப�
 
 #: HikariSub/HikariSubFrame.cpp:258
 msgid "Open dummy video"
-msgstr "திறந்திருக்கும் போலி வீடியோ"
+msgstr "போலி வீடியோவைத் திற"
 
 #: HikariSub/HikariSubFrame.cpp:259 HikariSub/Hotkeys.cpp:158
 #: HikariSub/HotkeysNaming.cpp:245
@@ -2369,7 +2362,7 @@ msgstr "தொடக்க நேரத்திற்குச் செல்�
 
 #: HikariSub/HikariSubFrame.cpp:268
 msgid "Moves video to start time"
-msgstr "வீடியோவைத் தொடங்க வீடியோவை நகர்த்துகிறது"
+msgstr "வீடியோவைத் தொடக்க நேரத்திற்கு நகர்த்துகிறது"
 
 #: HikariSub/HikariSubFrame.cpp:271 HikariSub/HotkeysNaming.cpp:248
 msgid "Go to end time of line"
@@ -2407,14 +2400,12 @@ msgid "Set audio marker to video time"
 msgstr "வீடியோ நேரத்துடன் ஆடியோ மார்க்கரை அமைக்கவும்"
 
 #: HikariSub/HikariSubFrame.cpp:283 HikariSub/HotkeysNaming.cpp:206
-#, fuzzy
 msgid "Zoom video"
-msgstr "சூம் வீடியோ"
+msgstr "வீடியோவை சூம் செய்"
 
 #: HikariSub/HikariSubFrame.cpp:284 HikariSub/HotkeysNaming.cpp:207
-#, fuzzy
 msgid "Turn off video zoom"
-msgstr "வீடியோ சூம்"
+msgstr "வீடியோ சூமை அணைக்கவும்"
 
 #: HikariSub/HikariSubFrame.cpp:286 HikariSub/HotkeysNaming.cpp:205
 msgid "Open video with FFMS2"
@@ -2426,11 +2417,11 @@ msgstr "பிரேம் துல்லியத்திற்காக FFMS
 
 #: HikariSub/HikariSubFrame.cpp:290
 msgid "&Video"
-msgstr "& வீடியோ"
+msgstr "வீடியோ (&v)"
 
 #: HikariSub/HikariSubFrame.cpp:293 HikariSub/HotkeysNaming.cpp:222
 msgid "Open audio"
-msgstr "திறந்த ஆடியோ"
+msgstr "ஆடியோவைத் திற"
 
 #: HikariSub/HikariSubFrame.cpp:294
 msgid "Opens audio file"
@@ -2466,7 +2457,7 @@ msgstr "ஆடியோவை மூடுகிறது"
 
 #: HikariSub/HikariSubFrame.cpp:305
 msgid "A&udio"
-msgstr "A & அழுகை"
+msgstr "ஆடியோ (&u)"
 
 #: HikariSub/HikariSubFrame.cpp:308 HikariSub/OptionsDialog.cpp:671
 msgid "All"
@@ -2523,7 +2514,7 @@ msgstr "எடிட்டரை இயக்குகிறது / முட�
 
 #: HikariSub/HikariSubFrame.cpp:318 HikariSub/HotkeysNaming.cpp:160
 msgid "ASS file properties"
-msgstr "கழுதை கோப்பு பண்புகள்"
+msgstr "ASS கோப்பு பண்புகள்"
 
 #: HikariSub/HikariSubFrame.cpp:319 HikariSub/ScriptInfo.cpp:25
 msgid "ASS subtitle properties"
@@ -2531,20 +2522,20 @@ msgstr "ASS வசன வரிகள் பண்புகள்"
 
 #: HikariSub/HikariSubFrame.cpp:320
 msgid "Style &manager"
-msgstr "நடை & மேலாளர்"
+msgstr "பாணி மேலாளர் (&m)"
 
 #: HikariSub/HikariSubFrame.cpp:321
 msgid "Is used to manage ASS styles"
-msgstr "கழுதை பாணிகளை நிர்வகிக்க பயன்படுகிறது"
+msgstr "ASS பாணிகளை நிர்வகிக்கப் பயன்படுகிறது"
 
 #: HikariSub/HikariSubFrame.cpp:323 HikariSub/Hotkeys.cpp:140
 #: HikariSub/HotkeysNaming.cpp:164
 msgid "Convert to ASS"
-msgstr "கழுதைக்கு மாற்றவும்"
+msgstr "ASS ஆக மாற்றவும்"
 
 #: HikariSub/HikariSubFrame.cpp:324
 msgid "Converts to ASS format"
-msgstr "கழுதை வடிவத்திற்கு மாற்றுகிறது"
+msgstr "ASS வடிவத்திற்கு மாற்றுகிறது"
 
 #: HikariSub/HikariSubFrame.cpp:325 HikariSub/Hotkeys.cpp:141
 #: HikariSub/HotkeysNaming.cpp:165
@@ -2571,7 +2562,7 @@ msgstr "MPL2 ஆக மாற்றவும்"
 
 #: HikariSub/HikariSubFrame.cpp:330
 msgid "Converts to MPL2 format"
-msgstr "MOL2 வடிவத்திற்கு மாற்றவும்"
+msgstr "MPL2 வடிவத்திற்கு மாற்றுகிறது"
 
 #: HikariSub/HikariSubFrame.cpp:331 HikariSub/Hotkeys.cpp:144
 #: HikariSub/HotkeysNaming.cpp:168
@@ -2592,7 +2583,7 @@ msgstr "ஒரு வடிவத்திலிருந்து இன்ன�
 
 #: HikariSub/HikariSubFrame.cpp:336
 msgid "Shift &times...\tCtrl-I"
-msgstr "சிப்ட் & டைம்ச் ... ctrl-i"
+msgstr "நேரங்களை நகர்த்து (&t)...\tCtrl-I"
 
 #: HikariSub/HikariSubFrame.cpp:337
 msgid "Shifting subtitle times"
@@ -2601,7 +2592,7 @@ msgstr "வசன வரிகளை மாற்றுகிறது"
 #: HikariSub/HikariSubFrame.cpp:340 HikariSub/HikariSubFrame.cpp:341
 #: HikariSub/HotkeysNaming.cpp:202
 msgid "Resample subtitles"
-msgstr "மறுவிற்பனை வசன வரிகள்"
+msgstr "வசன வரிகளை மறுமாதிரியாக்கு"
 
 #: HikariSub/HikariSubFrame.cpp:342 HikariSub/HikariSubFrame.cpp:343
 #: HikariSub/HotkeysNaming.cpp:251
@@ -2614,11 +2605,11 @@ msgstr "குறிச்சொற்களை மறைக்கவும்"
 
 #: HikariSub/HikariSubFrame.cpp:345
 msgid "Hides tags in ASS and MDVD"
-msgstr "குறிச்சொற்களை கழுதை மற்றும் டிவிடியில் மறைக்கவும்"
+msgstr "ASS மற்றும் MDVD இல் குறிச்சொற்களை மறைக்கிறது"
 
 #: HikariSub/HikariSubFrame.cpp:346
 msgid "Su&btitles"
-msgstr "வசன வரிகள்"
+msgstr "வசன வரிகள் (&b)"
 
 #: HikariSub/HikariSubFrame.cpp:349 HikariSub/HikariSubFrame.cpp:350
 #: HikariSub/HotkeysNaming.cpp:170
@@ -2642,7 +2633,7 @@ msgstr "குறுக்குவழி மேப்பிங் சாளர�
 
 #: HikariSub/HikariSubFrame.cpp:357
 msgid "Au&tomation"
-msgstr "தானியங்கு"
+msgstr "தானியங்கு (&t)"
 
 #: HikariSub/HikariSubFrame.cpp:360
 msgid "HikariSub &website"
@@ -2662,11 +2653,11 @@ msgstr "HikariSub சிக்கல் கண்காணிப்பைத் 
 
 #: HikariSub/HikariSubFrame.cpp:364
 msgid "Check for &updates"
-msgstr ""
+msgstr "புதுப்பிப்புகளைச் சரிபார் (&u)"
 
 #: HikariSub/HikariSubFrame.cpp:365
 msgid "Checks whether a newer version is available"
-msgstr ""
+msgstr "புதிய பதிப்பு கிடைக்கிறதா எனச் சரிபார்க்கிறது"
 
 #: HikariSub/HikariSubFrame.cpp:366
 msgid "&About"
@@ -2678,11 +2669,11 @@ msgstr "நிரல் தகவலைக் காட்டுகிறது"
 
 #: HikariSub/HikariSubFrame.cpp:369
 msgid "&Credits"
-msgstr "& வரவு"
+msgstr "நன்றியுரை (&c)"
 
 #: HikariSub/HikariSubFrame.cpp:370
 msgid "Shows credits"
-msgstr "வரவுகளைக் காட்டுகிறது"
+msgstr "நன்றியுரையைக் காட்டுகிறது"
 
 #: HikariSub/HikariSubFrame.cpp:371
 msgid "&Help"
@@ -2700,7 +2691,7 @@ msgstr "ச்கிரிப்டைத் தேர்வுசெய்க"
 
 #: HikariSub/HikariSubFrame.cpp:899
 msgid "Script files (*.lua),(*.moon)|*.lua;*.moon;"
-msgstr "ச்கிரிப்ட் கோப்புகள் (*.லுவா), (*. மூன்) |*.லுவா;*. சந்திரன்;"
+msgstr "ச்கிரிப்ட் கோப்புகள் (*.lua),(*.moon)|*.lua;*.moon;"
 
 #: HikariSub/HikariSubFrame.cpp:916
 msgid "This subtitle file does not have any scripts added"
@@ -2718,7 +2709,7 @@ msgstr "வசன வரிகளைத் தேர்வுசெய்க"
 
 #: HikariSub/HikariSubFrame.cpp:1009
 msgid "Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm"
-msgstr "வசன வரிகள் (*.ஆச்), (*. எச்.எச்.ஏ), (*. எச்.ஆர்.டி), (*. துணை), (*. TXT | வசனங்களுடன் வீடியோ (*.MKV), (*. OGM) |*.MKV;*. OGM"
+msgstr "வசன கோப்புகள் (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|உள்ளிணைந்த வசனங்களுடன் வீடியோக்கள் (*.mkv),(*.ogm)|*.mkv;*.ogm"
 
 #: HikariSub/HikariSubFrame.cpp:1046 HikariSub/HikariSubFrame.cpp:1062
 #: HikariSub/VideoBox.cpp:1106
@@ -2727,11 +2718,11 @@ msgstr "வீடியோ கோப்பைத் தேர்வுசெய�
 
 #: HikariSub/HikariSubFrame.cpp:1049
 msgid "Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|All files (*.*)|*.*"
-msgstr "வீடியோ கோப்புகள் (* g), (*. avs) |*.avi;*. mkv;*. Mp4;* கோப்புகள் (*.*) |*.*"
+msgstr "வீடியோ கோப்புகள் (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|அனைத்து கோப்புகளும் (*.*)|*.*"
 
 #: HikariSub/HikariSubFrame.cpp:1065
 msgid "Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*"
-msgstr "கீஃப்ரேம்கள் கோப்பு (*.txt), (*. பாச்), (*. புள்ளிவிவரங்கள்), (*. பதிவு) |*.txt;* *.*"
+msgstr "கீஃப்ரேம்கள் கோப்பு (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|அனைத்து கோப்புகளும் (*.*)|*.*"
 
 #: HikariSub/HikariSubFrame.cpp:1120
 #, c-format
@@ -2762,7 +2753,7 @@ msgstr ""
 
 #: HikariSub/HikariSubFrame.cpp:1124
 msgid "HikariSub includes parts of the following projects:\n"
-msgstr "கைனோட் பின்வரும் திட்டங்களின் சில பகுதிகளை உள்ளடக்கியது:\n"
+msgstr "HikariSub பின்வரும் திட்டங்களின் சில பகுதிகளை உள்ளடக்கியது:\n"
 
 #: HikariSub/HikariSubFrame.cpp:1126
 msgid ""
@@ -2774,7 +2765,7 @@ msgstr ""
 
 #: HikariSub/HikariSubFrame.cpp:1137
 msgid "About HikariSub"
-msgstr "Avut"
+msgstr "HikariSub பற்றி"
 
 #: HikariSub/HikariSubFrame.cpp:1142
 msgid "Graphical help: (buttons, help pictures etc.)\n"
@@ -2786,11 +2777,11 @@ msgstr "- சாண்ட்ரோச் (புதிய வீடியோ ப
 
 #: HikariSub/HikariSubFrame.cpp:1144
 msgid "- Devilkan (menu and toolbar buttons)\n"
-msgstr "- பிசாசன் (மெனு மற்றும் கருவிப்பட்டி பொத்தான்கள்)\n"
+msgstr "- Devilkan (மெனு மற்றும் கருவிப்பட்டி பொத்தான்கள்)\n"
 
 #: HikariSub/HikariSubFrame.cpp:1145
 msgid "- Zły Los (icons for file associations and menu).\n"
-msgstr "- ZłY லாச் (கோப்பு சங்கங்கள் மற்றும் மெனுவுக்கான சின்னங்கள்).\n"
+msgstr "- Zły Los (கோப்பு சங்கங்கள் மற்றும் மெனுவுக்கான சின்னங்கள்).\n"
 
 #: HikariSub/HikariSubFrame.cpp:1146
 msgid "Testers:\n"
@@ -2801,12 +2792,12 @@ msgid ""
 "- Sacredus (first translator using translator mode,\n"
 "great help testing HikariSub on a slow computer)\n"
 msgstr ""
-"- சேக்ரெடச் (மொழிபெயர்ப்பாளர் பயன்முறையைப் பயன்படுத்தி முதல் மொழிபெயர்ப்பாளர், \n"
-"மெதுவான கணினியில் கைனோட்டை சோதிக்கும் சிறந்த உதவி)\n"
+"- சேக்ரெடச் (மொழிபெயர்ப்பாளர் பயன்முறையைப் பயன்படுத்திய முதல் மொழிபெயர்ப்பாளர்,\n"
+"மெதுவான கணினியில் HikariSub-ஐச் சோதிப்பதில் பெரும் உதவி)\n"
 
 #: HikariSub/HikariSubFrame.cpp:1148
 msgid "- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n"
-msgstr "- பிசாசன் (க்ராச்அண்டர், அவரது அமைப்பு மற்றும் பழக்கவழக்கங்கள் காரணமாக அவர் கைனோட்டை நிறைய செயலிழக்கச் செய்தார்\n"
+msgstr "- Devilkan (crashhunter, அவரது அமைப்பு மற்றும் பழக்கவழக்கங்கள் காரணமாக அவர் HikariSub-ஐ நிறைய செயலிழக்கச் செய்தார்\n"
 
 #: HikariSub/HikariSubFrame.cpp:1149
 msgid "helped with typesetting tools and came up with many more improvements).\n"
@@ -2818,7 +2809,7 @@ msgstr "- மத்தியாச்மோவி (சில விபத்த�
 
 #: HikariSub/HikariSubFrame.cpp:1151
 msgid "- mas1904 (found some errors and helping with crash debuging).\n"
-msgstr "- MAS 1904 (சில பிழைகள் மற்றும் செயலிழப்பு பிழைத்திருத்தத்திற்கு உதவுதல்).\n"
+msgstr "- mas1904 (சில பிழைகளைக் கண்டறிந்தார், செயலிழப்பு பிழைத்திருத்தத்திற்கு உதவுகிறார்).\n"
 
 #: HikariSub/HikariSubFrame.cpp:1152
 msgid "- Senami (made new themes and found some bugs).\n"
@@ -2830,20 +2821,20 @@ msgstr "- ஆல்டினாட் (தாய் மொழிபெயர்�
 
 #: HikariSub/HikariSubFrame.cpp:1154
 msgid "- labrie75 (Korean translation).\n"
-msgstr "- லாப்ரி 75 (கொரிய மொழிபெயர்ப்பு).\n"
+msgstr "- labrie75 (கொரிய மொழிபெயர்ப்பு).\n"
 
 #: HikariSub/HikariSubFrame.cpp:1155
 msgid "- Niskala5570 (Malay translation).\n"
-msgstr "- நிச்கலா 5570 (மலாய் மொழிபெயர்ப்பு).\n"
+msgstr "- Niskala5570 (மலாய் மொழிபெயர்ப்பு).\n"
 
 #: HikariSub/HikariSubFrame.cpp:1156
 msgid "Thanks to other HikariSub users who reported bugs:\n"
-msgstr "பிழைகள் புகாரளித்த பிற கைனோட் பயனர்களுக்கு நன்றி:\n"
+msgstr "பிழைகளைப் புகாரளித்த பிற HikariSub பயனர்களுக்கு நன்றி:\n"
 
 #: HikariSub/HikariSubFrame.cpp:1157 HikariSub/HotkeysNaming.cpp:179
 #: HikariSub/OptionsDialog.cpp:679
 msgid "Credits"
-msgstr "வரவு"
+msgstr "நன்றியுரை"
 
 #: HikariSub/HikariSubFrame.cpp:1291
 msgid "Subtitle file "
@@ -2881,23 +2872,23 @@ msgstr "எதுவுமில்லை"
 #: HikariSub/HikariSubFrame.cpp:2231
 #, c-format
 msgid "Save subtitles named \"%s\" before %s?"
-msgstr "%s க்கு முன் \" %s\" என்ற வசன வரிகள் சேமிக்க விரும்புகிறீர்களா?"
+msgstr "\"%s\" என்ற வசன வரிகளை %s முன் சேமிக்கவா?"
 
 #: HikariSub/HikariSubFrame.cpp:2232
 msgid "exiting program"
-msgstr "வெளியேறும் திட்டம்"
+msgstr "நிரலிலிருந்து வெளியேறுவதற்கு"
 
 #: HikariSub/HikariSubFrame.cpp:2233
 msgid "closing tab"
-msgstr "நிறைவு தாவல்"
+msgstr "தாவலை மூடுவதற்கு"
 
 #: HikariSub/HikariSubFrame.cpp:2234
 msgid "loading new subtitles"
-msgstr "புதிய வசன வரிகள் ஏற்றுகின்றன"
+msgstr "புதிய வசன வரிகளை ஏற்றுவதற்கு"
 
 #: HikariSub/HikariSubFrame.cpp:2235
 msgid "removing subtitles"
-msgstr "வசன வரிகள் நீக்குதல்"
+msgstr "வசன வரிகளை அகற்றுவதற்கு"
 
 #: HikariSub/HikariSubFrame.cpp:2270 HikariSub/OptionsDialog.cpp:692
 msgid "Cannot load audio hotkeys"
@@ -3035,7 +3026,7 @@ msgstr "HikariSub இணையதளம்"
 
 #: HikariSub/Hotkeys.cpp:174 HikariSub/HotkeysNaming.cpp:113
 msgid "Duplicate lines"
-msgstr "நகல் கோடுகள்"
+msgstr "வரிகளை நகலாக்கு"
 
 #: HikariSub/Hotkeys.cpp:175 HikariSub/HotkeysNaming.cpp:112
 #: HikariSub/SubsGrid.cpp:269
@@ -3054,7 +3045,7 @@ msgstr "வசன வரிகள் முன்னோட்டத்தைக�
 
 #: HikariSub/Hotkeys.cpp:179 HikariSub/HotkeysNaming.cpp:263
 msgid "5 seconds forward"
-msgstr "5 வினாடிகள் முன்னோக்கி"
+msgstr "5 விநாடிகள் முன்னோக்கி"
 
 #: HikariSub/Hotkeys.cpp:180 HikariSub/HotkeysNaming.cpp:256
 msgid "5 seconds backward"
@@ -3084,7 +3075,7 @@ msgstr "ஒலி கூட்டு"
 
 #: HikariSub/Hotkeys.cpp:186 HikariSub/HotkeysNaming.cpp:270
 msgid "Volume down"
-msgstr "தொகுதி கீழே"
+msgstr "ஒலியளவைக் குறை"
 
 #: HikariSub/Hotkeys.cpp:187 HikariSub/HotkeysNaming.cpp:259
 msgid "Next chapter"
@@ -3096,7 +3087,7 @@ msgstr "முந்தைய அத்தியாயம்"
 
 #: HikariSub/Hotkeys.cpp:189 HikariSub/HotkeysNaming.cpp:82
 msgid "Add bold"
-msgstr "தைரியத்தைச் சேர்க்கவும்"
+msgstr "தடிமனைச் சேர்க்கவும்"
 
 #: HikariSub/Hotkeys.cpp:190 HikariSub/HotkeysNaming.cpp:83
 msgid "Add italic"
@@ -3136,7 +3127,7 @@ msgstr "கமிட்"
 
 #: HikariSub/Hotkeys.cpp:202 HikariSub/HotkeysNaming.cpp:48
 msgid "Commit alt"
-msgstr "எல்லாவற்றையும் செய்யுங்கள்"
+msgstr "கமிட் ஆல்ட்"
 
 #: HikariSub/Hotkeys.cpp:204 HikariSub/HotkeysNaming.cpp:50
 msgid "Previous line alt"
@@ -3187,19 +3178,19 @@ msgstr "மார்க்கருக்குப் பிறகு விள�
 
 #: HikariSub/Hotkeys.cpp:217 HikariSub/HotkeysNaming.cpp:63
 msgid "Play first 500ms"
-msgstr "முதல் 500 மீ"
+msgstr "முதல் 500 மி.வி. இயக்கவும்"
 
 #: HikariSub/Hotkeys.cpp:218 HikariSub/HotkeysNaming.cpp:64
 msgid "Play last 500ms"
-msgstr "கடைசி 500 மீ"
+msgstr "கடைசி 500 மி.வி. இயக்கவும்"
 
 #: HikariSub/Hotkeys.cpp:219 HikariSub/HotkeysNaming.cpp:65
 msgid "Play 500ms before"
-msgstr "முன்பு 500 மீ"
+msgstr "முன் 500 மி.வி. இயக்கவும்"
 
 #: HikariSub/Hotkeys.cpp:220 HikariSub/HotkeysNaming.cpp:66
 msgid "Play 500ms after"
-msgstr "500 எம்.எச்"
+msgstr "பின் 500 மி.வி. இயக்கவும்"
 
 #: HikariSub/Hotkeys.cpp:222 HikariSub/HotkeysNaming.cpp:68
 msgid "Add lead-in"
@@ -3362,7 +3353,7 @@ msgstr "காட்சி உறுதிப்படுத்தப்பட�
 
 #: HikariSub/HotkeysNaming.cpp:116 HikariSub/SubsGrid.cpp:238
 msgid "Turn off filtering"
-msgstr "வடிகட்டுதல் முறை"
+msgstr "வடிகட்டலை அணைக்கவும்"
 
 #: HikariSub/HotkeysNaming.cpp:117 HikariSub/HotkeysNaming.cpp:138
 #: HikariSub/SubsGrid.cpp:233 HikariSub/SubsGrid.cpp:272
@@ -3375,7 +3366,7 @@ msgstr "பாணிகளுடன் வரிகளை மறைக்கவ�
 
 #: HikariSub/HotkeysNaming.cpp:119 HikariSub/SubsGrid.cpp:236
 msgid "Show untranslated"
-msgstr "மொழிபெயர்க்கப்படவில்லை"
+msgstr "மொழிபெயர்க்கப்படாதவற்றைக் காட்டு"
 
 #: HikariSub/HotkeysNaming.cpp:120 HikariSub/SubsGrid.cpp:279
 msgid "Set FPS from video"
@@ -3423,7 +3414,7 @@ msgstr "இடது விளிம்பை மறைக்கவும்"
 
 #: HikariSub/HotkeysNaming.cpp:132 HikariSub/SubsGrid.cpp:196
 msgid "Hide right margin"
-msgstr "சரியான விளிம்பை மறைக்கவும்"
+msgstr "வலது விளிம்பை மறைக்கவும்"
 
 #: HikariSub/HotkeysNaming.cpp:133 HikariSub/SubsGrid.cpp:197
 msgid "Hide vertical margin"
@@ -3442,9 +3433,8 @@ msgid "Make tree"
 msgstr "மரத்தை உருவாக்குங்கள்"
 
 #: HikariSub/HotkeysNaming.cpp:137 HikariSub/SubsGrid.cpp:265
-#, fuzzy
 msgid "Select all lines visible on video"
-msgstr "வீடியோவில் காணக்கூடிய வசன வரிகள்"
+msgstr "வீடியோவில் தெரியும் அனைத்து வரிகளையும் தேர்ந்தெடுக்கவும்"
 
 #: HikariSub/HotkeysNaming.cpp:139
 msgid "Insert after"
@@ -3497,37 +3487,35 @@ msgstr "இடமாற்று கோடுகள்"
 
 #: HikariSub/HotkeysNaming.cpp:152 HikariSub/SubsGrid.cpp:282
 msgid "Dialogue shifting window"
-msgstr "தற்போதுள்ள துணைக்கு மொழிபெயர்ப்புடன் பொருந்தவும்"
+msgstr "உரையாடல் நகர்த்தல் சாளரம்"
 
 #: HikariSub/HotkeysNaming.cpp:153 HikariSub/SubsGrid.cpp:278
 msgid "Set new FPS"
 msgstr "புதிய FPS ஐ அமைக்கவும்"
 
 #: HikariSub/HotkeysNaming.cpp:155 HikariSub/SubsGrid.cpp:204
-#, fuzzy
 msgid "Split line at video time"
-msgstr "தற்போதைய வீடியோ நிலையில் வரியைத் தேர்ந்தெடுக்கவும்"
+msgstr "வீடியோ நேரத்தில் வரியைப் பிரிக்கவும்"
 
 #: HikariSub/HotkeysNaming.cpp:156 HikariSub/SubsGrid.cpp:206
 msgid "Split lines into frames"
-msgstr ""
+msgstr "வரிகளைச் சட்டகங்களாகப் பிரிக்கவும்"
 
 #: HikariSub/HotkeysNaming.cpp:157 HikariSub/SubsGrid.cpp:208
-#, fuzzy
 msgid "Split lines into characters"
-msgstr "கோடுகள் நகலெடுகிறது"
+msgstr "வரிகளை எழுத்துகளாகப் பிரிக்கவும்"
 
 #: HikariSub/HotkeysNaming.cpp:158 HikariSub/SubsGrid.cpp:209
 msgid "Split lines into words"
-msgstr ""
+msgstr "வரிகளைச் சொற்களாகப் பிரிக்கவும்"
 
 #: HikariSub/HotkeysNaming.cpp:159 HikariSub/SubsGrid.cpp:210
 msgid "Split lines by wraps"
-msgstr ""
+msgstr "வரி மடக்குகளின்படி வரிகளைப் பிரிக்கவும்"
 
 #: HikariSub/HotkeysNaming.cpp:161
 msgid "Check for updates"
-msgstr ""
+msgstr "புதுப்பிப்புகளைச் சரிபார்"
 
 #: HikariSub/HotkeysNaming.cpp:162
 msgid "About"
@@ -3611,7 +3599,7 @@ msgstr "வீடியோவைக் காண்க"
 
 #: HikariSub/HotkeysNaming.cpp:215
 msgid "Clean styles of ASS file"
-msgstr "கழுதை கோப்பின் தூய்மையான பாணிகள்"
+msgstr "ASS கோப்பின் பாணிகளைச் சுத்தம் செய்"
 
 #: HikariSub/HotkeysNaming.cpp:226
 msgid "Play active line"
@@ -3635,7 +3623,7 @@ msgstr "வீடியோவை அகற்று"
 
 #: HikariSub/HotkeysNaming.cpp:255 HikariSub/VideoBox.cpp:993
 msgid "Save frame as PNG"
-msgstr "சட்டகமாக png ஆக சேமிக்கவும்"
+msgstr "சட்டகத்தை PNG ஆகச் சேமிக்கவும்"
 
 #: HikariSub/HotkeysNaming.cpp:258 HikariSub/VideoBox.cpp:989
 msgid "Show / hide progress bar"
@@ -3655,7 +3643,7 @@ msgstr "முழுத் திரை"
 
 #: HikariSub/HotkeysNaming.cpp:271 HikariSub/VideoBox.cpp:991
 msgid "Save frame with subtitles as PNG"
-msgstr "பி.என்.சி என வசன வரிகள் மூலம் சட்டத்தை சேமிக்கவும்"
+msgstr "வசன வரிகளுடன் சட்டகத்தை PNG ஆகச் சேமிக்கவும்"
 
 #: HikariSub/LogHandler.cpp:42
 msgid "Log window"
@@ -3685,15 +3673,15 @@ msgstr "விதி திருத்து"
 
 #: HikariSub/MisspellReplacer.cpp:51
 msgid "Change to lower case"
-msgstr "சிறிய வழக்குக்கு மாற்றவும்"
+msgstr "சிறிய எழுத்துகளுக்கு மாற்றவும்"
 
 #: HikariSub/MisspellReplacer.cpp:52
 msgid "Change to upper case"
-msgstr "மேல் வழக்குக்கு மாற்றவும்"
+msgstr "பெரிய எழுத்துகளுக்கு மாற்றவும்"
 
 #: HikariSub/MisspellReplacer.cpp:53
 msgid "Dont change case"
-msgstr "வழக்கை மாற்ற வேண்டாம்"
+msgstr "பெரிய/சிறிய எழுத்தை மாற்ற வேண்டாம்"
 
 #: HikariSub/MisspellReplacer.cpp:54
 msgid "Replace only in tags"
@@ -3753,35 +3741,43 @@ msgstr "விதியை நீக்கு"
 
 #: HikariSub/MisspellReplacer.cpp:121
 msgid "Find error"
-msgstr "கண்டுபிடி"
+msgstr "பிழையைக் கண்டுபிடி"
 
 #: HikariSub/MisspellReplacer.cpp:123
 msgid ""
 "Find errors\n"
 "in current tab"
-msgstr "தற்போதைய தாவலில் காணலாம்"
+msgstr ""
+"தற்போதைய தாவலில்\n"
+"பிழைகளைக் கண்டுபிடி"
 
 #: HikariSub/MisspellReplacer.cpp:124
 msgid ""
 "Find errors\n"
 "in all tabs"
-msgstr "எல்லா தாவல்களிலும் காண்க"
+msgstr ""
+"எல்லா தாவல்களிலும்\n"
+"பிழைகளைக் கண்டுபிடி"
 
 #: HikariSub/MisspellReplacer.cpp:125
 msgid "Replace error"
-msgstr "மாற்று"
+msgstr "பிழையை மாற்று"
 
 #: HikariSub/MisspellReplacer.cpp:127
 msgid ""
 "Replace all errors\n"
 "in current tab"
-msgstr "அனைத்தையும் தற்போதைய தாவலில் மாற்றவும்"
+msgstr ""
+"தற்போதைய தாவலில்\n"
+"அனைத்துப் பிழைகளையும் மாற்று"
 
 #: HikariSub/MisspellReplacer.cpp:128
 msgid ""
 "Replace all errors\n"
 "in all tabs"
-msgstr "எல்லா தாவல்களிலும் மாற்றவும்"
+msgstr ""
+"எல்லா தாவல்களிலும்\n"
+"அனைத்துப் பிழைகளையும் மாற்று"
 
 #: HikariSub/MisspellReplacer.cpp:296 HikariSub/MisspellReplacer.cpp:321
 #: HikariSub/MisspellReplacer.cpp:340
@@ -3805,7 +3801,7 @@ msgstr ""
 #: HikariSub/MisspellReplacer.cpp:638
 #, c-format
 msgid "Cannot replace \"%s\" to \"%s\", with rule \"%s\" in line %i."
-msgstr "\"%s\" ஐ \"%s\" ஆக மாற்ற முடியாது,\"%s\" விதி %i இல்."
+msgstr "\"%s\" ஐ \"%s\" ஆக மாற்ற முடியாது (\"%s\" விதி, வரி %i)."
 
 #: HikariSub/MisspellReplacer.cpp:722
 msgid "Remove space before comma or dot"
@@ -3833,23 +3829,23 @@ msgstr "சப்பானிய பின்னொட்டுகளை நீ�
 
 #: HikariSub/MisspellReplacer.cpp:728
 msgid "Fixing Polish \"sie\""
-msgstr "போலிச் சரிசெய்தல் \"நீங்கள்\""
+msgstr "போலந்து மொழி \"sie\" ஐச் சரிசெய்தல்"
 
 #: HikariSub/MisspellReplacer.cpp:729
 msgid "Fixing Polish \"nie mozliwe\""
-msgstr "போலிச் சரிசெய்தல் \"சாத்தியமற்றது\""
+msgstr "போலந்து மொழி \"nie mozliwe\" ஐச் சரிசெய்தல்"
 
 #: HikariSub/MisspellReplacer.cpp:730
 msgid "Fixing Polish \"nie wazne\""
-msgstr "போலிசை சரிசெய்தல் \"முக்கியமல்ல\""
+msgstr "போலந்து மொழி \"nie wazne\" ஐச் சரிசெய்தல்"
 
 #: HikariSub/MisspellReplacer.cpp:731 HikariSub/MisspellReplacer.cpp:732
 msgid "Fixing Polish \"w ogole\""
-msgstr "போலிசை சரிசெய்தல் \"எல்லாவற்றிலும்\""
+msgstr "போலந்து மொழி \"w ogole\" ஐச் சரிசெய்தல்"
 
 #: HikariSub/MisspellReplacer.cpp:733 HikariSub/MisspellReplacer.cpp:734
 msgid "Fixing Polish \"bede\""
-msgstr "போலிச் \"பேட்\" ஐ சரிசெய்தல்"
+msgstr "போலந்து மொழி \"bede\" ஐச் சரிசெய்தல்"
 
 #: HikariSub/MisspellReplacer.cpp:784
 #, c-format
@@ -3942,6 +3938,8 @@ msgid ""
 "Cannot read the subtitle file:\n"
 "%s"
 msgstr ""
+"வசன வரிகள் கோப்பைப் படிக்க முடியாது:\n"
+"%s"
 
 #: HikariSub/Notebook.cpp:1307
 msgid "Video: "
@@ -3965,7 +3963,7 @@ msgstr "கோப்பகத்திலிருந்து வீடிய�
 
 #: HikariSub/Notebook.cpp:1326
 msgid "Load associated"
-msgstr "சுமை தொடர்புடையது"
+msgstr "தொடர்புடையவற்றை ஏற்று"
 
 #: HikariSub/Notebook.cpp:1327
 msgid "Load from directory"
@@ -3977,7 +3975,7 @@ msgstr "அமர்வு கோப்பு சிதைந்துள்ள�
 
 #: HikariSub/Notebook.cpp:1654
 msgid "Cannot read the subtitle files:\n"
-msgstr ""
+msgstr "வசன வரிகள் கோப்புகளைப் படிக்க முடியாது:\n"
 
 #: HikariSub/OpennWrite.cpp:70 HikariSub/OpennWrite.cpp:91
 #: HikariSub/OpennWrite.cpp:331 HikariSub/OpennWrite.cpp:338
@@ -3989,11 +3987,11 @@ msgstr "கோப்பில் சேமிக்க முடியாது.
 #: HikariSub/OpennWrite.cpp:72 HikariSub/OpennWrite.cpp:94
 #, c-format
 msgid "The old contents of the file are kept in %s."
-msgstr ""
+msgstr "கோப்பின் பழைய உள்ளடக்கம் %s இல் வைக்கப்பட்டுள்ளது."
 
 #: HikariSub/OpennWrite.cpp:85
 msgid "A temporary file in its folder would let in users the file keeps out."
-msgstr ""
+msgstr "அதன் கோப்புறையில் உருவாகும் தற்காலிகக் கோப்பு, இந்தக் கோப்பை அணுக முடியாத பயனர்களுக்கும் அணுகலைத் தந்துவிடும்."
 
 #: HikariSub/OpennWrite.cpp:213
 msgid "Cannot create file."
@@ -4014,7 +4012,7 @@ msgstr "கோப்பு திறக்கப்படவில்லை."
 
 #: HikariSub/OptionsDialog.cpp:312
 msgid "Open sorted subtitles"
-msgstr "வரிசைப்படுத்தப்பட்ட வசன வரிகள்"
+msgstr "வரிசைப்படுத்தப்பட்ட வசன வரிகளைத் திற"
 
 #: HikariSub/OptionsDialog.cpp:312
 msgid "Turn spell checking"
@@ -4094,7 +4092,7 @@ msgstr "காட்சி கருவிகள் எச்சரிக்க�
 
 #: HikariSub/OptionsDialog.cpp:323
 msgid "Compatibility with older HikariSub scripts"
-msgstr "பழைய கைனோட் ச்கிரிப்டுகளுடன் பொருந்தக்கூடிய தன்மை"
+msgstr "பழைய HikariSub ச்கிரிப்டுகளுடன் இணக்கம்"
 
 #: HikariSub/OptionsDialog.cpp:347
 msgid "Language (program restart required)"
@@ -4102,31 +4100,31 @@ msgstr "மொழி (நிரல் மறுதொடக்கம் தே�
 
 #: HikariSub/OptionsDialog.cpp:359
 msgid "Put files .dic and .aff to \"Dictionary\" folder"
-msgstr "கோப்புகளை வைக்கவும் .dic மற்றும் .aff \"அகராதி\" கோப்புறையில்"
+msgstr ".dic மற்றும் .aff கோப்புகளை \"Dictionary\" கோப்புறையில் வைக்கவும்"
 
 #: HikariSub/OptionsDialog.cpp:360
 msgid "Spell checker language (\"Dictionary\" folder)"
-msgstr "எழுத்துப்பிழை செக்கர் மொழி (\"அகராதி\" கோப்புறை)"
+msgstr "எழுத்துப்பிழை சரிபார்ப்பு மொழி (\"Dictionary\" கோப்புறை)"
 
 #: HikariSub/OptionsDialog.cpp:369
 msgid "Updates"
-msgstr ""
+msgstr "புதுப்பிப்புகள்"
 
 #: HikariSub/OptionsDialog.cpp:370 HikariSub/UpdateChecker.cpp:141
 msgid "Check for updates automatically"
-msgstr ""
+msgstr "புதுப்பிப்புகளைத் தானாகச் சரிபார்க்கவும்"
 
 #: HikariSub/OptionsDialog.cpp:372
 msgid "When the program starts: once a day, or an hour after a check that failed"
-msgstr ""
+msgstr "நிரல் தொடங்கும்போது: நாளுக்கு ஒருமுறை, அல்லது தோல்வியடைந்த சரிபார்ப்புக்கு ஒரு மணி நேரம் கழித்து"
 
 #: HikariSub/OptionsDialog.cpp:374 HikariSub/UpdateChecker.cpp:145
 msgid "Stable versions only"
-msgstr ""
+msgstr "நிலையான பதிப்புகள் மட்டும்"
 
 #: HikariSub/OptionsDialog.cpp:376
 msgid "A release candidate is still told about newer release candidates"
-msgstr ""
+msgstr "வெளியீட்டு வேட்பாளர் (RC) பதிப்பில் இருந்தால், புதிய வெளியீட்டு வேட்பாளர்கள் பற்றியும் அறிவிக்கப்படும்"
 
 #: HikariSub/OptionsDialog.cpp:396
 msgid "0 turns off saving while editing"
@@ -4158,7 +4156,7 @@ msgstr "எம்.எச்சில் இறுதி பிரேம் ஆ�
 
 #: HikariSub/OptionsDialog.cpp:429
 msgid "ASS tag replacement:"
-msgstr "கழுதை குறிச்சொல் மாற்று:"
+msgstr "ASS குறிச்சொல் மாற்று:"
 
 #: HikariSub/OptionsDialog.cpp:432
 msgid "Number of tab name characters"
@@ -4178,11 +4176,11 @@ msgstr "நிரல் எழுத்துரு:"
 
 #: HikariSub/OptionsDialog.cpp:454
 msgid "Calculate spaces and punctation characters for wraps"
-msgstr ""
+msgstr "வரி மடக்குகளுக்கு இடைவெளிகளையும் நிறுத்தற்குறிகளையும் கணக்கிடவும்"
 
 #: HikariSub/OptionsDialog.cpp:457
 msgid "Calculate spaces and punctation characters for CPS"
-msgstr ""
+msgstr "CPS-க்கு இடைவெளிகளையும் நிறுத்தற்குறிகளையும் கணக்கிடவும்"
 
 #: HikariSub/OptionsDialog.cpp:462
 msgid "Autoload loading method"
@@ -4205,7 +4203,6 @@ msgid "After program start asynchronously"
 msgstr "நிரல் ஒத்திசைவற்ற முறையில் தொடங்கிய பிறகு"
 
 #: HikariSub/OptionsDialog.cpp:469
-#, fuzzy
 msgid "Folder with external fonts"
 msgstr "வெளிப்புற எழுத்துருக்கள் கொண்ட கோப்புறை"
 
@@ -4215,9 +4212,8 @@ msgid "Choose"
 msgstr "தேர்வு"
 
 #: HikariSub/OptionsDialog.cpp:474
-#, fuzzy
 msgid "Choose choose external font folder"
-msgstr "சேமி கோப்புறையைத் தேர்வுசெய்க"
+msgstr "வெளிப்புற எழுத்துரு கோப்புறையைத் தேர்வுசெய்க"
 
 #: HikariSub/OptionsDialog.cpp:503
 msgid "Choose catalog"
@@ -4233,15 +4229,15 @@ msgstr "FPS ஐத் தேர்வுசெய்க"
 
 #: HikariSub/OptionsDialog.cpp:506
 msgid "Time for one letter in milliseconds"
-msgstr "மில்லி விநாடிகளில் ஒரு கடிதத்திற்கான நேரம்"
+msgstr "மில்லி விநாடிகளில் ஒரு எழுத்துக்கான நேரம்"
 
 #: HikariSub/OptionsDialog.cpp:507
 msgid "Tags to paste at the beginning of every ASS line"
-msgstr "ஒவ்வொரு கழுதை வரியின் தொடக்கத்திலும் ஒட்ட வேண்டிய குறிச்சொற்கள்"
+msgstr "ஒவ்வொரு ASS வரியின் தொடக்கத்திலும் ஒட்ட வேண்டிய குறிச்சொற்கள்"
 
 #: HikariSub/OptionsDialog.cpp:508
 msgid "Resolution when converting to ASS"
-msgstr "கழுதைக்கு மாற்றும்போது தீர்மானம்"
+msgstr "ASS ஆக மாற்றும்போது தீர்மானம்"
 
 #: HikariSub/OptionsDialog.cpp:538
 msgid "catalog for style"
@@ -4249,7 +4245,7 @@ msgstr "பாணிக்கான பட்டியல்"
 
 #: HikariSub/OptionsDialog.cpp:538
 msgid "style"
-msgstr "சூல் தண்டு"
+msgstr "பாணி"
 
 #: HikariSub/OptionsDialog.cpp:539
 #, c-format
@@ -4282,7 +4278,7 @@ msgstr "முழு திரையில் சூழல் மெனுவி
 
 #: HikariSub/OptionsDialog.cpp:605
 msgid "Convert video colours on the GPU (requires reloading)"
-msgstr ""
+msgstr "வீடியோ வண்ணங்களை GPU-வில் மாற்றவும் (மறுஏற்றம் தேவை)"
 
 #: HikariSub/OptionsDialog.cpp:605
 msgid "Open video with time of active line"
@@ -4301,9 +4297,8 @@ msgid "Subtitle display filter"
 msgstr "வசன வரிகள் வடிகட்டி"
 
 #: HikariSub/OptionsDialog.cpp:608
-#, fuzzy
 msgid "Start video zoom in percent."
-msgstr "சதவீதத்தில் வீடியோ சூம் தொடங்கவும்."
+msgstr "தொடக்க வீடியோ சூம், சதவீதத்தில்."
 
 #: HikariSub/OptionsDialog.cpp:627
 msgid "Linear"
@@ -4387,7 +4382,7 @@ msgstr "வீடியோ நிலையைக் காட்டு"
 
 #: HikariSub/OptionsDialog.cpp:726
 msgid "Activate the audio when hover"
-msgstr "வட்டமிடும்போது ஆடியோவை செயல்படுத்தவும்"
+msgstr "சுட்டி மேலே இருக்கும்போது ஆடியோவைச் செயல்படுத்தவும்"
 
 #: HikariSub/OptionsDialog.cpp:726
 msgid "Snap to keyframe"
@@ -4467,7 +4462,7 @@ msgstr "செயலற்ற சாளர உரை"
 
 #: HikariSub/OptionsDialog.cpp:796
 msgid "Window background"
-msgstr "விண்டர் பின்னணி"
+msgstr "சாளர பின்னணி"
 
 #: HikariSub/OptionsDialog.cpp:796
 msgid "Window text"
@@ -4507,7 +4502,7 @@ msgstr "சாளரம் அழுத்தப்பட்ட உறுப்�
 
 #: HikariSub/OptionsDialog.cpp:800
 msgid "Window closing upon hover"
-msgstr "ஓவர் மீது சாளர மூடல்"
+msgstr "சுட்டி மேலே இருக்கும்போது சாளர மூடல்"
 
 #: HikariSub/OptionsDialog.cpp:800
 msgid "Window elements warning"
@@ -4619,7 +4614,7 @@ msgstr "ஆசிரியர் சுருள் பிரேச்கள்"
 
 #: HikariSub/OptionsDialog.cpp:812
 msgid "Editor line splitting and ASS drawings"
-msgstr "எடிட்டர் லைன் பிரித்தல் மற்றும் கழுதை வரைபடங்கள்"
+msgstr "எடிட்டர் வரி பிரித்தல் மற்றும் ASS வரைபடங்கள்"
 
 #: HikariSub/OptionsDialog.cpp:812
 msgid "Editor tags operators"
@@ -4671,7 +4666,7 @@ msgstr "ஆசிரியர் எல்லை"
 
 #: HikariSub/OptionsDialog.cpp:816
 msgid "Editor border on focus"
-msgstr "கவனம் செலுத்தும் ஆசிரியர் எல்லை"
+msgstr "குவியத்தில் இருக்கும்போது ஆசிரியர் எல்லை"
 
 #: HikariSub/OptionsDialog.cpp:816
 msgid "Editor spelling error background"
@@ -4767,7 +4762,7 @@ msgstr "உரை புல எல்லை"
 
 #: HikariSub/OptionsDialog.cpp:826
 msgid "Text field border on focus"
-msgstr "கவனம் செலுத்துவதில் உரை புல எல்லை"
+msgstr "குவியத்தில் இருக்கும்போது உரை புல எல்லை"
 
 #: HikariSub/OptionsDialog.cpp:826
 msgid "Text field selection"
@@ -4783,11 +4778,11 @@ msgstr "பொத்தான் மற்றும் பட்டியல் 
 
 #: HikariSub/OptionsDialog.cpp:828
 msgid "Button and list background upon hover"
-msgstr "பொத்தான் மற்றும் ஓவர் மீது பின்னணி பட்டியல்"
+msgstr "சுட்டி மேலே இருக்கும்போது பொத்தான் மற்றும் பட்டியல் பின்னணி"
 
 #: HikariSub/OptionsDialog.cpp:829
 msgid "Button and list background on focus"
-msgstr "பொத்தான் மற்றும் பின்னணியை மையமாகக் கொண்டது"
+msgstr "குவியத்தில் இருக்கும்போது பொத்தான் மற்றும் பட்டியல் பின்னணி"
 
 #: HikariSub/OptionsDialog.cpp:829
 msgid "Button and list pushed background"
@@ -4799,7 +4794,7 @@ msgstr "பொத்தான் மற்றும் பட்டியல் 
 
 #: HikariSub/OptionsDialog.cpp:830
 msgid "Button and list border upon hover"
-msgstr "பொத்தானை மற்றும் வட்டத்தை பட்டியலிடுங்கள்"
+msgstr "சுட்டி மேலே இருக்கும்போது பொத்தான் மற்றும் பட்டியல் எல்லை"
 
 #: HikariSub/OptionsDialog.cpp:831
 msgid "Button and list border of pushed"
@@ -4807,11 +4802,11 @@ msgstr "பொத்தான் மற்றும் தள்ளப்பட�
 
 #: HikariSub/OptionsDialog.cpp:831
 msgid "Button and list border on focus"
-msgstr "பொத்தான் மற்றும் கவனம் செலுத்துவதில் எல்லை"
+msgstr "குவியத்தில் இருக்கும்போது பொத்தான் மற்றும் பட்டியல் எல்லை"
 
 #: HikariSub/OptionsDialog.cpp:832
 msgid "Button and list inactive border"
-msgstr "பொத்தான் மற்றும் செயலற்ற எல்லையை பட்டியலிடுங்கள்"
+msgstr "பொத்தான் மற்றும் பட்டியல் செயலற்ற எல்லை"
 
 #: HikariSub/OptionsDialog.cpp:832
 msgid "Togglebutton toggled background"
@@ -4835,7 +4830,7 @@ msgstr "ச்லைடரை உருட்டல் பட்டி தள்
 
 #: HikariSub/OptionsDialog.cpp:834
 msgid "Scroll bar slider upon hover"
-msgstr "ஓவர் மீது உருள் ச்லைடர்"
+msgstr "சுட்டி மேலே இருக்கும்போது உருள் பார் ச்லைடர்"
 
 #: HikariSub/OptionsDialog.cpp:835
 msgid "Static list background"
@@ -4927,7 +4922,7 @@ msgstr "இரண்டாவது புலப்படும் தாவல�
 
 #: HikariSub/OptionsDialog.cpp:845
 msgid "Tab inactive background upon hover"
-msgstr "ஓவர் குறித்த தாவல் செயலற்ற பின்னணி"
+msgstr "சுட்டி மேலே இருக்கும்போது தாவல் செயலற்ற பின்னணி"
 
 #: HikariSub/OptionsDialog.cpp:846
 msgid "Tab active text"
@@ -4935,11 +4930,11 @@ msgstr "தாவல் செயலில் உள்ள உரை"
 
 #: HikariSub/OptionsDialog.cpp:846
 msgid "Tab close upon hover"
-msgstr "தாவல் மூடு"
+msgstr "சுட்டி மேலே இருக்கும்போது தாவல் மூடல்"
 
 #: HikariSub/OptionsDialog.cpp:846
 msgid "Tab inactive text"
-msgstr "தாவல் செயலற்ற பின்னணி"
+msgstr "தாவல் செயலற்ற உரை"
 
 #: HikariSub/OptionsDialog.cpp:847
 msgid "Tab bar arrow"
@@ -4951,7 +4946,7 @@ msgstr "தாவல் பார் அம்பு பின்னணி"
 
 #: HikariSub/OptionsDialog.cpp:848
 msgid "Tab bar arrow background upon hover"
-msgstr "ஓவர் மீது தாவல் பார் அம்பு பின்னணி"
+msgstr "சுட்டி மேலே இருக்கும்போது தாவல் பார் அம்பு பின்னணி"
 
 #: HikariSub/OptionsDialog.cpp:850
 msgid "Slider border"
@@ -4975,7 +4970,7 @@ msgstr "தள்ளப்பட்ட ச்லைடர் எல்லை"
 
 #: HikariSub/OptionsDialog.cpp:851
 msgid "Slider border upon hover"
-msgstr "ஓவர் மீது ச்லைடர் எல்லை"
+msgstr "சுட்டி மேலே இருக்கும்போது ச்லைடர் எல்லை"
 
 #: HikariSub/OptionsDialog.cpp:852
 msgid "Slider background of pushed"
@@ -4983,7 +4978,7 @@ msgstr "தள்ளப்பட்ட ச்லைடர் பின்னண�
 
 #: HikariSub/OptionsDialog.cpp:852
 msgid "Slider background upon hover"
-msgstr "ஓவர் மீது ச்லைடர் பின்னணி"
+msgstr "சுட்டி மேலே இருக்கும்போது ச்லைடர் பின்னணி"
 
 #: HikariSub/OptionsDialog.cpp:854
 msgid "Finding result file name background"
@@ -5023,9 +5018,9 @@ msgid ""
 "Default themes, DarkSentro and LightSentro,\n"
 "cannot be edited and must be copied."
 msgstr ""
-"சமாளிக்கும் கருப்பொருளின் பெயர்.\n"
-" இயல்புநிலை கருப்பொருள்கள்: டார்க்சென்ட்ரோ & லைட்சென்ட்ரோ\n"
-" திருத்த முடியாது. அதை நகலெடுக்க வேண்டும்."
+"நகலெடுக்கப்பட்ட கருப்பொருளின் பெயர்.\n"
+"இயல்புநிலை கருப்பொருள்களான DarkSentro, LightSentro\n"
+"ஆகியவற்றைத் திருத்த முடியாது, அவற்றை நகலெடுக்க வேண்டும்."
 
 #: HikariSub/OptionsDialog.cpp:885 HikariSub/SelectLines.cpp:123
 #: HikariSub/stylestore.cpp:88 HikariSub/stylestore.cpp:141
@@ -5037,8 +5032,8 @@ msgid ""
 "Warning! Transparency works only on the audio spectrum,\n"
 "text field, and subtitle grid."
 msgstr ""
-"எச்சரிக்கை! ஆடியோ ச்பெக்ட்ரனில் மட்டுமே வெளிப்படைத்தன்மை செயல்படுகிறது, \n"
-"உரை கோப்பு மற்றும் வசன வரிகள் கட்டம்."
+"எச்சரிக்கை! வெளிப்படைத்தன்மை ஆடியோ ச்பெக்ட்ரம்,\n"
+"உரை புலம் மற்றும் வசன வரிகள் கட்டத்தில் மட்டுமே செயல்படும்."
 
 #: HikariSub/OptionsDialog.cpp:904
 msgid "Name"
@@ -5050,7 +5045,7 @@ msgstr "நிறம்"
 
 #: HikariSub/OptionsDialog.cpp:1011
 msgid "Deselect all"
-msgstr "அனைத்தையும் தேர்வு செய்யுங்கள்"
+msgstr "அனைத்தையும் தேர்வுநீக்கு"
 
 #: HikariSub/OptionsDialog.cpp:1011
 msgid "Select all"
@@ -5074,7 +5069,7 @@ msgstr "சங்கங்கள்"
 
 #: HikariSub/OptionsDialog.cpp:1036
 msgid "Subtitle properties"
-msgstr "ASS வசன வரிகள் பண்புகள்"
+msgstr "வசன வரிகள் பண்புகள்"
 
 #: HikariSub/OptionsDialog.cpp:1045
 msgid "Set default"
@@ -5098,7 +5093,7 @@ msgstr "புதுப்பித்தார்"
 #: HikariSub/OptionsPanels.cpp:32 HikariSub/ScriptInfo.cpp:56
 #: HikariSub/SubsGridDialogs.cpp:113
 msgid "Proofreading"
-msgstr "திருத்தி"
+msgstr "மெய்ப்புப் பார்த்தல்"
 
 #: HikariSub/OptionsPanels.cpp:32 HikariSub/ScriptInfo.cpp:58
 #: HikariSub/SubsGridDialogs.cpp:113
@@ -5113,7 +5108,7 @@ msgstr "தலைப்பு"
 #: HikariSub/OptionsPanels.cpp:32 HikariSub/ScriptInfo.cpp:54
 #: HikariSub/SubsGridDialogs.cpp:113
 msgid "Translator"
-msgstr "மொழிபெயர்"
+msgstr "மொழிபெயர்ப்பாளர்"
 
 #: HikariSub/OptionsPanels.cpp:55
 msgid "Always ask before changing subtitle information"
@@ -5130,11 +5125,11 @@ msgstr "குறியீட்டு வீடியோ"
 #: HikariSub/ProviderFFMS2.cpp:146
 #, c-format
 msgid "Cannot get frame %i: %s"
-msgstr ""
+msgstr "சட்டகம் %i ஐப் பெற முடியாது: %s"
 
 #: HikariSub/ProviderFFMS2.cpp:169
 msgid "Video frame size is too large"
-msgstr ""
+msgstr "வீடியோ சட்டகத்தின் அளவு மிகப் பெரியது"
 
 #: HikariSub/ProviderFFMS2.cpp:282
 msgid "Choose the track"
@@ -5183,14 +5178,13 @@ msgstr "நேரந்தவறுகை தோல்வியுற்றத�
 #: HikariSub/ProviderFFMS2.cpp:635
 #, c-format
 msgid "Cannot create the audio cache %s"
-msgstr ""
+msgstr "ஆடியோ கேச் %s ஐ உருவாக்க முடியாது"
 
 #: HikariSub/ProviderFFMS2.cpp:636
 msgid "Not enough memory for the audio cache"
-msgstr ""
+msgstr "ஆடியோ கேச்சுக்குப் போதுமான நினைவகம் இல்லை"
 
 #: HikariSub/RendererDirectShow.cpp:102
-#, fuzzy
 msgid "Cannot create DXVA processor service"
 msgstr "DXVA செயலி சேவையை உருவாக்க முடியாது"
 
@@ -5253,26 +5247,24 @@ msgstr "மேற்பரப்புகளை மேலெழுத முட�
 #: HikariSub/RendererGStreamer.cpp:107
 #, c-format
 msgid "Chapter %i"
-msgstr ""
+msgstr "அத்தியாயம் %i"
 
 #: HikariSub/RendererGStreamer.cpp:196
 msgid "Video file does not contain a video stream"
-msgstr ""
+msgstr "வீடியோ கோப்பில் வீடியோ ஸ்ட்ரீம் எதுவும் இல்லை"
 
 #: HikariSub/RendererGStreamer.cpp:278
-#, fuzzy
 msgid "Cannot create GStreamer pipeline (playbin)"
-msgstr "கட்டுப்படுத்தியை உருவாக்க முடியாது"
+msgstr "GStreamer பைப்லைனை (playbin) உருவாக்க முடியாது"
 
 #: HikariSub/RendererGStreamer.cpp:308
-#, fuzzy
 msgid "Cannot create GStreamer video display module"
-msgstr "செயல்முறையை உருவாக்க முடியவில்லை. மக்சிங் ரத்து செய்யப்பட்டது"
+msgstr "GStreamer வீடியோ காட்சித் தொகுதியை உருவாக்க முடியாது"
 
 #: HikariSub/RendererGStreamer.cpp:340
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot open video file: %s"
-msgstr "\"%s\" கோப்பைத் திறக்க முடியாது."
+msgstr "வீடியோ கோப்பைத் திறக்க முடியாது: %s"
 
 #: HikariSub/RendererGStreamer.cpp:681
 #, c-format
@@ -5288,7 +5280,6 @@ msgid "From video"
 msgstr "வீடியோவிலிருந்து"
 
 #: HikariSub/ScriptInfo.cpp:106
-#, fuzzy
 msgid "Layout"
 msgstr "மனையமைவு"
 
@@ -5302,7 +5293,7 @@ msgstr "0: ஆட்டோ, டாப் லைன் அகலமானது"
 
 #: HikariSub/ScriptInfo.cpp:140
 msgid "1: End-of-line wrapping, only \\N breaks"
-msgstr "1: இறுதி-வரி மடக்குதல், \\ n இடைவெளிகள் மட்டுமே"
+msgstr "1: வரி இறுதியில் மடக்குதல், \\N மட்டுமே வரியை உடைக்கும்"
 
 #: HikariSub/ScriptInfo.cpp:141
 msgid "2: No wrapping, both \\n and \\N break"
@@ -5400,7 +5391,7 @@ msgstr "முடிவுக்கு நகர்த்தவும்"
 
 #: HikariSub/SelectLines.cpp:127
 msgid "Set as comment"
-msgstr "கருத்து"
+msgstr "கருத்தாக அமை"
 
 #: HikariSub/SelectLines.cpp:130
 msgid "Action"
@@ -5423,7 +5414,7 @@ msgstr "%i கோடுகள் தேர்வில் சேர்க்க�
 #: HikariSub/SelectLines.cpp:235 HikariSub/SelectLines.cpp:277
 #, c-format
 msgid "%i lines deselected."
-msgstr "%i வரிகள் தேர்வு செய்யப்பட்டன."
+msgstr "%i வரிகள் தேர்வுநீக்கப்பட்டன."
 
 #: HikariSub/ShiftTimes.cpp:55
 msgid ""
@@ -5468,7 +5459,7 @@ msgstr "சுயவிவரங்களை நீக்குதல்"
 
 #: HikariSub/ShiftTimes.cpp:312
 msgid "Shift"
-msgstr "உயர்த்து"
+msgstr "நகர்த்து"
 
 #: HikariSub/ShiftTimes.cpp:312
 msgid "Shift subtitle times"
@@ -5492,7 +5483,7 @@ msgstr "வீடியோ / ஆடியோ மூலம் மாற்றவ�
 
 #: HikariSub/ShiftTimes.cpp:334
 msgid "Beginning"
-msgstr "தொடங்கு"
+msgstr "தொடக்கம்"
 
 #: HikariSub/ShiftTimes.cpp:335 HikariSub/SubsGridWindow.cpp:317
 #: HikariSub/SubsGridWindow.cpp:705 HikariSub/SubsGridWindow.cpp:1139
@@ -5523,7 +5514,7 @@ msgstr "நேர மாற்றத்தின் முறை"
 
 #: HikariSub/ShiftTimes.cpp:357
 msgid "Both times"
-msgstr "இரண்டு முறை"
+msgstr "இரு நேரங்களும்"
 
 #: HikariSub/ShiftTimes.cpp:366
 msgid "Correction end times"
@@ -5638,15 +5629,14 @@ msgid "Shift times by time / frames"
 msgstr "நேரம் / பிரேம்களால் நேரங்களை மாற்றவும்"
 
 #: HikariSub/ShiftTimes.cpp:563
-#, fuzzy
 msgid ""
 "Shifts \\move, \\t, and \\fad tag times\n"
 "so their positions on video do not change\n"
 "(slows down time shifting)"
 msgstr ""
-"சிப்ட் டேக் \\ நகர்வு, \\ டி, \\ ஃபேட் டைம்ச்\n"
-" அதன் வீடியோ நிலை மாறாது.\n"
-" (மெதுவாக மாற்றும் நேரங்கள்)"
+"\\move, \\t, \\fad குறிச்சொற்களின் நேரங்களையும் நகர்த்துகிறது,\n"
+"அதனால் வீடியோவில் அவற்றின் நிலைகள் மாறாது\n"
+"(நேர நகர்த்தலை மெதுவாக்கும்)"
 
 #: HikariSub/ShiftTimes.cpp:564
 msgid "The choice of times to move"
@@ -5674,11 +5664,11 @@ msgstr "மில்லி விநாடிகளில் இறுதி ந
 
 #: HikariSub/ShiftTimes.cpp:572
 msgid "Start time extension threshold"
-msgstr "தொடக்க நேர வாசல்"
+msgstr "தொடக்க நேர நீட்டிப்பு வாசல்"
 
 #: HikariSub/ShiftTimes.cpp:573
 msgid "End time extension threshold"
-msgstr "இறுதி நேர வாசல்"
+msgstr "இறுதி நேர நீட்டிப்பு வாசல்"
 
 #: HikariSub/ShiftTimes.cpp:574
 msgid ""
@@ -5727,8 +5717,8 @@ msgid ""
 "No dictionary files were found in the \"%s\\Dictionary\" folder.\n"
 "Spell checking will be disabled"
 msgstr ""
-"\"%s \\ அகராதி\" கோப்புறையில் அகராதி கோப்புகளைக் கண்டுபிடிக்க முடியவில்லை.\n"
-" எழுத்துப்பிழை சரிபார்ப்பு முடக்கப்படும்"
+"\"%s\\Dictionary\" கோப்புறையில் அகராதி கோப்புகள் எதுவும் கிடைக்கவில்லை.\n"
+"எழுத்துப்பிழை சரிபார்ப்பு முடக்கப்படும்"
 
 #: HikariSub/SpellChecker.cpp:130
 msgid "Unable to read the dictionary conversion format."
@@ -5746,7 +5736,9 @@ msgstr "கருத்துகளை புறக்கணிக்கவு�
 msgid ""
 "Ignore words written entirely\n"
 "in uppercase"
-msgstr "மேல் வழக்கு சொற்களை புறக்கணிக்கவும்"
+msgstr ""
+"முழுவதும் பெரிய எழுத்துகளில் எழுதப்பட்ட\n"
+"சொற்களைப் புறக்கணிக்கவும்"
 
 #: HikariSub/SpellCheckerDialog.cpp:50
 msgid "Misspell word:"
@@ -5786,7 +5778,7 @@ msgstr "அகராதியில் சேர்க்கப்பட்ட �
 
 #: HikariSub/StyleChange.cpp:46 HikariSub/SubsFile.cpp:230
 msgid "Style editing"
-msgstr "பதிப்பு நடை"
+msgstr "பாணி திருத்தம்"
 
 #: HikariSub/StyleChange.cpp:63
 msgid "Style name:"
@@ -5826,11 +5818,11 @@ msgstr "எல்லை:"
 
 #: HikariSub/StyleChange.cpp:171
 msgid "Scale X:"
-msgstr "அளவிலான எக்ச்:"
+msgstr "அளவு X:"
 
 #: HikariSub/StyleChange.cpp:171
 msgid "Scale Y:"
-msgstr "Y: y:"
+msgstr "அளவு Y:"
 
 #: HikariSub/StyleChange.cpp:171
 msgid "Shadow:"
@@ -5898,11 +5890,11 @@ msgstr "130 - இஆப்"
 
 #: HikariSub/StyleChange.cpp:247
 msgid "134 - Chinese GB2312"
-msgstr "134 - சீன சிபி 2312"
+msgstr "134 - சீன GB2312"
 
 #: HikariSub/StyleChange.cpp:248
 msgid "135 - Chinese BIG5"
-msgstr "135 - சீன பிக் 5"
+msgstr "135 - சீன BIG5"
 
 #: HikariSub/StyleChange.cpp:249
 msgid "161 - Greek"
@@ -5990,11 +5982,11 @@ msgstr "பிக்சல்களில் நிழல் அளவு"
 
 #: HikariSub/StyleChange.cpp:711
 msgid "Scale X in %"
-msgstr "% அளவிலான ஃச்"
+msgstr "X அளவு, % இல்"
 
 #: HikariSub/StyleChange.cpp:712
 msgid "Scale Y in %"
-msgstr "% இல் ஒய் அளவு"
+msgstr "Y அளவு, % இல்"
 
 #: HikariSub/StyleChange.cpp:713
 msgid "Rotation in degrees"
@@ -6041,7 +6033,7 @@ msgstr "நடுவண் இடது"
 
 #: HikariSub/StyleChange.cpp:724
 msgid "Center right"
-msgstr "நடுவண் சரியானது"
+msgstr "நடுவண் வலது"
 
 #: HikariSub/StyleChange.cpp:725
 msgid "Top left"
@@ -6074,14 +6066,14 @@ msgstr "நெடுவரிசைகளைத் தேர்வுசெய�
 
 #: HikariSub/SubsFile.cpp:38
 msgid "Set"
-msgstr "கணம்"
+msgstr "அமை"
 
 #: HikariSub/SubsFile.cpp:58
 #, c-format
 msgid "%d element"
 msgid_plural "%d elements"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d உறுப்பு"
+msgstr[1] "%d உறுப்புகள்"
 
 #: HikariSub/SubsFile.cpp:195
 msgid "Opening subtitles"
@@ -6161,7 +6153,7 @@ msgstr "கோடுகளை மாற்றுதல்"
 
 #: HikariSub/SubsFile.cpp:214
 msgid "Subtitles conversion"
-msgstr "வசன வரிகள் உரையாடல்"
+msgstr "வசன வரிகள் மாற்றம்"
 
 #: HikariSub/SubsFile.cpp:215
 msgid "Sorting subtitles"
@@ -6213,7 +6205,7 @@ msgstr "வசன வரிகள் பண்புகளை மாற்று
 
 #: HikariSub/SubsFile.cpp:227
 msgid "Selecting lines"
-msgstr "கோடுகள் செயல் என்பதைத் தேர்ந்தெடுக்கவும்"
+msgstr "வரிகளைத் தேர்ந்தெடுத்தல்"
 
 #: HikariSub/SubsFile.cpp:228
 msgid "Shifting times"
@@ -6273,7 +6265,7 @@ msgstr "காட்சி கருவி ஐட்ரா"
 
 #: HikariSub/SubsFile.cpp:245
 msgid "Fixing minor errors"
-msgstr "மல்டிர்ப்ளேசர்"
+msgstr "சிறு பிழைகளைச் சரிசெய்தல்"
 
 #: HikariSub/SubsFile.cpp:246
 msgid "Adding tree"
@@ -6289,7 +6281,7 @@ msgstr "மரத்திற்கு வரி சேர்க்கிறத�
 
 #: HikariSub/SubsFile.cpp:249
 msgid "Removing tree"
-msgstr "மரத்தை அகற்றவும்"
+msgstr "மரத்தை அகற்றுதல்"
 
 #: HikariSub/SubsFile.cpp:250
 msgid "Automation script"
@@ -6300,21 +6292,19 @@ msgid "Filtering"
 msgstr "வடிப்பி"
 
 #: HikariSub/SubsFile.cpp:252
-#, fuzzy
 msgid "Removing filtering"
-msgstr "கோடுகளை நீக்குதல்"
+msgstr "வடிகட்டலை நீக்குதல்"
 
 #: HikariSub/SubsFile.cpp:253
-#, fuzzy
 msgid "Splitting lines"
-msgstr "கோடுகள் நகலெடுகிறது"
+msgstr "வரிகளைப் பிரித்தல்"
 
 #: HikariSub/SubsFile.cpp:628
 #, c-format
 msgid "Fixed the tree markers of %d line: lines with no tree description are now ordinary lines and every tree is open or closed as a whole."
 msgid_plural "Fixed the tree markers of %d lines: lines with no tree description are now ordinary lines and every tree is open or closed as a whole."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%d வரியின் மரக் குறிப்பான்கள் சரிசெய்யப்பட்டன: மர விளக்கம் இல்லாத வரிகள் இப்போது சாதாரண வரிகள், ஒவ்வொரு மரமும் முழுமையாகத் திறந்தோ மூடியோ உள்ளது."
+msgstr[1] "%d வரிகளின் மரக் குறிப்பான்கள் சரிசெய்யப்பட்டன: மர விளக்கம் இல்லாத வரிகள் இப்போது சாதாரண வரிகள், ஒவ்வொரு மரமும் முழுமையாகத் திறந்தோ மூடியோ உள்ளது."
 
 #: HikariSub/SubsFile.cpp:839
 #, c-format
@@ -6323,7 +6313,7 @@ msgstr ", செயலில் வரி %i"
 
 #: HikariSub/SubsGrid.cpp:200
 msgid "Hide line wraps"
-msgstr "வரி மறைப்புகளை மறைக்கவும்"
+msgstr "வரி மடக்குகளை மறைக்கவும்"
 
 #: HikariSub/SubsGrid.cpp:228
 msgid "Do not include selected lines"
@@ -6331,53 +6321,51 @@ msgstr "தேர்ந்தெடுக்கப்பட்ட வரிக�
 
 #: HikariSub/SubsGrid.cpp:242
 msgid "Insert &before"
-msgstr "முன் செருகவும்"
+msgstr "முன் செருகவும் (&b)"
 
 #: HikariSub/SubsGrid.cpp:243
 msgid "Insert &after"
-msgstr "பின்னர் செருகவும்"
+msgstr "பின் செருகவும் (&a)"
 
 #: HikariSub/SubsGrid.cpp:245
 msgid "Insert before with &video time"
-msgstr "& வீடியோ நேரத்துடன் முன் செருகவும்"
+msgstr "வீடியோ நேரத்துடன் முன் செருகவும் (&v)"
 
 #: HikariSub/SubsGrid.cpp:246
 msgid "Insert &after with video time"
-msgstr "காணொளி நேரத்துடன் பின் செருகவும்"
+msgstr "வீடியோ நேரத்துடன் பின் செருகவும் (&a)"
 
 #: HikariSub/SubsGrid.cpp:249
-#, fuzzy
 msgid "Insert lines"
-msgstr "வரி செருகும்"
+msgstr "வரிகளைச் செருகவும்"
 
 #: HikariSub/SubsGrid.cpp:251
 msgid "&Duplicate lines"
-msgstr "& நகல் கோடுகள்"
+msgstr "வரிகளை நகலாக்கு (&d)"
 
 #: HikariSub/SubsGrid.cpp:253
 msgid "&Swap"
-msgstr "இடமாற்றம்"
+msgstr "இடமாற்று (&s)"
 
 #: HikariSub/SubsGrid.cpp:255
 msgid "Join &lines"
-msgstr "வரிகளில் சேரவும்"
+msgstr "வரிகளை இணை (&l)"
 
 #: HikariSub/SubsGrid.cpp:264
-#, fuzzy
 msgid "Split lines"
-msgstr "கோடுகள் நகலெடுகிறது"
+msgstr "வரிகளைப் பிரிக்கவும்"
 
 #: HikariSub/SubsGrid.cpp:266
 msgid "Copy\tCtrl-C"
-msgstr "Ctrl-C ஐ நகலெடுக்கவும்"
+msgstr "நகலெடு\tCtrl-C"
 
 #: HikariSub/SubsGrid.cpp:267
 msgid "Cut\tCtrl-X"
-msgstr "Ctrl-X ஐ வெட்டுங்கள்"
+msgstr "வெட்டு\tCtrl-X"
 
 #: HikariSub/SubsGrid.cpp:268
 msgid "Paste\tCtrl-V"
-msgstr "Ctrl-V ஐ ஒட்டவும்"
+msgstr "ஒட்டு\tCtrl-V"
 
 #: HikariSub/SubsGrid.cpp:271
 msgid "Hide columns"
@@ -6417,7 +6405,7 @@ msgstr "குறிச்சொற்கள் இல்லாமல் உர�
 
 #: HikariSub/SubsGrid.cpp:1011
 msgid "Subtitle files (*.ass),(*.srt),(*.sub),(*.txt)|*.ass;*.srt;*.sub;*.txt"
-msgstr "வசன கோப்புகள் (*.ஆச்), (*. எச்.ஆர்.டி), (*. துணை), (*"
+msgstr "வசன கோப்புகள் (*.ass),(*.srt),(*.sub),(*.txt)|*.ass;*.srt;*.sub;*.txt"
 
 #: HikariSub/SubsGrid.cpp:1216
 msgid "Save the file before loading subtitles from the MKV?"
@@ -6433,11 +6421,13 @@ msgstr "வசன வரிகள் திறக்க முடியாது
 msgid ""
 "In line %i, value '%s' cannot be scaled\n"
 "in tag '%s'"
-msgstr "%i வரியில் '%s' என்ற குறிச்சொல்லில் '%s' அளவிட முடியாது"
+msgstr ""
+"வரி %i இல், '%s' மதிப்பை அளவிட முடியாது\n"
+"('%s' குறிச்சொல்லில்)"
 
 #: HikariSub/SubsGridBase.cpp:214
 msgid "Invalid FPS. Correct it in options and try again."
-msgstr "தவறான எஃப்.பி.எச். அதை விருப்பங்களில் சரிசெய்து மீண்டும் முயற்சிக்கவும்."
+msgstr "தவறான FPS. அதை விருப்பங்களில் சரிசெய்து மீண்டும் முயற்சிக்கவும்."
 
 #: HikariSub/SubsGridBase.cpp:503 HikariSub/SubsGridBase.cpp:533
 msgid "Video was not loaded using FFMS2"
@@ -6445,20 +6435,20 @@ msgstr "FFMS2 ஐப் பயன்படுத்தி வீடியோ ஏ
 
 #: HikariSub/SubsGridBase.cpp:538
 msgid "No styles selected for time shifting"
-msgstr "நேரத்தை மாற்ற பாணிகளைத் தேர்வு செய்ய வேண்டாம்"
+msgstr "நேர நகர்த்தலுக்கு எந்தப் பாணியும் தேர்ந்தெடுக்கப்படவில்லை"
 
 #: HikariSub/SubsGridBase.cpp:556
 #, c-format
 msgid "Do you really want to shift only %s times?"
-msgstr "நீங்கள் உண்மையில் %s முறை மட்டுமே மாற்ற விரும்புகிறீர்களா?"
+msgstr "நீங்கள் உண்மையில் %s நேரங்களை மட்டும் நகர்த்த விரும்புகிறீர்களா?"
 
 #: HikariSub/SubsGridBase.cpp:557
 msgid "end"
-msgstr "முடிவு"
+msgstr "இறுதி"
 
 #: HikariSub/SubsGridBase.cpp:557
 msgid "start"
-msgstr "தொடங்கு"
+msgstr "தொடக்க"
 
 #: HikariSub/SubsGridBase.cpp:567
 msgid "No lines selected for shifting"
@@ -6466,17 +6456,17 @@ msgstr "மாற்றுவதற்கு எந்த வரிகளும�
 
 #: HikariSub/SubsGridBase.cpp:1324
 msgid "This edit would leave lines of a tree outside it, so it was not made."
-msgstr ""
+msgstr "இந்தத் திருத்தம் ஒரு மரத்தின் வரிகளை அதற்கு வெளியே விட்டுவிடும், எனவே அது செய்யப்படவில்லை."
 
 #: HikariSub/SubsGridBase.cpp:1325 HikariSub/SubsGridBase.cpp:1345
 #: HikariSub/SubsGridFiltering.cpp:186
 msgid "Trees"
-msgstr ""
+msgstr "மரங்கள்"
 
 #: HikariSub/SubsGridBase.cpp:1336
 #, c-format
 msgid "Line %d: %s"
-msgstr ""
+msgstr "வரி %d: %s"
 
 #: HikariSub/SubsGridBase.cpp:1339
 #, c-format
@@ -6491,17 +6481,25 @@ msgid_plural ""
 "\n"
 "Removing the trees deletes their description lines and shows their lines as ordinary lines."
 msgstr[0] ""
+"இந்தத் திருத்தம் ஒரு மரத்தைப் பிரிக்கும், அதன் சில வரிகளை அதற்கு வெளியே விடும் அல்லது அவற்றை வேறொரு மரத்துக்கு நகர்த்தும், எனவே அது செய்யப்படவில்லை:\n"
+"%s\n"
+"\n"
+"மரத்தை அகற்றினால் அதன் விளக்க வரி நீக்கப்பட்டு, அதன் வரிகள் சாதாரண வரிகளாகக் காட்டப்படும்."
 msgstr[1] ""
+"இந்தத் திருத்தம் மரங்களைப் பிரிக்கும், அவற்றின் சில வரிகளை அவற்றுக்கு வெளியே விடும் அல்லது அவற்றை வேறொரு மரத்துக்கு நகர்த்தும், எனவே அது செய்யப்படவில்லை:\n"
+"%s\n"
+"\n"
+"மரங்களை அகற்றினால் அவற்றின் விளக்க வரிகள் நீக்கப்பட்டு, அவற்றின் வரிகள் சாதாரண வரிகளாகக் காட்டப்படும்."
 
 #: HikariSub/SubsGridBase.cpp:1344
 msgid "Make the edit again after removing."
-msgstr ""
+msgstr "அகற்றிய பிறகு திருத்தத்தை மீண்டும் செய்யவும்."
 
 #: HikariSub/SubsGridBase.cpp:1346
 msgid "Remove the tree"
 msgid_plural "Remove the trees"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "மரத்தை அகற்று"
+msgstr[1] "மரங்களை அகற்று"
 
 #: HikariSub/SubsGridBase.cpp:1432
 msgid "Invalid format (file may be corrupted or contain errors)"
@@ -6509,7 +6507,7 @@ msgstr "தவறான வடிவம் (கோப்பு சிதைக�
 
 #: HikariSub/SubsGridBase.cpp:1508
 msgid "This subtitle file is plain text and will be opened as ASS subtitles"
-msgstr "இந்த வசன வரிகள் எளிய உரை, கழுதை வசனங்களாக திறக்கப்பட்டது"
+msgstr "இந்த வசனக் கோப்பு எளிய உரை, இது ASS வசனங்களாகத் திறக்கப்படும்"
 
 #: HikariSub/SubsGridBase.cpp:1577
 msgid ""
@@ -6529,7 +6527,7 @@ msgstr "வசன வரிகள் FPS"
 
 #: HikariSub/SubsGridDialogs.cpp:51
 msgid "New FPS"
-msgstr "புதிய எஃப்.பி.எச்"
+msgstr "புதிய FPS"
 
 #: HikariSub/SubsGridDialogs.cpp:53
 msgid "Change FPS"
@@ -6553,13 +6551,15 @@ msgstr "மரத்தின் பெயரை அமைக்கவும்"
 
 #: HikariSub/SubsGridDialogs.cpp:124
 msgid "Disable confirmation"
-msgstr "எச்சரிக்கை முடக்கு"
+msgstr "உறுதிப்படுத்தலை முடக்கு"
 
 #: HikariSub/SubsGridFiltering.cpp:185
 msgid ""
 "Hidden lines lie between the selected lines, so they cannot make one tree.\n"
 "Show the hidden lines or select only lines that are next to each other."
 msgstr ""
+"தேர்ந்தெடுக்கப்பட்ட வரிகளுக்கு இடையே மறைக்கப்பட்ட வரிகள் உள்ளன, எனவே அவை ஒரே மரமாக முடியாது.\n"
+"மறைக்கப்பட்ட வரிகளைக் காட்டவும் அல்லது அடுத்தடுத்து உள்ள வரிகளை மட்டும் தேர்ந்தெடுக்கவும்."
 
 #: HikariSub/SubsGridWindow.cpp:313 HikariSub/SubsGridWindow.cpp:701
 #: HikariSub/SubsGridWindow.cpp:1132 HikariSub/SubsGridWindow.cpp:1301
@@ -6582,12 +6582,12 @@ msgstr "வெர்ட்."
 #: HikariSub/SubsGridWindow.cpp:327 HikariSub/SubsGridWindow.cpp:716
 #: HikariSub/SubsGridWindow.cpp:1178 HikariSub/SubsGridWindow.cpp:1347
 msgid "CPS"
-msgstr "சிபிஎச்"
+msgstr "CPS"
 
 #: HikariSub/SubsGridWindow.cpp:328 HikariSub/SubsGridWindow.cpp:718
 #: HikariSub/SubsGridWindow.cpp:1183 HikariSub/SubsGridWindow.cpp:1352
 msgid "Wraps"
-msgstr "மறைப்புகள்"
+msgstr "மடக்குகள்"
 
 #: HikariSub/SubsGridWindow.cpp:329 HikariSub/SubsGridWindow.cpp:719
 msgid "Original text"
@@ -6607,7 +6607,6 @@ msgid "Change resolution"
 msgstr "தீர்மானத்தை மாற்றவும்"
 
 #: HikariSub/SubsResampleDialog.cpp:33
-#, fuzzy
 msgid "Target resolution"
 msgstr "இலக்கு தீர்மானம்"
 
@@ -6629,7 +6628,7 @@ msgstr "நீட்டிக்க"
 
 #: HikariSub/SubsResampleDialog.cpp:73 HikariSub/SubsResampleDialog.cpp:183
 msgid "Resample options"
-msgstr "மறுசீரமைப்பு விருப்பங்கள்"
+msgstr "மறுமாதிரியாக்க விருப்பங்கள்"
 
 #: HikariSub/SubsResampleDialog.cpp:169
 msgid "Incompatible resolution"
@@ -6646,13 +6645,13 @@ msgid ""
 "\n"
 "Match the resolution to the video?\n"
 msgstr ""
-"வசன வரிகள் மற்றும் வீடியோ தெளிவுத்திறன் வேறுபட்டது.\n"
-" நீங்கள் இப்போது அவற்றை மாற்றலாம் அல்லது வசன வரிகள் மறுசீரமைப்பைப் பயன்படுத்தலாம்.\n"
+"வீடியோ மற்றும் வசன வரிகளின் தீர்மானங்கள் வேறுபடுகின்றன.\n"
+"அவற்றை இப்போது மாற்றலாம் அல்லது 'வசனத் தீர்மானத்தை மாற்று' என்பதைப் பயன்படுத்தலாம்.\n"
 "\n"
-" வீடியோ தீர்மானம்: %i ஃச் %i\n"
-" வசனத் தீர்மானம்: %i ஃச் %i\n"
+"வீடியோ தீர்மானம்: %i x %i\n"
+"வசனத் தீர்மானம்: %i x %i\n"
 "\n"
-" வீடியோவுடன் தெளிவுத்திறனை பொருத்தவா?\n"
+"தீர்மானத்தை வீடியோவுடன் பொருத்தவா?\n"
 
 #: HikariSub/SubsResampleDialog.cpp:178
 msgid "Change only the subtitle resolution"
@@ -6660,11 +6659,11 @@ msgstr "வசனத் தீர்மானத்தை மட்டுமே 
 
 #: HikariSub/SubsResampleDialog.cpp:179
 msgid "Resample subtitles (no stretch)"
-msgstr "மறுவிற்பனை வசன வரிகள் (நீட்டிப்பு இல்லை)"
+msgstr "வசன வரிகளை மறுமாதிரியாக்கு (நீட்சி இல்லை)"
 
 #: HikariSub/SubsResampleDialog.cpp:181
 msgid "Resample subtitles (stretch)"
-msgstr "மறுவிற்பனை வசன வரிகள் (நீட்சி)"
+msgstr "வசன வரிகளை மறுமாதிரியாக்கு (நீட்சி)"
 
 #: HikariSub/SubsResampleDialog.cpp:185
 msgid "Change"
@@ -6684,7 +6683,7 @@ msgstr "லிபாச் FFMS2 உடன் மட்டுமே வேலை
 
 #: HikariSub/SubtitlesLibass.cpp:181
 msgid "Libass only opens ASS and SSA subtitles"
-msgstr "லிபாச் ஆச் மற்றும் எச்எச்ஏ வசன வரிகள் மட்டுமே திறக்கிறது"
+msgstr "Libass ASS மற்றும் SSA வசன வரிகளை மட்டுமே திறக்கும்"
 
 #: HikariSub/SubtitlesLibass.cpp:230
 msgid "Cannot open subtitles in Libass"
@@ -6692,15 +6691,15 @@ msgstr "லிபாசில் வசன வரிகள் திறக்க
 
 #: HikariSub/SubtitlesVSFilter.cpp:190
 msgid "Cannot initialize CSRI."
-msgstr "சி.எச்.ஆர்.ஐ."
+msgstr "CSRI-ஐத் துவக்க முடியாது."
 
 #: HikariSub/SubtitlesVSFilter.cpp:199
 msgid "Cannot create CSRI instance."
-msgstr "சி.எச்.ஆர்.ஐ உதாரணத்தை உருவாக்க முடியாது."
+msgstr "CSRI நிகழ்வை உருவாக்க முடியாது."
 
 #: HikariSub/SubtitlesVSFilter.cpp:208 HikariSub/SubtitlesVSFilter.cpp:313
 msgid "CSRI does not support this format."
-msgstr "சி.எச்.ஆர்.ஐ இந்த வடிவமைப்பை ஆதரிக்கவில்லை."
+msgstr "CSRI இந்த வடிவமைப்பை ஆதரிக்கவில்லை."
 
 #: HikariSub/TLDialog.cpp:24
 msgid "Translation matching options"
@@ -6781,15 +6780,16 @@ msgid ""
 "Subtitles were modified by another program.\n"
 "Reload and discard the unsaved changes in this tab?"
 msgstr ""
+"வசன வரிகள் வேறொரு நிரலால் மாற்றப்பட்டுள்ளன.\n"
+"மீண்டும் ஏற்றி, இந்தத் தாவலில் சேமிக்காத மாற்றங்களைக் கைவிடவா?"
 
 #: HikariSub/TabPanel.cpp:346 HikariSub/TabPanel.cpp:347
-#, fuzzy
 msgid "Reloading"
-msgstr "மீண்டும் ஏற்றுதல்…"
+msgstr "மீண்டும் ஏற்றுதல்"
 
 #: HikariSub/TabPanel.cpp:347
 msgid "Subtitles were modified by another program. Reload?"
-msgstr ""
+msgstr "வசன வரிகள் வேறொரு நிரலால் மாற்றப்பட்டுள்ளன. மீண்டும் ஏற்றவா?"
 
 #: HikariSub/TextEditorTagList.cpp:133
 msgid "Show description"
@@ -6869,7 +6869,7 @@ msgstr "நிழல் நிறத்தின் சாய்வு"
 
 #: HikariSub/TextEditorTagList.cpp:360
 msgid "Text alignment (SSA)"
-msgstr "உரை சீரமைப்பு (எச்எச்ஏ)"
+msgstr "உரை சீரமைப்பு (SSA)"
 
 #: HikariSub/TextEditorTagList.cpp:361
 msgid "Transparency"
@@ -6877,7 +6877,7 @@ msgstr "வெளிப்படைத்தன்மை"
 
 #: HikariSub/TextEditorTagList.cpp:363
 msgid "Bold text"
-msgstr "தைரியமான உரை"
+msgstr "தடித்த உரை"
 
 #: HikariSub/TextEditorTagList.cpp:364
 msgid "Edge blur"
@@ -6997,7 +6997,7 @@ msgstr "வளைவு உரை இயக்கம் (4 புள்ளிக
 
 #: HikariSub/TextEditorTagList.cpp:396
 msgid "Vector drawing movement"
-msgstr "திசையன் கிளிப்பின் நகர்வு"
+msgstr "திசையன் வரைபட நகர்வு"
 
 #: HikariSub/TextEditorTagList.cpp:397
 msgid "Anchor for rotation"
@@ -7041,7 +7041,7 @@ msgstr "சீரற்ற எழுத்துரு புள்ளிகள�
 
 #: HikariSub/TextEditorTagList.cpp:408
 msgid "Text strikethrough"
-msgstr "உரை வேலைநிறுத்தம்"
+msgstr "உரை குறுக்குக்கோடு"
 
 #: HikariSub/TextEditorTagList.cpp:409
 msgid "Text shadow"
@@ -7073,7 +7073,7 @@ msgstr "ஒய் அச்சில் நிழல்"
 
 #: HikariSub/TextEditorTagList.cpp:416
 msgid "Z coordinate for tags \\frx and \\fry"
-msgstr "குறிச்சொற்களுக்கு சட் ஒருங்கிணைப்பு \\ frx மற்றும் \\ fry"
+msgstr "\\frx, \\fry குறிச்சொற்களுக்கான Z ஆயத்தொலைவு"
 
 #: HikariSub/Toolbar.cpp:86
 #, c-format
@@ -7107,37 +7107,37 @@ msgstr "கருவிப்பட்டி சீரமைப்பு"
 #: HikariSub/UpdateChecker.cpp:107
 #, c-format
 msgid "You have the latest stable version. A newer prerelease, %s, is available."
-msgstr ""
+msgstr "உங்களிடம் சமீபத்திய நிலையான பதிப்பு உள்ளது. புதிய முன்வெளியீடு %s கிடைக்கிறது."
 
 #: HikariSub/UpdateChecker.cpp:108 HikariSub/UpdateChecker.cpp:273
 #: HikariSub/UpdateChecker.cpp:313 HikariSub/UpdateChecker.cpp:331
 msgid "Update"
-msgstr ""
+msgstr "புதுப்பிப்பு"
 
 #: HikariSub/UpdateChecker.cpp:109 HikariSub/UpdateChecker.cpp:152
 msgid "Open the download page"
-msgstr ""
+msgstr "பதிவிறக்கப் பக்கத்தைத் திற"
 
 #: HikariSub/UpdateChecker.cpp:119
 msgid "A new version is available"
-msgstr ""
+msgstr "புதிய பதிப்பு கிடைக்கிறது"
 
 #: HikariSub/UpdateChecker.cpp:129
 #, c-format
 msgid "You have version %s; version %s is available"
-msgstr ""
+msgstr "உங்களிடம் பதிப்பு %s உள்ளது; பதிப்பு %s கிடைக்கிறது"
 
 #: HikariSub/UpdateChecker.cpp:153
 msgid "Remind me in a week"
-msgstr ""
+msgstr "ஒரு வாரம் கழித்து நினைவூட்டு"
 
 #: HikariSub/UpdateChecker.cpp:273 HikariSub/UpdateChecker.cpp:331
 msgid "Cannot check for updates"
-msgstr ""
+msgstr "புதுப்பிப்புகளைச் சரிபார்க்க முடியாது"
 
 #: HikariSub/UpdateChecker.cpp:313
 msgid "You already have the latest version"
-msgstr ""
+msgstr "உங்களிடம் ஏற்கனவே சமீபத்திய பதிப்பு உள்ளது"
 
 #: HikariSub/UtilsWindows.cpp:63
 msgid "Unable to retrieve information about the monitor"
@@ -7174,16 +7174,16 @@ msgstr "வீடியோ நிலையை நகலெடுக்கவு�
 
 #: HikariSub/VideoBox.cpp:951
 msgid "Full screen\tF"
-msgstr "முழுத் திரை f"
+msgstr "முழுத் திரை\tF"
 
 #: HikariSub/VideoBox.cpp:952
 msgid "Exit full screen\tEscape"
-msgstr "முழு திரை தப்பிக்க"
+msgstr "முழுத் திரையிலிருந்து வெளியேறு\tEscape"
 
 #: HikariSub/VideoBox.cpp:960
 #, c-format
 msgid "Switch full screen to monitor %i"
-msgstr "%i ஐ கண்காணிக்க முழுத் திரையை மாற்றவும்"
+msgstr "முழுத் திரையை மானிட்டர் %i க்கு மாற்றவும்"
 
 #: HikariSub/VideoBox.cpp:961
 #, c-format
@@ -7192,7 +7192,7 @@ msgstr "மானிட்டர் %i இல் முழுத் திரை
 
 #: HikariSub/VideoBox.cpp:965
 msgid "Open editor"
-msgstr "திறந்த ஆசிரியர்"
+msgstr "எடிட்டரைத் திற"
 
 #: HikariSub/VideoBox.cpp:1007
 msgid "Filters"
@@ -7212,11 +7212,11 @@ msgstr "நீக்குதல்"
 
 #: HikariSub/VideoBox.cpp:1109
 msgid "Video files(*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.3gp;*.avs|All files (*.*)|*.*"
-msgstr "வீடியோ கோப்புகள் (*. அவி), (*. எம்.கே.வி), (*. MP4), (*. OGM), (*. WMV), (*. ASF), (*. RMVB), (* p), (*. avs) |*.avi;*. mkv;*. Mp4;* கோப்புகள் (*.*) |*.*"
+msgstr "வீடியோ கோப்புகள் (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.3gp;*.avs|அனைத்து கோப்புகளும் (*.*)|*.*"
 
 #: HikariSub/VideoBox.cpp:1124
 msgid "Subtitle files (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt"
-msgstr "வசன கோப்புகள் (*.ஆச்), (*. துணை), (*. TXT) |*.ASS;*. துணை;*"
+msgstr "வசன கோப்புகள் (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt"
 
 #: HikariSub/VideoBox.cpp:1779
 msgid "Invalid keyframes format"
@@ -7308,11 +7308,11 @@ msgstr "நிலை புள்ளிகளை நகர்த்தவும�
 
 #: HikariSub/VideoToolbar.cpp:71
 msgid "Change \\move starting points"
-msgstr "மாற்ற \\ தொடக்க புள்ளிகளை நகர்த்தவும்"
+msgstr "\\move தொடக்கப் புள்ளிகளை மாற்றவும்"
 
 #: HikariSub/VideoToolbar.cpp:72
 msgid "Change \\move ending points"
-msgstr "மாற்றம் \\ முடிவு புள்ளிகளை நகர்த்தவும்"
+msgstr "\\move முடிவுப் புள்ளிகளை மாற்றவும்"
 
 #: HikariSub/VideoToolbar.cpp:73
 msgid "Move clips"
@@ -7331,7 +7331,7 @@ msgstr ""
 
 #: HikariSub/VideoToolbar.cpp:75
 msgid "Move \\org points"
-msgstr "\\ Org புள்ளிகளை நகர்த்தவும்"
+msgstr "\\org புள்ளிகளை நகர்த்தவும்"
 
 #: HikariSub/VideoToolbar.cpp:78
 msgid ""
@@ -7479,7 +7479,7 @@ msgstr "தேர்ந்தெடுக்கப்பட்ட வரிக�
 
 #: HikariSub/VideoToolbar.cpp:141
 msgid "On moving to another line play:"
-msgstr "மற்றொரு வரி நாடகத்திற்குச் செல்லும்போது:"
+msgstr "மற்றொரு வரிக்குச் செல்லும்போது இயக்கவும்:"
 
 #: HikariSub/VideoToolbar.cpp:513
 msgid ""
@@ -7487,18 +7487,17 @@ msgid ""
 "After choose drawing from list just set cursor i n place\n"
 "of start of drawing and click left mouse button and drag."
 msgstr ""
-"திருத்து விருப்பத்துடன் கழுதை வரைபடங்களின் பட்டியல்.\n"
-" பட்டியலிலிருந்து வரைபடத்தைத் தேர்ந்தெடுத்த பிறகு, கர்சர் i n இடத்தை அமைக்கவும்\n"
-" வரைதல் தொடங்கி இடது சுட்டி பொத்தானைக் சொடுக்கு செய்து இழுக்கவும்."
+"திருத்தும் விருப்பத்துடன் ASS வரைபடங்களின் பட்டியல்.\n"
+"பட்டியலிலிருந்து வரைபடத்தைத் தேர்ந்தெடுத்த பிறகு, வரைபடம் தொடங்கும் இடத்தில்\n"
+"கர்சரை வைத்து இடது சுட்டி பொத்தானைச் சொடுக்கி இழுக்கவும்."
 
 #: HikariSub/VideoToolbar.cpp:747
 msgid "List of tags that can edit visual tool"
 msgstr "காட்சி கருவியைத் திருத்தக்கூடிய குறிச்சொற்களின் பட்டியல்"
 
 #: HikariSub/VideoToolbar.cpp:749 HikariSub/VisualAllTagsEdition.cpp:87
-#, fuzzy
 msgid "Gradient text increasing"
-msgstr "சாய்வு உரை அதிகரிக்கிறது"
+msgstr "உரை சாய்வு, அதிகரிக்கும்"
 
 #: HikariSub/VideoToolbar.cpp:749 HikariSub/VisualAllTagsEdition.cpp:87
 msgid "Insert"
@@ -7514,19 +7513,16 @@ msgid "Multiply+"
 msgstr "பெருக்கல்+"
 
 #: HikariSub/VideoToolbar.cpp:750 HikariSub/VisualAllTagsEdition.cpp:88
-#, fuzzy
 msgid "Gradient line decreasing"
-msgstr "நிழல் நிறத்தின் சாய்வு"
+msgstr "வரி சாய்வு, குறையும்"
 
 #: HikariSub/VideoToolbar.cpp:750 HikariSub/VisualAllTagsEdition.cpp:88
-#, fuzzy
 msgid "Gradient line increasing"
-msgstr "நிழல் நிறத்தின் சாய்வு"
+msgstr "வரி சாய்வு, அதிகரிக்கும்"
 
 #: HikariSub/VideoToolbar.cpp:750 HikariSub/VisualAllTagsEdition.cpp:88
-#, fuzzy
 msgid "Gradient text decreasing"
-msgstr "சாய்வு உரை குறைகிறது"
+msgstr "உரை சாய்வு, குறையும்"
 
 #: HikariSub/VideoToolbar.cpp:753
 msgid ""
@@ -7541,6 +7537,16 @@ msgid ""
 "Gradient line increasing - inserts a tag in selected lines, increasing the value.\n"
 "Gradient line decreasing - inserts a tag in selected lines, decreasing the value."
 msgstr ""
+"குறிச்சொல் மாற்ற விருப்பங்கள்:\n"
+"கூட்டு - ச்லைடர் மதிப்பைக் கூட்டி அனைத்து குறிச்சொற்களையும் மாற்றுகிறது.\n"
+"செருகவும் - ஒரு வரிக்கு கர்சர் நிலையிலும்,\n"
+"பல வரிகளுக்குத் தொடக்கத்திலும் குறிச்சொல்லைச் செருகுகிறது.\n"
+"பெருக்கவும் - ச்லைடர் மதிப்பைத் தேர்ந்தெடுத்த வரியின் எண்ணால் பெருக்குகிறது;\n"
+"முதல் வரி மாற்றப்படாது.\n"
+"உரை சாய்வு, அதிகரிக்கும் - ஒவ்வொரு எழுத்திலும் குறிச்சொல்லைச் செருகி, மதிப்பை அதிகரிக்கிறது.\n"
+"உரை சாய்வு, குறையும் - ஒவ்வொரு எழுத்திலும் குறிச்சொல்லைச் செருகி, மதிப்பைக் குறைக்கிறது.\n"
+"வரி சாய்வு, அதிகரிக்கும் - தேர்ந்தெடுத்த வரிகளில் குறிச்சொல்லைச் செருகி, மதிப்பை அதிகரிக்கிறது.\n"
+"வரி சாய்வு, குறையும் - தேர்ந்தெடுத்த வரிகளில் குறிச்சொல்லைச் செருகி, மதிப்பைக் குறைக்கிறது."
 
 #: HikariSub/VideoToolbar.cpp:783
 msgid "Edit listed tags and create new ones"
@@ -7548,15 +7554,15 @@ msgstr "பதிப்பு பட்டியல் குறிச்சொ�
 
 #: HikariSub/VideoToolbar.cpp:1102
 msgid "Center-below"
-msgstr "சென்டர்-பெலோ"
+msgstr "மையம்-கீழே"
 
 #: HikariSub/VideoToolbar.cpp:1102
 msgid "Left-below"
-msgstr "இடது-பெலோ"
+msgstr "இடது-கீழே"
 
 #: HikariSub/VideoToolbar.cpp:1102
 msgid "Right-below"
-msgstr "வலது-பெலோ"
+msgstr "வலது-கீழே"
 
 #: HikariSub/VideoToolbar.cpp:1103
 msgid "Center-above"
@@ -7584,15 +7590,15 @@ msgstr "முன்-மேல்"
 
 #: HikariSub/VideoToolbar.cpp:1105
 msgid "After-bottom"
-msgstr "பிறகு"
+msgstr "பின்-கீழ்"
 
 #: HikariSub/VideoToolbar.cpp:1105
 msgid "After-center"
-msgstr "பின் மையத்தில்"
+msgstr "பின்-மையம்"
 
 #: HikariSub/VideoToolbar.cpp:1105
 msgid "After-top"
-msgstr "பின்-பின்"
+msgstr "பின்-மேல்"
 
 #: HikariSub/VideoToolbar.cpp:1114
 msgid "Text placing works similar like in styles"
@@ -7640,11 +7646,11 @@ msgstr "உரையின் தொடக்கத்தில் குறி�
 
 #: HikariSub/VisualAllTagsEdition.cpp:75
 msgid "Inserted at the cursor position"
-msgstr "குறிச்சொல் கர்சருக்கு பதிலாக செருகப்பட்டது"
+msgstr "கர்சர் நிலையில் செருகப்பட்டது"
 
 #: HikariSub/VisualAllTagsEdition.cpp:76
 msgid "Clip rectangle with \\t animation"
-msgstr "\\ T அனிமேசனுடன் கிளிப் செவ்வகம்"
+msgstr "\\t அனிமேசனுடன் கிளிப் செவ்வகம்"
 
 #: HikariSub/VisualAllTagsEdition.cpp:82
 msgid "Decimal places:"
@@ -7655,17 +7661,14 @@ msgid "No additional values"
 msgstr "கூடுதல் மதிப்புகள் இல்லை"
 
 #: HikariSub/VisualAllTagsEdition.cpp:90
-#, fuzzy
 msgid "One additional value"
 msgstr "ஒரு கூடுதல் மதிப்பு"
 
 #: HikariSub/VisualAllTagsEdition.cpp:91
-#, fuzzy
 msgid "Two additional values"
 msgstr "இரண்டு கூடுதல் மதிப்புகள்"
 
 #: HikariSub/VisualAllTagsEdition.cpp:92
-#, fuzzy
 msgid "Three additional values"
 msgstr "மூன்று கூடுதல் மதிப்புகள்"
 
@@ -7724,19 +7727,16 @@ msgstr ""
 "புலம் \"குறைந்தபட்ச மதிப்பு\" இலிருந்து அதிகமாகும்."
 
 #: HikariSub/VisualAllTagsEdition.cpp:309
-#, fuzzy
 msgid "Field \"Step\" must contain a value greater than zero."
-msgstr ""
-"புலம் \"அதிகபட்ச மதிப்பு\" மதிப்பைக் கொண்டிருக்க வேண்டும் \n"
-"புலம் \"குறைந்தபட்ச மதிப்பு\" இலிருந்து அதிகமாகும்."
+msgstr "\"படி\" புலத்தில் சுழியத்தை விடப் பெரிய மதிப்பு இருக்க வேண்டும்."
 
 #: HikariSub/VisualAllTagsEdition.cpp:313
 msgid "Field \"Step\" contains a number too large for the current min-max range."
-msgstr "புலம் \"படி\" தற்போதைய மணித்துளி - அதிகபட்ச வரம்பிற்கு மிகச்சிறந்த எண்ணைக் கொண்டுள்ளது."
+msgstr "\"படி\" புலத்தில் உள்ள எண் தற்போதைய குறைந்தபட்ச-அதிகபட்ச வரம்புக்கு மிகப் பெரியது."
 
 #: HikariSub/VisualClips.cpp:1020
 msgid "Double \"m\" was blocked because of Vsfilter bug"
-msgstr "VSFILTER பிழை காரணமாக இரட்டை \"M\" தடுக்கப்பட்டது"
+msgstr "VSFilter பிழை காரணமாக இரட்டை \"m\" தடுக்கப்பட்டது"
 
 #: HikariSub/VisualDrawingShapes.cpp:44
 msgid "Vector shape editing"
@@ -7848,7 +7848,7 @@ msgstr "COM ஐ துவக்க முடியாது"
 
 #: HikariSub/dshowplayer.cpp:84
 msgid "Failed to initialize DirectShow"
-msgstr "நேரடி நிகழ்ச்சியைத் தொடங்கத் தவறிவிட்டது"
+msgstr "DirectShow-ஐத் துவக்க முடியவில்லை"
 
 #: HikariSub/dshowplayer.cpp:94
 msgid "Source filter not added"
@@ -7864,7 +7864,7 @@ msgstr "ஆடியோ ரெண்டரர் உதாரணத்தை உ
 
 #: HikariSub/dshowplayer.cpp:126
 msgid "Cannot add Direct Sound renderer"
-msgstr "நேரடி ஒலி ரெண்டரரைச் சேர்க்க முடியாது"
+msgstr "DirectSound ரெண்டரரைச் சேர்க்க முடியாது"
 
 #: HikariSub/dshowplayer.cpp:141 HikariSub/dshowplayer.cpp:162
 #: HikariSub/dshowplayer.cpp:182 HikariSub/dshowplayer.cpp:272
@@ -7877,7 +7877,7 @@ msgstr "ரெண்டரர் ஊசிகளை கணக்கிட மு
 
 #: HikariSub/dshowplayer.cpp:185
 msgid "Cannot enumerate Direct Sound pins"
-msgstr "நேரடி ஒலி ஊசிகளை கணக்கிட முடியாது"
+msgstr "DirectSound பின்களைக் கணக்கிட முடியாது"
 
 #: HikariSub/dshowplayer.cpp:195
 msgid "Cannot get renderer pin"
@@ -7889,7 +7889,7 @@ msgstr "Dsound முள் பெற முடியாது"
 
 #: HikariSub/dshowplayer.cpp:211 HikariSub/dshowplayer.cpp:238
 msgid "No IMediaTypes"
-msgstr "உடனடியாக"
+msgstr "IMediaTypes இல்லை"
 
 #: HikariSub/dshowplayer.cpp:212 HikariSub/dshowplayer.cpp:239
 msgid "No track type info"
@@ -7966,7 +7966,7 @@ msgstr "வெளிப்பாட்டைக் கண்டுபிடி�
 #: HikariSub/findreplace.cpp:937 HikariSub/findreplace.cpp:1285
 #: HikariSub/findreplace.cpp:1325
 msgid "Find and Replace"
-msgstr "மாற்றவும்"
+msgstr "கண்டுபிடித்து மாற்று"
 
 #: HikariSub/findreplace.cpp:937 HikariSub/findreplace.cpp:1285
 #: HikariSub/findreplace.cpp:1325
@@ -7979,8 +7979,8 @@ msgid ""
 "Are you sure you want to make changes in all subtitle files?\n"
 "If you make a mistake, backups are in the 'ReplaceBackup' folder."
 msgstr ""
-"அனைத்து வசனக் கோப்புகளிலும் மாற்ற விரும்புகிறீர்களா?\n"
-" மோசமான மாற்றிய பின் காப்புப்பிரதி கோப்புகள் 'மாற்றப்பட்ட பேக்அப்' கோப்புறையில் உள்ளன"
+"அனைத்து வசனக் கோப்புகளிலும் மாற்றங்களைச் செய்ய விரும்புகிறீர்களா?\n"
+"தவறு நேர்ந்தால், காப்புப்பிரதிகள் 'ReplaceBackup' கோப்புறையில் உள்ளன."
 
 #: HikariSub/findreplace.cpp:1453
 msgid "Search path is invalid"
@@ -8026,15 +8026,15 @@ msgstr "அமைப்புகளைப் படிக்க முடிய�
 
 #: HikariSub/hikarisubApp.cpp:361
 msgid "Cannot find language, language change failed"
-msgstr ""
+msgstr "மொழியைக் கண்டுபிடிக்க முடியவில்லை, மொழி மாற்றம் தோல்வியடைந்தது"
 
 #: HikariSub/hikarisubApp.cpp:366
 msgid "wxLocale cannot initialize, language change failed"
-msgstr ""
+msgstr "wxLocale-ஐத் துவக்க முடியவில்லை, மொழி மாற்றம் தோல்வியடைந்தது"
 
 #: HikariSub/hikarisubApp.cpp:379
 msgid "Cannot find translation, language change failed"
-msgstr ""
+msgstr "மொழிபெயர்ப்பைக் கண்டுபிடிக்க முடியவில்லை, மொழி மாற்றம் தோல்வியடைந்தது"
 
 #: HikariSub/hikarisubApp.cpp:404
 msgid ""
@@ -8093,19 +8093,19 @@ msgstr "சேமிப்பகத்தில் சேர்க்கவு�
 
 #: HikariSub/stylestore.cpp:126
 msgid "Add to ASS"
-msgstr "கழுதையில் சேர்க்கவும்"
+msgstr "ASS இல் சேர்க்கவும்"
 
 #: HikariSub/stylestore.cpp:127
 msgid "Add to all open ASS files"
-msgstr "திறந்த அனைத்து கழுதை கோப்புகளிலும் சேர்க்கவும்"
+msgstr "திறந்துள்ள அனைத்து ASS கோப்புகளிலும் சேர்க்கவும்"
 
 #: HikariSub/stylestore.cpp:132
 msgid "Styles in ASS file:"
-msgstr "கழுதை கோப்பில் பாணிகள்:"
+msgstr "ASS கோப்பில் உள்ள பாணிகள்:"
 
 #: HikariSub/stylestore.cpp:146
 msgid "Clear"
-msgstr "தெளிவான"
+msgstr "சுத்தம் செய்"
 
 #: HikariSub/stylestore.cpp:173
 msgid "Detach editing window"
@@ -8128,11 +8128,11 @@ msgstr "பாணி பெயர் மாற்றியமைக்கப்�
 
 #: HikariSub/stylestore.cpp:612
 msgid "Choose ASS file"
-msgstr "கழுதை கோப்பைத் தேர்வுசெய்க"
+msgstr "ASS கோப்பைத் தேர்வுசெய்க"
 
 #: HikariSub/stylestore.cpp:613
 msgid "ASS subtitle files(*.ass)|*.ass"
-msgstr "கழுதை வசன கோப்புகள் (*. கழுதை) |*.ஆச்"
+msgstr "ASS வசன கோப்புகள் (*.ass)|*.ass"
 
 #: HikariSub/stylestore.cpp:691 HikariSub/stylestore.cpp:702
 msgid "Copy of "
@@ -8181,7 +8181,7 @@ msgstr "சேமிப்பகத்தில் பாணியை நகல�
 
 #: HikariSub/stylestore.cpp:786
 msgid "Load style from external ASS file to storage"
-msgstr "வெளிப்புற கழுதை கோப்பிலிருந்து சேமிப்பகத்திற்கு பாணியை ஏற்றவும்"
+msgstr "வெளிப்புற ASS கோப்பிலிருந்து சேமிப்பகத்திற்கு பாணியை ஏற்றவும்"
 
 #: HikariSub/stylestore.cpp:787
 msgid "Delete style from storage"
@@ -8193,39 +8193,39 @@ msgstr "சேமிப்பகத்தில் பாணிகளை வர�
 
 #: HikariSub/stylestore.cpp:789
 msgid "Create new ASS style"
-msgstr "புதிய கழுதை பாணியை உருவாக்கவும்"
+msgstr "புதிய ASS பாணியை உருவாக்கவும்"
 
 #: HikariSub/stylestore.cpp:790
 msgid "Edit selected ASS style"
-msgstr "தேர்ந்தெடுக்கப்பட்ட கழுதை பாணியைத் திருத்தவும்"
+msgstr "தேர்ந்தெடுக்கப்பட்ட ASS பாணியைத் திருத்தவும்"
 
 #: HikariSub/stylestore.cpp:791
 msgid "Copy ASS style"
-msgstr "கழுதையின் நகல் பாணி"
+msgstr "ASS பாணியை நகலெடுக்கவும்"
 
 #: HikariSub/stylestore.cpp:792
 msgid "Load style from external ASS file"
-msgstr "வெளிப்புற கழுதை கோப்பிலிருந்து பாணியை ஏற்றவும்"
+msgstr "வெளிப்புற ASS கோப்பிலிருந்து பாணியை ஏற்றவும்"
 
 #: HikariSub/stylestore.cpp:793
 msgid "Delete style from ASS"
-msgstr "கழுதையிலிருந்து பாணியை நீக்கு"
+msgstr "ASS இலிருந்து பாணியை நீக்கு"
 
 #: HikariSub/stylestore.cpp:794
 msgid "Sort styles in ASS"
-msgstr "கழுதையில் பாணிகளை வரிசைப்படுத்துங்கள்"
+msgstr "ASS இல் பாணிகளை வரிசைப்படுத்துங்கள்"
 
 #: HikariSub/stylestore.cpp:795
 msgid "Copy style from ASS to storage"
-msgstr "கழுதையிலிருந்து சேமிப்பகத்திற்கு பாணியை நகலெடுக்கவும்"
+msgstr "ASS இலிருந்து சேமிப்பகத்திற்கு பாணியை நகலெடுக்கவும்"
 
 #: HikariSub/stylestore.cpp:796
 msgid "Copy style from storage to ASS"
-msgstr "சேமிப்பகத்திலிருந்து கழுதைக்கு பாணியை நகலெடுக்கவும்"
+msgstr "சேமிப்பகத்திலிருந்து ASS க்கு பாணியை நகலெடுக்கவும்"
 
 #: HikariSub/stylestore.cpp:797
 msgid "Delete unused ASS styles"
-msgstr "பயன்படுத்தப்படாத கழுதை பாணிகளை நீக்கு"
+msgstr "பயன்படுத்தப்படாத ASS பாணிகளை நீக்கு"
 
 #~ msgid "Cannot create Direct3D object"
 #~ msgstr "நேரடி 3D பொருளை உருவாக்க முடியாது"
