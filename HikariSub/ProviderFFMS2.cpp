@@ -31,6 +31,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <limits>
+#include <new>
 #include <vector>
 #include "UtilsWindows.h"
 #include "Provider.h"
@@ -567,6 +568,13 @@ void ProviderFFMS2::AudioLoad(ProviderFFMS2* vf, bool newIndex, int audiotrack)
 	}
 	vf->audioNotInitialized = false;
 done:
+	if (vf->audioNotInitialized && !vf->m_stopLoadingAudio) {
+		// without this the audio box waits for the cache forever
+		vf->m_audioLoadFailed = true;
+		HikariLog(vf->m_discCache ?
+			wxString::Format(_("Cannot create the audio cache %s"), vf->m_diskCacheFilename) :
+			wxString(_("Not enough memory for the audio cache")));
+	}
 	if (vf->m_audioSource) { FFMS_DestroyAudioSource(vf->m_audioSource); vf->m_audioSource = nullptr; }
 	vf->m_lockGetFrame = false;
 	SetEvent(vf->m_eventAudioComplete);
@@ -777,13 +785,22 @@ bool ProviderFFMS2::RAMCache()
 
 	const long long blsize = (1 << 22);
 	m_blockNum = (int)(end / blsize) + 1;
-	m_cache = new char* [m_blockNum];
+	// blocks not allocated yet stay null, so a failure can free the rest
+	m_cache = new (std::nothrow) char* [m_blockNum]();
+	if (!m_cache) {
+		m_blockNum = 0;
+		return false;
+	}
 
 	long long written = 0;
 	for (int i = 0; i < m_blockNum; i++)
 	{
 		long long size = std::min(blsize, end - written);
-		m_cache[i] = new char[std::max(1LL, size)];
+		m_cache[i] = new (std::nothrow) char[std::max(1LL, size)];
+		if (!m_cache[i]) {
+			ClearRAMCache();
+			return false;
+		}
 		long long frames = size / frameBytes;
 		long long silentFrames = std::clamp(silence - written / frameBytes, 0LL, frames);
 		memset(m_cache[i], 0, silentFrames * frameBytes);
@@ -850,18 +867,26 @@ bool ProviderFFMS2::DiskCache(bool newIndex)
 	try {
 		if (m_delayFrames > 0) {
 			std::vector<char> silence((size_t)(m_delayFrames * frameBytes));
-			fwrite(silence.data(), 1, silence.size(), m_fp);
+			good = fwrite(silence.data(), 1, silence.size(), m_fp) == silence.size();
 		}
 		std::vector<char> data((size_t)(block * frameBytes));
-		while (sourceFrame < sourceEnd) {
+		while (good && sourceFrame < sourceEnd) {
 			long long frames = std::min(block, sourceEnd - sourceFrame);
 			GetAudio(data.data(), sourceFrame, frames);
-			fwrite(data.data(), 1, frames * frameBytes, m_fp);
+			size_t bytes = (size_t)(frames * frameBytes);
+			// a full disk writes short, and such a cache must not be kept
+			if (fwrite(data.data(), 1, bytes, m_fp) != bytes) {
+				good = false;
+				break;
+			}
 			sourceFrame += frames;
 			m_audioProgress = ((float)sourceFrame / (float)sourceEnd);
 			if (m_stopLoadingAudio) break;
 		}
-		m_diskCacheComplete = sourceFrame >= sourceEnd;
+		// the buffered tail reaches the disk here, rewind would hide its error
+		if (good && fflush(m_fp) != 0)
+			good = false;
+		m_diskCacheComplete = good && sourceFrame >= sourceEnd;
 		rewind(m_fp);
 	}
 	catch (...) {

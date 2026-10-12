@@ -88,6 +88,10 @@ public:
 	float GetAudioProgress() {
 		return m_audioProgress.load();
 	}
+	// the audio cache could not be built, so the audio never finishes loading
+	bool AudioLoadFailed() {
+		return m_audioLoadFailed.load();
+	}
 protected:
 	Provider(const wxString& filename, RendererFFMS2* renderer);
 	// the playback thread: plays and seeks on request until killed
@@ -96,6 +100,7 @@ protected:
 	virtual bool FetchPlaybackFrame(int frame, unsigned char* buffer) { return false; }
 	std::atomic<bool> audioNotInitialized{ true };
 	std::atomic<float> m_audioProgress{ 0 };
+	std::atomic<bool> m_audioLoadFailed{ false };
 	// reads the whole cached audio once, stopping early when stop is set
 	void BuildPeaks(const std::atomic<bool> &stop);
 	WaveformPeaks m_peaks{ 256 };

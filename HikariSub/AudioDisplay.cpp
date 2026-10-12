@@ -120,6 +120,9 @@ AudioDisplay::AudioDisplay(wxWindow *parent)
 		if (!provider->AudioNotInitialized()){
 			UpdateImage(); ProgressTimer.Stop();
 		}
+		else if (provider->AudioLoadFailed()){
+			Refresh(false); ProgressTimer.Stop();
+		}
 		else if (provider->GetAudioProgress() != lastProgress){
 			Refresh(false);
 		}
@@ -1152,7 +1155,8 @@ void AudioDisplay::DrawProgress()
 	textParcent.right = w - 20;
 	textParcent.top = halfY - 20;
 	textParcent.bottom = halfY + 20;
-	wxString txt = wxString::Format(L"%d%%", (int)(provider->GetAudioProgress() * 100.f));
+	wxString txt = provider->AudioLoadFailed() ? wxString(_("Audio could not be loaded")) :
+		wxString::Format(L"%d%%", (int)(provider->GetAudioProgress() * 100.f));
 
 	d3dLine->SetWidth(1);
 	d3dLine->Begin();
@@ -1794,8 +1798,9 @@ void AudioDisplay::DrawWithWx(wxDC& dc, bool weak)
 		dc.DrawLine(left + 2, halfY, progressRight, halfY);
 		dc.SetFont(tahoma13);
 		dc.SetTextForeground(*wxWHITE);
-		dc.DrawLabel(wxString::Format(L"%d%%", (int)(provider->GetAudioProgress() * 100.f)),
-			wxRect(left, halfY - 20, right - left, 40), wxALIGN_CENTER);
+		wxString txt = provider->AudioLoadFailed() ? wxString(_("Audio could not be loaded")) :
+			wxString::Format(L"%d%%", (int)(provider->GetAudioProgress() * 100.f));
+		dc.DrawLabel(txt, wxRect(left, halfY - 20, right - left, 40), wxALIGN_CENTER);
 		return;
 	}
 
