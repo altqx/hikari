@@ -112,8 +112,9 @@ public:
     // The tab menu's "Subtitle comparison" (Notebook::ContextMenu,
     // Notebook.cpp:915-939), opened on a tab other than the active one with
     // `common` the Styles the two share: each one in SUBS_COMPARISON_STYLES is
-    // shown checked and added to compareStyles again (legacy never clears that
-    // list, so a style stays chosen however often it was added).
+    // shown checked and added to compareStyles unless it is there (legacy
+    // added it again at each opening, R1-stuck-style; the list is never
+    // cleared).
     struct MenuStyle {
         std::u8string name;
         bool checked = false;

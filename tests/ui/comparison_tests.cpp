@@ -630,12 +630,13 @@ private slots:
         QCOMPARE(states(), QStringLiteral("=x"));
     }
 
-    // Notebook.cpp:922-928 adds each checked style to compareStyles at every
-    // opening and the ID_CHECK_EVENT handler removes only the first copy
-    // (Notebook.cpp:103-109): after two openings a style cannot be unchecked
-    // (the list keeps it, it is saved again and shown checked next time).
-    // Legacy behaviour kept; proposed as R1-stuck-style in the R1 report.
-    void aStyleShownTwiceStaysChosenWhenUnchecked()
+    // R1-stuck-style: Notebook.cpp:922-928 added each checked style to
+    // compareStyles at every opening and the ID_CHECK_EVENT handler removed
+    // only the first copy (Notebook.cpp:103-109), so after two openings a
+    // style could not be unchecked (the list kept it, it was saved again and
+    // shown checked next time). Here an uncheck after two openings takes it
+    // out of the option and the comparison.
+    void aStyleShownTwiceIsUncheckedAtOnce()
     {
         application->settingsStore()->set("comparison.styles", QStringList{"Sign"});
         openTabMenu(1);
@@ -643,11 +644,11 @@ private slots:
         openTabMenu(1);
         QVERIFY(checked("compareStyle_Sign"));
         trigger("compareStyle_Sign"); // unchecked
-        QCOMPARE(application->settingsStore()->list("comparison.styles"), QStringList{"Sign"});
-        QCOMPARE(type(), 4); // COMPARE_BY_CHOSEN_STYLES
+        QCOMPARE(application->settingsStore()->list("comparison.styles"), QStringList{});
+        QCOMPARE(type(), 0);
         openTabMenu(1);
-        QVERIFY(checked("compareStyle_Sign"));
-        QVERIFY(checked("compareByChosenStyles"));
+        QVERIFY(!checked("compareStyle_Sign"));
+        QVERIFY(!checked("compareByChosenStyles"));
     }
 
     // GRID_COMPARISON_*: fixed per theme, not settings (the user's
