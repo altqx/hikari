@@ -332,6 +332,7 @@ Dialog {
                 text: modelData
                 checkable: true
                 checked: cellMenu.row >= 0 && window.catalogs.isFontInCatalog(modelData, window.fonts[cellMenu.row])
+                keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (FontCatalogList.cpp:393)
                 onTriggered: window.chooseCatalog(cellMenu.row, modelData, checked)
             }
             onObjectAdded: (index, object) => cellMenu.insertItem(index, object)

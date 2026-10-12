@@ -114,6 +114,17 @@ class ReferenceTest : public QObject {
         return session(id).document().lines()[std::size_t(row)]->id.value;
     }
     const ui::ShellController &shell() const { return application->shell(); }
+    // A Grid's rows by comparison state: '=' matched, 'x' differing, '.' none.
+    QString states(const char *grid) const
+    {
+        QString out;
+        auto *model = named(grid)->property("model").value<QAbstractItemModel *>();
+        for (int r = 0; r < model->rowCount(); ++r) {
+            const int state = model->index(r, 0).data(ui::LineTableModel::ComparisonRole).toInt();
+            out += state == 2 ? QLatin1Char('x') : state == 1 ? QLatin1Char('=') : QLatin1Char('.');
+        }
+        return out;
+    }
     QString status() const { return item("referenceMatchStatus")->property("text").toString(); }
     void press(Qt::Key key, Qt::KeyboardModifiers mods = Qt::NoModifier)
     {
@@ -633,6 +644,88 @@ private slots:
         QCOMPARE(application->comparedReferenceRow(1), -1);
         application->setReferenceLinked(false);
         QCOMPARE(application->comparedReferenceRow(0), -1);
+    }
+
+    // R1-compare-reference: Compare pairs two tabs, as legacy did; the tray
+    // header menu's "Compare with reference" pairs the editing target (CG1)
+    // with the Protected reference (CG2), also one opened as no tab, which
+    // the tab menu cannot reach. The tray paints the reference's side, which
+    // stays protected and unwritten.
+    void compareWithAReferenceThatIsNoTab()
+    {
+        const QString other = write(dir, "other.ass",
+                                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,e1\n"
+                                    "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,o2\n"
+                                    "Dialogue: 0,0:00:08.00,0:00:09.00,Default,,0,0,0,,e3\n");
+        const QByteArray before = hash(other);
+        QVERIFY(application->openReference(other));
+        const auto reference = application->workspace().reference();
+        QVERIFY(reference);
+        QCOMPARE(application->workspace().tabs().size(), std::size_t(3)); // no tab
+        const auto history = session(*reference).historySize();
+        QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
+        QObject *menu = named("panelOptionsMenu");
+        click(item("referenceMatchStatus"), Qt::RightButton); // the header's menu
+        QTRY_VERIFY(menu->property("opened").toBool());
+        auto *compare = item("panelOptions_compareWithReference");
+        QVERIFY(compare);
+        QCOMPARE(compare->property("text").toString(), QStringLiteral("Compare with reference"));
+        QVERIFY(compare->isEnabled());
+        QTRY_VERIFY(compare->isVisible() && compare->width() > 0);
+        click(compare);
+        QVERIFY(application->comparison().active());
+        QCOMPARE(application->comparison().first(), tab(0));
+        QCOMPARE(application->comparison().second(), reference);
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QCOMPARE(states("editingGrid"), QStringLiteral("=x="));
+        QCOMPARE(states("referenceGrid"), QStringLiteral("=x="));
+        QCOMPARE(application->workspace().reference(), reference);
+        QCOMPARE(session(*reference).historySize(), history);
+        QVERIFY(!session(*reference).isDirty());
+        QCOMPARE(hash(other), before);
+        application->turnOffComparison();
+        QCOMPARE(states("referenceGrid"), QStringLiteral("..."));
+    }
+
+    // R1-compare-reference: closing a reference closes no Document, and
+    // legacy removed the comparison only when a compared tab went
+    // (Notebook::DeletePage, Notebook.cpp:241-242; DestroyPreview,
+    // SubsGridPreview.cpp:91-107, left it). A reference opened as no tab
+    // stays open as a tab when it stops being the reference, closed or
+    // replaced, so the pair goes on as two tabs, as legacy's did, until it
+    // is turned off or either tab closes.
+    void closingANoTabReferenceKeepsItsComparisonAsATab()
+    {
+        const QString other = write(dir, "other.ass",
+                                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,e1\n"
+                                    "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,o2\n"
+                                    "Dialogue: 0,0:00:08.00,0:00:09.00,Default,,0,0,0,,e3\n");
+        QVERIFY(application->openReference(other));
+        const auto reference = *application->workspace().reference();
+        QVERIFY(application->compareWithReference());
+        QCOMPARE(states("editingGrid"), QStringLiteral("=x="));
+        application->closeReference();
+        QVERIFY(!application->workspace().reference());
+        QCOMPARE(application->workspace().tabs().size(), std::size_t(4));
+        QCOMPARE(tab(3), reference);
+        QVERIFY(application->comparison().active());
+        QCOMPARE(application->comparison().first(), tab(0));
+        QCOMPARE(application->comparison().second(), reference);
+        QCOMPARE(states("editingGrid"), QStringLiteral("=x="));
+        // Another reference takes the tray; the pair stays with the tab.
+        QVERIFY(application->openReference(write(dir, "next.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,e1\n")));
+        QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
+        QCOMPARE(states("referenceGrid"), QStringLiteral("."));
+        QCOMPARE(application->comparison().first(), tab(0));
+        QCOMPARE(application->comparison().second(), reference);
+        application->selectTab(3);
+        QCOMPARE(application->workspace().editingTarget(), reference);
+        QCOMPARE(states("editingGrid"), QStringLiteral("=x="));
+        // Closing that tab removes the comparison and both tables.
+        QVERIFY(application->closeEditingTarget());
+        QVERIFY(!application->comparison().active());
+        application->selectTab(0);
+        QCOMPARE(states("editingGrid"), QStringLiteral("..."));
     }
 
     // The compared grid's scroll (SubsGridWindow.cpp:1462-1465, 1719-1729):

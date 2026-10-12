@@ -3219,8 +3219,9 @@ private slots:
     // §1): Move panel…, Undock (Dock while it floats) and Close, each
     // disabled where the panel cannot do it (a dock that is not closable).
     // No item repeats a control of the header (the Reference tray's toolbar
-    // keeps its commands), and the tray's one close is the menu's Close
-    // reference. The button draws the three dots of K1's panel-menu.
+    // keeps its commands; its own item, Compare with reference, is none of
+    // them, R1-compare-reference), and the tray's one close is the menu's
+    // Close reference. The button draws the three dots of K1's panel-menu.
     void panelMenuHoldsMoveUndockAndClose()
     {
         QVERIFY(application->openFile(episode));
@@ -3231,7 +3232,8 @@ private slots:
         QVERIFY(menu);
         QVERIFY(openPanelMenu(QStringLiteral("Reference")));
         const QStringList referenceItems = panelMenuItems();
-        QCOMPARE(referenceItems, (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"),
+        QCOMPARE(referenceItems, (QStringList{QStringLiteral("Compare with reference"), QStringLiteral("|"),
+                                              QStringLiteral("Move panel…"), QStringLiteral("Undock"),
                                               QStringLiteral("Close reference")}));
         // No label twice in one header: the toolbar's buttons are not menu items.
         QQuickItem *referenceHeader = dockHeader(QStringLiteral("Reference"));
@@ -6101,6 +6103,96 @@ private slots:
         QTRY_COMPARE(table->columnCount(), 12);
         QVERIFY(hideCps->property("checked").toBool());
         application->shell().setHiddenColumns(0);
+    }
+
+    // R1-check-items-close: a check item keeps its menus open when switched,
+    // by the pointer, Enter or Space, as legacy's ITEM_CHECK did
+    // (MenuDialog::SendEvent, Menu.cpp:662-670), and the status bar keeps
+    // its help. (A Shift+click closes them: hotkeyGestureOnMenus.)
+    void checkItemsKeepTheirMenuOpen()
+    {
+        QStyleHints *hints = QGuiApplication::styleHints();
+        const bool hoverHint = hints->useHoverEffects();
+        auto restoreHover = qScopeGuard([&] { hints->setUseHoverEffects(hoverHint); });
+        hints->setUseHoverEffects(true);
+        QVERIFY(application->openFile(episode));
+        auto *root = engine->rootObjects().first();
+        auto &shell = application->shell();
+        const bool savedWithVideoName = application->saveWithVideoName();
+        auto restore = qScopeGuard([&] { application->setSaveWithVideoName(savedWithVideoName); });
+
+        // The File menu's "Save subtitles using the video name" (HikariSubFrame.cpp:192-194).
+        auto *barItem = root->findChild<QQuickItem *>(QStringLiteral("fileMenuBarItem"));
+        auto *fileMenu = barItem->property("menu").value<QObject *>();
+        QVERIFY(QMetaObject::invokeMethod(fileMenu, "popup", Q_ARG(QQuickItem *, barItem),
+                                          Q_ARG(QPointF, QPointF(0, barItem->height()))));
+        QTRY_VERIFY(fileMenu->property("opened").toBool());
+        auto *videoName = qobject_cast<QQuickItem *>(named("saveWithVideoNameMenuItem"));
+        QTRY_VERIFY(videoName->isVisible() && videoName->width() > 0);
+        QTest::mouseMove(window, videoName->mapToScene(QPointF(videoName->width() / 2, videoName->height() / 2)).toPoint());
+        QTRY_VERIFY(videoName->property("hovered").toBool());
+        QTRY_COMPARE(shell.statusText(), QStringLiteral("Save subtitles using the video name"));
+        clickWith(videoName, Qt::NoModifier);
+        QCOMPARE(application->saveWithVideoName(), !savedWithVideoName);
+        QTest::qWait(50);
+        QVERIFY(fileMenu->property("visible").toBool());
+        QCOMPARE(videoName->property("checked").toBool(), !savedWithVideoName);
+        QCOMPARE(shell.statusText(), QStringLiteral("Save subtitles using the video name"));
+        QVERIFY(videoName->property("highlighted").toBool()); // the keyboard's item too
+        press(Qt::Key_Return);
+        QCOMPARE(application->saveWithVideoName(), savedWithVideoName);
+        press(Qt::Key_Space);
+        QCOMPARE(application->saveWithVideoName(), !savedWithVideoName);
+        QTest::qWait(50);
+        QVERIFY(fileMenu->property("visible").toBool());
+        QCOMPARE(videoName->property("checked").toBool(), !savedWithVideoName);
+        QVERIFY(QMetaObject::invokeMethod(fileMenu, "close"));
+        QTRY_VERIFY(!fileMenu->property("visible").toBool());
+
+        // The Grid's Hide columns and Filtering (SubsGrid.cpp:190-200, 228-236).
+        auto *grid = item("editingGrid");
+        auto *table = QAccessible::queryAccessibleInterface(grid)->tableInterface();
+        QCOMPARE(table->columnCount(), 13);
+        auto *gridMenu = named("gridMenu");
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, grid->mapToScene(QPointF(grid->width() / 2, 30)).toPoint());
+        QTRY_VERIFY(gridMenu->property("opened").toBool());
+        auto *hideColumns = named("hideColumnsMenu");
+        QVERIFY(QMetaObject::invokeMethod(hideColumns, "open"));
+        auto *hideCps = qobject_cast<QQuickItem *>(named("hideColumn512"));
+        auto *hideWraps = qobject_cast<QQuickItem *>(named("hideColumn8192"));
+        QTRY_VERIFY(hideCps->isVisible() && hideCps->width() > 0);
+        clickWith(hideCps, Qt::NoModifier);
+        QCOMPARE(shell.hiddenColumns(), 512);
+        // (a second click soon after the first would be a double click)
+        QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50);
+        QVERIFY(hideColumns->property("visible").toBool());
+        QVERIFY(gridMenu->property("visible").toBool());
+        clickWith(hideWraps, Qt::NoModifier);
+        QCOMPARE(shell.hiddenColumns(), 512 | 8192);
+        QTRY_COMPARE(table->columnCount(), 11);
+        QVERIFY(hideColumns->property("visible").toBool());
+        QVERIFY(hideCps->property("checked").toBool() && hideWraps->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(hideColumns, "close"));
+        auto *filtering = named("filteringMenu");
+        QVERIFY(QMetaObject::invokeMethod(filtering, "open"));
+        auto *invert = qobject_cast<QQuickItem *>(named("filterInvert"));
+        auto *doNotReset = qobject_cast<QQuickItem *>(named("filterDoNotReset"));
+        QTRY_VERIFY(invert->isVisible() && invert->width() > 0);
+        const bool inverted = application->gridFilter().inverted();
+        const bool addToFilter = application->gridFilter().addToFilter();
+        clickWith(invert, Qt::NoModifier);
+        QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50);
+        clickWith(doNotReset, Qt::NoModifier);
+        QCOMPARE(application->gridFilter().inverted(), !inverted);
+        QCOMPARE(application->gridFilter().addToFilter(), !addToFilter);
+        QTest::qWait(50);
+        QVERIFY(filtering->property("visible").toBool());
+        QVERIFY(gridMenu->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(gridMenu, "dismiss"));
+        QTRY_VERIFY(!gridMenu->property("visible").toBool());
+        application->gridFilter().setInverted(inverted);
+        application->gridFilter().setAddToFilter(addToFilter);
+        shell.setHiddenColumns(0);
     }
 
     void hiddenLinesLeaveTheGridAndMarksReopenThem()
@@ -9450,7 +9542,9 @@ private slots:
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_OPEN_STYLE_MANAGER"), 0), QStringLiteral("Alt-Ctrl-K"));
         QVERIFY(application->settingsStore()->list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_OPEN_STYLE_MANAGER G=Alt-Ctrl-K")));
-        // The Grid's checkable "Reverse filtering": mapped, not switched.
+        // The Grid's checkable "Reverse filtering": mapped, not switched, and
+        // the menus close as for any item (R1-check-items-close: legacy sends
+        // a Shift+click on a check item as a plain item's, Menu.cpp:662, 682).
         auto *grid = item("editingGrid");
         const QPoint centre = grid->mapToScene(QPointF(grid->width() / 2, 30)).toPoint();
         QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centre);
@@ -9462,6 +9556,7 @@ private slots:
         QVERIFY(!application->gridFilter().inverted());
         clickWith(invert, Qt::ShiftModifier);
         QTRY_VERIFY(mapping->isVisible());
+        QTRY_VERIFY(!named("gridMenu")->property("visible").toBool());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 1);
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_R, Qt::ControlModifier | Qt::AltModifier);
         QTRY_VERIFY(!mapping->isVisible());
@@ -14559,7 +14654,7 @@ private slots:
         auto *menu = named("videoChaptersMenu");
         QVERIFY(menu && menu->property("enabled").toBool());
         // V3-video-menu-entries: Unload video, the streams and the chapters
-        // sit in the Video menu until V4's context menu hosts them
+        // in the Video menu too (the context menu's below)
         {
             auto *videoMenu = named("videoMenu");
             QVERIFY(videoMenu);
@@ -14608,6 +14703,108 @@ private slots:
         QVERIFY(video.selectStream(0));
         QTRY_COMPARE_WITH_TIMEOUT(application->generalPlayer().description().activeAudio, 0, 20000);
         QVERIFY(video.pause());
+
+        // V3-video-menu-entries: the video's context menu lists them in
+        // legacy's form and order (VideoBox.cpp:977-1016), docked and in
+        // fullscreen, each instance with its own names: after the separator
+        // Unload video, then a separator and each stream, a separator and
+        // each chapter, "<name>" with "[<time>]" in the binding column, the
+        // current one checked. A stream or a chapter closes the menu (legacy's
+        // radio items); Shift+click on Unload video maps VIDEO_DELETE_FILE
+        // for the Video window.
+        const auto entriesAfterSnapshots = [](QObject *contextMenu, const QString &prefix) {
+            QStringList out;
+            bool after = false;
+            for (QQuickItem *entry : menuItems(contextMenu)) {
+                after = after || (entry && entry->objectName() == prefix + QStringLiteral("CopyFrame"));
+                if (after && entry && entry->isVisible())
+                    out << entry->objectName();
+            }
+            return out;
+        };
+        const auto order = [](const QString &prefix) {
+            return QStringList{prefix + QStringLiteral("CopyFrame"), QString(), prefix + QStringLiteral("UnloadVideo"),
+                               prefix + QStringLiteral("StreamsSeparator"), prefix + QStringLiteral("Stream0"),
+                               prefix + QStringLiteral("Stream1"), prefix + QStringLiteral("ChaptersSeparator"),
+                               prefix + QStringLiteral("Chapter0"), prefix + QStringLiteral("Chapter1")};
+        };
+        QVERIFY(video.showFrameAt(0));
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(0));
+        auto *context = named("videoContextMenu");
+        QVERIFY(QMetaObject::invokeMethod(context, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
+        QTRY_VERIFY(context->property("opened").toBool());
+        QTRY_COMPARE(entriesAfterSnapshots(context, QStringLiteral("videoMenu")), order(QStringLiteral("videoMenu")));
+        QCOMPARE(named("videoMenuUnloadVideo")->property("labelText").toString(), QStringLiteral("Unload video"));
+        QVERIFY(named("videoMenuUnloadVideo")->property("enabled").toBool());
+        QCOMPARE(named("videoMenuStream0")->property("text").toString(), QStringLiteral("A: Main [eng] (pcm_s16le)"));
+        QCOMPARE(named("videoMenuStream1")->property("text").toString(), QStringLiteral("A: Commentary [jpn] (pcm_s16le)"));
+        QVERIFY(named("videoMenuStream0")->property("checked").toBool());
+        QVERIFY(!named("videoMenuStream1")->property("checked").toBool());
+        QCOMPARE(named("videoMenuChapter1")->property("labelText").toString(), QStringLiteral("Second"));
+        QCOMPARE(named("videoMenuChapter1")->property("keysText").toString(), QStringLiteral("[0:00:01.00]"));
+        QVERIFY(named("videoMenuChapter0")->property("checked").toBool());
+        QVERIFY(!named("videoMenuChapter1")->property("checked").toBool());
+        // (the entries made as the menu opens are placed by its list's next
+        // layout, below the snapshots)
+        const auto placed = [&](const char *name, const char *above) {
+            auto *entry = qobject_cast<QQuickItem *>(named(name));
+            auto *anchor = qobject_cast<QQuickItem *>(named(above));
+            return entry && anchor && entry->isVisible() && entry->width() > 0 && entry->y() > anchor->y();
+        };
+        auto *chapterItem = qobject_cast<QQuickItem *>(named("videoMenuChapter1"));
+        QTRY_VERIFY(placed("videoMenuChapter1", "videoMenuCopyFrame"));
+        clickWith(chapterItem, Qt::NoModifier);
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(24));
+        QTRY_VERIFY(!context->property("visible").toBool());
+        // (a second click soon after the first would be a double click)
+        const auto clickApart = [] { QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50); };
+        clickApart();
+        QVERIFY(QMetaObject::invokeMethod(context, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
+        QTRY_VERIFY(context->property("opened").toBool());
+        QTRY_VERIFY(named("videoMenuChapter1")->property("checked").toBool());
+        auto *streamItem = qobject_cast<QQuickItem *>(named("videoMenuStream1"));
+        QTRY_VERIFY(placed("videoMenuStream1", "videoMenuCopyFrame"));
+        clickWith(streamItem, Qt::NoModifier);
+        QVERIFY(video.streams()[1].toMap().value(QStringLiteral("checked")).toBool());
+        QTRY_VERIFY(!context->property("visible").toBool());
+        {
+            auto *mapping = mappingWindow("hotkeyMapping");
+            clickApart();
+            QVERIFY(QMetaObject::invokeMethod(context, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
+            QTRY_VERIFY(context->property("opened").toBool());
+            auto *unload = qobject_cast<QQuickItem *>(named("videoMenuUnloadVideo"));
+            QTRY_VERIFY(placed("videoMenuUnloadVideo", "videoMenuCopyFrame"));
+            clickWith(unload, Qt::ShiftModifier);
+            QTRY_VERIFY(mapping->isVisible());
+            QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
+                     QStringLiteral("Please enter a hotkey for \"Unload video\"."));
+            QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
+            keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_Escape);
+            QTRY_VERIFY(!mapping->isVisible());
+            QVERIFY(video.loaded()); // mapped, not run
+            QTRY_VERIFY(window->isActive());
+        }
+        // In fullscreen, its own instance.
+        auto &fs = application->videoFullscreen();
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        auto &tools = application->visualTools();
+        QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier,
+                          item("visualOverlay")->mapToScene(tools.videoRect().center()).toPoint());
+        auto *fsMenu = named("videoFullscreenMenu");
+        QTRY_VERIFY(fsMenu->property("opened").toBool());
+        QTRY_COMPARE(entriesAfterSnapshots(fsMenu, QStringLiteral("fullscreenMenu")), order(QStringLiteral("fullscreenMenu")));
+        QVERIFY(named("fullscreenMenuChapter1")->property("checked").toBool());
+        QVERIFY(named("fullscreenMenuStream1")->property("checked").toBool());
+        auto *fsChapter = qobject_cast<QQuickItem *>(named("fullscreenMenuChapter0"));
+        QTRY_VERIFY(placed("fullscreenMenuChapter0", "fullscreenMenuCopyFrame"));
+        clickWith(fsChapter, Qt::NoModifier);
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(0));
+        QTRY_VERIFY(!fsMenu->property("visible").toBool());
+        QTest::keyClick(fsWindow, Qt::Key_Escape);
+        QTRY_VERIFY(!fs.active());
+
         // a new video: no chapters until its own arrive, prevchap again
         video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), nativeFixture("cfr.mkv"), 20000);

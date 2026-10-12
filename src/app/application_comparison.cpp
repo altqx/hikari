@@ -167,14 +167,31 @@ bool Application::compareWithTab(int index)
     const auto target = m_workspace.editingTarget();
     if (index < 0 || index >= static_cast<int>(tabs.size()) || tabs.size() < 2 || !target)
         return false;
-    const auto second = tabs[static_cast<std::size_t>(index)];
-    if (second == *target)
+    return comparePair(*target, tabs[static_cast<std::size_t>(index)]);
+}
+
+bool Application::compareWithReference()
+{
+    // R1-compare-reference: as Compare does with a tab. Legacy compared tabs
+    // only (Notebook.cpp:947-953); a reference opened as no tab has no tab
+    // to open the tab menu on, so the tray's header menu offers it. The
+    // reference stays protected: comparing writes neither Document.
+    const auto target = m_workspace.editingTarget();
+    const auto reference = m_workspace.reference();
+    if (!target || !reference)
         return false;
-    const auto a = comparedDocument(*target), b = comparedDocument(second);
+    return comparePair(*target, *reference);
+}
+
+bool Application::comparePair(application::DocumentId first, application::DocumentId second)
+{
+    if (second == first)
+        return false;
+    const auto a = comparedDocument(first), b = comparedDocument(second);
     if (!a.document || !b.document)
         return false;
-    m_comparison.compare(*target, second, a, b, m_settings->integer(kType));
-    for (const auto id : {*target, second})
+    m_comparison.compare(first, second, a, b, m_settings->integer(kType));
+    for (const auto id : {first, second})
         m_comparedRevisions[id.value] = m_files->session(id)->revision();
     refreshViews();
     return true;

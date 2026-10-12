@@ -503,12 +503,20 @@ ApplicationWindow {
     // where the panel cannot do it (its dock's options: not closable, not
     // dockable). Its header asks for it (Docking.requestMenu: the "⋯"
     // button, a right click on the header, Space or Enter on the button).
-    // A panel's own items are settings that have no place in its body or
-    // its header's toolbar, never a copy of them: no panel has any yet (the
-    // Reference tray's commands are its toolbar's). The Reference tray's
-    // Close closes the reference, the tray with it (legacy's close mark,
-    // DestroyPreview), so the header holds one close, not two.
+    // A panel's own items are commands that have no place in its body or
+    // its header's toolbar, never a copy of them. The Reference tray has
+    // "Compare with reference" (R1-compare-reference: the editing target
+    // with the Protected reference, which the tab menu's Compare cannot
+    // reach when the reference is no tab). Its Close closes the reference,
+    // the tray with it (legacy's close mark, DestroyPreview), so the header
+    // holds one close, not two.
+    // An item's `enabled` is a function its entry follows, so the list itself
+    // stays put while the menu is open (a new list would remake the entries,
+    // the one being chosen too).
     function panelOwnItems(dock) {
+        if (dock === referenceDock)
+            return [{ name: "compareWithReference", text: qsTr("Compare with reference"),
+                      enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference() }]
         return []
     }
     function closePanel(dock) {
@@ -550,7 +558,7 @@ ApplicationWindow {
                 text: modelData.text
                 checkable: modelData.checkable === true
                 checked: modelData.checked === true
-                enabled: modelData.enabled !== false
+                enabled: typeof modelData.enabled === "function" ? modelData.enabled() : modelData.enabled !== false
                 onTriggered: modelData.run()
             }
             onObjectAdded: (index, object) => panelOptionsMenu.insertItem(index, object)
@@ -1005,6 +1013,7 @@ ApplicationWindow {
                         text: qsTr("Ask whether to load the last session at program startup")
                         checkable: true
                         checked: root.app.sessionRestore === 1
+                        keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (HikariSubFrame.cpp:171)
                         onToggled: root.app.sessionRestore = checked ? 1 : 0
                     }
                     ShellMenuItem {
@@ -1013,6 +1022,7 @@ ApplicationWindow {
                         text: qsTr("Load last session after program start")
                         checkable: true
                         checked: root.app.sessionRestore === 2
+                        keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (HikariSubFrame.cpp:175)
                         onToggled: root.app.sessionRestore = checked ? 2 : 0
                     }
                 }
@@ -1440,8 +1450,9 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_MARK_FROM_VIDEO")) root.app.setAudioFromVideo(true)
                 }
             }
-            // V3: legacy's video context menu entries (VideoBox.cpp:979-1016)
-            // in the Video menu too: Unload video (VIDEO_DELETE_FILE,
+            // V3: legacy's video context menu entries (VideoBox.cpp:979-1016),
+            // which the context menu has in legacy's form, in the Video menu
+            // too (V3-video-menu-entries): Unload video (VIDEO_DELETE_FILE,
             // V3-unload-video), the streams and the chapters.
             MenuSeparator {}
             ShellMenuItem {
@@ -1658,6 +1669,7 @@ ApplicationWindow {
                         text: modelData.label
                         checkable: true
                         checked: root.workspaceLayout.preset === modelData.name
+                        keepsMenuOpen: false // one choice of several
                         onTriggered: root.applyPreset(modelData.name)
                     }
                     onObjectAdded: (index, object) => presetMenu.insertItem(index, object)
@@ -1951,6 +1963,7 @@ ApplicationWindow {
                 text: qsTranslate("HikariSub.Editor", "Spellchecker")
                 checkable: true
                 checked: root.app.spellingOn
+                keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (DialogueTextEditor.cpp:2326)
                 visible: field.spelled
                 height: visible ? implicitHeight : 0
                 onTriggered: root.app.spellingOn = checked
@@ -1973,6 +1986,7 @@ ApplicationWindow {
                             checkable: true
                             // Legacy marks the entry whose name is the chosen language's.
                             checked: modelData.name === root.app.dictionaryName(root.app.dictionaryLanguage)
+                            keepsMenuOpen: false // ITEM_RADIO
                             onTriggered: root.app.dictionaryLanguage = modelData.symbol
                         }
                         onObjectAdded: (index, object) => languagesMenu.insertItem(index, object)

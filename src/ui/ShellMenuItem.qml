@@ -36,8 +36,32 @@ import Hikari.Ui
 // command runs (MenuDialog::OnMouseEvent, SendEvent and HideMenus,
 // Menu.cpp:600-646, 673-682 and 818-822; the keyboard's highlight did not
 // show it).
+//
+// R1-check-items-close: a check item keeps its menu open when it is switched,
+// by the pointer or by Enter or Space, as legacy's ITEM_CHECK did
+// (MenuDialog::SendEvent, Menu.cpp:662-670: the check flips and the event
+// goes out without HideMenus), so several can be switched in one opening; the
+// status bar keeps the item's help. With Shift the menu closes as for any
+// item: legacy sends a Shift+click on a check item down the plain item's
+// path, HideMenus and the hotkey mapping (Menu.cpp:662, 672-682). Legacy's
+// radio items (ITEM_RADIO) and its check items that hide the menu
+// (ITEM_CHECK_AND_HIDE, Menu.cpp:626-629) close it: those set
+// keepsMenuOpen false. The menu's own close is cut when the item is first
+// highlighted or pressed, which every switch by the user passes through.
 MenuItem {
     id: control
+    property bool keepsMenuOpen: checkable
+    property bool holdsMenu: false
+    function holdMenu() {
+        if (keepsMenuOpen && !subMenu && !holdsMenu)
+            holdsMenu = ShellMenus.keepOpen(control)
+    }
+    function keepsOpenNow() {
+        return holdsMenu && keepsMenuOpen && !ShellMenus.shiftHeld()
+    }
+    onMenuChanged: holdsMenu = false
+    onHighlightedChanged: if (highlighted) holdMenu()
+    onPressed: holdMenu()
     property string iconRole
     // The binding shown at the right (Main.applyMenuShortcuts fills the menu
     // bar's); a text with a tab carries its own.
@@ -52,8 +76,14 @@ MenuItem {
         : action && typeof action.help === "string" ? action.help : ""
     onHoveredChanged: hovered ? StatusHelp.show(control, shownHelp) : StatusHelp.hide(control)
     // Legacy emptied the field before the chosen command ran (StatusHelp).
-    onReleased: if (!subMenu) StatusHelp.activating()
-    onTriggered: if (!subMenu) StatusHelp.activated()
+    onReleased: if (!subMenu && !keepsOpenNow()) StatusHelp.activating()
+    onTriggered: {
+        if (subMenu || keepsOpenNow())
+            return
+        StatusHelp.activated()
+        if (holdsMenu && menu)
+            menu.dismiss() // the close the menu no longer makes
+    }
     Component.onDestruction: StatusHelp.hide(control)
     readonly property string shownIconRole: iconRole.length > 0 ? iconRole
         : subMenu && typeof subMenu.iconRole === "string" ? subMenu.iconRole : ""

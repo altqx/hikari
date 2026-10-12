@@ -53,6 +53,7 @@ ShellMenu {
             // ITEM_RADIO on the active tab.
             checkable: true
             checked: modelData.current
+            keepsMenuOpen: false
             Accessible.checkable: true
             Accessible.checked: modelData.current
             onTriggered: tabMenu.app.chooseTab(index, tabMenu.firstVisible)
