@@ -1686,8 +1686,9 @@ void AudioDisplay::SetDialogue(Dialogue *diag, int n, bool moveToEnd) {
 		}
 		else{
 			size_t prevPos = grid->GetKeyFromPosition(line_n, -1);
-			if (isNextLine && line_n != prevPos){
-				Dialogue *pdial = grid->file->GetDialogue(prevPos);
+			// no shown row before it gives no Line
+			Dialogue *pdial = (isNextLine && line_n != prevPos) ? grid->file->GetDialogue(prevPos) : nullptr;
+			if (pdial){
 				curStartMS = pdial->End.mstime;
 			}
 			else
@@ -2540,8 +2541,10 @@ int AudioDisplay::GetBoundarySnap(int ms, int rangeX, bool shiftHeld, bool start
 
 		for (int j = shadeFrom; j <= shadeTo; j++) {
 			if (j == line_n) continue;
+			// with every row filtered out the range starts at -1
+			if (j < 0 || j >= grid->file->GetCount()) continue;
 			shade = grid->file->GetDialogue(j);
-			if (!shade->isVisible)
+			if (!shade || !shade->isVisible)
 				continue;
 
 			// Get coordinates
