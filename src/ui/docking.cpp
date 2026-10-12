@@ -30,9 +30,14 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QScreen>
+#include <QTimer>
 #include <qpa/qplatformnativeinterface.h>
 
 #include <algorithm>
+
+#ifdef Q_OS_WIN
+#include <qt_windows.h>
+#endif
 
 namespace hikari::ui {
 
@@ -200,6 +205,102 @@ public:
     }
 };
 
+std::function<std::optional<qreal>(QWindow *)> g_nativeScale; // tests
+
+// dockchrome::kScaleSettleMs: a floating window's size in device-independent
+// pixels across a change of its screen's scale. Qt keeps a window's size
+// when Windows asks it to (WM_DPICHANGED); a live change of the display
+// scale left the floating Line editor's window at its pixel size instead
+// (native gate at 100 to 125 %), so its size became 80 % of the panel's
+// minimum and the engine, which keeps the panel at least that big, drew it
+// cut off. The keeper remembers the window's size and its scales while
+// they settle, and after a change of Qt's device pixel ratio gives the
+// window that size back.
+class ScaleKeeper final : public QObject {
+public:
+    explicit ScaleKeeper(QWindow *window)
+        : QObject(window)
+        , m_window(window)
+    {
+        window->installEventFilter(this);
+        m_settle.setSingleShot(true);
+        m_settle.setInterval(dockchrome::kScaleSettleMs);
+        connect(&m_settle, &QTimer::timeout, this, &ScaleKeeper::settle);
+    }
+
+    bool eventFilter(QObject *, QEvent *event) override
+    {
+        switch (event->type()) {
+        case QEvent::Show:
+        case QEvent::Resize:
+            // Not while a scale change settles, nor when the window system
+            // has a new scale that Qt has not taken yet (its resize for the
+            // new scale, read at the old one).
+            if (!m_settle.isActive() && (!m_known || !runsAhead()))
+                remember();
+            break;
+        case QEvent::DevicePixelRatioChange:
+            if (m_known)
+                m_settle.start();
+            break;
+        default:
+            break;
+        }
+        return false;
+    }
+
+private:
+    bool runsAhead() const
+    {
+        const std::optional<qreal> native = dockchrome::nativeScale(m_window);
+        return native && m_native && !qFuzzyCompare(*native, *m_native)
+            && qFuzzyCompare(m_window->devicePixelRatio(), m_dpr);
+    }
+
+    void remember()
+    {
+        m_size = m_window->size();
+        m_dpr = m_window->devicePixelRatio();
+        m_native = dockchrome::nativeScale(m_window);
+        m_known = true;
+    }
+
+    // The panels' minimum size (the engine's floating window view, a child
+    // of the window's content item).
+    QSize minimum() const
+    {
+        auto *quick = qobject_cast<QQuickWindow *>(m_window);
+        if (QQuickItem *content = quick ? quick->contentItem() : nullptr)
+            for (QQuickItem *child : content->childItems())
+                if (auto *view = qobject_cast<KDDockWidgets::QtQuick::FloatingWindow *>(child))
+                    return view->minSize();
+        return {};
+    }
+
+    void settle()
+    {
+        if (!m_window->isVisible()) {
+            m_known = false;
+            return;
+        }
+        QSize want = m_size.expandedTo(minimum());
+        if (QScreen *screen = m_window->screen())
+            want = want.boundedTo(screen->availableGeometry().size());
+        qCDebug(lcDocking) << "scale change:" << m_window->title() << "dpr" << m_dpr << "->"
+                           << m_window->devicePixelRatio() << "size" << m_window->size() << "->" << want;
+        if (want != m_window->size())
+            m_window->resize(want);
+        remember();
+    }
+
+    QWindow *const m_window;
+    QTimer m_settle;
+    bool m_known = false;
+    QSize m_size;
+    qreal m_dpr = 1;
+    std::optional<qreal> m_native;
+};
+
 // MuseScore's engine setup (its dockmodule.cpp, research §0): one header row
 // (the title bar hides while tabs show, and a group always shows its tabs:
 // DockTabBar.qml draws a lone panel's as a title bar), 1-pixel separators,
@@ -234,9 +335,13 @@ void configureEngine()
     KDDockWidgets::Core::FloatingWindow::s_windowFlagsOverride =
         Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint;
     // Frameless is not enough on Wayland (window_decorations.h): the window
-    // asks the compositor itself, before it is first shown.
+    // asks the compositor itself, before it is first shown. And the window
+    // keeps its size across a change of its screen's scale.
     KDDockWidgets::QtQuick::FloatingWindow::setQuickWindowCreationCallback(
-        [](QQuickView *window, KDDockWidgets::QtQuick::MainWindow *) { windowdecorations::requestNone(window); });
+        [](QQuickView *window, KDDockWidgets::QtQuick::MainWindow *) {
+            windowdecorations::requestNone(window);
+            new ScaleKeeper(window);
+        });
 }
 } // namespace
 
@@ -260,6 +365,26 @@ bool dockchrome::windowSystemComposites()
 void dockchrome::overrideCompositing(std::optional<bool> composites)
 {
     g_compositing = composites;
+}
+
+std::optional<qreal> dockchrome::nativeScale(QWindow *window)
+{
+    if (g_nativeScale)
+        return g_nativeScale(window);
+#ifdef Q_OS_WIN
+    // handle(), not winId(): winId() would make the native window now.
+    if (window && window->handle())
+        if (const UINT dpi = GetDpiForWindow(reinterpret_cast<HWND>(window->winId())))
+            return qreal(dpi) / USER_DEFAULT_SCREEN_DPI;
+#else
+    Q_UNUSED(window);
+#endif
+    return std::nullopt;
+}
+
+void dockchrome::overrideNativeScale(std::function<std::optional<qreal>(QWindow *)> scale)
+{
+    g_nativeScale = std::move(scale);
 }
 
 int dockchrome::floatingShadow()

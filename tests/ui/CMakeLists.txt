@@ -182,6 +182,8 @@ add_dependencies(hikari_ui_automation_workflow hikari_media_helper hikari_media_
 # D1: the pinned docking engine (KDDockWidgets, QtQuick frontend) qualified with the provisioned Qt.
 hikari_add_qttest(hikari_ui_docking_qualification_tests SOURCES docking_qualification_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin KDAB::kddockwidgets Qt6::Quick Qt6::QuickControls2)
+# The offscreen platform's screen configuration (a live scale change).
+target_link_libraries(hikari_ui_docking_qualification_tests PRIVATE Qt6::GuiPrivate)
 # D3: the floating header's split at the scales Windows offers.
 foreach(scale 125 150 175 200)
     math(EXPR whole "${scale} / 100")

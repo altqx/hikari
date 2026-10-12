@@ -20,6 +20,7 @@
 #include <kddockwidgets/KDDockWidgets.h>
 #include <kddockwidgets/LayoutSaver.h>
 #include <kddockwidgets/qtquick/Platform.h>
+#include <kddockwidgets/qtquick/views/FloatingWindow.h>
 
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -34,6 +35,8 @@
 #include <QStyleHints>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
+#include <qpa/qplatformnativeinterface.h>
+#include <qpa/qwindowsysteminterface.h>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -205,6 +208,30 @@ class DockingQualification : public QObject {
         QMouseEvent event(type, local, local, QPointF(global), button, buttons, Qt::NoModifier);
         QCoreApplication::sendEvent(w, &event);
         QCoreApplication::processEvents();
+    }
+
+    // Offscreen: the screen's logical DPI (96: 100 %, 120: 125 %) through the
+    // platform's configuration, as a live change of the display scale.
+    static bool setScreenDpi(int dpi)
+    {
+        QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
+        using Get = QJsonObject (*)(QPlatformNativeInterface *);
+        using Set = void (*)(const QJsonObject &, QPlatformNativeInterface *);
+        auto get = reinterpret_cast<Get>(native ? native->nativeResourceForIntegration("configuration") : nullptr);
+        auto set = reinterpret_cast<Set>(native ? native->nativeResourceForIntegration("setConfiguration") : nullptr);
+        if (!get || !set)
+            return false;
+        QJsonObject config = get(native);
+        QJsonArray screens = config.value(QStringLiteral("screens")).toArray();
+        if (screens.isEmpty())
+            return false;
+        QJsonObject first = screens.first().toObject();
+        first.insert(QStringLiteral("logicalDpi"), dpi);
+        screens.replace(0, first);
+        config.insert(QStringLiteral("screens"), screens);
+        set(config, native);
+        QWindowSystemInterface::flushWindowSystemEvents();
+        return true;
     }
 
 private slots:
@@ -773,6 +800,75 @@ private slots:
         QTRY_VERIFY(groupOf(header(QStringLiteral("Editor"))) && groupOf(header(QStringLiteral("Editor")))->height() >= 260 + 35);
         QVERIFY(docking()->setMinimumSize(QStringLiteral("Editor"), QSize()));
         hikari::ui::refreshDockConstraints();
+    }
+
+    // A floating panel keeps its size across a live change of its screen's
+    // scale (dockchrome::kScaleSettleMs). Native gate on Windows at 100 to
+    // 125 %: the floating Line editor's window kept its pixels, 80 % of the
+    // panel, and its content was cut off. The offscreen platform changes the
+    // screen's logical DPI the same way: the windows keep their pixels.
+    void floatingPanelKeepsItsSizeAcrossAScaleChange()
+    {
+        if (QGuiApplication::platformName() != QLatin1String("offscreen"))
+            QSKIP("the screen's scale changes through the offscreen platform's configuration");
+        QCOMPARE(window->devicePixelRatio(), 1.0);
+        restoreInitial();
+        // The window system's own scale for the windows (Windows:
+        // GetDpiForWindow), simulated.
+        qreal native = 1.0;
+        hikari::ui::dockchrome::overrideNativeScale([&native](QWindow *) { return std::optional<qreal>(native); });
+        QVERIFY(docking()->setMinimumSize(QStringLiteral("Editor"), QSize(360, 140)));
+        auto *editor = dock("Editor");
+        const auto restore = qScopeGuard([&] {
+            setScreenDpi(96);
+            hikari::ui::dockchrome::overrideNativeScale(nullptr);
+            docking()->setMinimumSize(QStringLiteral("Editor"), QSize());
+            editor->setProperty("isFloating", false);
+        });
+        QVERIFY(editor->setProperty("isFloating", true));
+        QQuickItem *bar = nullptr;
+        QTRY_VERIFY((bar = header(QStringLiteral("Editor"))) && bar->window() != window);
+        auto *floating = qobject_cast<QQuickWindow *>(bar->window());
+        QVERIFY(QTest::qWaitForWindowExposed(floating));
+        KDDockWidgets::QtQuick::FloatingWindow *view = nullptr;
+        for (QQuickItem *child : floating->contentItem()->childItems())
+            if (auto *v = qobject_cast<KDDockWidgets::QtQuick::FloatingWindow *>(child))
+                view = v;
+        QVERIFY(view);
+        // At its minimum, as the Line editor floats from the View menu.
+        const QSize minimum = view->minSize();
+        floating->resize(minimum);
+        QTRY_COMPARE(floating->size(), minimum);
+        QTest::qWait(50);
+
+        // 100 to 125 %, the window system keeping the window's pixels.
+        native = 1.25;
+        QVERIFY(setScreenDpi(120));
+        QTRY_COMPARE(floating->devicePixelRatio(), 1.25);
+        // the simulation: 80 % of the panel's minimum, until the change settles
+        QVERIFY2(qAbs(floating->width() - qRound(minimum.width() / 1.25)) <= 1,
+                 qPrintable(QStringLiteral("%1 at 125 %").arg(floating->width())));
+        QTRY_COMPARE(floating->size(), minimum);
+        QTRY_COMPARE(static_cast<QQuickItem *>(view)->size(), QSizeF(floating->size())); // the panel whole in its window
+        QCOMPARE(bar->window(), floating);
+
+        // A larger window, then 125 to 100 % with the window system resizing
+        // it for 100 % before Qt takes the new scale (Windows'
+        // WM_DPICHANGED ahead of the screen's change): that resize, read at
+        // 125 %, is not the size to keep.
+        const QSize large(qRound(minimum.width() * 1.6), qRound(minimum.height() * 1.6));
+        floating->resize(large);
+        QTRY_COMPARE(floating->size(), large);
+        QTest::qWait(50);
+        native = 1.0;
+        const QSize early(qRound(large.width() / 1.25), qRound(large.height() / 1.25));
+        floating->resize(early);
+        QTRY_COMPARE(floating->size(), early);
+        QTest::qWait(50); // its resize delivered at 125 %
+        QVERIFY(setScreenDpi(96));
+        QTRY_COMPARE(floating->devicePixelRatio(), 1.0);
+        QTest::qWait(hikari::ui::dockchrome::kScaleSettleMs * 2);
+        QCOMPARE(floating->size(), large);
     }
 
     // D3: while a panel is dragged, the accent highlight covers the area a
