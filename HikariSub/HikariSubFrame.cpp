@@ -1393,7 +1393,9 @@ bool HikariSubFrame::OpenFile(const wxString &filename, bool fulls/*=false*/, bo
 		tab->video->RemoveVisual(true);
 
 		
-		if (!Tabs->LoadSubtitles(tab, fname)){
+		bool subsLoaded = Tabs->LoadSubtitles(tab, fname);
+		//a video still opens when the subtitles found next to it cannot be loaded
+		if (!subsLoaded && issubs){
 			if (freeze)
 				tab->Thaw();
 			//do not leave the tab made for these subtitles empty behind
@@ -1401,17 +1403,19 @@ bool HikariSubFrame::OpenFile(const wxString &filename, bool fulls/*=false*/, bo
 				Tabs->RemoveUnusedPage(Tabs->FindPanel(tab, false), previousTab);
 			return false;
 		}
-		//remove comparison after every subs load or delete 
-		else if (nonewtab && tab->grid->Comparison){
-			SubsGrid::RemoveComparison();
-		}
+		if (subsLoaded){
+			//remove comparison after every subs load or delete 
+			if (nonewtab && tab->grid->Comparison){
+				SubsGrid::RemoveComparison();
+			}
 
-		SetRecent();
-		//set texts on window title and tab
-		Label();
-		SetSubsResolution(!Options.GetBool(DONT_ASK_FOR_BAD_RESOLUTION));
-		//turn on editor
-		if (!tab->editor && !fulls && !tab->video->IsFullScreen()){ HideEditor(); }
+			SetRecent();
+			//set texts on window title and tab
+			Label();
+			SetSubsResolution(!Options.GetBool(DONT_ASK_FOR_BAD_RESOLUTION));
+			//turn on editor
+			if (!tab->editor && !fulls && !tab->video->IsFullScreen()){ HideEditor(); }
+		}
 	}
 
 	//pass empty string for path to check if paths of subs are valid
