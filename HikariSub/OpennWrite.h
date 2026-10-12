@@ -22,16 +22,31 @@
 #endif
 
 #ifdef _WIN32
-// The volume serial number and file index GetFileInformationByHandle gives,
-// which tell one file from another on a volume.
+// The volume serial number and the 128-bit file id FileIdInfo gives, which
+// tell one file from another on a volume; on a volume or a Windows without
+// it, the 64-bit file index in its low half.
 struct WindowsFileId
 {
-	unsigned long volume = 0;
-	unsigned long indexHigh = 0;
-	unsigned long indexLow = 0;
+	unsigned long long volume = 0;
+	unsigned char index[16] = {};
+	// A volume that has no file ids, as some network redirectors, gives all
+	// zeros or all ones: that tells no file from another.
+	bool Known() const
+	{
+		bool zeros = true, ones = true;
+		for (unsigned char byte : index) {
+			zeros = zeros && byte == 0;
+			ones = ones && byte == 0xFF;
+		}
+		return !zeros && !ones;
+	}
 	bool operator==(const WindowsFileId &other) const
 	{
-		return volume == other.volume && indexHigh == other.indexHigh && indexLow == other.indexLow;
+		if (volume != other.volume) { return false; }
+		for (int i = 0; i < 16; ++i) {
+			if (index[i] != other.index[i]) { return false; }
+		}
+		return true;
 	}
 };
 
@@ -44,8 +59,13 @@ struct WindowsFileId
 // wxTempFile, a failed replace is never followed by a copy over the file
 // without a backup. A file that is not committed is left as it was.
 // Open notes which file is at the name, looked at without following a link
-// there; Commit saves only while the name still leads to that file, and the
-// copy writes only into it.
+// there, and refuses a file whose volume gives no file id; Commit saves only
+// while the name still leads to that file, and the copy writes only into it.
+// The target's folder is kept open meanwhile, without sharing deletes, so it
+// cannot be renamed, removed or replaced; Commit also checks that the folder's
+// path still leads to it. The temporary files and the old file a replace moves
+// aside are deleted through a handle checked to be on them, never by a name
+// looked up again.
 class WindowsSaveFile
 {
 public:
@@ -65,9 +85,18 @@ public:
 private:
 	bool Replace();
 	bool Rewrite();
+	// whether the path of the target's folder still leads to the folder
+	// Open kept open
+	bool FolderUnchanged() const;
 
 	wxFile file;
 	wxString target;
+	// the target's folder, its path and its id, kept open from Open on when
+	// it can be opened; a HANDLE
+	void *folder = nullptr;
+	bool folderOpened = false;
+	wxString folderPath;
+	WindowsFileId folderId;
 	// a file was at target when Open ran, and its id
 	bool targetExisted = false;
 	WindowsFileId targetId;

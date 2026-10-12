@@ -74,6 +74,7 @@ static void LogSaveFailure(const SaveFile &file)
 #include <wx/msw/wrapwin.h>
 #include <fcntl.h>
 #include <io.h>
+#include <string.h>
 #include <random>
 
 static bool WriteText(WindowsSaveFile &file, const wxString &text, const wxMBConv &conv)
@@ -127,11 +128,6 @@ static bool ResolveSaveTarget(const wxString &fileName, ResolvedSave *resolvedSa
 	return true;
 }
 
-static bool PathExists(const wxString &path)
-{
-	return ::GetFileAttributesW(path.wc_str()) != INVALID_FILE_ATTRIBUTES;
-}
-
 // Opens the file at path itself, not what a link or junction there leads to,
 // for its attributes only; such a handle keeps no other program from
 // reading, writing, renaming or deleting the file.
@@ -148,9 +144,21 @@ static bool ReadFileFacts(HANDLE handle, WindowsFileId *id, DWORD *links, bool *
 {
 	BY_HANDLE_FILE_INFORMATION info;
 	if (!::GetFileInformationByHandle(handle, &info)) { return false; }
-	id->volume = info.dwVolumeSerialNumber;
-	id->indexHigh = info.nFileIndexHigh;
-	id->indexLow = info.nFileIndexLow;
+	*id = WindowsFileId();
+	FILE_ID_INFO idInfo;
+	if (::GetFileInformationByHandleEx(handle, FileIdInfo, &idInfo, sizeof(idInfo))) {
+		//128 bits, which ReFS needs to tell its files apart
+		static_assert(sizeof(idInfo.FileId.Identifier) == sizeof(id->index), "a 128-bit file id");
+		id->volume = idInfo.VolumeSerialNumber;
+		memcpy(id->index, idInfo.FileId.Identifier, sizeof(id->index));
+	}
+	else {
+		//before Windows 8, or a file system without 128-bit ids: the 64-bit
+		//index, in the low half as NTFS puts it in a 128-bit id
+		id->volume = info.dwVolumeSerialNumber;
+		unsigned long long index = (static_cast<unsigned long long>(info.nFileIndexHigh) << 32) | info.nFileIndexLow;
+		for (int i = 0; i < 8; ++i) { id->index[i] = static_cast<unsigned char>(index >> (8 * i)); }
+	}
 	if (links) { *links = info.nNumberOfLinks; }
 	if (savable) {
 		FILE_ATTRIBUTE_TAG_INFO tag;
@@ -166,7 +174,8 @@ enum class NameLeadsTo { Nothing, TheSameFile, AnotherFile };
 
 // What path leads to, looked at without following a link there: nothing, the
 // file with id when existed, or another file; links is set to the number of
-// names of the file it leads to.
+// names of the file it leads to. A file whose id is not known is never the
+// same file.
 static NameLeadsTo LookAtName(const wxString &path, bool existed, const WindowsFileId &id, DWORD *links)
 {
 	*links = 0;
@@ -175,7 +184,7 @@ static NameLeadsTo LookAtName(const wxString &path, bool existed, const WindowsF
 		return ::GetLastError() == ERROR_FILE_NOT_FOUND ? NameLeadsTo::Nothing : NameLeadsTo::AnotherFile;
 	}
 	WindowsFileId now;
-	bool same = ReadFileFacts(handle, &now, links, nullptr) && existed && now == id;
+	bool same = ReadFileFacts(handle, &now, links, nullptr) && existed && id.Known() && now == id;
 	::CloseHandle(handle);
 	return same ? NameLeadsTo::TheSameFile : NameLeadsTo::AnotherFile;
 }
@@ -187,6 +196,7 @@ static NameLeadsTo LookAtName(const wxString &path, bool existed, const WindowsF
 // read or written.
 static bool OpenSameFile(const wxString &path, const WindowsFileId &id, DWORD access, DWORD share, wxFile *out)
 {
+	if (!id.Known()) { return false; }
 	HANDLE seen = OpenNoFollow(path);
 	if (seen == INVALID_HANDLE_VALUE) { return false; }
 	WindowsFileId now;
@@ -209,9 +219,39 @@ static bool OpenSameFile(const wxString &path, const WindowsFileId &id, DWORD ac
 	return true;
 }
 
-// Makes a new file in the folder of target and opens it for reading and
-// writing into file; id is set to its id. CREATE_NEW fails on a name that is
-// taken, by a link too, so it never opens a file another program put there.
+// Marks the file handle is open on to be deleted when its last handle is
+// closed. The handle needs DELETE access; no name is looked up.
+static bool DeleteByHandle(HANDLE handle)
+{
+	FILE_DISPOSITION_INFO info = { TRUE };
+	return ::SetFileInformationByHandle(handle, FileDispositionInfo, &info, sizeof(info)) != 0;
+}
+
+// Deletes the file at path only when it is the file with id: the name is
+// opened without following a link there, and the file that handle is on is
+// deleted through it, so a file another program put at the name is kept.
+static bool DeleteSameFile(const wxString &path, const WindowsFileId &id)
+{
+	if (!id.Known()) { return false; }
+	HANDLE handle = ::CreateFileW(path.wc_str(), DELETE | FILE_READ_ATTRIBUTES,
+		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
+		FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
+	if (handle == INVALID_HANDLE_VALUE) { return false; }
+	WindowsFileId now;
+	bool deleted = ReadFileFacts(handle, &now, nullptr, nullptr) && now == id && DeleteByHandle(handle);
+	::CloseHandle(handle);
+	return deleted;
+}
+
+// The handle a wxFile is open on, or INVALID_HANDLE_VALUE.
+static HANDLE HandleOf(const wxFile &file)
+{
+	return file.IsOpened() ? reinterpret_cast<HANDLE>(_get_osfhandle(file.fd())) : INVALID_HANDLE_VALUE;
+}
+
+// Makes a new file in the folder of target and opens it for reading, writing
+// and deleting into file; id is set to its id. CREATE_NEW fails on a name that
+// is taken, by a link too, so it never opens a file another program put there.
 // wxFileName::CreateTempFileName made the file with GetTempFileName and then
 // opened the name again without O_EXCL, which followed a link put there in
 // between.
@@ -224,7 +264,7 @@ static wxString MakeTempFileNear(const wxString &target, wxFile *file, WindowsFi
 	thread_local std::mt19937 random{ std::random_device{}() };
 	for (int attempt = 0; attempt < 100; ++attempt) {
 		wxString name = folder + wxString::Format(L"hks%08x.tmp", static_cast<unsigned int>(random()));
-		HANDLE handle = ::CreateFileW(name.wc_str(), GENERIC_READ | GENERIC_WRITE,
+		HANDLE handle = ::CreateFileW(name.wc_str(), GENERIC_READ | GENERIC_WRITE | DELETE,
 			FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (handle == INVALID_HANDLE_VALUE) {
 			DWORD error = ::GetLastError();
@@ -234,8 +274,8 @@ static wxString MakeTempFileNear(const wxString &target, wxFile *file, WindowsFi
 		int fd = ReadFileFacts(handle, id, nullptr, nullptr) ?
 			_open_osfhandle(reinterpret_cast<intptr_t>(handle), _O_BINARY) : -1;
 		if (fd == -1) {
+			DeleteByHandle(handle);
 			::CloseHandle(handle);
-			::DeleteFileW(name.wc_str());
 			return wxString();
 		}
 		file->Attach(fd);
@@ -257,6 +297,13 @@ static bool CopyContents(wxFile &from, wxFile &to)
 	}
 }
 
+// Opens the folder at path for listing, as a save keeps it; with share, the
+// modes other programs may open it in meanwhile.
+static HANDLE OpenFolder(const wxString &path, DWORD access, DWORD share)
+{
+	return ::CreateFileW(path.wc_str(), access, share, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
+}
+
 bool WindowsSaveFile::Open(const wxString &name)
 {
 	Discard();
@@ -265,6 +312,21 @@ bool WindowsSaveFile::Open(const wxString &name)
 	wxFileName fn(name);
 	if (!fn.IsAbsolute()) { fn.Normalize(wxPATH_NORM_ABSOLUTE); }
 	target = fn.GetFullPath();
+	size_t separator = target.find_last_of(L"\\/");
+	if (separator == wxString::npos) { return false; }
+	//The folder stays open until the save ends. Opened for listing and not
+	//shared for deleting, it cannot be renamed, removed or replaced with a
+	//junction meanwhile. A folder that cannot be listed is saved to without
+	//this.
+	folderPath = target.substr(0, separator);
+	if (folderPath.empty() || folderPath.Last() == L':') { folderPath += L"\\"; }
+	HANDLE folderHandle = OpenFolder(folderPath, FILE_LIST_DIRECTORY | FILE_READ_ATTRIBUTES,
+		FILE_SHARE_READ | FILE_SHARE_WRITE);
+	if (folderHandle != INVALID_HANDLE_VALUE) {
+		folder = folderHandle;
+		folderOpened = true;
+		if (!ReadFileFacts(folderHandle, &folderId, nullptr, nullptr)) { folderId = WindowsFileId(); }
+	}
 	//the file at the name now; Commit saves only while the name leads to it
 	targetExisted = false;
 	HANDLE handle = OpenNoFollow(target);
@@ -272,21 +334,53 @@ bool WindowsSaveFile::Open(const wxString &name)
 		bool savable = false;
 		bool known = ReadFileFacts(handle, &targetId, nullptr, &savable);
 		::CloseHandle(handle);
-		//a folder, or a link or junction at the resolved name, is not saved to
-		if (!known || !savable) { return false; }
+		//a folder, or a link or junction at the resolved name, is not saved
+		//to, nor a file on a volume that gives no file id: another file put
+		//at its name could not be told from it
+		if (!known || !savable || !targetId.Known()) {
+			Discard();
+			return false;
+		}
 		targetExisted = true;
 	}
-	else if (::GetLastError() != ERROR_FILE_NOT_FOUND) { return false; }
+	else if (::GetLastError() != ERROR_FILE_NOT_FOUND) {
+		Discard();
+		return false;
+	}
 	temp = MakeTempFileNear(target, &file, &tempId);
-	return !temp.empty();
+	if (temp.empty()) {
+		Discard();
+		return false;
+	}
+	return true;
+}
+
+bool WindowsSaveFile::FolderUnchanged() const
+{
+	if (!folderOpened || !folderId.Known()) { return true; }
+	HANDLE handle = OpenFolder(folderPath, FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE);
+	if (handle == INVALID_HANDLE_VALUE) { return false; }
+	WindowsFileId now;
+	bool same = ReadFileFacts(handle, &now, nullptr, nullptr) && now == folderId;
+	::CloseHandle(handle);
+	return same;
 }
 
 void WindowsSaveFile::Discard()
 {
-	if (file.IsOpened()) { file.Close(); }
+	if (file.IsOpened()) {
+		//file is the temporary file: deleted through its own handle
+		if (!temp.empty() && DeleteByHandle(HandleOf(file))) { temp.clear(); }
+		file.Close();
+	}
 	if (!temp.empty()) {
-		::DeleteFileW(temp.wc_str());
+		DeleteSameFile(temp, tempId);
 		temp.clear();
+	}
+	if (folderOpened) {
+		::CloseHandle(static_cast<HANDLE>(folder));
+		folder = nullptr;
+		folderOpened = false;
 	}
 }
 
@@ -296,6 +390,8 @@ bool WindowsSaveFile::Commit()
 	wxLogNull noLog;
 	//the new contents are on disk before the file is touched
 	bool saved = file.Flush();
+	//a folder on the way to the file replaced meanwhile: nothing is written
+	if (saved && !FolderUnchanged()) { saved = false; }
 	if (saved) {
 		DWORD links = 0;
 		NameLeadsTo now = LookAtName(target, targetExisted, targetId, &links);
@@ -328,37 +424,50 @@ bool WindowsSaveFile::Commit()
 bool WindowsSaveFile::Replace()
 {
 	file.Close();
-	//the old file is moved to this name while it is replaced, so a replace
-	//that stops half way can be undone
-	wxString backup = temp + L".old";
-	if (PathExists(backup)) { return false; }
-	if (::ReplaceFileW(target.wc_str(), temp.wc_str(), backup.wc_str(), REPLACEFILE_IGNORE_MERGE_ERRORS,
-		nullptr, nullptr)) {
+	//The old file is moved to a name of its own while it is replaced, so a
+	//replace that stops half way can be undone. The name is made as a new
+	//file first, which ReplaceFileW replaces, so it is no name another
+	//program could guess and put a file or link at.
+	wxFile reserved;
+	WindowsFileId reservedId;
+	wxString backup = MakeTempFileNear(target, &reserved, &reservedId);
+	if (backup.empty()) { return false; }
+	reserved.Close();
+	//Without REPLACEFILE_IGNORE_MERGE_ERRORS, a replace that cannot give the
+	//new file the old one's ACLs, streams and attributes fails with both files
+	//under their names, and the new contents are then copied into the old
+	//file, which keeps all of them.
+	if (::ReplaceFileW(target.wc_str(), temp.wc_str(), backup.wc_str(), 0, nullptr, nullptr)) {
 		temp.clear();
-		::DeleteFileW(backup.wc_str());
+		//the old file; a file another program put at the name in the moment
+		//before the replace is not the old file and is left at that name
+		DeleteSameFile(backup, targetId);
 		return true;
 	}
-	if (PathExists(backup)) {
+	DWORD links = 0;
+	if (LookAtName(backup, true, targetId, &links) == NameLeadsTo::TheSameFile) {
 		//ERROR_UNABLE_TO_MOVE_REPLACEMENT_2: the old file was moved away and
 		//the new one was not moved in; the old one goes back
-		if (PathExists(target) ||
+		if (LookAtName(target, false, targetId, &links) != NameLeadsTo::Nothing ||
 			!::MoveFileExW(backup.wc_str(), target.wc_str(), MOVEFILE_WRITE_THROUGH)) {
 			keptBackup = backup;
 		}
 		return false;
 	}
-	//Nothing was changed, mostly because another program has the file open
-	//without letting it be deleted. wxRenameFile then copied the new file
-	//over it, which truncates it first; the contents are copied in with a
-	//backup instead.
-	return PathExists(target) && Rewrite();
+	DeleteSameFile(backup, reservedId);
+	//Nothing was changed: another program has the file open without letting
+	//it be deleted, or the old file's ACLs, streams or attributes could not be
+	//given to the new one. wxRenameFile then copied the new file over it,
+	//which truncates it first; the contents are copied in with a backup
+	//instead.
+	return Rewrite();
 }
 
 bool WindowsSaveFile::Rewrite()
 {
 	//the temporary file Open made, not what its name leads to now
-	if (!file.IsOpened() &&
-		!OpenSameFile(temp, tempId, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, &file)) {
+	if (!file.IsOpened() && !OpenSameFile(temp, tempId, GENERIC_READ | DELETE,
+		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, &file)) {
 		return false;
 	}
 	wxFileOffset newLength = file.Length();
@@ -386,9 +495,10 @@ bool WindowsSaveFile::Rewrite()
 			if (!restored) { keptBackup = backupName; }
 		}
 	}
+	//the backup is deleted through its own handle
+	if (keptBackup.empty()) { DeleteByHandle(HandleOf(backup)); }
 	backup.Close();
 	out.Close();
-	if (keptBackup.empty()) { ::DeleteFileW(backupName.wc_str()); }
 	return saved;
 }
 
