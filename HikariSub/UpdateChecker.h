@@ -33,12 +33,4 @@ public:
 
 	// Menu entry: always checks, and reports being up to date and any failure.
 	static void CheckNow(wxWindow *parent);
-
-	// Semantic version precedence, with or without a leading "v". False when
-	// either side is not a semantic version, such as the old four-part tags.
-	static bool IsNewerVersion(const wxString &tag, const wxString &current);
-
-	// "v1.2.0-rc.1" and the like, so a prerelease tag published without
-	// GitHub's prerelease flag still stays out of "stable only".
-	static bool IsPrerelease(const wxString &tag);
 };

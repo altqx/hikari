@@ -30,6 +30,7 @@
 #include <wx/utils.h>
 #include <wx/webrequest.h>
 #include <ctime>
+#include <vector>
 
 namespace
 {
@@ -40,9 +41,11 @@ namespace
 		kNumVersion[2] == kVersion->patch && kNumVersion[3] == 0,
 		"NumVersionHikariSub does not match VersionHikariSub");
 
-	// One place for a fork to change.
+	// One place for a fork to change. GitHub lists a hundred at most on a
+	// page; with ten, a run of other releases, such as the qt-metadata-*
+	// ones, could push every version off the page.
 	const wxString kReleasesUrl =
-		L"https://api.github.com/repos/altqx/hikari/releases?per_page=10";
+		L"https://api.github.com/repos/altqx/hikari/releases?per_page=100";
 
 	constexpr time_t kDay  = 24 * 60 * 60;
 	constexpr time_t kWeek = 7 * kDay;
@@ -57,30 +60,42 @@ namespace
 
 	// The list endpoint is used rather than /releases/latest because latest
 	// hides prereleases outright, which would leave the "stable only" option
-	// with nothing to do.
-	bool FindNewerRelease(const wxString &body, bool stableOnly, ReleaseInfo *out)
+	// with nothing to do. False when the body is not a release list.
+	bool ReadReleases(const wxString &body, std::vector<update_policy::Release> *releases,
+		std::vector<ReleaseInfo> *infos)
 	{
 		JsonValue root = JsonValue::Parse(std::string(body.utf8_str()));
 		if (root.GetType() != JsonValue::Type::Array)
 			return false;
 
-		bool skipPrereleases = update_policy::SkipsPrereleases(stableOnly, VersionHikariSub);
 		for (const JsonValue &release : root.Items()) {
-			if (release.GetBool("draft"))
-				continue;
 			wxString tag = release.GetString("tag_name");
-			if (skipPrereleases && (release.GetBool("prerelease") || UpdateChecker::IsPrerelease(tag)))
-				continue;
-			if (tag.empty() || !UpdateChecker::IsNewerVersion(tag, VersionHikariSub))
-				continue;
+			update_policy::Release entry;
+			entry.tag = tag.utf8_string();
+			entry.draft = release.GetBool("draft");
+			entry.prerelease = release.GetBool("prerelease");
+			releases->push_back(entry);
 
-			out->tag = tag;
-			out->name = release.GetString("name", tag);
-			out->url = release.GetString("html_url");
-			out->notes = release.GetString("body");
-			return true;
+			ReleaseInfo info;
+			info.tag = tag;
+			info.name = release.GetString("name", tag);
+			info.url = release.GetString("html_url");
+			info.notes = release.GetString("body");
+			infos->push_back(info);
 		}
-		return false;
+		return true;
+	}
+
+	// Says that only a prerelease is newer, and offers to open its page.
+	void ShowNewerPrerelease(wxWindow *parent, const ReleaseInfo &release)
+	{
+		HikariMessageDialog message(parent,
+			wxString::Format(_("You have the latest stable version. A newer prerelease, %s, is available."),
+				release.tag), _("Update"), wxYES_NO);
+		message.SetYesLabel(_("Open the download page"));
+		message.SetNoLabel(_("Close"));
+		if ((message.ShowModal() & wxYES) && !release.url.empty())
+			wxLaunchDefaultBrowser(release.url);
 	}
 
 	class UpdateAvailableDialog : public HikariDialog
@@ -187,38 +202,36 @@ namespace
 				return;
 			}
 
-			ReleaseInfo release;
-			if (!FindNewerRelease(evt.GetResponse().AsString(),
-					Options.GetBool(UPDATER_CHECK_FOR_STABLE), &release))
-			{
+			std::vector<update_policy::Release> releases;
+			std::vector<ReleaseInfo> infos;
+			if (!ReadReleases(evt.GetResponse().AsString(), &releases, &infos)) {
 				if (interactive)
-					HikariMessageBox(_("You already have the latest version"), _("Update"));
+					HikariMessageBox(_("Cannot check for updates"), _("Update"));
 				return;
 			}
 
-			UpdateAvailableDialog dialog(parent, release);
-			dialog.ShowModal();
-			dialog.SaveChoices();
+			update_policy::Choice choice = update_policy::ChooseRelease(releases, VersionHikariSub,
+				Options.GetBool(UPDATER_CHECK_FOR_STABLE));
+			switch (update_policy::GetOutcome(choice)) {
+			case update_policy::Outcome::Offer: {
+				UpdateAvailableDialog dialog(parent, infos[choice.offer]);
+				dialog.ShowModal();
+				dialog.SaveChoices();
+				break;
+			}
+			case update_policy::Outcome::OnlyPrereleaseNewer:
+				if (interactive)
+					ShowNewerPrerelease(parent, infos[choice.skippedPrerelease]);
+				break;
+			case update_policy::Outcome::UpToDate:
+				if (interactive)
+					HikariMessageBox(_("You already have the latest version"), _("Update"));
+				break;
+			}
 		});
 
 		request.Start();
 	}
-}
-
-bool UpdateChecker::IsNewerVersion(const wxString &tag, const wxString &current)
-{
-	std::string left = tag.ToStdString();
-	std::string right = current.ToStdString();
-	std::optional<SemVer> newer = ParseSemVer(left);
-	std::optional<SemVer> installed = ParseSemVer(right);
-	return newer && installed && CompareSemVer(*newer, *installed) > 0;
-}
-
-bool UpdateChecker::IsPrerelease(const wxString &tag)
-{
-	std::string text = tag.ToStdString();
-	std::optional<SemVer> version = ParseSemVer(text);
-	return version && !version->prerelease.empty();
 }
 
 void UpdateChecker::CheckOnStartup(wxWindow *parent)

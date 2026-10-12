@@ -21,7 +21,9 @@
 #include "SemVer.h"
 
 #include <optional>
+#include <string>
 #include <string_view>
+#include <vector>
 
 namespace update_policy
 {
@@ -48,5 +50,75 @@ namespace update_policy
 	{
 		std::optional<SemVer> version = ParseSemVer(installed);
 		return stableOnly && !(version && !version->prerelease.empty());
+	}
+
+	// What a check needs of one entry of GitHub's release list.
+	struct Release
+	{
+		std::string tag;
+		bool draft = false;
+		// GitHub's flag. A tag with a prerelease suffix is a prerelease
+		// whether or not the flag was set when it was published.
+		bool prerelease = false;
+	};
+
+	struct Choice
+	{
+		// The release to offer, as an index into the list, or -1.
+		int offer = -1;
+		// The highest newer prerelease that "stable versions only" kept
+		// out, or -1.
+		int skippedPrerelease = -1;
+	};
+
+	enum class Outcome
+	{
+		// A newer release can be offered.
+		Offer,
+		// Nothing newer can be offered, but a newer prerelease was kept out.
+		OnlyPrereleaseNewer,
+		UpToDate,
+	};
+
+	// Drafts and tags that are not semantic versions, such as the
+	// qt-metadata-* releases, are ignored. Of the others newer than
+	// installed, the highest is chosen in whatever order GitHub lists them.
+	inline Choice ChooseRelease(const std::vector<Release> &releases, std::string_view installed,
+		bool stableOnly)
+	{
+		Choice choice;
+		std::optional<SemVer> current = ParseSemVer(installed);
+		if (!current)
+			return choice;
+
+		bool skipPrereleases = SkipsPrereleases(stableOnly, installed);
+		std::optional<SemVer> offered;
+		std::optional<SemVer> skipped;
+		for (size_t i = 0; i < releases.size(); i++) {
+			const Release &release = releases[i];
+			if (release.draft)
+				continue;
+			std::optional<SemVer> version = ParseSemVer(release.tag);
+			if (!version || CompareSemVer(*version, *current) <= 0)
+				continue;
+
+			bool prerelease = release.prerelease || !version->prerelease.empty();
+			std::optional<SemVer> &best = (skipPrereleases && prerelease) ? skipped : offered;
+			int &index = (skipPrereleases && prerelease) ? choice.skippedPrerelease : choice.offer;
+			if (!best || CompareSemVer(*version, *best) > 0) {
+				best = version;
+				index = static_cast<int>(i);
+			}
+		}
+		return choice;
+	}
+
+	constexpr Outcome GetOutcome(const Choice &choice)
+	{
+		if (choice.offer >= 0)
+			return Outcome::Offer;
+		if (choice.skippedPrerelease >= 0)
+			return Outcome::OnlyPrereleaseNewer;
+		return Outcome::UpToDate;
 	}
 }
