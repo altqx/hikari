@@ -421,7 +421,7 @@ int SelectLines::SelectOnTab(TabPanel *tab, bool *refreshTabLabel)
 			firstSelected = gridGetCount - 1;
 		}
 	}
-	if (action > 1 && allSelections){
+	if (action > 1 && Subs->HasChangesToRecord()){
 		tab->grid->SetModified(SELECT_LINES, true, false, firstSelected);
 		*refreshTabLabel = true;
 	}
