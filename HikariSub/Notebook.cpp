@@ -101,12 +101,13 @@ Notebook::Notebook(wxWindow *parent, int id)
 
 			wxString &name = item->label;
 			bool found = false;
-			for (size_t i = 0; i < SubsGrid::compareStyles.size(); i++){
+			for (size_t i = 0; i < SubsGrid::compareStyles.size();){
 				if (SubsGrid::compareStyles[i] == name){
-					if (!item->check){ SubsGrid::compareStyles.RemoveAt(i); }
 					found = true;
+					if (!item->check){ SubsGrid::compareStyles.RemoveAt(i); continue; }
 					break;
 				}
+				i++;
 			}
 			if (!found && item->check){ SubsGrid::compareStyles.Add(name); }
 			Options.SetTable(SUBS_COMPARISON_STYLES, SubsGrid::compareStyles);
@@ -923,7 +924,8 @@ void Notebook::ContextMenu(const wxPoint &pos, int i)
 			MenuItem * styleItem = styleComparisonMenu->Append(4448, availableStyles[i], emptyString, true, nullptr, nullptr, ITEM_CHECK);
 			if (optionsCompareStyles.Index(availableStyles[i]) != -1){ 
 				styleItem->Check(); 
-				SubsGrid::compareStyles.Add(availableStyles[i]); 
+				if (SubsGrid::compareStyles.Index(availableStyles[i]) == -1)
+					SubsGrid::compareStyles.Add(availableStyles[i]);
 			}
 		}
 	}
