@@ -838,6 +838,10 @@ public:
     Q_INVOKABLE bool toggleComparisonStyle(const QString &name, bool checked);
     // MENU_COMPARE: the editing target (CG1) with tab `index` (CG2).
     Q_INVOKABLE bool compareWithTab(int index);
+    // R1-compare-reference: the reference tray's "Compare with reference",
+    // the editing target (CG1) with the Protected reference (CG2), also one
+    // opened as no tab (openReference), which the tab menu cannot reach.
+    Q_INVOKABLE bool compareWithReference();
     // MENU_COMPARE - 1, "Turn off comparison".
     Q_INVOKABLE void turnOffComparison();
     const application::SubtitleComparison &comparison() const { return m_comparison; }
@@ -1043,6 +1047,7 @@ private:
     std::map<std::uint64_t, std::uint64_t> m_comparedRevisions;
     bool m_partialFilter = false;
     application::ComparedDocument comparedDocument(application::DocumentId id) const;
+    bool comparePair(application::DocumentId first, application::DocumentId second);
     void recompare();
     void refreshComparison();
     // R2

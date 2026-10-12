@@ -3219,8 +3219,9 @@ private slots:
     // §1): Move panel…, Undock (Dock while it floats) and Close, each
     // disabled where the panel cannot do it (a dock that is not closable).
     // No item repeats a control of the header (the Reference tray's toolbar
-    // keeps its commands), and the tray's one close is the menu's Close
-    // reference. The button draws the three dots of K1's panel-menu.
+    // keeps its commands; its own item, Compare with reference, is none of
+    // them, R1-compare-reference), and the tray's one close is the menu's
+    // Close reference. The button draws the three dots of K1's panel-menu.
     void panelMenuHoldsMoveUndockAndClose()
     {
         QVERIFY(application->openFile(episode));
@@ -3231,7 +3232,8 @@ private slots:
         QVERIFY(menu);
         QVERIFY(openPanelMenu(QStringLiteral("Reference")));
         const QStringList referenceItems = panelMenuItems();
-        QCOMPARE(referenceItems, (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"),
+        QCOMPARE(referenceItems, (QStringList{QStringLiteral("Compare with reference"), QStringLiteral("|"),
+                                              QStringLiteral("Move panel…"), QStringLiteral("Undock"),
                                               QStringLiteral("Close reference")}));
         // No label twice in one header: the toolbar's buttons are not menu items.
         QQuickItem *referenceHeader = dockHeader(QStringLiteral("Reference"));

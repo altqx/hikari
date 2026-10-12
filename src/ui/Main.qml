@@ -502,12 +502,20 @@ ApplicationWindow {
     // where the panel cannot do it (its dock's options: not closable, not
     // dockable). Its header asks for it (Docking.requestMenu: the "⋯"
     // button, a right click on the header, Space or Enter on the button).
-    // A panel's own items are settings that have no place in its body or
-    // its header's toolbar, never a copy of them: no panel has any yet (the
-    // Reference tray's commands are its toolbar's). The Reference tray's
-    // Close closes the reference, the tray with it (legacy's close mark,
-    // DestroyPreview), so the header holds one close, not two.
+    // A panel's own items are commands that have no place in its body or
+    // its header's toolbar, never a copy of them. The Reference tray has
+    // "Compare with reference" (R1-compare-reference: the editing target
+    // with the Protected reference, which the tab menu's Compare cannot
+    // reach when the reference is no tab). Its Close closes the reference,
+    // the tray with it (legacy's close mark, DestroyPreview), so the header
+    // holds one close, not two.
+    // An item's `enabled` is a function its entry follows, so the list itself
+    // stays put while the menu is open (a new list would remake the entries,
+    // the one being chosen too).
     function panelOwnItems(dock) {
+        if (dock === referenceDock)
+            return [{ name: "compareWithReference", text: qsTr("Compare with reference"),
+                      enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference() }]
         return []
     }
     function closePanel(dock) {
@@ -549,7 +557,7 @@ ApplicationWindow {
                 text: modelData.text
                 checkable: modelData.checkable === true
                 checked: modelData.checked === true
-                enabled: modelData.enabled !== false
+                enabled: typeof modelData.enabled === "function" ? modelData.enabled() : modelData.enabled !== false
                 onTriggered: modelData.run()
             }
             onObjectAdded: (index, object) => panelOptionsMenu.insertItem(index, object)
