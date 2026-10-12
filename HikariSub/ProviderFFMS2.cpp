@@ -395,9 +395,11 @@ done:
 			bool changeMatrix = false;
 			if (m_CS == FFMS_CS_UNSPECIFIED) {
 				m_CS = m_width > 1024 || m_height >= 600 ? FFMS_CS_BT709 : FFMS_CS_BT470BG;
+				//FFMS2 converts an untagged frame as BT.601, set the guess too
+				changeMatrix = true;
 			}
 			m_colorSpace = m_realColorSpace = ColorMatrixDescription(m_CS, m_CR);
-			if (m_CS == FFMS_CS_BT709 && colormatrix == L"TV.709") {
+			if (m_CS == FFMS_CS_BT709 && (colormatrix == L"TV.709" || changeMatrix)) {
 				if (FFMS_SetInputFormatV(m_videoSource, FFMS_CS_BT709, m_CR, FFMS_GetPixFmt(""), &m_errInfo)) {
 					HikariLog(_("Cannot change YCbCr matrix"));
 				}
