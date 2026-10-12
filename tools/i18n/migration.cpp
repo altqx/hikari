@@ -597,9 +597,8 @@ std::expected<MigrationOutput, QString> migrate(const KeyMap &map, const TsCatal
     r += QStringLiteral("## Inputs\n\n");
     r += QStringLiteral("- Legacy template `Locale/template.pot`: %1 messages (%2 with a plural, %3 with a msgctxt, %4 c-format).\n")
              .arg(templateMessages.size()).arg(legacyPlural).arg(legacyContext).arg(legacyCFormat);
-    r += QStringLiteral("- Rewrite keys (lupdate 6.11.2 over the source targets at the conversion, moved to the semantic "
-                        "contexts of `i18n/contexts.tsv` by O6 through `i18n/migration/contexts.tsv`): %1 messages in %2 "
-                        "contexts, %3 numerus.\n\n")
+    r += QStringLiteral("- Rewrite keys (lupdate 6.11.2 over the source targets at the conversion, in the semantic "
+                        "contexts of `i18n/contexts.tsv`): %1 messages in %2 contexts, %3 numerus.\n\n")
              .arg(liveKeyCount).arg(contexts.size()).arg(numerusKeys);
     r += QStringLiteral("## Key map\n\n");
     r += QStringLiteral("| Status | Rows | Meaning |\n| --- | --- | --- |\n");

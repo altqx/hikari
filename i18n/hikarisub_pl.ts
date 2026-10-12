@@ -65,7 +65,7 @@
     </message>
     <message>
         <source>Previous line</source>
-        <translation type="unfinished"></translation>
+        <translation>Poprzednia linijka</translation>
     </message>
     <message>
         <source>Play the previous line</source>
@@ -73,7 +73,7 @@
     </message>
     <message>
         <source>Next line</source>
-        <translation type="unfinished"></translation>
+        <translation>Następna linijka</translation>
     </message>
     <message>
         <source>Play the next line</source>
@@ -161,7 +161,7 @@
     </message>
     <message>
         <source>Commit</source>
-        <translation type="unfinished"></translation>
+        <translation>Zatwierdź</translation>
     </message>
     <message>
         <source>Apply changes</source>
@@ -312,7 +312,7 @@
     </message>
     <message>
         <source>Select a script editor</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz edytor skryptów</translation>
     </message>
     <message>
         <source>Programs (*.exe)</source>
@@ -392,28 +392,29 @@
     </message>
     <message>
         <source>Info</source>
-        <translation type="unfinished">Informacja</translation>
+        <translation>Informacja</translation>
     </message>
     <message>
         <source>This subtitle file does not have any scripts added</source>
-        <translation type="unfinished"></translation>
+        <translation>Ten plik napisów nie ma dodanych żadnych skryptów</translation>
     </message>
     <message>
         <source>Error</source>
-        <translation type="unfinished"></translation>
+        <translation>Błąd</translation>
     </message>
     <message>
         <source>Error loading Lua script: %1
 %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Błąd wczytywania skryptu Lua: %1
+%2</translation>
     </message>
     <message>
         <source>Automation error</source>
-        <translation type="unfinished"></translation>
+        <translation>Błąd automatyzacji</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można uruchomić edytora.</translation>
     </message>
     <message>
         <source>The macro was cancelled; nothing was changed.</source>
@@ -421,7 +422,7 @@
     </message>
     <message>
         <source>Validation Lua script &apos;%1&apos; failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Warunki skryptu Lua &apos;%1&apos; nie zostały spełnione</translation>
     </message>
     <message>
         <source>The script&apos;s helper ended; reload the script to use it again.</source>
@@ -485,12 +486,14 @@
     <message>
         <source>Swap shortcuts between the color picker
 and the color selection window</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamień ze sobą skróty próbnika
+i okna wyboru kolorów</translation>
     </message>
     <message>
         <source>Checking this option opens the color picker on left-click,
 and the color selection window on right-click.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zahaczenie tej opcji uruchamia próbnik po kliknięciu lewym przyciskiem,
+a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>Selected color:</source>
@@ -550,11 +553,11 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSL color</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolor HSL</translation>
     </message>
     <message>
         <source>Hue:</source>
-        <translation type="unfinished"></translation>
+        <translation>Odcień:</translation>
     </message>
     <message>
         <source>HSL hue</source>
@@ -562,7 +565,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Saturation:</source>
-        <translation type="unfinished"></translation>
+        <translation>Nasycenie:</translation>
     </message>
     <message>
         <source>HSL saturation</source>
@@ -570,7 +573,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Lightness:</source>
-        <translation type="unfinished"></translation>
+        <translation>Jaskrawość:</translation>
     </message>
     <message>
         <source>Lightness</source>
@@ -578,7 +581,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSV color</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolor HSV</translation>
     </message>
     <message>
         <source>HSV hue</source>
@@ -590,7 +593,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Value:</source>
-        <translation type="unfinished"></translation>
+        <translation>Wartość:</translation>
     </message>
     <message>
         <source>Value</source>
@@ -610,12 +613,13 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Color picker</source>
-        <translation type="unfinished"></translation>
+        <translation>Próbnik koloru</translation>
     </message>
     <message>
         <source>Move the window
 to the color selection location</source>
-        <translation type="unfinished"></translation>
+        <translation>Przenoś okno
+w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>OK</source>
@@ -623,7 +627,7 @@ to the color selection location</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation>Anuluj</translation>
     </message>
     <message>
         <source>Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).</source>
@@ -646,7 +650,7 @@ to the color selection location</source>
     </message>
     <message>
         <source>From video</source>
-        <translation type="unfinished">Z wideo</translation>
+        <translation>Z wideo</translation>
     </message>
     <message>
         <source>OK</source>
@@ -889,7 +893,7 @@ w tagu &apos;%3&apos;</translation>
     <name>HikariSub.Documents</name>
     <message>
         <source>Apply to All</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastosuj dla wszystkich</translation>
     </message>
     <message>
         <source>No</source>
@@ -1027,90 +1031,94 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>Video: </source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo: </translation>
     </message>
     <message>
         <source>Audio: </source>
-        <translation type="unfinished"></translation>
+        <translation>Audio: </translation>
     </message>
     <message>
         <source>Keyframes: </source>
-        <translation type="unfinished"></translation>
+        <translation>Klatki kluczowe: </translation>
     </message>
     <message>
         <source>Associated files:
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Skojarzone pliki:
+</translation>
     </message>
     <message>
         <source>Video from directory:
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo z folderu:
+</translation>
     </message>
     <message>
         <source>Load associated</source>
-        <translation type="unfinished">Wczytaj skojarzone</translation>
+        <translation>Wczytaj skojarzone</translation>
     </message>
     <message>
         <source>Load from directory</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj z folderu</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Editor</name>
     <message>
         <source>Bottom-left</source>
-        <translation type="unfinished"></translation>
+        <translation>Lewo-dół</translation>
     </message>
     <message>
         <source>Bottom-center</source>
-        <translation type="unfinished"></translation>
+        <translation>Środek-dół</translation>
     </message>
     <message>
         <source>Bottom-right</source>
-        <translation type="unfinished"></translation>
+        <translation>Prawo-dół</translation>
     </message>
     <message>
         <source>Middle-left</source>
-        <translation type="unfinished"></translation>
+        <translation>Lewo-środek</translation>
     </message>
     <message>
         <source>Center</source>
-        <translation type="unfinished"></translation>
+        <translation>Środek</translation>
     </message>
     <message>
         <source>Middle-right</source>
-        <translation type="unfinished"></translation>
+        <translation>Prawo-środek</translation>
     </message>
     <message>
         <source>Top-left</source>
-        <translation type="unfinished"></translation>
+        <translation>Lewo-góra</translation>
     </message>
     <message>
         <source>Top-center</source>
-        <translation type="unfinished"></translation>
+        <translation>Środek-góra</translation>
     </message>
     <message>
         <source>Top-right</source>
-        <translation type="unfinished"></translation>
+        <translation>Prawo-góra</translation>
     </message>
     <message>
         <source>Text position</source>
-        <translation type="unfinished"></translation>
+        <translation>Położenie tekstu</translation>
     </message>
     <message>
         <source>Number of characters in each line.
 No more than 43 characters per line (maximum 2 lines).</source>
-        <translation type="unfinished"></translation>
+        <translation>Ilość znaków w każdej linijce.
+Nie więcej niż 43 znaki na linijkę (maksymalnie 2 linijki)</translation>
     </message>
     <message>
         <source>Characters per second.
 Should not exceed 15 characters per second</source>
-        <translation type="unfinished"></translation>
+        <translation>Znaki na sekundę.
+Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Time</source>
-        <translation type="unfinished">Czas</translation>
+        <translation>Czas</translation>
     </message>
     <message>
         <source>Show times</source>
@@ -1118,7 +1126,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Frames</source>
-        <translation type="unfinished">Klatki</translation>
+        <translation>Klatki</translation>
     </message>
     <message>
         <source>Show frames</source>
@@ -1126,35 +1134,35 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Comment</source>
-        <translation type="unfinished"></translation>
+        <translation>Komentarz</translation>
     </message>
     <message>
         <source>Sets the line as a comment. Comments are not shown</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawia linijkę jako komentarz. Komentarze nie są wyświetlane</translation>
     </message>
     <message>
         <source>Layer</source>
-        <translation type="unfinished">Warstwa</translation>
+        <translation>Warstwa</translation>
     </message>
     <message>
         <source>Line layer. Higher layers are on top</source>
-        <translation type="unfinished"></translation>
+        <translation>Warstwa linijki, wyższe warstwy są na wierzchu</translation>
     </message>
     <message>
         <source>Start</source>
-        <translation type="unfinished">Start</translation>
+        <translation>Start</translation>
     </message>
     <message>
         <source>Line start time</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas początkowy linijki</translation>
     </message>
     <message>
         <source>End</source>
-        <translation type="unfinished">Koniec</translation>
+        <translation>Koniec</translation>
     </message>
     <message>
         <source>Line end time</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas końcowy linijki</translation>
     </message>
     <message>
         <source>Duration</source>
@@ -1162,7 +1170,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Line duration</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas trwania linijki</translation>
     </message>
     <message>
         <source>Style</source>
@@ -1170,7 +1178,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Line style</source>
-        <translation type="unfinished"></translation>
+        <translation>Styl linijki</translation>
     </message>
     <message>
         <source>Edit</source>
@@ -1186,51 +1194,51 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Allows quick editing of the current line&apos;s style</source>
-        <translation type="unfinished"></translation>
+        <translation>Umożliwia szybką edycję stylu linijki</translation>
     </message>
     <message>
         <source>Actor</source>
-        <translation type="unfinished">Aktor</translation>
+        <translation>Aktor</translation>
     </message>
     <message>
         <source>Line actor label. Does not affect the appearance of the subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Oznaczenie aktora linijki. Nie wpływa na wygląd napisów</translation>
     </message>
     <message>
         <source>Left margin</source>
-        <translation type="unfinished">Margines lewy</translation>
+        <translation>Margines lewy</translation>
     </message>
     <message>
         <source>Line left margin</source>
-        <translation type="unfinished"></translation>
+        <translation>Margines lewy linijki</translation>
     </message>
     <message>
         <source>Right margin</source>
-        <translation type="unfinished">Margines prawy</translation>
+        <translation>Margines prawy</translation>
     </message>
     <message>
         <source>Line right margin</source>
-        <translation type="unfinished"></translation>
+        <translation>Margines prawy linijki</translation>
     </message>
     <message>
         <source>Vertical margin</source>
-        <translation type="unfinished">Margines pionowy</translation>
+        <translation>Margines pionowy</translation>
     </message>
     <message>
         <source>Line top and bottom margins</source>
-        <translation type="unfinished"></translation>
+        <translation>Margines górny i dolny linijki</translation>
     </message>
     <message>
         <source>Effect</source>
-        <translation type="unfinished">Efekt</translation>
+        <translation>Efekt</translation>
     </message>
     <message>
         <source>Line effect. Used to mark lines to which karaoke or VSFilter effects should be applied</source>
-        <translation type="unfinished"></translation>
+        <translation>Efekt linijki. Służy do oznaczania linijek, na których zastosowane ma być karaoke bądź efekty VSFiltra</translation>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukryj tagi w nawiasach</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
@@ -1466,15 +1474,15 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Wraps: 0/86</source>
-        <translation type="unfinished"></translation>
+        <translation>Łamania: 0/86</translation>
     </message>
     <message>
         <source>Wraps: </source>
-        <translation type="unfinished"></translation>
+        <translation>Łamania: </translation>
     </message>
     <message>
         <source>Characters per second: %1&lt;=15</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Znaki na sekundę: %1&lt;=15</translation>
     </message>
     <message>
         <source>Duration is not a frame number.</source>
@@ -1525,43 +1533,43 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj</translation>
     </message>
     <message>
         <source>Adds fonts to a previously created catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaje czcionki do wcześniej utworzonego katalogu</translation>
     </message>
     <message>
         <source>Manage</source>
-        <translation type="unfinished"></translation>
+        <translation>Zarządzaj</translation>
     </message>
     <message>
         <source>Manages font catalogs</source>
-        <translation type="unfinished"></translation>
+        <translation>Umorzliwia zarządzanie katalogami stylów</translation>
     </message>
     <message>
         <source>Allows managing font catalogs</source>
-        <translation type="unfinished"></translation>
+        <translation>Umorzliwia zarządzanie katalogami czcionek</translation>
     </message>
     <message>
         <source>Filter</source>
-        <translation type="unfinished">Filtruj</translation>
+        <translation>Filtruj</translation>
     </message>
     <message>
         <source>Filters fonts to those containing the entered characters</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtruje czcionki, by zawierały wpisane znaki</translation>
     </message>
     <message>
         <source>Add fonts from subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj czcionki z napisów</translation>
     </message>
     <message>
         <source>Manage font catalogs</source>
-        <translation type="unfinished"></translation>
+        <translation>Zarządzanie katalogami czcionek</translation>
     </message>
     <message>
         <source>Catalogs:</source>
-        <translation type="unfinished"></translation>
+        <translation>Katalogi:</translation>
     </message>
     <message>
         <source>Choose or type a catalog name</source>
@@ -1573,7 +1581,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Edit</source>
-        <translation type="unfinished">Edytuj</translation>
+        <translation>Edytuj</translation>
     </message>
     <message>
         <source>Edit the catalog</source>
@@ -1581,7 +1589,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">Usuń</translation>
+        <translation>Usuń</translation>
     </message>
     <message>
         <source>Delete the catalog</source>
@@ -1589,7 +1597,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Load</source>
-        <translation type="unfinished">Wczytaj</translation>
+        <translation>Wczytaj</translation>
     </message>
     <message>
         <source>Load a catalog from a file</source>
@@ -1605,11 +1613,11 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Find:</source>
-        <translation type="unfinished"></translation>
+        <translation>Szukaj:</translation>
     </message>
     <message>
         <source>Save filter</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz Filtr</translation>
     </message>
     <message>
         <source>Font name</source>
@@ -1617,11 +1625,11 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Katalog</translation>
     </message>
     <message>
         <source>Sample</source>
-        <translation type="unfinished"></translation>
+        <translation>Przykład</translation>
     </message>
     <message>
         <source>Drawn by Qt, not by the subtitle renderer</source>
@@ -1641,23 +1649,23 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>The catalog list has autosave; files are stored in the &quot;Config&quot; folder.</source>
-        <translation type="unfinished"></translation>
+        <translation>Lista katalogów ma opcję autozapisu, pliki znajdują się w folderze &quot;Config&quot;.</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">Zamknij</translation>
+        <translation>Zamknij</translation>
     </message>
     <message>
         <source>Select the name of the profile</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz nazwę profilu</translation>
     </message>
     <message>
         <source>Choose new catalog name</source>
-        <translation type="unfinished"></translation>
+        <translation>Wprowadź nową nazwę katalogu</translation>
     </message>
     <message>
         <source>Replace with:</source>
-        <translation type="unfinished">Zamień na:</translation>
+        <translation>Zamień na:</translation>
     </message>
     <message>
         <source>OK</source>
@@ -1665,31 +1673,31 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation>Anuluj</translation>
     </message>
     <message>
         <source>Info</source>
-        <translation type="unfinished">Informacja</translation>
+        <translation>Informacja</translation>
     </message>
     <message>
         <source>Enter a name for the new catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Proszę wprowadzić nazwę nowego katalogu</translation>
     </message>
     <message>
         <source>Prompt</source>
-        <translation type="unfinished">Pytanie</translation>
+        <translation>Pytanie</translation>
     </message>
     <message>
         <source>Catalog named &quot;%1&quot; already exists. What to do?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Katalog o nazwie &quot;%1&quot; istnieje, co zrobić?</translation>
     </message>
     <message>
         <source>Merge</source>
-        <translation type="unfinished"></translation>
+        <translation>Scal</translation>
     </message>
     <message>
         <source>Are you sure you want to delete this catalog?</source>
-        <translation type="unfinished"></translation>
+        <translation>Czy na pewno chcesz usunąć ten katalog?</translation>
     </message>
     <message>
         <source>Choose font catalog file</source>
@@ -1701,19 +1709,19 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Font collector</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolekcjoner czcionek</translation>
     </message>
     <message>
         <source>Select the folder where you want to copy fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz folder, gdzie mają zostać skopiowane czcionki</translation>
     </message>
     <message>
         <source>Choose a name for the archive</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz nazwę dla archiwum</translation>
     </message>
     <message>
         <source>Save folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Folder zapisu</translation>
     </message>
     <message>
         <source>Destination folder</source>
@@ -1721,36 +1729,37 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Select a folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz folder</translation>
     </message>
     <message>
         <source>Options</source>
-        <translation type="unfinished">Opcje</translation>
+        <translation>Opcje</translation>
     </message>
     <message>
         <source>Check availability of fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdź dostępność czcionek</translation>
     </message>
     <message>
         <source>Copy to selected folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Skopiuj do wybranego folderu</translation>
     </message>
     <message>
         <source>Zip</source>
-        <translation type="unfinished"></translation>
+        <translation>Spakuj zipem</translation>
     </message>
     <message>
         <source>Save to video / subtitles folder.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisuj do folderu z napisami / wideo.</translation>
     </message>
     <message>
         <source>Saves to the video folder
 when demuxing fonts from an MKV file.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisuje do folderu z wideo
+przy wyciąganiu czcionek z pliku MKV.</translation>
     </message>
     <message>
         <source>Demux fonts from loaded MKV file</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyciągnij czcionki z wczytanego pliku MKV</translation>
     </message>
     <message>
         <source>Font collector log</source>
@@ -1770,19 +1779,19 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Start</source>
-        <translation type="unfinished">Start</translation>
+        <translation>Start</translation>
     </message>
     <message>
         <source>Start on tabs</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozpocznij na zakładkach</translation>
     </message>
     <message>
         <source>Choose save folder</source>
-        <translation type="unfinished">Wybierz folder zapisu</translation>
+        <translation>Wybierz folder zapisu</translation>
     </message>
     <message>
         <source>Select the name of the archive</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz nazwę archiwum</translation>
     </message>
     <message>
         <source>Archive files (*.zip)</source>
@@ -1822,7 +1831,7 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Filtering and font catalogs</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtrowanie i katalogi czcionek</translation>
     </message>
     <message>
         <source>Preview</source>
@@ -1850,33 +1859,35 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Remove all contents of catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń całą zawartość katalogu</translation>
     </message>
     <message>
         <source>Add fonts from all open subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj czcionki z wszystkich otwartych napisów</translation>
     </message>
     <message>
         <source>All fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie czcionki</translation>
     </message>
     <message>
         <source>Without catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>Bez katalogu</translation>
     </message>
     <message>
         <source>For adding fonts to catalog,
 click &quot;Manage&quot; button first,
 to create new catalog.</source>
-        <translation type="unfinished"></translation>
+        <translation>Aby móc dodawać czcionki do katalogu,
+należy najpierw kliknąć przycisk &quot;Zarządzaj&quot;,
+by utworzyć nowy katalog.</translation>
     </message>
     <message>
         <source>Autosave</source>
-        <translation type="unfinished">Autozapis</translation>
+        <translation>Autozapis</translation>
     </message>
     <message>
         <source>Cannot load external font folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można wczytać zewnętrznego katalogu czcionek</translation>
     </message>
     <message>
         <source>Cannot add external font file %1.</source>
@@ -1892,7 +1903,7 @@ to create new catalog.</source>
     </message>
     <message>
         <source>Found &quot;%1&quot; font file.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Znaleziono plik czcionki &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>The renderer also used &quot;%1&quot; (%2); it is not collected.</source>
@@ -1900,45 +1911,47 @@ to create new catalog.</source>
     </message>
     <message>
         <source>Copied font &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Skopiowano czcionkę &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Added font &quot;%1&quot; to the archive.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Dodano do archiwum czcionkę &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; belongs to a style
 that is not used.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Czcionka &quot;%1&quot; należy do stylu,
+który nie jest wykorzystywany.</translation>
     </message>
     <message>
         <source>
 Will not be copied.</source>
-        <translation type="unfinished"></translation>
+        <translation>
+Nie zostanie skopiowana.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; is missing normal style.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Czcionka &quot;%1&quot; nie ma stylu normalnego.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; is missing bold italics.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Czcionka &quot;%1&quot; nie ma pogrubienia z kursywą.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; is missing bold.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Czcionka &quot;%1&quot; nie ma pogrubienia.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; is missing italics.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Czcionka &quot;%1&quot; nie ma kursywy.</translation>
     </message>
     <message>
         <source>Cannot check the characters in font &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nie można sprawdzić znaków czcionki &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; does not contain characters: &quot;%2&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Czcionka &quot;%1&quot; nie zawiera znaków: &quot;%2&quot;.</translation>
     </message>
     <message>
         <source>Characters &quot;%1&quot; were drawn by the fallback font &quot;%2&quot;.</source>
@@ -1946,27 +1959,27 @@ Will not be copied.</source>
     </message>
     <message>
         <source>Cannot get the contents of font &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nie można pobrać zawartości czcionki &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Cannot open file &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nie można otworzyć pliku &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Cannot find &quot;%1&quot; font in Fonts folder.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nie można znaleźć czcionki &quot;%1&quot; w folderze Fonts.</translation>
     </message>
     <message>
         <source>Cannot copy font &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nie można skopiować czcionki &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Cannot zip font &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nie można spakować czcionki &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak wczytanych napisów, wczytaj napisy albo odznacz tę opcję.</translation>
     </message>
     <message>
         <source>Fonts</source>
@@ -1975,41 +1988,43 @@ Will not be copied.</source>
     </message>
     <message>
         <source>The save path is not valid.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybrana ścieżka zapisu jest niepoprawna.</translation>
     </message>
     <message>
         <source>The zip file already exists, delete it?</source>
-        <translation type="unfinished"></translation>
+        <translation>Plik zip już istnieje, usunąć go?</translation>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="unfinished">Potwierdzenie</translation>
+        <translation>Potwierdzenie</translation>
     </message>
     <message>
         <source>Found font &quot;%1&quot;
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Znaleziono czcionkę &quot;%1&quot;
+</translation>
     </message>
     <message>
         <source>Found font &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Znaleziono czcionkę &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Font not found &quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie znaleziono czcionki &quot;</translation>
     </message>
     <message>
         <source>In styles:
 </source>
-        <translation type="unfinished"></translation>
+        <translation>W stylach:
+</translation>
     </message>
     <message>
         <source> tabs: </source>
-        <translation type="unfinished"></translation>
+        <translation> zakładki: </translation>
     </message>
     <message>
         <source>In lines: </source>
-        <translation type="unfinished"></translation>
+        <translation>W linijkach: </translation>
     </message>
     <message>
         <source>Checked by the subtitle renderer (%1).
@@ -2063,31 +2078,35 @@ Will not be copied.</source>
     </message>
     <message>
         <source>found</source>
-        <translation type="unfinished"></translation>
+        <translation>znaleziono</translation>
     </message>
     <message>
         <source>copied</source>
-        <translation type="unfinished"></translation>
+        <translation>skopiowano</translation>
     </message>
     <message>
         <source>Finished, %1 %2.
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Zakończono, %1 %2.
+</translation>
     </message>
     <message>
         <source>Not found %1.
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nie znaleziono %1.
+</translation>
     </message>
     <message>
         <source>Cannot copy %1.
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Nie udało się skopiować %1.
+</translation>
     </message>
     <message>
         <source>Some fonts do not contain all glyphs used in the text.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Niektóre czcionki nie mają wszystkich znaków użytych w tekście.
+</translation>
     </message>
     <message>
         <source>The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.
@@ -2112,7 +2131,8 @@ Will not be copied.</source>
     <message>
         <source>Completed Successfully, %1 %2.
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Zakończono powodzeniem, %1 %2.
+</translation>
     </message>
     <message>
         <source>Finished in %1ms</source>
@@ -2132,13 +2152,17 @@ Will not be copied.</source>
         <source>Cannot retrieve the font file sizes and names;
 copying will be canceled.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można pobrać rozmiarów i nazw plików czcionek
+kopiowanie zostaje przerwane.
+</translation>
     </message>
     <message>
         <source>Retrieved sizes and names of %1 fonts, elapsed time %2ms.
 
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Pobrano rozmiary i nazwy %1 czcionek, upłynęło %2ms.
+
+</translation>
     </message>
     <message>
         <source>Ready to add %1 to the archive &quot;%2&quot;.
@@ -2157,29 +2181,31 @@ copying will be canceled.
     </message>
     <message>
         <source>Cannot create folder.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można utworzyć folderu.</translation>
     </message>
     <message>
         <source>Path is not available</source>
-        <translation type="unfinished"></translation>
+        <translation>Ścieżka jest niedostępna</translation>
     </message>
     <message>
         <source>Video: %1
 
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Wideo: %1
+
+</translation>
     </message>
     <message>
         <source>This video is not an MKV file.</source>
-        <translation type="unfinished"></translation>
+        <translation>To wideo nie jest plikiem MKV.</translation>
     </message>
     <message>
         <source>Cannot open MKV file</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można otworzyć pliku MKV</translation>
     </message>
     <message>
         <source>Loaded MKV file does not have any fonts.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytany plik MKV nie ma żadnych czcionek.</translation>
     </message>
     <message>
         <source>Font named &quot;%1&quot;.
@@ -2192,27 +2218,28 @@ copying will be canceled.
     </message>
     <message>
         <source>Saved a font named &quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisano czcionkę o nazwie &quot;</translation>
     </message>
     <message>
         <source>Cannot save font named &quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zapisać czcionki o nazwie &quot;</translation>
     </message>
     <message>
         <source>Completed, copied %1 fonts.
 Failed to copy %2 fonts.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Zakończono, skopiowano %1 czcionek.
+Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Completed successfully and copied %1 fonts.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Zakończono powodzeniem, skopiowano %1 czcionek.</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Grid</name>
     <message>
         <source>Font collector</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolekcjoner czcionek</translation>
     </message>
     <message>
         <source>Grid</source>
@@ -2328,7 +2355,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Select all lines visible on video</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznacz wszystkie linie widoczne na wideo</translation>
     </message>
     <message>
         <source>Make tree</source>
@@ -2336,7 +2363,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Show subtitles preview</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż podgląd napisów</translation>
     </message>
     <message>
         <source>Paste translation text</source>
@@ -2472,7 +2499,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Delete text</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń tekst</translation>
     </message>
     <message>
         <source>Delete lines	Shift+Del</source>
@@ -2480,7 +2507,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj napisy z pliku MKV / OGM</translation>
     </message>
     <message>
         <source>OK</source>
@@ -2990,27 +3017,27 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Run the last loaded script</source>
-        <translation type="unfinished"></translation>
+        <translation>Uruchom ostatnio zaczytany skrypt</translation>
     </message>
     <message>
         <source>Recently opened videos</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostatnio otwarte wideo</translation>
     </message>
     <message>
         <source>Recently opened keyframes</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostatnio otwarte klatki kluczowe</translation>
     </message>
     <message>
         <source>Open dummy video</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz dummy wideo</translation>
     </message>
     <message>
         <source>Insert start time from video</source>
-        <translation type="unfinished"></translation>
+        <translation>Wstaw czas początkowy z wideo</translation>
     </message>
     <message>
         <source>Insert end time from video</source>
-        <translation type="unfinished"></translation>
+        <translation>Wstaw czas końcowy z wideo</translation>
     </message>
     <message>
         <source>Set audio position to video time</source>
@@ -3026,11 +3053,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Zoom video</source>
-        <translation type="unfinished"></translation>
+        <translation>Powiększ wideo</translation>
     </message>
     <message>
         <source>Turn off video zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłącz powiększenie wideo</translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -3138,7 +3165,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Font collector</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolekcjoner czcionek</translation>
     </message>
     <message>
         <source>Resample subtitles</source>
@@ -3150,7 +3177,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukryj tagi w nawiasach</translation>
     </message>
     <message>
         <source>&amp;Help</source>
@@ -3226,251 +3253,251 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Converts to ASS format</source>
-        <translation type="unfinished"></translation>
+        <translation>Konwertuje do formatu ASS</translation>
     </message>
     <message>
         <source>Converts to SRT format</source>
-        <translation type="unfinished"></translation>
+        <translation>Konwertuje do formatu SRT</translation>
     </message>
     <message>
         <source>Converts to microDVD format</source>
-        <translation type="unfinished"></translation>
+        <translation>Konwertuje do formatu microDVD</translation>
     </message>
     <message>
         <source>Converts to MPL2 format</source>
-        <translation type="unfinished"></translation>
+        <translation>Konwertuje do formatu MPL2</translation>
     </message>
     <message>
         <source>Converts to TMPlayer format (not recommended)</source>
-        <translation type="unfinished"></translation>
+        <translation>Konwertuje do formatu TMPlayer (niezalecane)</translation>
     </message>
     <message>
         <source>Sort by start time</source>
-        <translation type="unfinished"></translation>
+        <translation>Sortuj według czasu początkowego</translation>
     </message>
     <message>
         <source>Sort by end time</source>
-        <translation type="unfinished"></translation>
+        <translation>Sortuj według czasu końcowego</translation>
     </message>
     <message>
         <source>Sort by styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Sortuj według stylów</translation>
     </message>
     <message>
         <source>Sort by actor</source>
-        <translation type="unfinished"></translation>
+        <translation>Sortuj według aktora</translation>
     </message>
     <message>
         <source>Sort by effect</source>
-        <translation type="unfinished"></translation>
+        <translation>Sortuj według efektu</translation>
     </message>
     <message>
         <source>Sort by layer</source>
-        <translation type="unfinished"></translation>
+        <translation>Sortuj według warstwy</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished">Wszystko</translation>
+        <translation>Wszystko</translation>
     </message>
     <message>
         <source>Video and subs</source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo i napisy</translation>
     </message>
     <message>
         <source>Audio and subs</source>
-        <translation type="unfinished"></translation>
+        <translation>Audio i napisy</translation>
     </message>
     <message>
         <source>Only video</source>
-        <translation type="unfinished"></translation>
+        <translation>Tylko wideo</translation>
     </message>
     <message>
         <source>Only subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Tylko napisy</translation>
     </message>
     <message>
         <source>Open subtitle file</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz plik napisów</translation>
     </message>
     <message>
         <source>Recently opened subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostatnio otwarte napisy</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń napisy z edytora</translation>
     </message>
     <message>
         <source>Opens video file</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwiera wybrane wideo</translation>
     </message>
     <message>
         <source>Save current file</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz aktualny plik</translation>
     </message>
     <message>
         <source>Save all subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz wszystkie napisy</translation>
     </message>
     <message>
         <source>Save as</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz jako</translation>
     </message>
     <message>
         <source>Save translation</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz tłumaczenie</translation>
     </message>
     <message>
         <source>Opens the selected autosave from the list</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwiera autozapis wybrany z listy</translation>
     </message>
     <message>
         <source>Opens the temporary file removal window</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwiera okno usuwania plików tymczasowych</translation>
     </message>
     <message>
         <source>Last session options</source>
-        <translation type="unfinished"></translation>
+        <translation>Opcje ostatniej sesji</translation>
     </message>
     <message>
         <source>Loads previously loaded files</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytuje poprzednio zaczytane pliki</translation>
     </message>
     <message>
         <source>Loads session from saved session file</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytuje sesję z wcześniej zapisanego pliku sesji</translation>
     </message>
     <message>
         <source>Saves session to file</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisuje sesję do pliku</translation>
     </message>
     <message>
         <source>Asks whether to load previously loaded files at program startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Pyta, czy wczytać ostatnio zaczytane pliki przy starcie programu</translation>
     </message>
     <message>
         <source>Loads previously loaded files at program startup</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytuje poprzednio zaczytane pliki przy starcie programu</translation>
     </message>
     <message>
         <source>Program settings</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawienia programu</translation>
     </message>
     <message>
         <source>Exit the program</source>
-        <translation type="unfinished"></translation>
+        <translation>Zakończ działanie programu</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="unfinished"></translation>
+        <translation>Cofnij</translation>
     </message>
     <message>
         <source>Redo</source>
-        <translation type="unfinished"></translation>
+        <translation>Ponów</translation>
     </message>
     <message>
         <source>Sorts all lines in ASS file</source>
-        <translation type="unfinished"></translation>
+        <translation>Sortuje wszystkie linie napisów ASS</translation>
     </message>
     <message>
         <source>Sorts selected lines in ASS file</source>
-        <translation type="unfinished"></translation>
+        <translation>Sortuje zaznaczone linie napisów ASS</translation>
     </message>
     <message>
         <source>History</source>
-        <translation type="unfinished"></translation>
+        <translation>Historia</translation>
     </message>
     <message>
         <source>Turns on multireplacer</source>
-        <translation type="unfinished"></translation>
+        <translation>Włącza okno poprawiania błędów</translation>
     </message>
     <message>
         <source>Selects lines by expressions</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznacza linijki wg danej frazy tekstu</translation>
     </message>
     <message>
         <source>Searches for the specified text phrases and replaces them</source>
-        <translation type="unfinished"></translation>
+        <translation>Szuka i podmienia dane frazy tekstu</translation>
     </message>
     <message>
         <source>Searches for the specified text phrase</source>
-        <translation type="unfinished"></translation>
+        <translation>Szuka dane frazy tekstu</translation>
     </message>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
-        <translation type="unfinished"></translation>
+        <translation>Znajduje kolejne wystąpięnie frazy w tekście</translation>
     </message>
     <message>
         <source>Load script</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj skrypt</translation>
     </message>
     <message>
         <source>Go to previous frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Przechodzi o jedną klatkę w tył</translation>
     </message>
     <message>
         <source>Go to next frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Przechodzi o jedną klatkę w przód</translation>
     </message>
     <message>
         <source>Moves video to start time</source>
-        <translation type="unfinished"></translation>
+        <translation>Przechodzi wideo do czasu początkowego linii</translation>
     </message>
     <message>
         <source>Moves video to end time</source>
-        <translation type="unfinished"></translation>
+        <translation>Przechodzi wideo do czasu końcowego linii</translation>
     </message>
     <message>
         <source>Plays / Pauses video</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwarza lub pauzuje wideo</translation>
     </message>
     <message>
         <source>Opens audio file</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwiera wybrane audio</translation>
     </message>
     <message>
         <source>Opens audio from video</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwiera audio z wideo</translation>
     </message>
     <message>
         <source>Opens blank audio 2 hour and 30 minutes long</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwiera puste audio na 2:30 godziny</translation>
     </message>
     <message>
         <source>Closes audio</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamyka audio</translation>
     </message>
     <message>
         <source>Enable / Disable editor</source>
-        <translation type="unfinished"></translation>
+        <translation>Włącz / Wyłącz edytor</translation>
     </message>
     <message>
         <source>Shifting subtitle times</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuwanie czasów napisów</translation>
     </message>
     <message>
         <source>Is used to manage ASS styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Służy do zarządzania stylami ASS</translation>
     </message>
     <message>
         <source>ASS subtitle properties</source>
-        <translation type="unfinished">Właściwości napisów ASS</translation>
+        <translation>Właściwości napisów ASS</translation>
     </message>
     <message>
         <source>Converts from one format to another</source>
-        <translation type="unfinished"></translation>
+        <translation>Konwersja z jednego formatu napisów na inny</translation>
     </message>
     <message>
         <source>Opens the HikariSub website in the default browser</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwiera stronę HikariSub w domyślnej przeglądarce</translation>
     </message>
     <message>
         <source>Opens the HikariSub issue tracker</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwiera listę zgłoszeń HikariSub</translation>
     </message>
     <message>
         <source>Checks whether a newer version is available</source>
@@ -3478,11 +3505,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Shows program info</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyświetla informacje o programie</translation>
     </message>
     <message>
         <source>Shows credits</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyświetla listę osób pomocnych przy tworzeniu programu</translation>
     </message>
     <message>
         <source>Log window</source>
@@ -3676,43 +3703,43 @@ great help testing HikariSub on a slow computer)
     <name>HikariSub.Matroska</name>
     <message>
         <source>Confirmation</source>
-        <translation type="unfinished">Potwierdzenie</translation>
+        <translation>Potwierdzenie</translation>
     </message>
     <message>
         <source>Save the file before loading subtitles from the MKV?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisać plik przed wczytaniem napisów z MKV?</translation>
     </message>
     <message>
         <source>Yes</source>
-        <translation type="unfinished">Tak</translation>
+        <translation>Tak</translation>
     </message>
     <message>
         <source>No</source>
-        <translation type="unfinished">Nie</translation>
+        <translation>Nie</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation>Anuluj</translation>
     </message>
     <message>
         <source>The file does not contain any subtitle tracks.</source>
-        <translation type="unfinished"></translation>
+        <translation>Plik nie ma żadnej ścieżki z napisami.</translation>
     </message>
     <message>
         <source>Choose subtitle track</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz ścieżkę napisów</translation>
     </message>
     <message>
         <source>Loading subtitles from Matroska.</source>
-        <translation type="unfinished"></translation>
+        <translation>Odczyt napisów z pliku Matroska.</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Upłynęło %1 sekund</translation>
     </message>
     <message>
         <source>Indexing error occurred: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Wystąpił błąd indeksowania: %1</translation>
     </message>
 </context>
 <context>
@@ -4252,7 +4279,7 @@ po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
         <source>Subtitle display filter</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtr wyświetlania napisów</translation>
     </message>
     <message>
         <source>Playback</source>
@@ -4572,7 +4599,7 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Border color</source>
-        <translation type="unfinished">Kolor obwódki</translation>
+        <translation>Kolor obwódki</translation>
     </message>
 </context>
 <context>
@@ -4638,7 +4665,7 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>ASS file properties</source>
-        <translation type="unfinished">Właściwości pliku ASS</translation>
+        <translation>Właściwości pliku ASS</translation>
     </message>
     <message>
         <source>Save</source>
@@ -5057,7 +5084,7 @@ bo została zedytowana.</translation>
     </message>
     <message>
         <source>Select lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaznacz linijki</translation>
     </message>
     <message>
         <source>With</source>
@@ -5208,27 +5235,27 @@ bo została zedytowana.</translation>
     </message>
     <message>
         <source>Find files</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyszukaj pliki</translation>
     </message>
     <message>
         <source>Filter list</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtruj listę</translation>
     </message>
     <message>
         <source>All words</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie słowa</translation>
     </message>
     <message>
         <source>Files</source>
-        <translation type="unfinished"></translation>
+        <translation>Pliki</translation>
     </message>
     <message>
         <source>Versions</source>
-        <translation type="unfinished"></translation>
+        <translation>Wersje</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz</translation>
     </message>
     <message>
         <source>Open auto save</source>
@@ -5440,15 +5467,15 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>Auto save folder is empty</source>
-        <translation type="unfinished"></translation>
+        <translation>Folder autozapisu jest pusty</translation>
     </message>
     <message>
         <source>Cannot open auto save folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można otworzyć folderu autozapisu</translation>
     </message>
     <message>
         <source>Failed to load autosave</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytywanie autozapisu nie powiodło się</translation>
     </message>
     <message>
         <source>Session file is corrupt</source>
@@ -5528,7 +5555,7 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished">Wszystko</translation>
+        <translation>Wszystko</translation>
     </message>
     <message>
         <source>Changes</source>
@@ -5593,7 +5620,7 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">Zamknij</translation>
+        <translation>Zamknij</translation>
     </message>
     <message>
         <source>%1 to import of %2 changes, %3 unchanged, %4 unresolved, %5 excluded, %6 retired</source>
@@ -5750,39 +5777,39 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Time elapsed: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Upłynęło %1 sekund</translation>
     </message>
     <message>
         <source>Video scale</source>
-        <translation type="unfinished"></translation>
+        <translation>Skala obrazu wideo</translation>
     </message>
     <message>
         <source>Video zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>Powiększenie wideo</translation>
     </message>
     <message>
         <source>Video duration</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas trwania wideo</translation>
     </message>
     <message>
         <source>Frames per second</source>
-        <translation type="unfinished"></translation>
+        <translation>Klatki na Sekundę</translation>
     </message>
     <message>
         <source>Video resolution</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozdzielczość wideo</translation>
     </message>
     <message>
         <source>Video aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>Proporcje wideo</translation>
     </message>
     <message>
         <source>Subtitles resolution</source>
-        <translation type="unfinished">Rozdzielczość napisów</translation>
+        <translation>Rozdzielczość napisów</translation>
     </message>
     <message>
         <source>Video file name</source>
-        <translation type="unfinished"></translation>
+        <translation>Nazwa pliku wideo</translation>
     </message>
 </context>
 <context>
@@ -6226,7 +6253,7 @@ Usunięte style:
     </message>
     <message>
         <source>Modified</source>
-        <translation type="unfinished">Zmodyfikowano</translation>
+        <translation>Zmodyfikowano</translation>
     </message>
     <message>
         <source>Protected reference</source>
@@ -6246,386 +6273,386 @@ Usunięte style:
     </message>
     <message>
         <source>Save</source>
-        <translation type="unfinished">Zapisz</translation>
+        <translation>Zapisz</translation>
     </message>
     <message>
         <source>Save all</source>
-        <translation type="unfinished">Zapisz wszystko</translation>
+        <translation>Zapisz wszystko</translation>
     </message>
     <message>
         <source>Close all tabs</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamknij wszystkie zakładki</translation>
     </message>
     <message>
         <source>Open the folder containing the subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz folder zawierający napisy</translation>
     </message>
     <message>
         <source>Open video containing folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz folder zawierający wideo</translation>
     </message>
     <message>
         <source>Open audio containing folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz folder zawierający audio</translation>
     </message>
     <message>
         <source>Open keyframes containing folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz folder zawierający klatki kluczowe</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
-        <translation type="unfinished"></translation>
+        <translation>Porównanie napisów</translation>
     </message>
     <message>
         <source>Compare by times</source>
-        <translation type="unfinished"></translation>
+        <translation>Porównaj według czasów</translation>
     </message>
     <message>
         <source>Compare by visible lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Porównaj według widocznych linijek</translation>
     </message>
     <message>
         <source>Compare by selections</source>
-        <translation type="unfinished"></translation>
+        <translation>Porównaj według zaznaczeń</translation>
     </message>
     <message>
         <source>Compare by styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Porównaj według stylów</translation>
     </message>
     <message>
         <source>Compare by selected styles</source>
-        <translation type="unfinished"></translation>
+        <translation>Porównaj według wybranych stylów</translation>
     </message>
     <message>
         <source>Compare</source>
-        <translation type="unfinished"></translation>
+        <translation>Porównaj</translation>
     </message>
     <message>
         <source>Turn off comparison</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłącz porównanie</translation>
     </message>
     <message>
         <source>Prompt</source>
-        <translation type="unfinished">Pytanie</translation>
+        <translation>Pytanie</translation>
     </message>
     <message>
         <source>All tabs will be closed, continue?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zostaną zamknięte wszystkie zakładki, kontynuować?</translation>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="unfinished">Potwierdzenie</translation>
+        <translation>Potwierdzenie</translation>
     </message>
     <message>
         <source>Load subtitles named &quot;%1&quot;?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Wczytać napisy o nazwie &quot;%1&quot;?</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.TagList</name>
     <message>
         <source>Transparency of primary color</source>
-        <translation type="unfinished"></translation>
+        <translation>Przezroczystość koloru podstawowego</translation>
     </message>
     <message>
         <source>Transparency of secondary color</source>
-        <translation type="unfinished"></translation>
+        <translation>Przezroczystość koloru pomocniczego</translation>
     </message>
     <message>
         <source>Transparency of border color</source>
-        <translation type="unfinished"></translation>
+        <translation>Przezroczystość koloru obwódki</translation>
     </message>
     <message>
         <source>Transparency of shadow color</source>
-        <translation type="unfinished"></translation>
+        <translation>Przezroczystość koloru cienia</translation>
     </message>
     <message>
         <source>Primary color</source>
-        <translation type="unfinished">Kolor podstawowy</translation>
+        <translation>Kolor podstawowy</translation>
     </message>
     <message>
         <source>Secondary color</source>
-        <translation type="unfinished">Kolor zastępczy</translation>
+        <translation>Kolor zastępczy</translation>
     </message>
     <message>
         <source>Border color</source>
-        <translation type="unfinished">Kolor obwódki</translation>
+        <translation>Kolor obwódki</translation>
     </message>
     <message>
         <source>Shadow color</source>
-        <translation type="unfinished">Kolor cienia</translation>
+        <translation>Kolor cienia</translation>
     </message>
     <message>
         <source>PNG mask of primary color</source>
-        <translation type="unfinished"></translation>
+        <translation>Maska PNG koloru podstawowego</translation>
     </message>
     <message>
         <source>PNG mask of secondary color</source>
-        <translation type="unfinished"></translation>
+        <translation>Maska PNG koloru pomocniczego</translation>
     </message>
     <message>
         <source>PNG mask of border color</source>
-        <translation type="unfinished"></translation>
+        <translation>Maska PNG koloru obwódki</translation>
     </message>
     <message>
         <source>PNG mask of shadow color</source>
-        <translation type="unfinished"></translation>
+        <translation>Maska PNG koloru cienia</translation>
     </message>
     <message>
         <source>Transparency gradient of primary color</source>
-        <translation type="unfinished"></translation>
+        <translation>Gradient przezroczystości koloru podstawowego</translation>
     </message>
     <message>
         <source>Transparency gradient of secondary color</source>
-        <translation type="unfinished"></translation>
+        <translation>Gradient przezroczystości koloru pomocniczego</translation>
     </message>
     <message>
         <source>Transparency gradient of border color</source>
-        <translation type="unfinished"></translation>
+        <translation>Gradient przezroczystości koloru obwódki</translation>
     </message>
     <message>
         <source>Transparency gradient of shadow color</source>
-        <translation type="unfinished"></translation>
+        <translation>Gradient przezroczystości koloru cienia</translation>
     </message>
     <message>
         <source>Gradient of primary color</source>
-        <translation type="unfinished"></translation>
+        <translation>Gradient koloru podstawowego</translation>
     </message>
     <message>
         <source>Gradient of secondary color</source>
-        <translation type="unfinished"></translation>
+        <translation>Gradient koloru pomocniczego</translation>
     </message>
     <message>
         <source>Gradient of border color</source>
-        <translation type="unfinished"></translation>
+        <translation>Gradient koloru obwódki</translation>
     </message>
     <message>
         <source>Gradient of shadow color</source>
-        <translation type="unfinished"></translation>
+        <translation>Gradient koloru cienia</translation>
     </message>
     <message>
         <source>Text alignment (SSA)</source>
-        <translation type="unfinished"></translation>
+        <translation>Położenie tekstu (układ SSA)</translation>
     </message>
     <message>
         <source>Transparency</source>
-        <translation type="unfinished"></translation>
+        <translation>Przezroczystość całego tekstu</translation>
     </message>
     <message>
         <source>Text position</source>
-        <translation type="unfinished"></translation>
+        <translation>Położenie tekstu</translation>
     </message>
     <message>
         <source>Bold text</source>
-        <translation type="unfinished"></translation>
+        <translation>Pogrubienie tekstu</translation>
     </message>
     <message>
         <source>Edge blur</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozmycie krawędzi</translation>
     </message>
     <message>
         <source>Blur of border, shadow or font</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozmycie</translation>
     </message>
     <message>
         <source>Thickness of border</source>
-        <translation type="unfinished"></translation>
+        <translation>Grubość obwódki</translation>
     </message>
     <message>
         <source>Vector clip / rectangle clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Wycinki wektorowe / prostokątne</translation>
     </message>
     <message>
         <source>Font distortion</source>
-        <translation type="unfinished"></translation>
+        <translation>Deformacja czcionki</translation>
     </message>
     <message>
         <source>Fading in / fading out of text</source>
-        <translation type="unfinished"></translation>
+        <translation>Pojawianie / znikanie tekstu</translation>
     </message>
     <message>
         <source>Fading in / fading out of text (advanced version)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pojawianie / znikanie tekstu (zaawansowana wersja)</translation>
     </message>
     <message>
         <source>Skew on X axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Pochylenie w osi X</translation>
     </message>
     <message>
         <source>Skew on Y axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Pochylenie w osi Y</translation>
     </message>
     <message>
         <source>Text encoding</source>
-        <translation type="unfinished"></translation>
+        <translation>Kodowanie tekstu</translation>
     </message>
     <message>
         <source>Font name</source>
-        <translation type="unfinished">Nazwa czcionki</translation>
+        <translation>Nazwa czcionki</translation>
     </message>
     <message>
         <source>Text rounding</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaokrąglenie tekstu</translation>
     </message>
     <message>
         <source>Rotation on X axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Obrót w osi X</translation>
     </message>
     <message>
         <source>Rotation on Y axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Obrót w osi Y</translation>
     </message>
     <message>
         <source>Rotation on Z axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Obrót w osi Z</translation>
     </message>
     <message>
         <source>Font size</source>
-        <translation type="unfinished">Rozmiar czcionki</translation>
+        <translation>Rozmiar czcionki</translation>
     </message>
     <message>
         <source>Scale on X and Y axes</source>
-        <translation type="unfinished"></translation>
+        <translation>Skala w osi X i Y</translation>
     </message>
     <message>
         <source>Scale on X axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Skala w osi X</translation>
     </message>
     <message>
         <source>Scale on Y axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Skala w osi Y</translation>
     </message>
     <message>
         <source>Font spacing</source>
-        <translation type="unfinished"></translation>
+        <translation>Odstępy między znakami</translation>
     </message>
     <message>
         <source>Vertical font spacing</source>
-        <translation type="unfinished"></translation>
+        <translation>Odstęp między znakami w pionie</translation>
     </message>
     <message>
         <source>Italic text</source>
-        <translation type="unfinished"></translation>
+        <translation>Kursywa / pochylenie tekstu</translation>
     </message>
     <message>
         <source>Reverse vector clip or rectangle clip</source>
-        <translation type="unfinished"></translation>
+        <translation>Odwrócone wycinki wektorowe / prostokątne</translation>
     </message>
     <message>
         <source>Text jitter</source>
-        <translation type="unfinished"></translation>
+        <translation>Trzęsienie tekstu</translation>
     </message>
     <message>
         <source>Karaoke timing</source>
-        <translation type="unfinished"></translation>
+        <translation>Timing karaoke</translation>
     </message>
     <message>
         <source>Karaoke timing smooth transition</source>
-        <translation type="unfinished"></translation>
+        <translation>Timing karaoke płynne przejście</translation>
     </message>
     <message>
         <source>Karaoke timing border</source>
-        <translation type="unfinished"></translation>
+        <translation>Timing karaoke obwódka</translation>
     </message>
     <message>
         <source>Karaoke timing (not supported)</source>
-        <translation type="unfinished"></translation>
+        <translation>Timing karaoke (nieobsługiwane)</translation>
     </message>
     <message>
         <source>Text movement</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruch tekstu</translation>
     </message>
     <message>
         <source>Text movement along a circle</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruch po okręgu</translation>
     </message>
     <message>
         <source>Text movement along a curve (3 points)</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruch po krzywej (3 punkty)</translation>
     </message>
     <message>
         <source>Text movement along a curve (4 points)</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruch po krzywej (4 punkty)</translation>
     </message>
     <message>
         <source>Vector drawing movement</source>
-        <translation type="unfinished"></translation>
+        <translation>Ruch rysunku wektorowego</translation>
     </message>
     <message>
         <source>Anchor for rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>Kotwica dla obrotów</translation>
     </message>
     <message>
         <source>Drawing and its scale</source>
-        <translation type="unfinished"></translation>
+        <translation>Rysunek wektorowy i skala</translation>
     </message>
     <message>
         <source>Offset of Y vector points</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesunięcie punktów wektora w osi Y</translation>
     </message>
     <message>
         <source>Text wrap method</source>
-        <translation type="unfinished"></translation>
+        <translation>Sposób łamania linii</translation>
     </message>
     <message>
         <source>Reset tags</source>
-        <translation type="unfinished"></translation>
+        <translation>Reset tagów</translation>
     </message>
     <message>
         <source>Font point randomness</source>
-        <translation type="unfinished"></translation>
+        <translation>Losowość punktów czcionki</translation>
     </message>
     <message>
         <source>Font point randomness seed</source>
-        <translation type="unfinished"></translation>
+        <translation>Losowość punktów czcionki seed</translation>
     </message>
     <message>
         <source>Font point randomness on X axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Losowość punktów czcionki oś X</translation>
     </message>
     <message>
         <source>Font point randomness on Y axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Losowość punktów czcionki oś Y</translation>
     </message>
     <message>
         <source>Font point randomness on Z axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Losowość punktów czcionki oś Z</translation>
     </message>
     <message>
         <source>Text strikethrough</source>
-        <translation type="unfinished"></translation>
+        <translation>Przekreślenie tekstu</translation>
     </message>
     <message>
         <source>Text shadow</source>
-        <translation type="unfinished"></translation>
+        <translation>Cień tekstu</translation>
     </message>
     <message>
         <source>Text animation</source>
-        <translation type="unfinished"></translation>
+        <translation>Animacja tekstu</translation>
     </message>
     <message>
         <source>Text underline</source>
-        <translation type="unfinished"></translation>
+        <translation>Podkreślenie tekstu</translation>
     </message>
     <message>
         <source>Border on X axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Obwódka w osi X</translation>
     </message>
     <message>
         <source>Border on Y axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Obwódka w osi Y</translation>
     </message>
     <message>
         <source>Shadow on X axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Cień w osi X</translation>
     </message>
     <message>
         <source>Shadow on Y axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Cień w osi Y</translation>
     </message>
     <message>
         <source>Z coordinate for tags \frx and \fry</source>
-        <translation type="unfinished"></translation>
+        <translation>Koordynata Z dla tagów \frx i \fry</translation>
     </message>
     <message>
         <source>Tag list</source>
@@ -6633,15 +6660,15 @@ Usunięte style:
     </message>
     <message>
         <source>Show description</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż opis</translation>
     </message>
     <message>
         <source>Show all tags</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż wszystkie tagi</translation>
     </message>
     <message>
         <source>Show VSFiltermod tags</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż tagi VSFiltermoda</translation>
     </message>
     <message>
         <source>%1, %2, %3 of %4</source>
@@ -6941,7 +6968,7 @@ Tłumaczenie idzie do góry.</translation>
     </message>
     <message>
         <source>Description</source>
-        <translation type="unfinished">Opis</translation>
+        <translation>Opis</translation>
     </message>
     <message>
         <source>Description:
@@ -6951,28 +6978,29 @@ Translation - text pasted into subtitles with correct timing.</source>
     </message>
     <message>
         <source>Not confirmed</source>
-        <translation type="unfinished"></translation>
+        <translation>Niepewne</translation>
     </message>
     <message>
         <source>Moving tags</source>
-        <translation type="unfinished"></translation>
+        <translation>Przenoszenie tagów</translation>
     </message>
     <message>
         <source>Translator mode</source>
-        <translation type="unfinished"></translation>
+        <translation>Tryb tłumacza</translation>
     </message>
     <message>
         <source>Translator mode displays and saves both foreign text and translation text</source>
-        <translation type="unfinished"></translation>
+        <translation>Tryb tłumacza wyświetla i zapisuje zarówno tekst obcojęzyczny, jak i tekst tłumaczenia</translation>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="unfinished">Potwierdzenie</translation>
+        <translation>Potwierdzenie</translation>
     </message>
     <message>
         <source>Are you sure you want to turn off translation mode?
 Foreign language text will be deleted.</source>
-        <translation type="unfinished"></translation>
+        <translation>Czy na pewno chcesz wyłączyć tryb tłumacza?
+Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Could not open %1; nothing was changed.</source>
@@ -6991,107 +7019,107 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Failed to initialize DirectShow</source>
-        <translation type="unfinished"></translation>
+        <translation>Błąd inicjalizacji Direct Show</translation>
     </message>
     <message>
         <source>Cannot create filters interface</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można stworzyć interfejsu filtrów</translation>
     </message>
     <message>
         <source>Cannot create controller</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można stworzyć kontrolera</translation>
     </message>
     <message>
         <source>Cannot create search interface</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można stworzyć interfejsu szukania</translation>
     </message>
     <message>
         <source>Cannot create audio interface</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można stworzyć interfejsu audio</translation>
     </message>
     <message>
         <source>Source filter not added</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtr źródła nie został dodany</translation>
     </message>
     <message>
         <source>Cannot add video renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można dodać renderera wideo</translation>
     </message>
     <message>
         <source>Cannot create audio renderer instance</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można utworzyć instancji renderera dźwięku</translation>
     </message>
     <message>
         <source>Cannot add Direct Sound renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można dodać renderera Direct Sound</translation>
     </message>
     <message>
         <source>Cannot enumerate source pins</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można wyliczyć pinów źródła</translation>
     </message>
     <message>
         <source>Cannot enumerate renderer pins</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można wyliczyć pinów renderera</translation>
     </message>
     <message>
         <source>Cannot enumerate Direct Sound pins</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można wyliczyć pinów dsound</translation>
     </message>
     <message>
         <source>Cannot get renderer pin</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można pobrać pinu renderera</translation>
     </message>
     <message>
         <source>Cannot get dsound pin</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można pobrać pinu dsound</translation>
     </message>
     <message>
         <source>No IMediaTypes</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak IMediaTypes</translation>
     </message>
     <message>
         <source>No track type info</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak informacji o rodzaju ścieżki</translation>
     </message>
     <message>
         <source>Cannot connect source pin to video renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można połączyć pinu źródła z rendererem wideo</translation>
     </message>
     <message>
         <source>Cannot connect source pin to audio renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można połączyć pinu źródła z rendererem audio</translation>
     </message>
     <message>
         <source>Cannot connect source pin to audio1 renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można połączyć pinu źródła z rendererem audio1</translation>
     </message>
     <message>
         <source>Cannot find connected source pin</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można znaleźć połączonego pinu źródła</translation>
     </message>
     <message>
         <source>Cannot get splitter pin info</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można pobrać informacji o pinie splittera</translation>
     </message>
     <message>
         <source>Cannot enumerate splitter pins</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można wyliczyć pinów splittera</translation>
     </message>
     <message>
         <source>Cannot connect source pin to video2 renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można połączyć pinu źródła z rendererem wideo2</translation>
     </message>
     <message>
         <source>Dummy video options</source>
-        <translation type="unfinished"></translation>
+        <translation>Opcje dummy wideo</translation>
     </message>
     <message>
         <source>This gives %1 frames</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Co daje %1 klatek</translation>
     </message>
     <message>
         <source>Video resolution:</source>
-        <translation type="unfinished"></translation>
+        <translation>Rozdzielczość wideo:</translation>
     </message>
     <message>
         <source>Width</source>
@@ -7103,19 +7131,19 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Color:</source>
-        <translation type="unfinished"></translation>
+        <translation>Kolor:</translation>
     </message>
     <message>
         <source>Checkerboard pattern</source>
-        <translation type="unfinished"></translation>
+        <translation>Siatka</translation>
     </message>
     <message>
         <source>Frames per second:</source>
-        <translation type="unfinished"></translation>
+        <translation>Klatki na sekundę:</translation>
     </message>
     <message>
         <source>Duration:</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas trwania:</translation>
     </message>
     <message>
         <source>Previous frame</source>
@@ -7147,7 +7175,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Previous file</source>
-        <translation type="unfinished"></translation>
+        <translation>Poprzedni plik</translation>
     </message>
     <message>
         <source>Pause</source>
@@ -7171,7 +7199,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Next file</source>
-        <translation type="unfinished"></translation>
+        <translation>Następny plik</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -7219,7 +7247,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Copy video position</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj pozycję na wideo</translation>
     </message>
     <message>
         <source>Exit full screen</source>
@@ -7231,59 +7259,59 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>Pełny ekran</translation>
     </message>
     <message>
         <source>Switch full screen to monitor %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Przełącz pełny ekran na %1 monitor</translation>
     </message>
     <message>
         <source>Open in full screen on monitor %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Włącz pełny ekran na %1 monitorze</translation>
     </message>
     <message>
         <source>Open editor</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz edytor</translation>
     </message>
     <message>
         <source>Recently opened subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostatnio otwarte napisy</translation>
     </message>
     <message>
         <source>Recently opened videos</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostatnio otwarte wideo</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz wideo</translation>
     </message>
     <message>
         <source>Open subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz napisy</translation>
     </message>
     <message>
         <source>Show / hide progress bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukryj / pokaż pasek postępu</translation>
     </message>
     <message>
         <source>Change aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmień proporcje wideo</translation>
     </message>
     <message>
         <source>Save frame with subtitles as PNG</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz klatkę z napisami jako PNG</translation>
     </message>
     <message>
         <source>Copy frame with subtitles to clipboard</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj klatkę z napisami do schowka</translation>
     </message>
     <message>
         <source>Save frame as PNG</source>
-        <translation type="unfinished"></translation>
+        <translation>Zapisz klatkę jako PNG</translation>
     </message>
     <message>
         <source>Copy frame to clipboard</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopiuj klatkę do schowka</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -7291,19 +7319,19 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Filters</source>
-        <translation type="unfinished"></translation>
+        <translation>Filtry</translation>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="unfinished">Potwierdzenie</translation>
+        <translation>Potwierdzenie</translation>
     </message>
     <message>
         <source>Are you sure you want to index the next video?</source>
-        <translation type="unfinished"></translation>
+        <translation>Czy na pewno chcesz zindeksować następne wideo?</translation>
     </message>
     <message>
         <source>Are you sure you want to index the previous video?</source>
-        <translation type="unfinished"></translation>
+        <translation>Czy na pewno chcesz zindeksować poprzednie wideo?</translation>
     </message>
     <message>
         <source>Seek on</source>
@@ -7311,31 +7339,31 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
-        <translation type="unfinished"></translation>
+        <translation>Dwukrotnym kliknięciu linii (zawsze włączone)</translation>
     </message>
     <message>
         <source>Every line change</source>
-        <translation type="unfinished"></translation>
+        <translation>Każdej zmianie linii</translation>
     </message>
     <message>
         <source>Clicking a line or editing when paused</source>
-        <translation type="unfinished"></translation>
+        <translation>Kliknięciu linii lub edycji na pauzie</translation>
     </message>
     <message>
         <source>Clicking a line or editing</source>
-        <translation type="unfinished"></translation>
+        <translation>Kliknięciu linii lub edycji</translation>
     </message>
     <message>
         <source>Editing line when paused</source>
-        <translation type="unfinished"></translation>
+        <translation>Edycji na pauzie</translation>
     </message>
     <message>
         <source>Editing</source>
-        <translation type="unfinished">Edycja</translation>
+        <translation>Edycja</translation>
     </message>
     <message>
         <source>Move video to selected line on:</source>
-        <translation type="unfinished"></translation>
+        <translation>Przesuwaj wideo do aktualnej linii po:</translation>
     </message>
     <message>
         <source>Then play</source>
@@ -7343,23 +7371,23 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Nothing</source>
-        <translation type="unfinished"></translation>
+        <translation>Nic</translation>
     </message>
     <message>
         <source>Audio to the line end time</source>
-        <translation type="unfinished"></translation>
+        <translation>Audio do końca linii</translation>
     </message>
     <message>
         <source>Video and audio to the line end time</source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo do końca linii</translation>
     </message>
     <message>
         <source>Video and audio to the next line start time</source>
-        <translation type="unfinished"></translation>
+        <translation>Wideo do początku następnej linii</translation>
     </message>
     <message>
         <source>On moving to another line play:</source>
-        <translation type="unfinished"></translation>
+        <translation>Odtwarzaj po zmianie linii:</translation>
     </message>
     <message>
         <source>Full screen video</source>
@@ -7367,19 +7395,19 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Previous video file</source>
-        <translation type="unfinished"></translation>
+        <translation>Poprzedni plik wideo</translation>
     </message>
     <message>
         <source>Show toolbar</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż pasek narzędzi</translation>
     </message>
     <message>
         <source>Indexing video</source>
-        <translation type="unfinished"></translation>
+        <translation>Indeksowanie pliku wideo</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation>Anuluj</translation>
     </message>
     <message>
         <source>Streams</source>
@@ -7387,11 +7415,11 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Volume</source>
-        <translation type="unfinished">Głośność</translation>
+        <translation>Głośność</translation>
     </message>
     <message>
         <source>Cannot change YCbCr matrix</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zmienić macierzy YCbCr</translation>
     </message>
     <message>
         <source>Invalid keyframes format</source>
@@ -7399,24 +7427,25 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Indexing error occurred: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Wystąpił błąd indeksowania: %1</translation>
     </message>
     <message>
         <source>Cannot create VideoSource.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można utworzyć VideoSource.</translation>
     </message>
     <message>
         <source>Cannot convert video to RGBA</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można przekonwertować wideo na RGBA</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nieprawidłowa wartość fps.</translation>
     </message>
     <message>
         <source>The file is not a valid video file or is corrupted,
 or codecs or a splitter may be missing</source>
-        <translation type="unfinished"></translation>
+        <translation>Plik nie jest poprawnym plikiem wideo albo jest uszkodzony,
+bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>No video open</source>
@@ -7440,18 +7469,18 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Aspect ratio: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Proporcje ekranu: %1</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.VisualTools</name>
     <message>
         <source>Tag editing</source>
-        <translation type="unfinished"></translation>
+        <translation>Edycja tagu</translation>
     </message>
     <message>
         <source>Edited tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytowany tag</translation>
     </message>
     <message>
         <source>Tags</source>
@@ -7463,23 +7492,23 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Add tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj tag</translation>
     </message>
     <message>
         <source>Delete tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń tag</translation>
     </message>
     <message>
         <source>Name:</source>
-        <translation type="unfinished"></translation>
+        <translation>Nazwa:</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation type="unfinished">Nazwa</translation>
+        <translation>Nazwa</translation>
     </message>
     <message>
         <source>Tag:</source>
-        <translation type="unfinished"></translation>
+        <translation>Tag:</translation>
     </message>
     <message>
         <source>Tag</source>
@@ -7487,7 +7516,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Minimal value:</source>
-        <translation type="unfinished"></translation>
+        <translation>Minimalna wartość:</translation>
     </message>
     <message>
         <source>Minimal value</source>
@@ -7495,7 +7524,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Maximal value:</source>
-        <translation type="unfinished"></translation>
+        <translation>Maksymalna wartość:</translation>
     </message>
     <message>
         <source>Maximal value</source>
@@ -7503,7 +7532,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Value:</source>
-        <translation type="unfinished"></translation>
+        <translation>Wartość:</translation>
     </message>
     <message>
         <source>Value</source>
@@ -7511,7 +7540,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Step:</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeskok:</translation>
     </message>
     <message>
         <source>Step</source>
@@ -7523,7 +7552,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Decimal places:</source>
-        <translation type="unfinished"></translation>
+        <translation>Liczby po przecinku:</translation>
     </message>
     <message>
         <source>Decimal places</source>
@@ -7531,23 +7560,23 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Used only when tag have 2 values or more</source>
-        <translation type="unfinished"></translation>
+        <translation>Używane tylko w przypadku gdy tag ma 2 wartości bądź więcej</translation>
     </message>
     <message>
         <source>Tag change options</source>
-        <translation type="unfinished"></translation>
+        <translation>Opcje zmiany tagów</translation>
     </message>
     <message>
         <source>Additional values:</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodatkowe wartości:</translation>
     </message>
     <message>
         <source>Value %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Wartość %1</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">Zastosuj</translation>
+        <translation>Zastosuj</translation>
     </message>
     <message>
         <source>OK</source>
@@ -7555,15 +7584,15 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation>Anuluj</translation>
     </message>
     <message>
         <source>Restore default</source>
-        <translation type="unfinished"></translation>
+        <translation>Przywróć domyślne</translation>
     </message>
     <message>
         <source>Vector shape editing</source>
-        <translation type="unfinished"></translation>
+        <translation>Edycja kształtów wektorowych</translation>
     </message>
     <message>
         <source>A shape named &quot;%1&quot; already exists.</source>
@@ -7571,7 +7600,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Edited shape</source>
-        <translation type="unfinished"></translation>
+        <translation>Edytowany kształt</translation>
     </message>
     <message>
         <source>Shapes</source>
@@ -7583,31 +7612,31 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Add shape</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj kształt</translation>
     </message>
     <message>
         <source>Delete shape</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń kształt</translation>
     </message>
     <message>
         <source>Editing</source>
-        <translation type="unfinished">Edycja</translation>
+        <translation>Edycja</translation>
     </message>
     <message>
         <source>Scaling relative to cursor:</source>
-        <translation type="unfinished"></translation>
+        <translation>Skalowanie względem kursora:</translation>
     </message>
     <message>
         <source>Changed width and height</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmienna szerokość i wysokość</translation>
     </message>
     <message>
         <source>Preserve aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>Utrzymuj proporcje</translation>
     </message>
     <message>
         <source>Changed is only width</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmienna tylko szerokość</translation>
     </message>
     <message>
         <source>Scaling relative to cursor</source>
@@ -7615,15 +7644,15 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Scaling mode:</source>
-        <translation type="unfinished"></translation>
+        <translation>Rodzaj skalowania:</translation>
     </message>
     <message>
         <source>Changing only drawing coordinates</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmiana koordynatów rysunku</translation>
     </message>
     <message>
         <source>Changing scale</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmiana skali</translation>
     </message>
     <message>
         <source>Scaling mode</source>
@@ -7631,11 +7660,11 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Shape:</source>
-        <translation type="unfinished"></translation>
+        <translation>Kształt:</translation>
     </message>
     <message>
         <source>Get shape from active line</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobierz kształt z aktywnej linii</translation>
     </message>
     <message>
         <source>Shape</source>
@@ -7643,11 +7672,11 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="unfinished">Potwierdzenie</translation>
+        <translation>Potwierdzenie</translation>
     </message>
     <message>
         <source>Replace</source>
-        <translation type="unfinished">Zamień</translation>
+        <translation>Zamień</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -7659,7 +7688,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation type="unfinished">Uwaga</translation>
+        <translation>Uwaga</translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>

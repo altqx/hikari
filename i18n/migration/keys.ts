@@ -4,22 +4,6 @@
 <context>
     <name>HikariSub.Audio</name>
     <message>
-        <source>Play</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Play line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Play the current line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stop</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Audio</source>
         <translation type="unfinished"></translation>
     </message>
@@ -64,7 +48,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Previous line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Play the previous line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -72,7 +64,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Play</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Play the current syllable / line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play the current line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -149,6 +157,10 @@
     </message>
     <message>
         <source>Add lead-out to the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Commit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -247,15 +259,76 @@
 <context>
     <name>HikariSub.Automation</name>
     <message>
-        <source>Automation</source>
+        <source>The document changed while the macro ran; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Cancel</source>
+        <source>The protected reference can&apos;t be changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Reload</source>
+        <source>The macro&apos;s changes could not be applied; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This subtitle file does not have any scripts added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading Lua script: %1
+%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The script&apos;s helper ended; reload the script to use it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automation error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot start editor.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a document to run a macro on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line being edited can&apos;t be committed, so the macro can&apos;t start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The macro was cancelled; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The macro was force stopped; reload the script to use it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Validation Lua script &apos;%1&apos; failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unresolved: the script or its macros changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unresolved: no loaded script has this macro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automation manager</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -263,19 +336,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Unload</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>All files (*)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Automation manager</source>
+        <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -284,6 +345,10 @@
     </message>
     <message>
         <source>Automation scripts (*.lua *.moon)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -303,6 +368,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Map hotkey</source>
         <translation type="unfinished"></translation>
     </message>
@@ -319,47 +388,59 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Unresolved: the script or its macros changed</source>
+        <source>A script is running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Unresolved: no loaded script has this macro</source>
+        <source>No scripts loaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The macro changed Styles or Script Info, which can&apos;t be applied yet; nothing was changed.</source>
+        <source>Load script…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The Document changed while the macro ran; nothing was changed.</source>
+        <source>Load an Automation script</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The protected reference can&apos;t be changed.</source>
+        <source>Loading</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The macro&apos;s changes could not be applied; nothing was changed.</source>
+        <source>Ready</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Open a Document to run a macro on.</source>
+        <source>Running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The Line being edited can&apos;t be committed, so the macro can&apos;t start.</source>
+        <source>Failed to load</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The macro was cancelled; nothing was changed.</source>
+        <source>Unavailable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The script&apos;s helper ended; reload the script to use it again.</source>
+        <source>Reload</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The macro was force stopped; reload the script to use it again.</source>
+        <source>Unload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a script editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Programs (*.exe)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*.*)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -399,6 +480,16 @@
     </message>
     <message>
         <source>Hue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap shortcuts between the color picker
+and the color selection window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking this option opens the color picker on left-click,
+and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -458,14 +549,72 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>HSL color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSL hue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSL saturation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lightness:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lightness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSV color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSV hue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSV saturation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a colour from the screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Recent colors</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
-<context>
-    <name>HikariSub.Conversion</name>
     <message>
-        <source>Resample subtitles</source>
+        <source>Screen pixels around the pointer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color picker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the window
+to the color selection location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -477,139 +626,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Choose new FPS</source>
+        <source>Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Subtitles FPS</source>
+        <source>The desktop&apos;s screenshot portal is not in use here.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>New FPS</source>
+        <source>The desktop could not pick a colour from the screen.</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Width</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Height</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>FPS</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>FPS from video</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalog for style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Time for one letter in milliseconds</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>New end times</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tags to paste at the beginning of every ASS line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Resolution when converting to ASS</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The conversion will:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>What the conversion changes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Convert</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Subtitles resolution</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>From subtitles</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Target resolution</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Resample options</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No stretch</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stretch</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Incompatible resolution</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The video and subtitle resolutions are different.
-You can change them now or use &apos;Change subtitle resolution&apos;.
-
-Video resolution: %1 x %2
-Subtitle resolution: %3 x %4
-
-Match the resolution to the video?
-</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Change only the subtitle resolution</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Resample subtitles (no stretch)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Resample subtitles (stretch)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Do not change</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Disable warning</source>
-        <translation type="unfinished"></translation>
-    </message>
+</context>
+<context>
+    <name>HikariSub.Conversion</name>
     <message>
         <source>In line %1, value &apos;%2&apos; cannot be scaled
 in tag &apos;%3&apos;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>This Document can&apos;t be converted to that format.</source>
+        <source>This document can&apos;t be converted to that format.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -678,11 +715,20 @@ in tag &apos;%3&apos;</source>
             <numerusform></numerusform>
         </translation>
     </message>
-</context>
-<context>
-    <name>HikariSub.Documents</name>
     <message>
-        <source>No</source>
+        <source>Choose new FPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles FPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New FPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -690,11 +736,219 @@ in tag &apos;%3&apos;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save subtitle file</source>
+        <source>FPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>FPS from video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog for style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time for one letter in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New end times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags to paste at the beginning of every ASS line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resolution when converting to ASS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The conversion will:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the conversion changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No stretch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stretch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Incompatible resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The video and subtitle resolutions are different.
+You can change them now or use &apos;Change subtitle resolution&apos;.
+
+Video resolution: %1 x %2
+Subtitle resolution: %3 x %4
+
+Match the resolution to the video?
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change only the subtitle resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample subtitles (no stretch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample subtitles (stretch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Do not change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Disable warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Documents</name>
+    <message>
+        <source>Untitled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose where to save the untitled document.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A document could not be saved; nothing was closed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not closed, because saving failed or there is newer work: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Subtitle file </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open %1; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not reload the subtitles; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The subtitles changed while reloading; nothing was replaced.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The reference is protected (read-only).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A macro is running on this document.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The edited line cannot be committed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The change was refused.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keyframes: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Associated files:
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video from directory:
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load associated</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load from directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save subtitle file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -715,7 +969,7 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>These Documents have unsaved changes:</source>
+        <source>These documents have unsaved changes:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -743,6 +997,10 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>ASS subtitles (*.ass)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -763,51 +1021,11 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Yes</source>
+        <source>No</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The reference is protected (read-only).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>A macro is running on this document.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The edited line cannot be committed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The change was refused.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Untitled</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose where to save the Untitled Document.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>A Document could not be saved; nothing was closed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Not closed, because saving failed or there is newer work: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not open %1; nothing was changed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not reload the subtitles; nothing was changed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The subtitles changed while reloading; nothing was replaced.</source>
+        <source>Apply to All</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -898,6 +1116,10 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Hide tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Original text</source>
         <translation type="unfinished"></translation>
     </message>
@@ -923,10 +1145,6 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Not applied: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -962,7 +1180,177 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Number of buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Comment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sets the line as a comment. Comments are not shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line layer. Higher layers are on top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line start time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line end time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit style: allows quick editing of the current line&apos;s style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allows quick editing of the current line&apos;s style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Actor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line actor label. Does not affect the appearance of the subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left margin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line left margin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right margin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line right margin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical margin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line top and bottom margins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line effect. Used to mark lines to which karaoke or VSFilter effects should be applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Number of characters in each line.
+No more than 43 characters per line (maximum 2 lines).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters per second.
+Should not exceed 15 characters per second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom-left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom-center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom-right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Middle-left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Middle-right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top-left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top-center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top-right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text position</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -983,6 +1371,10 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Here the text would become drawing or tag content: edit it with tags shown.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unconfirmed applies in translation mode only.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1014,6 +1406,14 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Start is not a frame number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End is not a frame number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Start is not a time such as 0:00:01.00.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1022,11 +1422,19 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Start is not a time such as %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End is not a time such as %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Margins must be whole numbers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>This Document can&apos;t be saved here.</source>
+        <source>This document can&apos;t be saved here.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1034,15 +1442,11 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Another open Document uses that file.</source>
+        <source>Another open document uses that file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The Document can&apos;t be saved right now.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unconfirmed applies in translation mode only.</source>
+        <source>The document can&apos;t be saved right now.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1061,9 +1465,388 @@ please save with different name or change file attribute.</source>
         <source>%1, active line %2</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Wraps: 0/86</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wraps: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters per second: %1&lt;=15</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration is not a frame number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration is not a time.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Fonts</name>
+    <message>
+        <source>%1 font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found &quot;%1&quot; font file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The renderer also used &quot;%1&quot; (%2); it is not collected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied font &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added font &quot;%1&quot; to the archive.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font &quot;%1&quot; belongs to a style
+that is not used.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>
+Will not be copied.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font &quot;%1&quot; is missing normal style.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font &quot;%1&quot; is missing bold italics.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font &quot;%1&quot; is missing bold.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font &quot;%1&quot; is missing italics.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot check the characters in font &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font &quot;%1&quot; does not contain characters: &quot;%2&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters &quot;%1&quot; were drawn by the fallback font &quot;%2&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot get the contents of font &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open file &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot find &quot;%1&quot; font in Fonts folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot copy font &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot zip font &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the folder where you want to copy fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No subtitles loaded. Load subtitles or deselect this option.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a name for the archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <comment>the folder the font collector writes beside the subtitles</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The save path is not valid.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The zip file already exists, delete it?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found font &quot;%1&quot;
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found font &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font not found &quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In styles:
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> tabs: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In lines: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checked by the subtitle renderer (%1).
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tab %1: the renderer could not read this document; it was not checked.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Families the renderer did not find: %1.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Families answered by a font of another name: %1.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters no font has: %1.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters drawn by a fallback font of this computer: %1.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tab %1: with the collected fonts alone, %2 of %3 frames differ.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Different fonts with the same file name: %1. Only one of them is kept in a folder.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The video shows the subtitles through %1, whose output this check does not verify.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The collected fonts alone reproduce every frame.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finished, %1 %2.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not found %1.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot copy %1.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some fonts do not contain all glyphs used in the text.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The output does not hold every collected font under its own name: the collection is incomplete.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writing was cancelled.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The output is labelled incomplete (&quot;%1&quot;).
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Completed Successfully, %1 %2.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finished in %1ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled; nothing was written.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The subtitle renderer is not available; the fonts cannot be checked.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot retrieve the font file sizes and names;
+copying will be canceled.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retrieved sizes and names of %1 fonts, elapsed time %2ms.
+
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to add %1 to the archive &quot;%2&quot;.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to copy %1 to &quot;%2&quot;.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Path is not available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video: %1
+
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This video is not an MKV file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open MKV file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loaded MKV file does not have any fonts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font named &quot;%1&quot;.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(no folder)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved a font named &quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot save font named &quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Completed, copied %1 fonts.
+Failed to copy %2 fonts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Completed successfully and copied %1 fonts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Without catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For adding fonts to catalog,
+click &quot;Manage&quot; button first,
+to create new catalog.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Autosave</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot load external font folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot add external font file %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Select a font</source>
         <translation type="unfinished"></translation>
@@ -1078,6 +1861,10 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Font name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1101,6 +1888,10 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Filtering and font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Preview</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1108,9 +1899,338 @@ please save with different name or change file attribute.</source>
         <source>AaBbCcDdEeFfGg 0123456789</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>The subtitle renderer uses %1 (%2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not installed under this name: the subtitle renderer substitutes %1 (%2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not installed: the subtitle renderer falls back to %1 (%2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No font answers this name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font collector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Destination folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check availability of fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to selected folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to video / subtitles folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves to the video folder
+when demuxing fonts from an MKV file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Demux fonts from loaded MKV file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font collector log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write this incomplete collection, labelled incomplete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start on tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose save folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the name of the archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Archive files (*.zip)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds fonts to a previously created catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manages font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allows managing font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filters fonts to those containing the entered characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add fonts from subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalogs:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose or type a catalog name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a catalog with this name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load a catalog from a file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Refresh fonts: reads the installed and external fonts again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sample</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drawn by Qt, not by the subtitle renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog of %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The catalog list has autosave; files are stored in the &quot;Config&quot; folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the name of the profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose new catalog name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace with:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter a name for the new catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Prompt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog named &quot;%1&quot; already exists. What to do?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Are you sure you want to delete this catalog?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose font catalog file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text files (*.txt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove all contents of catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add fonts from all open subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Grid</name>
+    <message>
+        <source>Layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The starting time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Actor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left margin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right margin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical margin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text without tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text into original</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text into translation</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Grid</source>
         <translation type="unfinished"></translation>
@@ -1224,7 +2344,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Select all lines visible on video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Make tree</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show subtitles preview</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1360,7 +2488,19 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Delete text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete lines	Shift+Del</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font collector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load subtitles from an MKV/OGM file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1388,11 +2528,11 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>This would break the Line group “%1”. Nothing was changed. Remove the group (its description Line is deleted) and try again, or cancel.</source>
+        <source>This would break the line group “%1”. Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>This would leave group members outside a Line group. Nothing was changed.</source>
+        <source>This would leave group members outside a line group. Nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1400,51 +2540,7 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Subtitle lines</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Layer</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The starting time</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>End time</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Actor</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Styles</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Left margin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Right margin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Vertical margin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Effect</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Text</source>
+        <source>Original text</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1480,23 +2576,31 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Original text</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Translation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Text without tags</source>
+        <source>Characters per second</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Text into original</source>
+        <source>Line wraps</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Text into translation</source>
+        <source>changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>changed, saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unconfirmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>bookmarked</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
@@ -1511,11 +2615,43 @@ please save with different name or change file attribute.</source>
             <numerusform></numerusform>
         </translation>
     </message>
+    <message>
+        <source>Subtitle lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Hotkeys</name>
     <message>
+        <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcut &quot;%1&quot; is invalid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcut can be set using Shift + Click</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hotkey mapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; is already assigned to %2. Press it again to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Please enter a hotkey for &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1543,7 +2679,7 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Please enter a hotkey for &quot;%1&quot;.</source>
+        <source>OK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1562,22 +2698,6 @@ please save with different name or change file attribute.</source>
         <source>Set anyway</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shortcut can be set using Shift + Click</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&quot;%1&quot; is already assigned to %2. Press it again to replace it.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shortcut &quot;%1&quot; is invalid</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>HikariSub.MainWindow</name>
@@ -1590,7 +2710,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Converts to ASS format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Convert to SRT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converts to SRT format</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1598,7 +2726,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Converts to microDVD format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Convert to MPL2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converts to MPL2 format</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1606,7 +2742,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Converts to TMPlayer format (not recommended)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The starting time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by start time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1614,7 +2758,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Sort by end time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by styles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1622,7 +2774,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Sort by actor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by effect</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1630,7 +2790,35 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Sort by layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video and subs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio and subs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open subtitle file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1638,11 +2826,23 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Recently opened subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Recently opened &amp;subtitles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove subtitles from the editor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1654,7 +2854,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Open &amp;Video…</source>
+        <source>Opens video file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open &amp;video…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save current file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1662,11 +2870,23 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Save all subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save &amp;all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Save as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save &amp;as…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save translation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1678,7 +2898,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Opens the selected autosave from the list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open auto save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens the temporary file removal window</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1690,7 +2918,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Last session options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Last session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loads previously loaded files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1698,7 +2934,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Loads session from saved session file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Load session from file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves session to file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1706,7 +2950,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Asks whether to load previously loaded files at program startup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Ask whether to load the last session at program startup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loads previously loaded files at program startup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1714,7 +2966,19 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Program settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import legacy settings...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exit the program</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1726,7 +2990,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Undo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;Undo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Redo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1734,7 +3006,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Sorts all lines in ASS file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>So&amp;rt all lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sorts selected lines in ASS file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1746,7 +3026,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>History</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;History</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turns on multireplacer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1754,7 +3042,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Selects lines by expressions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Select &amp;lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Searches for the specified text phrases and replaces them</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1762,7 +3058,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Searches for the specified text phrase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;Find</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finds the next occurrence of the phrase in the text</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1778,11 +3082,19 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Load script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;Load script…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Refresh autoload scripts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run the last loaded script</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1798,7 +3110,31 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Open &amp;video…</source>
+        <source>Recently opened videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recently opened keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open dummy video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert start time from video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert end time from video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to previous frame</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1806,7 +3142,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Go to next frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Next frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves video to start time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1814,7 +3158,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Moves video to end time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Go to end time of line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plays / Pauses video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1830,10 +3182,6 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Open keyframes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Set audio position to video time</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1842,7 +3190,23 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Unload video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off video zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A&amp;udio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens audio file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1854,11 +3218,23 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Opens audio from video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open audio from video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Opens blank audio 2 hour and 30 minutes long</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open blank 2h30m audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Closes audio</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1926,6 +3302,14 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Enable / Disable editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shifting subtitle times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shift &amp;times...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1934,7 +3318,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Is used to manage ASS styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Style &amp;manager</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ASS subtitle properties</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1942,7 +3334,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Converts from one format to another</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Conversion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font collector</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1954,7 +3354,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Hide tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;Help</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens the HikariSub website in the default browser</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1962,7 +3370,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Opens the HikariSub issue tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;Report an issue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checks whether a newer version is available</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1970,67 +3386,19 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Shows program info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;About</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Shows credits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;Credits</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Load associated</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Left margin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Right margin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Vertical margin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>B</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>I</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>U</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>S</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Fn</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show tags</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No editing target</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>  |  Reference (protected): %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Modified</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2054,15 +3422,15 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Close</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Log window</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2214,19 +3582,72 @@ great help testing HikariSub on a slow computer)
 </source>
         <translation type="unfinished"></translation>
     </message>
+</context>
+<context>
+    <name>HikariSub.Matroska</name>
     <message>
-        <source>Change resolution</source>
+        <source>Time elapsed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Get from video</source>
+        <source>Indexing error occurred: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save the file before loading subtitles from the MKV?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file does not contain any subtitle tracks.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose subtitle track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading subtitles from Matroska.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>HikariSub.MisspellReplacer</name>
     <message>
-        <source>Multireplacer</source>
+        <source>Rule &quot;%1&quot; is invalid.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot change rules
+when find results window is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1 cannot be replaced,
+cause it was edited.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot replace &quot;%1&quot; to &quot;%2&quot;, with rule &quot;%3&quot; in line %4.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fix minor errors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2373,29 +3794,40 @@ in all tabs</source>
         <source>Replace</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Line %1 cannot be replaced,
-cause it was edited.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rule &quot;%1&quot; is invalid.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cannot change rules
-when find results window is open</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cannot replace &quot;%1&quot; to &quot;%2&quot;, with rule &quot;%3&quot; in line %4.</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>HikariSub.Options</name>
     <message>
+        <source>Put files .dic and .aff to &quot;Dictionary&quot; folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The selected %1 for conversion does not exist
+and will be changed to the default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>catalog for style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot find translation, language change failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2404,10 +3836,6 @@ when find results window is open</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Set default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2435,7 +3863,7 @@ when find results window is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Themes</source>
+        <source>Appearance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2447,11 +3875,19 @@ when find results window is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Language (program restart required)</source>
+        <source>Language</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Spell checker language (&quot;Dictionary&quot; folder)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None chosen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No dictionaries found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2690,6 +4126,18 @@ after switching from full screen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Subtitle display filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Start video zoom in percent.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2795,26 +4243,6 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Audio spectrum background</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Audio spectrum echo</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Audio spectrum</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Color</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Choose filtering</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2883,6 +4311,14 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write the value into the subtitles&apos; information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Title</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2919,25 +4355,108 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Put files .dic and .aff to &quot;Dictionary&quot; folder</source>
+        <source>Theme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The selected %1 for conversion does not exist
-and will be changed to the default</source>
+        <source>Follow system theme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>catalog for style</source>
+        <source>Light or Dark as the system&apos;s colour scheme sets it; high contrast stays as chosen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>style</source>
+        <source>Accent color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (contrast %2:1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>UI colors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset to default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Red</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orange</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Purple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>High contrast white</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>High contrast black</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text and icons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border color</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Reference</name>
+    <message>
+        <source>The reference is protected (read-only).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare with reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reference: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Reference</source>
         <translation type="unfinished"></translation>
@@ -2946,11 +4465,43 @@ and will be changed to the default</source>
         <source>Reference (protected, read-only): %1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Follow the editing line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Independent navigation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Match %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show nearest line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reference lines (protected, read-only)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.ScriptProperties</name>
     <message>
-        <source>ASS subtitle properties</source>
+        <source>ASS file properties</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3074,6 +4625,84 @@ and will be changed to the default</source>
 <context>
     <name>HikariSub.Search</name>
     <message>
+        <source>Reached end. Search from the beginning?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Styles named &quot;%1&quot; do not exist in the subtitles being searched,
+which may significantly reduce the number of search results.
+What would you like to do?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None of the selected styles exist in the subtitles being searched,
+so nothing will be found.
+What would you like to do?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Are you sure you want to make changes in all subtitle files?
+If you make a mistake, backups are in the &apos;ReplaceBackup&apos; folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not find the specified phrase &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replaced %1 times.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search path is invalid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find and Replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid regular expression &apos;%1&apos;: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to find match for regular expression: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1 cannot be replaced,
+cause it was edited.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot back up %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open file %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot write file %1; it was left as it was.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be restored; its backup is in %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Search</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3083,6 +4712,14 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Find</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3222,6 +4859,10 @@ and will be changed to the default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>No results yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Find all, Find in all open subtitles and Find in subtitles list their matches here; check the ones to change and replace them.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3231,10 +4872,6 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Uncheck all</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replace</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3265,53 +4902,23 @@ and will be changed to the default</source>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Reached end. Search from the beginning?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Styles named &quot;%1&quot; do not exist in the subtitles being searched,
-which may significantly reduce the number of search results.
-What would you like to do?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>None of the selected styles exist in the subtitles being searched,
-so nothing will be found.
-What would you like to do?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Are you sure you want to make changes in all subtitle files?
-If you make a mistake, backups are in the &apos;ReplaceBackup&apos; folder.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not find the specified phrase &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replaced %1 times.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Search path is invalid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Confirmation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Info</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Find and Replace</source>
-        <translation type="unfinished"></translation>
-    </message>
+</context>
+<context>
+    <name>HikariSub.SelectLines</name>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 lines selected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 lines added to selection.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 lines deselected.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3319,35 +4926,7 @@ If you make a mistake, backups are in the &apos;ReplaceBackup&apos; folder.</sou
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Line %1 cannot be replaced,
-cause it was edited.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cannot back up %1.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cannot open file %1.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cannot write file %1; it was left as it was.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 could not be restored; its backup is in %2.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Line %1: </source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>HikariSub.SelectLines</name>
-    <message>
-        <source>Select</source>
+        <source>Select lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3423,6 +5002,10 @@ cause it was edited.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add to selection</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3471,42 +5054,50 @@ cause it was edited.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Invalid regular expression &apos;%1&apos;: %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Failed to find match for regular expression: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 lines selected.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 lines added to selection.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 lines deselected.</source>
+        <source>OK</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Session</name>
     <message>
+        <source>Autosave</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (recovered)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto save folder is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open auto save folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to load autosave</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Session file is corrupt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not find %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The tab of %1 has other work now; open the file in a new tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not open %1; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open auto save</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove temporary files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Dismiss</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3522,15 +5113,27 @@ cause it was edited.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Autosave</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Open copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Dismiss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove temporary files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Auto save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No auto save files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3688,28 +5291,222 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not open %1; nothing was changed.</source>
+        <source>Autosaves of the previous version (read only). Each opens as a new unsaved copy.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 (recovered)</source>
+        <source>Find files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Session file is corrupt</source>
+        <source>Filter list</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not find %1</source>
+        <source>All words</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The tab of %1 has other work now; open the file in a new tab.</source>
+        <source>Files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Versions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.SettingsImport</name>
+    <message>
+        <source>Cannot read %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot write the snapshot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 to import of %2 changes, %3 unchanged, %4 unresolved, %5 excluded, %6 retired</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No legacy settings were found beside the program. Choose the folder of a legacy installation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 holds no legacy settings (Config, Dictionary).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported. The settings take effect when HikariSub starts again; a setting you change before then keeps your change. The legacy files were not changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing to import: the chosen settings are already in effect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The legacy files changed since they were read. Read them again to review the changes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The current settings changed since this review. Review the import again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The import could not be prepared; the current settings stay in effect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There is no earlier generation of the settings to go back to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The settings before the import take effect when HikariSub starts again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import legacy settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the folder of a legacy installation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Roll back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go back to the settings before the last import?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go back to the settings before the last import? These changes made since will be replaced:
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installation:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose folder…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files that are not UTF-8 are read as:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Latin-1 (ISO 8859-1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows-1252</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unchanged</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Superseded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unresolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Excluded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retired</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proposed choice</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Legacy: %1    Now: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unresolved paths, kept as they are: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An import waits for the next start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An import waits for the next start. These settings changed since it was made keep your change:
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Spelling</name>
+    <message>
+        <source>No dictionary files were found in the &quot;%1&quot; folder.
+Spell checking will be disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to initialize spell checker.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The edited line cannot be committed.</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Fix suggestions</source>
         <translation type="unfinished"></translation>
@@ -3728,6 +5525,10 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Replace to:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No suggestions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3783,37 +5584,87 @@ in uppercase</source>
         <source>Words added to dictionary</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>No dictionary files were found in the &quot;%1&quot; folder.
-Spell checking will be disabled</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Failed to initialize spell checker.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The edited line cannot be committed.</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>HikariSub.StatusBar</name>
     <message>
-        <source>1 Line selected</source>
+        <source>Status bar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 Lines selected</source>
+        <source>1 line selected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 lines selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source> (%1 hidden)</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Time elapsed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames per second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video file name</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Styles</name>
+    <message>
+        <source>Copy of </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The document has no styles to edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style named &quot;%1&quot; already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Styles used:
+%1
+Styles deleted:
+%2</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Status of deleted styles</source>
         <translation type="unfinished"></translation>
@@ -3899,7 +5750,15 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Copy the selected style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit the selected style</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3911,7 +5770,15 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Delete the selected styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Sort</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort the styles by name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3951,6 +5818,10 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Copy style from storage to every open ASS file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Create new ASS style</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3964,10 +5835,6 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Delete unused ASS styles</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4055,6 +5922,10 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Alignment:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opaque box</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4068,10 +5939,6 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Vertical:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Alignment:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4163,11 +6030,15 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Apply</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Choose color</source>
+        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4194,34 +6065,23 @@ Spell checking will be disabled</source>
         <source>Choose styles</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Copy of </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The Document has no styles to edit.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Style named &quot;%1&quot; already exists.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Styles used:
-%1
-Styles deleted:
-%2</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>HikariSub.Tabs</name>
     <message>
         <source>Open documents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Modified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Protected reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Modified (history step %1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4232,23 +6092,430 @@ Styles deleted:
         <source>Open new tab</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Subtitle comparison</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare by times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare by visible lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare by selections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare by styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare by selected styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off comparison</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close all tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the folder containing the subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video containing folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open audio containing folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open keyframes containing folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Prompt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All tabs will be closed, continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load subtitles named &quot;%1&quot;?</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.TagList</name>
+    <message>
+        <source>Tag list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show all tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show VSFiltermod tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency of primary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency of secondary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency of border color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency of shadow color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Primary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Secondary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PNG mask of primary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PNG mask of secondary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PNG mask of border color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PNG mask of shadow color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency gradient of primary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency gradient of secondary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency gradient of border color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency gradient of shadow color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient of primary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient of secondary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient of border color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient of shadow color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text alignment (SSA)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bold text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edge blur</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur of border, shadow or font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thickness of border</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vector clip / rectangle clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font distortion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fading in / fading out of text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fading in / fading out of text (advanced version)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skew on X axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skew on Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text encoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text rounding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation on X axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation on Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation on Z axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale on X and Y axes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale on X axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale on Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical font spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Italic text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reverse vector clip or rectangle clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text jitter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke timing smooth transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke timing border</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke timing (not supported)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text movement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text movement along a circle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text movement along a curve (3 points)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text movement along a curve (4 points)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vector drawing movement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor for rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drawing and its scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset of Y vector points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text wrap method</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font point randomness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font point randomness seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font point randomness on X axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font point randomness on Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font point randomness on Z axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text strikethrough</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text shadow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text underline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border on X axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border on Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow on X axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow on Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Z coordinate for tags \frx and \fry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, %2, %3 of %4</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.TimeShift</name>
     <message>
-        <source>The starting time</source>
+        <source>No document open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>End time</source>
+        <source>No styles selected for time shifting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Styles</source>
+        <source>No lines selected for shifting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>End</source>
+        <source>Video was not loaded using FFMS2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The times could not be shifted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4292,6 +6559,10 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>End</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move the marker to video time</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4332,11 +6603,23 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>A method of time shift</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Both times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The starting time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4431,31 +6714,15 @@ Styles deleted:
         <source>end</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>No document open</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No styles selected for time shifting</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No lines selected for shifting</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Video was not loaded using FFMS2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The times could not be shifted.</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>HikariSub.Translation</name>
     <message>
-        <source>Translation</source>
+        <source>Could not open %1; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translation needs an ASS file: plain text cannot store it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4472,6 +6739,10 @@ Styles deleted:
     </message>
     <message>
         <source>Original</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4518,28 +6789,162 @@ Moves the translation one line up.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Description:
 Original - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.
 Translation - text pasted into subtitles with correct timing.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not open %1; nothing was changed.</source>
+        <source>Translator mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translator mode displays and saves both foreign text and translation text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Are you sure you want to turn off translation mode?
+Foreign language text will be deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not confirmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moving tags</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Video</name>
     <message>
-        <source>Previous frame</source>
+        <source>Cannot change YCbCr matrix</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Next frame</source>
+        <source>Invalid keyframes format</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Play / Pause</source>
+        <source>Indexing error occurred: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create VideoSource.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot convert video to RGBA</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid FPS value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to initialize DirectShow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create filters interface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create controller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create search interface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create audio interface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source filter not added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot add video renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create audio renderer instance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot add Direct Sound renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot enumerate source pins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot enumerate renderer pins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot enumerate Direct Sound pins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot get renderer pin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot get dsound pin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No IMediaTypes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No track type info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot connect source pin to video renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot connect source pin to audio renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot connect source pin to audio1 renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot find connected source pin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot get splitter pin info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot enumerate splitter pins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot connect source pin to video2 renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file is not a valid video file or is corrupted,
+or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4555,11 +6960,23 @@ Translation - text pasted into subtitles with correct timing.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Frame time; frame number; frames from the line&apos;s start frame; milliseconds from the line&apos;s start and end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pause</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play / Pause</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4575,15 +6992,23 @@ Translation - text pasted into subtitles with correct timing.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Warning</source>
+        <source>Next file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>All files (*)</source>
+        <source>Previous frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next frame</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4592,6 +7017,226 @@ Translation - text pasted into subtitles with correct timing.</source>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Streams</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Chapters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Indexing video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Are you sure you want to index the next video?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Are you sure you want to index the previous video?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dummy video options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This gives %1 frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video resolution:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checkerboard pattern</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames per second:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous video file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show toolbar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy video position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exit full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch full screen to monitor %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in full screen on monitor %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recently opened subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recently opened videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show / hide progress bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save frame with subtitles as PNG</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy frame with subtitles to clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save frame as PNG</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy frame to clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unload video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seek on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Double-clicking a line (always on)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every line change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clicking a line or editing when paused</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clicking a line or editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editing line when paused</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move video to selected line on:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Then play</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio to the line end time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video and audio to the line end time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video and audio to the next line start time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On moving to another line play:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4615,16 +7260,11 @@ Translation - text pasted into subtitles with correct timing.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Invalid keyframes format</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Associated files:
-Video: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>No video open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opening dummy video…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4639,67 +7279,278 @@ Video: %1</source>
         <source>Frame %1 of %2  %3</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Aspect ratio: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.VisualTools</name>
+    <message>
+        <source>%1 (not available yet)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Pick selected lines (%n line(s) picked: the tools edit them, not the active line)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Pick selected lines (the tools edit them, not the active line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) picked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Clear picked lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vector shape editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A shape named &quot;%1&quot; already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edited shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New shape name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scaling relative to cursor:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changed width and height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preserve aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changed is only width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scaling relative to cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scaling mode:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changing only drawing coordinates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changing scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scaling mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get shape from active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edited tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New tag name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimal value:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimal value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximal value:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximal value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where Insert puts the tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decimal places:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decimal places</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Used only when tag have 2 values or more</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag change options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Additional values:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Workspace</name>
     <message>
-        <source>Panels</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Float %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Minimize %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Minimize tab group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Dock %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Dock tab group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Float tab group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Restore %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Restore tab group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Maximize %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Maximize tab group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close tab group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Float</source>
+        <source>Move panel…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Dock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4708,10 +7559,6 @@ Video: %1</source>
     </message>
     <message>
         <source>Dismiss</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4751,6 +7598,10 @@ Video: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Float</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Placement</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4784,6 +7635,14 @@ Video: %1</source>
     </message>
     <message>
         <source>Resize</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Panels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4828,6 +7687,13 @@ Video: %1</source>
     </message>
     <message>
         <source>The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>QGuiApplication</name>
+    <message>
+        <source>QT_LAYOUT_DIRECTION</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

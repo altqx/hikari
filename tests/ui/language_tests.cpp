@@ -654,13 +654,22 @@ private slots:
         // Text legacy never translates either: the OK buttons' literal label
         // (OptionsDialog.cpp:1016, MappedButton(this, wxID_OK, L"OK")).
         const QSet<QString> allowed{QStringLiteral("OK")};
+        // The History list shows the edits' own names (edit_session.cpp's
+        // "Open" for the opening state), never catalog strings, though "Open"
+        // is also a key.
+        const auto inHistory = [](QObject *o) {
+            for (auto *i = qobject_cast<QQuickItem *>(o); i; i = i->parentItem())
+                if (i->objectName() == u"historyList")
+                    return true;
+            return false;
+        };
         QStringList stale;
         for (const auto &[o, text] : shownTexts())
             // A menu item's binding (menuItemKeys) is the hotkey's key names
             // (hotkeys.cpp's legacy names: "Left" for Previous frame), never
             // a catalog string, though "Left" and "Right" are also Grid
             // headings since they took legacy's translations (keys.ts).
-            if (sources.contains(text) && !allowed.contains(text) && o && o->objectName() != u"menuItemKeys")
+            if (sources.contains(text) && !allowed.contains(text) && o && o->objectName() != u"menuItemKeys" && !inHistory(o))
             {
                 QString chain;
                 for (QObject *p = o; p; p = p->parent())

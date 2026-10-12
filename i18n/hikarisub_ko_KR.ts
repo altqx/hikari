@@ -65,7 +65,7 @@
     </message>
     <message>
         <source>Previous line</source>
-        <translation type="unfinished"></translation>
+        <translation>이전 줄</translation>
     </message>
     <message>
         <source>Play the previous line</source>
@@ -73,7 +73,7 @@
     </message>
     <message>
         <source>Next line</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 줄</translation>
     </message>
     <message>
         <source>Play the next line</source>
@@ -161,7 +161,7 @@
     </message>
     <message>
         <source>Commit</source>
-        <translation type="unfinished"></translation>
+        <translation>확인 후 다음 줄로</translation>
     </message>
     <message>
         <source>Apply changes</source>
@@ -312,7 +312,7 @@
     </message>
     <message>
         <source>Select a script editor</source>
-        <translation type="unfinished"></translation>
+        <translation>스크립트 편집기 선택</translation>
     </message>
     <message>
         <source>Programs (*.exe)</source>
@@ -392,28 +392,29 @@
     </message>
     <message>
         <source>Info</source>
-        <translation type="unfinished">알림</translation>
+        <translation>알림</translation>
     </message>
     <message>
         <source>This subtitle file does not have any scripts added</source>
-        <translation type="unfinished"></translation>
+        <translation>이 자막에는 스크립트가 추가되지 않았습니다</translation>
     </message>
     <message>
         <source>Error</source>
-        <translation type="unfinished"></translation>
+        <translation>오류</translation>
     </message>
     <message>
         <source>Error loading Lua script: %1
 %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Lua 스크립트: %1를 불러오는 동안 오류 발생
+%2</translation>
     </message>
     <message>
         <source>Automation error</source>
-        <translation type="unfinished"></translation>
+        <translation>자동화 스크립트에 오류가 있음</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
-        <translation type="unfinished"></translation>
+        <translation>편집기를 시작할 수 없습니다.</translation>
     </message>
     <message>
         <source>The macro was cancelled; nothing was changed.</source>
@@ -421,7 +422,7 @@
     </message>
     <message>
         <source>Validation Lua script &apos;%1&apos; failed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&apos;%1&apos; Lua 스크립트 유효성 검사 실패</translation>
     </message>
     <message>
         <source>The script&apos;s helper ended; reload the script to use it again.</source>
@@ -485,12 +486,13 @@
     <message>
         <source>Swap shortcuts between the color picker
 and the color selection window</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">마우스 설정 변경(우클릭 색상 선택창/좌클릭 색상 선택기)</translation>
     </message>
     <message>
         <source>Checking this option opens the color picker on left-click,
 and the color selection window on right-click.</source>
-        <translation type="unfinished"></translation>
+        <translation>이 옵션을 선택하면 마우스 왼쪽 버튼을 클릭 할 때 색상 선택기를 엽니 다.
+오른쪽 클릭 후 색상 선택 창을 선택합니다.</translation>
     </message>
     <message>
         <source>Selected color:</source>
@@ -550,11 +552,11 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSL color</source>
-        <translation type="unfinished"></translation>
+        <translation>HSL</translation>
     </message>
     <message>
         <source>Hue:</source>
-        <translation type="unfinished"></translation>
+        <translation>색조:</translation>
     </message>
     <message>
         <source>HSL hue</source>
@@ -562,7 +564,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Saturation:</source>
-        <translation type="unfinished"></translation>
+        <translation>채도:</translation>
     </message>
     <message>
         <source>HSL saturation</source>
@@ -570,7 +572,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Lightness:</source>
-        <translation type="unfinished"></translation>
+        <translation>명도:</translation>
     </message>
     <message>
         <source>Lightness</source>
@@ -578,7 +580,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSV color</source>
-        <translation type="unfinished"></translation>
+        <translation>HSV</translation>
     </message>
     <message>
         <source>HSV hue</source>
@@ -590,7 +592,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Value:</source>
-        <translation type="unfinished"></translation>
+        <translation>명도:</translation>
     </message>
     <message>
         <source>Value</source>
@@ -610,12 +612,13 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Color picker</source>
-        <translation type="unfinished"></translation>
+        <translation>색상 선택기</translation>
     </message>
     <message>
         <source>Move the window
 to the color selection location</source>
-        <translation type="unfinished"></translation>
+        <translation>색상 선택기에서
+창을 이동합니다</translation>
     </message>
     <message>
         <source>OK</source>
@@ -623,7 +626,7 @@ to the color selection location</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">취소</translation>
+        <translation>취소</translation>
     </message>
     <message>
         <source>Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).</source>
@@ -646,7 +649,7 @@ to the color selection location</source>
     </message>
     <message>
         <source>From video</source>
-        <translation type="unfinished">영상에서</translation>
+        <translation>영상에서</translation>
     </message>
     <message>
         <source>OK</source>
@@ -870,7 +873,7 @@ in tag &apos;%3&apos;</source>
     <name>HikariSub.Documents</name>
     <message>
         <source>Apply to All</source>
-        <translation type="unfinished"></translation>
+        <translation>모두 적용</translation>
     </message>
     <message>
         <source>No</source>
@@ -1008,90 +1011,94 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Video: </source>
-        <translation type="unfinished"></translation>
+        <translation>영상 : </translation>
     </message>
     <message>
         <source>Audio: </source>
-        <translation type="unfinished"></translation>
+        <translation>소리 : </translation>
     </message>
     <message>
         <source>Keyframes: </source>
-        <translation type="unfinished"></translation>
+        <translation>키 프레임: </translation>
     </message>
     <message>
         <source>Associated files:
 </source>
-        <translation type="unfinished"></translation>
+        <translation>연결된 파일 :
+</translation>
     </message>
     <message>
         <source>Video from directory:
 </source>
-        <translation type="unfinished"></translation>
+        <translation>폴더에 있는 영상 :
+</translation>
     </message>
     <message>
         <source>Load associated</source>
-        <translation type="unfinished">연결 파일 열기</translation>
+        <translation>연결 파일 열기</translation>
     </message>
     <message>
         <source>Load from directory</source>
-        <translation type="unfinished"></translation>
+        <translation>폴더에 있는 영상 열기</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Editor</name>
     <message>
         <source>Bottom-left</source>
-        <translation type="unfinished"></translation>
+        <translation>왼쪽 아래</translation>
     </message>
     <message>
         <source>Bottom-center</source>
-        <translation type="unfinished"></translation>
+        <translation>중앙 아래</translation>
     </message>
     <message>
         <source>Bottom-right</source>
-        <translation type="unfinished"></translation>
+        <translation>오른쪽 아래</translation>
     </message>
     <message>
         <source>Middle-left</source>
-        <translation type="unfinished"></translation>
+        <translation>왼쪽 중앙</translation>
     </message>
     <message>
         <source>Center</source>
-        <translation type="unfinished"></translation>
+        <translation>중앙</translation>
     </message>
     <message>
         <source>Middle-right</source>
-        <translation type="unfinished"></translation>
+        <translation>오른쪽 중앙</translation>
     </message>
     <message>
         <source>Top-left</source>
-        <translation type="unfinished"></translation>
+        <translation>왼쪽 위</translation>
     </message>
     <message>
         <source>Top-center</source>
-        <translation type="unfinished"></translation>
+        <translation>중앙 위</translation>
     </message>
     <message>
         <source>Top-right</source>
-        <translation type="unfinished"></translation>
+        <translation>오른쪽 위</translation>
     </message>
     <message>
         <source>Text position</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 위치</translation>
     </message>
     <message>
         <source>Number of characters in each line.
 No more than 43 characters per line (maximum 2 lines).</source>
-        <translation type="unfinished"></translation>
+        <translation>각 줄의 글자 수.
+한 줄에 43자 이하 (최대 2줄).</translation>
     </message>
     <message>
         <source>Characters per second.
 Should not exceed 15 characters per second</source>
-        <translation type="unfinished"></translation>
+        <translation>초당 문자 수 : 
+초당 15자를 초과 시 확인</translation>
     </message>
     <message>
         <source>Time</source>
-        <translation type="unfinished">시간</translation>
+        <translation>시간</translation>
     </message>
     <message>
         <source>Show times</source>
@@ -1099,7 +1106,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Frames</source>
-        <translation type="unfinished">프레임</translation>
+        <translation>프레임</translation>
     </message>
     <message>
         <source>Show frames</source>
@@ -1107,35 +1114,35 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Comment</source>
-        <translation type="unfinished"></translation>
+        <translation>주석처리</translation>
     </message>
     <message>
         <source>Sets the line as a comment. Comments are not shown</source>
-        <translation type="unfinished"></translation>
+        <translation>줄을 주석으로 설정합니다. 표시되지 않습니다</translation>
     </message>
     <message>
         <source>Layer</source>
-        <translation type="unfinished">레이어</translation>
+        <translation>레이어</translation>
     </message>
     <message>
         <source>Line layer. Higher layers are on top</source>
-        <translation type="unfinished"></translation>
+        <translation>우선 순위(레이어) 설정, 높을수록 위에 있음</translation>
     </message>
     <message>
         <source>Start</source>
-        <translation type="unfinished">시작 시간</translation>
+        <translation>시작 시간</translation>
     </message>
     <message>
         <source>Line start time</source>
-        <translation type="unfinished"></translation>
+        <translation>시작 시간</translation>
     </message>
     <message>
         <source>End</source>
-        <translation type="unfinished">종료 시간</translation>
+        <translation>종료 시간</translation>
     </message>
     <message>
         <source>Line end time</source>
-        <translation type="unfinished"></translation>
+        <translation>종료 시간</translation>
     </message>
     <message>
         <source>Duration</source>
@@ -1143,7 +1150,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Line duration</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 재생 시간</translation>
     </message>
     <message>
         <source>Style</source>
@@ -1151,7 +1158,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Line style</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 스타일</translation>
     </message>
     <message>
         <source>Edit</source>
@@ -1167,51 +1174,51 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Allows quick editing of the current line&apos;s style</source>
-        <translation type="unfinished"></translation>
+        <translation>현재 줄의 스타일을 빠르게 편집할 수 있습니다</translation>
     </message>
     <message>
         <source>Actor</source>
-        <translation type="unfinished">배우</translation>
+        <translation>배우</translation>
     </message>
     <message>
         <source>Line actor label. Does not affect the appearance of the subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>배우 지정. 자막에는 영향을 주지 않습니다</translation>
     </message>
     <message>
         <source>Left margin</source>
-        <translation type="unfinished">왼쪽 여백</translation>
+        <translation>왼쪽 여백</translation>
     </message>
     <message>
         <source>Line left margin</source>
-        <translation type="unfinished"></translation>
+        <translation>왼쪽 여백</translation>
     </message>
     <message>
         <source>Right margin</source>
-        <translation type="unfinished">오른쪽 여백</translation>
+        <translation>오른쪽 여백</translation>
     </message>
     <message>
         <source>Line right margin</source>
-        <translation type="unfinished"></translation>
+        <translation>오른쪽 여백</translation>
     </message>
     <message>
         <source>Vertical margin</source>
-        <translation type="unfinished">세로 여백</translation>
+        <translation>세로 여백</translation>
     </message>
     <message>
         <source>Line top and bottom margins</source>
-        <translation type="unfinished"></translation>
+        <translation>세로 여백(상단 및 하단 여백)</translation>
     </message>
     <message>
         <source>Effect</source>
-        <translation type="unfinished">효과</translation>
+        <translation>효과</translation>
     </message>
     <message>
         <source>Line effect. Used to mark lines to which karaoke or VSFilter effects should be applied</source>
-        <translation type="unfinished"></translation>
+        <translation>줄에 들어가는 효과. 노래방 또는 VSFilter 효과를 적용 할 줄을 표시하는 데 사용됩니다</translation>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 숨김</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
@@ -1447,15 +1454,15 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Wraps: 0/86</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 수 : 0/86</translation>
     </message>
     <message>
         <source>Wraps: </source>
-        <translation type="unfinished"></translation>
+        <translation>글자 수 : </translation>
     </message>
     <message>
         <source>Characters per second: %1&lt;=15</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">초당 문자 수 : %1&lt;=15</translation>
     </message>
     <message>
         <source>Duration is not a frame number.</source>
@@ -1506,43 +1513,43 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Add</source>
-        <translation type="unfinished"></translation>
+        <translation>추가</translation>
     </message>
     <message>
         <source>Adds fonts to a previously created catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>목록에 글꼴 추가</translation>
     </message>
     <message>
         <source>Manage</source>
-        <translation type="unfinished"></translation>
+        <translation>글꼴 목록창</translation>
     </message>
     <message>
         <source>Manages font catalogs</source>
-        <translation type="unfinished"></translation>
+        <translation>스타일 목록을 관리 할 수 있습니다</translation>
     </message>
     <message>
         <source>Allows managing font catalogs</source>
-        <translation type="unfinished"></translation>
+        <translation>글꼴 관리창</translation>
     </message>
     <message>
         <source>Filter</source>
-        <translation type="unfinished">필터</translation>
+        <translation>필터</translation>
     </message>
     <message>
         <source>Filters fonts to those containing the entered characters</source>
-        <translation type="unfinished"></translation>
+        <translation>작성된 글자에 대한 글꼴 필터링</translation>
     </message>
     <message>
         <source>Add fonts from subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Subtitles에서 글꼴 추가</translation>
     </message>
     <message>
         <source>Manage font catalogs</source>
-        <translation type="unfinished"></translation>
+        <translation>글꼴 목록 관리</translation>
     </message>
     <message>
         <source>Catalogs:</source>
-        <translation type="unfinished"></translation>
+        <translation>목록 선택:</translation>
     </message>
     <message>
         <source>Choose or type a catalog name</source>
@@ -1554,7 +1561,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Edit</source>
-        <translation type="unfinished">편집</translation>
+        <translation>편집</translation>
     </message>
     <message>
         <source>Edit the catalog</source>
@@ -1562,7 +1569,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Delete</source>
-        <translation type="unfinished">삭제</translation>
+        <translation>삭제</translation>
     </message>
     <message>
         <source>Delete the catalog</source>
@@ -1570,7 +1577,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Load</source>
-        <translation type="unfinished">파일에서</translation>
+        <translation>파일에서</translation>
     </message>
     <message>
         <source>Load a catalog from a file</source>
@@ -1586,11 +1593,11 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Find:</source>
-        <translation type="unfinished"></translation>
+        <translation>찾기:</translation>
     </message>
     <message>
         <source>Save filter</source>
-        <translation type="unfinished"></translation>
+        <translation>필터 저장</translation>
     </message>
     <message>
         <source>Font name</source>
@@ -1598,11 +1605,11 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>목록</translation>
     </message>
     <message>
         <source>Sample</source>
-        <translation type="unfinished"></translation>
+        <translation>예)</translation>
     </message>
     <message>
         <source>Drawn by Qt, not by the subtitle renderer</source>
@@ -1622,23 +1629,23 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>The catalog list has autosave; files are stored in the &quot;Config&quot; folder.</source>
-        <translation type="unfinished"></translation>
+        <translation>글꼴 목록은 자동 저장 됩니다. 파일은 &quot;Config&quot; 폴더에서 찾을 수 있습니다.</translation>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">닫기</translation>
+        <translation>닫기</translation>
     </message>
     <message>
         <source>Select the name of the profile</source>
-        <translation type="unfinished"></translation>
+        <translation>프로필을 선택하십시오</translation>
     </message>
     <message>
         <source>Choose new catalog name</source>
-        <translation type="unfinished"></translation>
+        <translation>새 목록 이름 선택</translation>
     </message>
     <message>
         <source>Replace with:</source>
-        <translation type="unfinished">변경 글자:</translation>
+        <translation>변경 글자:</translation>
     </message>
     <message>
         <source>OK</source>
@@ -1646,31 +1653,31 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">취소</translation>
+        <translation>취소</translation>
     </message>
     <message>
         <source>Info</source>
-        <translation type="unfinished">알림</translation>
+        <translation>알림</translation>
     </message>
     <message>
         <source>Enter a name for the new catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>새 목록의 이름</translation>
     </message>
     <message>
         <source>Prompt</source>
-        <translation type="unfinished">질문</translation>
+        <translation>질문</translation>
     </message>
     <message>
         <source>Catalog named &quot;%1&quot; already exists. What to do?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&quot;%1&quot;라는 이름이 있습니다?</translation>
     </message>
     <message>
         <source>Merge</source>
-        <translation type="unfinished"></translation>
+        <translation>병합</translation>
     </message>
     <message>
         <source>Are you sure you want to delete this catalog?</source>
-        <translation type="unfinished"></translation>
+        <translation>이 목록을 삭제하시겠습니까?</translation>
     </message>
     <message>
         <source>Choose font catalog file</source>
@@ -1682,19 +1689,19 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Font collector</source>
-        <translation type="unfinished"></translation>
+        <translation>글꼴 수집</translation>
     </message>
     <message>
         <source>Select the folder where you want to copy fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>글꼴을 복사 할 폴더를 선택하십시오</translation>
     </message>
     <message>
         <source>Choose a name for the archive</source>
-        <translation type="unfinished"></translation>
+        <translation>이름 선택</translation>
     </message>
     <message>
         <source>Save folder</source>
-        <translation type="unfinished"></translation>
+        <translation>폴더 저장</translation>
     </message>
     <message>
         <source>Destination folder</source>
@@ -1702,36 +1709,37 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Select a folder</source>
-        <translation type="unfinished"></translation>
+        <translation>폴더 선택</translation>
     </message>
     <message>
         <source>Options</source>
-        <translation type="unfinished">선택</translation>
+        <translation>선택</translation>
     </message>
     <message>
         <source>Check availability of fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>글꼴 사용 가능 여부 확인</translation>
     </message>
     <message>
         <source>Copy to selected folder</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 폴더에 복사</translation>
     </message>
     <message>
         <source>Zip</source>
-        <translation type="unfinished"></translation>
+        <translation>Zip</translation>
     </message>
     <message>
         <source>Save to video / subtitles folder.</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 저장 / 자막 폴더.</translation>
     </message>
     <message>
         <source>Saves to the video folder
 when demuxing fonts from an MKV file.</source>
-        <translation type="unfinished"></translation>
+        <translation>MKV 파일에서 글꼴을 추출 할 때
+영상과 함께 폴더에 저장.</translation>
     </message>
     <message>
         <source>Demux fonts from loaded MKV file</source>
-        <translation type="unfinished"></translation>
+        <translation>로드 된 MKV 파일에서 글꼴 추출</translation>
     </message>
     <message>
         <source>Font collector log</source>
@@ -1751,19 +1759,19 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Start</source>
-        <translation type="unfinished">시작 시간</translation>
+        <translation>시작 시간</translation>
     </message>
     <message>
         <source>Start on tabs</source>
-        <translation type="unfinished"></translation>
+        <translation>탭으로 시작</translation>
     </message>
     <message>
         <source>Choose save folder</source>
-        <translation type="unfinished">저장 폴더 선택</translation>
+        <translation>저장 폴더 선택</translation>
     </message>
     <message>
         <source>Select the name of the archive</source>
-        <translation type="unfinished"></translation>
+        <translation>보관 파일 이름 선택</translation>
     </message>
     <message>
         <source>Archive files (*.zip)</source>
@@ -1803,7 +1811,7 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Filtering and font catalogs</source>
-        <translation type="unfinished"></translation>
+        <translation>필터링 및 글꼴 목록</translation>
     </message>
     <message>
         <source>Preview</source>
@@ -1831,33 +1839,35 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Remove all contents of catalog</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">카탈로그의 모든 내용 제거</translation>
     </message>
     <message>
         <source>Add fonts from all open subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">모든 오픈 ASS 파일에서 글꼴 추가</translation>
     </message>
     <message>
         <source>All fonts</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 글꼴</translation>
     </message>
     <message>
         <source>Without catalog</source>
-        <translation type="unfinished"></translation>
+        <translation>목록 선택 안 함</translation>
     </message>
     <message>
         <source>For adding fonts to catalog,
 click &quot;Manage&quot; button first,
 to create new catalog.</source>
-        <translation type="unfinished"></translation>
+        <translation>목록에 글꼴을 추가하려면
+먼저 &quot;글꼴 목록창&quot;버튼을 클릭하고
+새 목록를 만듭니다.</translation>
     </message>
     <message>
         <source>Autosave</source>
-        <translation type="unfinished">자동 저장</translation>
+        <translation>자동 저장</translation>
     </message>
     <message>
         <source>Cannot load external font folder</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">외부 글꼴 폴더를로드 할 수 없습니다</translation>
     </message>
     <message>
         <source>Cannot add external font file %1.</source>
@@ -1873,7 +1883,7 @@ to create new catalog.</source>
     </message>
     <message>
         <source>Found &quot;%1&quot; font file.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&quot;%1&quot; 글꼴을 찾았습니다.</translation>
     </message>
     <message>
         <source>The renderer also used &quot;%1&quot; (%2); it is not collected.</source>
@@ -1881,45 +1891,47 @@ to create new catalog.</source>
     </message>
     <message>
         <source>Copied font &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">복사 된 글꼴 &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Added font &quot;%1&quot; to the archive.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&quot;%1&quot;글꼴이 목록에 추가되었습니다.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; belongs to a style
 that is not used.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&quot;%1&quot; 글꼴은
+사용되지 않음.</translation>
     </message>
     <message>
         <source>
 Will not be copied.</source>
-        <translation type="unfinished"></translation>
+        <translation>
+복사되지 않음.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; is missing normal style.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&quot;%1&quot; 글꼴에는 일반 스타일이 없습니다.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; is missing bold italics.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&quot;%1&quot; 글꼴에는 굵은 기울임 스타일이 없습니다.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; is missing bold.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&quot;%1&quot; 글꼴에는 굵은 스타일이 없습니다.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; is missing italics.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&quot;%1&quot; 글꼴에는 기울임 스타일이 없습니다.</translation>
     </message>
     <message>
         <source>Cannot check the characters in font &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&quot;%1&quot;글꼴 문자를 확인할 수 없습니다.</translation>
     </message>
     <message>
         <source>Font &quot;%1&quot; does not contain characters: &quot;%2&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&quot;%1&quot;글꼴에 &quot;%2&quot; 문자가 없습니다.</translation>
     </message>
     <message>
         <source>Characters &quot;%1&quot; were drawn by the fallback font &quot;%2&quot;.</source>
@@ -1927,27 +1939,27 @@ Will not be copied.</source>
     </message>
     <message>
         <source>Cannot get the contents of font &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&quot;%1&quot;글꼴 내용을 가져올 수 없습니다.</translation>
     </message>
     <message>
         <source>Cannot open file &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&quot;%1&quot; 파일을 열 수 없습니다.</translation>
     </message>
     <message>
         <source>Cannot find &quot;%1&quot; font in Fonts folder.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">글꼴 폴더에서 &quot;%1&quot; 글꼴을 찾을 수 없습니다.</translation>
     </message>
     <message>
         <source>Cannot copy font &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&quot;%1&quot;글꼴을 복사 할 수 없습니다.</translation>
     </message>
     <message>
         <source>Cannot zip font &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">글꼴 &quot;%1&quot;을(를) 압축 할 수 없습니다.</translation>
     </message>
     <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
-        <translation type="unfinished"></translation>
+        <translation>불러 온 자막이 없습니다. 자막을 불러오거나 이 옵션을 선택 취소하세요.</translation>
     </message>
     <message>
         <source>Fonts</source>
@@ -1956,41 +1968,43 @@ Will not be copied.</source>
     </message>
     <message>
         <source>The save path is not valid.</source>
-        <translation type="unfinished"></translation>
+        <translation>저장 경로가 잘못되었습니다.</translation>
     </message>
     <message>
         <source>The zip file already exists, delete it?</source>
-        <translation type="unfinished"></translation>
+        <translation>Zip 파일이 이미 있습니다. 삭제 하시겠습니까?</translation>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="unfinished">확인해주세요</translation>
+        <translation>확인해주세요</translation>
     </message>
     <message>
         <source>Found font &quot;%1&quot;
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">찾은 글꼴 &quot;%1&quot;
+</translation>
     </message>
     <message>
         <source>Found font &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">찾은 글꼴 &quot;%1&quot;.</translation>
     </message>
     <message>
         <source>Font not found &quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>글꼴을 찾을 수 없음 &quot;</translation>
     </message>
     <message>
         <source>In styles:
 </source>
-        <translation type="unfinished"></translation>
+        <translation>스타일:
+</translation>
     </message>
     <message>
         <source> tabs: </source>
-        <translation type="unfinished"></translation>
+        <translation> 색인: </translation>
     </message>
     <message>
         <source>In lines: </source>
-        <translation type="unfinished"></translation>
+        <translation>줄에서: </translation>
     </message>
     <message>
         <source>Checked by the subtitle renderer (%1).
@@ -2044,31 +2058,35 @@ Will not be copied.</source>
     </message>
     <message>
         <source>found</source>
-        <translation type="unfinished"></translation>
+        <translation>찾기</translation>
     </message>
     <message>
         <source>copied</source>
-        <translation type="unfinished"></translation>
+        <translation>복사</translation>
     </message>
     <message>
         <source>Finished, %1 %2.
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">완료, %1 %2.
+</translation>
     </message>
     <message>
         <source>Not found %1.
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 를 찾을 수 없습니다.
+</translation>
     </message>
     <message>
         <source>Cannot copy %1.
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1를(을) 복사 할 수 없음
+</translation>
     </message>
     <message>
         <source>Some fonts do not contain all glyphs used in the text.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>일부 글꼴은 모든 글자가 포함되지 않을 수 있음.
+</translation>
     </message>
     <message>
         <source>The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.
@@ -2093,7 +2111,8 @@ Will not be copied.</source>
     <message>
         <source>Completed Successfully, %1 %2.
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">성공적으로 완료되었습니다. %1 %2.
+</translation>
     </message>
     <message>
         <source>Finished in %1ms</source>
@@ -2113,13 +2132,17 @@ Will not be copied.</source>
         <source>Cannot retrieve the font file sizes and names;
 copying will be canceled.
 </source>
-        <translation type="unfinished"></translation>
+        <translation>글꼴 파일 크기와 이름을 얻을 수 없습니다,
+복사가 취소되었습니다.
+</translation>
     </message>
     <message>
         <source>Retrieved sizes and names of %1 fonts, elapsed time %2ms.
 
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 글꼴의 크기와 이름을 가져 왔으며 %2 ms가 걸렸습니다.
+
+</translation>
     </message>
     <message>
         <source>Ready to add %1 to the archive &quot;%2&quot;.
@@ -2138,29 +2161,31 @@ copying will be canceled.
     </message>
     <message>
         <source>Cannot create folder.</source>
-        <translation type="unfinished"></translation>
+        <translation>폴더를 만들 수 없음.</translation>
     </message>
     <message>
         <source>Path is not available</source>
-        <translation type="unfinished"></translation>
+        <translation>경로를 사용할 수 없음</translation>
     </message>
     <message>
         <source>Video: %1
 
 </source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">영상: %1
+
+</translation>
     </message>
     <message>
         <source>This video is not an MKV file.</source>
-        <translation type="unfinished"></translation>
+        <translation>MKV 파일이 아닙니다.</translation>
     </message>
     <message>
         <source>Cannot open MKV file</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">MKV 파일을 열 수 없음.</translation>
     </message>
     <message>
         <source>Loaded MKV file does not have any fonts.</source>
-        <translation type="unfinished"></translation>
+        <translation>불러온 MKV 파일에 글꼴이 없습니다.</translation>
     </message>
     <message>
         <source>Font named &quot;%1&quot;.
@@ -2173,27 +2198,28 @@ copying will be canceled.
     </message>
     <message>
         <source>Saved a font named &quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>이름이 &quot;인 글꼴을 저장</translation>
     </message>
     <message>
         <source>Cannot save font named &quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>이름으로 글꼴을 저장할 수 없습니다 &quot;</translation>
     </message>
     <message>
         <source>Completed, copied %1 fonts.
 Failed to copy %2 fonts.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 글꼴을 복사했습니다.
+%2 글꼴을 복사하지 못했습니다.</translation>
     </message>
     <message>
         <source>Completed successfully and copied %1 fonts.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">성공적으로 %1 글꼴을 복사했습니다.</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Grid</name>
     <message>
         <source>Font collector</source>
-        <translation type="unfinished"></translation>
+        <translation>글꼴 수집</translation>
     </message>
     <message>
         <source>Grid</source>
@@ -2309,7 +2335,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Select all lines visible on video</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">동영상에 표시된 모든 줄 선택</translation>
     </message>
     <message>
         <source>Make tree</source>
@@ -2317,7 +2343,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Show subtitles preview</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 미리보기 표시</translation>
     </message>
     <message>
         <source>Paste translation text</source>
@@ -2453,7 +2479,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Delete text</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 삭제</translation>
     </message>
     <message>
         <source>Delete lines	Shift+Del</source>
@@ -2461,7 +2487,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
-        <translation type="unfinished"></translation>
+        <translation>MKV / OGM 파일 자막 불러오기</translation>
     </message>
     <message>
         <source>OK</source>
@@ -2967,27 +2993,27 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Run the last loaded script</source>
-        <translation type="unfinished"></translation>
+        <translation>최근 스크립트 실행</translation>
     </message>
     <message>
         <source>Recently opened videos</source>
-        <translation type="unfinished"></translation>
+        <translation>열었던 영상</translation>
     </message>
     <message>
         <source>Recently opened keyframes</source>
-        <translation type="unfinished"></translation>
+        <translation>열었던 키 프레임</translation>
     </message>
     <message>
         <source>Open dummy video</source>
-        <translation type="unfinished"></translation>
+        <translation>더미 영상 열기</translation>
     </message>
     <message>
         <source>Insert start time from video</source>
-        <translation type="unfinished"></translation>
+        <translation>영상위치-&gt;시작시간</translation>
     </message>
     <message>
         <source>Insert end time from video</source>
-        <translation type="unfinished"></translation>
+        <translation>영상위치-&gt;종료시간</translation>
     </message>
     <message>
         <source>Set audio position to video time</source>
@@ -3003,11 +3029,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Zoom video</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">영상 확대</translation>
     </message>
     <message>
         <source>Turn off video zoom</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">비디오 줌</translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -3115,7 +3141,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Font collector</source>
-        <translation type="unfinished"></translation>
+        <translation>글꼴 수집</translation>
     </message>
     <message>
         <source>Resample subtitles</source>
@@ -3127,7 +3153,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 숨김</translation>
     </message>
     <message>
         <source>&amp;Help</source>
@@ -3203,251 +3229,251 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Converts to ASS format</source>
-        <translation type="unfinished"></translation>
+        <translation>ASS로 변환</translation>
     </message>
     <message>
         <source>Converts to SRT format</source>
-        <translation type="unfinished"></translation>
+        <translation>SRT로 변환</translation>
     </message>
     <message>
         <source>Converts to microDVD format</source>
-        <translation type="unfinished"></translation>
+        <translation>MicroDVD로 변환하기</translation>
     </message>
     <message>
         <source>Converts to MPL2 format</source>
-        <translation type="unfinished"></translation>
+        <translation>MPL2로 변환</translation>
     </message>
     <message>
         <source>Converts to TMPlayer format (not recommended)</source>
-        <translation type="unfinished"></translation>
+        <translation>TMPlayer(권하지 않음)로 변환</translation>
     </message>
     <message>
         <source>Sort by start time</source>
-        <translation type="unfinished"></translation>
+        <translation>정렬 / 시작 시간</translation>
     </message>
     <message>
         <source>Sort by end time</source>
-        <translation type="unfinished"></translation>
+        <translation>정렬 / 종료 시간</translation>
     </message>
     <message>
         <source>Sort by styles</source>
-        <translation type="unfinished"></translation>
+        <translation>정렬 / 스타일</translation>
     </message>
     <message>
         <source>Sort by actor</source>
-        <translation type="unfinished"></translation>
+        <translation>정렬 / 배우</translation>
     </message>
     <message>
         <source>Sort by effect</source>
-        <translation type="unfinished"></translation>
+        <translation>정렬 / 효과</translation>
     </message>
     <message>
         <source>Sort by layer</source>
-        <translation type="unfinished"></translation>
+        <translation>정렬 / 레이어</translation>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished">모두</translation>
+        <translation>모두</translation>
     </message>
     <message>
         <source>Video and subs</source>
-        <translation type="unfinished"></translation>
+        <translation>영상과 자막</translation>
     </message>
     <message>
         <source>Audio and subs</source>
-        <translation type="unfinished"></translation>
+        <translation>소리와 자막</translation>
     </message>
     <message>
         <source>Only video</source>
-        <translation type="unfinished"></translation>
+        <translation>영상만</translation>
     </message>
     <message>
         <source>Only subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>자막만</translation>
     </message>
     <message>
         <source>Open subtitle file</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 파일 열기</translation>
     </message>
     <message>
         <source>Recently opened subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>열었던 자막</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished"></translation>
+        <translation>열기</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 자막을 삭제하고 &quot;새 자막&quot;으로 만들기</translation>
     </message>
     <message>
         <source>Opens video file</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 파일 열기</translation>
     </message>
     <message>
         <source>Save current file</source>
-        <translation type="unfinished"></translation>
+        <translation>현재 파일 저장</translation>
     </message>
     <message>
         <source>Save all subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 모두 저장</translation>
     </message>
     <message>
         <source>Save as</source>
-        <translation type="unfinished"></translation>
+        <translation>다른 이름으로 저장</translation>
     </message>
     <message>
         <source>Save translation</source>
-        <translation type="unfinished"></translation>
+        <translation>번역 저장</translation>
     </message>
     <message>
         <source>Opens the selected autosave from the list</source>
-        <translation type="unfinished"></translation>
+        <translation>자동 저장 목록 열기</translation>
     </message>
     <message>
         <source>Opens the temporary file removal window</source>
-        <translation type="unfinished"></translation>
+        <translation>임시 파일 제거 창 열기</translation>
     </message>
     <message>
         <source>Last session options</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막 작업 설정</translation>
     </message>
     <message>
         <source>Loads previously loaded files</source>
-        <translation type="unfinished"></translation>
+        <translation>마지막으로 불러온 파일 열기</translation>
     </message>
     <message>
         <source>Loads session from saved session file</source>
-        <translation type="unfinished"></translation>
+        <translation>저장된 세션 파일에서 세션 불러오기</translation>
     </message>
     <message>
         <source>Saves session to file</source>
-        <translation type="unfinished"></translation>
+        <translation>파일로 세션 저장</translation>
     </message>
     <message>
         <source>Asks whether to load previously loaded files at program startup</source>
-        <translation type="unfinished"></translation>
+        <translation>프로그램을 시작할 때 최근에 읽은 파일을 불러올지 묻습니다</translation>
     </message>
     <message>
         <source>Loads previously loaded files at program startup</source>
-        <translation type="unfinished"></translation>
+        <translation>프로그램 시작 후 마지막 세션 로드</translation>
     </message>
     <message>
         <source>Program settings</source>
-        <translation type="unfinished"></translation>
+        <translation>프로그램 설정</translation>
     </message>
     <message>
         <source>Exit the program</source>
-        <translation type="unfinished"></translation>
+        <translation>프로그램 종료</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="unfinished"></translation>
+        <translation>실행 취소</translation>
     </message>
     <message>
         <source>Redo</source>
-        <translation type="unfinished"></translation>
+        <translation>되돌리기</translation>
     </message>
     <message>
         <source>Sorts all lines in ASS file</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 줄 정렬 / ASS 파일</translation>
     </message>
     <message>
         <source>Sorts selected lines in ASS file</source>
-        <translation type="unfinished"></translation>
+        <translation>선택 줄 정렬 / ASS 파일</translation>
     </message>
     <message>
         <source>History</source>
-        <translation type="unfinished"></translation>
+        <translation>기록</translation>
     </message>
     <message>
         <source>Turns on multireplacer</source>
-        <translation type="unfinished"></translation>
+        <translation>자동 바꾸기 창 열기</translation>
     </message>
     <message>
         <source>Selects lines by expressions</source>
-        <translation type="unfinished"></translation>
+        <translation>주어진 텍스트 구문으로 선택한 줄을 만듭니다</translation>
     </message>
     <message>
         <source>Searches for the specified text phrases and replaces them</source>
-        <translation type="unfinished"></translation>
+        <translation>글자를 검색하고 변경합니다</translation>
     </message>
     <message>
         <source>Searches for the specified text phrase</source>
-        <translation type="unfinished"></translation>
+        <translation>글자를 검색합니다</translation>
     </message>
     <message>
         <source>Finds the next occurrence of the phrase in the text</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트에서 다음 문구 위치 찾기</translation>
     </message>
     <message>
         <source>Load script</source>
-        <translation type="unfinished"></translation>
+        <translation>스크립트 불러오기</translation>
     </message>
     <message>
         <source>Go to previous frame</source>
-        <translation type="unfinished"></translation>
+        <translation>이전 프레임으로 이동</translation>
     </message>
     <message>
         <source>Go to next frame</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 프레임으로 이동</translation>
     </message>
     <message>
         <source>Moves video to start time</source>
-        <translation type="unfinished"></translation>
+        <translation>영상를 시작 시간으로 이동</translation>
     </message>
     <message>
         <source>Moves video to end time</source>
-        <translation type="unfinished"></translation>
+        <translation>영상를 종료 시간으로 이동</translation>
     </message>
     <message>
         <source>Plays / Pauses video</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 재생 / 일시정지</translation>
     </message>
     <message>
         <source>Opens audio file</source>
-        <translation type="unfinished"></translation>
+        <translation>소리 파일 열기</translation>
     </message>
     <message>
         <source>Opens audio from video</source>
-        <translation type="unfinished"></translation>
+        <translation>영상/소리 열기</translation>
     </message>
     <message>
         <source>Opens blank audio 2 hour and 30 minutes long</source>
-        <translation type="unfinished"></translation>
+        <translation>2시간 30분 길이의 빈 오디오를 엽니다</translation>
     </message>
     <message>
         <source>Closes audio</source>
-        <translation type="unfinished"></translation>
+        <translation>소리를 닫기</translation>
     </message>
     <message>
         <source>Enable / Disable editor</source>
-        <translation type="unfinished"></translation>
+        <translation>편집 활성/비활성</translation>
     </message>
     <message>
         <source>Shifting subtitle times</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 시간 이동</translation>
     </message>
     <message>
         <source>Is used to manage ASS styles</source>
-        <translation type="unfinished"></translation>
+        <translation>ASS 스타일 관리창을 엽니다</translation>
     </message>
     <message>
         <source>ASS subtitle properties</source>
-        <translation type="unfinished">ASS 파일 정보</translation>
+        <translation>ASS 파일 정보</translation>
     </message>
     <message>
         <source>Converts from one format to another</source>
-        <translation type="unfinished"></translation>
+        <translation>다른 자막 형식으로 변환</translation>
     </message>
     <message>
         <source>Opens the HikariSub website in the default browser</source>
-        <translation type="unfinished"></translation>
+        <translation>기본 브라우저에서 HikariSub 웹사이트를 엽니다</translation>
     </message>
     <message>
         <source>Opens the HikariSub issue tracker</source>
-        <translation type="unfinished"></translation>
+        <translation>HikariSub 이슈 트래커를 엽니다</translation>
     </message>
     <message>
         <source>Checks whether a newer version is available</source>
@@ -3455,11 +3481,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Shows program info</source>
-        <translation type="unfinished"></translation>
+        <translation>프로그램 정보 보기</translation>
     </message>
     <message>
         <source>Shows credits</source>
-        <translation type="unfinished"></translation>
+        <translation>도움 준 분들</translation>
     </message>
     <message>
         <source>Log window</source>
@@ -3653,43 +3679,43 @@ great help testing HikariSub on a slow computer)
     <name>HikariSub.Matroska</name>
     <message>
         <source>Confirmation</source>
-        <translation type="unfinished">확인해주세요</translation>
+        <translation>확인해주세요</translation>
     </message>
     <message>
         <source>Save the file before loading subtitles from the MKV?</source>
-        <translation type="unfinished"></translation>
+        <translation>MKV의 자막을 불러오기 전에 파일을 저장 하시겠습니까?</translation>
     </message>
     <message>
         <source>Yes</source>
-        <translation type="unfinished">예</translation>
+        <translation>예</translation>
     </message>
     <message>
         <source>No</source>
-        <translation type="unfinished">아니오</translation>
+        <translation>아니오</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">취소</translation>
+        <translation>취소</translation>
     </message>
     <message>
         <source>The file does not contain any subtitle tracks.</source>
-        <translation type="unfinished"></translation>
+        <translation>파일에 자막이 없습니다.</translation>
     </message>
     <message>
         <source>Choose subtitle track</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 트랙 선택</translation>
     </message>
     <message>
         <source>Loading subtitles from Matroska.</source>
-        <translation type="unfinished"></translation>
+        <translation>Matroska(MKV)에서 자막 불러오기.</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">경과 시간: %1</translation>
     </message>
     <message>
         <source>Indexing error occurred: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">색인 오류: %1</translation>
     </message>
 </context>
 <context>
@@ -4225,7 +4251,7 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Subtitle display filter</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 필터</translation>
     </message>
     <message>
         <source>Playback</source>
@@ -4545,7 +4571,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Border color</source>
-        <translation type="unfinished">테두리 색상</translation>
+        <translation>테두리 색상</translation>
     </message>
 </context>
 <context>
@@ -4611,7 +4637,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>ASS file properties</source>
-        <translation type="unfinished">ASS 파일 정보</translation>
+        <translation>ASS 파일 정보</translation>
     </message>
     <message>
         <source>Save</source>
@@ -5029,7 +5055,7 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Select lines</source>
-        <translation type="unfinished"></translation>
+        <translation>선택 줄</translation>
     </message>
     <message>
         <source>With</source>
@@ -5180,27 +5206,27 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Find files</source>
-        <translation type="unfinished"></translation>
+        <translation>파일 검색 [구분자 한 칸 띄움]</translation>
     </message>
     <message>
         <source>Filter list</source>
-        <translation type="unfinished"></translation>
+        <translation>검색</translation>
     </message>
     <message>
         <source>All words</source>
-        <translation type="unfinished"></translation>
+        <translation>모두 포함하는 파일 찾기</translation>
     </message>
     <message>
         <source>Files</source>
-        <translation type="unfinished"></translation>
+        <translation>파일</translation>
     </message>
     <message>
         <source>Versions</source>
-        <translation type="unfinished"></translation>
+        <translation>자동 저장 파일</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="unfinished"></translation>
+        <translation>열기</translation>
     </message>
     <message>
         <source>Open auto save</source>
@@ -5412,15 +5438,15 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Auto save folder is empty</source>
-        <translation type="unfinished"></translation>
+        <translation>자동 저장 폴더가 비어 있음</translation>
     </message>
     <message>
         <source>Cannot open auto save folder</source>
-        <translation type="unfinished"></translation>
+        <translation>자동 저장 폴더를 열 수 없음</translation>
     </message>
     <message>
         <source>Failed to load autosave</source>
-        <translation type="unfinished"></translation>
+        <translation>자동 저장 폴더를 열 수 없습니다</translation>
     </message>
     <message>
         <source>Session file is corrupt</source>
@@ -5500,7 +5526,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>All</source>
-        <translation type="unfinished">모두</translation>
+        <translation>모두</translation>
     </message>
     <message>
         <source>Changes</source>
@@ -5565,7 +5591,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Close</source>
-        <translation type="unfinished">닫기</translation>
+        <translation>닫기</translation>
     </message>
     <message>
         <source>%1 to import of %2 changes, %3 unchanged, %4 unresolved, %5 excluded, %6 retired</source>
@@ -5721,39 +5747,39 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Time elapsed: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">경과 시간: %1</translation>
     </message>
     <message>
         <source>Video scale</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 크기</translation>
     </message>
     <message>
         <source>Video zoom</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 확대</translation>
     </message>
     <message>
         <source>Video duration</source>
-        <translation type="unfinished"></translation>
+        <translation>영상의 길이</translation>
     </message>
     <message>
         <source>Frames per second</source>
-        <translation type="unfinished"></translation>
+        <translation>초당 프레임</translation>
     </message>
     <message>
         <source>Video resolution</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 해상도</translation>
     </message>
     <message>
         <source>Video aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 가로 세로 비율</translation>
     </message>
     <message>
         <source>Subtitles resolution</source>
-        <translation type="unfinished">자막 해상도</translation>
+        <translation>자막 해상도</translation>
     </message>
     <message>
         <source>Video file name</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 파일 이름</translation>
     </message>
 </context>
 <context>
@@ -6197,7 +6223,7 @@ Styles deleted:
     </message>
     <message>
         <source>Modified</source>
-        <translation type="unfinished">적용 가능</translation>
+        <translation>적용 가능</translation>
     </message>
     <message>
         <source>Protected reference</source>
@@ -6217,386 +6243,386 @@ Styles deleted:
     </message>
     <message>
         <source>Save</source>
-        <translation type="unfinished">저장</translation>
+        <translation>저장</translation>
     </message>
     <message>
         <source>Save all</source>
-        <translation type="unfinished">모두 저장</translation>
+        <translation>모두 저장</translation>
     </message>
     <message>
         <source>Close all tabs</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 탭 닫기</translation>
     </message>
     <message>
         <source>Open the folder containing the subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 폴더 열기</translation>
     </message>
     <message>
         <source>Open video containing folder</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 폴더 열기</translation>
     </message>
     <message>
         <source>Open audio containing folder</source>
-        <translation type="unfinished"></translation>
+        <translation>소리 폴더 열기</translation>
     </message>
     <message>
         <source>Open keyframes containing folder</source>
-        <translation type="unfinished"></translation>
+        <translation>키 프레임 폴더 열기</translation>
     </message>
     <message>
         <source>Subtitle comparison</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 비교</translation>
     </message>
     <message>
         <source>Compare by times</source>
-        <translation type="unfinished"></translation>
+        <translation>시간으로 비교</translation>
     </message>
     <message>
         <source>Compare by visible lines</source>
-        <translation type="unfinished"></translation>
+        <translation>보이는 줄과 비교하기</translation>
     </message>
     <message>
         <source>Compare by selections</source>
-        <translation type="unfinished"></translation>
+        <translation>선택 비교</translation>
     </message>
     <message>
         <source>Compare by styles</source>
-        <translation type="unfinished"></translation>
+        <translation>스타일 비교</translation>
     </message>
     <message>
         <source>Compare by selected styles</source>
-        <translation type="unfinished"></translation>
+        <translation>선택 스타일 비교</translation>
     </message>
     <message>
         <source>Compare</source>
-        <translation type="unfinished"></translation>
+        <translation>비교</translation>
     </message>
     <message>
         <source>Turn off comparison</source>
-        <translation type="unfinished"></translation>
+        <translation>비교 해제</translation>
     </message>
     <message>
         <source>Prompt</source>
-        <translation type="unfinished">질문</translation>
+        <translation>질문</translation>
     </message>
     <message>
         <source>All tabs will be closed, continue?</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 탭이 닫힙니다. 계속하시겠습니까?</translation>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="unfinished">확인해주세요</translation>
+        <translation>확인해주세요</translation>
     </message>
     <message>
         <source>Load subtitles named &quot;%1&quot;?</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 파일도 같이 불러 오겠습니까?</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.TagList</name>
     <message>
         <source>Transparency of primary color</source>
-        <translation type="unfinished"></translation>
+        <translation>첫 번째 색상 투명도</translation>
     </message>
     <message>
         <source>Transparency of secondary color</source>
-        <translation type="unfinished"></translation>
+        <translation>두 번째 색상 투명도</translation>
     </message>
     <message>
         <source>Transparency of border color</source>
-        <translation type="unfinished"></translation>
+        <translation>테두리 투명도</translation>
     </message>
     <message>
         <source>Transparency of shadow color</source>
-        <translation type="unfinished"></translation>
+        <translation>그림자 색상 투명도</translation>
     </message>
     <message>
         <source>Primary color</source>
-        <translation type="unfinished">첫 번째 색상</translation>
+        <translation>첫 번째 색상</translation>
     </message>
     <message>
         <source>Secondary color</source>
-        <translation type="unfinished">두 번째 색상</translation>
+        <translation>두 번째 색상</translation>
     </message>
     <message>
         <source>Border color</source>
-        <translation type="unfinished">테두리 색상</translation>
+        <translation>테두리 색상</translation>
     </message>
     <message>
         <source>Shadow color</source>
-        <translation type="unfinished">그림자 색상</translation>
+        <translation>그림자 색상</translation>
     </message>
     <message>
         <source>PNG mask of primary color</source>
-        <translation type="unfinished"></translation>
+        <translation>PNG mask 기본 색상</translation>
     </message>
     <message>
         <source>PNG mask of secondary color</source>
-        <translation type="unfinished"></translation>
+        <translation>PNG mask 두번째 색상</translation>
     </message>
     <message>
         <source>PNG mask of border color</source>
-        <translation type="unfinished"></translation>
+        <translation>PNG mask 테두리 색상</translation>
     </message>
     <message>
         <source>PNG mask of shadow color</source>
-        <translation type="unfinished"></translation>
+        <translation>‪PNG mask 그림자 색상</translation>
     </message>
     <message>
         <source>Transparency gradient of primary color</source>
-        <translation type="unfinished"></translation>
+        <translation>그라데이션 첫 번째 색상 투명도</translation>
     </message>
     <message>
         <source>Transparency gradient of secondary color</source>
-        <translation type="unfinished"></translation>
+        <translation>그라데이션 두 번째 색상 투명도</translation>
     </message>
     <message>
         <source>Transparency gradient of border color</source>
-        <translation type="unfinished"></translation>
+        <translation>그라데이션 테두리 투명도</translation>
     </message>
     <message>
         <source>Transparency gradient of shadow color</source>
-        <translation type="unfinished"></translation>
+        <translation>그라데이션 그림자 투명도</translation>
     </message>
     <message>
         <source>Gradient of primary color</source>
-        <translation type="unfinished"></translation>
+        <translation>그라데이션 첫 번째 색상</translation>
     </message>
     <message>
         <source>Gradient of secondary color</source>
-        <translation type="unfinished"></translation>
+        <translation>그라데이션 첫 번째 색상</translation>
     </message>
     <message>
         <source>Gradient of border color</source>
-        <translation type="unfinished"></translation>
+        <translation>그라데이션 테두리</translation>
     </message>
     <message>
         <source>Gradient of shadow color</source>
-        <translation type="unfinished"></translation>
+        <translation>그라데이션 그림자</translation>
     </message>
     <message>
         <source>Text alignment (SSA)</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 정렬 (SSA)</translation>
     </message>
     <message>
         <source>Transparency</source>
-        <translation type="unfinished"></translation>
+        <translation>투명도</translation>
     </message>
     <message>
         <source>Text position</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 위치</translation>
     </message>
     <message>
         <source>Bold text</source>
-        <translation type="unfinished"></translation>
+        <translation>굵게</translation>
     </message>
     <message>
         <source>Edge blur</source>
-        <translation type="unfinished"></translation>
+        <translation>가장자리 흐림</translation>
     </message>
     <message>
         <source>Blur of border, shadow or font</source>
-        <translation type="unfinished"></translation>
+        <translation>테두리, 그림자 또는 글꼴의 흐림</translation>
     </message>
     <message>
         <source>Thickness of border</source>
-        <translation type="unfinished"></translation>
+        <translation>테두리 두께</translation>
     </message>
     <message>
         <source>Vector clip / rectangle clip</source>
-        <translation type="unfinished"></translation>
+        <translation>벡터 클립 / 사각형 클립</translation>
     </message>
     <message>
         <source>Font distortion</source>
-        <translation type="unfinished"></translation>
+        <translation>글꼴 변형</translation>
     </message>
     <message>
         <source>Fading in / fading out of text</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 서서히 보임 / 서서히 사라짐</translation>
     </message>
     <message>
         <source>Fading in / fading out of text (advanced version)</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 서서히 보임 / 서서히 사라짐 (고급 버전)</translation>
     </message>
     <message>
         <source>Skew on X axis</source>
-        <translation type="unfinished"></translation>
+        <translation>X 축 기울기</translation>
     </message>
     <message>
         <source>Skew on Y axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Y 축 기울기</translation>
     </message>
     <message>
         <source>Text encoding</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 인코딩</translation>
     </message>
     <message>
         <source>Font name</source>
-        <translation type="unfinished">글꼴 이름</translation>
+        <translation>글꼴 이름</translation>
     </message>
     <message>
         <source>Text rounding</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 둘러싸기</translation>
     </message>
     <message>
         <source>Rotation on X axis</source>
-        <translation type="unfinished"></translation>
+        <translation>X 축 회전</translation>
     </message>
     <message>
         <source>Rotation on Y axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Y 축 회전</translation>
     </message>
     <message>
         <source>Rotation on Z axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Z 축 회전</translation>
     </message>
     <message>
         <source>Font size</source>
-        <translation type="unfinished">글꼴 크기</translation>
+        <translation>글꼴 크기</translation>
     </message>
     <message>
         <source>Scale on X and Y axes</source>
-        <translation type="unfinished"></translation>
+        <translation>가로 세로 비율</translation>
     </message>
     <message>
         <source>Scale on X axis</source>
-        <translation type="unfinished"></translation>
+        <translation>가로 비율</translation>
     </message>
     <message>
         <source>Scale on Y axis</source>
-        <translation type="unfinished"></translation>
+        <translation>세로 비율</translation>
     </message>
     <message>
         <source>Font spacing</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 간격</translation>
     </message>
     <message>
         <source>Vertical font spacing</source>
-        <translation type="unfinished"></translation>
+        <translation>세로 글꼴 간격</translation>
     </message>
     <message>
         <source>Italic text</source>
-        <translation type="unfinished"></translation>
+        <translation>기울임</translation>
     </message>
     <message>
         <source>Reverse vector clip or rectangle clip</source>
-        <translation type="unfinished"></translation>
+        <translation>도형 클립 또는 직사각형 클립 반전</translation>
     </message>
     <message>
         <source>Text jitter</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 차이</translation>
     </message>
     <message>
         <source>Karaoke timing</source>
-        <translation type="unfinished"></translation>
+        <translation>노래방 시간</translation>
     </message>
     <message>
         <source>Karaoke timing smooth transition</source>
-        <translation type="unfinished"></translation>
+        <translation>노래방 시간 부드러운 전환</translation>
     </message>
     <message>
         <source>Karaoke timing border</source>
-        <translation type="unfinished"></translation>
+        <translation>노래방 시간 테두리</translation>
     </message>
     <message>
         <source>Karaoke timing (not supported)</source>
-        <translation type="unfinished"></translation>
+        <translation>노래방 시간 (지원되지 않음)</translation>
     </message>
     <message>
         <source>Text movement</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 이동</translation>
     </message>
     <message>
         <source>Text movement along a circle</source>
-        <translation type="unfinished"></translation>
+        <translation>원형 글자 이동</translation>
     </message>
     <message>
         <source>Text movement along a curve (3 points)</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 곡선 이동 (3 points)</translation>
     </message>
     <message>
         <source>Text movement along a curve (4 points)</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 곡선 이동 (4 points)</translation>
     </message>
     <message>
         <source>Vector drawing movement</source>
-        <translation type="unfinished"></translation>
+        <translation>도형 클립 이동</translation>
     </message>
     <message>
         <source>Anchor for rotation</source>
-        <translation type="unfinished"></translation>
+        <translation>회전 앵커</translation>
     </message>
     <message>
         <source>Drawing and its scale</source>
-        <translation type="unfinished"></translation>
+        <translation>그림 및 크기</translation>
     </message>
     <message>
         <source>Offset of Y vector points</source>
-        <translation type="unfinished"></translation>
+        <translation>도형을 Y축으로 이동</translation>
     </message>
     <message>
         <source>Text wrap method</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 줄 바꿈 방법</translation>
     </message>
     <message>
         <source>Reset tags</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 재설정</translation>
     </message>
     <message>
         <source>Font point randomness</source>
-        <translation type="unfinished"></translation>
+        <translation>임의의 글꼴 지저</translation>
     </message>
     <message>
         <source>Font point randomness seed</source>
-        <translation type="unfinished"></translation>
+        <translation>임의의 글꼴 지점 seed[?]</translation>
     </message>
     <message>
         <source>Font point randomness on X axis</source>
-        <translation type="unfinished"></translation>
+        <translation>임의의 글꼴 지점 X 축</translation>
     </message>
     <message>
         <source>Font point randomness on Y axis</source>
-        <translation type="unfinished"></translation>
+        <translation>임의의 글꼴 지점 Y 축</translation>
     </message>
     <message>
         <source>Font point randomness on Z axis</source>
-        <translation type="unfinished"></translation>
+        <translation>임의의 글꼴 지점 Z 축</translation>
     </message>
     <message>
         <source>Text strikethrough</source>
-        <translation type="unfinished"></translation>
+        <translation>삭제(표시)선</translation>
     </message>
     <message>
         <source>Text shadow</source>
-        <translation type="unfinished"></translation>
+        <translation>글자 그림자</translation>
     </message>
     <message>
         <source>Text animation</source>
-        <translation type="unfinished"></translation>
+        <translation>애니메이션 글자</translation>
     </message>
     <message>
         <source>Text underline</source>
-        <translation type="unfinished"></translation>
+        <translation>밑줄</translation>
     </message>
     <message>
         <source>Border on X axis</source>
-        <translation type="unfinished"></translation>
+        <translation>테두리 X 축</translation>
     </message>
     <message>
         <source>Border on Y axis</source>
-        <translation type="unfinished"></translation>
+        <translation>테두리 Y 축</translation>
     </message>
     <message>
         <source>Shadow on X axis</source>
-        <translation type="unfinished"></translation>
+        <translation>X 축의 그림자</translation>
     </message>
     <message>
         <source>Shadow on Y axis</source>
-        <translation type="unfinished"></translation>
+        <translation>Y 축의 그림자</translation>
     </message>
     <message>
         <source>Z coordinate for tags \frx and \fry</source>
-        <translation type="unfinished"></translation>
+        <translation>Z 좌표는 \frx, \fry 태그에 사용됩니다</translation>
     </message>
     <message>
         <source>Tag list</source>
@@ -6604,15 +6630,15 @@ Styles deleted:
     </message>
     <message>
         <source>Show description</source>
-        <translation type="unfinished"></translation>
+        <translation>설명 표시</translation>
     </message>
     <message>
         <source>Show all tags</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 태그 표시</translation>
     </message>
     <message>
         <source>Show VSFiltermod tags</source>
-        <translation type="unfinished"></translation>
+        <translation>VSFilter모드 태그 표시</translation>
     </message>
     <message>
         <source>%1, %2, %3 of %4</source>
@@ -6912,7 +6938,7 @@ Moves the translation one line up.</source>
     </message>
     <message>
         <source>Description</source>
-        <translation type="unfinished">설명</translation>
+        <translation>설명</translation>
     </message>
     <message>
         <source>Description:
@@ -6922,28 +6948,29 @@ Translation - text pasted into subtitles with correct timing.</source>
     </message>
     <message>
         <source>Not confirmed</source>
-        <translation type="unfinished"></translation>
+        <translation>확인되지 않음</translation>
     </message>
     <message>
         <source>Moving tags</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 이동</translation>
     </message>
     <message>
         <source>Translator mode</source>
-        <translation type="unfinished"></translation>
+        <translation>번역 모드</translation>
     </message>
     <message>
         <source>Translator mode displays and saves both foreign text and translation text</source>
-        <translation type="unfinished"></translation>
+        <translation>번역기 모드는 외국어와 번역을 모두 표시하고 저장합니다</translation>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="unfinished">확인해주세요</translation>
+        <translation>확인해주세요</translation>
     </message>
     <message>
         <source>Are you sure you want to turn off translation mode?
 Foreign language text will be deleted.</source>
-        <translation type="unfinished"></translation>
+        <translation>번역 모드를 끄시겠습니까?
+원본 글자가 삭제되고 번역 글자만 남게됩니다.</translation>
     </message>
     <message>
         <source>Could not open %1; nothing was changed.</source>
@@ -6962,107 +6989,107 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Failed to initialize DirectShow</source>
-        <translation type="unfinished"></translation>
+        <translation>Direct Show를 시작하는 동안 오류가 발생</translation>
     </message>
     <message>
         <source>Cannot create filters interface</source>
-        <translation type="unfinished"></translation>
+        <translation>필터 인터페이스를 만들 수 없음</translation>
     </message>
     <message>
         <source>Cannot create controller</source>
-        <translation type="unfinished"></translation>
+        <translation>컨트롤러를 만들 수 없음</translation>
     </message>
     <message>
         <source>Cannot create search interface</source>
-        <translation type="unfinished"></translation>
+        <translation>검색 인터페이스를 만들 수 없음</translation>
     </message>
     <message>
         <source>Cannot create audio interface</source>
-        <translation type="unfinished"></translation>
+        <translation>소리 인터페이스를 만들 수 없음</translation>
     </message>
     <message>
         <source>Source filter not added</source>
-        <translation type="unfinished"></translation>
+        <translation>소스 필터가 추가되지 않음</translation>
     </message>
     <message>
         <source>Cannot add video renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 렌더러를 추가 할 수 없음</translation>
     </message>
     <message>
         <source>Cannot create audio renderer instance</source>
-        <translation type="unfinished"></translation>
+        <translation>소리 렌더러 인스턴스를 만들 수 없음</translation>
     </message>
     <message>
         <source>Cannot add Direct Sound renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>Direct Sound 렌더러를 추가 할 수 없음</translation>
     </message>
     <message>
         <source>Cannot enumerate source pins</source>
-        <translation type="unfinished"></translation>
+        <translation>소스 핀을 계산할 수 없습니다</translation>
     </message>
     <message>
         <source>Cannot enumerate renderer pins</source>
-        <translation type="unfinished"></translation>
+        <translation>렌더러 핀을 계산할 수 없습니다</translation>
     </message>
     <message>
         <source>Cannot enumerate Direct Sound pins</source>
-        <translation type="unfinished"></translation>
+        <translation>Direct Sound 핀을 계산할 수 없습니다</translation>
     </message>
     <message>
         <source>Cannot get renderer pin</source>
-        <translation type="unfinished"></translation>
+        <translation>렌더러 핀을 가져올 수 없음</translation>
     </message>
     <message>
         <source>Cannot get dsound pin</source>
-        <translation type="unfinished"></translation>
+        <translation>Direct Sound 핀을 가져올 수 없음</translation>
     </message>
     <message>
         <source>No IMediaTypes</source>
-        <translation type="unfinished"></translation>
+        <translation>IMediaTypes 없음</translation>
     </message>
     <message>
         <source>No track type info</source>
-        <translation type="unfinished"></translation>
+        <translation>트랙 종류 정보 없음</translation>
     </message>
     <message>
         <source>Cannot connect source pin to video renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>소스 핀을 영상 렌더러에 연결할 수 없음</translation>
     </message>
     <message>
         <source>Cannot connect source pin to audio renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>소스 핀을 소리 렌더러에 연결할 수 없음</translation>
     </message>
     <message>
         <source>Cannot connect source pin to audio1 renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>소스 핀을 소리1 렌더러에 연결할 수 없음</translation>
     </message>
     <message>
         <source>Cannot find connected source pin</source>
-        <translation type="unfinished"></translation>
+        <translation>연결된 소스 핀을 찾을 수 없습니다</translation>
     </message>
     <message>
         <source>Cannot get splitter pin info</source>
-        <translation type="unfinished"></translation>
+        <translation>분할 핀 정보를 가져올 수 없음</translation>
     </message>
     <message>
         <source>Cannot enumerate splitter pins</source>
-        <translation type="unfinished"></translation>
+        <translation>스플리터 핀을 계산할 수 없습니다</translation>
     </message>
     <message>
         <source>Cannot connect source pin to video2 renderer</source>
-        <translation type="unfinished"></translation>
+        <translation>소스 핀을 영상2 렌더러에 연결할 수 없음</translation>
     </message>
     <message>
         <source>Dummy video options</source>
-        <translation type="unfinished"></translation>
+        <translation>더미 영상 설정</translation>
     </message>
     <message>
         <source>This gives %1 frames</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 프레임</translation>
     </message>
     <message>
         <source>Video resolution:</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 해상도:</translation>
     </message>
     <message>
         <source>Width</source>
@@ -7074,19 +7101,19 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Color:</source>
-        <translation type="unfinished"></translation>
+        <translation>색상:</translation>
     </message>
     <message>
         <source>Checkerboard pattern</source>
-        <translation type="unfinished"></translation>
+        <translation>바둑판 무늬</translation>
     </message>
     <message>
         <source>Frames per second:</source>
-        <translation type="unfinished"></translation>
+        <translation>초당 프레임:</translation>
     </message>
     <message>
         <source>Duration:</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 길이:</translation>
     </message>
     <message>
         <source>Previous frame</source>
@@ -7118,7 +7145,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Previous file</source>
-        <translation type="unfinished"></translation>
+        <translation>이전 파일</translation>
     </message>
     <message>
         <source>Pause</source>
@@ -7142,7 +7169,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Next file</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 파일</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -7190,7 +7217,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Copy video position</source>
-        <translation type="unfinished"></translation>
+        <translation>커서 위치 복사</translation>
     </message>
     <message>
         <source>Exit full screen</source>
@@ -7202,59 +7229,59 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>전체 화면</translation>
     </message>
     <message>
         <source>Switch full screen to monitor %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1을(를) 전체 화면으로 전환</translation>
     </message>
     <message>
         <source>Open in full screen on monitor %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">모니터 %1에서 전체 화면으로 열기</translation>
     </message>
     <message>
         <source>Open editor</source>
-        <translation type="unfinished"></translation>
+        <translation>편집박스 열기</translation>
     </message>
     <message>
         <source>Recently opened subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>열었던 자막</translation>
     </message>
     <message>
         <source>Recently opened videos</source>
-        <translation type="unfinished"></translation>
+        <translation>열었던 영상</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 파일 열기</translation>
     </message>
     <message>
         <source>Open subtitles</source>
-        <translation type="unfinished"></translation>
+        <translation>자막 파일 열기</translation>
     </message>
     <message>
         <source>Show / hide progress bar</source>
-        <translation type="unfinished"></translation>
+        <translation>진행 표시 줄 보임/ 숨김</translation>
     </message>
     <message>
         <source>Change aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>가로/세로 비율 변경</translation>
     </message>
     <message>
         <source>Save frame with subtitles as PNG</source>
-        <translation type="unfinished"></translation>
+        <translation>PNG 파일로 화면/자막 저장</translation>
     </message>
     <message>
         <source>Copy frame with subtitles to clipboard</source>
-        <translation type="unfinished"></translation>
+        <translation>현재 화면/자막 복사(클립보드)</translation>
     </message>
     <message>
         <source>Save frame as PNG</source>
-        <translation type="unfinished"></translation>
+        <translation>PNG 파일로 화면 저장</translation>
     </message>
     <message>
         <source>Copy frame to clipboard</source>
-        <translation type="unfinished"></translation>
+        <translation>현재 화면 복사(클립보드)</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -7262,19 +7289,19 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Filters</source>
-        <translation type="unfinished"></translation>
+        <translation>필터</translation>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="unfinished">확인해주세요</translation>
+        <translation>확인해주세요</translation>
     </message>
     <message>
         <source>Are you sure you want to index the next video?</source>
-        <translation type="unfinished"></translation>
+        <translation>다음 영상의 색인을 생성 하시겠습니까?</translation>
     </message>
     <message>
         <source>Are you sure you want to index the previous video?</source>
-        <translation type="unfinished"></translation>
+        <translation>이전 영상의 색인을 생성 하시겠습니까?</translation>
     </message>
     <message>
         <source>Seek on</source>
@@ -7282,31 +7309,31 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
-        <translation type="unfinished"></translation>
+        <translation>두 번 클릭으로 이동 ()</translation>
     </message>
     <message>
         <source>Every line change</source>
-        <translation type="unfinished"></translation>
+        <translation>항상 영상도 이동</translation>
     </message>
     <message>
         <source>Clicking a line or editing when paused</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 클릭으로 정지[?]</translation>
     </message>
     <message>
         <source>Clicking a line or editing</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 또는 에디션을 클릭[?]</translation>
     </message>
     <message>
         <source>Editing line when paused</source>
-        <translation type="unfinished"></translation>
+        <translation>일시 중지 된 경우 줄 편집[?]</translation>
     </message>
     <message>
         <source>Editing</source>
-        <translation type="unfinished">갱신 정보</translation>
+        <translation>갱신 정보</translation>
     </message>
     <message>
         <source>Move video to selected line on:</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 변경 시 영상 이동 방법:</translation>
     </message>
     <message>
         <source>Then play</source>
@@ -7314,23 +7341,23 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Nothing</source>
-        <translation type="unfinished"></translation>
+        <translation>없음</translation>
     </message>
     <message>
         <source>Audio to the line end time</source>
-        <translation type="unfinished"></translation>
+        <translation>소리를 줄 종료 시간 까지</translation>
     </message>
     <message>
         <source>Video and audio to the line end time</source>
-        <translation type="unfinished"></translation>
+        <translation>영상을 줄 종료까지 재생</translation>
     </message>
     <message>
         <source>Video and audio to the next line start time</source>
-        <translation type="unfinished"></translation>
+        <translation>영상을 다음 줄의 시작 부분까지 재생</translation>
     </message>
     <message>
         <source>On moving to another line play:</source>
-        <translation type="unfinished"></translation>
+        <translation>줄 변경 시 재생 방법:</translation>
     </message>
     <message>
         <source>Full screen video</source>
@@ -7338,19 +7365,19 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Previous video file</source>
-        <translation type="unfinished"></translation>
+        <translation>이전 영상 파일</translation>
     </message>
     <message>
         <source>Show toolbar</source>
-        <translation type="unfinished"></translation>
+        <translation>도구 모음 아이콘 표시</translation>
     </message>
     <message>
         <source>Indexing video</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 색인</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">취소</translation>
+        <translation>취소</translation>
     </message>
     <message>
         <source>Streams</source>
@@ -7358,11 +7385,11 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Volume</source>
-        <translation type="unfinished">소리</translation>
+        <translation>소리</translation>
     </message>
     <message>
         <source>Cannot change YCbCr matrix</source>
-        <translation type="unfinished"></translation>
+        <translation>YCbCr 행렬(매트릭스)을 변경할 수 없음</translation>
     </message>
     <message>
         <source>Invalid keyframes format</source>
@@ -7370,24 +7397,25 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Indexing error occurred: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">색인 오류: %1</translation>
     </message>
     <message>
         <source>Cannot create VideoSource.</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 소스를 만들 수 없음.</translation>
     </message>
     <message>
         <source>Cannot convert video to RGBA</source>
-        <translation type="unfinished"></translation>
+        <translation>영상를 RGBA로 변환할 수 없음</translation>
     </message>
     <message>
         <source>Invalid FPS value.</source>
-        <translation type="unfinished"></translation>
+        <translation>잘못된 FPS.</translation>
     </message>
     <message>
         <source>The file is not a valid video file or is corrupted,
 or codecs or a splitter may be missing</source>
-        <translation type="unfinished"></translation>
+        <translation>파일이 유효한 영상 파일이 아니거나 손상되었습니다
+코덱 또는 전달장치가 없습니다</translation>
     </message>
     <message>
         <source>No video open</source>
@@ -7411,18 +7439,18 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Aspect ratio: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">가로 세로 비율: %1</translation>
     </message>
 </context>
 <context>
     <name>HikariSub.VisualTools</name>
     <message>
         <source>Tag editing</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 편집</translation>
     </message>
     <message>
         <source>Edited tag</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 수정</translation>
     </message>
     <message>
         <source>Tags</source>
@@ -7434,23 +7462,23 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Add tag</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 추가</translation>
     </message>
     <message>
         <source>Delete tag</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 삭제</translation>
     </message>
     <message>
         <source>Name:</source>
-        <translation type="unfinished"></translation>
+        <translation>이름:</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation type="unfinished">이름</translation>
+        <translation>이름</translation>
     </message>
     <message>
         <source>Tag:</source>
-        <translation type="unfinished"></translation>
+        <translation>태그:</translation>
     </message>
     <message>
         <source>Tag</source>
@@ -7458,7 +7486,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Minimal value:</source>
-        <translation type="unfinished"></translation>
+        <translation>최소 값:</translation>
     </message>
     <message>
         <source>Minimal value</source>
@@ -7466,7 +7494,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Maximal value:</source>
-        <translation type="unfinished"></translation>
+        <translation>최대 값:</translation>
     </message>
     <message>
         <source>Maximal value</source>
@@ -7474,7 +7502,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Value:</source>
-        <translation type="unfinished"></translation>
+        <translation>명도:</translation>
     </message>
     <message>
         <source>Value</source>
@@ -7482,7 +7510,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Step:</source>
-        <translation type="unfinished"></translation>
+        <translation>단계:</translation>
     </message>
     <message>
         <source>Step</source>
@@ -7494,7 +7522,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Decimal places:</source>
-        <translation type="unfinished"></translation>
+        <translation>점 이후 숫자:</translation>
     </message>
     <message>
         <source>Decimal places</source>
@@ -7502,23 +7530,23 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Used only when tag have 2 values or more</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 값이 2개 이상인 경우에만 사용</translation>
     </message>
     <message>
         <source>Tag change options</source>
-        <translation type="unfinished"></translation>
+        <translation>태그 옵션 변경</translation>
     </message>
     <message>
         <source>Additional values:</source>
-        <translation type="unfinished"></translation>
+        <translation>추가 값:</translation>
     </message>
     <message>
         <source>Value %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">%1 값</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation type="unfinished">적용</translation>
+        <translation>적용</translation>
     </message>
     <message>
         <source>OK</source>
@@ -7526,15 +7554,15 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">취소</translation>
+        <translation>취소</translation>
     </message>
     <message>
         <source>Restore default</source>
-        <translation type="unfinished"></translation>
+        <translation>기본값으로 복원</translation>
     </message>
     <message>
         <source>Vector shape editing</source>
-        <translation type="unfinished"></translation>
+        <translation>벡터 모양의 편집</translation>
     </message>
     <message>
         <source>A shape named &quot;%1&quot; already exists.</source>
@@ -7542,7 +7570,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Edited shape</source>
-        <translation type="unfinished"></translation>
+        <translation>편집된 모양</translation>
     </message>
     <message>
         <source>Shapes</source>
@@ -7554,31 +7582,31 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Add shape</source>
-        <translation type="unfinished"></translation>
+        <translation>모양 추가</translation>
     </message>
     <message>
         <source>Delete shape</source>
-        <translation type="unfinished"></translation>
+        <translation>모양 삭제</translation>
     </message>
     <message>
         <source>Editing</source>
-        <translation type="unfinished">갱신 정보</translation>
+        <translation>갱신 정보</translation>
     </message>
     <message>
         <source>Scaling relative to cursor:</source>
-        <translation type="unfinished"></translation>
+        <translation>커서를 통한 크기 조정:</translation>
     </message>
     <message>
         <source>Changed width and height</source>
-        <translation type="unfinished"></translation>
+        <translation>넓이와 높이 변경</translation>
     </message>
     <message>
         <source>Preserve aspect ratio</source>
-        <translation type="unfinished"></translation>
+        <translation>비율을 유지</translation>
     </message>
     <message>
         <source>Changed is only width</source>
-        <translation type="unfinished"></translation>
+        <translation>넓이만 변경됨</translation>
     </message>
     <message>
         <source>Scaling relative to cursor</source>
@@ -7586,15 +7614,15 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Scaling mode:</source>
-        <translation type="unfinished"></translation>
+        <translation>크기 조절:</translation>
     </message>
     <message>
         <source>Changing only drawing coordinates</source>
-        <translation type="unfinished"></translation>
+        <translation>도면 좌표 변경</translation>
     </message>
     <message>
         <source>Changing scale</source>
-        <translation type="unfinished"></translation>
+        <translation>크기 변경</translation>
     </message>
     <message>
         <source>Scaling mode</source>
@@ -7602,11 +7630,11 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Shape:</source>
-        <translation type="unfinished"></translation>
+        <translation>모양:</translation>
     </message>
     <message>
         <source>Get shape from active line</source>
-        <translation type="unfinished"></translation>
+        <translation>활성 라인에서 모양 가져오기</translation>
     </message>
     <message>
         <source>Shape</source>
@@ -7614,11 +7642,11 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="unfinished">확인해주세요</translation>
+        <translation>확인해주세요</translation>
     </message>
     <message>
         <source>Replace</source>
-        <translation type="unfinished">교체</translation>
+        <translation>교체</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -7630,7 +7658,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation type="unfinished">경고</translation>
+        <translation>경고</translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>

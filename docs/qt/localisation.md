@@ -38,7 +38,36 @@ The move from lupdate's default contexts is the reviewable record `i18n/migratio
 
 `hikari_i18n_contexts_keep_translations` compares each language's catalog before the move (its git blob at 3e06caa9) and after it with `hikari_i18n_migrate compare`. Every entry before is at each of its new keys with the same translations, comment and state, apart from those joins. Every entry after comes from one before. The distinct translated texts are the same set: pl 687, ko_KR 686, th_TH 687, ta 680. The test skips, naming the missing object, in a clone without those blobs.
 
-`migration/keymap.tsv` was regenerated with `hikari_i18n_migrate keymap` (the second step of `hikari_i18n_keymap`) over the moved `keys.ts`, so it still pairs the legacy template with the keys O4 converted, now under their semantic contexts. The counts were 802 exact, 22 placeholder, 332 new and 1138 obsolete; the exact rows went from 785 to 802 because a legacy id shared by keys that moved to several surfaces has one row per surface. With the Grid's ten headings (above) they are 812 exact and 1132 obsolete. Running the `hikari_i18n_keymap` target itself re-extracts today's sources. The re-extracted map would pair 1306 keys instead of 824, because later cards added about 500 keys whose text equals a legacy id, and `hikari_i18n_convert` would then carry those legacy translations into the catalogs. That is a translation decision outside O6, so it is not run.
+`migration/keymap.tsv` was regenerated with `hikari_i18n_migrate keymap` (the second step of `hikari_i18n_keymap`) over the moved `keys.ts`, so it still pairs the legacy template with the keys O4 converted, now under their semantic contexts. The counts were 802 exact, 22 placeholder, 332 new and 1138 obsolete; the exact rows went from 785 to 802 because a legacy id shared by keys that moved to several surfaces has one row per surface. With the Grid's ten headings (above) they are 812 exact and 1132 obsolete. Running the `hikari_i18n_keymap` target itself re-extracts today's sources, so O6 did not run it: later cards had added keys whose text equals a legacy id, and carrying legacy's translations into them was a translation decision outside O6.
+
+#### Keys added after O4 ([O4-post-keys-carried](compatibility-decisions.md))
+
+The user decided on 2026-10-13 to run `hikari_i18n_keymap` and carry in legacy translations of exact text matches as finished. `migration/keys.ts` is now today's extraction (1865 keys in 30 contexts, in the O6 semantic contexts) and `keymap.tsv` its candidate map: 1253 exact rows from 1052 legacy messages (812 before), 61 placeholder (22), 551 new (332) and 716 obsolete (1132). `hikari_i18n_migrate convert`, run into a scratch directory as for the Grid's headings, reproduced the gettext catalogs unchanged and gave the new `report.md`. Its interface entries were carried into the checked-in catalogs only where the key was not finished; no finished entry differed from the conversion, so none changed. Per language, pl and th_TH gained 459 finished entries and 39 placeholder translations carried unfinished (finished 794 -> 1253), ko_KR and ta 450 finished and 48 unfinished (778 -> 1228): 39 placeholder rows and 9 exact rows whose legacy entry is fuzzy. Fuzzy and empty legacy entries stay unfinished, as in O4, because they never reached the legacy MO; the decision's wording does not make that exception and the user has not approved it. The 9 per language are the same keys in ko_KR and ta: `HikariSub.Colours` "Swap shortcuts between the color picker\nand the color selection window", `HikariSub.Fonts` "Add fonts from subtitles", "Remove all contents of catalog", "Add fonts from all open subtitles", "Cannot open MKV file" and "Cannot load external font folder", `HikariSub.Grid` "Select all lines visible on video", `HikariSub.MainWindow` "Zoom video" and "Turn off video zoom". With the earlier ones, 24 fuzzy and 1 empty exact rows are unfinished in ko_KR and 18 fuzzy and 7 empty in ta. Placeholder rows stay unfinished: they change the formatting, which needs review (above). The 15 keys O6 joined (18 entries per language) were exact rows already and keep the same translation. `hikari_lupdate` then left the four catalogs unchanged. Do not run `hikari_i18n_convert` over the checked-in catalogs: it rewrites them from the PO and `keys.ts` alone and drops the vanished entries lupdate keeps for their translation; convert into a scratch directory and carry its entries over as above.
+
+A legacy translation follows legacy's own use of its id, so a carried one can fit the new surface badly. A spot check of the short texts in every language found these, finished as decided and awaiting translator review:
+
+| Language | Context | Source | Carried translation | Problem |
+| --- | --- | --- | --- | --- |
+| ko_KR, ta | HikariSub.Video, HikariSub.VisualTools | Editing | 갱신 정보, புதுப்பித்தார் | "Update information" / "updated": legacy's id is the Script properties field. Here it is a video-follow choice and the shape editing group. |
+| ko_KR | HikariSub.Fonts | Start | 시작 시간 | "Start time" on the Font collector's Start button. |
+| ko_KR | HikariSub.Tabs | Modified | 적용 가능 | "Applicable" for a modified tab. |
+| ko_KR | HikariSub.Fonts | Sample | 예) | "e.g.)" as the catalog window's sample heading. |
+| ko_KR | HikariSub.Fonts | found | 찾기 | "Find" where the collector reports fonts found. |
+| ko_KR | HikariSub.Fonts | Load | 파일에서 | "From file" on the catalog window's Load button. |
+| ko_KR | HikariSub.VisualTools | Value: | 명도: | Colour "value" (brightness) for a tag's value. |
+| ko_KR | HikariSub.MainWindow | Redo | 되돌리기 | Reads as "revert" or "undo". |
+| ko_KR | HikariSub.Video | Editing line when paused | 일시 중지 된 경우 줄 편집[?] | The legacy translator's uncertainty mark "[?]" is kept and shown, as legacy showed it. |
+| ko_KR | HikariSub.Video | Clicking a line or editing | 줄 또는 에디션을 클릭[?] | The same "[?]" mark. |
+| ko_KR | HikariSub.Video | Clicking a line or editing when paused | 줄 클릭으로 정지[?] | The same "[?]" mark, and it reads "stop by clicking a line". |
+| ko_KR | HikariSub.TagList | Font point randomness seed | 임의의 글꼴 지점 seed[?] | The same "[?]" mark. |
+| pl, ko_KR | HikariSub.Fonts | Manages font catalogs | Umorzliwia zarządzanie katalogami stylów, 스타일 목록을 관리 할 수 있습니다 | Both say style catalogs (pl also misspells "Umożliwia"). |
+| ta | HikariSub.Video | No IMediaTypes | உடனடியாக | "Immediately". |
+| ta | HikariSub.Video | Open video, Open editor | வீடியோ திறந்த வீடியோ, திறந்த ஆசிரியர் | "Video open video" and "open author". |
+| ta | HikariSub.Fonts | Load | சுமை | "Burden" (a load to carry). |
+| ta | HikariSub.Video | Volume | தொகுதி | A book's volume, not loudness. |
+| ta | HikariSub.Fonts, HikariSub.Tabs | Prompt | உடனடி | "Instant" as a dialog title. |
+| ta | HikariSub.Video | Nothing | எதுவும் | "Anything". |
+| ta | HikariSub.TagList | Bold text | தைரியமான உரை | "Courageous text". |
 
 ### Plurals and placeholders
 
