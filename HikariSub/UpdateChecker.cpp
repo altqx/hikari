@@ -221,7 +221,9 @@ namespace
 	};
 
 	// One check: the request's handler, separate from the frame so that it
-	// can be unbound with it. It deletes itself once the request has ended.
+	// can be unbound with it. It asks for a page of the release list at a
+	// time, keeps the details of only the releases chosen so far, and
+	// deletes itself once the last request has ended.
 	// The frame is held weakly. A reply that comes while it is closing, or
 	// after, is still recorded, as the options outlive the frame and the
 	// event loop that brings the reply is still running; only what it
@@ -231,6 +233,7 @@ namespace
 	public:
 		explicit UpdateRequest(wxWindow *parent)
 			: parent(parent)
+			, pages(VersionHikariSub, Options.GetBool(UPDATER_CHECK_FOR_STABLE))
 		{
 			Bind(wxEVT_WEBREQUEST_DATA, &UpdateRequest::OnData, this);
 			Bind(wxEVT_WEBREQUEST_STATE, &UpdateRequest::OnState, this);
@@ -244,7 +247,6 @@ namespace
 			wxWebSession &session = wxWebSession::GetDefault();
 			if (!session.IsOpened())
 				return false;
-			this->page = page;
 			body.clear();
 			tooLarge = false;
 			request = session.CreateRequest(this, wxString::FromUTF8(update_policy::ReleasesApiUrl(page)));
@@ -288,18 +290,26 @@ namespace
 			if (state == wxWebRequest::State_Active || state == wxWebRequest::State_Idle)
 				return;
 
-			JsonValue root;
-			std::vector<update_policy::Release> releases;
-			update_policy::Ending ending = Read(state, ReplyUrl(evt), &root, &releases);
-			if (ending == update_policy::Ending::Answered && update_policy::NeedsNextPage(releases)) {
-				// Only while the window is open, as nothing would be shown.
-				if (page < update_policy::kMaxPages && IsParentOpen() && Start(page + 1))
-					return;
-				ending = update_policy::Ending::NoVersionListed;
+			update_policy::Ending ending = ReadPage(state, ReplyUrl(evt));
+			if (ending == update_policy::Ending::Answered) {
+				// The next page only while the window is open, as nothing
+				// would be shown; a check that so stops short of the end
+				// of the list is no answer (GetEnding()). A page that
+				// cannot be asked for fails the check, as one that fails
+				// to come does, rather than have it choose from part of
+				// the list.
+				if (pages.ReadsNextPage() && IsParentOpen()) {
+					if (Start(pages.NextPage()))
+						return;
+					ending = update_policy::Ending::NoRequest;
+				}
+				else {
+					ending = pages.GetEnding();
+				}
 			}
 			tracker.End(Now(), ending);
 			if (IsParentOpen())
-				Report(ending, root, releases);
+				Report(ending);
 			tracker.Done();
 			// Last, as nothing of this object may be used after it.
 			wxTheApp->ScheduleForDestruction(this);
@@ -313,8 +323,9 @@ namespace
 			return response.GetURL().utf8_string();
 		}
 
-		update_policy::Ending Read(wxWebRequest::State state, const std::string &url, JsonValue *root,
-			std::vector<update_policy::Release> *releases)
+		// Reads a page of the reply into pages, and the details of any
+		// release chosen from it.
+		update_policy::Ending ReadPage(wxWebRequest::State state, const std::string &url)
 		{
 			if (tooLarge)
 				return update_policy::Ending::CutOff;
@@ -325,11 +336,18 @@ namespace
 			if (!update_policy::IsApiReplyUrl(url))
 				return update_policy::Ending::NotFromApi;
 
-			*root = JsonValue::Parse(body);
+			JsonValue root = JsonValue::Parse(body);
 			body.clear();
 			body.shrink_to_fit();
-			if (!ReadReleases(*root, releases))
+			std::vector<update_policy::Release> releases;
+			if (!ReadReleases(root, &releases))
 				return update_policy::Ending::NotAList;
+			// ReadReleases() reads one entry for each of root's items, so
+			// an index on the page is one into root.Items().
+			pages.Add(releases);
+			chosen.Keep(pages, [&root](size_t index) {
+				return GetReleaseInfo(root.Items()[index]);
+			});
 			return update_policy::Ending::Answered;
 		}
 
@@ -340,8 +358,7 @@ namespace
 				!wxTheApp->IsScheduledForDestruction(window);
 		}
 
-		void Report(update_policy::Ending ending, const JsonValue &root,
-			const std::vector<update_policy::Release> &releases)
+		void Report(update_policy::Ending ending)
 		{
 			bool interactive = tracker.Reports();
 			if (ending != update_policy::Ending::Answered) {
@@ -350,23 +367,20 @@ namespace
 				return;
 			}
 
-			update_policy::Choice choice = update_policy::ChooseRelease(releases, VersionHikariSub,
-				Options.GetBool(UPDATER_CHECK_FOR_STABLE));
-			switch (update_policy::GetOutcome(choice)) {
+			switch (update_policy::GetOutcome(pages.GetChoice())) {
 			case update_policy::Outcome::Offer: {
-				ReleaseInfo release = GetReleaseInfo(root.Items()[choice.offer]);
-				if (!interactive && update_policy::WasDeclined(release.tag.utf8_string(),
+				if (!interactive && update_policy::WasDeclined(chosen.offer.tag.utf8_string(),
 					Options.GetString(UPDATER_DECLINED_VERSION).utf8_string()))
 				{
 					break;
 				}
-				UpdateAvailableDialog dialog(parent, release);
+				UpdateAvailableDialog dialog(parent, chosen.offer);
 				dialog.SaveChoices(dialog.ShowModal());
 				break;
 			}
 			case update_policy::Outcome::OnlyPrereleaseNewer:
 				if (interactive)
-					ShowNewerPrerelease(parent, GetReleaseInfo(root.Items()[choice.skippedPrerelease]));
+					ShowNewerPrerelease(parent, chosen.skippedPrerelease);
 				break;
 			case update_policy::Outcome::UpToDate:
 				if (interactive)
@@ -377,9 +391,10 @@ namespace
 
 		wxWeakRef<wxWindow> parent;
 		wxWebRequest request;
-		int page = 1;
 		std::string body;
 		bool tooLarge = false;
+		update_policy::ReleasePages pages;
+		update_policy::ChosenDetails<ReleaseInfo> chosen;
 	};
 
 	void Check(wxWindow *parent, bool interactive)

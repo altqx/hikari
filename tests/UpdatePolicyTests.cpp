@@ -405,7 +405,7 @@ struct FakeNextCheck : NextCheckStore
 };
 
 const Ending kEndings[] = { Ending::NoRequest, Ending::Failed, Ending::Cancelled, Ending::CutOff,
-	Ending::NotFromApi, Ending::NotAList, Ending::NoVersionListed, Ending::Answered };
+	Ending::NotFromApi, Ending::NotAList, Ending::NotReadToEnd, Ending::Answered };
 
 } // namespace
 
@@ -434,8 +434,8 @@ TEST(update_every_ending_of_a_check_is_recorded_once)
 		}
 		else {
 			// No session or request, a failure, a cancel, a reply cut
-			// off, from elsewhere, not a release list or with no version
-			// on any page read: the hour from the start stands.
+			// off, from elsewhere, not a release list or one not read to
+			// its end: the hour from the start stands.
 			CHECK(store.saves == 1);
 			CHECK(store.value == now + kHour);
 		}
@@ -554,36 +554,244 @@ std::vector<Release> MetadataPage(std::vector<Release> tail = {})
 	return page;
 }
 
+// The tag ReleasePages offers, or "" when it offers none.
+std::string Offered(const ReleasePages &pages)
+{
+	int offer = pages.GetChoice().offer;
+	return offer < 0 ? std::string() : pages.Releases()[offer].tag;
+}
+
+std::string Skipped(const ReleasePages &pages)
+{
+	int skipped = pages.GetChoice().skippedPrerelease;
+	return skipped < 0 ? std::string() : pages.Releases()[skipped].tag;
+}
+
+// Reads pages as the check does: each is added, and the details of the
+// releases chosen are kept from the page they are on, here as the page's
+// number and the tag read from it.
+struct PageReader
+{
+	ReleasePages pages;
+	ChosenDetails<std::string> chosen;
+	int reads = 0;
+
+	PageReader(const char *installed, bool stableOnly)
+		: pages(installed, stableOnly)
+	{
+	}
+
+	bool Add(const std::vector<Release> &page)
+	{
+		int number = pages.NextPage();
+		bool next = pages.Add(page);
+		chosen.Keep(pages, [&](size_t index) {
+			reads++;
+			CHECK(index < page.size());
+			return std::to_string(number) + ":" + page.at(index).tag;
+		});
+		return next;
+	}
+};
+
 } // namespace
 
-TEST(update_reads_the_next_page_when_a_full_one_holds_no_version)
+TEST(update_release_list_pages)
 {
 	CHECK(ReleasesApiUrl(1) == ReleasesApiUrl());
 	CHECK(ReleasesApiUrl(2) == "https://api.github.com/repos/altqx/hikari/releases?per_page=50&page=2");
 	CHECK(IsApiReplyUrl(ReleasesApiUrl(kMaxPages)));
 	CHECK(kMaxPages >= 2);
+	CHECK(MetadataPage().size() == kReleasesPerPage);
+}
 
-	// 25 Qt updates in a row, and no version on the page: before, the
-	// check said "up to date" and pointed nowhere.
-	std::vector<Release> page = MetadataPage();
-	CHECK(page.size() == kReleasesPerPage);
-	CHECK(OutcomeOf(page, "0.0.1-rc.3", true) == Outcome::UpToDate);
-	CHECK(NeedsNextPage(page));
-	// Drafts and other tags are not versions either.
-	CHECK(NeedsNextPage(MetadataPage({ Draft("v0.0.2"), Stable("nightly") })));
+TEST(update_reads_past_a_full_page_whose_versions_are_older)
+{
+	// 49 qt-metadata releases and rc.2 on the first page, rc.4 on the
+	// second: an rc.3 build stopped at the first, on a version, and said
+	// it was up to date.
+	ReleasePages pages("0.0.1-rc.3", true);
+	CHECK(pages.NextPage() == 1);
+	std::vector<Release> first = MetadataPage({ Pre("v0.0.1-rc.2") });
+	CHECK(first.size() == kReleasesPerPage);
+	CHECK(OutcomeOf(first, "0.0.1-rc.3", true) == Outcome::UpToDate);
+	CHECK(pages.Add(first));
+	CHECK(pages.ReadsNextPage());
+	CHECK(pages.NextPage() == 2);
+	CHECK(GetOutcome(pages.GetChoice()) == Outcome::UpToDate);
+	// Had the window closed here, the check would not have answered.
+	CHECK(pages.GetEnding() == Ending::NotReadToEnd);
 
-	// One version on the page, even an older one, is enough to stop.
-	CHECK(!NeedsNextPage(MetadataPage({ Pre("v0.0.1-rc.1") })));
-	CHECK(!NeedsNextPage(MetadataPage({ Stable("v0.0.2") })));
-	// A page that is not full is the end of the list.
-	page.pop_back();
-	CHECK(!NeedsNextPage(page));
-	CHECK(!NeedsNextPage({}));
+	CHECK(!pages.Add({ Pre("v0.0.1-rc.4") }));
+	CHECK(!pages.ReadsNextPage());
+	CHECK(pages.GetEnding() == Ending::Answered);
+	CHECK(GetOutcome(pages.GetChoice()) == Outcome::Offer);
+	CHECK(Offered(pages) == "v0.0.1-rc.4");
+	CHECK(pages.OnLastPage(pages.GetChoice().offer) == 0);
+}
 
-	// The next page's choice is the whole list's, since nothing on a page
-	// with no version can be offered.
-	std::vector<Release> next = { Pre("qt-metadata-windows-6.11.2-20261002"), Pre("v0.0.1-rc.4"),
-		Pre("v0.0.1-rc.3") };
-	CHECK(!NeedsNextPage(next));
-	CHECK(Offered(next, "0.0.1-rc.3", true) == "v0.0.1-rc.4");
+TEST(update_reads_past_a_full_page_with_a_newer_version)
+{
+	// A newer version on the first page and a higher one on the second:
+	// the second's is offered, from where it is on its page.
+	ReleasePages pages("0.0.1-rc.3", true);
+	CHECK(pages.Add(MetadataPage({ Pre("v0.0.1-rc.4") })));
+	CHECK(Offered(pages) == "v0.0.1-rc.4");
+	CHECK(pages.OnLastPage(pages.GetChoice().offer) == int(kReleasesPerPage) - 1);
+	CHECK(!pages.Add({ Pre("qt-metadata-windows-6.11.2-20261002"), Stable("v0.0.1"), Pre("v0.0.1-rc.5") }));
+	CHECK(Offered(pages) == "v0.0.1");
+	CHECK(pages.GetChoice().offer == int(kReleasesPerPage) + 1);
+	CHECK(pages.OnLastPage(pages.GetChoice().offer) == 1);
+
+	// The other way about, the first page's stays chosen, and is not on
+	// the page last added, so its details are the ones read with it.
+	ReleasePages reversed("0.0.1-rc.3", true);
+	CHECK(reversed.Add(MetadataPage({ Stable("v0.0.1") })));
+	CHECK(!reversed.Add({ Pre("v0.0.1-rc.5"), Pre("v0.0.1-rc.4") }));
+	CHECK(Offered(reversed) == "v0.0.1");
+	CHECK(reversed.GetChoice().offer == int(kReleasesPerPage) - 1);
+	CHECK(reversed.OnLastPage(reversed.GetChoice().offer) == -1);
+	CHECK(reversed.OnLastPage(-1) == -1);
+
+	// The same version on both pages, as a release published while the
+	// pages are read moves one from the end of a page to the next: the
+	// first stays chosen.
+	ReleasePages repeated("0.0.1-rc.3", true);
+	CHECK(repeated.Add(MetadataPage({ Pre("v0.0.1-rc.4") })));
+	CHECK(!repeated.Add({ Pre("v0.0.1-rc.4") }));
+	CHECK(repeated.OnLastPage(repeated.GetChoice().offer) == -1);
+
+	// A prerelease kept out by "stable versions only" is chosen over the
+	// pages the same way.
+	ReleasePages stable("0.0.1", true);
+	CHECK(stable.Add(MetadataPage({ Pre("v0.0.2-rc.1") })));
+	CHECK(!stable.Add({ Pre("v0.0.2-rc.2"), Stable("v0.0.1") }));
+	CHECK(GetOutcome(stable.GetChoice()) == Outcome::OnlyPrereleaseNewer);
+	CHECK(Skipped(stable) == "v0.0.2-rc.2");
+	CHECK(stable.OnLastPage(stable.GetChoice().skippedPrerelease) == 0);
+}
+
+TEST(update_check_that_stops_with_pages_to_go_is_not_an_answer)
+{
+	// The window closed after a full page: the next is not asked for,
+	// and whatever the pages read hold, a newer version, an older one or
+	// none, the check is not an answer, so the next comes in an hour.
+	for (std::vector<Release> tail : { std::vector<Release>{ Pre("v0.0.1-rc.4") },
+		std::vector<Release>{ Pre("v0.0.1-rc.2") }, std::vector<Release>{} })
+	{
+		ReleasePages pages("0.0.1-rc.3", true);
+		for (int page = 1; page < kMaxPages; page++) {
+			CHECK(pages.Add(MetadataPage(tail)));
+			CHECK(pages.ReadsNextPage());
+			CHECK(pages.GetEnding() == Ending::NotReadToEnd);
+		}
+	}
+}
+
+TEST(update_keeps_the_details_of_the_chosen_releases_from_their_page)
+{
+	// A higher version on the second page: its details are read from
+	// there, and only the chosen release's.
+	PageReader forward("0.0.1-rc.3", true);
+	CHECK(forward.Add(MetadataPage({ Pre("v0.0.1-rc.4") })));
+	CHECK(forward.chosen.offer == "1:v0.0.1-rc.4");
+	CHECK(forward.reads == 1);
+	CHECK(!forward.Add({ Pre("qt-metadata-windows-6.11.2-20261002"), Stable("v0.0.1"), Pre("v0.0.1-rc.5") }));
+	CHECK(forward.chosen.offer == "2:v0.0.1");
+	CHECK(forward.chosen.offer == "2:" + Offered(forward.pages));
+	CHECK(forward.reads == 2);
+
+	// The first page's stays chosen, with the details read with it; the
+	// second page's details are not read.
+	PageReader reversed("0.0.1-rc.3", true);
+	CHECK(reversed.Add(MetadataPage({ Stable("v0.0.1") })));
+	CHECK(!reversed.Add({ Pre("v0.0.1-rc.5"), Pre("v0.0.1-rc.4") }));
+	CHECK(reversed.chosen.offer == "1:v0.0.1");
+	CHECK(reversed.reads == 1);
+
+	// The same version on both pages: the first's details stay.
+	PageReader repeated("0.0.1-rc.3", true);
+	CHECK(repeated.Add(MetadataPage({ Pre("v0.0.1-rc.4") })));
+	CHECK(!repeated.Add({ Pre("v0.0.1-rc.4") }));
+	CHECK(repeated.chosen.offer == "1:v0.0.1-rc.4");
+	CHECK(repeated.reads == 1);
+
+	// A prerelease kept out, and a stable version offered, each from its
+	// own page.
+	PageReader both("0.0.1", true);
+	CHECK(both.Add(MetadataPage({ Stable("v0.0.2"), Pre("v0.0.3-rc.1") })));
+	CHECK(both.chosen.offer == "1:v0.0.2");
+	CHECK(both.chosen.skippedPrerelease == "1:v0.0.3-rc.1");
+	CHECK(both.Add(MetadataPage({ Pre("v0.0.3-rc.2") })));
+	CHECK(!both.Add({ Stable("v0.0.2"), Stable("v0.0.2-rc.9") }));
+	CHECK(both.chosen.offer == "1:v0.0.2");
+	CHECK(both.chosen.skippedPrerelease == "2:v0.0.3-rc.2");
+	CHECK(both.chosen.skippedPrerelease == "2:" + Skipped(both.pages));
+	CHECK(both.reads == 3);
+
+	// Nothing chosen, nothing read.
+	PageReader none("0.0.1-rc.3", true);
+	CHECK(!none.Add({ Pre("v0.0.1-rc.2"), Draft("v0.0.2") }));
+	CHECK(none.chosen.offer.empty());
+	CHECK(none.chosen.skippedPrerelease.empty());
+	CHECK(none.reads == 0);
+}
+
+TEST(update_a_page_that_is_not_full_ends_the_list)
+{
+	ReleasePages pages("0.0.1-rc.3", true);
+	std::vector<Release> page = MetadataPage({ Pre("v0.0.1-rc.4") });
+	page.erase(page.begin());
+	CHECK(!pages.Add(page));
+	CHECK(pages.GetEnding() == Ending::Answered);
+	CHECK(Offered(pages) == "v0.0.1-rc.4");
+
+	// The end of the list with no version on it is an answer: nothing is
+	// newer.
+	ReleasePages none("0.0.1-rc.3", true);
+	CHECK(none.Add(MetadataPage()));
+	CHECK(!none.Add({ Pre("qt-metadata-windows-6.11.2-20261002"), Draft("v0.0.2") }));
+	CHECK(none.GetEnding() == Ending::Answered);
+	CHECK(GetOutcome(none.GetChoice()) == Outcome::UpToDate);
+
+	// So is a list that ends on a full page, with an empty one after it.
+	ReleasePages empty("0.0.1-rc.3", true);
+	CHECK(empty.Add(MetadataPage({ Pre("v0.0.1-rc.2") })));
+	CHECK(!empty.Add({}));
+	CHECK(empty.GetEnding() == Ending::Answered);
+	CHECK(GetOutcome(empty.GetChoice()) == Outcome::UpToDate);
+}
+
+TEST(update_reads_kMaxPages_at_most)
+{
+	// Full pages to the cap: the reading stops, and the choice is from
+	// every page read.
+	ReleasePages pages("0.0.1-rc.3", true);
+	for (int page = 1; page < kMaxPages; page++)
+		CHECK(pages.Add(MetadataPage(page == 2 ? std::vector<Release>{ Pre("v0.0.1-rc.4") }
+			: std::vector<Release>{ Pre("v0.0.1-rc.2") })));
+	CHECK(pages.NextPage() == kMaxPages);
+	CHECK(!pages.Add(MetadataPage({ Pre("v0.0.1-rc.1") })));
+	CHECK(pages.Releases().size() == kMaxPages * kReleasesPerPage);
+	CHECK(!pages.ReadsNextPage());
+	// A newer version found is offered, though a higher one may be
+	// further down.
+	CHECK(pages.GetEnding() == Ending::Answered);
+	CHECK(Offered(pages) == "v0.0.1-rc.4");
+
+	// Nothing newer on them is no answer: a higher version may be further
+	// down, so the check fails rather than say nothing is newer, whether
+	// the pages hold older versions only, a newer prerelease kept out, or
+	// no version at all, only qt-metadata releases, drafts and other tags.
+	for (std::vector<Release> last : { std::vector<Release>{ Pre("v0.0.1-rc.2") },
+		std::vector<Release>{ Pre("v0.0.2-rc.1") }, std::vector<Release>{ Draft("v0.0.2"), Stable("nightly") } })
+	{
+		ReleasePages nothingNewer("0.0.1", true);
+		for (int page = 1; page < kMaxPages; page++)
+			CHECK(nothingNewer.Add(MetadataPage()));
+		CHECK(!nothingNewer.Add(MetadataPage(last)));
+		CHECK(!nothingNewer.ReadsNextPage());
+		CHECK(nothingNewer.GetChoice().offer < 0);
+		CHECK(nothingNewer.GetEnding() == Ending::NotReadToEnd);
+	}
 }

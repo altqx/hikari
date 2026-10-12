@@ -33,12 +33,18 @@ namespace update_policy
 	// One place for a fork to change.
 	constexpr std::string_view kRepository = "altqx/hikari";
 
-	// GitHub lists the newest first, and can leave nothing out of a
-	// release but by the page size. With ten, a run of other releases, such
-	// as the qt-metadata-* ones, two to a Qt update, could push every
-	// version off the page; fifty leaves room for 24 Qt updates in a row
-	// and keeps the page well under kMaxResponseBytes. A full page with no
-	// version on it at all is followed by the next, up to kMaxPages.
+	// GitHub's release list comes a page at a time, and nothing of a
+	// release can be left out of it but by the page size. Its docs give no
+	// order for the list, so the check reads every page, until one that is
+	// not full, and chooses over all of them (ReleasePages). Fifty to a
+	// page keeps a page of the largest releases, the qt-metadata-* ones,
+	// two to a Qt update, at half kMaxResponseBytes. kMaxPages bounds the
+	// rest: a check reads 200 releases, makes four requests, receives four
+	// times kMaxResponseBytes and waits four times kConnectTimeoutMs and
+	// kDataTimeoutMs at most, and leaves any further releases unread. As a
+	// higher version may be among those, a check that finds nothing newer
+	// in kMaxPages full pages fails rather than say so (GetEnding()), and
+	// kMaxPages has to grow before the repository lists that many.
 	constexpr size_t kReleasesPerPage = 50;
 	constexpr int kMaxPages = 4;
 
@@ -196,9 +202,10 @@ namespace update_policy
 		NotFromApi,
 		// The reply is not a release list.
 		NotAList,
-		// kMaxPages full pages came with no version on them, so the newest
-		// version, if any, is further down than the check reads.
-		NoVersionListed,
+		// The reading stopped on a full page, with releases further down
+		// unread: the window that asked closed with pages to go, or
+		// kMaxPages were read and nothing on them is newer to offer.
+		NotReadToEnd,
 		// A release list came, whether or not the window that asked was
 		// still open to show what it holds.
 		Answered,
@@ -344,7 +351,9 @@ namespace update_policy
 
 	// Drafts and tags that are not semantic versions, such as the
 	// qt-metadata-* releases, are ignored. Of the others newer than
-	// installed, the highest is chosen in whatever order GitHub lists them.
+	// installed, the highest is chosen in whatever order they are listed;
+	// of two that are the same version, the first. A list longer by
+	// releases at its end so keeps its choice, or chooses one of those.
 	inline Choice ChooseRelease(const std::vector<Release> &releases, std::string_view installed,
 		bool stableOnly)
 	{
@@ -375,21 +384,112 @@ namespace update_policy
 		return choice;
 	}
 
-	// Whether the newest version can be on a later page than releases: the
-	// page is full and holds no version at all, only drafts and other
-	// tags. One version on the page is enough to stop, as every later page
-	// lists older releases, and ChooseRelease() offers nothing from a page
-	// with none, so the next page's choice is the whole list's.
-	inline bool NeedsNextPage(const std::vector<Release> &releases)
+	// The release list as read so far, a page at a time, and the choice
+	// over all of it. GitHub's docs give no order for the list, so any
+	// page can hold a higher version than those before it, a newer one
+	// after a page with only older ones on it too: each page is read up
+	// to one that is not full, the end of the list, or to kMaxPages. What
+	// was read is then chosen from as one list, by ChooseRelease(). The
+	// pages are asked for one after another by number, so a release
+	// deleted between two requests moves one from the next page onto the
+	// one already read, and that one is not seen; one published between
+	// them is seen twice, and the first stays chosen.
+	class ReleasePages
 	{
-		if (releases.size() < kReleasesPerPage)
-			return false;
-		for (const Release &release : releases) {
-			if (!release.draft && ParseSemVer(release.tag))
-				return false;
+	public:
+		ReleasePages(std::string_view installed, bool stableOnly)
+			: installed(installed)
+			, stableOnly(stableOnly)
+		{
 		}
-		return true;
-	}
+
+		// Adds the page NextPage() asked for, and says whether to read the
+		// one after it.
+		bool Add(const std::vector<Release> &page)
+		{
+			lastStart = releases.size();
+			releases.insert(releases.end(), page.begin(), page.end());
+			pages++;
+			lastFull = page.size() >= kReleasesPerPage;
+			choice = ChooseRelease(releases, installed, stableOnly);
+			return ReadsNextPage();
+		}
+
+		// Whether the list goes on past the page last added, and the
+		// check reads the next one.
+		bool ReadsNextPage() const { return lastFull && pages < kMaxPages; }
+
+		// The page to ask for next, from 1.
+		int NextPage() const { return pages + 1; }
+
+		// Every release read, in the order the pages and they came.
+		const std::vector<Release> &Releases() const { return releases; }
+
+		// The choice over every page read, as indices into Releases().
+		const Choice &GetChoice() const { return choice; }
+
+		// Where an index into Releases() is on the page last added, or -1
+		// when it is on an earlier one. A choice on an earlier page is the
+		// one made then, so its details need reading only from the page
+		// it came on.
+		int OnLastPage(int index) const
+		{
+			if (index < 0 || static_cast<size_t>(index) < lastStart)
+				return -1;
+			return index - static_cast<int>(lastStart);
+		}
+
+		// How a check that has stopped reading ends. A list read to its
+		// end, a page that is not full, is an answer. One the check
+		// stopped reading with pages to go, as the window that asked
+		// closed, is not, whatever it holds, so that the next check comes
+		// in an hour rather than a day. Nor is one read to kMaxPages full
+		// pages with nothing on them newer to offer, as a higher version
+		// may be further down; a newer one found there is offered.
+		Ending GetEnding() const
+		{
+			if (lastFull && (ReadsNextPage() || choice.offer < 0))
+				return Ending::NotReadToEnd;
+			return Ending::Answered;
+		}
+
+	private:
+		std::string installed;
+		bool stableOnly;
+		std::vector<Release> releases;
+		Choice choice;
+		size_t lastStart = 0;
+		int pages = 0;
+		bool lastFull = false;
+	};
+
+	// The details, such as the name and notes, of the releases chosen so
+	// far. Each page's are read only for a release chosen from it, as the
+	// page is added, and kept: a release chosen from an earlier page keeps
+	// the details read with it.
+	template <class Details>
+	struct ChosenDetails
+	{
+		Details offer{};
+		Details skippedPrerelease{};
+
+		// After pages.Add(page), with read(i) the details of page[i].
+		template <class Read>
+		void Keep(const ReleasePages &pages, Read read)
+		{
+			KeepOne(pages, pages.GetChoice().offer, read, &offer);
+			KeepOne(pages, pages.GetChoice().skippedPrerelease, read, &skippedPrerelease);
+		}
+
+	private:
+		template <class Read>
+		static void KeepOne(const ReleasePages &pages, int index, Read &read, Details *details)
+		{
+			int onPage = pages.OnLastPage(index);
+			if (onPage >= 0)
+				*details = read(static_cast<size_t>(onPage));
+		}
+	};
 
 	constexpr Outcome GetOutcome(const Choice &choice)
 	{
