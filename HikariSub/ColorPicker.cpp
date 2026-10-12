@@ -1383,7 +1383,6 @@ SimpleColorPickerDialog::SimpleColorPickerDialog(wxWindow *parent, const AssColo
 	else
 		colorType->SetSelection(colorNum - 1);
 	Bind(wxEVT_COMMAND_CHOICE_SELECTED, [=, this](wxCommandEvent &evt){
-		AddRecent();
 		wxCommandEvent ctcevt(COLOR_TYPE_CHANGED, GetId());
 		//selections starts from 0, colors from 1
 		ctcevt.SetInt(colorType->GetSelection() + 1);

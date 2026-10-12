@@ -917,9 +917,9 @@ void EditBox::AllColorClick(int numColor, bool leftClick /*= true*/)
 		int spcdId = scpd->GetId();
 		scpd->Bind(COLOR_CHANGED, &EditBox::OnColorChange, this, spcdId);
 		scpd->Bind(COLOR_TYPE_CHANGED, [=, this](wxCommandEvent &evt){
-			AssColor col;
-			GetColor(&col, evt.GetInt());
-			scpd->SetColor(col);
+			GetColor(&actualColor, evt.GetInt());
+			actualColorstr = actualColor.GetAss(false, true);
+			scpd->SetColor(actualColor);
 		}, spcdId);
 
 		AssColor ret;
