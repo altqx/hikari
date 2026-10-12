@@ -26,6 +26,17 @@
 #include <limits>
 #include <vector>
 
+//the bytes wxFile::Write(text, conv) writes, into a SaveFile or a
+//WindowsSaveFile
+template <typename File>
+static bool WriteText(File &file, const wxString &text, const wxMBConv &conv)
+{
+	if (text.empty()){ return true; }
+	const wxCharBuffer bytes = text.mb_str(conv);
+	if (!bytes.length()){ return false; }
+	return file.Write(bytes.data(), bytes.length());
+}
+
 //the file a save writes, see ResolveSaveTarget
 struct ResolvedSave
 {
@@ -49,15 +60,6 @@ static bool ResolveSaveTarget(const wxString &fileName, ResolvedSave *target)
 	return true;
 }
 
-//the bytes wxFile::Write(text, conv) writes
-static bool WriteText(SaveFile &file, const wxString &text, const wxMBConv &conv)
-{
-	if (text.empty()){ return true; }
-	const wxCharBuffer bytes = text.mb_str(conv);
-	if (!bytes.length()){ return false; }
-	return file.Write(bytes.data(), bytes.length());
-}
-
 static bool OpenSaveFile(SaveFile &file, const ResolvedSave &target)
 {
 	return file.Open(target.found);
@@ -74,24 +76,13 @@ static void LogSaveFailure(const SaveFile &file)
 #else
 // wx's wrapper for windows.h, it keeps min and max from becoming macros
 #include <wx/msw/wrapwin.h>
-#include <aclapi.h>
-#include <sddl.h>
-#include <fcntl.h>
-#include <io.h>
-#include <string.h>
-#include <random>
-#include <string>
-
-static bool WriteText(WindowsSaveFile &file, const wxString &text, const wxMBConv &conv)
-{
-	return file.Write(text, conv);
-}
 
 static void LogSaveFailure(const WindowsSaveFile &file)
 {
 	HikariLog(_("Cannot save to file."));
 	if (!file.KeptBackup().empty()){
-		HikariLog(wxString::Format(_("The old contents of the file are kept in %s."), file.KeptBackup()));
+		HikariLog(wxString::Format(_("The old contents of the file are kept in %s."),
+			wxString(file.KeptBackup().c_str())));
 	}
 }
 
@@ -131,654 +122,6 @@ static bool ResolveSaveTarget(const wxString &fileName, ResolvedSave *resolvedSa
 	else if (resolved.StartsWith(L"\\\\?\\", &rest)) { resolved = rest; }
 	*target = resolved;
 	return true;
-}
-
-// Opens the file at path itself, not what a link or junction there leads to,
-// for its attributes only; such a handle keeps no other program from
-// reading, writing, renaming or deleting the file.
-static HANDLE OpenNoFollow(const wxString &path)
-{
-	return ::CreateFileW(path.wc_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-		nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
-}
-
-// The id of the file handle is open on, the number of names it has, and
-// whether it is a file that is saved to: no folder, and no link or junction,
-// which ResolveSaveTarget has followed before.
-static bool ReadFileFacts(HANDLE handle, WindowsFileId *id, DWORD *links, bool *savable)
-{
-	BY_HANDLE_FILE_INFORMATION info;
-	if (!::GetFileInformationByHandle(handle, &info)) { return false; }
-	*id = WindowsFileId();
-	FILE_ID_INFO idInfo;
-	if (::GetFileInformationByHandleEx(handle, FileIdInfo, &idInfo, sizeof(idInfo))) {
-		//128 bits, which ReFS needs to tell its files apart
-		static_assert(sizeof(idInfo.FileId.Identifier) == sizeof(id->index), "a 128-bit file id");
-		id->volume = idInfo.VolumeSerialNumber;
-		memcpy(id->index, idInfo.FileId.Identifier, sizeof(id->index));
-	}
-	else {
-		//before Windows 8, or a file system without 128-bit ids: the 64-bit
-		//index, in the low half as NTFS puts it in a 128-bit id
-		id->volume = info.dwVolumeSerialNumber;
-		unsigned long long index = (static_cast<unsigned long long>(info.nFileIndexHigh) << 32) | info.nFileIndexLow;
-		for (int i = 0; i < 8; ++i) { id->index[i] = static_cast<unsigned char>(index >> (8 * i)); }
-	}
-	if (links) { *links = info.nNumberOfLinks; }
-	if (savable) {
-		FILE_ATTRIBUTE_TAG_INFO tag;
-		*savable = !(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-			(!(info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) ||
-			(::GetFileInformationByHandleEx(handle, FileAttributeTagInfo, &tag, sizeof(tag)) &&
-			!IsReparseTagNameSurrogate(tag.ReparseTag)));
-	}
-	return true;
-}
-
-enum class NameLeadsTo { Nothing, TheSameFile, AnotherFile };
-
-// What path leads to, looked at without following a link there: nothing, the
-// file with id when existed, or another file; links is set to the number of
-// names of the file it leads to. A file whose id is not known is never the
-// same file.
-static NameLeadsTo LookAtName(const wxString &path, bool existed, const WindowsFileId &id, DWORD *links)
-{
-	*links = 0;
-	HANDLE handle = OpenNoFollow(path);
-	if (handle == INVALID_HANDLE_VALUE) {
-		return ::GetLastError() == ERROR_FILE_NOT_FOUND ? NameLeadsTo::Nothing : NameLeadsTo::AnotherFile;
-	}
-	WindowsFileId now;
-	bool same = ReadFileFacts(handle, &now, links, nullptr) && existed && id.Known() && now == id;
-	::CloseHandle(handle);
-	return same ? NameLeadsTo::TheSameFile : NameLeadsTo::AnotherFile;
-}
-
-// Opens the file with id at path, as the save saw it before, with access and
-// share into out. The name is opened without following a link there and
-// must lead to that file; ReOpenFile then opens the very file that look
-// found, so a link, junction or other file put at the name since is never
-// read or written.
-static HANDLE OpenSameHandle(const wxString &path, const WindowsFileId &id, DWORD access, DWORD share)
-{
-	if (!id.Known()) { return INVALID_HANDLE_VALUE; }
-	HANDLE seen = OpenNoFollow(path);
-	if (seen == INVALID_HANDLE_VALUE) { return INVALID_HANDLE_VALUE; }
-	WindowsFileId now;
-	HANDLE handle = INVALID_HANDLE_VALUE;
-	if (ReadFileFacts(seen, &now, nullptr, nullptr) && now == id) {
-		handle = ::ReOpenFile(seen, access, share, 0);
-	}
-	::CloseHandle(seen);
-	if (handle == INVALID_HANDLE_VALUE) { return INVALID_HANDLE_VALUE; }
-	if (!ReadFileFacts(handle, &now, nullptr, nullptr) || !(now == id)) {
-		::CloseHandle(handle);
-		return INVALID_HANDLE_VALUE;
-	}
-	return handle;
-}
-
-// OpenSameHandle into out
-static bool OpenSameFile(const wxString &path, const WindowsFileId &id, DWORD access, DWORD share, wxFile *out)
-{
-	HANDLE handle = OpenSameHandle(path, id, access, share);
-	if (handle == INVALID_HANDLE_VALUE) { return false; }
-	int fd = _open_osfhandle(reinterpret_cast<intptr_t>(handle), _O_BINARY);
-	if (fd == -1) {
-		::CloseHandle(handle);
-		return false;
-	}
-	out->Attach(fd);
-	return true;
-}
-
-// Marks the file handle is open on to be deleted when its last handle is
-// closed. The handle needs DELETE access; no name is looked up.
-static bool DeleteByHandle(HANDLE handle)
-{
-	FILE_DISPOSITION_INFO info = { TRUE };
-	return ::SetFileInformationByHandle(handle, FileDispositionInfo, &info, sizeof(info)) != 0;
-}
-
-// Deletes the file at path only when it is the file with id: the name is
-// opened without following a link there, and the file that handle is on is
-// deleted through it, so a file another program put at the name is kept.
-static bool DeleteSameFile(const wxString &path, const WindowsFileId &id)
-{
-	if (!id.Known()) { return false; }
-	HANDLE handle = ::CreateFileW(path.wc_str(), DELETE | FILE_READ_ATTRIBUTES,
-		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-		FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
-	if (handle == INVALID_HANDLE_VALUE) { return false; }
-	WindowsFileId now;
-	bool deleted = ReadFileFacts(handle, &now, nullptr, nullptr) && now == id && DeleteByHandle(handle);
-	::CloseHandle(handle);
-	return deleted;
-}
-
-// The handle a wxFile is open on, or INVALID_HANDLE_VALUE.
-static HANDLE HandleOf(const wxFile &file)
-{
-	return file.IsOpened() ? reinterpret_cast<HANDLE>(_get_osfhandle(file.fd())) : INVALID_HANDLE_VALUE;
-}
-
-namespace {
-
-// The user this process runs as, and the owner it gives what it makes, as
-// TokenUser and TokenOwner give them; read once.
-class ProcessUser
-{
-public:
-	static const ProcessUser &Get()
-	{
-		static const ProcessUser user;
-		return user;
-	}
-	// nullptr when it could not be read
-	PSID User() const { return user.empty() ? nullptr : reinterpret_cast<const TOKEN_USER *>(user.data())->User.Sid; }
-	PSID Owner() const { return owner.empty() ? nullptr : reinterpret_cast<const TOKEN_OWNER *>(owner.data())->Owner; }
-	// whether sid is the user or the owner it gives what it makes
-	bool Is(PSID sid) const
-	{
-		return sid && ((User() && ::EqualSid(sid, User())) || (Owner() && ::EqualSid(sid, Owner())));
-	}
-
-private:
-	ProcessUser()
-	{
-		HANDLE token = nullptr;
-		if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &token)) { return; }
-		user = Read(token, TokenUser);
-		owner = Read(token, TokenOwner);
-		::CloseHandle(token);
-	}
-	static std::vector<BYTE> Read(HANDLE token, TOKEN_INFORMATION_CLASS kind)
-	{
-		DWORD size = 0;
-		::GetTokenInformation(token, kind, nullptr, 0, &size);
-		std::vector<BYTE> info(size);
-		if (size == 0 || !::GetTokenInformation(token, kind, info.data(), size, &size)) { info.clear(); }
-		return info;
-	}
-	std::vector<BYTE> user;
-	std::vector<BYTE> owner;
-};
-
-// A security descriptor with a protected DACL, so that it takes no ACE from
-// a folder, that gives full access to the user this process runs as, to
-// SYSTEM and to Administrators, as Windows gives a user's own profile
-// folder, and to nobody else. With inheritable, files and folders made in a
-// folder that has it inherit the same ACEs. Get is nullptr when it cannot be
-// made.
-class PrivateSecurity
-{
-public:
-	explicit PrivateSecurity(bool inheritable)
-	{
-		LPWSTR sid = nullptr;
-		PSID user = ProcessUser::Get().User();
-		if (!user || !::ConvertSidToStringSidW(user, &sid)) { return; }
-		std::wstring flags = inheritable ? L"OICI" : L"";
-		std::wstring sddl = L"D:P(A;" + flags + L";FA;;;" + std::wstring(sid) + L")(A;" + flags + L";FA;;;SY)(A;" +
-			flags + L";FA;;;BA)";
-		::LocalFree(sid);
-		if (!::ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl.c_str(), SDDL_REVISION_1, &descriptor,
-			nullptr)) {
-			descriptor = nullptr;
-		}
-	}
-	~PrivateSecurity() { if (descriptor) { ::LocalFree(descriptor); } }
-	PrivateSecurity(const PrivateSecurity &) = delete;
-	PrivateSecurity &operator=(const PrivateSecurity &) = delete;
-	PSECURITY_DESCRIPTOR Get() const { return descriptor; }
-	PACL Dacl() const
-	{
-		BOOL present = FALSE, defaulted = FALSE;
-		PACL dacl = nullptr;
-		if (!descriptor || !::GetSecurityDescriptorDacl(descriptor, &present, &dacl, &defaulted) || !present) {
-			return nullptr;
-		}
-		return dacl;
-	}
-
-private:
-	PSECURITY_DESCRIPTOR descriptor = nullptr;
-};
-
-} // namespace
-
-// Whether dacl lets in, or passes on to what is made in a folder, nobody but
-// the user this process runs as, SYSTEM and Administrators. A null DACL lets
-// everybody in.
-static bool IsPrivateDacl(PACL dacl)
-{
-	PSID user = ProcessUser::Get().User();
-	if (!dacl || !user) { return false; }
-	for (DWORD i = 0; i < dacl->AceCount; ++i) {
-		void *ace = nullptr;
-		if (!::GetAce(dacl, i, &ace)) { return false; }
-		BYTE type = static_cast<ACE_HEADER *>(ace)->AceType;
-		if (type == ACCESS_DENIED_ACE_TYPE) { continue; }
-		//an object or callback ACE is not looked into
-		if (type != ACCESS_ALLOWED_ACE_TYPE) { return false; }
-		PSID sid = &static_cast<ACCESS_ALLOWED_ACE *>(ace)->SidStart;
-		if (!::EqualSid(sid, user) && !::IsWellKnownSid(sid, WinLocalSystemSid) &&
-			!::IsWellKnownSid(sid, WinBuiltinAdministratorsSid)) {
-			return false;
-		}
-	}
-	return true;
-}
-
-// Whether the volume of the file handle is open on keeps ACLs, as NTFS and
-// ReFS do and FAT does not; a volume that does not say is taken to.
-static bool KeepsAcls(HANDLE handle)
-{
-	DWORD flags = 0;
-	if (!::GetVolumeInformationByHandleW(handle, nullptr, 0, nullptr, nullptr, &flags, nullptr, 0)) { return true; }
-	return (flags & FILE_PERSISTENT_ACLS) != 0;
-}
-
-// Whether the file or folder handle is open on, with READ_CONTROL, lets
-// nobody else in, see IsPrivateDacl; own is set to whether its owner is the
-// user or the owner this process gives what it makes.
-static bool IsPrivate(HANDLE handle, bool *own)
-{
-	PSID owner = nullptr;
-	PACL dacl = nullptr;
-	PSECURITY_DESCRIPTOR current = nullptr;
-	*own = false;
-	if (::GetSecurityInfo(handle, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION, &owner,
-		nullptr, &dacl, nullptr, &current) != ERROR_SUCCESS) {
-		return false;
-	}
-	bool narrow = IsPrivateDacl(dacl);
-	*own = ProcessUser::Get().Is(owner);
-	::LocalFree(current);
-	return narrow;
-}
-
-// Gives the file or folder handle is open on, with WRITE_DAC, the DACL of
-// PrivateSecurity; a folder gets the inheritable one, and SetSecurityInfo
-// passes it on to the files and folders in it that inherit their ACEs.
-static bool GivePrivateDacl(HANDLE handle, bool folder)
-{
-	PrivateSecurity security(folder);
-	PACL dacl = security.Dacl();
-	return dacl && ::SetSecurityInfo(handle, SE_FILE_OBJECT,
-		DACL_SECURITY_INFORMATION | PROTECTED_DACL_SECURITY_INFORMATION, nullptr, nullptr, dacl,
-		nullptr) == ERROR_SUCCESS;
-}
-
-// Gives the file or folder handle is open on, with READ_CONTROL and
-// WRITE_DAC, the DACL of PrivateSecurity unless the DACL it has lets nobody
-// else in already. With ownOnly, one whose owner is neither the user nor the
-// owner this process gives what it makes is left as it is. Returns whether
-// it lets nobody else in now; one on a volume that keeps no ACLs is taken to,
-// as nothing more can be done there.
-static bool NarrowSecurity(HANDLE handle, bool folder, bool ownOnly)
-{
-	if (!KeepsAcls(handle)) { return true; }
-	bool own = false;
-	if (IsPrivate(handle, &own)) { return true; }
-	return (!ownOnly || own) && GivePrivateDacl(handle, folder);
-}
-
-// NarrowSecurity for the file handle is open on, through a handle of its own
-// that adds READ_CONTROL and WRITE_DAC
-static bool NarrowOpenFile(HANDLE handle)
-{
-	HANDLE security = ::ReOpenFile(handle, READ_CONTROL | WRITE_DAC,
-		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0);
-	if (security == INVALID_HANDLE_VALUE) { return !KeepsAcls(handle); }
-	bool narrowed = NarrowSecurity(security, false, false);
-	::CloseHandle(security);
-	return narrowed;
-}
-
-// who may open a file a save makes
-enum class FileAccess {
-	// whom its folder passes its ACEs on to
-	Folder,
-	// only the user, SYSTEM and Administrators where the file can be made
-	// so, or else as Folder
-	PrivateIfPossible,
-	// only them, or the file is not made
-	Private,
-};
-
-// Makes a new file at name and opens it for reading, writing and deleting,
-// shared with share; CREATE_NEW fails on a name that is taken, by a link
-// too. Unless access is Folder, it is made with PrivateSecurity. A volume
-// that refuses a security descriptor, as some network shares do, makes it
-// with its folder's ACEs, and it is then given the DACL before anything is
-// written into it; for Private, a file that cannot be given it is deleted
-// again and not made. INVALID_HANDLE_VALUE on a failure, with GetLastError
-// set.
-static HANDLE MakeFile(const wxString &name, DWORD share, FileAccess access)
-{
-	const DWORD rights = GENERIC_READ | GENERIC_WRITE | DELETE;
-	if (access != FileAccess::Folder) {
-		PrivateSecurity security(false);
-		SECURITY_ATTRIBUTES attributes = { static_cast<DWORD>(sizeof(SECURITY_ATTRIBUTES)), security.Get(), FALSE };
-		if (security.Get()) {
-			HANDLE handle = ::CreateFileW(name.wc_str(), rights, share, &attributes, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
-				nullptr);
-			if (handle != INVALID_HANDLE_VALUE) { return handle; }
-			DWORD error = ::GetLastError();
-			if (error == ERROR_FILE_EXISTS || error == ERROR_ALREADY_EXISTS) { return INVALID_HANDLE_VALUE; }
-		}
-	}
-	HANDLE handle = ::CreateFileW(name.wc_str(), rights, share, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
-	if (handle == INVALID_HANDLE_VALUE || access == FileAccess::Folder) { return handle; }
-	if (!NarrowOpenFile(handle) && access == FileAccess::Private) {
-		DeleteByHandle(handle);
-		::CloseHandle(handle);
-		::SetLastError(ERROR_ACCESS_DENIED);
-		return INVALID_HANDLE_VALUE;
-	}
-	return handle;
-}
-
-// Makes a new file in the folder of target with MakeFile and opens it into
-// file; id is set to its id. It is never a file another program put there.
-// wxFileName::CreateTempFileName made the file with GetTempFileName and then
-// opened the name again without O_EXCL, which followed a link put there in
-// between.
-static wxString MakeTempFileNear(const wxString &target, wxFile *file, WindowsFileId *id, FileAccess access)
-{
-	//target is absolute, see Open
-	size_t separator = target.find_last_of(L"\\/");
-	if (separator == wxString::npos) { return wxString(); }
-	wxString folder = target.substr(0, separator + 1);
-	thread_local std::mt19937 random{ std::random_device{}() };
-	for (int attempt = 0; attempt < 100; ++attempt) {
-		wxString name = folder + wxString::Format(L"hks%08x.tmp", static_cast<unsigned int>(random()));
-		HANDLE handle = MakeFile(name, FILE_SHARE_READ | FILE_SHARE_WRITE, access);
-		if (handle == INVALID_HANDLE_VALUE) {
-			DWORD error = ::GetLastError();
-			if (error == ERROR_FILE_EXISTS || error == ERROR_ALREADY_EXISTS) { continue; }
-			return wxString();
-		}
-		int fd = ReadFileFacts(handle, id, nullptr, nullptr) ?
-			_open_osfhandle(reinterpret_cast<intptr_t>(handle), _O_BINARY) : -1;
-		if (fd == -1) {
-			DeleteByHandle(handle);
-			::CloseHandle(handle);
-			return wxString();
-		}
-		file->Attach(fd);
-		return name;
-	}
-	return wxString();
-}
-
-// copies all of from, from its start, to the current offset of to
-static bool CopyContents(wxFile &from, wxFile &to)
-{
-	if (from.Seek(0) != 0) { return false; }
-	std::vector<char> buffer(1 << 16);
-	for (;;) {
-		ssize_t got = from.Read(buffer.data(), buffer.size());
-		if (got < 0) { return false; }
-		if (got == 0) { return true; }
-		if (to.Write(buffer.data(), static_cast<size_t>(got)) != static_cast<size_t>(got)) { return false; }
-	}
-}
-
-// Opens the folder at path for listing, as a save keeps it; with share, the
-// modes other programs may open it in meanwhile.
-static HANDLE OpenFolder(const wxString &path, DWORD access, DWORD share)
-{
-	return ::CreateFileW(path.wc_str(), access, share, nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
-}
-
-bool WindowsSaveFile::Open(const wxString &name, bool privateFile)
-{
-	Discard();
-	keptBackup.clear();
-	touched = false;
-	privateSave = privateFile;
-	//an absolute name puts the temporary file next to the file, see wxTempFile::Open
-	wxFileName fn(name);
-	if (!fn.IsAbsolute()) { fn.Normalize(wxPATH_NORM_ABSOLUTE); }
-	target = fn.GetFullPath();
-	size_t separator = target.find_last_of(L"\\/");
-	if (separator == wxString::npos) { return false; }
-	//The folder stays open until the save ends. Opened for listing and not
-	//shared for deleting, it cannot be renamed, removed or replaced with a
-	//junction meanwhile. A folder that cannot be listed is saved to without
-	//this.
-	folderPath = target.substr(0, separator);
-	if (folderPath.empty() || folderPath.Last() == L':') { folderPath += L"\\"; }
-	HANDLE folderHandle = OpenFolder(folderPath, FILE_LIST_DIRECTORY | FILE_READ_ATTRIBUTES,
-		FILE_SHARE_READ | FILE_SHARE_WRITE);
-	if (folderHandle != INVALID_HANDLE_VALUE) {
-		folder = folderHandle;
-		folderOpened = true;
-		if (!ReadFileFacts(folderHandle, &folderId, nullptr, nullptr)) { folderId = WindowsFileId(); }
-	}
-	//the file at the name now; Commit saves only while the name leads to it
-	targetExisted = false;
-	HANDLE handle = OpenNoFollow(target);
-	if (handle != INVALID_HANDLE_VALUE) {
-		bool savable = false;
-		bool known = ReadFileFacts(handle, &targetId, nullptr, &savable);
-		::CloseHandle(handle);
-		//a folder, or a link or junction at the resolved name, is not saved
-		//to, nor a file on a volume that gives no file id: another file put
-		//at its name could not be told from it
-		if (!known || !savable || !targetId.Known()) {
-			Discard();
-			return false;
-		}
-		targetExisted = true;
-	}
-	else if (::GetLastError() != ERROR_FILE_NOT_FOUND) {
-		Discard();
-		return false;
-	}
-	//The new contents of a file that is there are kept from everybody else
-	//while they are written: ReplaceFileW gives the new file the old one's
-	//DACL when it replaces it, and a rewrite only copies them into the old
-	//file. A new file's temporary file is the new file, which keeps the ACL
-	//it is made with when it is moved to the name: the ACEs its folder passes
-	//on, as a file made there by any other program gets, no more than the
-	//saved file has. A private file's is private in either case, and Commit
-	//narrows a private file that is there.
-	temp = MakeTempFileNear(target, &file, &tempId, TempAccess());
-	if (temp.empty()) {
-		Discard();
-		return false;
-	}
-	return true;
-}
-
-FileAccess WindowsSaveFile::TempAccess() const
-{
-	if (privateSave) { return FileAccess::Private; }
-	return targetExisted ? FileAccess::PrivateIfPossible : FileAccess::Folder;
-}
-
-bool WindowsSaveFile::FolderUnchanged() const
-{
-	if (!folderOpened || !folderId.Known()) { return true; }
-	HANDLE handle = OpenFolder(folderPath, FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE);
-	if (handle == INVALID_HANDLE_VALUE) { return false; }
-	WindowsFileId now;
-	bool same = ReadFileFacts(handle, &now, nullptr, nullptr) && now == folderId;
-	::CloseHandle(handle);
-	return same;
-}
-
-void WindowsSaveFile::Discard()
-{
-	if (file.IsOpened()) {
-		//file is the temporary file: deleted through its own handle
-		if (!temp.empty() && DeleteByHandle(HandleOf(file))) { temp.clear(); }
-		file.Close();
-	}
-	if (!temp.empty()) {
-		DeleteSameFile(temp, tempId);
-		temp.clear();
-	}
-	if (folderOpened) {
-		::CloseHandle(static_cast<HANDLE>(folder));
-		folder = nullptr;
-		folderOpened = false;
-	}
-}
-
-bool WindowsSaveFile::Commit()
-{
-	if (!file.IsOpened()) { return false; }
-	wxLogNull noLog;
-	//the new contents are on disk before the file is touched
-	bool saved = file.Flush();
-	//a folder on the way to the file replaced meanwhile: nothing is written
-	if (saved && !FolderUnchanged()) { saved = false; }
-	if (saved) {
-		DWORD links = 0;
-		NameLeadsTo now = LookAtName(target, targetExisted, targetId, &links);
-		if (!targetExisted) {
-			//a new file; one another program made in the meantime is not
-			//replaced, and MoveFileExW without MOVEFILE_REPLACE_EXISTING fails
-			//on a name made after this look too
-			file.Close();
-			saved = now == NameLeadsTo::Nothing &&
-				::MoveFileExW(temp.wc_str(), target.wc_str(), MOVEFILE_WRITE_THROUGH) != 0;
-			if (saved) { temp.clear(); touched = true; }
-		}
-		else if (now != NameLeadsTo::TheSameFile) {
-			//another program removed the file or put another one, a link or a
-			//folder at its name: nothing is written
-			saved = false;
-		}
-		else if (privateSave && !NarrowSaved()) {
-			//a private file that keeps others able to open it is not written
-			saved = false;
-		}
-		else if (links > 1) {
-			//a replace would put the new contents under this one name only
-			saved = Rewrite();
-		}
-		else {
-			saved = Replace();
-		}
-	}
-	Discard();
-	return saved;
-}
-
-bool WindowsSaveFile::NarrowSaved()
-{
-	//Before the new contents are in it: a replace gives the new file this
-	//DACL, and a rewrite writes into the file. A file an older version left,
-	//or that took a folder's ACEs, lets others in that a private file must not.
-	//WRITE_DAC is asked for only when the DACL is to be changed: a file whose
-	//owner is another user may let this user write it but not change that.
-	const DWORD share = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
-	HANDLE handle = OpenSameHandle(target, targetId, READ_CONTROL, share);
-	if (handle == INVALID_HANDLE_VALUE) { return false; }
-	bool own = false;
-	bool narrowed = !KeepsAcls(handle) || IsPrivate(handle, &own);
-	if (!narrowed) {
-		HANDLE writable = ::ReOpenFile(handle, WRITE_DAC, share, 0);
-		if (writable != INVALID_HANDLE_VALUE) {
-			narrowed = GivePrivateDacl(writable, false);
-			::CloseHandle(writable);
-		}
-	}
-	::CloseHandle(handle);
-	return narrowed;
-}
-
-bool WindowsSaveFile::Replace()
-{
-	file.Close();
-	//The old file is moved to a name of its own while it is replaced, so a
-	//replace that stops half way can be undone. The name is made as a new
-	//file first, which ReplaceFileW replaces, so it is no name another
-	//program could guess and put a file or link at.
-	wxFile reserved;
-	WindowsFileId reservedId;
-	wxString backup = MakeTempFileNear(target, &reserved, &reservedId,
-		privateSave ? FileAccess::Private : FileAccess::PrivateIfPossible);
-	if (backup.empty()) { return false; }
-	reserved.Close();
-	//Without REPLACEFILE_IGNORE_MERGE_ERRORS, a replace that cannot give the
-	//new file the old one's ACLs, streams and attributes fails with both files
-	//under their names, and the new contents are then copied into the old
-	//file, which keeps all of them.
-	if (::ReplaceFileW(target.wc_str(), temp.wc_str(), backup.wc_str(), 0, nullptr, nullptr)) {
-		temp.clear();
-		touched = true;
-		//the old file; a file another program put at the name in the moment
-		//before the replace is not the old file and is left at that name
-		DeleteSameFile(backup, targetId);
-		return true;
-	}
-	DWORD links = 0;
-	if (LookAtName(backup, true, targetId, &links) == NameLeadsTo::TheSameFile) {
-		//ERROR_UNABLE_TO_MOVE_REPLACEMENT_2: the old file was moved away and
-		//the new one was not moved in; the old one goes back
-		if (LookAtName(target, false, targetId, &links) != NameLeadsTo::Nothing ||
-			!::MoveFileExW(backup.wc_str(), target.wc_str(), MOVEFILE_WRITE_THROUGH)) {
-			keptBackup = backup;
-			touched = true;
-		}
-		return false;
-	}
-	DeleteSameFile(backup, reservedId);
-	//Nothing was changed: another program has the file open without letting
-	//it be deleted, or the old file's ACLs, streams or attributes could not be
-	//given to the new one. wxRenameFile then copied the new file over it,
-	//which truncates it first; the contents are copied in with a backup
-	//instead.
-	return Rewrite();
-}
-
-bool WindowsSaveFile::Rewrite()
-{
-	//the temporary file Open made, not what its name leads to now
-	if (!file.IsOpened() && !OpenSameFile(temp, tempId, GENERIC_READ | DELETE,
-		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, &file)) {
-		return false;
-	}
-	wxFileOffset newLength = file.Length();
-	wxFile out;
-	//the file Open found, not what its name leads to now; a program that has
-	//the file open without sharing writes keeps it as it is
-	if (newLength < 0 || !targetExisted ||
-		!OpenSameFile(target, targetId, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &out)) {
-		return false;
-	}
-	wxFileOffset oldLength = out.Length();
-	if (oldLength < 0) { return false; }
-	//a backup of the old contents, on disk before the file is touched; only
-	//this user may open it, as it would otherwise have the ACEs of the folder
-	//and not the file's own, which may keep other users out
-	wxFile backup;
-	WindowsFileId backupId;
-	wxString backupName = MakeTempFileNear(target, &backup, &backupId,
-		privateSave ? FileAccess::Private : FileAccess::PrivateIfPossible);
-	if (backupName.empty()) { return false; }
-	bool saved = CopyContents(out, backup) && backup.Flush();
-	if (saved) {
-		touched = true;
-		saved = out.Seek(0) == 0 && CopyContents(file, out) && _chsize_s(out.fd(), newLength) == 0 &&
-			out.Flush();
-		if (!saved) {
-			bool restored = out.Seek(0) == 0 && CopyContents(backup, out) &&
-				_chsize_s(out.fd(), oldLength) == 0 && out.Flush();
-			if (!restored) { keptBackup = backupName; }
-		}
-	}
-	//the backup is deleted through its own handle
-	if (keptBackup.empty()) { DeleteByHandle(HandleOf(backup)); }
-	backup.Close();
-	out.Close();
-	return saved;
 }
 
 // wx has no Windows converter for these uchardet charsets and would copy the
@@ -832,32 +175,7 @@ bool MakePrivateFolder(const wxString &path)
 #ifndef _WIN32
 	return MakePrivateFolderAt(std::string(folder.fn_str().data()));
 #else
-	//Made with the DACL of PrivateSecurity, which what is made in it
-	//inherits; on a volume that refuses that, it is given it below. A folder
-	//that was there, the user's own, is given it too unless it lets nobody
-	//else in already, and passes it on to the files in it that inherit their
-	//ACEs, such as the autosaves an older version made. Without traverse
-	//checking, the files in a folder could still be opened by their paths, so
-	//the folder's ACL alone would not keep them private. A link or junction
-	//at the name, and another user's folder, are left as they are and not
-	//used; a volume that keeps no ACLs, as FAT, can do no more and is used.
-	if (!wxFileName::DirExists(folder)) {
-		PrivateSecurity security(true);
-		SECURITY_ATTRIBUTES attributes = { static_cast<DWORD>(sizeof(SECURITY_ATTRIBUTES)), security.Get(), FALSE };
-		if (!security.Get() || !::CreateDirectoryW(folder.wc_str(), &attributes)) {
-			::CreateDirectoryW(folder.wc_str(), nullptr);
-		}
-	}
-	HANDLE handle = ::CreateFileW(folder.wc_str(), READ_CONTROL | WRITE_DAC | FILE_READ_ATTRIBUTES,
-		FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
-		FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, nullptr);
-	if (handle == INVALID_HANDLE_VALUE) { return false; }
-	BY_HANDLE_FILE_INFORMATION info;
-	bool narrowed = ::GetFileInformationByHandle(handle, &info) &&
-		(info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && !(info.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
-		NarrowSecurity(handle, true, true);
-	::CloseHandle(handle);
-	return narrowed;
+	return MakePrivateFolderOnWindows(folder.ToStdWstring());
 #endif
 }
 
@@ -866,22 +184,7 @@ FILE *OpenPrivateFile(const wxString &path)
 #ifndef _WIN32
 	return OpenPrivateFileAt(std::string(path.fn_str().data()));
 #else
-	//A file left at the name, or a link, which DeleteFileW removes and does
-	//not follow, is removed; the file is then made anew with MakeFile, which
-	//fails on a name taken again meanwhile. A file that is still open
-	//without sharing deletes, or a folder at the name, is not opened.
-	::DeleteFileW(path.wc_str());
-	HANDLE handle = MakeFile(path, FILE_SHARE_READ | FILE_SHARE_WRITE, FileAccess::Private);
-	if (handle == INVALID_HANDLE_VALUE) { return nullptr; }
-	int fd = _open_osfhandle(reinterpret_cast<intptr_t>(handle), _O_RDWR | _O_BINARY);
-	if (fd == -1) {
-		DeleteByHandle(handle);
-		::CloseHandle(handle);
-		return nullptr;
-	}
-	FILE *file = _fdopen(fd, "w+b");
-	if (!file) { _close(fd); }
-	return file;
+	return OpenPrivateFileOnWindows(path.ToStdWstring());
 #endif
 }
 
@@ -1041,7 +344,7 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 	bool tempOpened = false;
 	{
 		wxLogNull noLog;
-		tempOpened = saveFile.Open(target.path, privateFile);
+		tempOpened = saveFile.Open(target.path.ToStdWstring(), privateFile);
 	}
 	//without a temporary file, in a folder that is not writable, the file is
 	//not written either: writing it in place truncates it first, and a failed
@@ -1051,7 +354,7 @@ bool OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 		return false;
 	}
 	//the destructor removes the temporary file
-	if (!saveFile.Write(textToWrite, conv) || !saveFile.Commit()){
+	if (!WriteText(saveFile, textToWrite, conv) || !saveFile.Commit()){
 		LogSaveFailure(saveFile);
 		return false;
 	}
@@ -1080,7 +383,7 @@ bool CopyToPrivateFile(const wxString &from, const wxString &to)
 	WindowsSaveFile saveFile;
 	{
 		wxLogNull noLog;
-		if (!saveFile.Open(to, true)){ return false; }
+		if (!saveFile.Open(to.ToStdWstring(), true)){ return false; }
 	}
 #endif
 	std::vector<char> buffer(1 << 16);
@@ -1135,7 +438,7 @@ bool OpenWrite::OpenTemp(const wxString &fileName, bool privateFile)
 #endif
 	writeFailed = (fname.FileExists() && (!fname.IsFileReadable() || !fname.IsFileWritable())) ||
 #ifdef _WIN32
-		!tempFile.Open(target.path, privateFile);
+		!tempFile.Open(target.path.ToStdWstring(), privateFile);
 #else
 		!OpenSaveFile(tempFile, target);
 #endif

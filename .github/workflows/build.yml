@@ -38,6 +38,26 @@ jobs:
       - name: Run
         run: ctest --test-dir build-tests --output-on-failure
 
+  # The tests of the save code that is Windows' own, which needs no
+  # dependency and builds in a minute.
+  windows-tests:
+    name: Windows tests
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S tests -B build-tests -G "Visual Studio 17 2022" -A x64
+
+      - name: Build
+        run: cmake --build build-tests --config Release
+
+      - name: Run
+        run: ctest --test-dir build-tests -C Release --output-on-failure
+
   windows:
     name: Windows (${{ matrix.configuration }}|x64)
     runs-on: windows-2022
@@ -412,7 +432,7 @@ jobs:
 
   release:
     name: Release
-    needs: [release-version, tests, windows, linux]
+    needs: [release-version, tests, windows-tests, windows, linux]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

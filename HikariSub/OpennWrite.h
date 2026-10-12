@@ -1,4 +1,4 @@
-//  Copyright (c) 2016 - 2026, Marcin Drob
+﻿//  Copyright (c) 2016 - 2026, Marcin Drob
 
 //  HikariSub is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -20,108 +20,8 @@
 #include <stdio.h>
 #ifndef _WIN32
 #include "SaveFile.h"
-#endif
-
-#ifdef _WIN32
-enum class FileAccess;
-
-// The volume serial number and the 128-bit file id FileIdInfo gives, which
-// tell one file from another on a volume; on a volume or a Windows without
-// it, the 64-bit file index in its low half.
-struct WindowsFileId
-{
-	unsigned long long volume = 0;
-	unsigned char index[16] = {};
-	// A volume that has no file ids, as some network redirectors, gives all
-	// zeros or all ones: that tells no file from another.
-	bool Known() const
-	{
-		bool zeros = true, ones = true;
-		for (unsigned char byte : index) {
-			zeros = zeros && byte == 0;
-			ones = ones && byte == 0xFF;
-		}
-		return !zeros && !ones;
-	}
-	bool operator==(const WindowsFileId &other) const
-	{
-		if (volume != other.volume) { return false; }
-		for (int i = 0; i < 16; ++i) {
-			if (index[i] != other.index[i]) { return false; }
-		}
-		return true;
-	}
-};
-
-// One save of a file on Windows: Open makes a temporary file next to the
-// file, Write appends to it and Commit puts it in place. The temporary file
-// replaces the file with ReplaceFileW, which keeps the file's attributes and
-// ACLs; a file with several hard links, or one ReplaceFileW cannot replace
-// because another program has it open, gets the new contents copied into it
-// instead, with a backup of the old contents put back when that fails. Unlike
-// wxTempFile, a failed replace is never followed by a copy over the file
-// without a backup. A file that is not committed is left as it was.
-// Open notes which file is at the name, looked at without following a link
-// there, and refuses a file whose volume gives no file id; Commit saves only
-// while the name still leads to that file, and the copy writes only into it.
-// The target's folder is kept open meanwhile, without sharing deletes, so it
-// cannot be renamed, removed or replaced; Commit also checks that the folder's
-// path still leads to it. The temporary files and the old file a replace moves
-// aside are deleted through a handle checked to be on them, never by a name
-// looked up again.
-class WindowsSaveFile
-{
-public:
-	WindowsSaveFile() = default;
-	WindowsSaveFile(const WindowsSaveFile &) = delete;
-	WindowsSaveFile &operator=(const WindowsSaveFile &) = delete;
-	~WindowsSaveFile() { Discard(); }
-	// With privateFile, the saved file lets in only this user, SYSTEM and
-	// Administrators: a new one is made so, and one that is there is given
-	// that DACL in Commit before the new contents are in it, or is not
-	// saved when it cannot be given it. The temporary files are made so
-	// too, or not at all.
-	bool Open(const wxString &target, bool privateFile = false);
-	bool IsOpened() const { return file.IsOpened(); }
-	bool Write(const wxString &text, const wxMBConv &conv) { return file.Write(text, conv); }
-	bool Write(const void *data, size_t size) { return file.Write(data, size) == size; }
-	bool Commit();
-	void Discard();
-	// After a save failed half way and the old contents could not be put
-	// back, they are kept under this name.
-	const wxString &KeptBackup() const { return keptBackup; }
-	// whether Commit wrote into the file or put another one at its name,
-	// also when it then failed, see SaveFile::TargetTouched
-	bool TargetTouched() const { return touched; }
-
-private:
-	bool Replace();
-	bool Rewrite();
-	// who may open the temporary files: see Open
-	FileAccess TempAccess() const;
-	// gives the private file that is there the DACL of a new one
-	bool NarrowSaved();
-	// whether the path of the target's folder still leads to the folder
-	// Open kept open
-	bool FolderUnchanged() const;
-
-	wxFile file;
-	wxString target;
-	// the target's folder, its path and its id, kept open from Open on when
-	// it can be opened; a HANDLE
-	void *folder = nullptr;
-	bool folderOpened = false;
-	wxString folderPath;
-	WindowsFileId folderId;
-	// a file was at target when Open ran, and its id
-	bool targetExisted = false;
-	WindowsFileId targetId;
-	wxString temp;
-	WindowsFileId tempId;
-	wxString keptBackup;
-	bool touched = false;
-	bool privateSave = false;
-};
+#else
+#include "WindowsSaveFile.h"
 #endif
 
 // Makes the folder at path, or narrows the one there, so that only its user

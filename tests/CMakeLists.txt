@@ -3,6 +3,21 @@ project(HikariSubTests LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# On Windows, the tests of the save code that is Windows' own: the other tests
+# are of code that needs POSIX, and of LuaJIT and libcurl as Linux builds them.
+if(WIN32)
+    add_executable(hikarisub_windows_tests
+        check_main.cpp
+        WindowsSaveFileTests.cpp
+        ../HikariSub/WindowsSaveFile.cpp
+    )
+    target_compile_definitions(hikarisub_windows_tests PRIVATE UNICODE _UNICODE NOMINMAX)
+    target_link_libraries(hikarisub_windows_tests PRIVATE advapi32)
+    enable_testing()
+    add_test(NAME hikarisub_windows_tests COMMAND hikarisub_windows_tests)
+    return()
+endif()
+
 # The application's LuaJIT build, so its tests check what the application links.
 include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/VendoredLuaJIT.cmake)
 # DependencyControl's native modules, built as the application builds them.
