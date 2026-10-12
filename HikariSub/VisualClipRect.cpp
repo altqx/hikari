@@ -239,7 +239,7 @@ void ClipRect::OnMouseEvent(wxMouseEvent &evt)
 void ClipRect::SetCurVisual()
 {
 	int x1 = 0, x2 = SubsSize.x, y1 = 0, y2 = SubsSize.y;
-	bool found = FindTag(L"(i?clip[^\\)]+)");
+	bool found = FindTag(L"(i?clip[^\\)]+)", emptyString, 1);
 	const FindData& data = GetResult();
 	if (found && data.finding.Freq(L',') == 3){
 		int match = 1;
