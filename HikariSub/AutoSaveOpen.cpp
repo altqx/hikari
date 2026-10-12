@@ -16,6 +16,7 @@
 
 #include "AutoSaveOpen.h"
 #include "HikariSubFrame.h"
+#include "TabPanel.h"
 #include "HikariStaticBoxSizer.h"
 #include <wx/dir.h>
 #include <wx/tokenzr.h>
@@ -238,6 +239,16 @@ void AutoSaveOpen::OnOkClick(wxCommandEvent& evt)
 	if (it != verList->end()) {
 		wxString filePath = Options.pathfull + L"/Subs/" + it->second;
 		Hikari->OpenFile(filePath);
+		//the autosave is a recovery copy, so the first save asks where to write
+		//instead of overwriting it
+		TabPanel *tab = Hikari->GetTab();
+		if (tab && tab->SubsPath == filePath && (size_t)selFile < paths.size()) {
+			tab->SubsPath = emptyString;
+			tab->SubsName = paths[selFile];
+			tab->grid->file->RemoveLastIterSave();
+			tab->grid->UpdateUR(true);
+			Hikari->Label(tab->grid->file->GetActualHistoryIter());
+		}
 		EndModal(wxOK);
 		return;
 	}
