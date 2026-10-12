@@ -427,6 +427,9 @@ void FontCollectorDialog::OnButtonPath(wxCommandEvent &event)
 			(path->GetValue().EndsWith(L"zip")) ? HikariPathName(path->GetValue()) : emptyString,
 			L"zip", _("Archive files (*.zip)|*.zip"), wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	}
+	if (destdir.empty())
+		return;
+
 	Options.SetString(FONT_COLLECTOR_DIRECTORY, destdir);
 	Options.SaveOptions(true, false);
 	path->SetValue(destdir);
