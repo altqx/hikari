@@ -211,8 +211,9 @@ void MoveAll::SetCurVisual()
 	drawingPos = GetPosnScale(&scale, &alignment, moveValues);
 	if (moveValues[6] > 3){ drawingPos = CalcMovePos(); }
 	from = to = D3DXVECTOR2(GetCalculatedInPosX(drawingPos.x), GetCalculatedInPosY(drawingPos.y));
-	
+
 	Clear();
+	vectorClipScale = 1.f;
 
 	double orx = drawingPos.x, ory = drawingPos.y;
 	if (FindTag(L"org\\(([^\\)]+)")){
