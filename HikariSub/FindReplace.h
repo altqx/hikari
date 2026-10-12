@@ -43,7 +43,7 @@ class FindReplace
 public:
 
 	FindReplace(HikariSubFrame* kfparent, FindReplaceDialog *FRD);
-	~FindReplace(){};
+	~FindReplace();
 	void ShowResult(TabPanel *tab, const wxString &path, int keyLine, const wxPoint &pos, const wxString & text);
 	void ReplaceChecked();
 	HikariSubFrame *Hikari;

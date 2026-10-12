@@ -158,6 +158,10 @@ MisspellReplacer::~MisspellReplacer()
 {
 	if (rules.size())
 		SaveRules();
+	// the results window is parented to the main frame, so it would
+	// otherwise outlive this tool and keep a pointer to it
+	if (resultDialog)
+		resultDialog->Destroy();
 }
 
 void MisspellReplacer::ReplaceChecked()

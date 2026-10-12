@@ -67,6 +67,14 @@ FindReplace::FindReplace(HikariSubFrame* kfparent, FindReplaceDialog *_FRD)
 	CopyPath = Options.pathfull + L"/ReplaceBackup/";
 }
 
+FindReplace::~FindReplace()
+{
+	// the results window is parented to the main frame, so it would
+	// otherwise outlive this tool and keep a pointer to it
+	if (FRRD)
+		FRRD->Destroy();
+}
+
 void FindReplace::ShowResult(TabPanel *tab, const wxString &path, int keyLine, const wxPoint &pos, const wxString & text)
 {
 	if (tab){
