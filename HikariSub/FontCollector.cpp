@@ -181,7 +181,7 @@ FontCollectorDialog::FontCollectorDialog(wxWindow *parent, FontCollector *_fc)
 
 
 	fromMKV = new HikariCheckBox(this, 7991, _("Demux fonts from loaded MKV file"));
-	fromMKV->Enable(Notebook::GetTab()->VideoPath.Lower().EndsWith(L".mkv"));
+	fromMKV->Enable(Options.GetInt(FONT_COLLECTOR_ACTION) != 0 && Notebook::GetTab()->VideoPath.Lower().EndsWith(L".mkv"));
 	fromMKV->SetValue(Options.GetBool(FONT_COLLECTOR_FROM_MKV));
 
 	Connect(7998, wxEVT_COMMAND_CHECKBOX_CLICKED, (wxObjectEventFunction)&FontCollectorDialog::OnChangeOpt);
@@ -443,7 +443,7 @@ void FontCollectorDialog::OnButtonStart(wxCommandEvent &event)
 	console->SetValue(emptyString);
 	EnableControls(false);
 	
-	int operation = (fromMKV->GetValue() && fromMKV->IsEnabled()) ? FontCollector::COPY_MKV_FONTS :
+	int operation = (opts->GetSelection() != 0 && fromMKV->GetValue() && fromMKV->IsEnabled()) ? FontCollector::COPY_MKV_FONTS :
 		/*(opts->GetSelection() == 3) ? FontCollector::MUX_VIDEO_WITH_SUBS : */
 		(opts->GetSelection() == 0) ? FontCollector::CHECK_FONTS: FontCollector::COPY_FONTS;
 	if (event.GetId() == 9880){
