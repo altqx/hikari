@@ -72,10 +72,12 @@ static void LogSaveFailure(const SaveFile &file)
 #else
 // wx's wrapper for windows.h, it keeps min and max from becoming macros
 #include <wx/msw/wrapwin.h>
+#include <sddl.h>
 #include <fcntl.h>
 #include <io.h>
 #include <string.h>
 #include <random>
+#include <string>
 
 static bool WriteText(WindowsSaveFile &file, const wxString &text, const wxMBConv &conv)
 {
@@ -249,23 +251,64 @@ static HANDLE HandleOf(const wxFile &file)
 	return file.IsOpened() ? reinterpret_cast<HANDLE>(_get_osfhandle(file.fd())) : INVALID_HANDLE_VALUE;
 }
 
+// A security descriptor whose DACL lets only the user this process runs as
+// open a file, and takes no ACE from the file's folder; nullptr when it cannot
+// be made. LocalFree frees it.
+static PSECURITY_DESCRIPTOR OwnerOnlySecurity()
+{
+	HANDLE token = nullptr;
+	if (!::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &token)) { return nullptr; }
+	DWORD size = 0;
+	::GetTokenInformation(token, TokenUser, nullptr, 0, &size);
+	std::vector<BYTE> user(size);
+	bool known = size != 0 && ::GetTokenInformation(token, TokenUser, user.data(), size, &size);
+	::CloseHandle(token);
+	LPWSTR sid = nullptr;
+	if (!known || !::ConvertSidToStringSidW(reinterpret_cast<TOKEN_USER *>(user.data())->User.Sid, &sid)) {
+		return nullptr;
+	}
+	//protected, so no ACE of the folder is inherited
+	std::wstring sddl = L"D:P(A;;FA;;;" + std::wstring(sid) + L")";
+	::LocalFree(sid);
+	PSECURITY_DESCRIPTOR security = nullptr;
+	if (!::ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl.c_str(), SDDL_REVISION_1, &security, nullptr)) {
+		return nullptr;
+	}
+	return security;
+}
+
 // Makes a new file in the folder of target and opens it for reading, writing
 // and deleting into file; id is set to its id. CREATE_NEW fails on a name that
 // is taken, by a link too, so it never opens a file another program put there.
 // wxFileName::CreateTempFileName made the file with GetTempFileName and then
 // opened the name again without O_EXCL, which followed a link put there in
 // between.
-static wxString MakeTempFileNear(const wxString &target, wxFile *file, WindowsFileId *id)
+// A file made with no security descriptor gets the ACEs its folder passes on
+// to new files, not the ACL of the file it saves to, which may let fewer
+// users in; with ownerOnly it is made with one that lets only this user open
+// it, see OwnerOnlySecurity.
+static wxString MakeTempFileNear(const wxString &target, wxFile *file, WindowsFileId *id, bool ownerOnly)
 {
 	//target is absolute, see Open
 	size_t separator = target.find_last_of(L"\\/");
 	if (separator == wxString::npos) { return wxString(); }
 	wxString folder = target.substr(0, separator + 1);
+	SECURITY_ATTRIBUTES attributes = { static_cast<DWORD>(sizeof(SECURITY_ATTRIBUTES)), nullptr, FALSE };
+	if (ownerOnly) {
+		attributes.lpSecurityDescriptor = OwnerOnlySecurity();
+		//a file that cannot be made private is not made at all
+		if (!attributes.lpSecurityDescriptor) { return wxString(); }
+	}
+	struct SecurityFree {
+		void *security;
+		~SecurityFree() { if (security) { ::LocalFree(security); } }
+	} freeSecurity{ attributes.lpSecurityDescriptor };
 	thread_local std::mt19937 random{ std::random_device{}() };
 	for (int attempt = 0; attempt < 100; ++attempt) {
 		wxString name = folder + wxString::Format(L"hks%08x.tmp", static_cast<unsigned int>(random()));
 		HANDLE handle = ::CreateFileW(name.wc_str(), GENERIC_READ | GENERIC_WRITE | DELETE,
-			FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
+			FILE_SHARE_READ | FILE_SHARE_WRITE, ownerOnly ? &attributes : nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
+			nullptr);
 		if (handle == INVALID_HANDLE_VALUE) {
 			DWORD error = ::GetLastError();
 			if (error == ERROR_FILE_EXISTS || error == ERROR_ALREADY_EXISTS) { continue; }
@@ -348,7 +391,14 @@ bool WindowsSaveFile::Open(const wxString &name)
 		Discard();
 		return false;
 	}
-	temp = MakeTempFileNear(target, &file, &tempId);
+	//The new contents of a file that is there are kept from everybody else
+	//while they are written: ReplaceFileW gives the new file the old one's
+	//DACL when it replaces it, and a rewrite only copies them into the old
+	//file. A new file's temporary file is the new file, which keeps the ACL
+	//it is made with when it is moved to the name: the ACEs its folder passes
+	//on, as a file made there by any other program gets, no more than the
+	//saved file has.
+	temp = MakeTempFileNear(target, &file, &tempId, targetExisted);
 	if (temp.empty()) {
 		Discard();
 		return false;
@@ -431,7 +481,7 @@ bool WindowsSaveFile::Replace()
 	//program could guess and put a file or link at.
 	wxFile reserved;
 	WindowsFileId reservedId;
-	wxString backup = MakeTempFileNear(target, &reserved, &reservedId);
+	wxString backup = MakeTempFileNear(target, &reserved, &reservedId, true);
 	if (backup.empty()) { return false; }
 	reserved.Close();
 	//Without REPLACEFILE_IGNORE_MERGE_ERRORS, a replace that cannot give the
@@ -483,10 +533,12 @@ bool WindowsSaveFile::Rewrite()
 	}
 	wxFileOffset oldLength = out.Length();
 	if (oldLength < 0) { return false; }
-	//a backup of the old contents, on disk before the file is touched
+	//a backup of the old contents, on disk before the file is touched; only
+	//this user may open it, as it would otherwise have the ACEs of the folder
+	//and not the file's own, which may keep other users out
 	wxFile backup;
 	WindowsFileId backupId;
-	wxString backupName = MakeTempFileNear(target, &backup, &backupId);
+	wxString backupName = MakeTempFileNear(target, &backup, &backupId, true);
 	if (backupName.empty()) { return false; }
 	bool saved = CopyContents(out, backup) && backup.Flush();
 	if (saved) {
