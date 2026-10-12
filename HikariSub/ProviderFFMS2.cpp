@@ -737,7 +737,12 @@ void ProviderFFMS2::GetPlaybackBuffer(void* buf, long long start, long long coun
 
 void ProviderFFMS2::GetBuffer(void* buf, long long start, long long count, double volume)
 {
-	if (audioNotInitialized) { return; }
+	if (audioNotInitialized) {
+		// without audio the caller still reads count samples, so give it silence
+		if (count > 0)
+			memset(buf, 0, (size_t)count * sizeof(short));
+		return;
+	}
 	if (m_channels == 1) {
 		GetPlaybackBuffer(buf, start, count, volume);
 		return;

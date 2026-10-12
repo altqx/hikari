@@ -1108,14 +1108,15 @@ namespace Auto{
 		}
 		TabPanel *tab = Notebook::GetTab();
 		Provider* FFMS2 = tab->video->GetFFMS2();
-		if (!FFMS2){
+		// a video without audio has no samples to analyse
+		if (!FFMS2 || FFMS2->AudioNotInitialized()){
 			if (!tab->edit->ABox){
 				lua_pushstring(L, "get_frequency_peaks needs loaded audio by FFMS2");
 				lua_error(L);
 				return 0;
 			}
 			FFMS2 = tab->edit->ABox->audioDisplay->provider;
-			if (!FFMS2){
+			if (!FFMS2 || FFMS2->AudioNotInitialized()){
 				lua_pushstring(L, "get_frequency_peaks cannot get audio provider");
 				lua_error(L);
 				return 0;
