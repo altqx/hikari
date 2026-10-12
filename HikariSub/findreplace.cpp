@@ -1621,8 +1621,20 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 		return 0;
 
 	bool isSRT = (ext == L"srt");
+	wxString TlModeStyle;
+	bool hasTlMode = false;
 
 	if ((ext == L"ass"/* || ext == "ssa"*/)){
+		//keys of Find in files results count a TLMode pair as one Line
+		size_t tlModeStylePos = subsText.find(L"TLMode Style:");
+		if (tlModeStylePos != -1){
+			hasTlMode = true;
+			size_t nposition = subsText.find(L"\n", tlModeStylePos + 13);
+			if (nposition != -1){
+				TlModeStyle = subsText.Mid(tlModeStylePos + 13, nposition - (tlModeStylePos + 13));
+				TlModeStyle.Trim(true).Trim(false);
+			}
+		}
 		size_t result = subsText.find(/*(ext == "ass") ? */L"Dialogue:"/* : L"Marked="*/);
 		size_t result1 = subsText.find(/*(ext == "ass") ? */L"Comment:"/* : L"Marked="*/);
 		if (result == -1 && result1 == -1)// no dialogues;
@@ -1679,8 +1691,34 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 				continue;
 			}
 		}
-		if (SeekResult->keyLine != lineNum){
-
+		//the original line of a TLMode pair has the key of its translation
+		bool tlOriginal = false;
+		if (hasTlMode){
+			Dialogue tlCheck(token);
+			tlOriginal = tlCheck.Style == TlModeStyle;
+		}
+		dial = nullptr;
+		if (numOfResult < results.size() && SeekResult->keyLine == lineNum){
+			dial = new Dialogue(token);
+			dial->GetTextElement(dialogueColumn, &dialtxt);
+			//need checks
+			if (dialtxt != SeekResult->name){
+				//in a TLMode pair the results can belong to the translation
+				if (!tlOriginal){
+					HikariLog(wxString::Format(_("Line %i cannot be replaced,\ncause it was edited."),
+						SeekResult->idLine));
+					while (numOfResult < results.size() && SeekResult->keyLine == lineNum){
+						numOfResult++;
+						if (numOfResult < results.size())
+							SeekResult = results[numOfResult];
+					}
+				}
+				delete dial;
+				dial = nullptr;
+			}
+		}
+		if (!dial){
+			//unchanged or edited lines are written back as they are
 			if (isSRT)
 				replacedText << int(lineNum + 1) << L"\r\n";
 
@@ -1689,27 +1727,17 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 			if (isSRT)
 				replacedText << L"\r\n";
 
-			lineNum++;
+			if (!tlOriginal)
+				lineNum++;
 			token = emptyString;
 			continue;
 		}
-		
-		dial = new Dialogue(token);
 		token = emptyString;
-		if (!dial){
-			continue;
-		}
 
-		dial->GetTextElement(dialogueColumn, &dialtxt);
 		replacementDiff = 0;
 		lastEnd = 0;
-		//need checks
-		if (dialtxt != SeekResult->name){
-			HikariLog(wxString::Format(_("Line %i cannot be replaced,\ncause it was edited."),
-				SeekResult->idLine));
-			continue;
-		}
-		while (SeekResult->keyLine == lineNum){
+		wxString lineText = dialtxt;
+		while (numOfResult < results.size() && SeekResult->keyLine == lineNum && SeekResult->name == lineText){
 			int numOfReps = ReplaceCheckedLine(&dialtxt, SeekResult->findPosition, &replacementDiff, &lastEnd);
 
 			numOfChanges += numOfReps;
@@ -1718,8 +1746,6 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 			numOfResult++;
 			if (numOfResult < results.size())
 				SeekResult = results[numOfResult];
-			else
-				break;
 		}
 		if (isSRT)
 			replacedText << int(lineNum + 1) << L"\r\n";
@@ -1730,7 +1756,8 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 		dial->GetRaw(&replacedText);
 		delete dial;
 
-		lineNum++;
+		if (!tlOriginal)
+			lineNum++;
 		
 	}
 
