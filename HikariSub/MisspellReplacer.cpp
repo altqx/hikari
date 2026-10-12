@@ -279,6 +279,8 @@ void MisspellReplacer::FillRulesList()
 		wxString token = tokenizer.GetNextToken();
 		wxString OnOff = (tokenizerOnOff.HasMoreTokens()) ? tokenizerOnOff.GetNextToken() : wxString(L"0");
 		Rule newRule(token);
+		if (!newRule.isValid)
+			continue;
 		rules.push_back(newRule);
 
 		int row = RulesList->AppendItem(new ItemCheckBox(OnOff == L"1", emptyString));
@@ -778,5 +780,6 @@ Rule::Rule(const wxString & stringRule)
 	return;
 
 fail:
+	isValid = false;
 	HikariLog(wxString::Format(_("Rule \"%s\" is invalid."), stringRule));
 }
