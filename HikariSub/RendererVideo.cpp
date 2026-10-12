@@ -786,12 +786,11 @@ void RendererVideo::ResetZoom()
 	if (m_State == None){ return; }
 	m_ZoomRect = FloatRect(m_BackBufferRect.left, m_BackBufferRect.top, m_BackBufferRect.right, m_BackBufferRect.bottom);
 	wxSize size(m_BackBufferRect.right - m_BackBufferRect.left, m_BackBufferRect.bottom - m_BackBufferRect.top);
-	float videoToScreenXX = size.x / (float)m_Width;
-	float videoToScreenYY = size.y / (float)m_Height;
-	m_MainStreamRect.left = (m_ZoomRect.x - m_BackBufferRect.left) / videoToScreenXX;
-	m_MainStreamRect.top = (m_ZoomRect.y - m_BackBufferRect.top) / videoToScreenYY;
-	m_MainStreamRect.right = (m_ZoomRect.width - m_BackBufferRect.left) / videoToScreenXX;
-	m_MainStreamRect.bottom = (m_ZoomRect.height - m_BackBufferRect.top) / videoToScreenYY;
+	//the whole frame, dividing by the float scale truncates a row or column away
+	m_MainStreamRect.left = 0;
+	m_MainStreamRect.top = 0;
+	m_MainStreamRect.right = m_Width;
+	m_MainStreamRect.bottom = m_Height;
 	m_ZoomPercent = size.x / (m_ZoomRect.width - m_ZoomRect.x);
 	if (videoControl->m_IsFullscreen) { UpdateRects(false); }
 	if (m_Visual) {
