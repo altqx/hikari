@@ -350,7 +350,7 @@ void FontList::Delete(int i)
 
 int FontList::FindString(const wxString& text, bool caseSensitive)
 {
-	return 0;
+	return fonts->Index(text, caseSensitive);
 }
 
 void FontList::Scroll(int step)
