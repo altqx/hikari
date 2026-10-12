@@ -16,6 +16,7 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -428,11 +429,15 @@ TEST(FontCollection, MultilingualCorpusReportsWhatIsIncomplete)
 // after refresh() drops it. On Windows it is installed for the current user
 // (HKCU Fonts and %LOCALAPPDATA%\Microsoft\Windows\Fonts), the second of
 // FontEnumerator's folders (FontEnumerator.cpp:362-374); on Linux into a
-// folder of the fontconfig configuration.
+// folder of the fontconfig configuration. The service lists before the
+// install, so the listing that names the font is one read after it.
 TEST(FontPickerFacesInstalled, AnInstalledFontIsListedUntilItIsRemoved)
 {
     LibassFontService service;
     InstalledFont font(HIKARI_FONT_REFRESH_SOURCE, "refresh.ttf", "HikariProbeRefresh");
+    EXPECT_FALSE(listedFace(service.pickerFaces(FontEnvironment{}), font.path()))
+        << font.path().string() << " is listed before it was installed";
+    EXPECT_FALSE(lists(pickerFamilies(service), u"HikariProbeRefresh"));
     font.install();
     service.refresh();
     const auto faces = service.pickerFaces(FontEnvironment{});
@@ -597,9 +602,19 @@ TEST_F(FontPickerFacesDirectWrite, SystemAndUserFontsAreListedByTheirGdiFamilyNa
     const auto faces = service.pickerFaces(FontEnvironment{});
     const std::filesystem::path windows = qEnvironmentVariable("WINDIR").toStdWString();
     ASSERT_FALSE(windows.empty()) << "WINDIR";
-    const auto arial = listedFace(faces, windows / L"Fonts" / L"arial.ttf");
-    ASSERT_TRUE(arial) << "arial.ttf is not among the " << faces.size() << " faces listed";
-    EXPECT_EQ(arial->listedFamily, "Arial");
+    // Arial where the image has it, else any face listed from the system folder.
+    const std::filesystem::path systemFolder = windows / L"Fonts";
+    auto systemFont = listedFace(faces, systemFolder / L"arial.ttf");
+    for (auto f = faces.begin(); !systemFont && f != faces.end(); ++f) {
+        const QString folder = QFileInfo(QString::fromStdString(f->path)).path();
+        if (f->externalFile.empty() && samePath(folder.toStdString(), systemFolder))
+            systemFont = *f;
+    }
+    ASSERT_TRUE(systemFont) << "none of the " << faces.size() << " faces listed is from " << systemFolder.string();
+    if (samePath(systemFont->path, systemFolder / L"arial.ttf"))
+        EXPECT_EQ(systemFont->listedFamily, "Arial");
+    ASSERT_FALSE(systemFont->listedFamily.empty()) << systemFont->path;
+    EXPECT_TRUE(hasFamily(*systemFont, systemFont->listedFamily)) << systemFont->path;
 
     const auto base = listedFace(faces, userFont("base.ttf"));
     const auto fallback = listedFace(faces, userFont("fallback.ttf"));
@@ -618,13 +633,14 @@ TEST_F(FontPickerFacesDirectWrite, SystemAndUserFontsAreListedByTheirGdiFamilyNa
     EXPECT_TRUE(hasFamily(*legacy, "HikariProbeModern"));
 
     const auto families = pickerFamilies(service);
+    EXPECT_TRUE(lists(families, QString::fromStdString(systemFont->listedFamily).toStdU16String()))
+        << systemFont->listedFamily;
     for (const std::u16string name :
-         {u"Arial", u"HikariProbeBase", u"HikariProbeLegacy", u"HikariProbeCollectionA", u"HikariProbeCollectionB"})
+         {u"HikariProbeBase", u"HikariProbeLegacy", u"HikariProbeCollectionA", u"HikariProbeCollectionB"})
         EXPECT_TRUE(lists(families, name)) << QString::fromStdU16String(name).toStdString();
     EXPECT_FALSE(lists(families, u"HikariProbeModern"));
 
-    EXPECT_EQ(service.facesCover({*base, *fallback, *arial}, FontEnvironment{}, U"A"),
-              (std::vector<bool>{true, false, true}));
+    EXPECT_EQ(service.facesCover({*base, *fallback}, FontEnvironment{}, U"A"), (std::vector<bool>{true, false}));
     EXPECT_EQ(service.facesCover({*base, *fallback}, FontEnvironment{}, U"中"), (std::vector<bool>{false, true}));
 
     const auto dirs = service.fontDirectories();
