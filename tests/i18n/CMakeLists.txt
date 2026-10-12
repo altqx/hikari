@@ -61,3 +61,6 @@ add_test(NAME hikari_i18n_extraction_reads_every_caller
         -DGENERATE_PROJECT=${Qt6LinguistTools_DIR}/GenerateLUpdateProject.cmake
         -DSOURCE_DIR=${PROJECT_SOURCE_DIR} -P "${CMAKE_CURRENT_SOURCE_DIR}/check_extraction_sources.cmake")
 set_tests_properties(hikari_i18n_extraction_reads_every_caller PROPERTIES LABELS "i18n" TIMEOUT 60)
+
+# O6: the semantic contexts' lint and the record of their move.
+hikari_add_gtest(hikari_i18n_contexts_tests SOURCES contexts_tests.cpp LIBRARIES hikari_i18n LABELS i18n)
