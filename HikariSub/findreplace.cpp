@@ -417,7 +417,8 @@ seekFromStart:
 						textPosition = 0;
 					}
 				}
-				else{
+				//Beginning of text matches only at the start
+				else if (!startLine){
 					foundPosition = ltext.find(lfind, textPosition);
 				}
 				foundLength = lfind.length();
@@ -973,7 +974,8 @@ void FindReplace::FindInSubsLine(wxString *onlyString, Dialogue *dial, TabPanel 
 					tabTextPosition = 0;
 				}
 			}
-			else{
+			//Beginning of text matches only at the start
+			else if (!startLine){
 				foundPosition = ltext.find(lfind, tabTextPosition);
 			}
 			foundLength = lfind.length();
@@ -1037,7 +1039,8 @@ int FindReplace::ReplaceInSubsLine(wxString *onlyString)
 		}
 		else{ return 0; }
 	}
-	else if (startLine || endLine){
+	//with regex the pattern already has ^ or $, it is matched below
+	else if (!regEx && (startLine || endLine)){
 
 		wxString ltext = (!matchCase) ? onlyString->Lower() : *onlyString;
 		wxString lfind = (!matchCase) ? findString.Lower() : findString;
@@ -1074,7 +1077,9 @@ int FindReplace::ReplaceInSubsLine(wxString *onlyString)
 	// should be faster than generate text blocks and replace it within
 	while (1){
 		if (regEx){
-			if (!findReplaceRegEx.Matches(ltext.Mid(newpos)) || !findReplaceRegEx.GetMatch(&textPos, &flen))
+			//^ must match only at the start of the line, not of the rest of it
+			if (!findReplaceRegEx.Matches(ltext.Mid(newpos), (newpos) ? wxRE_NOTBOL : 0) ||
+				!findReplaceRegEx.GetMatch(&textPos, &flen))
 				break;
 
 			textPos += newpos;
@@ -1083,7 +1088,11 @@ int FindReplace::ReplaceInSubsLine(wxString *onlyString)
 			textPos = ltext.find(lfind, newpos);
 
 		
-		newpos = textPos + lfind.length();
+		//go on after the match, lfind is the pattern with regex;
+		//after an empty match go on one character further
+		newpos = textPos + ((regEx) ? flen : lfind.length());
+		if (regEx && !flen)
+			newpos++;
 		//diff for replacing and checking function
 		if (textPos == -1 || (textPos + repsDiff) >= onlyString->length()){ break; }
 		textPos += repsDiff;
