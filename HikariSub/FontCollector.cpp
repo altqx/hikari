@@ -1228,7 +1228,6 @@ bool FontCollector::CheckPathAndGlyphs(int *found, int *notFound, int *notCopied
 			if (!succeeded){
 				flc->AppendWarnings(wxString::Format(_("Cannot find \"%s\" font in Fonts folder."), fn));
 				(*notFound)++;
-				(*found)--;
 			}
 				
 		} else if (isNewFont)
