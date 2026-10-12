@@ -1229,6 +1229,9 @@ bool SubsGrid::LoadSubtitles(const wxString &str, wxString &ext)
 		HikariMessageBox(_("Invalid format (file may be corrupted or contain errors)"));
 		return false;
 	}
+	//only now the comparison, spell errors, original view and scroll of the
+	//old file are dropped
+	Clearing(false);
 	delete oldFile;
 
 	if (oldHasTlMode != hasTLMode){
@@ -1298,6 +1301,8 @@ bool SubsGrid::LoadSubtitles(const wxString &str, wxString &ext)
 	ScrollTo(active, false, -4);
 	if (subsFormat == SRT)
 		edit->ResizeTimeControls(true);
+	if (SL.PlainTextAsAss())
+		HikariMessageBox(_("This subtitle file is plain text and will be opened as ASS subtitles"));
 	return true;
 }
 

@@ -27,7 +27,7 @@
 SubsLoader::SubsLoader(SubsGrid *_grid, const wxString &text, wxString &ext)
 {
 	grid = _grid;
-	grid->Clearing();
+	//the grid hands over a new file and keeps its own state until this succeeds
 	grid->originalFormat = 0;
 	grid->hasTLMode = false;
 	bool validFormat = false;
@@ -59,18 +59,20 @@ SubsLoader::SubsLoader(SubsGrid *_grid, const wxString &text, wxString &ext)
 		succeeded = LoadTXT(text);
 		grid->SetSubsFormat();
 		if (grid->subsFormat == SRT){
-			grid->Clearing();
+			grid->file->Clear();
 			succeeded = LoadSRT(text);
 			if (succeeded) ext = L"srt";
 		}
 		else if (grid->subsFormat == ASS){
-			grid->Clearing();
+			grid->file->Clear();
 			succeeded = LoadASS(text);
 			ext = L"ass";
 			if (!succeeded){
 				grid->LoadDefault(false, false, false);
 				succeeded = LoadTXT(text);
-				HikariMessageBox(_("This subtitle file is plain text and will be opened as ASS subtitles"));
+				//told by the grid once the file is loaded, so no window is
+				//painted with this file and the old file's state
+				plainTextAsAss = true;
 			}
 		}
 		else{ validFormat = true; }
