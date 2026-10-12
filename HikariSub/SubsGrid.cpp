@@ -973,32 +973,40 @@ void SubsGrid::OnPasteTextTl()
 			wxStringTokenizer tokenizer(txt, L"\n", wxTOKEN_STRTOK);
 			tokenizer.GetNextToken();
 			wxString text1;
+			// applies the collected cue to the next line
+			auto flushCue = [&](){
+				Dialogue diall = Dialogue(text1.Trim());
+				if (iline < lastKey){
+					diall.Convert(subsFormat);
+					CopyDialogue(iline)->TextTl = diall.Text;
+				}
+				else{
+					diall.Convert(subsFormat);
+					diall.Start.NewTime(0);
+					diall.End.NewTime(0);
+					diall.Style = styleName;
+					diall.TextTl = diall.Text;
+					diall.Text = emptyString;
+					file->AddLine(diall.Copy());
+				}
+				// get next visible key
+				iline = (ignoreFiltered) ? iline + 1 : GetKeyFromPosition(iline, 1);
+				text1 = emptyString;
+			};
 			while (tokenizer.HasMoreTokens())
 			{
 				wxString text = tokenizer.GetNextToken().Trim();
 				if (IsNumber(text)){
 					if (text1 != emptyString){
-						Dialogue diall = Dialogue(text1.Trim());
-						if (iline < lastKey){
-							diall.Convert(subsFormat);
-							CopyDialogue(iline)->TextTl = diall.Text;
-						}
-						else{
-							diall.Convert(subsFormat);
-							diall.Start.NewTime(0);
-							diall.End.NewTime(0);
-							diall.Style = styleName;
-							diall.TextTl = diall.Text;
-							diall.Text = emptyString;
-							file->AddLine(diall.Copy());
-						}
-						// get next visible key
-						iline = (ignoreFiltered) ? iline + 1 : GetKeyFromPosition(iline, 1);
-						text1 = emptyString;
+						flushCue();
 					}
 				}
 				else{ text1 << text << L"\r\n"; }
 
+			}
+			// the last cue has no number line after it
+			if (!text1.Trim().empty()){
+				flushCue();
 			}
 		}
 		else{
