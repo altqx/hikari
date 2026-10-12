@@ -262,6 +262,17 @@ int ItemHotkey::OnVisibilityChange(int mode){
 	}
 }
 
+// An index choice shows its stored index, or the option's default
+// entry when the stored index is not one of its entries.
+static void SetChoiceIndex(HikariChoice *choice, CONFIG option)
+{
+	int index = Options.GetInt(option);
+	if (index < 0 || index >= choice->GetCount())
+		index = (option == FFMS2_VIDEO_SEEKING) ? 2 :
+			(option == AUDIO_INACTIVE_LINES_DISPLAY_MODE) ? 1 : 0;
+	choice->SetSelection(index);
+}
+
 wxString *OptionsDialog::windowNames = nullptr;
 std::map<idAndType, hdata> OptionsDialog::hotkeysCopy;
 
@@ -436,7 +447,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		HikariStaticBoxSizer* alm = new HikariStaticBoxSizer(wxHORIZONTAL, EditorAdvanced, _("Autoload loading method"));
 		wxString methods[] = { _("After program start asynchronously"), _("After program start"), _("After open menu asynchronously"), _("After open menu") };
 		HikariChoice* cmb = new HikariChoice(EditorAdvanced, ID_HIKARI_CHOICE, wxDefaultPosition, wxSize(200, -1), 4, methods, wxTE_PROCESS_ENTER);
-		cmb->SetSelection(Options.GetInt(AUTOMATION_LOADING_METHOD));
+		SetChoiceIndex(cmb, AUTOMATION_LOADING_METHOD);
 		ConOpt(cmb, AUTOMATION_LOADING_METHOD);
 		alm->Add(cmb, 1, wxCENTER | wxEXPAND | wxALL, 2);
 
@@ -729,7 +740,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		audioCacheFilesLimit->SetToolTip(_("Range from 0 to 10000, where 0 turns off\nremoving audio cache files."));
 		wxString inact[3] = { _("None"), _("Before and after the active"), _("All visible") };
 		HikariChoice *displayNonActiveLines = new HikariChoice(AudioSecond, ID_HIKARI_CHOICE, wxDefaultPosition, wxSize(300, -1), 3, inact);
-		displayNonActiveLines->SetSelection(Options.GetInt(opts1[2]));
+		SetChoiceIndex(displayNonActiveLines, opts1[2]);
 		ConOpt(Delay, opts1[0]);
 		ConOpt(markPlayTime, opts1[1]);
 		ConOpt(lineThickness, opts1[3]);
@@ -1143,7 +1154,7 @@ void OptionsDialog::SetOptions(bool saveall)
 				}
 				else {
 					wxString option = cbx->GetString(cbx->GetSelection());
-					if (Options.GetString(OB.option) != option) {
+					if (cbx->GetSelection() >= 0 && Options.GetString(OB.option) != option) {
 						Options.SetString(OB.option, option);
 						//vsfilter change
 						if (cbx->GetId() == ID_VSFILTER_PROVIDER) {
@@ -1158,7 +1169,7 @@ void OptionsDialog::SetOptions(bool saveall)
 				}
 			}
 			else {
-				if (Options.GetInt(OB.option) != cbx->GetSelection()) {
+				if (cbx->GetSelection() >= 0 && Options.GetInt(OB.option) != cbx->GetSelection()) {
 					Options.SetInt(OB.option, cbx->GetSelection());
 				}
 			}
@@ -1335,11 +1346,21 @@ void OptionsDialog::ResetDefault()
 			if (cbx->GetWindowStyle() & HIKARI_COMBO_BOX){
 				cbx->SetValue(Options.GetString(OB.option));
 			}
-			else if (cbx->GetId() != ID_HIKARI_CHOICE){
-				cbx->SetSelection(Options.GetInt(OB.option));
-			}//dictionary language            vobsub                   program language dont change that
-			else if (cbx->GetId() != ID_DICTIONARY_LANGUAGE || cbx->GetId() != ID_VSFILTER_PROVIDER || cbx->GetId() != ID_PROGRAM_LANGUAGE){
-				cbx->SetSelection(cbx->FindString(Options.GetString(OB.option)));
+			else if (cbx->GetId() == ID_HIKARI_CHOICE){
+				SetChoiceIndex(cbx, OB.option);
+			}
+			else{
+				// named entries, looked up the way the constructor does
+				wxString name = Options.GetString(OB.option);
+				if (cbx->GetId() == ID_PROGRAM_LANGUAGE || cbx->GetId() == ID_DICTIONARY_LANGUAGE)
+					name = Options.FindLanguage(name);
+				int sel = cbx->FindString(name);
+				if (sel < 0 && cbx->GetId() == ID_CONVERSION_STYLE_CATALOG)
+					sel = cbx->FindString(Options.actualStyleDir);
+				// a missing dictionary stays unselected, as in the constructor
+				if (cbx->GetId() != ID_DICTIONARY_LANGUAGE)
+					sel = MAX(0, sel);
+				cbx->SetSelection(sel);
 			}
 		}
 		else if (OB.ctrl->IsKindOf(CLASSINFO(FontPickerButton))){
@@ -1349,13 +1370,22 @@ void OptionsDialog::ResetDefault()
 			fpc->ChangeFont(font);
 		}
 		else if (OB.ctrl->IsKindOf(CLASSINFO(HikariTextCtrl))){
-			if (OB.ctrl->GetId() != ID_NUMBER_CONTROL){
+			if (OB.ctrl->GetId() == ID_VIDEO_ZOOM_PERCENT){
+				int percent = Options.GetInt(OB.option);
+				if (percent < 100 || percent > 1100)
+					percent = 200;
+				((NumCtrl*)OB.ctrl)->SetInt(percent);
+			}
+			else if (OB.ctrl->GetId() != ID_NUMBER_CONTROL){
 				HikariTextCtrl *sc = (HikariTextCtrl*)OB.ctrl;
 				sc->SetValue(Options.GetString(OB.option));
 			}
 			else{
 				NumCtrl *sc = (NumCtrl*)OB.ctrl;
-				sc->SetInt(Options.GetInt(OB.option));
+				int value = Options.GetInt(OB.option);
+				if (OB.option == TAB_TEXT_MAX_CHARS && !value)
+					value = 40;
+				sc->SetInt(value);
 			}
 		}
 	}
