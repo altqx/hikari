@@ -20,10 +20,11 @@ Window {
     required property ColourPickerController colourPicker
     required property var app
     title: qsTr("Style manager")
-    // Tall enough for the editor and its preview above the buttons; a
+    // Tall enough for the editor and its preview above the buttons, within
+    // the screen's free area (1280 x 800 at 150 % leaves 853 x 533); a
     // shorter window scrolls the editor.
-    width: 1000
-    height: 810
+    width: Math.min(1000, Screen.width - 24, Screen.desktopAvailableWidth - 24)
+    height: Math.min(810, Screen.height - 48, Screen.desktopAvailableHeight - 48)
     flags: Qt.Dialog
 
     property var storeSelected: []
@@ -179,24 +180,11 @@ Window {
         onRejected: done(false)
     }
 
-    // Legacy's labelled boxes (StyleChange.cpp:171-205): each
-    // field under its label, the boxes on the groups' edges.
-    component LabelledField: ColumnLayout {
-        id: labelled
-        property string label
-        property alias field: input
-        property alias text: input.text
-        property int fieldWidth: 72
-        signal edited()
-        spacing: 2
-        Label { text: labelled.label }
-        TextField {
-            id: input
-            Layout.fillWidth: true
-            Layout.preferredWidth: labelled.fieldWidth
-            Accessible.name: labelled.label
-            onTextEdited: labelled.edited()
-        }
+    // A field of the Style editor's geometry grid, as wide as its column
+    // and no narrower than 40 pixels.
+    component StyleField: TextField {
+        Layout.fillWidth: true
+        Layout.minimumWidth: 40
     }
     component StyleList: ListView {
         id: list
@@ -288,6 +276,9 @@ Window {
                 title: qsTr("Styles stored:")
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                // The two lists share the height evenly, whatever their
+                // commands' columns take.
+                Layout.preferredHeight: 0
                 RowLayout {
                     anchors.fill: parent
                     StyleList {
@@ -303,9 +294,12 @@ Window {
                     }
                     // The list's commands, an icon-only column of 22-pixel
                     // buttons (legacy's text buttons and arrow bitmaps): the
-                    // name in the tooltip and as the accessible name.
-                    ColumnLayout {
-                        Layout.alignment: Qt.AlignTop
+                    // name in the tooltip and as the accessible name. A list
+                    // shorter than them (a small screen) wraps them into a
+                    // second column.
+                    Flow {
+                        flow: Flow.TopToBottom
+                        Layout.fillHeight: true
                         spacing: 0
                         IconToolButton { padding: 3; objectName: "storeNew"; iconRole: "add"; text: qsTr("New"); tip: qsTr("Create new style in storage"); onClicked: manager.beginEditing(manager.styles.beginNew(true), true) }
                         IconToolButton { padding: 3; objectName: "storeCopy"; iconRole: "duplicate"; text: qsTr("Copy"); tip: qsTr("Copy the selected style"); enabled: manager.storeSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginCopy(true, manager.storeSelected[0]), true) }
@@ -313,7 +307,7 @@ Window {
                         IconToolButton { padding: 3; iconRole: "import"; text: qsTr("Load"); tip: qsTr("Load style from external ASS file to storage"); onClicked: { loadDialog.toStore = true; loadDialog.open() } }
                         IconToolButton { padding: 3; objectName: "storeDelete"; iconRole: "delete"; text: qsTr("Delete"); tip: qsTr("Delete the selected styles"); enabled: manager.storeSelected.length > 0; onClicked: manager.storeSelected = manager.styles.removeStyles(true, manager.storeSelected) }
                         IconToolButton { padding: 3; iconRole: "sort"; text: qsTr("Sort"); tip: qsTr("Sort the styles by name"); onClicked: { manager.styles.sortStyles(true); manager.storeSelected = [0] } }
-                        ToolSeparator { orientation: Qt.Horizontal; Layout.preferredWidth: 22; padding: 0 }
+                        ToolSeparator { orientation: Qt.Horizontal; width: 22; padding: 0 }
                         IconToolButton { padding: 3; iconRole: "move-to-top"; text: qsTr("Move selected styles to beginning"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 0) }
                         IconToolButton { padding: 3; iconRole: "move-up"; text: qsTr("Move selected styles up"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 1) }
                         IconToolButton { padding: 3; iconRole: "move-down"; text: qsTr("Move selected styles down"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 2) }
@@ -368,6 +362,7 @@ Window {
                 title: qsTr("Styles in ASS file:")
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.preferredHeight: 0 // as the stored styles'
                 enabled: manager.styles.available
                 RowLayout {
                     anchors.fill: parent
@@ -382,8 +377,9 @@ Window {
                         onPicked: (rows) => manager.assSelected = rows
                         onEdit: manager.beginEditing(manager.styles.beginEdit(false, manager.assSelected[0]), false)
                     }
-                    ColumnLayout {
-                        Layout.alignment: Qt.AlignTop
+                    Flow { // as the stored styles' commands
+                        flow: Flow.TopToBottom
+                        Layout.fillHeight: true
                         spacing: 0
                         IconToolButton { padding: 3; objectName: "assNew"; iconRole: "add"; text: qsTr("New"); tip: qsTr("Create new ASS style"); onClicked: manager.beginEditing(manager.styles.beginNew(false), false) }
                         IconToolButton { padding: 3; objectName: "assCopy"; iconRole: "duplicate"; text: qsTr("Copy"); tip: qsTr("Copy the selected style"); enabled: manager.assSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginCopy(false, manager.assSelected[0]), false) }
@@ -399,7 +395,7 @@ Window {
                             tip: qsTr("Delete unused ASS styles")
                             onClicked: { message.title = qsTr("Status of deleted styles"); message.text = manager.styles.cleanStyles(); message.open() }
                         }
-                        ToolSeparator { orientation: Qt.Horizontal; Layout.preferredWidth: 22; padding: 0 }
+                        ToolSeparator { orientation: Qt.Horizontal; width: 22; padding: 0 }
                         IconToolButton { padding: 3; iconRole: "move-to-top"; text: qsTr("Move selected styles to beginning"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 0) }
                         IconToolButton { padding: 3; iconRole: "move-up"; text: qsTr("Move selected styles up"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 1) }
                         IconToolButton { padding: 3; iconRole: "move-down"; text: qsTr("Move selected styles down"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 2) }
@@ -418,11 +414,20 @@ Window {
             visible: manager.editing
             ScrollView {
                 id: editorScroll
+                objectName: "styleEditorScroll"
                 Layout.fillWidth: true
                 Layout.minimumWidth: 0
                 Layout.preferredWidth: 0
                 Layout.fillHeight: true
-                contentWidth: availableWidth - (ScrollBar.vertical.visible ? ScrollBar.vertical.width + 2 : 0)
+                // As wide as the view, or the geometry grid's narrowest
+                // (a screen narrower than 1280 x 800 at 150 % scrolls it).
+                // The grid reports it once measured (a layout measures
+                // itself while laid out: read in this binding, it loops).
+                property real narrowest: 0
+                contentWidth: Math.max(narrowest, availableWidth - (ScrollBar.vertical.visible ? ScrollBar.vertical.width + 2 : 0))
+                // Its width is the layout's, never its content's: a view sized
+                // by what it scrolls would loop through contentWidth.
+                implicitWidth: 0
                 ScrollBar.vertical.policy: contentHeight > availableHeight ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
                 ColumnLayout {
                     id: editor
@@ -522,10 +527,15 @@ Window {
                             }
                         }
                     }
+                    // Legacy's kolgrid (StyleChange.cpp:146-171): each colour's
+                    // name, button and transparency in a column, the columns as
+                    // wide as the geometry's below so the two boxes line up.
                     GroupBox {
                         title: qsTr("Colors and transparency:")
                         Layout.fillWidth: true
-                        RowLayout {
+                        GridLayout {
+                            columns: 4
+                            columnSpacing: geometry.columnSpacing
                             Repeater {
                                 id: colours
                                 model: [qsTr("First"), qsTr("Second"), qsTr("Border"), qsTr("Shadow")]
@@ -541,13 +551,14 @@ Window {
                                         colour = c
                                         buttonAlpha = c.a
                                     }
+                                    Layout.preferredWidth: geometry.columnWidth(index)
                                     // The colour's name above its swatch (a label drawn on the
                                     // swatch was unreadable on light or dark colours).
                                     Label { text: modelData }
                                     Button {
                                         objectName: "styleColour" + (index + 1)
                                         Accessible.name: modelData
-                                        implicitWidth: 56
+                                        Layout.fillWidth: true
                                         implicitHeight: 24
                                         ToolTip.visible: hovered
                                         ToolTip.text: modelData
@@ -565,6 +576,8 @@ Window {
                                     }
                                     SpinBox {
                                         objectName: "styleAlpha" + (index + 1)
+                                        Layout.fillWidth: true
+                                        Layout.preferredWidth: 0
                                         from: 0; to: 255; editable: true
                                         value: colour.a
                                         Accessible.name: modelData + " " + qsTr("transparency")
@@ -574,66 +587,85 @@ Window {
                             }
                         }
                     }
-                    Frame {
+                    // Legacy's labelled boxes and Alignment (StyleChange.cpp:173-252)
+                    // as one grid: each field under its label, four columns
+                    // (Border, Shadow, Scale X, Scale Y; Angle, Spacing, Border
+                    // type; the margins), Alignment in the fourth beside Angle
+                    // and the margins. The columns share the width evenly and
+                    // narrow together, down to what the box and the radios take.
+                    GroupBox {
+                        id: geometryBox
                         Layout.fillWidth: true
-                        RowLayout {
-                            anchors.fill: parent
-                            spacing: 8
-                            LabelledField { id: outlineField; Layout.fillWidth: true; label: qsTr("Border:"); onEdited: manager.updatePreview() }
-                            LabelledField { id: shadowField; Layout.fillWidth: true; label: qsTr("Shadow:"); onEdited: manager.updatePreview() }
-                            LabelledField { id: scaleXField; Layout.fillWidth: true; label: qsTr("Scale X:"); onEdited: manager.updatePreview() }
-                            LabelledField { id: scaleYField; Layout.fillWidth: true; label: qsTr("Scale Y:"); onEdited: manager.updatePreview() }
-                        }
-                    }
-                    RowLayout {
-                        Layout.fillWidth: true
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignTop
-                            Frame {
-                                Layout.fillWidth: true
-                                RowLayout {
-                                    anchors.fill: parent
-                                    spacing: 8
-                                    LabelledField { id: angleField; Layout.fillWidth: true; label: qsTr("Angle:"); onEdited: manager.updatePreview() }
-                                    LabelledField { id: spacingField; Layout.fillWidth: true; label: qsTr("Spacing:"); onEdited: manager.updatePreview() }
-                                    ColumnLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 2
-                                        Label { text: qsTr("Border type:") }
-                                        CheckBox {
-                                            id: borderBox
-                                            text: qsTr("Opaque box")
-                                            Layout.preferredHeight: angleField.field.implicitHeight
-                                            onToggled: manager.updatePreview()
-                                        }
-                                    }
-                                }
+                        GridLayout {
+                            id: geometry
+                            objectName: "styleGeometry"
+                            width: parent.width
+                            // An even share of the width for each column, while
+                            // their labels, the box and the radios fit in it.
+                            readonly property real cellWidth: (width - 3 * columnSpacing) / 4
+                            // After the layout pass that measured it.
+                            onImplicitWidthChanged: Qt.callLater(() => editorScroll.narrowest = Layout.minimumWidth + geometryBox.leftPadding + geometryBox.rightPadding)
+                            columns: 4
+                            columnSpacing: 8
+                            rowSpacing: 2
+                            // Column i's width, from its first row's field.
+                            function columnWidth(i) {
+                                return [outlineField, shadowField, scaleXField, scaleYField][i].width
                             }
-                            Frame {
+                            Label { Layout.row: 0; Layout.column: 0; text: qsTr("Border:") }
+                            Label { Layout.row: 0; Layout.column: 1; text: qsTr("Shadow:") }
+                            Label { Layout.row: 0; Layout.column: 2; text: qsTr("Scale X:") }
+                            Label { Layout.row: 0; Layout.column: 3; text: qsTr("Scale Y:") }
+                            StyleField { id: outlineField; objectName: "styleOutline"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 1; Layout.column: 0; Accessible.name: qsTr("Border:"); onTextEdited: manager.updatePreview() }
+                            StyleField { id: shadowField; objectName: "styleShadow"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 1; Layout.column: 1; Accessible.name: qsTr("Shadow:"); onTextEdited: manager.updatePreview() }
+                            StyleField { id: scaleXField; objectName: "styleScaleX"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 1; Layout.column: 2; Accessible.name: qsTr("Scale X:"); onTextEdited: manager.updatePreview() }
+                            StyleField { id: scaleYField; objectName: "styleScaleY"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 1; Layout.column: 3; Accessible.name: qsTr("Scale Y:"); onTextEdited: manager.updatePreview() }
+                            Label { Layout.row: 2; Layout.column: 0; Layout.topMargin: 6; text: qsTr("Angle:") }
+                            Label { Layout.row: 2; Layout.column: 1; Layout.topMargin: 6; text: qsTr("Spacing:") }
+                            Label { Layout.row: 2; Layout.column: 2; Layout.topMargin: 6; text: qsTr("Border type:") }
+                            Label { Layout.row: 2; Layout.column: 3; Layout.topMargin: 6; text: qsTr("Alignment:") }
+                            StyleField { id: angleField; objectName: "styleAngle"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 3; Layout.column: 0; Accessible.name: qsTr("Angle:"); onTextEdited: manager.updatePreview() }
+                            StyleField { id: spacingField; objectName: "styleSpacing"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 3; Layout.column: 1; Accessible.name: qsTr("Spacing:"); onTextEdited: manager.updatePreview() }
+                            CheckBox {
+                                id: borderBox
+                                objectName: "styleOpaqueBox"
+                                Layout.row: 3; Layout.column: 2
+                                Layout.minimumWidth: implicitWidth
                                 Layout.fillWidth: true
-                                RowLayout {
-                                    anchors.fill: parent
-                                    spacing: 8
-                                    LabelledField { id: marginLeft; Layout.fillWidth: true; label: qsTr("Left margin:") }
-                                    LabelledField { id: marginRight; Layout.fillWidth: true; label: qsTr("Right:") }
-                                    LabelledField { id: marginVertical; Layout.fillWidth: true; label: qsTr("Vertical:") }
-                                }
+                                Layout.preferredWidth: geometry.cellWidth
+                                text: qsTr("Opaque box")
+                                onToggled: manager.updatePreview()
                             }
-                        }
-                        GroupBox {
-                            title: qsTr("Alignment:")
-                            Layout.alignment: Qt.AlignTop
-                            Layout.fillHeight: true
                             GridLayout {
+                                objectName: "styleAlignment"
+                                Layout.row: 3; Layout.column: 3; Layout.rowSpan: 3
+                                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                                Layout.minimumWidth: implicitWidth
                                 columns: 3
+                                columnSpacing: 0
+                                rowSpacing: 0
                                 ButtonGroup { id: alignmentGroup }
                                 Repeater {
                                     id: alignments
                                     model: ["7", "8", "9", "4", "5", "6", "1", "2", "3"]
-                                    RadioButton { required property string modelData; text: modelData; ButtonGroup.group: alignmentGroup; onToggled: manager.updatePreview() }
+                                    RadioButton {
+                                        required property string modelData
+                                        // Legacy's 2-pixel border (angrid): the three
+                                        // fit a narrow column.
+                                        leftPadding: 2
+                                        rightPadding: 6
+                                        text: modelData
+                                        ButtonGroup.group: alignmentGroup
+                                        onToggled: manager.updatePreview()
+                                    }
                                 }
                             }
+                            Label { Layout.row: 4; Layout.column: 0; Layout.topMargin: 6; text: qsTr("Left margin:") }
+                            Label { Layout.row: 4; Layout.column: 1; Layout.topMargin: 6; text: qsTr("Right:") }
+                            Label { Layout.row: 4; Layout.column: 2; Layout.topMargin: 6; text: qsTr("Vertical:") }
+                            StyleField { id: marginLeft; objectName: "styleMarginLeft"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 0; Accessible.name: qsTr("Left margin:") }
+                            StyleField { id: marginRight; objectName: "styleMarginRight"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 1; Accessible.name: qsTr("Right:") }
+                            StyleField { id: marginVertical; objectName: "styleMarginVertical"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 2; Accessible.name: qsTr("Vertical:") }
                         }
                     }
                     GroupBox {

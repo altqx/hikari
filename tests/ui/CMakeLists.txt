@@ -42,6 +42,19 @@ foreach(mode offscreen xvfb)
         set_tests_properties(hikari_ui_shell_tests.${mode} PROPERTIES TIMEOUT 900)
     endif()
 endforeach()
+# The Style manager and editor on a 1280 x 800 screen at 100 % and 150 %
+# (the offscreen platform's screen from a file, so Linux only).
+if(NOT WIN32)
+    foreach(scale 100 150)
+        math(EXPR whole "${scale} / 100")
+        math(EXPR part "${scale} % 100")
+        add_test(NAME hikari_ui_shell_tests.screen1280scale${scale}
+            COMMAND $<TARGET_FILE:hikari_ui_shell_tests> styleEditorFitsTheScreen)
+        set_tests_properties(hikari_ui_shell_tests.screen1280scale${scale} PROPERTIES
+            ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=${CMAKE_CURRENT_SOURCE_DIR}/screen-1280x800.json;QT_SCALE_FACTOR=${whole}.${part}"
+            LABELS "qttest;offscreen" TIMEOUT 120)
+    endforeach()
+endif()
 hikari_add_spix_test(hikari_ui_editor_workflow SOURCES editor_workflow.cpp LIBRARIES hikari_composition
     DEFINITIONS HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures")
 # E4: the Line editor's metadata fields in the accessibility tree (E2-a11y)

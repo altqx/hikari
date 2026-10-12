@@ -1996,6 +1996,146 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(window, "closeManager"));
     }
 
+    // The Style manager fits the screen's free area, and the Style editor's
+    // geometry is one grid: each label over its field, the colours' columns
+    // over the geometry's, no control cut off or past the editor's right
+    // edge, the closing row inside the window. Also registered on a
+    // 1280 x 800 screen at 100 % and 150 % (CMakeLists.txt); the default
+    // offscreen screen is 800 x 600.
+    void styleEditorFitsTheScreen()
+    {
+        QVERIFY(application->openFile(fontAss("style-fit.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
+        auto *root = engine->rootObjects().first();
+        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        QVERIFY(QTest::qWaitForWindowExposed(manager));
+        const QRect available = manager->screen()->availableGeometry();
+        QVERIFY2(manager->width() <= available.width() && manager->height() <= available.height(),
+                 qPrintable(QStringLiteral("%1x%2 in %3x%4").arg(manager->width()).arg(manager->height())
+                                .arg(available.width()).arg(available.height())));
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *content = manager->contentItem();
+        auto *scroll = findItem(content, QStringLiteral("styleEditorScroll"));
+        auto *editor = findItem(content, QStringLiteral("styleEditor"));
+        QVERIFY(scroll && editor);
+        QTRY_VERIFY(editor->isVisible() && editor->width() > 0);
+        QTest::qWait(50); // the layouts settle
+
+        // Nothing past the editor's right edge, and no check box, radio
+        // button or label narrower than its text. A screen narrower than
+        // 1280 x 800 at 150 % (853 pixels) scrolls the editor sideways, its
+        // bar shown; a wider one does not.
+        const qreal right = scroll->property("contentWidth").toReal();
+        const qreal view = scroll->property("availableWidth").toReal();
+        QQuickItem *sideways = nullptr;
+        for (QQuickItem *bar : scroll->findChildren<QQuickItem *>())
+            if (bar->inherits("QQuickScrollBar") && bar->property("orientation").toInt() == Qt::Horizontal)
+                sideways = bar;
+        QVERIFY(sideways);
+        if (manager->screen()->geometry().width() >= 853)
+            QVERIFY2(right <= view + 0.5, qPrintable(QStringLiteral("%1 in %2").arg(right).arg(view)));
+        else if (right > view + 0.5)
+            QTRY_VERIFY(sideways->isVisible() && sideways->property("size").toReal() < 1);
+        std::function<void(QQuickItem *)> check = [&](QQuickItem *item) {
+            for (QQuickItem *child : item->childItems()) {
+                if (!child->isVisible())
+                    continue;
+                const QString type = QString::fromLatin1(child->metaObject()->className());
+                const bool control = child->inherits("QQuickControl") || child->inherits("QQuickText");
+                if (control && child->width() > 0) {
+                    const QRectF r = child->mapRectToItem(editor, QRectF(0, 0, child->width(), child->height()));
+                    QVERIFY2(r.left() >= -0.5 && r.right() <= right + 0.5,
+                             qPrintable(QStringLiteral("%1 \"%2\" at %3..%4 of %5").arg(type, child->property("text").toString())
+                                            .arg(r.left()).arg(r.right()).arg(right)));
+                    if (child->inherits("QQuickCheckBox") || child->inherits("QQuickRadioButton")
+                        || (child->inherits("QQuickLabel") && !child->property("text").toString().isEmpty()))
+                        QVERIFY2(child->width() >= child->implicitWidth() - 0.5,
+                                 qPrintable(QStringLiteral("%1 \"%2\" %3 of %4").arg(type, child->property("text").toString())
+                                                .arg(child->width()).arg(child->implicitWidth())));
+                }
+                if (!child->inherits("QQuickControl") || child->inherits("QQuickPane") || child->inherits("QQuickGroupBox"))
+                    check(child);
+            }
+        };
+        check(editor);
+        if (QTest::currentTestFailed())
+            return;
+
+        // The geometry grid: every label over the field or box below it, and
+        // the colour columns over the geometry's.
+        const auto at = [&](const char *name) {
+            auto *item = findItem(editor, QLatin1String(name));
+            return item ? item->mapRectToItem(editor, QRectF(0, 0, item->width(), item->height())) : QRectF();
+        };
+        const QList<const char *> columns{"styleOutline", "styleShadow", "styleScaleX", "styleScaleY"};
+        const QList<QList<const char *>> below{{"styleAngle", "styleMarginLeft"}, {"styleSpacing", "styleMarginRight"},
+                                               {"styleOpaqueBox", "styleMarginVertical"}, {"styleAlignment"}};
+        for (int c = 0; c < 4; ++c) {
+            const QRectF top = at(columns[c]);
+            QVERIFY2(top.width() > 0, columns[c]);
+            for (const char *name : below[c])
+                QCOMPARE(at(name).left(), top.left());
+            const QRectF colour = at(qPrintable(QStringLiteral("styleColour%1").arg(c + 1)));
+            QCOMPARE(colour.left(), top.left());
+            if (c < 3)
+                QCOMPARE(colour.width(), top.width());
+        }
+        auto *geometry = findItem(editor, QStringLiteral("styleGeometry"));
+        QVERIFY(geometry);
+        for (QQuickItem *label : geometry->childItems()) {
+            if (!label->inherits("QQuickLabel"))
+                continue;
+            const QRectF l = label->mapRectToItem(editor, QRectF(0, 0, label->width(), label->height()));
+            bool over = false;
+            for (QQuickItem *field : geometry->childItems())
+                if (!field->inherits("QQuickLabel") && field->isVisible()) {
+                    const QRectF f = field->mapRectToItem(editor, QRectF(0, 0, field->width(), field->height()));
+                    over |= qAbs(f.left() - l.left()) < 0.5 && f.top() >= l.bottom() - 0.5 && f.top() - l.bottom() < 8;
+                }
+            QVERIFY2(over, qPrintable(label->property("text").toString()));
+        }
+
+        // The lists' commands beside the editor above the closing row (they
+        // wrap into a second column in a short window), each inside its box.
+        auto *closeButton = findItem(content, QStringLiteral("styleManagerClose"));
+        auto *footer = closeButton->parentItem();
+        while (footer && !footer->inherits("QQuickDialogButtonBox"))
+            footer = footer->parentItem();
+        QVERIFY(footer);
+        const qreal footerTop = footer->mapToItem(content, QPointF()).y();
+        std::function<void(QQuickItem *, QQuickItem *)> inBox = [&](QQuickItem *item, QQuickItem *box) {
+            for (QQuickItem *child : item->childItems()) {
+                if (!child->isVisible() || child == scroll || child == footer)
+                    continue;
+                QQuickItem *within = child->inherits("QQuickGroupBox") ? child : box;
+                if (child->inherits("QQuickAbstractButton")) {
+                    const QRectF r = child->mapRectToItem(content, QRectF(0, 0, child->width(), child->height()));
+                    const QRectF b = within ? within->mapRectToItem(content, QRectF(0, 0, within->width(), within->height()))
+                                            : QRectF(0, 0, manager->width(), footerTop);
+                    QVERIFY2(b.adjusted(-0.5, -0.5, 0.5, 0.5).contains(r) && r.bottom() <= footerTop + 0.5,
+                             qPrintable(QStringLiteral("%1 \"%2\" at %3,%4 %5x%6").arg(QString::fromLatin1(child->metaObject()->className()),
+                                            child->property("text").toString()).arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height())));
+                }
+                inBox(child, within);
+            }
+        };
+        inBox(content, nullptr);
+        if (QTest::currentTestFailed())
+            return;
+
+        // The closing row in the window.
+        for (const char *name : {"styleEditorOk", "styleEditorApply", "styleEditorCancel", "styleManagerClose"}) {
+            auto *button = findItem(content, QLatin1String(name));
+            QVERIFY2(button && button->isVisible(), name);
+            const QRectF r = button->mapRectToItem(content, QRectF(0, 0, button->width(), button->height()));
+            QVERIFY2(r.left() >= 0 && r.right() <= manager->width() && r.bottom() <= manager->height(), name);
+        }
+        QVERIFY(!findItem(content, QStringLiteral("styleManagerOk"))->isVisible()); // the editor's OK instead
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+    }
+
     // Y6: the Style editor does not keep its choice within the list
     // (StyleChange.cpp:98-104): SetSelection past the end is ignored, so the
     // choice stays where PutArray(names) moved it before "All fonts" and
