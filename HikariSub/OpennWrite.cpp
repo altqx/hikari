@@ -61,19 +61,21 @@ bool OpenWrite::FileOpen(const wxString &filename, wxString *riddenText, bool te
 	fname.Assign(filename);
 
 	if (!fname.IsFileReadable()){ return false; }
+	//read the bytes in binary mode; a text mode read stops at Ctrl+Z (0x1A) on Windows
+	wxFile filetest;
+	if (!filetest.Open(filename, wxFile::read, wxS_DEFAULT)) { return false; }
+	wxFileOffset fileLength = filetest.Length();
+	if (fileLength < 0 || static_cast<unsigned long long>(fileLength) >
+		static_cast<unsigned long long>(std::numeric_limits<size_t>::max())) {
+		return false;
+	}
+	std::vector<char> buff(static_cast<size_t>(fileLength));
+	if (!buff.empty() && filetest.Read(buff.data(), buff.size()) != buff.size()) {
+		return false;
+	}
+	filetest.Close();
+	if (buff.empty()) { riddenText->clear(); return false; }
 	if (test){
-		wxFile filetest;
-		if (!filetest.Open(filename, wxFile::read, wxS_DEFAULT)) { return false; }
-		wxFileOffset fileLength = filetest.Length();
-		if (fileLength < 0 || static_cast<unsigned long long>(fileLength) >
-			static_cast<unsigned long long>(std::numeric_limits<size_t>::max())) {
-			return false;
-		}
-		std::vector<char> buff(static_cast<size_t>(fileLength));
-		if (!buff.empty() && filetest.Read(buff.data(), buff.size()) != buff.size()) {
-			return false;
-		}
-
 		utf8 = buff.size() >= 3 && static_cast<unsigned char>(buff[0]) == 0xEF &&
 			static_cast<unsigned char>(buff[1]) == 0xBB &&
 			static_cast<unsigned char>(buff[2]) == 0xBF;
@@ -87,26 +89,20 @@ bool OpenWrite::FileOpen(const wxString &filename, wxString *riddenText, bool te
 				}
 			}
 		}
-		filetest.Close();
 	}
-	wxFFile fileo;
-	fileo.Open(filename, L"r");
-	if (fileo.IsOpened()){
-		wxCSConv convl = wxConvLocal;
-		if (utf8){
-			fileo.ReadAll(riddenText);
-		}
-		else{ fileo.ReadAll(riddenText, conv? *conv : convl); }
-		fileo.Close();
-		if (conv)
-			delete conv;
-		if (riddenText->empty()) return false;
-		return true;
+	wxCSConv convl = wxConvLocal;
+	if (utf8){
+		*riddenText = wxString(buff.data(), wxConvAuto(), buff.size());
 	}
+	else{ *riddenText = wxString(buff.data(), conv ? *conv : convl, buff.size()); }
 	if (conv)
 		delete conv;
-
-	return false;
+#ifdef _WIN32
+	//the text mode read this replaces turned CRLF into LF
+	riddenText->Replace(L"\r\n", L"\n");
+#endif
+	if (riddenText->empty()) return false;
+	return true;
 }
 
 void OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bool utf)
