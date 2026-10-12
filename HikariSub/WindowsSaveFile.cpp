@@ -1054,7 +1054,9 @@ FILE *OpenPrivateFileOnWindows(const std::wstring &path)
 	//A file left at the name, or a link, which DeleteFileW removes and does
 	//not follow, is removed; the file is then made anew with MakeFile, which
 	//fails on a name taken again meanwhile. A file that is still open
-	//without sharing deletes, or a folder at the name, is not opened.
+	//without sharing deletes, or a folder at the name, is not opened and is
+	//left there; a caller then makes no file, see OpenPrivateFile. A file
+	//that is made but cannot be opened as a stream is deleted again.
 	::DeleteFileW(path.c_str());
 	HANDLE handle = MakeFile(path, FILE_SHARE_READ | FILE_SHARE_WRITE, FileAccess::Private,
 		std::vector<unsigned char>());
@@ -1066,7 +1068,11 @@ FILE *OpenPrivateFileOnWindows(const std::wstring &path)
 		return nullptr;
 	}
 	FILE *file = _fdopen(fd, "w+b");
-	if (!file) { _close(fd); }
+	if (!file) {
+		//the fd owns the handle, which is still open until _close
+		DeleteByHandle(handle);
+		_close(fd);
+	}
 	return file;
 }
 
