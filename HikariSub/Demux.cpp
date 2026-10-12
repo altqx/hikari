@@ -287,14 +287,15 @@ int __stdcall Demux::GetSubtitles(int64_t Start, int64_t Duration, int64_t Total
 		// Get layer number
 		pos = blockString.Find(L",");
 		long int layer = 0;
-		if (pos) {
+		if (pos != wxNOT_FOUND) {
 			wxString layerString = blockString.Left(pos);
 			layerString.ToLong(&layer);
 			blockString = blockString.Mid(pos + 1);
 		}
 		if (blockString == emptyString) { blockString << L"Default,,0000,0000,0000,,"; }
 		// Assemble final
-		if (!blockString.StartsWith(L",")) { blockString.Prepend(L","); }
+		// the Style that follows may be empty, so always prepend the separator
+		blockString.Prepend(L",");
 		blockString = wxString::Format(L"Dialogue: %li,", layer) + subStart.raw() +
 			L"," + subEnd.raw() + blockString;
 
