@@ -96,6 +96,9 @@ class LineEditorController : public QObject {
     // video was opened (Notebook::LoadVideo), as legacy enables it.
     Q_PROPERTY(bool framesAvailable READ framesAvailable NOTIFY changed)
     Q_PROPERTY(bool showFrames READ showFrames WRITE setShowFrames NOTIFY changed)
+    // The time fields' form (application::TimeFieldForm: 0 ASS, 1 SRT,
+    // 2 TMPlayer, 3 a number), which TimeField.qml masks its editing to.
+    Q_PROPERTY(int timeForm READ timeForm NOTIFY changed)
     // E5: the active Line's Unconfirmed (legacy DoubtfulTL->SetValue in
     // SetLine) and the "Moving tags" toggle (AUTO_MOVE_TAGS_FROM_ORIGINAL).
     Q_PROPERTY(bool unconfirmed READ unconfirmed NOTIFY changed)
@@ -146,6 +149,7 @@ public:
     void setShowFramesSetting(bool on, std::function<void(bool)> store);
     bool assFields() const;
     bool hasEnd() const;
+    int timeForm() const;
     bool comment() const;
     QString layerText() const;
     QString durationText() const;

@@ -153,6 +153,8 @@ std::optional<TypedTime> typedTime(std::u8string_view text, TimeFieldRole role, 
                                    const std::optional<core::FrameRate> &microDvdRate, const LegacyTimebase *frames)
 {
     TypedTime out;
+    if (text.empty() && timeFieldForm(format, frames) == TimeFieldForm::Number)
+        text = u8"0"; // SubsTime::ParseMS (SubsTime.cpp:48): an empty field is 0
     if (exact(frames)) {
         // TimeCtrl::GetTime (TimeCtrl.cpp:268-286): the frame's time, ZEROIT.
         const auto frame = digits(text);
@@ -220,6 +222,134 @@ std::int64_t fieldPrecisionTime(core::SubtitleFormat format, std::int64_t ms)
         return static_cast<std::int64_t>(std::ceil(static_cast<float>(ms) * (10.0f / 1000.0f))) * 100;
     default: return ms;
     }
+}
+
+TimeFieldForm timeFieldForm(core::SubtitleFormat format, const LegacyTimebase *frames)
+{
+    if (exact(frames))
+        return TimeFieldForm::Number;
+    switch (format) {
+    case core::SubtitleFormat::Srt: return TimeFieldForm::Srt;
+    case core::SubtitleFormat::TMPlayer: return TimeFieldForm::TMPlayer;
+    case core::SubtitleFormat::MicroDvd:
+    case core::SubtitleFormat::Mpl2: return TimeFieldForm::Number;
+    default: return TimeFieldForm::Ass;
+    }
+}
+
+namespace {
+
+bool isDigit(char16_t c)
+{
+    return c >= u'0' && c <= u'9';
+}
+
+bool isSeparator(char16_t c)
+{
+    return c == u':' || c == u'.' || c == u',';
+}
+
+TimeFieldEdit refused(const TimeFieldState &field)
+{
+    return TimeFieldEdit{field, false, true};
+}
+
+TimeFieldEdit edited(std::u16string text, std::size_t start, std::size_t end)
+{
+    return TimeFieldEdit{TimeFieldState{std::move(text), start, end}, true, false};
+}
+
+// The selection in order and within the text.
+std::pair<std::size_t, std::size_t> span(const TimeFieldState &field)
+{
+    const std::size_t n = field.text.size();
+    const std::size_t a = std::min(field.selectionStart, n), b = std::min(field.selectionEnd, n);
+    return {std::min(a, b), std::max(a, b)};
+}
+
+// The number forms: the selection replaced, at most kTimeFieldDigits.
+TimeFieldEdit replaceInNumber(const TimeFieldState &field, std::u16string_view digits, bool cut)
+{
+    const auto [from, to] = span(field);
+    const std::size_t kept = field.text.size() - (to - from);
+    if (kept >= kTimeFieldDigits || (!cut && kept + digits.size() > kTimeFieldDigits))
+        return refused(field);
+    digits = digits.substr(0, kTimeFieldDigits - kept);
+    std::u16string text = field.text.substr(0, from);
+    text += digits;
+    text += field.text.substr(to);
+    return edited(std::move(text), from + digits.size(), from + digits.size());
+}
+
+} // namespace
+
+TimeFieldEdit typeIntoTimeField(TimeFieldForm form, const TimeFieldState &field, char16_t c)
+{
+    if (!isDigit(c))
+        return refused(field);
+    if (form == TimeFieldForm::Number)
+        return replaceInNumber(field, std::u16string_view(&c, 1), false);
+    auto [from, to] = span(field);
+    std::u16string txt = field.text;
+    if (from != to) // OnKeyEvent: the selected digits become 0, the caret goes to their start
+        for (std::size_t i = from; i < to; ++i)
+            if (isDigit(txt[i]))
+                txt[i] = u'0';
+    if (from >= txt.size())
+        return refused(field);
+    // HikariTextCtrl inserts the digit at the caret, then OnTimeWrite takes
+    // out the character after it, or moves the digit past a separator in
+    // place of the digit after that one.
+    std::size_t caret = from + 1;
+    if (isSeparator(txt[from])) {
+        txt[from + 1] = c;
+        ++caret;
+    } else {
+        txt[from] = c;
+    }
+    if (caret > 1 && txt[caret - 2] == u':' && txt[caret - 1] > u'5')
+        txt[caret - 1] = u'5';
+    return edited(std::move(txt), caret, caret);
+}
+
+TimeFieldEdit backspaceTimeField(const TimeFieldState &field)
+{
+    auto [from, to] = span(field);
+    if (from == to) {
+        if (from == 0)
+            return TimeFieldEdit{field, false, false};
+        --from;
+    }
+    std::u16string txt = field.text;
+    for (std::size_t i = from; i < to; ++i)
+        if (!isSeparator(txt[i]))
+            txt[i] = u'0';
+    if (from > 0 && isSeparator(txt[from - 1]))
+        --from;
+    const bool changed = txt != field.text; // over a separator only the caret moves
+    return TimeFieldEdit{TimeFieldState{std::move(txt), from, from}, changed, false};
+}
+
+TimeFieldEdit pasteIntoTimeField(TimeFieldForm form, const TimeFieldState &field, std::u16string_view pasted)
+{
+    if (form == TimeFieldForm::Number) {
+        if (pasted.empty() || !std::all_of(pasted.begin(), pasted.end(), isDigit))
+            return refused(field);
+        return replaceInNumber(field, pasted, true);
+    }
+    // The format's regex (TimeCtrl.cpp:89-91): digit and separator positions,
+    // the minutes' and seconds' tens at most 5.
+    const std::u16string_view mask = form == TimeFieldForm::Ass   ? u"0:50:50.00"
+                                     : form == TimeFieldForm::Srt ? u"00:50:50,000"
+                                                                  : u"00:50:50";
+    if (pasted.size() != mask.size())
+        return refused(field);
+    for (std::size_t i = 0; i < mask.size(); ++i) {
+        const bool digit = mask[i] == u'0' || mask[i] == u'5';
+        if (digit ? !isDigit(pasted[i]) || (mask[i] == u'5' && pasted[i] > u'5') : pasted[i] != mask[i])
+            return refused(field);
+    }
+    return edited(std::u16string(pasted), 0, pasted.size());
 }
 
 std::optional<std::int64_t> layerValue(std::u8string_view text)

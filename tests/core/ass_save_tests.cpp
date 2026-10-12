@@ -377,3 +377,31 @@ TEST(AssSave, ScriptInfoAndStyleEdits)
     ASSERT_TRUE(doc.removeStyle(u8"Default"));
     EXPECT_EQ(text(encodeAss(doc)).find("Style: Default"), std::string::npos);
 }
+
+// E5-tlmode-needs-script-info: a key set on an ASS Document without a Script
+// Info section adds the section at the top (after a byte-order mark), written
+// as legacy's header is (SubsGridBase.cpp:1490-1503) in the source's line
+// ends, with a blank line before the next section; every other byte stays.
+TEST(AssSave, ScriptInfoAddedToADocumentWithoutTheSection)
+{
+    for (const std::string nl : {"\n", "\r\n"}) {
+        const std::string input = "[V4+ Styles]" + nl + "Style: Default,Arial,20" + nl + nl + "[Events]" + nl +
+                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x" + nl;
+        auto doc = loadAss(bytesOf(input)).document;
+        ASSERT_FALSE(doc.scriptInfo(u8"TLMode"));
+        ASSERT_TRUE(doc.setScriptInfo(u8"TLMode", u8"Yes"));
+        ASSERT_TRUE(doc.setScriptInfo(u8"TLMode Style", u8"TLmode"));
+        ASSERT_TRUE(doc.setScriptInfo(u8"TLMode", u8"Yes")); // the same section, replaced in place
+        EXPECT_EQ(doc.scriptInfo(u8"TLMode Style"), u8"TLmode");
+        EXPECT_EQ(doc.sections().front().kind, SectionKind::ScriptInfo);
+        EXPECT_EQ(text(encodeAss(doc)), "[Script Info]" + nl + "TLMode: Yes" + nl + "TLMode Style: TLmode" + nl + nl + input);
+        // Every key removed: the header stays, as legacy writes it on every save.
+        ASSERT_TRUE(doc.removeScriptInfo(u8"TLMode"));
+        ASSERT_TRUE(doc.removeScriptInfo(u8"TLMode Style"));
+        EXPECT_EQ(text(encodeAss(doc)), "[Script Info]" + nl + nl + input);
+    }
+    const std::string bom = "\xEF\xBB\xBF[Events]\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x";
+    auto doc = loadAss(bytesOf(bom)).document;
+    ASSERT_TRUE(doc.setScriptInfo(u8"TLMode", u8"Yes"));
+    EXPECT_EQ(text(encodeAss(doc)), "\xEF\xBB\xBF[Script Info]\r\nTLMode: Yes\r\n\r\n" + bom.substr(3));
+}

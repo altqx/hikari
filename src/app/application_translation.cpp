@@ -59,16 +59,24 @@ bool Application::showOriginal(application::DocumentId document)
 
 bool Application::translatorModeAvailable() const
 {
-    // HikariSubFrame.cpp:2401: editor && form == ASS && SubsPath != "" (the
-    // text formats load as ASS in legacy, here as PlainText).
+    // HikariSubFrame.cpp:2401: editor && form == ASS && SubsPath != "". The
+    // text formats load as ASS in legacy and here as PlainText, which has no
+    // Script Info for the mode (E5-tlmode-needs-script-info).
     const auto target = m_workspace.editingTarget();
     const auto *session = target ? m_files->session(*target) : nullptr;
     if (!session)
         return false;
-    const auto format = session->document().format();
     const auto destination = m_files->destination(*target);
-    return (format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText) && destination &&
-           !destination->value.empty();
+    return session->document().format() == core::SubtitleFormat::Ass && destination && !destination->value.empty();
+}
+
+QString Application::translationHint() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto *session = target ? m_files->session(*target) : nullptr;
+    if (!session || session->document().format() != core::SubtitleFormat::PlainText)
+        return {};
+    return tr("Translation needs an ASS file: plain text cannot store it.");
 }
 
 bool Application::turnOnTranslationMode()

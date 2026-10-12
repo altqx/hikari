@@ -40,8 +40,10 @@ std::u8string editedDurationText(const core::LineRecord &line, core::SubtitleFor
                                  const LegacyTimebase *frames);
 
 // A typed time (TimeCtrl::GetTime after the field was edited). nullopt when
-// the text is not the field's form; the legacy control only lets the form be
-// typed (its digit validator and fixed separators).
+// the text is not the field's form; the masked field below lets only the form
+// be typed, as the legacy control did (its digit validator and fixed
+// separators). An empty number field reads as 0 (SubsTime::ParseMS,
+// SubsTime.cpp:48).
 struct TypedTime {
     std::int64_t ms = 0;                // the time, or the duration
     std::optional<std::int64_t> frame;  // MicroDVD: the authored frame (or frame count)
@@ -66,6 +68,50 @@ std::optional<MicroDvdTime> microDvdFieldTime(std::int64_t ms, const std::option
 // The start of a MicroDVD frame at the Document's rate (in place of legacy's
 // frame / 23.976), or nullopt without one (C01-fps-isolation).
 std::optional<core::DocumentTime> microDvdFrameTime(std::int64_t frame, const std::optional<core::FrameRate> &rate);
+
+// E4: TimeCtrl's masked editing (HikariSub/TimeCtrl.cpp), so a time field
+// never holds text outside its form. The clock forms (TimeCtrl's `form < MDVD
+// && !showFrames`) keep their separators and length: ASS "H:MM:SS.cc", SRT
+// "HH:MM:SS,mmm", TMPlayer "HH:MM:SS". MPL2, MicroDVD and the frames of the
+// Time/Frames switch are numbers: digits only, up to kTimeFieldDigits.
+enum class TimeFieldForm { Ass = 0, Srt = 1, TMPlayer = 2, Number = 3 };
+TimeFieldForm timeFieldForm(core::SubtitleFormat format, const LegacyTimebase *frames);
+// Legacy SetMaxLength(20) let wxAtoi overflow; nine digits stay an int.
+inline constexpr std::size_t kTimeFieldDigits = 9;
+
+// The field's text and selection (the caret when start == end).
+struct TimeFieldState {
+    std::u16string text;
+    std::size_t selectionStart = 0, selectionEnd = 0;
+};
+// One edit's outcome: the new state (the old one when refused), whether the
+// text changed, and legacy's wxBell for a refused key or paste.
+struct TimeFieldEdit {
+    TimeFieldState state;
+    bool changed = false;
+    bool bell = false;
+};
+// A typed character. Not a digit: refused with the bell (the digits-only
+// HikariTextValidator, TimeCtrl.cpp:34-47). In a clock form a digit typed
+// over a selection first zeroes the selected digits and goes to its start
+// (OnKeyEvent, :212-223); at the end it is refused with the bell (:224-226);
+// otherwise it replaces the next digit, skipping a ':' '.' or ',' before it
+// (OnTimeWrite, :166-201), and a digit straight after ':' is at most 5
+// (:190-191). A number takes it as typed text, the bell past
+// kTimeFieldDigits (HikariTextCtrl::OnCharPress).
+TimeFieldEdit typeIntoTimeField(TimeFieldForm form, const TimeFieldState &field, char16_t c);
+// Backspace in a clock form (TimeCtrl.cpp:113-137): the selected digits, or
+// the one before the caret, become 0 and the caret goes to the start of
+// them, before a separator in front of it; nothing at the start.
+TimeFieldEdit backspaceTimeField(const TimeFieldState &field);
+// Paste (TimeCtrl.cpp:68-107): a clock form takes only a whole time of its
+// form (ASS ^[0-9]:[0-5][0-9]:[0-5][0-9]\.[0-9][0-9]$, SRT with two-digit
+// hours and ",mmm", TMPlayer HH:MM:SS), all of it selected; a number takes
+// digits only (legacy's IsNumber also let a sign through, which no frame or
+// decisecond count holds), in place of the selection and cut at
+// kTimeFieldDigits (HikariTextCtrl::Paste). Anything else is refused with
+// the bell.
+TimeFieldEdit pasteIntoTimeField(TimeFieldForm form, const TimeFieldState &field, std::u16string_view pasted);
 
 // NumCtrl::GetInt for the Layer (EditBox.cpp:256: -10000000..10000000): the
 // value clamped to the range, or nullopt for text NumCtrl keeps the previous

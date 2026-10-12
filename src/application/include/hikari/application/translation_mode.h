@@ -22,7 +22,9 @@ namespace hikari::application {
 // SubsGrid::SetTlMode(true) (SubsGridBase.cpp:1311-1334) as one "Turning on
 // translator mode" step (GRID_TURN_ON_TLMODE, SubsFile.cpp:219). Refused when
 // translation mode is already on, for the line formats (legacy enables the
-// check box for ASS only), or without a Script Info section.
+// check box for ASS only) and for PlainText, which has no Script Info for
+// the mode (E5-tlmode-needs-script-info). An ASS Document without a Script
+// Info section gets one (Document::setScriptInfo).
 std::expected<void, CommandRefusal> turnOnTranslationModeStep(EditSession &session);
 
 // EditBox::OnDoubtfulTl (EditBox.cpp:1946-1962), the "Not confirmed" button

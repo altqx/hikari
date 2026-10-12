@@ -3522,6 +3522,7 @@ ApplicationWindow {
                             objectName: "pasteTranslation"
                             text: qsTranslate("HikariSub.Grid", "Paste translation text")
                             enabled: gridMenu.canPasteTranslation
+                            help: root.app.translationHint // E5-tlmode-needs-script-info: why it is disabled
                             onTriggered: {
                                 if (root.gridGesture(this, "GRID_PASTE_TRANSLATION"))
                                     return

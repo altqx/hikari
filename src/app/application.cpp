@@ -2826,8 +2826,8 @@ bool Application::canPasteTranslation() const
     const auto *session = target ? m_files->session(*target) : nullptr;
     if (!session || targetUntitled())
         return false;
-    const auto format = session->document().format();
-    return format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText;
+    // E5-tlmode-needs-script-info: not PlainText (translationHint says why).
+    return session->document().format() == core::SubtitleFormat::Ass;
 }
 
 QUrl Application::targetFolder() const

@@ -230,7 +230,9 @@ public:
     // The last Script Info value for key, as the legacy SubsFile::GetSInfo sees it.
     std::optional<std::u8string> scriptInfo(std::u8string_view key) const;
     // Legacy AddSInfo: the key's (last) value is replaced, or the key is added
-    // after the last Script Info property. False without a Script Info section.
+    // after the last Script Info property. An ASS Document without a Script
+    // Info section gets one at the top (E5-tlmode-needs-script-info); false
+    // for the other formats, which have none.
     bool setScriptInfo(std::u8string_view key, std::u8string value);
     // Legacy DeleteSInfo: the key is no longer written. False when absent.
     bool removeScriptInfo(std::u8string_view key);

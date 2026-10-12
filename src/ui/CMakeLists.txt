@@ -14,7 +14,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
     visual_tools_controller.cpp visual_tools_controller.h shape_editor.cpp shape_editor.h
     tag_list_controller.cpp tag_list_controller.h
-    all_tags_editor.cpp all_tags_editor.h)
+    all_tags_editor.cpp all_tags_editor.h time_field_mask.cpp time_field_mask.h)
 target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
@@ -48,8 +48,8 @@ qt_target_qml_sources(hikari_ui QML_FILES SettingsImportDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES FontCatalogBar.qml FontCatalogWindow.qml FontsFromSubtitlesDialog.qml)
 # Y9: GRID_SUBS_FROM_MKV's question, track chooser and progress.
 qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
-# E4: the Line editor's metadata fields, counters and \an choice
-qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml AlignmentChoice.qml)
+# E4: the Line editor's metadata fields, counters and \an choice; its masked time fields
+qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml AlignmentChoice.qml TimeField.qml)
 # T1: the visual tool rail, the overlay over the Video canvas, the tool strip below it and its readout.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolValues.qml VisualToolReadout.qml)
 # T2-T4: the families' options row (Position, Move, Scale, the rotations, the

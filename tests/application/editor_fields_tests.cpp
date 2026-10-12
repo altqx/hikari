@@ -135,6 +135,165 @@ TEST(EditorTimes, TypedTimesInEachFormat)
     EXPECT_FALSE(at(u8"00:61:02", core::SubtitleFormat::TMPlayer));
     EXPECT_FALSE(at(u8"1.5", core::SubtitleFormat::Mpl2));
     EXPECT_FALSE(at(u8"-3", core::SubtitleFormat::MicroDvd));
+    // An empty number field is 0 (SubsTime::ParseMS, SubsTime.cpp:48).
+    EXPECT_EQ(at(u8"", core::SubtitleFormat::Mpl2)->ms, 0);
+    EXPECT_EQ(at(u8"", core::SubtitleFormat::MicroDvd)->frame, 0);
+}
+
+// E4: TimeCtrl's masked editing (TimeCtrl.cpp at 20d647c4).
+namespace {
+
+TimeFieldState at(const char16_t *text, std::size_t start, std::size_t end)
+{
+    return TimeFieldState{text, start, end};
+}
+
+TimeFieldState at(const char16_t *text, std::size_t caret)
+{
+    return at(text, caret, caret);
+}
+
+// The text and caret after typing `keys` from `field`, and the bells.
+std::pair<TimeFieldState, int> typed(TimeFieldForm form, TimeFieldState field, std::u16string_view keys)
+{
+    int bells = 0;
+    for (const char16_t c : keys) {
+        const auto e = typeIntoTimeField(form, field, c);
+        bells += e.bell;
+        field = e.state;
+    }
+    return {field, bells};
+}
+
+} // namespace
+
+TEST(TimeField, TheFormFollowsTheFormatAndTheFramesSwitch)
+{
+    EXPECT_EQ(timeFieldForm(core::SubtitleFormat::Ass, nullptr), TimeFieldForm::Ass);
+    EXPECT_EQ(timeFieldForm(core::SubtitleFormat::PlainText, nullptr), TimeFieldForm::Ass);
+    EXPECT_EQ(timeFieldForm(core::SubtitleFormat::Srt, nullptr), TimeFieldForm::Srt);
+    EXPECT_EQ(timeFieldForm(core::SubtitleFormat::TMPlayer, nullptr), TimeFieldForm::TMPlayer);
+    EXPECT_EQ(timeFieldForm(core::SubtitleFormat::Mpl2, nullptr), TimeFieldForm::Number);
+    EXPECT_EQ(timeFieldForm(core::SubtitleFormat::MicroDvd, nullptr), TimeFieldForm::Number);
+    const auto tb = cfr();
+    EXPECT_EQ(timeFieldForm(core::SubtitleFormat::Srt, &tb), TimeFieldForm::Number);
+    const LegacyTimebase estimated({}, 25.0);
+    EXPECT_EQ(timeFieldForm(core::SubtitleFormat::Srt, &estimated), TimeFieldForm::Srt);
+}
+
+TEST(TimeField, TypingOverwritesAndSkipsTheSeparators)
+{
+    // OnTimeWrite (:166-201): each digit replaces the next one; before a
+    // separator it lands after it.
+    auto [field, bells] = typed(TimeFieldForm::Ass, at(u"0:00:01.50", 0), u"12345678");
+    EXPECT_EQ(field.text, u"1:23:45.67");
+    EXPECT_EQ(field.selectionStart, 10u);
+    EXPECT_EQ(bells, 1); // the eighth digit: past the end (:224-226)
+    std::tie(field, bells) = typed(TimeFieldForm::Srt, at(u"00:00:01,500", 3), u"1234567");
+    EXPECT_EQ(field.text, u"00:12:34,567");
+    EXPECT_EQ(bells, 0);
+    std::tie(field, bells) = typed(TimeFieldForm::TMPlayer, at(u"00:00:01", 2), u"0203");
+    EXPECT_EQ(field.text, u"00:02:03"); // from before ':' the digit goes after it
+    EXPECT_EQ(field.selectionStart, 8u);
+    // Separators and letters are refused with the bell (the digits-only validator).
+    std::tie(field, bells) = typed(TimeFieldForm::Ass, at(u"0:00:01.50", 0), u"0:00:02.50x");
+    EXPECT_EQ(field.text, u"0:00:02.50");
+    EXPECT_EQ(bells, 4);
+}
+
+TEST(TimeField, ADigitAfterAColonIsAtMostFive)
+{
+    // :190-191: the tens of minutes and seconds.
+    EXPECT_EQ(typed(TimeFieldForm::Ass, at(u"0:00:01.50", 2), u"9").first.text, u"0:50:01.50");
+    EXPECT_EQ(typed(TimeFieldForm::Ass, at(u"0:00:01.50", 4), u"9").first.text, u"0:00:51.50"); // from before ':'
+    EXPECT_EQ(typed(TimeFieldForm::Ass, at(u"0:00:01.50", 0), u"9").first.text, u"9:00:01.50"); // hours
+    EXPECT_EQ(typed(TimeFieldForm::Ass, at(u"0:00:01.50", 7), u"9").first.text, u"0:00:01.90"); // after '.'
+    EXPECT_EQ(typed(TimeFieldForm::Srt, at(u"00:00:01,500", 6), u"7").first.text, u"00:00:51,500");
+}
+
+TEST(TimeField, ADigitOverASelectionZeroesItFirst)
+{
+    // OnKeyEvent (:212-223): the selected digits become 0, then the digit
+    // goes in at the selection's start.
+    auto e = typeIntoTimeField(TimeFieldForm::Ass, at(u"1:23:45.67", 2, 9), u'4');
+    EXPECT_EQ(e.state.text, u"1:40:00.07");
+    EXPECT_EQ(e.state.selectionStart, 3u);
+    EXPECT_EQ(e.state.selectionEnd, 3u);
+    // A select-all then typing, as the shell tests type into a field.
+    EXPECT_EQ(typed(TimeFieldForm::Ass, at(u"1:23:45.67", 0, 10), u"0:00:03.25").first.text, u"0:00:03.25");
+    EXPECT_EQ(typed(TimeFieldForm::Ass, at(u"1:23:45.67", 0, 10), u"3").first.text, u"3:00:00.00");
+    // Not a digit: nothing is zeroed.
+    e = typeIntoTimeField(TimeFieldForm::Ass, at(u"1:23:45.67", 2, 9), u'a');
+    EXPECT_TRUE(e.bell);
+    EXPECT_FALSE(e.changed);
+    EXPECT_EQ(e.state.text, u"1:23:45.67");
+}
+
+TEST(TimeField, BackspaceZeroesDigits)
+{
+    // :113-137: the digit before the caret becomes 0 and the caret goes back,
+    // before a separator in front of it.
+    auto e = backspaceTimeField(at(u"1:23:45.67", 4));
+    EXPECT_EQ(e.state.text, u"1:20:45.67");
+    EXPECT_EQ(e.state.selectionStart, 3u);
+    e = backspaceTimeField(at(u"1:23:45.67", 3));
+    EXPECT_EQ(e.state.text, u"1:03:45.67");
+    EXPECT_EQ(e.state.selectionStart, 1u); // before the ':'
+    e = backspaceTimeField(at(u"1:23:45.67", 5)); // after a separator: only the caret moves
+    EXPECT_EQ(e.state.text, u"1:23:45.67");
+    EXPECT_FALSE(e.changed);
+    EXPECT_EQ(e.state.selectionStart, 4u);
+    e = backspaceTimeField(at(u"1:23:45.67", 2, 9)); // a selection: its digits
+    EXPECT_EQ(e.state.text, u"1:00:00.07");
+    EXPECT_EQ(e.state.selectionStart, 1u);
+    e = backspaceTimeField(at(u"1:23:45.67", 0)); // at the start: nothing
+    EXPECT_FALSE(e.changed);
+    EXPECT_FALSE(e.bell);
+    e = backspaceTimeField(at(u"00:12:34,567", 0, 12));
+    EXPECT_EQ(e.state.text, u"00:00:00,000");
+    EXPECT_EQ(e.state.selectionStart, 0u);
+}
+
+TEST(TimeField, PasteTakesOnlyAWholeTimeOfTheForm)
+{
+    // :89-102: the format's regex; all of it selected; else the bell.
+    auto e = pasteIntoTimeField(TimeFieldForm::Ass, at(u"0:00:01.50", 3), u"1:02:03.04");
+    EXPECT_TRUE(e.changed);
+    EXPECT_EQ(e.state.text, u"1:02:03.04");
+    EXPECT_EQ(e.state.selectionStart, 0u);
+    EXPECT_EQ(e.state.selectionEnd, 10u);
+    EXPECT_EQ(pasteIntoTimeField(TimeFieldForm::Srt, at(u"00:00:01,500", 0), u"01:02:03,456").state.text,
+              u"01:02:03,456");
+    EXPECT_EQ(pasteIntoTimeField(TimeFieldForm::TMPlayer, at(u"00:00:01", 0), u"01:02:03").state.text, u"01:02:03");
+    for (const char16_t *bad : {u"1:02:03,04", u"1:62:03.04", u"1:02:63.04", u"01:02:03.04", u"1:02:03.0", u"12",
+                                u" 1:02:03.04", u""}) {
+        e = pasteIntoTimeField(TimeFieldForm::Ass, at(u"0:00:01.50", 3), bad);
+        EXPECT_TRUE(e.bell);
+        EXPECT_FALSE(e.changed);
+        EXPECT_EQ(e.state.text, u"0:00:01.50");
+    }
+    EXPECT_TRUE(pasteIntoTimeField(TimeFieldForm::Srt, at(u"00:00:01,500", 0), u"1:02:03.04").bell);
+    EXPECT_TRUE(pasteIntoTimeField(TimeFieldForm::TMPlayer, at(u"00:00:01", 0), u"01:02:03,456").bell);
+}
+
+TEST(TimeField, NumbersTakeDigitsOnly)
+{
+    // MPL2, MicroDVD and frames (:78-88 and the validator): ordinary editing of digits.
+    auto [field, bells] = typed(TimeFieldForm::Number, at(u"12", 2), u"3a4");
+    EXPECT_EQ(field.text, u"1234");
+    EXPECT_EQ(bells, 1);
+    std::tie(field, bells) = typed(TimeFieldForm::Number, at(u"1234", 1, 3), u"9");
+    EXPECT_EQ(field.text, u"194");
+    EXPECT_EQ(field.selectionStart, 2u);
+    std::tie(field, bells) = typed(TimeFieldForm::Number, at(u"123456789", 9), u"0");
+    EXPECT_EQ(field.text, u"123456789"); // kTimeFieldDigits
+    EXPECT_EQ(bells, 1);
+    auto e = pasteIntoTimeField(TimeFieldForm::Number, at(u"12", 1, 2), u"345");
+    EXPECT_EQ(e.state.text, u"1345");
+    EXPECT_EQ(e.state.selectionStart, 4u);
+    EXPECT_EQ(pasteIntoTimeField(TimeFieldForm::Number, at(u"1234567", 7), u"8901").state.text, u"123456789");
+    for (const char16_t *bad : {u"-5", u"1.5", u"0:00:01.00", u""})
+        EXPECT_TRUE(pasteIntoTimeField(TimeFieldForm::Number, at(u"12", 2), bad).bell);
 }
 
 // MicroDVD: the frame is kept; its time comes from the Document's own rate

@@ -65,6 +65,15 @@ bool startsWithComment(const std::vector<std::byte> &src, const SourceSpan &span
     return true;
 }
 
+// The source's line end: the first one in its bytes ("\n" without one).
+std::u8string sourceNewline(const std::vector<std::byte> &src)
+{
+    for (std::size_t i = 0; i < src.size(); ++i)
+        if (src[i] == std::byte{'\n'})
+            return i > 0 && src[i - 1] == std::byte{'\r'} ? u8"\r\n" : u8"\n";
+    return u8"\n";
+}
+
 } // namespace
 
 std::vector<std::byte> encodeAss(const Document &document)
@@ -92,9 +101,18 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
         copy(0, 3);
     detail::NewlineTracker newlines;
     for (const auto &section : document.sections()) {
+        // E5-tlmode-needs-script-info: a Script Info section the Document
+        // added at the top has no bytes; it is written as legacy's header is
+        // (SubsGridBase.cpp:1490-1503): the header, its properties and a
+        // blank line before the next section, in the source's line ends.
+        const bool added = !section.headerSpan && !section.header.empty();
         if (section.headerSpan) {
             copy(section.headerSpan->offset, section.headerSpan->length + section.headerSpan->terminatorLength);
             newlines.see(*section.headerSpan);
+        } else if (added) {
+            newlines.newline = sourceNewline(src);
+            append(newlines.wrap(section.header));
+            newlines.openEnd = false;
         }
         for (const auto &record : section.records) {
             const auto *line = std::get_if<LineRecord>(&record);
@@ -227,6 +245,8 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
                 copy(span.offset, span.length + span.terminatorLength);
             }
         }
+        if (added)
+            append(newlines.newline);
     }
     return out;
 }
