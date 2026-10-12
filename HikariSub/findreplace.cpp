@@ -656,12 +656,13 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 	OpenWrite ow;
 	bool plainText = false;
 	wxString subsPath;
-	int SubsAllReplacements = 0;
 
 	for (size_t i = 0; i < paths->size(); i++){
 		
 		wxString subsText;
 		subsPath = (*paths)[i];
+		//replacements of this file only, a file without any is not rewritten
+		int SubsAllReplacements = 0;
 
 		//we must not remove files from table
 		//every thread need to get about the same number of files +-1
@@ -673,7 +674,9 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 		//else if (ext != L"ass"/* && ext == "ssa"*/ && ext != L"srt" && ext != L"mpl2" && ext != L"sub" && ext != L"txt")
 		//	continue;
 
-		ow.FileOpen(subsPath, &subsText);
+		//an unreadable or empty file has nothing to find or replace
+		if (!ow.FileOpen(subsPath, &subsText))
+			continue;
 
 		wxString replacedText;
 		int tabLinePosition = 0; int positionId = 0;
