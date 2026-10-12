@@ -366,6 +366,19 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		dicSizer->Add(dic, 0, wxALL | wxEXPAND, 2);
 		MainSizer->Add(dicSizer, 0, wxRIGHT | wxEXPAND, 5);
 
+		HikariStaticBoxSizer* updatesSizer = new HikariStaticBoxSizer(wxVERTICAL, GLOBAL_EDITOR, _("Updates"));
+		HikariCheckBox* autoCheck = new HikariCheckBox(GLOBAL_EDITOR, -1, _("Check for updates automatically"));
+		autoCheck->SetValue(Options.GetBool(UPDATER_AUTO_CHECK));
+		autoCheck->SetToolTip(_("Once a day at most, when the program starts"));
+		ConOpt(autoCheck, UPDATER_AUTO_CHECK);
+		HikariCheckBox* stableOnly = new HikariCheckBox(GLOBAL_EDITOR, -1, _("Stable versions only"));
+		stableOnly->SetValue(Options.GetBool(UPDATER_CHECK_FOR_STABLE));
+		stableOnly->SetToolTip(_("A release candidate is still told about newer release candidates"));
+		ConOpt(stableOnly, UPDATER_CHECK_FOR_STABLE);
+		updatesSizer->Add(autoCheck, 0, wxALL, 2);
+		updatesSizer->Add(stableOnly, 0, wxALL, 2);
+		MainSizer->Add(updatesSizer, 0, wxRIGHT | wxEXPAND, 5);
+
 		for (int i = 0; i < optsSize; i++)
 		{
 			HikariCheckBox* opt = new HikariCheckBox(GLOBAL_EDITOR, -1, labels[i]);
