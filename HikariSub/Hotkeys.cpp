@@ -27,6 +27,7 @@
 #include "TabPanel.h"
 #include "HikariStaticText.h"
 #include "Notebook.h"
+#include "SemVer.h"
 #include <wx/regex.h>
 #include <wx/log.h>
 #include <wx/msgdlg.h>
@@ -256,7 +257,13 @@ int Hotkeys::LoadHkeys(bool Audio)
 			LoadDefault(hkeys, Audio);
 		}*/
 		int first = token.find(L".");//0.8.0.build
-		if (first > -1){
+		// HikariSub writes "HikariSub v<semver>", which is current; only the
+		// old four-part headers carry a build number.
+		if (ver.StartsWith(L"HikariSub v") &&
+			ParseSemVer(ver.AfterFirst(L'v').BeforeFirst(L' ').ToStdString())){
+			checkVer = true;
+		}
+		else if (first > -1){
 			wxString ver = token.Mid(first + 5).BeforeFirst(L' ');
 			int version = wxAtoi(ver);
 			checkVer = (version > 487);
