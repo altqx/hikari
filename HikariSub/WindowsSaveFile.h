@@ -150,6 +150,20 @@ bool MakePrivateFolderOnWindows(const std::wstring &folder);
 // the file made anew with the DACL MakePrivateFolder gives, or not at all.
 FILE *OpenPrivateFileOnWindows(const std::wstring &path);
 
+// What the tests make a volume refuse, as a network share that refuses them
+// does; the application is built with nothing refused. securityAtCreate: a
+// file or folder made with a security descriptor is refused, so it is made
+// with its folder's ACEs. securityChange: giving a file or folder the
+// private DACL fails.
+struct WindowsSecurityRefusals
+{
+	bool securityAtCreate = false;
+	bool securityChange = false;
+};
+
+#ifdef HIKARISUB_TESTING
+// Only in the tests, which define HIKARISUB_TESTING.
+
 // Whether the DACL of the security descriptor descriptor lets in no one, for
 // reading a file or for giving themselves the right to, that the DACL of
 // reference keeps out, apart from the user, SYSTEM and Administrators; both
@@ -158,16 +172,9 @@ FILE *OpenPrivateFileOnWindows(const std::wstring &path);
 // only when it lets in no more than the file it saves, see WindowsSaveFile.
 bool DescriptorLetsInNoMoreThan(const void *descriptor, const void *reference);
 
-// For tests: makes the steps that keep a file or folder private fail as a
-// network share that refuses them does. securityAtCreate: a file or folder
-// made with a security descriptor is refused, so it is made with its
-// folder's ACEs. securityChange: giving a file or folder the private DACL
-// fails.
-struct WindowsSecurityRefusals
-{
-	bool securityAtCreate = false;
-	bool securityChange = false;
-};
+// Makes the steps that keep a file or folder private refuse what refusals
+// says, for the whole process; the tests run on one thread.
 void SetWindowsSecurityRefusalsForTesting(const WindowsSecurityRefusals &refusals);
+#endif
 
 #endif

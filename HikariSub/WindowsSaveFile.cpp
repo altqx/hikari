@@ -35,7 +35,12 @@
 
 namespace {
 
+#ifdef HIKARISUB_TESTING
 WindowsSecurityRefusals refusals;
+#else
+//the application never refuses what a volume does not
+constexpr WindowsSecurityRefusals refusals{};
+#endif
 
 const DWORD shareAll = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
 
@@ -641,6 +646,7 @@ std::wstring MakeTempFileNear(const std::wstring &target, HANDLE *file, WindowsF
 
 } // namespace
 
+#ifdef HIKARISUB_TESTING
 void SetWindowsSecurityRefusalsForTesting(const WindowsSecurityRefusals &refused)
 {
 	refusals = refused;
@@ -652,6 +658,7 @@ bool DescriptorLetsInNoMoreThan(const void *descriptor, const void *reference)
 	return DaclOf(const_cast<void *>(descriptor), &dacl) && DaclOf(const_cast<void *>(reference), &referenceDacl) &&
 		DaclLetsInNoMoreThan(dacl, referenceDacl);
 }
+#endif
 
 bool WindowsSaveFile::Open(const std::wstring &name, bool privateFile)
 {
