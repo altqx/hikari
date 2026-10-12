@@ -160,7 +160,7 @@ msgstr "ไม่สามารถสร้างอุปกรณ์ D3D9 ไ
 
 #: HikariSub/AudioDisplay.cpp:328 HikariSub/RendererVideo.cpp:376
 msgid "Cannot create swap chain"
-msgstr ""
+msgstr "ไม่สามารถสร้าง swap chain ได้"
 
 #: HikariSub/AudioDisplay.cpp:349
 msgid "One of the DirectX settings failed"
@@ -213,7 +213,7 @@ msgstr "ไม่สามารถคัดลอกภาพพื้นผิ
 
 #: HikariSub/AudioDisplay.cpp:1158 HikariSub/AudioDisplay.cpp:1804
 msgid "Audio could not be loaded"
-msgstr ""
+msgstr "ไม่สามารถโหลดเสียงได้"
 
 #: HikariSub/AutoSaveOpen.cpp:26
 msgid "Open auto save file"
@@ -670,7 +670,7 @@ msgstr "กด Shift พร้อมคลิกเพื่อกำหนด�
 
 #: HikariSub/ColorPicker.cpp:456
 msgid "Picking a color from the screen is not supported on Wayland"
-msgstr ""
+msgstr "ไม่รองรับการเลือกสีจากหน้าจอบน Wayland"
 
 #: HikariSub/ColorPicker.cpp:487
 msgid "Choose color"
@@ -1463,7 +1463,7 @@ msgstr "บันทึกอัตโนมัติ"
 
 #: HikariSub/FontCatalogList.cpp:315
 msgid "Choose font catalogs file"
-msgstr ""
+msgstr "เลือกแฟ้มแคตตาล็อกแบบอักษร"
 
 #: HikariSub/FontCatalogList.cpp:316
 msgid "Text files (*.txt)|*.txt"
@@ -2495,7 +2495,7 @@ msgstr "แสดงเฉพาะหน้าต่างคำบรรยา
 
 #: HikariSub/HikariSubFrame.cpp:313
 msgid "View"
-msgstr "มุมมอ&ง"
+msgstr "มุมมอง"
 
 #: HikariSub/HikariSubFrame.cpp:316 HikariSub/Hotkeys.cpp:146
 #: HikariSub/HotkeysNaming.cpp:175
@@ -2647,11 +2647,11 @@ msgstr "เปิดหน้าติดตามปัญหาของ Hikar
 
 #: HikariSub/HikariSubFrame.cpp:364
 msgid "Check for &updates"
-msgstr ""
+msgstr "&ตรวจหาอัปเดต"
 
 #: HikariSub/HikariSubFrame.cpp:365
 msgid "Checks whether a newer version is available"
-msgstr ""
+msgstr "ตรวจสอบว่ามีเวอร์ชันที่ใหม่กว่าหรือไม่"
 
 #: HikariSub/HikariSubFrame.cpp:366
 msgid "&About"
@@ -3509,7 +3509,7 @@ msgstr "แบ่งบรรทัดตามจุดแบ่งบรรท
 
 #: HikariSub/HotkeysNaming.cpp:161
 msgid "Check for updates"
-msgstr ""
+msgstr "ตรวจหาอัปเดต"
 
 #: HikariSub/HotkeysNaming.cpp:162
 msgid "About"
@@ -3932,6 +3932,8 @@ msgid ""
 "Cannot read the subtitle file:\n"
 "%s"
 msgstr ""
+"ไม่สามารถอ่านแฟ้มคำบรรยายได้:\n"
+"%s"
 
 #: HikariSub/Notebook.cpp:1307
 msgid "Video: "
@@ -3967,7 +3969,7 @@ msgstr "แฟ้มเซสชันไม่ถูกต้อง"
 
 #: HikariSub/Notebook.cpp:1654
 msgid "Cannot read the subtitle files:\n"
-msgstr ""
+msgstr "ไม่สามารถอ่านแฟ้มคำบรรยายต่อไปนี้ได้:\n"
 
 #: HikariSub/OpennWrite.cpp:70 HikariSub/OpennWrite.cpp:91
 #: HikariSub/OpennWrite.cpp:331 HikariSub/OpennWrite.cpp:338
@@ -3979,11 +3981,11 @@ msgstr "ไม่สามารถบันทึกลงแฟ้มได้
 #: HikariSub/OpennWrite.cpp:72 HikariSub/OpennWrite.cpp:94
 #, c-format
 msgid "The old contents of the file are kept in %s."
-msgstr ""
+msgstr "เนื้อหาเดิมของแฟ้มถูกเก็บไว้ที่ %s"
 
 #: HikariSub/OpennWrite.cpp:85
 msgid "A temporary file in its folder would let in users the file keeps out."
-msgstr ""
+msgstr "แฟ้มชั่วคราวในโฟลเดอร์เดียวกันจะเปิดให้ผู้ใช้ที่ไม่มีสิทธิ์ในแฟ้มนี้เข้าถึงได้"
 
 #: HikariSub/OpennWrite.cpp:213
 msgid "Cannot create file."
@@ -4100,23 +4102,23 @@ msgstr "ภาษาการตรวจสอบการสะกดคำ (�
 
 #: HikariSub/OptionsDialog.cpp:369
 msgid "Updates"
-msgstr ""
+msgstr "การอัปเดต"
 
 #: HikariSub/OptionsDialog.cpp:370 HikariSub/UpdateChecker.cpp:141
 msgid "Check for updates automatically"
-msgstr ""
+msgstr "ตรวจหาอัปเดตโดยอัตโนมัติ"
 
 #: HikariSub/OptionsDialog.cpp:372
 msgid "When the program starts: once a day, or an hour after a check that failed"
-msgstr ""
+msgstr "เมื่อเริ่มโปรแกรม: วันละครั้ง หรือหนึ่งชั่วโมงหลังจากการตรวจสอบที่ล้มเหลว"
 
 #: HikariSub/OptionsDialog.cpp:374 HikariSub/UpdateChecker.cpp:145
 msgid "Stable versions only"
-msgstr ""
+msgstr "เฉพาะเวอร์ชันเสถียร"
 
 #: HikariSub/OptionsDialog.cpp:376
 msgid "A release candidate is still told about newer release candidates"
-msgstr ""
+msgstr "หากใช้รุ่น Release Candidate อยู่ จะยังได้รับแจ้งเมื่อมีรุ่น Release Candidate ที่ใหม่กว่า"
 
 #: HikariSub/OptionsDialog.cpp:396
 msgid "0 turns off saving while editing"
@@ -4270,7 +4272,7 @@ msgstr "เปิดวิดีโอจากเมนูบริบทแบ
 
 #: HikariSub/OptionsDialog.cpp:605
 msgid "Convert video colours on the GPU (requires reloading)"
-msgstr ""
+msgstr "แปลงสีวิดีโอด้วย GPU (ต้องโหลดใหม่)"
 
 #: HikariSub/OptionsDialog.cpp:605
 msgid "Open video with time of active line"
@@ -5170,11 +5172,11 @@ msgstr "ไม่สามารถตั้งค่าดีเลย์ที
 #: HikariSub/ProviderFFMS2.cpp:635
 #, c-format
 msgid "Cannot create the audio cache %s"
-msgstr ""
+msgstr "ไม่สามารถสร้างแคชเสียง %s ได้"
 
 #: HikariSub/ProviderFFMS2.cpp:636
 msgid "Not enough memory for the audio cache"
-msgstr ""
+msgstr "หน่วยความจำไม่เพียงพอสำหรับแคชเสียง"
 
 #: HikariSub/RendererDirectShow.cpp:102
 msgid "Cannot create DXVA processor service"
@@ -6294,7 +6296,7 @@ msgstr "การแบ่งบรรทัด"
 #, c-format
 msgid "Fixed the tree markers of %d line: lines with no tree description are now ordinary lines and every tree is open or closed as a whole."
 msgid_plural "Fixed the tree markers of %d lines: lines with no tree description are now ordinary lines and every tree is open or closed as a whole."
-msgstr[0] ""
+msgstr[0] "แก้ไขเครื่องหมายทรีของ %d บรรทัดแล้ว: บรรทัดที่ไม่มีคำอธิบายทรีกลายเป็นบรรทัดปกติ และแต่ละทรีจะขยายหรือยุบทั้งทรี"
 
 #: HikariSub/SubsFile.cpp:839
 #, c-format
@@ -6444,17 +6446,17 @@ msgstr "ยังไม่ได้เลือกบรรทัดที่จ
 
 #: HikariSub/SubsGridBase.cpp:1324
 msgid "This edit would leave lines of a tree outside it, so it was not made."
-msgstr ""
+msgstr "การแก้ไขนี้จะทำให้บางบรรทัดของทรีอยู่นอกทรี จึงไม่ได้ดำเนินการแก้ไข"
 
 #: HikariSub/SubsGridBase.cpp:1325 HikariSub/SubsGridBase.cpp:1345
 #: HikariSub/SubsGridFiltering.cpp:186
 msgid "Trees"
-msgstr ""
+msgstr "ทรี"
 
 #: HikariSub/SubsGridBase.cpp:1336
 #, c-format
 msgid "Line %d: %s"
-msgstr ""
+msgstr "บรรทัด %d: %s"
 
 #: HikariSub/SubsGridBase.cpp:1339
 #, c-format
@@ -6469,15 +6471,19 @@ msgid_plural ""
 "\n"
 "Removing the trees deletes their description lines and shows their lines as ordinary lines."
 msgstr[0] ""
+"การแก้ไขนี้จะแยกทรี ทำให้บางบรรทัดอยู่นอกทรี หรือย้ายบรรทัดไปยังทรีอื่น จึงไม่ได้ดำเนินการแก้ไข:\n"
+"%s\n"
+"\n"
+"การลบทรีจะลบบรรทัดคำอธิบายของทรี และแสดงบรรทัดในทรีเป็นบรรทัดปกติ"
 
 #: HikariSub/SubsGridBase.cpp:1344
 msgid "Make the edit again after removing."
-msgstr ""
+msgstr "โปรดแก้ไขอีกครั้งหลังจากลบทรีแล้ว"
 
 #: HikariSub/SubsGridBase.cpp:1346
 msgid "Remove the tree"
 msgid_plural "Remove the trees"
-msgstr[0] ""
+msgstr[0] "ลบทรี"
 
 #: HikariSub/SubsGridBase.cpp:1432
 msgid "Invalid format (file may be corrupted or contain errors)"
@@ -6536,6 +6542,8 @@ msgid ""
 "Hidden lines lie between the selected lines, so they cannot make one tree.\n"
 "Show the hidden lines or select only lines that are next to each other."
 msgstr ""
+"มีบรรทัดที่ซ่อนอยู่ระหว่างบรรทัดที่เลือก จึงไม่สามารถรวมเป็นทรีเดียวได้\n"
+"โปรดแสดงบรรทัดที่ซ่อนอยู่ หรือเลือกเฉพาะบรรทัดที่อยู่ติดกัน"
 
 #: HikariSub/SubsGridWindow.cpp:313 HikariSub/SubsGridWindow.cpp:701
 #: HikariSub/SubsGridWindow.cpp:1132 HikariSub/SubsGridWindow.cpp:1301
@@ -6757,6 +6765,8 @@ msgid ""
 "Subtitles were modified by another program.\n"
 "Reload and discard the unsaved changes in this tab?"
 msgstr ""
+"คำบรรยายถูกแก้ไขโดยโปรแกรมอื่น\n"
+"ต้องการโหลดใหม่และละทิ้งการเปลี่ยนแปลงที่ยังไม่ได้บันทึกในแท็บนี้หรือไม่?"
 
 #: HikariSub/TabPanel.cpp:346 HikariSub/TabPanel.cpp:347
 msgid "Reloading"
@@ -7082,7 +7092,7 @@ msgstr "การจัดวางตำแหน่งแถบเครื่
 #: HikariSub/UpdateChecker.cpp:107
 #, c-format
 msgid "You have the latest stable version. A newer prerelease, %s, is available."
-msgstr ""
+msgstr "คุณใช้เวอร์ชันเสถียรล่าสุดอยู่แล้ว แต่มีเวอร์ชันทดสอบที่ใหม่กว่า (%s) ให้ใช้งาน"
 
 #: HikariSub/UpdateChecker.cpp:108 HikariSub/UpdateChecker.cpp:273
 #: HikariSub/UpdateChecker.cpp:313 HikariSub/UpdateChecker.cpp:331
@@ -7091,28 +7101,28 @@ msgstr "อัปเดต"
 
 #: HikariSub/UpdateChecker.cpp:109 HikariSub/UpdateChecker.cpp:152
 msgid "Open the download page"
-msgstr ""
+msgstr "เปิดหน้าดาวน์โหลด"
 
 #: HikariSub/UpdateChecker.cpp:119
 msgid "A new version is available"
-msgstr ""
+msgstr "มีเวอร์ชันใหม่ให้ใช้งาน"
 
 #: HikariSub/UpdateChecker.cpp:129
 #, c-format
 msgid "You have version %s; version %s is available"
-msgstr ""
+msgstr "คุณใช้เวอร์ชัน %s อยู่ และมีเวอร์ชัน %s ให้ใช้งาน"
 
 #: HikariSub/UpdateChecker.cpp:153
 msgid "Remind me in a week"
-msgstr ""
+msgstr "เตือนอีกครั้งในหนึ่งสัปดาห์"
 
 #: HikariSub/UpdateChecker.cpp:273 HikariSub/UpdateChecker.cpp:331
 msgid "Cannot check for updates"
-msgstr ""
+msgstr "ไม่สามารถตรวจหาอัปเดตได้"
 
 #: HikariSub/UpdateChecker.cpp:313
 msgid "You already have the latest version"
-msgstr ""
+msgstr "คุณใช้เวอร์ชันล่าสุดอยู่แล้ว"
 
 #: HikariSub/UtilsWindows.cpp:63
 msgid "Unable to retrieve information about the monitor"
@@ -8004,15 +8014,15 @@ msgstr ""
 
 #: HikariSub/hikarisubApp.cpp:361
 msgid "Cannot find language, language change failed"
-msgstr ""
+msgstr "ไม่พบภาษา เปลี่ยนภาษาไม่สำเร็จ"
 
 #: HikariSub/hikarisubApp.cpp:366
 msgid "wxLocale cannot initialize, language change failed"
-msgstr ""
+msgstr "wxLocale ไม่สามารถเริ่มต้นได้ เปลี่ยนภาษาไม่สำเร็จ"
 
 #: HikariSub/hikarisubApp.cpp:379
 msgid "Cannot find translation, language change failed"
-msgstr ""
+msgstr "ไม่พบคำแปล เปลี่ยนภาษาไม่สำเร็จ"
 
 #: HikariSub/hikarisubApp.cpp:404
 msgid ""
