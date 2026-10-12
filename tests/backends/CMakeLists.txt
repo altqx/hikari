@@ -223,8 +223,10 @@ target_compile_definitions(hikari_backends_transport_tests PRIVATE
 add_dependencies(hikari_backends_transport_tests hikari_media_helper hikari_media_fixtures)
 
 # I5: whole-document collection, reimport, refresh, concurrency and the
-# multilingual corpus. font-refresh starts empty; the refresh test copies a
-# font into it and removes it again.
+# multilingual corpus. font-refresh starts empty; the refresh tests copy a
+# font into it and remove it again. Y6: the installed-font listing; on
+# Windows its fixtures are installed for the current user while a test runs
+# (tests/support/fonts/windows_user_fonts.h).
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/font-refresh")
 hikari_add_gtest(hikari_backends_font_collection_tests SOURCES font_collection_tests.cpp
     LIBRARIES hikari_backends Qt6::Core LABELS backends
@@ -235,6 +237,10 @@ target_compile_definitions(hikari_backends_font_collection_tests PRIVATE
     HIKARI_FONT_REFRESH_SOURCE="${CMAKE_CURRENT_BINARY_DIR}/font-refresh-source"
     HIKARI_FONT_REFRESH_DIR="${CMAKE_CURRENT_BINARY_DIR}/font-refresh")
 add_dependencies(hikari_backends_font_collection_tests hikari_font_fixtures)
+target_include_directories(hikari_backends_font_collection_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+if(WIN32)
+    target_link_libraries(hikari_backends_font_collection_tests PRIVATE dwrite gdi32 advapi32)
+endif()
 
 # L1: the automation manager and macro identity.
 hikari_add_gtest(hikari_backends_automation_manager_tests SOURCES automation_manager_tests.cpp
