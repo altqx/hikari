@@ -21,6 +21,8 @@
 #include "TabPanel.h"
 #include "VideoBox.h"
 #include "SubsGrid.h"
+#include "EditBox.h"
+#include "SubtitlesProviderManager.h"
 #include "Provider.h"
 //#include "RendererVideo.h
 #include <wx/regex.h>
@@ -129,8 +131,19 @@ void ClipRect::OnMouseEvent(wxMouseEvent &evt)
 	if (evt.ButtonUp()){
 		if (tab->video->HasCapture()){ tab->video->ReleaseMouse(); }
 		if (showClip ){
-			if (Corner[1].y == Corner[0].y || Corner[1].x == Corner[0].x)
+			if (Corner[1].y == Corner[0].y || Corner[1].x == Corner[0].x){
 				showClip = false;
+				//nothing is sent, put the Line back where the drag showed its preview
+				if (dummytext){
+					if (!tab->edit->IsCursorOnStart()){
+						bool isOriginal = (tab->grid->hasTLMode && tab->edit->TextEdit->GetValue() == emptyString);
+						TextEditor *editor = (isOriginal) ? tab->edit->TextEditOrig : tab->edit->TextEdit;
+						editor->SetTextS(currentLineText, false, false);
+					}
+					SAFE_DELETE(dummytext);
+					tab->video->OpenSubs(OPEN_DUMMY, true, true);
+				}
+			}
 
 			if (Corner[1].y < Corner[0].y){
 				float tmpy = Corner[0].y;
