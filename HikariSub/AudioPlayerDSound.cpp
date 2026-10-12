@@ -197,7 +197,7 @@ void DirectSoundPlayer2Thread::Run()
 				if (!linuxState->playing)
 					return active;
 				if (eosSent)
-					return false;
+					return linuxState->currentFrame < end_frame;
 				return linuxState->currentFrame >= end_frame || !queueFull();
 			};
 			linuxState->cv.wait_for(lock, std::chrono::milliseconds(10), hasWork);
@@ -218,6 +218,20 @@ void DirectSoundPlayer2Thread::Run()
 				generation++;
 				eosSent = false;
 				active = false;
+			}
+			if (linuxState->playing && eosSent && linuxState->currentFrame < end_frame && !seekFailed) {
+				// The end moved past the frames already queued, but appsrc takes
+				// no data after EOS until a flush: start again from the audible
+				// frame, so playback goes on to the new end.
+				gint64 position = 0;
+				long long resumeFrame = linuxState->currentFrame;
+				if (gst_element_query_position(pipeline, GST_FORMAT_TIME, &position) && position >= 0)
+					resumeFrame = std::clamp((long long)gst_util_uint64_scale_round(position, rate, GST_SECOND),
+						start_frame.load(), linuxState->currentFrame);
+				linuxState->currentFrame = resumeFrame;
+				seekFailed = !seekTo(resumeFrame);
+				generation++;
+				eosSent = false;
 			}
 			if (seekFailed) {
 				linuxState->failed = true;
