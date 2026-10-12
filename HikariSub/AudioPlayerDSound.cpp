@@ -595,6 +595,17 @@ void DirectSoundPlayer2Thread::Run()
 	bool playback_should_be_running = false;
 	int current_latency = wanted_latency;
 	const DWORD wanted_latency_bytes = wanted_latency * waveFormat.nAvgBytesPerSec / 1000;
+	// an unplugged device fails every call; the thread then ends and the next
+	// Play opens a new player on the current default device
+	bool device_lost = false;
+	auto lose_device = [&](HRESULT res) {
+		HikariLog(wxString::Format(L"The audio device was lost (0x%08X), playback stopped.", (unsigned)res));
+		audioBuffer->Stop();
+		SetStopped();
+		playback_should_be_running = false;
+		device_lost = true;
+		running = false;
+	};
 
 	while (running)
 	{
@@ -623,9 +634,7 @@ void DirectSoundPlayer2Thread::Run()
 					res = audioBuffer->Lock(buffer_offset, 0, (void **)&buf, &buf_size, 0, 0, DSBLOCK_ENTIREBUFFER);
 				if (FAILED(res))
 				{
-					HikariLogSilent("Could not lock buffer for playback.");
-					SetStopped();
-					playback_should_be_running = false;
+					lose_device(res);
 					break;
 				}
 
@@ -644,15 +653,21 @@ void DirectSoundPlayer2Thread::Run()
 						// Very short playback length, do without streaming playback
 						current_latency = (bytes_filled * 1000) / waveFormat.nAvgBytesPerSec;
 						current_latency = (bytes_filled * 1000) / waveFormat.nAvgBytesPerSec;
-						if (FAILED(audioBuffer->Play(0, 0, 0)))
-							HikariLogSilent("Could not start single-buffer playback.");
+						res = audioBuffer->Play(0, 0, 0);
+						if (FAILED(res)) {
+							lose_device(res);
+							break;
+						}
 					}
 					else
 					{
 						// We filled the entire buffer so there's reason to do streaming playback
 						current_latency = wanted_latency;
-						if (FAILED(audioBuffer->Play(0, 0, DSBPLAY_LOOPING)))
-							HikariLogSilent("Could not start looping playback.");
+						res = audioBuffer->Play(0, 0, DSBPLAY_LOOPING);
+						if (FAILED(res)) {
+							lose_device(res);
+							break;
+						}
 					}
 
 					SetWritten(next_input_frame, buffer_offset, bytes_filled >= wanted_latency_bytes, true);
@@ -717,9 +732,12 @@ do_fill_buffer:
 				if (!playback_should_be_running)
 					break;
 
-				DWORD status;
-				if (FAILED(audioBuffer->GetStatus(&status)))
-					HikariLogDebug("Could not get playback buffer status");
+				DWORD status = 0;
+				HRESULT res = audioBuffer->GetStatus(&status);
+				if (FAILED(res)) {
+					lose_device(res);
+					break;
+				}
 
 					if (!(status & DSBSTATUS_LOOPING))
 					{
@@ -731,9 +749,12 @@ do_fill_buffer:
 						break;
 					}
 
-					DWORD play_cursor;
-					if (FAILED(audioBuffer->GetCurrentPosition(&play_cursor, 0)))
-						HikariLogDebug("Could not get play cursor position for filling buffer.");
+					DWORD play_cursor = 0;
+					res = audioBuffer->GetCurrentPosition(&play_cursor, 0);
+					if (FAILED(res)) {
+						lose_device(res);
+						break;
+					}
 
 						int bytes_needed = (int)play_cursor - (int)buffer_offset;
 					if (bytes_needed < 0) bytes_needed += (int)bufSize;
@@ -751,7 +772,7 @@ do_fill_buffer:
 					//assert(buffer_offset < bufSize);
 					//assert((unsigned long)bytes_needed <= bufSize);
 
-					HRESULT res = audioBuffer->Lock(buffer_offset, bytes_needed, (void** )&buf1, &buf1sz, (void** )&buf2, &buf2sz, 0);
+					res = audioBuffer->Lock(buffer_offset, bytes_needed, (void** )&buf1, &buf1sz, (void** )&buf2, &buf2sz, 0);
 					if (res == DSERR_BUFFERLOST)
 					{
 						// the contents went with the buffer, so start filling it over
@@ -764,7 +785,7 @@ do_fill_buffer:
 					}
 					if (FAILED(res))
 					{
-						HikariLogDebug(wxString::Format(L"Could not lock the playback buffer (0x%08X).", (unsigned)res));
+						lose_device(res);
 						break;
 					}
 
@@ -807,6 +828,9 @@ do_fill_buffer:
 	}
 	audioBuffer->Release();
 	defaultPlayback->Release();
+	// IsDead now reports the thread gone, so the player is opened again
+	if (device_lost)
+		ResetEvent(thread_running);
 }
 
 void DirectSoundPlayer2Thread::SetWritten(long long frame, unsigned long offset, bool refills, bool started)
