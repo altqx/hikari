@@ -456,7 +456,10 @@ void SubsGrid::OnJoin(wxCommandEvent &event)
 		else if (dial->TextTl != emptyString){ ntltext << en << dial->TextTl; }
 	}
 
-	DeleteRow(selections[1], selections[selections.size() - 1] - selections[1] + 1);
+	// delete only the joined lines, unselected (or hidden) lines between them stay
+	for (size_t i = selections.size() - 1; i > 0; i--){
+		DeleteRow(selections[i]);
+	}
 	dialc->Start.NewTime(start);
 	dialc->End.NewTime(end);
 	dialc->Text = ntext;
@@ -480,7 +483,10 @@ void SubsGrid::OnJoinToFirst(int id)
 		dialc->TextTl = ldial->TextTl;
 	}
 	currentLine = selections[0];
-	DeleteRow(selections[1], selections[selections.size() - 1] - selections[1] + 1);
+	// delete only the joined lines, unselected (or hidden) lines between them stay
+	for (size_t i = selections.size() - 1; i > 0; i--){
+		DeleteRow(selections[i]);
+	}
 
 	file->InsertSelection(selections[0]);
 	SetModified((id == GRID_JOIN_TO_LAST_LINE) ? GRID_JOIN_TO_LAST : GRID_JOIN_TO_FIRST);
