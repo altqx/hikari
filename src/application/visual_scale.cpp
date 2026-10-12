@@ -249,6 +249,10 @@ bool ScaleTool::finishEdit(VisualHost &host)
 {
     // A refused commit (a stale revision, a draft that cannot commit) wrote
     // nothing: the tool reads the unchanged text again, as after Esc.
+    // A release that changes no Line records nothing (T3-release-no-change;
+    // legacy's SetVisual(false) made an undo step of it, Visuals.cpp:822-826).
+    if (host.gesture() && !host.gesture()->changesAnyLine())
+        host.cancelGesture();
     const bool committed = !host.gesture() || host.commitGesture().has_value();
     m_editing.reset();
     if (!committed)
