@@ -152,10 +152,12 @@ private slots:
     // given to fontconfig). Every piece legacy measured, with the measuring
     // Style it had, goes through QtTextMeasurePort. The font is legacy's (the
     // line as high as the style's size, by whole points); what remains is the
-    // two engines' hinting: a whole pixel either way in a glyph's advance, the
-    // line's height and the descent, so widths agree within 3 percent and a
-    // pixel, heights and descents within 2 pixels, all times the style's
-    // scale.
+    // two engines' hinting. Before the scale, the gaps measured are at most 3
+    // pixels in 211 for a whole piece, 5 in 10 characters for a spaced one
+    // (each character is measured and rounded alone), 2 in the line's height
+    // and 1 in the descent. So a width agrees within 1.5 percent and a pixel,
+    // or half a pixel a character and a pixel when spaced, a height within 2
+    // pixels and a descent within 1, all times the style's scale.
     void textExtentsAgainstTheLegacyLinuxMeasure()
     {
 #ifdef _WIN32
@@ -189,9 +191,10 @@ private slots:
                                      .arg(got->width)
                                      .arg(got->height)
                                      .arg(got->descent);
-            QVERIFY2(qAbs(got->width - width) <= 0.03 * width + sx, qPrintable(what));
+            const double slack = st[13] != "0" ? 0.5 * text.size() : 0.015 * width / sx;
+            QVERIFY2(qAbs(got->width - width) <= (slack + 1) * sx + 1e-3, qPrintable(what));
             QVERIFY2(qAbs(got->height - e[QStringLiteral("height")].toDouble()) <= 2 * sy + 1e-3, qPrintable(what));
-            QVERIFY2(qAbs(got->descent - e[QStringLiteral("descent")].toDouble()) <= 2 * sy + 1e-3, qPrintable(what));
+            QVERIFY2(qAbs(got->descent - e[QStringLiteral("descent")].toDouble()) <= sy + 1e-3, qPrintable(what));
             QCOMPARE(got->externalLeading, e[QStringLiteral("extlead")].toDouble());
         }
         QCOMPARE(pieces, 38);
