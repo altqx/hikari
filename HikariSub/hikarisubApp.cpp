@@ -503,7 +503,7 @@ bool hikarisubApp::OnInit()
 		bool loadSession = true;
 #else
 		int session = Options.GetInt(LAST_SESSION_CONFIG);
-		bool loadSession = (session == 2 || Options.HasCrashed()) && !hasPaths;
+		bool loadSession = session == 2 && !hasPaths;
 		if (session == 1 && !hasPaths){
 			if (HikariMessageBox(_("Load last session?"), _("Prompt"), wxYES_NO, Frame) == wxYES){
 				loadSession = true;

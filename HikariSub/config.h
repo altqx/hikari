@@ -432,7 +432,6 @@ private:
 	bool isClosing = false;
 	std::map<int, wxFont*> programFonts;
 	wxColour defaultColour;
-	bool hasCrashed = false;
 	bool ConfigNeedToConvert(const wxString & fullVersion);
 	int lastCheckedId = -1;
 	unsigned long lastCheckedTime = 0;
@@ -495,7 +494,7 @@ public:
 	bool LoadAudioOpts();
 	void ResetDefault();
 	void SaveAudioOpts();
-	void SaveOptions(bool cfg = true, bool style = true, bool crashed = false);
+	void SaveOptions(bool cfg = true, bool style = true);
 	void SaveColors(const wxString &path = emptyString);
 	void LoadStyles(const wxString &katalog);
 	void clearstyles();
@@ -515,7 +514,6 @@ public:
 	//wxString GetStringColor(unsigned int);
 	wxString GetStringColor(size_t optionName);
 	wxString GetReleaseDate();
-	bool HasCrashed(){ return hasCrashed; }
 	//returns true when time is too short
 	bool CheckLastKeyEvent(int id, int timeInterval = 100);
 	config();
