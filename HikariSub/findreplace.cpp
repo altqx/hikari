@@ -180,6 +180,7 @@ void FindReplace::ReplaceChecked()
 		TabPanel *tab = nullptr;
 		int oldKeyLine = -1;
 		int numOfChanges = 0;
+		int lastEnd = 0;
 		bool skipLine = false;
 		bool lastIsTextTl = false;
 		size_t size = List->GetCount();
@@ -207,6 +208,7 @@ void FindReplace::ReplaceChecked()
 			//skip lines with different texts
 			if (oldKeyLine != SeekResult->keyLine || SeekResult->isTextTL != lastIsTextTl){
 				replacementDiff = 0;
+				lastEnd = 0;
 				if (lineText != SeekResult->name){
 					HikariLog(wxString::Format(_("Line %i cannot be replaced,\ncause it was edited."),
 						SeekResult->idLine));
@@ -218,7 +220,7 @@ void FindReplace::ReplaceChecked()
 			if (skipLine)
 				continue;
 
-			numOfChanges += ReplaceCheckedLine(&lineText, SeekResult->findPosition, &replacementDiff);
+			numOfChanges += ReplaceCheckedLine(&lineText, SeekResult->findPosition, &replacementDiff, &lastEnd);
 
 			if (tab != oldtab && oldtab && numOfChanges){
 				oldtab->grid->SetModified(REPLACE_ALL);
@@ -238,8 +240,15 @@ void FindReplace::ReplaceChecked()
 
 }
 
-int FindReplace::ReplaceCheckedLine(wxString *line, const wxPoint &pos, int *replacementDiff)
+int FindReplace::ReplaceCheckedLine(wxString *line, const wxPoint &pos, int *replacementDiff, int *lastEnd)
 {
+	int start = pos.x - (*replacementDiff);
+	//skip a result that overlaps the previous replacement or no longer fits the line,
+	//wxString::replace throws std::out_of_range past its end
+	if (pos.x < *lastEnd || start < 0 || pos.y < 0 || (size_t)(start + pos.y) > line->length())
+		return 0;
+
+	*lastEnd = pos.x + pos.y;
 	int reps = 1;
 	if (regEx){
 		wxString foundString = line->Mid(pos.x - (*replacementDiff), pos.y);
@@ -913,7 +922,8 @@ void FindReplace::FindInSubsLine(wxString *onlyString, Dialogue *dial, TabPanel 
 				break;
 			}
 			else
-				tabTextPosition = foundPosition + 1;
+				//skip the whole match, results must not overlap
+				tabTextPosition = foundPosition + ((foundLength) ? foundLength : 1);
 
 		}
 		else{
@@ -1025,14 +1035,22 @@ void FindReplace::Replace(TabWindow *window)
 		Find(window); 
 	}
 	if (findstart == -1 || findend == -1){ return; }
+	SubsGrid *grid = tab->grid;
+	wxString replacedText;
+	Dialogue *Dial = grid->file->GetDialogue(reprow);
+	if (Dial)
+		Dial->GetTextElement(wrep, &replacedText, tab->grid->hasTLMode);
+	//the line may have been shortened since the match was found,
+	//wxString::replace throws std::out_of_range past its end
+	if (!Dial || findstart > findend || (size_t)findend > replacedText.length()){
+		findstart = findend = -1;
+		return;
+	}
 	fnext = true;
 	wxString rep = window->ReplaceText->GetValue();
-	SubsGrid *grid = tab->grid;
 
 	Dialogue *Dialc = grid->CopyDialogue(reprow);
 	bool hasRegEx = window->RegEx->GetValue();
-	wxString replacedText;
-	Dialc->GetTextElement(wrep, &replacedText, tab->grid->hasTLMode);
 	if (hasRegEx && findReplaceRegEx.IsValid()){
 		wxString place = replacedText.Mid(findstart, findend - findstart);
 		int reps = findReplaceRegEx.Replace(&place, rep, 1);
@@ -1496,6 +1514,7 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 	wxString subsText;
 	int numOfChanges = 0;
 	int replacementDiff = 0;
+	int lastEnd = 0;
 	size_t numOfResult = 0;
 
 	SeekResults *SeekResult = results[0];
@@ -1578,6 +1597,7 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 
 		dial->GetTextElement(dialogueColumn, &dialtxt);
 		replacementDiff = 0;
+		lastEnd = 0;
 		//need checks
 		if (dialtxt != SeekResult->name){
 			HikariLog(wxString::Format(_("Line %i cannot be replaced,\ncause it was edited."),
@@ -1585,7 +1605,7 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 			continue;
 		}
 		while (SeekResult->keyLine == lineNum){
-			int numOfReps = ReplaceCheckedLine(&dialtxt, SeekResult->findPosition, &replacementDiff);
+			int numOfReps = ReplaceCheckedLine(&dialtxt, SeekResult->findPosition, &replacementDiff, &lastEnd);
 
 			numOfChanges += numOfReps;
 

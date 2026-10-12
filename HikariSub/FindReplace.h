@@ -124,7 +124,7 @@ private:
 	bool GetNextBlock(wxString *text, wxString *block);
 	bool UpdateValues(TabWindow *window);
 	int ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const wxString &copyPath);
-	int ReplaceCheckedLine(wxString *line, const wxPoint &pos, int *replacementDiff);
+	int ReplaceCheckedLine(wxString *line, const wxPoint &pos, int *replacementDiff, int *lastEnd);
 	FindReplaceDialog *FRD = nullptr;
 	FindReplaceResultsDialog *FRRD = nullptr;
 	std::atomic<int> AllReplacements = 0;
