@@ -6,6 +6,7 @@
 // for the window chosen. ask() is the HikariMessageDialog "Warning" that
 // follows when the keys are taken: Switch hotkeys (OK), Delete hotkey (Yes),
 // Set anyway (No) and Cancel, as the conflict offers them.
+pragma Translator: "HikariSub.Hotkeys"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

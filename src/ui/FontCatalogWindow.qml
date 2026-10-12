@@ -9,6 +9,7 @@
 //
 // "Refresh fonts" (the card's explicit refresh, F47-refresh) reads the
 // installed and external fonts again at once.
+pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs as Dialogs

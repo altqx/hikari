@@ -25,6 +25,9 @@ struct TsMessage {
     TsState state = TsState::Unfinished;
     QStringList translations; // one entry, or the numerus forms
     QList<std::pair<QString, QString>> extras; // <extra-NAME>, NAME without the prefix
+    // <location> elements (lupdate -locations absolute or relative): file and
+    // line. Read only; the catalogs are written without them (-locations none).
+    QList<std::pair<QString, int>> locations;
 };
 
 struct TsContext {

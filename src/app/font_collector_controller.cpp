@@ -93,7 +93,8 @@ QString pathJoin(const QString &dir, const QString &name)
 // wxGETTEXT_IN_CONTEXT_PLURAL("found or copied", "%d font", "%d fonts", n).
 QString fonts(int n)
 {
-    return n == 1 ? FontCollectorController::tr("%1 font").arg(n) : FontCollectorController::tr("%1 fonts").arg(n);
+    return n == 1 ? QCoreApplication::translate("HikariSub.Fonts", "%1 font").arg(n)
+                  : QCoreApplication::translate("HikariSub.Fonts", "%1 fonts").arg(n);
 }
 
 // SubsTime::GetFormatted(SRT): "%02i:%02i:%02i,%03i".
@@ -117,40 +118,40 @@ QString noteText(const Note &n)
     const QString fn = qs(n.family), a = qs(n.a), b = qs(n.b);
     switch (n.kind) {
     case K::FoundFile: // AppendInfo (FontCollector.cpp:1189)
-        return FontCollectorController::tr("Found \"%1\" font file.").arg(a);
+        return QCoreApplication::translate("HikariSub.Fonts", "Found \"%1\" font file.").arg(a);
     case K::RendererFile:
-        return FontCollectorController::tr("The renderer also used \"%1\" (%2); it is not collected.").arg(a, b);
+        return QCoreApplication::translate("HikariSub.Fonts", "The renderer also used \"%1\" (%2); it is not collected.").arg(a, b);
     case K::Copied: // SaveFont (902)
-        return FontCollectorController::tr("Copied font \"%1\".").arg(a);
+        return QCoreApplication::translate("HikariSub.Fonts", "Copied font \"%1\".").arg(a);
     case K::AddedToArchive: // SaveFont (887)
-        return FontCollectorController::tr("Added font \"%1\" to the archive.").arg(a);
+        return QCoreApplication::translate("HikariSub.Fonts", "Added font \"%1\" to the archive.").arg(a);
     case K::UnusedStyle: // CheckPathAndGlyphs (1096), CheckOrCopyFonts (835)
-        return FontCollectorController::tr("Font \"%1\" belongs to a style\nthat is not used.").arg(fn) +
-               (n.flag ? FontCollectorController::tr("\nWill not be copied.") : QString());
+        return QCoreApplication::translate("HikariSub.Fonts", "Font \"%1\" belongs to a style\nthat is not used.").arg(fn) +
+               (n.flag ? QCoreApplication::translate("HikariSub.Fonts", "\nWill not be copied.") : QString());
     case K::MissingNormal:
-        return FontCollectorController::tr("Font \"%1\" is missing normal style.").arg(fn);
+        return QCoreApplication::translate("HikariSub.Fonts", "Font \"%1\" is missing normal style.").arg(fn);
     case K::MissingBoldItalic:
-        return FontCollectorController::tr("Font \"%1\" is missing bold italics.").arg(fn);
+        return QCoreApplication::translate("HikariSub.Fonts", "Font \"%1\" is missing bold italics.").arg(fn);
     case K::MissingBold:
-        return FontCollectorController::tr("Font \"%1\" is missing bold.").arg(fn);
+        return QCoreApplication::translate("HikariSub.Fonts", "Font \"%1\" is missing bold.").arg(fn);
     case K::MissingItalic:
-        return FontCollectorController::tr("Font \"%1\" is missing italics.").arg(fn);
+        return QCoreApplication::translate("HikariSub.Fonts", "Font \"%1\" is missing italics.").arg(fn);
     case K::CannotCheckCharacters:
-        return FontCollectorController::tr("Cannot check the characters in font \"%1\".").arg(fn);
+        return QCoreApplication::translate("HikariSub.Fonts", "Cannot check the characters in font \"%1\".").arg(fn);
     case K::MissingCharacters:
-        return FontCollectorController::tr("Font \"%1\" does not contain characters: \"%2\".").arg(fn, a);
+        return QCoreApplication::translate("HikariSub.Fonts", "Font \"%1\" does not contain characters: \"%2\".").arg(fn, a);
     case K::FallbackCharacters:
-        return FontCollectorController::tr("Characters \"%1\" were drawn by the fallback font \"%2\".").arg(a, b);
+        return QCoreApplication::translate("HikariSub.Fonts", "Characters \"%1\" were drawn by the fallback font \"%2\".").arg(a, b);
     case K::CannotGetContents:
-        return FontCollectorController::tr("Cannot get the contents of font \"%1\".").arg(fn);
+        return QCoreApplication::translate("HikariSub.Fonts", "Cannot get the contents of font \"%1\".").arg(fn);
     case K::CannotOpenFile:
-        return FontCollectorController::tr("Cannot open file \"%1\".").arg(a);
+        return QCoreApplication::translate("HikariSub.Fonts", "Cannot open file \"%1\".").arg(a);
     case K::CannotFindInFolder:
-        return FontCollectorController::tr("Cannot find \"%1\" font in Fonts folder.").arg(fn);
+        return QCoreApplication::translate("HikariSub.Fonts", "Cannot find \"%1\" font in Fonts folder.").arg(fn);
     case K::CannotCopy:
-        return FontCollectorController::tr("Cannot copy font \"%1\".").arg(a);
+        return QCoreApplication::translate("HikariSub.Fonts", "Cannot copy font \"%1\".").arg(a);
     case K::CannotZip:
-        return FontCollectorController::tr("Cannot zip font \"%1\".").arg(a);
+        return QCoreApplication::translate("HikariSub.Fonts", "Cannot zip font \"%1\".").arg(a);
     }
     return {};
 }
@@ -379,18 +380,18 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
     emit settingsChanged();
     const QString subsPath = current >= 0 && current < int(tabs.size()) ? tabs[std::size_t(current)].path : QString();
     if (path.isEmpty() && !m_useSubsDirectory)
-        return refuse(tr("Select the folder where you want to copy fonts"));
+        return refuse(QCoreApplication::translate("HikariSub.Fonts", "Select the folder where you want to copy fonts"));
     // Legacy's subsfromMkv was the checkbox's value, enabled or not
     // (FontCollector.cpp:453-467); a disabled box could be checked there only
     // in the check mode, which never reaches this. With the value kept
     // (Y9-from-mkv-saved) a checked box is disabled for a video that is not
     // an MKV file, and then demuxes nothing: the run's own MKV choice.
     if (!m_runMkv && m_useSubsDirectory && subsPath.isEmpty())
-        return refuse(tr("No subtitles loaded. Load subtitles or deselect this option."));
+        return refuse(QCoreApplication::translate("HikariSub.Fonts", "No subtitles loaded. Load subtitles or deselect this option."));
     const QString pathValue = normalizePath(path);
     const bool zip = m_action == 2;
     if (zip && QFileInfo(pathValue).isDir() && !m_useSubsDirectory)
-        return refuse(tr("Choose a name for the archive"));
+        return refuse(QCoreApplication::translate("HikariSub.Fonts", "Choose a name for the archive"));
     QString copypath;
     if (m_useSubsDirectory) {
         // sourcePath: the video when demuxing fonts from the MKV (480).
@@ -400,7 +401,8 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
         // 482); the folder is named in the interface language
         // (FC-czcionki). An existing Czcionki folder is left as it is.
         const QString fontDir =
-            pathJoin(pathDir(sourcePath), tr("Fonts", "the folder the font collector writes beside the subtitles"));
+            pathJoin(pathDir(sourcePath), QCoreApplication::translate("HikariSub.Fonts",
+                                                                      "Fonts", "the folder the font collector writes beside the subtitles"));
         const qsizetype dot = rest.lastIndexOf(QLatin1Char('.'));
         copypath = zip ? pathJoin(fontDir, (dot < 0 ? rest : rest.left(dot)) + QStringLiteral(".zip")) : fontDir + separator();
     } else {
@@ -412,7 +414,7 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
         const bool valid = !copypath.isEmpty();
 #endif
         if (!valid)
-            return refuse(tr("The save path is not valid."));
+            return refuse(QCoreApplication::translate("HikariSub.Fonts", "The save path is not valid."));
         if (!zip && !copypath.endsWith(separator()))
             copypath += separator();
         else if (zip && !copypath.endsWith(QLatin1String(".zip")))
@@ -425,8 +427,8 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
         m_copyPath = copypath;
         m_runZip = zip;
         m_pendingArchive = copypath;
-        return {{QStringLiteral("question"), tr("The zip file already exists, delete it?")},
-                {QStringLiteral("title"), tr("Confirmation")},
+        return {{QStringLiteral("question"), QCoreApplication::translate("HikariSub.Fonts", "The zip file already exists, delete it?")},
+                {QStringLiteral("title"), QCoreApplication::translate("HikariSub.Fonts", "Confirmation")},
                 {QStringLiteral("archive"), copypath}};
     }
     m_copyPath = copypath;
@@ -480,13 +482,13 @@ void FontCollectorController::doLog(const Block &block)
     QString info;
     switch (block.header) {
     case Block::Header::Found:
-        info = tr("Found font \"%1\"\n").arg(qs(block.family));
+        info = QCoreApplication::translate("HikariSub.Fonts", "Found font \"%1\"\n").arg(qs(block.family));
         break;
     case Block::Header::FoundDot:
-        info = tr("Found font \"%1\".").arg(qs(block.family));
+        info = QCoreApplication::translate("HikariSub.Fonts", "Found font \"%1\".").arg(qs(block.family));
         break;
     case Block::Header::NotFound:
-        info = tr("Font not found \"") + qs(block.family) + QStringLiteral("\".\n");
+        info = QCoreApplication::translate("HikariSub.Fonts", "Font not found \"") + qs(block.family) + QStringLiteral("\".\n");
         break;
     }
     for (const auto &n : block.infos)
@@ -501,11 +503,11 @@ void FontCollectorController::doLog(const Block &block)
     area.block = block;
     QString messageText;
     if (!block.styles.empty())
-        messageText += tr("In styles:\n");
+        messageText += QCoreApplication::translate("HikariSub.Fonts", "In styles:\n");
     area.stylesFrom = position + int(messageText.size());
     for (const auto &[style, tabs] : block.styles) {
         messageText += QStringLiteral(" - ") + qs(style);
-        messageText += tr(" tabs: ");
+        messageText += QCoreApplication::translate("HikariSub.Fonts", " tabs: ");
         QStringList numbers;
         for (const int t : tabs)
             numbers << QString::number(t + 1);
@@ -513,7 +515,7 @@ void FontCollectorController::doLog(const Block &block)
     }
     area.stylesTo = position + int(messageText.size());
     if (!block.lines.empty())
-        messageText += tr("In lines: ");
+        messageText += QCoreApplication::translate("HikariSub.Fonts", "In lines: ");
     area.linesFrom = position + int(messageText.size());
     QStringList lines;
     for (const auto &[line, tabs] : block.lines)
@@ -546,7 +548,7 @@ void FontCollectorController::logRenderer(const CollectorReview &review)
     // fonts alone reproduce every frame.
     QString text;
     if (!review.provider.empty())
-        text += tr("Checked by the subtitle renderer (%1).\n").arg(qs(review.provider));
+        text += QCoreApplication::translate("HikariSub.Fonts", "Checked by the subtitle renderer (%1).\n").arg(qs(review.provider));
     QStringList missing, substituted;
     for (const auto &f : review.missingFamilies)
         missing << qs(f);
@@ -554,18 +556,22 @@ void FontCollectorController::logRenderer(const CollectorReview &review)
         substituted << qs(f);
     QString problems;
     for (const int t : review.unrendered)
-        problems += tr("Tab %1: the renderer could not read this Document; it was not checked.\n").arg(t + 1);
+        problems += QCoreApplication::translate("HikariSub.Fonts",
+                                                "Tab %1: the renderer could not read this Document; it was not checked.\n").arg(t + 1);
     if (!missing.isEmpty())
-        problems += tr("Families the renderer did not find: %1.\n").arg(missing.join(QStringLiteral(", ")));
+        problems += QCoreApplication::translate("HikariSub.Fonts", "Families the renderer did not find: %1.\n")
+                        .arg(missing.join(QStringLiteral(", ")));
     if (!substituted.isEmpty())
-        problems += tr("Families answered by a font of another name: %1.\n").arg(substituted.join(QStringLiteral(", ")));
+        problems += QCoreApplication::translate("HikariSub.Fonts", "Families answered by a font of another name: %1.\n")
+                        .arg(substituted.join(QStringLiteral(", ")));
     if (!review.missingGlyphs.empty())
-        problems += tr("Characters no font has: %1.\n").arg(codes(review.missingGlyphs));
+        problems += QCoreApplication::translate("HikariSub.Fonts", "Characters no font has: %1.\n").arg(codes(review.missingGlyphs));
     if (!review.fallbackGlyphs.empty())
-        problems += tr("Characters drawn by a fallback font of this computer: %1.\n").arg(codes(review.fallbackGlyphs));
+        problems += QCoreApplication::translate("HikariSub.Fonts", "Characters drawn by a fallback font of this computer: %1.\n")
+                        .arg(codes(review.fallbackGlyphs));
     for (const auto &r : review.reimports)
         if (!r.identical)
-            problems += tr("Tab %1: with the collected fonts alone, %2 of %3 frames differ.\n")
+            problems += QCoreApplication::translate("HikariSub.Fonts", "Tab %1: with the collected fonts alone, %2 of %3 frames differ.\n")
                             .arg(r.tab + 1)
                             .arg(r.differingFrames.size())
                             .arg(r.frames);
@@ -573,7 +579,8 @@ void FontCollectorController::logRenderer(const CollectorReview &review)
     for (const auto &n : review.nameClashes)
         clashes << qs(n);
     if (!clashes.isEmpty())
-        problems += tr("Different fonts with the same file name: %1. Only one of them is kept in a folder.\n")
+        problems += QCoreApplication::translate("HikariSub.Fonts",
+                                                "Different fonts with the same file name: %1. Only one of them is kept in a folder.\n")
                         .arg(clashes.join(QStringLiteral(", ")));
     bool reproduced = !review.reimports.empty() && review.unrendered.empty();
     for (const auto &r : review.reimports)
@@ -581,12 +588,13 @@ void FontCollectorController::logRenderer(const CollectorReview &review)
     send(text, kNormal);
     // W2: a libass agreement does not certify another renderer's output.
     if (!m_displayRenderer.isEmpty() && m_displayRenderer != QLatin1String("libass"))
-        send(tr("The video shows the subtitles through %1, whose output this check does not verify.\n")
+        send(QCoreApplication::translate("HikariSub.Fonts",
+                                         "The video shows the subtitles through %1, whose output this check does not verify.\n")
                  .arg(m_displayRenderer),
              kWarning);
     send(problems, kWarning);
     if (reproduced)
-        send(tr("The collected fonts alone reproduce every frame.\n"), kNormal);
+        send(QCoreApplication::translate("HikariSub.Fonts", "The collected fonts alone reproduce every frame.\n"), kNormal);
 }
 
 void FontCollectorController::logSummary(const CollectorReview &review, const CollectorResult &result)
@@ -595,36 +603,40 @@ void FontCollectorController::logSummary(const CollectorReview &review, const Co
     // not agree with, or that was not all written, is never reported as
     // success (fonts.md; partial-output rule).
     const bool checkFonts = review.action == CollectorAction::Check;
-    const QString verb = checkFonts ? tr("found") : tr("copied");
+    const QString verb = checkFonts ? QCoreApplication::translate("HikariSub.Fonts", "found")
+                                    : QCoreApplication::translate("HikariSub.Fonts", "copied");
     const bool success = result.complete;
     if (!success) {
-        QString message = QStringLiteral("\n") + tr("Finished, %1 %2.\n").arg(verb, fonts(result.foundCount));
+        QString message = QStringLiteral("\n") +
+                          QCoreApplication::translate("HikariSub.Fonts", "Finished, %1 %2.\n").arg(verb, fonts(result.foundCount));
         if (result.notFoundCount)
-            message += tr("Not found %1.\n").arg(fonts(result.notFoundCount));
+            message += QCoreApplication::translate("HikariSub.Fonts", "Not found %1.\n").arg(fonts(result.notFoundCount));
         if (result.notCopiedCount)
-            message += tr("Cannot copy %1.\n").arg(fonts(result.notCopiedCount));
+            message += QCoreApplication::translate("HikariSub.Fonts", "Cannot copy %1.\n").arg(fonts(result.notCopiedCount));
         if (!result.allGlyphs)
-            message += tr("Some fonts do not contain all glyphs used in the text.\n");
+            message += QCoreApplication::translate("HikariSub.Fonts", "Some fonts do not contain all glyphs used in the text.\n");
         if (!review.rendererComplete())
-            message += tr("The renderer cannot reproduce the subtitles from these fonts alone: the collection is "
-                          "incomplete.\n");
+            message += QCoreApplication::translate("HikariSub.Fonts",
+                                                   "The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.\n");
         else if (!review.nameClashes.empty())
-            message += tr("The output does not hold every collected font under its own name: the collection is "
-                          "incomplete.\n");
+            message += QCoreApplication::translate("HikariSub.Fonts",
+                                                   "The output does not hold every collected font under its own name: the collection is incomplete.\n");
         if (result.cancelled)
-            message += tr("Writing was cancelled.\n");
+            message += QCoreApplication::translate("HikariSub.Fonts", "Writing was cancelled.\n");
         if (result.labelled)
-            message += tr("The output is labelled incomplete (\"%1\").\n").arg(QString::fromUtf8(backends::kIncompleteLabel));
+            message += QCoreApplication::translate("HikariSub.Fonts", "The output is labelled incomplete (\"%1\").\n")
+                           .arg(QString::fromUtf8(backends::kIncompleteLabel));
         send(message, kWarning);
     } else {
-        send(QStringLiteral("\n") + tr("Completed Successfully, %1 %2.\n").arg(verb, fonts(result.foundCount)), kSuccess);
+        send(QStringLiteral("\n") + QCoreApplication::translate("HikariSub.Fonts", "Completed Successfully, %1 %2.\n")
+                                        .arg(verb, fonts(result.foundCount)), kSuccess);
     }
 }
 
 void FontCollectorController::logFinished()
 {
     // FontCollectorThread::Entry (FontCollector.cpp:1335-1336).
-    send(QStringLiteral("\n") + tr("Finished in %1ms").arg(srtTime(m_elapsed)), kNormal);
+    send(QStringLiteral("\n") + QCoreApplication::translate("HikariSub.Fonts", "Finished in %1ms").arg(srtTime(m_elapsed)), kNormal);
 }
 
 void FontCollectorController::prepared(std::expected<CollectorReview, application::FontError> review)
@@ -635,8 +647,8 @@ void FontCollectorController::prepared(std::expected<CollectorReview, applicatio
     const bool copy = m_runAction != CollectorAction::Check;
     if (!review) {
         send(review.error() == application::FontError::Cancelled
-                 ? tr("Cancelled; nothing was written.\n")
-                 : tr("The subtitle renderer is not available; the fonts cannot be checked.\n"),
+                 ? QCoreApplication::translate("HikariSub.Fonts", "Cancelled; nothing was written.\n")
+                 : QCoreApplication::translate("HikariSub.Fonts", "The subtitle renderer is not available; the fonts cannot be checked.\n"),
              kWarning);
         logFinished();
         emit logChanged();
@@ -645,7 +657,9 @@ void FontCollectorController::prepared(std::expected<CollectorReview, applicatio
     }
     m_review = std::move(*review);
     if (m_review->retrieveFailed) {
-        send(tr("Cannot retrieve the font file sizes and names;\ncopying will be canceled.\n"), kWarning);
+        send(QCoreApplication::translate("HikariSub.Fonts",
+                                         "Cannot retrieve the font file sizes and names;\n"
+                                         "copying will be canceled.\n"), kWarning);
         logFinished();
         m_canSaveFolder = true; // EVT_ENABLE_OPEN_FOLDER after any copy run
         m_review.reset();
@@ -654,7 +668,7 @@ void FontCollectorController::prepared(std::expected<CollectorReview, applicatio
         return;
     }
     if (m_review->retrievedFonts)
-        send(tr("Retrieved sizes and names of %1 fonts, elapsed time %2ms.\n\n")
+        send(QCoreApplication::translate("HikariSub.Fonts", "Retrieved sizes and names of %1 fonts, elapsed time %2ms.\n\n")
                  .arg(*m_review->retrievedFonts)
                  .arg(srtTime(m_review->retrieveMs)),
              kNormal);
@@ -672,12 +686,13 @@ void FontCollectorController::prepared(std::expected<CollectorReview, applicatio
     const int files = int(m_review->files.size());
     QString ready = QStringLiteral("\n") +
                     (m_runAction == CollectorAction::Zip
-                         ? tr("Ready to add %1 to the archive \"%2\".\n").arg(fonts(files), m_copyPath)
-                         : tr("Ready to copy %1 to \"%2\".\n").arg(fonts(files), m_copyPath));
+                         ? QCoreApplication::translate("HikariSub.Fonts", "Ready to add %1 to the archive \"%2\".\n")
+                               .arg(fonts(files), m_copyPath)
+                         : QCoreApplication::translate("HikariSub.Fonts", "Ready to copy %1 to \"%2\".\n").arg(fonts(files), m_copyPath));
     send(ready, kNormal);
     if (!m_review->complete())
-        send(tr("This collection is incomplete. It is written only when you acknowledge that, and the output is then "
-                "labelled incomplete.\n"),
+        send(QCoreApplication::translate("HikariSub.Fonts",
+                                         "This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.\n"),
              kWarning);
     emit logChanged();
     setStage(Review);
@@ -729,15 +744,15 @@ void FontCollectorController::applied(CollectorResult result)
     m_review.reset();
     clearLog();
     if (review.retrievedFonts)
-        send(tr("Retrieved sizes and names of %1 fonts, elapsed time %2ms.\n\n")
+        send(QCoreApplication::translate("HikariSub.Fonts", "Retrieved sizes and names of %1 fonts, elapsed time %2ms.\n\n")
                  .arg(*review.retrievedFonts)
                  .arg(srtTime(review.retrieveMs)),
              kNormal);
     if (result.pathNotAvailable) {
         // MakeDirectory and CheckOrCopyFonts (FontCollector.cpp:1005, 822).
         if (result.cannotCreateFolder)
-            send(tr("Cannot create folder."), kWarning);
-        send(tr("Path is not available"), kWarning);
+            send(QCoreApplication::translate("HikariSub.Fonts", "Cannot create folder."), kWarning);
+        send(QCoreApplication::translate("HikariSub.Fonts", "Path is not available"), kWarning);
     } else {
         logBlocks(result.found, result.notFound);
         logRenderer(review);
@@ -820,16 +835,16 @@ void FontCollectorController::logMkvTab(std::size_t index)
     using Status = application::MatroskaFontTab::Status;
     const auto &tab = m_mkvTabs[index];
     if (m_runAllTabs) // CopyMKVFonts with ON_ALL_TABS (FontCollector.cpp:921)
-        send(tr("Video: %1\n\n").arg(qs(tab.video)), kNormal);
+        send(QCoreApplication::translate("HikariSub.Fonts", "Video: %1\n\n").arg(qs(tab.video)), kNormal);
     switch (tab.status) {
     case Status::NotMkv:
-        send(tr("This video is not an MKV file."), kWarning);
+        send(QCoreApplication::translate("HikariSub.Fonts", "This video is not an MKV file."), kWarning);
         break;
     case Status::CannotOpen:
-        send(tr("Cannot open MKV file"), kWarning);
+        send(QCoreApplication::translate("HikariSub.Fonts", "Cannot open MKV file"), kWarning);
         break;
     case Status::NoFonts:
-        send(tr("Loaded MKV file does not have any fonts."), kWarning);
+        send(QCoreApplication::translate("HikariSub.Fonts", "Loaded MKV file does not have any fonts."), kWarning);
         break;
     case Status::Fonts:
         break;
@@ -842,7 +857,7 @@ void FontCollectorController::mkvPrepared(bool cancelled)
     clearLog();
     if (cancelled) {
         m_mkvTabs.clear();
-        send(tr("Cancelled; nothing was written.\n"), kWarning);
+        send(QCoreApplication::translate("HikariSub.Fonts", "Cancelled; nothing was written.\n"), kWarning);
         logFinished();
         emit logChanged();
         setStage(Done);
@@ -853,7 +868,7 @@ void FontCollectorController::mkvPrepared(bool cancelled)
     for (std::size_t i = 0; i < m_mkvTabs.size(); ++i) {
         logMkvTab(i);
         for (const auto &font : m_mkvTabs[i].fonts) {
-            send(tr("Font named \"%1\".\n").arg(qs(font.name)), kNormal);
+            send(QCoreApplication::translate("HikariSub.Fonts", "Font named \"%1\".\n").arg(qs(font.name)), kNormal);
             ++count;
         }
     }
@@ -874,9 +889,11 @@ void FontCollectorController::mkvPrepared(bool cancelled)
         setStage(Done);
         return;
     }
-    const QString target = m_copyPath.isEmpty() ? tr("(no folder)") : m_copyPath;
-    send(QStringLiteral("\n") + (m_runZip ? tr("Ready to add %1 to the archive \"%2\".\n").arg(fonts(count), target)
-                                           : tr("Ready to copy %1 to \"%2\".\n").arg(fonts(count), target)),
+    const QString target = m_copyPath.isEmpty() ? QCoreApplication::translate("HikariSub.Fonts", "(no folder)") : m_copyPath;
+    send(QStringLiteral("\n") + (m_runZip ? QCoreApplication::translate("HikariSub.Fonts", "Ready to add %1 to the archive \"%2\".\n")
+                                                .arg(fonts(count), target)
+                                           : QCoreApplication::translate("HikariSub.Fonts", "Ready to copy %1 to \"%2\".\n")
+                                                 .arg(fonts(count), target)),
          kNormal);
     emit logChanged();
     setStage(Review);
@@ -927,28 +944,30 @@ void FontCollectorController::mkvApplied(std::vector<application::MatroskaFontsS
             continue;
         if (result.outputFailed) {
             if (result.cannotCreateFolder)
-                send(tr("Cannot create folder."), kWarning);
+                send(QCoreApplication::translate("HikariSub.Fonts", "Cannot create folder."), kWarning);
             continue;
         }
         int copied = 0;
         for (std::size_t k = 0; k < result.saved.size(); ++k) {
             const QString name = qs(tab.fonts[k].name);
             if (result.saved[k]) {
-                send(tr("Saved a font named \"") + name + QStringLiteral("\".\n \n"), kNormal);
+                send(QCoreApplication::translate("HikariSub.Fonts", "Saved a font named \"") + name + QStringLiteral("\".\n \n"), kNormal);
                 ++copied;
             } else {
-                send(tr("Cannot save font named \"") + name + QStringLiteral("\".\n \n"), kWarning);
+                send(QCoreApplication::translate("HikariSub.Fonts", "Cannot save font named \"") + name + QStringLiteral("\".\n \n"),
+                     kWarning);
             }
         }
         if (result.cancelled) {
-            send(tr("Writing was cancelled.\n"), kWarning);
+            send(QCoreApplication::translate("HikariSub.Fonts", "Writing was cancelled.\n"), kWarning);
             break;
         }
         const int total = int(tab.fonts.size());
         if (copied < total)
-            send(tr("Completed, copied %1 fonts.\nFailed to copy %2 fonts.").arg(copied).arg(total - copied), kWarning);
+            send(QCoreApplication::translate("HikariSub.Fonts", "Completed, copied %1 fonts.\nFailed to copy %2 fonts.")
+                     .arg(copied).arg(total - copied), kWarning);
         else
-            send(tr("Completed successfully and copied %1 fonts.").arg(copied), kSuccess);
+            send(QCoreApplication::translate("HikariSub.Fonts", "Completed successfully and copied %1 fonts.").arg(copied), kSuccess);
     }
     (void)cancelled;
     m_mkvTabs.clear();
@@ -1040,7 +1059,7 @@ void FontCollectorController::logDoubleClicked(int position)
         if (!line.startsWith(QLatin1String(" - ")))
             return std::nullopt;
         QString name = line.mid(3);
-        const qsizetype result = name.indexOf(tr(" tabs: "));
+        const qsizetype result = name.indexOf(QCoreApplication::translate("HikariSub.Fonts", " tabs: "));
         if (result >= 0)
             name = name.left(result);
         return name;
@@ -1049,9 +1068,10 @@ void FontCollectorController::logDoubleClicked(int position)
     if (number.match(word).hasMatch()) {
         if (isStyle) {
             const QString line = text.left(end).section(QLatin1Char('\n'), -1);
-            if (!line.startsWith(QLatin1String(" - ")) || line.mid(3).indexOf(tr(" tabs: ")) < 0)
+            const QString tabs = QCoreApplication::translate("HikariSub.Fonts", " tabs: ");
+            if (!line.startsWith(QLatin1String(" - ")) || line.mid(3).indexOf(tabs) < 0)
                 return;
-            const QString style = line.mid(3).left(line.mid(3).indexOf(tr(" tabs: ")));
+            const QString style = line.mid(3).left(line.mid(3).indexOf(tabs));
             const auto it = block.styles.find(style.toStdU16String());
             if (it != block.styles.end() && !it->second.empty() && m_hooks.goToStyle) {
                 m_hooks.goToStyle(word.toInt() - 1, style);

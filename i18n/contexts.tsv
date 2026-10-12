@@ -1,0 +1,38 @@
+# O6: the translation contexts of the interface (docs/qt/localisation.md, "Keys and migration").
+# A string is keyed by the surface it belongs to, not by the QML file or C++ class that holds it, so moving
+# code keeps its translations. QML: a file of one surface sets `pragma Translator: "<context>"` and calls qsTr;
+# a string of another surface in it calls qsTranslate("<context>", ...). C++: QCoreApplication::translate
+# and QT_TRANSLATE_NOOP("<context>", ...); never tr(), whose context is the class.
+# The lint (ctest hikari_i18n_contexts_are_semantic) fails on a context missing here.
+# HikariSub.Automation.Gettext (aegisub.gettext's catalog) is not listed: no interface string uses it.
+context	surface
+HikariSub.Audio	The audio panel: waveform and spectrum, playback, audio files and tracks
+HikariSub.Automation	Automation: the manager, script notices and dialogs, macros and their shortcuts
+HikariSub.Colours	The colour pickers and the screen dropper
+HikariSub.Conversion	Format conversion, the FPS change and resampling (subtitle resolution)
+HikariSub.Documents	Opening, saving, closing and reloading Documents; Untitled Documents, associated files, refused commands
+HikariSub.Editor	The line editor panel: text fields and their menu, the line inspector, counters, alignment, tag buttons
+HikariSub.Fonts	The font collector, font catalogs, fonts from subtitles and the font chooser
+HikariSub.Grid	The subtitle grid: headings, line states, selection, line groups, copy and paste of columns
+HikariSub.Hotkeys	Hotkey mapping and shortcut hints
+HikariSub.MainWindow	The main window: title, menu bar and menu help, About, Credits, updates, the log and history windows
+HikariSub.Matroska	Subtitles from Matroska files
+HikariSub.MisspellReplacer	Fix minor errors (the misspell replacer) and its rules
+HikariSub.Options	The Options dialog, its Appearance page (themes, accent colours) and the interface language
+HikariSub.Reference	The protected reference panel and its tray
+HikariSub.ScriptProperties	The script properties dialog
+HikariSub.Search	Find and replace: its panel, questions and results
+HikariSub.SelectLines	The Select lines dialog
+HikariSub.Session	Sessions, autosaves and their recovery, temporary files
+HikariSub.SettingsImport	Importing the settings of a legacy installation
+HikariSub.Spelling	The spellchecker, dictionaries and fix suggestions
+HikariSub.StatusBar	The status bar: its fields, the selection status and progress
+HikariSub.Styles	The Style manager and style catalogs
+HikariSub.Tabs	The Document tab bar, its menu, tab commands and subtitle comparison
+HikariSub.TagList	The ASS override tag list and its popup
+HikariSub.TimeShift	The Shift times panel
+HikariSub.Translation	Translation mode: its switch and toggles, translation files and matching
+HikariSub.Video	The video panel and full screen: playback, menus, streams, chapters, keyframes, dummy video, indexing, player errors
+HikariSub.VisualTools	The visual tools: rail, options, values, and the tag and shape editing dialogs
+HikariSub.Workspace	Panel docking: title bars and tabs, panel options and placement, saved layouts
+QGuiApplication	Qt's QT_LAYOUT_DIRECTION key, which Qt reads in this context (the catalog's layout direction)

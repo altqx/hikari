@@ -490,9 +490,12 @@ TEST(CheckedIn, KeyMapIsTheCandidateMapOfTheRecordedInputs)
     QMap<MapStatus, int> counts;
     for (const KeyMapRow &row : map->rows)
         ++counts[row.status];
-    EXPECT_EQ(counts.value(MapStatus::Exact), 785);
+    // O6 moved the keys to semantic contexts (i18n/migration/contexts.tsv):
+    // a key whose calls now belong to several surfaces is one key in each, so
+    // O4's 785 exact and 321 new rows are 802 and 332 (report.md).
+    EXPECT_EQ(counts.value(MapStatus::Exact), 802);
     EXPECT_EQ(counts.value(MapStatus::Placeholder), 22);
-    EXPECT_EQ(counts.value(MapStatus::New), 321);
+    EXPECT_EQ(counts.value(MapStatus::New), 332);
     EXPECT_EQ(counts.value(MapStatus::Obsolete), 1138);
 }
 

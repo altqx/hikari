@@ -1,3 +1,4 @@
+pragma Translator: "HikariSub.Video"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

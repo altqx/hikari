@@ -1,3 +1,4 @@
+pragma Translator: "HikariSub.Reference"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

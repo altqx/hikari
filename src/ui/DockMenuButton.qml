@@ -1,3 +1,4 @@
+pragma Translator: "HikariSub.Workspace"
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui

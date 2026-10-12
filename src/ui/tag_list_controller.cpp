@@ -140,7 +140,7 @@ QString TagListController::selectedAnnouncement() const
     if (!entry)
         return {};
     const QString tag = QStringLiteral("\\") + QString::fromStdU16String(std::u16string(core::taglist::entries()[*entry].tag));
-    return tr("%1, %2, %3 of %4")
+    return QCoreApplication::translate("HikariSub.TagList", "%1, %2, %3 of %4")
         .arg(tag, description(*entry))
         .arg(list->selection() + 1)
         .arg(list->count());

@@ -3,6 +3,7 @@
 #include "settings_store.h"
 #include "theme.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QTimer>
@@ -171,12 +172,12 @@ QString AudioController::status() const
 {
     switch (m_box.state()) {
     case AudioBox::State::Closed:
-        return tr("No audio open");
+        return QCoreApplication::translate("HikariSub.Audio", "No audio open");
     case AudioBox::State::Opening: {
         // legacy ProgressSink, titled for video
         const auto [done, total] = m_box.indexing();
         const int percent = total > 0 ? static_cast<int>(done * 100 / total) : 0;
-        return tr("Indexing video %1%").arg(percent);
+        return QCoreApplication::translate("HikariSub.Audio", "Indexing video %1%").arg(percent);
     }
     case AudioBox::State::Loading:
     case AudioBox::State::Ready:

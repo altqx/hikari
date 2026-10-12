@@ -1,0 +1,1959 @@
+# O6: the interface strings' move from lupdate's default contexts (QML file and C++ class names) to the
+# semantic contexts of i18n/contexts.tsv. Reviewed record of hikari_i18n_migrate contextmap; the catalogs
+# were moved with hikari_i18n_migrate recontext.
+# basis: extracted = the same call before and after; context = a catalog entry without a call (vanished or
+# obsolete), moved where most keys of its old context went.
+from	source	comment	numerus	to	basis
+AlignmentChoice	Bottom-left		no	HikariSub.Editor	extracted
+AlignmentChoice	Bottom-center		no	HikariSub.Editor	extracted
+AlignmentChoice	Bottom-right		no	HikariSub.Editor	extracted
+AlignmentChoice	Middle-left		no	HikariSub.Editor	extracted
+AlignmentChoice	Center		no	HikariSub.Editor	extracted
+AlignmentChoice	Middle-right		no	HikariSub.Editor	extracted
+AlignmentChoice	Top-left		no	HikariSub.Editor	extracted
+AlignmentChoice	Top-center		no	HikariSub.Editor	extracted
+AlignmentChoice	Top-right		no	HikariSub.Editor	extracted
+AlignmentChoice	Text position		no	HikariSub.Editor	extracted
+AllTagsEditionDialog	Tag editing		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Edited tag		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Tags		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	New tag name		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Add tag		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Delete tag		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Name:		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Name		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Tag:		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Tag		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Minimal value:		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Minimal value		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Maximal value:		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Maximal value		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Value:		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Value		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Step:		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Step		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Where Insert puts the tag		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Decimal places:		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Decimal places		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Used only when tag have 2 values or more		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Tag change options		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Additional values:		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Value %1		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Apply		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	OK		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Cancel		no	HikariSub.VisualTools	extracted
+AllTagsEditionDialog	Restore default		no	HikariSub.VisualTools	extracted
+AppearancePage	Theme		no	HikariSub.Options	extracted
+AppearancePage	Follow system theme		no	HikariSub.Options	extracted
+AppearancePage	Light or Dark as the system's colour scheme sets it; high contrast stays as chosen		no	HikariSub.Options	extracted
+AppearancePage	Accent color		no	HikariSub.Options	extracted
+AppearancePage	%1 (contrast %2:1)		no	HikariSub.Options	extracted
+AppearancePage	UI colors		no	HikariSub.Options	extracted
+AppearancePage	Choose…		no	HikariSub.Options	extracted
+AppearancePage	Choose %1		no	HikariSub.Options	extracted
+AppearancePage	Reset to default		no	HikariSub.Options	extracted
+AspectRatioDialog	Aspect ratio		no	HikariSub.Video	extracted
+AssociationOffer	Apply to All		no	HikariSub.Documents	extracted
+AssociationOffer	No		no	HikariSub.Documents	extracted
+AutomationManager	A script is running		no	HikariSub.Automation	extracted
+AutomationManager	Cancel		no	HikariSub.Automation	extracted
+AutomationManager	No scripts loaded		no	HikariSub.Automation	extracted
+AutomationManager	Load script…		no	HikariSub.Automation	extracted
+AutomationManager	Load an Automation script		no	HikariSub.Automation	extracted
+AutomationManager	Loading		no	HikariSub.Automation	extracted
+AutomationManager	Ready		no	HikariSub.Automation	extracted
+AutomationManager	Running		no	HikariSub.Automation	extracted
+AutomationManager	Failed to load		no	HikariSub.Automation	extracted
+AutomationManager	Unavailable		no	HikariSub.Automation	extracted
+AutomationManager	Reload		no	HikariSub.Automation	extracted
+AutomationManager	Force stop		no	HikariSub.Automation	extracted
+AutomationManager	Unload		no	HikariSub.Automation	extracted
+AutomationManager	Automation		no	HikariSub.Automation	context
+AutomationNotices	Select a script editor		no	HikariSub.Automation	extracted
+AutomationNotices	Programs (*.exe)		no	HikariSub.Automation	extracted
+AutomationNotices	All files (*.*)		no	HikariSub.Automation	extracted
+ColourPickerDialog	Choose color		no	HikariSub.Colours	extracted
+ColourPickerDialog	Colour		no	HikariSub.Colours	extracted
+ColourPickerDialog	Primary color		no	HikariSub.Colours	extracted
+ColourPickerDialog	Secondary color		no	HikariSub.Colours	extracted
+ColourPickerDialog	Border color		no	HikariSub.Colours	extracted
+ColourPickerDialog	Shadow color		no	HikariSub.Colours	extracted
+ColourPickerDialog	Spectrum color		no	HikariSub.Colours	extracted
+ColourPickerDialog	Saturation and value		no	HikariSub.Colours	extracted
+ColourPickerDialog	Hue		no	HikariSub.Colours	extracted
+ColourPickerDialog	Swap shortcuts between the color picker\nand the color selection window		no	HikariSub.Colours	extracted
+ColourPickerDialog	Checking this option opens the color picker on left-click,\nand the color selection window on right-click.		no	HikariSub.Colours	extracted
+ColourPickerDialog	Selected color:		no	HikariSub.Colours	extracted
+ColourPickerDialog	RGB color		no	HikariSub.Colours	extracted
+ColourPickerDialog	Red:		no	HikariSub.Colours	extracted
+ColourPickerDialog	Red		no	HikariSub.Colours	extracted
+ColourPickerDialog	Green:		no	HikariSub.Colours	extracted
+ColourPickerDialog	Green		no	HikariSub.Colours	extracted
+ColourPickerDialog	Blue:		no	HikariSub.Colours	extracted
+ColourPickerDialog	Blue		no	HikariSub.Colours	extracted
+ColourPickerDialog	Alpha:		no	HikariSub.Colours	extracted
+ColourPickerDialog	Alpha		no	HikariSub.Colours	extracted
+ColourPickerDialog	ASS:		no	HikariSub.Colours	extracted
+ColourPickerDialog	ASS colour		no	HikariSub.Colours	extracted
+ColourPickerDialog	HTML:		no	HikariSub.Colours	extracted
+ColourPickerDialog	HTML colour		no	HikariSub.Colours	extracted
+ColourPickerDialog	HSL color		no	HikariSub.Colours	extracted
+ColourPickerDialog	Hue:		no	HikariSub.Colours	extracted
+ColourPickerDialog	HSL hue		no	HikariSub.Colours	extracted
+ColourPickerDialog	Saturation:		no	HikariSub.Colours	extracted
+ColourPickerDialog	HSL saturation		no	HikariSub.Colours	extracted
+ColourPickerDialog	Lightness:		no	HikariSub.Colours	extracted
+ColourPickerDialog	Lightness		no	HikariSub.Colours	extracted
+ColourPickerDialog	HSV color		no	HikariSub.Colours	extracted
+ColourPickerDialog	HSV hue		no	HikariSub.Colours	extracted
+ColourPickerDialog	HSV saturation		no	HikariSub.Colours	extracted
+ColourPickerDialog	Value:		no	HikariSub.Colours	extracted
+ColourPickerDialog	Value		no	HikariSub.Colours	extracted
+ColourPickerDialog	Pick a colour from the screen		no	HikariSub.Colours	extracted
+ColourPickerDialog	Recent colors		no	HikariSub.Colours	extracted
+DirectShowPlayer	Failed to initialize DirectShow		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot create filters interface		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot create controller		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot create search interface		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot create audio interface		no	HikariSub.Video	extracted
+DirectShowPlayer	Source filter not added		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot add video renderer		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot create audio renderer instance		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot add Direct Sound renderer		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot enumerate source pins		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot enumerate renderer pins		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot enumerate Direct Sound pins		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot get renderer pin		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot get dsound pin		no	HikariSub.Video	extracted
+DirectShowPlayer	No IMediaTypes		no	HikariSub.Video	extracted
+DirectShowPlayer	No track type info		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot connect source pin to video renderer		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot connect source pin to audio renderer		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot connect source pin to audio1 renderer		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot find connected source pin		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot get splitter pin info		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot enumerate splitter pins		no	HikariSub.Video	extracted
+DirectShowPlayer	Cannot connect source pin to video2 renderer		no	HikariSub.Video	extracted
+DockMenuButton	%1 options		no	HikariSub.Workspace	extracted
+DockTabBar	Panels		no	HikariSub.Workspace	extracted
+DockTabBar	Float %1		no	HikariSub.Workspace	context
+DockTabBar	Close %1		no	HikariSub.Workspace	context
+DockTitleBar	Dock		no	HikariSub.Workspace	extracted
+DockTitleBar	Close		no	HikariSub.Workspace	extracted
+DockTitleBar	Minimize %1		no	HikariSub.Workspace	context
+DockTitleBar	Minimize tab group		no	HikariSub.Workspace	context
+DockTitleBar	Dock %1		no	HikariSub.Workspace	context
+DockTitleBar	Dock tab group		no	HikariSub.Workspace	context
+DockTitleBar	Float %1		no	HikariSub.Workspace	context
+DockTitleBar	Float tab group		no	HikariSub.Workspace	context
+DockTitleBar	Restore %1		no	HikariSub.Workspace	context
+DockTitleBar	Restore tab group		no	HikariSub.Workspace	context
+DockTitleBar	Maximize %1		no	HikariSub.Workspace	context
+DockTitleBar	Maximize tab group		no	HikariSub.Workspace	context
+DockTitleBar	Close %1		no	HikariSub.Workspace	context
+DockTitleBar	Close tab group		no	HikariSub.Workspace	context
+DocumentTabBar	Open documents		no	HikariSub.Tabs	extracted
+DocumentTabBar	Modified		no	HikariSub.Tabs	extracted
+DocumentTabBar	Protected reference		no	HikariSub.Tabs	extracted
+DocumentTabBar	Modified (history step %1)		no	HikariSub.Tabs	extracted
+DocumentTabBar	Close %1		no	HikariSub.Tabs	extracted
+DocumentTabBar	Open new tab		no	HikariSub.Tabs	extracted
+DocumentTabMenu	Save		no	HikariSub.Tabs	extracted
+DocumentTabMenu	Save all		no	HikariSub.Tabs	extracted
+DocumentTabMenu	Close all tabs		no	HikariSub.Tabs	extracted
+DocumentTabMenu	Open the folder containing the subtitles		no	HikariSub.Tabs	extracted
+DocumentTabMenu	Open video containing folder		no	HikariSub.Tabs	extracted
+DocumentTabMenu	Open audio containing folder		no	HikariSub.Tabs	extracted
+DocumentTabMenu	Open keyframes containing folder		no	HikariSub.Tabs	extracted
+DummyVideoDialog	Dummy video options		no	HikariSub.Video	extracted
+DummyVideoDialog	This gives %1 frames		no	HikariSub.Video	extracted
+DummyVideoDialog	Video resolution:		no	HikariSub.Video	extracted
+DummyVideoDialog	Width		no	HikariSub.Video	extracted
+DummyVideoDialog	Height		no	HikariSub.Video	extracted
+DummyVideoDialog	Color:		no	HikariSub.Video	extracted
+DummyVideoDialog	Checkerboard pattern		no	HikariSub.Video	extracted
+DummyVideoDialog	Frames per second:		no	HikariSub.Video	extracted
+DummyVideoDialog	Duration:		no	HikariSub.Video	extracted
+FontCatalogBar	Font catalogs		no	HikariSub.Fonts	extracted
+FontCatalogBar	Add		no	HikariSub.Fonts	extracted
+FontCatalogBar	Adds fonts to a previously created catalog		no	HikariSub.Fonts	extracted
+FontCatalogBar	Manage		no	HikariSub.Fonts	extracted
+FontCatalogBar	Manages font catalogs		no	HikariSub.Fonts	extracted
+FontCatalogBar	Allows managing font catalogs		no	HikariSub.Fonts	extracted
+FontCatalogBar	Filter		no	HikariSub.Fonts	extracted
+FontCatalogBar	Filters fonts to those containing the entered characters		no	HikariSub.Fonts	extracted
+FontCatalogBar	Add fonts from subtitles		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Manage font catalogs		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Catalogs:		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Choose or type a catalog name		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Add		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Add a catalog with this name		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Edit		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Edit the catalog		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Delete		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Delete the catalog		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Load		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Load a catalog from a file		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Refresh fonts		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Refresh fonts: reads the installed and external fonts again		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Find:		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Filter		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Save filter		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Font name		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Catalog		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Sample		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Drawn by Qt, not by the subtitle renderer		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Fonts		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Mark %1		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Catalog of %1		no	HikariSub.Fonts	extracted
+FontCatalogWindow	The catalog list has autosave; files are stored in the "Config" folder.		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Close		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Select the name of the profile		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Choose new catalog name		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Replace with:		no	HikariSub.Fonts	extracted
+FontCatalogWindow	OK		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Cancel		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Info		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Enter a name for the new catalog		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Prompt		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Catalog named "%1" already exists. What to do?		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Merge		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Are you sure you want to delete this catalog?		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Choose font catalog file		no	HikariSub.Fonts	extracted
+FontCatalogWindow	Text files (*.txt)		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Font collector		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Select the folder where you want to copy fonts		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Choose a name for the archive		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Save folder		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Destination folder		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Select a folder		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Options		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Check availability of fonts		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Copy to selected folder		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Zip		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Save to video / subtitles folder.		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Saves to the video folder\nwhen demuxing fonts from an MKV file.		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Demux fonts from loaded MKV file		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Font collector log		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Write this incomplete collection, labelled incomplete		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Write archive		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Copy fonts		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Start		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Start on tabs		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Cancel		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Close		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Choose save folder		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Select the name of the archive		no	HikariSub.Fonts	extracted
+FontCollectorDialog	Archive files (*.zip)		no	HikariSub.Fonts	extracted
+FontDialog	Select a font		no	HikariSub.Fonts	extracted
+FontDialog	Font		no	HikariSub.Fonts	extracted
+FontDialog	Fonts		no	HikariSub.Fonts	extracted
+FontDialog	Font name		no	HikariSub.Fonts	extracted
+FontDialog	Size		no	HikariSub.Fonts	extracted
+FontDialog	Font size		no	HikariSub.Fonts	extracted
+FontDialog	Bold		no	HikariSub.Fonts	extracted
+FontDialog	Italic		no	HikariSub.Fonts	extracted
+FontDialog	Underline		no	HikariSub.Fonts	extracted
+FontDialog	Strikethrough		no	HikariSub.Fonts	extracted
+FontDialog	Filtering and font catalogs		no	HikariSub.Fonts	extracted
+FontDialog	Preview		no	HikariSub.Fonts	extracted
+FontDialog	AaBbCcDdEeFfGg 0123456789		no	HikariSub.Fonts	extracted
+FontDialog	The subtitle renderer uses %1 (%2).		no	HikariSub.Fonts	extracted
+FontDialog	Not installed under this name: the subtitle renderer substitutes %1 (%2).		no	HikariSub.Fonts	extracted
+FontDialog	Not installed: the subtitle renderer falls back to %1 (%2).		no	HikariSub.Fonts	extracted
+FontDialog	No font answers this name.		no	HikariSub.Fonts	extracted
+FontsFromSubtitlesDialog	Add fonts from subtitles		no	HikariSub.Fonts	extracted
+FontsFromSubtitlesDialog	Catalogs:		no	HikariSub.Fonts	extracted
+FontsFromSubtitlesDialog	Add		no	HikariSub.Fonts	extracted
+FontsFromSubtitlesDialog	Remove all contents of catalog		no	HikariSub.Fonts	extracted
+FontsFromSubtitlesDialog	Add fonts from all open subtitles		no	HikariSub.Fonts	extracted
+FontsFromSubtitlesDialog	OK		no	HikariSub.Fonts	extracted
+FontsFromSubtitlesDialog	Cancel		no	HikariSub.Fonts	extracted
+HikariSub.TagList	Transparency of primary color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Transparency of secondary color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Transparency of border color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Transparency of shadow color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Primary color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Secondary color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Border color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Shadow color		no	HikariSub.TagList	extracted
+HikariSub.TagList	PNG mask of primary color		no	HikariSub.TagList	extracted
+HikariSub.TagList	PNG mask of secondary color		no	HikariSub.TagList	extracted
+HikariSub.TagList	PNG mask of border color		no	HikariSub.TagList	extracted
+HikariSub.TagList	PNG mask of shadow color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Transparency gradient of primary color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Transparency gradient of secondary color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Transparency gradient of border color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Transparency gradient of shadow color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Gradient of primary color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Gradient of secondary color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Gradient of border color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Gradient of shadow color		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text alignment (SSA)		no	HikariSub.TagList	extracted
+HikariSub.TagList	Transparency		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text position		no	HikariSub.TagList	extracted
+HikariSub.TagList	Bold text		no	HikariSub.TagList	extracted
+HikariSub.TagList	Edge blur		no	HikariSub.TagList	extracted
+HikariSub.TagList	Blur of border, shadow or font		no	HikariSub.TagList	extracted
+HikariSub.TagList	Thickness of border		no	HikariSub.TagList	extracted
+HikariSub.TagList	Vector clip / rectangle clip		no	HikariSub.TagList	extracted
+HikariSub.TagList	Font distortion		no	HikariSub.TagList	extracted
+HikariSub.TagList	Fading in / fading out of text		no	HikariSub.TagList	extracted
+HikariSub.TagList	Fading in / fading out of text (advanced version)		no	HikariSub.TagList	extracted
+HikariSub.TagList	Skew on X axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Skew on Y axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text encoding		no	HikariSub.TagList	extracted
+HikariSub.TagList	Font name		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text rounding		no	HikariSub.TagList	extracted
+HikariSub.TagList	Rotation on X axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Rotation on Y axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Rotation on Z axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Font size		no	HikariSub.TagList	extracted
+HikariSub.TagList	Scale on X and Y axes		no	HikariSub.TagList	extracted
+HikariSub.TagList	Scale on X axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Scale on Y axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Font spacing		no	HikariSub.TagList	extracted
+HikariSub.TagList	Vertical font spacing		no	HikariSub.TagList	extracted
+HikariSub.TagList	Italic text		no	HikariSub.TagList	extracted
+HikariSub.TagList	Reverse vector clip or rectangle clip		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text jitter		no	HikariSub.TagList	extracted
+HikariSub.TagList	Karaoke timing		no	HikariSub.TagList	extracted
+HikariSub.TagList	Karaoke timing smooth transition		no	HikariSub.TagList	extracted
+HikariSub.TagList	Karaoke timing border		no	HikariSub.TagList	extracted
+HikariSub.TagList	Karaoke timing (not supported)		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text movement		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text movement along a circle		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text movement along a curve (3 points)		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text movement along a curve (4 points)		no	HikariSub.TagList	extracted
+HikariSub.TagList	Vector drawing movement		no	HikariSub.TagList	extracted
+HikariSub.TagList	Anchor for rotation		no	HikariSub.TagList	extracted
+HikariSub.TagList	Drawing and its scale		no	HikariSub.TagList	extracted
+HikariSub.TagList	Offset of Y vector points		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text wrap method		no	HikariSub.TagList	extracted
+HikariSub.TagList	Reset tags		no	HikariSub.TagList	extracted
+HikariSub.TagList	Font point randomness		no	HikariSub.TagList	extracted
+HikariSub.TagList	Font point randomness seed		no	HikariSub.TagList	extracted
+HikariSub.TagList	Font point randomness on X axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Font point randomness on Y axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Font point randomness on Z axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text strikethrough		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text shadow		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text animation		no	HikariSub.TagList	extracted
+HikariSub.TagList	Text underline		no	HikariSub.TagList	extracted
+HikariSub.TagList	Border on X axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Border on Y axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Shadow on X axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Shadow on Y axis		no	HikariSub.TagList	extracted
+HikariSub.TagList	Z coordinate for tags \\frx and \\fry		no	HikariSub.TagList	extracted
+HotkeyMapping	Hotkey mapping		no	HikariSub.Hotkeys	extracted
+HotkeyMapping	Global hotkey		no	HikariSub.Hotkeys	extracted
+HotkeyMapping	Subtitle grid hotkey		no	HikariSub.Hotkeys	extracted
+HotkeyMapping	Edit box hotkey		no	HikariSub.Hotkeys	extracted
+HotkeyMapping	Video hotkey		no	HikariSub.Hotkeys	extracted
+HotkeyMapping	Audio hotkey		no	HikariSub.Hotkeys	extracted
+HotkeyMapping	Window		no	HikariSub.Hotkeys	extracted
+HotkeyMapping	Please enter a hotkey for "%1".		no	HikariSub.Hotkeys	extracted
+HotkeyMapping	OK		no	HikariSub.Hotkeys	extracted
+HotkeyMapping	Warning		no	HikariSub.Hotkeys	extracted
+HotkeyMapping	Switch hotkeys		no	HikariSub.Hotkeys	extracted
+HotkeyMapping	Delete hotkey		no	HikariSub.Hotkeys	extracted
+HotkeyMapping	Set anyway		no	HikariSub.Hotkeys	extracted
+HotkeyMapping	Cancel		no	HikariSub.Hotkeys	extracted
+LegacyAutosaveList	Autosaves of the previous version (read only). Each opens as a new unsaved copy.		no	HikariSub.Session	extracted
+LegacyAutosaveList	Find files		no	HikariSub.Session	extracted
+LegacyAutosaveList	Filter list		no	HikariSub.Session	extracted
+LegacyAutosaveList	All words		no	HikariSub.Session	extracted
+LegacyAutosaveList	Files		no	HikariSub.Session	extracted
+LegacyAutosaveList	Versions		no	HikariSub.Session	extracted
+LegacyAutosaveList	Open		no	HikariSub.Session	extracted
+LineCounters	Number of characters in each line.\nNo more than 43 characters per line (maximum 2 lines).		no	HikariSub.Editor	extracted
+LineCounters	Characters per second.\nShould not exceed 15 characters per second		no	HikariSub.Editor	extracted
+LineCounters	Time		no	HikariSub.Editor	extracted
+LineCounters	Show times		no	HikariSub.Editor	extracted
+LineCounters	Frames		no	HikariSub.Editor	extracted
+LineCounters	Show frames		no	HikariSub.Editor	extracted
+LineInspector	Comment		no	HikariSub.Editor	extracted
+LineInspector	Sets the line as a comment. Comments are not shown		no	HikariSub.Editor	extracted
+LineInspector	Layer		no	HikariSub.Editor	extracted
+LineInspector	Line layer. Higher layers are on top		no	HikariSub.Editor	extracted
+LineInspector	Start		no	HikariSub.Editor	extracted
+LineInspector	Line start time		no	HikariSub.Editor	extracted
+LineInspector	End		no	HikariSub.Editor	extracted
+LineInspector	Line end time		no	HikariSub.Editor	extracted
+LineInspector	Duration		no	HikariSub.Editor	extracted
+LineInspector	Line duration		no	HikariSub.Editor	extracted
+LineInspector	Style		no	HikariSub.Editor	extracted
+LineInspector	Line style		no	HikariSub.Editor	extracted
+LineInspector	Edit style		no	HikariSub.Editor	extracted
+LineInspector	Edit style: allows quick editing of the current line's style		no	HikariSub.Editor	extracted
+LineInspector	Allows quick editing of the current line's style		no	HikariSub.Editor	extracted
+LineInspector	Actor		no	HikariSub.Editor	extracted
+LineInspector	Line actor label. Does not affect the appearance of the subtitles		no	HikariSub.Editor	extracted
+LineInspector	Left margin		no	HikariSub.Editor	extracted
+LineInspector	Line left margin		no	HikariSub.Editor	extracted
+LineInspector	Right margin		no	HikariSub.Editor	extracted
+LineInspector	Line right margin		no	HikariSub.Editor	extracted
+LineInspector	Vertical margin		no	HikariSub.Editor	extracted
+LineInspector	Line top and bottom margins		no	HikariSub.Editor	extracted
+LineInspector	Effect		no	HikariSub.Editor	extracted
+LineInspector	Line effect. Used to mark lines to which karaoke or VSFilter effects should be applied		no	HikariSub.Editor	extracted
+LineInspector	Edit		no	HikariSub.Editor	context
+Main	Play		no	HikariSub.Audio	extracted
+Main	Play line		no	HikariSub.Audio	extracted
+Main	Play the current line		no	HikariSub.Audio	extracted
+Main	Stop		no	HikariSub.Audio	extracted
+Main	Audio		no	HikariSub.Audio	extracted
+Main	Audio display		no	HikariSub.Audio	extracted
+Main	Search bar		no	HikariSub.Audio	extracted
+Main	Horizontal stretching		no	HikariSub.Audio	extracted
+Main	Vertical stretching		no	HikariSub.Audio	extracted
+Main	Volume		no	HikariSub.Audio	extracted
+Main	Link		no	HikariSub.Audio	extracted
+Main	Link the volume and stretch sliders		no	HikariSub.Audio	extracted
+Main	 or 		no	HikariSub.Audio	extracted
+Main	Shortcut can be set using Shift + Click		no	HikariSub.Audio	extracted
+Main	Second shortcut can be set using Control + Click		no	HikariSub.Audio	extracted
+Main	Previous line		no	HikariSub.Audio	extracted
+Main	Play the previous line		no	HikariSub.Audio	extracted
+Main	Next line		no	HikariSub.Audio	extracted
+Main	Play the next line		no	HikariSub.Audio	extracted
+Main	Play the current syllable / line		no	HikariSub.Audio	extracted
+Main	Stop playback		no	HikariSub.Audio	extracted
+Main	Before mark		no	HikariSub.Audio	extracted
+Main	Play before the tag		no	HikariSub.Audio	extracted
+Main	After mark		no	HikariSub.Audio	extracted
+Main	Play after the tag		no	HikariSub.Audio	extracted
+Main	500 before		no	HikariSub.Audio	extracted
+Main	Play 500ms before the start time		no	HikariSub.Audio	extracted
+Main	500 first		no	HikariSub.Audio	extracted
+Main	Play 500 ms after the start time		no	HikariSub.Audio	extracted
+Main	500 last		no	HikariSub.Audio	extracted
+Main	Play 500ms before the end time		no	HikariSub.Audio	extracted
+Main	500 after		no	HikariSub.Audio	extracted
+Main	Play 500ms after the end time		no	HikariSub.Audio	extracted
+Main	To end		no	HikariSub.Audio	extracted
+Main	Play to the end		no	HikariSub.Audio	extracted
+Main	In		no	HikariSub.Audio	extracted
+Main	Add lead-in to the active line		no	HikariSub.Audio	extracted
+Main	Out		no	HikariSub.Audio	extracted
+Main	Add lead-out to the active line		no	HikariSub.Audio	extracted
+Main	Commit		no	HikariSub.Audio	extracted
+Main	Apply changes		no	HikariSub.Audio	extracted
+Main	Go		no	HikariSub.Audio	extracted
+Main	Go to selection		no	HikariSub.Audio	extracted
+Main	Karaoke		no	HikariSub.Audio	extracted
+Main	Enable / disable karaoke creation		no	HikariSub.Audio	extracted
+Main	Auto split		no	HikariSub.Audio	extracted
+Main	Enable / Disable automatic splitting of syllables		no	HikariSub.Audio	extracted
+Main	Auto		no	HikariSub.Audio	extracted
+Main	Automatically apply changes		no	HikariSub.Audio	extracted
+Main	Next		no	HikariSub.Audio	extracted
+Main	Go to the next line after applying changes		no	HikariSub.Audio	extracted
+Main	Auto-scroll		no	HikariSub.Audio	extracted
+Main	Auto-scroll to the active line		no	HikariSub.Audio	extracted
+Main	Spectrum		no	HikariSub.Audio	extracted
+Main	Spectrum mode		no	HikariSub.Audio	extracted
+Main	Speech		no	HikariSub.Audio	extracted
+Main	Enhance speech frequencies in the spectrum		no	HikariSub.Audio	extracted
+Main	Choose audio file		no	HikariSub.Audio	extracted
+Main	Audio and video files		no	HikariSub.Audio	extracted
+Main	All files		no	HikariSub.Audio	extracted
+Main	Choose the track		no	HikariSub.Audio	extracted
+Main	Close		no	HikariSub.Automation	extracted
+Main	OK		no	HikariSub.Automation	extracted
+Main	Cancel		no	HikariSub.Automation	extracted
+Main	All files (*)		no	HikariSub.Automation	extracted
+Main	Automation manager		no	HikariSub.Automation	extracted
+Main	Force stop		no	HikariSub.Automation	extracted
+Main	Automation scripts (*.lua *.moon)		no	HikariSub.Automation	extracted
+Main	List of automation shortcuts		no	HikariSub.Automation	extracted
+Main	Path and script name		no	HikariSub.Automation	extracted
+Main	Macro		no	HikariSub.Automation	extracted
+Main	Hotkey		no	HikariSub.Automation	extracted
+Main	Map hotkey		no	HikariSub.Automation	extracted
+Main	Delete hotkey		no	HikariSub.Automation	extracted
+Main	Import legacy hotkeys…		no	HikariSub.Automation	extracted
+Main	Hotkeys (Hotkeys.txt)		no	HikariSub.Automation	extracted
+Main	Resample subtitles		no	HikariSub.Conversion	extracted
+Main	OK		no	HikariSub.Conversion	extracted
+Main	Cancel		no	HikariSub.Conversion	extracted
+Main	Choose new FPS		no	HikariSub.Conversion	extracted
+Main	Subtitles FPS		no	HikariSub.Conversion	extracted
+Main	New FPS		no	HikariSub.Conversion	extracted
+Main	Width		no	HikariSub.Conversion	extracted
+Main	Height		no	HikariSub.Conversion	extracted
+Main	FPS		no	HikariSub.Conversion	extracted
+Main	FPS from video		no	HikariSub.Conversion	extracted
+Main	Catalog for style		no	HikariSub.Conversion	extracted
+Main	Style		no	HikariSub.Conversion	extracted
+Main	Time for one letter in milliseconds		no	HikariSub.Conversion	extracted
+Main	New end times		no	HikariSub.Conversion	extracted
+Main	Tags to paste at the beginning of every ASS line		no	HikariSub.Conversion	extracted
+Main	Resolution when converting to ASS		no	HikariSub.Conversion	extracted
+Main	The conversion will:		no	HikariSub.Conversion	extracted
+Main	What the conversion changes		no	HikariSub.Conversion	extracted
+Main	Convert		no	HikariSub.Conversion	extracted
+Main	Subtitles resolution		no	HikariSub.Conversion	extracted
+Main	From subtitles		no	HikariSub.Conversion	extracted
+Main	Target resolution		no	HikariSub.Conversion	extracted
+Main	From video		no	HikariSub.Conversion	extracted
+Main	Resample options		no	HikariSub.Conversion	extracted
+Main	No stretch		no	HikariSub.Conversion	extracted
+Main	Stretch		no	HikariSub.Conversion	extracted
+Main	Incompatible resolution		no	HikariSub.Conversion	extracted
+Main	The video and subtitle resolutions are different.\nYou can change them now or use 'Change subtitle resolution'.\n\nVideo resolution: %1 x %2\nSubtitle resolution: %3 x %4\n\nMatch the resolution to the video?\n		no	HikariSub.Conversion	extracted
+Main	Change only the subtitle resolution		no	HikariSub.Conversion	extracted
+Main	Resample subtitles (no stretch)		no	HikariSub.Conversion	extracted
+Main	Resample subtitles (stretch)		no	HikariSub.Conversion	extracted
+Main	Change		no	HikariSub.Conversion	extracted
+Main	Do not change		no	HikariSub.Conversion	extracted
+Main	Disable warning		no	HikariSub.Conversion	extracted
+Main	Cancel		no	HikariSub.Documents	extracted
+Main	Save subtitle file		no	HikariSub.Documents	extracted
+Main	Subtitle file 		no	HikariSub.Documents	extracted
+Main	Warning		no	HikariSub.Documents	extracted
+Main	Chosen file is read only,\nplease save with different name or change file attribute.		no	HikariSub.Documents	extracted
+Main	Unsaved changes		no	HikariSub.Documents	extracted
+Main	Choose where to save %1.		no	HikariSub.Documents	extracted
+Main	These Documents have unsaved changes:		no	HikariSub.Documents	extracted
+Main	Save		no	HikariSub.Documents	extracted
+Main	Discard		no	HikariSub.Documents	extracted
+Main	Save as…		no	HikariSub.Documents	extracted
+Main	Save all		no	HikariSub.Documents	extracted
+Main	Discard all		no	HikariSub.Documents	extracted
+Main	Continue		no	HikariSub.Documents	extracted
+Main	ASS subtitles (*.ass)		no	HikariSub.Documents	extracted
+Main	All files (*)		no	HikariSub.Documents	extracted
+Main	Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)		no	HikariSub.Documents	extracted
+Main	Reloading		no	HikariSub.Documents	extracted
+Main	Subtitles were modified by another program. Reload?		no	HikariSub.Documents	extracted
+Main	Yes		no	HikariSub.Documents	extracted
+Main	No		no	HikariSub.Documents	extracted
+Main	Hide tags		no	HikariSub.Editor	extracted
+Main	&Copy		no	HikariSub.Editor	extracted
+Main	Cu&t		no	HikariSub.Editor	extracted
+Main	&Paste		no	HikariSub.Editor	extracted
+Main	Spellchecker		no	HikariSub.Editor	extracted
+Main	Installed languages		no	HikariSub.Editor	extracted
+Main	&Add word "%1" to dictionary		no	HikariSub.Editor	extracted
+Main	Error. Word "%1" was not added.		no	HikariSub.Editor	extracted
+Main	&Delete		no	HikariSub.Editor	extracted
+Main	Line editor		no	HikariSub.Editor	extracted
+Main	Line editor: %1		no	HikariSub.Editor	extracted
+Main	Bold		no	HikariSub.Editor	extracted
+Main	Italic		no	HikariSub.Editor	extracted
+Main	Underline		no	HikariSub.Editor	extracted
+Main	Strikeout		no	HikariSub.Editor	extracted
+Main	Font selection		no	HikariSub.Editor	extracted
+Main	Primary color		no	HikariSub.Editor	extracted
+Main	Secondary color for karaoke		no	HikariSub.Editor	extracted
+Main	Border color		no	HikariSub.Editor	extracted
+Main	Shadow color		no	HikariSub.Editor	extracted
+Main	Manage tag buttons		no	HikariSub.Editor	extracted
+Main	Change number of buttons		no	HikariSub.Editor	extracted
+Main	Original text		no	HikariSub.Editor	extracted
+Main	Line text		no	HikariSub.Editor	extracted
+Main	Translated text		no	HikariSub.Editor	extracted
+Main	Paste all		no	HikariSub.Editor	extracted
+Main	Paste the selected		no	HikariSub.Editor	extracted
+Main	Comment out original		no	HikariSub.Editor	extracted
+Main	Not applied: %1		no	HikariSub.Editor	extracted
+Main	Cancel		no	HikariSub.Editor	extracted
+Main	Enter ASS tag		no	HikariSub.Editor	extracted
+Main	Tag inserted in place of cursor		no	HikariSub.Editor	extracted
+Main	Insert Tag at text beginning		no	HikariSub.Editor	extracted
+Main	Plain text		no	HikariSub.Editor	extracted
+Main	Insertion		no	HikariSub.Editor	extracted
+Main	Button name		no	HikariSub.Editor	extracted
+Main	Button tag		no	HikariSub.Editor	extracted
+Main	Save tag		no	HikariSub.Editor	extracted
+Main	Number of buttons		no	HikariSub.Editor	extracted
+Main	Font collector		no	HikariSub.Grid	extracted
+Main	Grid		no	HikariSub.Grid	extracted
+Main	Editing: %1		no	HikariSub.Grid	extracted
+Main	No document open		no	HikariSub.Grid	extracted
+Main	Add lines		no	HikariSub.Grid	extracted
+Main	Copy tree		no	HikariSub.Grid	extracted
+Main	Change description		no	HikariSub.Grid	extracted
+Main	Select tree lines		no	HikariSub.Grid	extracted
+Main	Delete		no	HikariSub.Grid	extracted
+Main	&Insert		no	HikariSub.Grid	extracted
+Main	Insert &before		no	HikariSub.Grid	extracted
+Main	Insert &after		no	HikariSub.Grid	extracted
+Main	Insert before with &video time		no	HikariSub.Grid	extracted
+Main	Insert after with video time		no	HikariSub.Grid	extracted
+Main	Insert before with video frame time		no	HikariSub.Grid	extracted
+Main	Insert after with video frame time		no	HikariSub.Grid	extracted
+Main	&Duplicate lines		no	HikariSub.Grid	extracted
+Main	&Swap		no	HikariSub.Grid	extracted
+Main	Join &lines		no	HikariSub.Grid	extracted
+Main	Join lines and keep first		no	HikariSub.Grid	extracted
+Main	Join lines and keep last		no	HikariSub.Grid	extracted
+Main	Set times as a continuous (previous line)		no	HikariSub.Grid	extracted
+Main	Set times as a continuous (next line)		no	HikariSub.Grid	extracted
+Main	Split lines		no	HikariSub.Grid	extracted
+Main	Split line at video time		no	HikariSub.Grid	extracted
+Main	Split lines into frames		no	HikariSub.Grid	extracted
+Main	Split lines into characters		no	HikariSub.Grid	extracted
+Main	Split lines into words		no	HikariSub.Grid	extracted
+Main	Split lines by wraps		no	HikariSub.Grid	extracted
+Main	Select all lines visible on video		no	HikariSub.Grid	extracted
+Main	Make tree		no	HikariSub.Grid	extracted
+Main	Show subtitles preview		no	HikariSub.Grid	extracted
+Main	Paste translation text		no	HikariSub.Grid	extracted
+Main	Dialogue shifting window		no	HikariSub.Grid	extracted
+Main	Hide selected lines		no	HikariSub.Grid	extracted
+Main	Filtering		no	HikariSub.Grid	extracted
+Main	Filter after loading subtitles		no	HikariSub.Grid	extracted
+Main	Reverse filtering		no	HikariSub.Grid	extracted
+Main	Do not reset previous filtering		no	HikariSub.Grid	extracted
+Main	Hide lines with styles		no	HikariSub.Grid	extracted
+Main	Hide comments		no	HikariSub.Grid	extracted
+Main	Show unconfirmed		no	HikariSub.Grid	extracted
+Main	Show untranslated		no	HikariSub.Grid	extracted
+Main	Filter		no	HikariSub.Grid	extracted
+Main	Turn off filtering		no	HikariSub.Grid	extracted
+Main	Ignore filtering in some actions		no	HikariSub.Grid	extracted
+Main	Hide columns		no	HikariSub.Grid	extracted
+Main	Hide layer		no	HikariSub.Grid	extracted
+Main	Hide start time		no	HikariSub.Grid	extracted
+Main	Hide end time		no	HikariSub.Grid	extracted
+Main	Hide actor		no	HikariSub.Grid	extracted
+Main	Hide style		no	HikariSub.Grid	extracted
+Main	Hide left margin		no	HikariSub.Grid	extracted
+Main	Hide right margin		no	HikariSub.Grid	extracted
+Main	Hide vertical margin		no	HikariSub.Grid	extracted
+Main	Hide effect		no	HikariSub.Grid	extracted
+Main	Hide characters per second		no	HikariSub.Grid	extracted
+Main	Hide line wraps		no	HikariSub.Grid	extracted
+Main	Set new FPS		no	HikariSub.Grid	extracted
+Main	Set FPS from video		no	HikariSub.Grid	extracted
+Main	Copy\tCtrl+C		no	HikariSub.Grid	extracted
+Main	Cut\tCtrl+X		no	HikariSub.Grid	extracted
+Main	Paste\tCtrl+V		no	HikariSub.Grid	extracted
+Main	Copy columns		no	HikariSub.Grid	extracted
+Main	Paste columns		no	HikariSub.Grid	extracted
+Main	Delete text		no	HikariSub.Grid	extracted
+Main	Delete lines\tShift+Del		no	HikariSub.Grid	extracted
+Main	Load subtitles from an MKV/OGM file		no	HikariSub.Grid	extracted
+Main	OK		no	HikariSub.Grid	extracted
+Main	Cancel		no	HikariSub.Grid	extracted
+Main	Tree description		no	HikariSub.Grid	extracted
+Main	Set tree name		no	HikariSub.Grid	extracted
+Main	Change tree name		no	HikariSub.Grid	extracted
+Main	Line group		no	HikariSub.Grid	extracted
+Main	This would break the Line group “%1”. Nothing was changed. Remove the group (its description Line is deleted) and try again, or cancel.		no	HikariSub.Grid	extracted
+Main	This would leave group members outside a Line group. Nothing was changed.		no	HikariSub.Grid	extracted
+Main	Remove group		no	HikariSub.Grid	extracted
+Main	Shortcut can be set using Shift + Click		no	HikariSub.Hotkeys	extracted
+Main	Cancel		no	HikariSub.Hotkeys	extracted
+Main	Hotkey mapping		no	HikariSub.Hotkeys	extracted
+Main	"%1" is already assigned to %2. Press it again to replace it.		no	HikariSub.Hotkeys	extracted
+Main	Please enter a hotkey for "%1".		no	HikariSub.Hotkeys	extracted
+Main	%1 - HikariSub		no	HikariSub.MainWindow	extracted
+Main	Convert to ASS		no	HikariSub.MainWindow	extracted
+Main	Converts to ASS format		no	HikariSub.MainWindow	extracted
+Main	Convert to SRT		no	HikariSub.MainWindow	extracted
+Main	Converts to SRT format		no	HikariSub.MainWindow	extracted
+Main	Convert to MDVD		no	HikariSub.MainWindow	extracted
+Main	Converts to microDVD format		no	HikariSub.MainWindow	extracted
+Main	Convert to MPL2		no	HikariSub.MainWindow	extracted
+Main	Converts to MPL2 format		no	HikariSub.MainWindow	extracted
+Main	Convert to TMP		no	HikariSub.MainWindow	extracted
+Main	Converts to TMPlayer format (not recommended)		no	HikariSub.MainWindow	extracted
+Main	The starting time		no	HikariSub.MainWindow	extracted
+Main	Sort by start time		no	HikariSub.MainWindow	extracted
+Main	End time		no	HikariSub.MainWindow	extracted
+Main	Sort by end time		no	HikariSub.MainWindow	extracted
+Main	Styles		no	HikariSub.MainWindow	extracted
+Main	Sort by styles		no	HikariSub.MainWindow	extracted
+Main	Actor		no	HikariSub.MainWindow	extracted
+Main	Sort by actor		no	HikariSub.MainWindow	extracted
+Main	Effect		no	HikariSub.MainWindow	extracted
+Main	Sort by effect		no	HikariSub.MainWindow	extracted
+Main	Layer		no	HikariSub.MainWindow	extracted
+Main	Sort by layer		no	HikariSub.MainWindow	extracted
+Main	All		no	HikariSub.MainWindow	extracted
+Main	Video and subs		no	HikariSub.MainWindow	extracted
+Main	Audio and subs		no	HikariSub.MainWindow	extracted
+Main	Only video		no	HikariSub.MainWindow	extracted
+Main	Only subtitles		no	HikariSub.MainWindow	extracted
+Main	Dock		no	HikariSub.MainWindow	extracted
+Main	Close		no	HikariSub.MainWindow	extracted
+Main	&File		no	HikariSub.MainWindow	extracted
+Main	Open subtitle file		no	HikariSub.MainWindow	extracted
+Main	&Open…		no	HikariSub.MainWindow	extracted
+Main	Recently opened subtitles		no	HikariSub.MainWindow	extracted
+Main	Recently opened &subtitles		no	HikariSub.MainWindow	extracted
+Main	Open		no	HikariSub.MainWindow	extracted
+Main	None		no	HikariSub.MainWindow	extracted
+Main	Remove subtitles from the editor		no	HikariSub.MainWindow	extracted
+Main	Remove subtitles from the &editor		no	HikariSub.MainWindow	extracted
+Main	&Close		no	HikariSub.MainWindow	extracted
+Main	Opens video file		no	HikariSub.MainWindow	extracted
+Main	Open &Video…		no	HikariSub.MainWindow	extracted
+Main	Save current file		no	HikariSub.MainWindow	extracted
+Main	&Save		no	HikariSub.MainWindow	extracted
+Main	Save all subtitles		no	HikariSub.MainWindow	extracted
+Main	Save &all		no	HikariSub.MainWindow	extracted
+Main	Save as		no	HikariSub.MainWindow	extracted
+Main	Save &as…		no	HikariSub.MainWindow	extracted
+Main	Save translation		no	HikariSub.MainWindow	extracted
+Main	Save &translation		no	HikariSub.MainWindow	extracted
+Main	Save subtitles using the video name		no	HikariSub.MainWindow	extracted
+Main	Opens the selected autosave from the list		no	HikariSub.MainWindow	extracted
+Main	Open auto save		no	HikariSub.MainWindow	extracted
+Main	Opens the temporary file removal window		no	HikariSub.MainWindow	extracted
+Main	Remove temporary files		no	HikariSub.MainWindow	extracted
+Main	Show / Hide log window		no	HikariSub.MainWindow	extracted
+Main	Last session options		no	HikariSub.MainWindow	extracted
+Main	Last session		no	HikariSub.MainWindow	extracted
+Main	Loads previously loaded files		no	HikariSub.MainWindow	extracted
+Main	Load last session		no	HikariSub.MainWindow	extracted
+Main	Loads session from saved session file		no	HikariSub.MainWindow	extracted
+Main	Load session from file		no	HikariSub.MainWindow	extracted
+Main	Saves session to file		no	HikariSub.MainWindow	extracted
+Main	Save session to file		no	HikariSub.MainWindow	extracted
+Main	Asks whether to load previously loaded files at program startup		no	HikariSub.MainWindow	extracted
+Main	Ask whether to load the last session at program startup		no	HikariSub.MainWindow	extracted
+Main	Loads previously loaded files at program startup		no	HikariSub.MainWindow	extracted
+Main	Load last session after program start		no	HikariSub.MainWindow	extracted
+Main	Program settings		no	HikariSub.MainWindow	extracted
+Main	&Settings		no	HikariSub.MainWindow	extracted
+Main	Import legacy settings...		no	HikariSub.MainWindow	extracted
+Main	Exit the program		no	HikariSub.MainWindow	extracted
+Main	E&xit		no	HikariSub.MainWindow	extracted
+Main	&Edit		no	HikariSub.MainWindow	extracted
+Main	Undo		no	HikariSub.MainWindow	extracted
+Main	&Undo		no	HikariSub.MainWindow	extracted
+Main	Redo		no	HikariSub.MainWindow	extracted
+Main	&Redo		no	HikariSub.MainWindow	extracted
+Main	Sorts all lines in ASS file		no	HikariSub.MainWindow	extracted
+Main	So&rt all lines		no	HikariSub.MainWindow	extracted
+Main	Sorts selected lines in ASS file		no	HikariSub.MainWindow	extracted
+Main	So&rt selected lines		no	HikariSub.MainWindow	extracted
+Main	Undo to last save		no	HikariSub.MainWindow	extracted
+Main	History		no	HikariSub.MainWindow	extracted
+Main	&History		no	HikariSub.MainWindow	extracted
+Main	Turns on multireplacer		no	HikariSub.MainWindow	extracted
+Main	Fix minor errors (experimental)		no	HikariSub.MainWindow	extracted
+Main	Selects lines by expressions		no	HikariSub.MainWindow	extracted
+Main	Select &lines		no	HikariSub.MainWindow	extracted
+Main	Searches for the specified text phrases and replaces them		no	HikariSub.MainWindow	extracted
+Main	Find and re&place		no	HikariSub.MainWindow	extracted
+Main	Searches for the specified text phrase		no	HikariSub.MainWindow	extracted
+Main	&Find		no	HikariSub.MainWindow	extracted
+Main	Finds the next occurrence of the phrase in the text		no	HikariSub.MainWindow	extracted
+Main	Find next		no	HikariSub.MainWindow	extracted
+Main	&Automation		no	HikariSub.MainWindow	extracted
+Main	Open shortcut mapping window		no	HikariSub.MainWindow	extracted
+Main	Load script		no	HikariSub.MainWindow	extracted
+Main	&Load script…		no	HikariSub.MainWindow	extracted
+Main	Refresh autoload scripts		no	HikariSub.MainWindow	extracted
+Main	Run the last loaded script		no	HikariSub.MainWindow	extracted
+Main	Rerun last macro		no	HikariSub.MainWindow	extracted
+Main	Automation &manager		no	HikariSub.MainWindow	extracted
+Main	&Video		no	HikariSub.MainWindow	extracted
+Main	Open &video…		no	HikariSub.MainWindow	extracted
+Main	Recently opened videos		no	HikariSub.MainWindow	extracted
+Main	Open keyframes		no	HikariSub.MainWindow	extracted
+Main	Recently opened keyframes		no	HikariSub.MainWindow	extracted
+Main	Open dummy video		no	HikariSub.MainWindow	extracted
+Main	Insert start time from video		no	HikariSub.MainWindow	extracted
+Main	Insert end time from video		no	HikariSub.MainWindow	extracted
+Main	Go to previous frame		no	HikariSub.MainWindow	extracted
+Main	Previous frame		no	HikariSub.MainWindow	extracted
+Main	Go to next frame		no	HikariSub.MainWindow	extracted
+Main	Next frame		no	HikariSub.MainWindow	extracted
+Main	Moves video to start time		no	HikariSub.MainWindow	extracted
+Main	Go to start time		no	HikariSub.MainWindow	extracted
+Main	Moves video to end time		no	HikariSub.MainWindow	extracted
+Main	Go to end time of line		no	HikariSub.MainWindow	extracted
+Main	Plays / Pauses video		no	HikariSub.MainWindow	extracted
+Main	Play / Pause		no	HikariSub.MainWindow	extracted
+Main	Go to previous keyframe		no	HikariSub.MainWindow	extracted
+Main	Go to next keyframe		no	HikariSub.MainWindow	extracted
+Main	Set audio position to video time		no	HikariSub.MainWindow	extracted
+Main	Set audio marker to video time		no	HikariSub.MainWindow	extracted
+Main	Unload video		no	HikariSub.MainWindow	extracted
+Main	Zoom video		no	HikariSub.MainWindow	extracted
+Main	Turn off video zoom		no	HikariSub.MainWindow	extracted
+Main	A&udio		no	HikariSub.MainWindow	extracted
+Main	Opens audio file		no	HikariSub.MainWindow	extracted
+Main	Open audio		no	HikariSub.MainWindow	extracted
+Main	Recently opened audio		no	HikariSub.MainWindow	extracted
+Main	Opens audio from video		no	HikariSub.MainWindow	extracted
+Main	Open audio from video		no	HikariSub.MainWindow	extracted
+Main	Opens blank audio 2 hour and 30 minutes long		no	HikariSub.MainWindow	extracted
+Main	Open blank 2h30m audio		no	HikariSub.MainWindow	extracted
+Main	Closes audio		no	HikariSub.MainWindow	extracted
+Main	Close audio		no	HikariSub.MainWindow	extracted
+Main	Vie&w		no	HikariSub.MainWindow	extracted
+Main	&Panels		no	HikariSub.MainWindow	extracted
+Main	Show		no	HikariSub.MainWindow	extracted
+Main	Hide		no	HikariSub.MainWindow	extracted
+Main	Float		no	HikariSub.MainWindow	extracted
+Main	&Move panel…		no	HikariSub.MainWindow	extracted
+Main	Layout &preset		no	HikariSub.MainWindow	extracted
+Main	Editing		no	HikariSub.MainWindow	extracted
+Main	Timing		no	HikariSub.MainWindow	extracted
+Main	Translation		no	HikariSub.MainWindow	extracted
+Main	Typesetting		no	HikariSub.MainWindow	extracted
+Main	&Reset layout		no	HikariSub.MainWindow	extracted
+Main	Restore the previous layout		no	HikariSub.MainWindow	extracted
+Main	&Subtitles		no	HikariSub.MainWindow	extracted
+Main	Enable / Disable editor		no	HikariSub.MainWindow	extracted
+Main	Shifting subtitle times		no	HikariSub.MainWindow	extracted
+Main	Shift &times...		no	HikariSub.MainWindow	extracted
+Main	Shift times / run time post processor		no	HikariSub.MainWindow	extracted
+Main	Is used to manage ASS styles		no	HikariSub.MainWindow	extracted
+Main	Style &manager		no	HikariSub.MainWindow	extracted
+Main	ASS subtitle properties		no	HikariSub.MainWindow	extracted
+Main	ASS file properties		no	HikariSub.MainWindow	extracted
+Main	Converts from one format to another		no	HikariSub.MainWindow	extracted
+Main	Conversion		no	HikariSub.MainWindow	extracted
+Main	Font collector		no	HikariSub.MainWindow	extracted
+Main	Resample subtitles		no	HikariSub.MainWindow	extracted
+Main	Check spelling		no	HikariSub.MainWindow	extracted
+Main	Hide tags		no	HikariSub.MainWindow	extracted
+Main	&Help		no	HikariSub.MainWindow	extracted
+Main	Opens the HikariSub website in the default browser		no	HikariSub.MainWindow	extracted
+Main	HikariSub &website		no	HikariSub.MainWindow	extracted
+Main	Opens the HikariSub issue tracker		no	HikariSub.MainWindow	extracted
+Main	&Report an issue		no	HikariSub.MainWindow	extracted
+Main	Checks whether a newer version is available		no	HikariSub.MainWindow	extracted
+Main	Check for &updates		no	HikariSub.MainWindow	extracted
+Main	Shows program info		no	HikariSub.MainWindow	extracted
+Main	&About		no	HikariSub.MainWindow	extracted
+Main	Shows credits		no	HikariSub.MainWindow	extracted
+Main	&Credits		no	HikariSub.MainWindow	extracted
+Main	History (1 element)		no	HikariSub.MainWindow	extracted
+Main	History (%1 elements)		no	HikariSub.MainWindow	extracted
+Main	Set		no	HikariSub.MainWindow	extracted
+Main	OK		no	HikariSub.MainWindow	extracted
+Main	Cancel		no	HikariSub.MainWindow	extracted
+Main	Log window		no	HikariSub.MainWindow	extracted
+Main	Log		no	HikariSub.MainWindow	extracted
+Main	You already have the latest version		no	HikariSub.MainWindow	extracted
+Main	Cannot check for updates		no	HikariSub.MainWindow	extracted
+Main	Update		no	HikariSub.MainWindow	extracted
+Main	A new version is available		no	HikariSub.MainWindow	extracted
+Main	You have version %1; version %2 is available		no	HikariSub.MainWindow	extracted
+Main	Check for updates automatically		no	HikariSub.MainWindow	extracted
+Main	Stable versions only		no	HikariSub.MainWindow	extracted
+Main	Open the download page		no	HikariSub.MainWindow	extracted
+Main	Remind me in a week		no	HikariSub.MainWindow	extracted
+Main	About HikariSub		no	HikariSub.MainWindow	extracted
+Main	HikariSub subtitle editor by altqx,\nversion %1		no	HikariSub.MainWindow	extracted
+Main	Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n		no	HikariSub.MainWindow	extracted
+Main	If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n		no	HikariSub.MainWindow	extracted
+Main	HikariSub includes parts of the following projects:\n		no	HikariSub.MainWindow	extracted
+Main	Color picker, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n		no	HikariSub.MainWindow	extracted
+Main	Credits		no	HikariSub.MainWindow	extracted
+Main	Graphical help: (buttons, help pictures etc.)\n		no	HikariSub.MainWindow	extracted
+Main	- Xandros (new video buttons).\n		no	HikariSub.MainWindow	extracted
+Main	- Devilkan (menu and toolbar buttons)\n		no	HikariSub.MainWindow	extracted
+Main	- Zły Los (icons for file associations and menu).\n		no	HikariSub.MainWindow	extracted
+Main	Testers:\n		no	HikariSub.MainWindow	extracted
+Main	- Sacredus (first translator using translator mode,\ngreat help testing HikariSub on a slow computer)\n		no	HikariSub.MainWindow	extracted
+Main	- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n		no	HikariSub.MainWindow	extracted
+Main	helped with typesetting tools and came up with many more improvements).\n		no	HikariSub.MainWindow	extracted
+Main	- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n		no	HikariSub.MainWindow	extracted
+Main	- mas1904 (found some errors and helping with crash debuging).\n		no	HikariSub.MainWindow	extracted
+Main	- Senami (made new themes and found some bugs).\n		no	HikariSub.MainWindow	extracted
+Main	- altinat (Thai translation).\n		no	HikariSub.MainWindow	extracted
+Main	- labrie75 (Korean translation).\n		no	HikariSub.MainWindow	extracted
+Main	- Niskala5570 (Malay translation).\n		no	HikariSub.MainWindow	extracted
+Main	Thanks to other HikariSub users who reported bugs:\n		no	HikariSub.MainWindow	extracted
+Main	Load associated		no	HikariSub.MainWindow	context
+Main	Start		no	HikariSub.MainWindow	context
+Main	Left margin		no	HikariSub.MainWindow	context
+Main	Right margin		no	HikariSub.MainWindow	context
+Main	Vertical margin		no	HikariSub.MainWindow	context
+Main	B		no	HikariSub.MainWindow	context
+Main	I		no	HikariSub.MainWindow	context
+Main	U		no	HikariSub.MainWindow	context
+Main	S		no	HikariSub.MainWindow	context
+Main	Fn		no	HikariSub.MainWindow	context
+Main	Show tags		no	HikariSub.MainWindow	context
+Main	No editing target		no	HikariSub.MainWindow	context
+Main	  |  Reference (protected): %1		no	HikariSub.MainWindow	context
+Main	Modified		no	HikariSub.MainWindow	context
+Main	Change resolution		no	HikariSub.MainWindow	context
+Main	Get from video		no	HikariSub.MainWindow	context
+Main	Reference: %1		no	HikariSub.Reference	extracted
+Main	Reference		no	HikariSub.Reference	extracted
+Main	Reference (protected, read-only): %1		no	HikariSub.Reference	extracted
+Main	Search		no	HikariSub.Search	extracted
+Main	Find and replace		no	HikariSub.Search	extracted
+Main	Close		no	HikariSub.Session	extracted
+Main	Open auto save		no	HikariSub.Session	extracted
+Main	Remove temporary files		no	HikariSub.Session	extracted
+Main	Dismiss		no	HikariSub.Session	extracted
+Main	Unsaved work from a session that did not close. Each opens as a new unsaved copy; the original file is not changed.		no	HikariSub.Session	extracted
+Main	There is no unsaved work to recover.		no	HikariSub.Session	extracted
+Main	%1 — %2		no	HikariSub.Session	extracted
+Main	Autosave		no	HikariSub.Session	extracted
+Main	Open copy		no	HikariSub.Session	extracted
+Main	Auto save		no	HikariSub.Session	extracted
+Main	No auto save files		no	HikariSub.Session	extracted
+Main	Remove selected autosave files		no	HikariSub.Session	extracted
+Main	Remove all auto save files		no	HikariSub.Session	extracted
+Main	Remove files older than		no	HikariSub.Session	extracted
+Main	Day		no	HikariSub.Session	extracted
+Main	January		no	HikariSub.Session	extracted
+Main	February		no	HikariSub.Session	extracted
+Main	March		no	HikariSub.Session	extracted
+Main	April		no	HikariSub.Session	extracted
+Main	May		no	HikariSub.Session	extracted
+Main	June		no	HikariSub.Session	extracted
+Main	July		no	HikariSub.Session	extracted
+Main	August		no	HikariSub.Session	extracted
+Main	September		no	HikariSub.Session	extracted
+Main	October		no	HikariSub.Session	extracted
+Main	November		no	HikariSub.Session	extracted
+Main	December		no	HikariSub.Session	extracted
+Main	Month		no	HikariSub.Session	extracted
+Main	Year		no	HikariSub.Session	extracted
+Main	Remove older auto save files		no	HikariSub.Session	extracted
+Main	Fix suggestions		no	HikariSub.Spelling	extracted
+Main	Status of deleted styles		no	HikariSub.Styles	extracted
+Main	The starting time		no	HikariSub.TimeShift	extracted
+Main	End time		no	HikariSub.TimeShift	extracted
+Main	Styles		no	HikariSub.TimeShift	extracted
+Main	Shift times		no	HikariSub.TimeShift	extracted
+Main	Frames		no	HikariSub.TimeShift	extracted
+Main	Time		no	HikariSub.TimeShift	extracted
+Main	Shift subtitle times		no	HikariSub.TimeShift	extracted
+Main	Shift		no	HikariSub.TimeShift	extracted
+Main	Forward		no	HikariSub.TimeShift	extracted
+Main	Backward		no	HikariSub.TimeShift	extracted
+Main	Tag times		no	HikariSub.TimeShift	extracted
+Main	Shift by video / audio		no	HikariSub.TimeShift	extracted
+Main	Beginning		no	HikariSub.TimeShift	extracted
+Main	End		no	HikariSub.TimeShift	extracted
+Main	Move the marker to video time		no	HikariSub.TimeShift	extracted
+Main	Move the marker to audio time		no	HikariSub.TimeShift	extracted
+Main	Which lines		no	HikariSub.TimeShift	extracted
+Main	All lines		no	HikariSub.TimeShift	extracted
+Main	Selected lines		no	HikariSub.TimeShift	extracted
+Main	From the selected line		no	HikariSub.TimeShift	extracted
+Main	All times higher and equal		no	HikariSub.TimeShift	extracted
+Main	All times lower and equal		no	HikariSub.TimeShift	extracted
+Main	According to the selected styles		no	HikariSub.TimeShift	extracted
+Main	Styles, separated by commas		no	HikariSub.TimeShift	extracted
+Main	A method of time shift		no	HikariSub.TimeShift	extracted
+Main	Both times		no	HikariSub.TimeShift	extracted
+Main	Correction end times		no	HikariSub.TimeShift	extracted
+Main	Leave unchanged		no	HikariSub.TimeShift	extracted
+Main	Adjust overlapping times		no	HikariSub.TimeShift	extracted
+Main	New times		no	HikariSub.TimeShift	extracted
+Main	Run post processor		no	HikariSub.TimeShift	extracted
+Main	Post processor		no	HikariSub.TimeShift	extracted
+Main	Lead-in		no	HikariSub.TimeShift	extracted
+Main	Lead-out		no	HikariSub.TimeShift	extracted
+Main	Set times as continuous		no	HikariSub.TimeShift	extracted
+Main	Start time threshold		no	HikariSub.TimeShift	extracted
+Main	End time threshold		no	HikariSub.TimeShift	extracted
+Main	Snap to keyframes		no	HikariSub.TimeShift	extracted
+Main	Before the start of time		no	HikariSub.TimeShift	extracted
+Main	After the start time		no	HikariSub.TimeShift	extracted
+Main	Before the end time		no	HikariSub.TimeShift	extracted
+Main	After the end time		no	HikariSub.TimeShift	extracted
+Main	Profiles		no	HikariSub.TimeShift	extracted
+Main	Adding and editing profiles		no	HikariSub.TimeShift	extracted
+Main	Removing profiles		no	HikariSub.TimeShift	extracted
+Main	Confirmation		no	HikariSub.TimeShift	extracted
+Main	Do you really want to shift only %1 times?		no	HikariSub.TimeShift	extracted
+Main	start		no	HikariSub.TimeShift	extracted
+Main	end		no	HikariSub.TimeShift	extracted
+Main	Translation		no	HikariSub.Translation	extracted
+Main	Choose subtitle file		no	HikariSub.Translation	extracted
+Main	Subtitle files (*.ass *.srt *.sub *.txt)		no	HikariSub.Translation	extracted
+Main	Translation matching options		no	HikariSub.Translation	extracted
+Main	Original		no	HikariSub.Translation	extracted
+Main	Add line		no	HikariSub.Translation	extracted
+Main	Adds a blank line before the selected line.\nMoves the original one line down.\nThe added line must be timed.		no	HikariSub.Translation	extracted
+Main	Adds a blank line before the selected line.\nMoves the translation one line down.		no	HikariSub.Translation	extracted
+Main	Join lines		no	HikariSub.Translation	extracted
+Main	Joins the selected line with the next line.\nMoves the original one line up.		no	HikariSub.Translation	extracted
+Main	Joins the selected line with the next line.\nMoves the translation one line up.		no	HikariSub.Translation	extracted
+Main	Delete line		no	HikariSub.Translation	extracted
+Main	Deletes the selected line.\nMoves the original one line up.		no	HikariSub.Translation	extracted
+Main	Deletes the selected line.\nMoves the translation one line up.		no	HikariSub.Translation	extracted
+Main	Description		no	HikariSub.Translation	extracted
+Main	Description:\nOriginal - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.		no	HikariSub.Translation	extracted
+Main	Previous frame		no	HikariSub.Video	extracted
+Main	Next frame		no	HikariSub.Video	extracted
+Main	Play / Pause		no	HikariSub.Video	extracted
+Main	Video		no	HikariSub.Video	extracted
+Main	Video position		no	HikariSub.Video	extracted
+Main	Video times		no	HikariSub.Video	extracted
+Main	Frame time; frame number; frames from the line's start frame; milliseconds from the line's start and end		no	HikariSub.Video	extracted
+Main	Previous file		no	HikariSub.Video	extracted
+Main	Pause		no	HikariSub.Video	extracted
+Main	Play		no	HikariSub.Video	extracted
+Main	Play line		no	HikariSub.Video	extracted
+Main	Play the current line		no	HikariSub.Video	extracted
+Main	Stop		no	HikariSub.Video	extracted
+Main	Next file		no	HikariSub.Video	extracted
+Main	Warning		no	HikariSub.Video	extracted
+Main	All files (*)		no	HikariSub.Video	extracted
+Main	Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)		no	HikariSub.Video	extracted
+Main	Choose video file		no	HikariSub.Video	extracted
+Main	Keyframes file (*.txt *.pass *.stats *.log)		no	HikariSub.Video	extracted
+Main	Move panel…		no	HikariSub.Workspace	extracted
+Main	Dock		no	HikariSub.Workspace	extracted
+Main	Undock		no	HikariSub.Workspace	extracted
+Main	Close reference		no	HikariSub.Workspace	extracted
+Main	Close		no	HikariSub.Workspace	extracted
+Main	Float		no	HikariSub.Workspace	extracted
+Main	Restore the previous layout		no	HikariSub.Workspace	extracted
+Main	Dismiss		no	HikariSub.Workspace	extracted
+Main	Move panel		no	HikariSub.Workspace	extracted
+Main	Panel:		no	HikariSub.Workspace	extracted
+Main	Panel		no	HikariSub.Workspace	extracted
+Main	Place:		no	HikariSub.Workspace	extracted
+Main	Tab with		no	HikariSub.Workspace	extracted
+Main	Left of		no	HikariSub.Workspace	extracted
+Main	Above		no	HikariSub.Workspace	extracted
+Main	Right of		no	HikariSub.Workspace	extracted
+Main	Below		no	HikariSub.Workspace	extracted
+Main	Placement		no	HikariSub.Workspace	extracted
+Main	Next to:		no	HikariSub.Workspace	extracted
+Main	Next to panel		no	HikariSub.Workspace	extracted
+Main	Move		no	HikariSub.Workspace	extracted
+Main	Width:		no	HikariSub.Workspace	extracted
+Main	Width		no	HikariSub.Workspace	extracted
+Main	Height:		no	HikariSub.Workspace	extracted
+Main	Height		no	HikariSub.Workspace	extracted
+Main	Resize		no	HikariSub.Workspace	extracted
+MatroskaSubtitles	Confirmation		no	HikariSub.Matroska	extracted
+MatroskaSubtitles	Save the file before loading subtitles from the MKV?		no	HikariSub.Matroska	extracted
+MatroskaSubtitles	Yes		no	HikariSub.Matroska	extracted
+MatroskaSubtitles	No		no	HikariSub.Matroska	extracted
+MatroskaSubtitles	Cancel		no	HikariSub.Matroska	extracted
+MatroskaSubtitles	The file does not contain any subtitle tracks.		no	HikariSub.Matroska	extracted
+MatroskaSubtitles	Choose subtitle track		no	HikariSub.Matroska	extracted
+MatroskaSubtitles	Loading subtitles from Matroska.		no	HikariSub.Matroska	extracted
+MisspellReplacerDialog	Fix minor errors		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Rule editing		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Rule description		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Search phrase (regular expresions)		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Replace phrase		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Match case		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Change to lower case		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Change to upper case		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Dont change case		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Replace only in tags		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Replace only in text		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Rules		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Description		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Rule find		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Rule replace		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Which lines		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	All lines		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Selected lines		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	From the selected line		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	According to the selected styles		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Choose styles		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Styles		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Add rule		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Edit rule		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Delete rule		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Find error		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Find errors\nin current tab		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Find errors\nin all tabs		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Replace error		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Replace all errors\nin current tab		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Replace all errors\nin all tabs		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Search results		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Line %1: 		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Check all		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Uncheck all		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Replace		no	HikariSub.MisspellReplacer	extracted
+MisspellReplacerDialog	Multireplacer		no	HikariSub.MisspellReplacer	context
+QGuiApplication	QT_LAYOUT_DIRECTION		no	QGuiApplication	extracted
+QObject	The reference is protected (read-only).		no	HikariSub.Documents	extracted
+QObject	A macro is running on this document.		no	HikariSub.Documents	extracted
+QObject	The edited line cannot be committed.		no	HikariSub.Documents	extracted
+QObject	The change was refused.		no	HikariSub.Documents	extracted
+QObject	Select whole characters.		no	HikariSub.Editor	extracted
+QObject	Braces and backslashes are ASS syntax: edit them with tags shown.		no	HikariSub.Editor	extracted
+QObject	This touches a drawing or malformed tag: edit it with tags shown.		no	HikariSub.Editor	extracted
+QObject	Select the whole line break or hard space.		no	HikariSub.Editor	extracted
+QObject	Here the text would become drawing or tag content: edit it with tags shown.		no	HikariSub.Editor	extracted
+QObject	Subtitle lines		no	HikariSub.Grid	extracted
+QObject	Line %1		no	HikariSub.Grid	extracted
+QObject	the file could not be read		no	HikariSub.Video	extracted
+QObject	the file has no usable video track		no	HikariSub.Video	extracted
+QObject	the media helper ended		no	HikariSub.Video	extracted
+QObject	a media component is missing		no	HikariSub.Video	extracted
+QObject	the video could not be opened		no	HikariSub.Video	extracted
+RecentFilesMenu	Open		no	HikariSub.MainWindow	extracted
+RecentFilesMenu	None		no	HikariSub.MainWindow	extracted
+ReferenceTray	Follow the editing Line		no	HikariSub.Reference	extracted
+ReferenceTray	Independent navigation		no	HikariSub.Reference	extracted
+ReferenceTray	No matching Line		no	HikariSub.Reference	extracted
+ReferenceTray	Match %1 of %2		no	HikariSub.Reference	extracted
+ReferenceTray	Show nearest Line		no	HikariSub.Reference	extracted
+ReferenceTray	Previous match		no	HikariSub.Reference	extracted
+ReferenceTray	Next match		no	HikariSub.Reference	extracted
+ReferenceTray	Reference Lines (protected, read-only)		no	HikariSub.Reference	extracted
+ScreenDropperView	Screen pixels around the pointer		no	HikariSub.Colours	extracted
+ScriptPropertiesDialog	ASS file properties		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Save		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Cancel		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Subtitle information		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Title		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Author		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Translator		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Proofreading		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Timer		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Editing		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Resolution		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Subtitles		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Video width		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Video height		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	From video		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Layout		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Layout width		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Layout height		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Link the layout resolution to the subtitle resolution		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	YCbCr matrix		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Options		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Wrap style		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	0: Auto, top line wider		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	1: End-of-line wrapping, only N breaks		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	2: No wrapping, both \n and N break		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	3: Auto, bottom line wider		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Colliding lines		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Normal		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Reversed		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	Scale border and shadow		no	HikariSub.ScriptProperties	extracted
+ScriptPropertiesDialog	ASS subtitle properties		no	HikariSub.ScriptProperties	context
+SearchTool	Find		no	HikariSub.Search	extracted
+SearchTool	Replace		no	HikariSub.Search	extracted
+SearchTool	Find and replace		no	HikariSub.Search	extracted
+SearchTool	In files		no	HikariSub.Search	extracted
+SearchTool	Find in subtitles		no	HikariSub.Search	extracted
+SearchTool	Search text:		no	HikariSub.Search	extracted
+SearchTool	Replace with:		no	HikariSub.Search	extracted
+SearchTool	Filters:		no	HikariSub.Search	extracted
+SearchTool	Windows search filters separated by semicolons, e.g. "*.ass; *.srt".		no	HikariSub.Search	extracted
+SearchTool	Catalog:		no	HikariSub.Search	extracted
+SearchTool	Subtitle search folder:		no	HikariSub.Search	extracted
+SearchTool	Choose save folder		no	HikariSub.Search	extracted
+SearchTool	Match case		no	HikariSub.Search	extracted
+SearchTool	Include comments		no	HikariSub.Search	extracted
+SearchTool	Regular expressions		no	HikariSub.Search	extracted
+SearchTool	Skip tags		no	HikariSub.Search	extracted
+SearchTool	Beginning of text		no	HikariSub.Search	extracted
+SearchTool	Skip text		no	HikariSub.Search	extracted
+SearchTool	End of text		no	HikariSub.Search	extracted
+SearchTool	In field		no	HikariSub.Search	extracted
+SearchTool	Text		no	HikariSub.Search	extracted
+SearchTool	Styles		no	HikariSub.Search	extracted
+SearchTool	Actor		no	HikariSub.Search	extracted
+SearchTool	Effect		no	HikariSub.Search	extracted
+SearchTool	Lines		no	HikariSub.Search	extracted
+SearchTool	All lines		no	HikariSub.Search	extracted
+SearchTool	Selected lines		no	HikariSub.Search	extracted
+SearchTool	From selected		no	HikariSub.Search	extracted
+SearchTool	Choose styles		no	HikariSub.Search	extracted
+SearchTool	Search in subfolders		no	HikariSub.Search	extracted
+SearchTool	Search in hidden folders		no	HikariSub.Search	extracted
+SearchTool	Find in all open subtitles		no	HikariSub.Search	extracted
+SearchTool	Find all in current subtitles		no	HikariSub.Search	extracted
+SearchTool	Replace next		no	HikariSub.Search	extracted
+SearchTool	Replace all		no	HikariSub.Search	extracted
+SearchTool	Replace in all open subtitles		no	HikariSub.Search	extracted
+SearchTool	Replace in subtitles		no	HikariSub.Search	extracted
+SearchTool	Search results		no	HikariSub.Search	extracted
+SearchTool	No results yet		no	HikariSub.Search	extracted
+SearchTool	Find all, Find in all open subtitles and Find in subtitles list their matches here; check the ones to change and replace them.		no	HikariSub.Search	extracted
+SearchTool	Check all		no	HikariSub.Search	extracted
+SearchTool	Uncheck all		no	HikariSub.Search	extracted
+SearchTool	Remove nonexistent styles		no	HikariSub.Search	extracted
+SearchTool	OK		no	HikariSub.Search	extracted
+SearchTool	Remove styles		no	HikariSub.Search	extracted
+SearchTool	Yes		no	HikariSub.Search	extracted
+SearchTool	Ignore		no	HikariSub.Search	extracted
+SearchTool	No		no	HikariSub.Search	extracted
+SearchTool	Cancel		no	HikariSub.Search	extracted
+SelectLinesDialog	Select lines		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Find		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	With		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Without		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Search text:		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Choose styles		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Match case		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Regular expressions		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	In field		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Text		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Styles		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Actor		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Effect		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Start time		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	End time		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Dialogue / comments		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Dialogue		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Comments		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Selection		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Select		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Add to selection		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Deselect		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Action		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Do nothing		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Copy		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Cut		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Move to beginning		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Move to end		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Set as comment		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Delete		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Select in all tabs		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	Close		no	HikariSub.SelectLines	extracted
+SelectLinesDialog	OK		no	HikariSub.SelectLines	extracted
+SessionWindows	Prompt		no	HikariSub.Session	extracted
+SessionWindows	Load last session?		no	HikariSub.Session	extracted
+SessionWindows	The program crashed or was closed improperly.\nLoad the last session with the latest autosaved subtitles?		no	HikariSub.Session	extracted
+SessionWindows	Choose session file		no	HikariSub.Session	extracted
+SessionWindows	Session file (*.kls)		no	HikariSub.Session	extracted
+SessionWindows	Save session file		no	HikariSub.Session	extracted
+SessionWindows	Warning		no	HikariSub.Session	extracted
+SessionWindows	Chosen file is read only,\nplease save with different name or change file attribute.		no	HikariSub.Session	extracted
+SessionWindows	Session entries not restored		no	HikariSub.Session	extracted
+SessionWindows	Subtitles		no	HikariSub.Session	extracted
+SessionWindows	Video		no	HikariSub.Session	extracted
+SessionWindows	Audio		no	HikariSub.Session	extracted
+SessionWindows	Keyframes		no	HikariSub.Session	extracted
+SessionWindows	These files of the session could not be found. The tabs stay open; retry, choose the file, or remove the entry.		no	HikariSub.Session	extracted
+SessionWindows	Tab %1 (%2) – %3: %4		no	HikariSub.Session	extracted
+SessionWindows	Retry		no	HikariSub.Session	extracted
+SessionWindows	Relink…		no	HikariSub.Session	extracted
+SessionWindows	Remove		no	HikariSub.Session	extracted
+SessionWindows	Close		no	HikariSub.Session	extracted
+SessionWindows	Choose the file		no	HikariSub.Session	extracted
+SettingsDialog	Options		no	HikariSub.Options	extracted
+SettingsDialog	Set default		no	HikariSub.Options	extracted
+SettingsDialog	OK		no	HikariSub.Options	extracted
+SettingsDialog	Apply		no	HikariSub.Options	extracted
+SettingsDialog	Cancel		no	HikariSub.Options	extracted
+SettingsDialog	Font size		no	HikariSub.Options	extracted
+SettingsDialog	Editor		no	HikariSub.Options	extracted
+SettingsDialog	Conversion		no	HikariSub.Options	extracted
+SettingsDialog	Advanced		no	HikariSub.Options	extracted
+SettingsDialog	Video		no	HikariSub.Options	extracted
+SettingsDialog	Audio		no	HikariSub.Options	extracted
+SettingsDialog	Appearance		no	HikariSub.Options	extracted
+SettingsDialog	Hotkeys		no	HikariSub.Options	extracted
+SettingsDialog	Subtitle properties		no	HikariSub.Options	extracted
+SettingsDialog	Language		no	HikariSub.Options	extracted
+SettingsDialog	Spell checker language ("Dictionary" folder)		no	HikariSub.Options	extracted
+SettingsDialog	None chosen		no	HikariSub.Options	extracted
+SettingsDialog	No dictionaries found		no	HikariSub.Options	extracted
+SettingsDialog	Open sorted subtitles		no	HikariSub.Options	extracted
+SettingsDialog	Turn spell checking		no	HikariSub.Options	extracted
+SettingsDialog	Select the line with the time line\nof the previous active tab		no	HikariSub.Options	extracted
+SettingsDialog	Show suggestions by double-clicking on misspell		no	HikariSub.Options	extracted
+SettingsDialog	Always open subtitles in a new tab		no	HikariSub.Options	extracted
+SettingsDialog	Stay on selected line when editing times		no	HikariSub.Options	extracted
+SettingsDialog	Turn off edits preview on video\n(re-opening tab is required)		no	HikariSub.Options	extracted
+SettingsDialog	Turn searching of visible line\nafter switching from full screen		no	HikariSub.Options	extracted
+SettingsDialog	Synchronize time shifting window in all tabs		no	HikariSub.Options	extracted
+SettingsDialog	Change active line after add to selection		no	HikariSub.Options	extracted
+SettingsDialog	Show original in translator mode		no	HikariSub.Options	extracted
+SettingsDialog	Hide original on video in translator mode		no	HikariSub.Options	extracted
+SettingsDialog	Do not change selections when duplicating dialogue lines		no	HikariSub.Options	extracted
+SettingsDialog	Do not vertically center the active line in the subtitle grid		no	HikariSub.Options	extracted
+SettingsDialog	Use numpad shortcuts in text fields		no	HikariSub.Options	extracted
+SettingsDialog	Turn off visual tools warning		no	HikariSub.Options	extracted
+SettingsDialog	Do not warn about resolution mismatch		no	HikariSub.Options	extracted
+SettingsDialog	Compatibility with older HikariSub scripts		no	HikariSub.Options	extracted
+SettingsDialog	Choose catalog		no	HikariSub.Options	extracted
+SettingsDialog	Choose style		no	HikariSub.Options	extracted
+SettingsDialog	Choose FPS		no	HikariSub.Options	extracted
+SettingsDialog	FPS from video		no	HikariSub.Options	extracted
+SettingsDialog	New end times		no	HikariSub.Options	extracted
+SettingsDialog	Show window before conversion		no	HikariSub.Options	extracted
+SettingsDialog	Time for one letter in milliseconds		no	HikariSub.Options	extracted
+SettingsDialog	Resolution when converting to ASS		no	HikariSub.Options	extracted
+SettingsDialog	Tags to paste at the beginning of every ASS line		no	HikariSub.Options	extracted
+SettingsDialog	Calculate spaces and punctation characters for wraps		no	HikariSub.Options	extracted
+SettingsDialog	Calculate spaces and punctation characters for CPS		no	HikariSub.Options	extracted
+SettingsDialog	Number of edits to save		no	HikariSub.Options	extracted
+SettingsDialog	0 turns off saving while editing		no	HikariSub.Options	extracted
+SettingsDialog	Maximum number of autosave files		no	HikariSub.Options	extracted
+SettingsDialog	Number of autosaves can be set from 2 to 1000000		no	HikariSub.Options	extracted
+SettingsDialog	Start frame offset in ms:		no	HikariSub.Options	extracted
+SettingsDialog	End frame offset in ms:		no	HikariSub.Options	extracted
+SettingsDialog	ASS tag replacement:		no	HikariSub.Options	extracted
+SettingsDialog	Number of tab name characters		no	HikariSub.Options	extracted
+SettingsDialog	Number of tab name characters. Range from 20 to 150		no	HikariSub.Options	extracted
+SettingsDialog	LUA scripts tracking level		no	HikariSub.Options	extracted
+SettingsDialog	Subtitle grid font:		no	HikariSub.Options	extracted
+SettingsDialog	Program font:		no	HikariSub.Options	extracted
+SettingsDialog	Autoload loading method		no	HikariSub.Options	extracted
+SettingsDialog	After program start asynchronously		no	HikariSub.Options	extracted
+SettingsDialog	After program start		no	HikariSub.Options	extracted
+SettingsDialog	After open menu asynchronously		no	HikariSub.Options	extracted
+SettingsDialog	After open menu		no	HikariSub.Options	extracted
+SettingsDialog	Folder with external fonts		no	HikariSub.Options	extracted
+SettingsDialog	Choose		no	HikariSub.Options	extracted
+SettingsDialog	Open video from context menu on full screen		no	HikariSub.Options	extracted
+SettingsDialog	Left mouse button pauses video		no	HikariSub.Options	extracted
+SettingsDialog	Open video with time of active line		no	HikariSub.Options	extracted
+SettingsDialog	Convert video colours on the GPU (requires reloading)		no	HikariSub.Options	extracted
+SettingsDialog	Preferred audio (separated by semicolons)		no	HikariSub.Options	extracted
+SettingsDialog	FFMS2 video seeking method (requires reloading)		no	HikariSub.Options	extracted
+SettingsDialog	Linear		no	HikariSub.Options	extracted
+SettingsDialog	Normal		no	HikariSub.Options	extracted
+SettingsDialog	Unsafe (always fast)		no	HikariSub.Options	extracted
+SettingsDialog	Aggressive (fast in rewind)		no	HikariSub.Options	extracted
+SettingsDialog	Subtitle display filter		no	HikariSub.Options	extracted
+SettingsDialog	Playback		no	HikariSub.Options	extracted
+SettingsDialog	Built-in		no	HikariSub.Options	extracted
+SettingsDialog	Start video zoom in percent.		no	HikariSub.Options	extracted
+SettingsDialog	Show time next to cursor		no	HikariSub.Options	extracted
+SettingsDialog	Show seconds markers		no	HikariSub.Options	extracted
+SettingsDialog	Show background selection		no	HikariSub.Options	extracted
+SettingsDialog	Show video position		no	HikariSub.Options	extracted
+SettingsDialog	Show keyframes		no	HikariSub.Options	extracted
+SettingsDialog	Follow audio during playback		no	HikariSub.Options	extracted
+SettingsDialog	Activate the audio when hover		no	HikariSub.Options	extracted
+SettingsDialog	Snap to keyframe		no	HikariSub.Options	extracted
+SettingsDialog	Snap to other lines		no	HikariSub.Options	extracted
+SettingsDialog	Do not play audio after changing the line		no	HikariSub.Options	extracted
+SettingsDialog	Merge all the "n" with the previous syllable		no	HikariSub.Options	extracted
+SettingsDialog	Move syllable line after click		no	HikariSub.Options	extracted
+SettingsDialog	Load audio into RAM		no	HikariSub.Options	extracted
+SettingsDialog	Audio output		no	HikariSub.Options	extracted
+SettingsDialog	Audio delay in milliseconds		no	HikariSub.Options	extracted
+SettingsDialog	Audio to play before and after the marker in milliseconds		no	HikariSub.Options	extracted
+SettingsDialog	Lead-in		no	HikariSub.Options	extracted
+SettingsDialog	Lead-out		no	HikariSub.Options	extracted
+SettingsDialog	Line boundaries thickness		no	HikariSub.Options	extracted
+SettingsDialog	Audio cache files limit		no	HikariSub.Options	extracted
+SettingsDialog	Range from 0 to 10000, where 0 turns off\nremoving audio cache files.		no	HikariSub.Options	extracted
+SettingsDialog	The way to display inactive lines		no	HikariSub.Options	extracted
+SettingsDialog	None		no	HikariSub.Options	extracted
+SettingsDialog	Before and after the active		no	HikariSub.Options	extracted
+SettingsDialog	All visible		no	HikariSub.Options	extracted
+SettingsDialog	Choose filtering		no	HikariSub.Options	extracted
+SettingsDialog	All		no	HikariSub.Options	extracted
+SettingsDialog	Set shortcuts		no	HikariSub.Options	extracted
+SettingsDialog	Global shortcuts		no	HikariSub.Options	extracted
+SettingsDialog	Subtitle shortcuts		no	HikariSub.Options	extracted
+SettingsDialog	Editor shortcuts		no	HikariSub.Options	extracted
+SettingsDialog	Video shortcuts		no	HikariSub.Options	extracted
+SettingsDialog	Audio Shortcuts		no	HikariSub.Options	extracted
+SettingsDialog	Filtering mode:		no	HikariSub.Options	extracted
+SettingsDialog	Show hidden rows		no	HikariSub.Options	extracted
+SettingsDialog	Hide the rows shown		no	HikariSub.Options	extracted
+SettingsDialog	Function		no	HikariSub.Options	extracted
+SettingsDialog	Hotkey		no	HikariSub.Options	extracted
+SettingsDialog	Map hotkey		no	HikariSub.Options	extracted
+SettingsDialog	Restore default hotkey		no	HikariSub.Options	extracted
+SettingsDialog	Delete hotkey		no	HikariSub.Options	extracted
+SettingsDialog	Subtitle information		no	HikariSub.Options	extracted
+SettingsDialog	Use		no	HikariSub.Options	extracted
+SettingsDialog	Write the value into the subtitles' information		no	HikariSub.Options	extracted
+SettingsDialog	Title		no	HikariSub.Options	extracted
+SettingsDialog	Author		no	HikariSub.Options	extracted
+SettingsDialog	Translator		no	HikariSub.Options	extracted
+SettingsDialog	Proofreading		no	HikariSub.Options	extracted
+SettingsDialog	Timer		no	HikariSub.Options	extracted
+SettingsDialog	Editing		no	HikariSub.Options	extracted
+SettingsDialog	Always ask before changing subtitle information		no	HikariSub.Options	extracted
+SettingsDialog	Choose choose external font folder		no	HikariSub.Options	extracted
+SettingsDialog	Warning		no	HikariSub.Options	extracted
+SettingsDialog	Themes		no	HikariSub.Options	context
+SettingsDialog	Language (program restart required)		no	HikariSub.Options	context
+SettingsDialog	Audio spectrum background		no	HikariSub.Options	context
+SettingsDialog	Audio spectrum echo		no	HikariSub.Options	context
+SettingsDialog	Audio spectrum		no	HikariSub.Options	context
+SettingsDialog	Name		no	HikariSub.Options	context
+SettingsDialog	Color		no	HikariSub.Options	context
+SettingsImport	Cannot read %1		no	HikariSub.SettingsImport	extracted
+SettingsImport	Cannot write the snapshot		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Import legacy settings		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Choose the folder of a legacy installation		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Roll back		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Go back to the settings before the last import?		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Go back to the settings before the last import? These changes made since will be replaced:\n%1		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Installation:		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Choose folder…		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Read		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Files that are not UTF-8 are read as:		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Choose...		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Latin-1 (ISO 8859-1)		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Windows-1252		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Show:		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	All		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Changes		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Missing		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Unchanged		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Superseded		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Unresolved		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Excluded		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Retired		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Files read		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Proposed choice		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	All changes		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Legacy: %1    Now: %2		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Unresolved paths, kept as they are: %1		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	An import waits for the next start.		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	An import waits for the next start. These settings changed since it was made keep your change:\n%1		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Import		no	HikariSub.SettingsImport	extracted
+SettingsImportDialog	Close		no	HikariSub.SettingsImport	extracted
+ShapesEditionDialog	Vector shape editing		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	A shape named "%1" already exists.		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Edited shape		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Shapes		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	New shape name		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Add shape		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Delete shape		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Editing		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Name:		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Name		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Scaling relative to cursor:		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Changed width and height		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Preserve aspect ratio		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Changed is only width		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Scaling relative to cursor		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Scaling mode:		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Changing only drawing coordinates		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Changing scale		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Scaling mode		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Shape:		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Get shape from active line		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Shape		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Apply		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	OK		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Cancel		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Restore default		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Confirmation		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Replace		no	HikariSub.VisualTools	extracted
+ShapesEditionDialog	Rename		no	HikariSub.VisualTools	extracted
+SimpleColourPicker	Color picker		no	HikariSub.Colours	extracted
+SimpleColourPicker	Colour		no	HikariSub.Colours	extracted
+SimpleColourPicker	Primary color		no	HikariSub.Colours	extracted
+SimpleColourPicker	Secondary color		no	HikariSub.Colours	extracted
+SimpleColourPicker	Border color		no	HikariSub.Colours	extracted
+SimpleColourPicker	Shadow color		no	HikariSub.Colours	extracted
+SimpleColourPicker	ASS colour		no	HikariSub.Colours	extracted
+SimpleColourPicker	Pick a colour from the screen		no	HikariSub.Colours	extracted
+SimpleColourPicker	Move the window\nto the color selection location		no	HikariSub.Colours	extracted
+SimpleColourPicker	OK		no	HikariSub.Colours	extracted
+SimpleColourPicker	Cancel		no	HikariSub.Colours	extracted
+SpellCheckerDialog	Spellchecker		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	No spelling errors were found		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Misspell word:		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Replace to:		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	No suggestions		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Suggestions		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Ignore comments		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Ignore words written entirely\nin uppercase		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Replace		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Replace all		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Ignore		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Ignore All		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Add to dictionary		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Remove from dictionary		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Remove from dictionary words added by user.		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Close		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Warning		no	HikariSub.Spelling	extracted
+SpellCheckerDialog	Words added to dictionary		no	HikariSub.Spelling	extracted
+StatusBar	Status bar		no	HikariSub.StatusBar	extracted
+StyleManager	Style manager		no	HikariSub.Styles	extracted
+StyleManager	Confirmation		no	HikariSub.Styles	extracted
+StyleManager	Style named "%1" already exists. Replace?		no	HikariSub.Styles	extracted
+StyleManager	Yes to all		no	HikariSub.Styles	extracted
+StyleManager	Yes		no	HikariSub.Styles	extracted
+StyleManager	No		no	HikariSub.Styles	extracted
+StyleManager	Cancel		no	HikariSub.Styles	extracted
+StyleManager	Prompt		no	HikariSub.Styles	extracted
+StyleManager	Change all selected styles?		no	HikariSub.Styles	extracted
+StyleManager	Style name modified. Do you want to change all instances to the new name?		no	HikariSub.Styles	extracted
+StyleManager	Styles stored:		no	HikariSub.Styles	extracted
+StyleManager	Styles in ASS file:		no	HikariSub.Styles	extracted
+StyleManager	Catalog:		no	HikariSub.Styles	extracted
+StyleManager	Style catalog		no	HikariSub.Styles	extracted
+StyleManager	New		no	HikariSub.Styles	extracted
+StyleManager	New style catalog		no	HikariSub.Styles	extracted
+StyleManager	Delete		no	HikariSub.Styles	extracted
+StyleManager	Delete selected style catalog		no	HikariSub.Styles	extracted
+StyleManager	Create new style in storage		no	HikariSub.Styles	extracted
+StyleManager	Copy		no	HikariSub.Styles	extracted
+StyleManager	Copy the selected style		no	HikariSub.Styles	extracted
+StyleManager	Edit		no	HikariSub.Styles	extracted
+StyleManager	Edit the selected style		no	HikariSub.Styles	extracted
+StyleManager	Load		no	HikariSub.Styles	extracted
+StyleManager	Load style from external ASS file to storage		no	HikariSub.Styles	extracted
+StyleManager	Delete the selected styles		no	HikariSub.Styles	extracted
+StyleManager	Sort		no	HikariSub.Styles	extracted
+StyleManager	Sort the styles by name		no	HikariSub.Styles	extracted
+StyleManager	Move selected styles to beginning		no	HikariSub.Styles	extracted
+StyleManager	Move selected styles up		no	HikariSub.Styles	extracted
+StyleManager	Move selected styles down		no	HikariSub.Styles	extracted
+StyleManager	Move selected styles to end		no	HikariSub.Styles	extracted
+StyleManager	Add to storage		no	HikariSub.Styles	extracted
+StyleManager	Copy style from ASS to storage		no	HikariSub.Styles	extracted
+StyleManager	Add to ASS		no	HikariSub.Styles	extracted
+StyleManager	Copy style from storage to ASS		no	HikariSub.Styles	extracted
+StyleManager	Add to all open ASS files		no	HikariSub.Styles	extracted
+StyleManager	Copy style from storage to every open ASS file		no	HikariSub.Styles	extracted
+StyleManager	Create new ASS style		no	HikariSub.Styles	extracted
+StyleManager	Load style from external ASS file		no	HikariSub.Styles	extracted
+StyleManager	Clear		no	HikariSub.Styles	extracted
+StyleManager	Delete unused ASS styles		no	HikariSub.Styles	extracted
+StyleManager	Status of deleted styles		no	HikariSub.Styles	extracted
+StyleManager	OK		no	HikariSub.Styles	extracted
+StyleManager	Close		no	HikariSub.Styles	extracted
+StyleManager	Style name:		no	HikariSub.Styles	extracted
+StyleManager	Font and size:		no	HikariSub.Styles	extracted
+StyleManager	Font		no	HikariSub.Styles	extracted
+StyleManager	Size		no	HikariSub.Styles	extracted
+StyleManager	Bold		no	HikariSub.Styles	extracted
+StyleManager	Italic		no	HikariSub.Styles	extracted
+StyleManager	Underline		no	HikariSub.Styles	extracted
+StyleManager	Strikethrough		no	HikariSub.Styles	extracted
+StyleManager	Colors and transparency:		no	HikariSub.Styles	extracted
+StyleManager	First		no	HikariSub.Styles	extracted
+StyleManager	Second		no	HikariSub.Styles	extracted
+StyleManager	Border		no	HikariSub.Styles	extracted
+StyleManager	Shadow		no	HikariSub.Styles	extracted
+StyleManager	transparency		no	HikariSub.Styles	extracted
+StyleManager	Border:		no	HikariSub.Styles	extracted
+StyleManager	Shadow:		no	HikariSub.Styles	extracted
+StyleManager	Scale X:		no	HikariSub.Styles	extracted
+StyleManager	Scale Y:		no	HikariSub.Styles	extracted
+StyleManager	Angle:		no	HikariSub.Styles	extracted
+StyleManager	Spacing:		no	HikariSub.Styles	extracted
+StyleManager	Border type:		no	HikariSub.Styles	extracted
+StyleManager	Opaque box		no	HikariSub.Styles	extracted
+StyleManager	Left margin:		no	HikariSub.Styles	extracted
+StyleManager	Right:		no	HikariSub.Styles	extracted
+StyleManager	Vertical:		no	HikariSub.Styles	extracted
+StyleManager	Alignment:		no	HikariSub.Styles	extracted
+StyleManager	Text encoding:		no	HikariSub.Styles	extracted
+StyleManager	0 - ANSI		no	HikariSub.Styles	extracted
+StyleManager	1 - Default		no	HikariSub.Styles	extracted
+StyleManager	2 - Symbol		no	HikariSub.Styles	extracted
+StyleManager	77 - Mac		no	HikariSub.Styles	extracted
+StyleManager	128 - Japanese		no	HikariSub.Styles	extracted
+StyleManager	129 - Hangul		no	HikariSub.Styles	extracted
+StyleManager	130 - Johab		no	HikariSub.Styles	extracted
+StyleManager	134 - Chinese GB2312		no	HikariSub.Styles	extracted
+StyleManager	135 - Chinese BIG5		no	HikariSub.Styles	extracted
+StyleManager	161 - Greek		no	HikariSub.Styles	extracted
+StyleManager	162 - Turkish		no	HikariSub.Styles	extracted
+StyleManager	163 - Vietnamese		no	HikariSub.Styles	extracted
+StyleManager	177 - Hebrew		no	HikariSub.Styles	extracted
+StyleManager	178 - Arabic		no	HikariSub.Styles	extracted
+StyleManager	186 - Baltic		no	HikariSub.Styles	extracted
+StyleManager	204 - Russian		no	HikariSub.Styles	extracted
+StyleManager	222 - Thai		no	HikariSub.Styles	extracted
+StyleManager	238 - Central European (Polish)		no	HikariSub.Styles	extracted
+StyleManager	255 - OEM		no	HikariSub.Styles	extracted
+StyleManager	Style preview:		no	HikariSub.Styles	extracted
+StyleManager	Preview text		no	HikariSub.Styles	extracted
+StyleManager	Apply		no	HikariSub.Styles	extracted
+StyleManager	Choose color		no	HikariSub.Styles	extracted
+StyleManager	New catalog		no	HikariSub.Styles	extracted
+StyleManager	Catalog name		no	HikariSub.Styles	extracted
+StyleManager	Do you really want to delete the catalog named "%1"?		no	HikariSub.Styles	extracted
+StyleManager	Choose ASS file		no	HikariSub.Styles	extracted
+StyleManager	ASS subtitle files(*.ass)		no	HikariSub.Styles	extracted
+StyleManager	Choose styles		no	HikariSub.Styles	extracted
+SubtitleComparisonMenu	Subtitle comparison		no	HikariSub.Tabs	extracted
+SubtitleComparisonMenu	Compare by times		no	HikariSub.Tabs	extracted
+SubtitleComparisonMenu	Compare by visible lines		no	HikariSub.Tabs	extracted
+SubtitleComparisonMenu	Compare by selections		no	HikariSub.Tabs	extracted
+SubtitleComparisonMenu	Compare by styles		no	HikariSub.Tabs	extracted
+SubtitleComparisonMenu	Compare by selected styles		no	HikariSub.Tabs	extracted
+SubtitleComparisonMenu	Compare		no	HikariSub.Tabs	extracted
+SubtitleComparisonMenu	Turn off comparison		no	HikariSub.Tabs	extracted
+TabCommands	Prompt		no	HikariSub.Tabs	extracted
+TabCommands	All tabs will be closed, continue?		no	HikariSub.Tabs	extracted
+TabCommands	Confirmation		no	HikariSub.Tabs	extracted
+TabCommands	Load subtitles named "%1"?		no	HikariSub.Tabs	extracted
+TagListPopup	Tag list		no	HikariSub.TagList	extracted
+TagListPopup	Show description		no	HikariSub.TagList	extracted
+TagListPopup	Show all tags		no	HikariSub.TagList	extracted
+TagListPopup	Show VSFiltermod tags		no	HikariSub.TagList	extracted
+Theme	Red		no	HikariSub.Options	extracted
+Theme	Orange		no	HikariSub.Options	extracted
+Theme	Gold		no	HikariSub.Options	extracted
+Theme	Green		no	HikariSub.Options	extracted
+Theme	Blue		no	HikariSub.Options	extracted
+Theme	Purple		no	HikariSub.Options	extracted
+Theme	Pink		no	HikariSub.Options	extracted
+TranslationToggles	Not confirmed		no	HikariSub.Translation	extracted
+TranslationToggles	Moving tags		no	HikariSub.Translation	extracted
+TranslatorModeCheck	Translator mode		no	HikariSub.Translation	extracted
+TranslatorModeCheck	Translator mode displays and saves both foreign text and translation text		no	HikariSub.Translation	extracted
+TranslatorModeCheck	Confirmation		no	HikariSub.Translation	extracted
+TranslatorModeCheck	Are you sure you want to turn off translation mode?\nForeign language text will be deleted.		no	HikariSub.Translation	extracted
+VideoChaptersMenu	Chapters		no	HikariSub.Video	extracted
+VideoContextMenu	Copy video position		no	HikariSub.Video	extracted
+VideoContextMenu	Pause		no	HikariSub.Video	extracted
+VideoContextMenu	Play		no	HikariSub.Video	extracted
+VideoContextMenu	Stop		no	HikariSub.Video	extracted
+VideoContextMenu	Exit full screen		no	HikariSub.Video	extracted
+VideoContextMenu	Escape		no	HikariSub.Video	extracted
+VideoContextMenu	Full screen		no	HikariSub.Video	extracted
+VideoContextMenu	Switch full screen to monitor %1		no	HikariSub.Video	extracted
+VideoContextMenu	Open in full screen on monitor %1		no	HikariSub.Video	extracted
+VideoContextMenu	Open editor		no	HikariSub.Video	extracted
+VideoContextMenu	Recently opened subtitles		no	HikariSub.Video	extracted
+VideoContextMenu	Recently opened videos		no	HikariSub.Video	extracted
+VideoContextMenu	Open video		no	HikariSub.Video	extracted
+VideoContextMenu	Open subtitles		no	HikariSub.Video	extracted
+VideoContextMenu	Show / hide progress bar		no	HikariSub.Video	extracted
+VideoContextMenu	Change aspect ratio		no	HikariSub.Video	extracted
+VideoContextMenu	Save frame with subtitles as PNG		no	HikariSub.Video	extracted
+VideoContextMenu	Copy frame with subtitles to clipboard		no	HikariSub.Video	extracted
+VideoContextMenu	Save frame as PNG		no	HikariSub.Video	extracted
+VideoContextMenu	Copy frame to clipboard		no	HikariSub.Video	extracted
+VideoContextMenu	Filters		no	HikariSub.Video	extracted
+VideoFileQuestion	Confirmation		no	HikariSub.Video	extracted
+VideoFileQuestion	Are you sure you want to index the next video?		no	HikariSub.Video	extracted
+VideoFileQuestion	Are you sure you want to index the previous video?		no	HikariSub.Video	extracted
+VideoFollowChoices	Seek on		no	HikariSub.Video	extracted
+VideoFollowChoices	Double-clicking a line (always on)		no	HikariSub.Video	extracted
+VideoFollowChoices	Every line change		no	HikariSub.Video	extracted
+VideoFollowChoices	Clicking a line or editing when paused		no	HikariSub.Video	extracted
+VideoFollowChoices	Clicking a line or editing		no	HikariSub.Video	extracted
+VideoFollowChoices	Editing line when paused		no	HikariSub.Video	extracted
+VideoFollowChoices	Editing		no	HikariSub.Video	extracted
+VideoFollowChoices	Move video to selected line on:		no	HikariSub.Video	extracted
+VideoFollowChoices	Then play		no	HikariSub.Video	extracted
+VideoFollowChoices	Nothing		no	HikariSub.Video	extracted
+VideoFollowChoices	Audio to the line end time		no	HikariSub.Video	extracted
+VideoFollowChoices	Video and audio to the line end time		no	HikariSub.Video	extracted
+VideoFollowChoices	Video and audio to the next line start time		no	HikariSub.Video	extracted
+VideoFollowChoices	On moving to another line play:		no	HikariSub.Video	extracted
+VideoFullscreen	Full screen video		no	HikariSub.Video	extracted
+VideoFullscreen	Video position		no	HikariSub.Video	extracted
+VideoFullscreen	Previous video file		no	HikariSub.Video	extracted
+VideoFullscreen	Pause		no	HikariSub.Video	extracted
+VideoFullscreen	Play		no	HikariSub.Video	extracted
+VideoFullscreen	Play / Pause		no	HikariSub.Video	extracted
+VideoFullscreen	Play the current line		no	HikariSub.Video	extracted
+VideoFullscreen	Stop		no	HikariSub.Video	extracted
+VideoFullscreen	Next file		no	HikariSub.Video	extracted
+VideoFullscreen	Show toolbar		no	HikariSub.Video	extracted
+VideoFullscreen	Video times		no	HikariSub.Video	extracted
+VideoIndexingProgress	Indexing video		no	HikariSub.Video	extracted
+VideoIndexingProgress	Cancel		no	HikariSub.Video	extracted
+VideoStreamsMenu	Streams		no	HikariSub.Video	extracted
+VideoVolumeSlider	Volume		no	HikariSub.Video	extracted
+VisualToolOptions	Shape: %1		no	HikariSub.VisualTools	extracted
+VisualToolOptions	Warning		no	HikariSub.VisualTools	extracted
+VisualToolRail	%1 (not available yet)		no	HikariSub.VisualTools	extracted
+VisualToolValues	Pick selected lines		no	HikariSub.VisualTools	extracted
+VisualToolValues	Pick selected lines (%n line(s) picked: the tools edit them, not the active line)		yes	HikariSub.VisualTools	extracted
+VisualToolValues	Pick selected lines (the tools edit them, not the active line)		no	HikariSub.VisualTools	extracted
+VisualToolValues	%n line(s) picked		yes	HikariSub.VisualTools	extracted
+VisualToolValues	Clear picked lines		no	HikariSub.VisualTools	extracted
+VisualToolValues	Clear		no	HikariSub.VisualTools	context
+hikari::app::Application	In line %1, value '%2' cannot be scaled\nin tag '%3'		no	HikariSub.Conversion	extracted
+hikari::app::Application	This Document can't be converted to that format.		no	HikariSub.Conversion	extracted
+hikari::app::Application	Invalid FPS. Correct it in options and try again.		no	HikariSub.Conversion	extracted
+hikari::app::Application	The script properties and styles are removed.		no	HikariSub.Conversion	extracted
+hikari::app::Application	%n comment line(s) removed.		yes	HikariSub.Conversion	extracted
+hikari::app::Application	%n drawing(s) removed.		yes	HikariSub.Conversion	extracted
+hikari::app::Application	%n line(s) left without text removed.		yes	HikariSub.Conversion	extracted
+hikari::app::Application	%n duplicate line(s) removed.		yes	HikariSub.Conversion	extracted
+hikari::app::Application	Lines are sorted by time.		no	HikariSub.Conversion	extracted
+hikari::app::Application	Formatting tags converted or removed in %n line(s).		yes	HikariSub.Conversion	extracted
+hikari::app::Application	%n line(s) get the conversion style "%1".		yes	HikariSub.Conversion	extracted
+hikari::app::Application	Layer, style, actor, margins or effect removed from %n line(s).		yes	HikariSub.Conversion	extracted
+hikari::app::Application	Bookmarks, hidden lines and groups removed from %n line(s).		yes	HikariSub.Conversion	extracted
+hikari::app::Application	Times changed (rounding, frames or new end times) in %n line(s).		yes	HikariSub.Conversion	extracted
+hikari::app::Application	Untitled		no	HikariSub.Documents	extracted
+hikari::app::Application	Choose where to save the Untitled Document.		no	HikariSub.Documents	extracted
+hikari::app::Application	A Document could not be saved; nothing was closed.		no	HikariSub.Documents	extracted
+hikari::app::Application	Not closed, because saving failed or there is newer work: %1		no	HikariSub.Documents	extracted
+hikari::app::Application	Subtitle file 		no	HikariSub.Documents	extracted
+hikari::app::Application	%1 could not be saved.		no	HikariSub.Documents	extracted
+hikari::app::Application	Could not open %1; nothing was changed.		no	HikariSub.Documents	extracted
+hikari::app::Application	Could not reload the subtitles; nothing was changed.		no	HikariSub.Documents	extracted
+hikari::app::Application	The subtitles changed while reloading; nothing was replaced.		no	HikariSub.Documents	extracted
+hikari::app::Application	Video: 		no	HikariSub.Documents	extracted
+hikari::app::Application	Audio: 		no	HikariSub.Documents	extracted
+hikari::app::Application	Keyframes: 		no	HikariSub.Documents	extracted
+hikari::app::Application	Associated files:\n		no	HikariSub.Documents	extracted
+hikari::app::Application	Video from directory:\n		no	HikariSub.Documents	extracted
+hikari::app::Application	Load associated		no	HikariSub.Documents	extracted
+hikari::app::Application	Yes		no	HikariSub.Documents	extracted
+hikari::app::Application	Load from directory		no	HikariSub.Documents	extracted
+hikari::app::Application	Layer		no	HikariSub.Grid	extracted
+hikari::app::Application	The starting time		no	HikariSub.Grid	extracted
+hikari::app::Application	End time		no	HikariSub.Grid	extracted
+hikari::app::Application	Actor		no	HikariSub.Grid	extracted
+hikari::app::Application	Styles		no	HikariSub.Grid	extracted
+hikari::app::Application	Left margin		no	HikariSub.Grid	extracted
+hikari::app::Application	Right margin		no	HikariSub.Grid	extracted
+hikari::app::Application	Vertical margin		no	HikariSub.Grid	extracted
+hikari::app::Application	Effect		no	HikariSub.Grid	extracted
+hikari::app::Application	Text		no	HikariSub.Grid	extracted
+hikari::app::Application	Text without tags		no	HikariSub.Grid	extracted
+hikari::app::Application	Text into original		no	HikariSub.Grid	extracted
+hikari::app::Application	Text into translation		no	HikariSub.Grid	extracted
+hikari::app::Application	Line %1 cannot be replaced,\ncause it was edited.		no	HikariSub.MisspellReplacer	extracted
+hikari::app::Application	Rule "%1" is invalid.		no	HikariSub.MisspellReplacer	extracted
+hikari::app::Application	Cannot change rules\nwhen find results window is open		no	HikariSub.MisspellReplacer	extracted
+hikari::app::Application	Cannot replace "%1" to "%2", with rule "%3" in line %4.		no	HikariSub.MisspellReplacer	extracted
+hikari::app::Application	Put files .dic and .aff to "Dictionary" folder		no	HikariSub.Options	extracted
+hikari::app::Application	The selected %1 for conversion does not exist\nand will be changed to the default		no	HikariSub.Options	extracted
+hikari::app::Application	catalog for style		no	HikariSub.Options	extracted
+hikari::app::Application	style		no	HikariSub.Options	extracted
+hikari::app::Application	Cannot find translation, language change failed		no	HikariSub.Options	extracted
+hikari::app::Application	The reference is protected (read-only).		no	HikariSub.Reference	extracted
+hikari::app::Application	Reached end. Search from the beginning?		no	HikariSub.Search	extracted
+hikari::app::Application	Styles named "%1" do not exist in the subtitles being searched,\nwhich may significantly reduce the number of search results.\nWhat would you like to do?		no	HikariSub.Search	extracted
+hikari::app::Application	None of the selected styles exist in the subtitles being searched,\nso nothing will be found.\nWhat would you like to do?		no	HikariSub.Search	extracted
+hikari::app::Application	Are you sure you want to make changes in all subtitle files?\nIf you make a mistake, backups are in the 'ReplaceBackup' folder.		no	HikariSub.Search	extracted
+hikari::app::Application	Could not find the specified phrase "%1".		no	HikariSub.Search	extracted
+hikari::app::Application	Replaced %1 times.		no	HikariSub.Search	extracted
+hikari::app::Application	Search path is invalid		no	HikariSub.Search	extracted
+hikari::app::Application	Confirmation		no	HikariSub.Search	extracted
+hikari::app::Application	Info		no	HikariSub.Search	extracted
+hikari::app::Application	Find and Replace		no	HikariSub.Search	extracted
+hikari::app::Application	Invalid regular expression '%1': %2		no	HikariSub.Search	extracted
+hikari::app::Application	Failed to find match for regular expression: %1		no	HikariSub.Search	extracted
+hikari::app::Application	Line %1 cannot be replaced,\ncause it was edited.		no	HikariSub.Search	extracted
+hikari::app::Application	Cannot back up %1.		no	HikariSub.Search	extracted
+hikari::app::Application	Cannot open file %1.		no	HikariSub.Search	extracted
+hikari::app::Application	Cannot write file %1; it was left as it was.		no	HikariSub.Search	extracted
+hikari::app::Application	%1 could not be restored; its backup is in %2.		no	HikariSub.Search	extracted
+hikari::app::Application	Line %1: 		no	HikariSub.Search	extracted
+hikari::app::Application	Invalid regular expression '%1': %2		no	HikariSub.SelectLines	extracted
+hikari::app::Application	Failed to find match for regular expression: %1		no	HikariSub.SelectLines	extracted
+hikari::app::Application	%1 lines selected.		no	HikariSub.SelectLines	extracted
+hikari::app::Application	%1 lines added to selection.		no	HikariSub.SelectLines	extracted
+hikari::app::Application	%1 lines deselected.		no	HikariSub.SelectLines	extracted
+hikari::app::Application	Could not open %1; nothing was changed.		no	HikariSub.Session	extracted
+hikari::app::Application	Autosave		no	HikariSub.Session	extracted
+hikari::app::Application	%1 (recovered)		no	HikariSub.Session	extracted
+hikari::app::Application	Auto save folder is empty		no	HikariSub.Session	extracted
+hikari::app::Application	Cannot open auto save folder		no	HikariSub.Session	extracted
+hikari::app::Application	Failed to load autosave		no	HikariSub.Session	extracted
+hikari::app::Application	Session file is corrupt		no	HikariSub.Session	extracted
+hikari::app::Application	Could not find %1		no	HikariSub.Session	extracted
+hikari::app::Application	The tab of %1 has other work now; open the file in a new tab.		no	HikariSub.Session	extracted
+hikari::app::Application	The edited line cannot be committed.		no	HikariSub.Spelling	extracted
+hikari::app::Application	No dictionary files were found in the "%1" folder.\nSpell checking will be disabled		no	HikariSub.Spelling	extracted
+hikari::app::Application	Failed to initialize spell checker.		no	HikariSub.Spelling	extracted
+hikari::app::Application	No document open		no	HikariSub.TimeShift	extracted
+hikari::app::Application	No styles selected for time shifting		no	HikariSub.TimeShift	extracted
+hikari::app::Application	No lines selected for shifting		no	HikariSub.TimeShift	extracted
+hikari::app::Application	Video was not loaded using FFMS2		no	HikariSub.TimeShift	extracted
+hikari::app::Application	The times could not be shifted.		no	HikariSub.TimeShift	extracted
+hikari::app::Application	Could not open %1; nothing was changed.		no	HikariSub.Translation	extracted
+hikari::app::Application	Cannot change YCbCr matrix		no	HikariSub.Video	extracted
+hikari::app::Application	Invalid keyframes format		no	HikariSub.Video	extracted
+hikari::app::Application	Indexing error occurred: %1		no	HikariSub.Video	extracted
+hikari::app::Application	Cannot create VideoSource.		no	HikariSub.Video	extracted
+hikari::app::Application	Cannot convert video to RGBA		no	HikariSub.Video	extracted
+hikari::app::Application	Invalid FPS value.		no	HikariSub.Video	extracted
+hikari::app::Application	The file is not a valid video file or is corrupted,\nor codecs or a splitter may be missing		no	HikariSub.Video	extracted
+hikari::app::AutomationHotkeysController	Unresolved: the script or its macros changed		no	HikariSub.Automation	extracted
+hikari::app::AutomationHotkeysController	Unresolved: no loaded script has this macro		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	The Document changed while the macro ran; nothing was changed.		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	The protected reference can't be changed.		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	The macro's changes could not be applied; nothing was changed.		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	Info		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	This subtitle file does not have any scripts added		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	Error		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	Error loading Lua script: %1\n%2		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	The script's helper ended; reload the script to use it again.		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	Automation error		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	Cannot start editor.		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	Open a Document to run a macro on.		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	The Line being edited can't be committed, so the macro can't start.		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	The macro was cancelled; nothing was changed.		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	The macro was force stopped; reload the script to use it again.		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	Validation Lua script '%1' failed		no	HikariSub.Automation	extracted
+hikari::app::AutomationShell	The macro changed Styles or Script Info, which can't be applied yet; nothing was changed.		no	HikariSub.Automation	context
+hikari::app::FontCatalogsController	All fonts		no	HikariSub.Fonts	extracted
+hikari::app::FontCatalogsController	Without catalog		no	HikariSub.Fonts	extracted
+hikari::app::FontCatalogsController	For adding fonts to catalog,\nclick "Manage" button first,\nto create new catalog.		no	HikariSub.Fonts	extracted
+hikari::app::FontCatalogsController	Autosave		no	HikariSub.Fonts	extracted
+hikari::app::FontCatalogsController	Cannot load external font folder		no	HikariSub.Fonts	extracted
+hikari::app::FontCatalogsController	Cannot add external font file %1.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	%1 font		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	%1 fonts		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Found "%1" font file.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	The renderer also used "%1" (%2); it is not collected.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Copied font "%1".		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Added font "%1" to the archive.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Font "%1" belongs to a style\nthat is not used.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	\nWill not be copied.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Font "%1" is missing normal style.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Font "%1" is missing bold italics.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Font "%1" is missing bold.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Font "%1" is missing italics.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Cannot check the characters in font "%1".		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Font "%1" does not contain characters: "%2".		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Characters "%1" were drawn by the fallback font "%2".		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Cannot get the contents of font "%1".		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Cannot open file "%1".		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Cannot find "%1" font in Fonts folder.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Cannot copy font "%1".		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Cannot zip font "%1".		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Select the folder where you want to copy fonts		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	No subtitles loaded. Load subtitles or deselect this option.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Choose a name for the archive		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Fonts	the folder the font collector writes beside the subtitles	no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	The save path is not valid.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	The zip file already exists, delete it?		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Confirmation		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Found font "%1"\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Found font "%1".		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Font not found "		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	In styles:\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	 tabs: 		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	In lines: 		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Checked by the subtitle renderer (%1).\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Tab %1: the renderer could not read this Document; it was not checked.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Families the renderer did not find: %1.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Families answered by a font of another name: %1.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Characters no font has: %1.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Characters drawn by a fallback font of this computer: %1.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Tab %1: with the collected fonts alone, %2 of %3 frames differ.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Different fonts with the same file name: %1. Only one of them is kept in a folder.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	The video shows the subtitles through %1, whose output this check does not verify.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	The collected fonts alone reproduce every frame.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	found		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	copied		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Finished, %1 %2.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Not found %1.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Cannot copy %1.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Some fonts do not contain all glyphs used in the text.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	The output does not hold every collected font under its own name: the collection is incomplete.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Writing was cancelled.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	The output is labelled incomplete ("%1").\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Completed Successfully, %1 %2.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Finished in %1ms		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Cancelled; nothing was written.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	The subtitle renderer is not available; the fonts cannot be checked.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Cannot retrieve the font file sizes and names;\ncopying will be canceled.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Retrieved sizes and names of %1 fonts, elapsed time %2ms.\n\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Ready to add %1 to the archive "%2".\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Ready to copy %1 to "%2".\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Cannot create folder.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Path is not available		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Video: %1\n\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	This video is not an MKV file.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Cannot open MKV file		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Loaded MKV file does not have any fonts.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Font named "%1".\n		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	(no folder)		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Saved a font named "		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Cannot save font named "		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Completed, copied %1 fonts.\nFailed to copy %2 fonts.		no	HikariSub.Fonts	extracted
+hikari::app::FontCollectorController	Completed successfully and copied %1 fonts.		no	HikariSub.Fonts	extracted
+hikari::app::HotkeysController	The shortcut %1 of "Open video with FFMS2" was removed: the command is retired and videos are always indexed.		no	HikariSub.Hotkeys	extracted
+hikari::app::HotkeysController	Shortcut "%1" is invalid		no	HikariSub.Hotkeys	extracted
+hikari::app::MatroskaController	Time elapsed: %1		no	HikariSub.Matroska	extracted
+hikari::app::MatroskaController	Indexing error occurred: %1		no	HikariSub.Matroska	extracted
+hikari::app::SettingsImportController	%1 to import of %2 changes, %3 unchanged, %4 unresolved, %5 excluded, %6 retired		no	HikariSub.SettingsImport	extracted
+hikari::app::SettingsImportController	No legacy settings were found beside the program. Choose the folder of a legacy installation.		no	HikariSub.SettingsImport	extracted
+hikari::app::SettingsImportController	%1 holds no legacy settings (Config, Dictionary).		no	HikariSub.SettingsImport	extracted
+hikari::app::SettingsImportController	Imported. The settings take effect when HikariSub starts again; a setting you change before then keeps your change. The legacy files were not changed.		no	HikariSub.SettingsImport	extracted
+hikari::app::SettingsImportController	Nothing to import: the chosen settings are already in effect.		no	HikariSub.SettingsImport	extracted
+hikari::app::SettingsImportController	The legacy files changed since they were read. Read them again to review the changes.		no	HikariSub.SettingsImport	extracted
+hikari::app::SettingsImportController	The current settings changed since this review. Review the import again.		no	HikariSub.SettingsImport	extracted
+hikari::app::SettingsImportController	The import could not be prepared; the current settings stay in effect.		no	HikariSub.SettingsImport	extracted
+hikari::app::SettingsImportController	There is no earlier generation of the settings to go back to.		no	HikariSub.SettingsImport	extracted
+hikari::app::SettingsImportController	The settings before the import take effect when HikariSub starts again.		no	HikariSub.SettingsImport	extracted
+hikari::app::StyleManagerController	Copy of 		no	HikariSub.Styles	extracted
+hikari::app::StyleManagerController	The Document has no styles to edit.		no	HikariSub.Styles	extracted
+hikari::app::StyleManagerController	Style named "%1" already exists.		no	HikariSub.Styles	extracted
+hikari::app::StyleManagerController	None		no	HikariSub.Styles	extracted
+hikari::app::StyleManagerController	Styles used:\n%1\nStyles deleted:\n%2		no	HikariSub.Styles	extracted
+hikari::ui::AudioController	No audio open		no	HikariSub.Audio	extracted
+hikari::ui::AudioController	Indexing video %1%		no	HikariSub.Audio	extracted
+hikari::ui::AutomationDialogController	OK		no	HikariSub.Automation	extracted
+hikari::ui::AutomationDialogController	Cancel		no	HikariSub.Automation	extracted
+hikari::ui::LineEditorController	Unconfirmed applies in translation mode only.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Saving…		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Saved		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Saved; the disk could not confirm it is stored		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Save cancelled; nothing was written		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Save failed; the file on disk is unchanged		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	End is before Start.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Margins must be between 0 and 9999.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Start is not a frame number.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	End is not a frame number.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Start is not a time such as 0:00:01.00.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	End is not a time such as 0:00:01.00.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Start is not a time such as %1.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	End is not a time such as %1.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Margins must be whole numbers.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	This Document can't be saved here.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	The file changed on disk since it was opened. Reload it, or save elsewhere.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Another open Document uses that file.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	The Document can't be saved right now.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	This search applies in translation mode only.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	No unconfirmed lines found		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	No untranslated lines found		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	%1, active line %2		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Wraps: 0/86		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Wraps: 		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Characters per second: %1<=15		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Duration is not a frame number.		no	HikariSub.Editor	extracted
+hikari::ui::LineEditorController	Duration is not a time.		no	HikariSub.Editor	extracted
+hikari::ui::LineGrid	changed		no	HikariSub.Grid	extracted
+hikari::ui::LineGrid	changed, saved		no	HikariSub.Grid	extracted
+hikari::ui::LineGrid	unconfirmed		no	HikariSub.Grid	extracted
+hikari::ui::LineGrid	bookmarked		no	HikariSub.Grid	extracted
+hikari::ui::LineGrid	%n selected, %1 hidden		yes	HikariSub.Grid	extracted
+hikari::ui::LineGrid	%n selected		yes	HikariSub.Grid	extracted
+hikari::ui::LineTableModel	Original text		no	HikariSub.Grid	extracted
+hikari::ui::ScreenSampler	Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).		no	HikariSub.Colours	extracted
+hikari::ui::ScreenSampler	The desktop's screenshot portal is not in use here.		no	HikariSub.Colours	extracted
+hikari::ui::ScreenSampler	The desktop could not pick a colour from the screen.		no	HikariSub.Colours	extracted
+hikari::ui::ShellController	1 Line selected		no	HikariSub.StatusBar	extracted
+hikari::ui::ShellController	%1 Lines selected		no	HikariSub.StatusBar	extracted
+hikari::ui::ShellController	 (%1 hidden)		no	HikariSub.StatusBar	extracted
+hikari::ui::ShellController	Time elapsed: %1		no	HikariSub.StatusBar	extracted
+hikari::ui::StatusBarController	Video scale		no	HikariSub.StatusBar	extracted
+hikari::ui::StatusBarController	Video zoom		no	HikariSub.StatusBar	extracted
+hikari::ui::StatusBarController	Video duration		no	HikariSub.StatusBar	extracted
+hikari::ui::StatusBarController	Frames per second		no	HikariSub.StatusBar	extracted
+hikari::ui::StatusBarController	Video resolution		no	HikariSub.StatusBar	extracted
+hikari::ui::StatusBarController	Video aspect ratio		no	HikariSub.StatusBar	extracted
+hikari::ui::StatusBarController	Subtitles resolution		no	HikariSub.StatusBar	extracted
+hikari::ui::StatusBarController	Video file name		no	HikariSub.StatusBar	extracted
+hikari::ui::TagListController	%1, %2, %3 of %4		no	HikariSub.TagList	extracted
+hikari::ui::Theme	Light		no	HikariSub.Options	extracted
+hikari::ui::Theme	Dark		no	HikariSub.Options	extracted
+hikari::ui::Theme	High contrast white		no	HikariSub.Options	extracted
+hikari::ui::Theme	High contrast black		no	HikariSub.Options	extracted
+hikari::ui::Theme	Accent color		no	HikariSub.Options	extracted
+hikari::ui::Theme	Text and icons		no	HikariSub.Options	extracted
+hikari::ui::Theme	Border color		no	HikariSub.Options	extracted
+hikari::ui::VideoController	No video open		no	HikariSub.Video	extracted
+hikari::ui::VideoController	Opening dummy video…		no	HikariSub.Video	extracted
+hikari::ui::VideoController	Indexing %1…		no	HikariSub.Video	extracted
+hikari::ui::VideoController	Video unavailable: %1		no	HikariSub.Video	extracted
+hikari::ui::VideoController	Frame %1 of %2  %3		no	HikariSub.Video	extracted
+hikari::ui::VideoController	Associated files:\nVideo: %1		no	HikariSub.Video	context
+hikari::ui::VideoViewController	Aspect ratio: %1		no	HikariSub.Video	extracted
+hikari::ui::WorkspaceLayoutController	the file is larger than %1 bytes		no	HikariSub.Workspace	extracted
+hikari::ui::WorkspaceLayoutController	it is not a layout file		no	HikariSub.Workspace	extracted
+hikari::ui::WorkspaceLayoutController	it was written by a newer version		no	HikariSub.Workspace	extracted
+hikari::ui::WorkspaceLayoutController	its format is not known		no	HikariSub.Workspace	extracted
+hikari::ui::WorkspaceLayoutController	it names panels from a newer version		no	HikariSub.Workspace	extracted
+hikari::ui::WorkspaceLayoutController	it was made with %1		no	HikariSub.Workspace	extracted
+hikari::ui::WorkspaceLayoutController	it names an unknown panel (%1)		no	HikariSub.Workspace	extracted
+hikari::ui::WorkspaceLayoutController	it holds no layout		no	HikariSub.Workspace	extracted
+hikari::ui::WorkspaceLayoutController	it holds no Classic arrangement		no	HikariSub.Workspace	extracted
+hikari::ui::WorkspaceLayoutController	the docking engine could not restore it		no	HikariSub.Workspace	extracted
+hikari::ui::WorkspaceLayoutController	The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.		no	HikariSub.Workspace	extracted

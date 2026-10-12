@@ -8,6 +8,7 @@
 
 #include "hikari/application/keyframe_files.h"
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
 #include <QFile>
@@ -85,14 +86,15 @@ void Application::logVideoFailure()
         const QString text = failure ? QString::fromStdString(failure->message) : QString();
         using application::OpenStage;
         if (failure && failure->stage == OpenStage::Indexing)
-            m_log->log(tr("Indexing error occurred: %1").arg(text));
+            m_log->log(QCoreApplication::translate("HikariSub.Video", "Indexing error occurred: %1").arg(text));
         else if (failure && failure->stage == OpenStage::Source)
-            m_log->log(tr("Cannot create VideoSource."));
+            m_log->log(QCoreApplication::translate("HikariSub.Video", "Cannot create VideoSource."));
         else if (failure && failure->stage == OpenStage::Convert)
-            m_log->log(tr("Cannot convert video to RGBA"));
+            m_log->log(QCoreApplication::translate("HikariSub.Video", "Cannot convert video to RGBA"));
         else {
             if (failure && failure->stage == OpenStage::Indexer)
-                qDebug().noquote() << tr("Indexing error occurred: %1").arg(text); // HikariLogDebug
+                qDebug().noquote() << QCoreApplication::translate("HikariSub.Video", "Indexing error occurred: %1")
+                                          .arg(text); // HikariLogDebug
             m_log->log(m_video->status());
         }
     }
@@ -193,7 +195,7 @@ bool Application::keyframesWithoutVideo(const QString &path, QString &problem)
     const auto frames =
         application::parseKeyframes(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())));
     if (frames.empty()) {
-        problem = tr("Invalid keyframes format");
+        problem = QCoreApplication::translate("HikariSub.Video", "Invalid keyframes format");
         return true;
     }
     auto ms = application::keyframesWithoutVideo(frames);
@@ -239,7 +241,7 @@ QString Application::openDummyVideo(const QVariantMap &values)
         static_cast<std::uint8_t>(values.value(QStringLiteral("blue")).toInt()),
         values.value(QStringLiteral("pattern")).toBool());
     if (!text)
-        return tr("Invalid FPS value.");
+        return QCoreApplication::translate("HikariSub.Video", "Invalid FPS value.");
     m_video->openVideo(QString::fromStdString(*text));
     return {};
 }

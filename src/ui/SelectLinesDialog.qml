@@ -2,6 +2,7 @@
 // dialog: what to find and where, Dialogue/Comments, the selection operation
 // and the action on the selected Lines. Each run reports its count in a
 // message whose Close also closes the dialog.
+pragma Translator: "HikariSub.SelectLines"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

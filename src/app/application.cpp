@@ -203,23 +203,28 @@ public:
         using I = application::FindQuestion::Info;
         const QString argument = qs(q.argument);
         switch (q.kind) {
-        case K::Wrap: return tr("Reached end. Search from the beginning?");
+        case K::Wrap: return QCoreApplication::translate("HikariSub.Search", "Reached end. Search from the beginning?");
         case K::Styles:
-            return tr("Styles named \"%1\" do not exist in the subtitles being searched,\nwhich may significantly reduce "
-                      "the number of search results.\nWhat would you like to do?")
+            return QCoreApplication::translate("HikariSub.Search",
+                                               "Styles named \"%1\" do not exist in the subtitles being searched,\n"
+                                               "which may significantly reduce the number of search results.\n"
+                                               "What would you like to do?")
                 .arg(argument);
         case K::NoStyles:
-            return tr("None of the selected styles exist in the subtitles being searched,\nso nothing will be found.\n"
-                      "What would you like to do?");
+            return QCoreApplication::translate("HikariSub.Search",
+                                               "None of the selected styles exist in the subtitles being searched,\n"
+                                               "so nothing will be found.\nWhat would you like to do?");
         case K::ConfirmFiles:
-            return tr("Are you sure you want to make changes in all subtitle files?\nIf you make a mistake, backups are "
-                      "in the 'ReplaceBackup' folder.");
+            return QCoreApplication::translate("HikariSub.Search",
+                                               "Are you sure you want to make changes in all subtitle files?\n"
+                                               "If you make a mistake, backups are in the 'ReplaceBackup' folder.");
         case K::Message: break;
         }
         switch (q.info) {
-        case I::NotFound: return tr("Could not find the specified phrase \"%1\".").arg(argument);
-        case I::Replaced: return tr("Replaced %1 times.").arg(argument);
-        case I::InvalidPath: return tr("Search path is invalid");
+        case I::NotFound: return QCoreApplication::translate("HikariSub.Search", "Could not find the specified phrase \"%1\".")
+                                     .arg(argument);
+        case I::Replaced: return QCoreApplication::translate("HikariSub.Search", "Replaced %1 times.").arg(argument);
+        case I::InvalidPath: return QCoreApplication::translate("HikariSub.Search", "Search path is invalid");
         case I::None: break;
         }
         return qs(q.text);
@@ -228,11 +233,11 @@ public:
     {
         const QString title = qs(q.title);
         if (title == QLatin1String("Confirmation"))
-            return tr("Confirmation");
+            return QCoreApplication::translate("HikariSub.Search", "Confirmation");
         if (title == QLatin1String("Info"))
-            return tr("Info");
+            return QCoreApplication::translate("HikariSub.Search", "Info");
         if (title == QLatin1String("Find and Replace") || title.isEmpty())
-            return tr("Find and Replace");
+            return QCoreApplication::translate("HikariSub.Search", "Find and Replace");
         return title;
     }
     void finished() override { m_app.findFinished(); }
@@ -242,10 +247,14 @@ public:
     {
         using K = application::FindLog::Kind;
         switch (line.kind) {
-        case K::InvalidRegex: return tr("Invalid regular expression '%1': %2").arg(qs(line.first), qs(line.second));
-        case K::MatchError: return tr("Failed to find match for regular expression: %1").arg(qs(line.first));
-        case K::LineEdited: return tr("Line %1 cannot be replaced,\ncause it was edited.").arg(qs(line.first));
-        case K::CannotBackUp: return tr("Cannot back up %1.").arg(qs(line.first));
+        case K::InvalidRegex: return QCoreApplication::translate("HikariSub.Search", "Invalid regular expression '%1': %2")
+                                         .arg(qs(line.first), qs(line.second));
+        case K::MatchError: return QCoreApplication::translate("HikariSub.Search", "Failed to find match for regular expression: %1")
+                                       .arg(qs(line.first));
+        case K::LineEdited:
+            return QCoreApplication::translate("HikariSub.Search", "Line %1 cannot be replaced,\n"
+                                                               "cause it was edited.").arg(qs(line.first));
+        case K::CannotBackUp: return QCoreApplication::translate("HikariSub.Search", "Cannot back up %1.").arg(qs(line.first));
         case K::OutsideReplaceTab: break; // legacy's untranslated debug text
         }
         return qs(line.text);
@@ -328,7 +337,7 @@ public:
         {
             QFile in(name);
             if (!in.open(QIODevice::ReadOnly)) {
-                m_app.m_log->log(tr("Cannot open file %1.").arg(name));
+                m_app.m_log->log(QCoreApplication::translate("HikariSub.Search", "Cannot open file %1.").arg(name));
                 return false;
             }
             original = in.readAll();
@@ -345,9 +354,10 @@ public:
         };
         if (write(bytes))
             return true;
-        m_app.m_log->log(tr("Cannot write file %1; it was left as it was.").arg(name));
+        m_app.m_log->log(QCoreApplication::translate("HikariSub.Search", "Cannot write file %1; it was left as it was.").arg(name));
         if (!write(original))
-            m_app.m_log->log(tr("%1 could not be restored; its backup is in %2.").arg(name, m_app.m_replaceBackup));
+            m_app.m_log->log(QCoreApplication::translate("HikariSub.Search", "%1 could not be restored; its backup is in %2.")
+                                 .arg(name, m_app.m_replaceBackup));
         return false;
     }
     // FindReplace::ShowResult for a file: the tab that has it, else legacy
@@ -409,7 +419,6 @@ public:
     }
 
 private:
-    static QString tr(const char *text) { return Application::tr(text); }
     // wxDir::Traverse through application::legacy_dir (R5-per-platform):
     // the subfolders (listed with no pattern) walked first, then this
     // folder's own files matching `filter`; on Windows FindFirstFileW with
@@ -630,7 +639,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_video->session().preparePlayer();
     });
     // HikariLog(_("Cannot change YCbCr matrix")) (ProviderFFMS2.cpp:402, 408, 979).
-    m_video->session().setLog([this](const std::string &) { m_log->log(tr("Cannot change YCbCr matrix")); });
+    m_video->session().setLog([this](const std::string &) {
+        m_log->log(QCoreApplication::translate("HikariSub.Video", "Cannot change YCbCr matrix"));
+    });
     setUpTranslationControls(); // E5
     // P10: the status bar's fields from the video, its view and the editing target.
     m_statusBar = std::make_unique<ui::StatusBarController>(*m_video, *m_visualTools, [this]() -> const core::Document * {
@@ -1572,7 +1583,7 @@ QString fileTitle(const std::string &path)
 void Application::newDocument()
 {
     const auto id = m_files->createNew();
-    m_workspace.add(id, tr("Untitled").toStdString());
+    m_workspace.add(id, QCoreApplication::translate("HikariSub.Documents", "Untitled").toStdString());
     m_workspace.setEditingTarget(id);
     refreshViews();
 }
@@ -1646,15 +1657,18 @@ void Application::resolveClose(const QVariantList &choices)
             if (!plan) {
                 m_closing.clear();
                 emit closeFinished(false, plan.error() == application::SaveRefusal::NoDestination
-                                              ? tr("Choose where to save the Untitled Document.")
-                                              : tr("A Document could not be saved; nothing was closed."));
+                                              ? QCoreApplication::translate("HikariSub.Documents",
+                                                                            "Choose where to save the Untitled Document.")
+                                              : QCoreApplication::translate("HikariSub.Documents",
+                                                                            "A Document could not be saved; nothing was closed."));
                 return;
             }
             c.revision = plan->revision;
             auto permit = m_files->startSave(std::move(*plan));
             if (!permit) {
                 m_closing.clear();
-                emit closeFinished(false, tr("A Document could not be saved; nothing was closed."));
+                emit closeFinished(false, QCoreApplication::translate("HikariSub.Documents",
+                                                                      "A Document could not be saved; nothing was closed."));
                 return;
             }
             c.permit = *permit;
@@ -1734,7 +1748,9 @@ void Application::finishClose()
     m_closeThen.clear();
     if (!kept.isEmpty()) {
         refreshViews();
-        emit closeFinished(false, tr("Not closed, because saving failed or there is newer work: %1").arg(kept.join(QStringLiteral(", "))));
+        emit closeFinished(false, QCoreApplication::translate("HikariSub.Documents",
+                                                              "Not closed, because saving failed or there is newer work: %1")
+                                      .arg(kept.join(QStringLiteral(", "))));
         return;
     }
     if (then == QLatin1String("quit")) {
@@ -1745,7 +1761,7 @@ void Application::finishClose()
     } else if (then == QLatin1String("new")) {
         // P6: the Untitled Document takes the tab's place (legacy same tab).
         const auto id = m_files->createNew();
-        m_workspace.add(id, tr("Untitled").toStdString());
+        m_workspace.add(id, QCoreApplication::translate("HikariSub.Documents", "Untitled").toStdString());
         replaceTarget(id);
     } else if (then == QLatin1String("open")) {
         std::optional<application::DocumentId> id;
@@ -1894,8 +1910,8 @@ QVariantMap Application::saveDialogValuesFor(qulonglong id) const
                          : matroskaPath != m_matroskaPaths.end()      ? matroskaPath->second
                                                                  : QString();
     const QString ext = extensionFor(session->document().format());
-    const QString filter = ext == QStringLiteral("txt") ? tr("Subtitle file ") + QStringLiteral("(*.txt *.sub)")
-                                                        : tr("Subtitle file ") + QStringLiteral("(*.%1)").arg(ext);
+    const QString filter = QCoreApplication::translate("HikariSub.Documents", "Subtitle file ") +
+                           (ext == QStringLiteral("txt") ? QStringLiteral("(*.txt *.sub)") : QStringLiteral("(*.%1)").arg(ext));
     const QFileInfo info(path);
     return {{QStringLiteral("folder"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath())},
             {QStringLiteral("file"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath() + u'/' + info.completeBaseName())},
@@ -1944,7 +1960,7 @@ bool Application::saveDocument(qulonglong id)
     const std::string *title = m_workspace.title(*document);
     const QString name = title ? QString::fromStdString(*title) : QString();
     if (!plan || !m_files->startSave(std::move(*plan))) {
-        m_log->log(tr("%1 could not be saved.").arg(name));
+        m_log->log(QCoreApplication::translate("HikariSub.Documents", "%1 could not be saved.").arg(name));
         return false;
     }
     refreshViews();
@@ -2003,7 +2019,8 @@ QVariantMap Application::reviewOpen(const QString &path)
 {
     auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
     if (!staged) {
-        const QString problem = tr("Could not open %1; nothing was changed.").arg(QFileInfo(path).fileName());
+        const QString problem = QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.")
+                                    .arg(QFileInfo(path).fileName());
         m_log->log(problem);
         return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), problem}, {QStringLiteral("rows"), QVariantList()}};
     }
@@ -2097,11 +2114,11 @@ bool Application::reloadTarget()
         return false;
     auto staged = m_files->stageReload(*target);
     if (!staged) {
-        m_log->log(tr("Could not reload the subtitles; nothing was changed."));
+        m_log->log(QCoreApplication::translate("HikariSub.Documents", "Could not reload the subtitles; nothing was changed."));
         return false;
     }
     if (!m_files->activate(std::move(*staged))) {
-        m_log->log(tr("The subtitles changed while reloading; nothing was replaced."));
+        m_log->log(QCoreApplication::translate("HikariSub.Documents", "The subtitles changed while reloading; nothing was replaced."));
         return false;
     }
     if (auto *session = m_files->session(*target))
@@ -2317,30 +2334,40 @@ QVariantList Application::columnChoices(bool paste)
     if (!session)
         return {};
     const auto format = session->document().format();
-    std::vector<std::pair<QString, int>> rows;
+    // The labels' source texts, translated below.
+    std::vector<std::pair<const char *, int>> rows;
     if (format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText) {
-        rows = {{tr("Layer"), Layer},        {tr("The starting time"), Start}, {tr("End time"), End},
-                {tr("Actor"), Actor},        {tr("Styles"), Style},           {tr("Left margin"), MarginLeft},
-                {tr("Right margin"), MarginRight}, {tr("Vertical margin"), MarginVertical}, {tr("Effect"), Effect}};
+        rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "Layer"), Layer},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "The starting time"), Start},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "End time"), End},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Actor"), Actor},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Styles"), Style},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Left margin"), MarginLeft},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Right margin"), MarginRight},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Vertical margin"), MarginVertical},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Effect"), Effect}};
         if (!paste) {
-            rows.push_back({tr("Text"), Text});
-            rows.push_back({tr("Text without tags"), TextWithoutTags});
+            rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"), Text});
+            rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Text without tags"), TextWithoutTags});
         } else if (application::translationMode(*session)) {
-            rows.push_back({tr("Text into original"), Text});
-            rows.push_back({tr("Text into translation"), Translation});
+            rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Text into original"), Text});
+            rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Text into translation"), Translation});
         } else {
-            rows.push_back({tr("Text"), Text});
+            rows.push_back({QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"), Text});
         }
     } else if (format == core::SubtitleFormat::TMPlayer) {
-        rows = {{tr("The starting time"), Start}, {tr("Text"), Text}};
+        rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "The starting time"), Start},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"), Text}};
     } else {
         // Legacy labels the end time "The starting time" too.
-        rows = {{tr("The starting time"), Start}, {tr("The starting time"), End}, {tr("Text"), Text}};
+        rows = {{QT_TRANSLATE_NOOP("HikariSub.Grid", "The starting time"), Start},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "The starting time"), End},
+                {QT_TRANSLATE_NOOP("HikariSub.Grid", "Text"), Text}};
     }
     const int chosen = paste ? m_pasteColumns : m_copyColumns;
     QVariantList out;
     for (const auto &[label, bit] : rows)
-        out << QVariantMap{{QStringLiteral("label"), label},
+        out << QVariantMap{{QStringLiteral("label"), QCoreApplication::translate("HikariSub.Grid", label)},
                            {QStringLiteral("bit"), bit},
                            {QStringLiteral("checked"), (chosen & bit) != 0}};
     return out;
@@ -2503,7 +2530,7 @@ bool Application::autosave(application::DocumentId document)
     // after, whatever it shows then (SubsGridBase.cpp:1636-1651,
     // SubsGrid.cpp:54-57); each grid had its own timer. (A precise timer: a
     // coarse one may fire 5 % early.)
-    m_shell->setStatusText(tr("Autosave"));
+    m_shell->setStatusText(QCoreApplication::translate("HikariSub.Session", "Autosave"));
     QTimer::singleShot(5000, Qt::PreciseTimer, this, [this] { m_shell->setStatusText(QString()); });
     application::RecoveryContent content;
     content.bytes = core::encodeSubtitle(session->document(), m_files->saveOptions()); // E5: as SaveFile
@@ -2628,7 +2655,8 @@ bool Application::recoverBundle(const QString &key, qulonglong generation)
             session->editDraft(line, content->draft); // pending, not committed
         }
     }
-    m_workspace.add(id, tr("%1 (recovered)").arg(QString::fromStdString(content->title)).toStdString());
+    m_workspace.add(id, QCoreApplication::translate("HikariSub.Session", "%1 (recovered)")
+                            .arg(QString::fromStdString(content->title)).toStdString());
     m_workspace.setEditingTarget(id);
     refreshViews();
     return true;
@@ -2641,17 +2669,17 @@ QVariantList Application::legacyAutosaves()
     if (m_legacyAutosaveDir.isEmpty() || !QFileInfo(m_legacyAutosaveDir).isDir())
         return rows; // no legacy folder: nothing to list (and nothing logged)
     const auto files = application::listLegacyAutosaves(std::filesystem::path(m_legacyAutosaveDir.toStdU16String()),
-                                                        tr("Untitled").toStdU16String());
+                                                        QCoreApplication::translate("HikariSub.Documents", "Untitled").toStdU16String());
     if (files.empty()) {
         // GenerateList: "Cannot open auto save folder" when FindFirstFileW
         // finds nothing (the Linux build's, for an empty folder too; on
         // Windows "." and ".." are found), else "Auto save folder is empty".
 #ifdef _WIN32
-        m_log->log(tr("Auto save folder is empty"));
+        m_log->log(QCoreApplication::translate("HikariSub.Session", "Auto save folder is empty"));
 #else
         m_log->log(QDir(m_legacyAutosaveDir).isEmpty(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System)
-                       ? tr("Cannot open auto save folder")
-                       : tr("Auto save folder is empty"));
+                       ? QCoreApplication::translate("HikariSub.Session", "Cannot open auto save folder")
+                       : QCoreApplication::translate("HikariSub.Session", "Auto save folder is empty"));
 #endif
         return rows;
     }
@@ -2701,13 +2729,13 @@ bool Application::openLegacyAutosave(const QString &file)
     // new unsaved Untitled copy and the file is only read.
     auto staged = m_files->stageOpen({QFileInfo(file).absoluteFilePath().toStdString()});
     if (!staged) {
-        m_log->log(tr("Failed to load autosave"));
+        m_log->log(QCoreApplication::translate("HikariSub.Session", "Failed to load autosave"));
         return false;
     }
     const auto id = m_files->createUnsaved(std::move(staged->load.document));
     if (auto *session = m_files->session(id))
         selectLegacyActiveLine(*session);
-    m_workspace.add(id, tr("%1 (recovered)").arg(QFileInfo(file).fileName()).toStdString());
+    m_workspace.add(id, QCoreApplication::translate("HikariSub.Session", "%1 (recovered)").arg(QFileInfo(file).fileName()).toStdString());
     m_tabMedia[id.value]; // a new tab
     m_workspace.setEditingTarget(id);
     refreshViews();
@@ -2808,7 +2836,8 @@ bool Application::pasteTranslationFile(const QUrl &file)
     // that is empty changes nothing.
     const auto read = backends::readLegacyTextFile(path);
     if (!read) {
-        m_log->log(tr("Could not open %1; nothing was changed.").arg(QFileInfo(path).fileName()));
+        m_log->log(QCoreApplication::translate("HikariSub.Translation", "Could not open %1; nothing was changed.")
+                       .arg(QFileInfo(path).fileName()));
         return false;
     }
     const QString text = QString::fromStdU16String(*read);
@@ -2863,11 +2892,11 @@ QString Application::openKeyframes(const QUrl &file)
     }
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly))
-        return tr("Invalid keyframes format");
+        return QCoreApplication::translate("HikariSub.Video", "Invalid keyframes format");
     const QByteArray bytes = f.readAll();
     auto frames = application::parseKeyframes(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())));
     if (frames.empty())
-        return tr("Invalid keyframes format");
+        return QCoreApplication::translate("HikariSub.Video", "Invalid keyframes format");
     video.setKeyframes(std::move(frames));
     refreshViews();
     return {};
@@ -2883,7 +2912,7 @@ QString Application::shiftTimes()
 {
     auto *session = targetSession();
     if (!session)
-        return tr("No document open");
+        return QCoreApplication::translate("HikariSub.TimeShift", "No document open");
     const auto &video = m_video->session();
     const bool hasVideo = video.state() == application::VideoSession::State::Ready;
     const auto timebase = video.legacyTimebase();
@@ -2908,17 +2937,17 @@ QString Application::shiftTimes()
         if (const auto *problem = std::get_if<application::ShiftProblem>(&result.error())) {
             switch (*problem) {
             case application::ShiftProblem::NoStylesChosen:
-                return tr("No styles selected for time shifting");
+                return QCoreApplication::translate("HikariSub.TimeShift", "No styles selected for time shifting");
             case application::ShiftProblem::NoLinesSelected:
-                return tr("No lines selected for shifting");
+                return QCoreApplication::translate("HikariSub.TimeShift", "No lines selected for shifting");
             case application::ShiftProblem::NoExactTimebase:
-                return tr("Video was not loaded using FFMS2");
+                return QCoreApplication::translate("HikariSub.TimeShift", "Video was not loaded using FFMS2");
             }
         }
-        return tr("The times could not be shifted.");
+        return QCoreApplication::translate("HikariSub.TimeShift", "The times could not be shifted.");
     }
     if (result->endCorrectionSkipped)
-        m_log->log(tr("Video was not loaded using FFMS2"));
+        m_log->log(QCoreApplication::translate("HikariSub.TimeShift", "Video was not loaded using FFMS2"));
     return {};
 }
 
@@ -3021,7 +3050,7 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
             continue;
         // wxRegEx's wxLogError calls, per tab as legacy compiled per tab.
         if (result->invalidExpression)
-            m_log->log(tr("Invalid regular expression '%1': %2")
+            m_log->log(QCoreApplication::translate("HikariSub.SelectLines", "Invalid regular expression '%1': %2")
                            .arg(fromUtf16(result->invalidExpression->first), fromUtf16(result->invalidExpression->second)));
         for (const auto &error : result->matchErrors)
             m_log->log(regexMatchError(error));
@@ -3042,9 +3071,10 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
     m_settings->set("selectLines.recentSelections", m_selectRecent); // AddRecent's SetTable
     saveSelectLinesSettings(map);
     using M = application::SelectLinesSettings::Mode;
-    return settings.mode == M::Select           ? tr("%1 lines selected.").arg(count)
-           : settings.mode == M::AddToSelection ? tr("%1 lines added to selection.").arg(count)
-                                                : tr("%1 lines deselected.").arg(count);
+    return settings.mode == M::Select           ? QCoreApplication::translate("HikariSub.SelectLines", "%1 lines selected.").arg(count)
+           : settings.mode == M::AddToSelection ? QCoreApplication::translate("HikariSub.SelectLines",
+                                                                              "%1 lines added to selection.").arg(count)
+                                                : QCoreApplication::translate("HikariSub.SelectLines", "%1 lines deselected.").arg(count);
 }
 
 QString Application::selectStylesPattern(const QStringList &styles) const
@@ -3082,7 +3112,7 @@ application::ReplacerRule replacerRule(const QVariantMap &m)
 void logRegexErrors(ui::LogController &log, const std::vector<application::ReplacerRule> &rules, bool checkedOnly)
 {
     for (const auto &error : application::replacerRegexErrors(rules, checkedOnly))
-        log.log(QCoreApplication::translate("hikari::app::Application", "Invalid regular expression '%1': %2")
+        log.log(QCoreApplication::translate("HikariSub.SelectLines", "Invalid regular expression '%1': %2")
                     .arg(fromUtf16(error.expression), fromUtf16(error.message)));
 }
 
@@ -3090,7 +3120,7 @@ void logRegexErrors(ui::LogController &log, const std::vector<application::Repla
 // PCRE2 error (the match or heap limit), counted as no match.
 QString regexMatchError(const std::u16string &error)
 {
-    return QCoreApplication::translate("hikari::app::Application", "Failed to find match for regular expression: %1")
+    return QCoreApplication::translate("HikariSub.SelectLines", "Failed to find match for regular expression: %1")
         .arg(fromUtf16(error));
 }
 
@@ -3236,7 +3266,7 @@ std::vector<application::ReplacerRule> &Application::misspellRuleList()
         auto read = application::readReplacerRules(
             std::u8string_view(reinterpret_cast<const char8_t *>(text.constData()), static_cast<std::size_t>(text.size())));
         for (const auto &line : read.invalid)
-            m_log->log(tr("Rule \"%1\" is invalid.").arg(fromUtf8(line)));
+            m_log->log(QCoreApplication::translate("HikariSub.MisspellReplacer", "Rule \"%1\" is invalid.").arg(fromUtf8(line)));
         m_misspellRules = std::move(read.rules);
     }
     return *m_misspellRules;
@@ -3257,7 +3287,7 @@ QVariantList Application::misspellRules()
 bool Application::addMisspellRule(const QVariantMap &rule)
 {
     if (m_misspellResultsShown) {
-        m_log->log(tr("Cannot change rules\nwhen find results window is open"));
+        m_log->log(QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen find results window is open"));
         return false;
     }
     misspellRuleList().push_back(replacerRule(rule)); // added unchecked
@@ -3267,7 +3297,7 @@ bool Application::addMisspellRule(const QVariantMap &rule)
 bool Application::editMisspellRule(int index, const QVariantMap &rule)
 {
     if (m_misspellResultsShown) {
-        m_log->log(tr("Cannot change rules\nwhen find results window is open"));
+        m_log->log(QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen find results window is open"));
         return false;
     }
     auto &rules = misspellRuleList();
@@ -3285,7 +3315,7 @@ bool Application::editMisspellRule(int index, const QVariantMap &rule)
 bool Application::removeMisspellRule(int index)
 {
     if (m_misspellResultsShown) {
-        m_log->log(tr("Cannot change rules\nwhen find results window is open"));
+        m_log->log(QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen find results window is open"));
         return false;
     }
     auto &rules = misspellRuleList();
@@ -3386,11 +3416,13 @@ void Application::replaceMisspellFinds(const QVariantList &chosen)
         for (const auto &problem : result->problems) {
             using K = application::ReplacerProblem::Kind;
             if (problem.kind == K::Edited)
-                m_log->log(tr("Line %1 cannot be replaced,\ncause it was edited.").arg(problem.lineNumber));
+                m_log->log(QCoreApplication::translate("HikariSub.MisspellReplacer", "Line %1 cannot be replaced,\ncause it was edited.")
+                               .arg(problem.lineNumber));
             else if (problem.kind == K::MatchError)
                 m_log->log(regexMatchError(problem.found));
             else
-                m_log->log(tr("Cannot replace \"%1\" to \"%2\", with rule \"%3\" in line %4.")
+                m_log->log(QCoreApplication::translate("HikariSub.MisspellReplacer",
+                                                       "Cannot replace \"%1\" to \"%2\", with rule \"%3\" in line %4.")
                                .arg(fromUtf16(problem.found), fromUtf8(problem.replace), fromUtf8(problem.find))
                                .arg(problem.lineNumber));
         }
@@ -3438,9 +3470,11 @@ application::SpellChecker *Application::spellChecker()
                     status == application::SpellChecker::Status::NoDictionary
                         // Legacy names "<settings folder>\Dictionary"; the path
                         // takes the platform's separators.
-                        ? tr("No dictionary files were found in the \"%1\" folder.\nSpell checking will be disabled")
+                        ? QCoreApplication::translate("HikariSub.Spelling",
+                                                      "No dictionary files were found in the \"%1\" folder.\n"
+                                                      "Spell checking will be disabled")
                               .arg(QDir::toNativeSeparators(QFileInfo(m_dictionaryDir).absoluteFilePath()))
-                        : tr("Failed to initialize spell checker.");
+                        : QCoreApplication::translate("HikariSub.Spelling", "Failed to initialize spell checker.");
                 QMetaObject::invokeMethod(this, [this, message] {
                     emit spellingNotice(message);
                     emit spellingChanged();
@@ -3633,7 +3667,7 @@ bool Application::addEditorWord(const QString &word)
 QVariantMap Application::spellCheckState(bool changed, const QString &problem)
 {
     if (problem.isEmpty() && m_spellWalk && m_spellWalk->refused())
-        return spellCheckState(changed, tr("The edited line cannot be committed."));
+        return spellCheckState(changed, QCoreApplication::translate("HikariSub.Spelling", "The edited line cannot be committed."));
     const auto *current = m_spellWalk && m_spellWalk->current() ? &*m_spellWalk->current() : nullptr;
     QStringList suggestions;
     if (current)
@@ -3726,10 +3760,13 @@ namespace {
 QString refusalText(application::CommandRefusal refusal)
 {
     switch (refusal) {
-    case application::CommandRefusal::Protected: return QObject::tr("The reference is protected (read-only).");
-    case application::CommandRefusal::ReadOnly: return QObject::tr("A macro is running on this document.");
-    case application::CommandRefusal::InvalidDraft: return QObject::tr("The edited line cannot be committed.");
-    default: return QObject::tr("The change was refused.");
+    case application::CommandRefusal::Protected:
+        return QCoreApplication::translate("HikariSub.Documents", "The reference is protected (read-only).");
+    case application::CommandRefusal::ReadOnly:
+        return QCoreApplication::translate("HikariSub.Documents", "A macro is running on this document.");
+    case application::CommandRefusal::InvalidDraft:
+        return QCoreApplication::translate("HikariSub.Documents", "The edited line cannot be committed.");
+    default: return QCoreApplication::translate("HikariSub.Documents", "The change was refused.");
     }
 }
 
@@ -4009,7 +4046,7 @@ QVariantList Application::findResults() const
                         {QStringLiteral("visible"), r.visible}};
         if (!r.header) {
             // "Line %i: " and the text with the match marked (SeekResults::OnPaint).
-            row.insert(QStringLiteral("line"), tr("Line %1: ").arg(r.idLine));
+            row.insert(QStringLiteral("line"), QCoreApplication::translate("HikariSub.Search", "Line %1: ").arg(r.idLine));
             row.insert(QStringLiteral("before"), text.left(r.start));
             row.insert(QStringLiteral("match"), text.mid(r.start, r.length));
             row.insert(QStringLiteral("after"), text.mid(r.start + r.length));
@@ -4098,8 +4135,7 @@ bool Application::resample(int subsWidth, int subsHeight, int width, int height,
     if (!session || (subsWidth == width && subsHeight == height) || subsWidth < 1 || subsHeight < 1)
         return false;
     const auto warn = [this](int row, const std::u16string &value, const std::u16string &tag) {
-        m_log->log(tr("In line %1, value '%2' cannot be scaled\nin tag '%3'")
-                       .arg(row)
+        m_log->log(QCoreApplication::translate("HikariSub.Conversion", "In line %1, value '%2' cannot be scaled\nin tag '%3'").arg(row)
                        .arg(QString::fromStdU16String(value), QString::fromStdU16String(tag)));
     };
     const bool done = application::changeResolution(*session, {subsWidth, subsHeight}, {width, height}, true, stretch, warn)
@@ -4118,8 +4154,7 @@ bool Application::matchVideoResolution(int option)
     const application::Resolution subs{values.value(QStringLiteral("subsWidth")).toInt(), values.value(QStringLiteral("subsHeight")).toInt()};
     const application::Resolution video{values.value(QStringLiteral("videoWidth")).toInt(), values.value(QStringLiteral("videoHeight")).toInt()};
     const auto warn = [this](int row, const std::u16string &value, const std::u16string &tag) {
-        m_log->log(tr("In line %1, value '%2' cannot be scaled\nin tag '%3'")
-                       .arg(row)
+        m_log->log(QCoreApplication::translate("HikariSub.Conversion", "In line %1, value '%2' cannot be scaled\nin tag '%3'").arg(row)
                        .arg(QString::fromStdU16String(value), QString::fromStdU16String(tag)));
     };
     const bool done = application::changeResolution(*session, subs, video, option != 0, option == 2, warn).has_value();
@@ -4222,7 +4257,9 @@ QVariantMap Application::previewConversion(const QString &targetName)
     auto *session = targetSession();
     const auto target = formatNamed(targetName);
     if (!session || !target || !conversionTargets().contains(targetName))
-        return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), tr("This Document can't be converted to that format.")}};
+        return {{QStringLiteral("ok"), false},
+                {QStringLiteral("problem"),
+                 QCoreApplication::translate("HikariSub.Conversion", "This Document can't be converted to that format.")}};
     const QVariantMap o = conversionOptions();
     core::ConversionOptions options;
     const auto &video = m_video->session();
@@ -4233,7 +4270,9 @@ QVariantMap Application::previewConversion(const QString &targetName)
                       ? 1000.0 / frameMs
                       : o.value(QStringLiteral("fps")).toString().toDouble();
     if (options.fps < 1)
-        return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), tr("Invalid FPS. Correct it in options and try again.")}};
+        return {{QStringLiteral("ok"), false},
+                {QStringLiteral("problem"),
+                 QCoreApplication::translate("HikariSub.Conversion", "Invalid FPS. Correct it in options and try again.")}};
     options.videoFps = hasVideo && frameMs > 0.f ? 1000.0 / frameMs : 23.976;
     options.prefix = utf8(o.value(QStringLiteral("prefix")).toString());
     options.newEndTimes = o.value(QStringLiteral("newEndTimes")).toBool();
@@ -4253,31 +4292,39 @@ QVariantMap Application::previewConversion(const QString &targetName)
                                 QString::fromUtf8(reinterpret_cast<const char *>(b.data()), qsizetype(b.size())));
     });
     if (!result)
-        return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), tr("This Document can't be converted to that format.")}};
+        return {{QStringLiteral("ok"), false},
+                {QStringLiteral("problem"),
+                 QCoreApplication::translate("HikariSub.Conversion", "This Document can't be converted to that format.")}};
     const auto &r = result->report;
     QStringList losses;
     if (r.headerDropped)
-        losses << tr("The script properties and styles are removed.");
+        losses << QCoreApplication::translate("HikariSub.Conversion", "The script properties and styles are removed.");
     if (r.commentsRemoved)
-        losses << tr("%n comment line(s) removed.", nullptr, r.commentsRemoved);
+        losses << QCoreApplication::translate("HikariSub.Conversion", "%n comment line(s) removed.", nullptr, r.commentsRemoved);
     if (r.drawingsCleared)
-        losses << tr("%n drawing(s) removed.", nullptr, r.drawingsCleared);
+        losses << QCoreApplication::translate("HikariSub.Conversion", "%n drawing(s) removed.", nullptr, r.drawingsCleared);
     if (r.emptyRemoved)
-        losses << tr("%n line(s) left without text removed.", nullptr, r.emptyRemoved);
+        losses << QCoreApplication::translate("HikariSub.Conversion", "%n line(s) left without text removed.", nullptr, r.emptyRemoved);
     if (r.duplicatesRemoved)
-        losses << tr("%n duplicate line(s) removed.", nullptr, r.duplicatesRemoved);
+        losses << QCoreApplication::translate("HikariSub.Conversion", "%n duplicate line(s) removed.", nullptr, r.duplicatesRemoved);
     if (r.reordered)
-        losses << tr("Lines are sorted by time.");
+        losses << QCoreApplication::translate("HikariSub.Conversion", "Lines are sorted by time.");
     if (r.textChanged)
-        losses << tr("Formatting tags converted or removed in %n line(s).", nullptr, r.textChanged);
+        losses << QCoreApplication::translate("HikariSub.Conversion",
+                                              "Formatting tags converted or removed in %n line(s).", nullptr, r.textChanged);
     if (r.fieldsDropped)
         losses << (*target == core::SubtitleFormat::Ass
-                       ? tr("%n line(s) get the conversion style \"%1\".", nullptr, r.fieldsDropped).arg(o.value(QStringLiteral("style")).toString())
-                       : tr("Layer, style, actor, margins or effect removed from %n line(s).", nullptr, r.fieldsDropped));
+                       ? QCoreApplication::translate("HikariSub.Conversion",
+                                                     "%n line(s) get the conversion style \"%1\".", nullptr, r.fieldsDropped)
+                             .arg(o.value(QStringLiteral("style")).toString())
+                       : QCoreApplication::translate("HikariSub.Conversion",
+                                                     "Layer, style, actor, margins or effect removed from %n line(s).", nullptr, r.fieldsDropped));
     if (r.markersDropped)
-        losses << tr("Bookmarks, hidden lines and groups removed from %n line(s).", nullptr, r.markersDropped);
+        losses << QCoreApplication::translate("HikariSub.Conversion",
+                                              "Bookmarks, hidden lines and groups removed from %n line(s).", nullptr, r.markersDropped);
     if (r.timesChanged)
-        losses << tr("Times changed (rounding, frames or new end times) in %n line(s).", nullptr, r.timesChanged);
+        losses << QCoreApplication::translate("HikariSub.Conversion",
+                                              "Times changed (rounding, frames or new end times) in %n line(s).", nullptr, r.timesChanged);
     m_conversionPlan = std::make_unique<ConversionPlan>(
         ConversionPlan{m_workspace.editingTarget()->value, session->revision(), o, std::move(result->document)});
     return {{QStringLiteral("ok"), true}, {QStringLiteral("losses"), losses}};
@@ -4796,7 +4843,8 @@ QVariantMap Application::openSettingsDialog()
     }
     {
         if (lists.dictionaryNames.empty())
-            lists.dictionaryNames.push_back(tr("Put files .dic and .aff to \"Dictionary\" folder").toStdString());
+            lists.dictionaryNames.push_back(QCoreApplication::translate("HikariSub.Options",
+                                                                        "Put files .dic and .aff to \"Dictionary\" folder").toStdString());
     }
     // The conversion catalog: its option's catalog is loaded (LoadStyles), then
     // its Styles are listed.
@@ -4817,10 +4865,16 @@ QVariantMap Application::openSettingsDialog()
     m_hotkeys->beginOptions();
     QStringList warnings;
     // "The selected %s for conversion does not exist\nand will be changed to the default".
+    const auto missing = [](const char *what) {
+        return QCoreApplication::translate("HikariSub.Options",
+                                           "The selected %1 for conversion does not exist\n"
+                                           "and will be changed to the default")
+            .arg(QCoreApplication::translate("HikariSub.Options", what));
+    };
     if (open.catalogMissing)
-        warnings << tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("catalog for style"));
+        warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "catalog for style"));
     if (open.styleMissing)
-        warnings << tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("style"));
+        warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "style"));
     auto values = toVariant(open.state);
     addAppearance(values);
     return {{QStringLiteral("values"), values},

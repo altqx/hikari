@@ -6,6 +6,7 @@
 
 #include "hikari/app/application.h"
 
+#include <QCoreApplication>
 #include <QGuiApplication>
 #include <QPointer>
 #include <QQuickItem>
@@ -19,7 +20,7 @@ void Application::startLocalisation()
     // Legacy turns the old "0" and "1" values into English (hikarisubApp.cpp:329-334).
     if (const QString stored = m_settings->text("program.language"); stored == u"0" || stored == u"1")
         m_settings->set("program.language", QString());
-    m_untitledTitle = tr("Untitled"); // the tabs made so far are named in English
+    m_untitledTitle = QCoreApplication::translate("HikariSub.Documents", "Untitled"); // the tabs made so far are named in English
     connect(m_localisation.get(), &Localisation::languageChanged, this, &Application::languageSwitched);
     // A pseudolocale for layout checks (accents, rtl), never stored.
     m_localisation->setPseudo(Localisation::pseudoNamed(qEnvironmentVariable("HIKARI_PSEUDOLOCALE")));
@@ -41,7 +42,7 @@ void Application::switchLanguage()
     // failed" message boxes, hikarisubApp.cpp:347,365; here in the log, on
     // every platform).
     if (!m_localisation->setLanguage(m_settings->text("program.language")))
-        m_log->log(tr("Cannot find translation, language change failed"));
+        m_log->log(QCoreApplication::translate("HikariSub.Options", "Cannot find translation, language change failed"));
 }
 
 // Retranslation refreshes what QML binds with qsTr; the strings the
@@ -52,7 +53,7 @@ void Application::languageSwitched()
 {
     // Untitled tabs (legacy TabPanel's SubsName = _("Untitled")) take the
     // new name; a tab that has a file or another name keeps it.
-    const QString untitled = tr("Untitled");
+    const QString untitled = QCoreApplication::translate("HikariSub.Documents", "Untitled");
     if (untitled != m_untitledTitle) {
         for (const auto id : m_workspace.documents()) {
             const std::string *title = m_workspace.title(id);
@@ -68,7 +69,8 @@ void Application::languageSwitched()
     emit tabsChanged();
     // The Options dialog's dictionary choice names its empty case.
     if (m_optionsLists.dictionarySymbols.empty() && !m_optionsLists.dictionaryNames.empty()) {
-        m_optionsLists.dictionaryNames = {tr("Put files .dic and .aff to \"Dictionary\" folder").toStdString()};
+        m_optionsLists.dictionaryNames = {
+            QCoreApplication::translate("HikariSub.Options", "Put files .dic and .aff to \"Dictionary\" folder").toStdString()};
         emit settingsListsChanged({QString::fromStdString(m_optionsLists.dictionaryNames.front())});
     }
 }

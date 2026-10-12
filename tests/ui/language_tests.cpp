@@ -284,7 +284,7 @@ private slots:
         QVERIFY(localisation.setLanguage(QStringLiteral("pl_PL")));
         QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Cancel"), QStringLiteral("Anuluj (HikariSub)"));
         QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Close"), QStringLiteral("Zamknij (Qt)"));
-        QCOMPARE(QCoreApplication::translate("Main", "&File"), QStringLiteral("&Plik (HikariSub)"));
+        QCOMPARE(QCoreApplication::translate("HikariSub.MainWindow", "&File"), QStringLiteral("&Plik (HikariSub)"));
         QVERIFY(localisation.setLanguage(QString()));
         QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Cancel"), QStringLiteral("Cancel"));
         QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Close"), QStringLiteral("Close"));
@@ -315,11 +315,11 @@ private slots:
     {
         for (const char *language : {"ko_KR", "pl", "ta", "th_TH"}) {
             const QString ui = QStringLiteral(HIKARI_SOURCE_DIR "/i18n/hikarisub_%1.ts").arg(QLatin1String(language));
-            const auto label = tsEntry(ui, QStringLiteral("SettingsDialog"), QStringLiteral("Language"));
+            const auto label = tsEntry(ui, QStringLiteral("HikariSub.Options"), QStringLiteral("Language"));
             QVERIFY2(label.has_value(), language);
             QCOMPARE(label->first, QStringLiteral("unfinished"));
             QCOMPARE(label->second, QString());
-            const auto old = tsEntry(ui, QStringLiteral("SettingsDialog"), QStringLiteral("Language (program restart required)"));
+            const auto old = tsEntry(ui, QStringLiteral("HikariSub.Options"), QStringLiteral("Language (program restart required)"));
             QVERIFY2(old.has_value(), language);
             QCOMPARE(old->first, QStringLiteral("vanished"));
             const QString gettext = QStringLiteral(HIKARI_SOURCE_DIR "/i18n/hikarisub_gettext_%1.ts").arg(QLatin1String(language));
@@ -361,13 +361,13 @@ private slots:
         QCOMPARE(localisation.gettext("Search bar"), expected.toStdString());
         // The rewrite's interface contexts never answer for scripts.
         QVERIFY(localisation.setLanguage(QStringLiteral("pl")));
-        QCOMPARE(QCoreApplication::translate("Main", "&File"), QStringLiteral("&Plik"));
+        QCOMPARE(QCoreApplication::translate("HikariSub.MainWindow", "&File"), QStringLiteral("&Plik"));
         QCOMPARE(localisation.gettext("&File"), std::string("&Plik")); // the legacy id, from the gettext catalog
         QCOMPARE(localisation.gettext("Language (program restart required)"),
                  std::string("Język (wymaga restartu programu)"));
         QVERIFY(localisation.setLanguage(QStringLiteral("en")));
         QCOMPARE(localisation.gettext("Search bar"), std::string("Search bar"));
-        QCOMPARE(QCoreApplication::translate("Main", "&File"), QStringLiteral("&File"));
+        QCOMPARE(QCoreApplication::translate("HikariSub.MainWindow", "&File"), QStringLiteral("&File"));
     }
 
     // Settings: English and the catalogs; Apply switches the open window,
@@ -568,8 +568,7 @@ private slots:
         const QString english = application->shell().selectionStatus();
         QVERIFY2(english.endsWith(QStringLiteral(" (1 hidden)")), qPrintable(english));
         application->localisation().setPseudo(app::Localisation::Pseudo::Accents);
-        const QString suffix =
-            QCoreApplication::translate("hikari::ui::ShellController", " (%1 hidden)").arg(1);
+        const QString suffix = QCoreApplication::translate("HikariSub.StatusBar", " (%1 hidden)").arg(1);
         QVERIFY(suffix != QStringLiteral(" (1 hidden)"));
         QTRY_VERIFY2(application->shell().selectionStatus().endsWith(suffix),
                      qPrintable(application->shell().selectionStatus()));
@@ -814,6 +813,121 @@ private slots:
         QCOMPARE(QGuiApplication::font().pointSize(), 10);
         stop();
         QCOMPARE(QGuiApplication::font(), before);
+    }
+
+    // O6: the semantic contexts reach the window. Every text an item shows
+    // in English and then in Polish is looked up among the pl catalog's
+    // finished entries: the Polish text is the translation of the English
+    // one under a registered surface context (HikariSub.*), and the
+    // embedded QM answers that context. The main window's surfaces are each
+    // seen; lupdate's old file and class contexts answer nothing.
+    void semanticContextsShowTheCatalogOnSurfaces()
+    {
+        // The pl catalog's finished singular entries: source -> context ->
+        // translation.
+        QHash<QString, QHash<QString, QString>> finished;
+        {
+            QXmlStreamReader xml(readAll(QStringLiteral(HIKARI_SOURCE_DIR "/i18n/hikarisub_pl.ts")));
+            QString context, source;
+            bool numerus = false;
+            while (!xml.atEnd()) {
+                if (xml.readNext() != QXmlStreamReader::StartElement)
+                    continue;
+                if (xml.name() == u"name") {
+                    context = xml.readElementText();
+                } else if (xml.name() == u"message") {
+                    numerus = xml.attributes().value(QStringLiteral("numerus")) == u"yes";
+                } else if (xml.name() == u"source") {
+                    source = xml.readElementText();
+                } else if (xml.name() == u"translation" && !numerus && !xml.attributes().hasAttribute(QStringLiteral("type"))) {
+                    if (const QString text = xml.readElementText(); !text.isEmpty())
+                        finished[source][context] = text;
+                }
+            }
+        }
+        QVERIFY(finished.size() > 500);
+        QTranslator qm;
+        QVERIFY(qm.load(QStringLiteral(":/i18n/hikarisub_pl.qm")));
+        // What each object shows, per property, and its accessible name.
+        using Shown = QHash<std::pair<QObject *, QString>, QString>;
+        const auto shown = [] {
+            Shown out;
+            for (QWindow *w : QGuiApplication::allWindows()) {
+                auto *quick = qobject_cast<QQuickWindow *>(w);
+                if (!quick)
+                    continue;
+                QList<QObject *> objects{quick};
+                std::function<void(QQuickItem *)> walk = [&](QQuickItem *i) {
+                    objects << i;
+                    for (QQuickItem *c : i->childItems())
+                        walk(c);
+                };
+                walk(quick->contentItem());
+                objects << quick->findChildren<QObject *>();
+                for (QObject *o : objects) {
+                    for (const char *p : {"text", "title", "placeholderText"}) {
+                        const QVariant v = o->property(p);
+                        if (v.typeId() == QMetaType::QString && hasLetter(v.toString()))
+                            out.insert({o, QLatin1String(p)}, v.toString());
+                    }
+                    if (auto *i = qobject_cast<QQuickItem *>(o); i && i->isVisible())
+                        if (QAccessibleInterface *a = QAccessible::queryAccessibleInterface(i))
+                            if (const QString name = a->text(QAccessible::Name); hasLetter(name))
+                                out.insert({o, QStringLiteral("accessible")}, name);
+                }
+            }
+            return out;
+        };
+        start();
+        QVERIFY(application->openFile(episode));
+        QCoreApplication::processEvents();
+        const Shown english = shown();
+        application->settingsStore()->set("program.language", QStringLiteral("pl"));
+        QCOMPARE(application->localisation().language(), QStringLiteral("pl"));
+        QCoreApplication::processEvents();
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        const Shown polish = shown();
+        // The surface contexts whose translation an object now shows where it
+        // showed the source in English. A context counts as seen through a
+        // source only it translates that way, so a shared text such as
+        // "Cancel" proves no particular context.
+        QMap<QString, QSet<QString>> seen;
+        int shownTranslations = 0;
+        for (auto it = english.cbegin(); it != english.cend(); ++it) {
+            const QString after = polish.value(it.key());
+            if (after.isEmpty() || after == it.value())
+                continue;
+            QStringList contexts;
+            for (const auto &[context, text] : finished.value(it.value()).asKeyValueRange()) {
+                if (text != after)
+                    continue;
+                QVERIFY2(context.startsWith(QStringLiteral("HikariSub.")), qPrintable(context));
+                QCOMPARE(qm.translate(context.toUtf8().constData(), it.value().toUtf8().constData()), after);
+                contexts << context;
+            }
+            shownTranslations += !contexts.isEmpty();
+            if (contexts.size() == 1 && finished.value(it.value()).size() == 1)
+                seen[contexts.first()] << it.value();
+        }
+        QStringList found;
+        for (const auto &[context, sources] : seen.asKeyValueRange())
+            found << QStringLiteral("%1 (%2)").arg(context).arg(sources.size());
+        qInfo().noquote() << shownTranslations << "shown translations; sources one context translates, by context:"
+                          << found.join(QStringLiteral(", "));
+        for (const char *context : {"HikariSub.MainWindow", "HikariSub.Audio", "HikariSub.Video", "HikariSub.Editor",
+                                    "HikariSub.Grid", "HikariSub.TimeShift", "HikariSub.Options", "HikariSub.Styles",
+                                    "HikariSub.Session", "HikariSub.Conversion", "HikariSub.Documents"})
+            QVERIFY2(seen.contains(QLatin1String(context)), context);
+        // A surface string the application keeps: the Untitled tab's name.
+        application->addPage();
+        QCOMPARE(tabTitle(application->tabs().size() - 1), qm.translate("HikariSub.Documents", "Untitled"));
+        QCOMPARE(tabTitle(application->tabs().size() - 1), QStringLiteral("Bez nazwy"));
+        // The contexts O4 extracted (the QML file, the C++ class) are not in
+        // the QM any more.
+        QCOMPARE(qm.translate("HikariSub.MainWindow", "&File"), QStringLiteral("&Plik"));
+        QCOMPARE(qm.translate("Main", "&File"), QString());
+        QCOMPARE(qm.translate("hikari::app::Application", "Untitled"), QString());
+        application->settingsStore()->set("program.language", QStringLiteral("en"));
     }
 
     // Screenshots for review (HIKARI_LANGUAGE_SHOT_DIR; skipped without it):

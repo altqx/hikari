@@ -8,6 +8,7 @@
 #include "hikari/application/video_controls.h"
 #include "hikari/application/video_snapshot.h"
 
+#include <QCoreApplication>
 #include <QClipboard>
 #include <QCursor>
 #include <QDir>
@@ -288,7 +289,8 @@ QString VideoViewController::aspectLabel(int sliderValue) const
     // "Aspect ratio: %5.3f" of 1 / the ratio: the dialog's own ratio when
     // it opens (sliderValue < 0), then the slider's.
     const float ratio = sliderValue < 0 ? m_tools.videoView().aspectRatio() : application::aspectFromSlider(sliderValue);
-    return tr("Aspect ratio: %1").arg(QString::fromStdString(application::aspectLabelNumber(ratio)));
+    return QCoreApplication::translate("HikariSub.Video", "Aspect ratio: %1")
+               .arg(QString::fromStdString(application::aspectLabelNumber(ratio)));
 }
 
 void VideoViewController::setAspectFromSlider(int sliderValue)

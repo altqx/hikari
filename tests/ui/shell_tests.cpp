@@ -4753,7 +4753,7 @@ private slots:
                 bool isEmpty() const override { return false; }
                 QString translate(const char *context, const char *source, const char *, int) const override
                 {
-                    return QByteArray(context) == "hikari::app::FontCollectorController" && QByteArray(source) == "Fonts"
+                    return QByteArray(context) == "HikariSub.Fonts" && QByteArray(source) == "Fonts"
                                ? QStringLiteral("Czcionki")
                                : QString();
                 }

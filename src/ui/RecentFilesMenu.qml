@@ -1,3 +1,4 @@
+pragma Translator: "HikariSub.MainWindow"
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui

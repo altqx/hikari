@@ -1,3 +1,4 @@
+pragma Translator: "HikariSub.VisualTools"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

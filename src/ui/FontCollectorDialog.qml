@@ -7,6 +7,7 @@
 // would write; an incomplete collection is written only after the
 // acknowledgment and is labelled incomplete (routing #54). A double click in
 // the log goes to a Style or Line as legacy's OnConsoleDoubleClick did.
+pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

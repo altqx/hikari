@@ -110,9 +110,9 @@ TEST(Qm, RewriteCatalogsAnswerFinishedEntriesOnly)
     }
     QTranslator pl;
     ASSERT_TRUE(pl.load(QStringLiteral(":/i18n/hikarisub_pl.qm")));
-    EXPECT_EQ(pl.translate("Main", "Search bar"), QStringLiteral("Pasek szukania"));
-    EXPECT_EQ(pl.translate("hikari::app::StyleManagerController", "Copy of "), QStringLiteral("Kopia "));
-    EXPECT_EQ(pl.translate("hikari::app::Application", "Rule \"%1\" is invalid."), QString()); // carried, unfinished
+    EXPECT_EQ(pl.translate("HikariSub.Audio", "Search bar"), QStringLiteral("Pasek szukania"));
+    EXPECT_EQ(pl.translate("HikariSub.Styles", "Copy of "), QStringLiteral("Kopia "));
+    EXPECT_EQ(pl.translate("HikariSub.MisspellReplacer", "Rule \"%1\" is invalid."), QString()); // carried, unfinished
 }
 
 TEST(Qm, GettextCatalogsAnswerTheirFinishedEntries)
@@ -127,7 +127,7 @@ TEST(Qm, GettextCatalogsAnswerTheirFinishedEntries)
             EXPECT_EQ(lookup(translator, context, m), m.state == TsState::Finished ? m.translations.value(0) : QString())
                 << language.toStdString() << " " << m.source.toStdString();
         // Only the gettext context: the rewrite's contexts are not in this catalog.
-        EXPECT_EQ(translator.translate("Main", "Search bar"), QString());
+        EXPECT_EQ(translator.translate("HikariSub.Audio", "Search bar"), QString());
     }
     QTranslator pl;
     ASSERT_TRUE(pl.load(QStringLiteral(":/i18n/hikarisub_gettext_pl.qm")));

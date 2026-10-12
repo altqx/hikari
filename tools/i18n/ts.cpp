@@ -166,6 +166,10 @@ std::expected<TsCatalog, QString> readTs(const QByteArray &bytes)
                     continue;
                 }
                 if (element == u"location") {
+                    const auto attributes = xml.attributes();
+                    if (attributes.hasAttribute(u"filename") || attributes.hasAttribute(u"line"))
+                        message.locations.append({attributes.value(u"filename").toString(),
+                                                  attributes.value(u"line").toInt()});
                     xml.skipCurrentElement();
                     continue;
                 }

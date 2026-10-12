@@ -2,6 +2,7 @@
 // the catalog ("Styles stored:") above, the Document's Styles ("Styles in
 // ASS file:") below, the transfers between them, and the Style editor with
 // its preview at the side.
+pragma Translator: "HikariSub.Styles"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs

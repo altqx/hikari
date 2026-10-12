@@ -17,6 +17,7 @@
 
 #include "hikari/application/grid_clipboard.h"
 
+#include <QCoreApplication>
 #include <QClipboard>
 #include <QGuiApplication>
 
@@ -314,7 +315,7 @@ void Application::refuseReferenceChange()
 {
     // Legacy pasted into the previewed grid (PREVIEW_PASTE); the reference is
     // protected, so nothing changes.
-    m_shell->setStatusText(tr("The reference is protected (read-only)."));
+    m_shell->setStatusText(QCoreApplication::translate("HikariSub.Reference", "The reference is protected (read-only)."));
 }
 
 QVariantList Application::referenceOccurrences()

@@ -5,6 +5,7 @@
 
 #include "hikari/application/settings.h"
 
+#include <QCoreApplication>
 #include <QGuiApplication>
 #include <QPointer>
 #include <QQuickStyle>
@@ -44,22 +45,22 @@ bool isDarkColour(const QColor &colour)
 // preset's selected background is its hue at the spec green's selected
 // lightness and saturation.
 const std::array<Accent, 7> kLightAccents{{
-    {"red", QT_TRANSLATE_NOOP("Theme", "Red"), rgb(0xB3261E), rgb(0xFFFFFF), rgb(0xEBD7D6)},
-    {"orange", QT_TRANSLATE_NOOP("Theme", "Orange"), rgb(0x9C4600), rgb(0xFFFFFF), rgb(0xEBDFD6)},
-    {"gold", QT_TRANSLATE_NOOP("Theme", "Gold"), rgb(0x7A5E00), rgb(0xFFFFFF), rgb(0xEBE6D6)},
-    {"green", QT_TRANSLATE_NOOP("Theme", "Green"), rgb(0x145C4C), rgb(0xFFFFFF), rgb(0xD6EBE4)},
-    {"blue", QT_TRANSLATE_NOOP("Theme", "Blue"), rgb(0x1D5BA8), rgb(0xFFFFFF), rgb(0xD6DFEB)},
-    {"purple", QT_TRANSLATE_NOOP("Theme", "Purple"), rgb(0x5B3FB0), rgb(0xFFFFFF), rgb(0xDBD6EB)},
-    {"pink", QT_TRANSLATE_NOOP("Theme", "Pink"), rgb(0x9E2A73), rgb(0xFFFFFF), rgb(0xEBD6E3)},
+    {"red", QT_TRANSLATE_NOOP("HikariSub.Options", "Red"), rgb(0xB3261E), rgb(0xFFFFFF), rgb(0xEBD7D6)},
+    {"orange", QT_TRANSLATE_NOOP("HikariSub.Options", "Orange"), rgb(0x9C4600), rgb(0xFFFFFF), rgb(0xEBDFD6)},
+    {"gold", QT_TRANSLATE_NOOP("HikariSub.Options", "Gold"), rgb(0x7A5E00), rgb(0xFFFFFF), rgb(0xEBE6D6)},
+    {"green", QT_TRANSLATE_NOOP("HikariSub.Options", "Green"), rgb(0x145C4C), rgb(0xFFFFFF), rgb(0xD6EBE4)},
+    {"blue", QT_TRANSLATE_NOOP("HikariSub.Options", "Blue"), rgb(0x1D5BA8), rgb(0xFFFFFF), rgb(0xD6DFEB)},
+    {"purple", QT_TRANSLATE_NOOP("HikariSub.Options", "Purple"), rgb(0x5B3FB0), rgb(0xFFFFFF), rgb(0xDBD6EB)},
+    {"pink", QT_TRANSLATE_NOOP("HikariSub.Options", "Pink"), rgb(0x9E2A73), rgb(0xFFFFFF), rgb(0xEBD6E3)},
 }};
 const std::array<Accent, 7> kDarkAccents{{
-    {"red", QT_TRANSLATE_NOOP("Theme", "Red"), rgb(0xF4A9A3), rgb(0x2C1210), rgb(0x4C3230)},
-    {"orange", QT_TRANSLATE_NOOP("Theme", "Orange"), rgb(0xF5BB8A), rgb(0x2C1D10), rgb(0x4C3D30)},
-    {"gold", QT_TRANSLATE_NOOP("Theme", "Gold"), rgb(0xE3CF7E), rgb(0x2C2610), rgb(0x4C4630)},
-    {"green", QT_TRANSLATE_NOOP("Theme", "Green"), rgb(0x9CDBC9), rgb(0x102C24), rgb(0x304C47)},
-    {"blue", QT_TRANSLATE_NOOP("Theme", "Blue"), rgb(0xA6C8F2), rgb(0x101D2C), rgb(0x303D4C)},
-    {"purple", QT_TRANSLATE_NOOP("Theme", "Purple"), rgb(0xC6B5F4), rgb(0x18102C), rgb(0x38304C)},
-    {"pink", QT_TRANSLATE_NOOP("Theme", "Pink"), rgb(0xEFAAD3), rgb(0x2C1021), rgb(0x4C3041)},
+    {"red", QT_TRANSLATE_NOOP("HikariSub.Options", "Red"), rgb(0xF4A9A3), rgb(0x2C1210), rgb(0x4C3230)},
+    {"orange", QT_TRANSLATE_NOOP("HikariSub.Options", "Orange"), rgb(0xF5BB8A), rgb(0x2C1D10), rgb(0x4C3D30)},
+    {"gold", QT_TRANSLATE_NOOP("HikariSub.Options", "Gold"), rgb(0xE3CF7E), rgb(0x2C2610), rgb(0x4C4630)},
+    {"green", QT_TRANSLATE_NOOP("HikariSub.Options", "Green"), rgb(0x9CDBC9), rgb(0x102C24), rgb(0x304C47)},
+    {"blue", QT_TRANSLATE_NOOP("HikariSub.Options", "Blue"), rgb(0xA6C8F2), rgb(0x101D2C), rgb(0x303D4C)},
+    {"purple", QT_TRANSLATE_NOOP("HikariSub.Options", "Purple"), rgb(0xC6B5F4), rgb(0x18102C), rgb(0x38304C)},
+    {"pink", QT_TRANSLATE_NOOP("HikariSub.Options", "Pink"), rgb(0xEFAAD3), rgb(0x2C1021), rgb(0x4C3041)},
 }};
 
 // The fixed roles of each theme (visual-language.md): Light and Dark are the
@@ -648,12 +649,16 @@ QString Theme::accentKey() const
 
 QVariantList Theme::themes() const
 {
-    const char *names[] = {QT_TR_NOOP("Light"), QT_TR_NOOP("Dark"), QT_TR_NOOP("High contrast white"),
-                           QT_TR_NOOP("High contrast black")};
+    const char *names[] = {
+        QT_TRANSLATE_NOOP("HikariSub.Options", "Light"),
+        QT_TRANSLATE_NOOP("HikariSub.Options", "Dark"),
+        QT_TRANSLATE_NOOP("HikariSub.Options", "High contrast white"),
+        QT_TRANSLATE_NOOP("HikariSub.Options", "High contrast black"),
+    };
     QVariantList out;
     for (const auto code : theme::kCodes)
         out << QVariantMap{{QStringLiteral("code"), theme::codeName(code)},
-                           {QStringLiteral("name"), tr(names[static_cast<int>(code)])},
+                           {QStringLiteral("name"), QCoreApplication::translate("HikariSub.Options", names[static_cast<int>(code)])},
                            {QStringLiteral("dark"), theme::isDark(code)},
                            {QStringLiteral("highContrast"), theme::isHighContrast(code)}};
     return out;
@@ -671,7 +676,7 @@ QVariantList Theme::accents(bool dark) const
         for (const QColor &s : surfaces)
             lowest = std::min(lowest, theme::contrastRatio(a.accent, s));
         out << QVariantMap{{QStringLiteral("key"), QString::fromLatin1(a.key)},
-                           {QStringLiteral("name"), QCoreApplication::translate("Theme", a.name)},
+                           {QStringLiteral("name"), QCoreApplication::translate("HikariSub.Options", a.name)},
                            {QStringLiteral("accent"), a.accent},
                            {QStringLiteral("onAccent"), a.onAccent},
                            {QStringLiteral("contrast"), lowest}};
@@ -684,11 +689,15 @@ QVariantList Theme::picks(const QString &code) const
     const auto c = theme::codeFromName(code);
     if (!c || !theme::isHighContrast(*c))
         return {};
-    const char *names[] = {QT_TR_NOOP("Accent color"), QT_TR_NOOP("Text and icons"), QT_TR_NOOP("Border color")};
+    const char *names[] = {
+        QT_TRANSLATE_NOOP("HikariSub.Options", "Accent color"),
+        QT_TRANSLATE_NOOP("HikariSub.Options", "Text and icons"),
+        QT_TRANSLATE_NOOP("HikariSub.Options", "Border color"),
+    };
     QVariantList out;
     for (const auto pick : theme::kPicks)
         out << QVariantMap{{QStringLiteral("setting"), QString::fromLatin1(theme::pickSetting(*c, pick))},
-                           {QStringLiteral("name"), tr(names[static_cast<int>(pick)])},
+                           {QStringLiteral("name"), QCoreApplication::translate("HikariSub.Options", names[static_cast<int>(pick)])},
                            {QStringLiteral("defaultColour"), theme::pickDefault(*c, pick).name(QColor::HexRgb).toUpper()}};
     return out;
 }

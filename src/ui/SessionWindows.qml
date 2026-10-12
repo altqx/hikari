@@ -1,3 +1,4 @@
+pragma Translator: "HikariSub.Session"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs

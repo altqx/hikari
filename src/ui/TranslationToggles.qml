@@ -1,6 +1,7 @@
 // E5: the translation-mode toggle buttons (legacy EditBox DoubtfulTL "Not
 // confirmed" and AutoMoveTags "Moving tags", EditBox.cpp:248-258, shown with
 // translation mode by SetTlMode, EditBox.cpp:1142-1144).
+pragma Translator: "HikariSub.Translation"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

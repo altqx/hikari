@@ -11,7 +11,7 @@
     </message>
 </context>
 <context>
-    <name>Main</name>
+    <name>HikariSub.MainWindow</name>
     <message>
         <source>&amp;File</source>
         <translation>&amp;Plik (HikariSub)</translation>

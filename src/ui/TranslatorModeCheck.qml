@@ -2,6 +2,7 @@
 // EditBox.cpp:215-217, 1072-1078 and 1200). Turning it on is one "Turning on
 // translator mode" step; turning it off asks first, as SubsGrid::SetTlMode
 // (SubsGridBase.cpp:1339-1342) does, with No as the default answer.
+pragma Translator: "HikariSub.Translation"
 import QtQuick
 import QtQuick.Controls
 

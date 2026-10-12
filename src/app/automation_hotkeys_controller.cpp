@@ -2,6 +2,7 @@
 
 #include "hikari/app/automation_shell.h"
 
+#include <QCoreApplication>
 #include <QFile>
 #include <QKeySequence>
 #include <QFileInfo>
@@ -91,7 +92,7 @@ QVariantList AutomationHotkeysController::rows() const
         const auto it = m_staged.find(name);
         QString problem;
         if (it != m_staged.end() && !resolve(it->second))
-            problem = tr("Unresolved: the script or its macros changed");
+            problem = QCoreApplication::translate("HikariSub.Automation", "Unresolved: the script or its macros changed");
         out << QVariantMap{{QStringLiteral("legacyName"), qs(name)},
                            {QStringLiteral("script"), qs(m.scriptPath)},
                            {QStringLiteral("macro"), qs(m.name)},
@@ -106,7 +107,8 @@ QVariantList AutomationHotkeysController::rows() const
                                {QStringLiteral("script"), QString()},
                                {QStringLiteral("macro"), qs(b.macroName)},
                                {QStringLiteral("keys"), qs(b.keys)},
-                               {QStringLiteral("problem"), tr("Unresolved: no loaded script has this macro")}};
+                               {QStringLiteral("problem"), QCoreApplication::translate("HikariSub.Automation",
+                                                                                       "Unresolved: no loaded script has this macro")}};
     return out;
 }
 

@@ -5,6 +5,7 @@
 // why), the changes to import, Import (in effect at the next start) and
 // Roll back to the settings before the last import. Colours are the
 // palette's (the theme layer), never settings of their own.
+pragma Translator: "HikariSub.SettingsImport"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

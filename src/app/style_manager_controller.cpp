@@ -2,6 +2,7 @@
 
 #include "hikari/core/ass_load.h"
 
+#include <QCoreApplication>
 #include <QCollator>
 #include <QQuickImageProvider>
 #include <QFile>
@@ -296,7 +297,7 @@ QVariantMap StyleManagerController::beginCopy(bool store, int row)
     if (!styles || row < 0 || static_cast<std::size_t>(row) >= styles->size())
         return {};
     auto copy = (*styles)[static_cast<std::size_t>(row)];
-    copy.name = u8(tr("Copy of ")) + copy.name;
+    copy.name = u8(QCoreApplication::translate("HikariSub.Styles", "Copy of ")) + copy.name;
     m_edit = Edit{store, std::nullopt, copy};
     return valuesOf(copy);
 }
@@ -318,7 +319,7 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
     std::optional<StyleList> doc;
     auto *styles = list(m_edit->store, doc);
     if (!styles)
-        return tr("The Document has no styles to edit.");
+        return QCoreApplication::translate("HikariSub.Styles", "The Document has no styles to edit.");
     application::StyleEdit edit;
     edit.row = m_edit->row;
     edit.style = styleOf(values, m_edit->opened);
@@ -328,7 +329,7 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
     const StyleList before = *styles;
     const auto row = application::commitStyle(*styles, edit);
     if (!row)
-        return tr("Style named \"%1\" already exists.").arg(qs(row.error()));
+        return QCoreApplication::translate("HikariSub.Styles", "Style named \"%1\" already exists.").arg(qs(row.error()));
     if (m_edit->store) {
         m_catalogs.markChanged();
         emit changed();
@@ -582,10 +583,10 @@ QString StyleManagerController::cleanStyles()
     for (const auto &n : result->deleted)
         deleted += qs(n) + u'\n';
     if (used.isEmpty())
-        used = tr("None");
+        used = QCoreApplication::translate("HikariSub.Styles", "None");
     if (deleted.isEmpty())
-        deleted = tr("None");
-    return tr("Styles used:\n%1\nStyles deleted:\n%2").arg(used, deleted);
+        deleted = QCoreApplication::translate("HikariSub.Styles", "None");
+    return QCoreApplication::translate("HikariSub.Styles", "Styles used:\n%1\nStyles deleted:\n%2").arg(used, deleted);
 }
 
 void StyleManagerController::renderPreview(const QVariantMap &values, int width, int height, const QString &text)

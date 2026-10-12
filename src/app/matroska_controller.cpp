@@ -2,6 +2,7 @@
 
 #include "hikari/core/ass_save.h"
 
+#include <QCoreApplication>
 #include <QFileInfo>
 
 namespace hikari::app {
@@ -12,7 +13,7 @@ QString elapsedText(qint64 ms)
 {
     // _("Time elapsed: %s") with SubsTime::raw() (ProgressDialog.cpp:108-110).
     const auto raw = core::legacy::assTimeText(ms);
-    return MatroskaController::tr("Time elapsed: %1")
+    return QCoreApplication::translate("HikariSub.Matroska", "Time elapsed: %1")
         .arg(QString::fromUtf8(reinterpret_cast<const char *>(raw.data()), qsizetype(raw.size())));
 }
 
@@ -25,7 +26,7 @@ MatroskaController::MatroskaController(std::unique_ptr<application::MatroskaPort
     h.cannotOpen = [this](const std::string &error) {
         // Demux::Open (Demux.cpp:44-47).
         if (m_hooks.log)
-            m_hooks.log(tr("Indexing error occurred: %1").arg(QString::fromUtf8(error)));
+            m_hooks.log(QCoreApplication::translate("HikariSub.Matroska", "Indexing error occurred: %1").arg(QString::fromUtf8(error)));
     };
     h.noTracks = [this] {
         emit stateChanged();

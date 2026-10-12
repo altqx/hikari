@@ -6,6 +6,7 @@
 // the Filter ("Filtering and font catalogs", FontDialog.cpp:422-486,
 // 656-732); typing selects as FontList::SetSelectionByPartialName does; under
 // the preview the renderer reports the face it selected for the name.
+pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

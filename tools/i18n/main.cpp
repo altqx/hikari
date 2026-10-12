@@ -7,11 +7,19 @@
 //   convert --map <keymap.tsv> --keys <keys.ts> --pot <template.pot>
 //           --po <language>=<file.po>... --out-dir <dir> --report <report.md>
 //   probe   --po <file.po|template.pot> --language <language> --out <file.ts>
+//
+// O6, semantic contexts (i18n/contexts.tsv):
+//   lint       --contexts <contexts.tsv> --extracted <located.ts> --sources <dir>
+//   contextmap --before <located.ts> --after <located.ts> [--catalog <file.ts>]... --out <contexts.tsv>
+//   recontext  --map <contexts.tsv> --ts <file.ts>...          (rewrites each in place)
+//   compare    --map <contexts.tsv> --before <file.ts> --after <file.ts>
 
+#include "hikari/i18n/contexts.h"
 #include "hikari/i18n/migration.h"
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QMultiMap>
@@ -69,7 +77,7 @@ int main(int argc, char **argv)
     QCoreApplication app(argc, argv);
     QStringList args = app.arguments().mid(1);
     if (args.isEmpty())
-        return fail(QStringLiteral("usage: hikari_i18n_migrate keymap|convert|probe [options]"));
+        return fail(QStringLiteral("usage: hikari_i18n_migrate keymap|convert|probe|lint|contextmap|recontext|compare [options]"));
     const QString command = args.takeFirst();
     QMultiMap<QString, QString> options;
     for (qsizetype i = 0; i < args.size(); i += 2) {
@@ -79,7 +87,7 @@ int main(int argc, char **argv)
     }
     const auto option = [&](const QString &name) { return options.value(name); };
     for (const QString &name : options.uniqueKeys())
-        if (name != u"po" && options.count(name) > 1)
+        if (name != u"po" && name != u"catalog" && name != u"ts" && options.count(name) > 1)
             return fail(QStringLiteral("--%1 given twice").arg(name));
 
     if (command == u"keymap") {
@@ -151,6 +159,117 @@ int main(int argc, char **argv)
             return fail(probe.error());
         if (auto written = writeFile(option(QStringLiteral("out")), *probe); !written)
             return fail(written.error());
+        return 0;
+    }
+    if (command == u"lint") {
+        auto registryBytes = readFile(option(QStringLiteral("contexts")));
+        if (!registryBytes)
+            return fail(registryBytes.error());
+        auto registry = readContextRegistry(*registryBytes);
+        if (!registry)
+            return fail(QStringLiteral("%1: %2").arg(option(QStringLiteral("contexts")), registry.error()));
+        auto extracted = readKeys(option(QStringLiteral("extracted")));
+        if (!extracted)
+            return fail(extracted.error());
+        // Locations are relative to the TS file; report them from the sources.
+        const QDir tsDir = QFileInfo(option(QStringLiteral("extracted"))).absoluteDir();
+        const QDir sourceDir(option(QStringLiteral("sources")));
+        int messages = 0;
+        for (TsContext &context : extracted->contexts)
+            for (TsMessage &m : context.messages) {
+                ++messages;
+                for (auto &location : m.locations)
+                    location.first = QDir(sourceDir.absolutePath() + QStringLiteral("/..")).relativeFilePath(
+                        QDir::cleanPath(tsDir.absoluteFilePath(location.first)));
+            }
+        QList<SourceFile> sources;
+        QDirIterator it(sourceDir.absolutePath(), {QStringLiteral("*.qml"), QStringLiteral("*.js"), QStringLiteral("*.mjs"),
+                                                   QStringLiteral("*.cpp"), QStringLiteral("*.h")},
+                        QDir::Files, QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            const QString path = it.next();
+            auto bytes = readFile(path);
+            if (!bytes)
+                return fail(bytes.error());
+            sources.append({QDir(sourceDir.absolutePath() + QStringLiteral("/..")).relativeFilePath(path),
+                            QString::fromUtf8(*bytes)});
+        }
+        std::ranges::sort(sources, {}, &SourceFile::path);
+        const QStringList problems = lintContexts(*registry, *extracted, sources);
+        for (const QString &problem : problems)
+            std::fprintf(stderr, "%s\n", qPrintable(problem));
+        if (!problems.isEmpty())
+            return fail(QStringLiteral("%1 translatable string(s) or call(s) without a registered semantic context "
+                                       "(i18n/contexts.tsv)").arg(problems.size()));
+        std::printf("%d messages in %lld contexts, %lld sources: every context is registered\n", messages,
+                    static_cast<long long>(extracted->contexts.size()), static_cast<long long>(sources.size()));
+        return 0;
+    }
+
+    if (command == u"contextmap") {
+        auto before = readKeys(option(QStringLiteral("before")));
+        if (!before)
+            return fail(before.error());
+        auto after = readKeys(option(QStringLiteral("after")));
+        if (!after)
+            return fail(after.error());
+        QList<TsCatalog> catalogs;
+        for (const QString &path : options.values(QStringLiteral("catalog"))) {
+            auto catalog = readKeys(path);
+            if (!catalog)
+                return fail(catalog.error());
+            catalogs.append(*catalog);
+        }
+        auto map = buildContextMap(*before, *after, catalogs);
+        if (!map)
+            return fail(map.error());
+        if (auto written = writeFile(option(QStringLiteral("out")), writeContextMap(*map)); !written)
+            return fail(written.error());
+        return 0;
+    }
+
+    if (command == u"recontext" || command == u"compare") {
+        auto mapBytes = readFile(option(QStringLiteral("map")));
+        if (!mapBytes)
+            return fail(mapBytes.error());
+        auto map = readContextMap(*mapBytes);
+        if (!map)
+            return fail(QStringLiteral("context map: %1").arg(map.error()));
+        if (command == u"recontext") {
+            // Every catalog moves, or none is written.
+            QList<std::pair<QString, QByteArray>> outputs;
+            for (const QString &path : options.values(QStringLiteral("ts"))) {
+                auto catalog = readKeys(path);
+                if (!catalog)
+                    return fail(catalog.error());
+                auto moved = recontext(*catalog, *map);
+                if (!moved)
+                    return fail(QStringLiteral("%1: %2").arg(path, moved.error()));
+                outputs.append({path, writeTs(*moved)});
+            }
+            for (const auto &[path, bytes] : outputs)
+                if (auto written = writeFile(path, bytes); !written)
+                    return fail(written.error());
+            return 0;
+        }
+        auto before = readKeys(option(QStringLiteral("before")));
+        if (!before)
+            return fail(before.error());
+        auto after = readKeys(option(QStringLiteral("after")));
+        if (!after)
+            return fail(after.error());
+        const RecontextComparison c = compareRecontexted(*before, *after, *map);
+        for (const QString &problem : c.problems)
+            std::fprintf(stderr, "%s\n", qPrintable(problem));
+        for (const QString &entry : c.promoted)
+            std::printf("joined a finished entry with the same text: %s\n", qPrintable(entry));
+        std::printf("%s: entries %d -> %d (%d keys joined), with a translation %d -> %d, finished %d -> %d "
+                    "(%lld unfinished joined a finished one), distinct translated texts %d -> %d\n",
+                    qPrintable(after->language), c.entriesBefore, c.entriesAfter, c.joinedKeys, c.translatedBefore,
+                    c.translatedAfter, c.finishedBefore, c.finishedAfter, static_cast<long long>(c.promoted.size()),
+                    c.distinctTranslatedBefore, c.distinctTranslatedAfter);
+        if (!c.problems.isEmpty())
+            return fail(QStringLiteral("%1 difference(s)").arg(c.problems.size()));
         return 0;
     }
     return fail(QStringLiteral("unknown command %1").arg(command));
