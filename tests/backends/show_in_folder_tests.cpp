@@ -5,11 +5,13 @@
 // answers; these tests run a private session bus with a fake file manager.
 // Windows uses SHOpenFolderAndSelectItems as legacy did; the Explorer window
 // it opens is read back through the Shell automation objects, on an
-// interactive desktop only (winix task show-in-folder-explorer).
+// interactive desktop and only when asked (HIKARI_SHOW_IN_FOLDER_EXPLORER=1,
+// set by the winix task show-in-folder-explorer).
 
 #include "hikari/backends/show_in_folder.h"
 
 #include <QDir>
+#include <QFileInfo>
 #include <QProcess>
 #include <QStandardPaths>
 #include <QTemporaryDir>
@@ -25,6 +27,8 @@
 #include <wrl/client.h>
 
 #include <QImage>
+
+#include <algorithm>
 #else
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
@@ -133,7 +137,8 @@ QList<ExplorerWindow> explorerWindowsOn(const QString &folder)
     return found;
 }
 
-// The whole desktop (every monitor) with the window raised, to a PNG.
+// The whole desktop (every monitor) with the window raised, to a PNG; its
+// size is logged, and a capture of one colour (nothing drawn) is refused.
 bool saveDesktop(const QString &file, HWND window)
 {
     SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
@@ -163,7 +168,19 @@ bool saveDesktop(const QString &file, HWND window)
     DeleteDC(memory);
     ReleaseDC(nullptr, screen);
     SetWindowPos(window, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-    return !image.isNull() && image.save(file);
+    if (image.isNull())
+        return false;
+    const QRgb first = image.pixel(0, 0);
+    bool drawn = false;
+    for (int row = 0; row < image.height() && !drawn; ++row) {
+        const auto *line = reinterpret_cast<const QRgb *>(image.constScanLine(row));
+        drawn = std::any_of(line, line + image.width(), [first](QRgb pixel) { return pixel != first; });
+    }
+    if (!drawn || !image.save(file))
+        return false;
+    qInfo().noquote() << "desktop saved:" << image.width() << "x" << image.height() << "pixels,"
+                      << QFileInfo(file).size() << "bytes";
+    return true;
 }
 
 } // namespace
@@ -240,7 +257,7 @@ private slots:
 
         QTemporaryDir dir;
         const QString file = dir.filePath(QStringLiteral("ep 01 (ä).mkv"));
-        QFile(file).open(QIODevice::WriteOnly);
+        QVERIFY(QFile(file).open(QIODevice::WriteOnly));
 
         // No file manager on the bus: the folder opens instead (legacy Linux).
         QStringList fallbacks;
@@ -271,11 +288,17 @@ private slots:
     // (legacy SelectInFolder, config.cpp:1050-1058), read back from the
     // window through the Shell automation objects and then closed. With
     // HIKARI_SHOW_IN_FOLDER_SHOT set, the desktop is saved there first.
+    // It opens a real window, so it runs only with
+    // HIKARI_SHOW_IN_FOLDER_EXPLORER=1 (the winix task): on a CI runner a
+    // desktop can look usable and Explorer still be too slow to start.
     void explorerShowsTheFileSelected()
     {
 #ifndef _WIN32
         QSKIP("Explorer is Windows only");
 #else
+        if (qEnvironmentVariableIntValue("HIKARI_SHOW_IN_FOLDER_EXPLORER") != 1)
+            QSKIP("opens a real Explorer window, so it runs with HIKARI_SHOW_IN_FOLDER_EXPLORER=1 only "
+                  "(winix task show-in-folder-explorer)");
         if (const QString reason = noExplorerReason(); !reason.isEmpty())
             QSKIP(qPrintable(reason));
         const HRESULT com = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
