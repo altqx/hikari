@@ -687,8 +687,8 @@ import QtQuick
 import Hikari.Ui
 Row {
     spacing: 20
-    IconButton { objectName: "button"; iconRole: "save-as"; text: "Save as"; hoverEnabled: true }
-    IconToolButton { objectName: "tool"; iconRole: "save-as"; text: "Save as"; hoverEnabled: true }
+    IconButton { objectName: "button"; iconRole: "save-as"; text: "Save as"; tip: ""; hoverEnabled: true }
+    IconToolButton { objectName: "tool"; iconRole: "save-as"; text: "Save as"; tip: ""; hoverEnabled: true }
 }
 )", QSize(200, 60));
         QVERIFY(shown.root);
@@ -705,18 +705,35 @@ Row {
             };
             const std::pair normal{QColor(QStringLiteral("#202832")), QColor(QStringLiteral("#145c4c"))};
             QCOMPARE(colours(), normal);
+            // The button as drawn (its panel under the icon, whose colours
+            // are checked to stay): hover and press must change it.
+            const QRectF area = button->mapRectToScene(QRectF(0, 0, button->width(), button->height()));
+            const auto drawn = [&] {
+                const qreal ratio = window->effectiveDevicePixelRatio();
+                return window->grabWindow().copy(QRectF(area.topLeft() * ratio, area.size() * ratio).toAlignedRect());
+            };
+            // At rest: the pointer away from the button (it may be over it
+            // from an earlier step, and the button then shows hovered).
+            QTest::mouseMove(window, QPoint(195, 55));
+            QTRY_VERIFY(!button->property("hovered").toBool());
+            const QImage atRest = drawn();
+            QVERIFY(!atRest.isNull());
             const QPoint centre = button->mapToScene(QPointF(button->width() / 2, button->height() / 2)).toPoint();
             QTest::mouseMove(window, centre);
             QTRY_VERIFY(button->property("hovered").toBool());
             QVERIFY(panel->isVisible());
             QCOMPARE(colours(), normal);
+            QImage hovered;
+            QTRY_VERIFY2((hovered = drawn()) != atRest, name); // the panel shades on hover
             QTest::mousePress(window, Qt::LeftButton, {}, centre);
             QTRY_VERIFY(button->property("down").toBool());
             QVERIFY(panel->isVisible());
             QCOMPARE(colours(), normal);
+            QTRY_VERIFY2(drawn() != hovered && drawn() != atRest, name); // and again on press
             QTest::mouseRelease(window, Qt::LeftButton, {}, centre);
             QTest::mouseMove(window, QPoint(195, 55));
             QTRY_VERIFY(!button->property("hovered").toBool());
+            QTRY_VERIFY2(drawn() == atRest, name); // and back at rest
         }
         QVERIFY(!QQmlProperty(shown.root->findChild<QQuickItem *>(QStringLiteral("button"))->property("contentItem")
                                   .value<QQuickItem *>(), QStringLiteral("hovered"))
