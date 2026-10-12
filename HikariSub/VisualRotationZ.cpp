@@ -425,16 +425,19 @@ void RotationZ::ChangeTool(int _tool, bool blockSetCurVisual) {
 	changeAllTags = (_tool & 2) != 0;
 	replaceTagsInCursorPosition = !changeAllTags;
 	preserveProportions = (_tool & 4) != 0;
+	bool twoPointsChanged = twoPointsTool != hasTwoPoints;
+	if (twoPointsChanged) {
+		hasTwoPoints = twoPointsTool;
+		visibility[0] = false;
+		visibility[1] = false;
+	}
 	if (oldChangeAllTags != changeAllTags) {
 		if (!blockSetCurVisual) {
 			SetCurVisual();
 			tab->video->Render(false);
 		}
 	}
-	else if (twoPointsTool != hasTwoPoints) {
-		hasTwoPoints = twoPointsTool;
-		visibility[0] = false;
-		visibility[1] = false;
+	else if (twoPointsChanged) {
 		if (!blockSetCurVisual)
 			tab->video->Render(false);
 	}
