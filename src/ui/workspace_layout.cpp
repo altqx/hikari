@@ -239,7 +239,7 @@ bool WorkspaceLayoutController::restoreSaved()
 
 bool WorkspaceLayoutController::save()
 {
-    if (m_file.isEmpty() || m_restoring || !m_loaded || holding())
+    if (m_file.isEmpty() || m_restoring || !m_loaded || m_quitting || holding())
         return false;
     const QByteArray current = KDDockWidgets::LayoutSaver().serializeLayout();
     if (current == m_lastSaved)
@@ -252,6 +252,13 @@ bool WorkspaceLayoutController::save()
     m_lastSaved = current;
     emit changed();
     return true;
+}
+
+bool WorkspaceLayoutController::saveForQuit()
+{
+    const bool saved = save();
+    m_quitting = true;
+    return saved;
 }
 
 bool WorkspaceLayoutController::resetLayout()

@@ -231,6 +231,41 @@ private slots:
         QTRY_VERIFY(a.quitApproved());
         QTRY_VERIFY(!window->isVisible());
     }
+
+    // The review holds the close back before the docking engine sees it: the
+    // engine closes every panel on a close the window receives, which left
+    // the window empty while the review showed and after Cancel.
+    void cancellingTheReviewKeepsThePanels()
+    {
+        app::Application a;
+        QVERIFY(a.openFile(writeFile(dir, "panels.ass", "x")));
+        edit(a, u8"unsaved");
+        QQmlApplicationEngine engine;
+        hikari::ui::attachDocking(engine);
+        engine.setInitialProperties(a.qmlProperties());
+        engine.loadFromModule("Hikari.Ui", "Main");
+        auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        QTRY_VERIFY(window->property("arrangementSettled").toBool());
+        const auto panelsOpen = [window] {
+            for (const char *name : {"videoDock", "audioDock", "editorDock", "gridDock"})
+                if (!window->findChild<QObject *>(QLatin1String(name))->property("isOpen").toBool())
+                    return false;
+            return true;
+        };
+        QVERIFY(panelsOpen());
+        window->close();
+        auto *review = window->findChild<QQuickWindow *>(QStringLiteral("closeReview"));
+        QVERIFY(review);
+        QTRY_VERIFY(review->isVisible());
+        QVERIFY(window->isVisible());
+        QVERIFY(panelsOpen());
+        QVERIFY(QMetaObject::invokeMethod(review->findChild<QObject *>(QStringLiteral("closeCancel")), "clicked"));
+        QTRY_VERIFY(!review->isVisible());
+        QVERIFY(!a.quitApproved());
+        QVERIFY(window->isVisible());
+        QVERIFY(panelsOpen());
+    }
 };
 
 QTEST_MAIN(CloseReviewTests)

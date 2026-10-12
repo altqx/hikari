@@ -381,6 +381,41 @@ void Docking::setSystemMove(bool on)
     emit systemMoveChanged();
 }
 
+namespace {
+
+// Installed after the engine's own filter on the window, so it sees the
+// close first (Qt runs the filter installed last first).
+class CloseGuard : public QObject {
+public:
+    CloseGuard(QQuickWindow *window, QJSValue admit) : QObject(window), m_admit(std::move(admit)) {}
+
+    bool eventFilter(QObject *, QEvent *event) override
+    {
+        if (event->type() != QEvent::Close || !m_admit.isCallable())
+            return false;
+        const QJSValue admitted = m_admit.call();
+        if (admitted.isError()) {
+            qCWarning(lcDocking) << "the close guard failed:" << admitted.toString();
+            return false;
+        }
+        if (admitted.toBool())
+            return false;
+        event->ignore();
+        return true;
+    }
+
+private:
+    QJSValue m_admit;
+};
+
+} // namespace
+
+void Docking::guardClose(QQuickWindow *window, const QJSValue &admit)
+{
+    if (window)
+        window->installEventFilter(new CloseGuard(window, admit));
+}
+
 bool Docking::startSystemMove(QQuickItem *from)
 {
     QQuickWindow *window = from ? from->window() : nullptr;

@@ -11,8 +11,10 @@
 // highlight (DockDropHighlight.qml) over the area a drop would take.
 
 #include <QHash>
+#include <QJSValue>
 #include <QObject>
 #include <QPointer>
+#include <QQuickWindow>
 #include <QSize>
 #include <QtQml/qqmlregistration.h>
 
@@ -145,6 +147,12 @@ public:
     // window manager that moves windows, and offscreen, do not).
     // systemMoveRequested says so to tests on platforms that do not.
     Q_INVOKABLE bool startSystemMove(QQuickItem *from);
+    // The main window's close, before the docking engine takes it: the
+    // engine's main window filters the window's QEvent::Close and closes
+    // every panel it holds, before the window's own closing handler runs.
+    // `admit` (a QML function) runs first; when it returns false the close
+    // is refused there and the engine never sees it, so the panels stay.
+    Q_INVOKABLE void guardClose(QQuickWindow *window, const QJSValue &admit);
     // Asks the focused control for its context menu, as the keyboard does
     // (a QContextMenuEvent with the Keyboard reason to the focus window).
     // Main.qml's Shift+F10 on Windows, which keeps the key from the system.

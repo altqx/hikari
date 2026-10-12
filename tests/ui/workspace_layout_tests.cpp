@@ -102,6 +102,39 @@ private slots:
                                                           &problem));
     }
 
+    // Closing the main window saves the arrangement it showed, and nothing
+    // after that does. The docking engine closes every panel when the window
+    // receives the close, before the window's closing handler ran, so that
+    // handler saved the docked panels closed (the next start showed an
+    // empty main window), and a save during the teardown (the periodic one,
+    // on the Windows gate at 22a2a452) wrote the window hidden as well.
+    void theArrangementTheWindowClosedWithIsTheLastSaved()
+    {
+        start();
+        auto *window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(dock("audioDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(dock("audioDock")->property("isFloating").toBool());
+        window->close();
+        QTRY_VERIFY(!window->isVisible());
+        // What the teardown does after the close, then a save.
+        for (const char *name : {"videoDock", "audioDock", "editorDock", "gridDock"})
+            QVERIFY(QMetaObject::invokeMethod(dock(name), "close"));
+        QTRY_VERIFY(!dock("gridDock")->property("isOpen").toBool());
+        QVERIFY(!application->workspaceLayout().save());
+        engine.reset();
+        application.reset();
+        QFile f(layoutFile());
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        const QJsonObject payload = QJsonDocument::fromJson(f.readAll()).object().value(QStringLiteral("payload")).toObject();
+        QVERIFY(payload.value(QStringLiteral("mainWindows")).toArray().first().toObject().value(QStringLiteral("isVisible")).toBool());
+        start();
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(window->isVisible());
+        QVERIFY(dock("audioDock")->property("isFloating").toBool());
+        for (const char *name : {"videoDock", "audioDock", "editorDock", "gridDock"})
+            QVERIFY2(dock(name)->property("isOpen").toBool(), name);
+    }
+
     void aFloatedPanelComesBackNextSession()
     {
         start();

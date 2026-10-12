@@ -57,6 +57,10 @@ public:
     // until restoreSaved() has read the saved file, so a save before then
     // (the window closed before its first frame) cannot replace it.
     Q_INVOKABLE bool save();
+    // When the main window's close goes ahead: the last save. Taking the
+    // window down then closes every panel and hides the window; no save after
+    // this one writes that over the saved layout.
+    Q_INVOKABLE bool saveForQuit();
     Q_INVOKABLE bool resetLayout();
     Q_INVOKABLE bool restoreBackup();
     Q_INVOKABLE void dismissNotice();
@@ -117,6 +121,7 @@ private:
     QString m_preset = QStringLiteral("Editing");
     bool m_restoring = false;
     bool m_loaded = false; // restoreSaved() has run
+    bool m_quitting = false; // saveForQuit() has run
     bool m_menuHasFocus = false;
     QTimer m_screenCheck;
 };

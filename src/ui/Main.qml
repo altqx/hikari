@@ -135,8 +135,23 @@ ApplicationWindow {
         if (active)
             checkExternalChange()
     }
+    // The close as the window receives it, before the docking engine closes
+    // every panel (Docking.guardClose, from the first frame on): the review
+    // of unsaved work holds a close back here, so the panels stay while it is
+    // shown and after it is cancelled, and a close that goes ahead saves the
+    // layout as the user sees it, the last save of the session.
+    function admitClose() {
+        if (!root.app.quitApproved) {
+            const rows = root.app.reviewClose("quit")
+            if (rows.length > 0) {
+                closeReview.review(rows)
+                return false
+            }
+        }
+        root.workspaceLayout.saveForQuit()
+        return true
+    }
     onClosing: close => {
-        root.workspaceLayout.save()
         if (!root.app.quitApproved) {
             const rows = root.app.reviewClose("quit")
             if (rows.length > 0) {
@@ -3983,6 +3998,7 @@ ApplicationWindow {
         root.fitAudioBox()
         root.workspaceLayout.captureDefault()
         root.workspaceLayout.restoreSaved()
+        Docking.guardClose(root, root.admitClose)
         // D2: HikariSubFrame's constructor, `if (!EDITOR_ON) HideEditor(false)`.
         if (!root.app.editorOn)
             root.applyEditor(false)
