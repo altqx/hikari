@@ -486,9 +486,9 @@ TEST(FontCollectionFontconfig, ProviderFallbackIsReportedAndDoesNotReplay)
 
 TEST(FontCollectionFontconfig, InstallingAFontIsSeenByTheNextGeneration)
 {
-    namespace fs = std::filesystem;
-    const fs::path installed = fs::path(HIKARI_FONT_REFRESH_DIR) / "refresh.ttf";
-    fs::remove(installed);
+    // Installed and removed with the folder's modification time moved on, so
+    // the cache fontconfig keeps for the folder does not outlive the font.
+    InstalledFont font(HIKARI_FONT_REFRESH_SOURCE, "refresh.ttf", "HikariProbeRefresh");
     const auto script = document({"A,HikariProbeRefresh,0,0"}, {"A,Refresh"});
     FontEnvironment env;
     env.generation = 1;
@@ -502,14 +502,14 @@ TEST(FontCollectionFontconfig, InstallingAFontIsSeenByTheNextGeneration)
     };
     EXPECT_TRUE(listed(before->substitutedFamilies) || listed(before->missingFamilies));
     EXPECT_FALSE(before->complete());
-    fs::copy_file(fs::path(HIKARI_FONT_REFRESH_SOURCE) / "refresh.ttf", installed);
+    font.install();
     env.generation = 2;
     const auto after = service.collect(script, env);
-    fs::remove(installed);
+    font.remove();
     ASSERT_TRUE(after);
     EXPECT_TRUE(after->complete());
     ASSERT_EQ(after->fonts.size(), 1u);
-    EXPECT_EQ(after->fonts[0].path, installed.string());
+    EXPECT_EQ(after->fonts[0].path, font.path().string());
     EXPECT_EQ(after->generation, 2u);
 }
 
