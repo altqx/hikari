@@ -446,6 +446,18 @@ void ColorPickerScreenDropper::DropFromScreenXY(int x, int y)
 
 void ColorPickerScreenDropper::SendGetColorEvent(int x, int y)
 {
+#ifndef _WIN32
+	// DropFromScreenXY cannot read the screen on Wayland, so the capture still
+	// holds its initial white; report the failure instead of picking it
+	if (HikariSubIsWayland()){
+		static bool reported = false;
+		if (!reported){
+			reported = true;
+			HikariLog(_("Picking a color from the screen is not supported on Wayland"));
+		}
+		return;
+	}
+#endif
 	wxColour color;
 	wxMemoryDC capdc(capture);
 	capdc.GetPixel(x, y, &color);
