@@ -1673,6 +1673,8 @@ void AudioDisplay::SetDialogue(Dialogue *diag, int n, bool moveToEnd) {
 	dialogue = diag;
 	NeedCommit = false;
 	currentSyllable = 0;
+	// a boundary grabbed on the previous Line may not exist on this one
+	Grabbed = -1;
 	// Set flags
 	// Set times
 	if (Options.GetBool(AUDIO_GRAB_TIMES_ON_SELECT)) {
@@ -2295,7 +2297,7 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 				}
 
 
-				if (hasKara && Grabbed != -1)
+				if (hasKara && Grabbed >= 0 && Grabbed < (int)karaoke->syltimes.size())
 				{
 					int newpos = ZEROIT(GetMSAtX(x));
 					int prev = (Grabbed == 0) ? curStartMS : karaoke->syltimes[Grabbed - 1];
@@ -2310,6 +2312,7 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 				// Update stuff
 
 				hold = 0;
+				Grabbed = -1;
 
 				return;
 			}
@@ -2388,7 +2391,7 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 					}
 				}
 				//drag karaoke
-				if (hold == 5 && Grabbed != -1){
+				if (hold == 5 && Grabbed >= 0 && Grabbed < (int)karaoke->syltimes.size()){
 					int newpos = ZEROIT(GetMSAtX(x));
 					int sizes = karaoke->syls.size() - 1;
 					int prev = (Grabbed == 0) ? curStartMS : karaoke->syltimes[Grabbed - 1];
@@ -2426,7 +2429,7 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 
 			if (!playingToEnd) {
 				long long slend;
-				if (hasKara && Grabbed >= 0){
+				if (hasKara && Grabbed >= 0 && Grabbed < (int)karaoke->syltimes.size()){
 					slend = GetSampleAtMS(karaoke->syltimes[Grabbed]);
 				}
 				else{
