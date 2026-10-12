@@ -4547,6 +4547,10 @@ and will be changed to the default</source>
 <context>
     <name>HikariSub.Reference</name>
     <message>
+        <source>Compare with reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reference</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6128,7 +6132,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Choose color</source>
-        <translation>색상 선택</translation>
+        <translation type="vanished">색상 선택</translation>
     </message>
     <message>
         <source>New catalog</source>
@@ -6941,6 +6945,10 @@ Foreign language text will be deleted.</source>
         <source>Could not open %1; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Translation needs an ASS file: plain text cannot store it.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Video</name>
@@ -7242,6 +7250,10 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Copy frame to clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unload video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -7,6 +7,8 @@
 
 #include "hikari/core/ass_save.h"
 
+#include <QCoreApplication>
+
 namespace hikari::app {
 
 namespace {
@@ -76,7 +78,8 @@ QString Application::translationHint() const
     const auto *session = target ? m_files->session(*target) : nullptr;
     if (!session || session->document().format() != core::SubtitleFormat::PlainText)
         return {};
-    return tr("Translation needs an ASS file: plain text cannot store it.");
+    return QCoreApplication::translate("HikariSub.Translation",
+                                       "Translation needs an ASS file: plain text cannot store it.");
 }
 
 bool Application::turnOnTranslationMode()

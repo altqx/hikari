@@ -515,7 +515,7 @@ ApplicationWindow {
     // the one being chosen too).
     function panelOwnItems(dock) {
         if (dock === referenceDock)
-            return [{ name: "compareWithReference", text: qsTr("Compare with reference"),
+            return [{ name: "compareWithReference", text: qsTranslate("HikariSub.Reference", "Compare with reference"),
                       enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference() }]
         return []
     }
