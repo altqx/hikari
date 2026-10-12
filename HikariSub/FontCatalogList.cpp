@@ -774,6 +774,8 @@ bool FontCatalogManagement::ChangeCatalogName(wxWindow* messagesParent, const wx
 	}
 	
 	fontCatalogs[newCatalog] = (fontTable) ? fontTable : new wxArrayString();
+	if (fontCatalogsNames.Index(newCatalog) == -1)
+		fontCatalogsNames.Add(newCatalog);
 	FontCatalogList::StartEditionTimer(saveInterval);
 	return true;
 }
