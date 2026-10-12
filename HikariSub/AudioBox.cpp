@@ -284,7 +284,7 @@ void AudioBox::OnVerticalZoom(wxScrollEvent &event) {
 	audioDisplay->SetScale(value);
 	if (VerticalLink->GetValue()) {
 		audioDisplay->player->SetVolume(PlaybackVolumeFromSlider(pos));
-		VolumeBar->SetThumbPosition(VerticalZoom->GetThumbPosition());
+		VolumeBar->SetValue(VerticalZoom->GetValue());
 		Options.SetInt(AUDIO_VOLUME, pos);
 	}
 	Options.SetInt(AUDIO_VERTICAL_ZOOM, pos);
@@ -307,7 +307,7 @@ void AudioBox::OnVolume(wxScrollEvent &event) {
 		sliderPositionSave.Start(1000, true);
 
 	if (VerticalLink->GetValue()) {
-		VerticalZoom->SetThumbPosition(VolumeBar->GetThumbPosition());
+		VerticalZoom->SetValue(VolumeBar->GetValue());
 		audioDisplay->SetScale(AudioDisplayScaleFromSlider(pos));
 		Options.SetInt(AUDIO_VERTICAL_ZOOM, pos);
 	}
@@ -323,7 +323,7 @@ void AudioBox::OnVerticalLink(wxCommandEvent &event) {
 	if (VerticalLink->GetValue()) {
 		audioDisplay->player->SetVolume(PlaybackVolumeFromSlider(pos));
 		//VolumeBar->SetValue(pos);
-		VolumeBar->SetThumbPosition(VerticalZoom->GetThumbPosition());
+		VolumeBar->SetValue(VerticalZoom->GetValue());
 		Options.SetInt(AUDIO_VOLUME, pos);
 	}
 
@@ -628,7 +628,7 @@ void AudioBox::SetVolume(int vol)
 	Options.SaveAudioOpts();
 	VolumeBar->SetValue(vol);
 	if (VerticalLink->GetValue()) {
-		VerticalZoom->SetThumbPosition(VolumeBar->GetThumbPosition());
+		VerticalZoom->SetValue(VolumeBar->GetValue());
 		audioDisplay->SetScale(AudioDisplayScaleFromSlider(vol));
 	}
 
