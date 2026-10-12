@@ -8,6 +8,7 @@
 #include "hikari/core/srt.h"
 #include "line_measures.h"
 
+#include <QCoreApplication>
 #include <QString>
 
 #include <cmath>
@@ -459,8 +460,8 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
     static const char *names[] = {"#",     "L.",   "Start", "End",    "Styles", "Actor", "Left",
                                   "Right", "Vert.", "Effect", "CPS", "Wraps",  "Text", "Translation"};
     if (section == TextColumn && m_showOriginal)
-        return tr("Original text"); // SubsGridWindow.cpp:329
-    return tr(names[section]);
+        return QCoreApplication::translate("HikariSub.Grid", "Original text"); // SubsGridWindow.cpp:329
+    return QCoreApplication::translate("HikariSub.Grid", names[section]);
 }
 
 QHash<int, QByteArray> LineTableModel::roleNames() const

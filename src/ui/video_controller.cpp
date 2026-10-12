@@ -2,6 +2,7 @@
 
 #include "video_presenter.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QPointer>
@@ -19,11 +20,11 @@ namespace {
 QString reasonOf(std::optional<SourceError> e)
 {
     switch (e.value_or(SourceError::BackendFailure)) {
-    case SourceError::InvalidInput: return QObject::tr("the file could not be read");
-    case SourceError::Unsupported: return QObject::tr("the file has no usable video track");
-    case SourceError::HelperLost: return QObject::tr("the media helper ended");
-    case SourceError::MissingDependency: return QObject::tr("a media component is missing");
-    default: return QObject::tr("the video could not be opened");
+    case SourceError::InvalidInput: return QCoreApplication::translate("HikariSub.Video", "the file could not be read");
+    case SourceError::Unsupported: return QCoreApplication::translate("HikariSub.Video", "the file has no usable video track");
+    case SourceError::HelperLost: return QCoreApplication::translate("HikariSub.Video", "the media helper ended");
+    case SourceError::MissingDependency: return QCoreApplication::translate("HikariSub.Video", "a media component is missing");
+    default: return QCoreApplication::translate("HikariSub.Video", "the video could not be opened");
     }
 }
 
@@ -226,18 +227,20 @@ void VideoController::setOfferApplyToAll(bool on)
 QString VideoController::status() const
 {
     switch (m_session.state()) {
-    case VideoSession::State::Closed: return tr("No video open");
+    case VideoSession::State::Closed: return QCoreApplication::translate("HikariSub.Video", "No video open");
     case VideoSession::State::Opening:
         if (m_session.dummy())
-            return tr("Opening dummy video…");
-        return tr("Indexing %1…").arg(QFileInfo(QString::fromStdString(m_session.path())).fileName());
+            return QCoreApplication::translate("HikariSub.Video", "Opening dummy video…");
+        return QCoreApplication::translate("HikariSub.Video", "Indexing %1…")
+                   .arg(QFileInfo(QString::fromStdString(m_session.path())).fileName());
     case VideoSession::State::Failed:
-        return tr("Video unavailable: %1").arg(reasonOf(m_session.error()));
+        return QCoreApplication::translate("HikariSub.Video", "Video unavailable: %1").arg(reasonOf(m_session.error()));
     case VideoSession::State::Ready: break;
     }
     const int f = frame();
     const auto start = m_session.frameStart(f);
-    return tr("Frame %1 of %2  %3").arg(f).arg(frameCount()).arg(start ? clock(start->microseconds()) : QString());
+    return QCoreApplication::translate("HikariSub.Video", "Frame %1 of %2  %3")
+               .arg(f).arg(frameCount()).arg(start ? clock(start->microseconds()) : QString());
 }
 
 void VideoController::attachPresenter(QObject *presenter)

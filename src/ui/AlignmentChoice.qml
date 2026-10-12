@@ -2,6 +2,7 @@
 // the nine \an positions. It shows the shown Line's position
 // (EditBox::SetAlignment) and a choice puts \an<n> into the text's first
 // block (EditBox::OnAnChoice); only ASS has it (EditBox::HideControls).
+pragma Translator: "HikariSub.Editor"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

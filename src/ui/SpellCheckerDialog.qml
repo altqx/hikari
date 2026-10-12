@@ -2,6 +2,7 @@
 // modeless window over the editing target: the misspelled word, its
 // replacement and suggestions, Replace / Replace all / Ignore / Ignore All /
 // Add to dictionary / Remove from dictionary. Enter replaces, Esc closes.
+pragma Translator: "HikariSub.Spelling"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

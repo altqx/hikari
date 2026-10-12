@@ -164,7 +164,8 @@ QString FontCatalogsController::previewText() const
 QStringList FontCatalogsController::catalogChoices() const
 {
     const_cast<FontCatalogsController *>(this)->ensureLoaded();
-    return list(application::catalogChoices(m_catalogs.names(), u16(tr("All fonts")), u16(tr("Without catalog"))));
+    return list(application::catalogChoices(m_catalogs.names(), u16(QCoreApplication::translate("HikariSub.Fonts", "All fonts")),
+                                            u16(QCoreApplication::translate("HikariSub.Fonts", "Without catalog"))));
 }
 
 QStringList FontCatalogsController::fontList(int selection, const QString &value, bool filterOn, const QString &filterText)
@@ -324,7 +325,9 @@ bool FontCatalogsController::collectFromSubtitles(const QString &catalog, bool c
 void FontCatalogsController::noCatalogToAddTo()
 {
     if (m_hooks.log)
-        m_hooks.log(tr("For adding fonts to catalog,\nclick \"Manage\" button first,\nto create new catalog."));
+        m_hooks.log(QCoreApplication::translate("HikariSub.Fonts",
+                                                "For adding fonts to catalog,\nclick \"Manage\" button first,\n"
+                                                "to create new catalog."));
 }
 
 void FontCatalogsController::startAutosave()
@@ -337,7 +340,7 @@ void FontCatalogsController::autosaveNow()
 {
     // The edition timer: "Autosave", Config/FontCatalogsAutosave<i>.txt with i
     // going 0, 1, 2 and round again.
-    m_autosaveStatus = tr("Autosave");
+    m_autosaveStatus = QCoreApplication::translate("HikariSub.Fonts", "Autosave");
     emit autosaveStatusChanged();
     application::writeFontCatalogFile(catalogPath(m_dir, application::fontCatalogsAutosaveFile(m_autosaveIndex)),
                                       m_catalogs.serialize());
@@ -375,7 +378,7 @@ void FontCatalogsController::loadExternalFonts()
         auto load = application::loadExternalFonts(u16(path), kLower);
         if (!load.opened) {
             if (m_hooks.log)
-                m_hooks.log(tr("Cannot load external font folder"));
+                m_hooks.log(QCoreApplication::translate("HikariSub.Fonts", "Cannot load external font folder"));
         } else {
             environment.externalFonts = std::move(load.fonts);
         }
@@ -385,7 +388,8 @@ void FontCatalogsController::loadExternalFonts()
     // the provider reads no face from.
     for (const auto &file : m_families->unreadableExternalFonts())
         if (m_hooks.log)
-            m_hooks.log(tr("Cannot add external font file %1.").arg(QFileInfo(QString::fromStdString(file)).fileName()));
+            m_hooks.log(QCoreApplication::translate("HikariSub.Fonts", "Cannot add external font file %1.")
+                            .arg(QFileInfo(QString::fromStdString(file)).fileName()));
     if (m_hooks.fontsChanged)
         m_hooks.fontsChanged();
 }

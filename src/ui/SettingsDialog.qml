@@ -9,6 +9,7 @@
 // choices live until OK, Apply or Cancel; the Hotkeys page is the
 // shortcut editor's (O2, `hotkeys`); Associations are Windows only and wait
 // for their platform card.
+pragma Translator: "HikariSub.Options"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs

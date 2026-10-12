@@ -13,6 +13,12 @@ set(hikari_keys_ts "${CMAKE_BINARY_DIR}/i18n/keys/hikarisub_keys.ts")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/i18n/keys")
 qt_add_lupdate(SOURCE_TARGETS ${HIKARI_I18N_SOURCE_TARGETS} TS_FILES "${hikari_keys_ts}"
     LUPDATE_TARGET hikari_i18n_keys NO_GLOBAL_TARGET OPTIONS -locations none -no-obsolete)
+# O6: since the semantic contexts (i18n/contexts.tsv), keys.ts is O4's record
+# moved through migration/contexts.tsv (hikari_i18n_migrate recontext), and
+# keymap.tsv is the keymap step below over it. This target re-extracts today's
+# sources instead: keys added after O4 whose text equals a legacy id would be
+# mapped, and hikari_i18n_convert would carry their legacy translations in.
+# Run it only with that translation decision (docs/qt/localisation.md).
 add_custom_target(hikari_i18n_keymap
     COMMAND "${CMAKE_COMMAND}" -E copy "${hikari_keys_ts}" "${hikari_i18n_dir}/migration/keys.ts"
     COMMAND ${HIKARI_I18N_RUN} $<TARGET_FILE:hikari_i18n_migrate> keymap --pot "${PROJECT_SOURCE_DIR}/Locale/template.pot"

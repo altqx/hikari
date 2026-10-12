@@ -17,29 +17,29 @@ namespace {
 // Legacy's HR messages in DShowPlayer::OpenFile / InitializeGraph, for the
 // translation catalogs.
 [[maybe_unused]] constexpr const char *kOpenMessages[] = {
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Failed to initialize DirectShow"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot create filters interface"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot create controller"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot create search interface"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot create audio interface"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Source filter not added"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot add video renderer"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot create audio renderer instance"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot add Direct Sound renderer"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot enumerate source pins"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot enumerate renderer pins"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot enumerate Direct Sound pins"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot get renderer pin"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot get dsound pin"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "No IMediaTypes"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "No track type info"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot connect source pin to video renderer"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot connect source pin to audio renderer"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot connect source pin to audio1 renderer"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot find connected source pin"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot get splitter pin info"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot enumerate splitter pins"),
-    QT_TRANSLATE_NOOP("DirectShowPlayer", "Cannot connect source pin to video2 renderer"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Failed to initialize DirectShow"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot create filters interface"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot create controller"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot create search interface"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot create audio interface"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Source filter not added"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot add video renderer"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot create audio renderer instance"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot add Direct Sound renderer"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot enumerate source pins"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot enumerate renderer pins"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot enumerate Direct Sound pins"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot get renderer pin"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot get dsound pin"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "No IMediaTypes"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "No track type info"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot connect source pin to video renderer"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot connect source pin to audio renderer"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot connect source pin to audio1 renderer"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot find connected source pin"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot get splitter pin info"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot enumerate splitter pins"),
+    QT_TRANSLATE_NOOP("HikariSub.Video", "Cannot connect source pin to video2 renderer"),
 };
 
 } // namespace
@@ -71,9 +71,10 @@ void Application::choosePlayer()
             // Legacy: HR's HikariLogSilent for the failed step, then
             // VideoBox::LoadVideo's warning box.
             m_directShow->setOpenFailed([this](const std::string &message) {
-                m_log->log(QCoreApplication::translate("DirectShowPlayer", message.c_str()), true);
-                emit playerNotice(tr("The file is not a valid video file or is corrupted,\n"
-                                     "or codecs or a splitter may be missing"));
+                m_log->log(QCoreApplication::translate("HikariSub.Video", message.c_str()), true);
+                emit playerNotice(QCoreApplication::translate("HikariSub.Video",
+                                                              "The file is not a valid video file or is corrupted,\n"
+                                                              "or codecs or a splitter may be missing"));
             });
         }
         m_directShow->setColorSpace(m_video->session().matrix());

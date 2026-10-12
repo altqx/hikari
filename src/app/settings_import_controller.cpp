@@ -15,11 +15,6 @@ QString qs(std::string_view s)
     return QString::fromUtf8(s.data(), static_cast<qsizetype>(s.size()));
 }
 
-QString tr(const char *text)
-{
-    return QCoreApplication::translate("SettingsImport", text);
-}
-
 QString valueText(const std::optional<application::SettingValue> &v)
 {
     if (!v)
@@ -116,7 +111,8 @@ QString SettingsImportController::summary() const
     std::map<si::Disposition, int> counts;
     for (const auto &r : m_plan->rows)
         ++counts[r.disposition];
-    return tr("%1 to import of %2 changes, %3 unchanged, %4 unresolved, %5 excluded, %6 retired")
+    return QCoreApplication::translate("HikariSub.SettingsImport",
+                                       "%1 to import of %2 changes, %3 unchanged, %4 unresolved, %5 excluded, %6 retired")
         .arg(m_chosen.size())
         .arg(counts[si::Disposition::Change] + counts[si::Disposition::Missing])
         .arg(counts[si::Disposition::Unchanged])
@@ -138,8 +134,8 @@ void SettingsImportController::discover(const QStringList &candidates)
     m_roots = SettingsImportStore::discoverRoots(candidates.isEmpty() ? SettingsImportStore::defaultCandidates()
                                                                       : candidates);
     emit rootsChanged();
-    setStatus(m_roots.isEmpty() ? tr("No legacy settings were found beside the program. Choose the folder of a legacy "
-                                     "installation.")
+    setStatus(m_roots.isEmpty() ? QCoreApplication::translate("HikariSub.SettingsImport",
+                                                              "No legacy settings were found beside the program. Choose the folder of a legacy installation.")
                                 : QString());
 }
 
@@ -149,7 +145,8 @@ bool SettingsImportController::addRoot(const QString &folder)
     const QString path = url.isLocalFile() ? url.toLocalFile() : folder;
     const auto root = SettingsImportStore::inspectRoot(path);
     if (!root) {
-        setStatus(tr("%1 holds no legacy settings (Config, Dictionary).").arg(QDir::toNativeSeparators(path)));
+        setStatus(QCoreApplication::translate("HikariSub.SettingsImport", "%1 holds no legacy settings (Config, Dictionary).")
+                      .arg(QDir::toNativeSeparators(path)));
         return false;
     }
     if (std::ranges::none_of(m_roots, [&](const auto &r) { return r.path == root->path; })) {
@@ -251,23 +248,26 @@ bool SettingsImportController::importChosen()
     const auto result = m_store->activate(*m_plan, m_chosen, *m_snapshot, m_revision);
     switch (result) {
     case SettingsImportStore::Result::Activated:
-        setStatus(tr("Imported. The settings take effect when HikariSub starts again; a setting you change before "
-                     "then keeps your change. The legacy files were not changed."));
+        setStatus(QCoreApplication::translate("HikariSub.SettingsImport",
+                                              "Imported. The settings take effect when HikariSub starts again; a setting you change before then keeps your change. The legacy files were not changed."));
         emit stateChanged();
         propose();
         return true;
     case SettingsImportStore::Result::NoChange:
-        setStatus(tr("Nothing to import: the chosen settings are already in effect."));
+        setStatus(QCoreApplication::translate("HikariSub.SettingsImport", "Nothing to import: the chosen settings are already in effect."));
         return true;
     case SettingsImportStore::Result::StaleSources:
-        setStatus(tr("The legacy files changed since they were read. Read them again to review the changes."));
+        setStatus(QCoreApplication::translate("HikariSub.SettingsImport",
+                                              "The legacy files changed since they were read. Read them again to review the changes."));
         return false;
     case SettingsImportStore::Result::StaleDestination:
-        setStatus(tr("The current settings changed since this review. Review the import again."));
+        setStatus(QCoreApplication::translate("HikariSub.SettingsImport",
+                                              "The current settings changed since this review. Review the import again."));
         propose();
         return false;
     case SettingsImportStore::Result::StagingFailed:
-        setStatus(tr("The import could not be prepared; the current settings stay in effect."));
+        setStatus(QCoreApplication::translate("HikariSub.SettingsImport",
+                                              "The import could not be prepared; the current settings stay in effect."));
         return false;
     case SettingsImportStore::Result::NothingToRollBack:
         break;
@@ -291,10 +291,11 @@ bool SettingsImportController::rollback()
         return false;
     const auto result = m_store->rollback();
     if (result != SettingsImportStore::Result::Activated) {
-        setStatus(tr("There is no earlier generation of the settings to go back to."));
+        setStatus(QCoreApplication::translate("HikariSub.SettingsImport", "There is no earlier generation of the settings to go back to."));
         return false;
     }
-    setStatus(tr("The settings before the import take effect when HikariSub starts again."));
+    setStatus(QCoreApplication::translate("HikariSub.SettingsImport",
+                                          "The settings before the import take effect when HikariSub starts again."));
     emit stateChanged();
     if (m_snapshot) {
         propose();

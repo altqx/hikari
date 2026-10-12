@@ -284,7 +284,7 @@ private slots:
         QVERIFY(localisation.setLanguage(QStringLiteral("pl_PL")));
         QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Cancel"), QStringLiteral("Anuluj (HikariSub)"));
         QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Close"), QStringLiteral("Zamknij (Qt)"));
-        QCOMPARE(QCoreApplication::translate("Main", "&File"), QStringLiteral("&Plik (HikariSub)"));
+        QCOMPARE(QCoreApplication::translate("HikariSub.MainWindow", "&File"), QStringLiteral("&Plik (HikariSub)"));
         QVERIFY(localisation.setLanguage(QString()));
         QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Cancel"), QStringLiteral("Cancel"));
         QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Close"), QStringLiteral("Close"));
@@ -315,11 +315,11 @@ private slots:
     {
         for (const char *language : {"ko_KR", "pl", "ta", "th_TH"}) {
             const QString ui = QStringLiteral(HIKARI_SOURCE_DIR "/i18n/hikarisub_%1.ts").arg(QLatin1String(language));
-            const auto label = tsEntry(ui, QStringLiteral("SettingsDialog"), QStringLiteral("Language"));
+            const auto label = tsEntry(ui, QStringLiteral("HikariSub.Options"), QStringLiteral("Language"));
             QVERIFY2(label.has_value(), language);
             QCOMPARE(label->first, QStringLiteral("unfinished"));
             QCOMPARE(label->second, QString());
-            const auto old = tsEntry(ui, QStringLiteral("SettingsDialog"), QStringLiteral("Language (program restart required)"));
+            const auto old = tsEntry(ui, QStringLiteral("HikariSub.Options"), QStringLiteral("Language (program restart required)"));
             QVERIFY2(old.has_value(), language);
             QCOMPARE(old->first, QStringLiteral("vanished"));
             const QString gettext = QStringLiteral(HIKARI_SOURCE_DIR "/i18n/hikarisub_gettext_%1.ts").arg(QLatin1String(language));
@@ -361,13 +361,13 @@ private slots:
         QCOMPARE(localisation.gettext("Search bar"), expected.toStdString());
         // The rewrite's interface contexts never answer for scripts.
         QVERIFY(localisation.setLanguage(QStringLiteral("pl")));
-        QCOMPARE(QCoreApplication::translate("Main", "&File"), QStringLiteral("&Plik"));
+        QCOMPARE(QCoreApplication::translate("HikariSub.MainWindow", "&File"), QStringLiteral("&Plik"));
         QCOMPARE(localisation.gettext("&File"), std::string("&Plik")); // the legacy id, from the gettext catalog
         QCOMPARE(localisation.gettext("Language (program restart required)"),
                  std::string("Język (wymaga restartu programu)"));
         QVERIFY(localisation.setLanguage(QStringLiteral("en")));
         QCOMPARE(localisation.gettext("Search bar"), std::string("Search bar"));
-        QCOMPARE(QCoreApplication::translate("Main", "&File"), QStringLiteral("&File"));
+        QCOMPARE(QCoreApplication::translate("HikariSub.MainWindow", "&File"), QStringLiteral("&File"));
     }
 
     // Settings: English and the catalogs; Apply switches the open window,
@@ -568,8 +568,7 @@ private slots:
         const QString english = application->shell().selectionStatus();
         QVERIFY2(english.endsWith(QStringLiteral(" (1 hidden)")), qPrintable(english));
         application->localisation().setPseudo(app::Localisation::Pseudo::Accents);
-        const QString suffix =
-            QCoreApplication::translate("hikari::ui::ShellController", " (%1 hidden)").arg(1);
+        const QString suffix = QCoreApplication::translate("HikariSub.StatusBar", " (%1 hidden)").arg(1);
         QVERIFY(suffix != QStringLiteral(" (1 hidden)"));
         QTRY_VERIFY2(application->shell().selectionStatus().endsWith(suffix),
                      qPrintable(application->shell().selectionStatus()));

@@ -1,15 +1,25 @@
 // O6 (#205): semantic translation contexts (docs/qt/localisation.md, "Keys
 // and migration"). The lint over small fixtures, the record of the move from
 // lupdate's default contexts (pairing, escaping, joining entries, the
-// comparison).
+// comparison), and the checked-in registry, map and catalogs.
 
 #include "hikari/i18n/contexts.h"
 
 #include <gtest/gtest.h>
 
+#include <QFile>
+
 using namespace hikari::i18n;
 
 namespace {
+
+QByteArray readSource(const QString &relative)
+{
+    QFile file(QStringLiteral(HIKARI_SOURCE_DIR "/") + relative);
+    if (!file.open(QIODevice::ReadOnly))
+        ADD_FAILURE() << "cannot read " << relative.toStdString();
+    return file.readAll();
+}
 
 const ContextRegistry registry{{QStringLiteral("HikariSub.Editor"), QStringLiteral("The line editor")},
                                {QStringLiteral("HikariSub.Grid"), QStringLiteral("The grid")}};
@@ -211,4 +221,32 @@ TEST(Recontext, ComparisonNamesEveryDifference)
     EXPECT_TRUE(mentions(c.problems, QStringLiteral("changed: HikariSub.Grid \"Cancel\" (was Main)")));
     EXPECT_TRUE(mentions(c.problems, QStringLiteral("lost: HikariSub.Grid \"Close\" (was Main)")));
     EXPECT_TRUE(mentions(c.problems, QStringLiteral("added: HikariSub.Grid \"New\"")));
+}
+
+// The checked-in record: the registry reads, every move goes to a registered
+// context, and the catalogs and keys hold registered contexts only (the
+// gettext catalogs: their own context alone).
+TEST(CheckedIn, CatalogsUseTheRegisteredContexts)
+{
+    const auto contexts = readContextRegistry(readSource(QStringLiteral("i18n/contexts.tsv")));
+    ASSERT_TRUE(contexts.has_value()) << contexts.error().toStdString();
+    EXPECT_FALSE(contexts->contains(QStringLiteral("HikariSub.Automation.Gettext")));
+    for (auto it = contexts->cbegin(); it != contexts->cend(); ++it)
+        EXPECT_TRUE(it.key().startsWith(QStringLiteral("HikariSub.")) || it.key() == u"QGuiApplication") << it.key().toStdString();
+    const auto map = readContextMap(readSource(QStringLiteral("i18n/migration/contexts.tsv")));
+    ASSERT_TRUE(map.has_value()) << map.error().toStdString();
+    EXPECT_GT(map->moves.size(), 1800);
+    for (const ContextMove &m : map->moves) {
+        EXPECT_TRUE(contexts->contains(m.to)) << m.to.toStdString();
+        // HikariSub.TagList was semantic before O6 (tag_list_controller.cpp's
+        // QT_TRANSLATE_NOOP table): its keys stay where they were.
+        EXPECT_TRUE(!contexts->contains(m.from) || m.from == m.to) << m.from.toStdString();
+    }
+    for (const char *file : {"i18n/hikarisub_pl.ts", "i18n/hikarisub_ko_KR.ts", "i18n/hikarisub_th_TH.ts",
+                             "i18n/hikarisub_ta.ts", "i18n/migration/keys.ts"}) {
+        const auto catalog = readTs(readSource(QLatin1String(file)));
+        ASSERT_TRUE(catalog.has_value()) << file;
+        for (const TsContext &c : catalog->contexts)
+            EXPECT_TRUE(contexts->contains(c.name)) << file << ": " << c.name.toStdString();
+    }
 }

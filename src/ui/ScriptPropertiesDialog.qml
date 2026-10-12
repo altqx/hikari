@@ -1,6 +1,7 @@
 // Y3: legacy ScriptInfo "ASS subtitle properties" (GLOBAL_OPEN_ASS_PROPERTIES).
 // Only the fields the user changes are written (legacy IsModified), with the
 // legacy defaults applied on Save.
+pragma Translator: "HikariSub.ScriptProperties"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

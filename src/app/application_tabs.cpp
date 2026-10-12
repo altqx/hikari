@@ -21,6 +21,7 @@
 
 #include "hikari/application/session_file.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <algorithm>
 #include <QFile>
@@ -178,7 +179,7 @@ void Application::closeDocument(application::DocumentId document)
     // Notebook::DeletePage: with no tab left, a new empty (Untitled) one.
     if (m_workspace.tabs().empty()) {
         const auto id = m_files->createNew();
-        m_workspace.add(id, tr("Untitled").toStdString());
+        m_workspace.add(id, QCoreApplication::translate("HikariSub.Documents", "Untitled").toStdString());
         m_workspace.setEditingTarget(id);
     }
     refreshViews();
@@ -544,7 +545,7 @@ QVariantMap Application::reviewSession(const QUrl &file)
         return result(false, QString()); // no file or an empty one: legacy did nothing
     auto session = application::parseSession(*text);
     if (!session) {
-        const QString problem = tr("Session file is corrupt");
+        const QString problem = QCoreApplication::translate("HikariSub.Session", "Session file is corrupt");
         m_log->log(problem);
         return result(false, problem);
     }
@@ -622,7 +623,7 @@ void Application::applySession()
         } else {
             // A tab whose subtitles could not load stays, Untitled (legacy AddPage).
             id = m_files->createNew();
-            m_workspace.add(*id, tr("Untitled").toStdString());
+            m_workspace.add(*id, QCoreApplication::translate("HikariSub.Documents", "Untitled").toStdString());
             if (!subtitles.isEmpty())
                 m_unresolved.push_back({*id, QStringLiteral("subtitles"), subtitles, tab.active, 0});
         }
@@ -696,7 +697,7 @@ bool Application::retryRestore(int row)
     const auto isTarget = [&] { return m_workspace.editingTarget() == entry.document; };
     const bool dummyAudio = entry.kind == QLatin1String("audio") && entry.path == QLatin1String(application::AudioBox::kDummyName);
     if (!isFile(entry.path) && !dummyAudio) {
-        m_log->log(tr("Could not find %1").arg(QDir::toNativeSeparators(entry.path)));
+        m_log->log(QCoreApplication::translate("HikariSub.Session", "Could not find %1").arg(QDir::toNativeSeparators(entry.path)));
         return false;
     }
     TabMedia &media = m_tabMedia[entry.document.value];
@@ -705,12 +706,14 @@ bool Application::retryRestore(int row)
         auto *placeholder = m_files->session(entry.document);
         const auto destination = m_files->destination(entry.document);
         if (!placeholder || placeholder->isDirty() || (destination && !destination->value.empty())) {
-            m_log->log(tr("The tab of %1 has other work now; open the file in a new tab.").arg(QFileInfo(entry.path).fileName()));
+            m_log->log(QCoreApplication::translate("HikariSub.Session", "The tab of %1 has other work now; open the file in a new tab.")
+                           .arg(QFileInfo(entry.path).fileName()));
             return false;
         }
         auto staged = m_files->stageOpen({QFileInfo(entry.path).absoluteFilePath().toStdString()});
         if (!staged) {
-            m_log->log(tr("Could not open %1; nothing was changed.").arg(QFileInfo(entry.path).fileName()));
+            m_log->log(QCoreApplication::translate("HikariSub.Session", "Could not open %1; nothing was changed.")
+                           .arg(QFileInfo(entry.path).fileName()));
             return false;
         }
         m_unresolved.erase(m_unresolved.begin() + row);

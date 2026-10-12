@@ -3,6 +3,7 @@
 // rules list with its checkboxes, "Which lines", and finding or replacing
 // with the checked rules. Finds open the FindResultDialog "Search results",
 // where the checked ones are replaced.
+pragma Translator: "HikariSub.MisspellReplacer"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

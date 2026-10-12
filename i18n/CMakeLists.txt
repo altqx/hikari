@@ -11,6 +11,12 @@
 # Those need the source targets, so Extraction.cmake defines them once the
 # top-level directory has added src.
 #
+# O6: every interface string has a semantic context from contexts.tsv
+# (QML pragma Translator / qsTranslate, C++ QCoreApplication::translate /
+# QT_TRANSLATE_NOOP); the ctest hikari_i18n_contexts_are_semantic fails on
+# any other. migration/contexts.tsv records the move from lupdate's file and
+# class contexts.
+#
 # The gettext catalogs hold the aegisub.gettext compatibility entries; they
 # are not lupdate's, so extraction can never obsolete them.
 find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS LinguistTools)

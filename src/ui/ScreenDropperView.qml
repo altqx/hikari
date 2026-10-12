@@ -2,6 +2,7 @@
 // screen pixels last captured, each drawn 8 pixels wide, white until the
 // first capture; a left press on a pixel picks it (SendGetColorEvent).
 pragma ComponentBehavior: Bound
+pragma Translator: "HikariSub.Colours"
 import QtQuick
 import Hikari.Ui
 

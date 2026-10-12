@@ -10,6 +10,7 @@
 // and asks the catalog window to select its font when it is opened again.
 // "Without catalog" removes the catalogs' fonts in both (Y6-without-catalog:
 // legacy's font dialog removed its first font per catalog entry).
+pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

@@ -1,6 +1,7 @@
 // The automation manager tool (L1): loaded scripts with their state and
 // macros. Loading and reloading run the script's top level visibly; a failed
 // or unavailable script says why and offers reload.
+pragma Translator: "HikariSub.Automation"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

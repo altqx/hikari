@@ -1,5 +1,6 @@
 #include "automation_dialog_controller.h"
 
+#include <QCoreApplication>
 #include <QColor>
 
 #include <algorithm>
@@ -79,7 +80,8 @@ void AutomationDialogController::present(const QString &title, const application
     }
     m_buttons.clear();
     if (request.buttons.empty())
-        m_buttons << tr("OK") << tr("Cancel");
+        m_buttons << QCoreApplication::translate("HikariSub.Automation", "OK")
+                  << QCoreApplication::translate("HikariSub.Automation", "Cancel");
     for (const auto &b : request.buttons)
         m_buttons << QString::fromStdString(b);
     emit changed();

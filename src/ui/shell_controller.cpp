@@ -2,6 +2,7 @@
 
 #include "hikari/core/ass_save.h"
 
+#include <QCoreApplication>
 #include <QDateTime>
 
 #include <algorithm>
@@ -100,9 +101,11 @@ void ShellController::setSelection(const application::Selection &selection)
 QString ShellController::selectionText() const
 {
     const qsizetype count = m_selectedCount;
-    QString text = count == 0 ? QString() : count == 1 ? tr("1 Line selected") : tr("%1 Lines selected").arg(count);
+    QString text = count == 0   ? QString()
+                   : count == 1 ? QCoreApplication::translate("HikariSub.StatusBar", "1 Line selected")
+                                : QCoreApplication::translate("HikariSub.StatusBar", "%1 Lines selected").arg(count);
     if (m_hiddenCount > 0)
-        text += tr(" (%1 hidden)").arg(m_hiddenCount);
+        text += QCoreApplication::translate("HikariSub.StatusBar", " (%1 hidden)").arg(m_hiddenCount);
     return text;
 }
 
@@ -160,7 +163,7 @@ void ShellController::startProgress(const QString &title)
     // ProgressTitle (HikariSubFrame.cpp:578-588): 0%, with the time since the start.
     const qint64 elapsed = std::max<qint64>(progressNow() - m_progressStart, 0);
     setStatusText(m_progressTitle + QStringLiteral(" 0%. ") +
-                  tr("Time elapsed: %1").arg(qs(core::legacy::assTimeText(elapsed))));
+                  QCoreApplication::translate("HikariSub.StatusBar", "Time elapsed: %1").arg(qs(core::legacy::assTimeText(elapsed))));
 }
 
 void ShellController::setProgress(int percent)
@@ -169,7 +172,7 @@ void ShellController::setProgress(int percent)
     // NewTime keeps a negative time at 0; raw() is the ASS form.
     const qint64 elapsed = std::max<qint64>(progressNow() - m_progressStart, 0);
     setStatusText(m_progressTitle + QLatin1Char(' ') + QString::number(percent) + QStringLiteral("%. ") +
-                  tr("Time elapsed: %1").arg(qs(core::legacy::assTimeText(elapsed))));
+                  QCoreApplication::translate("HikariSub.StatusBar", "Time elapsed: %1").arg(qs(core::legacy::assTimeText(elapsed))));
 }
 
 void ShellController::endProgress()

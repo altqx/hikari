@@ -7,6 +7,7 @@
 #include "hikari/core/document.h"
 #include "hikari/core/srt.h"
 
+#include <QCoreApplication>
 #include <QFileInfo>
 
 namespace hikari::ui {
@@ -139,9 +140,15 @@ QStringList StatusBarController::fields() const
 QStringList StatusBarController::tooltips()
 {
     // HikariSubFrame.cpp:153-154.
-    return {QString(),           tr("Video scale"),       tr("Video zoom"),
-            tr("Video duration"), tr("Frames per second"), tr("Video resolution"),
-            tr("Video aspect ratio"), tr("Subtitles resolution"), tr("Video file name")};
+    return {QString(),
+            QCoreApplication::translate("HikariSub.StatusBar", "Video scale"),
+            QCoreApplication::translate("HikariSub.StatusBar", "Video zoom"),
+            QCoreApplication::translate("HikariSub.StatusBar", "Video duration"),
+            QCoreApplication::translate("HikariSub.StatusBar", "Frames per second"),
+            QCoreApplication::translate("HikariSub.StatusBar", "Video resolution"),
+            QCoreApplication::translate("HikariSub.StatusBar", "Video aspect ratio"),
+            QCoreApplication::translate("HikariSub.StatusBar", "Subtitles resolution"),
+            QCoreApplication::translate("HikariSub.StatusBar", "Video file name")};
 }
 
 } // namespace hikari::ui

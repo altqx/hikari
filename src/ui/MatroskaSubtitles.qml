@@ -6,6 +6,7 @@
 // subtitles from Matroska." progress (ProgresDialog: the gauge, "Time
 // elapsed", Cancel). The loaded Document replaces the tab's when it is
 // complete (MatroskaController).
+pragma Translator: "HikariSub.Matroska"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

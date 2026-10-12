@@ -7,6 +7,7 @@
 #include <kddockwidgets/qtquick/DockWidgetInstantiator.h>
 #include <kddockwidgets/kddockwidgets_version.h>
 
+#include <QCoreApplication>
 #include <QFile>
 #include <QGuiApplication>
 #include <QQuickItem>
@@ -138,35 +139,37 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
         return std::nullopt;
     };
     if (file.size() > kMaximumBytes)
-        return fail(tr("the file is larger than %1 bytes").arg(kMaximumBytes));
+        return fail(QCoreApplication::translate("HikariSub.Workspace", "the file is larger than %1 bytes").arg(kMaximumBytes));
     QJsonParseError error{};
     const QJsonDocument doc = QJsonDocument::fromJson(file, &error);
     if (error.error != QJsonParseError::NoError || !doc.isObject())
-        return fail(tr("it is not a layout file"));
+        return fail(QCoreApplication::translate("HikariSub.Workspace", "it is not a layout file"));
     const QJsonObject o = doc.object();
     const int schema = o.value(QStringLiteral("schema")).toInt(-1);
     if (schema != kSchema)
-        return fail(schema > kSchema ? tr("it was written by a newer version") : tr("its format is not known"));
+        return fail(schema > kSchema ? QCoreApplication::translate("HikariSub.Workspace", "it was written by a newer version")
+                                     : QCoreApplication::translate("HikariSub.Workspace", "its format is not known"));
     if (o.value(QStringLiteral("panelRegistry")).toInt(-1) > kPanelRegistry)
-        return fail(tr("it names panels from a newer version"));
+        return fail(QCoreApplication::translate("HikariSub.Workspace", "it names panels from a newer version"));
     if (o.value(QStringLiteral("engine")).toString() != engineVersion())
-        return fail(tr("it was made with %1").arg(o.value(QStringLiteral("engine")).toString()));
+        return fail(QCoreApplication::translate("HikariSub.Workspace", "it was made with %1")
+                        .arg(o.value(QStringLiteral("engine")).toString()));
     for (const auto &panel : o.value(QStringLiteral("panels")).toArray())
         if (!panelIds().contains(panel.toString()))
-            return fail(tr("it names an unknown panel (%1)").arg(panel.toString()));
+            return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(panel.toString()));
     const QJsonObject payload = o.value(QStringLiteral("payload")).toObject();
     if (payload.isEmpty())
-        return fail(tr("it holds no layout"));
+        return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no layout"));
     // IDs before the engine sees them: the Classic main window, known panels only.
     bool classic = false;
     for (const auto &w : payload.value(QStringLiteral("mainWindows")).toArray())
         classic = classic || w.toObject().value(QStringLiteral("uniqueName")).toString() == QStringLiteral("Classic");
     if (!classic)
-        return fail(tr("it holds no Classic arrangement"));
+        return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no Classic arrangement"));
     for (const auto &d : payload.value(QStringLiteral("allDockWidgets")).toArray()) {
         const QString name = d.toObject().value(QStringLiteral("uniqueName")).toString();
         if (!panelIds().contains(name))
-            return fail(tr("it names an unknown panel (%1)").arg(name));
+            return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
     }
     if (preset) {
         const QString named = o.value(QStringLiteral("preset")).toString();
@@ -214,14 +217,14 @@ bool WorkspaceLayoutController::restoreSaved()
     m_full.clear();
     if (!payload || !restorePayload(*payload)) {
         if (problem.isEmpty())
-            problem = tr("the docking engine could not restore it");
+            problem = QCoreApplication::translate("HikariSub.Workspace", "the docking engine could not restore it");
         // A copy is kept for diagnosis before anything can overwrite the
         // file; saving resumes once the user changes or resets the layout.
         const QString kept = m_file + QStringLiteral(".unrestored");
         writeAtomically(kept, *bytes);
         m_lastSaved = KDDockWidgets::LayoutSaver().serializeLayout();
-        m_notice = tr("The saved panel layout was not restored because %1. The Editing layout is shown; "
-                      "the saved file is kept at %2.")
+        m_notice = QCoreApplication::translate("HikariSub.Workspace",
+                                               "The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.")
                        .arg(problem, QDir::toNativeSeparators(kept));
         emit changed();
         return false;

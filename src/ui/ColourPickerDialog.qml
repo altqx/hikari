@@ -9,6 +9,7 @@
 // UpdateFrom* (ColorPicker.cpp:770-907) through its integer colour spaces
 // (colorspace.cpp): the spectrum is saturation across and value down from
 // black at the top (MakeSVSpectrum), the hue strip hue down, all 0-255.
+pragma Translator: "HikariSub.Colours"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

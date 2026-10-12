@@ -4,6 +4,7 @@
 // characters a wrap or three wraps, and over 15 characters per second; empty
 // for a comment), then Time and Frames (EDITBOX_TIMES_TO_FRAMES_SWITCH),
 // enabled once a video was opened (Notebook::LoadVideo).
+pragma Translator: "HikariSub.Editor"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

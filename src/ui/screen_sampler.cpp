@@ -1,5 +1,6 @@
 #include "screen_sampler.h"
 
+#include <QCoreApplication>
 #include <QCursor>
 #include <QGuiApplication>
 #include <QMouseEvent>
@@ -97,8 +98,8 @@ ScreenSampler::Route ScreenSampler::routeFor(const QString &platformName, bool w
     if (portalAvailable)
         return {QStringLiteral("portal"), {}};
     return {{},
-            tr("Picking a colour from the screen is not available: this Wayland session offers no screenshot "
-               "portal (xdg-desktop-portal with PickColor).")};
+            QCoreApplication::translate("HikariSub.Colours",
+                                        "Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).")};
 }
 
 ScreenSampler::ScreenSampler(QObject *parent) : QObject(parent), m_source(grabScreen) {}
@@ -262,7 +263,8 @@ void ScreenSampler::pickFromPortal()
     if (m_portalBusy)
         return;
     if (route() != QLatin1String("portal")) {
-        emit portalFailed(available() ? tr("The desktop's screenshot portal is not in use here.") : unavailableReason());
+        emit portalFailed(available() ? QCoreApplication::translate("HikariSub.Colours", "The desktop's screenshot portal is not in use here.")
+                                      : unavailableReason());
         return;
     }
     if (m_portalRequest) {
@@ -330,7 +332,7 @@ void ScreenSampler::answerPortal(uint response, double red, double green, double
                            {QStringLiteral("b"), channel(blue)},
                            {QStringLiteral("a"), 0}});
     } else if (response != 1) { // 1: the user cancelled, as a dropper released without a pick
-        emit portalFailed(tr("The desktop could not pick a colour from the screen."));
+        emit portalFailed(QCoreApplication::translate("HikariSub.Colours", "The desktop could not pick a colour from the screen."));
     }
     finishPortal();
 }

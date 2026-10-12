@@ -4,6 +4,7 @@
 // and Cancel. OK collects every Style's font and each \fn of the active
 // tab's Lines (or every tab's) into the chosen catalog and saves the
 // catalogs (CollectFontsFromSubtitles).
+pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

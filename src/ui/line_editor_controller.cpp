@@ -10,6 +10,7 @@
 #include "hikari/core/text_projection.h"
 #include "line_measures.h"
 
+#include <QCoreApplication>
 #include <QCollator>
 #include <QTextBoundaryFinder>
 
@@ -42,11 +43,16 @@ std::u16string u16(const QString &s)
 QString refusalText(core::MapRefusal r)
 {
     switch (r) {
-    case core::MapRefusal::SplitsCharacter: return QObject::tr("Select whole characters.");
-    case core::MapRefusal::AssSyntax: return QObject::tr("Braces and backslashes are ASS syntax: edit them with tags shown.");
-    case core::MapRefusal::Protected: return QObject::tr("This touches a drawing or malformed tag: edit it with tags shown.");
-    case core::MapRefusal::SplitsToken: return QObject::tr("Select the whole line break or hard space.");
-    case core::MapRefusal::Reinterpreted: return QObject::tr("Here the text would become drawing or tag content: edit it with tags shown.");
+    case core::MapRefusal::SplitsCharacter: return QCoreApplication::translate("HikariSub.Editor", "Select whole characters.");
+    case core::MapRefusal::AssSyntax:
+        return QCoreApplication::translate("HikariSub.Editor", "Braces and backslashes are ASS syntax: edit them with tags shown.");
+    case core::MapRefusal::Protected:
+        return QCoreApplication::translate("HikariSub.Editor", "This touches a drawing or malformed tag: edit it with tags shown.");
+    case core::MapRefusal::SplitsToken:
+        return QCoreApplication::translate("HikariSub.Editor", "Select the whole line break or hard space.");
+    case core::MapRefusal::Reinterpreted:
+        return QCoreApplication::translate("HikariSub.Editor",
+                                           "Here the text would become drawing or tag content: edit it with tags shown.");
     }
     return {};
 }
@@ -130,7 +136,7 @@ bool LineEditorController::toggleUnconfirmed()
     if (!editable())
         return false;
     if (!translationMode()) {
-        fail(tr("Unconfirmed applies in translation mode only."));
+        fail(QCoreApplication::translate("HikariSub.Editor", "Unconfirmed applies in translation mode only."));
         return false;
     }
     if (!application::toggleUnconfirmed(*s)) {
@@ -210,13 +216,16 @@ QString LineEditorController::saveStatus() const
     if (!status)
         return {};
     if (!status->outcome)
-        return tr("Saving…");
+        return QCoreApplication::translate("HikariSub.Editor", "Saving…");
     switch (*status->outcome) {
     // Edited since: "Saved" no longer holds (the tab's mark says Modified).
-    case application::WriteOutcome::Written: return dirty() ? QString() : tr("Saved");
-    case application::WriteOutcome::DurabilityUncertain: return tr("Saved; the disk could not confirm it is stored");
-    case application::WriteOutcome::Cancelled: return tr("Save cancelled; nothing was written");
-    case application::WriteOutcome::Failed: return tr("Save failed; the file on disk is unchanged");
+    case application::WriteOutcome::Written: return dirty() ? QString() : QCoreApplication::translate("HikariSub.Editor", "Saved");
+    case application::WriteOutcome::DurabilityUncertain:
+        return QCoreApplication::translate("HikariSub.Editor", "Saved; the disk could not confirm it is stored");
+    case application::WriteOutcome::Cancelled:
+        return QCoreApplication::translate("HikariSub.Editor", "Save cancelled; nothing was written");
+    case application::WriteOutcome::Failed:
+        return QCoreApplication::translate("HikariSub.Editor", "Save failed; the file on disk is unchanged");
     }
     return {};
 }
@@ -227,8 +236,9 @@ QString LineEditorController::problemText() const
     const auto problem = s ? s->draftProblem() : std::nullopt;
     if (!problem || s->invalidCommitPolicy() == application::InvalidCommitPolicy::Legacy)
         return {};
-    return *problem == application::DraftProblem::EndBeforeStart ? tr("End is before Start.")
-                                                                 : tr("Margins must be between 0 and 9999.");
+    return *problem == application::DraftProblem::EndBeforeStart
+               ? QCoreApplication::translate("HikariSub.Editor", "End is before Start.")
+               : QCoreApplication::translate("HikariSub.Editor", "Margins must be between 0 and 9999.");
 }
 
 bool LineEditorController::translationMode() const
@@ -402,12 +412,18 @@ bool LineEditorController::setTime(application::TimeFieldRole role, const QStrin
     const bool start = role == application::TimeFieldRole::Start;
     if (!typed) {
         if (frameTimebase())
-            fail(start ? tr("Start is not a frame number.") : tr("End is not a frame number."), text);
+            fail(start ? QCoreApplication::translate("HikariSub.Editor", "Start is not a frame number.")
+                       : QCoreApplication::translate("HikariSub.Editor", "End is not a frame number."),
+                 text);
         else if (format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText)
-            fail(start ? tr("Start is not a time such as 0:00:01.00.") : tr("End is not a time such as 0:00:01.00."), text);
+            fail(start ? QCoreApplication::translate("HikariSub.Editor", "Start is not a time such as 0:00:01.00.")
+                       : QCoreApplication::translate("HikariSub.Editor", "End is not a time such as 0:00:01.00."),
+                 text);
         else
-            fail(start ? tr("Start is not a time such as %1.").arg(qs(application::editorTimeTexts(core::LineRecord{}, format, nullptr).start))
-                       : tr("End is not a time such as %1.").arg(qs(application::editorTimeTexts(core::LineRecord{}, format, nullptr).end)),
+            fail(start ? QCoreApplication::translate("HikariSub.Editor", "Start is not a time such as %1.")
+                             .arg(qs(application::editorTimeTexts(core::LineRecord{}, format, nullptr).start))
+                       : QCoreApplication::translate("HikariSub.Editor", "End is not a time such as %1.")
+                             .arg(qs(application::editorTimeTexts(core::LineRecord{}, format, nullptr).end)),
                  text);
         return false;
     }
@@ -436,7 +452,7 @@ void LineEditorController::setMarginText(int which, const QString &text)
             refresh(); // NumCtrl keeps the previous value
             return;
         }
-        fail(tr("Margins must be whole numbers."), text);
+        fail(QCoreApplication::translate("HikariSub.Editor", "Margins must be whole numbers."), text);
         return;
     }
     application::DraftChange change;
@@ -685,7 +701,9 @@ bool LineEditorController::save()
         return false;
     auto plan = m_files.prepareSave(*m_document);
     if (!plan) {
-        fail(plan.error() == application::SaveRefusal::InvalidDraft ? problemText() : tr("This Document can't be saved here."));
+        fail(plan.error() == application::SaveRefusal::InvalidDraft
+                 ? problemText()
+                 : QCoreApplication::translate("HikariSub.Editor", "This Document can't be saved here."));
         return false;
     }
     committed(); // Save committed the draft first
@@ -693,13 +711,14 @@ bool LineEditorController::save()
     if (!started) {
         switch (started.error()) {
         case application::SaveRefusal::ExternalChange:
-            fail(tr("The file changed on disk since it was opened. Reload it, or save elsewhere."));
+            fail(QCoreApplication::translate("HikariSub.Editor",
+                                             "The file changed on disk since it was opened. Reload it, or save elsewhere."));
             break;
         case application::SaveRefusal::Collision:
-            fail(tr("Another open Document uses that file."));
+            fail(QCoreApplication::translate("HikariSub.Editor", "Another open Document uses that file."));
             break;
         default:
-            fail(tr("The Document can't be saved right now."));
+            fail(QCoreApplication::translate("HikariSub.Editor", "The Document can't be saved right now."));
             break;
         }
         return false;
@@ -1172,7 +1191,7 @@ bool LineEditorController::toggleUnconfirmedAndAdvance()
     if (!editable() || !r)
         return false;
     if (!translationMode()) {
-        fail(tr("Unconfirmed applies in translation mode only."));
+        fail(QCoreApplication::translate("HikariSub.Editor", "Unconfirmed applies in translation mode only."));
         return false;
     }
     // E5: EditBox::OnDoubtfulTl flips every selected Line (ChangeState(4)).
@@ -1192,7 +1211,7 @@ bool LineEditorController::findNext(std::size_t &cursor, const std::function<boo
     if (!s)
         return false;
     if (!translationMode()) {
-        fail(tr("This search applies in translation mode only."));
+        fail(QCoreApplication::translate("HikariSub.Editor", "This search applies in translation mode only."));
         return false;
     }
     const auto lines = s->document().lines();
@@ -1219,13 +1238,13 @@ bool LineEditorController::findNext(std::size_t &cursor, const std::function<boo
 bool LineEditorController::findNextUnconfirmed()
 {
     return findNext(m_nextUnconfirmed, [](const core::LineRecord &l) { return l.unconfirmed; },
-                    tr("No unconfirmed lines found"));
+                    QCoreApplication::translate("HikariSub.Editor", "No unconfirmed lines found"));
 }
 
 bool LineEditorController::findNextUntranslated()
 {
     return findNext(m_nextUntranslated, [](const core::LineRecord &l) { return l.translation.empty(); },
-                    tr("No untranslated lines found"));
+                    QCoreApplication::translate("HikariSub.Editor", "No untranslated lines found"));
 }
 
 void LineEditorController::writeFinished()
@@ -1313,7 +1332,8 @@ QStringList LineEditorController::history() const
         return out;
     for (const auto &step : s->history()) {
         const QString name = QString::fromStdString(step.name);
-        out << (step.activeRow ? tr("%1, active line %2").arg(name).arg(step.activeRow) : name);
+        out << (step.activeRow ? QCoreApplication::translate("HikariSub.Editor", "%1, active line %2")
+                                     .arg(name).arg(step.activeRow) : name);
     }
     return out;
 }
@@ -1572,7 +1592,7 @@ QString LineEditorController::charsText() const
 {
     const auto r = record();
     if (!r)
-        return tr("Wraps: 0/86"); // the label before any Line (EditBox.cpp:219)
+        return QCoreApplication::translate("HikariSub.Editor", "Wraps: 0/86"); // the label before any Line (EditBox.cpp:219)
     if (r->comment)
         return {};
     // EditBox::UpdateChars (EditBox.cpp:497-525): the edited field's
@@ -1587,7 +1607,7 @@ QString LineEditorController::charsText() const
         const qsizetype slash = head.lastIndexOf(QLatin1Char('/'));
         wraps = (slash < 0 ? QString() : head.left(slash)) + QStringLiteral("/.../");
     }
-    return tr("Wraps: ") + wraps + QStringLiteral("43");
+    return QCoreApplication::translate("HikariSub.Editor", "Wraps: ") + wraps + QStringLiteral("43");
 }
 
 bool LineEditorController::charsWarning() const
@@ -1619,14 +1639,14 @@ QString LineEditorController::cpsText() const
 {
     const auto r = record();
     if (!r)
-        return tr("Characters per second: %1<=15").arg(0);
+        return QCoreApplication::translate("HikariSub.Editor", "Characters per second: %1<=15").arg(0);
     if (r->comment)
         return {};
     // TextData::GetCPS over the Line copy's times: the draft's with live
     // editing (OnEdit), the committed ones without.
     const auto o = options();
     const auto times = o.liveEditing ? r : committedRecord();
-    return tr("Characters per second: %1<=15")
+    return QCoreApplication::translate("HikariSub.Editor", "Characters per second: %1<=15")
         .arg(editorCps(*r, times ? *times : *r, translationMode(), session()->document().format(), o));
 }
 
@@ -1807,7 +1827,9 @@ void LineEditorController::setDurationText(const QString &text)
     const auto typed = application::typedTime(u8(text), application::TimeFieldRole::Duration, format,
                                               s->document().frameRate(), frameTimebase());
     if (!typed) {
-        fail(frameTimebase() ? tr("Duration is not a frame number.") : tr("Duration is not a time."), text);
+        fail(frameTimebase() ? QCoreApplication::translate("HikariSub.Editor", "Duration is not a frame number.")
+                             : QCoreApplication::translate("HikariSub.Editor", "Duration is not a time."),
+             text);
         return;
     }
     // line->End = line->Start + DurEdit->GetTime() (SubsTime::operator+ adds the frames too).

@@ -1,3 +1,4 @@
+pragma Translator: "HikariSub.MainWindow"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -562,20 +563,20 @@ ApplicationWindow {
         }
         ShellMenuItem {
             objectName: "panelOptionsMove"
-            text: qsTr("Move panel…")
+            text: qsTranslate("HikariSub.Workspace", "Move panel…")
             // D2: not in the player layout, as View > Move panel….
             enabled: panelOptionsMenu.dockable && root.app.editorOn
             onTriggered: placementWindow.openFor(panelOptionsMenu.dock)
         }
         ShellMenuItem {
             objectName: "panelOptionsFloat"
-            text: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? qsTr("Dock") : qsTr("Undock")
+            text: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? qsTranslate("HikariSub.Workspace", "Dock") : qsTranslate("HikariSub.Workspace", "Undock")
             enabled: panelOptionsMenu.dock !== null && (!panelOptionsMenu.dock.isFloating || panelOptionsMenu.dockable)
             onTriggered: root.setPanelFloating(panelOptionsMenu.dock, !panelOptionsMenu.dock.isFloating)
         }
         ShellMenuItem {
             objectName: "panelOptionsClose"
-            text: panelOptionsMenu.dock === referenceDock ? qsTr("Close reference") : qsTr("Close")
+            text: panelOptionsMenu.dock === referenceDock ? qsTranslate("HikariSub.Workspace", "Close reference") : qsTranslate("HikariSub.Workspace", "Close")
             enabled: panelOptionsMenu.closable
             onTriggered: root.closePanel(panelOptionsMenu.dock)
         }
@@ -1939,15 +1940,15 @@ ApplicationWindow {
                 onObjectRemoved: (index, object) => editMenu.removeItem(object)
             }
             MenuSeparator { visible: editMenu.suggestions.length > 0; height: visible ? implicitHeight : 0 }
-            ShellMenuItem { iconRole: "edit-copy"; text: qsTr("&Copy"); enabled: field.selectedText.length > 0; onTriggered: field.copy() }
-            ShellMenuItem { iconRole: "edit-cut"; text: qsTr("Cu&t"); enabled: field.selectedText.length > 0 && !field.readOnly; onTriggered: field.cut() }
-            ShellMenuItem { iconRole: "edit-paste"; text: qsTr("&Paste"); enabled: !field.readOnly; onTriggered: field.paste() }
+            ShellMenuItem { iconRole: "edit-copy"; text: qsTranslate("HikariSub.Editor", "&Copy"); enabled: field.selectedText.length > 0; onTriggered: field.copy() }
+            ShellMenuItem { iconRole: "edit-cut"; text: qsTranslate("HikariSub.Editor", "Cu&t"); enabled: field.selectedText.length > 0 && !field.readOnly; onTriggered: field.cut() }
+            ShellMenuItem { iconRole: "edit-paste"; text: qsTranslate("HikariSub.Editor", "&Paste"); enabled: !field.readOnly; onTriggered: field.paste() }
             MenuSeparator {}
             ShellMenuItem {
                 id: spellingOnItem
                 iconRole: "spellchecker"
                 objectName: field.objectName + "SpellingOn"
-                text: qsTr("Spellchecker")
+                text: qsTranslate("HikariSub.Editor", "Spellchecker")
                 checkable: true
                 checked: root.app.spellingOn
                 visible: field.spelled
@@ -1961,7 +1962,7 @@ ApplicationWindow {
                 delegate: ShellMenu {
                     id: languagesMenu
                     objectName: field.objectName + "Languages"
-                    title: qsTr("Installed languages")
+                    title: qsTranslate("HikariSub.Editor", "Installed languages")
                     property var languages: []
                     onAboutToShow: languages = root.app.dictionaries()
                     Instantiator {
@@ -1992,19 +1993,19 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 objectName: field.objectName + "AddWord"
-                text: qsTr("&Add word \"%1\" to dictionary").arg(field.misspell.word || "")
+                text: qsTranslate("HikariSub.Editor", "&Add word \"%1\" to dictionary").arg(field.misspell.word || "")
                 visible: !!field.misspell.word
                 height: visible ? implicitHeight : 0
                 onTriggered: {
                     if (!root.app.addEditorWord(field.misspell.word)) {
-                        spellingNotice.text = qsTr("Error. Word \"%1\" was not added.").arg(field.misspell.word)
+                        spellingNotice.text = qsTranslate("HikariSub.Editor", "Error. Word \"%1\" was not added.").arg(field.misspell.word)
                         spellingNotice.open()
                     }
                 }
             }
             ShellMenuItem {
                 iconRole: "delete"
-                text: qsTr("&Delete")
+                text: qsTranslate("HikariSub.Editor", "&Delete")
                 enabled: field.selectedText.length > 0 && !field.readOnly
                 onTriggered: field.remove(field.selectionStart, field.selectionEnd)
             }
@@ -2203,7 +2204,7 @@ ApplicationWindow {
             id: videoDock
             objectName: "videoDock"
             uniqueName: "Video"
-            title: qsTr("Video")
+            title: qsTranslate("HikariSub.Video", "Video")
             Panel {
                 id: videoPanel
                 anchors.fill: parent
@@ -2213,7 +2214,7 @@ ApplicationWindow {
                 // follow choices wrap), above two rail buttons' height.
                 minimumBodySize: Qt.size(Math.max(videoTransport.implicitWidth, videoFollow.minimumWidth),
                                          videoControls.implicitHeight + 72)
-                title: qsTr("Video")
+                title: qsTranslate("HikariSub.Video", "Video")
                 // Frame stepping is the Global bindings GLOBAL_PREVIOUS_FRAME /
                 // GLOBAL_NEXT_FRAME (Left / Right by default), from the shell's
                 // table (legacy VideoBox has no arrow keys of its own).
@@ -2376,7 +2377,7 @@ ApplicationWindow {
                     value: Math.max(0, root.video.frame)
                     enabled: root.video.hasVideo
                     focusPolicy: Qt.NoFocus
-                    Accessible.name: qsTr("Video position")
+                    Accessible.name: qsTranslate("HikariSub.Video", "Video position")
                     onMoved: root.video.showFrameAt(Math.round(value))
                 }
                 RowLayout {
@@ -2390,9 +2391,9 @@ ApplicationWindow {
                         text: root.video.times
                         font.features: { "tnum": 1 }
                         color: root.video.keyframeShown ? Theme.warning : palette.windowText
-                        Accessible.name: qsTr("Video times")
+                        Accessible.name: qsTranslate("HikariSub.Video", "Video times")
                         // Legacy's times field: its parts named in the tooltip.
-                        Accessible.description: qsTr("Frame time; frame number; frames from the line's start frame; "
+                        Accessible.description: qsTranslate("HikariSub.Video", "Frame time; frame number; frames from the line's start frame; "
                                                      + "milliseconds from the line's start and end")
                         HoverHandler { id: timesHover }
                         ToolTip.visible: timesHover.hovered && text.length > 0
@@ -2417,18 +2418,18 @@ ApplicationWindow {
                     IconToolButton {
                         objectName: "previousFile"
                         iconRole: "media-previous-file"
-                        text: qsTr("Previous file")
+                        text: qsTranslate("HikariSub.Video", "Previous file")
                         focusPolicy: Qt.NoFocus
-                        tip: root.bitmapTip(qsTr("Previous file"), "VIDEO_PREVIOUS_FILE", 3)
+                        tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Previous file"), "VIDEO_PREVIOUS_FILE", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_PREVIOUS_FILE", 3, "bitmap")) videoFileQuestion.ask(false)
                     }
                     IconToolButton {
                         objectName: "playPause"
                         iconRole: root.video.playing ? "media-pause" : "media-play"
-                        text: root.video.playing ? qsTr("Pause") : qsTr("Play")
+                        text: root.video.playing ? qsTranslate("HikariSub.Video", "Pause") : qsTranslate("HikariSub.Video", "Play")
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        tip: root.bitmapTip(qsTr("Play / Pause"), "VIDEO_PLAY_PAUSE", 3)
+                        tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Play / Pause"), "VIDEO_PLAY_PAUSE", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_PLAY_PAUSE", 3, "bitmap")) root.video.togglePlay()
                     }
                     // A4: GLOBAL_PLAY_ACTUAL_LINE; legacy then focuses the
@@ -2436,11 +2437,11 @@ ApplicationWindow {
                     IconToolButton {
                         objectName: "playActualLine"
                         iconRole: "play-line"
-                        text: qsTr("Play line")
+                        text: qsTranslate("HikariSub.Video", "Play line")
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        tip: root.bitmapTip(qsTr("Play the current line"), "GLOBAL_PLAY_ACTUAL_LINE", 0)
-                        Accessible.name: qsTr("Play the current line")
+                        tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Play the current line"), "GLOBAL_PLAY_ACTUAL_LINE", 0)
+                        Accessible.name: qsTranslate("HikariSub.Video", "Play the current line")
                         onClicked: {
                             if (root.hotkeyGesture("GLOBAL_PLAY_ACTUAL_LINE", 0, "bitmap"))
                                 return
@@ -2451,24 +2452,24 @@ ApplicationWindow {
                     IconToolButton {
                         objectName: "stopVideo"
                         iconRole: "media-stop"
-                        text: qsTr("Stop")
+                        text: qsTranslate("HikariSub.Video", "Stop")
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        tip: root.bitmapTip(qsTr("Stop"), "VIDEO_STOP", 3)
+                        tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Stop"), "VIDEO_STOP", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_STOP", 3, "bitmap")) root.video.stop()
                     }
                     IconToolButton {
                         objectName: "nextFile"
                         iconRole: "media-next-file"
-                        text: qsTr("Next file")
+                        text: qsTranslate("HikariSub.Video", "Next file")
                         focusPolicy: Qt.NoFocus
-                        tip: root.bitmapTip(qsTr("Next file"), "VIDEO_NEXT_FILE", 3)
+                        tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Next file"), "VIDEO_NEXT_FILE", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_NEXT_FILE", 3, "bitmap")) videoFileQuestion.ask(true)
                     }
                     IconToolButton {
                         objectName: "previousFrame"
                         iconRole: "frame-previous"
-                        text: qsTr("Previous frame")
+                        text: qsTranslate("HikariSub.Video", "Previous frame")
                         enabled: root.video.hasVideo && root.video.frame > 0
                         onClicked: root.video.stepFrames(-1)
                     }
@@ -2481,7 +2482,7 @@ ApplicationWindow {
                     IconToolButton {
                         objectName: "nextFrame"
                         iconRole: "frame-next"
-                        text: qsTr("Next frame")
+                        text: qsTranslate("HikariSub.Video", "Next frame")
                         enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
                         onClicked: root.video.stepFrames(1)
                     }
@@ -2498,7 +2499,7 @@ ApplicationWindow {
             id: audioDock
             objectName: "audioDock"
             uniqueName: "Audio"
-            title: qsTr("Audio")
+            title: qsTranslate("HikariSub.Audio", "Audio")
             Panel {
                 id: audioPanel
                 anchors.fill: parent
@@ -2508,7 +2509,7 @@ ApplicationWindow {
                 minimumBodySize: audioButtons.visible
                                  ? Qt.size(audioButtons.implicitWidth, 64 + audioScroll.implicitHeight + 4 + audioButtons.implicitHeight)
                                  : Qt.size(audioStatus.implicitWidth, audioStatus.implicitHeight)
-                title: qsTr("Audio")
+                title: qsTranslate("HikariSub.Audio", "Audio")
                 // The audio box in legacy AudioBox's layout: the display with
                 // the search bar below it (DisplaySizer), the horizontal zoom
                 // and the vertical zoom, volume and link beside them
@@ -2523,7 +2524,7 @@ ApplicationWindow {
                     clip: true
                     anchors { left: parent.left; right: audioSliders.left; top: parent.top; bottom: audioScroll.top }
                     Accessible.role: Accessible.Graphic
-                    Accessible.name: qsTr("Audio display")
+                    Accessible.name: qsTranslate("HikariSub.Audio", "Audio display")
                     Accessible.description: root.audio.status
                 }
                 ScrollBar {
@@ -2553,7 +2554,7 @@ ApplicationWindow {
                         if (pressed) // legacy AudioBox::OnScrollbar
                             root.audio.setScrollPosition(Math.round(position * root.audio.scrollRange))
                     }
-                    ToolTip.text: qsTr("Search bar")
+                    ToolTip.text: qsTranslate("HikariSub.Audio", "Search bar")
                 }
                 // A2: legacy AudioBox's sliders beside the display: the
                 // horizontal zoom (0 at the top), the vertical zoom and the
@@ -2572,7 +2573,7 @@ ApplicationWindow {
                         from: 100; to: 0; stepSize: 1
                         value: root.audio.horizontalZoom
                         onMoved: root.audio.setHorizontalZoom(Math.round(value))
-                        ToolTip.text: qsTr("Horizontal stretching")
+                        ToolTip.text: qsTranslate("HikariSub.Audio", "Horizontal stretching")
                         ToolTip.visible: hovered
                         Accessible.name: ToolTip.text
                     }
@@ -2589,7 +2590,7 @@ ApplicationWindow {
                                 from: 1; to: 100; stepSize: 1
                                 value: root.audio.verticalZoom
                                 onMoved: root.audio.setVerticalZoom(Math.round(value))
-                                ToolTip.text: qsTr("Vertical stretching")
+                                ToolTip.text: qsTranslate("HikariSub.Audio", "Vertical stretching")
                                 ToolTip.visible: hovered
                                 Accessible.name: ToolTip.text
                             }
@@ -2600,7 +2601,7 @@ ApplicationWindow {
                                 from: 1; to: 100; stepSize: 1
                                 value: root.audio.volume
                                 onMoved: root.audio.setVolume(Math.round(value))
-                                ToolTip.text: qsTr("Volume")
+                                ToolTip.text: qsTranslate("HikariSub.Audio", "Volume")
                                 ToolTip.visible: hovered
                                 Accessible.name: ToolTip.text
                             }
@@ -2612,7 +2613,7 @@ ApplicationWindow {
                             objectName: "audioLink"
                             Layout.fillWidth: true
                             Layout.bottomMargin: 2 // legacy wxBOTTOM 2
-                            text: qsTr("Link")
+                            text: qsTranslate("HikariSub.Audio", "Link")
                             display: AbstractButton.IconOnly
                             contentItem: Icon {
                                 iconRole: "link"
@@ -2623,7 +2624,7 @@ ApplicationWindow {
                             checked: root.audio.linked
                             focusPolicy: Qt.NoFocus
                             onToggled: root.audio.setLinked(checked)
-                            ToolTip.text: qsTr("Link the volume and stretch sliders")
+                            ToolTip.text: qsTranslate("HikariSub.Audio", "Link the volume and stretch sliders")
                             ToolTip.visible: hovered
                             Accessible.name: ToolTip.text
                         }
@@ -2643,12 +2644,12 @@ ApplicationWindow {
                     let key = root.boundKeys(symbol, 4)
                     if (alt) {
                         const second = root.boundKeys(alt, 4)
-                        key = key + qsTr(" or ") + second
+                        key = key + qsTranslate("HikariSub.Audio", " or ") + second
                     }
                     let tip = key.length ? text + " (" + key + ")" : text
-                    tip += "\n" + qsTr("Shortcut can be set using Shift + Click")
+                    tip += "\n" + qsTranslate("HikariSub.Audio", "Shortcut can be set using Shift + Click")
                     if (alt)
-                        tip += "\n" + qsTr("Second shortcut can be set using Control + Click")
+                        tip += "\n" + qsTranslate("HikariSub.Audio", "Second shortcut can be set using Control + Click")
                     return tip
                 }
                 // The box's buttons (legacy AudioBox's ButtonSizer, in its
@@ -2697,102 +2698,102 @@ ApplicationWindow {
                     // A3, A4: AUDIO_PREVIOUS, AUDIO_NEXT, AUDIO_PLAY,
                     // AUDIO_PLAY_LINE (two hotkeys each), AUDIO_STOP
                     AudioButton {
-                        objectName: "audioPrevious"; text: qsTr("Previous line")
+                        objectName: "audioPrevious"; text: qsTranslate("HikariSub.Audio", "Previous line")
                         iconRole: "audio-previous-line"
-                        symbol: "AUDIO_PREVIOUS"; altSymbol: "AUDIO_PREVIOUS_ALT"; tip: qsTr("Play the previous line")
+                        symbol: "AUDIO_PREVIOUS"; altSymbol: "AUDIO_PREVIOUS_ALT"; tip: qsTranslate("HikariSub.Audio", "Play the previous line")
                         onRun: root.audio.previousLine()
                     }
                     AudioButton {
-                        objectName: "audioNext"; text: qsTr("Next line")
+                        objectName: "audioNext"; text: qsTranslate("HikariSub.Audio", "Next line")
                         iconRole: "audio-next-line"
-                        symbol: "AUDIO_NEXT"; altSymbol: "AUDIO_NEXT_ALT"; tip: qsTr("Play the next line")
+                        symbol: "AUDIO_NEXT"; altSymbol: "AUDIO_NEXT_ALT"; tip: qsTranslate("HikariSub.Audio", "Play the next line")
                         onRun: root.audio.nextLine()
                     }
                     AudioButton {
-                        objectName: "audioPlay"; text: qsTr("Play")
+                        objectName: "audioPlay"; text: qsTranslate("HikariSub.Audio", "Play")
                         iconRole: "audio-play"
-                        symbol: "AUDIO_PLAY"; altSymbol: "AUDIO_PLAY_ALT"; tip: qsTr("Play the current syllable / line")
+                        symbol: "AUDIO_PLAY"; altSymbol: "AUDIO_PLAY_ALT"; tip: qsTranslate("HikariSub.Audio", "Play the current syllable / line")
                         onRun: root.audio.runHotkey("AUDIO_PLAY")
                     }
                     AudioButton {
-                        objectName: "audioPlayLine"; text: qsTr("Play line")
+                        objectName: "audioPlayLine"; text: qsTranslate("HikariSub.Audio", "Play line")
                         iconRole: "play-line"
-                        symbol: "AUDIO_PLAY_LINE"; altSymbol: "AUDIO_PLAY_LINE_ALT"; tip: qsTr("Play the current line")
+                        symbol: "AUDIO_PLAY_LINE"; altSymbol: "AUDIO_PLAY_LINE_ALT"; tip: qsTranslate("HikariSub.Audio", "Play the current line")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_LINE")
                     }
                     AudioButton {
-                        objectName: "audioStop"; text: qsTr("Stop"); gap: 8
+                        objectName: "audioStop"; text: qsTranslate("HikariSub.Audio", "Stop"); gap: 8
                         iconRole: "media-stop"
-                        symbol: "AUDIO_STOP"; tip: qsTr("Stop playback")
+                        symbol: "AUDIO_STOP"; tip: qsTranslate("HikariSub.Audio", "Stop playback")
                         onRun: root.audio.runHotkey("AUDIO_STOP")
                     }
                     // A4: the mark plays (the ruler's mark, A3)
                     AudioButton {
-                        objectName: "audioPlayBeforeMark"; text: qsTr("Before mark")
+                        objectName: "audioPlayBeforeMark"; text: qsTranslate("HikariSub.Audio", "Before mark")
                         iconRole: "play-before-mark"
-                        symbol: "AUDIO_PLAY_BEFORE_MARK"; tip: qsTr("Play before the tag")
+                        symbol: "AUDIO_PLAY_BEFORE_MARK"; tip: qsTranslate("HikariSub.Audio", "Play before the tag")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_BEFORE_MARK")
                     }
                     AudioButton {
-                        objectName: "audioPlayAfterMark"; text: qsTr("After mark"); gap: 8
+                        objectName: "audioPlayAfterMark"; text: qsTranslate("HikariSub.Audio", "After mark"); gap: 8
                         iconRole: "play-after-mark"
-                        symbol: "AUDIO_PLAY_AFTER_MARK"; tip: qsTr("Play after the tag")
+                        symbol: "AUDIO_PLAY_AFTER_MARK"; tip: qsTranslate("HikariSub.Audio", "Play after the tag")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_AFTER_MARK")
                     }
                     // A4: the 500 ms plays and to the end
                     AudioButton {
-                        objectName: "audioPlay500Before"; text: qsTr("500 before")
+                        objectName: "audioPlay500Before"; text: qsTranslate("HikariSub.Audio", "500 before")
                         iconRole: "play-before-start"
-                        symbol: "AUDIO_PLAY_500MS_BEFORE"; tip: qsTr("Play 500ms before the start time")
+                        symbol: "AUDIO_PLAY_500MS_BEFORE"; tip: qsTranslate("HikariSub.Audio", "Play 500ms before the start time")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_BEFORE")
                     }
                     AudioButton {
-                        objectName: "audioPlay500First"; text: qsTr("500 first")
+                        objectName: "audioPlay500First"; text: qsTranslate("HikariSub.Audio", "500 first")
                         iconRole: "play-after-start"
-                        symbol: "AUDIO_PLAY_500MS_FIRST"; tip: qsTr("Play 500 ms after the start time")
+                        symbol: "AUDIO_PLAY_500MS_FIRST"; tip: qsTranslate("HikariSub.Audio", "Play 500 ms after the start time")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_FIRST")
                     }
                     AudioButton {
-                        objectName: "audioPlay500Last"; text: qsTr("500 last")
+                        objectName: "audioPlay500Last"; text: qsTranslate("HikariSub.Audio", "500 last")
                         iconRole: "play-before-end"
-                        symbol: "AUDIO_PLAY_500MS_LAST"; tip: qsTr("Play 500ms before the end time")
+                        symbol: "AUDIO_PLAY_500MS_LAST"; tip: qsTranslate("HikariSub.Audio", "Play 500ms before the end time")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_LAST")
                     }
                     AudioButton {
-                        objectName: "audioPlay500After"; text: qsTr("500 after")
+                        objectName: "audioPlay500After"; text: qsTranslate("HikariSub.Audio", "500 after")
                         iconRole: "play-after-end"
-                        symbol: "AUDIO_PLAY_500MS_AFTER"; tip: qsTr("Play 500ms after the end time")
+                        symbol: "AUDIO_PLAY_500MS_AFTER"; tip: qsTranslate("HikariSub.Audio", "Play 500ms after the end time")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_AFTER")
                     }
                     AudioButton {
-                        objectName: "audioPlayToEnd"; text: qsTr("To end"); gap: 8
+                        objectName: "audioPlayToEnd"; text: qsTranslate("HikariSub.Audio", "To end"); gap: 8
                         iconRole: "play-to-end"
-                        symbol: "AUDIO_PLAY_TO_END"; tip: qsTr("Play to the end")
+                        symbol: "AUDIO_PLAY_TO_END"; tip: qsTranslate("HikariSub.Audio", "Play to the end")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_TO_END")
                     }
                     // A3: AUDIO_LEAD_IN, AUDIO_LEAD_OUT, AUDIO_COMMIT, AUDIO_GOTO
                     AudioButton {
-                        objectName: "audioLeadIn"; text: qsTr("In")
+                        objectName: "audioLeadIn"; text: qsTranslate("HikariSub.Audio", "In")
                         iconRole: "lead-in"
-                        symbol: "AUDIO_LEAD_IN"; tip: qsTr("Add lead-in to the active line")
+                        symbol: "AUDIO_LEAD_IN"; tip: qsTranslate("HikariSub.Audio", "Add lead-in to the active line")
                         onRun: root.audio.leadIn()
                     }
                     AudioButton {
-                        objectName: "audioLeadOut"; text: qsTr("Out"); gap: 8
+                        objectName: "audioLeadOut"; text: qsTranslate("HikariSub.Audio", "Out"); gap: 8
                         iconRole: "lead-out"
-                        symbol: "AUDIO_LEAD_OUT"; tip: qsTr("Add lead-out to the active line")
+                        symbol: "AUDIO_LEAD_OUT"; tip: qsTranslate("HikariSub.Audio", "Add lead-out to the active line")
                         onRun: root.audio.leadOut()
                     }
                     AudioButton {
-                        objectName: "audioCommit"; text: qsTr("Commit")
+                        objectName: "audioCommit"; text: qsTranslate("HikariSub.Audio", "Commit")
                         iconRole: "commit"
-                        symbol: "AUDIO_COMMIT"; altSymbol: "AUDIO_COMMIT_ALT"; tip: qsTr("Apply changes")
+                        symbol: "AUDIO_COMMIT"; altSymbol: "AUDIO_COMMIT_ALT"; tip: qsTranslate("HikariSub.Audio", "Apply changes")
                         onRun: root.audio.commit()
                     }
                     AudioButton {
-                        objectName: "audioGoto"; text: qsTr("Go"); gap: 8
+                        objectName: "audioGoto"; text: qsTranslate("HikariSub.Audio", "Go"); gap: 8
                         iconRole: "go-to-selection"
-                        symbol: "AUDIO_GOTO"; tip: qsTr("Go to selection")
+                        symbol: "AUDIO_GOTO"; tip: qsTranslate("HikariSub.Audio", "Go to selection")
                         onRun: root.audio.goToSelection()
                     }
                     // A5: legacy AudioBox's KaraSwitch and KaraMode (toggle
@@ -2801,10 +2802,10 @@ ApplicationWindow {
                     AudioButton {
                         objectName: "audioKaraoke"
                         iconRole: "karaoke"
-                        text: qsTr("Karaoke")
+                        text: qsTranslate("HikariSub.Audio", "Karaoke")
                         checkable: true
                         checked: root.audio.karaoke
-                        tip: qsTr("Enable / disable karaoke creation")
+                        tip: qsTranslate("HikariSub.Audio", "Enable / disable karaoke creation")
                         onToggled: {
                             root.audio.toggleKaraoke()
                             checked = Qt.binding(() => root.audio.karaoke)
@@ -2813,10 +2814,10 @@ ApplicationWindow {
                     AudioButton {
                         objectName: "audioKaraokeSplit"
                         iconRole: "karaoke-split"
-                        text: qsTr("Auto split"); gap: 8
+                        text: qsTranslate("HikariSub.Audio", "Auto split"); gap: 8
                         checkable: true
                         checked: root.audio.karaokeSplitMode
-                        tip: qsTr("Enable / Disable automatic splitting of syllables")
+                        tip: qsTranslate("HikariSub.Audio", "Enable / Disable automatic splitting of syllables")
                         onToggled: {
                             root.audio.toggleKaraokeSplitMode()
                             checked = Qt.binding(() => root.audio.karaokeSplitMode)
@@ -2829,10 +2830,10 @@ ApplicationWindow {
                         id: audioAutoCommit
                         objectName: "audioAutoCommit"
                         iconRole: "auto-commit"
-                        text: qsTr("Auto")
+                        text: qsTranslate("HikariSub.Audio", "Auto")
                         checkable: true
                         checked: root.app.settings.value("audio.autoCommit")
-                        tip: qsTr("Automatically apply changes")
+                        tip: qsTranslate("HikariSub.Audio", "Automatically apply changes")
                         onToggled: {
                             root.app.settings.setValue("audio.autoCommit", checked)
                             audioDisplay.forceActiveFocus()
@@ -2849,10 +2850,10 @@ ApplicationWindow {
                         id: audioNextCommit
                         objectName: "audioNextCommit"
                         iconRole: "next-after-commit"
-                        text: qsTr("Next")
+                        text: qsTranslate("HikariSub.Audio", "Next")
                         checkable: true
                         checked: root.app.settings.value("audio.nextLineOnCommit")
-                        tip: qsTr("Go to the next line after applying changes")
+                        tip: qsTranslate("HikariSub.Audio", "Go to the next line after applying changes")
                         onToggled: {
                             root.app.settings.setValue("audio.nextLineOnCommit", checked)
                             audioDisplay.forceActiveFocus()
@@ -2871,28 +2872,28 @@ ApplicationWindow {
                     AudioButton {
                         objectName: "audioAutoScroll"
                         iconRole: "auto-scroll"
-                        text: qsTr("Auto-scroll")
+                        text: qsTranslate("HikariSub.Audio", "Auto-scroll")
                         checkable: true
                         checked: root.audio.autoScroll
-                        tip: qsTr("Auto-scroll to the active line")
+                        tip: qsTranslate("HikariSub.Audio", "Auto-scroll to the active line")
                         onToggled: { root.audio.setAutoScroll(checked); audioDisplay.forceActiveFocus() }
                     }
                     AudioButton {
                         objectName: "audioSpectrumMode"
                         iconRole: "spectrum"
-                        text: qsTr("Spectrum")
+                        text: qsTranslate("HikariSub.Audio", "Spectrum")
                         checkable: true
                         checked: root.audio.spectrumOn
-                        tip: qsTr("Spectrum mode")
+                        tip: qsTranslate("HikariSub.Audio", "Spectrum mode")
                         onToggled: { root.audio.setSpectrumOn(checked); audioDisplay.forceActiveFocus() }
                     }
                     AudioButton {
                         objectName: "audioSpectrumNonLinear"
                         iconRole: "spectrum-nonlinear"
-                        text: qsTr("Speech")
+                        text: qsTranslate("HikariSub.Audio", "Speech")
                         checkable: true
                         checked: root.audio.spectrumNonLinear
-                        tip: qsTr("Enhance speech frequencies in the spectrum")
+                        tip: qsTranslate("HikariSub.Audio", "Enhance speech frequencies in the spectrum")
                         onToggled: { root.audio.setSpectrumNonLinear(checked); audioDisplay.forceActiveFocus() }
                     }
                     Item { Layout.fillWidth: true }
@@ -2933,7 +2934,7 @@ ApplicationWindow {
             id: editorDock
             objectName: "editorDock"
             uniqueName: "Editor"
-            title: qsTr("Line editor")
+            title: qsTranslate("HikariSub.Editor", "Line editor")
             Panel {
                 id: editorPanel
                 anchors.fill: parent
@@ -2949,8 +2950,8 @@ ApplicationWindow {
                                          tagRow.implicitHeight + editorColumn.spacing + lineText.Layout.minimumHeight
                                          + (translationText.visible ? editorColumn.spacing
                                             + translationText.Layout.minimumHeight : 0))
-                title: shell.hasEditingTarget ? qsTr("Line editor: %1").arg(shell.editingTitle)
-                                              : qsTr("Line editor")
+                title: shell.hasEditingTarget ? qsTranslate("HikariSub.Editor", "Line editor: %1").arg(shell.editingTitle)
+                                              : qsTranslate("HikariSub.Editor", "Line editor")
                 // O2: EditBox's accelerator table covers the whole Line editor
                 // (TabPanel::SetAccels): a key its other controls do not take
                 // (the time and margin fields keep their editing keys) runs
@@ -3088,10 +3089,10 @@ ApplicationWindow {
                                 // (legacy EditBox's BOLD, ITALIC, UNDER, STRIKE
                                 // bitmaps, EditBox.cpp:168-195).
                                 model: [
-                                    { tag: "b", name: qsTr("Bold"), symbol: "EDITBOX_INSERT_BOLD" },
-                                    { tag: "i", name: qsTr("Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
-                                    { tag: "u", name: qsTr("Underline"), symbol: "EDITBOX_CHANGE_UNDERLINE" },
-                                    { tag: "s", name: qsTr("Strikeout"), symbol: "EDITBOX_CHANGE_STRIKEOUT" }
+                                    { tag: "b", name: qsTranslate("HikariSub.Editor", "Bold"), symbol: "EDITBOX_INSERT_BOLD" },
+                                    { tag: "i", name: qsTranslate("HikariSub.Editor", "Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
+                                    { tag: "u", name: qsTranslate("HikariSub.Editor", "Underline"), symbol: "EDITBOX_CHANGE_UNDERLINE" },
+                                    { tag: "s", name: qsTranslate("HikariSub.Editor", "Strikeout"), symbol: "EDITBOX_CHANGE_STRIKEOUT" }
                                 ]
                                 IconToolButton {
                                     required property var modelData
@@ -3115,10 +3116,10 @@ ApplicationWindow {
                             IconToolButton {
                                 objectName: "changeFont"
                                 iconRole: "tag-font"
-                                text: qsTr("Font selection")
+                                text: qsTranslate("HikariSub.Editor", "Font selection")
                                 focusPolicy: Qt.NoFocus
                                 enabled: root.editor.editable
-                                tip: root.mappedTip(qsTr("Font selection"), "EDITBOX_CHANGE_FONT", 2)
+                                tip: root.mappedTip(qsTranslate("HikariSub.Editor", "Font selection"), "EDITBOX_CHANGE_FONT", 2)
                                 onClicked: {
                                     if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
                                         return
@@ -3128,10 +3129,10 @@ ApplicationWindow {
                             }
                             Repeater {
                                 model: [
-                                    { number: 1, name: qsTr("Primary color"), symbol: "EDITBOX_CHANGE_COLOR_PRIMARY" },
-                                    { number: 2, name: qsTr("Secondary color for karaoke"), symbol: "EDITBOX_CHANGE_COLOR_SECONDARY" },
-                                    { number: 3, name: qsTr("Border color"), symbol: "EDITBOX_CHANGE_COLOR_OUTLINE" },
-                                    { number: 4, name: qsTr("Shadow color"), symbol: "EDITBOX_CHANGE_COLOR_SHADOW" }
+                                    { number: 1, name: qsTranslate("HikariSub.Editor", "Primary color"), symbol: "EDITBOX_CHANGE_COLOR_PRIMARY" },
+                                    { number: 2, name: qsTranslate("HikariSub.Editor", "Secondary color for karaoke"), symbol: "EDITBOX_CHANGE_COLOR_SECONDARY" },
+                                    { number: 3, name: qsTranslate("HikariSub.Editor", "Border color"), symbol: "EDITBOX_CHANGE_COLOR_OUTLINE" },
+                                    { number: 4, name: qsTranslate("HikariSub.Editor", "Shadow color"), symbol: "EDITBOX_CHANGE_COLOR_SHADOW" }
                                 ]
                                 IconToolButton {
                                     required property var modelData
@@ -3191,7 +3192,7 @@ ApplicationWindow {
                             IconToolButton { // legacy's square MenuButton with ARROW_LIST_DOUBLE
                                 objectName: "manageTagButtons"
                                 iconRole: "menu-more"
-                                text: qsTr("Manage tag buttons")
+                                text: qsTranslate("HikariSub.Editor", "Manage tag buttons")
                                 focusPolicy: Qt.NoFocus
                                 onClicked: tagButtonsMenu.popup()
                                 ShellMenu {
@@ -3209,7 +3210,7 @@ ApplicationWindow {
                                     }
                                     ShellMenuItem {
                                         objectName: "changeTagButtonCount"
-                                        text: qsTr("Change number of buttons")
+                                        text: qsTranslate("HikariSub.Editor", "Change number of buttons")
                                         onTriggered: tagButtonCountDialog.open()
                                     }
                                 }
@@ -3219,7 +3220,7 @@ ApplicationWindow {
                             IconToolButton {
                                 objectName: "showTags"
                                 iconRole: "hide-tags"
-                                text: qsTr("Hide tags")
+                                text: qsTranslate("HikariSub.Editor", "Hide tags")
                                 checkable: true
                                 checked: !root.editor.showTags
                                 onToggled: root.editor.showTags = !checked
@@ -3243,14 +3244,14 @@ ApplicationWindow {
                             objectName: "lineText"
                             role: 0
                             focus: true
-                            Accessible.name: root.editor.translationMode ? qsTr("Original text") : qsTr("Line text")
+                            Accessible.name: root.editor.translationMode ? qsTranslate("HikariSub.Editor", "Original text") : qsTranslate("HikariSub.Editor", "Line text")
                         }
                         RoleField {
                             id: translationText
                             objectName: "translationText"
                             role: 1
                             visible: root.editor.translationMode
-                            Accessible.name: qsTr("Translated text")
+                            Accessible.name: qsTranslate("HikariSub.Editor", "Translated text")
                         }
                         // Legacy translation-mode buttons (EDITBOX_PASTE_*,
                         // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
@@ -3264,7 +3265,7 @@ ApplicationWindow {
                             spacing: 5
                             Button {
                                 objectName: "pasteAllToTranslation"
-                                text: qsTr("Paste all")
+                                text: qsTranslate("HikariSub.Editor", "Paste all")
                                 focusPolicy: Qt.NoFocus
                                 enabled: root.editor.editable
                                 ToolTip.visible: hovered
@@ -3273,7 +3274,7 @@ ApplicationWindow {
                             }
                             Button {
                                 objectName: "pasteSelectionToTranslation"
-                                text: qsTr("Paste the selected")
+                                text: qsTranslate("HikariSub.Editor", "Paste the selected")
                                 focusPolicy: Qt.NoFocus
                                 enabled: root.editor.editable
                                 ToolTip.visible: hovered
@@ -3287,7 +3288,7 @@ ApplicationWindow {
                             }
                             Button {
                                 objectName: "commentOutOriginal"
-                                text: qsTr("Comment out original")
+                                text: qsTranslate("HikariSub.Editor", "Comment out original")
                                 focusPolicy: Qt.NoFocus
                                 enabled: root.editor.editable
                                 ToolTip.visible: hovered
@@ -3317,7 +3318,7 @@ ApplicationWindow {
                         Label {
                             objectName: "editorAttempted"
                             visible: root.editor.attempted.length > 0
-                            text: qsTr("Not applied: %1").arg(root.editor.attempted)
+                            text: qsTranslate("HikariSub.Editor", "Not applied: %1").arg(root.editor.attempted)
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
@@ -3330,15 +3331,15 @@ ApplicationWindow {
             id: gridDock
             objectName: "gridDock"
             uniqueName: "Grid"
-            title: qsTr("Grid")
+            title: qsTranslate("HikariSub.Grid", "Grid")
             Panel {
                 id: gridPanel
                 anchors.fill: parent
                 objectName: "gridPanel"
                 dockName: "Grid"
                 minimumBodySize: Qt.size(240, grid.rowHeight * 3) // the header and two Lines
-                title: shell.hasEditingTarget ? qsTr("Editing: %1").arg(shell.editingTitle) : qsTr("No document open")
-                accessibleName: qsTr("Grid")
+                title: shell.hasEditingTarget ? qsTranslate("HikariSub.Grid", "Editing: %1").arg(shell.editingTitle) : qsTranslate("HikariSub.Grid", "No document open")
+                accessibleName: qsTranslate("HikariSub.Grid", "Grid")
                 focus: true
                 HikariGrid {
                     id: grid
@@ -3371,14 +3372,14 @@ ApplicationWindow {
                         id: groupMenu
                         objectName: "groupMenu"
                         property var description: 0
-                        ShellMenuItem { objectName: "groupAddLines"; text: qsTr("Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
-                        ShellMenuItem { objectName: "groupCopy"; text: qsTr("Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
+                        ShellMenuItem { objectName: "groupAddLines"; text: qsTranslate("HikariSub.Grid", "Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
+                        ShellMenuItem { objectName: "groupCopy"; text: qsTranslate("HikariSub.Grid", "Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
                         ShellMenuItem {
-                            objectName: "groupRename"; text: qsTr("Change description")
+                            objectName: "groupRename"; text: qsTranslate("HikariSub.Grid", "Change description")
                             onTriggered: groupDescriptionDialog.edit(groupMenu.description)
                         }
-                        ShellMenuItem { objectName: "groupSelect"; text: qsTr("Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
-                        ShellMenuItem { objectName: "groupDelete"; text: qsTr("Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
+                        ShellMenuItem { objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
+                        ShellMenuItem { objectName: "groupDelete"; text: qsTranslate("HikariSub.Grid", "Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
                     }
                     // The Grid's accelerators (TabPanel::SetAccels): the fixed
                     // clipboard keys (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X,
@@ -3420,23 +3421,23 @@ ApplicationWindow {
                             canShiftTranslation = root.app.canShiftTranslation()
                         }
                         ShellMenu {
-                            title: qsTr("&Insert")
-                            ShellMenuItem { objectName: "insertBefore"; text: qsTr("Insert &before"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE")) root.app.insertLine(true) }
-                            ShellMenuItem { objectName: "insertAfter"; text: qsTr("Insert &after"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER")) root.app.insertLine(false) }
+                            title: qsTranslate("HikariSub.Grid", "&Insert")
+                            ShellMenuItem { objectName: "insertBefore"; text: qsTranslate("HikariSub.Grid", "Insert &before"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE")) root.app.insertLine(true) }
+                            ShellMenuItem { objectName: "insertAfter"; text: qsTranslate("HikariSub.Grid", "Insert &after"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER")) root.app.insertLine(false) }
                             ShellMenuItem {
-                                objectName: "insertBeforeVideo"; text: qsTr("Insert before with &video time")
+                                objectName: "insertBeforeVideo"; text: qsTranslate("HikariSub.Grid", "Insert before with &video time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_VIDEO")) root.app.insertLine(true, "video")
                             }
                             ShellMenuItem {
-                                objectName: "insertAfterVideo"; text: qsTr("Insert after with video time")
+                                objectName: "insertAfterVideo"; text: qsTranslate("HikariSub.Grid", "Insert after with video time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_VIDEO")) root.app.insertLine(false, "video")
                             }
                             ShellMenuItem {
-                                objectName: "insertBeforeFrame"; text: qsTr("Insert before with video frame time")
+                                objectName: "insertBeforeFrame"; text: qsTranslate("HikariSub.Grid", "Insert before with video frame time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME")) root.app.insertLine(true, "frame")
                             }
                             ShellMenuItem {
-                                objectName: "insertAfterFrame"; text: qsTr("Insert after with video frame time")
+                                objectName: "insertAfterFrame"; text: qsTranslate("HikariSub.Grid", "Insert after with video frame time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_WITH_VIDEO_FRAME")) root.app.insertLine(false, "frame")
                             }
                         }
@@ -3445,71 +3446,71 @@ ApplicationWindow {
                             iconRole: "duplicate"
                             // SetAccMenu: the binding's keys after the tab.
                             readonly property string keys: root.boundKeys("GRID_DUPLICATE_LINES", 1)
-                            text: qsTr("&Duplicate lines") + (keys.length ? "\t" + keys : "")
+                            text: qsTranslate("HikariSub.Grid", "&Duplicate lines") + (keys.length ? "\t" + keys : "")
                             onTriggered: if (!root.gridGesture(this, "GRID_DUPLICATE_LINES")) root.app.duplicateLines()
                         }
-                        ShellMenuItem { objectName: "swapLines"; text: qsTr("&Swap"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
-                        ShellMenuItem { objectName: "joinLines"; text: qsTr("Join &lines"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
-                        ShellMenuItem { objectName: "joinFirst"; text: qsTr("Join lines and keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
-                        ShellMenuItem { objectName: "joinLast"; text: qsTr("Join lines and keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
+                        ShellMenuItem { objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "&Swap"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
+                        ShellMenuItem { objectName: "joinLines"; text: qsTranslate("HikariSub.Grid", "Join &lines"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
+                        ShellMenuItem { objectName: "joinFirst"; text: qsTranslate("HikariSub.Grid", "Join lines and keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
+                        ShellMenuItem { objectName: "joinLast"; text: qsTranslate("HikariSub.Grid", "Join lines and keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
                         ShellMenuItem {
-                            objectName: "continuousPrevious"; text: qsTr("Set times as a continuous (previous line)")
+                            objectName: "continuousPrevious"; text: qsTranslate("HikariSub.Grid", "Set times as a continuous (previous line)")
                             onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_PREVIOUS_LINE")) root.app.makeContinuous(true)
                         }
                         ShellMenuItem {
-                            objectName: "continuousNext"; text: qsTr("Set times as a continuous (next line)")
+                            objectName: "continuousNext"; text: qsTranslate("HikariSub.Grid", "Set times as a continuous (next line)")
                             onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
                         }
                         // Legacy "Split lines" (GRID_SPLIT_BY_*).
                         ShellMenu {
-                            title: qsTr("Split lines")
+                            title: qsTranslate("HikariSub.Grid", "Split lines")
                             ShellMenuItem {
                                 objectName: "splitAtVideoTime"
-                                text: qsTr("Split line at video time")
+                                text: qsTranslate("HikariSub.Grid", "Split line at video time")
                                 enabled: root.video.hasVideo
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_VIDEO_TIME")) root.app.splitLines("videoTime")
                             }
                             ShellMenuItem {
                                 objectName: "splitIntoFrames"
-                                text: qsTr("Split lines into frames")
+                                text: qsTranslate("HikariSub.Grid", "Split lines into frames")
                                 enabled: root.video.hasVideo
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_FRAME")) root.app.splitLines("frames")
                             }
                             ShellMenuItem {
                                 objectName: "splitIntoCharacters"
-                                text: qsTr("Split lines into characters")
+                                text: qsTranslate("HikariSub.Grid", "Split lines into characters")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_CHARS")) root.app.splitLines("chars")
                             }
                             ShellMenuItem {
                                 objectName: "splitIntoWords"
-                                text: qsTr("Split lines into words")
+                                text: qsTranslate("HikariSub.Grid", "Split lines into words")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WORDS")) root.app.splitLines("words")
                             }
                             ShellMenuItem {
                                 objectName: "splitByWraps"
-                                text: qsTr("Split lines by wraps")
+                                text: qsTranslate("HikariSub.Grid", "Split lines by wraps")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
                             }
                         }
                         // V6: after "Split lines", as legacy's menu (SubsGrid.cpp:264-265).
                         ShellMenuItem {
-                            objectName: "selectVisibleLines"; text: qsTr("Select all lines visible on video")
+                            objectName: "selectVisibleLines"; text: qsTranslate("HikariSub.Grid", "Select all lines visible on video")
                             onTriggered: if (!root.gridGesture(this, "GRID_SELECT_VISIBLE_LINES")) root.app.selectLinesVisibleOnVideo()
                         }
-                        ShellMenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
+                        ShellMenuItem { objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         // R2: legacy's in-Grid preview, here another tab in the reference tray (SubsGrid.cpp:277).
                         ShellMenuItem {
                             iconRole: "reference"
                             objectName: "showPreview"
                             readonly property string keys: root.boundKeys("GRID_SHOW_PREVIEW", 1)
-                            text: qsTr("Show subtitles preview") + (keys.length ? "\t" + keys : "")
+                            text: qsTranslate("HikariSub.Grid", "Show subtitles preview") + (keys.length ? "\t" + keys : "")
                             enabled: gridMenu.visible && root.app.canShowPreview()
                             onTriggered: if (!root.gridGesture(this, "GRID_SHOW_PREVIEW")) root.app.showPreview()
                         }
                         // E3: GRID_PASTE_TRANSLATION and GRID_TRANSLATION_DIALOG.
                         ShellMenuItem {
                             objectName: "pasteTranslation"
-                            text: qsTr("Paste translation text")
+                            text: qsTranslate("HikariSub.Grid", "Paste translation text")
                             enabled: gridMenu.canPasteTranslation
                             onTriggered: {
                                 if (root.gridGesture(this, "GRID_PASTE_TRANSLATION"))
@@ -3520,22 +3521,22 @@ ApplicationWindow {
                         }
                         ShellMenuItem {
                             objectName: "translationDialog"
-                            text: qsTr("Dialogue shifting window")
+                            text: qsTranslate("HikariSub.Grid", "Dialogue shifting window")
                             enabled: gridMenu.canShiftTranslation
                             onTriggered: if (!root.gridGesture(this, "GRID_TRANSLATION_DIALOG")) translationShiftWindow.show()
                         }
-                        ShellMenuItem { objectName: "hideSelectedLines"; text: qsTr("Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
+                        ShellMenuItem { objectName: "hideSelectedLines"; text: qsTranslate("HikariSub.Grid", "Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
                         // Legacy Filtering submenu (GRID_FILTER_*).
                         ShellMenu {
                             id: filteringMenu
                             objectName: "filteringMenu"
                             iconRole: "filter"
-                            title: qsTr("Filtering")
+                            title: qsTranslate("HikariSub.Grid", "Filtering")
                             property var styleNames: []
                             onAboutToShow: styleNames = root.app.styleNames()
                             ShellMenuItem {
                                 objectName: "filterAfterLoad"
-                                text: qsTr("Filter after loading subtitles")
+                                text: qsTranslate("HikariSub.Grid", "Filter after loading subtitles")
                                 checkable: true
                                 enabled: root.shell.assColumns
                                 checked: root.gridFilter.afterLoad
@@ -3543,21 +3544,21 @@ ApplicationWindow {
                             }
                             ShellMenuItem {
                                 objectName: "filterInvert"
-                                text: qsTr("Reverse filtering")
+                                text: qsTranslate("HikariSub.Grid", "Reverse filtering")
                                 checkable: true
                                 checked: root.gridFilter.inverted
                                 onTriggered: if (!root.gridGesture(this, "GRID_FILTER_INVERT")) root.gridFilter.inverted = checked
                             }
                             ShellMenuItem {
                                 objectName: "filterDoNotReset"
-                                text: qsTr("Do not reset previous filtering")
+                                text: qsTranslate("HikariSub.Grid", "Do not reset previous filtering")
                                 checkable: true
                                 checked: root.gridFilter.addToFilter
                                 onTriggered: if (!root.gridGesture(this, "GRID_FILTER_DO_NOT_RESET")) root.gridFilter.addToFilter = checked
                             }
                             ShellMenu {
                                 id: filterStylesMenu
-                                title: qsTr("Hide lines with styles")
+                                title: qsTranslate("HikariSub.Grid", "Hide lines with styles")
                                 enabled: root.shell.assColumns
                                 Instantiator {
                                     model: filteringMenu.styleNames
@@ -3574,13 +3575,13 @@ ApplicationWindow {
                             }
                             Instantiator {
                                 model: [
-                                    { bit: 2, label: qsTr("Hide selected lines"), name: "filterBySelection",
+                                    { bit: 2, label: qsTranslate("HikariSub.Grid", "Hide selected lines"), name: "filterBySelection",
                                       symbol: "GRID_FILTER_BY_SELECTIONS" },
-                                    { bit: 4, label: qsTr("Hide comments"), name: "filterByComments", ass: true,
+                                    { bit: 4, label: qsTranslate("HikariSub.Grid", "Hide comments"), name: "filterByComments", ass: true,
                                       symbol: "GRID_FILTER_BY_DIALOGUES" },
-                                    { bit: 8, label: qsTr("Show unconfirmed"), name: "filterByUnconfirmed", tl: true,
+                                    { bit: 8, label: qsTranslate("HikariSub.Grid", "Show unconfirmed"), name: "filterByUnconfirmed", tl: true,
                                       symbol: "GRID_FILTER_BY_DOUBTFUL" },
-                                    { bit: 16, label: qsTr("Show untranslated"), name: "filterByUntranslated", tl: true,
+                                    { bit: 16, label: qsTranslate("HikariSub.Grid", "Show untranslated"), name: "filterByUntranslated", tl: true,
                                       symbol: "GRID_FILTER_BY_UNTRANSLATED" }
                                 ]
                                 delegate: ShellMenuItem {
@@ -3595,17 +3596,17 @@ ApplicationWindow {
                                 onObjectAdded: (index, object) => filteringMenu.insertItem(4 + index, object)
                                 onObjectRemoved: (index, object) => filteringMenu.removeItem(object)
                             }
-                            ShellMenuItem { objectName: "filter"; text: qsTr("Filter"); onTriggered: if (!root.gridGesture(this, "GRID_FILTER")) root.app.filterLines() }
+                            ShellMenuItem { objectName: "filter"; text: qsTranslate("HikariSub.Grid", "Filter"); onTriggered: if (!root.gridGesture(this, "GRID_FILTER")) root.app.filterLines() }
                             ShellMenuItem {
                                 objectName: "turnOffFiltering"
-                                text: qsTr("Turn off filtering")
+                                text: qsTranslate("HikariSub.Grid", "Turn off filtering")
                                 enabled: root.shell.filtered
                                 onTriggered: if (!root.gridGesture(this, "GRID_FILTER_BY_NOTHING")) root.app.turnOffFiltering()
                             }
                         }
                         ShellMenuItem {
                             objectName: "ignoreFilteringInActions"
-                            text: qsTr("Ignore filtering in some actions")
+                            text: qsTranslate("HikariSub.Grid", "Ignore filtering in some actions")
                             checkable: true
                             checked: root.gridFilter.ignoreInActions
                             onTriggered: if (!root.gridGesture(this, "GRID_FILTER_IGNORE_IN_ACTIONS")) root.gridFilter.ignoreInActions = checked
@@ -3614,20 +3615,20 @@ ApplicationWindow {
                         ShellMenu {
                             id: hideColumnsMenu
                             objectName: "hideColumnsMenu"
-                            title: qsTr("Hide columns")
+                            title: qsTranslate("HikariSub.Grid", "Hide columns")
                             Instantiator {
                                 model: [
-                                    { bit: 1, label: qsTr("Hide layer"), ass: true, symbol: "GRID_HIDE_LAYER" },
-                                    { bit: 2, label: qsTr("Hide start time"), ass: false, symbol: "GRID_HIDE_START" },
-                                    { bit: 4, label: qsTr("Hide end time"), ass: false, end: true, symbol: "GRID_HIDE_END" },
-                                    { bit: 16, label: qsTr("Hide actor"), ass: true, symbol: "GRID_HIDE_ACTOR" },
-                                    { bit: 8, label: qsTr("Hide style"), ass: true, symbol: "GRID_HIDE_STYLE" },
-                                    { bit: 32, label: qsTr("Hide left margin"), ass: true, symbol: "GRID_HIDE_MARGINL" },
-                                    { bit: 64, label: qsTr("Hide right margin"), ass: true, symbol: "GRID_HIDE_MARGINR" },
-                                    { bit: 128, label: qsTr("Hide vertical margin"), ass: true, symbol: "GRID_HIDE_MARGINV" },
-                                    { bit: 256, label: qsTr("Hide effect"), ass: true, symbol: "GRID_HIDE_EFFECT" },
-                                    { bit: 512, label: qsTr("Hide characters per second"), ass: false, symbol: "GRID_HIDE_CPS" },
-                                    { bit: 8192, label: qsTr("Hide line wraps"), ass: false, symbol: "GRID_HIDE_WRAPS" }
+                                    { bit: 1, label: qsTranslate("HikariSub.Grid", "Hide layer"), ass: true, symbol: "GRID_HIDE_LAYER" },
+                                    { bit: 2, label: qsTranslate("HikariSub.Grid", "Hide start time"), ass: false, symbol: "GRID_HIDE_START" },
+                                    { bit: 4, label: qsTranslate("HikariSub.Grid", "Hide end time"), ass: false, end: true, symbol: "GRID_HIDE_END" },
+                                    { bit: 16, label: qsTranslate("HikariSub.Grid", "Hide actor"), ass: true, symbol: "GRID_HIDE_ACTOR" },
+                                    { bit: 8, label: qsTranslate("HikariSub.Grid", "Hide style"), ass: true, symbol: "GRID_HIDE_STYLE" },
+                                    { bit: 32, label: qsTranslate("HikariSub.Grid", "Hide left margin"), ass: true, symbol: "GRID_HIDE_MARGINL" },
+                                    { bit: 64, label: qsTranslate("HikariSub.Grid", "Hide right margin"), ass: true, symbol: "GRID_HIDE_MARGINR" },
+                                    { bit: 128, label: qsTranslate("HikariSub.Grid", "Hide vertical margin"), ass: true, symbol: "GRID_HIDE_MARGINV" },
+                                    { bit: 256, label: qsTranslate("HikariSub.Grid", "Hide effect"), ass: true, symbol: "GRID_HIDE_EFFECT" },
+                                    { bit: 512, label: qsTranslate("HikariSub.Grid", "Hide characters per second"), ass: false, symbol: "GRID_HIDE_CPS" },
+                                    { bit: 8192, label: qsTranslate("HikariSub.Grid", "Hide line wraps"), ass: false, symbol: "GRID_HIDE_WRAPS" }
                                 ]
                                 delegate: ShellMenuItem {
                                     required property var modelData
@@ -3642,30 +3643,30 @@ ApplicationWindow {
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }
-                        ShellMenuItem { objectName: "setNewFps"; text: qsTr("Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) fpsWindow.show() }
+                        ShellMenuItem { objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) fpsWindow.show() }
                         ShellMenuItem {
-                            objectName: "setFpsFromVideo"; text: qsTr("Set FPS from video")
+                            objectName: "setFpsFromVideo"; text: qsTranslate("HikariSub.Grid", "Set FPS from video")
                             enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_SET_FPS_FROM_VIDEO")) root.app.setFpsFromVideo()
                         }
-                        ShellMenuItem { iconRole: "edit-copy"; objectName: "copyLines"; text: qsTr("Copy\tCtrl+C"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
-                        ShellMenuItem { iconRole: "edit-cut"; objectName: "cutLines"; text: qsTr("Cut\tCtrl+X"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
-                        ShellMenuItem { iconRole: "edit-paste"; objectName: "pasteLines"; text: qsTr("Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
-                        ShellMenuItem { objectName: "copyColumns"; text: qsTr("Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
-                        ShellMenuItem { objectName: "pasteColumns"; text: qsTr("Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
+                        ShellMenuItem { iconRole: "edit-copy"; objectName: "copyLines"; text: qsTranslate("HikariSub.Grid", "Copy\tCtrl+C"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
+                        ShellMenuItem { iconRole: "edit-cut"; objectName: "cutLines"; text: qsTranslate("HikariSub.Grid", "Cut\tCtrl+X"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
+                        ShellMenuItem { iconRole: "edit-paste"; objectName: "pasteLines"; text: qsTranslate("HikariSub.Grid", "Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
+                        ShellMenuItem { objectName: "copyColumns"; text: qsTranslate("HikariSub.Grid", "Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
+                        ShellMenuItem { objectName: "pasteColumns"; text: qsTranslate("HikariSub.Grid", "Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
                         // E6: SubsGrid's menu, "Delete text" before "Delete" (SubsGrid.cpp:285-286).
-                        ShellMenuItem { objectName: "deleteText"; text: qsTr("Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
-                        ShellMenuItem { iconRole: "delete"; objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
+                        ShellMenuItem { objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
+                        ShellMenuItem { iconRole: "delete"; objectName: "deleteLines"; text: qsTranslate("HikariSub.Grid", "Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
                         // Y8: SubsGrid's menu (SubsGrid.cpp:286-288).
                         MenuSeparator {}
                         ShellMenuItem {
                             iconRole: "font-collector"
-                            objectName: "gridFontCollector"; text: qsTr("Font collector"); enabled: root.shell.assColumns
+                            objectName: "gridFontCollector"; text: qsTranslate("HikariSub.Grid", "Font collector"); enabled: root.shell.assColumns
                             onTriggered: if (!root.gridGesture(this, "GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
                         }
                         // Y9: SubsGrid.cpp:289, enabled for a ".mkv" or ".ogm" video.
                         ShellMenuItem {
                             iconRole: "extract-subtitles"
-                            objectName: "gridSubsFromMkv"; text: qsTr("Load subtitles from an MKV/OGM file")
+                            objectName: "gridSubsFromMkv"; text: qsTranslate("HikariSub.Grid", "Load subtitles from an MKV/OGM file")
                             enabled: root.matroska.available
                             onTriggered: if (!root.gridGesture(this, "GRID_SUBS_FROM_MKV")) matroskaSubtitles.begin()
                         }
@@ -3676,7 +3677,7 @@ ApplicationWindow {
                     objectName: "gridEmptyState"
                     anchors.centerIn: parent
                     visible: !shell.hasEditingTarget
-                    text: qsTr("No document open")
+                    text: qsTranslate("HikariSub.Grid", "No document open")
                     color: gridPanel.palette.placeholderText
                     Accessible.ignored: true // the panel's description says it
                 }
@@ -3689,7 +3690,7 @@ ApplicationWindow {
             uniqueName: "Reference"
             // The tray's dock names the Protected reference: unlike the
             // Grid's Document, no Document tab shows it.
-            title: shell.hasReference ? qsTr("Reference: %1").arg(shell.referenceTitle) : qsTr("Reference")
+            title: shell.hasReference ? qsTranslate("HikariSub.Reference", "Reference: %1").arg(shell.referenceTitle) : qsTranslate("HikariSub.Reference", "Reference")
             Panel {
                 id: referencePanel
                 anchors.fill: parent
@@ -3697,7 +3698,7 @@ ApplicationWindow {
                 dockName: "Reference"
                 minimumBodySize: Qt.size(240, referenceTray.grid.rowHeight * 3)
                 visible: shell.hasReference
-                title: qsTr("Reference (protected, read-only): %1").arg(shell.referenceTitle)
+                title: qsTranslate("HikariSub.Reference", "Reference (protected, read-only): %1").arg(shell.referenceTitle)
                 // R2: its own navigation, linked matching and legacy's preview menu.
                 ReferenceTray {
                     id: referenceTray
@@ -3719,14 +3720,14 @@ ApplicationWindow {
             uniqueName: "Timing"
             // One name for the tool: the menu's, the panel's and legacy's
             // ("Shift times"); the uniqueName keeps saved layouts.
-            title: qsTr("Shift times")
+            title: qsTranslate("HikariSub.TimeShift", "Shift times")
             Panel {
                 id: timingPanel
                 objectName: "timingPanel"
                 dockName: "Timing"
                 minimumBodySize: Qt.size(shiftForm.implicitWidth + 20, 120) // the form scrolls
                 anchors.fill: parent
-                title: qsTr("Shift times")
+                title: qsTranslate("HikariSub.TimeShift", "Shift times")
                 ScrollView {
                     id: shiftScroll
                     anchors.fill: parent
@@ -3756,12 +3757,12 @@ ApplicationWindow {
                             return ((+m[1] * 60 + +m[2]) * 60 + +m[3]) * 1000 + (m[4] ? +m[4].padEnd(2, "0") * 10 : 0)
                         }
                         RowLayout {
-                            Label { text: shiftForm.settings.byFrames ? qsTr("Frames") : qsTr("Time") }
+                            Label { text: shiftForm.settings.byFrames ? qsTranslate("HikariSub.TimeShift", "Frames") : qsTranslate("HikariSub.TimeShift", "Time") }
                             TextField {
                                 id: shiftTime
                                 objectName: "shiftTime"
                                 Layout.fillWidth: true
-                                Accessible.name: qsTr("Shift subtitle times")
+                                Accessible.name: qsTranslate("HikariSub.TimeShift", "Shift subtitle times")
                                 text: shiftForm.settings.byFrames ? String(shiftForm.settings.frames)
                                                                   : shiftForm.timeText(shiftForm.settings.timeMs)
                                 onEditingFinished: {
@@ -3776,45 +3777,45 @@ ApplicationWindow {
                             }
                             Button {
                                 objectName: "shiftApply"
-                                text: qsTr("Shift")
-                                Accessible.description: qsTr("Shift subtitle times")
+                                text: qsTranslate("HikariSub.TimeShift", "Shift")
+                                Accessible.description: qsTranslate("HikariSub.TimeShift", "Shift subtitle times")
                                 onClicked: root.runShiftTimes()
                             }
                         }
                         RowLayout {
-                            RadioButton { objectName: "shiftForward"; text: qsTr("Forward"); checked: shiftForm.settings.forward; onToggled: if (checked) shiftForm.set("forward", true) }
-                            RadioButton { objectName: "shiftBackward"; text: qsTr("Backward"); checked: !shiftForm.settings.forward; onToggled: if (checked) shiftForm.set("forward", false) }
+                            RadioButton { objectName: "shiftForward"; text: qsTranslate("HikariSub.TimeShift", "Forward"); checked: shiftForm.settings.forward; onToggled: if (checked) shiftForm.set("forward", true) }
+                            RadioButton { objectName: "shiftBackward"; text: qsTranslate("HikariSub.TimeShift", "Backward"); checked: !shiftForm.settings.forward; onToggled: if (checked) shiftForm.set("forward", false) }
                         }
                         RowLayout {
                             CheckBox {
                                 objectName: "shiftFrames"
-                                text: qsTr("Frames")
+                                text: qsTranslate("HikariSub.TimeShift", "Frames")
                                 checked: shiftForm.settings.byFrames
                                 enabled: checked || root.app.exactTimebase()
                                 onToggled: shiftForm.set("byFrames", checked)
                             }
-                            CheckBox { objectName: "shiftTagTimes"; text: qsTr("Tag times"); checked: shiftForm.settings.tagTimes; onToggled: shiftForm.set("tagTimes", checked) }
+                            CheckBox { objectName: "shiftTagTimes"; text: qsTranslate("HikariSub.TimeShift", "Tag times"); checked: shiftForm.settings.tagTimes; onToggled: shiftForm.set("tagTimes", checked) }
                         }
                         GroupBox {
-                            title: qsTr("Shift by video / audio")
+                            title: qsTranslate("HikariSub.TimeShift", "Shift by video / audio")
                             Layout.fillWidth: true
                             ColumnLayout {
                                 RowLayout {
-                                    RadioButton { text: qsTr("Beginning"); checked: shiftForm.settings.fromStartTime; onToggled: if (checked) shiftForm.set("fromStartTime", true) }
-                                    RadioButton { text: qsTr("End"); checked: !shiftForm.settings.fromStartTime; onToggled: if (checked) shiftForm.set("fromStartTime", false) }
+                                    RadioButton { text: qsTranslate("HikariSub.TimeShift", "Beginning"); checked: shiftForm.settings.fromStartTime; onToggled: if (checked) shiftForm.set("fromStartTime", true) }
+                                    RadioButton { text: qsTranslate("HikariSub.TimeShift", "End"); checked: !shiftForm.settings.fromStartTime; onToggled: if (checked) shiftForm.set("fromStartTime", false) }
                                 }
-                                CheckBox { objectName: "shiftToVideo"; text: qsTr("Move the marker to video time"); checked: shiftForm.settings.moveToVideoTime; onToggled: shiftForm.set("moveToVideoTime", checked) }
-                                CheckBox { objectName: "shiftToAudio"; text: qsTr("Move the marker to audio time"); enabled: root.audio.hasMark /* A3: ShiftTimes::Contents */; checked: shiftForm.settings.moveToAudioTime; onToggled: shiftForm.set("moveToAudioTime", checked) }
+                                CheckBox { objectName: "shiftToVideo"; text: qsTranslate("HikariSub.TimeShift", "Move the marker to video time"); checked: shiftForm.settings.moveToVideoTime; onToggled: shiftForm.set("moveToVideoTime", checked) }
+                                CheckBox { objectName: "shiftToAudio"; text: qsTranslate("HikariSub.TimeShift", "Move the marker to audio time"); enabled: root.audio.hasMark /* A3: ShiftTimes::Contents */; checked: shiftForm.settings.moveToAudioTime; onToggled: shiftForm.set("moveToAudioTime", checked) }
                             }
                         }
-                        Label { text: qsTr("Which lines") }
+                        Label { text: qsTranslate("HikariSub.TimeShift", "Which lines") }
                         ComboBox {
                             objectName: "shiftWhichLines"
                             Layout.fillWidth: true
-                            Accessible.name: qsTr("Which lines")
-                            model: [qsTr("All lines"), qsTr("Selected lines"), qsTr("From the selected line"),
-                                    qsTr("All times higher and equal"), qsTr("All times lower and equal"),
-                                    qsTr("According to the selected styles")]
+                            Accessible.name: qsTranslate("HikariSub.TimeShift", "Which lines")
+                            model: [qsTranslate("HikariSub.TimeShift", "All lines"), qsTranslate("HikariSub.TimeShift", "Selected lines"), qsTranslate("HikariSub.TimeShift", "From the selected line"),
+                                    qsTranslate("HikariSub.TimeShift", "All times higher and equal"), qsTranslate("HikariSub.TimeShift", "All times lower and equal"),
+                                    qsTranslate("HikariSub.TimeShift", "According to the selected styles")]
                             currentIndex: shiftForm.settings.whichLines
                             onActivated: (index) => shiftForm.set("whichLines", index)
                         }
@@ -3822,39 +3823,39 @@ ApplicationWindow {
                             objectName: "shiftStyles"
                             Layout.fillWidth: true
                             visible: shiftForm.settings.whichLines === 5
-                            placeholderText: qsTr("Styles, separated by commas")
-                            Accessible.name: qsTr("Styles")
+                            placeholderText: qsTranslate("HikariSub.TimeShift", "Styles, separated by commas")
+                            Accessible.name: qsTranslate("HikariSub.TimeShift", "Styles")
                             text: shiftForm.settings.styles
                             onEditingFinished: shiftForm.set("styles", text)
                         }
-                        Label { text: qsTr("A method of time shift") }
+                        Label { text: qsTranslate("HikariSub.TimeShift", "A method of time shift") }
                         ComboBox {
                             objectName: "shiftWhichTimes"
                             Layout.fillWidth: true
-                            Accessible.name: qsTr("A method of time shift")
-                            model: [qsTr("Both times"), qsTr("The starting time"), qsTr("End time")]
+                            Accessible.name: qsTranslate("HikariSub.TimeShift", "A method of time shift")
+                            model: [qsTranslate("HikariSub.TimeShift", "Both times"), qsTranslate("HikariSub.TimeShift", "The starting time"), qsTranslate("HikariSub.TimeShift", "End time")]
                             currentIndex: shiftForm.settings.whichTimes
                             onActivated: (index) => shiftForm.set("whichTimes", index)
                         }
-                        Label { text: qsTr("Correction end times") }
+                        Label { text: qsTranslate("HikariSub.TimeShift", "Correction end times") }
                         ComboBox {
                             objectName: "shiftEndCorrection"
                             Layout.fillWidth: true
-                            Accessible.name: qsTr("Correction end times")
-                            model: [qsTr("Leave unchanged"), qsTr("Adjust overlapping times"), qsTr("New times")]
+                            Accessible.name: qsTranslate("HikariSub.TimeShift", "Correction end times")
+                            model: [qsTranslate("HikariSub.TimeShift", "Leave unchanged"), qsTranslate("HikariSub.TimeShift", "Adjust overlapping times"), qsTranslate("HikariSub.TimeShift", "New times")]
                             currentIndex: shiftForm.settings.correctEndTimes
                             onActivated: (index) => shiftForm.set("correctEndTimes", index)
                         }
                         // F6: legacy "Post processor" (the panel switches between shift and postprocessor).
                         CheckBox {
                             objectName: "postprocessorOn"
-                            text: qsTr("Run post processor")
+                            text: qsTranslate("HikariSub.TimeShift", "Run post processor")
                             checked: (shiftForm.settings.postprocessor & 16) !== 0
                             onToggled: shiftForm.set("postprocessor", checked ? (shiftForm.settings.postprocessor | 16)
                                                                               : (shiftForm.settings.postprocessor & ~16))
                         }
                         GroupBox {
-                            title: qsTr("Post processor")
+                            title: qsTranslate("HikariSub.TimeShift", "Post processor")
                             Layout.fillWidth: true
                             visible: (shiftForm.settings.postprocessor & 16) !== 0
                             GridLayout {
@@ -3872,28 +3873,28 @@ ApplicationWindow {
                                     value: shiftForm.settings[key]
                                     onValueModified: shiftForm.set(key, value)
                                 }
-                                FlagBox { objectName: "ppLeadIn"; bit: 1; text: qsTr("Lead-in") }
-                                MsBox { key: "leadIn"; Accessible.name: qsTr("Lead-in") }
-                                FlagBox { objectName: "ppLeadOut"; bit: 2; text: qsTr("Lead-out") }
-                                MsBox { key: "leadOut"; Accessible.name: qsTr("Lead-out") }
-                                FlagBox { objectName: "ppContinuous"; bit: 4; text: qsTr("Set times as continuous"); Layout.columnSpan: 2 }
-                                Label { text: qsTr("Start time threshold") }
-                                MsBox { key: "thresholdStart"; Accessible.name: qsTr("Start time threshold") }
-                                Label { text: qsTr("End time threshold") }
-                                MsBox { key: "thresholdEnd"; Accessible.name: qsTr("End time threshold") }
-                                FlagBox { objectName: "ppSnap"; bit: 8; text: qsTr("Snap to keyframes"); enabled: root.app.exactTimebase(); Layout.columnSpan: 2 }
-                                Label { text: qsTr("Before the start of time") }
-                                MsBox { key: "keyframeBeforeStart"; Accessible.name: qsTr("Before the start of time") }
-                                Label { text: qsTr("After the start time") }
-                                MsBox { key: "keyframeAfterStart"; Accessible.name: qsTr("After the start time") }
-                                Label { text: qsTr("Before the end time") }
-                                MsBox { key: "keyframeBeforeEnd"; Accessible.name: qsTr("Before the end time") }
-                                Label { text: qsTr("After the end time") }
-                                MsBox { key: "keyframeAfterEnd"; Accessible.name: qsTr("After the end time") }
+                                FlagBox { objectName: "ppLeadIn"; bit: 1; text: qsTranslate("HikariSub.TimeShift", "Lead-in") }
+                                MsBox { key: "leadIn"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Lead-in") }
+                                FlagBox { objectName: "ppLeadOut"; bit: 2; text: qsTranslate("HikariSub.TimeShift", "Lead-out") }
+                                MsBox { key: "leadOut"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Lead-out") }
+                                FlagBox { objectName: "ppContinuous"; bit: 4; text: qsTranslate("HikariSub.TimeShift", "Set times as continuous"); Layout.columnSpan: 2 }
+                                Label { text: qsTranslate("HikariSub.TimeShift", "Start time threshold") }
+                                MsBox { key: "thresholdStart"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Start time threshold") }
+                                Label { text: qsTranslate("HikariSub.TimeShift", "End time threshold") }
+                                MsBox { key: "thresholdEnd"; Accessible.name: qsTranslate("HikariSub.TimeShift", "End time threshold") }
+                                FlagBox { objectName: "ppSnap"; bit: 8; text: qsTranslate("HikariSub.TimeShift", "Snap to keyframes"); enabled: root.app.exactTimebase(); Layout.columnSpan: 2 }
+                                Label { text: qsTranslate("HikariSub.TimeShift", "Before the start of time") }
+                                MsBox { key: "keyframeBeforeStart"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Before the start of time") }
+                                Label { text: qsTranslate("HikariSub.TimeShift", "After the start time") }
+                                MsBox { key: "keyframeAfterStart"; Accessible.name: qsTranslate("HikariSub.TimeShift", "After the start time") }
+                                Label { text: qsTranslate("HikariSub.TimeShift", "Before the end time") }
+                                MsBox { key: "keyframeBeforeEnd"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Before the end time") }
+                                Label { text: qsTranslate("HikariSub.TimeShift", "After the end time") }
+                                MsBox { key: "keyframeAfterEnd"; Accessible.name: qsTranslate("HikariSub.TimeShift", "After the end time") }
                             }
                         }
                         GroupBox {
-                            title: qsTr("Profiles")
+                            title: qsTranslate("HikariSub.TimeShift", "Profiles")
                             Layout.fillWidth: true
                             RowLayout {
                                 anchors.fill: parent
@@ -3901,13 +3902,13 @@ ApplicationWindow {
                                     id: shiftProfile
                                     objectName: "shiftProfile"
                                     Layout.fillWidth: true
-                                    Accessible.name: qsTr("Profiles")
+                                    Accessible.name: qsTranslate("HikariSub.TimeShift", "Profiles")
                                     editable: true
                                     model: root.shiftTimes.profiles
                                     onActivated: (index) => root.shiftTimes.loadProfile(textAt(index))
                                 }
-                                IconToolButton { objectName: "shiftProfileSave"; iconRole: "add"; text: qsTr("Adding and editing profiles"); onClicked: root.shiftTimes.saveProfile(shiftProfile.editText) }
-                                IconToolButton { objectName: "shiftProfileRemove"; iconRole: "remove"; text: qsTr("Removing profiles"); onClicked: root.shiftTimes.removeProfile(shiftProfile.editText) }
+                                IconToolButton { objectName: "shiftProfileSave"; iconRole: "add"; text: qsTranslate("HikariSub.TimeShift", "Adding and editing profiles"); onClicked: root.shiftTimes.saveProfile(shiftProfile.editText) }
+                                IconToolButton { objectName: "shiftProfileRemove"; iconRole: "remove"; text: qsTranslate("HikariSub.TimeShift", "Removing profiles"); onClicked: root.shiftTimes.removeProfile(shiftProfile.editText) }
                             }
                         }
                         Label {
@@ -3928,7 +3929,7 @@ ApplicationWindow {
             id: searchDock
             objectName: "searchDock"
             uniqueName: "Search"
-            title: qsTr("Search")
+            title: qsTranslate("HikariSub.Search", "Search")
             // TabWindow::SaveValues when the tool closes.
             onIsOpenChanged: if (!isOpen) searchTool.save()
             Panel {
@@ -3937,7 +3938,7 @@ ApplicationWindow {
                 dockName: "Search"
                 minimumBodySize: searchTool.minimumSize
                 anchors.fill: parent
-                title: qsTr("Find and replace")
+                title: qsTranslate("HikariSub.Search", "Find and replace")
                 onActiveFocusChanged: if (activeFocus) searchTool.activated()
                 SearchTool {
                     id: searchTool
@@ -4010,12 +4011,12 @@ ApplicationWindow {
                 Accessible.role: Accessible.AlertMessage
             }
             Button {
-                text: qsTr("Restore the previous layout")
+                text: qsTranslate("HikariSub.Workspace", "Restore the previous layout")
                 visible: root.workspaceLayout.hasBackup
                 onClicked: root.workspaceLayout.restoreBackup()
             }
             Button {
-                text: qsTr("Dismiss")
+                text: qsTranslate("HikariSub.Workspace", "Dismiss")
                 onClicked: root.workspaceLayout.dismissNotice()
             }
         }
@@ -4155,9 +4156,9 @@ ApplicationWindow {
     FileDialog {
         id: saveAsDialog
         objectName: "saveAsDialog"
-        title: qsTr("Save subtitle file")
+        title: qsTranslate("HikariSub.Documents", "Save subtitle file")
         fileMode: FileDialog.SaveFile
-        nameFilters: [qsTr("Subtitle file ") + "(*.ass)"]
+        nameFilters: [qsTranslate("HikariSub.Documents", "Subtitle file ") + "(*.ass)"]
         property var document: 0 // P9: the Document saved (0: the editing target)
         onAccepted: {
             if (root.app.saveChosenFor(document, selectedFile) === "readonly") {
@@ -4186,11 +4187,11 @@ ApplicationWindow {
     Dialog {
         id: readOnlyWarning
         objectName: "readOnlyWarning"
-        title: qsTr("Warning")
+        title: qsTranslate("HikariSub.Documents", "Warning")
         modal: true
         anchors.centerIn: parent
         standardButtons: Dialog.Ok
-        Label { text: qsTr("Chosen file is read only,\nplease save with different name or change file attribute.") }
+        Label { text: qsTranslate("HikariSub.Documents", "Chosen file is read only,\nplease save with different name or change file attribute.") }
         property var document: 0
         onClosed: root.openSaveDialog(document)
     }
@@ -4219,7 +4220,7 @@ ApplicationWindow {
         color: Theme.panel // K2: a Window draws white unless told
         id: closeReview
         objectName: "closeReview"
-        title: qsTr("Unsaved changes")
+        title: qsTranslate("HikariSub.Documents", "Unsaved changes")
         width: 480
         height: 320
         modality: Qt.ApplicationModal
@@ -4238,7 +4239,7 @@ ApplicationWindow {
         function proceed() {
             for (let i = 0; i < rows.length; ++i)
                 if (choices[i].save && rows[i].untitled && choices[i].path.length === 0) {
-                    problem = qsTr("Choose where to save %1.").arg(rows[i].title)
+                    problem = qsTranslate("HikariSub.Documents", "Choose where to save %1.").arg(rows[i].title)
                     return
                 }
             root.app.resolveClose(choices)
@@ -4247,7 +4248,7 @@ ApplicationWindow {
             anchors.fill: parent
             anchors.margins: 8
             Label {
-                text: qsTr("These Documents have unsaved changes:")
+                text: qsTranslate("HikariSub.Documents", "These Documents have unsaved changes:")
             }
             Repeater {
                 model: closeReview.rows
@@ -4261,19 +4262,19 @@ ApplicationWindow {
                     }
                     RadioButton {
                         objectName: "closeSave" + rowItem.index
-                        text: qsTr("Save")
+                        text: qsTranslate("HikariSub.Documents", "Save")
                         checked: closeReview.choices[rowItem.index].save
                         onToggled: closeReview.choices[rowItem.index].save = checked
                     }
                     RadioButton {
                         objectName: "closeDiscard" + rowItem.index
-                        text: qsTr("Discard")
+                        text: qsTranslate("HikariSub.Documents", "Discard")
                         checked: !closeReview.choices[rowItem.index].save
                         onToggled: closeReview.choices[rowItem.index].save = !checked
                     }
                     Button {
                         visible: rowItem.modelData.untitled
-                        text: qsTr("Save as…")
+                        text: qsTranslate("HikariSub.Documents", "Save as…")
                         onClicked: {
                             closeSaveAs.row = rowItem.index
                             closeSaveAs.open()
@@ -4294,22 +4295,22 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignRight
                 Button {
                     objectName: "closeSaveAll"
-                    text: qsTr("Save all")
+                    text: qsTranslate("HikariSub.Documents", "Save all")
                     onClicked: { closeReview.choices.forEach(c => c.save = true); closeReview.proceed() }
                 }
                 Button {
                     objectName: "closeDiscardAll"
-                    text: qsTr("Discard all")
+                    text: qsTranslate("HikariSub.Documents", "Discard all")
                     onClicked: { closeReview.choices.forEach(c => c.save = false); closeReview.proceed() }
                 }
                 Button {
                     objectName: "closeContinue"
-                    text: qsTr("Continue")
+                    text: qsTranslate("HikariSub.Documents", "Continue")
                     onClicked: closeReview.proceed()
                 }
                 Button {
                     objectName: "closeCancel"
-                    text: qsTr("Cancel")
+                    text: qsTranslate("HikariSub.Documents", "Cancel")
                     onClicked: { root.app.cancelClose(); closeReview.close() }
                 }
             }
@@ -4318,7 +4319,7 @@ ApplicationWindow {
             id: closeSaveAs
             property int row: -1
             fileMode: FileDialog.SaveFile
-            nameFilters: [qsTr("ASS subtitles (*.ass)"), qsTr("All files (*)")]
+            nameFilters: [qsTranslate("HikariSub.Documents", "ASS subtitles (*.ass)"), qsTranslate("HikariSub.Documents", "All files (*)")]
             onAccepted: closeReview.choices[row].path = root.app.localPath(selectedFile)
         }
     }
@@ -4341,7 +4342,7 @@ ApplicationWindow {
         objectName: "automationManagerWindow"
         // K1: the set's automation icon as the window's (as legacy's dialogs show theirs, SetIcon).
         Component.onCompleted: IconTheme.setWindowIcon(automationManagerWindow, "automation")
-        title: qsTr("Automation manager")
+        title: qsTranslate("HikariSub.Automation", "Automation manager")
         width: 560
         height: 420
         AutomationManager {
@@ -4393,13 +4394,13 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignRight
                 Button {
                     objectName: "automationForceStop"
-                    text: qsTr("Force stop")
+                    text: qsTranslate("HikariSub.Automation", "Force stop")
                     visible: root.automation.forceStopOffered
                     onClicked: root.automation.forceStopRun()
                 }
                 Button {
                     objectName: "automationCancel"
-                    text: root.automation.running ? qsTr("Cancel") : qsTr("Close")
+                    text: root.automation.running ? qsTranslate("HikariSub.Automation", "Cancel") : qsTranslate("HikariSub.Automation", "Close")
                     onClicked: {
                         if (root.automation.running)
                             root.automation.cancelRun()
@@ -4412,14 +4413,14 @@ ApplicationWindow {
     }
     FileDialog {
         id: scriptDialog
-        nameFilters: [qsTr("Automation scripts (*.lua *.moon)"), qsTr("All files (*)")]
+        nameFilters: [qsTranslate("HikariSub.Automation", "Automation scripts (*.lua *.moon)"), qsTranslate("HikariSub.Automation", "All files (*)")]
         onAccepted: root.automation.loadScript(selectedFile)
     }
 
     FileDialog {
         id: videoDialog
         objectName: "videoOpenDialog"
-        nameFilters: [qsTr("Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"), qsTr("All files (*)")]
+        nameFilters: [qsTranslate("HikariSub.Video", "Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"), qsTranslate("HikariSub.Video", "All files (*)")]
         // P9; V5: from the fullscreen window without the subtitles question.
         onAccepted: root.videoFullscreen.active ? root.openVideoUnasked(root.app.localPath(selectedFile))
                                                 : tabCommands.openVideoFile(root.app.localPath(selectedFile))
@@ -4510,7 +4511,7 @@ ApplicationWindow {
     FileDialog {
         id: openDialog
         objectName: "subtitlesOpenDialog"
-        nameFilters: [qsTr("Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"), qsTr("All files (*)")]
+        nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"), qsTranslate("HikariSub.Documents", "All files (*)")]
         onAccepted: root.openSubtitles(root.app.localPath(selectedFile))
     }
 
@@ -4519,7 +4520,7 @@ ApplicationWindow {
         color: Theme.panel // K2: a Window draws white unless told
         id: fpsWindow
         objectName: "fpsWindow"
-        title: qsTr("Choose new FPS")
+        title: qsTranslate("HikariSub.Conversion", "Choose new FPS")
         width: 360
         height: 140
         modality: Qt.ApplicationModal
@@ -4529,30 +4530,30 @@ ApplicationWindow {
             anchors.fill: parent
             anchors.margins: 8
             columns: 2
-            Label { text: qsTr("Subtitles FPS") }
+            Label { text: qsTranslate("HikariSub.Conversion", "Subtitles FPS") }
             ComboBox {
                 id: oldFps
                 objectName: "oldFps"
                 editable: true
                 model: fpsWindow.presets
                 validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
-                Accessible.name: qsTr("Subtitles FPS")
+                Accessible.name: qsTranslate("HikariSub.Conversion", "Subtitles FPS")
             }
-            Label { text: qsTr("New FPS") }
+            Label { text: qsTranslate("HikariSub.Conversion", "New FPS") }
             ComboBox {
                 id: newFps
                 objectName: "newFps"
                 editable: true
                 model: fpsWindow.presets
                 validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
-                Accessible.name: qsTr("New FPS")
+                Accessible.name: qsTranslate("HikariSub.Conversion", "New FPS")
             }
             RowLayout {
                 Layout.columnSpan: 2
                 Layout.alignment: Qt.AlignRight
                 Button {
                     objectName: "fpsOk"
-                    text: qsTr("OK")
+                    text: qsTranslate("HikariSub.Conversion", "OK")
                     onClicked: {
                         if (root.app.setNewFps(oldFps.editText, newFps.editText))
                             fpsWindow.close()
@@ -4560,7 +4561,7 @@ ApplicationWindow {
                 }
                 Button {
                     objectName: "fpsCancel"
-                    text: qsTr("Cancel")
+                    text: qsTranslate("HikariSub.Conversion", "Cancel")
                     onClicked: fpsWindow.close()
                 }
             }
@@ -4573,7 +4574,7 @@ ApplicationWindow {
         color: Theme.panel // K2: a Window draws white unless told
         id: columnsWindow
         objectName: "columnsWindow"
-        title: paste ? qsTr("Paste columns") : qsTr("Copy columns")
+        title: paste ? qsTranslate("HikariSub.Grid", "Paste columns") : qsTranslate("HikariSub.Grid", "Copy columns")
         width: 320
         height: 420
         modality: Qt.ApplicationModal
@@ -4611,7 +4612,7 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignRight
                 Button {
                     objectName: "columnsOk"
-                    text: qsTr("OK")
+                    text: qsTranslate("HikariSub.Grid", "OK")
                     onClicked: {
                         const bits = columnsWindow.chosen()
                         columnsWindow.close()
@@ -4623,7 +4624,7 @@ ApplicationWindow {
                 }
                 Button {
                     objectName: "columnsCancel"
-                    text: qsTr("Cancel")
+                    text: qsTranslate("HikariSub.Grid", "Cancel")
                     onClicked: columnsWindow.close()
                 }
             }
@@ -4679,7 +4680,7 @@ ApplicationWindow {
         color: Theme.panel // K2: a Window draws white unless told
         id: placementWindow
         objectName: "placementWindow"
-        title: qsTr("Move panel")
+        title: qsTranslate("HikariSub.Workspace", "Move panel")
         width: 420
         height: 260
         transientParent: root
@@ -4700,7 +4701,7 @@ ApplicationWindow {
             anchors.fill: parent
             anchors.margins: 8
             columns: 2
-            Label { text: qsTr("Panel:") }
+            Label { text: qsTranslate("HikariSub.Workspace", "Panel:") }
             ComboBox {
                 id: placementPanel
                 objectName: "placementPanel"
@@ -4712,18 +4713,18 @@ ApplicationWindow {
                 model: root.dockList
                 textRole: "title"
                 displayText: placementWindow.visible && currentIndex >= 0 ? root.dockList[currentIndex].title : ""
-                Accessible.name: qsTr("Panel")
+                Accessible.name: qsTranslate("HikariSub.Workspace", "Panel")
                 onActivated: placementWindow.refreshSize()
             }
-            Label { text: qsTr("Place:") }
+            Label { text: qsTranslate("HikariSub.Workspace", "Place:") }
             ComboBox {
                 id: placementKind
                 objectName: "placementKind"
                 Layout.fillWidth: true
-                model: [qsTr("Tab with"), qsTr("Left of"), qsTr("Above"), qsTr("Right of"), qsTr("Below"), qsTr("Float")]
-                Accessible.name: qsTr("Placement")
+                model: [qsTranslate("HikariSub.Workspace", "Tab with"), qsTranslate("HikariSub.Workspace", "Left of"), qsTranslate("HikariSub.Workspace", "Above"), qsTranslate("HikariSub.Workspace", "Right of"), qsTranslate("HikariSub.Workspace", "Below"), qsTranslate("HikariSub.Workspace", "Float")]
+                Accessible.name: qsTranslate("HikariSub.Workspace", "Placement")
             }
-            Label { text: qsTr("Next to:") }
+            Label { text: qsTranslate("HikariSub.Workspace", "Next to:") }
             ComboBox {
                 id: placementTarget
                 objectName: "placementTarget"
@@ -4733,36 +4734,36 @@ ApplicationWindow {
                 textRole: "title"
                 displayText: placementWindow.visible && currentIndex >= 0 ? root.dockList[currentIndex].title : ""
                 currentIndex: 3 // the Grid
-                Accessible.name: qsTr("Next to panel")
+                Accessible.name: qsTranslate("HikariSub.Workspace", "Next to panel")
             }
             Item { Layout.fillWidth: true }
             Button {
                 objectName: "placementMove"
-                text: qsTr("Move")
+                text: qsTranslate("HikariSub.Workspace", "Move")
                 onClicked: {
                     root.placePanel(root.dockList[placementPanel.currentIndex], placementKind.currentIndex,
                                     root.dockList[placementTarget.currentIndex])
                     placementWindow.refreshSize()
                 }
             }
-            Label { text: qsTr("Width:") }
+            Label { text: qsTranslate("HikariSub.Workspace", "Width:") }
             SpinBox {
                 id: placementWidth
                 objectName: "placementWidth"
                 from: 0; to: 10000; stepSize: 10; editable: true
-                Accessible.name: qsTr("Width")
+                Accessible.name: qsTranslate("HikariSub.Workspace", "Width")
             }
-            Label { text: qsTr("Height:") }
+            Label { text: qsTranslate("HikariSub.Workspace", "Height:") }
             SpinBox {
                 id: placementHeight
                 objectName: "placementHeight"
                 from: 0; to: 10000; stepSize: 10; editable: true
-                Accessible.name: qsTr("Height")
+                Accessible.name: qsTranslate("HikariSub.Workspace", "Height")
             }
             Item { Layout.fillWidth: true }
             Button {
                 objectName: "placementResize"
-                text: qsTr("Resize")
+                text: qsTranslate("HikariSub.Workspace", "Resize")
                 onClicked: {
                     root.workspaceLayout.resizePanel(root.dockList[placementPanel.currentIndex],
                                                      placementWidth.value, placementHeight.value)
@@ -4776,9 +4777,9 @@ ApplicationWindow {
     FileDialog {
         id: audioDialog
         objectName: "audioDialog"
-        title: qsTr("Choose audio file")
-        nameFilters: [qsTr("Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)",
-                      qsTr("All files") + " (*)"]
+        title: qsTranslate("HikariSub.Audio", "Choose audio file")
+        nameFilters: [qsTranslate("HikariSub.Audio", "Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)",
+                      qsTranslate("HikariSub.Audio", "All files") + " (*)"]
         onAccepted: root.audio.openAudioUrl(selectedFile)
     }
     // A1: legacy HikariListBox "Choose the track" (ProviderFFMS2::Init with
@@ -4787,7 +4788,7 @@ ApplicationWindow {
     Dialog {
         id: audioTrackChooser
         objectName: "audioTrackChooser"
-        title: qsTr("Choose the track")
+        title: qsTranslate("HikariSub.Audio", "Choose the track")
         modal: true
         anchors.centerIn: parent
         standardButtons: Dialog.Ok | Dialog.Cancel
@@ -4825,8 +4826,8 @@ ApplicationWindow {
     }
     FileDialog {
         id: keyframesDialog
-        title: qsTr("Choose video file")
-        nameFilters: [qsTr("Keyframes file (*.txt *.pass *.stats *.log)"), qsTr("All files (*)")]
+        title: qsTranslate("HikariSub.Video", "Choose video file")
+        nameFilters: [qsTranslate("HikariSub.Video", "Keyframes file (*.txt *.pass *.stats *.log)"), qsTranslate("HikariSub.Video", "All files (*)")]
         onAccepted: {
             // V3: the recent keyframes take the file too (SetRecent(3))
             const problem = root.app.openKeyframesFile(selectedFile.toString())
@@ -4841,8 +4842,8 @@ ApplicationWindow {
     }
     FileDialog {
         id: translationFileDialog
-        title: qsTr("Choose subtitle file")
-        nameFilters: [qsTr("Subtitle files (*.ass *.srt *.sub *.txt)")]
+        title: qsTranslate("HikariSub.Translation", "Choose subtitle file")
+        nameFilters: [qsTranslate("HikariSub.Translation", "Subtitle files (*.ass *.srt *.sub *.txt)")]
         onAccepted: root.app.pasteTranslationFile(selectedFile)
     }
     // Legacy TLDialog: moves the translation or the original against the
@@ -4851,7 +4852,7 @@ ApplicationWindow {
         color: Theme.panel // K2: a Window draws white unless told
         id: translationShiftWindow
         objectName: "translationShiftWindow"
-        title: qsTr("Translation matching options")
+        title: qsTranslate("HikariSub.Translation", "Translation matching options")
         width: 360
         height: 250
         transientParent: root
@@ -4860,8 +4861,8 @@ ApplicationWindow {
             anchors.fill: parent
             anchors.margins: 8
             RowLayout {
-                Label { text: qsTr("Original"); Layout.fillWidth: true }
-                Label { text: qsTr("Translation"); Layout.fillWidth: true }
+                Label { text: qsTranslate("HikariSub.Translation", "Original"); Layout.fillWidth: true }
+                Label { text: qsTranslate("HikariSub.Translation", "Translation"); Layout.fillWidth: true }
             }
             GridLayout {
                 columns: 2
@@ -4869,12 +4870,12 @@ ApplicationWindow {
                 Repeater {
                     // Legacy layout: Original left, Translation right; mode is MoveTextTL's.
                     model: [
-                        { mode: 2, name: qsTr("Add line"), tip: qsTr("Adds a blank line before the selected line.\nMoves the original one line down.\nThe added line must be timed.") },
-                        { mode: 3, name: qsTr("Add line"), tip: qsTr("Adds a blank line before the selected line.\nMoves the translation one line down.") },
-                        { mode: 4, name: qsTr("Join lines"), tip: qsTr("Joins the selected line with the next line.\nMoves the original one line up.") },
-                        { mode: 1, name: qsTr("Join lines"), tip: qsTr("Joins the selected line with the next line.\nMoves the translation one line up.") },
-                        { mode: 5, name: qsTr("Delete line"), tip: qsTr("Deletes the selected line.\nMoves the original one line up.") },
-                        { mode: 0, name: qsTr("Delete line"), tip: qsTr("Deletes the selected line.\nMoves the translation one line up.") }
+                        { mode: 2, name: qsTranslate("HikariSub.Translation", "Add line"), tip: qsTranslate("HikariSub.Translation", "Adds a blank line before the selected line.\nMoves the original one line down.\nThe added line must be timed.") },
+                        { mode: 3, name: qsTranslate("HikariSub.Translation", "Add line"), tip: qsTranslate("HikariSub.Translation", "Adds a blank line before the selected line.\nMoves the translation one line down.") },
+                        { mode: 4, name: qsTranslate("HikariSub.Translation", "Join lines"), tip: qsTranslate("HikariSub.Translation", "Joins the selected line with the next line.\nMoves the original one line up.") },
+                        { mode: 1, name: qsTranslate("HikariSub.Translation", "Join lines"), tip: qsTranslate("HikariSub.Translation", "Joins the selected line with the next line.\nMoves the translation one line up.") },
+                        { mode: 5, name: qsTranslate("HikariSub.Translation", "Delete line"), tip: qsTranslate("HikariSub.Translation", "Deletes the selected line.\nMoves the original one line up.") },
+                        { mode: 0, name: qsTranslate("HikariSub.Translation", "Delete line"), tip: qsTranslate("HikariSub.Translation", "Deletes the selected line.\nMoves the translation one line up.") }
                     ]
                     Button {
                         required property var modelData
@@ -4894,8 +4895,8 @@ ApplicationWindow {
                 objectName: "translationShiftDescription"
                 Layout.alignment: Qt.AlignRight
                 iconRole: "about"
-                text: qsTr("Description")
-                tip: qsTr("Description:\nOriginal - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.")
+                text: qsTranslate("HikariSub.Translation", "Description")
+                tip: qsTranslate("HikariSub.Translation", "Description:\nOriginal - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.")
             }
         }
     }
@@ -4903,11 +4904,11 @@ ApplicationWindow {
         id: shiftConfirm
         objectName: "shiftConfirm"
         property int which: 1
-        title: qsTr("Confirmation")
+        title: qsTranslate("HikariSub.TimeShift", "Confirmation")
         modal: true
         anchors.centerIn: parent
         standardButtons: Dialog.Yes | Dialog.No
-        Label { text: qsTr("Do you really want to shift only %1 times?").arg(shiftConfirm.which === 1 ? qsTr("start") : qsTr("end")) }
+        Label { text: qsTranslate("HikariSub.TimeShift", "Do you really want to shift only %1 times?").arg(shiftConfirm.which === 1 ? qsTranslate("HikariSub.TimeShift", "start") : qsTranslate("HikariSub.TimeShift", "end")) }
         onAccepted: shiftMessage.text = root.app.shiftTimes()
     }
     // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
@@ -5062,36 +5063,36 @@ ApplicationWindow {
             anchors.fill: parent
             GridLayout {
                 columns: 2
-                Label { text: qsTr("FPS") }
+                Label { text: qsTranslate("HikariSub.Conversion", "FPS") }
                 RowLayout {
-                    TextField { id: convFps; objectName: "convFps"; Accessible.name: qsTr("FPS"); onEditingFinished: conversionDialog.set("fps", text) }
-                    CheckBox { id: convFpsFromVideo; text: qsTr("FPS from video"); onToggled: conversionDialog.set("fpsFromVideo", checked) }
+                    TextField { id: convFps; objectName: "convFps"; Accessible.name: qsTranslate("HikariSub.Conversion", "FPS"); onEditingFinished: conversionDialog.set("fps", text) }
+                    CheckBox { id: convFpsFromVideo; text: qsTranslate("HikariSub.Conversion", "FPS from video"); onToggled: conversionDialog.set("fpsFromVideo", checked) }
                 }
-                Label { text: qsTr("Catalog for style") }
+                Label { text: qsTranslate("HikariSub.Conversion", "Catalog for style") }
                 ComboBox {
                     id: convCatalog
                     model: root.styleManager.catalogs
-                    Accessible.name: qsTr("Catalog for style")
+                    Accessible.name: qsTranslate("HikariSub.Conversion", "Catalog for style")
                     onActivated: (i) => conversionDialog.set("styleCatalog", model[i])
                 }
-                Label { text: qsTr("Style") }
-                TextField { id: convStyle; Accessible.name: qsTr("Style"); onEditingFinished: conversionDialog.set("style", text) }
-                Label { text: qsTr("Time for one letter in milliseconds") }
+                Label { text: qsTranslate("HikariSub.Conversion", "Style") }
+                TextField { id: convStyle; Accessible.name: qsTranslate("HikariSub.Conversion", "Style"); onEditingFinished: conversionDialog.set("style", text) }
+                Label { text: qsTranslate("HikariSub.Conversion", "Time for one letter in milliseconds") }
                 RowLayout {
                     SpinBox { id: convPerLetter; from: 30; to: 1000; editable: true; onValueModified: conversionDialog.set("timePerCharacter", value) }
-                    CheckBox { id: convNewEnds; objectName: "convNewEnds"; text: qsTr("New end times"); onToggled: conversionDialog.set("newEndTimes", checked) }
+                    CheckBox { id: convNewEnds; objectName: "convNewEnds"; text: qsTranslate("HikariSub.Conversion", "New end times"); onToggled: conversionDialog.set("newEndTimes", checked) }
                 }
-                Label { text: qsTr("Tags to paste at the beginning of every ASS line") }
-                TextField { id: convPrefix; Accessible.name: qsTr("Tags to paste at the beginning of every ASS line"); onEditingFinished: conversionDialog.set("prefix", text) }
-                Label { text: qsTr("Resolution when converting to ASS") }
+                Label { text: qsTranslate("HikariSub.Conversion", "Tags to paste at the beginning of every ASS line") }
+                TextField { id: convPrefix; Accessible.name: qsTranslate("HikariSub.Conversion", "Tags to paste at the beginning of every ASS line"); onEditingFinished: conversionDialog.set("prefix", text) }
+                Label { text: qsTranslate("HikariSub.Conversion", "Resolution when converting to ASS") }
                 RowLayout {
-                    TextField { id: convWidth; Accessible.name: qsTr("Width"); onEditingFinished: conversionDialog.set("resolutionWidth", text) }
+                    TextField { id: convWidth; Accessible.name: qsTranslate("HikariSub.Conversion", "Width"); onEditingFinished: conversionDialog.set("resolutionWidth", text) }
                     Label { text: "×" }
-                    TextField { id: convHeight; Accessible.name: qsTr("Height"); onEditingFinished: conversionDialog.set("resolutionHeight", text) }
+                    TextField { id: convHeight; Accessible.name: qsTranslate("HikariSub.Conversion", "Height"); onEditingFinished: conversionDialog.set("resolutionHeight", text) }
                 }
             }
             Label {
-                text: conversionDialog.preview.ok ? qsTr("The conversion will:") : (conversionDialog.preview.problem || "")
+                text: conversionDialog.preview.ok ? qsTranslate("HikariSub.Conversion", "The conversion will:") : (conversionDialog.preview.problem || "")
                 font.bold: true
             }
             ListView {
@@ -5102,14 +5103,14 @@ ApplicationWindow {
                 clip: true
                 model: conversionDialog.preview.ok ? conversionDialog.preview.losses : []
                 Accessible.role: Accessible.List
-                Accessible.name: qsTr("What the conversion changes")
+                Accessible.name: qsTranslate("HikariSub.Conversion", "What the conversion changes")
                 delegate: Label { required property string modelData; text: "• " + modelData; Accessible.name: modelData }
             }
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
                 Button {
                     objectName: "conversionAccept"
-                    text: qsTr("Convert")
+                    text: qsTranslate("HikariSub.Conversion", "Convert")
                     enabled: conversionDialog.preview.ok === true
                     onClicked: {
                         if (!root.app.acceptConversion())
@@ -5118,7 +5119,7 @@ ApplicationWindow {
                             conversionDialog.close()
                     }
                 }
-                Button { text: qsTr("Cancel"); onClicked: conversionDialog.close() }
+                Button { text: qsTranslate("HikariSub.Conversion", "Cancel"); onClicked: conversionDialog.close() }
             }
         }
     }
@@ -5126,7 +5127,7 @@ ApplicationWindow {
     Dialog {
         id: resampleDialog
         objectName: "resampleDialog"
-        title: qsTr("Resample subtitles") // the menu command's name (legacy: "Change resolution")
+        title: qsTranslate("HikariSub.Conversion", "Resample subtitles") // the menu command's name (legacy: "Change resolution")
         header: IconDialogHeader { objectName: "resampleDialogTitle"; iconRole: "resample"; text: resampleDialog.title }
         modal: true
         anchors.centerIn: parent
@@ -5148,28 +5149,28 @@ ApplicationWindow {
         ColumnLayout {
             anchors.fill: parent
             GroupBox {
-                title: qsTr("Subtitles resolution")
+                title: qsTranslate("HikariSub.Conversion", "Subtitles resolution")
                 Layout.fillWidth: true
                 RowLayout {
-                    SpinBox { id: subsWidth; objectName: "resampleSubsWidth"; from: 100; to: 13000; editable: true; Accessible.name: qsTr("Subtitles resolution") }
+                    SpinBox { id: subsWidth; objectName: "resampleSubsWidth"; from: 100; to: 13000; editable: true; Accessible.name: qsTranslate("HikariSub.Conversion", "Subtitles resolution") }
                     Label { text: "×" }
                     SpinBox { id: subsHeight; objectName: "resampleSubsHeight"; from: 100; to: 10000; editable: true }
                     Button {
-                        text: qsTr("From subtitles")
+                        text: qsTranslate("HikariSub.Conversion", "From subtitles")
                         enabled: subsWidth.value !== resampleDialog.initial.subsWidth || subsHeight.value !== resampleDialog.initial.subsHeight
                         onClicked: { subsWidth.value = resampleDialog.initial.subsWidth; subsHeight.value = resampleDialog.initial.subsHeight }
                     }
                 }
             }
             GroupBox {
-                title: qsTr("Target resolution")
+                title: qsTranslate("HikariSub.Conversion", "Target resolution")
                 Layout.fillWidth: true
                 RowLayout {
-                    SpinBox { id: targetWidth; objectName: "resampleWidth"; from: 100; to: 13000; editable: true; Accessible.name: qsTr("Target resolution") }
+                    SpinBox { id: targetWidth; objectName: "resampleWidth"; from: 100; to: 13000; editable: true; Accessible.name: qsTranslate("HikariSub.Conversion", "Target resolution") }
                     Label { text: "×" }
                     SpinBox { id: targetHeight; objectName: "resampleHeight"; from: 100; to: 10000; editable: true }
                     Button {
-                        text: qsTr("From video")
+                        text: qsTranslate("HikariSub.Conversion", "From video")
                         // Legacy compares the target with the subtitles' size here.
                         enabled: targetWidth.value !== resampleDialog.initial.subsWidth || targetHeight.value !== resampleDialog.initial.subsHeight
                         onClicked: { targetWidth.value = resampleDialog.initial.videoWidth; targetHeight.value = resampleDialog.initial.videoHeight }
@@ -5177,19 +5178,19 @@ ApplicationWindow {
                 }
             }
             GroupBox {
-                title: qsTr("Resample options")
+                title: qsTranslate("HikariSub.Conversion", "Resample options")
                 Layout.fillWidth: true
                 enabled: resampleDialog.aspectChanges
                 RowLayout {
-                    RadioButton { id: noStretch; text: qsTr("No stretch"); checked: true }
-                    RadioButton { id: stretch; objectName: "resampleStretch"; text: qsTr("Stretch") }
+                    RadioButton { id: noStretch; text: qsTranslate("HikariSub.Conversion", "No stretch"); checked: true }
+                    RadioButton { id: stretch; objectName: "resampleStretch"; text: qsTranslate("HikariSub.Conversion", "Stretch") }
                 }
             }
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
                 Button {
                     objectName: "resampleOk"
-                    text: qsTr("OK")
+                    text: qsTranslate("HikariSub.Conversion", "OK")
                     onClicked: {
                         if (subsWidth.value === targetWidth.value && subsHeight.value === targetHeight.value)
                             return
@@ -5198,7 +5199,7 @@ ApplicationWindow {
                         resampleDialog.close()
                     }
                 }
-                Button { text: qsTr("Cancel"); onClicked: resampleDialog.close() }
+                Button { text: qsTranslate("HikariSub.Conversion", "Cancel"); onClicked: resampleDialog.close() }
             }
         }
     }
@@ -5210,7 +5211,7 @@ ApplicationWindow {
     Dialog {
         id: mismatchDialog
         objectName: "mismatchDialog"
-        title: qsTr("Incompatible resolution")
+        title: qsTranslate("HikariSub.Conversion", "Incompatible resolution")
         modal: true
         anchors.centerIn: parent
         property var sizes: ({})
@@ -5224,32 +5225,32 @@ ApplicationWindow {
             anchors.fill: parent
             Label {
                 objectName: "mismatchText"
-                text: qsTr("The video and subtitle resolutions are different.\nYou can change them now or use 'Change subtitle resolution'.\n\nVideo resolution: %1 x %2\nSubtitle resolution: %3 x %4\n\nMatch the resolution to the video?\n")
+                text: qsTranslate("HikariSub.Conversion", "The video and subtitle resolutions are different.\nYou can change them now or use 'Change subtitle resolution'.\n\nVideo resolution: %1 x %2\nSubtitle resolution: %3 x %4\n\nMatch the resolution to the video?\n")
                       .arg(mismatchDialog.sizes.videoWidth).arg(mismatchDialog.sizes.videoHeight)
                       .arg(mismatchDialog.sizes.subsWidth).arg(mismatchDialog.sizes.subsHeight)
             }
             GroupBox {
-                title: qsTr("Resample options")
+                title: qsTranslate("HikariSub.Conversion", "Resample options")
                 ColumnLayout {
-                    RadioButton { id: mismatchOnly; objectName: "mismatchOnly"; text: qsTr("Change only the subtitle resolution") }
-                    RadioButton { id: mismatchResample; objectName: "mismatchResample"; text: qsTr("Resample subtitles (no stretch)"); checked: true }
-                    RadioButton { id: mismatchStretch; objectName: "mismatchStretch"; text: qsTr("Resample subtitles (stretch)"); visible: mismatchDialog.canStretch }
+                    RadioButton { id: mismatchOnly; objectName: "mismatchOnly"; text: qsTranslate("HikariSub.Conversion", "Change only the subtitle resolution") }
+                    RadioButton { id: mismatchResample; objectName: "mismatchResample"; text: qsTranslate("HikariSub.Conversion", "Resample subtitles (no stretch)"); checked: true }
+                    RadioButton { id: mismatchStretch; objectName: "mismatchStretch"; text: qsTranslate("HikariSub.Conversion", "Resample subtitles (stretch)"); visible: mismatchDialog.canStretch }
                 }
             }
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
                 Button {
                     objectName: "mismatchChange"
-                    text: qsTr("Change")
+                    text: qsTranslate("HikariSub.Conversion", "Change")
                     onClicked: {
                         root.app.matchVideoResolution(mismatchOnly.checked ? 0 : mismatchStretch.checked ? 2 : 1)
                         mismatchDialog.close()
                     }
                 }
-                Button { text: qsTr("Do not change"); onClicked: mismatchDialog.close() }
+                Button { text: qsTranslate("HikariSub.Conversion", "Do not change"); onClicked: mismatchDialog.close() }
                 Button {
                     objectName: "mismatchDisable"
-                    text: qsTr("Disable warning")
+                    text: qsTranslate("HikariSub.Conversion", "Disable warning")
                     onClicked: { root.app.askForBadResolution = false; mismatchDialog.close() }
                 }
             }
@@ -5335,7 +5336,7 @@ ApplicationWindow {
         id: playerNotice
         objectName: "playerNotice"
         property alias text: playerNoticeLabel.text
-        title: qsTr("Warning")
+        title: qsTranslate("HikariSub.Video", "Warning")
         anchors.centerIn: parent
         modal: true
         standardButtons: Dialog.Ok
@@ -5358,7 +5359,7 @@ ApplicationWindow {
     Dialog {
         id: fixSuggestions
         objectName: "fixSuggestions"
-        title: qsTr("Fix suggestions")
+        title: qsTranslate("HikariSub.Spelling", "Fix suggestions")
         anchors.centerIn: parent
         modal: true
         standardButtons: Dialog.Ok | Dialog.Cancel
@@ -5434,7 +5435,7 @@ ApplicationWindow {
         color: Theme.panel // K2: a Window draws white unless told
         id: tagButtonDialog
         objectName: "tagButtonDialog"
-        title: qsTr("Enter ASS tag")
+        title: qsTranslate("HikariSub.Editor", "Enter ASS tag")
         width: 320
         height: 240
         modality: Qt.ApplicationModal
@@ -5461,34 +5462,34 @@ ApplicationWindow {
                 id: tagType
                 objectName: "tagType"
                 Layout.fillWidth: true
-                model: [qsTr("Tag inserted in place of cursor"), qsTr("Insert Tag at text beginning"), qsTr("Plain text")]
-                Accessible.name: qsTr("Insertion")
+                model: [qsTranslate("HikariSub.Editor", "Tag inserted in place of cursor"), qsTranslate("HikariSub.Editor", "Insert Tag at text beginning"), qsTranslate("HikariSub.Editor", "Plain text")]
+                Accessible.name: qsTranslate("HikariSub.Editor", "Insertion")
             }
-            Label { text: qsTr("Button name") }
+            Label { text: qsTranslate("HikariSub.Editor", "Button name") }
             TextField {
                 id: tagName
                 objectName: "tagName"
                 Layout.fillWidth: true
-                Accessible.name: qsTr("Button name")
+                Accessible.name: qsTranslate("HikariSub.Editor", "Button name")
                 onAccepted: tagButtonDialog.saveTag()
             }
-            Label { text: qsTr("Button tag") }
+            Label { text: qsTranslate("HikariSub.Editor", "Button tag") }
             TextField {
                 id: tagText
                 objectName: "tagText"
                 Layout.fillWidth: true
-                Accessible.name: qsTr("Button tag")
+                Accessible.name: qsTranslate("HikariSub.Editor", "Button tag")
                 onAccepted: tagButtonDialog.saveTag()
             }
             RowLayout {
                 Button {
                     objectName: "saveTag"
-                    text: qsTr("Save tag")
+                    text: qsTranslate("HikariSub.Editor", "Save tag")
                     onClicked: tagButtonDialog.saveTag()
                 }
                 Button {
                     objectName: "cancelTag"
-                    text: qsTr("Cancel")
+                    text: qsTranslate("HikariSub.Editor", "Cancel")
                     onClicked: tagButtonDialog.close()
                 }
             }
@@ -5499,7 +5500,7 @@ ApplicationWindow {
     Dialog {
         id: tagButtonCountDialog
         objectName: "tagButtonCountDialog"
-        title: qsTr("Change number of buttons")
+        title: qsTranslate("HikariSub.Editor", "Change number of buttons")
         modal: true
         anchors.centerIn: parent
         standardButtons: Dialog.Ok | Dialog.Cancel
@@ -5511,7 +5512,7 @@ ApplicationWindow {
             from: 0
             to: 20
             editable: true
-            Accessible.name: qsTr("Number of buttons")
+            Accessible.name: qsTranslate("HikariSub.Editor", "Number of buttons")
         }
     }
 
@@ -5520,7 +5521,7 @@ ApplicationWindow {
         color: Theme.panel // K2: a Window draws white unless told
         id: groupDescriptionDialog
         objectName: "groupDescriptionDialog"
-        title: qsTr("Tree description")
+        title: qsTranslate("HikariSub.Grid", "Tree description")
         width: 440
         height: 120
         modality: Qt.ApplicationModal
@@ -5545,19 +5546,19 @@ ApplicationWindow {
                 objectName: "groupDescription"
                 Layout.fillWidth: true
                 maximumLength: 500
-                Accessible.name: qsTr("Tree description")
+                Accessible.name: qsTranslate("HikariSub.Grid", "Tree description")
                 onAccepted: groupDescriptionDialog.accept()
             }
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
                 Button {
                     objectName: "groupDescriptionOk"
-                    text: root.app.groupTitle(groupDescriptionDialog.description).length === 0 ? qsTr("Set tree name") : qsTr("Change tree name")
+                    text: root.app.groupTitle(groupDescriptionDialog.description).length === 0 ? qsTranslate("HikariSub.Grid", "Set tree name") : qsTranslate("HikariSub.Grid", "Change tree name")
                     onClicked: groupDescriptionDialog.accept()
                 }
                 Button {
                     objectName: "groupDescriptionCancel"
-                    text: qsTr("Cancel")
+                    text: qsTranslate("HikariSub.Grid", "Cancel")
                     onClicked: groupDescriptionDialog.close()
                 }
             }
@@ -5578,7 +5579,7 @@ ApplicationWindow {
         color: Theme.panel // K2: a Window draws white unless told
         id: groupBreakDialog
         objectName: "groupBreakDialog"
-        title: qsTr("Line group")
+        title: qsTranslate("HikariSub.Grid", "Line group")
         width: 460
         height: 150
         modality: Qt.ApplicationModal
@@ -5592,15 +5593,15 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: groupBreakDialog.description
-                      ? qsTr("This would break the Line group “%1”. Nothing was changed. Remove the group (its description Line is deleted) and try again, or cancel.").arg(groupBreakDialog.title2)
-                      : qsTr("This would leave group members outside a Line group. Nothing was changed.")
+                      ? qsTranslate("HikariSub.Grid", "This would break the Line group “%1”. Nothing was changed. Remove the group (its description Line is deleted) and try again, or cancel.").arg(groupBreakDialog.title2)
+                      : qsTranslate("HikariSub.Grid", "This would leave group members outside a Line group. Nothing was changed.")
             }
             RowLayout {
                 Layout.alignment: Qt.AlignRight
                 Button {
                     objectName: "groupBreakRemove"
                     visible: groupBreakDialog.description
-                    text: qsTr("Remove group")
+                    text: qsTranslate("HikariSub.Grid", "Remove group")
                     onClicked: {
                         root.app.removeGroup(groupBreakDialog.description)
                         groupBreakDialog.close()
@@ -5608,7 +5609,7 @@ ApplicationWindow {
                 }
                 Button {
                     objectName: "groupBreakCancel"
-                    text: qsTr("Cancel")
+                    text: qsTranslate("HikariSub.Grid", "Cancel")
                     onClicked: groupBreakDialog.close()
                 }
             }
@@ -5626,7 +5627,7 @@ ApplicationWindow {
         color: Theme.panel // K2: a Window draws white unless told
         id: recoveryWindow
         objectName: "recoveryWindow"
-        title: qsTr("Open auto save")
+        title: qsTranslate("HikariSub.Session", "Open auto save")
         width: 560
         height: 560
         flags: Qt.Dialog
@@ -5643,8 +5644,8 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: recoveryWindow.bundles.length > 0
-                      ? qsTr("Unsaved work from a session that did not close. Each opens as a new unsaved copy; the original file is not changed.")
-                      : qsTr("There is no unsaved work to recover.")
+                      ? qsTranslate("HikariSub.Session", "Unsaved work from a session that did not close. Each opens as a new unsaved copy; the original file is not changed.")
+                      : qsTranslate("HikariSub.Session", "There is no unsaved work to recover.")
             }
             ListView {
                 objectName: "recoveryList"
@@ -5659,7 +5660,7 @@ ApplicationWindow {
                     Label {
                         Layout.fillWidth: true
                         elide: Text.ElideMiddle
-                        text: qsTr("%1 — %2").arg(modelData.title).arg(modelData.written)
+                        text: qsTranslate("HikariSub.Session", "%1 — %2").arg(modelData.title).arg(modelData.written)
                         ToolTip.visible: hovered
                         ToolTip.text: modelData.original
                     }
@@ -5667,11 +5668,11 @@ ApplicationWindow {
                         id: generationChoice
                         objectName: "recoveryGeneration" + index
                         model: modelData.generations.map(g => g.written)
-                        Accessible.name: qsTr("Autosave")
+                        Accessible.name: qsTranslate("HikariSub.Session", "Autosave")
                     }
                     Button {
                         objectName: "recoverBundle" + index
-                        text: qsTr("Open copy")
+                        text: qsTranslate("HikariSub.Session", "Open copy")
                         onClicked: {
                             if (root.app.recoverBundle(modelData.key, modelData.generations[generationChoice.currentIndex].generation))
                                 recoveryWindow.close()
@@ -5679,7 +5680,7 @@ ApplicationWindow {
                     }
                     Button {
                         objectName: "dismissBundle" + index
-                        text: qsTr("Dismiss")
+                        text: qsTranslate("HikariSub.Session", "Dismiss")
                         onClicked: {
                             root.app.dismissBundle(modelData.key)
                             recoveryWindow.bundles = root.app.recoveryBundles()
@@ -5698,7 +5699,7 @@ ApplicationWindow {
             Button {
                 Layout.alignment: Qt.AlignRight
                 objectName: "recoveryClose"
-                text: qsTr("Close")
+                text: qsTranslate("HikariSub.Session", "Close")
                 onClicked: recoveryWindow.close()
             }
         }
@@ -5710,7 +5711,7 @@ ApplicationWindow {
         color: Theme.panel // K2: a Window draws white unless told
         id: temporaryFilesWindow
         objectName: "temporaryFilesWindow"
-        title: qsTr("Remove temporary files")
+        title: qsTranslate("HikariSub.Session", "Remove temporary files")
         // As wide as its rows need (the last row's button was cut at 520).
         width: Math.max(520, temporaryContent.implicitWidth + 16)
         minimumWidth: temporaryContent.implicitWidth + 16
@@ -5736,7 +5737,7 @@ ApplicationWindow {
             id: temporaryContent
             anchors.fill: parent
             anchors.margins: 8
-            Label { text: qsTr("Auto save") }
+            Label { text: qsTranslate("HikariSub.Session", "Auto save") }
             Label {
                 visible: temporaryFilesWindow.bundles.length === 0
                 Layout.fillWidth: true
@@ -5744,7 +5745,7 @@ ApplicationWindow {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 color: Theme.muted
-                text: qsTr("No auto save files")
+                text: qsTranslate("HikariSub.Session", "No auto save files")
             }
             ListView {
                 visible: temporaryFilesWindow.bundles.length > 0
@@ -5756,14 +5757,14 @@ ApplicationWindow {
                     required property var modelData
                     required property int index
                     objectName: "autosave" + index
-                    text: qsTr("%1 — %2").arg(modelData.title).arg(modelData.written)
+                    text: qsTranslate("HikariSub.Session", "%1 — %2").arg(modelData.title).arg(modelData.written)
                     onToggled: temporaryFilesWindow.checked[modelData.key] = checked
                 }
             }
             RowLayout {
                 Button {
                     objectName: "removeSelectedAutosaves"
-                    text: qsTr("Remove selected autosave files")
+                    text: qsTranslate("HikariSub.Session", "Remove selected autosave files")
                     onClicked: {
                         for (const key in temporaryFilesWindow.checked)
                             if (temporaryFilesWindow.checked[key])
@@ -5773,7 +5774,7 @@ ApplicationWindow {
                 }
                 Button {
                     objectName: "removeAllAutosaves"
-                    text: qsTr("Remove all auto save files")
+                    text: qsTranslate("HikariSub.Session", "Remove all auto save files")
                     onClicked: {
                         root.app.removeAutosavesOlderThan(new Date(NaN))
                         temporaryFilesWindow.showFiles()
@@ -5781,18 +5782,18 @@ ApplicationWindow {
                 }
             }
             RowLayout {
-                Label { text: qsTr("Remove files older than") }
-                ComboBox { id: olderDay; model: 31; displayText: currentIndex + 1; Accessible.name: qsTr("Day") }
+                Label { text: qsTranslate("HikariSub.Session", "Remove files older than") }
+                ComboBox { id: olderDay; model: 31; displayText: currentIndex + 1; Accessible.name: qsTranslate("HikariSub.Session", "Day") }
                 ComboBox {
                     id: olderMonth
-                    model: [qsTr("January"), qsTr("February"), qsTr("March"), qsTr("April"), qsTr("May"), qsTr("June"),
-                            qsTr("July"), qsTr("August"), qsTr("September"), qsTr("October"), qsTr("November"), qsTr("December")]
-                    Accessible.name: qsTr("Month")
+                    model: [qsTranslate("HikariSub.Session", "January"), qsTranslate("HikariSub.Session", "February"), qsTranslate("HikariSub.Session", "March"), qsTranslate("HikariSub.Session", "April"), qsTranslate("HikariSub.Session", "May"), qsTranslate("HikariSub.Session", "June"),
+                            qsTranslate("HikariSub.Session", "July"), qsTranslate("HikariSub.Session", "August"), qsTranslate("HikariSub.Session", "September"), qsTranslate("HikariSub.Session", "October"), qsTranslate("HikariSub.Session", "November"), qsTranslate("HikariSub.Session", "December")]
+                    Accessible.name: qsTranslate("HikariSub.Session", "Month")
                 }
-                TextField { id: olderYear; Layout.preferredWidth: 60; validator: IntValidator { bottom: 2012 } Accessible.name: qsTr("Year") }
+                TextField { id: olderYear; Layout.preferredWidth: 60; validator: IntValidator { bottom: 2012 } Accessible.name: qsTranslate("HikariSub.Session", "Year") }
                 Button {
                     objectName: "removeOlderAutosaves"
-                    text: qsTr("Remove older auto save files")
+                    text: qsTranslate("HikariSub.Session", "Remove older auto save files")
                     onClicked: {
                         root.app.removeAutosavesOlderThan(temporaryFilesWindow.cutoff())
                         temporaryFilesWindow.showFiles()
@@ -5801,7 +5802,7 @@ ApplicationWindow {
             }
             Button {
                 Layout.alignment: Qt.AlignRight
-                text: qsTr("Close")
+                text: qsTranslate("HikariSub.Session", "Close")
                 onClicked: temporaryFilesWindow.close()
             }
         }
@@ -5814,13 +5815,13 @@ ApplicationWindow {
     // A mapped button's tooltip (MappedButton::SetToolTip).
     function mappedTip(text, symbol, window) {
         const key = root.boundKeys(symbol, window)
-        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTr("Shortcut can be set using Shift + Click")
+        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shortcut can be set using Shift + Click")
     }
     // A bitmap button's tooltip (BitmapButton::SetToolTip): its binding in
     // its window, then the gesture.
     function bitmapTip(text, symbol, window) {
         const key = root.boundKeys(symbol, window)
-        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTr("Shortcut can be set using Shift + Click")
+        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shortcut can be set using Shift + Click")
     }
     // Hotkeys::OnMapHkey (Hotkeys.cpp:466-540): the gesture maps the
     // action's hotkey instead of running it; the bindings are installed and
@@ -6220,7 +6221,7 @@ ApplicationWindow {
         id: cleanStylesMessage
         objectName: "cleanStylesMessage"
         property alias text: cleanStylesLabel.text
-        title: qsTr("Status of deleted styles")
+        title: qsTranslate("HikariSub.Styles", "Status of deleted styles")
         modal: true
         anchors.centerIn: parent
         standardButtons: Dialog.Ok
@@ -6249,7 +6250,7 @@ ApplicationWindow {
         color: Theme.panel // K2: a Window draws white unless told
         id: automationHotkeysWindow
         objectName: "automationHotkeysWindow"
-        title: qsTr("List of automation shortcuts")
+        title: qsTranslate("HikariSub.Automation", "List of automation shortcuts")
         width: 800
         height: 360
         flags: Qt.Dialog
@@ -6270,9 +6271,9 @@ ApplicationWindow {
                 model: root.automationHotkeys.rows
                 header: RowLayout {
                     width: hotkeyList.width
-                    Label { text: qsTr("Path and script name"); Layout.preferredWidth: hotkeyList.width * 0.5 }
-                    Label { text: qsTr("Macro"); Layout.preferredWidth: hotkeyList.width * 0.35 }
-                    Label { text: qsTr("Hotkey"); Layout.fillWidth: true }
+                    Label { text: qsTranslate("HikariSub.Automation", "Path and script name"); Layout.preferredWidth: hotkeyList.width * 0.5 }
+                    Label { text: qsTranslate("HikariSub.Automation", "Macro"); Layout.preferredWidth: hotkeyList.width * 0.35 }
+                    Label { text: qsTranslate("HikariSub.Automation", "Hotkey"); Layout.fillWidth: true }
                 }
                 delegate: ItemDelegate {
                     required property var modelData
@@ -6301,7 +6302,7 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignHCenter
                 Button {
                     objectName: "automationHotkeysOk"
-                    text: qsTr("OK")
+                    text: qsTranslate("HikariSub.Automation", "OK")
                     onClicked: {
                         root.automationHotkeys.commit()
                         automationHotkeysWindow.close()
@@ -6309,24 +6310,24 @@ ApplicationWindow {
                 }
                 Button {
                     objectName: "mapHotkey"
-                    text: qsTr("Map hotkey")
+                    text: qsTranslate("HikariSub.Automation", "Map hotkey")
                     enabled: automationHotkeysWindow.selectedName().length > 0
                     onClicked: hotkeyCapture.capture(automationHotkeysWindow.selectedName())
                 }
                 Button {
                     objectName: "deleteHotkey"
-                    text: qsTr("Delete hotkey")
+                    text: qsTranslate("HikariSub.Automation", "Delete hotkey")
                     enabled: automationHotkeysWindow.selectedName().length > 0
                     onClicked: root.automationHotkeys.clearKeys(automationHotkeysWindow.selectedName())
                 }
                 Button {
                     objectName: "importLegacyHotkeys"
-                    text: qsTr("Import legacy hotkeys…")
+                    text: qsTranslate("HikariSub.Automation", "Import legacy hotkeys…")
                     onClicked: legacyHotkeysDialog.open()
                 }
                 Button {
                     objectName: "automationHotkeysCancel"
-                    text: qsTr("Cancel")
+                    text: qsTranslate("HikariSub.Automation", "Cancel")
                     onClicked: {
                         root.automationHotkeys.cancel()
                         automationHotkeysWindow.close()
@@ -6336,7 +6337,7 @@ ApplicationWindow {
         }
         FileDialog {
             id: legacyHotkeysDialog
-            nameFilters: [qsTr("Hotkeys (Hotkeys.txt)"), qsTr("All files (*)")]
+            nameFilters: [qsTranslate("HikariSub.Automation", "Hotkeys (Hotkeys.txt)"), qsTranslate("HikariSub.Automation", "All files (*)")]
             onAccepted: root.automationHotkeys.importLegacy(root.app.localPath(selectedFile))
         }
     }
@@ -6345,7 +6346,7 @@ ApplicationWindow {
         color: Theme.panel // K2: a Window draws white unless told
         id: hotkeyCapture
         objectName: "hotkeyCapture"
-        title: qsTr("Hotkey mapping")
+        title: qsTranslate("HikariSub.Hotkeys", "Hotkey mapping")
         width: 420
         height: 150
         modality: Qt.ApplicationModal
@@ -6377,8 +6378,8 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: hotkeyCapture.conflictWith.length
-                      ? qsTr("\"%1\" is already assigned to %2. Press it again to replace it.").arg(hotkeyCapture.keys).arg(hotkeyCapture.conflictWith)
-                      : qsTr("Please enter a hotkey for \"%1\".").arg(hotkeyCapture.name)
+                      ? qsTranslate("HikariSub.Hotkeys", "\"%1\" is already assigned to %2. Press it again to replace it.").arg(hotkeyCapture.keys).arg(hotkeyCapture.conflictWith)
+                      : qsTranslate("HikariSub.Hotkeys", "Please enter a hotkey for \"%1\".").arg(hotkeyCapture.name)
             }
             Item {
                 id: captureArea
@@ -6398,7 +6399,7 @@ ApplicationWindow {
             }
             Button {
                 Layout.alignment: Qt.AlignRight
-                text: qsTr("Cancel")
+                text: qsTranslate("HikariSub.Hotkeys", "Cancel")
                 onClicked: hotkeyCapture.close()
             }
         }
@@ -6408,7 +6409,7 @@ ApplicationWindow {
         color: Theme.panel // K2: a Window draws white unless told
         id: reloadPrompt
         objectName: "reloadPrompt"
-        title: qsTr("Reloading")
+        title: qsTranslate("HikariSub.Documents", "Reloading")
         width: 420
         height: 120
         modality: Qt.ApplicationModal
@@ -6419,13 +6420,13 @@ ApplicationWindow {
             Label {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
-                text: qsTr("Subtitles were modified by another program. Reload?")
+                text: qsTranslate("HikariSub.Documents", "Subtitles were modified by another program. Reload?")
             }
             RowLayout {
                 Layout.alignment: Qt.AlignRight
                 Button {
                     objectName: "reloadYes"
-                    text: qsTr("Yes")
+                    text: qsTranslate("HikariSub.Documents", "Yes")
                     onClicked: {
                         reloadPrompt.close()
                         root.app.reloadTarget()
@@ -6433,7 +6434,7 @@ ApplicationWindow {
                 }
                 Button {
                     objectName: "reloadNo"
-                    text: qsTr("No")
+                    text: qsTranslate("HikariSub.Documents", "No")
                     onClicked: reloadPrompt.close()
                 }
             }

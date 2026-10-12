@@ -1,3 +1,4 @@
+pragma Translator: "HikariSub.Tabs"
 import QtQuick
 import QtQuick.Controls
 

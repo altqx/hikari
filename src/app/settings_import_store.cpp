@@ -342,7 +342,7 @@ std::optional<SettingsImportStore::Snapshot> SettingsImportStore::snapshot(const
         const auto bytes = readAll(root.path + QLatin1Char('/') + path);
         if (!bytes) {
             if (error)
-                *error = QCoreApplication::translate("SettingsImport", "Cannot read %1").arg(path);
+                *error = QCoreApplication::translate("HikariSub.SettingsImport", "Cannot read %1").arg(path);
             return std::nullopt;
         }
         si::SourceFile s;
@@ -364,7 +364,7 @@ std::optional<SettingsImportStore::Snapshot> SettingsImportStore::snapshot(const
     for (const auto &s : snap.sources) {
         if (!writeAll(snap.dir + QLatin1Char('/') + qs(s.path), bytesOf(s.bytes))) {
             if (error)
-                *error = QCoreApplication::translate("SettingsImport", "Cannot write the snapshot");
+                *error = QCoreApplication::translate("HikariSub.SettingsImport", "Cannot write the snapshot");
             return std::nullopt;
         }
         const auto decoded = si::decodeSettingsText(s.bytes, si::kReadBy);
@@ -385,7 +385,7 @@ std::optional<SettingsImportStore::Snapshot> SettingsImportStore::snapshot(const
     o[QStringLiteral("themes")] = QJsonArray::fromStringList(snap.themeFiles);
     if (!writeAll(snap.dir + QStringLiteral("/snapshot.json"), QJsonDocument(o).toJson())) {
         if (error)
-            *error = QCoreApplication::translate("SettingsImport", "Cannot write the snapshot");
+            *error = QCoreApplication::translate("HikariSub.SettingsImport", "Cannot write the snapshot");
         return std::nullopt;
     }
     return snap;

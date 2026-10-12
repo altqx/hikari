@@ -8,6 +8,7 @@
 // (OnLeaveWindow). Over the window the pointer works its controls. OK adds
 // the colour to the recent ones; Cancel, closing or losing the pointer takes
 // every change back.
+pragma Translator: "HikariSub.Colours"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

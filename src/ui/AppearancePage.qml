@@ -8,6 +8,7 @@
 // dialog's values and previewed live (Theme.preview); OK or Apply saves it,
 // Cancel takes the preview back.
 pragma ComponentBehavior: Bound
+pragma Translator: "HikariSub.Options"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

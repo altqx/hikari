@@ -13,6 +13,7 @@
 #include "hikari/application/recent_files.h"
 #include "hikari/backends/show_in_folder.h"
 
+#include <QCoreApplication>
 #include <QCollator>
 #include <QDir>
 #include <QFileInfo>
@@ -182,7 +183,7 @@ void Application::closeAllTabs()
     }
     if (m_workspace.tabs().empty()) {
         const auto id = m_files->createNew();
-        m_workspace.add(id, tr("Untitled").toStdString());
+        m_workspace.add(id, QCoreApplication::translate("HikariSub.Documents", "Untitled").toStdString());
         m_workspace.setEditingTarget(id);
     }
     refreshViews();
@@ -257,23 +258,29 @@ void Application::showAssociationOffer()
     QString prompt;
     if (offer.associated()) {
         if (!offer.video.empty())
-            prompt += tr("Video: ") + qs(offer.video) + u'\n';
+            prompt += QCoreApplication::translate("HikariSub.Documents", "Video: ") + qs(offer.video) + u'\n';
         if (!offer.audio.empty())
-            prompt += tr("Audio: ") + qs(offer.audio) + u'\n';
+            prompt += QCoreApplication::translate("HikariSub.Documents", "Audio: ") + qs(offer.audio) + u'\n';
         if (!offer.keyframes.empty())
-            prompt += tr("Keyframes: ") + qs(offer.keyframes) + u'\n';
-        prompt.prepend(tr("Associated files:\n"));
+            prompt += QCoreApplication::translate("HikariSub.Documents", "Keyframes: ") + qs(offer.keyframes) + u'\n';
+        prompt.prepend(QCoreApplication::translate("HikariSub.Documents", "Associated files:\n"));
     }
     if (!offer.directoryVideo.empty()) {
         if (!prompt.isEmpty())
             prompt += u'\n';
-        prompt += tr("Video from directory:\n") + QFileInfo(qs(offer.directoryVideo)).fileName();
+        prompt += QCoreApplication::translate("HikariSub.Documents",
+                                              "Video from directory:\n") + QFileInfo(qs(offer.directoryVideo)).fileName();
     }
     // wxOK and wxYES: "Load associated" and "Load from directory" together,
     // "Yes" alone (SetOkLabel(_("Yes")), or the plain Yes button).
     const bool both = offer.associated() && !offer.directoryVideo.empty();
-    const QString associated = !offer.associated() ? QString() : both ? tr("Load associated") : tr("Yes");
-    const QString directory = offer.directoryVideo.empty() ? QString() : both ? tr("Load from directory") : tr("Yes");
+    const QString yes = QCoreApplication::translate("HikariSub.Documents", "Yes");
+    const QString associated = !offer.associated() ? QString()
+                               : both              ? QCoreApplication::translate("HikariSub.Documents", "Load associated")
+                                                   : yes;
+    const QString directory = offer.directoryVideo.empty() ? QString()
+                              : both                       ? QCoreApplication::translate("HikariSub.Documents", "Load from directory")
+                                                           : yes;
     m_video->setOffer(prompt, associated, directory);
 }
 
@@ -459,7 +466,8 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
         const QString &path = pending.subtitlePaths[i];
         auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
         if (!staged) {
-            m_log->log(tr("Could not open %1; nothing was changed.").arg(QFileInfo(path).fileName()));
+            m_log->log(QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.")
+                           .arg(QFileInfo(path).fileName()));
             pending.count = i;
             break;
         }
@@ -504,7 +512,7 @@ void Application::applyFiles(PendingFiles files, bool skipFirst)
             // A video beyond the subtitles opens in a new tab of its own
             // (InsertTab, OpenFile(videos[i])).
             id = m_files->createNew();
-            m_workspace.add(*id, tr("Untitled").toStdString());
+            m_workspace.add(*id, QCoreApplication::translate("HikariSub.Documents", "Untitled").toStdString());
         }
         if (i == 0 && files.reuseFirst && original && *original != *id) {
             // Into the same tab (LoadSubtitles on the current page), whose

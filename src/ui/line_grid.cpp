@@ -5,6 +5,7 @@
 #include "theme.h"
 #include "hikari/application/subtitle_comparison.h"
 
+#include <QCoreApplication>
 #include <QAbstractProxyModel>
 #include <QAccessible>
 #include <QFontMetricsF>
@@ -223,13 +224,13 @@ QString LineGrid::rowStateText(int row) const
     const int state = m_model->index(row, 0).data(LineTableModel::LineStateRole).toInt();
     QStringList words;
     if ((state & 3) == 1)
-        words << tr("changed");
+        words << QCoreApplication::translate("HikariSub.Grid", "changed");
     else if ((state & 3) == 2)
-        words << tr("changed, saved");
+        words << QCoreApplication::translate("HikariSub.Grid", "changed, saved");
     if (state & 4)
-        words << tr("unconfirmed");
+        words << QCoreApplication::translate("HikariSub.Grid", "unconfirmed");
     if (state & 8)
-        words << tr("bookmarked");
+        words << QCoreApplication::translate("HikariSub.Grid", "bookmarked");
     return words.join(QStringLiteral(", "));
 }
 
@@ -483,8 +484,9 @@ void LineGrid::announceState(bool activeMoved)
         m_announcedSelected = selected;
         m_announcedHidden = hidden;
         if (QAccessible::isActive()) {
-            const QString message = hidden > 0 ? tr("%n selected, %1 hidden", nullptr, selected).arg(hidden)
-                                               : tr("%n selected", nullptr, selected);
+            const QString message =
+                hidden > 0 ? QCoreApplication::translate("HikariSub.Grid", "%n selected, %1 hidden", nullptr, selected).arg(hidden)
+                           : QCoreApplication::translate("HikariSub.Grid", "%n selected", nullptr, selected);
             QAccessibleAnnouncementEvent announcement(this, message);
             QAccessible::updateAccessibility(&announcement);
         }

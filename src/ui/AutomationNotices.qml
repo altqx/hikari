@@ -3,6 +3,7 @@
 // editor.") and Automation::OnEdit's "Select a script editor" picker. As
 // legacy's boxes are modal and come first, the picker asked for while a box
 // shows opens once the box is closed.
+pragma Translator: "HikariSub.Automation"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs as Dialogs

@@ -2,6 +2,7 @@
 
 #include "line_grid.h"
 
+#include <QCoreApplication>
 #include <QQuickWindow>
 #include <QWindow>
 
@@ -242,7 +243,7 @@ QString LineGridAccessible::text(QAccessible::Text type) const
         // R2: a Grid may name itself (the reference tray's).
         if (const LineGrid *g = grid(); g && !g->accessibleName().isEmpty())
             return g->accessibleName();
-        return QObject::tr("Subtitle lines");
+        return QCoreApplication::translate("HikariSub.Grid", "Subtitle lines");
     }
     return {};
 }
@@ -303,7 +304,9 @@ QString LineGridAccessible::columnDescription(int column) const
 QString LineGridAccessible::rowDescription(int row) const
 {
     LineGrid *g = grid();
-    return g && row >= 0 && row < rowCount() ? QObject::tr("Line %1").arg(g->cellText(row, 0)) : QString();
+    return g && row >= 0 && row < rowCount()
+               ? QCoreApplication::translate("HikariSub.Grid", "Line %1").arg(g->cellText(row, 0))
+               : QString();
 }
 
 QList<int> LineGridAccessible::selectedRows() const

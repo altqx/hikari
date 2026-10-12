@@ -6,6 +6,7 @@
 // right. The legacy message boxes are a queue of non-blocking dialogs; the
 // application resumes the search when one is answered (findQuestion /
 // answerFindQuestion) and refuses other find work meanwhile (findBusy).
+pragma Translator: "HikariSub.Search"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs as Dialogs

@@ -12,6 +12,7 @@
 // time fields stay on the Line with EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT,
 // EditBox::OnNewline). The Comment box, the Style choice and a pick from the
 // Actor or Effect list send the Line at once (EditBox.cpp:322-325).
+pragma Translator: "HikariSub.Editor"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

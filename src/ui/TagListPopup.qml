@@ -8,6 +8,7 @@
 // options menu. Colours are the theme palette's (legacy MENUBAR_BACKGROUND,
 // WINDOW_BORDER, MENU_BACKGROUND_SELECTION, MENU_BORDER_SELECTION and
 // WINDOW_TEXT).
+pragma Translator: "HikariSub.TagList"
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
