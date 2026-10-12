@@ -1391,6 +1391,12 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 		//else{
 
 		//}
+		//the session replaces every open tab, so ask about unsaved changes first
+		for (size_t i = 0; i < sthis->Pages.size(); i++)
+		{
+			if (sthis->Hikari->SavePrompt(1, i))
+				return;
+		}
 		sthis->Freeze();
 		SubsGrid::RemoveComparison();
 		for (std::vector<TabPanel*>::iterator i = sthis->Pages.begin(); i != sthis->Pages.end(); i++)
