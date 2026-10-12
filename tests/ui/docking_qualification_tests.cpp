@@ -210,6 +210,21 @@ class DockingQualification : public QObject {
         QCoreApplication::processEvents();
     }
 
+    // A window's width when Qt takes a new device pixel ratio for it.
+    struct WidthAtScaleChange : QObject {
+        explicit WidthAtScaleChange(QWindow *window)
+        {
+            window->installEventFilter(this);
+        }
+        bool eventFilter(QObject *object, QEvent *event) override
+        {
+            if (event->type() == QEvent::DevicePixelRatioChange && width < 0)
+                width = static_cast<QWindow *>(object)->width();
+            return false;
+        }
+        int width = -1;
+    };
+
     // Offscreen: the screen's logical DPI (96: 100 %, 120: 125 %) through the
     // platform's configuration, as a live change of the display scale.
     static bool setScreenDpi(int dpi)
@@ -842,13 +857,16 @@ private slots:
         QTest::qWait(50);
 
         // 100 to 125 %, the window system keeping the window's pixels.
+        // Its width as Qt takes the new scale (QWindow::width is read from
+        // the native window then, without a signal).
+        WidthAtScaleChange atChange(floating);
         native = 1.25;
         QVERIFY(setScreenDpi(120));
         QTRY_COMPARE(floating->devicePixelRatio(), 1.25);
-        // the simulation: 80 % of the panel's minimum, until the change settles
-        QVERIFY2(qAbs(floating->width() - qRound(minimum.width() / 1.25)) <= 1,
-                 qPrintable(QStringLiteral("%1 at 125 %").arg(floating->width())));
         QTRY_COMPARE(floating->size(), minimum);
+        // the simulation: 80 % of the panel's minimum until the change settled
+        QVERIFY2(qAbs(atChange.width - qRound(minimum.width() / 1.25)) <= 1,
+                 qPrintable(QStringLiteral("%1 at 125 %").arg(atChange.width)));
         QTRY_COMPARE(static_cast<QQuickItem *>(view)->size(), QSizeF(floating->size())); // the panel whole in its window
         QCOMPARE(bar->window(), floating);
 

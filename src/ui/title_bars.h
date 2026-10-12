@@ -6,10 +6,11 @@
 // light under the others. Qt makes a window's frame dark only while its own
 // colour scheme is dark, and that follows the system unless the application
 // asks for one (QStyleHints::setColorScheme). So the theme layer
-// (theme.cpp) asks Qt for the shown theme's side when the theme does not
-// follow the system, and sets every framed window's title bar through here
-// as well: when the window is created, when the theme changes and when the
-// application palette changes (Qt sets the frame again then). Other window
+// (theme.cpp), on Windows, asks Qt for the shown theme's side when the theme
+// does not follow the system, and sets every framed window's title bar
+// through here as well: when the window is created or shown, when the theme
+// changes and when the application palette changes (Qt sets the frame again
+// then). Other window
 // systems draw their decorations from the desktop's own theme, and setDark
 // does nothing there.
 

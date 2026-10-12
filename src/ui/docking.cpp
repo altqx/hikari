@@ -31,6 +31,7 @@
 #include <QQuickWindow>
 #include <QScreen>
 #include <QTimer>
+#include <QtMath>
 #include <qpa/qplatformnativeinterface.h>
 
 #include <algorithm>
@@ -233,9 +234,18 @@ public:
         switch (event->type()) {
         case QEvent::Show:
         case QEvent::Resize:
+            // A device pixel ratio that changed without its event (the
+            // window's screen's scale taken another way) settles as well.
+            if (m_known && !qFuzzyCompare(m_window->devicePixelRatio(), m_dpr)) {
+                if (!m_settle.isActive())
+                    m_settle.start();
+                break;
+            }
             // Not while a scale change settles, nor when the window system
             // has a new scale that Qt has not taken yet (its resize for the
-            // new scale, read at the old one).
+            // new scale, read at the old one). A resize of the user's own
+            // within kScaleSettleMs of a change is not kept either: the
+            // window takes its size from before the change.
             if (!m_settle.isActive() && (!m_known || !runsAhead()))
                 remember();
             break;
@@ -265,16 +275,22 @@ private:
         m_known = true;
     }
 
-    // The panels' minimum size (the engine's floating window view, a child
-    // of the window's content item).
+    // The window's minimum size for its panels: the engine's floating window
+    // view's (a child of the window's content item), with whatever of the
+    // window lies outside the view, and at least the window's own minimum.
     QSize minimum() const
     {
+        QSize least = m_window->minimumSize();
         auto *quick = qobject_cast<QQuickWindow *>(m_window);
         if (QQuickItem *content = quick ? quick->contentItem() : nullptr)
             for (QQuickItem *child : content->childItems())
-                if (auto *view = qobject_cast<KDDockWidgets::QtQuick::FloatingWindow *>(child))
-                    return view->minSize();
-        return {};
+                if (auto *view = qobject_cast<KDDockWidgets::QtQuick::FloatingWindow *>(child)) {
+                    const QSize outside(std::max(0, m_window->width() - qCeil(view->width())),
+                                        std::max(0, m_window->height() - qCeil(view->height())));
+                    least = least.expandedTo(view->minSize() + outside);
+                    break;
+                }
+        return least;
     }
 
     void settle()

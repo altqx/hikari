@@ -41,7 +41,6 @@ bool themed(const QWindow *window)
     case Qt::Popup:
     case Qt::ToolTip:
     case Qt::SplashScreen:
-    case Qt::Desktop:
     case Qt::ForeignWindow:
         return false;
     default:

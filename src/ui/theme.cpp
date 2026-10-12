@@ -544,13 +544,13 @@ public:
                 titlebars::setDark(window, dark);
     }
 
-    // A window's title bar once it has its native window, and again after Qt
-    // has set its frame for an application palette change (it does so after
-    // the event's filters, hence queued).
+    // A window's title bar once it has its native window, when it is shown,
+    // and again after Qt has set its frame for an application palette change
+    // (it does so after the event's filters, hence queued).
     bool eventFilter(QObject *object, QEvent *event) override
     {
         const auto type = event->type();
-        if (type != QEvent::PlatformSurface && type != QEvent::ApplicationPaletteChange)
+        if (type != QEvent::PlatformSurface && type != QEvent::Show && type != QEvent::ApplicationPaletteChange)
             return false;
         auto *window = qobject_cast<QWindow *>(object);
         if (!window || !titlebars::themed(window))
@@ -558,6 +558,10 @@ public:
         if (type == QEvent::PlatformSurface) {
             if (static_cast<QPlatformSurfaceEvent *>(event)->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated)
                 themeTitleBars({window});
+        } else if (type == QEvent::Show) {
+            // A window whose flags changed after its creation (framed now)
+            // is themed when it is next shown.
+            themeTitleBars({window});
         } else {
             QMetaObject::invokeMethod(
                 this, [this, w = QPointer<QWindow>(window)] {
@@ -569,14 +573,27 @@ public:
         return false;
     }
 
-    // The colour scheme Qt is asked for (Unknown: the system's).
+    // The colour scheme Qt is asked for (Unknown: the system's). Windows
+    // only: there Qt draws a framed window's title bar from it. Elsewhere
+    // it would also change the platform's palette, the client-side
+    // decorations (Wayland) and the application's appearance (macOS), which
+    // follow the desktop's own theme as in the legacy application, and what
+    // systemScheme reports. A request already made is not made again
+    // (each one has Qt refresh its palettes and themes), unless Qt reports
+    // another side than the one asked for.
     void requestScheme(Qt::ColorScheme scheme)
     {
+#ifdef Q_OS_WIN
         auto *hints = QGuiApplication::styleHints();
-        if (!hints || requested == scheme)
+        if (!hints)
+            return;
+        if (requested == scheme && (scheme == Qt::ColorScheme::Unknown || hints->colorScheme() == scheme))
             return;
         requested = scheme;
         hints->setColorScheme(scheme);
+#else
+        Q_UNUSED(scheme);
+#endif
     }
 
     // The popups (menus, dialogs) take the palette of their window, which a
