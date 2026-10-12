@@ -247,25 +247,20 @@ int Hotkeys::LoadHkeys(bool Audio)
 		return 1; 
 	}
 
-	wxStringTokenizer hk(acctxt, L"\n", wxTOKEN_STRTOK);
-
-	HotkeysFileHeader header;
-	if (acctxt.StartsWith(L"[")){
-		wxString token = hk.NextToken();
-		// HikariSub writes "HikariSub v<semver>", which is current; only the
-		// old four-part headers carry a build number.
-		header = ReadHotkeysHeader(token.ToStdWstring());
-		if (header.convert){
-			acctxt = acctxt.AfterFirst(L'\n');
-			ConfigConverter::Get()->ConvertHotkeys(&acctxt);
-			ow.FileWrite(Options.configPath + hkpath, acctxt);
-			// the tokenizer holds a copy of the old text, whose names
-			// GetIdValue does not know; read the converted lines instead,
-			// past the header ConvertHotkeys puts first
-			hk.SetString(acctxt, L"\n", wxTOKEN_STRTOK);
-			hk.NextToken();
-		}
+	// HikariSub writes "HikariSub v<semver>", which is current; only the old
+	// four-part headers carry a build number. A pre-1141 file is rewritten by
+	// ConfigConverter, and its bindings are read from the rewritten lines.
+	HotkeysFileText file = ReadHotkeysText(acctxt.ToStdWstring(), [](std::wstring &lines){
+		wxString converted(lines);
+		ConfigConverter::Get()->ConvertHotkeys(&converted);
+		lines = converted.ToStdWstring();
+	});
+	const HotkeysFileHeader &header = file.header;
+	if (header.convert){
+		ow.FileWrite(Options.configPath + hkpath, wxString(file.rewritten));
 	}
+	wxStringTokenizer hk(wxString(file.bindings), L"\n", wxTOKEN_STRTOK);
+
 	if (header.version == HotkeysFileVersion::Outdated){
 		HikariMessageBox(_("The shortcuts file is outdated and will be replaced with the default one"));
 		LoadDefault(hkeys, Audio);
@@ -313,9 +308,9 @@ int Hotkeys::LoadHkeys(bool Audio)
 		// it is: the ids it leaves out are shortcuts the user removed.
 		std::map<idAndType, hdata> defaults;
 		LoadDefault(defaults, Audio);
-		FillMissingHotkeys(hkeys, defaults);
+		size_t filled = FillMissingHotkeys(hkeys, defaults);
 		if (hkeys.size() <= 10){ return 0; }
-		if (HotkeysNeedWriteBack(header, true)){
+		if (HotkeysNeedWriteBack(header, filled > 0)){
 			// the converted file on disk now has a current header and only
 			// its own bindings; save the filled set so the next start
 			// reads what this one shows

@@ -20,6 +20,7 @@
 
 #include "SemVer.h"
 
+#include <cstddef>
 #include <cwchar>
 #include <string>
 #include <string_view>
@@ -84,11 +85,13 @@ inline bool HotkeysNeedDefaultFill(HotkeysFileVersion version, int bindings)
 }
 
 // The fill adds only the default ids the file does not set: a binding the
-// file holds is never replaced by its default.
+// file holds is never replaced by its default. Returns how many ids it added.
 template <class Map>
-void FillMissingHotkeys(Map &keys, const Map &defaults)
+size_t FillMissingHotkeys(Map &keys, const Map &defaults)
 {
+	size_t before = keys.size();
 	keys.insert(defaults.begin(), defaults.end());
+	return keys.size() - before;
 }
 
 // ConfigConverter rewrites a pre-1141 file with a current "HikariSub v<semver>"
@@ -98,4 +101,42 @@ void FillMissingHotkeys(Map &keys, const Map &defaults)
 inline bool HotkeysNeedWriteBack(const HotkeysFileHeader &header, bool filled)
 {
 	return header.convert && filled;
+}
+
+struct HotkeysFileText
+{
+	HotkeysFileHeader header;
+	// the binding lines LoadHkeys reads, without a header line; for a
+	// pre-1141 file these are the lines ConfigConverter rewrote
+	std::wstring bindings;
+	// for a pre-1141 file: the whole rewritten file, with the converter's
+	// header, which LoadHkeys writes back over the old one
+	std::wstring rewritten;
+};
+
+// Splits a Hotkeys.txt or AudioHotkeys.txt text into its header and binding
+// lines. convert(std::wstring &) rewrites the lines after a pre-1141 header in
+// place and puts its own header line first, as ConfigConverter::ConvertHotkeys
+// does. The bindings of a converted file come from the rewritten text: the old
+// names it replaces are not known to GetIdValue.
+template <class Convert>
+HotkeysFileText ReadHotkeysText(std::wstring text, Convert convert)
+{
+	HotkeysFileText file;
+	if (text.empty() || text[0] != L'[') {
+		file.bindings = std::move(text);
+		return file;
+	}
+
+	size_t end = text.find(L'\n');
+	std::wstring rest = (end == std::wstring::npos) ? std::wstring() : text.substr(end + 1);
+	file.header = ReadHotkeysHeader(std::wstring_view(text).substr(0, end));
+	if (file.header.convert) {
+		convert(rest);
+		file.rewritten = rest;
+		size_t converterHeader = rest.find(L'\n');
+		rest = (converterHeader == std::wstring::npos) ? std::wstring() : rest.substr(converterHeader + 1);
+	}
+	file.bindings = std::move(rest);
+	return file;
 }
