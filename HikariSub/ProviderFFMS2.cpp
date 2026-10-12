@@ -27,6 +27,7 @@
 #include "OpennWrite.h"
 #include <wx/dir.h>
 #include <wx/filename.h>
+#include <wx/log.h>
 #include <algorithm>
 #include <cstddef>
 #include <cstdlib>
@@ -348,8 +349,23 @@ done:
 			//FFMS_CancelIndexing(Indexer);
 			return 0;
 		}
-		if (privateIndices && FFMS_WriteIndex(m_indexPath.utf8_str(), m_index, &m_errInfo))
+		//FFMS2 writes into a file that is there, which keeps its own DACL on
+		//Windows, and makes one that is not with whatever its folder passes
+		//on, which a share may not apply: the file is made private first,
+		//or the index is not saved, see OpenPrivateFile
+		FILE *indexFile = privateIndices ? OpenPrivateFile(m_indexPath) : nullptr;
+		if (privateIndices && !indexFile)
+			HikariLogSilent(wxString::Format(L"The index file cannot be made private, no index is saved: %s",
+				m_indexPath));
+		if (indexFile)
+			fclose(indexFile);
+		if (indexFile && FFMS_WriteIndex(m_indexPath.utf8_str(), m_index, &m_errInfo))
 		{
+			{
+				//an empty or partly written index is not left to be read
+				wxLogNull noLog;
+				wxRemoveFile(m_indexPath);
+			}
 			HikariLogDebug(wxString::Format(_("Cannot save index, error %s occurred"), wxString::FromUTF8(m_errInfo.Buffer)));
 			//FFMS_DestroyIndex(index);
 			//FFMS_CancelIndexing(Indexer);
