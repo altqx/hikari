@@ -29,6 +29,64 @@
 #include "UtilsWindows.h"
 #include "Notebook.h"
 #include "EditBox.h"
+#include <set>
+#ifndef _WIN32
+#include <sys/stat.h>
+#include <stdlib.h>
+#endif
+
+namespace {
+//wxDir follows symbolic links and junctions, so a folder linking back up
+//the tree is walked again and again until the paths get too long
+bool IsLinkPath(const wxString &path)
+{
+#ifdef _WIN32
+	DWORD attributes = GetFileAttributesW(path.wc_str());
+	return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT);
+#else
+	struct stat st;
+	return lstat(path.fn_str(), &st) == 0 && S_ISLNK(st.st_mode);
+#endif
+}
+
+wxString RealPath(const wxString &path)
+{
+#ifndef _WIN32
+	char *resolved = realpath(path.fn_str(), nullptr);
+	if (resolved){
+		wxString result(resolved, *wxConvFileName);
+		free(resolved);
+		return result;
+	}
+#endif
+	return path;
+}
+
+//collects every file once, by its real path, and skips links and already
+//visited folders; a linked file would be replaced through another path
+class SubsFilesTraverser : public wxDirTraverser
+{
+public:
+	SubsFilesTraverser(wxArrayString *_paths, std::set<wxString> *_foundFiles)
+		: paths(_paths), foundFiles(_foundFiles){}
+	wxDirTraverseResult OnFile(const wxString &filename) override
+	{
+		if (!IsLinkPath(filename) && foundFiles->insert(RealPath(filename)).second)
+			paths->Add(filename);
+		return wxDIR_CONTINUE;
+	}
+	wxDirTraverseResult OnDir(const wxString &dirname) override
+	{
+		if (IsLinkPath(dirname) || !visitedDirs.insert(RealPath(dirname)).second)
+			return wxDIR_IGNORE;
+		return wxDIR_CONTINUE;
+	}
+private:
+	wxArrayString *paths;
+	std::set<wxString> *foundFiles;
+	std::set<wxString> visitedDirs;
+};
+}
 
 FindReplace::FindReplace(HikariSubFrame* kfparent, FindReplaceDialog *_FRD)
 	:FRD(_FRD)
@@ -1312,9 +1370,12 @@ void FindReplace::GetFolderFiles(const wxString &path, const wxString &filters, 
 		flags |= wxDIR_HIDDEN;
 
 	if (subsDir.IsOpened()){
+		//filters can overlap, every file must be replaced only once
+		std::set<wxString> foundFiles;
 		wxStringTokenizer tokenizer(filters, L";");
 		while (tokenizer.HasMoreTokens()){
-			subsDir.GetAllFiles(path, paths, tokenizer.NextToken(), flags);
+			SubsFilesTraverser traverser(paths, &foundFiles);
+			subsDir.Traverse(traverser, tokenizer.NextToken(), flags);
 		}
 	}
 	else{
