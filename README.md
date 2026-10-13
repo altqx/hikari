@@ -107,6 +107,59 @@ HikariSub will stay actively maintained rather than go dormant, and its dependen
 * **Windows x64**: the full-featured build, including DirectShow, DirectSound and Direct3D 9.
 * **Linux**: built on wxGTK and GStreamer.
 
+## Installing on Linux
+
+Every release on the [releases page](https://github.com/altqx/hikari/releases)
+has these Linux x86_64 packages. All of them need glibc 2.35 or newer: Ubuntu
+22.04, Debian 12, Fedora, openSUSE Tumbleweed, Arch, Linux Mint 21 and later.
+
+* **AppImage** (`HikariSub-<version>-linux-x86_64.AppImage`): one file with
+  everything inside, GTK, GLib and GStreamer included, so it runs on any of
+  those distributions with nothing else to install. Make it executable and run
+  it:
+
+  ```bash
+  chmod +x HikariSub-*-linux-x86_64.AppImage
+  ./HikariSub-*-linux-x86_64.AppImage
+  ```
+
+  It needs FUSE, but not the old `libfuse2`. Where FUSE is missing (in a
+  container, for example), run it with `--appimage-extract-and-run`. It adds
+  no menu entry of its own; AppImageLauncher or Gear Lever can add one.
+* **Debian, Ubuntu and Mint** (`hikarisub-<version>-linux-amd64.deb`):
+
+  ```bash
+  sudo apt install ./hikarisub-*-linux-amd64.deb
+  ```
+
+* **Fedora** and **openSUSE** (`hikarisub-<version>-linux-x86_64.rpm`):
+
+  ```bash
+  sudo dnf install ./hikarisub-*-linux-x86_64.rpm
+  sudo zypper install --allow-unsigned-rpm ./hikarisub-*-linux-x86_64.rpm
+  ```
+
+  On Fedora and openSUSE, H.264, AAC and other patented formats play only
+  with the full codec sets from RPM Fusion or Packman; the FFMS2 path used for
+  typesetting and timing decodes them either way.
+* **Arch Linux**: install the AUR package `hikarisub-bin` with an AUR helper
+  (`yay -S hikarisub-bin` or `paru -S hikarisub-bin`), and update it as any
+  other package (`yay -Syu`). It carries stable releases only.
+* **Portable** (`hikarisub-<version>-linux-x86_64.tar.gz`): extract it
+  anywhere and run `./hikarisub`. It uses the system's GTK and GStreamer, so
+  install those first (see "Package names on other Linux distributions"
+  below), and run `./install-desktop-integration.sh` for a menu entry.
+
+The deb, rpm and AUR packages install HikariSub in `/opt/hikarisub`, with
+`hikarisub` on the `PATH`, the menu entry, file types and icons, and pull in
+everything it needs, the GStreamer plugins included. Removing the package
+leaves your settings in your home directory alone.
+
+When a new release is out, HikariSub tells you. The AppImage replaces itself,
+and the deb and rpm download the new package and install it after the
+system's password prompt. The AUR package only tells you; update it with your
+AUR helper as usual.
+
 ## Building from Source
 
 HikariSub currently has two supported source-build paths:
