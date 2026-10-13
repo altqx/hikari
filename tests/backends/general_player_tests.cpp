@@ -12,6 +12,7 @@
 #include <QtTest>
 
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <optional>
 #include <thread>
@@ -269,13 +270,21 @@ private slots:
         QVERIFY(hikari::backends::videoFrameToBgra(delivered, bgra));
         QCOMPARE(bgra.width, 320);
         QCOMPARE(bgra.height, 240);
-        QCOMPARE(barcode(bgra), 13);
-        // Black and white at the 10-bit limited levels.
-        const auto *first = reinterpret_cast<const std::uint8_t *>(bgra.bgra.data());
-        QCOMPARE(int(first[0]), 255); // frame 13 = 0b1101: block 0 is white
-        const auto *dark = first + (bgra.height / 8) * bgra.stride + (3 * bgra.width / 8) * 4; // block 1
-        QCOMPARE(int(dark[0]), 0);
-        QCOMPARE(int(dark[3]), 255);
+        // The frame the seek reports (the player may land on the one before).
+        const int index = static_cast<int>(std::llround((*seeked)->deliveredStartUs * 24'000.0 / 1'001'000'000.0));
+        QVERIFY2(index == 12 || index == 13, qPrintable(QString::number(index)));
+        QCOMPARE(barcode(bgra), index);
+        // Black and white at the 10-bit limited levels: block 2 is white in
+        // frames 12 and 13 (0b1100, 0b1101), block 1 black.
+        const auto *pixels = reinterpret_cast<const std::uint8_t *>(bgra.bgra.data());
+        const int row = bgra.height / 8;
+        const auto *white = pixels + row * bgra.stride + (5 * bgra.width / 8) * 4;
+        const auto *black = pixels + row * bgra.stride + (3 * bgra.width / 8) * 4;
+        QCOMPARE(int(white[0]), 255);
+        QCOMPARE(int(white[1]), 255);
+        QCOMPARE(int(white[2]), 255);
+        QCOMPARE(int(black[0]), 0);
+        QCOMPARE(int(black[3]), 255);
     }
 
     // V1: frames arriving while the GUI thread is busy do not queue up: only

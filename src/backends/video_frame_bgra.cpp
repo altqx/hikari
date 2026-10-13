@@ -108,7 +108,19 @@ bool videoFrameToBgra(const QVideoFrame &source, application::IndexedFrame &out)
     out.stride = w * 4;
     out.bgra.resize(static_cast<std::size_t>(out.stride) * static_cast<std::size_t>(h));
     const int cw = (w + 1) / 2;
-    const int ch = shape.fullHeightChroma ? h : (h + 1) / 2;
+    // The chroma rows the mapping holds (an odd height may have one fewer):
+    // the last one serves the rows below it.
+    auto rows = [&frame](int plane) {
+        const int line = frame.bytesPerLine(plane);
+        return line > 0 ? static_cast<int>(frame.mappedBytes(plane) / line) : 0;
+    };
+    int ch = std::min(shape.fullHeightChroma ? h : (h + 1) / 2, rows(1));
+    if (shape.layout == Layout::Planar)
+        ch = std::min(ch, rows(2));
+    if (ch <= 0) {
+        frame.unmap();
+        return false;
+    }
     thread_local std::vector<std::uint8_t> yRow, uRow, vRow;
     yRow.resize(static_cast<std::size_t>(w));
     uRow.resize(static_cast<std::size_t>(cw) + 8); // the SIMD rows read 8 samples at a time

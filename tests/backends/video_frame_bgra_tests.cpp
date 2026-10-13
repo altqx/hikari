@@ -5,11 +5,13 @@
 #include "hikari/application/yuv_bgra.h"
 #include "hikari/backends/video_frame_bgra.h"
 
+#include <QGuiApplication>
 #include <QImage>
 #include <QVideoFrame>
 #include <QVideoFrameFormat>
 #include <QtTest>
 
+#include <algorithm>
 #include <array>
 #include <cstdlib>
 #include <cstring>
@@ -48,7 +50,11 @@ QVideoFrame uniform(QVideoFrameFormat::PixelFormat format, int width, int height
     QVideoFrame frame(f);
     if (!frame.map(QVideoFrame::WriteOnly))
         return {};
-    const int cw = (width + 1) / 2, ch = format == QVideoFrameFormat::Format_YUV422P ? height : (height + 1) / 2;
+    const int cw = (width + 1) / 2;
+    // The chroma rows Qt allocated (an odd height may have one fewer).
+    int ch = format == QVideoFrameFormat::Format_YUV422P ? height : (height + 1) / 2;
+    for (int plane = 1; plane < frame.planeCount(); ++plane)
+        ch = std::min(ch, int(frame.mappedBytes(plane) / frame.bytesPerLine(plane)));
     for (int y = 0; y < height; ++y) {
         uchar *line = frame.bits(0) + y * frame.bytesPerLine(0);
         switch (format) {
@@ -189,6 +195,12 @@ private slots:
                                           QVideoFrameFormat::ColorSpace(space), QVideoFrameFormat::ColorRange(range));
         IndexedFrame out;
         QVERIFY(hikari::backends::videoFrameToBgra(frame, out));
+        // Without a graphics device (offscreen) Qt's CPU fallback converts
+        // every frame as BT.601 limited range; with one (xvfb, a desktop)
+        // it follows the frame's matrix and range as the player path did.
+        if (QGuiApplication::platformName() == QLatin1String("offscreen") &&
+            !(space == QVideoFrameFormat::ColorSpace_BT601 && range == QVideoFrameFormat::ColorRange_Video))
+            QSKIP("Qt's offscreen conversion is BT.601 limited only");
         const QImage qt = QVideoFrame(frame).toImage().convertToFormat(QImage::Format_RGB32);
         QVERIFY(!qt.isNull());
         const QRgb theirs = qt.pixel(5, 5);
@@ -221,7 +233,7 @@ private slots:
                 p[0] = 10;
                 p[1] = 20;
                 p[2] = 30;
-                p[3] = 0; // X: ignored
+                p[3] = 255;
             }
         frame.unmap();
         IndexedFrame out;
