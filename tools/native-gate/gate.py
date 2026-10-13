@@ -1266,10 +1266,62 @@ def step_video():
             ev0 + ev1 + ev2 + ev3 + ev4 + ev5 + ["video-labels.txt"])
 
 
+def arrangement(st):
+    """Every shown panel's place for the persistence check: the window it is
+    in ("main" or its own floating window), its rectangle inside that window
+    and, for a floating panel, its window's size and (where the window system
+    reports it) its position; the main window's size."""
+    fr = frames(st)
+    out = {}
+    for p in st["panels"]:
+        if p["id"] not in PANELS or p["id"] in out:
+            continue
+        floating = p["frame"] != "HikariSub"
+        entry = {"window": "floating" if floating else "main", "rect": (p["x"], p["y"], p["w"], p["h"])}
+        if floating:
+            f = fr.get(p["frame"], {})
+            entry["size"] = (f.get("w"), f.get("h"))
+            r = B.client_rect(p["frame"]) if B.name == "x11" else None
+            entry["position"] = r[:2] if r else None
+        out[p["id"]] = entry
+    main = fr.get("HikariSub", {})
+    out["(main window)"] = {"window": "main", "size": (main.get("w"), main.get("h"))}
+    return out
+
+
+def arrangement_differences(before, after, tolerance=2):
+    """What moved between two arrangement() readings: a panel shown or gone,
+    another window, or a rectangle, size or position more than TOLERANCE
+    pixels away."""
+    def near(a, b):
+        return a is not None and b is not None and len(a) == len(b) and all(
+            x is not None and y is not None and abs(x - y) <= tolerance for x, y in zip(a, b))
+    diffs = []
+    for pid in sorted(set(before) | set(after)):
+        a, b = before.get(pid), after.get(pid)
+        if a is None or b is None:
+            diffs.append(f"{pid}: {'shown' if a else 'not shown'} before, {'shown' if b else 'not shown'} after")
+            continue
+        if a["window"] != b["window"]:
+            diffs.append(f"{pid}: {a['window']} before, {b['window']} after")
+            continue
+        for key in ("rect", "size", "position"):
+            if key in a and a[key] is not None and not near(a[key], b.get(key)):
+                diffs.append(f"{pid}: {key} {a[key]} before, {b.get(key)} after")
+    return diffs
+
+
 def step_persistence():
+    """Layout persistence across a restart, as the Windows gate checks it and
+    more: every panel's window (docked in the main window or floating) and
+    its geometry. Audio is floated first, so both kinds are in the layout."""
     fresh()
     float_panel("Audio", "persist")
-    ev0, st = B.snap("persist-0-before-exit")
+    st0 = wait_for(lambda s: "Audio" in frames(s))
+    time.sleep(1.0)
+    st0 = atspi()
+    before = arrangement(st0)
+    ev0, _ = B.snap("persist-0-before-exit", extra="# arrangement\n" + json.dumps(before, indent=1))
     # Close the main window the way the compositor does (its close request
     # reaches onClosing, which saves the layout).
     if B.name == "mutter":
@@ -1286,12 +1338,28 @@ def step_persistence():
     cfg = sh(f"find {os.environ['XDG_CONFIG_HOME']}/HikariSub -name 'layout.json*' -printf '%p %s\\n'")
     app("start")
     time.sleep(2)
-    st = wait_for(lambda s: "Audio" in frames(s))
-    ev1, st = B.snap("persist-1-after-restart", extra="# layout files\n" + cfg)
-    ok = "Audio" in frames(st)
+    st = wait_for(lambda s: "Audio" in frames(s) and {p["id"] for p in s["panels"]} >= set(before) - {"(main window)"})
+    time.sleep(1.0)
+    after = arrangement(atspi())
+    ev1, _ = B.snap("persist-1-after-restart", extra="# layout files\n" + cfg + "\n# arrangement\n"
+                    + json.dumps(after, indent=1))
+    diffs = arrangement_differences(before, after)
+    if diffs:  # read again once the restored windows had time to settle
+        time.sleep(4)
+        after = arrangement(atspi())
+        diffs = arrangement_differences(before, after)
+        ev2, _ = B.snap("persist-2-settled", extra="# arrangement\n" + json.dumps(after, indent=1))
+        ev1 += ev2
+    floating = sorted(p for p, e in before.items() if e["window"] == "floating")
+    docked = sorted(p for p, e in before.items() if e["window"] == "main" and p != "(main window)")
+    ok = gone and "Audio" in floating and docked and not diffs
+    where = ("floating windows' positions compared (X11)" if B.name == "x11" else
+             "floating windows' positions not compared: on Wayland the compositor places them, a client cannot")
     verdict("layout-persistence", "observed" if ok else "failed",
             f"main window closed through the compositor (process ended: {gone}); layout files: {cfg.strip()!r}; "
-            f"after restart Audio floating: {ok}", ev0 + ev1)
+            f"before exit floating {floating}, docked {docked}; after restart every panel in the same window "
+            f"with the same rectangle and window size (within 2 px): {not diffs}"
+            + (f"; differences: {diffs}" if diffs else "") + f"; {where}", ev0 + ev1)
 
 
 def step_fullscreen():
