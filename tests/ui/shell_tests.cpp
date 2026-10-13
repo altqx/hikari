@@ -11935,7 +11935,41 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_alignment"), "activated", Q_ARG(int, 4)));
             QTRY_COMPARE(session->historySize(), placed + 1);
             QTRY_VERIFY(squareAt({(ra.x + rb.x) / 2, (ra.y + rb.y) / 2}));
+
+            // The rectangle's resize shapes on screen: a corner's, the arrow
+            // inside it (VisualPosition.cpp:240-251).
+            const auto shape = [&] { return pointerArea->property("cursorShape").toInt(); };
+            QTest::mouseMove(window, (a + b) / 2);
+            QTRY_COMPARE(shape(), int(Qt::ArrowCursor));
+            QTest::mouseMove(window, b);
+            QTRY_COMPARE(shape(), int(Qt::SizeFDiagCursor));
+            // Out of the Line's time the render blocks the tool and puts the
+            // arrow back (Visuals::Draw's blockevents); a move over the edge
+            // sets nothing while it is blocked.
+            QVERIFY(application->video().showFrameAt(0));
+            QTRY_COMPARE_WITH_TIMEOUT(application->video().frame(), 0, 20000);
+            QTRY_VERIFY(!tools.warning().isEmpty());
+            QTRY_COMPARE(shape(), int(Qt::ArrowCursor));
+            QTest::mouseMove(window, QPoint(b.x(), (a.y() + b.y()) / 2));
+            QCOMPARE(shape(), int(Qt::ArrowCursor));
+            QVERIFY(tools.hasArrow());
+            // A shape still up when the block comes without a new frame (the
+            // Line's time edited under a still frame): the next pointer event
+            // puts the arrow back on screen too.
+            tools.setPointerShape(application::visual::PointerShape::SizeNS);
+            emit tools.changed();
+            QTRY_COMPARE(shape(), int(Qt::SizeVerCursor));
+            QTest::mouseMove(window, QPoint(b.x(), (a.y() + b.y()) / 2 + 1));
+            QVERIFY(tools.hasArrow());
+            QTRY_COMPARE(shape(), int(Qt::ArrowCursor));
+            QVERIFY(application->video().showFrameAt(24));
+            QTRY_COMPARE_WITH_TIMEOUT(application->video().frame(), 24, 20000);
+            QTRY_VERIFY(tools.warning().isEmpty());
+            QTest::mouseMove(window, QPoint(b.x(), (a.y() + b.y()) / 2));
+            QTRY_COMPARE(shape(), int(Qt::SizeHorCursor));
         }
+        byRect = visualItem("visualOption_byRectangle"); // the seeks rebuilt the option buttons
+        QVERIFY(byRect);
         QVERIFY(QMetaObject::invokeMethod(byRect, "click")); // off again
 
         // Move: drag the start handle; \move from there to the old point,
@@ -11951,7 +11985,11 @@ private slots:
         const std::size_t moveSteps = session->historySize();
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, f0);
         QTest::mouseMove(window, f0 + QPoint(-30, -20));
+        // The four-way shape from the press until the release
+        // (VisualMove.cpp:227).
+        QTRY_COMPARE(pointerArea->property("cursorShape").toInt(), int(Qt::SizeAllCursor));
         QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, f0 + QPoint(-30, -20));
+        QTRY_COMPARE(pointerArea->property("cursorShape").toInt(), int(Qt::ArrowCursor));
         QTRY_COMPARE(session->historySize(), moveSteps + 1);
         QCOMPARE(session->history().back().name, std::string("Visual movement tool"));
         QVERIFY2(signText().startsWith(QStringLiteral("{\\an5\\move(")), qPrintable(signText()));
@@ -12237,11 +12275,19 @@ private slots:
         QTRY_COMPARE(field->property("text").toString(), QStringLiteral("{\\pos(160,120)}third"));
         QVERIFY(QMetaObject::invokeMethod(field, "select", Q_ARG(int, 10), Q_ARG(int, 10)));
         QCOMPARE(application->editor().rawFieldSelection(0), (std::pair<long, long>{10, 10}));
+        // Legacy's pointer on screen: the X arrow's end shows its axis'
+        // shape while hovering (VisualScale.cpp:286-297) and through the
+        // drag (307-311).
+        QQuickItem *pointerArea = item("visualPointer");
+        QVERIFY(pointerArea);
+        const auto shape = [&] { return pointerArea->property("cursorShape").toInt(); };
         QTest::mouseMove(window, p);
+        QTRY_COMPARE(shape(), int(Qt::SizeHorCursor));
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
         QTest::mouseMove(window, p + QPoint(10, 0));
         QTest::mouseMove(window, p + QPoint(20, 0));
         QTRY_VERIFY(tools.gestureActive());
+        QCOMPARE(shape(), int(Qt::SizeHorCursor));
         QCOMPARE(thirdText(), QStringLiteral("{\\pos(160,120)}third")); // nothing reaches the Document yet
         QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, p + QPoint(20, 0));
         QTRY_COMPARE(session->historySize(), steps + 1);
@@ -12308,6 +12354,12 @@ private slots:
         QTRY_COMPARE(session->historySize(), rectangleSteps + 1);
         QCOMPARE(session->history().back().name, std::string("Visual scaling tool"));
         QVERIFY(scale->rectangleVisible());
+        // The drawn rectangle's corner shape on screen, the arrow inside it
+        // (VisualScale.cpp:152-172).
+        QTest::mouseMove(window, (r0 + r1) / 2);
+        QTRY_COMPARE(shape(), int(Qt::ArrowCursor));
+        QTest::mouseMove(window, QPoint(r1.x(), r0.y()));
+        QTRY_COMPARE(shape(), int(Qt::SizeBDiagCursor));
         const auto &sizing = scale->sizingRectangle();
         const float written = static_cast<float>(100 + view.toDevice(20)) / 100.f;
         const float expected =
@@ -12359,7 +12411,12 @@ private slots:
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, a);
         QTRY_VERIFY(rz->visibility()[0]);
         QTest::mouseMove(window, b);
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, b);
+        // The second point's press shows the four-way shape until the release
+        // (VisualRotationZ.cpp:211).
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, b);
+        QTRY_COMPARE(shape(), int(Qt::SizeAllCursor));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, b);
+        QTRY_COMPARE(shape(), int(Qt::ArrowCursor));
         QTRY_COMPARE(session->historySize(), before + 1);
         QCOMPARE(session->history().back().name, std::string("Visual Z-axis rotation tool"));
         const PointF p0 = rz->twoPoints()[0], p1 = rz->twoPoints()[1];
@@ -12393,8 +12450,10 @@ private slots:
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, c);
         QTest::mouseMove(window, c + QPoint(25, 0));
         QTRY_VERIFY(tools.gestureActive());
+        QTRY_COMPARE(shape(), int(Qt::SizeHorCursor)); // the left button turns \fry (VisualRotationXY.cpp:215)
         const PointF pressedAt = xyTool->firstmove(); // the press (VisualRotationXY.cpp:214)
         QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, c + QPoint(25, 0));
+        QTRY_COMPARE(shape(), int(Qt::ArrowCursor));
         QTRY_COMPARE(session->historySize(), xy + 1);
         QCOMPARE(session->history().back().name, std::string("Visual X/Y-axis rotation tool"));
         QVERIFY2(thirdText().contains(QStringLiteral("\\fry%1").arg(view.toDevice(25))), qPrintable(thirdText()));
@@ -12974,6 +13033,16 @@ private slots:
         QVERIFY2(m.hasMatch(), qPrintable(text(session->document().lines()[2])));
         QVERIFY(m.captured(1).toDouble() > 1 && m.captured(2).toDouble() > 1);
         QVERIFY(m.captured(3).toDouble() > m.captured(1).toDouble() && m.captured(4).toDouble() > m.captured(2).toDouble());
+        // The drawn rectangle's corner shape on screen, the arrow inside it
+        // (VisualDrawingShapes.cpp:387-398).
+        {
+            QQuickItem *pointerArea = visualItem("visualPointer");
+            QVERIFY(pointerArea);
+            QTest::mouseMove(window, (a + b) / 2);
+            QTRY_COMPARE(pointerArea->property("cursorShape").toInt(), int(Qt::ArrowCursor));
+            QTest::mouseMove(window, QPoint(b.x(), a.y()));
+            QTRY_COMPARE(pointerArea->property("cursorShape").toInt(), int(Qt::SizeBDiagCursor));
+        }
 
         // "Edit": the dialog, on the preset chosen (T5-editor-opens-next:
         // legacy opened on the one after it, "circle").
