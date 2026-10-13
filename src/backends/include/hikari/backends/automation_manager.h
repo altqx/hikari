@@ -32,6 +32,10 @@ public:
     // L4: the macro runs against `snapshot`; its result is host(path)->lastResult().
     bool run(const std::string &path, int ordinal, const application::MacroSnapshot &snapshot,
              bool validateFirst = false);
+    // S4-run-validation: only that macro's validation function (a
+    // dependency's, before another script's macro runs). It counts as the
+    // active macro until runFinished: Ok when valid, NotValid otherwise.
+    bool validate(const std::string &path, int ordinal, const application::MacroSnapshot &snapshot);
     // S4 (legacy LuaScript::CheckLastModified): whether the script file's
     // modification time differs from the one recorded when it last loaded;
     // false when the file cannot be read.

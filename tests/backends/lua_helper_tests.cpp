@@ -585,6 +585,70 @@ TEST_F(LuaHelper, ValidationEditsAreDroppedWhenItAnswersFalse)
     }
 }
 
+// S4-run-validation: protocol Validate calls only the validation function.
+// True ends Ok with a valid result that stages nothing (the macro does not
+// run, and validation's edits are dropped); false or an error ends NotValid
+// as RunValidated does; a macro without a validation function is valid.
+TEST_F(LuaHelper, ValidateCallsOnlyTheValidationFunction)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    const hikari::core::LineId l1{1}, l2{2};
+    session.setSelection(Selection{l1, {l1}});
+    auto host = load(fixture("validation.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    auto validate = [&](const char *name) {
+        run = {};
+        const auto snapshot = snapshotForMacro(session);
+        return snapshot && host->validate(macro(*host, name), *snapshot) &&
+               waitFor([&] { return run.outcome.has_value(); });
+    };
+    ASSERT_TRUE(validate("One line"));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log.value(0), QStringLiteral("validated 6 1 4"));
+    ASSERT_TRUE(host->lastResult());
+    EXPECT_TRUE(host->lastResult()->valid);
+    EXPECT_TRUE(host->lastResult()->dialogues.empty()) << "the macro did not run";
+    EXPECT_TRUE(host->lastResult()->info.empty());
+
+    // Edits made while answering true are dropped too: nothing is staged.
+    ASSERT_TRUE(validate("Edits while validating"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok);
+    EXPECT_TRUE(host->lastResult()->info.empty());
+
+    session.setSelection(Selection{l1, {l1, l2}});
+    ASSERT_TRUE(validate("One line"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+    EXPECT_TRUE(run.message.isEmpty());
+    ASSERT_TRUE(validate("Broken"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+    EXPECT_TRUE(run.message.startsWith(QStringLiteral("Runtime error in Lua macro validation function:\n")));
+    ASSERT_TRUE(validate("Unvalidated"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok);
+    EXPECT_TRUE(host->lastResult()->dialogues.empty());
+    EXPECT_EQ(host->state(), LuaScriptHost::State::Ready);
+}
+
+// S4-run-validation: the ScriptInfo lists the files the script's top level
+// loaded as Lua code, by require (and what that required) and include, in
+// the order first loaded and once each; not the script itself, not the
+// shared include directory's modules loaded before the top level (moonscript),
+// not what a macro loads later.
+TEST_F(LuaHelper, LoadListsTheFilesTheTopLevelLoaded)
+{
+    auto host = load(fixture("dependencies/main.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    const QDir dir(fixture("dependencies"));
+    auto canonical = [&](const char *name) {
+        return QDir::toNativeSeparators(QFileInfo(dir.filePath(QLatin1String(name))).canonicalFilePath()).toStdString();
+    };
+    EXPECT_EQ(host->info().loadedFiles,
+              (std::vector<std::string>{canonical("dep.lua"), canonical("nested.lua"), canonical("included.lua")}));
+    ASSERT_TRUE(runToEnd(*host, "Main"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(host->info().loadedFiles.size(), 3u);
+}
+
 // A33-subinspector-linux: SubInspector's native library (the Windows DLL
 // legacy shipped; built from the same v0.5.1 source on Linux) loads through
 // requireffi and measures a rendered line through libass. The bounds depend

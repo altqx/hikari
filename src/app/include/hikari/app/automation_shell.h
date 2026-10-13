@@ -14,6 +14,7 @@
 #include "hikari/application/automation_services.h"
 #include "hikari/application/document_scripts.h"
 #include "hikari/application/document_files.h"
+#include "hikari/application/macro_validation.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/automation_manager.h"
@@ -142,8 +143,16 @@ private:
         application::DocumentId target;
         application::MacroSnapshot snapshot;
         std::string path, macro;
+        int ordinal = 0;
         RunOrigin origin = RunOrigin::Menu;
+        // S4-run-validation: the dependencies' validations made first, the
+        // step under way (validations.size(): the macro itself, validated
+        // first) and the script whose helper works on it.
+        std::vector<application::MacroRef> validations;
+        std::size_t step = 0;
+        std::string active;
     };
+    bool startStep(Run &run);
     void finished(const QString &path, backends::LuaScriptHost::RunOutcome outcome, const QString &message);
     application::EditSession *session(application::DocumentId id) { return m_files.session(id); }
     void loadDocumentScript(const std::string &path);

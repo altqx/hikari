@@ -458,13 +458,13 @@ bool AutomationShell::rerunLast()
 
 bool AutomationShell::forceStopOffered() const
 {
-    const auto *host = m_run ? m_manager.host(m_run->path) : nullptr;
+    const auto *host = m_run ? m_manager.host(m_run->active) : nullptr;
     return host && host->forceStopAvailable();
 }
 
 bool AutomationShell::forceStopRun()
 {
-    return m_run && m_manager.forceStop(m_run->path);
+    return m_run && m_manager.forceStop(m_run->active);
 }
 
 bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin)
@@ -494,12 +494,16 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     }
     s->setReadOnly(true);
     // S4: every run validates first, as legacy does (LuaCommand::RunScript,
-    // HikariSubFrame::OnRunScript and GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT).
-    if (!m_manager.run(path, ordinal, *snapshot, true)) {
+    // HikariSubFrame::OnRunScript and GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT);
+    // S4-run-validation: the macros of the scripts it depends on validate
+    // before it, on the same snapshot, and no other macro does.
+    Run started{*target, std::move(*snapshot), path, macro, ordinal, origin};
+    started.validations = application::dependencyValidations(m_manager.scripts(), path);
+    if (!startStep(started)) {
         s->setReadOnly(false);
         return false;
     }
-    m_run = Run{*target, std::move(*snapshot), path, macro, origin};
+    m_run = std::move(started);
     m_last = {path, ordinal};
     m_title = QString::fromStdString(macro);
     m_task.clear();
@@ -512,10 +516,31 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     return true;
 }
 
+bool AutomationShell::startStep(Run &run)
+{
+    if (run.step < run.validations.size()) {
+        const auto &v = run.validations[run.step];
+        run.active = v.path;
+        return m_manager.validate(v.path, v.ordinal, run.snapshot);
+    }
+    run.active = run.path;
+    return m_manager.run(run.path, run.ordinal, run.snapshot, true);
+}
+
 void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutcome outcome, const QString &message)
 {
     if (!m_run)
         return;
+    using Outcome = backends::LuaScriptHost::RunOutcome;
+    if (m_run->step < m_run->validations.size() && outcome == Outcome::Ok) {
+        // A dependency answered true: the next validation, or the macro.
+        ++m_run->step;
+        if (startStep(*m_run)) {
+            emit progressChanged();
+            return;
+        }
+        outcome = Outcome::HelperLost; // that script's helper is gone meanwhile
+    }
     Run run = std::move(*m_run);
     m_run.reset();
     auto *s = session(run.target);
@@ -525,7 +550,6 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     m_dialogs.withdraw();
     bool ok = false;
     QString text;
-    using Outcome = backends::LuaScriptHost::RunOutcome;
     switch (outcome) {
     case Outcome::Ok: {
         const auto *host = m_manager.host(run.path);
@@ -552,12 +576,14 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
         // LuaCommand::Validate logs a runtime error (Automation.cpp:953); the
         // menu says nothing more (RunScript), a hotkey and "Run the last
         // loaded script" say validation failed (HikariSubFrame.cpp:929, 2641).
+        // A dependency's failed validation is said the same way, naming
+        // the dependency (S4-run-validation).
         if (!message.isEmpty() && m_logLine)
             m_logLine(message);
         if (run.origin != RunOrigin::Menu)
             emit notice(QCoreApplication::translate("HikariSub.Automation", "Error"),
                         QCoreApplication::translate("HikariSub.Automation", "Validation Lua script '%1' failed")
-                            .arg(prettyName(run.path)));
+                            .arg(prettyName(run.active)));
         break;
     }
     if (!text.isEmpty())

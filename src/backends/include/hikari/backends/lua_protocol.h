@@ -18,6 +18,12 @@
 //         LuaCommand::Validate before Run (S4). When it returns false or
 //         raises an error the macro does not run: Terminal Ok carries a
 //         MacroResult with valid false (and the error text, if any).
+//   Validate: as RunValidated, but the macro never runs: Terminal Ok carries
+//         a MacroResult with no lists, valid true or false (and the error
+//         text). What validation staged is dropped either way. A dependency's
+//         validation before another script's macro runs (S4-run-validation).
+// The ScriptInfo lists the files the script's top level loaded as Lua code
+// (require and include), for S4-run-validation's dependencies.
 // Progress payloads start with an i32 ProgressEvent: Log (str), Set (f64
 // percent), Task (str), Title (str).
 // Service payloads start with an i32 Service; Dialog carries a DialogRequest
@@ -35,10 +41,11 @@
 
 namespace hikari::backends::lua {
 
-inline constexpr std::uint32_t kProtocolVersion = 4; // 3: RunValidated (S4); 4: HostService::Gettext (O5)
+// 3: RunValidated (S4); 4: HostService::Gettext (O5); 5: Validate and ScriptInfo::loadedFiles (S4-run-validation)
+inline constexpr std::uint32_t kProtocolVersion = 5;
 inline constexpr char kHelperName[] = "hikari-lua-helper";
 
-enum class Command : std::int32_t { Load = 1, Run = 2, RunValidated = 3 };
+enum class Command : std::int32_t { Load = 1, Run = 2, RunValidated = 3, Validate = 4 };
 enum class ProgressEvent : std::int32_t { Log = 1, Set = 2, Task = 3, Title = 4 };
 enum class Service : std::int32_t { Dialog = 1, Host = 2 };
 

@@ -30,6 +30,10 @@ struct ScriptInfo {
     std::string author;
     std::string version;
     std::vector<ScriptMacro> macros;
+    // S4-run-validation: the files the script's top level loaded as Lua code
+    // (require, include, and what those loaded), first load first, each once,
+    // as absolute normalized UTF-8 paths; the script's own file is not listed.
+    std::vector<std::string> loadedFiles;
 };
 
 // One control. `kind` is the lowercased Lua class: label, edit, textbox,

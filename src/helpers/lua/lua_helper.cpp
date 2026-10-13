@@ -40,6 +40,7 @@ extern "C" {
 #include <new>
 #include <filesystem>
 #include <regex>
+#include <system_error>
 #include <type_traits>
 #include <variant>
 #include <fstream>
@@ -67,6 +68,7 @@ struct Script {
 };
 
 Script g_script;
+bool g_topLevel = false; // the script's top level runs (Load)
 Responder *g_responder = nullptr; // the running request
 Responder *g_services = nullptr;  // host services: the running request, or the Load while the top level runs
 int g_lastProgress = 0;
@@ -278,6 +280,27 @@ int registerFilter(lua_State *)
     return 0; // legacy stub: HikariSub has no export filters
 }
 
+// S4-run-validation: a file the top level loads as Lua code (require or
+// include) joins ScriptInfo::loadedFiles, once, absolute and normalized.
+void noteLoaded(const std::filesystem::path &file)
+{
+    if (!g_topLevel)
+        return;
+    std::error_code ec;
+    std::filesystem::path p = std::filesystem::weakly_canonical(std::filesystem::absolute(file, ec), ec);
+    if (ec)
+        p = file.lexically_normal();
+    std::filesystem::path self = std::filesystem::weakly_canonical(g_script.path, ec);
+    if (ec)
+        self = g_script.path.lexically_normal();
+    if (p == self)
+        return;
+    const std::string utf8 = toUtf8(p);
+    auto &files = g_script.info.loadedFiles;
+    if (std::find(files.begin(), files.end(), utf8) == files.end())
+        files.push_back(utf8);
+}
+
 int cancelScript(lua_State *L)
 {
     lua_pushlightuserdata(L, &g_cancelTag);
@@ -304,6 +327,7 @@ int include(lua_State *L)
         lua_pushfstring(L, "Lua include not found: %s", toUtf8(filepath).c_str());
         return lua_error(L);
     }
+    noteLoaded(filepath);
     if (!loadFile(L, filepath)) {
         // Legacy appends check_string(L, 1), the include's own name, not the error.
         lua_pushfstring(L, "Error loading Lua include \"%s\":\n%s", toUtf8(filepath).c_str(), filename.c_str());
@@ -709,6 +733,7 @@ int moduleLoader(lua_State *L)
         }
         if (!std::filesystem::exists(fromUtf8(filename)))
             continue;
+        noteLoaded(fromUtf8(filename));
         if (!loadFile(L, fromUtf8(filename)))
             return luaL_error(L, "Error loading Lua module \"%s\":\n%s", filename.c_str(), checkString(L, 1).c_str());
         break;
@@ -785,7 +810,10 @@ void load(Reader &in, Responder &r)
         return fail(stringOrEmpty(L, -1));
     lua_pushcfunction(L, addStackTrace);
     lua_insert(L, -2);
-    if (lua_pcall(L, 0, 0, -2) != 0)
+    g_topLevel = true;
+    const int topLevel = lua_pcall(L, 0, 0, -2);
+    g_topLevel = false;
+    if (topLevel != 0)
         return fail("Error initializing Lua script \"" + prettyName(g_script.path) + "\":\n\n" +
                     stringOrEmpty(L, -1) + ".");
     lua_pop(L, 1);
@@ -2149,8 +2177,14 @@ bool validate(lua_State *L, int index, std::string &error)
     return valid;
 }
 
-void run(Reader &in, Responder &r, std::size_t payloadSize, bool validateFirst)
+// Run: the macro. RunValidated: its validation function, then the macro
+// when it answers true. Validate: the validation function only
+// (S4-run-validation, a dependency's validation before another macro runs).
+enum class RunMode { Run, RunValidated, Validate };
+
+void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
 {
+    const bool validateFirst = mode != RunMode::Run;
     const std::int32_t index = in.i32();
     auto snapshot = lua::decodeSnapshot(in, payloadSize);
     if (!in.ok() || !snapshot)
@@ -2190,6 +2224,14 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, bool validateFirst)
             MacroResult result;
             result.valid = false;
             result.validationError = std::move(error);
+            g_subs = nullptr;
+            g_responder = nullptr;
+            g_services = nullptr;
+            return r.terminal(Outcome::Ok, lua::encodeMacroResult(result));
+        }
+        if (mode == RunMode::Validate) {
+            // Valid; what validation staged is dropped, the lists stay empty.
+            MacroResult result;
             g_subs = nullptr;
             g_responder = nullptr;
             g_services = nullptr;
@@ -2263,9 +2305,11 @@ int main()
         case lua::Command::Load:
             return load(in, r);
         case lua::Command::Run:
-            return run(in, r, request.payload.size(), false);
+            return run(in, r, request.payload.size(), RunMode::Run);
         case lua::Command::RunValidated:
-            return run(in, r, request.payload.size(), true);
+            return run(in, r, request.payload.size(), RunMode::RunValidated);
+        case lua::Command::Validate:
+            return run(in, r, request.payload.size(), RunMode::Validate);
         }
         r.terminal(Outcome::Unsupported);
     });
