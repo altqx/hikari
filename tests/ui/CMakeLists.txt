@@ -10,6 +10,10 @@ target_compile_definitions(hikari_ui_line_grid_tests PRIVATE HIKARI_TEST_ARTIFAC
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 hikari_add_qttest(hikari_ui_line_grid_a11y_tests SOURCES line_grid_a11y_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp LIBRARIES hikari_composition)
+# MSVC: shell_tests.cpp has more sections than a COFF object holds by default (C1128).
+if(MSVC)
+    target_compile_options(hikari_ui_shell_tests PRIVATE /bigobj)
+endif()
 hikari_add_qttest(hikari_ui_log_controller_tests SOURCES log_controller_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_tag_buttons_tests SOURCES tag_buttons_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_line_measures_tests SOURCES line_measures_tests.cpp LIBRARIES hikari_ui)
