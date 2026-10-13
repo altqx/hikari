@@ -55,8 +55,22 @@ wxString SubtitlesProviderManager::ProviderInUse()
 
 void SubtitlesProviderManager::GetProviders(wxArrayString *providerList)
 {
-	SubtitlesVSFilter::GetProviders(providerList);
-	providerList->Add(LIBASS_PROVIDER);
+	wxArrayString names;
+	SubtitlesVSFilter::GetProviders(&names);
+	std::vector<std::wstring> csri;
+	for (const wxString &name : names)
+		csri.push_back(name.ToStdWstring());
+	for (const std::wstring &name : OrderSubtitlesProviders(csri))
+		providerList->Add(wxString(name));
+}
+
+wxString SubtitlesProviderManager::ProviderLabel(const wxString &name)
+{
+	if (name == XY_VSFILTER_PROVIDER)
+		return L"xy-VSFilter";
+	if (name == VSFILTERMOD_PROVIDER)
+		return _("VSFilterMod (slow, only for VSFilterMod tags)");
+	return name;
 }
 
 void SubtitlesProviderManager::DestroyProviders()

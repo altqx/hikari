@@ -18,13 +18,24 @@
 #include <string>
 #include <vector>
 
-// The name the options store for libass.
+// The names the options store for libass and for the CSRI renderers of
+// xy-VSFilter and VSFilterMod.
 extern const wchar_t *const LIBASS_PROVIDER;
+extern const wchar_t *const XY_VSFILTER_PROVIDER;
+extern const wchar_t *const VSFILTERMOD_PROVIDER;
 
 // The subtitle renderer a stored choice stands for, given the CSRI renderers
-// that loaded (the default one first): the stored name when it is libass or
-// one of them, else the default CSRI renderer, else libass. A choice copied
-// from another computer, or a renderer that failed to load, then still shows
-// and uses a renderer that works.
+// that loaded: the stored name when it is libass or one of them, else
+// xy-VSFilter when it loaded, else libass. A choice copied from another
+// computer, or a renderer that failed to load, then still shows and uses a
+// renderer that works. VSFilterMod renders 10 to 30 times slower than
+// xy-VSFilter, so it is used only when chosen.
 std::wstring ResolveSubtitlesProvider(const std::wstring &stored,
 	const std::vector<std::wstring> &csriRenderers);
+
+// The renderers to offer, in order: xy-VSFilter when it loaded, libass, any
+// other CSRI renderer, then VSFilterMod when it loaded.
+std::vector<std::wstring> OrderSubtitlesProviders(const std::vector<std::wstring> &csriRenderers);
+
+// A renderer to offer only with a warning that it is slow.
+bool IsSlowSubtitlesProvider(const std::wstring &name);

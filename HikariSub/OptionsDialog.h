@@ -82,6 +82,8 @@ private:
 	std::vector<bool> registeredExts;
 	std::vector<wxString> programLanguages;
 	wxArrayString dictionaryLanguagesSymbols;
+	// the stored names of the subtitle renderers the Video page lists
+	wxArrayString subtitlesProviders;
 	TabPanel* tab;
 };
 

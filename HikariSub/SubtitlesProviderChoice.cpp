@@ -18,13 +18,46 @@
 #include <algorithm>
 
 const wchar_t *const LIBASS_PROVIDER = L"libass";
+const wchar_t *const XY_VSFILTER_PROVIDER = L"xy-vsfilter_textsub";
+const wchar_t *const VSFILTERMOD_PROVIDER = L"vsfiltermod_textsub";
+
+namespace {
+
+bool Contains(const std::vector<std::wstring> &names, const std::wstring &name)
+{
+	return std::find(names.begin(), names.end(), name) != names.end();
+}
+
+} // namespace
 
 std::wstring ResolveSubtitlesProvider(const std::wstring &stored,
 	const std::vector<std::wstring> &csriRenderers)
 {
 	if (stored == LIBASS_PROVIDER)
 		return stored;
-	if (!stored.empty() && std::find(csriRenderers.begin(), csriRenderers.end(), stored) != csriRenderers.end())
+	if (!stored.empty() && Contains(csriRenderers, stored))
 		return stored;
-	return csriRenderers.empty() ? std::wstring(LIBASS_PROVIDER) : csriRenderers.front();
+	if (Contains(csriRenderers, XY_VSFILTER_PROVIDER))
+		return XY_VSFILTER_PROVIDER;
+	return LIBASS_PROVIDER;
+}
+
+std::vector<std::wstring> OrderSubtitlesProviders(const std::vector<std::wstring> &csriRenderers)
+{
+	std::vector<std::wstring> providers;
+	if (Contains(csriRenderers, XY_VSFILTER_PROVIDER))
+		providers.push_back(XY_VSFILTER_PROVIDER);
+	providers.push_back(LIBASS_PROVIDER);
+	for (const std::wstring &renderer : csriRenderers) {
+		if (renderer != XY_VSFILTER_PROVIDER && !IsSlowSubtitlesProvider(renderer) && !Contains(providers, renderer))
+			providers.push_back(renderer);
+	}
+	if (Contains(csriRenderers, VSFILTERMOD_PROVIDER))
+		providers.push_back(VSFILTERMOD_PROVIDER);
+	return providers;
+}
+
+bool IsSlowSubtitlesProvider(const std::wstring &name)
+{
+	return name == VSFILTERMOD_PROVIDER;
 }

@@ -644,12 +644,14 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		ConOpt(sopts, vopts[5]);
 
 		HikariStaticBoxSizer *filtersizer = new HikariStaticBoxSizer(wxHORIZONTAL, video, voptspl[6]);
+		SubtitlesProviderManager::GetProviders(&subtitlesProviders);
 		wxArrayString vsfilters;
-		SubtitlesProviderManager::GetProviders(&vsfilters);
+		for (const wxString &provider : subtitlesProviders)
+			vsfilters.Add(SubtitlesProviderManager::ProviderLabel(provider));
 		HikariChoice *vsfiltersList = new HikariChoice(video, ID_VSFILTER_PROVIDER, 
 			wxDefaultPosition, wxSize(200, -1), vsfilters, wxTE_PROCESS_ENTER);
 		// a stored name that is not listed shows what is used instead
-		int result = vsfilters.Index(SubtitlesProviderManager::ProviderInUse());
+		int result = subtitlesProviders.Index(SubtitlesProviderManager::ProviderInUse());
 		if (result < 0)
 			result = 0;
 		vsfiltersList->SetSelection(result);
@@ -1175,17 +1177,23 @@ void OptionsDialog::SetOptions(bool saveall)
 						if (Options.GetString(OB.option) != language)
 							Options.SetString(OB.option, language);
 					}
+				}//subtitle renderer; the list shows labels, the options store names
+				else if (cbx->GetId() == ID_VSFILTER_PROVIDER) {
+					int sel = cbx->GetSelection();
+					if (sel >= 0 && sel < (int)subtitlesProviders.GetCount()) {
+						wxString provider = subtitlesProviders[sel];
+						if (Options.GetString(OB.option) != provider) {
+							Options.SetString(OB.option, provider);
+							SubtitlesProviderManager::DestroyProviders();
+							Notebook::RefreshVideo();
+						}
+					}
 				}
 				else {
 					wxString option = cbx->GetString(cbx->GetSelection());
 					if (cbx->GetSelection() >= 0 && Options.GetString(OB.option) != option) {
 						Options.SetString(OB.option, option);
-						//vsfilter change
-						if (cbx->GetId() == ID_VSFILTER_PROVIDER) {
-							SubtitlesProviderManager::DestroyProviders();
-							Notebook::RefreshVideo();
-						}
-						else if (cbx->GetId() == ID_CONVERSION_STYLE_CATALOG || cbx->GetId() == ID_CONVERSION_STYLE) {
+						if (cbx->GetId() == ID_CONVERSION_STYLE_CATALOG || cbx->GetId() == ID_CONVERSION_STYLE) {
 							Options.DeleteConversionStyle();
 							Notebook::RefreshVideo();
 						}

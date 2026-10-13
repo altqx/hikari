@@ -232,7 +232,8 @@ csri_rend *SubtitlesVSFilter::GetVSFilter()
 			return nullptr;
 		}
 		csri_info *info = csri_renderer_info(m_CsriRenderer);
-		wxString name = Options.GetString(VSFILTER_INSTANCE);
+		// not the stored name: with none stored, the default renderer may be VSFilterMod
+		wxString name = SubtitlesProviderManager::ProviderInUse();
 		if (!name.empty() && info){
 			while (info->name != name){
 				m_CsriRenderer = csri_renderer_next(m_CsriRenderer);

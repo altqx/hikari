@@ -61,7 +61,10 @@ public:
 	// see SubtitlesProvider::Prepare; takes the text
 	void Prepare(wxString *text);
 	static bool ReloadLibraries();
+	// the renderers to offer, in the order OrderSubtitlesProviders gives
 	static void GetProviders(wxArrayString *providerList);
+	// how the options show a renderer's name
+	static wxString ProviderLabel(const wxString &name);
 	// the renderer the stored choice stands for, which GetProviders lists;
 	// see ResolveSubtitlesProvider
 	static wxString ProviderInUse();
