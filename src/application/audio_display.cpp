@@ -3,8 +3,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <condition_variable>
 #include <cstdio>
+#include <deque>
+#include <mutex>
 #include <new>
+#include <thread>
 
 namespace hikari::application {
 
@@ -105,6 +109,13 @@ std::FILE *openFile(const std::filesystem::path &path, bool write)
 }
 
 // Legacy DiskCache: raw interleaved frames (no header, despite the .w64 name).
+// V1: the frames are written on a writer thread of the store's own, so a
+// slow disk never holds up the thread that appends them (the GUI's, as
+// blocks arrive from the media helper); legacy wrote each block in its
+// loading dialog. Frames not written yet are read from memory; at most
+// kMaxPendingBytes wait before append waits for the disk. A failed write
+// fails the next append (legacy's "Cannot write the audio cache") and keeps
+// the file from being named complete.
 class DiskStore : public AudioStore {
 public:
     DiskStore(std::filesystem::path path, std::FILE *file, int channels)
@@ -113,18 +124,30 @@ public:
     }
     // A complete cache file read back as it is (legacy DiskCache opening it "rb").
     DiskStore(std::filesystem::path path, std::FILE *file, int channels, std::int64_t frames)
-        : m_path(std::move(path)), m_file(file), m_channels(channels), m_frames(frames), m_reused(true)
+        : m_path(std::move(path)), m_file(file), m_channels(channels), m_frames(frames), m_written(frames),
+          m_reused(true)
     {
     }
     ~DiskStore() override
     {
+        {
+            std::unique_lock lock(m_mutex);
+            // A complete cache is written out to be named; an incomplete
+            // one is removed, so the writer stops after the piece it is on.
+            if (m_complete)
+                m_drained.wait(lock, [this] { return m_pending.empty() || m_failed; });
+            m_stop = true;
+        }
+        m_wake.notify_all();
+        if (m_writer.joinable())
+            m_writer.join();
         std::fclose(m_file);
         if (m_reused)
             return; // neither renamed nor removed
         std::error_code ec;
         std::filesystem::path part = m_path;
         part += ".part";
-        if (m_complete)
+        if (m_complete && !m_failed)
             std::filesystem::rename(part, m_path, ec);
         else
             std::filesystem::remove(part, ec);
@@ -132,37 +155,124 @@ public:
 
     bool append(const std::int16_t *interleaved, std::int64_t frames) override
     {
-        if (m_reused || seekTo(m_file, m_frames * 2 * m_channels) != 0)
+        if (m_reused)
             return false;
-        const auto n = static_cast<std::size_t>(frames * m_channels);
-        if (std::fwrite(interleaved, sizeof(std::int16_t), n, m_file) != n)
+        Piece piece;
+        piece.samples.assign(interleaved, interleaved + frames * m_channels);
+        std::unique_lock lock(m_mutex);
+        if (m_failed)
             return false;
+        m_drained.wait(lock, [this] { return m_pendingBytes < kMaxPendingBytes || m_failed; });
+        if (m_failed)
+            return false;
+        if (!m_writer.joinable())
+            m_writer = std::thread([this] { write(); });
+        piece.start = m_frames;
+        m_pendingBytes += piece.samples.size() * sizeof(std::int16_t);
+        m_pending.push_back(std::move(piece));
         m_frames += frames;
+        lock.unlock();
+        m_wake.notify_one();
         return true;
     }
     void read(std::int64_t start, std::int64_t count, std::int16_t *out) const override
     {
-        const auto n = static_cast<std::size_t>(count * m_channels);
+        std::int64_t written = 0;
+        {
+            // What waits for the disk, from memory.
+            std::lock_guard lock(m_mutex);
+            written = m_written;
+            for (const Piece &p : m_pending) {
+                const std::int64_t frames = static_cast<std::int64_t>(p.samples.size()) / m_channels;
+                const std::int64_t from = std::max(start, p.start), to = std::min(start + count, p.start + frames);
+                if (from < to)
+                    std::copy_n(p.samples.data() + (from - p.start) * m_channels, (to - from) * m_channels,
+                                out + (from - start) * m_channels);
+            }
+        }
+        const std::int64_t onDisk = std::clamp<std::int64_t>(written - start, 0, count);
+        if (onDisk <= 0)
+            return;
+        const auto n = static_cast<std::size_t>(onDisk * m_channels);
         std::size_t got = 0;
-        if (seekTo(m_file, start * 2 * m_channels) == 0)
-            got = std::fread(out, sizeof(std::int16_t), n, m_file);
+        {
+            std::lock_guard io(m_io);
+            if (seekTo(m_file, start * 2 * m_channels) == 0)
+                got = std::fread(out, sizeof(std::int16_t), n, m_file);
+        }
         std::fill(out + got, out + n, std::int16_t(0)); // a short read is silence, not stale memory
     }
-    std::int64_t frames() const override { return m_frames; }
+    std::int64_t frames() const override
+    {
+        std::lock_guard lock(m_mutex);
+        return m_frames;
+    }
     int channels() const override { return m_channels; }
     void complete() override
     {
-        std::fflush(m_file);
-        m_complete = true;
+        std::lock_guard lock(m_mutex);
+        m_complete = true; // flushed once written (the writer, then the destructor)
     }
 
 private:
+    static constexpr std::size_t kMaxPendingBytes = std::size_t(64) << 20;
+    struct Piece {
+        std::int64_t start = 0;
+        std::vector<std::int16_t> samples;
+    };
+    // The writer thread: the pieces in order, each left readable from
+    // memory until it is in the file.
+    void write()
+    {
+        for (;;) {
+            const Piece *piece = nullptr;
+            {
+                std::unique_lock lock(m_mutex);
+                m_wake.wait(lock, [this] { return m_stop || (!m_pending.empty() && !m_failed); });
+                if (m_stop)
+                    return;
+                piece = &m_pending.front(); // stays put: only this thread pops
+            }
+            bool ok = false;
+            {
+                std::lock_guard io(m_io);
+                ok = seekTo(m_file, piece->start * 2 * m_channels) == 0 &&
+                     std::fwrite(piece->samples.data(), sizeof(std::int16_t), piece->samples.size(), m_file) ==
+                         piece->samples.size();
+            }
+            {
+                std::lock_guard lock(m_mutex);
+                if (!ok) {
+                    m_failed = true; // the piece stays readable from memory
+                } else {
+                    m_written = piece->start + static_cast<std::int64_t>(piece->samples.size()) / m_channels;
+                    m_pendingBytes -= piece->samples.size() * sizeof(std::int16_t);
+                    m_pending.pop_front();
+                    if (m_pending.empty() && m_complete) {
+                        std::lock_guard io(m_io);
+                        std::fflush(m_file);
+                    }
+                }
+            }
+            m_drained.notify_all();
+        }
+    }
+
     std::filesystem::path m_path;
     std::FILE *m_file;
     int m_channels;
-    std::int64_t m_frames = 0;
+    mutable std::mutex m_mutex; // the fields below
+    mutable std::mutex m_io;    // the file's position and buffer
+    std::condition_variable m_wake, m_drained;
+    std::deque<Piece> m_pending;
+    std::size_t m_pendingBytes = 0;
+    std::int64_t m_frames = 0;  // appended
+    std::int64_t m_written = 0; // in the file
     bool m_complete = false;
+    bool m_failed = false;
+    bool m_stop = false;
     bool m_reused = false;
+    std::thread m_writer;
 };
 
 } // namespace

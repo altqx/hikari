@@ -1055,6 +1055,51 @@ TEST(AudioBox, AnUnwritableCacheEndsTheOpen)
     f.settings.cacheDir = blocker.parent_path();
 }
 
+// V1: the disk cache is written on a thread of its own, so an append never
+// waits for the disk; every frame appended reads back at once (from memory
+// until it is in the file), and the complete file is named on close.
+TEST(DisplayAudio, TheDiskCacheReadsBackFramesBeforeTheyAreWritten)
+{
+    const auto dir = std::filesystem::temp_directory_path() / "hikari-v1-disk-store";
+    std::filesystem::remove_all(dir);
+    const auto path = dir / "a_track1_2ch_0.w64";
+    std::string error;
+    auto store = diskAudioStore(path, 2, &error);
+    ASSERT_TRUE(store) << error;
+    constexpr int kPieces = 40, kFrames = 5000;
+    const auto sample = [](std::int64_t frame, int channel) {
+        return static_cast<std::int16_t>((frame * 7 + channel * 3) % 30011 - 15000);
+    };
+    std::vector<std::int16_t> piece(static_cast<std::size_t>(kFrames) * 2);
+    for (int p = 0; p < kPieces; ++p) {
+        for (int i = 0; i < kFrames; ++i)
+            for (int c = 0; c < 2; ++c)
+                piece[static_cast<std::size_t>(i) * 2 + c] = sample(std::int64_t(p) * kFrames + i, c);
+        ASSERT_TRUE(store->append(piece.data(), kFrames));
+        ASSERT_EQ(store->frames(), std::int64_t(p + 1) * kFrames);
+        // Across the last two pieces, whatever has reached the file.
+        const std::int64_t start = std::max<std::int64_t>(0, std::int64_t(p) * kFrames - 1234);
+        const std::int64_t count = std::int64_t(p + 1) * kFrames - start;
+        std::vector<std::int16_t> out(static_cast<std::size_t>(count) * 2, 1);
+        store->read(start, count, out.data());
+        for (std::int64_t i = 0; i < count; ++i)
+            for (int c = 0; c < 2; ++c)
+                ASSERT_EQ(out[static_cast<std::size_t>(i) * 2 + c], sample(start + i, c)) << "frame " << start + i;
+    }
+    store->complete();
+    store.reset();
+    auto part = path;
+    part += ".part";
+    EXPECT_FALSE(std::filesystem::exists(part));
+    ASSERT_EQ(std::filesystem::file_size(path), std::uintmax_t(kPieces) * kFrames * 4);
+    std::ifstream file(path, std::ios::binary);
+    std::vector<std::int16_t> all(static_cast<std::size_t>(kPieces) * kFrames * 2);
+    file.read(reinterpret_cast<char *>(all.data()), static_cast<std::streamsize>(all.size() * 2));
+    for (std::int64_t i = 0; i < std::int64_t(kPieces) * kFrames; i += 997)
+        EXPECT_EQ(all[static_cast<std::size_t>(i) * 2 + 1], sample(i, 1));
+    std::filesystem::remove_all(dir);
+}
+
 // A store that cannot keep frames (RAM exhausted) stops the append.
 TEST(DisplayAudio, AStoreThatCannotKeepFramesFailsTheAppend)
 {
