@@ -107,6 +107,24 @@ HikariSub will stay actively maintained rather than go dormant, and its dependen
 * **Windows x64**: the full-featured build, including DirectShow, DirectSound and Direct3D 9.
 * **Linux**: built on wxGTK and GStreamer.
 
+## Installing on Windows
+
+Each release has two Windows downloads, for Windows 10 version 1809 or later, x64:
+
+* **`HikariSub-<version>-windows-x64-setup.exe`**, the installer. It asks whether to install for **Just me** (in `%LOCALAPPDATA%\Programs\HikariSub`, no administrator rights needed) or for **All users** (in `Program Files`, after an administrator prompt). It adds a Start menu entry and, unless you untick it, registers HikariSub for `.ass`, `.ssa`, `.srt` and `.sub` files, without taking a file type that another program already opens. A desktop shortcut is optional. Running a newer installer updates the existing installation in place, for the same choice of users; to switch between Just me and All users, uninstall first. Uninstall from Settings > Apps; it removes the program files, shortcuts and file types, and keeps your settings and any files you added to the folder. The installer is not code-signed, so Windows SmartScreen may ask you to confirm it ("More info", then "Run anyway").
+* **`HikariSub-<version>-windows-x64.zip`**, the portable package. Extract it anywhere and run `HikariSub.exe`; it keeps its settings beside the executable and installs nothing.
+
+The installer also runs unattended:
+
+| Switch | Meaning |
+| --- | --- |
+| `/S` | silent: no pages or messages |
+| `/CURRENTUSER`, `/ALLUSERS` | install for you alone or for all users (the latter from an elevated prompt). Without either, a silent install updates the existing installation, or installs for you alone |
+| `/COMPONENTS=assoc,desktop` | a new silent install's options: `assoc` registers the file types (the default), `desktop` adds a desktop shortcut; `/COMPONENTS=` selects neither |
+| `/D=<folder>` | the installation folder; it must come last and is not quoted |
+
+Its exit code is 0 on success, 1 when cancelled, 2 on another failure, 3 when HikariSub is still running, 4 when administrator rights are needed or were refused, 5 when a newer version is already installed, and 6 when HikariSub is installed for the other choice of users. The uninstaller, `Uninstall HikariSub.exe` in the installation folder, takes `/S` too.
+
 ## Building from Source
 
 HikariSub currently has two supported source-build paths:
