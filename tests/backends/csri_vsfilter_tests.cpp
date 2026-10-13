@@ -19,10 +19,17 @@
 #include <QImage>
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cwchar>
 #include <filesystem>
+#include <memory>
+#include <mutex>
+#include <set>
 #include <string>
+#include <tuple>
 #include <vector>
 
 using namespace hikari;
@@ -133,6 +140,203 @@ std::filesystem::path legacyFolder()
                                std::filesystem::copy_options::overwrite_existing);
     return folder;
 }
+
+// The faces xy-VSFilter itself selected while it drew: its module's import
+// of gdi32!SelectObject is redirected, and each font it selects into a DC
+// (CMyFont's SelectFont(g_hDC, ...) for the metrics, CText's for the glyph
+// outlines, RTS.cpp:131 and :650) is read back on that DC right after the
+// selection: the LOGFONT it asked for (GetObject) and the face GDI's mapper
+// chose for it (GetTextFace, and the outline metrics' full name, which names
+// the font file's face, "Arial Bold Italic" where a style is a real face).
+namespace drawn {
+
+struct Face {
+    std::wstring requested;
+    LONG weight = 0;
+    bool italic = false;
+    std::wstring selected;
+    std::wstring full;
+    bool operator<(const Face &o) const
+    {
+        return std::tie(requested, weight, italic, selected, full) <
+               std::tie(o.requested, o.weight, o.italic, o.selected, o.full);
+    }
+    bool operator==(const Face &o) const = default;
+};
+
+using SelectObjectFn = HGDIOBJ(WINAPI *)(HDC, HGDIOBJ);
+std::mutex lock;
+std::set<Face> faces;
+SelectObjectFn realSelectObject = &SelectObject;
+
+HGDIOBJ WINAPI selectObject(HDC dc, HGDIOBJ object)
+{
+    HGDIOBJ previous = realSelectObject(dc, object);
+    if (previous && object && GetObjectType(object) == OBJ_FONT) {
+        LOGFONTW lf{};
+        wchar_t face[LF_FACESIZE] = {};
+        if (GetObjectW(object, sizeof lf, &lf) && GetTextFaceW(dc, LF_FACESIZE, face)) {
+            Face f{lf.lfFaceName, lf.lfWeight, lf.lfItalic != 0, face, {}};
+            if (const UINT size = GetOutlineTextMetricsW(dc, 0, nullptr)) {
+                // Whole OUTLINETEXTMETRICW elements, so the structure is aligned;
+                // its strings follow it, at offsets from its start.
+                std::vector<OUTLINETEXTMETRICW> buffer((size + sizeof(OUTLINETEXTMETRICW) - 1) / sizeof(OUTLINETEXTMETRICW));
+                OUTLINETEXTMETRICW *otm = buffer.data();
+                if (GetOutlineTextMetricsW(dc, size, otm))
+                    f.full = reinterpret_cast<const wchar_t *>(reinterpret_cast<const char *>(otm)
+                                                               + reinterpret_cast<std::size_t>(otm->otmpFullName));
+            }
+            std::lock_guard guard(lock);
+            faces.insert(std::move(f));
+        }
+    }
+    return previous;
+}
+
+// Points `module`'s import of dll!function at `replacement`; the import's
+// previous target, or null when the module does not import it by name.
+// Only the module's own import table: xy-VSFilter links MFC statically and
+// delay-loads only oleacc.dll (ports/hikari-xy-vsfilter/CMakeLists.txt, as
+// VSFilter.props has it), so its SelectFont calls go through that table; a
+// renderer reaching gdi32 another way fails the read-back, it never passes.
+void *patchImport(HMODULE module, const char *dll, const char *function, void *replacement)
+{
+    auto *base = reinterpret_cast<BYTE *>(module);
+    const auto *dos = reinterpret_cast<const IMAGE_DOS_HEADER *>(base);
+    const auto *nt = reinterpret_cast<const IMAGE_NT_HEADERS *>(base + dos->e_lfanew);
+    const auto &directory = nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+    if (!directory.VirtualAddress)
+        return nullptr;
+    for (auto *d = reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR *>(base + directory.VirtualAddress); d->Name; ++d) {
+        if (_stricmp(reinterpret_cast<const char *>(base + d->Name), dll) != 0 || !d->OriginalFirstThunk)
+            continue;
+        auto *name = reinterpret_cast<IMAGE_THUNK_DATA *>(base + d->OriginalFirstThunk);
+        auto *slot = reinterpret_cast<IMAGE_THUNK_DATA *>(base + d->FirstThunk);
+        for (; name->u1.AddressOfData; ++name, ++slot) {
+            if (IMAGE_SNAP_BY_ORDINAL(name->u1.Ordinal))
+                continue;
+            const auto *byName = reinterpret_cast<const IMAGE_IMPORT_BY_NAME *>(base + name->u1.AddressOfData);
+            if (std::strcmp(reinterpret_cast<const char *>(byName->Name), function) != 0)
+                continue;
+            DWORD protection = 0;
+            if (!VirtualProtect(&slot->u1.Function, sizeof slot->u1.Function, PAGE_READWRITE, &protection))
+                return nullptr;
+            void *previous = reinterpret_cast<void *>(slot->u1.Function);
+            slot->u1.Function = reinterpret_cast<ULONG_PTR>(replacement);
+            VirtualProtect(&slot->u1.Function, sizeof slot->u1.Function, protection, &protection);
+            FlushInstructionCache(GetCurrentProcess(), nullptr, 0);
+            return previous;
+        }
+    }
+    return nullptr;
+}
+
+// The module that holds a renderer's entry points.
+HMODULE moduleOf(const std::shared_ptr<CsriRenderers> &renderers)
+{
+    const auto *r = renderers->select("");
+    HMODULE module = nullptr;
+    if (!r || !GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                                  reinterpret_cast<LPCWSTR>(r->render), &module))
+        return nullptr;
+    return module;
+}
+
+// A script whose styles ask for these families, in words no other test
+// draws: xy-VSFilter keeps its measured words and outlines in module-wide
+// caches, and a cached word selects no font.
+std::string probeScript()
+{
+    return script("",
+                  "Style: Times,Times New Roman,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,"
+                  "2,8,20,20,20,1\n"
+                  "Style: Missing,Hikari No Such Font,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,"
+                  "1,2,2,5,20,20,20,1\n"
+                  "Style: Styled,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,-1,0,0,100,100,0,0,1,2,2,2,20,"
+                  "20,60,1\n",
+                  "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\\an7}Readback arial face\n"
+                  "Dialogue: 0,0:00:00.00,0:00:05.00,Times,,0,0,0,,Readback times face\n"
+                  "Dialogue: 0,0:00:00.00,0:00:05.00,Missing,,0,0,0,,Readback missing face\n"
+                  "Dialogue: 0,0:00:00.00,0:00:05.00,Styled,,0,0,0,,Readback styled face\n");
+}
+
+// Draws the probe through the renderers' default renderer with the import
+// redirected (and put back before the module could go), and returns the
+// faces it selected.
+std::set<Face> readBack(const std::shared_ptr<CsriRenderers> &renderers, std::string &problem)
+{
+    HMODULE module = moduleOf(renderers);
+    if (!module) {
+        problem = "the renderer's module was not found";
+        return {};
+    }
+    void *previous = patchImport(module, "gdi32.dll", "SelectObject", reinterpret_cast<void *>(&selectObject));
+    if (!previous) {
+        problem = "the renderer does not import gdi32!SelectObject by name";
+        return {};
+    }
+    realSelectObject = reinterpret_cast<SelectObjectFn>(previous);
+    {
+        std::lock_guard guard(lock);
+        faces.clear();
+    }
+    {
+        CsriRenderer r(renderers, "");
+        if (!r.prepare(snapshotOf(probeScript())))
+            problem = "the probe script was refused";
+        else if (const auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight); !frame || frame->empty)
+            problem = "the probe drew nothing";
+    }
+    patchImport(module, "gdi32.dll", "SelectObject", previous);
+    std::lock_guard guard(lock);
+    return faces;
+}
+
+QString line(const Face &f)
+{
+    const QString requested = QString::fromStdWString(f.requested), selected = QString::fromStdWString(f.selected);
+    const bool matched = requested.compare(selected, Qt::CaseInsensitive) == 0;
+    return QStringLiteral("%1 (weight %2%3) -> %4 [%5] (%6)")
+        .arg(requested)
+        .arg(f.weight)
+        .arg(f.italic ? QStringLiteral(", italic") : QString())
+        .arg(selected, QString::fromStdWString(f.full), matched ? QStringLiteral("matched") : QStringLiteral("substituted"));
+}
+
+// The built renderer's read-back, taken once per process: its caches would
+// answer a second probe without selecting a font.
+const std::set<Face> &builtFaces(std::string &problem)
+{
+    static std::string first;
+    static const std::set<Face> faces = readBack(CsriRenderers::load(builtFolder(), {}), first);
+    problem = first;
+    return faces;
+}
+
+// The probe's own selections, by what was asked and what GDI chose (the
+// full name is reported, not compared).
+std::set<Face> probed(const std::set<Face> &faces)
+{
+    std::set<Face> out;
+    for (const auto &f : faces)
+        for (const wchar_t *family : {L"Arial", L"Times New Roman", L"Hikari No Such Font"})
+            if (_wcsicmp(f.requested.c_str(), family) == 0)
+                out.insert(Face{f.requested, f.weight, f.italic, f.selected, {}});
+    return out;
+}
+
+// A report file in the test artifacts, open for writing (closed on failure).
+std::unique_ptr<QFile> report(const char *name)
+{
+    const QString artifacts = QStringLiteral(HIKARI_TEST_ARTIFACT_DIR);
+    QDir().mkpath(artifacts);
+    auto file = std::make_unique<QFile>(artifacts + QLatin1Char('/') + QLatin1String(name));
+    if (!file->open(QIODevice::WriteOnly | QIODevice::Text))
+        return {};
+    return file;
+}
+
+} // namespace drawn
 
 } // namespace
 
@@ -247,4 +451,66 @@ TEST(VsfilterRecipe, ReportsTheFacesGdiResolvesForItsOutput)
     const auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight);
     ASSERT_TRUE(frame);
     EXPECT_FALSE(frame->empty);
+}
+
+// The faces read back from xy-VSFilter's own font selections while it drew
+// (drawn::selectObject): each requested family GDI has is drawn with that
+// family, a family it lacks with a substitute, reported as substituted.
+// Written to vsfilter-drawn-faces.txt.
+TEST(VsfilterRecipe, ReadsBackTheFacesItDrewWith)
+{
+    std::string problem;
+    const auto &built = drawn::builtFaces(problem);
+    ASSERT_TRUE(problem.empty()) << problem;
+    const auto report = drawn::report("vsfilter-drawn-faces.txt");
+    ASSERT_TRUE(report);
+    report->write("# built: the faces xy-VSFilter selected while drawing (requested -> GDI's face [full name])\n");
+    for (const auto &f : built) {
+        report->write((drawn::line(f) + QLatin1Char('\n')).toUtf8());
+        std::fprintf(stderr, "W2 drawn %s\n", qPrintable(drawn::line(f)));
+    }
+    const auto selectedFor = [&](const wchar_t *family, LONG weight, bool italic) {
+        std::set<std::wstring> out;
+        for (const auto &f : built)
+            if (_wcsicmp(f.requested.c_str(), family) == 0 && f.weight == weight && f.italic == italic)
+                out.insert(f.selected);
+        return out;
+    };
+    const auto same = [](const std::set<std::wstring> &selected, const wchar_t *family) {
+        return selected.size() == 1 && _wcsicmp(selected.begin()->c_str(), family) == 0;
+    };
+    EXPECT_TRUE(same(selectedFor(L"Arial", FW_NORMAL, false), L"Arial")) << "Arial";
+    EXPECT_TRUE(same(selectedFor(L"Arial", FW_BOLD, true), L"Arial")) << "Arial bold italic";
+    EXPECT_TRUE(same(selectedFor(L"Times New Roman", FW_NORMAL, false), L"Times New Roman")) << "Times New Roman";
+    const auto missing = selectedFor(L"Hikari No Such Font", FW_NORMAL, false);
+    EXPECT_FALSE(missing.empty()) << "the missing family was never selected";
+    for (const auto &face : missing)
+        EXPECT_NE(_wcsicmp(face.c_str(), L"Hikari No Such Font"), 0) << "a family GDI lacks is drawn with a substitute";
+}
+
+// The same probe through the legacy release's renderer (HIKARI_LEGACY_CSRI):
+// for the probe's families (other selections, such as a DC's previous font
+// put back, are not compared) both renderers ask for the same weights and
+// slants and GDI gives them the same faces. Written to
+// vsfilter-drawn-faces-legacy.txt. Skipped without the legacy release.
+TEST(VsfilterRecipe, SelectsTheFacesTheLegacyReleaseSelects)
+{
+    const auto legacy = legacyFolder();
+    if (legacy.empty())
+        GTEST_SKIP() << "HIKARI_LEGACY_CSRI does not name the legacy release's Csri folder";
+    std::string problem;
+    const auto built = drawn::probed(drawn::builtFaces(problem));
+    ASSERT_TRUE(problem.empty()) << problem;
+    const auto old = drawn::probed(drawn::readBack(CsriRenderers::load(legacy, {}), problem));
+    ASSERT_TRUE(problem.empty()) << "legacy: " << problem;
+    const auto report = drawn::report("vsfilter-drawn-faces-legacy.txt");
+    ASSERT_TRUE(report);
+    for (const auto &[title, faces] : {std::pair{"# built", &built}, std::pair{"# legacy release (v0.0.1-rc.1)", &old}}) {
+        report->write(title);
+        report->write("\n");
+        for (const auto &f : *faces)
+            report->write((drawn::line(f) + QLatin1Char('\n')).toUtf8());
+    }
+    EXPECT_FALSE(built.empty());
+    EXPECT_EQ(built, old) << "the recipe's renderer and the legacy release's selected different faces";
 }

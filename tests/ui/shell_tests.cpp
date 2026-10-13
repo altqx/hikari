@@ -38,6 +38,11 @@
 #include <QMimeData>
 #include <QPalette>
 #include <QClipboard>
+#include <QProcess>
+#include <QPainter>
+#include <QRasterWindow>
+#include <QScreen>
+#include <QStandardPaths>
 #include <QStyleHints>
 #include <QDirIterator>
 #include <QContextMenuEvent>
@@ -2950,6 +2955,97 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
+    // Y7 with the sampler's own source (DropFromScreenXY's screen read:
+    // QScreen::grabWindow on the grab route), not a stand-in: a window
+    // painted one colour stands where the pointer picks, and the simple
+    // "Color picker"'s right press and "Choose color"'s dropper release each
+    // take that colour. On the windows platform (winix task
+    // y7-dropper-desktop) that is the desktop's screen; offscreen the same
+    // call reads the window's backing store.
+    void screenDroppersReadTheScreenItself()
+    {
+        auto &sampler = *application->colourPicker().sampler();
+        if (sampler.route() != QLatin1String("grab"))
+            QSKIP("this session reads no screen pixels (Wayland, or X11 on XWayland)");
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        application->editor().setShowTags(true);
+
+        // The colour, away from the shell's window where the screen allows it.
+        class Patch : public QRasterWindow {
+        protected:
+            void paintEvent(QPaintEvent *) override { QPainter(this).fillRect(QRect(QPoint(), size()), QColor(0x24, 0x68, 0xac)); }
+        };
+        Patch patch;
+        patch.setFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowDoesNotAcceptFocus | Qt::Tool);
+        const QRect area = window->screen()->availableGeometry();
+        const QSize size(96, 72);
+        QRect place(area.bottomRight() - QPoint(size.width() + 8, size.height() + 8), size);
+        for (const QRect &r : {place, QRect(area.topRight() - QPoint(size.width() + 8, -8), size),
+                               QRect(area.bottomLeft() + QPoint(8, -size.height() - 8), size)})
+            if (!window->frameGeometry().intersects(r)) {
+                place = r;
+                break;
+            }
+        patch.setGeometry(place);
+        patch.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&patch));
+        const QPoint global = place.center();
+        // The screen shows it (a compositor may take a frame or two).
+        const auto showsPatch = [&] {
+            const QVariantMap centre = sampler.sample(global.x(), global.y()).value(24).toMap();
+            return centre.value(QStringLiteral("r")).toInt() == 0x24 && centre.value(QStringLiteral("g")).toInt() == 0x68
+                   && centre.value(QStringLiteral("b")).toInt() == 0xac;
+        };
+        QTRY_VERIFY(showsPatch());
+        qInfo().noquote() << "Y7 screen" << QGuiApplication::platformName() << "patch" << place << "shell" << window->frameGeometry();
+
+        // The simple picker: a right press outside it picks at once.
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour3")));
+        QQuickWindow *simple = shellWindow("simpleColourPicker");
+        QVERIFY(simple);
+        QTRY_VERIFY(simple->isVisible());
+        QTRY_VERIFY(sampler.tracking());
+        if (simple->frameGeometry().contains(global))
+            simple->setPosition(area.topLeft() + QPoint(8, 8));
+        const QPoint local = simple->mapFromGlobal(global);
+        sendMouse(simple, QEvent::MouseButtonPress, local, Qt::RightButton, Qt::RightButton);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\3c&HAC6824&}first"));
+        QCOMPARE(findItem(simple->contentItem(), QStringLiteral("hexColour"))->property("text").toString(),
+                 QStringLiteral("&HAC6824&"));
+        sendMouse(simple, QEvent::MouseButtonRelease, local, Qt::RightButton, Qt::NoButton);
+        QVERIFY(QMetaObject::invokeMethod(simple, "accept"));
+        QTRY_VERIFY(!simple->isVisible());
+        QVERIFY(!sampler.tracking());
+
+        // "Choose color": the icon's left press takes the pointer, a right
+        // release over the colour picks the centre of what the screen shows.
+        auto *dialog = named("colourDialog");
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        const QPoint icon = centreOf(dialogItem("colourDialog", "eyedropperArea"));
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, icon);
+        QTRY_VERIFY(sampler.tracking());
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, icon);
+        const QPoint over = window->mapFromGlobal(global);
+        sendMouse(window, QEvent::MouseMove, over, Qt::NoButton, Qt::NoButton);
+        sendMouse(window, QEvent::MouseButtonRelease, over, Qt::RightButton, Qt::NoButton);
+        QVERIFY(!sampler.tracking());
+        QCOMPARE(dialog->property("red").toInt(), 0x24);
+        QCOMPARE(dialog->property("green").toInt(), 0x68);
+        QCOMPARE(dialog->property("blue").toInt(), 0xac);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&HAC6824&")));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
     void pasteTranslationAndTheShiftingWindow()
     {
         const QString path = dir.filePath(QStringLiteral("tl.ass"));
@@ -5147,12 +5243,65 @@ private slots:
                                   session.lastOverlay() ? "empty overlay" : "no overlay", 20000);
         QCOMPARE(renderer.activeName(), std::string("libass"));
         const auto libass = session.lastOverlay();
+        // With HIKARI_SURFACE_SHOT_DIR, the screen under the video picture as
+        // each renderer has it drawn (winix task w2-switch-desktop: the
+        // Windows desktop), saved as w2-desktop-<renderer>.png.
+        const QString shots = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        auto *presenter = item("videoPresenter");
+        QSignalSpy presented(presenter, SIGNAL(presented()));
+        const auto pixelsApart = [](const QImage &a, const QImage &b) {
+            if (a.size() != b.size())
+                return qsizetype(-1);
+            const QImage x = a.convertToFormat(QImage::Format_RGB32), y = b.convertToFormat(QImage::Format_RGB32);
+            qsizetype n = 0;
+            for (int row = 0; row < x.height(); ++row)
+                for (int col = 0; col < x.width(); ++col)
+                    n += x.pixel(col, row) != y.pixel(col, row);
+            return n;
+        };
+        // After a switch once the presenter has shown the new picture, and
+        // always once two grabs 250 ms apart agree (the window system shows
+        // the swapped frame, not an older or partial one).
+        const auto desktopShot = [&](const QString &name, QImage &shot, bool afterSwitch) {
+            if (shots.isEmpty())
+                return;
+            if (afterSwitch)
+                QTRY_VERIFY_WITH_TIMEOUT(presented.count() > 0, 10000);
+            presented.clear();
+            // grabWindow(0, ...) takes the point relative to the screen
+            // (QWindowsScreen and QXcbScreen add the screen's origin), not
+            // the virtual desktop.
+            QScreen *screen = window->screen();
+            const QRectF r = presenter->mapRectToScene(QRectF(0, 0, presenter->width(), presenter->height()));
+            const QPoint at = window->mapToGlobal(r.topLeft().toPoint()) - screen->geometry().topLeft();
+            const auto grab = [&] {
+                return screen->grabWindow(0, at.x(), at.y(), int(r.width()), int(r.height())).toImage();
+            };
+            QImage previous = grab();
+            const auto steady = [&] {
+                QTest::qWait(250);
+                shot = grab();
+                const bool same = !shot.isNull() && pixelsApart(previous, shot) == 0;
+                previous = shot;
+                return same;
+            };
+            QTRY_VERIFY_WITH_TIMEOUT(steady(), 10000);
+            QVERIFY(QDir().mkpath(shots));
+            QVERIFY(shot.save(shots + QStringLiteral("/w2-desktop-") + name + QStringLiteral(".png")));
+            qInfo().noquote() << "W2 desktop" << name << QGuiApplication::platformName() << shot.size();
+        };
+        QImage libassShot;
+        desktopShot(QStringLiteral("libass"), libassShot, false);
         auto restore = qScopeGuard([&] { application->settingsStore()->reset(QStringLiteral("video.subtitleProvider")); });
         application->settingsStore()->set("video.subtitleProvider", QStringLiteral("xy-vsfilter_textsub"));
 #ifdef HIKARI_WITH_VSFILTER
         QCOMPARE(renderer.activeName(), std::string("xy-vsfilter_textsub"));
         QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() != libass && !session.lastOverlay()->empty, 20000);
         const auto vsfilter = session.lastOverlay();
+        QImage vsfilterShot;
+        desktopShot(QStringLiteral("xy-vsfilter"), vsfilterShot, true);
+        if (!shots.isEmpty())
+            QVERIFY2(pixelsApart(libassShot, vsfilterShot) > 0, "the screen shows the same picture after the switch");
         QCOMPARE(vsfilter->width, libass->width);
         QCOMPARE(vsfilter->height, libass->height);
         QVERIFY(vsfilter->pixels != libass->pixels); // another renderer drew it
@@ -5172,6 +5321,10 @@ private slots:
         QCOMPARE(renderer.activeName(), std::string("libass"));
         QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() != vsfilter, 20000);
         QVERIFY(session.lastOverlay()->pixels == libass->pixels);
+        QImage againShot;
+        desktopShot(QStringLiteral("libass-again"), againShot, true);
+        if (!shots.isEmpty())
+            QVERIFY2(pixelsApart(libassShot, againShot) == 0, "libass's picture differs on the screen after switching back");
 #elif defined(_WIN32)
         // No CSRI renderer beside the tests: legacy "Cannot initialize
         // CSRI." and nothing drawn; there is no fallback to libass.
@@ -16982,6 +17135,77 @@ private slots:
         QVERIFY(!application->videoView().canSnapshot()); // legacy: only while paused
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, c);
         QTRY_VERIFY(!application->video().playing());
+    }
+
+    // V4 on the system clipboard: both copies (VIDEO_COPY_FRAME_TO_CLIPBOARD,
+    // VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD; legacy RendererVideo::SaveFrame put
+    // a wxBitmapDataObject there) read back by another process. Windows:
+    // tools/winix/clipboard-image.ps1 (System.Windows.Forms.Clipboard's
+    // GetImage, the device-independent bitmap other programs paste); X11:
+    // xclip's image/png. The owner hands the image over through its own
+    // event loop, so the reader is waited for without blocking it. Skipped
+    // where the clipboard is this process's own (offscreen) or no reader
+    // exists; winix task v4-clipboard-window fails on that skip.
+    void videoSnapshotsReachTheSystemClipboard()
+    {
+        const QString platform = QGuiApplication::platformName();
+        const QString out = QDir(QDir::tempPath()).filePath(QStringLiteral("hikari-clipboard-readback.png"));
+        QString program;
+        QStringList arguments;
+#ifdef Q_OS_WIN
+        if (platform != QLatin1String("windows"))
+            QSKIP(qPrintable(QStringLiteral("the %1 platform's clipboard is this process's own").arg(platform)));
+        program = QStringLiteral("powershell.exe");
+        arguments = {QStringLiteral("-NoProfile"), QStringLiteral("-STA"), QStringLiteral("-ExecutionPolicy"),
+                     QStringLiteral("Bypass"), QStringLiteral("-File"),
+                     QDir::toNativeSeparators(QStringLiteral(HIKARI_UI_SOURCE_DIR "/../../tools/winix/clipboard-image.ps1")),
+                     QDir::toNativeSeparators(out)};
+#else
+        if (platform != QLatin1String("xcb"))
+            QSKIP(qPrintable(QStringLiteral("the %1 platform's clipboard is not X11's").arg(platform)));
+        program = QStandardPaths::findExecutable(QStringLiteral("xclip"));
+        if (program.isEmpty())
+            QSKIP("no xclip to read the X11 clipboard from another process");
+        arguments = {QStringLiteral("-selection"), QStringLiteral("clipboard"), QStringLiteral("-t"),
+                     QStringLiteral("image/png"), QStringLiteral("-o")};
+#endif
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(folder.isValid());
+        QVERIFY(v4Open(folder));
+        const auto &session = application->video().session();
+        const QImage plain = cpuReference(*session.lastFrame(), nullptr);
+        const QImage subbed = cpuReference(*session.lastFrame(), session.lastOverlay().get());
+        QVERIFY(plain != subbed);
+        auto *root = engine->rootObjects().first();
+        for (const auto &[action, expected] : {std::pair{"VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD", subbed},
+                                               std::pair{"VIDEO_COPY_FRAME_TO_CLIPBOARD", plain}}) {
+            QGuiApplication::clipboard()->clear();
+            QTest::qWait(60); // VideoBox::OnAccelerator drops the same action within 50 ms (VideoBox.cpp:1137)
+            QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QString::fromLatin1(action))));
+            QTRY_VERIFY(sameImage(QGuiApplication::clipboard()->image(), expected));
+            QFile::remove(out);
+            QProcess reader;
+#ifndef Q_OS_WIN
+            reader.setStandardOutputFile(out);
+#endif
+            reader.start(program, arguments);
+            QVERIFY2(reader.waitForStarted(10000), qPrintable(reader.errorString()));
+            QTRY_VERIFY_WITH_TIMEOUT(reader.state() == QProcess::NotRunning, 60000);
+            const QString said = QString::fromLocal8Bit(reader.readAllStandardOutput() + reader.readAllStandardError()).trimmed();
+            qInfo().noquote() << action << "read back by" << QFileInfo(program).fileName() << said;
+            QVERIFY2(reader.exitStatus() == QProcess::NormalExit && reader.exitCode() == 0, qPrintable(said));
+            const QImage read(out);
+            QVERIFY2(!read.isNull(), qPrintable(QStringLiteral("%1 wrote no image").arg(program)));
+            QVERIFY2(sameImage(read, expected),
+                     qPrintable(QStringLiteral("%1: read back %2x%3, copied %4x%5")
+                                    .arg(QLatin1String(action))
+                                    .arg(read.width())
+                                    .arg(read.height())
+                                    .arg(expected.width())
+                                    .arg(expected.height())));
+        }
+        QFile::remove(out);
     }
 
     // The Script properties YCbCr matrix reaches the video's colours: the
