@@ -3744,6 +3744,10 @@ great help testing HikariSub on a slow computer)
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>HikariSub %1 was not installed: its installer did not finish. If another administrator account approved it, that account was told why.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cannot write the update to %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3756,7 +3760,19 @@ great help testing HikariSub on a slow computer)
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The download of HikariSub %1 changed or went missing, so it was not installed. It is downloaded again at the next check.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub is installed for all users in a folder that can be changed without administrator rights, so HikariSub %1 was not installed automatically. Run %2 to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The installer of HikariSub %1 could not be started. Run %2 to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub %1 could not be checked against its release on GitHub, so it was not installed. It will be tried again when you next quit.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
