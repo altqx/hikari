@@ -122,12 +122,23 @@ def floppy(cut=False):
             + stroke("M4.5 13.5v-4h7v4"))
 
 
-def film(x=1.5, y=2.5, w=11, h=8):
-    """A film frame: a rectangle with perforated side strips."""
+def film(x=1.5, y=2.5, w=11, h=8, strip=3):
+    """A film frame: a rectangle with perforated side strips strip wide."""
     x2, y2 = x + w, y + h
-    return (rect(x, y, w, h, 1) + stroke("M%s %sv%s M%s %sv%s" % (q(x + 3), q(y), q(h), q(x2 - 3), q(y), q(h)))
-            + stroke("M%s %sh3 M%s %sh3 M%s %sh-3 M%s %sh-3" % (
-                q(x), q(y + h / 3), q(x), q(y + 2 * h / 3), q(x2), q(y + h / 3), q(x2), q(y + 2 * h / 3))))
+    s = q(strip)
+    return (rect(x, y, w, h, 1) + stroke("M%s %sv%s M%s %sv%s" % (q(x + strip), q(y), q(h), q(x2 - strip), q(y), q(h)))
+            + stroke("M%s %sh%s M%s %sh%s M%s %sh-%s M%s %sh-%s" % (
+                q(x), q(y + h / 3), s, q(x), q(y + 2 * h / 3), s, q(x2), q(y + h / 3), s, q(x2), q(y + 2 * h / 3), s)))
+
+
+def video_film(right=8, bottom=8.5, divider=10):
+    """The video icons' film frame (10 x 7.5 units at 1.5, 2.5), open at its
+    lower right for a badge: the right edge stops at y right, the bottom
+    edge at x bottom and the right strip's divider at y divider, so that a
+    clear unit of background parts the film from the badge on any surface
+    (the knockout is geometry, not a mask or a background-coloured stroke)."""
+    return (stroke("M11.5 %sV3.5a1 1 0 0 0-1-1h-8a1 1 0 0 0-1 1V9a1 1 0 0 0 1 1H%s" % (q(right), q(bottom)))
+            + stroke("M4.5 2.5V10M8.5 2.5V%s" % q(divider)) + stroke("M1.5 5h3M1.5 7.5h3M11.5 5h-3M11.5 7.5h-3"))
 
 
 def note(x=6.5):
@@ -189,6 +200,29 @@ def letter_a(x=2, top=1.5, base=10.5, width=9):
     bar = top + (base - top) * 0.65
     return stroke("M%s %sL%s %sl%s %s" % (q(x), q(base), q(mid), q(top), q(width / 2), q(base - top))) + stroke(
         "M%s %sh%s" % (q(x + width * 0.2), q(bar), q(width * 0.6)))
+
+
+def roboto_a():
+    """The colour buttons' capital A in Roboto's proportions: 8 units wide
+    by 9 tall (outer), the apex cut flat as Roboto's is, the bar at 3/8 of
+    the height with its ends on the legs. It stands on y 10, so the swatch
+    below keeps a clear unit from its feet."""
+    return stroke("M4.5 9.5L7.5 1.5H8.5L11.5 9.5") + stroke("M5.75 6.5H10.25")
+
+
+def time_insert(start):
+    """Insert start / end time from video: a small film frame hands its time
+    down an elbow arrow into the start (left) or end (right) cell of the
+    line's timing bar; the arrow and the filled cell are the accent."""
+    if start:
+        return (film(6.5, 1.5, 8, 6, 2) + stroke("M5.5 10.5h8a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-8")
+                + stroke("M10.5 10.5v4")
+                + accent(stroke("M6.5 4.5h-3V9M1.5 7l2 2 2-2"),
+                         fill("M2 10h4v5H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1z")))
+    return (film(1.5, 1.5, 8, 6, 2) + stroke("M10.5 10.5h-8a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h8")
+            + stroke("M5.5 10.5v4")
+            + accent(stroke("M9.5 4.5h3V9M10.5 7l2 2 2-2"),
+                     fill("M14 10h-4v5h4a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1z")))
 
 
 def layout(*regions):
@@ -265,16 +299,32 @@ icon("select-lines", "Select lines", ["Sellines.png"], [EDIT, "select-lines"],
      mirror=True)
 
 # Video
-icon("open-video", "Open video", ["openvideo.png"], [VIDEO, "video-context-menu", "dummy-video"], film(1.5, 2.5, 11, 7.5) + plus_badge())
+# The video icons' badges (the user's review of 2026-10-13, round 2) stand in
+# the film's open corner one clear pixel from it at 16 px, as audio-from-video's
+# note does. Each cut is the least that leaves that pixel: the + and the x
+# (open-video, close-video) share audio-from-video's cut; the clock, a pixel
+# wider, takes a half unit more of the right and bottom edges.
+icon("open-video", "Open video", ["openvideo.png"], [VIDEO, "video-context-menu", "dummy-video"],
+     video_film() + accent(stroke("M12.5 10.5v4M10.5 12.5h4")))
+# The clock's ring is drawn through pixel centres, flat for two units on each
+# side with arcs of radius 4 at the corners: at 16 px it lands on whole pixels
+# (a seven-pixel ring), and larger it reads as round. The hands are one unit
+# each from the centre pixel, a clear pixel inside the ring.
 icon("recent-video", "Recently opened videos", ["RecentVideo.png"], [VIDEO, "video-context-menu"],
-     film(1.5, 2.5, 11, 7.5) + clock_badge())
+     video_film(7.5, 7.5, 8.5)
+     + accent(stroke("M11.5 9.5h2a4 4 0 0 1 2 2v2a4 4 0 0 1-2 2h-2a4 4 0 0 1-2-2v-2a4 4 0 0 1 2-2z"),
+              stroke("M12.5 11.5v1h1")))
 icon("open-keyframes", "Open keyframes", ["OpenKeyframes.png"], [VIDEO], diamond(6, 6.5, 4.5) + plus_badge())
 icon("recent-keyframes", "Recently opened keyframes", ["RecentKeyframes.png"], [VIDEO],
      diamond(6, 6.5, 4.5) + clock_badge())
+# Insert start / end time from video (the user's review of 2026-10-13): the
+# video's frame hands its time down into the line's start or end cell of the
+# timing bar below, as legacy's SetStartTime/SetEndTime bitmaps did; the
+# go-to pair keeps the bracket and the arrow.
 icon("set-start-time", "Insert start time from video", ["SetStartTime.png"], [VIDEO],
-     stroke("M5.5 2.5h-2v11h2") + accent(stroke("M14.5 8h-8M9 5.5L6.5 8 9 10.5")))
+     time_insert(start=True))
 icon("set-end-time", "Insert end time from video", ["SetEndTime.png"], [VIDEO],
-     stroke("M10.5 2.5h2v11h-2") + accent(stroke("M1.5 8h8M7 5.5L9.5 8 7 10.5")))
+     time_insert(start=False))
 icon("frame-previous", "Previous frame", ["PrevFrame.png"], [VIDEO, TRANSPORT],
      rect(6.5, 3.5, 8, 9, 1) + stroke("M9.5 3.5v9M11.5 3.5v9") + accent(stroke("M4 5.5L1.5 8 4 10.5")))
 icon("frame-next", "Next frame", ["NextFrame.png"], [VIDEO, TRANSPORT],
@@ -284,9 +334,9 @@ icon("keyframe-previous", "Go to previous keyframe", ["PrevKeyframe.png"], [VIDE
 icon("keyframe-next", "Go to next keyframe", ["NextKeyframe.png"], [VIDEO, TRANSPORT],
      diamond(5.5, 8, 4) + accent(stroke("M12 5.5L14.5 8 12 10.5")))
 icon("video-to-start-time", "Go to start time", ["videoonstime.png"], [VIDEO],
-     stroke("M5.5 2.5h-2v11h2") + accent(stroke("M14.5 8h-8M12 5.5L14.5 8 12 10.5")))
+     stroke("M5.5 2.5h-2v11h2") + accent(stroke("M14.5 8h-8M9 5.5L6.5 8 9 10.5")))
 icon("video-to-end-time", "Go to end time of line", ["videoonetime.png"], [VIDEO],
-     stroke("M10.5 2.5h2v11h-2") + accent(stroke("M1.5 8h8M4 5.5L1.5 8 4 10.5")))
+     stroke("M10.5 2.5h2v11h-2") + accent(stroke("M1.5 8h8M7 5.5L9.5 8 7 10.5")))
 icon("audio-to-video-time", "Set audio position to video time", ["SetVideoTimeOnAudio.png"], [VIDEO],
      waveform(1.5, 4.5, 11.5) + accent(stroke("M8 1.5v13")))
 icon("audio-marker-to-video-time", "Set audio marker to video time", ["SetVideoTimeOnAudioMark.png"],
@@ -305,9 +355,9 @@ icon("play-line", "Play the current line", ["playline.png", "playline1.png", "bu
      [TRANSPORT, FULLSCREEN, AUDIOBOX],
      stroke("M3.5 2.5h-2v11h2M12.5 2.5h2v11h-2") + triangle(5.5, 4.5, 6, 7))
 icon("media-previous-file", "Previous file", ["backward.png", "backward1.png"], [TRANSPORT, FULLSCREEN],
-     circle(8, 8, 6.5) + stroke("M5.5 5.5v5") + triangle(7, 5.5, 4, 5, right=False))
+     frect(1, 2, 2, 12, 0.5) + triangle(4.5, 2.5, 9, 11, right=False))
 icon("media-next-file", "Next file", ["forward.png", "forward1.png"], [TRANSPORT, FULLSCREEN],
-     circle(8, 8, 6.5) + stroke("M10.5 5.5v5") + triangle(5, 5.5, 4, 5))
+     triangle(2.5, 2.5, 9, 11) + frect(13, 2, 2, 12, 0.5))
 # V5 #184: the fullscreen panel's "Show toolbar" (legacy a check box,
 # VideoFullscreen.cpp:68): the window with its toolbar row.
 icon("show-toolbar", "Show toolbar", [], [FULLSCREEN],
@@ -318,16 +368,16 @@ icon("show-toolbar", "Show toolbar", [], [FULLSCREEN],
 icon("open-audio", "Open audio", ["OpenAudio.png"], [AUDIO], note(6.5) + plus_badge())
 icon("recent-audio", "Recently opened audio", ["RecentAudio.png"], [AUDIO], note(6.5) + clock_badge())
 icon("audio-from-video", "Open audio from video", ["OpenAudioFromVideo.png"], [AUDIO],
-     film(1.5, 1.5, 9, 7) + accent(stroke("M12.5 14.5V9.5l2 .75"), dot(11.25, 14.25, 1.25)))
+     video_film() + accent(stroke("M13.5 12.5v-8l1.5 .5"), dot(11.5, 12.5, 2)))
 icon("close-audio", "Close audio", ["CloseAudio.png"], [AUDIO], note(6.5) + cross_badge())
 
 # Audio box
-icon("audio-previous-line", "Previous line", ["button_prev.png"], [AUDIOBOX, "reference-tray"],
+icon("audio-previous-line", "Previous line", ["button_prev.png"], [AUDIOBOX],
      solid("M7.5 3.5v9L2 8z") + solid("M14 3.5v9L8.5 8z"))
-icon("audio-next-line", "Next line", ["button_next.png"], [AUDIOBOX, "reference-tray"],
+icon("audio-next-line", "Next line", ["button_next.png"], [AUDIOBOX],
      solid("M8.5 3.5v9L14 8z") + solid("M2 3.5v9L7.5 8z"))
 icon("audio-play", "Play", ["button_PlayLine.png"], [AUDIOBOX],
-     triangle(6, 3, 7.5, 10) + accent(stroke("M3 2.5v11")))
+     triangle(4.5, 3, 8, 10))
 icon("play-before-mark", "Play before the tag", ["button_playbefore.png"], [AUDIOBOX],
      triangle(2, 4, 6, 8) + accent(stroke("M11.5 2v12")))
 icon("play-after-mark", "Play after the tag", ["button_playafter.png"], [AUDIOBOX],
@@ -364,28 +414,34 @@ icon("spectrum", "Spectrum mode", ["button_spectrum.png"], [AUDIOBOX],
 icon("spectrum-nonlinear", "Non-linear spectrum", ["SpectrumNonLinear.png"], [AUDIOBOX],
      stroke("M2.5 13.5v-3M5 13.5v-7M7.5 13.5v-10M10 13.5v-6M12.5 13.5v-8")
      + accent(stroke("M1.5 12.5C6 12.5 11 9 14.5 2.5")))
-icon("link", "Link", ["button_link.png", "ScaleLink.png"], [AUDIOBOX, VISUAL, "script-properties", "reference-tray"],
+icon("link", "Link", ["button_link.png", "ScaleLink.png"], [AUDIOBOX, VISUAL, "script-properties"],
      stroke("M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8")
      + stroke("M6.5 9.5l3-3"))
 
 # Line editor tag buttons
-icon("tag-font", "Font selection", ["Font.png"], [EDITOR, "font-dialog"], letter_a(2.5, 2.5, 13.5, 11))
+# A filled F on whole pixels, as tag-bold's B: Roboto's narrow F (the top arm
+# 6 units, the middle arm 5, centred at half the cap height), the stem and
+# arms two units; two units narrower than the B, so lighter by its width and
+# its open form.
+icon("tag-font", "Font selection", ["Font.png"], [EDITOR, "font-dialog"],
+     fill("M5 2h6v2H7v3h3v2H7v5H5z"))
 icon("tag-bold", "Bold", ["Bold.png"], [EDITOR],
-     fill("M4 2h4.5a2.75 2.75 0 0 1 0 5.5h.5a3.25 3.25 0 0 1 0 6.5H4z"
-          "M6 4h2.5a.75.75 0 0 1 0 1.5H6zM6 9.5h3a1.25 1.25 0 0 1 0 2.5H6z", "evenodd"))
+     fill("M4 2h6a2 2 0 0 1 2 2v1.5c0 .75-.25 1.5-1 2 1.25.25 2 1.25 2 2.5v1.5a2.5 2.5 0 0 1-2.5 2.5H4z"
+          "M6 4h3.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75H6zM6 9h4.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75H6z",
+          "evenodd"))
 icon("tag-italic", "Italic", ["Italic.png"], [EDITOR], stroke("M7 2.5h5M4 13.5h5M9.5 2.5l-3 11"))
 icon("tag-underline", "Underline", ["Under.png"], [EDITOR],
      stroke("M4.5 2.5V7a3.5 3.5 0 0 0 7 0V2.5") + accent(stroke("M3.5 13.5h9")))
 icon("tag-strikeout", "Strikethrough", ["Strike.png"], [EDITOR],
      stroke("M11.25 4.25C10.75 3 9.5 2.5 8 2.5c-2 0-3.25 1-3.25 2.5 0 1.25.75 2 2 2.5M10.25 9.25c.5.5.75 1 .75 1.75 0 1.5-1.25 2.5-3 2.5-1.75 0-3-.75-3.5-2")
      + accent(stroke("M2.5 8h11")))
-icon("colour-primary", "Primary color", ["kolor1.png"], [EDITOR], letter_a(3, 1.5, 10.5, 10) + accent(frect(2, 12, 12, 3, 0.5)))
+icon("colour-primary", "Primary color", ["kolor1.png"], [EDITOR], roboto_a() + accent(frect(4, 12, 8, 3, 0.5)))
 icon("colour-secondary", "Secondary color for karaoke", ["kolor2.png"], [EDITOR],
-     letter_a(3, 1.5, 10.5, 10) + rect(8, 12.5, 5.5, 2, 0.5) + accent(frect(2, 12, 6, 3, 0.5)))
+     roboto_a() + rect(4.5, 12.5, 7, 2, 0.5) + accent(frect(4, 12, 4, 3, 0.5)))
 icon("colour-outline", "Border color", ["kolor3.png"], [EDITOR],
-     letter_a(3, 1.5, 10.5, 10) + accent(rect(2.5, 12.5, 11, 2, 0.5)))
+     roboto_a() + accent(rect(4.5, 12.5, 7, 2, 0.5)))
 icon("colour-shadow", "Shadow color", ["kolor4.png"], [EDITOR],
-     letter_a(3, 1.5, 10.5, 10) + rect(2.5, 11.5, 10, 2, 0.5) + accent(frect(4, 14, 10, 1.5)))
+     roboto_a() + rect(4.5, 11.5, 6, 2, 0.5) + accent(fill("M11 12h1v3H5v-1h6z")))
 icon("alignment", "Alignment (\\an)", [], [EDITOR],
      frect(2, 2, 2, 2) + frect(7, 2, 2, 2) + frect(12, 2, 2, 2) + frect(2, 7, 2, 2) + frect(7, 7, 2, 2)
      + frect(12, 7, 2, 2) + frect(2, 12, 2, 2) + frect(12, 12, 2, 2) + accent(frect(6.5, 11.5, 3, 3, 0.5)))
@@ -572,14 +628,14 @@ icon("move-to-bottom", "Move to end", [], [STYLEDLG],
 # boxes, the copied style's direction between them in the accent, so a
 # transfer never wears a move's arrow.
 icon("copy-to-storage", "Copy style from ASS to storage", [], [STYLEDLG],
-     rect(1.5, 1.5, 13, 3, 1) + rect(1.5, 11.5, 13, 3, 1)
-     + accent(stroke("M7.5 10v-4.5M5 8l2.5-2.5L10 8")))
+     rect(1.5, 1.5, 12, 3, 1) + rect(1.5, 11.5, 12, 3, 1)
+     + accent(stroke("M7.5 10v-4M5 8.5l2.5-2.5L10 8.5")))
 icon("copy-to-ass", "Copy style from storage to ASS", [], [STYLEDLG],
-     rect(1.5, 1.5, 13, 3, 1) + rect(1.5, 11.5, 13, 3, 1)
-     + accent(stroke("M7.5 6v4.5M5 8l2.5 2.5L10 8")))
+     rect(1.5, 1.5, 12, 3, 1) + rect(1.5, 11.5, 12, 3, 1)
+     + accent(stroke("M7.5 6v4M5 7.5L7.5 10 10 7.5")))
 icon("copy-to-all-ass", "Copy style from storage to every open ASS file", [], [STYLEDLG],
-     rect(1.5, 1.5, 13, 3, 1) + rect(1.5, 11.5, 11, 3, 1) + stroke("M3.5 9.5h10a1 1 0 0 1 1 1v2")
-     + accent(stroke("M7.5 5.5v2.5M5.75 6.5L7.5 8.25 9.25 6.5")))
+     rect(1.5, 1.5, 12, 3, 1) + rect(1.5, 12.5, 10, 2, 1) + stroke("M3.5 10.5h9a1 1 0 0 1 1 1v1")
+     + accent(stroke("M7.5 6v3M5 6.5L7.5 9 10 6.5")))
 icon("menu-more", "More", [], [EDITOR], stroke("M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"))
 # D3: a panel header's "⋯" menu (MuseScore's MenuButton): three dots in a
 # row, distinct from menu-more's double chevron, which drops a list open.
@@ -597,7 +653,8 @@ icon("delete", "Delete", [], [LISTS, GRIDMENU, TEXTMENU],
      stroke("M2.5 4h11M6 4V2.5h4V4") + stroke("M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9")
      + stroke("M6.75 7v5M9.25 7v5"))
 icon("import", "Load", [], [LISTS],
-     stroke("M1.5 10.5v3a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-3") + accent(stroke("M8 1.5v8.5M5 7l3 3 3-3")))
+     stroke("M5.5 9.5h-3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3")
+     + accent(stroke("M7.5 4.5v10M4.5 11.5l3 3 3-3")))
 icon("clear", "Clear", [], [LISTS, VISUAL],
      stroke("M9 2l5 5-6.5 6.5-5-5z") + accent(stroke("M5.5 5.5l5 5")) + stroke("M7.5 13.5h6"))
 icon("refresh", "Refresh", [], ["font-catalog", "automation-manager"],
@@ -632,7 +689,10 @@ icon("multireplace", "Fix minor errors", [], [SUBS, "misspell-replacer"],
      mirror=True)
 
 # Video
-icon("close-video", "Unload video", [], [VIDEO], film(1.5, 2.5, 11, 7.5) + cross_badge())
+# The x crosses at 12.5, 13 so that each arm runs through the points Qt's
+# antialiased one-pixel lines draw sharp (a half unit across, a whole unit
+# down): at 16 px both arms are single pixels, as heavy as open-video's +.
+icon("close-video", "Unload video", [], [VIDEO], video_film() + accent(stroke("M10.5 11l4 4M14.5 11l-4 4")))
 icon("fullscreen", "Full screen", [], [VIDEOMENU],
      stroke("M1.5 5.5v-3a1 1 0 0 1 1-1h3M10.5 1.5h3a1 1 0 0 1 1 1v3M14.5 10.5v3a1 1 0 0 1-1 1h-3M5.5 14.5h-3a1 1 0 0 1-1-1v-3"))
 icon("fullscreen-exit", "Exit full screen", [], [VIDEOMENU, FULLSCREEN],
