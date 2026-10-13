@@ -26,17 +26,22 @@ user='C:\Users\winix\AppData\Local\Programs\HikariSub'
 machine='C:\Program Files\HikariSub'
 legacy_orphans='ffms2.dll|D3DX9_43.dll|HikariSub.pdb|HikariSub_AVX.pdb|Locale|Themes|Csri|LICENSE.txt'
 
+# A job without an exit code never ran its script (the worker failed to
+# start it, for example "Access to the path is denied."); it is run once more.
 step() {
     local task=$1; shift
     local args=() kv
     for kv in "$@"; do args+=(--env "$kv"); done
-    local id
-    id=$(w run "$task" --json "${args[@]}" | head -1 | python3 -c 'import json,sys; print(json.loads(sys.stdin.readline())["id"])')
-    w job wait "$id" > /dev/null || true
     echo "## $task $*"
-    winix job logs "$id" --all | sed 's/^\[out\] //'
-    local code
-    code=$(winix job status "$id" | python3 -c 'import json,sys; print(json.load(sys.stdin)["exitCode"])')
+    local id code attempt
+    for attempt in 1 2; do
+        id=$(w run "$task" --json "${args[@]}" | head -1 | python3 -c 'import json,sys; print(json.loads(sys.stdin.readline())["id"])')
+        w job wait "$id" > /dev/null || true
+        winix job logs "$id" --all | sed 's/^\[out\] //'
+        code=$(winix job status "$id" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["exitCode"] if d["exitCode"] is not None else "none: " + str(d.get("error")))')
+        [[ "$code" == none:* ]] || break
+        echo "job $id did not run ($code)"
+    done
     [ "$code" = 0 ] || { echo "step failed (exit $code)"; exit 1; }
 }
 
