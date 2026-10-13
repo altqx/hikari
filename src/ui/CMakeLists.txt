@@ -14,7 +14,8 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
     visual_tools_controller.cpp visual_tools_controller.h shape_editor.cpp shape_editor.h
     tag_list_controller.cpp tag_list_controller.h
-    all_tags_editor.cpp all_tags_editor.h time_field_mask.cpp time_field_mask.h)
+    all_tags_editor.cpp all_tags_editor.h time_field_mask.cpp time_field_mask.h
+    script_resolution_prompt.cpp script_resolution_prompt.h)
 target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
@@ -34,6 +35,8 @@ hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui
 qt_target_qml_sources(hikari_ui QML_FILES HotkeyMapping.qml)
 # S4: the automation shell's message boxes and script editor picker.
 qt_target_qml_sources(hikari_ui QML_FILES AutomationNotices.qml)
+# Y4-playres-ask: the question a macro reading a missing script resolution asks.
+qt_target_qml_sources(hikari_ui QML_FILES ScriptResolutionDialog.qml)
 # R1: the tab menu's "Subtitle comparison".
 qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTabMenu.qml)
 # R2: the reference tray (navigation, linked matching, the preview menu).

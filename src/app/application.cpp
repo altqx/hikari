@@ -4659,6 +4659,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("automationManager"), QVariant::fromValue(m_automation->managerController())},
             {QStringLiteral("automationDialogs"), QVariant::fromValue(m_automation->dialogs())},
             {QStringLiteral("automationPicker"), QVariant::fromValue(m_automation->picker())},
+            {QStringLiteral("automationResolution"), QVariant::fromValue(m_automation->resolutionPrompt())},
             {QStringLiteral("log"), QVariant::fromValue(m_log.get())},
             {QStringLiteral("tagButtons"), QVariant::fromValue(m_tagButtons.get())},
             {QStringLiteral("colourPicker"), QVariant::fromValue(m_colourPicker.get())},

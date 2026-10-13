@@ -273,6 +273,47 @@ TEST_F(RouterTest, OnePickerAtATimeAndAWithdrawnAnswerIsDropped)
     EXPECT_EQ(replies[1].status, HostServiceReply::Status::Unavailable);
 }
 
+// Y4-playres-ask: the resolution question goes to its port; without one
+// (or declined to answer) it is Unavailable and the helper writes nothing.
+struct FakeResolution : ScriptResolutionPort {
+    ScriptResolutionRequest last;
+    std::function<void(std::optional<Resolution>)> reply;
+    int withdrawn = 0;
+    void resolve(const ScriptResolutionRequest &r, std::function<void(std::optional<Resolution>)> f) override
+    {
+        last = r;
+        reply = std::move(f);
+    }
+    void withdraw() override { ++withdrawn; }
+};
+
+TEST_F(RouterTest, TheScriptResolutionQuestionGoesToItsPort)
+{
+    router.handle(request(HostService::ScriptResolution, {0, 480}), collect());
+    ASSERT_EQ(replies.size(), 1u);
+    EXPECT_EQ(replies[0].status, HostServiceReply::Status::Unavailable);
+    FakeResolution port;
+    router.setScriptResolution(&port);
+    router.handle(request(HostService::ScriptResolution, {0, 480}), collect());
+    EXPECT_EQ(port.last.script, "/scripts/s.lua");
+    EXPECT_EQ(port.last.written, (Resolution{0, 480}));
+    EXPECT_EQ(replies.size(), 1u); // waits for the answer
+    port.reply(Resolution{1920, 1080});
+    ASSERT_EQ(replies.size(), 2u);
+    EXPECT_EQ(replies[1].integers, (std::vector<std::int64_t>{1920, 1080}));
+    // No values: Unavailable.
+    router.handle(request(HostService::ScriptResolution, {0, 0}), collect());
+    port.reply(std::nullopt);
+    ASSERT_EQ(replies.size(), 3u);
+    EXPECT_EQ(replies[2].status, HostServiceReply::Status::Unavailable);
+    // The run ends while it is asked: withdrawn, the late answer dropped.
+    router.handle(request(HostService::ScriptResolution, {0, 0}), collect());
+    router.withdraw();
+    EXPECT_EQ(port.withdrawn, 1);
+    port.reply(Resolution{640, 360});
+    EXPECT_EQ(replies.size(), 3u);
+}
+
 TEST_F(RouterTest, DecodePathUsesTheCurrentContext)
 {
     router.setPathContext(linuxContext);

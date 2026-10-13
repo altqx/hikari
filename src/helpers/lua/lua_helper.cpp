@@ -22,6 +22,7 @@
 // (lpeg, luabins, re/unicode/lfs) and MoonScript.
 
 #include "hikari/backends/helper_endpoint.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/backends/lua_protocol.h"
 #include "hikari/core/text_projection.h"
 #include "lua_native.h"
@@ -1235,19 +1236,19 @@ int subsLengths(lua_State *L)
     return 3;
 }
 
+// Legacy LuaGetScriptResolution answers GetASSRes, which wrote a missing
+// PlayResX/PlayResY into the file (1280x720, or a 16:9 partner) as it read
+// them. Y4-playres-ask (user decision 2026-10-13): the host is asked instead
+// (the user sets the resolution, or it comes from the video); its answer is
+// written into the staged Script Info, so the macro and its result hold it as
+// legacy's did. With no answer the script gets legacy's values and nothing is
+// written; a user who declines cancels the run.
+int subsScriptResolutionAsked(lua_State *L);
+
 int subsScriptResolution(lua_State *L)
 {
     checkLive(L);
-    int w = 0, h = 0;
-    for (const auto &i : g_subs->lists.info) {
-        if (i.key == "PlayResX")
-            w = std::atoi(i.value.c_str());
-        else if (i.key == "PlayResY")
-            h = std::atoi(i.value.c_str());
-    }
-    lua_pushinteger(L, w);
-    lua_pushinteger(L, h);
-    return 2;
+    return subsScriptResolutionAsked(L);
 }
 
 int subsIndex(lua_State *L)
@@ -1688,6 +1689,27 @@ int pushNil(lua_State *L)
 {
     lua_pushnil(L);
     return 1;
+}
+
+int subsScriptResolutionAsked(lua_State *L)
+{
+    using hikari::application::Resolution;
+    auto &info = g_subs->lists.info;
+    Resolution r = hikari::application::writtenScriptResolution(info);
+    if (hikari::application::lacksScriptResolution(r)) {
+        const auto reply = callHost(L, "script_resolution", HostService::ScriptResolution, {r.width, r.height});
+        const Resolution chosen{reply ? static_cast<int>(integerAt(*reply, 0)) : 0,
+                                reply ? static_cast<int>(integerAt(*reply, 1)) : 0};
+        if (!hikari::application::lacksScriptResolution(chosen)) {
+            hikari::application::setStagedScriptResolution(info, chosen);
+            r = chosen;
+        } else {
+            r = hikari::application::legacyScriptResolution(r);
+        }
+    }
+    lua_pushinteger(L, r.width);
+    lua_pushinteger(L, r.height);
+    return 2;
 }
 
 int frameFromMs(lua_State *L)

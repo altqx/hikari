@@ -266,6 +266,11 @@ const std::vector<SettingDefinition> &definitions()
         // quit; off, it only says that one exists. Legacy keeps it as
         // UPDATER_AUTO_INSTALL from 0.0.2 on, which the importer does not read.
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
+        // Y4-playres-ask (user decision 2026-10-13): a macro reading the
+        // resolution of a Document without PlayResX/PlayResY sets it from the
+        // open video's size without asking, both keys (the question's
+        // "Always set it from the video"; Settings > Editor).
+        {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
     };
     return table;
 }

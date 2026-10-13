@@ -1,6 +1,7 @@
 #include "hikari/application/resample.h"
 
 #include "hikari/application/grid_split.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/core/style.h"
 #include "hikari/core/text_projection.h"
 
@@ -177,15 +178,7 @@ u16 trimmed(u16v s)
 
 Resolution scriptResolution(const core::Document &document)
 {
-    int x = atoi8(document.scriptInfo(u8"PlayResX").value_or(u8""));
-    int y = atoi8(document.scriptInfo(u8"PlayResY").value_or(u8""));
-    if (x < 1 && y < 1)
-        return {1280, 720};
-    if (x < 1)
-        x = static_cast<int>(static_cast<float>(y) * (16.0 / 9.0));
-    else if (y < 1)
-        y = static_cast<int>(static_cast<float>(x) * (9.0 / 16.0));
-    return {x, y};
+    return legacyScriptResolution(writtenScriptResolution(document));
 }
 
 void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool stretch, const ResampleWarning &warn)

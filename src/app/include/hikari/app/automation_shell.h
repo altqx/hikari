@@ -23,6 +23,7 @@
 #include "automation_manager_controller.h"
 #include "automation_services_qt.h"
 #include "line_editor_controller.h"
+#include "script_resolution_prompt.h"
 #include "settings_store.h"
 #include "shell_controller.h"
 #include "video_controller.h"
@@ -129,6 +130,8 @@ public:
     ui::AutomationManagerController *managerController() { return m_managerController.get(); }
     ui::AutomationDialogController *dialogs() { return &m_dialogs; }
     ui::AutomationFilePickerController *picker() { return &m_picker; }
+    // Y4-playres-ask: the question a macro reading a missing script resolution asks.
+    ui::ScriptResolutionPromptController *resolutionPrompt() { return &m_resolutionPrompt; }
     backends::AutomationManager &manager() { return m_manager; }
     QString includeDir() const;
     QString autoloadDir() const;
@@ -157,8 +160,15 @@ private:
         std::vector<application::MacroRef> validations;
         std::size_t step = 0;
         std::string active;
+        // Y4-playres-ask: the resolution the user set (or the video gave)
+        // while the macro ran, applied as its own step before the macro's;
+        // declined: the user cancelled the question, so the run ends quietly.
+        std::optional<application::Resolution> resolution;
+        bool declined = false;
     };
     bool startStep(Run &run);
+    void resolveScriptResolution(const application::ScriptResolutionRequest &request,
+                                 std::function<void(std::optional<application::Resolution>)> reply);
     void finished(const QString &path, backends::LuaScriptHost::RunOutcome outcome, const QString &message);
     application::EditSession *session(application::DocumentId id) { return m_files.session(id); }
     void loadDocumentScript(const std::string &path);
@@ -175,6 +185,8 @@ private:
     application::AutomationServiceRouter m_router;
     ui::AutomationDialogController m_dialogs;
     ui::AutomationFilePickerController m_picker;
+    ui::ScriptResolutionPromptController m_resolutionPrompt;
+    std::unique_ptr<application::ScriptResolutionPort> m_resolutionPort;
     ui::QtClipboardPort m_clipboard;
     ui::QtTextMeasurePort m_measure;
     std::unique_ptr<application::MacroMediaPort> m_media;

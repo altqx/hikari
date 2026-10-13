@@ -151,11 +151,17 @@ std::string textOf(const OptionsState &s, const char *id)
 TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
 {
     const auto all = optionsBindings();
+    // The rewrite's own after legacy's: Y4-playres-ask's check box on the
+    // Editor page, then (Windows) A4-wasapi-default's output host API and
+    // W1's video player.
+    ASSERT_GT(all.size(), std::size(kLegacy));
+    const auto &fromVideo = all[std::size(kLegacy)];
+    EXPECT_EQ(fromVideo.setting, "automation.scriptResolutionFromVideo");
+    EXPECT_EQ(fromVideo.control, OptionsControl::Check);
+    EXPECT_EQ(fromVideo.page, OptionsPage::Editor);
 #ifdef _WIN32
-    // A4-wasapi-default: the output's host API, then W1's video player, the
-    // rewrite's own, last.
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 2);
-    const auto &hostApi = all[std::size(kLegacy)];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 3);
+    const auto &hostApi = all[std::size(kLegacy) + 1];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -166,10 +172,10 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy));
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 1);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
-    const auto bindings = all;
+    const auto bindings = all.first(std::size(kLegacy));
 #endif
     for (std::size_t i = 0; i < bindings.size(); ++i) {
         const auto *setting = findSetting(bindings[i].setting);

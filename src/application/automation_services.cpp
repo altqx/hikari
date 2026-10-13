@@ -276,12 +276,33 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
     }
     case HostService::Gettext:
         return m_translate ? reply(strings({m_translate(string(r, 0))})) : unavailable();
+    case HostService::ScriptResolution: {
+        if (!m_resolution || m_resolutionOpen)
+            return unavailable();
+        ScriptResolutionRequest q;
+        q.script = r.script;
+        q.written = Resolution{static_cast<int>(integer(r, 0)), static_cast<int>(integer(r, 1))};
+        m_resolutionOpen = true;
+        return m_resolution->resolve(q, [this, reply](std::optional<Resolution> chosen) {
+            if (!m_resolutionOpen)
+                return; // withdrawn: the run already ended
+            m_resolutionOpen = false;
+            if (!chosen || chosen->width < 1 || chosen->height < 1)
+                return reply(HostServiceReply::unavailable());
+            reply(integers({chosen->width, chosen->height}));
+        });
+    }
     }
     unavailable();
 }
 
 void AutomationServiceRouter::withdraw()
 {
+    if (m_resolutionOpen) {
+        m_resolutionOpen = false;
+        if (m_resolution)
+            m_resolution->withdraw();
+    }
     if (!m_pickerOpen)
         return;
     m_pickerOpen = false;

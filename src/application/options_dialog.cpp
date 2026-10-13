@@ -110,8 +110,12 @@ constexpr OptionsBinding kBindings[] = {
     {"audio.cacheFilesLimit", Number, AudioAdvanced, 0, 10000},
     {"audio.leadInValue", Number, AudioAdvanced, 0, 10000},
     {"audio.leadOutValue", Number, AudioAdvanced, 0, 10000},
+    // The rewrite's own, after legacy's. Y4-playres-ask: a missing script
+    // resolution a macro reads is set from the video without asking, on the
+    // Editor page after the automation compatibility option.
+    {"automation.scriptResolutionFromVideo", Check, Editor},
 #ifdef _WIN32
-    // The rewrite's own, after legacy's: the Windows output's host API
+    // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},
     // W1: the video player (0 built-in, 1 DirectShow), on the Video page.

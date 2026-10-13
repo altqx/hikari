@@ -8,6 +8,7 @@
 
 #include "hikari/application/audio_display.h"
 #include "hikari/application/automation.h"
+#include "hikari/application/resample.h"
 
 #include <functional>
 #include <optional>
@@ -93,6 +94,24 @@ public:
     virtual void setStatusText(const std::string &text) = 0;
 };
 
+// Y4-playres-ask: a macro reads the script resolution (subtitles.
+// script_resolution, karaskel's collect_head) while its Document lacks
+// PlayResX or PlayResY. The port answers once with the resolution to write
+// (asking the user, or from the video when the user chose so), or nullopt to
+// write nothing (the macro gets legacy's values). A user who declines ends
+// the run through the automation manager; the answer is then never given.
+struct ScriptResolutionRequest {
+    std::string script;      // the script that asked
+    Resolution written;      // PlayResX, PlayResY as staged (0: missing)
+};
+
+class ScriptResolutionPort {
+public:
+    virtual ~ScriptResolutionPort() = default;
+    virtual void resolve(const ScriptResolutionRequest &request, std::function<void(std::optional<Resolution>)> reply) = 0;
+    virtual void withdraw() = 0; // the run ended while the question was open
+};
+
 // Directories for decode_path, in native form without a trailing separator.
 struct AutomationPathContext {
     std::string audioPath, subtitlePath, videoPath; // files of the target Document
@@ -140,13 +159,15 @@ public:
     void setTextMeasure(TextMeasurePort *port) { m_measure = port; }
     void setFilePicker(FilePickerPort *port) { m_picker = port; }
     void setEditor(EditorPort *port) { m_editor = port; }
+    void setScriptResolution(ScriptResolutionPort *port) { m_resolution = port; }
     void setPathContext(std::function<AutomationPathContext()> context) { m_paths = std::move(context); }
     // O5: aegisub.gettext's lookup (the UTF-8 source in, its text out);
     // without one the service is Unavailable and the script gets its source.
     void setTranslation(std::function<std::string(const std::string &)> translate) { m_translate = std::move(translate); }
 
     void handle(const HostServiceRequest &request, Reply reply);
-    // The run ended: an open picker is withdrawn and its answer dropped.
+    // The run ended: an open picker or resolution question is withdrawn and
+    // its answer dropped.
     void withdraw();
 
 private:
@@ -155,9 +176,11 @@ private:
     TextMeasurePort *m_measure = nullptr;
     FilePickerPort *m_picker = nullptr;
     EditorPort *m_editor = nullptr;
+    ScriptResolutionPort *m_resolution = nullptr;
     std::function<AutomationPathContext()> m_paths;
     std::function<std::string(const std::string &)> m_translate;
     bool m_pickerOpen = false;
+    bool m_resolutionOpen = false;
 };
 
 } // namespace hikari::application
