@@ -203,7 +203,7 @@ installed_layout() {
         [ -f /usr/share/polkit-1/actions/io.github.altqx.HikariSub.update.policy ] ||
             fail "$what: the polkit action is missing"
     else
-        echo "SKIP: $what: no update helper in this build yet"
+        fail "$what: the update helper /opt/hikarisub/libexec/hikarisub-update-helper is missing"
     fi
     pass "$what: /opt/hikarisub, /usr/bin/hikarisub, package-kind.txt = $kind and the desktop files are in place"
 }
@@ -337,13 +337,26 @@ test_native() {
     if [ -d /upgrade ] && ls /upgrade/*."$kind" >/dev/null 2>&1; then
         before=$(pkg_version "$kind")
         newer=$(ls /upgrade/*."$kind" | head -n 1)
-        cp "$newer" /tmp/
-        pkg_install "$kind" "/tmp/$(basename "$newer")"
+        # The upgrade goes through the installed update helper, as the app
+        # runs it through pkexec (installers spec, 4.4): the user's own
+        # download, its SHA-256 and the release version.
+        cp "$newer" "$uhome/"
+        newer=$uhome/$(basename "$newer")
+        chown "$user:" "$newer"
+        newer_version=$(basename "$newer" | sed 's/^hikarisub-\(.*\)-linux-[^-]*$/\1/')
+        rc=0
+        PKEXEC_UID=$(id -u "$user") /opt/hikarisub/libexec/hikarisub-update-helper install "$kind" "$newer" \
+            "$(sha256sum "$newer" | cut -d ' ' -f 1)" "$newer_version" >"$log/helper-$kind.txt" 2>&1 || rc=$?
+        if [ "$rc" -ne 0 ]; then
+            cat "$log/helper-$kind.txt"
+            fail "$kind: the update helper did not install $(basename "$newer") (exit $rc)"
+        fi
+        [ -z "$(ls -A /var/cache/hikarisub-update)" ] || fail "$kind: the update helper left files in its cache"
         after=$(pkg_version "$kind")
         [ "$after" != "$before" ] || fail "$kind: the upgrade did not change the version ($before)"
         [ "$(cat "$uhome/keep.txt")" = keep ] || fail "$kind: the upgrade touched \$HOME"
         installed_layout "$kind upgrade" "$kind"
-        pass "$kind: upgraded $before -> $after, \$HOME untouched"
+        pass "$kind: the update helper upgraded $before -> $after, \$HOME untouched"
     fi
 
     pkg_remove "$kind"

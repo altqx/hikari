@@ -507,7 +507,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: floor-out/wx/prefix
-          key: wx-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.wx }}-${{ hashFiles('Thirdparty/build-wxwidgets-linux.sh', 'packaging/linux/floor/build.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
+          key: wx-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.wx }}-${{ hashFiles('Thirdparty/build-wxwidgets-linux.sh', 'Thirdparty/wxWidgets-patches/**', 'packaging/linux/floor/build.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
 
       - name: Cache FFmpeg and FFMS2 (floor)
         id: media-cache
@@ -531,7 +531,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: floor-out/wx/prefix
-          key: wx-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.wx }}-${{ hashFiles('Thirdparty/build-wxwidgets-linux.sh', 'packaging/linux/floor/build.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
+          key: wx-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.wx }}-${{ hashFiles('Thirdparty/build-wxwidgets-linux.sh', 'Thirdparty/wxWidgets-patches/**', 'packaging/linux/floor/build.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
 
       - name: Save FFmpeg and FFMS2 (floor)
         if: always() && steps.media-cache.outputs.cache-hit != 'true' && hashFiles('floor-out/media/lib/pkgconfig/ffms2.pc') != ''
@@ -730,7 +730,7 @@ jobs:
   # their release names.
   release:
     name: Release
-    needs: [release-version, tests, windows-tests, windows, linux]
+    needs: [release-version, tests, windows-tests, windows, windows-installer, linux, linux-packages, linux-package-tests]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -797,7 +797,7 @@ jobs:
           mkdir -p scan/tar scan/deb scan/rpm scan/appimage
           tar -xzf "release/hikarisub-$VERSION-linux-x86_64.tar.gz" -C scan/tar
           dpkg-deb -x "release/hikarisub-$VERSION-linux-amd64.deb" scan/deb
-          (cd scan/rpm && rpm2cpio "$OLDPWD/release/hikarisub-$VERSION-linux-x86_64.rpm" | cpio -idm --quiet)
+          (cd scan/rpm && rpm2cpio "$OLDPWD/release/hikarisub-$VERSION-linux-x86_64.rpm" | cpio -idm --quiet --no-absolute-filenames)
           appimage="$PWD/release/HikariSub-$VERSION-linux-x86_64.AppImage"
           chmod +x "$appimage"
           (cd scan/appimage && "$appimage" --appimage-extract > /dev/null)
