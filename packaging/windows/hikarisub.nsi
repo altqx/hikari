@@ -67,8 +67,9 @@ SetCompressorDictSize 64
 !define HS_CLASSES       "Software\Classes"
 !define HS_MUTEX         "Global\io.github.altqx.HikariSub.Running"
 ; Held by an /UPDATE run until it exits: an app started meanwhile leaves
-; and asks for a start afterwards (HsTakeStartRequest).
+; and sets HS_START_EVENT, and HikariSub starts afterwards (HsTakeStartRequest).
 !define HS_SETUP_MUTEX   "Global\io.github.altqx.HikariSub.Installing"
+!define HS_START_EVENT   "Global\io.github.altqx.HikariSub.StartAfterUpdate"
 !define HS_URL           "https://github.com/altqx/hikari"
 
 Name "${HS_NAME}"
@@ -111,8 +112,10 @@ Var HsUserLocalAppData
 Var HsRadioUser
 Var HsRadioMachine
 Var HsSelfHold        ; this setup's own file, held against change (HsHoldSelf)
+Var HsHeld            ; 1 when the file and every folder above it are held (HsHoldSelf)
 Var HsNewMachineDir   ; the new all-users folder HsMachineDirOk accepted
 Var HsSetupMutex      ; HS_SETUP_MUTEX, held until exit (/UPDATE)
+Var HsStartEvent      ; HS_START_EVENT, or 0
 
 ; ---------------------------------------------------------------------------
 ; Pages
@@ -387,24 +390,39 @@ Function HsLaunchApp
   Pop $0
 FunctionEnd
 
-; An app started while this /UPDATE ran left at once and wrote
-; start-after-<copy> in the update cache: HikariSub starts when this ends,
-; as with /RELAUNCH. (For all users that is the cache of the account that
-; approved UAC: another account's start is not seen.)
+; HS_START_EVENT: a manual-reset event, not set, that any signed-in user
+; may set (EVENT_MODIFY_STATE and SYNCHRONIZE for Authenticated Users),
+; held until exit. An event, not a file: an all-users setup that another
+; administrator approved runs in that account's profile, not the user's.
+!if ${NSIS_PTR_SIZE} != 4
+  !error "HsMakeStartEvent lays out a 32-bit SECURITY_ATTRIBUTES"
+!endif
+Function HsMakeStartEvent
+  Push $0
+  Push $1
+  Push $2
+  StrCpy $HsStartEvent 0
+  System::Call 'advapi32::ConvertStringSecurityDescriptorToSecurityDescriptorW(w "D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;0x100002;;;AU)S:(ML;;NW;;;ME)", i 1, *p .r1, p 0) i .r0'
+  ${If} $0 <> 0
+    System::Call '*(i 12, p r1, i 0) p .r2'
+    System::Call 'kernel32::CreateEventW(p r2, i 1, i 0, w "${HS_START_EVENT}") p .r0'
+    StrCpy $HsStartEvent $0
+    System::Free $2
+    System::Call 'kernel32::LocalFree(p r1)'
+  ${EndIf}
+  Pop $2
+  Pop $1
+  Pop $0
+FunctionEnd
+
+; An app started while this /UPDATE ran left at once and set HS_START_EVENT:
+; HikariSub starts when this ends, as with /RELAUNCH (as the desktop user).
 Function HsTakeStartRequest
   Push $0
   ${If} $HsUpdate = 1
-    StrCpy $0 $HsScope
-    ${If} $0 == ""
-      StrCpy $0 $HsCmdScope
-    ${EndIf}
-    ${If} $0 == "machine"
-      StrCpy $0 "$HsUserLocalAppData\HikariSub\Updates\start-after-nsis-machine"
-    ${Else}
-      StrCpy $0 "$HsUserLocalAppData\HikariSub\Updates\start-after-nsis-user"
-    ${EndIf}
-    ${If} ${FileExists} $0
-      Delete $0
+  ${AndIf} $HsStartEvent <> 0
+    System::Call 'kernel32::WaitForSingleObject(p $HsStartEvent, i 0) i .r0'
+    ${If} $0 = 0
       StrCpy $HsRelaunch 1
     ${EndIf}
   ${EndIf}
@@ -1115,18 +1133,91 @@ Function HsSelectComponents
   Pop $7
 FunctionEnd
 
-; The all-users relaunch hands $EXEPATH to UAC. A same-user process could
-; otherwise rename this running setup and put its own program at that path
-; before the prompt (an unsigned setup shows no publisher to tell them
-; apart). From the start, this setup's file is held open with reads shared
-; only: until it exits, no other process can write, rename or delete it, so
-; the file UAC starts is this one. Without the hold there is no relaunch.
+; The all-users relaunch hands $EXEPATH to UAC, which finds the file by
+; that path again. A same-user process could otherwise rename this running
+; setup, or a folder above it, and put its own program at that path before
+; the prompt (an unsigned setup shows no publisher to tell them apart).
+; From the start, this setup's file is held open with reads shared only,
+; and every folder above it, up to the drive's root, with deletes not
+; shared: until it exits, no other process can write, rename or delete the
+; file, or rename or delete a folder on the way, so the file UAC starts is
+; this one. A path through a junction or symbolic link (whose target its
+; owner could change), a network path, or anything that cannot be held,
+; and there is no relaunch: the user runs setup as administrator.
 Function HsHoldSelf
   Push $0
-  ; GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING. Closed when setup exits.
-  System::Call 'kernel32::CreateFileW(w "$EXEPATH", i 0x80000000, i 1, p 0, i 3, i 0, p 0) p .r0'
+  Push $1
+  Push $2
+  StrCpy $HsHeld 0
+  ; GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT.
+  ; Closed when setup exits.
+  System::Call 'kernel32::CreateFileW(w "$EXEPATH", i 0x80000000, i 1, p 0, i 3, i 0x00200000, p 0) p .r0'
   StrCpy $HsSelfHold $0
+  StrCpy $1 $EXEPATH 2
+  ${If} $HsSelfHold P<> -1
+  ${AndIf} $1 != "\\"
+    Push $HsSelfHold
+    Call HsIsLink
+    Pop $2
+    ${If} $2 = 0
+      StrCpy $HsHeld 1
+      StrCpy $1 $EXEPATH
+      ${Do}
+        ${GetParent} $1 $1
+        StrLen $2 $1
+        ${If} $2 <= 3
+          ${Break}
+        ${EndIf}
+        ; FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_WRITE, OPEN_EXISTING,
+        ; FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT. Kept open.
+        System::Call 'kernel32::CreateFileW(w "$1", i 1, i 3, p 0, i 3, i 0x02200000, p 0) p .r0'
+        ${If} $0 P= -1
+          StrCpy $HsHeld 0
+          ${Break}
+        ${EndIf}
+        Push $0
+        Call HsIsLink
+        Pop $2
+        ${If} $2 <> 0
+          StrCpy $HsHeld 0
+          ${Break}
+        ${EndIf}
+      ${Loop}
+    ${EndIf}
+  ${EndIf}
+  Pop $2
+  Pop $1
   Pop $0
+FunctionEnd
+
+; Whether the open handle on the stack is a junction or symbolic link (a
+; name-surrogate reparse point), or cannot be told: 1 or 0 on the stack.
+Function HsIsLink
+  Exch $0
+  Push $1
+  Push $2
+  Push $3
+  ; FILE_ATTRIBUTE_TAG_INFO { FileAttributes, ReparseTag }, FileAttributeTagInfo = 9.
+  System::Call '*(i 0, i 0) p .r1'
+  System::Call 'kernel32::GetFileInformationByHandleEx(p r0, i 9, p r1, i 8) i .r2'
+  System::Call '*$1(i .r3, i .r0)'
+  System::Free $1
+  ${If} $2 = 0
+    StrCpy $0 1
+  ${Else}
+    IntOp $3 $3 & 0x400
+    IntOp $0 $0 & 0x20000000
+    ${If} $3 <> 0
+    ${AndIf} $0 <> 0
+      StrCpy $0 1
+    ${Else}
+      StrCpy $0 0
+    ${EndIf}
+  ${EndIf}
+  Pop $3
+  Pop $2
+  Pop $1
+  Exch $0
 FunctionEnd
 
 Function .onInit
@@ -1140,6 +1231,7 @@ Function .onInit
     SetSilent silent
     ; Taken first, before the wait for the app: the app's own handoff
     ; waits for it, so a start after the app's quit finds it.
+    Call HsMakeStartEvent
     System::Call 'kernel32::CreateMutexW(p 0, i 1, w "${HS_SETUP_MUTEX}") p .r0'
     StrCpy $HsSetupMutex $0
   ${EndIf}
@@ -1288,7 +1380,7 @@ Function HsScopePageLeave
     ${If} $HsDirArg != ""
       StrCpy $R1 "$R1 /D=$HsDirArg"
     ${EndIf}
-    ${If} $HsSelfHold P= -1
+    ${If} $HsHeld <> 1
       MessageBox MB_OK|MB_ICONSTOP "To install HikariSub for all users, close this setup and run it as administrator."
       Abort
     ${EndIf}

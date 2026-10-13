@@ -220,12 +220,48 @@ bool UpdateInstaller::belongsToAnotherCopy(const Pending &pending) const
 // and the app it runs go together), with SIGTERM, then SIGKILL after a
 // grace, and waits for it, so that the image put back does not find it
 // still holding the single-instance lock.
+// Whether a process of that group still runs. Zombies do not count: they
+// stay in their group until reaped, which a container's init may never do,
+// and kill(-group, 0) still finds them.
+static bool groupAlive(pid_t group)
+{
+    if (::kill(-group, 0) != 0 && errno == ESRCH)
+        return false;
+    QDir proc(QStringLiteral("/proc"));
+    if (!proc.exists())
+        return true;
+    const QStringList entries = proc.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+    bool listed = false;
+    for (const QString &entry : entries) {
+        bool number = false;
+        entry.toInt(&number);
+        if (!number)
+            continue;
+        QFile stat(QStringLiteral("/proc/%1/stat").arg(entry));
+        if (!stat.open(QIODevice::ReadOnly))
+            continue;
+        const QByteArray line = stat.read(1024);
+        const qsizetype close = line.lastIndexOf(')');
+        if (close < 0)
+            continue;
+        listed = true;
+        // After "(comm)": state, ppid, pgrp.
+        const QList<QByteArray> fields = line.mid(close + 2).split(' ');
+        if (fields.size() < 3 || fields.at(2).toLongLong() != group)
+            continue;
+        if (fields.at(0) != "Z")
+            return true;
+    }
+    // Nothing could be read: as kill() says.
+    return !listed;
+}
+
 static void stopImage(qint64 pid)
 {
     if (pid <= 0)
         return;
     const pid_t group = pid_t(pid);
-    auto groupGone = [group] { return ::kill(-group, 0) != 0 && errno == ESRCH; };
+    auto groupGone = [group] { return !groupAlive(group); };
     auto waitFor = [&](int ms) {
         QElapsedTimer waited;
         waited.start();
@@ -274,11 +310,6 @@ QString UpdateInstaller::start()
     if (m_env.cacheDir.isEmpty())
         return {};
     QString message;
-#ifdef _WIN32
-    // No setup runs now (a start during one leaves before this): a request a
-    // setup did not take is not for the next one.
-    QFile::remove(m_env.cacheDir + QStringLiteral("/start-after-") + copyKey());
-#endif
     QString installing;
     if (QFile marker(installingPath()); marker.open(QIODevice::ReadOnly)) {
         installing = QString::fromUtf8(marker.read(64)).trimmed();
