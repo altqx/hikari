@@ -17,12 +17,20 @@
 
 #include <algorithm>
 
-FrameQueue::FrameQueue(size_t slots, size_t frameBytes, int frameCount)
+FrameQueue::FrameQueue(size_t slots, size_t frameBytes, int frameCount, bool finishing)
 	: m_slots(slots)
 	, m_frameCount(frameCount)
+	, m_finishing(finishing)
 {
 	for (Slot &slot : m_slots)
 		slot.data.resize(frameBytes);
+}
+
+size_t FrameQueue::SlotsFor(size_t frameBytes)
+{
+	const size_t budget = 256u << 20;
+	size_t slots = frameBytes ? budget / frameBytes : 8;
+	return std::min<size_t>(8, std::max<size_t>(4, slots));
 }
 
 FrameQueue::Slot *FrameQueue::Find(unsigned char *data)
@@ -70,7 +78,55 @@ void FrameQueue::Decoded(unsigned char *data, bool ok)
 			m_failed = true;
 		}
 		else {
+			slot->state = m_finishing ? DECODED : READY;
+		}
+	}
+	m_changed.notify_all();
+}
+
+unsigned char *FrameQueue::NextToFinish(int *frame)
+{
+	std::unique_lock<std::mutex> lock(m_mutex);
+	while (!m_stopped) {
+		Slot *first = nullptr;
+		bool dropped = false;
+		for (Slot &slot : m_slots) {
+			if (slot.state != DECODED)
+				continue;
+			// the player has moved past it, so it is not worth finishing
+			if (slot.frame < m_wanted) {
+				slot.state = FREE;
+				dropped = true;
+			}
+			else if (!first || slot.frame < first->frame) {
+				first = &slot;
+			}
+		}
+		if (dropped)
+			m_changed.notify_all();
+		if (first) {
+			first->state = FINISHING;
+			*frame = first->frame;
+			return first->data.data();
+		}
+		m_changed.wait(lock);
+	}
+	return nullptr;
+}
+
+void FrameQueue::Finished(unsigned char *data, unsigned tag)
+{
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		Slot *slot = Find(data);
+		if (!slot)
+			return;
+		if (slot->generation != m_generation) {
+			slot->state = FREE;
+		}
+		else {
 			slot->state = READY;
+			slot->tag = tag;
 		}
 	}
 	m_changed.notify_all();
@@ -89,14 +145,15 @@ FrameQueue::Result FrameQueue::Take(int wanted)
 		Slot *first = nullptr;
 		bool decoding = false;
 		for (Slot &slot : m_slots) {
-			if (slot.state == READY && slot.frame < wanted) {
+			if ((slot.state == READY || slot.state == DECODED) && slot.frame < wanted) {
 				slot.state = FREE;
 				dropped = true;
 			}
 			else if (slot.state == READY && (!first || slot.frame < first->frame)) {
 				first = &slot;
 			}
-			else if (slot.state == DECODING && slot.generation == m_generation) {
+			else if ((slot.state == DECODING || slot.state == DECODED || slot.state == FINISHING) &&
+				slot.generation == m_generation) {
 				decoding = true;
 			}
 		}
@@ -108,6 +165,7 @@ FrameQueue::Result FrameQueue::Take(int wanted)
 			first->state = TAKEN;
 			result.slot = first->data.data();
 			result.frame = first->frame;
+			result.tag = first->tag;
 			return result;
 		}
 		if (m_failed && !decoding) {
@@ -138,7 +196,7 @@ void FrameQueue::Reset(int frame)
 		std::lock_guard<std::mutex> lock(m_mutex);
 		++m_generation;
 		for (Slot &slot : m_slots) {
-			if (slot.state == READY)
+			if (slot.state == READY || slot.state == DECODED)
 				slot.state = FREE;
 		}
 		m_next = frame;

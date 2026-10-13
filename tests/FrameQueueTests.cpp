@@ -150,3 +150,110 @@ TEST(a_stopped_queue_plays_again_after_reset)
 	CHECK_EQ(FrameIn(r.slot), 40);
 	queue.Release(r.slot);
 }
+
+namespace {
+
+// Finishes each decoded frame by adding 1000 to the number in its slot,
+// and tags it with the frame number plus 7.
+struct Finisher
+{
+	FrameQueue &queue;
+	std::thread thread;
+
+	Finisher(FrameQueue &q) : queue(q), thread([this] { Run(); }) {}
+	~Finisher()
+	{
+		queue.Stop();
+		thread.join();
+	}
+	void Run()
+	{
+		int frame;
+		while (unsigned char *slot = queue.NextToFinish(&frame)) {
+			int value = FrameIn(slot) + 1000;
+			std::memcpy(slot, &value, sizeof(value));
+			queue.Finished(slot, frame + 7);
+		}
+	}
+};
+
+} // namespace
+
+TEST(the_player_takes_only_finished_frames_in_order)
+{
+	FrameQueue queue(4, sizeof(int), 100, true);
+	queue.Reset(10);
+	Decoder decoder(queue);
+	Finisher finisher(queue);
+	for (int wanted = 10; wanted < 30; wanted++) {
+		FrameQueue::Result r = queue.Take(wanted);
+		CHECK(r.slot != nullptr);
+		CHECK_EQ(r.frame, wanted);
+		CHECK_EQ(FrameIn(r.slot), wanted + 1000);
+		CHECK_EQ(r.tag, (unsigned)wanted + 7);
+		queue.Release(r.slot);
+	}
+}
+
+TEST(a_finished_queue_skips_to_a_later_frame)
+{
+	FrameQueue queue(4, sizeof(int), 100, true);
+	queue.Reset(0);
+	Decoder decoder(queue);
+	Finisher finisher(queue);
+	queue.Release(queue.Take(0).slot);
+	FrameQueue::Result r = queue.Take(60);
+	CHECK_EQ(r.frame, 60);
+	CHECK_EQ(FrameIn(r.slot), 1060);
+	queue.Release(r.slot);
+	queue.Reset(3);
+	r = queue.Take(3);
+	CHECK_EQ(r.frame, 3);
+	CHECK_EQ(FrameIn(r.slot), 1003);
+	queue.Release(r.slot);
+}
+
+TEST(reset_drops_frames_waiting_to_be_finished)
+{
+	FrameQueue queue(2, sizeof(int), 100, true);
+	queue.Reset(0);
+	int frame = -1;
+	unsigned char *a = queue.NextToDecode(&frame);
+	CHECK_EQ(frame, 0);
+	queue.Decoded(a, true);
+	queue.Reset(5);
+	unsigned char *b = queue.NextToDecode(&frame);
+	CHECK_EQ(frame, 5);
+	queue.Decoded(b, true);
+	// frame 0 was dropped, so 5 is the one to finish
+	CHECK(queue.NextToFinish(&frame) == b);
+	CHECK_EQ(frame, 5);
+	queue.Finished(b, 1);
+	FrameQueue::Result r = queue.Take(5);
+	CHECK(r.slot == b);
+	CHECK_EQ(r.tag, 1u);
+}
+
+TEST(the_end_waits_for_frames_being_finished)
+{
+	FrameQueue queue(3, sizeof(int), 3, true);
+	queue.Reset(1);
+	Decoder decoder(queue);
+	Finisher finisher(queue);
+	FrameQueue::Result r = queue.Take(2);
+	CHECK_EQ(r.frame, 2);
+	CHECK_EQ(FrameIn(r.slot), 1002);
+	queue.Release(r.slot);
+	r = queue.Take(3);
+	CHECK(r.slot == nullptr);
+	CHECK(!r.failed);
+}
+
+TEST(slots_for_a_frame_size)
+{
+	CHECK_EQ(FrameQueue::SlotsFor(1920u * 1080 * 4), (size_t)8);
+	CHECK_EQ(FrameQueue::SlotsFor(3840u * 2160 * 4), (size_t)8);
+	CHECK_EQ(FrameQueue::SlotsFor(4000u * 3000 * 4), (size_t)5);
+	CHECK_EQ(FrameQueue::SlotsFor(7680u * 4320 * 4), (size_t)4);
+	CHECK_EQ(FrameQueue::SlotsFor(0), (size_t)8);
+}
