@@ -1360,6 +1360,88 @@ TEST(VisualTransformPointer, ScaleDragsShowTheScaledAxis)
     EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
 }
 
+TEST(VisualTransformPointer, ScaleShiftChangesTheShapeOnlyDuringADrag)
+{
+    // Departure T3-scale-shift-hover (User, 2026-10-13): legacy re-ran the
+    // press's shape code whenever Shift's state changed (VisualScale.cpp:
+    // 300-312), so a Shift press or release while hovering, or a release
+    // with Shift still held, put a drag's shape up over the hover rules'.
+    // Here Shift changes the shape only while a button is down.
+    TestHost host;
+    setUp(host, caseNamed("scale-width-left-drag"));
+    ScaleTool tool;
+    tool.setToggled(6);
+    tool.selected(host);
+    tool.reset(host);
+    // Hovering: Shift pressed and released keeps the hover rules' shape,
+    // away from the arrows' ends (the arrow) and over the width's end.
+    for (const auto &[at, shape] : std::vector<std::pair<std::string, PointerShape>>{
+             {"move 500 50", PointerShape::Arrow},
+             {"move 501 50 shift", PointerShape::Arrow},
+             {"move 502 50", PointerShape::Arrow},
+             {"move 420 180", PointerShape::SizeWE},
+             {"move 421 180 shift", PointerShape::SizeWE},
+             {"move 422 180", PointerShape::SizeWE},
+             {"move 500 50", PointerShape::Arrow},
+         }) {
+        send(tool, host, at);
+        EXPECT_EQ(host.pointerShape(), shape) << at;
+    }
+    // A drag: Shift pressed during it shows both axes' shape, and the
+    // release with Shift still held puts the hover shape back at once.
+    send(tool, host, "press 600 50 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeWE);
+    send(tool, host, "move 610 50 left shift");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    send(tool, host, "move 640 70 left shift");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    ASSERT_GE(std::abs(tool.to().x - 640.f), 11.f);
+    send(tool, host, "release 640 70 left shift");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    send(tool, host, "move 641 70 shift");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    send(tool, host, "move 642 70");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+
+    // A Shift drag released over the width's end with Shift still held
+    // puts that end's hover shape back, not the drag's.
+    TestHost ends;
+    setUp(ends, caseNamed("scale-width-left-drag"));
+    ScaleTool grabbed;
+    grabbed.setToggled(6);
+    grabbed.selected(ends);
+    grabbed.reset(ends);
+    send(grabbed, ends, "press 420 180 left");
+    EXPECT_EQ(ends.pointerShape(), PointerShape::SizeWE);
+    send(grabbed, ends, "move 420 180 left shift");
+    EXPECT_EQ(ends.pointerShape(), PointerShape::Sizing);
+    send(grabbed, ends, "release 420 180 left shift");
+    EXPECT_EQ(ends.pointerShape(), PointerShape::SizeWE);
+
+    // "Preserve proportions" scales both axes from any press (SIZING), but
+    // hovering over the width's end with Shift keeps the end's shape.
+    TestHost linked;
+    setUp(linked, caseNamed("scale-width-left-drag"));
+    ScaleTool proportions;
+    proportions.setToggled(6 | 64);
+    proportions.selected(linked);
+    proportions.reset(linked);
+    send(proportions, linked, "move 420 180");
+    EXPECT_EQ(linked.pointerShape(), PointerShape::SizeWE);
+    send(proportions, linked, "move 421 180 shift");
+    EXPECT_EQ(linked.pointerShape(), PointerShape::SizeWE);
+    send(proportions, linked, "move 422 180");
+    EXPECT_EQ(linked.pointerShape(), PointerShape::SizeWE);
+    send(proportions, linked, "press 422 180 left");
+    EXPECT_EQ(linked.pointerShape(), PointerShape::Sizing);
+    send(proportions, linked, "move 422 180 left shift");
+    EXPECT_EQ(linked.pointerShape(), PointerShape::Sizing);
+    // Released there with Shift held: the width's end's shape, where legacy
+    // put the uniform drag's SIZING back up.
+    send(proportions, linked, "release 422 180 left shift");
+    EXPECT_EQ(linked.pointerShape(), PointerShape::SizeWE);
+}
+
 TEST(VisualTransformPointer, ScaleRectanglesEdgesAndCornersShowTheirResizeShapes)
 {
     // "Scale to rectangle" (VisualScale.cpp:152-172): the scaled rectangle's
