@@ -118,7 +118,10 @@ namespace
 
 	wxString PendingPath(package_kind::Kind kind) { return CacheDir() + kSep + L"pending-" + CopyKey(kind) + L".json"; }
 	wxString PendingPath() { return PendingPath(update_installer::Kind()); }
-	wxString LastResultPath() { return CacheDir() + kSep + L"last-result.json"; }
+	// How an update of this copy that was handed off ended; the NSIS
+	// installer writes it under its scope's key.
+	wxString LastResultPath(package_kind::Kind kind) { return CacheDir() + kSep + L"last-result-" + CopyKey(kind) + L".json"; }
+	wxString LastResultPath() { return LastResultPath(update_installer::Kind()); }
 	// The version of the AppImage update an ordinary quit left for the
 	// next start.
 	wxString AppImageAtStartPath() { return CacheDir() + kSep + L"at-start-" + CopyKey(package_kind::Kind::AppImage); }
@@ -167,10 +170,16 @@ namespace
 		return update_manifest::ReadPending(JsonValue::Parse(text));
 	}
 
-	void WriteLastResult(const std::string &version, bool ok, int code, const wxString &message)
+	// kind: the AppImage's paths name it, as they run before Kind() can be read.
+	void WriteLastResult(const std::string &version, bool ok, int code, const wxString &message,
+		package_kind::Kind kind)
 	{
 		LastResult result{ version, ok, code, ToUtf8(message) };
-		WriteAtomically(LastResultPath(), update_manifest::FormatLastResult(result));
+		WriteAtomically(LastResultPath(kind), update_manifest::FormatLastResult(result));
+	}
+	void WriteLastResult(const std::string &version, bool ok, int code, const wxString &message)
+	{
+		WriteLastResult(version, ok, code, message, update_installer::Kind());
 	}
 
 	std::string NowRfc3339()
@@ -1003,7 +1012,7 @@ namespace
 			wxString::Format(_("HikariSub %s did not start, so HikariSub %s was put back."),
 				FromUtf8(pending.version), VersionHikariSub) :
 			wxString::Format(_("HikariSub %s did not start. The previous version is %s; rename it back to use it."),
-				FromUtf8(pending.version), FromUtf8(old)));
+				FromUtf8(pending.version), FromUtf8(old)), package_kind::Kind::AppImage);
 		std::vector<std::string> restart = { appImage };
 		Spawn(restart);
 	}
@@ -1456,7 +1465,7 @@ bool update_installer::InstallAppImageAtStart(bool isAppImage)
 	if (!StageAppImage(*pending)) {
 		WriteLastResult(pending->version, false, 2,
 			wxString::Format(_("HikariSub %s could not replace the AppImage. The download is at %s."),
-				FromUtf8(pending->version), FromUtf8(pending->file)));
+				FromUtf8(pending->version), FromUtf8(pending->file)), package_kind::Kind::AppImage);
 		return false;
 	}
 	RemoveFile(record);

@@ -305,7 +305,7 @@ if ($Phase -eq 'semver') {
         $app = Start-Process -FilePath "$dir\HikariSub.exe" -PassThru
         Start-Sleep -Seconds 5
         Check 'silent upgrade while HikariSub runs: exit 3' ((Run-Setup $NewSetup '/S /CURRENTUSER') -eq 3)
-        $result = Join-Path $env:LOCALAPPDATA 'HikariSub\Updates\last-result.json'
+        $result = Join-Path $env:LOCALAPPDATA 'HikariSub\Updates\last-result-nsis-user.json'
         Remove-Item -Force -LiteralPath $result -ErrorAction SilentlyContinue
         Check '/UPDATE with /WAITPID of a running app: exit 3' ((Run-Setup $NewSetup "/S /UPDATE /WAITPID=$($app.Id) /CURRENTUSER /D=$dir") -eq 3)
         $json = if (Test-Path -LiteralPath $result) { Get-Content -Raw -LiteralPath $result | ConvertFrom-Json } else { $null }
