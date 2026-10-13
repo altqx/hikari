@@ -5362,6 +5362,13 @@ private:
         QMetaObject::invokeMethod(field, "positionToRectangle", Q_RETURN_ARG(QRectF, rect), Q_ARG(int, position));
         return field->mapToScene(QPointF(rect.x() + 2, rect.center().y())).toPoint();
     }
+    QVariantList appliedColours(const char *field) const
+    {
+        QVariantList applied;
+        if (auto *marks = item<QObject>(field))
+            QMetaObject::invokeMethod(marks, "appliedColours", Q_RETURN_ARG(QVariantList, applied));
+        return applied;
+    }
     QVariantList appliedMarks(const char *field) const
     {
         QVariantList applied;
@@ -5456,7 +5463,7 @@ private slots:
         QCOMPARE(grid->index(1, 0).data(ui::LineTableModel::SpellMarksRole).toList(), (QVariantList{0, 2}));
         QCOMPARE(grid->index(2, 0).data(ui::LineTableModel::SpellMarksRole).toList(), (QVariantList{4, 4}));
         // The editor shows Line 1 with the misspelling marked in its text.
-        QTRY_COMPARE(appliedMarks("lineTextSpellMarks"), (QVariantList{6, 11}));
+        QTRY_COMPARE(appliedMarks("lineTextHighlighter"), (QVariantList{6, 11}));
 
         auto *root = engine->rootObjects().first();
         auto *dialog = root->findChild<QObject *>(QStringLiteral("spellCheckerDialog"));
@@ -5490,14 +5497,14 @@ private slots:
 
         // The editor (tags hidden): "Teh" marked in the shown text; a
         // suggestion replaces it as one step.
-        QTRY_COMPARE(appliedMarks("lineTextSpellMarks"), (QVariantList{0, 3}));
+        QTRY_COMPARE(appliedMarks("lineTextHighlighter"), (QVariantList{0, 3}));
         const QVariantMap found = application->editorMisspellAt(0, 1);
         QCOMPARE(found.value(QStringLiteral("word")).toString(), QStringLiteral("Teh"));
         QCOMPARE(found.value(QStringLiteral("suggestions")).toStringList().first(), QStringLiteral("The"));
         QVERIFY(application->replaceEditorMisspell(0, 1, QStringLiteral("The")));
         QCOMPARE(session->history().back().name, std::string("Correcting spelling errors in the text field"));
         QCOMPARE(text(1), QStringLiteral("The {\\i1}text"));
-        QTRY_COMPARE(appliedMarks("lineTextSpellMarks"), QVariantList{});
+        QTRY_COMPARE(appliedMarks("lineTextHighlighter"), QVariantList{});
         // Add word: the user dictionary beside the dictionaries.
         QVERIFY(!application->addEditorWord(QStringLiteral("42")));
         QVERIFY(application->addEditorWord(QStringLiteral("Hikari")));
@@ -5507,7 +5514,7 @@ private slots:
         QCOMPARE(application->addedDictionaryWords(), QStringList{QStringLiteral("Hikari")});
         // Spelling off: no editor marks; the Grid keeps bracket errors only.
         application->setSpellingOn(false);
-        QTRY_COMPARE(appliedMarks("lineTextSpellMarks"), QVariantList{});
+        QTRY_COMPARE(appliedMarks("lineTextHighlighter"), QVariantList{});
         QCOMPARE(application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(),
                  QVariantList{});
         QCOMPARE(application->shell().lines()->index(2, 0).data(ui::LineTableModel::SpellMarksRole).toList(),
@@ -5516,6 +5523,98 @@ private slots:
                      .value(QStringLiteral("profile/editor.spellchecker")).toBool(),
                  false);
         application->editor().discard();
+    }
+
+    // E4: the text field's colours (TextEditor::DrawFieldD2D) and its state
+    // (TextEditor::SetState): EditBox::SetLine sets the state from the
+    // Line's Comment and Effect, and so does the Comment box (OnCommit,
+    // EditBox.cpp:974-977); typing in Effect does not. A comment has no
+    // spelling marks; a "code" or "template" comment takes the template
+    // colours.
+    void commentToggleSwitchesTheTextState()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        restartWithSpelling(home.path(), true);
+        QVERIFY(application->openFile(writeFile(dir, "states.ass",
+                                                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold{\\b1}\n"
+                                                "Comment: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,code once,if x then y end\n")));
+        auto *session = targetSession();
+        auto &editor = application->editor();
+        editor.setShowTags(true);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("Hello wrold{\\b1}"));
+        using R = core::syntax::Role;
+        // The expected [start, end, colour] of runs, the field's own text
+        // left out and touching runs of one colour joined, as the layout has them.
+        const auto colours = [](std::initializer_list<std::tuple<int, int, R>> runs) {
+            const auto &syntax = ui::theme::current().content.syntax;
+            QVariantList out;
+            for (const auto &[from, to, role] : runs) {
+                const QString name = syntax[std::size_t(role)].name();
+                if (out.size() >= 3 && out[out.size() - 2].toInt() == from && out.last().toString() == name)
+                    out[out.size() - 2] = to;
+                else
+                    out << from << to << name;
+            }
+            return out;
+        };
+        const QVariantList tags =
+            colours({{11, 12, R::CurlyBraces}, {12, 13, R::Operators}, {13, 14, R::Names}, {14, 15, R::Values}, {15, 16, R::CurlyBraces}});
+        QCOMPARE(editor.textState(), 0);
+        QTRY_COMPARE(appliedColours("lineTextHighlighter"), tags);
+        QTRY_COMPARE(appliedMarks("lineTextHighlighter"), (QVariantList{6, 11}));
+
+        // Comment on: a comment, without spelling marks, coloured as before.
+        auto *comment = item("commentBox");
+        const auto clickComment = [&] {
+            QTest::mouseClick(window, Qt::LeftButton, {}, comment->mapToScene(QPointF(8, comment->height() / 2)).toPoint());
+        };
+        clickComment();
+        QTRY_VERIFY(session->document().lines()[0]->comment);
+        QCOMPARE(editor.textState(), 1);
+        QTRY_COMPARE(appliedMarks("lineTextHighlighter"), QVariantList{});
+        QCOMPARE(appliedColours("lineTextHighlighter"), tags);
+        QVERIFY(application->editorSpellingMarks(0).isEmpty());
+        QVERIFY(application->editorMisspellAt(0, 7).isEmpty());
+
+        // An Effect typed changes no state; the Comment box sends it and sets it.
+        editor.setEffectText(QStringLiteral("code"));
+        QCOMPARE(editor.textState(), 1);
+        clickComment();
+        QTRY_VERIFY(!session->document().lines()[0]->comment);
+        QCOMPARE(session->document().lines()[0]->effect, u8"code");
+        QCOMPARE(editor.textState(), 0);
+        QTRY_COMPARE(appliedMarks("lineTextHighlighter"), (QVariantList{6, 11}));
+        clickComment();
+        QTRY_VERIFY(session->document().lines()[0]->comment);
+        QCOMPARE(editor.textState(), 3);
+        QTRY_COMPARE(appliedMarks("lineTextHighlighter"), QVariantList{});
+        // A code line: words are variables; a word ending at a block is text.
+        QTRY_COMPARE(appliedColours("lineTextHighlighter"),
+                     colours({{0, 5, R::TemplateVariables}, {11, 12, R::CurlyBraces}, {12, 13, R::Operators},
+                              {13, 14, R::Names}, {14, 15, R::Values}, {15, 16, R::CurlyBraces}}));
+
+        // SetLine: the second Line is a code comment.
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down);
+        QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("if x then y end"));
+        QCOMPARE(editor.textState(), 3);
+        QTRY_COMPARE(appliedColours("lineTextHighlighter"),
+                     colours({{0, 2, R::TemplateKeywords}, {3, 4, R::TemplateVariables}, {5, 9, R::TemplateKeywords},
+                              {10, 11, R::TemplateVariables}, {12, 15, R::TemplateKeywords}}));
+        // The theme's colours follow a theme change.
+        application->settingsStore()->setValue(QStringLiteral("appearance.followSystem"), false);
+        application->settingsStore()->setValue(QStringLiteral("appearance.theme"), QStringLiteral("highContrastWhite"));
+        QTRY_VERIFY(ui::theme::current().code == ui::theme::Code::HighContrastWhite);
+        QTRY_COMPARE(appliedColours("lineTextHighlighter"),
+                     colours({{0, 2, R::TemplateKeywords}, {3, 4, R::TemplateVariables}, {5, 9, R::TemplateKeywords},
+                              {10, 11, R::TemplateVariables}, {12, 15, R::TemplateKeywords}}));
+        QCOMPARE(appliedColours("lineTextHighlighter")[2].toString(), QStringLiteral("#5b2da8"));
+        application->settingsStore()->setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
+        QTRY_VERIFY(ui::theme::current().code == ui::theme::Code::Dark);
     }
 
     // F3: legacy SpellChecker::Get starts the checker once: with spelling off
@@ -14502,6 +14601,226 @@ private slots:
         QVERIFY(!application->editor().endWarning());
         application->editor().discard();
         application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), false);
+    }
+
+    // E4: TimeCtrl's mouse (TimeCtrl.cpp:286-387). The wheel over a column
+    // steps its unit per whole notch without taking the focus, and the time
+    // applies at once; the right button held and dragged steps it every 8
+    // pixels up or down and ten units every 10 pixels sideways, with no
+    // context menu. A MicroDVD frame steps by one on the wheel.
+    void timeFieldsFollowTheMouse()
+    {
+        QVERIFY(application->openFile(writeStyled("mouse.ass", "Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,first\n")));
+        auto *session = targetSession();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *start = item("startField");
+        const auto text = [&] { return start->property("text").toString(); };
+        const auto draftStart = [&] { return session->draftRecord() ? session->draftRecord()->start.value.microseconds() : -1; };
+        // The middle of the character at a column (TimeCtrl's HitTest: the
+        // character under the pointer).
+        const auto charPoint = [&](QQuickItem *field, int column) {
+            QRectF from, to;
+            QMetaObject::invokeMethod(field, "positionToRectangle", Q_RETURN_ARG(QRectF, from), Q_ARG(int, column));
+            QMetaObject::invokeMethod(field, "positionToRectangle", Q_RETURN_ARG(QRectF, to), Q_ARG(int, column + 1));
+            const qreal x = field->property("leftPadding").toReal() + (from.x() + to.x()) / 2;
+            return field->mapToScene(QPointF(x, from.center().y())).toPoint();
+        };
+        const auto wheel = [&](QPoint at, int delta) {
+            QWheelEvent event(at, window->mapToGlobal(at), QPoint(), QPoint(0, delta), Qt::NoButton, Qt::NoModifier,
+                              Qt::NoScrollPhase, false);
+            QCoreApplication::sendEvent(window, &event);
+            QCoreApplication::processEvents();
+        };
+
+        // "0:00:01.00": the seconds' column steps a second, without the focus.
+        wheel(charPoint(start, 6), 120);
+        QCOMPARE(text(), QStringLiteral("0:00:02.00"));
+        QVERIFY(!start->hasActiveFocus());
+        QCOMPARE(draftStart(), 2'000'000);
+        wheel(charPoint(start, 6), -240);
+        QCOMPARE(text(), QStringLiteral("0:00:00.00"));
+        QCOMPARE(draftStart(), 0);
+        // Below 0 the wheel does nothing; less than a notch is no step.
+        wheel(charPoint(start, 3), -120);
+        QCOMPARE(text(), QStringLiteral("0:00:00.00"));
+        wheel(charPoint(start, 9), 60);
+        QCOMPARE(text(), QStringLiteral("0:00:00.00"));
+        wheel(charPoint(start, 9), 360);
+        QCOMPARE(text(), QStringLiteral("0:00:00.03"));
+        // Without live editing the stepped time still reaches the draft.
+        application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), true);
+        wheel(charPoint(start, 2), 1 * 120);
+        QCOMPARE(text(), QStringLiteral("0:01:00.03"));
+        QCOMPARE(draftStart(), 60'030'000);
+        application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), false);
+        application->editor().discard();
+        QCOMPARE(text(), QStringLiteral("0:00:01.00"));
+
+        // The right button: the caret to the column and the focus, then the drag.
+        // The popups shown: the visible items of the window's overlay.
+        const auto shownPopups = [&] {
+            int n = 0;
+            for (auto *layer : window->contentItem()->childItems())
+                if (QByteArray(layer->metaObject()->className()) == "QQuickOverlay")
+                    for (auto *child : layer->childItems())
+                        n += child->isVisible();
+            return n;
+        };
+        const int popupsBefore = shownPopups();
+        const QPoint at = charPoint(start, 6);
+        QTest::mousePress(window, Qt::RightButton, {}, at);
+        QVERIFY(start->hasActiveFocus());
+        QCOMPARE(start->property("cursorPosition").toInt(), 6);
+        QTest::mouseMove(window, at + QPoint(0, -7));
+        QCOMPARE(text(), QStringLiteral("0:00:01.00"));
+        QTest::mouseMove(window, at + QPoint(0, -8));
+        QCOMPARE(text(), QStringLiteral("0:00:02.00"));
+        QCOMPARE(start->property("cursorPosition").toInt(), 6);
+        QTest::mouseMove(window, at + QPoint(0, -16));
+        QCOMPARE(text(), QStringLiteral("0:00:03.00"));
+        QTest::mouseMove(window, at + QPoint(0, -8));
+        QCOMPARE(text(), QStringLiteral("0:00:02.00"));
+        QTest::mouseMove(window, at + QPoint(10, -8));
+        QCOMPARE(text(), QStringLiteral("0:00:12.00"));
+        QTest::mouseMove(window, at + QPoint(-2, -8));
+        QCOMPARE(text(), QStringLiteral("0:00:02.00"));
+        QCOMPARE(draftStart(), 2'000'000); // live: NUMBER_CHANGED
+        QTest::mouseRelease(window, Qt::RightButton, {}, at + QPoint(-2, -8));
+        QCOMPARE(shownPopups(), popupsBefore);
+        // Released: moving changes nothing.
+        QTest::mouseMove(window, at + QPoint(0, -40));
+        QCOMPARE(text(), QStringLiteral("0:00:02.00"));
+        application->editor().discard();
+    }
+
+    // E4: TimeCtrl's wheel on MicroDVD's frame number steps one frame
+    // (orgframe += step); its drag set no frame (legacy's drag stepped the
+    // milliseconds of an MDVD time, which the number never shows).
+    void frameNumberFieldsTakeTheWheel()
+    {
+        {
+            QFile f(dir.filePath(QStringLiteral("mouse.mdvd.txt")));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("{25}{50}first\r\n");
+        }
+        QVERIFY(application->openFile(dir.filePath(QStringLiteral("mouse.mdvd.txt"))));
+        auto *session = targetSession();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *start = item("startField");
+        const auto text = [&] { return start->property("text").toString(); };
+        QTRY_COMPARE(text(), QStringLiteral("25"));
+        QCOMPARE(start->property("form").toInt(), 3);
+        QVERIFY(start->property("frameNumber").toBool());
+        const QPoint at = fieldPoint(start, 1);
+        QWheelEvent up(at, window->mapToGlobal(at), QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                       Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &up);
+        QCOMPARE(text(), QStringLiteral("26"));
+        QCOMPARE(session->draftRecord()->startFrame, std::optional<std::int64_t>(26));
+        QTest::mousePress(window, Qt::RightButton, {}, at);
+        QTest::mouseMove(window, at + QPoint(0, -16));
+        QTest::mouseRelease(window, Qt::RightButton, {}, at + QPoint(0, -16));
+        QCOMPARE(text(), QStringLiteral("26"));
+        application->editor().discard();
+    }
+
+    // E4: times the audio display puts in the fields (TimeCtrl::SetTime(...,
+    // true) from AudioDisplay::CommitChanges and UpdateTimeEditCtrls) show
+    // the warning colour on each field whose time changed until a Send; a
+    // Send from OnCommit (Apply changes, Ctrl+Enter) while a visual tool is
+    // on leaves it (EditBox.cpp:972).
+    void audioTimesWarnUntilSent()
+    {
+        restartWithoutSound();
+        keysNeverRepeat();
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00
+        auto *session = targetSession();
+        auto &audio = application->audio();
+        auto &editor = application->editor();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        application->settingsStore()->setValue(QStringLiteral("audio.autoCommit"), false);
+        auto *display = item("audioDisplay");
+        auto at = [&](int x, int y = 10) { return display->mapToScene(QPointF(x, y)).toPoint(); };
+        auto *start = item("startField");
+        auto *end = item("endField");
+        auto *duration = item("durationField");
+        const QColor warning = ui::theme::current().roles.warning;
+        const auto colour = [](QQuickItem *field) { return field->property("color").value<QColor>(); };
+
+        // The start boundary (column 33, 30 ms a column) dragged to 1.20:
+        // Start and Duration change, End does not.
+        QTest::mousePress(window, Qt::LeftButton, {}, at(33));
+        QCOMPARE(audio.timing().hold(), 1);
+        QTest::mouseMove(window, at(40));
+        QTest::mouseRelease(window, Qt::LeftButton, {}, at(40));
+        QVERIFY(audio.modified());
+        QCOMPARE(editor.startText(), QStringLiteral("0:00:01.20"));
+        QVERIFY(editor.startWarning());
+        QVERIFY(!editor.endWarning());
+        QVERIFY(editor.durationWarning());
+        QCOMPARE(colour(start), warning);
+        const QColor plain = colour(end); // the palette's text
+        QVERIFY(plain != warning);
+        QCOMPARE(colour(duration), warning);
+        // Send: the text colour again.
+        QVERIFY(editor.commit());
+        QVERIFY(!editor.startWarning());
+        QVERIFY(!editor.durationWarning());
+        QCOMPARE(colour(duration), plain);
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'200'000);
+
+        // AddLead (C) without auto commit: UpdateTimeEditCtrls sets Start and
+        // End only, so Duration is not warned.
+        display->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_C);
+        QCOMPARE(editor.startText(), QStringLiteral("0:00:01.00"));
+        QVERIFY(editor.startWarning());
+        QVERIFY(!editor.endWarning());
+        QVERIFY(!editor.durationWarning());
+
+        // Apply changes with a visual tool on sends the Line and keeps the colour.
+        auto &tools = application->visualTools();
+        QTRY_VERIFY(tools.railEnabled());
+        tools.selectFamily(1);
+        QCOMPARE(tools.activeFamily(), 1);
+        // Off the display, which takes the focus under the pointer (AUDIO_AUTO_FOCUS).
+        QTest::mouseMove(window, start->mapToScene(QPointF(start->width() / 2, start->height() / 2)).toPoint());
+        start->forceActiveFocus();
+        press(Qt::Key_Return, Qt::ControlModifier); // EDITBOX_COMMIT
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'000'000);
+        QVERIFY(editor.startWarning());
+        QCOMPARE(colour(start), warning);
+        // With the crosshair again Apply changes clears it.
+        tools.selectFamily(1);
+        QCOMPARE(tools.activeFamily(), 0);
+        press(Qt::Key_Return, Qt::ControlModifier);
+        QVERIFY(!editor.startWarning());
+        QCOMPARE(colour(start), plain);
+
+        // A live edit's warning stays through Apply changes with a tool on too.
+        tools.selectFamily(1);
+        typeInto("startField", QStringLiteral("0:00:09.00"));
+        QVERIFY(editor.startWarning());
+        press(Qt::Key_Return, Qt::ControlModifier);
+        QVERIFY(editor.startWarning());
+        editor.discard();
+        QVERIFY(!editor.startWarning());
+        tools.selectFamily(1);
+        QCOMPARE(tools.activeFamily(), 0);
+
+        // With auto commit the Send follows at once: no colour stays.
+        application->settingsStore()->setValue(QStringLiteral("audio.autoCommit"), true);
+        display->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_V);
+        QCOMPARE(editor.endText(), QStringLiteral("0:00:02.30"));
+        QVERIFY(!editor.startWarning());
+        QVERIFY(!editor.endWarning());
+        QVERIFY(!editor.durationWarning());
     }
 
     // E4: legacy TimeCtrl's masked field (TimeCtrl.cpp at 20d647c4): Start,

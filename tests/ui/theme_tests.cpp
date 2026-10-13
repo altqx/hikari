@@ -380,6 +380,23 @@ private slots:
         const auto light = ui::theme::content(Code::Light, roles(Code::Light));
         QCOMPARE(light.comparison, (std::array{hex(0xFFFFFF), hex(0xFF000C), hex(0xB7AC00), hex(0x9C0000), hex(0x817900)}));
         QCOMPARE(light.spellcheck, hex(0xFF6968));
+        // E4: the Line editor's text colours, legacy's EDITOR_* defaults
+        // (config.cpp:432-442) in Dark and Light; EDITOR_TEXT is the text role.
+        QCOMPARE(dark.syntax, (std::array{roles(Code::Dark).text, hex(0x8791FD), hex(0x00C3FF), hex(0x00C3FF),
+                                          hex(0x0076FF), hex(0xADABAB), hex(0xBDB76B), hex(0xFB4544), hex(0x00C3FF),
+                                          hex(0x8D80D3), hex(0x11A243)}));
+        QCOMPARE(light.syntax, (std::array{roles(Code::Light).text, hex(0x7E3B00), hex(0x787600), hex(0x787600),
+                                           hex(0x34C200), hex(0x817F7F), hex(0xBDB76B), hex(0xFB4544), hex(0x00C3FF),
+                                           hex(0x8D80D3), hex(0x11A243)}));
+        // The high-contrast themes' text colours read on their field at 4.5:1.
+        for (const auto code : {Code::HighContrastWhite, Code::HighContrastBlack}) {
+            const auto r = roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
+            const auto c = ui::theme::content(code, r);
+            QCOMPARE(c.syntax[0], r.text);
+            for (const QColor &colour : c.syntax)
+                QVERIFY2(contrastRatio(colour, r.field) >= 4.5,
+                         qPrintable(ui::theme::codeName(code) + QLatin1Char(' ') + colour.name()));
+        }
         // The accent moves the selection marks only.
         ui::theme::Choice choice;
         choice.darkAccent = QStringLiteral("blue");

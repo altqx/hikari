@@ -1937,12 +1937,20 @@ ApplicationWindow {
             spellMarks.ranges = spelled ? root.app.editorSpellingMarks(role) : []
         }
         onSpelledChanged: refreshMarks()
-        SpellingHighlighter {
+        // E4: the text in legacy TextEditor's colours (tags, line breaks and
+        // drawings; a template or code comment's code), and F3's marks.
+        EditorHighlighter {
             id: spellMarks
-            objectName: field.objectName + "SpellMarks"
+            objectName: field.objectName + "Highlighter"
             document: field.textDocument
             // EDITOR_SPELLCHECKER: the theme's (K2; legacy's dark and light defaults).
             colour: Theme.spellcheck
+            runs: {
+                root.editor.textState
+                root.editor.translationMode
+                return root.editor.colourRuns(field.role, field.text)
+            }
+            colours: Theme.syntax
         }
         Connections {
             target: root.app
@@ -6115,7 +6123,7 @@ ApplicationWindow {
         }
         switch (action) {
         case "EDITBOX_COMMIT_GO_NEXT_LINE": root.app.commitAndAdvance(); return true // V6: NextLine's play-after
-        case "EDITBOX_COMMIT": root.editor.commit(); return true
+        case "EDITBOX_COMMIT": root.editor.applyChanges(); return true
         case "EDITBOX_SPLIT_LINE": root.editor.splitLine(field.role, field.selectionStart, field.selectionEnd); return true
         case "EDITBOX_SET_DOUBTFUL": root.editor.toggleUnconfirmedAndAdvance(); return true
         case "EDITBOX_START_DIFFERENCE":

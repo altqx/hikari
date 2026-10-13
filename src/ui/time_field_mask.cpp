@@ -65,4 +65,42 @@ bool TimeFieldMask::holds(int form, const QString &text) const
     return application::pasteIntoTimeField(formOf(form), {}, text.toStdU16String()).changed;
 }
 
+QString TimeFieldMask::wheel(int form, bool frameNumber, const QString &text, int column, int notches) const
+{
+    const auto next = application::wheelTimeField(formOf(form), frameNumber, text.toStdU16String(),
+                                                  static_cast<std::size_t>(std::max(column, 0)), notches);
+    return next ? QString::fromStdU16String(*next) : QString();
+}
+
+namespace {
+
+QVariantMap dragMap(const application::TimeFieldDrag &drag)
+{
+    return {{QStringLiteral("ms"), static_cast<qlonglong>(drag.ms)},
+            {QStringLiteral("step"), static_cast<qlonglong>(drag.step)},
+            {QStringLiteral("x"), drag.x},
+            {QStringLiteral("y"), drag.y}};
+}
+
+} // namespace
+
+QVariantMap TimeFieldMask::dragBegin(int form, const QString &text, int column, int x, int y) const
+{
+    const auto drag = application::beginTimeFieldDrag(formOf(form), text.toStdU16String(),
+                                                      static_cast<std::size_t>(std::max(column, 0)), x, y);
+    return drag ? dragMap(*drag) : QVariantMap();
+}
+
+QVariantMap TimeFieldMask::dragMove(int form, const QVariantMap &drag, int x, int y) const
+{
+    if (drag.isEmpty())
+        return {};
+    application::TimeFieldDrag state{drag.value(QStringLiteral("ms")).toLongLong(),
+                                     drag.value(QStringLiteral("step")).toLongLong(),
+                                     drag.value(QStringLiteral("x")).toInt(), drag.value(QStringLiteral("y")).toInt()};
+    const auto next = application::dragTimeField(formOf(form), state, x, y);
+    return {{QStringLiteral("drag"), dragMap(state)},
+            {QStringLiteral("text"), next ? QString::fromStdU16String(*next) : QString()}};
+}
+
 } // namespace hikari::ui

@@ -129,6 +129,11 @@ struct Content {
     QColor gridWarning;   // a fast CPS or bad wraps cell
     std::array<QColor, 5> comparison; // GRID_COMPARISON_*: outline, mismatch, match, comment mismatch, comment match
     QColor comparisonSelection;       // GRID_SELECTION over a compared row (with alpha)
+    // E4: the Line editor's text colours by core::syntax::Role (EDITOR_TEXT,
+    // EDITOR_CURLY_BRACES, EDITOR_TAG_OPERATORS, EDITOR_TAG_NAMES,
+    // EDITOR_TAG_VALUES, EDITOR_SPLIT_LINES_AND_DRAWINGS and the five
+    // EDITOR_TEMPLATE_* colours); the first is the theme's text.
+    std::array<QColor, 11> syntax;
     application::AudioDisplayOptions audio; // the colour fields only
 };
 Content content(Code code, const Roles &roles);
@@ -204,6 +209,8 @@ class Theme : public QObject {
     Q_PROPERTY(QColor success READ success NOTIFY changed FINAL)
     Q_PROPERTY(QColor disabled READ disabled NOTIFY changed FINAL)
     Q_PROPERTY(QColor spellcheck READ spellcheck NOTIFY changed FINAL)
+    // E4: the Line editor's text colours, by core::syntax::Role.
+    Q_PROPERTY(QVariantList syntax READ syntax NOTIFY changed FINAL)
 public:
     explicit Theme(QObject *parent = nullptr);
     static Theme *create(QQmlEngine *engine, QJSEngine *js);
@@ -229,6 +236,7 @@ public:
     QColor success() const { return roles().success; }
     QColor disabled() const { return roles().disabled; }
     QColor spellcheck() const { return theme::current().content.spellcheck; }
+    QVariantList syntax() const;
 
     // The Appearance page: the themes ({code, name, dark, highContrast}), a
     // mode's accent presets ({key, name, accent, onAccent, contrast}: the

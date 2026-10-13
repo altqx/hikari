@@ -10,6 +10,7 @@
 #include <charconv>
 #include <climits>
 #include <cmath>
+#include <cstdlib>
 #include <regex>
 #include <string>
 
@@ -350,6 +351,116 @@ TimeFieldEdit pasteIntoTimeField(TimeFieldForm form, const TimeFieldState &field
             return refused(field);
     }
     return edited(std::u16string(pasted), 0, pasted.size());
+}
+
+namespace {
+
+// SubsTime::ParseMS of a clock form's text (SubsTime.cpp:43-66): the hours
+// before the first ':', two digits each of minutes and seconds after it, and
+// ASS's centiseconds or SRT's milliseconds.
+std::int64_t clockMs(TimeFieldForm form, std::u16string_view text)
+{
+    const std::size_t colon = text.find(u':');
+    const auto at = [&](std::size_t from, std::size_t count) -> std::int64_t {
+        std::int64_t v = 0;
+        for (std::size_t i = from; i < from + count && i < text.size(); ++i) {
+            if (text[i] < u'0' || text[i] > u'9')
+                break;
+            v = v * 10 + (text[i] - u'0');
+        }
+        return v;
+    };
+    if (colon == std::u16string_view::npos)
+        return 0;
+    std::int64_t ms = at(0, colon) * 3600000 + at(colon + 1, 2) * 60000 + at(colon + 4, 2) * 1000;
+    if (form == TimeFieldForm::Ass)
+        ms += at(colon + 7, 2) * 10;
+    else if (form == TimeFieldForm::Srt)
+        ms += at(colon + 7, 3);
+    return ms;
+}
+
+// SubsTime::raw in a clock form.
+std::u16string clockText(TimeFieldForm form, std::int64_t ms)
+{
+    const std::u8string t = form == TimeFieldForm::Srt        ? core::legacy::srtTimeText(ms)
+                            : form == TimeFieldForm::TMPlayer ? core::legacy::tmpTimeText(ms)
+                                                              : core::legacy::assTimeText(ms);
+    return std::u16string(t.begin(), t.end());
+}
+
+} // namespace
+
+std::int64_t timeFieldStep(TimeFieldForm form, std::size_t column)
+{
+    if (form == TimeFieldForm::Number)
+        return 1;
+    const std::size_t start = form == TimeFieldForm::Ass ? 2 : 3;
+    if (column < start)
+        return 3600000;
+    if (column < start + 3)
+        return 60000;
+    if (column < start + 6)
+        return 1000;
+    return 10;
+}
+
+std::optional<std::u16string> wheelTimeField(TimeFieldForm form, bool microDvdNumber, std::u16string_view text,
+                                             std::size_t column, int notches)
+{
+    if (notches == 0)
+        return std::nullopt;
+    if (form == TimeFieldForm::Number) {
+        if (!microDvdNumber)
+            return std::nullopt;
+        std::int64_t frame = 0;
+        for (const char16_t c : text)
+            if (c >= u'0' && c <= u'9')
+                frame = frame * 10 + (c - u'0');
+        frame += notches;
+        if (frame < 0 || frame > 999999999) // nine digits, kTimeFieldDigits
+            return std::nullopt;
+        const std::string n = std::to_string(frame);
+        return std::u16string(n.begin(), n.end());
+    }
+    const std::int64_t ms = clockMs(form, text) + static_cast<std::int64_t>(notches) * timeFieldStep(form, column);
+    if (ms < 0 || ms > kTimeFieldMaxMs)
+        return std::nullopt;
+    return clockText(form, ms);
+}
+
+std::optional<TimeFieldDrag> beginTimeFieldDrag(TimeFieldForm form, std::u16string_view text, std::size_t column,
+                                                int x, int y)
+{
+    if (form == TimeFieldForm::Number)
+        return std::nullopt;
+    return TimeFieldDrag{clockMs(form, text), timeFieldStep(form, column), x, y};
+}
+
+std::optional<std::u16string> dragTimeField(TimeFieldForm form, TimeFieldDrag &drag, int x, int y)
+{
+    if (form == TimeFieldForm::Number || drag.step == 0)
+        return std::nullopt;
+    const int absY = std::abs(y - drag.y), absX = std::abs(x - drag.x);
+    bool changed = false;
+    if (absY >= absX) {
+        if (absY >= 8) {
+            drag.ms = drag.y < y ? drag.ms - drag.step : drag.ms + drag.step;
+            drag.y = y;
+            drag.x = x;
+            changed = true;
+        }
+    } else if (absX >= 10) {
+        const std::int64_t step = drag.step * 10;
+        drag.ms = drag.x > x ? drag.ms - step : drag.ms + step;
+        drag.x = x;
+        drag.y = y;
+        changed = true;
+    }
+    drag.ms = std::clamp<std::int64_t>(drag.ms, 0, kTimeFieldMaxMs);
+    if (!changed)
+        return std::nullopt;
+    return clockText(form, drag.ms);
 }
 
 std::optional<std::int64_t> layerValue(std::u8string_view text)

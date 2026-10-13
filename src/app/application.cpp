@@ -1170,7 +1170,12 @@ void Application::commitAudioTimes(const application::AudioCommitRequest &reques
     if (!session || !m_editor->editable())
         return;
     const bool before = std::exchange(m_audioCommitting, true);
+    // E4: StartEdit/EndEdit/DurEdit->SetTime(time, true): the warning colour
+    // on each field whose time changes; Send (with `save`) clears it again.
+    m_editor->timesFromAudio(request.startMs, request.endMs, request.duration);
     const auto outcome = application::commitAudioTimes(*session, request, shownLines());
+    if (request.save)
+        m_editor->audioSent();
     m_editor->reloadFromSession();
     if (outcome && outcome->stepped)
         refreshViews();
@@ -3603,7 +3608,8 @@ std::optional<std::u16string> Application::editorRaw(int role) const
 QVariantList Application::editorSpellingMarks(int role)
 {
     QVariantList out;
-    if (!m_spellingOn || role != spellingRole())
+    // E4: none for a comment (TextEditor::SetState's SpellCheckerOnOff).
+    if (!m_spellingOn || role != spellingRole() || !core::syntax::spellChecked(m_editor->syntaxState()))
         return out;
     const auto raw = editorRaw(role);
     if (!raw || raw->empty())
@@ -3626,7 +3632,7 @@ QVariantList Application::editorSpellingMarks(int role)
 
 QVariantMap Application::editorMisspellAt(int role, int position)
 {
-    if (!m_spellingOn || role != spellingRole())
+    if (!m_spellingOn || role != spellingRole() || !core::syntax::spellChecked(m_editor->syntaxState()))
         return {};
     const auto raw = editorRaw(role);
     auto *checker = spellChecker();
