@@ -448,6 +448,9 @@
     <ClCompile Include="UtilsWindows.cpp">
       <Filter>U</Filter>
     </ClCompile>
+    <ClCompile Include="UpdateInstaller.cpp">
+      <Filter>U</Filter>
+    </ClCompile>
     <ClCompile Include="Videobox.cpp">
       <Filter>V</Filter>
     </ClCompile>
@@ -911,6 +914,18 @@
     </ClInclude>
     <ClInclude Include="UpdatePolicy.h">
       <Filter>U</Filter>
+    </ClInclude>
+    <ClInclude Include="UpdateManifest.h">
+      <Filter>U</Filter>
+    </ClInclude>
+    <ClInclude Include="UpdateInstaller.h">
+      <Filter>U</Filter>
+    </ClInclude>
+    <ClInclude Include="PackageKind.h">
+      <Filter>P</Filter>
+    </ClInclude>
+    <ClInclude Include="Sha256.h">
+      <Filter>S</Filter>
     </ClInclude>
     <ClInclude Include="VersionHikariSub.h">
       <Filter>V</Filter>
