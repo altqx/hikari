@@ -16,6 +16,9 @@ if [[ ! -f "$wx_source/src/zlib/zlib.h" ]]; then
     exit 1
 fi
 
+# Extra CMake options, word-split; the release floor build passes
+# packaging/linux/floor's choice of wx's own image and regex libraries.
+# shellcheck disable=SC2086
 cmake -S "$wx_source" -B "$wx_build" -G Ninja \
     -DCMAKE_BUILD_TYPE="$build_type" \
     -DCMAKE_INSTALL_PREFIX="$wx_prefix" \
@@ -26,7 +29,8 @@ cmake -S "$wx_source" -B "$wx_build" -G Ninja \
     -DwxBUILD_TESTS=OFF \
     -DwxBUILD_PRECOMP=OFF \
     -DwxUSE_MEDIACTRL=OFF \
-    -DwxUSE_WEBVIEW=OFF
+    -DwxUSE_WEBVIEW=OFF \
+    ${HIKARISUB_WX_CMAKE_ARGS-}
 cmake --build "$wx_build" --parallel "${HIKARISUB_WX_JOBS:-4}"
 cmake --install "$wx_build"
 "$wx_prefix/bin/wx-config" --version

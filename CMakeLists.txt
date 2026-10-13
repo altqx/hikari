@@ -44,6 +44,22 @@ set(wxWidgets_CONFIG_EXECUTABLE "${HIKARISUB_WX_CONFIG}" CACHE FILEPATH
     "wx-config selected for HikariSub" FORCE)
 find_package(wxWidgets 3.3.3 EXACT REQUIRED COMPONENTS core base adv aui html xml gl stc net)
 include(${wxWidgets_USE_FILE})
+# FFmpeg and FFMS2 from a private prefix win over pkg-config's system paths.
+# The release build (packaging/linux/floor) builds FFmpeg 7.1 and the
+# Thirdparty/ffms2 fork there, so the library matches the fork's headers that
+# Thirdparty/Build/FFMS2/indexing_additional.cpp is compiled against.
+set(HIKARISUB_MEDIA_PREFIX "" CACHE PATH
+    "Prefix holding FFmpeg and FFMS2 builds that win over the system's (lib/pkgconfig)")
+if(HIKARISUB_MEDIA_PREFIX)
+    if(NOT EXISTS "${HIKARISUB_MEDIA_PREFIX}/lib/pkgconfig/ffms2.pc")
+        message(FATAL_ERROR "HIKARISUB_MEDIA_PREFIX has no lib/pkgconfig/ffms2.pc: ${HIKARISUB_MEDIA_PREFIX}")
+    endif()
+    if(DEFINED ENV{PKG_CONFIG_PATH} AND NOT "$ENV{PKG_CONFIG_PATH}" STREQUAL "")
+        set(ENV{PKG_CONFIG_PATH} "${HIKARISUB_MEDIA_PREFIX}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+    else()
+        set(ENV{PKG_CONFIG_PATH} "${HIKARISUB_MEDIA_PREFIX}/lib/pkgconfig")
+    endif()
+endif()
 pkg_check_modules(LIBASS REQUIRED IMPORTED_TARGET libass)
 pkg_check_modules(FFMS2 REQUIRED IMPORTED_TARGET ffms2)
 pkg_check_modules(HUNSPELL REQUIRED IMPORTED_TARGET hunspell)
