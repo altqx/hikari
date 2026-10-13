@@ -6,8 +6,9 @@ import Hikari.Ui
 // tool (legacy VideoBox::OnMouseEvent hands it to the Visuals) and what the
 // tool draws is painted here, apart from the frame (docs/qt/media.md: tool
 // handles stay separate from the decoded textures). The crosshair hides the
-// pointer over the video. The Line warning of the other tools is drawn
-// centred on the video in red (Visuals::DrawWarning), unless
+// pointer over the video; the other tools show legacy's resize shapes over
+// their handles and during their drags. The Line warning of the other tools
+// is drawn centred on the video in red (Visuals::DrawWarning), unless
 // VIDEO_VISUAL_WARNINGS_OFF.
 Item {
     id: overlayItem
@@ -67,7 +68,9 @@ Item {
         cursorShape: overlayItem.view && overlayItem.view.zoomMode
                      ? [Qt.ArrowCursor, Qt.SizeHorCursor, Qt.SizeVerCursor][overlayItem.view.zoomCursor]
                      : overlayItem.cursorOverride >= 0 ? overlayItem.cursorOverride
-                     : overlayItem.toolsShown && overlayItem.tools.hideCursor ? Qt.BlankCursor : Qt.ArrowCursor
+                     : !overlayItem.toolsShown ? Qt.ArrowCursor
+                     : overlayItem.tools.hideCursor ? Qt.BlankCursor
+                     : overlayItem.tools.pointerShape
         onEntered: overlayItem.route(0, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
         onExited: overlayItem.route(1, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
         onPositionChanged: mouse => overlayItem.route(2, mouse.x, mouse.y, Qt.NoButton, mouse.buttons, mouse.modifiers)

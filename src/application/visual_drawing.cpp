@@ -1055,8 +1055,7 @@ void DrawingTool::setSquareShape(bool axisX)
 
 void DrawingTool::shapePointer(const Pointer &event, VisualHost &host)
 {
-    // Shapes::OnMouseEvent (VisualDrawingShapes.cpp:359-474). Legacy's
-    // cursor shapes over the edges are not ported (as T4's rectangle clip).
+    // Shapes::OnMouseEvent (VisualDrawingShapes.cpp:359-474).
     const bool click = event.kind == Pointer::Kind::Press && event.button == Pointer::Button::Left;
     const bool holding = event.leftDown && event.kind != Pointer::Kind::Release;
     int x = event.x, y = event.y;
@@ -1077,6 +1076,15 @@ void DrawingTool::shapePointer(const Pointer &event, VisualHost &host)
             m_began = false;
             host.cancelGesture();
         }
+        if (!host.hasArrow())
+            host.setPointerShape(PointerShape::Arrow);
+    }
+    if (!event.leftDown && m_rectVisible) {
+        // Over an edge or a corner its resize shape, elsewhere the arrow
+        // (VisualDrawingShapes.cpp:387-398); a drag keeps the shape it began
+        // with.
+        const int test = hitTest({static_cast<float>(x), static_cast<float>(y)}, false, host);
+        host.setPointerShape(test < INSIDE ? edgePointerShape(test) : PointerShape::Arrow);
     }
     if (event.kind == Pointer::Kind::Press && event.button == Pointer::Button::Left && !host.gesture())
         m_began = false;

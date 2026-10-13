@@ -993,3 +993,65 @@ TEST(DrawingDeparture, ChangingScaleKeepsTheDrawingInPlace)
               u8"{\\fscy120\\fscx150\\p1\\an7\\pos(300,300)}m 1 1 l 301 1 301 181 1 181{\\p0}{Text}");
     EXPECT_EQ(host.s->historySize(), steps + 1);
 }
+
+// The pointer's shapes (VideoBox::SetCursor from Shapes::OnMouseEvent,
+// VisualDrawingShapes.cpp:384-398; the user's 2026-10-13 decision to port
+// them). The drawing's points set none (DrawingAndClip never calls it).
+TEST(DrawingPointer, TheShapesRectangleEdgesAndCornersShowTheirResizeShapes)
+{
+    TestHost host;
+    setUp(host);
+    DrawingTool tool;
+    host.tool = &tool;
+    const auto rows = ids(*host.s);
+    host.s->setSelection({rows[1], {rows[1]}, rows[1], std::nullopt});
+    tool.reset(host);
+    ASSERT_TRUE(tool.setOption("shape", 1, host)); // rectangle
+    tool.pointer(at(Pointer::Kind::Move, 100, 100), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow); // nothing drawn yet
+    tool.pointer(at(Pointer::Kind::Press, 100, 100, true, Pointer::Button::Left), host);
+    tool.pointer(at(Pointer::Kind::Move, 200, 150, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow); // a new rectangle's drag sets none
+    tool.pointer(at(Pointer::Kind::Release, 200, 150, false, Pointer::Button::Left), host);
+    ASSERT_TRUE(tool.rectangleVisible());
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeNWSE); // released on its corner
+    const struct {
+        int x, y;
+        PointerShape shape;
+    } hovers[] = {
+        {100, 125, PointerShape::SizeWE},   {200, 125, PointerShape::SizeWE},   {150, 100, PointerShape::SizeNS},
+        {150, 150, PointerShape::SizeNS},   {100, 100, PointerShape::SizeNWSE}, {200, 150, PointerShape::SizeNWSE},
+        {200, 100, PointerShape::SizeNESW}, {100, 150, PointerShape::SizeNESW}, {150, 125, PointerShape::Arrow},
+        {400, 300, PointerShape::Arrow},
+    };
+    for (const auto &h : hovers) {
+        tool.pointer(at(Pointer::Kind::Move, h.x, h.y), host);
+        EXPECT_EQ(host.pointerShape(), h.shape) << h.x << "," << h.y;
+        tool.pointer(at(Pointer::Kind::Move, 150, 125), host);
+        EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    }
+    // The right edge's drag keeps west-east.
+    tool.pointer(at(Pointer::Kind::Move, 200, 125), host);
+    tool.pointer(at(Pointer::Kind::Press, 200, 125, true, Pointer::Button::Left), host);
+    tool.pointer(at(Pointer::Kind::Move, 260, 40, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeWE);
+    tool.pointer(at(Pointer::Kind::Release, 260, 40, false, Pointer::Button::Left), host);
+    tool.pointer(at(Pointer::Kind::Move, 150, 125), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+}
+
+TEST(DrawingPointer, TheDrawingsPointsSetNoShape)
+{
+    TestHost host;
+    setUp(host);
+    DrawingTool tool;
+    host.tool = &tool;
+    tool.editor().mode = VectorEditor::Drag;
+    tool.reset(host);
+    tool.pointer(at(Pointer::Kind::Move, 150, 50), host);
+    tool.pointer(at(Pointer::Kind::Press, 150, 50, true, Pointer::Button::Left), host);
+    tool.pointer(at(Pointer::Kind::Move, 160, 60, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    tool.pointer(at(Pointer::Kind::Release, 160, 60, false, Pointer::Button::Left), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+}

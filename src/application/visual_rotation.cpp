@@ -422,6 +422,8 @@ void RotationZTool::pointer(const Pointer &event, VisualHost &host)
             m_lastmove.x = std::atan2((m_org.y - y), (m_org.x - x)) * kDegrees;
             m_lastmove.x += m_lastmove.y;
         }
+        if (!host.hasArrow())
+            host.setPointerShape(PointerShape::Arrow);
         m_isOrg = false;
         m_grabbed = -1;
         host.toolChanged();
@@ -460,8 +462,10 @@ void RotationZTool::pointer(const Pointer &event, VisualHost &host)
             if (m_changeAllTags)
                 m_lastAngle = m_lastmove.y;
             m_isfirst = true;
+            host.setPointerShape(PointerShape::Sizing); // VisualRotationZ.cpp:211
             setVisual(true, host);
         } else {
+            host.setPointerShape(PointerShape::Sizing); // VisualRotationZ.cpp:215
             if (std::fabs(m_org.x - x) < pointCatch && std::fabs(m_org.y - y) < pointCatch) {
                 m_isOrg = true;
                 m_lastOrg = m_org;
@@ -881,6 +885,8 @@ void RotationXYTool::pointer(const Pointer &event, VisualHost &host)
     if (e.buttonUp) {
         setVisual(false, host);
         m_oldAngle = m_angle;
+        if (!host.hasArrow())
+            host.setPointerShape(PointerShape::Arrow);
         m_isOrg = false;
         host.toolChanged();
     }
@@ -898,6 +904,14 @@ void RotationXYTool::pointer(const Pointer &event, VisualHost &host)
             m_diffsY = static_cast<int>(m_org.y - y);
         }
         m_firstmove = {static_cast<float>(x), static_cast<float>(y)};
+        // VisualRotationXY.cpp:215-217: \fry's west-east, \frx's
+        // north-south, both together's four-way, the origin's drag too.
+        if (m_type == 0)
+            host.setPointerShape(PointerShape::SizeWE);
+        if (m_type == 1)
+            host.setPointerShape(PointerShape::SizeNS);
+        if (m_type == 2)
+            host.setPointerShape(PointerShape::Sizing);
     } else if (e.holding) {
         if (m_isOrg) {
             m_org = {static_cast<float>(x + m_diffsX), static_cast<float>(y + m_diffsY)};

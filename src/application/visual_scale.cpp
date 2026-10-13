@@ -410,8 +410,7 @@ std::pair<long, long> ScaleTool::changeVisualEditor(std::u16string &text)
 
 void ScaleTool::pointer(const Pointer &event, VisualHost &host)
 {
-    // Scale::OnMouseEvent (VisualScale.cpp:116-371). The cursor shapes are
-    // the overlay's (not drawn here).
+    // Scale::OnMouseEvent (VisualScale.cpp:116-371).
     if (event.kind == Pointer::Kind::Wheel)
         return;
     const VideoView &view = host.view();
@@ -443,6 +442,27 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
             } else {
                 (void)finishEdit(host);
             }
+            if (!host.hasArrow())
+                host.setPointerShape(PointerShape::Arrow);
+        }
+        if (!e.holding && (m_rectangleVisible || m_originalRectangleVisible)) {
+            // Over either rectangle's edge or corner its resize shape,
+            // elsewhere the arrow (VisualScale.cpp:152-172); legacy tested
+            // the scaled rectangle even while only the original showed.
+            const PointF at{static_cast<float>(x), static_cast<float>(y)};
+            bool setarrow = false;
+            if (const int test = hitTest(at, false, false); test < INSIDE) {
+                setarrow = true;
+                host.setPointerShape(edgePointerShape(test));
+            }
+            if (m_originalRectangleVisible) {
+                if (const int test = hitTest(at, true, false); test < INSIDE) {
+                    setarrow = true;
+                    host.setPointerShape(edgePointerShape(test));
+                }
+            }
+            if (!setarrow)
+                host.setPointerShape(PointerShape::Arrow);
         }
         if (e.click) {
             m_rightHolding = e.rightc && m_hasOriginalRectangle;
@@ -532,7 +552,28 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
 
     if (e.buttonUp) {
         setVisual(false, host);
+        if (!host.hasArrow())
+            host.setPointerShape(PointerShape::Arrow);
         m_wasUsedShift = false;
+    }
+    if (!e.holding) {
+        // VisualScale.cpp:286-297: the arrows' common end, the X arrow's
+        // and the Y arrow's ends (11 pixels), each only from the arrow
+        // shape, so a shape set over one end stays until the pointer leaves
+        // them all.
+        const float fx = static_cast<float>(x), fy = static_cast<float>(y);
+        if (std::abs(m_to.x - fx) < 11 && std::abs(m_to.y - fy) < 11) {
+            if (host.hasArrow())
+                host.setPointerShape(PointerShape::Sizing);
+        } else if (std::abs(m_to.x - fx) < 11 && std::abs(m_from.y - fy) < 11) {
+            if (host.hasArrow())
+                host.setPointerShape(PointerShape::SizeWE);
+        } else if (std::abs(m_to.y - fy) < 11 && std::abs(m_from.x - fx) < 11) {
+            if (host.hasArrow())
+                host.setPointerShape(PointerShape::SizeNS);
+        } else if (!host.hasArrow()) {
+            host.setPointerShape(PointerShape::Arrow);
+        }
     }
     if (e.click || m_wasUsedShift != e.shift) {
         const float fx = static_cast<float>(x), fy = static_cast<float>(y);
@@ -554,7 +595,16 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
         }
         m_diffs.x = m_to.x - fx;
         m_diffs.y = m_to.y - fy;
+        // VisualScale.cpp:307-311: the scaled axis' shape, both axes' with
+        // Shift's or "Preserve proportions"' uniform scaling.
+        if (m_type == 0)
+            host.setPointerShape(PointerShape::SizeWE);
+        if (m_type == 1)
+            host.setPointerShape(PointerShape::SizeNS);
+        if (m_type == 2)
+            host.setPointerShape(PointerShape::Sizing);
         if (((e.leftc || e.leftIsDown) && e.shift) || m_preserveProportions) {
+            host.setPointerShape(PointerShape::Sizing);
             m_type = 2;
             m_diffs.x = fx;
             m_diffs.y = fy;

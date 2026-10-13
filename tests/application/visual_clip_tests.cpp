@@ -1066,3 +1066,58 @@ TEST(ClipMakeTool, OneLinePerFamily)
     EXPECT_EQ(makeVisualTool(Family::RectangleClip)->family(), Family::RectangleClip);
     EXPECT_EQ(makeVisualTool(Family::VectorClip)->family(), Family::VectorClip);
 }
+
+// The pointer's shapes (VideoBox::SetCursor from ClipRect::OnMouseEvent,
+// VisualClipRect.cpp:149-163; the user's 2026-10-13 decision to port them).
+TEST(ClipPointer, RectangleEdgesAndCornersShowTheirResizeShapes)
+{
+    TestHost host;
+    setUp(host);
+    const auto id = ids(*host.s)[0];
+    ASSERT_TRUE(host.s->editDraftText(id, u8"{\\clip(300,150,900,600)}first"));
+    RectangleClipTool tool;
+    host.tool = &tool;
+    tool.reset(host); // the view's (100, 50) to (300, 200)
+    const struct {
+        int x, y;
+        PointerShape shape;
+    } hovers[] = {
+        {100, 125, PointerShape::SizeWE},   {300, 125, PointerShape::SizeWE},   {200, 50, PointerShape::SizeNS},
+        {200, 200, PointerShape::SizeNS},   {100, 50, PointerShape::SizeNWSE},  {300, 200, PointerShape::SizeNWSE},
+        {300, 50, PointerShape::SizeNESW},  {100, 200, PointerShape::SizeNESW}, {200, 125, PointerShape::Arrow},
+        {500, 300, PointerShape::Arrow},
+    };
+    for (const auto &h : hovers) {
+        tool.pointer(at(Pointer::Kind::Move, h.x, h.y), host);
+        EXPECT_EQ(host.pointerShape(), h.shape) << h.x << "," << h.y;
+        tool.pointer(at(Pointer::Kind::Move, 200, 125), host);
+        EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    }
+    // A drag keeps the edge's shape; the release puts the arrow back, then
+    // the shape of the edge the pointer is on.
+    tool.pointer(at(Pointer::Kind::Move, 200, 200), host);
+    tool.pointer(at(Pointer::Kind::Press, 200, 200, true, Pointer::Button::Left), host);
+    tool.pointer(at(Pointer::Kind::Move, 260, 250, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeNS);
+    tool.pointer(at(Pointer::Kind::Release, 260, 250, false, Pointer::Button::Left), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeNS); // the bottom edge followed the pointer
+    tool.pointer(at(Pointer::Kind::Move, 200, 125), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+}
+
+TEST(ClipPointer, TheVectorClipSetsNoShape)
+{
+    // DrawingAndClip::OnMouseEvent (VisualClips.cpp) never calls SetCursor.
+    TestHost host;
+    setUp(host);
+    VectorClipTool tool;
+    host.tool = &tool;
+    tool.editor().mode = VectorEditor::Drag;
+    tool.reset(host);
+    tool.pointer(at(Pointer::Kind::Move, 100, 0), host);
+    tool.pointer(at(Pointer::Kind::Press, 100, 0, true, Pointer::Button::Left), host);
+    tool.pointer(at(Pointer::Kind::Move, 110, 10, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    tool.pointer(at(Pointer::Kind::Release, 110, 10, false, Pointer::Button::Left), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+}

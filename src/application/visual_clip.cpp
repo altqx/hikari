@@ -531,6 +531,14 @@ void RectangleClipTool::pointer(const Pointer &event, VisualHost &host)
             m_began = false;
             host.cancelGesture();
         }
+        if (!host.hasArrow())
+            host.setPointerShape(PointerShape::Arrow);
+    }
+    if (!holding && m_showClip) {
+        // Over an edge or a corner its resize shape, elsewhere the arrow
+        // (VisualClipRect.cpp:152-163); a drag keeps the shape it began with.
+        const int test = hitTest({static_cast<float>(x), static_cast<float>(y)}, false, host);
+        host.setPointerShape(test < INSIDE ? edgePointerShape(test) : PointerShape::Arrow);
     }
     if (click) {
         m_grabbed = OUTSIDE;

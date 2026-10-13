@@ -31,6 +31,7 @@
 #include <map>
 #include <optional>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -1261,4 +1262,238 @@ TEST(VisualOverlay, RotationXYGridProjectsAsD3DX)
     p.angle = {0, 0};
     p.from = {320, 180};
     expectNear(*projectXY(p, 0, 0, 0), expected((320 - org.x) / W * 60, (org.y - 180) / H * 60, 17.2f));
+}
+
+// The pointer's shapes (VideoBox::SetCursor from the Visuals; the user's
+// 2026-10-13 decision to port them). The probe's view: the coefficient 3,
+// the Line at (320, 180), Scale's arrows ending at (420, 280), the width's
+// at (420, 180) and the height's at (320, 280).
+
+namespace {
+
+const Case &caseNamed(const char *name)
+{
+    static const auto cases = readCases();
+    const auto it = std::find_if(cases.begin(), cases.end(), [&](const Case &c) { return c.name == name; });
+    if (it == cases.end())
+        throw std::runtime_error(std::string("no case ") + name);
+    return *it;
+}
+
+// "press 420 180 left", "move 500 50", "release 420 180 left shift".
+void send(VisualTool &tool, TestHost &host, const std::string &event)
+{
+    std::istringstream in(event);
+    std::string kind;
+    in >> kind;
+    tool.pointer(pointerOf(kind, in), host);
+}
+
+} // namespace
+
+TEST(VisualTransformPointer, ScaleArrowEndsShowTheirAxisShape)
+{
+    // Scale::OnMouseEvent (VisualScale.cpp:286-297): over the arrows' common
+    // end SIZING, the width's end SIZEWE, the height's SIZENS (11 pixels),
+    // each only from the arrow; leaving them all puts the arrow back.
+    TestHost host;
+    setUp(host, caseNamed("scale-width-left-drag"));
+    ScaleTool tool;
+    tool.setToggled(6);
+    tool.selected(host);
+    tool.reset(host);
+    ASSERT_EQ(tool.to(), (PointF{420, 280}));
+    for (const auto &[at, shape] : std::vector<std::pair<std::string, PointerShape>>{
+             {"move 420 280", PointerShape::Sizing},
+             {"move 430 289", PointerShape::Sizing},
+             {"move 420 180", PointerShape::SizeWE},
+             {"move 411 171", PointerShape::SizeWE},
+             {"move 320 280", PointerShape::SizeNS},
+             {"move 500 50", PointerShape::Arrow},
+         }) {
+        send(tool, host, at);
+        EXPECT_EQ(host.pointerShape(), shape) << at;
+        send(tool, host, "move 500 50");
+        EXPECT_EQ(host.pointerShape(), PointerShape::Arrow) << at;
+    }
+    // A shape set over one end stays over another until the pointer leaves
+    // them all (legacy's HasArrow test).
+    send(tool, host, "move 420 280");
+    send(tool, host, "move 420 185");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    send(tool, host, "move 500 50");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+}
+
+TEST(VisualTransformPointer, ScaleDragsShowTheScaledAxis)
+{
+    // VisualScale.cpp:300-312: the left button's width SIZEWE, the right
+    // button's height SIZENS, the middle button's and Shift's both SIZING; a
+    // grabbed end its own axis; the release the arrow (:282), then the
+    // shape over the end the pointer is on.
+    TestHost host;
+    setUp(host, caseNamed("scale-width-left-drag"));
+    ScaleTool tool;
+    tool.setToggled(6);
+    tool.selected(host);
+    tool.reset(host);
+    send(tool, host, "press 420 180 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeWE);
+    send(tool, host, "move 470 185 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeWE);
+    send(tool, host, "release 470 185 left");
+    EXPECT_EQ(tool.to().x, 470.f);
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeWE); // over the width's end it moved
+    send(tool, host, "move 600 50");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    send(tool, host, "press 600 50 right");
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeNS);
+    send(tool, host, "release 600 50 right");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    send(tool, host, "press 600 50 middle");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    send(tool, host, "release 600 50 middle");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    send(tool, host, "press 600 50 left shift");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    send(tool, host, "release 600 50 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+}
+
+TEST(VisualTransformPointer, ScaleRectanglesEdgesAndCornersShowTheirResizeShapes)
+{
+    // "Scale to rectangle" (VisualScale.cpp:152-172): the scaled rectangle's
+    // and the original rectangle's edges and corners.
+    TestHost host;
+    setUp(host, caseNamed("scale-rectangle"));
+    ScaleTool tool;
+    tool.setToggled(7);
+    tool.selected(host);
+    tool.reset(host);
+    send(tool, host, "press 300 150 left");
+    send(tool, host, "move 400 200 left");
+    send(tool, host, "release 400 200 left");
+    ASSERT_TRUE(tool.rectangleVisible());
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeNWSE); // released on its corner
+    for (const auto &[at, shape] : std::vector<std::pair<std::string, PointerShape>>{
+             {"move 300 175", PointerShape::SizeWE},
+             {"move 400 175", PointerShape::SizeWE},
+             {"move 350 150", PointerShape::SizeNS},
+             {"move 350 200", PointerShape::SizeNS},
+             {"move 300 150", PointerShape::SizeNWSE},
+             {"move 400 200", PointerShape::SizeNWSE},
+             {"move 400 150", PointerShape::SizeNESW},
+             {"move 300 200", PointerShape::SizeNESW},
+             {"move 350 175", PointerShape::Arrow},
+         }) {
+        send(tool, host, at);
+        EXPECT_EQ(host.pointerShape(), shape) << at;
+        send(tool, host, "move 600 300");
+        EXPECT_EQ(host.pointerShape(), PointerShape::Arrow) << at;
+    }
+    // An edge's drag keeps its shape.
+    send(tool, host, "move 400 175");
+    send(tool, host, "press 400 175 left");
+    send(tool, host, "move 450 100 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeWE);
+    send(tool, host, "release 450 100 left");
+    send(tool, host, "move 600 300");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+
+    TestHost other;
+    setUp(other, caseNamed("scale-original-rectangle"));
+    ScaleTool original;
+    original.setToggled(55);
+    original.selected(other);
+    original.reset(other);
+    send(original, other, "press 50 50 right");
+    send(original, other, "move 150 100 right");
+    send(original, other, "release 150 100 right");
+    ASSERT_TRUE(original.originalRectangleVisible());
+    send(original, other, "move 50 75");
+    EXPECT_EQ(other.pointerShape(), PointerShape::SizeWE);
+    send(original, other, "move 120 100");
+    EXPECT_EQ(other.pointerShape(), PointerShape::SizeNS);
+    send(original, other, "move 120 75");
+    EXPECT_EQ(other.pointerShape(), PointerShape::Arrow);
+}
+
+TEST(VisualTransformPointer, RotationZDragsShowTheFourWayShape)
+{
+    // RotationZ::OnMouseEvent: nothing while hovering, SIZING from a press
+    // (the angle's or the \org's, VisualRotationZ.cpp:215), the arrow on the
+    // release (:158).
+    TestHost host;
+    setUp(host, caseNamed("rotz-drag"));
+    RotationZTool tool;
+    tool.setToggled(0);
+    tool.selected(host);
+    tool.reset(host);
+    send(tool, host, "move 320 180");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    send(tool, host, "press 420 180 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    send(tool, host, "move 380 250 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    send(tool, host, "release 380 250 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    send(tool, host, "press 320 180 left"); // the \org
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    send(tool, host, "release 330 190 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+}
+
+TEST(VisualTransformPointer, RotationZTwoPointsShowTheFourWayShapeFromTheSecond)
+{
+    // VisualRotationZ.cpp:177-211: the first point's click and a click
+    // away from both points set nothing; the second point's and a point's
+    // drag SIZING.
+    TestHost host;
+    setUp(host, caseNamed("rotz-two-points"));
+    RotationZTool tool;
+    tool.setToggled(1);
+    tool.selected(host);
+    tool.reset(host);
+    send(tool, host, "press 100 100 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    send(tool, host, "release 100 100 left");
+    send(tool, host, "press 300 200 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    send(tool, host, "release 300 200 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    send(tool, host, "press 301 199 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    send(tool, host, "release 310 150 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    send(tool, host, "press 50 300 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    send(tool, host, "release 50 300 left");
+}
+
+TEST(VisualTransformPointer, RotationXYDragsShowTheTurnedAxis)
+{
+    // RotationXY::OnMouseEvent (VisualRotationXY.cpp:215-217): the left
+    // button's \fry SIZEWE, the right's \frx SIZENS, the middle's both
+    // SIZING, the \org's drag too; the release the arrow (:199).
+    TestHost host;
+    setUp(host, caseNamed("rotxy-left-right-middle"));
+    RotationXYTool tool;
+    tool.setToggled(-1);
+    tool.selected(host);
+    tool.reset(host);
+    send(tool, host, "move 100 100");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    for (const auto &[button, shape] : std::vector<std::pair<std::string, PointerShape>>{
+             {"left", PointerShape::SizeWE}, {"right", PointerShape::SizeNS}, {"middle", PointerShape::Sizing}}) {
+        send(tool, host, "press 100 100 " + button);
+        EXPECT_EQ(host.pointerShape(), shape) << button;
+        send(tool, host, "move 130 120 " + button);
+        EXPECT_EQ(host.pointerShape(), shape) << button;
+        send(tool, host, "release 130 120 " + button);
+        EXPECT_EQ(host.pointerShape(), PointerShape::Arrow) << button;
+    }
+    send(tool, host, "press 320 180 left"); // the \org
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeWE);
+    send(tool, host, "release 330 180 left");
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
 }

@@ -248,6 +248,18 @@ LineWarning lineWarning(Family family, const core::LineRecord &line, std::int64_
     return line.comment ? LineWarning::Comment : LineWarning::NotVisible;
 }
 
+PointerShape edgePointerShape(int hit)
+{
+    // (test < 4) ? SIZEWE : (test >= 4 && test % 4 == 0) ? SIZENS :
+    // (TOP + LEFT or BOTTOM + RIGHT) ? SIZENWSE : SIZENESW.
+    constexpr int left = 1, right = 2, top = 4, bottom = 8;
+    if (hit < 4)
+        return PointerShape::SizeWE;
+    if (hit % 4 == 0)
+        return PointerShape::SizeNS;
+    return (hit == top + left || hit == bottom + right) ? PointerShape::SizeNWSE : PointerShape::SizeNESW;
+}
+
 std::u16string_view warningText(LineWarning warning)
 {
     switch (warning) {

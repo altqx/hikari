@@ -226,10 +226,29 @@ struct AllTagsSetting; // all_tags.h (T6)
 // The Line warnings (lineWarning below).
 enum class LineWarning { None, NotVisible, Comment };
 
+// The pointer's shape over the video (legacy VideoBox::SetCursor with the
+// stock cursors the Visuals asked for): wxCURSOR_ARROW, SIZEWE, SIZENS,
+// SIZENWSE, SIZENESW and SIZING.
+enum class PointerShape { Arrow, SizeWE, SizeNS, SizeNWSE, SizeNESW, Sizing };
+
+// The shape over a rectangle's edge or corner, from a HitTest result below
+// INSIDE (LEFT 1, RIGHT 2, TOP 4, BOTTOM 8 or their sums): the expression
+// Position, Scale, ClipRect and Shapes::OnMouseEvent share
+// (VisualPosition.cpp:246-248).
+PointerShape edgePointerShape(int hit);
+
 // The Video panel as a tool sees it.
 class VisualHost {
 public:
     virtual ~VisualHost() = default;
+    // The pointer's shape a tool set (VideoBox::SetCursor) and legacy
+    // VideoBox::HasArrow. It is the host's, not a tool's, as legacy kept it
+    // on the video window; the host puts the arrow back when the tool
+    // changes (VideoBox::OnChangeVisual) or its events are blocked
+    // (Visuals::Draw).
+    void setPointerShape(PointerShape shape) { m_pointerShape = shape; }
+    PointerShape pointerShape() const { return m_pointerShape; }
+    bool hasArrow() const { return m_pointerShape == PointerShape::Arrow; }
     virtual const VideoView &view() const = 0;
     // The editing target (null without one) and its active Line.
     virtual const EditSession *session() const = 0;
@@ -294,6 +313,9 @@ public:
     // (Hotkeys::GetHKey with EDITBOX_HOTKEY); legacy's default unless the
     // host knows the user's.
     virtual std::string editorHotkey(int id) const;
+
+private:
+    PointerShape m_pointerShape = PointerShape::Arrow;
 };
 
 // One visual family. The host gives a tool only the events legacy's
