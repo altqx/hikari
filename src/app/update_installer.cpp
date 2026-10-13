@@ -594,8 +594,16 @@ UpdateInstaller::ExitAction UpdateInstaller::installAtExit(const std::function<s
     // This only weeds out a broken download; the record is the user's to
     // change, so what installs checks the file against the release itself.
     if (!verify(m_pending.file, m_pending.size, m_pending.sha256)) {
+        const bool restart = m_restart;
+        const QString version = m_pending.version;
         QFile::remove(m_pending.file);
         dropPending();
+        writeResult(version, 2,
+                    QCoreApplication::translate("HikariSub.MainWindow", "The download of HikariSub %1 changed or went missing, so it was not installed. It is downloaded again at the next check.")
+                        .arg(version));
+        // Restart now still restarts: the version installed, which says why.
+        if (restart)
+            return {m_env.executable, {}};
         return {};
     }
     switch (m_env.package.kind) {

@@ -670,10 +670,23 @@ private slots:
         UpdateInstaller installer(env, QStringLiteral("0.1.0"));
         QVERIFY(download(installer, QStringLiteral("0.2.0"), package(name, bytes), serve(root, name, bytes)));
         write(installer.readyFile(), "the new deb, changed");
-        installer.installAtExit();
+        QVERIFY(installer.installAtExit().program.isEmpty());
         QVERIFY(!QFileInfo::exists(root + QStringLiteral("/ran")));
         QVERIFY(!QFileInfo::exists(pendingOf(root, PackageKind::Deb)));
         QCOMPARE(installer.state(), QStringLiteral("idle"));
+        // The next start says why.
+        {
+            UpdateInstaller next(env, QStringLiteral("0.1.0"));
+            QVERIFY(next.start().contains(QStringLiteral("changed or went missing")));
+        }
+        // After Restart now, the version installed starts again.
+        UpdateInstaller restarting(env, QStringLiteral("0.1.0"));
+        QVERIFY(download(restarting, QStringLiteral("0.2.0"), package(name, bytes), serve(root, name, bytes)));
+        QFile::remove(restarting.readyFile());
+        restarting.restartNow();
+        const auto action = restarting.installAtExit();
+        QCOMPARE(action.program, env.executable);
+        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/ran")));
     }
 
     void theAurAndPortableCopiesInstallNothing()
