@@ -366,8 +366,8 @@ resources, the bundled Automation tree with DependencyControl's native modules
 `Automation/automation/Include/BM`, `PT` and `DM`), the project license, and the
 configured English dictionary when one is available. It deliberately excludes CMake internals and any Config,
 Automation, or Themes files created by local runs. Host graphics/windowing
-libraries, codec libraries excluded for licensing reasons, and GStreamer
-plugins remain system requirements; this archive is not a universal AppImage.
+libraries, Fontconfig, GLib, and GStreamer with its plugins remain system
+requirements; this archive is not a universal AppImage.
 
 The package also carries `libSubInspector.so`, which ASSFoundation scripts use
 to measure rendered lines. To check that the automation's `Inspector.moon`

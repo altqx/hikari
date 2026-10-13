@@ -64,8 +64,12 @@ endif()
 #     which must match the GL stack; a bundled mismatch is a black-screen/crash.
 #   * Windowing/desktop stack: X11/xcb, wayland, xkbcommon and the
 #     GTK/GDK/pango/cairo/gdk-pixbuf/atk/harfbuzz toolkit -- the host dlopens
-#     matching pixbuf loaders, immodules and theme engines (GLib above is the
-#     one exception: it is bundled for GStreamer and is forward-compatible).
+#     matching pixbuf loaders, immodules and theme engines.
+#   * GStreamer and GLib: libgst*, glib/gobject/gio/gmodule/gthread and GLib's
+#     own libmount, libblkid and pcre2-8 -- GStreamer loads its plugins
+#     (appsrc, audioconvert, autoaudiosink, playbin...) from the host's plugin
+#     folder, which a bundled core built elsewhere does not look in, and the
+#     host's plugins need the host's core and GLib.
 #   * C++/compiler runtime: libstdc++, libgcc_s -- a bundled (older) copy would
 #     win on the process RPATH and then fail host GTK plugins that need a newer
 #     GLIBCXX/CXXABI.
@@ -78,7 +82,7 @@ endif()
 # soname (libx264.so.164 and libx265.so.199 on the build host), so a host with
 # other versions could not start the program.
 set(system_dep_regex
-    "^(ld-linux.*|linux-vdso.*|lib(c|m|dl|pthread|rt|resolv|nsl|util|anl)\\.so.*|libstdc\\+\\+\\.so.*|libgcc_s\\.so.*|libGL.*\\.so.*|libEGL.*\\.so.*|libOpenGL\\.so.*|libGLdispatch\\.so.*|libGLX.*\\.so.*|libglapi\\.so.*|libgbm\\.so.*|libdrm.*\\.so.*|libva.*\\.so.*|libvdpau.*\\.so.*|libX.*\\.so.*|libxcb.*\\.so.*|libxshmfence\\.so.*|libxkbcommon.*\\.so.*|libwayland-.*\\.so.*|libgtk-.*\\.so.*|libgdk-.*\\.so.*|libgdk_pixbuf.*\\.so.*|libpango.*\\.so.*|libcairo.*\\.so.*|libatk.*\\.so.*|libharfbuzz.*\\.so.*|libfontconfig\\.so.*|libpulse.*\\.so.*|libasound\\.so.*)$"
+    "^(ld-linux.*|linux-vdso.*|lib(c|m|dl|pthread|rt|resolv|nsl|util|anl)\\.so.*|libstdc\\+\\+\\.so.*|libgcc_s\\.so.*|libGL.*\\.so.*|libEGL.*\\.so.*|libOpenGL\\.so.*|libGLdispatch\\.so.*|libGLX.*\\.so.*|libglapi\\.so.*|libgbm\\.so.*|libdrm.*\\.so.*|libva.*\\.so.*|libvdpau.*\\.so.*|libX.*\\.so.*|libxcb.*\\.so.*|libxshmfence\\.so.*|libxkbcommon.*\\.so.*|libwayland-.*\\.so.*|libgtk-.*\\.so.*|libgdk-.*\\.so.*|libgdk_pixbuf.*\\.so.*|libpango.*\\.so.*|libcairo.*\\.so.*|libatk.*\\.so.*|libharfbuzz.*\\.so.*|libgst.*\\.so.*|lib(glib|gobject|gio|gmodule|gthread)-2\\.0\\.so.*|libmount\\.so.*|libblkid\\.so.*|libpcre2-8\\.so.*|libfontconfig\\.so.*|libpulse.*\\.so.*|libasound\\.so.*)$"
 )
 
 set(copied_count 0)
