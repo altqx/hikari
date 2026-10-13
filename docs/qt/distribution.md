@@ -1,27 +1,26 @@
 # Distribution and update policy
 
-**Decided by altqx on 2026-10-13; [ADR-0019](../adr/0019-installers-and-seamless-updates.md) records the decision.** It replaces the policy of 2026-09-27 ([ADR-0012](../adr/0012-distribution-and-updates.md): Inno Setup, notification-only updates, a signing gate for stable Windows releases). The [reviewed proposal of #40](proposals/distribution.md) and the [packaging research](https://github.com/altqx/hikari/blob/07f7005f742a7d44c6b169d11b90e0d2c62b7fea/docs/research/packaging.md) remain the review record. The policy applies to both codebases: legacy (the wx app on `main`, versions 0.0.x) and the Qt rewrite (versions 0.1.0 and later), which replaces legacy. Follow the accepted [CMake build](build.md) and [platform policy](platform-policy.md).
+**Decided by altqx on 2026-10-13; [ADR-0019](../adr/0019-installers-and-seamless-updates.md) records it.** It replaces the policy of 2026-09-27 ([ADR-0012](../adr/0012-distribution-and-updates.md): Inno Setup, notification-only updates, a signing gate for stable releases). The legacy app (0.0.x, branch `main`) and the rewrite (0.1.0 and later, branch `qt`) follow the same rules, so the rewrite can replace legacy in place.
 
 ## Packages
 
-Every release of either codebase publishes these x64 assets on GitHub Releases, with a `SHA256SUMS` file and the update manifest `hikarisub-update.json`:
+Every release publishes these assets, where `<V>` is the version without its `v`:
 
-| Asset | Name | Install and update |
-| --- | --- | --- |
-| Windows installer | `HikariSub-<V>-windows-x64-setup.exe` | NSIS, unsigned. Installs and updates itself |
-| Windows portable | `HikariSub-<V>-windows-x64.zip` | Notify only |
-| AppImage | `HikariSub-<V>-linux-x86_64.AppImage` (and its `.zsync`) | Replaces itself |
-| Debian, Ubuntu | `hikarisub-<V>-linux-amd64.deb` | Installs through `pkexec` |
-| Fedora, openSUSE | `hikarisub-<V>-linux-x86_64.rpm` | Installs through `pkexec` |
-| Linux portable | `hikarisub-<V>-linux-x86_64.tar.gz` | Notify only. Also the AUR package's source |
+| Package kind | Asset | Installs to | Updates |
+| --- | --- | --- | --- |
+| Windows installer (NSIS, unsigned) | `HikariSub-<V>-windows-x64-setup.exe` | "Just me": `%LOCALAPPDATA%\Programs\HikariSub`, no administrator; "All users": `%ProgramFiles%\HikariSub` | In the app, silently |
+| Windows portable | `HikariSub-<V>-windows-x64.zip` | Where it is extracted | Notice and release page |
+| AppImage | `HikariSub-<V>-linux-x86_64.AppImage` | The file itself | In the app: it replaces itself |
+| deb | `hikarisub-<V>-linux-amd64.deb` | `/opt/hikarisub`, `/usr/bin/hikarisub` | In the app, through `pkexec` |
+| rpm | `hikarisub-<V>-linux-x86_64.rpm` | `/opt/hikarisub`, `/usr/bin/hikarisub` | In the app, through `pkexec` |
+| Linux portable | `hikarisub-<V>-linux-x86_64.tar.gz` | Where it is extracted | Notice and release page |
+| Arch Linux | AUR package `hikarisub-bin`, built from the tar.gz | `/opt/hikarisub`, `/usr/bin/hikarisub` | Notice: update with the package manager |
 
-- **Arch Linux** installs `hikarisub-bin` from the AUR. Its `PKGBUILD` and `.SRCINFO` live in the repository, are built and checked with `makepkg` in an Arch container by the release job, and are pushed to the AUR by the owner. It carries stable releases only. No Arch binary package is a release asset.
-- **Native packages** (`.deb`, `.rpm`, AUR) install to `/opt/hikarisub` with a `/usr/bin/hikarisub` link, and declare every host library the app needs (GStreamer plugins included), so the package manager makes the app ready to use.
-- **The AppImage** bundles the app's libraries so that it starts on the major distributions. The Qt build floor is AlmaLinux 9 with `gcc-toolset-14` (glibc 2.34).
-- File names use the SemVer version `<V>`; the `.deb` and `.rpm` metadata use the `~` prerelease form (`0.1.0~beta.2-1`), which sorts correctly in dpkg and rpm.
-- Every package installs and starts with the network off. End users need no Qt account, compiler or online installer.
+The release also carries `SHA256SUMS`, the AppImage's `.zsync` for external AppImage updaters, and `hikarisub-update.json`, the update manifest. Nothing is code-signed.
 
-Flatpak and store submission stay deferred.
+Each installed copy has `package-kind.txt` beside the executable: `nsis-user`, `nsis-machine`, `appimage`, `deb`, `rpm` or `arch`. No marker means a portable copy. About and `hikarisub --version` name the kind, so bug reports carry it.
+
+The rewrite keeps its settings in the platform's user folders (`QStandardPaths`), whatever the kind. Removing or upgrading a package never deletes them, nor the update cache. The settings importer also looks in installed legacy's data folders, `%LOCALAPPDATA%\HikariSub\Legacy` and `~/.local/share/HikariSub/Legacy`.
 
 ## The Windows installer
 
@@ -34,32 +33,49 @@ Flatpak and store submission stay deferred.
 - Silent switches for the updater: `/S`, `/CURRENTUSER` or `/ALLUSERS`, `/UPDATE`, `/WAITPID=<pid>`, `/RELAUNCH`, `/D=<dir>`, with fixed exit codes. The installer waits for the running app to exit and never kills it.
 - Uninstall removes the files, shortcuts, associations and registry keys it created, and never the user's settings, documents, recovery data or the update cache.
 
-## Updates
+## Update check
 
-The app reads the GitHub release list, keeps the releases newer than itself on its channel (stable by default; prereleases by opt-in), and reads each candidate's manifest. A release whose manifest does not name the app's codebase in `offer_to` is skipped. Releases from before the manifest fall back to the asset names and GitHub's `digest` values. Failed or network-disabled checks stay distinct from "up to date", and editing never needs the network.
+The check reads GitHub's release list, 50 releases to a page and four pages at most. It keeps the releases that are not drafts, have a `v` + SemVer tag, are newer than the running version and fit the channel ("Stable versions only" skips GitHub prereleases and SemVer prerelease tags). It walks at most five of them, highest version first:
 
-What happens next depends on how the app was installed, which a `package-kind.txt` marker beside the executable records:
+- A release with `hikarisub-update.json` has its manifest read (64 KiB at most). A manifest that does not arrive or breaks its rules skips the release. One with an unknown schema counts as no manifest.
+- A release without a manifest (every release before this policy) takes its packages from the assets' GitHub digests, and is offered to the codebase its version names.
+- A release whose manifest's `offer_to` does not name `qt` is skipped.
 
-- **NSIS, AppImage, `.deb`, `.rpm`:** the app downloads the matching asset in the background, verifies its size and SHA-256, and shows "Update ready" with **Restart now** and **Later**. Restart now runs the normal quit, with the save prompt for every modified document; cancelling it cancels the update. Later installs the update at the next normal quit. The NSIS installer runs silently in the install's scope (one UAC prompt for an all-users install) and relaunches the app unelevated; the AppImage replaces its own file; `.deb` and `.rpm` install through `pkexec` running apt, dnf or zypper, with a small root helper and a polkit policy. Without `pkexec` the app opens the download and offers the install command to copy.
-- **AUR:** notify only. The app says that a new version is available and tells the user to update with the package manager or AUR helper (for example `yay -Syu` or `paru -Syu`). It never downloads or installs anything.
-- **Portable zip and tar.gz:** notify only, with the release page.
+URLs are built from the tag and the asset name (`https://github.com/altqx/hikari/releases/download/v<V>/<asset>`), never taken from a reply. Downloads may be redirected only to `github.com`, `objects.githubusercontent.com` and `release-assets.githubusercontent.com` over https. The automatic check keeps legacy's schedule (a day after each check, "Remind me in a week").
 
-"Install updates automatically", a new setting on by default, turns the install flows back into notification. The automatic check schedule, "Remind me in a week" and the stable/prerelease choice keep their behaviour. No flow installs a version that is not newer than the running one. Download URLs are built from the tag and the asset name, never taken from the reply, and redirects are followed only to GitHub's download hosts.
+What the first passing release offers depends on the package kind:
 
-## Qt replacing legacy
+- **NSIS, AppImage, deb, rpm** with a package for the kind: the download. A package that needs a newer Windows (`min_os`) or glibc (`min_glibc`) than the system has is only named, with the requirement.
+- **AUR:** "HikariSub `<V>` is available; you have `<old>`. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu." A prerelease points at the AppImage instead, as the AUR package carries stable versions only. Nothing is downloaded.
+- **Portable**, or "Install updates automatically" off: the notice and the release page.
 
-- Versions: legacy stays at 0.0.x, Qt starts at 0.1.0, so every Qt version sorts above every legacy version and the version names the codebase.
-- Qt releases name only `qt` in `offer_to` until the owner sets `HIKARISUB_OFFER_QT_TO_LEGACY`; from then on, legacy builds that read manifests offer them.
-- Legacy 0.0.1 reads no manifest and offers the highest stable release by notification. **No stable Qt release is published before Qt is meant for every legacy user.** Qt prereleases reach only legacy users who opted into prereleases.
-- The AUR package follows legacy until the owner opens the gate, then Qt only; its name never changes.
-- Installed legacy builds keep their settings in `%LOCALAPPDATA%\HikariSub\Legacy` or `~/.local/share/HikariSub/Legacy`, since installed program folders are read-only; the Qt settings importer reads them there. Qt keeps its state in the platform's user folders in every package, and has no sibling-data portable mode.
+## Seamless update
 
-## Payload, trust and release gates
+"Install updates automatically" is on by default and shown only for the kinds that install. The automatic check then downloads without asking; the menu's check offers "Download and install", with a progress line in its place while it runs.
 
-The payload is staged from the build and audited: every direct import of every shipped binary must resolve inside the payload or to an operating-system library, and Linux packages carry only `$ORIGIN` run paths. Dynamic Qt deployment keeps its license notices and source obligations ([Qt licensing](https://doc.qt.io/qt-6/licensing.html), [Qt's LGPL obligations](https://www.qt.io/development/open-source-lgpl-obligations)).
+1. The package goes to `%LOCALAPPDATA%\HikariSub\Updates\<V>\` or `${XDG_CACHE_HOME:-~/.cache}/HikariSub/Updates/<V>/` (an AppImage's beside the AppImage), as `<name>.part`. Its size and SHA-256 are checked as it arrives; a mismatch deletes it. `pending.json` in the cache records it.
+2. A bar under the menus says "HikariSub `<V>` is ready to install", with What's new, **Restart now** and **Later**. It comes back at each start while the update waits.
+3. Restart now runs the normal quit: the save review of every modified document, which can cancel it. Later installs at the next normal quit, without the restart.
+4. After the main window has closed, the file's size and hash are checked again, then it is handed off:
+   - **NSIS:** `setup.exe /S /UPDATE /WAITPID=<pid> [/RELAUNCH] /CURRENTUSER|/ALLUSERS /D=<install dir>`. "All users" asks UAC once; declining keeps the update pending. The installer waits for the app and its mutex `Global\io.github.altqx.HikariSub.Running`, and restarts it unelevated.
+   - **AppImage:** the new image replaces `$APPIMAGE`, which stays as `$APPIMAGE.old`. With Restart now the old process waits up to 60 s for the new one to report its window (`--hikari-health=<file>`), and otherwise puts the old image back and starts it.
+   - **deb, rpm:** "Installing update..." while `pkexec /opt/hikarisub/libexec/hikarisub-update-helper install <kind> <file> <sha256> <version>` asks for the password; the helper checks a root-owned copy and installs it with apt, dnf or zypper. Restart now then starts `/usr/bin/hikarisub`. A dismissed prompt keeps the update pending. Without `pkexec` or a polkit agent, the bar names the downloaded file, with Show in folder and Copy install command.
+5. A failed hand-off is told once at the next start (`last-result.json`). The next start of the new version deletes the update's leftovers.
 
-Nothing is code-signed for now. The SHA-256 published by GitHub, fetched over HTTPS, is the only integrity check of a download; it detects corruption on the way, not a compromised release account. A signature of `hikarisub-update.json` can be added later as a separate asset without changing the manifest schema.
+No flow installs a version that is not newer than the running one.
 
-The owner controls tags, releases, the `offer_to` gate and the AUR push. Release gates cover install, upgrade over legacy and over itself, the silent update in both scopes, uninstall, each Linux format in its distribution containers and the Arch package.
+## Versions and the move from legacy
 
-**Verification status:** this records the decision. Each installer, package and update flow still needs its own build and test evidence before a release.
+Legacy stays at 0.0.x and the rewrite starts at 0.1.0; `HIKARI_VERSION_SUFFIX` adds a prerelease (`0.1.0-beta.2`). deb and rpm versions put `~` before the prerelease inside the package (`0.1.0~beta.2-1`), never in the file name. Moving from legacy to the rewrite is an ordinary upgrade of one package (`hikarisub`, or `hikarisub-bin` on the AUR) or one installation.
+
+A rewrite release names `"offer_to": ["qt"]` until the owner sets `HIKARISUB_OFFER_QT_TO_LEGACY`; then `["qt", "legacy"]`. Legacy 0.0.1 knows nothing of manifests and offers the highest stable SemVer release it finds, so no stable rewrite release is published before the rewrite is meant for every legacy user.
+
+## Payload and licences
+
+Packages are staged from CMake install rules and Qt's QML deployment support, and the staged tree is audited (Qt plugins and imports, FFMS2/FFmpeg, libass and font libraries, the audio adapter, dictionaries, translations, helpers). Qt is linked dynamically and shipped with its licence notices; the obligations of each module and dependency are checked before a release. The AppImage bundles every library the app needs; deb and rpm declare their host dependencies.
+
+## Testing an update
+
+A test build (`-DHIKARI_UPDATE_TEST_FEED=ON`; off in releases, whose CI fails if the binary names `HIKARISUB_UPDATE_FEED`) reads `HIKARISUB_UPDATE_FEED=<base URL>`: `<base>releases.json` for the list, `<base>download/v<V>/<asset>` for the files and `<base>releases/tag/v<V>` for the pages. It also reads `HIKARISUB_PACKAGE_KIND=<token>` in place of the marker, so the AUR notice and the other flows can be tried without installing a package. `tools/update-feed/make-feed.py` builds such a feed from a folder of packages.
+
+**Verification status:** the update logic and its hand-offs have unit tests; installers, packages and the update flows still need their release tests on every claimed platform.

@@ -8,6 +8,16 @@ if(HIKARI_PROVISION_ONLY OR HIKARI_QT_VERIFY_ONLY)
 endif()
 
 project(HikariSub VERSION 0.1.0 LANGUAGES C CXX)
+# ADR 0019: the version the program reports and compares, and the release tag
+# without its "v": project(VERSION) and, for a prerelease, "-" and the suffix.
+set(HIKARI_VERSION_SUFFIX "" CACHE STRING "SemVer prerelease of the version, for example beta.2; empty for a release")
+if(HIKARI_VERSION_SUFFIX STREQUAL "")
+    set(HIKARI_VERSION "${PROJECT_VERSION}")
+elseif(HIKARI_VERSION_SUFFIX MATCHES "^[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*$")
+    set(HIKARI_VERSION "${PROJECT_VERSION}-${HIKARI_VERSION_SUFFIX}")
+else()
+    message(FATAL_ERROR "HIKARI_VERSION_SUFFIX \"${HIKARI_VERSION_SUFFIX}\" is not a SemVer prerelease")
+endif()
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)

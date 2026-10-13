@@ -154,7 +154,10 @@ public:
         // elsewhere may say so).
         bool outputHostApiSetting = backends::PortAudioOutput::onWindows;
         // P8: the release list the update check reads (tests: a file).
-        QUrl updateFeed = UpdateChecker::defaultFeed();
+        UpdateFeed updateFeed = UpdateFeed::github();
+        // ADR 0019: the package kind, update cache and installers; the
+        // default installs nothing (tests). The composition sets this process's.
+        UpdateEnvironment updateEnvironment;
         // Y2: where the style catalogs live; empty: "Catalog" beside the settings
         // file, or a temporary directory without one (tests).
         QString catalogDir;

@@ -555,12 +555,12 @@ private slots:
         }
         // No main toolbar (user decision 2026-10-05, P10-no-main-toolbar):
         // under the menu bar the window shows no row (its header is only
-        // D1's layout notice, hidden without one); the status bar is its
-        // bottom row, as legacy's.
+        // D1's layout notice and ADR 0019's update bar, hidden without
+        // either); the status bar is its bottom row, as legacy's.
         auto *root = engine->rootObjects().first();
         QVERIFY(root->property("menuBar").value<QObject *>());
         auto *header = root->property("header").value<QQuickItem *>();
-        QVERIFY(!header || (header->objectName() == QLatin1String("layoutNotice") && !header->isVisible()));
+        QVERIFY(!header || (header->objectName() == QLatin1String("noticeArea") && !header->isVisible()));
         QQuickItem *strip = visualItem("statusBar");
         QVERIFY(strip && strip->isVisible());
         QTRY_COMPARE(qRound(strip->mapToScene(QPointF(0, strip->height())).y()), qRound(window->contentItem()->height()));
