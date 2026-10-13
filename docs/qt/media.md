@@ -33,6 +33,14 @@ Begin with owned CPU frames and a **CPU-BGRA/libass reference**, then implement 
 
 Keep range, matrix, primaries and transfer metadata distinct; honor the existing ASS matrix override and record missing-metadata fallback. Establish SDR CPU/GPU and subtitle-alpha parity as the first reference. This is neither an HDR correctness claim nor approval to remove HDR-related capability. The [overlay research](https://github.com/altqx/hikari/blob/fb510f491048b3a073ace4076cf12bc949345c53/docs/research/visual-overlays.md) supports separate tool presentation.
 
+### Playback pipeline
+
+While playing, the GUI thread only shows results. A player hands each frame to the session's `PlaybackPipeline` from its own thread (Qt's video sink thread, DirectShow's streaming thread). Only the newest frame waits for the worker, and only the newest result waits for the GUI thread; anything older is dropped and counted, so a slow moment never leaves a backlog to play through. The worker converts the frame to BGRA into pooled buffers (`videoFrameToBgra`: NV12, NV21, P010, P016, YUV420P, YV12, YUV420P10 and YUV422P directly with the frame's matrix and range, anything else through `QVideoFrame::toImage`; DirectShow samples with legacy's own coefficients, bit for bit), renders the subtitle overlay at the frame's start, and renders the next frame's overlay ahead while it waits. Results carry the subtitles serial they were rendered for: a result made before a new prepare is rendered again on the GUI thread, and one from before a pause, stop or seek is dropped. The renderer selection serializes `select` against `prepare` and `render` so the worker may render while the GUI thread prepares.
+
+The presenter keeps persistent textures on the RHI backends and updates them in place: a frame shown again is not uploaded, and an overlay uploads only its visible rectangle together with the previous one's (to clear it). The software renderer makes an image of the visible part only. An overlay with nothing visible is not drawn. The session notifies once per player frame; the Video panel's texts (time, status) follow at most every 100 ms while playing, as legacy's VideoBox time timer did.
+
+Paused frames are still prepared on the GUI thread, and frames are converted on the CPU: Qt's own video texture path (`VideoOutput`) is not used, because the presenter composites the libass overlay and the visual tools over its own textures.
+
 DirectShow may remain an optional Windows playback adapter and xy-VSFilter/CSRI an optional subtitle-renderer adapter. They cannot dictate core types, the default cross-platform backend or a new general-purpose plugin ecosystem. Preserve a possible later macOS implementation.
 
 ## PortAudio, analysis and caches
