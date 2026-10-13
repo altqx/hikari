@@ -37,6 +37,9 @@
 #include <QMimeData>
 #include <QPalette>
 #include <QClipboard>
+#include <QProcess>
+#include <QScreen>
+#include <QStandardPaths>
 #include <QStyleHints>
 #include <QDirIterator>
 #include <QGuiApplication>
@@ -5142,12 +5145,50 @@ private slots:
                                   session.lastOverlay() ? "empty overlay" : "no overlay", 20000);
         QCOMPARE(renderer.activeName(), std::string("libass"));
         const auto libass = session.lastOverlay();
+        // With HIKARI_SURFACE_SHOT_DIR, the screen under the video picture as
+        // each renderer has it drawn (winix task w2-switch-desktop: the
+        // Windows desktop), saved as w2-desktop-<renderer>.png.
+        const QString shots = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        auto *presenter = item("videoPresenter");
+        QSignalSpy presented(presenter, SIGNAL(presented()));
+        // After a switch, once the presenter has shown the new picture.
+        const auto desktopShot = [&](const QString &name, QImage &shot, bool afterSwitch) {
+            if (shots.isEmpty())
+                return;
+            if (afterSwitch)
+                QTRY_VERIFY_WITH_TIMEOUT(presented.count() > 0, 10000);
+            QTest::qWait(500); // the window system's copy of the swapped frame
+            presented.clear();
+            const QRectF r = presenter->mapRectToScene(QRectF(0, 0, presenter->width(), presenter->height()));
+            const QPoint at = window->mapToGlobal(r.topLeft().toPoint());
+            shot = window->screen()->grabWindow(0, at.x(), at.y(), int(r.width()), int(r.height())).toImage();
+            QVERIFY(!shot.isNull());
+            QVERIFY(QDir().mkpath(shots));
+            QVERIFY(shot.save(shots + QStringLiteral("/w2-desktop-") + name + QStringLiteral(".png")));
+            qInfo().noquote() << "W2 desktop" << name << QGuiApplication::platformName() << shot.size();
+        };
+        const auto pixelsApart = [](const QImage &a, const QImage &b) {
+            if (a.size() != b.size())
+                return qsizetype(-1);
+            const QImage x = a.convertToFormat(QImage::Format_RGB32), y = b.convertToFormat(QImage::Format_RGB32);
+            qsizetype n = 0;
+            for (int row = 0; row < x.height(); ++row)
+                for (int col = 0; col < x.width(); ++col)
+                    n += x.pixel(col, row) != y.pixel(col, row);
+            return n;
+        };
+        QImage libassShot;
+        desktopShot(QStringLiteral("libass"), libassShot, false);
         auto restore = qScopeGuard([&] { application->settingsStore()->reset(QStringLiteral("video.subtitleProvider")); });
         application->settingsStore()->set("video.subtitleProvider", QStringLiteral("xy-vsfilter_textsub"));
 #ifdef HIKARI_WITH_VSFILTER
         QCOMPARE(renderer.activeName(), std::string("xy-vsfilter_textsub"));
         QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() != libass && !session.lastOverlay()->empty, 20000);
         const auto vsfilter = session.lastOverlay();
+        QImage vsfilterShot;
+        desktopShot(QStringLiteral("xy-vsfilter"), vsfilterShot, true);
+        if (!shots.isEmpty())
+            QVERIFY2(pixelsApart(libassShot, vsfilterShot) > 0, "the screen shows the same picture after the switch");
         QCOMPARE(vsfilter->width, libass->width);
         QCOMPARE(vsfilter->height, libass->height);
         QVERIFY(vsfilter->pixels != libass->pixels); // another renderer drew it
@@ -5167,6 +5208,10 @@ private slots:
         QCOMPARE(renderer.activeName(), std::string("libass"));
         QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() != vsfilter, 20000);
         QVERIFY(session.lastOverlay()->pixels == libass->pixels);
+        QImage againShot;
+        desktopShot(QStringLiteral("libass-again"), againShot, true);
+        if (!shots.isEmpty())
+            QVERIFY2(pixelsApart(libassShot, againShot) == 0, "libass's picture differs on the screen after switching back");
 #elif defined(_WIN32)
         // No CSRI renderer beside the tests: legacy "Cannot initialize
         // CSRI." and nothing drawn; there is no fallback to libass.
@@ -5181,6 +5226,9 @@ private slots:
         QCOMPARE(renderer.activeName(), std::string("libass"));
         QCOMPARE(renderer.providers(), std::vector<std::string>{"libass"});
         QCOMPARE(session.lastOverlay(), libass); // nothing was drawn again
+#endif
+#ifndef HIKARI_WITH_VSFILTER
+        Q_UNUSED(pixelsApart);
 #endif
     }
 
@@ -16263,6 +16311,77 @@ private slots:
         QVERIFY(!application->videoView().canSnapshot()); // legacy: only while paused
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, c);
         QTRY_VERIFY(!application->video().playing());
+    }
+
+    // V4 on the system clipboard: both copies (VIDEO_COPY_FRAME_TO_CLIPBOARD,
+    // VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD; legacy RendererVideo::SaveFrame put
+    // a wxBitmapDataObject there) read back by another process. Windows:
+    // tools/winix/clipboard-image.ps1 (System.Windows.Forms.Clipboard's
+    // GetImage, the device-independent bitmap other programs paste); X11:
+    // xclip's image/png. The owner hands the image over through its own
+    // event loop, so the reader is waited for without blocking it. Skipped
+    // where the clipboard is this process's own (offscreen) or no reader
+    // exists; winix task v4-clipboard-window fails on that skip.
+    void videoSnapshotsReachTheSystemClipboard()
+    {
+        const QString platform = QGuiApplication::platformName();
+        const QString out = QDir(QDir::tempPath()).filePath(QStringLiteral("hikari-clipboard-readback.png"));
+        QString program;
+        QStringList arguments;
+#ifdef Q_OS_WIN
+        if (platform != QLatin1String("windows"))
+            QSKIP(qPrintable(QStringLiteral("the %1 platform's clipboard is this process's own").arg(platform)));
+        program = QStringLiteral("powershell.exe");
+        arguments = {QStringLiteral("-NoProfile"), QStringLiteral("-STA"), QStringLiteral("-ExecutionPolicy"),
+                     QStringLiteral("Bypass"), QStringLiteral("-File"),
+                     QDir::toNativeSeparators(QStringLiteral(HIKARI_UI_SOURCE_DIR "/../../tools/winix/clipboard-image.ps1")),
+                     QDir::toNativeSeparators(out)};
+#else
+        if (platform != QLatin1String("xcb"))
+            QSKIP(qPrintable(QStringLiteral("the %1 platform's clipboard is not X11's").arg(platform)));
+        program = QStandardPaths::findExecutable(QStringLiteral("xclip"));
+        if (program.isEmpty())
+            QSKIP("no xclip to read the X11 clipboard from another process");
+        arguments = {QStringLiteral("-selection"), QStringLiteral("clipboard"), QStringLiteral("-t"),
+                     QStringLiteral("image/png"), QStringLiteral("-o")};
+#endif
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(folder.isValid());
+        QVERIFY(v4Open(folder));
+        const auto &session = application->video().session();
+        const QImage plain = cpuReference(*session.lastFrame(), nullptr);
+        const QImage subbed = cpuReference(*session.lastFrame(), session.lastOverlay().get());
+        QVERIFY(plain != subbed);
+        auto *root = engine->rootObjects().first();
+        for (const auto &[action, expected] : {std::pair{"VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD", subbed},
+                                               std::pair{"VIDEO_COPY_FRAME_TO_CLIPBOARD", plain}}) {
+            QGuiApplication::clipboard()->clear();
+            QTest::qWait(60); // VideoBox::OnAccelerator drops the same action within 50 ms (VideoBox.cpp:1137)
+            QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QString::fromLatin1(action))));
+            QTRY_VERIFY(sameImage(QGuiApplication::clipboard()->image(), expected));
+            QFile::remove(out);
+            QProcess reader;
+#ifndef Q_OS_WIN
+            reader.setStandardOutputFile(out);
+#endif
+            reader.start(program, arguments);
+            QVERIFY2(reader.waitForStarted(10000), qPrintable(reader.errorString()));
+            QTRY_VERIFY_WITH_TIMEOUT(reader.state() == QProcess::NotRunning, 60000);
+            const QString said = QString::fromLocal8Bit(reader.readAllStandardOutput() + reader.readAllStandardError()).trimmed();
+            qInfo().noquote() << action << "read back by" << QFileInfo(program).fileName() << said;
+            QVERIFY2(reader.exitStatus() == QProcess::NormalExit && reader.exitCode() == 0, qPrintable(said));
+            const QImage read(out);
+            QVERIFY2(!read.isNull(), qPrintable(QStringLiteral("%1 wrote no image").arg(program)));
+            QVERIFY2(sameImage(read, expected),
+                     qPrintable(QStringLiteral("%1: read back %2x%3, copied %4x%5")
+                                    .arg(QLatin1String(action))
+                                    .arg(read.width())
+                                    .arg(read.height())
+                                    .arg(expected.width())
+                                    .arg(expected.height())));
+        }
+        QFile::remove(out);
     }
 
     // The Script properties YCbCr matrix reaches the video's colours: the
