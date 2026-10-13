@@ -8154,7 +8154,9 @@ private slots:
               {"editor.allowNumpadHotkeys", "Use numpad shortcuts in text fields"},
               {"video.visualWarningsOff", "Turn off visual tools warning"},
               {"video.dontAskForBadResolution", "Do not warn about resolution mismatch"},
-              {"automation.oldScriptsCompatibility", "Compatibility with older HikariSub scripts"}}},
+              {"automation.oldScriptsCompatibility", "Compatibility with older HikariSub scripts"},
+              // Y4-playres-ask, the rewrite's own
+              {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"}}},
             {"settingsPageConversion",
              {{"convert.styleCatalog", nullptr},
               {"convert.style", nullptr},
@@ -10674,6 +10676,141 @@ private slots:
         automation.cancelRun();
         QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
         QTRY_VERIFY(run->property("enabled").toBool());
+    }
+
+    // Y4-playres-ask (user decision 2026-10-13): a macro reads the script
+    // resolution of a Document without PlayResX/PlayResY; the question
+    // (ScriptResolutionDialog.qml) starts from the video's size, "Use video
+    // resolution" puts it back, "Always use the video resolution" shows the
+    // video's size in the fields it locks; Set writes the values and the
+    // macro goes on with them; Escape stops the macro.
+    bool resolutionScriptReady()
+    {
+        const std::string path = HIKARI_LUA_FIXTURES "/script-resolution.lua";
+        application->automation().load(path);
+        return QTest::qWaitFor([&] {
+            for (const auto &s : application->automation().scripts())
+                if (s.path == path && s.state == application::ScriptStatus::State::Ready)
+                    return true;
+            return false;
+        }, 30000);
+    }
+    bool runResolutionMacro(const std::string &name)
+    {
+        const std::string path = HIKARI_LUA_FIXTURES "/script-resolution.lua";
+        for (const auto &s : application->automation().scripts())
+            if (s.path == path)
+                for (std::size_t i = 0; i < s.info.macros.size(); ++i)
+                    if (s.info.macros[i].name == name)
+                        return application->automation().run(path, static_cast<int>(i));
+        return false;
+    }
+    QQuickWindow *openResolutionQuestion(const char *macro)
+    {
+        auto *dialog = mappingWindow("scriptResolutionDialog");
+        if (!dialog || !runResolutionMacro(macro))
+            return nullptr;
+        if (!QTest::qWaitFor([&] { return dialog->isVisible(); }, 30000))
+            return nullptr;
+        return dialog;
+    }
+    void scriptResolutionQuestionSetsItBeforeTheMacroGoesOn()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(scriptWithoutPlayRes()));
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().lastFrame() != nullptr, 20000);
+        closeMismatchQuestion();
+        QVERIFY(resolutionScriptReady());
+        auto *dialog = openResolutionQuestion("Read resolution");
+        QVERIFY(dialog);
+        QCOMPARE(dialog->title(), QStringLiteral("Script resolution"));
+        QCOMPARE(in(dialog, "scriptResolutionText")->property("text").toString(),
+                 QStringLiteral("This file has no script resolution, and “script-resolution.lua” needs one."));
+        auto *width = in(dialog, "scriptResolutionWidth");
+        auto *height = in(dialog, "scriptResolutionHeight");
+        auto *useVideo = in(dialog, "scriptResolutionUseVideo");
+        auto *always = in(dialog, "scriptResolutionAlways");
+        QCOMPARE(width->property("value").toInt(), 320);
+        QCOMPARE(height->property("value").toInt(), 240);
+        QVERIFY(useVideo->property("enabled").toBool());
+        QVERIFY(always->property("enabled").toBool());
+        QVERIFY(!always->property("checked").toBool());
+        // Typed values; "Use video resolution" puts the video's back.
+        width->setProperty("value", 1000);
+        height->setProperty("value", 500);
+        clickButton(dialog, "scriptResolutionUseVideo");
+        QCOMPARE(width->property("value").toInt(), 320);
+        QCOMPARE(height->property("value").toInt(), 240);
+        // "Always" locks the fields on the video's size.
+        width->setProperty("value", 1000);
+        QVERIFY(QMetaObject::invokeMethod(always, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(always, "toggled"));
+        QCOMPARE(width->property("value").toInt(), 320);
+        QVERIFY(!width->property("enabled").toBool());
+        QVERIFY(!useVideo->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(always, "toggle"));
+        QVERIFY(width->property("enabled").toBool());
+        width->setProperty("value", 640);
+        height->setProperty("value", 480);
+        clickButton(dialog, "scriptResolutionSet");
+        QTRY_VERIFY(!dialog->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
+        QVERIFY2(application->automation().log().contains(QStringLiteral("640 x 480, 640 x 480, PlayResX=640;PlayResY=480")),
+                 qPrintable(application->automation().log()));
+        const auto &doc = application->files().session(*application->workspace().editingTarget())->document();
+        QVERIFY(doc.scriptInfo(u8"PlayResX") == std::u8string(u8"640"));
+        QVERIFY(doc.scriptInfo(u8"PlayResY") == std::u8string(u8"480"));
+        QVERIFY(!application->settingsStore()->boolean("automation.scriptResolutionFromVideo"));
+        // The progress window closes: nothing to say.
+        QTRY_VERIFY(!mappingWindow("automationProgress")->isVisible());
+
+        // Escape stops the macro, quietly.
+        application->editor().undo();
+        QVERIFY(!application->files().session(*application->workspace().editingTarget())->document().scriptInfo(u8"PlayResX"));
+        dialog = openResolutionQuestion("Edit and read");
+        QVERIFY(dialog);
+        QTRY_COMPARE(QGuiApplication::focusWindow(), dialog);
+        QTest::keyClick(dialog, Qt::Key_Escape);
+        QTRY_VERIFY(!dialog->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
+        QVERIFY(application->automation().lastMessage().isEmpty());
+        const auto &after = application->files().session(*application->workspace().editingTarget())->document();
+        QVERIFY(!after.scriptInfo(u8"PlayResX"));
+        QVERIFY(after.lines().front()->text == std::u8string(u8"first"));
+        QTRY_VERIFY(!mappingWindow("automationProgress")->isVisible());
+    }
+
+    // The question in the four themes, written to HIKARI_RESOLUTION_SHOT_DIR
+    // when it is set (tools/review: the user's visual review).
+    void scriptResolutionQuestionScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_RESOLUTION_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_RESOLUTION_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        auto &settings = *application->settingsStore();
+        QVERIFY(application->openFile(scriptWithoutPlayRes()));
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().lastFrame() != nullptr, 20000);
+        closeMismatchQuestion();
+        QVERIFY(resolutionScriptReady());
+        auto *dialog = openResolutionQuestion("Read resolution");
+        QVERIFY2(dialog, qPrintable(application->automation().log() + application->automation().lastMessage()));
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            QTest::qWait(300);
+            QImage shot;
+            QTRY_VERIFY((shot = dialog->grabWindow(), !shot.isNull() && shot.width() > 0));
+            QVERIFY(shot.save(out + QStringLiteral("/y4-script-resolution-") + QLatin1String(code) + QStringLiteral(".png")));
+        }
+        QVERIFY(QMetaObject::invokeMethod(in(dialog, "scriptResolutionCancel"), "clicked"));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
     }
 
     // A4: legacy AudioBox's play commands hand the player the frames each

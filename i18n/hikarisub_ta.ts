@@ -444,6 +444,34 @@
         <source>The macro was force stopped; reload the script to use it again.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Script resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file has no script resolution, and “%1” needs one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use video resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always use the video resolution without asking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set</source>
+        <translation type="unfinished">அமை</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Colours</name>
@@ -4217,6 +4245,10 @@ after switching from full screen</source>
     <message>
         <source>Compatibility with older HikariSub scripts</source>
         <translation>பழைய HikariSub ச்கிரிப்டுகளுடன் இணக்கம்</translation>
+    </message>
+    <message>
+        <source>Set a missing script resolution from the video without asking</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose catalog</source>

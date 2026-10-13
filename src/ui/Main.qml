@@ -38,6 +38,7 @@ ApplicationWindow {
     required property AutomationManagerController automationManager
     required property AutomationDialogController automationDialogs
     required property AutomationFilePickerController automationPicker
+    required property ScriptResolutionPromptController automationResolution
     required property LogController log
     required property TagButtonsController tagButtons
     required property ColourPickerController colourPicker
@@ -4397,6 +4398,9 @@ ApplicationWindow {
     }
     AutomationFilePicker {
         picker: root.automationPicker
+    }
+    ScriptResolutionDialog {
+        prompt: root.automationResolution
     }
     AutomationNotices {
         automation: root.automation

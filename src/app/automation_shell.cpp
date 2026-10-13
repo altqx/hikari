@@ -1,5 +1,7 @@
 #include "hikari/app/automation_shell.h"
 
+#include "hikari/application/script_resolution.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
@@ -168,6 +170,26 @@ private:
     application::Workspace &m_workspace;
 };
 
+// Y4-playres-ask: the router's question, answered by the shell.
+class ResolutionAdapter : public application::ScriptResolutionPort {
+public:
+    using Reply = std::function<void(std::optional<application::Resolution>)>;
+    using Resolve = std::function<void(const application::ScriptResolutionRequest &, Reply)>;
+    ResolutionAdapter(Resolve resolve, std::function<void()> withdraw)
+        : m_resolve(std::move(resolve)), m_withdraw(std::move(withdraw))
+    {
+    }
+    void resolve(const application::ScriptResolutionRequest &request, Reply reply) override
+    {
+        m_resolve(request, std::move(reply));
+    }
+    void withdraw() override { m_withdraw(); }
+
+private:
+    Resolve m_resolve;
+    std::function<void()> m_withdraw;
+};
+
 QString refusalText(const application::MacroApplyFailure &failure)
 {
     switch (failure.refusal.value_or(application::CommandRefusal::Invalid)) {
@@ -195,6 +217,12 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     m_router.setClipboard(&m_clipboard);
     m_router.setTextMeasure(&m_measure);
     m_router.setFilePicker(&m_picker);
+    m_resolutionPort = std::make_unique<ResolutionAdapter>(
+        [this](const application::ScriptResolutionRequest &request, ResolutionAdapter::Reply reply) {
+            resolveScriptResolution(request, std::move(reply));
+        },
+        [this] { m_resolutionPrompt.withdraw(); });
+    m_router.setScriptResolution(m_resolutionPort.get());
     m_router.setPathContext([this] {
         application::AutomationPathContext c;
         c.automationDir = QDir::toNativeSeparators(m_paths.automationDir).toStdString();
@@ -512,6 +540,49 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     return true;
 }
 
+void AutomationShell::resolveScriptResolution(const application::ScriptResolutionRequest &request,
+                                              std::function<void(std::optional<application::Resolution>)> reply)
+{
+    auto *s = m_run ? session(m_run->target) : nullptr;
+    // Nothing to write into (a Document that is not ASS has no Script Info
+    // for it), or nothing missing: legacy's values, nothing written.
+    if (!s || s->document().format() != core::SubtitleFormat::Ass ||
+        !application::lacksScriptResolution(request.written))
+        return reply(std::nullopt);
+    std::optional<application::Resolution> video;
+    if (const auto size = m_media->videoSize(); size && size->width > 0 && size->height > 0)
+        video = application::Resolution{size->width, size->height};
+    // The user chose to take it from the video without being asked.
+    if (video && m_settings && m_settings->boolean("automation.scriptResolutionFromVideo")) {
+        m_run->resolution = *video;
+        return reply(*video);
+    }
+    // No window to ask in (tests, a session without a view): the macro
+    // goes on with legacy's values and nothing is written.
+    if (!m_resolutionPrompt.asking())
+        return reply(std::nullopt);
+    ui::ScriptResolutionPromptController::Question question;
+    question.script = prettyName(request.script.empty() ? m_run->path : request.script);
+    question.suggested = application::suggestedScriptResolution(s->document(), video);
+    question.video = video;
+    m_resolutionPrompt.ask(std::move(question), [this, reply](std::optional<ui::ScriptResolutionPromptController::Answer> answer) {
+        if (!m_run)
+            return;
+        if (!answer) {
+            // Cancel: the macro does not go on (the run ends cancelled, quietly).
+            m_run->declined = true;
+            m_manager.cancel();
+            return;
+        }
+        if (answer->alwaysFromVideo && m_settings) {
+            m_settings->set("automation.scriptResolutionFromVideo", true);
+            m_settings->sync();
+        }
+        m_run->resolution = answer->resolution;
+        reply(answer->resolution);
+    });
+}
+
 void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutcome outcome, const QString &message)
 {
     if (!m_run)
@@ -523,6 +594,15 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
         s->setReadOnly(false);
     m_router.withdraw();
     m_dialogs.withdraw();
+    // Y4-playres-ask: the resolution set while the macro ran is its own undo
+    // step, before the macro's (whatever the macro's outcome: the user set
+    // it). The macro staged the same keys, so its result is read against the
+    // snapshot as it is now.
+    if (s && run.resolution && s->revision() == run.snapshot.revision &&
+        application::setScriptResolution(*s, *run.resolution)) {
+        application::setStagedScriptResolution(run.snapshot.info, *run.resolution);
+        run.snapshot.revision = s->revision();
+    }
     bool ok = false;
     QString text;
     using Outcome = backends::LuaScriptHost::RunOutcome;
@@ -539,7 +619,9 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     }
     case Outcome::Failed: text = message; break;
     case Outcome::Cancelled:
-        text = QCoreApplication::translate("HikariSub.Automation", "The macro was cancelled; nothing was changed.");
+        // A user who declined to set the script resolution chose not to run it.
+        if (!run.declined)
+            text = QCoreApplication::translate("HikariSub.Automation", "The macro was cancelled; nothing was changed.");
         break;
     case Outcome::HelperLost:
         text = QCoreApplication::translate("HikariSub.Automation", "The script's helper ended; reload the script to use it again.");

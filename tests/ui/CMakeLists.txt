@@ -179,6 +179,14 @@ target_compile_definitions(hikari_ui_automation_document_scripts_tests PRIVATE
     HIKARI_S4_SCRIPTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/document-scripts")
 add_dependencies(hikari_ui_automation_document_scripts_tests hikari_lua_helper hikari_automation_stage
     hikari_media_helper hikari_media_fixtures)
+# Y4-playres-ask: the script resolution question with real Lua helpers and media.
+hikari_add_qttest(hikari_ui_automation_resolution_tests SOURCES automation_resolution_tests.cpp
+    LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_automation_resolution_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
+    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
+add_dependencies(hikari_ui_automation_resolution_tests hikari_lua_helper hikari_automation_stage
+    hikari_media_helper hikari_media_fixtures)
 hikari_add_spix_test(hikari_ui_close_workflow SOURCES close_workflow.cpp LIBRARIES hikari_composition)
 hikari_add_spix_test(hikari_ui_open_workflow SOURCES open_workflow.cpp LIBRARIES hikari_composition)
 # S1: automation in the shell (Spix workflow, real helpers and video).

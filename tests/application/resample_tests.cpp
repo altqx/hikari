@@ -2,6 +2,7 @@
 // resample dialogs' OK at 20d647c4.
 
 #include "hikari/application/resample.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/style.h"
@@ -127,6 +128,75 @@ TEST(Resample, ScriptResolutionDefaults)
     EXPECT_EQ(scriptResolution(load("[Script Info]\nTitle: x\n")), (Resolution{1280, 720}));
     EXPECT_EQ(scriptResolution(load("[Script Info]\nPlayResY: 480\n")), (Resolution{853, 480}));
     EXPECT_EQ(scriptResolution(load("[Script Info]\nPlayResX: 1920\n")), (Resolution{1920, 1080}));
+}
+
+// Y4-playres-ask (user decision 2026-10-13): what GetASSRes tested, the
+// values it gave, without its write.
+TEST(ScriptResolution, MissingValuesAreFoundWithoutWriting)
+{
+    const auto bare = load("[Script Info]\nTitle: x\n");
+    EXPECT_EQ(writtenScriptResolution(bare), (Resolution{0, 0}));
+    EXPECT_TRUE(lacksScriptResolution(writtenScriptResolution(bare)));
+    EXPECT_TRUE(lacksScriptResolution(writtenScriptResolution(load("[Script Info]\nPlayResX: 1920\n"))));
+    EXPECT_TRUE(lacksScriptResolution(writtenScriptResolution(load("[Script Info]\nPlayResX: 0\nPlayResY: 720\n"))));
+    EXPECT_FALSE(lacksScriptResolution(writtenScriptResolution(load("[Script Info]\nPlayResX: 640\nPlayResY: 360\n"))));
+    // The last entry wins, as AddSInfo replaced it (and wxAtoi reads "720p" as 720).
+    EXPECT_EQ(writtenScriptResolution(load("[Script Info]\nPlayResX: 1\nPlayResX: 640\nPlayResY: 720p\n")),
+              (Resolution{640, 720}));
+    EXPECT_EQ(legacyScriptResolution({0, 0}), (Resolution{1280, 720}));
+    EXPECT_EQ(legacyScriptResolution({0, 480}), (Resolution{853, 480}));
+    EXPECT_EQ(legacyScriptResolution({1920, -1}), (Resolution{1920, 1080}));
+    // Reading never writes.
+    EXPECT_FALSE(bare.scriptInfo(u8"PlayResX"));
+    const std::vector<MacroInfoLine> staged{{"Title", "x"}, {"PlayResY", "480"}};
+    EXPECT_EQ(writtenScriptResolution(staged), (Resolution{0, 480}));
+}
+
+// The question starts from the open video's size, else legacy's values.
+TEST(ScriptResolution, TheSuggestionIsTheVideosElseLegacys)
+{
+    const auto bare = load("[Script Info]\nTitle: x\n");
+    EXPECT_EQ(suggestedScriptResolution(bare, Resolution{1920, 1080}), (Resolution{1920, 1080}));
+    EXPECT_EQ(suggestedScriptResolution(bare, std::nullopt), (Resolution{1280, 720}));
+    EXPECT_EQ(suggestedScriptResolution(bare, Resolution{0, 0}), (Resolution{1280, 720}));
+    EXPECT_EQ(suggestedScriptResolution(load("[Script Info]\nPlayResY: 480\n"), std::nullopt), (Resolution{853, 480}));
+}
+
+// Setting it is one undoable step; both keys are written, an existing one
+// in place and a missing one after the section's last property.
+TEST(ScriptResolution, SettingItIsOneUndoableStep)
+{
+    EditSession session{load("[Script Info]\nTitle: x\nPlayResY: 480\nScriptType: v4.00+\n\n[Events]\n"
+                             "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")};
+    const auto before = saved(session.document());
+    const auto steps = session.historySize();
+    ASSERT_TRUE(setScriptResolution(session, {1920, 1080}));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.history().back().name, kScriptResolutionStep);
+    EXPECT_TRUE(saved(session.document())
+                    .starts_with("[Script Info]\nTitle: x\nPlayResY: 1080\nScriptType: v4.00+\nPlayResX: 1920\n\n[Events]"))
+        << saved(session.document());
+    // The same values again change nothing and add no step.
+    ASSERT_TRUE(setScriptResolution(session, {1920, 1080}));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(saved(session.document()), before);
+    // Not below 1x1, and not on a read-only (macro-owned) Document.
+    EXPECT_FALSE(setScriptResolution(session, {0, 720}));
+    session.setReadOnly(true);
+    EXPECT_FALSE(setScriptResolution(session, {1280, 720}));
+    EXPECT_EQ(saved(session.document()), before);
+}
+
+// The staged Script Info follows Document::setScriptInfo: the last entry of
+// the key takes the value, else it is added at the end.
+TEST(ScriptResolution, StagedScriptInfoFollowsTheDocument)
+{
+    std::vector<MacroInfoLine> info{{"Title", "x"}, {"PlayResX", "1"}, {"PlayResX", "2"}, {"WrapStyle", "0"}};
+    setStagedScriptResolution(info, {640, 360});
+    EXPECT_EQ(info, (std::vector<MacroInfoLine>{{"Title", "x"}, {"PlayResX", "1"}, {"PlayResX", "640"},
+                                                {"WrapStyle", "0"}, {"PlayResY", "360"}}));
 }
 
 TEST(Resample, ChangeResolutionIsOneStep)

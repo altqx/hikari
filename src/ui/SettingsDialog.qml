@@ -348,6 +348,8 @@ Dialog {
                     SettingCheck { setting: "video.visualWarningsOff"; text: qsTr("Turn off visual tools warning") }
                     SettingCheck { setting: "video.dontAskForBadResolution"; text: qsTr("Do not warn about resolution mismatch") }
                     SettingCheck { setting: "automation.oldScriptsCompatibility"; text: qsTr("Compatibility with older HikariSub scripts") }
+                    // Y4-playres-ask: the script resolution question's "Always" choice.
+                    SettingCheck { setting: "automation.scriptResolutionFromVideo"; text: qsTr("Set a missing script resolution from the video without asking") }
                 }
             }
 

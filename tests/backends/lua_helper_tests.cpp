@@ -643,6 +643,7 @@ struct FakeServices {
     bool available = true;
     bool audio = true;        // FrequencyPeaks: Unavailable without audio
     std::int64_t peaksStatus = 0; // 1: an audio box without audio yet
+    std::vector<std::int64_t> resolution{1920, 1080}; // ScriptResolution's answer; empty: Unavailable
 
     LuaScriptHost::ServiceHandler handler()
     {
@@ -685,6 +686,11 @@ struct FakeServices {
             case HostService::EditorCursor: out.integers = {7}; break;
             case HostService::EditorSelection: out.integers = {7, 3}; break;
             case HostService::EditorModified: out.integers = {1}; break;
+            case HostService::ScriptResolution:
+                if (resolution.empty())
+                    return reply(HostServiceReply::unavailable());
+                out.integers = resolution;
+                break;
             case HostService::FrequencyPeaks:
                 if (!audio)
                     return reply(HostServiceReply::unavailable());
@@ -731,6 +737,89 @@ TEST_F(LuaHelper, MediaServicesAnswerInTheLegacyShapes)
     using hikari::application::HostService;
     EXPECT_EQ(services.requests.back().service, HostService::Frame);
     EXPECT_EQ(services.requests.back().integers, (std::vector<std::int64_t>{3, 1}));
+}
+
+// Y4-playres-ask (user decision 2026-10-13): legacy LuaGetScriptResolution
+// read GetASSRes, which wrote a missing PlayResX/PlayResY (1280x720 or a 16:9
+// partner) as it read them. Here the host is asked while one is missing; its
+// answer is written into the staged Script Info (the macro sees it, and its
+// result holds it); no answer gives legacy's values and writes nothing.
+TEST_F(LuaHelper, ScriptResolutionAsksTheHostWhileItIsMissing)
+{
+    using namespace hikari::application;
+    using hikari::application::HostService;
+    const auto withInfo = [](std::string_view extra) {
+        std::string text(kMacroScript);
+        text.insert(text.find("ScriptType"), extra);
+        std::vector<std::byte> bytes(text.size());
+        std::memcpy(bytes.data(), text.data(), bytes.size());
+        return EditSession(hikari::core::loadAss(bytes).document);
+    };
+    const auto asked = [](const FakeServices &f) {
+        std::vector<std::vector<std::int64_t>> out;
+        for (const auto &r : f.requests)
+            if (r.service == HostService::ScriptResolution)
+                out.push_back(r.integers);
+        return out;
+    };
+    FakeServices services;
+    auto host = load(fixture("script-resolution.lua"), services.handler());
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+
+    // Both missing: asked once with what the script holds; the answer is
+    // written (after the last property) and read back the second time.
+    auto session = macroSession();
+    auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Read resolution"), *snapshot, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log.value(0), "1920 x 1080, 1920 x 1080, PlayResX=1920;PlayResY=1080");
+    EXPECT_EQ(asked(services), (std::vector<std::vector<std::int64_t>>{{0, 0}}));
+    ASSERT_TRUE(host->lastResult());
+    auto info = snapshot->info;
+    info.push_back({"PlayResX", "1920"});
+    info.push_back({"PlayResY", "1080"});
+    EXPECT_EQ(host->lastResult()->info, info);
+
+    // One missing: asked with the other; an existing key keeps its place.
+    services.requests.clear();
+    auto half = withInfo("PlayResY: 480\n");
+    snapshot = snapshotForMacro(half);
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Read resolution"), *snapshot, run));
+    EXPECT_EQ(run.log.value(0), "1920 x 1080, 1920 x 1080, PlayResY=1080;PlayResX=1920");
+    EXPECT_EQ(asked(services), (std::vector<std::vector<std::int64_t>>{{0, 480}}));
+
+    // karaskel's collect_head reads it the same way.
+    services.requests.clear();
+    snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Karaskel head"), *snapshot, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log.value(0), "1920 x 1080");
+    EXPECT_EQ(asked(services).size(), 1u);
+
+    // Both set: never asked.
+    services.requests.clear();
+    auto set = withInfo("PlayResX: 640\nPlayResY: 360\n");
+    snapshot = snapshotForMacro(set);
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Read resolution"), *snapshot, run));
+    EXPECT_EQ(run.log.value(0), "640 x 360, 640 x 360, PlayResX=640;PlayResY=360");
+    EXPECT_TRUE(asked(services).empty());
+
+    // No answer: legacy's values, nothing written (asked again next time).
+    services.requests.clear();
+    services.resolution.clear();
+    snapshot = snapshotForMacro(half);
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Read resolution"), *snapshot, run));
+    EXPECT_EQ(run.log.value(0), "853 x 480, 853 x 480, PlayResY=480");
+    EXPECT_EQ(asked(services).size(), 2u);
+    EXPECT_EQ(host->lastResult()->info, snapshot->info);
+    snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Read resolution"), *snapshot, run));
+    EXPECT_EQ(run.log.value(0), "1280 x 720, 1280 x 720, ");
+    // Without any handler the host answers Unavailable itself.
+    auto bare = load(fixture("script-resolution.lua"));
+    ASSERT_TRUE(runMacro(*bare, macro(*bare, "Read resolution"), *snapshot, run));
+    EXPECT_EQ(run.log.value(0), "1280 x 720, 1280 x 720, ");
 }
 
 TEST_F(LuaHelper, UnavailableServicesReturnNil)

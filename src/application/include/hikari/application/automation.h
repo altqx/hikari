@@ -170,14 +170,17 @@ struct MacroResult {
 //                             numbers {intensities} (status 1: an audio box without audio yet; Unavailable: none)
 //   Gettext                   strings {source} -> strings {text} (O5: aegisub.gettext through the
 //                             HikariSub.Automation.Gettext QM; Unavailable or no string: the source)
+//   ScriptResolution          integers {PlayResX, PlayResY as staged, 0 missing} -> integers {width, height}
+//                             (Y4-playres-ask: asked only while one is missing; the answer is written into
+//                             the staged Script Info; Unavailable: legacy's values, nothing written)
 // Unavailable is the legacy nil: no video, no Document, a cancelled picker.
 enum class HostService : std::int32_t {
     FrameFromMs = 1, MsFromFrame, VideoSize, Keyframes, Frame, AudioSelection, ProjectProperties, TextExtents,
     ClipboardGet, ClipboardSet, OpenFiles, SaveFile, StatusText, DecodePath, FileName,
     EditorCursor, SetEditorCursor, EditorSelection, SetEditorSelection, EditorModified,
-    FrequencyPeaks, Gettext,
+    FrequencyPeaks, Gettext, ScriptResolution,
 };
-inline constexpr std::int32_t kLastHostService = static_cast<std::int32_t>(HostService::Gettext);
+inline constexpr std::int32_t kLastHostService = static_cast<std::int32_t>(HostService::ScriptResolution);
 
 struct HostServiceRequest {
     HostService service = HostService::FrameFromMs;
