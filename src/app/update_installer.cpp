@@ -62,7 +62,16 @@ bool isNative(PackageKind kind)
 #ifndef _WIN32
 bool alive(qint64 pid)
 {
-    return pid > 0 && (::kill(pid_t(pid), 0) == 0 || errno == EPERM);
+    if (pid <= 0 || (::kill(pid_t(pid), 0) != 0 && errno != EPERM))
+        return false;
+    // A detached child that has exited stays a zombie until its new parent
+    // reaps it, and a container's init may never do that: a zombie is gone.
+    QFile stat(QStringLiteral("/proc/%1/stat").arg(pid));
+    if (!stat.open(QIODevice::ReadOnly))
+        return true;
+    const QByteArray line = stat.read(1024);
+    const qsizetype close = line.lastIndexOf(')');
+    return close < 0 || close + 2 >= line.size() || line.at(close + 2) != 'Z';
 }
 
 // rename(2): atomic, and it replaces the target, which QFile::rename does not.
