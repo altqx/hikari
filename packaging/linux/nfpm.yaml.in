@@ -32,7 +32,11 @@ contents:
     dst: /opt/hikarisub/package-kind.txt
     packager: rpm
     file_info: {mode: 0644}
-  # The updater's root helper and its polkit action (spec 4.4).
+  # The updater's root helper and its polkit action (spec 4.4). The rpm
+  # must own libexec/, which is outside the tree, or removal leaves it.
+  - dst: /opt/hikarisub/libexec
+    type: dir
+    file_info: {mode: 0755}
   - src: "@HELPER@"
     dst: /opt/hikarisub/libexec/hikarisub-update-helper
     file_info: {mode: 0755}
