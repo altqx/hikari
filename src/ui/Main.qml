@@ -4027,42 +4027,46 @@ ApplicationWindow {
     // D1: a layout that could not be restored is named here, with the way back.
     // ADR 0019: below it, a downloaded update that is ready to install.
     header: ColumnLayout {
-      spacing: 0
-      Pane {
-        objectName: "layoutNotice"
-        visible: root.workspaceLayout.notice.length > 0
-        padding: 6
-        Layout.fillWidth: true
-        RowLayout {
-            anchors.fill: parent
-            Label {
-                objectName: "layoutNoticeText"
-                text: root.workspaceLayout.notice
-                wrapMode: Text.WordWrap
-                Layout.fillWidth: true
-                Accessible.role: Accessible.AlertMessage
-            }
-            Button {
-                text: qsTranslate("HikariSub.Workspace", "Restore the previous layout")
-                visible: root.workspaceLayout.hasBackup
-                onClicked: root.workspaceLayout.restoreBackup()
-            }
-            Button {
-                text: qsTranslate("HikariSub.Workspace", "Dismiss")
-                onClicked: root.workspaceLayout.dismissNotice()
+        objectName: "noticeArea"
+        spacing: 0
+        visible: layoutNotice.visible || updateReadyBar.visible
+        Pane {
+            id: layoutNotice
+            objectName: "layoutNotice"
+            visible: root.workspaceLayout.notice.length > 0
+            padding: 6
+            Layout.fillWidth: true
+            RowLayout {
+                anchors.fill: parent
+                Label {
+                    objectName: "layoutNoticeText"
+                    text: root.workspaceLayout.notice
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                    Accessible.role: Accessible.AlertMessage
+                }
+                Button {
+                    text: qsTranslate("HikariSub.Workspace", "Restore the previous layout")
+                    visible: root.workspaceLayout.hasBackup
+                    onClicked: root.workspaceLayout.restoreBackup()
+                }
+                Button {
+                    text: qsTranslate("HikariSub.Workspace", "Dismiss")
+                    onClicked: root.workspaceLayout.dismissNotice()
+                }
             }
         }
-      }
-      UpdateReadyBar {
-        updates: root.updates
-        Layout.fillWidth: true
-        // The normal quit follows: its review of unsaved work, then the
-        // installer. A cancelled review keeps the update for later.
-        onRestartRequested: {
-            root.updates.installer.restartNow()
-            root.close()
+        UpdateReadyBar {
+            id: updateReadyBar
+            updates: root.updates
+            Layout.fillWidth: true
+            // The normal quit follows: its review of unsaved work, then the
+            // installer. A cancelled review keeps the update for later.
+            onRestartRequested: {
+                root.updates.installer.restartNow()
+                root.close()
+            }
         }
-      }
     }
 
     footer: ColumnLayout {
