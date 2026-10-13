@@ -16,6 +16,33 @@ namespace {
 
 using application::HostServiceReply;
 
+bool windowsPaths()
+{
+#ifdef _WIN32
+    return true;
+#else
+    return false;
+#endif
+}
+
+application::AutomationFolders folders(const AutomationShell::Paths &paths)
+{
+    const auto native = [](const QString &dir) { return QDir::toNativeSeparators(dir).toStdString(); };
+    return application::automationFolders(native(paths.automationDir),
+                                          paths.userAutomationDir.isEmpty() ? std::string() : native(paths.userAutomationDir),
+                                          windowsPaths());
+}
+
+// The include folders after the script's own, one per line (the helper's
+// Load message, lua_helper.cpp).
+QString sharedIncludes(const AutomationShell::Paths &paths)
+{
+    QStringList dirs;
+    for (const auto &dir : folders(paths).include)
+        dirs << QString::fromStdString(dir);
+    return dirs.join(QLatin1Char('\n'));
+}
+
 // Media and Document answers for the macro's host services (legacy
 // Automation.cpp frame_from_ms, video_size, get_frame, project_properties...).
 class MediaAdapter : public application::MacroMediaPort {
@@ -186,8 +213,11 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
                                  ui::ShellController &shell, application::IndexedSourcePort &, QObject *parent)
     : QObject(parent), m_paths(std::move(paths)), m_files(files), m_workspace(workspace), m_editor(editor),
       m_video(video), m_shell(shell),
-      m_manager(m_paths.helper, QDir(m_paths.automationDir).filePath(QStringLiteral("automation/Include")))
+      m_manager(m_paths.helper, sharedIncludes(m_paths))
 {
+    // An installed copy makes its Automation folder as a portable one ships it.
+    for (const auto &dir : folders(m_paths).made)
+        QDir().mkpath(QDir::fromNativeSeparators(QString::fromStdString(dir)));
     m_media = std::make_unique<MediaAdapter>(video, files, workspace);
     m_editorPort = std::make_unique<EditorAdapter>(editor, shell, files, workspace);
     m_router.setMedia(m_media.get());
@@ -198,6 +228,8 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     m_router.setPathContext([this] {
         application::AutomationPathContext c;
         c.automationDir = QDir::toNativeSeparators(m_paths.automationDir).toStdString();
+        if (!m_paths.userAutomationDir.isEmpty())
+            c.userAutomationDir = QDir::toNativeSeparators(m_paths.userAutomationDir).toStdString();
         c.dictionaryDir = QDir::toNativeSeparators(QDir(m_paths.automationDir).filePath(QStringLiteral("../Dictionary")))
                               .toStdString();
         const auto target = m_workspace.editingTarget();
@@ -259,19 +291,33 @@ QString AutomationShell::autoloadDir() const
     return QDir(m_paths.automationDir).filePath(QStringLiteral("automation/Autoload"));
 }
 
+QStringList AutomationShell::autoloadScripts() const
+{
+    std::vector<std::pair<std::string, std::vector<std::string>>> listed;
+    for (const auto &folder : folders(m_paths).autoload) {
+        std::vector<std::string> names;
+        const QDir dir(QString::fromStdString(folder));
+        for (const QString &file : dir.entryList({QStringLiteral("*.lua"), QStringLiteral("*.moon")}, QDir::Files, QDir::Name))
+            names.push_back(file.toStdString());
+        listed.emplace_back(folder, std::move(names));
+    }
+    QStringList scripts;
+    for (const auto &path : application::chooseAutoloadScripts(listed, windowsPaths()))
+        scripts << QString::fromStdString(path);
+    return scripts;
+}
+
 void AutomationShell::autoload()
 {
-    const QDir dir(autoloadDir());
-    for (const QString &file : dir.entryList({QStringLiteral("*.lua"), QStringLiteral("*.moon")}, QDir::Files, QDir::Name))
-        m_manager.load(QDir::toNativeSeparators(dir.filePath(file)).toStdString());
+    for (const QString &script : autoloadScripts())
+        m_manager.load(script.toStdString());
 }
 
 void AutomationShell::reloadAutoload()
 {
     // Legacy "Refresh autoload scripts": loaded ones run their top level again; new ones load.
-    const QDir dir(autoloadDir());
-    for (const QString &file : dir.entryList({QStringLiteral("*.lua"), QStringLiteral("*.moon")}, QDir::Files, QDir::Name)) {
-        const std::string path = QDir::toNativeSeparators(dir.filePath(file)).toStdString();
+    for (const QString &script : autoloadScripts()) {
+        const std::string path = script.toStdString();
         if (m_manager.host(path))
             m_manager.reload(path);
         else

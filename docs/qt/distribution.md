@@ -64,6 +64,10 @@ What the first passing release offers depends on the package kind:
 
 No flow installs a version that is not newer than the running one.
 
+## Automation folders
+
+A portable copy keeps the Automation folder beside the program, as legacy does. An installed copy cannot write its program folder, so what scripts write (`?user`, `?local` and `?temp`, logs and autosaves) goes to its own Automation folder in the app's data folder (`%APPDATA%\HikariSub\HikariSub\Automation`, `~/.local/share/HikariSub/HikariSub/Automation`), laid out as the shipped one. Autoload scripts load from the shipped `automation/Autoload`, then from `automation/Autoload` and DependencyControl's `automation/autoload` there; a script there replaces a shipped script of the same name. Its `automation/Include` and `include` are searched before the shipped `Include` ([L6-user-automation-folder](compatibility-decisions.md)).
+
 ## Versions and the move from legacy
 
 Legacy stays at 0.0.x and the rewrite starts at 0.1.0; `HIKARI_VERSION_SUFFIX` adds a prerelease (`0.1.0-beta.2`). deb and rpm versions put `~` before the prerelease inside the package (`0.1.0~beta.2-1`), never in the file name. Moving from legacy to the rewrite is an ordinary upgrade of one package (`hikarisub`, or `hikarisub-bin` on the AUR) or one installation.

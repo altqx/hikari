@@ -49,6 +49,10 @@ public:
     struct Paths {
         QString helper;        // the Lua helper program
         QString automationDir; // <application>/Automation, holding automation/{Autoload,Include}
+        // An installed copy's own Automation folder, where scripts write and
+        // the user's autoload and include scripts are (installers spec 1.7);
+        // empty: automationDir, as a portable copy has it.
+        QString userAutomationDir;
     };
     AutomationShell(Paths paths, application::DocumentFiles &files, application::Workspace &workspace,
                     ui::LineEditorController &editor, ui::VideoController &video, ui::ShellController &shell,
@@ -127,6 +131,8 @@ public:
     backends::AutomationManager &manager() { return m_manager; }
     QString includeDir() const;
     QString autoloadDir() const;
+    // The autoload scripts, a user's in place of a shipped one of its name.
+    QStringList autoloadScripts() const;
 
 signals:
     void progressChanged();

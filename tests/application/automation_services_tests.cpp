@@ -55,6 +55,77 @@ TEST(DecodePath, WindowsSeparators)
     EXPECT_EQ(decodeAutomationPath("?temp/x", c), "C:\\Hikari\\Automation\\temp\\x");
 }
 
+// Installers spec 1.7: an installed copy's scripts write to the user's
+// Automation folder; ?data stays the shipped one.
+TEST(DecodePath, InstalledCopyWritesToTheUsersFolder)
+{
+    auto c = linuxContext();
+    c.userAutomationDir = "/home/a/.local/share/HikariSub/HikariSub/Automation";
+    EXPECT_EQ(decodeAutomationPath("?data/a.lua", c), "/opt/hikari/Automation/a.lua");
+    EXPECT_EQ(decodeAutomationPath("?user/config", c), "/home/a/.local/share/HikariSub/HikariSub/Automation/config");
+    EXPECT_EQ(decodeAutomationPath("?local/cfg", c), "/home/a/.local/share/HikariSub/HikariSub/Automation/cfg");
+    EXPECT_EQ(decodeAutomationPath("?temp/t", c), "/home/a/.local/share/HikariSub/HikariSub/Automation/temp/t");
+    EXPECT_EQ(decodeAutomationPath("?dictionary/en.dic", c), "/opt/hikari/Dictionary/en.dic");
+
+    AutomationPathContext w{"", "", "", "C:\\Program Files\\HikariSub\\Automation", "C:\\Program Files\\HikariSub\\Dictionary", true};
+    w.userAutomationDir = "C:\\Users\\a\\AppData\\Roaming\\HikariSub\\HikariSub\\Automation";
+    EXPECT_EQ(decodeAutomationPath("?temp/x", w), "C:\\Users\\a\\AppData\\Roaming\\HikariSub\\HikariSub\\Automation\\temp\\x");
+    EXPECT_EQ(decodeAutomationPath("?data/x", w), "C:\\Program Files\\HikariSub\\Automation\\x");
+}
+
+TEST(AutomationFolders, PortableCopyHasTheShippedFolderOnly)
+{
+    const std::vector<std::string> autoload{"/apps/hikari/Automation/automation/Autoload"};
+    const std::vector<std::string> include{"/apps/hikari/Automation/automation/Include"};
+    for (const std::string &user : {std::string(), std::string("/apps/hikari/Automation")}) {
+        const auto f = automationFolders("/apps/hikari/Automation", user, false);
+        EXPECT_EQ(f.autoload, autoload);
+        EXPECT_EQ(f.include, include);
+        EXPECT_TRUE(f.made.empty());
+    }
+    // One folder spelt in another case on Windows.
+    const auto w = automationFolders("C:\\Hikari\\Automation", "c:\\hikari\\automation", true);
+    EXPECT_EQ(w.autoload.size(), 1u);
+    EXPECT_TRUE(w.made.empty());
+}
+
+TEST(AutomationFolders, InstalledCopyAddsTheUsersFolders)
+{
+    const auto f = automationFolders("/opt/hikarisub/Automation", "/home/a/.local/share/HikariSub/HikariSub/Automation", false);
+    const std::string u = "/home/a/.local/share/HikariSub/HikariSub/Automation";
+    EXPECT_EQ(f.autoload, (std::vector<std::string>{"/opt/hikarisub/Automation/automation/Autoload",
+                                                     u + "/automation/Autoload", u + "/automation/autoload"}));
+    EXPECT_EQ(f.include, (std::vector<std::string>{u + "/automation/Include", u + "/automation/include",
+                                                    "/opt/hikarisub/Automation/automation/Include"}));
+    EXPECT_EQ(f.made, (std::vector<std::string>{u + "/log", u + "/temp", u + "/autosave", u + "/automation/Autoload",
+                                                 u + "/automation/Include"}));
+
+    // Windows has one autoload and one include folder per root.
+    const auto w = automationFolders("C:\\Program Files\\HikariSub\\Automation", "C:\\Users\\a\\Automation\\", true);
+    EXPECT_EQ(w.autoload, (std::vector<std::string>{"C:\\Program Files\\HikariSub\\Automation\\automation\\Autoload",
+                                                     "C:\\Users\\a\\Automation\\automation\\Autoload"}));
+    EXPECT_EQ(w.include, (std::vector<std::string>{"C:\\Users\\a\\Automation\\automation\\Include",
+                                                    "C:\\Program Files\\HikariSub\\Automation\\automation\\Include"}));
+}
+
+TEST(AutomationFolders, AUserScriptReplacesTheShippedOne)
+{
+    const std::string s = "/opt/hikarisub/Automation/automation/Autoload";
+    const std::string u = "/home/a/Automation/automation/Autoload";
+    const std::string d = "/home/a/Automation/automation/autoload";
+    const auto chosen = chooseAutoloadScripts({{s, {"a.moon", "b.lua", "gradient-factory.lua", "notes.txt"}},
+                                               {u, {"gradient-factory.lua", "mine.LUA"}},
+                                               {d, {"Gradient-Factory.lua", "l0.DependencyControl.Toolbox.moon"}}},
+                                              false);
+    EXPECT_EQ(chosen, (std::vector<std::string>{s + "/a.moon", s + "/b.lua", u + "/gradient-factory.lua",
+                                                 u + "/mine.LUA", d + "/Gradient-Factory.lua",
+                                                 d + "/l0.DependencyControl.Toolbox.moon"}));
+    const auto windows = chooseAutoloadScripts({{"C:\\P\\Autoload", {"gradient-factory.lua", "b.lua"}},
+                                                {"C:\\U\\Autoload", {"Gradient-Factory.lua"}}},
+                                               true);
+    EXPECT_EQ(windows, (std::vector<std::string>{"C:\\U\\Autoload\\Gradient-Factory.lua", "C:\\P\\Autoload\\b.lua"}));
+}
+
 struct FakeMedia : MacroMediaPort {
     bool video = true;
     std::optional<std::function<void(std::optional<Frame>)>> pendingFrame;

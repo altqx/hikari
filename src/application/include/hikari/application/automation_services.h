@@ -99,12 +99,37 @@ struct AutomationPathContext {
     std::string automationDir;                      // <application>/Automation
     std::string dictionaryDir;                      // <application>/Dictionary
     bool windows = false;
+    // Where scripts write (?user, ?local, ?temp): the user's Automation
+    // folder of an installed copy, whose program folder is read-only.
+    // Empty: automationDir, as a portable copy has it.
+    std::string userAutomationDir;
 };
 
 // Legacy decode_path: "?audio", "?data", "?dictionary", "?local", "?script",
 // "?temp", "?user" and "?video" prefixes, recognised by their 2nd and 5th
 // characters, become directories; separators are normalised for the platform.
+// "?data" is the shipped Automation folder; "?user", "?local" and "?temp"
+// the user's (the legacy installed copy's data root, installers spec 1.7).
 std::string decodeAutomationPath(std::string path, const AutomationPathContext &context);
+
+// Automation's folders (legacy AutomationFolders.h), native, without a
+// trailing separator. A portable copy has the shipped Automation folder
+// only. An installed copy also has the user's, laid out as the shipped one:
+// its automation/Autoload and DependencyControl's lower-case
+// automation/autoload load after the shipped Autoload, and its
+// automation/Include and include come before the shipped Include.
+struct AutomationFolders {
+    std::vector<std::string> autoload; // the shipped one first
+    std::vector<std::string> include;  // searched in this order after the script's own
+    std::vector<std::string> made;     // made at start: log, temp, autosave, Autoload, Include
+};
+// user empty or the same folder as shipped: a portable copy.
+AutomationFolders automationFolders(const std::string &shipped, const std::string &user, bool windows);
+// The autoload scripts from each folder's file names, in folder order and the
+// order given: a later folder's script replaces an earlier one of the same
+// name (by case on Windows) in its place. Only .lua and .moon files.
+std::vector<std::string> chooseAutoloadScripts(
+    const std::vector<std::pair<std::string, std::vector<std::string>>> &folders, bool windows);
 
 class AutomationServiceRouter {
 public:

@@ -10,6 +10,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -1383,3 +1384,35 @@ TEST_F(LuaHelper, CaptureProbeCorpusRunsInThisHost)
 }
 
 } // namespace
+
+// Installers spec 1.7: an installed copy hands the helper its user Include
+// folders, one per line, before the shipped one. The user's come first, so
+// DependencyControl's modules in ?user/automation/include load and a user
+// module shadows a shipped one; the shipped modules still load.
+TEST_F(LuaHelper, SharedIncludesAreSearchedInOrder)
+{
+    QTemporaryDir user, scripts;
+    ASSERT_TRUE(user.isValid() && scripts.isValid());
+    const auto write = [](const QString &path, const QByteArray &text) {
+        QDir().mkpath(QFileInfo(path).absolutePath());
+        QFile file(path);
+        ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+        file.write(text);
+    };
+    const QString upper = user.filePath(QStringLiteral("automation/Include"));
+    const QString lower = user.filePath(QStringLiteral("automation/include"));
+    write(upper + QStringLiteral("/json.lua"), "return { who = 'user' }\n");
+    write(lower + QStringLiteral("/depctrl_module.lua"), "return { who = 'depctrl' }\n");
+    write(upper + QStringLiteral("/user-include.lua"), "INCLUDED = 'user include'\n");
+    const QString script = scripts.filePath(QStringLiteral("includes.lua"));
+    write(script, "include('user-include.lua')\n"
+                  "script_name = require('json').who .. ',' .. require('depctrl_module').who\n"
+                  "script_description = INCLUDED .. ',' .. type(require('moonscript'))\n");
+    LuaScriptHost host(QStringLiteral(HIKARI_LUA_HELPER), script,
+                       QStringList{upper, lower, QStringLiteral(HIKARI_LUA_INCLUDE)}.join(QLatin1Char('\n')));
+    host.load();
+    ASSERT_TRUE(waitFor([&] { return host.state() != LuaScriptHost::State::Loading; }));
+    ASSERT_EQ(host.state(), LuaScriptHost::State::Ready) << host.lastError().toStdString();
+    EXPECT_EQ(host.info().name, "user,depctrl");
+    EXPECT_EQ(host.info().description, "user include,table");
+}

@@ -60,7 +60,7 @@ namespace {
 struct Script {
     lua_State *L = nullptr;
     std::filesystem::path path;
-    std::vector<std::string> includePath; // the script's directory, then the shared one
+    std::vector<std::string> includePath; // the script's directory, then the shared ones
     int traceLevel = 3;
     ScriptInfo info;
     std::vector<int> features; // registry refs of {run, validate, isactive}
@@ -751,7 +751,17 @@ void load(Reader &in, Responder &r)
     g_script.path = fromUtf8(path);
     g_script.traceLevel = traceLevel;
     // Legacy include directories end with a separator (wxPATH_GET_SEPARATOR).
-    g_script.includePath = {toUtf8(g_script.path.parent_path()) + LUA_DIRSEP, sharedInclude + LUA_DIRSEP};
+    // The shared ones come one per line: an installed copy's user Include
+    // folders, then the shipped one (AutomationFolders).
+    g_script.includePath = {toUtf8(g_script.path.parent_path()) + LUA_DIRSEP};
+    for (std::size_t from = 0;;) {
+        const std::size_t end = sharedInclude.find('\n', from);
+        const std::string dir = sharedInclude.substr(from, end == std::string::npos ? std::string::npos : end - from);
+        g_script.includePath.push_back(dir + LUA_DIRSEP);
+        if (end == std::string::npos)
+            break;
+        from = end + 1;
+    }
     lua_State *L = luaL_newstate();
     if (!L)
         return r.terminal(Outcome::Failed, bytesOf("Could not initialize Lua state"));

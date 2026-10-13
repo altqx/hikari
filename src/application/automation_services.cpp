@@ -3,6 +3,8 @@
 #include "hikari/application/audio_spectrum.h"
 
 #include <algorithm>
+#include <cctype>
+#include <initializer_list>
 #include <memory>
 
 namespace hikari::application {
@@ -46,6 +48,79 @@ HostServiceReply strings(std::vector<std::string> values)
 
 } // namespace
 
+namespace {
+
+std::string folded(std::string text, bool windows)
+{
+    if (windows)
+        std::transform(text.begin(), text.end(), text.begin(), [](unsigned char ch) { return char(std::tolower(ch)); });
+    return text;
+}
+
+std::string joinAll(std::string dir, std::initializer_list<const char *> names, bool windows)
+{
+    for (const char *name : names) {
+        if (!dir.empty() && dir.back() != (windows ? '\\' : '/'))
+            dir += windows ? '\\' : '/';
+        dir += name;
+    }
+    return dir;
+}
+
+void addUnique(std::vector<std::string> &folders, const std::string &folder, bool windows)
+{
+    for (const auto &have : folders)
+        if (folded(have, windows) == folded(folder, windows))
+            return;
+    folders.push_back(folder);
+}
+
+} // namespace
+
+AutomationFolders automationFolders(const std::string &shipped, const std::string &user, bool windows)
+{
+    AutomationFolders f;
+    f.autoload.push_back(joinAll(shipped, {"automation", "Autoload"}, windows));
+    const bool installed = !user.empty() && folded(user, windows) != folded(shipped, windows);
+    if (installed) {
+        addUnique(f.autoload, joinAll(user, {"automation", "Autoload"}, windows), windows);
+        addUnique(f.autoload, joinAll(user, {"automation", "autoload"}, windows), windows);
+        addUnique(f.include, joinAll(user, {"automation", "Include"}, windows), windows);
+        addUnique(f.include, joinAll(user, {"automation", "include"}, windows), windows);
+        for (const char *sub : {"log", "temp", "autosave"})
+            f.made.push_back(joinAll(user, {sub}, windows));
+        f.made.push_back(joinAll(user, {"automation", "Autoload"}, windows));
+        f.made.push_back(joinAll(user, {"automation", "Include"}, windows));
+    }
+    addUnique(f.include, joinAll(shipped, {"automation", "Include"}, windows), windows);
+    return f;
+}
+
+std::vector<std::string> chooseAutoloadScripts(
+    const std::vector<std::pair<std::string, std::vector<std::string>>> &folders, bool windows)
+{
+    std::vector<std::pair<std::string, std::string>> chosen; // folded name, path
+    for (const auto &[folder, names] : folders) {
+        for (const auto &name : names) {
+            const auto dot = name.find_last_of('.');
+            const std::string ext = dot == std::string::npos ? std::string() : folded(name.substr(dot + 1), true);
+            if (ext != "lua" && ext != "moon")
+                continue;
+            const std::string key = folded(name, windows);
+            const std::string path = joinAll(folder, {name.c_str()}, windows);
+            const auto same = std::find_if(chosen.begin(), chosen.end(), [&](const auto &e) { return e.first == key; });
+            if (same != chosen.end())
+                same->second = path;
+            else
+                chosen.emplace_back(key, path);
+        }
+    }
+    std::vector<std::string> paths;
+    for (const auto &entry : chosen)
+        paths.push_back(entry.second);
+    return paths;
+}
+
 std::string decodeAutomationPath(std::string path, const AutomationPathContext &c)
 {
     // Legacy normalises '\\' to '/' off Windows, then '/' to '\\' on Windows.
@@ -54,6 +129,7 @@ std::string decodeAutomationPath(std::string path, const AutomationPathContext &
         return path; // legacy indexes [1] and [4] unchecked; short paths stay as given
     const char a = path[1], b = path[4];
     const auto replace = [&](std::size_t count, const std::string &with) { path.replace(0, count, with); };
+    const std::string &user = c.userAutomationDir.empty() ? c.automationDir : c.userAutomationDir;
     if (a == 'a' && b == 'i')
         replace(6, dirOf(c.audioPath, c.windows));
     else if (a == 'd' && b == 'a')
@@ -61,13 +137,13 @@ std::string decodeAutomationPath(std::string path, const AutomationPathContext &
     else if (a == 'd' && b == 't')
         replace(11, c.dictionaryDir);
     else if (a == 'l' && b == 'a')
-        replace(6, c.automationDir);
+        replace(6, user);
     else if (a == 's' && b == 'i')
         replace(7, dirOf(c.subtitlePath, c.windows));
     else if (a == 't' && b == 'p')
-        replace(5, join(c.automationDir, "temp", c.windows));
+        replace(5, join(user, "temp", c.windows));
     else if (a == 'u' && b == 'r')
-        replace(5, c.automationDir);
+        replace(5, user);
     else if (a == 'v' && b == 'e')
         replace(6, dirOf(c.videoPath, c.windows));
     return path;

@@ -504,7 +504,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         emit m_video->changed();
     }, Qt::QueuedConnection);
     m_automation = std::make_unique<AutomationShell>(
-        AutomationShell::Paths{luaHelperPath(options.luaHelper), automationPath(options.automationDir)}, *m_files,
+        AutomationShell::Paths{luaHelperPath(options.luaHelper), automationPath(options.automationDir),
+                               options.userAutomationDir},
+        *m_files,
         m_workspace, *m_editor, *m_video, *m_shell, *m_mediaSource);
     m_automation->setDocumentChanged([this] { refreshViews(); });
     if (options.autoload)

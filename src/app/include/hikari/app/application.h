@@ -132,6 +132,9 @@ public:
         // empty: next to the application, else the build tree's.
         QString luaHelper;
         QString automationDir;
+        // An installed copy's own Automation folder (AutomationShell::Paths);
+        // empty: automationDir.
+        QString userAutomationDir;
         // Load the Autoload scripts at start (the application does; tests choose).
         bool autoload = false;
         // INI file holding the settings registry; empty: in memory only (tests).

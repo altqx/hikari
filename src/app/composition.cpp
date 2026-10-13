@@ -113,6 +113,13 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     options.systemUiLanguages = QLocale::system().uiLanguages();
     // ADR 0019: the install's package kind, the update cache and installers.
     options.updateEnvironment = UpdateEnvironment::current();
+    // Installers spec 1.7: an installed copy cannot write its program folder,
+    // so what scripts write, and the user's own autoload and include
+    // scripts, are in the data folder's Automation, laid out as the shipped
+    // one. A portable copy keeps them beside the program.
+    if (options.updateEnvironment.package.kind != application::PackageKind::Portable)
+        options.userAutomationDir =
+            QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/Automation");
 #ifdef HIKARI_UPDATE_TEST_FEED
     // Test builds only: a local release feed (tools/update-feed).
     if (const QString feed = qEnvironmentVariable("HIKARISUB_UPDATE_FEED"); !feed.isEmpty()) {
@@ -174,13 +181,6 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
 
 int run(int argc, char **argv, StartupMode mode)
 {
-    std::vector<std::string> arguments;
-    for (int i = 1; i < argc; ++i)
-        arguments.emplace_back(argv[i]);
-    const auto startup = application::parseStartupArguments(arguments);
-    if (startup.printVersion) {
-        // 8.1: "<version> (<kind>)" without a display.
-        QCoreApplication core(argc, argv);
 #ifdef _WIN32
     // ADR 0019: the installing side of an update, before anything of the
     // program starts (no settings, no window, no mutex): it checks the
@@ -195,6 +195,13 @@ int run(int argc, char **argv, StartupMode mode)
             HIKARI_VERSION, currentPackageKind().kind == application::PackageKind::NsisMachine, feed);
     }
 #endif
+    std::vector<std::string> arguments;
+    for (int i = 1; i < argc; ++i)
+        arguments.emplace_back(argv[i]);
+    const auto startup = application::parseStartupArguments(arguments);
+    if (startup.printVersion) {
+        // 8.1: "<version> (<kind>)" without a display.
+        QCoreApplication core(argc, argv);
         std::printf("%s (%s)\n", HIKARI_VERSION, qPrintable(packageKindToken(currentPackageKind().kind)));
         return 0;
     }

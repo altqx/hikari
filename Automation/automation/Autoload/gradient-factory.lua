@@ -908,7 +908,8 @@ end
 
 --save config to disk from string
 function gradient.save_config_to_disk(confResult)
-	path = aegisub.decode_path("?data") .. "\\gradient-factory.conf"
+	-- ?user: the install folder (?data) is read-only in an installed copy.
+	path = aegisub.decode_path("?user") .. "/gradient-factory.conf"
 	handle = io.open(path, "w")
 	if handle then
 		handle:write(confResult)
@@ -919,8 +920,12 @@ end
 --load config from disk
 function gradient.load_config_from_disk()
 	local confResult = ""
-	path = aegisub.decode_path("?data") .. "\\gradient-factory.conf"
+	path = aegisub.decode_path("?user") .. "/gradient-factory.conf"
 	handle = io.open(path, "r")
+	if not handle then
+		-- Saved by an older version, beside the shipped scripts.
+		handle = io.open(aegisub.decode_path("?data") .. "/gradient-factory.conf", "r")
+	end
 	if handle then
 		confResult = handle:read("*all")
 		io.close(handle)
