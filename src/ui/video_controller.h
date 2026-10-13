@@ -29,7 +29,9 @@ class VideoController : public QObject {
     QML_UNCREATABLE("Provided by the application composition")
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY changed)
     Q_PROPERTY(QString status READ status NOTIFY textsChanged)
-    Q_PROPERTY(int frame READ frame NOTIFY changed)
+    // The frame the seek bar and the status show: while playing the player's
+    // (legacy GetCurrentFrame), at the texts' pace like legacy's slider.
+    Q_PROPERTY(int frame READ frame NOTIFY textsChanged)
     Q_PROPERTY(int frameCount READ frameCount NOTIFY changed)
     Q_PROPERTY(bool offering READ offering NOTIFY changed)
     Q_PROPERTY(QString offer READ offer NOTIFY textsChanged)
@@ -42,9 +44,10 @@ class VideoController : public QObject {
     Q_PROPERTY(bool playing READ playing NOTIFY changed)
     // V2: the legacy times field ("00:00:01,001;  24;  0;  1 ms, -999 ms":
     // time, frame, frames from the active Line's start, then ms from its
-    // start and end) and whether the shown frame is a keyframe.
+    // start and end) and whether the shown frame is a keyframe; while
+    // playing, of the player's frame (legacy VideoBox::RefreshTime).
     Q_PROPERTY(QString times READ times NOTIFY textsChanged)
-    Q_PROPERTY(bool keyframeShown READ keyframeShown NOTIFY changed)
+    Q_PROPERTY(bool keyframeShown READ keyframeShown NOTIFY textsChanged)
     // V3: indexing with its progress (0 to 1; -1 before the first report)
     // and Cancel (legacy ProgressSink "Indexing video").
     Q_PROPERTY(bool indexing READ indexing NOTIFY changed)
@@ -80,7 +83,7 @@ public:
 
     bool hasVideo() const { return m_session.state() == application::VideoSession::State::Ready; }
     QString status() const;
-    int frame() const { return m_session.requestedFrame().value_or(-1); }
+    int frame() const { return m_session.currentFrame().value_or(-1); }
     int frameCount() const { return m_session.frameCount(); }
     bool offering() const { return !m_offer.isEmpty(); }
     QString offer() const { return m_offer; }
@@ -114,7 +117,9 @@ public:
     // V2 navigation.
     QString times() const;
     bool keyframeShown() const;
-    Q_INVOKABLE bool showFrameAt(int frame); // the seek bar
+    // The seek bar's own moves (never its value following playback): while
+    // playing, playback goes on from the frame (legacy VideoSlider::SendTime).
+    Q_INVOKABLE bool showFrameAt(int frame);
     Q_INVOKABLE bool seekBy(int ms);
     Q_INVOKABLE bool nextKeyframe() { return m_session.nextKeyframe(); }
     Q_INVOKABLE bool previousKeyframe() { return m_session.previousKeyframe(); }
@@ -160,8 +165,8 @@ signals:
     void changed();
     // V3: Unload video emptied the panel.
     void unloaded();
-    // With every change (at most every 100 ms while playing: the texts the
-    // panel shows need no more), and after a language switch.
+    // With every change (at most every 100 ms while playing: the texts, the
+    // frame and the seek bar need no more), and after a language switch.
     void textsChanged();
     // P9: 0 load associated, 1 load from directory, 2 no.
     void offerAnswered(int answer, bool applyToAll);
@@ -183,6 +188,7 @@ private:
     // V3
     void sessionChanged();
     void textsMayChange();
+    std::optional<int> reportedFrame() const;
     QTimer *m_textsTimer = nullptr; // V1: the texts' pace while playing
     std::vector<int> chapterStarts() const;
     application::DisplayAudioPort *m_trackPort = nullptr;

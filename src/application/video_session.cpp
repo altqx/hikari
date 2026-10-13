@@ -677,6 +677,29 @@ void VideoSession::seekKeepPlaying(core::DocumentTime time, bool startTime)
     startPlayback(m_starts[static_cast<std::size_t>(frame)].microseconds());
 }
 
+std::optional<int> VideoSession::currentFrame() const
+{
+    // A frame from before the latest play or seek no longer counts.
+    if (m_playing && m_lastGeneralUs && m_lastGeneralEpoch == m_playEpoch && m_timeline)
+        if (const auto at = m_timeline->frameContaining(core::DocumentTime(*m_lastGeneralUs)))
+            return static_cast<int>(at->value());
+    return m_requested;
+}
+
+bool VideoSession::seekFrame(int index)
+{
+    if (m_state != State::Ready || index < 0 || index >= frameCount())
+        return false;
+    if (!m_playing) {
+        showFrame(index);
+        return true;
+    }
+    m_requested = index;
+    m_lastGeneralUs.reset();
+    m_playEndMs = 0; // SetFFMS2Position resets the play end
+    return startPlayback(m_starts[static_cast<std::size_t>(index)].microseconds());
+}
+
 bool VideoSession::isKeyframe(int index) const
 {
     return std::binary_search(m_keyframes.begin(), m_keyframes.end(), index);

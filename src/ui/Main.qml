@@ -2410,11 +2410,20 @@ ApplicationWindow {
                 }
                 Slider {
                     objectName: "videoSlider"
+                    id: videoSeekBar
                     Layout.fillWidth: true
                     from: 0
                     to: Math.max(0, root.video.frameCount - 1)
                     stepSize: 1
-                    value: Math.max(0, root.video.frame)
+                    // It follows the reported frame (the player's while
+                    // playing, at the texts' pace) except while held, as
+                    // legacy VideoSlider's `block` kept its thumb under the
+                    // mouse; only its own moves seek.
+                    Binding on value {
+                        when: !videoSeekBar.pressed
+                        value: Math.max(0, root.video.frame)
+                        restoreMode: Binding.RestoreNone
+                    }
                     enabled: root.video.hasVideo
                     focusPolicy: Qt.NoFocus
                     Accessible.name: qsTranslate("HikariSub.Video", "Video position")

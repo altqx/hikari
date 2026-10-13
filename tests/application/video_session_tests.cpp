@@ -463,6 +463,59 @@ TEST_F(VideoTest, PlaybackShowsThePlayersFramesAndPausesOnTheExactIndexedFrame)
     EXPECT_FALSE(video.stopped());
 }
 
+// The Video panel's frame follows the player's frames while playing
+// (legacy GetCurrentFrame, FrameShownAt(m_Time)); the seek bar seeks the
+// player and playback goes on from there (VideoSlider::SendTime while
+// playing); the frames themselves never seek it.
+TEST_F(VideoTest, PlayingReportsThePlayersFrameAndTheSeekBarSeeksIt)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    video.setPresenter(&presenter);
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer(); // frame 0
+    EXPECT_EQ(video.currentFrame(), 0);
+    ASSERT_TRUE(video.play());
+    player.opened();
+    player.delivered();
+    EXPECT_EQ(video.currentFrame(), 0); // nothing delivered yet: where it started
+    video.generalFrame(playerFrame(), 120'000);
+    EXPECT_EQ(video.currentFrame(), 3);
+    video.generalFrame(playerFrame(), 205'000); // inside frame 5 (200-240 ms)
+    EXPECT_EQ(video.currentFrame(), 5);
+    EXPECT_EQ(video.requestedFrame(), 0);
+    // Delivered frames never seek the player.
+    EXPECT_EQ(std::count_if(player.calls.begin(), player.calls.end(),
+                            [](const std::string &c) { return c.starts_with("seek"); }),
+              1);
+    // The seek bar while playing: the player goes on from frame 6's start.
+    ASSERT_TRUE(video.seekFrame(6));
+    EXPECT_TRUE(video.playing());
+    EXPECT_EQ(video.currentFrame(), 6);
+    EXPECT_EQ(player.calls.back(), "seek 240000");
+    player.delivered();
+    EXPECT_EQ(player.calls.back(), "play");
+    EXPECT_TRUE(source.frames.empty()); // no indexed frame while playing
+    video.generalFrame(playerFrame(), 250'000);
+    EXPECT_EQ(video.currentFrame(), 6);
+    video.generalFrame(playerFrame(), 285'000);
+    EXPECT_EQ(video.currentFrame(), 7);
+    EXPECT_FALSE(video.seekFrame(10)); // past the last frame
+    EXPECT_FALSE(video.seekFrame(-1));
+    // Paused, the seek bar shows the frame.
+    ASSERT_TRUE(video.pause());
+    source.answer();
+    EXPECT_EQ(video.shownFrame(), 7);
+    EXPECT_EQ(video.currentFrame(), 7);
+    const std::size_t calls = player.calls.size();
+    ASSERT_TRUE(video.seekFrame(2));
+    EXPECT_EQ(player.calls.size(), calls);
+    EXPECT_EQ(video.currentFrame(), 2);
+    source.answer();
+    EXPECT_EQ(video.shownFrame(), 2);
+}
+
 TEST_F(VideoTest, SeeksAndKeyframesFollowTheLegacyRules)
 {
     video.open("/m/ep1.mkv");

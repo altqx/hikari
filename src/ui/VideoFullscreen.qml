@@ -220,11 +220,20 @@ Window {
                 spacing: 2
                 Slider {
                     objectName: "fullscreenSlider"
+                    id: fullscreenSeekBar
                     Layout.fillWidth: true
                     from: 0
                     to: Math.max(0, fs.shell.video.frameCount - 1)
                     stepSize: 1
-                    value: Math.max(0, fs.shell.video.frame)
+                    // It follows the reported frame (the player's while
+                    // playing, at the texts' pace) except while held, as
+                    // legacy VideoSlider's `block` kept its thumb under the
+                    // mouse; only its own moves seek.
+                    Binding on value {
+                        when: !fullscreenSeekBar.pressed
+                        value: Math.max(0, fs.shell.video.frame)
+                        restoreMode: Binding.RestoreNone
+                    }
                     enabled: fs.shell.video.hasVideo
                     focusPolicy: Qt.NoFocus
                     Accessible.name: qsTr("Video position")

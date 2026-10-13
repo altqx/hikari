@@ -202,6 +202,14 @@ public:
     // frame fails to decode, so the visual tools keep working.
     visual::SourceGeometry sourceGeometry() const;
     std::optional<int> requestedFrame() const { return m_requested; }
+    // The frame the Video panel reports (legacy RendererVideo::GetCurrentFrame,
+    // FrameShownAt(m_Time)): while playing the indexed frame whose interval
+    // holds the last delivered frame's start, else the requested frame.
+    std::optional<int> currentFrame() const;
+    // The seek bar (legacy VideoSlider::SendTime, Seek(ms, true,
+    // SEEK_NO_SNAP)): shows the frame; while playing, playback goes on from
+    // its start (RendererFFMS2::SetPosition). False outside the video.
+    bool seekFrame(int index);
     std::optional<int> shownFrame() const { return m_shown ? std::optional(m_shown->index) : std::nullopt; }
     std::optional<core::DocumentTime> frameStart(int index) const;
     // The first frame starting at or after `time` (a binary search); nullopt

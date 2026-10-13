@@ -91,10 +91,11 @@ void VideoController::sessionChanged()
     emit changed();
 }
 
-// V1: every player frame changes the session; the texts follow at most
-// every 100 ms while playing, at once otherwise. Legacy refreshed the time
-// while playing on a 100 ms timer too (VideoBox::Play's m_VideoTimeTimer,
-// HikariSub/VideoBox.cpp:220-222).
+// V1: every player frame changes the session; the texts, the frame and the
+// seek bar follow at most every 100 ms while playing, at once otherwise.
+// Legacy refreshed the time and the slider while playing on a 100 ms timer
+// too (VideoBox::Play's m_VideoTimeTimer, HikariSub/VideoBox.cpp:220-222,
+// and RefreshTime, VideoBox.cpp:1386-1410).
 void VideoController::textsMayChange()
 {
     if (m_session.playing()) {
@@ -353,9 +354,19 @@ bool VideoController::stop()
     return done;
 }
 
-QString VideoController::times() const
+// The shown indexed frame; while playing, or while a pause's indexed frame
+// is still on its way, the session's current frame (the player's).
+std::optional<int> VideoController::reportedFrame() const
 {
     const auto shown = m_session.shownFrame();
+    if (!m_session.playing() && shown && *shown >= 0)
+        return shown;
+    return m_session.currentFrame();
+}
+
+QString VideoController::times() const
+{
+    const auto shown = reportedFrame();
     const auto start = shown ? m_session.frameStart(*shown) : std::nullopt;
     if (!start)
         return {};
@@ -382,16 +393,15 @@ QString VideoController::times() const
 
 bool VideoController::keyframeShown() const
 {
-    const auto shown = m_session.shownFrame();
+    const auto shown = reportedFrame();
     return shown && m_session.isKeyframe(*shown);
 }
 
 bool VideoController::showFrameAt(int frame)
 {
-    if (!hasVideo() || frame < 0 || frame >= frameCount())
+    if (!hasVideo())
         return false;
-    m_session.showFrame(frame);
-    return true;
+    return m_session.seekFrame(frame);
 }
 
 bool VideoController::seekBy(int ms)
