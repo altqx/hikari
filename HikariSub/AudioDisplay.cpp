@@ -87,7 +87,7 @@ AudioDisplay::AudioDisplay(wxWindow *parent)
 	blockUpdate = false;
 	holding = false;
 	draggingScale = false;
-	inside = ownProvider = false;
+	inside = false;
 	currentSyllable = 0;
 	currentCharacter = -1;
 	Grabbed = -1;
@@ -178,10 +178,10 @@ AudioDisplay::~AudioDisplay() {
 		DestroyEvent = nullptr;
 	}
 	if (player) { player->CloseStream(); delete player; }
-	if (ownProvider && provider) { delete provider; provider = nullptr; }
 	ClearDX();
 	if (karaoke){ delete karaoke; }
 	if (spectrumRenderer){ delete spectrumRenderer; };
+	provider.Reset();
 	if (peak){
 		delete[] peak;
 		delete[] min;
@@ -1369,9 +1369,9 @@ void AudioDisplay::SetFile(wxString file, bool fromvideo) {
 			catch (const wxChar *e) {
 				wxLogError(e);
 			}
-			if (ownProvider && provider){ delete provider; provider = nullptr; }
 			delete player;
 			if (spectrumRenderer){ delete spectrumRenderer; spectrumRenderer = nullptr; }
+			provider.Reset();
 
 			player = nullptr;
 			Reset();
@@ -1395,17 +1395,19 @@ void AudioDisplay::SetFile(wxString file, bool fromvideo) {
 			Provider *FFMS2 = vb->GetFFMS2();
 			bool success = true;
 			if (FFMS2 && fromvideo){
-				provider = FFMS2;
-				ownProvider = (!provider->HasVideo());
-				if (ownProvider){ FFMS2 = nullptr; }
+				// the video frees its own provider; one opened for the
+				// audio alone is handed over
+				if (FFMS2->HasVideo())
+					provider.Borrow(FFMS2);
+				else
+					provider.Own(FFMS2);
 			}
 			else{
-				provider = Provider::Get(file, nullptr, HikariSubFrame::Get(), &success);
+				provider.Own(Provider::Get(file, nullptr, HikariSubFrame::Get(), &success));
 				if (!success || provider->GetSampleRate() < 0) {
-					delete provider; provider = 0;
+					provider.Reset();
 					loaded = false; return;
 				}
-				ownProvider = true;
 				vb->SetAudioPlayer(this);
 			}
 
@@ -1420,17 +1422,20 @@ void AudioDisplay::SetFile(wxString file, bool fromvideo) {
 		}
 		catch (const wxChar *e) {
 			if (player) { delete player; player = 0; }
-			if (provider) { delete provider; provider = 0; }
+			provider.Reset();
+			loaded = false;
 			wxLogError(e);
 		}
 		catch (wxString &err) {
 			if (player) { delete player; player = 0; }
-			if (provider) { delete provider; provider = 0; }
+			provider.Reset();
+			loaded = false;
 			HikariMessageBox(err, _T("Error loading audio"), wxICON_ERROR | wxOK);
 		}
 		catch (...) {
 			if (player) { delete player; player = 0; }
-			if (provider) { delete provider; provider = 0; }
+			provider.Reset();
+			loaded = false;
 			wxLogError(_T("Unknown error loading audio"));
 		}
 	}

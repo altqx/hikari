@@ -738,6 +738,9 @@
     <ClInclude Include="OptionsPanels.h">
       <Filter>O</Filter>
     </ClInclude>
+    <ClInclude Include="OwnedOrBorrowed.h">
+      <Filter>O</Filter>
+    </ClInclude>
     <ClInclude Include="Registry.h">
       <Filter>R</Filter>
     </ClInclude>

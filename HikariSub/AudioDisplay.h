@@ -29,6 +29,7 @@
 //#include "AudioBox.h"
 #include "EditBox.h"
 #include "TabPanel.h"
+#include "OwnedOrBorrowed.h"
 #include <wx/window.h>
 #include <wx/bitmap.h>
 #include <wx/timer.h>
@@ -68,7 +69,6 @@ private:
 	long long Position;
 	int samplesPercent;
 	int oldCurPos;
-	bool ownProvider;
 	bool hasFocus;
 	bool blockUpdate;
 	bool inside;
@@ -218,7 +218,8 @@ public:
 	SubsGrid *grid = nullptr;
 	EditBox *edit = nullptr;
 	TabPanel *tab = nullptr;
-	Provider *provider = nullptr;
+	// the display's own provider for an audio file, or the video's
+	OwnedOrBorrowed<Provider> provider;
 	DirectSoundPlayer2 *player = nullptr;
 	Karaoke *karaoke = nullptr;
 
