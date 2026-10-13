@@ -21,11 +21,13 @@
 #include "JsonLimits.h"
 #include "SemVer.h"
 
+#include <algorithm>
 #include <charconv>
 #include <cstddef>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace update_policy
@@ -376,6 +378,12 @@ namespace update_policy
 		// Whether pieces of the reply are still taken in.
 		bool TakesData() const { return !cutOff; }
 
+		// A further request of the same check, after one whose cut-off
+		// did not end it, as a release's update manifest that is too
+		// large only rules that release out. The deadline stays the
+		// check's.
+		void NextRequest() { cutOff = false; }
+
 		// A state event has ended the request of a page. How the check
 		// ends, Answered when the reply is to be read, or nothing when it
 		// has already ended and the event is ignored. A reply that came
@@ -448,10 +456,12 @@ namespace update_policy
 		return offeredVersion && declinedVersion && CompareSemVer(*offeredVersion, *declinedVersion) <= 0;
 	}
 
-	// UPDATER_AUTO_CHECK and UPDATER_CHECK_FOR_STABLE when Config.txt does
-	// not hold them.
+	// UPDATER_AUTO_CHECK, UPDATER_CHECK_FOR_STABLE and UPDATER_AUTO_INSTALL
+	// ("Install updates automatically", installers spec 4.1) when
+	// Config.txt does not hold them.
 	constexpr bool kAutoCheckDefault = true;
 	constexpr bool kStableOnlyDefault = true;
+	constexpr bool kAutoInstallDefault = true;
 
 	// Config.txt holds "true" or "false". Anything else, an option no build
 	// has written among them, is the option's default.
@@ -473,6 +483,16 @@ namespace update_policy
 		return stableOnly && !(version && !version->prerelease.empty());
 	}
 
+	// One of a release's files, as GitHub's list gives it.
+	struct ReleaseAsset
+	{
+		std::string name;
+		long long size = 0;
+		// "sha256:<hex>", or empty for an asset uploaded before GitHub
+		// kept digests.
+		std::string digest;
+	};
+
 	// What a check needs of one entry of GitHub's release list.
 	struct Release
 	{
@@ -481,6 +501,7 @@ namespace update_policy
 		// GitHub's flag. A tag with a prerelease suffix is a prerelease
 		// whether or not the flag was set when it was published.
 		bool prerelease = false;
+		std::vector<ReleaseAsset> assets;
 	};
 
 	struct Choice
@@ -605,6 +626,9 @@ namespace update_policy
 			return Ending::Answered;
 		}
 
+		const std::string &Installed() const { return installed; }
+		bool StableOnly() const { return stableOnly; }
+
 	private:
 		std::string installed;
 		bool stableOnly;
@@ -641,6 +665,119 @@ namespace update_policy
 			if (onPage >= 0)
 				*details = read(static_cast<size_t>(onPage));
 		}
+	};
+
+	// How many releases a check looks at closely, reading the update
+	// manifest of each that has one, before it gives up offering one
+	// (installers spec, 2.4).
+	constexpr size_t kMaxCandidates = 5;
+
+	// The version of a release's tag, without its "v", when the tag can be
+	// offered: "v" and a semantic version without build metadata, made of
+	// the characters ReleasePageUrl() takes. Empty otherwise. Releases
+	// carry no build metadata, and a download's URL is built from the tag.
+	inline std::string CandidateVersion(std::string_view tag)
+	{
+		if (tag.size() < 2 || tag[0] != 'v' || tag.find('+') != std::string_view::npos)
+			return std::string();
+		if (ReleasePageUrl(tag).empty() || !ParseSemVer(tag.substr(1)))
+			return std::string();
+		return std::string(tag.substr(1));
+	}
+
+	// The releases that may be offered, as indices into the list, highest
+	// version first and, of two of one version, the first listed: those
+	// that are not drafts, whose tag CandidateVersion() takes, newer than
+	// installed. offer fits the channel; skipped holds the prereleases
+	// that "stable versions only" kept out. Each has kMaxCandidates at
+	// most.
+	struct Candidates
+	{
+		std::vector<int> offer;
+		std::vector<int> skipped;
+	};
+
+	inline Candidates ListCandidates(const std::vector<Release> &releases, std::string_view installed,
+		bool stableOnly)
+	{
+		Candidates candidates;
+		std::optional<SemVer> current = ParseSemVer(installed);
+		if (!current)
+			return candidates;
+		bool skipPrereleases = SkipsPrereleases(stableOnly, installed);
+		std::vector<std::string> versions(releases.size());
+		std::vector<std::pair<SemVer, int>> offer, skipped;
+		for (size_t i = 0; i < releases.size(); i++) {
+			const Release &release = releases[i];
+			if (release.draft)
+				continue;
+			versions[i] = CandidateVersion(release.tag);
+			if (versions[i].empty())
+				continue;
+			// The view points into versions[i], which is not resized.
+			SemVer version = *ParseSemVer(versions[i]);
+			if (CompareSemVer(version, *current) <= 0)
+				continue;
+			bool prerelease = release.prerelease || !version.prerelease.empty();
+			(skipPrereleases && prerelease ? skipped : offer).push_back({ version, static_cast<int>(i) });
+		}
+		auto sorted = [](std::vector<std::pair<SemVer, int>> &list) {
+			std::stable_sort(list.begin(), list.end(), [](const auto &a, const auto &b) {
+				return CompareSemVer(a.first, b.first) > 0;
+			});
+			std::vector<int> indices;
+			for (size_t i = 0; i < list.size() && i < kMaxCandidates; i++)
+				indices.push_back(list[i].second);
+			return indices;
+		};
+		candidates.offer = sorted(offer);
+		candidates.skipped = sorted(skipped);
+		return candidates;
+	}
+
+	// The details, such as the name and notes, of the candidates so far.
+	// Each page's are read only for a candidate on it, as the page is
+	// added, and kept while it stays one: a candidate from an earlier page
+	// keeps the details read with it.
+	template <class Details>
+	class CandidateDetails
+	{
+	public:
+		// After pages.Add(page), with read(i) the details of page[i].
+		template <class Read>
+		void Keep(const ReleasePages &pages, Read read)
+		{
+			Candidates candidates = ListCandidates(pages.Releases(), pages.Installed(), pages.StableOnly());
+			std::vector<std::pair<int, Details>> kept;
+			for (const std::vector<int> *list : { &candidates.offer, &candidates.skipped }) {
+				for (int index : *list) {
+					if (const Details *details = Find(index)) {
+						kept.push_back({ index, *details });
+						continue;
+					}
+					int onPage = pages.OnLastPage(index);
+					if (onPage >= 0)
+						kept.push_back({ index, read(static_cast<size_t>(onPage)) });
+				}
+			}
+			details = std::move(kept);
+		}
+
+		// The details of the release at index in pages.Releases(), or
+		// nullptr when it is no candidate.
+		const Details *Find(int index) const
+		{
+			for (const auto &entry : details) {
+				if (entry.first == index)
+					return &entry.second;
+			}
+			return nullptr;
+		}
+
+		size_t Size() const { return details.size(); }
+
+	private:
+		std::vector<std::pair<int, Details>> details;
 	};
 
 	constexpr Outcome GetOutcome(const Choice &choice)

@@ -45,6 +45,9 @@ class wxServerBase;
 class hikarisubApp : public wxApp
 {
 public:
+	// --version and --hikari-gst-check answer here, before the GUI starts,
+	// so that they need no display.
+	bool Initialize(int& argc, wxChar** argv) override;
 	bool OnInit();
 	int OnExit();
 	int FilterEvent(wxEvent& event);
@@ -64,6 +67,11 @@ private:
 	wxServerBase* m_ipcServer;
 #endif
 	wxLocale *locale;
+#ifdef _WIN32
+	// Global\io.github.altqx.HikariSub.Running, held until exit, for the
+	// installer to wait on (installers spec, 4.2).
+	void *runningMutex = nullptr;
+#endif
 	static void OnOutofMemory();
 };
 

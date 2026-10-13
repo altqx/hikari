@@ -204,15 +204,19 @@ namespace Auto{
 #ifdef _WIN32
 		path.Replace(L'/', L'\\');
 #endif
+		// ?data is the shipped automation; ?user, ?local and ?temp are
+		// written to, so in an installed copy they are in the data root
+		// (installers spec, 1.7). A portable copy has both in one folder.
 		wxString firstAutomation = HikariPathJoin(Options.pathfull, L"Automation");
+		wxString userAutomation = HikariPathJoin(Options.dataPath, L"Automation");
 		if (path[0] == L'?'){
 			if (path[1] == L'a' && path[4] == L'i') path.replace(0, 6, (tab) ? HikariPathDir(tab->AudioPath) : wxString(L""));
 			else if (path[1] == L'd' && path[4] == L'a') path.replace(0, 5, firstAutomation);
 			else if (path[1] == L'd' && path[4] == L't') path.replace(0, 11, HikariPathJoin(Options.pathfull, L"Dictionary"));
-			else if (path[1] == L'l' && path[4] == L'a') path.replace(0, 6, firstAutomation);
+			else if (path[1] == L'l' && path[4] == L'a') path.replace(0, 6, userAutomation);
 			else if (path[1] == L's' && path[4] == L'i') path.replace(0, 7, (tab) ? HikariPathDir(tab->SubsPath) : wxString(L""));
-			else if (path[1] == L't' && path[4] == L'p') path.replace(0, 5, HikariPathJoin(firstAutomation, L"temp"));
-			else if (path[1] == L'u' && path[4] == L'r') path.replace(0, 5, firstAutomation);
+			else if (path[1] == L't' && path[4] == L'p') path.replace(0, 5, HikariPathJoin(userAutomation, L"temp"));
+			else if (path[1] == L'u' && path[4] == L'r') path.replace(0, 5, userAutomation);
 			else if (path[1] == L'v' && path[4] == L'e') path.replace(0, 6, (tab) ? HikariPathDir(tab->VideoPath) : wxString(L""));
 		}
 		push_value(L, path);
@@ -504,11 +508,21 @@ namespace Auto{
 
 
 
+	// The shipped Include folder, after the user's in an installed copy,
+	// where ?user/automation/include is (decode_path).
+	static void AddAutomationIncludes(std::vector<wxString> &include_path)
+	{
+		wxString shipped = HikariPathJoin(HikariPathJoin(HikariPathJoin(Options.pathfull, L"Automation"), L"automation"), L"Include") + wxFileName::GetPathSeparator();
+		if (Options.dataPath != Options.pathfull)
+			include_path.push_back(HikariPathJoin(HikariPathJoin(HikariPathJoin(Options.dataPath, L"Automation"), L"automation"), L"Include") + wxFileName::GetPathSeparator());
+		include_path.push_back(shipped);
+	}
+
 	LuaScript::LuaScript(wxString const& filename)
 		: filename(filename)
 	{
 		include_path.push_back(HikariPathDir(filename, wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR));
-		include_path.push_back(HikariPathJoin(HikariPathJoin(HikariPathJoin(Options.pathfull, L"Automation"), L"automation"), L"Include") + wxFileName::GetPathSeparator());
+		AddAutomationIncludes(include_path);
 		Create();
 	}
 
@@ -521,7 +535,7 @@ namespace Auto{
 		, HighTime(_highTime)
 	{
 		include_path.push_back(HikariPathDir(_filename, wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR));
-		include_path.push_back(HikariPathJoin(HikariPathJoin(HikariPathJoin(Options.pathfull, L"Automation"), L"automation"), L"Include") + wxFileName::GetPathSeparator());
+		AddAutomationIncludes(include_path);
 		size_t i = 0;
 		size_t macrosSize = _macros.size();
 		if (macrosSize) {

@@ -287,6 +287,7 @@ const JsonValue *JsonValue::Find(const std::string &key) const
 	return it == members.end() ? nullptr : &it->second;
 }
 
+#ifndef HIKARISUB_JSON_NO_WX
 wxString JsonValue::AsString() const
 {
 	return type == Type::String ? wxString::FromUTF8(text.c_str()) : wxString();
@@ -299,6 +300,7 @@ wxString JsonValue::GetString(const std::string &key, const wxString &fallback) 
 		return fallback;
 	return wxString::FromUTF8(value->text.c_str());
 }
+#endif
 
 bool JsonValue::GetBool(const std::string &key, bool fallback) const
 {

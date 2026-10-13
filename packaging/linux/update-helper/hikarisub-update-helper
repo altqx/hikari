@@ -1,0 +1,165 @@
+#!/bin/sh
+# HikariSub's update helper for the deb and rpm packages.
+#
+# The app runs it through pkexec once it has downloaded and verified an
+# update (installers spec, 4.4):
+#
+#   pkexec /opt/hikarisub/libexec/hikarisub-update-helper install <kind> <file> <sha256> <version>
+#
+# It installs <file>, the package the user downloaded, only if it is the
+# hikarisub package of <version> with that SHA-256, for the kind this system
+# has installed. It checks a root-owned copy, so the user's file cannot be
+# swapped after the check.
+#
+# Exit codes:
+#   0  success
+#   2  bad arguments
+#   3  hash, name or version mismatch
+#   4  the package manager failed
+#   5  the package manager is locked, and stayed locked for 60 s
+#
+# The file is the same on the legacy and Qt branches.
+
+set -u
+umask 077
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+LC_ALL=C
+export LC_ALL
+
+MARKER=/opt/hikarisub/package-kind.txt
+CACHE=/var/cache/hikarisub-update
+LOCK_WAIT=${HIKARISUB_HELPER_LOCK_WAIT:-60}
+
+fail() {
+	code=$1
+	shift
+	echo "hikarisub-update-helper: $*" >&2
+	exit "$code"
+}
+
+[ "$#" -eq 5 ] || fail 2 "usage: install <deb|rpm> <file> <sha256> <version>"
+[ "$1" = install ] || fail 2 "unknown command: $1"
+kind=$2
+file=$3
+sha256=$4
+version=$5
+
+[ "$(id -u)" = 0 ] || fail 2 "must run as root, through pkexec"
+case ${PKEXEC_UID:-} in
+	''|*[!0-9]*) fail 2 "PKEXEC_UID is not set: run it through pkexec" ;;
+esac
+
+case $kind in
+	deb|rpm) ;;
+	*) fail 2 "kind must be deb or rpm, not '$kind'" ;;
+esac
+[ -f "$MARKER" ] || fail 2 "$MARKER is missing"
+installed=$(head -c 64 "$MARKER" | tr -d '\r\n')
+[ "$installed" = "$kind" ] || fail 2 "this system has the '$installed' package, not '$kind'"
+
+case $file in
+	/*) ;;
+	*) fail 2 "the file must be an absolute path" ;;
+esac
+[ ! -L "$file" ] && [ -f "$file" ] || fail 2 "not a regular file: $file"
+owner=$(stat -c %u -- "$file") || fail 2 "cannot read $file"
+[ "$owner" = "$PKEXEC_UID" ] || fail 2 "$file is not owned by the user who asked"
+
+case $sha256 in
+	*[!0-9a-fA-F]*|'') fail 2 "bad sha256" ;;
+esac
+[ "${#sha256}" -eq 64 ] || fail 2 "bad sha256"
+sha256=$(printf '%s' "$sha256" | tr 'A-F' 'a-f')
+
+# The version as a semantic version, and as the packages carry it (1.3):
+# the "-" before a prerelease becomes "~".
+case $version in
+	''|*[!0-9A-Za-z.+-]*) fail 2 "bad version" ;;
+esac
+core=${version%%-*}
+if [ "$core" = "$version" ]; then
+	pkgversion=$version
+else
+	pkgversion="$core~${version#*-}"
+fi
+
+mkdir -p "$CACHE" || fail 4 "cannot create $CACHE"
+chown root:root "$CACHE" 2>/dev/null
+chmod 0700 "$CACHE"
+work=$(mktemp -d "$CACHE/install.XXXXXXXX") || fail 4 "cannot create a folder in $CACHE"
+trap 'rm -rf "$work"' EXIT
+trap 'exit 4' HUP INT TERM
+
+copy="$work/hikarisub.$kind"
+cp -- "$file" "$copy" || fail 2 "cannot copy $file"
+actual=$(sha256sum -- "$copy" | cut -d' ' -f1)
+[ "$actual" = "$sha256" ] || fail 3 "the SHA-256 of $file does not match"
+
+# The name and version, read by the format's own tool, from the copy. A
+# revision, "-1" or a packaging fix's "-2", follows the version.
+if [ "$kind" = deb ]; then
+	command -v dpkg-deb >/dev/null || fail 4 "dpkg-deb is missing"
+	name=$(dpkg-deb -f "$copy" Package 2>/dev/null) || fail 3 "not a deb package"
+	full=$(dpkg-deb -f "$copy" Version 2>/dev/null) || fail 3 "not a deb package"
+else
+	command -v rpm >/dev/null || fail 4 "rpm is missing"
+	read -r name full <<EOF_RPM || true
+$(rpm -qp --nosignature --nodigest --qf '%{NAME} %{VERSION}-%{RELEASE}\n' "$copy" 2>/dev/null)
+EOF_RPM
+	[ -n "${name:-}" ] || fail 3 "not an rpm package"
+fi
+[ "$name" = hikarisub ] || fail 3 "the package is '$name', not hikarisub"
+revision=${full##*-}
+case $revision in
+	''|*[!0-9]*) fail 3 "the package version '$full' has no revision" ;;
+esac
+[ "${full%-*}" = "$pkgversion" ] || fail 3 "the package is version '$full', not $pkgversion"
+
+log="$work/install.log"
+
+# Runs the install, again while the package manager's lock is held by
+# another, for LOCK_WAIT seconds. 0 or 4, or 5 when the lock stayed.
+install_package() {
+	waited=0
+	while :; do
+		"$@" >"$log" 2>&1
+		status=$?
+		cat "$log" >&2
+		[ "$status" -eq 0 ] && return 0
+		locked=0
+		if grep -qiE 'could not get lock|unable to acquire|lock-frontend|transaction lock|system management is locked|waiting for .*lock' "$log"; then
+			locked=1
+		fi
+		# zypper: ZYPPER_EXIT_ZYPP_LOCKED.
+		[ "$1" = zypper ] && [ "$status" -eq 7 ] && locked=1
+		[ "$locked" -eq 1 ] || return 4
+		[ "$waited" -lt "$LOCK_WAIT" ] || return 5
+		sleep 5
+		waited=$((waited + 5))
+	done
+}
+
+if [ "$kind" = deb ]; then
+	if command -v apt-get >/dev/null; then
+		install_package apt-get install -y --no-install-recommends "$copy"
+		exit $?
+	fi
+	install_package dpkg -i "$copy"
+	status=$?
+	[ "$status" -eq 0 ] || exit "$status"
+	# dpkg alone resolves nothing: broken dependencies fail it.
+	[ -z "$(dpkg --audit 2>/dev/null)" ] || exit 4
+	exit 0
+fi
+
+if command -v dnf >/dev/null; then
+	install_package dnf install -y --nogpgcheck "$copy"
+	exit $?
+fi
+if command -v zypper >/dev/null; then
+	install_package zypper --non-interactive install --allow-unsigned-rpm "$copy"
+	exit $?
+fi
+install_package rpm -U "$copy"
+exit $?

@@ -9,6 +9,11 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      offer_to:
+        description: 'A manual run of a tag: the release manifest offer_to (comma list of legacy and qt)'
+        required: false
+        default: ''
 
 concurrency:
   # head_ref on a pull_request, ref otherwise, so a branch and its PR share one
@@ -683,7 +688,8 @@ jobs:
           tests/packaging/linux/run.sh "${args[@]}" "${{ matrix.test }}" "${{ matrix.image }}" "$dist" "$version"
 
   # Runs alongside the builds so a tag that does not match the source fails
-  # straight away rather than after them.
+  # straight away rather than after them. Legacy stays at 0.0.x, and a
+  # release version has no build metadata.
   release-version:
     name: Release version
     if: startsWith(github.ref, 'refs/tags/v')
@@ -702,9 +708,26 @@ jobs:
             echo "::error::Tag $GITHUB_REF_NAME does not match VersionHikariSub \"$version\"; tag v$version instead."
             exit 1
           fi
+          if [[ "$version" == *+* ]]; then
+            echo "::error::$version has build metadata, which a release version does not."
+            exit 1
+          fi
+          identifier='(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+          if ! [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-$identifier(\.$identifier)*)?$ ]]; then
+            echo "::error::$version is not a semantic version."
+            exit 1
+          fi
+          if [[ "${BASH_REMATCH[1]}" != 0 || "${BASH_REMATCH[2]}" != 0 ]]; then
+            echo "::error::$version is 0.1.0 or higher, which is the Qt codebase's; legacy stays at 0.0.x."
+            exit 1
+          fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "prerelease=$([[ "$version" == *-* ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
+  # Publishes the release, then its update manifest, then for a stable
+  # release the AUR package's PKGBUILD (installers spec, section 7). The
+  # packages come from the linux-packages and windows-installer jobs under
+  # their release names.
   release:
     name: Release
     needs: [release-version, tests, windows-tests, windows, linux]
@@ -713,27 +736,158 @@ jobs:
       contents: write
     env:
       VERSION: ${{ needs.release-version.outputs.version }}
+      PRERELEASE: ${{ needs.release-version.outputs.prerelease }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      # The Windows artifact is the unarchived package directory, since
-      # upload-artifact zips it anyway.
       - name: Assemble the release files
         run: |
           mkdir release
-          (cd artifacts/hikarisub-windows-x64 && zip -qr "$OLDPWD/release/HikariSub-$VERSION-windows-x64.zip" HikariSub_x64)
-          cp artifacts/hikarisub-linux-x86_64/hikarisub-linux-x86_64.tar.gz "release/hikarisub-$VERSION-linux-x86_64.tar.gz"
-          (cd release && sha256sum * > SHA256SUMS && cat SHA256SUMS)
+          for artifact in hikarisub-windows-installer hikarisub-linux-packages; do
+            if [[ ! -d "artifacts/$artifact" ]]; then
+              echo "::error::The $artifact artifact is missing."
+              exit 1
+            fi
+          done
+          names=(
+            "HikariSub-$VERSION-windows-x64-setup.exe"
+            "HikariSub-$VERSION-windows-x64.zip"
+            "HikariSub-$VERSION-linux-x86_64.AppImage"
+            "HikariSub-$VERSION-linux-x86_64.AppImage.zsync"
+            "hikarisub-$VERSION-linux-amd64.deb"
+            "hikarisub-$VERSION-linux-x86_64.rpm"
+            "hikarisub-$VERSION-linux-x86_64.tar.gz"
+          )
+          for name in "${names[@]}"; do
+            found=$(find artifacts/hikarisub-windows-installer artifacts/hikarisub-linux-packages -type f -name "$name" | head -n 1)
+            if [[ -n "$found" ]]; then
+              cp "$found" "release/$name"
+            fi
+          done
+          # Today's tar.gz, when the packages job does not carry it.
+          tarball="release/hikarisub-$VERSION-linux-x86_64.tar.gz"
+          if [[ ! -f "$tarball" ]]; then
+            cp artifacts/hikarisub-linux-x86_64/hikarisub-linux-x86_64.tar.gz "$tarball"
+          fi
+          for name in "${names[@]}"; do
+            if [[ ! -f "release/$name" ]]; then
+              echo "::error::release/$name is missing."
+              exit 1
+            fi
+            if ! [[ "$name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+              echo "::error::$name is not a valid asset name."
+              exit 1
+            fi
+          done
+          (cd release && sha256sum -- * > SHA256SUMS && cat SHA256SUMS)
 
+      # A test build reads its update feed from the environment; a release
+      # never does. The name is looked for as UTF-8, UTF-16 and UTF-32, the
+      # forms wide strings take on Windows and Linux.
+      - name: Check no test feed is built in
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends rpm2cpio cpio
+          mkdir -p scan/tar scan/deb scan/rpm scan/appimage
+          tar -xzf "release/hikarisub-$VERSION-linux-x86_64.tar.gz" -C scan/tar
+          dpkg-deb -x "release/hikarisub-$VERSION-linux-amd64.deb" scan/deb
+          (cd scan/rpm && rpm2cpio "$OLDPWD/release/hikarisub-$VERSION-linux-x86_64.rpm" | cpio -idm --quiet)
+          appimage="$PWD/release/HikariSub-$VERSION-linux-x86_64.AppImage"
+          chmod +x "$appimage"
+          (cd scan/appimage && "$appimage" --appimage-extract > /dev/null)
+          python3 - artifacts/hikarisub-windows-x64 scan <<'PY'
+          import os, sys
+          needle = "HIKARISUB_UPDATE_FEED"
+          forms = [needle.encode("utf-8"), needle.encode("utf-16-le"), needle.encode("utf-32-le")]
+          found = []
+          for root in sys.argv[1:]:
+              for folder, _, files in os.walk(root):
+                  for name in files:
+                      path = os.path.join(folder, name)
+                      if os.path.islink(path) or not os.path.isfile(path):
+                          continue
+                      with open(path, "rb") as file:
+                          data = file.read()
+                      if any(form in data for form in forms):
+                          found.append(path)
+          for path in found:
+              print(f"::error::{path} contains {needle}: it is a test build.")
+          sys.exit(1 if found else 0)
+          PY
+
+      # --latest only for the highest stable version published, so a later
+      # legacy release does not become Latest over a Qt one.
       - name: Publish the release
+        run: |
+          if [[ "$PRERELEASE" == true ]]; then
+            flag=--prerelease
+          else
+            highest=$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+              --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' |
+              sed -n 's/^v\([0-9]*\.[0-9]*\.[0-9]*\)$/\1/p' | sort -V | tail -n 1)
+            if [[ -z "$highest" || "$(printf '%s\n%s\n' "$highest" "$VERSION" | sort -V | tail -n 1)" == "$VERSION" ]]; then
+              flag=--latest=true
+            else
+              flag=--latest=false
+            fi
+          fi
+          echo "Publishing with $flag"
+          gh release create "$GITHUB_REF_NAME" release/* --verify-tag --title "v$VERSION" --generate-notes "$flag"
+
+      - name: Read the asset names back
+        run: |
+          find release -maxdepth 1 -type f -printf '%f\n' | LC_ALL=C sort > uploaded.txt
+          gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name' | LC_ALL=C sort > published.txt
+          if ! diff uploaded.txt published.txt; then
+            echo "::error::GitHub changed the asset names."
+            exit 1
+          fi
+
+      # A legacy release is offered to legacy clients only, unless a manual
+      # run of the tag says otherwise. HIKARISUB_OFFER_QT_TO_LEGACY is for
+      # Qt releases.
+      - name: Publish the update manifest
         env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: >
-          gh release create "$GITHUB_REF_NAME" release/*
-          --verify-tag
-          --title "v$VERSION"
-          --generate-notes
-          ${{ needs.release-version.outputs.prerelease == 'true' && '--prerelease' || '--latest' }}
+          OFFER_TO: ${{ github.event.inputs.offer_to || 'legacy' }}
+        run: |
+          mkdir manifest
+          python3 tools/release/make-update-manifest.py --tag "$GITHUB_REF_NAME" --dir release \
+            --offer-to "$OFFER_TO" --output manifest/hikarisub-update.json --upload
+
+      # The AUR package follows legacy until Qt replaces it for users. Its
+      # PKGBUILD is rendered from the published tar.gz and built against
+      # the published URL; the release stays published if this fails.
+      - name: Render and build the AUR package
+        if: env.PRERELEASE != 'true' && vars.HIKARISUB_OFFER_QT_TO_LEGACY != 'true'
+        run: |
+          packaging/linux/aur/render-pkgbuild.sh "$VERSION" "release/hikarisub-$VERSION-linux-x86_64.tar.gz"
+          aur=packaging/linux/aur/hikarisub-bin
+          test -f "$aur/PKGBUILD" && test -f "$aur/.SRCINFO"
+          docker run --rm -v "$PWD/$aur:/aur:ro" -e VERSION archlinux:latest bash -euo pipefail -c '
+            pacman -Syu --noconfirm --needed base-devel sudo >/dev/null
+            useradd -m builder
+            echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
+            cp /aur/PKGBUILD /home/builder/
+            chown -R builder /home/builder
+            cd /home/builder
+            sudo -u builder makepkg -si --noconfirm
+            got=$(/usr/bin/hikarisub --version)
+            test "$got" = "$VERSION (arch)" || { echo "hikarisub --version: $got"; exit 1; }
+          '
+          mkdir aur-artifact
+          cp "$aur/PKGBUILD" "$aur/.SRCINFO" aur-artifact/
+
+      - name: Upload the AUR files
+        if: env.PRERELEASE != 'true' && vars.HIKARISUB_OFFER_QT_TO_LEGACY != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hikarisub-aur
+          path: aur-artifact/
+          include-hidden-files: true
+          if-no-files-found: error

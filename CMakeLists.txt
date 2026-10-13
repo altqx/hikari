@@ -136,6 +136,11 @@ target_link_options(subinspector PRIVATE "-Wl,--disable-new-dtags")
 
 add_compile_definitions(_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING _CRT_SECURE_NO_WARNINGS HAVE_DLL_EXPORT LINUX_BUILD HIKARISUB_LINUX_BUILD)
 add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-include> $<$<COMPILE_LANGUAGE:CXX>:${CMAKE_SOURCE_DIR}/HikariSub/platform.h> -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
+# Test builds only: the update feed and package kind from the environment.
+option(HIKARISUB_UPDATE_TEST_FEED "Read HIKARISUB_UPDATE_FEED and HIKARISUB_PACKAGE_KIND" OFF)
+if(HIKARISUB_UPDATE_TEST_FEED)
+    add_compile_definitions(HIKARISUB_UPDATE_TEST_FEED)
+endif()
 add_executable(hikarisub
     HikariSub/Demux.cpp
     HikariSub/DialogueTextEditor.cpp
@@ -194,6 +199,7 @@ add_executable(hikarisub
     HikariSub/FileTypes.cpp
     HikariSub/JsonValue.cpp
     HikariSub/UpdateChecker.cpp
+    HikariSub/UpdateInstaller.cpp
     HikariSub/Registry.cpp
     HikariSub/RendererDirectShow.cpp
     HikariSub/RendererVideo.cpp

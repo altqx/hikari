@@ -14,9 +14,11 @@
 //  You should have received a copy of the GNU General Public License
 //  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
 
-// Checks GitHub for a newer release and tells the user about it. It never
-// downloads or installs anything; the dialog opens the release page in a
-// browser, as Aegisub's version check does.
+// Checks GitHub for a newer release and offers it in the way this copy's
+// package kind allows (installers spec, sections 2 to 4): an installer,
+// AppImage, deb or rpm copy downloads and installs it (UpdateInstaller); an
+// AUR copy is told to update with its package manager; a portable copy, or
+// one with "Install updates automatically" off, is shown the release page.
 
 #pragma once
 

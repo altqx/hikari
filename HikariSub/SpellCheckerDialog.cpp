@@ -324,7 +324,7 @@ bool SpellCheckerDialog::IsAllUpperCase(const wxString &word)
 
 void SpellCheckerDialog::LoadAddedMisspels(wxArrayString &addedMisspels)
 {
-	wxString userpath = Options.pathfull + L"/Dictionary/UserDic.udic";
+	wxString userpath = Options.dataPath + L"/Dictionary/UserDic.udic";
 	if (wxFileExists(userpath)){
 		OpenWrite op;
 		wxString txt;

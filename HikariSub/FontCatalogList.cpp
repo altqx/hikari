@@ -200,7 +200,7 @@ FontCatalogList::FontCatalogList(wxWindow* parent, const wxString& styleFont)
 	autoSaveTimer.SetOwner(this, ID_EDIT_TIMER);
 	Bind(wxEVT_TIMER, [=, this](wxTimerEvent& evt) {
 		status->SetLabelText(0, _("Autosave"));
-		wxString path = Options.pathfull + L"/Config/FontCatalogsAutosave" + std::to_string(autoSaveI) + L".txt";
+		wxString path = Options.dataPath + L"/Config/FontCatalogsAutosave" + std::to_string(autoSaveI) + L".txt";
 		FCManagement.SaveCatalogs(path);
 		autoSaveI++;
 		if (autoSaveI > 2)
@@ -570,7 +570,7 @@ void FontCatalogManagement::LoadCatalogs(const wxString& external)
 	if (isInit && !isExternal)
 		return;
 
-	wxString path = (isExternal)? external : Options.pathfull + L"/Config/FontCatalogs.txt";
+	wxString path = (isExternal)? external : Options.dataPath + L"/Config/FontCatalogs.txt";
 	OpenWrite ow;
 	wxString fontCatalogsText;
 	std::map<wxString, fontList>::iterator it;
@@ -614,7 +614,7 @@ void FontCatalogManagement::LoadCatalogs(const wxString& external)
 
 void FontCatalogManagement::SaveCatalogs(const wxString& external)
 {
-	wxString path = external.empty()? Options.pathfull + L"/Config/FontCatalogs.txt" : external;
+	wxString path = external.empty()? Options.dataPath + L"/Config/FontCatalogs.txt" : external;
 	OpenWrite ow(path);
 	for (auto it = fontCatalogs.begin(); it != fontCatalogs.end(); it++) {
 		wxString fontCatalogsText;

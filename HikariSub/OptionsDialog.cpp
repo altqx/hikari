@@ -19,6 +19,7 @@
 #include "FileTypes.h"
 #include "OptionsDialog.h"
 #include "config.h"
+#include "UpdateInstaller.h"
 #include "HikariSubFrame.h"
 #include "Hotkeys.h"
 #include "NumCtrl.h"
@@ -381,6 +382,15 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		ConOpt(stableOnly, UPDATER_CHECK_FOR_STABLE);
 		updatesSizer->Add(autoCheck, 0, wxALL, 2);
 		updatesSizer->Add(stableOnly, 0, wxALL, 2);
+		// Only where the program installs updates itself: an AUR or a
+		// portable copy is only ever told about them.
+		if (package_kind::HasAutoInstallOption(update_installer::Kind())){
+			HikariCheckBox* autoInstall = new HikariCheckBox(GLOBAL_EDITOR, -1, _("Install updates automatically"));
+			autoInstall->SetValue(Options.GetBool(UPDATER_AUTO_INSTALL));
+			autoInstall->SetToolTip(_("Downloads a new version in the background and installs it when you restart or quit"));
+			ConOpt(autoInstall, UPDATER_AUTO_INSTALL);
+			updatesSizer->Add(autoInstall, 0, wxALL, 2);
+		}
 		MainSizer->Add(updatesSizer, 0, wxRIGHT | wxEXPAND, 5);
 
 		for (int i = 0; i < optsSize; i++)
@@ -866,14 +876,20 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		wxBoxSizer *sizer1 = new wxBoxSizer(wxHORIZONTAL);
 		wxArrayString choices;
 		wxArrayString files;
-		wxString pathwn = Options.pathfull + L"/Themes/";
 		const wxString & programTheme = Options.GetString(PROGRAM_THEME);
-		wxDir kat(pathwn);
-		if (kat.IsOpened()){
-			kat.GetAllFiles(pathwn, &files, L"*.txt", wxDIR_FILES);
+		// The shipped themes and, in an installed copy, the user's copies
+		// in the data root (installers spec, 1.7).
+		for (const wxString &root : { Options.pathfull, Options.dataPath }){
+			wxString pathwn = root + L"/Themes/";
+			if (wxDirExists(pathwn))
+				wxDir::GetAllFiles(pathwn, &files, L"*.txt", wxDIR_FILES);
+			if (Options.dataPath == Options.pathfull)
+				break;
 		}
 		for (size_t i = 0; i < files.size(); i++){
-			choices.Add(HikariPathName(files[i]).BeforeLast(L'.'));
+			wxString name = HikariPathName(files[i]).BeforeLast(L'.');
+			if (choices.Index(name, false) == -1)
+				choices.Add(name);
 		}
 		if (choices.Index(L"DarkSentro", false) == -1){
 			choices.Insert(L"DarkSentro", 0);
@@ -918,19 +934,17 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 			wxString themeName = newTheme->GetValue();
 			if (themeName.IsEmpty() || choices.Index(themeName, false) != -1){ wxBell(); return; }
 			wxString originalName = themeList->GetString(themeList->GetSelection());
-			wxString dir = Options.pathfull + L"/Themes/";
-			wxString copyPath = dir + themeName + L".txt";
+			wxString copyPath = Options.ThemeSavePath(themeName);
 			if (originalName == L"DarkSentro" || originalName == L"LightSentro"){
 				Options.SaveColors(copyPath);
 				List->Enable(true);
 				List->Refresh(false);
 			}
 			else{
-
-				if (!wxDirExists(dir)){
+				wxString originalPath = Options.ThemePath(originalName);
+				if (!wxFileExists(originalPath)){
 					wxBell(); return;
 				}
-				wxString originalPath = dir + originalName + L".txt";
 				wxCopyFile(originalPath, copyPath, false);
 			}
 			Options.SetString(PROGRAM_THEME, themeName);

@@ -124,13 +124,13 @@ void AutoSaveOpen::FindFiles()
 
 void AutoSaveOpen::GenerateList()
 {
-	wxString path = Options.pathfull + L"/Subs/*";
+	wxString path = Options.dataPath + L"/Subs/*";
 	//the autosaves are listed only from a folder that only the user may
 	//open, as MakePrivateFolder makes them in, and not from one another user
 	//could have put or swapped files in
-	if (wxDir::Exists(Options.pathfull + L"/Subs") && !MakePrivateFolder(Options.pathfull + L"/Subs")) {
+	if (wxDir::Exists(Options.dataPath + L"/Subs") && !MakePrivateFolder(Options.dataPath + L"/Subs")) {
 		HikariLog(_("Cannot open auto save folder"));
-		HikariLogSilent(wxString::Format(L"The autosave folder is not private: %s", Options.pathfull + L"/Subs"));
+		HikariLogSilent(wxString::Format(L"The autosave folder is not private: %s", Options.dataPath + L"/Subs"));
 		return;
 	}
 
@@ -142,7 +142,7 @@ void AutoSaveOpen::GenerateList()
 	if (h == INVALID_HANDLE_VALUE)
 	{
 		//there is no Subs folder until the first autosave, the list is just empty
-		if (wxDir::Exists(Options.pathfull + L"/Subs"))
+		if (wxDir::Exists(Options.dataPath + L"/Subs"))
 			HikariLog(_("Cannot open auto save folder"));
 		return;
 	}
@@ -248,7 +248,7 @@ void AutoSaveOpen::OnOkClick(wxCommandEvent& evt)
 
 	auto it = verList->find(item->name);
 	if (it != verList->end()) {
-		wxString filePath = Options.pathfull + L"/Subs/" + it->second;
+		wxString filePath = Options.dataPath + L"/Subs/" + it->second;
 		Hikari->OpenFile(filePath);
 		//the autosave is a recovery copy, so the first save asks where to write
 		//instead of overwriting it
