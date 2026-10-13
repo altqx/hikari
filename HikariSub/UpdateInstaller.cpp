@@ -108,16 +108,20 @@ namespace
 
 	// This copy's name in the shared cache (CopyKey): copies of other
 	// kinds, and AppImages at other paths, keep records of their own.
-	wxString CopyKey()
+	// InstallAppImageAtStart names the kind itself: it runs before the
+	// options have read the marker that Kind() needs.
+	wxString CopyKey(package_kind::Kind kind)
 	{
-		return FromUtf8(update_manifest::CopyKey(package_kind::Token(update_installer::Kind()), ToUtf8(AppImagePath())));
+		return FromUtf8(update_manifest::CopyKey(package_kind::Token(kind), ToUtf8(AppImagePath())));
 	}
+	wxString CopyKey() { return CopyKey(update_installer::Kind()); }
 
-	wxString PendingPath() { return CacheDir() + kSep + L"pending-" + CopyKey() + L".json"; }
+	wxString PendingPath(package_kind::Kind kind) { return CacheDir() + kSep + L"pending-" + CopyKey(kind) + L".json"; }
+	wxString PendingPath() { return PendingPath(update_installer::Kind()); }
 	wxString LastResultPath() { return CacheDir() + kSep + L"last-result.json"; }
 	// The version of the AppImage update an ordinary quit left for the
 	// next start.
-	wxString AppImageAtStartPath() { return CacheDir() + kSep + L"at-start-" + CopyKey(); }
+	wxString AppImageAtStartPath() { return CacheDir() + kSep + L"at-start-" + CopyKey(package_kind::Kind::AppImage); }
 	// The version of the NSIS update handed to its installer at the last
 	// quit. The installer writes a failure to last-result.json in the
 	// profile of the account that runs it, which for all users is the
@@ -155,10 +159,10 @@ namespace
 		return RenameFile(temporary, path);
 	}
 
-	std::optional<Pending> LoadPending()
+	std::optional<Pending> LoadPending(const wxString &path = PendingPath())
 	{
 		std::string text;
-		if (!ReadSmallFile(PendingPath(), &text))
+		if (!ReadSmallFile(path, &text))
 			return std::nullopt;
 		return update_manifest::ReadPending(JsonValue::Parse(text));
 	}
@@ -1424,7 +1428,8 @@ bool update_installer::InstallAppImageAtStart(bool isAppImage)
 	std::string named;
 	if (!ReadSmallFile(AppImageAtStartPath(), &named, 64))
 		return false;
-	std::optional<Pending> pending = LoadPending();
+	const wxString record = PendingPath(package_kind::Kind::AppImage);
+	std::optional<Pending> pending = LoadPending(record);
 	// Another AppImage copy's quit left it: that copy's next start installs
 	// it. (Kind() is not read yet, so the record's kind decides.)
 	if (pending && package_kind::ParseToken(pending->kind) == package_kind::Kind::AppImage &&
@@ -1447,7 +1452,7 @@ bool update_installer::InstallAppImageAtStart(bool isAppImage)
 				FromUtf8(pending->version), FromUtf8(pending->file)));
 		return false;
 	}
-	RemoveFile(PendingPath());
+	RemoveFile(record);
 	AppImageWatchdog(*pending);
 	return true;
 #else
