@@ -141,9 +141,11 @@ UpdateInstaller::~UpdateInstaller()
     abortDownload();
 }
 
+// This copy's download folder for a version: Updates/<copy>/<V>, so that
+// each copy clears only its own.
 QString UpdateInstaller::versionDir(const QString &version) const
 {
-    return m_env.cacheDir + QLatin1Char('/') + version;
+    return m_env.cacheDir + QLatin1Char('/') + copyKey() + QLatin1Char('/') + version;
 }
 
 // This copy's name in the shared cache (updateCopyKey): copies of other
@@ -324,8 +326,9 @@ QString UpdateInstaller::start()
             setState(pending.manual ? QStringLiteral("manual") : QStringLiteral("ready"));
         }
     }
-    // The folders of versions this one has reached.
-    const QDir cache(m_env.cacheDir);
+    // This copy's folders of versions this one has reached; other copies'
+    // downloads are theirs to clear.
+    const QDir cache(m_env.cacheDir + QLatin1Char('/') + copyKey());
     for (const QString &name : cache.entryList(QDir::Dirs | QDir::NoDotAndDotDot))
         if (application::parseSemVer(std8(name)) && !application::isNewerVersion(std8(name), std8(m_running)))
             QDir(cache.filePath(name)).removeRecursively();
@@ -778,7 +781,9 @@ bool UpdateInstaller::replaceAppImage(const QStringList &arguments)
     // The pending record stays: the new version's first start drops it with .old.
     // The watchdog: the new image reports its window by creating the health
     // file; if it exits first or stays silent, the old image comes back.
-    const QString health = m_env.cacheDir + QStringLiteral("/health-") + version;
+    // Named for this copy too: another AppImage's watchdog, waiting on the
+    // same version, must not take this one's report for its own.
+    const QString health = m_env.cacheDir + QStringLiteral("/health-%1-%2").arg(copyKey(), version);
     QFile::remove(health);
     QProcess next;
     next.setProgram(image);

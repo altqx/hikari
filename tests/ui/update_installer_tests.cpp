@@ -144,7 +144,7 @@ private slots:
         QVERIFY(installer.canInstall());
         QVERIFY(download(installer, QStringLiteral("0.2.0"), package(name, bytes), serve(root, name, bytes)));
         QCOMPARE(installer.state(), QStringLiteral("ready"));
-        const QString file = root + QStringLiteral("/cache/0.2.0/") + name;
+        const QString file = root + QStringLiteral("/cache/deb/0.2.0/") + name;
         QCOMPARE(installer.readyFile(), file);
         QCOMPARE(read(file), bytes);
         QVERIFY(!QFileInfo::exists(file + QStringLiteral(".part")));
@@ -175,8 +175,8 @@ private slots:
         installer.download(QStringLiteral("0.2.0"), package(name, "the real deb"), url, true);
         QVERIFY(failed.wait(5000));
         QCOMPARE(installer.state(), QStringLiteral("idle"));
-        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/0.2.0/") + name));
-        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/0.2.0/") + name + QStringLiteral(".part")));
+        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/deb/0.2.0/") + name));
+        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/deb/0.2.0/") + name + QStringLiteral(".part")));
         QVERIFY(!QFileInfo::exists(pendingOf(root, PackageKind::Deb)));
         // The automatic download fails silently.
         UpdateInstaller quiet(environment(PackageKind::Deb, root), QStringLiteral("0.1.0"));
@@ -198,6 +198,7 @@ private slots:
         const QString root = folder();
         const QString cache = root + QStringLiteral("/cache");
         const QString debRecord = pendingOf(root, PackageKind::Deb);
+        const QString debDir = cache + QStringLiteral("/deb"); // this copy's downloads
         const auto record = [&](const QString &version, const QString &kind, const QString &file, const QByteArray &bytes,
                                 const QString &at) {
             write(file, bytes);
@@ -208,24 +209,28 @@ private slots:
         };
         // Installed: the record and its file go, with the folders of
         // versions this one has reached; a newer one's stays.
-        record(QStringLiteral("0.2.0"), QStringLiteral("deb"), cache + QStringLiteral("/0.2.0/x.deb"), "x", debRecord);
-        QDir().mkpath(cache + QStringLiteral("/0.1.9"));
-        QDir().mkpath(cache + QStringLiteral("/0.3.0"));
-        QDir().mkpath(cache + QStringLiteral("/other"));
+        record(QStringLiteral("0.2.0"), QStringLiteral("deb"), debDir + QStringLiteral("/0.2.0/x.deb"), "x", debRecord);
+        QDir().mkpath(debDir + QStringLiteral("/0.1.9"));
+        QDir().mkpath(debDir + QStringLiteral("/0.3.0"));
+        QDir().mkpath(debDir + QStringLiteral("/other"));
+        // Another copy's download of a version this one has reached is that
+        // copy's to clear.
+        QDir().mkpath(cache + QStringLiteral("/rpm/0.1.9"));
         write(cache + QStringLiteral("/last-result.json"),
               QJsonDocument(QJsonObject{{"version", "0.2.0"}, {"ok", false}, {"code", 4}, {"message", "It failed"}}).toJson());
         UpdateInstaller installed(environment(PackageKind::Deb, root), QStringLiteral("0.2.0"));
         QCOMPARE(installed.start(), QStringLiteral("It failed"));
         QCOMPARE(installed.state(), QStringLiteral("idle"));
         QVERIFY(!QFileInfo::exists(debRecord));
-        QVERIFY(!QFileInfo::exists(cache + QStringLiteral("/0.2.0")));
-        QVERIFY(!QFileInfo::exists(cache + QStringLiteral("/0.1.9")));
-        QVERIFY(QFileInfo::exists(cache + QStringLiteral("/0.3.0")));
-        QVERIFY(QFileInfo::exists(cache + QStringLiteral("/other")));
+        QVERIFY(!QFileInfo::exists(debDir + QStringLiteral("/0.2.0")));
+        QVERIFY(!QFileInfo::exists(debDir + QStringLiteral("/0.1.9")));
+        QVERIFY(QFileInfo::exists(debDir + QStringLiteral("/0.3.0")));
+        QVERIFY(QFileInfo::exists(debDir + QStringLiteral("/other")));
+        QVERIFY(QFileInfo::exists(cache + QStringLiteral("/rpm/0.1.9")));
         QVERIFY(!QFileInfo::exists(cache + QStringLiteral("/last-result.json")));
         QCOMPARE(installed.start(), QString()); // the message shows once
         // Still to install: ready again at this start.
-        record(QStringLiteral("0.3.0"), QStringLiteral("deb"), cache + QStringLiteral("/0.3.0/y.deb"), "y", debRecord);
+        record(QStringLiteral("0.3.0"), QStringLiteral("deb"), debDir + QStringLiteral("/0.3.0/y.deb"), "y", debRecord);
         UpdateInstaller waiting(environment(PackageKind::Deb, root), QStringLiteral("0.2.0"));
         waiting.start();
         QCOMPARE(waiting.state(), QStringLiteral("ready"));
@@ -237,7 +242,7 @@ private slots:
         manual.start();
         QCOMPARE(manual.state(), QStringLiteral("manual"));
         // The helper through sudo, which checks the file as pkexec's would.
-        QCOMPARE(manual.manualCommand(), QStringLiteral("sudo ") + env.helper + QStringLiteral(" install ") + cache +
+        QCOMPARE(manual.manualCommand(), QStringLiteral("sudo ") + env.helper + QStringLiteral(" install ") + debDir +
                                              QStringLiteral("/0.3.0/y.deb 0.3.0"));
         // The cache is the user's: a copy of another kind has a record of
         // its own and never touches this one's.
@@ -245,7 +250,7 @@ private slots:
         rpm.start();
         QCOMPARE(rpm.state(), QStringLiteral("idle"));
         QVERIFY(QFileInfo::exists(debRecord));
-        QVERIFY(QFileInfo::exists(cache + QStringLiteral("/0.3.0/y.deb")));
+        QVERIFY(QFileInfo::exists(debDir + QStringLiteral("/0.3.0/y.deb")));
         // Its own download leaves this one's record alone.
         const QByteArray rpmBytes = "the new rpm";
         const QString rpmName = QStringLiteral("hikarisub-0.3.0-linux-x86_64.rpm");
@@ -254,16 +259,16 @@ private slots:
         QVERIFY(QFileInfo::exists(debRecord));
         UpdateInstaller debAgain(environment(PackageKind::Deb, root), QStringLiteral("0.2.0"));
         debAgain.start();
-        QCOMPARE(debAgain.readyFile(), cache + QStringLiteral("/0.3.0/y.deb"));
+        QCOMPARE(debAgain.readyFile(), debDir + QStringLiteral("/0.3.0/y.deb"));
         // A record of another kind in this copy's place is still not
         // this copy's: neither offered nor removed.
-        record(QStringLiteral("0.3.0"), QStringLiteral("rpm"), cache + QStringLiteral("/0.3.0/z.rpm"), "z", debRecord);
+        record(QStringLiteral("0.3.0"), QStringLiteral("rpm"), debDir + QStringLiteral("/0.3.0/z.rpm"), "z", debRecord);
         UpdateInstaller deb(environment(PackageKind::Deb, root), QStringLiteral("0.2.0"));
         deb.start();
         QCOMPARE(deb.state(), QStringLiteral("idle"));
         QVERIFY(QFileInfo::exists(debRecord));
         // One whose kind cannot be read is dropped.
-        record(QStringLiteral("0.3.0"), QStringLiteral("snap"), cache + QStringLiteral("/0.3.0/y.deb"), "y", debRecord);
+        record(QStringLiteral("0.3.0"), QStringLiteral("snap"), debDir + QStringLiteral("/0.3.0/y.deb"), "y", debRecord);
         UpdateInstaller unknown(environment(PackageKind::Deb, root), QStringLiteral("0.2.0"));
         unknown.start();
         QCOMPARE(unknown.state(), QStringLiteral("idle"));
@@ -300,7 +305,7 @@ private slots:
         QVERIFY(busy);
         QCOMPARE(action.program, QStringLiteral("/usr/bin/hikarisub"));
         QCOMPARE(action.arguments, QStringList{QStringLiteral("--hikari-updated-from=0.1.0")});
-        const QString file = root + QStringLiteral("/cache/0.2.0/") + name;
+        const QString file = root + QStringLiteral("/cache/rpm/0.2.0/") + name;
         QCOMPARE(QString::fromUtf8(read(root + QStringLiteral("/args"))).split(QLatin1Char('\n'), Qt::SkipEmptyParts),
                  (QStringList{QStringLiteral("/opt/hikarisub/libexec/hikarisub-update-helper"), QStringLiteral("install"),
                               file, QStringLiteral("0.2.0")}));
@@ -537,7 +542,7 @@ private slots:
         QVERIFY(installer.restartRequested());
         installer.installAtExit();
         QCOMPARE(read(image), fresh);
-        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/health-0.2.0")));
+        QVERIFY(!QFileInfo::exists(root + copyFile(root, QStringLiteral("health-%1-0.2.0"), PackageKind::AppImage, image)));
         QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/last-result.json")));
     }
 

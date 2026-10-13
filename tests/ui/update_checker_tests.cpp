@@ -222,7 +222,7 @@ private slots:
         QVERIFY(ready.wait(5000));
         QCOMPARE(installer.state(), QStringLiteral("ready"));
         QCOMPARE(installer.readyVersion(), QStringLiteral("0.2.0"));
-        const QString file = cache + QStringLiteral("/0.2.0/hikarisub-0.2.0-linux-amd64.deb");
+        const QString file = cache + QStringLiteral("/deb/0.2.0/hikarisub-0.2.0-linux-amd64.deb");
         QCOMPARE(installer.readyFile(), file);
         QFile downloaded(file);
         QVERIFY(downloaded.open(QIODevice::ReadOnly));
