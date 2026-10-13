@@ -134,9 +134,13 @@ private:
     int m_pixfmt = csri::BGRA;
     int m_width = 0, m_height = 0;
     std::uint64_t m_generation = 0;
-    // The context's leased fonts, added to the process until the next
-    // prepare or the adapter's end.
-    std::vector<std::shared_ptr<void>> m_fonts;
+    // The context's leased fonts, added to the process until a prepare
+    // without them or the adapter's end, by the lease's bytes.
+    struct AddedFont {
+        const void *bytes = nullptr;
+        std::shared_ptr<void> handle;
+    };
+    std::vector<AddedFont> m_fonts;
 };
 
 } // namespace hikari::backends

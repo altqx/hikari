@@ -267,14 +267,21 @@ TEST_F(Csri, LeasedFontsAreAddedForTheContextsLifetime)
         EXPECT_EQ(events, (std::vector<std::string>{"add Leased A (opened 0)", "add Leased B (opened 0)"}));
         EXPECT_EQ(live, 2);
         events.clear();
+        // The next edit's snapshot carries the same leases: nothing is added
+        // or removed again.
+        ASSERT_TRUE(r.prepare(first));
+        EXPECT_TRUE(events.empty());
+        EXPECT_EQ(live, 2);
         RenderSnapshot second = snapshotOf("[Script Info]\n");
-        second.fonts = {lease("Leased C")};
+        second.fonts = {lease("Leased C"), first.fonts[1]};
         ASSERT_TRUE(r.prepare(second));
-        EXPECT_EQ(events, (std::vector<std::string>{"add Leased C (opened 1)", "remove Leased A", "remove Leased B"}));
-        EXPECT_EQ(live, 1);
+        EXPECT_EQ(events, (std::vector<std::string>{"add Leased C (opened 2)", "remove Leased A"}));
+        EXPECT_EQ(live, 2);
         events.clear();
     }
-    EXPECT_EQ(events, (std::vector<std::string>{"remove Leased C"}));
+    EXPECT_EQ(events.size(), 2u);
+    EXPECT_TRUE(std::ranges::contains(events, std::string("remove Leased B")));
+    EXPECT_TRUE(std::ranges::contains(events, std::string("remove Leased C")));
     EXPECT_EQ(live, 0);
     // Without a renderer nothing is added.
     CsriRenderer none(std::make_shared<CsriRenderers>(std::vector<csri::Renderer>{}), "", logger());

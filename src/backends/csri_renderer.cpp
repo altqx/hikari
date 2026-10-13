@@ -126,11 +126,19 @@ std::expected<std::uint64_t, RenderError> CsriRenderer::prepare(application::Ren
     }
     m_renderer = renderer;
     // The new context's fonts are added before the previous context's go,
-    // so a font both use stays available.
-    std::vector<std::shared_ptr<void>> fonts;
-    for (const auto &font : snapshot.fonts)
-        if (auto handle = m_renderers->loadFont(font))
-            fonts.push_back(std::move(handle));
+    // so a font both use stays available; a lease the previous context
+    // already added (the same bytes, as every edit's snapshot carries) is
+    // kept, not added again.
+    std::vector<AddedFont> fonts;
+    for (const auto &font : snapshot.fonts) {
+        if (!font.bytes)
+            continue;
+        const auto kept = std::ranges::find(m_fonts, font.bytes.get(), &AddedFont::bytes);
+        if (kept != m_fonts.end())
+            fonts.push_back(*kept);
+        else if (auto handle = m_renderers->loadFont(font))
+            fonts.push_back({font.bytes.get(), std::move(handle)});
+    }
     m_fonts = std::move(fonts);
     // ParseInstance: csri_open_mem(mb_str(wxConvUTF8), strlen), so the script
     // ends at its first NUL.
