@@ -190,8 +190,8 @@ int main(int argc, char **argv)
     int lastBarcode = -1;
     std::int64_t lastStart = -1;
     int frames = 0;
-    player.setFrameSink([&](hikari::application::IndexedFrame frame, std::int64_t startUs) {
-        lastBarcode = barcode(frame);
+    player.setFrameSink([&](std::shared_ptr<hikari::application::IndexedFrame> frame, std::int64_t startUs) {
+        lastBarcode = barcode(*frame);
         lastStart = startUs;
         ++frames;
     });

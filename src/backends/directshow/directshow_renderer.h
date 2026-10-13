@@ -4,12 +4,14 @@
 // on the DirectShow base classes. It accepts legacy's formats (YV12, NV12,
 // YUY2, RGB32 in VIDEOINFOHEADER or VIDEOINFOHEADER2), records the format as
 // legacy's SetMediaType did, and hands every sample it shows to the player as
-// a BGRA frame: the paused state's first sample (OnReceiveFirstSample) and
+// a BGRA frame (converted on the streaming thread, into a pooled buffer): the paused state's first sample (OnReceiveFirstSample) and
 // each sample the clock releases (Render), once each, preroll samples skipped
 // as legacy's Render skipped them. A sample's time is the segment's start
 // plus its own (legacy added the sample time to the position it sought).
 
 #include "directshow_frames.h"
+
+#include "hikari/application/playback_pipeline.h"
 
 #include <streams.h>
 
@@ -26,12 +28,14 @@ struct Delivery {
     std::uint64_t serial = 0; // the seek the frame follows (Bridge::requestedSerial)
     std::int64_t startUs = 0;
     std::optional<std::int64_t> endUs;
-    application::IndexedFrame frame;
+    std::shared_ptr<application::IndexedFrame> frame; // from the bridge's pool
 };
 
 // Shared by the player (its thread) and the renderer (streaming threads).
 struct Bridge {
-    std::function<void(Delivery)> deliver; // posts to the player's thread
+    std::function<void(Delivery)> deliver; // posts to the player's thread (the newest only)
+    // V1: the frames' buffers, reused once the frames shown before are released.
+    std::shared_ptr<application::FramePool> pool = application::FramePool::create();
     std::function<void()> endOfStream;     // likewise
     std::atomic<bool> bt709{false};
     std::atomic<std::uint64_t> requestedSerial{0};

@@ -112,14 +112,15 @@ void VideoRenderer::deliver(IMediaSample *sample)
     format.bottomUp = info.bottomUp;
     Delivery d;
     d.serial = m_serial;
+    d.frame = m_bridge->pool->acquire();
     if (!toBgra(format, buffer, static_cast<std::size_t>(sample->GetActualDataLength()), m_bridge->bt709,
-                d.frame))
+                *d.frame))
         return;
-    d.frame.index = -1;
+    d.frame->index = -1;
     const REFERENCE_TIME segment = m_pInputPin ? m_pInputPin->CurrentStartTime() : 0;
     if (SUCCEEDED(timed)) {
         d.startUs = (segment + start) / 10;
-        d.frame.pts = d.startUs;
+        d.frame->pts = d.startUs;
         if (timed == S_OK && end > start)
             d.endUs = (segment + end) / 10;
     } else {

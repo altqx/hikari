@@ -77,10 +77,11 @@ void Application::choosePlayer()
             m_directShow = std::make_unique<backends::DirectShowPlayer>([this](std::function<void()> task) {
                 QMetaObject::invokeMethod(this, std::move(task), Qt::QueuedConnection);
             });
-            // Its frames are shown as the general player's are.
-            m_directShow->setFrameSink([this](application::IndexedFrame frame, std::int64_t startUs) {
-                m_video->session().generalFrame(std::move(frame), startUs);
-                emit m_video->changed();
+            // Its frames are shown as the general player's are (their
+            // overlay rendered on the session's worker).
+            m_directShow->setFrameSink([this](std::shared_ptr<application::IndexedFrame> frame, std::int64_t startUs) {
+                m_video->session().submitGeneralFrame(startUs, std::nullopt,
+                                                      [frame = std::move(frame)](application::FramePool &) { return frame; });
             });
             // Legacy: HR's HikariLogSilent for the failed step, then
             // VideoBox::LoadVideo's warning box.

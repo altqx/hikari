@@ -32,8 +32,11 @@ class DirectShowPlayer final : public application::GeneralPlayerPort {
 public:
     // Runs a task on the owner's thread (a queued call).
     using Post = std::function<void(std::function<void()>)>;
-    // A delivered frame (index -1, BGRA, top-down) and its start time.
-    using FrameSink = std::function<void(application::IndexedFrame frame, std::int64_t startUs)>;
+    // A delivered frame (index -1, BGRA, top-down; its buffer goes back to
+    // the adapter's pool when the frame is released) and its start time.
+    // V1: while one delivery waits for the owner's thread a newer one
+    // replaces it, so a busy thread is never behind by more than one frame.
+    using FrameSink = std::function<void(std::shared_ptr<application::IndexedFrame> frame, std::int64_t startUs)>;
 
     // A graph filter as legacy's Filters menu lists it (EnumFilters): its
     // name, enabled when it has property pages.
