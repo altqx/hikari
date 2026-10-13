@@ -253,3 +253,93 @@ Function ${UN}HsProtectedFromUser
 FunctionEnd
 
 !macroend
+
+; Sets $HsSelfHold and $HsHeld, which the includer declares.
+!macro HS_HOLD_SELF_FUNCTIONS
+; The all-users relaunch hands $EXEPATH to UAC, which finds the file by
+; that path again. A same-user process could otherwise rename this running
+; setup, or a folder above it, and put its own program at that path before
+; the prompt (an unsigned setup shows no publisher to tell them apart).
+; From the start, this setup's file is held open with reads shared only,
+; and every folder above it, up to the drive's root, with deletes not
+; shared: until it exits, no other process can write, rename or delete the
+; file, or rename or delete a folder on the way, so the file UAC starts is
+; this one. A path through a junction or symbolic link (whose target its
+; owner could change), a network path, or anything that cannot be held,
+; and there is no relaunch: the user runs setup as administrator.
+Function HsHoldSelf
+  Push $0
+  Push $1
+  Push $2
+  StrCpy $HsHeld 0
+  ; GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, FILE_FLAG_OPEN_REPARSE_POINT.
+  ; Closed when setup exits.
+  System::Call 'kernel32::CreateFileW(w "$EXEPATH", i 0x80000000, i 1, p 0, i 3, i 0x00200000, p 0) p .r0'
+  StrCpy $HsSelfHold $0
+  StrCpy $1 $EXEPATH 2
+  ${If} $HsSelfHold P<> -1
+  ${AndIf} $1 != "\\"
+    Push $HsSelfHold
+    Call HsIsLink
+    Pop $2
+    ${If} $2 = 0
+      StrCpy $HsHeld 1
+      StrCpy $1 $EXEPATH
+      ${Do}
+        ${GetParent} $1 $1
+        StrLen $2 $1
+        ${If} $2 <= 3
+          ${Break}
+        ${EndIf}
+        ; FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_WRITE, OPEN_EXISTING,
+        ; FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OPEN_REPARSE_POINT. Kept open.
+        System::Call 'kernel32::CreateFileW(w "$1", i 1, i 3, p 0, i 3, i 0x02200000, p 0) p .r0'
+        ${If} $0 P= -1
+          StrCpy $HsHeld 0
+          ${Break}
+        ${EndIf}
+        Push $0
+        Call HsIsLink
+        Pop $2
+        ${If} $2 <> 0
+          StrCpy $HsHeld 0
+          ${Break}
+        ${EndIf}
+      ${Loop}
+    ${EndIf}
+  ${EndIf}
+  Pop $2
+  Pop $1
+  Pop $0
+FunctionEnd
+
+; Whether the open handle on the stack is a junction or symbolic link (a
+; name-surrogate reparse point), or cannot be told: 1 or 0 on the stack.
+Function HsIsLink
+  Exch $0
+  Push $1
+  Push $2
+  Push $3
+  ; FILE_ATTRIBUTE_TAG_INFO { FileAttributes, ReparseTag }, FileAttributeTagInfo = 9.
+  System::Call '*(i 0, i 0) p .r1'
+  System::Call 'kernel32::GetFileInformationByHandleEx(p r0, i 9, p r1, i 8) i .r2'
+  System::Call '*$1(i .r3, i .r0)'
+  System::Free $1
+  ${If} $2 = 0
+    StrCpy $0 1
+  ${Else}
+    IntOp $3 $3 & 0x400
+    IntOp $0 $0 & 0x20000000
+    ${If} $3 <> 0
+    ${AndIf} $0 <> 0
+      StrCpy $0 1
+    ${Else}
+      StrCpy $0 0
+    ${EndIf}
+  ${EndIf}
+  Pop $3
+  Pop $2
+  Pop $1
+  Exch $0
+FunctionEnd
+!macroend
