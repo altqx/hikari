@@ -16,8 +16,8 @@ has been finalized or gtk_widget_translate_coordinates() fails (a destroyed
 target is no longer inside the TLW), instead of moving the overlay to
 uninitialized coordinates.
 
-Not upstream as of wxWidgets master 2026-10-13 (src/gtk/overlay.cpp is
-unchanged since v3.3.3).
+Not upstream as of wxWidgets v3.3.4 and master 2026-10-13: neither changes
+src/gtk/overlay.cpp.
 ---
 diff --git a/src/gtk/overlay.cpp b/src/gtk/overlay.cpp
 index 0f5d477cba..cd9b9aafdd 100644

@@ -84,7 +84,7 @@ out 4152 `wxCHECK`/`wxASSERT`/`wxFAIL` lines across 658 files, including the
 macro definitions in `include/wx/debug.h`, where `wxCHECK(cond, rc)` expanded to
 nothing while 59 call sites still used it.
 
-It is now a plain submodule at `v3.3.3`, pinned to upstream's tag, built by
+It is now a plain submodule at `v3.3.4`, pinned to upstream's tag, built by
 wxWidgets' own `wx_vc17.sln` on Windows. Those guards are upstream's again.
 
 The Linux build carries patches for wxGTK bugs that HikariSub hits and that
@@ -101,3 +101,7 @@ Windows does not apply them: so far they only patch GTK code.
 
 When the submodule moves to a newer wxWidgets, drop each patch upstream has
 taken; the script stops with an error on one that no longer applies.
+
+The submodule moved from `v3.3.3` to `v3.3.4` on 2026-10-13. v3.3.4 does not
+have the overlay fix: its `src/gtk/overlay.cpp` is the same as v3.3.3's, and
+so is master's. `0001` is kept, and it applies to v3.3.4 unchanged.

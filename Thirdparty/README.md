@@ -58,7 +58,7 @@ libraries are listed in `AdditionalDependencies`.
 | `harfbuzz` | [harfbuzz/harfbuzz](https://github.com/harfbuzz/harfbuzz) | `14.4.0` |
 | `libass` | [libass/libass](https://github.com/libass/libass) | `0.17.5` |
 | `Hunspell` | [hunspell/hunspell](https://github.com/hunspell/hunspell) | `v1.7.3` |
-| `wxWidgets` | [wxWidgets/wxWidgets](https://github.com/wxWidgets/wxWidgets) | `v3.3.3` |
+| `wxWidgets` | [wxWidgets/wxWidgets](https://github.com/wxWidgets/wxWidgets) | `v3.3.4` |
 | `ffms2` | **[altqx/ffms2](https://github.com/altqx/ffms2)** | branch `hikarisub` |
 | `xy-VSFilter-xy_sub_filter_rc5` | **[altqx/xy-VSFilter](https://github.com/altqx/xy-VSFilter)** | branch `hikarisub` |
 | `SubInspector` | [TypesettingTools/SubInspector](https://github.com/TypesettingTools/SubInspector) | `51c4c7a` (0.5.2) |

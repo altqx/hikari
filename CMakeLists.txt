@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC OFF)
 find_package(PkgConfig REQUIRED)
-# Windows builds the pinned Thirdparty/wxWidgets 3.3.3 submodule. Use the same
+# Windows builds the pinned Thirdparty/wxWidgets 3.3.4 submodule. Use the same
 # source/version on Linux instead of silently accepting the host's wxGTK 3.2.
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(HIKARISUB_WX_DEFAULT_CONFIG "${CMAKE_SOURCE_DIR}/build-wx-linux-debug/prefix/bin/wx-config")
@@ -15,12 +15,12 @@ else()
     set(HIKARISUB_WX_DEFAULT_CONFIG "${CMAKE_SOURCE_DIR}/build-wx-linux/prefix/bin/wx-config")
 endif()
 set(HIKARISUB_WX_CONFIG "${HIKARISUB_WX_DEFAULT_CONFIG}"
-    CACHE FILEPATH "wx-config from the pinned wxWidgets 3.3.3 Linux build")
+    CACHE FILEPATH "wx-config from the pinned wxWidgets 3.3.4 Linux build")
 if(NOT EXISTS "${HIKARISUB_WX_CONFIG}")
     message(FATAL_ERROR
-        "Pinned wxWidgets 3.3.3 is missing at ${HIKARISUB_WX_CONFIG}. "
+        "Pinned wxWidgets 3.3.4 is missing at ${HIKARISUB_WX_CONFIG}. "
         "Run Thirdparty/build-wxwidgets-linux.sh (with --debug for Debug) first, or set HIKARISUB_WX_CONFIG "
-        "to a wx-config for wxWidgets 3.3.3.")
+        "to a wx-config for wxWidgets 3.3.4.")
 endif()
 execute_process(
     COMMAND "${HIKARISUB_WX_CONFIG}" --prefix
@@ -37,12 +37,12 @@ else()
 endif()
 if(NOT EXISTS "${HIKARISUB_WX_PREFIX}/lib/cmake/wxWidgets-3.3/wxWidgetsTargets-${HIKARISUB_WX_EXPORT_CONFIG}.cmake")
     message(FATAL_ERROR
-        "${HIKARISUB_WX_CONFIG} does not point to the pinned wxWidgets 3.3.3 ${HIKARISUB_WX_EXPORT_CONFIG} build. "
+        "${HIKARISUB_WX_CONFIG} does not point to the pinned wxWidgets 3.3.4 ${HIKARISUB_WX_EXPORT_CONFIG} build. "
         "Run Thirdparty/build-wxwidgets-linux.sh (with --debug for Debug) first.")
 endif()
 set(wxWidgets_CONFIG_EXECUTABLE "${HIKARISUB_WX_CONFIG}" CACHE FILEPATH
     "wx-config selected for HikariSub" FORCE)
-find_package(wxWidgets 3.3.3 EXACT REQUIRED COMPONENTS core base adv aui html xml gl stc net)
+find_package(wxWidgets 3.3.4 EXACT REQUIRED COMPONENTS core base adv aui html xml gl stc net)
 include(${wxWidgets_USE_FILE})
 pkg_check_modules(LIBASS REQUIRED IMPORTED_TARGET libass)
 pkg_check_modules(FFMS2 REQUIRED IMPORTED_TARGET ffms2)
