@@ -1524,6 +1524,9 @@ def step_dpi():
             return
         time.sleep(3)
         ev1, st = snap(f"dpi-1-at-{after}", extra="# DPI_RESULT\n" + json.dumps(res))
+        kept, how_kept = floating_kept(st0, st, "Line editor", after / 100)
+        verdict("dpi-floating-keeps-size", "observed" if kept else "failed",
+                f"floating Line editor after 100 -> {after} %: {how_kept} (dpi-1-at-{after}.png)", ev0 + ev1)
         set_focus("Line text")
         keys("end")
         type_text(" hidpi")
@@ -1539,9 +1542,127 @@ def step_dpi():
     finally:
         back = dpi_set(100)
         time.sleep(3)
-        ev2, st = snap("dpi-2-restored", extra="# DPI_RESULT\n" + json.dumps(back))
+        ev2, st2 = snap("dpi-2-restored", extra="# DPI_RESULT\n" + json.dumps(back))
         verdict("dpi-restored", "observed" if back.get("after") == 100 else "failed",
                 f"scale restored: {back}", ev2)
+        if back.get("after") == 100 and isinstance(res.get("after"), int) and res["after"] > 100:
+            kept, how_kept = floating_kept(st0, st2, "Line editor", 1.0)
+            verdict("dpi-floating-keeps-size-back", "observed" if kept else "failed",
+                    f"floating Line editor after {res['after']} -> 100 %: {how_kept} (dpi-2-restored.png)", ev0 + ev2)
+
+
+def floating_kept(st0, st1, name, ratio):
+    """A floating panel's window across a scale change: its pixel size grew
+    by the scale's ratio (its size in device-independent pixels kept, within
+    3 px), and its panel fits whole inside it (not cut off): the panel's
+    header and pane together, as wide and as high as UI Automation reports
+    them, within the window's size. Sizes, not places: after a live scale
+    change on the VM's two monitors Qt's UI Automation places some elements
+    of the window by the other monitor's origin (siblings 52 px apart at
+    100 % came out 322 px apart at 125 %, the header left of the window),
+    while their sizes scale as drawn. The places are recorded too."""
+    f0, f1 = frames(st0).get(name), frames(st1).get(name)
+    if not f0 or not f1:
+        return False, f"window {name!r} at 100 %: {bool(f0)}, after: {bool(f1)}"
+    want = (round(f0["w"] * ratio), round(f0["h"] * ratio))
+    sized = abs(f1["w"] - want[0]) <= 3 and abs(f1["h"] - want[1]) <= 3
+    els = [e for e in st1.get("elements") or [] if e["win"] == name and not e["off"]]
+    panes = [e for e in els if e["t"] == "Pane" and panel_id(e["n"]) == panel_id(name)]
+    pane = panes[0] if panes else None
+    bars = [e for e in els if e["t"] == "TitleBar" and e["n"] == name]
+    bar = bars[0] if bars else None
+    high = (pane["h"] if pane else 0) + (bar["h"] if bar else 0)
+    wide = max(pane["w"] if pane else 0, bar["w"] if bar else 0)
+    whole = bool(pane) and wide <= f1["w"] + 1 and high <= f1["h"] + 1
+    placed = bool(pane) and (pane["x"] >= f1["x"] and pane["y"] >= f1["y"]
+                             and pane["x"] + pane["w"] <= f1["x"] + f1["w"] + 1
+                             and pane["y"] + pane["h"] <= f1["y"] + f1["h"] + 1)
+    return sized and whole, (f"window {f0['w']}x{f0['h']} -> {f1['w']}x{f1['h']} (kept would be {want[0]}x{want[1]}): "
+                             f"{sized}; header and panel {wide}x{high} within the window's {f1['w']}x{f1['h']}: "
+                             f"{whole}; UI Automation places the panel at "
+                             f"{pane and (pane['x'], pane['y'], pane['w'], pane['h'])}, the window at "
+                             f"{(f1['x'], f1['y'], f1['w'], f1['h'])} (inside by place: {placed})")
+
+
+def title_bar_shade(png, f, mons):
+    """The mean grey of the window's title bar on screen: a strip of its top
+    20 px, away from the icon and the caption buttons."""
+    from PIL import Image
+    ox = min(m["x"] for m in mons)
+    oy = min(m["y"] for m in mons)
+    img = Image.open(EVID / png).convert("RGB")
+    x0, y0 = max(f["x"], 0) - ox, max(f["y"], 0) - oy
+    x1 = min(f["x"] + f["w"], img.width + ox) - ox
+    px = [img.getpixel((x, y)) for x in range(x0 + 40, max(x0 + 41, x1 - 160), 9) for y in range(y0 + 2, y0 + 20, 3)
+          if 0 <= x < img.width and 0 <= y < img.height]
+    return round(sum(sum(c) / 3 for c in px) / len(px), 1) if px else None
+
+
+def system_theme(light):
+    """The system's app colour scheme (gate.ps1 systemtheme); returns (before, now)."""
+    _, lines = W.task("gate-win-system-theme", env={"GATE_APPS_LIGHT": light})
+    return line_value(lines, "APPS_LIGHT="), line_value(lines, "APPS_LIGHT_NOW=")
+
+
+def step_dark():
+    """K2 on Windows: the title bar of every framed window follows the theme
+    (src/ui/title_bars.h). With the system's apps light: Dark chosen in a
+    fresh profile, then Light chosen; then following the system, its scheme
+    switched dark and light again while HikariSub runs. Each: the title bar
+    as DWM has it (uia.ps1 darkTitleBar) for every window with a caption,
+    and the main window's title bar on screen. The system's scheme is put
+    back at the end."""
+    original, _ = system_theme("status")
+    mons = monitors()
+    WS_CAPTION = 0x00C00000
+
+    def check(tag, item, dark, what):
+        time.sleep(2)
+        ev, _ = snap(f"titlebar-{tag}")
+        st = uia(dpi=True)
+        framed = [w for w in st.get("windowInfo") or [] if (w.get("style") or 0) & WS_CAPTION == WS_CAPTION]
+        flags = {w.get("name"): w.get("darkTitleBar") for w in framed}
+        main = frames(st).get(MAIN)
+        shade = title_bar_shade(ev[0], main, mons) if main else None
+        on_screen = shade is not None and (shade < 90 if dark else shade > 170)
+        ok = bool(framed) and all(v == (1 if dark else 0) for v in flags.values()) and on_screen
+        verdict(item, "observed" if ok else "failed",
+                f"{what}: title bars {'dark' if dark else 'light'} expected; DWMWA_USE_IMMERSIVE_DARK_MODE per framed "
+                f"window {flags}; the main window's title bar on screen grey {shade} ({ev[0]})", ev)
+
+    def start(theme, follow):
+        app_kill()
+        job, lines = W.task("gate-win-fresh")
+        for l in lines:
+            if l.startswith("set aside"):
+                log(l)
+                if not PROFILE["original"]:
+                    PROFILE["original"] = l.split(" -> ", 1)[1].rsplit("\\", 1)[0]
+        if job.get("state") != "succeeded":
+            raise RuntimeError("gate-win-fresh failed (the profile was not set aside): " + " | ".join(lines[-6:]))
+        _, lines = W.task("gate-win-theme", env={"GATE_THEME": theme, "GATE_FOLLOW": follow})
+        log("theme:", line_value(lines, "THEME_RESULT "))
+        app_start(LAYOUT["episode"])
+        dismiss_notices()
+
+    try:
+        log("system apps light before:", original, "now:", system_theme("1"))
+        start("dark", "false")
+        check("0-dark", "titlebar-dark-chosen", True, "Dark chosen (follow the system off), the system light")
+        start("light", "false")
+        check("1-light", "titlebar-light-chosen", False, "Light chosen, the system light")
+        start("dark", "true")
+        check("2-follow-light", "titlebar-follow-system", False, "following the system, the system light")
+        log("system dark:", system_theme("0"))
+        check("3-follow-dark-live", "titlebar-follow-system-live", True,
+              "following the system, the system switched to dark while HikariSub runs")
+        log("system light:", system_theme("1"))
+        check("4-follow-light-live", "titlebar-follow-system-live-back", False,
+              "following the system, the system switched back to light")
+    finally:
+        app_kill()
+        if original in ("0", "1"):
+            log("system theme restored:", system_theme(original))
 
 
 def step_a11y():
@@ -1953,7 +2074,7 @@ def step_video_fullscreen():
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "outputs": step_outputs, "nvda": step_nvda, "menutext": step_menu_from_text,
-         "tests": step_test_executables, "a11y": step_a11y, "header": step_header, "dpi": step_dpi,
+         "tests": step_test_executables, "a11y": step_a11y, "header": step_header, "dpi": step_dpi, "dark": step_dark,
          "views": step_views, "editor": step_editor, "videofs": step_video_fullscreen}
 
 

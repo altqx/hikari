@@ -11,8 +11,10 @@
 #                 Elements off screen do not match; "all" acts on every match (else the first);
 #                 "after" waits that many milliseconds before the next action (a menu opening).
 #   GATE_UIA_SETTLE_MS  wait after the actions (default 1000)
-# It also reports GetDpiForWindow and the window styles (GWL_STYLE, GWL_EXSTYLE)
-# for each window of the app.
+# It also reports GetDpiForWindow, the window styles (GWL_STYLE, GWL_EXSTYLE)
+# and whether the title bar is dark (DwmGetWindowAttribute
+# DWMWA_USE_IMMERSIVE_DARK_MODE: 1 dark, 0 light, null unreadable) for each
+# window of the app.
 $ErrorActionPreference = 'Stop'
 trap { Write-Output "UIA_ERROR $($_.Exception.Message) (line $($_.InvocationInfo.ScriptLineNumber): $($_.InvocationInfo.Line.Trim()))"; exit 1 }
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
@@ -23,6 +25,12 @@ public static class GateUia {
     [DllImport("user32.dll")] public static extern bool SetProcessDpiAwarenessContext(IntPtr c);
     [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr h);
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")] public static extern IntPtr GetWindowLongPtr(IntPtr h, int i);
+    [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int attribute, out int value, int size);
+    public static object DarkTitleBar(IntPtr h) {
+        int value;
+        if (DwmGetWindowAttribute(h, 20, out value, 4) == 0 || DwmGetWindowAttribute(h, 19, out value, 4) == 0) return value != 0 ? 1 : 0;
+        return null;
+    }
 }
 '@
 [void][GateUia]::SetProcessDpiAwarenessContext([IntPtr]-4)
@@ -92,7 +100,8 @@ $dpi = @(Windows | ForEach-Object {
         $h = [int64]$_.Current.NativeWindowHandle
         if ($h) {
             [ordered]@{ hwnd = $h; name = $_.Current.Name; dpi = [int][GateUia]::GetDpiForWindow([IntPtr]$h)
-                style = [GateUia]::GetWindowLongPtr([IntPtr]$h, -16).ToInt64(); exStyle = [GateUia]::GetWindowLongPtr([IntPtr]$h, -20).ToInt64() }
+                style = [GateUia]::GetWindowLongPtr([IntPtr]$h, -16).ToInt64(); exStyle = [GateUia]::GetWindowLongPtr([IntPtr]$h, -20).ToInt64()
+                darkTitleBar = [GateUia]::DarkTitleBar([IntPtr]$h) }
         }
     })
 $json = [ordered]@{ pids = $appPids; actions = $actions; windowDpi = $dpi } | ConvertTo-Json -Depth 5 -Compress

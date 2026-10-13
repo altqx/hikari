@@ -18,6 +18,7 @@
 #include <QSize>
 #include <QtQml/qqmlregistration.h>
 
+#include <functional>
 #include <optional>
 
 class QQmlEngine;
@@ -64,6 +65,26 @@ bool windowSystemComposites();
 // Tests: pretend the window system does or does not composite (nullopt:
 // ask it again).
 void overrideCompositing(std::optional<bool> composites);
+
+// A floating panel's window keeps its size in device-independent pixels
+// when its screen's scale changes (a live change of the display scale on
+// Windows, 100 to 125 %): the window system may leave the window at its
+// pixel size, which at the new scale is smaller than the panel (native gate:
+// the floating Line editor kept 639 x 198 pixels at 125 % and its content
+// was cut off). Once the change has settled (kScaleSettleMs after Qt's last
+// device pixel ratio change for the window) the window takes back the size
+// it had before it, at least its panels' minimum size and at most its
+// screen's available size.
+inline constexpr int kScaleSettleMs = 250;
+// The window system's own scale for `window` (Windows: GetDpiForWindow /
+// 96), which can change before Qt's devicePixelRatio does: a resize the
+// window system makes for the new scale before Qt takes the new scale is
+// not taken as the size to keep. nullopt where it is not known (other
+// platforms, no native window).
+std::optional<qreal> nativeScale(QWindow *window);
+// Tests: answers nativeScale instead of the window system (nullptr: the
+// window system again).
+void overrideNativeScale(std::function<std::optional<qreal>(QWindow *)> scale);
 } // namespace dockchrome
 
 // Engine views and panel chrome the shell's QML needs (DockTabBar.qml,

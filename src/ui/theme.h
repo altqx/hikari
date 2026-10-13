@@ -159,7 +159,10 @@ void useSettings(SettingsStore *settings);
 void preview(const QVariantMap &values);
 void endPreview();
 // The platform's colour scheme (QStyleHints::colorScheme), or one forced
-// for tests and screenshots (nullopt: the platform's again).
+// for tests and screenshots (nullopt: the platform's again). On Windows,
+// while the theme does not follow the system, Qt is asked for the shown
+// theme's side (Qt draws the framed windows' title bars from it,
+// title_bars.h), and QStyleHints reports that one.
 Qt::ColorScheme systemScheme();
 void forceSystemScheme(std::optional<Qt::ColorScheme> scheme);
 // The Qt Quick Controls style the theme's palette drives on every platform:

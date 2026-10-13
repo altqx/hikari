@@ -2,14 +2,17 @@
 
 #include "settings_store.h"
 #include "style/style_colours.h"
+#include "title_bars.h"
 
 #include "hikari/application/settings.h"
 
 #include <QCoreApplication>
 #include <QGuiApplication>
+#include <QPlatformSurfaceEvent>
 #include <QPointer>
 #include <QQuickStyle>
 #include <QQuickWindow>
+#include <QScopeGuard>
 #include <QStyleHints>
 #include <QtQml/qqmlengine.h>
 #include <QtQml/qqmlextensionplugin.h>
@@ -488,6 +491,12 @@ public:
 
     void refresh(bool force = false)
     {
+        // Asking Qt for a colour scheme (requestScheme) can report a change
+        // at once, which would come back here.
+        if (refreshing)
+            return;
+        refreshing = true;
+        const auto done = qScopeGuard([this] { refreshing = false; });
         const auto value = [this](const char *id) -> QVariant {
             const QString key = QLatin1String(id);
             if (previewValues) {
@@ -499,6 +508,10 @@ public:
         };
         State next;
         next.choice = choiceFrom(value);
+        // Following the system, Qt's scheme is the system's again before it
+        // is read.
+        if (next.choice.followSystem)
+            requestScheme(Qt::ColorScheme::Unknown);
         next.code = effective(next.choice, scheme());
         next.roles = resolve(next.code, next.choice);
         next.content = content(next.code, next.roles);
@@ -509,9 +522,78 @@ public:
         // for it); without one, Fusion's.
         if (settings && (force || !same))
             QGuiApplication::setPalette(palette(state.roles));
+        // Not following the system, Qt's own scheme is the theme's side, so
+        // that what Qt sets on a window's frame (at its creation, on a
+        // palette or system change) agrees with the theme.
+        if (!state.choice.followSystem)
+            requestScheme(isDark(state.code) ? Qt::ColorScheme::Dark : Qt::ColorScheme::Light);
         style::StyleColours::setFocus(settings ? state.roles.focus : QColor());
+        // Every time, as the system's own change (which comes here) has Qt
+        // set the frames from its scheme.
+        themeTitleBars(QGuiApplication::topLevelWindows());
         if (force || !same)
             emit changed();
+    }
+
+    // The window system's title bars of the framed windows (title_bars.h).
+    void themeTitleBars(const QList<QWindow *> &windows) const
+    {
+        const bool dark = isDark(state.code);
+        for (QWindow *window : windows)
+            if (titlebars::themed(window))
+                titlebars::setDark(window, dark);
+    }
+
+    // A window's title bar once it has its native window, when it is shown,
+    // and again after Qt has set its frame for an application palette change
+    // (it does so after the event's filters, hence queued).
+    bool eventFilter(QObject *object, QEvent *event) override
+    {
+        const auto type = event->type();
+        if (type != QEvent::PlatformSurface && type != QEvent::Show && type != QEvent::ApplicationPaletteChange)
+            return false;
+        auto *window = qobject_cast<QWindow *>(object);
+        if (!window || !titlebars::themed(window))
+            return false;
+        if (type == QEvent::PlatformSurface) {
+            if (static_cast<QPlatformSurfaceEvent *>(event)->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated)
+                themeTitleBars({window});
+        } else if (type == QEvent::Show) {
+            // A window whose flags changed after its creation (framed now)
+            // is themed when it is next shown.
+            themeTitleBars({window});
+        } else {
+            QMetaObject::invokeMethod(
+                this, [this, w = QPointer<QWindow>(window)] {
+                    if (w)
+                        themeTitleBars({w.data()});
+                },
+                Qt::QueuedConnection);
+        }
+        return false;
+    }
+
+    // The colour scheme Qt is asked for (Unknown: the system's). Windows
+    // only: there Qt draws a framed window's title bar from it. Elsewhere
+    // it would also change the platform's palette, the client-side
+    // decorations (Wayland) and the application's appearance (macOS), which
+    // follow the desktop's own theme as in the legacy application, and what
+    // systemScheme reports. A request already made is not made again
+    // (each one has Qt refresh its palettes and themes), unless Qt reports
+    // another side than the one asked for.
+    void requestScheme(Qt::ColorScheme scheme)
+    {
+#ifdef Q_OS_WIN
+        auto *hints = QGuiApplication::styleHints();
+        if (!hints)
+            return;
+        if (requested == scheme && (scheme == Qt::ColorScheme::Unknown || hints->colorScheme() == scheme))
+            return;
+        requested = scheme;
+        hints->setColorScheme(scheme);
+#else
+        Q_UNUSED(scheme);
+#endif
     }
 
     // The popups (menus, dialogs) take the palette of their window, which a
@@ -539,6 +621,8 @@ public:
             QGuiApplication::setPalette(QPalette());
             QGuiApplication::setPalette(palette(state.roles));
         }
+        if (added)
+            themeTitleBars(windows);
     }
 
 signals:
@@ -552,15 +636,19 @@ private:
         state.content = content(state.code, state.roles);
         if (auto *hints = QGuiApplication::styleHints())
             connect(hints, &QStyleHints::colorSchemeChanged, this, [this] { refresh(); });
-        if (auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance()))
+        if (auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance())) {
             connect(app, &QGuiApplication::focusWindowChanged, this, [this](QWindow *window) {
                 if (window)
                     adopt({window});
             });
+            app->installEventFilter(this);
+        }
         refresh();
     }
 
     static constexpr const char *kAdopted = "hikariThemePalette";
+    bool refreshing = false;
+    std::optional<Qt::ColorScheme> requested;
 };
 
 } // namespace

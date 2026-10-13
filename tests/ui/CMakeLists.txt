@@ -182,6 +182,8 @@ add_dependencies(hikari_ui_automation_workflow hikari_media_helper hikari_media_
 # D1: the pinned docking engine (KDDockWidgets, QtQuick frontend) qualified with the provisioned Qt.
 hikari_add_qttest(hikari_ui_docking_qualification_tests SOURCES docking_qualification_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin KDAB::kddockwidgets Qt6::Quick Qt6::QuickControls2)
+# The offscreen platform's screen configuration (a live scale change).
+target_link_libraries(hikari_ui_docking_qualification_tests PRIVATE Qt6::GuiPrivate)
 # D3: the floating header's split at the scales Windows offers.
 foreach(scale 125 150 175 200)
     math(EXPR whole "${scale} / 100")
@@ -261,6 +263,18 @@ target_compile_definitions(hikari_ui_icon_tests PRIVATE
 # following the system, the high-contrast pickers, content colours, the live
 # preview and the Theme singleton; the swatch sheet with HIKARI_THEME_SHEET_DIR.
 hikari_add_qttest(hikari_ui_theme_tests SOURCES theme_tests.cpp LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2 OFFSCREEN_ONLY)
+# K2 on Windows: the window system's title bar of every framed window follows
+# the theme (title_bars.h); on Windows also read back from the window system
+# in real windows (the .windows entry, the windows platform).
+hikari_add_qttest(hikari_ui_title_bar_tests SOURCES title_bar_tests.cpp
+    LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2)
+if(WIN32)
+    add_test(NAME hikari_ui_title_bar_tests.windows
+        COMMAND $<TARGET_FILE:hikari_ui_title_bar_tests> windowsTitleBarFollowsTheTheme
+            -o "${CMAKE_BINARY_DIR}/qttest-hikari_ui_title_bar_tests-windows.txt,txt" -o "-,txt")
+    set_tests_properties(hikari_ui_title_bar_tests.windows PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=windows" LABELS "qttest;windows" TIMEOUT 120)
+endif()
 foreach(scale 150 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")
