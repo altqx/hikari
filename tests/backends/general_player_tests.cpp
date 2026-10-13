@@ -4,14 +4,17 @@
 // delivered frame's reported start time, and which frame actually arrived.
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/qt_general_player.h"
+#include "hikari/backends/video_frame_bgra.h"
 
 #include <QImage>
 #include <QSignalSpy>
 #include <QVideoFrame>
 #include <QtTest>
 
+#include <chrono>
 #include <cstdio>
 #include <optional>
+#include <thread>
 
 using hikari::application::Chapter;
 using hikari::application::MediaDescription;
@@ -38,6 +41,20 @@ int barcode(const QVideoFrame &frame)
         for (int bx = 0; bx < 4; ++bx) {
             const QRgb p = image.pixel((2 * bx + 1) * image.width() / 8, (2 * by + 1) * image.height() / 8);
             if ((qRed(p) + qGreen(p) + qBlue(p)) / 3 > 128)
+                value |= 1 << (by * 4 + bx);
+        }
+    return value;
+}
+
+// The barcode from a converted frame (V1's conversion, not Qt's).
+int barcode(const hikari::application::IndexedFrame &frame)
+{
+    int value = 0;
+    for (int by = 0; by < 4; ++by)
+        for (int bx = 0; bx < 4; ++bx) {
+            const int x = (2 * bx + 1) * frame.width / 8, y = (2 * by + 1) * frame.height / 8;
+            const auto *p = reinterpret_cast<const std::uint8_t *>(frame.bgra.data()) + y * frame.stride + x * 4;
+            if ((p[0] + p[1] + p[2]) / 3 > 128)
                 value |= 1 << (by * 4 + bx);
         }
     return value;
@@ -230,6 +247,56 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return a.has_value() && b.has_value(); }, 10'000));
         QCOMPARE(a->error(), PlayerError::Stale);
         QVERIFY(b->has_value());
+    }
+
+    // V1: a 10-bit 4:2:0 file decoded in software (the HEVC Main 10 case
+    // without hardware decoding) gives frames the player path converts.
+    void tenBitFramesAreConverted()
+    {
+        QtGeneralPlayer player(false);
+        QVERIFY(open(player, "yuv10"));
+        pauseOnFirstFrame(player);
+        QVideoFrame delivered;
+        auto connection = connect(&player, &QtGeneralPlayer::frameDelivered, this,
+                                  [&](const QVideoFrame &f) { delivered = f; });
+        std::optional<std::expected<SeekResult, PlayerError>> seeked;
+        player.seek(cfrStartUs(13), [&](auto r) { seeked = std::move(r); });
+        QVERIFY(QTest::qWaitFor([&] { return seeked.has_value() && delivered.isValid(); }, 10'000));
+        disconnect(connection);
+        QVERIFY(seeked->has_value());
+        qInfo() << "10-bit fixture pixel format" << delivered.pixelFormat();
+        hikari::application::IndexedFrame bgra;
+        QVERIFY(hikari::backends::videoFrameToBgra(delivered, bgra));
+        QCOMPARE(bgra.width, 320);
+        QCOMPARE(bgra.height, 240);
+        QCOMPARE(barcode(bgra), 13);
+        // Black and white at the 10-bit limited levels.
+        const auto *first = reinterpret_cast<const std::uint8_t *>(bgra.bgra.data());
+        QCOMPARE(int(first[0]), 255); // frame 13 = 0b1101: block 0 is white
+        const auto *dark = first + (bgra.height / 8) * bgra.stride + (3 * bgra.width / 8) * 4; // block 1
+        QCOMPARE(int(dark[0]), 0);
+        QCOMPARE(int(dark[3]), 255);
+    }
+
+    // V1: frames arriving while the GUI thread is busy do not queue up: only
+    // the newest waits, the rest are counted as superseded.
+    void framesDoNotBacklogWhileTheGuiThreadIsBusy()
+    {
+        QtGeneralPlayer player(false);
+        QVERIFY(open(player, "longgop"));
+        player.play();
+        QVERIFY(QTest::qWaitFor([&] { return player.deliveredFrames() > 2; }, 10'000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(600)); // the GUI thread stalls
+        const auto received = player.receivedFrames();
+        const auto before = player.deliveredFrames();
+        QCoreApplication::processEvents(); // everything queued meanwhile
+        const auto after = player.deliveredFrames();
+        player.pause();
+        qInfo() << "received" << received << "superseded" << player.supersededFrames() << "delivered after the stall"
+                << after - before;
+        QVERIFY2(after - before <= 1, qPrintable(QString::number(after - before)));
+        if (received > before + 1) // the player kept rendering through the stall
+            QVERIFY(player.supersededFrames() > 0);
     }
 
     void missingFilesFailExplicitly()

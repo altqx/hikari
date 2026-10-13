@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace hikari::application {
@@ -27,6 +28,11 @@ struct Presentation {
     std::shared_ptr<const IndexedFrame> frame;  // opaque BGRA
     std::shared_ptr<const OverlayFrame> overlay; // premultiplied BGRA at the frame's size; may be null
     PresentationTransform transform;
+    // Where the overlay's visible pixels are, when the submitter knows
+    // (overlayBounds); nullopt in it: none are visible. Unknown: the
+    // presenter finds them itself.
+    bool overlayBoundsKnown = false;
+    std::optional<PixelRect> overlayBounds;
 };
 
 enum class PresentOutcome {

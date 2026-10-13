@@ -14,6 +14,7 @@ hikari_module(hikari_lua_protocol ALLOW hikari_helper_endpoint hikari_applicatio
 # helper processes).
 add_library(hikari_backends STATIC module.cpp libass_renderer.cpp helper_host.cpp ffms_indexed_source.cpp
     audio_ring.cpp audio_output_engine.cpp portaudio_output.cpp lua_script_host.cpp qt_general_player.cpp
+    video_frame_bgra.cpp include/hikari/backends/video_frame_bgra.h
     libass_font_service.cpp line_audition.cpp include/hikari/backends/line_audition.h
     transport_coordinator.cpp include/hikari/backends/transport_coordinator.h
     automation_manager.cpp include/hikari/backends/automation_manager.h process_metrics.cpp

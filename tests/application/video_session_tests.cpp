@@ -8,10 +8,14 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <chrono>
 #include <cstring>
 #include <deque>
+#include <mutex>
 #include <set>
 #include <string_view>
+#include <thread>
 
 using namespace hikari;
 using namespace hikari::application;
@@ -802,4 +806,153 @@ TEST_F(VideoTest, TheDocumentMatrixSetsTheSourcesInputMatrix)
     EXPECT_EQ(video.colourMatrix().applied(), "TV.709");
     video.setMatrix("TV.709");
     EXPECT_EQ(source.matrixCalls.size(), 1u);
+}
+
+// V1: player frames through the playback pipeline.
+namespace {
+
+PlaybackPipeline::Make pooledPlayerFrame()
+{
+    return [](FramePool &pool) {
+        auto f = pool.acquire();
+        *f = playerFrame();
+        return f;
+    };
+}
+
+// The owner's event queue: the worker's results run when the test drains it.
+struct PostQueue {
+    std::mutex mutex;
+    std::deque<std::function<void()>> tasks;
+    PlaybackPipeline::Post post()
+    {
+        return [this](std::function<void()> task) {
+            std::lock_guard lock(mutex);
+            tasks.push_back(std::move(task));
+        };
+    }
+    // Waits for a posted result, then runs everything posted.
+    bool drain()
+    {
+        const auto until = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        for (;;) {
+            {
+                std::lock_guard lock(mutex);
+                if (!tasks.empty())
+                    break;
+            }
+            if (std::chrono::steady_clock::now() > until)
+                return false;
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        for (;;) {
+            std::function<void()> task;
+            {
+                std::lock_guard lock(mutex);
+                if (tasks.empty())
+                    return true;
+                task = std::move(tasks.front());
+                tasks.pop_front();
+            }
+            task();
+        }
+    }
+};
+
+struct PlayingTest : VideoTest {
+    FakePlayer player;
+    int notified = 0;
+    void SetUp() override
+    {
+        video.setGeneralPlayer(&player);
+        video.setPresenter(&presenter);
+        video.setSubtitles({std::byte{'x'}});
+        video.open("/m/ep1.mkv");
+        source.finishOpen();
+        source.answer(); // frame 0
+        ASSERT_TRUE(video.play());
+        player.opened();
+        player.delivered();
+        video.setObserver([this] { ++notified; });
+    }
+};
+
+} // namespace
+
+TEST_F(PlayingTest, APlayerFrameIsShownWithTheWorkersOverlayAndOneNotification)
+{
+    const auto renders = renderer.renderedAt.size();
+    const auto shown = presenter.shown.size();
+    video.submitGeneralFrame(205'000, 245'000, pooledPlayerFrame());
+    ASSERT_EQ(presenter.shown.size(), shown + 1);
+    const auto &p = presenter.shown.back();
+    EXPECT_EQ(p.frame->index, -1);
+    ASSERT_TRUE(p.overlay);
+    EXPECT_TRUE(p.overlayBoundsKnown); // measured on the worker
+    EXPECT_EQ(renderer.renderedAt.size(), renders + 1); // rendered once, not again on the owner
+    EXPECT_EQ(renderer.renderedAt.back(), 205'000);
+    EXPECT_EQ(notified, 1); // the presenter's answer does not notify again while playing
+    video.submitGeneralFrame(245'000, 285'000, pooledPlayerFrame());
+    EXPECT_EQ(notified, 2);
+    const auto c = video.pipelineCounters();
+    ASSERT_TRUE(c);
+    EXPECT_EQ(c->delivered, 2u);
+}
+
+TEST_F(PlayingTest, AnOlderPlayerFrameThanTheShownOneIsDropped)
+{
+    video.generalFrame(playerFrame(), 245'000);
+    const auto shown = presenter.shown.size();
+    video.generalFrame(playerFrame(), 205'000); // late, out of order
+    EXPECT_EQ(presenter.shown.size(), shown);
+    EXPECT_EQ(notified, 1);
+}
+
+TEST_F(PlayingTest, AResultFromBeforeAPauseIsDropped)
+{
+    PostQueue queue;
+    video.setFrameWorker(queue.post());
+    video.submitGeneralFrame(205'000, std::nullopt, pooledPlayerFrame());
+    // The worker made it; the owner pauses before taking it.
+    ASSERT_TRUE(video.pause());
+    while (!source.frames.empty())
+        source.answer(); // the indexed frame at the pause
+    const auto shown = presenter.shown.size();
+    ASSERT_TRUE(queue.drain());
+    EXPECT_EQ(presenter.shown.size(), shown);
+    EXPECT_EQ(video.shownFrame(), 0);
+    EXPECT_GE(presenter.shown.back().frame->index, 0);
+    // Playing again starts a new epoch: the old result would be dropped too.
+    ASSERT_TRUE(video.play());
+    player.delivered();
+    video.submitGeneralFrame(245'000, std::nullopt, pooledPlayerFrame());
+    ASSERT_TRUE(queue.drain());
+    EXPECT_EQ(presenter.shown.back().frame->index, -1);
+    video.setFrameWorker(nullptr);
+}
+
+TEST_F(PlayingTest, NewSubtitlesRenderTheWorkersFrameAgain)
+{
+    PostQueue queue;
+    video.setFrameWorker(queue.post());
+    video.submitGeneralFrame(205'000, std::nullopt, pooledPlayerFrame());
+    // Wait for the worker's result, then prepare new subtitles before it is shown.
+    {
+        const auto until = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        for (;;) {
+            {
+                std::lock_guard lock(queue.mutex);
+                if (!queue.tasks.empty())
+                    break;
+            }
+            ASSERT_LT(std::chrono::steady_clock::now(), until);
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+    video.setSubtitles({std::byte{'y'}});
+    ASSERT_TRUE(queue.drain());
+    EXPECT_EQ(presenter.shown.back().frame->index, -1);
+    EXPECT_EQ(std::count(renderer.renderedAt.begin(), renderer.renderedAt.end(), 205'000), 2);
+    EXPECT_EQ(renderer.renderedAt.back(), 205'000); // again, for the new subtitles
+    video.setFrameWorker(nullptr);
 }

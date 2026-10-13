@@ -15,6 +15,9 @@ hikari_add_gtest(hikari_application_document_scripts_tests SOURCES document_scri
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_automation_services_tests SOURCES automation_services_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# V1: playback frames off the GUI thread
+hikari_add_gtest(hikari_application_playback_pipeline_tests SOURCES playback_pipeline_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_video_session_tests SOURCES video_session_tests.cpp
     LIBRARIES hikari_application LABELS application)
 # V3: video sources, tracks and chapters

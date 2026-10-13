@@ -10,6 +10,12 @@ target_sources(hikari_application PRIVATE audio_playback.cpp)
 # A5: the audio box's karaoke mode.
 target_sources(hikari_application PRIVATE audio_karaoke.cpp)
 target_include_directories(hikari_application PUBLIC include)
+# V1: player frames off the GUI thread (latest wins, pooled buffers, the
+# overlay on a worker) and the Y'CbCr rows to BGRA the CPU paths share.
+target_sources(hikari_application PRIVATE playback_pipeline.cpp yuv_bgra.cpp
+    include/hikari/application/playback_pipeline.h include/hikari/application/yuv_bgra.h)
+find_package(Threads REQUIRED)
+target_link_libraries(hikari_application PUBLIC Threads::Threads)
 # F1: find and replace.
 target_sources(hikari_application PRIVATE find_replace.cpp)
 # A2 and L6: the audio spectrum (the audio box's display and
