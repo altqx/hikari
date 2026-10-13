@@ -135,11 +135,11 @@ std::expected<std::uint64_t, RenderError> CsriRenderer::prepare(application::Ren
     for (const auto &font : snapshot.fonts) {
         if (!font.bytes)
             continue;
-        const auto kept = std::ranges::find(m_fonts, font.bytes.get(), &AddedFont::bytes);
+        const auto kept = std::ranges::find(m_fonts, font.bytes, &AddedFont::bytes);
         if (kept != m_fonts.end())
             fonts.push_back(*kept);
         else if (auto handle = m_renderers->loadFont(font))
-            fonts.push_back({font.bytes.get(), std::move(handle)});
+            fonts.push_back({font.bytes, std::move(handle)});
     }
     m_fonts = std::move(fonts);
     // ParseInstance: csri_open_mem(mb_str(wxConvUTF8), strlen), so the script

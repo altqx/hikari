@@ -328,6 +328,34 @@ TEST_F(Csri, LeasedFontsAreAddedForTheContextsLifetime)
     EXPECT_EQ(live, 0);
 }
 
+// A kept font holds its lease's bytes for as long as it stands for them, so
+// a later lease cannot take the same address and pass for a font that is
+// already added; once the context drops the font, a new lease is added.
+TEST_F(Csri, AKeptFontHoldsItsLeasesBytes)
+{
+    const auto renderers = twoRenderers();
+    std::vector<std::string> events;
+    renderers->setFontLoader([&](const FontLease &font) -> std::shared_ptr<void> {
+        events.push_back("add " + font.family);
+        return std::make_shared<int>(0);
+    });
+    CsriRenderer r(renderers, "xy-vsfilter_textsub", logger());
+    std::weak_ptr<const std::vector<std::byte>> first;
+    {
+        RenderSnapshot s = snapshotOf("[Script Info]\n");
+        s.fonts = {FontLease{"Leased A", std::make_shared<const std::vector<std::byte>>(4, std::byte{1})}};
+        first = s.fonts[0].bytes;
+        ASSERT_TRUE(r.prepare(std::move(s)));
+    }
+    EXPECT_FALSE(first.expired());
+    ASSERT_TRUE(r.prepare(snapshotOf("[Script Info]\n")));
+    EXPECT_TRUE(first.expired());
+    RenderSnapshot next = snapshotOf("[Script Info]\n");
+    next.fonts = {FontLease{"Leased B", std::make_shared<const std::vector<std::byte>>(4, std::byte{2})}};
+    ASSERT_TRUE(r.prepare(next));
+    EXPECT_EQ(events, (std::vector<std::string>{"add Leased A", "add Leased B"}));
+}
+
 // The Video page's order (user 2026-10-13): xy-VSFilter, libass, VSFilterMod
 // last; an empty or uninstalled name draws through libass, never VSFilterMod
 // or the first CSRI renderer (W2-libass-default, W2-missing-renderer-libass).

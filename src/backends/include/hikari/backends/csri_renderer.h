@@ -142,9 +142,11 @@ private:
     int m_width = 0, m_height = 0;
     std::uint64_t m_generation = 0;
     // The context's leased fonts, added to the process until a prepare
-    // without them or the adapter's end, by the lease's bytes.
+    // without them or the adapter's end, by the lease's bytes. The entry
+    // holds the bytes, so no other font's buffer can take their address
+    // while the entry stands for them.
     struct AddedFont {
-        const void *bytes = nullptr;
+        std::shared_ptr<const std::vector<std::byte>> bytes;
         std::shared_ptr<void> handle;
     };
     std::vector<AddedFont> m_fonts;
