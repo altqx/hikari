@@ -1,0 +1,158 @@
+Subject: wxGTK: disconnect wxOverlay's "map-event" handler when it goes away
+
+On Wayland, wxOverlayImpl::Init() connects map_event() to "map-event" of the
+target's top level window when that window is not mapped yet, with the
+overlay as the handler's data. Nothing disconnected it except the handler
+itself, so an overlay deleted before its TLW was mapped (for example the
+overlay of a generic wxCaret whose window is destroyed while its dialog is
+still hidden) left the handler behind, and mapping the TLW later called
+PositionOverlay() on the freed overlay: gtk_widget_translate_coordinates()
+then crashed on its garbage m_target.
+
+Keep the handler id and the TLW (as a weak pointer), connect it once per TLW
+rather than on every Init(), and disconnect it in the destructor and Reset().
+Also hold the target widget as a weak pointer, and skip positioning when it
+has been finalized or gtk_widget_translate_coordinates() fails (a destroyed
+target is no longer inside the TLW), instead of moving the overlay to
+uninitialized coordinates.
+
+Not upstream as of wxWidgets master 2026-10-13 (src/gtk/overlay.cpp is
+unchanged since v3.3.3).
+---
+diff --git a/src/gtk/overlay.cpp b/src/gtk/overlay.cpp
+index 0f5d477cba..cd9b9aafdd 100644
+--- a/src/gtk/overlay.cpp
++++ b/src/gtk/overlay.cpp
+@@ -28,9 +28,18 @@ public:
+     virtual void Clear(wxDC* dc) override;
+     virtual void Reset() override;
+     void PositionOverlay(GtkWidget* tlw);
++    void SetTarget(GtkWidget* target);
++    void ConnectMapEvent(GtkWidget* tlw);
++    void DisconnectMapEvent();
+ 
+     GtkWidget* m_overlay;
++    // Both of these are weak pointers, reset to null when the widget is
++    // destroyed, so that a widget which goes away before the overlay does is
++    // never used.
+     GtkWidget* m_target;
++    // Unmapped TLW whose "map-event" is connected to map_event(), if any.
++    GtkWidget* m_mapTLW;
++    gulong m_mapHandler;
+     cairo_surface_t* m_surface;
+     cairo_t* m_cr;
+     wxRect m_rect;
+@@ -59,8 +68,8 @@ static gboolean draw(GtkWidget*, cairo_t* cr, wxOverlayImpl* overlay)
+ 
+ static gboolean map_event(GtkWidget* widget, GdkEvent*, wxOverlayImpl* overlay)
+ {
++    overlay->DisconnectMapEvent();
+     overlay->PositionOverlay(widget);
+-    g_signal_handlers_disconnect_by_data(widget, overlay);
+     return false;
+ }
+ } // extern "C"
+@@ -69,12 +78,18 @@ wxOverlayImpl::wxOverlayImpl()
+ {
+     m_overlay = nullptr;
+     m_target = nullptr;
++    m_mapTLW = nullptr;
++    m_mapHandler = 0;
+     m_surface = nullptr;
+     m_cr = nullptr;
+ }
+ 
+ wxOverlayImpl::~wxOverlayImpl()
+ {
++    // The TLW may outlive the overlay, and may not be mapped yet: if it is
++    // mapped later, map_event() must not be called with a deleted overlay.
++    DisconnectMapEvent();
++    SetTarget(nullptr);
+     if (m_surface)
+         cairo_surface_destroy(m_surface);
+     if (m_overlay)
+@@ -97,7 +112,7 @@ void wxOverlayImpl::Init(wxDC* dc, int x, int y, int width, int height)
+ 
+     wxCHECK_RET(win && m_cr, "invalid dc for wxOverlay");
+ 
+-    m_target = win->GetConnectWidget();
++    SetTarget(win->GetConnectWidget());
+     GtkWidget* const tlw = gtk_widget_get_toplevel(m_target);
+     if (m_overlay == nullptr)
+     {
+@@ -150,9 +165,12 @@ void wxOverlayImpl::Init(wxDC* dc, int x, int y, int width, int height)
+     gtk_widget_set_size_request(m_overlay, m_rect.width, m_rect.height);
+     // Underlying window must be mapped before overlay can be positioned on it
+     if (gtk_widget_get_mapped(tlw))
++    {
++        DisconnectMapEvent();
+         PositionOverlay(tlw);
++    }
+     else
+-        g_signal_connect(tlw, "map-event", G_CALLBACK(map_event), this);
++        ConnectMapEvent(tlw);
+ }
+ 
+ void wxOverlayImpl::BeginDrawing(wxDC*)
+@@ -197,6 +215,8 @@ void wxOverlayImpl::Clear(wxDC*)
+ 
+ void wxOverlayImpl::Reset()
+ {
++    // Nothing is shown until the next Init(), which positions it again.
++    DisconnectMapEvent();
+     if (m_surface)
+     {
+         cairo_surface_destroy(m_surface);
+@@ -206,10 +226,51 @@ void wxOverlayImpl::Reset()
+         gtk_widget_hide(m_overlay);
+ }
+ 
++void wxOverlayImpl::SetTarget(GtkWidget* target)
++{
++    if (m_target == target)
++        return;
++    if (m_target)
++        g_object_remove_weak_pointer(G_OBJECT(m_target), (void**)&m_target);
++    m_target = target;
++    if (m_target)
++        g_object_add_weak_pointer(G_OBJECT(m_target), (void**)&m_target);
++}
++
++void wxOverlayImpl::ConnectMapEvent(GtkWidget* tlw)
++{
++    // Init() is called again for every drawing, connect only once per TLW.
++    if (m_mapTLW == tlw)
++        return;
++    DisconnectMapEvent();
++    m_mapTLW = tlw;
++    g_object_add_weak_pointer(G_OBJECT(m_mapTLW), (void**)&m_mapTLW);
++    m_mapHandler = g_signal_connect(tlw, "map-event", G_CALLBACK(map_event), this);
++}
++
++void wxOverlayImpl::DisconnectMapEvent()
++{
++    if (m_mapTLW)
++    {
++        // A TLW that is destroyed but not finalized yet has no handlers left.
++        if (g_signal_handler_is_connected(m_mapTLW, m_mapHandler))
++            g_signal_handler_disconnect(m_mapTLW, m_mapHandler);
++        g_object_remove_weak_pointer(G_OBJECT(m_mapTLW), (void**)&m_mapTLW);
++        m_mapTLW = nullptr;
++    }
++    m_mapHandler = 0;
++}
++
+ void wxOverlayImpl::PositionOverlay(GtkWidget* tlw)
+ {
++    // The target can be finalized before the overlay, or destroyed and not
++    // in tlw any more, there is nothing to position the overlay over then.
++    if (m_target == nullptr)
++        return;
++
+     int x, y;
+-    gtk_widget_translate_coordinates(m_target, tlw, m_rect.x, m_rect.y, &x, &y);
++    if (!gtk_widget_translate_coordinates(m_target, tlw, m_rect.x, m_rect.y, &x, &y))
++        return;
+     gtk_window_move(GTK_WINDOW(m_overlay), x, y);
+     gtk_widget_show(m_overlay);
+ }

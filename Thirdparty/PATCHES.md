@@ -95,5 +95,9 @@ skipped), so after that script has run the submodule shows as modified. CI's
 wxWidgets cache key includes the patches, so changing one rebuilds wxGTK.
 Windows does not apply them: so far they only patch GTK code.
 
+| Patch | What |
+|---|---|
+| `0001-gtk-overlay-disconnect-map-event.patch` | `src/gtk/overlay.cpp`, used only on Wayland: an overlay connected to its unmapped top-level window's `map-event` and never disconnected, so an overlay deleted before that window was shown left a handler that later ran on freed memory. The generic `wxCaret` of `HikariTextCtrl` and `DialogueTextEditor` draws through one, and the Style manager crashed in `gtk_widget_translate_coordinates` when it was opened after the style editor. |
+
 When the submodule moves to a newer wxWidgets, drop each patch upstream has
 taken; the script stops with an error on one that no longer applies.
