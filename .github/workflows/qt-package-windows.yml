@@ -2,7 +2,8 @@ name: Qt rewrite — Windows packages
 
 # Installers SPEC 6 and 7: the Windows payload is built on windows-2025 (no
 # tests), then the NSIS installer and the portable zip are made on Ubuntu with
-# makensis 3.09, because windows-2025 images carry no NSIS. The artifact
+# makensis 3.13 built from source (packaging/windows/build-makensis.sh),
+# because windows-2025 images carry no NSIS and Ubuntu's 3.09 has CVE-2025-43715. The artifact
 # hikarisub-windows-installer holds HikariSub-<V>-windows-x64-setup.exe and
 # HikariSub-<V>-windows-x64.zip under their release names. qt-release.yml
 # calls this workflow with the release version.
@@ -162,7 +163,7 @@ jobs:
           retention-days: 14
 
   installer:
-    name: NSIS installer and portable zip (Ubuntu, makensis 3.09)
+    name: NSIS installer and portable zip (Ubuntu, makensis 3.13)
     needs: [version, payload]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -178,11 +179,14 @@ jobs:
           name: hikarisub-qt-windows-payload
           path: payload/HikariSub
 
-      - name: Install makensis and 7-Zip
+      # makensis itself is built by build-installer.sh (build-makensis.sh,
+      # the version and SHA-256s in tools.lock): Ubuntu's nsis is 3.09,
+      # which has CVE-2025-43715.
+      - name: Install the tools to build makensis, and 7-Zip
         run: |
           set -euo pipefail
           sudo apt-get update -q
-          sudo apt-get install -y -q --no-install-recommends nsis p7zip-full
+          sudo apt-get install -y -q --no-install-recommends scons g++ zlib1g-dev bzip2 unzip p7zip-full
 
       - name: Build the installer
         run: |
@@ -195,7 +199,7 @@ jobs:
       # The uninstaller's elevation rule, built alone for the Windows test
       # (tests/packaging/windows/protected-tests.ps1).
       - name: Build the elevation rule test
-        run: tests/packaging/windows/build-protected-test.sh nsis-work/protected-test.exe
+        run: HS_MAKENSIS="nsis-work/nsis-$(sed -n 's/^MAKENSIS_VERSION=//p' packaging/windows/tools.lock)/Bin/makensis" tests/packaging/windows/build-protected-test.sh nsis-work/protected-test.exe
 
       # 7-Zip reads NSIS installers: every payload file is inside byte for
       # byte, nothing else but the installer's own files, and the manifest it
