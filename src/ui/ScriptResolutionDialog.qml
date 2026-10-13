@@ -2,9 +2,11 @@
 // resolution of a Document without PlayResX/PlayResY (legacy GetASSRes wrote
 // 1280x720 silently). The user sets it here, from the open video's size or
 // legacy's values to start with; "Use video resolution" puts the video's size
-// back, and "Always use the video resolution" sets it from the video in later
-// runs without asking. Set lets the macro go on with it (one undo step);
-// Cancel, Escape or closing the window stops the macro.
+// back, and "Always set it from the video" sets it from the video in later
+// runs without asking (a value the file has is kept; the fields show what
+// it sets). Both appear only with a video open. Set lets the macro go on
+// with it (one undo step); Cancel, Escape or closing the window stops the
+// macro. Return presses the focused button, else Set.
 pragma Translator: "HikariSub.Automation"
 import QtQuick
 import QtQuick.Controls
@@ -43,9 +45,34 @@ Window {
             prompt.reject()
     }
 
+    // The values typed before "Always" was ticked, put back when it is unticked.
+    property int typedWidth: 0
+    property int typedHeight: 0
+
     function useVideo() {
         widthBox.value = prompt.videoWidth
         heightBox.value = prompt.videoHeight
+    }
+    function alwaysToggled() {
+        if (always.checked) {
+            typedWidth = widthBox.value
+            typedHeight = heightBox.value
+            widthBox.value = prompt.fromVideoWidth
+            heightBox.value = prompt.fromVideoHeight
+        } else {
+            widthBox.value = typedWidth
+            heightBox.value = typedHeight
+        }
+    }
+    // As a dialog's default button: Return on a button presses that button,
+    // anywhere else Set.
+    function activate() {
+        if (activeFocusItem === cancelButton)
+            prompt.reject()
+        else if (activeFocusItem === useVideoButton)
+            useVideo()
+        else
+            set()
     }
     function set() {
         // A typed value counts even before the field gives up the focus.
@@ -54,7 +81,7 @@ Window {
         prompt.accept(widthBox.value, heightBox.value, always.checked)
     }
 
-    Shortcut { sequences: ["Return", "Enter"]; enabled: window.visible; onActivated: window.set() }
+    Shortcut { sequences: ["Return", "Enter"]; enabled: window.visible; onActivated: window.activate() }
     Shortcut { sequence: "Escape"; enabled: window.visible; onActivated: window.prompt.reject() }
 
     ColumnLayout {
@@ -91,10 +118,12 @@ Window {
                 Accessible.name: qsTr("Height")
             }
             Button {
+                id: useVideoButton
                 objectName: "scriptResolutionUseVideo"
                 text: qsTr("Use video resolution")
-                enabled: window.prompt.hasVideo && !always.checked
-                ToolTip.visible: hovered && window.prompt.hasVideo
+                visible: window.prompt.hasVideo
+                enabled: !always.checked
+                ToolTip.visible: hovered
                 ToolTip.delay: 600
                 ToolTip.text: window.prompt.videoWidth + " × " + window.prompt.videoHeight
                 onClicked: window.useVideo()
@@ -105,9 +134,9 @@ Window {
             objectName: "scriptResolutionAlways"
             // its box under the fields' left edge
             Layout.leftMargin: -leftPadding
-            text: qsTr("Always use the video resolution without asking")
-            enabled: window.prompt.hasVideo
-            onToggled: if (checked) window.useVideo()
+            text: qsTr("Always set it from the video without asking")
+            visible: window.prompt.hasVideo
+            onToggled: window.alwaysToggled()
         }
         WindowFooter {
             Button {
@@ -118,6 +147,7 @@ Window {
                 onClicked: window.set()
             }
             Button {
+                id: cancelButton
                 objectName: "scriptResolutionCancel"
                 text: qsTr("Cancel")
                 DialogButtonBox.buttonRole: DialogButtonBox.RejectRole

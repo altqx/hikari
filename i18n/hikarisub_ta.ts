@@ -465,7 +465,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Always use the video resolution without asking</source>
+        <source>Always set it from the video without asking</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

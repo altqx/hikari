@@ -5,8 +5,9 @@
 // the user is asked to set it when a macro reads it: the question starts
 // from the open video's size, else legacy's values; Set writes it as its own
 // undo step and the macro goes on with it; Cancel stops the macro; "Always
-// use the video resolution" sets it from the video in later runs without
-// asking. A Document that has it, or a macro that never reads it, is never
+// set it from the video" sets it from the video in later runs without
+// asking (a value the file has is kept, the other follows the video). A
+// Document that has it, or a macro that never reads it, is never
 // asked about; without a window to ask in nothing waits and nothing is
 // written (the macro gets legacy's values).
 
@@ -250,9 +251,9 @@ private slots:
         QVERIFY(!document().scriptInfo(u8"PlayResX"));
     }
 
-    // "Always use the video resolution": kept in the settings, and later
-    // runs set it from the video without asking. Without a video it is
-    // asked for anyway.
+    // "Always set it from the video": kept in the settings, and later runs
+    // set it from the video without asking, keeping a value the file has.
+    // Without a video it is asked for anyway.
     void alwaysFromTheVideoSkipsTheQuestion()
     {
         QVERIFY(open(""));
@@ -270,10 +271,11 @@ private slots:
         QVERIFY(run("Read resolution"));
         QVERIFY(ended());
         QCOMPARE(asked.count(), 0);
-        QVERIFY2(app->automation().log().contains(QStringLiteral("320 x 240, 320 x 240, PlayResX=320;PlayResY=240")),
+        // PlayResX 1920 kept; PlayResY follows the video's 4:3.
+        QVERIFY2(app->automation().log().contains(QStringLiteral("1920 x 1440, 1920 x 1440, PlayResX=1920;PlayResY=1440")),
                  qPrintable(app->automation().log()));
-        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("320"));
-        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("240"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("1920"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("1440"));
         auto after = before;
         after.push_back(std::string(application::kScriptResolutionStep));
         QCOMPARE(steps(), after);
@@ -284,6 +286,111 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(prompt().isOpen(), 30'000);
         prompt().reject();
         QVERIFY(ended());
+    }
+
+    // With a video and one value written, the question keeps that value and
+    // the other follows the video ("Always" would set the same); "Use video
+    // resolution" still offers the video's own size.
+    void aWrittenValueIsKeptInTheVideosSuggestion()
+    {
+        QVERIFY(open("PlayResY: 480\n"));
+        QVERIFY(openVideo());
+        QVERIFY(run("Read resolution"));
+        QTRY_VERIFY_WITH_TIMEOUT(prompt().isOpen(), 30'000);
+        QCOMPARE(prompt().width(), 640);
+        QCOMPARE(prompt().height(), 480);
+        QCOMPARE(prompt().fromVideoWidth(), 640);
+        QCOMPARE(prompt().fromVideoHeight(), 480);
+        QCOMPARE(prompt().videoWidth(), 320);
+        QCOMPARE(prompt().videoHeight(), 240);
+        prompt().accept(640, 480, false);
+        QVERIFY(ended());
+        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("640"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("480"));
+    }
+
+    // The validation function reads it: asked once, there; the processing
+    // function goes on with the same values; two steps as from the macro.
+    void aValidationReadIsAskedOnce()
+    {
+        QVERIFY(open(""));
+        QVERIFY(openVideo());
+        const auto before = steps();
+        int asked = 0;
+        connect(&prompt(), &ui::ScriptResolutionPromptController::changed, this, [&] { asked += prompt().isOpen(); });
+        QVERIFY(run("Validate and read"));
+        QTRY_VERIFY_WITH_TIMEOUT(prompt().isOpen(), 30'000);
+        prompt().accept(640, 480, false);
+        QVERIFY(ended());
+        disconnect(&prompt(), nullptr, this, nullptr);
+        QCOMPARE(asked, 1);
+        QVERIFY2(app->automation().log().contains(QStringLiteral("run 640 x 480")), qPrintable(app->automation().log()));
+        QCOMPARE(firstText(), std::string("edited"));
+        auto after = before;
+        after.push_back(std::string(application::kScriptResolutionStep));
+        after.push_back("Automation: Validate and read");
+        QCOMPARE(steps(), after);
+    }
+
+    // Cancel in validation: the macro does not run, nothing changes.
+    void cancelInValidationStopsTheMacro()
+    {
+        QVERIFY(open(""));
+        const auto before = steps();
+        QVERIFY(run("Validate and read"));
+        QTRY_VERIFY_WITH_TIMEOUT(prompt().isOpen(), 30'000);
+        prompt().reject();
+        QVERIFY(ended());
+        QCOMPARE(firstText(), std::string("first"));
+        QVERIFY(!document().scriptInfo(u8"PlayResX"));
+        QCOMPARE(steps(), before);
+        QVERIFY(app->automation().lastMessage().isEmpty());
+        QVERIFY(!session().isReadOnly());
+    }
+
+    // Set, then the validation refuses: the macro does not run, and the
+    // resolution the user set stays as its own step.
+    void aRefusingValidationKeepsTheResolutionSet()
+    {
+        QVERIFY(open(""));
+        const auto before = steps();
+        QVERIFY(run("Validate refuses"));
+        QTRY_VERIFY_WITH_TIMEOUT(prompt().isOpen(), 30'000);
+        prompt().accept(1280, 720, false);
+        QVERIFY(ended());
+        QCOMPARE(firstText(), std::string("first"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("1280"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("720"));
+        auto after = before;
+        after.push_back(std::string(application::kScriptResolutionStep));
+        QCOMPARE(steps(), after);
+    }
+
+    // The Document changes under the run while the question is open (the
+    // run holds it read-only, so this stands for any change that slips
+    // past): the resolution the user set is still its own step, and the
+    // macro's result is refused as for any stale run.
+    void aDocumentChangedUnderTheRunKeepsTheResolution()
+    {
+        QVERIFY(open(""));
+        const auto before = steps();
+        QVERIFY(run("Edit and read"));
+        QTRY_VERIFY_WITH_TIMEOUT(prompt().isOpen(), 30'000);
+        session().setReadOnly(false);
+        QVERIFY(session().run(application::Command{"Outside", session().revision(), {},
+                                                   [](core::Document &d) { return d.setScriptInfo(u8"Title", u8"outside"); }}));
+        session().setReadOnly(true);
+        prompt().accept(640, 480, false);
+        QVERIFY(ended());
+        QCOMPARE(firstText(), std::string("first"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("640"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("480"));
+        auto after = before;
+        after.push_back("Outside");
+        after.push_back(std::string(application::kScriptResolutionStep));
+        QCOMPARE(steps(), after);
+        QCOMPARE(app->automation().lastMessage(),
+                 QStringLiteral("The document changed while the macro ran; nothing was changed."));
     }
 
     // A Document with both values, or a macro that never reads them: no

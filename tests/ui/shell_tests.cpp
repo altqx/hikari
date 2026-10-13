@@ -10681,9 +10681,10 @@ private slots:
     // Y4-playres-ask (user decision 2026-10-13): a macro reads the script
     // resolution of a Document without PlayResX/PlayResY; the question
     // (ScriptResolutionDialog.qml) starts from the video's size, "Use video
-    // resolution" puts it back, "Always use the video resolution" shows the
-    // video's size in the fields it locks; Set writes the values and the
-    // macro goes on with them; Escape stops the macro.
+    // resolution" puts it back, "Always set it from the video" shows what it
+    // sets in the fields it locks and unticking puts the typed values back;
+    // Return in a field sets the values and the macro goes on with them;
+    // Return on Cancel and Escape stop the macro.
     bool resolutionScriptReady()
     {
         const std::string path = HIKARI_LUA_FIXTURES "/script-resolution.lua";
@@ -10742,18 +10743,25 @@ private slots:
         clickButton(dialog, "scriptResolutionUseVideo");
         QCOMPARE(width->property("value").toInt(), 320);
         QCOMPARE(height->property("value").toInt(), 240);
-        // "Always" locks the fields on the video's size.
+        // "Always" locks the fields on what it sets; unticked, the typed values come back.
         width->setProperty("value", 1000);
         QVERIFY(QMetaObject::invokeMethod(always, "toggle"));
         QVERIFY(QMetaObject::invokeMethod(always, "toggled"));
         QCOMPARE(width->property("value").toInt(), 320);
+        QCOMPARE(height->property("value").toInt(), 240);
         QVERIFY(!width->property("enabled").toBool());
         QVERIFY(!useVideo->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(always, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(always, "toggled"));
         QVERIFY(width->property("enabled").toBool());
+        QCOMPARE(width->property("value").toInt(), 1000);
+        QCOMPARE(height->property("value").toInt(), 240);
         width->setProperty("value", 640);
         height->setProperty("value", 480);
-        clickButton(dialog, "scriptResolutionSet");
+        // Return in a field answers Set.
+        QTRY_COMPARE(QGuiApplication::focusWindow(), dialog);
+        qobject_cast<QQuickItem *>(width)->forceActiveFocus();
+        QTest::keyClick(dialog, Qt::Key_Return);
         QTRY_VERIFY(!dialog->isVisible());
         QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
         QVERIFY2(application->automation().log().contains(QStringLiteral("640 x 480, 640 x 480, PlayResX=640;PlayResY=480")),
@@ -10765,20 +10773,27 @@ private slots:
         // The progress window closes: nothing to say.
         QTRY_VERIFY(!mappingWindow("automationProgress")->isVisible());
 
-        // Escape stops the macro, quietly.
+        // Return on Cancel, and Escape, stop the macro, quietly.
         application->editor().undo();
         QVERIFY(!application->files().session(*application->workspace().editingTarget())->document().scriptInfo(u8"PlayResX"));
-        dialog = openResolutionQuestion("Edit and read");
-        QVERIFY(dialog);
-        QTRY_COMPARE(QGuiApplication::focusWindow(), dialog);
-        QTest::keyClick(dialog, Qt::Key_Escape);
-        QTRY_VERIFY(!dialog->isVisible());
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QVERIFY(application->automation().lastMessage().isEmpty());
-        const auto &after = application->files().session(*application->workspace().editingTarget())->document();
-        QVERIFY(!after.scriptInfo(u8"PlayResX"));
-        QVERIFY(after.lines().front()->text == std::u8string(u8"first"));
-        QTRY_VERIFY(!mappingWindow("automationProgress")->isVisible());
+        for (const bool escape : {false, true}) {
+            dialog = openResolutionQuestion("Edit and read");
+            QVERIFY(dialog);
+            QTRY_COMPARE(QGuiApplication::focusWindow(), dialog);
+            if (escape) {
+                QTest::keyClick(dialog, Qt::Key_Escape);
+            } else {
+                qobject_cast<QQuickItem *>(in(dialog, "scriptResolutionCancel"))->forceActiveFocus();
+                QTest::keyClick(dialog, Qt::Key_Return);
+            }
+            QTRY_VERIFY(!dialog->isVisible());
+            QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
+            QVERIFY(application->automation().lastMessage().isEmpty());
+            const auto &after = application->files().session(*application->workspace().editingTarget())->document();
+            QVERIFY(!after.scriptInfo(u8"PlayResX"));
+            QVERIFY(after.lines().front()->text == std::u8string(u8"first"));
+            QTRY_VERIFY(!mappingWindow("automationProgress")->isVisible());
+        }
     }
 
     // The question in the four themes, written to HIKARI_RESOLUTION_SHOT_DIR

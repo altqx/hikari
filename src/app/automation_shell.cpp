@@ -552,10 +552,12 @@ void AutomationShell::resolveScriptResolution(const application::ScriptResolutio
     std::optional<application::Resolution> video;
     if (const auto size = m_media->videoSize(); size && size->width > 0 && size->height > 0)
         video = application::Resolution{size->width, size->height};
-    // The user chose to take it from the video without being asked.
+    // The user chose to take it from the video without being asked: a value
+    // the file has is kept, the missing one follows the video.
     if (video && m_settings && m_settings->boolean("automation.scriptResolutionFromVideo")) {
-        m_run->resolution = *video;
-        return reply(*video);
+        const auto fromVideo = application::videoScriptResolution(request.written, *video);
+        m_run->resolution = fromVideo;
+        return reply(fromVideo);
     }
     // No window to ask in (tests, a session without a view): the macro
     // goes on with legacy's values and nothing is written.
@@ -563,8 +565,10 @@ void AutomationShell::resolveScriptResolution(const application::ScriptResolutio
         return reply(std::nullopt);
     ui::ScriptResolutionPromptController::Question question;
     question.script = prettyName(request.script.empty() ? m_run->path : request.script);
-    question.suggested = application::suggestedScriptResolution(s->document(), video);
+    question.suggested = application::suggestedScriptResolution(request.written, video);
     question.video = video;
+    if (video)
+        question.fromVideo = application::videoScriptResolution(request.written, *video);
     m_resolutionPrompt.ask(std::move(question), [this, reply](std::optional<ui::ScriptResolutionPromptController::Answer> answer) {
         if (!m_run)
             return;
@@ -597,11 +601,14 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     // Y4-playres-ask: the resolution set while the macro ran is its own undo
     // step, before the macro's (whatever the macro's outcome: the user set
     // it). The macro staged the same keys, so its result is read against the
-    // snapshot as it is now.
-    if (s && run.resolution && s->revision() == run.snapshot.revision &&
-        application::setScriptResolution(*s, *run.resolution)) {
-        application::setStagedScriptResolution(run.snapshot.info, *run.resolution);
-        run.snapshot.revision = s->revision();
+    // snapshot as it is now; a Document changed under the run keeps the
+    // snapshot's old revision, and the macro's result is refused as before.
+    if (s && run.resolution) {
+        const bool current = s->revision() == run.snapshot.revision;
+        if (application::setScriptResolution(*s, *run.resolution) && current) {
+            application::setStagedScriptResolution(run.snapshot.info, *run.resolution);
+            run.snapshot.revision = s->revision();
+        }
     }
     bool ok = false;
     QString text;

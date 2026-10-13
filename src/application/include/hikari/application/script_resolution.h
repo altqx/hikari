@@ -1,14 +1,15 @@
 #pragma once
 
 // Y4-playres-ask (user decision 2026-10-13; docs/qt/compatibility-decisions.md):
-// legacy SubsGrid::GetASSRes (SubsGridBase.cpp:1948-1974 at 20d647c4) wrote a
+// legacy SubsGrid::GetASSRes (SubsGridBase.cpp:1653-1679 at 20d647c4) wrote a
 // missing PlayResX/PlayResY into the Document whenever anything read the
 // resolution, so a macro reading it (subtitles.script_resolution, karaskel's
 // collect_head) saw 1280x720 or a 16:9 partner written silently. Here nothing
 // writes on read: when a macro reads the resolution of a Document that lacks
 // it, the user is asked to set it (prefilled from the open video, else
 // legacy's values), or it is set from the video without asking when the user
-// chose so. Without anyone to ask the macro gets legacy's values and nothing
+// chose so. A key the file already has is kept in both cases; only the
+// missing one comes from the video. Without anyone to ask the macro gets legacy's values and nothing
 // is written.
 
 #include "hikari/application/automation.h"
@@ -37,9 +38,16 @@ bool lacksScriptResolution(Resolution written);
 // partner for one), without writing anything.
 Resolution legacyScriptResolution(Resolution written);
 
-// What the question offers first: the video's size while one is open, else
-// legacy's values for the Document.
-Resolution suggestedScriptResolution(const core::Document &document, std::optional<Resolution> video);
+// The resolution taken from a video (the question's start, and what
+// "Always set it from the video" writes): the video's size when both values
+// are missing; otherwise the value written is kept and the missing one
+// follows the video's aspect ratio, rounded (PlayResY 480 with a 320x240
+// video: 640x480), as legacy's partner followed 16:9.
+Resolution videoScriptResolution(Resolution written, Resolution video);
+
+// What the question offers first for written values: from the video while
+// one is open (videoScriptResolution), else legacy's values.
+Resolution suggestedScriptResolution(Resolution written, std::optional<Resolution> video);
 
 // Document::setScriptInfo on a macro's staged Script Info: the last entry of
 // that key takes the value, else the entry is added at the end.

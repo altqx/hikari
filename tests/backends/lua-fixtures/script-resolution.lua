@@ -38,3 +38,25 @@ aegisub.register_macro("Edit only", "", function(subs, sel)
     l.text = "edited"
     subs[sel[1]] = l
 end)
+
+-- The validation function reads it: asked there, and the processing
+-- function sees the same values without a second question.
+aegisub.register_macro("Validate and read", "", function(subs, sel)
+    local l = subs[sel[1]]
+    l.text = "edited"
+    subs[sel[1]] = l
+    local w, h = subs.script_resolution()
+    aegisub.log("run %d x %d", w, h)
+end, function(subs)
+    local w, h = subs.script_resolution()
+    return w > 0 and h > 0
+end)
+
+aegisub.register_macro("Validate refuses", "", function(subs, sel)
+    local l = subs[sel[1]]
+    l.text = "edited"
+    subs[sel[1]] = l
+end, function(subs)
+    subs.script_resolution()
+    return false
+end)

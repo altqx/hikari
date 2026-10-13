@@ -268,8 +268,8 @@ const std::vector<SettingDefinition> &definitions()
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
         // Y4-playres-ask (user decision 2026-10-13): a macro reading the
         // resolution of a Document without PlayResX/PlayResY sets it from the
-        // open video without asking (the question's "Always use the video
-        // resolution"; Settings > Editor).
+        // open video without asking, keeping a value the file has (the
+        // question's "Always set it from the video"; Settings > Editor).
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
     };
     return table;

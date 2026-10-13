@@ -1,5 +1,6 @@
 #include "hikari/application/script_resolution.h"
 
+#include <algorithm>
 #include <cstdlib>
 
 namespace hikari::application {
@@ -57,11 +58,25 @@ Resolution legacyScriptResolution(Resolution written)
     return {x, y};
 }
 
-Resolution suggestedScriptResolution(const core::Document &document, std::optional<Resolution> video)
+Resolution videoScriptResolution(Resolution written, Resolution video)
+{
+    const auto partner = [](long long value, long long numerator, long long denominator) {
+        return static_cast<int>(std::max<long long>(1, (value * numerator + denominator / 2) / denominator));
+    };
+    if (written.width < 1 && written.height < 1)
+        return video;
+    if (written.width < 1)
+        return {partner(written.height, video.width, video.height), written.height};
+    if (written.height < 1)
+        return {written.width, partner(written.width, video.height, video.width)};
+    return written;
+}
+
+Resolution suggestedScriptResolution(Resolution written, std::optional<Resolution> video)
 {
     if (video && video->width > 0 && video->height > 0)
-        return *video;
-    return legacyScriptResolution(writtenScriptResolution(document));
+        return videoScriptResolution(written, *video);
+    return legacyScriptResolution(written);
 }
 
 void setStagedScriptInfo(std::vector<MacroInfoLine> &info, std::string_view key, std::string value)
