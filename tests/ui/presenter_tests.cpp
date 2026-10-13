@@ -95,6 +95,31 @@ QImage cpuReference(const application::IndexedFrame &f, const OverlayFrame *o)
     return out;
 }
 
+// A premultiplied half-transparent grey box over `rect`, nothing elsewhere.
+std::shared_ptr<const OverlayFrame> box(const QRect &rect)
+{
+    auto o = std::make_shared<OverlayFrame>();
+    o->width = kW;
+    o->height = kH;
+    o->stride = kW * 4;
+    o->pixels.assign(static_cast<std::size_t>(o->stride) * kH, 0);
+    o->empty = false;
+    for (int y = rect.top(); y <= rect.bottom(); ++y)
+        for (int x = rect.left(); x <= rect.right(); ++x)
+            std::memset(&o->pixels[static_cast<std::size_t>(y) * o->stride + x * 4], 128, 4);
+    return o;
+}
+
+Presentation withBounds(std::uint64_t generation, std::shared_ptr<const application::IndexedFrame> frame,
+                        std::shared_ptr<const OverlayFrame> overlay, std::optional<QRect> bounds)
+{
+    Presentation p{generation, std::move(frame), std::move(overlay), {}};
+    p.overlayBoundsKnown = true;
+    if (bounds)
+        p.overlayBounds = application::PixelRect{bounds->x(), bounds->y(), bounds->width(), bounds->height()};
+    return p;
+}
+
 } // namespace
 
 class PresenterTests : public QObject {
@@ -235,6 +260,58 @@ private slots:
         QVERIFY2(std::abs(topLeft.red() - 200) <= 2 && std::abs(topLeft.green() - 40) <= 2, qPrintable(topLeft.name()));
         QVERIFY2(std::abs(bottomRight.red() - 220) <= 2, qPrintable(bottomRight.name()));
         QCOMPARE(presenter->presentedGeneration(), 4u); // placement presents nothing new
+    }
+
+    // V1: a frame shown again under new subtitles keeps its texture, and an
+    // overlay uploads only the part that changed (the new subtitles' visible
+    // pixels and where the last ones were).
+    void onlyTheChangedOverlayRegionIsUploaded()
+    {
+        const auto frame = quadrants();
+        const QRect a(10, 10, 8, 6), b(50, 30, 10, 4);
+        QVERIFY(presentAndWait(withBounds(1, frame, box(a), a)));
+        const auto first = presenter->uploadStats();
+        QCOMPARE(first.frameUploads, 1);
+        QCOMPARE(first.overlayUploads, 1);
+        QVERIFY(presentAndWait(withBounds(2, frame, box(b), b)));
+        const auto second = presenter->uploadStats();
+        QCOMPARE(second.frameUploads, 1); // the same frame: not uploaded again
+        QCOMPARE(second.overlayUploads, 2);
+        const QRect region = second.lastOverlayUpload;
+        QVERIFY2(region.contains(b), qPrintable(QStringLiteral("%1,%2 %3x%4").arg(region.x()).arg(region.y())
+                                                    .arg(region.width()).arg(region.height())));
+        if (window->rhi()) // the persistent texture: the old box is cleared in the same upload
+            QCOMPARE(region, a.united(b));
+        else // a texture of the visible part only
+            QCOMPARE(region, b.adjusted(-2, -2, 2, 2));
+        // The composite is the frame with the second box alone.
+        const QImage grabbed = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, kW, kH);
+        QVERIFY(testing::compareImages(grabbed, cpuReference(*frame, box(b).get()), {2, 0}).withinTolerance);
+        // Bounds the renderer did not report are measured.
+        QVERIFY(presentAndWait({3, frame, box(a), {}}));
+        QCOMPARE(presenter->uploadStats().overlayUploads, 3);
+        const QImage again = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, kW, kH);
+        QVERIFY(testing::compareImages(again, cpuReference(*frame, box(a).get()), {2, 0}).withinTolerance);
+    }
+
+    // V1: an overlay with nothing visible draws nothing and uploads nothing.
+    void anEmptyOverlayIsNotDrawn()
+    {
+        const auto frame = quadrants();
+        QVERIFY(presentAndWait(withBounds(1, frame, box(QRect(10, 10, 8, 6)), QRect(10, 10, 8, 6))));
+        const int uploads = presenter->uploadStats().overlayUploads;
+        QVERIFY(presentAndWait(withBounds(2, frame, box(QRect()), std::nullopt))); // all transparent
+        QVERIFY(presentAndWait({3, frame, nullptr, {}}));
+        auto empty = std::make_shared<OverlayFrame>(*box(QRect()));
+        empty->empty = true;
+        QVERIFY(presentAndWait({4, frame, empty, {}}));
+        QCOMPARE(presenter->uploadStats().overlayUploads, uploads);
+        QCOMPARE(presenter->uploadStats().frameUploads, 1);
+        const QImage grabbed = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, kW, kH);
+        QVERIFY(testing::compareImages(grabbed, cpuReference(*frame, nullptr), {2, 0}).withinTolerance);
+        // A new frame is uploaded.
+        QVERIFY(presentAndWait({5, quadrants(), nullptr, {}}));
+        QCOMPARE(presenter->uploadStats().frameUploads, 2);
     }
 
     void pixelAspectWidensTheFrame()
