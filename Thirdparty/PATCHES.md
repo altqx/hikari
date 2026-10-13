@@ -84,7 +84,7 @@ out 4152 `wxCHECK`/`wxASSERT`/`wxFAIL` lines across 658 files, including the
 macro definitions in `include/wx/debug.h`, where `wxCHECK(cond, rc)` expanded to
 nothing while 59 call sites still used it.
 
-It is now a plain submodule at `v3.3.3`, pinned to upstream's tag, built by
+It is now a plain submodule at `v3.3.4`, pinned to upstream's tag, built by
 wxWidgets' own `wx_vc17.sln` on Windows. Those guards are upstream's again.
 
 The Linux build carries patches for wxGTK bugs that HikariSub hits and that
@@ -98,6 +98,13 @@ Windows does not apply them: so far they only patch GTK code.
 | Patch | What |
 |---|---|
 | `0001-gtk-overlay-disconnect-map-event.patch` | `src/gtk/overlay.cpp`, used only on Wayland: an overlay connected to its unmapped top-level window's `map-event` and never disconnected, so an overlay deleted before that window was shown left a handler that later ran on freed memory. The generic `wxCaret` of `HikariTextCtrl` and `DialogueTextEditor` draws through one, and the Style manager crashed in `gtk_widget_translate_coordinates` when it was opened after the style editor. |
+| `0002-gtk-printable-key-not-control-key.patch` | `src/gtk/window.cpp`: the key code of a non-letter character comes from what the key with the same hardware code types in a fixed US layout, which is only the same key when the keymap uses the standard evdev codes. A virtual keyboard's keymap does not: wtype gives the first character it types the code of Escape, so typing a digit with it sent `WXK_ESCAPE` and closed the Style manager. The US layout's character is now taken only when it is printable. A virtual key whose code lands on another printable US key still gets that key's code in key down and char hook events (wtype's second character, on code 10, gets `'1'`); the typed text comes from the char event and is right. `tests/WxGtkKeyTests.cpp` checks the patch when the tests are built next to the pinned wxWidgets build (`HIKARISUB_TESTS_WX_PREFIX`, the Release `build-wx-linux/prefix` by default) and `xvfb-run` is installed, so it runs locally and on akari-rvm but not in CI, whose tests job builds no wxWidgets. |
 
 When the submodule moves to a newer wxWidgets, drop each patch upstream has
 taken; the script stops with an error on one that no longer applies.
+
+The submodule moved from `v3.3.3` to `v3.3.4` on 2026-10-13. v3.3.4 does not
+have the overlay fix: its `src/gtk/overlay.cpp` is the same as v3.3.3's, and
+so is master's. `0001` is kept, and it applies to v3.3.4 unchanged. `0002`
+is written against v3.3.4; master's `wxTranslateGTKKeyEventToWx()` has the
+same code.

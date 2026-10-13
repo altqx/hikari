@@ -191,7 +191,7 @@ namespace update_policy
 	constexpr long long kCheckDeadlineSeconds = 2 * 60;
 
 	// How long the check waits, after the deadline, for the request's
-	// last event. A backend can lose it: wx 3.3.3's WinHTTP one sends
+	// last event. A backend can lose it: wx 3.3.4's WinHTTP one sends
 	// none when the cancel comes while it takes in a piece of the reply.
 	// The check then ends without it (CheckRun::Fire()), so that it does
 	// not keep every later check from starting.
@@ -366,7 +366,7 @@ namespace update_policy
 		// The reply has passed kMaxResponseBytes. Whether to cancel its
 		// request: as at the deadline, only one still active. The pieces
 		// of a reply come before its state event, so the request may have
-		// completed by the time one passes the cap, and wx 3.3.3's curl
+		// completed by the time one passes the cap, and wx 3.3.4's curl
 		// backend ends a completed request a second time if it is
 		// cancelled, in State_Cancelled, and releases it twice.
 		bool CutOff(bool requestActive)

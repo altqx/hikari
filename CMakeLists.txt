@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC OFF)
 find_package(PkgConfig REQUIRED)
-# Windows builds the pinned Thirdparty/wxWidgets 3.3.3 submodule. Use the same
+# Windows builds the pinned Thirdparty/wxWidgets 3.3.4 submodule. Use the same
 # source/version on Linux instead of silently accepting the host's wxGTK 3.2.
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(HIKARISUB_WX_DEFAULT_CONFIG "${CMAKE_SOURCE_DIR}/build-wx-linux-debug/prefix/bin/wx-config")
@@ -15,12 +15,12 @@ else()
     set(HIKARISUB_WX_DEFAULT_CONFIG "${CMAKE_SOURCE_DIR}/build-wx-linux/prefix/bin/wx-config")
 endif()
 set(HIKARISUB_WX_CONFIG "${HIKARISUB_WX_DEFAULT_CONFIG}"
-    CACHE FILEPATH "wx-config from the pinned wxWidgets 3.3.3 Linux build")
+    CACHE FILEPATH "wx-config from the pinned wxWidgets 3.3.4 Linux build")
 if(NOT EXISTS "${HIKARISUB_WX_CONFIG}")
     message(FATAL_ERROR
-        "Pinned wxWidgets 3.3.3 is missing at ${HIKARISUB_WX_CONFIG}. "
+        "Pinned wxWidgets 3.3.4 is missing at ${HIKARISUB_WX_CONFIG}. "
         "Run Thirdparty/build-wxwidgets-linux.sh (with --debug for Debug) first, or set HIKARISUB_WX_CONFIG "
-        "to a wx-config for wxWidgets 3.3.3.")
+        "to a wx-config for wxWidgets 3.3.4.")
 endif()
 execute_process(
     COMMAND "${HIKARISUB_WX_CONFIG}" --prefix
@@ -37,12 +37,12 @@ else()
 endif()
 if(NOT EXISTS "${HIKARISUB_WX_PREFIX}/lib/cmake/wxWidgets-3.3/wxWidgetsTargets-${HIKARISUB_WX_EXPORT_CONFIG}.cmake")
     message(FATAL_ERROR
-        "${HIKARISUB_WX_CONFIG} does not point to the pinned wxWidgets 3.3.3 ${HIKARISUB_WX_EXPORT_CONFIG} build. "
+        "${HIKARISUB_WX_CONFIG} does not point to the pinned wxWidgets 3.3.4 ${HIKARISUB_WX_EXPORT_CONFIG} build. "
         "Run Thirdparty/build-wxwidgets-linux.sh (with --debug for Debug) first.")
 endif()
 set(wxWidgets_CONFIG_EXECUTABLE "${HIKARISUB_WX_CONFIG}" CACHE FILEPATH
     "wx-config selected for HikariSub" FORCE)
-find_package(wxWidgets 3.3.3 EXACT REQUIRED COMPONENTS core base adv aui html xml gl stc net)
+find_package(wxWidgets 3.3.4 EXACT REQUIRED COMPONENTS core base adv aui html xml gl stc net)
 include(${wxWidgets_USE_FILE})
 # FFmpeg and FFMS2 from a private prefix win over pkg-config's system paths.
 # The release build (packaging/linux/floor) builds FFmpeg 7.1 and the
@@ -74,6 +74,9 @@ pkg_check_modules(FONTCONFIG REQUIRED IMPORTED_TARGET fontconfig)
 # frames the app composites (libass subtitles + progress bar) and presents through
 # the shared wx paint path, and gstreamer-audio provides linear volume.
 pkg_check_modules(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0 gstreamer-app-1.0)
+# The video window paints frames with cairo, which GTK brings and the package
+# takes from the host like the rest of the GTK stack.
+pkg_check_modules(CAIRO REQUIRED IMPORTED_TARGET cairo)
 # LuaJIT is the vendored one, built as the Windows build builds it (Lua 5.2
 # extensions on, string.buffer off), not the distribution's: see the module.
 include(${CMAKE_SOURCE_DIR}/cmake/VendoredLuaJIT.cmake)
@@ -187,6 +190,7 @@ add_executable(hikarisub
     HikariSub/LineGroups.cpp
     HikariSub/LineParse.cpp
     HikariSub/AssBlend.cpp
+    HikariSub/FrameExchange.cpp
     HikariSub/FrameQueue.cpp
     HikariSub/Playback.cpp
     HikariSub/WaveformPeaks.cpp
@@ -252,6 +256,7 @@ add_executable(hikarisub
     HikariSub/SubsLoader.cpp
     HikariSub/SubsResampleDialog.cpp
     HikariSub/SubtitlesLibass.cpp
+    HikariSub/SubtitlesProviderChoice.cpp
     HikariSub/SubtitlesProviderManager.cpp
     HikariSub/SubtitlesVSFilter.cpp
     HikariSub/TextEditorTagList.cpp
@@ -326,7 +331,7 @@ add_custom_target(hikarisub_gitparams ALL
 )
 add_dependencies(hikarisub hikarisub_gitparams
     hikarisub_depctrl_badmutex hikarisub_depctrl_precisetimer hikarisub_depctrl_downloadmanager)
-target_link_libraries(hikarisub PRIVATE ${wxWidgets_LIBRARIES} PkgConfig::LIBASS PkgConfig::FFMS2 hikarisub_luajit PkgConfig::HUNSPELL PkgConfig::UCHARDET PkgConfig::LIBCURL PkgConfig::ICU_UC PkgConfig::ICU_I18N PkgConfig::FFMPEG PkgConfig::FONTCONFIG PkgConfig::GSTREAMER Boost::filesystem Boost::locale Boost::regex $<$<BOOL:${Boost_SYSTEM_FOUND}>:Boost::system> $<$<BOOL:${Boost_THREAD_FOUND}>:Boost::thread> GL ${CMAKE_DL_LIBS})
+target_link_libraries(hikarisub PRIVATE ${wxWidgets_LIBRARIES} PkgConfig::LIBASS PkgConfig::FFMS2 hikarisub_luajit PkgConfig::HUNSPELL PkgConfig::UCHARDET PkgConfig::LIBCURL PkgConfig::ICU_UC PkgConfig::ICU_I18N PkgConfig::FFMPEG PkgConfig::FONTCONFIG PkgConfig::GSTREAMER PkgConfig::CAIRO Boost::filesystem Boost::locale Boost::regex $<$<BOOL:${Boost_SYSTEM_FOUND}>:Boost::system> $<$<BOOL:${Boost_THREAD_FOUND}>:Boost::thread> GL ${CMAKE_DL_LIBS})
 set_target_properties(hikarisub PROPERTIES
     BUILD_RPATH "$ORIGIN"
     INSTALL_RPATH "$ORIGIN"

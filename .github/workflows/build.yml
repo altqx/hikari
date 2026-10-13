@@ -1,11 +1,11 @@
 name: Build
 
 on:
-  # Only master on push. Branches in this repository with an open pull request
+  # Only main on push. Branches in this repository with an open pull request
   # would otherwise be built twice for one commit, once per event.  A v* tag
   # builds and publishes a release.
   push:
-    branches: [master]
+    branches: [main]
     tags: ['v*']
   pull_request:
   workflow_dispatch:
@@ -433,7 +433,7 @@ jobs:
             echo "usable=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build pinned wxWidgets 3.3.3
+      - name: Build pinned wxWidgets 3.3.4
         if: steps.wx-check.outputs.usable != 'true'
         run: Thirdparty/build-wxwidgets-linux.sh ${{ matrix.build_type == 'Debug' && '--debug' || '' }}
 
@@ -474,7 +474,7 @@ jobs:
           tar -xzf build/dist/hikarisub-linux-x86_64.tar.gz -C build/package-check
           package=build/package-check/hikarisub-linux-x86_64
           test -x "$package/hikarisub"
-          test -f "$package/libwx_gtk3u_core-3.3.so.3"
+          test -f "$package/libwx_gtk3u_core-3.3.so.4"
           test -f "$package/HikariSub/Bitmaps/HideTags.png"
           test -f "$package/Automation/automation/Autoload/strip-tags.lua"
           test -f "$package/Automation/automation/Include/BM/BadMutex/libBadMutex.so"

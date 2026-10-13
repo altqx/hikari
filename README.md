@@ -231,7 +231,7 @@ has no translations.
    submodules (FFmpeg, Boost, ICU, fribidi, zlib, curl), verifying each
    archive's SHA-256 against [`Thirdparty/dependencies.json`](Thirdparty/dependencies.json)
    and refusing to continue on a mismatch
-3. `build-wxwidgets.ps1` — builds wxWidgets 3.3.3 using `wx_vc17.sln`, the
+3. `build-wxwidgets.ps1` — builds wxWidgets 3.3.4 using `wx_vc17.sln`, the
    solution wxWidgets itself ships
 4. `gen-gitparams.ps1` — writes `HikariSub/gitparams.h`
 
@@ -275,7 +275,7 @@ library directories live in `HikariSub\HikariSub.vcxproj` under
 
 ### Linux build
 
-The Linux build uses CMake and system packages for most dependencies. wxGTK is built from the same pinned wxWidgets 3.3.3 submodule as the Windows build. It requires GCC, FFMS2, FFmpeg, libass, Hunspell, uchardet, libcurl, ICU, Boost, GStreamer 1.x, and OpenGL development packages.
+The Linux build uses CMake and system packages for most dependencies. wxGTK is built from the same pinned wxWidgets 3.3.4 submodule as the Windows build. It requires GCC, FFMS2, FFmpeg, libass, Hunspell, uchardet, libcurl, ICU, Boost, GStreamer 1.x, and OpenGL development packages.
 
 #### 1. Install dependencies on Ubuntu/Debian
 
@@ -335,7 +335,7 @@ The exact package names vary by distribution. Install the equivalent development
 - CMake 3.21 or newer
 - GNU tar and gzip (used by the reproducible Linux archive target)
 - pkg-config
-- GTK 3 and OpenGL development packages for the pinned wxWidgets 3.3.3 build
+- GTK 3 and OpenGL development packages for the pinned wxWidgets 3.3.4 build
 - libass
 - FFMS2
 - Hunspell
@@ -407,7 +407,7 @@ build-wx-linux/prefix/bin/wx-config --version
 build-wx-linux/prefix/bin/wx-config --libs core,base,adv,aui,html,xml,gl,stc,net
 ```
 
-The version must be 3.3.3. HikariSub's CMake configure uses this private `wx-config` by default and rejects a different wxWidgets version. If a command fails, install the missing `-dev`/`-devel` package or adjust `PKG_CONFIG_PATH` so that pkg-config can locate the corresponding `.pc` file.
+The version must be 3.3.4. HikariSub's CMake configure uses this private `wx-config` by default and rejects a different wxWidgets version. If a command fails, install the missing `-dev`/`-devel` package or adjust `PKG_CONFIG_PATH` so that pkg-config can locate the corresponding `.pc` file.
 
 For a Debug build, run `Thirdparty/build-wxwidgets-linux.sh --debug` and
 configure HikariSub with `-DCMAKE_BUILD_TYPE=Debug`. The Debug build uses its

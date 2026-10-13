@@ -235,6 +235,8 @@ bool SubtitlesLibass::OpenString(wxString *text)
 
 void SubtitlesLibass::SetVideoParameters(const wxSize & size, unsigned char format, bool isSwapped)
 {
+	// playback draws on frames ahead without the rendering lock
+	wxMutexLocker lock(openMutex);
 	m_VideoSize = size;
 	m_IsSwapped = isSwapped;
 	m_Format = format;
@@ -274,6 +276,14 @@ void SubtitlesLibass::ReloadLibraries(bool destroyExisted)
 		m_IsReady.store(false);
 		m_Library = ass_library_init();
 		ass_set_message_cb(m_Library, MessageCallback, nullptr);
+#ifndef _WIN32
+		// Linux adds the fonts folder to the process's fontconfig, which
+		// libass does not use: it makes its own configuration. It loads the
+		// folder itself instead, when the renderer is set up.
+		wxString fontsDir = Options.GetString(EXTERNAL_FONTS_DIRECTORY);
+		if (!fontsDir.empty())
+			ass_set_fonts_dir(m_Library, fontsDir.utf8_str());
+#endif
 		if (!m_Libass) {
 			unsigned int threadid = 0;
 			thread = (HANDLE)_beginthreadex(0, 0, ProcessLibassCache, this, 0, &threadid);

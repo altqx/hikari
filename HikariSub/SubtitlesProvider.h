@@ -99,6 +99,9 @@ public:
 	bool Open(wxString *text);
 	bool OpenString(wxString *text);
 	static void GetProviders(wxArrayString *providerList);
+	// the renderers that loaded, the default one first; unlike GetProviders
+	// it keeps them open
+	static void GetRendererNames(wxArrayString *names);
 	void SetVideoParameters(const wxSize& size, unsigned char format, bool isSwapped);
 	bool CanPrepare() override { return true; }
 protected:

@@ -111,18 +111,12 @@ void HikariStaticBox::PaintForeground(wxDC& tdc, const tagRECT& rc)
 	tdc.SetBrush(*wxTRANSPARENT_BRUSH);
 	wxSize fsize = tdc.GetTextExtent(labels[0]);
 	int halfY = fsize.y / 2;
-#ifdef _WIN32
 	tdc.SetPen(wxPen(Options.GetColour(STATICBOX_BORDER)));
 	tdc.DrawRectangle(4, halfY, w - 8, h - halfY - 2);
 	tdc.SetBackgroundMode(wxSOLID);
 	tdc.SetTextBackground(background);
 	int posx = 8;
 	int cellWidth = (w - 16) / labels.size();
-#else
-	// On wxGTK these labels are help text; make the helper box layout-only.
-	return;
-#endif
-#ifdef _WIN32
 	tdc.SetTextForeground(GetParent()->GetForegroundColour());
 	for (int i = 0; i < labels.GetCount(); i++){
 		wxString text = wxString(L" ") + labels[i] + wxString(L" ");
@@ -147,16 +141,11 @@ void HikariStaticBox::PaintForeground(wxDC& tdc, const tagRECT& rc)
 		}
 		posx += cellWidth + wdiff;
 	}
-#endif
 }
 
 wxSize HikariStaticBox::CalcBorders()
 {
-#ifdef _WIN32
 	return wxSize(8, heightText + 5);
-#else
-	return wxSize(6, 6);
-#endif
 }
 
 bool HikariStaticBox::Enable(bool enable)
@@ -223,13 +212,11 @@ wxSize HikariStaticBoxSizer::CalcMin()
 	wxSize ret(wxBoxSizer::CalcMin());
 	ret.x += 2 * borders.x;
 
-#ifdef _WIN32
 	// ensure that we're wide enough to show the static box label (there is no
 	// need to check for the static box best size in vertical direction though)
 	const int boxWidth = box->GetBestSize().x;
 	if (ret.x < boxWidth)
 		ret.x = boxWidth;
-#endif
 
 	ret.y += borders.x + borders.y;
 

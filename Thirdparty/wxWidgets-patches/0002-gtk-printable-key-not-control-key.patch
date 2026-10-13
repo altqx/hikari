@@ -1,0 +1,52 @@
+Subject: wxGTK: don't turn a printable key into Escape, Tab, Return or Backspace
+
+For a key whose keysym is a non-letter character, wxTranslateGTKKeyEventToWx()
+takes the key code from what the key with the same hardware code produces in
+a fixed US layout, so that keys give the same codes as on a US keyboard
+whatever the layout. That assumes the current keymap uses the standard evdev
+key codes. A keymap that numbers its keys in its own way breaks it: wtype, for
+one, gives the first character it types the code 9, which is Escape in the US
+layout. Typing "3" with it then sent a key down event with WXK_ESCAPE, and a
+dialog with an escape id closed on it.
+
+Only take the US layout's character when it is printable. Otherwise fall back
+on the key's own Unicode value, as the code already does without XKB.
+
+Not upstream as of wxWidgets v3.3.4 and master 2026-10-13: both have the same
+code.
+---
+diff --git a/src/gtk/window.cpp b/src/gtk/window.cpp
+index 78c1dd8b04..2d6d116732 100644
+--- a/src/gtk/window.cpp
++++ b/src/gtk/window.cpp
+@@ -1191,7 +1191,17 @@ wxTranslateGTKKeyEventToWx(wxKeyEvent& event,
+                                    gdk_event->hardware_keycode,
+                                    key_code_str,
+                                    sizeof(key_code_str));
+-            if ( strlen(key_code_str) == 1 )
++
++            // The hardware code is the same physical key as in the US layout
++            // only when the current keymap uses the standard evdev key codes.
++            // A keymap that numbers its keys in its own way, as virtual
++            // keyboards do (wtype, on-screen keyboards, remote input), can
++            // send a printable character on a code that is Escape, Tab,
++            // Return or Backspace in the US layout. A character key must not
++            // turn into one of those, so only take the US layout's character
++            // when it is printable too.
++            const unsigned char usChar = key_code_str[0];
++            if ( strlen(key_code_str) == 1 && usChar >= 0x20 && usChar != 0x7f )
+             {
+                 extraTraceInfo = " [XKB]";
+ 
+@@ -1226,8 +1236,9 @@ wxTranslateGTKKeyEventToWx(wxKeyEvent& event,
+             else
+ #endif // wxHAS_XKB
+             {
+-                // Without XKB we can only fall back on using the Unicode key
+-                // code if possible.
++                // Without XKB, or when the US layout gives no printable
++                // character for this key, we can only fall back on using the
++                // Unicode key code if possible.
+                 if ( unichar < 256 )
+                 {
+                     key_code = unichar;

@@ -232,7 +232,8 @@ csri_rend *SubtitlesVSFilter::GetVSFilter()
 			return nullptr;
 		}
 		csri_info *info = csri_renderer_info(m_CsriRenderer);
-		wxString name = Options.GetString(VSFILTER_INSTANCE);
+		// not the stored name: with none stored, the default renderer may be VSFilterMod
+		wxString name = SubtitlesProviderManager::ProviderInUse();
 		if (!name.empty() && info){
 			while (info->name != name){
 				m_CsriRenderer = csri_renderer_next(m_CsriRenderer);
@@ -249,28 +250,29 @@ csri_rend *SubtitlesVSFilter::GetVSFilter()
 	return m_CsriRenderer;
 }
 
+void SubtitlesVSFilter::GetRendererNames(wxArrayString *names)
+{
+	std::lock_guard<std::recursive_mutex> lock(s_CsriMutex);
+	for (csri_rend *filter = csri_renderer_default(); filter; filter = csri_renderer_next(filter)) {
+		csri_info *info = csri_renderer_info(filter);
+		if (!info) {
+			// as before, a renderer without info ends the list when it is the default
+			if (filter == csri_renderer_default())
+				return;
+			continue;
+		}
+		names->Add(info->name);
+	}
+}
+
 void SubtitlesVSFilter::GetProviders(wxArrayString *providerList)
 {
 	// it closes the renderer a parse on the worker may be using
 	std::lock_guard<std::recursive_mutex> lock(s_CsriMutex);
-	csri_rend *filter = csri_renderer_default();
-	if (!filter)
+	if (!csri_renderer_default())
 		return;
-	csri_info *info = csri_renderer_info(filter);
-	if (!info){
-		csri_close_renderer(filter);
-		return;
-	}
-	providerList->Add(info->name);
-	while (1){
-		filter = csri_renderer_next(filter);
-		if (!filter)
-			break;
-		info = csri_renderer_info(filter);
-		if (info)
-			providerList->Add(info->name);
-	}
-	csri_close_renderer(filter);
+	GetRendererNames(providerList);
+	csri_close_renderer(nullptr);
 	//test if current renderer is removed
 	//if yes than just set nullptr to renderer
 	//without destroying it it makes memory leaks

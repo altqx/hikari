@@ -111,3 +111,14 @@ TEST(skipping_stops_at_the_last_frame)
 	Timebase tb = Pal(30);
 	CHECK_EQ(NextPlaybackFrame(tb, 10, 100000, 0, 30).frame, 29);
 }
+
+TEST(a_frame_drawn_ahead_is_too_late_when_playback_would_skip_it)
+{
+	Timebase tb = Pal(100);
+	// frame 10 is due at 400 ms; playback shows it up to 20 ms late
+	CHECK(!FrameReadyTooLate(tb, 10, 390, 100));
+	CHECK(!FrameReadyTooLate(tb, 10, 420, 100));
+	CHECK(FrameReadyTooLate(tb, 10, 421, 100));
+	// the last frame is shown however late it is
+	CHECK(!FrameReadyTooLate(tb, 99, 10000, 100));
+}

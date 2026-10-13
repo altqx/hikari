@@ -383,6 +383,11 @@ bool VideoBox::LoadVideo(const wxString& fileName, int subsFlag, bool fulls /*= 
 	}
 	//renderer->m_BlockResize = false;
 	if (m_IsDirectShow){
+#ifndef _WIN32
+		// DirectShow lets the window paint once its graph runs; GStreamer
+		// has nothing that would, and the window would never show the video
+		renderer->m_BlockResize = false;
+#endif
 		Play();
 		if ((tab->editor && !m_IsFullscreen) || dontPlayOnStart){ Pause(); }
 		if (!m_VolumeSlider->IsShown()){ 

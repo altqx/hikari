@@ -45,6 +45,11 @@ bool PlaybackReachedEnd(int frame, int ms, int playEndMs, int frameCount)
 	return (playEndMs > 0 && ms >= playEndMs) || frame >= frameCount - 1;
 }
 
+bool FrameReadyTooLate(const Timebase &timebase, int frame, int readyMs, int frameCount)
+{
+	return frame < frameCount - 1 && timebase.MsAt(frame) < readyMs - LATE_FRAME_MARGIN;
+}
+
 PlaybackStep NextPlaybackFrame(const Timebase &timebase, int frame, int nowMs,
 	int playEndMs, int frameCount)
 {

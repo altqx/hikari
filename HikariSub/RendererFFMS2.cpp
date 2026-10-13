@@ -27,14 +27,14 @@
 #include "Visuals.h"
 #include "VideoFullscreen.h"
 #include "SubtitlesProviderManager.h"
+#include <algorithm>
+#include <chrono>
 #ifndef _WIN32
 #include <wx/bitmap.h>
 #include <wx/app.h>
 #include <wx/dcclient.h>
 #include <wx/image.h>
 #include <wx/thread.h>
-#include <algorithm>
-#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #endif
@@ -52,54 +52,108 @@ void RendererFFMS2::StartLinuxPlaybackThread()
 	StopLinuxPlaybackThread();
 	m_LinuxPresentedFrames.store(0);
 	m_LinuxPlaybackStop.store(false);
+	if (m_FFMS2 && m_Height > 0 && m_Pitch > 0) {
+		// kept between plays, as the frames are large
+		size_t frameBytes = (size_t)m_Height * m_Pitch;
+		int frameCount = m_FFMS2->m_numFrames;
+		if (!m_LinuxQueue || m_LinuxQueue->FrameBytes() != frameBytes || m_LinuxQueue->FrameCount() != frameCount)
+			m_LinuxQueue = std::make_unique<FrameQueue>(FrameQueue::SlotsFor(frameBytes), frameBytes, frameCount, true);
+		m_LinuxQueue->Reset(m_Frame);
+	}
 	m_LinuxPlaybackThread = std::thread(&RendererFFMS2::LinuxPlaybackLoop, this);
 }
 
 void RendererFFMS2::StopLinuxPlaybackThread()
 {
 	m_LinuxPlaybackStop.store(true);
-	if (m_LinuxPlaybackThread.joinable())
-		m_LinuxPlaybackThread.join();
+	if (!m_LinuxPlaybackThread.joinable())
+		return;
+	// wakes the playback thread if it waits for a frame
+	if (m_LinuxQueue)
+		m_LinuxQueue->Stop();
+	m_LinuxPlaybackThread.join();
+	// The frame buffer is what pauses, redraws and copies use. Playback no
+	// longer copies every frame into it, so it takes the last one shown.
+	if (m_LinuxFrames.TakeLatest() && m_LinuxFrames.Front().time >= 0)
+		m_Time = m_LinuxFrames.Front().time;
+	FrameExchange::Frame shown = m_LinuxFrames.Front();
+	wxCriticalSectionLocker lock(m_MutexRendering);
+	if (shown.data && m_FrameBuffer && shown.width == m_Width && shown.height == m_Height && shown.pitch == m_Pitch)
+		memcpy(m_FrameBuffer, shown.data, (size_t)m_Height * m_Pitch);
 }
 
 void RendererFFMS2::LinuxPlaybackLoop()
 {
-	if (!m_FFMS2 || m_Width <= 0 || m_Height <= 0 || m_Pitch <= 0)
+	if (!m_FFMS2 || !m_LinuxQueue || m_Width <= 0 || m_Height <= 0 || m_Pitch <= 0)
 		return;
 
-	std::vector<unsigned char> frameBuffer(static_cast<size_t>(m_Height) * static_cast<size_t>(m_Pitch));
 	const bool debugPlayback = std::getenv("HIKARISUB_DEBUG_LINUX_PLAYBACK") != nullptr;
-	unsigned int decodedFrames = 0;
+	unsigned int shownFrames = 0;
 	if (debugPlayback)
 		std::fprintf(stderr, "[linux-playback] start time=%d frame=%d end=%d duration=%d\n", m_Time.load(), m_Frame.load(), m_PlayEndTime.load(), GetDuration());
-	int lastPresentedFrame = -1;
+
+	// One thread decodes frames ahead and another draws their subtitles, so
+	// a slow frame or a crowded moment of subtitles does not hold up the
+	// frame shown; this thread shows each frame when it is due.
+	FrameQueue &queue = *m_LinuxQueue;
+	std::thread decoder([this, &queue]() {
+		int frame;
+		while (unsigned char *slot = queue.NextToDecode(&frame))
+			queue.Decoded(slot, m_FFMS2->FetchPlaybackFrame(frame, slot));
+	});
+	std::thread subtitles([this, &queue]() { FinishFramesAhead(queue); });
+	struct StopThreads {
+		FrameQueue &queue;
+		std::thread &decoder;
+		std::thread &subtitles;
+		~StopThreads() { queue.Stop(); decoder.join(); subtitles.join(); }
+	} stopThreads{ queue, decoder, subtitles };
+
+	const Timebase &timebase = GetTimebase();
+	const int frameCount = m_FFMS2->m_numFrames;
+	const size_t frameBytes = queue.FrameBytes();
+	int wanted = m_Frame;
 	while (!m_LinuxPlaybackStop.load()) {
-		int playTime = static_cast<int>(timeGetTime() - m_LastTime);
-		if (playTime < 0)
-			playTime = 0;
-		if ((m_PlayEndTime > 0 && playTime >= m_PlayEndTime) || playTime >= GetDuration()) {
-			wxCommandEvent* evt = new wxCommandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ID_END_OF_STREAM);
-			wxQueueEvent(videoControl, evt);
+		FrameQueue::Result decoded = queue.Take(wanted);
+		if (m_LinuxPlaybackStop.load())
+			break;
+		if (!decoded.slot) {
+			// a failed frame or the end: either way nothing more to show
+			wxQueueEvent(videoControl, new wxCommandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ID_END_OF_STREAM));
 			break;
 		}
-
-		const Timebase &timebase = GetTimebase();
-		int nextFrame = timebase.ClampFrame(timebase.FrameAt(playTime));
-		if (nextFrame != lastPresentedFrame) {
-			m_Frame = nextFrame;
-			m_Time = timebase.MsAt(m_Frame);
-			m_FFMS2->GetFrame(m_Frame, frameBuffer.data());
-			DrawTexture(frameBuffer.data(), true);
-			++decodedFrames;
-			if (debugPlayback && (decodedFrames <= 5 || (decodedFrames % 30) == 0))
-				std::fprintf(stderr, "[linux-playback] decode=%u playTime=%d time=%d frame=%d\n", decodedFrames, playTime, m_Time.load(), m_Frame.load());
-			lastPresentedFrame = nextFrame;
+		int frame = decoded.frame;
+		if (decoded.tag != m_SubsGeneration.load()) {
+			// the subtitles changed after this frame was drawn
+			queue.Release(decoded.slot);
+			queue.Reset(frame);
+			continue;
 		}
+		m_Frame = frame;
+		m_Time = timebase.MsAt(frame);
+		unsigned char *shown = m_LinuxFrames.BeginWrite(m_Width, m_Height, m_Pitch);
+		memcpy(shown, decoded.slot, frameBytes);
+		queue.Release(decoded.slot);
+		m_LinuxFrames.Publish(m_Time);
+		QueueLinuxRender();
+		++shownFrames;
+		if (debugPlayback && (shownFrames <= 5 || (shownFrames % 30) == 0))
+			std::fprintf(stderr, "[linux-playback] shown=%u clock=%d time=%d frame=%d\n", shownFrames,
+				(int)(timeGetTime() - m_LastTime), m_Time.load(), frame);
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(4));
+		if (PlaybackReachedEnd(frame, m_Time, m_PlayEndTime, frameCount)) {
+			wxQueueEvent(videoControl, new wxCommandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ID_END_OF_STREAM));
+			break;
+		}
+		int played = PlayedMs();
+		PlaybackStep step = NextPlaybackFrame(timebase, frame, played, m_PlayEndTime, frameCount);
+		wanted = step.frame;
+		// sleeps in short steps, so stopping does not wait for a long frame
+		for (int left = step.sleepMs; left > 0 && !m_LinuxPlaybackStop.load(); left -= 10)
+			std::this_thread::sleep_for(std::chrono::milliseconds(std::min(left, 10)));
 	}
 	if (debugPlayback)
-		std::fprintf(stderr, "[linux-playback] stop decoded=%u presented=%u time=%d frame=%d\n", decodedFrames, m_LinuxPresentedFrames.load(), m_Time.load(), m_Frame.load());
+		std::fprintf(stderr, "[linux-playback] stop shown=%u presented=%u time=%d frame=%d\n", shownFrames, m_LinuxPresentedFrames.load(), m_Time.load(), m_Frame.load());
 }
 
 #endif
@@ -118,7 +172,55 @@ RendererFFMS2::~RendererFFMS2()
 	DeleteProvider();
 }
 
+unsigned RendererFFMS2::DrawSubtitlesAhead(unsigned char *frame, int number)
+{
+	// Read before drawing: OpenSubs changes the generation after it opens
+	// the new subtitles too, so a frame drawn with the old ones never comes
+	// out with the newest generation.
+	unsigned generation = m_SubsGeneration.load();
+	m_SubsProvider->Draw(frame, GetTimebase().MsAt(number));
+	return generation;
+}
+
+void RendererFFMS2::FinishFramesAhead(FrameQueue &queue)
+{
+	const Timebase &timebase = GetTimebase();
+	// how long the latest frames took to draw, ms
+	double cost = 0;
+	int frame;
+	while (unsigned char *slot = queue.NextToFinish(&frame)) {
+		if (FrameReadyTooLate(timebase, frame, PlayedMs() + (int)cost, queue.FrameCount())) {
+			queue.Drop(slot);
+			continue;
+		}
+		auto start = std::chrono::steady_clock::now();
+		unsigned generation = DrawSubtitlesAhead(slot, frame);
+		double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+		cost = cost > 0 ? cost * 0.75 + ms * 0.25 : ms;
+		queue.Finished(slot, generation);
+	}
+}
+
+int RendererFFMS2::PlayedMs()
+{
+#ifdef _WIN32
+	return PlaybackClock();
+#else
+	return std::max(0, (int)(timeGetTime() - m_LastTime));
+#endif
+}
+
 bool RendererFFMS2::DrawTexture(unsigned char *nframe, bool copy)
+{
+	return DrawFrame(nframe, copy, false);
+}
+
+bool RendererFFMS2::ShowFinishedFrame(unsigned char *frame)
+{
+	return DrawFrame(frame, false, true);
+}
+
+bool RendererFFMS2::DrawFrame(unsigned char *nframe, bool copy, bool subsDrawn)
 {
 	wxCriticalSectionLocker lock(m_MutexRendering);
 
@@ -137,20 +239,12 @@ bool RendererFFMS2::DrawTexture(unsigned char *nframe, bool copy)
 		}
 
 		m_SubsProvider->Draw(fdata, m_Time);
-		if (nframe && m_FrameBuffer) {
+		// the playback thread publishes the frame it composited itself
+		if (!wxIsMainThread())
+			return true;
+		if (nframe && m_FrameBuffer && nframe != m_FrameBuffer) {
 			// Keep the software backbuffer in sync for wxGTK redraws after ASS rendering.
 			memcpy(m_FrameBuffer, fdata, m_Height * m_Pitch);
-		}
-		if (!wxIsMainThread()) {
-			{
-				std::lock_guard<std::mutex> pendingLock(m_LinuxPendingFrameMutex);
-				const size_t frameBytes = static_cast<size_t>(m_Height) * static_cast<size_t>(m_Pitch);
-				if (m_LinuxPendingFrame.size() != frameBytes)
-					m_LinuxPendingFrame.resize(frameBytes);
-				memcpy(m_LinuxPendingFrame.data(), fdata, frameBytes);
-			}
-			QueueLinuxRender();
-			return true;
 		}
 		PresentLinuxFrame(fdata);
 		return true;
@@ -188,7 +282,7 @@ bool RendererFFMS2::DrawTexture(unsigned char *nframe, bool copy)
 
 	if (overlay)
 		UpdateOverlay();
-	else
+	else if (!subsDrawn)
 		m_SubsProvider->Draw(fdata, m_Time);
 	IDirect3DSurface9 *upload = m_UploadSurfaces[m_UploadIndex];
 	if (!upload)
@@ -526,6 +620,8 @@ bool RendererFFMS2::OpenSubs(int flag, bool redraw, wxString *text, bool resetPa
 			m_SubsProvider->SetVideoParameters(wxSize(m_Width, m_Height), m_Nv12 ? ARGB32 : m_Format, m_SwapFrame);
 
 		result = m_SubsProvider->Open(flag, SubtitlesText(flag, text));
+		// changed once more now they are open, for frames drawn ahead
+		++m_SubsGeneration;
 	}
 
 #ifndef _WIN32

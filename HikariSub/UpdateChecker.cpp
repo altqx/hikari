@@ -452,7 +452,7 @@ namespace
 		// WinHTTP's data timeout is a read's, so the check does. A cancel
 		// ends the request in State_Cancelled, and OnState() ends the check
 		// as TimedOut: curl's backend sets it at once, and WinHTTP's when
-		// the read in flight is aborted. wx 3.3.3's WinHTTP backend sends
+		// the read in flight is aborted. wx 3.3.4's WinHTTP backend sends
 		// nothing if the cancel comes while it takes in a piece of the
 		// reply; the check then ends on the timer's second firing, and the
 		// handler is kept, as such a request may still send it an event,

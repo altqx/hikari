@@ -18,6 +18,7 @@
 
 #include "RendererVideo.h"
 #include "Provider.h"
+#include "FrameQueue.h"
 #include <d3d9.h>
 #include <d3dx9.h>
 #include "UndoD3DXMacros.h"
@@ -55,6 +56,19 @@ public:
 	void GetFpsnRatio(float *fps, long *arx, long *ary);
 	void SetVolume(int vol);
 	bool DrawTexture(unsigned char * nframe = nullptr, bool copy = false);
+	// Draws the subtitles on a frame decoded ahead of playback, at that
+	// frame's time, off the thread that shows it. Returns the subtitles
+	// generation drawn; a frame drawn with an older one is out of date.
+	unsigned DrawSubtitlesAhead(unsigned char *frame, int number);
+	// Finishes the frames of a playback queue with DrawSubtitlesAhead until
+	// it stops. When drawing takes longer than a frame lasts, it leaves out
+	// the frames that would be ready too late to be shown, as the frame shown
+	// itself used to, rather than fall further behind.
+	void FinishFramesAhead(FrameQueue &queue);
+	// the playback clock, from any thread
+	int PlayedMs();
+	// shows a frame DrawSubtitlesAhead has drawn on
+	bool ShowFinishedFrame(unsigned char *frame);
 	void Render(bool RecreateFrame = true, bool wait = true);
 	void ChangePositionByFrame(int cpos);
 	//it's safe to not exist visual
@@ -100,8 +114,11 @@ public:
 	// QueueLinuxRender/PresentLinuxFrame/RenderToDc) lives in RendererVideo.
 	std::thread m_LinuxPlaybackThread;
 	std::atomic_bool m_LinuxPlaybackStop{ false };
+	// frames decoded and drawn ahead of playback
+	std::unique_ptr<FrameQueue> m_LinuxQueue;
 #endif
 protected:
+	bool DrawFrame(unsigned char *nframe, bool copy, bool subsDrawn);
 	void StartStream() override;
 	void PauseStream() override;
 	void StopStream() override;
