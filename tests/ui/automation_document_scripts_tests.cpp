@@ -14,12 +14,17 @@
 #include <QDir>
 #include <QFile>
 #include <QGuiApplication>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QScopeGuard>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
 #include <algorithm>
+#include <map>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -405,6 +410,12 @@ private slots:
         QCOMPARE(std::string(text.begin(), text.end()), std::string("0,10,20|3000,4000"));
     }
 
+    // The legacy capture (local-s4-document-scripts-20261013, the legacy
+    // Linux app driven through its "Run the last loaded script" hotkey) as
+    // the rewrite gives it, case by case: what the scripts saw and did, the
+    // boxes, the log window, the editor picker, the modified state.
+    void replaysTheLegacyCapture();
+
     // L4 refused these; now (S4) a macro's Script Info and Style edits apply
     // with its Line edits as one undo step, which Undo reverts together.
     void styleAndInfoEditsAreOneStep()
@@ -444,6 +455,196 @@ private slots:
         QCOMPARE(firstText(), std::string("Gate"));
     }
 };
+
+void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
+{
+    QFile observations(QStringLiteral(HIKARI_S4_OBSERVATIONS));
+    QVERIFY(observations.open(QIODevice::ReadOnly));
+    const QJsonArray cases =
+        QJsonDocument::fromJson(observations.readAll()).object()["cases"].toArray()[0].toObject()["observations"].toArray();
+    QCOMPARE(cases.size(), 7);
+    const QDir scripts(QStringLiteral(HIKARI_S4_SCRIPTS));
+    QFile headFile(scripts.filePath(QStringLiteral("record.lua.in")));
+    QVERIFY(headFile.open(QIODevice::ReadOnly));
+    const QByteArray head = headFile.readAll();
+    // The legacy boxes' text, read from the capture's screenshots (screens/);
+    // in validation-error the log window covers the box, so its text is the
+    // one the same branch gives validation-false (a validation that raises
+    // answers false, Automation.cpp:952-956; HikariSubFrame.cpp:924).
+    const std::map<QString, QString> boxText{
+        {QStringLiteral("no-scripts"), QStringLiteral("This subtitle file does not have any scripts added")},
+        {QStringLiteral("only-missing"), QStringLiteral("This subtitle file does not have any scripts added")},
+        {QStringLiteral("validation-false"), QStringLiteral("Validation Lua script 'invalid.lua' failed")},
+        {QStringLiteral("validation-error"), QStringLiteral("Validation Lua script 'raising.lua' failed")},
+        {QStringLiteral("load-error"), QStringLiteral("Error loading Lua script: broken.lua\n")},
+    };
+    // Keys legacy adds to Script Info and the rewrite does not, taken off
+    // legacy's records only (the rewrite's are compared whole): YCbCr Matrix
+    // on load (C03-ycbcr-on-load) and PlayResX and PlayResY written by
+    // GetASSRes when the status bar reads the resolution (SubsGridBase.cpp:
+    // 1653-1675; the rewrite only reads them, Y4, open for a decision), once
+    // each; in validation-false, the "Validated" keys the validation function
+    // inserts and its "edited while validating" text (S4-validation-edits).
+    const QStringList addedOnLoad{QStringLiteral("YCbCr Matrix"), QStringLiteral("PlayResX"), QStringLiteral("PlayResY")};
+
+    // A failed check leaves the slot early: the next slot starts in the
+    // test's own folder without the capture variable.
+    const auto restore = qScopeGuard([this] {
+        app.reset();
+        qunsetenv("HIKARI_CAPTURE_OUT");
+        QDir::setCurrent(dir.path());
+    });
+    for (const auto &c : cases) {
+        const QJsonObject legacy = c.toObject();
+        const QString id = legacy["id"].toString();
+        QCOMPARE(legacy["status"].toString(), QStringLiteral("captured"));
+        // Each case in its own folder, the working directory (relative paths).
+        QDir root(dir.path());
+        QVERIFY(root.mkpath(id));
+        QDir caseDir(root.filePath(id));
+        QVERIFY(QDir::setCurrent(caseDir.path()));
+        const QString absolute = caseDir.filePath(QStringLiteral("abs"));
+        for (const QString &folder : {absolute, caseDir.filePath(QStringLiteral("s4"))})
+            for (const char *name : {"first", "last", "invalid", "raising", "broken"}) {
+                QFile body(scripts.filePath(QLatin1String(name) + QStringLiteral(".lua")));
+                QVERIFY(body.open(QIODevice::ReadOnly));
+                QByteArray text = head;
+                text.replace("local tag = TAG", "local tag = \"" + QByteArray(name) + "\"");
+                writeFile(folder + QLatin1Char('/') + QLatin1String(name) + QStringLiteral(".lua"), text + "\n" + body.readAll());
+            }
+        const QString out = caseDir.filePath(QStringLiteral("capture.jsonl"));
+        writeFile(out, {});
+        qputenv("HIKARI_CAPTURE_OUT", out.toLocal8Bit());
+        // Settings of its own, as legacy's fresh copy (no script editor set).
+        auto o = options();
+        o.settingsFile = caseDir.filePath(QStringLiteral("hikari.ini"));
+        app = std::make_unique<app::Application>(o);
+        QByteArray value;
+        if (!legacy["document_scripts"].isNull())
+            value = legacy["document_scripts"].toString().replace(QStringLiteral("{abs}"), QDir::toNativeSeparators(absolute)).toUtf8();
+        QVERIFY(!open(qPrintable(id + QStringLiteral(".ass")), value).isEmpty());
+        auto &automation = app->automation();
+        QSignalSpy done(&automation, &app::AutomationShell::runCompleted);
+        QSignalSpy notices(&automation, &app::AutomationShell::notice);
+        QSignalSpy editor(&automation, &app::AutomationShell::chooseScriptEditor);
+        auto records = [&] {
+            QFile f(out);
+            if (!f.open(QIODevice::ReadOnly))
+                return QList<QJsonObject>{};
+            QList<QJsonObject> got;
+            for (const QByteArray &line : f.readAll().split('\n'))
+                if (!line.isEmpty())
+                    got.append(QJsonDocument::fromJson(line).object());
+            return got;
+        };
+
+        const QJsonArray steps = legacy["steps"].toArray();
+        for (qsizetype n = 0; n < steps.size(); ++n) {
+            const QJsonObject step = steps[n].toObject();
+            const QString where = id + QStringLiteral(" step ") + QString::number(n);
+            if (step["do"].toString() == QStringLiteral("touch")) {
+                for (const QString &folder : {absolute, caseDir.filePath(QStringLiteral("s4"))}) {
+                    QFile f(folder + QLatin1Char('/') + step["script"].toString() + QStringLiteral(".lua"));
+                    QVERIFY(f.open(QIODevice::Append));
+                    f.write("-- changed\n");
+                    QVERIFY(f.flush());
+                    QVERIFY(f.setFileTime(QDateTime::currentDateTime().addSecs(60), QFileDevice::FileModificationTime));
+                }
+                continue;
+            }
+            // The windows legacy opened: a box (its title and text), the log
+            // window, the editor picker.
+            QStringList titles;
+            for (const auto &w : step["windows"].toArray())
+                titles << w.toObject()["title"].toString();
+            const bool box = titles.contains(QStringLiteral("Info")) || titles.contains(QStringLiteral("Error"));
+            const bool picker = titles.contains(QStringLiteral("Select a script editor"));
+
+            const auto before = records().size();
+            const auto doneBefore = done.size(), noticesBefore = notices.size(), editorBefore = editor.size();
+            automation.runLastLoadedScript();
+            QTRY_VERIFY_WITH_TIMEOUT(done.size() > doneBefore || notices.size() > noticesBefore, 30'000);
+            // A box a failed run brings after its end, the picker after a load error.
+            QTRY_VERIFY_WITH_TIMEOUT(notices.size() - noticesBefore >= (box ? 1 : 0) &&
+                                         editor.size() - editorBefore >= (picker ? 1 : 0),
+                                     30'000);
+            QTest::qWait(300); // nothing more comes
+            const auto got = records().mid(before);
+
+            // Legacy's records, less the validations its Automation menu build
+            // made first: the hotkey goes through the menu item, and
+            // OnMenuSelected rebuilds the item's menu before running it
+            // (HikariSubFrame.cpp:680-686, BuildMenu validates every macro,
+            // Automation.cpp:1375, 1434). The rewrite validates when it runs.
+            // The command's validation is the last one.
+            const QJsonArray all = step["records"].toArray();
+            qsizetype command = -1;
+            for (qsizetype i = 0; i < all.size(); ++i)
+                if (all[i].toObject()["event"].toString() == QStringLiteral("validate"))
+                    command = i;
+            QStringList expectedLoads, gotLoads, expected, actual;
+            const bool validationEdits = id == QStringLiteral("validation-false");
+            auto view = [&](const QJsonObject &r, bool fromLegacy) {
+                QString first = r["first"].toString();
+                QStringList info;
+                for (const auto &k : r["info"].toArray())
+                    info << k.toString();
+                if (fromLegacy) {
+                    for (const QString &key : addedOnLoad)
+                        info.removeOne(key);
+                    if (validationEdits && r["script"].toString() == QStringLiteral("invalid")) {
+                        info.removeAll(QStringLiteral("Validated"));
+                        if (first == QStringLiteral("edited while validating"))
+                            first = QStringLiteral("Gate");
+                    }
+                }
+                return r["script"].toString() + QLatin1Char(' ') + r["event"].toString() + QLatin1Char(' ') + first +
+                       QLatin1Char(' ') + QString::number(r["lines"].toInt()) + QLatin1Char(' ') + info.join(QLatin1Char(','));
+            };
+            for (qsizetype i = 0; i < all.size(); ++i) {
+                const QJsonObject r = all[i].toObject();
+                if (r["event"].toString() == QStringLiteral("load"))
+                    expectedLoads << r["script"].toString();
+                else if (r["event"].toString() != QStringLiteral("validate") || i == command)
+                    expected << view(r, true);
+            }
+            for (const QJsonObject &r : got) {
+                if (r["event"].toString() == QStringLiteral("load"))
+                    gotLoads << r["script"].toString();
+                else
+                    actual << view(r, false);
+            }
+            // Each script loads in its own helper, so the loads' order is theirs.
+            expectedLoads.sort();
+            gotLoads.sort();
+            QVERIFY2(gotLoads == expectedLoads, qPrintable(where + QStringLiteral(": ") + gotLoads.join(QLatin1Char(','))));
+            QVERIFY2(actual == expected,
+                     qPrintable(where + QStringLiteral(":\n  rewrite ") + actual.join(QStringLiteral("\n          ")) +
+                                QStringLiteral("\n  legacy  ") + expected.join(QStringLiteral("\n          "))));
+
+            QVERIFY2(notices.size() - noticesBefore == (box ? 1 : 0),
+                     qPrintable(where + QStringLiteral(": ") + QString::number(notices.size() - noticesBefore) +
+                                QStringLiteral(" notices, the last ") +
+                                (notices.isEmpty() ? QString() : notices.last().at(1).toString())));
+            if (box) {
+                QCOMPARE(notices.last().at(0).toString(), titles.contains(QStringLiteral("Info")) ? QStringLiteral("Info")
+                                                                                                  : QStringLiteral("Error"));
+                const auto text = boxText.find(id);
+                QVERIFY2(text != boxText.end(), qPrintable(where + QStringLiteral(": no legacy box text")));
+                QVERIFY2(notices.last().at(1).toString().startsWith(text->second),
+                         qPrintable(where + QStringLiteral(": ") + notices.last().at(1).toString()));
+            }
+            QCOMPARE(editor.size() - editorBefore, picker ? 1 : 0);
+            if (titles.contains(QStringLiteral("Log window")))
+                QVERIFY(app->log().history().contains(QStringLiteral("Runtime error in Lua macro validation function:")));
+            // A run marks the Document modified ("1*" in legacy's title); a
+            // failed validation does not.
+            QCOMPARE(session().isDirty(), step["main_title"].toString().contains(QLatin1Char('*')));
+        }
+        app.reset();
+        qunsetenv("HIKARI_CAPTURE_OUT");
+    }
+}
 
 QTEST_MAIN(AutomationDocumentScriptsTests)
 #include "automation_document_scripts_tests.moc"

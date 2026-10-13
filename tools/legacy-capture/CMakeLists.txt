@@ -586,3 +586,87 @@ target_compile_options(legacy_tag_move_capture PRIVATE ${wx_cflags}
     -include "${LEGACY_SOURCE}/HikariSub/platform.h"
     -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
 target_link_libraries(legacy_tag_move_capture PRIVATE ${wx_libs})
+
+# Y9: legacy Demux (Demux.cpp, copied unchanged beside nothing so its quoted
+# includes reach the stand-ins in demux/) on Matroska files, through FFMS2 as
+# the legacy Linux build links it: the distribution's libffms2 and FFmpeg,
+# with Thirdparty/Build/FFMS2/indexing_additional.cpp compiled against the
+# ffms2 fork's headers (LEGACY_SOURCE/Thirdparty/ffms2, the submodule at the
+# baseline). SubsFile::AddSInfo, GetSInfo, GetSInfoP (SubsFile.cpp),
+# HikariNormalizePath and HikariPathName (config.h) and ZEROIT (SubsDialogue.h) are copied unchanged;
+# SubsTime is the legacy SubsTime.cpp. Built only when those are available.
+pkg_check_modules(LEGACY_FFMS2 IMPORTED_TARGET ffms2 libavformat libavcodec libavutil)
+if(LEGACY_FFMS2_FOUND AND EXISTS "${LEGACY_SOURCE}/Thirdparty/ffms2/src/core/indexing.h"
+   AND EXISTS "${LEGACY_SOURCE}/Thirdparty/Build/FFMS2/indexing_additional.cpp")
+    set(demux_gen "${CMAKE_CURRENT_BINARY_DIR}/demux")
+    file(MAKE_DIRECTORY "${demux_gen}")
+    configure_file("${legacy_hs}/Demux.cpp" "${demux_gen}/copy/Demux.cpp" COPYONLY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsFile.cpp" "${demux_gen}/subs_file.inc"
+        "const wxString & SubsFile::GetSInfo(const wxString &key, int *ii/* = 0*/)"
+        "SInfo *SubsFile::GetSInfoP(const wxString &key, int *ii)"
+        "void SubsFile::AddSInfo(const wxString &SI, wxString val, bool save)" COMMAND_ERROR_IS_FATAL ANY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/config.h" "${demux_gen}/path_name.inc"
+        "inline wxString HikariNormalizePath(const wxString& path)"
+        "inline wxString HikariPathName(const wxString& path)" COMMAND_ERROR_IS_FATAL ANY)
+    file(STRINGS "${legacy_hs}/SubsDialogue.h" zeroit REGEX "^#define ZEROIT")
+    list(LENGTH zeroit zeroit_count)
+    if(NOT zeroit_count EQUAL 1)
+        message(FATAL_ERROR "SubsDialogue.h: expected one ZEROIT definition")
+    endif()
+    file(WRITE "${demux_gen}/zeroit.inc" "// SubsDialogue.h, unchanged.\n${zeroit}\n")
+    # How legacy read what Demux built (demux/legacy_parse.h): the AssColor,
+    # Styles and Dialogue classes, with Styles::parseStyle and GetRaw,
+    # Dialogue::SetRaw and GetRaw and what they reach, copied unchanged.
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/styles.h" "${demux_gen}/styles_classes.inc"
+        "class AssColor" "class Styles" COMMAND_ERROR_IS_FATAL ANY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.h" "${demux_gen}/dialogue_classes.inc"
+        "enum {\n\tLAYER = 1," "class StoreHelper" "class StoreTextHelper"
+        "inline wxString operator+(const wxString &lhs, StoreTextHelper &rhs)"
+        "inline wxString operator+(const wchar_t *lhs, StoreTextHelper &rhs)"
+        "inline wxString operator+(StoreTextHelper &lhs, const wxString &rhs)"
+        "inline wxString operator+(StoreTextHelper &lhs, const wchar_t *rhs)"
+        "class TagData" "class ParseData" "class Visibility" "class Dialogue" COMMAND_ERROR_IS_FATAL ANY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/styles.cpp" "${demux_gen}/styles_defs.inc"
+        "AssColor::AssColor()" "AssColor::~AssColor()" "void AssColor::SetAss(wxString color)"
+        "wxString AssColor::GetAss(bool alpha, bool style) const"
+        "Styles::Styles(wxString styledata, char form)" "Styles::~Styles()"
+        "bool Styles::parseStyle(const wxString &styledata, char form)" "wxString Styles::GetRaw()"
+        COMMAND_ERROR_IS_FATAL ANY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.cpp" "${demux_gen}/dialogue_defs.inc"
+        "line:std::atomic<unsigned> Visibility::s_Epoch" "line:static wxRegEx expresion1("
+        "line:static wxRegEx expresion2(" "line:static wxRegEx expresion("
+        "ParseData::~ParseData()" "Dialogue::~Dialogue()" "void Dialogue::ClearParse()"
+        "Dialogue::Dialogue(const wxString &ldial, const wxString &txttl)"
+        "void Dialogue::SetRaw(const wxString &ldial)"
+        "void Dialogue::GetRaw(wxString *txt, bool tl/*=false*/, const wxString &style/*=\"\"*/, bool hideOriginalOnVideo /*= false*/)"
+        COMMAND_ERROR_IS_FATAL ANY)
+    set(legacy_flags
+        -include "${LEGACY_SOURCE}/HikariSub/platform.h"
+        -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
+    set(legacy_defs _SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING _CRT_SECURE_NO_WARNINGS HAVE_DLL_EXPORT
+        LINUX_BUILD HIKARISUB_LINUX_BUILD)
+    # The FFMS2 extension, as the legacy build compiles it.
+    add_library(legacy_demux_ffms2 OBJECT "${LEGACY_SOURCE}/Thirdparty/Build/FFMS2/indexing_additional.cpp")
+    target_include_directories(legacy_demux_ffms2 PRIVATE "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
+    target_compile_definitions(legacy_demux_ffms2 PRIVATE ${legacy_defs})
+    target_compile_options(legacy_demux_ffms2 PRIVATE ${wx_cflags} ${legacy_flags})
+    target_link_libraries(legacy_demux_ffms2 PRIVATE PkgConfig::LEGACY_FFMS2)
+    # SubsTime and Timebase with the legacy headers.
+    add_library(legacy_demux_time OBJECT "${legacy_hs}/Timebase.cpp" "${legacy_hs}/SubsTime.cpp")
+    target_include_directories(legacy_demux_time PRIVATE "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
+    target_compile_definitions(legacy_demux_time PRIVATE ${legacy_defs})
+    target_compile_options(legacy_demux_time PRIVATE ${wx_cflags} ${legacy_flags})
+    add_executable(legacy_demux_capture demux_capture.cpp demux/legacy_parse.cpp "${demux_gen}/copy/Demux.cpp"
+        $<TARGET_OBJECTS:legacy_demux_ffms2> $<TARGET_OBJECTS:legacy_demux_time>)
+    # The stand-ins come first; the legacy directory supplies Demux.h (whose
+    # own include reaches the fork's ffms.h), LogHandler.h, SubsTime.h and
+    # ZipEntryUtf8.h.
+    target_include_directories(legacy_demux_capture PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/demux" "${demux_gen}" "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
+    target_compile_definitions(legacy_demux_capture PRIVATE ${legacy_defs})
+    target_compile_options(legacy_demux_capture PRIVATE ${wx_cflags} ${legacy_flags})
+    target_link_options(legacy_demux_capture PRIVATE "-Wl,--wrap=FFMS_GetSubtitles")
+    target_link_libraries(legacy_demux_capture PRIVATE ${wx_libs} PkgConfig::LEGACY_FFMS2)
+else()
+    message(STATUS "legacy_demux_capture: needs pkg-config ffms2 and FFmpeg, and LEGACY_SOURCE/Thirdparty/ffms2")
+endif()

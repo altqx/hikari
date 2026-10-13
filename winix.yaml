@@ -166,6 +166,19 @@ tasks:
     # attach of the Windows SDK's cdb, if the VM has it; the release ships its PDBs).
     script: $p = Get-Process HikariSub -ErrorAction SilentlyContinue | Select-Object -First 1; if (-not $p) { Write-Output 'no HikariSub process'; exit 0 }; Write-Output "pid $($p.Id) responding=$($p.Responding)"; $p.Threads | ForEach-Object { Write-Output "thread $($_.Id) $($_.ThreadState) $($_.WaitReason)" }; $cdb = @("${env:ProgramFiles(x86)}\Windows Kits\10\Debuggers\x64\cdb.exe", "${env:ProgramFiles}\Windows Kits\10\Debuggers\x64\cdb.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1; if (-not $cdb) { Write-Output 'cdb not found'; exit 0 }; $sym = Split-Path $p.Path; & $cdb -pv -p $p.Id -y $sym -c '.symopt+0x40; ~*kc 30; q' 2>&1 | ForEach-Object { "$_" }
     timeoutSeconds: 300
+  legacy-win-s4-setup:
+    # S4 on Windows: one copy of the legacy release per document-scripts case
+    # (tools/legacy-capture/windows/document-scripts.ps1; run legacy-win-setup first).
+    script: ./tools/legacy-capture/windows/document-scripts.ps1 -Action setup
+    timeoutSeconds: 900
+  legacy-win-s4-touch:
+    # A Document script changed on disk between two runs (S4_SCRIPT, default last).
+    script: ./tools/legacy-capture/windows/document-scripts.ps1 -Action touch
+    timeoutSeconds: 120
+  legacy-win-s4-output:
+    # The S4 scripts' records per case (drive_windows.py --document-scripts).
+    script: ./tools/legacy-capture/windows/document-scripts.ps1 -Action output
+    timeoutSeconds: 120
   legacy-win-dump:
     # A minidump of the legacy app (thread stacks, no full memory) through
     # dbghelp's MiniDumpWriteDump, kept as an artifact for offline stacks.

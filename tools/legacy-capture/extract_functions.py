@@ -6,7 +6,9 @@ Usage: extract_functions.py <source> <output> <signature>...
 Each signature is the start of a definition as it is written in the source
 (for example "bool RendererVideo::UpdateRects(bool changeZoom)" or
 "class FloatRect"); the definition runs from there to the brace that closes
-its body (and a following ';' for a class, struct or enum). Every signature must match
+its body (and a following ';' for a class, struct or enum). A signature
+written "line:<start>" copies the one source line that starts with <start>
+instead (a variable definition, such as a static). Every signature must match
 exactly once. The output holds the definitions in the order given, each after
 a #line directive naming its place in the source, so compiler messages and
 the probe's citations point at the legacy file.
@@ -47,11 +49,18 @@ def main():
         text = f.read().replace("\r\n", "\n")
     parts = []
     for signature in signatures:
+        whole_line = signature.startswith("line:")
+        if whole_line:
+            signature = "\n" + signature[len("line:"):]
         first = text.find(signature)
         if first < 0 or text.find(signature, first + 1) >= 0:
-            raise SystemExit(f"{source}: '{signature}' must occur exactly once")
-        end = body_end(text, first)
-        if signature.startswith(("class ", "struct ", "enum ")) and text[end:end + 1] == ";":
+            raise SystemExit(f"{source}: '{signature.lstrip()}' must occur exactly once")
+        if whole_line:
+            first += 1
+            end = text.index("\n", first)
+        else:
+            end = body_end(text, first)
+        if not whole_line and signature.startswith(("class ", "struct ", "enum ")) and text[end:end + 1] == ";":
             end += 1
         line = text.count("\n", 0, first) + 1
         parts.append(f'#line {line} "{source}"\n{text[first:end]}\n')

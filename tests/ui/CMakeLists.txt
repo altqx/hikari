@@ -173,7 +173,10 @@ hikari_add_qttest(hikari_ui_automation_document_scripts_tests SOURCES automation
     LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_automation_document_scripts_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
-    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
+    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
+    # The legacy capture (document_scripts_capture.py) and its scripts.
+    HIKARI_S4_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-s4-document-scripts-20261013/s4.json"
+    HIKARI_S4_SCRIPTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/document-scripts")
 add_dependencies(hikari_ui_automation_document_scripts_tests hikari_lua_helper hikari_automation_stage
     hikari_media_helper hikari_media_fixtures)
 hikari_add_spix_test(hikari_ui_close_workflow SOURCES close_workflow.cpp LIBRARIES hikari_composition)
