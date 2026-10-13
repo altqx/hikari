@@ -5151,22 +5151,6 @@ private slots:
         const QString shots = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
         auto *presenter = item("videoPresenter");
         QSignalSpy presented(presenter, SIGNAL(presented()));
-        // After a switch, once the presenter has shown the new picture.
-        const auto desktopShot = [&](const QString &name, QImage &shot, bool afterSwitch) {
-            if (shots.isEmpty())
-                return;
-            if (afterSwitch)
-                QTRY_VERIFY_WITH_TIMEOUT(presented.count() > 0, 10000);
-            QTest::qWait(500); // the window system's copy of the swapped frame
-            presented.clear();
-            const QRectF r = presenter->mapRectToScene(QRectF(0, 0, presenter->width(), presenter->height()));
-            const QPoint at = window->mapToGlobal(r.topLeft().toPoint());
-            shot = window->screen()->grabWindow(0, at.x(), at.y(), int(r.width()), int(r.height())).toImage();
-            QVERIFY(!shot.isNull());
-            QVERIFY(QDir().mkpath(shots));
-            QVERIFY(shot.save(shots + QStringLiteral("/w2-desktop-") + name + QStringLiteral(".png")));
-            qInfo().noquote() << "W2 desktop" << name << QGuiApplication::platformName() << shot.size();
-        };
         const auto pixelsApart = [](const QImage &a, const QImage &b) {
             if (a.size() != b.size())
                 return qsizetype(-1);
@@ -5176,6 +5160,37 @@ private slots:
                 for (int col = 0; col < x.width(); ++col)
                     n += x.pixel(col, row) != y.pixel(col, row);
             return n;
+        };
+        // After a switch once the presenter has shown the new picture, and
+        // always once two grabs 250 ms apart agree (the window system shows
+        // the swapped frame, not an older or partial one).
+        const auto desktopShot = [&](const QString &name, QImage &shot, bool afterSwitch) {
+            if (shots.isEmpty())
+                return;
+            if (afterSwitch)
+                QTRY_VERIFY_WITH_TIMEOUT(presented.count() > 0, 10000);
+            presented.clear();
+            // grabWindow(0, ...) takes the point relative to the screen
+            // (QWindowsScreen and QXcbScreen add the screen's origin), not
+            // the virtual desktop.
+            QScreen *screen = window->screen();
+            const QRectF r = presenter->mapRectToScene(QRectF(0, 0, presenter->width(), presenter->height()));
+            const QPoint at = window->mapToGlobal(r.topLeft().toPoint()) - screen->geometry().topLeft();
+            const auto grab = [&] {
+                return screen->grabWindow(0, at.x(), at.y(), int(r.width()), int(r.height())).toImage();
+            };
+            QImage previous = grab();
+            const auto steady = [&] {
+                QTest::qWait(250);
+                shot = grab();
+                const bool same = !shot.isNull() && pixelsApart(previous, shot) == 0;
+                previous = shot;
+                return same;
+            };
+            QTRY_VERIFY_WITH_TIMEOUT(steady(), 10000);
+            QVERIFY(QDir().mkpath(shots));
+            QVERIFY(shot.save(shots + QStringLiteral("/w2-desktop-") + name + QStringLiteral(".png")));
+            qInfo().noquote() << "W2 desktop" << name << QGuiApplication::platformName() << shot.size();
         };
         QImage libassShot;
         desktopShot(QStringLiteral("libass"), libassShot, false);
@@ -5226,9 +5241,6 @@ private slots:
         QCOMPARE(renderer.activeName(), std::string("libass"));
         QCOMPARE(renderer.providers(), std::vector<std::string>{"libass"});
         QCOMPARE(session.lastOverlay(), libass); // nothing was drawn again
-#endif
-#ifndef HIKARI_WITH_VSFILTER
-        Q_UNUSED(pixelsApart);
 #endif
     }
 
