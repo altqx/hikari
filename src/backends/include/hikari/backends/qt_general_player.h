@@ -2,17 +2,23 @@
 
 // GeneralPlayer through Qt Multimedia's FFmpeg-backed QMediaPlayer (N5), in
 // the application process (ADR 0016). The player renders into its own
-// QVideoSink; every frame that sink receives is a delivered frame, which is
-// what acknowledges a seek and anchors the clock. Audio goes to the default
-// output device when one exists; without one playback is silent.
+// QVideoSink; a frame that sink receives is a delivered frame, which is
+// what acknowledges a seek and anchors the clock. V1: the sink's frames are
+// taken on the thread that renders them and handed to this object's thread
+// latest first: while one waits a newer one replaces it, so a busy GUI
+// thread never works through a backlog of old frames (a seek drops the one
+// waiting). Audio goes to the default output device when one exists;
+// without one playback is silent.
 
 #include "hikari/application/general_player.h"
 
 #include <QMediaPlayer>
 #include <QObject>
+#include <QVideoFrame>
 #include <QVideoSink>
 
 #include <memory>
+#include <mutex>
 #include <optional>
 
 class QAudioOutput;
@@ -46,6 +52,10 @@ public:
     QVideoSink *videoSink() { return &m_sink; }
     QString subtitleText() const { return m_sink.subtitleText(); }
     std::uint64_t deliveredFrames() const { return m_delivered; }
+    // Frames the sink received, and those a newer one replaced before this
+    // thread took them.
+    std::uint64_t receivedFrames() const;
+    std::uint64_t supersededFrames() const;
 
 signals:
     void frameDelivered(const QVideoFrame &frame);
@@ -55,6 +65,8 @@ signals:
 private:
     void onStatus(QMediaPlayer::MediaStatus status);
     void onFrame(const QVideoFrame &frame);
+    void takeFrame();
+    void dropWaitingFrame();
     void failOpen(application::PlayerError error);
     application::MediaDescription describe() const;
 
@@ -73,6 +85,16 @@ private:
     std::optional<PendingSeek> m_pendingSeek;
     application::PlayerClock m_clock;
     double m_volume = 1.0;
+    // The newest frame the sink received, until this thread takes it.
+    struct Slot {
+        std::mutex mutex;
+        QVideoFrame frame;
+        bool queued = false; // a takeFrame call is on this thread's queue
+        bool alive = true;
+        std::uint64_t received = 0;
+        std::uint64_t superseded = 0;
+    };
+    std::shared_ptr<Slot> m_slot = std::make_shared<Slot>();
 };
 
 } // namespace hikari::backends

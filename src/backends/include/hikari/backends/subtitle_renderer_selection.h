@@ -11,12 +11,17 @@
 // through libass (W2-missing-renderer-libass, user 2026-10-13): legacy fell
 // back to the default CSRI renderer (GetVSFilter), and with none at all drew
 // nothing ("Cannot initialize CSRI.").
+//
+// V1: render() and prepare() may run on another thread (the playback
+// worker) while select() switches the renderer: a switch waits for a render
+// in progress, and renders wait for the switch.
 
 #include "hikari/backends/libass_renderer.h"
 
 #include <filesystem>
 #include <functional>
 #include <memory>
+#include <shared_mutex>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -73,6 +78,7 @@ public:
 
 private:
     std::shared_ptr<CsriRenderers> csriRenderers();
+    std::shared_mutex m_switch; // select() exclusive, prepare() and render() shared
     LibassRenderer m_libass;
     application::SubtitleRendererPort *m_active = &m_libass;
     std::string m_provider = "libass";

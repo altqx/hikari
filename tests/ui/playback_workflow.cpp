@@ -2,10 +2,14 @@
 // through the general player (its frames are shown, with the overlay), then
 // Pause: the indexed frame shown is the one whose interval holds the last
 // delivered frame (the accepted I4 handoff), read from the barcode each
-// fixture frame carries. Stop returns to the first frame.
+// fixture frame carries. Stop returns to the first frame. While playing
+// there is one change notification per frame shown, and the texts update at
+// about 10 Hz (V1).
 
 #include "hikari/app/application.h"
 #include "docking.h"
+#include "status_bar_controller.h"
+#include "visual_tools_controller.h"
 
 #include <QDir>
 #include <QFile>
@@ -54,6 +58,10 @@ struct Shown {
     bool accepted = false;
     int generalFrames = 0;   // player frames shown so far
     int lastGeneralBarcode = -1;
+    int changes = 0; // V1: the panel's change notifications
+    int texts = 0;   // and its texts' (times, status)
+    int tools = 0;   // the visual tools' change notifications
+    int statusBar = 0; // the status bar's
 };
 
 std::mutex g_mutex;
@@ -68,6 +76,7 @@ Shown shown()
 class Workflow : public spix::TestServer {
 public:
     std::vector<std::string> observed;
+    bool rate = false;
 
 protected:
     std::string status() { return getStringProperty("mainWindow/videoStatus", "text"); }
@@ -94,7 +103,24 @@ protected:
                 label = getStringProperty("mainWindow/playPause", "text");
             }
             observed.push_back(label); // 1: Pause while playing
+            const Shown before = shown();
+            const auto from = std::chrono::steady_clock::now();
             observed.push_back(waitFor([](const Shown &s) { return s.generalFrames >= 5; }) ? "playing" : "no frames"); // 2
+            wait(500ms);
+            status();
+            const Shown after = shown();
+            const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - from).count();
+            // V1: one notification per frame shown, the texts at about 10 Hz.
+            const int frames = after.generalFrames - before.generalFrames, changes = after.changes - before.changes,
+                      texts = after.texts - before.texts, tools = after.tools - before.tools,
+                      bar = after.statusBar - before.statusBar;
+            std::printf("while playing: %d frames, %d notifications, %d text updates, %d visual tools and %d status "
+                        "bar notifications in %.0f ms\n",
+                        frames, changes, texts, tools, bar, ms);
+            // The visual tools and the status bar notify only when what they
+            // show changes (the shown frame's warning, the fields), not per frame.
+            rate = frames > 0 && changes <= frames + 1 && texts >= 2 && texts <= static_cast<int>(ms / 100) + 2 &&
+                   tools <= 1 && bar <= texts;
             mouseClick("mainWindow/playPause");
             // Once paused, late player frames are ignored: the last one is final.
             label.clear();
@@ -169,9 +195,22 @@ int main(int argc, char **argv)
     options.playbackAudio = false; // never a desktop's speakers in tests
     hikari::app::Application application(options);
     auto &video = application.video();
+    QObject::connect(&video, &hikari::ui::VideoController::textsChanged, [] {
+        std::lock_guard lock(g_mutex);
+        ++g_shown.texts;
+    });
+    QObject::connect(&application.visualTools(), &hikari::ui::VisualToolsController::changed, [] {
+        std::lock_guard lock(g_mutex);
+        ++g_shown.tools;
+    });
+    QObject::connect(&application.statusBar(), &hikari::ui::StatusBarController::changed, [] {
+        std::lock_guard lock(g_mutex);
+        ++g_shown.statusBar;
+    });
     QObject::connect(&video, &hikari::ui::VideoController::changed, [&video] {
         const auto &session = video.session();
         std::lock_guard lock(g_mutex);
+        ++g_shown.changes;
         if (const auto frame = session.lastFrame()) {
             if (frame->index < 0 && frame.get() != nullptr) {
                 ++g_shown.generalFrames;
@@ -215,6 +254,8 @@ int main(int argc, char **argv)
         expect(o[7] == "frame 47", "L seeks 5 s forward, clamped to the last frame");
         expect(o[8] == "frame 0", "; seeks 5 s back, clamped to the first frame");
         expect(o[9] == "00:00:00,000;  0;  0;  0 ms, -2000 ms", "the times field");
+        expect(test.rate, "one notification per frame, the texts at about 10 Hz and the tools and status bar only "
+                          "on a change while playing");
     }
     return failures == 0 ? 0 : 1;
 }

@@ -78,6 +78,7 @@ bool SubtitleRendererSelection::select(const std::string &provider)
         if (m_log)
             m_log("The subtitle renderer " + provider + " is not installed; libass is used.");
     }
+    std::unique_lock lock(m_switch); // no render on another thread meanwhile
     if (chosen == m_provider)
         return false;
     m_provider = chosen;
@@ -111,12 +112,14 @@ std::string SubtitleRendererSelection::activeName() const
 std::expected<std::uint64_t, application::RenderError>
 SubtitleRendererSelection::prepare(application::RenderSnapshot snapshot)
 {
+    std::shared_lock lock(m_switch);
     return m_active->prepare(std::move(snapshot));
 }
 
 std::expected<application::OverlayFrame, application::RenderError>
 SubtitleRendererSelection::render(core::DocumentTime time, int width, int height)
 {
+    std::shared_lock lock(m_switch);
     return m_active->render(time, width, height);
 }
 

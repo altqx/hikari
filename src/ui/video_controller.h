@@ -13,6 +13,7 @@
 #include "hikari/application/video_sources.h"
 
 #include <QObject>
+#include <QTimer>
 
 #include <functional>
 #include <QString>
@@ -42,7 +43,7 @@ class VideoController : public QObject {
     // V2: the legacy times field ("00:00:01,001;  24;  0;  1 ms, -999 ms":
     // time, frame, frames from the active Line's start, then ms from its
     // start and end) and whether the shown frame is a keyframe.
-    Q_PROPERTY(QString times READ times NOTIFY changed)
+    Q_PROPERTY(QString times READ times NOTIFY textsChanged)
     Q_PROPERTY(bool keyframeShown READ keyframeShown NOTIFY changed)
     // V3: indexing with its progress (0 to 1; -1 before the first report)
     // and Cancel (legacy ProgressSink "Indexing video").
@@ -159,7 +160,9 @@ signals:
     void changed();
     // V3: Unload video emptied the panel.
     void unloaded();
-    void textsChanged(); // with every change, and after a language switch
+    // With every change (at most every 100 ms while playing: the texts the
+    // panel shows need no more), and after a language switch.
+    void textsChanged();
     // P9: 0 load associated, 1 load from directory, 2 no.
     void offerAnswered(int answer, bool applyToAll);
     // A video opened on request while the question was shown.
@@ -179,6 +182,8 @@ private:
     std::optional<std::pair<core::DocumentTime, core::DocumentTime>> m_lineTimes;
     // V3
     void sessionChanged();
+    void textsMayChange();
+    QTimer *m_textsTimer = nullptr; // V1: the texts' pace while playing
     std::vector<int> chapterStarts() const;
     application::DisplayAudioPort *m_trackPort = nullptr;
     application::ChapterPort *m_chapterPort = nullptr;

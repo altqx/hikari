@@ -19,6 +19,7 @@
 #include "hikari/application/general_player.h"
 #include "hikari/application/indexed_source.h"
 #include "hikari/application/legacy_timebase.h"
+#include "hikari/application/playback_pipeline.h"
 #include "hikari/application/presenter.h"
 #include "hikari/application/subtitle_render.h"
 #include "hikari/application/video_matrix.h"
@@ -132,8 +133,22 @@ public:
     // A1: legacy's Stopped state: Stop while playing, until the next Play
     // (legacy marks the paused video's frame in the audio box only when Paused).
     bool stopped() const { return m_stopped; }
-    // A frame the general player delivered, converted to BGRA by the UI.
+    // A frame the general player delivered, already BGRA; shown and its
+    // overlay rendered at once.
     void generalFrame(IndexedFrame frame, std::int64_t startUs);
+    // V1: player frames go through a PlaybackPipeline: its worker makes the
+    // BGRA and renders the overlay, `post` runs the results on this thread.
+    // Without one (tests) a submitted frame is handled before
+    // submitGeneralFrame returns.
+    void setFrameWorker(PlaybackPipeline::Post post);
+    // V1: a frame the player delivered. Only the newest one waits; a result older than the frame shown, or from before a pause,
+    // a stop or a seek, is dropped.
+    void submitGeneralFrame(std::int64_t startUs, std::optional<std::int64_t> endUs, PlaybackPipeline::Make make);
+    std::optional<PlaybackPipeline::Counters> pipelineCounters() const;
+    // V1: the matrix and range the indexed frames are converted with now
+    // (the last input matrix set, else the source's own; nullopt with no
+    // video open), for player frames to look as the paused frame does.
+    std::optional<LegacyColourMatrix::Input> playerColour() const;
 
     // V2: legacy VideoBox::Seek and keyframe navigation, from the shown frame.
     // A start time shows the frame at or after it (Timebase::FrameAt, 0 at or
@@ -189,6 +204,9 @@ public:
     std::optional<int> requestedFrame() const { return m_requested; }
     std::optional<int> shownFrame() const { return m_shown ? std::optional(m_shown->index) : std::nullopt; }
     std::optional<core::DocumentTime> frameStart(int index) const;
+    // The first frame starting at or after `time` (a binary search); nullopt
+    // past the last frame's start.
+    std::optional<int> frameAtOrAfter(core::DocumentTime time) const;
     // What was last submitted, and how the presenter answered.
     std::shared_ptr<const IndexedFrame> lastFrame() const { return m_shown; }
     std::shared_ptr<const OverlayFrame> lastOverlay() const { return m_overlay; }
@@ -196,8 +214,10 @@ public:
 
 private:
     void notify();
-    void present();
+    void present(std::optional<std::optional<PixelRect>> overlayBounds = std::nullopt);
     void render();
+    void subtitlesChanged();
+    void showGeneral(PlaybackPipeline::Output out);
 
     IndexedSourcePort &m_source;
     SubtitleRendererPort &m_renderer;
@@ -227,6 +247,8 @@ private:
     bool m_stopped = false;
     std::uint64_t m_playEpoch = 0;
     std::optional<std::int64_t> m_lastGeneralUs;
+    std::uint64_t m_lastGeneralEpoch = 0; // the play epoch m_lastGeneralUs belongs to
+    std::uint64_t m_subtitleSerial = 0;   // each prepare and close of the subtitles
     int m_playEndMs = 0; // A4: legacy m_PlayEndTime (0: none)
     bool startPlayback(std::int64_t fromUs);
     std::optional<core::DocumentTime> m_overlayTime; // a general frame's time
@@ -244,8 +266,11 @@ private:
     // V4
     std::string m_docMatrix;
     LegacyColourMatrix m_colour;
+    std::optional<LegacyColourMatrix::Input> m_inputMatrix; // the last one set and not refused
     std::function<void(const std::string &)> m_log;
     void applyInputMatrix(LegacyColourMatrix::Input input, std::optional<LegacyColourMatrix::Change> change);
+    // V1: last, so its worker stops before anything it reads goes.
+    std::unique_ptr<PlaybackPipeline> m_pipeline;
 };
 
 } // namespace hikari::application

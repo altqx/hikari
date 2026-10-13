@@ -142,9 +142,9 @@ class DirectShowPlayerTests : public QObject {
 
     void watch(DirectShowPlayer &player, Delivered &delivered)
     {
-        player.setFrameSink([&delivered](IndexedFrame frame, std::int64_t start) {
+        player.setFrameSink([&delivered](std::shared_ptr<IndexedFrame> frame, std::int64_t start) {
             ++delivered.frames;
-            delivered.lastBarcode = barcode(frame);
+            delivered.lastBarcode = barcode(*frame);
             delivered.lastStartUs = start;
             delivered.all.emplace_back(delivered.lastBarcode, start);
         });

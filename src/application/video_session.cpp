@@ -10,6 +10,36 @@ namespace hikari::application {
 VideoSession::VideoSession(IndexedSourcePort &source, SubtitleRendererPort &renderer)
     : m_source(source), m_renderer(renderer)
 {
+    setFrameWorker(nullptr);
+}
+
+void VideoSession::setFrameWorker(PlaybackPipeline::Post post)
+{
+    m_pipeline.reset(); // its worker stops first
+    m_pipeline = std::make_unique<PlaybackPipeline>(m_renderer, std::move(post),
+                                                    [this](PlaybackPipeline::Output out) { showGeneral(std::move(out)); });
+    m_pipeline->setSubtitles(m_subtitleSerial, m_hasSubtitles);
+}
+
+std::optional<LegacyColourMatrix::Input> VideoSession::playerColour() const
+{
+    if (m_state != State::Ready)
+        return std::nullopt;
+    if (m_inputMatrix)
+        return m_inputMatrix;
+    return LegacyColourMatrix::Input{m_colour.sourceColorSpace(), m_colour.sourceColorRange()};
+}
+
+std::optional<PlaybackPipeline::Counters> VideoSession::pipelineCounters() const
+{
+    return m_pipeline ? std::optional(m_pipeline->counters()) : std::nullopt;
+}
+
+void VideoSession::subtitlesChanged()
+{
+    ++m_subtitleSerial;
+    if (m_pipeline)
+        m_pipeline->setSubtitles(m_subtitleSerial, m_hasSubtitles);
 }
 
 void VideoSession::notify()
@@ -92,6 +122,7 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         m_geometry = {opened->width, opened->height, opened->sarNum, opened->sarDen};
         m_state = State::Ready;
         // V4: legacy ProviderFFMS2::Init's matrix, before the first frame.
+        m_inputMatrix.reset();
         if (const auto input = m_colour.open(opened->colorSpace, opened->colorRange, opened->width, opened->height,
                                              m_docMatrix))
             applyInputMatrix(*input, std::nullopt);
@@ -147,6 +178,7 @@ void VideoSession::setSubtitles(std::vector<std::byte> script)
     snapshot.script = std::move(script);
     snapshot.fonts = m_fonts;
     m_hasSubtitles = m_renderer.prepare(std::move(snapshot)).has_value();
+    subtitlesChanged(); // after the prepare: the worker's renders from now on use it
     if (m_shown) {
         render();
         present();
@@ -173,10 +205,12 @@ void VideoSession::applyInputMatrix(LegacyColourMatrix::Input input, std::option
 {
     const std::weak_ptr<bool> alive = m_alive;
     const std::uint64_t generation = m_source.generation();
+    const auto previous = std::exchange(m_inputMatrix, input);
     m_source.setInputMatrix(input.colorSpace, input.colorRange,
-                            [this, alive, generation, change](std::expected<void, SourceError> done) {
+                            [this, alive, generation, change, previous](std::expected<void, SourceError> done) {
                                 if (alive.expired() || done || generation != m_source.generation())
                                     return;
+                                m_inputMatrix = previous; // the converter keeps the one before
                                 if (change)
                                     m_colour.revert(*change);
                                 if (m_log)
@@ -188,6 +222,7 @@ void VideoSession::applyInputMatrix(LegacyColourMatrix::Input input, std::option
 void VideoSession::closeSubtitles()
 {
     m_hasSubtitles = false;
+    subtitlesChanged();
     if (m_shown) {
         render();
         present();
@@ -199,6 +234,14 @@ std::optional<core::DocumentTime> VideoSession::frameStart(int index) const
     if (index < 0 || index >= frameCount())
         return std::nullopt;
     return m_starts[static_cast<std::size_t>(index)];
+}
+
+std::optional<int> VideoSession::frameAtOrAfter(core::DocumentTime time) const
+{
+    const auto at = std::lower_bound(m_starts.begin(), m_starts.end(), time);
+    if (at == m_starts.end())
+        return std::nullopt;
+    return static_cast<int>(at - m_starts.begin());
 }
 
 void VideoSession::seekTo(core::DocumentTime start)
@@ -294,7 +337,7 @@ visual::SourceGeometry VideoSession::sourceGeometry() const
     return {};
 }
 
-void VideoSession::present()
+void VideoSession::present(std::optional<std::optional<PixelRect>> overlayBounds)
 {
     if (!m_presenter || !m_shown)
         return;
@@ -302,6 +345,10 @@ void VideoSession::present()
     p.generation = m_shown->generation;
     p.frame = m_shown;
     p.overlay = m_overlay;
+    if (overlayBounds) {
+        p.overlayBoundsKnown = true;
+        p.overlayBounds = *overlayBounds;
+    }
     // T1: the source's SAR widens the frame as legacy's aspect did
     // (ProviderFFMS2.cpp:366; no SAR is square).
     const auto geometry = sourceGeometry();
@@ -313,6 +360,10 @@ void VideoSession::present()
         if (alive.expired() || shown != m_shown)
             return;
         m_lastPresent = result;
+        // V1: while playing, the next player frame's notification carries it
+        // (one notification per frame).
+        if (m_playing && shown->index < 0)
+            return;
         notify();
     });
 }
@@ -449,13 +500,60 @@ void VideoSession::generalFrame(IndexedFrame frame, std::int64_t startUs)
 {
     if (!m_playing)
         return; // a late frame after a pause or stop
-    m_lastGeneralUs = startUs;
     frame.generation = m_source.generation();
-    m_shown = std::make_shared<const IndexedFrame>(std::move(frame));
+    PlaybackPipeline::Output out;
+    out.epoch = m_playEpoch;
+    out.startUs = startUs;
+    out.frame = std::make_shared<const IndexedFrame>(std::move(frame));
+    showGeneral(std::move(out)); // no overlay yet: rendered here
+}
+
+void VideoSession::submitGeneralFrame(std::int64_t startUs, std::optional<std::int64_t> endUs,
+                                      PlaybackPipeline::Make make)
+{
+    if (!m_playing || !make)
+        return; // a late frame after a pause or stop
+    const std::uint64_t generation = m_source.generation();
+    PlaybackPipeline::Input input;
+    input.epoch = m_playEpoch;
+    input.startUs = startUs;
+    input.endUs = endUs;
+    input.make = [make = std::move(make), generation](FramePool &pool) {
+        auto frame = make(pool);
+        if (frame) {
+            frame->generation = generation;
+            frame->index = -1; // a player frame, not an indexed one
+        }
+        return frame;
+    };
+    m_pipeline->submit(std::move(input));
+}
+
+void VideoSession::showGeneral(PlaybackPipeline::Output out)
+{
+    // Late: after a pause or stop, from before a seek, or older than the
+    // frame already shown.
+    if (!m_playing || out.epoch != m_playEpoch || !out.frame)
+        return;
+    if (m_lastGeneralUs && m_lastGeneralEpoch == out.epoch && out.startUs < *m_lastGeneralUs)
+        return;
+    const std::int64_t startUs = out.startUs;
+    m_lastGeneralUs = startUs;
+    m_lastGeneralEpoch = out.epoch;
+    m_shown = std::move(out.frame);
     m_overlayTime = core::DocumentTime(startUs);
     m_lastPresent.reset();
-    render();
-    present();
+    if (out.subtitles != 0 && out.subtitles == m_subtitleSerial) {
+        // Rendered on the worker for the subtitles shown now.
+        m_overlay = m_hasSubtitles ? std::move(out.overlay) : nullptr;
+        if (m_overlay)
+            present(std::optional(out.overlayBounds));
+        else
+            present();
+    } else {
+        render();
+        present();
+    }
     notify();
     // A4: a Line's playback pauses once its end frame is shown
     if (m_playEndMs > 0 && m_timeline)

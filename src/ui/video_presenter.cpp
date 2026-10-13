@@ -7,6 +7,10 @@
 #include <QSGSimpleTextureNode>
 #include <QSGTexture>
 
+#include <rhi/qrhi.h>
+
+#include "hikari/application/playback_pipeline.h"
+
 namespace hikari::ui {
 
 using application::PresentOutcome;
@@ -15,15 +19,151 @@ using application::PresentStage;
 
 namespace {
 
+QRect rectOf(const std::optional<application::PixelRect> &r)
+{
+    return r ? QRect(r->x, r->y, r->width, r->height) : QRect();
+}
+
+// A texture kept across frames and updated in place on the render thread
+// (RHI backends): the frame's image whole, the overlay's only where it or
+// the overlay before it has visible pixels. The image given stays valid
+// until the next commit (the node keeps the lease it points into). A
+// texture that cannot be made (larger than the backend allows, or refused)
+// is reported through `failed`; the image stays pending and the next sync
+// gives it again.
+class UpdatableTexture : public QSGTexture {
+public:
+    using Uploaded = std::function<void(const QRect &)>;
+    using Failed = std::function<void()>;
+    UpdatableTexture(bool alpha, Uploaded uploaded, Failed failed)
+        : m_alpha(alpha), m_uploaded(std::move(uploaded)), m_failed(std::move(failed))
+    {
+    }
+    ~UpdatableTexture() override
+    {
+        if (m_texture)
+            m_texture->deleteLater();
+    }
+    qint64 comparisonKey() const override { return static_cast<qint64>(reinterpret_cast<quintptr>(this)); }
+    QRhiTexture *rhiTexture() const override { return m_texture; }
+    QSize textureSize() const override { return m_size; }
+    bool hasAlphaChannel() const override { return m_alpha; }
+    bool hasMipmaps() const override { return false; }
+    // The last commit could not make the texture (render thread, also
+    // where the node syncs).
+    bool failed() const { return m_failure; }
+
+    // The whole image next commit; `lease` keeps its pixels.
+    void setFrame(const QImage &image, std::shared_ptr<const void> lease)
+    {
+        m_image = image;
+        m_frame = std::move(lease);
+        m_size = image.size();
+        m_overlay.reset();
+        m_bounds.reset();
+        m_pending = true;
+    }
+    // An overlay: what changes is where it or the previous one has visible
+    // pixels (`bounds` when known; else found at commit, off the GUI thread).
+    void setOverlay(const QImage &image, std::shared_ptr<const application::OverlayFrame> lease,
+                    std::optional<QRect> bounds)
+    {
+        m_image = image;
+        m_size = image.size();
+        m_overlay = std::move(lease);
+        m_bounds = bounds;
+        m_pending = true;
+    }
+
+    void commitTextureOperations(QRhi *rhi, QRhiResourceUpdateBatch *updates) override
+    {
+        if (!m_pending)
+            return;
+        bool whole = false;
+        if (!m_texture || m_texture->pixelSize() != m_size) {
+            if (m_texture)
+                m_texture->deleteLater();
+            m_texture = nullptr;
+            const int largest = rhi->resourceLimit(QRhi::TextureSizeMax);
+            QRhiTexture *texture = nullptr;
+            if (m_size.width() <= largest && m_size.height() <= largest) {
+                texture = rhi->newTexture(QRhiTexture::BGRA8, m_size);
+                if (!texture->create()) {
+                    delete texture;
+                    texture = nullptr;
+                }
+            }
+            if (!texture) {
+                m_failure = true;
+                if (m_failed)
+                    m_failed();
+                return;
+            }
+            m_texture = texture;
+            whole = true;
+            m_content = QRect();
+        }
+        m_pending = false;
+        m_failure = false;
+        QRect region(QPoint(0, 0), m_size);
+        if (m_overlay) {
+            const QRect visible = m_bounds ? *m_bounds : rectOf(application::overlayBounds(*m_overlay));
+            if (!whole)
+                region = visible.united(m_content); // clears what the last one drew
+            m_content = visible;
+        }
+        if (m_uploaded)
+            m_uploaded(region);
+        if (!region.isEmpty()) {
+            QRhiTextureSubresourceUploadDescription part(m_image);
+            part.setSourceTopLeft(region.topLeft());
+            part.setSourceSize(region.size());
+            part.setDestinationTopLeft(region.topLeft());
+            updates->uploadTexture(m_texture, QRhiTextureUploadDescription({QRhiTextureUploadEntry(0, 0, part)}));
+        }
+        m_image = QImage();
+        m_overlay.reset();
+        m_frame.reset();
+    }
+
+private:
+    bool m_alpha;
+    Uploaded m_uploaded;
+    Failed m_failed;
+    bool m_failure = false;
+    std::shared_ptr<const void> m_frame;
+    QRhiTexture *m_texture = nullptr;
+    QSize m_size;
+    QImage m_image;
+    std::shared_ptr<const application::OverlayFrame> m_overlay;
+    std::optional<QRect> m_bounds;
+    QRect m_content; // the overlay texels that may be visible
+    bool m_pending = false;
+};
+
 // Holds the leases its textures were made from.
 class PresentNode : public QSGNode {
 public:
     QSGRectangleNode *background = nullptr;
     QSGSimpleTextureNode *frame = nullptr;
-    QSGSimpleTextureNode *overlay = nullptr;
+    QSGSimpleTextureNode *overlay = nullptr; // in the tree only while it draws something
     std::shared_ptr<const application::IndexedFrame> frameLease;
-    std::shared_ptr<const application::OverlayFrame> overlayLease;
+    std::shared_ptr<const application::OverlayFrame> overlayLease; // null: no overlay drawn
+    QRect overlayRegion; // the frame pixels the overlay texture holds
+    bool overlayAttached = false;
+    ~PresentNode() override
+    {
+        if (!overlayAttached)
+            delete overlay;
+    }
 };
+
+// Visible pixels plus a margin of transparent ones, so a filtered edge
+// samples as it would in the whole overlay.
+QRect padded(const QRect &bounds, const QSize &size)
+{
+    return bounds.adjusted(-2, -2, 2, 2).intersected(QRect(QPoint(0, 0), size));
+}
 
 QString layoutError(const application::Presentation &p)
 {
@@ -171,6 +311,10 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
         delete node;
         return nullptr;
     }
+    // V1: the RHI backends keep their textures and update them in place; the
+    // software renderer makes images.
+    QRhi *rhi = win->rhi();
+    const bool inPlace = rhi && rhi->isTextureFormatSupported(QRhiTexture::BGRA8);
     if (!node) {
         node = new PresentNode;
         node->background = win->createRectangleNode();
@@ -181,46 +325,129 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
         node->appendChildNode(node->frame);
         node->overlay = new QSGSimpleTextureNode;
         node->overlay->setOwnsTexture(true);
-        node->appendChildNode(node->overlay);
+        upload = true;
     }
     if (upload) {
         const auto &f = *m_shown.frame;
-        const QImage frameImage(reinterpret_cast<const uchar *>(f.bgra.data()), f.width, f.height, f.stride,
-                                QImage::Format_RGB32);
-        QSGTexture *frameTexture = win->createTextureFromImage(frameImage);
-        QSGTexture *overlayTexture = nullptr;
-        if (m_shown.overlay && !m_shown.overlay->empty) {
-            const auto &o = *m_shown.overlay;
-            const QImage overlayImage(o.pixels.data(), o.width, o.height, o.stride,
-                                      QImage::Format_ARGB32_Premultiplied);
-            overlayTexture = win->createTextureFromImage(overlayImage, QQuickWindow::TextureHasAlphaChannel);
+        // The same frame again (new subtitles over it): its texture stays.
+        auto *kept = dynamic_cast<UpdatableTexture *>(node->frame->texture());
+        if (node->frameLease != m_shown.frame || !node->frame->texture() || (kept && kept->failed())) {
+            const QImage frameImage(reinterpret_cast<const uchar *>(f.bgra.data()), f.width, f.height, f.stride,
+                                    QImage::Format_RGB32);
+            if (inPlace) {
+                auto *texture = dynamic_cast<UpdatableTexture *>(node->frame->texture());
+                if (!texture) {
+                    texture = new UpdatableTexture(
+                        false,
+                        [stats = m_stats](const QRect &) {
+                            std::lock_guard lock(stats->mutex);
+                            ++stats->frameUploads;
+                        },
+                        [stats = m_stats] {
+                            std::lock_guard lock(stats->mutex);
+                            stats->failed = true;
+                        });
+                    texture->setFiltering(QSGTexture::Linear);
+                    node->frame->setTexture(texture);
+                }
+                texture->setFrame(frameImage, m_shown.frame);
+                node->frame->markDirty(QSGNode::DirtyMaterial);
+            } else {
+                QSGTexture *frameTexture = win->createTextureFromImage(frameImage);
+                if (!frameTexture) {
+                    if (uploaded)
+                        resolveLater(std::move(uploaded->done), {m_shown.generation, PresentOutcome::Error,
+                                                                 PresentStage::Submitted, "texture upload failed"});
+                    return node;
+                }
+                frameTexture->setFiltering(QSGTexture::Linear);
+                node->frame->setTexture(frameTexture);
+                std::lock_guard lock(m_stats->mutex);
+                ++m_stats->frameUploads;
+            }
+            node->frameLease = m_shown.frame;
         }
-        if (!frameTexture || (m_shown.overlay && !m_shown.overlay->empty && !overlayTexture)) {
-            delete frameTexture;
-            delete overlayTexture;
-            if (uploaded)
-                resolveLater(std::move(uploaded->done), {m_shown.generation, PresentOutcome::Error,
-                                                         PresentStage::Submitted, "texture upload failed"});
-            return node;
+        // The overlay: none, or nothing visible, draws nothing.
+        const auto overlay = m_shown.overlay && !m_shown.overlay->empty ? m_shown.overlay : nullptr;
+        std::optional<QRect> bounds;
+        if (overlay && m_shown.overlayBoundsKnown)
+            bounds = rectOf(m_shown.overlayBounds);
+        else if (overlay && !inPlace)
+            bounds = rectOf(application::overlayBounds(*overlay));
+        node->overlayLease = nullptr;
+        if (overlay && !(bounds && bounds->isEmpty())) {
+            const auto &o = *overlay;
+            const QSize size(o.width, o.height);
+            if (inPlace) {
+                auto *texture = dynamic_cast<UpdatableTexture *>(node->overlay->texture());
+                if (!texture) {
+                    texture = new UpdatableTexture(
+                        true,
+                        [stats = m_stats](const QRect &region) {
+                            std::lock_guard lock(stats->mutex);
+                            ++stats->overlayUploads;
+                            stats->lastOverlayUpload = region;
+                        },
+                        [stats = m_stats] {
+                            std::lock_guard lock(stats->mutex);
+                            stats->failed = true;
+                        });
+                    texture->setFiltering(QSGTexture::Linear);
+                    node->overlay->setTexture(texture);
+                }
+                texture->setOverlay(QImage(o.pixels.data(), o.width, o.height, o.stride,
+                                           QImage::Format_ARGB32_Premultiplied),
+                                    overlay, bounds);
+                node->overlay->markDirty(QSGNode::DirtyMaterial);
+                node->overlayRegion = QRect(QPoint(0, 0), size);
+                node->overlayLease = overlay;
+            } else {
+                // Only the part with visible pixels becomes an image.
+                const QRect region = padded(*bounds, size);
+                const QImage part(o.pixels.data() + static_cast<std::size_t>(region.y()) * o.stride + region.x() * 4,
+                                  region.width(), region.height(), o.stride, QImage::Format_ARGB32_Premultiplied);
+                QSGTexture *texture = win->createTextureFromImage(part, QQuickWindow::TextureHasAlphaChannel);
+                if (!texture) {
+                    if (uploaded)
+                        resolveLater(std::move(uploaded->done), {m_shown.generation, PresentOutcome::Error,
+                                                                 PresentStage::Submitted, "texture upload failed"});
+                    return node;
+                }
+                texture->setFiltering(QSGTexture::Linear);
+                node->overlay->setTexture(texture);
+                node->overlayRegion = region;
+                node->overlayLease = overlay;
+                std::lock_guard lock(m_stats->mutex);
+                ++m_stats->overlayUploads;
+                m_stats->lastOverlayUpload = region;
+            }
         }
-        frameTexture->setFiltering(QSGTexture::Linear);
-        node->frame->setTexture(frameTexture);
-        node->frameLease = m_shown.frame;
-        node->overlay->setTexture(overlayTexture ? overlayTexture : win->createTextureFromImage(QImage(1, 1, QImage::Format_ARGB32_Premultiplied)));
-        if (overlayTexture)
-            overlayTexture->setFiltering(QSGTexture::Linear);
-        node->overlayLease = overlayTexture ? m_shown.overlay : nullptr;
     }
     const QRectF target = frameRect();
     node->background->setRect(boundingRect());
     node->frame->setRect(target);
-    node->overlay->setRect(node->overlayLease ? target : QRectF());
     // T1: the zoomed part of the frame (and of its overlay, made at its size).
     const QRectF whole(0, 0, m_shown.frame->width, m_shown.frame->height);
     const QRectF source = m_sourceRect.isEmpty() ? whole : m_sourceRect;
     node->frame->setSourceRect(source);
-    if (node->overlayLease)
-        node->overlay->setSourceRect(source);
+    // The overlay's region of the frame, where the shown part of the frame covers it.
+    QRectF visible;
+    if (node->overlayLease && source.width() > 0 && source.height() > 0)
+        visible = QRectF(node->overlayRegion).intersected(source);
+    if (!visible.isEmpty()) {
+        const double sx = target.width() / source.width(), sy = target.height() / source.height();
+        node->overlay->setRect(QRectF(target.x() + (visible.x() - source.x()) * sx,
+                                      target.y() + (visible.y() - source.y()) * sy, visible.width() * sx,
+                                      visible.height() * sy));
+        node->overlay->setSourceRect(visible.translated(-QPointF(node->overlayRegion.topLeft())));
+        if (!node->overlayAttached) {
+            node->appendChildNode(node->overlay);
+            node->overlayAttached = true;
+        }
+    } else if (node->overlayAttached) {
+        node->removeChildNode(node->overlay);
+        node->overlayAttached = false;
+    }
     node->markDirty(QSGNode::DirtyGeometry);
 
     if (uploaded) {
@@ -233,6 +460,12 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
     return node;
 }
 
+VideoPresenter::UploadStats VideoPresenter::uploadStats() const
+{
+    std::lock_guard lock(m_stats->mutex);
+    return {m_stats->frameUploads, m_stats->overlayUploads, m_stats->lastOverlayUpload};
+}
+
 void VideoPresenter::onFrameSwapped()
 {
     std::optional<Resolved> done;
@@ -240,8 +473,22 @@ void VideoPresenter::onFrameSwapped()
         std::lock_guard lock(m_renderMutex);
         done = std::exchange(m_awaitingRender, std::nullopt);
     }
+    // A texture the frame just rendered could not be made (V1: textures
+    // are made while rendering, after the sync that accepted the frame).
+    bool failed = false;
+    {
+        std::lock_guard lock(m_stats->mutex);
+        failed = std::exchange(m_stats->failed, false);
+    }
     if (!done)
         return;
+    if (failed) {
+        done->result.outcome = PresentOutcome::Error;
+        done->result.stage = PresentStage::Submitted;
+        done->result.message = "texture upload failed";
+        resolveLater(std::move(done->done), std::move(done->result));
+        return;
+    }
     const std::uint64_t generation = done->result.generation;
     QPointer<VideoPresenter> self(this);
     QMetaObject::invokeMethod(

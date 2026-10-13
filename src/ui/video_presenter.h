@@ -8,13 +8,22 @@
 // scene graph starts a new surface epoch: submissions made for the old
 // surface are rejected instead of uploaded, while the content already shown
 // is uploaded again for the new surface.
+//
+// V1: with an RHI backend the two textures are kept and updated in place:
+// a new frame is uploaded whole, the same frame again (new subtitles over
+// it) not at all, and an overlay only where it or the one before it has
+// visible pixels. An overlay with nothing visible is not drawn. The software
+// renderer makes an image of the frame and of the overlay's visible part.
 
 #include "hikari/application/presenter.h"
 
 #include <QQuickItem>
 #include <QtQml/qqmlregistration.h>
 
+#include <QRect>
+
 #include <atomic>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <vector>
@@ -45,6 +54,14 @@ public:
     QRectF sourceRect() const { return m_sourceRect; }
     void setSourceRect(const QRectF &rect);
     std::uint64_t rejectedSubmissions() const { return m_rejected; }
+    // Uploads so far (tests): whole frames, overlays, and the frame pixels
+    // the last overlay upload covered.
+    struct UploadStats {
+        int frameUploads = 0;
+        int overlayUploads = 0;
+        QRect lastOverlayUpload;
+    };
+    UploadStats uploadStats() const;
 
 signals:
     void presented();
@@ -80,6 +97,11 @@ private:
     quint64 m_presentedGeneration = 0;
     std::uint64_t m_rejected = 0;
     QRectF m_videoRect, m_sourceRect;
+    struct Stats : UploadStats {
+        std::mutex mutex;
+        bool failed = false; // a texture could not be made since the last swap
+    };
+    std::shared_ptr<Stats> m_stats = std::make_shared<Stats>(); // written on the render thread
 };
 
 } // namespace hikari::ui

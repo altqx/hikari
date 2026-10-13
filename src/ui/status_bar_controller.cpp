@@ -59,7 +59,9 @@ StatusBarController::StatusBarController(VideoController &video, VisualToolsCont
                                          QObject *parent)
     : QObject(parent), m_video(video), m_tools(tools), m_document(std::move(document))
 {
-    connect(&m_video, &VideoController::changed, this, &StatusBarController::refresh);
+    // None of its fields moves with each player frame: the video's texts'
+    // pace (at most every 100 ms while playing) is enough.
+    connect(&m_video, &VideoController::textsChanged, this, &StatusBarController::refresh);
     connect(&m_tools, &VisualToolsController::geometryChanged, this, &StatusBarController::refresh);
     connect(&m_tools, &VisualToolsController::changed, this, &StatusBarController::refresh);
     refresh();

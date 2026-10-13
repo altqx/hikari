@@ -97,6 +97,11 @@ public:
     virtual ~SubtitleRendererPort() = default;
     // Replaces the render context. Returns its generation.
     virtual std::expected<std::uint64_t, RenderError> prepare(RenderSnapshot snapshot) = 0;
+    // The overlay at `time`, which counts to the millisecond only
+    // (time.microseconds() / 1000, as libass's and CSRI's draw calls take
+    // it): two times in the same millisecond give the same pixels, so the
+    // V1 playback pipeline may use an overlay rendered ahead for any frame
+    // starting in that millisecond.
     virtual std::expected<OverlayFrame, RenderError> render(core::DocumentTime time, int width, int height) = 0;
 };
 

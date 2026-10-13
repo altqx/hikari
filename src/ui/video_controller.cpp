@@ -45,7 +45,11 @@ VideoController::VideoController(application::IndexedSourcePort &source, applica
     : QObject(parent), m_session(source, renderer)
 {
     m_session.setObserver([this] { sessionChanged(); });
-    connect(this, &VideoController::changed, this, &VideoController::textsChanged); // O5
+    m_textsTimer = new QTimer(this);
+    m_textsTimer->setSingleShot(true);
+    m_textsTimer->setInterval(100);
+    connect(m_textsTimer, &QTimer::timeout, this, &VideoController::textsChanged);
+    connect(this, &VideoController::changed, this, &VideoController::textsMayChange); // O5
 }
 
 void VideoController::setMediaInfo(application::DisplayAudioPort *tracks, application::ChapterPort *chapters)
@@ -85,6 +89,21 @@ void VideoController::sessionChanged()
         }
     }
     emit changed();
+}
+
+// V1: every player frame changes the session; the texts follow at most
+// every 100 ms while playing, at once otherwise. Legacy refreshed the time
+// while playing on a 100 ms timer too (VideoBox::Play's m_VideoTimeTimer,
+// HikariSub/VideoBox.cpp:220-222).
+void VideoController::textsMayChange()
+{
+    if (m_session.playing()) {
+        if (!m_textsTimer->isActive())
+            m_textsTimer->start();
+        return;
+    }
+    m_textsTimer->stop();
+    emit textsChanged();
 }
 
 double VideoController::indexingProgress() const
@@ -349,13 +368,9 @@ QString VideoController::times() const
                       .arg(ms % 1000, 3, 10, QLatin1Char('0'))
                       .arg(*shown);
     if (m_lineTimes) {
-        // The Line's start frame is the one at or after its start (Timebase::FrameAt).
-        int lineFrame = 0;
-        for (int i = 0; i < m_session.frameCount(); ++i)
-            if (*m_session.frameStart(i) >= m_lineTimes->first) {
-                lineFrame = i;
-                break;
-            }
+        // The Line's start frame is the one at or after its start
+        // (Timebase::FrameAt); 0 past the last frame.
+        const int lineFrame = m_session.frameAtOrAfter(m_lineTimes->first).value_or(0);
         out += QStringLiteral("%1;  ").arg(*shown - lineFrame);
     }
     if (m_lineTimes && m_editorOn) {

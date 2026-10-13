@@ -279,6 +279,7 @@ private:
     std::optional<core::LineId> m_seenActive;
     std::optional<std::pair<std::u8string, std::u8string>> m_seenDraft; // the active Line's draft text, translation
     std::int64_t m_seenTime = -1;
+    QString m_frameWarning; // the warning the last video change notified
     QString m_notice;
     QVariantList m_options; // the tool's buttons as last shown
     int m_bells = 0;

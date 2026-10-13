@@ -36,6 +36,8 @@
 //          probe-<container>-<codec>  W1 experiments (not built by default)
 //          colorhd   the same patches at 1280x720 with no matrix or range
 //                    tags (V4: legacy's guess for an untagged frame)
+//          yuv10     the cfr video as lossless FFV1 in 10-bit 4:2:0
+//                    (yuv420p10le; V1: a high bit depth player frame)
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -62,6 +64,19 @@ constexpr int kBlocks = 4;
 
 void drawIndex(AVFrame *f, int index)
 {
+    if (f->format == AV_PIX_FMT_YUV420P10LE) { // the same levels in 10 bits
+        for (int y = 0; y < kHeight; ++y)
+            for (int x = 0; x < kWidth; ++x) {
+                const int bit = (y * kBlocks / kHeight) * kBlocks + (x * kBlocks / kWidth);
+                reinterpret_cast<std::uint16_t *>(f->data[0] + y * f->linesize[0])[x] =
+                    static_cast<std::uint16_t>((index >> bit) & 1 ? 940 : 64);
+            }
+        for (int p = 1; p < 3; ++p)
+            for (int y = 0; y < kHeight / 2; ++y)
+                for (int x = 0; x < kWidth / 2; ++x)
+                    reinterpret_cast<std::uint16_t *>(f->data[p] + y * f->linesize[p])[x] = 512;
+        return;
+    }
     for (int y = 0; y < kHeight; ++y)
         for (int x = 0; x < kWidth; ++x) {
             const int bit = (y * kBlocks / kHeight) * kBlocks + (x * kBlocks / kWidth);
@@ -163,7 +178,7 @@ int writeAudioOnly(const std::string &out)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd>");
+        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd|yuv10>");
     const std::string out = argv[1], kind = argv[2];
     av_log_set_level(AV_LOG_ERROR); // the encoders' clipping notes are noise in the build log
     if (kind == "audioonly")
@@ -175,7 +190,10 @@ int main(int argc, char **argv)
     AVCodecID codecId = AV_CODEC_ID_MPEG4;
     const char *codecTag = nullptr;
     AVPixelFormat pixelFormat = AV_PIX_FMT_YUV420P;
-    if (kind == "dshow-cfr") {
+    if (kind == "yuv10") {
+        codecId = AV_CODEC_ID_FFV1;
+        pixelFormat = AV_PIX_FMT_YUV420P10LE;
+    } else if (kind == "dshow-cfr") {
         container = "avi";
         codecTag = "XVID";
     } else if (kind == "dshow-vfr") {

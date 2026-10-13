@@ -4,6 +4,7 @@
 #include "hikari/backends/legacy_text_file.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/simulated_output.h"
+#include "hikari/backends/video_frame_bgra.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/application/grid_commands.h"
@@ -489,20 +490,22 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // overlay, and a pause hands back to the exact indexed frame.
     m_generalPlayer = std::make_unique<backends::QtGeneralPlayer>(options.playbackAudio);
     m_video->session().setGeneralPlayer(m_generalPlayer.get());
+    // Its frames are made BGRA and their overlay rendered on the session's
+    // worker; the results come back to this thread, the newest only.
+    m_video->session().setFrameWorker([this](std::function<void()> task) {
+        QMetaObject::invokeMethod(this, std::move(task), Qt::QueuedConnection);
+    });
     connect(m_generalPlayer.get(), &backends::QtGeneralPlayer::frameDelivered, this, [this](const QVideoFrame &frame) {
-        const QImage image = frame.toImage().convertToFormat(QImage::Format_RGB32); // BGRA in memory
-        if (image.isNull())
-            return;
-        application::IndexedFrame out;
-        out.index = -1; // a player frame, not an indexed one
-        out.width = image.width();
-        out.height = image.height();
-        out.stride = static_cast<int>(image.bytesPerLine());
-        out.bgra.resize(static_cast<std::size_t>(image.sizeInBytes()));
-        std::memcpy(out.bgra.data(), image.constBits(), out.bgra.size());
-        m_video->session().generalFrame(std::move(out), frame.startTime());
-        emit m_video->changed();
-    }, Qt::QueuedConnection);
+        const qint64 end = frame.endTime();
+        // The paused frame's matrix and range (V4's), so playing does not change the colours.
+        const auto colour = m_video->session().playerColour();
+        m_video->session().submitGeneralFrame(
+            frame.startTime(), end > frame.startTime() ? std::optional<std::int64_t>(end) : std::nullopt,
+            [frame, colour](application::FramePool &pool) -> std::shared_ptr<application::IndexedFrame> {
+                auto out = pool.acquire();
+                return backends::videoFrameToBgra(frame, *out, colour) ? out : nullptr;
+            });
+    });
     m_automation = std::make_unique<AutomationShell>(
         AutomationShell::Paths{luaHelperPath(options.luaHelper), automationPath(options.automationDir),
                                options.userAutomationDir},

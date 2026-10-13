@@ -8,6 +8,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <mutex>
 #include <optional>
 #include <utility>
 
@@ -406,12 +407,31 @@ DirectShowPlayer::DirectShowPlayer(Post post) : d(std::make_unique<Impl>())
     d->comInitialized = SUCCEEDED(hr);
     const std::weak_ptr<bool> alive = d->alive;
     Impl *impl = d.get();
-    d->bridge->deliver = [post = d->post, alive, impl](dshow::Delivery delivery) {
-        auto shared = std::make_shared<dshow::Delivery>(std::move(delivery));
-        post([alive, impl, shared] {
-            if (alive.expired())
+    // Latest wins: a delivery still waiting for the owner's thread is
+    // replaced by a newer one (and only one task is queued at a time).
+    struct Waiting {
+        std::mutex mutex;
+        std::optional<dshow::Delivery> delivery;
+        bool queued = false;
+    };
+    auto waiting = std::make_shared<Waiting>();
+    d->bridge->deliver = [post = d->post, alive, impl, waiting](dshow::Delivery delivery) {
+        {
+            std::lock_guard lock(waiting->mutex);
+            waiting->delivery = std::move(delivery);
+            if (std::exchange(waiting->queued, true))
                 return;
-            impl->onDelivery(std::move(*shared));
+        }
+        post([alive, impl, waiting] {
+            std::optional<dshow::Delivery> taken;
+            {
+                std::lock_guard lock(waiting->mutex);
+                waiting->queued = false;
+                taken = std::exchange(waiting->delivery, std::nullopt);
+            }
+            if (alive.expired() || !taken)
+                return;
+            impl->onDelivery(std::move(*taken));
         });
     };
     d->bridge->endOfStream = [post = d->post, alive, impl] {
