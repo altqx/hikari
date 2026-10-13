@@ -19,6 +19,7 @@
 
 using namespace hikari;
 using application::OverlayFrame;
+using application::OverlayPixels;
 using application::Presentation;
 using application::PresentOutcome;
 using application::PresentResult;
@@ -103,11 +104,12 @@ std::shared_ptr<const OverlayFrame> box(const QRect &rect)
     o->width = kW;
     o->height = kH;
     o->stride = kW * 4;
-    o->pixels.assign(static_cast<std::size_t>(o->stride) * kH, 0);
+    OverlayPixels::Bytes pixels(static_cast<std::size_t>(o->stride) * kH, 0);
     o->empty = false;
     for (int y = rect.top(); y <= rect.bottom(); ++y)
         for (int x = rect.left(); x <= rect.right(); ++x)
-            std::memset(&o->pixels[static_cast<std::size_t>(y) * o->stride + x * 4], 128, 4);
+            std::memset(&pixels[static_cast<std::size_t>(y) * o->stride + x * 4], 128, 4);
+    o->pixels = std::move(pixels);
     return o;
 }
 

@@ -48,8 +48,9 @@ struct Renderer : SubtitleRendererPort {
         o.width = w;
         o.height = h;
         o.stride = w * 4;
-        o.pixels.assign(static_cast<std::size_t>(o.stride) * static_cast<std::size_t>(h), 0);
-        o.pixels[4 + 3] = 255; // pixel (1, 0)
+        OverlayPixels::Bytes pixels(static_cast<std::size_t>(o.stride) * static_cast<std::size_t>(h), 0);
+        pixels[4 + 3] = 255; // pixel (1, 0)
+        o.pixels = std::move(pixels);
         o.empty = false;
         return o;
     }
@@ -384,16 +385,21 @@ TEST(OverlayBounds, CoverTheVisiblePixels)
     o.width = 9; // odd: the last pixel is checked on its own
     o.height = 4;
     o.stride = 40; // padded rows
-    o.pixels.assign(160, 0);
+    OverlayPixels::Bytes pixels(160, 0);
+    o.pixels = pixels;
     o.empty = false;
     EXPECT_FALSE(overlayBounds(o));
-    auto set = [&](int x, int y) { o.pixels[static_cast<std::size_t>(y * o.stride + x * 4 + 3)] = 1; };
+    auto set = [&](int x, int y) {
+        pixels[static_cast<std::size_t>(y * o.stride + x * 4 + 3)] = 1;
+        o.pixels = pixels;
+    };
     set(3, 1);
     EXPECT_EQ(overlayBounds(o), (PixelRect{3, 1, 1, 1}));
     set(8, 2);
     set(0, 3);
     EXPECT_EQ(overlayBounds(o), (PixelRect{0, 1, 9, 3}));
-    o.pixels[38] = 9; // row padding is not a pixel
+    pixels[38] = 9; // row padding is not a pixel
+    o.pixels = pixels;
     EXPECT_EQ(overlayBounds(o), (PixelRect{0, 1, 9, 3}));
     o.empty = true;
     EXPECT_FALSE(overlayBounds(o));
