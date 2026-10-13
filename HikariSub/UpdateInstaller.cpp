@@ -1084,6 +1084,10 @@ namespace
 				execAfterExit = withRelaunch;
 			}
 			else {
+				// Not the release's file, or not newer: it will not become
+				// right, so it is not offered or tried again.
+				if (code == update_manifest::kHelperMismatch || code == update_manifest::kHelperBadArguments)
+					DropPending(record);
 				WriteLastResult(record.version, false, code, HelperMessage(code, file));
 				execAfterExit = withRelaunch;
 			}
@@ -1365,7 +1369,7 @@ static update_installer::Quit Unstarted(wxWindow *frame, const Pending &pending,
 	return update_installer::Quit::Continue;
 }
 
-update_installer::Quit update_installer::OnQuit(wxWindow *frame)
+update_installer::Quit update_installer::OnQuit(wxWindow *frame, bool canWait)
 {
 	if (handedOff || waitingForInstaller)
 		return Quit::Continue;
@@ -1398,6 +1402,11 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 	}
 
 #ifdef _WIN32
+	// The installer's prompt and wait need the app to stay: not now.
+	if (!canWait) {
+		relaunch = false;
+		return Quit::Continue;
+	}
 	if (nsisAttempted && !relaunch)
 		return Quit::Continue;
 	nsisAttempted = true;
@@ -1451,6 +1460,11 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 			ShowManualInstall(frame, *pending);
 			return Quit::Veto;
 		}
+		return Quit::Continue;
+	}
+	// The password prompt and its wait need the app to stay: not now.
+	if (!canWait) {
+		relaunch = false;
 		return Quit::Continue;
 	}
 	handedOff = true;

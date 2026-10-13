@@ -106,7 +106,10 @@ namespace update_installer
 
 	// The frame is closing and every save prompt has passed: hands the
 	// pending update off, with relaunch when Restart now asked for it.
-	Quit OnQuit(wxWindow *frame);
+	// canWait is false for a close that cannot be vetoed, such as the end
+	// of the session: nothing that keeps the app alive is started then,
+	// and the update stays pending for the next quit.
+	Quit OnQuit(wxWindow *frame, bool canWait = true);
 
 	// "Restart now": the normal quit, then the new version.
 	void RestartNow(wxWindow *frame);

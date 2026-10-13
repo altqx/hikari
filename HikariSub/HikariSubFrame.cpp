@@ -2583,13 +2583,18 @@ void HikariSubFrame::OnClose1(wxCloseEvent& event)
 	// Every document has had its save prompt: a pending update is handed
 	// off now (installers spec, 4.1), and a deb or rpm one closes the
 	// frame itself once its installer ends.
-	switch (update_installer::OnQuit(this)){
+	// A close that cannot be vetoed (the session ends) starts nothing that
+	// would keep the app alive: the update stays for the next quit.
+	switch (update_installer::OnQuit(this, event.CanVeto())){
 	case update_installer::Quit::Continue:
 		break;
 	case update_installer::Quit::Veto:
-	case update_installer::Quit::Wait:
-		if (event.CanVeto())
+		if (event.CanVeto()) {
 			event.Veto();
+			return;
+		}
+		break;
+	case update_installer::Quit::Wait:
 		return;
 	}
 	event.Skip();
