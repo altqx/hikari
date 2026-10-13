@@ -49,6 +49,7 @@
 #include <shellapi.h>
 #else
 #include <gnu/libc-version.h>
+#include <cerrno>
 #include <signal.h>
 #include <spawn.h>
 #include <sys/stat.h>
@@ -662,6 +663,21 @@ namespace
 	}
 
 	// Deletes the pending record, and its file when it is still there.
+	// A pending AppImage update that another AppImage copy of the user's
+	// downloaded (IsStagedBeside): neither offered, removed nor installed
+	// here.
+	bool ForAnotherImage(const Pending &pending)
+	{
+#ifdef _WIN32
+		(void)pending;
+		return false;
+#else
+		return update_installer::Kind() == package_kind::Kind::AppImage &&
+			package_kind::ParseToken(pending.kind) == package_kind::Kind::AppImage &&
+			!update_manifest::IsStagedBeside(ToUtf8(AppImagePath()), pending.file, pending.version);
+#endif
+	}
+
 	void DropPending(const Pending &pending)
 	{
 		RemoveFile(FromUtf8(pending.file));
@@ -893,6 +909,32 @@ namespace
 		return arguments;
 	}
 
+	// Stops a started image that did not report its window: its whole
+	// process group (Spawn starts it in a session of its own, so the
+	// AppImage runtime and the app it runs go together), with SIGTERM, then
+	// SIGKILL after a grace, and waits for it, so that the image put back
+	// does not find it still holding the single-instance lock.
+	void StopImage(pid_t child, bool reaped)
+	{
+		if (child <= 0)
+			return;
+		auto gone = [&](int tenths) {
+			for (int i = 0; i < tenths; i++) {
+				if (!reaped && waitpid(child, nullptr, WNOHANG) == child)
+					reaped = true;
+				if (reaped && kill(-child, 0) != 0 && errno == ESRCH)
+					return true;
+				usleep(100 * 1000);
+			}
+			return false;
+		};
+		kill(-child, SIGTERM);
+		if (gone(50))
+			return;
+		kill(-child, SIGKILL);
+		gone(50);
+	}
+
 	// The AppImage watchdog (4.3, steps 3 and 4): start the new file, and
 	// restore the old one if it does not show its window within 60 s.
 	void AppImageWatchdog(const Pending &pending)
@@ -904,22 +946,24 @@ namespace
 		arguments.push_back(std::string(update_manifest::kHealthSwitch) + health);
 		pid_t child = Spawn(arguments);
 		bool healthy = false;
+		bool reaped = false;
 		for (int waited = 0; child > 0 && waited < 60 * 5; waited++) {
 			if (access(health.c_str(), F_OK) == 0) {
 				healthy = true;
 				break;
 			}
 			int status = 0;
-			if (waitpid(child, &status, WNOHANG) == child)
+			if (waitpid(child, &status, WNOHANG) == child) {
+				reaped = true;
 				break;
+			}
 			usleep(200 * 1000);
 		}
 		if (healthy) {
 			unlink(health.c_str());
 			return;
 		}
-		if (child > 0 && waitpid(child, nullptr, WNOHANG) == 0)
-			kill(child, SIGTERM);
+		StopImage(child, reaped);
 		std::string old = appImage + ".old";
 		bool restored = rename(old.c_str(), appImage.c_str()) == 0;
 		WriteLastResult(pending.version, false, 1, restored ?
@@ -1175,7 +1219,8 @@ bool update_installer::IsPending(const std::string &version)
 	if (current && current->Version() == version)
 		return true;
 	std::optional<Pending> pending = LoadPending();
-	return pending && pending->version == version && wxFileExists(FromUtf8(pending->file));
+	return pending && pending->version == version && !ForAnotherImage(*pending) &&
+		wxFileExists(FromUtf8(pending->file));
 }
 
 void update_installer::SetCommandLine(const wxString &health, const wxString &from)
@@ -1214,7 +1259,10 @@ void update_installer::OnStartup(wxWindow *frame)
 	}
 
 	std::optional<Pending> pending = LoadPending();
-	if (pending) {
+	if (pending && ForAnotherImage(*pending)) {
+		// Another AppImage copy's update: left to it.
+	}
+	else if (pending) {
 		std::optional<package_kind::Kind> kind = package_kind::ParseToken(pending->kind);
 		bool usable = kind && *kind == Kind() && update_manifest::IsNewer(pending->version, VersionHikariSub) &&
 			package_kind::FlowOf(Kind()) == package_kind::Flow::Install && wxFileExists(FromUtf8(pending->file));
@@ -1243,7 +1291,7 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 	if (handedOff || waitingForInstaller)
 		return Quit::Continue;
 	std::optional<Pending> pending = LoadPending();
-	if (!pending)
+	if (!pending || ForAnotherImage(*pending))
 		return Quit::Continue;
 	std::optional<package_kind::Kind> kind = package_kind::ParseToken(pending->kind);
 	if (!kind || *kind != Kind() || package_kind::FlowOf(*kind) != package_kind::Flow::Install ||
@@ -1338,9 +1386,16 @@ bool update_installer::InstallAppImageAtStart(bool isAppImage)
 	std::string named;
 	if (!ReadSmallFile(AppImageAtStartPath(), &named, 64))
 		return false;
+	std::optional<Pending> pending = LoadPending();
+	// Another AppImage copy's quit left it: that copy's next start installs
+	// it. (Kind() is not read yet, so the record's kind decides.)
+	if (pending && package_kind::ParseToken(pending->kind) == package_kind::Kind::AppImage &&
+		!update_manifest::IsStagedBeside(ToUtf8(AppImagePath()), pending->file, pending->version))
+	{
+		return false;
+	}
 	// Once: what fails below leaves the update to OnStartup().
 	RemoveFile(AppImageAtStartPath());
-	std::optional<Pending> pending = LoadPending();
 	if (!pending || !update_manifest::IsAtStartVersion(named, pending->version) ||
 		package_kind::ParseToken(pending->kind) != package_kind::Kind::AppImage ||
 		!update_manifest::IsNewer(pending->version, VersionHikariSub) ||

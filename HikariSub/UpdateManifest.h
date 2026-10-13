@@ -713,6 +713,17 @@ namespace update_manifest
 		return ".HikariSub-" + std::string(version) + ".AppImage";
 	}
 
+	// Whether a pending AppImage update was staged beside this image: the
+	// cache, and so its record, is shared by every copy the user keeps, and
+	// a download beside another copy is that copy's to install.
+	inline bool IsStagedBeside(std::string_view appImage, std::string_view file, std::string_view version)
+	{
+		size_t slash = appImage.find_last_of('/');
+		if (slash == std::string_view::npos)
+			return false;
+		return file == std::string(appImage.substr(0, slash + 1)) + AppImageStagingName(version);
+	}
+
 	// The update helper of the deb and rpm, and the switch that tells the
 	// new version which it updated from.
 	constexpr std::string_view kUpdateHelper = "/opt/hikarisub/libexec/hikarisub-update-helper";

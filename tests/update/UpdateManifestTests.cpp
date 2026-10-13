@@ -640,6 +640,13 @@ TEST(update_hand_off_commands)
 	CHECK(InstallCommand("/home/u/it's.rpm", "1.0.0") ==
 		"sudo /opt/hikarisub/libexec/hikarisub-update-helper install '/home/u/it'\\''s.rpm' '1.0.0'");
 	CHECK(AppImageStagingName("0.0.3") == ".HikariSub-0.0.3.AppImage");
+	// A pending AppImage update belongs to the copy it was staged beside.
+	CHECK(IsStagedBeside("/home/u/Apps/HikariSub.AppImage", "/home/u/Apps/.HikariSub-0.0.3.AppImage", "0.0.3"));
+	CHECK(!IsStagedBeside("/home/u/Other/HikariSub.AppImage", "/home/u/Apps/.HikariSub-0.0.3.AppImage", "0.0.3"));
+	CHECK(!IsStagedBeside("/home/u/Apps/HikariSub.AppImage", "/home/u/Apps/.HikariSub-0.0.4.AppImage", "0.0.3"));
+	CHECK(!IsStagedBeside("/home/u/Apps/HikariSub.AppImage", "/home/u/Apps/sub/.HikariSub-0.0.3.AppImage", "0.0.3"));
+	CHECK(!IsStagedBeside("HikariSub.AppImage", ".HikariSub-0.0.3.AppImage", "0.0.3"));
+	CHECK(IsStagedBeside("/HikariSub.AppImage", "/.HikariSub-0.0.3.AppImage", "0.0.3"));
 }
 
 TEST(update_appimage_at_start_names_the_pending_version)
