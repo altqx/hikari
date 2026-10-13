@@ -100,10 +100,16 @@ const wxString HikariSubIpcTopic()
 // to it and have files opened. Found once, so the socket removed at the end
 // is the one made at the start. Empty when there is no such folder; files
 // are then not passed on.
+// wxWidgets 3.3.4 changed what its IPC sends over the socket. A 3.3.4
+// client connecting to a running instance built with an older wxWidgets gets
+// no answer it can read, and with each of SendOpenPathsToRunningInstance()'s
+// attempts bounded only by wx's IPC timeout, it could wait for minutes. The
+// name changed with the format: a second instance of another build does not
+// find the running one's socket and gives up after a few seconds instead.
 wxString HikariSubIpcServiceName()
 {
 	static const wxString name = []() {
-		std::string socket = UserRuntimeSocketPath("hikarisub.ipc");
+		std::string socket = UserRuntimeSocketPath("hikarisub-2.ipc");
 		if (socket.empty()){
 			HikariLogSilent(L"No folder only this user can open for the socket that passes files to a running instance");
 			return wxString();
