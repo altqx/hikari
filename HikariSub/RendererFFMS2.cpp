@@ -27,14 +27,14 @@
 #include "Visuals.h"
 #include "VideoFullscreen.h"
 #include "SubtitlesProviderManager.h"
+#include <algorithm>
+#include <chrono>
 #ifndef _WIN32
 #include <wx/bitmap.h>
 #include <wx/app.h>
 #include <wx/dcclient.h>
 #include <wx/image.h>
 #include <wx/thread.h>
-#include <algorithm>
-#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #endif
@@ -101,11 +101,7 @@ void RendererFFMS2::LinuxPlaybackLoop()
 		while (unsigned char *slot = queue.NextToDecode(&frame))
 			queue.Decoded(slot, m_FFMS2->FetchPlaybackFrame(frame, slot));
 	});
-	std::thread subtitles([this, &queue]() {
-		int frame;
-		while (unsigned char *slot = queue.NextToFinish(&frame))
-			queue.Finished(slot, DrawSubtitlesAhead(slot, frame));
-	});
+	std::thread subtitles([this, &queue]() { FinishFramesAhead(queue); });
 	struct StopThreads {
 		FrameQueue &queue;
 		std::thread &decoder;
@@ -149,7 +145,7 @@ void RendererFFMS2::LinuxPlaybackLoop()
 			wxQueueEvent(videoControl, new wxCommandEvent(wxEVT_COMMAND_BUTTON_CLICKED, ID_END_OF_STREAM));
 			break;
 		}
-		int played = std::max(0, (int)(timeGetTime() - m_LastTime));
+		int played = PlayedMs();
 		PlaybackStep step = NextPlaybackFrame(timebase, frame, played, m_PlayEndTime, frameCount);
 		wanted = step.frame;
 		// sleeps in short steps, so stopping does not wait for a long frame
@@ -184,6 +180,34 @@ unsigned RendererFFMS2::DrawSubtitlesAhead(unsigned char *frame, int number)
 	unsigned generation = m_SubsGeneration.load();
 	m_SubsProvider->Draw(frame, GetTimebase().MsAt(number));
 	return generation;
+}
+
+void RendererFFMS2::FinishFramesAhead(FrameQueue &queue)
+{
+	const Timebase &timebase = GetTimebase();
+	// how long the latest frames took to draw, ms
+	double cost = 0;
+	int frame;
+	while (unsigned char *slot = queue.NextToFinish(&frame)) {
+		if (FrameReadyTooLate(timebase, frame, PlayedMs() + (int)cost, queue.FrameCount())) {
+			queue.Drop(slot);
+			continue;
+		}
+		auto start = std::chrono::steady_clock::now();
+		unsigned generation = DrawSubtitlesAhead(slot, frame);
+		double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+		cost = cost > 0 ? cost * 0.75 + ms * 0.25 : ms;
+		queue.Finished(slot, generation);
+	}
+}
+
+int RendererFFMS2::PlayedMs()
+{
+#ifdef _WIN32
+	return PlaybackClock();
+#else
+	return std::max(0, (int)(timeGetTime() - m_LastTime));
+#endif
 }
 
 bool RendererFFMS2::DrawTexture(unsigned char *nframe, bool copy)

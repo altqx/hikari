@@ -257,3 +257,23 @@ TEST(slots_for_a_frame_size)
 	CHECK_EQ(FrameQueue::SlotsFor(7680u * 4320 * 4), (size_t)4);
 	CHECK_EQ(FrameQueue::SlotsFor(0), (size_t)8);
 }
+
+TEST(a_dropped_frame_is_never_taken)
+{
+	FrameQueue queue(2, sizeof(int), 100, true);
+	queue.Reset(0);
+	int frame = -1;
+	unsigned char *a = queue.NextToDecode(&frame);
+	queue.Decoded(a, true);
+	unsigned char *b = queue.NextToDecode(&frame);
+	queue.Decoded(b, true);
+	CHECK(queue.NextToFinish(&frame) == a);
+	queue.Drop(a);
+	CHECK(queue.NextToFinish(&frame) == b);
+	CHECK_EQ(frame, 1);
+	queue.Finished(b, 3);
+	// frame 0 is gone, so the player gets the next one
+	FrameQueue::Result r = queue.Take(0);
+	CHECK(r.slot == b);
+	CHECK_EQ(r.frame, 1);
+}

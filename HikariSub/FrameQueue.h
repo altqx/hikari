@@ -51,6 +51,8 @@ public:
 	// Finishing side: waits for the next decoded frame, or nullptr once stopped.
 	unsigned char *NextToFinish(int *frame);
 	void Finished(unsigned char *slot, unsigned tag);
+	// a frame not worth finishing, as it would be shown too late
+	void Drop(unsigned char *slot);
 
 	// Player side: waits for wanted, or the first later frame decoded.
 	Result Take(int wanted);

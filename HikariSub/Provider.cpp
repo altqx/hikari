@@ -208,9 +208,7 @@ void Provider::RunPlaybackThread()
 			if (subsAhead) {
 				subtitles = std::thread([this, &queue]() {
 					MultimediaThread multimedia(L"Playback");
-					int frame;
-					while (unsigned char *slot = queue.NextToFinish(&frame))
-						queue.Finished(slot, m_renderer->DrawSubtitlesAhead(slot, frame));
+					m_renderer->FinishFramesAhead(queue);
 				});
 			}
 			struct StopDecoder {

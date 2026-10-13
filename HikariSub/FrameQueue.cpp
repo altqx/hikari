@@ -132,6 +132,17 @@ void FrameQueue::Finished(unsigned char *data, unsigned tag)
 	m_changed.notify_all();
 }
 
+void FrameQueue::Drop(unsigned char *data)
+{
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+		Slot *slot = Find(data);
+		if (slot && slot->state == FINISHING)
+			slot->state = FREE;
+	}
+	m_changed.notify_all();
+}
+
 FrameQueue::Result FrameQueue::Take(int wanted)
 {
 	std::unique_lock<std::mutex> lock(m_mutex);

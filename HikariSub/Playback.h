@@ -65,3 +65,7 @@ struct PlaybackStep
 // the next one after a sleep, or a later one when playback fell behind.
 PlaybackStep NextPlaybackFrame(const Timebase &timebase, int frame, int nowMs,
 	int playEndMs, int frameCount);
+
+// Whether a frame drawn ahead and ready at readyMs comes too late to be
+// shown: playback skips frames that late. The last frame is always shown.
+bool FrameReadyTooLate(const Timebase &timebase, int frame, int readyMs, int frameCount);
