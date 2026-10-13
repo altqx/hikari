@@ -14,6 +14,7 @@
 #include "hikari/application/document_files.h"
 #include "hikari/application/editor_fields.h"
 #include "hikari/application/legacy_timebase.h"
+#include "hikari/core/editor_syntax.h"
 #include "hikari/core/editor_font_colour.h"
 #include "hikari/core/style.h"
 #include "hikari/core/tag_commands.h"
@@ -88,10 +89,16 @@ class LineEditorController : public QObject {
     Q_PROPERTY(QString cpsText READ cpsText NOTIFY changed)
     Q_PROPERTY(bool cpsWarning READ cpsWarning NOTIFY changed)
     // Start and End in the warning colour while a live edit has Start after
-    // End (EditBox::OnEdit, EditBox.cpp:1526-1545), until the Line is sent
-    // or shown again (Send, EditBox.cpp:546-554; SetLine, EditBox.cpp:394-402).
+    // End (EditBox::OnEdit, EditBox.cpp:1526-1545), and Start, End and
+    // Duration while they hold times the audio display put there and the
+    // Line has not taken (TimeCtrl::SetTime(..., true) from
+    // AudioDisplay::CommitChanges and UpdateTimeEditCtrls,
+    // AudioDisplay.cpp:1718-1722, 2825-2826), until the Line is sent or shown
+    // again (Send, EditBox.cpp:546-554; SetLine, EditBox.cpp:394-402). A Send
+    // from OnCommit while a visual tool is on leaves them (EditBox.cpp:972).
     Q_PROPERTY(bool startWarning READ startWarning NOTIFY changed)
     Q_PROPERTY(bool endWarning READ endWarning NOTIFY changed)
+    Q_PROPERTY(bool durationWarning READ durationWarning NOTIFY changed)
     // The Time/Frames switch (EDITBOX_TIMES_TO_FRAMES_SWITCH): enabled once a
     // video was opened (Notebook::LoadVideo), as legacy enables it.
     Q_PROPERTY(bool framesAvailable READ framesAvailable NOTIFY changed)
@@ -99,10 +106,18 @@ class LineEditorController : public QObject {
     // The time fields' form (application::TimeFieldForm: 0 ASS, 1 SRT,
     // 2 TMPlayer, 3 a number), which TimeField.qml masks its editing to.
     Q_PROPERTY(int timeForm READ timeForm NOTIFY changed)
+    // E4: a number time field holds MicroDVD frames (TimeCtrl's form MDVD),
+    // which its wheel steps.
+    Q_PROPERTY(bool frameNumbers READ frameNumbers NOTIFY changed)
     // E5: the active Line's Unconfirmed (legacy DoubtfulTL->SetValue in
     // SetLine) and the "Moving tags" toggle (AUTO_MOVE_TAGS_FROM_ORIGINAL).
     Q_PROPERTY(bool unconfirmed READ unconfirmed NOTIFY changed)
     Q_PROPERTY(bool moveTags READ moveTags NOTIFY changed)
+    // E4: the edited text field's state (core::syntax::TextState: 0 dialogue,
+    // 1 comment, 2 template, 3 code), as legacy TextEditor::SetState gets it
+    // from EditBox::SetLine and from a Comment box toggle (OnCommit), not
+    // from typing in Effect.
+    Q_PROPERTY(int textState READ textState NOTIFY changed)
 
 public:
     // The options the editor reads where legacy reads them (O1's registry).
@@ -150,6 +165,7 @@ public:
     bool assFields() const;
     bool hasEnd() const;
     int timeForm() const;
+    bool frameNumbers() const;
     bool comment() const;
     QString layerText() const;
     QString durationText() const;
@@ -167,7 +183,24 @@ public:
     bool cpsWarning() const;
     bool startWarning() const { return m_timeWarning[0]; }
     bool endWarning() const { return m_timeWarning[1]; }
+    bool durationWarning() const { return m_timeWarning[2]; }
+    // E4: the audio display puts its selection into the time fields
+    // (AudioDisplay::CommitChanges sets Start, End and Duration; with
+    // `duration` false, UpdateTimeEditCtrls sets Start and End). Called
+    // before the times reach the draft: each field whose time (in
+    // milliseconds, SubsTime::operator==) changes takes the warning colour.
+    void timesFromAudio(std::int64_t startMs, std::int64_t endMs, bool duration);
+    // The audio display's EditBox::Send(AUDIO_CHANGE_TIME, ...): the time
+    // fields back in the text colour.
+    void audioSent();
     bool framesAvailable() const { return m_framesAvailable; }
+    int textState() const { return static_cast<int>(m_textState); }
+    core::syntax::TextState syntaxState() const { return m_textState; }
+    // E4: the colour runs of `text` in the field `role` (0 Original, 1
+    // Translated), flat [start, end, core::syntax::Role] triples (TextEditor's
+    // DrawFieldD2D). The edited field (TextEdit: the Translated one in
+    // translation mode) is coloured in the text state; the other as dialogue.
+    Q_INVOKABLE QVariantList colourRuns(int role, const QString &text) const;
     bool showFrames() const { return m_showFrames; }
     void setShowFrames(bool on);
     // The timebase the times show frames of (switch on, exact), or nullptr.
@@ -216,7 +249,12 @@ public:
     // E6: GLOBAL_NEXT_LINE (1) / GLOBAL_PREVIOUS_LINE (-1), SubsGrid::NextLine:
     // the next or previous shown Line; past the last shown one a new Line.
     Q_INVOKABLE bool nextLine(int direction);
+    // EditBox::Send(EDITBOX_LINE_EDITION, false): the draft to the Line.
     Q_INVOKABLE bool commit();
+    // EDITBOX_COMMIT "Apply changes" (EditBox::OnCommit): commit() as
+    // Send(..., visualdummy) with a visual tool on, which leaves the time
+    // fields' warning colour (EditBox.cpp:972).
+    Q_INVOKABLE bool applyChanges();
     Q_INVOKABLE void discard();          // Esc
     Q_INVOKABLE bool undo();             // draft history first, then the Document
     Q_INVOKABLE bool redo();
@@ -402,7 +440,10 @@ private:
     // E4
     Options options() const { return m_options ? m_options() : Options{}; }
     std::optional<core::LineRecord> committedRecord() const;
-    bool sendDraft(bool leaving = false); // EditBox::Send(EDITBOX_LINE_EDITION, ...)
+    // EditBox::Send(EDITBOX_LINE_EDITION, ...); `visual`: OnCommit's
+    // visualdummy, which keeps the time fields' warning colour.
+    bool sendDraft(bool leaving = false, bool visual = false);
+    bool visualToolOn() const { return m_visualToolActive && m_visualToolActive(); }
     void rebuildLists(); // EditBox::RebuildActorEffectLists
     void lineShown();    // what EditBox::SetLine sets once per Line
     bool setTime(application::TimeFieldRole role, const QString &text);
@@ -414,13 +455,15 @@ private:
     QStringList m_actors, m_effects;
     int m_alignment = 2;
     bool m_durationEdited = false; // OnEdit's Duration after a Start/End edit
-    // StartEdit/EndEdit: the warning colour shown, and legacy's
+    // StartEdit/EndEdit/DurEdit: the warning colour shown, and legacy's
     // changedBackGround, which is set with it and never cleared.
-    bool m_timeWarning[2] = {false, false};
-    bool m_timeWarned[2] = {false, false};
+    bool m_timeWarning[3] = {false, false, false};
+    bool m_timeWarned[3] = {false, false, false};
     void clearTimeWarnings();
     std::optional<QString> m_typedDuration; // DurEdit keeps what was typed until SetLine
     std::optional<core::LineId> m_shownLine;
+    core::syntax::TextState m_textState = core::syntax::TextState::Dialogue;
+    void updateTextState(); // TextEditor::SetState from the Line's Comment and Effect
 
     application::DocumentFiles &m_files;
     std::optional<application::DocumentId> m_document;

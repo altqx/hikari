@@ -465,9 +465,9 @@ void LineEditorController::setMarginText(int which, const QString &text)
 bool LineEditorController::commit()
 {
     auto *s = session();
-    // EditBox::OnCommit sends even with nothing changed, and Send puts the
-    // time fields back in the text colour first (EditBox.cpp:546-554).
-    if (m_timeWarning[0] || m_timeWarning[1]) {
+    // Send runs even with nothing changed, and puts the time fields back in
+    // the text colour first (EditBox.cpp:546-554).
+    if (m_timeWarning[0] || m_timeWarning[1] || m_timeWarning[2]) {
         clearTimeWarnings();
         emit changed();
     }
@@ -476,12 +476,26 @@ bool LineEditorController::commit()
     return sendDraft();
 }
 
+bool LineEditorController::applyChanges()
+{
+    // EditBox::OnCommit: Send(EDITBOX_LINE_EDITION, false, false, Visual != 0)
+    // (EditBox.cpp:972); with a visual tool on (any but the crosshair) its
+    // visualdummy keeps the time fields' warning colour.
+    if (!visualToolOn())
+        return commit();
+    auto *s = session();
+    if (!s || !s->draftLine())
+        return false;
+    return sendDraft(false, true);
+}
+
 // EditBox::Send(EDITBOX_LINE_EDITION, false): the draft's fields go to the
 // Line, or to every selected Line with several selected (SubsGrid::ChangeLine);
 // an Actor or Effect change rebuilds their lists (EditBox.cpp:633-636).
-bool LineEditorController::sendDraft(bool leaving)
+bool LineEditorController::sendDraft(bool leaving, bool visual)
 {
-    clearTimeWarnings(); // Send, EditBox.cpp:546-554
+    if (!visual)
+        clearTimeWarnings(); // Send, EditBox.cpp:546-554
     auto *s = session();
     if (!s || !s->draftLine())
         return true;
@@ -1481,6 +1495,12 @@ int LineEditorController::timeForm() const
                               : application::TimeFieldForm::Ass);
 }
 
+bool LineEditorController::frameNumbers() const
+{
+    auto *s = session();
+    return s && s->document().format() == core::SubtitleFormat::MicroDvd;
+}
+
 bool LineEditorController::comment() const
 {
     const auto r = record();
@@ -1578,6 +1598,8 @@ void LineEditorController::lineShown()
     m_durationEdited = false;
     clearTimeWarnings(); // SetLine, EditBox.cpp:394-402
     m_typedDuration.reset();
+    // TextEdit->SetState(...) (EditBox.cpp:430-432)
+    m_textState = r ? core::syntax::textState(r->comment, core::toUtf16(r->effect)) : core::syntax::TextState::Dialogue;
     if (!r)
         return;
     // EditBox::SetAlignment: the Style's alignment (GetStyle(0, name): the
@@ -1751,9 +1773,32 @@ bool LineEditorController::setComment(bool on)
         return false;
     session()->editDraft(r->id, application::DraftChange{.comment = on});
     m_attempted.clear();
-    const bool sent = sendDraft();
+    const bool sent = sendDraft(false, visualToolOn()); // OnCommit
+    // OnCommit's TextEdit->SetState(..., true) for the Comment box
+    // (EditBox.cpp:974-977): the edited Line's Comment and Effect.
+    updateTextState();
     refresh();
     return sent;
+}
+
+void LineEditorController::updateTextState()
+{
+    const auto r = record();
+    m_textState = r ? core::syntax::textState(r->comment, core::toUtf16(r->effect)) : core::syntax::TextState::Dialogue;
+}
+
+QVariantList LineEditorController::colourRuns(int role, const QString &shown) const
+{
+    QVariantList out;
+    if (role != 0 && role != 1)
+        return out;
+    const auto state = role == (translationMode() ? 1 : 0) ? m_textState : core::syntax::TextState::Dialogue;
+    const auto runs = core::syntax::colourRuns(
+        std::u16string_view(reinterpret_cast<const char16_t *>(shown.utf16()), static_cast<std::size_t>(shown.size())),
+        state);
+    for (const auto &run : runs)
+        out << static_cast<int>(run.start) << static_cast<int>(run.end) << static_cast<int>(run.role);
+    return out;
 }
 
 bool LineEditorController::chooseStyle(const QString &name)
@@ -1763,7 +1808,7 @@ bool LineEditorController::chooseStyle(const QString &name)
         return false;
     session()->editDraft(r->id, application::DraftChange{.style = u8(name)});
     m_attempted.clear();
-    const bool sent = sendDraft();
+    const bool sent = sendDraft(false, visualToolOn()); // OnCommit
     refresh();
     return sent;
 }
@@ -1792,7 +1837,7 @@ bool LineEditorController::chooseActor(const QString &text)
     if (!editable() || !r || !assFields())
         return false;
     session()->editDraft(r->id, application::DraftChange{.actor = u8(text)});
-    const bool sent = sendDraft();
+    const bool sent = sendDraft(false, visualToolOn()); // OnCommit
     refresh();
     return sent;
 }
@@ -1803,7 +1848,7 @@ bool LineEditorController::chooseEffect(const QString &text)
     if (!editable() || !r || !assFields())
         return false;
     session()->editDraft(r->id, application::DraftChange{.effect = u8(text)});
-    const bool sent = sendDraft();
+    const bool sent = sendDraft(false, visualToolOn()); // OnCommit
     refresh();
     return sent;
 }
@@ -1855,7 +1900,40 @@ void LineEditorController::setDurationText(const QString &text)
 void LineEditorController::clearTimeWarnings()
 {
     // SetForegroundColour(WINDOW_TEXT); changedBackGround stays set.
-    m_timeWarning[0] = m_timeWarning[1] = false;
+    m_timeWarning[0] = m_timeWarning[1] = m_timeWarning[2] = false;
+}
+
+void LineEditorController::timesFromAudio(std::int64_t startMs, std::int64_t endMs, bool duration)
+{
+    const auto r = record();
+    if (!r)
+        return;
+    // TimeCtrl::SetTime: `if (mTime == newtime && stillModified) return;`,
+    // otherwise SetForegroundColour(WINDOW_WARNING_ELEMENTS) and
+    // changedBackGround (TimeCtrl.cpp:233-254).
+    const std::int64_t start = r->start.value.microseconds() / 1000, end = r->end.value.microseconds() / 1000;
+    bool changedAny = false;
+    const auto mark = [&](int field, bool changes) {
+        if (!changes)
+            return;
+        m_timeWarning[field] = m_timeWarned[field] = true;
+        changedAny = true;
+    };
+    mark(0, startMs != start);
+    mark(1, endMs != end);
+    // DurEdit: gtime.NewTime(curEndMS - curStartMS), never below 0.
+    if (duration && hasEnd())
+        mark(2, std::max<std::int64_t>(0, endMs - startMs) != std::max<std::int64_t>(0, end - start));
+    if (changedAny)
+        emit changed();
+}
+
+void LineEditorController::audioSent()
+{
+    if (!(m_timeWarning[0] || m_timeWarning[1] || m_timeWarning[2]))
+        return;
+    clearTimeWarnings();
+    emit changed();
 }
 
 void LineEditorController::timeTyped(int role, const QString &text)

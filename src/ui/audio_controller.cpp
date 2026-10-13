@@ -995,7 +995,13 @@ void AudioController::addLead(bool in, bool out)
     std::tie(m_startMs, m_endMs) =
         application::legacyAddLead(m_startMs, m_endMs, in, out, options.leadIn, options.leadOut);
     if (m_hooks.commit)
-        m_hooks.commit({m_startMs, m_endMs, false, false, m_timing.hold() != 0, application::AudioAdjacent::None});
+        m_hooks.commit({.startMs = m_startMs,
+                        .endMs = m_endMs,
+                        .save = false,
+                        .nextLine = false,
+                        .holding = m_timing.hold() != 0,
+                        .adjacent = application::AudioAdjacent::None,
+                        .duration = false}); // UpdateTimeEditCtrls: Start and End
     m_needCommit = true;
     if (options.autoCommit)
         commitChanges(false, true, false);

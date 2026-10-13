@@ -179,6 +179,9 @@ struct AudioCommitRequest {
     // in a TLMode file), marked modified even when it is the same text, so
     // the Send writes it (to every selected Line with several selected).
     std::optional<std::u16string> karaokeText;
+    // E4: the editor's Duration field takes the times too (CommitChanges);
+    // AddLead's UpdateTimeEditCtrls sets Start and End only.
+    bool duration = true;
 };
 struct AudioCommitOutcome {
     bool stepped = false;              // a history step was recorded

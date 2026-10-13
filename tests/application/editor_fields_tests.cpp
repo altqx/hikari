@@ -298,6 +298,88 @@ TEST(TimeField, NumbersTakeDigitsOnly)
 
 // MicroDVD: the frame is kept; its time comes from the Document's own rate
 // (C01-fps-isolation in place of legacy's frame / 23.976), else unresolved.
+// TimeCtrl::OnMouseEvent (TimeCtrl.cpp:286-387): grad from HitTest's
+// column, `mstime` stepped and clamped, raw() shown.
+TEST(TimeField, TheMouseStepsTheColumnsUnit)
+{
+    using F = TimeFieldForm;
+    // ASS "0:00:00.00": startPos 2.
+    for (const auto [column, step] : std::vector<std::pair<std::size_t, std::int64_t>>{
+             {0, 3600000}, {1, 3600000}, {2, 60000}, {4, 60000}, {5, 1000}, {7, 1000}, {8, 10}, {10, 10}})
+        EXPECT_EQ(timeFieldStep(F::Ass, column), step) << column;
+    // SRT "00:00:00,000" and TMPlayer "00:00:00": startPos 3; TMPlayer's
+    // last column (its end, 8) is still seconds.
+    for (const auto [column, step] : std::vector<std::pair<std::size_t, std::int64_t>>{
+             {2, 3600000}, {3, 60000}, {5, 60000}, {6, 1000}, {8, 1000}, {9, 10}, {12, 10}})
+        EXPECT_EQ(timeFieldStep(F::Srt, column), step) << column;
+    EXPECT_EQ(timeFieldStep(F::TMPlayer, 8), 1000);
+}
+
+TEST(TimeField, TheWheelStepsWholeNotches)
+{
+    using F = TimeFieldForm;
+    const auto wheel = [](F form, std::u16string_view text, std::size_t column, int notches, bool mdvd = false) {
+        const auto r = wheelTimeField(form, mdvd, text, column, notches);
+        return r ? std::string(r->begin(), r->end()) : std::string("refused");
+    };
+    EXPECT_EQ(wheel(F::Ass, u"0:01:02.03", 9, 1), "0:01:02.04");
+    EXPECT_EQ(wheel(F::Ass, u"0:01:02.03", 6, -2), "0:01:00.03");
+    EXPECT_EQ(wheel(F::Ass, u"0:01:02.03", 3, 3), "0:04:02.03");
+    EXPECT_EQ(wheel(F::Ass, u"0:01:02.03", 0, 1), "1:01:02.03");
+    EXPECT_EQ(wheel(F::Ass, u"0:00:59.99", 9, 1), "0:01:00.00"); // carries
+    // Outside 0..9:59:59.999 the wheel does nothing (TimeCtrl.cpp:381).
+    EXPECT_EQ(wheel(F::Ass, u"0:00:00.05", 9, -1), "0:00:00.04");
+    EXPECT_EQ(wheel(F::Ass, u"0:00:00.05", 6, -1), "refused");
+    EXPECT_EQ(wheel(F::Ass, u"9:30:00.00", 0, 1), "refused");
+    EXPECT_EQ(wheel(F::Ass, u"9:59:59.99", 9, 1), "refused");
+    EXPECT_EQ(wheel(F::Ass, u"0:00:01.00", 9, 0), "refused"); // less than a notch
+    EXPECT_EQ(wheel(F::Srt, u"00:00:01,005", 10, 1), "00:00:01,015");
+    EXPECT_EQ(wheel(F::Srt, u"01:00:01,005", 1, -1), "00:00:01,005");
+    EXPECT_EQ(wheel(F::TMPlayer, u"00:00:01", 8, 2), "00:00:03");
+    // MicroDVD's frame steps by one, not below 0; other numbers are not ported.
+    EXPECT_EQ(wheel(F::Number, u"120", 1, 1, true), "121");
+    EXPECT_EQ(wheel(F::Number, u"120", 0, -3, true), "117");
+    EXPECT_EQ(wheel(F::Number, u"0", 0, -1, true), "refused");
+    EXPECT_EQ(wheel(F::Number, u"", 0, 1, true), "1");
+    EXPECT_EQ(wheel(F::Number, u"999999999", 0, 1, true), "refused");
+    EXPECT_EQ(wheel(F::Number, u"120", 0, 1, false), "refused");
+}
+
+TEST(TimeField, TheRightButtonDragsTheTime)
+{
+    using F = TimeFieldForm;
+    const auto text = [](const std::optional<std::u16string> &r) {
+        return r ? std::string(r->begin(), r->end()) : std::string("none");
+    };
+    auto drag = beginTimeFieldDrag(F::Ass, u"0:01:02.03", 6, 100, 50); // seconds
+    ASSERT_TRUE(drag);
+    EXPECT_EQ(drag->ms, 62030);
+    EXPECT_EQ(drag->step, 1000);
+    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 100, 43)), "none");          // 7 pixels: nothing yet
+    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 100, 42)), "0:01:03.03");    // 8 up: one step up
+    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 103, 30)), "0:01:04.03");    // from where it stepped
+    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 103, 38)), "0:01:03.03");    // down: one step down
+    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 112, 38)), "none");          // 9 right: nothing
+    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 113, 38)), "0:01:13.03");    // 10 right: ten steps
+    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 100, 40)), "0:01:03.03");    // 13 left (2 down): ten back
+    // Equal moves count as vertical (absy >= absx).
+    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 110, 30)), "0:01:04.03");
+    // Clamped at 0 and at 9:59:59.999 (TimeCtrl.cpp:321-323).
+    auto hours = beginTimeFieldDrag(F::Ass, u"0:30:00.00", 0, 0, 0);
+    ASSERT_TRUE(hours);
+    EXPECT_EQ(text(dragTimeField(F::Ass, *hours, 0, 8)), "0:00:00.00");
+    for (int i = 1; i <= 11; ++i)
+        dragTimeField(F::Ass, *hours, 0, 8 - 8 * i);
+    EXPECT_EQ(hours->ms, kTimeFieldMaxMs);
+    EXPECT_EQ(text(dragTimeField(F::Ass, *hours, 0, -100)), "9:59:59.99");
+    // Each format's text; TMPlayer's seconds hold the dragged milliseconds.
+    auto srt = beginTimeFieldDrag(F::Srt, u"00:00:01,005", 11, 0, 0);
+    ASSERT_TRUE(srt);
+    EXPECT_EQ(text(dragTimeField(F::Srt, *srt, 0, -8)), "00:00:01,015");
+    // Number forms do not drag (not ported).
+    EXPECT_FALSE(beginTimeFieldDrag(F::Number, u"12", 0, 0, 0));
+}
+
 TEST(EditorTimes, MicroDvdFramesUseTheDocumentRate)
 {
     auto t = typedTime(u8"50", TimeFieldRole::Start, core::SubtitleFormat::MicroDvd, std::nullopt, nullptr);

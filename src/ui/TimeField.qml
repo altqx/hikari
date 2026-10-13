@@ -10,6 +10,14 @@
 // platform's other editing keys, the context menu, a middle-click paste) is
 // kept only when the text is still of the form; otherwise the field goes
 // back with the bell.
+//
+// The mouse steps the time as TimeCtrl::OnMouseEvent did (TimeCtrl.cpp:286-387,
+// application::wheelTimeField and dragTimeField): the wheel over a column
+// steps that column's unit per notch, and the right button held and dragged
+// steps it every 8 pixels up or down (up adding) or ten units every 10
+// pixels right or left. The right button opens no context menu here, as in
+// legacy, where its release ended the drag, on any platform's trigger (the
+// Menu key still opens it).
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
@@ -27,6 +35,12 @@ TextField {
     // Legacy wxBell; the shell has no audible bell to give.
     signal bell()
 
+    // The number is a MicroDVD frame, which the wheel steps by one.
+    property bool frameNumber: false
+    property var drag: ({}) // the right button's drag (TimeFieldMask.dragBegin), {} when none
+    // From the right button's press to just after its release.
+    property bool rightHeld: false
+
     property string held // the last text of the form, for an edit to go back to
     selectByMouse: true
     maximumLength: clock ? 32767 : 9 // application::kTimeFieldDigits
@@ -39,6 +53,62 @@ TextField {
             text = edit.text
         select(edit.selectionStart, edit.selectionEnd)
         return edit.changed
+    }
+    // A stepped time: the caret stays (HikariTextCtrl::SetValue's newSel
+    // false) and it applies as typing does (NUMBER_CHANGED).
+    function step(next) {
+        if (next.length === 0)
+            return
+        const from = selectionStart, to = selectionEnd
+        text = next
+        select(Math.min(from, text.length), Math.min(to, text.length))
+        typed()
+    }
+    MouseArea {
+        objectName: field.objectName + "Mouse"
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        onPressed: mouse => {
+            field.rightHeld = true
+            const column = field.positionAt(mouse.x, mouse.y, TextInput.CursorOnCharacter)
+            field.forceActiveFocus(Qt.MouseFocusReason)
+            field.select(column, column)
+            field.drag = TimeFieldMask.dragBegin(field.form, field.text, column, mouse.x, mouse.y)
+        }
+        onPositionChanged: mouse => {
+            if (!field.drag.step)
+                return
+            const moved = TimeFieldMask.dragMove(field.form, field.drag, mouse.x, mouse.y)
+            field.drag = moved.drag
+            field.step(moved.text)
+        }
+        onReleased: {
+            field.drag = ({})
+            // After the release's own delivery, in which Qt may make its
+            // context menu event.
+            Qt.callLater(() => field.rightHeld = false)
+        }
+        onCanceled: {
+            field.drag = ({})
+            field.rightHeld = false
+        }
+        onWheel: wheel => {
+            // GetWheelRotation() / GetWheelDelta(): whole notches only.
+            const notches = Math.trunc(wheel.angleDelta.y / 120)
+            field.step(TimeFieldMask.wheel(field.form, field.frameNumber, field.text,
+                                           field.positionAt(wheel.x, wheel.y, TextInput.CursorOnCharacter), notches))
+            wheel.accepted = true
+        }
+    }
+    // The right button's context menu event (Qt makes one from its press,
+    // or on Windows its release, when that is left unaccepted) stops here: a
+    // ContextMenu with no menu takes it, so the field's own menu never opens
+    // from the right button. The Menu key's, made with no button held, goes
+    // on to the field.
+    Item {
+        anchors.fill: parent
+        visible: field.rightHeld
+        ContextMenu.onRequested: {}
     }
     onTextChanged: if (TimeFieldMask.holds(form, text)) held = text
     onTextEdited: {

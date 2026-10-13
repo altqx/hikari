@@ -7,7 +7,8 @@
 // Fields change the editor's draft when their editing finishes; with live
 // video editing on, Start, End and Duration also change it as they are typed
 // (TimeCtrl's NUMBER_CHANGED runs EditBox::OnEdit, EditBox.cpp:343-346), and
-// Start or End show the warning colour while Start is after End. Enter runs
+// Start or End show the warning colour while Start is after End; times the
+// audio display put in the fields show it until the Line takes them. Enter runs
 // the Editor's EDITBOX_COMMIT_GO_NEXT_LINE / EDITBOX_COMMIT bindings (the
 // time fields stay on the Line with EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT,
 // EditBox::OnNewline). The Comment box, the Style choice and a pick from the
@@ -37,7 +38,7 @@ ColumnLayout {
             return false
         field.apply()
         if (action === "EDITBOX_COMMIT")
-            inspector.editor.commit()
+            inspector.editor.applyChanges()
         else
             inspector.editor.commitFromField(timeField)
         return true
@@ -75,6 +76,7 @@ ColumnLayout {
         property string tip
         signal applied(string text)
         form: inspector.editor.timeForm
+        frameNumber: inspector.editor.frameNumbers
         text: value
         Layout.preferredWidth: 90
         // Legacy WINDOW_WARNING_ELEMENTS: the theme layer's warning role.
@@ -83,6 +85,15 @@ ColumnLayout {
         // fields, not the focused one).
         onValueChanged: if (!typing) text = value
         onTyped: {
+            // The wheel steps a field without the focus, whose editing then
+            // never finishes: it applies at once (legacy's Send took every
+            // modified field). OnEdit acts only on the focused field
+            // (EditBox.cpp:1524-1525), so the live edit and its warning
+            // colour do not run for it.
+            if (!activeFocus) {
+                apply()
+                return
+            }
             typing = true
             inspector.editor.timeTyped(timeRole, text)
             typing = false
@@ -247,6 +258,7 @@ ColumnLayout {
             value: inspector.editor.durationText
             enabled: inspector.editor.editable && inspector.editor.hasEnd
             timeRole: 0
+            warning: inspector.editor.durationWarning
             Accessible.name: qsTr("Duration")
             tip: qsTr("Line duration")
             onApplied: text => inspector.editor.setDurationText(text)

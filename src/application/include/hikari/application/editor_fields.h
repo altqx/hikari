@@ -113,6 +113,47 @@ TimeFieldEdit backspaceTimeField(const TimeFieldState &field);
 // the bell.
 TimeFieldEdit pasteIntoTimeField(TimeFieldForm form, const TimeFieldState &field, std::u16string_view pasted);
 
+// E4: TimeCtrl's mouse (TimeCtrl.cpp:286-387): the right button dragged
+// over a time field, and the wheel, step its time. In a clock form the step
+// is that of the column (TimeCtrl's `grad`, from HitTest's column): hours
+// before column 2 (ASS) or 3 (SRT, TMPlayer), minutes in the next three,
+// seconds in the three after, 10 ms past them.
+std::int64_t timeFieldStep(TimeFieldForm form, std::size_t column);
+// TimeCtrl's top time, 9:59:59.999 (TimeCtrl.cpp:322-323, 380).
+inline constexpr std::int64_t kTimeFieldMaxMs = 35999999;
+// The wheel: `notches` whole wheel steps (GetWheelRotation() /
+// GetWheelDelta(), so a smaller rotation is none) over `column`. A clock
+// form moves by notches times the column's step, refused (nullopt) when the
+// time would leave 0..kTimeFieldMaxMs. A MicroDVD number (`microDvdNumber`,
+// with or without the frames switch: legacy's `form == MDVD` steps orgframe)
+// moves by `notches` frames, refused below 0 or past kTimeFieldDigits.
+// nullopt for any other number (MPL2's deciseconds, the frames switch's
+// frames of another format): legacy stepped those wrongly (its 1 ms step on
+// MPL2's deciseconds goes up only; with the frames switch it stepped the
+// milliseconds behind a frame number that never changed), so they are not
+// ported until the user decides how they step.
+std::optional<std::u16string> wheelTimeField(TimeFieldForm form, bool microDvdNumber, std::u16string_view text,
+                                             std::size_t column, int notches);
+// The right button held down (TimeCtrl's `holding`): the time it started
+// from and accumulates (mstime), the column's step (grad) and the pointer
+// position it last stepped at (oldposx, oldposy).
+struct TimeFieldDrag {
+    std::int64_t ms = 0, step = 0;
+    int x = 0, y = 0;
+};
+// The right button pressed at `column` and (x, y) of a clock form; nullopt
+// in a number form, where legacy's drag never stepped the number shown
+// (MicroDVD, MPL2) or set the frame to a time in milliseconds (the frames
+// switch): not ported, as for the wheel.
+std::optional<TimeFieldDrag> beginTimeFieldDrag(TimeFieldForm form, std::u16string_view text, std::size_t column,
+                                                int x, int y);
+// The pointer moved to (x, y) with the button held: 8 pixels up or down
+// (where the vertical move is not the smaller) step the time by the step,
+// up adding; otherwise 10 pixels right or left step it by ten steps, right
+// adding. Each step restarts both distances. The time stays within
+// 0..kTimeFieldMaxMs. The new text, or nullopt when nothing stepped.
+std::optional<std::u16string> dragTimeField(TimeFieldForm form, TimeFieldDrag &drag, int x, int y);
+
 // NumCtrl::GetInt for the Layer (EditBox.cpp:256: -10000000..10000000): the
 // value clamped to the range, or nullopt for text NumCtrl keeps the previous
 // value for.
