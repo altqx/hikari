@@ -1198,6 +1198,10 @@ Should not exceed 15 characters per second</source>
         <translation type="obsolete">편집</translation>
     </message>
     <message>
+        <source>Changed, not applied to the line yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit style</source>
         <translation type="unfinished"></translation>
     </message>

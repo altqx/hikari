@@ -29,13 +29,11 @@ public:
     // TimeCtrl's mouse (application::wheelTimeField, beginTimeFieldDrag,
     // dragTimeField). `mouseForm` is application::TimeCtrlForm (0 ASS, 1 SRT,
     // 2 TMPlayer, 3 MicroDVD, 4 MPL2), `frames` whether the field shows
-    // frames, `ms` the time behind the text. The wheel answers {text, ms},
-    // or {} for none.
-    Q_INVOKABLE QVariantMap wheel(int mouseForm, bool frames, const QString &text, double ms, int column,
-                                  int notches) const;
-    // A right-button drag: {ms, step, x, y, frame} for the field to keep;
-    // each move answers {drag, text} (text "" for no step).
-    Q_INVOKABLE QVariantMap dragBegin(int mouseForm, bool frames, const QString &text, double ms, int column, int x,
+    // frames. The wheel's new text, or "" for none.
+    Q_INVOKABLE QString wheel(int mouseForm, bool frames, const QString &text, int column, int notches) const;
+    // A right-button drag: {value, step, x, y} for the field to keep; each
+    // move answers {drag, text} (text "" for no step).
+    Q_INVOKABLE QVariantMap dragBegin(int mouseForm, bool frames, const QString &text, int column, int x,
                                       int y) const;
     Q_INVOKABLE QVariantMap dragMove(int mouseForm, bool frames, const QVariantMap &drag, int x, int y) const;
 };

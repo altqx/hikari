@@ -626,10 +626,15 @@ void LineEditorController::discard()
         s->discardDraft();
     clearTimeWarnings(); // the shown times are the Line's again
     dropStepped();
+    // Duration shows End - Start again, not a Duration typed before
+    // (E4-esc-resets-duration; legacy DurEdit kept it until SetLine).
+    m_typedDuration.reset();
+    m_durationEdited = false;
     m_draftUndo.clear();
     m_draftRedo.clear();
     m_attempted.clear();
     refresh();
+    emit discarded();
 }
 
 void LineEditorController::placeCaretAfterChange(const QString (&before)[2])
@@ -1519,26 +1524,6 @@ int LineEditorController::timeCtrlForm() const
     return static_cast<int>(s ? application::timeCtrlForm(s->document().format()) : application::TimeCtrlForm::Ass);
 }
 
-double LineEditorController::startMs() const
-{
-    const auto r = record();
-    return r ? static_cast<double>(r->start.value.microseconds() / 1000) : 0.0;
-}
-
-double LineEditorController::endMs() const
-{
-    const auto r = record();
-    return r ? static_cast<double>(r->end.value.microseconds() / 1000) : 0.0;
-}
-
-double LineEditorController::durationMs() const
-{
-    const auto r = record();
-    return r ? static_cast<double>(
-                   std::max<std::int64_t>(0, (r->end.value.microseconds() - r->start.value.microseconds()) / 1000))
-             : 0.0;
-}
-
 bool LineEditorController::comment() const
 {
     const auto r = record();
@@ -1968,6 +1953,7 @@ void LineEditorController::timesFromAudio(std::int64_t startMs, std::int64_t end
         changedAny = true;
     };
     // SetTime replaces the text of each field it sets, a step not yet sent included.
+    changedAny = m_steppedTime[1] || m_steppedTime[2] || (duration && m_steppedTime[0]);
     m_steppedTime[1].reset();
     m_steppedTime[2].reset();
     if (duration)
@@ -2073,6 +2059,22 @@ bool LineEditorController::timeModified(int role) const
 bool LineEditorController::numberModified(int role) const
 {
     return role >= 0 && role <= 3 && m_steppedNumber[role].has_value();
+}
+
+int LineEditorController::steppedTimes() const
+{
+    int bits = 0;
+    for (int role = 0; role < 3; ++role)
+        bits |= timeModified(role) ? 1 << role : 0;
+    return bits;
+}
+
+int LineEditorController::steppedNumbers() const
+{
+    int bits = 0;
+    for (int role = 0; role < 4; ++role)
+        bits |= numberModified(role) ? 1 << role : 0;
+    return bits;
 }
 
 void LineEditorController::dropStepped()

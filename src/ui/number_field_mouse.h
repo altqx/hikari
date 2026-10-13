@@ -19,8 +19,8 @@ public:
     using QObject::QObject;
     // OnNumWrite's value of typed text; NaN where NumCtrl keeps its value.
     Q_INVOKABLE double value(const QString &text) const;
-    // The wheel from `value` over [from, to]: {value, text} with text "" when
-    // the move left the range (the value moved all the same).
+    // The wheel from `value` over [from, to]: {value, text}, the value
+    // clamped to the range, with text "" when it did not change.
     Q_INVOKABLE QVariantMap wheel(double value, int notches, double from, double to) const;
     // A right-button drag {value, x, y}: each move answers {drag, text}
     // (text "" for no step).

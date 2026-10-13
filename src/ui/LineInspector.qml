@@ -10,10 +10,10 @@
 // Start or End show the warning colour while Start is after End; times the
 // audio display put in the fields show it until the Line takes them. The
 // mouse wheel over a field without the focus changes only that field, which
-// the next Send takes and showing another Line drops (legacy IsModified).
-// Enter runs
-// the Editor's EDITBOX_COMMIT_GO_NEXT_LINE / EDITBOX_COMMIT bindings (the
-// time fields stay on the Line with EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT,
+// the next Send takes and showing another Line drops (legacy IsModified);
+// such a field shows the warning colour until then. Enter runs the Editor's
+// EDITBOX_COMMIT_GO_NEXT_LINE / EDITBOX_COMMIT bindings (the time fields
+// stay on the Line with EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT,
 // EditBox::OnNewline). The Comment box, the Style choice and a pick from the
 // Actor or Effect list send the Line at once (EditBox.cpp:322-325).
 pragma Translator: "HikariSub.Editor"
@@ -47,6 +47,21 @@ ColumnLayout {
         return true
     }
 
+    // E4-stepped-field-warning: a field holding a mouse step that the Line
+    // has not taken shows the theme's warning colour, its text and a 1-pixel
+    // outline over the field's own, until a Send takes the step or showing
+    // another Line, Esc, the Time/Frames switch or a time from the audio
+    // display drops it; screen readers read the state as the field's
+    // description, and its tooltip says it too.
+    readonly property string pendingText: qsTr("Changed, not applied to the line yet")
+    component PendingMark: Rectangle {
+        anchors.fill: parent
+        color: "transparent"
+        border.width: 1
+        border.color: Theme.warning
+        visible: parent.pending
+    }
+
     // The Layer and the margins: legacy NumCtrl (NumberField, with its mouse).
     component Field: NumberField {
         id: field
@@ -78,8 +93,20 @@ ColumnLayout {
         }
         onEditingFinished: apply()
         Keys.onPressed: event => event.accepted = inspector.commitKey(event, field, false)
+        // A step not yet sent: the warning colour (E4-stepped-field-warning).
+        readonly property bool pending: modified || (inspector.editor.steppedNumbers & (1 << numberRole)) !== 0
+        color: pending ? Theme.warning : palette.text
+        PendingMark {}
+        Connections {
+            target: inspector.editor
+            function onDiscarded() {
+                field.text = field.value
+                field.given(field.value)
+            }
+        }
+        Accessible.description: pending ? inspector.pendingText : ""
         ToolTip.visible: hovered && tip.length > 0
-        ToolTip.text: tip
+        ToolTip.text: pending ? tip + "\n" + inspector.pendingText : tip
         ToolTip.delay: 500
     }
 
@@ -98,8 +125,10 @@ ColumnLayout {
         frames: inspector.editor.framesShown
         text: value
         Layout.preferredWidth: 90
-        // Legacy WINDOW_WARNING_ELEMENTS: the theme layer's warning role.
-        color: warning ? Theme.warning : palette.text
+        // Legacy WINDOW_WARNING_ELEMENTS: the theme layer's warning role,
+        // also while the field holds a mouse step not yet sent
+        // (E4-stepped-field-warning).
+        color: warning || pending ? Theme.warning : palette.text
         // A live edit leaves the typed text as it is (OnEdit sets the other
         // fields, not the focused one).
         onValueChanged: {
@@ -136,17 +165,18 @@ ColumnLayout {
         }
         onEditingFinished: apply()
         otherKey: event => inspector.commitKey(event, time, true)
-        // A field without the focus and without a step the Line has not
-        // taken holds the Line's time behind its text again (SetTime).
+        readonly property bool pending: modified || (inspector.editor.steppedTimes & (1 << timeRole)) !== 0
+        PendingMark {}
         Connections {
             target: inspector.editor
-            function onChanged() {
-                if (!time.activeFocus && !inspector.editor.timeModified(time.timeRole))
-                    time.hiddenMs = time.timeMs
+            function onDiscarded() {
+                time.text = time.value
+                time.modified = false
             }
         }
+        Accessible.description: pending ? inspector.pendingText : ""
         ToolTip.visible: hovered && tip.length > 0
-        ToolTip.text: tip
+        ToolTip.text: pending ? tip + "\n" + inspector.pendingText : tip
         ToolTip.delay: 500
     }
     // The time field with the focus (TimeFieldRole), or -1.
@@ -280,7 +310,6 @@ ColumnLayout {
             value: inspector.editor.startText
             enabled: inspector.editor.editable
             timeRole: 1
-            timeMs: inspector.editor.startMs
             warning: inspector.editor.startWarning
             Accessible.name: qsTr("Start")
             tip: qsTr("Line start time")
@@ -292,7 +321,6 @@ ColumnLayout {
             value: inspector.editor.endText
             enabled: inspector.editor.editable && inspector.editor.hasEnd
             timeRole: 2
-            timeMs: inspector.editor.endMs
             warning: inspector.editor.endWarning
             Accessible.name: qsTr("End")
             tip: qsTr("Line end time")
@@ -304,7 +332,6 @@ ColumnLayout {
             value: inspector.editor.durationText
             enabled: inspector.editor.editable && inspector.editor.hasEnd
             timeRole: 0
-            timeMs: inspector.editor.durationMs
             warning: inspector.editor.durationWarning
             Accessible.name: qsTr("Duration")
             tip: qsTr("Line duration")

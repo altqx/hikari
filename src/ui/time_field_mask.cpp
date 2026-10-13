@@ -74,32 +74,24 @@ application::TimeFieldMouse mouseOf(int form, bool frames)
 
 QVariantMap dragMap(const application::TimeFieldDrag &drag)
 {
-    return {{QStringLiteral("ms"), static_cast<double>(drag.ms)},
+    return {{QStringLiteral("value"), static_cast<double>(drag.value)},
             {QStringLiteral("step"), static_cast<double>(drag.step)},
             {QStringLiteral("x"), drag.x},
-            {QStringLiteral("y"), drag.y},
-            {QStringLiteral("frame"), static_cast<double>(drag.frame)}};
+            {QStringLiteral("y"), drag.y}};
 }
 
 } // namespace
 
-QVariantMap TimeFieldMask::wheel(int mouseForm, bool frames, const QString &text, double ms, int column,
-                                 int notches) const
+QString TimeFieldMask::wheel(int mouseForm, bool frames, const QString &text, int column, int notches) const
 {
     const auto next = application::wheelTimeField(mouseOf(mouseForm, frames), text.toStdU16String(),
-                                                  static_cast<std::int64_t>(ms),
                                                   static_cast<std::size_t>(std::max(column, 0)), notches);
-    if (!next)
-        return {};
-    return {{QStringLiteral("text"), QString::fromStdU16String(next->text)},
-            {QStringLiteral("ms"), static_cast<double>(next->ms)}};
+    return next ? QString::fromStdU16String(*next) : QString();
 }
 
-QVariantMap TimeFieldMask::dragBegin(int mouseForm, bool frames, const QString &text, double ms, int column, int x,
-                                     int y) const
+QVariantMap TimeFieldMask::dragBegin(int mouseForm, bool frames, const QString &text, int column, int x, int y) const
 {
     return dragMap(application::beginTimeFieldDrag(mouseOf(mouseForm, frames), text.toStdU16String(),
-                                                   static_cast<std::int64_t>(ms),
                                                    static_cast<std::size_t>(std::max(column, 0)), x, y));
 }
 
@@ -107,10 +99,9 @@ QVariantMap TimeFieldMask::dragMove(int mouseForm, bool frames, const QVariantMa
 {
     if (drag.isEmpty())
         return {};
-    application::TimeFieldDrag state{static_cast<std::int64_t>(drag.value(QStringLiteral("ms")).toDouble()),
+    application::TimeFieldDrag state{static_cast<std::int64_t>(drag.value(QStringLiteral("value")).toDouble()),
                                      static_cast<std::int64_t>(drag.value(QStringLiteral("step")).toDouble()),
-                                     drag.value(QStringLiteral("x")).toInt(), drag.value(QStringLiteral("y")).toInt(),
-                                     static_cast<std::int64_t>(drag.value(QStringLiteral("frame")).toDouble())};
+                                     drag.value(QStringLiteral("x")).toInt(), drag.value(QStringLiteral("y")).toInt()};
     const auto next = application::dragTimeField(mouseOf(mouseForm, frames), state, x, y);
     return {{QStringLiteral("drag"), dragMap(state)},
             {QStringLiteral("text"), next ? QString::fromStdU16String(*next) : QString()}};

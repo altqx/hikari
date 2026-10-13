@@ -108,14 +108,14 @@ class LineEditorController : public QObject {
     Q_PROPERTY(int timeForm READ timeForm NOTIFY changed)
     // E4: what the time fields' mouse reads (TimeCtrl::OnMouseEvent):
     // TimeCtrl's own form (application::TimeCtrlForm: 0 ASS, 1 SRT,
-    // 2 TMPlayer, 3 MicroDVD, 4 MPL2), whether the fields show frames, and
-    // the time behind each field's text in milliseconds (TimeCtrl's
-    // mTime.mstime as SetTime gives it: the Line's Start and End, End - Start).
+    // 2 TMPlayer, 3 MicroDVD, 4 MPL2) and whether the fields show frames.
     Q_PROPERTY(int timeCtrlForm READ timeCtrlForm NOTIFY changed)
     Q_PROPERTY(bool framesShown READ framesShown NOTIFY changed)
-    Q_PROPERTY(double startMs READ startMs NOTIFY changed)
-    Q_PROPERTY(double endMs READ endMs NOTIFY changed)
-    Q_PROPERTY(double durationMs READ durationMs NOTIFY changed)
+    // E4-stepped-field-warning: the fields holding a mouse step the Line has
+    // not taken (timeModified, numberModified), one bit a role: the time
+    // fields' TimeFieldRole (1 << role), the Layer's and the margins' role.
+    Q_PROPERTY(int steppedTimes READ steppedTimes NOTIFY changed)
+    Q_PROPERTY(int steppedNumbers READ steppedNumbers NOTIFY changed)
     // E5: the active Line's Unconfirmed (legacy DoubtfulTL->SetValue in
     // SetLine) and the "Moving tags" toggle (AUTO_MOVE_TAGS_FROM_ORIGINAL).
     Q_PROPERTY(bool unconfirmed READ unconfirmed NOTIFY changed)
@@ -174,9 +174,8 @@ public:
     int timeForm() const;
     int timeCtrlForm() const;
     bool framesShown() const { return frameTimebase() != nullptr; }
-    double startMs() const;
-    double endMs() const;
-    double durationMs() const;
+    int steppedTimes() const;
+    int steppedNumbers() const;
     bool comment() const;
     QString layerText() const;
     QString durationText() const;
@@ -408,6 +407,9 @@ signals:
     void leftLineCommitted(qulonglong line);
     void selectionRequested();
     void fieldFocusRequested(int role); // E5: 0 Original, 1 Translated
+    // E4: discard() put the Line's values back: the fields drop what they
+    // hold (a typed or stepped text, their modified flag), focused or not.
+    void discarded();
 
 private:
     application::EditSession *session() const;

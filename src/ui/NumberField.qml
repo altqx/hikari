@@ -4,11 +4,12 @@
 // application::wheelNumberField and dragNumberField). The wheel steps the
 // value by one a notch, with or without the focus; the right button held and
 // dragged takes the focus and steps it by one every 8 pixels up or down (up
-// adding) or by ten every 10 pixels right or left. Steps stay within
-// [from, to]. A step marks the field modified (HikariTextCtrl::SetValue's
-// modif). The right button opens no context menu here, as in legacy, where
-// its release ended the drag, on any platform's trigger (the Menu key still
-// opens it).
+// adding) or by ten every 10 pixels right or left. Each step is clamped to
+// [from, to] and shows the clamped value (E4-numctrl-clamp; legacy's wheel
+// showed nothing past the range and kept counting). A step marks the field
+// modified (HikariTextCtrl::SetValue's modif). The right button opens no
+// context menu here, as in legacy, where its release ended the drag, on any
+// platform's trigger (the Menu key still opens it).
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
@@ -19,8 +20,8 @@ TextField {
     property real from: 0
     property real to: 0
     // NumCtrl's own `value`: what the field was given (SetInt, clamped), the
-    // last number typed, and what the wheel and the drag left, which may be
-    // outside the range after the wheel.
+    // last number typed (which may be outside the range), and what the wheel
+    // and the drag left.
     property real numValue: 0
     // Stepped by the mouse since the field was last applied or given a value.
     property bool modified: false

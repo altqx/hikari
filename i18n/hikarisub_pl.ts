@@ -1217,6 +1217,10 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation type="obsolete">Edytuj</translation>
     </message>
     <message>
+        <source>Changed, not applied to the line yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit style</source>
         <translation type="unfinished"></translation>
     </message>
