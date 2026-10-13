@@ -1,11 +1,14 @@
 # The Qt deployment manifest (packaging/qt-deployment.json): the Qt plugins a
 # package carries, per platform. Checks, for every platform it names:
-# - the plugins every package must carry ("required": K1's Qt SVG image
-#   plugin and icon engine) are listed;
+# - the plugins every package must carry (K1's Qt SVG image plugin and icon
+#   engine, named here and not in the manifest, so the data under check
+#   cannot drop them) are listed;
 # - each plugin's Qt module archive is in that platform's Qt lock
 #   (cmake/locks/qt-<platform>.lock.json), so the provisioned Qt has it;
 # and, for the platform this runs on, that each plugin file is in the
-# provisioned Qt's plugin folder. Writes the resolved files to OUT. Script mode:
+# provisioned Qt's plugin folder. Writes the resolved files to OUT. Nothing
+# here shows that a package carries them: no package is built from the
+# manifest yet (Phase 5). Script mode:
 #
 #   cmake -DMANIFEST=<qt-deployment.json> -DLOCKS=<cmake/locks> -DPLUGINS=<Qt plugins dir>
 #         -DPLATFORM=linux|windows -DOUT=<resolved.json> -P QtDeploymentManifest.cmake
@@ -18,27 +21,28 @@ endforeach()
 set(problems "")
 file(READ "${MANIFEST}" manifest)
 
-# The plugins every platform's package must carry.
-set(required "")
-string(JSON required_count LENGTH "${manifest}" required)
-math(EXPR last "${required_count} - 1")
-foreach(i RANGE ${last})
-    string(JSON category MEMBER "${manifest}" required ${i})
-    string(JSON names_count LENGTH "${manifest}" required "${category}")
-    math(EXPR last_name "${names_count} - 1")
-    foreach(j RANGE ${last_name})
-        string(JSON name GET "${manifest}" required "${category}" ${j})
-        list(APPEND required "${category}/${name}")
-    endforeach()
-endforeach()
+# The plugins every platform's package must carry (K1).
+set(required imageformats/qsvg iconengines/qsvgicon)
+
+# The members of a JSON object or the length of an array at PATH..., 0 when
+# it is empty or absent ("foreach(RANGE -1)" would still run).
+function(json_length out)
+    string(JSON n ERROR_VARIABLE missing LENGTH "${manifest}" ${ARGN})
+    if(missing)
+        set(n 0)
+    endif()
+    set(${out} ${n} PARENT_SCOPE)
+endfunction()
 
 set(platforms "")
-string(JSON platform_count LENGTH "${manifest}" platforms)
-math(EXPR last "${platform_count} - 1")
-foreach(i RANGE ${last})
-    string(JSON platform MEMBER "${manifest}" platforms ${i})
-    list(APPEND platforms "${platform}")
-endforeach()
+json_length(platform_count platforms)
+if(platform_count GREATER 0)
+    math(EXPR last "${platform_count} - 1")
+    foreach(i RANGE ${last})
+        string(JSON platform MEMBER "${manifest}" platforms ${i})
+        list(APPEND platforms "${platform}")
+    endforeach()
+endif()
 foreach(platform linux windows)
     if(NOT platform IN_LIST platforms)
         list(APPEND problems "no ${platform} manifest")
@@ -52,19 +56,25 @@ foreach(platform IN LISTS platforms)
     set(modules "")
     if(EXISTS "${lock_file}")
         file(READ "${lock_file}" lock)
-        string(JSON object_count LENGTH "${lock}" objects)
-        math(EXPR last_object "${object_count} - 1")
-        foreach(k RANGE ${last_object})
-            string(JSON kind GET "${lock}" objects ${k} kind)
-            if(NOT kind STREQUAL "payload")
-                continue()
-            endif()
-            string(JSON path GET "${lock}" objects ${k} path)
-            get_filename_component(archive "${path}" NAME)
-            if(archive MATCHES "^[0-9.]+-[0-9]+-[0-9]+(qt[a-z0-9]+)-")
-                list(APPEND modules "${CMAKE_MATCH_1}")
-            endif()
-        endforeach()
+        string(JSON object_count ERROR_VARIABLE no_objects LENGTH "${lock}" objects)
+        if(no_objects OR object_count EQUAL 0)
+            list(APPEND problems "${platform}: the Qt lock ${lock_file} lists no objects")
+            set(object_count 0)
+        endif()
+        if(object_count GREATER 0)
+            math(EXPR last_object "${object_count} - 1")
+            foreach(k RANGE ${last_object})
+                string(JSON kind GET "${lock}" objects ${k} kind)
+                if(NOT kind STREQUAL "payload")
+                    continue()
+                endif()
+                string(JSON path GET "${lock}" objects ${k} path)
+                get_filename_component(archive "${path}" NAME)
+                if(archive MATCHES "^[0-9.]+-[0-9]+-[0-9]+(qt[a-z0-9]+)-")
+                    list(APPEND modules "${CMAKE_MATCH_1}")
+                endif()
+            endforeach()
+        endif()
         list(REMOVE_DUPLICATES modules)
     else()
         list(APPEND problems "${platform}: no Qt lock ${lock_file}")
@@ -72,11 +82,17 @@ foreach(platform IN LISTS platforms)
 
     set(listed "")
     set(files_json "")
-    string(JSON category_count LENGTH "${manifest}" platforms ${platform})
+    json_length(category_count platforms ${platform})
+    if(category_count EQUAL 0)
+        list(APPEND problems "${platform}: the manifest lists no plugin category")
+    endif()
     math(EXPR last_category "${category_count} - 1")
     foreach(c RANGE ${last_category})
+        if(category_count EQUAL 0)
+            break()
+        endif()
         string(JSON category MEMBER "${manifest}" platforms ${platform} ${c})
-        string(JSON entry_count LENGTH "${manifest}" platforms ${platform} "${category}")
+        json_length(entry_count platforms ${platform} "${category}")
         if(entry_count EQUAL 0)
             list(APPEND problems "${platform}: ${category} lists no plugin")
             continue()
