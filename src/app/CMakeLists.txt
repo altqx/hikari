@@ -60,3 +60,18 @@ if(WIN32)
     target_link_libraries(hikari_composition PUBLIC hikari_directshow)
     set_property(TARGET hikari_composition APPEND PROPERTY HIKARI_ALLOWED_LINKS hikari_directshow)
 endif()
+# Installers SPEC 1.4, 1.5 and 6.5: on Windows the program is HikariSub.exe,
+# the name legacy's shortcut, App Paths key and file associations point at, a
+# GUI program carrying legacy's icon resources with legacy's ids. The
+# installer's payload is staged by the hikari_package_windows target.
+if(WIN32)
+    set(HIKARI_LEGACY_DIR "${PROJECT_SOURCE_DIR}/HikariSub")
+    set(HIKARI_RC_VERSION "${PROJECT_VERSION}")
+    if(HIKARI_VERSION_SUFFIX)
+        string(APPEND HIKARI_RC_VERSION "-${HIKARI_VERSION_SUFFIX}")
+    endif()
+    configure_file(windows/hikarisub.rc.in "${CMAKE_CURRENT_BINARY_DIR}/hikarisub.rc" @ONLY)
+    target_sources(hikarisub PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/hikarisub.rc")
+    set_target_properties(hikarisub PROPERTIES OUTPUT_NAME HikariSub WIN32_EXECUTABLE TRUE)
+    include("${PROJECT_SOURCE_DIR}/cmake/HikariPackageWindows.cmake")
+endif()

@@ -72,6 +72,14 @@
       }
     },
     {
+      "name": "windows-x64-package",
+      "inherits": "windows-x64-release",
+      "displayName": "Windows x64 release payload for the installer and the portable zip (no tests)",
+      "cacheVariables": {
+        "BUILD_TESTING": "OFF"
+      }
+    },
+    {
       "name": "provision",
       "inherits": "base",
       "displayName": "Provision locked dependencies only",
@@ -100,6 +108,13 @@
     {
       "name": "windows-x64-vsfilter",
       "configurePreset": "windows-x64-vsfilter"
+    },
+    {
+      "name": "windows-x64-package",
+      "configurePreset": "windows-x64-package",
+      "targets": [
+        "hikari_package_windows"
+      ]
     }
   ],
   "testPresets": [
@@ -305,6 +320,19 @@
         {
           "type": "test",
           "name": "windows-x64-vsfilter"
+        }
+      ]
+    },
+    {
+      "name": "windows-x64-package",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-x64-package"
+        },
+        {
+          "type": "build",
+          "name": "windows-x64-package"
         }
       ]
     },
