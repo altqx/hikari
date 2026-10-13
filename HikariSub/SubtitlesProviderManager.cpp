@@ -33,7 +33,7 @@ SubtitlesProvider *SubtitlesProviderManager::GetProvider()
 			SP = new SubtitlesLibass();
 		else
 			SP = new SubtitlesVSFilter();
-
+		m_IsLibass = SP->IsLibass() ? 1 : 0;
 	}
 	return SP;
 }
@@ -62,6 +62,7 @@ void SubtitlesProviderManager::GetProviders(wxArrayString *providerList)
 void SubtitlesProviderManager::DestroyProviders()
 {
 	for (auto *spm : gs_Base) {
+		std::lock_guard<std::mutex> lock(spm->m_ProviderMutex);
 		SAFE_DELETE(spm->SP)
 	}
 }
@@ -101,16 +102,19 @@ void SubtitlesProviderManager::Release()
 
 void SubtitlesProviderManager::Draw(unsigned char* buffer, int time)
 {
+	std::lock_guard<std::mutex> lock(m_ProviderMutex);
 	GetProvider()->Draw(buffer, time);
 }
 
 bool SubtitlesProviderManager::DrawOverlay(unsigned char* overlay, int time, wxRect* dirty)
 {
+	std::lock_guard<std::mutex> lock(m_ProviderMutex);
 	return GetProvider()->DrawOverlay(overlay, time, dirty);
 }
 
 bool SubtitlesProviderManager::Open(int flag, wxString *text)
 {
+	std::lock_guard<std::mutex> lock(m_ProviderMutex);
 	bool result = GetProvider()->Open(text);
 	m_ShowsWholeSubtitles = result && flag == OPEN_WHOLE_SUBTITLES;
 	return result;
@@ -118,26 +122,36 @@ bool SubtitlesProviderManager::Open(int flag, wxString *text)
 //for styles preview
 bool SubtitlesProviderManager::OpenString(wxString *text)
 {
+	std::lock_guard<std::mutex> lock(m_ProviderMutex);
 	return GetProvider()->OpenString(text);
 }
 
 void SubtitlesProviderManager::SetVideoParameters(const wxSize& size, unsigned char format, bool isSwapped)
 {
+	std::lock_guard<std::mutex> lock(m_ProviderMutex);
 	GetProvider()->SetVideoParameters(size, format, isSwapped);
 }
 
 bool SubtitlesProviderManager::IsLibass()
 {
+	// a renderer changed in Options is created again at once, by the
+	// reopen that follows or the next frame drawn
+	int known = m_IsLibass.load();
+	if (known >= 0)
+		return known == 1;
+	std::lock_guard<std::mutex> lock(m_ProviderMutex);
 	return GetProvider()->IsLibass();
 }
 
 bool SubtitlesProviderManager::CanPrepare()
 {
+	std::lock_guard<std::mutex> lock(m_ProviderMutex);
 	return GetProvider()->CanPrepare();
 }
 
 void SubtitlesProviderManager::Prepare(wxString *text)
 {
+	std::lock_guard<std::mutex> lock(m_ProviderMutex);
 	GetProvider()->Prepare(text);
 }
 
@@ -145,6 +159,7 @@ bool SubtitlesProviderManager::ReloadLibraries()
 {
 	if (ProviderInUse() == LIBASS_PROVIDER) {
 		if (gs_Base.size() > 0) {
+			std::lock_guard<std::mutex> lock(gs_Base[0]->m_ProviderMutex);
 			gs_Base[0]->GetProvider()->ReloadLibraries(true);
 		}
 		return true;

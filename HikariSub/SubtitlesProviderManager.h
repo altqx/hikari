@@ -18,6 +18,8 @@
 #include "wx/arrstr.h"
 #include "wx/window.h"
 #include "wx/gdicmn.h"
+#include <atomic>
+#include <mutex>
 #include <vector>
 
 
@@ -33,6 +35,9 @@ enum
 class SubtitlesProvider;
 class TabPanel;
 
+// Its methods may be called from any thread: the subtitle thread draws
+// frames ahead while the main thread opens the subtitles or, after the
+// renderer changes in Options, destroys the provider.
 class SubtitlesProviderManager
 {
 public:
@@ -66,8 +71,16 @@ private:
 	~SubtitlesProviderManager();
 	SubtitlesProviderManager() {};
 	SubtitlesProviderManager(const SubtitlesProviderManager &copy) = delete;
+	// guards SP, which DestroyProviders deletes, and serializes the calls
+	// into it; taken after any lock of the renderer
+	std::mutex m_ProviderMutex;
 	SubtitlesProvider *SP = nullptr;
-	bool m_ShowsWholeSubtitles = false;
+	std::atomic<bool> m_ShowsWholeSubtitles = false;
+	// whether the renderer last created is libass, -1 before one is; read
+	// without the lock, as by the thread showing frames while the one
+	// drawing ahead holds it
+	std::atomic<int> m_IsLibass = -1;
+	// call with m_ProviderMutex locked
 	SubtitlesProvider *GetProvider();
 	static std::vector< SubtitlesProviderManager*> gs_Base;
 };
