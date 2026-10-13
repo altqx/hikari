@@ -10,6 +10,7 @@
 // legacy-win-setup extracts it to out/legacy-win/bundled/HikariSub_x64/Csri).
 // Without it the comparison is skipped, never passed.
 
+#include "hikari/application/font_families.h"
 #include "hikari/backends/csri_renderer.h"
 
 #include <windows.h>
@@ -25,6 +26,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cwchar>
+#include <cwctype>
 #include <filesystem>
 #include <memory>
 #include <mutex>
@@ -676,6 +678,80 @@ TEST(VsfilterRecipe, DrawsWithTheSnapshotsLeasedFonts)
             EXPECT_EQ(faces, (std::set<std::wstring>{L"Titillium Web"})) << name;
             EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << name << ": the lease outlived its context";
         }
+    }
+}
+
+// W2: a fonts reload (application::reloadSubtitleFonts, the fonts-changed
+// hook; legacy's watcher removed the external fonts from the process, added
+// the folder's anew and reopened the subtitles) reaches the kept adapter at
+// its next prepare. One adapter, as the video keeps it, draws a Line in
+// Titillium Web with the external folder's fonts as the application reads
+// them (loadExternalFonts): first from an empty folder (GDI's substitute),
+// then with the font copied into the folder and the fonts reloaded (the
+// family is drawn), then with the font deleted and the fonts reloaded (the
+// substitute again, pixel for pixel, and GDI no longer has the family).
+TEST(VsfilterRecipe, AFontsReloadReachesTheKeptRenderer)
+{
+    ASSERT_TRUE(leasedFontBytes()) << HIKARI_TEST_FONT;
+    if (gdiFace(L"Titillium Web") == L"Titillium Web")
+        GTEST_SKIP() << "Titillium Web is installed on this system, so a reload proves nothing";
+    std::vector<std::pair<std::string, std::shared_ptr<CsriRenderers>>> renderers{
+        {"xy-VSFilter", CsriRenderers::load(builtFolder(), {})}};
+    if (const auto loaded = vsfilterModRenderers())
+        renderers.emplace_back("VSFilterMod", loaded);
+    const auto artifacts = std::filesystem::path(QDir(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR)).absolutePath().toStdU16String());
+    const application::FontNameLower lower = [](char16_t c) { return static_cast<char16_t>(std::towlower(c)); };
+    for (const auto &entry : renderers) {
+        const std::string &name = entry.first;
+        const auto folder = artifacts / ("reload-" + name);
+        std::filesystem::remove_all(folder);
+        std::filesystem::create_directories(folder);
+        CsriRenderer r(entry.second, "");
+        // Words no other test draws: xy-VSFilter keeps module-wide caches.
+        const std::string text = script("",
+                                        "Style: Reload,Titillium Web,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,"
+                                        "0,100,100,0,0,1,2,2,5,20,20,20,1\n",
+                                        "Dialogue: 0,0:00:00.00,0:00:05.00,Reload,,0,0,0,,Reloaded external words\n");
+        const auto draw = [&](const char *step) -> std::optional<OverlayFrame> {
+            const auto load = application::loadExternalFonts(folder.u16string() + u"\\", lower);
+            EXPECT_TRUE(load.opened) << name << ", " << step;
+            RenderSnapshot s = snapshotOf(text);
+            for (const auto &font : load.fonts)
+                s.fonts.push_back(FontLease{font.name, font.bytes});
+            if (!r.prepare(std::move(s))) {
+                ADD_FAILURE() << name << ", " << step << ": the script was refused";
+                return std::nullopt;
+            }
+            auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight);
+            if (!frame || frame->empty) {
+                ADD_FAILURE() << name << ", " << step << ": nothing was drawn";
+                return std::nullopt;
+            }
+            image(*frame).save(QString::fromStdU16String((artifacts / ("reload-" + name + "-" + step + ".png")).u16string()));
+            return std::move(*frame);
+        };
+        const auto before = draw("before");
+        ASSERT_TRUE(before);
+        EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << name;
+
+        std::filesystem::copy_file(std::filesystem::path(HIKARI_TEST_FONT), folder / "TitilliumWeb-Regular.ttf");
+        reloadSubtitleFonts();
+        const auto added = draw("added");
+        ASSERT_TRUE(added);
+        EXPECT_EQ(gdiFace(L"Titillium Web"), L"Titillium Web") << name << ": the added font is not in the process";
+        std::size_t differing = 0;
+        for (std::size_t i = 0; i < added->pixels.size(); ++i)
+            differing += added->pixels[i] != before->pixels[i];
+        std::fprintf(stderr, "W2 %s: after the reload that added the font, the Line differs in %zu bytes\n", name.c_str(),
+                     differing);
+        EXPECT_GT(differing, 0u) << name << ": the font added to the folder was not drawn after the reload";
+
+        std::filesystem::remove(folder / "TitilliumWeb-Regular.ttf");
+        reloadSubtitleFonts();
+        const auto removed = draw("removed");
+        ASSERT_TRUE(removed);
+        EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << name << ": the removed font is still in the process";
+        EXPECT_TRUE(removed->pixels == before->pixels) << name << ": the removed font is still drawn after the reload";
     }
 }
 

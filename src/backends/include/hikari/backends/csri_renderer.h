@@ -28,7 +28,12 @@
 // section, and the snapshot's font leases, which each context adds to the
 // process privately while it lives (AddFontMemResourceEx; legacy loaded its
 // external fonts folder with AddFontResourceExW(FR_PRIVATE), FontEnumerator.cpp
-// LoadExternalFontsToProcess, so the in-process VSFilter saw them).
+// LoadExternalFontsToProcess, so the in-process VSFilter saw them). A reload
+// of the fonts (application::reloadSubtitleFonts: legacy's font watcher
+// removed every external font from the process, added the folder's fonts
+// again and reopened each tab's subtitles) adds the next context's leases
+// anew, those the previous context had added as well, and the previous
+// context's registrations go.
 
 #include "hikari/application/subtitle_render.h"
 #include "hikari/backends/overlay_blend.h"
@@ -144,14 +149,15 @@ private:
     int m_width = 0, m_height = 0;
     std::uint64_t m_generation = 0;
     // The context's leased fonts, added to the process until a prepare
-    // without them or the adapter's end, by the lease's bytes. The entry
-    // holds the bytes, so no other font's buffer can take their address
-    // while the entry stands for them.
+    // without them, a prepare after a fonts reload, or the adapter's end, by
+    // the lease's bytes. The entry holds the bytes, so no other font's buffer
+    // can take their address while the entry stands for them.
     struct AddedFont {
         std::shared_ptr<const std::vector<std::byte>> bytes;
         std::shared_ptr<void> handle;
     };
     std::vector<AddedFont> m_fonts;
+    std::uint64_t m_fontReloads = 0; // application::subtitleFontsReloads() when m_fonts were added
     // The second frame a BGR_ renderer draws onto (white), kept between frames.
     std::vector<std::uint8_t> m_white;
     // The overlay buffers, shared with the frames; and what the shown one has drawn.

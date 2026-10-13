@@ -396,6 +396,63 @@ TEST_F(Csri, AKeptFontHoldsItsLeasesBytes)
     EXPECT_EQ(events, (std::vector<std::string>{"add Leased A", "add Leased B"}));
 }
 
+// A fonts reload (application::reloadSubtitleFonts; legacy's watcher removed
+// the external fonts from the process, added the folder's anew and reopened
+// the subtitles) reaches the kept adapter at its next prepare: every lease
+// of the new context is added again, even one the previous context had
+// added, before the previous context's registrations go; a lease the
+// reloaded context lacks is no longer in the process. Without a reload the
+// same leases are kept.
+TEST_F(Csri, AFontsReloadAddsTheNextContextsFontsAgain)
+{
+    const auto renderers = twoRenderers();
+    std::vector<std::string> events;
+    int live = 0;
+    renderers->setFontLoader([&](const FontLease &font) -> std::shared_ptr<void> {
+        events.push_back("add " + font.family + " (opened " + std::to_string(calls.opened.size()) + ")");
+        ++live;
+        return std::shared_ptr<void>(new int(0), [&, family = font.family](void *p) {
+            events.push_back("remove " + family);
+            --live;
+            delete static_cast<int *>(p);
+        });
+    });
+    const auto lease = [](std::string family, std::byte b) {
+        return FontLease{std::move(family), std::make_shared<const std::vector<std::byte>>(4, b)};
+    };
+    CsriRenderer r(renderers, "xy-vsfilter_textsub", logger());
+    RenderSnapshot first = snapshotOf("[Script Info]\n");
+    first.fonts = {lease("Kept", std::byte{1}), lease("Removed", std::byte{2})};
+    ASSERT_TRUE(r.prepare(first));
+    events.clear();
+    ASSERT_TRUE(r.prepare(first));
+    EXPECT_TRUE(events.empty()) << "no reload: the same leases stay added";
+
+    reloadSubtitleFonts();
+    RenderSnapshot reloaded = snapshotOf("[Script Info]\n");
+    reloaded.fonts = {first.fonts[0], lease("Added", std::byte{3})};
+    first = {};
+    ASSERT_TRUE(r.prepare(reloaded));
+    EXPECT_EQ(events, (std::vector<std::string>{"add Kept (opened 2)", "add Added (opened 2)", "remove Kept",
+                                                "remove Removed"}));
+    EXPECT_EQ(live, 2);
+    events.clear();
+    ASSERT_TRUE(r.prepare(reloaded));
+    EXPECT_TRUE(events.empty()) << "one reload re-adds the fonts once";
+
+    // A context whose script the renderer refuses takes the reload too.
+    reloadSubtitleFonts();
+    calls.failOpen = true;
+    EXPECT_FALSE(r.prepare(reloaded));
+    calls.failOpen = false;
+    EXPECT_EQ(events, (std::vector<std::string>{"add Kept (opened 4)", "add Added (opened 4)", "remove Kept",
+                                                "remove Added"}));
+    events.clear();
+    ASSERT_TRUE(r.prepare(reloaded));
+    EXPECT_TRUE(events.empty());
+    EXPECT_EQ(live, 2);
+}
+
 // The Video page's order (user 2026-10-13): xy-VSFilter, libass, VSFilterMod
 // last; an empty or uninstalled name draws through libass, never VSFilterMod
 // or the first CSRI renderer (W2-libass-default, W2-missing-renderer-libass).

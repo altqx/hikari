@@ -85,7 +85,8 @@ const csri::Renderer *CsriRenderers::select(std::string_view name) const
 }
 
 CsriRenderer::CsriRenderer(std::shared_ptr<CsriRenderers> renderers, std::string name, CsriRenderers::Log log)
-    : m_renderers(std::move(renderers)), m_name(std::move(name)), m_log(std::move(log))
+    : m_renderers(std::move(renderers)), m_name(std::move(name)), m_log(std::move(log)),
+      m_fontReloads(application::subtitleFontsReloads())
 {
 }
 
@@ -120,6 +121,12 @@ std::expected<std::uint64_t, RenderError> CsriRenderer::prepare(application::Ren
     }
     std::lock_guard lock(m_renderers->mutex());
     closeInstance(); // Open: the previous instance is no longer shown
+    // A fonts reload since the previous context's fonts were added: none of
+    // them is kept, each lease is added to the process again (legacy's watcher
+    // removed the external fonts and added the folder's anew).
+    const std::uint64_t reloads = application::subtitleFontsReloads();
+    const bool reloaded = reloads != m_fontReloads;
+    m_fontReloads = reloads;
     const csri::Renderer *renderer = m_renderers->select(m_name);
     if (!renderer || !renderer->openMem) {
         m_renderer = nullptr;
@@ -132,12 +139,12 @@ std::expected<std::uint64_t, RenderError> CsriRenderer::prepare(application::Ren
     // The new context's fonts are added before the previous context's go,
     // so a font both use stays available; a lease the previous context
     // already added (the same bytes, as every edit's snapshot carries) is
-    // kept, not added again.
+    // kept, not added again, unless the fonts were reloaded since.
     std::vector<AddedFont> fonts;
     for (const auto &font : snapshot.fonts) {
         if (!font.bytes)
             continue;
-        const auto kept = std::ranges::find(m_fonts, font.bytes, &AddedFont::bytes);
+        const auto kept = reloaded ? m_fonts.end() : std::ranges::find(m_fonts, font.bytes, &AddedFont::bytes);
         if (kept != m_fonts.end())
             fonts.push_back(*kept);
         else if (auto handle = m_renderers->loadFont(font))
