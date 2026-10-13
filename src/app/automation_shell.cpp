@@ -518,8 +518,15 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
 
 bool AutomationShell::startStep(Run &run)
 {
-    if (run.step < run.validations.size()) {
+    using State = backends::LuaScriptHost::State;
+    for (; run.step < run.validations.size(); ++run.step) {
         const auto &v = run.validations[run.step];
+        // A dependency unloaded, or reloading, since the run began is no
+        // longer a loaded and ready script: skipped, as one that was not
+        // ready when the run began (S4-run-validation).
+        const auto *host = m_manager.host(v.path);
+        if (!host || host->state() != State::Ready)
+            continue;
         run.active = v.path;
         return m_manager.validate(v.path, v.ordinal, run.snapshot);
     }
@@ -539,7 +546,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
             emit progressChanged();
             return;
         }
-        outcome = Outcome::HelperLost; // that script's helper is gone meanwhile
+        outcome = Outcome::HelperLost; // the macro's own helper is gone meanwhile
     }
     Run run = std::move(*m_run);
     m_run.reset();
