@@ -4025,10 +4025,14 @@ ApplicationWindow {
     }
 
     // D1: a layout that could not be restored is named here, with the way back.
-    header: Pane {
+    // ADR 0019: below it, a downloaded update that is ready to install.
+    header: ColumnLayout {
+      spacing: 0
+      Pane {
         objectName: "layoutNotice"
         visible: root.workspaceLayout.notice.length > 0
         padding: 6
+        Layout.fillWidth: true
         RowLayout {
             anchors.fill: parent
             Label {
@@ -4048,6 +4052,17 @@ ApplicationWindow {
                 onClicked: root.workspaceLayout.dismissNotice()
             }
         }
+      }
+      UpdateReadyBar {
+        updates: root.updates
+        Layout.fillWidth: true
+        // The normal quit follows: its review of unsaved work, then the
+        // installer. A cancelled review keeps the update for later.
+        onRestartRequested: {
+            root.updates.installer.restartNow()
+            root.close()
+        }
+      }
     }
 
     footer: ColumnLayout {
@@ -4259,7 +4274,12 @@ ApplicationWindow {
         property var choices: []
         property string problem: ""
         // Closing the window is Cancel (a waiting file result is then shown).
-        onClosing: root.app.cancelClose()
+        // ADR 0019: a cancelled quit takes "Restart now" back.
+        onClosing: {
+            if (!root.app.quitApproved)
+                root.updates.installer.cancelRestart()
+            root.app.cancelClose()
+        }
         function review(list) {
             choices = list.map(r => ({ id: r.id, save: true, path: "" }))
             rows = list
@@ -4949,18 +4969,32 @@ ApplicationWindow {
     }
     // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
     // and failures; the automatic one speaks only for a newer release.
+    // ADR 0019: an AUR copy gets its own notice; an update that installs
+    // offers "Download and install" and, once downloaded, the ready bar.
     Connections {
         target: root.updates
         function onFinished(outcome, release, interactive) {
             if (outcome === "available") {
-                updateAvailable.release = release
-                updateAvailable.open()
+                if (release.offer === "aur") {
+                    updateAurNotice.show(release)
+                } else {
+                    updateAvailable.release = release
+                    updateAvailable.open()
+                }
             } else {
                 updateMessage.text = outcome === "current" ? qsTr("You already have the latest version")
                                                           : qsTr("Cannot check for updates")
                 updateMessage.open()
             }
         }
+        function onNotice(message) {
+            updateMessage.text = message
+            updateMessage.open()
+        }
+    }
+    Connections {
+        target: root.updates.installer
+        function onReady() { updateAvailable.close() }
     }
     Dialog {
         id: updateMessage
@@ -4970,12 +5004,19 @@ ApplicationWindow {
         modal: true
         anchors.centerIn: parent
         standardButtons: Dialog.Ok
-        Label { id: updateMessageLabel }
+        Label { id: updateMessageLabel; wrapMode: Text.WordWrap; width: Math.min(implicitWidth, 520) }
+    }
+    UpdateAurNotice {
+        id: updateAurNotice
+        updates: root.updates
+        anchors.centerIn: parent
     }
     Dialog {
         id: updateAvailable
         objectName: "updateAvailable"
         property var release: ({})
+        readonly property bool installs: release.offer === "install" && root.updates.autoInstall
+        readonly property bool downloading: root.updates.installer.state === "downloading"
         title: qsTr("A new version is available")
         modal: true
         anchors.centerIn: parent
@@ -4988,7 +5029,27 @@ ApplicationWindow {
                 Layout.preferredHeight: 220
                 TextArea { objectName: "updateNotes"; text: updateAvailable.release.notes || ""; readOnly: true; wrapMode: TextEdit.Wrap }
             }
-            Label { text: updateAvailable.release.url || "" }
+            // A package this system cannot run: the release page only.
+            Label {
+                objectName: "updateRequirement"
+                visible: updateAvailable.release.offer === "requirement"
+                wrapMode: Text.WordWrap
+                Layout.preferredWidth: 460
+                text: updateAvailable.release.requirementIsOs
+                      ? qsTr("This version needs Windows %1 or later.").arg(updateAvailable.release.requirement || "")
+                      : qsTr("This version needs glibc %1 or later.").arg(updateAvailable.release.requirement || "")
+            }
+            // The download in place of the button that started it.
+            RowLayout {
+                visible: updateAvailable.downloading
+                Layout.fillWidth: true
+                ProgressBar {
+                    objectName: "updateProgress"
+                    Layout.fillWidth: true
+                    value: root.updates.installer.progress
+                }
+                Label { text: qsTr("Downloading...") }
+            }
             CheckBox {
                 objectName: "updateAutoCheck"
                 text: qsTr("Check for updates automatically")
@@ -5001,8 +5062,25 @@ ApplicationWindow {
                 checked: root.updates.stableOnly
                 onToggled: root.updates.stableOnly = checked
             }
+            CheckBox {
+                objectName: "updateAutoInstall"
+                visible: root.updates.installsUpdates
+                text: qsTr("Install updates automatically")
+                checked: root.updates.autoInstall
+                onToggled: root.updates.autoInstall = checked
+            }
             WindowFooter {
-                Button { text: qsTr("Open the download page"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole; onClicked: root.updates.openReleasePage(updateAvailable.release.url || "") }
+                Button {
+                    visible: !updateAvailable.downloading
+                    text: updateAvailable.installs ? qsTr("Download and install") : qsTr("Open the download page")
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+                    onClicked: {
+                        if (updateAvailable.installs)
+                            root.updates.downloadOffer()
+                        else
+                            root.updates.openReleasePage(updateAvailable.release.url || "")
+                    }
+                }
                 Button { objectName: "updateRemind"; text: qsTr("Remind me in a week"); DialogButtonBox.buttonRole: DialogButtonBox.NoRole; onClicked: { root.updates.remindInAWeek(); updateAvailable.close() } }
                 Button { text: qsTr("Close"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: updateAvailable.close() }
             }
@@ -5018,7 +5096,7 @@ ApplicationWindow {
         standardButtons: Dialog.Ok
         Label {
             objectName: "aboutText"
-            text: qsTr("HikariSub subtitle editor by altqx,\nversion %1").arg(root.updates.version) + " \n\n" +
+            text: qsTr("HikariSub subtitle editor by altqx,\nversion %1").arg(root.updates.versionLabel) + " \n\n" +
                   qsTr("Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n") +
                   qsTr("If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n") +
                   qsTr("HikariSub includes parts of the following projects:\n") +
