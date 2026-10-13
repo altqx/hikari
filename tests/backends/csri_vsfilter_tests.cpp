@@ -20,9 +20,12 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cwchar>
 #include <filesystem>
+#include <memory>
 #include <mutex>
 #include <set>
 #include <string>
@@ -175,10 +178,13 @@ HGDIOBJ WINAPI selectObject(HDC dc, HGDIOBJ object)
         if (GetObjectW(object, sizeof lf, &lf) && GetTextFaceW(dc, LF_FACESIZE, face)) {
             Face f{lf.lfFaceName, lf.lfWeight, lf.lfItalic != 0, face, {}};
             if (const UINT size = GetOutlineTextMetricsW(dc, 0, nullptr)) {
-                std::vector<char> buffer(size);
-                auto *otm = reinterpret_cast<OUTLINETEXTMETRICW *>(buffer.data());
+                // Whole OUTLINETEXTMETRICW elements, so the structure is aligned;
+                // its strings follow it, at offsets from its start.
+                std::vector<OUTLINETEXTMETRICW> buffer((size + sizeof(OUTLINETEXTMETRICW) - 1) / sizeof(OUTLINETEXTMETRICW));
+                OUTLINETEXTMETRICW *otm = buffer.data();
                 if (GetOutlineTextMetricsW(dc, size, otm))
-                    f.full = reinterpret_cast<const wchar_t *>(buffer.data() + reinterpret_cast<std::size_t>(otm->otmpFullName));
+                    f.full = reinterpret_cast<const wchar_t *>(reinterpret_cast<const char *>(otm)
+                                                               + reinterpret_cast<std::size_t>(otm->otmpFullName));
             }
             std::lock_guard guard(lock);
             faces.insert(std::move(f));
@@ -189,6 +195,10 @@ HGDIOBJ WINAPI selectObject(HDC dc, HGDIOBJ object)
 
 // Points `module`'s import of dll!function at `replacement`; the import's
 // previous target, or null when the module does not import it by name.
+// Only the module's own import table: xy-VSFilter links MFC statically and
+// delay-loads only oleacc.dll (ports/hikari-xy-vsfilter/CMakeLists.txt, as
+// VSFilter.props has it), so its SelectFont calls go through that table; a
+// renderer reaching gdi32 another way fails the read-back, it never passes.
 void *patchImport(HMODULE module, const char *dll, const char *function, void *replacement)
 {
     auto *base = reinterpret_cast<BYTE *>(module);
@@ -291,6 +301,39 @@ QString line(const Face &f)
         .arg(f.weight)
         .arg(f.italic ? QStringLiteral(", italic") : QString())
         .arg(selected, QString::fromStdWString(f.full), matched ? QStringLiteral("matched") : QStringLiteral("substituted"));
+}
+
+// The built renderer's read-back, taken once per process: its caches would
+// answer a second probe without selecting a font.
+const std::set<Face> &builtFaces(std::string &problem)
+{
+    static std::string first;
+    static const std::set<Face> faces = readBack(CsriRenderers::load(builtFolder(), {}), first);
+    problem = first;
+    return faces;
+}
+
+// The probe's own selections, by what was asked and what GDI chose (the
+// full name is reported, not compared).
+std::set<Face> probed(const std::set<Face> &faces)
+{
+    std::set<Face> out;
+    for (const auto &f : faces)
+        for (const wchar_t *family : {L"Arial", L"Times New Roman", L"Hikari No Such Font"})
+            if (_wcsicmp(f.requested.c_str(), family) == 0)
+                out.insert(Face{f.requested, f.weight, f.italic, f.selected, {}});
+    return out;
+}
+
+// A report file in the test artifacts, open for writing (closed on failure).
+std::unique_ptr<QFile> report(const char *name)
+{
+    const QString artifacts = QStringLiteral(HIKARI_TEST_ARTIFACT_DIR);
+    QDir().mkpath(artifacts);
+    auto file = std::make_unique<QFile>(artifacts + QLatin1Char('/') + QLatin1String(name));
+    if (!file->open(QIODevice::WriteOnly | QIODevice::Text))
+        return {};
+    return file;
 }
 
 } // namespace drawn
@@ -412,27 +455,23 @@ TEST(VsfilterRecipe, ReportsTheFacesGdiResolvesForItsOutput)
 
 // The faces read back from xy-VSFilter's own font selections while it drew
 // (drawn::selectObject): each requested family GDI has is drawn with that
-// family, a family it lacks with a substitute, reported as substituted; with
-// the legacy release's renderer (HIKARI_LEGACY_CSRI) the two select the same
-// faces. Written to vsfilter-drawn-faces.txt.
+// family, a family it lacks with a substitute, reported as substituted.
+// Written to vsfilter-drawn-faces.txt.
 TEST(VsfilterRecipe, ReadsBackTheFacesItDrewWith)
 {
     std::string problem;
-    const auto renderers = CsriRenderers::load(builtFolder(), {});
-    const auto built = drawn::readBack(renderers, problem);
+    const auto &built = drawn::builtFaces(problem);
     ASSERT_TRUE(problem.empty()) << problem;
-    const QString artifacts = QStringLiteral(HIKARI_TEST_ARTIFACT_DIR);
-    QDir().mkpath(artifacts);
-    QFile report(artifacts + QStringLiteral("/vsfilter-drawn-faces.txt"));
-    ASSERT_TRUE(report.open(QIODevice::WriteOnly | QIODevice::Text));
-    report.write("# built: the faces xy-VSFilter selected while drawing (requested -> GDI's face [full name])\n");
+    const auto report = drawn::report("vsfilter-drawn-faces.txt");
+    ASSERT_TRUE(report);
+    report->write("# built: the faces xy-VSFilter selected while drawing (requested -> GDI's face [full name])\n");
     for (const auto &f : built) {
-        report.write((drawn::line(f) + QLatin1Char('\n')).toUtf8());
+        report->write((drawn::line(f) + QLatin1Char('\n')).toUtf8());
         std::fprintf(stderr, "W2 drawn %s\n", qPrintable(drawn::line(f)));
     }
-    const auto selectedFor = [&](const std::set<drawn::Face> &faces, const wchar_t *family, LONG weight, bool italic) {
+    const auto selectedFor = [&](const wchar_t *family, LONG weight, bool italic) {
         std::set<std::wstring> out;
-        for (const auto &f : faces)
+        for (const auto &f : built)
             if (_wcsicmp(f.requested.c_str(), family) == 0 && f.weight == weight && f.italic == italic)
                 out.insert(f.selected);
         return out;
@@ -440,21 +479,38 @@ TEST(VsfilterRecipe, ReadsBackTheFacesItDrewWith)
     const auto same = [](const std::set<std::wstring> &selected, const wchar_t *family) {
         return selected.size() == 1 && _wcsicmp(selected.begin()->c_str(), family) == 0;
     };
-    EXPECT_TRUE(same(selectedFor(built, L"Arial", FW_NORMAL, false), L"Arial")) << "Arial";
-    EXPECT_TRUE(same(selectedFor(built, L"Arial", FW_BOLD, true), L"Arial")) << "Arial bold italic";
-    EXPECT_TRUE(same(selectedFor(built, L"Times New Roman", FW_NORMAL, false), L"Times New Roman")) << "Times New Roman";
-    const auto missing = selectedFor(built, L"Hikari No Such Font", FW_NORMAL, false);
+    EXPECT_TRUE(same(selectedFor(L"Arial", FW_NORMAL, false), L"Arial")) << "Arial";
+    EXPECT_TRUE(same(selectedFor(L"Arial", FW_BOLD, true), L"Arial")) << "Arial bold italic";
+    EXPECT_TRUE(same(selectedFor(L"Times New Roman", FW_NORMAL, false), L"Times New Roman")) << "Times New Roman";
+    const auto missing = selectedFor(L"Hikari No Such Font", FW_NORMAL, false);
     EXPECT_FALSE(missing.empty()) << "the missing family was never selected";
     for (const auto &face : missing)
         EXPECT_NE(_wcsicmp(face.c_str(), L"Hikari No Such Font"), 0) << "a family GDI lacks is drawn with a substitute";
+}
 
+// The same probe through the legacy release's renderer (HIKARI_LEGACY_CSRI):
+// for the probe's families (other selections, such as a DC's previous font
+// put back, are not compared) both renderers ask for the same weights and
+// slants and GDI gives them the same faces. Written to
+// vsfilter-drawn-faces-legacy.txt. Skipped without the legacy release.
+TEST(VsfilterRecipe, SelectsTheFacesTheLegacyReleaseSelects)
+{
     const auto legacy = legacyFolder();
     if (legacy.empty())
-        return;
-    const auto old = drawn::readBack(CsriRenderers::load(legacy, {}), problem);
+        GTEST_SKIP() << "HIKARI_LEGACY_CSRI does not name the legacy release's Csri folder";
+    std::string problem;
+    const auto built = drawn::probed(drawn::builtFaces(problem));
+    ASSERT_TRUE(problem.empty()) << problem;
+    const auto old = drawn::probed(drawn::readBack(CsriRenderers::load(legacy, {}), problem));
     ASSERT_TRUE(problem.empty()) << "legacy: " << problem;
-    report.write("# legacy release (v0.0.1-rc.1)\n");
-    for (const auto &f : old)
-        report.write((drawn::line(f) + QLatin1Char('\n')).toUtf8());
+    const auto report = drawn::report("vsfilter-drawn-faces-legacy.txt");
+    ASSERT_TRUE(report);
+    for (const auto &[title, faces] : {std::pair{"# built", &built}, std::pair{"# legacy release (v0.0.1-rc.1)", &old}}) {
+        report->write(title);
+        report->write("\n");
+        for (const auto &f : *faces)
+            report->write((drawn::line(f) + QLatin1Char('\n')).toUtf8());
+    }
+    EXPECT_FALSE(built.empty());
     EXPECT_EQ(built, old) << "the recipe's renderer and the legacy release's selected different faces";
 }
