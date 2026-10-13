@@ -16,7 +16,8 @@
 // steps that column's unit per notch, and the right button held and dragged
 // steps it every 8 pixels up or down (up adding) or ten units every 10
 // pixels right or left. The right button opens no context menu here, as in
-// legacy, where its release ended the drag (the Menu key still opens it).
+// legacy, where its release ended the drag, on any platform's trigger (the
+// Menu key still opens it).
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
@@ -37,6 +38,8 @@ TextField {
     // The number is a MicroDVD frame, which the wheel steps by one.
     property bool frameNumber: false
     property var drag: ({}) // the right button's drag (TimeFieldMask.dragBegin), {} when none
+    // From the right button's press to just after its release.
+    property bool rightHeld: false
 
     property string held // the last text of the form, for an edit to go back to
     selectByMouse: true
@@ -66,6 +69,7 @@ TextField {
         anchors.fill: parent
         acceptedButtons: Qt.RightButton
         onPressed: mouse => {
+            field.rightHeld = true
             const column = field.positionAt(mouse.x, mouse.y, TextInput.CursorOnCharacter)
             field.forceActiveFocus(Qt.MouseFocusReason)
             field.select(column, column)
@@ -78,8 +82,16 @@ TextField {
             field.drag = moved.drag
             field.step(moved.text)
         }
-        onReleased: field.drag = ({})
-        onCanceled: field.drag = ({})
+        onReleased: {
+            field.drag = ({})
+            // After the release's own delivery, in which Qt may make its
+            // context menu event.
+            Qt.callLater(() => field.rightHeld = false)
+        }
+        onCanceled: {
+            field.drag = ({})
+            field.rightHeld = false
+        }
         onWheel: wheel => {
             // GetWheelRotation() / GetWheelDelta(): whole notches only.
             const notches = Math.trunc(wheel.angleDelta.y / 120)
@@ -87,6 +99,16 @@ TextField {
                                            field.positionAt(wheel.x, wheel.y, TextInput.CursorOnCharacter), notches))
             wheel.accepted = true
         }
+    }
+    // The right button's context menu event (Qt makes one from its press,
+    // or on Windows its release, when that is left unaccepted) stops here: a
+    // ContextMenu with no menu takes it, so the field's own menu never opens
+    // from the right button. The Menu key's, made with no button held, goes
+    // on to the field.
+    Item {
+        anchors.fill: parent
+        visible: field.rightHeld
+        ContextMenu.onRequested: {}
     }
     onTextChanged: if (TimeFieldMask.holds(form, text)) held = text
     onTextEdited: {

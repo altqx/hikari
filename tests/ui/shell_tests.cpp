@@ -39,6 +39,7 @@
 #include <QClipboard>
 #include <QStyleHints>
 #include <QDirIterator>
+#include <QContextMenuEvent>
 #include <QGuiApplication>
 #include <QSignalSpy>
 #include <QQmlApplicationEngine>
@@ -5592,9 +5593,9 @@ private slots:
         QTRY_VERIFY(session->document().lines()[0]->comment);
         QCOMPARE(editor.textState(), 3);
         QTRY_COMPARE(appliedMarks("lineTextHighlighter"), QVariantList{});
-        // A code line: words are variables; a word ending at a block is text.
+        // A code line: its words are variables, a word ending at a block too.
         QTRY_COMPARE(appliedColours("lineTextHighlighter"),
-                     colours({{0, 5, R::TemplateVariables}, {11, 12, R::CurlyBraces}, {12, 13, R::Operators},
+                     colours({{0, 5, R::TemplateVariables}, {6, 11, R::TemplateVariables}, {11, 12, R::CurlyBraces}, {12, 13, R::Operators},
                               {13, 14, R::Names}, {14, 15, R::Values}, {15, 16, R::CurlyBraces}}));
 
         // SetLine: the second Line is a code comment.
@@ -14642,6 +14643,15 @@ private slots:
         wheel(charPoint(start, 6), -240);
         QCOMPARE(text(), QStringLiteral("0:00:00.00"));
         QCOMPARE(draftStart(), 0);
+        // OnEdit acts only on the focused field: a Start stepped past End
+        // without the focus takes no warning colour.
+        wheel(charPoint(start, 6), 6 * 120);
+        QCOMPARE(text(), QStringLiteral("0:00:06.00"));
+        QCOMPARE(draftStart(), 6'000'000);
+        QVERIFY(!application->editor().startWarning());
+        QVERIFY(!application->editor().endWarning());
+        wheel(charPoint(start, 6), -6 * 120);
+        QCOMPARE(text(), QStringLiteral("0:00:00.00"));
         // Below 0 the wheel does nothing; less than a notch is no step.
         wheel(charPoint(start, 3), -120);
         QCOMPARE(text(), QStringLiteral("0:00:00.00"));
@@ -14659,15 +14669,31 @@ private slots:
         QCOMPARE(text(), QStringLiteral("0:00:01.00"));
 
         // The right button: the caret to the column and the focus, then the drag.
-        // The popups shown: the visible items of the window's overlay.
-        const auto shownPopups = [&] {
+        // The context menus shown: a field's own (Fusion's
+        // TextEditingContextMenu, a Popup.Window outside the overlay) and any
+        // in the window's overlay.
+        const auto menusOf = [](QQuickItem *field) {
+            QList<QObject *> menus;
+            for (auto *popup : field->findChildren<QObject *>())
+                if (popup->inherits("QQuickPopup"))
+                    menus << popup;
+            return menus;
+        };
+        const auto shownMenus = [&](QQuickItem *field) {
             int n = 0;
+            for (auto *menu : menusOf(field))
+                n += menu->property("visible").toBool();
             for (auto *layer : window->contentItem()->childItems())
                 if (QByteArray(layer->metaObject()->className()) == "QQuickOverlay")
                     for (auto *child : layer->childItems())
                         n += child->isVisible();
             return n;
         };
+        const auto closeMenus = [&](QQuickItem *field) {
+            for (auto *menu : menusOf(field))
+                QMetaObject::invokeMethod(menu, "close");
+        };
+        const auto shownPopups = [&] { return shownMenus(start); };
         const int popupsBefore = shownPopups();
         const QPoint at = charPoint(start, 6);
         QTest::mousePress(window, Qt::RightButton, {}, at);
@@ -14692,6 +14718,45 @@ private slots:
         // Released: moving changes nothing.
         QTest::mouseMove(window, at + QPoint(0, -40));
         QCOMPARE(text(), QStringLiteral("0:00:02.00"));
+        // Windows opens a context menu on the right button's release
+        // (QStyleHints::contextMenuTrigger, which QWindow synthesizes the
+        // menu event from when the release is not accepted): the drag's
+        // release opens none there either. The Layer field, with no mouse of
+        // its own, shows that the right button does open a field's menu,
+        // on the press and then on the release.
+        auto *layer = item("layerField");
+        const QPoint layerAt = layer->mapToScene(QPointF(layer->width() / 2, layer->height() / 2)).toPoint();
+        QCOMPARE(shownMenus(layer), 0);
+        QTest::mousePress(window, Qt::RightButton, {}, layerAt);
+        QTRY_COMPARE(shownMenus(layer), 1);
+        closeMenus(layer);
+        QTest::mouseRelease(window, Qt::RightButton, {}, layerAt);
+        QTRY_COMPARE(shownMenus(layer), 0);
+        auto *hints = QGuiApplication::styleHints();
+        const auto trigger = hints->contextMenuTrigger();
+        hints->setContextMenuTrigger(Qt::ContextMenuTrigger::Release);
+        QTest::mousePress(window, Qt::RightButton, {}, layerAt);
+        QCOMPARE(shownMenus(layer), 0);
+        QTest::mouseRelease(window, Qt::RightButton, {}, layerAt);
+        QTRY_COMPARE(shownMenus(layer), 1);
+        closeMenus(layer);
+        QTRY_COMPARE(shownMenus(layer), 0);
+        QTest::mousePress(window, Qt::RightButton, {}, at);
+        QTest::mouseMove(window, at + QPoint(0, -8));
+        QCOMPARE(text(), QStringLiteral("0:00:03.00"));
+        QTest::mouseRelease(window, Qt::RightButton, {}, at + QPoint(0, -8));
+        QCOMPARE(shownPopups(), popupsBefore);
+        hints->setContextMenuTrigger(trigger);
+        // The Menu key's event opens the field's menu. It is sent at the
+        // focused field's origin, where Qt Quick aims one that has no
+        // position (QQuickDeliveryAgentPrivate::contextMenuTargets).
+        start->forceActiveFocus();
+        const QPoint origin = start->mapToScene(QPointF()).toPoint();
+        QContextMenuEvent menuKey(QContextMenuEvent::Keyboard, origin, window->mapToGlobal(origin));
+        QCoreApplication::sendEvent(window, &menuKey);
+        QTRY_COMPARE(shownPopups(), popupsBefore + 1);
+        closeMenus(start);
+        QTRY_COMPARE(shownPopups(), popupsBefore);
         application->editor().discard();
     }
 

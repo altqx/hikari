@@ -5,6 +5,7 @@
 #include <QTextDocument>
 #include <QTextLayout>
 
+#include <algorithm>
 #include <tuple>
 
 namespace hikari::ui {

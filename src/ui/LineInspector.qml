@@ -85,14 +85,18 @@ ColumnLayout {
         // fields, not the focused one).
         onValueChanged: if (!typing) text = value
         onTyped: {
+            // The wheel steps a field without the focus, whose editing then
+            // never finishes: it applies at once (legacy's Send took every
+            // modified field). OnEdit acts only on the focused field
+            // (EditBox.cpp:1524-1525), so the live edit and its warning
+            // colour do not run for it.
+            if (!activeFocus) {
+                apply()
+                return
+            }
             typing = true
             inspector.editor.timeTyped(timeRole, text)
             typing = false
-            // The wheel steps a field without the focus, whose editing then
-            // never finishes: it applies at once (legacy's Send took every
-            // modified field).
-            if (!activeFocus)
-                apply()
         }
         // Only a changed field is sent (legacy IsModified). An applied time
         // field shows the Line's form again, the only form TimeCtrl holds.

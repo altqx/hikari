@@ -166,4 +166,24 @@ TEST(EditorSyntax, CodeLinesAreCodeThroughout)
                                                                  {2, 3, R::Names},
                                                                  {3, 4, R::Values},
                                                                  {4, 5, R::CurlyBraces}}));
+    // Its plain text is a variable too (DrawFieldD2D:1188's `ctext`): before
+    // a block, before '}', before a tag's backslash and before a line break.
+    EXPECT_EQ(runs(u"ab{\\b1}", TextState::Code), (Runs{{0, 2, R::TemplateVariables},
+                                                                   {2, 3, R::CurlyBraces},
+                                                                   {3, 4, R::Operators},
+                                                                   {4, 5, R::Names},
+                                                                   {5, 6, R::Values},
+                                                                   {6, 7, R::CurlyBraces}}));
+    EXPECT_EQ(runs(u"{x}", TextState::Code), (Runs{{0, 1, R::CurlyBraces},
+                                                              {1, 2, R::TemplateVariables},
+                                                              {2, 3, R::CurlyBraces}}));
+    EXPECT_EQ(runs(u"{a\\b1}", TextState::Code), (Runs{{0, 1, R::CurlyBraces},
+                                                                  {1, 2, R::TemplateVariables},
+                                                                  {2, 3, R::Operators},
+                                                                  {3, 4, R::Names},
+                                                                  {4, 5, R::Values},
+                                                                  {5, 6, R::CurlyBraces}}));
+    EXPECT_EQ(runs(u"a\\Nb", TextState::Code), (Runs{{0, 1, R::TemplateVariables},
+                                                                 {1, 3, R::SplitAndDrawings},
+                                                                 {3, 4, R::TemplateVariables}}));
 }

@@ -118,6 +118,10 @@ public:
 private:
     void draw(const Part &part, Role role)
     {
+        // DrawFieldD2D:1188: a code Line's `ctext` is EDITOR_TEMPLATE_VARIABLES,
+        // so every plain-text draw in it is a variable.
+        if (role == Role::Text && m_state == TextState::Code)
+            role = Role::TemplateVariables;
         for (const std::size_t i : part.at)
             m_roles[i] = role;
     }
