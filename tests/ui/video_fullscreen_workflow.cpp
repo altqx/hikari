@@ -10,7 +10,12 @@
 // Esc brings everything back.
 //
 // Linux runs it offscreen with two screens (fullscreen-two-screens.json, the
-// second at scale 2); Windows on the real desktop.
+// second at scale 2), and again with `--primary-second`, the second screen
+// made the primary before the window opens: the monitors are then the
+// primary first and the other after it (V5-monitor-order), so "monitor 2"
+// is the screen the system lists first. Windows runs it on the real desktop.
+// Every run checks the fullscreen window's owner (V5-wayland-parent): the
+// main window, except on Wayland.
 
 #include "hikari/app/application.h"
 #include "docking.h"
@@ -28,6 +33,8 @@
 #include <QTimer>
 #include <QtQml/qqmlextensionplugin.h>
 #include <Spix/QtQmlBot.h>
+#include <qpa/qplatformscreen.h>
+#include <qpa/qwindowsysteminterface.h>
 
 #include <atomic>
 #include <chrono>
@@ -161,14 +168,38 @@ int main(int argc, char **argv)
     std::setvbuf(stdout, nullptr, _IONBF, 0); // each line as it comes (a task's log)
     QGuiApplication app(argc, argv);
     int monitors = 1;
-    for (int i = 1; i + 1 < argc; ++i)
-        if (std::strcmp(argv[i], "--monitors") == 0)
+    bool primarySecond = false;
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--monitors") == 0 && i + 1 < argc)
             monitors = std::atoi(argv[i + 1]);
+        if (std::strcmp(argv[i], "--primary-second") == 0)
+            primarySecond = true;
+    }
     int failures = 0;
     auto expect = [&](bool ok, const char *what) {
         std::printf("%s: %s\n", ok ? "ok" : "FAILED", what);
         failures += ok ? 0 : 1;
     };
+    // The system's list before any reordering, and with --primary-second
+    // its second screen made the primary (as a display setting would).
+    const auto systemScreens = QGuiApplication::screens();
+    if (primarySecond) {
+        expect(systemScreens.size() >= 2, "two screens for --primary-second");
+        if (systemScreens.size() >= 2)
+            QWindowSystemInterface::handlePrimaryScreenChanged(systemScreens[1]->handle());
+        expect(QGuiApplication::primaryScreen() == systemScreens.value(1), "the second screen is the primary");
+    }
+    {
+        // V5-monitor-order: the primary first, the others in the system's order.
+        const auto ordered = hikari::ui::VideoFullscreenController::monitors();
+        QList<QScreen *> expected{QGuiApplication::primaryScreen()};
+        for (QScreen *s : systemScreens)
+            if (s != QGuiApplication::primaryScreen())
+                expected.push_back(s);
+        expect(ordered == expected, "the monitors: the primary first, the others in the system's order");
+        for (QScreen *s : ordered)
+            std::printf("monitor %s%s\n", qPrintable(s->name()), s == QGuiApplication::primaryScreen() ? " primary" : "");
+    }
     const auto screens = QGuiApplication::screens();
     for (QScreen *s : screens)
         std::printf("screen %s %dx%d+%d+%d dpr %.2f%s\n", qPrintable(s->name()), s->geometry().width(),
@@ -278,6 +309,14 @@ int main(int argc, char **argv)
                     s.mainGeometry.width(), s.mainGeometry.height(), s.mainGeometry.x(), s.mainGeometry.y(),
                     s.mainVisibility, s.presenterInFullscreen ? "fullscreen" : "panel", s.videoDockOpen ? "open" : "closed",
                     s.focusInFullscreen ? "fullscreen" : "other", qPrintable(s.focusItem));
+    // V5-wayland-parent: owned by the main window, except on Wayland.
+    {
+        const bool wayland = QGuiApplication::platformName().startsWith(QLatin1String("wayland"));
+        QQuickWindow *w = fs.window();
+        expect(w && w->transientParent() == (wayland ? nullptr : static_cast<QWindow *>(window)),
+               wayland ? "the fullscreen window has no parent (Wayland)"
+                       : "the fullscreen window is owned by the main window");
+    }
     const std::size_t steps = monitors > 1 ? 11 : 7;
     expect(o.size() == steps, "every step observed");
     if (o.size() == steps) {
@@ -315,8 +354,11 @@ int main(int argc, char **argv)
     }
     if (monitors > 1 && changes.size() == 4) {
         const auto &in = changes[2], &out = changes[3];
-        const QScreen *second = screens.size() > 1 ? screens[1] == QGuiApplication::primaryScreen() ? screens[0] : screens[1]
-                                                   : nullptr;
+        // Monitor 2 (index 1): the first screen after the primary in the system's order.
+        const auto ordered = hikari::ui::VideoFullscreenController::monitors();
+        const QScreen *second = ordered.size() > 1 ? ordered[1] : nullptr;
+        if (primarySecond)
+            expect(second == systemScreens.value(0), "monitor 2 is the screen the system lists first");
         expect(in.active && in.monitor == 1, "the context menu's monitor 2");
         expect(second && in.screen == second->name(), "on the second monitor");
         expect(second && in.fullscreenGeometry == second->geometry(), "covering the second monitor");

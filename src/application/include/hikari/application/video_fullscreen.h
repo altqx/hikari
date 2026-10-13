@@ -11,6 +11,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace hikari::application {
@@ -32,6 +33,22 @@ struct MonitorRect {
 // rectangle (the main window), else the first; n: that monitor, the first
 // beyond the list. -1 when there is no monitor (legacy's 1920x1080 guess).
 int fullscreenMonitor(int monitor, const std::vector<MonitorRect> &monitors, const MonitorRect &program);
+
+// The monitors' order (V5-monitor-order): `count` monitors in the system's
+// order with the one at `primary` moved to the front and the others kept in
+// their order, as legacy Windows' MonitorEnumProc1 built GetMonitorRect1's
+// list (UtilsWindows.cpp:57-70: the primary inserted at the front, the
+// others appended). The indexes of the system's list; a `primary` outside it
+// leaves the order as it is.
+std::vector<int> primaryFirst(int count, int primary);
+
+// Whether the fullscreen window is owned by the main window on the Qt
+// platform `platformName` (V5-wayland-parent): legacy's Fullscreen frame
+// always was (wxFrame(parent, ...)); on Wayland ("wayland", "wayland-egl",
+// ...) a parent makes the window the main window's dialog (xdg_toplevel
+// set_parent) and the compositor keeps the keyboard on the main window's
+// output, so it stands alone there.
+bool fullscreenOwnedByMainWindow(std::string_view platformName);
 
 // VideoBox::ContextMenu (VideoBox.cpp:941-948): one entry per monitor after
 // the first, MENU_MONITORS + i, numbered i + 1 in the text: "Open in full

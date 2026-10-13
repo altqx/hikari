@@ -25,6 +25,22 @@ int fullscreenMonitor(int monitor, const std::vector<MonitorRect> &monitors, con
     return 0;
 }
 
+std::vector<int> primaryFirst(int count, int primary)
+{
+    std::vector<int> order;
+    if (primary >= 0 && primary < count)
+        order.push_back(primary);
+    for (int i = 0; i < count; ++i)
+        if (i != primary)
+            order.push_back(i);
+    return order;
+}
+
+bool fullscreenOwnedByMainWindow(std::string_view platformName)
+{
+    return !platformName.starts_with("wayland");
+}
+
 int fullscreenMonitorEntries(int monitors)
 {
     return monitors > 1 ? monitors - 1 : 0;
