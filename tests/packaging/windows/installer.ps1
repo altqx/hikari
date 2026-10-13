@@ -211,8 +211,8 @@ switch ($env:ACTION) {
             $k = "$h\Software\Microsoft\Windows\CurrentVersion\Uninstall\HikariSub"
             if (Test-Path $k) { "$k = $(Value $k DisplayVersion) at $(Value $k InstallLocation)" }
         }
-        $r = Join-Path $env:LOCALAPPDATA 'HikariSub\Updates\last-result.json'
-        if (Test-Path -LiteralPath $r) { "last-result.json: $(Get-Content -Raw -LiteralPath $r)" }
+        Get-ChildItem -LiteralPath (Join-Path $env:LOCALAPPDATA 'HikariSub\Updates') -Filter 'last-result-*.json' -ErrorAction SilentlyContinue |
+            ForEach-Object { "$($_.Name): $(Get-Content -Raw -LiteralPath $_.FullName)" }
     }
     'open-file' {
         # The shell's open verb on a .ass file starts this install's program with it.
@@ -237,11 +237,12 @@ switch ($env:ACTION) {
         # The updater's hand-off (SPEC 4.2) without the app's updater: the
         # installer starts with /UPDATE /WAITPID=<the running app> while the
         # app runs, must wait for it, and installs once it exits (CLOSE_APP=1)
-        # or gives up with 3 and last-result.json (CLOSE_APP=0).
+        # or gives up with 3 and last-result-<scope>.json (CLOSE_APP=0).
         $expect = if ($env:EXPECT) { [int]$env:EXPECT } else { 0 }
         $app = Get-Process -Name HikariSub -ErrorAction SilentlyContinue | Select-Object -First 1
         if (-not $app) { Fail 'no running HikariSub to update'; break }
-        $result = Join-Path $env:LOCALAPPDATA 'HikariSub\Updates\last-result.json'
+        $copy = if ("$env:ARGS" -match '/ALLUSERS') { 'nsis-machine' } else { 'nsis-user' }
+        $result = Join-Path $env:LOCALAPPDATA "HikariSub\Updates\last-result-$copy.json"
         Remove-Item -LiteralPath $result -ErrorAction SilentlyContinue
         $a = "/S /UPDATE /WAITPID=$($app.Id) $env:ARGS".Trim()
         Write-Output "run: `"$env:SETUP`" $a"

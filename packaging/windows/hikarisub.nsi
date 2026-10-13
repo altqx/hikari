@@ -386,9 +386,20 @@ FunctionEnd
 Function HsFail
   Push $0
   ${If} $HsUpdate = 1
+    ; Under the copy's key (the app's CopyKey): another copy that shares
+    ; this cache does not take this result for its own.
+    StrCpy $0 $HsScope
+    ${If} $0 == ""
+      StrCpy $0 $HsCmdScope
+    ${EndIf}
+    ${If} $0 == "machine"
+      StrCpy $0 "nsis-machine"
+    ${Else}
+      StrCpy $0 "nsis-user"
+    ${EndIf}
     CreateDirectory "$HsUserLocalAppData\HikariSub\Updates"
     ClearErrors
-    FileOpen $0 "$HsUserLocalAppData\HikariSub\Updates\last-result.json" w
+    FileOpen $0 "$HsUserLocalAppData\HikariSub\Updates\last-result-$0.json" w
     ${IfNot} ${Errors}
       FileWrite $0 '{"version": "${HS_VERSION}", "ok": false, "code": $R8, "message": "$R7"}$\r$\n'
       FileClose $0

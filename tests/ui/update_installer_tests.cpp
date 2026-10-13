@@ -213,10 +213,11 @@ private slots:
         QDir().mkpath(debDir + QStringLiteral("/0.1.9"));
         QDir().mkpath(debDir + QStringLiteral("/0.3.0"));
         QDir().mkpath(debDir + QStringLiteral("/other"));
-        // Another copy's download of a version this one has reached is that
-        // copy's to clear.
+        // Another copy's download of a version this one has reached, and its
+        // last result, are that copy's to clear.
         QDir().mkpath(cache + QStringLiteral("/rpm/0.1.9"));
-        write(cache + QStringLiteral("/last-result.json"),
+        write(copyFile(root, QStringLiteral("last-result-%1.json"), PackageKind::Rpm), "{}");
+        write(copyFile(root, QStringLiteral("last-result-%1.json"), PackageKind::Deb),
               QJsonDocument(QJsonObject{{"version", "0.2.0"}, {"ok", false}, {"code", 4}, {"message", "It failed"}}).toJson());
         UpdateInstaller installed(environment(PackageKind::Deb, root), QStringLiteral("0.2.0"));
         QCOMPARE(installed.start(), QStringLiteral("It failed"));
@@ -227,7 +228,8 @@ private slots:
         QVERIFY(QFileInfo::exists(debDir + QStringLiteral("/0.3.0")));
         QVERIFY(QFileInfo::exists(debDir + QStringLiteral("/other")));
         QVERIFY(QFileInfo::exists(cache + QStringLiteral("/rpm/0.1.9")));
-        QVERIFY(!QFileInfo::exists(cache + QStringLiteral("/last-result.json")));
+        QVERIFY(QFileInfo::exists(copyFile(root, QStringLiteral("last-result-%1.json"), PackageKind::Rpm)));
+        QVERIFY(!QFileInfo::exists(copyFile(root, QStringLiteral("last-result-%1.json"), PackageKind::Deb)));
         QCOMPARE(installed.start(), QString()); // the message shows once
         // Still to install: ready again at this start.
         record(QStringLiteral("0.3.0"), QStringLiteral("deb"), debDir + QStringLiteral("/0.3.0/y.deb"), "y", debRecord);
@@ -369,7 +371,7 @@ private slots:
         QCOMPARE(read(image + QStringLiteral(".old")), old);
         QVERIFY(!QFileInfo::exists(staged));
         QVERIFY(!QFileInfo::exists(atStartOf(root, image)));
-        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/last-result.json")));
+        QVERIFY(!QFileInfo::exists(copyFile(root, QStringLiteral("last-result-%1.json"), PackageKind::AppImage, image)));
         const QList<QByteArray> args = read(root + QStringLiteral("/args")).split('\n');
         QVERIFY(args.contains("--hikari-updated-from=0.1.0"));
         QVERIFY(args.contains("/subs/ep 1.ass"));
@@ -543,7 +545,7 @@ private slots:
         installer.installAtExit();
         QCOMPARE(read(image), fresh);
         QVERIFY(!QFileInfo::exists(root + copyFile(root, QStringLiteral("health-%1-0.2.0"), PackageKind::AppImage, image)));
-        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/last-result.json")));
+        QVERIFY(!QFileInfo::exists(copyFile(root, QStringLiteral("last-result-%1.json"), PackageKind::AppImage, image)));
     }
 
     void theWatchdogPutsTheOldOneBack()
@@ -612,7 +614,7 @@ private slots:
         QVERIFY(!QFileInfo::exists(marker));
         // The installer's own report, when it reached this profile, wins.
         QVERIFY(write(marker, "0.2.0"));
-        QVERIFY(write(env.cacheDir + QStringLiteral("/last-result.json"),
+        QVERIFY(write(copyFile(root, QStringLiteral("last-result-%1.json"), PackageKind::NsisMachine),
                       R"({"version": "0.2.0", "ok": false, "code": 3, "message": "HikariSub is still running."})"));
         UpdateInstaller reported(env, QStringLiteral("0.1.0"));
         QCOMPARE(reported.start(), QStringLiteral("HikariSub is still running."));

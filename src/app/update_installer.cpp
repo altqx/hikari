@@ -163,7 +163,7 @@ QString UpdateInstaller::pendingPath() const
 
 QString UpdateInstaller::resultPath() const
 {
-    return m_env.cacheDir + QStringLiteral("/last-result.json");
+    return m_env.cacheDir + QStringLiteral("/last-result-%1.json").arg(copyKey());
 }
 
 // The version of the NSIS update handed to its installer at the last quit.
