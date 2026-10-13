@@ -382,6 +382,16 @@ if want helper; then
         expect_rc 2 'a caller-supplied kind and SHA-256' "$kind" "$forged" "$(sha256sum "$forged" | cut -d' ' -f1)" "$version"
         expect_rc 2 'a caller-supplied SHA-256' "$forged" "$(sha256sum "$forged" | cut -d' ' -f1)" "$version"
         expect_rc 3 "the caller's own package" "$forged" "$version"
+        # The command the app shows without pkexec runs the helper through
+        # sudo, which names the user in SUDO_UID: the same checks apply.
+        set +e; env -u PKEXEC_UID SUDO_UID=$uid "$helper" install "$forged" "$version" > /tmp/helper.log 2>&1
+        rc=$?; set -e
+        [ $rc -eq 3 ] || { cat /tmp/helper.log >&2; fail "helper the caller's own package, through sudo: exit $rc, expected 3"; }
+        pass "helper the caller's own package, through sudo: exit 3"
+        set +e; env -u PKEXEC_UID -u SUDO_UID "$helper" install "$good" "$version" > /tmp/helper.log 2>&1
+        rc=$?; set -e
+        [ $rc -eq 2 ] || { cat /tmp/helper.log >&2; fail "helper with no asking user: exit $rc, expected 2"; }
+        pass "helper with no asking user: exit 2"
         grep -qx "https://github.com/altqx/hikari/releases/download/v$version/SHA256SUMS" "$releases/requests.log" ||
             fail "helper: it did not ask GitHub for the SHA256SUMS of v$version"
         pass "helper: it asked GitHub for the SHA256SUMS of v$version"

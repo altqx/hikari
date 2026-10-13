@@ -194,7 +194,9 @@ private slots:
         UpdateInstaller manual(env, QStringLiteral("0.2.0"));
         manual.start();
         QCOMPARE(manual.state(), QStringLiteral("manual"));
-        QCOMPARE(manual.manualCommand(), QStringLiteral("sudo apt install ") + cache + QStringLiteral("/0.3.0/y.deb"));
+        // The helper through sudo, which checks the file as pkexec's would.
+        QCOMPARE(manual.manualCommand(), QStringLiteral("sudo ") + env.helper + QStringLiteral(" install ") + cache +
+                                             QStringLiteral("/0.3.0/y.deb 0.3.0"));
         // A record of another kind (the copy was reinstalled) is dropped.
         UpdateInstaller rpm(environment(PackageKind::Rpm, root), QStringLiteral("0.2.0"));
         rpm.start();

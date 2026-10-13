@@ -213,9 +213,12 @@ struct ApplyRequest {
 std::optional<ApplyRequest> parseApplyArguments(const std::vector<std::string> &arguments);
 bool isPlainWindowsPath(std::string_view path);
 
-// Without pkexec: the command that installs the downloaded file.
-enum class PackageTool { Apt, Dnf, Zypper };
-std::string manualInstallCommand(PackageTool tool, std::string_view file);
+// Without pkexec: the command that installs the downloaded file, the update
+// helper through sudo. The helper checks the file against the release's
+// SHA256SUMS as root, as it does through pkexec; the package manager is
+// never given the user's own file, which another process of the user's
+// could replace after the app's check.
+std::string manualInstallCommand(std::string_view helper, std::string_view file, std::string_view version);
 
 // The program's own switches; the rest of the command line is left as it is.
 struct StartupArguments {

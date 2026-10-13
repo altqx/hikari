@@ -296,11 +296,15 @@ TEST(UpdateInstall, DeadlineHashesAndCommands)
               "/S /UPDATE /WAITPID=42 /RELAUNCH /CURRENTUSER /D=C:\\Users\\A B\\AppData\\Local\\Programs\\HikariSub");
     EXPECT_EQ(nsisUpdateArguments(true, false, 7, "C:\\Program Files\\HikariSub"),
               "/S /UPDATE /WAITPID=7 /ALLUSERS /D=C:\\Program Files\\HikariSub");
-    EXPECT_EQ(manualInstallCommand(PackageTool::Apt, "/home/a/.cache/HikariSub/Updates/0.2.0/x.deb"),
-              "sudo apt install /home/a/.cache/HikariSub/Updates/0.2.0/x.deb");
-    EXPECT_EQ(manualInstallCommand(PackageTool::Dnf, "/home/a b/x.rpm"), "sudo dnf install --nogpgcheck '/home/a b/x.rpm'");
-    EXPECT_EQ(manualInstallCommand(PackageTool::Zypper, "/h/it's.rpm"),
-              "sudo zypper install --allow-unsigned-rpm '/h/it'\\''s.rpm'");
+    // By hand, the helper checks the file as root, as through pkexec; the
+    // package manager is never given the user's file.
+    constexpr std::string_view helper = "/opt/hikarisub/libexec/hikarisub-update-helper";
+    EXPECT_EQ(manualInstallCommand(helper, "/home/a/.cache/HikariSub/Updates/0.2.0/x.deb", "0.2.0"),
+              "sudo /opt/hikarisub/libexec/hikarisub-update-helper install /home/a/.cache/HikariSub/Updates/0.2.0/x.deb 0.2.0");
+    EXPECT_EQ(manualInstallCommand(helper, "/home/a b/x.rpm", "0.3.0-beta.1"),
+              "sudo /opt/hikarisub/libexec/hikarisub-update-helper install '/home/a b/x.rpm' 0.3.0-beta.1");
+    EXPECT_EQ(manualInstallCommand(helper, "/h/it's.rpm", "1.0.0"),
+              "sudo /opt/hikarisub/libexec/hikarisub-update-helper install '/h/it'\\''s.rpm' 1.0.0");
 }
 
 TEST(UpdateInstall, StartupArguments)

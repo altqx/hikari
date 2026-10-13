@@ -637,28 +637,17 @@ std::optional<ApplyRequest> parseApplyArguments(const std::vector<std::string> &
     return request;
 }
 
-std::string manualInstallCommand(PackageTool tool, std::string_view file)
+std::string manualInstallCommand(std::string_view helper, std::string_view file, std::string_view version)
 {
-    std::string quoted;
-    if (!file.empty() && std::all_of(file.begin(), file.end(), shellSafe)) {
-        quoted = file;
-    } else {
-        quoted = "'";
-        for (char c : file)
+    auto quote = [](std::string_view text) {
+        if (!text.empty() && std::all_of(text.begin(), text.end(), shellSafe))
+            return std::string(text);
+        std::string quoted = "'";
+        for (char c : text)
             quoted += c == '\'' ? std::string("'\\''") : std::string(1, c);
-        quoted += "'";
-    }
-    switch (tool) {
-    case PackageTool::Apt:
-        return "sudo apt install " + quoted;
-    case PackageTool::Dnf:
-        // The packages are unsigned: dnf and zypper skip the signature
-        // check, as the update helper has them do.
-        return "sudo dnf install --nogpgcheck " + quoted;
-    case PackageTool::Zypper:
-        return "sudo zypper install --allow-unsigned-rpm " + quoted;
-    }
-    return {};
+        return quoted + "'";
+    };
+    return "sudo " + quote(helper) + " install " + quote(file) + " " + quote(version);
 }
 
 StartupArguments parseStartupArguments(const std::vector<std::string> &arguments)

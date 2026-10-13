@@ -464,14 +464,8 @@ QString UpdateInstaller::manualCommand() const
 {
     if (m_state != QLatin1String("manual"))
         return {};
-    using application::PackageTool;
-    PackageTool tool = PackageTool::Apt;
-    if (m_env.package.kind == PackageKind::Rpm)
-        tool = QStandardPaths::findExecutable(QStringLiteral("dnf")).isEmpty() &&
-                       !QStandardPaths::findExecutable(QStringLiteral("zypper")).isEmpty()
-                   ? PackageTool::Zypper
-                   : PackageTool::Dnf;
-    return QString::fromStdString(application::manualInstallCommand(tool, std8(m_pending.file)));
+    return QString::fromStdString(
+        application::manualInstallCommand(std8(m_env.helper), std8(m_pending.file), std8(m_pending.version)));
 }
 
 void UpdateInstaller::restartNow()
