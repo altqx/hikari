@@ -32,6 +32,7 @@
 #include "screen_sampler.h"
 #include "video_presenter.h"
 #include "hikari/app/composition.h"
+#include "next_file_folder.h"
 
 #include <QAccessible>
 #include <QMimeData>
@@ -40,6 +41,9 @@
 #include <QStyleHints>
 #include <QDirIterator>
 #include <QContextMenuEvent>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QGuiApplication>
 #include <QSignalSpy>
 #include <QQmlApplicationEngine>
@@ -15971,6 +15975,240 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(question, "accept"));
         QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[1], 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+    }
+
+    // V3: the previous/next file order against legacy's own NextFile
+    // (tools/legacy-capture/next_file, the observation for this platform in
+    // tests/fixtures/legacy-observations/local-v3-next-file-20261013). Legacy
+    // walked wxDir::GetAllFiles(..., wxDIR_FILES) as the system enumerates the
+    // folder, unsorted (readdir on Linux, FindFirstFileW on Windows), so the
+    // observation is checked for that relation, the same folder is made here
+    // in the same order, and both walks must follow this file system's
+    // enumeration the way legacy's followed its own. On NTFS, whose
+    // enumeration is the index's order and does not depend on the creation
+    // order, the enumeration must also equal the observed one.
+    void nextFileFollowsTheLegacyObservation()
+    {
+#ifdef _WIN32
+        const QString platform = QStringLiteral("windows");
+#else
+        const QString platform = QStringLiteral("linux");
+#endif
+        const QString observationFile = QStringLiteral(HIKARI_NEXT_FILE_OBSERVATIONS "/") + platform + QStringLiteral(".json");
+        if (!QFileInfo::exists(observationFile))
+            QSKIP(qPrintable(QStringLiteral("no legacy NextFile observation for %1 (%2); the winix task "
+                                            "legacy-win-next-file records the Windows one")
+                                 .arg(platform, observationFile)));
+        QFile in(observationFile);
+        QVERIFY(in.open(QIODevice::ReadOnly));
+        const QJsonObject observation = QJsonDocument::fromJson(in.readAll()).object();
+        QCOMPARE(observation.value(QStringLiteral("platform")).toString(), platform);
+        const auto strings = [](const QJsonValue &v) {
+            QStringList out;
+            for (const QJsonValue &item : v.toArray())
+                out << item.toString();
+            return out;
+        };
+        QMap<QString, QString> kinds;
+        QStringList created;
+        for (const QJsonValue &entry : observation.value(QStringLiteral("created")).toArray()) {
+            const QString name = entry.toObject().value(QStringLiteral("name")).toString();
+            kinds.insert(name, entry.toObject().value(QStringLiteral("kind")).toString());
+            created << name;
+        }
+        // wxDIR_FILES without wxDIR_HIDDEN: no folder, no hidden entry ('.'
+        // names on Linux, the hidden attribute on Windows); nothing sorted.
+        const auto listingOf = [&](const QStringList &enumeration) {
+            QStringList out;
+            for (const QString &name : enumeration) {
+                const QString kind = kinds.value(name);
+                const bool hidden = platform == QLatin1String("windows") ? kind == QLatin1String("hidden")
+                                                                          : name.startsWith(QLatin1Char('.'));
+                if (kind != QLatin1String("dir") && !hidden)
+                    out << name;
+            }
+            return out;
+        };
+        const auto isVideo = [](const QString &name) { return application::isNextFileVideo(name.toStdString()); };
+        // NextFile pressed from `start` until it seeks instead: the videos after
+        // (or before) it in the listing.
+        const auto walkOf = [&](const QStringList &listing, const QString &start, bool next) {
+            QStringList out;
+            const int from = static_cast<int>(listing.indexOf(start));
+            for (int k = next ? from + 1 : from - 1; next ? k < listing.size() : k >= 0; next ? ++k : --k)
+                if (isVideo(listing[k]))
+                    out << listing[k];
+            return out;
+        };
+        const auto firstVideo = [&](const QStringList &listing) {
+            const auto it = std::find_if(listing.begin(), listing.end(), isVideo);
+            return it == listing.end() ? QString() : *it;
+        };
+        const auto lastVideo = [&](const QStringList &listing) {
+            const auto it = std::find_if(listing.rbegin(), listing.rend(), isVideo);
+            return it == listing.rend() ? QString() : *it;
+        };
+
+        // The observation: legacy's listing is the enumeration filtered, unsorted.
+        const QStringList observedEnumeration = strings(observation.value(QStringLiteral("enumeration")));
+        const QStringList observedListing = strings(observation.value(QStringLiteral("listing")));
+        QCOMPARE(QSet<QString>(observedEnumeration.begin(), observedEnumeration.end()),
+                 QSet<QString>(created.begin(), created.end()));
+        QVERIFY(observation.value(QStringLiteral("listingIsGetAllFiles")).toBool());
+        QCOMPARE(observedListing, listingOf(observedEnumeration));
+        for (const char *direction : {"next", "previous"}) {
+            const QJsonObject walk = observation.value(QLatin1String(direction)).toObject();
+            const bool next = std::strcmp(direction, "next") == 0;
+            QCOMPARE(walk.value(QStringLiteral("start")).toString(),
+                     next ? firstVideo(observedListing) : lastVideo(observedListing));
+            QCOMPARE(strings(walk.value(QStringLiteral("opened"))),
+                     walkOf(observedListing, walk.value(QStringLiteral("start")).toString(), next));
+            QCOMPARE(strings(walk.value(QStringLiteral("end"))), (QStringList{QStringLiteral("seek 0"), QStringLiteral("pause false")}));
+        }
+
+        // The same folder here, created in the same order; the videos are the
+        // cfr fixture so that each one opens.
+        restartWithoutSound();
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        const QString folder = own.filePath(QStringLiteral("walk"));
+        QVERIFY(QDir().mkpath(folder));
+        for (const QString &name : created) {
+            const QString path = QDir(folder).filePath(name);
+            const QString kind = kinds.value(name);
+            if (kind == QLatin1String("dir")) {
+                QVERIFY(QDir().mkdir(path));
+                continue;
+            }
+            if (isVideo(name)) {
+                QVERIFY2(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), path), qPrintable(name));
+            } else {
+                QFile f(path);
+                QVERIFY2(f.open(QIODevice::WriteOnly) && f.write("x", 1) == 1, qPrintable(name));
+            }
+            if (kind == QLatin1String("hidden"))
+                QVERIFY(tests::setHiddenAttribute(path));
+        }
+        const QStringList enumeration = tests::enumerateFolder(folder);
+        qInfo() << "enumeration here:" << enumeration;
+        if (platform == QLatin1String("windows")
+            && observation.value(QStringLiteral("filesystem")).toString() == QLatin1String("NTFS")
+            && tests::folderFileSystem(folder) == QLatin1String("NTFS"))
+            QCOMPARE(enumeration, observedEnumeration);
+        const QStringList listing = listingOf(enumeration);
+
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        const auto pathOf = [&](const QString &name) { return QDir::toNativeSeparators(QDir(folder).filePath(name)); };
+        for (const bool next : {true, false}) {
+            const QString start = next ? firstVideo(listing) : lastVideo(listing);
+            video.openVideo(pathOf(start));
+            QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), pathOf(start), 20000);
+            QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+            QStringList opened;
+            for (const QString &expected : walkOf(listing, start, next)) {
+                QVERIFY(application->nextVideoFile(next));
+                QTRY_COMPARE_WITH_TIMEOUT(QFileInfo(QString::fromStdString(video.session().path())).fileName(), expected,
+                                          20000);
+                QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+                opened << expected;
+            }
+            QCOMPARE(opened, walkOf(listing, start, next));
+            // Past the end: Seek(0) and Pause(false), the file kept; again to pause.
+            QVERIFY(application->nextVideoFile(next));
+            QTest::qWait(200);
+            QCOMPARE(QFileInfo(QString::fromStdString(video.session().path())).fileName(),
+                     next ? lastVideo(listing) : firstVideo(listing));
+            QCOMPARE(video.session().requestedFrame(), std::optional<int>(0));
+            if (video.playing())
+                QVERIFY(application->nextVideoFile(next));
+            QVERIFY(!video.playing());
+        }
+    }
+
+    // V3: what legacy's wxDir::GetAllFiles(wxDIR_FILES) lists where Qt's
+    // QDir::Files would not, or the reverse (application::legacy_dir). On
+    // Linux every entry that is not a folder is listed, a symbolic link to
+    // nothing among them, so NextFile goes to one named like a video and
+    // tries to open it; on Windows a video with the system attribute is left
+    // out as a hidden one is (msw/dir.cpp IsHidden). The current file written
+    // with ".." is found, the folder listed as written (wxFileName::GetPath).
+    void nextFileListsWhatLegacyListed()
+    {
+        restartWithoutSound();
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        const QString folder = own.filePath(QStringLiteral("walk"));
+        QVERIFY(QDir().mkpath(folder + QStringLiteral("/sub")));
+        for (const char *name : {"a.mkv", "c.mkv"})
+            QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), QDir(folder).filePath(QLatin1String(name))));
+        const QString special = QStringLiteral("b.mkv");
+#ifdef _WIN32
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), QDir(folder).filePath(special)));
+        QVERIFY(tests::setSystemAttribute(QDir(folder).filePath(special)));
+        const bool specialListed = false;
+#else
+        QVERIFY(QFile::link(own.filePath(QStringLiteral("missing.mkv")), QDir(folder).filePath(special)));
+        const bool specialListed = true;
+#endif
+        QStringList listing;
+        for (const QString &name : tests::enumerateFolder(folder))
+            if (name != QLatin1String("sub") && (specialListed || name != special))
+                listing << name;
+        qInfo() << "listing here:" << listing;
+        QCOMPARE(listing.size(), specialListed ? 3 : 2);
+        const auto real = [&](const QString &name) { return name != special; };
+        const auto pathOf = [&](const QString &name) { return QDir::toNativeSeparators(QDir(folder).filePath(name)); };
+        const auto dottedOf = [&](const QString &name) {
+            return QDir::toNativeSeparators(folder + QStringLiteral("/sub/../") + name);
+        };
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        const auto sessionPath = [&] { return QString::fromStdString(video.session().path()); };
+
+        // "..": from the listing's end the way out restarts, and the other way
+        // opens the neighbour, written with the same folder
+        {
+            const bool atEnd = real(listing.last());
+            const QString start = atEnd ? listing.last() : listing.first();
+            const QString neighbour = atEnd ? listing[listing.size() - 2] : listing[1];
+            video.openVideo(dottedOf(start));
+            QTRY_COMPARE_WITH_TIMEOUT(sessionPath(), dottedOf(start), 20000);
+            QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+            QVERIFY(application->nextVideoFile(atEnd));
+            QTest::qWait(200);
+            QCOMPARE(sessionPath(), dottedOf(start));
+            QCOMPARE(video.session().requestedFrame(), std::optional<int>(0));
+            QVERIFY(application->nextVideoFile(!atEnd));
+            QTRY_COMPARE_WITH_TIMEOUT(sessionPath(), dottedOf(neighbour), 20000);
+        }
+
+        // both ways from the real videos at the ends: the listing's videos in
+        // its order, the special entry included only where legacy listed it
+        // (there its open fails, which ends the walk)
+        bool specialReached = false;
+        for (const bool next : {true, false}) {
+            QString start;
+            for (const QString &name : listing)
+                if (real(name) && (start.isEmpty() || !next))
+                    start = name;
+            video.openVideo(pathOf(start));
+            QTRY_COMPARE_WITH_TIMEOUT(sessionPath(), pathOf(start), 20000);
+            QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+            const int from = static_cast<int>(listing.indexOf(start));
+            for (int k = next ? from + 1 : from - 1; next ? k < listing.size() : k >= 0; next ? ++k : --k) {
+                QVERIFY(application->nextVideoFile(next));
+                QTRY_COMPARE_WITH_TIMEOUT(sessionPath(), pathOf(listing[k]), 20000);
+                if (!real(listing[k])) {
+                    QTRY_VERIFY_WITH_TIMEOUT(video.session().error().has_value(), 20000);
+                    QVERIFY(!video.hasVideo());
+                    specialReached = true;
+                    break;
+                }
+                QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+            }
+        }
+        QCOMPARE(specialReached, specialListed);
     }
 
     // V3-next-file-no-recent: with no video and an empty recent list the

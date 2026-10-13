@@ -51,6 +51,16 @@ TEST(VideoFullscreenMonitor, OneMenuEntryPerMonitorAfterTheFirst)
     EXPECT_EQ(fullscreenMonitorEntries(3), 2);
 }
 
+// V5-wayland-parent: legacy's Fullscreen frame was the main window's child
+// on every platform; on Wayland the rewrite's window has no parent.
+TEST(VideoFullscreenWindow, OwnedByTheMainWindowExceptOnWayland)
+{
+    for (const char *platform : {"windows", "xcb", "offscreen", "minimal", "cocoa", "eglfs"})
+        EXPECT_TRUE(fullscreenOwnedByMainWindow(platform)) << platform;
+    for (const char *platform : {"wayland", "wayland-egl", "wayland-brcm"})
+        EXPECT_FALSE(fullscreenOwnedByMainWindow(platform)) << platform;
+}
+
 TEST(VideoFullscreenPanel, ShowsBelowTheVideoAndHidesOverItUnlessPinned)
 {
     // A 1080-high window with a 60-pixel panel: the video ends at 1020.

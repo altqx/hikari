@@ -25,6 +25,11 @@ int fullscreenMonitor(int monitor, const std::vector<MonitorRect> &monitors, con
     return 0;
 }
 
+bool fullscreenOwnedByMainWindow(std::string_view platformName)
+{
+    return !platformName.starts_with("wayland");
+}
+
 int fullscreenMonitorEntries(int monitors)
 {
     return monitors > 1 ? monitors - 1 : 0;

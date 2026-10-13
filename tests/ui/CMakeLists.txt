@@ -9,7 +9,7 @@ hikari_add_qttest(hikari_ui_line_grid_tests SOURCES line_grid_tests.cpp LIBRARIE
 target_compile_definitions(hikari_ui_line_grid_tests PRIVATE HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts"
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 hikari_add_qttest(hikari_ui_line_grid_a11y_tests SOURCES line_grid_a11y_tests.cpp LIBRARIES hikari_ui)
-hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_log_controller_tests SOURCES log_controller_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_tag_buttons_tests SOURCES tag_buttons_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_line_measures_tests SOURCES line_measures_tests.cpp LIBRARIES hikari_ui)
@@ -19,6 +19,7 @@ target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
     HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui"
+    HIKARI_NEXT_FILE_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-v3-next-file-20261013"
     HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>"
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper
@@ -115,7 +116,7 @@ add_dependencies(hikari_ui_status_workflow hikari_media_helper hikari_media_fixt
 # V5: video fullscreen, its keys and the monitor choice (Spix workflow); on
 # Linux also with two offscreen screens, the second at scale 2.
 hikari_add_spix_test(hikari_ui_video_fullscreen_workflow SOURCES video_fullscreen_workflow.cpp
-    LIBRARIES hikari_composition
+    LIBRARIES hikari_composition Qt6::GuiPrivate
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_video_fullscreen_workflow hikari_media_helper hikari_media_fixtures)
@@ -123,6 +124,12 @@ if(NOT WIN32)
     add_test(NAME hikari_ui_video_fullscreen_workflow.twoscreens
         COMMAND $<TARGET_FILE:hikari_ui_video_fullscreen_workflow> --monitors 2)
     set_tests_properties(hikari_ui_video_fullscreen_workflow.twoscreens PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=${CMAKE_CURRENT_SOURCE_DIR}/fullscreen-two-screens.json"
+        LABELS "ui;offscreen" TIMEOUT 120)
+    # V5-monitor-order: the second screen made the primary.
+    add_test(NAME hikari_ui_video_fullscreen_workflow.secondprimary
+        COMMAND $<TARGET_FILE:hikari_ui_video_fullscreen_workflow> --monitors 2 --primary-second)
+    set_tests_properties(hikari_ui_video_fullscreen_workflow.secondprimary PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=${CMAKE_CURRENT_SOURCE_DIR}/fullscreen-two-screens.json"
         LABELS "ui;offscreen" TIMEOUT 120)
 endif()

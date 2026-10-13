@@ -146,6 +146,13 @@ tasks:
     # tools/legacy-capture/drive_windows.py; nothing is installed.
     script: ./tools/legacy-capture/windows/setup.ps1
     timeoutSeconds: 900
+  legacy-win-next-file:
+    # V3: legacy VideoBox::NextFile's folder walk on NTFS (the probe in
+    # tools/legacy-capture/next_file, built with MSVC against the legacy
+    # pin's wxWidgets 3.3.3 in out/legacy-win/next-file).
+    script: ./tools/legacy-capture/windows/next-file.ps1
+    timeoutSeconds: 3600
+    artifacts: [out/legacy-win/next-file/windows.json]
   legacy-win-output:
     # The probe's capture lines and the legacy Config it left (drive_windows.py).
     script: ./tools/legacy-capture/windows/output.ps1

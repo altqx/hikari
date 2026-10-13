@@ -61,8 +61,9 @@ Window {
     flags: Qt.Window | Qt.FramelessWindowHint
     // On Wayland a window with a parent is a dialog of it (xdg_toplevel
     // set_parent): sway, for one, keeps the keyboard on the main window when
-    // it opens on another output. The fullscreen window stands alone there.
-    transientParent: Qt.platform.pluginName.startsWith("wayland") ? null : shell
+    // it opens on another output. The fullscreen window stands alone there
+    // (V5-wayland-parent).
+    transientParent: controller.ownedByMainWindow() ? shell : null
     visible: false
 
     onActiveChanged: if (active && controller.active) keys.forceActiveFocus()

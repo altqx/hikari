@@ -149,6 +149,54 @@ bool isNextFileVideo(std::string_view path)
     return std::find(std::begin(kExtensions), std::end(kExtensions), ext) != std::end(kExtensions);
 }
 
+std::string nextFileFolder(std::string_view path, PathFormat format)
+{
+    const bool dos = format == PathFormat::Dos;
+    const auto isSeparator = [dos](char c) { return c == '/' || (dos && c == '\\'); };
+    const char separator = dos ? '\\' : '/';
+    // wxFileName::SplitVolume (filename.cpp): the extended prefix up to the
+    // next backslash, a UNC "\\server", a drive letter
+    std::string_view volume;
+    if (dos) {
+        if (path.starts_with("\\\\?\\"))
+            volume = path.substr(0, path.find('\\', 4));
+        else if (path.size() > 2 && isSeparator(path[0]) && isSeparator(path[1]) && !isSeparator(path[2])) {
+            std::size_t end = 3;
+            while (end < path.size() && !isSeparator(path[end]))
+                ++end;
+            volume = path.substr(0, end);
+        } else if (path.size() >= 2 && path[1] == ':'
+                   && ((path[0] >= 'a' && path[0] <= 'z') || (path[0] >= 'A' && path[0] <= 'Z')))
+            volume = path.substr(0, 2);
+    }
+    std::string_view rest = path.substr(volume.size());
+    // the folder part: everything before the last separator
+    std::size_t last = std::string_view::npos;
+    for (std::size_t i = 0; i < rest.size(); ++i)
+        if (isSeparator(rest[i]))
+            last = i;
+    std::string out(volume);
+    if (last == std::string_view::npos)
+        return out;
+    const std::string_view folder = rest.substr(0, last + 1);
+    if (isSeparator(folder.front()))
+        out += separator; // absolute
+    bool first = true;
+    for (std::size_t i = 0; i < folder.size();) {
+        std::size_t end = i;
+        while (end < folder.size() && !isSeparator(folder[end]))
+            ++end;
+        if (end > i) { // DoSetPath drops empty names
+            if (!first)
+                out += separator;
+            out.append(folder.substr(i, end - i));
+            first = false;
+        }
+        i = end + 1;
+    }
+    return out;
+}
+
 NextFileStep NextFileWalker::step(std::optional<std::vector<std::string>> listing, const std::string &current, bool next)
 {
     if (listing)

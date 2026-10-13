@@ -1,0 +1,21 @@
+# Legacy observations: V3 previous / next file order (local probe, 2026-10-13)
+
+Captured by the `legacy_next_file_capture` probe ([`next_file_capture.cpp`](../../../../tools/legacy-capture/next_file/next_file_capture.cpp), its own project in [`tools/legacy-capture/next_file/`](../../../../tools/legacy-capture/next_file/CMakeLists.txt)) on the folder [`inputs/next-file-names.txt`](../../../../tools/legacy-capture/inputs/next-file-names.txt) describes. [`extract_functions.py`](../../../../tools/legacy-capture/extract_functions.py) copies `VideoBox::NextFile` (`HikariSub/VideoBox.cpp:682-739` at `20d647c4`) out of its file unchanged; it is compiled against a static wxbase built from the legacy checkout's own `Thirdparty/wxWidgets` submodule (v3.3.3, `670835ae`), so `wxDir::GetAllFiles(pathwn, &files, emptyString, wxDIR_FILES)` is the pinned wx's `src/unix/dir.cpp`. The GUI NextFile calls is stood in for by [`next_file/standins.h`](../../../../tools/legacy-capture/next_file/standins.h): every file opens (`OpenFile` returns true and sets the tab's `VideoPath`), and `Seek`, `Pause` and `SetFocus` are recorded.
+
+Each file is one JSON object: the platform, wx's version, the folder's file system, the entries as created (in the names file's order, which is deliberately not a sorted one), the folder as the system enumerates it (`readdir`, every entry), NextFile's listing (its `files` member, also checked equal to a direct `wxDir::GetAllFiles` call) and two walks: VIDEO_NEXT_FILE pressed from the listing's first video until NextFile seeks instead of opening, and VIDEO_PREVIOUS_FILE from its last video.
+
+| File | File system | Where | sha256 |
+| --- | --- | --- | --- |
+| `linux.json` | btrfs | this machine, `/home/altq/Work/hikari-wt/tmp` | `a7e3dd863822f5f53d6ea441779cca233e4d54fbf22499e671b90d49c8fbc719` |
+| `linux-tmpfs.json` | tmpfs | this machine, `/dev/shm` | `ebdd82308b6ee9ef4b363ec16d99c428e4d99c9d6faf6e279e2bebda9d14feac` |
+| `linux-xfs.json` | xfs | akari-rvm's `hikari-runner` container, `/tmp` | `8839152e6b9d1e6164af7059e97d24cff15f17f2600f474b22cc2376fddf2409` |
+
+`windows.json` (NTFS) is not captured yet: the winix task `legacy-win-next-file` ([`windows/next-file.ps1`](../../../../tools/legacy-capture/windows/next-file.ps1)) builds the same probe with MSVC in the VM and writes it.
+
+## What legacy does
+
+Legacy's order is the file system's own, unsorted. In all three captures the listing is exactly the enumeration with the folder (`folder.mkv`) and the `.` name (`.dotted.mkv`) left out, and each walk is the listing's videos after (before) the start in that order, then `seek 0`, `pause false`. The order itself differs between file systems for the same names created in the same order: btrfs and xfs (a small folder) enumerate in creation order, tmpfs in the reverse of it; ext4 (not captured here) enumerates a hashed folder in the order of its name hashes, which depend on the file system's seed. No name order (byte, case-insensitive, natural, locale) is involved on Linux. On Windows wx's `FindFirstFileW` on NTFS should return the names in the volume's index order (by upper-cased UTF-16 code units), a fixed order for a given set of names whatever the creation order; that is not observed yet, and the Windows capture will show it.
+
+## Compared with the rewrite
+
+`ShellTests::nextFileFollowsTheLegacyObservation` (`hikari_ui_shell_tests`) reads the observation for the platform it runs on (it skips, naming the file, when that platform's is absent): it checks the relation above in the observation (listing = enumeration filtered, unsorted; the walks follow the listing), makes the same folder in the same order (the videos are copies of the `cfr.mkv` media fixture so each one opens), and walks it with `Application::nextVideoFile` both ways, which must open the videos in the order this file system's enumeration gives, as legacy's did on its own. On Windows with both folders on NTFS the enumeration must also equal the observed one, since NTFS's order does not depend on the creation order. A byte-for-byte match with `linux.json` on another Linux file system is not expected and not checked: the order is the file system's.

@@ -7,6 +7,7 @@
 #include "hikari/app/application.h"
 
 #include "hikari/application/keyframe_files.h"
+#include "hikari/application/legacy_dir.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -249,7 +250,10 @@ QString Application::openDummyVideo(const QVariantMap &values)
 // VIDEO_PREVIOUS_FILE / VIDEO_NEXT_FILE (VideoBox::NextFile): the folder of
 // the video (legacy VideoPath, kept by a failed open), else of the oldest
 // recent video (legacy videorec[size - 1]), listed as wxDir::GetAllFiles
-// lists it: files only, hidden ones left out, in the file system's own order.
+// lists it (application::legacy_dir, R5-per-platform): every entry that is
+// not a folder, hidden ones left out ('.' names on Linux, the hidden or
+// system attribute on Windows), in the file system's own order, unsorted
+// (tests/fixtures/legacy-observations/local-v3-next-file-20261013).
 bool Application::nextVideoFile(bool next)
 {
     auto &session = m_video->session();
@@ -263,11 +267,21 @@ bool Application::nextVideoFile(bool next)
     // the last listing again (legacy's `files` member)
     std::optional<std::vector<std::string>> files;
     if (!application::isDummyVideo(path.toStdString())) {
-        const QDir dir = QFileInfo(path).absoluteDir();
-        if (dir.exists() && dir.isReadable()) {
+#ifdef _WIN32
+        constexpr auto format = application::PathFormat::Dos;
+#else
+        constexpr auto format = application::PathFormat::Unix;
+#endif
+        // the folder as `path` writes it and each file as that folder, a
+        // separator and the name (wxDir::GetAllFiles), so that `path` is
+        // found when written so ("..", "." or a relative path kept)
+        const QString folder = QString::fromStdString(application::nextFileFolder(path.toStdString(), format));
+        if (const auto listed = application::legacy_dir::entries(QFileInfo(folder).filesystemFilePath(), {},
+                                                                 application::legacy_dir::Files)) {
             files.emplace();
-            for (const QString &name : dir.entryList(QDir::Files, QDir::Unsorted))
-                files->push_back(QDir::toNativeSeparators(dir.absoluteFilePath(name)).toStdString());
+            const QString prefix = folder.endsWith(QDir::separator()) ? folder : folder + QDir::separator();
+            for (const auto &file : *listed)
+                files->push_back((prefix + QFileInfo(file).fileName()).toStdString());
         }
     }
     const auto step = m_nextFile.step(std::move(files), path.toStdString(), next);

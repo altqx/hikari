@@ -75,6 +75,9 @@ public:
     // The monitors (GetMonitorRect1's list: Qt's screens, the primary first), and how many.
     static QList<QScreen *> monitors();
     Q_INVOKABLE int monitorCount() const { return static_cast<int>(monitors().size()); }
+    // Whether the fullscreen window has the main window as its transient
+    // parent on this platform (not on Wayland: V5-wayland-parent).
+    Q_INVOKABLE static bool ownedByMainWindow();
     // The monitor SetFullscreen(monitor) takes with the main window where it is.
     Q_INVOKABLE int monitorFor(int monitor) const;
 
