@@ -71,3 +71,23 @@ add_dependencies(hikarisub_tests
 
 enable_testing()
 add_test(NAME hikarisub_tests COMMAND hikarisub_tests)
+
+# wxGTK's key events, against the pinned wxWidgets build the application uses
+# (Thirdparty/build-wxwidgets-linux.sh, which applies Thirdparty/wxWidgets-patches)
+# and under xvfb-run for a display. Left out when either is missing, as in the
+# CI tests job, which builds no wxWidgets.
+set(HIKARISUB_TESTS_WX_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/../build-wx-linux/prefix"
+    CACHE PATH "Prefix of the pinned wxWidgets 3.3.4 Linux build, for the wxGTK tests")
+find_program(HIKARISUB_TESTS_XVFB_RUN xvfb-run)
+if(EXISTS "${HIKARISUB_TESTS_WX_PREFIX}/lib/cmake/wxWidgets-3.3" AND HIKARISUB_TESTS_XVFB_RUN)
+    find_package(wxWidgets 3.3.4 EXACT CONFIG REQUIRED COMPONENTS core base
+        PATHS "${HIKARISUB_TESTS_WX_PREFIX}" NO_DEFAULT_PATH)
+    pkg_check_modules(HIKARISUB_TESTS_GTK3 REQUIRED IMPORTED_TARGET gtk+-3.0)
+    add_executable(hikarisub_wxgtk_tests check_main.cpp WxGtkKeyTests.cpp)
+    target_link_libraries(hikarisub_wxgtk_tests PRIVATE wx::core wx::base PkgConfig::HIKARISUB_TESTS_GTK3)
+    add_test(NAME hikarisub_wxgtk_tests
+        COMMAND "${HIKARISUB_TESTS_XVFB_RUN}" -a $<TARGET_FILE:hikarisub_wxgtk_tests>)
+    set_tests_properties(hikarisub_wxgtk_tests PROPERTIES ENVIRONMENT "GDK_BACKEND=x11")
+else()
+    message(STATUS "hikarisub_wxgtk_tests left out: needs ${HIKARISUB_TESTS_WX_PREFIX} and xvfb-run")
+endif()
