@@ -25,7 +25,7 @@
 // which is no more protected than the folder it is in, so a per-user copy
 // that claims to be for all users is never elevated, nor one installed
 // for all users into a folder the user can write. That process trusts nothing the user's
-// side wrote (pending.json, its SHA-256, the download folder):
+// side wrote (the pending record, its SHA-256, the download folder):
 //
 //   1. <version> must be a release version newer than its own.
 //   2. It downloads the release's SHA256SUMS itself, over HTTPS from the

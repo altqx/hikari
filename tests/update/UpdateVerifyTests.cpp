@@ -96,7 +96,7 @@ TEST(update_verify_finds_the_listed_digest)
 TEST(update_verify_ignores_what_the_caller_says_the_digest_is)
 {
 	// The caller's forged installer, and the digest it recorded for it in
-	// pending.json: the check takes neither; only the digest the release
+	// pending record: the check takes neither; only the digest the release
 	// lists for the release file decides.
 	std::string official = "the release's installer";
 	std::string forged = "someone else's installer";

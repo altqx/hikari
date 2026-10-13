@@ -15,7 +15,7 @@
 
 // What decides, in the process that installs an update, that the package
 // is the release's own file (installers spec, 4.2 and 4.4). Nothing the
-// unprivileged app recorded is trusted there: not pending.json, not its
+// unprivileged app recorded is trusted there: not the pending record, not its
 // SHA-256. The installing side takes a version and a file only, downloads
 // the release's SHA256SUMS itself from the fixed GitHub URL, and compares
 // the file with the digest listed for the release file's own name. The

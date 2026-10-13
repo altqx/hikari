@@ -616,8 +616,8 @@ namespace update_manifest
 		return out + "\"";
 	}
 
-	// <update cache>/pending.json: a verified download waiting to be
-	// installed (4.1).
+	// <update cache>/pending-<CopyKey>.json: a verified download waiting
+	// to be installed (4.1).
 	struct Pending
 	{
 		std::string version;
@@ -707,21 +707,62 @@ namespace update_manifest
 	}
 
 	// The AppImage's download, beside $APPIMAGE (4.3): hidden, and named
-	// for the version, so that a later one does not overwrite it.
-	inline std::string AppImageStagingName(std::string_view version)
-	{
-		return ".HikariSub-" + std::string(version) + ".AppImage";
-	}
-
-	// Whether a pending AppImage update was staged beside this image: the
-	// cache, and so its record, is shared by every copy the user keeps, and
-	// a download beside another copy is that copy's to install.
-	inline bool IsStagedBeside(std::string_view appImage, std::string_view file, std::string_view version)
+	// for the image and the version, so that a later version does not
+	// overwrite it and another AppImage in the same folder stages its own.
+	// "" when $APPIMAGE is not an absolute file path.
+	inline std::string AppImageStagingPath(std::string_view appImage, std::string_view version)
 	{
 		size_t slash = appImage.find_last_of('/');
-		if (slash == std::string_view::npos)
-			return false;
-		return file == std::string(appImage.substr(0, slash + 1)) + AppImageStagingName(version);
+		if (appImage.empty() || appImage[0] != '/' || slash + 1 == appImage.size())
+			return std::string();
+		return std::string(appImage.substr(0, slash + 1)) + "." + std::string(appImage.substr(slash + 1)) + "." +
+			std::string(version) + ".update";
+	}
+
+	// The version a file beside the AppImage was staged for, when it is
+	// this image's download or its .part; else "".
+	inline std::string StagedVersion(std::string_view appImageName, std::string_view name)
+	{
+		std::string prefix = "." + std::string(appImageName) + ".";
+		if (appImageName.empty() || !name.starts_with(prefix))
+			return std::string();
+		name.remove_prefix(prefix.size());
+		if (name.ends_with(".part"))
+			name.remove_suffix(5);
+		if (!name.ends_with(".update"))
+			return std::string();
+		name.remove_suffix(7);
+		return ParseSemVer(name) ? std::string(name) : std::string();
+	}
+
+	// Whether a pending AppImage update was staged for this image: the
+	// cache is shared by every copy the user keeps, and a download for
+	// another copy, in another folder or under another name, is that
+	// copy's to install.
+	inline bool IsStagedBeside(std::string_view appImage, std::string_view file, std::string_view version)
+	{
+		std::string staged = AppImageStagingPath(appImage, version);
+		return !staged.empty() && file == staged;
+	}
+
+	// What this copy's files in the shared update cache are named for
+	// (pending-<key>.json and its markers), so that copies of other kinds,
+	// and AppImages at other paths, keep their own: the kind's token, and
+	// for an AppImage a hash of its path too. A collision only shares a
+	// record, which IsStagedBeside still tells apart.
+	inline std::string CopyKey(std::string_view kindToken, std::string_view appImage)
+	{
+		if (kindToken != package_kind::Token(package_kind::Kind::AppImage))
+			return std::string(kindToken);
+		unsigned long long hash = 14695981039346656037ULL; // FNV-1a
+		for (unsigned char c : appImage) {
+			hash ^= c;
+			hash *= 1099511628211ULL;
+		}
+		std::string key = std::string(kindToken) + "-";
+		for (int shift = 60; shift >= 0; shift -= 4)
+			key += "0123456789abcdef"[(hash >> shift) & 0xF];
+		return key;
 	}
 
 	// The update helper of the deb and rpm, and the switch that tells the
@@ -760,7 +801,7 @@ namespace update_manifest
 		return quoted + "'";
 	}
 
-	// Whether the appimage-at-start file an ordinary quit wrote names the
+	// Whether the at-start file an ordinary quit wrote names the
 	// pending update's version: that version, with an optional newline.
 	inline bool IsAtStartVersion(std::string_view named, std::string_view pending)
 	{

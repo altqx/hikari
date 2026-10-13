@@ -104,17 +104,26 @@ namespace
 		return wxRenameFile(from, to, true);
 	}
 
-	wxString PendingPath() { return CacheDir() + kSep + L"pending.json"; }
+	wxString AppImagePath();
+
+	// This copy's name in the shared cache (CopyKey): copies of other
+	// kinds, and AppImages at other paths, keep records of their own.
+	wxString CopyKey()
+	{
+		return FromUtf8(update_manifest::CopyKey(package_kind::Token(update_installer::Kind()), ToUtf8(AppImagePath())));
+	}
+
+	wxString PendingPath() { return CacheDir() + kSep + L"pending-" + CopyKey() + L".json"; }
 	wxString LastResultPath() { return CacheDir() + kSep + L"last-result.json"; }
 	// The version of the AppImage update an ordinary quit left for the
 	// next start.
-	wxString AppImageAtStartPath() { return CacheDir() + kSep + L"appimage-at-start"; }
+	wxString AppImageAtStartPath() { return CacheDir() + kSep + L"at-start-" + CopyKey(); }
 	// The version of the NSIS update handed to its installer at the last
 	// quit. The installer writes a failure to last-result.json in the
 	// profile of the account that runs it, which for all users is the
 	// administrator who approved UAC, maybe not this user: the next start
 	// tells this user from this file when it is still not that version.
-	wxString InstallingPath() { return CacheDir() + kSep + L"installing"; }
+	wxString InstallingPath() { return CacheDir() + kSep + L"installing-" + CopyKey(); }
 
 	bool ReadSmallFile(const wxString &path, std::string *content, size_t limit = 64 * 1024)
 	{
@@ -424,11 +433,9 @@ namespace
 		{
 			wxString name = FromUtf8(target.package.name);
 			if (update_installer::Kind() == package_kind::Kind::AppImage) {
-				wxString appImage = AppImagePath();
-				wxString dir = appImage.BeforeLast(kSep);
-				if (dir.empty())
+				finalPath = FromUtf8(update_manifest::AppImageStagingPath(ToUtf8(AppImagePath()), target.version));
+				if (finalPath.empty())
 					return false;
-				finalPath = dir + kSep + FromUtf8(update_manifest::AppImageStagingName(target.version));
 			}
 			else {
 				wxString cache = CacheDir();
@@ -672,7 +679,8 @@ namespace
 	// A pending update of another copy of HikariSub that shares this
 	// user's cache: one of another kind (an AppImage beside a deb, an
 	// installed copy beside a portable one), or an AppImage update that
-	// another AppImage copy downloaded (IsStagedBeside). It is neither
+	// is for another AppImage (IsStagedBeside). Each copy has a record of
+	// its own (CopyKey), so this is a second guard. It is neither
 	// offered, removed nor installed here. A record whose kind cannot be
 	// read is no copy's, and is dropped as before.
 	bool ForAnotherCopy(const Pending &pending)
@@ -722,16 +730,14 @@ namespace
 			return;
 		wxString name;
 		std::vector<wxString> stale;
-		for (bool more = appDir.GetFirst(&name, L".HikariSub-*", wxDIR_FILES | wxDIR_HIDDEN); more;
+		const std::string imageName = ToUtf8(appImage.AfterLast(kSep));
+		for (bool more = appDir.GetFirst(&name, wxEmptyString, wxDIR_FILES | wxDIR_HIDDEN); more;
 			more = appDir.GetNext(&name))
 		{
-			// .HikariSub-<V>.AppImage, and its .part.
-			const wxString prefix = L".HikariSub-";
-			int suffix = name.Find(L".AppImage");
-			if (suffix == wxNOT_FOUND || suffix <= int(prefix.length()))
-				continue;
-			wxString version = name.Mid(prefix.length(), suffix - prefix.length());
-			if (!update_manifest::IsNewer(ToUtf8(version), VersionHikariSub))
+			// This image's .<name>.<V>.update, and its .part; another
+			// image's are its own to clear.
+			std::string version = update_manifest::StagedVersion(imageName, ToUtf8(name));
+			if (!version.empty() && !update_manifest::IsNewer(version, VersionHikariSub))
 				stale.push_back(appImage.BeforeLast(kSep) + kSep + name);
 		}
 		for (const wxString &file : stale)

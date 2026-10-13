@@ -259,7 +259,7 @@ TEST(updateApplyAllUsersRunsAVerifiedCopyFromAPrivateFolder)
 
 TEST(updateApplyRefusesAForgedInstallerBeforeRunningIt)
 {
-	// The caller's pending.json would carry the forged file's own digest;
+	// The caller's pending record would carry the forged file's own digest;
 	// Apply is not given it, and the release lists another.
 	Fixture fixture;
 	Put(fixture.file, kForged);

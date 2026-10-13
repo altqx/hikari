@@ -639,14 +639,34 @@ TEST(update_hand_off_commands)
 		"sudo /opt/hikarisub/libexec/hikarisub-update-helper install '/home/u/a b.deb' '0.4.0-beta.1'");
 	CHECK(InstallCommand("/home/u/it's.rpm", "1.0.0") ==
 		"sudo /opt/hikarisub/libexec/hikarisub-update-helper install '/home/u/it'\\''s.rpm' '1.0.0'");
-	CHECK(AppImageStagingName("0.0.3") == ".HikariSub-0.0.3.AppImage");
-	// A pending AppImage update belongs to the copy it was staged beside.
-	CHECK(IsStagedBeside("/home/u/Apps/HikariSub.AppImage", "/home/u/Apps/.HikariSub-0.0.3.AppImage", "0.0.3"));
-	CHECK(!IsStagedBeside("/home/u/Other/HikariSub.AppImage", "/home/u/Apps/.HikariSub-0.0.3.AppImage", "0.0.3"));
-	CHECK(!IsStagedBeside("/home/u/Apps/HikariSub.AppImage", "/home/u/Apps/.HikariSub-0.0.4.AppImage", "0.0.3"));
-	CHECK(!IsStagedBeside("/home/u/Apps/HikariSub.AppImage", "/home/u/Apps/sub/.HikariSub-0.0.3.AppImage", "0.0.3"));
-	CHECK(!IsStagedBeside("HikariSub.AppImage", ".HikariSub-0.0.3.AppImage", "0.0.3"));
-	CHECK(IsStagedBeside("/HikariSub.AppImage", "/.HikariSub-0.0.3.AppImage", "0.0.3"));
+	CHECK(AppImageStagingPath("/home/u/Apps/HikariSub.AppImage", "0.0.3") ==
+		"/home/u/Apps/.HikariSub.AppImage.0.0.3.update");
+	CHECK(AppImageStagingPath("HikariSub.AppImage", "0.0.3").empty());
+	CHECK(AppImageStagingPath("/home/u/Apps/", "0.0.3").empty());
+	// A pending AppImage update belongs to the image it was staged for:
+	// its folder and its name.
+	CHECK(IsStagedBeside("/home/u/Apps/HikariSub.AppImage", "/home/u/Apps/.HikariSub.AppImage.0.0.3.update", "0.0.3"));
+	CHECK(!IsStagedBeside("/home/u/Other/HikariSub.AppImage", "/home/u/Apps/.HikariSub.AppImage.0.0.3.update", "0.0.3"));
+	CHECK(!IsStagedBeside("/home/u/Apps/HikariSub-test.AppImage", "/home/u/Apps/.HikariSub.AppImage.0.0.3.update", "0.0.3"));
+	CHECK(!IsStagedBeside("/home/u/Apps/HikariSub.AppImage", "/home/u/Apps/.HikariSub.AppImage.0.0.4.update", "0.0.3"));
+	CHECK(!IsStagedBeside("/home/u/Apps/HikariSub.AppImage", "/home/u/Apps/sub/.HikariSub.AppImage.0.0.3.update", "0.0.3"));
+	CHECK(!IsStagedBeside("HikariSub.AppImage", ".HikariSub.AppImage.0.0.3.update", "0.0.3"));
+	CHECK(IsStagedBeside("/HikariSub.AppImage", "/.HikariSub.AppImage.0.0.3.update", "0.0.3"));
+	// The staged files an image clears are its own.
+	CHECK(StagedVersion("HikariSub.AppImage", ".HikariSub.AppImage.0.0.3.update") == "0.0.3");
+	CHECK(StagedVersion("HikariSub.AppImage", ".HikariSub.AppImage.0.1.0-beta.2.update.part") == "0.1.0-beta.2");
+	CHECK(StagedVersion("HikariSub.AppImage", ".HikariSub-test.AppImage.0.0.3.update").empty());
+	CHECK(StagedVersion("HikariSub.AppImage", ".HikariSub.AppImage.x.update").empty());
+	CHECK(StagedVersion("HikariSub.AppImage", ".HikariSub.AppImage.0.0.3").empty());
+	CHECK(StagedVersion("", "..0.0.3.update").empty());
+	// Each copy keeps its own records in the shared cache.
+	CHECK(CopyKey("deb", "") == "deb");
+	CHECK(CopyKey("nsis-machine", "") == "nsis-machine");
+	std::string a = CopyKey("appimage", "/home/u/Apps/HikariSub.AppImage");
+	std::string b = CopyKey("appimage", "/home/u/Apps/HikariSub-test.AppImage");
+	CHECK(a.size() == 25 && a.starts_with("appimage-"));
+	CHECK(a != b);
+	CHECK(a == CopyKey("appimage", "/home/u/Apps/HikariSub.AppImage"));
 }
 
 TEST(update_appimage_at_start_names_the_pending_version)
