@@ -4,8 +4,8 @@
 // the Dark and High contrast black panels. Focused, its border is the
 // accent's outline (the K2 card: the accent drives the focused field
 // border); with keyboard focus (Tab, Backtab, a shortcut) the style's ring
-// (FocusFrame: 2 wide, 3 beyond it, in the theme's focus role, the text
-// colour) is drawn beside it. Everything else is Fusion's.
+// (FocusFrame: 1 wide, just outside it, in the theme's focus role, the
+// text colour) is drawn beside it. Everything else is Fusion's.
 import QtQuick
 import QtQuick.Controls.Fusion as F
 import QtQuick.Controls.Fusion.impl as FI

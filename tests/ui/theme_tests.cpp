@@ -580,11 +580,13 @@ Window {
     }
 
     // K2 focus (visual-language.md, "Keyboard focus"; the user's 2026-10-05
-    // decision after MuseScore 4's NavigationFocusBorder): every focusable
-    // control of the style draws keyboard focus (Tab, Backtab, a shortcut)
-    // as a ring 2 wide in the focus role, the theme's text colour: 3 beyond
-    // a button, tool button, combo box, check box, radio button, field, text
-    // area or spin box, around a slider's handle, inside a tab. The accent
+    // decision after MuseScore 4's NavigationFocusBorder, made 1 wide and
+    // tight by the user's 2026-10-13 decision): every focusable control of
+    // the style draws keyboard focus (Tab, Backtab, a shortcut) as a ring 1
+    // wide in the focus role, the theme's text colour: just outside a
+    // button, tool button, combo box, check box, radio button, field, text
+    // area, spin box or a slider's handle, touching its edge, and 1 inside a
+    // tab. The accent
     // stays for selection, the default button and a focused field's border,
     // and the control's own outline stays the boundary colour, so keyboard
     // focus and selection are told apart. A click's focus draws no ring.
@@ -670,21 +672,31 @@ Window {
                              qPrintable(where + QStringLiteral(" ring %1, text %2").arg(name(ringColour(i)), name(r.text))));
                 QCOMPARE(ringColour(i), r.focus);
                 QVERIFY2(ringColour(i) != r.accent && ringColour(i) != r.select, qPrintable(where));
-                QCOMPARE(ring(i)->property("border").value<QObject *>()->property("width").toInt(), 2);
-                // Where it is: 3 beyond the control (the slider's handle);
-                // inside a tab, which the tab bar would clip.
+                QCOMPARE(ring(i)->property("border").value<QObject *>()->property("width").toInt(), 1);
+                // Where it is: just outside the control (the slider's
+                // handle), touching it; 1 inside a tab's background, which
+                // the tab bar would clip.
                 const QRectF at = sceneRect(ring(i));
-                if (i == Tab)
+                if (i == Tab) {
+                    auto *background = controls[i]->property("background").value<QQuickItem *>();
                     QVERIFY2(sceneRect(controls[i]).contains(at), qPrintable(where));
-                else
+                    QCOMPARE(at, sceneRect(background).adjusted(1, 1, -1, -1));
+                } else {
                     QCOMPARE(at, sceneRect(i == Slider ? controls[i]->property("handle").value<QQuickItem *>()
-                                                       : controls[i]).adjusted(-5, -5, 5, 5));
-                // and drawn: its left side in the text colour
+                                                       : controls[i]).adjusted(-1, -1, 1, 1));
+                }
+                // and drawn: its left side in the text colour, 1 wide (the
+                // pixel inside it is not the ring's)
                 const QImage shot = window->grabWindow();
                 const qreal dpr = window->effectiveDevicePixelRatio();
-                const QPoint pixel = ((at.topLeft() + QPointF(1, at.height() / 2)) * dpr).toPoint();
-                QVERIFY2(shot.pixelColor(pixel) == r.text,
-                         qPrintable(where + QStringLiteral(" drawn %1").arg(name(shot.pixelColor(pixel)))));
+                const auto pixelAt = [&](qreal x) {
+                    return QPoint(int(std::floor((at.left() + x) * dpr)), int(std::floor((at.top() + at.height() / 2) * dpr)));
+                };
+                QVERIFY2(shot.pixelColor(pixelAt(0.5)) == r.text,
+                         qPrintable(where + QStringLiteral(" drawn %1").arg(name(shot.pixelColor(pixelAt(0.5))))));
+                if (i == Tab || i == Field || i == 6 /* the text area */)
+                    QVERIFY2(shot.pixelColor(pixelAt(1.5)) != r.text,
+                             qPrintable(where + QStringLiteral(" 2 wide: %1").arg(name(shot.pixelColor(pixelAt(1.5))))));
                 // The control's own outline stays the boundary colour.
                 if (i < 5)
                     QTRY_VERIFY2(outline(i) == r.line, qPrintable(where));
@@ -717,6 +729,50 @@ Window {
         tabTo(controls[0]);
         QTRY_VERIFY(ring(0)->isVisible());
         QTRY_COMPARE(ringColour(0), colour("paletteText"));
+    }
+
+    // K2 focus (the user's 2026-10-13 decision): the panel holding the focus
+    // shows a small triangle in the accent at its header's top trailing
+    // corner (PanelFocusMark.qml), where the header is `field` (a lone
+    // panel's title bar, a selected tab) or `raised` (the tab strip). The
+    // accent meets 3:1 on both in every theme with every preset, the high
+    // contrast themes' default accent pick included. With
+    // HIKARI_THEME_SHEET_DIR set the ratios are written to
+    // k2-focus-mark-contrast.txt for the review.
+    void panelFocusMarkContrast()
+    {
+        QString report;
+        QTextStream out(&report);
+        out << "theme | accent | on field | on raised\n";
+        const auto check = [&](Code code, const ui::theme::Roles &r, const QString &accent) {
+            const double field = contrastRatio(r.accent, r.field);
+            const double raised = contrastRatio(r.accent, r.raised);
+            out << ui::theme::codeName(code) << " | " << accent << " " << name(r.accent) << " | "
+                << QString::number(field, 'f', 2) << " | " << QString::number(raised, 'f', 2) << "\n";
+            const QString what = ui::theme::codeName(code) + QLatin1Char(' ') + accent;
+            QVERIFY2(field >= 3.0, qPrintable(what + QStringLiteral(" on field %1").arg(field)));
+            QVERIFY2(raised >= 3.0, qPrintable(what + QStringLiteral(" on raised %1").arg(raised)));
+        };
+        for (const bool dark : {false, true})
+            for (const auto &a : ui::theme::accents(dark)) {
+                ui::theme::Choice choice;
+                (dark ? choice.darkAccent : choice.lightAccent) = QLatin1String(a.key);
+                const Code code = dark ? Code::Dark : Code::Light;
+                check(code, roles(code, choice), QLatin1String(a.key));
+            }
+        const auto defaults = ui::theme::choiceFrom([](const char *) { return QVariant(); });
+        for (const Code code : {Code::HighContrastWhite, Code::HighContrastBlack}) {
+            const auto r = roles(code, defaults);
+            QCOMPARE(r.accent, ui::theme::pickDefault(code, ui::theme::Pick::Accent));
+            check(code, r, QStringLiteral("accent pick"));
+        }
+        qInfo().noquote() << report;
+        if (const QString dir = qEnvironmentVariable("HIKARI_THEME_SHEET_DIR"); !dir.isEmpty()) {
+            QVERIFY(QDir().mkpath(dir));
+            QFile file(dir + QStringLiteral("/k2-focus-mark-contrast.txt"));
+            QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
+            file.write(report.toUtf8());
+        }
     }
 
     // The swatch sheet for the user's review: per mode, the seven accents as

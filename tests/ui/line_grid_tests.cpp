@@ -290,10 +290,12 @@ private slots:
 
     // K2 focus (visual-language.md, "Keyboard focus"): while the Grid has
     // keyboard focus its focused cell, the current Line's row, carries the
-    // focus ring, 2 wide in the text colour just inside the current Line's
-    // accent outline; a selected current row keeps its 3-wide accent marker
-    // over the ring's left side. Without focus no ring. Every theme; focus
-    // stays apart from the selection's accent and background.
+    // focus ring, 1 wide in the text colour tight inside the current Line's
+    // accent outline (the user's 2026-10-13 decision: "grid row should still
+    // use the ring too", 1 wide like the controls'); a selected current row
+    // keeps its 3-wide accent marker over the ring's left side. Without
+    // focus no ring. Every theme; focus stays apart from the selection's
+    // accent and background.
     void focusRingOnTheCurrentRow()
     {
         const char *script = "[Events]\n"
@@ -355,14 +357,14 @@ private slots:
             image = paint();
             expect(image, 0, mid, roles.accent, "current outline (left)");
             expect(image, 1, mid, roles.focus, "ring (left)");
-            expect(image, 2, mid, roles.focus, "ring (left, second)");
-            expect(image, 3, mid, label, "inside the ring");
+            expect(image, 2, mid, label, "inside the ring (1 wide)");
             expect(image, 719, mid, roles.accent, "current outline (right)");
             expect(image, 718, mid, roles.focus, "ring (right)");
-            expect(image, 717, mid, roles.focus, "ring (right, second)");
+            QVERIFY2(image.pixelColor(717, mid) != roles.focus, "ring (right) 1 wide");
             expect(image, middle, top(1), roles.accent, "current outline (top)");
             expect(image, middle, top(1) + 1, roles.focus, "ring (top)");
-            expect(image, middle, top(1) + 2, roles.focus, "ring (top, second)");
+            expect(image, middle, top(1) + 2, theme::current().content.gridAlternate, "inside the ring (top, 1 wide)");
+            expect(image, middle, top(2) - 3, theme::current().content.gridAlternate, "inside the ring (bottom, 1 wide)");
             expect(image, middle, top(2) - 2, roles.focus, "ring (bottom)");
             expect(image, middle, top(2) - 1, roles.accent, "current outline (bottom)");
             // only on the current row
@@ -377,6 +379,7 @@ private slots:
             expect(image, 1, selectedMid, roles.accent, "marker over the ring");
             expect(image, 3, selectedMid, label, "past the marker");
             expect(image, middle, top(2) + 1, roles.focus, "ring (top) on a selected row");
+            expect(image, middle, top(2) + 2, roles.select, "inside the ring on a selected row");
             expect(image, 718, selectedMid, roles.focus, "ring (right) on a selected row");
             expect(image, 1, mid, label, "the ring left with the current Line");
             model.setSelection({core::LineId{2}, {core::LineId{3}}}, core::LineId{3});

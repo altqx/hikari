@@ -367,6 +367,45 @@ class ShellTest : public QObject {
         QCoreApplication::processEvents();
     }
 
+    // The visible dock headers (DockTabBar.qml) of every window.
+    QList<QQuickItem *> visibleDockHeaders() const
+    {
+        QList<QQuickItem *> out;
+        std::function<void(QQuickItem *)> walk = [&](QQuickItem *from) {
+            if (from->objectName() == QLatin1String("dockHeader") && from->isVisible())
+                out << from;
+            for (QQuickItem *child : from->childItems())
+                walk(child);
+        };
+        for (QWindow *w : QGuiApplication::topLevelWindows())
+            if (auto *qw = qobject_cast<QQuickWindow *>(w); qw && qw->isVisible())
+                walk(qw->contentItem());
+        return out;
+    }
+    // The panels whose header shows the focused panel's corner mark
+    // (PanelFocusMark.qml), by their dock names.
+    QStringList markedPanels() const
+    {
+        QStringList out;
+        for (QQuickItem *header : visibleDockHeaders()) {
+            QQuickItem *mark = findItem(header, QStringLiteral("panelFocusMark"));
+            if (!mark)
+                return {QStringLiteral("a header without a mark")};
+            if (mark->isVisible())
+                out << header->property("currentName").toString();
+        }
+        return out;
+    }
+    // A pixel of `on`'s window at `at` in `on`'s coordinates, as drawn.
+    static QColor drawnPixel(QQuickItem *on, QPointF at)
+    {
+        QQuickWindow *w = on->window();
+        const QImage shot = w->grabWindow();
+        const qreal dpr = w->effectiveDevicePixelRatio();
+        const QPointF p = on->mapToScene(at) * dpr;
+        return QColor(shot.pixel(int(std::floor(p.x())), int(std::floor(p.y()))));
+    }
+
 private slots:
     void initTestCase()
     {
@@ -3673,7 +3712,13 @@ private slots:
         QQuickItem *tab = header->property("currentTab").value<QQuickItem *>();
         QTRY_VERIFY2(tab->hasActiveFocus(), window->activeFocusItem() ? qPrintable(window->activeFocusItem()->objectName()) : "none");
         QVERIFY(findItem(tab, QStringLiteral("tabFocusRing"))->isVisible());
-        QVERIFY(!findItem(header, QStringLiteral("focusRing"))->isVisible()); // the tab's ring, not the header's
+        // the tab's ring, 1 wide and 1 inside it; the panel keeps its corner mark
+        auto *tabRing = findItem(tab, QStringLiteral("tabFocusRing"));
+        QCOMPARE(tabRing->property("border").value<QObject *>()->property("width").toInt(), 1);
+        QCOMPARE(tabRing->mapRectToItem(tab, QRectF(0, 0, tabRing->width(), tabRing->height())).topLeft(), QPointF(1, 1));
+        QVERIFY(findItem(header, QStringLiteral("panelFocusMark"))->isVisible());
+        for (auto *ring : header->findChildren<QQuickItem *>(QStringLiteral("focusRing")))
+            QVERIFY(ring->parentItem() != header && !ring->isVisible()); // no header ring; no control ringed
         QQuickItem *button = findItem(header, QStringLiteral("dockMenuButton"));
         press(Qt::Key_Right);
         QTRY_VERIFY(button->hasActiveFocus());
@@ -11007,7 +11052,7 @@ private slots:
         QCOMPARE(QAccessible::queryAccessibleInterface(dialogItem("settingsDialog", "accent_blue"))->text(QAccessible::Name),
                  QStringLiteral("Blue"));
         // Keyboard focus on a theme card or a swatch: the focus role's ring,
-        // 2 wide and 3 beyond it (visual-language.md, "Keyboard focus ring"),
+        // 1 wide just outside it (visual-language.md, "Keyboard focus"),
         // apart from the accent or text border marking the chosen one.
         for (const char *name : {"appearanceTheme_dark", "accent_green"}) {
             auto *control = dialogItem("settingsDialog", name);
@@ -11021,10 +11066,11 @@ private slots:
             const auto *border = ring->property("border").value<QObject *>();
             QCOMPARE(border->property("color").value<QColor>(), ui::theme::current().roles.focus);
             QCOMPARE(border->property("color").value<QColor>(), ui::theme::current().roles.text);
-            QCOMPARE(border->property("width").toInt(), 2);
+            QCOMPARE(border->property("width").toInt(), 1);
             QVERIFY(ui::theme::current().roles.focus != ui::theme::current().roles.accent);
-            QCOMPARE(ring->width(), control->width() + 10);
-            QCOMPARE(ring->x(), -5.0);
+            QCOMPARE(ring->width(), control->width() + 2);
+            QCOMPARE(ring->x(), -1.0);
+            QCOMPARE(ring->y(), -1.0);
             dialogItem("settingsDialog", "appearanceFollowSystem")->forceActiveFocus(Qt::TabFocusReason);
             QTRY_VERIFY2(!ring->isVisible(), name);
         }
@@ -11219,17 +11265,22 @@ private slots:
         }
     }
 
-    // K2 focus (visual-language.md, "Keyboard focus"): the panel holding
-    // keyboard focus rings its header (D3: its dock header row), 2 wide just
-    // inside it in the focus role (the theme's text colour), and the ring
-    // moves with the focus; the panel has no accent border (D1 drew a
-    // focused panel's border 2 wide in the accent). The Grid's focused
-    // cell, its current row, has its own ring, painted when the Grid takes
-    // the focus and gone when it leaves. Every theme.
-    void keyboardFocusRingsThePanelHeaderAndTheGridRow()
+    // K2 focus (visual-language.md, "Keyboard focus"; the user's 2026-10-13
+    // decision): the panel holding keyboard focus shows a small filled right
+    // triangle in the accent at its top right corner (its dock header's),
+    // and no ring; the mark moves with the focus, shows on no other panel,
+    // and follows an accent or theme change live. No dock header or title
+    // bar draws a ring any more. The panel has no accent border (D1 drew
+    // one round a focused panel). The Grid's focused cell,
+    // its current row, keeps a ring, 1 wide inside its accent outline,
+    // painted while the Grid has the focus and gone when it leaves. Every
+    // theme.
+    void focusedPanelShowsTheAccentCornerMark()
     {
         auto &settings = *application->settingsStore();
         QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
+        QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
         auto *root = engine->rootObjects().first();
         auto *grid = item("editingGrid");
         auto *text = item("lineText");
@@ -11237,59 +11288,155 @@ private slots:
         QVERIFY(grid && text && gridPanel);
         grid->forceActiveFocus(Qt::TabFocusReason);
         press(Qt::Key_Home);
-        const auto ringed = [&] {
-            QStringList out;
-            for (auto *bar : root->findChildren<QQuickItem *>(QStringLiteral("dockHeader"))) {
-                auto *ring = bar->findChild<QQuickItem *>(QStringLiteral("focusRing"));
-                if (!ring)
-                    return QStringList{QStringLiteral("a header without a ring")};
-                if (bar->isVisible() && ring->isVisible())
-                    out << bar->property("currentTitle").toString();
-            }
-            return out;
-        };
-        const auto ringOf = [&](const QString &title) -> QQuickItem * {
-            for (auto *bar : root->findChildren<QQuickItem *>(QStringLiteral("dockHeader")))
-                if (bar->isVisible() && bar->property("currentTitle").toString() == title)
-                    return bar->findChild<QQuickItem *>(QStringLiteral("focusRing"));
-            return nullptr;
-        };
-        const auto pixel = [&](QQuickItem *on, QPointF at) {
-            const QImage shot = window->grabWindow();
-            const qreal dpr = window->effectiveDevicePixelRatio();
-            const QPointF p = on->mapToScene(at) * dpr;
-            return QColor(shot.pixel(int(std::floor(p.x())), int(std::floor(p.y()))));
-        };
+        // No ring on a dock header or a title bar: the only rings in the dock
+        // chrome are its controls' own (the "⋯" button's, the toolbars').
+        for (const char *chrome : {"dockHeader", "dockTitleBar"})
+            for (auto *bar : root->findChildren<QQuickItem *>(QLatin1String(chrome)))
+                for (auto *ring : bar->findChildren<QQuickItem *>(QStringLiteral("focusRing"))) {
+                    QVERIFY2(ring->parentItem() != bar, chrome);
+                    auto *control = ring->property("control").value<QQuickItem *>();
+                    QVERIFY2(control && control != bar && control->inherits("QQuickControl"), chrome);
+                }
         const double rh = grid->property("rowHeight").toDouble();
         // the ring's top side on the first row, below the header (its left
         // side lies under a selected row's marker)
         const QPointF currentRowRing(grid->width() / 2, rh + 1.5);
+        const QPointF insideCurrentRowRing(grid->width() / 2, rh + 2.5);
+        const auto markOf = [&](const QString &panel) {
+            QQuickItem *header = dockHeader(panel);
+            return header ? findItem(header, QStringLiteral("panelFocusMark")) : nullptr;
+        };
+        // The mark: in the accent, flush with the header's top and right
+        // edges, its legs 8 long; the diagonal leaves the corner's far side
+        // to the header.
+        const auto checkMark = [&](const QString &panel, const QColor &accent) {
+            QQuickItem *header = dockHeader(panel);
+            QQuickItem *mark = markOf(panel);
+            QVERIFY2(header && mark && mark->isVisible(), qPrintable(panel));
+            QCOMPARE(mark->property("colour").value<QColor>(), accent);
+            const qreal leg = mark->property("leg").toReal();
+            QCOMPARE(mark->width(), leg);
+            QCOMPARE(mark->height(), leg);
+            QVERIFY2(leg >= 8 && leg <= 10, qPrintable(QString::number(leg)));
+            const QRectF at = mark->mapRectToItem(header, QRectF(0, 0, mark->width(), mark->height()));
+            QCOMPARE(at.top(), 0.0);
+            QCOMPARE(at.right(), header->width());
+            QVERIFY(!mark->property("mirrored").toBool());
+            // drawn: the corner in the accent, the far side of the diagonal not
+            QTRY_COMPARE(drawnPixel(header, QPointF(header->width() - 0.5, 0.5)), accent);
+            QTRY_COMPARE(drawnPixel(header, QPointF(header->width() - 2.5, 1.5)), accent);
+            QVERIFY(drawnPixel(header, QPointF(header->width() - leg + 0.5, leg - 0.5)) != accent);
+            // above the content, taking no input
+            QCOMPARE(mark->acceptedMouseButtons(), Qt::NoButton);
+            QVERIFY(mark->childItems().size() == 1
+                    && mark->childItems().front()->acceptedMouseButtons() == Qt::NoButton);
+        };
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
         for (const auto theme : ui::theme::kCodes) {
             settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(theme));
             const auto &roles = ui::theme::current().roles;
             QCOMPARE(roles.focus, roles.text);
             grid->forceActiveFocus(Qt::TabFocusReason);
-            QTRY_COMPARE(ringed(), QStringList{QStringLiteral("Grid")});
-            auto *ring = ringOf(QStringLiteral("Grid"));
-            QVERIFY(ring);
-            const auto *border = ring->property("border").value<QObject *>();
-            QCOMPARE(border->property("color").value<QColor>(), roles.focus);
-            QCOMPARE(border->property("width").toInt(), 2);
-            auto *bar = ring->parentItem();
-            QVERIFY(QRectF(0, 0, bar->width(), bar->height()).contains(ring->mapRectToItem(bar, ring->boundingRect())));
-            QTRY_COMPARE(pixel(ring, QPointF(0.5, ring->height() / 2)), roles.focus);
-            QTRY_COMPARE(pixel(grid, currentRowRing), roles.focus);
+            QTRY_COMPARE(markedPanels(), QStringList{QStringLiteral("Grid")});
+            checkMark(QStringLiteral("Grid"), roles.accent);
+            if (QTest::currentTestFailed())
+                return;
+            // The Grid's current row: the 1-wide ring inside its outline.
+            QTRY_COMPARE(drawnPixel(grid, currentRowRing), roles.focus);
+            QVERIFY(drawnPixel(grid, insideCurrentRowRing) != roles.focus);
             // D3: the panel has no frame of its own (the separators are the
             // boundaries between panels): its body's colour to its edge.
             for (const QPointF at : {QPointF(0.5, gridPanel->height() / 2), QPointF(1.5, gridPanel->height() / 2)})
-                QTRY_COMPARE(pixel(gridPanel, at), roles.field);
-            // The Line editor takes the focus: its header is ringed, the
-            // Grid's ring and its row's ring are gone.
+                QTRY_COMPARE(drawnPixel(gridPanel, at), roles.field);
+            // The Line editor takes the focus: its header has the mark, the
+            // Grid's mark and its row's ring are gone.
             text->forceActiveFocus(Qt::TabFocusReason);
-            QTRY_VERIFY(ringed().size() == 1 && ringed().front().startsWith(QStringLiteral("Line editor")));
-            QTRY_VERIFY(pixel(grid, currentRowRing) != roles.focus);
+            QTRY_COMPARE(markedPanels(), QStringList{QStringLiteral("Editor")});
+            checkMark(QStringLiteral("Editor"), roles.accent);
+            QVERIFY(!markOf(QStringLiteral("Grid"))->isVisible());
+            QVERIFY(!markOf(QStringLiteral("Reference"))->isVisible());
+            QTRY_VERIFY(drawnPixel(grid, currentRowRing) != roles.focus);
+            if (QTest::currentTestFailed())
+                return;
         }
+        // The accent follows an accent change live, and a theme change.
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
+        grid->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_COMPARE(markedPanels(), QStringList{QStringLiteral("Grid")});
+        for (const char *key : {"blue", "purple", "orange"}) {
+            settings.setValue(QStringLiteral("appearance.darkAccent"), QLatin1String(key));
+            const QColor accent = ui::theme::accent(true, QLatin1String(key)).accent;
+            QCOMPARE(ui::theme::current().roles.accent, accent);
+            QTRY_COMPARE(markOf(QStringLiteral("Grid"))->property("colour").value<QColor>(), accent);
+            checkMark(QStringLiteral("Grid"), accent);
+        }
+        settings.setValue(QStringLiteral("appearance.lightAccent"), QStringLiteral("red"));
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+        QTRY_COMPARE(markOf(QStringLiteral("Grid"))->property("colour").value<QColor>(),
+                     ui::theme::accent(false, QStringLiteral("red")).accent);
+        checkMark(QStringLiteral("Grid"), ui::theme::accent(false, QStringLiteral("red")).accent);
+    }
+
+    // K2 focus: a floating panel's header carries the corner mark while its
+    // window holds the focus; the main window's panels show none.
+    void floatingPanelShowsTheCornerMark()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *audioDock = item<QObject>("audioDock");
+        audioDock->setProperty("isFloating", true);
+        QTRY_VERIFY(item("audioPanel")->window() != window);
+        QQuickWindow *floating = item("audioPanel")->window();
+        QTRY_VERIFY(floating->isExposed());
+        floating->requestActivate();
+        QTRY_VERIFY(QGuiApplication::focusWindow() == floating);
+        item("audioPanel")->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_COMPARE(markedPanels(), QStringList{QStringLiteral("Audio")});
+        QQuickItem *header = dockHeader(QStringLiteral("Audio"));
+        QVERIFY(header && header->window() == floating);
+        QQuickItem *mark = findItem(header, QStringLiteral("panelFocusMark"));
+        const QColor accent = ui::theme::current().roles.accent;
+        QCOMPARE(mark->property("colour").value<QColor>(), accent);
+        QTRY_COMPARE(drawnPixel(header, QPointF(header->width() - 0.5, 0.5)), accent);
+        // Back to the main window: the Grid's header has it, the floating one not.
+        window->requestActivate();
+        QTRY_VERIFY(QGuiApplication::focusWindow() == window);
+        item("editingGrid")->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_COMPARE(markedPanels(), QStringList{QStringLiteral("Grid")});
+        QVERIFY(!mark->isVisible());
+        audioDock->setProperty("isFloating", false);
+        QTRY_VERIFY(item("audioPanel")->window() == window);
+    }
+
+    // K2 focus: in a right-to-left layout (LayoutMirroring on the window's
+    // root item, as Localisation sets it) the mark sits in the panel's top
+    // left corner, flush with its top and left edges.
+    void panelFocusMarkMirrorsRightToLeft()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *grid = item("editingGrid");
+        QQmlContext *context = qmlContext(engine->rootObjects().first());
+        QQmlProperty mirroring(window->contentItem(), QStringLiteral("LayoutMirroring.enabled"), context);
+        QVERIFY(mirroring.isValid());
+        QQmlProperty(window->contentItem(), QStringLiteral("LayoutMirroring.childrenInherit"), context).write(true);
+        auto restore = qScopeGuard([&] { mirroring.write(false); });
+        QVERIFY(mirroring.write(true));
+        grid->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_COMPARE(markedPanels(), QStringList{QStringLiteral("Grid")});
+        QQuickItem *header = dockHeader(QStringLiteral("Grid"));
+        QQuickItem *mark = findItem(header, QStringLiteral("panelFocusMark"));
+        QTRY_VERIFY(mark->property("mirrored").toBool());
+        const QRectF at = mark->mapRectToItem(header, QRectF(0, 0, mark->width(), mark->height()));
+        QCOMPARE(at.left(), 0.0);
+        QCOMPARE(at.top(), 0.0);
+        const QColor accent = ui::theme::current().roles.accent;
+        const qreal leg = mark->property("leg").toReal();
+        QTRY_COMPARE(drawnPixel(header, QPointF(0.5, 0.5)), accent);
+        QVERIFY(drawnPixel(header, QPointF(leg - 0.5, leg - 0.5)) != accent);
+        QVERIFY(drawnPixel(header, QPointF(header->width() - 0.5, 0.5)) != accent);
+        // Left to right again: the top right corner.
+        QVERIFY(mirroring.write(false));
+        QTRY_VERIFY(!mark->property("mirrored").toBool());
+        QTRY_COMPARE(drawnPixel(header, QPointF(header->width() - 0.5, 0.5)), accent);
     }
 
     // W1: video.playbackPlayer chooses the player that plays video. On
@@ -13871,6 +14018,127 @@ private slots:
             auto *dialogItemRoot = dialog->property("contentItem").value<QQuickItem *>()->parentItem();
             QVERIFY(dialogShot.copy(crop(dialogItemRoot).adjusted(-8, -8, 8, 8).intersected(dialogShot.rect()))
                         .save(out + QStringLiteral("/appearance-page") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+            QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
+    }
+
+    // K2 focus: screenshots of keyboard focus for review (the user's
+    // 2026-10-13 decision) in the four themes, written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (focus-<view>-<theme>.png): the
+    // main window with the Grid focused (its panel's corner mark, its current
+    // row's ring); Shift times focused as a tab beside the Line editor (the
+    // group's mark); the Audio panel floating and focused, on the main
+    // window's background; in Shift times a button, a text field and a check
+    // box with keyboard focus (the 1-wide ring, the group's mark); and on
+    // the Appearance page the Green accent swatch with keyboard focus (the
+    // Dark theme card in the high-contrast themes, which have no swatches).
+    // Each image's subject is checked before it is saved.
+    void focusScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        window->resize(1600, 900);
+        QVERIFY(application->openFile(episode));
+        auto *root = engine->rootObjects().first();
+        auto *grid = item("editingGrid");
+        grid->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Home);
+        const auto cropOf = [](QQuickItem *it, int margin) {
+            const qreal dpr = it->window()->effectiveDevicePixelRatio();
+            const QRectF r = it->mapRectToScene(QRectF(0, 0, it->width(), it->height())).adjusted(-margin, -margin, margin, margin);
+            return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+        };
+        const auto groupOf = [](QQuickItem *header) {
+            for (QQuickItem *p = header; p; p = p->parentItem())
+                if (p->objectName() == QLatin1String("dockGroup"))
+                    return p;
+            return header;
+        };
+        const auto save = [&](const QImage &image, const QString &view, const QString &theme) {
+            return image.save(out + QStringLiteral("/focus-") + view + QLatin1Char('-') + theme + QStringLiteral(".png"));
+        };
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            // The main window, the Grid focused.
+            grid->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_COMPARE(markedPanels(), QStringList{QStringLiteral("Grid")});
+            QTest::qWait(200);
+            QVERIFY(save(window->grabWindow(), QStringLiteral("grid"), theme));
+            // Shift times as a tab beside the Line editor, focused.
+            QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
+            QTRY_VERIFY(item<QObject>("timingDock")->property("isOpen").toBool());
+            QQuickItem *timing = nullptr;
+            QTRY_VERIFY((timing = dockHeader(QStringLiteral("Timing"))));
+            QTRY_COMPARE(timing->property("count").toInt(), 2);
+            item("shiftTime")->forceActiveFocus(Qt::MouseFocusReason);
+            QTRY_COMPARE(markedPanels(), QStringList{QStringLiteral("Timing")});
+            QTest::qWait(200);
+            QVERIFY(save(window->grabWindow().copy(cropOf(groupOf(timing), 0)), QStringLiteral("tabbed"), theme));
+            // Its controls with keyboard focus: the ring and the group's mark.
+            for (const auto &[view, name] : {std::pair{"button", "shiftApply"}, std::pair{"field", "shiftTime"},
+                                             std::pair{"checkbox", "shiftTagTimes"}}) {
+                QQuickItem *control = item(name);
+                QVERIFY2(control && control->isVisible(), name);
+                grid->forceActiveFocus(Qt::MouseFocusReason); // (a focus change, with its reason)
+                control->forceActiveFocus(Qt::TabFocusReason);
+                QQuickItem *ring = control->findChild<QQuickItem *>(QStringLiteral("focusRing"));
+                QTRY_VERIFY2(ring && ring->isVisible(), name);
+                QTRY_COMPARE(markedPanels(), QStringList{QStringLiteral("Timing")});
+                QTest::qWait(200);
+                QVERIFY(save(window->grabWindow().copy(cropOf(groupOf(timing), 0)), QLatin1String(view), theme));
+            }
+            QVERIFY(QMetaObject::invokeMethod(item<QObject>("timingDock"), "close"));
+            QTRY_VERIFY(!item<QObject>("timingDock")->property("isOpen").toBool());
+            // The Audio panel floating and focused.
+            auto *audioDock = item<QObject>("audioDock");
+            audioDock->setProperty("isFloating", true);
+            QTRY_VERIFY(item("audioPanel")->window() != window);
+            QQuickWindow *floating = item("audioPanel")->window();
+            QTRY_VERIFY(floating->isExposed());
+            floating->requestActivate();
+            QTRY_VERIFY(QGuiApplication::focusWindow() == floating);
+            item("audioPanel")->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_COMPARE(markedPanels(), QStringList{QStringLiteral("Audio")});
+            QTest::qWait(300);
+            {
+                const QImage shot = floating->grabWindow();
+                QImage canvas(shot.size() + QSize(40, 40), QImage::Format_ARGB32_Premultiplied);
+                canvas.fill(window->color());
+                QPainter p(&canvas);
+                p.drawImage(20, 20, shot);
+                p.end();
+                QVERIFY(save(canvas, QStringLiteral("floating"), theme));
+            }
+            audioDock->setProperty("isFloating", false);
+            QTRY_VERIFY(item("audioPanel")->window() == window);
+            window->requestActivate();
+            QTRY_VERIFY(QGuiApplication::focusWindow() == window);
+            // The Appearance page: a swatch (a theme card in high contrast)
+            // with keyboard focus.
+            auto *dialog = openSettings();
+            QTRY_VERIFY(dialog->property("opened").toBool());
+            dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 6);
+            QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageAppearance")->isVisible());
+            const char *subject = ui::theme::isHighContrast(code) ? "appearanceTheme_dark" : "accent_green";
+            QQuickItem *control = dialogItem("settingsDialog", subject);
+            QVERIFY2(control && control->isVisible(), subject);
+            control->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_VERIFY2(control->property("visualFocus").toBool(), subject);
+            QQuickItem *ring = control->property("background").value<QQuickItem *>()->findChild<QQuickItem *>(QStringLiteral("focusRing"));
+            QTRY_VERIFY2(ring && ring->isVisible(), subject);
+            QTest::qWait(300);
+            const QImage dialogShot = window->grabWindow();
+            auto *dialogRoot = dialog->property("contentItem").value<QQuickItem *>()->parentItem();
+            QVERIFY(save(dialogShot.copy(cropOf(dialogRoot, 8).intersected(dialogShot.rect())), QStringLiteral("swatch"), theme));
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!dialog->property("visible").toBool());
         }

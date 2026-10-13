@@ -2,8 +2,8 @@
 // boundary colour (control.palette.mid, the line role; see CMakeLists.txt).
 // Fusion draws them in Fusion.outline(), the window colour darkened 140%,
 // about 1.1:1 against the Dark and High contrast black panels. Keyboard
-// focus (visualFocus) is the style's ring around the handle (FocusFrame: 2
-// wide, 3 beyond it, in the theme's focus role, the text colour) instead of
+// focus (visualFocus) is the style's ring around the handle (FocusFrame: 1
+// wide, just outside it, in the theme's focus role, the text colour) instead of
 // Fusion's accent-tinted handle, apart from the accent of the groove's
 // filled part. Everything else is Fusion's (the handle is FI.SliderHandle's
 // drawing, its outline on itself).

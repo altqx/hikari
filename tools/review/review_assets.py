@@ -13,6 +13,11 @@ each item as {id, card, title, file, note}:
 * K2: the seven accent presets of Light and Dark on each surface role
   (theme_tests swatchSheet, HIKARI_THEME_SHEET_DIR) and the main window in
   the four themes (shell_tests surfaceScreenshots, HIKARI_SURFACE_SHOT_DIR);
+* K2 focus (the user's 2026-10-13 decision): keyboard focus in the four
+  themes (shell_tests focusScreenshots): the focused panel's accent corner
+  mark on the Grid, a tabbed group and a floating panel, and the 1-wide
+  ring on a button, a text field, a check box and an accent swatch, with
+  the mark's contrast table (theme_tests panelFocusMarkContrast);
 * O5: the main window, the File menu and the Options dialog in Polish, Thai,
   the accented pseudolocale and right-to-left (language_tests screenshots,
   HIKARI_LANGUAGE_SHOT_DIR);
@@ -24,9 +29,10 @@ The tests run on Qt's offscreen platform, which draws with the system's
 fonts through fontconfig on Linux. Windows counterparts come from the
 Windows VM, not from this script.
 
-Run:  python3 tools/review/review_assets.py <build dir> <output dir>
+Run:  python3 tools/review/review_assets.py <build dir> <output dir> [part...]
       (the build dir is a configured and built tree, e.g.
-      out/build/ubuntu-x64-release; the output dir is created)
+      out/build/ubuntu-x64-release; the output dir is created; the parts,
+      k1, k2, k2-focus, o5 and d3, default to all of them)
 """
 
 import json
@@ -71,6 +77,25 @@ LANGUAGE_VIEWS = [
 # Polish and Thai carry legacy's translations; strings new in this
 # application have none yet, and Qt shows them in English.
 PARTIAL_CATALOG = {"polish", "thai"}
+FOCUS_VIEWS = [
+    ("grid", "Grid focused",
+     "The main window with a document open and the Grid focused: the accent corner mark at the Grid panel's top "
+     "right, the current row's 1-wide ring inside its accent outline."),
+    ("tabbed", "Tabbed group focused",
+     "Shift times as a tab beside the Line editor, its field focused by a click (no ring): the group's corner mark."),
+    ("floating", "Floating panel focused",
+     "The Audio panel floating and focused, on the main window's background (the margin around it is the "
+     "canvas): the corner mark at its header's top right."),
+    ("button", "Focused button", "Shift times' Apply with keyboard focus: the 1-wide ring, and the group's mark."),
+    ("field", "Focused text field",
+     "Shift times' time field with keyboard focus: the accent border with the 1-wide ring beside it, and the "
+     "group's mark."),
+    ("checkbox", "Focused check box",
+     "Shift times' Tag times with keyboard focus: the 1-wide ring round the whole control, and the group's mark."),
+    ("swatch", "Focused accent swatch",
+     "The Options dialog's Appearance page, the Green accent swatch with keyboard focus: the 1-wide ring "
+     "outside it. The high contrast themes have no accent swatches: there the Dark theme card has the focus."),
+]
 DOCK_VIEWS = [
     ("main", "Main window",
      "The default arrangement with a document and a reference open; no video or audio loaded."),
@@ -208,6 +233,31 @@ def k2_items(build, work, out):
     return items
 
 
+def k2_focus_items(build, work, out):
+    folder = os.path.join(work, "k2-focus")
+    run(build, "hikari_ui_theme_tests", ["panelFocusMarkContrast"], {"HIKARI_THEME_SHEET_DIR": folder})
+    shutil.copy(written(folder, "k2-focus-mark-contrast.txt", "theme_tests panelFocusMarkContrast"),
+                os.path.join(out, "k2-focus-mark-contrast.txt"))
+    shots = os.path.join(work, "focus")
+    run(build, "hikari_ui_shell_tests", ["focusScreenshots"], {"HIKARI_SURFACE_SHOT_DIR": shots})
+    items = []
+    for theme, name in THEMES:
+        for view, title, note in FOCUS_VIEWS:
+            file = "k2-focus-%s-%s.png" % (view, theme)
+            shutil.copy(written(shots, "focus-%s-%s.png" % (view, theme), "shell_tests focusScreenshots"),
+                        os.path.join(out, file))
+            items.append({
+                "id": "k2-focus-%s-%s" % (view, theme),
+                "card": "K2",
+                "title": "K2 focus: %s, %s" % (title, name),
+                "file": file,
+                "note": note + " The user's 2026-10-13 decision: panels lose their ring for the accent corner "
+                        "mark (k2-focus-mark-contrast.txt has its contrast in every theme and accent); controls "
+                        "and the Grid's current row keep a 1-wide ring. 1600 x 900 window, offscreen, Linux.",
+            })
+    return items
+
+
 def o5_items(build, work, out):
     folder = os.path.join(work, "o5")
     run(build, "hikari_ui_language_tests", ["screenshots"], {"HIKARI_LANGUAGE_SHOT_DIR": folder})
@@ -248,16 +298,23 @@ def d3_items(build, work, out):
     return items
 
 
+PARTS = [("k1", k1_sheet), ("k2", k2_items), ("k2-focus", k2_focus_items), ("o5", o5_items), ("d3", d3_items)]
+
+
 def main():
-    if len(sys.argv) != 3:
+    if len(sys.argv) < 3:
         sys.exit(__doc__)
-    build, out = (os.path.abspath(a) for a in sys.argv[1:])
+    build, out = (os.path.abspath(a) for a in sys.argv[1:3])
+    parts = sys.argv[3:] or [name for name, _ in PARTS]
+    unknown = [p for p in parts if p not in dict(PARTS)]
+    if unknown:
+        sys.exit("unknown part %s; the parts are %s" % (", ".join(unknown), ", ".join(n for n, _ in PARTS)))
     os.makedirs(out, exist_ok=True)
+    items = []
     with tempfile.TemporaryDirectory(prefix="hikari-review-") as work:
-        items = k1_sheet(build, work, out)
-        items += k2_items(build, work, out)
-        items += o5_items(build, work, out)
-        items += d3_items(build, work, out)
+        for name, part in PARTS:
+            if name in parts:
+                items += part(build, work, out)
     with open(os.path.join(out, "manifest.json"), "w", encoding="utf-8") as f:
         json.dump(items, f, indent=2, ensure_ascii=False)
         f.write("\n")

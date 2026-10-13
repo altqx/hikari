@@ -737,9 +737,9 @@ void LineGrid::paint(QPainter *painter)
     // the selected background with the leading accent marker, the active
     // Line outlined in the accent, a Comment in secondary text. While the
     // Grid has keyboard focus its focused cell, the active Line's row,
-    // carries the focus ring (visual-language.md, "Keyboard focus"): 2 wide
-    // in the focus role, the text colour, just inside the accent outline,
-    // under a selected row's marker.
+    // carries the focus ring (visual-language.md, "Keyboard focus"; the
+    // user's 2026-10-13 decision): 1 wide in the focus role, the text
+    // colour, tight inside the accent outline, under a selected row's marker.
     const auto &roles = theme::current().roles;
     const auto &content = theme::current().content;
     painter->fillRect(bounds, roles.panel);
@@ -833,10 +833,10 @@ void LineGrid::paint(QPainter *painter)
         }
         if (active && hasActiveFocus()) {
             const double w = bounds.width();
-            painter->fillRect(QRectF(1, top + 1, w - 2, 2), roles.focus);
-            painter->fillRect(QRectF(1, top + rh - 3, w - 2, 2), roles.focus);
-            painter->fillRect(QRectF(1, top + 3, 2, rh - 6), roles.focus);
-            painter->fillRect(QRectF(w - 3, top + 3, 2, rh - 6), roles.focus);
+            painter->fillRect(QRectF(1, top + 1, w - 2, 1), roles.focus);
+            painter->fillRect(QRectF(1, top + rh - 2, w - 2, 1), roles.focus);
+            painter->fillRect(QRectF(1, top + 2, 1, rh - 4), roles.focus);
+            painter->fillRect(QRectF(w - 2, top + 2, 1, rh - 4), roles.focus);
         }
         if (selected)
             painter->fillRect(QRectF(0, top, 3, rh), roles.accent);

@@ -87,8 +87,9 @@ qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
 # K2: the theme layer (docs/qt/ux/visual-language.md): the Theme singleton and
 # the appearance state, the Options dialog's Appearance page and its focus
-# ring, and the docking engine's separators (D1's splitter), group frames and
-# floating windows in the theme's colours.
+# ring, the focused panel's accent corner mark, and the docking engine's
+# separators (D1's splitter), group frames and floating windows in the theme's
+# colours.
 target_sources(hikari_ui PRIVATE theme.cpp theme.h)
 # K2 on Windows: the title bar of every framed window follows the theme
 # (DWMWA_USE_IMMERSIVE_DARK_MODE, title_bars.h).
@@ -96,7 +97,7 @@ target_sources(hikari_ui PRIVATE title_bars.cpp title_bars.h)
 if(WIN32)
     target_link_libraries(hikari_ui PRIVATE dwmapi)
 endif()
-qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml FocusRing.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml FocusRing.qml PanelFocusMark.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
 # K2: the controls style (Fusion with the theme's control outlines), chosen by
 # theme::chooseControlsStyle and imported as a static plugin by theme.cpp.
 add_subdirectory(style)

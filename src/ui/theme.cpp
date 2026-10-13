@@ -228,7 +228,9 @@ namespace {
 // Keyboard focus (K2, visual-language.md "Keyboard focus"; the user's
 // 2026-10-05 decision): MuseScore 4's convention, a ring in the text colour
 // (its NavigationFocusBorder in fontPrimaryColor), which the accent of
-// selection, the default button and a focused field's border never is. A
+// selection, the default button and a focused field's border never is; 1
+// wide and drawn tight since the user's 2026-10-13 decision, which marks
+// the focused panel with an accent corner triangle instead of a ring. A
 // high-contrast text pick takes it along.
 Roles withFocus(Roles roles)
 {

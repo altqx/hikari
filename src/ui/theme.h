@@ -70,7 +70,8 @@ struct Roles {
     QColor accent;     // action / active accent
     QColor onAccent;   // text on an accent fill
     QColor select;     // selected background
-    QColor focus;      // keyboard focus: the text colour (K2, MuseScore's focus ring)
+    QColor focus;      // keyboard focus: the text colour (K2, MuseScore's focus ring; 1 wide and
+                       // tight, the user's 2026-10-13 decision; a focused panel's mark is the accent)
     QColor danger;     // error emphasis
     QColor warning;    // warning emphasis (legacy WINDOW_WARNING_ELEMENTS)
     QColor success;    // success text (legacy FontCollectorDialog's "#008000")

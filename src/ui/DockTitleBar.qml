@@ -12,8 +12,10 @@ import Hikari.Ui
 // cursor. Dragging its title moves the window and docks it where the
 // highlight shows, double-clicking docks it. As on a panel's header
 // (DockTabBar.qml), the rest of the bar moves the window through the
-// window system. Loaded through the adapter's view factory
-// (ui/docking.cpp).
+// window system. The bar draws no keyboard focus mark: the group holding
+// the focus in the window shows the accent corner mark on its own header
+// (K2, PanelFocusMark.qml), one mark for one focus. Loaded through the
+// adapter's view factory (ui/docking.cpp).
 KDDWViews.TitleBarBase {
     id: root
     objectName: "dockTitleBar"
@@ -97,17 +99,5 @@ KDDWViews.TitleBarBase {
         width: Math.max(0, menuButton.x - 2 - x)
         height: parent.height
         onDoubleClicked: root.floatButtonClicked()
-    }
-
-    // K2: the focus ring of the window holding the keyboard focus.
-    Rectangle {
-        objectName: "focusRing"
-        anchors.fill: parent
-        anchors.margins: 1
-        z: 2
-        color: "transparent"
-        border.width: 2
-        border.color: Theme.focus
-        visible: root.isFocused && !menuButton.activeFocus
     }
 }
