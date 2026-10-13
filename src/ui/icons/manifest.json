@@ -670,7 +670,7 @@
    "role": "audio-play",
    "file": "audio-play.svg",
    "label": "Play",
-   "accent": true,
+   "accent": false,
    "mirror": false,
    "legacy": [
     "button_PlayLine.png"
