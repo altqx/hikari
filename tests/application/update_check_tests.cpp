@@ -307,6 +307,26 @@ TEST(UpdateInstall, DeadlineHashesAndCommands)
               "sudo /opt/hikarisub/libexec/hikarisub-update-helper install '/h/it'\\''s.rpm' 1.0.0");
 }
 
+TEST(UpdateInstall, EachCopyKeepsItsOwnFiles)
+{
+    // An AppImage's download is named for the image and the version.
+    EXPECT_EQ(appImageStagingPath("/home/u/Apps/HikariSub.AppImage", "0.2.0"),
+              "/home/u/Apps/.HikariSub.AppImage.0.2.0.update");
+    EXPECT_NE(appImageStagingPath("/home/u/Apps/HikariSub-test.AppImage", "0.2.0"),
+              appImageStagingPath("/home/u/Apps/HikariSub.AppImage", "0.2.0"));
+    EXPECT_EQ(appImageStagingPath("HikariSub.AppImage", "0.2.0"), "");
+    EXPECT_EQ(appImageStagingPath("/home/u/Apps/", "0.2.0"), "");
+    EXPECT_EQ(appImageStagingPath("", "0.2.0"), "");
+    // Records in the shared cache are named for the copy.
+    EXPECT_EQ(updateCopyKey("deb", ""), "deb");
+    EXPECT_EQ(updateCopyKey("nsis-machine", "/ignored"), "nsis-machine");
+    const std::string a = updateCopyKey("appimage", "/home/u/Apps/HikariSub.AppImage");
+    EXPECT_EQ(a.size(), 25u);
+    EXPECT_EQ(a.rfind("appimage-", 0), 0u);
+    EXPECT_NE(a, updateCopyKey("appimage", "/home/u/Apps/HikariSub-test.AppImage"));
+    EXPECT_EQ(a, updateCopyKey("appimage", "/home/u/Apps/HikariSub.AppImage"));
+}
+
 TEST(UpdateInstall, StartupArguments)
 {
     const auto a = parseStartupArguments({"--hikari-updated-from=0.1.0", "episode.ass", "--hikari-health=/c/health-0.2.0"});
@@ -368,7 +388,7 @@ TEST(UpdateVerify, theCallersDigestHasNoSay)
 {
     const std::string setup = "HikariSub-0.2.0-windows-x64-setup.exe";
     // The release lists kHash; the caller's forged file hashes to
-    // kOtherHash, which its pending.json would carry. Only the list decides.
+    // kOtherHash, which its pending record would carry. Only the list decides.
     EXPECT_EQ(checkListedSha256(kHash + "  " + setup + "\n", setup, kOtherHash), InstallCheck::Mismatch);
     EXPECT_EQ(checkListedSha256(kHash + "  " + setup + "\n", setup, kHash), InstallCheck::Ok);
     EXPECT_EQ(checkListedSha256(kOtherHash + "  HikariSub-0.2.0-windows-x64.zip\n" + kHash + "  " + setup + "\n", setup,
@@ -392,6 +412,11 @@ TEST(UpdateVerify, applyArgumentsAreAVersionAFileAPidAndAFlag)
     EXPECT_FALSE(parseApplyArguments({"0.2.0", "x.exe", "4242", "0"}));
     EXPECT_FALSE(parseApplyArguments({"0.2.0", "\\\\server\\share\\x.exe", "4242", "0"}));
     EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\a\\..\\x.exe", "4242", "0"}));
+    // Windows drops a name's trailing spaces and dots: "C:\a\.. \x.exe" is "C:\x.exe".
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\a\\.. \\x.exe", "4242", "0"}));
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\a.\\x.exe", "4242", "0"}));
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\x.exe ", "4242", "0"}));
+    EXPECT_TRUE(parseApplyArguments({"0.2.0", "C:\\a.b\\x.exe", "4242", "0"}));
     EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\x.exe:stream", "4242", "0"}));
     EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:/x.exe", "4242", "0"}));
     EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\x.exe", "0", "0"}));

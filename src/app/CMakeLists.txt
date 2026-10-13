@@ -33,7 +33,7 @@ endif()
 if(WIN32)
     # ShellExecuteExW and CommandLineToArgvW, and the installing side's
     # WinHTTP, random folder name and folder ACL.
-    target_link_libraries(hikari_composition PRIVATE shell32 winhttp bcrypt advapi32)
+    target_link_libraries(hikari_composition PRIVATE shell32 winhttp bcrypt crypt32 advapi32)
 endif()
 hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_uiplugin hikari_backends
     hikari_application hikari_core "Qt6::*" "hikari_ui*")

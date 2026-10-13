@@ -104,6 +104,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Repair failed' }
 
       - name: Configure, build and test without credentials
+        env:
+          HIKARI_TEST_NETWORK: '1' # update_apply_tests fetches a release's SHA256SUMS
         run: |
           $ErrorActionPreference = 'Stop'
           if (Test-Path "$env:APPDATA\Qt\qtaccount.ini") { throw 'Qt account file left in the profile' }

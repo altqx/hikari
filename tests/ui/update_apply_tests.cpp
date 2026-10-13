@@ -373,6 +373,31 @@ private slots:
         QVERIFY(!disk.isProtected(L""));
     }
 
+    // The real fetch, against a published release (HIKARI_TEST_NETWORK=1):
+    // GitHub redirects to its asset host, every hop must be allowed, and
+    // every server's certificate must chain to a root the machine trusts.
+    void theRealFetchFollowsOnlyAllowedHosts()
+    {
+        if (qEnvironmentVariable("HIKARI_TEST_NETWORK") != QLatin1String("1"))
+            QSKIP("HIKARI_TEST_NETWORK=1 fetches from GitHub");
+        const std::string url = hikari::application::sumsUrl("0.0.1");
+        const auto anyGitHub = [](const std::string &u) {
+            for (const char *prefix : {"https://github.com/", "https://objects.githubusercontent.com/",
+                                       "https://release-assets.githubusercontent.com/"})
+                if (u.rfind(prefix, 0) == 0)
+                    return true;
+            return false;
+        };
+        const auto sums = update_apply::fetchHttps(url, anyGitHub, 65536);
+        QVERIFY(sums);
+        QVERIFY(QByteArray::fromStdString(*sums).contains("HikariSub-0.0.1-windows-x64.zip"));
+        // A redirect to a host that is not allowed is not followed.
+        const auto githubOnly = [](const std::string &u) { return u.rfind("https://github.com/", 0) == 0; };
+        QVERIFY(!update_apply::fetchHttps(url, githubOnly, 65536));
+        // Nor is a URL that is not allowed fetched at all.
+        QVERIFY(!update_apply::fetchHttps(url, [](const std::string &) { return false; }, 65536));
+    }
+
     void theUsersOwnFolderIsChangeable()
     {
         QTemporaryDir dir;

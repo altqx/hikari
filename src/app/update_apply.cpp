@@ -9,6 +9,7 @@
 #include <bcrypt.h>
 #include <sddl.h>
 #include <shellapi.h>
+#include <wincrypt.h>
 #include <winhttp.h>
 
 #include <QByteArrayView>
@@ -300,25 +301,50 @@ int apply(const application::ApplyRequest &request, const Environment &environme
     return application::kApplyOk;
 }
 
+namespace {
+    // Whether the server's certificate chains to a root that this
+    // computer trusts (the local machine's stores only) and names host.
+    // WinHTTP's own check also takes the current user's root store, which
+    // an unelevated process of the same user can add a root to; with a
+    // proxy of its choosing, it could then answer for GitHub here.
+    bool trustedByMachine(HINTERNET request, const wchar_t *host)
+    {
+        PCCERT_CONTEXT certificate = nullptr;
+        DWORD size = sizeof(certificate);
+        if (!WinHttpQueryOption(request, WINHTTP_OPTION_SERVER_CERT_CONTEXT, &certificate, &size) || !certificate)
+            return false;
+        LPSTR serverAuth[] = { const_cast<LPSTR>(szOID_PKIX_KP_SERVER_AUTH) };
+        CERT_CHAIN_PARA chainPara = {};
+        chainPara.cbSize = sizeof(chainPara);
+        chainPara.RequestedUsage.dwType = USAGE_MATCH_TYPE_AND;
+        chainPara.RequestedUsage.Usage.cUsageIdentifier = 1;
+        chainPara.RequestedUsage.Usage.rgpszUsageIdentifier = serverAuth;
+        PCCERT_CHAIN_CONTEXT chain = nullptr;
+        bool trusted = false;
+        if (CertGetCertificateChain(HCCE_LOCAL_MACHINE, certificate, nullptr, certificate->hCertStore, &chainPara, 0,
+                nullptr, &chain))
+        {
+            SSL_EXTRA_CERT_CHAIN_POLICY_PARA ssl = {};
+            ssl.cbSize = sizeof(ssl);
+            ssl.dwAuthType = AUTHTYPE_SERVER;
+            ssl.pwszServerName = const_cast<wchar_t *>(host);
+            CERT_CHAIN_POLICY_PARA policy = {};
+            policy.cbSize = sizeof(policy);
+            policy.pvExtraPolicyPara = &ssl;
+            CERT_CHAIN_POLICY_STATUS status = {};
+            status.cbSize = sizeof(status);
+            trusted = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_SSL, chain, &policy, &status) &&
+                status.dwError == 0;
+            CertFreeCertificateChain(chain);
+        }
+        CertFreeCertificateContext(certificate);
+        return trusted;
+    }
+}
+
 std::optional<std::string> fetchHttps(const std::string &url,
     const std::function<bool(const std::string &finalUrl)> &allowed, size_t limit)
 {
-    std::wstring wide = Widen(url);
-    URL_COMPONENTS parts = {};
-    parts.dwStructSize = sizeof(parts);
-    wchar_t host[256] = {}, path[2048] = {};
-    parts.lpszHostName = host;
-    parts.dwHostNameLength = DWORD(std::size(host));
-    parts.lpszUrlPath = path;
-    parts.dwUrlPathLength = DWORD(std::size(path));
-    if (wide.empty() || !WinHttpCrackUrl(wide.c_str(), 0, 0, &parts))
-        return std::nullopt;
-    bool secure = parts.nScheme == INTERNET_SCHEME_HTTPS;
-    // Plain http only for a test build's feed on 127.0.0.1, which allowed
-    // decides.
-    if (!secure && !allowed(url))
-        return std::nullopt;
-
     InternetHandle session(WinHttpOpen(L"HikariSub", WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, WINHTTP_NO_PROXY_NAME,
         WINHTTP_NO_PROXY_BYPASS, 0));
     if (!session.value)
@@ -332,54 +358,98 @@ std::optional<std::string> fetchHttps(const std::string &url,
         protocols = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
         WinHttpSetOption(session.value, WINHTTP_OPTION_SECURE_PROTOCOLS, &protocols, sizeof(protocols));
     }
-    InternetHandle connection(WinHttpConnect(session.value, host, parts.nPort, 0));
-    if (!connection.value)
-        return std::nullopt;
-    InternetHandle request(WinHttpOpenRequest(connection.value, L"GET", path, nullptr, WINHTTP_NO_REFERER,
-        WINHTTP_DEFAULT_ACCEPT_TYPES, secure ? WINHTTP_FLAG_SECURE : 0));
-    if (!request.value)
-        return std::nullopt;
-    // Redirects, but never from https to http; certificate errors fail the
-    // request, as WinHTTP does unless told to ignore them.
-    DWORD policy = WINHTTP_OPTION_REDIRECT_POLICY_DISALLOW_HTTPS_TO_HTTP;
-    WinHttpSetOption(request.value, WINHTTP_OPTION_REDIRECT_POLICY, &policy, sizeof(policy));
-    if (!WinHttpSendRequest(request.value, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0) ||
-        !WinHttpReceiveResponse(request.value, nullptr))
-    {
-        return std::nullopt;
-    }
-    DWORD status = 0, size = sizeof(status);
-    if (!WinHttpQueryHeaders(request.value, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
-            WINHTTP_HEADER_NAME_BY_INDEX, &status, &size, WINHTTP_NO_HEADER_INDEX) || status != 200)
-    {
-        return std::nullopt;
-    }
-    DWORD urlBytes = 0;
-    WinHttpQueryOption(request.value, WINHTTP_OPTION_URL, nullptr, &urlBytes);
-    std::wstring finalUrl(urlBytes / sizeof(wchar_t) + 1, L'\0');
-    if (!WinHttpQueryOption(request.value, WINHTTP_OPTION_URL, finalUrl.data(), &urlBytes))
-        return std::nullopt;
-    finalUrl.resize(wcsnlen(finalUrl.c_str(), finalUrl.size()));
-    if (!allowed(Narrow(finalUrl)))
-        return std::nullopt;
 
-    std::string body;
-    for (;;) {
-        DWORD available = 0;
-        if (!WinHttpQueryDataAvailable(request.value, &available))
+    // Redirects are followed here, not by WinHTTP, so that every URL on
+    // the way passes allowed and every server's certificate is checked.
+    std::string next = url;
+    for (int hop = 0; hop < 6; hop++) {
+        std::wstring wide = Widen(next);
+        // The parts point into wide; the path and the query are sent.
+        URL_COMPONENTS parts = {};
+        parts.dwStructSize = sizeof(parts);
+        parts.dwHostNameLength = DWORD(-1);
+        parts.dwUrlPathLength = DWORD(-1);
+        parts.dwExtraInfoLength = DWORD(-1);
+        if (wide.empty() || !WinHttpCrackUrl(wide.c_str(), DWORD(wide.size()), 0, &parts) || !parts.lpszHostName ||
+            parts.dwHostNameLength == 0)
+        {
             return std::nullopt;
-        if (available == 0)
-            break;
-        if (body.size() + available > limit)
+        }
+        bool secure = parts.nScheme == INTERNET_SCHEME_HTTPS;
+        // Plain http only for a test build's feed on 127.0.0.1, which
+        // allowed decides.
+        if (!allowed(next) || (!secure && parts.nScheme != INTERNET_SCHEME_HTTP))
             return std::nullopt;
-        size_t at = body.size();
-        body.resize(at + available);
-        DWORD read = 0;
-        if (!WinHttpReadData(request.value, body.data() + at, available, &read))
+        std::wstring target = parts.lpszUrlPath && parts.dwUrlPathLength ?
+            std::wstring(parts.lpszUrlPath, parts.dwUrlPathLength) : std::wstring(L"/");
+        if (parts.lpszExtraInfo && parts.dwExtraInfoLength)
+            target.append(parts.lpszExtraInfo, parts.dwExtraInfoLength);
+        std::wstring hostName(parts.lpszHostName, parts.dwHostNameLength);
+
+        InternetHandle connection(WinHttpConnect(session.value, hostName.c_str(), parts.nPort, 0));
+        if (!connection.value)
             return std::nullopt;
-        body.resize(at + read);
+        InternetHandle request(WinHttpOpenRequest(connection.value, L"GET", target.c_str(), nullptr,
+            WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, secure ? WINHTTP_FLAG_SECURE : 0));
+        if (!request.value)
+            return std::nullopt;
+        DWORD policy = WINHTTP_OPTION_REDIRECT_POLICY_NEVER;
+        if (!WinHttpSetOption(request.value, WINHTTP_OPTION_REDIRECT_POLICY, &policy, sizeof(policy)))
+            return std::nullopt;
+        if (!WinHttpSendRequest(request.value, WINHTTP_NO_ADDITIONAL_HEADERS, 0, WINHTTP_NO_REQUEST_DATA, 0, 0, 0) ||
+            !WinHttpReceiveResponse(request.value, nullptr))
+        {
+            return std::nullopt;
+        }
+        if (secure && !trustedByMachine(request.value, hostName.c_str()))
+            return std::nullopt;
+        DWORD status = 0, size = sizeof(status);
+        if (!WinHttpQueryHeaders(request.value, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                WINHTTP_HEADER_NAME_BY_INDEX, &status, &size, WINHTTP_NO_HEADER_INDEX))
+        {
+            return std::nullopt;
+        }
+        if (status == 301 || status == 302 || status == 303 || status == 307 || status == 308) {
+            DWORD bytes = 0;
+            WinHttpQueryHeaders(request.value, WINHTTP_QUERY_LOCATION, WINHTTP_HEADER_NAME_BY_INDEX,
+                WINHTTP_NO_OUTPUT_BUFFER, &bytes, WINHTTP_NO_HEADER_INDEX);
+            if (bytes == 0 || bytes > 16384)
+                return std::nullopt;
+            std::wstring location(bytes / sizeof(wchar_t) + 1, L'\0');
+            if (!WinHttpQueryHeaders(request.value, WINHTTP_QUERY_LOCATION, WINHTTP_HEADER_NAME_BY_INDEX,
+                    location.data(), &bytes, WINHTTP_NO_HEADER_INDEX))
+            {
+                return std::nullopt;
+            }
+            location.resize(wcsnlen(location.c_str(), location.size()));
+            // GitHub's are absolute; anything else is not followed.
+            next = Narrow(location);
+            if (next.empty())
+                return std::nullopt;
+            continue;
+        }
+        if (status != 200)
+            return std::nullopt;
+
+        std::string body;
+        for (;;) {
+            DWORD available = 0;
+            if (!WinHttpQueryDataAvailable(request.value, &available))
+                return std::nullopt;
+            if (available == 0)
+                break;
+            if (body.size() + available > limit)
+                return std::nullopt;
+            size_t at = body.size();
+            body.resize(at + available);
+            DWORD read = 0;
+            if (!WinHttpReadData(request.value, body.data() + at, available, &read))
+                return std::nullopt;
+            body.resize(at + read);
+        }
+        return body;
     }
-    return body;
+    return std::nullopt;
 }
 
 bool launch(const std::wstring &installer, const std::wstring &arguments)

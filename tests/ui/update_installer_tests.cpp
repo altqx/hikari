@@ -64,6 +64,26 @@ bool running(qint64 pid)
 #endif
 }
 
+// A copy's files in the shared cache, named for it (updateCopyKey).
+QString copyFile(const QString &root, const QString &pattern, PackageKind kind, const QString &appImage = {})
+{
+    const std::string key = hikari::application::updateCopyKey(
+        hikari::application::packageKindToken(kind, false), appImage.toStdString());
+    return root + QStringLiteral("/cache/") + pattern.arg(QString::fromStdString(key));
+}
+QString pendingOf(const QString &root, PackageKind kind, const QString &appImage = {})
+{
+    return copyFile(root, QStringLiteral("pending-%1.json"), kind, appImage);
+}
+QString atStartOf(const QString &root, const QString &appImage)
+{
+    return copyFile(root, QStringLiteral("at-start-%1"), PackageKind::AppImage, appImage);
+}
+QString stagedOf(const QString &appImage, const QString &version)
+{
+    return QString::fromStdString(hikari::application::appImageStagingPath(appImage.toStdString(), version.toStdString()));
+}
+
 UpdatePackage package(const QString &name, const QByteArray &bytes)
 {
     return {name.toStdString(), bytes.size(), sha256(bytes).toStdString(), {}, {}};
@@ -128,7 +148,7 @@ private slots:
         QCOMPARE(installer.readyFile(), file);
         QCOMPARE(read(file), bytes);
         QVERIFY(!QFileInfo::exists(file + QStringLiteral(".part")));
-        const QJsonObject pending = QJsonDocument::fromJson(read(root + QStringLiteral("/cache/pending.json"))).object();
+        const QJsonObject pending = QJsonDocument::fromJson(read(pendingOf(root, PackageKind::Deb))).object();
         QCOMPARE(pending.value(QStringLiteral("schema")).toInt(), 1);
         QCOMPARE(pending.value(QStringLiteral("version")).toString(), QStringLiteral("0.2.0"));
         QCOMPARE(pending.value(QStringLiteral("kind")).toString(), QStringLiteral("deb"));
@@ -157,7 +177,7 @@ private slots:
         QCOMPARE(installer.state(), QStringLiteral("idle"));
         QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/0.2.0/") + name));
         QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/0.2.0/") + name + QStringLiteral(".part")));
-        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/pending.json")));
+        QVERIFY(!QFileInfo::exists(pendingOf(root, PackageKind::Deb)));
         // The automatic download fails silently.
         UpdateInstaller quiet(environment(PackageKind::Deb, root), QStringLiteral("0.1.0"));
         QSignalSpy quietFailed(&quiet, &UpdateInstaller::failed);
@@ -177,16 +197,18 @@ private slots:
     {
         const QString root = folder();
         const QString cache = root + QStringLiteral("/cache");
-        const auto record = [&](const QString &version, const QString &kind, const QString &file, const QByteArray &bytes) {
+        const QString debRecord = pendingOf(root, PackageKind::Deb);
+        const auto record = [&](const QString &version, const QString &kind, const QString &file, const QByteArray &bytes,
+                                const QString &at) {
             write(file, bytes);
-            write(cache + QStringLiteral("/pending.json"),
+            write(at,
                   QJsonDocument(QJsonObject{{"schema", 1}, {"version", version}, {"kind", kind}, {"file", file},
                                             {"sha256", sha256(bytes)}, {"size", qint64(bytes.size())}})
                       .toJson());
         };
         // Installed: the record and its file go, with the folders of
         // versions this one has reached; a newer one's stays.
-        record(QStringLiteral("0.2.0"), QStringLiteral("deb"), cache + QStringLiteral("/0.2.0/x.deb"), "x");
+        record(QStringLiteral("0.2.0"), QStringLiteral("deb"), cache + QStringLiteral("/0.2.0/x.deb"), "x", debRecord);
         QDir().mkpath(cache + QStringLiteral("/0.1.9"));
         QDir().mkpath(cache + QStringLiteral("/0.3.0"));
         QDir().mkpath(cache + QStringLiteral("/other"));
@@ -195,7 +217,7 @@ private slots:
         UpdateInstaller installed(environment(PackageKind::Deb, root), QStringLiteral("0.2.0"));
         QCOMPARE(installed.start(), QStringLiteral("It failed"));
         QCOMPARE(installed.state(), QStringLiteral("idle"));
-        QVERIFY(!QFileInfo::exists(cache + QStringLiteral("/pending.json")));
+        QVERIFY(!QFileInfo::exists(debRecord));
         QVERIFY(!QFileInfo::exists(cache + QStringLiteral("/0.2.0")));
         QVERIFY(!QFileInfo::exists(cache + QStringLiteral("/0.1.9")));
         QVERIFY(QFileInfo::exists(cache + QStringLiteral("/0.3.0")));
@@ -203,7 +225,7 @@ private slots:
         QVERIFY(!QFileInfo::exists(cache + QStringLiteral("/last-result.json")));
         QCOMPARE(installed.start(), QString()); // the message shows once
         // Still to install: ready again at this start.
-        record(QStringLiteral("0.3.0"), QStringLiteral("deb"), cache + QStringLiteral("/0.3.0/y.deb"), "y");
+        record(QStringLiteral("0.3.0"), QStringLiteral("deb"), cache + QStringLiteral("/0.3.0/y.deb"), "y", debRecord);
         UpdateInstaller waiting(environment(PackageKind::Deb, root), QStringLiteral("0.2.0"));
         waiting.start();
         QCOMPARE(waiting.state(), QStringLiteral("ready"));
@@ -217,19 +239,35 @@ private slots:
         // The helper through sudo, which checks the file as pkexec's would.
         QCOMPARE(manual.manualCommand(), QStringLiteral("sudo ") + env.helper + QStringLiteral(" install ") + cache +
                                              QStringLiteral("/0.3.0/y.deb 0.3.0"));
-        // A record of another kind is another copy's (the cache is the
-        // user's): neither offered nor removed.
+        // The cache is the user's: a copy of another kind has a record of
+        // its own and never touches this one's.
         UpdateInstaller rpm(environment(PackageKind::Rpm, root), QStringLiteral("0.2.0"));
         rpm.start();
         QCOMPARE(rpm.state(), QStringLiteral("idle"));
-        QVERIFY(QFileInfo::exists(cache + QStringLiteral("/pending.json")));
+        QVERIFY(QFileInfo::exists(debRecord));
         QVERIFY(QFileInfo::exists(cache + QStringLiteral("/0.3.0/y.deb")));
+        // Its own download leaves this one's record alone.
+        const QByteArray rpmBytes = "the new rpm";
+        const QString rpmName = QStringLiteral("hikarisub-0.3.0-linux-x86_64.rpm");
+        QVERIFY(download(rpm, QStringLiteral("0.3.0"), package(rpmName, rpmBytes), serve(root, rpmName, rpmBytes)));
+        QVERIFY(QFileInfo::exists(pendingOf(root, PackageKind::Rpm)));
+        QVERIFY(QFileInfo::exists(debRecord));
+        UpdateInstaller debAgain(environment(PackageKind::Deb, root), QStringLiteral("0.2.0"));
+        debAgain.start();
+        QCOMPARE(debAgain.readyFile(), cache + QStringLiteral("/0.3.0/y.deb"));
+        // A record of another kind in this copy's place is still not
+        // this copy's: neither offered nor removed.
+        record(QStringLiteral("0.3.0"), QStringLiteral("rpm"), cache + QStringLiteral("/0.3.0/z.rpm"), "z", debRecord);
+        UpdateInstaller deb(environment(PackageKind::Deb, root), QStringLiteral("0.2.0"));
+        deb.start();
+        QCOMPARE(deb.state(), QStringLiteral("idle"));
+        QVERIFY(QFileInfo::exists(debRecord));
         // One whose kind cannot be read is dropped.
-        record(QStringLiteral("0.3.0"), QStringLiteral("snap"), cache + QStringLiteral("/0.3.0/y.deb"), "y");
+        record(QStringLiteral("0.3.0"), QStringLiteral("snap"), cache + QStringLiteral("/0.3.0/y.deb"), "y", debRecord);
         UpdateInstaller unknown(environment(PackageKind::Deb, root), QStringLiteral("0.2.0"));
         unknown.start();
         QCOMPARE(unknown.state(), QStringLiteral("idle"));
-        QVERIFY(!QFileInfo::exists(cache + QStringLiteral("/pending.json")));
+        QVERIFY(!QFileInfo::exists(debRecord));
     }
 
     void pkexecRunsTheHelper()
@@ -272,21 +310,21 @@ private slots:
         // Dismissed: still pending; a restart brings back the version installed.
         auto [dismissed, again, busy2] = run(126, true);
         QCOMPARE(again.program, root + QStringLiteral("/old-hikarisub"));
-        QVERIFY(QFileInfo::exists(root + QStringLiteral("/cache/pending.json")));
+        QVERIFY(QFileInfo::exists(pendingOf(root, PackageKind::Rpm)));
         // At quit without a restart: nothing to run afterwards.
         auto [later, none, busy3] = run(126, false);
         QVERIFY(none.program.isEmpty());
         // The release's SHA256SUMS could not be had: still pending, said at the
         // next start.
         auto [offline, after6, busy6] = run(6, false);
-        QVERIFY(QFileInfo::exists(root + QStringLiteral("/cache/pending.json")));
+        QVERIFY(QFileInfo::exists(pendingOf(root, PackageKind::Rpm)));
         {
             UpdateInstaller told(environment(PackageKind::Rpm, root), QStringLiteral("0.1.0"));
             QVERIFY(told.start().contains(QStringLiteral("GitHub")));
         }
         // The helper refused the package: reported at the next start, not retried.
         auto [refused, after, busy4] = run(3, false);
-        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/pending.json")));
+        QVERIFY(!QFileInfo::exists(pendingOf(root, PackageKind::Rpm)));
         UpdateInstaller next(environment(PackageKind::Rpm, root), QStringLiteral("0.1.0"));
         QVERIFY(next.start().contains(QStringLiteral("0.2.0")));
         QCOMPARE(next.state(), QStringLiteral("idle"));
@@ -308,7 +346,7 @@ private slots:
         const QString name = QStringLiteral("HikariSub-0.2.0-linux-x86_64.AppImage");
         QVERIFY(download(installer, QStringLiteral("0.2.0"), package(name, fresh), serve(root, name, fresh)));
         // Beside the image, hidden, executable.
-        const QString staged = root + QStringLiteral("/apps/.HikariSub-0.2.0.AppImage");
+        const QString staged = root + QStringLiteral("/apps/.My HikariSub.AppImage.0.2.0.update");
         QCOMPARE(installer.readyFile(), staged);
         QVERIFY(QFileInfo(staged).isExecutable());
         // Later, at an ordinary quit: nothing would watch the new image's
@@ -316,7 +354,7 @@ private slots:
         installer.installAtExit();
         QCOMPARE(read(image), old);
         QVERIFY(QFileInfo::exists(staged));
-        QCOMPARE(read(root + QStringLiteral("/cache/appimage-at-start")), QByteArray("0.2.0"));
+        QCOMPARE(read(atStartOf(root, image)), QByteArray("0.2.0"));
         // That start: swapped, the old one kept as .old, the new one
         // started with this start's files under the watchdog.
         UpdateInstaller atStart(env, QStringLiteral("0.1.0"));
@@ -325,7 +363,7 @@ private slots:
         QVERIFY(QFileInfo(image).isExecutable());
         QCOMPARE(read(image + QStringLiteral(".old")), old);
         QVERIFY(!QFileInfo::exists(staged));
-        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/appimage-at-start")));
+        QVERIFY(!QFileInfo::exists(atStartOf(root, image)));
         QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/last-result.json")));
         const QList<QByteArray> args = read(root + QStringLiteral("/args")).split('\n');
         QVERIFY(args.contains("--hikari-updated-from=0.1.0"));
@@ -337,7 +375,7 @@ private slots:
         UpdateInstaller started(env, QStringLiteral("0.2.0"));
         started.start();
         QVERIFY(!QFileInfo::exists(image + QStringLiteral(".old")));
-        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/pending.json")));
+        QVERIFY(!QFileInfo::exists(pendingOf(root, PackageKind::AppImage, image)));
     }
 
     // An ordinary quit's update that cannot start is put back at the start
@@ -386,10 +424,10 @@ private slots:
         UpdateInstaller noQuit(env, QStringLiteral("0.1.0"));
         QVERIFY(!noQuit.installAppImageAtStart({}));
         // Another version named.
-        QVERIFY(write(root + QStringLiteral("/cache/appimage-at-start"), "0.3.0"));
+        QVERIFY(write(atStartOf(root, image), "0.3.0"));
         UpdateInstaller other(env, QStringLiteral("0.1.0"));
         QVERIFY(!other.installAppImageAtStart({}));
-        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/appimage-at-start")));
+        QVERIFY(!QFileInfo::exists(atStartOf(root, image)));
         // A changed file.
         installer.installAtExit();
         write(installer.readyFile(), "#!/bin/sh\nexit 0\n# changed\n", true);
@@ -398,21 +436,24 @@ private slots:
         QCOMPARE(read(image), old);
         QVERIFY(!QFileInfo::exists(image + QStringLiteral(".old")));
         // Not an AppImage.
-        QVERIFY(write(root + QStringLiteral("/cache/appimage-at-start"), "0.2.0"));
+        QVERIFY(write(atStartOf(root, image), "0.2.0"));
         UpdateInstaller deb(environment(PackageKind::Deb, root), QStringLiteral("0.1.0"));
         QVERIFY(!deb.installAppImageAtStart({}));
     }
 
     // The cache is shared by every AppImage copy of the user's: one copy's
-    // update is neither offered, removed nor installed by another.
+    // update is neither offered, removed nor installed by another, in
+    // another folder or beside it under another name.
     void anAppImageCopyLeavesAnothersUpdateAlone()
     {
         const QString root = folder();
         const QString mine = root + QStringLiteral("/apps/HikariSub.AppImage");
         const QString other = root + QStringLiteral("/other/HikariSub.AppImage");
+        const QString beside = root + QStringLiteral("/apps/HikariSub-test.AppImage");
         const QByteArray old = "#!/bin/sh\nexit 0\n";
         QVERIFY(write(mine, old, true));
         QVERIFY(write(other, old, true));
+        QVERIFY(write(beside, old, true));
         const QByteArray fresh = "#!/bin/sh\nfor a; do case \"$a\" in --hikari-health=*) : > \"${a#--hikari-health=}\";; esac; done\nsleep 1\n";
         auto env = environment(PackageKind::AppImage, root);
         env.package.appImage = mine;
@@ -420,22 +461,35 @@ private slots:
         const QString name = QStringLiteral("HikariSub-0.2.0-linux-x86_64.AppImage");
         QVERIFY(download(installer, QStringLiteral("0.2.0"), package(name, fresh), serve(root, name, fresh)));
         installer.installAtExit(); // an ordinary quit: installed at its next start
-        const QString staged = root + QStringLiteral("/apps/.HikariSub-0.2.0.AppImage");
-        auto otherEnv = env;
-        otherEnv.package.appImage = other;
-        UpdateInstaller otherStart(otherEnv, QStringLiteral("0.1.0"));
-        QVERIFY(!otherStart.installAppImageAtStart({}));
-        otherStart.start();
-        QCOMPARE(otherStart.state(), QStringLiteral("idle"));
-        QCOMPARE(read(other), old);
+        const QString staged = stagedOf(mine, QStringLiteral("0.2.0"));
+        QCOMPARE(staged, root + QStringLiteral("/apps/.HikariSub.AppImage.0.2.0.update"));
+        for (const QString &image : {other, beside}) {
+            auto otherEnv = env;
+            otherEnv.package.appImage = image;
+            UpdateInstaller otherStart(otherEnv, QStringLiteral("0.1.0"));
+            QVERIFY(!otherStart.installAppImageAtStart({}));
+            otherStart.start();
+            QCOMPARE(otherStart.state(), QStringLiteral("idle"));
+            QCOMPARE(read(image), old);
+        }
         QVERIFY(QFileInfo::exists(staged));
-        QVERIFY(QFileInfo::exists(root + QStringLiteral("/cache/pending.json")));
-        QVERIFY(QFileInfo::exists(root + QStringLiteral("/cache/appimage-at-start")));
-        // The copy it belongs to still installs it.
+        QVERIFY(QFileInfo::exists(pendingOf(root, PackageKind::AppImage, mine)));
+        QVERIFY(QFileInfo::exists(atStartOf(root, mine)));
+        // The copy beside it downloads its own: its own file and record.
+        auto besideEnv = env;
+        besideEnv.package.appImage = beside;
+        UpdateInstaller besideCopy(besideEnv, QStringLiteral("0.1.0"));
+        QVERIFY(download(besideCopy, QStringLiteral("0.2.0"), package(name, fresh), serve(root, name, fresh)));
+        QCOMPARE(besideCopy.readyFile(), stagedOf(beside, QStringLiteral("0.2.0")));
+        QVERIFY(QFileInfo::exists(pendingOf(root, PackageKind::AppImage, beside)));
+        // The copy it belongs to still installs it, and the other's stays.
         UpdateInstaller atStart(env, QStringLiteral("0.1.0"));
         QVERIFY(atStart.installAppImageAtStart({}));
         QCOMPARE(read(mine), fresh);
         QCOMPARE(read(other), old);
+        QCOMPARE(read(beside), old);
+        QVERIFY(QFileInfo::exists(stagedOf(beside, QStringLiteral("0.2.0"))));
+        QVERIFY(QFileInfo::exists(pendingOf(root, PackageKind::AppImage, beside)));
     }
 
     // A new image that hangs without reporting its window (and ignores
@@ -539,7 +593,7 @@ private slots:
     {
         const QString root = folder();
         auto env = environment(PackageKind::NsisMachine, root);
-        const QString marker = env.cacheDir + QStringLiteral("/installing");
+        const QString marker = copyFile(root, QStringLiteral("installing-%1"), PackageKind::NsisMachine);
         QVERIFY(write(marker, "0.2.0"));
         UpdateInstaller failed(env, QStringLiteral("0.1.0"));
         const QString message = failed.start();
@@ -574,13 +628,13 @@ private slots:
         auto env = environment(PackageKind::AppImage, root);
         env.package.appImage = image;
         // The record the update left; this start is its version's.
-        QVERIFY(write(env.cacheDir + QStringLiteral("/pending.json"),
+        QVERIFY(write(pendingOf(root, PackageKind::AppImage, image),
                       R"({"schema": 1, "version": "0.2.0", "kind": "appimage", "file": ")" + root.toUtf8() +
-                          R"(/.HikariSub-0.2.0.AppImage", "sha256": "", "size": 3})"));
+                          R"(/.HikariSub.AppImage.0.2.0.update", "sha256": "", "size": 3})"));
         UpdateInstaller watched(env, QStringLiteral("0.2.0"));
         watched.expectHealthReport();
         watched.start();
-        QVERIFY(!QFileInfo::exists(env.cacheDir + QStringLiteral("/pending.json")));
+        QVERIFY(!QFileInfo::exists(pendingOf(root, PackageKind::AppImage, image)));
         QVERIFY(QFileInfo::exists(image + QStringLiteral(".old")));
 #ifndef _WIN32
         // The cache cannot be written: no report, so the old image stays.
@@ -611,7 +665,7 @@ private slots:
         write(installer.readyFile(), "the new deb, changed");
         installer.installAtExit();
         QVERIFY(!QFileInfo::exists(root + QStringLiteral("/ran")));
-        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/pending.json")));
+        QVERIFY(!QFileInfo::exists(pendingOf(root, PackageKind::Deb)));
         QCOMPARE(installer.state(), QStringLiteral("idle"));
     }
 

@@ -171,7 +171,7 @@ std::string nsisUpdateArguments(bool machine, bool relaunch, long long waitPid, 
 
 // What installs an update decides by itself that the package is the
 // release's own file (ADR 0019): nothing the unprivileged app recorded,
-// pending.json and its SHA-256 included, is trusted there. It takes a
+// the pending record and its SHA-256 included, is trusted there. It takes a
 // version and a file, downloads that release's SHA256SUMS from the fixed
 // GitHub URL, and compares the file with the digest listed for the release
 // file's own name. The Linux update helper does the same in shell.
@@ -202,7 +202,8 @@ InstallCheck checkListedSha256(std::string_view sums, std::string_view name, std
 
 // --hikari-apply-update <version> <file> <pid> <0|1 relaunch>: the Windows
 // installing side's request. `file` is an absolute path on a drive
-// ("X:\..."), with no "..", wildcard or stream.
+// ("X:\..."), with no "..", wildcard or stream, and no name that ends in a
+// dot or a space.
 inline constexpr std::string_view kApplyUpdateSwitch = "--hikari-apply-update";
 struct ApplyRequest {
     std::string version;
@@ -219,6 +220,18 @@ bool isPlainWindowsPath(std::string_view path);
 // never given the user's own file, which another process of the user's
 // could replace after the app's check.
 std::string manualInstallCommand(std::string_view helper, std::string_view file, std::string_view version);
+
+// The AppImage's download, beside the image: hidden, and named for the
+// image and the version, so that a later version does not overwrite it and
+// another AppImage in the same folder stages its own. "" when appImage is
+// not an absolute file path.
+std::string appImageStagingPath(std::string_view appImage, std::string_view version);
+
+// What a copy's files in the shared update cache are named for (its
+// pending record and markers), so that copies of other kinds, and AppImages
+// at other paths, keep their own: the kind's token, and for an AppImage a
+// hash of its path too (FNV-1a 64).
+std::string updateCopyKey(std::string_view kindToken, std::string_view appImage);
 
 // The program's own switches; the rest of the command line is left as it is.
 struct StartupArguments {

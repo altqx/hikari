@@ -604,9 +604,12 @@ bool isPlainWindowsPath(std::string_view path)
     const auto letter = [](char c) { return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'); };
     if (path.size() < 4 || path.size() > 32000 || !letter(path[0]) || path[1] != ':' || path[2] != '\\')
         return false;
-    if (path.find("\\..\\") != std::string_view::npos || path.find("\\.\\") != std::string_view::npos ||
-        path.ends_with("\\..") || path.ends_with("\\."))
-        return false;
+    // No name that ends in a dot or a space: Windows drops those, so "." and
+    // "..", and "a\.. \b", which is "b".
+    for (std::size_t i = 4; i <= path.size(); ++i) {
+        if ((i == path.size() || path[i] == '\\') && (path[i - 1] == '.' || path[i - 1] == ' '))
+            return false;
+    }
     for (std::size_t i = 2; i < path.size(); ++i) {
         const unsigned char c = static_cast<unsigned char>(path[i]);
         if (c < 32 || c == '"' || c == '*' || c == '?' || c == '<' || c == '>' || c == '|' || c == ':' || c == '/')
@@ -635,6 +638,30 @@ std::optional<ApplyRequest> parseApplyArguments(const std::vector<std::string> &
         return std::nullopt;
     request.relaunch = arguments[3] == "1";
     return request;
+}
+
+std::string appImageStagingPath(std::string_view appImage, std::string_view version)
+{
+    const std::size_t slash = appImage.find_last_of('/');
+    if (appImage.empty() || appImage.front() != '/' || slash + 1 == appImage.size())
+        return {};
+    return std::string(appImage.substr(0, slash + 1)) + "." + std::string(appImage.substr(slash + 1)) + "." +
+           std::string(version) + ".update";
+}
+
+std::string updateCopyKey(std::string_view kindToken, std::string_view appImage)
+{
+    if (kindToken != packageKindToken(PackageKind::AppImage, false))
+        return std::string(kindToken);
+    std::uint64_t hash = 14695981039346656037ULL;
+    for (const unsigned char c : appImage) {
+        hash ^= c;
+        hash *= 1099511628211ULL;
+    }
+    std::string key = std::string(kindToken) + "-";
+    for (int shift = 60; shift >= 0; shift -= 4)
+        key += "0123456789abcdef"[(hash >> shift) & 0xF];
+    return key;
 }
 
 std::string manualInstallCommand(std::string_view helper, std::string_view file, std::string_view version)

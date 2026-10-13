@@ -146,9 +146,17 @@ QString UpdateInstaller::versionDir(const QString &version) const
     return m_env.cacheDir + QLatin1Char('/') + version;
 }
 
+// This copy's name in the shared cache (updateCopyKey): copies of other
+// kinds, and AppImages at other paths, keep records of their own.
+QString UpdateInstaller::copyKey() const
+{
+    return QString::fromStdString(
+        application::updateCopyKey(std8(packageKindToken(m_env.package.kind)), std8(m_env.package.appImage)));
+}
+
 QString UpdateInstaller::pendingPath() const
 {
-    return m_env.cacheDir + QStringLiteral("/pending.json");
+    return m_env.cacheDir + QStringLiteral("/pending-%1.json").arg(copyKey());
 }
 
 QString UpdateInstaller::resultPath() const
@@ -159,13 +167,13 @@ QString UpdateInstaller::resultPath() const
 // The version of the NSIS update handed to its installer at the last quit.
 QString UpdateInstaller::installingPath() const
 {
-    return m_env.cacheDir + QStringLiteral("/installing");
+    return m_env.cacheDir + QStringLiteral("/installing-%1").arg(copyKey());
 }
 
 // An ordinary quit's AppImage update, for the next start: its version.
 QString UpdateInstaller::atStartPath() const
 {
-    return m_env.cacheDir + QStringLiteral("/appimage-at-start");
+    return m_env.cacheDir + QStringLiteral("/at-start-%1").arg(copyKey());
 }
 
 std::optional<UpdateInstaller::Pending> UpdateInstaller::readPending() const
@@ -181,18 +189,19 @@ std::optional<UpdateInstaller::Pending> UpdateInstaller::readPending() const
                    qint64(p.value(QStringLiteral("size")).toDouble()), p.value(QStringLiteral("manual")).toBool()};
 }
 
-// An AppImage's download, beside the image it replaces (hidden, named for
-// the version).
+// An AppImage's download, beside the image it replaces (appImageStagingPath:
+// hidden, named for the image and the version).
 QString UpdateInstaller::appImageStaging(const QString &version) const
 {
-    return QFileInfo(m_env.package.appImage).absolutePath() + QStringLiteral("/.HikariSub-%1.AppImage").arg(version);
+    return QString::fromStdString(application::appImageStagingPath(std8(m_env.package.appImage), std8(version)));
 }
 
-// The cache, and so pending.json, is the user's, shared by every copy
-// they keep: a record of another kind is the other copy's (an AppImage
-// beside an installed package, say), and one whose download was staged
-// beside another AppImage copy is that copy's to install. Either is left
-// alone. A record whose kind cannot be read is this copy's to drop.
+// The cache is the user's, shared by every copy they keep, and each copy
+// has a record of its own (copyKey); as a second guard, a record of another
+// kind is the other copy's (an AppImage beside an installed package, say),
+// and one staged for another AppImage, in another folder or under another
+// name, is that copy's to install. Either is left alone. A record whose
+// kind cannot be read is this copy's to drop.
 bool UpdateInstaller::belongsToAnotherCopy(const Pending &pending) const
 {
     const auto kind = application::parsePackageKind(std8(pending.kind));
@@ -409,6 +418,8 @@ void UpdateInstaller::download(const QString &version, const application::Update
         d.file = appImageStaging(version);
     else
         d.file = versionDir(version) + QLatin1Char('/') + name;
+    if (d.file.isEmpty())
+        return; // an AppImage path that is not absolute
     if (verify(d.file, d.size, d.sha256)) {
         makeReady(d);
         return;
@@ -764,7 +775,7 @@ bool UpdateInstaller::replaceAppImage(const QStringList &arguments)
         writeResult(version, 2, QCoreApplication::translate("HikariSub.MainWindow", "Cannot replace %1, so the update was not installed.").arg(image));
         return false;
     }
-    // pending.json stays: the new version's first start drops it with .old.
+    // The pending record stays: the new version's first start drops it with .old.
     // The watchdog: the new image reports its window by creating the health
     // file; if it exits first or stays silent, the old image comes back.
     const QString health = m_env.cacheDir + QStringLiteral("/health-") + version;

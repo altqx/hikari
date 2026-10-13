@@ -152,6 +152,7 @@ private:
     void dropPending();
     void writeResult(const QString &version, int code, const QString &message) const;
     QString versionDir(const QString &version) const;
+    QString copyKey() const;
     QString pendingPath() const;
     QString resultPath() const;
     QString atStartPath() const;

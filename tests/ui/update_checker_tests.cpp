@@ -227,7 +227,7 @@ private slots:
         QFile downloaded(file);
         QVERIFY(downloaded.open(QIODevice::ReadOnly));
         QCOMPARE(downloaded.readAll(), wanted.deb);
-        QVERIFY(QFileInfo::exists(cache + QStringLiteral("/pending.json")));
+        QVERIFY(QFileInfo::exists(cache + QStringLiteral("/pending-deb.json")));
     }
 
     // Without a manifest (every release before them): the assets' digests.

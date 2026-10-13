@@ -12,7 +12,7 @@
 // is no more protected than the folder it is in, so a per-user copy that
 // claims to be for all users is never elevated, nor one installed for all
 // users into a folder the user can write. That process trusts nothing the user's side
-// wrote (pending.json, its SHA-256, the download folder):
+// wrote (the pending record, its SHA-256, the download folder):
 //   1. <version> must be a release version newer than its own;
 //   2. it downloads the release's SHA256SUMS itself, over HTTPS from the
 //      fixed GitHub URL, and takes the digest listed for
@@ -58,8 +58,10 @@ int apply(const application::ApplyRequest &request, const Environment &environme
 std::wstring commandLine(const application::ApplyRequest &request);
 
 // The real pieces of an Environment.
-// A GET of at most `limit` bytes over WinHTTP, which checks certificates;
-// the final URL after redirects must pass `allowed`.
+// A GET of at most `limit` bytes over WinHTTP. Every URL on the way,
+// redirects included, must pass `allowed`, and every server's certificate
+// must chain to a root in the local machine's stores, not one the current
+// user added.
 std::optional<std::string> fetchHttps(const std::string &url,
                                       const std::function<bool(const std::string &finalUrl)> &allowed,
                                       std::size_t limit);
