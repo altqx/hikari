@@ -293,6 +293,14 @@ target_compile_definitions(hikari_backends_matroska_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
 add_dependencies(hikari_backends_matroska_tests hikari_media_helper hikari_media_fixtures)
+# Y9: the same reads against legacy Demux's run on mkvmerge-muxed files.
+hikari_add_gtest(hikari_backends_matroska_capture_tests SOURCES matroska_capture_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_matroska_capture_tests PRIVATE
+    HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+    HIKARI_MUXED_MKV="${PROJECT_SOURCE_DIR}/tests/fixtures/matroska-muxed"
+    HIKARI_DEMUX_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-y9-demux-20261013/observations.jsonl")
+add_dependencies(hikari_backends_matroska_capture_tests hikari_media_helper)
 
 # T4: the clips the visual tools write, rendered by libass, against the tools'
 # own outline and mask.
