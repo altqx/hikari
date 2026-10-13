@@ -300,12 +300,20 @@ icon("select-lines", "Select lines", ["Sellines.png"], [EDIT, "select-lines"],
 
 # Video
 # The video icons' badges (the user's review of 2026-10-13, round 2) stand in
-# the film's open corner one clear unit from it, as audio-from-video's note
-# does: + and the clock on the pixel grid, the x at the corner.
+# the film's open corner one clear pixel from it at 16 px, as audio-from-video's
+# note does. Each cut is the least that leaves that pixel: the + and the x
+# (open-video, close-video) share audio-from-video's cut; the clock, a pixel
+# wider, takes a half unit more of the right and bottom edges.
 icon("open-video", "Open video", ["openvideo.png"], [VIDEO, "video-context-menu", "dummy-video"],
      video_film() + accent(stroke("M12.5 10.5v4M10.5 12.5h4")))
+# The clock's ring is drawn through pixel centres, flat for two units on each
+# side with arcs of radius 4 at the corners: at 16 px it lands on whole pixels
+# (a seven-pixel ring), and larger it reads as round. The hands are one unit
+# each from the centre pixel, a clear pixel inside the ring.
 icon("recent-video", "Recently opened videos", ["RecentVideo.png"], [VIDEO, "video-context-menu"],
-     video_film(7.5, 7, 8.5) + accent(circle(12.5, 12.5, 3), stroke("M12.5 11v1.5h1.5")))
+     video_film(7.5, 7.5, 8.5)
+     + accent(stroke("M11.5 9.5h2a4 4 0 0 1 2 2v2a4 4 0 0 1-2 2h-2a4 4 0 0 1-2-2v-2a4 4 0 0 1 2-2z"),
+              stroke("M12.5 11.5v1h1")))
 icon("open-keyframes", "Open keyframes", ["OpenKeyframes.png"], [VIDEO], diamond(6, 6.5, 4.5) + plus_badge())
 icon("recent-keyframes", "Recently opened keyframes", ["RecentKeyframes.png"], [VIDEO],
      diamond(6, 6.5, 4.5) + clock_badge())
@@ -412,10 +420,11 @@ icon("link", "Link", ["button_link.png", "ScaleLink.png"], [AUDIOBOX, VISUAL, "s
 
 # Line editor tag buttons
 # A filled F on whole pixels, as tag-bold's B: Roboto's narrow F (the top arm
-# 7 units, the middle arm 6, centred at half the cap height), the stem and
-# arms two units; lighter than the B by its open form.
+# 6 units, the middle arm 5, centred at half the cap height), the stem and
+# arms two units; two units narrower than the B, so lighter by its width and
+# its open form.
 icon("tag-font", "Font selection", ["Font.png"], [EDITOR, "font-dialog"],
-     fill("M5 2h7v2H7v3h4v2H7v5H5z"))
+     fill("M5 2h6v2H7v3h3v2H7v5H5z"))
 icon("tag-bold", "Bold", ["Bold.png"], [EDITOR],
      fill("M4 2h6a2 2 0 0 1 2 2v1.5c0 .75-.25 1.5-1 2 1.25.25 2 1.25 2 2.5v1.5a2.5 2.5 0 0 1-2.5 2.5H4z"
           "M6 4h3.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75H6zM6 9h4.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-.75.75H6z",
@@ -680,7 +689,10 @@ icon("multireplace", "Fix minor errors", [], [SUBS, "misspell-replacer"],
      mirror=True)
 
 # Video
-icon("close-video", "Unload video", [], [VIDEO], video_film() + accent(stroke("M11 11l4 4M15 11l-4 4")))
+# The x crosses at 12.5, 13 so that each arm runs through the points Qt's
+# antialiased one-pixel lines draw sharp (a half unit across, a whole unit
+# down): at 16 px both arms are single pixels, as heavy as open-video's +.
+icon("close-video", "Unload video", [], [VIDEO], video_film() + accent(stroke("M10.5 11l4 4M14.5 11l-4 4")))
 icon("fullscreen", "Full screen", [], [VIDEOMENU],
      stroke("M1.5 5.5v-3a1 1 0 0 1 1-1h3M10.5 1.5h3a1 1 0 0 1 1 1v3M14.5 10.5v3a1 1 0 0 1-1 1h-3M5.5 14.5h-3a1 1 0 0 1-1-1v-3"))
 icon("fullscreen-exit", "Exit full screen", [], [VIDEOMENU, FULLSCREEN],
