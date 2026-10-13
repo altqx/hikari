@@ -89,6 +89,11 @@ TEST(UpdateCheck, CandidatesBySemVerSkippingDraftsPrereleasesAndOtherTags)
     EXPECT_EQ(findNewerRelease(feed, "0.1.0", true)->url, "u3");
     EXPECT_FALSE(findNewerRelease(feed, "0.1.2", true));
     EXPECT_FALSE(findNewerRelease({}, "0.1.0", false));
+    // A prerelease build takes prereleases even with "Stable versions only".
+    const auto fromBeta = updateCandidates(feed, "0.1.0-beta.1", true);
+    ASSERT_EQ(fromBeta.size(), 4u);
+    EXPECT_EQ(fromBeta[0].tag, "v0.2.0-rc.1");
+    EXPECT_EQ(fromBeta[3].tag, "v0.1.1");
     EXPECT_TRUE(isPrerelease(feed[2]));
     EXPECT_TRUE(isPrerelease(feed[3]));
     EXPECT_FALSE(isPrerelease(feed[7]));
