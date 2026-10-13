@@ -153,9 +153,11 @@ cp -- "$file" "$copy" || fail 2 "cannot copy $file"
 
 # The release's digests, downloaded by root from the fixed URL. -q leaves
 # out any curlrc; https only, redirects included (GitHub sends the file
-# from its asset hosts); certificates are checked, as curl does unless told
-# otherwise.
+# from its asset hosts); certificates are checked against the system's
+# roots, as curl does unless told otherwise (sudo and pkexec drop these
+# variables already; this does not count on it).
 command -v curl >/dev/null || fail 6 "curl is missing"
+unset CURL_CA_BUNDLE SSL_CERT_FILE SSL_CERT_DIR CURL_HOME
 sums="$work/SHA256SUMS"
 curl -q --proto =https --proto-redir =https --tlsv1.2 --fail --silent --show-error --location \
 	--max-redirs 5 --max-filesize 65536 --connect-timeout 20 --max-time 60 --retry 2 \

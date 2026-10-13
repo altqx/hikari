@@ -90,8 +90,10 @@ namespace update_apply
 
 	// The real pieces of an Environment.
 
-	// A GET over HTTPS, with WinHTTP's certificate checks, of at most
-	// limit bytes; the final URL after redirects must pass allowed.
+	// A GET over HTTPS of at most limit bytes. Every URL on the way,
+	// redirects included, must pass allowed, and every server's
+	// certificate must chain to a root in the local machine's stores, not
+	// one the current user added.
 	std::optional<std::string> FetchHttps(const std::string &url,
 		const std::function<bool(const std::string &finalUrl)> &allowed, size_t limit);
 

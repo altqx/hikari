@@ -454,3 +454,34 @@ TEST(updateApplyFindsTheUsersOwnFolderChangeable)
 	Put(folder + L"\\hikarisub.exe", "a program");
 	CHECK(!update_apply::IsProtectedFromUser(folder));
 }
+
+#ifdef _WIN32
+// The real fetch, against a published release (HIKARISUB_TEST_NETWORK=1):
+// GitHub redirects to its asset host, every hop must be allowed, and every
+// server's certificate must chain to a root the machine trusts.
+TEST(updateApplyFetchFollowsOnlyAllowedHosts)
+{
+	wchar_t flag[8] = {};
+	if (GetEnvironmentVariableW(L"HIKARISUB_TEST_NETWORK", flag, 8) != 1 || flag[0] != L'1') {
+		std::printf("skipped: HIKARISUB_TEST_NETWORK=1 fetches from GitHub\n");
+		return;
+	}
+	std::string url = update_verify::SumsUrl("0.0.1");
+	auto anyGitHub = [](const std::string &u) {
+		for (const char *prefix : { "https://github.com/", "https://objects.githubusercontent.com/",
+				"https://release-assets.githubusercontent.com/" })
+		{
+			if (u.rfind(prefix, 0) == 0)
+				return true;
+		}
+		return false;
+	};
+	std::optional<std::string> sums = update_apply::FetchHttps(url, anyGitHub, 65536);
+	CHECK(sums && sums->find("HikariSub-0.0.1-windows-x64.zip") != std::string::npos);
+	// A redirect to a host that is not allowed is not followed.
+	auto githubOnly = [](const std::string &u) { return u.rfind("https://github.com/", 0) == 0; };
+	CHECK(!update_apply::FetchHttps(url, githubOnly, 65536));
+	// Nor is a URL that is not allowed fetched at all.
+	CHECK(!update_apply::FetchHttps(url, [](const std::string &) { return false; }, 65536));
+}
+#endif

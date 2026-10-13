@@ -18,7 +18,7 @@ if(WIN32)
     # HIKARISUB_TESTING: the seam that makes a volume's refusals, which the
 # application is built without
 target_compile_definitions(hikarisub_windows_tests PRIVATE UNICODE _UNICODE NOMINMAX HIKARISUB_TESTING)
-    target_link_libraries(hikarisub_windows_tests PRIVATE advapi32 bcrypt winhttp)
+    target_link_libraries(hikarisub_windows_tests PRIVATE advapi32 bcrypt crypt32 winhttp)
     enable_testing()
     add_test(NAME hikarisub_windows_tests COMMAND hikarisub_windows_tests)
     return()
