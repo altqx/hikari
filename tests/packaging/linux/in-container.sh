@@ -330,14 +330,20 @@ test_native() {
         newer=$(ls /upgrade/*."$kind" | head -n 1)
         # The upgrade goes through the installed update helper, as the app
         # runs it through pkexec (installers spec, 4.4): the user's own
-        # download, its SHA-256 and the release version.
+        # download and the release version. The helper downloads that
+        # release's SHA256SUMS itself; fake-curl.sh stands in for GitHub
+        # with one that lists the newer package.
         cp "$newer" "$uhome/"
         newer=$uhome/$(basename "$newer")
         chown "$user:" "$newer"
         newer_version=$(basename "$newer" | sed 's/^hikarisub-\(.*\)-linux-[^-]*$/\1/')
+        mkdir -p "/srv/hikarisub-releases/v$newer_version"
+        (cd "$uhome" && sha256sum "$(basename "$newer")") > "/srv/hikarisub-releases/v$newer_version/SHA256SUMS"
+        install -m 0755 /tests/fake-curl.sh /usr/local/bin/curl
         rc=0
-        PKEXEC_UID=$(id -u "$user") /opt/hikarisub/libexec/hikarisub-update-helper install "$kind" "$newer" \
-            "$(sha256sum "$newer" | cut -d ' ' -f 1)" "$newer_version" >"$log/helper-$kind.txt" 2>&1 || rc=$?
+        PKEXEC_UID=$(id -u "$user") /opt/hikarisub/libexec/hikarisub-update-helper install "$newer" \
+            "$newer_version" >"$log/helper-$kind.txt" 2>&1 || rc=$?
+        rm -f /usr/local/bin/curl
         if [ "$rc" -ne 0 ]; then
             cat "$log/helper-$kind.txt"
             fail "$kind: the update helper did not install $(basename "$newer") (exit $rc)"

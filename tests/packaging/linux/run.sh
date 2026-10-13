@@ -42,7 +42,8 @@ image=$("$repo/packaging/linux/fetch-tool.sh" --image "$image_name")
 
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT INT TERM
-cp "$here/in-container.sh" "$here/sample.mkv" "$here/sample-free.webm" "$repo/packaging/linux/appimage/host-libs.txt" "$stage/"
+cp "$here/in-container.sh" "$here/sample.mkv" "$here/sample-free.webm" "$repo/packaging/linux/appimage/host-libs.txt" \
+    "$repo/tests/update/helper/fake-curl.sh" "$stage/"
 if [ -n "$gst_check" ]; then
     cp "$gst_check" "$stage/gst-check"
     chmod 0755 "$stage/gst-check"

@@ -33,6 +33,7 @@
 #include "VideoBox.h"
 #include "Notebook.h"
 #include "PackageKind.h"
+#include "UpdateApply.h"
 #include "UpdateInstaller.h"
 #include "VersionHikariSub.h"
 #include <wx/image.h>
@@ -393,6 +394,12 @@ namespace
 
 bool hikarisubApp::Initialize(int& argc, wxChar** argv)
 {
+#ifdef _WIN32
+	// The installing side of an update (installers spec, 4.2): nothing of
+	// the app starts, no settings are read and no window opens.
+	if (argc >= 2 && wxString(argv[1]) == update_apply::kSwitch)
+		std::exit(update_installer::ApplyUpdate(KindTokenAtStart() == package_kind::Token(package_kind::Kind::NsisMachine)));
+#endif
 	for (int i = 1; i < argc; i++) {
 		wxString argument = argv[i];
 		if (argument == L"--version") {

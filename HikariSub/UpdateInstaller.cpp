@@ -21,6 +21,8 @@
 #include "MappedButton.h"
 #include "Sha256.h"
 #include "UpdatePolicy.h"
+#include "UpdateApply.h"
+#include "UpdateVerify.h"
 #include "VersionHikariSub.h"
 #include "config.h"
 #include <wx/app.h>
@@ -719,43 +721,116 @@ namespace
 
 	enum class Launch { Started, Declined, Failed };
 
-	// The NSIS installer in /UPDATE mode (4.2): CreateProcessW for the
-	// user's scope, one UAC prompt for all users'.
-	Launch LaunchNsis(const Pending &pending, bool withRelaunch)
+	// Starts the installing side (UpdateApply.h): this installed
+	// hikarisub.exe with --hikari-apply-update, through one UAC prompt for
+	// all users' scope, unelevated for the user's own. The downloaded
+	// installer is never what UAC is asked to run: the installing side
+	// checks it against the release's SHA256SUMS first (4.2).
+	Launch StartApply(const Pending &pending, bool withRelaunch, HANDLE *process)
 	{
 		bool allUsers = update_installer::Kind() == package_kind::Kind::NsisMachine;
-		wxString installDir = Options.pathfull;
-		while (installDir.EndsWith(L"\\"))
-			installDir.RemoveLast();
-		wxString arguments = FromUtf8(update_manifest::NsisArguments(GetCurrentProcessId(), withRelaunch, allUsers,
-			ToUtf8(installDir)));
-		wxString file = FromUtf8(pending.file);
-		if (allUsers) {
-			SHELLEXECUTEINFOW info = {};
-			info.cbSize = sizeof(info);
-			info.fMask = SEE_MASK_NOASYNC;
-			info.lpVerb = L"runas";
-			std::wstring fileWide = Wide(file), argumentsWide = Wide(arguments);
-			info.lpFile = fileWide.c_str();
-			info.lpParameters = argumentsWide.c_str();
-			info.nShow = SW_SHOWNORMAL;
-			if (ShellExecuteExW(&info))
-				return Launch::Started;
-			return GetLastError() == ERROR_CANCELLED ? Launch::Declined : Launch::Failed;
-		}
-		std::wstring commandLine = L"\"" + Wide(file) + L"\" " + Wide(arguments);
-		STARTUPINFOW startup = {};
-		startup.cb = sizeof(startup);
-		PROCESS_INFORMATION process = {};
-		if (!CreateProcessW(nullptr, commandLine.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startup,
-			&process))
-		{
+		std::vector<wchar_t> exe(32768);
+		DWORD length = GetModuleFileNameW(nullptr, exe.data(), DWORD(exe.size()));
+		if (length == 0 || length >= exe.size())
 			return Launch::Failed;
-		}
-		CloseHandle(process.hThread);
-		CloseHandle(process.hProcess);
+		update_apply::Request request;
+		request.version = pending.version;
+		request.file = Wide(FromUtf8(pending.file));
+		request.pid = GetCurrentProcessId();
+		request.relaunch = withRelaunch;
+		std::wstring parameters = update_apply::CommandLine(request);
+		SHELLEXECUTEINFOW info = {};
+		info.cbSize = sizeof(info);
+		info.fMask = SEE_MASK_NOASYNC | SEE_MASK_NOCLOSEPROCESS;
+		info.lpVerb = allUsers ? L"runas" : nullptr;
+		info.lpFile = exe.data();
+		info.lpParameters = parameters.c_str();
+		info.nShow = SW_SHOWNORMAL;
+		if (!ShellExecuteExW(&info))
+			return GetLastError() == ERROR_CANCELLED ? Launch::Declined : Launch::Failed;
+		if (!info.hProcess)
+			return Launch::Failed;
+		*process = info.hProcess;
 		return Launch::Started;
 	}
+
+	// What the installing side's exit code means for the user.
+	wxString ApplyMessage(int code, const Pending &pending)
+	{
+		switch (code) {
+		case update_verify::kMismatch:
+			return _("The update was refused: the installer does not match its release.");
+		case update_verify::kNoSums:
+			return wxString::Format(_("HikariSub %s could not be checked against its release on GitHub, so it was not installed. It is tried again at the next quit."),
+				FromUtf8(pending.version));
+		case update_verify::kBadArguments:
+			return _("The update could not be handed to the installer.");
+		default:
+			return wxString::Format(_("The installer of HikariSub %s could not be started. You can run it yourself: %s"),
+				FromUtf8(pending.version), FromUtf8(pending.file));
+		}
+	}
+
+	// Waits, with the event loop running and the frame hidden, for the
+	// installing side to check the installer and start it. Then the frame
+	// is closed, and the installer waits for this process to end; or, when
+	// the installing side refused, the user is told why, and a Restart
+	// now keeps the app running.
+	class ApplyWait : public wxTimer
+	{
+	public:
+		ApplyWait(wxWindow *frame, HANDLE process, const Pending &pending, bool withRelaunch)
+			: owner(frame), process(process), pending(pending), withRelaunch(withRelaunch)
+		{
+			busy = new HikariDialog(nullptr, -1, _("Update"));
+			wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
+			sizer->Add(new HikariStaticText(busy, -1, _("Checking the update...")), 0, wxEXPAND | wxALL, 12);
+			busy->SetSizerAndFit(sizer);
+			busy->CenterOnScreen();
+			busy->Show();
+			frame->Hide();
+			Start(200);
+		}
+
+		void Notify() override
+		{
+			if (WaitForSingleObject(process, 0) != WAIT_OBJECT_0)
+				return;
+			Stop();
+			DWORD code = update_verify::kFailed;
+			if (!GetExitCodeProcess(process, &code))
+				code = update_verify::kFailed;
+			CloseHandle(process);
+			waitingForInstaller = false;
+			if (busy)
+				busy->Destroy();
+			if (code != update_verify::kOk) {
+				// A file that is not the release's, or a version that is
+				// not newer, will not become right: it is dropped.
+				if (code == update_verify::kMismatch || code == update_verify::kBadArguments)
+					DropPending(pending);
+				HikariMessageBox(ApplyMessage(int(code), pending), _("Update"), wxOK, nullptr);
+				handedOff = false;
+				if (withRelaunch && owner) {
+					relaunch = false;
+					owner->Show();
+					owner->Raise();
+					wxTheApp->CallAfter([this] { delete this; });
+					return;
+				}
+			}
+			if (owner)
+				owner->Destroy();
+			wxTheApp->CallAfter([this] { delete this; });
+		}
+
+	private:
+		wxWeakRef<wxWindow> owner;
+		HANDLE process;
+		Pending pending;
+		bool withRelaunch;
+		wxWeakRef<HikariDialog> busy;
+	};
 #else
 	// Steps 1 and 2 of the AppImage hand-off (4.3): keep the running file
 	// as $APPIMAGE.old, then rename the new one over $APPIMAGE.
@@ -865,6 +940,9 @@ namespace
 			return _("The package manager was busy with another installation. The update is installed at the next quit.");
 		case update_manifest::kHelperBadArguments:
 			return _("The update could not be handed to the installer.");
+		case update_manifest::kHelperNoSums:
+			return wxString::Format(_("The update could not be checked against its release on GitHub, so it was not installed. You can install it yourself: %s"),
+				file);
 		default:
 			return wxString::Format(_("The update could not be installed (code %d)."), code);
 		}
@@ -918,13 +996,12 @@ namespace
 				owner->Destroy();
 			wxTheApp->CallAfter([process] { delete process; });
 		});
+		// The file and the version only: the helper checks the file
+		// against the release's own SHA256SUMS, never a digest of ours.
 		wxString helper = FromUtf8(std::string(update_manifest::kUpdateHelper));
-		wxString kind = FromUtf8(record.kind);
 		wxString file = FromUtf8(record.file);
-		wxString sha256 = FromUtf8(record.sha256);
 		wxString version = FromUtf8(record.version);
-		const wxChar *argv[] = { L"pkexec", helper.wc_str(), L"install", kind.wc_str(), file.wc_str(),
-			sha256.wc_str(), version.wc_str(), nullptr };
+		const wxChar *argv[] = { L"pkexec", helper.wc_str(), L"install", file.wc_str(), version.wc_str(), nullptr };
 		if (wxExecute(argv, wxEXEC_ASYNC, process) == 0) {
 			// pkexec could not start: as if it was not there.
 			wxProcessEvent failed(0, 0, update_manifest::kPkexecNotAuthorised);
@@ -933,6 +1010,53 @@ namespace
 	}
 #endif
 }
+
+#ifdef _WIN32
+int update_installer::ApplyUpdate(bool allUsersInstall)
+{
+	int count = 0;
+	LPWSTR *argv = CommandLineToArgvW(GetCommandLineW(), &count);
+	if (!argv)
+		return update_verify::kBadArguments;
+	std::vector<std::wstring> arguments;
+	bool isSwitch = count >= 2 && std::wstring(argv[1]) == update_apply::kSwitch;
+	for (int i = 2; i < count; i++)
+		arguments.push_back(argv[i]);
+	LocalFree(argv);
+	std::optional<update_apply::Request> request = isSwitch ? update_apply::Parse(arguments) : std::nullopt;
+	if (!request)
+		return update_verify::kBadArguments;
+
+	update_apply::Environment environment;
+	environment.installed = VersionHikariSub;
+	std::vector<wchar_t> exe(32768);
+	DWORD length = GetModuleFileNameW(nullptr, exe.data(), DWORD(exe.size()));
+	if (length == 0 || length >= exe.size())
+		return update_verify::kFailed;
+	std::wstring path(exe.data(), length);
+	environment.installDir = path.substr(0, path.find_last_of(L'\\'));
+	environment.allUsers = allUsersInstall;
+	if (allUsersInstall) {
+		// Program Files is only an administrator's to change, and so is
+		// the folder the installer is copied to.
+		if (!update_apply::IsElevated())
+			return update_verify::kBadArguments;
+		environment.stagingParent = update_apply::SystemTempFolder();
+	}
+	std::string feed = FeedBase();
+	environment.fetchSums = [feed](const std::string &version) -> std::optional<std::string> {
+		std::string url = feed.empty() ? update_verify::SumsUrl(version) :
+			update_manifest::feed::DownloadUrl(feed, version, update_verify::kSumsName);
+		if (url.empty())
+			return std::nullopt;
+		return update_apply::FetchHttps(url, [feed](const std::string &reply) {
+			return feed.empty() ? update_manifest::IsDownloadUrl(reply) : update_manifest::feed::IsFeedUrl(feed, reply);
+		}, update_verify::kMaxSumsBytes);
+	};
+	environment.run = update_apply::Launch;
+	return update_apply::Apply(*request, environment);
+}
+#endif
 
 package_kind::Kind update_installer::Kind()
 {
@@ -1125,7 +1249,9 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 		DropPending(*pending);
 		return Quit::Continue;
 	}
-	// The file is checked again: it sat in the user's folder since.
+	// The file is checked again: it sat in the user's folder since. This
+	// only weeds out a broken download: the record is the user's to
+	// change, so what installs checks the file against the release itself.
 	if (!VerifyFile(FromUtf8(pending->file), pending->size, pending->sha256)) {
 		DropPending(*pending);
 		return Quit::Continue;
@@ -1135,10 +1261,13 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 	if (nsisAttempted && !relaunch)
 		return Quit::Continue;
 	nsisAttempted = true;
-	switch (LaunchNsis(*pending, relaunch)) {
+	HANDLE process = nullptr;
+	switch (StartApply(*pending, relaunch, &process)) {
 	case Launch::Started:
 		handedOff = true;
-		return Quit::Continue;
+		waitingForInstaller = true;
+		new ApplyWait(frame, process, *pending, relaunch);
+		return Quit::Wait;
 	case Launch::Declined:
 		// The record stays; a Restart now keeps the app running.
 		if (relaunch) {

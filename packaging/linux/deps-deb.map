@@ -58,14 +58,17 @@ libasound.so.2            libasound2t64 | libasound2
 libpulse.so.0             libpulse0
 # runtime
 # The GStreamer plugins legacy plays through, an audio sink, the gio tool
-# for move-to-trash, the icon theme, and (recommended) the updater's
-# password prompt and an English dictionary.
+# for move-to-trash, the icon theme, curl and the CA certificates the
+# update helper checks a release's SHA256SUMS with, and (recommended) the
+# updater's password prompt and an English dictionary.
 depends     gstreamer1.0-plugins-base
 depends     gstreamer1.0-plugins-good
 depends     gstreamer1.0-libav
 depends     gstreamer1.0-pulseaudio | gstreamer1.0-pipewire | gstreamer1.0-alsa
 depends     libglib2.0-bin
 depends     hicolor-icon-theme
+depends     curl
+depends     ca-certificates
 recommends  gstreamer1.0-plugins-bad
 recommends  hunspell-en-us
 recommends  pkexec | policykit-1

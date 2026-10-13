@@ -26,6 +26,7 @@
 #include "PackageKind.h"
 #include "SemVer.h"
 #include "UpdatePolicy.h"
+#include "UpdateVerify.h"
 
 #include <cstddef>
 #include <cstdio>
@@ -719,25 +720,18 @@ namespace update_manifest
 	constexpr std::string_view kUpdatedFromSwitch = "--hikari-updated-from=";
 	constexpr std::string_view kHealthSwitch = "--hikari-health=";
 
-	// The NSIS installer's arguments in /UPDATE mode (4.2). /D= comes last
-	// and unquoted, as NSIS takes the rest of the line as the folder.
-	inline std::string NsisArguments(unsigned long pid, bool relaunch, bool allUsers, std::string_view installDir)
-	{
-		std::string arguments = "/S /UPDATE /WAITPID=" + std::to_string(pid);
-		if (relaunch)
-			arguments += " /RELAUNCH";
-		arguments += allUsers ? " /ALLUSERS" : " /CURRENTUSER";
-		arguments += " /D=" + std::string(installDir);
-		return arguments;
-	}
+	// The NSIS installer's arguments in /UPDATE mode (4.2).
+	using update_verify::NsisArguments;
 
 	// The helper's exit codes (4.4), and pkexec's for a prompt that was
-	// dismissed or not authorised.
-	constexpr int kHelperOk = 0;
-	constexpr int kHelperBadArguments = 2;
-	constexpr int kHelperMismatch = 3;
-	constexpr int kHelperPackageManagerFailed = 4;
+	// dismissed or not authorised. The Windows installing side
+	// (UpdateApply.h) exits with the same 0, 2, 3, 4 and 6.
+	constexpr int kHelperOk = update_verify::kOk;
+	constexpr int kHelperBadArguments = update_verify::kBadArguments;
+	constexpr int kHelperMismatch = update_verify::kMismatch;
+	constexpr int kHelperPackageManagerFailed = update_verify::kFailed;
 	constexpr int kHelperLocked = 5;
+	constexpr int kHelperNoSums = update_verify::kNoSums;
 	constexpr int kPkexecDismissed = 126;
 	constexpr int kPkexecNotAuthorised = 127;
 

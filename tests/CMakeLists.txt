@@ -9,12 +9,15 @@ if(WIN32)
     add_executable(hikarisub_windows_tests
         check_main.cpp
         WindowsSaveFileTests.cpp
+        update/UpdateApplyTests.cpp
+        update/UpdateVerifyTests.cpp
+        ../HikariSub/UpdateApply.cpp
         ../HikariSub/WindowsSaveFile.cpp
     )
     # HIKARISUB_TESTING: the seam that makes a volume's refusals, which the
 # application is built without
 target_compile_definitions(hikarisub_windows_tests PRIVATE UNICODE _UNICODE NOMINMAX HIKARISUB_TESTING)
-    target_link_libraries(hikarisub_windows_tests PRIVATE advapi32)
+    target_link_libraries(hikarisub_windows_tests PRIVATE advapi32 bcrypt winhttp)
     enable_testing()
     add_test(NAME hikarisub_windows_tests COMMAND hikarisub_windows_tests)
     return()
@@ -48,6 +51,7 @@ add_executable(hikarisub_tests
     UndoHistoryTests.cpp
     UpdatePolicyTests.cpp
     update/UpdateManifestTests.cpp
+    update/UpdateVerifyTests.cpp
     TextComparisonTests.cpp
     WaveformPeaksTests.cpp
     ../HikariSub/AssBlend.cpp

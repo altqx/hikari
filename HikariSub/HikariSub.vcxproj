@@ -416,6 +416,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClCompile Include="FileTypes.cpp" />
     <ClCompile Include="JsonValue.cpp" />
     <ClCompile Include="UpdateChecker.cpp" />
+    <ClCompile Include="UpdateApply.cpp" />
     <ClCompile Include="UpdateInstaller.cpp" />
     <ClCompile Include="Registry.cpp" />
     <ClCompile Include="SelectLines.cpp" />
@@ -623,6 +624,8 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="UpdatePolicy.h" />
     <ClInclude Include="UpdateManifest.h" />
     <ClInclude Include="UpdateInstaller.h" />
+    <ClInclude Include="UpdateApply.h" />
+    <ClInclude Include="UpdateVerify.h" />
     <ClInclude Include="PackageKind.h" />
     <ClInclude Include="Sha256.h" />
     <ClInclude Include="VersionHikariSub.h" />

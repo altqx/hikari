@@ -8,7 +8,7 @@
 #
 # The out dir gets:
 #   releases.json                    one page shaped like GitHub's release list
-#   download/v<V>/<asset name>       each package, and hikarisub-update.json
+#   download/v<V>/<asset name>       each package, SHA256SUMS and hikarisub-update.json
 #   releases/tag/v<V>                a release page
 #   requests.log                     every request served, one per line
 #
@@ -16,6 +16,7 @@
 # (HIKARI_UPDATE_FEED for Qt). Options change a release to test the other
 # paths: --no-manifest V drops a manifest so the client falls back to the
 # digests, --bad-sha256 NAME gives a package a wrong hash in its manifest,
+# --bad-sums V lists wrong digests in a release's SHA256SUMS,
 # --offer-to V=legacy,qt sets offer_to, --draft V marks a release a draft.
 
 import argparse
@@ -29,6 +30,7 @@ import sys
 from datetime import datetime, timezone
 
 MANIFEST = "hikarisub-update.json"
+SUMS = "SHA256SUMS"
 MIN_OS = "10.0.17763"
 MIN_GLIBC = {"legacy": "2.35", "qt": "2.34"}
 VERSION = r"(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)"
@@ -116,6 +118,15 @@ def build(source, out, args):
             else:
                 package["min_glibc"] = MIN_GLIBC[codebase]
             packages[key] = package
+        # SHA256SUMS, as the release job publishes it: what the installing
+        # side (the Windows apply step, the Linux helper) checks a package
+        # against. --bad-sums V lists a wrong digest for every package.
+        sums = os.path.join(folder, SUMS)
+        with open(sums, "w", encoding="utf-8") as file:
+            for asset in sorted(assets, key=lambda entry: entry["name"]):
+                digest = "0" * 64 if version in args.bad_sums else asset["digest"].split(":", 1)[1]
+                file.write(f"{digest}  {asset['name']}\n")
+        assets.append({"name": SUMS, "size": os.path.getsize(sums), "digest": f"sha256:{sha256_of(sums)}"})
         if version not in args.no_manifest:
             manifest = {
                 "schema": 1,
@@ -187,6 +198,8 @@ def main():
     parser.add_argument("--no-serve", action="store_true", help="write the feed only")
     parser.add_argument("--no-manifest", action="append", default=[], metavar="V",
                         help="leave out the manifest of version V")
+    parser.add_argument("--bad-sums", action="append", default=[], metavar="V",
+                        help="list a wrong digest for every package of version V in its SHA256SUMS")
     parser.add_argument("--bad-sha256", action="append", default=[], metavar="NAME",
                         help="give asset NAME a wrong SHA-256 in its manifest")
     parser.add_argument("--offer-to", action="append", default=[], metavar="V=LIST",

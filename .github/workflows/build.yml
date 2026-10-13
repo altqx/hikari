@@ -43,6 +43,28 @@ jobs:
       - name: Run
         run: ctest --test-dir build-tests --output-on-failure
 
+  # The deb and rpm update helper (installers spec, 4.4), run as pkexec
+  # would in the pinned test images: stand-in packages, and a stand-in for
+  # GitHub that serves made-up releases' SHA256SUMS.
+  update-helper-tests:
+    name: Update helper (${{ matrix.kind }}, ${{ matrix.image }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { kind: deb, image: ubuntu-22.04 }
+          - { kind: deb, image: ubuntu-24.04 }
+          - { kind: rpm, image: fedora }
+          - { kind: rpm, image: tumbleweed }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run
+        run: |
+          image=$(packaging/linux/fetch-tool.sh --image "${{ matrix.image }}")
+          docker run --rm -v "$PWD:/src:ro" "$image" sh /src/tests/update/helper/test-update-helper.sh "${{ matrix.kind }}"
+
   # The tests of the save code that is Windows' own, which needs no
   # dependency and builds in a minute.
   windows-tests:
@@ -730,7 +752,7 @@ jobs:
   # their release names.
   release:
     name: Release
-    needs: [release-version, tests, windows-tests, windows, windows-installer, linux, linux-packages, linux-package-tests]
+    needs: [release-version, tests, windows-tests, update-helper-tests, windows, windows-installer, linux, linux-packages, linux-package-tests]
     runs-on: ubuntu-24.04
     permissions:
       contents: write

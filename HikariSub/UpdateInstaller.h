@@ -111,6 +111,15 @@ namespace update_installer
 	// "Restart now": the normal quit, then the new version.
 	void RestartNow(wxWindow *frame);
 
+#ifdef _WIN32
+	// hikarisub.exe --hikari-apply-update <version> <file> <pid> <relaunch>,
+	// from wxApp::Initialize before anything else: checks the installer
+	// against the release's SHA256SUMS and starts it (UpdateApply.h).
+	// Returns the exit code. allUsersInstall: this copy is an all-users
+	// install, which runs it elevated.
+	int ApplyUpdate(bool allUsersInstall);
+#endif
+
 	// From wxApp::OnExit, once the windows are gone and the single-instance
 	// lock is released: the AppImage watchdog and the relaunch after a
 	// deb or rpm install.
