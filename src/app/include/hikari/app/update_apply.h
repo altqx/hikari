@@ -65,8 +65,24 @@ std::wstring commandLine(const application::ApplyRequest &request);
 std::optional<std::string> fetchHttps(const std::string &url,
                                       const std::function<bool(const std::string &finalUrl)> &allowed,
                                       std::size_t limit);
+// CreateProcessW, with the installer's folder as its working folder. It
+// returns once the installer holds kSetupMutex (or has exited, or after
+// 10 s): an app started after this one's quit sees it.
 bool launch(const std::wstring &installer, const std::wstring &arguments);
 std::wstring systemTempFolder(); // %windir%\Temp
+
+// Held by an update's setup (/UPDATE) from its start to its exit, while it
+// waits for the app and replaces its files.
+inline constexpr wchar_t kSetupMutex[] = L"Global\\io.github.altqx.HikariSub.Installing";
+// Whether an update's setup runs now: kSetupMutex exists, even one this
+// process may not open (an elevated setup's).
+bool setupRunning();
+// A start while an update's setup runs would hold the program open and stop
+// the update: it leaves at once and asks the setup to start HikariSub when
+// it is done, with start-after-<copy> in the update cache of %LOCALAPPDATA%
+// (the folder the setup writes its result to). False when that file cannot
+// be written.
+bool askStartAfterSetup(const std::wstring &copyKey);
 bool isElevated();
 
 // What the user may do to a path: the access mask AccessCheck grants for

@@ -274,6 +274,11 @@ QString UpdateInstaller::start()
     if (m_env.cacheDir.isEmpty())
         return {};
     QString message;
+#ifdef _WIN32
+    // No setup runs now (a start during one leaves before this): a request a
+    // setup did not take is not for the next one.
+    QFile::remove(m_env.cacheDir + QStringLiteral("/start-after-") + copyKey());
+#endif
     QString installing;
     if (QFile marker(installingPath()); marker.open(QIODevice::ReadOnly)) {
         installing = QString::fromUtf8(marker.read(64)).trimmed();
@@ -603,7 +608,7 @@ UpdateInstaller::ExitAction UpdateInstaller::installAtExit(const std::function<s
                         .arg(version));
         // Restart now still restarts: the version installed, which says why.
         if (restart)
-            return {m_env.executable, {}};
+            return startInstalled();
         return {};
     }
     switch (m_env.package.kind) {
@@ -637,9 +642,8 @@ UpdateInstaller::ExitAction UpdateInstaller::installNsis(const std::function<std
     const std::wstring program = QDir::toNativeSeparators(m_env.executable).toStdWString();
     const std::wstring parameters = update_apply::commandLine(request);
     const auto startAgain = [this] {
-        // A Restart now that installed nothing starts the version still here.
         if (m_restart)
-            QProcess::startDetached(m_env.executable, {});
+            startInstalled();
     };
     // UAC is asked to run this program only when the user cannot have
     // changed it: package-kind.txt says "all users" in a per-user copy as
@@ -733,9 +737,25 @@ UpdateInstaller::ExitAction UpdateInstaller::installAppImage()
             marker.commit();
         return {};
     }
-    replaceAppImage({});
+    // Nothing replaced and nothing started (a folder that became
+    // read-only): the version still here starts again, which says why.
+    if (!replaceAppImage({}))
+        return startInstalled();
 #endif
     return {};
+}
+
+// A Restart now that installed nothing starts the version still here. On
+// Linux it takes this process's place (an AppImage's mount stays with it);
+// on Windows it starts beside this one, which is exiting.
+UpdateInstaller::ExitAction UpdateInstaller::startInstalled() const
+{
+#ifdef _WIN32
+    QProcess::startDetached(m_env.executable, {});
+    return {};
+#else
+    return {m_env.executable, {}};
+#endif
 }
 
 bool UpdateInstaller::installAppImageAtStart(const QStringList &arguments)

@@ -465,7 +465,41 @@ bool launch(const std::wstring &installer, const std::wstring &arguments)
         return false;
     }
     CloseHandle(process.hThread);
+    // The app this hands off for exits next: a start of it after that must
+    // find the setup's mutex. The setup takes it first thing.
+    for (int waited = 0; waited < 100 && !setupRunning(); ++waited) {
+        if (WaitForSingleObject(process.hProcess, 100) != WAIT_TIMEOUT)
+            break;
+    }
     CloseHandle(process.hProcess);
+    return true;
+}
+
+bool setupRunning()
+{
+    HANDLE mutex = OpenMutexW(SYNCHRONIZE, FALSE, kSetupMutex);
+    if (mutex) {
+        CloseHandle(mutex);
+        return true;
+    }
+    return GetLastError() == ERROR_ACCESS_DENIED;
+}
+
+bool askStartAfterSetup(const std::wstring &copyKey)
+{
+    wchar_t base[32768];
+    const DWORD length = GetEnvironmentVariableW(L"LOCALAPPDATA", base, 32768);
+    if (length == 0 || length >= 32768)
+        return false;
+    std::wstring folder = std::wstring(base, length) + L"\\HikariSub";
+    CreateDirectoryW(folder.c_str(), nullptr);
+    folder += L"\\Updates";
+    CreateDirectoryW(folder.c_str(), nullptr);
+    HANDLE file = CreateFileW((folder + L"\\start-after-" + copyKey).c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (file == INVALID_HANDLE_VALUE)
+        return false;
+    CloseHandle(file);
     return true;
 }
 

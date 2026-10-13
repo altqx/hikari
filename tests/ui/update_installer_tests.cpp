@@ -385,6 +385,36 @@ private slots:
         QVERIFY(!QFileInfo::exists(pendingOf(root, PackageKind::AppImage, image)));
     }
 
+    // Restart now with an image that cannot be replaced (its folder became
+    // read-only): the version still here starts again and says why.
+    void aRestartThatCannotReplaceTheImageStartsTheOldOne()
+    {
+#ifndef _WIN32
+        if (::geteuid() == 0)
+            QSKIP("root writes to a read-only folder");
+#endif
+        const QString root = folder();
+        const QString apps = root + QStringLiteral("/apps");
+        const QString image = apps + QStringLiteral("/HikariSub.AppImage");
+        const QByteArray old = "#!/bin/sh\nexit 0\n";
+        QVERIFY(write(image, old, true));
+        const QByteArray fresh = "#!/bin/sh\nexit 0\n# 0.2.0\n";
+        auto env = environment(PackageKind::AppImage, root);
+        env.package.appImage = image;
+        UpdateInstaller installer(env, QStringLiteral("0.1.0"));
+        const QString name = QStringLiteral("HikariSub-0.2.0-linux-x86_64.AppImage");
+        QVERIFY(download(installer, QStringLiteral("0.2.0"), package(name, fresh), serve(root, name, fresh)));
+        QVERIFY(QFile::setPermissions(apps, QFileDevice::ReadOwner | QFileDevice::ExeOwner));
+        installer.restartNow();
+        const auto action = installer.installAtExit();
+        QVERIFY(QFile::setPermissions(apps, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+        QCOMPARE(action.program, env.executable);
+        QVERIFY(action.arguments.isEmpty());
+        QCOMPARE(read(image), old);
+        QVERIFY(!QFileInfo::exists(image + QStringLiteral(".old")));
+        QVERIFY(read(copyFile(root, QStringLiteral("last-result-%1.json"), PackageKind::AppImage, image)).contains("Cannot keep a copy"));
+    }
+
     // An ordinary quit's update that cannot start is put back at the start
     // that installs it, as after Restart now.
     void anAppImageThatCannotStartIsPutBackAtTheNextStart()

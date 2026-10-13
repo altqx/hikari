@@ -208,6 +208,16 @@ int run(int argc, char **argv, StartupMode mode)
         return 0;
     }
 #ifdef _WIN32
+    // An update's setup is replacing this installed copy: this start would
+    // hold the program open and stop it, so it leaves, and the setup starts
+    // HikariSub when it is done (distribution.md).
+    if (update_apply::setupRunning()) {
+        QCoreApplication core(argc, argv);
+        const auto kind = currentPackageKind().kind;
+        if ((kind == application::PackageKind::NsisUser || kind == application::PackageKind::NsisMachine) &&
+            update_apply::askStartAfterSetup(packageKindToken(kind).toStdWString()))
+            return 0;
+    }
     // Held until exit: the installer waits while it exists. A failure is ignored.
     CreateMutexW(nullptr, FALSE, L"Global\\io.github.altqx.HikariSub.Running");
 #endif

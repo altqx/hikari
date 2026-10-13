@@ -163,6 +163,7 @@ private:
     bool replaceAppImage(const QStringList &arguments);
     ExitAction installNsis(const std::function<std::function<void()>()> &busy);
     ExitAction installAppImage();
+    ExitAction startInstalled() const;
     ExitAction installNative(const std::function<std::function<void()>()> &busy);
 
     UpdateEnvironment m_env;
