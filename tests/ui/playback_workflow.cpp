@@ -31,6 +31,7 @@
 #include <cstdio>
 #include <cmath>
 #include <cstdlib>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -78,6 +79,15 @@ public:
         m_ok = pthread_getcpuclockid(pthread_self(), &m_clock) == 0;
 #endif
     }
+    ~GuiThreadClock()
+    {
+#ifdef _WIN32
+        if (m_thread)
+            CloseHandle(m_thread);
+#endif
+    }
+    GuiThreadClock(const GuiThreadClock &) = delete;
+    GuiThreadClock &operator=(const GuiThreadClock &) = delete;
     double ms() const
     {
 #ifdef _WIN32
@@ -118,7 +128,8 @@ struct Shown {
     int tools = 0;   // the visual tools' change notifications
     int statusBar = 0; // the status bar's
     std::vector<int> generalBarcodes; // each player frame shown, in order
-    const void *lastGeneral = nullptr;
+    // Held, so a later frame can never reuse its address and pass as it.
+    std::shared_ptr<const hikari::application::IndexedFrame> lastGeneral;
 };
 
 std::mutex g_mutex;
@@ -209,23 +220,41 @@ protected:
             rate = frames > 0 && changes <= frames + 1 && texts >= 2 && texts <= static_cast<int>(ms / 100) + 2 &&
                    tools <= 1 && bar <= texts;
             // The status, the times and the seek bar show the player's frame
-            // (legacy VideoBox::RefreshTime), at most 100 ms behind it.
+            // (legacy VideoBox::RefreshTime), at most 100 ms behind it. Each
+            // read lies between the player frames shown just before and just
+            // after it, so the reads' own latency does not count; the bound is
+            // 250 ms of this 24 fps video: the 100 ms pace, a frame's own
+            // duration and timer slack (Windows' clock steps 15.6 ms).
             {
-                const auto first = panelFrames();
-                const int shownFirst = shown().lastGeneralBarcode;
-                wait(300ms);
-                const auto second = panelFrames();
-                const int shownSecond = shown().lastGeneralBarcode;
-                auto behind = [](const std::vector<int> &f, int player) {
-                    for (const int v : f)
-                        if (v <= 0 || v > player || player - v > 5)
+                static constexpr int kLagFrames = 6;
+                struct Read {
+                    std::vector<int> panel;
+                    int from = -1, to = -1; // the player's frame around the read
+                };
+                auto read = [&] {
+                    Read r;
+                    r.from = shown().lastGeneralBarcode;
+                    r.panel = panelFrames();
+                    r.to = shown().lastGeneralBarcode;
+                    return r;
+                };
+                auto inStep = [](const Read &r) {
+                    for (const int v : r.panel)
+                        if (v <= 0 || v > r.to || v < r.from - kLagFrames)
                             return false;
                     return true;
                 };
-                const bool ok = behind(first, shownFirst) && behind(second, shownSecond) && second[2] > first[2];
-                char text[160];
-                std::snprintf(text, sizeof text, "status %d, times %d, bar %d at player %d; then %d, %d, %d at %d",
-                              first[0], first[1], first[2], shownFirst, second[0], second[1], second[2], shownSecond);
+                const Read first = read();
+                // Far enough on that the bar must have moved, whatever its lag.
+                const int target = first.to + kLagFrames + 2;
+                waitFor([target](const Shown &s) { return s.lastGeneralBarcode >= target; });
+                const Read second = read();
+                const bool ok = inStep(first) && inStep(second) && second.panel[2] > first.panel[2];
+                char text[200];
+                std::snprintf(text, sizeof text,
+                              "status %d, times %d, bar %d at player %d-%d; then %d, %d, %d at %d-%d",
+                              first.panel[0], first.panel[1], first.panel[2], first.from, first.to,
+                              second.panel[0], second.panel[1], second.panel[2], second.from, second.to);
                 follows = ok ? "follows" : text;
             }
             // A click at 90% of the seek bar while playing: the player jumps
@@ -346,8 +375,8 @@ int main(int argc, char **argv)
             if (frame->index < 0 && frame.get() != nullptr) {
                 ++g_shown.generalFrames;
                 g_shown.lastGeneralBarcode = barcode(*frame);
-                if (frame.get() != g_shown.lastGeneral) {
-                    g_shown.lastGeneral = frame.get();
+                if (frame != g_shown.lastGeneral) {
+                    g_shown.lastGeneral = frame;
                     g_shown.generalBarcodes.push_back(g_shown.lastGeneralBarcode);
                 }
             }

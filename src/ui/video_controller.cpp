@@ -354,8 +354,10 @@ bool VideoController::stop()
     return done;
 }
 
-// The shown indexed frame; while playing, or while a pause's indexed frame
-// is still on its way, the session's current frame (the player's).
+// The shown indexed frame when paused. While playing, the session's current
+// frame: the indexed frame holding the player's last frame. While a pause's
+// indexed frame is still on its way, also the current frame, which is then
+// the frame the pause requested.
 std::optional<int> VideoController::reportedFrame() const
 {
     const auto shown = m_session.shownFrame();
