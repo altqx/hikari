@@ -2,6 +2,9 @@ if(NOT DEFINED HIKARISUB_EXE OR NOT DEFINED RUNTIME_DIR)
     message(FATAL_ERROR "HIKARISUB_EXE and RUNTIME_DIR are required")
 endif()
 
+include("${CMAKE_CURRENT_LIST_DIR}/LinuxHostLibs.cmake")
+hikarisub_rpath_dirs("${HIKARISUB_EXE}" exe_rpath_dirs)
+
 # Remove previously manifested libraries before rescanning $ORIGIN.
 set(runtime_manifest "${RUNTIME_DIR}/.hikarisub-runtime-dependencies")
 if(EXISTS "${runtime_manifest}")
@@ -24,6 +27,7 @@ elseif(DEFINED HIKARISUB_BUILD_DIR)
         # the ones the executable actually links.
         file(GET_RUNTIME_DEPENDENCIES
             EXECUTABLES "${HIKARISUB_EXE}"
+            DIRECTORIES ${exe_rpath_dirs}
             RESOLVED_DEPENDENCIES_VAR probe_runtime_deps
         )
         set(legacy_runtime_deps)
@@ -47,6 +51,7 @@ endif()
 
 file(GET_RUNTIME_DEPENDENCIES
     EXECUTABLES "${HIKARISUB_EXE}"
+    DIRECTORIES ${exe_rpath_dirs}
     RESOLVED_DEPENDENCIES_VAR resolved_deps
     UNRESOLVED_DEPENDENCIES_VAR unresolved_deps
 )
@@ -55,42 +60,25 @@ if(unresolved_deps)
     message(FATAL_ERROR "Unresolved runtime dependencies: ${unresolved_deps}")
 endif()
 
-# Bundle only the application's own version-sensitive libraries (wxWidgets, ICU,
-# FFMS2, libass, Lua, Hunspell, uchardet and their private transitive helpers)
-# next to the binary.
-#
-#   * GPU/driver-coupled: libGL/GLVND/EGL/GLX/OpenGL/glapi, libva, libvdpau,
-#     libdrm, libgbm -- GLVND dlopens the host's vendor ICD (e.g. libGLX_nvidia)
-#     which must match the GL stack; a bundled mismatch is a black-screen/crash.
-#   * Windowing/desktop stack: X11/xcb, wayland, xkbcommon and the
-#     GTK/GDK/pango/cairo/gdk-pixbuf/atk/harfbuzz toolkit -- the host dlopens
-#     matching pixbuf loaders, immodules and theme engines.
-#   * GStreamer and GLib: libgst*, glib/gobject/gio/gmodule/gthread and GLib's
-#     own libmount, libblkid and pcre2-8 -- GStreamer loads its plugins
-#     (appsrc, audioconvert, autoaudiosink, playbin...) from the host's plugin
-#     folder, which a bundled core built elsewhere does not look in, and the
-#     host's plugins need the host's core and GLib.
-#   * C++/compiler runtime: libstdc++, libgcc_s -- a bundled (older) copy would
-#     win on the process RPATH and then fail host GTK plugins that need a newer
-#     GLIBCXX/CXXABI.
-#   * Fontconfig: libfontconfig reads the host's /etc/fonts configuration,
-#     which a bundled older copy may not understand.
-#   * Host audio: libpulse/libasound -- SDL2 dlopens the host backend anyway.
-#   * glibc/ELF loader: must come from the host kernel/libc.
-#
-# libx264 and libx265 are bundled: the bundled FFmpeg links them by exact
-# soname (libx264.so.164 and libx265.so.199 on the build host), so a host with
-# other versions could not start the program.
-set(system_dep_regex
-    "^(ld-linux.*|linux-vdso.*|lib(c|m|dl|pthread|rt|resolv|nsl|util|anl)\\.so.*|libstdc\\+\\+\\.so.*|libgcc_s\\.so.*|libGL.*\\.so.*|libEGL.*\\.so.*|libOpenGL\\.so.*|libGLdispatch\\.so.*|libGLX.*\\.so.*|libglapi\\.so.*|libgbm\\.so.*|libdrm.*\\.so.*|libva.*\\.so.*|libvdpau.*\\.so.*|libX.*\\.so.*|libxcb.*\\.so.*|libxshmfence\\.so.*|libxkbcommon.*\\.so.*|libwayland-.*\\.so.*|libgtk-.*\\.so.*|libgdk-.*\\.so.*|libgdk_pixbuf.*\\.so.*|libpango.*\\.so.*|libcairo.*\\.so.*|libatk.*\\.so.*|libharfbuzz.*\\.so.*|libgst.*\\.so.*|lib(glib|gobject|gio|gmodule|gthread)-2\\.0\\.so.*|libmount\\.so.*|libblkid\\.so.*|libpcre2-8\\.so.*|libfontconfig\\.so.*|libpulse.*\\.so.*|libasound\\.so.*)$"
-)
+# Bundle only the application's own version-sensitive libraries (wxWidgets,
+# ICU, FFMS2 and FFmpeg with the codec libraries it links, libass, Hunspell,
+# uchardet, curl and their private transitive helpers) next to the binary.
+# Everything else comes from the host; cmake/LinuxHostLibs.cmake has the list
+# (packaging/linux/appimage/host-libs.txt plus the GTK, GLib and GStreamer
+# desktop stack) and applies the closure rule: whatever a host library needs
+# is host-side too.
+hikarisub_split_runtime_deps(host bundled_deps host_dep_names ${resolved_deps})
 
 set(copied_count 0)
 set(copied_names)
-foreach(dep IN LISTS resolved_deps)
+foreach(dep IN LISTS bundled_deps)
     get_filename_component(dep_name "${dep}" NAME)
-    if(NOT dep_name MATCHES "${system_dep_regex}")
-        set(copied_dep "${RUNTIME_DIR}/${dep_name}")
+    set(copied_dep "${RUNTIME_DIR}/${dep_name}")
+    # A library already in RUNTIME_DIR resolves to itself; nothing to copy.
+    get_filename_component(dep_dir "${dep}" DIRECTORY)
+    file(REAL_PATH "${dep_dir}" dep_dir_real)
+    file(REAL_PATH "${RUNTIME_DIR}" runtime_dir_real_now)
+    if(NOT dep_dir_real STREQUAL runtime_dir_real_now)
         execute_process(
             COMMAND "${CMAKE_COMMAND}" -E copy_if_different
                     "${dep}" "${copied_dep}"
@@ -99,9 +87,9 @@ foreach(dep IN LISTS resolved_deps)
         if(NOT copy_result EQUAL 0)
             message(FATAL_ERROR "Failed to copy runtime dependency ${dep}")
         endif()
-        list(APPEND copied_names "${dep_name}")
-        math(EXPR copied_count "${copied_count} + 1")
     endif()
+    list(APPEND copied_names "${dep_name}")
+    math(EXPR copied_count "${copied_count} + 1")
 endforeach()
 
 list(REMOVE_DUPLICATES copied_names)

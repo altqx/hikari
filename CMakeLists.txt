@@ -406,6 +406,7 @@ add_custom_target(hikarisub_linux_package
             -D DEPCTRL_MODULE_DIR=${HIKARISUB_DEPCTRL_DIR}
             -D DEPCTRL_MODULES=${HIKARISUB_DEPCTRL_MODULE_LIST}
             -D SUBINSPECTOR_LIBRARY=$<TARGET_FILE:subinspector>
+            -D READELF_EXECUTABLE=${CMAKE_READELF}
             -P "${CMAKE_SOURCE_DIR}/cmake/PackageLinuxRuntime.cmake"
     DEPENDS hikarisub subinspector
             hikarisub_depctrl_badmutex hikarisub_depctrl_precisetimer hikarisub_depctrl_downloadmanager
