@@ -3540,6 +3540,18 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation type="unfinished">Masz wersję %1; dostępna jest wersja %2</translation>
     </message>
     <message>
+        <source>This version needs Windows %1 or later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This version needs glibc %1 or later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Check for updates automatically</source>
         <translation>Automatycznie sprawdzaj aktualizacje</translation>
     </message>
@@ -3548,8 +3560,16 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation>Tylko wersje stabilne</translation>
     </message>
     <message>
+        <source>Install updates automatically</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open the download page</source>
         <translation>Otwórz stronę pobierania</translation>
+    </message>
+    <message>
+        <source>Download and install</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remind me in a week</source>
@@ -3697,6 +3717,98 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>Get from video</source>
         <translation type="vanished">Pobierz z wideo</translation>
+    </message>
+    <message>
+        <source>The update to HikariSub %1 could not be installed (error %2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot write the update to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot download the update: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The downloaded update does not match its checksum, so it was deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The installer of HikariSub %1 could not be started. Run %2 to install it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot keep a copy of %1, so the update was not installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot replace %1, so the update was not installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub %1 did not start, so the version you had was put back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The downloaded HikariSub %1 package did not pass its checks, so it was not installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub %1 was not installed because the package manager is busy. It will be installed when you next quit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package manager could not install HikariSub %1 (error %2). The file is %3.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>installer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>portable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update downloaded: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub %1 is ready to install</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What&apos;s new</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy install command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub %1 is a prerelease. The AUR package carries stable versions only. To try it, use the AppImage from the release page.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub %1 is available; you have %2. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing update...</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
