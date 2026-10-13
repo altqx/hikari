@@ -61,7 +61,14 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
         // The render: Visuals::Draw sets blockevents for the shown frame.
         if (auto *t = tool(); t && m_view.hasVideo() && t->warnsOutsideLine() && currentWarning() != LineWarning::None)
             block(*t);
-        emit changed(); // the shown frame's time moves the warnings
+        // The shown frame's time moves the warning. V1: while playing, every
+        // player frame changes the video and none of the rest of this
+        // controller's state, so a frame notifies only when it changes the
+        // warning (the status bar and the panel's bindings follow `changed`).
+        if (const QString now = warning(); !m_video.session().playing() || now != m_frameWarning) {
+            m_frameWarning = now;
+            emit changed();
+        }
         // T3: a \move's position follows the shown frame (legacy Draw ran
         // DrawVisual on every frame, Visuals.cpp:504-529);
         // T5: so do a \move drawing's points (DrawingAndClip::DrawVisual).

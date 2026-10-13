@@ -8,6 +8,8 @@
 
 #include "hikari/app/application.h"
 #include "docking.h"
+#include "status_bar_controller.h"
+#include "visual_tools_controller.h"
 
 #include <QDir>
 #include <QFile>
@@ -58,6 +60,8 @@ struct Shown {
     int lastGeneralBarcode = -1;
     int changes = 0; // V1: the panel's change notifications
     int texts = 0;   // and its texts' (times, status)
+    int tools = 0;   // the visual tools' change notifications
+    int statusBar = 0; // the status bar's
 };
 
 std::mutex g_mutex;
@@ -108,10 +112,15 @@ protected:
             const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - from).count();
             // V1: one notification per frame shown, the texts at about 10 Hz.
             const int frames = after.generalFrames - before.generalFrames, changes = after.changes - before.changes,
-                      texts = after.texts - before.texts;
-            std::printf("while playing: %d frames, %d notifications, %d text updates in %.0f ms\n", frames, changes,
-                        texts, ms);
-            rate = frames > 0 && changes <= frames + 1 && texts >= 2 && texts <= static_cast<int>(ms / 100) + 2;
+                      texts = after.texts - before.texts, tools = after.tools - before.tools,
+                      bar = after.statusBar - before.statusBar;
+            std::printf("while playing: %d frames, %d notifications, %d text updates, %d visual tools and %d status "
+                        "bar notifications in %.0f ms\n",
+                        frames, changes, texts, tools, bar, ms);
+            // The visual tools and the status bar notify only when what they
+            // show changes (the shown frame's warning, the fields), not per frame.
+            rate = frames > 0 && changes <= frames + 1 && texts >= 2 && texts <= static_cast<int>(ms / 100) + 2 &&
+                   tools <= 1 && bar <= texts;
             mouseClick("mainWindow/playPause");
             // Once paused, late player frames are ignored: the last one is final.
             label.clear();
@@ -190,6 +199,14 @@ int main(int argc, char **argv)
         std::lock_guard lock(g_mutex);
         ++g_shown.texts;
     });
+    QObject::connect(&application.visualTools(), &hikari::ui::VisualToolsController::changed, [] {
+        std::lock_guard lock(g_mutex);
+        ++g_shown.tools;
+    });
+    QObject::connect(&application.statusBar(), &hikari::ui::StatusBarController::changed, [] {
+        std::lock_guard lock(g_mutex);
+        ++g_shown.statusBar;
+    });
     QObject::connect(&video, &hikari::ui::VideoController::changed, [&video] {
         const auto &session = video.session();
         std::lock_guard lock(g_mutex);
@@ -237,7 +254,8 @@ int main(int argc, char **argv)
         expect(o[7] == "frame 47", "L seeks 5 s forward, clamped to the last frame");
         expect(o[8] == "frame 0", "; seeks 5 s back, clamped to the first frame");
         expect(o[9] == "00:00:00,000;  0;  0;  0 ms, -2000 ms", "the times field");
-        expect(test.rate, "one notification per frame and the texts at about 10 Hz while playing");
+        expect(test.rate, "one notification per frame, the texts at about 10 Hz and the tools and status bar only "
+                          "on a change while playing");
     }
     return failures == 0 ? 0 : 1;
 }
