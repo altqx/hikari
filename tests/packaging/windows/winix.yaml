@@ -29,6 +29,19 @@ tasks:
   installer-semver:
     script: ./tests/packaging/windows/installer-tests.ps1 -Phase semver -SetupDir $env:HS_SETUP_DIR
     timeoutSeconds: 900
+  # The uninstaller's elevation rule (protected-tests.ps1), with
+  # HS_PROTECTED_EXE the guest path of protected-test.exe.
+  protected-setup:
+    elevated: true
+    script: ./tests/packaging/windows/protected-tests.ps1 -Phase setup
+    timeoutSeconds: 300
+  protected-check:
+    script: ./tests/packaging/windows/protected-tests.ps1 -Phase check -Exe $env:HS_PROTECTED_EXE
+    timeoutSeconds: 300
+  protected-cleanup:
+    elevated: true
+    script: ./tests/packaging/windows/protected-tests.ps1 -Phase cleanup
+    timeoutSeconds: 300
   installer-state:
     script: ./tests/packaging/windows/installer-tests.ps1 -Phase state
     timeoutSeconds: 120

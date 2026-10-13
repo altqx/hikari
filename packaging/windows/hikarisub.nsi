@@ -46,6 +46,7 @@ SetCompressorDictSize 64
 !include FileFunc.nsh
 !include x64.nsh
 !include WinVer.nsh
+!include "${__FILEDIR__}/protected.nsh"
 !include StdUtils.nsh
 
 ; ---------------------------------------------------------------------------
@@ -357,6 +358,7 @@ FunctionEnd
 
 !insertmacro HS_SHARED_FUNCTIONS ""
 !insertmacro HS_SHARED_FUNCTIONS "un."
+!insertmacro HS_PROTECTED_FUNCTIONS "un."
 !insertmacro HS_PAYLOAD_PATH_FUNCTION ""
 
 ; ---------------------------------------------------------------------------
@@ -1213,6 +1215,17 @@ Function un.onInit
   ${AndIf} $HsIsAdmin <> 1
     ${If} ${Silent}
     ${OrIf} $HsElevated = 1
+      SetErrorLevel 4
+      Quit
+    ${EndIf}
+    ; Only from a folder the user cannot change: package-kind.txt, which
+    ; says all users, and the uninstaller started elevated would otherwise
+    ; be the user's to rewrite, and a same-user process could have its own
+    ; code run as administrator (spec 6.4).
+    StrCpy $R0 $INSTDIR
+    Call un.HsProtectedFromUser
+    ${If} $R2 <> 1
+      MessageBox MB_OK|MB_ICONSTOP "HikariSub's folder, $INSTDIR, can be changed without administrator rights, so the uninstaller does not ask for them. To uninstall HikariSub for all users, run the uninstaller as administrator."
       SetErrorLevel 4
       Quit
     ${EndIf}
