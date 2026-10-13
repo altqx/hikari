@@ -283,6 +283,65 @@ jobs:
           path: dist
           if-no-files-found: error
 
+  # The NSIS installer, built on Linux from the Release package above with
+  # Ubuntu's makensis: windows-2025 images carry no NSIS, and the Qt branch
+  # builds the same script the same way. The artifact holds the release
+  # names of the setup and the portable zip.
+  windows-installer:
+    name: Windows installer
+    needs: windows
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install NSIS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends nsis p7zip-full
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: hikarisub-windows-x64
+          path: artifacts
+
+      - name: Build the installer
+        run: |
+          version=$(sed -n 's/^#define[[:space:]]*VersionHikariSub[[:space:]]*"\(.*\)".*/\1/p' HikariSub/VersionHikariSub.h)
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          packaging/windows/build-installer.sh \
+            --payload artifacts/HikariSub_x64 --version "$version" --codebase legacy \
+            --icon HikariSub/Bitmaps/HikariLargeIcon.ico --icon-header HikariSub/FileTypeIcons.h \
+            --out "installer/HikariSub-$version-windows-x64-setup.exe" --work nsis-work
+
+      # 7-Zip reads NSIS installers. Every payload file must be inside,
+      # byte for byte, and nothing else but the installer's own files; the
+      # manifest it writes must list exactly the payload.
+      - name: Check the installer contents
+        run: |
+          setup="installer/HikariSub-$VERSION-windows-x64-setup.exe"
+          7z x -y -onsis-check "$setup" > /dev/null
+          (cd artifacts/HikariSub_x64 && find . -type f | sed 's|^\./||' | LC_ALL=C sort) > payload.txt
+          (cd nsis-check && find . -type f | sed 's|^\./||' | LC_ALL=C sort) |
+            grep -vx -e 'install-manifest.txt' -e 'Uninstall HikariSub.exe' -e '\$PLUGINSDIR/.*' > packed.txt
+          diff payload.txt packed.txt
+          tr -d '\r' < nsis-check/install-manifest.txt | tr '\\' '/' | LC_ALL=C sort > manifest.txt
+          diff payload.txt manifest.txt
+          while IFS= read -r f; do
+            cmp "artifacts/HikariSub_x64/$f" "nsis-check/$f"
+          done < payload.txt
+          test -f 'nsis-check/$PLUGINSDIR/StdUtils.dll'
+          ls -l "$setup"
+
+      - name: Zip the portable package
+        run: (cd artifacts && zip -qr "$OLDPWD/installer/HikariSub-$VERSION-windows-x64.zip" HikariSub_x64)
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: hikarisub-windows-installer
+          path: installer/*
+          if-no-files-found: error
+
   linux:
     name: Linux (${{ matrix.build_type }})
     runs-on: ubuntu-24.04
