@@ -9,8 +9,9 @@ headless inside a container and HikariSub runs as a client of it.
 | --- | --- | --- | --- | --- |
 | `sway` | sway 1.12 (wlroots 0.20), headless backend, two outputs (HEADLESS-2 at scale 2) | `zwlr_virtual_pointer_v1` (`vpointer`) and `wtype` (virtual keyboard) | `grim` | `swaymsg -t get_tree` |
 | `kwin` | KWin 6.7 `--virtual` | libei through `org.kde.KWin.EIS.RemoteDesktop` (`eiinject`) | `org.kde.KWin.ScreenShot2` | KWin script |
-| `mutter` | mutter 50 `--headless` with virtual monitors (gnome-shell needs systemd-logind, which a container lacks) | libei through `org.gnome.Mutter.RemoteDesktop` | `org.gnome.Mutter.ScreenCast` + PipeWire | none (mutter alone publishes none) |
+| `mutter` | mutter 51 `--headless` with virtual monitors (gnome-shell needs systemd-logind, which a container lacks) | libei through `org.gnome.Mutter.RemoteDesktop` | `org.gnome.Mutter.ScreenCast` + PipeWire | none (mutter alone publishes none) |
 | `x11` | Xvfb 21.1 + openbox | XTEST (`xdotool`) | `import` | `xdotool`, AT-SPI |
+| `hyprland` | Hyprland 0.56 nested in KWin `--virtual` (Hyprland has no headless backend; sway offers xdg_wm_base 5, Hyprland binds 6), one 1600x1000 output | `vpointer` and `wtype`, as on sway | `grim` | `hyprctl clients -j` |
 
 Accessibility is read over AT-SPI (`atspi_tool.py`, python-gobject `Atspi`)
 with `QT_LINUX_ACCESSIBILITY_ALWAYS_ON=1`; Orca runs with `--debug-file` and
@@ -42,6 +43,15 @@ Evidence goes to `out/native-gate-evidence/<session>/`: one PNG and one TXT
 `failed` or `not-observable` with the reason. A failed item is never
 recorded as a pass.
 
+Session `hyprland` (D3) is not in the default set: `run.sh hyprland -- STEP...`.
+Hyprland's nested backend allocates GBM buffers on the render node; on an
+NVIDIA host Mesa cannot (it falls back to dumb buffers, which a render node
+refuses), so the image needs the host's NVIDIA user-space driver at the
+kernel module's version: build `Dockerfile.hyprland` (its header says how)
+and pass `GATE_IMAGE`; `run.sh` then adds the `/dev/nvidia*` devices. Its
+session directory is `hypr` (`sessions/enter.sh hypr ...`): Hyprland's IPC
+socket path must fit a Unix socket address.
+
 ## Steps (`gate.py SESSION [STEP...]`)
 
 | Step | Gate item |
@@ -63,6 +73,14 @@ recorded as a pass.
 | `views` | D2 (#201): View > Only subtitles, Only video, Video and subs, Audio and subs and All from the keyboard (with `ep1.mkv` and blank audio from Audio > Open blank 2h30m audio): the core panels each shows, the focus on a shown panel, the Line editor's draft kept, All back to the panels' places |
 | `editor` | D2: Ctrl+E (GLOBAL_EDITOR) through the compositor: only the Video panel, with the focus; Ctrl+E again: the arrangement back at its places, the focus on the Grid, the draft kept |
 | `videofs` | V5 (#184): F in the Video panel shows the video fullscreen on the main window's output, Space and Right work there, Esc leaves with the main window's geometry and the focus restored; the context menu's "Open in full screen on monitor 2" puts it on the second output (scale 2 on sway, KWin and mutter; two RandR monitors on X11) and Esc brings the docked video back; then the `hikari_ui_video_fullscreen_workflow --monitors 2` Spix workflow under the session |
+| `tagspeech` | E6 (#188): "{\\" in the Line text opens the tag list, "b", Down, Return complete "\\blur"; the list's announcements (`Accessible.announce` from the Line text, which keeps the focus) as AT-SPI `object:announcement` events and in Orca's speech |
+| `statusspeech` | P10 (#200): the status bar's fields over AT-SPI and Orca's "read status bar" (Orca+KP_Enter twice, desktop layout) through the compositor's keyboard |
+| `refspeech` | R2 (#194): the reference tray (Ctrl+Q with a session restoring a reference): its controls' accessible names, then F6 into it under Orca, the lines and match navigation spoken |
+| `icons` | K1 (#204): every icon-only control named over AT-SPI in the main window, a floating panel, the video fullscreen and the Style manager |
+| `ime` | E6 with a real input method: ibus and ibus-hangul (Qt's ibus input context) compose 한 under the open tag list and commit it into the Line; the focus never leaves the Line text (on sway the romaja keyboard: wtype's own keymap sends key codes the 2-set keyboard reads through a US keymap) |
+| `scheme` | K2 (#206): Follow system theme through the XDG settings portal (xdg-desktop-portal-gtk reading `org.gnome.desktop.interface color-scheme`), changed live: the window's brightness under the session's own platform theme, under Qt's gnome theme and under `QT_QPA_PLATFORMTHEME=xdgdesktopportal` |
+| `dropper` | Y7 (#190): the Line editor's colour picker's screen dropper: on X11 the simple picker's own pointer grab picking a colour patch with a real right click; on KWin the screenshot portal's PickColor (xdg-desktop-portal-kde, KWin's picker) answered by a click on the patch; elsewhere not-observable (no backend with PickColor) |
+| `edgetile` | D3 (#207): the floating panel's free header part dragged to the screen's left edge through the window system's move: whether the window system tiles it (a note either way) |
 | `a11y` | what AT-SPI exposes of the D3 headers: each lone panel's title bar named after it (Qt's AT-SPI bridge gives a title bar the role `text`) with its "<panel> options" button, the Grid's page tab; the menu's Undock and Dock pressed through AT-SPI float and dock Audio; a tab group's page tabs checked when selected, the options button on the selected one, a tab pressed selects it, and Undock floats Shift times; the Grid's table in the panel named Grid |
 
 ## Other tools
@@ -83,7 +101,9 @@ recorded as a pass.
   `summary.txt`.
 - `probe_*.py`: single questions asked during the gate (F6 after Float, F6
   into a floating panel, the third-level View menu, fullscreen, closing the
-  main window with a floating panel).
+  main window with a floating panel, the View > Panels submenu one key at a
+  time, the X11 colour picker's pointer grab, the screenshot portal's
+  PickColor outside HikariSub).
 - `sessions/enter.sh SESSION CMD...`: run a command inside a session;
   `sessions/stop.sh SESSION` ends one. Sessions share the container, so
   `app.sh` only touches the HikariSub of its own session.
@@ -117,3 +137,16 @@ compositing manager, so a floating panel has no shadow there; the `floating`
 step starts picom with an empty configuration (Arch's default one draws
 picom's own shadows) to see the drawn shadow, and moves the window over the
 main window first so the shadow has something to show through.
+
+Sweep lessons (2026-10-14): a submenu opened from the keyboard under a
+resting pointer highlights the item under the pointer, so keyboard steps
+first park the pointer (`park_pointer`); KWin's own Qt Quick windows (its
+colour picker's prompt) run on Qt Quick's software backend, as with OpenGL
+they abort it here; the image has a machine id (libdbus aborts a client
+that opens a private bus without one) and qt6-wayland (the KDE portal
+backend's Qt); a drag through the window system's move goes in steps of at
+most 8 pixels (the window lags the pointer by the step that crosses the
+drag distance); `locate_floating` takes a 1-pixel line whose bottom edge is
+where the window's height puts it (a flat stretch of background, or the
+Line editor's text box, otherwise matches first); wtype's keymap has one
+level per key, so "{" is typed as text on sway, not Shift+[.

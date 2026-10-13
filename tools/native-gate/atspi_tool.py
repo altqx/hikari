@@ -15,6 +15,13 @@
                                                        whether each is enabled and focused (JSON)
   atspi_tool.py fsjson                                 V5: each showing frame, whether it holds the
                                                        full screen video, its buttons, times and focus
+  atspi_tool.py controls                               K1: every showing control of every window (role,
+                                                       name, description, path) as JSON, the unnamed ones
+                                                       listed apart
+  atspi_tool.py announcements SECONDS                  E6: object:announcement events (the text and the
+                                                       object announcing it), one per line
+  atspi_tool.py statusbar                              P10: the showing status bar's children (role,
+                                                       name, description) as JSON
 
 Every line names the role, the accessible name, the states that matter for
 the gate (focused, active, showing, visible) and the screen extents.
@@ -184,6 +191,21 @@ def main():
         GLib.timeout_add(int(seconds * 1000), loop.quit)
         loop.run()
         return 0
+    if cmd == "announcements":
+        seconds = float(sys.argv[2]) if len(sys.argv) > 2 else 10
+        t0 = time.monotonic()
+
+        def said(ev):
+            text = ev.any_data if isinstance(ev.any_data, str) else repr(ev.any_data)
+            print(f"{time.monotonic() - t0:7.3f} {ev.type} politeness={ev.detail1} text={text!r} "
+                  f"from {describe(ev.source)}", flush=True)
+
+        listener = Atspi.EventListener.new(said)
+        listener.register("object:announcement")
+        loop = GLib.MainLoop()
+        GLib.timeout_add(int(seconds * 1000), loop.quit)
+        loop.run()
+        return 0
     a = app()
     if a is None:
         print("hikarisub is not on the accessibility bus")
@@ -323,6 +345,60 @@ def main():
         fo = focused(a)
         if fo:
             out["focusPath"] = path_of(fo)
+        print(json.dumps(out, indent=1))
+    elif cmd == "controls":
+        # K1 (#204): what a screen reader finds of every control, icon-only
+        # ones included: each showing one with its role, name and description.
+        import json
+        roles = ("button", "push button", "toggle button", "check box", "radio button", "combo box", "slider",
+                 "spin button", "page tab", "menu item", "check menu item", "radio menu item", "entry", "text",
+                 "list item", "table", "tree", "list", "scroll bar", "tool bar")
+        out = {"controls": [], "unnamed": []}
+        for i in range(a.get_child_count()):
+            f = a.get_child_at_index(i)
+            try:
+                if not f.get_state_set().contains(Atspi.StateType.SHOWING):
+                    continue
+            except GLib.Error:
+                continue
+            for o in all_objects(f):
+                try:
+                    role = o.get_role_name()
+                    ost = o.get_state_set()
+                    name = o.get_name() or ""
+                    desc = o.get_description() or ""
+                except GLib.Error:
+                    continue
+                if role not in roles or not ost.contains(Atspi.StateType.SHOWING):
+                    continue
+                e = o.get_extents(Atspi.CoordType.WINDOW)
+                row = {"window": f.get_name(), "role": role, "name": name, "description": desc,
+                       "box": [e.x, e.y, e.width, e.height], "path": path_of(o)}
+                out["controls"].append(row)
+                # A text field or list item is named by its content or label
+                # elsewhere; the controls a pointer user knows by an icon are
+                # the buttons.
+                if not name.strip() and role in ("button", "push button", "toggle button", "check box",
+                                                 "radio button", "combo box", "slider", "spin button",
+                                                 "page tab", "menu item", "check menu item", "radio menu item"):
+                    out["unnamed"].append(row)
+        print(json.dumps(out, indent=1))
+    elif cmd == "statusbar":
+        import json
+        out = []
+        for o in all_objects(a):
+            try:
+                if o.get_role_name() != "status bar" or not o.get_state_set().contains(Atspi.StateType.SHOWING):
+                    continue
+                bar = {"name": o.get_name(), "path": path_of(o), "children": []}
+                for c in all_objects(o)[1:]:
+                    cs = c.get_state_set()
+                    bar["children"].append({"role": c.get_role_name(), "name": c.get_name(),
+                                            "description": c.get_description(),
+                                            "showing": cs.contains(Atspi.StateType.SHOWING)})
+                out.append(bar)
+            except GLib.Error:
+                pass
         print(json.dumps(out, indent=1))
     elif cmd == "press-showing":
         for o in all_objects(a):

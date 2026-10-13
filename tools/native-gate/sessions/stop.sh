@@ -8,6 +8,7 @@ sway) pat='sway -c|/tmp/vpointer|wtype -s' ;;
 kwin) pat='kwin_wayland|eidaemon.py kwin' ;;
 mutter) pat='mutter --headless|eidaemon.py mutter|^pipewire|^wireplumber' ;;
 x11) pat='Xvfb :7|openbox|picom' ;;
+hypr) pat='^Hyprland|wayland-host' ;;
 esac
 python3 - "$rt" "$pat" <<'EOF'
 import os, re, signal, sys
