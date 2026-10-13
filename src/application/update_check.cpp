@@ -1,5 +1,7 @@
 #include "hikari/application/update_check.h"
 
+#include <algorithm>
+
 namespace hikari::application {
 
 namespace {
@@ -137,19 +139,444 @@ bool isPrereleaseTag(std::string_view tag)
     return version && !version->prerelease.empty();
 }
 
+namespace {
+
+char lower(char c)
+{
+    return c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c;
+}
+
+bool equalsIgnoringCase(std::string_view a, std::string_view b)
+{
+    if (a.size() != b.size())
+        return false;
+    for (std::size_t i = 0; i < a.size(); ++i)
+        if (lower(a[i]) != lower(b[i]))
+            return false;
+    return true;
+}
+
+std::string lowered(std::string_view s)
+{
+    std::string out(s);
+    for (char &c : out)
+        c = lower(c);
+    return out;
+}
+
+bool isAlphanumeric(char c)
+{
+    return isDigit(c) || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+}
+
+// The tag a candidate needs: "v" and a version without build metadata.
+std::optional<SemVer> candidateVersion(std::string_view tag)
+{
+    if (tag.size() < 2 || tag[0] != 'v' || tag.find('+') != std::string_view::npos || !isValidUrlTag(tag))
+        return std::nullopt;
+    return parseSemVer(tag);
+}
+
+std::string_view withoutV(std::string_view tag)
+{
+    if (!tag.empty() && (tag[0] == 'v' || tag[0] == 'V'))
+        tag.remove_prefix(1);
+    return tag;
+}
+
+// The package keys the client knows, the manifest's and 2.1's.
+constexpr std::string_view kPackageKeys[] = {"nsis", "portable-windows", "appimage", "deb", "rpm", "portable-linux"};
+
+const ReleaseAsset *assetNamed(const ReleaseEntry &release, std::string_view name)
+{
+    for (const auto &asset : release.assets)
+        if (asset.name == name)
+            return &asset;
+    return nullptr;
+}
+
+// "sha256:<hex>" as GitHub gives an asset's digest; empty otherwise.
+std::string digestHash(std::string_view digest)
+{
+    constexpr std::string_view prefix = "sha256:";
+    if (!equalsIgnoringCase(digest.substr(0, prefix.size()), prefix))
+        return {};
+    const std::string_view hex = digest.substr(prefix.size());
+    return isSha256Hex(hex) ? lowered(hex) : std::string();
+}
+
+std::optional<std::vector<long long>> dottedNumbers(std::string_view text)
+{
+    std::vector<long long> out;
+    while (true) {
+        const std::size_t dot = text.find('.');
+        // Not parseNumber: a part of these may have leading zeros.
+        const std::string_view part = text.substr(0, dot);
+        if (!isNumeric(part) || part.size() > 9)
+            return std::nullopt;
+        long long value = 0;
+        for (char c : part)
+            value = value * 10 + (c - '0');
+        out.push_back(value);
+        if (dot == std::string_view::npos)
+            return out;
+        text.remove_prefix(dot + 1);
+    }
+}
+
+bool shellSafe(char c)
+{
+    return isAlphanumeric(c) || c == '/' || c == '.' || c == '_' || c == '-' || c == '+' || c == '~' || c == ',' ||
+           c == ':' || c == '@' || c == '%' || c == '=';
+}
+
+} // namespace
+
+std::optional<Codebase> codebaseOfVersion(std::string_view version)
+{
+    // By the version's core alone: 0.1.0-beta.2 is the rewrite's, though
+    // SemVer sorts it below 0.1.0.
+    const auto v = parseSemVer(version);
+    if (!v)
+        return std::nullopt;
+    return v->major == 0 && v->minor == 0 ? Codebase::Legacy : Codebase::Qt;
+}
+
+std::optional<Codebase> parseCodebase(std::string_view name)
+{
+    if (name == "legacy")
+        return Codebase::Legacy;
+    if (name == "qt")
+        return Codebase::Qt;
+    return std::nullopt;
+}
+
+std::optional<PackageKind> parsePackageKind(std::string_view marker)
+{
+    if (marker.ends_with("\r\n"))
+        marker.remove_suffix(2);
+    else if (marker.ends_with('\n'))
+        marker.remove_suffix(1);
+    if (marker == "nsis-user")
+        return PackageKind::NsisUser;
+    if (marker == "nsis-machine")
+        return PackageKind::NsisMachine;
+    if (marker == "appimage")
+        return PackageKind::AppImage;
+    if (marker == "deb")
+        return PackageKind::Deb;
+    if (marker == "rpm")
+        return PackageKind::Rpm;
+    if (marker == "arch")
+        return PackageKind::Arch;
+    return std::nullopt;
+}
+
+std::string_view packageKindToken(PackageKind kind, bool windows)
+{
+    switch (kind) {
+    case PackageKind::NsisUser:
+        return "nsis-user";
+    case PackageKind::NsisMachine:
+        return "nsis-machine";
+    case PackageKind::AppImage:
+        return "appimage";
+    case PackageKind::Deb:
+        return "deb";
+    case PackageKind::Rpm:
+        return "rpm";
+    case PackageKind::Arch:
+        return "arch";
+    case PackageKind::Portable:
+        break;
+    }
+    return windows ? "portable-windows" : "portable-linux";
+}
+
+std::string_view packageKey(PackageKind kind, bool windows)
+{
+    switch (kind) {
+    case PackageKind::NsisUser:
+    case PackageKind::NsisMachine:
+        return "nsis";
+    case PackageKind::Arch:
+        return {};
+    default:
+        return packageKindToken(kind, windows);
+    }
+}
+
+bool installsUpdates(PackageKind kind)
+{
+    return kind != PackageKind::Portable && kind != PackageKind::Arch;
+}
+
+bool isValidAssetName(std::string_view name)
+{
+    if (name.empty() || !isAlphanumeric(name[0]))
+        return false;
+    for (char c : name)
+        if (!isAlphanumeric(c) && c != '.' && c != '_' && c != '-')
+            return false;
+    return true;
+}
+
+bool isValidUrlTag(std::string_view tag)
+{
+    if (tag.empty() || tag == "." || tag == "..")
+        return false;
+    for (char c : tag)
+        if (!isAlphanumeric(c) && c != '-' && c != '.' && c != '+')
+            return false;
+    return true;
+}
+
+std::string assetNameFor(std::string_view key, std::string_view version)
+{
+    const std::string v(version);
+    if (key == "nsis")
+        return "HikariSub-" + v + "-windows-x64-setup.exe";
+    if (key == "portable-windows")
+        return "HikariSub-" + v + "-windows-x64.zip";
+    if (key == "appimage")
+        return "HikariSub-" + v + "-linux-x86_64.AppImage";
+    if (key == "deb")
+        return "hikarisub-" + v + "-linux-amd64.deb";
+    if (key == "rpm")
+        return "hikarisub-" + v + "-linux-x86_64.rpm";
+    if (key == "portable-linux")
+        return "hikarisub-" + v + "-linux-x86_64.tar.gz";
+    return {};
+}
+
+bool isAllowedDownloadHost(std::string_view host)
+{
+    for (std::string_view allowed : {"github.com", "objects.githubusercontent.com", "release-assets.githubusercontent.com"})
+        if (equalsIgnoringCase(host, allowed))
+            return true;
+    return false;
+}
+
+bool isPrerelease(const ReleaseEntry &release)
+{
+    return release.prerelease || isPrereleaseTag(release.tag);
+}
+
+std::vector<ReleaseEntry> updateCandidates(const std::vector<ReleaseEntry> &releases, std::string_view current,
+                                           bool stableOnly)
+{
+    const auto installed = parseSemVer(current);
+    std::vector<std::pair<SemVer, const ReleaseEntry *>> found;
+    if (!installed)
+        return {};
+    for (const auto &release : releases) {
+        if (release.draft || (stableOnly && isPrerelease(release)))
+            continue;
+        const auto version = candidateVersion(release.tag);
+        if (!version || compareSemVer(*version, *installed) <= 0)
+            continue;
+        const bool seen = std::any_of(found.begin(), found.end(),
+                                      [&](const auto &f) { return compareSemVer(f.first, *version) == 0; });
+        if (!seen)
+            found.emplace_back(*version, &release);
+    }
+    std::stable_sort(found.begin(), found.end(),
+                     [](const auto &a, const auto &b) { return compareSemVer(a.first, b.first) > 0; });
+    std::vector<ReleaseEntry> out;
+    for (const auto &f : found)
+        out.push_back(*f.second);
+    return out;
+}
+
 std::optional<ReleaseEntry> findNewerRelease(const std::vector<ReleaseEntry> &releases, std::string_view current,
                                              bool stableOnly)
 {
-    for (const auto &release : releases) {
-        if (release.draft)
-            continue;
-        if (stableOnly && (release.prerelease || isPrereleaseTag(release.tag)))
-            continue;
-        if (release.tag.empty() || !isNewerVersion(release.tag, current))
-            continue;
-        return release;
+    auto candidates = updateCandidates(releases, current, stableOnly);
+    if (candidates.empty())
+        return std::nullopt;
+    return std::move(candidates.front());
+}
+
+ManifestResult readManifest(const ManifestFields &fields, const ReleaseEntry &release)
+{
+    ManifestResult result;
+    if (!fields.schema)
+        return result;
+    if (*fields.schema != 1) {
+        result.status = ManifestStatus::UnknownSchema;
+        return result;
     }
-    return std::nullopt;
+    const std::string_view version = withoutV(release.tag);
+    const auto codebase = fields.codebase ? parseCodebase(*fields.codebase) : std::nullopt;
+    if (!fields.version || *fields.version != version || !codebase || codebaseOfVersion(version) != codebase)
+        return result;
+    if (!fields.offerTo || fields.offerTo->empty() || !fields.packagesIsObject)
+        return result;
+    ReleasePackages &out = result.packages;
+    out.codebase = *codebase;
+    out.fromManifest = true;
+    for (const auto &name : *fields.offerTo) {
+        const auto to = parseCodebase(name);
+        if (!to)
+            return result;
+        if (std::find(out.offerTo.begin(), out.offerTo.end(), *to) == out.offerTo.end())
+            out.offerTo.push_back(*to);
+    }
+    for (const std::string_view key : kPackageKeys) {
+        const auto entry = fields.packages.find(key);
+        if (entry == fields.packages.end())
+            continue;
+        const auto &p = entry->second;
+        // The name is the one 2.1 gives the key, so that a manifest cannot
+        // have one kind download another kind's file.
+        if (!p.name || *p.name != assetNameFor(key, version) || !p.sha256 || !isSha256Hex(*p.sha256) || !p.size ||
+            *p.size <= 0)
+            continue;
+        UpdatePackage package{*p.name, *p.size, lowered(*p.sha256), p.minOs.value_or(std::string()),
+                              p.minGlibc.value_or(std::string())};
+        const ReleaseAsset *asset = assetNamed(release, package.name);
+        if (!asset)
+            continue;
+        if (const std::string digest = digestHash(asset->digest); !digest.empty() && digest != package.sha256)
+            continue;
+        out.packages.emplace(std::string(key), std::move(package));
+    }
+    result.status = ManifestStatus::Valid;
+    return result;
+}
+
+ReleasePackages fallbackPackages(const ReleaseEntry &release)
+{
+    ReleasePackages out;
+    const std::string_view version = withoutV(release.tag);
+    out.codebase = codebaseOfVersion(version).value_or(Codebase::Qt);
+    out.offerTo = {out.codebase};
+    for (const std::string_view key : kPackageKeys) {
+        const ReleaseAsset *asset = assetNamed(release, assetNameFor(key, version));
+        if (!asset || asset->size <= 0)
+            continue;
+        std::string hash = digestHash(asset->digest);
+        if (hash.empty())
+            continue;
+        out.packages.emplace(std::string(key), UpdatePackage{asset->name, asset->size, std::move(hash), {}, {}});
+    }
+    return out;
+}
+
+bool offeredTo(const ReleasePackages &packages, Codebase codebase)
+{
+    return std::find(packages.offerTo.begin(), packages.offerTo.end(), codebase) != packages.offerTo.end();
+}
+
+UpdateOffer chooseOffer(PackageKind kind, bool windows, const ReleasePackages &packages, std::string_view osVersion,
+                        std::string_view glibcVersion)
+{
+    UpdateOffer offer;
+    if (kind == PackageKind::Arch) {
+        offer.kind = OfferKind::Aur;
+        return offer;
+    }
+    if (!installsUpdates(kind))
+        return offer;
+    const auto found = packages.packages.find(packageKey(kind, windows));
+    if (found == packages.packages.end())
+        return offer;
+    const UpdatePackage &package = found->second;
+    if (!isSha256Hex(package.sha256) || package.size <= 0 || package.size > kMaxPackageBytes ||
+        !isValidAssetName(package.name))
+        return offer;
+    offer.package = package;
+    const std::string &need = windows ? package.minOs : package.minGlibc;
+    if (!dottedVersionAtLeast(windows ? osVersion : glibcVersion, need)) {
+        offer.kind = OfferKind::Requirement;
+        offer.requirement = need;
+        offer.requirementIsOs = windows;
+        return offer;
+    }
+    offer.kind = OfferKind::Install;
+    return offer;
+}
+
+bool dottedVersionAtLeast(std::string_view have, std::string_view need)
+{
+    if (need.empty())
+        return true;
+    const auto a = dottedNumbers(have), b = dottedNumbers(need);
+    if (!a || !b)
+        return false;
+    for (std::size_t i = 0; i < std::max(a->size(), b->size()); ++i) {
+        const long long x = i < a->size() ? (*a)[i] : 0, y = i < b->size() ? (*b)[i] : 0;
+        if (x != y)
+            return x > y;
+    }
+    return true;
+}
+
+std::int64_t downloadDeadlineMs(std::int64_t size)
+{
+    constexpr std::int64_t kMinimum = 10 * 60 * 1000;
+    const std::int64_t atRate = size > 0 ? size / (100 * 1024) * 1000 + 1000 : 0;
+    return std::max(kMinimum, atRate);
+}
+
+bool isSha256Hex(std::string_view text)
+{
+    if (text.size() != 64)
+        return false;
+    for (char c : text)
+        if (!isDigit(c) && !(c >= 'a' && c <= 'f') && !(c >= 'A' && c <= 'F'))
+            return false;
+    return true;
+}
+
+std::string nsisUpdateArguments(bool machine, bool relaunch, long long waitPid, std::string_view installDir)
+{
+    std::string out = "/S /UPDATE /WAITPID=" + std::to_string(waitPid);
+    if (relaunch)
+        out += " /RELAUNCH";
+    out += machine ? " /ALLUSERS" : " /CURRENTUSER";
+    out += " /D=";
+    out += installDir;
+    return out;
+}
+
+std::string manualInstallCommand(PackageTool tool, std::string_view file)
+{
+    std::string quoted;
+    if (!file.empty() && std::all_of(file.begin(), file.end(), shellSafe)) {
+        quoted = file;
+    } else {
+        quoted = "'";
+        for (char c : file)
+            quoted += c == '\'' ? std::string("'\\''") : std::string(1, c);
+        quoted += "'";
+    }
+    switch (tool) {
+    case PackageTool::Apt:
+        return "sudo apt install " + quoted;
+    case PackageTool::Dnf:
+        return "sudo dnf install " + quoted;
+    case PackageTool::Zypper:
+        return "sudo zypper install --allow-unsigned-rpm " + quoted;
+    }
+    return {};
+}
+
+StartupArguments parseStartupArguments(const std::vector<std::string> &arguments)
+{
+    constexpr std::string_view health = "--hikari-health=", from = "--hikari-updated-from=";
+    StartupArguments out;
+    for (const auto &argument : arguments) {
+        if (argument == "--version")
+            out.printVersion = true;
+        else if (argument.starts_with(health))
+            out.healthFile = argument.substr(health.size());
+        else if (argument.starts_with(from))
+            out.updatedFrom = argument.substr(from.size());
+        else
+            out.rest.push_back(argument);
+    }
+    return out;
 }
 
 } // namespace hikari::application
