@@ -10,8 +10,9 @@
 #   protected-tests.ps1 -Phase selfhold -Setup <setup.exe>
 #                                        unelevated: while setup runs, no
 #                                        other process can rename or rewrite
-#                                        its file (the all-users relaunch
-#                                        hands that path to UAC)
+#                                        its file, or rename a folder above
+#                                        it (the all-users relaunch hands
+#                                        that path to UAC)
 #   protected-tests.ps1 -Phase machinedir -Setup <setup.exe>
 #                                        elevated: an all-users install goes
 #                                        only to a folder under Program Files
@@ -126,9 +127,11 @@ elseif ($Phase -eq 'check') {
 }
 elseif ($Phase -eq 'selfhold') {
     if (-not $Setup) { Write-Output 'FAIL -Setup is required'; exit 1 }
-    $dir = Join-Path $env:TEMP 'HsSelfHold'
-    if (Test-Path -LiteralPath $dir) { Remove-Item -Recurse -Force -LiteralPath $dir }
+    $top = Join-Path $env:TEMP 'HsSelfHoldTop'
+    $dir = Join-Path $top 'HsSelfHold'
+    if (Test-Path -LiteralPath $top) { Remove-Item -Recurse -Force -LiteralPath $top }
     New-Item -ItemType Directory -Path $dir | Out-Null
+    function Try-RenameFolder([string] $path) { try { $name = Split-Path -Leaf $path; Rename-Item -LiteralPath $path -NewName "$name-moved" -ErrorAction Stop; Rename-Item -LiteralPath "$path-moved" -NewName $name; return $true } catch { return $false } }
     $exe = Join-Path $dir 'setup.exe'
     Copy-Item -LiteralPath $Setup -Destination $exe
     function Try-Rename { try { Rename-Item -LiteralPath $exe -NewName 'moved.exe' -ErrorAction Stop; Rename-Item -LiteralPath "$dir\moved.exe" -NewName 'setup.exe'; return $true } catch { return $false } }
@@ -141,11 +144,14 @@ elseif ($Phase -eq 'selfhold') {
     Check 'while it runs, its file cannot be renamed' (-not (Try-Rename))
     Check 'while it runs, its file cannot be opened for writing' (-not (Try-Write))
     Check 'while it runs, its file cannot be deleted' (-not $(try { Remove-Item -LiteralPath $exe -ErrorAction Stop; $true } catch { $false }))
+    Check 'while it runs, its folder cannot be renamed' (-not (Try-RenameFolder $dir))
+    Check 'while it runs, the folder above that cannot be renamed' (-not (Try-RenameFolder $top))
     Stop-Process -Id $p.Id -Force
     $p.WaitForExit()
     Start-Sleep -Seconds 1
     Check 'after it exits, its file can be renamed again' (Try-Rename)
-    Remove-Item -Recurse -Force -LiteralPath $dir
+    Check 'after it exits, its folder can be renamed again' (Try-RenameFolder $dir)
+    Remove-Item -Recurse -Force -LiteralPath $top
 }
 elseif ($Phase -eq 'machinedir') {
     if (-not $Setup) { Write-Output 'FAIL -Setup is required'; exit 1 }
