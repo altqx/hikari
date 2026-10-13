@@ -349,7 +349,8 @@ if(WIN32 AND HIKARI_WITH_VSFILTER)
             "${_w2_csri}/xy-VSFilter_hikarisub.dll"
         VERBATIM)
     target_compile_definitions(hikari_backends_vsfilter_tests PRIVATE HIKARI_VSFILTER_CSRI_DIR="${_w2_csri}"
-        HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/vsfilter")
+        HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/vsfilter"
+        HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 endif()
 # W1: the optional DirectShow adapter (Windows only). Its frame and seek
 # fixtures run against the default players on the same media; its manifest

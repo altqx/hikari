@@ -514,3 +514,118 @@ TEST(VsfilterRecipe, SelectsTheFacesTheLegacyReleaseSelects)
     EXPECT_FALSE(built.empty());
     EXPECT_EQ(built, old) << "the recipe's renderer and the legacy release's selected different faces";
 }
+
+namespace {
+
+// The face GDI gives this process for `family` now.
+std::wstring gdiFace(const wchar_t *family)
+{
+    HDC dc = CreateCompatibleDC(nullptr);
+    LOGFONTW lf{};
+    lf.lfHeight = 36;
+    lf.lfWeight = FW_NORMAL;
+    lf.lfCharSet = DEFAULT_CHARSET;
+    wcsncpy_s(lf.lfFaceName, family, _TRUNCATE);
+    HFONT font = CreateFontIndirectW(&lf);
+    HGDIOBJ old = SelectObject(dc, font);
+    wchar_t face[LF_FACESIZE] = {};
+    GetTextFaceW(dc, LF_FACESIZE, face);
+    SelectObject(dc, old);
+    DeleteObject(font);
+    DeleteDC(dc);
+    return face;
+}
+
+std::shared_ptr<const std::vector<std::byte>> leasedFontBytes()
+{
+    QFile f(QStringLiteral(HIKARI_TEST_FONT));
+    if (!f.open(QIODevice::ReadOnly))
+        return nullptr;
+    const QByteArray d = f.readAll();
+    auto bytes = std::make_shared<std::vector<std::byte>>(static_cast<std::size_t>(d.size()));
+    std::memcpy(bytes->data(), d.constData(), bytes->size());
+    return bytes;
+}
+
+// Draws a Line in a family only the lease has through `renderers`' default
+// renderer, with its SelectObject import read back (drawn::selectObject):
+// the faces it selected for that family.
+std::set<std::wstring> facesDrawnWithALease(const std::shared_ptr<CsriRenderers> &renderers, const char *words,
+                                            std::string &problem)
+{
+    HMODULE module = drawn::moduleOf(renderers);
+    if (!module) {
+        problem = "the renderer's module was not found";
+        return {};
+    }
+    void *previous = drawn::patchImport(module, "gdi32.dll", "SelectObject", reinterpret_cast<void *>(&drawn::selectObject));
+    if (!previous) {
+        problem = "the renderer does not import gdi32!SelectObject by name";
+        return {};
+    }
+    drawn::realSelectObject = reinterpret_cast<drawn::SelectObjectFn>(previous);
+    {
+        std::lock_guard guard(drawn::lock);
+        drawn::faces.clear();
+    }
+    {
+        CsriRenderer r(renderers, "");
+        RenderSnapshot s = snapshotOf(script("",
+                                             "Style: Leased,Titillium Web,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,"
+                                             "0,0,0,0,100,100,0,0,1,2,2,5,20,20,20,1\n",
+                                             std::string("Dialogue: 0,0:00:00.00,0:00:05.00,Leased,,0,0,0,,") + words + "\n"));
+        s.fonts = {FontLease{"Titillium Web", leasedFontBytes()}};
+        if (!r.prepare(std::move(s)))
+            problem = "the script was refused";
+        else if (gdiFace(L"Titillium Web") != L"Titillium Web")
+            problem = "GDI does not have the leased family while the context lives";
+        else if (const auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight); !frame || frame->empty)
+            problem = "nothing was drawn";
+    }
+    drawn::patchImport(module, "gdi32.dll", "SelectObject", previous);
+    std::set<std::wstring> out;
+    std::lock_guard guard(drawn::lock);
+    for (const auto &f : drawn::faces)
+        if (_wcsicmp(f.requested.c_str(), L"Titillium Web") == 0)
+            out.insert(f.selected);
+    return out;
+}
+
+} // namespace
+
+// W2: the snapshot's font leases (the external fonts, as legacy's
+// FontEnumerator added its folder with AddFontResourceExW(FR_PRIVATE)) reach
+// the CSRI renderer: a family only a lease has is drawn with that face, and
+// the process no longer has it once the context is gone. The faces are read
+// back from the renderer's own selections. HIKARI_VSFILTERMOD_CSRI (a folder
+// holding the package's VSFiltermod.dll) runs the same check on VSFilterMod.
+TEST(VsfilterRecipe, DrawsWithTheSnapshotsLeasedFonts)
+{
+    ASSERT_TRUE(leasedFontBytes()) << HIKARI_TEST_FONT;
+    if (gdiFace(L"Titillium Web") == L"Titillium Web")
+        GTEST_SKIP() << "Titillium Web is installed on this system, so a lease proves nothing";
+    std::vector<std::pair<std::string, std::shared_ptr<CsriRenderers>>> renderers{
+        {"xy-VSFilter", CsriRenderers::load(builtFolder(), {})}};
+    if (const char *mod = std::getenv("HIKARI_VSFILTERMOD_CSRI"); mod && *mod) {
+        const auto source = std::filesystem::path(mod) / "VSFiltermod.dll";
+        const auto folder =
+            std::filesystem::path(QDir(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR)).absolutePath().toStdU16String()) /
+            "vsfiltermod-csri";
+        std::filesystem::create_directories(folder);
+        std::filesystem::copy_file(source, folder / "VSFiltermod.dll", std::filesystem::copy_options::overwrite_existing);
+        const auto loaded = CsriRenderers::load(folder, {});
+        EXPECT_EQ(loaded->names(), (std::vector<std::string>{"vsfiltermod_textsub"}));
+        renderers.emplace_back("VSFilterMod", loaded);
+    }
+    for (const auto &[name, list] : renderers) {
+        std::string problem;
+        const auto faces = facesDrawnWithALease(list, name == "VSFilterMod" ? "Leased mod words" : "Leased xy words", problem);
+        EXPECT_TRUE(problem.empty()) << name << ": " << problem;
+        std::fprintf(stderr, "W2 %s leased Titillium Web drawn with:", name.c_str());
+        for (const auto &f : faces)
+            std::fprintf(stderr, " %s", QString::fromStdWString(f).toUtf8().constData());
+        std::fprintf(stderr, "\n");
+        EXPECT_EQ(faces, (std::set<std::wstring>{L"Titillium Web"})) << name;
+        EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << name << ": the lease outlived its context";
+    }
+}

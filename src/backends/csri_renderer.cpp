@@ -3,6 +3,10 @@
 #include <algorithm>
 #include <cstring>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace hikari::backends {
 
 using application::OverlayFrame;
@@ -10,11 +14,36 @@ using application::RenderError;
 
 namespace {
 constexpr int kMaxDimension = 16384;
+
+#ifdef _WIN32
+// A private, in-memory font for GDI in this process (not enumerable, gone with
+// the handle): what VSFilter's CreateFontIndirect finds by family name.
+std::shared_ptr<void> addPrivateFont(const application::FontLease &font)
+{
+    if (!font.bytes || font.bytes->empty())
+        return nullptr;
+    DWORD faces = 0;
+    HANDLE handle = AddFontMemResourceEx(const_cast<std::byte *>(font.bytes->data()),
+                                         static_cast<DWORD>(font.bytes->size()), nullptr, &faces);
+    if (!handle)
+        return nullptr;
+    return std::shared_ptr<void>(handle, [](void *h) { RemoveFontMemResourceEx(h); });
 }
+#endif
+
+} // namespace
 
 CsriRenderers::CsriRenderers(std::vector<csri::Renderer> renderers, std::vector<std::shared_ptr<void>> libraries)
     : m_renderers(std::move(renderers)), m_libraries(std::move(libraries))
 {
+#ifdef _WIN32
+    m_fontLoader = addPrivateFont;
+#endif
+}
+
+std::shared_ptr<void> CsriRenderers::loadFont(const application::FontLease &font) const
+{
+    return m_fontLoader ? m_fontLoader(font) : nullptr;
 }
 
 CsriRenderers::~CsriRenderers() = default;
@@ -90,11 +119,19 @@ std::expected<std::uint64_t, RenderError> CsriRenderer::prepare(application::Ren
     const csri::Renderer *renderer = m_renderers->select(m_name);
     if (!renderer || !renderer->openMem) {
         m_renderer = nullptr;
+        m_fonts.clear();
         if (m_log)
             m_log("Cannot initialize CSRI.");
         return std::unexpected(RenderError::BackendFailure);
     }
     m_renderer = renderer;
+    // The new context's fonts are added before the previous context's go,
+    // so a font both use stays available.
+    std::vector<std::shared_ptr<void>> fonts;
+    for (const auto &font : snapshot.fonts)
+        if (auto handle = m_renderers->loadFont(font))
+            fonts.push_back(std::move(handle));
+    m_fonts = std::move(fonts);
     // ParseInstance: csri_open_mem(mb_str(wxConvUTF8), strlen), so the script
     // ends at its first NUL.
     const auto *bytes = reinterpret_cast<const char *>(snapshot.script.data());

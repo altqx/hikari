@@ -236,6 +236,54 @@ TEST_F(Csri, AnUnsupportedFormatClosesTheInstance)
     EXPECT_EQ(r.render(core::DocumentTime(0), 0, 4).error(), RenderError::InvalidSize);
 }
 
+// The snapshot's font leases reach the process's GDI while their context
+// lives (legacy loaded its external fonts with AddFontResourceExW(FR_PRIVATE)
+// for the in-process VSFilter): added before the instance opens, the next
+// context's added before the previous context's go, all gone with the adapter.
+TEST_F(Csri, LeasedFontsAreAddedForTheContextsLifetime)
+{
+    const auto renderers = twoRenderers();
+    std::vector<std::string> events;
+    int live = 0;
+    renderers->setFontLoader([&](const FontLease &font) -> std::shared_ptr<void> {
+        if (!font.bytes)
+            return nullptr;
+        events.push_back("add " + font.family + " (opened " + std::to_string(calls.opened.size()) + ")");
+        ++live;
+        return std::shared_ptr<void>(new int(0), [&, family = font.family](void *p) {
+            events.push_back("remove " + family);
+            --live;
+            delete static_cast<int *>(p);
+        });
+    });
+    const auto lease = [](std::string family) {
+        return FontLease{std::move(family), std::make_shared<const std::vector<std::byte>>(4, std::byte{1})};
+    };
+    {
+        CsriRenderer r(renderers, "xy-vsfilter_textsub", logger());
+        RenderSnapshot first = snapshotOf("[Script Info]\n");
+        first.fonts = {lease("Leased A"), lease("Leased B"), FontLease{"No bytes", nullptr}};
+        ASSERT_TRUE(r.prepare(first));
+        EXPECT_EQ(events, (std::vector<std::string>{"add Leased A (opened 0)", "add Leased B (opened 0)"}));
+        EXPECT_EQ(live, 2);
+        events.clear();
+        RenderSnapshot second = snapshotOf("[Script Info]\n");
+        second.fonts = {lease("Leased C")};
+        ASSERT_TRUE(r.prepare(second));
+        EXPECT_EQ(events, (std::vector<std::string>{"add Leased C (opened 1)", "remove Leased A", "remove Leased B"}));
+        EXPECT_EQ(live, 1);
+        events.clear();
+    }
+    EXPECT_EQ(events, (std::vector<std::string>{"remove Leased C"}));
+    EXPECT_EQ(live, 0);
+    // Without a renderer nothing is added.
+    CsriRenderer none(std::make_shared<CsriRenderers>(std::vector<csri::Renderer>{}), "", logger());
+    RenderSnapshot s = snapshotOf("[Script Info]\n");
+    s.fonts = {lease("Leased D")};
+    EXPECT_FALSE(none.prepare(s));
+    EXPECT_EQ(live, 0);
+}
+
 // The Video page's order (user 2026-10-13): xy-VSFilter, libass, VSFilterMod
 // last; an empty or uninstalled name draws through libass, never VSFilterMod
 // or the first CSRI renderer (W2-libass-default, W2-missing-renderer-libass).
