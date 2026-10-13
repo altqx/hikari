@@ -36,6 +36,22 @@ tasks:
     visualStudio: false
     elevated: true
     timeoutSeconds: 900
+  # The uninstaller's elevation rule (protected-tests.ps1), with
+  # HS_PROTECTED_EXE the guest path of protected-test.exe.
+  protected-setup:
+    script: ./tests/packaging/windows/protected-tests.ps1 -Phase setup
+    visualStudio: false
+    elevated: true
+    timeoutSeconds: 300
+  protected-check:
+    script: ./tests/packaging/windows/protected-tests.ps1 -Phase check -Exe $env:HS_PROTECTED_EXE
+    visualStudio: false
+    timeoutSeconds: 300
+  protected-cleanup:
+    script: ./tests/packaging/windows/protected-tests.ps1 -Phase cleanup
+    visualStudio: false
+    elevated: true
+    timeoutSeconds: 300
   inst-detach:
     # installer.ps1 for start-app: the app keeps running after the task ends.
     script: ./tests/packaging/windows/installer.ps1

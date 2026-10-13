@@ -192,6 +192,11 @@ jobs:
             --icon HikariSub/Bitmaps/HikariLargeIcon.ico --icon-header HikariSub/FileTypeIcons.h \
             --out "dist/HikariSub-$VERSION-windows-x64-setup.exe" --work nsis-work
 
+      # The uninstaller's elevation rule, built alone for the Windows test
+      # (tests/packaging/windows/protected-tests.ps1).
+      - name: Build the elevation rule test
+        run: tests/packaging/windows/build-protected-test.sh nsis-work/protected-test.exe
+
       # 7-Zip reads NSIS installers: every payload file is inside byte for
       # byte, nothing else but the installer's own files, and the manifest it
       # writes lists exactly the payload (as legacy's windows-installer job).

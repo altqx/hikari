@@ -32,6 +32,7 @@ The rewrite keeps its settings in the platform's user folders (`QStandardPaths`)
 - An upgrade (legacy to legacy, legacy to Qt, Qt to Qt) installs over the previous files and removes the files of the previous payload that the new one lacks, using the `install-manifest.txt` each installer leaves. It never deletes a file it did not install. A downgrade asks first, and a silent downgrade is refused.
 - Silent switches for the updater: `/S`, `/CURRENTUSER` or `/ALLUSERS`, `/UPDATE`, `/WAITPID=<pid>`, `/RELAUNCH`, `/D=<dir>`, with fixed exit codes. The installer waits for the running app to exit and never kills it.
 - Uninstall removes the files, shortcuts, associations and registry keys it created, and never the user's settings, documents, recovery data or the update cache.
+- An all-users uninstall started without administrator rights starts itself again through UAC only when the install folder is protected from the user, by the updater's rule (`packaging/windows/protected.nsh`, each right opened alone under the user's own token). Otherwise it says so and exits 4: in a folder the user can change, `package-kind.txt` and the uninstaller that would run elevated are the user's to rewrite.
 
 ## Update check
 
