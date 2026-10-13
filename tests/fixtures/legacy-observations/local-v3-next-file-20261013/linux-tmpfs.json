@@ -1,0 +1,12 @@
+{
+  "probe": "next-file",
+  "platform": "linux",
+  "wx": "wxWidgets 3.3.3",
+  "filesystem": "tmpfs",
+  "created": [{"kind": "file", "name": "ep10.mkv"}, {"kind": "file", "name": "B.mkv"}, {"kind": "file", "name": "notes.txt"}, {"kind": "file", "name": "ep2.mkv"}, {"kind": "file", "name": ".dotted.mkv"}, {"kind": "file", "name": "a.b.mkv"}, {"kind": "file", "name": "Ärger.mkv"}, {"kind": "file", "name": "ep1.mkv"}, {"kind": "hidden", "name": "attr-hidden.mkv"}, {"kind": "file", "name": "日本語.mkv"}, {"kind": "file", "name": "c.MKV"}, {"kind": "dir", "name": "folder.mkv"}, {"kind": "file", "name": "x.mkv.txt"}, {"kind": "file", "name": "~tilde.avi"}, {"kind": "file", "name": "a.mkv"}, {"kind": "file", "name": "_under.mp4"}, {"kind": "file", "name": "noext"}, {"kind": "file", "name": "é.mkv"}],
+  "enumeration": ["é.mkv", "noext", "_under.mp4", "a.mkv", "~tilde.avi", "x.mkv.txt", "folder.mkv", "c.MKV", "日本語.mkv", "attr-hidden.mkv", "ep1.mkv", "Ärger.mkv", "a.b.mkv", ".dotted.mkv", "ep2.mkv", "notes.txt", "B.mkv", "ep10.mkv"],
+  "listing": ["é.mkv", "noext", "_under.mp4", "a.mkv", "~tilde.avi", "x.mkv.txt", "c.MKV", "日本語.mkv", "attr-hidden.mkv", "ep1.mkv", "Ärger.mkv", "a.b.mkv", "ep2.mkv", "notes.txt", "B.mkv", "ep10.mkv"],
+  "listingIsGetAllFiles": true,
+  "next": {"start": "é.mkv", "opened": ["_under.mp4", "a.mkv", "~tilde.avi", "c.MKV", "日本語.mkv", "attr-hidden.mkv", "ep1.mkv", "Ärger.mkv", "a.b.mkv", "ep2.mkv", "B.mkv", "ep10.mkv"], "end": ["seek 0", "pause false"]},
+  "previous": {"start": "ep10.mkv", "opened": ["B.mkv", "ep2.mkv", "a.b.mkv", "Ärger.mkv", "ep1.mkv", "attr-hidden.mkv", "日本語.mkv", "c.MKV", "~tilde.avi", "a.mkv", "_under.mp4", "é.mkv"], "end": ["seek 0", "pause false"]}
+}
