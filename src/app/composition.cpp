@@ -162,6 +162,8 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     });
     // An AppImage's new version reports its window to the old one's watchdog.
     if (!startup.healthFile.empty())
+        application.updates().installer().expectHealthReport();
+    if (!startup.healthFile.empty())
         if (auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first()))
             QObject::connect(
                 window, &QQuickWindow::frameSwapped, &application,

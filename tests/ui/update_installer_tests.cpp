@@ -523,6 +523,71 @@ private slots:
         QVERIFY(!QFileInfo::exists(image + QStringLiteral(".old")));
     }
 
+    // A Windows update handed to its installer: the installer reports a
+    // failure in the profile of the account that ran it, maybe another
+    // administrator's; this user's next start says so when it is still not
+    // that version.
+    void aHandedOffUpdateThatDidNotInstallIsTold()
+    {
+        const QString root = folder();
+        auto env = environment(PackageKind::NsisMachine, root);
+        const QString marker = env.cacheDir + QStringLiteral("/installing");
+        QVERIFY(write(marker, "0.2.0"));
+        UpdateInstaller failed(env, QStringLiteral("0.1.0"));
+        const QString message = failed.start();
+        QVERIFY(message.contains(QStringLiteral("0.2.0")));
+        QVERIFY(message.contains(QStringLiteral("did not finish")));
+        QVERIFY(!QFileInfo::exists(marker));
+        // Installed: nothing to say.
+        QVERIFY(write(marker, "0.2.0"));
+        UpdateInstaller installed(env, QStringLiteral("0.2.0"));
+        QCOMPARE(installed.start(), QString());
+        QVERIFY(!QFileInfo::exists(marker));
+        // The installer's own report, when it reached this profile, wins.
+        QVERIFY(write(marker, "0.2.0"));
+        QVERIFY(write(env.cacheDir + QStringLiteral("/last-result.json"),
+                      R"({"version": "0.2.0", "ok": false, "code": 3, "message": "HikariSub is still running."})"));
+        UpdateInstaller reported(env, QStringLiteral("0.1.0"));
+        QCOMPARE(reported.start(), QStringLiteral("HikariSub is still running."));
+        // Anything else in the file is not a version.
+        QVERIFY(write(marker, "../0.2.0"));
+        UpdateInstaller junk(env, QStringLiteral("0.1.0"));
+        QCOMPARE(junk.start(), QString());
+    }
+
+    // The watched first start keeps the old image until the watchdog has
+    // its report: without one, the watchdog puts the old image back.
+    void theOldImageStaysUntilTheReportIsWritten()
+    {
+        const QString root = folder();
+        const QString image = root + QStringLiteral("/HikariSub.AppImage");
+        QVERIFY(write(image, "new", true));
+        QVERIFY(write(image + QStringLiteral(".old"), "old", true));
+        auto env = environment(PackageKind::AppImage, root);
+        env.package.appImage = image;
+        // The record the update left; this start is its version's.
+        QVERIFY(write(env.cacheDir + QStringLiteral("/pending.json"),
+                      R"({"schema": 1, "version": "0.2.0", "kind": "appimage", "file": ")" + root.toUtf8() +
+                          R"(/.HikariSub-0.2.0.AppImage", "sha256": "", "size": 3})"));
+        UpdateInstaller watched(env, QStringLiteral("0.2.0"));
+        watched.expectHealthReport();
+        watched.start();
+        QVERIFY(!QFileInfo::exists(env.cacheDir + QStringLiteral("/pending.json")));
+        QVERIFY(QFileInfo::exists(image + QStringLiteral(".old")));
+#ifndef _WIN32
+        // The cache cannot be written: no report, so the old image stays.
+        if (::geteuid() != 0) {
+            QVERIFY(QFile::setPermissions(env.cacheDir, QFileDevice::ReadOwner | QFileDevice::ExeOwner));
+            watched.reportHealthy(env.cacheDir + QStringLiteral("/health-0.2.0"));
+            QVERIFY(QFile::setPermissions(env.cacheDir, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+            QVERIFY(!QFileInfo::exists(env.cacheDir + QStringLiteral("/health-0.2.0")));
+            QVERIFY(QFileInfo::exists(image + QStringLiteral(".old")));
+        }
+#endif
+        watched.reportHealthy(env.cacheDir + QStringLiteral("/health-0.2.0"));
+        QVERIFY(!QFileInfo::exists(image + QStringLiteral(".old")));
+    }
+
     // A tampered file is not installed: the check before the hand-off.
     void theFileIsCheckedAgainBeforeTheHandOff()
     {

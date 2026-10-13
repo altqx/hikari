@@ -156,6 +156,12 @@ QString UpdateInstaller::resultPath() const
     return m_env.cacheDir + QStringLiteral("/last-result.json");
 }
 
+// The version of the NSIS update handed to its installer at the last quit.
+QString UpdateInstaller::installingPath() const
+{
+    return m_env.cacheDir + QStringLiteral("/installing");
+}
+
 // An ordinary quit's AppImage update, for the next start: its version.
 QString UpdateInstaller::atStartPath() const
 {
@@ -251,7 +257,14 @@ QString UpdateInstaller::start()
     if (m_env.cacheDir.isEmpty())
         return {};
     QString message;
+    QString installing;
+    if (QFile marker(installingPath()); marker.open(QIODevice::ReadOnly)) {
+        installing = QString::fromUtf8(marker.read(64)).trimmed();
+        marker.close();
+        marker.remove();
+    }
     if (QFile result(resultPath()); result.open(QIODevice::ReadOnly)) {
+        installing.clear();
         const QJsonObject r = QJsonDocument::fromJson(result.read(application::kMaxManifestBytes)).object();
         result.close();
         result.remove();
@@ -263,6 +276,11 @@ QString UpdateInstaller::start()
                               .arg(r.value(QStringLiteral("code")).toInt());
         }
     }
+    // Handed to the installer, no result here, and still not installed: the
+    // installer failed, and told the account that ran it, if anyone.
+    if (application::isReleaseVersion(std8(installing)) && application::isNewerVersion(std8(installing), std8(m_running)))
+        message = QCoreApplication::translate("HikariSub.MainWindow", "HikariSub %1 was not installed: its installer did not finish. If another administrator account approved it, that account was told why.")
+                      .arg(installing);
     const QString token = packageKindToken(m_env.package.kind);
     if (QFile record(pendingPath()); record.open(QIODevice::ReadOnly)) {
         const QJsonObject p = QJsonDocument::fromJson(record.read(application::kMaxManifestBytes)).object();
@@ -274,10 +292,11 @@ QString UpdateInstaller::start()
             // Another AppImage copy's update: neither offered nor removed.
         } else if (p.value(QStringLiteral("schema")).toInt() == 1 &&
             !application::isNewerVersion(std8(pending.version), std8(m_running))) {
-            // Installed (or older): an AppImage's old image goes with it.
+            // Installed (or older): an AppImage's old image goes with it,
+            // unless a watchdog waits for this start's report (reportHealthy).
             QFile::remove(pending.file);
             record.remove();
-            if (m_env.package.kind == PackageKind::AppImage && !m_env.package.appImage.isEmpty())
+            if (m_env.package.kind == PackageKind::AppImage && !m_env.package.appImage.isEmpty() && !m_watched)
                 QFile::remove(m_env.package.appImage + QStringLiteral(".old"));
         } else if (p.value(QStringLiteral("schema")).toInt() != 1 || pending.kind != token ||
                    !QFileInfo(pending.file).isFile() || QFileInfo(pending.file).size() != pending.size ||
@@ -640,8 +659,16 @@ UpdateInstaller::ExitAction UpdateInstaller::installNsis(const std::function<std
     CloseHandle(info.hProcess);
     if (hide)
         hide();
-    if (code == DWORD(application::kApplyOk))
-        return {}; // the installer waits for this process to exit
+    if (code == DWORD(application::kApplyOk)) {
+        // The installer waits for this process to exit. It writes a failure
+        // to last-result.json under the LocalAppData of the account that
+        // runs it, for all users the administrator who approved UAC, maybe
+        // not this user: the next start tells this user from this file.
+        if (QSaveFile installing(installingPath());
+            installing.open(QIODevice::WriteOnly) && installing.write(version.toUtf8()) >= 0)
+            installing.commit();
+        return {};
+    }
     QString message;
     switch (int(code)) {
     case application::kApplyMismatch:

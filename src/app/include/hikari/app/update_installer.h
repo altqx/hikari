@@ -119,6 +119,10 @@ public:
     // The new process of an AppImage update: reports its window to the
     // watchdog (a file in the update cache only) and drops $APPIMAGE.old.
     void reportHealthy(const QString &healthFile);
+    // This start is the watched first start of an AppImage update: start()
+    // leaves $APPIMAGE.old to reportHealthy, since the watchdog puts it
+    // back if no report comes.
+    void expectHealthReport() { m_watched = true; }
     // The start after an ordinary quit left an AppImage update to install:
     // replaces the image and starts the new one, with `arguments`, under the
     // watchdog. True when another process took over (the new version, or
@@ -151,6 +155,7 @@ private:
     QString pendingPath() const;
     QString resultPath() const;
     QString atStartPath() const;
+    QString installingPath() const;
     std::optional<Pending> readPending() const;
     QString appImageStaging(const QString &version) const;
     bool belongsToAnotherImage(const Pending &pending) const;
@@ -164,6 +169,7 @@ private:
     QString m_state = QStringLiteral("idle");
     double m_progress = 0;
     bool m_restart = false;
+    bool m_watched = false;
     Pending m_pending;
 
     // The download in flight.
