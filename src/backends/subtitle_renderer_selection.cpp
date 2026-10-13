@@ -70,8 +70,14 @@ bool SubtitleRendererSelection::select(const std::string &provider)
     // libass loads no CSRI renderer; any other name must be installed.
     const std::string chosen = provider.empty() || provider == "libass" ? std::string("libass")
                                                                         : resolveProvider(provider, providers());
-    if (chosen != provider && !provider.empty() && m_log)
-        m_log("The subtitle renderer " + provider + " is not installed; libass is used.");
+    // Logged once per name, not on every settings write that repeats it.
+    if (chosen == provider || provider.empty()) {
+        m_missingLogged.clear();
+    } else if (provider != m_missingLogged) {
+        m_missingLogged = provider;
+        if (m_log)
+            m_log("The subtitle renderer " + provider + " is not installed; libass is used.");
+    }
     if (chosen == m_provider)
         return false;
     m_provider = chosen;

@@ -81,6 +81,7 @@ private:
 #ifdef _WIN32
     std::shared_ptr<CsriRenderers> m_csriRenderers;
     std::unique_ptr<CsriRenderer> m_csri;
+    std::string m_missingLogged; // the uninstalled name last logged
 #endif
 };
 

@@ -383,6 +383,25 @@ TEST(RendererSelection, VsfilterModIsListedLastAndNeverTheDefault)
     EXPECT_EQ(resolveProvider("vsfiltermod_textsub", onlyLibass), "libass");
 }
 
+#ifdef _WIN32
+// An uninstalled name is logged once, not on every settings write that
+// repeats it; a name chosen again after another is logged again.
+TEST(RendererSelection, AnUninstalledNameIsLoggedOnce)
+{
+    SubtitleRendererSelection selection;
+    std::vector<std::string> log;
+    selection.setLog([&](const std::string &text) { log.push_back(text); });
+    EXPECT_EQ(selection.providers(), (std::vector<std::string>{"libass"})); // no Csri folder
+    EXPECT_FALSE(selection.select("vsfiltermod_textsub"));
+    EXPECT_FALSE(selection.select("vsfiltermod_textsub"));
+    EXPECT_TRUE(selection.usesLibass());
+    EXPECT_EQ(log, (std::vector<std::string>{"The subtitle renderer vsfiltermod_textsub is not installed; libass is used."}));
+    EXPECT_FALSE(selection.select("libass"));
+    EXPECT_FALSE(selection.select("vsfiltermod_textsub"));
+    EXPECT_EQ(log.size(), 2u);
+}
+#endif
+
 #ifndef _WIN32
 // Linux evidence for W2: libass is the only renderer, whatever the setting says.
 TEST(RendererSelection, LibassIsTheOnlyRendererOnLinux)

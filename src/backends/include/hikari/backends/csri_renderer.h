@@ -33,6 +33,7 @@
 #include "hikari/application/subtitle_render.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <functional>
 #include <memory>
@@ -150,6 +151,8 @@ private:
         std::shared_ptr<void> handle;
     };
     std::vector<AddedFont> m_fonts;
+    // The second frame a BGR_ renderer draws onto (white), kept between frames.
+    std::vector<std::uint8_t> m_white;
 };
 
 } // namespace hikari::backends

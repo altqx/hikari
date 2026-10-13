@@ -218,9 +218,12 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
         // (RendererFFMS2::GetFrameWithSubs without the overlay); the same
         // instant drawn again onto white gives each pixel's coverage, so the
         // overlay composites over any frame as that drawing did.
-        std::vector<std::uint8_t> white(frame.pixels.size());
-        for (std::size_t i = 0; i < white.size(); i += 4)
+        std::vector<std::uint8_t> &white = m_white;
+        white.resize(frame.pixels.size());
+        for (std::size_t i = 0; i < white.size(); i += 4) {
             white[i] = white[i + 1] = white[i + 2] = 255;
+            white[i + 3] = 0;
+        }
         target.planes[0] = white.data();
         m_renderer->render(m_instance, &target, double(ms / 1000.0));
         bool drawn = false;
