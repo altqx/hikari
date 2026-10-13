@@ -122,7 +122,7 @@ The installer also runs unattended:
 | `/S` | silent: no pages or messages |
 | `/CURRENTUSER`, `/ALLUSERS` | install for you alone or for all users (the latter from an elevated prompt). Without either, a silent install updates the existing installation, or installs for you alone |
 | `/COMPONENTS=assoc,desktop` | a new silent install's options: `assoc` registers the file types (the default), `desktop` adds a desktop shortcut; `/COMPONENTS=` selects neither |
-| `/D=<folder>` | the installation folder; it must come last and is not quoted. For all users it must be a folder under Program Files |
+| `/D=<folder>` | the installation folder; it must come last and is not quoted. For all users it must be a new folder directly in Program Files, or the folder of the existing all-users installation |
 
 Its exit code is 0 on success, 1 when cancelled, 2 on another failure, 3 when HikariSub is still running, 4 when administrator rights are needed or were refused, 5 when a newer version is already installed, and 6 when HikariSub is installed for the other choice of users. The uninstaller, `Uninstall HikariSub.exe` in the installation folder, takes `/S` too.
 
