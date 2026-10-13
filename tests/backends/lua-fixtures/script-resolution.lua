@@ -60,3 +60,11 @@ end, function(subs)
     subs.script_resolution()
     return false
 end)
+
+-- Reads it, then runs until the run is cancelled.
+aegisub.register_macro("Read and wait", "", function(subs)
+    subs.script_resolution()
+    while not aegisub.progress.is_cancelled() do
+        aegisub.progress.set(50)
+    end
+end)

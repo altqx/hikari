@@ -443,6 +443,27 @@ private slots:
         QVERIFY(!document().scriptInfo(u8"PlayResX"));
         QCOMPARE(app->automation().lastMessage(), QStringLiteral("The macro was cancelled; nothing was changed."));
     }
+
+    // The run is cancelled after the user pressed Set: the resolution stays
+    // its own step, and the message says so.
+    void cancellingAfterSetKeepsTheResolution()
+    {
+        QVERIFY(open(""));
+        const auto before = steps();
+        QVERIFY(run("Read and wait"));
+        QTRY_VERIFY_WITH_TIMEOUT(prompt().isOpen(), 30'000);
+        prompt().accept(640, 480, false);
+        QTRY_VERIFY(!prompt().isOpen());
+        app->automation().cancelRun();
+        QVERIFY(ended());
+        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("640"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("480"));
+        auto after = before;
+        after.push_back(std::string(application::kScriptResolutionStep));
+        QCOMPARE(steps(), after);
+        QCOMPARE(app->automation().lastMessage(),
+                 QStringLiteral("The macro was cancelled; only the script resolution was set."));
+    }
 };
 
 QTEST_MAIN(AutomationResolutionTests)

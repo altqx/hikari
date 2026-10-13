@@ -421,6 +421,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The macro was cancelled; only the script resolution was set.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Validation Lua script &apos;%1&apos; failed</source>
         <translation type="unfinished">การตรวจสอบสคริปต์ Lua &apos;%1&apos; ไม่ผ่าน</translation>
     </message>

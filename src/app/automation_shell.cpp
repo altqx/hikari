@@ -600,9 +600,11 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     // it). The macro staged the same keys, so its result is read against the
     // snapshot as it is now; a Document changed under the run keeps the
     // snapshot's old revision, and the macro's result is refused as before.
+    bool resolutionSet = false;
     if (s && run.resolution) {
         const bool current = s->revision() == run.snapshot.revision;
-        if (application::setScriptResolution(*s, *run.resolution) && current) {
+        resolutionSet = application::setScriptResolution(*s, *run.resolution).has_value();
+        if (resolutionSet && current) {
             application::setStagedScriptResolution(run.snapshot.info, *run.resolution);
             run.snapshot.revision = s->revision();
         }
@@ -624,7 +626,11 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     case Outcome::Failed: text = message; break;
     case Outcome::Cancelled:
         // A user who declined to set the script resolution chose not to run it.
-        if (!run.declined)
+        // A resolution the user set before cancelling is kept as its own step.
+        if (resolutionSet)
+            text = QCoreApplication::translate("HikariSub.Automation",
+                                               "The macro was cancelled; only the script resolution was set.");
+        else if (!run.declined)
             text = QCoreApplication::translate("HikariSub.Automation", "The macro was cancelled; nothing was changed.");
         break;
     case Outcome::HelperLost:
