@@ -76,7 +76,8 @@
       "inherits": "windows-x64-release",
       "displayName": "Windows x64 release payload for the installer and the portable zip (no tests)",
       "cacheVariables": {
-        "BUILD_TESTING": "OFF"
+        "BUILD_TESTING": "OFF",
+        "HIKARI_WITH_VSFILTER": "ON"
       }
     },
     {
