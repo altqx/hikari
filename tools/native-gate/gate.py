@@ -1280,13 +1280,33 @@ def arrangement(st):
         entry = {"window": "floating" if floating else "main", "rect": (p["x"], p["y"], p["w"], p["h"])}
         if floating:
             f = fr.get(p["frame"], {})
-            entry["size"] = (f.get("w"), f.get("h"))
+            # None when unreadable (no frame or no size): a reading before exit
+            # without it is not compared.
+            entry["size"] = (f["w"], f["h"]) if f.get("w") is not None and f.get("h") is not None else None
             r = B.client_rect(p["frame"]) if B.name == "x11" else None
             entry["position"] = r[:2] if r else None
         out[p["id"]] = entry
     main = fr.get("HikariSub", {})
-    out["(main window)"] = {"window": "main", "size": (main.get("w"), main.get("h"))}
+    out["(main window)"] = {"window": "main", "size": (main["w"], main["h"])
+                            if main.get("w") is not None and main.get("h") is not None else None}
     return out
+
+
+def settled_arrangement(pred, timeout=10.0, step=0.5):
+    """arrangement() once PRED holds and two readings STEP seconds apart
+    agree (the compositor and the layout have stopped moving), or the last
+    reading at TIMEOUT."""
+    end = time.time() + timeout
+    st = wait_for(pred, timeout=timeout)
+    current = arrangement(st)
+    while time.time() < end:
+        time.sleep(step)
+        st = atspi()
+        reading = arrangement(st)
+        if pred(st) and not arrangement_differences(current, reading, tolerance=0):
+            return reading
+        current = reading
+    return current
 
 
 def arrangement_differences(before, after, tolerance=2):
@@ -1317,10 +1337,7 @@ def step_persistence():
     its geometry. Audio is floated first, so both kinds are in the layout."""
     fresh()
     float_panel("Audio", "persist")
-    st0 = wait_for(lambda s: "Audio" in frames(s))
-    time.sleep(1.0)
-    st0 = atspi()
-    before = arrangement(st0)
+    before = settled_arrangement(lambda s: "Audio" in frames(s))
     ev0, _ = B.snap("persist-0-before-exit", extra="# arrangement\n" + json.dumps(before, indent=1))
     # Close the main window the way the compositor does (its close request
     # reaches onClosing, which saves the layout).
@@ -1338,9 +1355,8 @@ def step_persistence():
     cfg = sh(f"find {os.environ['XDG_CONFIG_HOME']}/HikariSub -name 'layout.json*' -printf '%p %s\\n'")
     app("start")
     time.sleep(2)
-    st = wait_for(lambda s: "Audio" in frames(s) and {p["id"] for p in s["panels"]} >= set(before) - {"(main window)"})
-    time.sleep(1.0)
-    after = arrangement(atspi())
+    after = settled_arrangement(
+        lambda s: "Audio" in frames(s) and {p["id"] for p in s["panels"]} >= set(before) - {"(main window)"})
     ev1, _ = B.snap("persist-1-after-restart", extra="# layout files\n" + cfg + "\n# arrangement\n"
                     + json.dumps(after, indent=1))
     diffs = arrangement_differences(before, after)
