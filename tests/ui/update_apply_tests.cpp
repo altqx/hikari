@@ -210,7 +210,10 @@ private slots:
 #endif
     }
 
-#ifdef _WIN32
+    // Not _WIN32: moc sees no compiler-predefined macros under MSVC, so slots
+    // behind _WIN32 were never registered and never ran. CMake defines this
+    // for the compiler and moc alike.
+#if HIKARI_UPDATE_APPLY_WINDOWS_TESTS
     void theCommandLineReadsBack()
     {
         ApplyRequest request;
