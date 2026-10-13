@@ -29,3 +29,6 @@ tasks:
   installer-semver:
     script: ./tests/packaging/windows/installer-tests.ps1 -Phase semver -SetupDir $env:HS_SETUP_DIR
     timeoutSeconds: 900
+  installer-state:
+    script: ./tests/packaging/windows/installer-tests.ps1 -Phase state
+    timeoutSeconds: 120

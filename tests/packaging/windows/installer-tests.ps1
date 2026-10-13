@@ -20,16 +20,17 @@
 # installed, but leaves files a user would own (it creates and deletes its own).
 
 param(
-    [Parameter(Mandatory)] [ValidateSet('user', 'machine', 'semver')] [string] $Phase,
-    [Parameter(Mandatory)] [string] $SetupDir,
+    [Parameter(Mandatory)] [ValidateSet('user', 'machine', 'semver', 'state')] [string] $Phase,
+    [string] $SetupDir = '',
     [string] $Old = '0.0.2',
     [string] $New = '0.0.3'
 )
 
 $ErrorActionPreference = 'Stop'
 $script:failures = 0
-$OldSetup = Join-Path $SetupDir "HikariSub-$Old-windows-x64-setup.exe"
-$NewSetup = Join-Path $SetupDir "HikariSub-$New-windows-x64-setup.exe"
+if ($Phase -ne 'state' -and -not $SetupDir) { Write-Output 'FAIL -SetupDir is required'; exit 1 }
+$OldSetup = "$SetupDir\HikariSub-$Old-windows-x64-setup.exe"
+$NewSetup = "$SetupDir\HikariSub-$New-windows-x64-setup.exe"
 $Mutex = 'Global\io.github.altqx.HikariSub.Running'
 $Exts = 'ass', 'ssa', 'srt', 'sub'
 $IconIds = @{ ass = 109; ssa = 110; srt = 111; sub = 112 }
@@ -68,6 +69,12 @@ function RegValue([string] $key, [string] $name) {
     $k = Get-Item -LiteralPath $key -ErrorAction SilentlyContinue
     if (-not $k) { return $null }
     return $k.GetValue($name, $null, 'DoNotExpandEnvironmentNames')
+}
+
+# Remove-ItemProperty cannot delete a key's default value.
+function Remove-DefaultValue([string] $classesSubkey) {
+    $k = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey("Software\Classes\$classesSubkey", $true)
+    if ($k) { $k.DeleteValue('', $false); $k.Close() }
 }
 
 function Shortcut-Info([string] $lnk) {
@@ -204,6 +211,39 @@ $SemverSequence = @(
     @('0.1.0-BETA.1', 5), @('0.1.0-beta.11', 0), @('0.1.0-rc.1', 0), @('0.1.0', 0),
     @('0.1.0', 0), @('0.1.0-rc.1', 5))
 
+if ($Phase -eq 'state') {
+    # What an install left, for manual (interactive) runs: both scopes.
+    foreach ($root in 'HKCU', 'HKLM') {
+        $u = "${root}:\Software\Microsoft\Windows\CurrentVersion\Uninstall\HikariSub"
+        if (Test-Path $u) {
+            $dir = RegValue $u 'InstallLocation'
+            Write-Output "== $root install in $dir, version $(RegValue $u 'DisplayVersion'), kind $(Get-Content -Raw -LiteralPath "$dir\package-kind.txt" -ErrorAction SilentlyContinue)"
+            Write-Output "   components '$(RegValue "${root}:\Software\HikariSub\Install" 'Components')', $((Manifest-Files $dir).Count) manifest files"
+        } else { Write-Output "== no $root install" }
+    }
+    # cmd's assoc and ftype read HKLM only; the shell's own answer covers both scopes.
+    Add-Type -Namespace HsTest -Name Shell -MemberDefinition @'
+[DllImport("shlwapi.dll", CharSet = CharSet.Unicode)]
+public static extern int AssocQueryString(int flags, int str, string assoc, string extra, System.Text.StringBuilder outText, ref int outLength);
+'@
+    foreach ($e in $Exts + 'txt') {
+        $sb = New-Object System.Text.StringBuilder 1024; $n = 1024
+        $hr = [HsTest.Shell]::AssocQueryString(0, 1, ".$e", 'open', $sb, [ref]$n)
+        $progid = (Get-Item -LiteralPath "Registry::HKEY_CLASSES_ROOT\.$e" -ErrorAction SilentlyContinue)
+        $owp = (Get-Item -LiteralPath "Registry::HKEY_CLASSES_ROOT\.$e\OpenWithProgids" -ErrorAction SilentlyContinue)
+        Write-Output "   .$e -> '$(if ($progid) { $progid.GetValue('') })', open: $(if ($hr -eq 0) { $sb.ToString() } else { "none (0x{0:x8})" -f $hr }), OpenWithProgids: $(if ($owp) { $owp.GetValueNames() -join ' ' })"
+    }
+    foreach ($lnk in (Join-Path ([Environment]::GetFolderPath('Programs')) 'HikariSub.lnk'), (Join-Path ([Environment]::GetFolderPath('CommonPrograms')) 'HikariSub.lnk'),
+                     (Join-Path ([Environment]::GetFolderPath('Desktop')) 'HikariSub.lnk')) {
+        if (Test-Path -LiteralPath $lnk) { $i = Shortcut-Info $lnk; Write-Output "   $lnk -> $($i.Target) [$($i.Aumid)]" } else { Write-Output "   no $lnk" }
+    }
+    $d = Join-Path $env:LOCALAPPDATA 'Programs\HikariSub'
+    Write-Output "   $d exists: $(Test-Path -LiteralPath $d)"
+    if (Test-Path -LiteralPath $d) { Get-ChildItem -Force -LiteralPath $d | ForEach-Object { "     $($_.Name)" } }
+    Write-Output "   HKCU\Software\HikariSub exists: $(Test-Path 'HKCU:\Software\HikariSub')"
+    exit 0
+}
+
 if ($Phase -ne 'semver') {
     foreach ($f in $OldSetup, $NewSetup) {
         if (-not (Test-Path -LiteralPath $f)) { Write-Output "FAIL missing $f"; exit 1 }
@@ -244,7 +284,7 @@ if ($Phase -eq 'semver') {
     New-Item -Force -Path "$c\.srt" | Out-Null
     Set-ItemProperty -LiteralPath "$c\.srt" -Name '(default)' -Value 'OtherApp.srt'
     foreach ($e in 'ass', 'ssa', 'sub') {
-        if ((RegValue "$c\.$e" '') -like 'HikariSub.*') { Remove-ItemProperty -LiteralPath "$c\.$e" -Name '(default)' }
+        if ((RegValue "$c\.$e" '') -like 'HikariSub.*') { Remove-DefaultValue ".$e" }
     }
     $foreign = @{ srt = 'OtherApp.srt' }
     try {
@@ -323,7 +363,7 @@ if ($Phase -eq 'semver') {
         Check 'uninstall after no-assoc install: folder gone' (-not (Test-Path -LiteralPath $dir))
     } finally {
         Stop-Installed $dir
-        if ($null -eq $savedSrt) { Remove-ItemProperty -LiteralPath "$c\.srt" -Name '(default)' -ErrorAction SilentlyContinue }
+        if ($null -eq $savedSrt) { Remove-DefaultValue '.srt' }
         else { Set-ItemProperty -LiteralPath "$c\.srt" -Name '(default)' -Value $savedSrt }
     }
 } else {
