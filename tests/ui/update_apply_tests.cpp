@@ -407,6 +407,38 @@ private slots:
         exe.close();
         QVERIFY(!update_apply::isProtectedFromUser(native(dir.path())));
     }
+
+    // A start while an update's setup runs leaves and asks for a start after
+    // it; the handoff returns only once the setup holds its mutex.
+    void aStartDuringTheSetupWaitsForIt()
+    {
+        QVERIFY(!update_apply::setupRunning());
+        HANDLE held = CreateMutexW(nullptr, TRUE, update_apply::kSetupMutex);
+        QVERIFY(held != nullptr);
+        QVERIFY(update_apply::setupRunning());
+        ReleaseMutex(held);
+        CloseHandle(held);
+        QVERIFY(!update_apply::setupRunning());
+
+        QTemporaryDir local;
+        QVERIFY(local.isValid());
+        const QByteArray saved = qgetenv("LOCALAPPDATA");
+        qputenv("LOCALAPPDATA", QDir::toNativeSeparators(local.path()).toLocal8Bit());
+        const bool asked = update_apply::askStartAfterSetup(L"nsis-user");
+        qputenv("LOCALAPPDATA", saved);
+        QVERIFY(asked);
+        QVERIFY(QFileInfo::exists(local.filePath(QStringLiteral("HikariSub/Updates/start-after-nsis-user"))));
+
+        // A stand-in setup that takes the mutex after starting up, then holds
+        // it 8 s: launch returns while it is held, not at once.
+        wchar_t system[MAX_PATH];
+        const UINT length = GetSystemDirectoryW(system, MAX_PATH);
+        const std::wstring powershell = std::wstring(system, length) + L"\\WindowsPowerShell\\v1.0\\powershell.exe";
+        QVERIFY(update_apply::launch(powershell, L"-NoProfile -NonInteractive -Command \"$m = [Threading.Mutex]::new($true, "
+                                                 L"'Global\\io.github.altqx.HikariSub.Installing'); Start-Sleep -Seconds 8\""));
+        QVERIFY(update_apply::setupRunning());
+        QTRY_VERIFY_WITH_TIMEOUT(!update_apply::setupRunning(), 20000);
+    }
 #endif
 };
 

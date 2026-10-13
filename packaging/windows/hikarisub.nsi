@@ -66,6 +66,9 @@ SetCompressorDictSize 64
 !define HS_REGAPPS_KEY   "Software\RegisteredApplications"
 !define HS_CLASSES       "Software\Classes"
 !define HS_MUTEX         "Global\io.github.altqx.HikariSub.Running"
+; Held by an /UPDATE run until it exits: an app started meanwhile leaves
+; and asks for a start afterwards (HsTakeStartRequest).
+!define HS_SETUP_MUTEX   "Global\io.github.altqx.HikariSub.Installing"
 !define HS_URL           "https://github.com/altqx/hikari"
 
 Name "${HS_NAME}"
@@ -109,6 +112,7 @@ Var HsRadioUser
 Var HsRadioMachine
 Var HsSelfHold        ; this setup's own file, held against change (HsHoldSelf)
 Var HsNewMachineDir   ; the new all-users folder HsMachineDirOk accepted
+Var HsSetupMutex      ; HS_SETUP_MUTEX, held until exit (/UPDATE)
 
 ; ---------------------------------------------------------------------------
 ; Pages
@@ -383,6 +387,30 @@ Function HsLaunchApp
   Pop $0
 FunctionEnd
 
+; An app started while this /UPDATE ran left at once and wrote
+; start-after-<copy> in the update cache: HikariSub starts when this ends,
+; as with /RELAUNCH. (For all users that is the cache of the account that
+; approved UAC: another account's start is not seen.)
+Function HsTakeStartRequest
+  Push $0
+  ${If} $HsUpdate = 1
+    StrCpy $0 $HsScope
+    ${If} $0 == ""
+      StrCpy $0 $HsCmdScope
+    ${EndIf}
+    ${If} $0 == "machine"
+      StrCpy $0 "$HsUserLocalAppData\HikariSub\Updates\start-after-nsis-machine"
+    ${Else}
+      StrCpy $0 "$HsUserLocalAppData\HikariSub\Updates\start-after-nsis-user"
+    ${EndIf}
+    ${If} ${FileExists} $0
+      Delete $0
+      StrCpy $HsRelaunch 1
+    ${EndIf}
+  ${EndIf}
+  Pop $0
+FunctionEnd
+
 ; Reports a failure and exits. $R8 = exit code, $R7 = message.
 Function HsFail
   Push $0
@@ -406,6 +434,7 @@ Function HsFail
       FileClose $0
     ${EndIf}
   ${EndIf}
+  Call HsTakeStartRequest
   ${If} $HsRelaunch = 1
     Call HsLaunchApp
   ${EndIf}
@@ -1109,6 +1138,10 @@ Function .onInit
   Call HsParseArgs
   ${If} $HsUpdate = 1
     SetSilent silent
+    ; Taken first, before the wait for the app: the app's own handoff
+    ; waits for it, so a start after the app's quit finds it.
+    System::Call 'kernel32::CreateMutexW(p 0, i 1, w "${HS_SETUP_MUTEX}") p .r0'
+    StrCpy $HsSetupMutex $0
   ${EndIf}
   Call HsCheckAdmin
 
@@ -1188,6 +1221,7 @@ Function .onInit
 FunctionEnd
 
 Function .onInstSuccess
+  Call HsTakeStartRequest
   ${If} $HsRelaunch = 1
     Call HsLaunchApp
   ${EndIf}
