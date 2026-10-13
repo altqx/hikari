@@ -1,0 +1,13 @@
+# Tools that build the HikariSub NSIS installer (installers spec, 6.1).
+# The same file on the legacy and Qt branches. KEY=VALUE lines, readable by
+# bash (source) and by a line parser.
+
+# makensis from Ubuntu 24.04's nsis package. `makensis -VERSION` prints
+# v3.09 followed by the Debian revision (v3.09-4); the script uses no feature
+# newer than 3.09.
+MAKENSIS_VERSION=3.09
+
+# StdUtils, for ExecShellAsUser (relaunching the app unelevated).
+STDUTILS_VERSION=1.14
+STDUTILS_URL=https://github.com/lordmulder/stdutils/releases/download/1.14/StdUtils.2018-10-27.zip
+STDUTILS_SHA256=3ffe893dc7477fdb1cac551a86ae017509e1f2d0ebdc7185fd0fbaf20870688c

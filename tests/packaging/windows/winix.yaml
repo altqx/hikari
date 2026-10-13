@@ -1,0 +1,34 @@
+# The NSIS installer checks (installers spec, 8.3) on the Winix VM. Build the
+# two test installers on Linux (make-test-payloads.sh), push them into the
+# guest, then run a task with HS_SETUP_DIR set to that guest folder:
+#
+#   winix --config tests/packaging/windows/winix.yaml sync . --workspace <branch>
+#   winix push <out dir> 'C:\Users\Public\hs-installer-tests'
+#   winix --config tests/packaging/windows/winix.yaml run installer-user \
+#     --workspace <branch> --env 'HS_SETUP_DIR=C:\Users\Public\hs-installer-tests'
+#
+# installer-machine runs elevated (SYSTEM, no desktop) for the all-users scope.
+# The interactive pages and the UAC relaunch are driven with `winix ui`.
+version: 1
+image: windows-dev
+workspace: hikari-installer
+resources:
+  cpus: 4
+  memoryGiB: 8
+  diskGiB: 180
+exclude: [.git, .winix, .env, '*.pfx', '*.key', 'build*', out, Thirdparty]
+pipeline: [installer-user]
+tasks:
+  installer-user:
+    script: ./tests/packaging/windows/installer-tests.ps1 -Phase user -SetupDir $env:HS_SETUP_DIR
+    timeoutSeconds: 1800
+  installer-machine:
+    elevated: true
+    script: ./tests/packaging/windows/installer-tests.ps1 -Phase machine -SetupDir $env:HS_SETUP_DIR
+    timeoutSeconds: 1800
+  installer-semver:
+    script: ./tests/packaging/windows/installer-tests.ps1 -Phase semver -SetupDir $env:HS_SETUP_DIR
+    timeoutSeconds: 900
+  installer-state:
+    script: ./tests/packaging/windows/installer-tests.ps1 -Phase state
+    timeoutSeconds: 120
