@@ -596,15 +596,21 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
         m_diffs.x = m_to.x - fx;
         m_diffs.y = m_to.y - fy;
         // VisualScale.cpp:307-311: the scaled axis' shape, both axes' with
-        // Shift's or "Preserve proportions"' uniform scaling.
-        if (m_type == 0)
+        // Shift's or "Preserve proportions"' uniform scaling, only while a
+        // button is down (T3-scale-shift-hover, User 2026-10-13). Legacy
+        // also ran this on a Shift press or release while hovering and on a
+        // release with Shift held, putting a drag's shape up over the hover
+        // rules'; the state below is still set as legacy set it.
+        const bool dragShape = e.holding;
+        if (dragShape && m_type == 0)
             host.setPointerShape(PointerShape::SizeWE);
-        if (m_type == 1)
+        if (dragShape && m_type == 1)
             host.setPointerShape(PointerShape::SizeNS);
-        if (m_type == 2)
+        if (dragShape && m_type == 2)
             host.setPointerShape(PointerShape::Sizing);
         if (((e.leftc || e.leftIsDown) && e.shift) || m_preserveProportions) {
-            host.setPointerShape(PointerShape::Sizing);
+            if (dragShape)
+                host.setPointerShape(PointerShape::Sizing);
             m_type = 2;
             m_diffs.x = fx;
             m_diffs.y = fy;

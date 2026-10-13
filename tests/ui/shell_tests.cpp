@@ -12723,6 +12723,28 @@ private slots:
         QCOMPARE(session->historySize(), steps + 1);
         QVERIFY2(thirdText().contains(fscx), qPrintable(thirdText()));
         QCOMPARE(scale->to(), arrowsBefore);
+        // T3-scale-shift-hover (User, 2026-10-13): Shift changes the shape
+        // only while a button is down. Away from the arrows' ends a Shift
+        // press or release while hovering keeps the arrow; a Shift press
+        // shows both axes' shape, and its release with Shift still held puts
+        // the arrow back at once (a release that changes nothing, no step).
+        const QPoint away = videoPoint(QPointF(view.toLogical((scale->from().x + scale->to().x) / 2),
+                                               view.toLogical(scale->from().y) - 30));
+        QTest::mouseMove(window, away);
+        QTRY_COMPARE(shape(), int(Qt::ArrowCursor));
+        QTest::mouseEvent(QTest::MouseMove, window, Qt::NoButton, Qt::ShiftModifier, away + QPoint(1, 0));
+        QCOMPARE(shape(), int(Qt::ArrowCursor));
+        QTest::mouseMove(window, away);
+        QCOMPARE(shape(), int(Qt::ArrowCursor));
+        const std::size_t shiftSteps = session->historySize();
+        QTest::mousePress(window, Qt::LeftButton, Qt::ShiftModifier, away);
+        QTRY_VERIFY(tools.gestureActive());
+        QCOMPARE(shape(), int(Qt::SizeAllCursor));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::ShiftModifier, away);
+        QTRY_VERIFY(!tools.gestureActive());
+        QCOMPARE(shape(), int(Qt::ArrowCursor));
+        QCOMPARE(session->historySize(), shiftSteps);
+        QCOMPARE(scale->to(), arrowsBefore);
         application->editor().setShowTags(false);
 
         // The rectangle mode against the measured text: GetTextSize through

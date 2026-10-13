@@ -48,7 +48,7 @@ The user decided on 2026-10-13 to run `hikari_i18n_keymap` and carry in legacy t
 
 * **Exact rows.** All are finished, 1264 in every language, with 0.0.1's translation. Where 0.0.1 changed a translation, that translation replaced the 20d647c4 one: pl 3 entries, ko_KR 67, th_TH 0, ta 165.
 * **Fuzzy and empty entries.** The rows the first carry held back unfinished are finished now: ko_KR 24 and ta 18 that had a fuzzy legacy entry, and ko_KR 1 and ta 7 that had an empty one. ("Update" is the ko_KR one.) The 11 new exact rows were also finished, in every language.
-* **Placeholder rows.** These stay unfinished, holding the converted text. A formatting change needs review (above), and the decision covers exact matches only. 0.0.1 changed the text of 7 of these rows in ko_KR and 11 in ta.
+* **Placeholder rows.** These stay unfinished, holding the converted text, and show English until a translator reviews them (O4-placeholder-review, User, 2026-10-13). A formatting change needs review (above), and the carry decision covers exact matches only. 0.0.1 changed the text of 7 of these rows in ko_KR and 11 in ta.
 * **Uncertainty marks.** No "[?]" mark is left in any catalog: 0.0.1 retranslated the four ko_KR entries that had one.
 
 Per language, finished / unfinished with text / empty interface entries: pl 1253 / 61 / 551 before and 1264 / 62 / 539 after, ko_KR 1228 / 85 / 552 before, ta 1228 / 79 / 558 before, and th_TH as pl. After the re-carry, all four languages are 1264 / 62 / 539. gettext finished: pl and th_TH 1823 of 1823 before, ko_KR and ta 1767 of 1823 before; all four are 1836 of 1836 after. `hikari_lupdate` then found 1865 keys, 0 new, and left the four catalogs unchanged.
