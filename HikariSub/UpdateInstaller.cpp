@@ -1299,12 +1299,6 @@ void update_installer::OnStartup(wxWindow *frame)
 	}
 #endif
 
-#ifdef _WIN32
-	// No setup runs now (a start during one leaves before this): a request
-	// a setup did not take is not for the next one.
-	RemoveFile(CacheDir() + kSep + L"start-after-" + CopyKey());
-#endif
-
 	std::string text;
 	std::string installing;
 	if (ReadSmallFile(InstallingPath(), &installing, 64))

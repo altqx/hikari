@@ -34,6 +34,7 @@ $OldSetup = "$SetupDir\HikariSub-$Old-windows-x64-setup.exe"
 $NewSetup = "$SetupDir\HikariSub-$New-windows-x64-setup.exe"
 $Mutex = 'Global\io.github.altqx.HikariSub.Running'
 $SetupMutex = 'Global\io.github.altqx.HikariSub.Installing'
+$StartEvent = 'Global\io.github.altqx.HikariSub.StartAfterUpdate'
 $Exts = 'ass', 'ssa', 'srt', 'sub'
 $IconIds = @{ ass = 109; ssa = 110; srt = 111; sub = 112 }
 
@@ -344,19 +345,22 @@ if ($Phase -eq 'semver') {
         Stop-Installed $dir
 
         # /UPDATE holds its mutex from its start: an app started meanwhile
-        # leaves and writes start-after-nsis-user, and HikariSub starts
-        # when the update is done, without /RELAUNCH.
-        $request = Join-Path $env:LOCALAPPDATA 'HikariSub\Updates\start-after-nsis-user'
-        New-Item -ItemType Directory -Force (Split-Path $request) | Out-Null
-        Set-Content -LiteralPath $request ''
+        # leaves and sets the setup's start event (as this standard user),
+        # and HikariSub starts when the update is done, without /RELAUNCH.
         $waiter = Start-Process -FilePath powershell.exe -ArgumentList '-NoProfile -Command Start-Sleep -Seconds 8' -PassThru -WindowStyle Hidden
         $setup = Start-Process -FilePath $NewSetup -ArgumentList "/S /UPDATE /WAITPID=$($waiter.Id) /CURRENTUSER /D=$dir" -PassThru
         $null = $setup.Handle
         Start-Sleep -Seconds 3
         Check '/UPDATE holds its mutex while it waits for the app' (Setup-Mutex-Held)
+        $requested = $false
+        try {
+            $e = [Threading.EventWaitHandle]::OpenExisting($StartEvent, [Security.AccessControl.EventWaitHandleRights]'Modify, Synchronize')
+            $requested = $e.Set()
+            $e.Dispose()
+        } catch { Write-Output "  start event: $($_.Exception.Message)" }
+        Check 'a standard user can set the start event' $requested
         $setup.WaitForExit()
         Check '/UPDATE with a start request: exit 0' ($setup.ExitCode -eq 0) "got $($setup.ExitCode)"
-        Check '/UPDATE took the start request' (-not (Test-Path -LiteralPath $request))
         Check '/UPDATE released its mutex' (-not (Setup-Mutex-Held))
         Start-Sleep -Seconds 3
         $started = @(Get-Process -Name HikariSub -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq "$dir\HikariSub.exe" })
@@ -413,6 +417,23 @@ if ($Phase -eq 'semver') {
         Check-Upgraded $dir 'all-users upgrade'
         Check-Associations $dir 'HKLM' $New $foreign
         Check '/UPDATE /ALLUSERS same version: exit 0' ((Run-Setup $NewSetup "/S /UPDATE /ALLUSERS /D=$dir") -eq 0)
+        # An elevated /UPDATE's start event: any signed-in user may set it
+        # (the desktop user, when another administrator approved UAC).
+        $waiter = Start-Process -FilePath powershell.exe -ArgumentList '-NoProfile -Command Start-Sleep -Seconds 6' -PassThru -WindowStyle Hidden
+        $setup = Start-Process -FilePath $NewSetup -ArgumentList "/S /UPDATE /WAITPID=$($waiter.Id) /ALLUSERS /D=$dir" -PassThru
+        $null = $setup.Handle
+        Start-Sleep -Seconds 3
+        $rights = $null
+        try {
+            $e = [Threading.EventWaitHandle]::OpenExisting($StartEvent, [Security.AccessControl.EventWaitHandleRights]'ReadPermissions, Synchronize')
+            $au = [Security.Principal.SecurityIdentifier]::new('S-1-5-11')
+            $rights = @($e.GetAccessControl().GetAccessRules($true, $false, [Security.Principal.SecurityIdentifier]) |
+                Where-Object { $_.IdentityReference -eq $au -and $_.AccessControlType -eq 'Allow' } | ForEach-Object { [int]$_.EventWaitHandleRights })
+            $e.Dispose()
+        } catch { Write-Output "  start event: $($_.Exception.Message)" }
+        Check 'an elevated /UPDATE lets signed-in users set its start event' ($rights -and ($rights | Where-Object { ($_ -band 0x100002) -eq 0x100002 })) "got $rights"
+        $setup.WaitForExit()
+        Check '/UPDATE /ALLUSERS with /WAITPID: exit 0' ($setup.ExitCode -eq 0) "got $($setup.ExitCode)"
         Check 'downgrade: exit 5' ((Run-Setup $OldSetup '/S /ALLUSERS') -eq 5)
         Run-Uninstaller $dir '/ALLUSERS /S' 'HKLM'
         Check-Gone $dir 'HKLM' $programs $desktop $foreign @()

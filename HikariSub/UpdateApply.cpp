@@ -535,22 +535,14 @@ bool update_apply::SetupRunning()
 	return GetLastError() == ERROR_ACCESS_DENIED;
 }
 
-bool update_apply::AskStartAfterSetup(const std::wstring &copyKey)
+bool update_apply::AskStartAfterSetup()
 {
-	wchar_t base[32768];
-	DWORD length = GetEnvironmentVariableW(L"LOCALAPPDATA", base, 32768);
-	if (length == 0 || length >= 32768)
+	HANDLE event = OpenEventW(EVENT_MODIFY_STATE, FALSE, kStartAfterSetup);
+	if (!event)
 		return false;
-	std::wstring folder = std::wstring(base, length) + L"\\HikariSub";
-	CreateDirectoryW(folder.c_str(), nullptr);
-	folder += L"\\Updates";
-	CreateDirectoryW(folder.c_str(), nullptr);
-	HANDLE file = CreateFileW((folder + L"\\start-after-" + copyKey).c_str(), GENERIC_WRITE, 0, nullptr,
-		CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-	if (file == INVALID_HANDLE_VALUE)
-		return false;
-	CloseHandle(file);
-	return true;
+	bool set = SetEvent(event) != FALSE;
+	CloseHandle(event);
+	return set;
 }
 
 std::wstring update_apply::SystemTempFolder()

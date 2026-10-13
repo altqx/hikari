@@ -108,12 +108,16 @@ namespace update_apply
 	// Whether an update's setup runs now: kSetupMutex exists, even one
 	// this process may not open (an elevated setup's).
 	bool SetupRunning();
+	// Made by the same setup, before kSetupMutex, for any signed-in user
+	// to set: an app started meanwhile asks for a start after the update.
+	// An event, not a file: an all-users setup that another administrator
+	// approved runs in that account's profile, not the user's.
+	constexpr wchar_t kStartAfterSetup[] = L"Global\\io.github.altqx.HikariSub.StartAfterUpdate";
 	// A start while an update's setup runs would hold the program open
-	// and stop the update: it leaves at once and asks the setup to start
-	// HikariSub when it is done, with start-after-<copy> in the update
-	// cache of %LOCALAPPDATA% (the folder setup writes its result to).
-	// False when that file cannot be written.
-	bool AskStartAfterSetup(const std::wstring &copyKey);
+	// and stop the update: it leaves at once and sets kStartAfterSetup,
+	// and the setup starts HikariSub as the desktop user when it is done.
+	// False when the event cannot be set.
+	bool AskStartAfterSetup();
 
 	// %windir%\Temp.
 	std::wstring SystemTempFolder();

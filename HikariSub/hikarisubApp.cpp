@@ -424,10 +424,12 @@ bool hikarisubApp::Initialize(int& argc, wxChar** argv)
 	// HikariSub when it is done (installers spec, 4.2).
 	if (update_apply::SetupRunning()) {
 		std::string_view kind = KindTokenAtStart();
-		if ((kind == package_kind::Token(package_kind::Kind::NsisUser) ||
-				kind == package_kind::Token(package_kind::Kind::NsisMachine)) &&
-			update_apply::AskStartAfterSetup(std::wstring(kind.begin(), kind.end())))
+		if (kind == package_kind::Token(package_kind::Kind::NsisUser) ||
+			kind == package_kind::Token(package_kind::Kind::NsisMachine))
+		{
+			update_apply::AskStartAfterSetup();
 			std::exit(0);
+		}
 	}
 #endif
 	return wxApp::Initialize(argc, argv);

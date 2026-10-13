@@ -467,13 +467,14 @@ TEST(updateApplyAStartDuringTheSetupWaitsForIt)
 	CloseHandle(held);
 	CHECK(!update_apply::SetupRunning());
 
-	wchar_t saved[32768] = {};
-	DWORD savedLength = GetEnvironmentVariableW(L"LOCALAPPDATA", saved, 32768);
-	std::wstring local = TempFolder();
-	SetEnvironmentVariableW(L"LOCALAPPDATA", local.c_str());
-	CHECK(update_apply::AskStartAfterSetup(L"nsis-user"));
-	SetEnvironmentVariableW(L"LOCALAPPDATA", savedLength ? saved : nullptr);
-	CHECK(GetFileAttributesW((local + L"\\HikariSub\\Updates\\start-after-nsis-user").c_str()) != INVALID_FILE_ATTRIBUTES);
+	// The start request sets the setup's event; with no setup, nothing.
+	CHECK(!update_apply::AskStartAfterSetup());
+	HANDLE request = CreateEventW(nullptr, TRUE, FALSE, update_apply::kStartAfterSetup);
+	CHECK(request != nullptr);
+	CHECK(WaitForSingleObject(request, 0) == WAIT_TIMEOUT);
+	CHECK(update_apply::AskStartAfterSetup());
+	CHECK(WaitForSingleObject(request, 0) == WAIT_OBJECT_0);
+	CloseHandle(request);
 
 	// A stand-in setup that takes the mutex after starting up, then holds
 	// it 8 s: Launch returns while it is held, not at once.
