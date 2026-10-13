@@ -464,3 +464,18 @@ add_custom_target(hikarisub_appimage
     VERBATIM
 )
 add_dependencies(hikarisub_appimage hikarisub_linux_package)
+
+add_custom_target(hikarisub_native_packages
+    COMMAND ${CMAKE_COMMAND}
+            -D SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -D BINARY_DIR=${CMAKE_BINARY_DIR}
+            -D PACKAGE_ROOT=${HIKARISUB_PACKAGE_ROOT}
+            -D VERSION=${HIKARISUB_PACKAGE_VERSION}
+            -D NFPM=${HIKARISUB_NFPM}
+            -D OUTPUT_DIR=${CMAKE_BINARY_DIR}/dist
+            -D MIN_GLIBC=${HIKARISUB_MIN_GLIBC}
+            -P "${CMAKE_SOURCE_DIR}/cmake/PackageLinuxNative.cmake"
+    COMMENT "Creating the HikariSub deb and rpm"
+    VERBATIM
+)
+add_dependencies(hikarisub_native_packages hikarisub_linux_package)

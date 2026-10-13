@@ -1,0 +1,66 @@
+# Arch dependencies of the legacy hikarisub-bin AUR package
+# (packaging/linux/aur/render-pkgbuild.sh, through resolve-deps.sh).
+# One line per host soname the app tree needs: "<soname> <package>". The
+# render fails on a soname that has no line here.
+ld-linux-x86-64.so.2      @glibc
+libc.so.6                 @glibc
+libm.so.6                 @glibc
+libdl.so.2                @glibc
+libpthread.so.0           @glibc
+librt.so.1                @glibc
+libresolv.so.2            @glibc
+libstdc++.so.6            gcc-libs
+libgcc_s.so.1             gcc-libs
+libgtk-3.so.0             gtk3
+libgdk-3.so.0             gtk3
+libgdk_pixbuf-2.0.so.0    gdk-pixbuf2
+libpango-1.0.so.0         pango
+libpangocairo-1.0.so.0    pango
+libpangoft2-1.0.so.0      pango
+libcairo.so.2             cairo
+libcairo-gobject.so.2     cairo
+libatk-1.0.so.0           at-spi2-core
+libharfbuzz.so.0          harfbuzz
+libglib-2.0.so.0          glib2
+libgobject-2.0.so.0       glib2
+libgio-2.0.so.0           glib2
+libgmodule-2.0.so.0       glib2
+libgthread-2.0.so.0       glib2
+libgstreamer-1.0.so.0     gstreamer
+libgstbase-1.0.so.0       gstreamer
+libgstapp-1.0.so.0        gst-plugins-base-libs
+libgstaudio-1.0.so.0      gst-plugins-base-libs
+libgstvideo-1.0.so.0      gst-plugins-base-libs
+libX11.so.6               libx11
+libXext.so.6              libxext
+libXtst.so.6              libxtst
+libXxf86vm.so.1           libxxf86vm
+libSM.so.6                libsm
+libICE.so.6               libice
+libxkbcommon.so.0         libxkbcommon
+libwayland-client.so.0    wayland
+libwayland-egl.so.1       wayland
+libGL.so.1                libglvnd
+libEGL.so.1               libglvnd
+libGLU.so.1               glu
+libfontconfig.so.1        fontconfig
+libfreetype.so.6          freetype2
+libfribidi.so.0           fribidi
+libbrotlidec.so.1         brotli
+libffi.so.8               libffi
+libz.so.1                 zlib
+libzstd.so.1              zstd
+libexpat.so.1             expat
+libdbus-1.so.3            dbus
+libsystemd.so.0           systemd-libs
+libasound.so.2            alsa-lib
+libpulse.so.0             libpulse
+# runtime
+# The GStreamer plugins legacy plays through (gst-plugins-good has the
+# PulseAudio sink), glib2 for the gio tool (move-to-trash), the icon theme.
+depends     gst-plugins-base
+depends     gst-plugins-good
+depends     gst-libav
+depends     glib2
+depends     hicolor-icon-theme
+optdepends  gst-plugins-bad: more demuxers and parsers for video playback
