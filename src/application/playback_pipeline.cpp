@@ -1,6 +1,8 @@
 #include "hikari/application/playback_pipeline.h"
 
 #include <algorithm>
+#include <bit>
+#include <limits>
 #include <cmath>
 #include <cstring>
 #include <utility>
@@ -94,6 +96,163 @@ std::optional<PixelRect> overlayBounds(const OverlayFrame &o)
     return PixelRect{left, top, right - left + 1, bottom - top + 1};
 }
 
+namespace {
+
+// The millisecond every renderer port draws a time at (its output depends
+// on the time only to the millisecond, subtitle_render.h).
+std::int64_t millisecond(std::int64_t us)
+{
+    return us / 1000;
+}
+
+// Where the next frame starts, from the frames seen so far (the worker's),
+// as the millisecond to render ahead. Each start is taken as a measurement
+// of an exact time on a constant pace, anchor + k * interval (k: frames
+// since the anchor): in a millisecond timebase (every start a whole
+// millisecond, Matroska) one rounded half up from [start - 0.5 ms,
+// start + 0.5 ms), otherwise one within a microsecond of it (a timebase
+// converted to microseconds). The (anchor, interval) pairs every start so
+// far allows form a convex polygon, cut down by each new start; the next
+// frame's start lies in the range the polygon gives for k + 1, and the
+// millisecond covering most of that range is the guess (one render a frame;
+// nearly always right once a few frames have narrowed the pace). A start
+// the polygon cannot hold (a new rate, a seek the epoch did not show)
+// measures again from the frame before it. While half or more of the last
+// 16 guesses missed (a variable frame rate) nothing is rendered ahead.
+class Pace {
+public:
+    // The frame `startUs` arrived: the millisecond to render ahead for the
+    // next one (none while the guesses keep missing; `withheld` says so).
+    std::optional<std::int64_t> next(std::uint64_t epoch, std::int64_t startUs, std::optional<std::int64_t> endUs,
+                                     bool &withheld)
+    {
+        withheld = false;
+        const bool ms = startUs % 1000 == 0;
+        const double half = ms ? 500.0 : 1.0;
+        if (epoch != m_epoch || !m_last || startUs <= *m_last) {
+            *this = Pace{};
+            m_epoch = epoch;
+            restart(startUs, half);
+        } else {
+            if (m_guess)
+                record(*m_guess == millisecond(startUs));
+            double low = 0, high = 0;
+            span(1.0, 0.0, low, high); // the interval's range
+            const double middle = (low + high) / 2;
+            const std::int64_t k =
+                m_k + (m_k > 0 ? std::max<std::int64_t>(1, std::llround(static_cast<double>(startUs - *m_last) / middle)) : 1);
+            if (!cut(k, startUs, half)) {
+                restart(*m_last, half);
+                cut(1, startUs, half);
+                m_k = 1;
+            } else {
+                m_k = k;
+            }
+        }
+        m_last = startUs;
+        m_guess.reset();
+        if (m_k == 0) {
+            // One frame: its end, if it has one, is the guess.
+            if (endUs && *endUs > startUs)
+                m_guess = millisecond(*endUs);
+            return m_guess;
+        }
+        double lo = 0, hi = 0;
+        span(static_cast<double>(m_k + 1), 1.0, lo, hi);
+        lo += static_cast<double>(m_anchor);
+        hi += static_cast<double>(m_anchor);
+        // The millisecond lo falls in, or the next one if more of the range is past it.
+        const auto key = [ms](double us) {
+            return static_cast<std::int64_t>(ms ? std::floor((us + 500.0) / 1000.0) : std::trunc(us / 1000.0));
+        };
+        const std::int64_t first = key(lo);
+        const double boundary = static_cast<double>(first + 1) * 1000.0 - (ms ? 500.0 : 0.0);
+        m_guess = hi <= boundary || boundary - lo >= hi - boundary ? first : first + 1;
+        if (unreliable()) {
+            withheld = true;
+            return std::nullopt;
+        }
+        return m_guess;
+    }
+
+private:
+    struct Point {
+        double a, p; // the anchor's exact start (from the anchor's start, us) and the interval (us)
+    };
+    void restart(std::int64_t anchor, double half)
+    {
+        m_anchor = anchor;
+        m_k = 0;
+        // 1 to 1000 frames a second.
+        m_polygon = {{-half, 1e3}, {half, 1e3}, {half, 1e6}, {-half, 1e6}};
+    }
+    // Keeps (a, p) with ca * a + cp * p <= c (Sutherland-Hodgman).
+    void clip(double ca, double cp, double c)
+    {
+        std::vector<Point> out;
+        const std::size_t n = m_polygon.size();
+        for (std::size_t i = 0; i < n; ++i) {
+            const Point &x = m_polygon[i], &y = m_polygon[(i + 1) % n];
+            const double fx = ca * x.a + cp * x.p - c, fy = ca * y.a + cp * y.p - c;
+            if (fx <= 0)
+                out.push_back(x);
+            if ((fx < 0 && fy > 0) || (fx > 0 && fy < 0)) {
+                const double t = fx / (fx - fy);
+                out.push_back({x.a + t * (y.a - x.a), x.p + t * (y.p - x.p)});
+            }
+        }
+        // Points a cut left on top of each other.
+        std::vector<Point> kept;
+        const auto same = [](const Point &x, const Point &y) {
+            return std::abs(x.a - y.a) <= 1e-6 && std::abs(x.p - y.p) <= 1e-9;
+        };
+        for (const Point &q : out)
+            if (kept.empty() || !same(kept.back(), q))
+                kept.push_back(q);
+        if (kept.size() > 1 && same(kept.front(), kept.back()))
+            kept.pop_back();
+        m_polygon = std::move(kept);
+    }
+    // The frame k steps from the anchor started at `startUs`: false when no
+    // pace allows it.
+    bool cut(std::int64_t k, std::int64_t startUs, double half)
+    {
+        const double x = static_cast<double>(startUs - m_anchor), kd = static_cast<double>(k);
+        clip(1.0, kd, x + half);
+        if (m_polygon.size() >= 3)
+            clip(-1.0, -kd, -(x - half));
+        return m_polygon.size() >= 3;
+    }
+    // The range of a * ca + p * cp over the polygon (its corners).
+    void span(double cp, double ca, double &lo, double &hi) const
+    {
+        lo = std::numeric_limits<double>::infinity();
+        hi = -lo;
+        for (const Point &q : m_polygon) {
+            const double v = ca * q.a + cp * q.p;
+            lo = std::min(lo, v);
+            hi = std::max(hi, v);
+        }
+    }
+    void record(bool hit)
+    {
+        m_misses = ((m_misses << 1) | (hit ? 0u : 1u)) & 0xffffu;
+        m_recorded = std::min(m_recorded + 1, 16);
+    }
+    bool unreliable() const { return m_recorded > 0 && std::popcount(m_misses) * 2 >= std::max(m_recorded, 8); }
+
+    std::uint64_t m_epoch = 0;
+    std::optional<std::int64_t> m_last;
+    std::int64_t m_anchor = 0;
+    std::int64_t m_k = 0; // frames from the anchor to the last start
+    std::vector<Point> m_polygon;
+    std::optional<std::int64_t> m_guess; // the millisecond guessed for the next frame
+    std::uint32_t m_misses = 0;          // the last guesses, newest in bit 0 (1: missed)
+    int m_recorded = 0;
+};
+
+} // namespace
+
 struct PlaybackPipeline::State {
     std::mutex mutex;
     std::condition_variable wake;
@@ -120,36 +279,7 @@ struct PlaybackPipeline::State {
     };
     // The worker's own: what it rendered ahead, and the frames' pace.
     std::vector<Ahead> ahead;
-    std::uint64_t paceEpoch = 0;
-    std::optional<std::int64_t> lastStartUs;
-    double intervalUs = 0;
-    // Where the next frame may start: one frame on at the pace seen so far
-    // (the frame's own duration until then). In a millisecond timebase
-    // (Matroska) a constant-rate frame starts at its exact time rounded to
-    // the millisecond, either side of the pace: both are tried.
-    std::vector<std::int64_t> nextStarts(std::uint64_t epoch, std::int64_t startUs, std::optional<std::int64_t> endUs)
-    {
-        if (epoch != paceEpoch || !lastStartUs || startUs <= *lastStartUs) {
-            paceEpoch = epoch;
-            intervalUs = 0;
-        } else {
-            const double step = static_cast<double>(startUs - *lastStartUs);
-            if (intervalUs <= 0)
-                intervalUs = step;
-            else if (step < intervalUs * 1.5) // not across dropped frames
-                intervalUs = intervalUs * 0.9 + step * 0.1;
-        }
-        lastStartUs = startUs;
-        const double pace = intervalUs > 0 ? intervalUs : endUs ? static_cast<double>(*endUs - startUs) : 0;
-        if (pace <= 0)
-            return {};
-        const double next = static_cast<double>(startUs) + pace;
-        if (startUs % 1000 != 0)
-            return {endUs && intervalUs <= 0 ? *endUs : std::llround(next)};
-        const std::int64_t below = static_cast<std::int64_t>(std::floor(next / 1000.0)) * 1000;
-        const bool nearerBelow = next - static_cast<double>(below) < 500.0;
-        return nearerBelow ? std::vector<std::int64_t>{below, below + 1000} : std::vector<std::int64_t>{below + 1000, below};
-    }
+    Pace pace;
 };
 
 PlaybackPipeline::PlaybackPipeline(SubtitleRendererPort &renderer, Post post, Deliver deliver)
@@ -223,8 +353,18 @@ PlaybackPipeline::Output PlaybackPipeline::process(Input input)
     out.startUs = input.startUs;
     out.frame = input.make ? input.make(*m_pool) : nullptr;
     auto ahead = std::exchange(m_state->ahead, {});
-    if (!out.frame)
+    // What was rendered ahead and not taken by this frame was work for nothing.
+    const auto unused = [this, &ahead](bool taken) {
+        const std::size_t n = ahead.size() - (taken ? 1 : 0);
+        if (n == 0)
+            return;
+        std::lock_guard lock(m_state->mutex);
+        m_state->counters.aheadUnused += n;
+    };
+    if (!out.frame) {
+        unused(false);
         return out;
+    }
     std::uint64_t serial = 0;
     bool on = false;
     {
@@ -232,21 +372,27 @@ PlaybackPipeline::Output PlaybackPipeline::process(Input input)
         serial = m_state->serial;
         on = m_state->on;
     }
-    if (!serial)
+    if (!serial) {
+        unused(false);
         return out;
+    }
     out.subtitles = serial;
-    if (!on)
+    if (!on) {
+        unused(false);
         return out;
+    }
     const int width = out.frame->width, height = out.frame->height;
     for (auto &made : ahead)
-        if (made.serial == serial && made.at.timeUs == input.startUs && made.at.width == width &&
+        if (made.serial == serial && millisecond(made.at.timeUs) == millisecond(input.startUs) && made.at.width == width &&
             made.at.height == height) {
             out.overlay = std::move(made.overlay);
             out.overlayBounds = made.bounds;
+            unused(true);
             std::lock_guard lock(m_state->mutex);
             ++m_state->counters.aheadUsed;
             return out;
         }
+    unused(false);
     if (auto overlay = m_renderer.render(core::DocumentTime(input.startUs), width, height)) {
         out.overlayBounds = overlayBounds(*overlay);
         out.overlay = std::make_shared<const OverlayFrame>(std::move(*overlay));
@@ -284,9 +430,14 @@ void PlaybackPipeline::run()
                 made.overlay = std::make_shared<const OverlayFrame>(std::move(*overlay));
             }
             state->ahead.push_back(std::move(made));
+            {
+                std::lock_guard lock(state->mutex);
+                ++state->counters.aheadRendered;
+            }
             continue;
         }
-        const std::vector<std::int64_t> next = state->nextStarts(input->epoch, input->startUs, input->endUs);
+        bool withheld = false;
+        const std::optional<std::int64_t> next = state->pace.next(input->epoch, input->startUs, input->endUs, withheld);
         Output out = process(std::move(*input));
         const bool shown = out.frame != nullptr;
         const int width = shown ? out.frame->width : 0, height = shown ? out.frame->height : 0;
@@ -300,9 +451,14 @@ void PlaybackPipeline::run()
             state->output = std::move(out);
             if (!state->posted)
                 post = state->posted = true;
-            if (shown && !state->input)
-                for (const std::int64_t at : next)
-                    state->aheadRequests.push_back({at, width, height});
+            if (shown && !state->input) {
+                if (next) {
+                    state->aheadRequests.push_back({*next * 1000, width, height});
+                    ++state->counters.aheadPlanned;
+                }
+                if (withheld)
+                    ++state->counters.aheadWithheld;
+            }
         }
         if (post)
             state->post([weak] {

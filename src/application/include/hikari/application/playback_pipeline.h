@@ -8,7 +8,13 @@
 // allocation or zero fill per frame), renders its subtitle overlay at its
 // start time, and posts the result to the owner's thread, where again only
 // the newest result waits. With no input waiting the worker renders the
-// overlay of the next frame (the current one's end) ahead of time.
+// overlay of the next frame ahead of time, once, at the millisecond it
+// guesses the frame starts in (renderers draw to the millisecond,
+// subtitle_render.h): one frame on at the constant pace the starts so far
+// allow (exactly, even when a millisecond timebase rounds every start; the
+// first frame's guess is its end). While half or more of the last 16
+// guesses missed (a variable frame rate) it renders nothing ahead, so
+// guessing costs at most one render a frame and usually none.
 //
 // The renderer port's render() must be safe to call from the worker while
 // the owner prepares new subtitles (SubtitleRendererPort's adapters serialize
@@ -82,7 +88,11 @@ public:
         std::uint64_t superseded = 0; // replaced while waiting for the worker
         std::uint64_t delivered = 0;
         std::uint64_t replacedResults = 0; // a newer result replaced one the owner had not taken
+        std::uint64_t aheadPlanned = 0;    // overlays asked to be rendered ahead
+        std::uint64_t aheadRendered = 0;   // ... and rendered (the others: a frame came first)
         std::uint64_t aheadUsed = 0;       // overlays rendered ahead that a frame then used
+        std::uint64_t aheadUnused = 0;     // overlays rendered ahead that no frame used
+        std::uint64_t aheadWithheld = 0;   // frames after which nothing was rendered ahead (unreliable pace)
     };
 
     // No post: inline, every submitted frame is made, rendered and delivered

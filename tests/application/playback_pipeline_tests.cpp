@@ -239,10 +239,10 @@ TEST(PlaybackPipeline, TheNextFramesOverlayIsRenderedAhead)
     PlaybackPipeline pipeline(renderer, queue.post(), [&](PlaybackPipeline::Output o) { got.push_back(std::move(o)); });
     pipeline.setSubtitles(1, true);
     pipeline.submit(input(0, 40'000));
-    // The frame's own overlay, then the next frame's at its end (and the
-    // millisecond after it, either side of the pace).
-    ASSERT_TRUE(eventually([&] { return renderer.times().size() == 3; }));
-    EXPECT_EQ(renderer.times(), (std::vector<std::int64_t>{0, 40'000, 41'000}));
+    // The frame's own overlay, then the next frame's at its end: a start
+    // within half a millisecond of 0 ends within half a millisecond of 40.
+    ASSERT_TRUE(eventually([&] { return renderer.times().size() == 2; }));
+    EXPECT_EQ(renderer.times(), (std::vector<std::int64_t>{0, 40'000}));
     pipeline.submit(input(40'000, 80'000));
     ASSERT_TRUE(eventually([&] { return pipeline.counters().aheadUsed == 1 && queue.size() == 1; }));
     queue.drain();
@@ -263,7 +263,7 @@ TEST(PlaybackPipeline, AnOverlayRenderedAheadForOlderSubtitlesIsNotUsed)
     PlaybackPipeline pipeline(renderer, queue.post(), [&](PlaybackPipeline::Output o) { got.push_back(std::move(o)); });
     pipeline.setSubtitles(1, true);
     pipeline.submit(input(0, 40'000));
-    ASSERT_TRUE(eventually([&] { return renderer.times().size() == 3; }));
+    ASSERT_TRUE(eventually([&] { return renderer.times().size() == 2; }));
     pipeline.setSubtitles(2, true); // new subtitles prepared
     pipeline.submit(input(40'000, 80'000));
     ASSERT_TRUE(eventually([&] {
@@ -274,6 +274,82 @@ TEST(PlaybackPipeline, AnOverlayRenderedAheadForOlderSubtitlesIsNotUsed)
     EXPECT_EQ(got.back().subtitles, 2u);
     const auto times = renderer.times();
     EXPECT_EQ(std::count(times.begin(), times.end(), 40'000), 2); // ahead, then again for serial 2
+}
+
+namespace {
+
+// Plays `starts` one frame at a time, each after the worker has rendered
+// what it planned ahead for the one before.
+PlaybackPipeline::Counters playOneByOne(const std::vector<std::int64_t> &starts, std::vector<std::int64_t> *rendered = nullptr)
+{
+    Renderer renderer;
+    Queue queue;
+    std::size_t shown = 0;
+    PlaybackPipeline pipeline(renderer, queue.post(), [&](PlaybackPipeline::Output) { ++shown; });
+    pipeline.setSubtitles(1, true);
+    for (std::size_t i = 0; i < starts.size(); ++i) {
+        const auto end = i + 1 < starts.size() ? std::optional(starts[i + 1]) : std::nullopt;
+        pipeline.submit(input(starts[i], end));
+        EXPECT_TRUE(eventually([&] {
+            queue.drain();
+            return shown == i + 1;
+        }));
+        EXPECT_TRUE(eventually([&] {
+            const auto c = pipeline.counters();
+            return c.aheadRendered == c.aheadPlanned;
+        }));
+    }
+    if (rendered)
+        *rendered = renderer.times();
+    return pipeline.counters();
+}
+
+} // namespace
+
+// 23.976 frames a second in a millisecond timebase (Matroska): each start
+// is its exact time rounded, 41 or 42 ms after the one before. Once the
+// pace has settled the next start is known to the millisecond, so nearly
+// every frame's overlay is rendered once, ahead of it.
+TEST(PlaybackPipeline, AConstantRateInMillisecondsIsRenderedAheadOnce)
+{
+    std::vector<std::int64_t> starts;
+    for (int n = 0; n < 240; ++n)
+        starts.push_back((static_cast<std::int64_t>(n) * 1'001'000 / 24 + 500) / 1000 * 1000);
+    std::vector<std::int64_t> rendered;
+    const auto c = playOneByOne(starts, &rendered);
+    EXPECT_GE(c.aheadUsed, 230u);
+    EXPECT_LE(c.aheadUnused, 12u); // a guess on a rounding boundary may miss
+    EXPECT_EQ(c.aheadWithheld, 0u);
+    EXPECT_LE(rendered.size(), starts.size() + 14); // each frame's overlay about once
+}
+
+// The same with a timebase converted to microseconds (29.97 frames a
+// second at 90 kHz): the starts are a microsecond either side of the pace,
+// and an overlay rendered ahead serves a frame starting in its millisecond.
+TEST(PlaybackPipeline, AConstantRateInMicrosecondsIsRenderedAheadOnce)
+{
+    std::vector<std::int64_t> starts;
+    for (int n = 0; n < 120; ++n)
+        starts.push_back(static_cast<std::int64_t>(n) * 3003 * 1'000'000 / 90'000 + 1);
+    const auto c = playOneByOne(starts);
+    EXPECT_GE(c.aheadUsed, 115u);
+    EXPECT_LE(c.aheadUnused, 3u);
+}
+
+// A variable frame rate: the guesses keep missing, so after a few the
+// pipeline stops rendering ahead instead of rendering for nothing.
+TEST(PlaybackPipeline, AnUnpredictablePaceStopsRenderingAhead)
+{
+    std::mt19937 random(7);
+    std::uniform_int_distribution<int> step(15, 70);
+    std::vector<std::int64_t> starts{0};
+    for (int n = 1; n < 160; ++n)
+        starts.push_back(starts.back() + step(random) * 1000);
+    std::vector<std::int64_t> rendered;
+    const auto c = playOneByOne(starts, &rendered);
+    EXPECT_GE(c.aheadWithheld, 130u);
+    EXPECT_LE(c.aheadUnused, 10u); // a few guesses, then none
+    EXPECT_LE(rendered.size(), starts.size() + 10);
 }
 
 TEST(PlaybackPipeline, AFrameWithNothingToShowGivesNoOverlay)
@@ -345,7 +421,7 @@ void reference(const yuv::Matrix &m, const std::uint8_t *y, const std::uint8_t *
 TEST(YuvRow, MatchesTheFormulaForEveryMatrixAndWidth)
 {
     std::vector<yuv::Matrix> matrices;
-    for (auto space : {yuv::Space::Bt601, yuv::Space::Bt709, yuv::Space::Bt2020})
+    for (auto space : {yuv::Space::Bt601, yuv::Space::Bt709, yuv::Space::Bt2020, yuv::Space::Fcc, yuv::Space::Smpte240m})
         for (bool full : {false, true})
             matrices.push_back(yuv::matrix(space, full));
     matrices.push_back({298, 409, -100, -208, 516, 16, 8}); // W1's DirectShow BT.601
@@ -374,7 +450,7 @@ TEST(YuvRow, MatchesTheFormulaForEveryMatrixAndWidth)
 
 TEST(YuvRow, LimitedRangeBlackAndWhiteAreExact)
 {
-    for (auto space : {yuv::Space::Bt601, yuv::Space::Bt709, yuv::Space::Bt2020}) {
+    for (auto space : {yuv::Space::Bt601, yuv::Space::Bt709, yuv::Space::Bt2020, yuv::Space::Fcc, yuv::Space::Smpte240m}) {
         const auto m = yuv::matrix(space, false);
         std::vector<std::uint8_t> y(32), u(24, 128), v(24, 128), out(128);
         for (int x = 0; x < 32; ++x)
