@@ -15645,6 +15645,91 @@ private slots:
         }
     }
 
+    // V3: what legacy's wxDir::GetAllFiles(wxDIR_FILES) lists where Qt's
+    // QDir::Files would not, or the reverse (application::legacy_dir). On
+    // Linux every entry that is not a folder is listed, a symbolic link to
+    // nothing among them, so NextFile goes to one named like a video and
+    // tries to open it; on Windows a video with the system attribute is left
+    // out as a hidden one is (msw/dir.cpp IsHidden). The current file written
+    // with ".." is found, the folder listed as written (wxFileName::GetPath).
+    void nextFileListsWhatLegacyListed()
+    {
+        restartWithoutSound();
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        const QString folder = own.filePath(QStringLiteral("walk"));
+        QVERIFY(QDir().mkpath(folder + QStringLiteral("/sub")));
+        for (const char *name : {"a.mkv", "c.mkv"})
+            QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), QDir(folder).filePath(QLatin1String(name))));
+        const QString special = QStringLiteral("b.mkv");
+#ifdef _WIN32
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), QDir(folder).filePath(special)));
+        QVERIFY(tests::setSystemAttribute(QDir(folder).filePath(special)));
+        const bool specialListed = false;
+#else
+        QVERIFY(QFile::link(own.filePath(QStringLiteral("missing.mkv")), QDir(folder).filePath(special)));
+        const bool specialListed = true;
+#endif
+        QStringList listing;
+        for (const QString &name : tests::enumerateFolder(folder))
+            if (name != QLatin1String("sub") && (specialListed || name != special))
+                listing << name;
+        qInfo() << "listing here:" << listing;
+        QCOMPARE(listing.size(), specialListed ? 3 : 2);
+        const auto real = [&](const QString &name) { return name != special; };
+        const auto pathOf = [&](const QString &name) { return QDir::toNativeSeparators(QDir(folder).filePath(name)); };
+        const auto dottedOf = [&](const QString &name) {
+            return QDir::toNativeSeparators(folder + QStringLiteral("/sub/../") + name);
+        };
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        const auto sessionPath = [&] { return QString::fromStdString(video.session().path()); };
+
+        // "..": from the listing's end the way out restarts, and the other way
+        // opens the neighbour, written with the same folder
+        {
+            const bool atEnd = real(listing.last());
+            const QString start = atEnd ? listing.last() : listing.first();
+            const QString neighbour = atEnd ? listing[listing.size() - 2] : listing[1];
+            video.openVideo(dottedOf(start));
+            QTRY_COMPARE_WITH_TIMEOUT(sessionPath(), dottedOf(start), 20000);
+            QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+            QVERIFY(application->nextVideoFile(atEnd));
+            QTest::qWait(200);
+            QCOMPARE(sessionPath(), dottedOf(start));
+            QCOMPARE(video.session().requestedFrame(), std::optional<int>(0));
+            QVERIFY(application->nextVideoFile(!atEnd));
+            QTRY_COMPARE_WITH_TIMEOUT(sessionPath(), dottedOf(neighbour), 20000);
+        }
+
+        // both ways from the real videos at the ends: the listing's videos in
+        // its order, the special entry included only where legacy listed it
+        // (there its open fails, which ends the walk)
+        bool specialReached = false;
+        for (const bool next : {true, false}) {
+            QString start;
+            for (const QString &name : listing)
+                if (real(name) && (start.isEmpty() || !next))
+                    start = name;
+            video.openVideo(pathOf(start));
+            QTRY_COMPARE_WITH_TIMEOUT(sessionPath(), pathOf(start), 20000);
+            QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+            const int from = static_cast<int>(listing.indexOf(start));
+            for (int k = next ? from + 1 : from - 1; next ? k < listing.size() : k >= 0; next ? ++k : --k) {
+                QVERIFY(application->nextVideoFile(next));
+                QTRY_COMPARE_WITH_TIMEOUT(sessionPath(), pathOf(listing[k]), 20000);
+                if (!real(listing[k])) {
+                    QTRY_VERIFY_WITH_TIMEOUT(video.session().error().has_value(), 20000);
+                    QVERIFY(!video.hasVideo());
+                    specialReached = true;
+                    break;
+                }
+                QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+            }
+        }
+        QCOMPARE(specialReached, specialListed);
+    }
+
     // V3-next-file-no-recent: with no video and an empty recent list the
     // previous/next file does nothing (legacy VideoBox::NextFile read
     // videorec[videorec.size() - 1] of the empty list, VideoBox.cpp:691).

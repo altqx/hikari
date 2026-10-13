@@ -15,6 +15,9 @@ QStringList enumerateFolder(const QString &folder);
 // Windows: gives `path` FILE_ATTRIBUTE_HIDDEN; elsewhere does nothing. True
 // when done.
 bool setHiddenAttribute(const QString &path);
+// Windows: gives `path` FILE_ATTRIBUTE_SYSTEM alone; elsewhere does nothing.
+// True when done.
+bool setSystemAttribute(const QString &path);
 // Windows: the file system of the volume holding `folder` ("NTFS", "ReFS");
 // elsewhere an empty string.
 QString folderFileSystem(const QString &folder);

@@ -37,6 +37,17 @@ struct NextFileStep {
     std::string path;
 };
 
+// The folder NextFile lists (VideoBox.cpp:692-697: wxFileName(path).GetPath(),
+// wxPATH_GET_VOLUME): `path`'s folder as written, not cleaned. The volume
+// (Dos: "C:", "\\server", "\\?\C:"), the root separator when the path is
+// absolute, then the folder's names joined by the separator ('/' or '\'),
+// empty ones (doubled separators) dropped and "." and ".." kept; "" when
+// `path` names no folder. wxDir lists each file as that folder, a separator
+// and the name, so NextFile finds the current file when `path` is written
+// that way.
+enum class PathFormat { Unix, Dos };
+std::string nextFileFolder(std::string_view path, PathFormat format);
+
 // VideoBox::NextFile over `files`, the folder's files (wxDir::GetAllFiles with
 // wxDIR_FILES: hidden files left out, in the platform's own listing order,
 // unsorted) as full paths, or nullopt when the folder could not be opened:

@@ -267,12 +267,21 @@ bool Application::nextVideoFile(bool next)
     // the last listing again (legacy's `files` member)
     std::optional<std::vector<std::string>> files;
     if (!application::isDummyVideo(path.toStdString())) {
-        const QDir dir = QFileInfo(path).absoluteDir();
-        if (const auto listed = application::legacy_dir::entries(QFileInfo(dir.absolutePath()).filesystemAbsoluteFilePath(),
-                                                                 {}, application::legacy_dir::Files)) {
+#ifdef _WIN32
+        constexpr auto format = application::PathFormat::Dos;
+#else
+        constexpr auto format = application::PathFormat::Unix;
+#endif
+        // the folder as `path` writes it and each file as that folder, a
+        // separator and the name (wxDir::GetAllFiles), so that `path` is
+        // found when written so ("..", "." or a relative path kept)
+        const QString folder = QString::fromStdString(application::nextFileFolder(path.toStdString(), format));
+        if (const auto listed = application::legacy_dir::entries(QFileInfo(folder).filesystemFilePath(), {},
+                                                                 application::legacy_dir::Files)) {
             files.emplace();
+            const QString prefix = folder.endsWith(QDir::separator()) ? folder : folder + QDir::separator();
             for (const auto &file : *listed)
-                files->push_back(QDir::toNativeSeparators(QFileInfo(file).absoluteFilePath()).toStdString());
+                files->push_back((prefix + QFileInfo(file).fileName()).toStdString());
         }
     }
     const auto step = m_nextFile.step(std::move(files), path.toStdString(), next);

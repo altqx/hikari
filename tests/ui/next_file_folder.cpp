@@ -3,6 +3,8 @@
 #include <QDir>
 #include <QFile>
 
+#include <string>
+
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -49,6 +51,16 @@ bool setHiddenAttribute(const QString &path)
 {
 #ifdef _WIN32
     return SetFileAttributesW(QDir::toNativeSeparators(path).toStdWString().c_str(), FILE_ATTRIBUTE_HIDDEN) != 0;
+#else
+    Q_UNUSED(path);
+    return true;
+#endif
+}
+
+bool setSystemAttribute(const QString &path)
+{
+#ifdef _WIN32
+    return SetFileAttributesW(QDir::toNativeSeparators(path).toStdWString().c_str(), FILE_ATTRIBUTE_SYSTEM) != 0;
 #else
     Q_UNUSED(path);
     return true;

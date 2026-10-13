@@ -58,6 +58,29 @@ TEST(NextFile, WalksTheListingInItsOwnOrderSkippingOtherFiles)
     EXPECT_EQ(step.path, "/v/c.mkv");
 }
 
+// The folder NextFile lists, wxFileName(path).GetPath() (VideoBox.cpp:692-697):
+// as written, "." and ".." kept, doubled separators dropped.
+TEST(NextFile, TheFolderAsWxFileNameGivesIt)
+{
+    EXPECT_EQ(nextFileFolder("/v/a.mkv", PathFormat::Unix), "/v");
+    EXPECT_EQ(nextFileFolder("/v/sub/../a.mkv", PathFormat::Unix), "/v/sub/..");
+    EXPECT_EQ(nextFileFolder("/v/./a.mkv", PathFormat::Unix), "/v/.");
+    EXPECT_EQ(nextFileFolder("//v//w///a.mkv", PathFormat::Unix), "/v/w");
+    EXPECT_EQ(nextFileFolder("/a.mkv", PathFormat::Unix), "/");
+    EXPECT_EQ(nextFileFolder("v/a.mkv", PathFormat::Unix), "v");
+    EXPECT_EQ(nextFileFolder("../v/a.mkv", PathFormat::Unix), "../v");
+    EXPECT_EQ(nextFileFolder("a.mkv", PathFormat::Unix), "");
+    EXPECT_EQ(nextFileFolder("/v\\w/a.mkv", PathFormat::Unix), "/v\\w"); // a backslash is a name's
+    EXPECT_EQ(nextFileFolder(R"(C:\v\a.mkv)", PathFormat::Dos), R"(C:\v)");
+    EXPECT_EQ(nextFileFolder(R"(C:\v\sub\..\a.mkv)", PathFormat::Dos), R"(C:\v\sub\..)");
+    EXPECT_EQ(nextFileFolder(R"(C:\v\\w/a.mkv)", PathFormat::Dos), R"(C:\v\w)");
+    EXPECT_EQ(nextFileFolder(R"(C:\a.mkv)", PathFormat::Dos), R"(C:\)");
+    EXPECT_EQ(nextFileFolder(R"(C:a.mkv)", PathFormat::Dos), "C:");
+    EXPECT_EQ(nextFileFolder(R"(\\server\share\v\a.mkv)", PathFormat::Dos), R"(\\server\share\v)");
+    EXPECT_EQ(nextFileFolder(R"(\\?\C:\v\a.mkv)", PathFormat::Dos), R"(\\?\C:\v)");
+    EXPECT_EQ(nextFileFolder(R"(v\a.mkv)", PathFormat::Dos), "v");
+}
+
 TEST(NextFile, EndsRestartAndAMissingFileUsesTheRememberedPosition)
 {
     const std::vector<std::string> files{"/v/a.mkv", "/v/b.mkv", "/v/c.mkv"};
