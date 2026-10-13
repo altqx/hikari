@@ -35,8 +35,10 @@
 
 #include <QAccessible>
 #include <QMimeData>
+#include <QPainter>
 #include <QPalette>
 #include <QClipboard>
+#include <QCursor>
 #include <QStyleHints>
 #include <QDirIterator>
 #include <QGuiApplication>
@@ -13871,6 +13873,127 @@ private slots:
                         .save(out + QStringLiteral("/appearance-page") + suffix));
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
+    }
+
+    // D3: screenshots of the dock and panel chrome for review in the four
+    // themes of the theme layer, written to HIKARI_SURFACE_SHOT_DIR when it
+    // is set (dock-<view>-<theme>.png): the main window; the bottom panels'
+    // one-tab bars (the Grid, the Reference tray with its toolbar in the
+    // header); a tabbed group (Shift times beside the Line editor) and its
+    // "⋯" menu; a floating panel (Audio) on the main window's background;
+    // and a drag of the Video panel by its header over the Grid, the
+    // dragged window painted over the main window as the screen shows it.
+    void dockChromeScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
+        QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
+        auto *root = engine->rootObjects().first();
+        const auto cropOf = [](QQuickItem *it) {
+            const qreal dpr = it->window()->effectiveDevicePixelRatio();
+            const QRectF r = it->mapRectToScene(QRectF(0, 0, it->width(), it->height()));
+            return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+        };
+        const auto groupOf = [](QQuickItem *header) {
+            for (QQuickItem *p = header; p; p = p->parentItem())
+                if (p->objectName() == QLatin1String("dockGroup"))
+                    return p;
+            return header;
+        };
+        const auto sendMouse = [](QWindow *w, QEvent::Type type, QPoint global, Qt::MouseButtons buttons) {
+            QCursor::setPos(global);
+            const QPointF local = QPointF(global - w->position());
+            QMouseEvent event(type, local, local, QPointF(global), Qt::LeftButton, buttons, Qt::NoModifier);
+            QCoreApplication::sendEvent(w, &event);
+            QCoreApplication::processEvents();
+        };
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString prefix = out + QStringLiteral("/dock-");
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+            QTest::qWait(200);
+            QVERIFY(window->grabWindow().save(prefix + QStringLiteral("main") + suffix));
+            // The bottom panels: the Grid's one-tab bar and the Reference tray's.
+            QQuickItem *grid = dockHeader(QStringLiteral("Grid"));
+            QQuickItem *reference = dockHeader(QStringLiteral("Reference"));
+            QVERIFY(grid && reference);
+            QVERIFY(window->grabWindow()
+                        .copy(cropOf(groupOf(grid)).united(cropOf(groupOf(reference))))
+                        .save(prefix + QStringLiteral("bottom") + suffix));
+            // A tabbed group and its "⋯" menu.
+            QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
+            QTRY_VERIFY(item<QObject>("timingDock")->property("isOpen").toBool());
+            QQuickItem *timing = nullptr;
+            QTRY_VERIFY((timing = dockHeader(QStringLiteral("Timing"))));
+            QTest::qWait(200);
+            QVERIFY(window->grabWindow().copy(cropOf(groupOf(timing))).save(prefix + QStringLiteral("tabbed") + suffix));
+            QVERIFY(openPanelMenu(QStringLiteral("Timing")));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(prefix + QStringLiteral("menu") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMenu"), "close"));
+            QTRY_VERIFY(!named("panelOptionsMenu")->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(item<QObject>("timingDock"), "close"));
+            QTRY_VERIFY(!item<QObject>("timingDock")->property("isOpen").toBool());
+            // A floating panel on the main window's background.
+            auto *audioDock = item<QObject>("audioDock");
+            audioDock->setProperty("isFloating", true);
+            QTRY_VERIFY(item("audioPanel")->window() != window);
+            QQuickWindow *floating = item("audioPanel")->window();
+            QTRY_VERIFY(floating->isExposed());
+            QTest::qWait(300);
+            {
+                const QImage shot = floating->grabWindow();
+                QImage canvas(shot.size() + QSize(40, 40), QImage::Format_ARGB32_Premultiplied);
+                canvas.fill(window->color());
+                QPainter p(&canvas);
+                p.drawImage(20, 20, shot);
+                p.end();
+                QVERIFY(canvas.save(prefix + QStringLiteral("floating") + suffix));
+            }
+            audioDock->setProperty("isFloating", false);
+            QTRY_VERIFY(item("audioPanel")->window() == window);
+            QTest::qWait(200);
+            // A drag: the Video panel by its header over the Grid's left part.
+            QQuickItem *video = dockHeader(QStringLiteral("Video"));
+            QVERIFY(video);
+            QQuickItem *gridGroup = groupOf(dockHeader(QStringLiteral("Grid")));
+            const QPoint start = window->mapToGlobal(video->mapToScene(QPointF(60, video->height() / 2)).toPoint());
+            const QRectF g = gridGroup->mapRectToScene(QRectF(0, 0, gridGroup->width(), gridGroup->height()));
+            const QPoint target = window->mapToGlobal(QPointF(g.left() + g.width() / 8, g.center().y()).toPoint());
+            sendMouse(window, QEvent::MouseButtonPress, start, Qt::LeftButton);
+            QWindow *receiver = window;
+            for (int i = 1; i <= 20; ++i) {
+                sendMouse(receiver, QEvent::MouseMove, start + (target - start) * i / 20, Qt::LeftButton);
+                if (QWindow *f = item("videoPanel")->window(); f != window)
+                    receiver = f;
+                QTest::qWait(20);
+            }
+            QTest::qWait(200);
+            QImage shot = window->grabWindow();
+            if (auto *f = qobject_cast<QQuickWindow *>(item("videoPanel")->window()); f && f != window) {
+                QPainter p(&shot);
+                p.setOpacity(f->opacity());
+                const qreal dpr = window->effectiveDevicePixelRatio();
+                const QImage dragged = f->grabWindow();
+                p.drawImage(QRectF(QPointF(f->position() - window->position()) * dpr, QSizeF(dragged.size())), dragged);
+            }
+            QVERIFY(shot.save(prefix + QStringLiteral("drag") + suffix));
+            sendMouse(receiver, QEvent::MouseButtonRelease, target, Qt::NoButton);
+            QTest::qWait(200);
+            application->workspaceLayout().resetLayout();
+            QVERIFY(QMetaObject::invokeMethod(item<QObject>("referenceDock"), "open"));
+            QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
+            QTest::qWait(300);
         }
     }
 
