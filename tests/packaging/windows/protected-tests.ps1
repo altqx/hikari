@@ -127,6 +127,8 @@ elseif ($Phase -eq 'check') {
 }
 elseif ($Phase -eq 'selfhold') {
     if (-not $Setup) { Write-Output 'FAIL -Setup is required'; exit 1 }
+    # PowerShell names are not case-sensitive: $exe below is $Exe.
+    $harness = $Exe
     $top = Join-Path $env:TEMP 'HsSelfHoldTop'
     $dir = Join-Path $top 'HsSelfHold'
     if (Test-Path -LiteralPath $top) { Remove-Item -Recurse -Force -LiteralPath $top }
@@ -136,11 +138,32 @@ elseif ($Phase -eq 'selfhold') {
     Copy-Item -LiteralPath $Setup -Destination $exe
     function Try-Rename { try { Rename-Item -LiteralPath $exe -NewName 'moved.exe' -ErrorAction Stop; Rename-Item -LiteralPath "$dir\moved.exe" -NewName 'setup.exe'; return $true } catch { return $false } }
     function Try-Write { try { $f = [IO.File]::Open($exe, 'Open', 'ReadWrite', 'ReadWrite'); $f.Close(); return $true } catch { return $false } }
+    if ($harness) {
+        # The same holds through protected-test.exe /HOLDSELF: 11 held, 10 not.
+        $probe = Join-Path $dir 'probe.exe'
+        Copy-Item -LiteralPath $harness -Destination $probe
+        function Probe([string] $path) {
+            $q = Start-Process -FilePath $path -ArgumentList '/HOLDSELF' -PassThru -WindowStyle Hidden
+            $null = $q.Handle
+            if (-not $q.WaitForExit(20000)) { Stop-Process -Id $q.Id -Force; return 'hung' }
+            return $q.ExitCode
+        }
+        $code = Probe $probe
+        Check 'from a plain folder, the file and every folder above it are held' ($code -eq 11) "got $code"
+        # Through a junction, whose target its owner could change: no relaunch.
+        $link = Join-Path $top 'link'
+        cmd /c mklink /J $link $dir | Out-Null
+        $code = Probe (Join-Path $link 'probe.exe')
+        Check 'through a junction, the holds are refused' ($code -eq 10) "got $code"
+        cmd /c rmdir $link | Out-Null
+    }
     Check 'before setup runs, its file can be renamed' (Try-Rename)
     # No /S: setup waits on its first page.
     $p = Start-Process -FilePath $exe -PassThru
     Start-Sleep -Seconds 4
     Check 'setup is running' (-not $p.HasExited)
+    $p.Refresh()
+    Check 'setup shows its first page (the holds did not stall it)' ($p.MainWindowHandle -ne [IntPtr]::Zero)
     Check 'while it runs, its file cannot be renamed' (-not (Try-Rename))
     Check 'while it runs, its file cannot be opened for writing' (-not (Try-Write))
     Check 'while it runs, its file cannot be deleted' (-not $(try { Remove-Item -LiteralPath $exe -ErrorAction Stop; $true } catch { $false }))

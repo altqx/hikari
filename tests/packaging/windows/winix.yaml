@@ -50,7 +50,7 @@ tasks:
     timeoutSeconds: 600
   # A running setup's file is held against change, HS_SETUP as above.
   protected-selfhold:
-    script: ./tests/packaging/windows/protected-tests.ps1 -Phase selfhold -Setup $env:HS_SETUP
+    script: ./tests/packaging/windows/protected-tests.ps1 -Phase selfhold -Setup $env:HS_SETUP -Exe $env:HS_EXE
     timeoutSeconds: 300
   # The Windows unit tests, with the real SHA256SUMS fetch from GitHub.
   windows-unit:
