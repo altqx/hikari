@@ -98,13 +98,18 @@ case $family in
         fi ;;
     dnf) baseline=(libglvnd-opengl libglvnd-egl libglvnd-glx libX11 libX11-xcb libxcb fontconfig freetype libwayland-client
                    libwayland-cursor libwayland-egl alsa-lib pulseaudio-libs dbus-libs libSM libICE glib2) ;;
-    zypper) baseline=(libOpenGL0 libEGL1 libGLX0 libGL1 libX11-6 libX11-xcb1 libxcb1 libxcb-randr0 libxcb-shm0 libxcb-sync1
+    zypper) baseline=(libglvnd libX11-6 libX11-xcb1 libxcb1 libxcb-randr0 libxcb-shm0 libxcb-sync1
                       libxcb-xfixes0 libxcb-render0 libxcb-shape0 libfontconfig1 libfreetype6 libwayland-client0
                       libwayland-cursor0 libwayland-egl1 libasound2 libpulse0 libdbus-1-3 libSM6 libICE6 libglib-2_0-0) ;;
     arch) baseline=(libglvnd libx11 libxcb fontconfig freetype2 wayland alsa-lib libpulse dbus libsm libice glib2) ;;
 esac
 
-# A test user owns $HOME; the app never runs as root here.
+# A test user owns $HOME; the app never runs as root here. Minimal images
+# (Fedora, openSUSE) lack runuser and useradd.
+case $family in
+    dnf) install_pkgs util-linux shadow-utils ;;
+    zypper) install_pkgs util-linux shadow ;;
+esac
 id tester > /dev/null 2>&1 || useradd -m tester
 home=/home/tester
 marker=$home/.local/share/hikari-test-marker
