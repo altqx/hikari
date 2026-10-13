@@ -935,7 +935,9 @@ namespace
 
 	// The command line of this start, without the updater's own switches,
 	// for a relaunch.
-	std::vector<std::string> RelaunchArguments(const std::string &program)
+	// The program and this start's own arguments (its files), without the
+	// update's switches.
+	std::vector<std::string> StartArguments(const std::string &program)
 	{
 		std::vector<std::string> arguments = { program };
 		for (int i = 1; i < wxTheApp->argc; i++) {
@@ -944,6 +946,12 @@ namespace
 				continue;
 			arguments.push_back(argument);
 		}
+		return arguments;
+	}
+
+	std::vector<std::string> RelaunchArguments(const std::string &program)
+	{
+		std::vector<std::string> arguments = StartArguments(program);
 		arguments.push_back(std::string(update_manifest::kUpdatedFromSwitch) + VersionHikariSub);
 		return arguments;
 	}
@@ -1013,8 +1021,8 @@ namespace
 				FromUtf8(pending.version), VersionHikariSub) :
 			wxString::Format(_("HikariSub %s did not start. The previous version is %s; rename it back to use it."),
 				FromUtf8(pending.version), FromUtf8(old)), package_kind::Kind::AppImage);
-		std::vector<std::string> restart = { appImage };
-		Spawn(restart);
+		// The image put back gets this start's files too.
+		Spawn(StartArguments(appImage));
 	}
 
 	// What the helper's exit code means for the user (4.4).
