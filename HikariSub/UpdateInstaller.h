@@ -124,4 +124,13 @@ namespace update_installer
 	// lock is released: the AppImage watchdog and the relaunch after a
 	// deb or rpm install.
 	void AfterExit();
+
+	// From wxApp::OnInit, before the single-instance lock: the AppImage
+	// update that an ordinary quit left installs now, replacing the image
+	// and starting the new one with this start's arguments under the
+	// watchdog, as after Restart now. An ordinary quit cannot do that
+	// itself: nothing would watch the new image's first start, and an
+	// image that cannot start would stay. True when another process took
+	// over (the new version, or the old one put back), so this one exits.
+	bool InstallAppImageAtStart();
 }

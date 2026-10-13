@@ -20,7 +20,11 @@
 // The app does not hand the downloaded installer to UAC. For an all-users
 // install it elevates the installed hikarisub.exe in Program Files, which
 // only administrators can change, with this switch; for a per-user install
-// it runs the same unelevated. That process trusts nothing the user's
+// it runs the same unelevated. It elevates only a program the user cannot
+// change (IsProtectedFromUser): the scope comes from package-kind.txt,
+// which is no more protected than the folder it is in, so a per-user copy
+// that claims to be for all users is never elevated, nor one installed
+// for all users into a folder the user can write. That process trusts nothing the user's
 // side wrote (pending.json, its SHA-256, the download folder):
 //
 //   1. <version> must be a release version newer than its own.
@@ -99,6 +103,29 @@ namespace update_apply
 
 	// Whether this process runs elevated.
 	bool IsElevated();
+
+	// What the user may do to a path: the access mask AccessCheck grants
+	// for MAXIMUM_ALLOWED, or nothing when it cannot be told.
+	using RightsOf = std::function<std::optional<unsigned long>(const std::wstring &path)>;
+	struct Entry
+	{
+		std::wstring name;
+		bool folder = false;
+		// A symbolic link, junction or other reparse point.
+		bool reparse = false;
+	};
+	// A folder's entries, or nothing when it cannot be listed.
+	using ListOf = std::function<std::optional<std::vector<Entry>>(const std::wstring &folder)>;
+
+	// Whether elevating the program in installDir, a plain "X:\..." path,
+	// runs only what administrators put there: the user can write,
+	// delete, re-own or re-permission nothing in installDir or under it,
+	// and can neither delete nor replace any folder on the way to it.
+	// Anything that cannot be told, a reparse point in the folder among
+	// them, counts as changeable.
+	bool IsProtected(const std::wstring &installDir, const RightsOf &rightsOf, const ListOf &list);
+	// IsProtected() for the user of this process, on the disk.
+	bool IsProtectedFromUser(const std::wstring &installDir);
 }
 
 #endif

@@ -105,6 +105,9 @@ namespace
 
 	wxString PendingPath() { return CacheDir() + kSep + L"pending.json"; }
 	wxString LastResultPath() { return CacheDir() + kSep + L"last-result.json"; }
+	// The version of the AppImage update an ordinary quit left for the
+	// next start.
+	wxString AppImageAtStartPath() { return CacheDir() + kSep + L"appimage-at-start"; }
 
 	bool ReadSmallFile(const wxString &path, std::string *content, size_t limit = 64 * 1024)
 	{
@@ -719,7 +722,8 @@ namespace
 #ifdef _WIN32
 	std::wstring Wide(const wxString &text) { return std::wstring(text.wc_str()); }
 
-	enum class Launch { Started, Declined, Failed };
+	// Unprotected: an all-users copy the user can change, never elevated.
+	enum class Launch { Started, Declined, Failed, Unprotected };
 
 	// Starts the installing side (UpdateApply.h): this installed
 	// hikarisub.exe with --hikari-apply-update, through one UAC prompt for
@@ -733,6 +737,15 @@ namespace
 		DWORD length = GetModuleFileNameW(nullptr, exe.data(), DWORD(exe.size()));
 		if (length == 0 || length >= exe.size())
 			return Launch::Failed;
+		// UAC is asked to run this program only when the user cannot have
+		// changed it: package-kind.txt says "all users" in a per-user copy
+		// as easily as in Program Files, and a DLL put beside the program
+		// would run elevated before any check (UpdateApply.h).
+		std::wstring installDir(exe.data(), length);
+		size_t slash = installDir.find_last_of(L'\\');
+		installDir.erase(slash == std::wstring::npos ? 0 : slash);
+		if (allUsers && !update_apply::IsElevated() && !update_apply::IsProtectedFromUser(installDir))
+			return Launch::Unprotected;
 		update_apply::Request request;
 		request.version = pending.version;
 		request.file = Wide(FromUtf8(pending.file));
@@ -1275,6 +1288,14 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 			return Quit::Veto;
 		}
 		return Quit::Continue;
+	case Launch::Unprotected:
+		// The download stays for the user to run; the update is not tried again.
+		RemoveFile(PendingPath());
+		WriteLastResult(pending->version, false, 4,
+			wxString::Format(_("HikariSub is installed for all users in a folder that can be changed without administrator rights, so HikariSub %s was not installed automatically. You can run its installer yourself: %s"),
+				FromUtf8(pending->version), FromUtf8(pending->file)));
+		relaunch = false;
+		return Quit::Continue;
 	case Launch::Failed:
 		break;
 	}
@@ -1285,6 +1306,11 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 	return Quit::Continue;
 #else
 	if (*kind == package_kind::Kind::AppImage) {
+		if (!relaunch) {
+			// An ordinary quit: the next start installs it, watched.
+			WriteAtomically(AppImageAtStartPath(), pending->version);
+			return Quit::Continue;
+		}
 		if (!StageAppImage(*pending)) {
 			WriteLastResult(pending->version, false, 2,
 				wxString::Format(_("HikariSub %s could not replace the AppImage. The download is at %s."),
@@ -1310,6 +1336,38 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 	handedOffPending = *pending;
 	RunPkexec(frame, *pending);
 	return Quit::Wait;
+#endif
+}
+
+bool update_installer::InstallAppImageAtStart()
+{
+#ifndef _WIN32
+	if (Kind() != package_kind::Kind::AppImage || AppImagePath().empty())
+		return false;
+	std::string named;
+	if (!ReadSmallFile(AppImageAtStartPath(), &named, 64))
+		return false;
+	// Once: what fails below leaves the update to OnStartup().
+	RemoveFile(AppImageAtStartPath());
+	std::optional<Pending> pending = LoadPending();
+	if (!pending || !update_manifest::IsAtStartVersion(named, pending->version) ||
+		package_kind::ParseToken(pending->kind) != package_kind::Kind::AppImage ||
+		!update_manifest::IsNewer(pending->version, VersionHikariSub) ||
+		!VerifyFile(FromUtf8(pending->file), pending->size, pending->sha256))
+	{
+		return false;
+	}
+	if (!StageAppImage(*pending)) {
+		WriteLastResult(pending->version, false, 2,
+			wxString::Format(_("HikariSub %s could not replace the AppImage. The download is at %s."),
+				FromUtf8(pending->version), FromUtf8(pending->file)));
+		return false;
+	}
+	RemoveFile(PendingPath());
+	AppImageWatchdog(*pending);
+	return true;
+#else
+	return false;
 #endif
 }
 

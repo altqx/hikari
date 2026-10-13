@@ -31,6 +31,8 @@
 #include <windows.h>
 #include <aclapi.h>
 #include <sddl.h>
+#include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -337,3 +339,118 @@ TEST(updateApplyReportsAnInstallerThatDoesNotStart)
 }
 
 #endif
+
+namespace {
+
+// A made-up disk: each path's rights for the user, and each folder's entries.
+struct FakeDisk
+{
+	std::map<std::wstring, unsigned long> rights;
+	std::map<std::wstring, std::vector<update_apply::Entry>> folders;
+
+	update_apply::RightsOf RightsOf()
+	{
+		return [this](const std::wstring &path) -> std::optional<unsigned long> {
+			auto found = rights.find(path);
+			if (found == rights.end())
+				return std::nullopt;
+			return found->second;
+		};
+	}
+	update_apply::ListOf ListOf()
+	{
+		return [this](const std::wstring &folder) -> std::optional<std::vector<update_apply::Entry>> {
+			auto found = folders.find(folder);
+			if (found == folders.end())
+				return std::nullopt;
+			return found->second;
+		};
+	}
+	bool Protected(const std::wstring &dir) { return update_apply::IsProtected(dir, RightsOf(), ListOf()); }
+};
+
+// Program Files as Windows sets it up: users read and run.
+FakeDisk ProgramFiles()
+{
+	const unsigned long read = FILE_GENERIC_READ | FILE_GENERIC_EXECUTE;
+	FakeDisk disk;
+	// C:\ lets users make folders in it, as Windows has it.
+	disk.rights[L"C:\\"] = read | FILE_ADD_SUBDIRECTORY;
+	disk.rights[L"C:\\Program Files"] = read;
+	disk.rights[L"C:\\Program Files\\HikariSub"] = read;
+	disk.rights[L"C:\\Program Files\\HikariSub\\hikarisub.exe"] = read;
+	disk.rights[L"C:\\Program Files\\HikariSub\\ffms2.dll"] = read;
+	disk.rights[L"C:\\Program Files\\HikariSub\\Automation"] = read;
+	disk.rights[L"C:\\Program Files\\HikariSub\\Automation\\a.lua"] = read;
+	disk.folders[L"C:\\Program Files\\HikariSub"] = {
+		{ L"hikarisub.exe", false, false }, { L"ffms2.dll", false, false }, { L"Automation", true, false } };
+	disk.folders[L"C:\\Program Files\\HikariSub\\Automation"] = { { L"a.lua", false, false } };
+	return disk;
+}
+
+} // namespace
+
+TEST(updateApplyElevatesOnlyAProgramTheUserCannotChange)
+{
+	FakeDisk disk = ProgramFiles();
+	CHECK(disk.Protected(L"C:\\Program Files\\HikariSub"));
+	CHECK(disk.Protected(L"C:\\Program Files\\HikariSub\\"));
+
+	// A DLL the user may write, or put beside the program, or a file deep
+	// in the folder: an elevation could run the user's code.
+	unsigned long changes[] = { FILE_WRITE_DATA, FILE_APPEND_DATA, DELETE, WRITE_DAC, WRITE_OWNER };
+	for (unsigned long change : changes) {
+		FakeDisk dll = ProgramFiles();
+		dll.rights[L"C:\\Program Files\\HikariSub\\ffms2.dll"] |= change;
+		CHECK(!dll.Protected(L"C:\\Program Files\\HikariSub"));
+		FakeDisk folder = ProgramFiles();
+		folder.rights[L"C:\\Program Files\\HikariSub"] |= change;
+		CHECK(!folder.Protected(L"C:\\Program Files\\HikariSub"));
+		FakeDisk deep = ProgramFiles();
+		deep.rights[L"C:\\Program Files\\HikariSub\\Automation\\a.lua"] |= change;
+		CHECK(!deep.Protected(L"C:\\Program Files\\HikariSub"));
+	}
+	FakeDisk addFile = ProgramFiles();
+	addFile.rights[L"C:\\Program Files\\HikariSub\\Automation"] |= FILE_ADD_FILE;
+	CHECK(!addFile.Protected(L"C:\\Program Files\\HikariSub"));
+
+	// A folder on the way that the user can empty or re-permission: the
+	// install folder could be renamed away and replaced.
+	unsigned long replaces[] = { FILE_DELETE_CHILD, DELETE, WRITE_DAC, WRITE_OWNER };
+	for (unsigned long replace : replaces) {
+		FakeDisk way = ProgramFiles();
+		way.rights[L"C:\\Program Files"] |= replace;
+		CHECK(!way.Protected(L"C:\\Program Files\\HikariSub"));
+		FakeDisk root = ProgramFiles();
+		root.rights[L"C:\\"] |= replace;
+		CHECK(!root.Protected(L"C:\\Program Files\\HikariSub"));
+	}
+
+	// What cannot be told counts as changeable: a path without rights,
+	// a folder that cannot be listed, a link inside.
+	FakeDisk unknown = ProgramFiles();
+	unknown.rights.erase(L"C:\\Program Files\\HikariSub\\ffms2.dll");
+	CHECK(!unknown.Protected(L"C:\\Program Files\\HikariSub"));
+	FakeDisk unlisted = ProgramFiles();
+	unlisted.folders.erase(L"C:\\Program Files\\HikariSub\\Automation");
+	CHECK(!unlisted.Protected(L"C:\\Program Files\\HikariSub"));
+	FakeDisk link = ProgramFiles();
+	link.folders[L"C:\\Program Files\\HikariSub"].push_back({ L"plugins", true, true });
+	CHECK(!link.Protected(L"C:\\Program Files\\HikariSub"));
+
+	// Only a plain local path.
+	CHECK(!disk.Protected(L"\\\\server\\share\\HikariSub"));
+	CHECK(!disk.Protected(L"\\\\?\\C:\\Program Files\\HikariSub"));
+	CHECK(!disk.Protected(L"C:\\Program Files\\..\\Program Files\\HikariSub"));
+	CHECK(!disk.Protected(L"C:Program Files\\HikariSub"));
+	CHECK(!disk.Protected(L"C:\\"));
+	CHECK(!disk.Protected(L""));
+}
+
+TEST(updateApplyFindsTheUsersOwnFolderChangeable)
+{
+	// The user's temp folder, as a per-user copy's LocalAppData is.
+	std::wstring folder = TempFolder();
+	Put(folder + L"\\hikarisub.exe", "a program");
+	CHECK(!update_apply::IsProtectedFromUser(folder));
+}

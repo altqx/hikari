@@ -749,6 +749,15 @@ namespace update_manifest
 		return quoted + "'";
 	}
 
+	// Whether the appimage-at-start file an ordinary quit wrote names the
+	// pending update's version: that version, with an optional newline.
+	inline bool IsAtStartVersion(std::string_view named, std::string_view pending)
+	{
+		if (!named.empty() && named.back() == '\n')
+			named.remove_suffix(1);
+		return !named.empty() && named == pending && update_verify::IsReleaseVersion(named);
+	}
+
 	enum class InstallTool
 	{
 		Apt,
@@ -757,12 +766,13 @@ namespace update_manifest
 	};
 
 	// The command a user runs to install a downloaded package by hand,
-	// when there is no pkexec (4.4).
+	// when there is no pkexec (4.4). The packages are unsigned, so dnf and
+	// zypper are told not to look for a signature, as the helper tells them.
 	inline std::string InstallCommand(InstallTool tool, std::string_view file)
 	{
 		switch (tool) {
 		case InstallTool::Apt: return "sudo apt install " + ShellQuote(file);
-		case InstallTool::Dnf: return "sudo dnf install " + ShellQuote(file);
+		case InstallTool::Dnf: return "sudo dnf install --nogpgcheck " + ShellQuote(file);
 		case InstallTool::Zypper: return "sudo zypper install --allow-unsigned-rpm " + ShellQuote(file);
 		}
 		return std::string();

@@ -28,6 +28,7 @@
 #include <winhttp.h>
 
 #include <cwchar>
+#include <cwctype>
 #include <memory>
 
 #pragma comment(lib, "bcrypt.lib")
@@ -450,6 +451,124 @@ std::wstring update_apply::SystemTempFolder()
 	if (length == 0 || length >= MAX_PATH)
 		return std::wstring();
 	return std::wstring(windows, length) + L"\\Temp";
+}
+
+namespace
+{
+	// What lets the user change a file or a folder (FILE_WRITE_DATA and
+	// FILE_APPEND_DATA are FILE_ADD_FILE and FILE_ADD_SUBDIRECTORY).
+	constexpr unsigned long kChanges = FILE_WRITE_DATA | FILE_APPEND_DATA | FILE_DELETE_CHILD | DELETE |
+		WRITE_DAC | WRITE_OWNER;
+	// What lets the user replace a folder on the way: delete or rename it,
+	// or a child of it, or give itself that right.
+	constexpr unsigned long kReplaces = FILE_DELETE_CHILD | DELETE | WRITE_DAC | WRITE_OWNER;
+
+	bool TreeIsProtected(const std::wstring &folder, const update_apply::RightsOf &rightsOf,
+		const update_apply::ListOf &list, int depth)
+	{
+		std::optional<unsigned long> rights = rightsOf(folder);
+		if (!rights || (*rights & kChanges) || depth > 32)
+			return false;
+		std::optional<std::vector<update_apply::Entry>> entries = list(folder);
+		if (!entries)
+			return false;
+		for (const update_apply::Entry &entry : *entries) {
+			if (entry.reparse)
+				return false;
+			std::wstring path = folder + L"\\" + entry.name;
+			if (entry.folder) {
+				if (!TreeIsProtected(path, rightsOf, list, depth + 1))
+					return false;
+				continue;
+			}
+			std::optional<unsigned long> fileRights = rightsOf(path);
+			if (!fileRights || (*fileRights & kChanges))
+				return false;
+		}
+		return true;
+	}
+}
+
+bool update_apply::IsProtected(const std::wstring &installDir, const RightsOf &rightsOf, const ListOf &list)
+{
+	std::wstring dir = installDir;
+	while (dir.size() > 3 && dir.back() == L'\\')
+		dir.pop_back();
+	// A plain local path below a drive's root: no UNC, device or relative
+	// path, and no "." or ".." to walk.
+	if (dir.size() < 4 || !iswalpha(dir[0]) || dir[1] != L':' || dir[2] != L'\\' ||
+		dir.find(L'/') != std::wstring::npos || dir.find(L"\\\\") != std::wstring::npos)
+		return false;
+	for (size_t start = 3; start < dir.size();) {
+		size_t end = dir.find(L'\\', start);
+		std::wstring part = dir.substr(start, end == std::wstring::npos ? std::wstring::npos : end - start);
+		if (part == L"." || part == L"..")
+			return false;
+		if (end == std::wstring::npos)
+			break;
+		start = end + 1;
+	}
+	// The folders on the way, the drive's root first.
+	for (size_t at = 2; at != std::wstring::npos && at < dir.size(); at = dir.find(L'\\', at + 1)) {
+		std::wstring ancestor = dir.substr(0, at + (at == 2 ? 1 : 0));
+		std::optional<unsigned long> rights = rightsOf(ancestor);
+		if (!rights || (*rights & kReplaces))
+			return false;
+	}
+	return TreeIsProtected(dir, rightsOf, list, 0);
+}
+
+bool update_apply::IsProtectedFromUser(const std::wstring &installDir)
+{
+	HANDLE process = nullptr;
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | TOKEN_DUPLICATE, &process))
+		return false;
+	Handle processToken(process);
+	HANDLE duplicate = nullptr;
+	if (!DuplicateToken(process, SecurityIdentification, &duplicate))
+		return false;
+	Handle token(duplicate);
+	RightsOf rightsOf = [&token](const std::wstring &path) -> std::optional<unsigned long> {
+		const SECURITY_INFORMATION wanted = OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+			DACL_SECURITY_INFORMATION;
+		DWORD needed = 0;
+		GetFileSecurityW(path.c_str(), wanted, nullptr, 0, &needed);
+		if (needed == 0)
+			return std::nullopt;
+		std::vector<unsigned char> descriptor(needed);
+		if (!GetFileSecurityW(path.c_str(), wanted, descriptor.data(), needed, &needed))
+			return std::nullopt;
+		GENERIC_MAPPING mapping = { FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_GENERIC_EXECUTE, FILE_ALL_ACCESS };
+		std::vector<unsigned char> privileges(1024);
+		DWORD privilegesSize = DWORD(privileges.size());
+		DWORD granted = 0;
+		BOOL allowed = FALSE;
+		if (!AccessCheck(descriptor.data(), token.value, MAXIMUM_ALLOWED, &mapping,
+			reinterpret_cast<PPRIVILEGE_SET>(privileges.data()), &privilegesSize, &granted, &allowed))
+			return std::nullopt;
+		return allowed ? granted : 0;
+	};
+	ListOf list = [](const std::wstring &folder) -> std::optional<std::vector<Entry>> {
+		WIN32_FIND_DATAW data;
+		HANDLE find = FindFirstFileExW((folder + L"\\*").c_str(), FindExInfoBasic, &data, FindExSearchNameMatch,
+			nullptr, FIND_FIRST_EX_LARGE_FETCH);
+		if (find == INVALID_HANDLE_VALUE)
+			return std::nullopt;
+		std::vector<Entry> entries;
+		do {
+			std::wstring name = data.cFileName;
+			if (name == L"." || name == L"..")
+				continue;
+			entries.push_back({ name, (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0,
+				(data.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0 });
+		} while (FindNextFileW(find, &data));
+		bool complete = GetLastError() == ERROR_NO_MORE_FILES;
+		FindClose(find);
+		if (!complete)
+			return std::nullopt;
+		return entries;
+	};
+	return IsProtected(installDir, rightsOf, list);
 }
 
 bool update_apply::IsElevated()

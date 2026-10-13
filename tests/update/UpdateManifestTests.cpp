@@ -634,10 +634,24 @@ TEST(update_hand_off_commands)
 	CHECK(ShellQuote("/tmp/a b") == "'/tmp/a b'");
 	CHECK(ShellQuote("it's") == "'it'\\''s'");
 	CHECK(InstallCommand(InstallTool::Apt, "/home/u/x.deb") == "sudo apt install '/home/u/x.deb'");
-	CHECK(InstallCommand(InstallTool::Dnf, "/home/u/x.rpm") == "sudo dnf install '/home/u/x.rpm'");
+	CHECK(InstallCommand(InstallTool::Dnf, "/home/u/x.rpm") == "sudo dnf install --nogpgcheck '/home/u/x.rpm'");
 	CHECK(InstallCommand(InstallTool::Zypper, "/home/u/x.rpm") ==
 		"sudo zypper install --allow-unsigned-rpm '/home/u/x.rpm'");
 	CHECK(AppImageStagingName("0.0.3") == ".HikariSub-0.0.3.AppImage");
+}
+
+TEST(update_appimage_at_start_names_the_pending_version)
+{
+	// An ordinary quit names the AppImage update the next start installs.
+	CHECK(IsAtStartVersion("0.0.3", "0.0.3"));
+	CHECK(IsAtStartVersion("0.0.3\n", "0.0.3"));
+	CHECK(IsAtStartVersion("0.1.0-beta.1", "0.1.0-beta.1"));
+	// Another version, nothing, or what is not a version: nothing installs.
+	CHECK(!IsAtStartVersion("0.0.4", "0.0.3"));
+	CHECK(!IsAtStartVersion("", ""));
+	CHECK(!IsAtStartVersion("\n", ""));
+	CHECK(!IsAtStartVersion("0.0.3\n\n", "0.0.3"));
+	CHECK(!IsAtStartVersion("junk", "junk"));
 }
 
 TEST(update_further_request_of_a_check_takes_data_again)
