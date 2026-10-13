@@ -286,10 +286,13 @@ jobs:
           mkdir -p /tmp/aur && cp /home/builder/aur/pkg/PKGBUILD /home/builder/aur/pkg/.SRCINFO /tmp/aur/
           # The version ordering of spec 1.3, with pacman's own tool.
           [ "$(vercmp 0.0.9 0.1.0)" = -1 ]
+      # Rendered from the CI tar.gz. qt-release.yml renders the published
+      # one and uploads that as hikarisub-aur, so this name must differ:
+      # one run cannot hold two artifacts of the same name.
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: ${{ !contains(needs.build.outputs.version, '-') }}
         with:
-          name: hikarisub-aur
+          name: hikarisub-aur-ci
           path: /tmp/aur/
           include-hidden-files: true
           if-no-files-found: error
