@@ -65,40 +65,53 @@ bool TimeFieldMask::holds(int form, const QString &text) const
     return application::pasteIntoTimeField(formOf(form), {}, text.toStdU16String()).changed;
 }
 
-QString TimeFieldMask::wheel(int form, bool frameNumber, const QString &text, int column, int notches) const
-{
-    const auto next = application::wheelTimeField(formOf(form), frameNumber, text.toStdU16String(),
-                                                  static_cast<std::size_t>(std::max(column, 0)), notches);
-    return next ? QString::fromStdU16String(*next) : QString();
-}
-
 namespace {
+
+application::TimeFieldMouse mouseOf(int form, bool frames)
+{
+    return {static_cast<application::TimeCtrlForm>(std::clamp(form, 0, 4)), frames};
+}
 
 QVariantMap dragMap(const application::TimeFieldDrag &drag)
 {
-    return {{QStringLiteral("ms"), static_cast<qlonglong>(drag.ms)},
-            {QStringLiteral("step"), static_cast<qlonglong>(drag.step)},
+    return {{QStringLiteral("ms"), static_cast<double>(drag.ms)},
+            {QStringLiteral("step"), static_cast<double>(drag.step)},
             {QStringLiteral("x"), drag.x},
-            {QStringLiteral("y"), drag.y}};
+            {QStringLiteral("y"), drag.y},
+            {QStringLiteral("frame"), static_cast<double>(drag.frame)}};
 }
 
 } // namespace
 
-QVariantMap TimeFieldMask::dragBegin(int form, const QString &text, int column, int x, int y) const
+QVariantMap TimeFieldMask::wheel(int mouseForm, bool frames, const QString &text, double ms, int column,
+                                 int notches) const
 {
-    const auto drag = application::beginTimeFieldDrag(formOf(form), text.toStdU16String(),
-                                                      static_cast<std::size_t>(std::max(column, 0)), x, y);
-    return drag ? dragMap(*drag) : QVariantMap();
+    const auto next = application::wheelTimeField(mouseOf(mouseForm, frames), text.toStdU16String(),
+                                                  static_cast<std::int64_t>(ms),
+                                                  static_cast<std::size_t>(std::max(column, 0)), notches);
+    if (!next)
+        return {};
+    return {{QStringLiteral("text"), QString::fromStdU16String(next->text)},
+            {QStringLiteral("ms"), static_cast<double>(next->ms)}};
 }
 
-QVariantMap TimeFieldMask::dragMove(int form, const QVariantMap &drag, int x, int y) const
+QVariantMap TimeFieldMask::dragBegin(int mouseForm, bool frames, const QString &text, double ms, int column, int x,
+                                     int y) const
+{
+    return dragMap(application::beginTimeFieldDrag(mouseOf(mouseForm, frames), text.toStdU16String(),
+                                                   static_cast<std::int64_t>(ms),
+                                                   static_cast<std::size_t>(std::max(column, 0)), x, y));
+}
+
+QVariantMap TimeFieldMask::dragMove(int mouseForm, bool frames, const QVariantMap &drag, int x, int y) const
 {
     if (drag.isEmpty())
         return {};
-    application::TimeFieldDrag state{drag.value(QStringLiteral("ms")).toLongLong(),
-                                     drag.value(QStringLiteral("step")).toLongLong(),
-                                     drag.value(QStringLiteral("x")).toInt(), drag.value(QStringLiteral("y")).toInt()};
-    const auto next = application::dragTimeField(formOf(form), state, x, y);
+    application::TimeFieldDrag state{static_cast<std::int64_t>(drag.value(QStringLiteral("ms")).toDouble()),
+                                     static_cast<std::int64_t>(drag.value(QStringLiteral("step")).toDouble()),
+                                     drag.value(QStringLiteral("x")).toInt(), drag.value(QStringLiteral("y")).toInt(),
+                                     static_cast<std::int64_t>(drag.value(QStringLiteral("frame")).toDouble())};
+    const auto next = application::dragTimeField(mouseOf(mouseForm, frames), state, x, y);
     return {{QStringLiteral("drag"), dragMap(state)},
             {QStringLiteral("text"), next ? QString::fromStdU16String(*next) : QString()}};
 }

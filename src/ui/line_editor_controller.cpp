@@ -176,30 +176,40 @@ void LineEditorController::setShowTags(bool show)
 
 QString LineEditorController::startText() const
 {
+    if (m_steppedTime[1])
+        return *m_steppedTime[1];
     const auto r = record();
     return r ? qs(application::editorTimeTexts(*r, session()->document().format(), frameTimebase()).start) : QString();
 }
 
 QString LineEditorController::endText() const
 {
+    if (m_steppedTime[2])
+        return *m_steppedTime[2];
     const auto r = record();
     return r ? qs(application::editorTimeTexts(*r, session()->document().format(), frameTimebase()).end) : QString();
 }
 
 QString LineEditorController::marginLeftText() const
 {
+    if (m_steppedNumber[1])
+        return *m_steppedNumber[1];
     const auto r = record();
     return r ? QString::number(r->marginLeft.value) : QString();
 }
 
 QString LineEditorController::marginRightText() const
 {
+    if (m_steppedNumber[2])
+        return *m_steppedNumber[2];
     const auto r = record();
     return r ? QString::number(r->marginRight.value) : QString();
 }
 
 QString LineEditorController::marginVerticalText() const
 {
+    if (m_steppedNumber[3])
+        return *m_steppedNumber[3];
     const auto r = record();
     return r ? QString::number(r->marginVertical.value) : QString();
 }
@@ -427,6 +437,7 @@ bool LineEditorController::setTime(application::TimeFieldRole role, const QStrin
                  text);
         return false;
     }
+    m_steppedTime[static_cast<int>(role)].reset(); // the field's text is the Line's now
     application::DraftChange change;
     if (typed->timeResolved)
         (start ? change.start : change.end) = core::DocumentTime(typed->ms * 1000);
@@ -445,6 +456,8 @@ void LineEditorController::setMarginText(int which, const QString &text)
     const auto r = record();
     if (!editable() || !r)
         return;
+    if (which >= 0 && which <= 2)
+        m_steppedNumber[which + 1].reset();
     bool ok = false;
     const qlonglong value = text.trimmed().toLongLong(&ok);
     if (!ok) {
@@ -471,6 +484,7 @@ bool LineEditorController::commit()
         clearTimeWarnings();
         emit changed();
     }
+    applyStepped(); // the modified fields first (EditBox.cpp:560-605)
     if (!s || !s->draftLine())
         return false;
     return sendDraft();
@@ -483,6 +497,7 @@ bool LineEditorController::applyChanges()
     // visualdummy keeps the time fields' warning colour.
     if (!visualToolOn())
         return commit();
+    applyStepped();
     auto *s = session();
     if (!s || !s->draftLine())
         return false;
@@ -496,6 +511,7 @@ bool LineEditorController::sendDraft(bool leaving, bool visual)
 {
     if (!visual)
         clearTimeWarnings(); // Send, EditBox.cpp:546-554
+    applyStepped();
     auto *s = session();
     if (!s || !s->draftLine())
         return true;
@@ -536,6 +552,7 @@ bool LineEditorController::nextLine(int direction)
     {
         const auto all = s->document().lines();
         const bool last = !all.empty() && all.back()->id == r->id;
+        applyStepped();
         if (s->draftLine() && !sendDraft(!last))
             return false;
     }
@@ -608,6 +625,7 @@ void LineEditorController::discard()
     if (auto *s = session())
         s->discardDraft();
     clearTimeWarnings(); // the shown times are the Line's again
+    dropStepped();
     m_draftUndo.clear();
     m_draftRedo.clear();
     m_attempted.clear();
@@ -1495,10 +1513,30 @@ int LineEditorController::timeForm() const
                               : application::TimeFieldForm::Ass);
 }
 
-bool LineEditorController::frameNumbers() const
+int LineEditorController::timeCtrlForm() const
 {
     auto *s = session();
-    return s && s->document().format() == core::SubtitleFormat::MicroDvd;
+    return static_cast<int>(s ? application::timeCtrlForm(s->document().format()) : application::TimeCtrlForm::Ass);
+}
+
+double LineEditorController::startMs() const
+{
+    const auto r = record();
+    return r ? static_cast<double>(r->start.value.microseconds() / 1000) : 0.0;
+}
+
+double LineEditorController::endMs() const
+{
+    const auto r = record();
+    return r ? static_cast<double>(r->end.value.microseconds() / 1000) : 0.0;
+}
+
+double LineEditorController::durationMs() const
+{
+    const auto r = record();
+    return r ? static_cast<double>(
+                   std::max<std::int64_t>(0, (r->end.value.microseconds() - r->start.value.microseconds()) / 1000))
+             : 0.0;
 }
 
 bool LineEditorController::comment() const
@@ -1509,6 +1547,8 @@ bool LineEditorController::comment() const
 
 QString LineEditorController::layerText() const
 {
+    if (m_steppedNumber[0])
+        return *m_steppedNumber[0];
     const auto r = record();
     // NumCtrl::SetInt clamps to the range (EditBox.cpp:256).
     return r ? QString::number(std::clamp<std::int64_t>(r->layer.value, -10000000, 10000000)) : QString();
@@ -1519,6 +1559,8 @@ QString LineEditorController::durationText() const
     const auto r = record();
     if (!r)
         return {};
+    if (m_steppedTime[0])
+        return *m_steppedTime[0];
     if (m_typedDuration)
         return *m_typedDuration;
     const auto format = session()->document().format();
@@ -1598,6 +1640,7 @@ void LineEditorController::lineShown()
     m_durationEdited = false;
     clearTimeWarnings(); // SetLine, EditBox.cpp:394-402
     m_typedDuration.reset();
+    dropStepped(); // SetLine's SetTime and SetInt replace the fields' text
     // TextEdit->SetState(...) (EditBox.cpp:430-432)
     m_textState = r ? core::syntax::textState(r->comment, core::toUtf16(r->effect)) : core::syntax::TextState::Dialogue;
     if (!r)
@@ -1734,6 +1777,9 @@ void LineEditorController::setShowFrames(bool on)
     }
     m_durationEdited = false;
     m_typedDuration.reset();
+    m_steppedTime[0].reset(); // OnChangeTimeDisplay's SetTime on the three
+    m_steppedTime[1].reset();
+    m_steppedTime[2].reset();
     if (m_storeShowFrames)
         m_storeShowFrames(on);
     emit frameDisplayChanged();
@@ -1858,6 +1904,7 @@ void LineEditorController::setLayerText(const QString &text)
     const auto r = record();
     if (!editable() || !r || !assFields())
         return;
+    m_steppedNumber[0].reset();
     const auto value = application::layerValue(u8(text));
     if (value && *value != r->layer.value)
         session()->editDraft(r->id, application::DraftChange{.layer = *value});
@@ -1893,6 +1940,7 @@ void LineEditorController::setDurationText(const QString &text)
     m_attempted.clear();
     m_durationEdited = false;
     m_typedDuration = text; // DurEdit keeps the typed text
+    m_steppedTime[0].reset();
     s->editDraft(r->id, change);
     refresh();
 }
@@ -1919,6 +1967,11 @@ void LineEditorController::timesFromAudio(std::int64_t startMs, std::int64_t end
         m_timeWarning[field] = m_timeWarned[field] = true;
         changedAny = true;
     };
+    // SetTime replaces the text of each field it sets, a step not yet sent included.
+    m_steppedTime[1].reset();
+    m_steppedTime[2].reset();
+    if (duration)
+        m_steppedTime[0].reset();
     mark(0, startMs != start);
     mark(1, endMs != end);
     // DurEdit: gtime.NewTime(curEndMS - curStartMS), never below 0.
@@ -1945,10 +1998,13 @@ void LineEditorController::timeTyped(int role, const QString &text)
         return;
     auto *s = session();
     const auto field = static_cast<application::TimeFieldRole>(role);
+    m_steppedTime[role].reset(); // the focused field holds what was typed
     if (!application::typedTime(u8(text), field, s->document().format(), s->document().frameRate(), frameTimebase()))
         return; // not yet the field's form: the field's apply reports it
     if (field == application::TimeFieldRole::Duration) {
-        // durFocus: End = Start + DurEdit (EditBox.cpp:1546-1550).
+        // durFocus: End = Start + DurEdit (EditBox.cpp:1546-1550), and
+        // EndEdit shows the draft's End again.
+        m_steppedTime[2].reset();
         if (hasEnd())
             setDurationText(text);
         return;
@@ -1957,8 +2013,23 @@ void LineEditorController::timeTyped(int role, const QString &text)
     // (EditBox.cpp:1526-1545).
     if (!setTime(field, text))
         return;
+    liveStartEnd(field == application::TimeFieldRole::Start ? 0 : 1);
+}
+
+void LineEditorController::liveStartEnd(int focused)
+{
+    // OnEdit reads EndEdit and StartEdit as they are, so a field the mouse
+    // stepped goes to the draft too; DurEdit->SetTime replaces a stepped
+    // Duration.
+    for (const auto role : {application::TimeFieldRole::End, application::TimeFieldRole::Start}) {
+        auto &stepped = m_steppedTime[static_cast<int>(role)];
+        if (!stepped)
+            continue;
+        const QString text = *std::exchange(stepped, std::nullopt);
+        setTime(role, text);
+    }
+    m_steppedTime[0].reset();
     const auto line = record();
-    const int focused = field == application::TimeFieldRole::Start ? 0 : 1;
     // SubsTime::operator> compares the milliseconds (SubsTime.cpp:184-187).
     if (line && line->start.value.microseconds() / 1000 > line->end.value.microseconds() / 1000)
         m_timeWarning[focused] = m_timeWarned[focused] = true;
@@ -1967,6 +2038,83 @@ void LineEditorController::timeTyped(int role, const QString &text)
     else if (m_timeWarned[1])
         m_timeWarning[1] = false;
     emit changed();
+}
+
+void LineEditorController::timeStepped(int role, const QString &text, int focused)
+{
+    if (!editable() || role < 0 || role > 2 || (role != 1 && !hasEnd()))
+        return;
+    m_steppedTime[role] = text;
+    if (options().liveEditing) {
+        // EditBox::OnEdit for the focused field (EditBox.cpp:1524-1556).
+        if (focused == 1 || focused == 2) {
+            liveStartEnd(focused == 1 ? 0 : 1);
+            return;
+        }
+        if (focused == 0)
+            m_steppedTime[2].reset(); // EndEdit->SetTime(line->End, false, 2)
+    }
+    emit changed();
+}
+
+void LineEditorController::numberStepped(int role, const QString &text)
+{
+    if (!editable() || !assFields() || role < 0 || role > 3)
+        return;
+    m_steppedNumber[role] = text;
+    emit changed();
+}
+
+bool LineEditorController::timeModified(int role) const
+{
+    return role >= 0 && role <= 2 && m_steppedTime[role].has_value();
+}
+
+bool LineEditorController::numberModified(int role) const
+{
+    return role >= 0 && role <= 3 && m_steppedNumber[role].has_value();
+}
+
+void LineEditorController::dropStepped()
+{
+    for (auto &t : m_steppedTime)
+        t.reset();
+    for (auto &n : m_steppedNumber)
+        n.reset();
+}
+
+// EditBox::Send's modified fields in its order (EditBox.cpp:560-605): the
+// Layer, Start, End, the Duration (End = Start + Duration), the margins.
+bool LineEditorController::applyStepped()
+{
+    std::optional<QString> time[3], number[4];
+    for (int i = 0; i < 3; ++i)
+        time[i] = std::exchange(m_steppedTime[i], std::nullopt);
+    for (int i = 0; i < 4; ++i)
+        number[i] = std::exchange(m_steppedNumber[i], std::nullopt);
+    bool any = false;
+    if (number[0]) {
+        setLayerText(*number[0]);
+        any = true;
+    }
+    if (time[1]) {
+        setTime(application::TimeFieldRole::Start, *time[1]);
+        any = true;
+    }
+    if (time[2]) {
+        setTime(application::TimeFieldRole::End, *time[2]);
+        any = true;
+    }
+    if (time[0]) {
+        setDurationText(*time[0]);
+        any = true;
+    }
+    for (int i = 1; i < 4; ++i)
+        if (number[i]) {
+            setMarginText(i - 1, *number[i]);
+            any = true;
+        }
+    return any;
 }
 
 bool LineEditorController::chooseAlignment(int index)

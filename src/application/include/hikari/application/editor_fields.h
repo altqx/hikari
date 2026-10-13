@@ -121,38 +121,104 @@ TimeFieldEdit pasteIntoTimeField(TimeFieldForm form, const TimeFieldState &field
 std::int64_t timeFieldStep(TimeFieldForm form, std::size_t column);
 // TimeCtrl's top time, 9:59:59.999 (TimeCtrl.cpp:322-323, 380).
 inline constexpr std::int64_t kTimeFieldMaxMs = 35999999;
+
+// The mouse reads TimeCtrl's own `form`, the Document's format as SubsTime
+// numbers it (ASS, SRT, TMP, MDVD, MPL2), and its showFrames, not the
+// field's mask: with the Time/Frames switch a frame number still steps by the
+// format's column units, and MPL2's deciseconds by TimeCtrl's 1 ms.
+enum class TimeCtrlForm { Ass = 0, Srt = 1, TMPlayer = 2, MicroDvd = 3, Mpl2 = 4 };
+TimeCtrlForm timeCtrlForm(core::SubtitleFormat format);
+struct TimeFieldMouse {
+    TimeCtrlForm form = TimeCtrlForm::Ass;
+    bool frames = false; // the field shows frames (the switch on, an exact timebase)
+};
+// TimeCtrl's `grad` for the column under the pointer: 1 for MicroDVD and
+// MPL2, else the clock column's (startPos 2 for ASS, 3 otherwise), the frame
+// number's columns included.
+std::int64_t timeFieldStep(TimeFieldMouse mouse, std::size_t column);
+
+// A stepped field: its text and the time behind it (TimeCtrl's
+// mTime.mstime, which a frame number does not show and the next drag of a
+// frame number starts from).
+struct TimeFieldStepped {
+    std::u16string text;
+    std::int64_t ms = 0;
+};
 // The wheel: `notches` whole wheel steps (GetWheelRotation() /
-// GetWheelDelta(), so a smaller rotation is none) over `column`. A clock
-// form moves by notches times the column's step, refused (nullopt) when the
-// time would leave 0..kTimeFieldMaxMs. A MicroDVD number (`microDvdNumber`,
-// with or without the frames switch: legacy's `form == MDVD` steps orgframe)
-// moves by `notches` frames, refused below 0 or past kTimeFieldDigits.
-// nullopt for any other number (MPL2's deciseconds, the frames switch's
-// frames of another format): legacy stepped those wrongly (its 1 ms step on
-// MPL2's deciseconds goes up only; with the frames switch it stepped the
-// milliseconds behind a frame number that never changed), so they are not
-// ported until the user decides how they step.
-std::optional<std::u16string> wheelTimeField(TimeFieldForm form, bool microDvdNumber, std::u16string_view text,
-                                             std::size_t column, int notches);
+// GetWheelDelta(), so a smaller rotation is none) over `column` of `text`,
+// with `ms` the time behind it. As TimeCtrl.cpp:363-385 does, the text is
+// read in its form (SetRaw), MicroDVD's frame moves by the notches and every
+// other form's milliseconds by notches times the step, and the move is
+// refused (nullopt) when the time would leave 0..kTimeFieldMaxMs or the frame
+// go below 0. What it shows, SubsTime::raw:
+// - a clock form: the stepped time;
+// - MPL2: the milliseconds in deciseconds rounded up, so a notch up adds a
+//   decisecond and a notch down shows the same number;
+// - MicroDVD: the stepped frame, except that frame 0 reached from another
+//   frame shows the frame it started from (raw recomputes a 0 frame from the
+//   time, which is that frame's);
+// - frames (the switch): the frame, which moves only on MicroDVD; on the
+//   other formats the step goes to the time behind the unchanged number.
+// A number past kTimeFieldDigits is refused too.
+std::optional<TimeFieldStepped> wheelTimeField(TimeFieldMouse mouse, std::u16string_view text, std::int64_t ms,
+                                               std::size_t column, int notches);
 // The right button held down (TimeCtrl's `holding`): the time it started
-// from and accumulates (mstime), the column's step (grad) and the pointer
-// position it last stepped at (oldposx, oldposy).
+// from and accumulates (TimeCtrl::mstime), the column's step (grad), the
+// pointer position it last stepped at (oldposx, oldposy) and MicroDVD's
+// frame (mTime.orgframe).
 struct TimeFieldDrag {
     std::int64_t ms = 0, step = 0;
     int x = 0, y = 0;
+    std::int64_t frame = 0;
 };
-// The right button pressed at `column` and (x, y) of a clock form; nullopt
-// in a number form, where legacy's drag never stepped the number shown
-// (MicroDVD, MPL2) or set the frame to a time in milliseconds (the frames
-// switch): not ported, as for the wheel.
-std::optional<TimeFieldDrag> beginTimeFieldDrag(TimeFieldForm form, std::u16string_view text, std::size_t column,
-                                                int x, int y);
+// The right button pressed at `column` and (x, y), `ms` the time behind the
+// text: the drag starts from the time the text reads in its form (a frame
+// number: the time behind it).
+TimeFieldDrag beginTimeFieldDrag(TimeFieldMouse mouse, std::u16string_view text, std::int64_t ms, std::size_t column,
+                                 int x, int y);
 // The pointer moved to (x, y) with the button held: 8 pixels up or down
 // (where the vertical move is not the smaller) step the time by the step,
 // up adding; otherwise 10 pixels right or left step it by ten steps, right
 // adding. Each step restarts both distances. The time stays within
-// 0..kTimeFieldMaxMs. The new text, or nullopt when nothing stepped.
-std::optional<std::u16string> dragTimeField(TimeFieldForm form, TimeFieldDrag &drag, int x, int y);
+// 0..kTimeFieldMaxMs. The text shown after a step (the same text when the
+// form does not show the change), or nullopt when nothing stepped:
+// - a clock form: the time;
+// - MPL2: the time in deciseconds rounded up (100 steps to a decisecond);
+// - MicroDVD: its frame, which never moves, except that frame 0 becomes 1
+//   at the first step above 0 ms (raw's frame for a time at any rate up to
+//   100 frames a second), and stays 1;
+// - frames (the switch): the stepped milliseconds as the frame number
+//   (TimeCtrl.cpp:325-327 sets orgframe to mstime).
+std::optional<std::u16string> dragTimeField(TimeFieldMouse mouse, TimeFieldDrag &drag, int x, int y);
+
+// E4: NumCtrl's mouse (NumCtrl.cpp:243-319) on the Layer and the margins,
+// whose range NumCtrl clamps to (EditBox.cpp:271, 288-290). `value` is
+// NumCtrl's own `value`: what SetInt set, the last number typed (OnNumWrite
+// reads it whatever the range), and what the wheel and the drag left.
+struct NumberFieldRange {
+    std::int64_t from = 0, to = 0;
+};
+inline constexpr NumberFieldRange kLayerRange{-10000000, 10000000};
+inline constexpr NumberFieldRange kMarginRange{0, 9999};
+// OnNumWrite's value of typed text, or nullopt where NumCtrl keeps the one
+// it had (empty, "-", or not a number).
+std::optional<std::int64_t> numberFieldValue(std::u16string_view text);
+// The wheel: `value` moves by `notches` (whole notches), and the new value's
+// text when it is in the range. Outside it nothing is shown and `value`
+// keeps the move (NumCtrl adds the step before its range test), so the wheel
+// comes back into the range only as many notches later.
+std::optional<std::u16string> wheelNumberField(std::int64_t &value, int notches, NumberFieldRange range);
+// The right button held down: the value and the pointer position it last
+// stepped at.
+struct NumberFieldDrag {
+    std::int64_t value = 0;
+    int x = 0, y = 0;
+};
+// The pointer moved to (x, y): 8 pixels up or down step the value by one,
+// refused outside the range; 10 pixels right or left by ten, clamped to the
+// range, refused only from its end. A refused step leaves the position where
+// it was. The new text, or nullopt when nothing stepped.
+std::optional<std::u16string> dragNumberField(NumberFieldDrag &drag, int x, int y, NumberFieldRange range);
 
 // NumCtrl::GetInt for the Layer (EditBox.cpp:256: -10000000..10000000): the
 // value clamped to the range, or nullopt for text NumCtrl keeps the previous

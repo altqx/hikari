@@ -405,41 +405,136 @@ std::int64_t timeFieldStep(TimeFieldForm form, std::size_t column)
     return 10;
 }
 
-std::optional<std::u16string> wheelTimeField(TimeFieldForm form, bool microDvdNumber, std::u16string_view text,
-                                             std::size_t column, int notches)
+TimeCtrlForm timeCtrlForm(core::SubtitleFormat format)
+{
+    switch (format) {
+    case core::SubtitleFormat::Srt: return TimeCtrlForm::Srt;
+    case core::SubtitleFormat::TMPlayer: return TimeCtrlForm::TMPlayer;
+    case core::SubtitleFormat::MicroDvd: return TimeCtrlForm::MicroDvd;
+    case core::SubtitleFormat::Mpl2: return TimeCtrlForm::Mpl2;
+    default: return TimeCtrlForm::Ass;
+    }
+}
+
+namespace {
+
+TimeFieldForm clockForm(TimeCtrlForm form)
+{
+    return form == TimeCtrlForm::Srt        ? TimeFieldForm::Srt
+           : form == TimeCtrlForm::TMPlayer ? TimeFieldForm::TMPlayer
+                                            : TimeFieldForm::Ass;
+}
+
+bool numberForm(TimeCtrlForm form)
+{
+    return form == TimeCtrlForm::MicroDvd || form == TimeCtrlForm::Mpl2;
+}
+
+bool blank(std::u16string_view text)
+{
+    return std::ranges::all_of(text, [](char16_t c) { return c == u' ' || c == u'\t'; });
+}
+
+// wxAtoi of a number field's text (its digits; the mask holds nothing else).
+std::int64_t fieldNumber(std::u16string_view text)
+{
+    std::int64_t n = 0;
+    for (const char16_t c : text)
+        if (c >= u'0' && c <= u'9')
+            n = n * 10 + (c - u'0');
+    return n;
+}
+
+std::u16string numberText(std::int64_t n)
+{
+    const std::string t = std::to_string(n);
+    return std::u16string(t.begin(), t.end());
+}
+
+// SubsTime::raw(MPL2): the milliseconds in deciseconds, rounded up.
+std::int64_t mpl2Deciseconds(std::int64_t ms)
+{
+    return ms >= 0 ? (ms + 99) / 100 : -((-ms) / 100);
+}
+
+constexpr std::int64_t kMaxFieldNumber = 999999999; // kTimeFieldDigits
+
+} // namespace
+
+std::int64_t timeFieldStep(TimeFieldMouse mouse, std::size_t column)
+{
+    // TimeCtrl.cpp:350-355, 366-371: `form` is never FRAME there.
+    if (numberForm(mouse.form))
+        return 1;
+    return timeFieldStep(clockForm(mouse.form), column);
+}
+
+std::optional<TimeFieldStepped> wheelTimeField(TimeFieldMouse mouse, std::u16string_view text, std::int64_t ms,
+                                               std::size_t column, int notches)
 {
     if (notches == 0)
         return std::nullopt;
-    if (form == TimeFieldForm::Number) {
-        if (!microDvdNumber)
-            return std::nullopt;
-        std::int64_t frame = 0;
-        for (const char16_t c : text)
-            if (c >= u'0' && c <= u'9')
-                frame = frame * 10 + (c - u'0');
-        frame += notches;
-        if (frame < 0 || frame > 999999999) // nine digits, kTimeFieldDigits
-            return std::nullopt;
-        const std::string n = std::to_string(frame);
-        return std::u16string(n.begin(), n.end());
+    // mTime.SetRaw(GetValue(), showFrames ? FRAME : form) (SubsTime::ParseMS):
+    // an empty text is 0 ms and frame 0; a frame number sets only the frame.
+    const bool empty = blank(text);
+    std::int64_t time = empty ? 0 : ms;
+    std::int64_t frame = 0;
+    const std::int64_t typedFrame = empty ? 0 : fieldNumber(text);
+    if (mouse.frames)
+        frame = typedFrame;
+    else if (mouse.form == TimeCtrlForm::MicroDvd)
+        frame = typedFrame; // its time is the frame's at the rate: `ms`
+    else if (mouse.form == TimeCtrlForm::Mpl2)
+        time = typedFrame * 100;
+    else if (!empty)
+        time = clockMs(clockForm(mouse.form), text);
+    const std::int64_t step = static_cast<std::int64_t>(notches) * timeFieldStep(mouse, column);
+    if (mouse.form == TimeCtrlForm::MicroDvd)
+        frame += step;
+    else
+        time += step;
+    if (time < 0 || time > kTimeFieldMaxMs || frame < 0 || frame > kMaxFieldNumber)
+        return std::nullopt;
+    // mTime.raw(showFrames ? FRAME : form)
+    if (mouse.frames)
+        return TimeFieldStepped{numberText(frame), time};
+    switch (mouse.form) {
+    case TimeCtrlForm::MicroDvd:
+        // raw(MDVD) gives a frame of 0 the frame of the time, which is
+        // ParseMS's time of the frame the text held.
+        return TimeFieldStepped{numberText(frame == 0 && typedFrame != 0 ? typedFrame : frame), ms};
+    case TimeCtrlForm::Mpl2: return TimeFieldStepped{numberText(mpl2Deciseconds(time)), time};
+    default: return TimeFieldStepped{clockText(clockForm(mouse.form), time), time};
     }
-    const std::int64_t ms = clockMs(form, text) + static_cast<std::int64_t>(notches) * timeFieldStep(form, column);
-    if (ms < 0 || ms > kTimeFieldMaxMs)
-        return std::nullopt;
-    return clockText(form, ms);
 }
 
-std::optional<TimeFieldDrag> beginTimeFieldDrag(TimeFieldForm form, std::u16string_view text, std::size_t column,
-                                                int x, int y)
+TimeFieldDrag beginTimeFieldDrag(TimeFieldMouse mouse, std::u16string_view text, std::int64_t ms, std::size_t column,
+                                 int x, int y)
 {
-    if (form == TimeFieldForm::Number)
-        return std::nullopt;
-    return TimeFieldDrag{clockMs(form, text), timeFieldStep(form, column), x, y};
+    // TimeCtrl.cpp:345-358: mTime.SetRaw(GetValue(), ...), then mstime from
+    // mTime.mstime (`form` is never FRAME).
+    TimeFieldDrag drag;
+    drag.step = timeFieldStep(mouse, column);
+    drag.x = x;
+    drag.y = y;
+    const bool empty = blank(text);
+    drag.frame = empty ? 0 : fieldNumber(text);
+    if (empty)
+        drag.ms = 0;
+    else if (mouse.frames)
+        drag.ms = ms;
+    else if (mouse.form == TimeCtrlForm::MicroDvd)
+        drag.ms = drag.frame == 0 ? 0 : ms;
+    else if (mouse.form == TimeCtrlForm::Mpl2)
+        drag.ms = drag.frame * 100;
+    else
+        drag.ms = clockMs(clockForm(mouse.form), text);
+    return drag;
 }
 
-std::optional<std::u16string> dragTimeField(TimeFieldForm form, TimeFieldDrag &drag, int x, int y)
+std::optional<std::u16string> dragTimeField(TimeFieldMouse mouse, TimeFieldDrag &drag, int x, int y)
 {
-    if (form == TimeFieldForm::Number || drag.step == 0)
+    if (drag.step == 0)
         return std::nullopt;
     const int absY = std::abs(y - drag.y), absX = std::abs(x - drag.x);
     bool changed = false;
@@ -460,7 +555,72 @@ std::optional<std::u16string> dragTimeField(TimeFieldForm form, TimeFieldDrag &d
     drag.ms = std::clamp<std::int64_t>(drag.ms, 0, kTimeFieldMaxMs);
     if (!changed)
         return std::nullopt;
-    return clockText(form, drag.ms);
+    // TimeCtrl.cpp:325-328: showFrames sets the frame to the milliseconds,
+    // otherwise the time; then raw().
+    if (mouse.frames) {
+        drag.frame = drag.ms;
+        return numberText(drag.frame);
+    }
+    switch (mouse.form) {
+    case TimeCtrlForm::MicroDvd:
+        if (drag.frame == 0 && drag.ms != 0)
+            drag.frame = 1; // raw: ceil(mstime * fps / 1000) of a 1 or 10 ms step
+        return numberText(drag.frame);
+    case TimeCtrlForm::Mpl2: return numberText(mpl2Deciseconds(drag.ms));
+    default: return clockText(clockForm(mouse.form), drag.ms);
+    }
+}
+
+std::optional<std::int64_t> numberFieldValue(std::u16string_view text)
+{
+    // OnNumWrite (NumCtrl.cpp:226-241): "," read as ".", ToCDouble.
+    std::string t;
+    for (const char16_t c : text)
+        t.push_back(c == u',' ? '.' : c < 0x80 ? static_cast<char>(c) : '?');
+    if (t.empty() || t == "-")
+        return std::nullopt;
+    double value = 0;
+    const auto [end, ec] = std::from_chars(t.data(), t.data() + t.size(), value);
+    if (ec != std::errc() || end != t.data() + t.size() || !std::isfinite(value))
+        return std::nullopt;
+    if (value >= 9.2e18 || value <= -9.2e18)
+        return std::nullopt;
+    return static_cast<std::int64_t>(value); // NumCtrl::GetInt truncates
+}
+
+std::optional<std::u16string> wheelNumberField(std::int64_t &value, int notches, NumberFieldRange range)
+{
+    if (notches == 0)
+        return std::nullopt;
+    // NumCtrl.cpp:305-311: value += step before the range test.
+    value += notches;
+    if (value < range.from || value > range.to)
+        return std::nullopt;
+    return numberText(value);
+}
+
+std::optional<std::u16string> dragNumberField(NumberFieldDrag &drag, int x, int y, NumberFieldRange range)
+{
+    const int absY = std::abs(y - drag.y), absX = std::abs(x - drag.x);
+    std::int64_t next = 0;
+    if (absY >= absX) {
+        if (absY < 8)
+            return std::nullopt;
+        next = drag.y < y ? drag.value - 1 : drag.value + 1;
+        if (next < range.from || next > range.to)
+            return std::nullopt;
+    } else {
+        if (absX < 10)
+            return std::nullopt;
+        next = drag.x > x ? drag.value - 10 : drag.value + 10;
+        if ((drag.value == range.from && next < range.from) || (drag.value == range.to && next > range.to))
+            return std::nullopt;
+        next = std::clamp(next, range.from, range.to);
+    }
+    drag.value = next;
+    drag.x = x;
+    drag.y = y;
+    return numberText(next);
 }
 
 std::optional<std::int64_t> layerValue(std::u8string_view text)

@@ -27,13 +27,17 @@ public:
     // application::kTimeFieldDigits, or empty).
     Q_INVOKABLE bool holds(int form, const QString &text) const;
     // TimeCtrl's mouse (application::wheelTimeField, beginTimeFieldDrag,
-    // dragTimeField). The wheel's new text, or "" for none; `frameNumber`:
-    // the number is a MicroDVD frame.
-    Q_INVOKABLE QString wheel(int form, bool frameNumber, const QString &text, int column, int notches) const;
-    // A right-button drag: {ms, step, x, y} for the field to keep, or {} where
-    // the form does not drag; each move answers {drag, text} ("" for none).
-    Q_INVOKABLE QVariantMap dragBegin(int form, const QString &text, int column, int x, int y) const;
-    Q_INVOKABLE QVariantMap dragMove(int form, const QVariantMap &drag, int x, int y) const;
+    // dragTimeField). `mouseForm` is application::TimeCtrlForm (0 ASS, 1 SRT,
+    // 2 TMPlayer, 3 MicroDVD, 4 MPL2), `frames` whether the field shows
+    // frames, `ms` the time behind the text. The wheel answers {text, ms},
+    // or {} for none.
+    Q_INVOKABLE QVariantMap wheel(int mouseForm, bool frames, const QString &text, double ms, int column,
+                                  int notches) const;
+    // A right-button drag: {ms, step, x, y, frame} for the field to keep;
+    // each move answers {drag, text} (text "" for no step).
+    Q_INVOKABLE QVariantMap dragBegin(int mouseForm, bool frames, const QString &text, double ms, int column, int x,
+                                      int y) const;
+    Q_INVOKABLE QVariantMap dragMove(int mouseForm, bool frames, const QVariantMap &drag, int x, int y) const;
 };
 
 } // namespace hikari::ui

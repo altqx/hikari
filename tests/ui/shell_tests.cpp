@@ -15524,10 +15524,11 @@ private slots:
     }
 
     // E4: TimeCtrl's mouse (TimeCtrl.cpp:286-387). The wheel over a column
-    // steps its unit per whole notch without taking the focus, and the time
-    // applies at once; the right button held and dragged steps it every 8
-    // pixels up or down and ten units every 10 pixels sideways, with no
-    // context menu. A MicroDVD frame steps by one on the wheel.
+    // steps its unit per whole notch without taking the focus, and the field
+    // keeps the time until a Send (wheelStepsAFieldUntilSent); the right
+    // button held and dragged steps it every 8 pixels up or down and ten
+    // units every 10 pixels sideways, with no context menu. A MicroDVD frame
+    // steps by one on the wheel.
     void timeFieldsFollowTheMouse()
     {
         QVERIFY(application->openFile(writeStyled("mouse.ass", "Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,first\n")));
@@ -15554,19 +15555,18 @@ private slots:
             QCoreApplication::processEvents();
         };
 
-        // "0:00:01.00": the seconds' column steps a second, without the focus.
+        // "0:00:01.00": the seconds' column steps a second, without the
+        // focus; the field alone changes.
         wheel(charPoint(start, 6), 120);
         QCOMPARE(text(), QStringLiteral("0:00:02.00"));
         QVERIFY(!start->hasActiveFocus());
-        QCOMPARE(draftStart(), 2'000'000);
+        QCOMPARE(draftStart(), -1);
         wheel(charPoint(start, 6), -240);
         QCOMPARE(text(), QStringLiteral("0:00:00.00"));
-        QCOMPARE(draftStart(), 0);
         // OnEdit acts only on the focused field: a Start stepped past End
         // without the focus takes no warning colour.
         wheel(charPoint(start, 6), 6 * 120);
         QCOMPARE(text(), QStringLiteral("0:00:06.00"));
-        QCOMPARE(draftStart(), 6'000'000);
         QVERIFY(!application->editor().startWarning());
         QVERIFY(!application->editor().endWarning());
         wheel(charPoint(start, 6), -6 * 120);
@@ -15578,12 +15578,7 @@ private slots:
         QCOMPARE(text(), QStringLiteral("0:00:00.00"));
         wheel(charPoint(start, 9), 360);
         QCOMPARE(text(), QStringLiteral("0:00:00.03"));
-        // Without live editing the stepped time still reaches the draft.
-        application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), true);
-        wheel(charPoint(start, 2), 1 * 120);
-        QCOMPARE(text(), QStringLiteral("0:01:00.03"));
-        QCOMPARE(draftStart(), 60'030'000);
-        application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), false);
+        QCOMPARE(draftStart(), -1);
         application->editor().discard();
         QCOMPARE(text(), QStringLiteral("0:00:01.00"));
 
@@ -15640,10 +15635,10 @@ private slots:
         // Windows opens a context menu on the right button's release
         // (QStyleHints::contextMenuTrigger, which QWindow synthesizes the
         // menu event from when the release is not accepted): the drag's
-        // release opens none there either. The Layer field, with no mouse of
-        // its own, shows that the right button does open a field's menu,
-        // on the press and then on the release.
-        auto *layer = item("layerField");
+        // release opens none there either. The Actor box's text, with no
+        // mouse of its own, shows that the right button does open a field's
+        // menu, on the press and then on the release.
+        auto *layer = item("actorBox")->property("contentItem").value<QQuickItem *>();
         const QPoint layerAt = layer->mapToScene(QPointF(layer->width() / 2, layer->height() / 2)).toPoint();
         QCOMPARE(shownMenus(layer), 0);
         QTest::mousePress(window, Qt::RightButton, {}, layerAt);
@@ -15679,37 +15674,414 @@ private slots:
         application->editor().discard();
     }
 
-    // E4: TimeCtrl's wheel on MicroDVD's frame number steps one frame
-    // (orgframe += step); its drag set no frame (legacy's drag stepped the
-    // milliseconds of an MDVD time, which the number never shows).
+    // E4: TimeCtrl's mouse on MicroDVD's frame number (TimeCtrl.cpp:286-387):
+    // the wheel steps one frame (orgframe += step); the drag steps the
+    // milliseconds behind the frame, which the number shows only from frame
+    // 0, as 1. The drag takes the focus, so OnEdit gives the draft the
+    // field's frame.
     void frameNumberFieldsTakeTheWheel()
     {
         {
             QFile f(dir.filePath(QStringLiteral("mouse.mdvd.txt")));
             QVERIFY(f.open(QIODevice::WriteOnly));
-            f.write("{25}{50}first\r\n");
+            f.write("{25}{50}first\r\n{0}{10}second\r\n");
         }
         QVERIFY(application->openFile(dir.filePath(QStringLiteral("mouse.mdvd.txt"))));
         auto *session = targetSession();
+        auto &editor = application->editor();
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
-        QTRY_VERIFY(application->editor().hasLine());
+        QTRY_VERIFY(editor.hasLine());
         auto *start = item("startField");
         const auto text = [&] { return start->property("text").toString(); };
+        const auto lineFrame = [&](int i) { return session->document().lines()[i]->startFrame; };
         QTRY_COMPARE(text(), QStringLiteral("25"));
         QCOMPARE(start->property("form").toInt(), 3);
-        QVERIFY(start->property("frameNumber").toBool());
+        QCOMPARE(start->property("mouseForm").toInt(), 3); // TimeCtrlForm::MicroDvd
         const QPoint at = fieldPoint(start, 1);
         QWheelEvent up(at, window->mapToGlobal(at), QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
                        Qt::NoScrollPhase, false);
         QCoreApplication::sendEvent(window, &up);
         QCOMPARE(text(), QStringLiteral("26"));
-        QCOMPARE(session->draftRecord()->startFrame, std::optional<std::int64_t>(26));
+        QVERIFY(editor.timeModified(1));
+        QVERIFY(!session->draftLine());
+        QCOMPARE(lineFrame(0), std::optional<std::int64_t>(25));
+        // The drag shows the same frame, which the focused field's live edit
+        // gives the draft.
         QTest::mousePress(window, Qt::RightButton, {}, at);
+        QTest::mouseMove(window, at + QPoint(0, -8));
         QTest::mouseMove(window, at + QPoint(0, -16));
         QTest::mouseRelease(window, Qt::RightButton, {}, at + QPoint(0, -16));
         QCOMPARE(text(), QStringLiteral("26"));
-        application->editor().discard();
+        QVERIFY(!editor.timeModified(1));
+        QCOMPARE(session->draftRecord()->startFrame, std::optional<std::int64_t>(26));
+        QVERIFY(editor.commit());
+        QCOMPARE(lineFrame(0), std::optional<std::int64_t>(26));
+
+        // Frame 0: the drag's first step up shows 1, and it stays 1.
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down);
+        QTRY_COMPARE(text(), QStringLiteral("0"));
+        QTest::mousePress(window, Qt::RightButton, {}, at);
+        QTest::mouseMove(window, at + QPoint(0, 8));
+        QCOMPARE(text(), QStringLiteral("0"));
+        QTest::mouseMove(window, at + QPoint(0, 0));
+        QCOMPARE(text(), QStringLiteral("1"));
+        QTest::mouseMove(window, at + QPoint(0, -8));
+        QTest::mouseMove(window, at + QPoint(0, 0));
+        QCOMPARE(text(), QStringLiteral("1"));
+        QTest::mouseRelease(window, Qt::RightButton, {}, at);
+        QCOMPARE(session->draftRecord()->startFrame, std::optional<std::int64_t>(1));
+        // The wheel down from 1 reaches frame 0 and shows 1 again (raw's
+        // frame of the time of frame 1); refused below 0.
+        QWheelEvent down(at, window->mapToGlobal(at), QPoint(), QPoint(0, -120), Qt::NoButton, Qt::NoModifier,
+                         Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &down);
+        QCOMPARE(text(), QStringLiteral("1"));
+        editor.discard();
+        QCOMPARE(text(), QStringLiteral("0"));
+        item("editingGrid")->forceActiveFocus();
+        QCoreApplication::sendEvent(window, &down);
+        QCOMPARE(text(), QStringLiteral("0"));
+        QVERIFY(!editor.timeModified(1));
+    }
+
+    // E4: MPL2's deciseconds under TimeCtrl's mouse: the wheel and the drag
+    // step the milliseconds by 1, shown rounded up (SubsTime::raw(MPL2)), so
+    // a notch up adds a decisecond, a notch down shows the same number, and
+    // the drag adds one at its first step and the next only 100 steps on.
+    void mpl2FieldsTakeTheMouse()
+    {
+        const QString mpl2 = dir.filePath(QStringLiteral("mouse.mpl2.txt"));
+        {
+            QFile f(mpl2);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[12][25]first\r\n");
+        }
+        QVERIFY(application->openFile(mpl2));
+        auto *session = targetSession();
+        auto &editor = application->editor();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *start = item("startField");
+        const auto text = [&] { return start->property("text").toString(); };
+        QTRY_COMPARE(text(), QStringLiteral("12"));
+        QCOMPARE(start->property("mouseForm").toInt(), 4); // TimeCtrlForm::Mpl2
+        const QPoint at = fieldPoint(start, 1);
+        const auto wheel = [&](int delta) {
+            QWheelEvent event(at, window->mapToGlobal(at), QPoint(), QPoint(0, delta), Qt::NoButton, Qt::NoModifier,
+                              Qt::NoScrollPhase, false);
+            QCoreApplication::sendEvent(window, &event);
+        };
+        wheel(120);
+        QCOMPARE(text(), QStringLiteral("13"));
+        QVERIFY(editor.timeModified(1));
+        wheel(-120);
+        QCOMPARE(text(), QStringLiteral("13"));
+        QVERIFY(editor.timeModified(1));
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'200'000);
+        QVERIFY(editor.applyChanges());
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'300'000);
+        QVERIFY(!editor.timeModified(1));
+        // The drag, with the focus: live, so the draft follows.
+        QTest::mousePress(window, Qt::RightButton, {}, at);
+        QVERIFY(start->hasActiveFocus());
+        QTest::mouseMove(window, at + QPoint(0, -8));
+        QCOMPARE(text(), QStringLiteral("14"));
+        QCOMPARE(session->draftRecord()->start.value.microseconds(), 1'400'000);
+        QTest::mouseMove(window, at + QPoint(0, -16));
+        QTest::mouseMove(window, at + QPoint(10, -16));
+        QCOMPARE(text(), QStringLiteral("14"));
+        QTest::mouseRelease(window, Qt::RightButton, {}, at + QPoint(10, -16));
+        editor.discard();
+        QCOMPARE(text(), QStringLiteral("13"));
+    }
+
+    // E4: the Time/Frames switch under TimeCtrl's mouse (TimeCtrl.cpp:286-387):
+    // the wheel steps the time behind the frame number, which stays, and
+    // marks the field modified, so the next Send gives the Line that frame's
+    // time; the drag sets the frame number to the stepped milliseconds
+    // (orgframe = mstime), stepped by the column's unit.
+    void framesFieldsTakeTheMouse()
+    {
+        QVERIFY(application->openFile(writeStyled("frames-mouse.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:01.50,Default,,0,0,0,,first\n")));
+        auto *session = targetSession();
+        auto &editor = application->editor();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(editor.hasLine());
+        application->settingsStore()->setValue(QStringLiteral("video.dontAskForBadResolution"), true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        QTRY_VERIFY(editor.framesAvailable());
+        editor.setShowFrames(true);
+        auto *start = item("startField");
+        const auto text = [&] { return start->property("text").toString(); };
+        QTRY_COMPARE(text(), QStringLiteral("24")); // 24000/1001: frame 24 starts at 1001 ms
+        QVERIFY(start->property("frames").toBool());
+        QCOMPARE(start->property("timeMs").toDouble(), 1000.0);
+        item("editingGrid")->forceActiveFocus();
+        const QPoint at = fieldPoint(start, 0);
+        QWheelEvent up(at, window->mapToGlobal(at), QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                       Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &up);
+        QCOMPARE(text(), QStringLiteral("24"));
+        QVERIFY(editor.timeModified(1));
+        QCOMPARE(start->property("hiddenMs").toDouble(), 3'601'000.0); // the hours' column
+        // Send: frame 24's time (StartTimeFor, the midpoint after frame 23
+        // at 959.29 ms, ZEROIT) where the Line had 1.00.
+        QVERIFY(editor.applyChanges());
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 980'000);
+        QVERIFY(!editor.timeModified(1));
+        // The drag from the time behind the number (now 980 ms), in the
+        // column under the pointer: 1, an hour (ASS's startPos 2).
+        QTest::mousePress(window, Qt::RightButton, {}, fieldPoint(start, 1));
+        QVERIFY(start->hasActiveFocus());
+        QTest::mouseMove(window, fieldPoint(start, 1) + QPoint(0, 8));
+        QCOMPARE(text(), QStringLiteral("0")); // 980 ms less an hour, clamped
+        QTest::mouseMove(window, fieldPoint(start, 1) + QPoint(0, 0));
+        QCOMPARE(text(), QStringLiteral("3600000"));
+        QTest::mouseRelease(window, Qt::RightButton, {}, fieldPoint(start, 1));
+        editor.discard();
+        QCOMPARE(text(), QStringLiteral("24")); // 980 ms: frame 24 is the first at or after it
+    }
+
+    // E4: the wheel over a field without the focus changes only that field
+    // and marks it modified (TimeCtrl's and NumCtrl's SetValue(..., true));
+    // the next Send takes it (EditBox::Send reads every modified field,
+    // EditBox.cpp:560-605), and showing another Line drops it (SetLine's
+    // SetTime and SetInt replace the text). The Line and the draft stay as
+    // they were until then.
+    void wheelStepsAFieldUntilSent()
+    {
+        QVERIFY(application->openFile(writeStyled("modified.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,first\n"
+                                                  "Dialogue: 0,0:00:06.00,0:00:08.00,Default,,0,0,0,,second\n")));
+        auto *session = targetSession();
+        auto &editor = application->editor();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(editor.hasLine());
+        auto *start = item("startField");
+        auto *end = item("endField");
+        auto *duration = item("durationField");
+        auto *layer = item("layerField");
+        auto *marginLeft = item("marginLeftField");
+        const auto text = [](QQuickItem *field) { return field->property("text").toString(); };
+        const auto line = [&](int i) { return session->document().lines()[i]; };
+        auto *model = item("editingGrid")->property("model").value<QAbstractItemModel *>();
+        const auto wheel = [&](QQuickItem *field, int column, int delta) {
+            const QPoint at = fieldPoint(field, column);
+            QWheelEvent event(at, window->mapToGlobal(at), QPoint(), QPoint(0, delta), Qt::NoButton, Qt::NoModifier,
+                              Qt::NoScrollPhase, false);
+            QCoreApplication::sendEvent(window, &event);
+            QCoreApplication::processEvents();
+        };
+        const QColor plain = end->property("color").value<QColor>();
+
+        // The field's text changes and it is modified; the Line, the draft,
+        // the Grid and the other fields do not follow.
+        wheel(start, 6, 120);
+        QCOMPARE(text(start), QStringLiteral("0:00:02.00"));
+        QVERIFY(!start->hasActiveFocus());
+        QVERIFY(editor.timeModified(1));
+        QVERIFY(!session->draftLine());
+        QCOMPARE(line(0)->start.value.microseconds(), 1'000'000);
+        QCOMPARE(model->index(0, ui::LineTableModel::StartColumn).data().toString(), QStringLiteral("0:00:01.00"));
+        QCOMPARE(text(duration), QStringLiteral("0:00:04.00"));
+        // Legacy gives a stepped field no colour of its own.
+        QCOMPARE(start->property("color").value<QColor>(), plain);
+        // Apply changes (a Send) takes it, as one step that Undo takes back.
+        const auto steps = session->historySize();
+        QVERIFY(editor.applyChanges());
+        QCOMPARE(line(0)->start.value.microseconds(), 2'000'000);
+        QCOMPARE(session->historySize(), steps + 1);
+        QVERIFY(!editor.timeModified(1));
+        QCOMPARE(text(start), QStringLiteral("0:00:02.00"));
+        QVERIFY(editor.undo());
+        QCOMPARE(line(0)->start.value.microseconds(), 1'000'000);
+        QTRY_COMPARE(text(start), QStringLiteral("0:00:01.00"));
+
+        // Without live editing too.
+        application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), true);
+        wheel(end, 6, 120);
+        QCOMPARE(text(end), QStringLiteral("0:00:06.00"));
+        QVERIFY(!session->draftLine());
+        QVERIFY(editor.commit());
+        QCOMPARE(line(0)->end.value.microseconds(), 6'000'000);
+        application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), false);
+
+        // Another Line shown drops the steps: the Layer and Start of the
+        // first Line, which keeps its values.
+        wheel(start, 6, 120);
+        wheel(layer, 0, 2 * 120);
+        QCOMPARE(text(layer), QStringLiteral("2"));
+        QVERIFY(editor.numberModified(0));
+        QCOMPARE(line(0)->layer.value, 0);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down);
+        QTRY_COMPARE(text(start), QStringLiteral("0:00:06.00"));
+        QCOMPARE(text(layer), QStringLiteral("0"));
+        QVERIFY(!editor.timeModified(1));
+        QVERIFY(!editor.numberModified(0));
+        press(Qt::Key_Up);
+        QTRY_COMPARE(text(start), QStringLiteral("0:00:01.00"));
+        QCOMPARE(line(0)->start.value.microseconds(), 1'000'000);
+        QCOMPARE(line(0)->layer.value, 0);
+
+        // Esc's discard drops them too.
+        wheel(start, 6, 120);
+        editor.discard();
+        QCOMPARE(text(start), QStringLiteral("0:00:01.00"));
+        QVERIFY(!editor.timeModified(1));
+
+        // Enter in another field sends them with its own change, as one step.
+        wheel(end, 6, -120);
+        wheel(marginLeft, 0, 3 * 120);
+        QCOMPARE(text(marginLeft), QStringLiteral("3"));
+        typeInto("marginRightField", QStringLiteral("7"));
+        const auto before = session->historySize();
+        press(Qt::Key_Return); // EDITBOX_COMMIT_GO_NEXT_LINE
+        QCOMPARE(session->historySize(), before + 1);
+        QCOMPARE(line(0)->end.value.microseconds(), 5'000'000);
+        QCOMPARE(line(0)->marginLeft.value, 3);
+        QCOMPARE(line(0)->marginRight.value, 7);
+        QTRY_COMPARE(text(start), QStringLiteral("0:00:06.00")); // the next Line
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Up);
+        QTRY_COMPARE(text(start), QStringLiteral("0:00:01.00"));
+
+        // With live editing, OnEdit runs for the focused field: with Start
+        // focused the draft takes a stepped End and Duration follows; with
+        // Duration focused End shows the draft's End again.
+        start->forceActiveFocus();
+        wheel(end, 6, 120);
+        QCOMPARE(text(end), QStringLiteral("0:00:06.00"));
+        QVERIFY(!editor.timeModified(2));
+        QCOMPARE(session->draftRecord()->end.value.microseconds(), 6'000'000);
+        QCOMPARE(text(duration), QStringLiteral("0:00:05.00"));
+        QCOMPARE(line(0)->end.value.microseconds(), 5'000'000);
+        editor.discard();
+        duration->forceActiveFocus();
+        wheel(end, 6, 120);
+        QCOMPARE(text(end), QStringLiteral("0:00:05.00"));
+        QVERIFY(!editor.timeModified(2));
+        wheel(start, 6, 120);
+        QCOMPARE(text(start), QStringLiteral("0:00:02.00"));
+        QVERIFY(editor.timeModified(1));
+        editor.discard();
+
+        // NumCtrl's wheel past the range shows nothing and keeps the move.
+        wheel(marginLeft, 0, -120);
+        QCOMPARE(text(marginLeft), QStringLiteral("2"));
+        QVERIFY(editor.commit());
+        QCOMPARE(line(0)->marginLeft.value, 2);
+        wheel(marginLeft, 0, -3 * 120); // 2 - 3: below 0, nothing shown
+        QCOMPARE(text(marginLeft), QStringLiteral("2"));
+        QVERIFY(!editor.numberModified(1));
+        wheel(marginLeft, 0, 120); // -1 + 1, not 2 + 1
+        QCOMPARE(text(marginLeft), QStringLiteral("0"));
+        QVERIFY(editor.numberModified(1));
+        editor.discard();
+
+        // NumCtrl's right button: the focus, then 8 pixels up a step and 10
+        // sideways ten, no context menu; Enter sends the focused field.
+        const QPoint layerAt = layer->mapToScene(QPointF(layer->width() / 2, layer->height() / 2)).toPoint();
+        QTest::mousePress(window, Qt::RightButton, {}, layerAt);
+        QVERIFY(layer->hasActiveFocus());
+        QTest::mouseMove(window, layerAt + QPoint(0, -8));
+        QCOMPARE(text(layer), QStringLiteral("1"));
+        QTest::mouseMove(window, layerAt + QPoint(10, -8));
+        QCOMPARE(text(layer), QStringLiteral("11"));
+        QTest::mouseRelease(window, Qt::RightButton, {}, layerAt + QPoint(10, -8));
+        QCoreApplication::processEvents();
+        int menus = 0;
+        for (auto *popup : layer->findChildren<QObject *>())
+            if (popup->inherits("QQuickPopup"))
+                menus += popup->property("visible").toBool();
+        QCOMPARE(menus, 0);
+        QVERIFY(!editor.numberModified(0)); // focused: the field holds it
+        QCOMPARE(line(0)->layer.value, 0);
+        press(Qt::Key_Return);
+        QCOMPARE(line(0)->layer.value, 11);
+    }
+
+    // E4-apply-nothing-to-send: Apply changes with nothing to send does
+    // nothing; legacy OnCommit (EditBox.cpp:966-985) re-selected the Line in
+    // the audio display (SetDialogue, which scrolled back to it) and re-set a
+    // visual tool even then.
+    void applyWithNothingToSendDoesNothing()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(episode));
+        auto *session = targetSession();
+        auto &audio = application->audio();
+        auto &editor = application->editor();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(editor.hasLine());
+        audio.setHorizontalZoom(0); // the most columns
+        const auto &view = audio.view();
+        const auto before = view.position();
+        audio.setScrollPosition(10); // 120 columns on, away from the Line
+        const auto scrolled = view.position();
+        QVERIFY(scrolled != before);
+        const auto steps = session->historySize();
+        const auto revision = session->revision();
+        QVERIFY(!session->draftLine());
+        QVERIFY(!editor.applyChanges());
+        QCoreApplication::processEvents();
+        QCOMPARE(view.position(), scrolled);
+        QCOMPARE(session->historySize(), steps);
+        QCOMPARE(session->revision(), revision);
+    }
+
+    // E4: offscreen screenshots of a time field the wheel stepped without
+    // the focus (modified, not yet sent) in the four themes, beside the
+    // Grid's Line, for the visual review.
+    void modifiedFieldScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_E4_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_E4_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QVERIFY(application->openFile(writeStyled("modified-shot.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:05.00,Default,,0,0,0,,first\n"
+                                                  "Dialogue: 0,0:00:06.00,0:00:08.00,Default,,0,0,0,,second\n")));
+        auto &settings = *application->settingsStore();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *start = item("startField");
+        const QPoint at = fieldPoint(start, 6);
+        QWheelEvent event(at, window->mapToGlobal(at), QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &event);
+        QCOMPARE(start->property("text").toString(), QStringLiteral("0:00:02.00"));
+        QVERIFY(application->editor().timeModified(1));
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        auto *inspector = item("lineInspector");
+        auto *grid = item("editingGrid");
+        QVERIFY(inspector && grid);
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            QTest::qWait(300);
+            QImage shot;
+            QTRY_VERIFY((shot = window->grabWindow(), !shot.isNull() && shot.width() > 0));
+            // The Grid's first rows down to the metadata row.
+            const qreal ratio = shot.devicePixelRatio();
+            const QRectF gridArea = grid->mapRectToScene(QRectF(0, 0, grid->width(), qMin<qreal>(grid->height(), 90)));
+            const QRectF row = inspector->mapRectToScene(QRectF(0, 0, inspector->width(), inspector->height()));
+            const QRectF area = gridArea.united(row);
+            QVERIFY(shot.copy(QRectF(area.topLeft() * ratio, area.size() * ratio).toAlignedRect())
+                        .save(out + QStringLiteral("/e4-modified-field-") + QLatin1String(code) + QStringLiteral(".png")));
+        }
     }
 
     // E4: times the audio display puts in the fields (TimeCtrl::SetTime(...,

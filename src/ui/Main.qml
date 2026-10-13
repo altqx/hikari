@@ -3336,6 +3336,7 @@ ApplicationWindow {
 
                         // E4: the Line's fields (legacy BoxSizer2, below the text).
                         LineInspector {
+                            objectName: "lineInspector"
                             editor: root.editor
                             hotkeys: root.hotkeys
                             Layout.fillWidth: true

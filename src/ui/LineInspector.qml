@@ -8,7 +8,10 @@
 // video editing on, Start, End and Duration also change it as they are typed
 // (TimeCtrl's NUMBER_CHANGED runs EditBox::OnEdit, EditBox.cpp:343-346), and
 // Start or End show the warning colour while Start is after End; times the
-// audio display put in the fields show it until the Line takes them. Enter runs
+// audio display put in the fields show it until the Line takes them. The
+// mouse wheel over a field without the focus changes only that field, which
+// the next Send takes and showing another Line drops (legacy IsModified).
+// Enter runs
 // the Editor's EDITBOX_COMMIT_GO_NEXT_LINE / EDITBOX_COMMIT bindings (the
 // time fields stay on the Line with EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT,
 // EditBox::OnNewline). The Comment box, the Style choice and a pick from the
@@ -44,19 +47,34 @@ ColumnLayout {
         return true
     }
 
-    component Field: TextField {
+    // The Layer and the margins: legacy NumCtrl (NumberField, with its mouse).
+    component Field: NumberField {
         id: field
         property string value
         property string tip
+        property int numberRole: -1 // the editor's NumberFieldRole: 0 Layer, 1-3 the margins
         signal applied(string text)
         text: value
-        selectByMouse: true
         Layout.preferredWidth: 90
-        onValueChanged: text = value
-        // Only a changed field is sent (legacy IsModified).
+        onValueChanged: {
+            text = value
+            given(value)
+        }
+        Component.onCompleted: given(value)
+        // The wheel steps a field without the focus: modified, kept until
+        // the next Send (legacy IsModified), as the time fields.
+        onStepped: {
+            if (activeFocus)
+                return
+            inspector.editor.numberStepped(numberRole, text)
+            text = value
+            modified = false
+        }
+        // Only a changed or stepped field is sent (legacy IsModified).
         function apply() {
-            if (text !== value)
+            if (text !== value || modified)
                 applied(text)
+            modified = false
         }
         onEditingFinished: apply()
         Keys.onPressed: event => event.accepted = inspector.commitKey(event, field, false)
@@ -76,41 +94,64 @@ ColumnLayout {
         property string tip
         signal applied(string text)
         form: inspector.editor.timeForm
-        frameNumber: inspector.editor.frameNumbers
+        mouseForm: inspector.editor.timeCtrlForm
+        frames: inspector.editor.framesShown
         text: value
         Layout.preferredWidth: 90
         // Legacy WINDOW_WARNING_ELEMENTS: the theme layer's warning role.
         color: warning ? Theme.warning : palette.text
         // A live edit leaves the typed text as it is (OnEdit sets the other
         // fields, not the focused one).
-        onValueChanged: if (!typing) text = value
+        onValueChanged: {
+            if (typing)
+                return
+            text = value
+            modified = false
+        }
         onTyped: {
             // The wheel steps a field without the focus, whose editing then
-            // never finishes: it applies at once (legacy's Send took every
-            // modified field). OnEdit acts only on the focused field
-            // (EditBox.cpp:1524-1525), so the live edit and its warning
-            // colour do not run for it.
+            // never finishes: the field is modified and keeps its text until
+            // the next Send takes it (legacy IsModified), which the editor
+            // holds. OnEdit acts on the focused time field only
+            // (EditBox.cpp:1524-1525), with this field's text read as it is.
             if (!activeFocus) {
-                apply()
+                inspector.editor.timeStepped(timeRole, text, inspector.focusedTimeRole())
+                text = value // what the editor kept: the step, or the Line's time OnEdit put back
+                modified = false
                 return
             }
             typing = true
             inspector.editor.timeTyped(timeRole, text)
             typing = false
         }
-        // Only a changed field is sent (legacy IsModified). An applied time
-        // field shows the Line's form again, the only form TimeCtrl holds.
+        // Only a changed or stepped field is sent (legacy IsModified). An
+        // applied time field shows the Line's form again, the only form
+        // TimeCtrl holds.
         function apply() {
-            if (text !== value)
+            if (text !== value || modified)
                 applied(text)
+            modified = false
             if (inspector.editor.attempted.length === 0)
                 text = value
         }
         onEditingFinished: apply()
         otherKey: event => inspector.commitKey(event, time, true)
+        // A field without the focus and without a step the Line has not
+        // taken holds the Line's time behind its text again (SetTime).
+        Connections {
+            target: inspector.editor
+            function onChanged() {
+                if (!time.activeFocus && !inspector.editor.timeModified(time.timeRole))
+                    time.hiddenMs = time.timeMs
+            }
+        }
         ToolTip.visible: hovered && tip.length > 0
         ToolTip.text: tip
         ToolTip.delay: 500
+    }
+    // The time field with the focus (TimeFieldRole), or -1.
+    function focusedTimeRole() {
+        return startField.activeFocus ? 1 : endField.activeFocus ? 2 : duration.activeFocus ? 0 : -1
     }
 
     // Legacy ComboBoxCtrl: an editable box listing the Document's values,
@@ -228,6 +269,9 @@ ColumnLayout {
             validator: RegularExpressionValidator { regularExpression: /[-0-9.,]*/ }
             Accessible.name: qsTr("Layer")
             tip: qsTr("Line layer. Higher layers are on top")
+            numberRole: 0
+            from: -10000000
+            to: 10000000
             onApplied: text => inspector.editor.setLayerText(text)
         }
         TimeBox {
@@ -236,6 +280,7 @@ ColumnLayout {
             value: inspector.editor.startText
             enabled: inspector.editor.editable
             timeRole: 1
+            timeMs: inspector.editor.startMs
             warning: inspector.editor.startWarning
             Accessible.name: qsTr("Start")
             tip: qsTr("Line start time")
@@ -247,6 +292,7 @@ ColumnLayout {
             value: inspector.editor.endText
             enabled: inspector.editor.editable && inspector.editor.hasEnd
             timeRole: 2
+            timeMs: inspector.editor.endMs
             warning: inspector.editor.endWarning
             Accessible.name: qsTr("End")
             tip: qsTr("Line end time")
@@ -258,6 +304,7 @@ ColumnLayout {
             value: inspector.editor.durationText
             enabled: inspector.editor.editable && inspector.editor.hasEnd
             timeRole: 0
+            timeMs: inspector.editor.durationMs
             warning: inspector.editor.durationWarning
             Accessible.name: qsTr("Duration")
             tip: qsTr("Line duration")
@@ -315,6 +362,9 @@ ColumnLayout {
             enabled: inspector.editor.editable && inspector.editor.assFields
             Layout.preferredWidth: 50
             Accessible.name: qsTr("Left margin")
+            numberRole: 1
+            from: 0
+            to: 9999
             tip: qsTr("Line left margin")
             onApplied: text => inspector.editor.setMarginText(0, text)
         }
@@ -325,6 +375,9 @@ ColumnLayout {
             enabled: inspector.editor.editable && inspector.editor.assFields
             Layout.preferredWidth: 50
             Accessible.name: qsTr("Right margin")
+            numberRole: 2
+            from: 0
+            to: 9999
             tip: qsTr("Line right margin")
             onApplied: text => inspector.editor.setMarginText(1, text)
         }
@@ -335,6 +388,9 @@ ColumnLayout {
             enabled: inspector.editor.editable && inspector.editor.assFields
             Layout.preferredWidth: 50
             Accessible.name: qsTr("Vertical margin")
+            numberRole: 3
+            from: 0
+            to: 9999
             tip: qsTr("Line top and bottom margins")
             onApplied: text => inspector.editor.setMarginText(2, text)
         }

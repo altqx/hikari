@@ -106,9 +106,16 @@ class LineEditorController : public QObject {
     // The time fields' form (application::TimeFieldForm: 0 ASS, 1 SRT,
     // 2 TMPlayer, 3 a number), which TimeField.qml masks its editing to.
     Q_PROPERTY(int timeForm READ timeForm NOTIFY changed)
-    // E4: a number time field holds MicroDVD frames (TimeCtrl's form MDVD),
-    // which its wheel steps.
-    Q_PROPERTY(bool frameNumbers READ frameNumbers NOTIFY changed)
+    // E4: what the time fields' mouse reads (TimeCtrl::OnMouseEvent):
+    // TimeCtrl's own form (application::TimeCtrlForm: 0 ASS, 1 SRT,
+    // 2 TMPlayer, 3 MicroDVD, 4 MPL2), whether the fields show frames, and
+    // the time behind each field's text in milliseconds (TimeCtrl's
+    // mTime.mstime as SetTime gives it: the Line's Start and End, End - Start).
+    Q_PROPERTY(int timeCtrlForm READ timeCtrlForm NOTIFY changed)
+    Q_PROPERTY(bool framesShown READ framesShown NOTIFY changed)
+    Q_PROPERTY(double startMs READ startMs NOTIFY changed)
+    Q_PROPERTY(double endMs READ endMs NOTIFY changed)
+    Q_PROPERTY(double durationMs READ durationMs NOTIFY changed)
     // E5: the active Line's Unconfirmed (legacy DoubtfulTL->SetValue in
     // SetLine) and the "Moving tags" toggle (AUTO_MOVE_TAGS_FROM_ORIGINAL).
     Q_PROPERTY(bool unconfirmed READ unconfirmed NOTIFY changed)
@@ -165,7 +172,11 @@ public:
     bool assFields() const;
     bool hasEnd() const;
     int timeForm() const;
-    bool frameNumbers() const;
+    int timeCtrlForm() const;
+    bool framesShown() const { return frameTimebase() != nullptr; }
+    double startMs() const;
+    double endMs() const;
+    double durationMs() const;
     bool comment() const;
     QString layerText() const;
     QString durationText() const;
@@ -230,6 +241,26 @@ public:
     // Text not yet in the field's form is left for the field's apply, since
     // the legacy control only ever holds its form.
     Q_INVOKABLE void timeTyped(int role, const QString &text);
+    // E4: the mouse stepped a time field without the focus (TimeCtrl's
+    // wheel: SetValue(..., true) and NUMBER_CHANGED). The field is modified
+    // and keeps `text`, and the Line does not take it until the next Send
+    // (EditBox::Send reads every modified field, EditBox.cpp:560-605); showing
+    // a Line, Esc, the Time/Frames switch or a time from the audio display
+    // drops it, as SetTime replaced the text. With live video editing
+    // EditBox::OnEdit still runs for the field with the focus, `focused`
+    // (TimeFieldRole, or -1): with Start or End focused the draft takes both
+    // fields' times, so a stepped Start or End goes to it and Duration
+    // follows; with Duration focused End shows the draft's End again
+    // (EditBox.cpp:1520-1556).
+    Q_INVOKABLE void timeStepped(int role, const QString &text, int focused);
+    // E4: the mouse stepped the Layer (0) or a margin (1 left, 2 right,
+    // 3 vertical) without the focus (NumCtrl's wheel): modified until the
+    // next Send takes it or a Line is shown.
+    Q_INVOKABLE void numberStepped(int role, const QString &text);
+    // Whether a field holds a step the Line has not taken: TimeFieldRole for
+    // the time fields, the numberStepped role for the others.
+    Q_INVOKABLE bool timeModified(int role) const;
+    Q_INVOKABLE bool numberModified(int role) const;
     // EditBox::OnAnChoice: \an<index + 1> into the first block of the edited
     // text field (TextEdit, or TextEditOrig while the translation is empty).
     Q_INVOKABLE bool chooseAlignment(int index);
@@ -461,6 +492,16 @@ private:
     bool m_timeWarned[3] = {false, false, false};
     void clearTimeWarnings();
     std::optional<QString> m_typedDuration; // DurEdit keeps what was typed until SetLine
+    // E4: fields the mouse stepped without the focus (legacy IsModified with
+    // no OnEdit): TimeFieldRole's Duration, Start, End, and the Layer and
+    // margins. Their text shows in place of the Line's until a Send applies
+    // them (applyStepped) or the Line is shown again.
+    std::optional<QString> m_steppedTime[3];
+    std::optional<QString> m_steppedNumber[4];
+    bool applyStepped();
+    void dropStepped();
+    // OnEdit's startEndFocus branch for the focused Start (0) or End (1).
+    void liveStartEnd(int focused);
     std::optional<core::LineId> m_shownLine;
     core::syntax::TextState m_textState = core::syntax::TextState::Dialogue;
     void updateTextState(); // TextEditor::SetState from the Line's Comment and Effect

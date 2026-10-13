@@ -317,10 +317,10 @@ TEST(TimeField, TheMouseStepsTheColumnsUnit)
 
 TEST(TimeField, TheWheelStepsWholeNotches)
 {
-    using F = TimeFieldForm;
-    const auto wheel = [](F form, std::u16string_view text, std::size_t column, int notches, bool mdvd = false) {
-        const auto r = wheelTimeField(form, mdvd, text, column, notches);
-        return r ? std::string(r->begin(), r->end()) : std::string("refused");
+    using F = TimeCtrlForm;
+    const auto wheel = [](F form, std::u16string_view text, std::size_t column, int notches) {
+        const auto r = wheelTimeField({form, false}, text, 0, column, notches);
+        return r ? std::string(r->text.begin(), r->text.end()) : std::string("refused");
     };
     EXPECT_EQ(wheel(F::Ass, u"0:01:02.03", 9, 1), "0:01:02.04");
     EXPECT_EQ(wheel(F::Ass, u"0:01:02.03", 6, -2), "0:01:00.03");
@@ -336,48 +336,182 @@ TEST(TimeField, TheWheelStepsWholeNotches)
     EXPECT_EQ(wheel(F::Srt, u"00:00:01,005", 10, 1), "00:00:01,015");
     EXPECT_EQ(wheel(F::Srt, u"01:00:01,005", 1, -1), "00:00:01,005");
     EXPECT_EQ(wheel(F::TMPlayer, u"00:00:01", 8, 2), "00:00:03");
-    // MicroDVD's frame steps by one, not below 0; other numbers are not ported.
-    EXPECT_EQ(wheel(F::Number, u"120", 1, 1, true), "121");
-    EXPECT_EQ(wheel(F::Number, u"120", 0, -3, true), "117");
-    EXPECT_EQ(wheel(F::Number, u"0", 0, -1, true), "refused");
-    EXPECT_EQ(wheel(F::Number, u"", 0, 1, true), "1");
-    EXPECT_EQ(wheel(F::Number, u"999999999", 0, 1, true), "refused");
-    EXPECT_EQ(wheel(F::Number, u"120", 0, 1, false), "refused");
+    const auto stepped = wheelTimeField({F::Ass, false}, u"0:01:02.03", 0, 9, 1);
+    ASSERT_TRUE(stepped);
+    EXPECT_EQ(stepped->ms, 62040);
+}
+
+// The number forms as TimeCtrl::OnMouseEvent stepped them (TimeCtrl.cpp:363-385,
+// SubsTime::ParseMS and raw): `grad` 1 for MicroDVD and MPL2.
+TEST(TimeField, TheWheelStepsTheNumberFormsAsLegacy)
+{
+    using F = TimeCtrlForm;
+    const auto wheel = [](TimeFieldMouse mouse, std::u16string_view text, std::int64_t ms, std::size_t column,
+                          int notches) {
+        const auto r = wheelTimeField(mouse, text, ms, column, notches);
+        return r ? std::string(r->text.begin(), r->text.end()) + "@" + std::to_string(r->ms) : std::string("refused");
+    };
+    // MicroDVD: the frame by the notches, not below 0 or past nine digits;
+    // frame 0 reached from another frame shows the frame it started from
+    // (raw recomputes a 0 frame from ParseMS's time of that frame).
+    EXPECT_EQ(wheel({F::MicroDvd, false}, u"120", 4800, 1, 1), "121@4800");
+    EXPECT_EQ(wheel({F::MicroDvd, false}, u"120", 4800, 0, -3), "117@4800");
+    EXPECT_EQ(wheel({F::MicroDvd, false}, u"0", 0, 0, -1), "refused");
+    EXPECT_EQ(wheel({F::MicroDvd, false}, u"", 0, 0, 1), "1@0");
+    EXPECT_EQ(wheel({F::MicroDvd, false}, u"1", 40, 0, -1), "1@40");
+    EXPECT_EQ(wheel({F::MicroDvd, false}, u"3", 120, 0, -3), "3@120");
+    EXPECT_EQ(wheel({F::MicroDvd, false}, u"3", 120, 0, -2), "1@120");
+    EXPECT_EQ(wheel({F::MicroDvd, false}, u"999999999", 0, 0, 1), "refused");
+    // MPL2: the time's milliseconds by the notches, shown in deciseconds
+    // rounded up: up a decisecond, down the same number, 0 refused below.
+    EXPECT_EQ(wheel({F::Mpl2, false}, u"12", 0, 1, 1), "13@1201");
+    EXPECT_EQ(wheel({F::Mpl2, false}, u"12", 0, 0, 5), "13@1205");
+    EXPECT_EQ(wheel({F::Mpl2, false}, u"12", 0, 1, -1), "12@1199");
+    EXPECT_EQ(wheel({F::Mpl2, false}, u"12", 0, 1, -99), "12@1101");
+    EXPECT_EQ(wheel({F::Mpl2, false}, u"0", 0, 0, -1), "refused");
+    // The Time/Frames switch: MicroDVD's frame steps; on the other formats
+    // the frame stays and the time behind it takes the column's step
+    // (startPos 2 for ASS, else 3; MPL2's 1 ms), refused out of range.
+    EXPECT_EQ(wheel({F::MicroDvd, true}, u"25", 1000, 1, 2), "27@1000");
+    EXPECT_EQ(wheel({F::MicroDvd, true}, u"0", 0, 0, -1), "refused");
+    EXPECT_EQ(wheel({F::Ass, true}, u"0024", 1000, 3, 1), "24@61000");
+    EXPECT_EQ(wheel({F::Ass, true}, u"24", 1000, 0, 1), "24@3601000");
+    EXPECT_EQ(wheel({F::Srt, true}, u"24", 1000, 1, 1), "24@3601000");
+    EXPECT_EQ(wheel({F::Srt, true}, u"24", 1000, 1, -1), "refused");
+    EXPECT_EQ(wheel({F::Ass, true}, u"24", 1000, 9, -1), "24@990");
+    EXPECT_EQ(wheel({F::Mpl2, true}, u"24", 1000, 0, -1), "24@999");
+    EXPECT_EQ(wheel({F::Ass, true}, u"", 1000, 9, 1), "0@10"); // ParseMS of nothing: 0 ms
+    EXPECT_EQ(timeFieldStep(TimeFieldMouse{F::Mpl2, false}, 0), 1);
+    EXPECT_EQ(timeFieldStep(TimeFieldMouse{F::TMPlayer, true}, 2), 3600000);
 }
 
 TEST(TimeField, TheRightButtonDragsTheTime)
 {
-    using F = TimeFieldForm;
+    using F = TimeCtrlForm;
+    const TimeFieldMouse ass{F::Ass, false};
     const auto text = [](const std::optional<std::u16string> &r) {
         return r ? std::string(r->begin(), r->end()) : std::string("none");
     };
-    auto drag = beginTimeFieldDrag(F::Ass, u"0:01:02.03", 6, 100, 50); // seconds
-    ASSERT_TRUE(drag);
-    EXPECT_EQ(drag->ms, 62030);
-    EXPECT_EQ(drag->step, 1000);
-    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 100, 43)), "none");          // 7 pixels: nothing yet
-    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 100, 42)), "0:01:03.03");    // 8 up: one step up
-    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 103, 30)), "0:01:04.03");    // from where it stepped
-    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 103, 38)), "0:01:03.03");    // down: one step down
-    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 112, 38)), "none");          // 9 right: nothing
-    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 113, 38)), "0:01:13.03");    // 10 right: ten steps
-    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 100, 40)), "0:01:03.03");    // 13 left (2 down): ten back
+    auto drag = beginTimeFieldDrag(ass, u"0:01:02.03", 0, 6, 100, 50); // seconds
+    EXPECT_EQ(drag.ms, 62030);
+    EXPECT_EQ(drag.step, 1000);
+    EXPECT_EQ(text(dragTimeField(ass, drag, 100, 43)), "none");          // 7 pixels: nothing yet
+    EXPECT_EQ(text(dragTimeField(ass, drag, 100, 42)), "0:01:03.03");    // 8 up: one step up
+    EXPECT_EQ(text(dragTimeField(ass, drag, 103, 30)), "0:01:04.03");    // from where it stepped
+    EXPECT_EQ(text(dragTimeField(ass, drag, 103, 38)), "0:01:03.03");    // down: one step down
+    EXPECT_EQ(text(dragTimeField(ass, drag, 112, 38)), "none");          // 9 right: nothing
+    EXPECT_EQ(text(dragTimeField(ass, drag, 113, 38)), "0:01:13.03");    // 10 right: ten steps
+    EXPECT_EQ(text(dragTimeField(ass, drag, 100, 40)), "0:01:03.03");    // 13 left (2 down): ten back
     // Equal moves count as vertical (absy >= absx).
-    EXPECT_EQ(text(dragTimeField(F::Ass, *drag, 110, 30)), "0:01:04.03");
+    EXPECT_EQ(text(dragTimeField(ass, drag, 110, 30)), "0:01:04.03");
     // Clamped at 0 and at 9:59:59.999 (TimeCtrl.cpp:321-323).
-    auto hours = beginTimeFieldDrag(F::Ass, u"0:30:00.00", 0, 0, 0);
-    ASSERT_TRUE(hours);
-    EXPECT_EQ(text(dragTimeField(F::Ass, *hours, 0, 8)), "0:00:00.00");
+    auto hours = beginTimeFieldDrag(ass, u"0:30:00.00", 0, 0, 0, 0);
+    EXPECT_EQ(text(dragTimeField(ass, hours, 0, 8)), "0:00:00.00");
     for (int i = 1; i <= 11; ++i)
-        dragTimeField(F::Ass, *hours, 0, 8 - 8 * i);
-    EXPECT_EQ(hours->ms, kTimeFieldMaxMs);
-    EXPECT_EQ(text(dragTimeField(F::Ass, *hours, 0, -100)), "9:59:59.99");
+        dragTimeField(ass, hours, 0, 8 - 8 * i);
+    EXPECT_EQ(hours.ms, kTimeFieldMaxMs);
+    EXPECT_EQ(text(dragTimeField(ass, hours, 0, -100)), "9:59:59.99");
     // Each format's text; TMPlayer's seconds hold the dragged milliseconds.
-    auto srt = beginTimeFieldDrag(F::Srt, u"00:00:01,005", 11, 0, 0);
-    ASSERT_TRUE(srt);
-    EXPECT_EQ(text(dragTimeField(F::Srt, *srt, 0, -8)), "00:00:01,015");
-    // Number forms do not drag (not ported).
-    EXPECT_FALSE(beginTimeFieldDrag(F::Number, u"12", 0, 0, 0));
+    const TimeFieldMouse srt{F::Srt, false};
+    auto s = beginTimeFieldDrag(srt, u"00:00:01,005", 0, 11, 0, 0);
+    EXPECT_EQ(text(dragTimeField(srt, s, 0, -8)), "00:00:01,015");
+}
+
+// TimeCtrl's drag of the number forms (TimeCtrl.cpp:300-358): `mstime` from
+// mTime.mstime, then orgframe = mstime with the switch, else the time.
+TEST(TimeField, TheRightButtonDragsTheNumberFormsAsLegacy)
+{
+    using F = TimeCtrlForm;
+    const auto text = [](const std::optional<std::u16string> &r) {
+        return r ? std::string(r->begin(), r->end()) : std::string("none");
+    };
+    // MPL2: 1 ms a step, so a decisecond up at the first step and the next
+    // only 100 steps on; down shows the same number until 100 ms are gone.
+    const TimeFieldMouse mpl2{F::Mpl2, false};
+    auto m = beginTimeFieldDrag(mpl2, u"12", 0, 1, 0, 0);
+    EXPECT_EQ(m.ms, 1200);
+    EXPECT_EQ(m.step, 1);
+    EXPECT_EQ(text(dragTimeField(mpl2, m, 0, -8)), "13");
+    EXPECT_EQ(text(dragTimeField(mpl2, m, 0, -16)), "13");
+    EXPECT_EQ(text(dragTimeField(mpl2, m, 10, -16)), "13"); // ten 1 ms steps right
+    EXPECT_EQ(m.ms, 1212);
+    auto down = beginTimeFieldDrag(mpl2, u"12", 0, 0, 0, 0);
+    EXPECT_EQ(text(dragTimeField(mpl2, down, 0, 8)), "12");
+    for (int i = 2; i <= 100; ++i)
+        dragTimeField(mpl2, down, 0, 8 * i);
+    EXPECT_EQ(down.ms, 1100);
+    EXPECT_EQ(text(dragTimeField(mpl2, down, 0, 808)), "11");
+    // MicroDVD: the frame never moves, except that 0 becomes 1 at the first
+    // step above 0 ms and stays 1.
+    const TimeFieldMouse mdvd{F::MicroDvd, false};
+    auto d = beginTimeFieldDrag(mdvd, u"25", 1000, 0, 0, 0);
+    EXPECT_EQ(text(dragTimeField(mdvd, d, 0, -8)), "25");
+    EXPECT_EQ(text(dragTimeField(mdvd, d, 0, 40)), "25");
+    auto zero = beginTimeFieldDrag(mdvd, u"0", 0, 0, 0, 0);
+    EXPECT_EQ(text(dragTimeField(mdvd, zero, 0, 8)), "0");
+    EXPECT_EQ(text(dragTimeField(mdvd, zero, 0, 16)), "0");
+    EXPECT_EQ(text(dragTimeField(mdvd, zero, 0, 8)), "1");
+    EXPECT_EQ(text(dragTimeField(mdvd, zero, 0, 16)), "1");
+    // The switch: the frame number becomes the milliseconds behind it,
+    // stepped by the column's unit on ASS, SRT and TMPlayer, 1 on MicroDVD
+    // and MPL2.
+    const TimeFieldMouse frames{F::Ass, true};
+    auto f = beginTimeFieldDrag(frames, u"24", 1000, 1, 0, 0);
+    EXPECT_EQ(f.step, 3600000);
+    EXPECT_EQ(text(dragTimeField(frames, f, 0, -8)), "3601000");
+    EXPECT_EQ(text(dragTimeField(frames, f, 0, 0)), "1000");
+    EXPECT_EQ(text(dragTimeField(frames, f, 0, 8)), "0");
+    const TimeFieldMouse mdvdFrames{F::MicroDvd, true};
+    auto g = beginTimeFieldDrag(mdvdFrames, u"25", 1000, 1, 0, 0);
+    EXPECT_EQ(text(dragTimeField(mdvdFrames, g, 0, -8)), "1001");
+}
+
+// NumCtrl::OnMouseEvent (NumCtrl.cpp:243-312) on the Layer and the margins.
+TEST(NumberField, TheMouseStepsTheValueAsLegacy)
+{
+    const auto text = [](const std::optional<std::u16string> &r) {
+        return r ? std::string(r->begin(), r->end()) : std::string("none");
+    };
+    std::int64_t v = 5;
+    EXPECT_EQ(text(wheelNumberField(v, 1, kMarginRange)), "6");
+    EXPECT_EQ(text(wheelNumberField(v, -3, kMarginRange)), "3");
+    EXPECT_EQ(text(wheelNumberField(v, 0, kMarginRange)), "none");
+    // Past the range nothing shows, but the value keeps the move: as many
+    // notches back before the wheel shows a number again.
+    std::int64_t top = 9999;
+    EXPECT_EQ(text(wheelNumberField(top, 2, kMarginRange)), "none");
+    EXPECT_EQ(top, 10001);
+    EXPECT_EQ(text(wheelNumberField(top, -1, kMarginRange)), "none");
+    EXPECT_EQ(text(wheelNumberField(top, -1, kMarginRange)), "9999");
+    EXPECT_EQ(text(wheelNumberField(top, -1, kMarginRange)), "9998");
+    std::int64_t layer = -10000000;
+    EXPECT_EQ(text(wheelNumberField(layer, -1, kLayerRange)), "none");
+    // The drag: one a step up or down, refused out of the range (the
+    // position stays, so the distance grows); ten sideways, clamped.
+    NumberFieldDrag d{9997, 0, 0};
+    EXPECT_EQ(text(dragNumberField(d, 0, -7, kMarginRange)), "none");
+    EXPECT_EQ(text(dragNumberField(d, 0, -8, kMarginRange)), "9998");
+    EXPECT_EQ(text(dragNumberField(d, 0, -16, kMarginRange)), "9999");
+    EXPECT_EQ(text(dragNumberField(d, 0, -24, kMarginRange)), "none");
+    EXPECT_EQ(d.y, -16);
+    EXPECT_EQ(text(dragNumberField(d, 0, -8, kMarginRange)), "9998"); // 8 down from -16
+    EXPECT_EQ(text(dragNumberField(d, 10, -8, kMarginRange)), "9999");  // clamped
+    EXPECT_EQ(text(dragNumberField(d, 20, -8, kMarginRange)), "none");  // from the end
+    EXPECT_EQ(text(dragNumberField(d, 0, -8, kMarginRange)), "9989"); // from x 10, where it last stepped
+    NumberFieldDrag z{3, 0, 0};
+    EXPECT_EQ(text(dragNumberField(z, -10, 0, kMarginRange)), "0");
+    // A value left outside the range by the wheel: a vertical step stays
+    // refused, a sideways one clamps.
+    NumberFieldDrag out{10001, 0, 0};
+    EXPECT_EQ(text(dragNumberField(out, 0, 8, kMarginRange)), "none");
+    EXPECT_EQ(text(dragNumberField(out, -10, 8, kMarginRange)), "9991");
+    // OnNumWrite's value of typed text.
+    EXPECT_EQ(numberFieldValue(u"12"), 12);
+    EXPECT_EQ(numberFieldValue(u"-3"), -3);
+    EXPECT_EQ(numberFieldValue(u"20000"), 20000);
+    EXPECT_FALSE(numberFieldValue(u""));
+    EXPECT_FALSE(numberFieldValue(u"-"));
+    EXPECT_FALSE(numberFieldValue(u"x"));
 }
 
 TEST(EditorTimes, MicroDvdFramesUseTheDocumentRate)

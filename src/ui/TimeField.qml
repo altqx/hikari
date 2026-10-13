@@ -15,9 +15,14 @@
 // application::wheelTimeField and dragTimeField): the wheel over a column
 // steps that column's unit per notch, and the right button held and dragged
 // steps it every 8 pixels up or down (up adding) or ten units every 10
-// pixels right or left. The right button opens no context menu here, as in
-// legacy, where its release ended the drag, on any platform's trigger (the
-// Menu key still opens it).
+// pixels right or left. MPL2's deciseconds, MicroDVD's frames and the
+// frames of the Time/Frames switch step as TimeCtrl stepped them, reading
+// the Document's format (`mouseForm`) and the time behind a frame number
+// (`timeMs`, TimeCtrl's mTime.mstime), so some steps leave the number as it
+// was. A step marks the field modified (HikariTextCtrl::SetValue's modif)
+// even when its text stays. The right button opens no context menu here, as
+// in legacy, where its release ended the drag, on any platform's trigger
+// (the Menu key still opens it).
 import QtQuick
 import QtQuick.Controls
 import Hikari.Ui
@@ -35,8 +40,17 @@ TextField {
     // Legacy wxBell; the shell has no audible bell to give.
     signal bell()
 
-    // The number is a MicroDVD frame, which the wheel steps by one.
-    property bool frameNumber: false
+    // The mouse's form (application::TimeCtrlForm: 0 ASS, 1 SRT, 2 TMPlayer,
+    // 3 MicroDVD, 4 MPL2) and whether the field shows frames.
+    property int mouseForm: 0
+    property bool frames: false
+    // The time behind the text as the field was given it (TimeCtrl::SetTime),
+    // and as the wheel left it (`hiddenMs`).
+    property real timeMs: 0
+    property real hiddenMs: 0
+    // Stepped by the mouse since the field was last applied or given a time
+    // (legacy IsModified after a step's SetValue(..., true)).
+    property bool modified: false
     property var drag: ({}) // the right button's drag (TimeFieldMask.dragBegin), {} when none
     // From the right button's press to just after its release.
     property bool rightHeld: false
@@ -55,15 +69,21 @@ TextField {
         return edit.changed
     }
     // A stepped time: the caret stays (HikariTextCtrl::SetValue's newSel
-    // false) and it applies as typing does (NUMBER_CHANGED).
-    function step(next) {
+    // false), the field is modified and it applies as typing does
+    // (NUMBER_CHANGED). `ms`: the time behind the text after the step.
+    function step(next, ms) {
         if (next.length === 0)
             return
         const from = selectionStart, to = selectionEnd
         text = next
         select(Math.min(from, text.length), Math.min(to, text.length))
+        modified = true
         typed()
+        if (ms !== undefined)
+            hiddenMs = ms
     }
+    onTimeMsChanged: hiddenMs = timeMs
+    Component.onCompleted: hiddenMs = timeMs
     MouseArea {
         objectName: field.objectName + "Mouse"
         anchors.fill: parent
@@ -73,12 +93,13 @@ TextField {
             const column = field.positionAt(mouse.x, mouse.y, TextInput.CursorOnCharacter)
             field.forceActiveFocus(Qt.MouseFocusReason)
             field.select(column, column)
-            field.drag = TimeFieldMask.dragBegin(field.form, field.text, column, mouse.x, mouse.y)
+            field.drag = TimeFieldMask.dragBegin(field.mouseForm, field.frames, field.text, field.hiddenMs, column,
+                                                 mouse.x, mouse.y)
         }
         onPositionChanged: mouse => {
             if (!field.drag.step)
                 return
-            const moved = TimeFieldMask.dragMove(field.form, field.drag, mouse.x, mouse.y)
+            const moved = TimeFieldMask.dragMove(field.mouseForm, field.frames, field.drag, mouse.x, mouse.y)
             field.drag = moved.drag
             field.step(moved.text)
         }
@@ -95,8 +116,10 @@ TextField {
         onWheel: wheel => {
             // GetWheelRotation() / GetWheelDelta(): whole notches only.
             const notches = Math.trunc(wheel.angleDelta.y / 120)
-            field.step(TimeFieldMask.wheel(field.form, field.frameNumber, field.text,
-                                           field.positionAt(wheel.x, wheel.y, TextInput.CursorOnCharacter), notches))
+            const next = TimeFieldMask.wheel(field.mouseForm, field.frames, field.text, field.hiddenMs,
+                                             field.positionAt(wheel.x, wheel.y, TextInput.CursorOnCharacter), notches)
+            if (next.text !== undefined)
+                field.step(next.text, next.ms)
             wheel.accepted = true
         }
     }
