@@ -763,6 +763,9 @@ TEST_F(VideoTest, TheDocumentMatrixSetsTheSourcesInputMatrix)
     ASSERT_EQ(source.frames.size(), 1u);
     source.answer();
     EXPECT_EQ(video.colourMatrix().applied(), "TV.601");
+    // V1: player frames take the same matrix.
+    using Input = LegacyColourMatrix::Input;
+    EXPECT_EQ(video.playerColour(), (Input{5, 1}));
     // The source's own: BT.709 set, the shown frame decoded again.
     video.setMatrix("TV.709");
     EXPECT_EQ(source.matrixCalls.back(), (std::pair<int, int>{1, 1}));
@@ -779,6 +782,7 @@ TEST_F(VideoTest, TheDocumentMatrixSetsTheSourcesInputMatrix)
     video.setMatrix("TV.601");
     EXPECT_EQ(logged, (std::vector<std::string>{"Cannot change YCbCr matrix"}));
     EXPECT_EQ(video.colourMatrix().applied(), "TV.709");
+    EXPECT_EQ(video.playerColour(), (Input{1, 1})); // the converter kept BT.709
     // A BT.601 source never takes "TV.709".
     source.refuseMatrix = false;
     source.colorSpace = 6;
@@ -788,6 +792,7 @@ TEST_F(VideoTest, TheDocumentMatrixSetsTheSourcesInputMatrix)
     source.finishOpen();
     EXPECT_EQ(source.matrixCalls.size(), before);
     EXPECT_EQ(video.colourMatrix().source(), "TV.601");
+    EXPECT_EQ(video.playerColour(), (Input{6, 1})); // nothing set: the source's own
     // An untagged HD source with a Document matrix other than TV.601: its
     // guess, BT.709, is set before the first frame (approved departure
     // V4-untagged-matrix; legacy left the converter's BT.601 under the name

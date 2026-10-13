@@ -497,11 +497,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     connect(m_generalPlayer.get(), &backends::QtGeneralPlayer::frameDelivered, this, [this](const QVideoFrame &frame) {
         const qint64 end = frame.endTime();
+        // The paused frame's matrix and range (V4's), so playing does not change the colours.
+        const auto colour = m_video->session().playerColour();
         m_video->session().submitGeneralFrame(
             frame.startTime(), end > frame.startTime() ? std::optional<std::int64_t>(end) : std::nullopt,
-            [frame](application::FramePool &pool) -> std::shared_ptr<application::IndexedFrame> {
+            [frame, colour](application::FramePool &pool) -> std::shared_ptr<application::IndexedFrame> {
                 auto out = pool.acquire();
-                return backends::videoFrameToBgra(frame, *out) ? out : nullptr;
+                return backends::videoFrameToBgra(frame, *out, colour) ? out : nullptr;
             });
     });
     m_automation = std::make_unique<AutomationShell>(

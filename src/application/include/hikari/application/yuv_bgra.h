@@ -25,7 +25,9 @@ struct Matrix {
     int shift = 13;
 };
 
-enum class Space { Bt601, Bt709, Bt2020 };
+// The luma coefficients of BT.601 (and SMPTE 170M, BT.470BG), BT.709,
+// BT.2020 (non-constant luminance), FCC and SMPTE 240M.
+enum class Space { Bt601, Bt709, Bt2020, Fcc, Smpte240m };
 
 // The matrix with 13 fractional bits (limited range: luma 16-235, chroma 16-240).
 Matrix matrix(Space space, bool fullRange);

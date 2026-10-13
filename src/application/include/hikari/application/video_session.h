@@ -145,6 +145,10 @@ public:
     // a stop or a seek, is dropped.
     void submitGeneralFrame(std::int64_t startUs, std::optional<std::int64_t> endUs, PlaybackPipeline::Make make);
     std::optional<PlaybackPipeline::Counters> pipelineCounters() const;
+    // V1: the matrix and range the indexed frames are converted with now
+    // (the last input matrix set, else the source's own; nullopt with no
+    // video open), for player frames to look as the paused frame does.
+    std::optional<LegacyColourMatrix::Input> playerColour() const;
 
     // V2: legacy VideoBox::Seek and keyframe navigation, from the shown frame.
     // A start time shows the frame at or after it (Timebase::FrameAt, 0 at or
@@ -262,6 +266,7 @@ private:
     // V4
     std::string m_docMatrix;
     LegacyColourMatrix m_colour;
+    std::optional<LegacyColourMatrix::Input> m_inputMatrix; // the last one set and not refused
     std::function<void(const std::string &)> m_log;
     void applyInputMatrix(LegacyColourMatrix::Input input, std::optional<LegacyColourMatrix::Change> change);
     // V1: last, so its worker stops before anything it reads goes.

@@ -21,6 +21,15 @@ void VideoSession::setFrameWorker(PlaybackPipeline::Post post)
     m_pipeline->setSubtitles(m_subtitleSerial, m_hasSubtitles);
 }
 
+std::optional<LegacyColourMatrix::Input> VideoSession::playerColour() const
+{
+    if (m_state != State::Ready)
+        return std::nullopt;
+    if (m_inputMatrix)
+        return m_inputMatrix;
+    return LegacyColourMatrix::Input{m_colour.sourceColorSpace(), m_colour.sourceColorRange()};
+}
+
 std::optional<PlaybackPipeline::Counters> VideoSession::pipelineCounters() const
 {
     return m_pipeline ? std::optional(m_pipeline->counters()) : std::nullopt;
@@ -113,6 +122,7 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         m_geometry = {opened->width, opened->height, opened->sarNum, opened->sarDen};
         m_state = State::Ready;
         // V4: legacy ProviderFFMS2::Init's matrix, before the first frame.
+        m_inputMatrix.reset();
         if (const auto input = m_colour.open(opened->colorSpace, opened->colorRange, opened->width, opened->height,
                                              m_docMatrix))
             applyInputMatrix(*input, std::nullopt);
@@ -195,10 +205,12 @@ void VideoSession::applyInputMatrix(LegacyColourMatrix::Input input, std::option
 {
     const std::weak_ptr<bool> alive = m_alive;
     const std::uint64_t generation = m_source.generation();
+    const auto previous = std::exchange(m_inputMatrix, input);
     m_source.setInputMatrix(input.colorSpace, input.colorRange,
-                            [this, alive, generation, change](std::expected<void, SourceError> done) {
+                            [this, alive, generation, change, previous](std::expected<void, SourceError> done) {
                                 if (alive.expired() || done || generation != m_source.generation())
                                     return;
+                                m_inputMatrix = previous; // the converter keeps the one before
                                 if (change)
                                     m_colour.revert(*change);
                                 if (m_log)

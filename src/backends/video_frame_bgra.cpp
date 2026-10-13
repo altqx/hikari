@@ -41,16 +41,37 @@ bool shapeOf(QVideoFrameFormat::PixelFormat format, Shape &s)
     }
 }
 
-yuv::Matrix matrixOf(const QVideoFrameFormat &format, int height)
+yuv::Matrix matrixOf(const QVideoFrameFormat &format, int width, int height,
+                     const std::optional<application::LegacyColourMatrix::Input> &colour)
 {
-    yuv::Space space = height > 576 ? yuv::Space::Bt709 : yuv::Space::Bt601;
+    namespace ffms = application::ffms_colour;
+    if (colour) {
+        // FFMS2's (libavutil's) matrix constants; BT.2020's are 9 and 10.
+        std::optional<yuv::Space> space;
+        switch (colour->colorSpace) {
+        case ffms::kBt709: space = yuv::Space::Bt709; break;
+        case ffms::kBt470bg:
+        case ffms::kSmpte170m: space = yuv::Space::Bt601; break;
+        case ffms::kFcc: space = yuv::Space::Fcc; break;
+        case ffms::kSmpte240m: space = yuv::Space::Smpte240m; break;
+        case 9:
+        case 10: space = yuv::Space::Bt2020; break;
+        default: break; // RGB, unspecified or unknown: the frame's own
+        }
+        if (space)
+            return yuv::matrix(*space, colour->colorRange == ffms::kRangeJpeg);
+    }
+    // Untagged: legacy's guess (ProviderFFMS2.cpp:393-395, video_matrix.h).
+    yuv::Space space = width > 1024 || height >= 600 ? yuv::Space::Bt709 : yuv::Space::Bt601;
     switch (format.colorSpace()) {
     case QVideoFrameFormat::ColorSpace_BT601: space = yuv::Space::Bt601; break;
     case QVideoFrameFormat::ColorSpace_BT709: space = yuv::Space::Bt709; break;
     case QVideoFrameFormat::ColorSpace_BT2020: space = yuv::Space::Bt2020; break;
     default: break;
     }
-    return yuv::matrix(space, format.colorRange() == QVideoFrameFormat::ColorRange_Full);
+    const bool full = colour ? colour->colorRange == ffms::kRangeJpeg
+                             : format.colorRange() == QVideoFrameFormat::ColorRange_Full;
+    return yuv::matrix(space, full);
 }
 
 std::uint8_t narrow(std::uint16_t v, bool highBits)
@@ -86,7 +107,8 @@ bool viaImage(const QVideoFrame &frame, application::IndexedFrame &out)
 
 } // namespace
 
-bool videoFrameToBgra(const QVideoFrame &source, application::IndexedFrame &out)
+bool videoFrameToBgra(const QVideoFrame &source, application::IndexedFrame &out,
+                      std::optional<application::LegacyColourMatrix::Input> colour)
 {
     if (!source.isValid())
         return false;
@@ -102,7 +124,7 @@ bool videoFrameToBgra(const QVideoFrame &source, application::IndexedFrame &out)
         frame.unmap();
         return false;
     }
-    const yuv::Matrix m = matrixOf(frame.surfaceFormat(), h);
+    const yuv::Matrix m = matrixOf(frame.surfaceFormat(), w, h, colour);
     out.width = w;
     out.height = h;
     out.stride = w * 4;

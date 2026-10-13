@@ -18,6 +18,12 @@ Matrix matrix(Space space, bool fullRange)
     } else if (space == Space::Bt2020) {
         kr = 0.2627;
         kb = 0.0593;
+    } else if (space == Space::Fcc) {
+        kr = 0.30;
+        kb = 0.11;
+    } else if (space == Space::Smpte240m) {
+        kr = 0.212;
+        kb = 0.087;
     }
     const double kg = 1.0 - kr - kb;
     const double luma = fullRange ? 1.0 : 255.0 / 219.0;

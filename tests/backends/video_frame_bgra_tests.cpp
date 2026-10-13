@@ -160,10 +160,10 @@ private slots:
             {QVideoFrameFormat::ColorSpace_BT601, QVideoFrameFormat::ColorRange_Video, 8, yuv::Space::Bt601, false},
             {QVideoFrameFormat::ColorSpace_BT709, QVideoFrameFormat::ColorRange_Full, 8, yuv::Space::Bt709, true},
             {QVideoFrameFormat::ColorSpace_BT2020, QVideoFrameFormat::ColorRange_Video, 8, yuv::Space::Bt2020, false},
-            // Untagged: BT.601 up to 576 lines, BT.709 above.
-            {QVideoFrameFormat::ColorSpace_Undefined, QVideoFrameFormat::ColorRange_Unknown, 576, yuv::Space::Bt601,
+            // Untagged: legacy's guess, BT.709 from 600 lines (or wider than 1024).
+            {QVideoFrameFormat::ColorSpace_Undefined, QVideoFrameFormat::ColorRange_Unknown, 598, yuv::Space::Bt601,
              false},
-            {QVideoFrameFormat::ColorSpace_Undefined, QVideoFrameFormat::ColorRange_Unknown, 578, yuv::Space::Bt709,
+            {QVideoFrameFormat::ColorSpace_Undefined, QVideoFrameFormat::ColorRange_Unknown, 600, yuv::Space::Bt709,
              false},
         };
         for (const Case &c : cases) {
@@ -172,6 +172,67 @@ private slots:
                 uniform(QVideoFrameFormat::Format_YUV420P, 16, c.height, c.space, c.range), out));
             QCOMPARE(differing(out, expected(yuv::matrix(c.want, c.full), kY, kU, kV)), 0);
         }
+    }
+
+    // The indexed video's matrix, when given, wins over the frame's: a
+    // player frame has the paused frame's colours (V4's YCbCr matrix,
+    // e.g. TV.601 over a BT.709 source).
+    void theIndexedVideosMatrixApplies()
+    {
+        namespace ffms = hikari::application::ffms_colour;
+        using Input = hikari::application::LegacyColourMatrix::Input;
+        struct Case {
+            Input input;
+            yuv::Space want;
+            bool full;
+        };
+        const Case cases[] = {
+            {{ffms::kBt470bg, ffms::kRangeMpeg}, yuv::Space::Bt601, false},
+            {{ffms::kSmpte170m, ffms::kRangeUnspecified}, yuv::Space::Bt601, false},
+            {{ffms::kBt709, ffms::kRangeJpeg}, yuv::Space::Bt709, true},
+            {{ffms::kFcc, ffms::kRangeMpeg}, yuv::Space::Fcc, false},
+            {{ffms::kSmpte240m, ffms::kRangeMpeg}, yuv::Space::Smpte240m, false},
+            {{9, ffms::kRangeMpeg}, yuv::Space::Bt2020, false},
+            // RGB (no matrix): the frame's own (BT.709 limited here), with the input's range.
+            {{ffms::kRgb, ffms::kRangeMpeg}, yuv::Space::Bt709, false},
+        };
+        for (const Case &c : cases) {
+            IndexedFrame out;
+            QVERIFY(hikari::backends::videoFrameToBgra(uniform(QVideoFrameFormat::Format_NV12, 16, 8), out, c.input));
+            QCOMPARE(differing(out, expected(yuv::matrix(c.want, c.full), kY, kU, kV)), 0);
+        }
+    }
+
+    // Rotation and mirroring are not applied (the indexed frames and the
+    // subtitles take the coded picture as it is): a rotated stream's frame
+    // keeps its coded size and pixels.
+    void rotationAndMirroringAreNotApplied()
+    {
+        const int w = 24, h = 8;
+        QVideoFrameFormat f(QSize(w, h), QVideoFrameFormat::Format_YUV420P);
+        f.setColorSpace(QVideoFrameFormat::ColorSpace_BT601);
+        f.setRotation(QtVideo::Rotation::Clockwise90); // the stream's orientation
+        f.setMirrored(true);
+        QVideoFrame frame(f);
+        QVERIFY(frame.map(QVideoFrame::WriteOnly));
+        for (int y = 0; y < h; ++y)
+            for (int x = 0; x < w; ++x)
+                frame.bits(0)[y * frame.bytesPerLine(0) + x] = uchar(x < w / 2 ? 40 : 200); // dark left, light right
+        for (int plane = 1; plane < 3; ++plane)
+            std::memset(frame.bits(plane), 128, static_cast<std::size_t>(frame.mappedBytes(plane)));
+        frame.unmap();
+        frame.setRotation(QtVideo::Rotation::Clockwise180); // and the frame's own
+        frame.setMirrored(true);
+        IndexedFrame out;
+        QVERIFY(hikari::backends::videoFrameToBgra(frame, out));
+        QCOMPARE(out.width, w);
+        QCOMPARE(out.height, h);
+        const auto *p = reinterpret_cast<const std::uint8_t *>(out.bgra.data());
+        QVERIFY(p[0] < 64);                   // the top left is still dark
+        QVERIFY(p[(w - 1) * 4] > 192);        // and the top right light
+        // What Qt's own conversion makes of it, for the record.
+        const QImage qt = QVideoFrame(frame).toImage();
+        qInfo("Qt's toImage of the rotated frame: %dx%d", qt.width(), qt.height());
     }
 
     // Qt's own CPU conversion (what the player path used before) gives the
