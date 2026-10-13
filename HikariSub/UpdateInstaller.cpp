@@ -109,6 +109,12 @@ namespace
 	// The version of the AppImage update an ordinary quit left for the
 	// next start.
 	wxString AppImageAtStartPath() { return CacheDir() + kSep + L"appimage-at-start"; }
+	// The version of the NSIS update handed to its installer at the last
+	// quit. The installer writes a failure to last-result.json in the
+	// profile of the account that runs it, which for all users is the
+	// administrator who approved UAC, maybe not this user: the next start
+	// tells this user from this file when it is still not that version.
+	wxString InstallingPath() { return CacheDir() + kSep + L"installing"; }
 
 	bool ReadSmallFile(const wxString &path, std::string *content, size_t limit = 64 * 1024)
 	{
@@ -839,6 +845,10 @@ namespace
 					return;
 				}
 			}
+			else {
+				// The installer runs once this process has exited.
+				WriteAtomically(InstallingPath(), pending.version);
+			}
 			if (owner)
 				owner->Destroy();
 			wxTheApp->CallAfter([this] { delete this; });
@@ -1250,7 +1260,11 @@ void update_installer::OnStartup(wxWindow *frame)
 #endif
 
 	std::string text;
+	std::string installing;
+	if (ReadSmallFile(InstallingPath(), &installing, 64))
+		RemoveFile(InstallingPath());
 	if (ReadSmallFile(LastResultPath(), &text)) {
+		installing.clear();
 		RemoveFile(LastResultPath());
 		std::optional<LastResult> result = update_manifest::ReadLastResult(JsonValue::Parse(text));
 		if (result && !result->ok) {
@@ -1260,6 +1274,14 @@ void update_installer::OnStartup(wxWindow *frame)
 					FromUtf8(result->version), result->code);
 			HikariMessageBox(message, _("Update"), wxOK, frame);
 		}
+	}
+	// Handed to the installer, no result here, and still not installed:
+	// the installer failed, and told the account that ran it, if anyone.
+	if (!installing.empty() && installing.back() == '\n')
+		installing.pop_back();
+	if (update_verify::IsReleaseVersion(installing) && update_manifest::IsNewer(installing, VersionHikariSub)) {
+		HikariMessageBox(wxString::Format(_("HikariSub %s was not installed: its installer did not finish. If another administrator account approved it, that account was told why."),
+			FromUtf8(installing)), _("Update"), wxOK, frame);
 	}
 
 	std::optional<Pending> pending = LoadPending();
