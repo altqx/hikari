@@ -26,3 +26,6 @@ tasks:
     elevated: true
     script: ./tests/packaging/windows/installer-tests.ps1 -Phase machine -SetupDir $env:HS_SETUP_DIR
     timeoutSeconds: 1800
+  installer-semver:
+    script: ./tests/packaging/windows/installer-tests.ps1 -Phase semver -SetupDir $env:HS_SETUP_DIR
+    timeoutSeconds: 900

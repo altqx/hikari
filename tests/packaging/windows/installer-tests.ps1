@@ -1,6 +1,6 @@
 # HikariSub NSIS installer checks on Windows (installers spec, 8.3).
 #
-#   installer-tests.ps1 -Phase user|machine -SetupDir <dir> [-Old 0.0.2] [-New 0.0.3]
+#   installer-tests.ps1 -Phase user|machine|semver -SetupDir <dir> [-Old 0.0.2] [-New 0.0.3]
 #
 # <dir> holds two installers of the same codebase, HikariSub-<Old>-windows-x64-setup.exe
 # and HikariSub-<New>-windows-x64-setup.exe, built from payloads that differ: the
@@ -12,12 +12,15 @@
 #          scope errors (4, 6), associations next to another app's, uninstall.
 # machine: run elevated (SYSTEM through Winix's elevated task, no desktop).
 #          All-users install, upgrade, /UPDATE, downgrade, scope conflict, uninstall.
+# semver:  run as a standard user, with <dir> from make-semver-installers.sh:
+#          installs a sequence of versions per user and checks that each one
+#          that is older than the installed one is refused (SemVer precedence).
 #
 # Prints PASS/FAIL per check and exits 1 if any check failed. It removes what it
 # installed, but leaves files a user would own (it creates and deletes its own).
 
 param(
-    [Parameter(Mandatory)] [ValidateSet('user', 'machine')] [string] $Phase,
+    [Parameter(Mandatory)] [ValidateSet('user', 'machine', 'semver')] [string] $Phase,
     [Parameter(Mandatory)] [string] $SetupDir,
     [string] $Old = '0.0.2',
     [string] $New = '0.0.3'
@@ -189,11 +192,39 @@ function Remove-Existing([string] $root, [string] $flag) {
     }
 }
 
-foreach ($f in $OldSetup, $NewSetup) {
-    if (-not (Test-Path -LiteralPath $f)) { Write-Output "FAIL missing $f"; exit 1 }
+# Version, then the exit code installing it over the one before must give.
+$SemverSequence = @(
+    @('0.0.3-rc.2', 0), @('0.0.3-rc.10', 0), @('0.0.3-rc.9', 5), @('0.0.3', 0),
+    @('0.0.3-rc.10', 5), @('0.0.10', 0), @('0.0.9', 5), @('0.1.0-alpha', 0),
+    @('0.1.0-alpha.1', 0), @('0.1.0-alpha.beta', 0), @('0.1.0-beta', 0),
+    @('0.1.0-BETA.1', 5), @('0.1.0-beta.11', 0), @('0.1.0-rc.1', 0), @('0.1.0', 0),
+    @('0.1.0', 0), @('0.1.0-rc.1', 5))
+
+if ($Phase -ne 'semver') {
+    foreach ($f in $OldSetup, $NewSetup) {
+        if (-not (Test-Path -LiteralPath $f)) { Write-Output "FAIL missing $f"; exit 1 }
+    }
 }
 
-if ($Phase -eq 'user') {
+if ($Phase -eq 'semver') {
+    $dir = Join-Path $env:LOCALAPPDATA 'Programs\HikariSub'
+    Write-Output "== semver phase as $env:USERNAME, $dir"
+    Remove-Existing 'HKCU' '/CURRENTUSER'
+    $installed = $null
+    try {
+        foreach ($step in $SemverSequence) {
+            $v = $step[0]
+            $code = Run-Setup (Join-Path $SetupDir "HikariSub-$v-windows-x64-setup.exe") '/S /CURRENTUSER /COMPONENTS='
+            Check "install $v over $installed: exit $($step[1])" ($code -eq $step[1]) "got $code"
+            if ($code -eq 0) { $installed = $v }
+            $now = RegValue 'HKCU:\Software\HikariSub\Install' 'Version'
+            Check "installed version is $installed" ($now -ceq $installed) "got $now"
+        }
+    } finally {
+        Remove-Existing 'HKCU' '/CURRENTUSER'
+    }
+    Check 'semver: uninstalled' (-not (Test-Path -LiteralPath $dir))
+} elseif ($Phase -eq 'user') {
     $root = 'HKCU'
     $dir = Join-Path $env:LOCALAPPDATA 'Programs\HikariSub'
     $programs = [Environment]::GetFolderPath('Programs')
