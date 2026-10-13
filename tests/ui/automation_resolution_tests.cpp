@@ -106,13 +106,23 @@ class AutomationResolutionTests : public QObject {
         }
         return false;
     }
-    bool run(const std::string &name)
+    bool loadReady(const std::string &path)
+    {
+        app->automation().load(path);
+        return QTest::qWaitFor([&] {
+            for (const auto &s : app->automation().scripts())
+                if (s.path == path && s.state == application::ScriptStatus::State::Ready)
+                    return true;
+            return false;
+        }, 30'000);
+    }
+    bool run(const std::string &name, const QString &script = kScript)
     {
         for (const auto &s : app->automation().scripts())
-            if (s.path == kScript.toStdString())
+            if (s.path == script.toStdString())
                 for (std::size_t i = 0; i < s.info.macros.size(); ++i)
                     if (s.info.macros[i].name == name)
-                        return app->automation().run(kScript.toStdString(), static_cast<int>(i));
+                        return app->automation().run(script.toStdString(), static_cast<int>(i));
         return false;
     }
     bool ended()
@@ -463,6 +473,47 @@ private slots:
         QCOMPARE(steps(), after);
         QCOMPARE(app->automation().lastMessage(),
                  QStringLiteral("The macro was cancelled; only the script resolution was set."));
+    }
+
+    // S4-run-validation: a dependency's validation reads the resolution
+    // first. The question names the dependency, and the resolution set
+    // there is what the macro then reads, without a second question.
+    void aDependencyAsksOnceForTheRun()
+    {
+        const QString deps = dir.filePath(QStringLiteral("deps"));
+        QVERIFY(QDir().mkpath(deps));
+        auto write = [](const QString &path, const QByteArray &bytes) {
+            QFile f(path);
+            return f.open(QIODevice::WriteOnly) && f.write(bytes) == bytes.size();
+        };
+        const QString dep = QDir::toNativeSeparators(deps + QStringLiteral("/dep.lua"));
+        QVERIFY(write(dep, "aegisub.register_macro(\"Dep\", \"\", function() end, function(subs)\n"
+                           "    local w, h = subs.script_resolution()\n"
+                           "    return w > 0 and h > 0\n"
+                           "end)\n"
+                           "return {}\n"));
+        const QString main = QDir::toNativeSeparators(deps + QStringLiteral("/main.lua"));
+        QVERIFY(write(main, "require \"dep\"\n"
+                            "aegisub.register_macro(\"Main\", \"\", function(subs)\n"
+                            "    local w, h = subs.script_resolution()\n"
+                            "    aegisub.log(\"main %d x %d\", w, h)\n"
+                            "end)\n"));
+        QVERIFY(loadReady(dep.toStdString()));
+        QVERIFY(loadReady(main.toStdString()));
+        QVERIFY(open(""));
+        const auto before = steps();
+        QVERIFY(run("Main", main));
+        QTRY_VERIFY_WITH_TIMEOUT(prompt().isOpen(), 30'000);
+        QCOMPARE(prompt().script(), QStringLiteral("dep.lua"));
+        prompt().accept(640, 480, false);
+        QVERIFY(ended());
+        QVERIFY(!prompt().isOpen());
+        QVERIFY2(app->automation().log().contains(QStringLiteral("main 640 x 480")), qPrintable(app->automation().log()));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("640"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("480"));
+        auto after = before;
+        after.push_back(std::string(application::kScriptResolutionStep));
+        QCOMPARE(steps(), after);
     }
 };
 

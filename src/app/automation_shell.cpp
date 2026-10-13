@@ -659,6 +659,10 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     using Outcome = backends::LuaScriptHost::RunOutcome;
     if (m_run->step < m_run->validations.size() && outcome == Outcome::Ok) {
         // A dependency answered true: the next validation, or the macro.
+        // A script resolution set while it validated is staged for the
+        // next helper, so the question is not asked again (Y4-playres-ask).
+        if (m_run->resolution)
+            application::setStagedScriptResolution(m_run->snapshot.info, *m_run->resolution);
         ++m_run->step;
         if (startStep(*m_run)) {
             emit progressChanged();
