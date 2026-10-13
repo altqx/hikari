@@ -8,6 +8,11 @@
 #include "docking.h"
 #include "workspace_layout.h"
 
+#include <kddockwidgets/core/DockRegistry.h>
+#include <kddockwidgets/core/DropArea.h>
+#include <kddockwidgets/core/FloatingWindow.h>
+#include <kddockwidgets/core/View.h>
+
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -162,6 +167,73 @@ private slots:
         QVERIFY(application->workspaceLayout().hasBackup());
         QVERIFY(application->workspaceLayout().restoreBackup());
         QTRY_VERIFY(dock("editorDock")->property("isFloating").toBool());
+        stop();
+    }
+
+    // D1 native gate (persist, sway, KWin and mutter): the floating Audio
+    // window came back at its size, but the panel in it 35 pixels (the
+    // header's height) shorter, an empty band below it. The engine rebuilds
+    // a floating window's layout at its layout area's size with the
+    // window's own title bar shown, hides the title bar once the layout has
+    // its lone group (whose tab bar is the header), and ignores the area's
+    // resizes while a restore runs, so the layout kept the area's height
+    // under the title bar. X11 (and this offscreen platform) resize the
+    // restored window's contents after the restore has ended, which fits
+    // the layout again; a Wayland window has its restored size at once and
+    // nothing follows. So the layout has to fill its area when the restore
+    // returns, before any later resize could mend it. With the drawn
+    // shadow, as on Wayland.
+    void aFloatingPanelComesBackFillingItsWindow()
+    {
+        ui::dockchrome::overrideCompositing(true);
+        const auto unset = qScopeGuard([] { ui::dockchrome::overrideCompositing(std::nullopt); });
+        auto audio = [this] {
+            return engine->rootObjects().first()->findChild<QQuickItem *>(QStringLiteral("audioPanel"));
+        };
+        // The panel's bottom edge against its window's: the frame's inset.
+        auto bottomGap = [](QQuickItem *panel) {
+            return panel->window()->height() - qRound(panel->mapToScene(QPointF(0, panel->height())).y());
+        };
+        auto layoutsFillTheirAreas = [] {
+            QStringList short_;
+            for (auto *floating : KDDockWidgets::DockRegistry::self()->floatingWindows()) {
+                const QSize area = floating->dropArea()->view()->size();
+                const QSize layout = floating->dropArea()->layoutSize();
+                if (layout != area)
+                    short_ << QStringLiteral("layout %1x%2 in an area of %3x%4")
+                                  .arg(layout.width()).arg(layout.height()).arg(area.width()).arg(area.height());
+            }
+            return short_;
+        };
+        start();
+        QVERIFY(dock("audioDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(dock("audioDock")->property("isFloating").toBool());
+        QTRY_VERIFY(audio() && audio()->window() != engine->rootObjects().first() && audio()->height() > 0);
+        QQuickWindow *floating = audio()->window();
+        floating->resize(640, 260);
+        QTRY_COMPARE(floating->size(), QSize(640, 260));
+        QTRY_COMPARE(bottomGap(audio()), ui::dockchrome::floatingShadow() + 1);
+        const QSizeF panelBefore = audio()->size();
+        const QSize windowBefore = floating->size();
+        stop();
+
+        start();
+        QTRY_VERIFY(dock("audioDock")->property("isFloating").toBool());
+        QTRY_VERIFY(audio() && audio()->window() != engine->rootObjects().first());
+        QTRY_COMPARE(audio()->window()->size(), windowBefore);
+        QTRY_COMPARE(audio()->size(), panelBefore);
+        QCOMPARE(bottomGap(audio()), ui::dockchrome::floatingShadow() + 1);
+
+        // The same restore within the session (Reset layout, then Restore
+        // the previous layout), checked as it returns.
+        QVERIFY(application->workspaceLayout().resetLayout());
+        QTRY_VERIFY(!dock("audioDock")->property("isFloating").toBool());
+        QVERIFY(application->workspaceLayout().restoreBackup());
+        QVERIFY(dock("audioDock")->property("isFloating").toBool());
+        const QStringList short_ = layoutsFillTheirAreas();
+        QVERIFY2(short_.isEmpty(), qPrintable(short_.join(QStringLiteral("; "))));
+        QTRY_COMPARE(audio()->size(), panelBefore);
+        QCOMPARE(bottomGap(audio()), ui::dockchrome::floatingShadow() + 1);
         stop();
     }
 
