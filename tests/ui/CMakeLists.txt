@@ -83,6 +83,8 @@ target_compile_definitions(hikari_ui_presenter_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_presenter_tests hikari_media_helper hikari_media_fixtures)
+# V1: the largest texture the RHI backend makes (QRhi::resourceLimit).
+target_link_libraries(hikari_ui_presenter_tests PRIVATE Qt6::GuiPrivate)
 # L1: the automation manager tool over the real manager.
 hikari_add_qttest(hikari_ui_automation_manager_tests SOURCES automation_manager_ui_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin hikari_backends)

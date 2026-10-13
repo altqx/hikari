@@ -27,11 +27,18 @@ QRect rectOf(const std::optional<application::PixelRect> &r)
 // A texture kept across frames and updated in place on the render thread
 // (RHI backends): the frame's image whole, the overlay's only where it or
 // the overlay before it has visible pixels. The image given stays valid
-// until the next commit (the node keeps the lease it points into).
+// until the next commit (the node keeps the lease it points into). A
+// texture that cannot be made (larger than the backend allows, or refused)
+// is reported through `failed`; the image stays pending and the next sync
+// gives it again.
 class UpdatableTexture : public QSGTexture {
 public:
     using Uploaded = std::function<void(const QRect &)>;
-    UpdatableTexture(bool alpha, Uploaded uploaded) : m_alpha(alpha), m_uploaded(std::move(uploaded)) {}
+    using Failed = std::function<void()>;
+    UpdatableTexture(bool alpha, Uploaded uploaded, Failed failed)
+        : m_alpha(alpha), m_uploaded(std::move(uploaded)), m_failed(std::move(failed))
+    {
+    }
     ~UpdatableTexture() override
     {
         if (m_texture)
@@ -42,6 +49,9 @@ public:
     QSize textureSize() const override { return m_size; }
     bool hasAlphaChannel() const override { return m_alpha; }
     bool hasMipmaps() const override { return false; }
+    // The last commit could not make the texture (render thread, also
+    // where the node syncs).
+    bool failed() const { return m_failure; }
 
     // The whole image next commit; `lease` keeps its pixels.
     void setFrame(const QImage &image, std::shared_ptr<const void> lease)
@@ -69,20 +79,32 @@ public:
     {
         if (!m_pending)
             return;
-        m_pending = false;
         bool whole = false;
         if (!m_texture || m_texture->pixelSize() != m_size) {
             if (m_texture)
                 m_texture->deleteLater();
-            m_texture = rhi->newTexture(QRhiTexture::BGRA8, m_size);
-            if (!m_texture->create()) {
-                delete m_texture;
-                m_texture = nullptr;
+            m_texture = nullptr;
+            const int largest = rhi->resourceLimit(QRhi::TextureSizeMax);
+            QRhiTexture *texture = nullptr;
+            if (m_size.width() <= largest && m_size.height() <= largest) {
+                texture = rhi->newTexture(QRhiTexture::BGRA8, m_size);
+                if (!texture->create()) {
+                    delete texture;
+                    texture = nullptr;
+                }
+            }
+            if (!texture) {
+                m_failure = true;
+                if (m_failed)
+                    m_failed();
                 return;
             }
+            m_texture = texture;
             whole = true;
             m_content = QRect();
         }
+        m_pending = false;
+        m_failure = false;
         QRect region(QPoint(0, 0), m_size);
         if (m_overlay) {
             const QRect visible = m_bounds ? *m_bounds : rectOf(application::overlayBounds(*m_overlay));
@@ -107,6 +129,8 @@ public:
 private:
     bool m_alpha;
     Uploaded m_uploaded;
+    Failed m_failed;
+    bool m_failure = false;
     std::shared_ptr<const void> m_frame;
     QRhiTexture *m_texture = nullptr;
     QSize m_size;
@@ -306,16 +330,23 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
     if (upload) {
         const auto &f = *m_shown.frame;
         // The same frame again (new subtitles over it): its texture stays.
-        if (node->frameLease != m_shown.frame || !node->frame->texture()) {
+        auto *kept = dynamic_cast<UpdatableTexture *>(node->frame->texture());
+        if (node->frameLease != m_shown.frame || !node->frame->texture() || (kept && kept->failed())) {
             const QImage frameImage(reinterpret_cast<const uchar *>(f.bgra.data()), f.width, f.height, f.stride,
                                     QImage::Format_RGB32);
             if (inPlace) {
                 auto *texture = dynamic_cast<UpdatableTexture *>(node->frame->texture());
                 if (!texture) {
-                    texture = new UpdatableTexture(false, [stats = m_stats](const QRect &) {
-                        std::lock_guard lock(stats->mutex);
-                        ++stats->frameUploads;
-                    });
+                    texture = new UpdatableTexture(
+                        false,
+                        [stats = m_stats](const QRect &) {
+                            std::lock_guard lock(stats->mutex);
+                            ++stats->frameUploads;
+                        },
+                        [stats = m_stats] {
+                            std::lock_guard lock(stats->mutex);
+                            stats->failed = true;
+                        });
                     texture->setFiltering(QSGTexture::Linear);
                     node->frame->setTexture(texture);
                 }
@@ -350,11 +381,17 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
             if (inPlace) {
                 auto *texture = dynamic_cast<UpdatableTexture *>(node->overlay->texture());
                 if (!texture) {
-                    texture = new UpdatableTexture(true, [stats = m_stats](const QRect &region) {
-                        std::lock_guard lock(stats->mutex);
-                        ++stats->overlayUploads;
-                        stats->lastOverlayUpload = region;
-                    });
+                    texture = new UpdatableTexture(
+                        true,
+                        [stats = m_stats](const QRect &region) {
+                            std::lock_guard lock(stats->mutex);
+                            ++stats->overlayUploads;
+                            stats->lastOverlayUpload = region;
+                        },
+                        [stats = m_stats] {
+                            std::lock_guard lock(stats->mutex);
+                            stats->failed = true;
+                        });
                     texture->setFiltering(QSGTexture::Linear);
                     node->overlay->setTexture(texture);
                 }
@@ -436,8 +473,22 @@ void VideoPresenter::onFrameSwapped()
         std::lock_guard lock(m_renderMutex);
         done = std::exchange(m_awaitingRender, std::nullopt);
     }
+    // A texture the frame just rendered could not be made (V1: textures
+    // are made while rendering, after the sync that accepted the frame).
+    bool failed = false;
+    {
+        std::lock_guard lock(m_stats->mutex);
+        failed = std::exchange(m_stats->failed, false);
+    }
     if (!done)
         return;
+    if (failed) {
+        done->result.outcome = PresentOutcome::Error;
+        done->result.stage = PresentStage::Submitted;
+        done->result.message = "texture upload failed";
+        resolveLater(std::move(done->done), std::move(done->result));
+        return;
+    }
     const std::uint64_t generation = done->result.generation;
     QPointer<VideoPresenter> self(this);
     QMetaObject::invokeMethod(

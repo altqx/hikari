@@ -99,6 +99,7 @@ private:
     QRectF m_videoRect, m_sourceRect;
     struct Stats : UploadStats {
         std::mutex mutex;
+        bool failed = false; // a texture could not be made since the last swap
     };
     std::shared_ptr<Stats> m_stats = std::make_shared<Stats>(); // written on the render thread
 };

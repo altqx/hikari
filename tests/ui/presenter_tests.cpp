@@ -11,6 +11,7 @@
 #include <QDir>
 #include <QFile>
 #include <QQuickWindow>
+#include <rhi/qrhi.h>
 #include <QtTest>
 
 #include <cstring>
@@ -312,6 +313,29 @@ private slots:
         // A new frame is uploaded.
         QVERIFY(presentAndWait({5, quadrants(), nullptr, {}}));
         QCOMPARE(presenter->uploadStats().frameUploads, 2);
+    }
+
+    // V1: a texture the backend cannot make (here, wider than its largest)
+    // fails the present instead of reporting a frame it never drew; the
+    // next frame is shown as usual.
+    void aTextureThatCannotBeMadeFailsThePresent()
+    {
+        QVERIFY(presentAndWait({1, quadrants(), nullptr, {}}));
+        QRhi *rhi = window->rhi();
+        if (!rhi || !rhi->isTextureFormatSupported(QRhiTexture::BGRA8))
+            QSKIP("the textures are kept only with an RHI backend");
+        const int largest = rhi->resourceLimit(QRhi::TextureSizeMax);
+        const auto failed = presentAndWait({2, quadrants(largest + 2, 2), nullptr, {}});
+        QVERIFY(failed);
+        QCOMPARE(failed->outcome, PresentOutcome::Error);
+        QCOMPARE(failed->message, std::string("texture upload failed"));
+        QCOMPARE(presenter->presentedGeneration(), 1u);
+        const auto shown = presentAndWait({3, quadrants(), nullptr, {}});
+        QVERIFY(shown);
+        QCOMPARE(shown->outcome, PresentOutcome::Accepted);
+        QCOMPARE(shown->stage, PresentStage::Rendered);
+        const QImage grabbed = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, kW, kH);
+        QVERIFY(testing::compareImages(grabbed, cpuReference(*quadrants(), nullptr), {2, 0}).withinTolerance);
     }
 
     void pixelAspectWidensTheFrame()
