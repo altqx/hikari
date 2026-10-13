@@ -21,6 +21,7 @@
 // section); the snapshot's font leases are not handed to it.
 
 #include "hikari/application/subtitle_render.h"
+#include "hikari/backends/overlay_blend.h"
 
 #include <cstddef>
 #include <filesystem>
@@ -123,6 +124,9 @@ private:
     int m_pixfmt = csri::BGRA;
     int m_width = 0, m_height = 0;
     std::uint64_t m_generation = 0;
+    // The overlay buffers, shared with the frames; and what the shown one has drawn.
+    OverlayBuffers m_buffers;
+    application::PixelRect m_bounds;
 };
 
 } // namespace hikari::backends

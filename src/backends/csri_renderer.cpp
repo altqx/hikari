@@ -1,4 +1,5 @@
 #include "hikari/backends/csri_renderer.h"
+#include "hikari/backends/overlay_blend.h"
 
 #include <algorithm>
 #include <cstring>
@@ -6,6 +7,7 @@
 namespace hikari::backends {
 
 using application::OverlayFrame;
+using application::PixelRect;
 using application::RenderError;
 
 namespace {
@@ -139,31 +141,33 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     frame.height = height;
     frame.stride = width * 4;
     frame.generation = m_generation;
-    // DrawOverlay: a cleared overlay, drawn whole every time.
-    frame.pixels.assign(static_cast<std::size_t>(frame.stride) * static_cast<std::size_t>(height), 0);
+    // DrawOverlay: a cleared overlay, drawn whole every time. A reused buffer
+    // is cleared where it was drawn last.
+    const bool resized = m_buffers.setSize(width, height);
+    if (resized)
+        m_bounds = {};
+    OverlayBuffers::Buffer &buffer = m_buffers.acquire();
     csri::Frame target{};
     target.pixfmt = m_pixfmt;
-    target.planes[0] = frame.pixels.data();
+    target.planes[0] = buffer.bytes->data();
     target.strides[0] = frame.stride;
     // Draw: csri_render(instance, frame, double(time / 1000.0)) with the
     // frame's time in integer milliseconds.
     const auto ms = static_cast<int>(time.microseconds() / 1000);
     m_renderer->render(m_instance, &target, double(ms / 1000.0));
-    bool drawn = false;
-    for (std::size_t i = 0; i < frame.pixels.size(); i += 4) {
-        std::uint8_t *p = &frame.pixels[i];
-        const unsigned a = p[3];
-        if (a == 0) {
-            p[0] = p[1] = p[2] = 0;
-            continue;
-        }
-        drawn = true;
-        if (a != 255)
-            for (int c = 0; c < 3; ++c)
-                p[c] = static_cast<std::uint8_t>((p[c] * a + 127) / 255);
+    const PixelRect bounds = premultiplyStraightAlpha(buffer.bytes->data(), width, height, frame.stride);
+    buffer.drawn.add(bounds);
+    frame.pixels = application::OverlayPixels(buffer.bytes);
+    frame.empty = bounds.width <= 0;
+    if (resized) {
+        frame.changed.push_back({0, 0, width, height});
+    } else {
+        if (m_bounds.width > 0)
+            frame.changed.push_back(m_bounds);
+        if (bounds.width > 0 && bounds != m_bounds)
+            frame.changed.push_back(bounds);
     }
-    frame.empty = !drawn;
-    frame.changed.push_back({0, 0, width, height});
+    m_bounds = bounds;
     return frame;
 }
 

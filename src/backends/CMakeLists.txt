@@ -12,7 +12,8 @@ hikari_module(hikari_lua_protocol ALLOW hikari_helper_endpoint hikari_applicatio
 
 # Backend adapters implementing application ports (FFMS2/libass, audio, files,
 # helper processes).
-add_library(hikari_backends STATIC module.cpp libass_renderer.cpp helper_host.cpp ffms_indexed_source.cpp
+add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.cpp
+    include/hikari/backends/overlay_blend.h helper_host.cpp ffms_indexed_source.cpp
     audio_ring.cpp audio_output_engine.cpp portaudio_output.cpp lua_script_host.cpp qt_general_player.cpp
     libass_font_service.cpp line_audition.cpp include/hikari/backends/line_audition.h
     transport_coordinator.cpp include/hikari/backends/transport_coordinator.h
