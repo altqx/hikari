@@ -1,6 +1,6 @@
 #pragma once
 
-// W2: the optional CSRI subtitle renderer adapter (xy-VSFilter) for the
+// W2: the optional CSRI subtitle renderer adapter (xy-VSFilter, VSFilterMod) for the
 // SubtitleRenderer port, Windows only in the application. It reproduces the
 // legacy CSRI path at 20d647c4:
 // - CsriMod.cpp: the renderer list is every library under the program's Csri
@@ -16,13 +16,24 @@
 // xy-VSFilter writes straight alpha into a BGRA frame (MemSubPic.cpp
 // AlphaBltOther, MSP_RGBA), which legacy blended with D3DBLEND_SRCALPHA
 // (RendererFFMS2::DrawOverlay); the port's overlay is premultiplied, so the
-// colours are multiplied by their alpha here.
-// VSFilter resolves fonts through GDI (system fonts and the script's [Fonts]
-// section); the snapshot's font leases are not handed to it.
+// colours are multiplied by their alpha here. A renderer that takes only
+// BGR_ (VSFilterMod) blends into the frame and leaves no alpha; legacy drew
+// it onto the RGB32 video frame (GetFrameWithSubs without the overlay), so
+// the same instant is drawn onto black and onto white and the overlay is
+// what the two differ by: each pixel's colour and its coverage.
+// The script opened starts with a UTF-8 byte order mark, as GetVisible's text
+// did (SubsGridBase.cpp:1804-1805); a renderer's exception on open is a script
+// it cannot open.
+// VSFilter resolves fonts through GDI: system fonts, the script's [Fonts]
+// section, and the snapshot's font leases, which each context adds to the
+// process privately while it lives (AddFontMemResourceEx; legacy loaded its
+// external fonts folder with AddFontResourceExW(FR_PRIVATE), FontEnumerator.cpp
+// LoadExternalFontsToProcess, so the in-process VSFilter saw them).
 
 #include "hikari/application/subtitle_render.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <functional>
 #include <memory>
@@ -92,7 +103,15 @@ public:
     // VSFilter is not safe to call from two threads at once.
     std::recursive_mutex &mutex() { return m_mutex; }
 
+    // Adds a lease's font to the process for GDI, privately; the handle
+    // removes it. The default does that on Windows (AddFontMemResourceEx) and
+    // nothing elsewhere; null when the font was not added.
+    using FontLoader = std::function<std::shared_ptr<void>(const application::FontLease &)>;
+    void setFontLoader(FontLoader loader) { m_fontLoader = std::move(loader); }
+    std::shared_ptr<void> loadFont(const application::FontLease &font) const;
+
 private:
+    FontLoader m_fontLoader;
     std::vector<csri::Renderer> m_renderers;
     std::vector<std::shared_ptr<void>> m_libraries; // keeps the modules loaded
     std::recursive_mutex m_mutex;
@@ -123,6 +142,17 @@ private:
     int m_pixfmt = csri::BGRA;
     int m_width = 0, m_height = 0;
     std::uint64_t m_generation = 0;
+    // The context's leased fonts, added to the process until a prepare
+    // without them or the adapter's end, by the lease's bytes. The entry
+    // holds the bytes, so no other font's buffer can take their address
+    // while the entry stands for them.
+    struct AddedFont {
+        std::shared_ptr<const std::vector<std::byte>> bytes;
+        std::shared_ptr<void> handle;
+    };
+    std::vector<AddedFont> m_fonts;
+    // The second frame a BGR_ renderer draws onto (white), kept between frames.
+    std::vector<std::uint8_t> m_white;
 };
 
 } // namespace hikari::backends

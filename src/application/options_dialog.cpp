@@ -329,11 +329,15 @@ OptionsOpening openOptionsDialog(Settings &settings, const OptionsLists &lists)
         case Renderer: {
             if (lists.renderers.size() < 2)
                 break; // not offered
-            // vsfilters.Index(name), the first entry when it is not listed.
-            // Unset reads as libass (W2: CSRI is chosen explicitly), so OK
-            // does not switch to the first CSRI renderer.
-            const std::string name = settings.text(id).empty() ? std::string("libass") : settings.text(id);
-            const auto it = std::ranges::find(lists.renderers, name);
+            // vsfilters.Index(name). Unset reads as libass (W2-libass-default:
+            // CSRI is chosen explicitly), and so does a name that is not
+            // listed (W2-missing-renderer-libass; legacy showed the first
+            // entry, its default CSRI renderer): the choice shows what draws,
+            // and OK never switches to a CSRI renderer nobody chose.
+            const std::string &name = settings.text(id);
+            auto it = std::ranges::find(lists.renderers, name);
+            if (name.empty() || it == lists.renderers.end())
+                it = std::ranges::find(lists.renderers, std::string("libass"));
             const auto sel = it == lists.renderers.end() ? 0 : std::int64_t(it - lists.renderers.begin());
             state[id] = select(std::int64_t{-1}, sel, lists.renderers.size());
             break;

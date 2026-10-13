@@ -21,12 +21,14 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <cwchar>
 #include <filesystem>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <string>
 #include <tuple>
@@ -513,4 +515,238 @@ TEST(VsfilterRecipe, SelectsTheFacesTheLegacyReleaseSelects)
     }
     EXPECT_FALSE(built.empty());
     EXPECT_EQ(built, old) << "the recipe's renderer and the legacy release's selected different faces";
+}
+
+namespace {
+
+// The face GDI gives this process for `family` now.
+std::wstring gdiFace(const wchar_t *family)
+{
+    HDC dc = CreateCompatibleDC(nullptr);
+    LOGFONTW lf{};
+    lf.lfHeight = 36;
+    lf.lfWeight = FW_NORMAL;
+    lf.lfCharSet = DEFAULT_CHARSET;
+    wcsncpy_s(lf.lfFaceName, family, _TRUNCATE);
+    HFONT font = CreateFontIndirectW(&lf);
+    HGDIOBJ old = SelectObject(dc, font);
+    wchar_t face[LF_FACESIZE] = {};
+    GetTextFaceW(dc, LF_FACESIZE, face);
+    SelectObject(dc, old);
+    DeleteObject(font);
+    DeleteDC(dc);
+    return face;
+}
+
+std::shared_ptr<const std::vector<std::byte>> leasedFontBytes()
+{
+    QFile f(QStringLiteral(HIKARI_TEST_FONT));
+    if (!f.open(QIODevice::ReadOnly))
+        return nullptr;
+    const QByteArray d = f.readAll();
+    auto bytes = std::make_shared<std::vector<std::byte>>(static_cast<std::size_t>(d.size()));
+    std::memcpy(bytes->data(), d.constData(), bytes->size());
+    return bytes;
+}
+
+// HIKARI_VSFILTERMOD_CSRI (a folder holding the package's VSFiltermod.dll):
+// VSFilterMod loaded alone, from a copy in its own folder; null without it.
+std::shared_ptr<CsriRenderers> vsfilterModRenderers()
+{
+    const char *mod = std::getenv("HIKARI_VSFILTERMOD_CSRI");
+    if (!mod || !*mod)
+        return nullptr;
+    const auto folder =
+        std::filesystem::path(QDir(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR)).absolutePath().toStdU16String()) /
+        "vsfiltermod-csri";
+    std::filesystem::create_directories(folder);
+    std::filesystem::copy_file(std::filesystem::path(mod) / "VSFiltermod.dll", folder / "VSFiltermod.dll",
+                               std::filesystem::copy_options::overwrite_existing);
+    return CsriRenderers::load(folder, {});
+}
+
+// A Line in `family` (the lease's family or Arial) through `renderers`'
+// default renderer, with the Titillium Web lease or none.
+std::optional<OverlayFrame> drawLeaseProbe(const std::shared_ptr<CsriRenderers> &renderers, const char *family, bool lease,
+                                           std::string &problem)
+{
+    CsriRenderer r(renderers, "");
+    RenderSnapshot s = snapshotOf(script("",
+                                         std::string("Style: Probe,") + family +
+                                             ",40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,5,"
+                                             "20,20,20,1\n",
+                                         "Dialogue: 0,0:00:00.00,0:00:05.00,Probe,,0,0,0,,Leased font probe\n"));
+    if (lease)
+        s.fonts = {FontLease{"Titillium Web", leasedFontBytes()}};
+    if (!r.prepare(std::move(s))) {
+        problem = "the script was refused";
+        return std::nullopt;
+    }
+    if (lease && gdiFace(L"Titillium Web") != L"Titillium Web") {
+        problem = "GDI does not have the leased family while the context lives";
+        return std::nullopt;
+    }
+    auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight);
+    if (!frame || frame->empty) {
+        problem = "nothing was drawn";
+        return std::nullopt;
+    }
+    return std::move(*frame);
+}
+
+// xy-VSFilter's own font selections while it draws the lease's family
+// (drawn::selectObject): the faces it selected for it.
+std::set<std::wstring> facesDrawnWithALease(const std::shared_ptr<CsriRenderers> &renderers, std::string &problem)
+{
+    HMODULE module = drawn::moduleOf(renderers);
+    if (!module) {
+        problem = "the renderer's module was not found";
+        return {};
+    }
+    void *previous = drawn::patchImport(module, "gdi32.dll", "SelectObject", reinterpret_cast<void *>(&drawn::selectObject));
+    if (!previous) {
+        problem = "the renderer does not import gdi32!SelectObject by name";
+        return {};
+    }
+    drawn::realSelectObject = reinterpret_cast<drawn::SelectObjectFn>(previous);
+    {
+        std::lock_guard guard(drawn::lock);
+        drawn::faces.clear();
+    }
+    {
+        CsriRenderer r(renderers, "");
+        RenderSnapshot s = snapshotOf(script("",
+                                             "Style: Leased,Titillium Web,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,"
+                                             "0,0,0,0,100,100,0,0,1,2,2,5,20,20,20,1\n",
+                                             "Dialogue: 0,0:00:00.00,0:00:05.00,Leased,,0,0,0,,Leased read-back words\n"));
+        s.fonts = {FontLease{"Titillium Web", leasedFontBytes()}};
+        if (!r.prepare(std::move(s)))
+            problem = "the script was refused";
+        else if (const auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight); !frame || frame->empty)
+            problem = "nothing was drawn";
+    }
+    drawn::patchImport(module, "gdi32.dll", "SelectObject", previous);
+    std::set<std::wstring> out;
+    std::lock_guard guard(drawn::lock);
+    for (const auto &f : drawn::faces)
+        if (_wcsicmp(f.requested.c_str(), L"Titillium Web") == 0)
+            out.insert(f.selected);
+    return out;
+}
+
+} // namespace
+
+// W2: the snapshot's font leases (the external fonts, as legacy's
+// FontEnumerator added its folder with AddFontResourceExW(FR_PRIVATE)) reach
+// the CSRI renderer. A Line in Titillium Web, a family only the lease has,
+// is drawn while GDI has the family and differs from the same Line in Arial,
+// GDI's substitute for a missing family (without the lease the two are drawn
+// alike); the process no longer has the family once the context is gone.
+// The face each renderer selected is also read back from its own
+// selections. HIKARI_VSFILTERMOD_CSRI (a folder holding the package's
+// VSFiltermod.dll) adds VSFilterMod.
+TEST(VsfilterRecipe, DrawsWithTheSnapshotsLeasedFonts)
+{
+    ASSERT_TRUE(leasedFontBytes()) << HIKARI_TEST_FONT;
+    if (gdiFace(L"Titillium Web") == L"Titillium Web")
+        GTEST_SKIP() << "Titillium Web is installed on this system, so a lease proves nothing";
+    std::vector<std::pair<std::string, std::shared_ptr<CsriRenderers>>> renderers{
+        {"xy-VSFilter", CsriRenderers::load(builtFolder(), {})}};
+    if (const auto loaded = vsfilterModRenderers()) {
+        EXPECT_EQ(loaded->names(), (std::vector<std::string>{"vsfiltermod_textsub"}));
+        renderers.emplace_back("VSFilterMod", loaded);
+    }
+    for (const auto &[name, list] : renderers) {
+        std::string problem;
+        const auto arial = drawLeaseProbe(list, "Arial", false, problem);
+        ASSERT_TRUE(arial) << name << ": " << problem;
+        const auto leased = drawLeaseProbe(list, "Titillium Web", true, problem);
+        ASSERT_TRUE(leased) << name << ": " << problem;
+        std::size_t differing = 0;
+        for (std::size_t i = 0; i < leased->pixels.size(); ++i)
+            differing += leased->pixels[i] != arial->pixels[i];
+        std::fprintf(stderr, "W2 %s: the leased family's Line differs from Arial's in %zu bytes\n", name.c_str(), differing);
+        EXPECT_GT(differing, 0u) << name << ": the leased family was drawn as GDI's substitute";
+        image(*leased).save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/lease-%1-titillium.png").arg(QString::fromStdString(name)));
+        image(*arial).save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/lease-%1-arial.png").arg(QString::fromStdString(name)));
+        EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << name << ": the lease outlived its context";
+        {
+            const auto faces = facesDrawnWithALease(list, problem);
+            EXPECT_TRUE(problem.empty()) << name << ": " << problem;
+            EXPECT_EQ(faces, (std::set<std::wstring>{L"Titillium Web"})) << name;
+            EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << name << ": the lease outlived its context";
+        }
+    }
+}
+
+// W2: VSFilterMod takes only BGR_, which blends into the frame and leaves no
+// alpha; legacy drew it onto the RGB32 video frame. The adapter's overlay
+// (the instant drawn onto black and onto white) composited over a frame must
+// give what VSFilterMod draws onto that frame itself, on every fixture.
+TEST(VsfilterRecipe, VsfilterModOverlayMatchesDrawingOnTheFrame)
+{
+    const auto renderers = vsfilterModRenderers();
+    if (!renderers)
+        GTEST_SKIP() << "HIKARI_VSFILTERMOD_CSRI is not set";
+    ASSERT_EQ(renderers->names(), (std::vector<std::string>{"vsfiltermod_textsub"}));
+    const csri::Renderer *mod = renderers->select("");
+    ASSERT_TRUE(mod);
+    // A frame with every level in every channel, as a video frame has.
+    std::vector<std::uint8_t> background(std::size_t(kWidth) * kHeight * 4);
+    for (int y = 0; y < kHeight; ++y)
+        for (int x = 0; x < kWidth; ++x) {
+            std::uint8_t *p = &background[(std::size_t(y) * kWidth + x) * 4];
+            p[0] = static_cast<std::uint8_t>(x * 255 / (kWidth - 1));
+            p[1] = static_cast<std::uint8_t>(y * 255 / (kHeight - 1));
+            p[2] = static_cast<std::uint8_t>((x + y) % 256);
+            p[3] = 0;
+        }
+    auto out = drawn::report("vsfiltermod-overlay.txt");
+    std::size_t frames = 0;
+    for (const auto &f : fixtures()) {
+        CsriRenderer overlay(renderers, "");
+        ASSERT_TRUE(overlay.prepare(snapshotOf(f.text))) << f.name;
+        const std::string marked = "\xEF\xBB\xBF" + f.text; // as GetVisible's text
+        void *direct = mod->openMem(mod->rend, marked.data(), marked.size(), nullptr);
+        ASSERT_TRUE(direct) << f.name;
+        const csri::Fmt fmt{csri::BGR_, kWidth, kHeight};
+        ASSERT_EQ(mod->requestFmt(direct, &fmt), 0) << f.name;
+        for (int ms : f.times) {
+            const auto frame = overlay.render(core::DocumentTime(std::int64_t(ms) * 1000), kWidth, kHeight);
+            ASSERT_TRUE(frame) << f.name << " " << ms;
+            std::vector<std::uint8_t> drawn = background;
+            csri::Frame target{};
+            target.pixfmt = csri::BGR_;
+            target.planes[0] = drawn.data();
+            target.strides[0] = kWidth * 4;
+            mod->render(direct, &target, ms / 1000.0);
+            int worst = 0;
+            std::size_t covered = 0, off = 0;
+            for (std::size_t i = 0; i < drawn.size(); i += 4) {
+                const std::uint8_t *o = &frame->pixels[i];
+                covered += o[3] != 0;
+                for (int c = 0; c < 3; ++c) {
+                    const int composite = o[c] + (background[i + c] * (255 - o[3]) + 127) / 255;
+                    const int d = std::abs(composite - int(drawn[i + c]));
+                    worst = (std::max)(worst, d);
+                    off += d > 1;
+                }
+            }
+            if (out)
+                out->write(QStringLiteral("%1 %2 ms: %3 covered pixels, largest channel difference %4, %5 channels off by more than 1\n")
+                               .arg(QString::fromLatin1(f.name))
+                               .arg(ms)
+                               .arg(covered)
+                               .arg(worst)
+                               .arg(off)
+                               .toUtf8());
+            std::fprintf(stderr, "W2 VSFilterMod %s %d ms: %zu covered, largest difference %d, %zu off by more than 1\n",
+                         f.name, ms, covered, worst, off);
+            EXPECT_GT(covered, 0u) << f.name << " " << ms;
+            EXPECT_LE(worst, 2) << f.name << " " << ms;
+            ++frames;
+        }
+        mod->close(direct);
+    }
+    EXPECT_GT(frames, 0u);
 }

@@ -540,6 +540,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 return "the script's registration differs";
             }
         };
+        // W2: a renderer name that is not installed here is not proposed.
+        m_importStore->rendererInstalled = [this](std::string_view name) {
+            return std::ranges::contains(m_renderer.providers(), name);
+        };
         m_importStore->recover();
     }
     m_settingsImport = std::make_unique<SettingsImportController>(m_importStore.get());
@@ -4905,13 +4909,27 @@ QVariantMap Application::openSettingsDialog()
         warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "style"));
     auto values = toVariant(open.state);
     addAppearance(values);
+    // W2: the renderers as the choice shows them; VSFilterMod says what it
+    // is for (user 2026-10-13: slow, only for its own tags).
+    QStringList rendererLabels;
+    for (const auto &name : lists.renderers)
+        rendererLabels << subtitleRendererLabel(name);
     return {{QStringLiteral("values"), values},
             {QStringLiteral("languages"), qList(lists.languageNames)},
             {QStringLiteral("dictionaries"), qList(lists.dictionaryNames)},
             {QStringLiteral("catalogs"), qList(lists.catalogs)},
             {QStringLiteral("styles"), qList(lists.styles)},
             {QStringLiteral("renderers"), qList(lists.renderers)},
+            {QStringLiteral("rendererLabels"), rendererLabels},
             {QStringLiteral("warnings"), warnings}};
+}
+
+QString Application::subtitleRendererLabel(const std::string &name)
+{
+    if (backends::isVsfilterMod(name))
+        return QCoreApplication::translate("HikariSub.Options", "%1 (slow; only for VSFilterMod tags)")
+            .arg(QString::fromStdString(name));
+    return QString::fromStdString(name);
 }
 
 // K2: the Appearance page's settings (the theme, following the system, each

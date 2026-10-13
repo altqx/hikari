@@ -78,8 +78,10 @@ struct OptionsLists {
     std::vector<std::string> styles;            // the current catalog's Styles
     std::string currentCatalog;                 // actualStyleDir
     // W2: SubtitlesProviderManager::GetProviders, the CSRI renderers' names
-    // then "libass". With one entry or none the choice is not offered (only
-    // libass: Linux, or Windows without a CSRI renderer).
+    // and "libass" (SubtitleRendererSelection::providers: VSFilterMod last).
+    // With one entry or none the choice is not offered (only libass: Linux,
+    // or Windows without a CSRI renderer). A stored name that is not listed
+    // shows libass, as it draws.
     std::vector<std::string> renderers;
     // config::FindLanguage.
     std::function<std::string(std::string_view)> findLanguage;

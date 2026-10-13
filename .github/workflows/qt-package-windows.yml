@@ -134,7 +134,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $p = 'out/build/windows-x64-package/payload/HikariSub'
-          foreach ($f in 'HikariSub.exe', 'hikari-media-helper.exe', 'hikari-lua-helper.exe', 'Qt6Core.dll', 'vcruntime140.dll', 'msvcp140.dll', 'Dictionary/en_US.dic', 'Automation/automation') {
+          foreach ($f in 'HikariSub.exe', 'hikari-media-helper.exe', 'hikari-lua-helper.exe', 'Qt6Core.dll', 'vcruntime140.dll', 'msvcp140.dll', 'Dictionary/en_US.dic', 'Automation/automation', 'Csri/xy-VSFilter_hikarisub.dll', 'Csri/VSFiltermod.dll') {
             if (-not (Test-Path "$p/$f")) { throw "payload lacks $f" }
           }
           foreach ($f in 'package-kind.txt', 'install-manifest.txt') {

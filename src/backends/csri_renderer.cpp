@@ -2,6 +2,12 @@
 
 #include <algorithm>
 #include <cstring>
+#include <string>
+#include <string_view>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 namespace hikari::backends {
 
@@ -10,11 +16,36 @@ using application::RenderError;
 
 namespace {
 constexpr int kMaxDimension = 16384;
+
+#ifdef _WIN32
+// A private, in-memory font for GDI in this process (not enumerable, gone with
+// the handle): what VSFilter's CreateFontIndirect finds by family name.
+std::shared_ptr<void> addPrivateFont(const application::FontLease &font)
+{
+    if (!font.bytes || font.bytes->empty())
+        return nullptr;
+    DWORD faces = 0;
+    HANDLE handle = AddFontMemResourceEx(const_cast<std::byte *>(font.bytes->data()),
+                                         static_cast<DWORD>(font.bytes->size()), nullptr, &faces);
+    if (!handle)
+        return nullptr;
+    return std::shared_ptr<void>(handle, [](void *h) { RemoveFontMemResourceEx(h); });
 }
+#endif
+
+} // namespace
 
 CsriRenderers::CsriRenderers(std::vector<csri::Renderer> renderers, std::vector<std::shared_ptr<void>> libraries)
     : m_renderers(std::move(renderers)), m_libraries(std::move(libraries))
 {
+#ifdef _WIN32
+    m_fontLoader = addPrivateFont;
+#endif
+}
+
+std::shared_ptr<void> CsriRenderers::loadFont(const application::FontLease &font) const
+{
+    return m_fontLoader ? m_fontLoader(font) : nullptr;
 }
 
 CsriRenderers::~CsriRenderers() = default;
@@ -90,16 +121,48 @@ std::expected<std::uint64_t, RenderError> CsriRenderer::prepare(application::Ren
     const csri::Renderer *renderer = m_renderers->select(m_name);
     if (!renderer || !renderer->openMem) {
         m_renderer = nullptr;
+        m_fonts.clear();
         if (m_log)
             m_log("Cannot initialize CSRI.");
         return std::unexpected(RenderError::BackendFailure);
     }
     m_renderer = renderer;
+    // The new context's fonts are added before the previous context's go,
+    // so a font both use stays available; a lease the previous context
+    // already added (the same bytes, as every edit's snapshot carries) is
+    // kept, not added again.
+    std::vector<AddedFont> fonts;
+    for (const auto &font : snapshot.fonts) {
+        if (!font.bytes)
+            continue;
+        const auto kept = std::ranges::find(m_fonts, font.bytes, &AddedFont::bytes);
+        if (kept != m_fonts.end())
+            fonts.push_back(*kept);
+        else if (auto handle = m_renderers->loadFont(font))
+            fonts.push_back({font.bytes, std::move(handle)});
+    }
+    m_fonts = std::move(fonts);
     // ParseInstance: csri_open_mem(mb_str(wxConvUTF8), strlen), so the script
-    // ends at its first NUL.
+    // ends at its first NUL. GetVisible (SubsGridBase.cpp:1804-1805) starts
+    // the text with a byte order mark, which the renderers read as UTF-8;
+    // without it VSFilter reads the bytes in the ANSI code page, and
+    // VSFilterMod fails to open some scripts at all.
     const auto *bytes = reinterpret_cast<const char *>(snapshot.script.data());
     const std::size_t length = snapshot.script.empty() ? 0 : strnlen(bytes, snapshot.script.size());
-    m_instance = renderer->openMem(renderer->rend, bytes, length, nullptr);
+    constexpr std::string_view bom = "\xEF\xBB\xBF";
+    std::string text;
+    if (!std::string_view(bytes, length).starts_with(bom)) {
+        text.reserve(bom.size() + length);
+        text.append(bom).append(bytes, length);
+    }
+    const std::string_view script = text.empty() ? std::string_view(bytes, length) : std::string_view(text);
+    try {
+        m_instance = renderer->openMem(renderer->rend, script.data(), script.size(), nullptr);
+    } catch (...) {
+        // A renderer's own exception (VSFilterMod's MFC ones) is a script
+        // it cannot open, not the end of the program.
+        m_instance = nullptr;
+    }
     if (!m_instance) {
         if (m_log)
             m_log("Cannot create CSRI instance.");
@@ -149,6 +212,41 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     // frame's time in integer milliseconds.
     const auto ms = static_cast<int>(time.microseconds() / 1000);
     m_renderer->render(m_instance, &target, double(ms / 1000.0));
+    if (m_pixfmt == csri::BGR_) {
+        // BGR_ (VSFilterMod takes no other) blends into the frame and leaves
+        // no alpha. Legacy drew it onto the RGB32 video frame
+        // (RendererFFMS2::GetFrameWithSubs without the overlay); the same
+        // instant drawn again onto white gives each pixel's coverage, so the
+        // overlay composites over any frame as that drawing did.
+        std::vector<std::uint8_t> &white = m_white;
+        white.resize(frame.pixels.size());
+        for (std::size_t i = 0; i < white.size(); i += 4) {
+            white[i] = white[i + 1] = white[i + 2] = 255;
+            white[i + 3] = 0;
+        }
+        target.planes[0] = white.data();
+        m_renderer->render(m_instance, &target, double(ms / 1000.0));
+        bool drawn = false;
+        for (std::size_t i = 0; i < frame.pixels.size(); i += 4) {
+            std::uint8_t *p = &frame.pixels[i];
+            const std::uint8_t *w = &white[i];
+            int through = 0; // what the frame shows through, summed over the channels
+            for (int c = 0; c < 3; ++c)
+                through += (std::max)(0, int(w[c]) - int(p[c]));
+            const int a = 255 - (through + 1) / 3;
+            if (a <= 0) {
+                p[0] = p[1] = p[2] = p[3] = 0;
+                continue;
+            }
+            drawn = true;
+            for (int c = 0; c < 3; ++c)
+                p[c] = static_cast<std::uint8_t>((std::min)(int(p[c]), a));
+            p[3] = static_cast<std::uint8_t>(a);
+        }
+        frame.empty = !drawn;
+        frame.changed.push_back({0, 0, width, height});
+        return frame;
+    }
     bool drawn = false;
     for (std::size_t i = 0; i < frame.pixels.size(); i += 4) {
         std::uint8_t *p = &frame.pixels[i];

@@ -904,6 +904,40 @@ TEST(SettingsImport, ForeignAndMissingPathsAreReportedNotRepaired)
     EXPECT_EQ(applyPlan(second, proposedRows(second), destinationOf(first, d)), first);
 }
 
+// W2-missing-renderer-libass: a Windows profile's VSFILTER_INSTANCE names a
+// CSRI renderer; where it is not installed (Linux, or a build without the
+// Csri folder) the row stays unresolved and is not proposed, so the profile
+// keeps drawing through libass. Where it is installed it is imported.
+TEST(SettingsImport, ARendererThatIsNotInstalledStaysUnresolved)
+{
+    const std::string body = padding() + "VSFILTER_INSTANCE=xy-vsfilter_textsub\r\n";
+    Destination noCsri = linuxHost();
+    noCsri.rendererInstalled = [](std::string_view name) { return name == "libass"; };
+    const Plan plan = buildPlan({config(body)}, noCsri, readBy(ReadBy::Windows));
+    const PlanRow &row = rowOf(plan, "setting:video.subtitleProvider");
+    EXPECT_EQ(row.disposition, Disposition::Unresolved);
+    EXPECT_FALSE(row.selectable);
+    EXPECT_FALSE(row.proposedImport);
+    EXPECT_NE(row.reason.find("not installed here"), std::string::npos) << row.reason;
+    EXPECT_FALSE(proposedRows(plan).contains("setting:video.subtitleProvider"));
+    EXPECT_FALSE(applyPlan(plan, {"setting:video.subtitleProvider"}, noCsri).values.contains("video.subtitleProvider"));
+    // libass itself is installed everywhere.
+    const Plan libass = buildPlan({config(padding() + "VSFILTER_INSTANCE=libass\r\n")}, noCsri, readBy(ReadBy::Windows));
+    EXPECT_EQ(rowOf(libass, "setting:video.subtitleProvider").disposition, Disposition::Change);
+    EXPECT_TRUE(rowOf(libass, "setting:video.subtitleProvider").proposedImport);
+
+    Destination package = linuxHost();
+    package.windowsHost = true;
+    package.rendererInstalled = [](std::string_view name) {
+        return name == "xy-vsfilter_textsub" || name == "libass" || name == "vsfiltermod_textsub";
+    };
+    const Plan installed = buildPlan({config(body)}, package, readBy(ReadBy::Windows));
+    EXPECT_EQ(rowOf(installed, "setting:video.subtitleProvider").disposition, Disposition::Change);
+    EXPECT_TRUE(rowOf(installed, "setting:video.subtitleProvider").proposedImport);
+    EXPECT_EQ(applyPlan(installed, proposedRows(installed), package).values.at("video.subtitleProvider"),
+              SettingValue(std::string("xy-vsfilter_textsub")));
+}
+
 // ---- Keeping the destination, repeat import and later edits (S44-import)
 
 TEST(SettingsImport, CurrentChoicesAreKeptUnlessChosen)

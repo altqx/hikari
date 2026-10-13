@@ -4699,6 +4699,10 @@ and will be changed to the default</source>
         <translation>สไตล์</translation>
     </message>
     <message>
+        <source>%1 (slow; only for VSFilterMod tags)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cannot find translation, language change failed</source>
         <translation>ไม่พบคำแปล เปลี่ยนภาษาไม่สำเร็จ</translation>
     </message>

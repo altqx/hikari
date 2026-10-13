@@ -4695,6 +4695,10 @@ and will be changed to the default</source>
         <translation>스타일</translation>
     </message>
     <message>
+        <source>%1 (slow; only for VSFilterMod tags)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cannot find translation, language change failed</source>
         <translation>번역을 찾을 수 없어 언어를 변경하지 못했습니다</translation>
     </message>
