@@ -83,6 +83,8 @@ jobs:
         run: cmake --build build-tests --config Release
 
       - name: Run
+        env:
+          HIKARISUB_TEST_NETWORK: '1' # the installing side's real fetch of a release's SHA256SUMS
         run: ctest --test-dir build-tests -C Release --output-on-failure
 
   windows:
