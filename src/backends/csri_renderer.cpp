@@ -1,4 +1,5 @@
 #include "hikari/backends/csri_renderer.h"
+#include "hikari/backends/overlay_blend.h"
 
 #include <algorithm>
 #include <cstring>
@@ -12,6 +13,7 @@
 namespace hikari::backends {
 
 using application::OverlayFrame;
+using application::PixelRect;
 using application::RenderError;
 
 namespace {
@@ -202,16 +204,21 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     frame.height = height;
     frame.stride = width * 4;
     frame.generation = m_generation;
-    // DrawOverlay: a cleared overlay, drawn whole every time.
-    frame.pixels.assign(static_cast<std::size_t>(frame.stride) * static_cast<std::size_t>(height), 0);
+    // DrawOverlay: a cleared overlay, drawn whole every time. A reused buffer
+    // is cleared where it was drawn last.
+    const bool resized = m_buffers.setSize(width, height);
+    if (resized)
+        m_bounds = {};
+    OverlayBuffers::Buffer &buffer = m_buffers.acquire();
     csri::Frame target{};
     target.pixfmt = m_pixfmt;
-    target.planes[0] = frame.pixels.data();
+    target.planes[0] = buffer.bytes->data();
     target.strides[0] = frame.stride;
     // Draw: csri_render(instance, frame, double(time / 1000.0)) with the
     // frame's time in integer milliseconds.
     const auto ms = static_cast<int>(time.microseconds() / 1000);
     m_renderer->render(m_instance, &target, double(ms / 1000.0));
+    PixelRect bounds;
     if (m_pixfmt == csri::BGR_) {
         // BGR_ (VSFilterMod takes no other) blends into the frame and leaves
         // no alpha. Legacy drew it onto the RGB32 video frame
@@ -219,49 +226,54 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
         // instant drawn again onto white gives each pixel's coverage, so the
         // overlay composites over any frame as that drawing did.
         std::vector<std::uint8_t> &white = m_white;
-        white.resize(frame.pixels.size());
+        white.resize(buffer.bytes->size());
         for (std::size_t i = 0; i < white.size(); i += 4) {
             white[i] = white[i + 1] = white[i + 2] = 255;
             white[i + 3] = 0;
         }
         target.planes[0] = white.data();
         m_renderer->render(m_instance, &target, double(ms / 1000.0));
-        bool drawn = false;
-        for (std::size_t i = 0; i < frame.pixels.size(); i += 4) {
-            std::uint8_t *p = &frame.pixels[i];
-            const std::uint8_t *w = &white[i];
-            int through = 0; // what the frame shows through, summed over the channels
-            for (int c = 0; c < 3; ++c)
-                through += (std::max)(0, int(w[c]) - int(p[c]));
-            const int a = 255 - (through + 1) / 3;
-            if (a <= 0) {
-                p[0] = p[1] = p[2] = p[3] = 0;
-                continue;
+        int left = width, top = height, right = -1, bottom = -1;
+        for (int y = 0; y < height; ++y) {
+            std::uint8_t *row = buffer.bytes->data() + static_cast<std::size_t>(y) * frame.stride;
+            const std::uint8_t *whiteRow = white.data() + static_cast<std::size_t>(y) * frame.stride;
+            for (int x = 0; x < width; ++x) {
+                std::uint8_t *p = row + 4 * x;
+                const std::uint8_t *w = whiteRow + 4 * x;
+                int through = 0; // what the frame shows through, summed over the channels
+                for (int c = 0; c < 3; ++c)
+                    through += (std::max)(0, int(w[c]) - int(p[c]));
+                const int a = 255 - (through + 1) / 3;
+                if (a <= 0) {
+                    p[0] = p[1] = p[2] = p[3] = 0;
+                    continue;
+                }
+                for (int c = 0; c < 3; ++c)
+                    p[c] = static_cast<std::uint8_t>((std::min)(int(p[c]), a));
+                p[3] = static_cast<std::uint8_t>(a);
+                left = (std::min)(left, x);
+                right = (std::max)(right, x);
+                top = (std::min)(top, y);
+                bottom = (std::max)(bottom, y);
             }
-            drawn = true;
-            for (int c = 0; c < 3; ++c)
-                p[c] = static_cast<std::uint8_t>((std::min)(int(p[c]), a));
-            p[3] = static_cast<std::uint8_t>(a);
         }
-        frame.empty = !drawn;
+        if (right >= 0)
+            bounds = {left, top, right - left + 1, bottom - top + 1};
+    } else {
+        bounds = premultiplyStraightAlpha(buffer.bytes->data(), width, height, frame.stride);
+    }
+    buffer.drawn.add(bounds);
+    frame.pixels = application::OverlayPixels(buffer.bytes);
+    frame.empty = bounds.width <= 0;
+    if (resized) {
         frame.changed.push_back({0, 0, width, height});
-        return frame;
+    } else {
+        if (m_bounds.width > 0)
+            frame.changed.push_back(m_bounds);
+        if (bounds.width > 0 && bounds != m_bounds)
+            frame.changed.push_back(bounds);
     }
-    bool drawn = false;
-    for (std::size_t i = 0; i < frame.pixels.size(); i += 4) {
-        std::uint8_t *p = &frame.pixels[i];
-        const unsigned a = p[3];
-        if (a == 0) {
-            p[0] = p[1] = p[2] = 0;
-            continue;
-        }
-        drawn = true;
-        if (a != 255)
-            for (int c = 0; c < 3; ++c)
-                p[c] = static_cast<std::uint8_t>((p[c] * a + 127) / 255);
-    }
-    frame.empty = !drawn;
-    frame.changed.push_back({0, 0, width, height});
+    m_bounds = bounds;
     return frame;
 }
 

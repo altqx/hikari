@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -32,6 +33,7 @@ struct Calls {
     // The pixel the fake draws at (1, 1): straight-alpha BGRA, as xy-VSFilter
     // writes into an MSP_RGBA target (MemSubPic.cpp AlphaBltOther).
     std::uint8_t pixel[4] = {200, 100, 50, 128};
+    int x = 1, y = 1;
 } calls;
 
 int instanceToken = 0;
@@ -59,7 +61,7 @@ void render(void *, csri::Frame *frame, double time)
     calls.times.push_back(time);
     calls.renderedFormats.push_back(frame->pixfmt);
     calls.strides.push_back(frame->strides[0]);
-    unsigned char *p = frame->planes[0] + frame->strides[0] * 1 + 4 * 1;
+    unsigned char *p = frame->planes[0] + frame->strides[0] * calls.y + 4 * calls.x;
     if (frame->pixfmt == csri::BGR_) {
         // BGR_ (VSFilterMod's only target, xy-VSFilter's MSP_RGB32) blends
         // the colour into the frame and leaves the padding byte 0.
@@ -210,18 +212,56 @@ TEST_F(Csri, TheOverlayIsDrawnWholeOntoAClearedBgraFrame)
     for (std::size_t i = 0; i < frame->pixels.size(); ++i)
         if (i < 20 || i >= 24)
             EXPECT_EQ(frame->pixels[i], 0) << i;
-    // The same size is not requested again; the next frame starts cleared.
+    // The same size is not requested again; the next frame starts cleared,
+    // and reports the old bounds of what was drawn.
     calls.pixel[3] = 0;
     frame = r.render(core::DocumentTime(2'000'000), 4, 3);
     ASSERT_TRUE(frame);
     EXPECT_EQ(calls.requested.size(), 1u);
     EXPECT_TRUE(frame->empty);
-    EXPECT_EQ(frame->changed, (std::vector<PixelRect>{{0, 0, 4, 3}}));
+    EXPECT_EQ(frame->changed, (std::vector<PixelRect>{{1, 1, 1, 1}}));
     EXPECT_TRUE(std::ranges::all_of(frame->pixels, [](std::uint8_t b) { return b == 0; }));
     // A new size is requested again.
     ASSERT_TRUE(r.render(core::DocumentTime(0), 6, 2));
     ASSERT_EQ(calls.requested.size(), 2u);
     EXPECT_EQ(calls.requested[1].width, 6u);
+}
+
+// The frame is drawn into a reused buffer, cleared only where it was drawn
+// last; a frame still held is never drawn over. The changed areas are the
+// bounds of what was drawn before and now.
+TEST_F(Csri, ABufferIsReusedClearedWhereItWasDrawn)
+{
+    CsriRenderer r(twoRenderers(), "", logger());
+    ASSERT_TRUE(r.prepare(snapshotOf("[Script Info]\n")));
+    calls.pixel[3] = 255;
+    std::optional<OverlayFrame> first;
+    {
+        auto rendered = r.render(core::DocumentTime(0), 8, 4);
+        ASSERT_TRUE(rendered);
+        first = std::move(*rendered);
+    }
+    EXPECT_EQ(first->changed, (std::vector<PixelRect>{{0, 0, 8, 4}})); // a new size: all of it
+    OverlayPixels held = first->pixels;
+    calls.x = 5;
+    calls.y = 2;
+    const auto second = r.render(core::DocumentTime(40'000), 8, 4);
+    ASSERT_TRUE(second);
+    EXPECT_FALSE(second->pixels.sameBuffer(held));
+    EXPECT_EQ(second->changed, (std::vector<PixelRect>{{1, 1, 1, 1}, {5, 2, 1, 1}}));
+    EXPECT_EQ(held[1 * 32 + 4 + 3], 255); // the held frame is as it was
+    first.reset();
+    held = OverlayPixels();
+    // Released, its buffer is reused: the old pixel is gone.
+    calls.x = 6;
+    const OverlayPixels secondPixels = second->pixels;
+    const auto third = r.render(core::DocumentTime(80'000), 8, 4);
+    ASSERT_TRUE(third);
+    EXPECT_FALSE(third->pixels.sameBuffer(secondPixels));
+    std::vector<std::uint8_t> expected(8 * 4 * 4, 0);
+    std::memcpy(&expected[2 * 32 + 6 * 4], calls.pixel, 4);
+    EXPECT_EQ(third->pixels, OverlayPixels(expected));
+    EXPECT_EQ(third->changed, (std::vector<PixelRect>{{5, 2, 1, 1}, {6, 2, 1, 1}}));
 }
 
 TEST_F(Csri, BgraRefusedFallsBackToBgrx)

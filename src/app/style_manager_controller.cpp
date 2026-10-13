@@ -634,20 +634,11 @@ QImage renderStylePreview(backends::LibassRenderer &renderer, core::StyleValues 
             rowPixels[x] = phase ? one : two;
         }
     }
-    if (renderer.prepare(std::move(snapshot))) {
-        if (const auto frame = renderer.render(core::DocumentTime(1'000'000), width, height); frame && !frame->empty) {
-            // Premultiplied BGRA over the background.
-            for (int y = 0; y < height; ++y) {
-                auto *dst = reinterpret_cast<QRgb *>(image.scanLine(y));
-                const auto *src = frame->pixels.data() + static_cast<std::size_t>(y) * static_cast<std::size_t>(frame->stride);
-                for (int x = 0; x < width; ++x) {
-                    const int b = src[x * 4], g = src[x * 4 + 1], r = src[x * 4 + 2], a = src[x * 4 + 3];
-                    const QRgb d = dst[x];
-                    dst[x] = qRgb(r + qRed(d) * (255 - a) / 255, g + qGreen(d) * (255 - a) / 255, b + qBlue(d) * (255 - a) / 255);
-                }
-            }
-        }
-    }
+    // Premultiplied BGRA over the opaque background (ARGB32's bytes are B, G, R, A).
+    static_assert(Q_BYTE_ORDER == Q_LITTLE_ENDIAN);
+    if (renderer.prepare(std::move(snapshot)))
+        if (const auto frame = renderer.render(core::DocumentTime(1'000'000), width, height))
+            application::compositeOverlay(*frame, image.bits(), width, height, image.bytesPerLine());
     return image;
 }
 

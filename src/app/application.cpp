@@ -781,9 +781,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return out;
         };
         hooks.log = [this](const QString &text) { m_log->log(text); };
-        // FontEnumerator's RefreshVideo(true): the video's subtitles render
-        // again with the external fonts.
+        // FontEnumerator's RefreshVideo(true): libass's fonts are loaded
+        // again (ReloadLibraries, so a font installed meanwhile is found), and
+        // the video's subtitles render again with the external fonts.
         hooks.fontsChanged = [this] {
+            application::reloadSubtitleFonts();
             if (!m_fontCatalogs)
                 return;
             m_video->session().setFonts(m_fontCatalogs->externalFontLeases());

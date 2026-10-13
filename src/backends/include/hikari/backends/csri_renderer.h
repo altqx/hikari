@@ -31,6 +31,7 @@
 // LoadExternalFontsToProcess, so the in-process VSFilter saw them).
 
 #include "hikari/application/subtitle_render.h"
+#include "hikari/backends/overlay_blend.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -153,6 +154,9 @@ private:
     std::vector<AddedFont> m_fonts;
     // The second frame a BGR_ renderer draws onto (white), kept between frames.
     std::vector<std::uint8_t> m_white;
+    // The overlay buffers, shared with the frames; and what the shown one has drawn.
+    OverlayBuffers m_buffers;
+    application::PixelRect m_bounds;
 };
 
 } // namespace hikari::backends
