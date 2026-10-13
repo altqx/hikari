@@ -58,8 +58,17 @@ void RendererFFMS2::StartLinuxPlaybackThread()
 void RendererFFMS2::StopLinuxPlaybackThread()
 {
 	m_LinuxPlaybackStop.store(true);
-	if (m_LinuxPlaybackThread.joinable())
-		m_LinuxPlaybackThread.join();
+	if (!m_LinuxPlaybackThread.joinable())
+		return;
+	m_LinuxPlaybackThread.join();
+	// The frame buffer is what pauses, redraws and copies use. Playback no
+	// longer copies every frame into it, so it takes the last one shown.
+	if (m_LinuxFrames.TakeLatest() && m_LinuxFrames.Front().time >= 0)
+		m_Time = m_LinuxFrames.Front().time;
+	FrameExchange::Frame shown = m_LinuxFrames.Front();
+	wxCriticalSectionLocker lock(m_MutexRendering);
+	if (shown.data && m_FrameBuffer && shown.width == m_Width && shown.height == m_Height && shown.pitch == m_Pitch)
+		memcpy(m_FrameBuffer, shown.data, (size_t)m_Height * m_Pitch);
 }
 
 void RendererFFMS2::LinuxPlaybackLoop()
@@ -67,7 +76,6 @@ void RendererFFMS2::LinuxPlaybackLoop()
 	if (!m_FFMS2 || m_Width <= 0 || m_Height <= 0 || m_Pitch <= 0)
 		return;
 
-	std::vector<unsigned char> frameBuffer(static_cast<size_t>(m_Height) * static_cast<size_t>(m_Pitch));
 	const bool debugPlayback = std::getenv("HIKARISUB_DEBUG_LINUX_PLAYBACK") != nullptr;
 	unsigned int decodedFrames = 0;
 	if (debugPlayback)
@@ -88,8 +96,12 @@ void RendererFFMS2::LinuxPlaybackLoop()
 		if (nextFrame != lastPresentedFrame) {
 			m_Frame = nextFrame;
 			m_Time = timebase.MsAt(m_Frame);
-			m_FFMS2->GetFrame(m_Frame, frameBuffer.data());
-			DrawTexture(frameBuffer.data(), true);
+			// decoded and composited straight into the buffer the window shows
+			unsigned char *frame = m_LinuxFrames.BeginWrite(m_Width, m_Height, m_Pitch);
+			m_FFMS2->GetFrame(m_Frame, frame);
+			DrawTexture(frame);
+			m_LinuxFrames.Publish(m_Time);
+			QueueLinuxRender();
 			++decodedFrames;
 			if (debugPlayback && (decodedFrames <= 5 || (decodedFrames % 30) == 0))
 				std::fprintf(stderr, "[linux-playback] decode=%u playTime=%d time=%d frame=%d\n", decodedFrames, playTime, m_Time.load(), m_Frame.load());
@@ -137,20 +149,12 @@ bool RendererFFMS2::DrawTexture(unsigned char *nframe, bool copy)
 		}
 
 		m_SubsProvider->Draw(fdata, m_Time);
-		if (nframe && m_FrameBuffer) {
+		// the playback thread publishes the frame it composited itself
+		if (!wxIsMainThread())
+			return true;
+		if (nframe && m_FrameBuffer && nframe != m_FrameBuffer) {
 			// Keep the software backbuffer in sync for wxGTK redraws after ASS rendering.
 			memcpy(m_FrameBuffer, fdata, m_Height * m_Pitch);
-		}
-		if (!wxIsMainThread()) {
-			{
-				std::lock_guard<std::mutex> pendingLock(m_LinuxPendingFrameMutex);
-				const size_t frameBytes = static_cast<size_t>(m_Height) * static_cast<size_t>(m_Pitch);
-				if (m_LinuxPendingFrame.size() != frameBytes)
-					m_LinuxPendingFrame.resize(frameBytes);
-				memcpy(m_LinuxPendingFrame.data(), fdata, frameBytes);
-			}
-			QueueLinuxRender();
-			return true;
 		}
 		PresentLinuxFrame(fdata);
 		return true;

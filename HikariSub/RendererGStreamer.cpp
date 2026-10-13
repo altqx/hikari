@@ -175,10 +175,7 @@ void RendererGStreamer::TearDown()
 	m_Pipeline = nullptr;
 	m_AppSink = nullptr; // owned by playbin
 
-	std::lock_guard<std::mutex> lock(m_LinuxPendingFrameMutex);
-	m_LinuxPendingFrame.clear();
-	m_LinuxPresentFrame.clear();
-	m_LinuxPendingTime = -1;
+	m_LinuxFrames.Clear();
 }
 
 bool RendererGStreamer::WaitPreroll()
@@ -236,14 +233,6 @@ bool RendererGStreamer::QueryVideoInfo()
 			if (m_FrameBuffer) { delete[] m_FrameBuffer; m_FrameBuffer = nullptr; }
 			m_FrameBuffer = new unsigned char[(size_t)m_Height * m_Pitch]();
 		}
-	}
-
-	// Seed the present buffer with a black frame so RenderToDc always has a
-	// correctly-sized buffer to blit and never falls back to m_FrameBuffer
-	// (which the streaming thread may be writing).
-	{
-		std::lock_guard<std::mutex> pendingLock(m_LinuxPendingFrameMutex);
-		m_LinuxPresentFrame.assign((size_t)m_Height * m_Pitch, 0);
 	}
 
 	videoControl->m_FPS = fps;
@@ -439,30 +428,25 @@ void RendererGStreamer::HandleSample(GstSample *sample)
 			m_FrameBuffer = new unsigned char[(size_t)m_Height * m_Pitch]();
 			m_SubsProvider->SetVideoParameters(wxSize(m_Width, m_Height), ARGB32, false);
 		}
+		// The frame is composited straight into the buffer the window shows
+		// it from, while holding m_SubsMutex so a resize can't change the
+		// size meanwhile. Lock order: m_SubsMutex -> m_PbMutex.
+		unsigned char *frame = m_LinuxFrames.BeginWrite(m_Width, m_Height, m_Pitch);
 		const int rowBytes = std::min(srcStride, m_Pitch);
 		for (int y = 0; y < m_Height; ++y)
-			memcpy(m_FrameBuffer + (size_t)y * m_Pitch, src + (size_t)y * srcStride, rowBytes);
+			memcpy(frame + (size_t)y * m_Pitch, src + (size_t)y * srcStride, rowBytes);
 
 		// Subtitles, then (fullscreen) progress bar, composited into the frame.
 		if (m_SubsOpened)
-			m_SubsProvider->Draw(m_FrameBuffer, frameTimeMs);
+			m_SubsProvider->Draw(frame, frameTimeMs);
 
 		if (m_PbValid.load() && videoControl->m_FullScreenProgressBar) {
 			std::lock_guard<std::mutex> pbLock(m_PbMutex);
 			if (!m_PbBuffer.empty() && m_PbW > 0 && m_PbH > 0)
-				BlendPremultBgra(m_FrameBuffer, m_Pitch, m_Width, m_Height,
+				BlendPremultBgra(frame, m_Pitch, m_Width, m_Height,
 					m_PbBuffer.data(), m_PbX, m_PbY, m_PbW, m_PbH);
 		}
-
-		// Copy the composited frame into the pending buffer while still holding
-		// m_SubsMutex, so a resize can't swap m_FrameBuffer between compositing
-		// and this copy.  Lock order: m_SubsMutex -> m_PbMutex -> pending.
-		std::lock_guard<std::mutex> pendingLock(m_LinuxPendingFrameMutex);
-		const size_t frameBytes = (size_t)m_Height * m_Pitch;
-		if (m_LinuxPendingFrame.size() != frameBytes)
-			m_LinuxPendingFrame.resize(frameBytes);
-		memcpy(m_LinuxPendingFrame.data(), m_FrameBuffer, frameBytes);
-		m_LinuxPendingTime = frameTimeMs;
+		m_LinuxFrames.Publish(frameTimeMs);
 	}
 	gst_video_frame_unmap(&vframe);
 	QueueLinuxRender();

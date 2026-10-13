@@ -32,6 +32,7 @@ add_executable(hikarisub_tests
     check_main.cpp
     AssBlendTests.cpp
     DependencyControlModulesTests.cpp
+    FrameExchangeTests.cpp
     FrameQueueTests.cpp
     HotkeysFileTests.cpp
     LineGroupsTests.cpp
@@ -51,6 +52,7 @@ add_executable(hikarisub_tests
     TextComparisonTests.cpp
     WaveformPeaksTests.cpp
     ../HikariSub/AssBlend.cpp
+    ../HikariSub/FrameExchange.cpp
     ../HikariSub/FrameQueue.cpp
     ../HikariSub/LineGroups.cpp
     ../HikariSub/Playback.cpp

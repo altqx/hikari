@@ -166,6 +166,7 @@ add_executable(hikarisub
     HikariSub/LineGroups.cpp
     HikariSub/LineParse.cpp
     HikariSub/AssBlend.cpp
+    HikariSub/FrameExchange.cpp
     HikariSub/FrameQueue.cpp
     HikariSub/Playback.cpp
     HikariSub/WaveformPeaks.cpp

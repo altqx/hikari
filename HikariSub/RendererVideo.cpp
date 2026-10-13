@@ -85,6 +85,16 @@ namespace
 		dc.DrawBitmap(bitmap, targetRect.left, targetRect.top, false);
 	}
 }
+
+// Paints BGRA video frames into the video window on the UI thread.
+class LinuxFramePainter
+{
+public:
+	void Paint(wxDC &dc, const FrameExchange::Frame &frame, const RECT &target)
+	{
+		DrawBgraFrameWithWxDc(dc, frame.data, frame.width, frame.height, frame.pitch, target);
+	}
+};
 #endif
 
 
@@ -145,21 +155,15 @@ void RendererVideo::QueueLinuxRender()
 	wxTheApp->CallAfter([this, alive]() {
 		if (!alive->load())
 			return; // renderer was destroyed before this ran
-		{
-			std::lock_guard<std::mutex> lock(m_LinuxPendingFrameMutex);
-			if (!m_LinuxPendingFrame.empty()) {
-				m_LinuxPresentFrame.swap(m_LinuxPendingFrame);
-				// Prevent empty callbacks from restoring the old frame.
-				m_LinuxPendingFrame.clear();
-				if (m_LinuxPendingTime >= 0) {
-					m_Time = m_LinuxPendingTime;
-					m_LinuxPendingTime = -1;
-				}
-			}
-			// Reset under the producer lock to avoid missed frames.
-			m_LinuxRenderQueued.store(false);
+		// cleared before taking, so a frame published from here on queues
+		// another call instead of being missed
+		m_LinuxRenderQueued.store(false);
+		if (m_LinuxFrames.TakeLatest()) {
+			int time = m_LinuxFrames.Front().time;
+			if (time >= 0)
+				m_Time = time;
 		}
-		if (m_State != None && !m_LinuxPresentFrame.empty()) {
+		if (m_State != None && m_LinuxFrames.Front().data) {
 			wxWindow* renderWindow = (videoControl->m_IsFullscreen && videoControl->m_FullScreenWindow) ?
 				static_cast<wxWindow*>(videoControl->m_FullScreenWindow) : static_cast<wxWindow*>(videoControl);
 			if (renderWindow)
@@ -171,16 +175,9 @@ void RendererVideo::QueueLinuxRender()
 
 void RendererVideo::PresentLinuxFrame(const unsigned char* frame)
 {
-	if (!frame || m_Height <= 0 || m_Pitch <= 0)
+	if (!frame || m_Width <= 0 || m_Height <= 0 || m_Pitch <= 0)
 		return;
-	{
-		std::lock_guard<std::mutex> pendingLock(m_LinuxPendingFrameMutex);
-		const size_t frameBytes = static_cast<size_t>(m_Height) * static_cast<size_t>(m_Pitch);
-		if (m_LinuxPresentFrame.size() != frameBytes)
-			m_LinuxPresentFrame.resize(frameBytes);
-		if (m_LinuxPresentFrame.data() != frame)
-			memcpy(m_LinuxPresentFrame.data(), frame, frameBytes);
-	}
+	m_LinuxFrames.ShowCopy(frame, m_Width, m_Height, m_Pitch, m_Time);
 	wxWindow* renderWindow = (videoControl->m_IsFullscreen && videoControl->m_FullScreenWindow) ?
 		static_cast<wxWindow*>(videoControl->m_FullScreenWindow) : static_cast<wxWindow*>(videoControl);
 	if (renderWindow)
@@ -189,20 +186,20 @@ void RendererVideo::PresentLinuxFrame(const unsigned char* frame)
 
 void RendererVideo::RenderToDc(wxDC& dc)
 {
-	wxCriticalSectionLocker lock(m_MutexRendering);
-	if (m_Width <= 0 || m_Height <= 0 || m_Pitch <= 0)
-		return;
-	std::lock_guard<std::mutex> pendingLock(m_LinuxPendingFrameMutex);
-	// Guard against a present buffer that doesn't (yet) match the current
-	// dimensions (e.g. a mid-stream resolution change) so the blit never reads
-	// past the buffer.
-	const size_t needed = (size_t)m_Height * (size_t)m_Pitch;
-	if (!m_LinuxPresentFrame.empty() && m_LinuxPresentFrame.size() < needed)
-		return;
-	const unsigned char* frame = !m_LinuxPresentFrame.empty() ? m_LinuxPresentFrame.data() : m_FrameBuffer;
-	if (!frame)
-		return;
-	DrawBgraFrameWithWxDc(dc, frame, m_Width, m_Height, m_Pitch, m_BackBufferRect);
+	if (!m_LinuxPainter)
+		m_LinuxPainter = std::make_unique<LinuxFramePainter>();
+	// the front frame is the UI thread's own: no lock is held while painting it
+	FrameExchange::Frame frame = m_LinuxFrames.Front();
+	if (frame.data) {
+		m_LinuxPainter->Paint(dc, frame, m_BackBufferRect);
+	}
+	else {
+		// nothing shown yet, as before the first frame of a video comes
+		dc.SetBrush(*wxBLACK_BRUSH);
+		dc.SetPen(*wxBLACK_PEN);
+		dc.DrawRectangle(m_BackBufferRect.left, m_BackBufferRect.top,
+			m_BackBufferRect.right - m_BackBufferRect.left, m_BackBufferRect.bottom - m_BackBufferRect.top);
+	}
 	++m_LinuxPresentedFrames;
 	if (m_Visual && !m_HasZoom)
 		m_Visual->DrawWx(dc, m_Time);
