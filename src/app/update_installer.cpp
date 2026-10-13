@@ -188,13 +188,19 @@ QString UpdateInstaller::appImageStaging(const QString &version) const
     return QFileInfo(m_env.package.appImage).absolutePath() + QStringLiteral("/.HikariSub-%1.AppImage").arg(version);
 }
 
-// The cache, and so pending.json, is the user's, shared by every AppImage
-// copy they keep: a record whose download was staged beside another copy
-// is that copy's to install, and this one leaves it alone.
-bool UpdateInstaller::belongsToAnotherImage(const Pending &pending) const
+// The cache, and so pending.json, is the user's, shared by every copy
+// they keep: a record of another kind is the other copy's (an AppImage
+// beside an installed package, say), and one whose download was staged
+// beside another AppImage copy is that copy's to install. Either is left
+// alone. A record whose kind cannot be read is this copy's to drop.
+bool UpdateInstaller::belongsToAnotherCopy(const Pending &pending) const
 {
-    return m_env.package.kind == PackageKind::AppImage &&
-           pending.kind == packageKindToken(PackageKind::AppImage) && pending.file != appImageStaging(pending.version);
+    const auto kind = application::parsePackageKind(std8(pending.kind));
+    if (!kind)
+        return false;
+    if (pending.kind != packageKindToken(m_env.package.kind))
+        return true;
+    return *kind == PackageKind::AppImage && pending.file != appImageStaging(pending.version);
 }
 
 #ifndef _WIN32
@@ -288,8 +294,8 @@ QString UpdateInstaller::start()
         Pending pending{p.value(QStringLiteral("version")).toString(), p.value(QStringLiteral("kind")).toString(),
                         p.value(QStringLiteral("file")).toString(), p.value(QStringLiteral("sha256")).toString(),
                         qint64(p.value(QStringLiteral("size")).toDouble()), p.value(QStringLiteral("manual")).toBool()};
-        if (belongsToAnotherImage(pending)) {
-            // Another AppImage copy's update: neither offered nor removed.
+        if (belongsToAnotherCopy(pending)) {
+            // Another copy's update: neither offered nor removed.
         } else if (p.value(QStringLiteral("schema")).toInt() == 1 &&
             !application::isNewerVersion(std8(pending.version), std8(m_running))) {
             // Installed (or older): an AppImage's old image goes with it,
@@ -721,8 +727,8 @@ bool UpdateInstaller::installAppImageAtStart(const QStringList &arguments)
     const QString version = QString::fromUtf8(marker.read(64)).trimmed();
     marker.close();
     const auto pending = readPending();
-    // Another AppImage copy's quit left it: that copy's next start installs it.
-    if (pending && belongsToAnotherImage(*pending))
+    // Another copy's record: that copy's next start installs it.
+    if (pending && belongsToAnotherCopy(*pending))
         return false;
     marker.remove(); // once: a failure below leaves the update to start()
     if (!pending || pending->version != version || pending->kind != packageKindToken(m_env.package.kind) ||

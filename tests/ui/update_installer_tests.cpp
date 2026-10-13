@@ -217,10 +217,18 @@ private slots:
         // The helper through sudo, which checks the file as pkexec's would.
         QCOMPARE(manual.manualCommand(), QStringLiteral("sudo ") + env.helper + QStringLiteral(" install ") + cache +
                                              QStringLiteral("/0.3.0/y.deb 0.3.0"));
-        // A record of another kind (the copy was reinstalled) is dropped.
+        // A record of another kind is another copy's (the cache is the
+        // user's): neither offered nor removed.
         UpdateInstaller rpm(environment(PackageKind::Rpm, root), QStringLiteral("0.2.0"));
         rpm.start();
         QCOMPARE(rpm.state(), QStringLiteral("idle"));
+        QVERIFY(QFileInfo::exists(cache + QStringLiteral("/pending.json")));
+        QVERIFY(QFileInfo::exists(cache + QStringLiteral("/0.3.0/y.deb")));
+        // One whose kind cannot be read is dropped.
+        record(QStringLiteral("0.3.0"), QStringLiteral("snap"), cache + QStringLiteral("/0.3.0/y.deb"), "y");
+        UpdateInstaller unknown(environment(PackageKind::Deb, root), QStringLiteral("0.2.0"));
+        unknown.start();
+        QCOMPARE(unknown.state(), QStringLiteral("idle"));
         QVERIFY(!QFileInfo::exists(cache + QStringLiteral("/pending.json")));
     }
 

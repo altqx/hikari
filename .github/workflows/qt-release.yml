@@ -199,25 +199,15 @@ jobs:
           sys.exit(1 if found else 0)
           PY
 
-      # --latest only for the highest stable version published, so a later
-      # legacy release does not become Latest over a Qt one, nor the reverse.
-      - name: Publish the release
+      # A draft first: clients see the release only once its update manifest
+      # is there (published below). Without one they would fall back to the
+      # assets' digests, without the manifest's offer_to and requirements.
+      - name: Create the release as a draft
         run: |
           set -euo pipefail
-          if [[ "$PRERELEASE" == true ]]; then
-            flag=--prerelease
-          else
-            highest=$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
-              --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' |
-              sed -n 's/^v\([0-9]*\.[0-9]*\.[0-9]*\)$/\1/p' | sort -V | tail -n 1)
-            if [[ -z "$highest" || "$(printf '%s\n%s\n' "$highest" "$VERSION" | sort -V | tail -n 1)" == "$VERSION" ]]; then
-              flag=--latest=true
-            else
-              flag=--latest=false
-            fi
-          fi
-          echo "Publishing with $flag"
-          gh release create "$GITHUB_REF_NAME" release/* --verify-tag --title "v$VERSION" --generate-notes "$flag"
+          flag=()
+          [[ "$PRERELEASE" == true ]] && flag=(--prerelease)
+          gh release create "$GITHUB_REF_NAME" release/* --verify-tag --draft --title "v$VERSION" --generate-notes "${flag[@]}"
 
       - name: Read the asset names back
         run: |
@@ -243,6 +233,26 @@ jobs:
           mkdir manifest
           python3 tools/release/make-update-manifest.py --tag "$GITHUB_REF_NAME" --dir release \
             --offer-to "$offer_to" --output manifest/hikarisub-update.json --upload
+
+      # --latest only for the highest stable version published, so a later
+      # legacy release does not become Latest over a Qt one, nor the reverse.
+      - name: Publish the release
+        run: |
+          set -euo pipefail
+          if [[ "$PRERELEASE" == true ]]; then
+            flag=--latest=false
+          else
+            highest=$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+              --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' |
+              sed -n 's/^v\([0-9]*\.[0-9]*\.[0-9]*\)$/\1/p' | sort -V | tail -n 1)
+            if [[ -z "$highest" || "$(printf '%s\n%s\n' "$highest" "$VERSION" | sort -V | tail -n 1)" == "$VERSION" ]]; then
+              flag=--latest=true
+            else
+              flag=--latest=false
+            fi
+          fi
+          echo "Publishing with $flag"
+          gh release edit "$GITHUB_REF_NAME" --draft=false "$flag"
 
       # The AUR package carries the rewrite once it replaces legacy for users
       # (HIKARISUB_OFFER_QT_TO_LEGACY). Its PKGBUILD is rendered from the
