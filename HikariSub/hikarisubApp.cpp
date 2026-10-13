@@ -428,7 +428,7 @@ bool hikarisubApp::OnInit()
 	m_ipcServer = nullptr;
 	// An AppImage update an ordinary quit left: installed now, watched,
 	// before the lock, so the new image starts as the only instance.
-	if (update_installer::InstallAppImageAtStart())
+	if (update_installer::InstallAppImageAtStart(KindTokenAtStart() == package_kind::Token(package_kind::Kind::AppImage)))
 		return false;
 #endif
 	m_checker = new wxSingleInstanceChecker();

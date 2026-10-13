@@ -1339,10 +1339,11 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 #endif
 }
 
-bool update_installer::InstallAppImageAtStart()
+bool update_installer::InstallAppImageAtStart(bool isAppImage)
 {
 #ifndef _WIN32
-	if (Kind() != package_kind::Kind::AppImage || AppImagePath().empty())
+	// Not Kind(): it would keep this kind before the options read the marker.
+	if (!isAppImage || AppImagePath().empty())
 		return false;
 	std::string named;
 	if (!ReadSmallFile(AppImageAtStartPath(), &named, 64))
@@ -1367,6 +1368,7 @@ bool update_installer::InstallAppImageAtStart()
 	AppImageWatchdog(*pending);
 	return true;
 #else
+	(void)isAppImage;
 	return false;
 #endif
 }

@@ -132,5 +132,7 @@ namespace update_installer
 	// itself: nothing would watch the new image's first start, and an
 	// image that cannot start would stay. True when another process took
 	// over (the new version, or the old one put back), so this one exits.
-	bool InstallAppImageAtStart();
+	// isAppImage: this start's kind, read from the marker and $APPIMAGE
+	// (Kind() would cache a kind before the options have read the marker).
+	bool InstallAppImageAtStart(bool isAppImage);
 }
