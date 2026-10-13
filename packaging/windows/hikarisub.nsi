@@ -67,8 +67,9 @@ SetCompressorDictSize 64
 !define HS_CLASSES       "Software\Classes"
 !define HS_MUTEX         "Global\io.github.altqx.HikariSub.Running"
 ; Held by an /UPDATE run until it exits: an app started meanwhile leaves
-; and asks for a start afterwards (HsTakeStartRequest).
+; and sets HS_START_EVENT, and HikariSub starts afterwards (HsTakeStartRequest).
 !define HS_SETUP_MUTEX   "Global\io.github.altqx.HikariSub.Installing"
+!define HS_START_EVENT   "Global\io.github.altqx.HikariSub.StartAfterUpdate"
 !define HS_URL           "https://github.com/altqx/hikari"
 
 Name "${HS_NAME}"
@@ -113,6 +114,7 @@ Var HsRadioMachine
 Var HsSelfHold        ; this setup's own file, held against change (HsHoldSelf)
 Var HsNewMachineDir   ; the new all-users folder HsMachineDirOk accepted
 Var HsSetupMutex      ; HS_SETUP_MUTEX, held until exit (/UPDATE)
+Var HsStartEvent      ; HS_START_EVENT, or 0
 
 ; ---------------------------------------------------------------------------
 ; Pages
@@ -387,24 +389,39 @@ Function HsLaunchApp
   Pop $0
 FunctionEnd
 
-; An app started while this /UPDATE ran left at once and wrote
-; start-after-<copy> in the update cache: HikariSub starts when this ends,
-; as with /RELAUNCH. (For all users that is the cache of the account that
-; approved UAC: another account's start is not seen.)
+; HS_START_EVENT: a manual-reset event, not set, that any signed-in user
+; may set (EVENT_MODIFY_STATE and SYNCHRONIZE for Authenticated Users),
+; held until exit. An event, not a file: an all-users setup that another
+; administrator approved runs in that account's profile, not the user's.
+!if ${NSIS_PTR_SIZE} != 4
+  !error "HsMakeStartEvent lays out a 32-bit SECURITY_ATTRIBUTES"
+!endif
+Function HsMakeStartEvent
+  Push $0
+  Push $1
+  Push $2
+  StrCpy $HsStartEvent 0
+  System::Call 'advapi32::ConvertStringSecurityDescriptorToSecurityDescriptorW(w "D:(A;;GA;;;SY)(A;;GA;;;BA)(A;;0x100002;;;AU)S:(ML;;NW;;;ME)", i 1, *p .r1, p 0) i .r0'
+  ${If} $0 <> 0
+    System::Call '*(i 12, p r1, i 0) p .r2'
+    System::Call 'kernel32::CreateEventW(p r2, i 1, i 0, w "${HS_START_EVENT}") p .r0'
+    StrCpy $HsStartEvent $0
+    System::Free $2
+    System::Call 'kernel32::LocalFree(p r1)'
+  ${EndIf}
+  Pop $2
+  Pop $1
+  Pop $0
+FunctionEnd
+
+; An app started while this /UPDATE ran left at once and set HS_START_EVENT:
+; HikariSub starts when this ends, as with /RELAUNCH (as the desktop user).
 Function HsTakeStartRequest
   Push $0
   ${If} $HsUpdate = 1
-    StrCpy $0 $HsScope
-    ${If} $0 == ""
-      StrCpy $0 $HsCmdScope
-    ${EndIf}
-    ${If} $0 == "machine"
-      StrCpy $0 "$HsUserLocalAppData\HikariSub\Updates\start-after-nsis-machine"
-    ${Else}
-      StrCpy $0 "$HsUserLocalAppData\HikariSub\Updates\start-after-nsis-user"
-    ${EndIf}
-    ${If} ${FileExists} $0
-      Delete $0
+  ${AndIf} $HsStartEvent <> 0
+    System::Call 'kernel32::WaitForSingleObject(p $HsStartEvent, i 0) i .r0'
+    ${If} $0 = 0
       StrCpy $HsRelaunch 1
     ${EndIf}
   ${EndIf}
@@ -1140,6 +1157,7 @@ Function .onInit
     SetSilent silent
     ; Taken first, before the wait for the app: the app's own handoff
     ; waits for it, so a start after the app's quit finds it.
+    Call HsMakeStartEvent
     System::Call 'kernel32::CreateMutexW(p 0, i 1, w "${HS_SETUP_MUTEX}") p .r0'
     StrCpy $HsSetupMutex $0
   ${EndIf}

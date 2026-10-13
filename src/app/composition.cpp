@@ -214,9 +214,10 @@ int run(int argc, char **argv, StartupMode mode)
     if (update_apply::setupRunning()) {
         QCoreApplication core(argc, argv);
         const auto kind = currentPackageKind().kind;
-        if ((kind == application::PackageKind::NsisUser || kind == application::PackageKind::NsisMachine) &&
-            update_apply::askStartAfterSetup(packageKindToken(kind).toStdWString()))
+        if (kind == application::PackageKind::NsisUser || kind == application::PackageKind::NsisMachine) {
+            update_apply::askStartAfterSetup();
             return 0;
+        }
     }
     // Held until exit: the installer waits while it exists. A failure is ignored.
     CreateMutexW(nullptr, FALSE, L"Global\\io.github.altqx.HikariSub.Running");

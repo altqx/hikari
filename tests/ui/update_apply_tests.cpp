@@ -420,14 +420,14 @@ private slots:
         CloseHandle(held);
         QVERIFY(!update_apply::setupRunning());
 
-        QTemporaryDir local;
-        QVERIFY(local.isValid());
-        const QByteArray saved = qgetenv("LOCALAPPDATA");
-        qputenv("LOCALAPPDATA", QDir::toNativeSeparators(local.path()).toLocal8Bit());
-        const bool asked = update_apply::askStartAfterSetup(L"nsis-user");
-        qputenv("LOCALAPPDATA", saved);
-        QVERIFY(asked);
-        QVERIFY(QFileInfo::exists(local.filePath(QStringLiteral("HikariSub/Updates/start-after-nsis-user"))));
+        // The start request sets the setup's event; with no setup, nothing.
+        QVERIFY(!update_apply::askStartAfterSetup());
+        HANDLE request = CreateEventW(nullptr, TRUE, FALSE, update_apply::kStartAfterSetup);
+        QVERIFY(request != nullptr);
+        QCOMPARE(WaitForSingleObject(request, 0), DWORD(WAIT_TIMEOUT));
+        QVERIFY(update_apply::askStartAfterSetup());
+        QCOMPARE(WaitForSingleObject(request, 0), DWORD(WAIT_OBJECT_0));
+        CloseHandle(request);
 
         // A stand-in setup that takes the mutex after starting up, then holds
         // it 8 s: launch returns while it is held, not at once.

@@ -274,11 +274,6 @@ QString UpdateInstaller::start()
     if (m_env.cacheDir.isEmpty())
         return {};
     QString message;
-#ifdef _WIN32
-    // No setup runs now (a start during one leaves before this): a request a
-    // setup did not take is not for the next one.
-    QFile::remove(m_env.cacheDir + QStringLiteral("/start-after-") + copyKey());
-#endif
     QString installing;
     if (QFile marker(installingPath()); marker.open(QIODevice::ReadOnly)) {
         installing = QString::fromUtf8(marker.read(64)).trimmed();
