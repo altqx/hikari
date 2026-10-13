@@ -72,6 +72,7 @@ optdepends=$(awk -F '\t' '$1 == "optdepends" { print $2 }' "$work/deps" | quote)
 sha256=$(sha256sum "$tarball" | cut -d ' ' -f 1)
 
 mkdir -p "$out"
+out=$(cd "$out" && pwd)
 python3 - "$here/PKGBUILD.in" "$out/PKGBUILD" "$version" "$sha256" "$depends" "$optdepends" <<'EOF'
 import sys
 src, dst, version, sha256, depends, optdepends = sys.argv[1:]
