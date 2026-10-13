@@ -2071,11 +2071,281 @@ def step_video_fullscreen():
     displays("extend", scale2=100)
 
 
+# ---------------------------------------------------------------- wave-5 sweep steps
+def nvda_start():
+    """The portable NVDA (nvda-setup the first time), silent, logging speech;
+    returns its log's guest path (nvda_stop reads it back)."""
+    if not LAYOUT.get("nvda_exe"):
+        job, lines = W.task("nvda-setup", timeout=1500)
+        raw = line_value(lines, "NVDA_LAYOUT ")
+        (EVID / "nvda-setup.txt").write_text("\n".join(lines) + "\n")
+        if not raw:
+            return None
+        LAYOUT["nvda_exe"] = json.loads(raw)["exe"]
+    nvda_log = LAYOUT["nvda_dir"] + "\\nvda-" + time.strftime("%Y%m%d-%H%M%S") + ".log"
+    W.ui("launch", exe=LAYOUT["nvda_exe"], arguments=[
+        "--minimal", "--replace", "--disable-addons", "--log-level=12", f"--log-file={nvda_log}",
+        f"--config-path={LAYOUT['nvda_config']}"], cwd=LAYOUT["nvda_dir"])
+    time.sleep(10)
+    return nvda_log
+
+
+def nvda_stop(nvda_log, tag):
+    """Quits NVDA; its speech lines (TAG-nvda-speech.txt) and whether the
+    silent synthesizer spoke them."""
+    job, lines = W.task("nvda-output", env={"GATE_NVDA_LOG": nvda_log})
+    s = sections(lines)
+    speech = [l.strip() for l in s.get("speech", []) if l.strip()]
+    (EVID / f"{tag}-nvda-speech.txt").write_text("\n".join(speech) + "\n")
+    (EVID / f"{tag}-nvda-output.txt").write_text("\n".join(lines) + "\n")
+    W.pull(LAYOUT["nvda_dir"] + "\\nvda-last.log", EVID / f"{tag}-nvda.log")
+    silent = any("silence" in l for l in s.get("synth", []))
+    return speech, silent, [f"{tag}-nvda-speech.txt", f"{tag}-nvda-output.txt", f"{tag}-nvda.log"]
+
+
+def step_snap():
+    """D3 (#207): whether Windows Snap takes the borderless floating tool
+    window when its header's free part (the window system's move,
+    startSystemMove) is dragged to the primary monitor's left edge and to its
+    top edge, the pointer held at the edge for Snap's preview. Either answer is
+    the observation the card asks for; the window must stay a floating panel."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    placed = fullscreen("left", width=480)
+    log("main window on the left:", placed)
+    try:
+        time.sleep(1.0)
+        mons = monitors()
+        prim = next(m for m in mons if m["primary"])
+        focus_main_compositor()
+        float_panel("Audio", "snap")
+        st = wait_for(lambda s: "Audio" in frames(s), timeout=4)
+        if "Audio" not in frames(st):
+            verdict("floating-snap", "not-observable", "Audio did not float")
+            return
+        out, shots = [], []
+        for edge, target in (("left", (prim["x"] + 1, prim["y"] + prim["h"] // 2)),
+                             ("top", (prim["x"] + prim["w"] // 2, prim["y"] + 1))):
+            st = uia()
+            before = frames(st).get("Audio")
+            btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == "Audio"), None)
+            if not before or not btn:
+                out.append({"edge": edge, "error": "no floating Audio or its ⋯ in UIA"})
+                continue
+            sx, sy = btn["x"] - 24, btn["y"] + btn["h"] // 2
+            # Over bare desktop first (the drag distance starts the system move), then to the edge.
+            mid = (max(prim["x"] + 520, sx - 60), min(prim["y"] + prim["h"] - 200, sy + 60))
+            try:
+                pointer([(sx, sy)], hold=True)
+                time.sleep(0.25)
+                pointer([(sx, sy), mid], button="none", steps=20, delayMs=40)
+                pointer([mid, target], button="none", steps=30, delayMs=40)
+                time.sleep(1.5)  # Snap shows its preview while the pointer rests at the edge
+                ev, _ = snap(f"snap-{edge}-held")
+                shots += ev
+            finally:
+                release()
+                time.sleep(2.0)
+            st = uia(dpi=True)
+            after = frames(st).get("Audio")
+            ev, st = snap(f"snap-{edge}-released")
+            shots += ev
+            half = bool(after) and abs(after["x"] - prim["x"]) <= 12 and abs(after["w"] - prim["w"] // 2) <= 24 \
+                and after["h"] >= prim["h"] - 90
+            full = bool(after) and after["w"] >= prim["w"] - 24 and after["h"] >= prim["h"] - 90
+            out.append({"edge": edge, "pressed": [sx, sy], "to": list(target),
+                        "before": before and [before["x"], before["y"], before["w"], before["h"]],
+                        "after": after and [after["x"], after["y"], after["w"], after["h"]],
+                        "snapped": "left half" if edge == "left" and half else "maximized" if edge == "top" and full
+                        else "no", "still floating": bool(after)})
+            if after:  # back to the middle of the free desktop for the next edge
+                fullscreen("left", width=480)
+        (EVID / "snap.json").write_text(json.dumps({"monitors": mons, "drags": out}, indent=1))
+        floating = all(o.get("still floating") for o in out)
+        taken = [o["edge"] + ": " + o.get("snapped", "?") for o in out]
+        verdict("floating-snap", "observed" if out and floating and not any("error" in o for o in out) else "failed",
+                f"the floating Audio window's free part dragged to the primary monitor's left and top edges and "
+                f"held there 1.5 s: Snap took it {taken}; still a floating panel after each: {floating} "
+                f"(snap.json: window rectangles before and after)", ["snap.json"] + shots)
+    finally:
+        fullscreen("off")
+
+
+def step_tags():
+    """E6 (#188): NVDA reads the Line text's tag list: with tags shown (the
+    Line editor's "Hide tags" switch off), `{\\` opens the list under the
+    caret, the focus stays in the text field, and Down announces the selected
+    tag ("\be, Edge blur, 2 of 20": Accessible.announce, a UIA notification)."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    nvda_log = nvda_start()
+    if not nvda_log:
+        verdict("nvda-tag-list", "error", "nvda-setup did not create the portable copy (nvda-setup.txt)", ["nvda-setup.txt"])
+        return
+    ev, st, typed = [], {"texts": {}}, None
+    try:
+        focus_main_compositor()
+        st0 = uia(do=[{"action": "invoke", "name": "Hide tags", "type": "Button"}], settle_ms=800)
+        set_focus("Line text")
+        keys("home", 0.5)
+        type_text("{\\")
+        time.sleep(1.5)
+        ev, st = snap("tags-0-list-open")
+        typed = st["texts"].get("Line text")
+        keys("down", 1.2, "down", 1.2)
+        ev += snap("tags-1-down-down")[0]
+        st1 = uia()
+        keys("escape", 0.8)
+        ev += snap("tags-2-escape")[0]
+    finally:
+        speech, silent, nev = nvda_stop(nvda_log, "tags")
+    rows = [e for e in st.get("elements") or [] if e["t"] in ("ListItem", "DataItem") and not e["off"]]
+    announced = [l for l in speech if re.search(r"\d+ of \d+", l) or "Edge blur" in l]
+    focus_kept = "Line text" in (st1.get("focus") or "")
+    (EVID / "tags.json").write_text(json.dumps({"hide-tags pressed": st0.get("actions"), "text after typing": typed,
+                                                "focus with the list open": st1.get("focus"),
+                                                "list rows in UIA": [(e["t"], e["n"]) for e in rows][:40],
+                                                "announcements": announced}, indent=1, ensure_ascii=False))
+    verdict("tag-list-raw-view", "observed" if typed and typed.startswith("{\\") else "failed",
+            f"with Hide tags pressed through UIA ({st0.get('actions')}), typing {{\\ at the start left the Line text "
+            f"{typed!r}", ["tags.json"] + ev)
+    verdict("tag-list-focus-kept", "observed" if focus_kept else "failed",
+            f"with the list open and Down pressed twice the focus is {st1.get('focus')!r}", ["tags.json"] + ev)
+    verdict("nvda-tag-list", "observed" if announced and silent else "failed",
+            f"NVDA spoke the tag list's selection: {announced[:6]} ({len(speech)} speech lines, silent synthesizer "
+            f"{silent})", ["tags.json"] + nev + ev)
+
+
+def step_statusbar():
+    """P10 (#200): the status bar as a screen reader finds it: UIA's
+    StatusBar element and its fields, and NVDA's "read status bar" command
+    (NVDA+End, the desktop layout) with the main window in the foreground."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    nvda_log = nvda_start()
+    if not nvda_log:
+        verdict("nvda-status-bar", "error", "nvda-setup did not create the portable copy (nvda-setup.txt)", ["nvda-setup.txt"])
+        return
+    try:
+        focus_main_compositor()
+        set_focus("Line text")
+        time.sleep(1.0)
+        ev, st = snap("statusbar-0")
+        keys("insert+end", 2.5)
+        keys("insert+end", 2.5)  # twice: NVDA spells it on a double press, but each press speaks it
+        ev += snap("statusbar-1-read")[0]
+    finally:
+        speech, silent, nev = nvda_stop(nvda_log, "statusbar")
+    els = st.get("elements") or []
+    bars = [e for e in els if e["t"] == "StatusBar" and not e["off"]]
+    fields = [(c["t"], c["n"], c["val"]) for b in bars for c in els
+              if any(a["i"] == b["i"] for a in ancestors(els, c)) and not c["off"]]
+    (EVID / "statusbar.json").write_text(json.dumps({"status bars": [el_path(els, b) for b in bars],
+                                                     "fields": fields}, indent=1, ensure_ascii=False))
+    verdict("uia-status-bar", "observed" if bars and fields else "failed",
+            f"UIA StatusBar elements {[el_path(els, b) for b in bars]} with {len(fields)} named descendants: "
+            f"{fields[:12]}", ["statusbar.json"] + ev)
+    none = [l for l in speech if "no status bar" in l.lower()]
+    read = [l for l in speech if "status bar" in l.lower() and l not in none] or \
+        [l for l in speech if any(n and n in l for _, n, _ in fields if n and len(n) > 3)]
+    verdict("nvda-status-bar", "observed" if read and not none and silent else "failed",
+            f"NVDA+End (read status bar): {read[:6]}; 'no status bar' answers {none[:2]} ({len(speech)} speech lines, "
+            f"silent synthesizer {silent})", ["statusbar.json"] + nev + ev)
+
+
+def new_elements(before, st, frame=None):
+    seen = {(e["win"], el_path(before.get("elements") or [], e)) for e in before.get("elements") or []}
+    els = st.get("elements") or []
+    return [dict(e, path=el_path(els, e)) for e in els if not e["off"] and (e["win"], el_path(els, e)) not in seen
+            and (frame is None or frame_id(e["win"]) == frame)]
+
+
+def step_dialogs():
+    """K1 (#204): the names UI Automation gives the controls of windows and
+    dialogs outside the main window's own surfaces (the Style manager with
+    its move and transfer arrows, the time shift window, Find and replace,
+    Settings): every button, check box and menu button has a name."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    named = ("Button", "CheckBox", "RadioButton", "SplitButton", "ComboBox", "Edit", "Slider", "Spinner", "TabItem",
+             "ListItem", "MenuItem", "Hyperlink")
+    found, ev = {}, []
+    for title, opener in (("Style manager", ("ctrl+m",)), ("Time shift", ("ctrl+i",)),
+                          ("Find and replace", ("ctrl+h",)), ("Settings", None)):
+        focus_main_compositor()
+        set_focus("Line text")
+        before = uia()
+        if opener:
+            keys(*opener, 2.0)
+        else:
+            ok = any(menu_to(n, opener="alt+f") for n in ("Settings…", "Settings", "Options…", "Options"))
+            if ok:
+                keys("return", 2.0)
+        st = uia()
+        new = new_elements(before, st)
+        tag = re.sub(r"\W+", "-", title.lower())
+        ev += snap(f"dialogs-{tag}")[0]
+        controls = [e for e in new if e["t"] in named]
+        unnamed = [e["path"] + f" id={e['id']!r}" for e in controls if not (e["n"] or "").strip()]
+        found[title] = {"opened": bool(new), "windows": sorted({e["win"] for e in new}),
+                        "controls": [(e["t"], e["n"]) for e in controls], "unnamed": unnamed}
+        keys("escape", 1.0)
+        for f in [f for f in uia()["frames"] if f["id"] not in (MAIN,) and f["id"] not in PANELS]:
+            close_window(f["name"])
+    (EVID / "dialogs.json").write_text(json.dumps(found, indent=1, ensure_ascii=False))
+    opened = [t for t, v in found.items() if v["opened"]]
+    unnamed = {t: v["unnamed"] for t, v in found.items() if v["unnamed"]}
+    verdict("uia-names-outside-main", "observed" if opened and not unnamed else "failed",
+            f"opened {opened} (not opened: {[t for t in found if t not in opened]}); controls with no UIA name: "
+            f"{unnamed or 'none'}; counts { {t: len(v['controls']) for t, v in found.items()} } (dialogs.json)",
+            ["dialogs.json"] + ev)
+
+
+def step_reference():
+    """R2 (#194): the reference tray through UI Automation and NVDA: a second
+    tab (Ctrl+T), back to the first (Ctrl+PgUp), Ctrl+Q in the Grid shows the
+    next tab as the linked reference; the tray's controls and its status are
+    named, and NVDA speaks them when F6 and Tab reach the tray."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    nvda_log = nvda_start()
+    if not nvda_log:
+        verdict("nvda-reference-tray", "error", "nvda-setup did not create the portable copy", ["nvda-setup.txt"])
+        return
+    ev, st = [], {}
+    try:
+        focus_main_compositor()
+        keys("ctrl+t", 1.5, "ctrl+pgup", 1.5)
+        set_focus("Subtitle lines")
+        keys("home", 0.5, "ctrl+q", 2.0)
+        ev, st = snap("reference-0-tray")
+        for _ in range(6):
+            keys("tab", 0.9)
+        ev += snap("reference-1-tabbed")[0]
+    finally:
+        speech, silent, nev = nvda_stop(nvda_log, "reference")
+    want = ("Follow the editing line", "Show nearest line", "Previous match", "Next match",
+            "Reference lines (protected, read-only)")
+    els = st.get("elements") or []
+    present = {n: bool([e for e in els if e["n"] == n and not e["off"]]) for n in want}
+    status = [e["n"] for e in els if re.match(r"(Match \d+ of \d+|No matching line|Independent navigation)$", e["n"] or "")]
+    spoken = [n for n in want + tuple(status) if any(n in l for l in speech)]
+    (EVID / "reference.json").write_text(json.dumps({"present": present, "status": status, "spoken": spoken},
+                                                    indent=1, ensure_ascii=False))
+    verdict("uia-reference-tray", "observed" if all(present.values()) and status else "failed",
+            f"tray controls in UIA {present}; status {status}", ["reference.json"] + ev)
+    verdict("nvda-reference-tray", "observed" if spoken and silent else "failed",
+            f"NVDA spoke {spoken} ({len(speech)} speech lines, silent synthesizer {silent})",
+            ["reference.json"] + nev + ev)
+
+
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "outputs": step_outputs, "nvda": step_nvda, "menutext": step_menu_from_text,
          "tests": step_test_executables, "a11y": step_a11y, "header": step_header, "dpi": step_dpi, "dark": step_dark,
-         "views": step_views, "editor": step_editor, "videofs": step_video_fullscreen}
+         "views": step_views, "editor": step_editor, "videofs": step_video_fullscreen,
+         "snap": step_snap, "tags": step_tags, "statusbar": step_statusbar, "dialogs": step_dialogs,
+         "reference": step_reference}
 
 
 def main():
