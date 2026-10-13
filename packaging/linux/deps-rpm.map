@@ -12,4 +12,6 @@ libresolv.so.2 @glibc
 # runtime
 depends hicolor-icon-theme
 depends fontconfig
+depends curl
+depends ca-certificates
 recommends polkit

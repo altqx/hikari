@@ -5,13 +5,19 @@
 // arrives, and recorded in pending.json; the window then offers "Restart
 // now" and "Later". The hand-off happens after the normal quit (every
 // document reviewed and the main window closed), per package kind:
-//   - NSIS: the installer in its update mode, silent; all-users scope asks
-//     UAC once;
+//   - NSIS: the installed program with --hikari-apply-update (update_apply.h)
+//     checks the installer against the release's SHA256SUMS, from a private
+//     copy for all users, and starts it in its update mode; all-users scope
+//     asks UAC once, for the installed program;
 //   - AppImage: the new image replaces $APPIMAGE (the old one kept as
-//     $APPIMAGE.old); with a restart, a watchdog waits for the new process
-//     to report its window and puts the old image back if it does not;
-//   - deb and rpm: pkexec runs the packaged helper, which installs with apt,
-//     dnf or zypper; without pkexec the file is offered with the command that
+//     $APPIMAGE.old) and a watchdog waits for the new process to report its
+//     window, putting the old image back if it does not. With Restart now
+//     that happens at the quit; after an ordinary quit it waits for the next
+//     start, which then starts the new image under the watchdog, so a
+//     version that cannot start is always put back;
+//   - deb and rpm: pkexec runs the packaged helper with the file and the
+//     version only; it checks the file against the release's SHA256SUMS,
+//     which it downloads itself, and installs with apt, dnf or zypper; without pkexec the file is offered with the command that
 //     installs it.
 // The AUR and portable copies never get here: they are told only.
 
@@ -29,6 +35,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 
 class QNetworkReply;
 
@@ -106,12 +113,17 @@ public:
         QStringList arguments;
     };
     // `busy` shows the "Installing update..." notice and returns a function
-    // that hides it (deb and rpm only).
+    // that hides it (deb, rpm and NSIS).
     ExitAction installAtExit(const std::function<std::function<void()>()> &busy = {});
 
     // The new process of an AppImage update: reports its window to the
     // watchdog (a file in the update cache only) and drops $APPIMAGE.old.
     void reportHealthy(const QString &healthFile);
+    // The start after an ordinary quit left an AppImage update to install:
+    // replaces the image and starts the new one, with `arguments`, under the
+    // watchdog. True when another process took over (the new version, or
+    // the old one put back and started again), so this one only exits.
+    bool installAppImageAtStart(const QStringList &arguments);
 
 signals:
     void stateChanged();
@@ -138,7 +150,10 @@ private:
     QString versionDir(const QString &version) const;
     QString pendingPath() const;
     QString resultPath() const;
-    ExitAction installNsis();
+    QString atStartPath() const;
+    std::optional<Pending> readPending() const;
+    bool replaceAppImage(const QStringList &arguments);
+    ExitAction installNsis(const std::function<std::function<void()>()> &busy);
     ExitAction installAppImage();
     ExitAction installNative(const std::function<std::function<void()>()> &busy);
 

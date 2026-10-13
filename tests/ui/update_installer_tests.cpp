@@ -235,7 +235,10 @@ private slots:
         const QString file = root + QStringLiteral("/cache/0.2.0/") + name;
         QCOMPARE(QString::fromUtf8(read(root + QStringLiteral("/args"))).split(QLatin1Char('\n'), Qt::SkipEmptyParts),
                  (QStringList{QStringLiteral("/opt/hikarisub/libexec/hikarisub-update-helper"), QStringLiteral("install"),
-                              QStringLiteral("rpm"), file, sha256(bytes), QStringLiteral("0.2.0")}));
+                              file, QStringLiteral("0.2.0")}));
+        // The file and the version only: no digest of ours reaches the helper,
+        // which checks the file against the release's own SHA256SUMS.
+        QVERIFY(!read(root + QStringLiteral("/args")).contains(sha256(bytes).toLatin1()));
         // Dismissed: still pending; a restart brings back the version installed.
         auto [dismissed, again, busy2] = run(126, true);
         QCOMPARE(again.program, root + QStringLiteral("/old-hikarisub"));
@@ -243,6 +246,14 @@ private slots:
         // At quit without a restart: nothing to run afterwards.
         auto [later, none, busy3] = run(126, false);
         QVERIFY(none.program.isEmpty());
+        // The release's SHA256SUMS could not be had: still pending, said at the
+        // next start.
+        auto [offline, after6, busy6] = run(6, false);
+        QVERIFY(QFileInfo::exists(root + QStringLiteral("/cache/pending.json")));
+        {
+            UpdateInstaller told(environment(PackageKind::Rpm, root), QStringLiteral("0.1.0"));
+            QVERIFY(told.start().contains(QStringLiteral("GitHub")));
+        }
         // The helper refused the package: reported at the next start, not retried.
         auto [refused, after, busy4] = run(3, false);
         QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/pending.json")));
@@ -255,8 +266,11 @@ private slots:
     {
         const QString root = folder();
         const QString image = root + QStringLiteral("/apps/My HikariSub.AppImage");
-        QVERIFY(write(image, "#!/bin/sh\nexit 0\n", true));
-        const QByteArray fresh = "#!/bin/sh\n# the new one\nexit 0\n";
+        const QByteArray old = "#!/bin/sh\nexit 0\n";
+        QVERIFY(write(image, old, true));
+        // The new version reports its window and records its arguments.
+        const QByteArray fresh = "#!/bin/sh\nfor a; do case \"$a\" in --hikari-health=*) : > \"${a#--hikari-health=}\";; esac; done\n"
+                                 "printf '%s\\n' \"$@\" > \"" + root.toUtf8() + "/args\"\nsleep 1\n";
         auto env = environment(PackageKind::AppImage, root);
         env.package.appImage = image;
         UpdateInstaller installer(env, QStringLiteral("0.1.0"));
@@ -267,17 +281,96 @@ private slots:
         const QString staged = root + QStringLiteral("/apps/.HikariSub-0.2.0.AppImage");
         QCOMPARE(installer.readyFile(), staged);
         QVERIFY(QFileInfo(staged).isExecutable());
-        // Later, at quit: swapped, the old one kept as .old until the new
-        // version's start drops it.
+        // Later, at an ordinary quit: nothing would watch the new image's
+        // first start, so the image stays and the next start installs it.
         installer.installAtExit();
+        QCOMPARE(read(image), old);
+        QVERIFY(QFileInfo::exists(staged));
+        QCOMPARE(read(root + QStringLiteral("/cache/appimage-at-start")), QByteArray("0.2.0"));
+        // That start: swapped, the old one kept as .old, the new one
+        // started with this start's files under the watchdog.
+        UpdateInstaller atStart(env, QStringLiteral("0.1.0"));
+        QVERIFY(atStart.installAppImageAtStart({QStringLiteral("/subs/ep 1.ass")}));
         QCOMPARE(read(image), fresh);
         QVERIFY(QFileInfo(image).isExecutable());
-        QCOMPARE(read(image + QStringLiteral(".old")), QByteArray("#!/bin/sh\nexit 0\n"));
+        QCOMPARE(read(image + QStringLiteral(".old")), old);
         QVERIFY(!QFileInfo::exists(staged));
+        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/appimage-at-start")));
+        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/last-result.json")));
+        const QList<QByteArray> args = read(root + QStringLiteral("/args")).split('\n');
+        QVERIFY(args.contains("--hikari-updated-from=0.1.0"));
+        QVERIFY(args.contains("/subs/ep 1.ass"));
+        // Once only.
+        UpdateInstaller again(env, QStringLiteral("0.1.0"));
+        QVERIFY(!again.installAppImageAtStart({}));
+        // The new version's start drops .old and the record.
         UpdateInstaller started(env, QStringLiteral("0.2.0"));
         started.start();
         QVERIFY(!QFileInfo::exists(image + QStringLiteral(".old")));
         QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/pending.json")));
+    }
+
+    // An ordinary quit's update that cannot start is put back at the start
+    // that installs it, as after Restart now.
+    void anAppImageThatCannotStartIsPutBackAtTheNextStart()
+    {
+        const QString root = folder();
+        const QString image = root + QStringLiteral("/HikariSub.AppImage");
+        const QByteArray old = "#!/bin/sh\nexit 0\n";
+        QVERIFY(write(image, old, true));
+        const QByteArray broken = "#!/bin/sh\nexit 1\n";
+        auto env = environment(PackageKind::AppImage, root);
+        env.package.appImage = image;
+        env.healthTimeoutMs = 10 * 1000;
+        UpdateInstaller installer(env, QStringLiteral("0.1.0"));
+        const QString name = QStringLiteral("HikariSub-0.2.0-linux-x86_64.AppImage");
+        QVERIFY(download(installer, QStringLiteral("0.2.0"), package(name, broken), serve(root, name, broken)));
+        installer.installAtExit();
+        QCOMPARE(read(image), old);
+        UpdateInstaller atStart(env, QStringLiteral("0.1.0"));
+        QElapsedTimer took;
+        took.start();
+        QVERIFY(atStart.installAppImageAtStart({}));
+        QVERIFY(took.elapsed() < 9000); // the exit, not the timeout, ended the wait
+        QCOMPARE(read(image), old);
+        QVERIFY(!QFileInfo::exists(image + QStringLiteral(".old")));
+        UpdateInstaller next(env, QStringLiteral("0.1.0"));
+        QVERIFY(next.start().contains(QStringLiteral("0.2.0")));
+        QCOMPARE(next.state(), QStringLiteral("idle"));
+    }
+
+    // Only the version an ordinary quit named, and only a verified file.
+    void theStartInstallsOnlyWhatTheQuitLeft()
+    {
+        const QString root = folder();
+        const QString image = root + QStringLiteral("/HikariSub.AppImage");
+        const QByteArray old = "#!/bin/sh\nexit 0\n";
+        QVERIFY(write(image, old, true));
+        const QByteArray fresh = "#!/bin/sh\nexit 0\n# new\n";
+        auto env = environment(PackageKind::AppImage, root);
+        env.package.appImage = image;
+        UpdateInstaller installer(env, QStringLiteral("0.1.0"));
+        const QString name = QStringLiteral("HikariSub-0.2.0-linux-x86_64.AppImage");
+        QVERIFY(download(installer, QStringLiteral("0.2.0"), package(name, fresh), serve(root, name, fresh)));
+        // No quit yet: nothing to install at start.
+        UpdateInstaller noQuit(env, QStringLiteral("0.1.0"));
+        QVERIFY(!noQuit.installAppImageAtStart({}));
+        // Another version named.
+        QVERIFY(write(root + QStringLiteral("/cache/appimage-at-start"), "0.3.0"));
+        UpdateInstaller other(env, QStringLiteral("0.1.0"));
+        QVERIFY(!other.installAppImageAtStart({}));
+        QVERIFY(!QFileInfo::exists(root + QStringLiteral("/cache/appimage-at-start")));
+        // A changed file.
+        installer.installAtExit();
+        write(installer.readyFile(), "#!/bin/sh\nexit 0\n# changed\n", true);
+        UpdateInstaller changed(env, QStringLiteral("0.1.0"));
+        QVERIFY(!changed.installAppImageAtStart({}));
+        QCOMPARE(read(image), old);
+        QVERIFY(!QFileInfo::exists(image + QStringLiteral(".old")));
+        // Not an AppImage.
+        QVERIFY(write(root + QStringLiteral("/cache/appimage-at-start"), "0.2.0"));
+        UpdateInstaller deb(environment(PackageKind::Deb, root), QStringLiteral("0.1.0"));
+        QVERIFY(!deb.installAppImageAtStart({}));
     }
 
     void theWatchdogKeepsAnUpdateThatStarts()

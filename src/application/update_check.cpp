@@ -544,6 +544,99 @@ std::string nsisUpdateArguments(bool machine, bool relaunch, long long waitPid, 
     return out;
 }
 
+bool isReleaseVersion(std::string_view version)
+{
+    if (version.empty() || version.size() > 64 || version[0] < '0' || version[0] > '9' ||
+        version.find('+') != std::string_view::npos || !isValidUrlTag(version))
+        return false;
+    return parseSemVer(version).has_value();
+}
+
+std::string sumsUrl(std::string_view version)
+{
+    if (!isReleaseVersion(version))
+        return {};
+    return "https://github.com/altqx/hikari/releases/download/v" + std::string(version) + "/" + std::string(kSumsName);
+}
+
+std::optional<std::string> listedSha256(std::string_view sums, std::string_view name)
+{
+    if (sums.size() > kMaxSumsBytes || name.empty())
+        return std::nullopt;
+    std::optional<std::string> found;
+    int count = 0;
+    while (!sums.empty()) {
+        const std::size_t end = sums.find('\n');
+        std::string_view line = sums.substr(0, end);
+        sums = end == std::string_view::npos ? std::string_view() : sums.substr(end + 1);
+        if (!line.empty() && line.back() == '\r')
+            line.remove_suffix(1);
+        if (line.size() < 66 || line[64] != ' ' || (line[65] != ' ' && line[65] != '*') || line.substr(66) != name)
+            continue;
+        ++count;
+        found = std::string(line.substr(0, 64));
+    }
+    if (count != 1)
+        return std::nullopt;
+    for (char c : *found)
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')))
+            return std::nullopt;
+    return found;
+}
+
+InstallCheck checkInstallVersion(std::string_view version, std::string_view installed)
+{
+    if (!isReleaseVersion(version) || !isNewerVersion(version, installed))
+        return InstallCheck::BadVersion;
+    return InstallCheck::Ok;
+}
+
+InstallCheck checkListedSha256(std::string_view sums, std::string_view name, std::string_view actual)
+{
+    const auto expected = listedSha256(sums, name);
+    if (!expected)
+        return InstallCheck::NotListed;
+    return *expected == actual ? InstallCheck::Ok : InstallCheck::Mismatch;
+}
+
+bool isPlainWindowsPath(std::string_view path)
+{
+    const auto letter = [](char c) { return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'); };
+    if (path.size() < 4 || path.size() > 32000 || !letter(path[0]) || path[1] != ':' || path[2] != '\\')
+        return false;
+    if (path.find("\\..\\") != std::string_view::npos || path.find("\\.\\") != std::string_view::npos ||
+        path.ends_with("\\..") || path.ends_with("\\."))
+        return false;
+    for (std::size_t i = 2; i < path.size(); ++i) {
+        const unsigned char c = static_cast<unsigned char>(path[i]);
+        if (c < 32 || c == '"' || c == '*' || c == '?' || c == '<' || c == '>' || c == '|' || c == ':' || c == '/')
+            return false;
+    }
+    return true;
+}
+
+std::optional<ApplyRequest> parseApplyArguments(const std::vector<std::string> &arguments)
+{
+    if (arguments.size() != 4)
+        return std::nullopt;
+    ApplyRequest request;
+    request.version = arguments[0];
+    request.file = arguments[1];
+    if (!isReleaseVersion(request.version) || !isPlainWindowsPath(request.file))
+        return std::nullopt;
+    const std::string &pid = arguments[2];
+    if (pid.empty() || pid.size() > 10 || !std::all_of(pid.begin(), pid.end(), [](char c) { return c >= '0' && c <= '9'; }))
+        return std::nullopt;
+    const unsigned long long value = std::stoull(pid);
+    if (value == 0 || value > 0xffffffffull)
+        return std::nullopt;
+    request.pid = static_cast<unsigned long>(value);
+    if (arguments[3] != "0" && arguments[3] != "1")
+        return std::nullopt;
+    request.relaunch = arguments[3] == "1";
+    return request;
+}
+
 std::string manualInstallCommand(PackageTool tool, std::string_view file)
 {
     std::string quoted;
@@ -559,7 +652,9 @@ std::string manualInstallCommand(PackageTool tool, std::string_view file)
     case PackageTool::Apt:
         return "sudo apt install " + quoted;
     case PackageTool::Dnf:
-        return "sudo dnf install " + quoted;
+        // The packages are unsigned: dnf and zypper skip the signature
+        // check, as the update helper has them do.
+        return "sudo dnf install --nogpgcheck " + quoted;
     case PackageTool::Zypper:
         return "sudo zypper install --allow-unsigned-rpm " + quoted;
     }

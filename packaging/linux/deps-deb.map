@@ -62,4 +62,6 @@ libssl.so.3 libssl3t64 | libssl3
 depends libxcb-cursor0
 depends fontconfig
 depends hicolor-icon-theme
+depends curl
+depends ca-certificates
 recommends pkexec | policykit-1

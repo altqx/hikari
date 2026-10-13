@@ -1,5 +1,6 @@
 #include "hikari/app/update_installer.h"
 
+#include "hikari/app/update_apply.h"
 #include "hikari/backends/show_in_folder.h"
 
 #include <QClipboard>
@@ -153,6 +154,25 @@ QString UpdateInstaller::pendingPath() const
 QString UpdateInstaller::resultPath() const
 {
     return m_env.cacheDir + QStringLiteral("/last-result.json");
+}
+
+// An ordinary quit's AppImage update, for the next start: its version.
+QString UpdateInstaller::atStartPath() const
+{
+    return m_env.cacheDir + QStringLiteral("/appimage-at-start");
+}
+
+std::optional<UpdateInstaller::Pending> UpdateInstaller::readPending() const
+{
+    QFile record(pendingPath());
+    if (!record.open(QIODevice::ReadOnly))
+        return std::nullopt;
+    const QJsonObject p = QJsonDocument::fromJson(record.read(application::kMaxManifestBytes)).object();
+    if (p.value(QStringLiteral("schema")).toInt() != 1)
+        return std::nullopt;
+    return Pending{p.value(QStringLiteral("version")).toString(), p.value(QStringLiteral("kind")).toString(),
+                   p.value(QStringLiteral("file")).toString(), p.value(QStringLiteral("sha256")).toString(),
+                   qint64(p.value(QStringLiteral("size")).toDouble()), p.value(QStringLiteral("manual")).toBool()};
 }
 
 void UpdateInstaller::setState(const QString &state)
@@ -489,6 +509,8 @@ UpdateInstaller::ExitAction UpdateInstaller::installAtExit(const std::function<s
         !application::isNewerVersion(std8(m_pending.version), std8(m_running)))
         return {};
     // Checked again: the file sat in the user's cache since its download.
+    // This only weeds out a broken download; the record is the user's to
+    // change, so what installs checks the file against the release itself.
     if (!verify(m_pending.file, m_pending.size, m_pending.sha256)) {
         QFile::remove(m_pending.file);
         dropPending();
@@ -497,7 +519,7 @@ UpdateInstaller::ExitAction UpdateInstaller::installAtExit(const std::function<s
     switch (m_env.package.kind) {
     case PackageKind::NsisUser:
     case PackageKind::NsisMachine:
-        return installNsis();
+        return installNsis(busy);
     case PackageKind::AppImage:
         return installAppImage();
     case PackageKind::Deb:
@@ -508,53 +530,144 @@ UpdateInstaller::ExitAction UpdateInstaller::installAtExit(const std::function<s
     }
 }
 
-UpdateInstaller::ExitAction UpdateInstaller::installNsis()
+UpdateInstaller::ExitAction UpdateInstaller::installNsis(const std::function<std::function<void()>()> &busy)
 {
 #ifdef _WIN32
+    // The downloaded installer is never what runs elevated: the installed
+    // program itself, with --hikari-apply-update, checks it against the
+    // release's SHA256SUMS and starts it (update_apply.h). Elevated through
+    // one UAC prompt for all users; unelevated for the user's own install.
     const bool machine = m_env.package.kind == PackageKind::NsisMachine;
-    QString dir = QDir::toNativeSeparators(QFileInfo(m_env.executable).absolutePath());
-    while (dir.endsWith(QLatin1Char('\\')))
-        dir.chop(1);
-    const std::wstring setup = QDir::toNativeSeparators(m_pending.file).toStdWString();
-    const std::wstring arguments = QString::fromStdString(application::nsisUpdateArguments(
-                                                              machine, m_restart, qint64(GetCurrentProcessId()), std8(dir)))
-                                       .toStdWString();
-    if (machine) {
-        // One UAC prompt; the installer starts the program again unelevated.
-        SHELLEXECUTEINFOW info{};
-        info.cbSize = sizeof(info);
-        info.fMask = SEE_MASK_NOASYNC;
-        info.lpVerb = L"runas";
-        info.lpFile = setup.c_str();
-        info.lpParameters = arguments.c_str();
-        info.nShow = SW_SHOWNORMAL;
-        if (!ShellExecuteExW(&info)) {
-            const DWORD error = GetLastError();
-            if (error != ERROR_CANCELLED) // declined: still pending
-                writeResult(m_pending.version, 4,
-                            QCoreApplication::translate("HikariSub.MainWindow", "The installer of HikariSub %1 could not be started. Run %2 to install it.")
-                                .arg(m_pending.version, QDir::toNativeSeparators(m_pending.file)));
-        }
+    const QString version = m_pending.version;
+    application::ApplyRequest request;
+    request.version = std8(version);
+    request.file = QDir::toNativeSeparators(m_pending.file).toStdString();
+    request.pid = GetCurrentProcessId();
+    request.relaunch = m_restart;
+    const std::wstring program = QDir::toNativeSeparators(m_env.executable).toStdWString();
+    const std::wstring parameters = update_apply::commandLine(request);
+    const auto startAgain = [this] {
+        // A Restart now that installed nothing starts the version still here.
+        if (m_restart)
+            QProcess::startDetached(m_env.executable, {});
+    };
+    // UAC is asked to run this program only when the user cannot have
+    // changed it: package-kind.txt says "all users" in a per-user copy as
+    // easily as in Program Files, and a DLL put beside the program would
+    // run elevated before any check (update_apply.h).
+    if (machine && !update_apply::isElevated() &&
+        !update_apply::isProtectedFromUser(QDir::toNativeSeparators(QFileInfo(m_env.executable).absolutePath()).toStdWString())) {
+        // The download stays for the user to run; the update is not tried again.
+        QFile::remove(pendingPath());
+        writeResult(version, application::kApplyFailed,
+                    QCoreApplication::translate("HikariSub.MainWindow", "HikariSub is installed for all users in a folder that can be changed without administrator rights, so HikariSub %1 was not installed automatically. Run %2 to install it.")
+                        .arg(version, QDir::toNativeSeparators(m_pending.file)));
+        startAgain();
         return {};
     }
-    std::wstring command = L"\"" + setup + L"\" " + arguments;
-    STARTUPINFOW startup{};
-    startup.cb = sizeof(startup);
-    PROCESS_INFORMATION process{};
-    if (CreateProcessW(setup.c_str(), command.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startup,
-                       &process)) {
-        CloseHandle(process.hThread);
-        CloseHandle(process.hProcess);
-    } else {
-        writeResult(m_pending.version, 2,
-                    QCoreApplication::translate("HikariSub.MainWindow", "The installer of HikariSub %1 could not be started. Run %2 to install it.")
-                        .arg(m_pending.version, QDir::toNativeSeparators(m_pending.file)));
+    SHELLEXECUTEINFOW info{};
+    info.cbSize = sizeof(info);
+    info.fMask = SEE_MASK_NOASYNC | SEE_MASK_NOCLOSEPROCESS;
+    info.lpVerb = machine ? L"runas" : nullptr;
+    info.lpFile = program.c_str();
+    info.lpParameters = parameters.c_str();
+    info.nShow = SW_HIDE;
+    if (!ShellExecuteExW(&info) || !info.hProcess) {
+        if (GetLastError() != ERROR_CANCELLED) // declined: still pending
+            writeResult(version, application::kApplyFailed,
+                        QCoreApplication::translate("HikariSub.MainWindow", "The installer of HikariSub %1 could not be started. Run %2 to install it.")
+                            .arg(version, QDir::toNativeSeparators(m_pending.file)));
+        startAgain();
+        return {};
     }
+    std::function<void()> hide = busy ? busy() : std::function<void()>();
+    QEventLoop loop; // the busy notice keeps painting
+    QTimer poll;
+    connect(&poll, &QTimer::timeout, &loop, [&loop, process = info.hProcess] {
+        if (WaitForSingleObject(process, 0) == WAIT_OBJECT_0)
+            loop.quit();
+    });
+    poll.start(100);
+    if (WaitForSingleObject(info.hProcess, 0) != WAIT_OBJECT_0)
+        loop.exec();
+    poll.stop();
+    DWORD code = DWORD(application::kApplyFailed);
+    if (!GetExitCodeProcess(info.hProcess, &code))
+        code = DWORD(application::kApplyFailed);
+    CloseHandle(info.hProcess);
+    if (hide)
+        hide();
+    if (code == DWORD(application::kApplyOk))
+        return {}; // the installer waits for this process to exit
+    QString message;
+    switch (int(code)) {
+    case application::kApplyMismatch:
+    case application::kApplyBadArguments:
+        // Not the release's file, or not newer: it will not become right.
+        message = QCoreApplication::translate("HikariSub.MainWindow", "The downloaded HikariSub %1 package did not pass its checks, so it was not installed.").arg(version);
+        QFile::remove(m_pending.file);
+        QFile::remove(pendingPath());
+        break;
+    case application::kApplyNoSums:
+        message = QCoreApplication::translate("HikariSub.MainWindow", "HikariSub %1 could not be checked against its release on GitHub, so it was not installed. It will be tried again when you next quit.").arg(version);
+        break;
+    default:
+        message = QCoreApplication::translate("HikariSub.MainWindow", "The installer of HikariSub %1 could not be started. Run %2 to install it.")
+                      .arg(version, QDir::toNativeSeparators(m_pending.file));
+        break;
+    }
+    writeResult(version, int(code), message);
+    startAgain();
+#else
+    Q_UNUSED(busy);
 #endif
     return {};
 }
 
 UpdateInstaller::ExitAction UpdateInstaller::installAppImage()
+{
+#ifndef _WIN32
+    if (!m_restart) {
+        // An ordinary quit: nothing would watch the new image's first start,
+        // so the next start replaces the image and watches it instead.
+        QSaveFile marker(atStartPath());
+        if (marker.open(QIODevice::WriteOnly) && marker.write(m_pending.version.toUtf8()) >= 0)
+            marker.commit();
+        return {};
+    }
+    replaceAppImage({});
+#endif
+    return {};
+}
+
+bool UpdateInstaller::installAppImageAtStart(const QStringList &arguments)
+{
+#ifndef _WIN32
+    if (m_env.package.kind != PackageKind::AppImage || m_env.cacheDir.isEmpty() || m_env.package.appImage.isEmpty())
+        return false;
+    QFile marker(atStartPath());
+    if (!marker.open(QIODevice::ReadOnly))
+        return false;
+    const QString version = QString::fromUtf8(marker.read(64)).trimmed();
+    marker.close();
+    marker.remove(); // once: a failure below leaves the update to start()
+    const auto pending = readPending();
+    if (!pending || pending->version != version || pending->kind != packageKindToken(m_env.package.kind) ||
+        !application::isNewerVersion(std8(pending->version), std8(m_running)) || !canInstall() ||
+        !verify(pending->file, pending->size, pending->sha256))
+        return false;
+    m_pending = *pending;
+    m_restart = true;
+    return replaceAppImage(arguments);
+#else
+    Q_UNUSED(arguments);
+    return false;
+#endif
+}
+
+// The swap and the watchdog: true when a process was started in this one's
+// place (the new version, or the old one put back).
+bool UpdateInstaller::replaceAppImage(const QStringList &arguments)
 {
 #ifndef _WIN32
     const QString image = m_env.package.appImage, old = image + QStringLiteral(".old"), fresh = m_pending.file;
@@ -564,24 +677,23 @@ UpdateInstaller::ExitAction UpdateInstaller::installAppImage()
     // The old image stays as .old: a hard link, else moved, else copied.
     if (::link(imagePath.constData(), oldPath.constData()) != 0 && !replaceFile(image, old) && !QFile::copy(image, old)) {
         writeResult(version, 2, QCoreApplication::translate("HikariSub.MainWindow", "Cannot keep a copy of %1, so the update was not installed.").arg(image));
-        return {};
+        return false;
     }
     if (!replaceFile(fresh, image)) {
         if (!QFileInfo::exists(image))
             replaceFile(old, image);
         writeResult(version, 2, QCoreApplication::translate("HikariSub.MainWindow", "Cannot replace %1, so the update was not installed.").arg(image));
-        return {};
+        return false;
     }
     // pending.json stays: the new version's first start drops it with .old.
-    if (!m_restart)
-        return {};
     // The watchdog: the new image reports its window by creating the health
     // file; if it exits first or stays silent, the old image comes back.
     const QString health = m_env.cacheDir + QStringLiteral("/health-") + version;
     QFile::remove(health);
     QProcess next;
     next.setProgram(image);
-    next.setArguments({QStringLiteral("--hikari-updated-from=") + m_running, QStringLiteral("--hikari-health=") + health});
+    next.setArguments(QStringList{QStringLiteral("--hikari-updated-from=") + m_running, QStringLiteral("--hikari-health=") + health} +
+                      arguments);
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     for (const char *name : {"APPDIR", "APPIMAGE", "ARGV0", "OWD"})
         env.remove(QString::fromLatin1(name));
@@ -594,7 +706,7 @@ UpdateInstaller::ExitAction UpdateInstaller::installAppImage()
         while (waited.elapsed() < m_env.healthTimeoutMs) {
             if (QFileInfo::exists(health)) {
                 QFile::remove(health);
-                return {};
+                return true;
             }
             if (!alive(pid))
                 break;
@@ -606,9 +718,12 @@ UpdateInstaller::ExitAction UpdateInstaller::installAppImage()
     replaceFile(old, image);
     writeResult(version, 1,
                 QCoreApplication::translate("HikariSub.MainWindow", "HikariSub %1 did not start, so the version you had was put back.").arg(version));
-    QProcess::startDetached(image, {}, QDir::homePath());
+    QProcess::startDetached(image, arguments, QDir::homePath());
+    return true;
+#else
+    Q_UNUSED(arguments);
+    return false;
 #endif
-    return {};
 }
 
 UpdateInstaller::ExitAction UpdateInstaller::installNative(const std::function<std::function<void()>()> &busy)
@@ -621,8 +736,9 @@ UpdateInstaller::ExitAction UpdateInstaller::installNative(const std::function<s
         return again;
     QProcess helper;
     helper.setProgram(m_env.pkexec);
-    helper.setArguments({m_env.helper, QStringLiteral("install"), packageKindToken(m_env.package.kind), m_pending.file,
-                         m_pending.sha256, version});
+    // The file and the version only: the helper checks the file against the
+    // release's own SHA256SUMS, never a digest of ours.
+    helper.setArguments({m_env.helper, QStringLiteral("install"), m_pending.file, version});
     std::function<void()> hide = busy ? busy() : std::function<void()>();
     QElapsedTimer took;
     took.start();
@@ -661,6 +777,9 @@ UpdateInstaller::ExitAction UpdateInstaller::installNative(const std::function<s
         message = QCoreApplication::translate("HikariSub.MainWindow", "The downloaded HikariSub %1 package did not pass its checks, so it was not installed.").arg(version);
         QFile::remove(m_pending.file);
         QFile::remove(pendingPath());
+        break;
+    case application::kApplyNoSums:
+        message = QCoreApplication::translate("HikariSub.MainWindow", "HikariSub %1 could not be checked against its release on GitHub, so it was not installed. It will be tried again when you next quit.").arg(version);
         break;
     case 5:
         message = QCoreApplication::translate("HikariSub.MainWindow", "HikariSub %1 was not installed because the package manager is busy. It will be installed when "

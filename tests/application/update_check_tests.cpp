@@ -298,7 +298,7 @@ TEST(UpdateInstall, DeadlineHashesAndCommands)
               "/S /UPDATE /WAITPID=7 /ALLUSERS /D=C:\\Program Files\\HikariSub");
     EXPECT_EQ(manualInstallCommand(PackageTool::Apt, "/home/a/.cache/HikariSub/Updates/0.2.0/x.deb"),
               "sudo apt install /home/a/.cache/HikariSub/Updates/0.2.0/x.deb");
-    EXPECT_EQ(manualInstallCommand(PackageTool::Dnf, "/home/a b/x.rpm"), "sudo dnf install '/home/a b/x.rpm'");
+    EXPECT_EQ(manualInstallCommand(PackageTool::Dnf, "/home/a b/x.rpm"), "sudo dnf install --nogpgcheck '/home/a b/x.rpm'");
     EXPECT_EQ(manualInstallCommand(PackageTool::Zypper, "/h/it's.rpm"),
               "sudo zypper install --allow-unsigned-rpm '/h/it'\\''s.rpm'");
 }
@@ -313,4 +313,85 @@ TEST(UpdateInstall, StartupArguments)
     EXPECT_EQ(a.rest[0], "episode.ass");
     EXPECT_TRUE(parseStartupArguments({"--version"}).printVersion);
     EXPECT_TRUE(parseStartupArguments({}).rest.empty());
+}
+
+// ADR 0019: what installs an update checks the version it is asked for and
+// the file against the release's SHA256SUMS, and nothing the app recorded.
+TEST(UpdateVerify, releaseVersionsOnly)
+{
+    EXPECT_TRUE(isReleaseVersion("0.2.0"));
+    EXPECT_TRUE(isReleaseVersion("0.2.0-beta.1"));
+    for (const char *bad : {"", "v0.2.0", "0.2.0+build.1", "01.2.0", "0.2", "0.2.0.1", "0.2.0;id", "0.2.0 ",
+                            "0.2.0/../x", "../0.2.0", "0.2.0-01"})
+        EXPECT_FALSE(isReleaseVersion(bad)) << bad;
+    EXPECT_FALSE(isReleaseVersion(std::string(70, '1')));
+
+    EXPECT_EQ(checkInstallVersion("0.2.0", "0.1.0"), InstallCheck::Ok);
+    EXPECT_EQ(checkInstallVersion("0.1.0", "0.0.9"), InstallCheck::Ok);
+    // The same, an older or a malformed version: an older release cannot be
+    // put back through the installing side.
+    EXPECT_EQ(checkInstallVersion("0.2.0", "0.2.0"), InstallCheck::BadVersion);
+    EXPECT_EQ(checkInstallVersion("0.1.0", "0.2.0"), InstallCheck::BadVersion);
+    EXPECT_EQ(checkInstallVersion("0.2.0-rc.1", "0.2.0"), InstallCheck::BadVersion);
+    EXPECT_EQ(checkInstallVersion("v0.3.0", "0.2.0"), InstallCheck::BadVersion);
+}
+
+TEST(UpdateVerify, sumsUrlIsBuiltFromTheVersionOnly)
+{
+    EXPECT_EQ(sumsUrl("0.2.0"), "https://github.com/altqx/hikari/releases/download/v0.2.0/SHA256SUMS");
+    EXPECT_EQ(sumsUrl("0.2.0-rc.1"), "https://github.com/altqx/hikari/releases/download/v0.2.0-rc.1/SHA256SUMS");
+    EXPECT_TRUE(sumsUrl("0.2.0/../../evil").empty());
+    EXPECT_TRUE(sumsUrl("0.2.0?x=1").empty());
+}
+
+TEST(UpdateVerify, findsTheDigestListedOnceForTheName)
+{
+    const std::string setup = "HikariSub-0.2.0-windows-x64-setup.exe";
+    const std::string sums = kHash + "  " + setup + "\n" + kOtherHash + "  hikarisub-0.2.0-linux-amd64.deb\n";
+    EXPECT_EQ(listedSha256(sums, setup), kHash);
+    EXPECT_EQ(listedSha256(sums, "hikarisub-0.2.0-linux-amd64.deb"), kOtherHash);
+    EXPECT_EQ(listedSha256(kHash + " *" + setup + "\r\n", setup), kHash);
+    EXPECT_FALSE(listedSha256(sums, "HikariSub-0.2.0-windows-x64-setup"));
+    EXPECT_FALSE(listedSha256(kHash + "  x" + setup + "\n", setup));
+    EXPECT_FALSE(listedSha256(sums + kHash + "  " + setup + "\n", setup)); // twice
+    EXPECT_FALSE(listedSha256(std::string(64, 'A') + "  " + setup + "\n", setup));
+    EXPECT_FALSE(listedSha256(kHash + " " + setup + "\n", setup));
+    EXPECT_FALSE(listedSha256("", setup));
+    EXPECT_FALSE(listedSha256(sums + std::string(kMaxSumsBytes, '\n'), setup));
+}
+
+TEST(UpdateVerify, theCallersDigestHasNoSay)
+{
+    const std::string setup = "HikariSub-0.2.0-windows-x64-setup.exe";
+    // The release lists kHash; the caller's forged file hashes to
+    // kOtherHash, which its pending.json would carry. Only the list decides.
+    EXPECT_EQ(checkListedSha256(kHash + "  " + setup + "\n", setup, kOtherHash), InstallCheck::Mismatch);
+    EXPECT_EQ(checkListedSha256(kHash + "  " + setup + "\n", setup, kHash), InstallCheck::Ok);
+    EXPECT_EQ(checkListedSha256(kOtherHash + "  HikariSub-0.2.0-windows-x64.zip\n" + kHash + "  " + setup + "\n", setup,
+                                kOtherHash),
+              InstallCheck::Mismatch);
+    EXPECT_EQ(checkListedSha256(kOtherHash + "  hikarisub-0.2.0-linux-amd64.deb\n", setup, kOtherHash),
+              InstallCheck::NotListed);
+}
+
+TEST(UpdateVerify, applyArgumentsAreAVersionAFileAPidAndAFlag)
+{
+    const auto request = parseApplyArguments({"0.2.0", "C:\\Users\\a b\\x.exe", "4242", "1"});
+    ASSERT_TRUE(request);
+    EXPECT_EQ(request->version, "0.2.0");
+    EXPECT_EQ(request->file, "C:\\Users\\a b\\x.exe");
+    EXPECT_EQ(request->pid, 4242u);
+    EXPECT_TRUE(request->relaunch);
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\x.exe", "4242", "1", kHash})); // no digest taken
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\x.exe", "4242"}));
+    EXPECT_FALSE(parseApplyArguments({"v0.2.0", "C:\\x.exe", "4242", "0"}));
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "x.exe", "4242", "0"}));
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "\\\\server\\share\\x.exe", "4242", "0"}));
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\a\\..\\x.exe", "4242", "0"}));
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\x.exe:stream", "4242", "0"}));
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:/x.exe", "4242", "0"}));
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\x.exe", "0", "0"}));
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\x.exe", "-1", "0"}));
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\x.exe", "99999999999", "0"}));
+    EXPECT_FALSE(parseApplyArguments({"0.2.0", "C:\\x.exe", "4242", "yes"}));
 }

@@ -12,6 +12,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     hotkeys_controller.cpp include/hikari/app/hotkeys_controller.h
     update_checker.cpp include/hikari/app/update_checker.h
     update_installer.cpp include/hikari/app/update_installer.h # ADR 0019: download, verify, hand-off
+    update_apply.cpp include/hikari/app/update_apply.h # ADR 0019: the Windows installing side
     package_kind.cpp include/hikari/app/package_kind.h
     style_manager_controller.cpp include/hikari/app/style_manager_controller.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
@@ -30,7 +31,9 @@ if(HIKARI_UPDATE_TEST_FEED)
     target_compile_definitions(hikari_composition PRIVATE HIKARI_UPDATE_TEST_FEED)
 endif()
 if(WIN32)
-    target_link_libraries(hikari_composition PRIVATE shell32) # ShellExecuteExW (the all-users update)
+    # ShellExecuteExW and CommandLineToArgvW, and the installing side's
+    # WinHTTP, random folder name and folder ACL.
+    target_link_libraries(hikari_composition PRIVATE shell32 winhttp bcrypt advapi32)
 endif()
 hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_uiplugin hikari_backends
     hikari_application hikari_core "Qt6::*" "hikari_ui*")

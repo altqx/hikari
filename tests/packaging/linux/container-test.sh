@@ -19,7 +19,9 @@
 #              stand-in legacy 0.0.x), each upgraded by this version; files
 #              under $HOME survive.
 #   remove     (8.1.6) removal leaves no /opt/hikarisub and $HOME untouched.
-#   helper     (8.1.7) the update helper, run as root with PKEXEC_UID.
+#   helper     (8.1.7) the update helper, run as root with PKEXEC_UID, from
+#              the --old 0.0.9 stand-in to this version, with fake-curl.sh
+#              serving made-up releases' SHA256SUMS.
 #   aur        (8.2) render the PKGBUILD from the tar.gz, makepkg, namcap,
 #              .SRCINFO, pacman -U, start, remove. archlinux only.
 #
@@ -337,11 +339,36 @@ if want helper; then
     if grep -q 'not part of this build' "$helper"; then
         skip "update helper tests (this build packages a placeholder helper)"
     else
+        [ -n "$old" ] || fail "helper needs --old (the 0.0.9 stand-in it upgrades from)"
         kind=$family; [ $family = deb ] || kind=rpm
+        ext=rpm; [ "$kind" = deb ] && ext=deb
         pkg=$(native_file "$dist" "$version")
+        asset=${pkg##*/}
+        stand_in=$(native_file "$old" 0.0.9)
         uid=$(id -u tester)
-        cp "$pkg" /tmp/helper-good && chown tester /tmp/helper-good
-        sha=$(sha256sum /tmp/helper-good | cut -d' ' -f1)
+        # The helper of this version, root's, run from outside /opt so the
+        # older stand-in it upgrades from can be installed under it.
+        install -m 0755 "$helper" /usr/local/sbin/hikarisub-update-helper
+        helper=/usr/local/sbin/hikarisub-update-helper
+        native_remove > /dev/null 2>&1 || true
+        native_install "$stand_in"
+        # The stand-in for GitHub: the helper's curl serves made-up
+        # releases' SHA256SUMS from /srv/hikarisub-releases.
+        install -m 0755 "$src/tests/packaging/linux/fake-curl.sh" /usr/local/bin/curl
+        releases=/srv/hikarisub-releases
+        rm -rf "$releases"
+        publish() # <version> <digest> <name>
+        {
+            mkdir -p "$releases/v$1"
+            printf '%s  %s\n' "$2" "$3" >> "$releases/v$1/SHA256SUMS"
+        }
+        for f in "$pkg" "$stand_in"; do
+            cp "$f" "/tmp/helper-${f##*/}" && chown tester "/tmp/helper-${f##*/}"
+        done
+        good=/tmp/helper-$asset
+        forged=/tmp/helper-${stand_in##*/}
+        sha=$(sha256sum "$good" | cut -d' ' -f1)
+        publish "$version" "$sha" "$asset"
         expect_rc() # <rc> <label> <args...>
         {
             local want_rc=$1 label=$2; shift 2
@@ -349,23 +376,49 @@ if want helper; then
             [ $rc -eq "$want_rc" ] || { cat /tmp/helper.log >&2; fail "helper $label: exit $rc, expected $want_rc"; }
             pass "helper $label: exit $rc"
         }
-        expect_rc 3 'wrong hash' "$kind" /tmp/helper-good 0000000000000000000000000000000000000000000000000000000000000000 "$version"
-        expect_rc 3 'wrong version' "$kind" /tmp/helper-good "$sha" 9.9.9
-        cp /tmp/helper-good /tmp/helper-root && chown root /tmp/helper-root
-        expect_rc 2 'file owned by another user' "$kind" /tmp/helper-root "$sha" "$version"
-        expect_rc 2 'kind arch' arch /tmp/helper-good "$sha" "$version"
-        other=deb; [ "$kind" = deb ] && other=rpm
-        expect_rc 2 'kind not the marker' "$other" /tmp/helper-good "$sha" "$version"
-        if [ -n "$old" ]; then
-            ext=rpm; [ "$kind" = deb ] && ext=deb
-            wrong=''
-            for f in "$old"/hikarisub-wrongname-*."$ext"; do [ -f "$f" ] && wrong=$f; done
-            if [ -n "$wrong" ]; then
-                cp "$wrong" /tmp/helper-wrong && chown tester /tmp/helper-wrong
-                expect_rc 3 'wrong package name' "$kind" /tmp/helper-wrong "$(sha256sum /tmp/helper-wrong | cut -d' ' -f1)" "$version"
-            fi
+        # The caller has no say in the digest: the old form that passed one
+        # is refused, and the caller's own package, at a released version,
+        # is not that release's file.
+        expect_rc 2 'a caller-supplied kind and SHA-256' "$kind" "$forged" "$(sha256sum "$forged" | cut -d' ' -f1)" "$version"
+        expect_rc 2 'a caller-supplied SHA-256' "$forged" "$(sha256sum "$forged" | cut -d' ' -f1)" "$version"
+        expect_rc 3 "the caller's own package" "$forged" "$version"
+        grep -qx "https://github.com/altqx/hikari/releases/download/v$version/SHA256SUMS" "$releases/requests.log" ||
+            fail "helper: it did not ask GitHub for the SHA256SUMS of v$version"
+        pass "helper: it asked GitHub for the SHA256SUMS of v$version"
+        for bad in '' "v$version" "$version+build.1" 01.2.3 1.2 '1.2.3;id' ../1.2.3; do
+            expect_rc 2 "the bad version '$bad'" "$good" "$bad"
+        done
+        expect_rc 2 'a version not newer than the installed one' "$forged" 0.0.9
+        publish 99.0.0 "$(printf '%064d' 0)" "hikarisub-99.0.0-linux-amd64.deb"
+        publish 99.0.0 "$(printf '%064d' 0)" "hikarisub-99.0.0-linux-x86_64.rpm"
+        expect_rc 3 'a SHA256SUMS whose digest does not match' "$good" 99.0.0
+        publish 98.0.0 "$sha" "hikarisub-98.0.0-windows-x64-setup.exe"
+        expect_rc 3 "a digest listed under another file's name" "$good" 98.0.0
+        publish 97.0.0 "$sha" "hikarisub-97.0.0-linux-amd64.deb"
+        publish 97.0.0 "$sha" "hikarisub-97.0.0-linux-x86_64.rpm"
+        expect_rc 3 'a listed package of another version' "$good" 97.0.0
+        expect_rc 6 'a version with no release' "$good" 96.0.0
+        set +e; env FAKE_CURL_OFFLINE=1 PKEXEC_UID=$uid "$helper" install "$good" "$version" > /tmp/helper.log 2>&1
+        rc=$?; set -e
+        [ $rc -eq 6 ] || { cat /tmp/helper.log >&2; fail "helper GitHub cannot be reached: exit $rc, expected 6"; }
+        pass "helper GitHub cannot be reached: exit 6"
+        cp /tmp/helper-$asset /tmp/helper-root && chown root /tmp/helper-root
+        expect_rc 2 'a file owned by another user' /tmp/helper-root "$version"
+        wrong=''
+        for f in "$old"/hikarisub-wrongname-*."$ext"; do [ -f "$f" ] && wrong=$f; done
+        if [ -n "$wrong" ]; then
+            cp "$wrong" /tmp/helper-wrong && chown tester /tmp/helper-wrong
+            publish 95.0.0 "$(sha256sum /tmp/helper-wrong | cut -d' ' -f1)" "hikarisub-95.0.0-linux-amd64.deb"
+            publish 95.0.0 "$(sha256sum /tmp/helper-wrong | cut -d' ' -f1)" "hikarisub-95.0.0-linux-x86_64.rpm"
+            expect_rc 3 'a listed package that is not hikarisub' /tmp/helper-wrong 95.0.0
         fi
-        expect_rc 0 'good package' "$kind" /tmp/helper-good "$sha" "$version"
+        [ "$(installed_version)" = 0.0.9-1 ] || fail "helper: a refused package changed the install ($(installed_version))"
+        expect_rc 0 "the release's own package" "$good" "$version"
+        [ "$(installed_version)" = "$(expected_native_version "$version")" ] ||
+            fail "helper: $version is not installed ($(installed_version))"
+        [ -z "$(ls -A /var/cache/hikarisub-update)" ] || fail "helper: it left files in /var/cache/hikarisub-update"
+        [ "$(stat -c '%U %a' /var/cache/hikarisub-update)" = "root 700" ] || fail "helper: its cache is not root's 0700"
+        rm -f /usr/local/bin/curl /usr/local/sbin/hikarisub-update-helper
     fi
 fi
 

@@ -4,11 +4,13 @@
 
 #include "hikari/app/application.h"
 #include "hikari/app/style_manager_controller.h"
+#include "hikari/app/update_apply.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/update_check.h"
 #include "hikari/backends/legacy_spelling.h"
 
 #include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QLocale>
 #include <QQmlApplicationEngine>
@@ -80,6 +82,21 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
     QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
+#ifndef _WIN32
+    // ADR 0019: an AppImage update that an ordinary quit left installs now,
+    // before anything of this version starts, with the new image watched as
+    // after Restart now; this start's files go to whichever version runs.
+    if (mode == StartupMode::Run) {
+        QStringList files;
+        for (const auto &argument : startup.rest) {
+            const QString path = QString::fromLocal8Bit(argument);
+            files << (QFileInfo::exists(path) ? QFileInfo(path).absoluteFilePath() : path);
+        }
+        UpdateInstaller early(UpdateEnvironment::current(), QStringLiteral(HIKARI_VERSION));
+        if (early.installAppImageAtStart(files))
+            return 0;
+    }
+#endif
 
     Application::Options options;
     options.autoload = true; // legacy: the Autoload scripts load at start
@@ -164,6 +181,20 @@ int run(int argc, char **argv, StartupMode mode)
     if (startup.printVersion) {
         // 8.1: "<version> (<kind>)" without a display.
         QCoreApplication core(argc, argv);
+#ifdef _WIN32
+    // ADR 0019: the installing side of an update, before anything of the
+    // program starts (no settings, no window, no mutex): it checks the
+    // installer against the release's SHA256SUMS and starts it.
+    if (argc >= 2 && std::string_view(argv[1]) == application::kApplyUpdateSwitch) {
+        QCoreApplication core(argc, argv);
+        std::string feed;
+#ifdef HIKARI_UPDATE_TEST_FEED
+        feed = qEnvironmentVariable("HIKARISUB_UPDATE_FEED").toStdString();
+#endif
+        return update_apply::runFromCommandLine(
+            HIKARI_VERSION, currentPackageKind().kind == application::PackageKind::NsisMachine, feed);
+    }
+#endif
         std::printf("%s (%s)\n", HIKARI_VERSION, qPrintable(packageKindToken(currentPackageKind().kind)));
         return 0;
     }

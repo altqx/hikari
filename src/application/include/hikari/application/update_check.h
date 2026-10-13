@@ -169,6 +169,50 @@ bool isSha256Hex(std::string_view text);
 // unquoted as NSIS reads it. `installDir` has backslashes and no trailing one.
 std::string nsisUpdateArguments(bool machine, bool relaunch, long long waitPid, std::string_view installDir);
 
+// What installs an update decides by itself that the package is the
+// release's own file (ADR 0019): nothing the unprivileged app recorded,
+// pending.json and its SHA-256 included, is trusted there. It takes a
+// version and a file, downloads that release's SHA256SUMS from the fixed
+// GitHub URL, and compares the file with the digest listed for the release
+// file's own name. The Linux update helper does the same in shell.
+inline constexpr std::string_view kSumsName = "SHA256SUMS";
+inline constexpr std::size_t kMaxSumsBytes = 64 * 1024;
+// The installing side's exit codes, the Linux helper's too.
+inline constexpr int kApplyOk = 0;
+inline constexpr int kApplyBadArguments = 2;
+inline constexpr int kApplyMismatch = 3;
+inline constexpr int kApplyFailed = 4;
+inline constexpr int kApplyNoSums = 6;
+
+// A release version: SemVer without a "v" or build metadata, as tags carry
+// it, 64 characters at most.
+bool isReleaseVersion(std::string_view version);
+// https://github.com/altqx/hikari/releases/download/v<V>/SHA256SUMS, or
+// empty when `version` is not a release version.
+std::string sumsUrl(std::string_view version);
+// The digest SHA256SUMS lists for `name` ("<sha256>  <name>" or
+// "<sha256> *<name>", CRLF too): 64 lowercase hex digits, listed exactly once.
+std::optional<std::string> listedSha256(std::string_view sums, std::string_view name);
+enum class InstallCheck { Ok, BadVersion, NotListed, Mismatch };
+// A release version newer than the installed one; nothing else.
+InstallCheck checkInstallVersion(std::string_view version, std::string_view installed);
+// `actual`, the SHA-256 of the file as the installing side read it, against
+// the one the release lists for `name`.
+InstallCheck checkListedSha256(std::string_view sums, std::string_view name, std::string_view actual);
+
+// --hikari-apply-update <version> <file> <pid> <0|1 relaunch>: the Windows
+// installing side's request. `file` is an absolute path on a drive
+// ("X:\..."), with no "..", wildcard or stream.
+inline constexpr std::string_view kApplyUpdateSwitch = "--hikari-apply-update";
+struct ApplyRequest {
+    std::string version;
+    std::string file; // UTF-8
+    unsigned long pid = 0;
+    bool relaunch = false;
+};
+std::optional<ApplyRequest> parseApplyArguments(const std::vector<std::string> &arguments);
+bool isPlainWindowsPath(std::string_view path);
+
 // Without pkexec: the command that installs the downloaded file.
 enum class PackageTool { Apt, Dnf, Zypper };
 std::string manualInstallCommand(PackageTool tool, std::string_view file);
