@@ -1,11 +1,11 @@
 name: Build
 
 on:
-  # Only master on push. Branches in this repository with an open pull request
+  # Only main on push. Branches in this repository with an open pull request
   # would otherwise be built twice for one commit, once per event.  A v* tag
   # builds and publishes a release.
   push:
-    branches: [master]
+    branches: [main]
     tags: ['v*']
   pull_request:
   workflow_dispatch:
