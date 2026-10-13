@@ -8,9 +8,9 @@
 // writes on read: when a macro reads the resolution of a Document that lacks
 // it, the user is asked to set it (prefilled from the open video, else
 // legacy's values), or it is set from the video without asking when the user
-// chose so. A key the file already has is kept in both cases; only the
-// missing one comes from the video. Without anyone to ask the macro gets legacy's values and nothing
-// is written.
+// chose so; from the video, both keys take the video's size, even when the
+// file has one of them. Without anyone to ask the macro gets legacy's values
+// and nothing is written.
 
 #include "hikari/application/automation.h"
 #include "hikari/application/edit_session.h"
@@ -38,15 +38,8 @@ bool lacksScriptResolution(Resolution written);
 // partner for one), without writing anything.
 Resolution legacyScriptResolution(Resolution written);
 
-// The resolution taken from a video (the question's start, and what
-// "Always set it from the video" writes): the video's size when both values
-// are missing; otherwise the value written is kept and the missing one
-// follows the video's aspect ratio, rounded (PlayResY 480 with a 320x240
-// video: 640x480), as legacy's partner followed 16:9.
-Resolution videoScriptResolution(Resolution written, Resolution video);
-
-// What the question offers first for written values: from the video while
-// one is open (videoScriptResolution), else legacy's values.
+// What the question offers first for written values: the open video's own
+// size (both keys, even when the file has one), else legacy's values.
 Resolution suggestedScriptResolution(Resolution written, std::optional<Resolution> video);
 
 // Document::setScriptInfo on a macro's staged Script Info: the last entry of

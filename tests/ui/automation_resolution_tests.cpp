@@ -6,7 +6,7 @@
 // from the open video's size, else legacy's values; Set writes it as its own
 // undo step and the macro goes on with it; Cancel stops the macro; "Always
 // set it from the video" sets it from the video in later runs without
-// asking (a value the file has is kept, the other follows the video). A
+// asking (both keys take the video's size, even when the file has one). A
 // Document that has it, or a macro that never reads it, is never
 // asked about; without a window to ask in nothing waits and nothing is
 // written (the macro gets legacy's values).
@@ -252,7 +252,8 @@ private slots:
     }
 
     // "Always set it from the video": kept in the settings, and later runs
-    // set it from the video without asking, keeping a value the file has.
+    // set both keys to the video's size without asking, replacing a value the
+    // file has.
     // Without a video it is asked for anyway.
     void alwaysFromTheVideoSkipsTheQuestion()
     {
@@ -271,11 +272,11 @@ private slots:
         QVERIFY(run("Read resolution"));
         QVERIFY(ended());
         QCOMPARE(asked.count(), 0);
-        // PlayResX 1920 kept; PlayResY follows the video's 4:3.
-        QVERIFY2(app->automation().log().contains(QStringLiteral("1920 x 1440, 1920 x 1440, PlayResX=1920;PlayResY=1440")),
+        // PlayResX 1920 replaced too: both keys are the video's 320x240.
+        QVERIFY2(app->automation().log().contains(QStringLiteral("320 x 240, 320 x 240, PlayResX=320;PlayResY=240")),
                  qPrintable(app->automation().log()));
-        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("1920"));
-        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("1440"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("320"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("240"));
         auto after = before;
         after.push_back(std::string(application::kScriptResolutionStep));
         QCOMPARE(steps(), after);
@@ -288,25 +289,23 @@ private slots:
         QVERIFY(ended());
     }
 
-    // With a video and one value written, the question keeps that value and
-    // the other follows the video ("Always" would set the same); "Use video
-    // resolution" still offers the video's own size.
-    void aWrittenValueIsKeptInTheVideosSuggestion()
+    // With a video and one value written, the question starts from the
+    // video's own size for both keys ("Always" would set the same); Set
+    // replaces the written one.
+    void aWrittenValueIsReplacedByTheVideosSuggestion()
     {
         QVERIFY(open("PlayResY: 480\n"));
         QVERIFY(openVideo());
         QVERIFY(run("Read resolution"));
         QTRY_VERIFY_WITH_TIMEOUT(prompt().isOpen(), 30'000);
-        QCOMPARE(prompt().width(), 640);
-        QCOMPARE(prompt().height(), 480);
-        QCOMPARE(prompt().fromVideoWidth(), 640);
-        QCOMPARE(prompt().fromVideoHeight(), 480);
+        QCOMPARE(prompt().width(), 320);
+        QCOMPARE(prompt().height(), 240);
         QCOMPARE(prompt().videoWidth(), 320);
         QCOMPARE(prompt().videoHeight(), 240);
-        prompt().accept(640, 480, false);
+        prompt().accept(320, 240, false);
         QVERIFY(ended());
-        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("640"));
-        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("480"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("320"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("240"));
     }
 
     // The validation function reads it: asked once, there; the processing

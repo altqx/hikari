@@ -552,12 +552,11 @@ void AutomationShell::resolveScriptResolution(const application::ScriptResolutio
     std::optional<application::Resolution> video;
     if (const auto size = m_media->videoSize(); size && size->width > 0 && size->height > 0)
         video = application::Resolution{size->width, size->height};
-    // The user chose to take it from the video without being asked: a value
-    // the file has is kept, the missing one follows the video.
+    // The user chose to take it from the video without being asked: both
+    // keys take the video's size, a value the file has included.
     if (video && m_settings && m_settings->boolean("automation.scriptResolutionFromVideo")) {
-        const auto fromVideo = application::videoScriptResolution(request.written, *video);
-        m_run->resolution = fromVideo;
-        return reply(fromVideo);
+        m_run->resolution = *video;
+        return reply(*video);
     }
     // No window to ask in (tests, a session without a view): the macro
     // goes on with legacy's values and nothing is written.
@@ -567,8 +566,6 @@ void AutomationShell::resolveScriptResolution(const application::ScriptResolutio
     question.script = prettyName(request.script.empty() ? m_run->path : request.script);
     question.suggested = application::suggestedScriptResolution(request.written, video);
     question.video = video;
-    if (video)
-        question.fromVideo = application::videoScriptResolution(request.written, *video);
     m_resolutionPrompt.ask(std::move(question), [this, reply](std::optional<ui::ScriptResolutionPromptController::Answer> answer) {
         if (!m_run)
             return;

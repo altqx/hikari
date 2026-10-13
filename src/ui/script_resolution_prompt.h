@@ -4,8 +4,8 @@
 // of a Document that lacks PlayResX/PlayResY (ScriptResolutionDialog.qml).
 // The width and height start from the open video's size, else legacy's
 // values; "Use video resolution" puts the video's size back; "Always set it
-// from the video" makes later runs set it from the video without asking
-// (keeping a value the file has: application::videoScriptResolution).
+// from the video" makes later runs set both keys to the video's size without
+// asking.
 // Set answers with the values, Cancel without (the run does not go on).
 //
 // The question is asked only while a view shows it (setView); without one
@@ -35,14 +35,11 @@ class ScriptResolutionPromptController : public QObject {
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY changed)
     Q_PROPERTY(int videoWidth READ videoWidth NOTIFY changed)
     Q_PROPERTY(int videoHeight READ videoHeight NOTIFY changed)
-    Q_PROPERTY(int fromVideoWidth READ fromVideoWidth NOTIFY changed)
-    Q_PROPERTY(int fromVideoHeight READ fromVideoHeight NOTIFY changed)
 public:
     struct Question {
         QString script;                                     // the script's file name
         application::Resolution suggested;                  // the values the fields start with
         std::optional<application::Resolution> video;       // the open video's size
-        application::Resolution fromVideo;                  // what "Always" sets (with a video)
     };
     struct Answer {
         application::Resolution resolution;
@@ -65,8 +62,6 @@ public:
     bool hasVideo() const { return m_question.video.has_value(); }
     int videoWidth() const { return m_question.video ? m_question.video->width : 0; }
     int videoHeight() const { return m_question.video ? m_question.video->height : 0; }
-    int fromVideoWidth() const { return m_question.video ? m_question.fromVideo.width : 0; }
-    int fromVideoHeight() const { return m_question.video ? m_question.fromVideo.height : 0; }
 
     // From QML.
     Q_INVOKABLE void setView(QObject *view);

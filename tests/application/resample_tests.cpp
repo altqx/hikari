@@ -153,6 +153,8 @@ TEST(ScriptResolution, MissingValuesAreFoundWithoutWriting)
 }
 
 // The question starts from the open video's size, else legacy's values.
+// With a video, both keys take its size, even when the file has one of them
+// (user decision 14, 2026-10-13 night).
 TEST(ScriptResolution, TheSuggestionIsTheVideosElseLegacys)
 {
     const auto bare = writtenScriptResolution(load("[Script Info]\nTitle: x\n"));
@@ -161,22 +163,12 @@ TEST(ScriptResolution, TheSuggestionIsTheVideosElseLegacys)
     EXPECT_EQ(suggestedScriptResolution(bare, Resolution{0, 0}), (Resolution{1280, 720}));
     EXPECT_EQ(suggestedScriptResolution(writtenScriptResolution(load("[Script Info]\nPlayResY: 480\n")), std::nullopt),
               (Resolution{853, 480}));
-    // With a video, a value the file has is kept and the other follows the video.
-    EXPECT_EQ(suggestedScriptResolution({0, 480}, Resolution{320, 240}), (Resolution{640, 480}));
-}
-
-// From a video: its size when both are missing; a value the file has is
-// kept and the missing one follows the video's aspect ratio, rounded.
-TEST(ScriptResolution, FromTheVideoAWrittenValueIsKept)
-{
-    EXPECT_EQ(videoScriptResolution({0, 0}, {320, 240}), (Resolution{320, 240}));
-    EXPECT_EQ(videoScriptResolution({0, 480}, {320, 240}), (Resolution{640, 480}));
-    EXPECT_EQ(videoScriptResolution({1920, 0}, {320, 240}), (Resolution{1920, 1440}));
-    EXPECT_EQ(videoScriptResolution({-1, 1080}, {1920, 1080}), (Resolution{1920, 1080}));
-    EXPECT_EQ(videoScriptResolution({0, 480}, {720, 576}), (Resolution{600, 480}));
-    EXPECT_EQ(videoScriptResolution({0, 101}, {1000, 3}), (Resolution{33667, 101})); // rounded, not truncated
-    EXPECT_EQ(videoScriptResolution({1, 0}, {1000, 1}), (Resolution{1, 1}));        // never below 1
-    EXPECT_EQ(videoScriptResolution({640, 360}, {320, 240}), (Resolution{640, 360}));
+    // A value the file has is replaced by the video's too.
+    EXPECT_EQ(suggestedScriptResolution({0, 480}, Resolution{320, 240}), (Resolution{320, 240}));
+    EXPECT_EQ(suggestedScriptResolution({1920, 0}, Resolution{320, 240}), (Resolution{320, 240}));
+    EXPECT_EQ(suggestedScriptResolution({-1, 1080}, Resolution{720, 576}), (Resolution{720, 576}));
+    // No usable video: legacy's 16:9 partner of the written value.
+    EXPECT_EQ(suggestedScriptResolution({1920, 0}, Resolution{0, 240}), (Resolution{1920, 1080}));
 }
 
 // Setting it is one undoable step; both keys are written, an existing one

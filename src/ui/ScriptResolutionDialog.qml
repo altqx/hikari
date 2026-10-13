@@ -3,8 +3,8 @@
 // 1280x720 silently). The user sets it here, from the open video's size or
 // legacy's values to start with; "Use video resolution" puts the video's size
 // back, and "Always set it from the video" sets it from the video in later
-// runs without asking (a value the file has is kept; the fields show what
-// it sets). Both appear only with a video open. Set lets the macro go on
+// runs without asking (both keys, the video's size; the fields show it).
+// Both appear only with a video open. Set lets the macro go on
 // with it (one undo step); Cancel, Escape or closing the window stops the
 // macro. Return presses the focused button, else Set.
 pragma Translator: "HikariSub.Automation"
@@ -57,8 +57,7 @@ Window {
         if (always.checked) {
             typedWidth = widthBox.value
             typedHeight = heightBox.value
-            widthBox.value = prompt.fromVideoWidth
-            heightBox.value = prompt.fromVideoHeight
+            useVideo()
         } else {
             widthBox.value = typedWidth
             heightBox.value = typedHeight
