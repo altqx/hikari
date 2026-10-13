@@ -1,6 +1,7 @@
 #!/bin/sh
 # Tests packaging/linux/update-helper/hikarisub-update-helper (installers
-# spec, 8.1 step 7) in a distro container, as root, with PKEXEC_UID set by
+# spec, 8.1 step 7) in a distro container, as root, with PKEXEC_UID (or
+# SUDO_UID, as the manual command runs it) set by
 # hand, since a container has no polkit session. It builds small stand-in
 # hikarisub packages with the distro's own tools, installs the oldest, and
 # feeds the helper good and bad packages.
@@ -194,7 +195,11 @@ f() { echo "$home/$1.$kind"; }
 
 expect 2 "no arguments" run
 expect 2 "an unknown command" run remove "$(f good)" 0.0.2
-expect 2 "no PKEXEC_UID" env -u PKEXEC_UID "$installed_helper" install "$(f good)" 0.0.2
+expect 2 "no PKEXEC_UID or SUDO_UID" env -u PKEXEC_UID -u SUDO_UID "$installed_helper" install "$(f good)" 0.0.2
+# The command the app shows where there is no pkexec: sudo runs the same
+# checks, for the user sudo names.
+expect 3 "the caller's own package, through sudo" env -u PKEXEC_UID SUDO_UID="$TESTER_UID" "$installed_helper" install "$(f forged)" 0.0.3
+expect 2 "through sudo, a file owned by another user" env -u PKEXEC_UID SUDO_UID=0 "$installed_helper" install "$(f good)" 0.0.2
 # The old form, with the caller's kind and digest: refused, the caller has
 # no say in the digest.
 expect 2 "a caller-supplied kind and SHA-256" run install "$kind" "$(f forged)" "$(sha "$(f forged)")" 0.0.3
@@ -242,7 +247,7 @@ fi
 expect 0 "the release's own package" run install "$(f good)" 0.0.2
 [ "$(installed_version)" = "good ($kind)" ] || { say "FAIL 0.0.2 is not installed: $(installed_version)"; failures=$((failures + 1)); }
 expect 2 "a downgrade to a released version" run install "$(f installed)" 0.0.1
-expect 0 "a prerelease, as 0.1.0~beta.1" run install "$(f beta)" 0.1.0-beta.1
+expect 0 "a prerelease, as 0.1.0~beta.1, through sudo" env -u PKEXEC_UID SUDO_UID="$TESTER_UID" "$installed_helper" install "$(f beta)" 0.1.0-beta.1
 [ "$(installed_version)" = "beta ($kind)" ] || { say "FAIL the prerelease is not installed: $(installed_version)"; failures=$((failures + 1)); }
 [ -z "$(ls -A /var/cache/hikarisub-update 2>/dev/null)" ] || { say "FAIL the helper left files in /var/cache/hikarisub-update"; failures=$((failures + 1)); }
 [ "$(stat -c '%U %a' /var/cache/hikarisub-update)" = "root 700" ] || { say "FAIL /var/cache/hikarisub-update is not root's 0700"; failures=$((failures + 1)); }

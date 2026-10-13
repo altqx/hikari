@@ -633,10 +633,12 @@ TEST(update_hand_off_commands)
 
 	CHECK(ShellQuote("/tmp/a b") == "'/tmp/a b'");
 	CHECK(ShellQuote("it's") == "'it'\\''s'");
-	CHECK(InstallCommand(InstallTool::Apt, "/home/u/x.deb") == "sudo apt install '/home/u/x.deb'");
-	CHECK(InstallCommand(InstallTool::Dnf, "/home/u/x.rpm") == "sudo dnf install --nogpgcheck '/home/u/x.rpm'");
-	CHECK(InstallCommand(InstallTool::Zypper, "/home/u/x.rpm") ==
-		"sudo zypper install --allow-unsigned-rpm '/home/u/x.rpm'");
+	// By hand, the helper checks the file as root, as through pkexec; the
+	// package manager is never given the user's file.
+	CHECK(InstallCommand("/home/u/a b.deb", "0.4.0-beta.1") ==
+		"sudo /opt/hikarisub/libexec/hikarisub-update-helper install '/home/u/a b.deb' '0.4.0-beta.1'");
+	CHECK(InstallCommand("/home/u/it's.rpm", "1.0.0") ==
+		"sudo /opt/hikarisub/libexec/hikarisub-update-helper install '/home/u/it'\\''s.rpm' '1.0.0'");
 	CHECK(AppImageStagingName("0.0.3") == ".HikariSub-0.0.3.AppImage");
 }
 

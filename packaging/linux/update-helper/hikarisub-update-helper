@@ -6,6 +6,10 @@
 #
 #   pkexec /opt/hikarisub/libexec/hikarisub-update-helper install <file> <version>
 #
+# Where there is no pkexec, the app shows the same command with sudo in
+# place of pkexec for the user to run, so a package installed by hand is
+# checked the same way.
+#
 # It installs <file>, the package the user downloaded, only if it is the
 # official release file of HikariSub <version>. The caller is not trusted:
 # any local process can run this command, so the only things it gives are
@@ -63,9 +67,11 @@ fail() {
 file=$2
 version=$3
 
-[ "$(id -u)" = 0 ] || fail 2 "must run as root, through pkexec"
-case ${PKEXEC_UID:-} in
-	''|*[!0-9]*) fail 2 "PKEXEC_UID is not set: run it through pkexec" ;;
+[ "$(id -u)" = 0 ] || fail 2 "must run as root, through pkexec or sudo"
+# The user who asked: pkexec names them in PKEXEC_UID, sudo in SUDO_UID.
+asker=${PKEXEC_UID:-${SUDO_UID:-}}
+case $asker in
+	''|*[!0-9]*) fail 2 "neither PKEXEC_UID nor SUDO_UID is set: run it through pkexec or sudo" ;;
 esac
 
 [ -f "$MARKER" ] || fail 2 "$MARKER is missing"
@@ -132,7 +138,7 @@ case $file in
 esac
 [ ! -L "$file" ] && [ -f "$file" ] || fail 2 "not a regular file: $file"
 owner=$(stat -c %u -- "$file") || fail 2 "cannot read $file"
-[ "$owner" = "$PKEXEC_UID" ] || fail 2 "$file is not owned by the user who asked"
+[ "$owner" = "$asker" ] || fail 2 "$file is not owned by the user who asked"
 
 mkdir -p "$CACHE" || fail 4 "cannot create $CACHE"
 [ ! -L "$CACHE" ] && [ -d "$CACHE" ] || fail 4 "$CACHE is not a folder"

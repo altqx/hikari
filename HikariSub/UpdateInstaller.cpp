@@ -205,15 +205,6 @@ namespace
 		return kind == package_kind::Kind::Deb || kind == package_kind::Kind::Rpm;
 	}
 
-	update_manifest::InstallTool ManualTool(package_kind::Kind kind)
-	{
-		if (kind == package_kind::Kind::Deb)
-			return update_manifest::InstallTool::Apt;
-		if (!FindInPath(L"dnf").empty() || FindInPath(L"zypper").empty())
-			return update_manifest::InstallTool::Dnf;
-		return update_manifest::InstallTool::Zypper;
-	}
-
 	// Session state of the hand-off.
 	wxString healthFile;
 	wxString updatedFrom;
@@ -262,7 +253,7 @@ namespace
 		buttons->Add(copy, 1, wxALL, 2);
 		buttons->Add(close, 1, wxALL, 2);
 		sizer->Add(buttons, 0, wxEXPAND | wxALL, 2);
-		std::string command = update_manifest::InstallCommand(ManualTool(update_installer::Kind()), pending.file);
+		std::string command = update_manifest::InstallCommand(pending.file, pending.version);
 		dialog->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [file](wxCommandEvent &) { ShowInFolder(file); }, wxID_OPEN);
 		dialog->Bind(wxEVT_COMMAND_BUTTON_CLICKED, [command](wxCommandEvent &) {
 			if (wxTheClipboard->Open()) {
@@ -994,8 +985,7 @@ namespace
 				if (code == update_manifest::kPkexecNotAuthorised && time(nullptr) - started < 2) {
 					WriteLastResult(record.version, false, code,
 						wxString::Format(_("No password prompt could be shown to install HikariSub %s. Install it yourself: %s"),
-							FromUtf8(record.version), FromUtf8(update_manifest::InstallCommand(
-								ManualTool(update_installer::Kind()), record.file))));
+							FromUtf8(record.version), FromUtf8(update_manifest::InstallCommand(record.file, record.version))));
 				}
 				execAfterExit = withRelaunch;
 			}

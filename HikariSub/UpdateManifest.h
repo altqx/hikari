@@ -758,24 +758,15 @@ namespace update_manifest
 		return !named.empty() && named == pending && update_verify::IsReleaseVersion(named);
 	}
 
-	enum class InstallTool
-	{
-		Apt,
-		Dnf,
-		Zypper,
-	};
-
 	// The command a user runs to install a downloaded package by hand,
-	// when there is no pkexec (4.4). The packages are unsigned, so dnf and
-	// zypper are told not to look for a signature, as the helper tells them.
-	inline std::string InstallCommand(InstallTool tool, std::string_view file)
+	// when there is no pkexec (4.4): the update helper through sudo, so the
+	// package is checked against the release's SHA256SUMS, as root, as it
+	// is through pkexec. The file the app downloaded is not handed to the
+	// package manager itself; another process of the user's could replace
+	// it after the app's own check.
+	inline std::string InstallCommand(std::string_view file, std::string_view version)
 	{
-		switch (tool) {
-		case InstallTool::Apt: return "sudo apt install " + ShellQuote(file);
-		case InstallTool::Dnf: return "sudo dnf install --nogpgcheck " + ShellQuote(file);
-		case InstallTool::Zypper: return "sudo zypper install --allow-unsigned-rpm " + ShellQuote(file);
-		}
-		return std::string();
+		return "sudo " + std::string(kUpdateHelper) + " install " + ShellQuote(file) + " " + ShellQuote(version);
 	}
 
 	// The local update feed of test builds (installers spec, 8.4): a base
