@@ -369,8 +369,12 @@ std::vector<ReleaseEntry> updateCandidates(const std::vector<ReleaseEntry> &rele
     std::vector<std::pair<SemVer, const ReleaseEntry *>> found;
     if (!installed)
         return {};
+    // Installers spec 2.4, as legacy's SkipsPrereleases: "Stable versions
+    // only" holds on a stable build; a prerelease build always takes
+    // prereleases, so a beta is offered the next beta.
+    const bool skipPrereleases = stableOnly && installed->prerelease.empty();
     for (const auto &release : releases) {
-        if (release.draft || (stableOnly && isPrerelease(release)))
+        if (release.draft || (skipPrereleases && isPrerelease(release)))
             continue;
         const auto version = candidateVersion(release.tag);
         if (!version || compareSemVer(*version, *installed) <= 0)
