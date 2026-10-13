@@ -31,6 +31,8 @@ hikari_module(hikari_application ALLOW hikari_core)
 target_sources(hikari_application PRIVATE session_file.cpp)
 # S4: the scripts a Document names in its Script Info.
 target_sources(hikari_application PRIVATE document_scripts.cpp)
+# S4-run-validation: the validations a macro run makes (its dependencies').
+target_sources(hikari_application PRIVATE macro_validation.cpp)
 # R1: subtitle comparison (legacy SubsComparison and the tab menu's state).
 target_sources(hikari_application PRIVATE subtitle_comparison.cpp)
 # R2: reference navigation (legacy SubsGridPreview's matching).

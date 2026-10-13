@@ -203,6 +203,17 @@ bool AutomationManager::run(const std::string &path, int ordinal, const applicat
     return true;
 }
 
+bool AutomationManager::validate(const std::string &path, int ordinal, const application::MacroSnapshot &snapshot)
+{
+    if (m_shuttingDown || busy())
+        return false;
+    LuaScriptHost *h = host(path);
+    if (!h || !h->validate(ordinal, snapshot))
+        return false;
+    notify();
+    return true;
+}
+
 bool AutomationManager::forceStop(const std::string &path)
 {
     LuaScriptHost *h = host(path);

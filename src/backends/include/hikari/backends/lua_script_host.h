@@ -11,6 +11,7 @@
 
 #include "hikari/application/automation.h"
 #include "hikari/backends/helper_host.h"
+#include "hikari/backends/lua_protocol.h"
 
 #include <QObject>
 #include <QString>
@@ -58,6 +59,11 @@ public:
     // With `validateFirst` the macro's validation function runs first, on
     // the same subtitles object (legacy LuaCommand::Validate then Run).
     bool run(int macroIndex, const application::MacroSnapshot &snapshot, bool validateFirst = false);
+    // Only the macro's validation function (protocol Validate): finished()
+    // gives Ok when it answers true (lastResult() valid, with no lists) and
+    // NotValid otherwise; the macro does not run and nothing is staged
+    // (S4-run-validation). False unless Ready.
+    bool validate(int macroIndex, const application::MacroSnapshot &snapshot);
     // What the last successful run staged and returned (set before finished()).
     const std::optional<application::MacroResult> &lastResult() const { return m_lastResult; }
     // Latches the run as cancelled: it ends Cancelled even if the script then
@@ -98,6 +104,7 @@ signals:
 
 private:
     void startHelper();
+    bool send(lua::Command command, int macroIndex, const application::MacroSnapshot &snapshot);
     void sendLoad();
     void onEvent(std::uint64_t request, std::expected<helper::Event, helper::HostError> event);
     void endRun(RunOutcome outcome, const QString &message);

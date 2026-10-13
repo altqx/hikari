@@ -163,11 +163,21 @@ bool LuaScriptHost::run(int macroIndex)
 
 bool LuaScriptHost::run(int macroIndex, const application::MacroSnapshot &snapshot, bool validateFirst)
 {
+    return send(validateFirst ? lua::Command::RunValidated : lua::Command::Run, macroIndex, snapshot);
+}
+
+bool LuaScriptHost::validate(int macroIndex, const application::MacroSnapshot &snapshot)
+{
+    return send(lua::Command::Validate, macroIndex, snapshot);
+}
+
+bool LuaScriptHost::send(lua::Command command, int macroIndex, const application::MacroSnapshot &snapshot)
+{
     if (m_state != State::Ready || macroIndex < 0 || static_cast<std::size_t>(macroIndex) >= m_info.macros.size())
         return false;
     m_lastResult.reset();
     Writer w;
-    w.i32(static_cast<std::int32_t>(validateFirst ? lua::Command::RunValidated : lua::Command::Run)).i32(macroIndex);
+    w.i32(static_cast<std::int32_t>(command)).i32(macroIndex);
     const auto body = lua::encodeSnapshot(snapshot);
     auto payload = w.take();
     payload.insert(payload.end(), body.begin(), body.end());

@@ -283,6 +283,194 @@ private slots:
         QVERIFY(!session().isReadOnly());
     }
 
+    // S4-run-validation: a run validates its macro and, before it, the
+    // macros of the scripts it depends on (main.lua requires dep.lua, an
+    // autoload-style script, and dep2.lua, another Document script); an
+    // unrelated script's validation and the script's own other macros' do not
+    // run (legacy's menu build validated every Document-script macro). A
+    // dependency answering false or raising, the first or a later one, stops
+    // the run as the macro's own validation does; a dependency unloaded while
+    // an earlier one validates is skipped.
+    void runValidatesItsDependenciesFirst()
+    {
+        const QString deps = dir.filePath(QStringLiteral("deps"));
+        const QString records = deps + QStringLiteral("/records.txt");
+        const QString go = deps + QStringLiteral("/go.txt");
+        auto answerFile = [&](const char *tag) { return deps + QStringLiteral("/%1-answer.txt").arg(QLatin1String(tag)); };
+        // record(event) appends "<tag> <event>"; answer() reads the tag's
+        // answer file: true (the default), false, error, or wait (for go.txt,
+        // then true).
+        auto head = [&](const char *tag) {
+            return "local function record(event)\n"
+                   "    local f = assert(io.open(\"" + records.toUtf8() + "\", \"a\"))\n"
+                   "    f:write(\"" + QByteArray(tag) + " \" .. event .. \"\\n\")\n"
+                   "    f:close()\n"
+                   "end\n"
+                   "local function answer()\n"
+                   "    local f = io.open(\"" + answerFile(tag).toUtf8() + "\", \"r\")\n"
+                   "    local a = f and f:read(\"*l\") or \"true\"\n"
+                   "    if f then f:close() end\n"
+                   "    if a == \"error\" then error(\"" + QByteArray(tag) + " says no\") end\n"
+                   "    if a == \"wait\" then\n"
+                   "        local deadline = os.time() + 30\n"
+                   "        while os.time() < deadline do\n"
+                   "            local g = io.open(\"" + go.toUtf8() + "\", \"r\")\n"
+                   "            if g then g:close(); break end\n"
+                   "        end\n"
+                   "        return true\n"
+                   "    end\n"
+                   "    return a == \"true\"\n"
+                   "end\n";
+        };
+        const QString dep = QDir::toNativeSeparators(deps + QStringLiteral("/dep.lua"));
+        writeFile(dep, head("dep") +
+                           "aegisub.register_macro(\"Dep guarded\", \"\", function() record(\"run\") end,\n"
+                           "    function() record(\"validate guarded\"); return answer() end)\n"
+                           "aegisub.register_macro(\"Dep plain\", \"\", function() record(\"run plain\") end)\n"
+                           "aegisub.register_macro(\"Dep second\", \"\", function() end,\n"
+                           "    function() record(\"validate second\"); return true end)\n"
+                           "return {}\n");
+        const QString dep2 = QDir::toNativeSeparators(deps + QStringLiteral("/dep2.lua"));
+        writeFile(dep2, head("dep2") +
+                            "aegisub.register_macro(\"Dep2\", \"\", function() record(\"run\") end,\n"
+                            "    function() record(\"validate\"); return answer() end)\n"
+                            "return {}\n");
+        const QString main = QDir::toNativeSeparators(deps + QStringLiteral("/main.lua"));
+        writeFile(main, head("main") +
+                            "aegisub.register_macro(\"Main\", \"\", function(subs, sel)\n"
+                            "    record(\"run\")\n"
+                            "    local l = subs[sel[1]]; l.text = \"main:\" .. l.text; subs[sel[1]] = l\n"
+                            "end, function() record(\"validate\"); return answer() end)\n"
+                            "aegisub.register_macro(\"Main other\", \"\", function() record(\"run other\") end,\n"
+                            "    function() record(\"validate other\"); return true end)\n"
+                            "require \"dep\"\n"
+                            "require \"dep2\"\n");
+        const QString other = QDir::toNativeSeparators(dir.filePath(QStringLiteral("unrelated/other.lua")));
+        writeFile(other, head("other") + "aegisub.register_macro(\"Other\", \"\", function() end,\n"
+                                         "    function() record(\"validate\"); return true end)\n");
+        auto &automation = app->automation();
+        automation.load(dep.toStdString());
+        automation.load(other.toStdString());
+        // Two Document scripts; main.lua, the last, is the one "Run the last
+        // loaded script" runs.
+        QVERIFY(!open("deps.ass", "|" + dep2.toUtf8() + "|" + main.toUtf8()).isEmpty());
+        automation.menuOpened();
+        QVERIFY(settled());
+        QCOMPARE(automation.scripts().size(), std::size_t(4));
+        auto taken = [&] {
+            QFile f(records);
+            QStringList got;
+            if (f.open(QIODevice::ReadOnly))
+                got = QString::fromUtf8(f.readAll()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+            f.close();
+            QFile::remove(records);
+            return got;
+        };
+        auto answer = [&](const char *tag, const QByteArray &a) { writeFile(answerFile(tag), a + "\n"); };
+        taken();
+        QSignalSpy done(&automation, &app::AutomationShell::runCompleted);
+        QSignalSpy notices(&automation, &app::AutomationShell::notice);
+        const auto steps = session().historySize();
+        const QStringList dependencies{QStringLiteral("dep validate guarded"), QStringLiteral("dep validate second"),
+                                       QStringLiteral("dep2 validate")};
+
+        automation.runLastLoadedScript();
+        QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 30'000);
+        QVERIFY(done.last().at(0).toBool());
+        QCOMPARE(taken(), (dependencies + QStringList{QStringLiteral("main validate"), QStringLiteral("main run")}));
+        QCOMPARE(firstText(), std::string("main:Gate"));
+        QCOMPARE(session().historySize(), steps + 1);
+        QVERIFY(notices.isEmpty());
+
+        // The script's other macro, from the menu: the same dependencies.
+        QVERIFY(automation.run(main.toStdString(), 1));
+        QTRY_COMPARE_WITH_TIMEOUT(done.size(), 2, 30'000);
+        QCOMPARE(taken(), (dependencies + QStringList{QStringLiteral("main validate other"),
+                                                      QStringLiteral("main run other")}));
+        // The dependency's own macro depends on nothing.
+        QVERIFY(automation.run(dep.toStdString(), 0));
+        QTRY_COMPARE_WITH_TIMEOUT(done.size(), 3, 30'000);
+        QCOMPARE(taken(), (QStringList{QStringLiteral("dep validate guarded"), QStringLiteral("dep run")}));
+
+        // A failing validation: nothing more validates or runs, the Document
+        // is unchanged, the box names the script whose validation failed,
+        // and the error (when it raised) goes to the log window first.
+        const auto changed = session().historySize();
+        int runs = 3;
+        int boxes = 0;
+        auto refused = [&](const QStringList &expected, const QString &file) {
+            automation.runLastLoadedScript();
+            ++runs;
+            ++boxes;
+            QTRY_COMPARE_WITH_TIMEOUT(done.size(), runs, 30'000);
+            QVERIFY(!done.last().at(0).toBool());
+            QCOMPARE(taken(), expected);
+            QCOMPARE(notices.size(), boxes);
+            QCOMPARE(notices.last().at(0).toString(), QStringLiteral("Error"));
+            QCOMPARE(notices.last().at(1).toString(), QStringLiteral("Validation Lua script '%1' failed").arg(file));
+            QCOMPARE(firstText(), std::string("main:Gate"));
+            QCOMPARE(session().historySize(), changed);
+            QVERIFY(!session().isReadOnly());
+            QVERIFY(!automation.running());
+        };
+        // The first dependency answers false, then raises.
+        answer("dep", "false");
+        refused({QStringLiteral("dep validate guarded")}, QStringLiteral("dep.lua"));
+        if (QTest::currentTestFailed())
+            return;
+        answer("dep", "error");
+        refused({QStringLiteral("dep validate guarded")}, QStringLiteral("dep.lua"));
+        if (QTest::currentTestFailed())
+            return;
+        QVERIFY(app->log().history().contains(QStringLiteral("Runtime error in Lua macro validation function:")));
+        QVERIFY(app->log().history().contains(QStringLiteral("dep says no")));
+        answer("dep", "true");
+        // A later dependency, after the first passed.
+        answer("dep2", "false");
+        refused(dependencies, QStringLiteral("dep2.lua"));
+        if (QTest::currentTestFailed())
+            return;
+        answer("dep2", "error");
+        refused(dependencies, QStringLiteral("dep2.lua"));
+        if (QTest::currentTestFailed())
+            return;
+        QVERIFY(app->log().history().contains(QStringLiteral("dep2 says no")));
+        answer("dep2", "true");
+        // The macro's own, after every dependency passed.
+        answer("main", "false");
+        refused(dependencies + QStringList{QStringLiteral("main validate")}, QStringLiteral("main.lua"));
+        if (QTest::currentTestFailed())
+            return;
+
+        // From the menu legacy says nothing (LuaCommand::RunScript).
+        QVERIFY(automation.run(main.toStdString(), 0));
+        ++runs;
+        QTRY_COMPARE_WITH_TIMEOUT(done.size(), runs, 30'000);
+        QVERIFY(!done.last().at(0).toBool());
+        QCOMPARE(taken(), dependencies + QStringList{QStringLiteral("main validate")});
+        QCOMPARE(notices.size(), boxes);
+        QCOMPARE(firstText(), std::string("main:Gate"));
+        QCOMPARE(session().historySize(), changed);
+        QVERIFY(!session().isReadOnly());
+        answer("main", "true");
+
+        // dep2.lua is unloaded while dep.lua validates: it is no longer a
+        // loaded script, so it is skipped and the macro runs.
+        answer("dep", "wait");
+        automation.runLastLoadedScript();
+        QTRY_VERIFY_WITH_TIMEOUT(QFile(records).size() > 0, 30'000);
+        QVERIFY(automation.running());
+        automation.unload(dep2.toStdString());
+        writeFile(go, "go\n");
+        ++runs;
+        QTRY_COMPARE_WITH_TIMEOUT(done.size(), runs, 30'000);
+        QVERIFY(done.last().at(0).toBool());
+        QCOMPARE(taken(), (QStringList{QStringLiteral("dep validate guarded"), QStringLiteral("dep validate second"),
+                                       QStringLiteral("main validate"), QStringLiteral("main run")}));
+        QCOMPARE(firstText(), std::string("main:main:Gate"));
+        QCOMPARE(notices.size(), boxes);
+    }
+
     // Legacy runs one macro at a time behind a modal progress dialog
     // (HikariSubFrame.cpp:916-936 runs to completion before anything else);
     // asked while another macro runs, the last script's macro is not dropped:
@@ -591,7 +779,8 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
             // made first: the hotkey goes through the menu item, and
             // OnMenuSelected rebuilds the item's menu before running it
             // (HikariSubFrame.cpp:680-686, BuildMenu validates every macro,
-            // Automation.cpp:1375, 1434). The rewrite validates when it runs.
+            // Automation.cpp:1375, 1434). The rewrite validates when it runs
+            // (S4-run-validation).
             // The command's validation is the last one.
             const QJsonArray all = step["records"].toArray();
             qsizetype command = -1;

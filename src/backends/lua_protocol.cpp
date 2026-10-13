@@ -35,6 +35,9 @@ std::vector<std::byte> encodeInfo(const ScriptInfo &info)
     w.i32(static_cast<std::int32_t>(info.macros.size()));
     for (const auto &m : info.macros)
         w.str(m.name).str(m.description).u8(m.hasValidate).u8(m.hasIsActive);
+    w.i32(static_cast<std::int32_t>(info.loadedFiles.size()));
+    for (const auto &f : info.loadedFiles)
+        w.str(f);
     return w.take();
 }
 
@@ -57,6 +60,11 @@ std::optional<ScriptInfo> decodeInfo(const std::vector<std::byte> &payload)
         m.hasIsActive = r.u8() != 0;
         info.macros.push_back(std::move(m));
     }
+    const auto files = count(r, payload.size());
+    if (!files)
+        return std::nullopt;
+    for (std::size_t i = 0; i < *files; ++i)
+        info.loadedFiles.push_back(r.str());
     if (!r.ok() || !r.atEnd())
         return std::nullopt;
     return info;
