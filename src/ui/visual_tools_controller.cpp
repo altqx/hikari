@@ -60,7 +60,7 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
         syncGeometry();
         // The render: Visuals::Draw sets blockevents for the shown frame.
         if (auto *t = tool(); t && m_view.hasVideo() && t->warnsOutsideLine() && currentWarning() != LineWarning::None)
-            t->blocked(*this);
+            block(*t);
         emit changed(); // the shown frame's time moves the warnings
         // T3: a \move's position follows the shown frame (legacy Draw ran
         // DrawVisual on every frame, Visuals.cpp:504-529);
@@ -198,6 +198,13 @@ void VisualToolsController::refresh()
     emit changed();
 }
 
+void VisualToolsController::block(VisualTool &t)
+{
+    t.blocked(*this);
+    if (!hasArrow())
+        setPointerShape(PointerShape::Arrow);
+}
+
 void VisualToolsController::resetTool()
 {
     // RendererVideo::SetVisual: the tools' transform takes the current zoom,
@@ -285,6 +292,10 @@ bool VisualToolsController::escape()
         return false;
     }
     m_gesture.reset();
+    // The drag is over: the shape it set goes, as on legacy's button
+    // release; the next move sets the one over a handle again.
+    if (!hasArrow())
+        setPointerShape(PointerShape::Arrow);
     // T2-T4: the tool reads its Lines again, as before the gesture (legacy
     // SetCurVisual), so its handles, points or corners go back to where the
     // text puts them.
@@ -726,9 +737,12 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
     // Visuals::Draw's blockevents: a tool other than the crosshair takes no
     // events outside its Line's time or on a comment, warning shown or not.
     if (t->warnsOutsideLine() && currentWarning() != LineWarning::None) {
-        t->blocked(*this);
+        const PointerShape shape = pointerShape();
+        block(*t);
         if (m_gesture && p.kind == Pointer::Kind::Release)
             (void)escape(); // legacy released the mouse capture
+        if (pointerShape() != shape)
+            emit changed();
         return;
     }
     t->pointer(p, *this);
@@ -764,6 +778,9 @@ void VisualToolsController::selectFamily(int family)
         return;
     (void)escape();
     m_family = chosen;
+    // VideoBox::OnChangeVisual: the arrow back for the new tool.
+    if (!hasArrow())
+        setPointerShape(PointerShape::Arrow);
     // Visuals::Get made a new tool for the family (RendererVideo::SetVisual).
     if (auto *t = tool())
         t->selected(*this);
@@ -850,6 +867,29 @@ QString VisualToolsController::warning() const
     if (!t || !t->warnsOutsideLine() || !m_view.hasVideo() || m_settings.boolean("video.visualWarningsOff"))
         return {};
     return qs(warningText(currentWarning()));
+}
+
+int VisualToolsController::pointerShapeCursor() const
+{
+    // wx's stock cursors as Qt's: SIZING is the four-way move (IDC_SIZEALL
+    // on Windows, legacy's platform).
+    if (!tool() || !m_view.hasVideo() || m_view.zoomMode())
+        return Qt::ArrowCursor;
+    switch (pointerShape()) {
+    case PointerShape::SizeWE:
+        return Qt::SizeHorCursor;
+    case PointerShape::SizeNS:
+        return Qt::SizeVerCursor;
+    case PointerShape::SizeNWSE:
+        return Qt::SizeFDiagCursor;
+    case PointerShape::SizeNESW:
+        return Qt::SizeBDiagCursor;
+    case PointerShape::Sizing:
+        return Qt::SizeAllCursor;
+    case PointerShape::Arrow:
+        break;
+    }
+    return Qt::ArrowCursor;
 }
 
 bool VisualToolsController::hideCursor() const

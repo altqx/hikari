@@ -51,6 +51,10 @@ class VisualToolsController : public QObject, public application::visual::Visual
     // VideoBox hides the pointer over the video while the crosshair is the
     // tool (VideoBox.cpp:607-611).
     Q_PROPERTY(bool hideCursor READ hideCursor NOTIFY changed)
+    // T2-T5: the shape the tool asked for over its handles and during its
+    // drags (legacy VideoBox::SetCursor from the Visuals), a Qt::CursorShape;
+    // Qt::ArrowCursor otherwise.
+    Q_PROPERTY(int pointerShape READ pointerShapeCursor NOTIFY changed)
     // The tool's Line warning (empty for none or with VIDEO_VISUAL_WARNINGS_OFF).
     Q_PROPERTY(QString warning READ warning NOTIFY changed)
     // The presenter draws the frame here (legacy m_BackBufferRect), from the
@@ -130,6 +134,7 @@ public:
     QString labelFamily() const; // the family the label font resolves to
     int labelPixelSize() const;
     bool hideCursor() const;
+    int pointerShapeCursor() const;
     QString warning() const;
     QRectF videoRect() const;
     QRectF sourceRect() const;
@@ -235,6 +240,8 @@ private:
     application::EditSession *editingSession() const { return m_session ? m_session() : nullptr; }
     void syncGeometry();
     void resetTool();
+    // Visuals::Draw with nothing to show: blockevents, and the arrow back.
+    void block(application::visual::VisualTool &tool);
     application::visual::LineWarning currentWarning() const;
     void updatePreview();
     void refreshOptions();

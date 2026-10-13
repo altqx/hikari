@@ -11837,10 +11837,17 @@ private slots:
         const std::size_t steps = session->historySize();
         const QPoint start = videoPoint(*handle());
         const QPoint end = start + QPoint(12, 7);
+        // Legacy's pointer: the arrow over the handle, the four-way move
+        // shape (wxCURSOR_SIZING) during the drag, the arrow after it
+        // (VisualPosition.cpp:369, 725).
+        QQuickItem *pointerArea = item("visualPointer");
+        QVERIFY(pointerArea);
         QTest::mouseMove(window, start);
+        QCOMPARE(pointerArea->property("cursorShape").toInt(), int(Qt::ArrowCursor));
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, start);
         QTest::mouseMove(window, end);
         QTRY_VERIFY(tools.gestureActive());
+        QTRY_COMPARE(pointerArea->property("cursorShape").toInt(), int(Qt::SizeAllCursor));
         const QPointF moved = item("visualOverlay")->mapFromScene(QPointF(end));
         const PointF h0 = view.scriptToView({100, 80});
         const PointF h1{h0.x + float(view.toDevice(moved.x()) - view.toDevice(item("visualOverlay")->mapFromScene(QPointF(start)).x())),
@@ -11851,6 +11858,7 @@ private slots:
         QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, end);
         QTRY_COMPARE(session->historySize(), steps + 1);
         QCOMPARE(session->history().back().name, std::string("Visual positioning tool"));
+        QTRY_COMPARE(pointerArea->property("cursorShape").toInt(), int(Qt::ArrowCursor));
         const QString dragged = QStringLiteral("{\\an5\\pos(%1,%2)\\bord0\\shad0\\p1}m 0 0 l 40 0 40 40 0 40")
                                     .arg(ft(staged.x), ft(staged.y));
         QCOMPARE(signText(), dragged);
@@ -11861,8 +11869,10 @@ private slots:
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, end);
         QTest::mouseMove(window, end + QPoint(20, 20));
         QTRY_VERIFY(tools.gestureActive());
+        QTRY_COMPARE(pointerArea->property("cursorShape").toInt(), int(Qt::SizeAllCursor));
         QTest::keyClick(window, Qt::Key_Escape);
         QVERIFY(!tools.gestureActive());
+        QTRY_COMPARE(pointerArea->property("cursorShape").toInt(), int(Qt::ArrowCursor)); // the drag is over
         QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, end + QPoint(20, 20));
         QCOMPARE(session->historySize(), steps + 1);
         QCOMPARE(signText(), dragged);
@@ -12603,6 +12613,21 @@ private slots:
         }
         QCOMPARE(polygons, 1); // the darkened outside
         QCOMPARE(lines, 4);    // the outline
+        // Legacy's resize shapes over the rectangle's corners and edges, the
+        // arrow inside it (ClipRect::OnMouseEvent, VisualClipRect.cpp:152-163).
+        QQuickItem *pointerArea = visualItem("visualPointer");
+        QVERIFY(pointerArea);
+        const auto shape = [&] { return pointerArea->property("cursorShape").toInt(); };
+        QCOMPARE(shape(), int(Qt::SizeFDiagCursor)); // released on the bottom-right corner
+        const QPoint centre = (a + b) / 2;
+        QTest::mouseMove(window, centre);
+        QTRY_COMPARE(shape(), int(Qt::ArrowCursor));
+        QTest::mouseMove(window, QPoint(b.x(), a.y()));
+        QTRY_COMPARE(shape(), int(Qt::SizeBDiagCursor));
+        QTest::mouseMove(window, QPoint(centre.x(), a.y()));
+        QTRY_COMPARE(shape(), int(Qt::SizeVerCursor));
+        QTest::mouseMove(window, QPoint(a.x(), centre.y()));
+        QTRY_COMPARE(shape(), int(Qt::SizeHorCursor));
         // Invert clip: \iclip, recorded as legacy did (VISUAL_VECTOR_CLIP).
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_invert"), "click"));
         QTRY_VERIFY(text(session->document().lines()[0]).startsWith(QStringLiteral("{\\iclip(")));
@@ -12617,9 +12642,12 @@ private slots:
         QTRY_COMPARE(session->historySize(), nudge + 1);
         QVERIFY(text(session->document().lines()[0]) != beforeNudge);
 
-        // The vector clip: its modes, Add line on.
+        // The vector clip: its modes, Add line on. The tool's change puts the
+        // arrow back (VideoBox::OnChangeVisual), the pointer still on the
+        // rectangle's left edge.
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool7"), "click"));
         QCOMPARE(tools.activeFamily(), 7);
+        QTRY_COMPARE(shape(), int(Qt::ArrowCursor));
         QTRY_VERIFY(visualItem("visualOption_mode5"));
         QVERIFY(settle());
         const char *roles[] = {"vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete"};

@@ -1142,3 +1142,142 @@ TEST(VisualPositionWarning, OnlyWhileNoneOfItsLinesIsVisible)
     EXPECT_EQ(tool.warning(host), LineWarning::NotVisible);
     EXPECT_TRUE(tool.overlay(host).polygons.empty());
 }
+
+// The pointer's shapes (VideoBox::SetCursor from the Visuals; the user's
+// 2026-10-13 decision to port them).
+
+TEST(VisualPositionPointer, ADragShowsTheFourWayShapeUntilTheRelease)
+{
+    // Position::OnMouseEvent: no shape over the text's point, SIZING from
+    // the press (VisualPosition.cpp:369), the arrow back on the left
+    // release (SavePosition, :725).
+    TestHost host;
+    standard(host);
+    PositionTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    tool.pointer(at(Pointer::Kind::Move, 100, 100), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    tool.pointer(at(Pointer::Kind::Press, 100, 100, Pointer::Button::Left, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    tool.pointer(at(Pointer::Kind::Move, 120, 110, Pointer::Button::None, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    tool.pointer(at(Pointer::Kind::Release, 120, 110, Pointer::Button::Left), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    // The helper cross's drag sets none (it returns before, :365-368).
+    tool.pointer(at(Pointer::Kind::Press, 200, 200, Pointer::Button::Middle), host);
+    tool.pointer(at(Pointer::Kind::Release, 200, 200, Pointer::Button::Middle), host);
+    tool.pointer(at(Pointer::Kind::Press, 200, 200, Pointer::Button::Left, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    tool.pointer(at(Pointer::Kind::Release, 200, 200, Pointer::Button::Left), host);
+}
+
+TEST(VisualPositionPointer, TheRectanglesEdgesAndCornersShowTheirResizeShapes)
+{
+    // "Set position by rectangle" (VisualPosition.cpp:240-251): over an edge
+    // its west-east or north-south shape, over a corner its diagonal, the
+    // arrow elsewhere; a drag keeps the shape it began with.
+    TestHost host;
+    standard(host);
+    PositionTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    ASSERT_TRUE(tool.setOption("byRectangle", 1, host));
+    tool.pointer(at(Pointer::Kind::Press, 100, 100, Pointer::Button::Left, true), host);
+    tool.pointer(at(Pointer::Kind::Move, 200, 160, Pointer::Button::None, true), host);
+    tool.pointer(at(Pointer::Kind::Release, 200, 160, Pointer::Button::Left), host);
+    // The release lands on the corner just drawn.
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeNWSE);
+    const struct {
+        int x, y;
+        PointerShape shape;
+    } hovers[] = {
+        {100, 130, PointerShape::SizeWE},   {200, 130, PointerShape::SizeWE},   {150, 100, PointerShape::SizeNS},
+        {150, 160, PointerShape::SizeNS},   {100, 100, PointerShape::SizeNWSE}, {200, 160, PointerShape::SizeNWSE},
+        {200, 100, PointerShape::SizeNESW}, {100, 160, PointerShape::SizeNESW}, {150, 130, PointerShape::Arrow},
+        {300, 300, PointerShape::Arrow},
+    };
+    for (const auto &h : hovers) {
+        tool.pointer(at(Pointer::Kind::Move, h.x, h.y), host);
+        EXPECT_EQ(host.pointerShape(), h.shape) << h.x << "," << h.y;
+        // Leaving the handle puts the arrow back.
+        tool.pointer(at(Pointer::Kind::Move, 150, 130), host);
+        EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    }
+    // The left edge's drag keeps west-east past the edge's reach.
+    tool.pointer(at(Pointer::Kind::Move, 100, 130), host);
+    tool.pointer(at(Pointer::Kind::Press, 100, 130, Pointer::Button::Left, true), host);
+    tool.pointer(at(Pointer::Kind::Move, 60, 30, Pointer::Button::None, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::SizeWE);
+    tool.pointer(at(Pointer::Kind::Release, 60, 30, Pointer::Button::Left), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+}
+
+TEST(VisualMovePointer, ADragShowsTheFourWayShapeUntilTheRelease)
+{
+    // Move::OnMouseEvent: SIZING from either button's press
+    // (VisualMove.cpp:282), the arrow back on its release (:264); nothing
+    // while hovering the start or the end.
+    TestHost host;
+    standard(host, 1);
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    tool.pointer(at(Pointer::Kind::Move, 10, 20), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    tool.pointer(at(Pointer::Kind::Press, 10, 20, Pointer::Button::Left, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    tool.pointer(at(Pointer::Kind::Release, 12, 22, Pointer::Button::Left), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    Pointer right = at(Pointer::Kind::Press, 30, 40, Pointer::Button::Right);
+    right.rightDown = true;
+    tool.pointer(right, host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    tool.pointer(at(Pointer::Kind::Release, 30, 40, Pointer::Button::Right), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+}
+
+TEST(VisualMovePointer, TwoPointsShowTheFourWayShapeFromTheSecondPoint)
+{
+    // "Set movement using 2 points" (VisualMove.cpp:181-228): the first
+    // point's click sets nothing; the second point's, and a drag of either,
+    // SIZING; a click elsewhere nothing; the release the arrow (:167).
+    TestHost host;
+    standard(host, 1);
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    ASSERT_TRUE(tool.setOption("twoPoints", 1, host));
+    tool.pointer(at(Pointer::Kind::Press, 100, 100, Pointer::Button::Left, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    tool.pointer(at(Pointer::Kind::Release, 100, 100, Pointer::Button::Left), host);
+    tool.pointer(at(Pointer::Kind::Press, 200, 150, Pointer::Button::Left, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    tool.pointer(at(Pointer::Kind::Release, 200, 150, Pointer::Button::Left), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    tool.pointer(at(Pointer::Kind::Press, 300, 300, Pointer::Button::Left, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+    tool.pointer(at(Pointer::Kind::Release, 300, 300, Pointer::Button::Left), host);
+    tool.pointer(at(Pointer::Kind::Press, 101, 101, Pointer::Button::Left, true), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Sizing);
+    tool.pointer(at(Pointer::Kind::Release, 101, 101, Pointer::Button::Left), host);
+    EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
+}
+
+TEST(VisualPointerShape, TheRectanglesHitCodesAsLegacysExpression)
+{
+    EXPECT_EQ(edgePointerShape(1), PointerShape::SizeWE);  // LEFT
+    EXPECT_EQ(edgePointerShape(2), PointerShape::SizeWE);  // RIGHT
+    EXPECT_EQ(edgePointerShape(3), PointerShape::SizeWE);  // both (a narrow rectangle)
+    EXPECT_EQ(edgePointerShape(4), PointerShape::SizeNS);  // TOP
+    EXPECT_EQ(edgePointerShape(8), PointerShape::SizeNS);  // BOTTOM
+    EXPECT_EQ(edgePointerShape(12), PointerShape::SizeNS); // both
+    EXPECT_EQ(edgePointerShape(5), PointerShape::SizeNWSE);
+    EXPECT_EQ(edgePointerShape(10), PointerShape::SizeNWSE);
+    EXPECT_EQ(edgePointerShape(6), PointerShape::SizeNESW);
+    EXPECT_EQ(edgePointerShape(9), PointerShape::SizeNESW);
+}

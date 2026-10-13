@@ -332,6 +332,8 @@ void PositionTool::savePosition(VisualHost &host)
         setMovePosition(d, time);
         d.lastpos = d.pos;
     }
+    if (!host.hasArrow())
+        host.setPointerShape(PointerShape::Arrow);
     m_movingHelperLine = false;
 }
 
@@ -413,6 +415,7 @@ void PositionTool::pointer(const Pointer &evt, VisualHost &host)
             m_movingHelperLine = true;
             return;
         }
+        host.setPointerShape(PointerShape::Sizing); // VisualPosition.cpp:369
         if (host.batchTargets().size() != m_data.size())
             setCurVisual(host, false);
         m_firstmove = {static_cast<float>(x), static_cast<float>(y)};
@@ -450,7 +453,7 @@ void PositionTool::pointer(const Pointer &evt, VisualHost &host)
 void PositionTool::rectanglePointer(const Pointer &evt, VisualHost &host)
 {
     // Position::OnMouseEvent's "Set position by rectangle" (VisualPosition.
-    // cpp:222-328). The pointer's shape over the edges is the panel's.
+    // cpp:222-328).
     const bool click = evt.kind == Pointer::Kind::Press && evt.button == Pointer::Button::Left;
     const bool dclick = evt.kind == Pointer::Kind::DoubleClick && evt.button == Pointer::Button::Left;
     const bool holding = evt.leftDown;
@@ -471,6 +474,14 @@ void PositionTool::rectanglePointer(const Pointer &evt, VisualHost &host)
             m_inGesture = false;
             host.cancelGesture(); // nothing placed: nothing to write
         }
+        if (!host.hasArrow())
+            host.setPointerShape(PointerShape::Arrow);
+    }
+    if (!holding && m_rectangleVisible) {
+        // Over an edge or a corner its resize shape, elsewhere the arrow
+        // (VisualPosition.cpp:240-251); a drag keeps the shape it began with.
+        const int test = hitTest({static_cast<float>(x), static_cast<float>(y)}, false, host);
+        host.setPointerShape(test < INSIDE ? edgePointerShape(test) : PointerShape::Arrow);
     }
     if (click || dclick) {
         m_grabbed = OUTSIDE;
@@ -1169,6 +1180,8 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
             } else {
                 setVisual(false, host);
             }
+            if (!host.hasArrow())
+                host.setPointerShape(PointerShape::Arrow);
             m_grabbed = -1;
             m_moveDistance = sub(m_to, m_from);
             m_movingHelperLine = false;
@@ -1218,6 +1231,7 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
             }
             m_lastmove = m_lastTo = m_to;
             m_firstmove = m_lastFrom = m_from;
+            host.setPointerShape(PointerShape::Sizing); // VisualMove.cpp:227
             if (setMove(host))
                 setVisual(true, host);
             else
@@ -1247,6 +1261,8 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
 
     if (buttonUp) {
         setVisual(false, host);
+        if (!host.hasArrow())
+            host.setPointerShape(PointerShape::Arrow);
         m_grabbed = -1;
         m_moveDistance = sub(m_to, m_from);
         m_movingHelperLine = false;
@@ -1262,6 +1278,7 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
             m_movingHelperLine = true;
             return;
         }
+        host.setPointerShape(PointerShape::Sizing); // VisualMove.cpp:282
         if (leftc)
             m_type = 0;
         if (rightc)
