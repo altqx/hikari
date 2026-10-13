@@ -11,9 +11,9 @@
 //
 // Linux runs it offscreen with two screens (fullscreen-two-screens.json, the
 // second at scale 2), and again with `--primary-second`, the second screen
-// made the primary before the window opens: the monitors are then the
-// primary first and the other after it (V5-monitor-order), so "monitor 2"
-// is the screen the system lists first. Windows runs it on the real desktop.
+// made the primary before the window opens: Qt's screens, which are the
+// monitors, are then that screen first and the other after it
+// (V5-monitor-order), so "monitor 2" is the screen the system listed first. Windows runs it on the real desktop.
 // Every run checks the fullscreen window's owner (V5-wayland-parent): the
 // main window, except on Wayland.
 
@@ -180,8 +180,8 @@ int main(int argc, char **argv)
         std::printf("%s: %s\n", ok ? "ok" : "FAILED", what);
         failures += ok ? 0 : 1;
     };
-    // The system's list before any reordering, and with --primary-second
-    // its second screen made the primary (as a display setting would).
+    // The system's list at start, and with --primary-second its second
+    // screen made the primary (as a display setting would).
     const auto systemScreens = QGuiApplication::screens();
     if (primarySecond) {
         expect(systemScreens.size() >= 2, "two screens for --primary-second");
@@ -190,13 +190,13 @@ int main(int argc, char **argv)
         expect(QGuiApplication::primaryScreen() == systemScreens.value(1), "the second screen is the primary");
     }
     {
-        // V5-monitor-order: the primary first, the others in the system's order.
+        // V5-monitor-order: the primary first, then the other screen.
         const auto ordered = hikari::ui::VideoFullscreenController::monitors();
         QList<QScreen *> expected{QGuiApplication::primaryScreen()};
         for (QScreen *s : systemScreens)
             if (s != QGuiApplication::primaryScreen())
                 expected.push_back(s);
-        expect(ordered == expected, "the monitors: the primary first, the others in the system's order");
+        expect(ordered == expected, "the monitors: the primary first, then the other screen");
         for (QScreen *s : ordered)
             std::printf("monitor %s%s\n", qPrintable(s->name()), s == QGuiApplication::primaryScreen() ? " primary" : "");
     }

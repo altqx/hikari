@@ -76,15 +76,12 @@ QList<QScreen *> VideoFullscreenController::monitors()
 {
     // GetMonitorRect1's list: on Windows MonitorEnumProc1's, the primary
     // first, then the others in EnumDisplayMonitors' order; on Linux
-    // wxDisplay's. Qt's screens with its primary moved to the front and the
-    // others in the system's order (on Wayland the outputs' order, as
-    // wxDisplay's) on every platform (V5-monitor-order).
-    const QList<QScreen *> screens = QGuiApplication::screens();
-    QList<QScreen *> out;
-    for (const int i : application::primaryFirst(static_cast<int>(screens.size()),
-                                                 static_cast<int>(screens.indexOf(QGuiApplication::primaryScreen()))))
-        out.push_back(screens[i]);
-    return out;
+    // wxDisplay's. Qt's screens are the primary first on every platform
+    // (V5-monitor-order): QGuiApplication::primaryScreen is by definition the
+    // first of QGuiApplication::screens (qguiapplication.cpp), so a primary
+    // change puts the new primary at the front of that list. The others are
+    // in Qt's order (on Wayland the outputs' order, as wxDisplay's).
+    return QGuiApplication::screens();
 }
 
 bool VideoFullscreenController::ownedByMainWindow()

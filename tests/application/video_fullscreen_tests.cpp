@@ -51,31 +51,6 @@ TEST(VideoFullscreenMonitor, OneMenuEntryPerMonitorAfterTheFirst)
     EXPECT_EQ(fullscreenMonitorEntries(3), 2);
 }
 
-// V5-monitor-order: MonitorEnumProc1 (UtilsWindows.cpp:57-70) inserted the
-// primary at the front and appended the others in EnumDisplayMonitors'
-// order; the rewrite orders every platform's screens so.
-TEST(VideoFullscreenMonitor, ThePrimaryComesFirstAndTheOthersKeepTheirOrder)
-{
-    EXPECT_EQ(primaryFirst(3, 0), (std::vector<int>{0, 1, 2}));
-    EXPECT_EQ(primaryFirst(3, 1), (std::vector<int>{1, 0, 2}));
-    EXPECT_EQ(primaryFirst(3, 2), (std::vector<int>{2, 0, 1}));
-    EXPECT_EQ(primaryFirst(4, 2), (std::vector<int>{2, 0, 1, 3}));
-    EXPECT_EQ(primaryFirst(1, 0), (std::vector<int>{0}));
-    EXPECT_EQ(primaryFirst(0, -1), (std::vector<int>{}));
-    // No primary known: the system's order.
-    EXPECT_EQ(primaryFirst(2, -1), (std::vector<int>{0, 1}));
-    EXPECT_EQ(primaryFirst(2, 2), (std::vector<int>{0, 1}));
-    // The menu's "monitor 2" (index 1) is then the first monitor after the
-    // primary in the system's order.
-    const std::vector<MonitorRect> system{{1920, 0, 1280, 1024}, {0, 0, 1920, 1080}, {0, -900, 1600, 900}};
-    std::vector<MonitorRect> ordered;
-    for (const int i : primaryFirst(3, 1))
-        ordered.push_back(system[static_cast<std::size_t>(i)]);
-    EXPECT_EQ(ordered, kMonitors);
-    EXPECT_EQ(fullscreenMonitor(1, ordered, {100, 100, 800, 600}), 1);
-    EXPECT_EQ(ordered[1], system[0]);
-}
-
 // V5-wayland-parent: legacy's Fullscreen frame was the main window's child
 // on every platform; on Wayland the rewrite's window has no parent.
 TEST(VideoFullscreenWindow, OwnedByTheMainWindowExceptOnWayland)
