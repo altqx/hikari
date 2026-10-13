@@ -1542,28 +1542,46 @@ def step_dpi():
     finally:
         back = dpi_set(100)
         time.sleep(3)
-        ev2, st = snap("dpi-2-restored", extra="# DPI_RESULT\n" + json.dumps(back))
+        ev2, st2 = snap("dpi-2-restored", extra="# DPI_RESULT\n" + json.dumps(back))
         verdict("dpi-restored", "observed" if back.get("after") == 100 else "failed",
                 f"scale restored: {back}", ev2)
+        if back.get("after") == 100 and isinstance(res.get("after"), int) and res["after"] > 100:
+            kept, how_kept = floating_kept(st0, st2, "Line editor", 1.0)
+            verdict("dpi-floating-keeps-size-back", "observed" if kept else "failed",
+                    f"floating Line editor after {res['after']} -> 100 %: {how_kept} (dpi-2-restored.png)", ev0 + ev2)
 
 
 def floating_kept(st0, st1, name, ratio):
     """A floating panel's window across a scale change: its pixel size grew
     by the scale's ratio (its size in device-independent pixels kept, within
-    3 px), and its panel lies whole inside it (not cut off)."""
+    3 px), and its panel fits whole inside it (not cut off): the panel's
+    header and pane together, as wide and as high as UI Automation reports
+    them, within the window's size. Sizes, not places: after a live scale
+    change on the VM's two monitors Qt's UI Automation places some elements
+    of the window by the other monitor's origin (siblings 52 px apart at
+    100 % came out 322 px apart at 125 %, the header left of the window),
+    while their sizes scale as drawn. The places are recorded too."""
     f0, f1 = frames(st0).get(name), frames(st1).get(name)
     if not f0 or not f1:
         return False, f"window {name!r} at 100 %: {bool(f0)}, after: {bool(f1)}"
     want = (round(f0["w"] * ratio), round(f0["h"] * ratio))
     sized = abs(f1["w"] - want[0]) <= 3 and abs(f1["h"] - want[1]) <= 3
-    panes = [e for e in st1.get("elements") or [] if e["win"] == name and e["t"] == "Pane" and not e["off"]
-             and panel_id(e["n"]) == panel_id(name)]
+    els = [e for e in st1.get("elements") or [] if e["win"] == name and not e["off"]]
+    panes = [e for e in els if e["t"] == "Pane" and panel_id(e["n"]) == panel_id(name)]
     pane = panes[0] if panes else None
-    whole = bool(pane) and (pane["x"] >= f1["x"] and pane["y"] >= f1["y"] and pane["x"] + pane["w"] <= f1["x"] + f1["w"] + 1
-                            and pane["y"] + pane["h"] <= f1["y"] + f1["h"] + 1)
+    bars = [e for e in els if e["t"] == "TitleBar" and e["n"] == name]
+    bar = bars[0] if bars else None
+    high = (pane["h"] if pane else 0) + (bar["h"] if bar else 0)
+    wide = max(pane["w"] if pane else 0, bar["w"] if bar else 0)
+    whole = bool(pane) and wide <= f1["w"] + 1 and high <= f1["h"] + 1
+    placed = bool(pane) and (pane["x"] >= f1["x"] and pane["y"] >= f1["y"]
+                             and pane["x"] + pane["w"] <= f1["x"] + f1["w"] + 1
+                             and pane["y"] + pane["h"] <= f1["y"] + f1["h"] + 1)
     return sized and whole, (f"window {f0['w']}x{f0['h']} -> {f1['w']}x{f1['h']} (kept would be {want[0]}x{want[1]}): "
-                             f"{sized}; panel {pane and (pane['x'], pane['y'], pane['w'], pane['h'])} inside the window "
-                             f"{(f1['x'], f1['y'], f1['w'], f1['h'])}: {whole}")
+                             f"{sized}; header and panel {wide}x{high} within the window's {f1['w']}x{f1['h']}: "
+                             f"{whole}; UI Automation places the panel at "
+                             f"{pane and (pane['x'], pane['y'], pane['w'], pane['h'])}, the window at "
+                             f"{(f1['x'], f1['y'], f1['w'], f1['h'])} (inside by place: {placed})")
 
 
 def title_bar_shade(png, f, mons):
