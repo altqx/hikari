@@ -2,10 +2,11 @@
 # installers spec 6.4) on Windows, through protected-test.exe
 # (build-protected-test.sh):
 #
-#   protected-tests.ps1 -Phase setup     elevated: makes C:\HsProtected with its rights
+#   protected-tests.ps1 -Phase setup     elevated: makes C:\HsProtected with its rights,
+#                                        and a folder in Program Files
 #   protected-tests.ps1 -Phase check -Exe <protected-test.exe>
 #                                        as a standard user: each folder's answer
-#   protected-tests.ps1 -Phase cleanup   elevated: removes C:\HsProtected
+#   protected-tests.ps1 -Phase cleanup   elevated: removes them
 #
 # Prints PASS/FAIL per check and exits 1 if any check failed.
 
@@ -17,6 +18,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $script:failures = 0
 $Root = 'C:\HsProtected'
+# An all-users install as the installer makes it, with Program Files' rights.
+$ProgramFilesApp = Join-Path $env:ProgramFiles 'HsProtectedTest\app'
 
 function Check([string] $what, [bool] $ok, [string] $detail = '') {
     if ($ok) { Write-Output "PASS $what" }
@@ -37,6 +40,8 @@ function New-App([string] $dir) {
 
 if ($Phase -eq 'setup') {
     if (Test-Path -LiteralPath $Root) { cmd /c rmdir /s /q $Root }
+    $pf = Split-Path -Parent $ProgramFilesApp
+    if (Test-Path -LiteralPath $pf) { cmd /c rmdir /s /q $pf }
     New-Item -ItemType Directory -Path $Root | Out-Null
     # A folder made at C:\ gives Authenticated Users Modify through C:\'s
     # inheritable rights: this one gives users read and run only, as
@@ -63,7 +68,8 @@ if ($Phase -eq 'setup') {
     # A junction in the tree.
     New-App "$Root\junction\app"
     cmd /c mklink /J "$Root\junction\app\link" "$Root\locked\app" | Out-Null
-    Write-Output "PASS setup made $Root"
+    New-App $ProgramFilesApp
+    Write-Output "PASS setup made $Root and $ProgramFilesApp"
 }
 elseif ($Phase -eq 'check') {
     if (-not $Exe) { Write-Output 'FAIL -Exe is required'; exit 1 }
@@ -74,6 +80,7 @@ elseif ($Phase -eq 'check') {
     $mine = Join-Path $env:LOCALAPPDATA 'HsProtectedTest\app'
     New-App $mine
     $cases = [ordered]@{
+        $ProgramFilesApp                   = 0
         "$Root\locked\app"                 = 0
         "$Root\openfile\app"               = 1
         "$Root\readonly\app"               = 1
@@ -114,7 +121,9 @@ else {
         Get-ChildItem -Recurse -Force -LiteralPath $Root | ForEach-Object { $_.Attributes = 'Normal' }
         cmd /c rmdir /s /q $Root
     }
-    Check "cleanup removed $Root" (-not (Test-Path -LiteralPath $Root))
+    $pf = Split-Path -Parent $ProgramFilesApp
+    if (Test-Path -LiteralPath $pf) { cmd /c rmdir /s /q $pf }
+    Check "cleanup removed $Root and $pf" (-not (Test-Path -LiteralPath $Root) -and -not (Test-Path -LiteralPath $pf))
 }
 
 if ($script:failures -gt 0) { exit 1 }

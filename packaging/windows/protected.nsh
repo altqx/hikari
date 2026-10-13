@@ -1,6 +1,7 @@
 ; Whether an install folder is protected from the user who runs this process
 ; (installers spec, 4.2 and 6.4): the rule the app applies before it asks for
-; elevation (UpdateApply's IsProtectedFromUser), for the uninstaller, which
+; elevation (IsProtectedFromUser in legacy's UpdateApply, isProtectedFromUser
+; in Qt's update_apply), for the uninstaller, which
 ; must not start a copy of itself elevated from a folder the user could
 ; change. A same-user process could replace that file between the check and
 ; the UAC prompt, and get its own code run as administrator.
