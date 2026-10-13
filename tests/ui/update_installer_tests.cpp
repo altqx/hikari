@@ -13,6 +13,11 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#ifndef _WIN32
+#include <csignal>
+#include <unistd.h>
+#endif
+
 using hikari::app::PackageInfo;
 using hikari::app::UpdateEnvironment;
 using hikari::app::UpdateInstaller;
@@ -42,6 +47,21 @@ bool write(const QString &path, const QByteArray &bytes, bool executable = false
     if (executable)
         f.setPermissions(f.permissions() | QFileDevice::ExeOwner | QFileDevice::ExeUser);
     return true;
+}
+
+// Whether a process runs: it exists and is not a zombie.
+bool running(qint64 pid)
+{
+#ifndef _WIN32
+    if (::kill(pid_t(pid), 0) != 0)
+        return false;
+    const QByteArray stat = read(QStringLiteral("/proc/%1/stat").arg(pid));
+    const qsizetype close = stat.lastIndexOf(')');
+    return close < 0 || close + 2 >= stat.size() || stat.at(close + 2) != 'Z';
+#else
+    Q_UNUSED(pid);
+    return false;
+#endif
 }
 
 UpdatePackage package(const QString &name, const QByteArray &bytes)
@@ -373,6 +393,70 @@ private slots:
         QVERIFY(write(root + QStringLiteral("/cache/appimage-at-start"), "0.2.0"));
         UpdateInstaller deb(environment(PackageKind::Deb, root), QStringLiteral("0.1.0"));
         QVERIFY(!deb.installAppImageAtStart({}));
+    }
+
+    // The cache is shared by every AppImage copy of the user's: one copy's
+    // update is neither offered, removed nor installed by another.
+    void anAppImageCopyLeavesAnothersUpdateAlone()
+    {
+        const QString root = folder();
+        const QString mine = root + QStringLiteral("/apps/HikariSub.AppImage");
+        const QString other = root + QStringLiteral("/other/HikariSub.AppImage");
+        const QByteArray old = "#!/bin/sh\nexit 0\n";
+        QVERIFY(write(mine, old, true));
+        QVERIFY(write(other, old, true));
+        const QByteArray fresh = "#!/bin/sh\nfor a; do case \"$a\" in --hikari-health=*) : > \"${a#--hikari-health=}\";; esac; done\nsleep 1\n";
+        auto env = environment(PackageKind::AppImage, root);
+        env.package.appImage = mine;
+        UpdateInstaller installer(env, QStringLiteral("0.1.0"));
+        const QString name = QStringLiteral("HikariSub-0.2.0-linux-x86_64.AppImage");
+        QVERIFY(download(installer, QStringLiteral("0.2.0"), package(name, fresh), serve(root, name, fresh)));
+        installer.installAtExit(); // an ordinary quit: installed at its next start
+        const QString staged = root + QStringLiteral("/apps/.HikariSub-0.2.0.AppImage");
+        auto otherEnv = env;
+        otherEnv.package.appImage = other;
+        UpdateInstaller otherStart(otherEnv, QStringLiteral("0.1.0"));
+        QVERIFY(!otherStart.installAppImageAtStart({}));
+        otherStart.start();
+        QCOMPARE(otherStart.state(), QStringLiteral("idle"));
+        QCOMPARE(read(other), old);
+        QVERIFY(QFileInfo::exists(staged));
+        QVERIFY(QFileInfo::exists(root + QStringLiteral("/cache/pending.json")));
+        QVERIFY(QFileInfo::exists(root + QStringLiteral("/cache/appimage-at-start")));
+        // The copy it belongs to still installs it.
+        UpdateInstaller atStart(env, QStringLiteral("0.1.0"));
+        QVERIFY(atStart.installAppImageAtStart({}));
+        QCOMPARE(read(mine), fresh);
+        QCOMPARE(read(other), old);
+    }
+
+    // A new image that hangs without reporting its window (and ignores
+    // SIGTERM, as does what it started) is gone, with what it started,
+    // before the old image is put back.
+    void theWatchdogStopsAHungUpdateBeforePuttingTheOldOneBack()
+    {
+        const QString root = folder();
+        const QString image = root + QStringLiteral("/HikariSub.AppImage");
+        const QByteArray old = "#!/bin/sh\nexit 0\n";
+        QVERIFY(write(image, old, true));
+        const QByteArray hung = "#!/bin/sh\ntrap '' TERM\necho $$ > \"" + root.toUtf8() + "/pid\"\n"
+                                "sleep 60 &\necho $! > \"" + root.toUtf8() + "/child\"\nwait\n";
+        auto env = environment(PackageKind::AppImage, root);
+        env.package.appImage = image;
+        env.healthTimeoutMs = 1500;
+        UpdateInstaller installer(env, QStringLiteral("0.1.0"));
+        const QString name = QStringLiteral("HikariSub-0.2.0-linux-x86_64.AppImage");
+        QVERIFY(download(installer, QStringLiteral("0.2.0"), package(name, hung), serve(root, name, hung)));
+        installer.restartNow();
+        installer.installAtExit();
+        QCOMPARE(read(image), old);
+        for (const char *file : {"/pid", "/child"}) {
+            const qint64 pid = read(root + QLatin1String(file)).trimmed().toLongLong();
+            QVERIFY2(pid > 0, file);
+            QVERIFY2(!running(pid), file);
+        }
+        UpdateInstaller next(env, QStringLiteral("0.1.0"));
+        QVERIFY(next.start().contains(QStringLiteral("0.2.0")));
     }
 
     void theWatchdogKeepsAnUpdateThatStarts()

@@ -175,6 +175,53 @@ std::optional<UpdateInstaller::Pending> UpdateInstaller::readPending() const
                    qint64(p.value(QStringLiteral("size")).toDouble()), p.value(QStringLiteral("manual")).toBool()};
 }
 
+// An AppImage's download, beside the image it replaces (hidden, named for
+// the version).
+QString UpdateInstaller::appImageStaging(const QString &version) const
+{
+    return QFileInfo(m_env.package.appImage).absolutePath() + QStringLiteral("/.HikariSub-%1.AppImage").arg(version);
+}
+
+// The cache, and so pending.json, is the user's, shared by every AppImage
+// copy they keep: a record whose download was staged beside another copy
+// is that copy's to install, and this one leaves it alone.
+bool UpdateInstaller::belongsToAnotherImage(const Pending &pending) const
+{
+    return m_env.package.kind == PackageKind::AppImage &&
+           pending.kind == packageKindToken(PackageKind::AppImage) && pending.file != appImageStaging(pending.version);
+}
+
+#ifndef _WIN32
+// Stops a started image that did not report its window: its whole process
+// group (it was started in a session of its own, so the AppImage runtime
+// and the app it runs go together), with SIGTERM, then SIGKILL after a
+// grace, and waits for it, so that the image put back does not find it
+// still holding the single-instance lock.
+static void stopImage(qint64 pid)
+{
+    if (pid <= 0)
+        return;
+    const pid_t group = pid_t(pid);
+    auto groupGone = [group] { return ::kill(-group, 0) != 0 && errno == ESRCH; };
+    auto waitFor = [&](int ms) {
+        QElapsedTimer waited;
+        waited.start();
+        while (waited.elapsed() < ms) {
+            if (!alive(pid) && groupGone())
+                return true;
+            QThread::msleep(50);
+        }
+        return false;
+    };
+    ::kill(-group, SIGTERM);
+    if (waitFor(5000))
+        return;
+    if (!groupGone())
+        ::kill(-group, SIGKILL);
+    waitFor(5000);
+}
+#endif
+
 void UpdateInstaller::setState(const QString &state)
 {
     if (m_state == state)
@@ -223,7 +270,9 @@ QString UpdateInstaller::start()
         Pending pending{p.value(QStringLiteral("version")).toString(), p.value(QStringLiteral("kind")).toString(),
                         p.value(QStringLiteral("file")).toString(), p.value(QStringLiteral("sha256")).toString(),
                         qint64(p.value(QStringLiteral("size")).toDouble()), p.value(QStringLiteral("manual")).toBool()};
-        if (p.value(QStringLiteral("schema")).toInt() == 1 &&
+        if (belongsToAnotherImage(pending)) {
+            // Another AppImage copy's update: neither offered nor removed.
+        } else if (p.value(QStringLiteral("schema")).toInt() == 1 &&
             !application::isNewerVersion(std8(pending.version), std8(m_running))) {
             // Installed (or older): an AppImage's old image goes with it.
             QFile::remove(pending.file);
@@ -332,7 +381,7 @@ void UpdateInstaller::download(const QString &version, const application::Update
     Pending d{version, packageKindToken(m_env.package.kind), {}, QString::fromStdString(package.sha256), package.size,
               false};
     if (m_env.package.kind == PackageKind::AppImage)
-        d.file = QFileInfo(m_env.package.appImage).absolutePath() + QStringLiteral("/.HikariSub-%1.AppImage").arg(version);
+        d.file = appImageStaging(version);
     else
         d.file = versionDir(version) + QLatin1Char('/') + name;
     if (verify(d.file, d.size, d.sha256)) {
@@ -644,8 +693,11 @@ bool UpdateInstaller::installAppImageAtStart(const QStringList &arguments)
         return false;
     const QString version = QString::fromUtf8(marker.read(64)).trimmed();
     marker.close();
-    marker.remove(); // once: a failure below leaves the update to start()
     const auto pending = readPending();
+    // Another AppImage copy's quit left it: that copy's next start installs it.
+    if (pending && belongsToAnotherImage(*pending))
+        return false;
+    marker.remove(); // once: a failure below leaves the update to start()
     if (!pending || pending->version != version || pending->kind != packageKindToken(m_env.package.kind) ||
         !application::isNewerVersion(std8(pending->version), std8(m_running)) || !canInstall() ||
         !verify(pending->file, pending->size, pending->sha256))
@@ -693,6 +745,8 @@ bool UpdateInstaller::replaceAppImage(const QStringList &arguments)
         env.remove(QString::fromLatin1(name));
     next.setProcessEnvironment(env);
     next.setWorkingDirectory(QDir::homePath());
+    // A session of its own: the watchdog can stop its whole process group.
+    next.setUnixProcessParameters(QProcess::UnixProcessFlag::CreateNewSession);
     qint64 pid = 0;
     if (next.startDetached(&pid)) {
         QElapsedTimer waited;
@@ -706,8 +760,7 @@ bool UpdateInstaller::replaceAppImage(const QStringList &arguments)
                 break;
             QThread::msleep(100);
         }
-        if (alive(pid))
-            ::kill(pid_t(pid), SIGTERM);
+        stopImage(pid);
     }
     replaceFile(old, image);
     writeResult(version, 1,

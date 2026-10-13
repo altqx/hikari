@@ -152,6 +152,8 @@ private:
     QString resultPath() const;
     QString atStartPath() const;
     std::optional<Pending> readPending() const;
+    QString appImageStaging(const QString &version) const;
+    bool belongsToAnotherImage(const Pending &pending) const;
     bool replaceAppImage(const QStringList &arguments);
     ExitAction installNsis(const std::function<std::function<void()>()> &busy);
     ExitAction installAppImage();
