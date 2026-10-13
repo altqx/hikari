@@ -7,6 +7,14 @@ name: Qt rewrite — Windows packages
 # HikariSub-<V>-windows-x64.zip under their release names. qt-release.yml
 # calls this workflow with the release version.
 on:
+  push:
+    branches: [qt, inst-qt-windows]
+    paths:
+      - cmake/HikariPackageWindows.cmake
+      - src/app/CMakeLists.txt
+      - src/app/windows/**
+      - packaging/windows/**
+      - .github/workflows/qt-package-windows.yml
   workflow_dispatch:
     inputs:
       version:
