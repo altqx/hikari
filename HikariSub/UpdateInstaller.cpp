@@ -1371,6 +1371,16 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 	// change, so what installs checks the file against the release itself.
 	if (!VerifyFile(FromUtf8(pending->file), pending->size, pending->sha256)) {
 		DropPending(*pending);
+		wxString message = wxString::Format(_("The download of HikariSub %s changed or went missing, so it was not installed. It is downloaded again at the next check."),
+			FromUtf8(pending->version));
+		// Restart now keeps the app open and says why; a quit says so at
+		// the next start.
+		if (relaunch) {
+			relaunch = false;
+			HikariMessageBox(message, _("Update"), wxOK, frame);
+			return Quit::Veto;
+		}
+		WriteLastResult(pending->version, false, 2, message);
 		return Quit::Continue;
 	}
 
