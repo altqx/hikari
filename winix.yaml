@@ -343,3 +343,28 @@ tasks:
     visualStudio: false
     timeoutSeconds: 600
     artifacts: [out/build/windows-x64-vsfilter/w2-desktop]
+  qttest-window:
+    # One QtTest executable on the interactive desktop (the windows platform, tools/winix/qttest.ps1):
+    # TEST, ARGS, TEST_TIMEOUT, FORMAT, OUT (a workspace folder for the output), REQUIRE_RUN=1 (a skip
+    # fails the task); any other --env (HIKARI_*_SHOT_DIR, ...) reaches the test.
+    script: $env:QT_QPA_PLATFORM = 'windows'; ./tools/winix/qttest.ps1
+    visualStudio: false
+    timeoutSeconds: 1800
+  ctest-regex:
+    # ctest by regex R (V=1 for -V), with the JUnit report as the artifact.
+    script: $v = if ($env:V) { '-V' } else { '--output-on-failure' }; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "$env:R" $v --output-junit results-regex.xml
+    timeoutSeconds: 2700
+    artifacts: [out/build/windows-x64-release/results-regex.xml]
+  review-window:
+    # The Windows counterparts of the review images (K1 sheets, K2 four themes and focus, O5 languages,
+    # D3 chrome) on the interactive desktop (tools/winix/review-window.ps1; PARTS selects).
+    script: ./tools/winix/review-window.ps1
+    visualStudio: false
+    timeoutSeconds: 3600
+    artifacts: [out/build/windows-x64-release/review-window]
+  vsfilter-shell-all:
+    # W2: the whole shell suite (offscreen) in the build with xy-VSFilter beside the program (vsfilter-build first).
+    script: $env:BUILD = 'windows-x64-vsfilter'; $env:TEST = 'hikari_ui_shell_tests'; $env:TEST_TIMEOUT = '2400'; $env:OUT = 'out/build/windows-x64-vsfilter/shell-all'; ./tools/winix/qttest.ps1
+    visualStudio: false
+    timeoutSeconds: 2700
+    artifacts: [out/build/windows-x64-vsfilter/shell-all]
