@@ -603,7 +603,7 @@ std::expected<MigrationOutput, QString> migrate(const KeyMap &map, const TsCatal
     r += QStringLiteral("## Key map\n\n");
     r += QStringLiteral("| Status | Rows | Meaning |\n| --- | --- | --- |\n");
     r += QStringLiteral("| exact | %1 rows from %2 legacy messages (%3 one-to-many) | Same source text and disambiguation (msgctxt), neither plural. "
-                        "The reviewed translation is kept; a fuzzy or empty one stays unfinished. |\n")
+                        "The legacy translation is carried finished; a fuzzy or empty one would be carried unfinished. |\n")
              .arg(exact).arg(exactLegacy.size()).arg(oneToMany);
     r += QStringLiteral("| placeholder | %1 rows from %2 legacy messages | A c-format id that is the rewrite source once its directives are Qt markers. "
                         "The converted translation is carried unfinished for review. |\n")
