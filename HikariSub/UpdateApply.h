@@ -98,7 +98,22 @@ namespace update_apply
 		const std::function<bool(const std::string &finalUrl)> &allowed, size_t limit);
 
 	// CreateProcessW, with the installer's folder as its working folder.
+	// It returns once the installer holds kSetupMutex (or has exited, or
+	// after 10 s): an app started after this one's quit sees it.
 	bool Launch(const std::wstring &installer, const std::wstring &arguments);
+
+	// Held by an update's setup (/UPDATE) from its start to its exit,
+	// while it waits for the app and replaces its files.
+	constexpr wchar_t kSetupMutex[] = L"Global\\io.github.altqx.HikariSub.Installing";
+	// Whether an update's setup runs now: kSetupMutex exists, even one
+	// this process may not open (an elevated setup's).
+	bool SetupRunning();
+	// A start while an update's setup runs would hold the program open
+	// and stop the update: it leaves at once and asks the setup to start
+	// HikariSub when it is done, with start-after-<copy> in the update
+	// cache of %LOCALAPPDATA% (the folder setup writes its result to).
+	// False when that file cannot be written.
+	bool AskStartAfterSetup(const std::wstring &copyKey);
 
 	// %windir%\Temp.
 	std::wstring SystemTempFolder();

@@ -8,7 +8,8 @@
 # Extra\sub\file.txt (tests/packaging/windows/make-test-payloads.sh).
 #
 # user:    run as a standard user. Per-user install, upgrade with the app running
-#          (exit 3), /UPDATE with /WAITPID and /RELAUNCH, downgrade (exit 5),
+#          (exit 3), /UPDATE with /WAITPID and /RELAUNCH, its mutex and a start
+#          request from a start during it, downgrade (exit 5),
 #          scope errors (4, 6), associations next to another app's, uninstall.
 # machine: run elevated (SYSTEM through Winix's elevated task, no desktop).
 #          All-users install, upgrade, /UPDATE, downgrade, scope conflict, uninstall.
@@ -32,12 +33,19 @@ if ($Phase -ne 'state' -and -not $SetupDir) { Write-Output 'FAIL -SetupDir is re
 $OldSetup = "$SetupDir\HikariSub-$Old-windows-x64-setup.exe"
 $NewSetup = "$SetupDir\HikariSub-$New-windows-x64-setup.exe"
 $Mutex = 'Global\io.github.altqx.HikariSub.Running'
+$SetupMutex = 'Global\io.github.altqx.HikariSub.Installing'
 $Exts = 'ass', 'ssa', 'srt', 'sub'
 $IconIds = @{ ass = 109; ssa = 110; srt = 111; sub = 112 }
 
 function Check([string] $what, [bool] $ok, [string] $detail = '') {
     if ($ok) { Write-Output "PASS $what" }
     else { Write-Output "FAIL $what $detail"; $script:failures++ }
+}
+
+function Setup-Mutex-Held {
+    $m = $null
+    if ([Threading.Mutex]::TryOpenExisting($SetupMutex, [ref] $m)) { $m.Dispose(); return $true }
+    return $false
 }
 
 function Run-Setup([string] $exe, [string] $arguments) {
@@ -333,6 +341,26 @@ if ($Phase -eq 'semver') {
         Start-Sleep -Seconds 3
         $relaunched = @(Get-Process -Name HikariSub -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq "$dir\HikariSub.exe" })
         Check '/RELAUNCH started HikariSub.exe from the install folder' ($relaunched.Count -ge 1)
+        Stop-Installed $dir
+
+        # /UPDATE holds its mutex from its start: an app started meanwhile
+        # leaves and writes start-after-nsis-user, and HikariSub starts
+        # when the update is done, without /RELAUNCH.
+        $request = Join-Path $env:LOCALAPPDATA 'HikariSub\Updates\start-after-nsis-user'
+        New-Item -ItemType Directory -Force (Split-Path $request) | Out-Null
+        Set-Content -LiteralPath $request ''
+        $waiter = Start-Process -FilePath powershell.exe -ArgumentList '-NoProfile -Command Start-Sleep -Seconds 8' -PassThru -WindowStyle Hidden
+        $setup = Start-Process -FilePath $NewSetup -ArgumentList "/S /UPDATE /WAITPID=$($waiter.Id) /CURRENTUSER /D=$dir" -PassThru
+        $null = $setup.Handle
+        Start-Sleep -Seconds 3
+        Check '/UPDATE holds its mutex while it waits for the app' (Setup-Mutex-Held)
+        $setup.WaitForExit()
+        Check '/UPDATE with a start request: exit 0' ($setup.ExitCode -eq 0) "got $($setup.ExitCode)"
+        Check '/UPDATE took the start request' (-not (Test-Path -LiteralPath $request))
+        Check '/UPDATE released its mutex' (-not (Setup-Mutex-Held))
+        Start-Sleep -Seconds 3
+        $started = @(Get-Process -Name HikariSub -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq "$dir\HikariSub.exe" })
+        Check 'a start request started HikariSub.exe after the update' ($started.Count -ge 1)
         Stop-Installed $dir
 
         Check 'downgrade: exit 5' ((Run-Setup $OldSetup '/S') -eq 5)

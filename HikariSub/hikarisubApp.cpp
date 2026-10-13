@@ -418,6 +418,18 @@ bool hikarisubApp::Initialize(int& argc, wxChar** argv)
 #endif
 		}
 	}
+#ifdef _WIN32
+	// An update's setup is replacing this installed copy: this start would
+	// hold the program open and stop it, so it leaves, and the setup starts
+	// HikariSub when it is done (installers spec, 4.2).
+	if (update_apply::SetupRunning()) {
+		std::string_view kind = KindTokenAtStart();
+		if ((kind == package_kind::Token(package_kind::Kind::NsisUser) ||
+				kind == package_kind::Token(package_kind::Kind::NsisMachine)) &&
+			update_apply::AskStartAfterSetup(std::wstring(kind.begin(), kind.end())))
+			std::exit(0);
+	}
+#endif
 	return wxApp::Initialize(argc, argv);
 }
 

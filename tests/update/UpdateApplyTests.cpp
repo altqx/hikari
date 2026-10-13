@@ -455,6 +455,39 @@ TEST(updateApplyFindsTheUsersOwnFolderChangeable)
 	CHECK(!update_apply::IsProtectedFromUser(folder));
 }
 
+// A start while an update's setup runs leaves and asks for a start after
+// it; the handoff returns only once the setup holds its mutex.
+TEST(updateApplyAStartDuringTheSetupWaitsForIt)
+{
+	CHECK(!update_apply::SetupRunning());
+	HANDLE held = CreateMutexW(nullptr, TRUE, update_apply::kSetupMutex);
+	CHECK(held != nullptr);
+	CHECK(update_apply::SetupRunning());
+	ReleaseMutex(held);
+	CloseHandle(held);
+	CHECK(!update_apply::SetupRunning());
+
+	wchar_t saved[32768] = {};
+	DWORD savedLength = GetEnvironmentVariableW(L"LOCALAPPDATA", saved, 32768);
+	std::wstring local = TempFolder();
+	SetEnvironmentVariableW(L"LOCALAPPDATA", local.c_str());
+	CHECK(update_apply::AskStartAfterSetup(L"nsis-user"));
+	SetEnvironmentVariableW(L"LOCALAPPDATA", savedLength ? saved : nullptr);
+	CHECK(GetFileAttributesW((local + L"\\HikariSub\\Updates\\start-after-nsis-user").c_str()) != INVALID_FILE_ATTRIBUTES);
+
+	// A stand-in setup that takes the mutex after starting up, then holds
+	// it 8 s: Launch returns while it is held, not at once.
+	wchar_t system[MAX_PATH];
+	UINT length = GetSystemDirectoryW(system, MAX_PATH);
+	std::wstring powershell = std::wstring(system, length) + L"\\WindowsPowerShell\\v1.0\\powershell.exe";
+	CHECK(update_apply::Launch(powershell,
+		L"-NoProfile -NonInteractive -Command \"$m = [Threading.Mutex]::new($true, 'Global\\io.github.altqx.HikariSub.Installing'); Start-Sleep -Seconds 8\""));
+	CHECK(update_apply::SetupRunning());
+	for (int waited = 0; waited < 100 && update_apply::SetupRunning(); ++waited)
+		Sleep(200);
+	CHECK(!update_apply::SetupRunning());
+}
+
 #ifdef _WIN32
 // The real fetch, against a published release (HIKARISUB_TEST_NETWORK=1):
 // GitHub redirects to its asset host, every hop must be allowed, and every
