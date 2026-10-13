@@ -656,21 +656,23 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
     QFile headFile(scripts.filePath(QStringLiteral("record.lua.in")));
     QVERIFY(headFile.open(QIODevice::ReadOnly));
     QByteArray head = headFile.readAll();
-    // Two scripts load at once, each in its own helper, and both append to
-    // the one capture file. Windows has no atomic append across processes
-    // (the C runtime seeks to the end, then writes), so one load line could
-    // overwrite the other. Each record takes the file in turn: a lock file
-    // beside it, taken by renaming it, which only one helper can do.
+    // The Document's scripts load at once, each in its own helper, and one
+    // can still be loading while the last one's macro runs. On Windows two
+    // helpers appending to one file can lose a line: the C runtime's append
+    // seeks to the end, then writes, so both can write at the same offset.
+    // A lock file taken with os.rename does not keep them apart either: two
+    // LuaJIT processes taking one 5000 times each in the Windows VM were
+    // both inside it about 800 times, and lines were still lost. So each
+    // script's load records go to a file of its own (capture.jsonl.<tag>);
+    // validations and runs come from the one active macro, one at a time,
+    // and go to the shared capture in order.
     const QByteArray appendOpen = "local f = assert(io.open(output(), \"a\"))";
     QVERIFY(head.contains(appendOpen));
-    head.replace(appendOpen, "local f = locked(output())");
+    head.replace(appendOpen, "local f = assert(io.open(own(output(), event), \"a\"))");
     // On the tag's line, so the scripts' line numbers stay legacy's.
-    const QByteArray locked = " local function locked(out)"
-                              " local lock, mine = out .. \".lock\", out .. \".lock.\" .. tag"
-                              " for _ = 1, 50000000 do if os.rename(lock, mine) then break end end"
-                              " local f = assert(io.open(out, \"a\"))"
-                              " return { write = function(_, s) f:write(s) end,"
-                              " close = function() f:close(); os.rename(mine, lock) end } end";
+    const QByteArray own = " local function own(out, event) return event == \"load\" and out .. \".\" .. tag or out end";
+    const QStringList tags{QStringLiteral("first"), QStringLiteral("last"), QStringLiteral("invalid"),
+                           QStringLiteral("raising"), QStringLiteral("broken")};
     // The legacy boxes' text, read from the capture's screenshots (screens/);
     // in validation-error the log window covers the box, so its text is the
     // one the same branch gives validation-false (a validation that raises
@@ -709,16 +711,15 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
         QVERIFY(QDir::setCurrent(caseDir.path()));
         const QString absolute = caseDir.filePath(QStringLiteral("abs"));
         for (const QString &folder : {absolute, caseDir.filePath(QStringLiteral("s4"))})
-            for (const char *name : {"first", "last", "invalid", "raising", "broken"}) {
-                QFile body(scripts.filePath(QLatin1String(name) + QStringLiteral(".lua")));
+            for (const QString &name : tags) {
+                QFile body(scripts.filePath(name + QStringLiteral(".lua")));
                 QVERIFY(body.open(QIODevice::ReadOnly));
                 QByteArray text = head;
-                text.replace("local tag = TAG", "local tag = \"" + QByteArray(name) + "\";" + locked);
-                writeFile(folder + QLatin1Char('/') + QLatin1String(name) + QStringLiteral(".lua"), text + "\n" + body.readAll());
+                text.replace("local tag = TAG", "local tag = \"" + name.toUtf8() + "\";" + own);
+                writeFile(folder + QLatin1Char('/') + name + QStringLiteral(".lua"), text + "\n" + body.readAll());
             }
         const QString out = caseDir.filePath(QStringLiteral("capture.jsonl"));
         writeFile(out, {});
-        writeFile(out + QStringLiteral(".lock"), {});
         qputenv("HIKARI_CAPTURE_OUT", out.toLocal8Bit());
         // Settings of its own, as legacy's fresh copy (no script editor set).
         auto o = options();
@@ -741,6 +742,16 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
                 if (!line.isEmpty())
                     got.append(QJsonDocument::fromJson(line).object());
             return got;
+        };
+        // How many times each script has loaded: the lines of its own file.
+        auto loads = [&] {
+            std::map<QString, qsizetype> count;
+            for (const QString &tag : tags) {
+                QFile f(out + QLatin1Char('.') + tag);
+                if (f.open(QIODevice::ReadOnly))
+                    count[tag] = f.readAll().count('\n');
+            }
+            return count;
         };
 
         const QJsonArray steps = legacy["steps"].toArray();
@@ -766,6 +777,7 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
             const bool picker = titles.contains(QStringLiteral("Select a script editor"));
 
             const auto before = records().size();
+            const auto loadsBefore = loads();
             const auto doneBefore = done.size(), noticesBefore = notices.size(), editorBefore = editor.size();
             automation.runLastLoadedScript();
             QTRY_VERIFY_WITH_TIMEOUT(done.size() > doneBefore || notices.size() > noticesBefore, 30'000);
@@ -775,18 +787,21 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
                                      30'000);
             // The run waits for its own script's load only; the others' loads,
             // each in its own helper, can land after it ends (on Windows CI).
-            qsizetype loads = 0;
-            for (const auto &r : step["records"].toArray())
-                loads += r.toObject()["event"].toString() == QStringLiteral("load");
+            // So wait until every load legacy recorded in the step has a line.
             auto loadsSince = [&] {
-                qsizetype n = 0;
-                for (const QJsonObject &r : records().mid(before))
-                    n += r["event"].toString() == QStringLiteral("load");
-                return n;
+                QStringList got;
+                for (const auto &[script, count] : loads())
+                    for (auto i = loadsBefore.contains(script) ? loadsBefore.at(script) : 0; i < count; ++i)
+                        got << script;
+                return got;
             };
-            QTRY_VERIFY_WITH_TIMEOUT(loadsSince() >= loads, 30'000);
+            qsizetype loadsExpected = 0;
+            for (const auto &r : step["records"].toArray())
+                loadsExpected += r.toObject()["event"].toString() == QStringLiteral("load");
+            QTRY_VERIFY_WITH_TIMEOUT(loadsSince().size() >= loadsExpected, 30'000);
             QTest::qWait(300); // nothing more comes
             const auto got = records().mid(before);
+            QStringList gotLoads = loadsSince();
 
             // Legacy's records, less the validations its Automation menu build
             // made first: the hotkey goes through the menu item, and
@@ -800,7 +815,7 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
             for (qsizetype i = 0; i < all.size(); ++i)
                 if (all[i].toObject()["event"].toString() == QStringLiteral("validate"))
                     command = i;
-            QStringList expectedLoads, gotLoads, expected, actual;
+            QStringList expectedLoads, expected, actual;
             const bool validationEdits = id == QStringLiteral("validation-false");
             auto view = [&](const QJsonObject &r, bool fromLegacy) {
                 QString first = r["first"].toString();
@@ -826,12 +841,8 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
                 else if (r["event"].toString() != QStringLiteral("validate") || i == command)
                     expected << view(r, true);
             }
-            for (const QJsonObject &r : got) {
-                if (r["event"].toString() == QStringLiteral("load"))
-                    gotLoads << r["script"].toString();
-                else
-                    actual << view(r, false);
-            }
+            for (const QJsonObject &r : got)
+                actual << view(r, false);
             // Each script loads in its own helper, so the loads' order is theirs.
             expectedLoads.sort();
             gotLoads.sort();
