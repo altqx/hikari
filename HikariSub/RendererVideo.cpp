@@ -41,6 +41,8 @@
 #include <wx/image.h>
 #include <wx/dc.h>
 #include <wx/app.h>
+#include <cairo.h>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 
@@ -86,14 +88,109 @@ namespace
 	}
 }
 
-// Paints BGRA video frames into the video window on the UI thread.
+// Paints BGRA video frames into the video window on the UI thread, with
+// cairo on the paint's own context. A frame of another size than the window
+// is scaled once, bilinearly, into a surface kept for the repaints that
+// come before the next frame (the time and slider refreshes, overlapping
+// windows), so a repaint only copies it.
 class LinuxFramePainter
 {
 public:
+	~LinuxFramePainter() { Forget(); }
+
 	void Paint(wxDC &dc, const FrameExchange::Frame &frame, const RECT &target)
 	{
-		DrawBgraFrameWithWxDc(dc, frame.data, frame.width, frame.height, frame.pitch, target);
+		int targetWidth = target.right - target.left;
+		int targetHeight = target.bottom - target.top;
+		if (!frame.data || frame.width <= 0 || frame.height <= 0 || frame.pitch < frame.width * 4 ||
+			targetWidth <= 0 || targetHeight <= 0)
+			return;
+		cairo_t *cr = static_cast<cairo_t *>(dc.GetImpl()->GetCairoContext());
+		if (!cr) {
+			DrawBgraFrameWithWxDc(dc, frame.data, frame.width, frame.height, frame.pitch, target);
+			return;
+		}
+		// the window's pixels, which a HiDPI screen has more of than wx's units
+		double scaleX = 1, scaleY = 1;
+		cairo_surface_get_device_scale(cairo_get_target(cr), &scaleX, &scaleY);
+		int pixelWidth = (int)std::lround(targetWidth * scaleX);
+		int pixelHeight = (int)std::lround(targetHeight * scaleY);
+
+		cairo_surface_t *image;
+		if (pixelWidth == frame.width && pixelHeight == frame.height) {
+			// one to one: the frame itself, without a copy. BGRA in memory is
+			// cairo's native-endian xRGB on little-endian machines.
+			Forget();
+			image = cairo_image_surface_create_for_data(const_cast<unsigned char *>(frame.data),
+				CAIRO_FORMAT_RGB24, frame.width, frame.height, frame.pitch);
+		}
+		else {
+			if (!Scale(frame, pixelWidth, pixelHeight))
+				return;
+			image = cairo_surface_reference(m_Scaled);
+		}
+		cairo_save(cr);
+		cairo_rectangle(cr, target.left, target.top, targetWidth, targetHeight);
+		cairo_clip(cr);
+		cairo_translate(cr, target.left, target.top);
+		cairo_scale(cr, 1.0 / scaleX, 1.0 / scaleY);
+		cairo_set_source_surface(cr, image, 0, 0);
+		cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_NEAREST);
+		cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+		cairo_paint(cr);
+		cairo_restore(cr);
+		cairo_surface_destroy(image);
 	}
+
+private:
+	bool Scale(const FrameExchange::Frame &frame, int width, int height)
+	{
+		if (m_Scaled && m_Serial == frame.serial && m_Source == frame.data &&
+			m_Width == width && m_Height == height)
+			return true;
+		if (!m_Scaled || m_Width != width || m_Height != height) {
+			Forget();
+			m_Scaled = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
+			if (cairo_surface_status(m_Scaled) != CAIRO_STATUS_SUCCESS) {
+				Forget();
+				return false;
+			}
+			m_Width = width;
+			m_Height = height;
+		}
+		cairo_surface_t *source = cairo_image_surface_create_for_data(const_cast<unsigned char *>(frame.data),
+			CAIRO_FORMAT_RGB24, frame.width, frame.height, frame.pitch);
+		cairo_t *cr = cairo_create(m_Scaled);
+		cairo_scale(cr, (double)width / frame.width, (double)height / frame.height);
+		cairo_set_source_surface(cr, source, 0, 0);
+		// GOOD averages when shrinking, but takes 24 ms for 720p; BILINEAR is
+		// what wxImage::Rescale did before, at a tenth of its time
+		cairo_pattern_set_filter(cairo_get_source(cr), CAIRO_FILTER_BILINEAR);
+		cairo_pattern_set_extend(cairo_get_source(cr), CAIRO_EXTEND_PAD);
+		cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+		cairo_paint(cr);
+		cairo_destroy(cr);
+		cairo_surface_destroy(source);
+		cairo_surface_flush(m_Scaled);
+		m_Serial = frame.serial;
+		m_Source = frame.data;
+		return true;
+	}
+
+	void Forget()
+	{
+		if (m_Scaled)
+			cairo_surface_destroy(m_Scaled);
+		m_Scaled = nullptr;
+		m_Width = m_Height = 0;
+		m_Source = nullptr;
+	}
+
+	cairo_surface_t *m_Scaled = nullptr;
+	int m_Width = 0;
+	int m_Height = 0;
+	unsigned m_Serial = 0;
+	const unsigned char *m_Source = nullptr;
 };
 #endif
 
