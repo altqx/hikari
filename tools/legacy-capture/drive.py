@@ -14,11 +14,15 @@ Routes (see plan.json):
             macros run through script hotkeys (dialog subset, then corpus)
   ui        (plan "ui" section, ui_capture.py) F1 Find and replace and F3
             spell checker cases, observed through automation/state-dump.lua
+  document-scripts (plan "document_scripts" section,
+            document_scripts_capture.py) S4: the scripts a Document names and
+            "Run the last loaded script", with validation
 Anything else is recorded as not captured, with the plan's reason.
 """
 import argparse, hashlib, json, os, platform, shutil, subprocess, sys, tarfile, tempfile, time
 from pathlib import Path
 
+import document_scripts_capture
 import ui_capture
 
 
@@ -498,6 +502,11 @@ def main():
         ui = plan["ui"]
         result["cases"].append({"id": ui["id"], "route": "ui",
                                 "observations": ui_capture.run(ui, a.package, a.display, workdir, a.plan.parent)})
+    if "document_scripts" in plan:
+        s4 = plan["document_scripts"]
+        result["cases"].append({"id": s4["id"], "route": "document-scripts",
+                                "observations": document_scripts_capture.run(s4, a.package, a.display, workdir,
+                                                                             a.plan.parent)})
     a.out.write_text(json.dumps(result, indent=1) + "\n")
     bad = [c["id"] for c in result["cases"] for o in c.get("observations", [])
            if o["status"] not in ("captured", "not-representable-in-legacy-ms")]

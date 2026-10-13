@@ -2,6 +2,7 @@
 """S3 on Windows: the legacy automation capture driven on the Winix VM desktop.
 
     drive_windows.py --plan plan.json --out <dir>/observations.json [--config winix.yaml]
+    drive_windows.py --plan plan.json --out <dir>/s4.json --document-scripts   (S4, see document_scripts())
 
 The Linux route (drive.py) never completes a dialog case: the legacy Linux
 build deadlocks on any macro that shows a dialog. This route runs the legacy
@@ -304,6 +305,86 @@ def probe(legacy, layout, spec, dump_first_hang):
     return rec
 
 
+FILE_PICKERS = ("Select a script editor", "Choose script")
+
+
+def document_scripts(legacy, spec):
+    """S4 on Windows: each case of plan.json's document_scripts section in its
+    own copy (legacy-win-s4-setup), as document_scripts_capture.py runs them
+    on Linux: GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT by its hotkey, the scripts'
+    records (legacy-win-s4-output), the windows that open, each answered in
+    turn (Return, Escape for a file picker, Alt+F4 for the log window), and
+    the main window's title."""
+    job, lines = legacy.w.task("legacy-win-s4-setup")
+    layout = next((l[len("S4_LAYOUT "):] for l in lines if l.startswith("S4_LAYOUT ")), None)
+    if job.get("state") != "succeeded" or not layout:
+        raise RuntimeError("legacy-win-s4-setup failed:\n" + "\n".join(lines[-30:]))
+    layout = json.loads(layout)
+    keys = "+".join(k.upper() for k in spec["hotkey"].split("-"))
+
+    def records(case):
+        _, out = legacy.w.task("legacy-win-s4-output")
+        text = "".join(sections(out).get(case, []))
+        return [json.loads(l) for l in base64.b64decode(text).decode("utf-8").splitlines() if l.strip()] if text else []
+
+    obs = []
+    for case in spec["cases"]:
+        rec = {"id": case["id"], "document_scripts": case.get("document_scripts"), "status": "timeout", "steps": []}
+        where = layout["cases"][case["id"]]
+        if not legacy.launch(where["exe"], where["doc"]):
+            rec["status"] = "no-main-window"
+            obs.append(rec)
+            continue
+        time.sleep(5)
+        rec["startup_popups"] = legacy.popups()
+        rec["startup_records"] = records(case["id"])
+        for _ in rec["startup_popups"] or []:
+            legacy.w.ui("keys", keys="RETURN")
+            time.sleep(1)
+        seen = len(rec["startup_records"])
+        for step in case["steps"]:
+            if step["do"] == "touch":
+                legacy.w.task("legacy-win-s4-touch")  # S4_SCRIPT defaults to the plan's only touched script, last
+                rec["steps"].append({"do": "touch", "script": step["script"], "status": "done"})
+                continue
+            srec = {"do": "run_last", "hotkey": keys, "windows": []}
+            legacy.focus_main()
+            time.sleep(0.5)
+            srec["hotkey_reply"] = legacy.w.ui("keys", keys=keys)
+            time.sleep(step.get("timeout", 8))
+            got = records(case["id"])
+            srec["records"] = got[seen:]
+            seen = len(got)
+            for n in range(6):
+                popups = legacy.popups() or []
+                if not popups:
+                    break
+                title = popups[0]
+                entry = {"title": title, "screenshot": legacy.shot(f"s4-{case['id']}-{len(rec['steps'])}-{n}")}
+                # The log window does not close on Return (the Linux capture):
+                # Alt+F4 closes it.
+                entry["answered"] = "ALT+F4" if title == "Log window" else \
+                    "ESCAPE" if title in FILE_PICKERS else "RETURN"
+                legacy.w.ui("keys", keys=entry["answered"])
+                time.sleep(1.5)
+                more = records(case["id"])
+                if len(more) > seen:
+                    entry["records_after"] = more[seen:]
+                    seen = len(more)
+                srec["windows"].append(entry)
+            mine = legacy.windows() or []
+            srec["main_title"] = next((w.get("name") for w in mine if MAIN_TITLE in (w.get("name") or "")), None)
+            srec["status"] = "done" if mine else "app-ended"
+            rec["steps"].append(srec)
+            if srec["status"] != "done":
+                break
+        rec["status"] = "captured" if len(rec["steps"]) == len(case["steps"]) and \
+            all(s["status"] == "done" for s in rec["steps"]) else "incomplete"
+        legacy.kill()
+        obs.append(rec)
+    return obs
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--plan", required=True, type=Path)
@@ -313,6 +394,8 @@ def main():
     ap.add_argument("--scratch", default="out/legacy-win", type=Path, help="job artifacts (the minidump) go here")
     ap.add_argument("--dump-first-hang", action="store_true",
                     help="keep a minidump of the first step that never answers (legacy-win-dump)")
+    ap.add_argument("--document-scripts", action="store_true",
+                    help="run only plan.json's document_scripts cases (S4; legacy-win-s4-* tasks)")
     a = ap.parse_args()
     plan = json.loads(a.plan.read_text())
     spec = plan["automation"]
@@ -329,6 +412,12 @@ def main():
               "package_sha256": layout["zip_sha256"], "probe_sha256": layout["probe_sha256"],
               "host": f"windows (Winix VM {a.vm}, Windows build {windows.get('OsBuildNumber', '?')})",
               "captured_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "cases": []}
+    if a.document_scripts:
+        s4 = plan["document_scripts"]
+        result["cases"].append({"id": s4["id"], "route": "document-scripts", "observations": document_scripts(legacy, s4)})
+        a.out.write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n")
+        print(json.dumps({c["id"]: c["status"] for c in result["cases"][0]["observations"]}))
+        return
     obs = [bundled_startup(legacy, layout), probe(legacy, layout, spec, a.dump_first_hang)]
     result["cases"].append({"id": spec["id"], "route": "automation", "observations": obs})
     a.out.write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n")

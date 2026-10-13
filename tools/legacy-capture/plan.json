@@ -880,5 +880,100 @@
       }
     ],
     "env": {"LANG": "C.UTF-8"}
+  },
+  "document_scripts": {
+    "id": "S4-document-scripts",
+    "note": "Document scripts (Script Info 'Automation Scripts') and Run the last loaded script, through its hotkey; see document_scripts_capture.py.",
+    "scripts_dir": "automation/document-scripts",
+    "scripts": [
+      "first",
+      "last",
+      "invalid",
+      "raising",
+      "broken"
+    ],
+    "hotkey": "Ctrl-Shift-F12",
+    "xdotool_key": "ctrl+shift+F12",
+    "focus_at": [900, 259],
+    "styles": "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\r\nStyle: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1",
+    "events": "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Gate\r\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,Second\r\n",
+    "cases": [
+      {
+        "id": "runs-last",
+        "document_scripts": "|{abs}/first.lua|missing.lua|s4/last.lua",
+        "steps": [
+          {
+            "do": "run_last"
+          },
+          {
+            "do": "touch",
+            "script": "last"
+          },
+          {
+            "do": "run_last"
+          },
+          {
+            "do": "run_last"
+          }
+        ]
+      },
+      {
+        "id": "separators",
+        "document_scripts": "  s4/first.lua~~s4/last.lua$missing.lua",
+        "steps": [
+          {
+            "do": "run_last"
+          }
+        ]
+      },
+      {
+        "id": "no-scripts",
+        "document_scripts": null,
+        "steps": [
+          {
+            "do": "run_last"
+          }
+        ]
+      },
+      {
+        "id": "only-missing",
+        "document_scripts": "|nothing.lua",
+        "steps": [
+          {
+            "do": "run_last"
+          }
+        ]
+      },
+      {
+        "id": "validation-false",
+        "document_scripts": "|{abs}/invalid.lua",
+        "steps": [
+          {
+            "do": "run_last"
+          },
+          {
+            "do": "run_last"
+          }
+        ]
+      },
+      {
+        "id": "validation-error",
+        "document_scripts": "|{abs}/raising.lua",
+        "steps": [
+          {
+            "do": "run_last"
+          }
+        ]
+      },
+      {
+        "id": "load-error",
+        "document_scripts": "|{abs}/broken.lua",
+        "steps": [
+          {
+            "do": "run_last"
+          }
+        ]
+      }
+    ]
   }
 }
