@@ -16,6 +16,7 @@
 
 
 #include "SemVer.h"
+#include "PackageKind.h"
 #include "UpdatePolicy.h"
 #include "VersionHikariSub.h"
 #include "OpennWrite.h"
@@ -46,6 +47,7 @@
 #include "UtilsWindows.h"
 #include <locale>
 #include <algorithm>
+#include <optional>
 #ifndef _WIN32
 #include <cctype>
 #include <fstream>
@@ -632,9 +634,10 @@ int config::LoadOptions()
 {
 	wxStandardPathsBase &paths = wxStandardPaths::Get();
 	pathfull = paths.GetExecutablePath().BeforeLast(wxFileName::GetPathSeparator());
-	packageMarker = ReadPackageMarker(pathfull);
+	std::optional<package_kind::Kind> marker = ReadPackageMarker(pathfull);
+	packageMarker = marker ? wxString::FromUTF8(std::string(package_kind::Token(*marker)).c_str()) : wxString();
 	dataPath = pathfull;
-	if (package_kind::IsInstalled(packageMarker)){
+	if (package_kind::IsInstalled(marker)){
 		wxString installedData = InstalledDataPath();
 		if (!installedData.empty() && wxFileName::Mkdir(installedData, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL)){
 			dataPath = installedData;

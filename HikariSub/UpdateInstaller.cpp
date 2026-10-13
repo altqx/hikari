@@ -913,10 +913,10 @@ package_kind::Kind update_installer::Kind()
 	static std::optional<package_kind::Kind> kind;
 	if (!kind) {
 #ifdef _WIN32
-		kind = package_kind::Resolve(Options.packageMarker, true, false);
+		kind = package_kind::Resolve(package_kind::ParseToken(ToUtf8(Options.packageMarker)), true, false);
 #else
 		wxString appImage = AppImagePath();
-		kind = package_kind::Resolve(Options.packageMarker, false,
+		kind = package_kind::Resolve(package_kind::ParseToken(ToUtf8(Options.packageMarker)), false,
 			!appImage.empty() && wxFileName::FileExists(appImage));
 #endif
 	}

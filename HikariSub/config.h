@@ -21,7 +21,6 @@
 #include "EnumFactory.h"
 #include "LogHandler.h"
 #include "WinUndef.h"
-#include "PackageKind.h"
 #include <wx/tokenzr.h>
 #include <wx/utils.h>
 
@@ -31,7 +30,6 @@
 #include <wx/bitmap.h>
 #include <wx/filename.h>
 #include <map>
-#include <optional>
 #include <vector>
 #include <algorithm>
 
@@ -453,8 +451,10 @@ public:
 	//or ~/.local/share/HikariSub/Legacy (installers spec, 1.7). It keeps the
 	//portable layout: Config/, Catalog/, Dictionary/UserDic.udic, Subs/...
 	wxString dataPath;
-	//package-kind.txt beside the executable, read as the options load
-	std::optional<package_kind::Kind> packageMarker;
+	//the kind's token in package-kind.txt beside the executable, read as
+	//the options load; empty when there is none or it names no kind. A
+	//string, since projects built before C++17 include this header too.
+	wxString packageMarker;
 	wxArrayString dirs;
 	bool AudioOpts;
 
