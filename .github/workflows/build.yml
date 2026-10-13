@@ -501,7 +501,7 @@ jobs:
           mkdir -p check/tar check/deb check/rpm
           tar -xzf "linux-packages/hikarisub-$VERSION-linux-x86_64.tar.gz" -C check/tar
           dpkg-deb -x "linux-packages/hikarisub-$VERSION-linux-amd64.deb" check/deb
-          (cd check/rpm && rpm2cpio "../../linux-packages/hikarisub-$VERSION-linux-x86_64.rpm" | cpio -idm --quiet)
+          (cd check/rpm && rpm2cpio "../../linux-packages/hikarisub-$VERSION-linux-x86_64.rpm" | cpio -idm --quiet --no-absolute-filenames)
           (cd check && "../linux-packages/HikariSub-$VERSION-linux-x86_64.AppImage" --appimage-extract >/dev/null)
           for tree in check/tar check/deb check/rpm check/squashfs-root; do
             tests/packaging/linux/check-payload.sh "$tree" 2.35
