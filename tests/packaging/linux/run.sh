@@ -13,8 +13,9 @@
 #              hikarisub-<V>-linux-x86_64.tar.gz
 #
 # Options:
-#   --gst-check <file>  gst-check built in the floor container (required
-#                       until the app has --hikari-gst-check)
+#   --gst-check <file>  gst-check built in the floor container; the AppImage
+#                       test runs it in the app's place to see where each
+#                       element is loaded from
 #   --aur <dir>         the rendered PKGBUILD and .SRCINFO (aur test)
 #   --upgrade <dir>     newer test packages to upgrade to (deb, rpm tests)
 set -eu

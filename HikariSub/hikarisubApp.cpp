@@ -323,7 +323,9 @@ namespace
 #ifndef _WIN32
 	// --hikari-gst-check[=<file>] (installers spec, 8.1): creates the
 	// GStreamer elements the player uses and, given a file, decodes it to
-	// fakesinks. Prints what is missing; exits 0 when nothing is.
+	// fakesinks. Prints what is missing; exits 0 when nothing is, 1 when an
+	// element is missing and 2 when the file does not decode, as the
+	// packaging tests' gst-check does.
 	int GstCheck(const char *file)
 	{
 		GError *error = nullptr;
@@ -356,7 +358,7 @@ namespace
 		GstElement *audioSink = gst_element_factory_make("fakesink", nullptr);
 		g_object_set(playbin, "uri", uri, "video-sink", videoSink, "audio-sink", audioSink, nullptr);
 		g_free(uri);
-		int result = 1;
+		int result = 2;
 		if (gst_element_set_state(playbin, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE) {
 			GstBus *bus = gst_element_get_bus(playbin);
 			GstMessage *message = gst_bus_timed_pop_filtered(bus, 60 * GST_SECOND,

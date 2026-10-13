@@ -82,12 +82,6 @@ as_user() {
     su "$user" -s /bin/sh -c "cd $uhome && $*"
 }
 
-# --version and --hikari-gst-check come with the updater work; until the
-# binary has them the tests use gst-check and skip the version line.
-has_switch() {
-    grep -q -- "$2" "$1" 2>/dev/null
-}
-
 # Starts the GUI under Xvfb for 10 s as the test user. Still running at the
 # end (exit 124 from timeout) is success; a crash or a loader error fails.
 gui_start() {
@@ -107,20 +101,19 @@ gui_start() {
     pass "$what: the GUI starts and runs under Xvfb"
 }
 
+# --version prints "<version> (<kind>)" and exits 0 without a display
+# (installers spec, 8.1).
 version_check() {
-    what=$1 exe=$2 kind=$3
-    if has_switch "$exe" --hikari-gst-check; then
-        out=$(as_user "APPIMAGE_EXTRACT_AND_RUN=1 timeout 20 $4 --version") ||
-            fail "$what: --version failed"
-        [ "$out" = "$version ($kind)" ] || fail "$what: --version printed '$out', not '$version ($kind)'"
-        pass "$what: --version prints $out"
-    else
-        echo "SKIP: $what: the app has no --version yet"
-    fi
+    what=$1 kind=$2 runner=$3
+    out=$(as_user "APPIMAGE_EXTRACT_AND_RUN=1 timeout 20 $runner --version") ||
+        fail "$what: --version failed"
+    [ "$out" = "$version ($kind)" ] || fail "$what: --version printed '$out', not '$version ($kind)'"
+    pass "$what: --version prints $out"
 }
 
-# Runs the GStreamer check through <runner>, which runs gst-check (or the
-# app's --hikari-gst-check once it exists) with the package's environment.
+# Runs the GStreamer check through <runner> with the package's environment:
+# the app's own --hikari-gst-check=<file>, or a runner that takes the file as
+# its argument (gst-check, which also prints where each element came from).
 # Exit 1 is a missing element, exit 2 a file that does not decode. The
 # VP8/Vorbis sample must decode everywhere. The H.264/AAC sample must decode
 # too, except from an rpm: Fedora and openSUSE ship no H.264 or AAC decoder
@@ -128,18 +121,22 @@ version_check() {
 gst_check() {
     what=$1
     shift
-    as_user "$* /tests/sample-free.webm" > "$log/gst-$what.txt" 2>&1 || {
+    case $* in
+    *--hikari-gst-check) sep== ;;
+    *) sep=' ' ;;
+    esac
+    as_user "$*$sep/tests/sample-free.webm" > "$log/gst-$what.txt" 2>&1 || {
         cat "$log/gst-$what.txt"
         fail "$what: the GStreamer check failed on the VP8/Vorbis sample"
     }
     cat "$log/gst-$what.txt"
     pass "$what: playbin, appsrc, appsink, audioconvert, audioresample, autoaudiosink and videoconvert load; the VP8/Vorbis sample decodes"
     rc=0
-    as_user "$* /tests/sample.mkv" > "$log/gst-$what-h264.txt" 2>&1 || rc=$?
+    as_user "$*$sep/tests/sample.mkv" > "$log/gst-$what-h264.txt" 2>&1 || rc=$?
     if [ $rc -eq 0 ]; then
         pass "$what: the H.264/AAC sample decodes"
     elif [ $rc -eq 2 ] && [ "$mode" = rpm ]; then
-        grep -i 'missing decoder' "$log/gst-$what-h264.txt" || true
+        grep -i 'decode:\|missing decoder' "$log/gst-$what-h264.txt" || true
         echo "SKIP: $what: $PRETTY_NAME has no H.264/AAC decoder of its own"
     else
         cat "$log/gst-$what-h264.txt"
@@ -220,13 +217,9 @@ native_checks() {
     what=$1 kind=$2
     installed_layout "$what" "$kind"
     ldd_check "$what" /opt/hikarisub
-    version_check "$what" /opt/hikarisub/hikarisub "$kind" /usr/bin/hikarisub
+    version_check "$what" "$kind" /usr/bin/hikarisub
     gui_start "$what" /usr/bin/hikarisub
-    if has_switch /opt/hikarisub/hikarisub --hikari-gst-check; then
-        gst_check "$what" /usr/bin/hikarisub --hikari-gst-check
-    else
-        gst_check "$what" /tests/gst-check
-    fi
+    gst_check "$what" /usr/bin/hikarisub --hikari-gst-check
 }
 
 # ------------------------------------------------------------- AppImage ----
@@ -239,7 +232,7 @@ test_appimage() {
     appdir=$uhome/squashfs-root
     [ "$(cat "$appdir/usr/lib/hikarisub/package-kind.txt")" = appimage ] ||
         fail "appimage: package-kind.txt is not appimage"
-    version_check appimage "$appdir/usr/lib/hikarisub/hikarisub" appimage ./HikariSub.AppImage
+    version_check appimage appimage ./HikariSub.AppImage
     gui_start appimage ./HikariSub.AppImage
 
     # Which libraries the running app loads, and from where: nothing on the
@@ -261,20 +254,18 @@ test_appimage() {
     [ $bad -eq 0 ] || fail "appimage: host libraries were loaded from the AppImage"
     pass "appimage: $(grep -c "^$appdir/" "$log/loaded.txt") libraries loaded from the AppImage, none on the host list; $(grep -vc "^$appdir/" "$log/loaded.txt") from the host"
 
-    # The GStreamer check with the AppImage's own environment: AppRun runs
-    # gst-check in the app's place (or the app's own switch once it has one).
-    if has_switch "$appdir/usr/lib/hikarisub/hikarisub" --hikari-gst-check; then
-        gst_check appimage "APPIMAGE_EXTRACT_AND_RUN=1 ./HikariSub.AppImage --hikari-gst-check"
-    else
-        mv "$appdir/usr/lib/hikarisub/hikarisub" "$appdir/usr/lib/hikarisub/hikarisub.real"
-        printf '#!/bin/sh\nexec /tests/gst-check "$@"\n' > "$appdir/usr/lib/hikarisub/hikarisub"
-        chmod 0755 "$appdir/usr/lib/hikarisub/hikarisub"
-        gst_check appimage "./squashfs-root/AppRun"
-        grep '^element ' "$log/gst-appimage.txt" | grep -v "$appdir/usr/lib/hikarisub-runtime/gstreamer-1.0/" |
-            grep -v '(built in)' && fail "appimage: an element came from outside the AppImage"
-        mv "$appdir/usr/lib/hikarisub/hikarisub.real" "$appdir/usr/lib/hikarisub/hikarisub"
-        pass "appimage: every element comes from the AppImage's own plugins"
-    fi
+    # The GStreamer check with the AppImage's own environment: the app's
+    # switch through the AppImage, then gst-check in the app's place, which
+    # also says where each element was loaded from.
+    gst_check appimage "APPIMAGE_EXTRACT_AND_RUN=1 ./HikariSub.AppImage --hikari-gst-check"
+    mv "$appdir/usr/lib/hikarisub/hikarisub" "$appdir/usr/lib/hikarisub/hikarisub.real"
+    printf '#!/bin/sh\nexec /tests/gst-check "$@"\n' > "$appdir/usr/lib/hikarisub/hikarisub"
+    chmod 0755 "$appdir/usr/lib/hikarisub/hikarisub"
+    gst_check appimage-elements "./squashfs-root/AppRun"
+    grep '^element ' "$log/gst-appimage-elements.txt" | grep -v "$appdir/usr/lib/hikarisub-runtime/gstreamer-1.0/" |
+        grep -v '(built in)' && fail "appimage: an element came from outside the AppImage"
+    mv "$appdir/usr/lib/hikarisub/hikarisub.real" "$appdir/usr/lib/hikarisub/hikarisub"
+    pass "appimage: every element comes from the AppImage's own plugins"
 }
 
 # ------------------------------------------------------------ deb / rpm ----
