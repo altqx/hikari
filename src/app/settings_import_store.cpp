@@ -441,6 +441,7 @@ si::Destination SettingsImportStore::destinationOf(const si::Profile &profile) c
 #endif
     d.pathExists = [](std::string_view path) { return QFileInfo::exists(qs(path)); };
     d.macroProblem = macroProblem;
+    d.rendererInstalled = rendererInstalled;
     return d;
 }
 

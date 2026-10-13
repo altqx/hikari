@@ -4,7 +4,31 @@
 #include "hikari/backends/csri_renderer.h"
 #endif
 
+#include <algorithm>
+#include <iterator>
+
 namespace hikari::backends {
+
+bool isVsfilterMod(std::string_view name)
+{
+    return name == kVsfilterModRenderer;
+}
+
+std::vector<std::string> orderedProviders(const std::vector<std::string> &csriNames)
+{
+    std::vector<std::string> list;
+    std::ranges::copy_if(csriNames, std::back_inserter(list), [](const std::string &n) { return !isVsfilterMod(n); });
+    list.emplace_back("libass");
+    std::ranges::copy_if(csriNames, std::back_inserter(list), [](const std::string &n) { return isVsfilterMod(n); });
+    return list;
+}
+
+std::string resolveProvider(std::string_view stored, const std::vector<std::string> &providers)
+{
+    if (!stored.empty() && std::ranges::find(providers, stored) != providers.end())
+        return std::string(stored);
+    return "libass";
+}
 
 SubtitleRendererSelection::SubtitleRendererSelection() = default;
 SubtitleRendererSelection::~SubtitleRendererSelection() = default;
@@ -33,18 +57,21 @@ std::shared_ptr<CsriRenderers> SubtitleRendererSelection::csriRenderers()
 
 std::vector<std::string> SubtitleRendererSelection::providers()
 {
-    std::vector<std::string> list;
 #ifdef _WIN32
-    list = csriRenderers()->names();
+    return orderedProviders(csriRenderers()->names());
+#else
+    return orderedProviders({});
 #endif
-    list.emplace_back("libass");
-    return list;
 }
 
 bool SubtitleRendererSelection::select(const std::string &provider)
 {
-    const std::string chosen = provider.empty() ? std::string("libass") : provider;
 #ifdef _WIN32
+    // libass loads no CSRI renderer; any other name must be installed.
+    const std::string chosen = provider.empty() || provider == "libass" ? std::string("libass")
+                                                                        : resolveProvider(provider, providers());
+    if (chosen != provider && !provider.empty() && m_log)
+        m_log("The subtitle renderer " + provider + " is not installed; libass is used.");
     if (chosen == m_provider)
         return false;
     m_provider = chosen;
@@ -61,7 +88,7 @@ bool SubtitleRendererSelection::select(const std::string &provider)
     m_active = m_csri.get();
     return true;
 #else
-    (void)chosen;
+    (void)provider;
     return false; // libass only
 #endif
 }

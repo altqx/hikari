@@ -32,7 +32,8 @@ Dialog {
     property var dictionaries: []
     property var catalogs: []
     property var styles: []
-    property var renderers: [] // W2: the CSRI renderers' names, then "libass"
+    property var renderers: [] // W2: the CSRI renderers' names and "libass", VSFilterMod last
+    property var rendererLabels: [] // W2: as shown, VSFilterMod's with its note
     property var warnings: []
     signal reloaded()
 
@@ -43,6 +44,7 @@ Dialog {
         catalogs = r.catalogs
         styles = r.styles
         renderers = r.renderers
+        rendererLabels = r.rendererLabels
         values = r.values
         reloaded()
         hotkeyFilter.currentIndex = 0 // a new dialog's filter choice
@@ -508,7 +510,8 @@ Dialog {
                         }
                     }
                     // W2: legacy's "Subtitle display filter" (ID_VSFILTER_PROVIDER),
-                    // only when there is a CSRI renderer to choose besides libass.
+                    // only when there is a CSRI renderer to choose besides libass
+                    // (W2-filter-row-hidden).
                     GroupBox {
                         objectName: "settingsRendererGroup"
                         title: qsTr("Subtitle display filter")
@@ -518,7 +521,7 @@ Dialog {
                             setting: "video.subtitleProvider"
                             anchors.left: parent.left
                             anchors.right: parent.right
-                            model: dialog.renderers
+                            model: dialog.rendererLabels
                             Accessible.name: qsTr("Subtitle display filter")
                         }
                     }

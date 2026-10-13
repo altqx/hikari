@@ -710,6 +710,9 @@ public:
     // Y9: GRID_SUBS_FROM_MKV (the font collector reads attachments through its own helper).
     MatroskaController &matroska() { return *m_matroska; }
     backends::SubtitleRendererSelection &subtitleRenderer() { return m_renderer; } // W2
+    // W2: a renderer as the Video page's choice shows it: its name, and for
+    // VSFilterMod a note that it is slow and only for its own tags.
+    static QString subtitleRendererLabel(const std::string &name);
     ui::LogController &log() { return *m_log; }
     // O5: the interface language (PROGRAM_LANGUAGE, switched live) and
     // aegisub.gettext's catalog.

@@ -124,6 +124,9 @@ public:
     // An imported macro binding's problem with the scripts loaded now
     // (Destination::macroProblem).
     std::function<std::string(std::string_view alias)> macroProblem;
+    // W2: whether a subtitle renderer is installed here
+    // (Destination::rendererInstalled).
+    std::function<bool(std::string_view name)> rendererInstalled;
 
     // Tests: a step that fails (returning true makes it fail).
     enum class Step { Backup, Profile, Files, Complete, Manifest };

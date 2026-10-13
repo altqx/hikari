@@ -234,6 +234,10 @@ struct Destination {
     // An imported macro binding's problem with the scripts loaded now
     // (missing, basename collision); "" when it resolves. Optional.
     std::function<std::string(std::string_view alias)> macroProblem;
+    // W2: whether a subtitle renderer is installed here (among
+    // SubtitleRendererSelection::providers); VSFILTER_INSTANCE naming one
+    // that is not stays unresolved. Unset: not checked.
+    std::function<bool(std::string_view name)> rendererInstalled;
 };
 
 // What an activated import recorded (its identity: the source hashes, the

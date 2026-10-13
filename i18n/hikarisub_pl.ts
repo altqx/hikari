@@ -4686,6 +4686,10 @@ zostanie zmieniony na domyślny</translation>
         <translation>styl</translation>
     </message>
     <message>
+        <source>%1 (slow; only for VSFilterMod tags)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cannot find translation, language change failed</source>
         <translation>Nie można znaleźć tłumaczenia, zmiana języka nie powiodła się</translation>
     </message>

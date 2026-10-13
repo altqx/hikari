@@ -4675,6 +4675,10 @@ and will be changed to the default</source>
         <translation>பாணி</translation>
     </message>
     <message>
+        <source>%1 (slow; only for VSFilterMod tags)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Cannot find translation, language change failed</source>
         <translation>மொழிபெயர்ப்பைக் கண்டுபிடிக்க முடியவில்லை, மொழி மாற்றம் தோல்வியடைந்தது</translation>
     </message>

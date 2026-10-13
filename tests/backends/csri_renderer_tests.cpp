@@ -236,6 +236,33 @@ TEST_F(Csri, AnUnsupportedFormatClosesTheInstance)
     EXPECT_EQ(r.render(core::DocumentTime(0), 0, 4).error(), RenderError::InvalidSize);
 }
 
+// The Video page's order (user 2026-10-13): xy-VSFilter, libass, VSFilterMod
+// last; an empty or uninstalled name draws through libass, never VSFilterMod
+// or the first CSRI renderer (W2-libass-default, W2-missing-renderer-libass).
+TEST(RendererSelection, VsfilterModIsListedLastAndNeverTheDefault)
+{
+    EXPECT_EQ(orderedProviders({"xy-vsfilter_textsub", "vsfiltermod_textsub"}),
+              (std::vector<std::string>{"xy-vsfilter_textsub", "libass", "vsfiltermod_textsub"}));
+    // Legacy's CSRI order when VSFilterMod loads last (it is then the default).
+    EXPECT_EQ(orderedProviders({"vsfiltermod_textsub", "xy-vsfilter_textsub"}),
+              (std::vector<std::string>{"xy-vsfilter_textsub", "libass", "vsfiltermod_textsub"}));
+    EXPECT_EQ(orderedProviders({"vsfiltermod_textsub"}), (std::vector<std::string>{"libass", "vsfiltermod_textsub"}));
+    EXPECT_EQ(orderedProviders({}), (std::vector<std::string>{"libass"}));
+    EXPECT_TRUE(isVsfilterMod("vsfiltermod_textsub"));
+    EXPECT_FALSE(isVsfilterMod("xy-vsfilter_textsub"));
+
+    const std::vector<std::string> package{"xy-vsfilter_textsub", "libass", "vsfiltermod_textsub"};
+    EXPECT_EQ(resolveProvider("", package), "libass");
+    EXPECT_EQ(resolveProvider("libass", package), "libass");
+    EXPECT_EQ(resolveProvider("xy-vsfilter_textsub", package), "xy-vsfilter_textsub");
+    EXPECT_EQ(resolveProvider("vsfiltermod_textsub", package), "vsfiltermod_textsub"); // chosen explicitly
+    EXPECT_EQ(resolveProvider("removed_textsub", package), "libass");
+    EXPECT_EQ(resolveProvider("XY-VSFILTER_TEXTSUB", package), "libass"); // exact, as vsfilters.Index
+    const std::vector<std::string> onlyLibass{"libass"};
+    EXPECT_EQ(resolveProvider("xy-vsfilter_textsub", onlyLibass), "libass");
+    EXPECT_EQ(resolveProvider("vsfiltermod_textsub", onlyLibass), "libass");
+}
+
 #ifndef _WIN32
 // Linux evidence for W2: libass is the only renderer, whatever the setting says.
 TEST(RendererSelection, LibassIsTheOnlyRendererOnLinux)
