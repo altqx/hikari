@@ -48,6 +48,14 @@ tasks:
     elevated: true
     script: ./tests/packaging/windows/protected-tests.ps1 -Phase machinedir -Setup $env:HS_SETUP
     timeoutSeconds: 600
+  # A running setup's file is held against change, HS_SETUP as above.
+  protected-selfhold:
+    script: ./tests/packaging/windows/protected-tests.ps1 -Phase selfhold -Setup $env:HS_SETUP
+    timeoutSeconds: 300
+  # The Windows unit tests, with the real SHA256SUMS fetch from GitHub.
+  windows-unit:
+    script: ./tests/packaging/windows/windows-unit-tests.ps1
+    timeoutSeconds: 1800
   installer-state:
     script: ./tests/packaging/windows/installer-tests.ps1 -Phase state
     timeoutSeconds: 120

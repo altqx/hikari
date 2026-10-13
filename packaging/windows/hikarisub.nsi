@@ -107,6 +107,7 @@ Var HsHasCmdComponents
 Var HsUserLocalAppData
 Var HsRadioUser
 Var HsRadioMachine
+Var HsSelfHold        ; this setup's own file, held against change (HsHoldSelf)
 
 ; ---------------------------------------------------------------------------
 ; Pages
@@ -1033,9 +1034,24 @@ Function HsSelectComponents
   Pop $7
 FunctionEnd
 
+; The all-users relaunch hands $EXEPATH to UAC. A same-user process could
+; otherwise rename this running setup and put its own program at that path
+; before the prompt (an unsigned setup shows no publisher to tell them
+; apart). From the start, this setup's file is held open with reads shared
+; only: until it exits, no other process can write, rename or delete it, so
+; the file UAC starts is this one. Without the hold there is no relaunch.
+Function HsHoldSelf
+  Push $0
+  ; GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING. Closed when setup exits.
+  System::Call 'kernel32::CreateFileW(w "$EXEPATH", i 0x80000000, i 1, p 0, i 3, i 0, p 0) p .r0'
+  StrCpy $HsSelfHold $0
+  Pop $0
+FunctionEnd
+
 Function .onInit
   SetRegView 64
   SetShellVarContext current
+  Call HsHoldSelf
   StrCpy $HsUserLocalAppData $LOCALAPPDATA
   StrCpy $HsDirArg $INSTDIR
   Call HsParseArgs
@@ -1185,6 +1201,10 @@ Function HsScopePageLeave
     StrCpy $R1 "/ALLUSERS /ELEVATED $R1"
     ${If} $HsDirArg != ""
       StrCpy $R1 "$R1 /D=$HsDirArg"
+    ${EndIf}
+    ${If} $HsSelfHold P= -1
+      MessageBox MB_OK|MB_ICONSTOP "To install HikariSub for all users, close this setup and run it as administrator."
+      Abort
     ${EndIf}
     StrCpy $R0 "$EXEPATH"
     Call HsRunElevated

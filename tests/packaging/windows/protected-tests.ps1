@@ -7,6 +7,11 @@
 #   protected-tests.ps1 -Phase check -Exe <protected-test.exe>
 #                                        as a standard user: each folder's answer
 #   protected-tests.ps1 -Phase cleanup   elevated: removes them
+#   protected-tests.ps1 -Phase selfhold -Setup <setup.exe>
+#                                        unelevated: while setup runs, no
+#                                        other process can rename or rewrite
+#                                        its file (the all-users relaunch
+#                                        hands that path to UAC)
 #   protected-tests.ps1 -Phase machinedir -Setup <setup.exe>
 #                                        elevated: an all-users install goes
 #                                        only to a folder under Program Files
@@ -14,7 +19,7 @@
 # Prints PASS/FAIL per check and exits 1 if any check failed.
 
 param(
-    [Parameter(Mandatory)] [ValidateSet('setup', 'check', 'cleanup', 'machinedir')] [string] $Phase,
+    [Parameter(Mandatory)] [ValidateSet('setup', 'check', 'cleanup', 'machinedir', 'selfhold')] [string] $Phase,
     [string] $Exe = '',
     [string] $Setup = ''
 )
@@ -118,6 +123,29 @@ elseif ($Phase -eq 'check') {
     } catch {
         Check 'the parent case: the user could move the app folder away' $false "$_"
     }
+}
+elseif ($Phase -eq 'selfhold') {
+    if (-not $Setup) { Write-Output 'FAIL -Setup is required'; exit 1 }
+    $dir = Join-Path $env:TEMP 'HsSelfHold'
+    if (Test-Path -LiteralPath $dir) { Remove-Item -Recurse -Force -LiteralPath $dir }
+    New-Item -ItemType Directory -Path $dir | Out-Null
+    $exe = Join-Path $dir 'setup.exe'
+    Copy-Item -LiteralPath $Setup -Destination $exe
+    function Try-Rename { try { Rename-Item -LiteralPath $exe -NewName 'moved.exe' -ErrorAction Stop; Rename-Item -LiteralPath "$dir\moved.exe" -NewName 'setup.exe'; return $true } catch { return $false } }
+    function Try-Write { try { $f = [IO.File]::Open($exe, 'Open', 'ReadWrite', 'ReadWrite'); $f.Close(); return $true } catch { return $false } }
+    Check 'before setup runs, its file can be renamed' (Try-Rename)
+    # No /S: setup waits on its first page.
+    $p = Start-Process -FilePath $exe -PassThru
+    Start-Sleep -Seconds 4
+    Check 'setup is running' (-not $p.HasExited)
+    Check 'while it runs, its file cannot be renamed' (-not (Try-Rename))
+    Check 'while it runs, its file cannot be opened for writing' (-not (Try-Write))
+    Check 'while it runs, its file cannot be deleted' (-not $(try { Remove-Item -LiteralPath $exe -ErrorAction Stop; $true } catch { $false }))
+    Stop-Process -Id $p.Id -Force
+    $p.WaitForExit()
+    Start-Sleep -Seconds 1
+    Check 'after it exits, its file can be renamed again' (Try-Rename)
+    Remove-Item -Recurse -Force -LiteralPath $dir
 }
 elseif ($Phase -eq 'machinedir') {
     if (-not $Setup) { Write-Output 'FAIL -Setup is required'; exit 1 }
