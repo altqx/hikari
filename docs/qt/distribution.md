@@ -1,47 +1,65 @@
 # Distribution and update policy
 
-**Accepted on 2026-09-27 in the live review with altqx for [distribution policy #40](https://github.com/altqx/hikari/issues/40).** The user accepted the complete package, notification-only update and stable-signing policy from the [reviewed proposal](https://github.com/altqx/hikari/blob/6b81fd56a71a9cb94f93c90453fda8b294fd9899/docs/qt/proposals/distribution.md); [ADR-0012](../adr/0012-distribution-and-updates.md) records the decision. The [packaging research](https://github.com/altqx/hikari/blob/07f7005f742a7d44c6b169d11b90e0d2c62b7fea/docs/research/packaging.md) is source evidence, not a built installer or release test. Follow the accepted [CMake build](build.md) and [platform policy](platform-policy.md), including initial Windows 10 qualification and explicit later retirement.
+**Decided by altqx on 2026-10-13; [ADR-0019](../adr/0019-installers-and-seamless-updates.md) records the decision.** It replaces the policy of 2026-09-27 ([ADR-0012](../adr/0012-distribution-and-updates.md): Inno Setup, notification-only updates, a signing gate for stable Windows releases). The [reviewed proposal of #40](proposals/distribution.md) and the [packaging research](https://github.com/altqx/hikari/blob/07f7005f742a7d44c6b169d11b90e0d2c62b7fea/docs/research/packaging.md) remain the review record. The policy applies to both codebases: legacy (the wx app on `main`, versions 0.0.x) and the Qt rewrite (versions 0.1.0 and later), which replaces legacy. Follow the accepted [CMake build](build.md) and [platform policy](platform-policy.md).
 
-## Package routes
+## Packages
 
-Use one audited staging manifest feeding these initial x64 artifacts:
+Every release of either codebase publishes these x64 assets on GitHub Releases, with a `SHA256SUMS` file and the update manifest `hikarisub-update.json`:
 
-| Target | Accepted artifact and behavior |
-| --- | --- |
-| Windows installed | **Offline Inno Setup EXE**, per-user installation by default, with shortcuts, optional associations and uninstall. No machine-wide/admin installation by default. |
-| Windows portable | **ZIP** of the same application payload, with an explicit portable-state marker. No automatic registry integration. |
-| Ubuntu LTS / Fedora | **AppImage**, qualified on the exact supported releases; retain a relocatable tar.gz staging artifact for extraction/recovery and diagnostics. |
+| Asset | Name | Install and update |
+| --- | --- | --- |
+| Windows installer | `HikariSub-<V>-windows-x64-setup.exe` | NSIS, unsigned. Installs and updates itself |
+| Windows portable | `HikariSub-<V>-windows-x64.zip` | Notify only |
+| AppImage | `HikariSub-<V>-linux-x86_64.AppImage` (and its `.zsync`) | Replaces itself |
+| Debian, Ubuntu | `hikarisub-<V>-linux-amd64.deb` | Installs through `pkexec` |
+| Fedora, openSUSE | `hikarisub-<V>-linux-x86_64.rpm` | Installs through `pkexec` |
+| Linux portable | `hikarisub-<V>-linux-x86_64.tar.gz` | Notify only. Also the AUR package's source |
 
-[Inno Setup](https://jrsoftware.org/isinfo.php) documents non-administrative installs, uninstall, registry/shortcut authoring and signing hooks. Invoke its pinned compiler from CMake packaging targets; an Inno definition is installer authoring, not a separate bootstrap/build pipeline. CPack archive generation can serve ZIP/tar outputs. A stock generator does not design safe upgrades or gather every runtime dependency. WiX/MSI adds enterprise deployment authoring; Qt IFW adds maintenance-tool/repository ownership; neither is needed for the existing notifier. Review the pinned Inno license for the owner's use; this policy does not authorize a purchase.
+- **Arch Linux** installs `hikarisub-bin` from the AUR. Its `PKGBUILD` and `.SRCINFO` live in the repository, are built and checked with `makepkg` in an Arch container by the release job, and are pushed to the AUR by the owner. It carries stable releases only. No Arch binary package is a release asset.
+- **Native packages** (`.deb`, `.rpm`, AUR) install to `/opt/hikarisub` with a `/usr/bin/hikarisub` link, and declare every host library the app needs (GStreamer plugins included), so the package manager makes the app ready to use.
+- **The AppImage** bundles the app's libraries so that it starts on the major distributions. The Qt build floor is AlmaLinux 9 with `gcc-toolset-14` (glibc 2.34).
+- File names use the SemVer version `<V>`; the `.deb` and `.rpm` metadata use the `~` prerelease form (`0.1.0~beta.2-1`), which sorts correctly in dpkg and rpm.
+- Every package installs and starts with the network off. End users need no Qt account, compiler or online installer.
 
-Defer Flatpak, native DEB/RPM and store submission from the first release. Flatpak remains the preferred later managed route, but needs a separate accepted distribution step: portals/sibling-media access, fontconfig differences, sandbox permissions and runtime compatibility are material to subtitle workflows. It must not silently replace the accepted pinned Qt SDK with a different runtime Qt. This deliberately narrows the research's two-format Linux recommendation to reduce initial maintenance. AppImage remains a portability claim to prove, not a guarantee supplied by its file extension.
+Flatpak and store submission stay deferred.
 
-## State, associations and offline use
+## The Windows installer
 
-Installed builds keep program files immutable and use platform user-data/config/cache/recovery locations. Portable mode redirects writable state to an explicit sibling data directory; an unwritable location produces an actionable error, not a silent switch. Preserve legacy data through the agreed copy/import process. Changing package type does not import settings implicitly or overwrite the source profile.
+- One installer, built with `makensis` on Linux from the staged Windows payload, for both codebases. The script `packaging/windows/hikarisub.nsi` has the same bytes on both branches; the codebase's part is generated into `payload.nsh`.
+- The user chooses **Just me** (the default; no administrator, `%LOCALAPPDATA%\Programs\HikariSub`, `HKCU`) or **All users** (one UAC prompt, `%ProgramFiles%\HikariSub`, `HKLM`). An existing install fixes the choice; changing it means uninstalling first.
+- The program is `HikariSub.exe` in both codebases, so the Start menu shortcut, the App Paths key and the file associations stay valid when Qt replaces legacy. The Qt executable carries legacy's file-type icon resources with legacy's ids.
+- Optional components: **Associate subtitle files** (on by default) registers `.ass .ssa .srt .sub` as an eligible handler and becomes the default only where no other app is; never `.txt`. **Desktop shortcut** is off by default.
+- The payload ships the Qt runtime from `windeployqt` and the app-local MSVC runtime from the Visual Studio redistributable folder, never from System32. The installer runs no `VC_redist`, so a per-user install needs no administrator.
+- An upgrade (legacy to legacy, legacy to Qt, Qt to Qt) installs over the previous files and removes the files of the previous payload that the new one lacks, using the `install-manifest.txt` each installer leaves. It never deletes a file it did not install. A downgrade asks first, and a silent downgrade is refused.
+- Silent switches for the updater: `/S`, `/CURRENTUSER` or `/ALLUSERS`, `/UPDATE`, `/WAITPID=<pid>`, `/RELAUNCH`, `/D=<dir>`, with fixed exit codes. The installer waits for the running app to exit and never kills it.
+- Uninstall removes the files, shortcuts, associations and registry keys it created, and never the user's settings, documents, recovery data or the update cache.
 
-Installer associations are opt-in eligible-handler registration, not forced Windows defaults. Portable integration is a separate user action with a repair/remove path after relocation. Linux integration supplies desktop/MIME/icon metadata and preserves the user's default choices. Uninstall removes only application-owned integration and files; user subtitles, settings, recovery data and externally selected fonts remain.
+## Updates
 
-Windows artifacts contain their required Qt/native payload and licensed app-local MSVC redistributable files, avoiding an admin/runtime download prerequisite for the per-user path. Verify that exact redistributable set and its servicing obligations; never harvest System32. AppImage retains declared host kernel/glibc/graphics requirements and a tested extraction fallback when mounting is unavailable. End users do not need a Qt account, compiler or online installer. Network-disabled installation/startup must work after download on a supported host; offline developer builds additionally require prefetched verified inputs.
+The app reads the GitHub release list, keeps the releases newer than itself on its channel (stable by default; prereleases by opt-in), and reads each candidate's manifest. A release whose manifest does not name the app's codebase in `offer_to` is skipped. Releases from before the manifest fall back to the asset names and GitHub's `digest` values. Failed or network-disabled checks stay distinct from "up to date", and editing never needs the network.
 
-## Updates and channels
+What happens next depends on how the app was installed, which a `package-kind.txt` marker beside the executable records:
 
-Use **check-and-notify only**, preserving existing disabled-check, stable/prerelease and reminder behavior. An available update opens the validated release/download page after user action. Do not download, replace files, restart or install automatically. Failed/network-disabled checks are distinct from “up to date”; checking is optional and editing remains offline-capable.
+- **NSIS, AppImage, `.deb`, `.rpm`:** the app downloads the matching asset in the background, verifies its size and SHA-256, and shows "Update ready" with **Restart now** and **Later**. Restart now runs the normal quit, with the save prompt for every modified document; cancelling it cancels the update. Later installs the update at the next normal quit. The NSIS installer runs silently in the install's scope (one UAC prompt for an all-users install) and relaunches the app unelevated; the AppImage replaces its own file; `.deb` and `.rpm` install through `pkexec` running apt, dnf or zypper, with a small root helper and a polkit policy. Without `pkexec` the app opens the download and offers the install command to copy.
+- **AUR:** notify only. The app says that a new version is available and tells the user to update with the package manager or AUR helper (for example `yay -Syu` or `paru -Syu`). It never downloads or installs anything.
+- **Portable zip and tar.gz:** notify only, with the release page.
 
-Use immutable versioned GitHub Releases assets. Stable is the default channel; beta requires opt-in and identifies prereleases; development CI artifacts are explicitly unsupported test builds and never offered as stable updates. Match OS, architecture, package kind and minimum platform requirements before offering a release. Windows 10 retirement notices precede incompatible offers. Beta and stable can use separate installations/profiles; changing channel does not silently migrate or downgrade user data.
+"Install updates automatically", a new setting on by default, turns the install flows back into notification. The automatic check schedule, "Remind me in a week" and the stable/prerelease choice keep their behaviour. No flow installs a version that is not newer than the running one. Download URLs are built from the tag and the asset name, never taken from the reply, and redirects are followed only to GitHub's download hosts.
 
-Updates use complete packages. Stop safely before replacing installed files; preserve the prior package and a pre-migration profile backup for recovery. Portable upgrades unpack beside the old version, then deliberately transfer compatible data. Never promise automatic rollback across an incompatible data migration. A future managed package must delegate installation/updates to its manager; adding WinSparkle or an internal updater requires a new explicit decision.
+## Qt replacing legacy
+
+- Versions: legacy stays at 0.0.x, Qt starts at 0.1.0, so every Qt version sorts above every legacy version and the version names the codebase.
+- Qt releases name only `qt` in `offer_to` until the owner sets `HIKARISUB_OFFER_QT_TO_LEGACY`; from then on, legacy builds that read manifests offer them.
+- Legacy 0.0.1 reads no manifest and offers the highest stable release by notification. **No stable Qt release is published before Qt is meant for every legacy user.** Qt prereleases reach only legacy users who opted into prereleases.
+- The AUR package follows legacy until the owner opens the gate, then Qt only; its name never changes.
+- Installed legacy builds keep their settings in `%LOCALAPPDATA%\HikariSub\Legacy` or `~/.local/share/HikariSub/Legacy`, since installed program folders are read-only; the Qt settings importer reads them there. Qt keeps its state in the platform's user folders in every package, and has no sibling-data portable mode.
 
 ## Payload, trust and release gates
 
-Stage from CMake install rules and Qt's QML deployment support, then audit actual Qt plugins/imports, FFMS2/FFmpeg, libass/font libraries, audio adapter, dictionaries, translations and helpers. Fail on missing assets, SDK paths or conflicting FFmpeg ABIs. Dynamic loading requires explicit inventory beyond linker inspection.
+The payload is staged from the build and audited: every direct import of every shipped binary must resolve inside the payload or to an operating-system library, and Linux packages carry only `$ORIGIN` run paths. Dynamic Qt deployment keeps its license notices and source obligations ([Qt licensing](https://doc.qt.io/qt-6/licensing.html), [Qt's LGPL obligations](https://www.qt.io/development/open-source-lgpl-obligations)).
 
-Use dynamic Qt deployment with a per-component license/source manifest, notices and corresponding source/build/patch materials. Qt documents LGPLv3/GPLv3 alternatives and GPL-only modules; dynamic linking alone does not establish compliance. Preserve applicable library replacement/relinking rights and installation information; signing must not become a prohibition on modified local builds. Verify the selected module/dependency obligations before release. [Qt licensing](https://doc.qt.io/qt-6/licensing.html), [Qt's LGPL obligations](https://www.qt.io/development/open-source-lgpl-obligations).
+Nothing is code-signed for now. The SHA-256 published by GitHub, fetched over HTTPS, is the only integrity check of a download; it detects corruption on the way, not a compromised release account. A signature of `hikarisub-update.json` can be added later as a separate asset without changing the manifest schema.
 
-Require **trusted, timestamped Authenticode signing for public stable Windows installers and application binaries**; clearly labelled unsigned beta/test artifacts may precede it. Publish final SHA-256 manifests for all artifacts, with an owner-controlled signature/public-key verification procedure for direct downloads. Hashes beside downloads detect corruption, not independently establish publisher identity. Windows signing options include qualifying open-source programs and paid providers; eligibility, cost and SmartScreen reputation are not guaranteed. [Microsoft signing guidance](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/code-signing-options).
+The owner controls tags, releases, the `offer_to` gate and the AUR push. Release gates cover install, upgrade over legacy and over itself, the silent update in both scopes, uninstall, each Linux format in its distribution containers and the Arch package.
 
-The owner controls publisher identity, provider/repository accounts, keys, recovery/rotation and protected release authorization. Credentials never enter source, documentation or untrusted PR jobs. Provider selection and any registration or purchase remain owner-controlled follow-up work; this decision is not evidence of completed signing or deployment.
-
-Release gates cover clean-machine startup, offline install, upgrade/interruption/recovery/uninstall, portable relocation, associations, fonts/media/IME/accessibility, final signatures and source availability on every claimed target. Later macOS needs its own `.app` deployment, Developer ID/notarization and runtime qualification; portable interfaces must permit it.
-
-**Verification status:** this accepts the package bundle and deferred managed Linux packaging, notification-only updates, and the trusted-signing gate for stable Windows releases while allowing labelled unsigned prereleases. No installer, signing, offline, upgrade/recovery or deployment gate has been executed or passed by this decision.
+**Verification status:** this records the decision. Each installer, package and update flow still needs its own build and test evidence before a release.

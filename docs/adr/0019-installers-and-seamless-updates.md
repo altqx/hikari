@@ -1,0 +1,13 @@
+---
+status: accepted
+---
+
+# Ship NSIS and native Linux packages that update themselves, and let Qt replace legacy in place
+
+On 2026-10-13, altqx decided how both codebases are installed and updated, superseding [ADR-0012](0012-distribution-and-updates.md). The [distribution policy](../qt/distribution.md) records the details. Windows gets an unsigned NSIS installer in which the user chooses "Just me" (no administrator, `%LOCALAPPDATA%\Programs\HikariSub`) or "All users" (administrator, Program Files), with silent switches for the updater; the Inno Setup route is dropped. Linux gets an AppImage, native `.deb` and `.rpm` packages that declare their host dependencies, and an AUR package, `hikarisub-bin`, that repackages the release tar.gz. Portable zip and tar.gz archives stay.
+
+Updates are no longer notification only. NSIS, AppImage, `.deb` and `.rpm` installs download the matching release asset from GitHub Releases in the background, verify its SHA-256, and offer "Restart now" or "Later"; Later installs at the next quit, after the usual save prompts. `.deb` and `.rpm` install through the system password prompt (`pkexec` running apt, dnf or zypper), the AppImage replaces itself, and the NSIS installer runs silently in the install's own scope. AUR installs and the portable archives stay notify only: on Arch the app says a new version is available and tells the user to update with the package manager or AUR helper, and never downloads or installs anything itself. A new setting, "Install updates automatically", on by default, turns the install flows back into notification.
+
+Qt replaces legacy under the same identity: install folder, Uninstall key, Start menu entry, file associations, `HikariSub.exe` on Windows, the `hikarisub` and `hikarisub-bin` package names and the desktop id `io.github.altqx.HikariSub`. Installing Qt over a legacy install is an ordinary upgrade. Legacy stays at 0.0.x and Qt starts at 0.1.0, so the version names the codebase. Every release publishes a `hikarisub-update.json` manifest whose `offer_to` names the codebases it may be offered to; Qt releases name only `qt` until the owner opens the gate for legacy users. Legacy 0.0.1 knows no manifest and offers the highest stable release by notification, so no stable Qt release is published before Qt is meant for every legacy user.
+
+Nothing is code-signed for now: the SHA-256 from GitHub over HTTPS is the only integrity check, which replaces ADR-0012's Authenticode gate for stable Windows releases. A later signature of the manifest fits as a separate asset. This decision authorizes no release, tag or AUR publication, and it is not evidence that any installer, update flow or clean-machine gate has passed.
