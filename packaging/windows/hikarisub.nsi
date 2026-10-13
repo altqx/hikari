@@ -358,6 +358,8 @@ FunctionEnd
 
 !insertmacro HS_SHARED_FUNCTIONS ""
 !insertmacro HS_SHARED_FUNCTIONS "un."
+!insertmacro HS_PLAIN_PATH_FUNCTION ""
+!insertmacro HS_PLAIN_PATH_FUNCTION "un."
 !insertmacro HS_PROTECTED_FUNCTIONS "un."
 !insertmacro HS_PAYLOAD_PATH_FUNCTION ""
 
@@ -710,6 +712,19 @@ Function HsFindExisting
   Pop $0
 FunctionEnd
 
+; Fails with code 2 when an all-users install would go to a folder
+; HsMachineDirOk refuses.
+Function HsCheckMachineDir
+  ${If} $HsScope == "machine"
+    Call HsMachineDirOk
+    ${If} $R2 <> 1
+      StrCpy $R8 2
+      StrCpy $R7 "For all users, HikariSub installs in a folder under $PROGRAMFILES64, not in $INSTDIR."
+      Call HsFail
+    ${EndIf}
+  ${EndIf}
+FunctionEnd
+
 ; Sets the shell context and the default folder for $HsScope (spec 6.2).
 Function HsApplyScope
   ${If} $HsScope == "machine"
@@ -727,6 +742,39 @@ Function HsApplyScope
   ${Else}
     StrCpy $INSTDIR "$HsUserLocalAppData\Programs\${HS_NAME}"
   ${EndIf}
+FunctionEnd
+
+; $R2 = 1 when $INSTDIR may hold an all-users install (spec 6.2): a folder
+; under Program Files, which only administrators can create or change, as a
+; plain path; or the folder of the all-users install already there, which
+; an administrator chose. A folder elsewhere could have been made by a
+; standard user, who could then replace the program that every user, and
+; administrators, start from the shortcuts and file types.
+Function HsMachineDirOk
+  Push $0
+  Push $1
+  Push $R0
+  StrCpy $R2 0
+  ${If} $HsExistScope == "machine"
+  ${AndIf} $HsExistDir != ""
+  ${AndIf} $INSTDIR == $HsExistDir
+    StrCpy $R2 1
+  ${Else}
+    StrCpy $R0 $INSTDIR
+    Call HsPlainPath
+    ${If} $R2 = 1
+      StrLen $1 "$PROGRAMFILES64\"
+      StrCpy $0 $INSTDIR $1
+      StrCpy $R0 $INSTDIR "" $1
+      ${If} $0 != "$PROGRAMFILES64\"
+      ${OrIf} $R0 == ""
+        StrCpy $R2 0
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
+  Pop $R0
+  Pop $1
+  Pop $0
 FunctionEnd
 
 ; Waits for HikariSub to exit before files are replaced (spec 4.2, 6.4).
@@ -853,6 +901,8 @@ FunctionEnd
 
 Section "-Program files" SecCore
   SectionIn RO
+  ; Again here: the folder page may have been skipped or changed.
+  Call HsCheckMachineDir
   SetOutPath "$INSTDIR"
   Call HsWaitForApp
 
@@ -1037,6 +1087,7 @@ Function .onInit
   ${EndIf}
 
   Call HsApplyScope
+  Call HsCheckMachineDir
 
   ${If} $HsExistVersion != ""
     StrCpy $R0 $HsExistVersion
@@ -1159,6 +1210,13 @@ Function HsDirectoryPagePre
 FunctionEnd
 
 Function HsDirectoryPageLeave
+  ${If} $HsScope == "machine"
+    Call HsMachineDirOk
+    ${If} $R2 <> 1
+      MessageBox MB_OK|MB_ICONEXCLAMATION "For all users, HikariSub installs in a folder under $PROGRAMFILES64. Choose a folder there, or go back and choose Just me."
+      Abort
+    ${EndIf}
+  ${EndIf}
   ClearErrors
   CreateDirectory "$INSTDIR"
   FileOpen $0 "$INSTDIR\.hikarisub-setup-write-test" w

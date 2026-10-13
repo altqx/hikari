@@ -42,6 +42,12 @@ tasks:
     elevated: true
     script: ./tests/packaging/windows/protected-tests.ps1 -Phase cleanup
     timeoutSeconds: 300
+  # An all-users install only under Program Files, with HS_SETUP the guest
+  # path of a setup.exe (any payload).
+  protected-machinedir:
+    elevated: true
+    script: ./tests/packaging/windows/protected-tests.ps1 -Phase machinedir -Setup $env:HS_SETUP
+    timeoutSeconds: 600
   installer-state:
     script: ./tests/packaging/windows/installer-tests.ps1 -Phase state
     timeoutSeconds: 120

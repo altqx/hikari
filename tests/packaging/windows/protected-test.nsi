@@ -19,6 +19,7 @@ OutFile "${HS_OUTFILE}"
 !include FileFunc.nsh
 !include "${__FILEDIR__}/../../../packaging/windows/protected.nsh"
 
+!insertmacro HS_PLAIN_PATH_FUNCTION ""
 !insertmacro HS_PROTECTED_FUNCTIONS ""
 
 Section
