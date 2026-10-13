@@ -20,7 +20,12 @@ find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS QuickControls2)
 qt_standard_project_setup(REQUIRES 6.11)
 add_subdirectory(tools/i18n) # O4: the PO-to-TS migration tool
 add_subdirectory(i18n) # O4: TS catalogs, QM in the build
+# installers: the app's QML is compiled into a static module under src/ui, so
+# the deploy scan for its Qt Quick imports must read that folder too.
+set(QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/src/ui")
 add_subdirectory(src)
+unset(QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS)
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariInstall.cmake") # installers: the app tree and the packages
 include(i18n/Extraction.cmake) # O4: lupdate and the migration, on request
 add_subdirectory(tests/dependency-load)
 if(BUILD_TESTING)
