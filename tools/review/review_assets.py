@@ -8,7 +8,8 @@ each item as {id, card, title, file, note}:
 * K1: the four icons awaiting approval (copy-to-storage, copy-to-ass,
   copy-to-all-ass, panel-menu) drawn by the Icon item in Light and Dark at
   100, 150 and 200 %, one sheet (icon_tests contactSheets with
-  HIKARI_ICON_SHEET_ROLES, as the polish pass's new-icons sheets);
+  HIKARI_ICON_SHEET_ROLES: the four cells of each of its sheets, stacked
+  under captions this script adds);
 * K2: the seven accent presets of Light and Dark on each surface role
   (theme_tests swatchSheet, HIKARI_THEME_SHEET_DIR) and the main window in
   the four themes (shell_tests surfaceScreenshots, HIKARI_SURFACE_SHOT_DIR);
@@ -30,16 +31,25 @@ Run:  python3 tools/review/review_assets.py <build dir> <output dir>
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 
-from PIL import Image, ImageDraw, ImageFont
+try:
+    from PIL import Image, ImageDraw, ImageFont
+except ImportError:
+    sys.exit("review_assets.py needs Pillow (python-pillow, or pip install pillow)")
 
 K1_ROLES = ["copy-to-storage", "copy-to-ass", "copy-to-all-ass", "panel-menu"]
-K1_CELL_WIDTH = 168  # icon_tests contactSheets: a cell is 168 x 44 at 100 %
+# icon_tests contactSheets lays the roles out in 8 columns of 168 x 44 cells
+# at 100 %; k1_sheet checks each sheet's size against these.
+K1_COLUMNS = 8
+K1_CELL_WIDTH = 168
 K1_CELL_HEIGHT = 44
+# A hung hook (the drag is the likeliest) ends the run instead of blocking it.
+TIMEOUT_SECONDS = 600
 SCALES = [(100, "1"), (150, "1.5"), (200, "2")]
 THEMES = [
     ("light", "Light"),
@@ -56,10 +66,14 @@ LANGUAGES = [
 LANGUAGE_VIEWS = [
     ("main-window", "Main window", "The main window with a document open."),
     ("file-menu", "File menu", "The File menu, open over the main window."),
-    ("options", "Options dialog", "The Options dialog as it opens."),
+    ("options", "Options dialog", "The Options dialog as it opens, on its first page (Editor)."),
 ]
+# Polish and Thai carry legacy's translations; strings new in this
+# application have none yet, and Qt shows them in English.
+PARTIAL_CATALOG = {"polish", "thai"}
 DOCK_VIEWS = [
-    ("main", "Main window", "The default arrangement with a reference open."),
+    ("main", "Main window",
+     "The default arrangement with a document and a reference open; no video or audio loaded."),
     ("bottom", "Bottom panels",
      "The Grid's one-tab bar and the Reference tray with its toolbar in the header."),
     ("tabbed", "Tabbed group", "Shift times as a tab beside the Line editor."),
@@ -71,19 +85,38 @@ DOCK_VIEWS = [
 
 
 def run(build, binary, functions, env):
+    """Runs the hooks `functions` of test `binary`; exits naming them when
+    the run fails, times out or skips one."""
     path = os.path.join(build, "tests", "ui", binary)
     if not os.path.exists(path):
         sys.exit("missing %s: build the tree first" % path)
     full = dict(os.environ)
     full["QT_QPA_PLATFORM"] = "offscreen"
     full.update(env)
-    print("running %s %s %s" % (binary, " ".join(functions),
-                                " ".join("%s=%s" % kv for kv in sorted(env.items()))), flush=True)
-    result = subprocess.run([path] + functions, env=full, cwd=os.path.dirname(path),
-                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    hooks = "%s %s" % (binary, " ".join(functions))
+    print("running %s %s" % (hooks, " ".join("%s=%s" % kv for kv in sorted(env.items()))), flush=True)
+    try:
+        result = subprocess.run([path, "-v1"] + functions, env=full, cwd=os.path.dirname(path),
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                timeout=TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired as e:
+        output = e.stdout or ""
+        sys.stdout.write(output if isinstance(output, str) else output.decode(errors="replace"))
+        sys.exit("%s timed out after %d s" % (hooks, TIMEOUT_SECONDS))
     if result.returncode != 0:
         sys.stdout.write(result.stdout)
-        sys.exit("%s failed (%d)" % (binary, result.returncode))
+        sys.exit("%s failed (%d)" % (hooks, result.returncode))
+    if re.search(r"^SKIP\b", result.stdout, re.MULTILINE):
+        sys.stdout.write(result.stdout)
+        sys.exit("%s skipped: no images written" % hooks)
+
+
+def written(folder, name, hook):
+    """The path of `name` in `folder`, which `hook` was to write."""
+    path = os.path.join(folder, name)
+    if not os.path.exists(path):
+        sys.exit("%s did not write %s" % (hook, path))
+    return path
 
 
 def label_font(size):
@@ -108,8 +141,14 @@ def k1_sheet(build, work, out):
             "HIKARI_ICON_SHEET_DIR": folder,
         })
         for theme, name in THEMES[:2]:
-            sheet = Image.open(os.path.join(folder, "review-%s-%d.png" % (theme, percent))).convert("RGB")
+            sheet = Image.open(written(folder, "review-%s-%d.png" % (theme, percent),
+                                       "icon_tests contactSheets")).convert("RGB")
             scale = percent / 100
+            rows_of_cells = (len(K1_ROLES) + K1_COLUMNS - 1) // K1_COLUMNS
+            expected = (round(K1_COLUMNS * K1_CELL_WIDTH * scale), round(rows_of_cells * K1_CELL_HEIGHT * scale))
+            if sheet.size != expected:
+                sys.exit("icon_tests contactSheets drew a %d x %d sheet at %d %%, not %d x %d: update K1_COLUMNS "
+                         "and K1_CELL_* to its layout" % (sheet.size + (percent,) + expected))
             crop = sheet.crop((0, 0, round(len(K1_ROLES) * K1_CELL_WIDTH * scale), round(K1_CELL_HEIGHT * scale)))
             rows.append(("%s %d %%" % (name, percent), crop))
     width = max(image.width for _, image in rows) + 32
@@ -132,16 +171,17 @@ def k1_sheet(build, work, out):
         "title": "K1: the four new icons",
         "file": os.path.basename(target),
         "note": "copy-to-storage, copy-to-ass, copy-to-all-ass and panel-menu, drawn by the application's Icon "
-                "item at 16 and 32 px in Light and Dark at 100, 150 and 200 % (offscreen, Linux). "
-                "Approve or reject each icon.",
+                "item at 16 and 32 px in Light and Dark at 100, 150 and 200 % (offscreen, Linux). Each strip is "
+                "the four cells of the icon test's contact sheet, with the role names at the sheet's 11 px; the "
+                "theme and scale captions are added by the review script. Approve or reject each icon.",
     }]
 
 
 def k2_items(build, work, out):
     folder = os.path.join(work, "k2")
     run(build, "hikari_ui_theme_tests", ["swatchSheet"], {"HIKARI_THEME_SHEET_DIR": folder})
-    shutil.copy(os.path.join(folder, "k2-accents.png"), os.path.join(out, "k2-accents.png"))
-    shutil.copy(os.path.join(folder, "k2-contrast.txt"), os.path.join(out, "k2-contrast.txt"))
+    shutil.copy(written(folder, "k2-accents.png", "theme_tests swatchSheet"), os.path.join(out, "k2-accents.png"))
+    shutil.copy(written(folder, "k2-contrast.txt", "theme_tests swatchSheet"), os.path.join(out, "k2-contrast.txt"))
     items = [{
         "id": "k2-accents",
         "card": "K2",
@@ -155,7 +195,8 @@ def k2_items(build, work, out):
     run(build, "hikari_ui_shell_tests", ["surfaceScreenshots"], {"HIKARI_SURFACE_SHOT_DIR": shots})
     for theme, name in THEMES:
         file = "k2-main-window-%s.png" % theme
-        shutil.copy(os.path.join(shots, "main-window-%s.png" % theme), os.path.join(out, file))
+        shutil.copy(written(shots, "main-window-%s.png" % theme, "shell_tests surfaceScreenshots"),
+                    os.path.join(out, file))
         items.append({
             "id": "k2-main-window-%s" % theme,
             "card": "K2",
@@ -174,13 +215,16 @@ def o5_items(build, work, out):
     for language, name in LANGUAGES:
         for view, title, note in LANGUAGE_VIEWS:
             file = "o5-%s-%s.png" % (view, language)
-            shutil.copy(os.path.join(folder, "%s-%s.png" % (view, language)), os.path.join(out, file))
+            shutil.copy(written(folder, "%s-%s.png" % (view, language), "language_tests screenshots"),
+                        os.path.join(out, file))
+            partial = (" English text is expected where the catalog has no translation yet (strings new in "
+                       "this application)." if language in PARTIAL_CATALOG else "")
             items.append({
                 "id": "o5-%s-%s" % (view, language),
                 "card": "O5",
                 "title": "O5: %s, %s" % (title, name),
                 "file": file,
-                "note": note + " Language switched live; offscreen, Linux.",
+                "note": note + " Language switched live; offscreen, Linux." + partial,
             })
     return items
 
@@ -192,7 +236,8 @@ def d3_items(build, work, out):
     for theme, name in THEMES:
         for view, title, note in DOCK_VIEWS:
             file = "d3-%s-%s.png" % (view, theme)
-            shutil.copy(os.path.join(folder, "dock-%s-%s.png" % (view, theme)), os.path.join(out, file))
+            shutil.copy(written(folder, "dock-%s-%s.png" % (view, theme), "shell_tests dockChromeScreenshots"),
+                        os.path.join(out, file))
             items.append({
                 "id": "d3-%s-%s" % (view, theme),
                 "card": "D3",

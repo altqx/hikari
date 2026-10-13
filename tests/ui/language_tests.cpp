@@ -944,8 +944,9 @@ private slots:
     }
 
     // Screenshots for review (HIKARI_LANGUAGE_SHOT_DIR; skipped without it):
-    // the main window with the File menu and the Options dialog in Polish,
-    // the accented pseudolocale and the right-to-left one.
+    // the main window with the File menu and the Options dialog (on its
+    // first page) in Polish, Thai, the accented pseudolocale and the
+    // right-to-left one.
     void screenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_LANGUAGE_SHOT_DIR");
@@ -965,6 +966,11 @@ private slots:
         for (const auto &c : cases) {
             application->settingsStore()->set("program.language", QLatin1String(c.language));
             application->localisation().setPseudo(c.pseudo);
+            // The language switched: the menus are not in English, and only
+            // the right-to-left pseudolocale mirrors the layout.
+            QTRY_VERIFY(fileMenuTitle() != QStringLiteral("&File"));
+            QCOMPARE(QGuiApplication::layoutDirection(),
+                     c.pseudo == app::Localisation::Pseudo::RightToLeft ? Qt::RightToLeft : Qt::LeftToRight);
             QTest::qWait(300);
             QVERIFY(window->grabWindow().save(out + QStringLiteral("/main-window-%1.png").arg(QLatin1String(c.name))));
             auto *bar = item("fileMenuBarItem");
