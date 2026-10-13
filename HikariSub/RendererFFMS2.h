@@ -60,6 +60,8 @@ public:
 	// frame's time, off the thread that shows it. Returns the subtitles
 	// generation drawn; a frame drawn with an older one is out of date.
 	unsigned DrawSubtitlesAhead(unsigned char *frame, int number);
+	// shows a frame DrawSubtitlesAhead has drawn on
+	bool ShowFinishedFrame(unsigned char *frame);
 	void Render(bool RecreateFrame = true, bool wait = true);
 	void ChangePositionByFrame(int cpos);
 	//it's safe to not exist visual
@@ -109,6 +111,7 @@ public:
 	std::unique_ptr<FrameQueue> m_LinuxQueue;
 #endif
 protected:
+	bool DrawFrame(unsigned char *nframe, bool copy, bool subsDrawn);
 	void StartStream() override;
 	void PauseStream() override;
 	void StopStream() override;

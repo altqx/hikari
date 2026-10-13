@@ -188,6 +188,16 @@ unsigned RendererFFMS2::DrawSubtitlesAhead(unsigned char *frame, int number)
 
 bool RendererFFMS2::DrawTexture(unsigned char *nframe, bool copy)
 {
+	return DrawFrame(nframe, copy, false);
+}
+
+bool RendererFFMS2::ShowFinishedFrame(unsigned char *frame)
+{
+	return DrawFrame(frame, false, true);
+}
+
+bool RendererFFMS2::DrawFrame(unsigned char *nframe, bool copy, bool subsDrawn)
+{
 	wxCriticalSectionLocker lock(m_MutexRendering);
 
 #ifndef _WIN32
@@ -248,7 +258,7 @@ bool RendererFFMS2::DrawTexture(unsigned char *nframe, bool copy)
 
 	if (overlay)
 		UpdateOverlay();
-	else
+	else if (!subsDrawn)
 		m_SubsProvider->Draw(fdata, m_Time);
 	IDirect3DSurface9 *upload = m_UploadSurfaces[m_UploadIndex];
 	if (!upload)

@@ -187,10 +187,15 @@ void Provider::RunPlaybackThread()
 			} signalIdle{ m_eventPlaybackIdle };
 			unsigned char* buff = m_renderer->m_FrameBuffer;
 			size_t frameBytes = m_renderer->FrameBytes();
-			// a second thread decodes a few frames ahead, so a slow frame
-			// does not hold up the one being shown; kept between plays
-			if (!savedQueue || savedQueue->FrameBytes() != frameBytes || savedQueue->FrameCount() != m_numFrames)
-				savedQueue = std::make_unique<FrameQueue>(4, frameBytes, m_numFrames);
+			// Subtitles drawn on the frame are drawn ahead too, by a third
+			// thread; those in the overlay stay with the frame shown, as they
+			// are drawn only when they change.
+			bool subsAhead = !m_renderer->UsesOverlay();
+			// a second thread decodes frames ahead, so a slow frame does not
+			// hold up the one being shown; kept between plays
+			if (!savedQueue || savedQueue->FrameBytes() != frameBytes || savedQueue->FrameCount() != m_numFrames ||
+				savedQueue->Finishing() != subsAhead)
+				savedQueue = std::make_unique<FrameQueue>(FrameQueue::SlotsFor(frameBytes), frameBytes, m_numFrames, subsAhead);
 			FrameQueue &queue = *savedQueue;
 			queue.Reset(m_renderer->m_Frame);
 			std::thread decoder([this, &queue]() {
@@ -199,11 +204,27 @@ void Provider::RunPlaybackThread()
 				while (unsigned char *slot = queue.NextToDecode(&frame))
 					queue.Decoded(slot, FetchPlaybackFrame(frame, slot));
 			});
+			std::thread subtitles;
+			if (subsAhead) {
+				subtitles = std::thread([this, &queue]() {
+					MultimediaThread multimedia(L"Playback");
+					int frame;
+					while (unsigned char *slot = queue.NextToFinish(&frame))
+						queue.Finished(slot, m_renderer->DrawSubtitlesAhead(slot, frame));
+				});
+			}
 			struct StopDecoder {
 				FrameQueue &queue;
 				std::thread &decoder;
-				~StopDecoder() { queue.Stop(); decoder.join(); }
-			} stopDecoder{ queue, decoder };
+				std::thread &subtitles;
+				~StopDecoder()
+				{
+					queue.Stop();
+					decoder.join();
+					if (subtitles.joinable())
+						subtitles.join();
+				}
+			} stopDecoder{ queue, decoder, subtitles };
 
 			while (1) {
 				if (WaitForSingleObject(m_eventKillSelf, 0) == WAIT_OBJECT_0) { return; }
@@ -221,6 +242,12 @@ void Provider::RunPlaybackThread()
 					break;
 				}
 				int frame = decoded.frame;
+				if (subsAhead && decoded.tag != m_renderer->SubtitlesGeneration()) {
+					// the subtitles changed after this frame was drawn
+					queue.Release(decoded.slot);
+					queue.Reset(frame);
+					continue;
+				}
 				if (frame != m_renderer->m_Frame) {
 					m_renderer->m_Frame = frame;
 					m_renderer->m_Time = timebase.MsAt(frame);
@@ -228,7 +255,10 @@ void Provider::RunPlaybackThread()
 				memcpy(buff, decoded.slot, frameBytes);
 				queue.Release(decoded.slot);
 
-				m_renderer->DrawTexture(buff);
+				if (subsAhead)
+					m_renderer->ShowFinishedFrame(buff);
+				else
+					m_renderer->DrawTexture(buff);
 				m_renderer->Render(false);
 
 				if (PlaybackReachedEnd(frame, m_renderer->m_Time, m_renderer->m_PlayEndTime, m_numFrames)) {
