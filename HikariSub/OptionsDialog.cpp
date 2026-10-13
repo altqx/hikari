@@ -299,7 +299,11 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 	wxWindow* AudioSecond = new wxWindow(OptionsTree, -1);
 	wxWindow* video = new wxWindow(OptionsTree, -1);
 	wxWindow* Themes = new wxWindow(OptionsTree, -1);
+#ifdef _WIN32
+	// Only Windows has the Associations page. A page that is never added is
+	// still shown, over the tree, so it is not made elsewhere.
 	wxWindow* Assocs = new wxWindow(OptionsTree, -1);
+#endif
 	wxWindow* SubsProps = new SubtitlesProperties(OptionsTree, this);
 
 	hkeymodif = 0;
@@ -982,6 +986,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		}, List->GetId());
 	}
 	//associations
+#ifdef _WIN32
 	{
 		const int numExtensions = (int)kHikariSubFileTypeCount;
 		wxString extensions[kHikariSubFileTypeCount];
@@ -1019,6 +1024,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		ConOpt(CheckListBox, (CONFIG)3000);
 		Assocs->SetSizerAndFit(sizer);
 	}
+#endif
 
 	//Adding pages
 	OptionsTree->AddPage(GLOBAL_EDITOR, _("Editor"));
