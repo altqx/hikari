@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cstring>
+#include <string>
+#include <string_view>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -141,10 +143,26 @@ std::expected<std::uint64_t, RenderError> CsriRenderer::prepare(application::Ren
     }
     m_fonts = std::move(fonts);
     // ParseInstance: csri_open_mem(mb_str(wxConvUTF8), strlen), so the script
-    // ends at its first NUL.
+    // ends at its first NUL. GetVisible (SubsGridBase.cpp:1804-1805) starts
+    // the text with a byte order mark, which the renderers read as UTF-8;
+    // without it VSFilter reads the bytes in the ANSI code page, and
+    // VSFilterMod fails to open some scripts at all.
     const auto *bytes = reinterpret_cast<const char *>(snapshot.script.data());
     const std::size_t length = snapshot.script.empty() ? 0 : strnlen(bytes, snapshot.script.size());
-    m_instance = renderer->openMem(renderer->rend, bytes, length, nullptr);
+    constexpr std::string_view bom = "\xEF\xBB\xBF";
+    std::string text;
+    if (!std::string_view(bytes, length).starts_with(bom)) {
+        text.reserve(bom.size() + length);
+        text.append(bom).append(bytes, length);
+    }
+    const std::string_view script = text.empty() ? std::string_view(bytes, length) : std::string_view(text);
+    try {
+        m_instance = renderer->openMem(renderer->rend, script.data(), script.size(), nullptr);
+    } catch (...) {
+        // A renderer's own exception (VSFilterMod's MFC ones) is a script
+        // it cannot open, not the end of the program.
+        m_instance = nullptr;
+    }
     if (!m_instance) {
         if (m_log)
             m_log("Cannot create CSRI instance.");
@@ -194,6 +212,38 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     // frame's time in integer milliseconds.
     const auto ms = static_cast<int>(time.microseconds() / 1000);
     m_renderer->render(m_instance, &target, double(ms / 1000.0));
+    if (m_pixfmt == csri::BGR_) {
+        // BGR_ (VSFilterMod takes no other) blends into the frame and leaves
+        // no alpha. Legacy drew it onto the RGB32 video frame
+        // (RendererFFMS2::GetFrameWithSubs without the overlay); the same
+        // instant drawn again onto white gives each pixel's coverage, so the
+        // overlay composites over any frame as that drawing did.
+        std::vector<std::uint8_t> white(frame.pixels.size());
+        for (std::size_t i = 0; i < white.size(); i += 4)
+            white[i] = white[i + 1] = white[i + 2] = 255;
+        target.planes[0] = white.data();
+        m_renderer->render(m_instance, &target, double(ms / 1000.0));
+        bool drawn = false;
+        for (std::size_t i = 0; i < frame.pixels.size(); i += 4) {
+            std::uint8_t *p = &frame.pixels[i];
+            const std::uint8_t *w = &white[i];
+            int through = 0; // what the frame shows through, summed over the channels
+            for (int c = 0; c < 3; ++c)
+                through += (std::max)(0, int(w[c]) - int(p[c]));
+            const int a = 255 - (through + 1) / 3;
+            if (a <= 0) {
+                p[0] = p[1] = p[2] = p[3] = 0;
+                continue;
+            }
+            drawn = true;
+            for (int c = 0; c < 3; ++c)
+                p[c] = static_cast<std::uint8_t>((std::min)(int(p[c]), a));
+            p[3] = static_cast<std::uint8_t>(a);
+        }
+        frame.empty = !drawn;
+        frame.changed.push_back({0, 0, width, height});
+        return frame;
+    }
     bool drawn = false;
     for (std::size_t i = 0; i < frame.pixels.size(); i += 4) {
         std::uint8_t *p = &frame.pixels[i];

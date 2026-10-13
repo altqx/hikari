@@ -1,6 +1,6 @@
 #pragma once
 
-// W2: the optional CSRI subtitle renderer adapter (xy-VSFilter) for the
+// W2: the optional CSRI subtitle renderer adapter (xy-VSFilter, VSFilterMod) for the
 // SubtitleRenderer port, Windows only in the application. It reproduces the
 // legacy CSRI path at 20d647c4:
 // - CsriMod.cpp: the renderer list is every library under the program's Csri
@@ -16,7 +16,14 @@
 // xy-VSFilter writes straight alpha into a BGRA frame (MemSubPic.cpp
 // AlphaBltOther, MSP_RGBA), which legacy blended with D3DBLEND_SRCALPHA
 // (RendererFFMS2::DrawOverlay); the port's overlay is premultiplied, so the
-// colours are multiplied by their alpha here.
+// colours are multiplied by their alpha here. A renderer that takes only
+// BGR_ (VSFilterMod) blends into the frame and leaves no alpha; legacy drew
+// it onto the RGB32 video frame (GetFrameWithSubs without the overlay), so
+// the same instant is drawn onto black and onto white and the overlay is
+// what the two differ by: each pixel's colour and its coverage.
+// The script opened starts with a UTF-8 byte order mark, as GetVisible's text
+// did (SubsGridBase.cpp:1804-1805); a renderer's exception on open is a script
+// it cannot open.
 // VSFilter resolves fonts through GDI: system fonts, the script's [Fonts]
 // section, and the snapshot's font leases, which each context adds to the
 // process privately while it lives (AddFontMemResourceEx; legacy loaded its

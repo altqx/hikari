@@ -28,6 +28,7 @@ struct Calls {
     std::vector<int> renderedFormats;
     std::vector<std::ptrdiff_t> strides;
     bool failOpen = false;
+    bool throwOnOpen = false;
     // The pixel the fake draws at (1, 1): straight-alpha BGRA, as xy-VSFilter
     // writes into an MSP_RGBA target (MemSubPic.cpp AlphaBltOther).
     std::uint8_t pixel[4] = {200, 100, 50, 128};
@@ -39,6 +40,8 @@ void *openMem(void *, const void *data, std::size_t length, void *)
 {
     if (calls.failOpen)
         return nullptr;
+    if (calls.throwOnOpen)
+        throw 1; // as VSFilterMod's MFC exceptions leave csri_open_mem
     calls.opened.emplace_back(static_cast<const char *>(data), length);
     return &instanceToken;
 }
@@ -57,11 +60,16 @@ void render(void *, csri::Frame *frame, double time)
     calls.renderedFormats.push_back(frame->pixfmt);
     calls.strides.push_back(frame->strides[0]);
     unsigned char *p = frame->planes[0] + frame->strides[0] * 1 + 4 * 1;
-    std::memcpy(p, calls.pixel, 4);
-    // BGR_ is xy-VSFilter's MSP_RGB32 target: its AlphaBlt masks the colour
-    // channels and leaves the padding byte 0 (MemSubPic.cpp MSP_RGB32).
-    if (frame->pixfmt == csri::BGR_)
+    if (frame->pixfmt == csri::BGR_) {
+        // BGR_ (VSFilterMod's only target, xy-VSFilter's MSP_RGB32) blends
+        // the colour into the frame and leaves the padding byte 0.
+        const unsigned a = calls.pixel[3];
+        for (int c = 0; c < 3; ++c)
+            p[c] = static_cast<unsigned char>((calls.pixel[c] * a + p[c] * (255 - a) + 127) / 255);
         p[3] = 0;
+        return;
+    }
+    std::memcpy(p, calls.pixel, 4);
 }
 
 const csri::Info xyInfo{"xy-vsfilter_textsub", "3.2", "xy-VSFilter/TextSub", "Gabest", "Copyright"};
@@ -155,12 +163,25 @@ TEST_F(Csri, TheScriptIsOpenedFromMemoryUpToItsFirstNul)
     script += "ignored";
     ASSERT_TRUE(r.prepare(snapshotOf(script)));
     ASSERT_EQ(calls.opened.size(), 1u);
-    EXPECT_EQ(calls.opened[0], "[Script Info]\nTitle: x\n"); // strlen(mb_str)
+    // strlen(mb_str), after GetVisible's byte order mark
+    EXPECT_EQ(calls.opened[0], "\xEF\xBB\xBF[Script Info]\nTitle: x\n");
     EXPECT_EQ(r.selectedName(), "vsfiltermod_textsub");
+    // A script saved with the mark keeps one.
+    ASSERT_TRUE(r.prepare(snapshotOf("\xEF\xBB\xBF[Script Info]\n")));
+    EXPECT_EQ(calls.opened.back(), "\xEF\xBB\xBF[Script Info]\n");
     calls.failOpen = true;
     EXPECT_EQ(r.prepare(snapshotOf("x")).error(), RenderError::InvalidInput);
     EXPECT_EQ(log, (std::vector<std::string>{"Cannot create CSRI instance."}));
-    EXPECT_EQ(calls.closed, 1); // the previous instance
+    EXPECT_EQ(calls.closed, 2); // the previous instances
+}
+
+TEST_F(Csri, ARendererThatThrowsCannotCreateTheInstance)
+{
+    CsriRenderer r(twoRenderers(), "vsfiltermod_textsub", logger());
+    calls.throwOnOpen = true;
+    EXPECT_EQ(r.prepare(snapshotOf("[Script Info]\n")).error(), RenderError::InvalidInput);
+    EXPECT_EQ(log, (std::vector<std::string>{"Cannot create CSRI instance."}));
+    EXPECT_EQ(r.render(core::DocumentTime(0), 8, 8).error(), RenderError::NoSnapshot);
 }
 
 TEST_F(Csri, TheOverlayIsDrawnWholeOntoAClearedBgraFrame)
@@ -206,20 +227,36 @@ TEST_F(Csri, TheOverlayIsDrawnWholeOntoAClearedBgraFrame)
 TEST_F(Csri, BgraRefusedFallsBackToBgrx)
 {
     calls.refuse = {csri::BGRA};
-    CsriRenderer r(twoRenderers(), "", logger());
+    CsriRenderer r(twoRenderers(), "vsfiltermod_textsub", logger());
     ASSERT_TRUE(r.prepare(snapshotOf("[Script Info]\n")));
-    const auto frame = r.render(core::DocumentTime(0), 4, 4);
+    auto frame = r.render(core::DocumentTime(1'500'000), 4, 4);
     ASSERT_TRUE(frame);
     ASSERT_EQ(calls.requested.size(), 2u);
     EXPECT_EQ(calls.requested[1].pixfmt, csri::BGR_);
-    EXPECT_EQ(calls.renderedFormats, (std::vector<int>{csri::BGR_}));
     EXPECT_TRUE(log.empty());
-    // The BGR_ output carries no alpha, so nothing shows: legacy uploaded the
-    // overlay as D3DFMT_A8R8G8B8 and blended it with D3DBLEND_SRCALPHA
-    // (RendererVideo.cpp:411-412, RendererFFMS2.cpp:298-303 and :725), where
-    // alpha 0 keeps the video. The fallback opens the instance but draws no
-    // subtitles; xy-VSFilter itself accepts BGRA (csriapi.cpp), so only
-    // another CSRI renderer reaches it.
+    // BGR_ blends into the frame and leaves no alpha, as legacy drew it onto
+    // the RGB32 video frame: the instant is drawn onto black, then onto
+    // white, and the overlay is the colour with the coverage the two give.
+    EXPECT_EQ(calls.renderedFormats, (std::vector<int>{csri::BGR_, csri::BGR_}));
+    EXPECT_EQ(calls.times, (std::vector<double>{1.5, 1.5}));
+    EXPECT_FALSE(frame->empty);
+    const std::uint8_t *p = &frame->pixels[1 * 16 + 4];
+    EXPECT_EQ(p[0], 100); // the same premultiplied pixel the BGRA frame gives
+    EXPECT_EQ(p[1], 50);
+    EXPECT_EQ(p[2], 25);
+    EXPECT_EQ(p[3], 128);
+    for (std::size_t i = 0; i < frame->pixels.size(); ++i)
+        if (i < 20 || i >= 24)
+            EXPECT_EQ(frame->pixels[i], 0) << i;
+    // Opaque and clear pixels.
+    std::memcpy(calls.pixel, "\x10\x20\x30\xFF", 4);
+    frame = r.render(core::DocumentTime(0), 4, 4);
+    ASSERT_TRUE(frame);
+    EXPECT_EQ(std::vector<std::uint8_t>(frame->pixels.begin() + 20, frame->pixels.begin() + 24),
+              (std::vector<std::uint8_t>{0x10, 0x20, 0x30, 0xFF}));
+    calls.pixel[3] = 0;
+    frame = r.render(core::DocumentTime(0), 4, 4);
+    ASSERT_TRUE(frame);
     EXPECT_TRUE(frame->empty);
     EXPECT_TRUE(std::ranges::all_of(frame->pixels, [](std::uint8_t b) { return b == 0; }));
 }
