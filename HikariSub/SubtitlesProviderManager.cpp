@@ -15,6 +15,7 @@
 //  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "SubtitlesProvider.h"
+#include "SubtitlesProviderChoice.h"
 #include "config.h"
 
 
@@ -28,13 +29,7 @@ SubtitlesProviderManager::~SubtitlesProviderManager()
 SubtitlesProvider *SubtitlesProviderManager::GetProvider()
 {
 	if (!SP){
-		wxString provider = Options.GetString(VSFILTER_INSTANCE);
-#ifndef _WIN32
-		// Default to libass on wxGTK when no provider is configured.
-		if (provider.empty())
-			provider = L"libass";
-#endif
-		if (provider == L"libass")
+		if (ProviderInUse() == LIBASS_PROVIDER)
 			SP = new SubtitlesLibass();
 		else
 			SP = new SubtitlesVSFilter();
@@ -43,10 +38,25 @@ SubtitlesProvider *SubtitlesProviderManager::GetProvider()
 	return SP;
 }
 
+wxString SubtitlesProviderManager::ProviderInUse()
+{
+	std::wstring stored = Options.GetString(VSFILTER_INSTANCE).ToStdWstring();
+	std::vector<std::wstring> csri;
+#ifdef _WIN32
+	// Linux loads no CSRI renderers; libass needs none of them loaded
+	wxArrayString names;
+	if (stored != LIBASS_PROVIDER)
+		SubtitlesVSFilter::GetRendererNames(&names);
+	for (const wxString &name : names)
+		csri.push_back(name.ToStdWstring());
+#endif
+	return wxString(ResolveSubtitlesProvider(stored, csri));
+}
+
 void SubtitlesProviderManager::GetProviders(wxArrayString *providerList)
 {
 	SubtitlesVSFilter::GetProviders(providerList);
-	providerList->Add(L"libass");
+	providerList->Add(LIBASS_PROVIDER);
 }
 
 void SubtitlesProviderManager::DestroyProviders()
@@ -133,8 +143,7 @@ void SubtitlesProviderManager::Prepare(wxString *text)
 
 bool SubtitlesProviderManager::ReloadLibraries()
 {
-	wxString provider = Options.GetString(VSFILTER_INSTANCE);
-	if (provider == L"libass") {
+	if (ProviderInUse() == LIBASS_PROVIDER) {
 		if (gs_Base.size() > 0) {
 			gs_Base[0]->GetProvider()->ReloadLibraries(true);
 		}

@@ -415,6 +415,9 @@
     <ClCompile Include="SubtitlesLibass.cpp">
       <Filter>S</Filter>
     </ClCompile>
+    <ClCompile Include="SubtitlesProviderChoice.cpp">
+      <Filter>S</Filter>
+    </ClCompile>
     <ClCompile Include="SubtitlesProviderManager.cpp">
       <Filter>S</Filter>
     </ClCompile>
@@ -868,6 +871,9 @@
       <Filter>S</Filter>
     </ClInclude>
     <ClInclude Include="SubtitlesProvider.h">
+      <Filter>S</Filter>
+    </ClInclude>
+    <ClInclude Include="SubtitlesProviderChoice.h">
       <Filter>S</Filter>
     </ClInclude>
     <ClInclude Include="SubtitlesProviderManager.h">

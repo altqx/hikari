@@ -648,8 +648,8 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		SubtitlesProviderManager::GetProviders(&vsfilters);
 		HikariChoice *vsfiltersList = new HikariChoice(video, ID_VSFILTER_PROVIDER, 
 			wxDefaultPosition, wxSize(200, -1), vsfilters, wxTE_PROCESS_ENTER);
-		wxString name = Options.GetString(vopts[6]);
-		int result = vsfilters.Index(name);
+		// a stored name that is not listed shows what is used instead
+		int result = vsfilters.Index(SubtitlesProviderManager::ProviderInUse());
 		if (result < 0)
 			result = 0;
 		vsfiltersList->SetSelection(result);

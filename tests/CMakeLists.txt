@@ -44,6 +44,7 @@ add_executable(hikarisub_tests
     SaveTargetTests.cpp
     SemVerTests.cpp
     SrtTagsTests.cpp
+    SubtitlesProviderChoiceTests.cpp
     TimebaseTests.cpp
     UndoHistoryTests.cpp
     UpdatePolicyTests.cpp
@@ -54,6 +55,7 @@ add_executable(hikarisub_tests
     ../HikariSub/LineGroups.cpp
     ../HikariSub/Playback.cpp
     ../HikariSub/SaveFile.cpp
+    ../HikariSub/SubtitlesProviderChoice.cpp
     ../HikariSub/PrivateFolder.cpp
     ../HikariSub/TextComparison.cpp
     ../HikariSub/Timebase.cpp

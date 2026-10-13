@@ -229,6 +229,7 @@ add_executable(hikarisub
     HikariSub/SubsLoader.cpp
     HikariSub/SubsResampleDialog.cpp
     HikariSub/SubtitlesLibass.cpp
+    HikariSub/SubtitlesProviderChoice.cpp
     HikariSub/SubtitlesProviderManager.cpp
     HikariSub/SubtitlesVSFilter.cpp
     HikariSub/TextEditorTagList.cpp

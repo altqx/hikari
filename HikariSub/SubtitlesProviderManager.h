@@ -57,6 +57,9 @@ public:
 	void Prepare(wxString *text);
 	static bool ReloadLibraries();
 	static void GetProviders(wxArrayString *providerList);
+	// the renderer the stored choice stands for, which GetProviders lists;
+	// see ResolveSubtitlesProvider
+	static wxString ProviderInUse();
 	static void DestroyProviders();
 	static void DestroySubsProvider();
 private:
