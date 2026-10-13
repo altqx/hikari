@@ -69,12 +69,16 @@ endif()
 #   * C++/compiler runtime: libstdc++, libgcc_s -- a bundled (older) copy would
 #     win on the process RPATH and then fail host GTK plugins that need a newer
 #     GLIBCXX/CXXABI.
+#   * Fontconfig: libfontconfig reads the host's /etc/fonts configuration,
+#     which a bundled older copy may not understand.
 #   * Host audio: libpulse/libasound -- SDL2 dlopens the host backend anyway.
 #   * glibc/ELF loader: must come from the host kernel/libc.
-#   * GPL-licensed codecs: libx264/libx265 -- not redistributed, to avoid
-#     imposing GPL terms on the bundle; FFmpeg loads the host copies instead.
+#
+# libx264 and libx265 are bundled: the bundled FFmpeg links them by exact
+# soname (libx264.so.164 and libx265.so.199 on the build host), so a host with
+# other versions could not start the program.
 set(system_dep_regex
-    "^(ld-linux.*|linux-vdso.*|lib(c|m|dl|pthread|rt|resolv|nsl|util|anl)\\.so.*|libstdc\\+\\+\\.so.*|libgcc_s\\.so.*|libGL.*\\.so.*|libEGL.*\\.so.*|libOpenGL\\.so.*|libGLdispatch\\.so.*|libGLX.*\\.so.*|libglapi\\.so.*|libgbm\\.so.*|libdrm.*\\.so.*|libva.*\\.so.*|libvdpau.*\\.so.*|libX.*\\.so.*|libxcb.*\\.so.*|libxshmfence\\.so.*|libxkbcommon.*\\.so.*|libwayland-.*\\.so.*|libgtk-.*\\.so.*|libgdk-.*\\.so.*|libgdk_pixbuf.*\\.so.*|libpango.*\\.so.*|libcairo.*\\.so.*|libatk.*\\.so.*|libharfbuzz.*\\.so.*|libpulse.*\\.so.*|libasound\\.so.*|libx264\\.so.*|libx265\\.so.*)$"
+    "^(ld-linux.*|linux-vdso.*|lib(c|m|dl|pthread|rt|resolv|nsl|util|anl)\\.so.*|libstdc\\+\\+\\.so.*|libgcc_s\\.so.*|libGL.*\\.so.*|libEGL.*\\.so.*|libOpenGL\\.so.*|libGLdispatch\\.so.*|libGLX.*\\.so.*|libglapi\\.so.*|libgbm\\.so.*|libdrm.*\\.so.*|libva.*\\.so.*|libvdpau.*\\.so.*|libX.*\\.so.*|libxcb.*\\.so.*|libxshmfence\\.so.*|libxkbcommon.*\\.so.*|libwayland-.*\\.so.*|libgtk-.*\\.so.*|libgdk-.*\\.so.*|libgdk_pixbuf.*\\.so.*|libpango.*\\.so.*|libcairo.*\\.so.*|libatk.*\\.so.*|libharfbuzz.*\\.so.*|libfontconfig\\.so.*|libpulse.*\\.so.*|libasound\\.so.*)$"
 )
 
 set(copied_count 0)
