@@ -129,8 +129,12 @@ elseif ($Phase -eq 'machinedir') {
     $writable = 'C:\HsWritable'
     New-Item -ItemType Directory -Force -Path $writable | Out-Null
     $pf = $env:ProgramFiles
-    # (NSIS turns "/" in /D= into "\" itself.)
-    foreach ($dir in @("$writable\HikariSub", "$pf\..\HsWritable\HikariSub", "$pf", "$pf\\HikariSubTest")) {
+    # (NSIS turns "/" in /D= into "\" itself.) Windows drops a name's
+    # trailing spaces and dots, so "$pf\.. \x" is "C:\x".
+    $dirs = @("$writable\HikariSub", "$pf\..\HsWritable\HikariSub", "$pf\.. \HsWritable\HikariSub",
+        "$pf\... \..\HsWritable\HikariSub", "$pf\HikariSubTest.", "$pf\HikariSubTest:s", "$pf",
+        "$pf\\HikariSubTest")
+    foreach ($dir in $dirs) {
         $code = Install "/S /ALLUSERS /D=$dir"
         Check "all users in $dir refused" ($code -eq 2) "exit $code"
         Check "all users in ${dir}: nothing installed" (-not (Test-Path $key))

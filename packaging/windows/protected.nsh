@@ -30,7 +30,11 @@
 !macro HS_PLAIN_PATH_FUNCTION UN
 
 ; $R0 = a folder. $R2 = 1 when it is a plain "X:\..." path: a drive letter,
-; one "\" between names, no "/", no "." or ".." name, no trailing "\".
+; one "\" between names, no "/", no "." or ".." name, no trailing "\", no
+; name that ends in a space or a dot (Windows drops those, so "C:\a\.. \b"
+; is "C:\b"), none of : * ? " < > | (":" names a stream), and Windows'
+; own full form of it (GetFullPathNameW) is the same string. A caller can
+; then compare it with a prefix and know where it points.
 Function ${UN}HsPlainPath
   Push $0
   Push $1
@@ -69,11 +73,19 @@ Function ${UN}HsPlainPath
       ${EndIf}
       StrCpy $R1 $0 1 $3
       ${If} $R1 == "/"
+      ${OrIf} $R1 == ":"
+      ${OrIf} $R1 == "*"
+      ${OrIf} $R1 == "?"
+      ${OrIf} $R1 == '"'
+      ${OrIf} $R1 == "<"
+      ${OrIf} $R1 == ">"
+      ${OrIf} $R1 == "|"
         StrCpy $R2 0
       ${ElseIf} $R1 == "\"
+        StrCpy $R1 $1 "" -1
         ${If} $1 == ""
-        ${OrIf} $1 == "."
-        ${OrIf} $1 == ".."
+        ${OrIf} $R1 == "."
+        ${OrIf} $R1 == " "
           StrCpy $R2 0
         ${EndIf}
         StrCpy $1 ""
@@ -82,6 +94,15 @@ Function ${UN}HsPlainPath
       ${EndIf}
       IntOp $3 $3 + 1
     ${Loop}
+  ${EndIf}
+  ${If} $R2 = 1
+    ; What Windows makes of it must be it, case and all.
+    System::Call 'kernel32::GetFullPathNameW(w R0, i ${NSIS_MAX_STRLEN}, w .r1, p 0) i .r2'
+    ${If} $2 = 0
+    ${OrIf} $2 >= ${NSIS_MAX_STRLEN}
+    ${OrIf} $1 S!= $R0
+      StrCpy $R2 0
+    ${EndIf}
   ${EndIf}
   Pop $R1
   Pop $3
