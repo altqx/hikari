@@ -38,6 +38,8 @@
 #include <QPalette>
 #include <QClipboard>
 #include <QProcess>
+#include <QPainter>
+#include <QRasterWindow>
 #include <QScreen>
 #include <QStandardPaths>
 #include <QStyleHints>
@@ -2944,6 +2946,97 @@ private slots:
         QTRY_VERIFY(dialog->property("visible").toBool());
         QVERIFY(!dialogItem("colourDialog", "eyedropper")->isEnabled());
         QCOMPARE(dialogItem("colourDialog", "dropperUnavailable")->property("text").toString(), sampler.unavailableReason());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
+    // Y7 with the sampler's own source (DropFromScreenXY's screen read:
+    // QScreen::grabWindow on the grab route), not a stand-in: a window
+    // painted one colour stands where the pointer picks, and the simple
+    // "Color picker"'s right press and "Choose color"'s dropper release each
+    // take that colour. On the windows platform (winix task
+    // y7-dropper-desktop) that is the desktop's screen; offscreen the same
+    // call reads the window's backing store.
+    void screenDroppersReadTheScreenItself()
+    {
+        auto &sampler = *application->colourPicker().sampler();
+        if (sampler.route() != QLatin1String("grab"))
+            QSKIP("this session reads no screen pixels (Wayland, or X11 on XWayland)");
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        application->editor().setShowTags(true);
+
+        // The colour, away from the shell's window where the screen allows it.
+        class Patch : public QRasterWindow {
+        protected:
+            void paintEvent(QPaintEvent *) override { QPainter(this).fillRect(QRect(QPoint(), size()), QColor(0x24, 0x68, 0xac)); }
+        };
+        Patch patch;
+        patch.setFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::WindowDoesNotAcceptFocus | Qt::Tool);
+        const QRect area = window->screen()->availableGeometry();
+        const QSize size(96, 72);
+        QRect place(area.bottomRight() - QPoint(size.width() + 8, size.height() + 8), size);
+        for (const QRect &r : {place, QRect(area.topRight() - QPoint(size.width() + 8, -8), size),
+                               QRect(area.bottomLeft() + QPoint(8, -size.height() - 8), size)})
+            if (!window->frameGeometry().intersects(r)) {
+                place = r;
+                break;
+            }
+        patch.setGeometry(place);
+        patch.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&patch));
+        const QPoint global = place.center();
+        // The screen shows it (a compositor may take a frame or two).
+        const auto showsPatch = [&] {
+            const QVariantMap centre = sampler.sample(global.x(), global.y()).value(24).toMap();
+            return centre.value(QStringLiteral("r")).toInt() == 0x24 && centre.value(QStringLiteral("g")).toInt() == 0x68
+                   && centre.value(QStringLiteral("b")).toInt() == 0xac;
+        };
+        QTRY_VERIFY(showsPatch());
+        qInfo().noquote() << "Y7 screen" << QGuiApplication::platformName() << "patch" << place << "shell" << window->frameGeometry();
+
+        // The simple picker: a right press outside it picks at once.
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour3")));
+        QQuickWindow *simple = shellWindow("simpleColourPicker");
+        QVERIFY(simple);
+        QTRY_VERIFY(simple->isVisible());
+        QTRY_VERIFY(sampler.tracking());
+        if (simple->frameGeometry().contains(global))
+            simple->setPosition(area.topLeft() + QPoint(8, 8));
+        const QPoint local = simple->mapFromGlobal(global);
+        sendMouse(simple, QEvent::MouseButtonPress, local, Qt::RightButton, Qt::RightButton);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\3c&HAC6824&}first"));
+        QCOMPARE(findItem(simple->contentItem(), QStringLiteral("hexColour"))->property("text").toString(),
+                 QStringLiteral("&HAC6824&"));
+        sendMouse(simple, QEvent::MouseButtonRelease, local, Qt::RightButton, Qt::NoButton);
+        QVERIFY(QMetaObject::invokeMethod(simple, "accept"));
+        QTRY_VERIFY(!simple->isVisible());
+        QVERIFY(!sampler.tracking());
+
+        // "Choose color": the icon's left press takes the pointer, a right
+        // release over the colour picks the centre of what the screen shows.
+        auto *dialog = named("colourDialog");
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        const QPoint icon = centreOf(dialogItem("colourDialog", "eyedropperArea"));
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, icon);
+        QTRY_VERIFY(sampler.tracking());
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, icon);
+        const QPoint over = window->mapFromGlobal(global);
+        sendMouse(window, QEvent::MouseMove, over, Qt::NoButton, Qt::NoButton);
+        sendMouse(window, QEvent::MouseButtonRelease, over, Qt::RightButton, Qt::NoButton);
+        QVERIFY(!sampler.tracking());
+        QCOMPARE(dialog->property("red").toInt(), 0x24);
+        QCOMPARE(dialog->property("green").toInt(), 0x68);
+        QCOMPARE(dialog->property("blue").toInt(), 0xac);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&HAC6824&")));
         QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
