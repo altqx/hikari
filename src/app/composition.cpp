@@ -5,14 +5,32 @@
 #include "hikari/app/application.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/application/recent_files.h"
+#include "hikari/application/update_check.h"
 #include "hikari/backends/legacy_spelling.h"
 
+#include <QFile>
 #include <QGuiApplication>
 #include <QLocale>
 #include <QQmlApplicationEngine>
+#include <QQmlComponent>
+#include <QQuickWindow>
 #include <QStandardPaths>
 #include <QTimer>
 #include <QtQml/qqmlextensionplugin.h>
+
+#include <cstdio>
+#include <functional>
+#include <string>
+#include <vector>
+
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
 
 // The UI module is a static QML module; its plugin must be imported explicitly.
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
@@ -32,7 +50,32 @@ void openStartVideo(QObject *mainWindow, const QString &path)
     QMetaObject::invokeMethod(mainWindow, "openSingleVideo", Q_ARG(QVariant, path));
 }
 
-int run(int argc, char **argv, StartupMode mode)
+namespace {
+
+#ifdef HIKARI_UPDATE_TEST_FEED
+QString originOf(const QUrl &url)
+{
+    return url.adjusted(QUrl::RemovePath | QUrl::RemoveQuery | QUrl::RemoveFragment | QUrl::RemoveUserInfo).toString();
+}
+#endif
+
+// ADR 0019: "Installing update..." while pkexec's helper runs, after the
+// main window has closed; the returned function hides it.
+std::function<void()> showInstalling(QQmlApplicationEngine &engine)
+{
+    QQmlComponent component(&engine);
+    component.loadFromModule("Hikari.Ui", "UpdateInstallingWindow");
+    QObject *window = component.create();
+    if (!window)
+        return {};
+    // The notice cannot end the wait: closing it is refused, and no window
+    // closing quits the application meanwhile.
+    QGuiApplication::setQuitOnLastWindowClosed(false);
+    return [window] { delete window; };
+}
+
+int runWindow(int argc, char **argv, StartupMode mode, const application::StartupArguments &startup,
+              UpdateInstaller::ExitAction &exitAction)
 {
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
@@ -51,13 +94,23 @@ int run(int argc, char **argv, StartupMode mode)
     options.bundledDictionaryDir = QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary");
     // O5: the first start on a Polish system takes Polish (Application).
     options.systemUiLanguages = QLocale::system().uiLanguages();
+    // ADR 0019: the install's package kind, the update cache and installers.
+    options.updateEnvironment = UpdateEnvironment::current();
+#ifdef HIKARI_UPDATE_TEST_FEED
+    // Test builds only: a local release feed (tools/update-feed).
+    if (const QString feed = qEnvironmentVariable("HIKARISUB_UPDATE_FEED"); !feed.isEmpty()) {
+        options.updateFeed = UpdateFeed::local(QUrl(feed));
+        const QString feedOrigin = originOf(QUrl(feed));
+        options.updateEnvironment.allowRedirect = [feedOrigin](const QUrl &to) { return originOf(to) == feedOrigin; };
+    }
+#endif
     Application application(options);
-    application.setStartedWithPaths(argc > 1); // P6: no session at start then
+    application.setStartedWithPaths(!startup.rest.empty()); // P6: no session at start then
     // A path on the command line opens as the editing target. V5: a video
     // opens as legacy OpenFiles opens one file (hikarisubApp.cpp:483-487),
     // fullscreen with video.fullScreenOnStart, once the window is up.
-    const QString startPath = argc > 1 ? QString::fromLocal8Bit(argv[1]) : QString();
-    const bool startVideo = argc > 1 && openStartFile(application, startPath);
+    const QString startPath = startup.rest.empty() ? QString() : QString::fromLocal8Bit(startup.rest.front());
+    const bool startVideo = !startPath.isEmpty() && openStartFile(application, startPath);
 
     // K2: the controls draw with the theme layer's palette.
     hikari::ui::theme::chooseControlsStyle();
@@ -73,11 +126,68 @@ int run(int argc, char **argv, StartupMode mode)
         return 2;
     if (startVideo)
         openStartVideo(engine.rootObjects().first(), startPath);
-    if (mode == StartupMode::ExitAfterWindowCreated)
+    if (mode == StartupMode::ExitAfterWindowCreated) {
         QTimer::singleShot(0, &app, [] { QCoreApplication::exit(0); });
-    else // legacy CallAfter(CheckOnStartup): once the window is up
-        QTimer::singleShot(0, &application, [&application] { application.updates().checkOnStartup(); });
-    return app.exec();
+        return app.exec();
+    }
+    // legacy CallAfter(CheckOnStartup): once the window is up; first what an
+    // earlier update left (its record, its failure).
+    QTimer::singleShot(0, &application, [&application] {
+        application.updates().startUp();
+        application.updates().checkOnStartup();
+    });
+    // An AppImage's new version reports its window to the old one's watchdog.
+    if (!startup.healthFile.empty())
+        if (auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first()))
+            QObject::connect(
+                window, &QQuickWindow::frameSwapped, &application,
+                [&application, health = QString::fromLocal8Bit(startup.healthFile)] {
+                    application.updates().installer().reportHealthy(health);
+                },
+                Qt::SingleShotConnection);
+    const int code = app.exec();
+    // ADR 0019: a ready update installs after a normal quit, every document
+    // reviewed and the main window closed.
+    if (code == 0)
+        exitAction = application.updates().installer().installAtExit([&engine] { return showInstalling(engine); });
+    return code;
+}
+
+} // namespace
+
+int run(int argc, char **argv, StartupMode mode)
+{
+    std::vector<std::string> arguments;
+    for (int i = 1; i < argc; ++i)
+        arguments.emplace_back(argv[i]);
+    const auto startup = application::parseStartupArguments(arguments);
+    if (startup.printVersion) {
+        // 8.1: "<version> (<kind>)" without a display.
+        QCoreApplication core(argc, argv);
+        std::printf("%s (%s)\n", HIKARI_VERSION, qPrintable(packageKindToken(currentPackageKind().kind)));
+        return 0;
+    }
+#ifdef _WIN32
+    // Held until exit: the installer waits while it exists. A failure is ignored.
+    CreateMutexW(nullptr, FALSE, L"Global\\io.github.altqx.HikariSub.Running");
+#endif
+    UpdateInstaller::ExitAction exitAction;
+    const int code = runWindow(argc, argv, mode, startup, exitAction);
+#ifndef _WIN32
+    if (!exitAction.program.isEmpty()) {
+        // deb and rpm: the new version (or, after a failure, the one still
+        // installed) takes this process's place.
+        std::vector<QByteArray> held{QFile::encodeName(exitAction.program)};
+        for (const QString &argument : exitAction.arguments)
+            held.push_back(argument.toLocal8Bit());
+        std::vector<char *> execArguments;
+        for (QByteArray &a : held)
+            execArguments.push_back(a.data());
+        execArguments.push_back(nullptr);
+        ::execv(execArguments.front(), execArguments.data());
+    }
+#endif
+    return code;
 }
 
 } // namespace hikari::app

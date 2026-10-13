@@ -11,6 +11,8 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h
     hotkeys_controller.cpp include/hikari/app/hotkeys_controller.h
     update_checker.cpp include/hikari/app/update_checker.h
+    update_installer.cpp include/hikari/app/update_installer.h # ADR 0019: download, verify, hand-off
+    package_kind.cpp include/hikari/app/package_kind.h
     style_manager_controller.cpp include/hikari/app/style_manager_controller.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
@@ -19,8 +21,17 @@ target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari
 # Running from the build tree, the media helper is not next to the executable.
 target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_BUILD_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>" HIKARI_BUILD_AUTOMATION="${HIKARI_AUTOMATION_ROOT}"
-    HIKARI_VERSION="${PROJECT_VERSION}")
+    HIKARI_VERSION="${HIKARI_VERSION}")
 add_dependencies(hikari_composition hikari_media_helper hikari_lua_helper hikari_automation_stage)
+# ADR 0019: test builds read HIKARISUB_UPDATE_FEED (a local release feed) and
+# HIKARISUB_PACKAGE_KIND; a release build has neither name in it.
+option(HIKARI_UPDATE_TEST_FEED "Read the update feed and package kind from the environment (test builds only)" OFF)
+if(HIKARI_UPDATE_TEST_FEED)
+    target_compile_definitions(hikari_composition PRIVATE HIKARI_UPDATE_TEST_FEED)
+endif()
+if(WIN32)
+    target_link_libraries(hikari_composition PRIVATE shell32) # ShellExecuteExW (the all-users update)
+endif()
 hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_uiplugin hikari_backends
     hikari_application hikari_core "Qt6::*" "hikari_ui*")
 

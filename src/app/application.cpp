@@ -667,7 +667,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // O2: legacy LoadHkeys at startup, then SetAccels.
     m_hotkeys = std::make_unique<HotkeysController>(*m_automationHotkeys, *m_settings,
                                                     [this](const QString &message) { m_log->log(message); });
-    m_updates = std::make_unique<UpdateChecker>(*m_settings, options.updateFeed, QStringLiteral(HIKARI_VERSION));
+    m_updates = std::make_unique<UpdateChecker>(*m_settings, options.updateFeed, QStringLiteral(HIKARI_VERSION),
+                                                options.updateEnvironment);
     {
         const QString catalogDir = !options.catalogDir.isEmpty() ? options.catalogDir
                                    : !m_settingsFile.isEmpty()   ? QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Catalog")

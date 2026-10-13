@@ -326,6 +326,15 @@ QStringList SettingsImportStore::defaultCandidates()
         out << base + QStringLiteral("/HikariSub") << base + QStringLiteral("/Programs/HikariSub")
             << base + QStringLiteral("/Kainote");
     }
+    // ADR 0019: an installed legacy (0.0.2 on) keeps its settings here.
+    if (const QString local = qEnvironmentVariable("LOCALAPPDATA"); !local.isEmpty())
+        out << QDir::fromNativeSeparators(local) + QStringLiteral("/HikariSub/Legacy");
+#else
+    // ADR 0019: an installed legacy (0.0.2 on): ${XDG_DATA_HOME:-~/.local/share}/HikariSub/Legacy.
+    QString data = qEnvironmentVariable("XDG_DATA_HOME");
+    if (data.isEmpty() || QDir::isRelativePath(data))
+        data = QDir::homePath() + QStringLiteral("/.local/share");
+    out << data + QStringLiteral("/HikariSub/Legacy");
 #endif
     return out;
 }

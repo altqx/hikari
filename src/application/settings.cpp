@@ -261,6 +261,11 @@ const std::vector<SettingDefinition> &definitions()
         // indexing was off). Chosen here only, never as a fallback; other
         // platforms ignore it.
         {"video.playbackPlayer", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        // ADR 0019: "Install updates automatically": an installer, AppImage,
+        // deb or rpm copy downloads an update and installs it at the next
+        // quit; off, it only says that one exists. Legacy keeps it as
+        // UPDATER_AUTO_INSTALL from 0.0.2 on, which the importer does not read.
+        {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
     };
     return table;
 }
