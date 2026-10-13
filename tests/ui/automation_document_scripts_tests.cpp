@@ -466,7 +466,22 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
     const QDir scripts(QStringLiteral(HIKARI_S4_SCRIPTS));
     QFile headFile(scripts.filePath(QStringLiteral("record.lua.in")));
     QVERIFY(headFile.open(QIODevice::ReadOnly));
-    const QByteArray head = headFile.readAll();
+    QByteArray head = headFile.readAll();
+    // Two scripts load at once, each in its own helper, and both append to
+    // the one capture file. Windows has no atomic append across processes
+    // (the C runtime seeks to the end, then writes), so one load line could
+    // overwrite the other. Each record takes the file in turn: a lock file
+    // beside it, taken by renaming it, which only one helper can do.
+    const QByteArray appendOpen = "local f = assert(io.open(output(), \"a\"))";
+    QVERIFY(head.contains(appendOpen));
+    head.replace(appendOpen, "local f = locked(output())");
+    // On the tag's line, so the scripts' line numbers stay legacy's.
+    const QByteArray locked = " local function locked(out)"
+                              " local lock, mine = out .. \".lock\", out .. \".lock.\" .. tag"
+                              " for _ = 1, 50000000 do if os.rename(lock, mine) then break end end"
+                              " local f = assert(io.open(out, \"a\"))"
+                              " return { write = function(_, s) f:write(s) end,"
+                              " close = function() f:close(); os.rename(mine, lock) end } end";
     // The legacy boxes' text, read from the capture's screenshots (screens/);
     // in validation-error the log window covers the box, so its text is the
     // one the same branch gives validation-false (a validation that raises
@@ -509,11 +524,12 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
                 QFile body(scripts.filePath(QLatin1String(name) + QStringLiteral(".lua")));
                 QVERIFY(body.open(QIODevice::ReadOnly));
                 QByteArray text = head;
-                text.replace("local tag = TAG", "local tag = \"" + QByteArray(name) + "\"");
+                text.replace("local tag = TAG", "local tag = \"" + QByteArray(name) + "\";" + locked);
                 writeFile(folder + QLatin1Char('/') + QLatin1String(name) + QStringLiteral(".lua"), text + "\n" + body.readAll());
             }
         const QString out = caseDir.filePath(QStringLiteral("capture.jsonl"));
         writeFile(out, {});
+        writeFile(out + QStringLiteral(".lock"), {});
         qputenv("HIKARI_CAPTURE_OUT", out.toLocal8Bit());
         // Settings of its own, as legacy's fresh copy (no script editor set).
         auto o = options();
