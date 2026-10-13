@@ -108,6 +108,7 @@ Var HsUserLocalAppData
 Var HsRadioUser
 Var HsRadioMachine
 Var HsSelfHold        ; this setup's own file, held against change (HsHoldSelf)
+Var HsNewMachineDir   ; the new all-users folder HsMachineDirOk accepted
 
 ; ---------------------------------------------------------------------------
 ; Pages
@@ -695,7 +696,16 @@ Function HsFindExisting
   ${EndIf}
   SetShellVarContext current
   ClearErrors
-  ReadRegStr $0 SHCTX "${HS_UNINST_KEY}" "DisplayName"
+  ; The elevated relaunch for all users, and an all-users update, run as
+  ; whichever administrator approved UAC: their HKCU is not the user's, and
+  ; a per-user install of theirs has nothing to do with this one.
+  ${If} $HsElevated = 1
+  ${OrIf} $HsUpdate = 1
+  ${AndIf} $HsCmdScope == "machine"
+    SetErrors
+  ${Else}
+    ReadRegStr $0 SHCTX "${HS_UNINST_KEY}" "DisplayName"
+  ${EndIf}
   ${IfNot} ${Errors}
     ${If} $HsExistScope == "machine"
       MessageBox MB_OK|MB_ICONEXCLAMATION "${HS_NAME} is installed both for all users and for you alone. This setup updates the installation for all users. Uninstall the other one from Settings > Apps." /SD IDOK
@@ -756,16 +766,20 @@ Function HsApplyScope
   ${EndIf}
 FunctionEnd
 
-; $R2 = 1 when $INSTDIR may hold an all-users install (spec 6.2): a folder
-; under Program Files, which only administrators can create or change, as a
-; plain path; or the folder of the all-users install already there, which
-; an administrator chose. A folder elsewhere could have been made by a
-; standard user, who could then replace the program that every user, and
-; administrators, start from the shortcuts and file types.
+; $R2 = 1 when $INSTDIR may hold an all-users install (spec 6.2): a new
+; folder directly in Program Files, as a plain path, which only
+; administrators can create there and which takes Program Files' rights; or
+; the folder of the all-users install already there, which an administrator
+; chose. A folder elsewhere, or one that is already there (another program's
+; folder may let users change it, or hold a junction), could be the user's
+; to change, who could then replace the program that every user, and
+; administrators, start from the shortcuts and file types. A new folder this
+; setup has already accepted ($HsNewMachineDir) stays accepted once made.
 Function HsMachineDirOk
   Push $0
   Push $1
   Push $R0
+  Push $2
   StrCpy $R2 0
   ${If} $HsExistScope == "machine"
   ${AndIf} $HsExistDir != ""
@@ -783,7 +797,34 @@ Function HsMachineDirOk
         StrCpy $R2 0
       ${EndIf}
     ${EndIf}
+    ; Directly in Program Files: one name, no "\".
+    ${If} $R2 = 1
+      StrLen $1 $R0
+      StrCpy $0 0
+      ${Do}
+        ${If} $0 >= $1
+          ${Break}
+        ${EndIf}
+        StrCpy $2 $R0 1 $0
+        ${If} $2 == "\"
+          StrCpy $R2 0
+          ${Break}
+        ${EndIf}
+        IntOp $0 $0 + 1
+      ${Loop}
+    ${EndIf}
+    ; New: not there yet, unless this setup accepted it and made it.
+    ${If} $R2 = 1
+      ${If} $INSTDIR S== $HsNewMachineDir
+        StrCpy $R2 1
+      ${ElseIf} ${FileExists} "$INSTDIR"
+        StrCpy $R2 0
+      ${Else}
+        StrCpy $HsNewMachineDir $INSTDIR
+      ${EndIf}
+    ${EndIf}
   ${EndIf}
+  Pop $2
   Pop $R0
   Pop $1
   Pop $0
@@ -1244,7 +1285,7 @@ Function HsDirectoryPageLeave
   ${If} $HsScope == "machine"
     Call HsMachineDirOk
     ${If} $R2 <> 1
-      MessageBox MB_OK|MB_ICONEXCLAMATION "For all users, HikariSub installs in a folder under $PROGRAMFILES64. Choose a folder there, or go back and choose Just me."
+      MessageBox MB_OK|MB_ICONEXCLAMATION "For all users, HikariSub installs in a new folder directly in $PROGRAMFILES64. Choose a folder name there that is not in use, or go back and choose Just me."
       Abort
     ${EndIf}
   ${EndIf}

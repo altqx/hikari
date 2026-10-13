@@ -162,14 +162,20 @@ elseif ($Phase -eq 'machinedir') {
     # (NSIS turns "/" in /D= into "\", and drops ":" after the drive,
     # itself.) Windows drops a name's trailing spaces and dots, so
     # "$pf\.. \x" is "C:\x".
+    # A folder already in Program Files may be another program's, with
+    # rights that let users change it: only a new one directly there.
+    $existing = "$pf\HikariSubTestExisting"
+    New-Item -ItemType Directory -Force -Path $existing | Out-Null
     $dirs = @("$writable\HikariSub", "$pf\..\HsWritable\HikariSub", "$pf\.. \HsWritable\HikariSub",
-        "$pf\... \..\HsWritable\HikariSub", "$pf\HikariSubTest.", "$pf", "$pf\\HikariSubTest")
+        "$pf\... \..\HsWritable\HikariSub", "$pf\HikariSubTest.", "$pf", "$pf\\HikariSubTest", $existing,
+        "$existing\HikariSub")
     foreach ($dir in $dirs) {
         $code = Install "/S /ALLUSERS /D=$dir"
         Check "all users in $dir refused" ($code -eq 2) "exit $code"
         Check "all users in ${dir}: nothing installed" (-not (Test-Path $key))
     }
     Check 'nothing written to the writable folder' (@(Get-ChildItem -Force -LiteralPath $writable).Count -eq 0)
+    Check 'nothing written to the folder already there' (@(Get-ChildItem -Force -LiteralPath $existing).Count -eq 0)
     cmd /c rmdir /s /q $writable
     $code = Install "/S /ALLUSERS /D=$pf\HikariSubTest"
     Check "all users in $pf\HikariSubTest" ($code -eq 0) "exit $code"
