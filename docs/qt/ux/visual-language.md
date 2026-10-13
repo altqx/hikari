@@ -106,26 +106,26 @@ Measured WCAG 2.x contrast (`hikari_ui_theme_tests` accentPresetsMeetContrast; t
 | The Grid's focused cell (`line_grid.cpp`) | While the Grid has keyboard focus, the current Line's row: a ring 1 wide just inside its 1-wide accent outline; a selected row's 3-wide accent marker stays over the ring's left side. |
 | The panel holding the focus (`PanelFocusMark.qml` on its dock header, `DockTabBar.qml`) | No ring. A filled right triangle in the accent, its legs 8 logical pixels (whole device pixels at any scale), flush with the panel's top and trailing edges: the top right corner, the top left in a right-to-left layout. It is drawn over the header's toolbar and takes no input. The group holding the focus (the engine's `isFocused`; a floating window while active) shows it, the Grid's group included, and it moves with F6, Tab and a click. A floating window of several groups shows it on the focused group's header only; its title bar (`DockTitleBar.qml`) draws none. A header control with keyboard focus (the selected tab, the "⋯" button) rings itself as well. Panels have no accent border (D1 drew a focused panel's border 2 wide in the accent). |
 
-The mark's accent is the high-contrast accent pick in those themes; against the header's surfaces (`field` under a lone panel's title bar and a selected tab, `raised` under the tab strip) it measures at least 3:1 in every theme with every preset (`hikari_ui_theme_tests` panelFocusMarkContrast):
+The mark's accent is the high-contrast accent pick in those themes; against the header's surfaces it sits on (`field` under a lone panel's title bar and a selected tab, also the panel's body; `raised` under the tab strip) and the surfaces around a panel (`panel`, the windows' and dialogs' surface; `background`, the application's) it measures at least 3:1 in every theme with every preset (`hikari_ui_theme_tests` panelFocusMarkContrast):
 
-| Theme | Accent | On `field` | On `raised` |
-| --- | --- | --- | --- |
-| Light | Red `#B3261E` | 6.54 | 5.71 |
-| Light | Orange `#9C4600` | 6.38 | 5.58 |
-| Light | Gold `#7A5E00` | 6.12 | 5.35 |
-| Light | Green `#145C4C` | 7.88 | 6.89 |
-| Light | Blue `#1D5BA8` | 6.74 | 5.90 |
-| Light | Purple `#5B3FB0` | 7.55 | 6.60 |
-| Light | Pink `#9E2A73` | 6.92 | 6.05 |
-| Dark | Red `#F4A9A3` | 8.93 | 6.93 |
-| Dark | Orange `#F5BB8A` | 9.98 | 7.75 |
-| Dark | Gold `#E3CF7E` | 10.90 | 8.46 |
-| Dark | Green `#9CDBC9` | 10.82 | 8.40 |
-| Dark | Blue `#A6C8F2` | 9.83 | 7.63 |
-| Dark | Purple `#C6B5F4` | 9.14 | 7.10 |
-| Dark | Pink `#EFAAD3` | 9.18 | 7.12 |
-| High contrast white | Accent pick (default) `#0037B3` | 9.56 | 8.02 |
-| High contrast black | Accent pick (default) `#FFFF00` | 19.56 | 17.01 |
+| Theme | Accent | On `field` | On `raised` | On `panel` | On `background` |
+| --- | --- | --- | --- | --- | --- |
+| Light | Red `#B3261E` | 6.54 | 5.71 | 6.25 | 5.35 |
+| Light | Orange `#9C4600` | 6.38 | 5.58 | 6.11 | 5.23 |
+| Light | Gold `#7A5E00` | 6.12 | 5.35 | 5.86 | 5.02 |
+| Light | Green `#145C4C` | 7.88 | 6.89 | 7.54 | 6.45 |
+| Light | Blue `#1D5BA8` | 6.74 | 5.90 | 6.45 | 5.52 |
+| Light | Purple `#5B3FB0` | 7.55 | 6.60 | 7.22 | 6.18 |
+| Light | Pink `#9E2A73` | 6.92 | 6.05 | 6.63 | 5.67 |
+| Dark | Red `#F4A9A3` | 8.93 | 6.93 | 8.03 | 9.10 |
+| Dark | Orange `#F5BB8A` | 9.98 | 7.75 | 8.98 | 10.18 |
+| Dark | Gold `#E3CF7E` | 10.90 | 8.46 | 9.80 | 11.11 |
+| Dark | Green `#9CDBC9` | 10.82 | 8.40 | 9.73 | 11.03 |
+| Dark | Blue `#A6C8F2` | 9.83 | 7.63 | 8.84 | 10.02 |
+| Dark | Purple `#C6B5F4` | 9.14 | 7.10 | 8.22 | 9.32 |
+| Dark | Pink `#EFAAD3` | 9.18 | 7.12 | 8.25 | 9.36 |
+| High contrast white | Accent pick (default) `#0037B3` | 9.56 | 8.02 | 9.56 | 9.56 |
+| High contrast black | Accent pick (default) `#FFFF00` | 19.56 | 17.01 | 18.65 | 19.56 |
 
 Spacing for the ring: a control's ring needs 1 pixel beyond it. The Line editor's scroll brings a focused control into view with 1 pixel to spare (it kept 5 for the 2026-10-05 ring). Views that clip a control at their edge keep it 1 inside: the visual tool rail's buttons (its frame's padding 2 became 1, the buttons 1 inside its scrolled area, where they were), the Shift times form (1 inside its scrolled area), and the recovery, auto save, unresolved restore and Misspelling replacer result lists (1-pixel margins). The panels' 4-pixel body margin and the controls' 8-pixel spacing are the layout's rhythm, older than the ring, and stay.
 

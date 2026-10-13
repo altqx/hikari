@@ -34,6 +34,7 @@
 
 #include <cmath>
 #include <set>
+#include <utility>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -734,24 +735,29 @@ Window {
     // K2 focus (the user's 2026-10-13 decision): the panel holding the focus
     // shows a small triangle in the accent at its header's top trailing
     // corner (PanelFocusMark.qml), where the header is `field` (a lone
-    // panel's title bar, a selected tab) or `raised` (the tab strip). The
-    // accent meets 3:1 on both in every theme with every preset, the high
-    // contrast themes' default accent pick included. With
+    // panel's title bar, a selected tab; also the panel body, the palette's
+    // base) or `raised` (the tab strip). The accent meets 3:1 on those and on
+    // the `panel` and `background` surfaces around a panel in every theme
+    // with every preset, the high contrast themes' default accent pick
+    // included. With
     // HIKARI_THEME_SHEET_DIR set the ratios are written to
     // k2-focus-mark-contrast.txt for the review.
     void panelFocusMarkContrast()
     {
         QString report;
         QTextStream out(&report);
-        out << "theme | accent | on field | on raised\n";
+        out << "theme | accent | on field | on raised | on panel | on background\n";
         const auto check = [&](Code code, const ui::theme::Roles &r, const QString &accent) {
-            const double field = contrastRatio(r.accent, r.field);
-            const double raised = contrastRatio(r.accent, r.raised);
-            out << ui::theme::codeName(code) << " | " << accent << " " << name(r.accent) << " | "
-                << QString::number(field, 'f', 2) << " | " << QString::number(raised, 'f', 2) << "\n";
             const QString what = ui::theme::codeName(code) + QLatin1Char(' ') + accent;
-            QVERIFY2(field >= 3.0, qPrintable(what + QStringLiteral(" on field %1").arg(field)));
-            QVERIFY2(raised >= 3.0, qPrintable(what + QStringLiteral(" on raised %1").arg(raised)));
+            out << ui::theme::codeName(code) << " | " << accent << " " << name(r.accent);
+            const std::pair<const char *, QColor> surfaces[] = {
+                {"field", r.field}, {"raised", r.raised}, {"panel", r.panel}, {"background", r.background}};
+            for (const auto &[surface, colour] : surfaces) {
+                const double ratio = contrastRatio(r.accent, colour);
+                out << " | " << QString::number(ratio, 'f', 2);
+                QVERIFY2(ratio >= 3.0, qPrintable(what + QStringLiteral(" on %1 %2").arg(QLatin1String(surface)).arg(ratio)));
+            }
+            out << "\n";
         };
         for (const bool dark : {false, true})
             for (const auto &a : ui::theme::accents(dark)) {
