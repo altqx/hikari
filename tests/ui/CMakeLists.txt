@@ -24,6 +24,10 @@ target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper
     hikari_lua_helper hikari_automation_stage)
+# MSVC: the shell tests outgrew an object file's default section count (C1128).
+if(MSVC)
+    target_compile_options(hikari_ui_shell_tests PRIVATE /bigobj)
+endif()
 # W2 (Windows, HIKARI_WITH_VSFILTER): the recipe's xy-VSFilter in the Csri
 # folder beside the tests, as the application ships it, so the Video page
 # offers it and the loaded video switches renderers.
