@@ -101,6 +101,7 @@ HikariSub will stay actively maintained rather than go dormant, and its dependen
 
 * **Automation 4**: runs Automation 4 Lua scripts on LuaJIT, ships the Aegisub automation library, and works with [DependencyControl](https://github.com/TypesettingTools/DependencyControl).
 * **Script management**: autoloads scripts, maps macro hotkeys, reruns the last script, and has a compatibility mode for older scripts.
+* **Your own scripts**: the portable package keeps everything in its `Automation` folder. An installed copy cannot write to its program folder, so it keeps what scripts write (`?user`, `?local` and `?temp`, logs and autosaves) in `%LOCALAPPDATA%\HikariSub\Legacy\Automation` on Windows or `~/.local/share/HikariSub/Legacy/Automation` on Linux. It autoloads scripts from `automation/Autoload` there, and from DependencyControl's `automation/autoload`, as well as the shipped ones; a script there replaces a shipped script of the same name.
 
 ### Platforms
 

@@ -9,6 +9,7 @@ if(WIN32)
     add_executable(hikarisub_windows_tests
         check_main.cpp
         WindowsSaveFileTests.cpp
+        AutomationFoldersTests.cpp
         update/UpdateApplyTests.cpp
         update/UpdateVerifyTests.cpp
         ../HikariSub/UpdateApply.cpp
@@ -34,6 +35,7 @@ hikarisub_add_dependencycontrol_modules("${HIKARISUB_TEST_DEPCTRL_DIR}")
 add_executable(hikarisub_tests
     check_main.cpp
     AssBlendTests.cpp
+    AutomationFoldersTests.cpp
     DependencyControlModulesTests.cpp
     FrameQueueTests.cpp
     HotkeysFileTests.cpp

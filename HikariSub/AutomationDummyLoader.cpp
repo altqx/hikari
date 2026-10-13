@@ -14,6 +14,7 @@
 //  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Automation.h"
+#include "AutomationFolders.h"
 #include "OpennWrite.h"
 #include "config.h"
 #include <wx/filename.h>
@@ -21,37 +22,86 @@
 
 
 namespace Auto {
-	
+
+	static automation_folders::Roots Roots()
+	{
+		automation_folders::Roots roots;
+		roots.shipped = std::string(Options.pathfull.utf8_str());
+		roots.data = std::string(Options.dataPath.utf8_str());
+		roots.separator = char(wxFileName::GetPathSeparator());
+#ifdef _WIN32
+		roots.caseSensitive = false;
+#endif
+		return roots;
+	}
+
+	static std::vector<wxString> ToWx(const std::vector<std::string> &paths)
+	{
+		std::vector<wxString> result;
+		for (const std::string &path : paths)
+			result.push_back(wxString::FromUTF8(path.c_str()));
+		return result;
+	}
+
+	std::vector<wxString> AutomationIncludeFolders()
+	{
+		std::vector<wxString> folders = ToWx(automation_folders::IncludeFolders(Roots()));
+		for (wxString &folder : folders)
+			folder += wxFileName::GetPathSeparator();
+		return folders;
+	}
+
+	void MakeUserAutomationFolders()
+	{
+		for (const wxString &folder : ToWx(automation_folders::UserFolders(Roots()))) {
+			if (!wxDirExists(folder))
+				wxFileName::Mkdir(folder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+		}
+	}
+
+	std::vector<wxString> AutoloadScripts()
+	{
+		automation_folders::Roots roots = Roots();
+		std::vector<std::pair<std::string, std::vector<std::string>>> listed;
+		bool shipped = true;
+		for (const std::string &folder : automation_folders::AutoloadFolders(roots)) {
+			wxString path = wxString::FromUTF8(folder.c_str());
+			std::vector<std::string> names;
+			wxDir dir;
+			// The user's folders need not exist.
+			if (wxDirExists(path) && dir.Open(path)) {
+				wxString fn;
+				bool more = dir.GetFirst(&fn, wxEmptyString, wxDIR_FILES);
+				while (more) {
+					names.push_back(std::string(fn.utf8_str()));
+					more = dir.GetNext(&fn);
+				}
+			}
+			else if (shipped) {
+				HikariLogSilent(wxString::Format(L"Failed to open a directory in the Automation autoload path: %s",
+					path.wc_str()));
+			}
+			shipped = false;
+			listed.emplace_back(folder, std::move(names));
+		}
+		// The same spelling as before for a shipped script, which the list
+		// SaveDummy() wrote names (FindFilename()).
+		std::vector<wxString> scripts = ToWx(automation_folders::ChooseScripts(roots, listed));
+		for (wxString &script : scripts)
+			script = wxFileName(script).GetFullPath();
+		return scripts;
+	}
+
 	void AutomationDummyLoader::FastReloadScripts()
 	{
-		wxDir dir;
-
-		if (!dir.Open(AutoloadPath)) {
-			HikariLog(wxString::Format(L"Failed to open a directory in the Automation autoload path: %s", 
-				AutoloadPath.wc_str()));
-			return;
-		}
-
-		wxString fn;
-		wxFileName script_path(AutoloadPath, L"");
-		bool more = dir.GetFirst(&fn, wxEmptyString, wxDIR_FILES);
 		std::vector<size_t> tableOfScripts;
 
-		while (more) {
-			script_path.SetName(fn);
+		for (const wxString &fullpath : AutoloadScripts()) {
 			try {
-				wxString fullpath = script_path.GetFullPath();
-				wxString ext = fullpath.AfterLast(L'.').Lower();
-
-				if (ext != L"lua" && ext != L"moon") {
-					more = dir.GetNext(&fn);
-					continue;
-				}
 				size_t result = FindFilename(fullpath);
 				if(result == -1){
 					HikariLogSilent(L"Not added script " + fullpath);
 					if (!((Automation*)this)->Add(fullpath, false, true)) {
-						more = dir.GetNext(&fn);
 						continue;
 					}
 					
@@ -62,8 +112,6 @@ namespace Auto {
 			catch (...) {
 				
 			}
-
-			more = dir.GetNext(&fn);
 		}
 
 		if (tableOfScripts.size() != Scripts.size()) {

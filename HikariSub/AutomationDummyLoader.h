@@ -24,11 +24,19 @@ namespace Auto {
 	class LuaCommand;
 	class LuaScript;
 
+	// Automation's folders in this copy (AutomationFolders.h): the include
+	// folders a script searches after its own, with a trailing separator,
+	// and the autoload scripts to load, a user script in place of a shipped
+	// one of the same name.
+	std::vector<wxString> AutomationIncludeFolders();
+	std::vector<wxString> AutoloadScripts();
+	// Makes the data root's Automation folders in an installed copy.
+	void MakeUserAutomationFolders();
+
 	class AutomationDummyLoader {
 
 	public:
 		std::vector<LuaScript*> Scripts;
-		wxString AutoloadPath;
 		
 		AutomationDummyLoader() {};
 		void FastReloadScripts();

@@ -975,6 +975,9 @@
     <ClInclude Include="AutomationDummyLoader.h">
       <Filter>A</Filter>
     </ClInclude>
+    <ClInclude Include="AutomationFolders.h">
+      <Filter>A</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc">

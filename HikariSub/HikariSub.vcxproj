@@ -493,6 +493,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="Automation.h" />
     <ClInclude Include="AutomationDialog.h" />
     <ClInclude Include="AutomationDummyLoader.h" />
+    <ClInclude Include="AutomationFolders.h" />
     <ClInclude Include="AutomationHotkeysDialog.h" />
     <ClInclude Include="AutomationLPeg.h" />
     <ClInclude Include="AutomationProgress.h" />

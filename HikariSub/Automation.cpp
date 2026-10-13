@@ -508,14 +508,12 @@ namespace Auto{
 
 
 
-	// The shipped Include folder, after the user's in an installed copy,
-	// where ?user/automation/include is (decode_path).
+	// The user's include folders, then the shipped one, in an installed
+	// copy, where ?user/automation/include is (decode_path).
 	static void AddAutomationIncludes(std::vector<wxString> &include_path)
 	{
-		wxString shipped = HikariPathJoin(HikariPathJoin(HikariPathJoin(Options.pathfull, L"Automation"), L"automation"), L"Include") + wxFileName::GetPathSeparator();
-		if (Options.dataPath != Options.pathfull)
-			include_path.push_back(HikariPathJoin(HikariPathJoin(HikariPathJoin(Options.dataPath, L"Automation"), L"automation"), L"Include") + wxFileName::GetPathSeparator());
-		include_path.push_back(shipped);
+		for (const wxString &folder : AutomationIncludeFolders())
+			include_path.push_back(folder);
 	}
 
 	LuaScript::LuaScript(wxString const& filename)
@@ -1127,7 +1125,7 @@ namespace Auto{
 	Automation::Automation(bool loadSubsScripts, bool loadNow)
 	{
 		initialized = false;
-		AutoloadPath = Options.pathfull + L"/Automation/automation/Autoload";
+		MakeUserAutomationFolders();
 		if (loadSubsScripts){ return; }
 		if (LoadDummy()) {
 			finished = true;
@@ -1230,30 +1228,13 @@ namespace Auto{
 		int error_count = 0;
 
 		
-		wxDir dir;
-		
-		if (!dir.Open(AutoloadPath)) {
-			//wxLogWarning("Failed to open a directory in the Automation autoload path: %s", dirname.c_str());
-			return;
-		}
-
-
-		wxString fn;
-		wxFileName script_path(AutoloadPath, L"");
-		bool more = dir.GetFirst(&fn, wxEmptyString, wxDIR_FILES);
-
-		while (more) {
+		for (const wxString &fullpath : AutoloadScripts()) {
 			if (breakLoading){
 				break;
 			}
-			script_path.SetName(fn);
+			wxString fn = wxFileName(fullpath).GetFullName();
 			try {
-				wxString fullpath = script_path.GetFullPath();
-				wxString ext = fullpath.AfterLast(L'.').Lower();
-
-				if ((ext != L"lua" && ext != L"moon") || 
-					!Add(fullpath, false, true)){ 
-					more = dir.GetNext(&fn); 
+				if (!Add(fullpath, false, true)){ 
 					continue; 
 				}
 
@@ -1271,8 +1252,6 @@ namespace Auto{
 				error_count++;
 				HikariLog(wxString::Format(_("Unknown error loading Lua script: %s."), fn.wc_str()));
 			}
-
-			more = dir.GetNext(&fn);
 		}
 
 		if (error_count > 0) {
