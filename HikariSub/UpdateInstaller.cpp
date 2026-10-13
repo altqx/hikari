@@ -1352,6 +1352,19 @@ void update_installer::RestartNow(wxWindow *frame)
 		relaunch = false;
 }
 
+static update_installer::Quit Unstarted(wxWindow *frame, const Pending &pending, int code, const wxString &message)
+{
+	// Restart now keeps the app open and says why at once; a quit says so
+	// at the next start.
+	if (relaunch) {
+		relaunch = false;
+		HikariMessageBox(message, _("Update"), wxOK, frame);
+		return update_installer::Quit::Veto;
+	}
+	WriteLastResult(pending.version, false, code, message);
+	return update_installer::Quit::Continue;
+}
+
 update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 {
 	if (handedOff || waitingForInstaller)
@@ -1405,19 +1418,15 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 	case Launch::Unprotected:
 		// The download stays for the user to run; the update is not tried again.
 		RemoveFile(PendingPath());
-		WriteLastResult(pending->version, false, 4,
+		return Unstarted(frame, *pending, 4,
 			wxString::Format(_("HikariSub is installed for all users in a folder that can be changed without administrator rights, so HikariSub %s was not installed automatically. You can run its installer yourself: %s"),
 				FromUtf8(pending->version), FromUtf8(pending->file)));
-		relaunch = false;
-		return Quit::Continue;
 	case Launch::Failed:
 		break;
 	}
-	WriteLastResult(pending->version, false, 2,
+	return Unstarted(frame, *pending, 2,
 		wxString::Format(_("The installer of HikariSub %s could not be started. You can run it yourself: %s"),
 			FromUtf8(pending->version), FromUtf8(pending->file)));
-	relaunch = false;
-	return Quit::Continue;
 #else
 	if (*kind == package_kind::Kind::AppImage) {
 		if (!relaunch) {
@@ -1426,11 +1435,9 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 			return Quit::Continue;
 		}
 		if (!StageAppImage(*pending)) {
-			WriteLastResult(pending->version, false, 2,
+			return Unstarted(frame, *pending, 2,
 				wxString::Format(_("HikariSub %s could not replace the AppImage. The download is at %s."),
 					FromUtf8(pending->version), FromUtf8(pending->file)));
-			relaunch = false;
-			return Quit::Continue;
 		}
 		handedOff = true;
 		RemoveFile(PendingPath());
