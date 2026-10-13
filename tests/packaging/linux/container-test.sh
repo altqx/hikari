@@ -137,9 +137,10 @@ check_version() # <kind> <command...>
         skip "--version of $kind (the build has no --version switch yet)"
         return 0
     fi
-    local out
-    out=$(as_tester timeout 20 "$@" --version 2>&1) || fail "$* --version exited $? : $out"
-    [[ $out =~ ^${version//./\\.}\ \(($(kind_name "$kind"))\)$ ]] || fail "$* --version printed '$out'"
+    # The line is on stdout; Qt and the loader may warn on stderr.
+    local out err=/tmp/version-stderr.txt
+    out=$(as_tester timeout 20 "$@" --version 2>"$err") || fail "$* --version exited $? : $out $(cat "$err")"
+    [[ $out =~ ^${version//./\\.}\ \(($(kind_name "$kind"))\)$ ]] || fail "$* --version printed '$out' (stderr: $(cat "$err"))"
     pass "--version: $out"
 }
 

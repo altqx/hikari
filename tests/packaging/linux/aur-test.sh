@@ -121,8 +121,10 @@ pass "pacman -U: marker arch, no helper or policy, every library resolves, deskt
 home=/home/tester
 as_tester() { runuser -u tester -- env HOME=$home "$@"; }
 if [ $expect_version = 1 ]; then
-    out=$(as_tester timeout 20 /usr/bin/hikarisub --version 2>&1) || fail "--version exited $?: $out"
-    [[ $out =~ ^${version//./\\.}\ \((arch|AUR)\)$ ]] || fail "--version printed '$out'"
+    # The line is on stdout; Qt and the loader may warn on stderr.
+    out=$(as_tester timeout 20 /usr/bin/hikarisub --version 2>/tmp/version-stderr.txt) ||
+        fail "--version exited $?: $out $(cat /tmp/version-stderr.txt)"
+    [[ $out =~ ^${version//./\\.}\ \((arch|AUR)\)$ ]] || fail "--version printed '$out' (stderr: $(cat /tmp/version-stderr.txt))"
     pass "--version: $out"
 else
     skip "--version (the build has no --version switch yet)"
