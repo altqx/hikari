@@ -311,7 +311,7 @@ jobs:
           if-no-files-found: error
 
   # The NSIS installer, built on Linux from the Release package above with
-  # Ubuntu's makensis: windows-2025 images carry no NSIS, and the Qt branch
+  # makensis built from source: windows-2025 images carry no NSIS, and the Qt branch
   # builds the same script the same way. The artifact holds the release
   # names of the setup and the portable zip.
   windows-installer:
@@ -321,10 +321,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install NSIS
+      # makensis itself is built by build-installer.sh (build-makensis.sh,
+      # the version and SHA-256s in tools.lock): Ubuntu's nsis is 3.09,
+      # which has CVE-2025-43715.
+      - name: Install the tools to build makensis
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends nsis p7zip-full
+          sudo apt-get install -y --no-install-recommends scons g++ zlib1g-dev bzip2 unzip p7zip-full
 
       - uses: actions/download-artifact@v4
         with:
@@ -343,7 +346,7 @@ jobs:
       # The uninstaller's elevation rule, built alone for the Windows test
       # (tests/packaging/windows/protected-tests.ps1).
       - name: Build the elevation rule test
-        run: tests/packaging/windows/build-protected-test.sh nsis-work/protected-test.exe
+        run: HS_MAKENSIS="nsis-work/nsis-$(sed -n 's/^MAKENSIS_VERSION=//p' packaging/windows/tools.lock)/Bin/makensis" tests/packaging/windows/build-protected-test.sh nsis-work/protected-test.exe
 
       # 7-Zip reads NSIS installers. Every payload file must be inside,
       # byte for byte, and nothing else but the installer's own files; the

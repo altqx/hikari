@@ -6,9 +6,11 @@
 #                      --out <setup.exe> [--icon <file.ico>]
 #                      [--icon-header <FileTypeIcons.h>] [--work <dir>]
 #
-# Needs makensis (Ubuntu 24.04's nsis package), python3, curl, unzip and
-# sha256sum. StdUtils is downloaded into <work>/stdutils and checked against
-# tools.lock; set HS_STDUTILS_ZIP to use a local copy of the same zip.
+# Needs python3, curl, unzip, sha256sum and what build-makensis.sh needs:
+# makensis is the one tools.lock names, built into <work>/nsis-<version>
+# (or HS_MAKENSIS, which must be that version). StdUtils is downloaded into
+# <work>/stdutils and checked against tools.lock; set HS_STDUTILS_ZIP to use
+# a local copy of the same zip.
 set -euo pipefail
 
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -42,9 +44,11 @@ lock_value() {
   printf '%s' "$value"
 }
 
+# The makensis of tools.lock (build-makensis.sh), or HS_MAKENSIS.
+makensis=${HS_MAKENSIS:-$("$here/build-makensis.sh" "$work")}
 want_nsis=$(lock_value MAKENSIS_VERSION)
-have_nsis=$(makensis -VERSION)
-if [[ $have_nsis != "v$want_nsis" && $have_nsis != "v$want_nsis-"* ]]; then
+have_nsis=$("$makensis" -VERSION)
+if [[ $have_nsis != "v$want_nsis" ]]; then
   echo "makensis is $have_nsis; tools.lock wants $want_nsis" >&2
   exit 1
 fi
@@ -64,7 +68,7 @@ args=(--payload "$payload" --version "$version" --codebase "$codebase" --out "$w
 python3 "$here/make-payload-nsh.py" "${args[@]}"
 
 rm -f "$out"
-makensis -V2 -WX -INPUTCHARSET UTF8 \
+"$makensis" -V2 -WX -INPUTCHARSET UTF8 \
   "-DHS_PAYLOAD_NSH=$work/gen/payload.nsh" \
   "-DHS_STDUTILS=$work/stdutils" \
   "-DHS_OUTFILE=$out" \

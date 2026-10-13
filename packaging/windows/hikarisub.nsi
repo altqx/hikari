@@ -1,4 +1,4 @@
-; HikariSub installer and uninstaller (NSIS 3.09).
+; HikariSub installer and uninstaller (NSIS 3.13, built by build-makensis.sh).
 ;
 ; This file is the same on the legacy (main) and Qt (qt) branches. What
 ; differs per codebase and per build comes from payload.nsh, which
