@@ -433,3 +433,34 @@ add_custom_target(hikarisub_linux_package
     COMMENT "Creating clean HikariSub Linux runtime archive"
     VERBATIM
 )
+
+# Release packages made from the staged tar.gz tree: the AppImage (everything
+# bundled, cmake/PackageLinuxAppImage.cmake) and the deb and rpm (nFPM,
+# cmake/PackageLinuxNative.cmake). packaging/linux/floor/build.sh builds them
+# in the ubuntu:22.04 floor container; packaging/linux/fetch-tool.sh fetches
+# the pinned tools named below.
+file(STRINGS "${CMAKE_SOURCE_DIR}/HikariSub/VersionHikariSub.h" HIKARISUB_VERSION_LINE
+     REGEX "^#define[ \t]+VersionHikariSub[ \t]+\"")
+string(REGEX REPLACE ".*\"([^\"]+)\".*" "\\1" HIKARISUB_PACKAGE_VERSION "${HIKARISUB_VERSION_LINE}")
+set(HIKARISUB_APPIMAGETOOL "" CACHE FILEPATH "appimagetool, as pinned in packaging/linux/tools.lock")
+set(HIKARISUB_APPIMAGE_RUNTIME "" CACHE FILEPATH "The static type2-runtime, as pinned in packaging/linux/tools.lock")
+set(HIKARISUB_NFPM "" CACHE FILEPATH "nfpm, as pinned in packaging/linux/tools.lock")
+set(HIKARISUB_MIN_GLIBC "2.35" CACHE STRING "The lowest glibc the packages declare (the manifest's min_glibc)")
+set(HIKARISUB_PACKAGE_ROOT "${HIKARISUB_PACKAGE_STAGE_PARENT}/${HIKARISUB_PACKAGE_BASENAME}")
+
+add_custom_target(hikarisub_appimage
+    COMMAND ${CMAKE_COMMAND}
+            -D SOURCE_DIR=${CMAKE_SOURCE_DIR}
+            -D BINARY_DIR=${CMAKE_BINARY_DIR}
+            -D PACKAGE_ROOT=${HIKARISUB_PACKAGE_ROOT}
+            -D VERSION=${HIKARISUB_PACKAGE_VERSION}
+            -D APPIMAGETOOL=${HIKARISUB_APPIMAGETOOL}
+            -D APPIMAGE_RUNTIME=${HIKARISUB_APPIMAGE_RUNTIME}
+            -D OUTPUT=${CMAKE_BINARY_DIR}/dist/HikariSub-${HIKARISUB_PACKAGE_VERSION}-linux-x86_64.AppImage
+            -D PKG_CONFIG_EXECUTABLE=${PKG_CONFIG_EXECUTABLE}
+            -D READELF_EXECUTABLE=${CMAKE_READELF}
+            -P "${CMAKE_SOURCE_DIR}/cmake/PackageLinuxAppImage.cmake"
+    COMMENT "Creating the HikariSub AppImage"
+    VERBATIM
+)
+add_dependencies(hikarisub_appimage hikarisub_linux_package)
