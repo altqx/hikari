@@ -360,7 +360,8 @@ private slots:
         auto taken = [&] {
             QFile f(records);
             QStringList got;
-            if (f.open(QIODevice::ReadOnly))
+            // Text: Lua's io.open writes "\r\n" on Windows.
+            if (f.open(QIODevice::ReadOnly | QIODevice::Text))
                 got = QString::fromUtf8(f.readAll()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
             f.close();
             QFile::remove(records);
@@ -772,6 +773,18 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
             QTRY_VERIFY_WITH_TIMEOUT(notices.size() - noticesBefore >= (box ? 1 : 0) &&
                                          editor.size() - editorBefore >= (picker ? 1 : 0),
                                      30'000);
+            // The run waits for its own script's load only; the others' loads,
+            // each in its own helper, can land after it ends (on Windows CI).
+            qsizetype loads = 0;
+            for (const auto &r : step["records"].toArray())
+                loads += r.toObject()["event"].toString() == QStringLiteral("load");
+            auto loadsSince = [&] {
+                qsizetype n = 0;
+                for (const QJsonObject &r : records().mid(before))
+                    n += r["event"].toString() == QStringLiteral("load");
+                return n;
+            };
+            QTRY_VERIFY_WITH_TIMEOUT(loadsSince() >= loads, 30'000);
             QTest::qWait(300); // nothing more comes
             const auto got = records().mid(before);
 
