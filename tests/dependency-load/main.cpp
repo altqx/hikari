@@ -1,5 +1,17 @@
 // Loads each provisioned dependency in one process and checks its identity.
+#include <QBuffer>
+#include <QColor>
+#include <QFile>
 #include <QGuiApplication>
+#include <QDir>
+#include <QIcon>
+#include <QIconEngine>
+#include <QIconEnginePlugin>
+#include <QImage>
+#include <QImageReader>
+#include <QLibraryInfo>
+#include <QPluginLoader>
+#include <QTemporaryDir>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <cstdio>
@@ -32,6 +44,41 @@ int main(int argc, char **argv)
     std::unique_ptr<QObject> item(component.create());
     if (!item || item->property("width").toInt() != 4)
         return fail(qPrintable(component.errorString()));
+
+    // K1: the Qt SVG image plugin and icon engine load from the provisioned
+    // Qt (packaging/qt-deployment.json lists both for every package).
+    if (!QImageReader::supportedImageFormats().contains("svg"))
+        return fail("the Qt SVG image plugin (imageformats/qsvg) does not load");
+    QByteArray svg("<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\">"
+                   "<rect width=\"16\" height=\"16\" fill=\"#ff0000\"/></svg>");
+    QBuffer buffer(&svg);
+    const QImage image = QImageReader(&buffer, "svg").read();
+    if (image.isNull() || image.pixelColor(8, 8) != QColor(255, 0, 0))
+        return fail("the Qt SVG image plugin does not draw an SVG");
+    QTemporaryDir dir;
+    QFile file(dir.filePath(QStringLiteral("probe.svg")));
+    if (!dir.isValid() || !file.open(QIODevice::WriteOnly) || file.write(svg) != svg.size())
+        return fail("probe.svg");
+    file.close();
+    // The icon engine itself, from the plugin folder QIcon searches: QIcon
+    // falls back to reading the file through the image plugin, so a drawn
+    // icon alone would not show the engine is there.
+    const QDir engines(QLibraryInfo::path(QLibraryInfo::PluginsPath) + QStringLiteral("/iconengines"));
+    bool svgEngine = false;
+    for (const QString &name : engines.entryList(QDir::Files)) {
+        QPluginLoader loader(engines.filePath(name));
+        auto *plugin = qobject_cast<QIconEnginePlugin *>(loader.instance());
+        const std::unique_ptr<QIconEngine> iconEngine(plugin ? plugin->create() : nullptr);
+        if (!iconEngine || iconEngine->key() != QLatin1String("svg"))
+            continue;
+        iconEngine->addFile(file.fileName(), QSize(), QIcon::Normal, QIcon::Off); // as QIcon(file) does
+        const QImage drawn = iconEngine->pixmap(QSize(48, 48), QIcon::Normal, QIcon::Off).toImage();
+        svgEngine = drawn.size() == QSize(48, 48) && drawn.pixelColor(24, 24) == QColor(255, 0, 0);
+        break;
+    }
+    if (!svgEngine)
+        return fail("the Qt SVG icon engine (iconengines/qsvgicon) does not load or draw an SVG icon");
+    std::puts("svg=imageformats/qsvg iconengines/qsvgicon");
 
     FFMS_Init(0, 0);
     const int ffms = FFMS_GetVersion();
