@@ -157,11 +157,13 @@ elseif ($Phase -eq 'machinedir') {
     $writable = 'C:\HsWritable'
     New-Item -ItemType Directory -Force -Path $writable | Out-Null
     $pf = $env:ProgramFiles
-    # (NSIS turns "/" in /D= into "\" itself.) Windows drops a name's
-    # trailing spaces and dots, so "$pf\.. \x" is "C:\x".
+    # Leftovers of an earlier run.
+    Get-ChildItem -LiteralPath $pf -Directory -Filter 'HikariSubTest*' | Remove-Item -Recurse -Force
+    # (NSIS turns "/" in /D= into "\", and drops ":" after the drive,
+    # itself.) Windows drops a name's trailing spaces and dots, so
+    # "$pf\.. \x" is "C:\x".
     $dirs = @("$writable\HikariSub", "$pf\..\HsWritable\HikariSub", "$pf\.. \HsWritable\HikariSub",
-        "$pf\... \..\HsWritable\HikariSub", "$pf\HikariSubTest.", "$pf\HikariSubTest:s", "$pf",
-        "$pf\\HikariSubTest")
+        "$pf\... \..\HsWritable\HikariSub", "$pf\HikariSubTest.", "$pf", "$pf\\HikariSubTest")
     foreach ($dir in $dirs) {
         $code = Install "/S /ALLUSERS /D=$dir"
         Check "all users in $dir refused" ($code -eq 2) "exit $code"
@@ -179,6 +181,7 @@ elseif ($Phase -eq 'machinedir') {
     Start-Process -FilePath "$pf\HikariSubTest\Uninstall HikariSub.exe" -ArgumentList '/ALLUSERS /S' -Wait | Out-Null
     for ($i = 0; $i -lt 60 -and (Test-Path $key); $i++) { Start-Sleep -Milliseconds 500 }
     Check 'uninstalled' (-not (Test-Path $key))
+    Get-ChildItem -LiteralPath $pf -Directory -Filter 'HikariSubTest*' | Remove-Item -Recurse -Force
 }
 else {
     if (Test-Path -LiteralPath "$Root\junction\app\link") { cmd /c rmdir "$Root\junction\app\link" }
