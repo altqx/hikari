@@ -451,6 +451,12 @@
     <ClCompile Include="UtilsWindows.cpp">
       <Filter>U</Filter>
     </ClCompile>
+    <ClCompile Include="UpdateInstaller.cpp">
+      <Filter>U</Filter>
+    </ClCompile>
+    <ClCompile Include="UpdateApply.cpp">
+      <Filter>U</Filter>
+    </ClCompile>
     <ClCompile Include="Videobox.cpp">
       <Filter>V</Filter>
     </ClCompile>
@@ -918,6 +924,24 @@
     <ClInclude Include="UpdatePolicy.h">
       <Filter>U</Filter>
     </ClInclude>
+    <ClInclude Include="UpdateManifest.h">
+      <Filter>U</Filter>
+    </ClInclude>
+    <ClInclude Include="UpdateInstaller.h">
+      <Filter>U</Filter>
+    </ClInclude>
+    <ClInclude Include="UpdateApply.h">
+      <Filter>U</Filter>
+    </ClInclude>
+    <ClInclude Include="UpdateVerify.h">
+      <Filter>U</Filter>
+    </ClInclude>
+    <ClInclude Include="PackageKind.h">
+      <Filter>P</Filter>
+    </ClInclude>
+    <ClInclude Include="Sha256.h">
+      <Filter>S</Filter>
+    </ClInclude>
     <ClInclude Include="VersionHikariSub.h">
       <Filter>V</Filter>
     </ClInclude>
@@ -955,6 +979,9 @@
       <Filter>M</Filter>
     </ClInclude>
     <ClInclude Include="AutomationDummyLoader.h">
+      <Filter>A</Filter>
+    </ClInclude>
+    <ClInclude Include="AutomationFolders.h">
       <Filter>A</Filter>
     </ClInclude>
   </ItemGroup>

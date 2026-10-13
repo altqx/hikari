@@ -50,7 +50,9 @@ SpellChecker::SpellChecker()
 	conv = nullptr;
 	SC = nullptr;
 	dictionaryPath = Options.pathfull + L"/Dictionary/";
-	userDictionaryPath = dictionaryPath + L"UserDic.udic";
+	// The user's words are the user's data, apart from the shipped
+	// dictionaries in an installed copy (installers spec, 1.7).
+	userDictionaryPath = Options.dataPath + L"/Dictionary/UserDic.udic";
 
 }
 
@@ -221,6 +223,7 @@ bool SpellChecker::AddWord(const wxString& word)
 	wxString txt;
 	if (!ow.FileOpen(userDictionaryPath, &txt, false)){ txt = word; }
 	else{ txt += L"\n" + word; }
+	wxFileName::Mkdir(Options.dataPath + L"/Dictionary", wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 	ow.FileWrite(userDictionaryPath, txt);
 
 	return true;

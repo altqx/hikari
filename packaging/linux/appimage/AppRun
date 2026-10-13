@@ -1,0 +1,74 @@
+#!/bin/sh
+# HikariSub AppImage entry point (legacy wx app).
+#
+# The AppImage bundles GTK3, GLib and GStreamer with its plugins under
+# usr/lib/hikarisub-runtime, so the app runs the same on every distribution.
+# This script points them at the bundled pieces and away from the host's, then
+# starts the app. A variable the user has already set is kept, except the
+# ones marked "always": those must name the bundled copies, because a host
+# module built for another GLib or GStreamer would not load.
+#
+# cmake/PackageLinuxAppImage.cmake fills in @VERSION@.
+
+HERE=$(dirname "$(readlink -f "$0")")
+APPDIR=${APPDIR:-$HERE}
+export APPDIR
+runtime=$APPDIR/usr/lib/hikarisub-runtime
+version='@VERSION@'
+cache=${XDG_CACHE_HOME:-${HOME:-/tmp}/.cache}/HikariSub
+
+# always
+LD_LIBRARY_PATH=$runtime/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH
+
+# GStreamer: the bundled core, plugins and scanner only (always).
+GST_PLUGIN_SYSTEM_PATH_1_0=$runtime/gstreamer-1.0
+GST_PLUGIN_SCANNER_1_0=$runtime/libexec/gst-plugin-scanner
+export GST_PLUGIN_SYSTEM_PATH_1_0 GST_PLUGIN_SCANNER_1_0
+unset GST_PLUGIN_PATH_1_0 GST_PLUGIN_PATH
+: "${GST_REGISTRY_1_0:=$cache/gst-registry-$version.bin}"
+export GST_REGISTRY_1_0
+
+# GIO: no host modules (gvfs, dconf), built for another GLib (always).
+GIO_MODULE_DIR=$runtime/gio/modules
+export GIO_MODULE_DIR
+
+: "${GTK_PATH:=$runtime/gtk-3.0}"
+: "${GDK_PIXBUF_MODULEDIR:=$runtime/gdk-pixbuf-2.0/2.10.0/loaders}"
+: "${GSETTINGS_SCHEMA_DIR:=$runtime/share/glib-2.0/schemas}"
+export GTK_PATH GDK_PIXBUF_MODULEDIR GSETTINGS_SCHEMA_DIR
+
+XDG_DATA_DIRS=$runtime/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}
+export XDG_DATA_DIRS
+
+# The pixbuf loader and im-module caches hold absolute paths, and the
+# AppImage is mounted somewhere new on every start. Write this mount's copies
+# of the shipped templates, keyed by the mount path; GTK and gdk-pixbuf read
+# them once at start-up, so copies older than a day are pruned.
+caches=${XDG_RUNTIME_DIR:-$cache}/hikarisub-appimage-$version
+key=$(printf '%s' "$APPDIR" | cksum | cut -d ' ' -f 1)
+escaped=$(printf '%s' "$APPDIR" | sed 's/[\\&|]/\\&/g')
+if mkdir -p "$caches" 2>/dev/null; then
+    find "$caches" -type f -name '*.cache' -mtime +0 -exec rm -f {} + 2>/dev/null
+    for name in loaders immodules; do
+        template=$runtime/$name.cache.in
+        out=$caches/$name-$key.cache
+        [ -f "$template" ] || continue
+        if [ ! -f "$out" ] &&
+            sed "s|@APPDIR@|$escaped|g" "$template" > "$out.$$" 2>/dev/null; then
+            mv -f "$out.$$" "$out"
+        fi
+        rm -f "$out.$$"
+        [ -f "$out" ] || continue
+        case $name in
+        loaders)
+            : "${GDK_PIXBUF_MODULE_FILE:=$out}"
+            export GDK_PIXBUF_MODULE_FILE ;;
+        immodules)
+            : "${GTK_IM_MODULE_FILE:=$out}"
+            export GTK_IM_MODULE_FILE ;;
+        esac
+    done
+fi
+
+exec "$APPDIR/usr/lib/hikarisub/hikarisub" "$@"

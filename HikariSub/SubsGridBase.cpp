@@ -1918,15 +1918,15 @@ void SubsGrid::OnBackupTimer(wxTimerEvent &event)
 	wxString path;
 	wxString ext = (subsFormat < SRT) ? L"ass" : (subsFormat == SRT) ? L"srt" : L"txt";
 
-	path << Options.pathfull << L"/Subs/" << tab->SubsName.BeforeLast(L'.')
+	path << Options.dataPath << L"/Subs/" << tab->SubsName.BeforeLast(L'.')
 		<< L"_" << Notebook::GetTabs()->FindPanel(tab) << L"_" << numsave << L"." << ext;
 
 	//the autosaves are copies of the subtitles that only the user may read;
 	//none is made in a folder another user could read or swap files in, and
 	//the next edit tries again
-	if (!MakePrivateFolder(Options.pathfull + L"/Subs")) {
+	if (!MakePrivateFolder(Options.dataPath + L"/Subs")) {
 		HikariLogSilent(wxString::Format(L"The autosave folder is not private, no autosave is made: %s",
-			Options.pathfull + L"/Subs"));
+			Options.dataPath + L"/Subs"));
 		makebackup = true;
 		return;
 	}

@@ -9,12 +9,16 @@ if(WIN32)
     add_executable(hikarisub_windows_tests
         check_main.cpp
         WindowsSaveFileTests.cpp
+        AutomationFoldersTests.cpp
+        update/UpdateApplyTests.cpp
+        update/UpdateVerifyTests.cpp
+        ../HikariSub/UpdateApply.cpp
         ../HikariSub/WindowsSaveFile.cpp
     )
     # HIKARISUB_TESTING: the seam that makes a volume's refusals, which the
 # application is built without
 target_compile_definitions(hikarisub_windows_tests PRIVATE UNICODE _UNICODE NOMINMAX HIKARISUB_TESTING)
-    target_link_libraries(hikarisub_windows_tests PRIVATE advapi32)
+    target_link_libraries(hikarisub_windows_tests PRIVATE advapi32 bcrypt crypt32 winhttp)
     enable_testing()
     add_test(NAME hikarisub_windows_tests COMMAND hikarisub_windows_tests)
     return()
@@ -31,6 +35,7 @@ hikarisub_add_dependencycontrol_modules("${HIKARISUB_TEST_DEPCTRL_DIR}")
 add_executable(hikarisub_tests
     check_main.cpp
     AssBlendTests.cpp
+    AutomationFoldersTests.cpp
     DependencyControlModulesTests.cpp
     FrameExchangeTests.cpp
     FrameQueueTests.cpp
@@ -49,10 +54,13 @@ add_executable(hikarisub_tests
     TimebaseTests.cpp
     UndoHistoryTests.cpp
     UpdatePolicyTests.cpp
+    update/UpdateManifestTests.cpp
+    update/UpdateVerifyTests.cpp
     TextComparisonTests.cpp
     WaveformPeaksTests.cpp
     ../HikariSub/AssBlend.cpp
     ../HikariSub/FrameExchange.cpp
+    ../HikariSub/JsonValue.cpp
     ../HikariSub/FrameQueue.cpp
     ../HikariSub/LineGroups.cpp
     ../HikariSub/Playback.cpp
@@ -67,7 +75,10 @@ add_executable(hikarisub_tests
 # libcurl as the application links it, so OpenSSL's libcrypto is loaded when
 # the modules are.
 target_link_libraries(hikarisub_tests PRIVATE hikarisub_luajit PkgConfig::HIKARISUB_DEPCTRL_CURL)
+# HIKARISUB_JSON_NO_WX: JsonValue without its wxString accessors, for the
+# update manifest's tests.
 target_compile_definitions(hikarisub_tests PRIVATE
+    HIKARISUB_JSON_NO_WX
     HIKARISUB_TEST_AUTOMATION_INCLUDE="${CMAKE_CURRENT_SOURCE_DIR}/../Automation/automation/Include"
     HIKARISUB_TEST_DEPCTRL_DIR="${HIKARISUB_TEST_DEPCTRL_DIR}")
 add_dependencies(hikarisub_tests

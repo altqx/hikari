@@ -9,6 +9,11 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      offer_to:
+        description: 'A manual run of a tag: the release manifest offer_to (comma list of legacy and qt)'
+        required: false
+        default: ''
 
 concurrency:
   # head_ref on a pull_request, ref otherwise, so a branch and its PR share one
@@ -38,6 +43,28 @@ jobs:
       - name: Run
         run: ctest --test-dir build-tests --output-on-failure
 
+  # The deb and rpm update helper (installers spec, 4.4), run as pkexec
+  # would in the pinned test images: stand-in packages, and a stand-in for
+  # GitHub that serves made-up releases' SHA256SUMS.
+  update-helper-tests:
+    name: Update helper (${{ matrix.kind }}, ${{ matrix.image }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { kind: deb, image: ubuntu-22.04 }
+          - { kind: deb, image: ubuntu-24.04 }
+          - { kind: rpm, image: fedora }
+          - { kind: rpm, image: tumbleweed }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run
+        run: |
+          image=$(packaging/linux/fetch-tool.sh --image "${{ matrix.image }}")
+          docker run --rm -v "$PWD:/src:ro" "$image" sh /src/tests/update/helper/test-update-helper.sh "${{ matrix.kind }}"
+
   # The tests of the save code that is Windows' own, which needs no
   # dependency and builds in a minute.
   windows-tests:
@@ -56,6 +83,8 @@ jobs:
         run: cmake --build build-tests --config Release
 
       - name: Run
+        env:
+          HIKARISUB_TEST_NETWORK: '1' # the installing side's real fetch of a release's SHA256SUMS
         run: ctest --test-dir build-tests -C Release --output-on-failure
 
   windows:
@@ -283,6 +312,73 @@ jobs:
           path: dist
           if-no-files-found: error
 
+  # The NSIS installer, built on Linux from the Release package above with
+  # makensis built from source: windows-2025 images carry no NSIS, and the Qt branch
+  # builds the same script the same way. The artifact holds the release
+  # names of the setup and the portable zip.
+  windows-installer:
+    name: Windows installer
+    needs: windows
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # makensis itself is built by build-installer.sh (build-makensis.sh,
+      # the version and SHA-256s in tools.lock): Ubuntu's nsis is 3.09,
+      # which has CVE-2025-43715.
+      - name: Install the tools to build makensis
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends scons g++ zlib1g-dev bzip2 unzip p7zip-full
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: hikarisub-windows-x64
+          path: artifacts
+
+      - name: Build the installer
+        run: |
+          version=$(sed -n 's/^#define[[:space:]]*VersionHikariSub[[:space:]]*"\(.*\)".*/\1/p' HikariSub/VersionHikariSub.h)
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          packaging/windows/build-installer.sh \
+            --payload artifacts/HikariSub_x64 --version "$version" --codebase legacy \
+            --icon HikariSub/Bitmaps/HikariLargeIcon.ico --icon-header HikariSub/FileTypeIcons.h \
+            --out "installer/HikariSub-$version-windows-x64-setup.exe" --work nsis-work
+
+      # The uninstaller's elevation rule, built alone for the Windows test
+      # (tests/packaging/windows/protected-tests.ps1).
+      - name: Build the elevation rule test
+        run: HS_MAKENSIS="nsis-work/nsis-$(sed -n 's/^MAKENSIS_VERSION=//p' packaging/windows/tools.lock)/Bin/makensis" tests/packaging/windows/build-protected-test.sh nsis-work/protected-test.exe
+
+      # 7-Zip reads NSIS installers. Every payload file must be inside,
+      # byte for byte, and nothing else but the installer's own files; the
+      # manifest it writes must list exactly the payload.
+      - name: Check the installer contents
+        run: |
+          setup="installer/HikariSub-$VERSION-windows-x64-setup.exe"
+          7z x -y -onsis-check "$setup" > /dev/null
+          (cd artifacts/HikariSub_x64 && find . -type f | sed 's|^\./||' | LC_ALL=C sort) > payload.txt
+          (cd nsis-check && find . -type f | sed 's|^\./||' | LC_ALL=C sort) |
+            grep -vx -e 'install-manifest.txt' -e 'Uninstall HikariSub.exe' -e '\$PLUGINSDIR/.*' > packed.txt
+          diff payload.txt packed.txt
+          tr -d '\r' < nsis-check/install-manifest.txt | tr '\\' '/' | LC_ALL=C sort > manifest.txt
+          diff payload.txt manifest.txt
+          while IFS= read -r f; do
+            cmp "artifacts/HikariSub_x64/$f" "nsis-check/$f"
+          done < payload.txt
+          test -f 'nsis-check/$PLUGINSDIR/StdUtils.dll'
+          ls -l "$setup"
+
+      - name: Zip the portable package
+        run: (cd artifacts && zip -qr "$OLDPWD/installer/HikariSub-$VERSION-windows-x64.zip" HikariSub_x64)
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: hikarisub-windows-installer
+          path: installer/*
+          if-no-files-found: error
+
   linux:
     name: Linux (${{ matrix.build_type }})
     runs-on: ubuntu-24.04
@@ -407,8 +503,225 @@ jobs:
           path: build/dist/hikarisub-linux-x86_64.tar.gz*
           if-no-files-found: error
 
+  # The release packages for Linux, built in the ubuntu:22.04 floor container
+  # (glibc 2.35, g++-12; packaging/linux/floor) so they run on Ubuntu 22.04,
+  # Debian 12 and everything newer: the portable tar.gz, the AppImage (with
+  # GTK, GLib and GStreamer inside), the deb and rpm (nFPM) and the AUR
+  # PKGBUILD. FFmpeg 7.1 and the FFMS2 fork are built from source there.
+  # The artifact hikarisub-linux-packages holds the files under their release
+  # asset names, plus aur/PKGBUILD and aur/.SRCINFO for a stable version.
+  linux-packages:
+    name: Linux packages
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.keys.outputs.version }}
+      stable: ${{ steps.keys.outputs.stable }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Resolve the cache keys
+        id: keys
+        run: |
+          version=$(sed -n 's/^#define[[:space:]]*VersionHikariSub[[:space:]]*"\(.*\)".*/\1/p' HikariSub/VersionHikariSub.h)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "stable=$([[ "$version" == *-* ]] && echo false || echo true)" >> "$GITHUB_OUTPUT"
+          image=$(cat packaging/linux/floor/image)
+          echo "image=${image##*@sha256:}" >> "$GITHUB_OUTPUT"
+          echo "wx=$(git rev-parse HEAD:Thirdparty/wxWidgets)" >> "$GITHUB_OUTPUT"
+          echo "ffms2=$(git rev-parse HEAD:Thirdparty/ffms2)" >> "$GITHUB_OUTPUT"
+
+      # Keyed by the container image digest too: these are built in the floor
+      # container and must never mix with the ubuntu-24.04 job's builds.
+      - name: Cache wxWidgets (floor)
+        id: wx-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: floor-out/wx/prefix
+          key: wx-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.wx }}-${{ hashFiles('Thirdparty/build-wxwidgets-linux.sh', 'Thirdparty/wxWidgets-patches/**', 'packaging/linux/floor/build.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
+
+      - name: Cache FFmpeg and FFMS2 (floor)
+        id: media-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: floor-out/media
+          key: media-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.ffms2 }}-${{ hashFiles('packaging/linux/floor/sources.lock', 'packaging/linux/floor/build-media.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
+
+      - name: Build the floor container
+        run: docker build -q --build-arg BASE="$(cat packaging/linux/floor/image)" -t hikarisub-floor packaging/linux/floor
+
+      - name: Build the packages
+        timeout-minutes: 120
+        run: |
+          docker run --rm -v "$PWD:$PWD" -w "$PWD" hikarisub-floor \
+            sh -c 'rc=0; packaging/linux/floor/build.sh "$PWD/floor-out" "$(nproc)" || rc=$?; chown -R "$1" floor-out; exit $rc' \
+            sh "$(id -u):$(id -g)"
+
+      - name: Save wxWidgets (floor)
+        if: always() && steps.wx-cache.outputs.cache-hit != 'true' && hashFiles('floor-out/wx/prefix/bin/wx-config') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: floor-out/wx/prefix
+          key: wx-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.wx }}-${{ hashFiles('Thirdparty/build-wxwidgets-linux.sh', 'Thirdparty/wxWidgets-patches/**', 'packaging/linux/floor/build.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
+
+      - name: Save FFmpeg and FFMS2 (floor)
+        if: always() && steps.media-cache.outputs.cache-hit != 'true' && hashFiles('floor-out/media/lib/pkgconfig/ffms2.pc') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: floor-out/media
+          key: media-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.ffms2 }}-${{ hashFiles('packaging/linux/floor/sources.lock', 'packaging/linux/floor/build-media.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
+
+      - name: Collect the release files
+        env:
+          VERSION: ${{ steps.keys.outputs.version }}
+        run: |
+          mkdir -p linux-packages
+          d=floor-out/app/dist
+          cp "$d/hikarisub-linux-x86_64.tar.gz" "linux-packages/hikarisub-$VERSION-linux-x86_64.tar.gz"
+          cp "$d/HikariSub-$VERSION-linux-x86_64.AppImage" "$d/HikariSub-$VERSION-linux-x86_64.AppImage.zsync" \
+             "$d/hikarisub-$VERSION-linux-amd64.deb" "$d/hikarisub-$VERSION-linux-x86_64.rpm" linux-packages/
+          for f in linux-packages/*; do
+            [[ "$(basename "$f")" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || { echo "::error::bad asset name $f"; exit 1; }
+          done
+          (cd linux-packages && sha256sum * | tee ../linux-packages.sha256)
+
+      # The payload rules of the installers spec (5.1, 5.2): glibc 2.35 at
+      # most, $ORIGIN-only RPATHs, nothing from packaging/linux/appimage/host-libs.txt.
+      - name: Check the payloads
+        env:
+          VERSION: ${{ steps.keys.outputs.version }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends rpm2cpio cpio rpm
+          mkdir -p check/tar check/deb check/rpm
+          tar -xzf "linux-packages/hikarisub-$VERSION-linux-x86_64.tar.gz" -C check/tar
+          dpkg-deb -x "linux-packages/hikarisub-$VERSION-linux-amd64.deb" check/deb
+          (cd check/rpm && rpm2cpio "../../linux-packages/hikarisub-$VERSION-linux-x86_64.rpm" | cpio -idm --quiet --no-absolute-filenames)
+          (cd check && "../linux-packages/HikariSub-$VERSION-linux-x86_64.AppImage" --appimage-extract >/dev/null)
+          for tree in check/tar check/deb check/rpm check/squashfs-root; do
+            tests/packaging/linux/check-payload.sh "$tree" 2.35
+          done
+          # The versions inside the packages (installers spec, 1.3).
+          debver=$(dpkg-deb -f "linux-packages/hikarisub-$VERSION-linux-amd64.deb" Version)
+          rpmver=$(rpm -qp --qf '%{VERSION}-%{RELEASE}' "linux-packages/hikarisub-$VERSION-linux-x86_64.rpm")
+          expected="$(sed 's/-/~/' <<<"$VERSION")-1"
+          echo "deb $debver, rpm $rpmver, expected $expected"
+          [[ "$debver" == "$expected" && "$rpmver" == "$expected" ]]
+          dpkg --compare-versions 0.0.9-1 lt 0.1.0~beta.1-1
+          dpkg --compare-versions 0.1.0~beta.1-1 lt 0.1.0-1
+          [[ "$(rpm --eval '%{lua: print(rpm.vercmp("0.0.9-1", "0.1.0~beta.1-1") .. rpm.vercmp("0.1.0~beta.1-1", "0.1.0-1"))}')" == "-1-1" ]]
+          dpkg-deb -I "linux-packages/hikarisub-$VERSION-linux-amd64.deb"
+          rpm -qp --requires --recommends "linux-packages/hikarisub-$VERSION-linux-x86_64.rpm"
+          # The dependencies came through (resolve-deps.sh and the maps).
+          dpkg-deb -f "linux-packages/hikarisub-$VERSION-linux-amd64.deb" Depends | grep -q 'libgtk-3-0'
+          dpkg-deb -f "linux-packages/hikarisub-$VERSION-linux-amd64.deb" Depends | grep -q 'gstreamer1.0-plugins-good'
+          rpm -qp --requires "linux-packages/hikarisub-$VERSION-linux-x86_64.rpm" | grep -q 'libgtk-3.so.0()(64bit)'
+          # The update information the AppImage carries for external updaters.
+          grep -a -q 'gh-releases-zsync|altqx|hikari|latest|HikariSub-\*-linux-x86_64.AppImage.zsync' \
+            "linux-packages/HikariSub-$VERSION-linux-x86_64.AppImage"
+
+      # A stable version gets the AUR files the owner commits and pushes
+      # (installers spec, 5.5). A prerelease is never rendered; its run
+      # renders a test PKGBUILD for X.Y.Z offline, only for the container test.
+      - name: Render the AUR package
+        env:
+          VERSION: ${{ steps.keys.outputs.version }}
+          STABLE: ${{ steps.keys.outputs.stable }}
+        run: |
+          if [[ "$STABLE" == true ]]; then
+            packaging/linux/aur/render-pkgbuild.sh "$VERSION" "linux-packages/hikarisub-$VERSION-linux-x86_64.tar.gz" linux-packages/aur
+            aur_dir=linux-packages/aur aur_version=$VERSION
+          else
+            aur_version=${VERSION%%-*}
+            mkdir -p aur-test
+            cp "linux-packages/hikarisub-$VERSION-linux-x86_64.tar.gz" "aur-test/hikarisub-$aur_version-linux-x86_64.tar.gz"
+            packaging/linux/aur/render-pkgbuild.sh --offline "$aur_version" "aur-test/hikarisub-$aur_version-linux-x86_64.tar.gz" aur-test/aur
+          fi
+          cat linux-packages/aur/PKGBUILD 2>/dev/null || cat aur-test/aur/PKGBUILD
+
+      - name: Upload the packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: hikarisub-linux-packages
+          path: linux-packages
+          include-hidden-files: true
+          if-no-files-found: error
+
+      - name: Upload the test helpers
+        run: |
+          mkdir -p test-helpers
+          cp -a floor-out/test/. test-helpers/
+          if [[ -d aur-test ]]; then cp -a aur-test test-helpers/; fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hikarisub-linux-package-tests
+          path: test-helpers
+          include-hidden-files: true
+          if-no-files-found: error
+
+  # Installs and starts each package in clean containers of the distributions
+  # it targets (installers spec, 8.1 and 8.2; tests/packaging/linux).
+  linux-package-tests:
+    name: Linux package test (${{ matrix.test }}, ${{ matrix.image }})
+    needs: linux-packages
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { test: appimage, image: ubuntu-22.04 }
+          - { test: appimage, image: ubuntu-24.04 }
+          - { test: appimage, image: debian-12 }
+          - { test: appimage, image: fedora }
+          - { test: appimage, image: tumbleweed }
+          - { test: appimage, image: archlinux }
+          - { test: deb, image: ubuntu-22.04 }
+          - { test: deb, image: ubuntu-24.04 }
+          - { test: deb, image: debian-12 }
+          - { test: rpm, image: fedora }
+          - { test: rpm, image: tumbleweed }
+          - { test: tar, image: ubuntu-22.04 }
+          - { test: tar, image: ubuntu-24.04 }
+          - { test: aur, image: archlinux }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: hikarisub-linux-packages
+          path: dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: hikarisub-linux-package-tests
+          path: helpers
+
+      - name: Test
+        env:
+          VERSION: ${{ needs.linux-packages.outputs.version }}
+          STABLE: ${{ needs.linux-packages.outputs.stable }}
+        run: |
+          args=(--gst-check helpers/gst-check)
+          case "${{ matrix.test }}" in
+            deb|rpm) args+=(--upgrade helpers/upgrade) ;;
+          esac
+          dist=dist version=$VERSION
+          if [[ "${{ matrix.test }}" == aur ]]; then
+            if [[ "$STABLE" == true ]]; then
+              args+=(--aur dist/aur)
+            else
+              version=${VERSION%%-*}
+              dist=helpers/aur-test
+              args+=(--aur helpers/aur-test/aur)
+            fi
+          fi
+          tests/packaging/linux/run.sh "${args[@]}" "${{ matrix.test }}" "${{ matrix.image }}" "$dist" "$version"
+
   # Runs alongside the builds so a tag that does not match the source fails
-  # straight away rather than after them.
+  # straight away rather than after them. Legacy stays at 0.0.x, and a
+  # release version has no build metadata.
   release-version:
     name: Release version
     if: startsWith(github.ref, 'refs/tags/v')
@@ -427,38 +740,195 @@ jobs:
             echo "::error::Tag $GITHUB_REF_NAME does not match VersionHikariSub \"$version\"; tag v$version instead."
             exit 1
           fi
+          if [[ "$version" == *+* ]]; then
+            echo "::error::$version has build metadata, which a release version does not."
+            exit 1
+          fi
+          identifier='(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+          if ! [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-$identifier(\.$identifier)*)?$ ]]; then
+            echo "::error::$version is not a semantic version."
+            exit 1
+          fi
+          if [[ "${BASH_REMATCH[1]}" != 0 || "${BASH_REMATCH[2]}" != 0 ]]; then
+            echo "::error::$version is 0.1.0 or higher, which is the Qt codebase's; legacy stays at 0.0.x."
+            exit 1
+          fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "prerelease=$([[ "$version" == *-* ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
+  # Publishes the release, then its update manifest, then for a stable
+  # release the AUR package's PKGBUILD (installers spec, section 7). The
+  # packages come from the linux-packages and windows-installer jobs under
+  # their release names.
   release:
     name: Release
-    needs: [release-version, tests, windows-tests, windows, linux]
+    needs: [release-version, tests, windows-tests, update-helper-tests, windows, windows-installer, linux, linux-packages, linux-package-tests]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     env:
       VERSION: ${{ needs.release-version.outputs.version }}
+      PRERELEASE: ${{ needs.release-version.outputs.prerelease }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      # The Windows artifact is the unarchived package directory, since
-      # upload-artifact zips it anyway.
       - name: Assemble the release files
         run: |
           mkdir release
-          (cd artifacts/hikarisub-windows-x64 && zip -qr "$OLDPWD/release/HikariSub-$VERSION-windows-x64.zip" HikariSub_x64)
-          cp artifacts/hikarisub-linux-x86_64/hikarisub-linux-x86_64.tar.gz "release/hikarisub-$VERSION-linux-x86_64.tar.gz"
-          (cd release && sha256sum * > SHA256SUMS && cat SHA256SUMS)
+          for artifact in hikarisub-windows-installer hikarisub-linux-packages; do
+            if [[ ! -d "artifacts/$artifact" ]]; then
+              echo "::error::The $artifact artifact is missing."
+              exit 1
+            fi
+          done
+          names=(
+            "HikariSub-$VERSION-windows-x64-setup.exe"
+            "HikariSub-$VERSION-windows-x64.zip"
+            "HikariSub-$VERSION-linux-x86_64.AppImage"
+            "HikariSub-$VERSION-linux-x86_64.AppImage.zsync"
+            "hikarisub-$VERSION-linux-amd64.deb"
+            "hikarisub-$VERSION-linux-x86_64.rpm"
+            "hikarisub-$VERSION-linux-x86_64.tar.gz"
+          )
+          for name in "${names[@]}"; do
+            found=$(find artifacts/hikarisub-windows-installer artifacts/hikarisub-linux-packages -type f -name "$name" | head -n 1)
+            if [[ -n "$found" ]]; then
+              cp "$found" "release/$name"
+            fi
+          done
+          # Today's tar.gz, when the packages job does not carry it.
+          tarball="release/hikarisub-$VERSION-linux-x86_64.tar.gz"
+          if [[ ! -f "$tarball" ]]; then
+            cp artifacts/hikarisub-linux-x86_64/hikarisub-linux-x86_64.tar.gz "$tarball"
+          fi
+          for name in "${names[@]}"; do
+            if [[ ! -f "release/$name" ]]; then
+              echo "::error::release/$name is missing."
+              exit 1
+            fi
+            if ! [[ "$name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+              echo "::error::$name is not a valid asset name."
+              exit 1
+            fi
+          done
+          (cd release && sha256sum -- * > SHA256SUMS && cat SHA256SUMS)
 
-      - name: Publish the release
+      # A test build reads its update feed from the environment; a release
+      # never does. The name is looked for as UTF-8, UTF-16 and UTF-32, the
+      # forms wide strings take on Windows and Linux.
+      - name: Check no test feed is built in
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends rpm2cpio cpio
+          mkdir -p scan/tar scan/deb scan/rpm scan/appimage
+          tar -xzf "release/hikarisub-$VERSION-linux-x86_64.tar.gz" -C scan/tar
+          dpkg-deb -x "release/hikarisub-$VERSION-linux-amd64.deb" scan/deb
+          (cd scan/rpm && rpm2cpio "$OLDPWD/release/hikarisub-$VERSION-linux-x86_64.rpm" | cpio -idm --quiet --no-absolute-filenames)
+          appimage="$PWD/release/HikariSub-$VERSION-linux-x86_64.AppImage"
+          chmod +x "$appimage"
+          (cd scan/appimage && "$appimage" --appimage-extract > /dev/null)
+          python3 - artifacts/hikarisub-windows-x64 scan <<'PY'
+          import os, sys
+          needle = "HIKARISUB_UPDATE_FEED"
+          forms = [needle.encode("utf-8"), needle.encode("utf-16-le"), needle.encode("utf-32-le")]
+          found = []
+          for root in sys.argv[1:]:
+              for folder, _, files in os.walk(root):
+                  for name in files:
+                      path = os.path.join(folder, name)
+                      if os.path.islink(path) or not os.path.isfile(path):
+                          continue
+                      with open(path, "rb") as file:
+                          data = file.read()
+                      if any(form in data for form in forms):
+                          found.append(path)
+          for path in found:
+              print(f"::error::{path} contains {needle}: it is a test build.")
+          sys.exit(1 if found else 0)
+          PY
+
+      # A draft first: clients see the release only once its update manifest
+      # is there (published below). Without one they would fall back to the
+      # assets' digests, without the manifest's offer_to and requirements.
+      - name: Create the release as a draft
+        run: |
+          flag=()
+          [[ "$PRERELEASE" == true ]] && flag=(--prerelease)
+          gh release create "$GITHUB_REF_NAME" release/* --verify-tag --draft --title "v$VERSION" --generate-notes "${flag[@]}"
+
+      - name: Read the asset names back
+        run: |
+          find release -maxdepth 1 -type f -printf '%f\n' | LC_ALL=C sort > uploaded.txt
+          gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name' | LC_ALL=C sort > published.txt
+          if ! diff uploaded.txt published.txt; then
+            echo "::error::GitHub changed the asset names."
+            exit 1
+          fi
+
+      # A legacy release is offered to legacy clients only, unless a manual
+      # run of the tag says otherwise. HIKARISUB_OFFER_QT_TO_LEGACY is for
+      # Qt releases.
+      - name: Publish the update manifest
         env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: >
-          gh release create "$GITHUB_REF_NAME" release/*
-          --verify-tag
-          --title "v$VERSION"
-          --generate-notes
-          ${{ needs.release-version.outputs.prerelease == 'true' && '--prerelease' || '--latest' }}
+          OFFER_TO: ${{ github.event.inputs.offer_to || 'legacy' }}
+        run: |
+          mkdir manifest
+          python3 tools/release/make-update-manifest.py --tag "$GITHUB_REF_NAME" --dir release \
+            --offer-to "$OFFER_TO" --output manifest/hikarisub-update.json --upload
+
+      # --latest only for the highest stable version published, so a later
+      # legacy release does not become Latest over a Qt one.
+      - name: Publish the release
+        run: |
+          if [[ "$PRERELEASE" == true ]]; then
+            flag=--latest=false
+          else
+            highest=$(gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+              --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name' |
+              sed -n 's/^v\([0-9]*\.[0-9]*\.[0-9]*\)$/\1/p' | sort -V | tail -n 1)
+            if [[ -z "$highest" || "$(printf '%s\n%s\n' "$highest" "$VERSION" | sort -V | tail -n 1)" == "$VERSION" ]]; then
+              flag=--latest=true
+            else
+              flag=--latest=false
+            fi
+          fi
+          echo "Publishing with $flag"
+          gh release edit "$GITHUB_REF_NAME" --draft=false "$flag"
+
+      # The AUR package follows legacy until Qt replaces it for users. Its
+      # PKGBUILD is rendered from the published tar.gz and built against
+      # the published URL; the release stays published if this fails.
+      - name: Render and build the AUR package
+        if: env.PRERELEASE != 'true' && vars.HIKARISUB_OFFER_QT_TO_LEGACY != 'true'
+        run: |
+          packaging/linux/aur/render-pkgbuild.sh "$VERSION" "release/hikarisub-$VERSION-linux-x86_64.tar.gz"
+          aur=packaging/linux/aur/hikarisub-bin
+          test -f "$aur/PKGBUILD" && test -f "$aur/.SRCINFO"
+          docker run --rm -v "$PWD/$aur:/aur:ro" -e VERSION archlinux:latest bash -euo pipefail -c '
+            pacman -Syu --noconfirm --needed base-devel sudo >/dev/null
+            useradd -m builder
+            echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
+            cp /aur/PKGBUILD /home/builder/
+            chown -R builder /home/builder
+            cd /home/builder
+            sudo -u builder makepkg -si --noconfirm
+            got=$(/usr/bin/hikarisub --version)
+            test "$got" = "$VERSION (arch)" || { echo "hikarisub --version: $got"; exit 1; }
+          '
+          mkdir aur-artifact
+          cp "$aur/PKGBUILD" "$aur/.SRCINFO" aur-artifact/
+
+      - name: Upload the AUR files
+        if: env.PRERELEASE != 'true' && vars.HIKARISUB_OFFER_QT_TO_LEGACY != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hikarisub-aur
+          path: aur-artifact/
+          include-hidden-files: true
+          if-no-files-found: error

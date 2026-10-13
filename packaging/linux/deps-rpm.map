@@ -1,0 +1,24 @@
+# rpm dependencies of the legacy hikarisub package (packaging/linux/resolve-deps.sh).
+# A host soname needs no line here: it becomes its own capability, for example
+# libgtk-3.so.0()(64bit), which Fedora and openSUSE both resolve. The glibc
+# family maps to the glibc floor.
+ld-linux-x86-64.so.2  @glibc
+libc.so.6             @glibc
+libm.so.6             @glibc
+libdl.so.2            @glibc
+libpthread.so.0       @glibc
+librt.so.1            @glibc
+# runtime
+# The GStreamer plugins legacy plays through (rich dependencies cover both
+# Fedora's and openSUSE's names), the gio tool for move-to-trash, the icon
+# theme, curl and the CA certificates the update helper checks a
+# release's SHA256SUMS with, and the updater's password prompt.
+depends     (gstreamer1-plugins-base or gstreamer-plugins-base)
+depends     (gstreamer1-plugins-good or gstreamer-plugins-good)
+depends     glib2
+depends     hicolor-icon-theme
+depends     curl
+depends     ca-certificates
+recommends  (gstreamer1-plugin-libav or gstreamer-plugins-libav)
+recommends  (gstreamer1-plugins-bad-free or gstreamer-plugins-bad)
+recommends  polkit

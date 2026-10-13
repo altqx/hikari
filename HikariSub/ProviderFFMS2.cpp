@@ -300,7 +300,7 @@ done:
 
 	wxString sep = wxFileName::GetPathSeparator();
 	wxString baseName = wxFileName(m_filename).GetName();
-	m_indexPath = Options.pathfull + sep + L"Indices" + sep + baseName +
+	m_indexPath = Options.dataPath + sep + L"Indices" + sep + baseName +
 		wxString::Format(L"_%i.ffindex", audiotrack);
 
 	//the indices are named after the user's media and hold what is in it:
@@ -606,7 +606,7 @@ void ProviderFFMS2::AudioLoad(ProviderFFMS2* vf, bool newIndex, int audiotrack)
 		wxString sep = wxFileName::GetPathSeparator();
 		wxString baseName = wxFileName(vf->m_filename).GetName();
 		// a cache made with other channels or another delay holds other data
-		vf->m_diskCacheFilename << Options.pathfull << sep << L"AudioCache" << sep <<
+		vf->m_diskCacheFilename << Options.dataPath << sep << L"AudioCache" << sep <<
 			baseName << L"_track" << audiotrack << L"_" << vf->m_channels << L"ch_" <<
 			vf->m_delayFrames << L".w64";
 		//the cache holds the audio of the user's media: for the user only.
@@ -979,7 +979,7 @@ void ProviderFFMS2::ClearDiskCache()
 
 void ProviderFFMS2::DeleteOldAudioCache()
 {
-	wxString path = Options.pathfull + wxFileName::GetPathSeparator() + L"AudioCache";
+	wxString path = Options.dataPath + wxFileName::GetPathSeparator() + L"AudioCache";
 	size_t maxAudio = Options.GetInt(AUDIO_CACHE_FILES_LIMIT);
 	if (maxAudio < 1)
 		return;

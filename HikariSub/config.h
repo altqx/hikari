@@ -231,6 +231,7 @@ inline wxString HikariPathJoin(const wxString& dir, const wxString& name)
 	CG(TOOLBAR_IDS,)\
 	CG(TOOLBAR_ALIGNMENT,)\
 	CG(UPDATER_AUTO_CHECK,)\
+	CG(UPDATER_AUTO_INSTALL,)\
 	CG(UPDATER_CHECK_FOR_STABLE,)\
 	CG(UPDATER_DECLINED_VERSION,)\
 	CG(UPDATER_NEXT_CHECK,)\
@@ -442,8 +443,18 @@ private:
 public:
 	std::vector<Styles*> assstore;
 	wxString progname;
-	//actual style catalog --- path to program exe
+	//actual style catalog --- path to program exe, the read-only resource
+	//root (themes, locale, bitmaps, the shipped automation and dictionaries)
 	wxString actualStyleDir, pathfull, configPath;
+	//the writable data root: pathfull for a portable copy; for an installed
+	//one, whose program folder is read-only, %LOCALAPPDATA%\HikariSub\Legacy
+	//or ~/.local/share/HikariSub/Legacy (installers spec, 1.7). It keeps the
+	//portable layout: Config/, Catalog/, Dictionary/UserDic.udic, Subs/...
+	wxString dataPath;
+	//the kind's token in package-kind.txt beside the executable, read as
+	//the options load; empty when there is none or it names no kind. A
+	//string, since projects built before C++17 include this header too.
+	wxString packageMarker;
 	wxArrayString dirs;
 	bool AudioOpts;
 
@@ -505,6 +516,10 @@ public:
 	wxString FindLanguage(const wxString & symbol);
 	//install directory, or the source tree when run from a build
 	wxString GetLocalePath() const;
+	//a theme's file: the user's copy in the data root, else the shipped one
+	wxString ThemePath(const wxString &themeName) const;
+	//where a theme is written: always in the data root
+	wxString ThemeSavePath(const wxString &themeName) const;
 	//main value is 10 offset from 10
 	wxFont *GetFont(int offset = 0, const wxString& name = L"", bool bold = false);
 	//em height in pixels, the value wxFont::GetPixelSize() returns on Windows

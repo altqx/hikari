@@ -1,0 +1,251 @@
+#!/bin/sh
+# HikariSub's update helper for the deb and rpm packages.
+#
+# The app runs it through pkexec once it has downloaded an update
+# (installers spec, 4.4):
+#
+#   pkexec /opt/hikarisub/libexec/hikarisub-update-helper install <file> <version>
+#
+# Where there is no pkexec, the app shows the same command with sudo in
+# place of pkexec for the user to run, so a package installed by hand is
+# checked the same way.
+#
+# It installs <file>, the package the user downloaded, only if it is the
+# official release file of HikariSub <version>. The caller is not trusted:
+# any local process can run this command, so the only things it gives are
+# the file and the version, and neither is believed.
+#
+#   - <version> must be a release version (SemVer without build metadata)
+#     newer than the installed hikarisub package.
+#   - The file is copied into a root-owned folder first, and only the copy
+#     is checked and installed, so it cannot be swapped after the check.
+#   - The helper downloads the release's SHA256SUMS itself, over HTTPS with
+#     certificate checks, from the fixed URL
+#       https://github.com/altqx/hikari/releases/download/v<version>/SHA256SUMS
+#     and the copy's SHA-256 must be the one listed there for the release
+#     file of this kind: hikarisub-<version>-linux-amd64.deb or
+#     hikarisub-<version>-linux-x86_64.rpm. That digest is what
+#     authenticates the package; the release packages carry no GPG
+#     signature, so dnf and zypper are told not to look for one.
+#   - The package must also be named hikarisub, be of <version>, and be
+#     built for this machine's architecture.
+#
+# Exit codes:
+#   0  success
+#   2  bad arguments, or a version that is not newer than the installed one
+#   3  the package is not that release's file (digest, name, version, arch)
+#   4  the package manager failed
+#   5  the package manager is locked, and stayed locked for 60 s
+#   6  the release's SHA256SUMS could not be downloaded
+#
+# The file is the same on the legacy and Qt branches.
+
+set -u
+umask 077
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+LC_ALL=C
+export LC_ALL
+
+MARKER=/opt/hikarisub/package-kind.txt
+CACHE=/var/cache/hikarisub-update
+RELEASES=https://github.com/altqx/hikari/releases/download
+LOCK_WAIT=${HIKARISUB_HELPER_LOCK_WAIT:-60}
+case $LOCK_WAIT in
+	''|*[!0-9]*) LOCK_WAIT=60 ;;
+esac
+
+fail() {
+	code=$1
+	shift
+	echo "hikarisub-update-helper: $*" >&2
+	exit "$code"
+}
+
+[ "$#" -eq 3 ] || fail 2 "usage: install <file> <version>"
+[ "$1" = install ] || fail 2 "unknown command: $1"
+file=$2
+version=$3
+
+[ "$(id -u)" = 0 ] || fail 2 "must run as root, through pkexec or sudo"
+# The user who asked: pkexec names them in PKEXEC_UID, sudo in SUDO_UID.
+asker=${PKEXEC_UID:-${SUDO_UID:-}}
+case $asker in
+	''|*[!0-9]*) fail 2 "neither PKEXEC_UID nor SUDO_UID is set: run it through pkexec or sudo" ;;
+esac
+
+[ -f "$MARKER" ] || fail 2 "$MARKER is missing"
+kind=$(head -c 64 "$MARKER" | tr -d '\r\n')
+case $kind in
+	deb|rpm) ;;
+	*) fail 2 "$MARKER says '$kind', not deb or rpm" ;;
+esac
+
+# A release version: SemVer 2.0.0 without build metadata, as the release
+# job tags them. The character check comes first, so the pattern sees one
+# line of plain characters.
+case $version in
+	''|*[!0-9A-Za-z.-]*) fail 2 "bad version" ;;
+esac
+[ "${#version}" -le 64 ] || fail 2 "bad version"
+ident='(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+printf '%s\n' "$version" |
+	grep -Eqx "(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-$ident(\.$ident)*)?" ||
+	fail 2 "bad version: $version"
+
+# The version as the packages carry it (1.3): the "-" before a prerelease
+# becomes "~".
+core=${version%%-*}
+if [ "$core" = "$version" ]; then
+	pkgversion=$version
+else
+	pkgversion="$core~${version#*-}"
+fi
+
+# The installed package's version, without its revision, and the release
+# file's name and architecture for this kind.
+if [ "$kind" = deb ]; then
+	command -v dpkg-deb >/dev/null || fail 4 "dpkg-deb is missing"
+	installed=$(dpkg-query -W -f '${Version}' hikarisub 2>/dev/null) || fail 2 "hikarisub is not installed"
+	arch=amd64
+	[ "$(dpkg --print-architecture)" = "$arch" ] || fail 2 "this system is not $arch"
+	asset="hikarisub-$version-linux-amd64.deb"
+else
+	command -v rpm >/dev/null || fail 4 "rpm is missing"
+	installed=$(rpm -q --qf '%{VERSION}-%{RELEASE}' hikarisub 2>/dev/null) || fail 2 "hikarisub is not installed"
+	arch=x86_64
+	[ "$(uname -m)" = "$arch" ] || fail 2 "this system is not $arch"
+	asset="hikarisub-$version-linux-x86_64.rpm"
+fi
+installed=${installed%-*}
+case $installed in
+	''|*[!0-9A-Za-z.~+]*) fail 2 "the installed version '$installed' cannot be read" ;;
+esac
+
+# Newer than the installed one, in the package manager's own ordering, so
+# an older release cannot be put back through here.
+if [ "$kind" = deb ]; then
+	dpkg --compare-versions "$pkgversion" gt "$installed" ||
+		fail 2 "$version is not newer than the installed $installed"
+else
+	order=$(rpm --eval "%{lua: print(rpm.vercmp('$pkgversion', '$installed'))}")
+	[ "$order" = 1 ] || fail 2 "$version is not newer than the installed $installed"
+fi
+
+case $file in
+	/*) ;;
+	*) fail 2 "the file must be an absolute path" ;;
+esac
+[ ! -L "$file" ] && [ -f "$file" ] || fail 2 "not a regular file: $file"
+owner=$(stat -c %u -- "$file") || fail 2 "cannot read $file"
+[ "$owner" = "$asker" ] || fail 2 "$file is not owned by the user who asked"
+
+mkdir -p "$CACHE" || fail 4 "cannot create $CACHE"
+[ ! -L "$CACHE" ] && [ -d "$CACHE" ] || fail 4 "$CACHE is not a folder"
+chown root:root "$CACHE" || fail 4 "cannot own $CACHE"
+chmod 0700 "$CACHE" || fail 4 "cannot protect $CACHE"
+work=$(mktemp -d "$CACHE/install.XXXXXXXX") || fail 4 "cannot create a folder in $CACHE"
+trap 'rm -rf "$work"' EXIT
+trap 'exit 4' HUP INT TERM
+
+copy="$work/hikarisub.$kind"
+cp -- "$file" "$copy" || fail 2 "cannot copy $file"
+
+# The release's digests, downloaded by root from the fixed URL. -q leaves
+# out any curlrc; https only, redirects included (GitHub sends the file
+# from its asset hosts); certificates are checked against the system's
+# roots, as curl does unless told otherwise (sudo and pkexec drop these
+# variables already; this does not count on it).
+command -v curl >/dev/null || fail 6 "curl is missing"
+unset CURL_CA_BUNDLE SSL_CERT_FILE SSL_CERT_DIR CURL_HOME
+sums="$work/SHA256SUMS"
+curl -q --proto =https --proto-redir =https --tlsv1.2 --fail --silent --show-error --location \
+	--max-redirs 5 --max-filesize 65536 --connect-timeout 20 --max-time 60 --retry 2 \
+	--output "$sums" -- "$RELEASES/v$version/SHA256SUMS" ||
+	fail 6 "cannot download the SHA256SUMS of v$version"
+[ -f "$sums" ] && [ "$(wc -c < "$sums")" -le 65536 ] || fail 6 "the SHA256SUMS of v$version is too large"
+
+# Exactly one line for the release file: "<sha256>  <name>", or "*<name>"
+# as sha256sum writes binary mode.
+expected=$(awk -v name="$asset" '
+	{ sub(/\r$/, "") }
+	NF == 2 && ($2 == name || $2 == "*" name) { count++; digest = $1 }
+	END { if (count == 1) print digest }' "$sums")
+case $expected in
+	*[!0-9a-f]*|'') fail 3 "the SHA256SUMS of v$version does not list $asset once" ;;
+esac
+[ "${#expected}" -eq 64 ] || fail 3 "the SHA256SUMS of v$version has a bad digest for $asset"
+actual=$(sha256sum -- "$copy" | cut -d' ' -f1)
+[ "$actual" = "$expected" ] || fail 3 "$file is not $asset of the v$version release"
+
+# The name, version and architecture, read by the format's own tool, from
+# the copy. A revision, "-1" or a packaging fix's "-2", follows the
+# version.
+if [ "$kind" = deb ]; then
+	name=$(dpkg-deb -f "$copy" Package 2>/dev/null) || fail 3 "not a deb package"
+	full=$(dpkg-deb -f "$copy" Version 2>/dev/null) || fail 3 "not a deb package"
+	pkgarch=$(dpkg-deb -f "$copy" Architecture 2>/dev/null) || fail 3 "not a deb package"
+else
+	read -r name full pkgarch <<EOF_RPM || true
+$(rpm -qp --nosignature --nodigest --qf '%{NAME} %{VERSION}-%{RELEASE} %{ARCH}\n' "$copy" 2>/dev/null)
+EOF_RPM
+	[ -n "${name:-}" ] || fail 3 "not an rpm package"
+fi
+[ "$name" = hikarisub ] || fail 3 "the package is '$name', not hikarisub"
+[ "${pkgarch:-}" = "$arch" ] || fail 3 "the package is for '${pkgarch:-}', not $arch"
+revision=${full##*-}
+case $revision in
+	''|*[!0-9]*) fail 3 "the package version '$full' has no revision" ;;
+esac
+[ "${full%-*}" = "$pkgversion" ] || fail 3 "the package is version '$full', not $pkgversion"
+
+log="$work/install.log"
+
+# Runs the install, again while the package manager's lock is held by
+# another, for LOCK_WAIT seconds. 0 or 4, or 5 when the lock stayed.
+install_package() {
+	waited=0
+	while :; do
+		"$@" >"$log" 2>&1
+		status=$?
+		cat "$log" >&2
+		[ "$status" -eq 0 ] && return 0
+		locked=0
+		if grep -qiE 'could not get lock|unable to acquire|lock-frontend|transaction lock|system management is locked|waiting for .*lock' "$log"; then
+			locked=1
+		fi
+		# zypper: ZYPPER_EXIT_ZYPP_LOCKED.
+		[ "$1" = zypper ] && [ "$status" -eq 7 ] && locked=1
+		[ "$locked" -eq 1 ] || return 4
+		[ "$waited" -lt "$LOCK_WAIT" ] || return 5
+		sleep 5
+		waited=$((waited + 5))
+	done
+}
+
+# The SHA-256 check above authenticated the copy against the release, so
+# the GPG checks dnf and zypper would make (the packages have no
+# signature) are turned off; nothing else is.
+if [ "$kind" = deb ]; then
+	if command -v apt-get >/dev/null; then
+		install_package apt-get install -y --no-install-recommends "$copy"
+		exit $?
+	fi
+	install_package dpkg -i "$copy"
+	status=$?
+	[ "$status" -eq 0 ] || exit "$status"
+	# dpkg alone resolves nothing: broken dependencies fail it.
+	[ -z "$(dpkg --audit 2>/dev/null)" ] || exit 4
+	exit 0
+fi
+
+if command -v dnf >/dev/null; then
+	install_package dnf install -y --nogpgcheck "$copy"
+	exit $?
+fi
+if command -v zypper >/dev/null; then
+	install_package zypper --non-interactive install --allow-unsigned-rpm "$copy"
+	exit $?
+fi
+install_package rpm -U "$copy"
+exit $?

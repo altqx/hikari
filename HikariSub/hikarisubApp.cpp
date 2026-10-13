@@ -32,6 +32,10 @@
 #include "SubsGrid.h"
 #include "VideoBox.h"
 #include "Notebook.h"
+#include "PackageKind.h"
+#include "UpdateApply.h"
+#include "UpdateInstaller.h"
+#include "VersionHikariSub.h"
 #include <wx/image.h>
 #include <wx/ipc.h>
 #include <wx/utils.h>
@@ -40,11 +44,18 @@
 #include <wx/stdpaths.h>
 #include <wx/filename.h>
 #include <wx/filefn.h>
+#include <wx/ffile.h>
 #include <wx/log.h>
 #include <wx/weakref.h>
 #include <wx/translation.h>
+#include <cstdio>
+#include <cstdlib>
+#include <optional>
+#include <string>
 #ifndef _WIN32
 #include "PrivateFolder.h"
+#include <gst/gst.h>
+#include <unistd.h>
 #include <clocale>
 #include <cstring>
 #include <cstdlib>
@@ -204,8 +215,12 @@ STDAPI GetDpiForMonitor(
 #ifdef _WIN32
 LONG __stdcall MyCustomFilter(EXCEPTION_POINTERS* pep)
 {
-	wxStandardPathsBase& paths = wxStandardPaths::Get();
-	wxString exePath = wxFileName(paths.GetExecutablePath()).GetPath() + L"/MiniDump.dmp";
+	// The data root: an installed copy cannot write beside the exe.
+	wxString exePath = Options.dataPath + L"/MiniDump.dmp";
+	if (Options.dataPath.empty()){
+		wxStandardPathsBase& paths = wxStandardPaths::Get();
+		exePath = wxFileName(paths.GetExecutablePath()).GetPath() + L"/MiniDump.dmp";
+	}
 	HANDLE hFile = CreateFileW(exePath.wc_str(), GENERIC_READ | GENERIC_WRITE,
 		0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -267,18 +282,199 @@ void hikarisubApp::OnOutofMemory()
 
 IMPLEMENT_APP(hikarisubApp);
 
+namespace
+{
+	// The kind this copy runs as, for --version, read before the options
+	// are: package-kind.txt beside the executable and $APPIMAGE.
+	std::string_view KindTokenAtStart()
+	{
+#ifdef _WIN32
+		wchar_t exe[32768];
+		DWORD length = GetModuleFileNameW(nullptr, exe, 32768);
+		wxString dir = wxString(exe, length).BeforeLast(L'\\');
+#else
+		char exe[4096];
+		ssize_t length = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
+		wxString dir = length > 0 ? wxString::FromUTF8(exe, length).BeforeLast(L'/') : wxString();
+#endif
+		std::optional<package_kind::Kind> marker;
+#ifdef HIKARISUB_UPDATE_TEST_FEED
+		if (const char *forced = std::getenv("HIKARISUB_PACKAGE_KIND"))
+			marker = package_kind::ParseToken(forced);
+		else
+#endif
+		{
+			// fopen, not wxFFile, which logs a missing file before wx can
+			// show it.
+			std::string path = (dir + wxFileName::GetPathSeparator() + L"package-kind.txt").utf8_string();
+#ifdef _WIN32
+			FILE *file = _wfopen(wxString::FromUTF8(path.c_str()).wc_str(), L"rb");
+#else
+			FILE *file = std::fopen(path.c_str(), "rb");
+#endif
+			char content[64];
+			size_t read = file ? std::fread(content, 1, sizeof(content), file) : 0;
+			if (file)
+				std::fclose(file);
+			if (read > 0 && read < sizeof(content))
+				marker = package_kind::ParseMarker(std::string_view(content, read));
+		}
+#ifdef _WIN32
+		return package_kind::Token(package_kind::Resolve(marker, true, false));
+#else
+		const char *appImage = std::getenv("APPIMAGE");
+		return package_kind::Token(package_kind::Resolve(marker, false, appImage && wxFileName::FileExists(appImage)));
+#endif
+	}
+
+#ifndef _WIN32
+	// --hikari-gst-check[=<file>] (installers spec, 8.1): creates the
+	// GStreamer elements the player uses and, given a file, decodes it to
+	// fakesinks. Prints what is missing; exits 0 when nothing is, 1 when an
+	// element is missing and 2 when the file does not decode, as the
+	// packaging tests' gst-check does.
+	int GstCheck(const char *file)
+	{
+		GError *error = nullptr;
+		if (!gst_init_check(nullptr, nullptr, &error)) {
+			std::printf("GStreamer cannot start: %s\n", error ? error->message : "unknown error");
+			return 1;
+		}
+		int missing = 0;
+		for (const char *factory : { "playbin", "appsrc", "appsink", "audioconvert", "audioresample",
+			"autoaudiosink", "videoconvert", "fakesink" })
+		{
+			GstElement *element = gst_element_factory_make(factory, nullptr);
+			if (!element) {
+				std::printf("missing element: %s\n", factory);
+				missing++;
+				continue;
+			}
+			gst_object_unref(element);
+		}
+		if (missing)
+			return 1;
+		if (!file || !*file) {
+			std::printf("elements: ok\n");
+			return 0;
+		}
+
+		gchar *uri = gst_filename_to_uri(file, nullptr);
+		GstElement *playbin = gst_element_factory_make("playbin", nullptr);
+		GstElement *videoSink = gst_element_factory_make("fakesink", nullptr);
+		GstElement *audioSink = gst_element_factory_make("fakesink", nullptr);
+		g_object_set(playbin, "uri", uri, "video-sink", videoSink, "audio-sink", audioSink, nullptr);
+		g_free(uri);
+		int result = 2;
+		if (gst_element_set_state(playbin, GST_STATE_PLAYING) != GST_STATE_CHANGE_FAILURE) {
+			GstBus *bus = gst_element_get_bus(playbin);
+			GstMessage *message = gst_bus_timed_pop_filtered(bus, 60 * GST_SECOND,
+				GstMessageType(GST_MESSAGE_EOS | GST_MESSAGE_ERROR));
+			if (!message) {
+				std::printf("decode: timed out\n");
+			}
+			else if (GST_MESSAGE_TYPE(message) == GST_MESSAGE_ERROR) {
+				GError *decodeError = nullptr;
+				gst_message_parse_error(message, &decodeError, nullptr);
+				std::printf("decode: %s\n", decodeError ? decodeError->message : "error");
+				if (decodeError)
+					g_error_free(decodeError);
+			}
+			else {
+				std::printf("decode: ok\n");
+				result = 0;
+			}
+			if (message)
+				gst_message_unref(message);
+			gst_object_unref(bus);
+		}
+		else {
+			std::printf("decode: the pipeline does not start\n");
+		}
+		gst_element_set_state(playbin, GST_STATE_NULL);
+		gst_object_unref(playbin);
+		return result;
+	}
+#endif
+}
+
+bool hikarisubApp::Initialize(int& argc, wxChar** argv)
+{
+#ifdef _WIN32
+	// The installing side of an update (installers spec, 4.2): nothing of
+	// the app starts, no settings are read and no window opens.
+	if (argc >= 2 && wxString(argv[1]) == update_apply::kSwitch)
+		std::exit(update_installer::ApplyUpdate(KindTokenAtStart() == package_kind::Token(package_kind::Kind::NsisMachine)));
+#endif
+	for (int i = 1; i < argc; i++) {
+		wxString argument = argv[i];
+		if (argument == L"--version") {
+			std::printf("%s (%s)\n", VersionHikariSub, std::string(KindTokenAtStart()).c_str());
+			std::fflush(stdout);
+			std::exit(0);
+		}
+		if (argument == L"--hikari-gst-check" || argument.StartsWith(L"--hikari-gst-check=")) {
+#ifdef _WIN32
+			std::exit(2);
+#else
+			std::string file = argument.AfterFirst(L'=').utf8_string();
+			int result = GstCheck(file.c_str());
+			std::fflush(stdout);
+			std::exit(result);
+#endif
+		}
+	}
+#ifdef _WIN32
+	// An update's setup is replacing this installed copy: this start would
+	// hold the program open and stop it, so it leaves, and the setup starts
+	// HikariSub when it is done (installers spec, 4.2).
+	if (update_apply::SetupRunning()) {
+		std::string_view kind = KindTokenAtStart();
+		if (kind == package_kind::Token(package_kind::Kind::NsisUser) ||
+			kind == package_kind::Token(package_kind::Kind::NsisMachine))
+		{
+			update_apply::AskStartAfterSetup();
+			std::exit(0);
+		}
+	}
+#endif
+	return wxApp::Initialize(argc, argv);
+}
+
 bool hikarisubApp::OnInit()
 {
 
 #ifndef _WIN32
 	m_ipcServer = nullptr;
+	// An AppImage update an ordinary quit left: installed now, watched,
+	// before the lock, so the new image starts as the only instance.
+	if (update_installer::InstallAppImageAtStart(KindTokenAtStart() == package_kind::Token(package_kind::Kind::AppImage)))
+		return false;
 #endif
 	m_checker = new wxSingleInstanceChecker();
+
+	// The updater's switches are not files to open.
+	wxArrayString arguments;
+	{
+		wxString healthFile, updatedFrom;
+		for (int i = 1; i < argc; i++) {
+			wxString argument = argv[i];
+			if (argument.StartsWith(L"--hikari-health=", &healthFile) ||
+				argument.StartsWith(L"--hikari-updated-from=", &updatedFrom))
+				continue;
+			arguments.Add(argument);
+		}
+		update_installer::SetCommandLine(healthFile, updatedFrom);
+	}
 
 	//bool wxsOK = true;
 
 	if (!m_checker->IsAnotherRunning())
 	{
+#ifdef _WIN32
+		// Held until the process ends; a failure is ignored.
+		runningMutex = CreateMutexW(nullptr, FALSE, L"Global\\io.github.altqx.HikariSub.Running");
+#endif
 
 #ifndef _WIN32
 		RemoveHikariSubIpcSocket();
@@ -411,7 +607,7 @@ bool hikarisubApp::OnInit()
 			wxDELETE(locale); return false;
 		}
 
-		for (int i = 1; i < argc; i++) { paths.Add(argv[i]); }
+		for (const wxString &argument : arguments) { paths.Add(argument); }
 
 		int posx, posy, sizex, sizey, msizex, msizey, sposx, sposy;
 		Options.GetCoords(WINDOW_POSITION, &posx, &posy);
@@ -597,16 +793,12 @@ bool hikarisubApp::OnInit()
 	}
 	else{
 #ifndef _WIN32
-		wxArrayString openPaths;
-		for (int i = 1; i < argc; i++) {
-			openPaths.Add(argv[i]);
-		}
-		wxString subs = JoinOpenPaths(openPaths);
+		wxString subs = JoinOpenPaths(arguments);
 #else
 		wxString subs;
-		for (int i = 1; i < argc; i++) {
-			subs.Append(argv[i]);
-			if (i + 1 != argc){ subs += L"|"; }
+		for (size_t i = 0; i < arguments.size(); i++) {
+			subs.Append(arguments[i]);
+			if (i + 1 != arguments.size()){ subs += L"|"; }
 		}
 #endif
 
@@ -656,8 +848,11 @@ int hikarisubApp::OnExit()
 	if (m_ipcServer){ delete m_ipcServer; m_ipcServer = nullptr; }
 	RemoveHikariSubIpcSocket();
 #endif
-	if (m_checker){ delete m_checker; }
+	if (m_checker){ delete m_checker; m_checker = nullptr; }
 	wxDELETE(locale);
+	// The AppImage watchdog and the relaunch after a package install, once
+	// the windows, the lock and the socket are gone.
+	update_installer::AfterExit();
 	return 0;
 }
 

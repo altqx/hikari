@@ -70,6 +70,7 @@
 #include <wx/iconbndl.h>
 #include "Registry.h"
 #include "UpdateChecker.h"
+#include "UpdateInstaller.h"
 #include "UtilsWindows.h"
 
 #include <boost/locale/generator.hpp>
@@ -138,7 +139,10 @@ HikariSubFrame::HikariSubFrame(const wxPoint &pos, const wxSize &size)
 #endif
 
 	// Deferred: wxWebRequest needs a running event loop.
-	CallAfter([this] { UpdateChecker::CheckOnStartup(this); });
+	CallAfter([this] {
+		update_installer::OnStartup(this);
+		UpdateChecker::CheckOnStartup(this);
+	});
 
 	Menubar = new MenuBar(this);
 
@@ -1118,7 +1122,9 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 	}
 	else if (id == GLOBAL_ABOUT){
 		HikariMessageBox(wxString::Format(_("HikariSub subtitle editor by altqx,\nversion %s from %s"),
-			Options.progname.AfterFirst(L'v'), Options.GetReleaseDate()) + " \n\n" +
+			Options.progname.AfterFirst(L'v') + L" (" +
+			wxString::FromUTF8(std::string(package_kind::AboutName(update_installer::Kind())).c_str()) + L")",
+			Options.GetReleaseDate()) + " \n\n" +
 			_("Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n") +
 			_("If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n") +
 			_("HikariSub includes parts of the following projects:\n") +
@@ -2574,6 +2580,23 @@ void HikariSubFrame::OnClose1(wxCloseEvent& event)
 		if (SavePrompt(0)){ Tabs->iter = curit; return; }
 	}
 	Tabs->iter = curit;
+	// Every document has had its save prompt: a pending update is handed
+	// off now (installers spec, 4.1), and a deb or rpm one closes the
+	// frame itself once its installer ends.
+	// A close that cannot be vetoed (the session ends) starts nothing that
+	// would keep the app alive: the update stays for the next quit.
+	switch (update_installer::OnQuit(this, event.CanVeto())){
+	case update_installer::Quit::Continue:
+		break;
+	case update_installer::Quit::Veto:
+		if (event.CanVeto()) {
+			event.Veto();
+			return;
+		}
+		break;
+	case update_installer::Quit::Wait:
+		return;
+	}
 	event.Skip();
 }
 

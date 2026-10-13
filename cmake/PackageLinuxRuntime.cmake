@@ -184,6 +184,27 @@ file(COPY "${PACKAGING_DIR}/icons/hicolor"
 file(COPY_FILE "${PACKAGING_DIR}/install-desktop-integration.sh"
                "${package_root}/install-desktop-integration.sh")
 
+# No build path ships: every ELF keeps only the $ORIGIN-relative entries of its
+# RPATH or RUNPATH (the executable's $ORIGIN, libSubInspector's way up to the
+# package root). The build tree's copies carry the wx and media prefixes.
+# Nothing on the host list may be in the tree either.
+include("${SOURCE_DIR}/cmake/LinuxHostLibs.cmake")
+if(NOT DEFINED READELF_EXECUTABLE OR READELF_EXECUTABLE STREQUAL "")
+    find_program(READELF_EXECUTABLE readelf REQUIRED)
+endif()
+hikarisub_host_regex(full host_list_regex)
+file(GLOB_RECURSE package_elf_candidates LIST_DIRECTORIES FALSE "${package_root}/*")
+foreach(candidate IN LISTS package_elf_candidates)
+    get_filename_component(candidate_name "${candidate}" NAME)
+    if(candidate_name MATCHES "${host_list_regex}")
+        message(FATAL_ERROR "A host library is in the package: ${candidate}")
+    endif()
+    hikarisub_is_elf("${candidate}" candidate_is_elf)
+    if(candidate_is_elf)
+        hikarisub_normalize_rpath("${candidate}" "${READELF_EXECUTABLE}")
+    endif()
+endforeach()
+
 # Normalize modes for reproducibility.
 file(GLOB_RECURSE package_entries
     LIST_DIRECTORIES TRUE

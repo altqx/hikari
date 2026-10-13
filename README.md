@@ -30,7 +30,7 @@ HikariSub will stay actively maintained rather than go dormant, and its dependen
 * **Themes**: every colour in the interface can be themed. The bundled themes can be copied and edited in the settings.
 * **Localisation**: the interface is available in English, Polish, Korean, Thai and Tamil.
 * **Windows integration**: registers file associations for subtitle types.
-* **Update check**: when the program starts, once a day at most, it asks GitHub (api.github.com) for the list of HikariSub releases and says when a newer one is out. If GitHub could not be reached, it asks again at a start an hour later. It downloads and installs nothing; its dialog opens the release page in the browser. GitHub sees your IP address and "HikariSub" as the user agent, and nothing about the build. The check is on by default; turn it off in File > Settings, on the Editor page, under Updates. Help > Check for updates checks at any time.
+* **Update check**: when the program starts, once a day at most, it asks GitHub (api.github.com) for the list of HikariSub releases and says when a newer one is out. If GitHub could not be reached, it asks again at a start an hour later. What happens next depends on how HikariSub was installed. The Windows installer, the AppImage, and the deb and rpm packages download the new version from github.com in the background, check it against the SHA-256 the release lists, and install it when you choose Restart now or the next time you quit (an AppImage at the next start after that quit, so that a version that cannot start is put back). Before it installs, the part that installs checks the download once more by itself against the release's `SHA256SUMS` on GitHub, so nothing another program put in your download folder runs with administrator rights: on Windows that is the installed HikariSub, which an all-users installation starts through the administrator prompt, only when its folder cannot be changed without administrator rights, and which then runs the installer (if you start HikariSub while that installer runs, it starts when the installer is done); on Linux it is the deb and rpm packages' update helper, which asks for your password through the system's prompt (pkexec) and installs the package only if it is that release's own file. The AUR package says a new version is out; update it with your AUR helper or pacman as usual. A portable copy (zip or tar.gz) says a new version is out and opens the release page. GitHub sees your IP address and "HikariSub" as the user agent, and nothing about the build. The check is on by default; turn it off in File > Settings, on the Editor page, under Updates, where turning off "Install updates automatically" makes an installed copy only say a new version is out, as a portable copy does. Help > Check for updates checks at any time.
 
 ### Subtitle grid
 
@@ -101,11 +101,83 @@ HikariSub will stay actively maintained rather than go dormant, and its dependen
 
 * **Automation 4**: runs Automation 4 Lua scripts on LuaJIT, ships the Aegisub automation library, and works with [DependencyControl](https://github.com/TypesettingTools/DependencyControl).
 * **Script management**: autoloads scripts, maps macro hotkeys, reruns the last script, and has a compatibility mode for older scripts.
+* **Your own scripts**: the portable package keeps everything in its `Automation` folder. An installed copy cannot write to its program folder, so it keeps what scripts write (`?user`, `?local` and `?temp`, logs and autosaves) in `%LOCALAPPDATA%\HikariSub\Legacy\Automation` on Windows or `~/.local/share/HikariSub/Legacy/Automation` on Linux. It autoloads scripts from `automation/Autoload` there, and from DependencyControl's `automation/autoload`, as well as the shipped ones; a script there replaces a shipped script of the same name.
 
 ### Platforms
 
 * **Windows x64**: the full-featured build, including DirectShow, DirectSound and Direct3D 9.
 * **Linux**: built on wxGTK and GStreamer.
+
+## Installing on Windows
+
+Each release has two Windows downloads, for Windows 10 version 1809 or later, x64:
+
+* **`HikariSub-<version>-windows-x64-setup.exe`**, the installer. It asks whether to install for **Just me** (in `%LOCALAPPDATA%\Programs\HikariSub`, no administrator rights needed) or for **All users** (in `Program Files`, after an administrator prompt). It adds a Start menu entry and, unless you untick it, registers HikariSub for `.ass`, `.ssa`, `.srt` and `.sub` files, without taking a file type that another program already opens. A desktop shortcut is optional. Running a newer installer updates the existing installation in place, for the same choice of users; to switch between Just me and All users, uninstall first. Uninstall from Settings > Apps; it removes the program files, shortcuts and file types, and keeps your settings and any files you added to the folder. An all-users uninstall started without administrator rights asks for them only when the installation folder cannot be changed without them; otherwise run the uninstaller as administrator. The installer is not code-signed, so Windows SmartScreen may ask you to confirm it ("More info", then "Run anyway").
+* **`HikariSub-<version>-windows-x64.zip`**, the portable package. Extract it anywhere and run `HikariSub.exe`; it keeps its settings beside the executable and installs nothing.
+
+The installer also runs unattended:
+
+| Switch | Meaning |
+| --- | --- |
+| `/S` | silent: no pages or messages |
+| `/CURRENTUSER`, `/ALLUSERS` | install for you alone or for all users (the latter from an elevated prompt). Without either, a silent install updates the existing installation, or installs for you alone |
+| `/COMPONENTS=assoc,desktop` | a new silent install's options: `assoc` registers the file types (the default), `desktop` adds a desktop shortcut; `/COMPONENTS=` selects neither |
+| `/D=<folder>` | the installation folder; it must come last and is not quoted. For all users it must be a new folder directly in Program Files, or the folder of the existing all-users installation |
+
+Its exit code is 0 on success, 1 when cancelled, 2 on another failure, 3 when HikariSub is still running, 4 when administrator rights are needed or were refused, 5 when a newer version is already installed, and 6 when HikariSub is installed for the other choice of users. The uninstaller, `Uninstall HikariSub.exe` in the installation folder, takes `/S` too.
+
+## Installing on Linux
+
+Every release on the [releases page](https://github.com/altqx/hikari/releases)
+has these Linux x86_64 packages. All of them need glibc 2.35 or newer: Ubuntu
+22.04, Debian 12, Fedora, openSUSE Tumbleweed, Arch, Linux Mint 21 and later.
+
+* **AppImage** (`HikariSub-<version>-linux-x86_64.AppImage`): one file with
+  everything inside, GTK, GLib and GStreamer included, so it runs on any of
+  those distributions with nothing else to install. Make it executable and run
+  it:
+
+  ```bash
+  chmod +x HikariSub-*-linux-x86_64.AppImage
+  ./HikariSub-*-linux-x86_64.AppImage
+  ```
+
+  It needs FUSE, but not the old `libfuse2`. Where FUSE is missing (in a
+  container, for example), run it with `--appimage-extract-and-run`. It adds
+  no menu entry of its own; AppImageLauncher or Gear Lever can add one.
+* **Debian, Ubuntu and Mint** (`hikarisub-<version>-linux-amd64.deb`):
+
+  ```bash
+  sudo apt install ./hikarisub-*-linux-amd64.deb
+  ```
+
+* **Fedora** and **openSUSE** (`hikarisub-<version>-linux-x86_64.rpm`):
+
+  ```bash
+  sudo dnf install --nogpgcheck ./hikarisub-*-linux-x86_64.rpm
+  sudo zypper install --allow-unsigned-rpm ./hikarisub-*-linux-x86_64.rpm
+  ```
+
+  On Fedora and openSUSE, H.264, AAC and other patented formats play only
+  with the full codec sets from RPM Fusion or Packman; the FFMS2 path used for
+  typesetting and timing decodes them either way.
+* **Arch Linux**: install the AUR package `hikarisub-bin` with an AUR helper
+  (`yay -S hikarisub-bin` or `paru -S hikarisub-bin`), and update it as any
+  other package (`yay -Syu`). It carries stable releases only.
+* **Portable** (`hikarisub-<version>-linux-x86_64.tar.gz`): extract it
+  anywhere and run `./hikarisub`. It uses the system's GTK and GStreamer, so
+  install those first (see "Package names on other Linux distributions"
+  below), and run `./install-desktop-integration.sh` for a menu entry.
+
+The deb, rpm and AUR packages install HikariSub in `/opt/hikarisub`, with
+`hikarisub` on the `PATH`, the menu entry, file types and icons, and pull in
+everything it needs, the GStreamer plugins included. Removing the package
+leaves your settings in your home directory alone.
+
+When a new release is out, HikariSub tells you. The AppImage replaces itself,
+and the deb and rpm download the new package and install it after the
+system's password prompt. The AUR package only tells you; update it with your
+AUR helper as usual.
 
 ## Building from Source
 

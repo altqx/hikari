@@ -122,7 +122,7 @@ FindReplace::FindReplace(HikariSubFrame* kfparent, FindReplaceDialog *_FRD)
 	SYSTEM_INFO sysinfo;
 	GetSystemInfo(&sysinfo);
 	numOfProcessors = (sysinfo.dwNumberOfProcessors > 0) ? sysinfo.dwNumberOfProcessors : 4;
-	CopyPath = Options.pathfull + L"/ReplaceBackup/";
+	CopyPath = Options.dataPath + L"/ReplaceBackup/";
 }
 
 FindReplace::~FindReplace()
@@ -205,7 +205,7 @@ void FindReplace::ReplaceChecked()
 	if (FRRD->findInFiles){
 		wxString path;
 		wxString oldPath;
-		wxString copyPath = Options.pathfull + L"/ReplaceBackup/";
+		wxString copyPath = Options.dataPath + L"/ReplaceBackup/";
 		//the backups are copies of the user's subtitles: for the user only, and
 		//not made in a folder another user could read or swap files in
 		if (!MakePrivateFolder(copyPath)) {
@@ -886,7 +886,7 @@ void FindReplace::FindReplaceInSubs(TabWindow *window)
 	//the backups are copies of the user's subtitles: for the user only, and
 	//not made in a folder another user could read or swap files in
 	if (!find){
-		CopyPath = Options.pathfull + L"/ReplaceBackup/";
+		CopyPath = Options.dataPath + L"/ReplaceBackup/";
 		if (!MakePrivateFolder(CopyPath)) {
 			HikariLogSilent(wxString::Format(L"The replace backup folder is not private, no backups are made: %s",
 				CopyPath));
