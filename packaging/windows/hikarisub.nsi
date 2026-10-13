@@ -156,10 +156,15 @@ FunctionEnd
 ; predate the mutex.
 Function ${UN}HsAppRunning
   Push $0
+  Push $1
   StrCpy $R9 0
-  System::Call 'kernel32::OpenMutexW(i 0x00100000, i 0, w "${HS_MUTEX}") p .r0'
+  ; A mutex we may not open (another user's) exists all the same.
+  System::Call 'kernel32::OpenMutexW(i 0x00100000, i 0, w "${HS_MUTEX}") p .r0 ?e'
+  Pop $1
   ${If} $0 <> 0
     System::Call 'kernel32::CloseHandle(p r0)'
+    StrCpy $R9 1
+  ${ElseIf} $1 = 5
     StrCpy $R9 1
   ${EndIf}
   ${If} $R9 = 0
@@ -182,6 +187,7 @@ Function ${UN}HsAppRunning
       FileClose $0
     ${EndIf}
   ${EndIf}
+  Pop $1
   Pop $0
 FunctionEnd
 
