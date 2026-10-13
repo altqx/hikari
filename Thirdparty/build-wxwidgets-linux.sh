@@ -16,6 +16,19 @@ if [[ ! -f "$wx_source/src/zlib/zlib.h" ]]; then
     exit 1
 fi
 
+# HikariSub's fixes to wxGTK, applied to the submodule's working tree (see
+# Thirdparty/PATCHES.md). A patch that is already applied is left alone, so
+# the script can be run again on the same checkout.
+for patch in "$repo_root"/Thirdparty/wxWidgets-patches/*.patch; do
+    [[ -e "$patch" ]] || continue
+    if git -C "$wx_source" apply --reverse --check "$patch" 2>/dev/null; then
+        echo "wxWidgets patch already applied: ${patch##*/}"
+    else
+        git -C "$wx_source" apply "$patch"
+        echo "wxWidgets patch applied: ${patch##*/}"
+    fi
+done
+
 cmake -S "$wx_source" -B "$wx_build" -G Ninja \
     -DCMAKE_BUILD_TYPE="$build_type" \
     -DCMAKE_INSTALL_PREFIX="$wx_prefix" \

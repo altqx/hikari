@@ -63,9 +63,13 @@ libraries are listed in `AdditionalDependencies`.
 | `xy-VSFilter-xy_sub_filter_rc5` | **[altqx/xy-VSFilter](https://github.com/altqx/xy-VSFilter)** | branch `hikarisub` |
 | `SubInspector` | [TypesettingTools/SubInspector](https://github.com/TypesettingTools/SubInspector) | `51c4c7a` (0.5.2) |
 
-The first five are stock upstream at a release tag, so they point straight at
-upstream. `ffms2` and `xy-VSFilter` carry HikariSub's own changes, so they point at forks whose
+The first five are pinned to an upstream release tag with no commits of our
+own, so they point straight at upstream. `ffms2` and `xy-VSFilter` carry HikariSub's own changes, so they point at forks whose
 `hikarisub` branch is upstream plus those changes — see [`PATCHES.md`](PATCHES.md).
+`wxWidgets` is not built untouched on Linux, though: `build-wxwidgets-linux.sh`
+applies the wxGTK fixes in `wxWidgets-patches/` to the checkout's working tree
+(the pinned commit stays upstream's tag) before it builds. `PATCHES.md` lists
+them too.
 
 `SubInspector` is Linux-only: the automation tree ships its Windows build as
 `Automation/automation/Include/SubInspector/Inspector/SubInspector.dll`

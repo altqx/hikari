@@ -325,7 +325,9 @@ pkg-config --modversion \
   gstreamer-app-1.0
 ```
 
-Build wxWidgets from the pinned submodule, then verify it:
+Build wxWidgets from the pinned submodule, then verify it. The script first
+applies HikariSub's wxGTK fixes from `Thirdparty/wxWidgets-patches/` to the
+submodule (see `Thirdparty/PATCHES.md`):
 
 ```bash
 Thirdparty/build-wxwidgets-linux.sh

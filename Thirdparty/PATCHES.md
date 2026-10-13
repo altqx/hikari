@@ -1,4 +1,4 @@
-# The two forks
+# The two forks, and the wxWidgets patches
 
 Two dependencies carry HikariSub's own changes. Rather than sitting as
 unattributed copies in this tree, each is a fork repository whose `hikarisub`
@@ -84,6 +84,16 @@ out 4152 `wxCHECK`/`wxASSERT`/`wxFAIL` lines across 658 files, including the
 macro definitions in `include/wx/debug.h`, where `wxCHECK(cond, rc)` expanded to
 nothing while 59 call sites still used it.
 
-It is now a plain submodule at `v3.3.3` with no local changes, built by
-wxWidgets' own `wx_vc17.sln`. Those guards are upstream's again, so there is
-nothing here to patch.
+It is now a plain submodule at `v3.3.3`, pinned to upstream's tag, built by
+wxWidgets' own `wx_vc17.sln` on Windows. Those guards are upstream's again.
+
+The Linux build carries patches for wxGTK bugs that HikariSub hits and that
+upstream has not fixed yet. They live in `Thirdparty/wxWidgets-patches/` and
+`Thirdparty/build-wxwidgets-linux.sh` applies them to the submodule's working
+tree before it configures wxWidgets (a patch that is already applied is
+skipped), so after that script has run the submodule shows as modified. CI's
+wxWidgets cache key includes the patches, so changing one rebuilds wxGTK.
+Windows does not apply them: so far they only patch GTK code.
+
+When the submodule moves to a newer wxWidgets, drop each patch upstream has
+taken; the script stops with an error on one that no longer applies.
