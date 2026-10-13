@@ -198,8 +198,12 @@ STDAPI GetDpiForMonitor(
 #ifdef _WIN32
 LONG __stdcall MyCustomFilter(EXCEPTION_POINTERS* pep)
 {
-	wxStandardPathsBase& paths = wxStandardPaths::Get();
-	wxString exePath = wxFileName(paths.GetExecutablePath()).GetPath() + L"/MiniDump.dmp";
+	// The data root: an installed copy cannot write beside the exe.
+	wxString exePath = Options.dataPath + L"/MiniDump.dmp";
+	if (Options.dataPath.empty()){
+		wxStandardPathsBase& paths = wxStandardPaths::Get();
+		exePath = wxFileName(paths.GetExecutablePath()).GetPath() + L"/MiniDump.dmp";
+	}
 	HANDLE hFile = CreateFileW(exePath.wc_str(), GENERIC_READ | GENERIC_WRITE,
 		0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 

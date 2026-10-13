@@ -127,7 +127,7 @@ void ShapesEdition::OnResetDefault(wxCommandEvent& evt)
 {
 	if (HikariMessageBox(_("Are you sure you want to reset to default?"),
 		_("Confirmation"), wxYES_NO, this) == wxYES) {
-		wxString path = Options.pathfull + L"/Config/ShapesSettings.txt";
+		wxString path = Options.dataPath + L"/Config/ShapesSettings.txt";
 		_wremove(path.wc_str());
 		shapes.clear();
 		LoadSettings(&shapes);
@@ -295,7 +295,7 @@ void ShapesEdition::Save(int id)
 
 void LoadSettings(std::vector<ShapesSetting>* shapes)
 {
-	wxString path = Options.pathfull + L"/Config/ShapesSettings.txt";
+	wxString path = Options.dataPath + L"/Config/ShapesSettings.txt";
 	OpenWrite ow;
 	wxString txtSettings;
 	//write entire setings in plain text
@@ -353,7 +353,7 @@ void GetNames(std::vector<ShapesSetting>* shapes, wxArrayString* nameList)
 
 void SaveSettings(std::vector<ShapesSetting>* shapes)
 {
-	wxString path = Options.pathfull + L"/Config/ShapesSettings.txt";
+	wxString path = Options.dataPath + L"/Config/ShapesSettings.txt";
 	OpenWrite ow(path);
 	for (size_t i = 0; i < shapes->size(); i++) {
 		ShapesSetting shapeSetting = (*shapes)[i];

@@ -26,6 +26,7 @@
 #include <wx/string.h>
 #include <wx/log.h>
 #include <wx/filename.h>
+#include <wx/ffile.h>
 #include <wx/uilocale.h>
 #include "CsriMod.h"
 #include "Notebook.h"
@@ -347,7 +348,7 @@ void config::SaveOptions(bool cfg, bool style)
 			stylefile << GetStyle(j)->GetRaw();
 		}
 		wxString path;
-		path << pathfull << wxFileName::GetPathSeparator() << L"Catalog" << wxFileName::GetPathSeparator() << actualStyleDir << L".sty";
+		path << dataPath << wxFileName::GetPathSeparator() << L"Catalog" << wxFileName::GetPathSeparator() << actualStyleDir << L".sty";
 		ow.FileWrite(path, stylefile);
 	}
 }
@@ -545,11 +546,98 @@ void config::LoadDefaultColors(bool dark, wxColour *table)
 
 }
 
+namespace
+{
+	// package-kind.txt beside the executable (installers spec, 3). A test
+	// build may stand in another kind with HIKARISUB_PACKAGE_KIND.
+	std::optional<package_kind::Kind> ReadPackageMarker(const wxString &exeDir)
+	{
+#ifdef HIKARISUB_UPDATE_TEST_FEED
+		wxString forced;
+		if (wxGetEnv(L"HIKARISUB_PACKAGE_KIND", &forced))
+			return package_kind::ParseToken(forced.utf8_string());
+#endif
+		wxFFile marker(exeDir + wxFileName::GetPathSeparator() + wxString(package_kind::kMarkerFile.data()), L"rb");
+		if (!marker.IsOpened())
+			return std::nullopt;
+		char content[64];
+		size_t read = marker.Read(content, sizeof(content));
+		if (read >= sizeof(content))
+			return std::nullopt;
+		return package_kind::ParseMarker(std::string_view(content, read));
+	}
+
+	// The data root of an installed copy, or empty when the environment
+	// gives none.
+	wxString InstalledDataPath()
+	{
+		const wxChar sep = wxFileName::GetPathSeparator();
+		wxString base;
+#ifdef _WIN32
+		if (!wxGetEnv(L"LOCALAPPDATA", &base) || base.empty())
+			return wxString();
+#else
+		if (!wxGetEnv(L"XDG_DATA_HOME", &base) || !base.StartsWith(L"/")){
+			wxString home;
+			if (!wxGetEnv(L"HOME", &home) || !home.StartsWith(L"/"))
+				return wxString();
+			base = home + L"/.local/share";
+		}
+#endif
+		return base + sep + L"HikariSub" + sep + L"Legacy";
+	}
+
+	// Copies the files under from that to lacks, folders and all; never
+	// over a file to already has.
+	void CopyMissingTree(const wxString &from, const wxString &to)
+	{
+		if (!wxDirExists(from))
+			return;
+		wxArrayString files;
+		wxDir::GetAllFiles(from, &files, emptyString, wxDIR_FILES | wxDIR_DIRS | wxDIR_HIDDEN);
+		for (const wxString &file : files){
+			wxString target = to + file.Mid(from.length());
+			if (wxFileExists(target))
+				continue;
+			wxFileName::Mkdir(target.BeforeLast(wxFileName::GetPathSeparator()), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+			wxCopyFile(file, target, false);
+		}
+	}
+
+	// On the first installed start, the settings of a portable copy that
+	// was installed over (someone installed into an extracted zip) are
+	// copied, never moved, to the data root (1.7): Config/, Catalog/ and
+	// the user's own dictionary.
+	void CopyPortableData(const wxString &exeDir, const wxString &dataDir)
+	{
+		const wxChar sep = wxFileName::GetPathSeparator();
+		if (wxFileExists(dataDir + sep + L"Config" + sep + L"Config.txt") ||
+			!wxFileExists(exeDir + sep + L"Config" + sep + L"Config.txt"))
+			return;
+		CopyMissingTree(exeDir + sep + L"Config", dataDir + sep + L"Config");
+		CopyMissingTree(exeDir + sep + L"Catalog", dataDir + sep + L"Catalog");
+		wxString userDictionary = sep + wxString(L"Dictionary") + sep + L"UserDic.udic";
+		if (wxFileExists(exeDir + userDictionary) && !wxFileExists(dataDir + userDictionary)){
+			wxFileName::Mkdir(dataDir + sep + L"Dictionary", wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+			wxCopyFile(exeDir + userDictionary, dataDir + userDictionary, false);
+		}
+	}
+}
+
 int config::LoadOptions()
 {
 	wxStandardPathsBase &paths = wxStandardPaths::Get();
 	pathfull = paths.GetExecutablePath().BeforeLast(wxFileName::GetPathSeparator());
-	configPath = pathfull + wxFileName::GetPathSeparator() + L"Config";
+	packageMarker = ReadPackageMarker(pathfull);
+	dataPath = pathfull;
+	if (package_kind::IsInstalled(packageMarker)){
+		wxString installedData = InstalledDataPath();
+		if (!installedData.empty() && wxFileName::Mkdir(installedData, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL)){
+			dataPath = installedData;
+			CopyPortableData(pathfull, dataPath);
+		}
+	}
+	configPath = dataPath + wxFileName::GetPathSeparator() + L"Config";
 	wxFileName::Mkdir(configPath, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 	wxString path;
 	path << configPath << wxFileName::GetPathSeparator() << L"Config.txt";
@@ -594,7 +682,7 @@ int config::LoadOptions()
 
 	actualStyleDir = L"Default";
 	path = emptyString;
-	path << pathfull << wxFileName::GetPathSeparator() << L"Catalog" << wxFileName::GetPathSeparator();
+	path << dataPath << wxFileName::GetPathSeparator() << L"Catalog" << wxFileName::GetPathSeparator();
 	wxFileName::Mkdir(path, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 	wxDir kat(path);
 	if (kat.IsOpened()){
@@ -625,7 +713,7 @@ void config::LoadColors(const wxString &_themeName){
 	}
 	bool failed = false;
 	if (themeName != L"DarkSentro" && themeName != L"LightSentro"){
-		wxString path = pathfull + wxFileName::GetPathSeparator() + L"Themes" + wxFileName::GetPathSeparator() + themeName + L".txt";
+		wxString path = ThemePath(themeName);
 		OpenWrite ow;
 		wxString txtColors;
 		if (ow.FileOpen(path, &txtColors, false)){
@@ -675,7 +763,7 @@ void config::LoadStyles(const wxString &katalog)
 {
 	actualStyleDir = katalog;
 	wxString path;
-	path << pathfull << wxFileName::GetPathSeparator() << L"Catalog" << wxFileName::GetPathSeparator() << katalog << L".sty";
+	path << dataPath << wxFileName::GetPathSeparator() << L"Catalog" << wxFileName::GetPathSeparator() << katalog << L".sty";
 	OpenWrite ow;
 	for (std::vector<Styles*>::iterator it = assstore.begin(); it != assstore.end(); it++){
 		delete (*it);
@@ -937,7 +1025,7 @@ wxString config::GetStringColor(size_t optionName)
 void config::SaveColors(const wxString &path){
 	wxString finalpath = path;
 	if (path.IsEmpty()){
-		finalpath = pathfull + wxFileName::GetPathSeparator() + L"Themes" + wxFileName::GetPathSeparator() + GetString(PROGRAM_THEME) + L".txt";
+		finalpath = ThemeSavePath(GetString(PROGRAM_THEME));
 	}
 	OpenWrite ow(finalpath, true);
 	//ow.PartFileWrite(L"[" + progname + L"]\n");
@@ -997,6 +1085,23 @@ int config::GetFontPixelHeight(const wxFont &font)
 	// wxGTK would report the line height here, wxMSW the em height; recompute it.
 	return std::max(1, (int)(((double)font.GetPointSize() * ((double)fontDPI) / 72.0) + 0.5));
 #endif
+}
+
+wxString config::ThemePath(const wxString &themeName) const
+{
+	const wxChar sep = wxFileName::GetPathSeparator();
+	wxString userTheme = dataPath + sep + L"Themes" + sep + themeName + L".txt";
+	if (dataPath != pathfull && wxFileExists(userTheme))
+		return userTheme;
+	return pathfull + sep + L"Themes" + sep + themeName + L".txt";
+}
+
+wxString config::ThemeSavePath(const wxString &themeName) const
+{
+	const wxChar sep = wxFileName::GetPathSeparator();
+	wxString dir = dataPath + sep + L"Themes";
+	wxFileName::Mkdir(dir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+	return dir + sep + themeName + L".txt";
 }
 
 wxString config::GetLocalePath() const
