@@ -1,0 +1,6 @@
+# Sources the legacy floor build (packaging/linux/floor) downloads.
+# FFmpeg is the 7.1 series, as on Windows (Thirdparty/dependencies.json): the
+# Thirdparty/ffms2 fork uses FFmpeg 7.1 API (AV_DISPOSITION_MULTILAYER,
+# AVStereo3D.primary_eye) and does not build against 6.1.
+# name     version  sha256                                                            url
+ffmpeg     7.1.5    de668509caf9e35e3cd162473441fdb29538c6d96ed080292b3cf9e6fc5d558f  https://ffmpeg.org/releases/ffmpeg-7.1.5.tar.xz

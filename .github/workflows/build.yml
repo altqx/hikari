@@ -407,6 +407,222 @@ jobs:
           path: build/dist/hikarisub-linux-x86_64.tar.gz*
           if-no-files-found: error
 
+  # The release packages for Linux, built in the ubuntu:22.04 floor container
+  # (glibc 2.35, g++-12; packaging/linux/floor) so they run on Ubuntu 22.04,
+  # Debian 12 and everything newer: the portable tar.gz, the AppImage (with
+  # GTK, GLib and GStreamer inside), the deb and rpm (nFPM) and the AUR
+  # PKGBUILD. FFmpeg 7.1 and the FFMS2 fork are built from source there.
+  # The artifact hikarisub-linux-packages holds the files under their release
+  # asset names, plus aur/PKGBUILD and aur/.SRCINFO for a stable version.
+  linux-packages:
+    name: Linux packages
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.keys.outputs.version }}
+      stable: ${{ steps.keys.outputs.stable }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Resolve the cache keys
+        id: keys
+        run: |
+          version=$(sed -n 's/^#define[[:space:]]*VersionHikariSub[[:space:]]*"\(.*\)".*/\1/p' HikariSub/VersionHikariSub.h)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "stable=$([[ "$version" == *-* ]] && echo false || echo true)" >> "$GITHUB_OUTPUT"
+          image=$(cat packaging/linux/floor/image)
+          echo "image=${image##*@sha256:}" >> "$GITHUB_OUTPUT"
+          echo "wx=$(git rev-parse HEAD:Thirdparty/wxWidgets)" >> "$GITHUB_OUTPUT"
+          echo "ffms2=$(git rev-parse HEAD:Thirdparty/ffms2)" >> "$GITHUB_OUTPUT"
+
+      # Keyed by the container image digest too: these are built in the floor
+      # container and must never mix with the ubuntu-24.04 job's builds.
+      - name: Cache wxWidgets (floor)
+        id: wx-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: floor-out/wx/prefix
+          key: wx-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.wx }}-${{ hashFiles('Thirdparty/build-wxwidgets-linux.sh', 'packaging/linux/floor/build.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
+
+      - name: Cache FFmpeg and FFMS2 (floor)
+        id: media-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: floor-out/media
+          key: media-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.ffms2 }}-${{ hashFiles('packaging/linux/floor/sources.lock', 'packaging/linux/floor/build-media.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
+
+      - name: Build the floor container
+        run: docker build -q --build-arg BASE="$(cat packaging/linux/floor/image)" -t hikarisub-floor packaging/linux/floor
+
+      - name: Build the packages
+        timeout-minutes: 120
+        run: |
+          docker run --rm -v "$PWD:$PWD" -w "$PWD" hikarisub-floor \
+            sh -c 'rc=0; packaging/linux/floor/build.sh "$PWD/floor-out" "$(nproc)" || rc=$?; chown -R "$1" floor-out; exit $rc' \
+            sh "$(id -u):$(id -g)"
+
+      - name: Save wxWidgets (floor)
+        if: always() && steps.wx-cache.outputs.cache-hit != 'true' && hashFiles('floor-out/wx/prefix/bin/wx-config') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: floor-out/wx/prefix
+          key: wx-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.wx }}-${{ hashFiles('Thirdparty/build-wxwidgets-linux.sh', 'packaging/linux/floor/build.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
+
+      - name: Save FFmpeg and FFMS2 (floor)
+        if: always() && steps.media-cache.outputs.cache-hit != 'true' && hashFiles('floor-out/media/lib/pkgconfig/ffms2.pc') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: floor-out/media
+          key: media-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.ffms2 }}-${{ hashFiles('packaging/linux/floor/sources.lock', 'packaging/linux/floor/build-media.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
+
+      - name: Collect the release files
+        env:
+          VERSION: ${{ steps.keys.outputs.version }}
+        run: |
+          mkdir -p linux-packages
+          d=floor-out/app/dist
+          cp "$d/hikarisub-linux-x86_64.tar.gz" "linux-packages/hikarisub-$VERSION-linux-x86_64.tar.gz"
+          cp "$d/HikariSub-$VERSION-linux-x86_64.AppImage" "$d/HikariSub-$VERSION-linux-x86_64.AppImage.zsync" \
+             "$d/hikarisub-$VERSION-linux-amd64.deb" "$d/hikarisub-$VERSION-linux-x86_64.rpm" linux-packages/
+          for f in linux-packages/*; do
+            [[ "$(basename "$f")" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || { echo "::error::bad asset name $f"; exit 1; }
+          done
+          (cd linux-packages && sha256sum * | tee ../linux-packages.sha256)
+
+      # The payload rules of the installers spec (5.1, 5.2): glibc 2.35 at
+      # most, $ORIGIN-only RPATHs, nothing from packaging/linux/appimage/host-libs.txt.
+      - name: Check the payloads
+        env:
+          VERSION: ${{ steps.keys.outputs.version }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends rpm2cpio cpio rpm
+          mkdir -p check/tar check/deb check/rpm
+          tar -xzf "linux-packages/hikarisub-$VERSION-linux-x86_64.tar.gz" -C check/tar
+          dpkg-deb -x "linux-packages/hikarisub-$VERSION-linux-amd64.deb" check/deb
+          (cd check/rpm && rpm2cpio "../../linux-packages/hikarisub-$VERSION-linux-x86_64.rpm" | cpio -idm --quiet --no-absolute-filenames)
+          (cd check && "../linux-packages/HikariSub-$VERSION-linux-x86_64.AppImage" --appimage-extract >/dev/null)
+          for tree in check/tar check/deb check/rpm check/squashfs-root; do
+            tests/packaging/linux/check-payload.sh "$tree" 2.35
+          done
+          # The versions inside the packages (installers spec, 1.3).
+          debver=$(dpkg-deb -f "linux-packages/hikarisub-$VERSION-linux-amd64.deb" Version)
+          rpmver=$(rpm -qp --qf '%{VERSION}-%{RELEASE}' "linux-packages/hikarisub-$VERSION-linux-x86_64.rpm")
+          expected="$(sed 's/-/~/' <<<"$VERSION")-1"
+          echo "deb $debver, rpm $rpmver, expected $expected"
+          [[ "$debver" == "$expected" && "$rpmver" == "$expected" ]]
+          dpkg --compare-versions 0.0.9-1 lt 0.1.0~beta.1-1
+          dpkg --compare-versions 0.1.0~beta.1-1 lt 0.1.0-1
+          [[ "$(rpm --eval '%{lua: print(rpm.vercmp("0.0.9-1", "0.1.0~beta.1-1") .. rpm.vercmp("0.1.0~beta.1-1", "0.1.0-1"))}')" == "-1-1" ]]
+          dpkg-deb -I "linux-packages/hikarisub-$VERSION-linux-amd64.deb"
+          rpm -qp --requires --recommends "linux-packages/hikarisub-$VERSION-linux-x86_64.rpm"
+          # The dependencies came through (resolve-deps.sh and the maps).
+          dpkg-deb -f "linux-packages/hikarisub-$VERSION-linux-amd64.deb" Depends | grep -q 'libgtk-3-0'
+          dpkg-deb -f "linux-packages/hikarisub-$VERSION-linux-amd64.deb" Depends | grep -q 'gstreamer1.0-plugins-good'
+          rpm -qp --requires "linux-packages/hikarisub-$VERSION-linux-x86_64.rpm" | grep -q 'libgtk-3.so.0()(64bit)'
+          # The update information the AppImage carries for external updaters.
+          grep -a -q 'gh-releases-zsync|altqx|hikari|latest|HikariSub-\*-linux-x86_64.AppImage.zsync' \
+            "linux-packages/HikariSub-$VERSION-linux-x86_64.AppImage"
+
+      # A stable version gets the AUR files the owner commits and pushes
+      # (installers spec, 5.5). A prerelease is never rendered; its run
+      # renders a test PKGBUILD for X.Y.Z offline, only for the container test.
+      - name: Render the AUR package
+        env:
+          VERSION: ${{ steps.keys.outputs.version }}
+          STABLE: ${{ steps.keys.outputs.stable }}
+        run: |
+          if [[ "$STABLE" == true ]]; then
+            packaging/linux/aur/render-pkgbuild.sh "$VERSION" "linux-packages/hikarisub-$VERSION-linux-x86_64.tar.gz" linux-packages/aur
+            aur_dir=linux-packages/aur aur_version=$VERSION
+          else
+            aur_version=${VERSION%%-*}
+            mkdir -p aur-test
+            cp "linux-packages/hikarisub-$VERSION-linux-x86_64.tar.gz" "aur-test/hikarisub-$aur_version-linux-x86_64.tar.gz"
+            packaging/linux/aur/render-pkgbuild.sh --offline "$aur_version" "aur-test/hikarisub-$aur_version-linux-x86_64.tar.gz" aur-test/aur
+          fi
+          cat linux-packages/aur/PKGBUILD 2>/dev/null || cat aur-test/aur/PKGBUILD
+
+      - name: Upload the packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: hikarisub-linux-packages
+          path: linux-packages
+          include-hidden-files: true
+          if-no-files-found: error
+
+      - name: Upload the test helpers
+        run: |
+          mkdir -p test-helpers
+          cp -a floor-out/test/. test-helpers/
+          if [[ -d aur-test ]]; then cp -a aur-test test-helpers/; fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hikarisub-linux-package-tests
+          path: test-helpers
+          include-hidden-files: true
+          if-no-files-found: error
+
+  # Installs and starts each package in clean containers of the distributions
+  # it targets (installers spec, 8.1 and 8.2; tests/packaging/linux).
+  linux-package-tests:
+    name: Linux package test (${{ matrix.test }}, ${{ matrix.image }})
+    needs: linux-packages
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { test: appimage, image: ubuntu-22.04 }
+          - { test: appimage, image: ubuntu-24.04 }
+          - { test: appimage, image: debian-12 }
+          - { test: appimage, image: fedora }
+          - { test: appimage, image: tumbleweed }
+          - { test: appimage, image: archlinux }
+          - { test: deb, image: ubuntu-22.04 }
+          - { test: deb, image: ubuntu-24.04 }
+          - { test: deb, image: debian-12 }
+          - { test: rpm, image: fedora }
+          - { test: rpm, image: tumbleweed }
+          - { test: tar, image: ubuntu-22.04 }
+          - { test: tar, image: ubuntu-24.04 }
+          - { test: aur, image: archlinux }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: hikarisub-linux-packages
+          path: dist
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: hikarisub-linux-package-tests
+          path: helpers
+
+      - name: Test
+        env:
+          VERSION: ${{ needs.linux-packages.outputs.version }}
+          STABLE: ${{ needs.linux-packages.outputs.stable }}
+        run: |
+          args=(--gst-check helpers/gst-check)
+          case "${{ matrix.test }}" in
+            deb|rpm) args+=(--upgrade helpers/upgrade) ;;
+          esac
+          dist=dist version=$VERSION
+          if [[ "${{ matrix.test }}" == aur ]]; then
+            if [[ "$STABLE" == true ]]; then
+              args+=(--aur dist/aur)
+            else
+              version=${VERSION%%-*}
+              dist=helpers/aur-test
+              args+=(--aur helpers/aur-test/aur)
+            fi
+          fi
+          tests/packaging/linux/run.sh "${args[@]}" "${{ matrix.test }}" "${{ matrix.image }}" "$dist" "$version"
+
   # Runs alongside the builds so a tag that does not match the source fails
   # straight away rather than after them.
   release-version:
