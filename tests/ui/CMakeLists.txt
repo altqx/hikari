@@ -208,7 +208,8 @@ foreach(scale 125 150 175 200)
     set_tests_properties(hikari_ui_docking_qualification_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
 endforeach()
-hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
 # D2: the View menu's arrangements and the editor switch through the composition.
 hikari_add_qttest(hikari_ui_view_arrangements_tests SOURCES view_arrangements_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_view_arrangements_tests PRIVATE

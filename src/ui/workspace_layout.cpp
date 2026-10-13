@@ -196,6 +196,9 @@ bool WorkspaceLayoutController::restorePayload(const QByteArray &payload, bool i
     if (!restored && !m_default.isEmpty())
         KDDockWidgets::LayoutSaver().restoreLayout(m_default); // rebuild a known arrangement
     m_restoring = false;
+    // D1: the floating windows' layouts at their windows' size (native
+    // gate: the floating Audio panel came back 35 pixels short on Wayland).
+    hikari::ui::fitFloatingLayouts();
     // D3: the panels' minimum sizes now, not the ones it was saved with.
     hikari::ui::refreshDockConstraints();
     // A layout saved with another set of screens may place a floating panel

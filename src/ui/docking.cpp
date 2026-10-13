@@ -11,6 +11,7 @@
 #include <kddockwidgets/core/DropArea.h>
 #include <kddockwidgets/core/FloatingWindow.h>
 #include <kddockwidgets/core/Group.h>
+#include <kddockwidgets/core/Layout.h>
 #include <kddockwidgets/core/MainWindow.h>
 #include <kddockwidgets/core/Platform.h>
 #include <kddockwidgets/core/indicators/ClassicDropIndicatorOverlay.h>
@@ -608,6 +609,34 @@ KDDockWidgets::Core::DockWidget *dockByName(const QString &uniqueName)
     return registry ? registry->dockByName(uniqueName) : nullptr;
 }
 } // namespace
+
+int fitFloatingLayouts()
+{
+    if (!KDDockWidgets::Core::Platform::instance())
+        return 0;
+    int fitted = 0;
+    for (KDDockWidgets::Core::FloatingWindow *floating : KDDockWidgets::DockRegistry::self()->floatingWindows()) {
+        KDDockWidgets::Core::DropArea *area = floating->dropArea();
+        if (!area || !area->view())
+            continue;
+        // The engine builds a floating window's layout at its area's size
+        // then, with the window's title bar shown (there are no groups yet
+        // to tell it otherwise), hides the title bar once the layout has a
+        // lone group, and does not follow its area's resizes while the
+        // restore runs: the layout kept the area's height under the title
+        // bar, 35 pixels short of it.
+        const QSize areaSize = area->view()->size();
+        const QSize layoutSize = area->layoutSize();
+        const QQuickItem *item = KDDockWidgets::QtQuick::asQQuickItem(floating->view());
+        qCDebug(lcDocking) << "restored floating window" << (item && item->window() ? item->window()->title() : QString())
+                           << "layout" << layoutSize << "area" << areaSize;
+        if (areaSize.isEmpty() || layoutSize == areaSize)
+            continue;
+        area->setLayoutSize(areaSize);
+        ++fitted;
+    }
+    return fitted;
+}
 
 void refreshDockConstraints()
 {

@@ -42,6 +42,11 @@ bool attachDocking(QQmlEngine &engine);
 // Returns how many windows were moved.
 int keepFloatingPanelsOnScreen();
 
+// D1: has every floating panel window's layout fill the window's layout
+// area again after a restore (the engine leaves it the area's height under
+// a title bar the window no longer shows). Returns how many it resized.
+int fitFloatingLayouts();
+
 // D3: has every panel group take its panels' current minimum sizes
 // (Docking.setMinimumSize) again. A restored layout brings the sizes it was
 // saved with, which can be below them; the engine then grows the groups.
