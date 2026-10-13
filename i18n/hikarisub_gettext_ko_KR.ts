@@ -6,7 +6,7 @@
 # Weblate &lt;noreply-mt-weblate@weblate.org&gt;, 2026.
 # LibreTranslate &lt;noreply-mt-libretranslate@weblate.org&gt;, 2026.
 # Weblate Translation Memory &lt;noreply-mt-weblate-translation-memory@weblate.org&gt;, 2026.</extra-po-header-comments>
-    <extra-po-input>Locale/ko_KR.po at 20d647c4c769ab7f5d383cf3c1c33f03876a94e9</extra-po-input>
+    <extra-po-input>Locale/ko_KR.po at b31505da24dcc0c4053ad5e0cc73e15266a85bac</extra-po-input>
     <extra-po-language-team>Korean</extra-po-language-team>
     <extra-po-last-translator>altqx &lt;al@altqx.com&gt;</extra-po-last-translator>
     <extra-po-plural-forms>nplurals=1; plural=0;</extra-po-plural-forms>
@@ -43,7 +43,7 @@
     </message>
     <message>
         <source>Play the current syllable / line</source>
-        <translation>다음 음절 재생(노래방)</translation>
+        <translation>현재 음절 / 줄 재생</translation>
     </message>
     <message>
         <source>Play the current line</source>
@@ -126,36 +126,24 @@
         <translation>스펙트럼 음성 주파수 향상</translation>
     </message>
     <message>
-        <source>Invalid keyframes format</source>
-        <translation>잘못된 키 프레임 형식</translation>
-    </message>
-    <message>
-        <source>Error</source>
-        <translation>오류</translation>
-    </message>
-    <message>
-        <source>Cannot create Direct3D object</source>
-        <translation>Direct 3D 개체를 만들 수 없음</translation>
-    </message>
-    <message>
         <source>Cannot create D3D9 device</source>
         <translation>D3D9 장치를 만들 수 없음</translation>
+    </message>
+    <message>
+        <source>Cannot create swap chain</source>
+        <translation>스왑 체인을 만들 수 없음</translation>
     </message>
     <message>
         <source>One of the DirectX settings failed</source>
         <translation>DirectX 설정에 오류가 있습니다</translation>
     </message>
     <message>
-        <source>Cannot set projection matrix</source>
-        <translation>매트릭스(행렬) 투영을 설정할 수 없음</translation>
-    </message>
-    <message>
         <source>Cannot set world matrix</source>
-        <translation>매트릭스보기를 설정할 수 없음</translation>
+        <translation>월드 매트릭스를 설정할 수 없음</translation>
     </message>
     <message>
         <source>Cannot set view matrix</source>
-        <translation>매트릭스 월드를 설정할 수 없음</translation>
+        <translation>뷰 매트릭스를 설정할 수 없음</translation>
     </message>
     <message>
         <source>Cannot create surface</source>
@@ -163,7 +151,7 @@
     </message>
     <message>
         <source>Cannot create D3DX line</source>
-        <translation>D3DX 줄을 열 수 없습니다</translation>
+        <translation>D3DX 선을 만들 수 없음</translation>
     </message>
     <message>
         <source>Cannot create D3DX font</source>
@@ -186,12 +174,12 @@
         <translation>적용할 수 없음</translation>
     </message>
     <message>
-        <source>Cannot lock texture buffer</source>
-        <translation>텍스처 버퍼를 잠글 수 없습니다</translation>
-    </message>
-    <message>
         <source>Cannot blit spectrum surfaces</source>
         <translation>스펙트럼 표면은 자체적으로 중첩 될 수 없음</translation>
+    </message>
+    <message>
+        <source>Audio could not be loaded</source>
+        <translation>소리를 불러올 수 없음</translation>
     </message>
     <message>
         <source>Open auto save file</source>
@@ -239,11 +227,11 @@
     </message>
     <message>
         <source>Failed to load autosave</source>
-        <translation>자동 저장 폴더를 열 수 없습니다</translation>
+        <translation>자동 저장 파일을 불러오지 못했습니다</translation>
     </message>
     <message>
         <source>Remove temporary files</source>
-        <translation>저장 파일 삭제</translation>
+        <translation>임시 파일 삭제</translation>
     </message>
     <message>
         <source>Remove files older than</source>
@@ -303,7 +291,7 @@
     </message>
     <message>
         <source>Remove all files</source>
-        <translation>모든 파일 제거</translation>
+        <translation>모든 파일 삭제</translation>
     </message>
     <message>
         <source>Remove all older files</source>
@@ -323,7 +311,7 @@
     </message>
     <message>
         <source>Remove older auto save files</source>
-        <translation>오래된 자동 저장 파일 제거</translation>
+        <translation>오래된 자동 저장 파일 삭제</translation>
     </message>
     <message>
         <source>FFMS2 index</source>
@@ -392,7 +380,7 @@
     </message>
     <message>
         <source>Macro named &apos;%s&apos; is already defined in the script &apos;%s&apos;</source>
-        <translation>&apos;%s&apos;인 매크로가 이미 스크립트 &apos;%s&apos;에 정의되어 있습니다.&apos;</translation>
+        <translation>&apos;%s&apos;인 매크로가 이미 스크립트 &apos;%s&apos;에 정의되어 있습니다.</translation>
         <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
@@ -431,7 +419,7 @@ See the script descriptions for more information.</source>
     </message>
     <message>
         <source>Programs (*.exe)|*.exe|All files (*.*)|*.*</source>
-        <translation>프로그램 (* .exe) | * .exe | All Files (*. *) | *. *</translation>
+        <translation>프로그램 (*.exe)|*.exe|모든 파일 (*.*)|*.*</translation>
     </message>
     <message>
         <source>Automation error</source>
@@ -440,6 +428,10 @@ See the script descriptions for more information.</source>
     <message>
         <source>Cannot start editor.</source>
         <translation>편집기를 시작할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation>오류</translation>
     </message>
     <message>
         <source>Full Lua error description</source>
@@ -565,12 +557,16 @@ What would you like to do?</source>
         <translation>첫 번째 단축키 설정 / 쉬프트 + 클릭</translation>
     </message>
     <message>
+        <source>Picking a color from the screen is not supported on Wayland</source>
+        <translation>Wayland에서는 화면에서 색상을 선택할 수 없습니다</translation>
+    </message>
+    <message>
         <source>Choose color</source>
         <translation>색상 선택</translation>
     </message>
     <message>
         <source>Spectrum color</source>
-        <translation>색상 선택</translation>
+        <translation>스펙트럼 색상</translation>
     </message>
     <message>
         <source>RGB color</source>
@@ -603,8 +599,8 @@ What would you like to do?</source>
     <message>
         <source>Swap shortcuts between the color picker
 and the color selection window</source>
-        <translation type="unfinished">마우스 설정 변경(우클릭 색상 선택창/좌클릭 색상 선택기)</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>색상 선택기와 색상 선택 창의
+클릭 단축키 서로 바꾸기</translation>
     </message>
     <message>
         <source>Checking this option opens the color picker on left-click,
@@ -677,15 +673,15 @@ to the color selection location</source>
     </message>
     <message>
         <source>&amp;Copy</source>
-        <translation>복사</translation>
+        <translation>복사[&amp;C]</translation>
     </message>
     <message>
         <source>Cu&amp;t</source>
-        <translation>잘라내기</translation>
+        <translation>잘라내기[&amp;T]</translation>
     </message>
     <message>
         <source>&amp;Paste</source>
-        <translation>붙여넣기</translation>
+        <translation>붙여넣기[&amp;P]</translation>
     </message>
     <message>
         <source>Search word translation on ling.pl</source>
@@ -713,12 +709,12 @@ to the color selection location</source>
     </message>
     <message>
         <source>&amp;Add word &quot;%s&quot; to dictionary</source>
-        <translation>사전에 &quot;%s&quot; 단어 추가</translation>
+        <translation>사전에 &quot;%s&quot; 단어 추가[&amp;A]</translation>
         <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
         <source>&amp;Delete</source>
-        <translation>삭제</translation>
+        <translation>삭제[&amp;D]</translation>
     </message>
     <message>
         <source>Show status bar</source>
@@ -1006,7 +1002,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>No unconfirmed lines found</source>
-        <translation>검토 할 수 없음</translation>
+        <translation>확인되지 않은 줄이 없음</translation>
     </message>
     <message>
         <source>No untranslated lines found</source>
@@ -1015,6 +1011,26 @@ Should not exceed 15 characters per second</source>
     <message>
         <source>Manage tag buttons</source>
         <translation>상용구 등록</translation>
+    </message>
+    <message>
+        <source>ASS subtitles</source>
+        <translation>자막 ASS</translation>
+    </message>
+    <message>
+        <source>SSA subtitles</source>
+        <translation>자막 SSA</translation>
+    </message>
+    <message>
+        <source>SRT subtitles</source>
+        <translation>자막 SRT</translation>
+    </message>
+    <message>
+        <source>SUB subtitles</source>
+        <translation>자막 SUB</translation>
+    </message>
+    <message>
+        <source>TXT subtitles</source>
+        <translation>자막 TXT</translation>
     </message>
     <message>
         <source>Search text:</source>
@@ -1066,7 +1082,7 @@ the search for everything &quot;*. *&quot; Is changed to *.ass</source>
     </message>
     <message>
         <source>Include comments</source>
-        <translation>주석</translation>
+        <translation>주석 포함</translation>
     </message>
     <message>
         <source>Skip tags</source>
@@ -1250,8 +1266,8 @@ folders</source>
         <translation>자동 저장</translation>
     </message>
     <message>
-        <source>Choose video file</source>
-        <translation>영상 파일 선택</translation>
+        <source>Choose font catalogs file</source>
+        <translation>글꼴 목록 파일 선택</translation>
     </message>
     <message>
         <source>Text files (*.txt)|*.txt</source>
@@ -1277,12 +1293,11 @@ to create new catalog.</source>
     </message>
     <message>
         <source>Add fonts from subtitles</source>
-        <translation type="unfinished">Subtitles에서 글꼴 추가</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>자막에서 글꼴 추가</translation>
     </message>
     <message>
         <source>Catalog named &quot;%s&quot; already exists. What to do?</source>
-        <translation>&quot;%s&quot;라는 이름이 있습니다?</translation>
+        <translation>&quot;%s&quot; 목록이 이미 있습니다. 어떻게 할까요?</translation>
         <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
@@ -1291,13 +1306,11 @@ to create new catalog.</source>
     </message>
     <message>
         <source>Remove all contents of catalog</source>
-        <translation type="unfinished">카탈로그의 모든 내용 제거</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>목록의 모든 내용 제거</translation>
     </message>
     <message>
         <source>Add fonts from all open subtitles</source>
-        <translation type="unfinished">모든 오픈 ASS 파일에서 글꼴 추가</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>열려 있는 모든 자막에서 글꼴 추가</translation>
     </message>
     <message>
         <source>In styles:
@@ -1307,7 +1320,7 @@ to create new catalog.</source>
     </message>
     <message>
         <source> tabs: </source>
-        <translation> 색인: </translation>
+        <translation> 탭: </translation>
     </message>
     <message>
         <source>In lines: </source>
@@ -1339,7 +1352,7 @@ to create new catalog.</source>
     </message>
     <message>
         <source>Save to video / subtitles folder.</source>
-        <translation>영상 저장 / 자막 폴더.</translation>
+        <translation>영상 / 자막 폴더에 저장.</translation>
     </message>
     <message>
         <source>Saves to the video folder
@@ -1361,7 +1374,7 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Save folder</source>
-        <translation>폴더 저장</translation>
+        <translation>저장 폴더</translation>
     </message>
     <message>
         <source>Select the name of the archive</source>
@@ -1434,8 +1447,8 @@ copying will be canceled.
     <message>
         <source>Font &quot;%s&quot; belongs to a style
 that is not used.</source>
-        <translation>&quot;%s&quot; 글꼴은
-사용되지 않음.</translation>
+        <translation>&quot;%s&quot; 글꼴은 사용되지 않는
+스타일에 속합니다.</translation>
         <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
@@ -1447,22 +1460,22 @@ that is not used.</source>
     <message>
         <source>Finished, %s %s.
 </source>
-        <translation>완료, %s %s.
+        <translation>완료, %s: %s.
 </translation>
         <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
         <source>copied</source>
-        <translation>복사</translation>
+        <translation>복사함</translation>
     </message>
     <message>
         <source>found</source>
-        <translation>찾기</translation>
+        <translation>찾음</translation>
     </message>
     <message>
         <source>Not found %s.
 </source>
-        <translation>%s 를 찾을 수 없습니다.
+        <translation>%s을(를) 찾을 수 없습니다.
 </translation>
         <extra-po-flags>c-format</extra-po-flags>
     </message>
@@ -1476,7 +1489,7 @@ that is not used.</source>
     <message>
         <source>Completed Successfully, %s %s.
 </source>
-        <translation>성공적으로 완료되었습니다. %s %s.
+        <translation>성공적으로 완료되었습니다. %s: %s.
 </translation>
         <extra-po-flags>c-format</extra-po-flags>
     </message>
@@ -1515,8 +1528,7 @@ that is not used.</source>
     </message>
     <message>
         <source>Cannot open MKV file</source>
-        <translation type="unfinished">MKV 파일을 열 수 없음.</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>MKV 파일을 열 수 없음</translation>
     </message>
     <message>
         <source>Loaded MKV file does not have any fonts.</source>
@@ -1560,8 +1572,8 @@ Will not be copied.</source>
     <message>
         <source>Font &quot;%s&quot; belongs to a style
 that is not used.%s</source>
-        <translation>글꼴 &quot;%s&quot;을(를) 스타일에서 가져옴,
-%s은(는) 사용되지 않습니다</translation>
+        <translation>&quot;%s&quot; 글꼴은 사용되지 않는
+스타일에 속합니다.%s</translation>
         <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
@@ -1665,7 +1677,7 @@ Finished in %sms</source>
     </message>
     <message>
         <source>Manages font catalogs</source>
-        <translation>스타일 목록을 관리 할 수 있습니다</translation>
+        <translation>글꼴 목록을 관리합니다</translation>
     </message>
     <message>
         <source>Filter</source>
@@ -1685,8 +1697,7 @@ Finished in %sms</source>
     </message>
     <message>
         <source>Loading external fonts</source>
-        <translation type="unfinished">외부 글꼴 적재</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>외부 글꼴 불러오는 중</translation>
     </message>
     <message>
         <source>Cannot create next notification handler for fonts folder.</source>
@@ -1694,18 +1705,977 @@ Finished in %sms</source>
     </message>
     <message>
         <source>Removing fonts from external folder</source>
-        <translation type="unfinished">외부 폴더에서 글꼴 제거</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>외부 폴더의 글꼴 제거 중</translation>
     </message>
     <message>
         <source>Loading fonts from external folder</source>
-        <translation type="unfinished">외부 폴더에서 글꼴로드</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>외부 폴더에서 글꼴 불러오는 중</translation>
     </message>
     <message>
         <source>Cannot load external font folder</source>
-        <translation type="unfinished">외부 글꼴 폴더를로드 할 수 없습니다</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>외부 글꼴 폴더를 불러올 수 없음</translation>
+    </message>
+    <message>
+        <source>Apply to All</source>
+        <translation>모두 적용</translation>
+    </message>
+    <message>
+        <source>Yes to all</source>
+        <translation>모두 예</translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation>예</translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation>아니오</translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>도움말</translation>
+    </message>
+    <message>
+        <source>Untitled - </source>
+        <translation>새 자막 - </translation>
+    </message>
+    <message>
+        <source>Video duration</source>
+        <translation>영상의 길이</translation>
+    </message>
+    <message>
+        <source>Video scale</source>
+        <translation>영상 크기</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>영상 확대</translation>
+    </message>
+    <message>
+        <source>Frames per second</source>
+        <translation>초당 프레임</translation>
+    </message>
+    <message>
+        <source>Subtitles resolution</source>
+        <translation>자막 해상도</translation>
+    </message>
+    <message>
+        <source>Video aspect ratio</source>
+        <translation>영상 가로 세로 비율</translation>
+    </message>
+    <message>
+        <source>Video file name</source>
+        <translation>영상 파일 이름</translation>
+    </message>
+    <message>
+        <source>Video resolution</source>
+        <translation>영상 해상도</translation>
+    </message>
+    <message>
+        <source>Load last session</source>
+        <translation>마지막 작업 열기</translation>
+    </message>
+    <message>
+        <source>Loads previously loaded files</source>
+        <translation>마지막으로 불러온 파일 열기</translation>
+    </message>
+    <message>
+        <source>Load session from file</source>
+        <translation>파일에서 세션 불러오기</translation>
+    </message>
+    <message>
+        <source>Loads session from saved session file</source>
+        <translation>저장된 세션 파일에서 세션 불러오기</translation>
+    </message>
+    <message>
+        <source>Save session to file</source>
+        <translation>파일로 세션 저장</translation>
+    </message>
+    <message>
+        <source>Saves session to file</source>
+        <translation>파일로 세션 저장</translation>
+    </message>
+    <message>
+        <source>Ask whether to load the last session at program startup</source>
+        <translation>프로그램 실행 시 마지막 작업 물어보기</translation>
+    </message>
+    <message>
+        <source>Asks whether to load previously loaded files at program startup</source>
+        <translation>프로그램을 시작할 때 최근에 읽은 파일을 불러올지 묻습니다</translation>
+    </message>
+    <message>
+        <source>Load last session after program start</source>
+        <translation>마지막 작업 항상 열기</translation>
+    </message>
+    <message>
+        <source>Loads previously loaded files at program startup</source>
+        <translation>프로그램 시작 후 마지막 세션 로드</translation>
+    </message>
+    <message>
+        <source>&amp;Open subtitles</source>
+        <translation>자막 열기[&amp;O]</translation>
+    </message>
+    <message>
+        <source>Open subtitle file</source>
+        <translation>자막 파일 열기</translation>
+    </message>
+    <message>
+        <source>&amp;Save</source>
+        <translation>저장[&amp;S]</translation>
+    </message>
+    <message>
+        <source>Save current file</source>
+        <translation>현재 파일 저장</translation>
+    </message>
+    <message>
+        <source>Save &amp;all</source>
+        <translation>모두 저장[&amp;A]</translation>
+    </message>
+    <message>
+        <source>Save all subtitles</source>
+        <translation>자막 모두 저장</translation>
+    </message>
+    <message>
+        <source>Save &amp;as...</source>
+        <translation>다른 이름으로...[&amp;A]</translation>
+    </message>
+    <message>
+        <source>Save as</source>
+        <translation>다른 이름으로 저장</translation>
+    </message>
+    <message>
+        <source>Save &amp;translation</source>
+        <translation>번역본 저장[&amp;T]</translation>
+    </message>
+    <message>
+        <source>Save translation</source>
+        <translation>번역 저장</translation>
+    </message>
+    <message>
+        <source>Recently opened &amp;subtitles</source>
+        <translation>열었던 자막[&amp;S]</translation>
+    </message>
+    <message>
+        <source>Recently opened subtitles</source>
+        <translation>열었던 자막</translation>
+    </message>
+    <message>
+        <source>Remove subtitles from the &amp;editor</source>
+        <translation>편집기에서 자막 제거[&amp;E]</translation>
+    </message>
+    <message>
+        <source>Remove subtitles from the editor</source>
+        <translation>모든 자막을 삭제하고 &quot;새 자막&quot;으로 만들기</translation>
+    </message>
+    <message>
+        <source>Save subtitles using the video name</source>
+        <translation>영상과 같은 이름으로 자막 저장</translation>
+    </message>
+    <message>
+        <source>Open auto save</source>
+        <translation>자동 저장 파일 열기</translation>
+    </message>
+    <message>
+        <source>Opens the selected autosave from the list</source>
+        <translation>자동 저장 목록 열기</translation>
+    </message>
+    <message>
+        <source>Opens the temporary file removal window</source>
+        <translation>임시 파일 제거 창 열기</translation>
+    </message>
+    <message>
+        <source>Show / Hide log window</source>
+        <translation>기록 창 열기/닫기</translation>
+    </message>
+    <message>
+        <source>Last session</source>
+        <translation>마지막 작업</translation>
+    </message>
+    <message>
+        <source>Last session options</source>
+        <translation>마지막 작업 설정</translation>
+    </message>
+    <message>
+        <source>&amp;Settings</source>
+        <translation>설정[&amp;T]</translation>
+    </message>
+    <message>
+        <source>Program settings</source>
+        <translation>프로그램 설정</translation>
+    </message>
+    <message>
+        <source>&amp;Exit	Alt-F4</source>
+        <translation>프로그램 종료[&amp;X]	Alt-F4</translation>
+    </message>
+    <message>
+        <source>Exit the program</source>
+        <translation>프로그램 종료</translation>
+    </message>
+    <message>
+        <source>&amp;File</source>
+        <translation>파일[&amp;F]</translation>
+    </message>
+    <message>
+        <source>&amp;Undo</source>
+        <translation>실행 취소[&amp;U]</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>실행 취소</translation>
+    </message>
+    <message>
+        <source>Undo to last save</source>
+        <translation>마지막 저장으로 돌리기</translation>
+    </message>
+    <message>
+        <source>&amp;Redo</source>
+        <translation>되돌리기[&amp;R]</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>되돌리기</translation>
+    </message>
+    <message>
+        <source>&amp;History</source>
+        <translation>수정사항 보기[&amp;H]</translation>
+    </message>
+    <message>
+        <source>History</source>
+        <translation>기록</translation>
+    </message>
+    <message>
+        <source>Find and re&amp;place</source>
+        <translation>찾아서 바꾸기[&amp;P]</translation>
+    </message>
+    <message>
+        <source>Searches for the specified text phrases and replaces them</source>
+        <translation>글자를 검색하고 변경합니다</translation>
+    </message>
+    <message>
+        <source>&amp;Find</source>
+        <translation>찾기[&amp;F]</translation>
+    </message>
+    <message>
+        <source>Searches for the specified text phrase</source>
+        <translation>글자를 검색합니다</translation>
+    </message>
+    <message>
+        <source>Find next</source>
+        <translation>다음 찾기</translation>
+    </message>
+    <message>
+        <source>Finds the next occurrence of the phrase in the text</source>
+        <translation>텍스트에서 다음 문구 위치 찾기</translation>
+    </message>
+    <message>
+        <source>The starting time</source>
+        <translation>시작 시간</translation>
+    </message>
+    <message>
+        <source>Sort by start time</source>
+        <translation>정렬 / 시작 시간</translation>
+    </message>
+    <message>
+        <source>End time</source>
+        <translation>종료 시간</translation>
+    </message>
+    <message>
+        <source>Sort by end time</source>
+        <translation>정렬 / 종료 시간</translation>
+    </message>
+    <message>
+        <source>Sort by styles</source>
+        <translation>정렬 / 스타일</translation>
+    </message>
+    <message>
+        <source>Sort by actor</source>
+        <translation>정렬 / 배우</translation>
+    </message>
+    <message>
+        <source>Sort by effect</source>
+        <translation>정렬 / 효과</translation>
+    </message>
+    <message>
+        <source>Layer</source>
+        <translation>레이어</translation>
+    </message>
+    <message>
+        <source>Sort by layer</source>
+        <translation>정렬 / 레이어</translation>
+    </message>
+    <message>
+        <source>So&amp;rt all lines</source>
+        <translation>줄 정렬[&amp;S]</translation>
+    </message>
+    <message>
+        <source>Sorts all lines in ASS file</source>
+        <translation>모든 줄 정렬 / ASS 파일</translation>
+    </message>
+    <message>
+        <source>So&amp;rt selected lines</source>
+        <translation>선택 줄 정렬[&amp;O]</translation>
+    </message>
+    <message>
+        <source>Sorts selected lines in ASS file</source>
+        <translation>선택 줄 정렬 / ASS 파일</translation>
+    </message>
+    <message>
+        <source>Fix minor errors (experimental)</source>
+        <translation>사소한 오류 수정 (실험적)</translation>
+    </message>
+    <message>
+        <source>Turns on multireplacer</source>
+        <translation>자동 바꾸기 창 열기</translation>
+    </message>
+    <message>
+        <source>Select &amp;lines</source>
+        <translation>다중 찾기[&amp;L]</translation>
+    </message>
+    <message>
+        <source>Selects lines by expressions</source>
+        <translation>주어진 텍스트 구문으로 선택한 줄을 만듭니다</translation>
+    </message>
+    <message>
+        <source>&amp;Edit</source>
+        <translation>편집[&amp;E]</translation>
+    </message>
+    <message>
+        <source>Open video</source>
+        <translation>영상 파일 열기</translation>
+    </message>
+    <message>
+        <source>Opens video file</source>
+        <translation>영상 파일 열기</translation>
+    </message>
+    <message>
+        <source>Recently opened videos</source>
+        <translation>열었던 영상</translation>
+    </message>
+    <message>
+        <source>Open keyframes</source>
+        <translation>키 프레임 열기</translation>
+    </message>
+    <message>
+        <source>Recently opened keyframes</source>
+        <translation>열었던 키 프레임</translation>
+    </message>
+    <message>
+        <source>Open dummy video</source>
+        <translation>더미 영상 열기</translation>
+    </message>
+    <message>
+        <source>Insert start time from video</source>
+        <translation>영상위치-&gt;시작시간</translation>
+    </message>
+    <message>
+        <source>Inserts the start time from video</source>
+        <translation>현재 영상위치를 시작시간으로</translation>
+    </message>
+    <message>
+        <source>Insert end time from video</source>
+        <translation>영상위치-&gt;종료시간</translation>
+    </message>
+    <message>
+        <source>Inserts the end time from video</source>
+        <translation>현재 영상위치를 종료시간으로</translation>
+    </message>
+    <message>
+        <source>Previous frame</source>
+        <translation>이전 프레임</translation>
+    </message>
+    <message>
+        <source>Go to previous frame</source>
+        <translation>이전 프레임으로 이동</translation>
+    </message>
+    <message>
+        <source>Next frame</source>
+        <translation>다음 프레임</translation>
+    </message>
+    <message>
+        <source>Go to next frame</source>
+        <translation>다음 프레임으로 이동</translation>
+    </message>
+    <message>
+        <source>Go to start time</source>
+        <translation>시작 시간으로</translation>
+    </message>
+    <message>
+        <source>Moves video to start time</source>
+        <translation>영상을 시작 시간으로 이동</translation>
+    </message>
+    <message>
+        <source>Go to end time of line</source>
+        <translation>종료 시간으로</translation>
+    </message>
+    <message>
+        <source>Moves video to end time</source>
+        <translation>영상을 종료 시간으로 이동</translation>
+    </message>
+    <message>
+        <source>Play / Pause</source>
+        <translation>재생 / 일시 정지</translation>
+    </message>
+    <message>
+        <source>Plays / Pauses video</source>
+        <translation>영상 재생 / 일시정지</translation>
+    </message>
+    <message>
+        <source>Go to previous keyframe</source>
+        <translation>이전 키 프레임</translation>
+    </message>
+    <message>
+        <source>Go to next keyframe</source>
+        <translation>다음 키 프레임</translation>
+    </message>
+    <message>
+        <source>Set audio position to video time</source>
+        <translation>영상지점으로 소리 이동</translation>
+    </message>
+    <message>
+        <source>Set audio marker to video time</source>
+        <translation>영상지점 소리 표시선 설정</translation>
+    </message>
+    <message>
+        <source>Zoom video</source>
+        <translation>영상 확대</translation>
+    </message>
+    <message>
+        <source>Turn off video zoom</source>
+        <translation>영상 확대 해제</translation>
+    </message>
+    <message>
+        <source>Open video with FFMS2</source>
+        <translation>FFMS2로 영상 열기</translation>
+    </message>
+    <message>
+        <source>Opens video with FFMS2 for frame precision</source>
+        <translation>프레임 정밀도를 위해 FFMS2로 영상 열기</translation>
+    </message>
+    <message>
+        <source>&amp;Video</source>
+        <translation>영상[&amp;V]</translation>
+    </message>
+    <message>
+        <source>Open audio</source>
+        <translation>소리 파일 열기</translation>
+    </message>
+    <message>
+        <source>Opens audio file</source>
+        <translation>소리 파일 열기</translation>
+    </message>
+    <message>
+        <source>Recently opened audio</source>
+        <translation>열었던 소리</translation>
+    </message>
+    <message>
+        <source>Open audio from video</source>
+        <translation>영상/소리 파일 열기</translation>
+    </message>
+    <message>
+        <source>Opens audio from video</source>
+        <translation>영상/소리 열기</translation>
+    </message>
+    <message>
+        <source>Open blank 2h30m audio</source>
+        <translation>빈 2h30m 오디오 열기</translation>
+    </message>
+    <message>
+        <source>Opens blank audio 2 hour and 30 minutes long</source>
+        <translation>2시간 30분 길이의 빈 오디오를 엽니다</translation>
+    </message>
+    <message>
+        <source>Close audio</source>
+        <translation>소리 닫기</translation>
+    </message>
+    <message>
+        <source>Closes audio</source>
+        <translation>소리를 닫기</translation>
+    </message>
+    <message>
+        <source>A&amp;udio</source>
+        <translation>소리[&amp;U]</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>모두</translation>
+    </message>
+    <message>
+        <source>Shows all windows</source>
+        <translation>모든 창을 표시합니다</translation>
+    </message>
+    <message>
+        <source>Shows only video window and subs window</source>
+        <translation>영상 창과 자막 창만 표시</translation>
+    </message>
+    <message>
+        <source>Video and subs</source>
+        <translation>영상과 자막</translation>
+    </message>
+    <message>
+        <source>Audio and subs</source>
+        <translation>소리와 자막</translation>
+    </message>
+    <message>
+        <source>Shows only audio window and subs window</source>
+        <translation>소리 창과 자막 창만 표시</translation>
+    </message>
+    <message>
+        <source>Only video</source>
+        <translation>영상만</translation>
+    </message>
+    <message>
+        <source>Shows only video window</source>
+        <translation>영상 창만 표시</translation>
+    </message>
+    <message>
+        <source>Only subtitles</source>
+        <translation>자막만</translation>
+    </message>
+    <message>
+        <source>Shows only the subtitle window</source>
+        <translation>자막 창만 표시</translation>
+    </message>
+    <message>
+        <source>View</source>
+        <translation>보기[&amp;W]</translation>
+    </message>
+    <message>
+        <source>Enable / Disable editor</source>
+        <translation>편집 활성/비활성</translation>
+    </message>
+    <message>
+        <source>Enables / disables editor</source>
+        <translation>편집박스 활성화 / 비활성화</translation>
+    </message>
+    <message>
+        <source>ASS file properties</source>
+        <translation>ASS 파일 정보</translation>
+    </message>
+    <message>
+        <source>ASS subtitle properties</source>
+        <translation>ASS 파일 정보</translation>
+    </message>
+    <message>
+        <source>Style &amp;manager</source>
+        <translation>스타일 관리자[&amp;M]</translation>
+    </message>
+    <message>
+        <source>Is used to manage ASS styles</source>
+        <translation>ASS 스타일 관리창을 엽니다</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>ASS로 변환</translation>
+    </message>
+    <message>
+        <source>Converts to ASS format</source>
+        <translation>ASS로 변환</translation>
+    </message>
+    <message>
+        <source>Convert to SRT</source>
+        <translation>SRT로 변환</translation>
+    </message>
+    <message>
+        <source>Converts to SRT format</source>
+        <translation>SRT로 변환</translation>
+    </message>
+    <message>
+        <source>Convert to MDVD</source>
+        <translation>MDVD로 변환</translation>
+    </message>
+    <message>
+        <source>Converts to microDVD format</source>
+        <translation>MicroDVD로 변환하기</translation>
+    </message>
+    <message>
+        <source>Convert to MPL2</source>
+        <translation>MPL2로 변환</translation>
+    </message>
+    <message>
+        <source>Converts to MPL2 format</source>
+        <translation>MPL2로 변환</translation>
+    </message>
+    <message>
+        <source>Convert to TMP</source>
+        <translation>TMP로 변환</translation>
+    </message>
+    <message>
+        <source>Converts to TMPlayer format (not recommended)</source>
+        <translation>TMPlayer(권하지 않음)로 변환</translation>
+    </message>
+    <message>
+        <source>Conversion</source>
+        <translation>변환</translation>
+    </message>
+    <message>
+        <source>Converts from one format to another</source>
+        <translation>다른 자막 형식으로 변환</translation>
+    </message>
+    <message>
+        <source>Shift &amp;times...	Ctrl-I</source>
+        <translation>시간 조정...[&amp;T]	Ctrl-I</translation>
+    </message>
+    <message>
+        <source>Shifting subtitle times</source>
+        <translation>자막 시간 이동</translation>
+    </message>
+    <message>
+        <source>Resample subtitles</source>
+        <translation>자막해상도 변경</translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation>철자 확인창</translation>
+    </message>
+    <message>
+        <source>Hide tags</source>
+        <translation>태그 숨김</translation>
+    </message>
+    <message>
+        <source>Hides tags in ASS and MDVD</source>
+        <translation>ASS 및 MDVD에서 태그 숨김</translation>
+    </message>
+    <message>
+        <source>Su&amp;btitles</source>
+        <translation>자막[&amp;S]</translation>
+    </message>
+    <message>
+        <source>Load script</source>
+        <translation>스크립트 불러오기</translation>
+    </message>
+    <message>
+        <source>Refresh autoload scripts</source>
+        <translation>자동 불러오기 스크립트 새로 고침</translation>
+    </message>
+    <message>
+        <source>Run the last loaded script</source>
+        <translation>최근 스크립트 실행</translation>
+    </message>
+    <message>
+        <source>Open shortcut mapping window</source>
+        <translation>단축키 설정 창 열기</translation>
+    </message>
+    <message>
+        <source>Au&amp;tomation</source>
+        <translation>자동화[&amp;A]</translation>
+    </message>
+    <message>
+        <source>HikariSub &amp;website</source>
+        <translation>HikariSub 웹사이트[&amp;W]</translation>
+    </message>
+    <message>
+        <source>Opens the HikariSub website in the default browser</source>
+        <translation>기본 브라우저에서 HikariSub 웹사이트를 엽니다</translation>
+    </message>
+    <message>
+        <source>&amp;Report an issue</source>
+        <translation>문제 보고[&amp;R]</translation>
+    </message>
+    <message>
+        <source>Opens the HikariSub issue tracker</source>
+        <translation>HikariSub 이슈 트래커를 엽니다</translation>
+    </message>
+    <message>
+        <source>Check for &amp;updates</source>
+        <translation>업데이트 확인[&amp;U]</translation>
+    </message>
+    <message>
+        <source>Checks whether a newer version is available</source>
+        <translation>새 버전이 있는지 확인합니다</translation>
+    </message>
+    <message>
+        <source>&amp;About</source>
+        <translation>프로그램 정보[&amp;A]</translation>
+    </message>
+    <message>
+        <source>Shows program info</source>
+        <translation>프로그램 정보 보기</translation>
+    </message>
+    <message>
+        <source>&amp;Credits</source>
+        <translation>만든 사람들[&amp;C]</translation>
+    </message>
+    <message>
+        <source>Shows credits</source>
+        <translation>도움 준 분들</translation>
+    </message>
+    <message>
+        <source>&amp;Help</source>
+        <translation>도움말[&amp;H]</translation>
+    </message>
+    <message>
+        <source>Time elapsed: %s</source>
+        <translation>경과 시간: %s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Choose script</source>
+        <translation>스크립트 선택</translation>
+    </message>
+    <message>
+        <source>Script files (*.lua),(*.moon)|*.lua;*.moon;</source>
+        <translation>스크립트 파일 (*.lua),(*.moon)|*.lua;*.moon;</translation>
+    </message>
+    <message>
+        <source>This subtitle file does not have any scripts added</source>
+        <translation>이 자막에는 스크립트가 추가되지 않았습니다</translation>
+    </message>
+    <message>
+        <source>Validation Lua script &apos;%s&apos; failed</source>
+        <translation>&apos;%s&apos; Lua 스크립트 유효성 검사 실패</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Choose subtitle file</source>
+        <translation>자막 파일 선택</translation>
+    </message>
+    <message>
+        <source>Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm</source>
+        <translation>자막 파일(*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|자막이 있는 영상(*.mkv),(*.ogm)|*.mkv;*.ogm</translation>
+    </message>
+    <message>
+        <source>Choose video file</source>
+        <translation>영상 파일 선택</translation>
+    </message>
+    <message>
+        <source>Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|All files (*.*)|*.*</source>
+        <translation>영상 파일 (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|모든 파일 (*.*)|*.*</translation>
+    </message>
+    <message>
+        <source>Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*</source>
+        <translation>키 프레임 파일 (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|모든 파일 (*.*)|*.*</translation>
+    </message>
+    <message>
+        <source>HikariSub subtitle editor by altqx,
+version %s from %s</source>
+        <translation>altqx가 만든 HikariSub 자막 편집기,
+버전 %s (%s)</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Based on Kainote by Marcin Drob aka Bakura or Bjakja.
+
+</source>
+        <translation>Marcin Drob(Bakura 또는 Bjakja)의 Kainote를 기반으로 합니다.
+
+</translation>
+    </message>
+    <message>
+        <source>If you have noticed any bugs or have any suggestions for changes or new features,
+open an issue at https://github.com/altqx/hikari/issues.
+
+</source>
+        <translation>버그를 발견했거나 변경 사항 또는 새 기능에 대한 제안이 있다면
+https://github.com/altqx/hikari/issues 에 이슈를 등록해 주세요.
+
+</translation>
+    </message>
+    <message>
+        <source>HikariSub includes parts of the following projects:
+</source>
+        <translation>HikariSub에는 다음 프로젝트의 일부가 포함됩니다:
+</translation>
+    </message>
+    <message>
+        <source>Color picker, demuxing subtitles from MKV, audio box, audio player, automation,
+and several other individual features taken from Aegisub -
+</source>
+        <translation>Aegisub에서 가져온 기능 - 
+색상 선택기, mkv자막 muxing, 소리박스, 소리 재생, 자동화
+</translation>
+    </message>
+    <message>
+        <source>About HikariSub</source>
+        <translation>HikariSub 정보</translation>
+    </message>
+    <message>
+        <source>Graphical help: (buttons, help pictures etc.)
+</source>
+        <translation>그래픽 지원: (버튼, 이미지 기타 등등..)
+</translation>
+    </message>
+    <message>
+        <source>- Xandros (new video buttons).
+</source>
+        <translation>- Xandros (새로운 영상 버튼).
+</translation>
+    </message>
+    <message>
+        <source>- Devilkan (menu and toolbar buttons)
+</source>
+        <translation>- Devilkan (메뉴 및 도구 모음 버튼)
+</translation>
+    </message>
+    <message>
+        <source>- Zły Los (icons for file associations and menu).
+</source>
+        <translation>- Zły Los (파일 연결 및 메뉴 아이콘).
+</translation>
+    </message>
+    <message>
+        <source>Testers:
+</source>
+        <translation>테스터:
+</translation>
+    </message>
+    <message>
+        <source>- Sacredus (first translator using translator mode,
+great help testing HikariSub on a slow computer)
+</source>
+        <translation>- Sacredus (번역 모드를 사용하는 첫 번째 사용자입니다,
+느린 컴퓨터에서 HikariSub를 테스트하는데 많은 도움이 되었습니다).
+</translation>
+    </message>
+    <message>
+        <source>- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot
+</source>
+        <translation>- Devilkan (크래시 헌터. 그의 시스템과 사용 습관 덕분에 HikariSub가 자주 충돌했고,
+</translation>
+    </message>
+    <message>
+        <source>helped with typesetting tools and came up with many more improvements).
+</source>
+        <translation>타입세팅 도구 작업을 돕고 많은 개선 사항을 제안했습니다).
+</translation>
+    </message>
+    <message>
+        <source>- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).
+</source>
+        <translation>- MatiasMovie (일부 충돌을 발견하고 몇 가지 개선 사항을 제안했으며 버그 수정에 도움이 되었습니다).
+</translation>
+    </message>
+    <message>
+        <source>- mas1904 (found some errors and helping with crash debuging).
+</source>
+        <translation>- mas1904 (오류를 발견하고 충돌 디버깅에 도움을 주었습니다).
+</translation>
+    </message>
+    <message>
+        <source>- Senami (made new themes and found some bugs).
+</source>
+        <translation>- Senami (새로운 테마를 만들고 몇 가지 버그를 발견했습니다).
+</translation>
+    </message>
+    <message>
+        <source>- altinat (Thai translation).
+</source>
+        <translation>- altinat (태국어 번역).
+</translation>
+    </message>
+    <message>
+        <source>- labrie75 (Korean translation).
+</source>
+        <translation>- labrie75 (한국어 번역).
+</translation>
+    </message>
+    <message>
+        <source>- Niskala5570 (Malay translation).
+</source>
+        <translation>- Niskala5570(말레이어 번역).
+</translation>
+    </message>
+    <message>
+        <source>Thanks to other HikariSub users who reported bugs:
+</source>
+        <translation>프로그램을 사용하고 버그를 제보 해 주신 분들께 감사드립니다.
+</translation>
+    </message>
+    <message>
+        <source>Credits</source>
+        <translation>만든사람들</translation>
+    </message>
+    <message>
+        <source>Subtitle file </source>
+        <translation>자막 파일 </translation>
+    </message>
+    <message>
+        <source>Save subtitle file</source>
+        <translation>자막 파일 저장</translation>
+    </message>
+    <message>
+        <source>Chosen file is read only,
+please save with different name or change file attribute.</source>
+        <translation>선택한 파일은 읽기 전용이며,
+다른 이름으로 저장하거나 파일 속성을 변경하십시오.</translation>
+    </message>
+    <message>
+        <source>Load subtitles named &quot;%s&quot;?</source>
+        <translation>%s 파일도 같이 불러 오겠습니까?</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Cannot open subtitle file</source>
+        <translation>자막 파일을 열 수 없음</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>없음</translation>
+    </message>
+    <message>
+        <source>Save subtitles named &quot;%s&quot; before %s?</source>
+        <translation>&quot;%s&quot; 자막을 저장하시겠습니까? (%s 전)</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>exiting program</source>
+        <translation>프로그램 종료</translation>
+    </message>
+    <message>
+        <source>closing tab</source>
+        <translation>탭 닫기</translation>
+    </message>
+    <message>
+        <source>loading new subtitles</source>
+        <translation>새 자막 불러오기</translation>
+    </message>
+    <message>
+        <source>removing subtitles</source>
+        <translation>자막 제거</translation>
+    </message>
+    <message>
+        <source>Cannot load audio hotkeys</source>
+        <translation>소리 단축키를 불러올 수 없음</translation>
+    </message>
+    <message>
+        <source>Cannot load audio configuration</source>
+        <translation>소리 설정을 불러올 수 없음</translation>
+    </message>
+    <message>
+        <source>Choose audio file</source>
+        <translation>소리 파일 선택</translation>
+    </message>
+    <message>
+        <source>Audio and video files</source>
+        <translation>영상 및 소리 파일</translation>
+    </message>
+    <message>
+        <source>All files</source>
+        <translation>모든 파일</translation>
+    </message>
+    <message>
+        <source>Undo to </source>
+        <translation>실행 취소 - </translation>
+    </message>
+    <message>
+        <source>Redo to </source>
+        <translation>되돌리기 - </translation>
+    </message>
+    <message>
+        <source>Choose session file</source>
+        <translation>세션 파일 선택</translation>
+    </message>
+    <message>
+        <source>Session file (*.kls),|*.kls</source>
+        <translation>세션 파일(*.kls),|*.kls</translation>
+    </message>
+    <message>
+        <source>Save session file</source>
+        <translation>세션 파일 저장</translation>
+    </message>
+    <message>
+        <source>Hotkey &quot;%s&quot; it&apos;s not script hotkey.</source>
+        <translation>단축키 &apos;%s&apos;는 스크립트의 내용이 아닙니다.</translation>
+        <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
         <source>Exit</source>
@@ -1724,48 +2694,8 @@ Finished in %sms</source>
         <translation>시간 이동</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>ASS로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>SRT로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>MDVD로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>MPL2로 변환</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>TMP로 변환</translation>
-    </message>
-    <message>
         <source>Style manager</source>
         <translation>스타일 관리</translation>
-    </message>
-    <message>
-        <source>Enable / Disable editor</source>
-        <translation>편집 활성/비활성</translation>
-    </message>
-    <message>
-        <source>Open video</source>
-        <translation>영상 파일 열기</translation>
-    </message>
-    <message>
-        <source>Undo</source>
-        <translation>실행 취소</translation>
-    </message>
-    <message>
-        <source>Redo</source>
-        <translation>되돌리기</translation>
-    </message>
-    <message>
-        <source>History</source>
-        <translation>기록</translation>
     </message>
     <message>
         <source>Open subtitles</source>
@@ -1788,36 +2718,12 @@ Finished in %sms</source>
         <translation>줄 삭제</translation>
     </message>
     <message>
-        <source>Insert start time from video</source>
-        <translation>영상위치-&gt;시작시간</translation>
-    </message>
-    <message>
-        <source>Insert end time from video</source>
-        <translation>영상위치-&gt;종료시간</translation>
-    </message>
-    <message>
-        <source>Play / Pause</source>
-        <translation>재생 / 일시 정지</translation>
-    </message>
-    <message>
-        <source>Previous frame</source>
-        <translation>이전 프레임</translation>
-    </message>
-    <message>
-        <source>Next frame</source>
-        <translation>다음 프레임</translation>
-    </message>
-    <message>
         <source>Previous line</source>
         <translation>이전 줄</translation>
     </message>
     <message>
         <source>Next line</source>
         <translation>다음 줄</translation>
-    </message>
-    <message>
-        <source>Find next</source>
-        <translation>다음 찾기</translation>
     </message>
     <message>
         <source>Merge with previous line</source>
@@ -2021,7 +2927,7 @@ Finished in %sms</source>
     </message>
     <message>
         <source>The shortcuts file is outdated and will be replaced with the default one</source>
-        <translation>단축키 설정 파일은 더 이상 할 수 없으며 기본값으로 대체됩니다</translation>
+        <translation>단축키 설정 파일이 오래되어 기본값으로 대체됩니다</translation>
     </message>
     <message>
         <source>Shortcut &quot;%s&quot; is invalid</source>
@@ -2055,7 +2961,7 @@ Finished in %sms</source>
     </message>
     <message>
         <source>Video hotkey</source>
-        <translation>영상 단축ㅋ</translation>
+        <translation>영상 단축키</translation>
     </message>
     <message>
         <source>Please enter a hotkey for &quot;%s&quot;.</source>
@@ -2076,7 +2982,7 @@ Finished in %sms</source>
     </message>
     <message>
         <source>First tag button</source>
-        <translation>태크 버튼 1</translation>
+        <translation>태그 버튼 1</translation>
     </message>
     <message>
         <source>Second tag button</source>
@@ -2092,7 +2998,7 @@ Finished in %sms</source>
     </message>
     <message>
         <source>5th tag button</source>
-        <translation>태크 버튼 5</translation>
+        <translation>태그 버튼 5</translation>
     </message>
     <message>
         <source>6th tag button</source>
@@ -2132,7 +3038,7 @@ Finished in %sms</source>
     </message>
     <message>
         <source>15th tag button</source>
-        <translation>태크 버튼 15</translation>
+        <translation>태그 버튼 15</translation>
     </message>
     <message>
         <source>16th tag button</source>
@@ -2252,8 +3158,7 @@ Finished in %sms</source>
     </message>
     <message>
         <source>Select all lines visible on video</source>
-        <translation type="unfinished">동영상에 표시된 모든 줄 선택</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>영상에 보이는 모든 줄 선택</translation>
     </message>
     <message>
         <source>Insert after</source>
@@ -2313,32 +3218,27 @@ Finished in %sms</source>
     </message>
     <message>
         <source>Split line at video time</source>
-        <translation type="unfinished">현재 영상지점으로 줄 이동</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>영상 시간에서 줄 분할</translation>
     </message>
     <message>
         <source>Split lines into frames</source>
-        <translation type="unfinished">프레임에 분할 라인</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>프레임 단위로 줄 분할</translation>
     </message>
     <message>
         <source>Split lines into characters</source>
-        <translation type="unfinished">줄 복사</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>글자 단위로 줄 분할</translation>
     </message>
     <message>
         <source>Split lines into words</source>
-        <translation type="unfinished">단어로 줄을 분할</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>단어 단위로 줄 분할</translation>
     </message>
     <message>
         <source>Split lines by wraps</source>
-        <translation type="unfinished">연락처</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>줄 바꿈 기준으로 줄 분할</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>ASS 파일 정보</translation>
+        <source>Check for updates</source>
+        <translation>업데이트 확인</translation>
     </message>
     <message>
         <source>About</source>
@@ -2347,46 +3247,6 @@ Finished in %sms</source>
     <message>
         <source>Report an issue</source>
         <translation>문제 보고</translation>
-    </message>
-    <message>
-        <source>Open audio from video</source>
-        <translation>영상/소리 파일 열기</translation>
-    </message>
-    <message>
-        <source>Load script</source>
-        <translation>스크립트 불러오기</translation>
-    </message>
-    <message>
-        <source>Open shortcut mapping window</source>
-        <translation>단축키 설정 창 열기</translation>
-    </message>
-    <message>
-        <source>Refresh autoload scripts</source>
-        <translation>자동 불러오기 스크립트 새로 고침</translation>
-    </message>
-    <message>
-        <source>Close audio</source>
-        <translation>소리 닫기</translation>
-    </message>
-    <message>
-        <source>Credits</source>
-        <translation>만든사람들</translation>
-    </message>
-    <message>
-        <source>Hide tags</source>
-        <translation>태그 숨김</translation>
-    </message>
-    <message>
-        <source>Open keyframes</source>
-        <translation>키 프레임 열기</translation>
-    </message>
-    <message>
-        <source>Open auto save</source>
-        <translation>자동 저장 파일 열기</translation>
-    </message>
-    <message>
-        <source>Run the last loaded script</source>
-        <translation>최근 스크립트 실행</translation>
     </message>
     <message>
         <source>Sort all lines by start time</source>
@@ -2441,36 +3301,6 @@ Finished in %sms</source>
         <translation>시간 이동 / 포스트 프로세서</translation>
     </message>
     <message>
-        <source>Go to previous keyframe</source>
-        <translation>이전 키 프레임</translation>
-    </message>
-    <message>
-        <source>Go to next keyframe</source>
-        <translation>다음 키 프레임</translation>
-    </message>
-    <message>
-        <source>Resample subtitles</source>
-        <translation>자막해상도 변경</translation>
-    </message>
-    <message>
-        <source>Undo to last save</source>
-        <translation>마지막 저장으로 돌리기</translation>
-    </message>
-    <message>
-        <source>Open video with FFMS2</source>
-        <translation>FFMS2로 영상 열기</translation>
-    </message>
-    <message>
-        <source>Zoom video</source>
-        <translation type="unfinished">영상 확대</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
-    </message>
-    <message>
-        <source>Turn off video zoom</source>
-        <translation type="unfinished">비디오 줌</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
-    </message>
-    <message>
         <source>View all</source>
         <translation>모두 보기</translation>
     </message>
@@ -2495,64 +3325,16 @@ Finished in %sms</source>
         <translation>스타일 초기화</translation>
     </message>
     <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>자동 바꾸기 [책임 못 짐]</translation>
-    </message>
-    <message>
-        <source>Load last session</source>
-        <translation>마지막 작업 열기</translation>
-    </message>
-    <message>
-        <source>Open audio</source>
-        <translation>소리 파일 열기</translation>
-    </message>
-    <message>
         <source>Play active line</source>
         <translation>현재 줄 재생</translation>
-    </message>
-    <message>
-        <source>Remove subtitles from the editor</source>
-        <translation>모든 자막을 삭제하고 &quot;새 자막&quot;으로 만들기</translation>
-    </message>
-    <message>
-        <source>Save all subtitles</source>
-        <translation>자막 모두 저장</translation>
-    </message>
-    <message>
-        <source>Save translation</source>
-        <translation>번역 저장</translation>
-    </message>
-    <message>
-        <source>Save subtitles using the video name</source>
-        <translation>영상과 같은 이름으로 자막 저장</translation>
     </message>
     <message>
         <source>Select lines</source>
         <translation>선택 줄</translation>
     </message>
     <message>
-        <source>Set audio position to video time</source>
-        <translation>영상지점으로 소리 이동</translation>
-    </message>
-    <message>
-        <source>Set audio marker to video time</source>
-        <translation>영상지점 소리 표시선 설정</translation>
-    </message>
-    <message>
         <source>Settings</source>
         <translation>프로그램 설정</translation>
-    </message>
-    <message>
-        <source>Go to start time</source>
-        <translation>시작 시간으로</translation>
-    </message>
-    <message>
-        <source>Go to end time of line</source>
-        <translation>종료 시간으로</translation>
-    </message>
-    <message>
-        <source>Check spelling</source>
-        <translation>철자 확인창</translation>
     </message>
     <message>
         <source>Copy frame to clipboard</source>
@@ -2585,772 +3367,6 @@ Finished in %sms</source>
     <message>
         <source>Save frame with subtitles as PNG</source>
         <translation>PNG 파일로 화면/자막 저장</translation>
-    </message>
-    <message>
-        <source>Apply to All</source>
-        <translation>모두 적용</translation>
-    </message>
-    <message>
-        <source>Yes to all</source>
-        <translation>모두 예</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>예</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>아니오</translation>
-    </message>
-    <message>
-        <source>Help</source>
-        <translation>도움말</translation>
-    </message>
-    <message>
-        <source>Untitled - </source>
-        <translation>새 자막 - </translation>
-    </message>
-    <message>
-        <source>Video duration</source>
-        <translation>영상의 길이</translation>
-    </message>
-    <message>
-        <source>Video scale</source>
-        <translation>영상 크기</translation>
-    </message>
-    <message>
-        <source>Video zoom</source>
-        <translation>영상 확대</translation>
-    </message>
-    <message>
-        <source>Frames per second</source>
-        <translation>초당 프레임</translation>
-    </message>
-    <message>
-        <source>Subtitles resolution</source>
-        <translation>자막 해상도</translation>
-    </message>
-    <message>
-        <source>Video aspect ratio</source>
-        <translation>영상 가로 세로 비율</translation>
-    </message>
-    <message>
-        <source>Video file name</source>
-        <translation>영상 파일 이름</translation>
-    </message>
-    <message>
-        <source>Video resolution</source>
-        <translation>영상 해상도</translation>
-    </message>
-    <message>
-        <source>Loads previously loaded files</source>
-        <translation>마지막으로 불러온 파일 열기</translation>
-    </message>
-    <message>
-        <source>Load session from file</source>
-        <translation>파일에서 세션 불러오기</translation>
-    </message>
-    <message>
-        <source>Loads session from saved session file</source>
-        <translation>저장된 세션 파일에서 세션 불러오기</translation>
-    </message>
-    <message>
-        <source>Save session to file</source>
-        <translation>파일로 세션 저장</translation>
-    </message>
-    <message>
-        <source>Saves session to file</source>
-        <translation>파일로 세션 저장</translation>
-    </message>
-    <message>
-        <source>Ask whether to load the last session at program startup</source>
-        <translation>프로그램 실행 시 마지막 작업 물어보기</translation>
-    </message>
-    <message>
-        <source>Asks whether to load previously loaded files at program startup</source>
-        <translation>프로그램을 시작할 때 최근에 읽은 파일을 불러올지 묻습니다</translation>
-    </message>
-    <message>
-        <source>Load last session after program start</source>
-        <translation>마지막 작업 항상 열기</translation>
-    </message>
-    <message>
-        <source>Loads previously loaded files at program startup</source>
-        <translation>프로그램 시작 후 마지막 세션 로드</translation>
-    </message>
-    <message>
-        <source>&amp;Open subtitles</source>
-        <translation>자막 열기[&amp;O]</translation>
-    </message>
-    <message>
-        <source>Open subtitle file</source>
-        <translation>자막 파일 열기</translation>
-    </message>
-    <message>
-        <source>&amp;Save</source>
-        <translation>저장[&amp;S]</translation>
-    </message>
-    <message>
-        <source>Save current file</source>
-        <translation>현재 파일 저장</translation>
-    </message>
-    <message>
-        <source>Save &amp;all</source>
-        <translation>모두 저장</translation>
-    </message>
-    <message>
-        <source>Save &amp;as...</source>
-        <translation>다른 이름으로...[&amp;A]</translation>
-    </message>
-    <message>
-        <source>Save as</source>
-        <translation>다른 이름으로 저장</translation>
-    </message>
-    <message>
-        <source>Save &amp;translation</source>
-        <translation>번역본 저장</translation>
-    </message>
-    <message>
-        <source>Recently opened &amp;subtitles</source>
-        <translation>열었던 자막</translation>
-    </message>
-    <message>
-        <source>Recently opened subtitles</source>
-        <translation>열었던 자막</translation>
-    </message>
-    <message>
-        <source>Remove subtitles from the &amp;editor</source>
-        <translation>내용 삭제 후 새 파일 만들기</translation>
-    </message>
-    <message>
-        <source>Opens the selected autosave from the list</source>
-        <translation>자동 저장 목록 열기</translation>
-    </message>
-    <message>
-        <source>Opens the temporary file removal window</source>
-        <translation>임시 파일 제거 창 열기</translation>
-    </message>
-    <message>
-        <source>Show / Hide log window</source>
-        <translation>기록 창 열기/닫기</translation>
-    </message>
-    <message>
-        <source>Last session</source>
-        <translation>마지막 작업</translation>
-    </message>
-    <message>
-        <source>Last session options</source>
-        <translation>마지막 작업 설정</translation>
-    </message>
-    <message>
-        <source>&amp;Settings</source>
-        <translation>설정[&amp;T]</translation>
-    </message>
-    <message>
-        <source>Program settings</source>
-        <translation>프로그램 설정</translation>
-    </message>
-    <message>
-        <source>&amp;Exit	Alt-F4</source>
-        <translation>프로그램 종료[&amp;X]	Alt-F4</translation>
-    </message>
-    <message>
-        <source>Exit the program</source>
-        <translation>프로그램 종료</translation>
-    </message>
-    <message>
-        <source>&amp;File</source>
-        <translation>파일[&amp;F]</translation>
-    </message>
-    <message>
-        <source>&amp;Undo</source>
-        <translation>실행 취소[&amp;U]</translation>
-    </message>
-    <message>
-        <source>&amp;Redo</source>
-        <translation>되돌리기[&amp;R]</translation>
-    </message>
-    <message>
-        <source>&amp;History</source>
-        <translation>수정사항 보기[&amp;H]</translation>
-    </message>
-    <message>
-        <source>Find and re&amp;place</source>
-        <translation>찾아서 바꾸기[&amp;P]</translation>
-    </message>
-    <message>
-        <source>Searches for the specified text phrases and replaces them</source>
-        <translation>글자를 검색하고 변경합니다</translation>
-    </message>
-    <message>
-        <source>&amp;Find</source>
-        <translation>찾기[&amp;F]</translation>
-    </message>
-    <message>
-        <source>Searches for the specified text phrase</source>
-        <translation>글자를 검색합니다</translation>
-    </message>
-    <message>
-        <source>Finds the next occurrence of the phrase in the text</source>
-        <translation>텍스트에서 다음 문구 위치 찾기</translation>
-    </message>
-    <message>
-        <source>The starting time</source>
-        <translation>시작 시간</translation>
-    </message>
-    <message>
-        <source>Sort by start time</source>
-        <translation>정렬 / 시작 시간</translation>
-    </message>
-    <message>
-        <source>End time</source>
-        <translation>종료 시간</translation>
-    </message>
-    <message>
-        <source>Sort by end time</source>
-        <translation>정렬 / 종료 시간</translation>
-    </message>
-    <message>
-        <source>Sort by styles</source>
-        <translation>정렬 / 스타일</translation>
-    </message>
-    <message>
-        <source>Sort by actor</source>
-        <translation>정렬 / 배우</translation>
-    </message>
-    <message>
-        <source>Sort by effect</source>
-        <translation>정렬 / 효과</translation>
-    </message>
-    <message>
-        <source>Layer</source>
-        <translation>레이어</translation>
-    </message>
-    <message>
-        <source>Sort by layer</source>
-        <translation>정렬 / 레이어</translation>
-    </message>
-    <message>
-        <source>So&amp;rt all lines</source>
-        <translation>줄 정렬[&amp;S]</translation>
-    </message>
-    <message>
-        <source>Sorts all lines in ASS file</source>
-        <translation>모든 줄 정렬 / ASS 파일</translation>
-    </message>
-    <message>
-        <source>So&amp;rt selected lines</source>
-        <translation>선택 줄 정렬[&amp;O]</translation>
-    </message>
-    <message>
-        <source>Sorts selected lines in ASS file</source>
-        <translation>선택 줄 정렬 / ASS 파일</translation>
-    </message>
-    <message>
-        <source>Turns on multireplacer</source>
-        <translation>자동 바꾸기 창 열기</translation>
-    </message>
-    <message>
-        <source>Select &amp;lines</source>
-        <translation>다중 찾기[&amp;L]</translation>
-    </message>
-    <message>
-        <source>Selects lines by expressions</source>
-        <translation>주어진 텍스트 구문으로 선택한 줄을 만듭니다</translation>
-    </message>
-    <message>
-        <source>&amp;Edit</source>
-        <translation>편집[&amp;E]</translation>
-    </message>
-    <message>
-        <source>Opens video file</source>
-        <translation>영상 파일 열기</translation>
-    </message>
-    <message>
-        <source>Recently opened videos</source>
-        <translation>열었던 영상</translation>
-    </message>
-    <message>
-        <source>Recently opened keyframes</source>
-        <translation>열었던 키 프레임</translation>
-    </message>
-    <message>
-        <source>Open dummy video</source>
-        <translation>더미 영상 열기</translation>
-    </message>
-    <message>
-        <source>Inserts the start time from video</source>
-        <translation>현재 영상위치를 시작시간으로</translation>
-    </message>
-    <message>
-        <source>Inserts the end time from video</source>
-        <translation>현재 영상위치를 종료시간으로</translation>
-    </message>
-    <message>
-        <source>Go to previous frame</source>
-        <translation>이전 프레임으로 이동</translation>
-    </message>
-    <message>
-        <source>Go to next frame</source>
-        <translation>다음 프레임으로 이동</translation>
-    </message>
-    <message>
-        <source>Moves video to start time</source>
-        <translation>영상를 시작 시간으로 이동</translation>
-    </message>
-    <message>
-        <source>Moves video to end time</source>
-        <translation>영상를 종료 시간으로 이동</translation>
-    </message>
-    <message>
-        <source>Plays / Pauses video</source>
-        <translation>영상 재생 / 일시정지</translation>
-    </message>
-    <message>
-        <source>Opens video with FFMS2 for frame precision</source>
-        <translation>프레임 정밀도를 위해 FFMS2로 영상 열기</translation>
-    </message>
-    <message>
-        <source>&amp;Video</source>
-        <translation>영상[&amp;V]</translation>
-    </message>
-    <message>
-        <source>Opens audio file</source>
-        <translation>소리 파일 열기</translation>
-    </message>
-    <message>
-        <source>Recently opened audio</source>
-        <translation>열었던 소리</translation>
-    </message>
-    <message>
-        <source>Opens audio from video</source>
-        <translation>영상/소리 열기</translation>
-    </message>
-    <message>
-        <source>Open blank 2h30m audio</source>
-        <translation>빈 2h30m 오디오 열기</translation>
-    </message>
-    <message>
-        <source>Opens blank audio 2 hour and 30 minutes long</source>
-        <translation>2시간 30분 길이의 빈 오디오를 엽니다</translation>
-    </message>
-    <message>
-        <source>Closes audio</source>
-        <translation>소리를 닫기</translation>
-    </message>
-    <message>
-        <source>A&amp;udio</source>
-        <translation>소리[&amp;U]</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>모두</translation>
-    </message>
-    <message>
-        <source>Shows all windows</source>
-        <translation>모든 창을 표시합니다</translation>
-    </message>
-    <message>
-        <source>Shows only video window and subs window</source>
-        <translation>영상 창과 자막 창만 표시</translation>
-    </message>
-    <message>
-        <source>Video and subs</source>
-        <translation>영상과 자막</translation>
-    </message>
-    <message>
-        <source>Audio and subs</source>
-        <translation>소리와 자막</translation>
-    </message>
-    <message>
-        <source>Shows only audio window and subs window</source>
-        <translation>소리 창과 자막 창만 표시</translation>
-    </message>
-    <message>
-        <source>Only video</source>
-        <translation>영상만</translation>
-    </message>
-    <message>
-        <source>Shows only video window</source>
-        <translation>영상 창만 표시</translation>
-    </message>
-    <message>
-        <source>Only subtitles</source>
-        <translation>자막만</translation>
-    </message>
-    <message>
-        <source>Shows only the subtitle window</source>
-        <translation>자막 창만 표시</translation>
-    </message>
-    <message>
-        <source>View</source>
-        <translation>보기[&amp;W]</translation>
-    </message>
-    <message>
-        <source>Enables / disables editor</source>
-        <translation>편집박스 활성화 / 비활성화</translation>
-    </message>
-    <message>
-        <source>ASS subtitle properties</source>
-        <translation>ASS 파일 정보</translation>
-    </message>
-    <message>
-        <source>Style &amp;manager</source>
-        <translation>스타일 관리자[&amp;M]</translation>
-    </message>
-    <message>
-        <source>Is used to manage ASS styles</source>
-        <translation>ASS 스타일 관리창을 엽니다</translation>
-    </message>
-    <message>
-        <source>Converts to ASS format</source>
-        <translation>ASS로 변환</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>SRT로 변환</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>MicroDVD로 변환하기</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>MPL2로 변환</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>TMPlayer(권하지 않음)로 변환</translation>
-    </message>
-    <message>
-        <source>Conversion</source>
-        <translation>변환</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>다른 자막 형식으로 변환</translation>
-    </message>
-    <message>
-        <source>Shift &amp;times...	Ctrl-I</source>
-        <translation>시간 조정... Ctrl-I</translation>
-    </message>
-    <message>
-        <source>Shifting subtitle times</source>
-        <translation>자막 시간 이동</translation>
-    </message>
-    <message>
-        <source>Hides tags in ASS and MDVD</source>
-        <translation>ASS 및 MDVD에서 태그 숨김</translation>
-    </message>
-    <message>
-        <source>Su&amp;btitles</source>
-        <translation>자막[&amp;S]</translation>
-    </message>
-    <message>
-        <source>Au&amp;tomation</source>
-        <translation>자동화[&amp;A]</translation>
-    </message>
-    <message>
-        <source>HikariSub &amp;website</source>
-        <translation>HikariSub 웹사이트[&amp;W]</translation>
-    </message>
-    <message>
-        <source>Opens the HikariSub website in the default browser</source>
-        <translation>기본 브라우저에서 HikariSub 웹사이트를 엽니다</translation>
-    </message>
-    <message>
-        <source>&amp;Report an issue</source>
-        <translation>문제 보고[&amp;R]</translation>
-    </message>
-    <message>
-        <source>Opens the HikariSub issue tracker</source>
-        <translation>HikariSub 이슈 트래커를 엽니다</translation>
-    </message>
-    <message>
-        <source>&amp;About</source>
-        <translation>프로그램 정보[&amp;A]</translation>
-    </message>
-    <message>
-        <source>Shows program info</source>
-        <translation>프로그램 정보 보기</translation>
-    </message>
-    <message>
-        <source>&amp;Credits</source>
-        <translation>만든 사람들[&amp;C]</translation>
-    </message>
-    <message>
-        <source>Shows credits</source>
-        <translation>도움 준 분들</translation>
-    </message>
-    <message>
-        <source>&amp;Help</source>
-        <translation>도움말[&amp;H]</translation>
-    </message>
-    <message>
-        <source>Time elapsed: %s</source>
-        <translation>경과 시간: %s</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Choose script</source>
-        <translation>스크립트 선택</translation>
-    </message>
-    <message>
-        <source>Script files (*.lua),(*.moon)|*.lua;*.moon;</source>
-        <translation>스크립트 파일 (*.lua),(*.moon)|*.lua;*.moon;</translation>
-    </message>
-    <message>
-        <source>This subtitle file does not have any scripts added</source>
-        <translation>이 자막에는 스크립트가 추가되지 않았습니다</translation>
-    </message>
-    <message>
-        <source>Validation Lua script &apos;%s&apos; failed</source>
-        <translation>&apos;%s&apos; Lua 스크립트 유효성 검사 실패</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Choose subtitle file</source>
-        <translation>자막 파일 선택</translation>
-    </message>
-    <message>
-        <source>Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm</source>
-        <translation>자막 파일(*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*. txt|자막이 있는 영상(*.mkv),(*.ogm)|*.mkv;*.ogm</translation>
-    </message>
-    <message>
-        <source>Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|All files (*.*)|*.*</source>
-        <translation>영상 파일 (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|모든 파일 (*.*)|*.*</translation>
-    </message>
-    <message>
-        <source>Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*</source>
-        <translation>키 프레임 파일 (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|모든 파일 (*.*)|*.*</translation>
-    </message>
-    <message>
-        <source>HikariSub subtitle editor by altqx,
-version %s from %s</source>
-        <translation>altqx가 만든 HikariSub 자막 편집기,
-버전 %s (%s)</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Based on Kainote by Marcin Drob aka Bakura or Bjakja.
-
-</source>
-        <translation>Marcin Drob(Bakura 또는 Bjakja)의 Kainote를 기반으로 합니다.
-
-</translation>
-    </message>
-    <message>
-        <source>If you have noticed any bugs or have any suggestions for changes or new features,
-open an issue at https://github.com/altqx/hikari/issues.
-
-</source>
-        <translation>버그를 발견했거나 변경 사항 또는 새 기능에 대한 제안이 있다면
-https://github.com/altqx/hikari/issues 에 이슈를 등록해 주세요.
-
-</translation>
-    </message>
-    <message>
-        <source>HikariSub includes parts of the following projects:
-</source>
-        <translation>HikariSub에는 다음 프로젝트의 일부가 포함됩니다:
-</translation>
-    </message>
-    <message>
-        <source>Color picker, demuxing subtitles from MKV, audio box, audio player, automation,
-and several other individual features taken from Aegisub -
-</source>
-        <translation>Aegisub에서 가져온 기능 - 
-색상 선택기, mkv자막 muxing, 소리박스, 소리 재생, 자동화
-</translation>
-    </message>
-    <message>
-        <source>About HikariSub</source>
-        <translation>HikariSub 정보</translation>
-    </message>
-    <message>
-        <source>Graphical help: (buttons, help pictures etc.)
-</source>
-        <translation>그래픽 지원: (버튼, 이미지 기타 등등..)
-</translation>
-    </message>
-    <message>
-        <source>- Xandros (new video buttons).
-</source>
-        <translation>- Xandros (새로운 영상 버튼).
-</translation>
-    </message>
-    <message>
-        <source>- Devilkan (menu and toolbar buttons)
-</source>
-        <translation>- Devilkan (메뉴 및 도구 모음 버튼)
-</translation>
-    </message>
-    <message>
-        <source>- Zły Los (icons for file associations and menu).
-</source>
-        <translation>- Zły Los (파일 연결 및 메뉴 아이콘).
-</translation>
-    </message>
-    <message>
-        <source>Testers:
-</source>
-        <translation>테스터:
-</translation>
-    </message>
-    <message>
-        <source>- Sacredus (first translator using translator mode,
-great help testing HikariSub on a slow computer)
-</source>
-        <translation>- Sacredus (번역 모드를 사용하는 첫 번째 사용자입니다,
-느린 컴퓨터에서 HikariSub를 테스트하는데 많은 도움이 되었습니다).
-</translation>
-    </message>
-    <message>
-        <source>- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot
-</source>
-        <translation>- Devilkan (문자 설정 도구를 설정하는데 도움을 주고,
-</translation>
-    </message>
-    <message>
-        <source>helped with typesetting tools and came up with many more improvements).
-</source>
-        <translation>그의 시스템과 습관으로 인해 많은 버그를 추적하고 오류를 수정할 수 있었습니다).
-</translation>
-    </message>
-    <message>
-        <source>- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).
-</source>
-        <translation>- MatiasMovie (일부 충돌을 발견하고 몇 가지 개선 사항을 제안했으며 버그 수정에 도움이 되었습니다).
-</translation>
-    </message>
-    <message>
-        <source>- mas1904 (found some errors and helping with crash debuging).
-</source>
-        <translation>- mas1904 (오류를 발견하고 충돌 디버깅에 도움을 주었습니다).
-</translation>
-    </message>
-    <message>
-        <source>- Senami (made new themes and found some bugs).
-</source>
-        <translation>- Senami (새로운 테마를 만들고 몇 가지 버그를 발견했습니다).
-</translation>
-    </message>
-    <message>
-        <source>- altinat (Thai translation).
-</source>
-        <translation>- altinat (태국어 번역).
-</translation>
-    </message>
-    <message>
-        <source>- labrie75 (Korean translation).
-</source>
-        <translation>- labrie75 (한국어 번역).
-</translation>
-    </message>
-    <message>
-        <source>- Niskala5570 (Malay translation).
-</source>
-        <translation>- Niskala5570(말레이어 번역).
-</translation>
-    </message>
-    <message>
-        <source>Thanks to other HikariSub users who reported bugs:
-</source>
-        <translation>프로그램을 사용하고 버그를 제보 해 주신 분들께 감사드립니다.
-</translation>
-    </message>
-    <message>
-        <source>Subtitle file </source>
-        <translation>자막 파일 </translation>
-    </message>
-    <message>
-        <source>Save subtitle file</source>
-        <translation>자막 파일 저장</translation>
-    </message>
-    <message>
-        <source>Chosen file is read only,
-please save with different name or change file attribute.</source>
-        <translation>선택한 파일은 읽기 전용이며,
-다른 이름으로 저장하거나 파일 속성을 변경하십시오.</translation>
-    </message>
-    <message>
-        <source>Load subtitles named &quot;%s&quot;?</source>
-        <translation>%s 파일도 같이 불러 오겠습니까?</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Cannot open subtitle file</source>
-        <translation>자막 파일을 열 수 없음</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation>없음</translation>
-    </message>
-    <message>
-        <source>Save subtitles named &quot;%s&quot; before %s?</source>
-        <translation>&quot;%s&quot;로 저장 후에 %s?</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>exiting program</source>
-        <translation>프로그램 종료</translation>
-    </message>
-    <message>
-        <source>closing tab</source>
-        <translation>탭 닫기</translation>
-    </message>
-    <message>
-        <source>loading new subtitles</source>
-        <translation>자막을 불러올까요</translation>
-    </message>
-    <message>
-        <source>removing subtitles</source>
-        <translation>내용 삭제</translation>
-    </message>
-    <message>
-        <source>Cannot load audio hotkeys</source>
-        <translation>소리 단축키를 불러올 수 없음</translation>
-    </message>
-    <message>
-        <source>Cannot load audio configuration</source>
-        <translation>소리 설정을 불러올 수 없음</translation>
-    </message>
-    <message>
-        <source>Choose audio file</source>
-        <translation>소리 파일 선택</translation>
-    </message>
-    <message>
-        <source>Audio and video files</source>
-        <translation>영상 및 소리 파일</translation>
-    </message>
-    <message>
-        <source>All files</source>
-        <translation>모든 파이</translation>
-    </message>
-    <message>
-        <source>Undo to </source>
-        <translation>실행 취소 - </translation>
-    </message>
-    <message>
-        <source>Redo to </source>
-        <translation>되돌리기 - </translation>
-    </message>
-    <message>
-        <source>Choose session file</source>
-        <translation>세션 파일 선택</translation>
-    </message>
-    <message>
-        <source>Session file (*.kls),|*.kls</source>
-        <translation>세션 파일(*.kls),|*.kls</translation>
-    </message>
-    <message>
-        <source>Save session file</source>
-        <translation>세션 파일 저장</translation>
-    </message>
-    <message>
-        <source>Hotkey &quot;%s&quot; it&apos;s not script hotkey.</source>
-        <translation>단축키 &apos;%s&apos;는 스크립트의 내용이 아닙니다.</translation>
-        <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
         <source>Log window</source>
@@ -3500,11 +3516,11 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Replace more then three dots to suspension point</source>
-        <translation>세 개 이상의 점을 정지 지점으로 변경</translation>
+        <translation>세 개 이상의 점을 말줄임표로 변경</translation>
     </message>
     <message>
         <source>Replace two dots to suspension point</source>
-        <translation>두 개의 점을 정지 지점으로 변경</translation>
+        <translation>두 개의 점을 말줄임표로 변경</translation>
     </message>
     <message>
         <source>Replace missing spaces after dot or comma</source>
@@ -3620,6 +3636,13 @@ cause it was edited.</source>
         <translation>모든 탭이 닫힙니다. 계속하시겠습니까?</translation>
     </message>
     <message>
+        <source>Cannot read the subtitle file:
+%s</source>
+        <translation>자막 파일을 읽을 수 없음:
+%s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
         <source>Video: </source>
         <translation>영상 : </translation>
     </message>
@@ -3656,6 +3679,25 @@ cause it was edited.</source>
         <translation>잘못된 파일 세션</translation>
     </message>
     <message>
+        <source>Cannot read the subtitle files:
+</source>
+        <translation>자막 파일을 읽을 수 없음:
+</translation>
+    </message>
+    <message>
+        <source>Cannot save to file.</source>
+        <translation>파일을 저장할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The old contents of the file are kept in %s.</source>
+        <translation>파일의 이전 내용은 %s에 보관되어 있습니다.</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>A temporary file in its folder would let in users the file keeps out.</source>
+        <translation>파일이 있는 폴더에 임시 파일을 만들면 이 파일에 접근할 수 없는 사용자도 접근할 수 있게 됩니다.</translation>
+    </message>
+    <message>
         <source>Cannot create file.</source>
         <translation>파일을 만들 수 없음.</translation>
     </message>
@@ -3672,10 +3714,6 @@ cause it was edited.</source>
         <translation>파일이 열리지 않았습니다.</translation>
     </message>
     <message>
-        <source>Cannot save to file.</source>
-        <translation>파일을 저장할 수 없습니다.</translation>
-    </message>
-    <message>
         <source>Open sorted subtitles</source>
         <translation>정렬된 자막으로 열기</translation>
     </message>
@@ -3686,8 +3724,8 @@ cause it was edited.</source>
     <message>
         <source>Select the line with the time line
 of the previous active tab</source>
-        <translation>종료 전
-마지막 탭의 번호 선택</translation>
+        <translation>이전 활성 탭의 시간에 해당하는
+줄 선택</translation>
     </message>
     <message>
         <source>Always open subtitles in a new tab</source>
@@ -3766,6 +3804,26 @@ after switching from full screen</source>
         <translation>맞춤법 검사 (&quot;Dictionary&quot; 폴더)</translation>
     </message>
     <message>
+        <source>Updates</source>
+        <translation>업데이트</translation>
+    </message>
+    <message>
+        <source>Check for updates automatically</source>
+        <translation>자동으로 업데이트 확인</translation>
+    </message>
+    <message>
+        <source>When the program starts: once a day, or an hour after a check that failed</source>
+        <translation>프로그램 시작 시: 하루에 한 번, 또는 확인에 실패한 경우 1시간 후</translation>
+    </message>
+    <message>
+        <source>Stable versions only</source>
+        <translation>안정 버전만</translation>
+    </message>
+    <message>
+        <source>A release candidate is still told about newer release candidates</source>
+        <translation>릴리스 후보 버전을 사용 중이면 더 새로운 릴리스 후보는 계속 알립니다</translation>
+    </message>
+    <message>
         <source>0 turns off saving while editing</source>
         <translation>0으로 하면 저장하지 않음</translation>
     </message>
@@ -3815,13 +3873,11 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Calculate spaces and punctation characters for wraps</source>
-        <translation type="unfinished">포장을 위한 공간과 punctation 문자 계산</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>글자 수 계산 시 공백 및 문장 부호 포함</translation>
     </message>
     <message>
         <source>Calculate spaces and punctation characters for CPS</source>
-        <translation type="unfinished">공간 계산 및 CPS에 대한 음성</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>초당 문자 수(CPS) 계산 시 공백 및 문장 부호 포함</translation>
     </message>
     <message>
         <source>Autoload loading method</source>
@@ -3829,11 +3885,11 @@ after switching from full screen</source>
     </message>
     <message>
         <source>After open menu</source>
-        <translation>자동화 메뉴 클릭 후 모두</translation>
+        <translation>자동화 메뉴를 연 후</translation>
     </message>
     <message>
         <source>After open menu asynchronously</source>
-        <translation>자동화 메뉴 클릭 후 순차적으로</translation>
+        <translation>자동화 메뉴를 연 후 (비동기)</translation>
     </message>
     <message>
         <source>After program start</source>
@@ -3841,12 +3897,11 @@ after switching from full screen</source>
     </message>
     <message>
         <source>After program start asynchronously</source>
-        <translation>프로그램 시작 후</translation>
+        <translation>프로그램 시작 후 (비동기)</translation>
     </message>
     <message>
         <source>Folder with external fonts</source>
-        <translation type="unfinished">외부 글꼴로 폴더</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>외부 글꼴 폴더</translation>
     </message>
     <message>
         <source>Choose</source>
@@ -3854,8 +3909,7 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Choose choose external font folder</source>
-        <translation type="unfinished">외부 글꼴 폴더를 선택하십시오</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>외부 글꼴 폴더 선택</translation>
     </message>
     <message>
         <source>Choose catalog</source>
@@ -3917,6 +3971,10 @@ and will be changed to the default</source>
         <translation>전체 화면의 컨텍스트 메뉴에서 영상 열기</translation>
     </message>
     <message>
+        <source>Convert video colours on the GPU (requires reloading)</source>
+        <translation>GPU에서 영상 색상 변환 (다시 불러오기 필요)</translation>
+    </message>
+    <message>
         <source>Open video with time of active line</source>
         <translation>파일 열 때 선택되어있는 줄로 영상도 이동</translation>
     </message>
@@ -3934,8 +3992,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Start video zoom in percent.</source>
-        <translation type="unfinished">비디오 줌을 퍼센트로 시작합니다.</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>영상 확대 시작 배율(퍼센트).</translation>
     </message>
     <message>
         <source>Linear</source>
@@ -4674,98 +4731,12 @@ text field, and subtitle grid.</source>
         <translation>색상</translation>
     </message>
     <message>
-        <source>ASS subtitles</source>
-        <translation>자막 ASS</translation>
-    </message>
-    <message>
-        <source>SRT subtitles</source>
-        <translation>자막 SRT</translation>
-    </message>
-    <message>
-        <source>SSA subtitles</source>
-        <translation>자막 SSA</translation>
-    </message>
-    <message>
-        <source>SUB subtitles</source>
-        <translation>자막 SUB</translation>
-    </message>
-    <message>
-        <source>TXT subtitles</source>
-        <translation>자막 TXT</translation>
-    </message>
-    <message>
-        <source>Video AVI</source>
-        <translation>영상 AVI</translation>
-    </message>
-    <message>
-        <source>Video MKV</source>
-        <translation>영상 MKV</translation>
-    </message>
-    <message>
-        <source>Video MP4</source>
-        <translation>영상 MP4</translation>
-    </message>
-    <message>
-        <source>Video OGM</source>
-        <translation>영상 OGM</translation>
-    </message>
-    <message>
-        <source>Video 3GP</source>
-        <translation>영상 3GP</translation>
-    </message>
-    <message>
-        <source>Video ASF</source>
-        <translation>영상 ASF</translation>
-    </message>
-    <message>
-        <source>Video RM</source>
-        <translation>영상 RM</translation>
-    </message>
-    <message>
-        <source>Video RMVB</source>
-        <translation>영상 RMVB</translation>
-    </message>
-    <message>
-        <source>Video WMV</source>
-        <translation>영상 WMV</translation>
-    </message>
-    <message>
-        <source>Video M2TS</source>
-        <translation>영상 M2TS</translation>
-    </message>
-    <message>
-        <source>Video MPEG</source>
-        <translation>영상 MPEG</translation>
-    </message>
-    <message>
-        <source>Video MPG</source>
-        <translation>영상 MPG</translation>
-    </message>
-    <message>
-        <source>Video TS</source>
-        <translation>영상 TS</translation>
-    </message>
-    <message>
-        <source>WARNING! Behavior differs on each Windows version.
-For example, on Windows 7 WMP blocked
-the ability to change video associations.</source>
-        <translation>경고! 모든 Windows에서 다르게 작동합니다.</translation>
-    </message>
-    <message>
         <source>Deselect all</source>
         <translation>모두 선택 취소</translation>
     </message>
     <message>
         <source>Select all</source>
         <translation>모두 선택</translation>
-    </message>
-    <message>
-        <source>Select subtitles</source>
-        <translation>자막 선택</translation>
-    </message>
-    <message>
-        <source>Select video</source>
-        <translation>영상 선택</translation>
     </message>
     <message>
         <source>Advanced</source>
@@ -4785,7 +4756,7 @@ the ability to change video associations.</source>
     </message>
     <message>
         <source>Subtitle properties</source>
-        <translation>ASS 파일 정보</translation>
+        <translation>자막 속성</translation>
     </message>
     <message>
         <source>Set default</source>
@@ -4832,14 +4803,13 @@ the ability to change video associations.</source>
         <translation>영상 색인</translation>
     </message>
     <message>
-        <source>Video frame size is too large</source>
-        <translation type="unfinished">영상 구조 크기는 너무 크다</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <source>Cannot get frame %i: %s</source>
+        <translation>%i 프레임을 가져올 수 없음: %s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
-        <source>Cannot get frame %i: %s</source>
-        <translation type="unfinished"></translation>
-        <extra-po-flags>c-format</extra-po-flags>
+        <source>Video frame size is too large</source>
+        <translation>영상 프레임 크기가 너무 큼</translation>
     </message>
     <message>
         <source>Choose the track</source>
@@ -4856,7 +4826,7 @@ the ability to change video associations.</source>
     </message>
     <message>
         <source>Cannot convert video to RGBA</source>
-        <translation>영상를 RGBA로 변환할 수 없음</translation>
+        <translation>영상을 RGBA로 변환할 수 없음</translation>
     </message>
     <message>
         <source>Cannot change YCbCr matrix</source>
@@ -4885,13 +4855,17 @@ the ability to change video associations.</source>
         <translation>지연 실패, 소리 길이 초과</translation>
     </message>
     <message>
-        <source>Not enough RAM</source>
-        <translation>RAM 부족</translation>
+        <source>Cannot create the audio cache %s</source>
+        <translation>소리 임시 저장 파일 %s을(를) 만들 수 없음</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Not enough memory for the audio cache</source>
+        <translation>소리 임시 저장에 필요한 메모리가 부족함</translation>
     </message>
     <message>
         <source>Cannot create DXVA processor service</source>
-        <translation type="unfinished">DXVA 프로세서 서비스를 생성 할 수 없음</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>DXVA 프로세서 서비스를 만들 수 없음</translation>
     </message>
     <message>
         <source>Cannot get DXVA GUIDs</source>
@@ -4931,6 +4905,10 @@ the ability to change video associations.</source>
         <translation>프레임 버퍼 없음</translation>
     </message>
     <message>
+        <source>Cannot lock texture buffer</source>
+        <translation>텍스처 버퍼를 잠글 수 없습니다</translation>
+    </message>
+    <message>
         <source>Cannot unlock subtitle texture buffer</source>
         <translation>자막 텍스처 버퍼를 잠금 해제 할 수 없음</translation>
     </message>
@@ -4949,32 +4927,25 @@ the ability to change video associations.</source>
     </message>
     <message>
         <source>Video file does not contain a video stream</source>
-        <translation type="unfinished">Video file는 비디오 스트림을 포함하지 않습니다</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>영상 파일에 영상 스트림이 없음</translation>
     </message>
     <message>
         <source>Cannot create GStreamer pipeline (playbin)</source>
-        <translation type="unfinished">컨트롤러를 만들 수 없음</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>GStreamer 파이프라인(playbin)을 만들 수 없음</translation>
     </message>
     <message>
         <source>Cannot create GStreamer video display module</source>
-        <translation type="unfinished">프로세스를 만들 수 없음. Muxing은 취소됨</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>GStreamer 영상 표시 모듈을 만들 수 없음</translation>
     </message>
     <message>
         <source>Cannot open video file: %s</source>
-        <translation type="unfinished">&quot;%s&quot; 파일을 열 수 없습니다.</translation>
-        <extra-po-flags>c-format, fuzzy</extra-po-flags>
+        <translation>영상 파일을 열 수 없음: %s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
         <source>Track %i</source>
         <translation>%i 트랙</translation>
         <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Cannot set matrix projection</source>
-        <translation>매트릭스(행렬) 투영을 설정할 수 없음</translation>
     </message>
     <message>
         <source>Resolution</source>
@@ -4986,8 +4957,7 @@ the ability to change video associations.</source>
     </message>
     <message>
         <source>Layout</source>
-        <translation type="unfinished">제품정보</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>레이아웃</translation>
     </message>
     <message>
         <source>YCbCr matrix</source>
@@ -5323,10 +5293,9 @@ mark time audio ± time shift</source>
         <source>Shifts \move, \t, and \fad tag times
 so their positions on video do not change
 (slows down time shifting)</source>
-        <translation type="unfinished">&quot;\move&quot;, &quot;\t&quot;, &quot;\fad&quot; 태그는
-자막 재생 시간에 영향을 미치지 않음.
-(시간 이동을 느리게 함)</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>\move, \t, \fad 태그 시간도 이동하여
+영상에서의 위치가 바뀌지 않게 합니다
+(시간 이동이 느려짐)</translation>
     </message>
     <message>
         <source>The choice of times to move</source>
@@ -5599,7 +5568,7 @@ in uppercase</source>
     </message>
     <message>
         <source>204 - Russian</source>
-        <translation>204 - 러시아러</translation>
+        <translation>204 - 러시아어</translation>
     </message>
     <message>
         <source>222 - Thai</source>
@@ -5743,7 +5712,7 @@ in uppercase</source>
     </message>
     <message>
         <source>%d element</source>
-        <translation type="unfinished"></translation>
+        <translation>항목 %d개</translation>
         <extra-po-flags>c-format</extra-po-flags>
         <extra-po-msgid_plural>%d elements</extra-po-msgid_plural>
     </message>
@@ -5901,7 +5870,7 @@ in uppercase</source>
     </message>
     <message>
         <source>Visual scaling tool</source>
-        <translation>도구 크기 조정</translation>
+        <translation>크기 조정 도구</translation>
     </message>
     <message>
         <source>Visual Z-axis rotation tool</source>
@@ -5937,7 +5906,7 @@ in uppercase</source>
     </message>
     <message>
         <source>Fixing minor errors</source>
-        <translation>다중 교체기</translation>
+        <translation>사소한 오류 수정</translation>
     </message>
     <message>
         <source>Adding tree</source>
@@ -5965,13 +5934,17 @@ in uppercase</source>
     </message>
     <message>
         <source>Removing filtering</source>
-        <translation type="unfinished">줄 삭제 중</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>필터링 해제</translation>
     </message>
     <message>
         <source>Splitting lines</source>
-        <translation type="unfinished">줄 복사</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>줄 분할</translation>
+    </message>
+    <message>
+        <source>Fixed the tree markers of %d line: lines with no tree description are now ordinary lines and every tree is open or closed as a whole.</source>
+        <translation>줄 %d개의 트리 표시를 수정했습니다: 트리 설명이 없는 줄은 이제 일반 줄이며, 모든 트리는 전체가 함께 열리거나 닫힙니다.</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+        <extra-po-msgid_plural>Fixed the tree markers of %d lines: lines with no tree description are now ordinary lines and every tree is open or closed as a whole.</extra-po-msgid_plural>
     </message>
     <message>
         <source>, active line %i</source>
@@ -5984,15 +5957,15 @@ in uppercase</source>
     </message>
     <message>
         <source>Do not include selected lines</source>
-        <translation>선택한 라인은 병합 할 수 없습니다</translation>
+        <translation>선택한 줄 제외</translation>
     </message>
     <message>
         <source>Insert &amp;before</source>
-        <translation>이전에 빈 줄 추가</translation>
+        <translation>이전에 빈 줄 추가[&amp;B]</translation>
     </message>
     <message>
         <source>Insert &amp;after</source>
-        <translation>이후에 빈 줄 추가</translation>
+        <translation>이후에 빈 줄 추가[&amp;A]</translation>
     </message>
     <message>
         <source>Insert before with &amp;video time</source>
@@ -6004,8 +5977,7 @@ in uppercase</source>
     </message>
     <message>
         <source>Insert lines</source>
-        <translation type="unfinished">줄 삽입</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>줄 삽입</translation>
     </message>
     <message>
         <source>&amp;Duplicate lines</source>
@@ -6013,7 +5985,7 @@ in uppercase</source>
     </message>
     <message>
         <source>&amp;Swap</source>
-        <translation>바꿈</translation>
+        <translation>서로 바꾸기[&amp;S]</translation>
     </message>
     <message>
         <source>Join &amp;lines</source>
@@ -6021,8 +5993,7 @@ in uppercase</source>
     </message>
     <message>
         <source>Split lines</source>
-        <translation type="unfinished">줄 복사</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>줄 분할</translation>
     </message>
     <message>
         <source>Copy	Ctrl-C</source>
@@ -6120,6 +6091,51 @@ in tag &apos;%s&apos;</source>
         <translation>이동할 줄이 없습니다</translation>
     </message>
     <message>
+        <source>This edit would leave lines of a tree outside it, so it was not made.</source>
+        <translation>이 편집은 트리의 줄을 트리 밖에 남기게 되므로 적용하지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Trees</source>
+        <translation>트리</translation>
+    </message>
+    <message>
+        <source>Line %d: %s</source>
+        <translation>%d 줄: %s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>This edit would split a tree, leave some of its lines outside it or move them into another tree, so it was not made:
+%s
+
+Removing the tree deletes its description line and shows its lines as ordinary lines.</source>
+        <translation>이 편집은 트리를 나누거나, 일부 줄을 트리 밖에 남기거나, 다른 트리로 옮기게 되므로 적용하지 않았습니다:
+%s
+
+트리를 제거하면 트리 설명 줄이 삭제되고 그 줄들은 일반 줄로 표시됩니다.</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+        <extra-po-msgid_plural>This edit would split trees, leave some of their lines outside them or move them into another tree, so it was not made:
+%s
+
+Removing the trees deletes their description lines and shows their lines as ordinary lines.</extra-po-msgid_plural>
+    </message>
+    <message>
+        <source>Make the edit again after removing.</source>
+        <translation>트리를 제거한 후 다시 편집하십시오.</translation>
+    </message>
+    <message>
+        <source>Remove the tree</source>
+        <translation>트리 제거</translation>
+        <extra-po-msgid_plural>Remove the trees</extra-po-msgid_plural>
+    </message>
+    <message>
+        <source>Invalid format (file may be corrupted or contain errors)</source>
+        <translation>잘못된 형식(파일이 손상되었거나 오류가 포함되어 있을 수 있음)</translation>
+    </message>
+    <message>
+        <source>This subtitle file is plain text and will be opened as ASS subtitles</source>
+        <translation>이 자막 파일은 일반 텍스트이며 ASS 자막으로 열립니다</translation>
+    </message>
+    <message>
         <source>Are you sure you want to turn off translation mode?
 Foreign language text will be deleted.</source>
         <translation>번역 모드를 끄시겠습니까?
@@ -6162,6 +6178,12 @@ Foreign language text will be deleted.</source>
         <translation>설정 해제</translation>
     </message>
     <message>
+        <source>Hidden lines lie between the selected lines, so they cannot make one tree.
+Show the hidden lines or select only lines that are next to each other.</source>
+        <translation>선택한 줄 사이에 숨겨진 줄이 있어 하나의 트리로 만들 수 없습니다.
+숨겨진 줄을 표시하거나 서로 붙어 있는 줄만 선택하십시오.</translation>
+    </message>
+    <message>
         <source>L.</source>
         <translation>L.</translation>
     </message>
@@ -6198,21 +6220,12 @@ Foreign language text will be deleted.</source>
         <translation>자막보기의 높이가 너무 낮아 미리보기를 표시 할 수 없습니다</translation>
     </message>
     <message>
-        <source>This subtitle file is plain text and will be opened as ASS subtitles</source>
-        <translation>이 자막 파일은 일반 텍스트이며 ASS 자막으로 열립니다</translation>
-    </message>
-    <message>
-        <source>Invalid format (file may be corrupted or contain errors)</source>
-        <translation>잘못된 형식(파일이 손상되었거나 오류가 포함되어 있을 수 있음)</translation>
-    </message>
-    <message>
         <source>Change resolution</source>
         <translation>자막해상도 변경</translation>
     </message>
     <message>
         <source>Target resolution</source>
-        <translation type="unfinished">변경할 해상도</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>대상 해상도</translation>
     </message>
     <message>
         <source>From subtitles</source>
@@ -6317,7 +6330,7 @@ Moves the translation one line up.</source>
     </message>
     <message>
         <source>Add line</source>
-        <translation>제어점 추가</translation>
+        <translation>줄 추가</translation>
     </message>
     <message>
         <source>Adds a blank line before the selected line.
@@ -6365,14 +6378,18 @@ Translation - text pasted into subtitles with correct timing.</source>
 번역 - 번역과 수정을 거침.</translation>
     </message>
     <message>
+        <source>Subtitles were modified by another program.
+Reload and discard the unsaved changes in this tab?</source>
+        <translation>다른 프로그램에서 자막이 수정되었습니다.
+이 탭의 저장하지 않은 변경 사항을 버리고 다시 불러오시겠습니까?</translation>
+    </message>
+    <message>
         <source>Reloading</source>
-        <translation type="unfinished">새로고침하는 중</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>다시 불러오기</translation>
     </message>
     <message>
         <source>Subtitles were modified by another program. Reload?</source>
-        <translation type="unfinished">Subtiltes는 다른 프로그램에 의해 수정되었습니다, 다시로드?</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>다른 프로그램에서 자막이 수정되었습니다. 다시 불러오시겠습니까?</translation>
     </message>
     <message>
         <source>Show description</source>
@@ -6404,51 +6421,51 @@ Translation - text pasted into subtitles with correct timing.</source>
     </message>
     <message>
         <source>PNG mask of primary color</source>
-        <translation>PNG mask 기본 색상</translation>
+        <translation>첫 번째 색상 PNG 마스크</translation>
     </message>
     <message>
         <source>PNG mask of secondary color</source>
-        <translation>PNG mask 두번째 색상</translation>
+        <translation>두 번째 색상 PNG 마스크</translation>
     </message>
     <message>
         <source>PNG mask of border color</source>
-        <translation>PNG mask 테두리 색상</translation>
+        <translation>테두리 색상 PNG 마스크</translation>
     </message>
     <message>
         <source>PNG mask of shadow color</source>
-        <translation>‪PNG mask 그림자 색상</translation>
+        <translation>그림자 색상 PNG 마스크</translation>
     </message>
     <message>
         <source>Transparency gradient of primary color</source>
-        <translation>그라데이션 첫 번째 색상 투명도</translation>
+        <translation>첫 번째 색상 투명도 그라데이션</translation>
     </message>
     <message>
         <source>Transparency gradient of secondary color</source>
-        <translation>그라데이션 두 번째 색상 투명도</translation>
+        <translation>두 번째 색상 투명도 그라데이션</translation>
     </message>
     <message>
         <source>Transparency gradient of border color</source>
-        <translation>그라데이션 테두리 투명도</translation>
+        <translation>테두리 색상 투명도 그라데이션</translation>
     </message>
     <message>
         <source>Transparency gradient of shadow color</source>
-        <translation>그라데이션 그림자 투명도</translation>
+        <translation>그림자 색상 투명도 그라데이션</translation>
     </message>
     <message>
         <source>Gradient of primary color</source>
-        <translation>그라데이션 첫 번째 색상</translation>
+        <translation>첫 번째 색상 그라데이션</translation>
     </message>
     <message>
         <source>Gradient of secondary color</source>
-        <translation>그라데이션 첫 번째 색상</translation>
+        <translation>두 번째 색상 그라데이션</translation>
     </message>
     <message>
         <source>Gradient of border color</source>
-        <translation>그라데이션 테두리</translation>
+        <translation>테두리 색상 그라데이션</translation>
     </message>
     <message>
         <source>Gradient of shadow color</source>
-        <translation>그라데이션 그림자</translation>
+        <translation>그림자 색상 그라데이션</translation>
     </message>
     <message>
         <source>Text alignment (SSA)</source>
@@ -6572,11 +6589,11 @@ Translation - text pasted into subtitles with correct timing.</source>
     </message>
     <message>
         <source>Text movement along a curve (3 points)</source>
-        <translation>글자 곡선 이동 (3 points)</translation>
+        <translation>글자 곡선 이동 (3개 지점)</translation>
     </message>
     <message>
         <source>Text movement along a curve (4 points)</source>
-        <translation>글자 곡선 이동 (4 points)</translation>
+        <translation>글자 곡선 이동 (4개 지점)</translation>
     </message>
     <message>
         <source>Vector drawing movement</source>
@@ -6604,23 +6621,23 @@ Translation - text pasted into subtitles with correct timing.</source>
     </message>
     <message>
         <source>Font point randomness</source>
-        <translation>임의의 글꼴 지저</translation>
+        <translation>글꼴 윤곽점 무작위화</translation>
     </message>
     <message>
         <source>Font point randomness seed</source>
-        <translation>임의의 글꼴 지점 seed[?]</translation>
+        <translation>글꼴 윤곽점 무작위화 시드</translation>
     </message>
     <message>
         <source>Font point randomness on X axis</source>
-        <translation>임의의 글꼴 지점 X 축</translation>
+        <translation>X 축 글꼴 윤곽점 무작위화</translation>
     </message>
     <message>
         <source>Font point randomness on Y axis</source>
-        <translation>임의의 글꼴 지점 Y 축</translation>
+        <translation>Y 축 글꼴 윤곽점 무작위화</translation>
     </message>
     <message>
         <source>Font point randomness on Z axis</source>
-        <translation>임의의 글꼴 지점 Z 축</translation>
+        <translation>Z 축 글꼴 윤곽점 무작위화</translation>
     </message>
     <message>
         <source>Text strikethrough</source>
@@ -6688,33 +6705,38 @@ Translation - text pasted into subtitles with correct timing.</source>
         <translation>도구 모음 정렬</translation>
     </message>
     <message>
-        <source>A new version (%s) is available. Update?</source>
-        <translation type="unfinished"></translation>
+        <source>You have the latest stable version. A newer prerelease, %s, is available.</source>
+        <translation>최신 안정 버전을 사용 중입니다. 더 새로운 시험판 %s을(를) 사용할 수 있습니다.</translation>
         <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
         <source>Update</source>
-        <translation type="unfinished"></translation>
+        <translation>업데이트</translation>
     </message>
     <message>
-        <source>Disable updates</source>
-        <translation type="unfinished"></translation>
+        <source>Open the download page</source>
+        <translation>다운로드 페이지 열기</translation>
     </message>
     <message>
-        <source>Update after closing</source>
-        <translation type="unfinished"></translation>
+        <source>A new version is available</source>
+        <translation>새 버전을 사용할 수 있습니다</translation>
     </message>
     <message>
-        <source>Cannot download the new version of HikariSub</source>
-        <translation type="unfinished"></translation>
+        <source>You have version %s; version %s is available</source>
+        <translation>현재 버전은 %s이며, %s 버전을 사용할 수 있습니다</translation>
+        <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
-        <source>Cannot find the HikariSub updater</source>
-        <translation type="unfinished"></translation>
+        <source>Remind me in a week</source>
+        <translation>1주일 후에 다시 알림</translation>
     </message>
     <message>
-        <source>Cannot close HikariSub</source>
-        <translation type="unfinished"></translation>
+        <source>Cannot check for updates</source>
+        <translation>업데이트를 확인할 수 없음</translation>
+    </message>
+    <message>
+        <source>You already have the latest version</source>
+        <translation>이미 최신 버전을 사용 중입니다</translation>
     </message>
     <message>
         <source>Unable to retrieve information about the monitor</source>
@@ -6753,11 +6775,11 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Exit full screen	Escape</source>
-        <translation>전체 화면 종료	ESC</translation>
+        <translation>전체 화면 종료	Escape</translation>
     </message>
     <message>
         <source>Switch full screen to monitor %i</source>
-        <translation>%i을(를) 전체 화면으로 전환</translation>
+        <translation>모니터 %i(으)로 전체 화면 전환</translation>
         <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
@@ -6792,6 +6814,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Subtitle files (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt</source>
         <translation>자막 파일 (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt</translation>
+    </message>
+    <message>
+        <source>Invalid keyframes format</source>
+        <translation>잘못된 키 프레임 형식</translation>
     </message>
     <message>
         <source>Previous video file</source>
@@ -6938,7 +6964,7 @@ in two or one axis.</source>
     </message>
     <message>
         <source>Scale height</source>
-        <translation>새로 크기</translation>
+        <translation>세로 크기</translation>
     </message>
     <message>
         <source>Set a custom rectangle for the current scale.
@@ -6982,12 +7008,12 @@ advance the video by enough frames
 so that the same video element
 for which the start point was set remains visible.
 Movement is generated by placing the second point.</source>
-        <translation type="unfinished">2개 지점에서 이동 및 영상 위치를 설정합니다.
-텍스트가 이동하기 전에 비디오에 첫 번째 지점을 설정한 후,
-프레임이 끝나도록 비디오를 설정합니다.
-첫 번째 설정점은 계속 표시됩니다.
-이동하면 두 번째 지점이 생성됩니다.</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>2개 지점과 영상 위치로 이동을 설정합니다.
+움직이는 글자 앞에 첫 번째 지점을 놓은 후,
+시작 지점을 지정한 영상 속 대상이
+계속 보이는 범위 안에서
+영상을 충분한 프레임만큼 진행합니다.
+두 번째 지점을 놓으면 이동이 생성됩니다.</translation>
     </message>
     <message>
         <source>Changing all X/Y-rotation tags</source>
@@ -6995,7 +7021,7 @@ Movement is generated by placing the second point.</source>
     </message>
     <message>
         <source>Double-clicking a line (always on)</source>
-        <translation>두 번 클릭으로 이동 ()</translation>
+        <translation>줄 두 번 클릭 시 (항상 켜짐)</translation>
     </message>
     <message>
         <source>Every line change</source>
@@ -7003,15 +7029,15 @@ Movement is generated by placing the second point.</source>
     </message>
     <message>
         <source>Clicking a line or editing</source>
-        <translation>줄 또는 에디션을 클릭[?]</translation>
+        <translation>줄 클릭 또는 편집 시</translation>
     </message>
     <message>
         <source>Clicking a line or editing when paused</source>
-        <translation>줄 클릭으로 정지[?]</translation>
+        <translation>일시 정지 중 줄 클릭 또는 편집 시</translation>
     </message>
     <message>
         <source>Editing line when paused</source>
-        <translation>일시 중지 된 경우 줄 편집[?]</translation>
+        <translation>일시 정지 중 줄 편집 시</translation>
     </message>
     <message>
         <source>Audio to the line end time</source>
@@ -7051,8 +7077,7 @@ of start of drawing and click left mouse button and drag.</source>
     </message>
     <message>
         <source>Gradient text increasing</source>
-        <translation type="unfinished">Gradient 텍스트 증가</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>그라데이션 글자 증가</translation>
     </message>
     <message>
         <source>Insert</source>
@@ -7060,26 +7085,23 @@ of start of drawing and click left mouse button and drag.</source>
     </message>
     <message>
         <source>Multiply</source>
-        <translation>다중</translation>
+        <translation>곱하기</translation>
     </message>
     <message>
         <source>Multiply+</source>
-        <translation>다중+</translation>
+        <translation>곱하기+</translation>
     </message>
     <message>
         <source>Gradient line decreasing</source>
-        <translation type="unfinished">Gradient 선 감소</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>그라데이션 줄 감소</translation>
     </message>
     <message>
         <source>Gradient line increasing</source>
-        <translation type="unfinished">Gradient 선 증가</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>그라데이션 줄 증가</translation>
     </message>
     <message>
         <source>Gradient text decreasing</source>
-        <translation type="unfinished">Gradient 텍스트 감소</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>그라데이션 글자 감소</translation>
     </message>
     <message>
         <source>Tag change options:
@@ -7092,21 +7114,16 @@ Gradient text increasing - inserts a tag at each character, increasing the value
 Gradient text decreasing - inserts a tag at each character, decreasing the value.
 Gradient line increasing - inserts a tag in selected lines, increasing the value.
 Gradient line decreasing - inserts a tag in selected lines, decreasing the value.</source>
-        <translation type="unfinished">태그 변경의 옵션 :
-추가 - 변경 모든 태그 슬라이더에 이동.
-인서트 - 한 줄 때 커서 위치에 삽입 태그
-또는 멀티 라인의 시작에.
-Multiply - 선택된 번호 od에 의하여 slider의 곱하기 이동
-첫번째 선은 변화하지 않습니다. 캐스케이드에 대 한 만든.
-Gradient 텍스트 증가 - 모든 문자에 태그를 넣어
-슬라이더의 수 증가
-Gradient text decreasing - 모든 문자에 태그를 넣어
-슬라이더의 수에서 감소
-Gradient 라인 증가 - 모든 라인에 태그를 넣어
-슬라이더의 수 증가
-Gradient 라인 감소 - 모든 라인에 태그를 넣어
-슬라이더의 수에서 감소</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>태그 변경 옵션:
+추가 - 슬라이더 값을 더해 모든 태그를 변경합니다.
+삽입 - 한 줄이면 커서 위치에, 여러 줄이면
+시작 부분에 태그를 삽입합니다.
+곱하기 - 슬라이더 값에 선택한 줄 번호를 곱합니다.
+첫 번째 줄은 변경되지 않습니다.
+그라데이션 글자 증가 - 글자마다 값을 늘려 가며 태그를 삽입합니다.
+그라데이션 글자 감소 - 글자마다 값을 줄여 가며 태그를 삽입합니다.
+그라데이션 줄 증가 - 선택한 줄마다 값을 늘려 가며 태그를 삽입합니다.
+그라데이션 줄 감소 - 선택한 줄마다 값을 줄여 가며 태그를 삽입합니다.</translation>
     </message>
     <message>
         <source>Edit listed tags and create new ones</source>
@@ -7222,18 +7239,15 @@ Gradient 라인 감소 - 모든 라인에 태그를 넣어
     </message>
     <message>
         <source>One additional value</source>
-        <translation type="unfinished">한 개 추가 값</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>추가 값 1개</translation>
     </message>
     <message>
         <source>Two additional values</source>
-        <translation type="unfinished">추가 값 없음</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>추가 값 2개</translation>
     </message>
     <message>
         <source>Three additional values</source>
-        <translation type="unfinished">세 개의 추가 값</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>추가 값 3개</translation>
     </message>
     <message>
         <source>Used only when tag have 2 values or more</source>
@@ -7289,9 +7303,7 @@ greater than field &quot;Minimum value&quot;.</source>
     </message>
     <message>
         <source>Field &quot;Step&quot; must contain a value greater than zero.</source>
-        <translation type="unfinished">&quot;최대값&quot; 필드에는 값이 포함되어야 합니다.
-&quot;최소값&quot; 필드보다 큽니다.</translation>
-        <extra-po-flags>fuzzy</extra-po-flags>
+        <translation>&quot;단계&quot; 필드에는 0보다 큰 값을 입력해야 합니다.</translation>
     </message>
     <message>
         <source>Field &quot;Step&quot; contains a number too large for the current min-max range.</source>
@@ -7363,7 +7375,7 @@ greater than field &quot;Minimum value&quot;.</source>
     </message>
     <message>
         <source>Save changes to shape &quot;%s&quot;?</source>
-        <translation>&quot;%s&quot; 모양 에디션을 저장하시겠습니까?</translation>
+        <translation>&quot;%s&quot; 모양의 변경 사항을 저장하시겠습니까?</translation>
         <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
@@ -7373,6 +7385,10 @@ greater than field &quot;Minimum value&quot;.</source>
     <message>
         <source>Video must be set at least one frame after the line&apos;s start time</source>
         <translation>영상 시작 시간 이후 최소 한 프레임 이상 설정해야 합니다</translation>
+    </message>
+    <message>
+        <source>Cannot set matrix projection</source>
+        <translation>매트릭스(행렬) 투영을 설정할 수 없음</translation>
     </message>
     <message>
         <source>Cannot read clip rectangle values.</source>
@@ -7542,7 +7558,7 @@ If you make a mistake, backups are in the &apos;ReplaceBackup&apos; folder.</sou
 so nothing will be found.
 What would you like to do?</source>
         <translation>선택한 스타일이 모두 존재하지 않으며 아무 것도 찾을 수 없습니다.
-어떻게 할까ㅇ?</translation>
+어떻게 하시겠습니까?</translation>
     </message>
     <message>
         <source>Remove styles</source>
@@ -7569,6 +7585,18 @@ What would you like to do?</source>
         <source>Cannot read settings.
 The program will be terminated.</source>
         <translation>설정을 읽을 수 없습니다. 프로그램이 종료됩니다.</translation>
+    </message>
+    <message>
+        <source>Cannot find language, language change failed</source>
+        <translation>언어를 찾을 수 없어 언어를 변경하지 못했습니다</translation>
+    </message>
+    <message>
+        <source>wxLocale cannot initialize, language change failed</source>
+        <translation>wxLocale을 초기화할 수 없어 언어를 변경하지 못했습니다</translation>
+    </message>
+    <message>
+        <source>Cannot find translation, language change failed</source>
+        <translation>번역을 찾을 수 없어 언어를 변경하지 못했습니다</translation>
     </message>
     <message>
         <source>Cannot read hotkeys.
@@ -7684,7 +7712,7 @@ Styles deleted:
     </message>
     <message>
         <source>Status of deleted styles</source>
-        <translation>글꼴 초기화</translation>
+        <translation>삭제된 스타일 상태</translation>
     </message>
     <message>
         <source>Style catalog</source>
@@ -7708,7 +7736,7 @@ Styles deleted:
     </message>
     <message>
         <source>Load style from external ASS file to storage</source>
-        <translation>ASS자막에서 가져오기</translation>
+        <translation>외부 ASS 파일에서 목록으로 스타일 불러오기</translation>
     </message>
     <message>
         <source>Delete style from storage</source>
@@ -7732,7 +7760,7 @@ Styles deleted:
     </message>
     <message>
         <source>Load style from external ASS file</source>
-        <translation>ASS자막에서 가져오기</translation>
+        <translation>외부 ASS 파일에서 스타일 불러오기</translation>
     </message>
     <message>
         <source>Delete style from ASS</source>

@@ -1,6 +1,6 @@
-# O4 key map: legacy gettext keys (Locale/template.pot at 20d647c4c769ab7f5d383cf3c1c33f03876a94e9) to the rewrite's Qt keys.
+# O4 key map: legacy gettext keys (Locale/template.pot at b31505da24dcc0c4053ad5e0cc73e15266a85bac) to the rewrite's Qt keys.
 # Reviewed input of hikari_i18n_migrate convert; regenerate with hikari_i18n_keymap.
-# input-commit	20d647c4c769ab7f5d383cf3c1c33f03876a94e9
+# input-commit	b31505da24dcc0c4053ad5e0cc73e15266a85bac
 status	msgctxt	msgid	msgid_plural	context	source	comment	numerus	placeholders
 exact	\N	Search bar	\N	HikariSub.Audio	Search bar		no	\N
 exact	\N	Horizontal stretching	\N	HikariSub.Audio	Horizontal stretching		no	\N
@@ -32,12 +32,9 @@ exact	\N	Go to the next line after applying changes	\N	HikariSub.Audio	Go to the
 exact	\N	Auto-scroll to the active line	\N	HikariSub.Audio	Auto-scroll to the active line		no	\N
 exact	\N	Spectrum mode	\N	HikariSub.Audio	Spectrum mode		no	\N
 exact	\N	Enhance speech frequencies in the spectrum	\N	HikariSub.Audio	Enhance speech frequencies in the spectrum		no	\N
-exact	\N	Invalid keyframes format	\N	HikariSub.Video	Invalid keyframes format		no	\N
-exact	\N	Error	\N	HikariSub.Automation	Error		no	\N
-obsolete	\N	Cannot create Direct3D object	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot create D3D9 device	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create swap chain	\N	\N	\N	\N	\N	\N
 obsolete	\N	One of the DirectX settings failed	\N	\N	\N	\N	\N	\N
-obsolete	\N	Cannot set projection matrix	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot set world matrix	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot set view matrix	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot create surface	\N	\N	\N	\N	\N	\N
@@ -47,8 +44,8 @@ obsolete	\N	Cannot create plain surface	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot reset Direct3D	\N	\N	\N	\N	\N	\N
 exact	\N	Modified	\N	HikariSub.Tabs	Modified		no	\N
 obsolete	\N	Negative time	\N	\N	\N	\N	\N	\N
-obsolete	\N	Cannot lock texture buffer	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot blit spectrum surfaces	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio could not be loaded	\N	\N	\N	\N	\N	\N
 obsolete	\N	Open auto save file	\N	\N	\N	\N	\N	\N
 exact	\N	Find files	\N	HikariSub.Session	Find files		no	\N
 exact	\N	Filter list	\N	HikariSub.Session	Filter list		no	\N
@@ -124,6 +121,7 @@ exact	\N	Select a script editor	\N	HikariSub.Automation	Select a script editor		
 obsolete	\N	Programs (*.exe)|*.exe|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
 exact	\N	Automation error	\N	HikariSub.Automation	Automation error		no	\N
 exact	\N	Cannot start editor.	\N	HikariSub.Automation	Cannot start editor.		no	\N
+exact	\N	Error	\N	HikariSub.Automation	Error		no	\N
 obsolete	\N	Full Lua error description	\N	\N	\N	\N	\N	\N
 exact	\N	Edit	\N	HikariSub.Fonts	Edit		no	\N
 exact	\N	Edit	\N	HikariSub.Styles	Edit		no	\N
@@ -178,6 +176,7 @@ obsolete	\N	Cannot add a line of class %s to a field of class %s	\N	\N	\N	\N	\N	
 obsolete	\N	Missing subtitles pointer	\N	\N	\N	\N	\N	\N
 exact	\N	Shortcut can be set using Shift + Click	\N	HikariSub.Audio	Shortcut can be set using Shift + Click		no	\N
 exact	\N	Shortcut can be set using Shift + Click	\N	HikariSub.Hotkeys	Shortcut can be set using Shift + Click		no	\N
+obsolete	\N	Picking a color from the screen is not supported on Wayland	\N	\N	\N	\N	\N	\N
 exact	\N	Choose color	\N	HikariSub.Colours	Choose color		no	\N
 exact	\N	Spectrum color	\N	HikariSub.Colours	Spectrum color		no	\N
 exact	\N	RGB color	\N	HikariSub.Colours	RGB color		no	\N
@@ -316,6 +315,11 @@ exact	\N	Change number of buttons	\N	HikariSub.Editor	Change number of buttons		
 exact	\N	No unconfirmed lines found	\N	HikariSub.Editor	No unconfirmed lines found		no	\N
 exact	\N	No untranslated lines found	\N	HikariSub.Editor	No untranslated lines found		no	\N
 exact	\N	Manage tag buttons	\N	HikariSub.Editor	Manage tag buttons		no	\N
+obsolete	\N	ASS subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	SSA subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	SRT subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	SUB subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	TXT subtitles	\N	\N	\N	\N	\N	\N
 exact	\N	Search text:	\N	HikariSub.Search	Search text:		no	\N
 exact	\N	Search text:	\N	HikariSub.SelectLines	Search text:		no	\N
 exact	\N	Replace with:	\N	HikariSub.Fonts	Replace with:		no	\N
@@ -410,7 +414,7 @@ exact	\N	Catalogs:	\N	HikariSub.Fonts	Catalogs:		no	\N
 exact	\N	Find:	\N	HikariSub.Fonts	Find:		no	\N
 exact	\N	Autosave	\N	HikariSub.Fonts	Autosave		no	\N
 exact	\N	Autosave	\N	HikariSub.Session	Autosave		no	\N
-exact	\N	Choose video file	\N	HikariSub.Video	Choose video file		no	\N
+obsolete	\N	Choose font catalogs file	\N	\N	\N	\N	\N	\N
 obsolete	\N	Text files (*.txt)|*.txt	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot find elements of line %i	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot add font "%s".	\N	\N	\N	\N	\N	\N
@@ -522,21 +526,267 @@ obsolete	\N	Cannot create next notification handler for fonts folder.	\N	\N	\N	\
 obsolete	\N	Removing fonts from external folder	\N	\N	\N	\N	\N	\N
 obsolete	\N	Loading fonts from external folder	\N	\N	\N	\N	\N	\N
 exact	\N	Cannot load external font folder	\N	HikariSub.Fonts	Cannot load external font folder		no	\N
+exact	\N	Apply to All	\N	HikariSub.Documents	Apply to All		no	\N
+exact	\N	Yes to all	\N	HikariSub.Styles	Yes to all		no	\N
+exact	\N	Yes	\N	HikariSub.Documents	Yes		no	\N
+exact	\N	Yes	\N	HikariSub.Matroska	Yes		no	\N
+exact	\N	Yes	\N	HikariSub.Search	Yes		no	\N
+exact	\N	Yes	\N	HikariSub.Styles	Yes		no	\N
+exact	\N	No	\N	HikariSub.Documents	No		no	\N
+exact	\N	No	\N	HikariSub.Matroska	No		no	\N
+exact	\N	No	\N	HikariSub.Search	No		no	\N
+exact	\N	No	\N	HikariSub.Styles	No		no	\N
+obsolete	\N	Help	\N	\N	\N	\N	\N	\N
+obsolete	\N	Untitled - 	\N	\N	\N	\N	\N	\N
+exact	\N	Video duration	\N	HikariSub.StatusBar	Video duration		no	\N
+exact	\N	Video scale	\N	HikariSub.StatusBar	Video scale		no	\N
+exact	\N	Video zoom	\N	HikariSub.StatusBar	Video zoom		no	\N
+exact	\N	Frames per second	\N	HikariSub.StatusBar	Frames per second		no	\N
+exact	\N	Subtitles resolution	\N	HikariSub.Conversion	Subtitles resolution		no	\N
+exact	\N	Subtitles resolution	\N	HikariSub.StatusBar	Subtitles resolution		no	\N
+exact	\N	Video aspect ratio	\N	HikariSub.StatusBar	Video aspect ratio		no	\N
+exact	\N	Video file name	\N	HikariSub.StatusBar	Video file name		no	\N
+exact	\N	Video resolution	\N	HikariSub.StatusBar	Video resolution		no	\N
+exact	\N	Load last session	\N	HikariSub.MainWindow	Load last session		no	\N
+exact	\N	Loads previously loaded files	\N	HikariSub.MainWindow	Loads previously loaded files		no	\N
+exact	\N	Load session from file	\N	HikariSub.MainWindow	Load session from file		no	\N
+exact	\N	Loads session from saved session file	\N	HikariSub.MainWindow	Loads session from saved session file		no	\N
+exact	\N	Save session to file	\N	HikariSub.MainWindow	Save session to file		no	\N
+exact	\N	Saves session to file	\N	HikariSub.MainWindow	Saves session to file		no	\N
+exact	\N	Ask whether to load the last session at program startup	\N	HikariSub.MainWindow	Ask whether to load the last session at program startup		no	\N
+exact	\N	Asks whether to load previously loaded files at program startup	\N	HikariSub.MainWindow	Asks whether to load previously loaded files at program startup		no	\N
+exact	\N	Load last session after program start	\N	HikariSub.MainWindow	Load last session after program start		no	\N
+exact	\N	Loads previously loaded files at program startup	\N	HikariSub.MainWindow	Loads previously loaded files at program startup		no	\N
+obsolete	\N	&Open subtitles	\N	\N	\N	\N	\N	\N
+exact	\N	Open subtitle file	\N	HikariSub.MainWindow	Open subtitle file		no	\N
+exact	\N	&Save	\N	HikariSub.MainWindow	&Save		no	\N
+exact	\N	Save current file	\N	HikariSub.MainWindow	Save current file		no	\N
+exact	\N	Save &all	\N	HikariSub.MainWindow	Save &all		no	\N
+exact	\N	Save all subtitles	\N	HikariSub.MainWindow	Save all subtitles		no	\N
+obsolete	\N	Save &as...	\N	\N	\N	\N	\N	\N
+exact	\N	Save as	\N	HikariSub.MainWindow	Save as		no	\N
+exact	\N	Save &translation	\N	HikariSub.MainWindow	Save &translation		no	\N
+exact	\N	Save translation	\N	HikariSub.MainWindow	Save translation		no	\N
+exact	\N	Recently opened &subtitles	\N	HikariSub.MainWindow	Recently opened &subtitles		no	\N
+exact	\N	Recently opened subtitles	\N	HikariSub.MainWindow	Recently opened subtitles		no	\N
+exact	\N	Recently opened subtitles	\N	HikariSub.Video	Recently opened subtitles		no	\N
+exact	\N	Remove subtitles from the &editor	\N	HikariSub.MainWindow	Remove subtitles from the &editor		no	\N
+exact	\N	Remove subtitles from the editor	\N	HikariSub.MainWindow	Remove subtitles from the editor		no	\N
+exact	\N	Save subtitles using the video name	\N	HikariSub.MainWindow	Save subtitles using the video name		no	\N
+exact	\N	Open auto save	\N	HikariSub.MainWindow	Open auto save		no	\N
+exact	\N	Open auto save	\N	HikariSub.Session	Open auto save		no	\N
+exact	\N	Opens the selected autosave from the list	\N	HikariSub.MainWindow	Opens the selected autosave from the list		no	\N
+exact	\N	Opens the temporary file removal window	\N	HikariSub.MainWindow	Opens the temporary file removal window		no	\N
+exact	\N	Show / Hide log window	\N	HikariSub.MainWindow	Show / Hide log window		no	\N
+exact	\N	Last session	\N	HikariSub.MainWindow	Last session		no	\N
+exact	\N	Last session options	\N	HikariSub.MainWindow	Last session options		no	\N
+exact	\N	&Settings	\N	HikariSub.MainWindow	&Settings		no	\N
+exact	\N	Program settings	\N	HikariSub.MainWindow	Program settings		no	\N
+obsolete	\N	&Exit\tAlt-F4	\N	\N	\N	\N	\N	\N
+exact	\N	Exit the program	\N	HikariSub.MainWindow	Exit the program		no	\N
+exact	\N	&File	\N	HikariSub.MainWindow	&File		no	\N
+exact	\N	&Undo	\N	HikariSub.MainWindow	&Undo		no	\N
+exact	\N	Undo	\N	HikariSub.MainWindow	Undo		no	\N
+exact	\N	Undo to last save	\N	HikariSub.MainWindow	Undo to last save		no	\N
+exact	\N	&Redo	\N	HikariSub.MainWindow	&Redo		no	\N
+exact	\N	Redo	\N	HikariSub.MainWindow	Redo		no	\N
+exact	\N	&History	\N	HikariSub.MainWindow	&History		no	\N
+exact	\N	History	\N	HikariSub.MainWindow	History		no	\N
+exact	\N	Find and re&place	\N	HikariSub.MainWindow	Find and re&place		no	\N
+exact	\N	Searches for the specified text phrases and replaces them	\N	HikariSub.MainWindow	Searches for the specified text phrases and replaces them		no	\N
+exact	\N	&Find	\N	HikariSub.MainWindow	&Find		no	\N
+exact	\N	Searches for the specified text phrase	\N	HikariSub.MainWindow	Searches for the specified text phrase		no	\N
+exact	\N	Find next	\N	HikariSub.MainWindow	Find next		no	\N
+exact	\N	Finds the next occurrence of the phrase in the text	\N	HikariSub.MainWindow	Finds the next occurrence of the phrase in the text		no	\N
+exact	\N	The starting time	\N	HikariSub.Grid	The starting time		no	\N
+exact	\N	The starting time	\N	HikariSub.MainWindow	The starting time		no	\N
+exact	\N	The starting time	\N	HikariSub.TimeShift	The starting time		no	\N
+exact	\N	Sort by start time	\N	HikariSub.MainWindow	Sort by start time		no	\N
+exact	\N	End time	\N	HikariSub.Grid	End time		no	\N
+exact	\N	End time	\N	HikariSub.MainWindow	End time		no	\N
+exact	\N	End time	\N	HikariSub.SelectLines	End time		no	\N
+exact	\N	End time	\N	HikariSub.TimeShift	End time		no	\N
+exact	\N	Sort by end time	\N	HikariSub.MainWindow	Sort by end time		no	\N
+exact	\N	Sort by styles	\N	HikariSub.MainWindow	Sort by styles		no	\N
+exact	\N	Sort by actor	\N	HikariSub.MainWindow	Sort by actor		no	\N
+exact	\N	Sort by effect	\N	HikariSub.MainWindow	Sort by effect		no	\N
+exact	\N	Layer	\N	HikariSub.Editor	Layer		no	\N
+exact	\N	Layer	\N	HikariSub.Grid	Layer		no	\N
+exact	\N	Layer	\N	HikariSub.MainWindow	Layer		no	\N
+exact	\N	Sort by layer	\N	HikariSub.MainWindow	Sort by layer		no	\N
+exact	\N	So&rt all lines	\N	HikariSub.MainWindow	So&rt all lines		no	\N
+exact	\N	Sorts all lines in ASS file	\N	HikariSub.MainWindow	Sorts all lines in ASS file		no	\N
+exact	\N	So&rt selected lines	\N	HikariSub.MainWindow	So&rt selected lines		no	\N
+exact	\N	Sorts selected lines in ASS file	\N	HikariSub.MainWindow	Sorts selected lines in ASS file		no	\N
+exact	\N	Fix minor errors (experimental)	\N	HikariSub.MainWindow	Fix minor errors (experimental)		no	\N
+exact	\N	Turns on multireplacer	\N	HikariSub.MainWindow	Turns on multireplacer		no	\N
+exact	\N	Select &lines	\N	HikariSub.MainWindow	Select &lines		no	\N
+exact	\N	Selects lines by expressions	\N	HikariSub.MainWindow	Selects lines by expressions		no	\N
+exact	\N	&Edit	\N	HikariSub.MainWindow	&Edit		no	\N
+exact	\N	Open video	\N	HikariSub.Video	Open video		no	\N
+exact	\N	Opens video file	\N	HikariSub.MainWindow	Opens video file		no	\N
+exact	\N	Recently opened videos	\N	HikariSub.MainWindow	Recently opened videos		no	\N
+exact	\N	Recently opened videos	\N	HikariSub.Video	Recently opened videos		no	\N
+exact	\N	Open keyframes	\N	HikariSub.MainWindow	Open keyframes		no	\N
+exact	\N	Recently opened keyframes	\N	HikariSub.MainWindow	Recently opened keyframes		no	\N
+exact	\N	Open dummy video	\N	HikariSub.MainWindow	Open dummy video		no	\N
+exact	\N	Insert start time from video	\N	HikariSub.MainWindow	Insert start time from video		no	\N
+obsolete	\N	Inserts the start time from video	\N	\N	\N	\N	\N	\N
+exact	\N	Insert end time from video	\N	HikariSub.MainWindow	Insert end time from video		no	\N
+obsolete	\N	Inserts the end time from video	\N	\N	\N	\N	\N	\N
+exact	\N	Previous frame	\N	HikariSub.MainWindow	Previous frame		no	\N
+exact	\N	Previous frame	\N	HikariSub.Video	Previous frame		no	\N
+exact	\N	Go to previous frame	\N	HikariSub.MainWindow	Go to previous frame		no	\N
+exact	\N	Next frame	\N	HikariSub.MainWindow	Next frame		no	\N
+exact	\N	Next frame	\N	HikariSub.Video	Next frame		no	\N
+exact	\N	Go to next frame	\N	HikariSub.MainWindow	Go to next frame		no	\N
+exact	\N	Go to start time	\N	HikariSub.MainWindow	Go to start time		no	\N
+exact	\N	Moves video to start time	\N	HikariSub.MainWindow	Moves video to start time		no	\N
+exact	\N	Go to end time of line	\N	HikariSub.MainWindow	Go to end time of line		no	\N
+exact	\N	Moves video to end time	\N	HikariSub.MainWindow	Moves video to end time		no	\N
+exact	\N	Play / Pause	\N	HikariSub.MainWindow	Play / Pause		no	\N
+exact	\N	Play / Pause	\N	HikariSub.Video	Play / Pause		no	\N
+exact	\N	Plays / Pauses video	\N	HikariSub.MainWindow	Plays / Pauses video		no	\N
+exact	\N	Go to previous keyframe	\N	HikariSub.MainWindow	Go to previous keyframe		no	\N
+exact	\N	Go to next keyframe	\N	HikariSub.MainWindow	Go to next keyframe		no	\N
+exact	\N	Set audio position to video time	\N	HikariSub.MainWindow	Set audio position to video time		no	\N
+exact	\N	Set audio marker to video time	\N	HikariSub.MainWindow	Set audio marker to video time		no	\N
+exact	\N	Zoom video	\N	HikariSub.MainWindow	Zoom video		no	\N
+exact	\N	Turn off video zoom	\N	HikariSub.MainWindow	Turn off video zoom		no	\N
+obsolete	\N	Open video with FFMS2	\N	\N	\N	\N	\N	\N
+obsolete	\N	Opens video with FFMS2 for frame precision	\N	\N	\N	\N	\N	\N
+exact	\N	&Video	\N	HikariSub.MainWindow	&Video		no	\N
+exact	\N	Open audio	\N	HikariSub.MainWindow	Open audio		no	\N
+exact	\N	Opens audio file	\N	HikariSub.MainWindow	Opens audio file		no	\N
+exact	\N	Recently opened audio	\N	HikariSub.MainWindow	Recently opened audio		no	\N
+exact	\N	Open audio from video	\N	HikariSub.MainWindow	Open audio from video		no	\N
+exact	\N	Opens audio from video	\N	HikariSub.MainWindow	Opens audio from video		no	\N
+exact	\N	Open blank 2h30m audio	\N	HikariSub.MainWindow	Open blank 2h30m audio		no	\N
+exact	\N	Opens blank audio 2 hour and 30 minutes long	\N	HikariSub.MainWindow	Opens blank audio 2 hour and 30 minutes long		no	\N
+exact	\N	Close audio	\N	HikariSub.MainWindow	Close audio		no	\N
+exact	\N	Closes audio	\N	HikariSub.MainWindow	Closes audio		no	\N
+exact	\N	A&udio	\N	HikariSub.MainWindow	A&udio		no	\N
+exact	\N	All	\N	HikariSub.MainWindow	All		no	\N
+exact	\N	All	\N	HikariSub.Options	All		no	\N
+exact	\N	All	\N	HikariSub.SettingsImport	All		no	\N
+obsolete	\N	Shows all windows	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shows only video window and subs window	\N	\N	\N	\N	\N	\N
+exact	\N	Video and subs	\N	HikariSub.MainWindow	Video and subs		no	\N
+exact	\N	Audio and subs	\N	HikariSub.MainWindow	Audio and subs		no	\N
+obsolete	\N	Shows only audio window and subs window	\N	\N	\N	\N	\N	\N
+exact	\N	Only video	\N	HikariSub.MainWindow	Only video		no	\N
+obsolete	\N	Shows only video window	\N	\N	\N	\N	\N	\N
+exact	\N	Only subtitles	\N	HikariSub.MainWindow	Only subtitles		no	\N
+obsolete	\N	Shows only the subtitle window	\N	\N	\N	\N	\N	\N
+obsolete	\N	View	\N	\N	\N	\N	\N	\N
+exact	\N	Enable / Disable editor	\N	HikariSub.MainWindow	Enable / Disable editor		no	\N
+obsolete	\N	Enables / disables editor	\N	\N	\N	\N	\N	\N
+exact	\N	ASS file properties	\N	HikariSub.MainWindow	ASS file properties		no	\N
+exact	\N	ASS file properties	\N	HikariSub.ScriptProperties	ASS file properties		no	\N
+exact	\N	ASS subtitle properties	\N	HikariSub.MainWindow	ASS subtitle properties		no	\N
+exact	\N	Style &manager	\N	HikariSub.MainWindow	Style &manager		no	\N
+exact	\N	Is used to manage ASS styles	\N	HikariSub.MainWindow	Is used to manage ASS styles		no	\N
+exact	\N	Convert to ASS	\N	HikariSub.MainWindow	Convert to ASS		no	\N
+exact	\N	Converts to ASS format	\N	HikariSub.MainWindow	Converts to ASS format		no	\N
+exact	\N	Convert to SRT	\N	HikariSub.MainWindow	Convert to SRT		no	\N
+exact	\N	Converts to SRT format	\N	HikariSub.MainWindow	Converts to SRT format		no	\N
+exact	\N	Convert to MDVD	\N	HikariSub.MainWindow	Convert to MDVD		no	\N
+exact	\N	Converts to microDVD format	\N	HikariSub.MainWindow	Converts to microDVD format		no	\N
+exact	\N	Convert to MPL2	\N	HikariSub.MainWindow	Convert to MPL2		no	\N
+exact	\N	Converts to MPL2 format	\N	HikariSub.MainWindow	Converts to MPL2 format		no	\N
+exact	\N	Convert to TMP	\N	HikariSub.MainWindow	Convert to TMP		no	\N
+exact	\N	Converts to TMPlayer format (not recommended)	\N	HikariSub.MainWindow	Converts to TMPlayer format (not recommended)		no	\N
+exact	\N	Conversion	\N	HikariSub.MainWindow	Conversion		no	\N
+exact	\N	Conversion	\N	HikariSub.Options	Conversion		no	\N
+exact	\N	Converts from one format to another	\N	HikariSub.MainWindow	Converts from one format to another		no	\N
+obsolete	\N	Shift &times...\tCtrl-I	\N	\N	\N	\N	\N	\N
+exact	\N	Shifting subtitle times	\N	HikariSub.MainWindow	Shifting subtitle times		no	\N
+exact	\N	Resample subtitles	\N	HikariSub.Conversion	Resample subtitles		no	\N
+exact	\N	Resample subtitles	\N	HikariSub.MainWindow	Resample subtitles		no	\N
+exact	\N	Check spelling	\N	HikariSub.MainWindow	Check spelling		no	\N
+exact	\N	Hide tags	\N	HikariSub.Editor	Hide tags		no	\N
+exact	\N	Hide tags	\N	HikariSub.MainWindow	Hide tags		no	\N
+obsolete	\N	Hides tags in ASS and MDVD	\N	\N	\N	\N	\N	\N
+obsolete	\N	Su&btitles	\N	\N	\N	\N	\N	\N
+exact	\N	Load script	\N	HikariSub.MainWindow	Load script		no	\N
+exact	\N	Refresh autoload scripts	\N	HikariSub.MainWindow	Refresh autoload scripts		no	\N
+exact	\N	Run the last loaded script	\N	HikariSub.MainWindow	Run the last loaded script		no	\N
+exact	\N	Open shortcut mapping window	\N	HikariSub.MainWindow	Open shortcut mapping window		no	\N
+obsolete	\N	Au&tomation	\N	\N	\N	\N	\N	\N
+exact	\N	HikariSub &website	\N	HikariSub.MainWindow	HikariSub &website		no	\N
+exact	\N	Opens the HikariSub website in the default browser	\N	HikariSub.MainWindow	Opens the HikariSub website in the default browser		no	\N
+exact	\N	&Report an issue	\N	HikariSub.MainWindow	&Report an issue		no	\N
+exact	\N	Opens the HikariSub issue tracker	\N	HikariSub.MainWindow	Opens the HikariSub issue tracker		no	\N
+exact	\N	Check for &updates	\N	HikariSub.MainWindow	Check for &updates		no	\N
+exact	\N	Checks whether a newer version is available	\N	HikariSub.MainWindow	Checks whether a newer version is available		no	\N
+exact	\N	&About	\N	HikariSub.MainWindow	&About		no	\N
+exact	\N	Shows program info	\N	HikariSub.MainWindow	Shows program info		no	\N
+exact	\N	&Credits	\N	HikariSub.MainWindow	&Credits		no	\N
+exact	\N	Shows credits	\N	HikariSub.MainWindow	Shows credits		no	\N
+exact	\N	&Help	\N	HikariSub.MainWindow	&Help		no	\N
+placeholder	\N	Time elapsed: %s	\N	HikariSub.Matroska	Time elapsed: %1		no	%s -> %1
+placeholder	\N	Time elapsed: %s	\N	HikariSub.StatusBar	Time elapsed: %1		no	%s -> %1
+obsolete	\N	Choose script	\N	\N	\N	\N	\N	\N
+obsolete	\N	Script files (*.lua),(*.moon)|*.lua;*.moon;	\N	\N	\N	\N	\N	\N
+exact	\N	This subtitle file does not have any scripts added	\N	HikariSub.Automation	This subtitle file does not have any scripts added		no	\N
+placeholder	\N	Validation Lua script '%s' failed	\N	HikariSub.Automation	Validation Lua script '%1' failed		no	%s -> %1
+exact	\N	Choose subtitle file	\N	HikariSub.Translation	Choose subtitle file		no	\N
+obsolete	\N	Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm	\N	\N	\N	\N	\N	\N
+exact	\N	Choose video file	\N	HikariSub.Video	Choose video file		no	\N
+obsolete	\N	Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
+obsolete	\N	Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
+obsolete	\N	HikariSub subtitle editor by altqx,\nversion %s from %s	\N	\N	\N	\N	\N	\N
+exact	\N	Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n	\N	HikariSub.MainWindow	Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n		no	\N
+exact	\N	If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n	\N	HikariSub.MainWindow	If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n		no	\N
+exact	\N	HikariSub includes parts of the following projects:\n	\N	HikariSub.MainWindow	HikariSub includes parts of the following projects:\n		no	\N
+obsolete	\N	Color picker, demuxing subtitles from MKV, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n	\N	\N	\N	\N	\N	\N
+exact	\N	About HikariSub	\N	HikariSub.MainWindow	About HikariSub		no	\N
+exact	\N	Graphical help: (buttons, help pictures etc.)\n	\N	HikariSub.MainWindow	Graphical help: (buttons, help pictures etc.)\n		no	\N
+exact	\N	- Xandros (new video buttons).\n	\N	HikariSub.MainWindow	- Xandros (new video buttons).\n		no	\N
+exact	\N	- Devilkan (menu and toolbar buttons)\n	\N	HikariSub.MainWindow	- Devilkan (menu and toolbar buttons)\n		no	\N
+exact	\N	- Zły Los (icons for file associations and menu).\n	\N	HikariSub.MainWindow	- Zły Los (icons for file associations and menu).\n		no	\N
+exact	\N	Testers:\n	\N	HikariSub.MainWindow	Testers:\n		no	\N
+exact	\N	- Sacredus (first translator using translator mode,\ngreat help testing HikariSub on a slow computer)\n	\N	HikariSub.MainWindow	- Sacredus (first translator using translator mode,\ngreat help testing HikariSub on a slow computer)\n		no	\N
+exact	\N	- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n	\N	HikariSub.MainWindow	- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n		no	\N
+exact	\N	helped with typesetting tools and came up with many more improvements).\n	\N	HikariSub.MainWindow	helped with typesetting tools and came up with many more improvements).\n		no	\N
+exact	\N	- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n	\N	HikariSub.MainWindow	- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n		no	\N
+exact	\N	- mas1904 (found some errors and helping with crash debuging).\n	\N	HikariSub.MainWindow	- mas1904 (found some errors and helping with crash debuging).\n		no	\N
+exact	\N	- Senami (made new themes and found some bugs).\n	\N	HikariSub.MainWindow	- Senami (made new themes and found some bugs).\n		no	\N
+exact	\N	- altinat (Thai translation).\n	\N	HikariSub.MainWindow	- altinat (Thai translation).\n		no	\N
+exact	\N	- labrie75 (Korean translation).\n	\N	HikariSub.MainWindow	- labrie75 (Korean translation).\n		no	\N
+exact	\N	- Niskala5570 (Malay translation).\n	\N	HikariSub.MainWindow	- Niskala5570 (Malay translation).\n		no	\N
+exact	\N	Thanks to other HikariSub users who reported bugs:\n	\N	HikariSub.MainWindow	Thanks to other HikariSub users who reported bugs:\n		no	\N
+exact	\N	Credits	\N	HikariSub.MainWindow	Credits		no	\N
+exact	\N	Subtitle file 	\N	HikariSub.Documents	Subtitle file 		no	\N
+exact	\N	Save subtitle file	\N	HikariSub.Documents	Save subtitle file		no	\N
+exact	\N	Chosen file is read only,\nplease save with different name or change file attribute.	\N	HikariSub.Documents	Chosen file is read only,\nplease save with different name or change file attribute.		no	\N
+exact	\N	Chosen file is read only,\nplease save with different name or change file attribute.	\N	HikariSub.Session	Chosen file is read only,\nplease save with different name or change file attribute.		no	\N
+placeholder	\N	Load subtitles named "%s"?	\N	HikariSub.Tabs	Load subtitles named "%1"?		no	%s -> %1
+obsolete	\N	Cannot open subtitle file	\N	\N	\N	\N	\N	\N
+exact	\N	None	\N	HikariSub.MainWindow	None		no	\N
+exact	\N	None	\N	HikariSub.Options	None		no	\N
+exact	\N	None	\N	HikariSub.Styles	None		no	\N
+obsolete	\N	Save subtitles named "%s" before %s?	\N	\N	\N	\N	\N	\N
+obsolete	\N	exiting program	\N	\N	\N	\N	\N	\N
+obsolete	\N	closing tab	\N	\N	\N	\N	\N	\N
+obsolete	\N	loading new subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	removing subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot load audio hotkeys	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot load audio configuration	\N	\N	\N	\N	\N	\N
+exact	\N	Choose audio file	\N	HikariSub.Audio	Choose audio file		no	\N
+exact	\N	Audio and video files	\N	HikariSub.Audio	Audio and video files		no	\N
+exact	\N	All files	\N	HikariSub.Audio	All files		no	\N
+obsolete	\N	Undo to 	\N	\N	\N	\N	\N	\N
+obsolete	\N	Redo to 	\N	\N	\N	\N	\N	\N
+exact	\N	Choose session file	\N	HikariSub.Session	Choose session file		no	\N
+obsolete	\N	Session file (*.kls),|*.kls	\N	\N	\N	\N	\N	\N
+exact	\N	Save session file	\N	HikariSub.Session	Save session file		no	\N
+obsolete	\N	Hotkey "%s" it's not script hotkey.	\N	\N	\N	\N	\N	\N
 obsolete	\N	Exit	\N	\N	\N	\N	\N	\N
 exact	\N	Open new tab	\N	HikariSub.Tabs	Open new tab		no	\N
 obsolete	\N	Close current tab	\N	\N	\N	\N	\N	\N
 obsolete	\N	Time shift window	\N	\N	\N	\N	\N	\N
-exact	\N	Convert to ASS	\N	HikariSub.MainWindow	Convert to ASS		no	\N
-exact	\N	Convert to SRT	\N	HikariSub.MainWindow	Convert to SRT		no	\N
-exact	\N	Convert to MDVD	\N	HikariSub.MainWindow	Convert to MDVD		no	\N
-exact	\N	Convert to MPL2	\N	HikariSub.MainWindow	Convert to MPL2		no	\N
-exact	\N	Convert to TMP	\N	HikariSub.MainWindow	Convert to TMP		no	\N
 exact	\N	Style manager	\N	HikariSub.Styles	Style manager		no	\N
-exact	\N	Enable / Disable editor	\N	HikariSub.MainWindow	Enable / Disable editor		no	\N
-exact	\N	Open video	\N	HikariSub.Video	Open video		no	\N
-exact	\N	Undo	\N	HikariSub.MainWindow	Undo		no	\N
-exact	\N	Redo	\N	HikariSub.MainWindow	Redo		no	\N
-exact	\N	History	\N	HikariSub.MainWindow	History		no	\N
 exact	\N	Open subtitles	\N	HikariSub.Video	Open subtitles		no	\N
 exact	\N	Save	\N	HikariSub.Documents	Save		no	\N
 exact	\N	Save	\N	HikariSub.ScriptProperties	Save		no	\N
@@ -544,17 +794,8 @@ exact	\N	Save	\N	HikariSub.Tabs	Save		no	\N
 obsolete	\N	Save as...	\N	\N	\N	\N	\N	\N
 exact	\N	Delete text	\N	HikariSub.Grid	Delete text		no	\N
 exact	\N	Delete line	\N	HikariSub.Translation	Delete line		no	\N
-exact	\N	Insert start time from video	\N	HikariSub.MainWindow	Insert start time from video		no	\N
-exact	\N	Insert end time from video	\N	HikariSub.MainWindow	Insert end time from video		no	\N
-exact	\N	Play / Pause	\N	HikariSub.MainWindow	Play / Pause		no	\N
-exact	\N	Play / Pause	\N	HikariSub.Video	Play / Pause		no	\N
-exact	\N	Previous frame	\N	HikariSub.MainWindow	Previous frame		no	\N
-exact	\N	Previous frame	\N	HikariSub.Video	Previous frame		no	\N
-exact	\N	Next frame	\N	HikariSub.MainWindow	Next frame		no	\N
-exact	\N	Next frame	\N	HikariSub.Video	Next frame		no	\N
 exact	\N	Previous line	\N	HikariSub.Audio	Previous line		no	\N
 exact	\N	Next line	\N	HikariSub.Audio	Next line		no	\N
-exact	\N	Find next	\N	HikariSub.MainWindow	Find next		no	\N
 obsolete	\N	Merge with previous line	\N	\N	\N	\N	\N	\N
 obsolete	\N	Merge with next line	\N	\N	\N	\N	\N	\N
 obsolete	\N	Change start time to nearest keyframe	\N	\N	\N	\N	\N	\N
@@ -685,22 +926,9 @@ exact	\N	Split lines into frames	\N	HikariSub.Grid	Split lines into frames		no	\
 exact	\N	Split lines into characters	\N	HikariSub.Grid	Split lines into characters		no	\N
 exact	\N	Split lines into words	\N	HikariSub.Grid	Split lines into words		no	\N
 exact	\N	Split lines by wraps	\N	HikariSub.Grid	Split lines by wraps		no	\N
-exact	\N	ASS file properties	\N	HikariSub.MainWindow	ASS file properties		no	\N
-exact	\N	ASS file properties	\N	HikariSub.ScriptProperties	ASS file properties		no	\N
+obsolete	\N	Check for updates	\N	\N	\N	\N	\N	\N
 obsolete	\N	About	\N	\N	\N	\N	\N	\N
 obsolete	\N	Report an issue	\N	\N	\N	\N	\N	\N
-exact	\N	Open audio from video	\N	HikariSub.MainWindow	Open audio from video		no	\N
-exact	\N	Load script	\N	HikariSub.MainWindow	Load script		no	\N
-exact	\N	Open shortcut mapping window	\N	HikariSub.MainWindow	Open shortcut mapping window		no	\N
-exact	\N	Refresh autoload scripts	\N	HikariSub.MainWindow	Refresh autoload scripts		no	\N
-exact	\N	Close audio	\N	HikariSub.MainWindow	Close audio		no	\N
-exact	\N	Credits	\N	HikariSub.MainWindow	Credits		no	\N
-exact	\N	Hide tags	\N	HikariSub.Editor	Hide tags		no	\N
-exact	\N	Hide tags	\N	HikariSub.MainWindow	Hide tags		no	\N
-exact	\N	Open keyframes	\N	HikariSub.MainWindow	Open keyframes		no	\N
-exact	\N	Open auto save	\N	HikariSub.MainWindow	Open auto save		no	\N
-exact	\N	Open auto save	\N	HikariSub.Session	Open auto save		no	\N
-exact	\N	Run the last loaded script	\N	HikariSub.MainWindow	Run the last loaded script		no	\N
 obsolete	\N	Sort all lines by start time	\N	\N	\N	\N	\N	\N
 obsolete	\N	Sort all lines by end time	\N	\N	\N	\N	\N	\N
 obsolete	\N	Sort all lines by styles	\N	\N	\N	\N	\N	\N
@@ -714,35 +942,15 @@ obsolete	\N	Sort selected lines by actor	\N	\N	\N	\N	\N	\N
 obsolete	\N	Sort selected lines by effect	\N	\N	\N	\N	\N	\N
 obsolete	\N	Sort selected lines by layer	\N	\N	\N	\N	\N	\N
 exact	\N	Shift times / run time post processor	\N	HikariSub.MainWindow	Shift times / run time post processor		no	\N
-exact	\N	Go to previous keyframe	\N	HikariSub.MainWindow	Go to previous keyframe		no	\N
-exact	\N	Go to next keyframe	\N	HikariSub.MainWindow	Go to next keyframe		no	\N
-exact	\N	Resample subtitles	\N	HikariSub.Conversion	Resample subtitles		no	\N
-exact	\N	Resample subtitles	\N	HikariSub.MainWindow	Resample subtitles		no	\N
-exact	\N	Undo to last save	\N	HikariSub.MainWindow	Undo to last save		no	\N
-obsolete	\N	Open video with FFMS2	\N	\N	\N	\N	\N	\N
-exact	\N	Zoom video	\N	HikariSub.MainWindow	Zoom video		no	\N
-exact	\N	Turn off video zoom	\N	HikariSub.MainWindow	Turn off video zoom		no	\N
 obsolete	\N	View all	\N	\N	\N	\N	\N	\N
 obsolete	\N	View audio and subtitles	\N	\N	\N	\N	\N	\N
 obsolete	\N	View only subtitles	\N	\N	\N	\N	\N	\N
 obsolete	\N	View video and subtitles	\N	\N	\N	\N	\N	\N
 obsolete	\N	View only video	\N	\N	\N	\N	\N	\N
 obsolete	\N	Clean styles of ASS file	\N	\N	\N	\N	\N	\N
-exact	\N	Fix minor errors (experimental)	\N	HikariSub.MainWindow	Fix minor errors (experimental)		no	\N
-exact	\N	Load last session	\N	HikariSub.MainWindow	Load last session		no	\N
-exact	\N	Open audio	\N	HikariSub.MainWindow	Open audio		no	\N
 obsolete	\N	Play active line	\N	\N	\N	\N	\N	\N
-exact	\N	Remove subtitles from the editor	\N	HikariSub.MainWindow	Remove subtitles from the editor		no	\N
-exact	\N	Save all subtitles	\N	HikariSub.MainWindow	Save all subtitles		no	\N
-exact	\N	Save translation	\N	HikariSub.MainWindow	Save translation		no	\N
-exact	\N	Save subtitles using the video name	\N	HikariSub.MainWindow	Save subtitles using the video name		no	\N
 exact	\N	Select lines	\N	HikariSub.SelectLines	Select lines		no	\N
-exact	\N	Set audio position to video time	\N	HikariSub.MainWindow	Set audio position to video time		no	\N
-exact	\N	Set audio marker to video time	\N	HikariSub.MainWindow	Set audio marker to video time		no	\N
 obsolete	\N	Settings	\N	\N	\N	\N	\N	\N
-exact	\N	Go to start time	\N	HikariSub.MainWindow	Go to start time		no	\N
-exact	\N	Go to end time of line	\N	HikariSub.MainWindow	Go to end time of line		no	\N
-exact	\N	Check spelling	\N	HikariSub.MainWindow	Check spelling		no	\N
 exact	\N	Copy frame to clipboard	\N	HikariSub.Video	Copy frame to clipboard		no	\N
 obsolete	\N	Remove video	\N	\N	\N	\N	\N	\N
 exact	\N	Save frame as PNG	\N	HikariSub.Video	Save frame as PNG		no	\N
@@ -751,206 +959,6 @@ exact	\N	Change aspect ratio	\N	HikariSub.Video	Change aspect ratio		no	\N
 exact	\N	Copy frame with subtitles to clipboard	\N	HikariSub.Video	Copy frame with subtitles to clipboard		no	\N
 exact	\N	Full screen	\N	HikariSub.Video	Full screen		no	\N
 exact	\N	Save frame with subtitles as PNG	\N	HikariSub.Video	Save frame with subtitles as PNG		no	\N
-exact	\N	Apply to All	\N	HikariSub.Documents	Apply to All		no	\N
-exact	\N	Yes to all	\N	HikariSub.Styles	Yes to all		no	\N
-exact	\N	Yes	\N	HikariSub.Documents	Yes		no	\N
-exact	\N	Yes	\N	HikariSub.Matroska	Yes		no	\N
-exact	\N	Yes	\N	HikariSub.Search	Yes		no	\N
-exact	\N	Yes	\N	HikariSub.Styles	Yes		no	\N
-exact	\N	No	\N	HikariSub.Documents	No		no	\N
-exact	\N	No	\N	HikariSub.Matroska	No		no	\N
-exact	\N	No	\N	HikariSub.Search	No		no	\N
-exact	\N	No	\N	HikariSub.Styles	No		no	\N
-obsolete	\N	Help	\N	\N	\N	\N	\N	\N
-obsolete	\N	Untitled - 	\N	\N	\N	\N	\N	\N
-exact	\N	Video duration	\N	HikariSub.StatusBar	Video duration		no	\N
-exact	\N	Video scale	\N	HikariSub.StatusBar	Video scale		no	\N
-exact	\N	Video zoom	\N	HikariSub.StatusBar	Video zoom		no	\N
-exact	\N	Frames per second	\N	HikariSub.StatusBar	Frames per second		no	\N
-exact	\N	Subtitles resolution	\N	HikariSub.Conversion	Subtitles resolution		no	\N
-exact	\N	Subtitles resolution	\N	HikariSub.StatusBar	Subtitles resolution		no	\N
-exact	\N	Video aspect ratio	\N	HikariSub.StatusBar	Video aspect ratio		no	\N
-exact	\N	Video file name	\N	HikariSub.StatusBar	Video file name		no	\N
-exact	\N	Video resolution	\N	HikariSub.StatusBar	Video resolution		no	\N
-exact	\N	Loads previously loaded files	\N	HikariSub.MainWindow	Loads previously loaded files		no	\N
-exact	\N	Load session from file	\N	HikariSub.MainWindow	Load session from file		no	\N
-exact	\N	Loads session from saved session file	\N	HikariSub.MainWindow	Loads session from saved session file		no	\N
-exact	\N	Save session to file	\N	HikariSub.MainWindow	Save session to file		no	\N
-exact	\N	Saves session to file	\N	HikariSub.MainWindow	Saves session to file		no	\N
-exact	\N	Ask whether to load the last session at program startup	\N	HikariSub.MainWindow	Ask whether to load the last session at program startup		no	\N
-exact	\N	Asks whether to load previously loaded files at program startup	\N	HikariSub.MainWindow	Asks whether to load previously loaded files at program startup		no	\N
-exact	\N	Load last session after program start	\N	HikariSub.MainWindow	Load last session after program start		no	\N
-exact	\N	Loads previously loaded files at program startup	\N	HikariSub.MainWindow	Loads previously loaded files at program startup		no	\N
-obsolete	\N	&Open subtitles	\N	\N	\N	\N	\N	\N
-exact	\N	Open subtitle file	\N	HikariSub.MainWindow	Open subtitle file		no	\N
-exact	\N	&Save	\N	HikariSub.MainWindow	&Save		no	\N
-exact	\N	Save current file	\N	HikariSub.MainWindow	Save current file		no	\N
-exact	\N	Save &all	\N	HikariSub.MainWindow	Save &all		no	\N
-obsolete	\N	Save &as...	\N	\N	\N	\N	\N	\N
-exact	\N	Save as	\N	HikariSub.MainWindow	Save as		no	\N
-exact	\N	Save &translation	\N	HikariSub.MainWindow	Save &translation		no	\N
-exact	\N	Recently opened &subtitles	\N	HikariSub.MainWindow	Recently opened &subtitles		no	\N
-exact	\N	Recently opened subtitles	\N	HikariSub.MainWindow	Recently opened subtitles		no	\N
-exact	\N	Recently opened subtitles	\N	HikariSub.Video	Recently opened subtitles		no	\N
-exact	\N	Remove subtitles from the &editor	\N	HikariSub.MainWindow	Remove subtitles from the &editor		no	\N
-exact	\N	Opens the selected autosave from the list	\N	HikariSub.MainWindow	Opens the selected autosave from the list		no	\N
-exact	\N	Opens the temporary file removal window	\N	HikariSub.MainWindow	Opens the temporary file removal window		no	\N
-exact	\N	Show / Hide log window	\N	HikariSub.MainWindow	Show / Hide log window		no	\N
-exact	\N	Last session	\N	HikariSub.MainWindow	Last session		no	\N
-exact	\N	Last session options	\N	HikariSub.MainWindow	Last session options		no	\N
-exact	\N	&Settings	\N	HikariSub.MainWindow	&Settings		no	\N
-exact	\N	Program settings	\N	HikariSub.MainWindow	Program settings		no	\N
-obsolete	\N	&Exit\tAlt-F4	\N	\N	\N	\N	\N	\N
-exact	\N	Exit the program	\N	HikariSub.MainWindow	Exit the program		no	\N
-exact	\N	&File	\N	HikariSub.MainWindow	&File		no	\N
-exact	\N	&Undo	\N	HikariSub.MainWindow	&Undo		no	\N
-exact	\N	&Redo	\N	HikariSub.MainWindow	&Redo		no	\N
-exact	\N	&History	\N	HikariSub.MainWindow	&History		no	\N
-exact	\N	Find and re&place	\N	HikariSub.MainWindow	Find and re&place		no	\N
-exact	\N	Searches for the specified text phrases and replaces them	\N	HikariSub.MainWindow	Searches for the specified text phrases and replaces them		no	\N
-exact	\N	&Find	\N	HikariSub.MainWindow	&Find		no	\N
-exact	\N	Searches for the specified text phrase	\N	HikariSub.MainWindow	Searches for the specified text phrase		no	\N
-exact	\N	Finds the next occurrence of the phrase in the text	\N	HikariSub.MainWindow	Finds the next occurrence of the phrase in the text		no	\N
-exact	\N	The starting time	\N	HikariSub.Grid	The starting time		no	\N
-exact	\N	The starting time	\N	HikariSub.MainWindow	The starting time		no	\N
-exact	\N	The starting time	\N	HikariSub.TimeShift	The starting time		no	\N
-exact	\N	Sort by start time	\N	HikariSub.MainWindow	Sort by start time		no	\N
-exact	\N	End time	\N	HikariSub.Grid	End time		no	\N
-exact	\N	End time	\N	HikariSub.MainWindow	End time		no	\N
-exact	\N	End time	\N	HikariSub.SelectLines	End time		no	\N
-exact	\N	End time	\N	HikariSub.TimeShift	End time		no	\N
-exact	\N	Sort by end time	\N	HikariSub.MainWindow	Sort by end time		no	\N
-exact	\N	Sort by styles	\N	HikariSub.MainWindow	Sort by styles		no	\N
-exact	\N	Sort by actor	\N	HikariSub.MainWindow	Sort by actor		no	\N
-exact	\N	Sort by effect	\N	HikariSub.MainWindow	Sort by effect		no	\N
-exact	\N	Layer	\N	HikariSub.Editor	Layer		no	\N
-exact	\N	Layer	\N	HikariSub.Grid	Layer		no	\N
-exact	\N	Layer	\N	HikariSub.MainWindow	Layer		no	\N
-exact	\N	Sort by layer	\N	HikariSub.MainWindow	Sort by layer		no	\N
-exact	\N	So&rt all lines	\N	HikariSub.MainWindow	So&rt all lines		no	\N
-exact	\N	Sorts all lines in ASS file	\N	HikariSub.MainWindow	Sorts all lines in ASS file		no	\N
-exact	\N	So&rt selected lines	\N	HikariSub.MainWindow	So&rt selected lines		no	\N
-exact	\N	Sorts selected lines in ASS file	\N	HikariSub.MainWindow	Sorts selected lines in ASS file		no	\N
-exact	\N	Turns on multireplacer	\N	HikariSub.MainWindow	Turns on multireplacer		no	\N
-exact	\N	Select &lines	\N	HikariSub.MainWindow	Select &lines		no	\N
-exact	\N	Selects lines by expressions	\N	HikariSub.MainWindow	Selects lines by expressions		no	\N
-exact	\N	&Edit	\N	HikariSub.MainWindow	&Edit		no	\N
-exact	\N	Opens video file	\N	HikariSub.MainWindow	Opens video file		no	\N
-exact	\N	Recently opened videos	\N	HikariSub.MainWindow	Recently opened videos		no	\N
-exact	\N	Recently opened videos	\N	HikariSub.Video	Recently opened videos		no	\N
-exact	\N	Recently opened keyframes	\N	HikariSub.MainWindow	Recently opened keyframes		no	\N
-exact	\N	Open dummy video	\N	HikariSub.MainWindow	Open dummy video		no	\N
-obsolete	\N	Inserts the start time from video	\N	\N	\N	\N	\N	\N
-obsolete	\N	Inserts the end time from video	\N	\N	\N	\N	\N	\N
-exact	\N	Go to previous frame	\N	HikariSub.MainWindow	Go to previous frame		no	\N
-exact	\N	Go to next frame	\N	HikariSub.MainWindow	Go to next frame		no	\N
-exact	\N	Moves video to start time	\N	HikariSub.MainWindow	Moves video to start time		no	\N
-exact	\N	Moves video to end time	\N	HikariSub.MainWindow	Moves video to end time		no	\N
-exact	\N	Plays / Pauses video	\N	HikariSub.MainWindow	Plays / Pauses video		no	\N
-obsolete	\N	Opens video with FFMS2 for frame precision	\N	\N	\N	\N	\N	\N
-exact	\N	&Video	\N	HikariSub.MainWindow	&Video		no	\N
-exact	\N	Opens audio file	\N	HikariSub.MainWindow	Opens audio file		no	\N
-exact	\N	Recently opened audio	\N	HikariSub.MainWindow	Recently opened audio		no	\N
-exact	\N	Opens audio from video	\N	HikariSub.MainWindow	Opens audio from video		no	\N
-exact	\N	Open blank 2h30m audio	\N	HikariSub.MainWindow	Open blank 2h30m audio		no	\N
-exact	\N	Opens blank audio 2 hour and 30 minutes long	\N	HikariSub.MainWindow	Opens blank audio 2 hour and 30 minutes long		no	\N
-exact	\N	Closes audio	\N	HikariSub.MainWindow	Closes audio		no	\N
-exact	\N	A&udio	\N	HikariSub.MainWindow	A&udio		no	\N
-exact	\N	All	\N	HikariSub.MainWindow	All		no	\N
-exact	\N	All	\N	HikariSub.Options	All		no	\N
-exact	\N	All	\N	HikariSub.SettingsImport	All		no	\N
-obsolete	\N	Shows all windows	\N	\N	\N	\N	\N	\N
-obsolete	\N	Shows only video window and subs window	\N	\N	\N	\N	\N	\N
-exact	\N	Video and subs	\N	HikariSub.MainWindow	Video and subs		no	\N
-exact	\N	Audio and subs	\N	HikariSub.MainWindow	Audio and subs		no	\N
-obsolete	\N	Shows only audio window and subs window	\N	\N	\N	\N	\N	\N
-exact	\N	Only video	\N	HikariSub.MainWindow	Only video		no	\N
-obsolete	\N	Shows only video window	\N	\N	\N	\N	\N	\N
-exact	\N	Only subtitles	\N	HikariSub.MainWindow	Only subtitles		no	\N
-obsolete	\N	Shows only the subtitle window	\N	\N	\N	\N	\N	\N
-obsolete	\N	View	\N	\N	\N	\N	\N	\N
-obsolete	\N	Enables / disables editor	\N	\N	\N	\N	\N	\N
-exact	\N	ASS subtitle properties	\N	HikariSub.MainWindow	ASS subtitle properties		no	\N
-exact	\N	Style &manager	\N	HikariSub.MainWindow	Style &manager		no	\N
-exact	\N	Is used to manage ASS styles	\N	HikariSub.MainWindow	Is used to manage ASS styles		no	\N
-exact	\N	Converts to ASS format	\N	HikariSub.MainWindow	Converts to ASS format		no	\N
-exact	\N	Converts to SRT format	\N	HikariSub.MainWindow	Converts to SRT format		no	\N
-exact	\N	Converts to microDVD format	\N	HikariSub.MainWindow	Converts to microDVD format		no	\N
-exact	\N	Converts to MPL2 format	\N	HikariSub.MainWindow	Converts to MPL2 format		no	\N
-exact	\N	Converts to TMPlayer format (not recommended)	\N	HikariSub.MainWindow	Converts to TMPlayer format (not recommended)		no	\N
-exact	\N	Conversion	\N	HikariSub.MainWindow	Conversion		no	\N
-exact	\N	Conversion	\N	HikariSub.Options	Conversion		no	\N
-exact	\N	Converts from one format to another	\N	HikariSub.MainWindow	Converts from one format to another		no	\N
-obsolete	\N	Shift &times...\tCtrl-I	\N	\N	\N	\N	\N	\N
-exact	\N	Shifting subtitle times	\N	HikariSub.MainWindow	Shifting subtitle times		no	\N
-obsolete	\N	Hides tags in ASS and MDVD	\N	\N	\N	\N	\N	\N
-obsolete	\N	Su&btitles	\N	\N	\N	\N	\N	\N
-obsolete	\N	Au&tomation	\N	\N	\N	\N	\N	\N
-exact	\N	HikariSub &website	\N	HikariSub.MainWindow	HikariSub &website		no	\N
-exact	\N	Opens the HikariSub website in the default browser	\N	HikariSub.MainWindow	Opens the HikariSub website in the default browser		no	\N
-exact	\N	&Report an issue	\N	HikariSub.MainWindow	&Report an issue		no	\N
-exact	\N	Opens the HikariSub issue tracker	\N	HikariSub.MainWindow	Opens the HikariSub issue tracker		no	\N
-exact	\N	&About	\N	HikariSub.MainWindow	&About		no	\N
-exact	\N	Shows program info	\N	HikariSub.MainWindow	Shows program info		no	\N
-exact	\N	&Credits	\N	HikariSub.MainWindow	&Credits		no	\N
-exact	\N	Shows credits	\N	HikariSub.MainWindow	Shows credits		no	\N
-exact	\N	&Help	\N	HikariSub.MainWindow	&Help		no	\N
-placeholder	\N	Time elapsed: %s	\N	HikariSub.Matroska	Time elapsed: %1		no	%s -> %1
-placeholder	\N	Time elapsed: %s	\N	HikariSub.StatusBar	Time elapsed: %1		no	%s -> %1
-obsolete	\N	Choose script	\N	\N	\N	\N	\N	\N
-obsolete	\N	Script files (*.lua),(*.moon)|*.lua;*.moon;	\N	\N	\N	\N	\N	\N
-exact	\N	This subtitle file does not have any scripts added	\N	HikariSub.Automation	This subtitle file does not have any scripts added		no	\N
-placeholder	\N	Validation Lua script '%s' failed	\N	HikariSub.Automation	Validation Lua script '%1' failed		no	%s -> %1
-exact	\N	Choose subtitle file	\N	HikariSub.Translation	Choose subtitle file		no	\N
-obsolete	\N	Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
-obsolete	\N	Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
-obsolete	\N	HikariSub subtitle editor by altqx,\nversion %s from %s	\N	\N	\N	\N	\N	\N
-exact	\N	Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n	\N	HikariSub.MainWindow	Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n		no	\N
-exact	\N	If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n	\N	HikariSub.MainWindow	If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n		no	\N
-exact	\N	HikariSub includes parts of the following projects:\n	\N	HikariSub.MainWindow	HikariSub includes parts of the following projects:\n		no	\N
-obsolete	\N	Color picker, demuxing subtitles from MKV, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n	\N	\N	\N	\N	\N	\N
-exact	\N	About HikariSub	\N	HikariSub.MainWindow	About HikariSub		no	\N
-exact	\N	Graphical help: (buttons, help pictures etc.)\n	\N	HikariSub.MainWindow	Graphical help: (buttons, help pictures etc.)\n		no	\N
-exact	\N	- Xandros (new video buttons).\n	\N	HikariSub.MainWindow	- Xandros (new video buttons).\n		no	\N
-exact	\N	- Devilkan (menu and toolbar buttons)\n	\N	HikariSub.MainWindow	- Devilkan (menu and toolbar buttons)\n		no	\N
-exact	\N	- Zły Los (icons for file associations and menu).\n	\N	HikariSub.MainWindow	- Zły Los (icons for file associations and menu).\n		no	\N
-exact	\N	Testers:\n	\N	HikariSub.MainWindow	Testers:\n		no	\N
-exact	\N	- Sacredus (first translator using translator mode,\ngreat help testing HikariSub on a slow computer)\n	\N	HikariSub.MainWindow	- Sacredus (first translator using translator mode,\ngreat help testing HikariSub on a slow computer)\n		no	\N
-exact	\N	- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n	\N	HikariSub.MainWindow	- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n		no	\N
-exact	\N	helped with typesetting tools and came up with many more improvements).\n	\N	HikariSub.MainWindow	helped with typesetting tools and came up with many more improvements).\n		no	\N
-exact	\N	- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n	\N	HikariSub.MainWindow	- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n		no	\N
-exact	\N	- mas1904 (found some errors and helping with crash debuging).\n	\N	HikariSub.MainWindow	- mas1904 (found some errors and helping with crash debuging).\n		no	\N
-exact	\N	- Senami (made new themes and found some bugs).\n	\N	HikariSub.MainWindow	- Senami (made new themes and found some bugs).\n		no	\N
-exact	\N	- altinat (Thai translation).\n	\N	HikariSub.MainWindow	- altinat (Thai translation).\n		no	\N
-exact	\N	- labrie75 (Korean translation).\n	\N	HikariSub.MainWindow	- labrie75 (Korean translation).\n		no	\N
-exact	\N	- Niskala5570 (Malay translation).\n	\N	HikariSub.MainWindow	- Niskala5570 (Malay translation).\n		no	\N
-exact	\N	Thanks to other HikariSub users who reported bugs:\n	\N	HikariSub.MainWindow	Thanks to other HikariSub users who reported bugs:\n		no	\N
-exact	\N	Subtitle file 	\N	HikariSub.Documents	Subtitle file 		no	\N
-exact	\N	Save subtitle file	\N	HikariSub.Documents	Save subtitle file		no	\N
-exact	\N	Chosen file is read only,\nplease save with different name or change file attribute.	\N	HikariSub.Documents	Chosen file is read only,\nplease save with different name or change file attribute.		no	\N
-exact	\N	Chosen file is read only,\nplease save with different name or change file attribute.	\N	HikariSub.Session	Chosen file is read only,\nplease save with different name or change file attribute.		no	\N
-placeholder	\N	Load subtitles named "%s"?	\N	HikariSub.Tabs	Load subtitles named "%1"?		no	%s -> %1
-obsolete	\N	Cannot open subtitle file	\N	\N	\N	\N	\N	\N
-exact	\N	None	\N	HikariSub.MainWindow	None		no	\N
-exact	\N	None	\N	HikariSub.Options	None		no	\N
-exact	\N	None	\N	HikariSub.Styles	None		no	\N
-obsolete	\N	Save subtitles named "%s" before %s?	\N	\N	\N	\N	\N	\N
-obsolete	\N	exiting program	\N	\N	\N	\N	\N	\N
-obsolete	\N	closing tab	\N	\N	\N	\N	\N	\N
-obsolete	\N	loading new subtitles	\N	\N	\N	\N	\N	\N
-obsolete	\N	removing subtitles	\N	\N	\N	\N	\N	\N
-obsolete	\N	Cannot load audio hotkeys	\N	\N	\N	\N	\N	\N
-obsolete	\N	Cannot load audio configuration	\N	\N	\N	\N	\N	\N
-exact	\N	Choose audio file	\N	HikariSub.Audio	Choose audio file		no	\N
-exact	\N	Audio and video files	\N	HikariSub.Audio	Audio and video files		no	\N
-exact	\N	All files	\N	HikariSub.Audio	All files		no	\N
-obsolete	\N	Undo to 	\N	\N	\N	\N	\N	\N
-obsolete	\N	Redo to 	\N	\N	\N	\N	\N	\N
-exact	\N	Choose session file	\N	HikariSub.Session	Choose session file		no	\N
-obsolete	\N	Session file (*.kls),|*.kls	\N	\N	\N	\N	\N	\N
-exact	\N	Save session file	\N	HikariSub.Session	Save session file		no	\N
-obsolete	\N	Hotkey "%s" it's not script hotkey.	\N	\N	\N	\N	\N	\N
 exact	\N	Log window	\N	HikariSub.MainWindow	Log window		no	\N
 exact	\N	Apply	\N	HikariSub.Options	Apply		no	\N
 exact	\N	Apply	\N	HikariSub.Styles	Apply		no	\N
@@ -1023,6 +1031,7 @@ exact	\N	Compare	\N	HikariSub.Tabs	Compare		no	\N
 exact	\N	Turn off comparison	\N	HikariSub.Tabs	Turn off comparison		no	\N
 exact	\N	Subtitle comparison	\N	HikariSub.Tabs	Subtitle comparison		no	\N
 exact	\N	All tabs will be closed, continue?	\N	HikariSub.Tabs	All tabs will be closed, continue?		no	\N
+obsolete	\N	Cannot read the subtitle file:\n%s	\N	\N	\N	\N	\N	\N
 exact	\N	Video: 	\N	HikariSub.Documents	Video: 		no	\N
 exact	\N	Audio: 	\N	HikariSub.Documents	Audio: 		no	\N
 exact	\N	Keyframes: 	\N	HikariSub.Documents	Keyframes: 		no	\N
@@ -1031,11 +1040,14 @@ exact	\N	Video from directory:\n	\N	HikariSub.Documents	Video from directory:\n	
 exact	\N	Load associated	\N	HikariSub.Documents	Load associated		no	\N
 exact	\N	Load from directory	\N	HikariSub.Documents	Load from directory		no	\N
 exact	\N	Session file is corrupt	\N	HikariSub.Session	Session file is corrupt		no	\N
+obsolete	\N	Cannot read the subtitle files:\n	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot save to file.	\N	\N	\N	\N	\N	\N
+obsolete	\N	The old contents of the file are kept in %s.	\N	\N	\N	\N	\N	\N
+obsolete	\N	A temporary file in its folder would let in users the file keeps out.	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot create file.	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot open file.	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot read the file.	\N	\N	\N	\N	\N	\N
 obsolete	\N	The file was not opened.	\N	\N	\N	\N	\N	\N
-obsolete	\N	Cannot save to file.	\N	\N	\N	\N	\N	\N
 exact	\N	Open sorted subtitles	\N	HikariSub.Options	Open sorted subtitles		no	\N
 exact	\N	Turn spell checking	\N	HikariSub.Options	Turn spell checking		no	\N
 exact	\N	Select the line with the time line\nof the previous active tab	\N	HikariSub.Options	Select the line with the time line\nof the previous active tab		no	\N
@@ -1057,6 +1069,11 @@ exact	\N	Compatibility with older HikariSub scripts	\N	HikariSub.Options	Compati
 obsolete	\N	Language (program restart required)	\N	\N	\N	\N	\N	\N
 exact	\N	Put files .dic and .aff to "Dictionary" folder	\N	HikariSub.Options	Put files .dic and .aff to "Dictionary" folder		no	\N
 exact	\N	Spell checker language ("Dictionary" folder)	\N	HikariSub.Options	Spell checker language ("Dictionary" folder)		no	\N
+obsolete	\N	Updates	\N	\N	\N	\N	\N	\N
+exact	\N	Check for updates automatically	\N	HikariSub.MainWindow	Check for updates automatically		no	\N
+obsolete	\N	When the program starts: once a day, or an hour after a check that failed	\N	\N	\N	\N	\N	\N
+exact	\N	Stable versions only	\N	HikariSub.MainWindow	Stable versions only		no	\N
+obsolete	\N	A release candidate is still told about newer release candidates	\N	\N	\N	\N	\N	\N
 exact	\N	0 turns off saving while editing	\N	HikariSub.Options	0 turns off saving while editing		no	\N
 exact	\N	Number of autosaves can be set from 2 to 1000000	\N	HikariSub.Options	Number of autosaves can be set from 2 to 1000000		no	\N
 exact	\N	Number of tab name characters. Range from 20 to 150	\N	HikariSub.Options	Number of tab name characters. Range from 20 to 150		no	\N
@@ -1098,6 +1115,7 @@ exact	\N	New end times	\N	HikariSub.Options	New end times		no	\N
 exact	\N	Show window before conversion	\N	HikariSub.Options	Show window before conversion		no	\N
 exact	\N	Left mouse button pauses video	\N	HikariSub.Options	Left mouse button pauses video		no	\N
 exact	\N	Open video from context menu on full screen	\N	HikariSub.Options	Open video from context menu on full screen		no	\N
+exact	\N	Convert video colours on the GPU (requires reloading)	\N	HikariSub.Options	Convert video colours on the GPU (requires reloading)		no	\N
 exact	\N	Open video with time of active line	\N	HikariSub.Options	Open video with time of active line		no	\N
 exact	\N	Preferred audio (separated by semicolons)	\N	HikariSub.Options	Preferred audio (separated by semicolons)		no	\N
 exact	\N	FFMS2 video seeking method (requires reloading)	\N	HikariSub.Options	FFMS2 video seeking method (requires reloading)		no	\N
@@ -1289,29 +1307,8 @@ exact	\N	Copy	\N	HikariSub.Styles	Copy		no	\N
 obsolete	\N	Warning! Transparency works only on the audio spectrum,\ntext field, and subtitle grid.	\N	\N	\N	\N	\N	\N
 exact	\N	Name	\N	HikariSub.VisualTools	Name		no	\N
 obsolete	\N	Color	\N	\N	\N	\N	\N	\N
-obsolete	\N	ASS subtitles	\N	\N	\N	\N	\N	\N
-obsolete	\N	SRT subtitles	\N	\N	\N	\N	\N	\N
-obsolete	\N	SSA subtitles	\N	\N	\N	\N	\N	\N
-obsolete	\N	SUB subtitles	\N	\N	\N	\N	\N	\N
-obsolete	\N	TXT subtitles	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video AVI	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video MKV	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video MP4	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video OGM	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video 3GP	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video ASF	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video RM	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video RMVB	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video WMV	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video M2TS	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video MPEG	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video MPG	\N	\N	\N	\N	\N	\N
-obsolete	\N	Video TS	\N	\N	\N	\N	\N	\N
-obsolete	\N	WARNING! Behavior differs on each Windows version.\nFor example, on Windows 7 WMP blocked\nthe ability to change video associations.	\N	\N	\N	\N	\N	\N
 obsolete	\N	Deselect all	\N	\N	\N	\N	\N	\N
 obsolete	\N	Select all	\N	\N	\N	\N	\N	\N
-obsolete	\N	Select subtitles	\N	\N	\N	\N	\N	\N
-obsolete	\N	Select video	\N	\N	\N	\N	\N	\N
 exact	\N	Advanced	\N	HikariSub.Options	Advanced		no	\N
 obsolete	\N	Themes	\N	\N	\N	\N	\N	\N
 exact	\N	Hotkeys	\N	HikariSub.Options	Hotkeys		no	\N
@@ -1338,8 +1335,8 @@ exact	\N	Translator	\N	HikariSub.ScriptProperties	Translator		no	\N
 exact	\N	Always ask before changing subtitle information	\N	HikariSub.Options	Always ask before changing subtitle information		no	\N
 obsolete	\N	Time elapsed: 00:00:00.00	\N	\N	\N	\N	\N	\N
 exact	\N	Indexing video	\N	HikariSub.Video	Indexing video		no	\N
-obsolete	\N	Video frame size is too large	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot get frame %i: %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video frame size is too large	\N	\N	\N	\N	\N	\N
 exact	\N	Choose the track	\N	HikariSub.Audio	Choose the track		no	\N
 obsolete	\N	Cannot save index, error %s occurred	\N	\N	\N	\N	\N	\N
 exact	\N	Cannot create VideoSource.	\N	HikariSub.Video	Cannot create VideoSource.		no	\N
@@ -1350,7 +1347,8 @@ obsolete	\N	You cannot get information about the video	\N	\N	\N	\N	\N	\N
 obsolete	\N	An error occurred when creating audio source: %s	\N	\N	\N	\N	\N	\N
 obsolete	\N	An error occurred when converting audio: %s	\N	\N	\N	\N	\N	\N
 obsolete	\N	Delay failed, it's longer than audio duration time	\N	\N	\N	\N	\N	\N
-obsolete	\N	Not enough RAM	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create the audio cache %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	Not enough memory for the audio cache	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot create DXVA processor service	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot get DXVA GUIDs	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot enumerate DXVA formats	\N	\N	\N	\N	\N	\N
@@ -1361,6 +1359,7 @@ obsolete	\N	Cannot create DXVA processor	\N	\N	\N	\N	\N	\N
 obsolete	\N	One of the DirectX vertices settings failed	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot create subtitle texture	\N	\N	\N	\N	\N	\N
 obsolete	\N	No frame buffer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot lock texture buffer	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot unlock subtitle texture buffer	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot unlock texture buffer	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot overlay surfaces	\N	\N	\N	\N	\N	\N
@@ -1370,7 +1369,6 @@ obsolete	\N	Cannot create GStreamer pipeline (playbin)	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot create GStreamer video display module	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot open video file: %s	\N	\N	\N	\N	\N	\N
 obsolete	\N	Track %i	\N	\N	\N	\N	\N	\N
-obsolete	\N	Cannot set matrix projection	\N	\N	\N	\N	\N	\N
 exact	\N	Resolution	\N	HikariSub.ScriptProperties	Resolution		no	\N
 exact	\N	From video	\N	HikariSub.Conversion	From video		no	\N
 exact	\N	From video	\N	HikariSub.ScriptProperties	From video		no	\N
@@ -1623,6 +1621,7 @@ obsolete	\N	Automation script	\N	\N	\N	\N	\N	\N
 exact	\N	Filtering	\N	HikariSub.Grid	Filtering		no	\N
 obsolete	\N	Removing filtering	\N	\N	\N	\N	\N	\N
 obsolete	\N	Splitting lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixed the tree markers of %d line: lines with no tree description are now ordinary lines and every tree is open or closed as a whole.	Fixed the tree markers of %d lines: lines with no tree description are now ordinary lines and every tree is open or closed as a whole.	\N	\N	\N	\N	\N
 obsolete	\N	, active line %i	\N	\N	\N	\N	\N	\N
 exact	\N	Hide line wraps	\N	HikariSub.Grid	Hide line wraps		no	\N
 obsolete	\N	Do not include selected lines	\N	\N	\N	\N	\N	\N
@@ -1658,6 +1657,14 @@ placeholder	\N	Do you really want to shift only %s times?	\N	HikariSub.TimeShift
 exact	\N	end	\N	HikariSub.TimeShift	end		no	\N
 exact	\N	start	\N	HikariSub.TimeShift	start		no	\N
 exact	\N	No lines selected for shifting	\N	HikariSub.TimeShift	No lines selected for shifting		no	\N
+obsolete	\N	This edit would leave lines of a tree outside it, so it was not made.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Trees	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line %d: %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	This edit would split a tree, leave some of its lines outside it or move them into another tree, so it was not made:\n%s\n\nRemoving the tree deletes its description line and shows its lines as ordinary lines.	This edit would split trees, leave some of their lines outside them or move them into another tree, so it was not made:\n%s\n\nRemoving the trees deletes their description lines and shows their lines as ordinary lines.	\N	\N	\N	\N	\N
+obsolete	\N	Make the edit again after removing.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove the tree	Remove the trees	\N	\N	\N	\N	\N
+obsolete	\N	Invalid format (file may be corrupted or contain errors)	\N	\N	\N	\N	\N	\N
+obsolete	\N	This subtitle file is plain text and will be opened as ASS subtitles	\N	\N	\N	\N	\N	\N
 exact	\N	Are you sure you want to turn off translation mode?\nForeign language text will be deleted.	\N	HikariSub.Translation	Are you sure you want to turn off translation mode?\nForeign language text will be deleted.		no	\N
 exact	\N	Choose new FPS	\N	HikariSub.Conversion	Choose new FPS		no	\N
 exact	\N	Subtitles FPS	\N	HikariSub.Conversion	Subtitles FPS		no	\N
@@ -1668,6 +1675,7 @@ exact	\N	Tree description	\N	HikariSub.Grid	Tree description		no	\N
 exact	\N	Change tree name	\N	HikariSub.Grid	Change tree name		no	\N
 exact	\N	Set tree name	\N	HikariSub.Grid	Set tree name		no	\N
 obsolete	\N	Disable confirmation	\N	\N	\N	\N	\N	\N
+obsolete	\N	Hidden lines lie between the selected lines, so they cannot make one tree.\nShow the hidden lines or select only lines that are next to each other.	\N	\N	\N	\N	\N	\N
 exact	\N	L.	\N	HikariSub.Grid	L.		no	\N
 exact	\N	Left	\N	HikariSub.Grid	Left		no	\N
 exact	\N	Right	\N	HikariSub.Grid	Right		no	\N
@@ -1680,8 +1688,6 @@ exact	\N	Translation	\N	HikariSub.Grid	Translation		no	\N
 exact	\N	Translation	\N	HikariSub.MainWindow	Translation		no	\N
 exact	\N	Translation	\N	HikariSub.Translation	Translation		no	\N
 obsolete	\N	Cannot show preview cause grid height is too low	\N	\N	\N	\N	\N	\N
-obsolete	\N	This subtitle file is plain text and will be opened as ASS subtitles	\N	\N	\N	\N	\N	\N
-obsolete	\N	Invalid format (file may be corrupted or contain errors)	\N	\N	\N	\N	\N	\N
 obsolete	\N	Change resolution	\N	\N	\N	\N	\N	\N
 exact	\N	Target resolution	\N	HikariSub.Conversion	Target resolution		no	\N
 exact	\N	From subtitles	\N	HikariSub.Conversion	From subtitles		no	\N
@@ -1713,6 +1719,7 @@ exact	\N	Deletes the selected line.\nMoves the original one line up.	\N	HikariSu
 exact	\N	Adds a blank line before the selected line.\nMoves the original one line down.\nThe added line must be timed.	\N	HikariSub.Translation	Adds a blank line before the selected line.\nMoves the original one line down.\nThe added line must be timed.		no	\N
 exact	\N	Original	\N	HikariSub.Translation	Original		no	\N
 obsolete	\N	Description:\nOriginal - subtitle text with correct timing, used\nto compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitles were modified by another program.\nReload and discard the unsaved changes in this tab?	\N	\N	\N	\N	\N	\N
 exact	\N	Reloading	\N	HikariSub.Documents	Reloading		no	\N
 exact	\N	Subtitles were modified by another program. Reload?	\N	HikariSub.Documents	Subtitles were modified by another program. Reload?		no	\N
 exact	\N	Show description	\N	HikariSub.TagList	Show description		no	\N
@@ -1793,13 +1800,14 @@ obsolete	\N	On right	\N	\N	\N	\N	\N	\N
 obsolete	\N	On the left	\N	\N	\N	\N	\N	\N
 obsolete	\N	On top	\N	\N	\N	\N	\N	\N
 obsolete	\N	Toolbar alignment	\N	\N	\N	\N	\N	\N
-obsolete	\N	A new version (%s) is available. Update?	\N	\N	\N	\N	\N	\N
+obsolete	\N	You have the latest stable version. A newer prerelease, %s, is available.	\N	\N	\N	\N	\N	\N
 exact	\N	Update	\N	HikariSub.MainWindow	Update		no	\N
-obsolete	\N	Disable updates	\N	\N	\N	\N	\N	\N
-obsolete	\N	Update after closing	\N	\N	\N	\N	\N	\N
-obsolete	\N	Cannot download the new version of HikariSub	\N	\N	\N	\N	\N	\N
-obsolete	\N	Cannot find the HikariSub updater	\N	\N	\N	\N	\N	\N
-obsolete	\N	Cannot close HikariSub	\N	\N	\N	\N	\N	\N
+exact	\N	Open the download page	\N	HikariSub.MainWindow	Open the download page		no	\N
+exact	\N	A new version is available	\N	HikariSub.MainWindow	A new version is available		no	\N
+placeholder	\N	You have version %s; version %s is available	\N	HikariSub.MainWindow	You have version %1; version %2 is available		no	%s %s -> %1 %2
+exact	\N	Remind me in a week	\N	HikariSub.MainWindow	Remind me in a week		no	\N
+exact	\N	Cannot check for updates	\N	HikariSub.MainWindow	Cannot check for updates		no	\N
+exact	\N	You already have the latest version	\N	HikariSub.MainWindow	You already have the latest version		no	\N
 obsolete	\N	Unable to retrieve information about the monitor	\N	\N	\N	\N	\N	\N
 placeholder	\N	Aspect ratio: %5.3f	\N	HikariSub.Video	Aspect ratio: %1		no	%5.3f -> %1
 exact	\N	The file is not a valid video file or is corrupted,\nor codecs or a splitter may be missing	\N	HikariSub.Video	The file is not a valid video file or is corrupted,\nor codecs or a splitter may be missing		no	\N
@@ -1818,6 +1826,7 @@ obsolete	\N	Are you sure you want to move loaded video to recycle bin?	\N	\N	\N	
 obsolete	\N	Deleting	\N	\N	\N	\N	\N	\N
 obsolete	\N	Video files(*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.3gp;*.avs|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
 obsolete	\N	Subtitle files (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt	\N	\N	\N	\N	\N	\N
+exact	\N	Invalid keyframes format	\N	HikariSub.Video	Invalid keyframes format		no	\N
 exact	\N	Previous video file	\N	HikariSub.Video	Previous video file		no	\N
 exact	\N	Show toolbar	\N	HikariSub.Video	Show toolbar		no	\N
 obsolete	\N	Position pointer	\N	\N	\N	\N	\N	\N
@@ -1944,6 +1953,7 @@ obsolete	\N	Cannot remove all shapes from the list	\N	\N	\N	\N	\N	\N
 obsolete	\N	Save changes to shape "%s"?	\N	\N	\N	\N	\N	\N
 obsolete	\N	Field "shape" cannot be empty.	\N	\N	\N	\N	\N	\N
 obsolete	\N	Video must be set at least one frame after the line's start time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot set matrix projection	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot read clip rectangle values.	\N	\N	\N	\N	\N	\N
 obsolete	\N	Visual editing tools\ndo not work on comments	\N	\N	\N	\N	\N	\N
 obsolete	\N	Line is not visible on video\nor has zero duration	\N	\N	\N	\N	\N	\N
@@ -1989,6 +1999,9 @@ placeholder	\N	Styles named "%s" do not exist in the subtitles being searched,\n
 exact	\N	Remove nonexistent styles	\N	HikariSub.Search	Remove nonexistent styles		no	\N
 obsolete	\N	Not enough RAM. History partially deleted	\N	\N	\N	\N	\N	\N
 obsolete	\N	Cannot read settings.\nThe program will be terminated.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot find language, language change failed	\N	\N	\N	\N	\N	\N
+obsolete	\N	wxLocale cannot initialize, language change failed	\N	\N	\N	\N	\N	\N
+exact	\N	Cannot find translation, language change failed	\N	HikariSub.Options	Cannot find translation, language change failed		no	\N
 obsolete	\N	Cannot read hotkeys.\nThe program will be terminated.	\N	\N	\N	\N	\N	\N
 exact	\N	Load last session?	\N	HikariSub.Session	Load last session?		no	\N
 exact	\N	The program crashed or was closed improperly.\nLoad the last session with the latest autosaved subtitles?	\N	HikariSub.Session	The program crashed or was closed improperly.\nLoad the last session with the latest autosaved subtitles?		no	\N
@@ -2301,31 +2314,19 @@ new	\N	\N	\N	HikariSub.MainWindow	&Reset layout		no	\N
 new	\N	\N	\N	HikariSub.MainWindow	Restore the previous layout		no	\N
 new	\N	\N	\N	HikariSub.MainWindow	&Subtitles		no	\N
 new	\N	\N	\N	HikariSub.MainWindow	Shift &times...		no	\N
-new	\N	\N	\N	HikariSub.MainWindow	Checks whether a newer version is available		no	\N
-new	\N	\N	\N	HikariSub.MainWindow	Check for &updates		no	\N
 new	\N	\N	\N	HikariSub.MainWindow	History (1 element)		no	\N
 new	\N	\N	\N	HikariSub.MainWindow	History (%1 elements)		no	\N
 new	\N	\N	\N	HikariSub.MainWindow	OK		no	\N
 new	\N	\N	\N	HikariSub.MainWindow	Log		no	\N
-new	\N	\N	\N	HikariSub.MainWindow	You already have the latest version		no	\N
-new	\N	\N	\N	HikariSub.MainWindow	Cannot check for updates		no	\N
-new	\N	\N	\N	HikariSub.MainWindow	A new version is available		no	\N
-new	\N	\N	\N	HikariSub.MainWindow	You have version %1; version %2 is available		no	\N
-new	\N	\N	\N	HikariSub.MainWindow	Check for updates automatically		no	\N
-new	\N	\N	\N	HikariSub.MainWindow	Stable versions only		no	\N
-new	\N	\N	\N	HikariSub.MainWindow	Open the download page		no	\N
-new	\N	\N	\N	HikariSub.MainWindow	Remind me in a week		no	\N
 new	\N	\N	\N	HikariSub.MainWindow	HikariSub subtitle editor by altqx,\nversion %1		no	\N
 new	\N	\N	\N	HikariSub.MainWindow	Color picker, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n		no	\N
 new	\N	\N	\N	HikariSub.MisspellReplacer	Fix minor errors		no	\N
 new	\N	\N	\N	HikariSub.MisspellReplacer	Rules		no	\N
-new	\N	\N	\N	HikariSub.Options	Cannot find translation, language change failed		no	\N
 new	\N	\N	\N	HikariSub.Options	OK		no	\N
 new	\N	\N	\N	HikariSub.Options	Appearance		no	\N
 new	\N	\N	\N	HikariSub.Options	Language		no	\N
 new	\N	\N	\N	HikariSub.Options	None chosen		no	\N
 new	\N	\N	\N	HikariSub.Options	No dictionaries found		no	\N
-new	\N	\N	\N	HikariSub.Options	Convert video colours on the GPU (requires reloading)		no	\N
 new	\N	\N	\N	HikariSub.Options	Playback		no	\N
 new	\N	\N	\N	HikariSub.Options	Built-in		no	\N
 new	\N	\N	\N	HikariSub.Options	Audio output		no	\N

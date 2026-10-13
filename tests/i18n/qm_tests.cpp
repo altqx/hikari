@@ -47,7 +47,7 @@ QString lookup(const QTranslator &translator, const QString &context, const TsMe
                                 m.comment.isEmpty() ? nullptr : m.comment.toUtf8().constData(), n);
 }
 
-// The legacy Plural-Forms of each catalog at 20d647c4, as gettext and wx
+// The legacy Plural-Forms of each catalog (the same at 20d647c4 and 0.0.1), as gettext and wx
 // evaluate them; English has no catalog and wxGetTranslation(str1, str2, n)
 // falls back to n == 1 ? str1 : str2 (wx include/wx/translation.h:305-307).
 int legacyForm(const QString &language, int n)
@@ -226,10 +226,13 @@ TEST(Qm, NumerusRulesPickTheLegacyPluralForm)
                 ++checked;
             }
         }
-        EXPECT_EQ(checked, 3 * counts.size()) << language.toStdString();
-        // Korean and Tamil leave all three plural entries untranslated at 20d647c4.
-        const bool allUntranslated = language == u"ko_KR" || language == u"ta";
-        EXPECT_EQ(fallbacks, allUntranslated ? checked : 0) << language.toStdString();
+        // Legacy 0.0.1 has six plural entries, two of which never print their
+        // count ("Remove the tree", the %s message about splitting a tree),
+        // and translates all of them in every catalog, so none falls back to
+        // English (at 20d647c4 Korean and Tamil left the three there were
+        // untranslated).
+        EXPECT_EQ(checked, 6 * counts.size()) << language.toStdString();
+        EXPECT_EQ(fallbacks, 0) << language.toStdString();
     }
     // The two font-count meanings answer differently where Polish differs.
     QTranslator pl;

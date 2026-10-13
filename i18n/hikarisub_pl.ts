@@ -3149,7 +3149,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Shift times / run time post processor</source>
-        <translation>Przesuń czasy / uruchom post processor</translation>
+        <translation>Przesuń czasy / uruchom postprocesor</translation>
     </message>
     <message>
         <source>Style &amp;manager</source>
@@ -3193,7 +3193,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Check for &amp;updates</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdź &amp;aktualizacje</translation>
     </message>
     <message>
         <source>&amp;About</source>
@@ -3501,7 +3501,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Checks whether a newer version is available</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdza, czy dostępna jest nowsza wersja</translation>
     </message>
     <message>
         <source>Shows program info</source>
@@ -3521,11 +3521,11 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>You already have the latest version</source>
-        <translation type="unfinished"></translation>
+        <translation>Masz już najnowszą wersję</translation>
     </message>
     <message>
         <source>Cannot check for updates</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można sprawdzić aktualizacji</translation>
     </message>
     <message>
         <source>Update</source>
@@ -3533,27 +3533,27 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>A new version is available</source>
-        <translation type="unfinished"></translation>
+        <translation>Dostępna jest nowa wersja</translation>
     </message>
     <message>
         <source>You have version %1; version %2 is available</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Masz wersję %1; dostępna jest wersja %2</translation>
     </message>
     <message>
         <source>Check for updates automatically</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatycznie sprawdzaj aktualizacje</translation>
     </message>
     <message>
         <source>Stable versions only</source>
-        <translation type="unfinished"></translation>
+        <translation>Tylko wersje stabilne</translation>
     </message>
     <message>
         <source>Open the download page</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwórz stronę pobierania</translation>
     </message>
     <message>
         <source>Remind me in a week</source>
-        <translation type="unfinished"></translation>
+        <translation>Przypomnij za tydzień</translation>
     </message>
     <message>
         <source>About HikariSub</source>
@@ -4251,7 +4251,7 @@ po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
         <source>Convert video colours on the GPU (requires reloading)</source>
-        <translation type="unfinished"></translation>
+        <translation>Konwertuj kolory wideo na GPU (wymaga ponownego wczytania)</translation>
     </message>
     <message>
         <source>Preferred audio (separated by semicolons)</source>
@@ -4575,7 +4575,7 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Cannot find translation, language change failed</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można znaleźć tłumaczenia, zmiana języka nie powiodła się</translation>
     </message>
     <message>
         <source>Light</source>
@@ -6799,11 +6799,11 @@ Usunięte style:
     </message>
     <message>
         <source>Run post processor</source>
-        <translation>Uruchom postprocessor</translation>
+        <translation>Uruchom postprocesor</translation>
     </message>
     <message>
         <source>Post processor</source>
-        <translation>Post processor</translation>
+        <translation>Postprocesor</translation>
     </message>
     <message>
         <source>Lead-in</source>

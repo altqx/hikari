@@ -5,7 +5,7 @@
 # Originally translated by Marcin Drob.
 # These strings were the msgids until the sources moved to English.
 #</extra-po-header-comments>
-    <extra-po-input>Locale/pl.po at 20d647c4c769ab7f5d383cf3c1c33f03876a94e9</extra-po-input>
+    <extra-po-input>Locale/pl.po at b31505da24dcc0c4053ad5e0cc73e15266a85bac</extra-po-input>
     <extra-po-language-team>Polish</extra-po-language-team>
     <extra-po-last-translator>altqx &lt;al@altqx.com&gt;</extra-po-last-translator>
     <extra-po-plural-forms>nplurals=3; plural=(n==1 ? 0 : n%10&gt;=2 &amp;&amp; n%10&lt;=4 &amp;&amp; (n%100&lt;10 || n%100&gt;=20) ? 1 : 2);</extra-po-plural-forms>
@@ -125,28 +125,16 @@
         <translation>Uwydatnienie częstotliwości głosu na spektrum</translation>
     </message>
     <message>
-        <source>Invalid keyframes format</source>
-        <translation>Nieprawidłowy format klatek kluczowych</translation>
-    </message>
-    <message>
-        <source>Error</source>
-        <translation>Błąd</translation>
-    </message>
-    <message>
-        <source>Cannot create Direct3D object</source>
-        <translation>Nie można utworzyć obiektu Direct3D</translation>
-    </message>
-    <message>
         <source>Cannot create D3D9 device</source>
         <translation>Nie można utworzyć urządzenia D3D9</translation>
     </message>
     <message>
-        <source>One of the DirectX settings failed</source>
-        <translation>Zawiodło któreś z ustawień DirectX</translation>
+        <source>Cannot create swap chain</source>
+        <translation>Nie można utworzyć łańcucha wymiany</translation>
     </message>
     <message>
-        <source>Cannot set projection matrix</source>
-        <translation>Nie można ustawić macierzy porojekcji</translation>
+        <source>One of the DirectX settings failed</source>
+        <translation>Zawiodło któreś z ustawień DirectX</translation>
     </message>
     <message>
         <source>Cannot set world matrix</source>
@@ -185,12 +173,12 @@
         <translation>Czas ujemny</translation>
     </message>
     <message>
-        <source>Cannot lock texture buffer</source>
-        <translation>Nie można zablokować bufora tekstury</translation>
-    </message>
-    <message>
         <source>Cannot blit spectrum surfaces</source>
         <translation>Nie można nałożyć powierzchni spectrum na siebie</translation>
+    </message>
+    <message>
+        <source>Audio could not be loaded</source>
+        <translation>Nie udało się wczytać audio</translation>
     </message>
     <message>
         <source>Open auto save file</source>
@@ -441,6 +429,10 @@ Zobacz opisy skryptów, by uzyskać więcej informacji.</translation>
         <translation>Nie można uruchomić edytora.</translation>
     </message>
     <message>
+        <source>Error</source>
+        <translation>Błąd</translation>
+    </message>
+    <message>
         <source>Full Lua error description</source>
         <translation>Pełny opis błędu Lua</translation>
     </message>
@@ -562,6 +554,10 @@ Co zrobić?</translation>
     <message>
         <source>Shortcut can be set using Shift + Click</source>
         <translation>Skrót można ustawić Shift + Klik</translation>
+    </message>
+    <message>
+        <source>Picking a color from the screen is not supported on Wayland</source>
+        <translation>Pobieranie koloru z ekranu nie jest obsługiwane w Wayland</translation>
     </message>
     <message>
         <source>Choose color</source>
@@ -1016,6 +1012,26 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Zarządzaj przyciskami tagów</translation>
     </message>
     <message>
+        <source>ASS subtitles</source>
+        <translation>Napisy ASS</translation>
+    </message>
+    <message>
+        <source>SSA subtitles</source>
+        <translation>Napisy SSA</translation>
+    </message>
+    <message>
+        <source>SRT subtitles</source>
+        <translation>Napisy SRT</translation>
+    </message>
+    <message>
+        <source>SUB subtitles</source>
+        <translation>Napisy SUB</translation>
+    </message>
+    <message>
+        <source>TXT subtitles</source>
+        <translation>Napisy TXT</translation>
+    </message>
+    <message>
         <source>Search text:</source>
         <translation>Szukany tekst:</translation>
     </message>
@@ -1249,8 +1265,8 @@ w ukrytych folderach</translation>
         <translation>Autozapis</translation>
     </message>
     <message>
-        <source>Choose video file</source>
-        <translation>Wybierz plik wideo</translation>
+        <source>Choose font catalogs file</source>
+        <translation>Wybierz plik katalogów czcionek</translation>
     </message>
     <message>
         <source>Text files (*.txt)|*.txt</source>
@@ -1699,6 +1715,968 @@ Zakończono w %sms</translation>
         <translation>Nie można wczytać zewnętrznego katalogu czcionek</translation>
     </message>
     <message>
+        <source>Apply to All</source>
+        <translation>Zastosuj dla wszystkich</translation>
+    </message>
+    <message>
+        <source>Yes to all</source>
+        <translation>Tak dla wszystkich</translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation>Tak</translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation>Nie</translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>Pomoc</translation>
+    </message>
+    <message>
+        <source>Untitled - </source>
+        <translation>Bez nazwy - </translation>
+    </message>
+    <message>
+        <source>Video duration</source>
+        <translation>Czas trwania wideo</translation>
+    </message>
+    <message>
+        <source>Video scale</source>
+        <translation>Skala obrazu wideo</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>Powiększenie wideo</translation>
+    </message>
+    <message>
+        <source>Frames per second</source>
+        <translation>Klatki na Sekundę</translation>
+    </message>
+    <message>
+        <source>Subtitles resolution</source>
+        <translation>Rozdzielczość napisów</translation>
+    </message>
+    <message>
+        <source>Video aspect ratio</source>
+        <translation>Proporcje wideo</translation>
+    </message>
+    <message>
+        <source>Video file name</source>
+        <translation>Nazwa pliku wideo</translation>
+    </message>
+    <message>
+        <source>Video resolution</source>
+        <translation>Rozdzielczość wideo</translation>
+    </message>
+    <message>
+        <source>Load last session</source>
+        <translation>Wczytaj ostatnią sesję</translation>
+    </message>
+    <message>
+        <source>Loads previously loaded files</source>
+        <translation>Wczytuje poprzednio zaczytane pliki</translation>
+    </message>
+    <message>
+        <source>Load session from file</source>
+        <translation>Wczytaj sesję z pliku</translation>
+    </message>
+    <message>
+        <source>Loads session from saved session file</source>
+        <translation>Wczytuje sesję z wcześniej zapisanego pliku sesji</translation>
+    </message>
+    <message>
+        <source>Save session to file</source>
+        <translation>Zapisz sesję do pliku</translation>
+    </message>
+    <message>
+        <source>Saves session to file</source>
+        <translation>Zapisuje sesję do pliku</translation>
+    </message>
+    <message>
+        <source>Ask whether to load the last session at program startup</source>
+        <translation>Pytaj o wczytanie ostatniej sesji przy starcie programu</translation>
+    </message>
+    <message>
+        <source>Asks whether to load previously loaded files at program startup</source>
+        <translation>Pyta, czy wczytać ostatnio zaczytane pliki przy starcie programu</translation>
+    </message>
+    <message>
+        <source>Load last session after program start</source>
+        <translation>Wczytaj ostatnią sesję przy starcie programu</translation>
+    </message>
+    <message>
+        <source>Loads previously loaded files at program startup</source>
+        <translation>Wczytuje poprzednio zaczytane pliki przy starcie programu</translation>
+    </message>
+    <message>
+        <source>&amp;Open subtitles</source>
+        <translation>&amp;Otwórz napisy</translation>
+    </message>
+    <message>
+        <source>Open subtitle file</source>
+        <translation>Otwórz plik napisów</translation>
+    </message>
+    <message>
+        <source>&amp;Save</source>
+        <translation>&amp;Zapisz</translation>
+    </message>
+    <message>
+        <source>Save current file</source>
+        <translation>Zapisz aktualny plik</translation>
+    </message>
+    <message>
+        <source>Save &amp;all</source>
+        <translation>Zapisz &amp;wszystko</translation>
+    </message>
+    <message>
+        <source>Save all subtitles</source>
+        <translation>Zapisz wszystkie napisy</translation>
+    </message>
+    <message>
+        <source>Save &amp;as...</source>
+        <translation>Zapisz &amp;jako...</translation>
+    </message>
+    <message>
+        <source>Save as</source>
+        <translation>Zapisz jako</translation>
+    </message>
+    <message>
+        <source>Save &amp;translation</source>
+        <translation>Zapisz &amp;tłumaczenie</translation>
+    </message>
+    <message>
+        <source>Save translation</source>
+        <translation>Zapisz tłumaczenie</translation>
+    </message>
+    <message>
+        <source>Recently opened &amp;subtitles</source>
+        <translation>Ostatnio otwa&amp;rte napisy</translation>
+    </message>
+    <message>
+        <source>Recently opened subtitles</source>
+        <translation>Ostatnio otwarte napisy</translation>
+    </message>
+    <message>
+        <source>Remove subtitles from the &amp;editor</source>
+        <translation>Usuń napisy z e&amp;dytora</translation>
+    </message>
+    <message>
+        <source>Remove subtitles from the editor</source>
+        <translation>Usuń napisy z edytora</translation>
+    </message>
+    <message>
+        <source>Save subtitles using the video name</source>
+        <translation>Zapisuj napisy z nazwą wideo</translation>
+    </message>
+    <message>
+        <source>Open auto save</source>
+        <translation>Otwórz autozapis</translation>
+    </message>
+    <message>
+        <source>Opens the selected autosave from the list</source>
+        <translation>Otwiera autozapis wybrany z listy</translation>
+    </message>
+    <message>
+        <source>Opens the temporary file removal window</source>
+        <translation>Otwiera okno usuwania plików tymczasowych</translation>
+    </message>
+    <message>
+        <source>Show / Hide log window</source>
+        <translation>Pokaż / Ukryj okno logów</translation>
+    </message>
+    <message>
+        <source>Last session</source>
+        <translation>Ostatnia sesja</translation>
+    </message>
+    <message>
+        <source>Last session options</source>
+        <translation>Opcje ostatniej sesji</translation>
+    </message>
+    <message>
+        <source>&amp;Settings</source>
+        <translation>&amp;Ustawienia</translation>
+    </message>
+    <message>
+        <source>Program settings</source>
+        <translation>Ustawienia programu</translation>
+    </message>
+    <message>
+        <source>&amp;Exit	Alt-F4</source>
+        <translation>Wyjści&amp;e	Alt-F4</translation>
+    </message>
+    <message>
+        <source>Exit the program</source>
+        <translation>Zakończ działanie programu</translation>
+    </message>
+    <message>
+        <source>&amp;File</source>
+        <translation>&amp;Plik</translation>
+    </message>
+    <message>
+        <source>&amp;Undo</source>
+        <translation>&amp;Cofnij</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>Cofnij</translation>
+    </message>
+    <message>
+        <source>Undo to last save</source>
+        <translation>Cofnij do ostatniego zapisu</translation>
+    </message>
+    <message>
+        <source>&amp;Redo</source>
+        <translation>&amp;Ponów</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>Ponów</translation>
+    </message>
+    <message>
+        <source>&amp;History</source>
+        <translation>&amp;Historia</translation>
+    </message>
+    <message>
+        <source>History</source>
+        <translation>Historia</translation>
+    </message>
+    <message>
+        <source>Find and re&amp;place</source>
+        <translation>Znajdź i za&amp;mień</translation>
+    </message>
+    <message>
+        <source>Searches for the specified text phrases and replaces them</source>
+        <translation>Szuka i podmienia dane frazy tekstu</translation>
+    </message>
+    <message>
+        <source>&amp;Find</source>
+        <translation>Z&amp;najdź</translation>
+    </message>
+    <message>
+        <source>Searches for the specified text phrase</source>
+        <translation>Szuka dane frazy tekstu</translation>
+    </message>
+    <message>
+        <source>Find next</source>
+        <translation>Znajdź następny</translation>
+    </message>
+    <message>
+        <source>Finds the next occurrence of the phrase in the text</source>
+        <translation>Znajduje kolejne wystąpięnie frazy w tekście</translation>
+    </message>
+    <message>
+        <source>The starting time</source>
+        <translation>Czas początkowy</translation>
+    </message>
+    <message>
+        <source>Sort by start time</source>
+        <translation>Sortuj według czasu początkowego</translation>
+    </message>
+    <message>
+        <source>End time</source>
+        <translation>Czas końcowy</translation>
+    </message>
+    <message>
+        <source>Sort by end time</source>
+        <translation>Sortuj według czasu końcowego</translation>
+    </message>
+    <message>
+        <source>Sort by styles</source>
+        <translation>Sortuj według stylów</translation>
+    </message>
+    <message>
+        <source>Sort by actor</source>
+        <translation>Sortuj według aktora</translation>
+    </message>
+    <message>
+        <source>Sort by effect</source>
+        <translation>Sortuj według efektu</translation>
+    </message>
+    <message>
+        <source>Layer</source>
+        <translation>Warstwa</translation>
+    </message>
+    <message>
+        <source>Sort by layer</source>
+        <translation>Sortuj według warstwy</translation>
+    </message>
+    <message>
+        <source>So&amp;rt all lines</source>
+        <translation>Sort&amp;uj wszystkie linie</translation>
+    </message>
+    <message>
+        <source>Sorts all lines in ASS file</source>
+        <translation>Sortuje wszystkie linie napisów ASS</translation>
+    </message>
+    <message>
+        <source>So&amp;rt selected lines</source>
+        <translation>Sortu&amp;j zaznaczone linie</translation>
+    </message>
+    <message>
+        <source>Sorts selected lines in ASS file</source>
+        <translation>Sortuje zaznaczone linie napisów ASS</translation>
+    </message>
+    <message>
+        <source>Fix minor errors (experimental)</source>
+        <translation>Popraw drobne błędy (eksperymentalne)</translation>
+    </message>
+    <message>
+        <source>Turns on multireplacer</source>
+        <translation>Włącza okno poprawiania błędów</translation>
+    </message>
+    <message>
+        <source>Select &amp;lines</source>
+        <translation>Zaznacz &amp;linijki</translation>
+    </message>
+    <message>
+        <source>Selects lines by expressions</source>
+        <translation>Zaznacza linijki wg danej frazy tekstu</translation>
+    </message>
+    <message>
+        <source>&amp;Edit</source>
+        <translation>&amp;Edycja</translation>
+    </message>
+    <message>
+        <source>Open video</source>
+        <translation>Otwórz wideo</translation>
+    </message>
+    <message>
+        <source>Opens video file</source>
+        <translation>Otwiera wybrane wideo</translation>
+    </message>
+    <message>
+        <source>Recently opened videos</source>
+        <translation>Ostatnio otwarte wideo</translation>
+    </message>
+    <message>
+        <source>Open keyframes</source>
+        <translation>Otwórz klatki kluczowe</translation>
+    </message>
+    <message>
+        <source>Recently opened keyframes</source>
+        <translation>Ostatnio otwarte klatki kluczowe</translation>
+    </message>
+    <message>
+        <source>Open dummy video</source>
+        <translation>Otwórz dummy wideo</translation>
+    </message>
+    <message>
+        <source>Insert start time from video</source>
+        <translation>Wstaw czas początkowy z wideo</translation>
+    </message>
+    <message>
+        <source>Inserts the start time from video</source>
+        <translation>Wstawia czas początkowy z wideo</translation>
+    </message>
+    <message>
+        <source>Insert end time from video</source>
+        <translation>Wstaw czas końcowy z wideo</translation>
+    </message>
+    <message>
+        <source>Inserts the end time from video</source>
+        <translation>Wstawia czas końcowy z wideo</translation>
+    </message>
+    <message>
+        <source>Previous frame</source>
+        <translation>Klatka w tył</translation>
+    </message>
+    <message>
+        <source>Go to previous frame</source>
+        <translation>Przechodzi o jedną klatkę w tył</translation>
+    </message>
+    <message>
+        <source>Next frame</source>
+        <translation>Klatka w przód</translation>
+    </message>
+    <message>
+        <source>Go to next frame</source>
+        <translation>Przechodzi o jedną klatkę w przód</translation>
+    </message>
+    <message>
+        <source>Go to start time</source>
+        <translation>Przejdź do czasu początkowego linii</translation>
+    </message>
+    <message>
+        <source>Moves video to start time</source>
+        <translation>Przechodzi wideo do czasu początkowego linii</translation>
+    </message>
+    <message>
+        <source>Go to end time of line</source>
+        <translation>Przejdź do czasu końcowego linii</translation>
+    </message>
+    <message>
+        <source>Moves video to end time</source>
+        <translation>Przechodzi wideo do czasu końcowego linii</translation>
+    </message>
+    <message>
+        <source>Play / Pause</source>
+        <translation>Odtwórz / Pauza</translation>
+    </message>
+    <message>
+        <source>Plays / Pauses video</source>
+        <translation>Odtwarza lub pauzuje wideo</translation>
+    </message>
+    <message>
+        <source>Go to previous keyframe</source>
+        <translation>Przejdź do poprzedniej klatki kluczowej</translation>
+    </message>
+    <message>
+        <source>Go to next keyframe</source>
+        <translation>Przejdź do następnej klatki kluczowej</translation>
+    </message>
+    <message>
+        <source>Set audio position to video time</source>
+        <translation>Ustaw audio z czasem wideo</translation>
+    </message>
+    <message>
+        <source>Set audio marker to video time</source>
+        <translation>Ustaw znacznik audio z czasem wideo</translation>
+    </message>
+    <message>
+        <source>Zoom video</source>
+        <translation>Powiększ wideo</translation>
+    </message>
+    <message>
+        <source>Turn off video zoom</source>
+        <translation>Wyłącz powiększenie wideo</translation>
+    </message>
+    <message>
+        <source>Open video with FFMS2</source>
+        <translation>Otwieraj wideo przez FFMS2</translation>
+    </message>
+    <message>
+        <source>Opens video with FFMS2 for frame precision</source>
+        <translation>Otwiera wideo przez FFMS2, co daje dokładność klatkową</translation>
+    </message>
+    <message>
+        <source>&amp;Video</source>
+        <translation>&amp;Wideo</translation>
+    </message>
+    <message>
+        <source>Open audio</source>
+        <translation>Otwórz audio</translation>
+    </message>
+    <message>
+        <source>Opens audio file</source>
+        <translation>Otwiera wybrane audio</translation>
+    </message>
+    <message>
+        <source>Recently opened audio</source>
+        <translation>Ostatnio otwarte audio</translation>
+    </message>
+    <message>
+        <source>Open audio from video</source>
+        <translation>Otwórz audio z wideo</translation>
+    </message>
+    <message>
+        <source>Opens audio from video</source>
+        <translation>Otwiera audio z wideo</translation>
+    </message>
+    <message>
+        <source>Open blank 2h30m audio</source>
+        <translation>Otwórz puste audio na 2:30 godziny</translation>
+    </message>
+    <message>
+        <source>Opens blank audio 2 hour and 30 minutes long</source>
+        <translation>Otwiera puste audio na 2:30 godziny</translation>
+    </message>
+    <message>
+        <source>Close audio</source>
+        <translation>Zamknij audio</translation>
+    </message>
+    <message>
+        <source>Closes audio</source>
+        <translation>Zamyka audio</translation>
+    </message>
+    <message>
+        <source>A&amp;udio</source>
+        <translation>A&amp;udio</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>Wszystko</translation>
+    </message>
+    <message>
+        <source>Shows all windows</source>
+        <translation>Wszystkie okna są widoczne</translation>
+    </message>
+    <message>
+        <source>Shows only video window and subs window</source>
+        <translation>Widoczne tylko okno wideo i napisów</translation>
+    </message>
+    <message>
+        <source>Video and subs</source>
+        <translation>Wideo i napisy</translation>
+    </message>
+    <message>
+        <source>Audio and subs</source>
+        <translation>Audio i napisy</translation>
+    </message>
+    <message>
+        <source>Shows only audio window and subs window</source>
+        <translation>Widoczne tylko okno audio i napisów</translation>
+    </message>
+    <message>
+        <source>Only video</source>
+        <translation>Tylko wideo</translation>
+    </message>
+    <message>
+        <source>Shows only video window</source>
+        <translation>Widoczne tylko okno wideo</translation>
+    </message>
+    <message>
+        <source>Only subtitles</source>
+        <translation>Tylko napisy</translation>
+    </message>
+    <message>
+        <source>Shows only the subtitle window</source>
+        <translation>Widoczne tylko okno napisów</translation>
+    </message>
+    <message>
+        <source>View</source>
+        <translation>Wido&amp;k</translation>
+    </message>
+    <message>
+        <source>Enable / Disable editor</source>
+        <translation>Włącz / Wyłącz edytor</translation>
+    </message>
+    <message>
+        <source>Enables / disables editor</source>
+        <translation>Włączanie bądź wyłączanie edytora</translation>
+    </message>
+    <message>
+        <source>ASS file properties</source>
+        <translation>Właściwości pliku ASS</translation>
+    </message>
+    <message>
+        <source>ASS subtitle properties</source>
+        <translation>Właściwości napisów ASS</translation>
+    </message>
+    <message>
+        <source>Style &amp;manager</source>
+        <translation>&amp;Menedżer stylów</translation>
+    </message>
+    <message>
+        <source>Is used to manage ASS styles</source>
+        <translation>Służy do zarządzania stylami ASS</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>Konwertuj do ASS</translation>
+    </message>
+    <message>
+        <source>Converts to ASS format</source>
+        <translation>Konwertuje do formatu ASS</translation>
+    </message>
+    <message>
+        <source>Convert to SRT</source>
+        <translation>Konwertuj do SRT</translation>
+    </message>
+    <message>
+        <source>Converts to SRT format</source>
+        <translation>Konwertuje do formatu SRT</translation>
+    </message>
+    <message>
+        <source>Convert to MDVD</source>
+        <translation>Konwertuj do MDVD</translation>
+    </message>
+    <message>
+        <source>Converts to microDVD format</source>
+        <translation>Konwertuje do formatu microDVD</translation>
+    </message>
+    <message>
+        <source>Convert to MPL2</source>
+        <translation>Konwertuj do MPL2</translation>
+    </message>
+    <message>
+        <source>Converts to MPL2 format</source>
+        <translation>Konwertuje do formatu MPL2</translation>
+    </message>
+    <message>
+        <source>Convert to TMP</source>
+        <translation>Konwertuj do TMP</translation>
+    </message>
+    <message>
+        <source>Converts to TMPlayer format (not recommended)</source>
+        <translation>Konwertuje do formatu TMPlayer (niezalecane)</translation>
+    </message>
+    <message>
+        <source>Conversion</source>
+        <translation>Konwersja</translation>
+    </message>
+    <message>
+        <source>Converts from one format to another</source>
+        <translation>Konwersja z jednego formatu napisów na inny</translation>
+    </message>
+    <message>
+        <source>Shift &amp;times...	Ctrl-I</source>
+        <translation>Okno zmiany &amp;czasów	Ctrl-I</translation>
+    </message>
+    <message>
+        <source>Shifting subtitle times</source>
+        <translation>Przesuwanie czasów napisów</translation>
+    </message>
+    <message>
+        <source>Resample subtitles</source>
+        <translation>Zmień rozdzielczość napisów</translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation>Sprawdź poprawność pisowni</translation>
+    </message>
+    <message>
+        <source>Hide tags</source>
+        <translation>Ukryj tagi w nawiasach</translation>
+    </message>
+    <message>
+        <source>Hides tags in ASS and MDVD</source>
+        <translation>Ukrywa tagi w nawiasach ASS i MDVD</translation>
+    </message>
+    <message>
+        <source>Su&amp;btitles</source>
+        <translation>&amp;Napisy</translation>
+    </message>
+    <message>
+        <source>Load script</source>
+        <translation>Wczytaj skrypt</translation>
+    </message>
+    <message>
+        <source>Refresh autoload scripts</source>
+        <translation>Odśwież skrypty autoload</translation>
+    </message>
+    <message>
+        <source>Run the last loaded script</source>
+        <translation>Uruchom ostatnio zaczytany skrypt</translation>
+    </message>
+    <message>
+        <source>Open shortcut mapping window</source>
+        <translation>Otwórz okno mapowania skrótów</translation>
+    </message>
+    <message>
+        <source>Au&amp;tomation</source>
+        <translation>Au&amp;tomatyzacja</translation>
+    </message>
+    <message>
+        <source>HikariSub &amp;website</source>
+        <translation>&amp;Strona HikariSub</translation>
+    </message>
+    <message>
+        <source>Opens the HikariSub website in the default browser</source>
+        <translation>Otwiera stronę HikariSub w domyślnej przeglądarce</translation>
+    </message>
+    <message>
+        <source>&amp;Report an issue</source>
+        <translation>&amp;Zgłoś problem</translation>
+    </message>
+    <message>
+        <source>Opens the HikariSub issue tracker</source>
+        <translation>Otwiera listę zgłoszeń HikariSub</translation>
+    </message>
+    <message>
+        <source>Check for &amp;updates</source>
+        <translation>Sprawdź &amp;aktualizacje</translation>
+    </message>
+    <message>
+        <source>Checks whether a newer version is available</source>
+        <translation>Sprawdza, czy dostępna jest nowsza wersja</translation>
+    </message>
+    <message>
+        <source>&amp;About</source>
+        <translation>&amp;O programie</translation>
+    </message>
+    <message>
+        <source>Shows program info</source>
+        <translation>Wyświetla informacje o programie</translation>
+    </message>
+    <message>
+        <source>&amp;Credits</source>
+        <translation>&amp;Lista osób pomocnych przy tworzeniu programu</translation>
+    </message>
+    <message>
+        <source>Shows credits</source>
+        <translation>Wyświetla listę osób pomocnych przy tworzeniu programu</translation>
+    </message>
+    <message>
+        <source>&amp;Help</source>
+        <translation>Pomo&amp;c</translation>
+    </message>
+    <message>
+        <source>Time elapsed: %s</source>
+        <translation>Upłynęło %s sekund</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Choose script</source>
+        <translation>Wybierz sktypt</translation>
+    </message>
+    <message>
+        <source>Script files (*.lua),(*.moon)|*.lua;*.moon;</source>
+        <translation>Pliki skryptów (*.lua),(*.moon)|*.lua;*.moon;</translation>
+    </message>
+    <message>
+        <source>This subtitle file does not have any scripts added</source>
+        <translation>Ten plik napisów nie ma dodanych żadnych skryptów</translation>
+    </message>
+    <message>
+        <source>Validation Lua script &apos;%s&apos; failed</source>
+        <translation>Warunki skryptu Lua &apos;%s&apos; nie zostały spełnione</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Choose subtitle file</source>
+        <translation>Wybierz plik napisów</translation>
+    </message>
+    <message>
+        <source>Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm</source>
+        <translation>Pliki napisów (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Pliki wideo z wbudowanymi napisami (*.mkv),(*.ogm)|*.mkv;*.ogm</translation>
+    </message>
+    <message>
+        <source>Choose video file</source>
+        <translation>Wybierz plik wideo</translation>
+    </message>
+    <message>
+        <source>Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|All files (*.*)|*.*</source>
+        <translation>Pliki wideo(*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|Wszystkie pliki (*.*)|*.*</translation>
+    </message>
+    <message>
+        <source>Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*</source>
+        <translation>Pliki klatek kluczowych (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|Wszystkie pliki (*.*)|*.*</translation>
+    </message>
+    <message>
+        <source>HikariSub subtitle editor by altqx,
+version %s from %s</source>
+        <translation>Edytor napisów HikariSub autorstwa altqx,
+wersja %s z dnia %s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Based on Kainote by Marcin Drob aka Bakura or Bjakja.
+
+</source>
+        <translation>Oparty na programie Kainote autorstwa Marcina Droba aka Bakura lub Bjakja.
+
+</translation>
+    </message>
+    <message>
+        <source>If you have noticed any bugs or have any suggestions for changes or new features,
+open an issue at https://github.com/altqx/hikari/issues.
+
+</source>
+        <translation>Jeśli zauważyłeś(aś) jakieś błędy bądź masz jakieś propozycje zmian lub nowych funkcji,
+zgłoś je na https://github.com/altqx/hikari/issues.
+
+</translation>
+    </message>
+    <message>
+        <source>HikariSub includes parts of the following projects:
+</source>
+        <translation>HikariSub zawiera w sobie części następujących projektów:
+</translation>
+    </message>
+    <message>
+        <source>Color picker, demuxing subtitles from MKV, audio box, audio player, automation,
+and several other individual features taken from Aegisub -
+</source>
+        <translation>Color picker, wymuxowywanie napisów z mkv, audiobox, odwarzacz audio, automatyzacja
+i kilka innych pojedynczych funkcji wzięte z Aegisuba -
+</translation>
+    </message>
+    <message>
+        <source>About HikariSub</source>
+        <translation>O HikariSub</translation>
+    </message>
+    <message>
+        <source>Graphical help: (buttons, help pictures etc.)
+</source>
+        <translation>Pomoc graficzna: (przyciski, obrazki do pomocy itd.)
+</translation>
+    </message>
+    <message>
+        <source>- Xandros (new video buttons).
+</source>
+        <translation>- Xandros (przyciski do wideo).
+</translation>
+    </message>
+    <message>
+        <source>- Devilkan (menu and toolbar buttons)
+</source>
+        <translation>- Devilkan (ikony do menu i paska narzędzi, obrazki do pomocy).
+</translation>
+    </message>
+    <message>
+        <source>- Zły Los (icons for file associations and menu).
+</source>
+        <translation>- Zły Los (ikony do skojarzonych plików i do menu).
+</translation>
+    </message>
+    <message>
+        <source>Testers:
+</source>
+        <translation>Testerzy: (mniej i bardziej wprawieni użytkownicy programu)
+</translation>
+    </message>
+    <message>
+        <source>- Sacredus (first translator using translator mode,
+great help testing HikariSub on a slow computer)
+</source>
+        <translation>- Sacredus (chyba pierwszy tłumacz używający trybu tłumacza,
+ nieoceniona pomoc przy testowaniu wydajności na słabym komputerze).
+</translation>
+    </message>
+    <message>
+        <source>- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot
+</source>
+        <translation>- Devilkan (crashhunter, ze względu na swój system i przyzwyczajenia wytropił już wiele crashy,
+</translation>
+    </message>
+    <message>
+        <source>helped with typesetting tools and came up with many more improvements).
+</source>
+        <translation>pomógł w poprawie działania narzędzi do typesettingu, wymyślił wiele innych usprawnień).
+</translation>
+    </message>
+    <message>
+        <source>- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).
+</source>
+        <translation>- MatiasMovie (wyłapał parę crashy i zaproponował różne usprawnienia, pomaga w debugowaniu crashy).
+</translation>
+    </message>
+    <message>
+        <source>- mas1904 (found some errors and helping with crash debuging).
+</source>
+        <translation>- mas1904 (wyłapał trochę błędów, pomaga w debugowaniu crashy).
+</translation>
+    </message>
+    <message>
+        <source>- Senami (made new themes and found some bugs).
+</source>
+        <translation>- Senami (stworzył nowe motywy, a także wyłapał parę błędów).
+</translation>
+    </message>
+    <message>
+        <source>- altinat (Thai translation).
+</source>
+        <translation>- altinat (tajskie tłumaczenie).
+</translation>
+    </message>
+    <message>
+        <source>- labrie75 (Korean translation).
+</source>
+        <translation>- labrie75 (koreańskie tłumaczenie).
+</translation>
+    </message>
+    <message>
+        <source>- Niskala5570 (Malay translation).
+</source>
+        <translation>- Niskala5570 (malajskie tłumaczenie).
+</translation>
+    </message>
+    <message>
+        <source>Thanks to other HikariSub users who reported bugs:
+</source>
+        <translation>Podziękowania także dla osób, które używają programu i zgłaszali błędy.
+</translation>
+    </message>
+    <message>
+        <source>Credits</source>
+        <translation>Lista osób pomocnych przy tworzeniu programu</translation>
+    </message>
+    <message>
+        <source>Subtitle file </source>
+        <translation>Plik napisów </translation>
+    </message>
+    <message>
+        <source>Save subtitle file</source>
+        <translation>Zapisz plik napisów</translation>
+    </message>
+    <message>
+        <source>Chosen file is read only,
+please save with different name or change file attribute.</source>
+        <translation>Wybrany plik jest tylko do odczytu,
+proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
+    </message>
+    <message>
+        <source>Load subtitles named &quot;%s&quot;?</source>
+        <translation>Wczytać napisy o nazwie &quot;%s&quot;?</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Cannot open subtitle file</source>
+        <translation>Nie można otworzyć napisów</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>Brak</translation>
+    </message>
+    <message>
+        <source>Save subtitles named &quot;%s&quot; before %s?</source>
+        <translation>Zapisać napisy o nazwie &quot;%s&quot; przed %s?</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>exiting program</source>
+        <translation>zamknięciem programu</translation>
+    </message>
+    <message>
+        <source>closing tab</source>
+        <translation>zamknięciem zakładki</translation>
+    </message>
+    <message>
+        <source>loading new subtitles</source>
+        <translation>wczytaniem nowych napisów</translation>
+    </message>
+    <message>
+        <source>removing subtitles</source>
+        <translation>usunięciem napisów</translation>
+    </message>
+    <message>
+        <source>Cannot load audio hotkeys</source>
+        <translation>Nie można wczytać skrótów klawiszowych audio</translation>
+    </message>
+    <message>
+        <source>Cannot load audio configuration</source>
+        <translation>Nie można wczytać opcji audio</translation>
+    </message>
+    <message>
+        <source>Choose audio file</source>
+        <translation>Wybierz plik audio</translation>
+    </message>
+    <message>
+        <source>Audio and video files</source>
+        <translation>Pliki audio i wideo</translation>
+    </message>
+    <message>
+        <source>All files</source>
+        <translation>Wszystkie pliki</translation>
+    </message>
+    <message>
+        <source>Undo to </source>
+        <translation>&amp;Cofnij do </translation>
+    </message>
+    <message>
+        <source>Redo to </source>
+        <translation>&amp;Ponów do </translation>
+    </message>
+    <message>
+        <source>Choose session file</source>
+        <translation>Wybierz plik sesji</translation>
+    </message>
+    <message>
+        <source>Session file (*.kls),|*.kls</source>
+        <translation>Plik sesji (*.kls),|*.kls</translation>
+    </message>
+    <message>
+        <source>Save session file</source>
+        <translation>Zapisz plik sesji</translation>
+    </message>
+    <message>
+        <source>Hotkey &quot;%s&quot; it&apos;s not script hotkey.</source>
+        <translation>Skrót o nazwie &apos;%s&apos; nie należy do skrypru.</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
         <source>Exit</source>
         <translation>Wyjście</translation>
     </message>
@@ -1715,48 +2693,8 @@ Zakończono w %sms</translation>
         <translation>Okno zmiany czasów</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>Konwertuj do ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>Konwertuj do SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>Konwertuj do MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>Konwertuj do MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>Konwertuj do TMP</translation>
-    </message>
-    <message>
         <source>Style manager</source>
         <translation>Menedżer stylów</translation>
-    </message>
-    <message>
-        <source>Enable / Disable editor</source>
-        <translation>Włącz / Wyłącz edytor</translation>
-    </message>
-    <message>
-        <source>Open video</source>
-        <translation>Otwórz wideo</translation>
-    </message>
-    <message>
-        <source>Undo</source>
-        <translation>Cofnij</translation>
-    </message>
-    <message>
-        <source>Redo</source>
-        <translation>Ponów</translation>
-    </message>
-    <message>
-        <source>History</source>
-        <translation>Historia</translation>
     </message>
     <message>
         <source>Open subtitles</source>
@@ -1779,36 +2717,12 @@ Zakończono w %sms</translation>
         <translation>Usuń linijkę</translation>
     </message>
     <message>
-        <source>Insert start time from video</source>
-        <translation>Wstaw czas początkowy z wideo</translation>
-    </message>
-    <message>
-        <source>Insert end time from video</source>
-        <translation>Wstaw czas końcowy z wideo</translation>
-    </message>
-    <message>
-        <source>Play / Pause</source>
-        <translation>Odtwórz / Pauza</translation>
-    </message>
-    <message>
-        <source>Previous frame</source>
-        <translation>Klatka w tył</translation>
-    </message>
-    <message>
-        <source>Next frame</source>
-        <translation>Klatka w przód</translation>
-    </message>
-    <message>
         <source>Previous line</source>
         <translation>Poprzednia linijka</translation>
     </message>
     <message>
         <source>Next line</source>
         <translation>Następna linijka</translation>
-    </message>
-    <message>
-        <source>Find next</source>
-        <translation>Znajdź następny</translation>
     </message>
     <message>
         <source>Merge with previous line</source>
@@ -2322,8 +3236,8 @@ Zakończono w %sms</translation>
         <translation>Podziel linie według łamań</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>Właściwości pliku ASS</translation>
+        <source>Check for updates</source>
+        <translation>Sprawdź aktualizacje</translation>
     </message>
     <message>
         <source>About</source>
@@ -2332,46 +3246,6 @@ Zakończono w %sms</translation>
     <message>
         <source>Report an issue</source>
         <translation>Zgłoś problem</translation>
-    </message>
-    <message>
-        <source>Open audio from video</source>
-        <translation>Otwórz audio z wideo</translation>
-    </message>
-    <message>
-        <source>Load script</source>
-        <translation>Wczytaj skrypt</translation>
-    </message>
-    <message>
-        <source>Open shortcut mapping window</source>
-        <translation>Otwórz okno mapowania skrótów</translation>
-    </message>
-    <message>
-        <source>Refresh autoload scripts</source>
-        <translation>Odśwież skrypty autoload</translation>
-    </message>
-    <message>
-        <source>Close audio</source>
-        <translation>Zamknij audio</translation>
-    </message>
-    <message>
-        <source>Credits</source>
-        <translation>Lista osób pomocnych przy tworzeniu programu</translation>
-    </message>
-    <message>
-        <source>Hide tags</source>
-        <translation>Ukryj tagi w nawiasach</translation>
-    </message>
-    <message>
-        <source>Open keyframes</source>
-        <translation>Otwórz klatki kluczowe</translation>
-    </message>
-    <message>
-        <source>Open auto save</source>
-        <translation>Otwórz autozapis</translation>
-    </message>
-    <message>
-        <source>Run the last loaded script</source>
-        <translation>Uruchom ostatnio zaczytany skrypt</translation>
     </message>
     <message>
         <source>Sort all lines by start time</source>
@@ -2423,35 +3297,7 @@ Zakończono w %sms</translation>
     </message>
     <message>
         <source>Shift times / run time post processor</source>
-        <translation>Przesuń czasy / uruchom post processor</translation>
-    </message>
-    <message>
-        <source>Go to previous keyframe</source>
-        <translation>Przejdź do poprzedniej klatki kluczowej</translation>
-    </message>
-    <message>
-        <source>Go to next keyframe</source>
-        <translation>Przejdź do następnej klatki kluczowej</translation>
-    </message>
-    <message>
-        <source>Resample subtitles</source>
-        <translation>Zmień rozdzielczość napisów</translation>
-    </message>
-    <message>
-        <source>Undo to last save</source>
-        <translation>Cofnij do ostatniego zapisu</translation>
-    </message>
-    <message>
-        <source>Open video with FFMS2</source>
-        <translation>Otwieraj wideo przez FFMS2</translation>
-    </message>
-    <message>
-        <source>Zoom video</source>
-        <translation>Powiększ wideo</translation>
-    </message>
-    <message>
-        <source>Turn off video zoom</source>
-        <translation>Wyłącz powiększenie wideo</translation>
+        <translation>Przesuń czasy / uruchom postprocesor</translation>
     </message>
     <message>
         <source>View all</source>
@@ -2478,64 +3324,16 @@ Zakończono w %sms</translation>
         <translation>Oczyść style pliku ASS</translation>
     </message>
     <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>Popraw drobne błędy (eksperymentalne)</translation>
-    </message>
-    <message>
-        <source>Load last session</source>
-        <translation>Wczytaj ostatnią sesję</translation>
-    </message>
-    <message>
-        <source>Open audio</source>
-        <translation>Otwórz audio</translation>
-    </message>
-    <message>
         <source>Play active line</source>
         <translation>Odtwórz aktywną linijkę</translation>
-    </message>
-    <message>
-        <source>Remove subtitles from the editor</source>
-        <translation>Usuń napisy z edytora</translation>
-    </message>
-    <message>
-        <source>Save all subtitles</source>
-        <translation>Zapisz wszystkie napisy</translation>
-    </message>
-    <message>
-        <source>Save translation</source>
-        <translation>Zapisz tłumaczenie</translation>
-    </message>
-    <message>
-        <source>Save subtitles using the video name</source>
-        <translation>Zapisuj napisy z nazwą wideo</translation>
     </message>
     <message>
         <source>Select lines</source>
         <translation>Zaznacz linijki</translation>
     </message>
     <message>
-        <source>Set audio position to video time</source>
-        <translation>Ustaw audio z czasem wideo</translation>
-    </message>
-    <message>
-        <source>Set audio marker to video time</source>
-        <translation>Ustaw znacznik audio z czasem wideo</translation>
-    </message>
-    <message>
         <source>Settings</source>
         <translation>Ustawienia</translation>
-    </message>
-    <message>
-        <source>Go to start time</source>
-        <translation>Przejdź do czasu początkowego linii</translation>
-    </message>
-    <message>
-        <source>Go to end time of line</source>
-        <translation>Przejdź do czasu końcowego linii</translation>
-    </message>
-    <message>
-        <source>Check spelling</source>
-        <translation>Sprawdź poprawność pisowni</translation>
     </message>
     <message>
         <source>Copy frame to clipboard</source>
@@ -2568,772 +3366,6 @@ Zakończono w %sms</translation>
     <message>
         <source>Save frame with subtitles as PNG</source>
         <translation>Zapisz klatkę z napisami jako PNG</translation>
-    </message>
-    <message>
-        <source>Apply to All</source>
-        <translation>Zastosuj dla wszystkich</translation>
-    </message>
-    <message>
-        <source>Yes to all</source>
-        <translation>Tak dla wszystkich</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>Tak</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>Nie</translation>
-    </message>
-    <message>
-        <source>Help</source>
-        <translation>Pomoc</translation>
-    </message>
-    <message>
-        <source>Untitled - </source>
-        <translation>Bez nazwy - </translation>
-    </message>
-    <message>
-        <source>Video duration</source>
-        <translation>Czas trwania wideo</translation>
-    </message>
-    <message>
-        <source>Video scale</source>
-        <translation>Skala obrazu wideo</translation>
-    </message>
-    <message>
-        <source>Video zoom</source>
-        <translation>Powiększenie wideo</translation>
-    </message>
-    <message>
-        <source>Frames per second</source>
-        <translation>Klatki na Sekundę</translation>
-    </message>
-    <message>
-        <source>Subtitles resolution</source>
-        <translation>Rozdzielczość napisów</translation>
-    </message>
-    <message>
-        <source>Video aspect ratio</source>
-        <translation>Proporcje wideo</translation>
-    </message>
-    <message>
-        <source>Video file name</source>
-        <translation>Nazwa pliku wideo</translation>
-    </message>
-    <message>
-        <source>Video resolution</source>
-        <translation>Rozdzielczość wideo</translation>
-    </message>
-    <message>
-        <source>Loads previously loaded files</source>
-        <translation>Wczytuje poprzednio zaczytane pliki</translation>
-    </message>
-    <message>
-        <source>Load session from file</source>
-        <translation>Wczytaj sesję z pliku</translation>
-    </message>
-    <message>
-        <source>Loads session from saved session file</source>
-        <translation>Wczytuje sesję z wcześniej zapisanego pliku sesji</translation>
-    </message>
-    <message>
-        <source>Save session to file</source>
-        <translation>Zapisz sesję do pliku</translation>
-    </message>
-    <message>
-        <source>Saves session to file</source>
-        <translation>Zapisuje sesję do pliku</translation>
-    </message>
-    <message>
-        <source>Ask whether to load the last session at program startup</source>
-        <translation>Pytaj o wczytanie ostatniej sesji przy starcie programu</translation>
-    </message>
-    <message>
-        <source>Asks whether to load previously loaded files at program startup</source>
-        <translation>Pyta, czy wczytać ostatnio zaczytane pliki przy starcie programu</translation>
-    </message>
-    <message>
-        <source>Load last session after program start</source>
-        <translation>Wczytaj ostatnią sesję przy starcie programu</translation>
-    </message>
-    <message>
-        <source>Loads previously loaded files at program startup</source>
-        <translation>Wczytuje poprzednio zaczytane pliki przy starcie programu</translation>
-    </message>
-    <message>
-        <source>&amp;Open subtitles</source>
-        <translation>&amp;Otwórz napisy</translation>
-    </message>
-    <message>
-        <source>Open subtitle file</source>
-        <translation>Otwórz plik napisów</translation>
-    </message>
-    <message>
-        <source>&amp;Save</source>
-        <translation>&amp;Zapisz</translation>
-    </message>
-    <message>
-        <source>Save current file</source>
-        <translation>Zapisz aktualny plik</translation>
-    </message>
-    <message>
-        <source>Save &amp;all</source>
-        <translation>Zapisz &amp;wszystko</translation>
-    </message>
-    <message>
-        <source>Save &amp;as...</source>
-        <translation>Zapisz &amp;jako...</translation>
-    </message>
-    <message>
-        <source>Save as</source>
-        <translation>Zapisz jako</translation>
-    </message>
-    <message>
-        <source>Save &amp;translation</source>
-        <translation>Zapisz &amp;tłumaczenie</translation>
-    </message>
-    <message>
-        <source>Recently opened &amp;subtitles</source>
-        <translation>Ostatnio otwa&amp;rte napisy</translation>
-    </message>
-    <message>
-        <source>Recently opened subtitles</source>
-        <translation>Ostatnio otwarte napisy</translation>
-    </message>
-    <message>
-        <source>Remove subtitles from the &amp;editor</source>
-        <translation>Usuń napisy z e&amp;dytora</translation>
-    </message>
-    <message>
-        <source>Opens the selected autosave from the list</source>
-        <translation>Otwiera autozapis wybrany z listy</translation>
-    </message>
-    <message>
-        <source>Opens the temporary file removal window</source>
-        <translation>Otwiera okno usuwania plików tymczasowych</translation>
-    </message>
-    <message>
-        <source>Show / Hide log window</source>
-        <translation>Pokaż / Ukryj okno logów</translation>
-    </message>
-    <message>
-        <source>Last session</source>
-        <translation>Ostatnia sesja</translation>
-    </message>
-    <message>
-        <source>Last session options</source>
-        <translation>Opcje ostatniej sesji</translation>
-    </message>
-    <message>
-        <source>&amp;Settings</source>
-        <translation>&amp;Ustawienia</translation>
-    </message>
-    <message>
-        <source>Program settings</source>
-        <translation>Ustawienia programu</translation>
-    </message>
-    <message>
-        <source>&amp;Exit	Alt-F4</source>
-        <translation>Wyjści&amp;e	Alt-F4</translation>
-    </message>
-    <message>
-        <source>Exit the program</source>
-        <translation>Zakończ działanie programu</translation>
-    </message>
-    <message>
-        <source>&amp;File</source>
-        <translation>&amp;Plik</translation>
-    </message>
-    <message>
-        <source>&amp;Undo</source>
-        <translation>&amp;Cofnij</translation>
-    </message>
-    <message>
-        <source>&amp;Redo</source>
-        <translation>&amp;Ponów</translation>
-    </message>
-    <message>
-        <source>&amp;History</source>
-        <translation>&amp;Historia</translation>
-    </message>
-    <message>
-        <source>Find and re&amp;place</source>
-        <translation>Znajdź i za&amp;mień</translation>
-    </message>
-    <message>
-        <source>Searches for the specified text phrases and replaces them</source>
-        <translation>Szuka i podmienia dane frazy tekstu</translation>
-    </message>
-    <message>
-        <source>&amp;Find</source>
-        <translation>Z&amp;najdź</translation>
-    </message>
-    <message>
-        <source>Searches for the specified text phrase</source>
-        <translation>Szuka dane frazy tekstu</translation>
-    </message>
-    <message>
-        <source>Finds the next occurrence of the phrase in the text</source>
-        <translation>Znajduje kolejne wystąpięnie frazy w tekście</translation>
-    </message>
-    <message>
-        <source>The starting time</source>
-        <translation>Czas początkowy</translation>
-    </message>
-    <message>
-        <source>Sort by start time</source>
-        <translation>Sortuj według czasu początkowego</translation>
-    </message>
-    <message>
-        <source>End time</source>
-        <translation>Czas końcowy</translation>
-    </message>
-    <message>
-        <source>Sort by end time</source>
-        <translation>Sortuj według czasu końcowego</translation>
-    </message>
-    <message>
-        <source>Sort by styles</source>
-        <translation>Sortuj według stylów</translation>
-    </message>
-    <message>
-        <source>Sort by actor</source>
-        <translation>Sortuj według aktora</translation>
-    </message>
-    <message>
-        <source>Sort by effect</source>
-        <translation>Sortuj według efektu</translation>
-    </message>
-    <message>
-        <source>Layer</source>
-        <translation>Warstwa</translation>
-    </message>
-    <message>
-        <source>Sort by layer</source>
-        <translation>Sortuj według warstwy</translation>
-    </message>
-    <message>
-        <source>So&amp;rt all lines</source>
-        <translation>Sort&amp;uj wszystkie linie</translation>
-    </message>
-    <message>
-        <source>Sorts all lines in ASS file</source>
-        <translation>Sortuje wszystkie linie napisów ASS</translation>
-    </message>
-    <message>
-        <source>So&amp;rt selected lines</source>
-        <translation>Sortu&amp;j zaznaczone linie</translation>
-    </message>
-    <message>
-        <source>Sorts selected lines in ASS file</source>
-        <translation>Sortuje zaznaczone linie napisów ASS</translation>
-    </message>
-    <message>
-        <source>Turns on multireplacer</source>
-        <translation>Włącza okno poprawiania błędów</translation>
-    </message>
-    <message>
-        <source>Select &amp;lines</source>
-        <translation>Zaznacz &amp;linijki</translation>
-    </message>
-    <message>
-        <source>Selects lines by expressions</source>
-        <translation>Zaznacza linijki wg danej frazy tekstu</translation>
-    </message>
-    <message>
-        <source>&amp;Edit</source>
-        <translation>&amp;Edycja</translation>
-    </message>
-    <message>
-        <source>Opens video file</source>
-        <translation>Otwiera wybrane wideo</translation>
-    </message>
-    <message>
-        <source>Recently opened videos</source>
-        <translation>Ostatnio otwarte wideo</translation>
-    </message>
-    <message>
-        <source>Recently opened keyframes</source>
-        <translation>Ostatnio otwarte klatki kluczowe</translation>
-    </message>
-    <message>
-        <source>Open dummy video</source>
-        <translation>Otwórz dummy wideo</translation>
-    </message>
-    <message>
-        <source>Inserts the start time from video</source>
-        <translation>Wstawia czas początkowy z wideo</translation>
-    </message>
-    <message>
-        <source>Inserts the end time from video</source>
-        <translation>Wstawia czas końcowy z wideo</translation>
-    </message>
-    <message>
-        <source>Go to previous frame</source>
-        <translation>Przechodzi o jedną klatkę w tył</translation>
-    </message>
-    <message>
-        <source>Go to next frame</source>
-        <translation>Przechodzi o jedną klatkę w przód</translation>
-    </message>
-    <message>
-        <source>Moves video to start time</source>
-        <translation>Przechodzi wideo do czasu początkowego linii</translation>
-    </message>
-    <message>
-        <source>Moves video to end time</source>
-        <translation>Przechodzi wideo do czasu końcowego linii</translation>
-    </message>
-    <message>
-        <source>Plays / Pauses video</source>
-        <translation>Odtwarza lub pauzuje wideo</translation>
-    </message>
-    <message>
-        <source>Opens video with FFMS2 for frame precision</source>
-        <translation>Otwiera wideo przez FFMS2, co daje dokładność klatkową</translation>
-    </message>
-    <message>
-        <source>&amp;Video</source>
-        <translation>&amp;Wideo</translation>
-    </message>
-    <message>
-        <source>Opens audio file</source>
-        <translation>Otwiera wybrane audio</translation>
-    </message>
-    <message>
-        <source>Recently opened audio</source>
-        <translation>Ostatnio otwarte audio</translation>
-    </message>
-    <message>
-        <source>Opens audio from video</source>
-        <translation>Otwiera audio z wideo</translation>
-    </message>
-    <message>
-        <source>Open blank 2h30m audio</source>
-        <translation>Otwórz puste audio na 2:30 godziny</translation>
-    </message>
-    <message>
-        <source>Opens blank audio 2 hour and 30 minutes long</source>
-        <translation>Otwiera puste audio na 2:30 godziny</translation>
-    </message>
-    <message>
-        <source>Closes audio</source>
-        <translation>Zamyka audio</translation>
-    </message>
-    <message>
-        <source>A&amp;udio</source>
-        <translation>A&amp;udio</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Wszystko</translation>
-    </message>
-    <message>
-        <source>Shows all windows</source>
-        <translation>Wszystkie okna są widoczne</translation>
-    </message>
-    <message>
-        <source>Shows only video window and subs window</source>
-        <translation>Widoczne tylko okno wideo i napisów</translation>
-    </message>
-    <message>
-        <source>Video and subs</source>
-        <translation>Wideo i napisy</translation>
-    </message>
-    <message>
-        <source>Audio and subs</source>
-        <translation>Audio i napisy</translation>
-    </message>
-    <message>
-        <source>Shows only audio window and subs window</source>
-        <translation>Widoczne tylko okno audio i napisów</translation>
-    </message>
-    <message>
-        <source>Only video</source>
-        <translation>Tylko wideo</translation>
-    </message>
-    <message>
-        <source>Shows only video window</source>
-        <translation>Widoczne tylko okno wideo</translation>
-    </message>
-    <message>
-        <source>Only subtitles</source>
-        <translation>Tylko napisy</translation>
-    </message>
-    <message>
-        <source>Shows only the subtitle window</source>
-        <translation>Widoczne tylko okno napisów</translation>
-    </message>
-    <message>
-        <source>View</source>
-        <translation>Wido&amp;k</translation>
-    </message>
-    <message>
-        <source>Enables / disables editor</source>
-        <translation>Włączanie bądź wyłączanie edytora</translation>
-    </message>
-    <message>
-        <source>ASS subtitle properties</source>
-        <translation>Właściwości napisów ASS</translation>
-    </message>
-    <message>
-        <source>Style &amp;manager</source>
-        <translation>&amp;Menedżer stylów</translation>
-    </message>
-    <message>
-        <source>Is used to manage ASS styles</source>
-        <translation>Służy do zarządzania stylami ASS</translation>
-    </message>
-    <message>
-        <source>Converts to ASS format</source>
-        <translation>Konwertuje do formatu ASS</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>Konwertuje do formatu SRT</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>Konwertuje do formatu microDVD</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>Konwertuje do formatu MPL2</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>Konwertuje do formatu TMPlayer (niezalecane)</translation>
-    </message>
-    <message>
-        <source>Conversion</source>
-        <translation>Konwersja</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>Konwersja z jednego formatu napisów na inny</translation>
-    </message>
-    <message>
-        <source>Shift &amp;times...	Ctrl-I</source>
-        <translation>Okno zmiany &amp;czasów	Ctrl-I</translation>
-    </message>
-    <message>
-        <source>Shifting subtitle times</source>
-        <translation>Przesuwanie czasów napisów</translation>
-    </message>
-    <message>
-        <source>Hides tags in ASS and MDVD</source>
-        <translation>Ukrywa tagi w nawiasach ASS i MDVD</translation>
-    </message>
-    <message>
-        <source>Su&amp;btitles</source>
-        <translation>&amp;Napisy</translation>
-    </message>
-    <message>
-        <source>Au&amp;tomation</source>
-        <translation>Au&amp;tomatyzacja</translation>
-    </message>
-    <message>
-        <source>HikariSub &amp;website</source>
-        <translation>&amp;Strona HikariSub</translation>
-    </message>
-    <message>
-        <source>Opens the HikariSub website in the default browser</source>
-        <translation>Otwiera stronę HikariSub w domyślnej przeglądarce</translation>
-    </message>
-    <message>
-        <source>&amp;Report an issue</source>
-        <translation>&amp;Zgłoś problem</translation>
-    </message>
-    <message>
-        <source>Opens the HikariSub issue tracker</source>
-        <translation>Otwiera listę zgłoszeń HikariSub</translation>
-    </message>
-    <message>
-        <source>&amp;About</source>
-        <translation>&amp;O programie</translation>
-    </message>
-    <message>
-        <source>Shows program info</source>
-        <translation>Wyświetla informacje o programie</translation>
-    </message>
-    <message>
-        <source>&amp;Credits</source>
-        <translation>&amp;Lista osób pomocnych przy tworzeniu programu</translation>
-    </message>
-    <message>
-        <source>Shows credits</source>
-        <translation>Wyświetla listę osób pomocnych przy tworzeniu programu</translation>
-    </message>
-    <message>
-        <source>&amp;Help</source>
-        <translation>Pomo&amp;c</translation>
-    </message>
-    <message>
-        <source>Time elapsed: %s</source>
-        <translation>Upłynęło %s sekund</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Choose script</source>
-        <translation>Wybierz sktypt</translation>
-    </message>
-    <message>
-        <source>Script files (*.lua),(*.moon)|*.lua;*.moon;</source>
-        <translation>Pliki skryptów (*.lua),(*.moon)|*.lua;*.moon;</translation>
-    </message>
-    <message>
-        <source>This subtitle file does not have any scripts added</source>
-        <translation>Ten plik napisów nie ma dodanych żadnych skryptów</translation>
-    </message>
-    <message>
-        <source>Validation Lua script &apos;%s&apos; failed</source>
-        <translation>Warunki skryptu Lua &apos;%s&apos; nie zostały spełnione</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Choose subtitle file</source>
-        <translation>Wybierz plik napisów</translation>
-    </message>
-    <message>
-        <source>Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm</source>
-        <translation>Pliki napisów (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Pliki wideo z wbudowanymi napisami (*.mkv),(*.ogm)|*.mkv;*.ogm</translation>
-    </message>
-    <message>
-        <source>Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|All files (*.*)|*.*</source>
-        <translation>Pliki wideo(*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|Wszystkie pliki (*.*)|*.*</translation>
-    </message>
-    <message>
-        <source>Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*</source>
-        <translation>Pliki klatek kluczowych (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|Wszystkie pliki (*.*)|*.*</translation>
-    </message>
-    <message>
-        <source>HikariSub subtitle editor by altqx,
-version %s from %s</source>
-        <translation>Edytor napisów HikariSub autorstwa altqx,
-wersja %s z dnia %s</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Based on Kainote by Marcin Drob aka Bakura or Bjakja.
-
-</source>
-        <translation>Oparty na programie Kainote autorstwa Marcina Droba aka Bakura lub Bjakja.
-
-</translation>
-    </message>
-    <message>
-        <source>If you have noticed any bugs or have any suggestions for changes or new features,
-open an issue at https://github.com/altqx/hikari/issues.
-
-</source>
-        <translation>Jeśli zauważyłeś(aś) jakieś błędy bądź masz jakieś propozycje zmian lub nowych funkcji,
-zgłoś je na https://github.com/altqx/hikari/issues.
-
-</translation>
-    </message>
-    <message>
-        <source>HikariSub includes parts of the following projects:
-</source>
-        <translation>HikariSub zawiera w sobie części następujących projektów:
-</translation>
-    </message>
-    <message>
-        <source>Color picker, demuxing subtitles from MKV, audio box, audio player, automation,
-and several other individual features taken from Aegisub -
-</source>
-        <translation>Color picker, wymuxowywanie napisów z mkv, audiobox, odwarzacz audio, automatyzacja
-i kilka innych pojedynczych funkcji wzięte z Aegisuba -
-</translation>
-    </message>
-    <message>
-        <source>About HikariSub</source>
-        <translation>O HikariSub</translation>
-    </message>
-    <message>
-        <source>Graphical help: (buttons, help pictures etc.)
-</source>
-        <translation>Pomoc graficzna: (przyciski, obrazki do pomocy itd.)
-</translation>
-    </message>
-    <message>
-        <source>- Xandros (new video buttons).
-</source>
-        <translation>- Xandros (przyciski do wideo).
-</translation>
-    </message>
-    <message>
-        <source>- Devilkan (menu and toolbar buttons)
-</source>
-        <translation>- Devilkan (ikony do menu i paska narzędzi, obrazki do pomocy).
-</translation>
-    </message>
-    <message>
-        <source>- Zły Los (icons for file associations and menu).
-</source>
-        <translation>- Zły Los (ikony do skojarzonych plików i do menu).
-</translation>
-    </message>
-    <message>
-        <source>Testers:
-</source>
-        <translation>Testerzy: (mniej i bardziej wprawieni użytkownicy programu)
-</translation>
-    </message>
-    <message>
-        <source>- Sacredus (first translator using translator mode,
-great help testing HikariSub on a slow computer)
-</source>
-        <translation>- Sacredus (chyba pierwszy tłumacz używający trybu tłumacza,
- nieoceniona pomoc przy testowaniu wydajności na słabym komputerze).
-</translation>
-    </message>
-    <message>
-        <source>- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot
-</source>
-        <translation>- Devilkan (crashhunter, ze względu na swój system i przyzwyczajenia wytropił już wiele crashy,
-</translation>
-    </message>
-    <message>
-        <source>helped with typesetting tools and came up with many more improvements).
-</source>
-        <translation>pomógł w poprawie działania narzędzi do typesettingu, wymyślił wiele innych usprawnień).
-</translation>
-    </message>
-    <message>
-        <source>- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).
-</source>
-        <translation>- MatiasMovie (wyłapał parę crashy i zaproponował różne usprawnienia, pomaga w debugowaniu crashy).
-</translation>
-    </message>
-    <message>
-        <source>- mas1904 (found some errors and helping with crash debuging).
-</source>
-        <translation>- mas1904 (wyłapał trochę błędów, pomaga w debugowaniu crashy).
-</translation>
-    </message>
-    <message>
-        <source>- Senami (made new themes and found some bugs).
-</source>
-        <translation>- Senami (stworzył nowe motywy, a także wyłapał parę błędów).
-</translation>
-    </message>
-    <message>
-        <source>- altinat (Thai translation).
-</source>
-        <translation>- altinat (tajskie tłumaczenie).
-</translation>
-    </message>
-    <message>
-        <source>- labrie75 (Korean translation).
-</source>
-        <translation>- labrie75 (koreańskie tłumaczenie).
-</translation>
-    </message>
-    <message>
-        <source>- Niskala5570 (Malay translation).
-</source>
-        <translation>- Niskala5570 (malajskie tłumaczenie).
-</translation>
-    </message>
-    <message>
-        <source>Thanks to other HikariSub users who reported bugs:
-</source>
-        <translation>Podziękowania także dla osób, które używają programu i zgłaszali błędy.
-</translation>
-    </message>
-    <message>
-        <source>Subtitle file </source>
-        <translation>Plik napisów </translation>
-    </message>
-    <message>
-        <source>Save subtitle file</source>
-        <translation>Zapisz plik napisów</translation>
-    </message>
-    <message>
-        <source>Chosen file is read only,
-please save with different name or change file attribute.</source>
-        <translation>Wybrany plik jest tylko do odczytu,
-proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
-    </message>
-    <message>
-        <source>Load subtitles named &quot;%s&quot;?</source>
-        <translation>Wczytać napisy o nazwie &quot;%s&quot;?</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Cannot open subtitle file</source>
-        <translation>Nie można otworzyć napisów</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation>Brak</translation>
-    </message>
-    <message>
-        <source>Save subtitles named &quot;%s&quot; before %s?</source>
-        <translation>Zapisać napisy o nazwie &quot;%s&quot; przed %s?</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>exiting program</source>
-        <translation>zamknięciem programu</translation>
-    </message>
-    <message>
-        <source>closing tab</source>
-        <translation>zamknięciem zakładki</translation>
-    </message>
-    <message>
-        <source>loading new subtitles</source>
-        <translation>wczytaniem nowych napisów</translation>
-    </message>
-    <message>
-        <source>removing subtitles</source>
-        <translation>usunięciem napisów</translation>
-    </message>
-    <message>
-        <source>Cannot load audio hotkeys</source>
-        <translation>Nie można wczytać skrótów klawiszowych audio</translation>
-    </message>
-    <message>
-        <source>Cannot load audio configuration</source>
-        <translation>Nie można wczytać opcji audio</translation>
-    </message>
-    <message>
-        <source>Choose audio file</source>
-        <translation>Wybierz plik audio</translation>
-    </message>
-    <message>
-        <source>Audio and video files</source>
-        <translation>Pliki audio i wideo</translation>
-    </message>
-    <message>
-        <source>All files</source>
-        <translation>Wszystkie pliki</translation>
-    </message>
-    <message>
-        <source>Undo to </source>
-        <translation>&amp;Cofnij do </translation>
-    </message>
-    <message>
-        <source>Redo to </source>
-        <translation>&amp;Ponów do </translation>
-    </message>
-    <message>
-        <source>Choose session file</source>
-        <translation>Wybierz plik sesji</translation>
-    </message>
-    <message>
-        <source>Session file (*.kls),|*.kls</source>
-        <translation>Plik sesji (*.kls),|*.kls</translation>
-    </message>
-    <message>
-        <source>Save session file</source>
-        <translation>Zapisz plik sesji</translation>
-    </message>
-    <message>
-        <source>Hotkey &quot;%s&quot; it&apos;s not script hotkey.</source>
-        <translation>Skrót o nazwie &apos;%s&apos; nie należy do skrypru.</translation>
-        <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
         <source>Log window</source>
@@ -3607,6 +3639,13 @@ bo została zedytowana.</translation>
         <translation>Zostaną zamknięte wszystkie zakładki, kontynuować?</translation>
     </message>
     <message>
+        <source>Cannot read the subtitle file:
+%s</source>
+        <translation>Nie można odczytać pliku napisów:
+%s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
         <source>Video: </source>
         <translation>Wideo: </translation>
     </message>
@@ -3643,6 +3682,25 @@ bo została zedytowana.</translation>
         <translation>Nieprawidłowy plik sesji</translation>
     </message>
     <message>
+        <source>Cannot read the subtitle files:
+</source>
+        <translation>Nie można odczytać plików napisów:
+</translation>
+    </message>
+    <message>
+        <source>Cannot save to file.</source>
+        <translation>Nie można zapisać do pliku.</translation>
+    </message>
+    <message>
+        <source>The old contents of the file are kept in %s.</source>
+        <translation>Poprzednia zawartość pliku została zachowana w %s.</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>A temporary file in its folder would let in users the file keeps out.</source>
+        <translation>Plik tymczasowy w folderze tego pliku byłby dostępny dla użytkowników, którzy nie mają dostępu do samego pliku.</translation>
+    </message>
+    <message>
         <source>Cannot create file.</source>
         <translation>Nie można utworzyć pliku.</translation>
     </message>
@@ -3657,10 +3715,6 @@ bo została zedytowana.</translation>
     <message>
         <source>The file was not opened.</source>
         <translation>Plik nie został otwarty.</translation>
-    </message>
-    <message>
-        <source>Cannot save to file.</source>
-        <translation>Nie można zapisać do pliku.</translation>
     </message>
     <message>
         <source>Open sorted subtitles</source>
@@ -3751,6 +3805,26 @@ po wyjściu z pełnego ekranu</translation>
     <message>
         <source>Spell checker language (&quot;Dictionary&quot; folder)</source>
         <translation>Język sprawdzania pisowni (folder &quot;Dictionary&quot;)</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>Aktualizacje</translation>
+    </message>
+    <message>
+        <source>Check for updates automatically</source>
+        <translation>Automatycznie sprawdzaj aktualizacje</translation>
+    </message>
+    <message>
+        <source>When the program starts: once a day, or an hour after a check that failed</source>
+        <translation>Przy uruchomieniu programu: raz dziennie lub godzinę po nieudanym sprawdzeniu</translation>
+    </message>
+    <message>
+        <source>Stable versions only</source>
+        <translation>Tylko wersje stabilne</translation>
+    </message>
+    <message>
+        <source>A release candidate is still told about newer release candidates</source>
+        <translation>Wersja RC nadal otrzymuje powiadomienia o nowszych wersjach RC</translation>
     </message>
     <message>
         <source>0 turns off saving while editing</source>
@@ -3898,6 +3972,10 @@ zostanie zmieniony na domyślny</translation>
     <message>
         <source>Open video from context menu on full screen</source>
         <translation>Otwórz wideo z menu kontekstowego na pełnym ekranie</translation>
+    </message>
+    <message>
+        <source>Convert video colours on the GPU (requires reloading)</source>
+        <translation>Konwertuj kolory wideo na GPU (wymaga ponownego wczytania)</translation>
     </message>
     <message>
         <source>Open video with time of active line</source>
@@ -4656,100 +4734,12 @@ polu tekstowym i polu napisów.</translation>
         <translation>Kolor</translation>
     </message>
     <message>
-        <source>ASS subtitles</source>
-        <translation>Napisy ASS</translation>
-    </message>
-    <message>
-        <source>SRT subtitles</source>
-        <translation>Napisy SRT</translation>
-    </message>
-    <message>
-        <source>SSA subtitles</source>
-        <translation>Napisy SSA</translation>
-    </message>
-    <message>
-        <source>SUB subtitles</source>
-        <translation>Napisy SUB</translation>
-    </message>
-    <message>
-        <source>TXT subtitles</source>
-        <translation>Napisy TXT</translation>
-    </message>
-    <message>
-        <source>Video AVI</source>
-        <translation>Wideo AVI</translation>
-    </message>
-    <message>
-        <source>Video MKV</source>
-        <translation>Wideo MKV</translation>
-    </message>
-    <message>
-        <source>Video MP4</source>
-        <translation>Wideo MP4</translation>
-    </message>
-    <message>
-        <source>Video OGM</source>
-        <translation>Wideo OGM</translation>
-    </message>
-    <message>
-        <source>Video 3GP</source>
-        <translation>Wideo 3GP</translation>
-    </message>
-    <message>
-        <source>Video ASF</source>
-        <translation>Wideo ASF</translation>
-    </message>
-    <message>
-        <source>Video RM</source>
-        <translation>Wideo RM</translation>
-    </message>
-    <message>
-        <source>Video RMVB</source>
-        <translation>Wideo RMVB</translation>
-    </message>
-    <message>
-        <source>Video WMV</source>
-        <translation>Wideo WMV</translation>
-    </message>
-    <message>
-        <source>Video M2TS</source>
-        <translation>Wideo M2TS</translation>
-    </message>
-    <message>
-        <source>Video MPEG</source>
-        <translation>Wideo MPEG</translation>
-    </message>
-    <message>
-        <source>Video MPG</source>
-        <translation>Wideo MPG</translation>
-    </message>
-    <message>
-        <source>Video TS</source>
-        <translation>Wideo TS</translation>
-    </message>
-    <message>
-        <source>WARNING! Behavior differs on each Windows version.
-For example, on Windows 7 WMP blocked
-the ability to change video associations.</source>
-        <translation>UWAGA! Działanie na każdym Windowsie jest inne.
-Przykładowo na Windows7 WMP zablokował
-możliwość zmiany skojarzeń wideo.</translation>
-    </message>
-    <message>
         <source>Deselect all</source>
         <translation>Odznacz wszystko</translation>
     </message>
     <message>
         <source>Select all</source>
         <translation>Zaznacz wszystko</translation>
-    </message>
-    <message>
-        <source>Select subtitles</source>
-        <translation>Zaznacz napisy</translation>
-    </message>
-    <message>
-        <source>Select video</source>
-        <translation>Zaznacz wideo</translation>
     </message>
     <message>
         <source>Advanced</source>
@@ -4816,13 +4806,13 @@ możliwość zmiany skojarzeń wideo.</translation>
         <translation>Indeksowanie pliku wideo</translation>
     </message>
     <message>
-        <source>Video frame size is too large</source>
-        <translation>Rozmiar klatki wideo jest zbyt duży</translation>
-    </message>
-    <message>
         <source>Cannot get frame %i: %s</source>
         <translation>Nie można pobrać klatki %i: %s</translation>
         <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Video frame size is too large</source>
+        <translation>Rozmiar klatki wideo jest zbyt duży</translation>
     </message>
     <message>
         <source>Choose the track</source>
@@ -4868,8 +4858,13 @@ możliwość zmiany skojarzeń wideo.</translation>
         <translation>Nie można ustawić opóźnienia, przekracza czas trwania audio</translation>
     </message>
     <message>
-        <source>Not enough RAM</source>
-        <translation>Za mało pamięci RAM</translation>
+        <source>Cannot create the audio cache %s</source>
+        <translation>Nie można utworzyć pliku audio cache %s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Not enough memory for the audio cache</source>
+        <translation>Za mało pamięci na audio cache</translation>
     </message>
     <message>
         <source>Cannot create DXVA processor service</source>
@@ -4913,6 +4908,10 @@ możliwość zmiany skojarzeń wideo.</translation>
         <translation>Brak bufora klatki</translation>
     </message>
     <message>
+        <source>Cannot lock texture buffer</source>
+        <translation>Nie można zablokować bufora tekstury</translation>
+    </message>
+    <message>
         <source>Cannot unlock subtitle texture buffer</source>
         <translation>Nie można odblokować bufora tekstury napisów</translation>
     </message>
@@ -4950,10 +4949,6 @@ możliwość zmiany skojarzeń wideo.</translation>
         <source>Track %i</source>
         <translation>Ścieżka %i</translation>
         <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Cannot set matrix projection</source>
-        <translation>Nie można ustawić macierzy projekcji</translation>
     </message>
     <message>
         <source>Resolution</source>
@@ -5111,7 +5106,7 @@ bądź wybierz istniejący, by nadpisać</translation>
     </message>
     <message>
         <source>Post processor</source>
-        <translation>Post processor</translation>
+        <translation>Postprocesor</translation>
     </message>
     <message>
         <source>Shift times</source>
@@ -5211,7 +5206,7 @@ do czasu audio</translation>
     </message>
     <message>
         <source>Run post processor</source>
-        <translation>Uruchom postprocessor</translation>
+        <translation>Uruchom postprocesor</translation>
     </message>
     <message>
         <source>Set times as continuous</source>
@@ -5950,6 +5945,12 @@ wielką literą</translation>
         <translation>Dzielenie linii</translation>
     </message>
     <message>
+        <source>Fixed the tree markers of %d line: lines with no tree description are now ordinary lines and every tree is open or closed as a whole.</source>
+        <translation>Naprawiono znaczniki drzewek w %d linii: linie bez opisu drzewka są teraz zwykłymi liniami, a każde drzewko jest rozwinięte lub zwinięte w całości.</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+        <extra-po-msgid_plural>Fixed the tree markers of %d lines: lines with no tree description are now ordinary lines and every tree is open or closed as a whole.</extra-po-msgid_plural>
+    </message>
+    <message>
         <source>, active line %i</source>
         <translation>, aktywna linia %i</translation>
         <extra-po-flags>c-format</extra-po-flags>
@@ -6095,6 +6096,51 @@ w tagu &apos;%s&apos;</translation>
         <translation>Nie zaznaczono linii do przesunięcia</translation>
     </message>
     <message>
+        <source>This edit would leave lines of a tree outside it, so it was not made.</source>
+        <translation>Ta edycja pozostawiłaby linie drzewka poza nim, więc nie została wykonana.</translation>
+    </message>
+    <message>
+        <source>Trees</source>
+        <translation>Drzewka</translation>
+    </message>
+    <message>
+        <source>Line %d: %s</source>
+        <translation>Linia %d: %s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>This edit would split a tree, leave some of its lines outside it or move them into another tree, so it was not made:
+%s
+
+Removing the tree deletes its description line and shows its lines as ordinary lines.</source>
+        <translation>Ta edycja podzieliłaby drzewko, pozostawiła część jego linii poza nim lub przeniosła je do innego drzewka, więc nie została wykonana:
+%s
+
+Usunięcie drzewka usuwa jego linię opisu i pokazuje jego linie jako zwykłe linie.</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+        <extra-po-msgid_plural>This edit would split trees, leave some of their lines outside them or move them into another tree, so it was not made:
+%s
+
+Removing the trees deletes their description lines and shows their lines as ordinary lines.</extra-po-msgid_plural>
+    </message>
+    <message>
+        <source>Make the edit again after removing.</source>
+        <translation>Po usunięciu wykonaj edycję ponownie.</translation>
+    </message>
+    <message>
+        <source>Remove the tree</source>
+        <translation>Usuń drzewko</translation>
+        <extra-po-msgid_plural>Remove the trees</extra-po-msgid_plural>
+    </message>
+    <message>
+        <source>Invalid format (file may be corrupted or contain errors)</source>
+        <translation>Niepoprawny format (plik uszkodzony lub zawiera błędy)</translation>
+    </message>
+    <message>
+        <source>This subtitle file is plain text and will be opened as ASS subtitles</source>
+        <translation>Ten plik napisów jest zwykłym tekstem, zostaje otwarty jako napisy ASS</translation>
+    </message>
+    <message>
         <source>Are you sure you want to turn off translation mode?
 Foreign language text will be deleted.</source>
         <translation>Czy na pewno chcesz wyłączyć tryb tłumacza?
@@ -6137,6 +6183,12 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
         <translation>Wyłącz potwierdzenie</translation>
     </message>
     <message>
+        <source>Hidden lines lie between the selected lines, so they cannot make one tree.
+Show the hidden lines or select only lines that are next to each other.</source>
+        <translation>Między zaznaczonymi liniami są ukryte linie, więc nie mogą one utworzyć jednego drzewka.
+Pokaż ukryte linie albo zaznacz tylko linie sąsiadujące ze sobą.</translation>
+    </message>
+    <message>
         <source>L.</source>
         <translation>W.</translation>
     </message>
@@ -6171,14 +6223,6 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     <message>
         <source>Cannot show preview cause grid height is too low</source>
         <translation>Nie można wyświetlić podglądu, ponieważ wielkość okna napisów jest zbyt mała</translation>
-    </message>
-    <message>
-        <source>This subtitle file is plain text and will be opened as ASS subtitles</source>
-        <translation>Ten plik napisów jest zwykłym tekstem, zostaje otwarty jako napisy ASS</translation>
-    </message>
-    <message>
-        <source>Invalid format (file may be corrupted or contain errors)</source>
-        <translation>Niepoprawny format (plik uszkodzony lub zawiera błędy)</translation>
     </message>
     <message>
         <source>Change resolution</source>
@@ -6338,6 +6382,12 @@ Translation - text pasted into subtitles with correct timing.</source>
 Oryginał - tekst napisów z właściwym timingiem służy
 do porównania wklejanych dialogów, później zostaje usunięty.
 Tłumaczenie - tekst wklejony do napisów z poprawnym timingiem.</translation>
+    </message>
+    <message>
+        <source>Subtitles were modified by another program.
+Reload and discard the unsaved changes in this tab?</source>
+        <translation>Napisy zostały zmodyfikowane przez inny program.
+Przeładować je i odrzucić niezapisane zmiany w tej zakładce?</translation>
     </message>
     <message>
         <source>Reloading</source>
@@ -6661,8 +6711,8 @@ Tłumaczenie - tekst wklejony do napisów z poprawnym timingiem.</translation>
         <translation>Pozycja paska narzędzi</translation>
     </message>
     <message>
-        <source>A new version (%s) is available. Update?</source>
-        <translation>Dostępna jest nowa wersja programu %s zaktualizować?</translation>
+        <source>You have the latest stable version. A newer prerelease, %s, is available.</source>
+        <translation>Masz najnowszą wersję stabilną. Dostępna jest nowsza wersja przedpremierowa: %s.</translation>
         <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
@@ -6670,24 +6720,29 @@ Tłumaczenie - tekst wklejony do napisów z poprawnym timingiem.</translation>
         <translation>Aktualizacja</translation>
     </message>
     <message>
-        <source>Disable updates</source>
-        <translation>Wyłącz aktualizacje</translation>
+        <source>Open the download page</source>
+        <translation>Otwórz stronę pobierania</translation>
     </message>
     <message>
-        <source>Update after closing</source>
-        <translation>Zakutalizuj po zamknięciu</translation>
+        <source>A new version is available</source>
+        <translation>Dostępna jest nowa wersja</translation>
     </message>
     <message>
-        <source>Cannot download the new version of HikariSub</source>
-        <translation>Nie można pobrać nowej wersji HikariSub</translation>
+        <source>You have version %s; version %s is available</source>
+        <translation>Masz wersję %s; dostępna jest wersja %s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
-        <source>Cannot find the HikariSub updater</source>
-        <translation>Nie można znaleźć updatera HikariSub</translation>
+        <source>Remind me in a week</source>
+        <translation>Przypomnij za tydzień</translation>
     </message>
     <message>
-        <source>Cannot close HikariSub</source>
-        <translation>Nie można zamknąć HikariSub</translation>
+        <source>Cannot check for updates</source>
+        <translation>Nie można sprawdzić aktualizacji</translation>
+    </message>
+    <message>
+        <source>You already have the latest version</source>
+        <translation>Masz już najnowszą wersję</translation>
     </message>
     <message>
         <source>Unable to retrieve information about the monitor</source>
@@ -6765,6 +6820,10 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Subtitle files (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt</source>
         <translation>Pliki napisów (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt</translation>
+    </message>
+    <message>
+        <source>Invalid keyframes format</source>
+        <translation>Nieprawidłowy format klatek kluczowych</translation>
     </message>
     <message>
         <source>Previous video file</source>
@@ -7336,6 +7395,10 @@ większą od pola &quot;Minimalna wartość&quot;.</translation>
         <translation>Wideo musi być ustawione minimum jedną klatkę po czasie początkowym linijki</translation>
     </message>
     <message>
+        <source>Cannot set matrix projection</source>
+        <translation>Nie można ustawić macierzy projekcji</translation>
+    </message>
+    <message>
         <source>Cannot read clip rectangle values.</source>
         <translation>Nie można pobrać wartości clipa prostokątnego.</translation>
     </message>
@@ -7533,6 +7596,18 @@ Co zrobić?</translation>
 The program will be terminated.</source>
         <translation>Nie udało się wczytać opcji.
 Działanie programu zostanie zakończone.</translation>
+    </message>
+    <message>
+        <source>Cannot find language, language change failed</source>
+        <translation>Nie można znaleźć języka, zmiana języka nie powiodła się</translation>
+    </message>
+    <message>
+        <source>wxLocale cannot initialize, language change failed</source>
+        <translation>Nie można zainicjalizować wxLocale, zmiana języka nie powiodła się</translation>
+    </message>
+    <message>
+        <source>Cannot find translation, language change failed</source>
+        <translation>Nie można znaleźć tłumaczenia, zmiana języka nie powiodła się</translation>
     </message>
     <message>
         <source>Cannot read hotkeys.
