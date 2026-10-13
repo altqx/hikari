@@ -398,6 +398,7 @@ void config::LoadDefaultConfig(wxString * defaultOptions)
 	configTable[GRID_CHANGE_ACTIVE_ON_SELECTION] = L"true";
 	configTable[UPDATER_AUTO_CHECK] = update_policy::kAutoCheckDefault ? L"true" : L"false";
 	configTable[UPDATER_CHECK_FOR_STABLE] = update_policy::kStableOnlyDefault ? L"true" : L"false";
+	configTable[UPDATER_AUTO_INSTALL] = update_policy::kAutoInstallDefault ? L"true" : L"false";
 }
 
 //remember, create table[colorsSize] without this size it will crash
@@ -557,7 +558,10 @@ namespace
 		if (wxGetEnv(L"HIKARISUB_PACKAGE_KIND", &forced))
 			return package_kind::ParseToken(forced.utf8_string());
 #endif
-		wxFFile marker(exeDir + wxFileName::GetPathSeparator() + wxString(package_kind::kMarkerFile.data()), L"rb");
+		wxString path = exeDir + wxFileName::GetPathSeparator() + wxString(package_kind::kMarkerFile.data());
+		if (!wxFileExists(path))
+			return std::nullopt;
+		wxFFile marker(path, L"rb");
 		if (!marker.IsOpened())
 			return std::nullopt;
 		char content[64];
@@ -679,6 +683,8 @@ int config::LoadOptions()
 		GetString(UPDATER_AUTO_CHECK).utf8_string(), update_policy::kAutoCheckDefault));
 	SetBool(UPDATER_CHECK_FOR_STABLE, update_policy::ReadOption(
 		GetString(UPDATER_CHECK_FOR_STABLE).utf8_string(), update_policy::kStableOnlyDefault));
+	SetBool(UPDATER_AUTO_INSTALL, update_policy::ReadOption(
+		GetString(UPDATER_AUTO_INSTALL).utf8_string(), update_policy::kAutoInstallDefault));
 
 	actualStyleDir = L"Default";
 	path = emptyString;

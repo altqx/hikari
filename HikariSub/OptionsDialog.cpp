@@ -19,6 +19,7 @@
 #include "FileTypes.h"
 #include "OptionsDialog.h"
 #include "config.h"
+#include "UpdateInstaller.h"
 #include "HikariSubFrame.h"
 #include "Hotkeys.h"
 #include "NumCtrl.h"
@@ -381,6 +382,15 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		ConOpt(stableOnly, UPDATER_CHECK_FOR_STABLE);
 		updatesSizer->Add(autoCheck, 0, wxALL, 2);
 		updatesSizer->Add(stableOnly, 0, wxALL, 2);
+		// Only where the program installs updates itself: an AUR or a
+		// portable copy is only ever told about them.
+		if (package_kind::HasAutoInstallOption(update_installer::Kind())){
+			HikariCheckBox* autoInstall = new HikariCheckBox(GLOBAL_EDITOR, -1, _("Install updates automatically"));
+			autoInstall->SetValue(Options.GetBool(UPDATER_AUTO_INSTALL));
+			autoInstall->SetToolTip(_("Downloads a new version in the background and installs it when you restart or quit"));
+			ConOpt(autoInstall, UPDATER_AUTO_INSTALL);
+			updatesSizer->Add(autoInstall, 0, wxALL, 2);
+		}
 		MainSizer->Add(updatesSizer, 0, wxRIGHT | wxEXPAND, 5);
 
 		for (int i = 0; i < optsSize; i++)

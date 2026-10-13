@@ -178,6 +178,7 @@ add_executable(hikarisub
     HikariSub/FileTypes.cpp
     HikariSub/JsonValue.cpp
     HikariSub/UpdateChecker.cpp
+    HikariSub/UpdateInstaller.cpp
     HikariSub/Registry.cpp
     HikariSub/RendererDirectShow.cpp
     HikariSub/RendererVideo.cpp

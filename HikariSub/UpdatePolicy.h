@@ -456,10 +456,12 @@ namespace update_policy
 		return offeredVersion && declinedVersion && CompareSemVer(*offeredVersion, *declinedVersion) <= 0;
 	}
 
-	// UPDATER_AUTO_CHECK and UPDATER_CHECK_FOR_STABLE when Config.txt does
-	// not hold them.
+	// UPDATER_AUTO_CHECK, UPDATER_CHECK_FOR_STABLE and UPDATER_AUTO_INSTALL
+	// ("Install updates automatically", installers spec 4.1) when
+	// Config.txt does not hold them.
 	constexpr bool kAutoCheckDefault = true;
 	constexpr bool kStableOnlyDefault = true;
+	constexpr bool kAutoInstallDefault = true;
 
 	// Config.txt holds "true" or "false". Anything else, an option no build
 	// has written among them, is the option's default.
