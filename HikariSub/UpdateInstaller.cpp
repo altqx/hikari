@@ -445,7 +445,7 @@ namespace
 				wxString cache = CacheDir();
 				if (cache.empty())
 					return false;
-				wxString dir = cache + kSep + FromUtf8(target.version);
+				wxString dir = cache + kSep + CopyKey() + kSep + FromUtf8(target.version);
 				if (!wxFileName::Mkdir(dir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL))
 					return false;
 				finalPath = dir + kSep + name;
@@ -708,11 +708,15 @@ namespace
 		RemoveFile(PendingPath());
 	}
 
-	// Removes the Updates/<V> folders, and the AppImage's staged files,
-	// of versions that are not newer than this one (4.1).
+	// Removes this copy's Updates/<copy>/<V> folders, and the AppImage's
+	// staged files, of versions that are not newer than this one (4.1).
+	// Other copies' downloads are theirs to clear: a deb copy's pending
+	// 0.0.2 is not done with because a portable 0.0.3 started.
 	void ClearOldVersions()
 	{
 		wxString cache = CacheDir();
+		if (!cache.empty())
+			cache += kSep + CopyKey();
 		if (!cache.empty() && wxDirExists(cache)) {
 			wxDir dir(cache);
 			wxString name;
@@ -966,7 +970,10 @@ namespace
 	void AppImageWatchdog(const Pending &pending)
 	{
 		std::string appImage = ToUtf8(AppImagePath());
-		std::string health = ToUtf8(CacheDir() + kSep + L"health-" + FromUtf8(pending.version));
+		// Named for this image too: another AppImage's watchdog, waiting on
+		// the same version, must not take this one's report for its own.
+		std::string health = ToUtf8(CacheDir() + kSep + L"health-" + CopyKey(package_kind::Kind::AppImage) + L"-" +
+			FromUtf8(pending.version));
 		unlink(health.c_str());
 		std::vector<std::string> arguments = RelaunchArguments(appImage);
 		arguments.push_back(std::string(update_manifest::kHealthSwitch) + health);
