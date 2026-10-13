@@ -3170,7 +3170,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Check for &amp;updates</source>
-        <translation type="unfinished"></translation>
+        <translation>&amp;ตรวจหาอัปเดต</translation>
     </message>
     <message>
         <source>&amp;About</source>
@@ -3478,7 +3478,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Checks whether a newer version is available</source>
-        <translation type="unfinished"></translation>
+        <translation>ตรวจสอบว่ามีเวอร์ชันที่ใหม่กว่าหรือไม่</translation>
     </message>
     <message>
         <source>Shows program info</source>
@@ -3498,11 +3498,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>You already have the latest version</source>
-        <translation type="unfinished"></translation>
+        <translation>คุณใช้เวอร์ชันล่าสุดอยู่แล้ว</translation>
     </message>
     <message>
         <source>Cannot check for updates</source>
-        <translation type="unfinished"></translation>
+        <translation>ไม่สามารถตรวจหาอัปเดตได้</translation>
     </message>
     <message>
         <source>Update</source>
@@ -3510,27 +3510,27 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>A new version is available</source>
-        <translation type="unfinished"></translation>
+        <translation>มีเวอร์ชันใหม่ให้ใช้งาน</translation>
     </message>
     <message>
         <source>You have version %1; version %2 is available</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">คุณใช้เวอร์ชัน %1 อยู่ และมีเวอร์ชัน %2 ให้ใช้งาน</translation>
     </message>
     <message>
         <source>Check for updates automatically</source>
-        <translation type="unfinished"></translation>
+        <translation>ตรวจหาอัปเดตโดยอัตโนมัติ</translation>
     </message>
     <message>
         <source>Stable versions only</source>
-        <translation type="unfinished"></translation>
+        <translation>เฉพาะเวอร์ชันเสถียร</translation>
     </message>
     <message>
         <source>Open the download page</source>
-        <translation type="unfinished"></translation>
+        <translation>เปิดหน้าดาวน์โหลด</translation>
     </message>
     <message>
         <source>Remind me in a week</source>
-        <translation type="unfinished"></translation>
+        <translation>เตือนอีกครั้งในหนึ่งสัปดาห์</translation>
     </message>
     <message>
         <source>About HikariSub</source>
@@ -4228,7 +4228,7 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Convert video colours on the GPU (requires reloading)</source>
-        <translation type="unfinished"></translation>
+        <translation>แปลงสีวิดีโอด้วย GPU (ต้องโหลดใหม่)</translation>
     </message>
     <message>
         <source>Preferred audio (separated by semicolons)</source>
@@ -4552,7 +4552,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Cannot find translation, language change failed</source>
-        <translation type="unfinished"></translation>
+        <translation>ไม่พบคำแปล เปลี่ยนภาษาไม่สำเร็จ</translation>
     </message>
     <message>
         <source>Light</source>

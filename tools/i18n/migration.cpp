@@ -603,7 +603,7 @@ std::expected<MigrationOutput, QString> migrate(const KeyMap &map, const TsCatal
     r += QStringLiteral("## Key map\n\n");
     r += QStringLiteral("| Status | Rows | Meaning |\n| --- | --- | --- |\n");
     r += QStringLiteral("| exact | %1 rows from %2 legacy messages (%3 one-to-many) | Same source text and disambiguation (msgctxt), neither plural. "
-                        "The reviewed translation is kept; a fuzzy or empty one stays unfinished. |\n")
+                        "The legacy translation is carried finished; a fuzzy or empty one would be carried unfinished. |\n")
              .arg(exact).arg(exactLegacy.size()).arg(oneToMany);
     r += QStringLiteral("| placeholder | %1 rows from %2 legacy messages | A c-format id that is the rewrite source once its directives are Qt markers. "
                         "The converted translation is carried unfinished for review. |\n")
@@ -670,8 +670,13 @@ std::expected<QByteArray, QString> legacyPluralProbe(const LanguageInput &input)
     TsCatalog catalog;
     catalog.language = input.language;
     TsContext context{QString::fromLatin1(pluralProbeContext), {}};
+    // The count is one plain "%d" (as "%n") or not shown at all: legacy
+    // 0.0.1's "Remove the tree" and its %s message about splitting a tree
+    // pick their form by a count they never print, so the text is kept.
     const auto toNumerus = [&](const QString &text) -> std::expected<QString, QString> {
         const QList<PrintfDirective> directives = printfDirectives(text);
+        if (std::ranges::none_of(directives, [](const PrintfDirective &d) { return d.conversion == u'd' || d.conversion == u'i'; }))
+            return text;
         if (directives.size() != 1 || directives[0].conversion != u'd' || directives[0].length != 2)
             return std::unexpected(QStringLiteral("%1: %2 is not one plain %d").arg(input.fileName, text));
         QString out = text;

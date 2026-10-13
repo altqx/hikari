@@ -23,7 +23,7 @@ find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS LinguistTools)
 
 # The legacy catalogs the migration read (Locale/*.po), recorded in the
 # catalogs and the report.
-set(HIKARI_I18N_INPUT_COMMIT 20d647c4c769ab7f5d383cf3c1c33f03876a94e9)
+set(HIKARI_I18N_INPUT_COMMIT b31505da24dcc0c4053ad5e0cc73e15266a85bac)
 set(HIKARI_LANGUAGES pl ko_KR th_TH ta)
 
 set(hikari_ui_ts "")

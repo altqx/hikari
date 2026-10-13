@@ -5,7 +5,7 @@
 # altinat &lt;al@altqx.com&gt;, 2026.
 # Weblate &lt;noreply-mt-weblate@weblate.org&gt;, 2026.
 # LibreTranslate &lt;noreply-mt-libretranslate@weblate.org&gt;, 2026.</extra-po-header-comments>
-    <extra-po-input>Locale/th_TH.po at 20d647c4c769ab7f5d383cf3c1c33f03876a94e9</extra-po-input>
+    <extra-po-input>Locale/th_TH.po at b31505da24dcc0c4053ad5e0cc73e15266a85bac</extra-po-input>
     <extra-po-language-team>Thai</extra-po-language-team>
     <extra-po-last-translator>altqx &lt;al@altqx.com&gt;</extra-po-last-translator>
     <extra-po-plural-forms>nplurals=1; plural=0;</extra-po-plural-forms>
@@ -125,28 +125,16 @@
         <translation>เน้นย่านความถี่เสียงพูดในสเปกตรัม</translation>
     </message>
     <message>
-        <source>Invalid keyframes format</source>
-        <translation>รูปแบบคีย์เฟรมไม่ถูกต้อง</translation>
-    </message>
-    <message>
-        <source>Error</source>
-        <translation>ข้อผิดพลาด</translation>
-    </message>
-    <message>
-        <source>Cannot create Direct3D object</source>
-        <translation>ไม่สามารถสร้างวัตถุ Direct3D ได้</translation>
-    </message>
-    <message>
         <source>Cannot create D3D9 device</source>
         <translation>ไม่สามารถสร้างอุปกรณ์ D3D9 ได้</translation>
     </message>
     <message>
-        <source>One of the DirectX settings failed</source>
-        <translation>การตั้งค่า DirectX บางส่วนล้มเหลว</translation>
+        <source>Cannot create swap chain</source>
+        <translation>ไม่สามารถสร้าง swap chain ได้</translation>
     </message>
     <message>
-        <source>Cannot set projection matrix</source>
-        <translation>ไม่สามารถตั้งค่าเมทริกซ์ฉายภาพได้</translation>
+        <source>One of the DirectX settings failed</source>
+        <translation>การตั้งค่า DirectX บางส่วนล้มเหลว</translation>
     </message>
     <message>
         <source>Cannot set world matrix</source>
@@ -185,12 +173,12 @@
         <translation>เวลาติดลบ</translation>
     </message>
     <message>
-        <source>Cannot lock texture buffer</source>
-        <translation>ไม่สามารถล็อกบัฟเฟอร์พื้นผิวได้</translation>
-    </message>
-    <message>
         <source>Cannot blit spectrum surfaces</source>
         <translation>ไม่สามารถคัดลอกภาพพื้นผิวสเปกตรัมได้</translation>
+    </message>
+    <message>
+        <source>Audio could not be loaded</source>
+        <translation>ไม่สามารถโหลดเสียงได้</translation>
     </message>
     <message>
         <source>Open auto save file</source>
@@ -441,6 +429,10 @@ See the script descriptions for more information.</source>
         <translation>ไม่สามารถเรียกใช้ตัวแก้ไขได้</translation>
     </message>
     <message>
+        <source>Error</source>
+        <translation>ข้อผิดพลาด</translation>
+    </message>
+    <message>
         <source>Full Lua error description</source>
         <translation>รายละเอียดข้อผิดพลาดของ Lua</translation>
     </message>
@@ -562,6 +554,10 @@ What would you like to do?</source>
     <message>
         <source>Shortcut can be set using Shift + Click</source>
         <translation>กด Shift พร้อมคลิกเพื่อกำหนดปุ่มลัด</translation>
+    </message>
+    <message>
+        <source>Picking a color from the screen is not supported on Wayland</source>
+        <translation>ไม่รองรับการเลือกสีจากหน้าจอบน Wayland</translation>
     </message>
     <message>
         <source>Choose color</source>
@@ -1016,6 +1012,26 @@ Should not exceed 15 characters per second</source>
         <translation>จัดการปุ่มแท็ก</translation>
     </message>
     <message>
+        <source>ASS subtitles</source>
+        <translation>คำบรรยาย ASS</translation>
+    </message>
+    <message>
+        <source>SSA subtitles</source>
+        <translation>คำบรรยาย SSA</translation>
+    </message>
+    <message>
+        <source>SRT subtitles</source>
+        <translation>คำบรรยาย SRT</translation>
+    </message>
+    <message>
+        <source>SUB subtitles</source>
+        <translation>คำบรรยาย SUB</translation>
+    </message>
+    <message>
+        <source>TXT subtitles</source>
+        <translation>คำบรรยาย TXT</translation>
+    </message>
+    <message>
         <source>Search text:</source>
         <translation>ค้นหาข้อความ:</translation>
     </message>
@@ -1249,8 +1265,8 @@ folders</source>
         <translation>บันทึกอัตโนมัติ</translation>
     </message>
     <message>
-        <source>Choose video file</source>
-        <translation>เลือกแฟ้มวิดีโอ</translation>
+        <source>Choose font catalogs file</source>
+        <translation>เลือกแฟ้มแคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
         <source>Text files (*.txt)|*.txt</source>
@@ -1699,6 +1715,968 @@ Finished in %sms</source>
         <translation>ไม่สามารถโหลดโฟลเดอร์แบบอักษรภายนอกได้</translation>
     </message>
     <message>
+        <source>Apply to All</source>
+        <translation>นำไปใช้ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Yes to all</source>
+        <translation>ใช่ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation>ใช่</translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation>ไม่</translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>ช่วยเหลือ</translation>
+    </message>
+    <message>
+        <source>Untitled - </source>
+        <translation>ไม่มีชื่อ - </translation>
+    </message>
+    <message>
+        <source>Video duration</source>
+        <translation>ระยะเวลาวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Video scale</source>
+        <translation>ขนาดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>ซูมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Frames per second</source>
+        <translation>เฟรมต่อวินาที</translation>
+    </message>
+    <message>
+        <source>Subtitles resolution</source>
+        <translation>ความละเอียดคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Video aspect ratio</source>
+        <translation>อัตราส่วนภาพวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Video file name</source>
+        <translation>ชื่อแฟ้มวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Video resolution</source>
+        <translation>ความละเอียดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Load last session</source>
+        <translation>โหลดเซสชันล่าสุด</translation>
+    </message>
+    <message>
+        <source>Loads previously loaded files</source>
+        <translation>เปิดแฟ้มที่โหลดก่อนหน้านี้</translation>
+    </message>
+    <message>
+        <source>Load session from file</source>
+        <translation>โหลดเซสชันจากไฟล์</translation>
+    </message>
+    <message>
+        <source>Loads session from saved session file</source>
+        <translation>โหลดเซสชันจากไฟล์เซสชันที่บันทึกไว้ก่อนหน้านี้</translation>
+    </message>
+    <message>
+        <source>Save session to file</source>
+        <translation>บันทึกเซสชันเป็นไฟล์</translation>
+    </message>
+    <message>
+        <source>Saves session to file</source>
+        <translation>บันทึกเซสชันเป็นไฟล์</translation>
+    </message>
+    <message>
+        <source>Ask whether to load the last session at program startup</source>
+        <translation>ถามว่าจะโหลดเซสชันล่าสุดเมื่อเริ่มโปรแกรมหรือไม่</translation>
+    </message>
+    <message>
+        <source>Asks whether to load previously loaded files at program startup</source>
+        <translation>ถามว่าจะโหลดแฟ้มที่เปิดล่าสุดเมื่อเริ่มโปรแกรมหรือไม่</translation>
+    </message>
+    <message>
+        <source>Load last session after program start</source>
+        <translation>โหลดเซสชันล่าสุดเมื่อเริ่มโปรแกรม</translation>
+    </message>
+    <message>
+        <source>Loads previously loaded files at program startup</source>
+        <translation>โหลดแฟ้มที่เปิดไว้ก่อนหน้าเมื่อเริ่มโปรแกรม</translation>
+    </message>
+    <message>
+        <source>&amp;Open subtitles</source>
+        <translation>เ&amp;ปิดคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Open subtitle file</source>
+        <translation>เปิดแฟ้มคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>&amp;Save</source>
+        <translation>&amp;บันทึก</translation>
+    </message>
+    <message>
+        <source>Save current file</source>
+        <translation>บันทึกแฟ้มปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Save &amp;all</source>
+        <translation>บันทึก&amp;ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Save all subtitles</source>
+        <translation>บันทึกคำบรรยายทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Save &amp;as...</source>
+        <translation>บันทึกเ&amp;ป็น…</translation>
+    </message>
+    <message>
+        <source>Save as</source>
+        <translation>บันทึกเป็น</translation>
+    </message>
+    <message>
+        <source>Save &amp;translation</source>
+        <translation>บันทึก&amp;การแปล</translation>
+    </message>
+    <message>
+        <source>Save translation</source>
+        <translation>บันทึกการแปล</translation>
+    </message>
+    <message>
+        <source>Recently opened &amp;subtitles</source>
+        <translation>คำบรรยายที่เพิ่งเ&amp;ปิด</translation>
+    </message>
+    <message>
+        <source>Recently opened subtitles</source>
+        <translation>คำบรรยายที่เพิ่งเปิด</translation>
+    </message>
+    <message>
+        <source>Remove subtitles from the &amp;editor</source>
+        <translation>นำคำบรรยายออกจากตัวแก้ไ&amp;ข</translation>
+    </message>
+    <message>
+        <source>Remove subtitles from the editor</source>
+        <translation>นำคำบรรยายออกจากตัวแก้ไข</translation>
+    </message>
+    <message>
+        <source>Save subtitles using the video name</source>
+        <translation>บันทึกคำบรรยายด้วยชื่อวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Open auto save</source>
+        <translation>เปิดแฟ้มบันทึกอัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Opens the selected autosave from the list</source>
+        <translation>เปิดแฟ้มบันทึกอัตโนมัติที่เลือกจากรายการ</translation>
+    </message>
+    <message>
+        <source>Opens the temporary file removal window</source>
+        <translation>เปิดหน้าต่างลบแฟ้มชั่วคราว</translation>
+    </message>
+    <message>
+        <source>Show / Hide log window</source>
+        <translation>แสดง / ซ่อนหน้าต่างบันทึก</translation>
+    </message>
+    <message>
+        <source>Last session</source>
+        <translation>เซสชันสุดท้าย</translation>
+    </message>
+    <message>
+        <source>Last session options</source>
+        <translation>ตัวเลือกเซสชันสุดท้าย</translation>
+    </message>
+    <message>
+        <source>&amp;Settings</source>
+        <translation>&amp;การตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Program settings</source>
+        <translation>การตั้งค่าโปรแกรม</translation>
+    </message>
+    <message>
+        <source>&amp;Exit	Alt-F4</source>
+        <translation>&amp;ออก	Alt-F4</translation>
+    </message>
+    <message>
+        <source>Exit the program</source>
+        <translation>ออกจากโปรแกรม</translation>
+    </message>
+    <message>
+        <source>&amp;File</source>
+        <translation>&amp;แฟ้ม</translation>
+    </message>
+    <message>
+        <source>&amp;Undo</source>
+        <translation>&amp;เลิกทำ</translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation>เลิกทำ</translation>
+    </message>
+    <message>
+        <source>Undo to last save</source>
+        <translation>ย้อนกลับไปยังสถานะที่บันทึกล่าสุด</translation>
+    </message>
+    <message>
+        <source>&amp;Redo</source>
+        <translation>&amp;ทำซ้ำ</translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation>ทำซ้ำ</translation>
+    </message>
+    <message>
+        <source>&amp;History</source>
+        <translation>&amp;ประวัติ</translation>
+    </message>
+    <message>
+        <source>History</source>
+        <translation>ประวัติ</translation>
+    </message>
+    <message>
+        <source>Find and re&amp;place</source>
+        <translation>ค้นหาและแ&amp;ทนที่</translation>
+    </message>
+    <message>
+        <source>Searches for the specified text phrases and replaces them</source>
+        <translation>ค้นหาและแทนที่วลีข้อความที่ระบุ</translation>
+    </message>
+    <message>
+        <source>&amp;Find</source>
+        <translation>&amp;ค้นหา</translation>
+    </message>
+    <message>
+        <source>Searches for the specified text phrase</source>
+        <translation>ค้นหาวลีข้อความที่ระบุ</translation>
+    </message>
+    <message>
+        <source>Find next</source>
+        <translation>ค้นหาถัดไป</translation>
+    </message>
+    <message>
+        <source>Finds the next occurrence of the phrase in the text</source>
+        <translation>ค้นหาตำแหน่งถัดไปของวลีในข้อความ</translation>
+    </message>
+    <message>
+        <source>The starting time</source>
+        <translation>เวลาเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Sort by start time</source>
+        <translation>เรียงตามเวลาเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>End time</source>
+        <translation>เวลาสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Sort by end time</source>
+        <translation>จัดเรียงตามเวลาสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Sort by styles</source>
+        <translation>จัดเรียงตามสไตล์</translation>
+    </message>
+    <message>
+        <source>Sort by actor</source>
+        <translation>จัดเรียงตามผู้พูด</translation>
+    </message>
+    <message>
+        <source>Sort by effect</source>
+        <translation>จัดเรียงตามเอฟเฟกต์</translation>
+    </message>
+    <message>
+        <source>Layer</source>
+        <translation>ชั้น</translation>
+    </message>
+    <message>
+        <source>Sort by layer</source>
+        <translation>จัดเรียงตามชั้น</translation>
+    </message>
+    <message>
+        <source>So&amp;rt all lines</source>
+        <translation>จัดเ&amp;รียงทุกบรรทัด</translation>
+    </message>
+    <message>
+        <source>Sorts all lines in ASS file</source>
+        <translation>จัดเรียงบรรทัดคำบรรยายทั้งหมดในแฟ้ม ASS</translation>
+    </message>
+    <message>
+        <source>So&amp;rt selected lines</source>
+        <translation>จัดเ&amp;รียงบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>Sorts selected lines in ASS file</source>
+        <translation>จัดเรียงบรรทัดคำบรรยาย ASS ที่เลือก</translation>
+    </message>
+    <message>
+        <source>Fix minor errors (experimental)</source>
+        <translation>แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)</translation>
+    </message>
+    <message>
+        <source>Turns on multireplacer</source>
+        <translation>เปิดเครื่องมือแทนที่หลายรายการ</translation>
+    </message>
+    <message>
+        <source>Select &amp;lines</source>
+        <translation>เลือก&amp;บรรทัด</translation>
+    </message>
+    <message>
+        <source>Selects lines by expressions</source>
+        <translation>เลือกบรรทัดตามนิพจน์</translation>
+    </message>
+    <message>
+        <source>&amp;Edit</source>
+        <translation>&amp;แก้ไข</translation>
+    </message>
+    <message>
+        <source>Open video</source>
+        <translation>เปิดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Opens video file</source>
+        <translation>เปิดแฟ้มวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Recently opened videos</source>
+        <translation>วิดีโอที่เพิ่งเปิด</translation>
+    </message>
+    <message>
+        <source>Open keyframes</source>
+        <translation>เปิดคีย์เฟรม</translation>
+    </message>
+    <message>
+        <source>Recently opened keyframes</source>
+        <translation>คีย์เฟรมที่เพิ่งเปิด</translation>
+    </message>
+    <message>
+        <source>Open dummy video</source>
+        <translation>เปิดวิดีโอจำลอง</translation>
+    </message>
+    <message>
+        <source>Insert start time from video</source>
+        <translation>แทรกเวลาเริ่มต้นจากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Inserts the start time from video</source>
+        <translation>แทรกเวลาเริ่มต้นจากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Insert end time from video</source>
+        <translation>แทรกเวลาสิ้นสุดจากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Inserts the end time from video</source>
+        <translation>แทรกเวลาสิ้นสุดจากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Previous frame</source>
+        <translation>เฟรมก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Go to previous frame</source>
+        <translation>ถอยหลังหนึ่งเฟรม</translation>
+    </message>
+    <message>
+        <source>Next frame</source>
+        <translation>เฟรมถัดไป</translation>
+    </message>
+    <message>
+        <source>Go to next frame</source>
+        <translation>ไปข้างหน้าหนึ่งเฟรม</translation>
+    </message>
+    <message>
+        <source>Go to start time</source>
+        <translation>ไปยังเวลาเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Moves video to start time</source>
+        <translation>ย้ายวิดีโอไปยังเวลาเริ่มต้นของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Go to end time of line</source>
+        <translation>ไปยังเวลาสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Moves video to end time</source>
+        <translation>ย้ายวิดีโอไปยังเวลาสิ้นสุดของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Play / Pause</source>
+        <translation>เล่น / หยุดชั่วคราว</translation>
+    </message>
+    <message>
+        <source>Plays / Pauses video</source>
+        <translation>เล่น / หยุดวิดีโอชั่วคราว</translation>
+    </message>
+    <message>
+        <source>Go to previous keyframe</source>
+        <translation>ไปยังคีย์เฟรมก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Go to next keyframe</source>
+        <translation>ไปยังคีย์เฟรมถัดไป</translation>
+    </message>
+    <message>
+        <source>Set audio position to video time</source>
+        <translation>เลื่อนตำแหน่งเสียงให้ตรงกับเวลาวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Set audio marker to video time</source>
+        <translation>เลื่อนเครื่องหมายเสียงให้ตรงกับเวลาวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Zoom video</source>
+        <translation>ซูมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Turn off video zoom</source>
+        <translation>ปิดการซูมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Open video with FFMS2</source>
+        <translation>เปิดวิดีโอผ่าน FFMS2</translation>
+    </message>
+    <message>
+        <source>Opens video with FFMS2 for frame precision</source>
+        <translation>เปิดวิดีโอด้วย FFMS2 เพื่อความแม่นยำของเฟรม</translation>
+    </message>
+    <message>
+        <source>&amp;Video</source>
+        <translation>&amp;วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Open audio</source>
+        <translation>เปิดเสียง</translation>
+    </message>
+    <message>
+        <source>Opens audio file</source>
+        <translation>เปิดแฟ้มเสียง</translation>
+    </message>
+    <message>
+        <source>Recently opened audio</source>
+        <translation>เสียงที่เพิ่งเปิด</translation>
+    </message>
+    <message>
+        <source>Open audio from video</source>
+        <translation>เปิดเสียงจากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Opens audio from video</source>
+        <translation>เปิดเสียงจากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Open blank 2h30m audio</source>
+        <translation>เปิดเสียงเปล่ายาว 2:30 ชั่วโมง</translation>
+    </message>
+    <message>
+        <source>Opens blank audio 2 hour and 30 minutes long</source>
+        <translation>เปิดเสียงเปล่าที่ยาวเป็นเวลา 2:30 ชั่วโมง</translation>
+    </message>
+    <message>
+        <source>Close audio</source>
+        <translation>นำเสียงออก</translation>
+    </message>
+    <message>
+        <source>Closes audio</source>
+        <translation>ปิดแฟ้มเสียง</translation>
+    </message>
+    <message>
+        <source>A&amp;udio</source>
+        <translation>เ&amp;สียง</translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Shows all windows</source>
+        <translation>แสดงหน้าต่างทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Shows only video window and subs window</source>
+        <translation>แสดงเฉพาะหน้าต่างวิดีโอและหน้าต่างคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Video and subs</source>
+        <translation>วิดีโอและคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Audio and subs</source>
+        <translation>เสียงและคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Shows only audio window and subs window</source>
+        <translation>แสดงเฉพาะหน้าต่างเสียงและหน้าต่างคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Only video</source>
+        <translation>วิดีโอเท่านั้น</translation>
+    </message>
+    <message>
+        <source>Shows only video window</source>
+        <translation>แสดงเฉพาะหน้าต่างวิดีโอเท่านั้น</translation>
+    </message>
+    <message>
+        <source>Only subtitles</source>
+        <translation>คำบรรยายเท่านั้น</translation>
+    </message>
+    <message>
+        <source>Shows only the subtitle window</source>
+        <translation>แสดงเฉพาะหน้าต่างคำบรรยายเท่านั้น</translation>
+    </message>
+    <message>
+        <source>View</source>
+        <translation>มุมมอง</translation>
+    </message>
+    <message>
+        <source>Enable / Disable editor</source>
+        <translation>เปิด / ปิดใช้งานตัวแก้ไข</translation>
+    </message>
+    <message>
+        <source>Enables / disables editor</source>
+        <translation>เปิด / ปิดตัวแก้ไข</translation>
+    </message>
+    <message>
+        <source>ASS file properties</source>
+        <translation>คุณสมบัติแฟ้ม ASS</translation>
+    </message>
+    <message>
+        <source>ASS subtitle properties</source>
+        <translation>คุณสมบัติของคำบรรยาย ASS</translation>
+    </message>
+    <message>
+        <source>Style &amp;manager</source>
+        <translation>&amp;ตัวจัดการสไตล์</translation>
+    </message>
+    <message>
+        <source>Is used to manage ASS styles</source>
+        <translation>ใช้สำหรับจัดการสไตล์ ASS</translation>
+    </message>
+    <message>
+        <source>Convert to ASS</source>
+        <translation>แปลงเป็น ASS</translation>
+    </message>
+    <message>
+        <source>Converts to ASS format</source>
+        <translation>แปลงเป็นรูปแบบ ASS</translation>
+    </message>
+    <message>
+        <source>Convert to SRT</source>
+        <translation>แปลงเป็น SRT</translation>
+    </message>
+    <message>
+        <source>Converts to SRT format</source>
+        <translation>แปลงเป็นรูปแบบ SRT</translation>
+    </message>
+    <message>
+        <source>Convert to MDVD</source>
+        <translation>แปลงเป็น MDVD</translation>
+    </message>
+    <message>
+        <source>Converts to microDVD format</source>
+        <translation>แปลงเป็นรูปแบบ microDVD</translation>
+    </message>
+    <message>
+        <source>Convert to MPL2</source>
+        <translation>แปลงเป็น MPL2</translation>
+    </message>
+    <message>
+        <source>Converts to MPL2 format</source>
+        <translation>แปลงเป็นรูปแบบ MPL2</translation>
+    </message>
+    <message>
+        <source>Convert to TMP</source>
+        <translation>แปลงเป็น TMP</translation>
+    </message>
+    <message>
+        <source>Converts to TMPlayer format (not recommended)</source>
+        <translation>แปลงเป็นรูปแบบ TMPlayer (ไม่แนะนำ)</translation>
+    </message>
+    <message>
+        <source>Conversion</source>
+        <translation>การแปลง</translation>
+    </message>
+    <message>
+        <source>Converts from one format to another</source>
+        <translation>แปลงจากรูปแบบหนึ่งเป็นอีกรูปแบบหนึ่ง</translation>
+    </message>
+    <message>
+        <source>Shift &amp;times...	Ctrl-I</source>
+        <translation>เลื่อน&amp;เวลา…	Ctrl-I</translation>
+    </message>
+    <message>
+        <source>Shifting subtitle times</source>
+        <translation>เลื่อนเวลาคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Resample subtitles</source>
+        <translation>เปลี่ยนความละเอียดของคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation>ตรวจการสะกด</translation>
+    </message>
+    <message>
+        <source>Hide tags</source>
+        <translation>ซ่อนแท็ก</translation>
+    </message>
+    <message>
+        <source>Hides tags in ASS and MDVD</source>
+        <translation>ซ่อนแท็กในวงเล็บ ASS และ MDVD</translation>
+    </message>
+    <message>
+        <source>Su&amp;btitles</source>
+        <translation>&amp;คำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Load script</source>
+        <translation>โหลดสคริปต์</translation>
+    </message>
+    <message>
+        <source>Refresh autoload scripts</source>
+        <translation>รีเฟรชสคริปต์อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Run the last loaded script</source>
+        <translation>เรียกใช้สคริปต์ล่าสุด</translation>
+    </message>
+    <message>
+        <source>Open shortcut mapping window</source>
+        <translation>เปิดหน้าต่างกำหนดปุ่มลัด</translation>
+    </message>
+    <message>
+        <source>Au&amp;tomation</source>
+        <translation>สคริปต์&amp;อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>HikariSub &amp;website</source>
+        <translation>&amp;เว็บไซต์ HikariSub</translation>
+    </message>
+    <message>
+        <source>Opens the HikariSub website in the default browser</source>
+        <translation>เปิดเว็บไซต์ HikariSub ในเบราว์เซอร์เริ่มต้น</translation>
+    </message>
+    <message>
+        <source>&amp;Report an issue</source>
+        <translation>&amp;รายงานปัญหา</translation>
+    </message>
+    <message>
+        <source>Opens the HikariSub issue tracker</source>
+        <translation>เปิดหน้าติดตามปัญหาของ HikariSub</translation>
+    </message>
+    <message>
+        <source>Check for &amp;updates</source>
+        <translation>&amp;ตรวจหาอัปเดต</translation>
+    </message>
+    <message>
+        <source>Checks whether a newer version is available</source>
+        <translation>ตรวจสอบว่ามีเวอร์ชันที่ใหม่กว่าหรือไม่</translation>
+    </message>
+    <message>
+        <source>&amp;About</source>
+        <translation>&amp;เกี่ยวกับ</translation>
+    </message>
+    <message>
+        <source>Shows program info</source>
+        <translation>แสดงข้อมูลโปรแกรม</translation>
+    </message>
+    <message>
+        <source>&amp;Credits</source>
+        <translation>&amp;เครดิต</translation>
+    </message>
+    <message>
+        <source>Shows credits</source>
+        <translation>แสดงรายชื่อของผู้ที่มีส่วนร่วมในการสร้างโปรแกรม</translation>
+    </message>
+    <message>
+        <source>&amp;Help</source>
+        <translation>&amp;ช่วยเหลือ</translation>
+    </message>
+    <message>
+        <source>Time elapsed: %s</source>
+        <translation>ใช้เวลาไปแล้ว: %s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Choose script</source>
+        <translation>เลือกสคริปต์อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Script files (*.lua),(*.moon)|*.lua;*.moon;</source>
+        <translation>แฟ้มสคริปต์ (*.lua),(*.moon)|*.lua;*.moon;</translation>
+    </message>
+    <message>
+        <source>This subtitle file does not have any scripts added</source>
+        <translation>คำบรรยายนี้ไม่ได้เพิ่มสคริปต์ใด ๆ</translation>
+    </message>
+    <message>
+        <source>Validation Lua script &apos;%s&apos; failed</source>
+        <translation>การตรวจสอบสคริปต์ Lua &apos;%s&apos; ไม่ผ่าน</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Choose subtitle file</source>
+        <translation>เลือกแฟ้มคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm</source>
+        <translation>แฟ้มคำบรรยาย (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|วิดีโอที่มีคำบรรยาย (*.mkv),(*.ogm)|*.mkv;*.ogm</translation>
+    </message>
+    <message>
+        <source>Choose video file</source>
+        <translation>เลือกแฟ้มวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|All files (*.*)|*.*</source>
+        <translation>แฟ้มวิดีโอ (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|แฟ้มทั้งหมด (*.*)|*.*</translation>
+    </message>
+    <message>
+        <source>Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*</source>
+        <translation>แฟ้มคีย์เฟรม (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|แฟ้มทั้งหมด (*.*)|*.*</translation>
+    </message>
+    <message>
+        <source>HikariSub subtitle editor by altqx,
+version %s from %s</source>
+        <translation>โปรแกรมแก้ไขคำบรรยาย HikariSub โดย altqx
+เวอร์ชัน %s วันที่ %s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Based on Kainote by Marcin Drob aka Bakura or Bjakja.
+
+</source>
+        <translation>พัฒนาต่อยอดจาก Kainote ของ Marcin Drob หรือ Bakura หรือ Bjakja
+
+</translation>
+    </message>
+    <message>
+        <source>If you have noticed any bugs or have any suggestions for changes or new features,
+open an issue at https://github.com/altqx/hikari/issues.
+
+</source>
+        <translation>หากพบข้อผิดพลาด หรือมีข้อเสนอแนะเกี่ยวกับการเปลี่ยนแปลงหรือฟีเจอร์ใหม่
+โปรดแจ้งได้ที่ https://github.com/altqx/hikari/issues
+
+</translation>
+    </message>
+    <message>
+        <source>HikariSub includes parts of the following projects:
+</source>
+        <translation>HikariSub มีบางส่วนของโครงการดังต่อไปนี้:
+</translation>
+    </message>
+    <message>
+        <source>Color picker, demuxing subtitles from MKV, audio box, audio player, automation,
+and several other individual features taken from Aegisub -
+</source>
+        <translation>ตัวเลือกสี การแยกคำบรรยายจาก MKV หน้าต่างเสียง เครื่องเล่นเสียง Automation
+และคุณสมบัติอื่น ๆ อีกหลายรายการที่นำมาจาก Aegisub -
+</translation>
+    </message>
+    <message>
+        <source>About HikariSub</source>
+        <translation>เกี่ยวกับ HikariSub</translation>
+    </message>
+    <message>
+        <source>Graphical help: (buttons, help pictures etc.)
+</source>
+        <translation>ความช่วยเหลือด้านกราฟิก: (ปุ่ม, รูปภาพช่วยเหลือ ฯลฯ )
+</translation>
+    </message>
+    <message>
+        <source>- Xandros (new video buttons).
+</source>
+        <translation>- Xandros (ปุ่มวิดีโอ)
+</translation>
+    </message>
+    <message>
+        <source>- Devilkan (menu and toolbar buttons)
+</source>
+        <translation>- Devilkan (ไอคอนเมนูและแถบเครื่องมือ)
+</translation>
+    </message>
+    <message>
+        <source>- Zły Los (icons for file associations and menu).
+</source>
+        <translation>- Zły Los (ไอคอนแฟ้มและเมนู)
+</translation>
+    </message>
+    <message>
+        <source>Testers:
+</source>
+        <translation>ผู้ทดสอบ:
+</translation>
+    </message>
+    <message>
+        <source>- Sacredus (first translator using translator mode,
+great help testing HikariSub on a slow computer)
+</source>
+        <translation>- Sacredus (นักแปลคนแรกที่ใช้โหมดการแปล
+ช่วยได้มากในการทดสอบ HikariSub บนคอมพิวเตอร์ช้า)
+</translation>
+    </message>
+    <message>
+        <source>- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot
+</source>
+        <translation>- Devilkan (ผู้ค้นหาข้อขัดข้อง ซึ่งพบข้อขัดข้องจำนวนมากจากระบบและพฤติกรรมการใช้งานของตน
+</translation>
+    </message>
+    <message>
+        <source>helped with typesetting tools and came up with many more improvements).
+</source>
+        <translation>และช่วยปรับปรุงการทำงานของเครื่องมือจัดวางตัวอักษร รวมถึงเสนอการปรับปรุงอื่น ๆ อีกมากมาย)
+</translation>
+    </message>
+    <message>
+        <source>- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).
+</source>
+        <translation>- MatiasMovie (พบข้อขัดข้องบางส่วน เสนอการปรับปรุงหลายรายการ และช่วยดีบักข้อขัดข้อง)
+</translation>
+    </message>
+    <message>
+        <source>- mas1904 (found some errors and helping with crash debuging).
+</source>
+        <translation>- mas1904 (พบข้อผิดพลาดบางส่วนและช่วยดีบักข้อขัดข้อง)
+</translation>
+    </message>
+    <message>
+        <source>- Senami (made new themes and found some bugs).
+</source>
+        <translation>- Senami (สร้างธีมใหม่และเป็นผู้พบข้อบกพร่องหลายอย่าง)
+</translation>
+    </message>
+    <message>
+        <source>- altinat (Thai translation).
+</source>
+        <translation>- altinat (ผู้แปลภาษาไทย)
+</translation>
+    </message>
+    <message>
+        <source>- labrie75 (Korean translation).
+</source>
+        <translation>- labrie75 (ผู้แปลภาษาเกาหลี)
+</translation>
+    </message>
+    <message>
+        <source>- Niskala5570 (Malay translation).
+</source>
+        <translation>- Niskala5570 (ผู้แปลภาษามาเลย์)
+</translation>
+    </message>
+    <message>
+        <source>Thanks to other HikariSub users who reported bugs:
+</source>
+        <translation>ขอขอบพระคุณผู้ที่ใช้โปรแกรมนี้และรายงานข้อผิดพลาด:
+</translation>
+    </message>
+    <message>
+        <source>Credits</source>
+        <translation>เครดิต</translation>
+    </message>
+    <message>
+        <source>Subtitle file </source>
+        <translation>แฟ้มคำบรรยาย </translation>
+    </message>
+    <message>
+        <source>Save subtitle file</source>
+        <translation>บันทึกแฟ้มคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Chosen file is read only,
+please save with different name or change file attribute.</source>
+        <translation>แฟ้มที่เลือกเป็นแบบอ่านอย่างเดียว
+โปรดบันทึกโดยใช้ชื่ออื่นหรือเปลี่ยนคุณสมบัติของแฟ้ม</translation>
+    </message>
+    <message>
+        <source>Load subtitles named &quot;%s&quot;?</source>
+        <translation>ต้องการโหลดคำบรรยายชื่อ &quot;%s&quot; หรือไม่?</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Cannot open subtitle file</source>
+        <translation>ไม่สามารถเปิดแฟ้มคำบรรยายได้</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>ไม่มี</translation>
+    </message>
+    <message>
+        <source>Save subtitles named &quot;%s&quot; before %s?</source>
+        <translation>ต้องการบันทึกคำบรรยาย &quot;%s&quot; ก่อน %s หรือไม่?</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>exiting program</source>
+        <translation>กำลังออกจากโปรแกรม</translation>
+    </message>
+    <message>
+        <source>closing tab</source>
+        <translation>กำลังปิดแท็บ</translation>
+    </message>
+    <message>
+        <source>loading new subtitles</source>
+        <translation>กำลังโหลดคำบรรยายใหม่</translation>
+    </message>
+    <message>
+        <source>removing subtitles</source>
+        <translation>กำลังลบคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Cannot load audio hotkeys</source>
+        <translation>ไม่สามารถโหลดปุ่มลัดเสียงได้</translation>
+    </message>
+    <message>
+        <source>Cannot load audio configuration</source>
+        <translation>ไม่สามารถโหลดการตั้งค่าเสียงได้</translation>
+    </message>
+    <message>
+        <source>Choose audio file</source>
+        <translation>เลือกแฟ้มเสียง</translation>
+    </message>
+    <message>
+        <source>Audio and video files</source>
+        <translation>แฟ้มเสียงและวิดีโอ</translation>
+    </message>
+    <message>
+        <source>All files</source>
+        <translation>แฟ้มทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Undo to </source>
+        <translation>เลิกทำจนถึง </translation>
+    </message>
+    <message>
+        <source>Redo to </source>
+        <translation>ทำซ้ำจนถึง </translation>
+    </message>
+    <message>
+        <source>Choose session file</source>
+        <translation>เลือกแฟ้มเซสชัน</translation>
+    </message>
+    <message>
+        <source>Session file (*.kls),|*.kls</source>
+        <translation>แฟ้มเซสชัน (*.kls),|*.kls</translation>
+    </message>
+    <message>
+        <source>Save session file</source>
+        <translation>บันทึกแฟ้มเซสชัน</translation>
+    </message>
+    <message>
+        <source>Hotkey &quot;%s&quot; it&apos;s not script hotkey.</source>
+        <translation>ปุ่มลัด &quot;%s&quot; ไม่ใช่ปุ่มลัดของสคริปต์</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
         <source>Exit</source>
         <translation>ออก</translation>
     </message>
@@ -1715,48 +2693,8 @@ Finished in %sms</source>
         <translation>เลื่อนเวลา</translation>
     </message>
     <message>
-        <source>Convert to ASS</source>
-        <translation>แปลงเป็น ASS</translation>
-    </message>
-    <message>
-        <source>Convert to SRT</source>
-        <translation>แปลงเป็น SRT</translation>
-    </message>
-    <message>
-        <source>Convert to MDVD</source>
-        <translation>แปลงเป็น MDVD</translation>
-    </message>
-    <message>
-        <source>Convert to MPL2</source>
-        <translation>แปลงเป็น MPL2</translation>
-    </message>
-    <message>
-        <source>Convert to TMP</source>
-        <translation>แปลงเป็น TMP</translation>
-    </message>
-    <message>
         <source>Style manager</source>
         <translation>ตัวจัดการสไตล์</translation>
-    </message>
-    <message>
-        <source>Enable / Disable editor</source>
-        <translation>เปิด / ปิดใช้งานตัวแก้ไข</translation>
-    </message>
-    <message>
-        <source>Open video</source>
-        <translation>เปิดวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Undo</source>
-        <translation>เลิกทำ</translation>
-    </message>
-    <message>
-        <source>Redo</source>
-        <translation>ทำซ้ำ</translation>
-    </message>
-    <message>
-        <source>History</source>
-        <translation>ประวัติ</translation>
     </message>
     <message>
         <source>Open subtitles</source>
@@ -1779,36 +2717,12 @@ Finished in %sms</source>
         <translation>ลบบรรทัด</translation>
     </message>
     <message>
-        <source>Insert start time from video</source>
-        <translation>แทรกเวลาเริ่มต้นจากวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Insert end time from video</source>
-        <translation>แทรกเวลาสิ้นสุดจากวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Play / Pause</source>
-        <translation>เล่น / หยุดชั่วคราว</translation>
-    </message>
-    <message>
-        <source>Previous frame</source>
-        <translation>เฟรมก่อนหน้า</translation>
-    </message>
-    <message>
-        <source>Next frame</source>
-        <translation>เฟรมถัดไป</translation>
-    </message>
-    <message>
         <source>Previous line</source>
         <translation>บรรทัดก่อนหน้า</translation>
     </message>
     <message>
         <source>Next line</source>
         <translation>บรรทัดถัดไป</translation>
-    </message>
-    <message>
-        <source>Find next</source>
-        <translation>ค้นหาถัดไป</translation>
     </message>
     <message>
         <source>Merge with previous line</source>
@@ -2322,8 +3236,8 @@ Finished in %sms</source>
         <translation>แบ่งบรรทัดตามจุดแบ่งบรรทัด</translation>
     </message>
     <message>
-        <source>ASS file properties</source>
-        <translation>คุณสมบัติแฟ้ม ASS</translation>
+        <source>Check for updates</source>
+        <translation>ตรวจหาอัปเดต</translation>
     </message>
     <message>
         <source>About</source>
@@ -2332,46 +3246,6 @@ Finished in %sms</source>
     <message>
         <source>Report an issue</source>
         <translation>รายงานปัญหา</translation>
-    </message>
-    <message>
-        <source>Open audio from video</source>
-        <translation>เปิดเสียงจากวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Load script</source>
-        <translation>โหลดสคริปต์</translation>
-    </message>
-    <message>
-        <source>Open shortcut mapping window</source>
-        <translation>เปิดหน้าต่างกำหนดปุ่มลัด</translation>
-    </message>
-    <message>
-        <source>Refresh autoload scripts</source>
-        <translation>รีเฟรชสคริปต์อัตโนมัติ</translation>
-    </message>
-    <message>
-        <source>Close audio</source>
-        <translation>นำเสียงออก</translation>
-    </message>
-    <message>
-        <source>Credits</source>
-        <translation>เครดิต</translation>
-    </message>
-    <message>
-        <source>Hide tags</source>
-        <translation>ซ่อนแท็ก</translation>
-    </message>
-    <message>
-        <source>Open keyframes</source>
-        <translation>เปิดคีย์เฟรม</translation>
-    </message>
-    <message>
-        <source>Open auto save</source>
-        <translation>เปิดแฟ้มบันทึกอัตโนมัติ</translation>
-    </message>
-    <message>
-        <source>Run the last loaded script</source>
-        <translation>เรียกใช้สคริปต์ล่าสุด</translation>
     </message>
     <message>
         <source>Sort all lines by start time</source>
@@ -2426,34 +3300,6 @@ Finished in %sms</source>
         <translation>เลื่อนเวลา / ใช้โพสต์โปรเซสเซอร์</translation>
     </message>
     <message>
-        <source>Go to previous keyframe</source>
-        <translation>ไปยังคีย์เฟรมก่อนหน้า</translation>
-    </message>
-    <message>
-        <source>Go to next keyframe</source>
-        <translation>ไปยังคีย์เฟรมถัดไป</translation>
-    </message>
-    <message>
-        <source>Resample subtitles</source>
-        <translation>เปลี่ยนความละเอียดของคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Undo to last save</source>
-        <translation>ย้อนกลับไปยังสถานะที่บันทึกล่าสุด</translation>
-    </message>
-    <message>
-        <source>Open video with FFMS2</source>
-        <translation>เปิดวิดีโอผ่าน FFMS2</translation>
-    </message>
-    <message>
-        <source>Zoom video</source>
-        <translation>ซูมวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Turn off video zoom</source>
-        <translation>ปิดการซูมวิดีโอ</translation>
-    </message>
-    <message>
         <source>View all</source>
         <translation>แสดงทั้งหมด</translation>
     </message>
@@ -2478,64 +3324,16 @@ Finished in %sms</source>
         <translation>ล้างสไตล์ในแฟ้ม ASS</translation>
     </message>
     <message>
-        <source>Fix minor errors (experimental)</source>
-        <translation>แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)</translation>
-    </message>
-    <message>
-        <source>Load last session</source>
-        <translation>โหลดเซสชันล่าสุด</translation>
-    </message>
-    <message>
-        <source>Open audio</source>
-        <translation>เปิดเสียง</translation>
-    </message>
-    <message>
         <source>Play active line</source>
         <translation>เล่นบรรทัดปัจจุบัน</translation>
-    </message>
-    <message>
-        <source>Remove subtitles from the editor</source>
-        <translation>นำคำบรรยายออกจากตัวแก้ไข</translation>
-    </message>
-    <message>
-        <source>Save all subtitles</source>
-        <translation>บันทึกคำบรรยายทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Save translation</source>
-        <translation>บันทึกการแปล</translation>
-    </message>
-    <message>
-        <source>Save subtitles using the video name</source>
-        <translation>บันทึกคำบรรยายด้วยชื่อวิดีโอ</translation>
     </message>
     <message>
         <source>Select lines</source>
         <translation>เลือกบรรทัด</translation>
     </message>
     <message>
-        <source>Set audio position to video time</source>
-        <translation>เลื่อนตำแหน่งเสียงให้ตรงกับเวลาวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Set audio marker to video time</source>
-        <translation>เลื่อนเครื่องหมายเสียงให้ตรงกับเวลาวิดีโอ</translation>
-    </message>
-    <message>
         <source>Settings</source>
         <translation>การตั้งค่า</translation>
-    </message>
-    <message>
-        <source>Go to start time</source>
-        <translation>ไปยังเวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Go to end time of line</source>
-        <translation>ไปยังเวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Check spelling</source>
-        <translation>ตรวจการสะกด</translation>
     </message>
     <message>
         <source>Copy frame to clipboard</source>
@@ -2568,772 +3366,6 @@ Finished in %sms</source>
     <message>
         <source>Save frame with subtitles as PNG</source>
         <translation>บันทึกเฟรมพร้อมคำบรรยายเป็น PNG</translation>
-    </message>
-    <message>
-        <source>Apply to All</source>
-        <translation>นำไปใช้ทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Yes to all</source>
-        <translation>ใช่ทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Yes</source>
-        <translation>ใช่</translation>
-    </message>
-    <message>
-        <source>No</source>
-        <translation>ไม่</translation>
-    </message>
-    <message>
-        <source>Help</source>
-        <translation>ช่วยเหลือ</translation>
-    </message>
-    <message>
-        <source>Untitled - </source>
-        <translation>ไม่มีชื่อ - </translation>
-    </message>
-    <message>
-        <source>Video duration</source>
-        <translation>ระยะเวลาวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Video scale</source>
-        <translation>ขนาดวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Video zoom</source>
-        <translation>ซูมวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Frames per second</source>
-        <translation>เฟรมต่อวินาที</translation>
-    </message>
-    <message>
-        <source>Subtitles resolution</source>
-        <translation>ความละเอียดคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Video aspect ratio</source>
-        <translation>อัตราส่วนภาพวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Video file name</source>
-        <translation>ชื่อแฟ้มวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Video resolution</source>
-        <translation>ความละเอียดวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Loads previously loaded files</source>
-        <translation>เปิดแฟ้มที่โหลดก่อนหน้านี้</translation>
-    </message>
-    <message>
-        <source>Load session from file</source>
-        <translation>โหลดเซสชันจากไฟล์</translation>
-    </message>
-    <message>
-        <source>Loads session from saved session file</source>
-        <translation>โหลดเซสชันจากไฟล์เซสชันที่บันทึกไว้ก่อนหน้านี้</translation>
-    </message>
-    <message>
-        <source>Save session to file</source>
-        <translation>บันทึกเซสชันเป็นไฟล์</translation>
-    </message>
-    <message>
-        <source>Saves session to file</source>
-        <translation>บันทึกเซสชันเป็นไฟล์</translation>
-    </message>
-    <message>
-        <source>Ask whether to load the last session at program startup</source>
-        <translation>ถามว่าจะโหลดเซสชันล่าสุดเมื่อเริ่มโปรแกรมหรือไม่</translation>
-    </message>
-    <message>
-        <source>Asks whether to load previously loaded files at program startup</source>
-        <translation>ถามว่าจะโหลดแฟ้มที่เปิดล่าสุดเมื่อเริ่มโปรแกรมหรือไม่</translation>
-    </message>
-    <message>
-        <source>Load last session after program start</source>
-        <translation>โหลดเซสชันล่าสุดเมื่อเริ่มโปรแกรม</translation>
-    </message>
-    <message>
-        <source>Loads previously loaded files at program startup</source>
-        <translation>โหลดแฟ้มที่เปิดไว้ก่อนหน้าเมื่อเริ่มโปรแกรม</translation>
-    </message>
-    <message>
-        <source>&amp;Open subtitles</source>
-        <translation>เ&amp;ปิดคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Open subtitle file</source>
-        <translation>เปิดแฟ้มคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>&amp;Save</source>
-        <translation>&amp;บันทึก</translation>
-    </message>
-    <message>
-        <source>Save current file</source>
-        <translation>บันทึกแฟ้มปัจจุบัน</translation>
-    </message>
-    <message>
-        <source>Save &amp;all</source>
-        <translation>บันทึก&amp;ทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Save &amp;as...</source>
-        <translation>บันทึกเ&amp;ป็น…</translation>
-    </message>
-    <message>
-        <source>Save as</source>
-        <translation>บันทึกเป็น</translation>
-    </message>
-    <message>
-        <source>Save &amp;translation</source>
-        <translation>บันทึก&amp;การแปล</translation>
-    </message>
-    <message>
-        <source>Recently opened &amp;subtitles</source>
-        <translation>คำบรรยายที่เพิ่งเ&amp;ปิด</translation>
-    </message>
-    <message>
-        <source>Recently opened subtitles</source>
-        <translation>คำบรรยายที่เพิ่งเปิด</translation>
-    </message>
-    <message>
-        <source>Remove subtitles from the &amp;editor</source>
-        <translation>นำคำบรรยายออกจากตัวแก้ไ&amp;ข</translation>
-    </message>
-    <message>
-        <source>Opens the selected autosave from the list</source>
-        <translation>เปิดแฟ้มบันทึกอัตโนมัติที่เลือกจากรายการ</translation>
-    </message>
-    <message>
-        <source>Opens the temporary file removal window</source>
-        <translation>เปิดหน้าต่างลบแฟ้มชั่วคราว</translation>
-    </message>
-    <message>
-        <source>Show / Hide log window</source>
-        <translation>แสดง / ซ่อนหน้าต่างบันทึก</translation>
-    </message>
-    <message>
-        <source>Last session</source>
-        <translation>เซสชันสุดท้าย</translation>
-    </message>
-    <message>
-        <source>Last session options</source>
-        <translation>ตัวเลือกเซสชันสุดท้าย</translation>
-    </message>
-    <message>
-        <source>&amp;Settings</source>
-        <translation>&amp;การตั้งค่า</translation>
-    </message>
-    <message>
-        <source>Program settings</source>
-        <translation>การตั้งค่าโปรแกรม</translation>
-    </message>
-    <message>
-        <source>&amp;Exit	Alt-F4</source>
-        <translation>&amp;ออก	Alt-F4</translation>
-    </message>
-    <message>
-        <source>Exit the program</source>
-        <translation>ออกจากโปรแกรม</translation>
-    </message>
-    <message>
-        <source>&amp;File</source>
-        <translation>&amp;แฟ้ม</translation>
-    </message>
-    <message>
-        <source>&amp;Undo</source>
-        <translation>&amp;เลิกทำ</translation>
-    </message>
-    <message>
-        <source>&amp;Redo</source>
-        <translation>&amp;ทำซ้ำ</translation>
-    </message>
-    <message>
-        <source>&amp;History</source>
-        <translation>&amp;ประวัติ</translation>
-    </message>
-    <message>
-        <source>Find and re&amp;place</source>
-        <translation>ค้นหาและแ&amp;ทนที่</translation>
-    </message>
-    <message>
-        <source>Searches for the specified text phrases and replaces them</source>
-        <translation>ค้นหาและแทนที่วลีข้อความที่ระบุ</translation>
-    </message>
-    <message>
-        <source>&amp;Find</source>
-        <translation>&amp;ค้นหา</translation>
-    </message>
-    <message>
-        <source>Searches for the specified text phrase</source>
-        <translation>ค้นหาวลีข้อความที่ระบุ</translation>
-    </message>
-    <message>
-        <source>Finds the next occurrence of the phrase in the text</source>
-        <translation>ค้นหาตำแหน่งถัดไปของวลีในข้อความ</translation>
-    </message>
-    <message>
-        <source>The starting time</source>
-        <translation>เวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>Sort by start time</source>
-        <translation>เรียงตามเวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>End time</source>
-        <translation>เวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Sort by end time</source>
-        <translation>จัดเรียงตามเวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Sort by styles</source>
-        <translation>จัดเรียงตามสไตล์</translation>
-    </message>
-    <message>
-        <source>Sort by actor</source>
-        <translation>จัดเรียงตามผู้พูด</translation>
-    </message>
-    <message>
-        <source>Sort by effect</source>
-        <translation>จัดเรียงตามเอฟเฟกต์</translation>
-    </message>
-    <message>
-        <source>Layer</source>
-        <translation>ชั้น</translation>
-    </message>
-    <message>
-        <source>Sort by layer</source>
-        <translation>จัดเรียงตามชั้น</translation>
-    </message>
-    <message>
-        <source>So&amp;rt all lines</source>
-        <translation>จัดเ&amp;รียงทุกบรรทัด</translation>
-    </message>
-    <message>
-        <source>Sorts all lines in ASS file</source>
-        <translation>จัดเรียงบรรทัดคำบรรยายทั้งหมดในแฟ้ม ASS</translation>
-    </message>
-    <message>
-        <source>So&amp;rt selected lines</source>
-        <translation>จัดเ&amp;รียงบรรทัดที่เลือก</translation>
-    </message>
-    <message>
-        <source>Sorts selected lines in ASS file</source>
-        <translation>จัดเรียงบรรทัดคำบรรยาย ASS ที่เลือก</translation>
-    </message>
-    <message>
-        <source>Turns on multireplacer</source>
-        <translation>เปิดเครื่องมือแทนที่หลายรายการ</translation>
-    </message>
-    <message>
-        <source>Select &amp;lines</source>
-        <translation>เลือก&amp;บรรทัด</translation>
-    </message>
-    <message>
-        <source>Selects lines by expressions</source>
-        <translation>เลือกบรรทัดตามนิพจน์</translation>
-    </message>
-    <message>
-        <source>&amp;Edit</source>
-        <translation>&amp;แก้ไข</translation>
-    </message>
-    <message>
-        <source>Opens video file</source>
-        <translation>เปิดแฟ้มวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Recently opened videos</source>
-        <translation>วิดีโอที่เพิ่งเปิด</translation>
-    </message>
-    <message>
-        <source>Recently opened keyframes</source>
-        <translation>คีย์เฟรมที่เพิ่งเปิด</translation>
-    </message>
-    <message>
-        <source>Open dummy video</source>
-        <translation>เปิดวิดีโอจำลอง</translation>
-    </message>
-    <message>
-        <source>Inserts the start time from video</source>
-        <translation>แทรกเวลาเริ่มต้นจากวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Inserts the end time from video</source>
-        <translation>แทรกเวลาสิ้นสุดจากวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Go to previous frame</source>
-        <translation>ถอยหลังหนึ่งเฟรม</translation>
-    </message>
-    <message>
-        <source>Go to next frame</source>
-        <translation>ไปข้างหน้าหนึ่งเฟรม</translation>
-    </message>
-    <message>
-        <source>Moves video to start time</source>
-        <translation>ย้ายวิดีโอไปยังเวลาเริ่มต้นของบรรทัด</translation>
-    </message>
-    <message>
-        <source>Moves video to end time</source>
-        <translation>ย้ายวิดีโอไปยังเวลาสิ้นสุดของบรรทัด</translation>
-    </message>
-    <message>
-        <source>Plays / Pauses video</source>
-        <translation>เล่น / หยุดวิดีโอชั่วคราว</translation>
-    </message>
-    <message>
-        <source>Opens video with FFMS2 for frame precision</source>
-        <translation>เปิดวิดีโอด้วย FFMS2 เพื่อความแม่นยำของเฟรม</translation>
-    </message>
-    <message>
-        <source>&amp;Video</source>
-        <translation>&amp;วิดีโอ</translation>
-    </message>
-    <message>
-        <source>Opens audio file</source>
-        <translation>เปิดแฟ้มเสียง</translation>
-    </message>
-    <message>
-        <source>Recently opened audio</source>
-        <translation>เสียงที่เพิ่งเปิด</translation>
-    </message>
-    <message>
-        <source>Opens audio from video</source>
-        <translation>เปิดเสียงจากวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Open blank 2h30m audio</source>
-        <translation>เปิดเสียงเปล่ายาว 2:30 ชั่วโมง</translation>
-    </message>
-    <message>
-        <source>Opens blank audio 2 hour and 30 minutes long</source>
-        <translation>เปิดเสียงเปล่าที่ยาวเป็นเวลา 2:30 ชั่วโมง</translation>
-    </message>
-    <message>
-        <source>Closes audio</source>
-        <translation>ปิดแฟ้มเสียง</translation>
-    </message>
-    <message>
-        <source>A&amp;udio</source>
-        <translation>เ&amp;สียง</translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>ทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Shows all windows</source>
-        <translation>แสดงหน้าต่างทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Shows only video window and subs window</source>
-        <translation>แสดงเฉพาะหน้าต่างวิดีโอและหน้าต่างคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Video and subs</source>
-        <translation>วิดีโอและคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Audio and subs</source>
-        <translation>เสียงและคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Shows only audio window and subs window</source>
-        <translation>แสดงเฉพาะหน้าต่างเสียงและหน้าต่างคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Only video</source>
-        <translation>วิดีโอเท่านั้น</translation>
-    </message>
-    <message>
-        <source>Shows only video window</source>
-        <translation>แสดงเฉพาะหน้าต่างวิดีโอเท่านั้น</translation>
-    </message>
-    <message>
-        <source>Only subtitles</source>
-        <translation>คำบรรยายเท่านั้น</translation>
-    </message>
-    <message>
-        <source>Shows only the subtitle window</source>
-        <translation>แสดงเฉพาะหน้าต่างคำบรรยายเท่านั้น</translation>
-    </message>
-    <message>
-        <source>View</source>
-        <translation>มุมมอ&amp;ง</translation>
-    </message>
-    <message>
-        <source>Enables / disables editor</source>
-        <translation>เปิด / ปิดตัวแก้ไข</translation>
-    </message>
-    <message>
-        <source>ASS subtitle properties</source>
-        <translation>คุณสมบัติของคำบรรยาย ASS</translation>
-    </message>
-    <message>
-        <source>Style &amp;manager</source>
-        <translation>&amp;ตัวจัดการสไตล์</translation>
-    </message>
-    <message>
-        <source>Is used to manage ASS styles</source>
-        <translation>ใช้สำหรับจัดการสไตล์ ASS</translation>
-    </message>
-    <message>
-        <source>Converts to ASS format</source>
-        <translation>แปลงเป็นรูปแบบ ASS</translation>
-    </message>
-    <message>
-        <source>Converts to SRT format</source>
-        <translation>แปลงเป็นรูปแบบ SRT</translation>
-    </message>
-    <message>
-        <source>Converts to microDVD format</source>
-        <translation>แปลงเป็นรูปแบบ microDVD</translation>
-    </message>
-    <message>
-        <source>Converts to MPL2 format</source>
-        <translation>แปลงเป็นรูปแบบ MPL2</translation>
-    </message>
-    <message>
-        <source>Converts to TMPlayer format (not recommended)</source>
-        <translation>แปลงเป็นรูปแบบ TMPlayer (ไม่แนะนำ)</translation>
-    </message>
-    <message>
-        <source>Conversion</source>
-        <translation>การแปลง</translation>
-    </message>
-    <message>
-        <source>Converts from one format to another</source>
-        <translation>แปลงจากรูปแบบหนึ่งเป็นอีกรูปแบบหนึ่ง</translation>
-    </message>
-    <message>
-        <source>Shift &amp;times...	Ctrl-I</source>
-        <translation>เลื่อน&amp;เวลา…	Ctrl-I</translation>
-    </message>
-    <message>
-        <source>Shifting subtitle times</source>
-        <translation>เลื่อนเวลาคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Hides tags in ASS and MDVD</source>
-        <translation>ซ่อนแท็กในวงเล็บ ASS และ MDVD</translation>
-    </message>
-    <message>
-        <source>Su&amp;btitles</source>
-        <translation>&amp;คำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Au&amp;tomation</source>
-        <translation>สคริปต์&amp;อัตโนมัติ</translation>
-    </message>
-    <message>
-        <source>HikariSub &amp;website</source>
-        <translation>&amp;เว็บไซต์ HikariSub</translation>
-    </message>
-    <message>
-        <source>Opens the HikariSub website in the default browser</source>
-        <translation>เปิดเว็บไซต์ HikariSub ในเบราว์เซอร์เริ่มต้น</translation>
-    </message>
-    <message>
-        <source>&amp;Report an issue</source>
-        <translation>&amp;รายงานปัญหา</translation>
-    </message>
-    <message>
-        <source>Opens the HikariSub issue tracker</source>
-        <translation>เปิดหน้าติดตามปัญหาของ HikariSub</translation>
-    </message>
-    <message>
-        <source>&amp;About</source>
-        <translation>&amp;เกี่ยวกับ</translation>
-    </message>
-    <message>
-        <source>Shows program info</source>
-        <translation>แสดงข้อมูลโปรแกรม</translation>
-    </message>
-    <message>
-        <source>&amp;Credits</source>
-        <translation>&amp;เครดิต</translation>
-    </message>
-    <message>
-        <source>Shows credits</source>
-        <translation>แสดงรายชื่อของผู้ที่มีส่วนร่วมในการสร้างโปรแกรม</translation>
-    </message>
-    <message>
-        <source>&amp;Help</source>
-        <translation>&amp;ช่วยเหลือ</translation>
-    </message>
-    <message>
-        <source>Time elapsed: %s</source>
-        <translation>ใช้เวลาไปแล้ว: %s</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Choose script</source>
-        <translation>เลือกสคริปต์อัตโนมัติ</translation>
-    </message>
-    <message>
-        <source>Script files (*.lua),(*.moon)|*.lua;*.moon;</source>
-        <translation>แฟ้มสคริปต์ (*.lua),(*.moon)|*.lua;*.moon;</translation>
-    </message>
-    <message>
-        <source>This subtitle file does not have any scripts added</source>
-        <translation>คำบรรยายนี้ไม่ได้เพิ่มสคริปต์ใด ๆ</translation>
-    </message>
-    <message>
-        <source>Validation Lua script &apos;%s&apos; failed</source>
-        <translation>การตรวจสอบสคริปต์ Lua &apos;%s&apos; ไม่ผ่าน</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Choose subtitle file</source>
-        <translation>เลือกแฟ้มคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm</source>
-        <translation>แฟ้มคำบรรยาย (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|วิดีโอที่มีคำบรรยาย (*.mkv),(*.ogm)|*.mkv;*.ogm</translation>
-    </message>
-    <message>
-        <source>Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|All files (*.*)|*.*</source>
-        <translation>แฟ้มวิดีโอ (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|แฟ้มทั้งหมด (*.*)|*.*</translation>
-    </message>
-    <message>
-        <source>Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*</source>
-        <translation>แฟ้มคีย์เฟรม (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|แฟ้มทั้งหมด (*.*)|*.*</translation>
-    </message>
-    <message>
-        <source>HikariSub subtitle editor by altqx,
-version %s from %s</source>
-        <translation>โปรแกรมแก้ไขคำบรรยาย HikariSub โดย altqx
-เวอร์ชัน %s วันที่ %s</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Based on Kainote by Marcin Drob aka Bakura or Bjakja.
-
-</source>
-        <translation>พัฒนาต่อยอดจาก Kainote ของ Marcin Drob หรือ Bakura หรือ Bjakja
-
-</translation>
-    </message>
-    <message>
-        <source>If you have noticed any bugs or have any suggestions for changes or new features,
-open an issue at https://github.com/altqx/hikari/issues.
-
-</source>
-        <translation>หากพบข้อผิดพลาด หรือมีข้อเสนอแนะเกี่ยวกับการเปลี่ยนแปลงหรือฟีเจอร์ใหม่
-โปรดแจ้งได้ที่ https://github.com/altqx/hikari/issues
-
-</translation>
-    </message>
-    <message>
-        <source>HikariSub includes parts of the following projects:
-</source>
-        <translation>HikariSub มีบางส่วนของโครงการดังต่อไปนี้:
-</translation>
-    </message>
-    <message>
-        <source>Color picker, demuxing subtitles from MKV, audio box, audio player, automation,
-and several other individual features taken from Aegisub -
-</source>
-        <translation>ตัวเลือกสี การแยกคำบรรยายจาก MKV หน้าต่างเสียง เครื่องเล่นเสียง Automation
-และคุณสมบัติอื่น ๆ อีกหลายรายการที่นำมาจาก Aegisub -
-</translation>
-    </message>
-    <message>
-        <source>About HikariSub</source>
-        <translation>เกี่ยวกับ HikariSub</translation>
-    </message>
-    <message>
-        <source>Graphical help: (buttons, help pictures etc.)
-</source>
-        <translation>ความช่วยเหลือด้านกราฟิก: (ปุ่ม, รูปภาพช่วยเหลือ ฯลฯ )
-</translation>
-    </message>
-    <message>
-        <source>- Xandros (new video buttons).
-</source>
-        <translation>- Xandros (ปุ่มวิดีโอ)
-</translation>
-    </message>
-    <message>
-        <source>- Devilkan (menu and toolbar buttons)
-</source>
-        <translation>- Devilkan (ไอคอนเมนูและแถบเครื่องมือ)
-</translation>
-    </message>
-    <message>
-        <source>- Zły Los (icons for file associations and menu).
-</source>
-        <translation>- Zły Los (ไอคอนแฟ้มและเมนู)
-</translation>
-    </message>
-    <message>
-        <source>Testers:
-</source>
-        <translation>ผู้ทดสอบ:
-</translation>
-    </message>
-    <message>
-        <source>- Sacredus (first translator using translator mode,
-great help testing HikariSub on a slow computer)
-</source>
-        <translation>- Sacredus (นักแปลคนแรกที่ใช้โหมดการแปล
-ช่วยได้มากในการทดสอบ HikariSub บนคอมพิวเตอร์ช้า)
-</translation>
-    </message>
-    <message>
-        <source>- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot
-</source>
-        <translation>- Devilkan (ผู้ค้นหาข้อขัดข้อง ซึ่งพบข้อขัดข้องจำนวนมากจากระบบและพฤติกรรมการใช้งานของตน
-</translation>
-    </message>
-    <message>
-        <source>helped with typesetting tools and came up with many more improvements).
-</source>
-        <translation>และช่วยปรับปรุงการทำงานของเครื่องมือจัดวางตัวอักษร รวมถึงเสนอการปรับปรุงอื่น ๆ อีกมากมาย)
-</translation>
-    </message>
-    <message>
-        <source>- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).
-</source>
-        <translation>- MatiasMovie (พบข้อขัดข้องบางส่วน เสนอการปรับปรุงหลายรายการ และช่วยดีบักข้อขัดข้อง)
-</translation>
-    </message>
-    <message>
-        <source>- mas1904 (found some errors and helping with crash debuging).
-</source>
-        <translation>- mas1904 (พบข้อผิดพลาดบางส่วนและช่วยดีบักข้อขัดข้อง)
-</translation>
-    </message>
-    <message>
-        <source>- Senami (made new themes and found some bugs).
-</source>
-        <translation>- Senami (สร้างธีมใหม่และเป็นผู้พบข้อบกพร่องหลายอย่าง)
-</translation>
-    </message>
-    <message>
-        <source>- altinat (Thai translation).
-</source>
-        <translation>- altinat (ผู้แปลภาษาไทย)
-</translation>
-    </message>
-    <message>
-        <source>- labrie75 (Korean translation).
-</source>
-        <translation>- labrie75 (ผู้แปลภาษาเกาหลี)
-</translation>
-    </message>
-    <message>
-        <source>- Niskala5570 (Malay translation).
-</source>
-        <translation>- Niskala5570 (ผู้แปลภาษามาเลย์)
-</translation>
-    </message>
-    <message>
-        <source>Thanks to other HikariSub users who reported bugs:
-</source>
-        <translation>ขอขอบพระคุณผู้ที่ใช้โปรแกรมนี้และรายงานข้อผิดพลาด:
-</translation>
-    </message>
-    <message>
-        <source>Subtitle file </source>
-        <translation>แฟ้มคำบรรยาย </translation>
-    </message>
-    <message>
-        <source>Save subtitle file</source>
-        <translation>บันทึกแฟ้มคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Chosen file is read only,
-please save with different name or change file attribute.</source>
-        <translation>แฟ้มที่เลือกเป็นแบบอ่านอย่างเดียว
-โปรดบันทึกโดยใช้ชื่ออื่นหรือเปลี่ยนคุณสมบัติของแฟ้ม</translation>
-    </message>
-    <message>
-        <source>Load subtitles named &quot;%s&quot;?</source>
-        <translation>ต้องการโหลดคำบรรยายชื่อ &quot;%s&quot; หรือไม่?</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Cannot open subtitle file</source>
-        <translation>ไม่สามารถเปิดแฟ้มคำบรรยายได้</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation>ไม่มี</translation>
-    </message>
-    <message>
-        <source>Save subtitles named &quot;%s&quot; before %s?</source>
-        <translation>ต้องการบันทึกคำบรรยาย &quot;%s&quot; ก่อน %s หรือไม่?</translation>
-        <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>exiting program</source>
-        <translation>กำลังออกจากโปรแกรม</translation>
-    </message>
-    <message>
-        <source>closing tab</source>
-        <translation>กำลังปิดแท็บ</translation>
-    </message>
-    <message>
-        <source>loading new subtitles</source>
-        <translation>กำลังโหลดคำบรรยายใหม่</translation>
-    </message>
-    <message>
-        <source>removing subtitles</source>
-        <translation>กำลังลบคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Cannot load audio hotkeys</source>
-        <translation>ไม่สามารถโหลดปุ่มลัดเสียงได้</translation>
-    </message>
-    <message>
-        <source>Cannot load audio configuration</source>
-        <translation>ไม่สามารถโหลดการตั้งค่าเสียงได้</translation>
-    </message>
-    <message>
-        <source>Choose audio file</source>
-        <translation>เลือกแฟ้มเสียง</translation>
-    </message>
-    <message>
-        <source>Audio and video files</source>
-        <translation>แฟ้มเสียงและวิดีโอ</translation>
-    </message>
-    <message>
-        <source>All files</source>
-        <translation>แฟ้มทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Undo to </source>
-        <translation>เลิกทำจนถึง </translation>
-    </message>
-    <message>
-        <source>Redo to </source>
-        <translation>ทำซ้ำจนถึง </translation>
-    </message>
-    <message>
-        <source>Choose session file</source>
-        <translation>เลือกแฟ้มเซสชัน</translation>
-    </message>
-    <message>
-        <source>Session file (*.kls),|*.kls</source>
-        <translation>แฟ้มเซสชัน (*.kls),|*.kls</translation>
-    </message>
-    <message>
-        <source>Save session file</source>
-        <translation>บันทึกแฟ้มเซสชัน</translation>
-    </message>
-    <message>
-        <source>Hotkey &quot;%s&quot; it&apos;s not script hotkey.</source>
-        <translation>ปุ่มลัด &quot;%s&quot; ไม่ใช่ปุ่มลัดของสคริปต์</translation>
-        <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
         <source>Log window</source>
@@ -3607,6 +3639,13 @@ cause it was edited.</source>
         <translation>ต้องการปิดแท็บทั้งหมดแล้วดำเนินต่อหรือไม่?</translation>
     </message>
     <message>
+        <source>Cannot read the subtitle file:
+%s</source>
+        <translation>ไม่สามารถอ่านแฟ้มคำบรรยายได้:
+%s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
         <source>Video: </source>
         <translation>วิดีโอ: </translation>
     </message>
@@ -3643,6 +3682,25 @@ cause it was edited.</source>
         <translation>แฟ้มเซสชันไม่ถูกต้อง</translation>
     </message>
     <message>
+        <source>Cannot read the subtitle files:
+</source>
+        <translation>ไม่สามารถอ่านแฟ้มคำบรรยายต่อไปนี้ได้:
+</translation>
+    </message>
+    <message>
+        <source>Cannot save to file.</source>
+        <translation>ไม่สามารถบันทึกลงแฟ้มได้</translation>
+    </message>
+    <message>
+        <source>The old contents of the file are kept in %s.</source>
+        <translation>เนื้อหาเดิมของแฟ้มถูกเก็บไว้ที่ %s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>A temporary file in its folder would let in users the file keeps out.</source>
+        <translation>แฟ้มชั่วคราวในโฟลเดอร์เดียวกันจะเปิดให้ผู้ใช้ที่ไม่มีสิทธิ์ในแฟ้มนี้เข้าถึงได้</translation>
+    </message>
+    <message>
         <source>Cannot create file.</source>
         <translation>ไม่สามารถสร้างแฟ้มได้</translation>
     </message>
@@ -3657,10 +3715,6 @@ cause it was edited.</source>
     <message>
         <source>The file was not opened.</source>
         <translation>ไม่ได้เปิดแฟ้ม</translation>
-    </message>
-    <message>
-        <source>Cannot save to file.</source>
-        <translation>ไม่สามารถบันทึกลงแฟ้มได้</translation>
     </message>
     <message>
         <source>Open sorted subtitles</source>
@@ -3751,6 +3805,26 @@ after switching from full screen</source>
     <message>
         <source>Spell checker language (&quot;Dictionary&quot; folder)</source>
         <translation>ภาษาการตรวจสอบการสะกดคำ (โฟลเดอร์ &quot;Dictionary&quot;)</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>การอัปเดต</translation>
+    </message>
+    <message>
+        <source>Check for updates automatically</source>
+        <translation>ตรวจหาอัปเดตโดยอัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>When the program starts: once a day, or an hour after a check that failed</source>
+        <translation>เมื่อเริ่มโปรแกรม: วันละครั้ง หรือหนึ่งชั่วโมงหลังจากการตรวจสอบที่ล้มเหลว</translation>
+    </message>
+    <message>
+        <source>Stable versions only</source>
+        <translation>เฉพาะเวอร์ชันเสถียร</translation>
+    </message>
+    <message>
+        <source>A release candidate is still told about newer release candidates</source>
+        <translation>หากใช้รุ่น Release Candidate อยู่ จะยังได้รับแจ้งเมื่อมีรุ่น Release Candidate ที่ใหม่กว่า</translation>
     </message>
     <message>
         <source>0 turns off saving while editing</source>
@@ -3898,6 +3972,10 @@ and will be changed to the default</source>
     <message>
         <source>Open video from context menu on full screen</source>
         <translation>เปิดวิดีโอจากเมนูบริบทแบบเต็มหน้าจอ</translation>
+    </message>
+    <message>
+        <source>Convert video colours on the GPU (requires reloading)</source>
+        <translation>แปลงสีวิดีโอด้วย GPU (ต้องโหลดใหม่)</translation>
     </message>
     <message>
         <source>Open video with time of active line</source>
@@ -4656,98 +4734,12 @@ text field, and subtitle grid.</source>
         <translation>สี</translation>
     </message>
     <message>
-        <source>ASS subtitles</source>
-        <translation>คำบรรยาย ASS</translation>
-    </message>
-    <message>
-        <source>SRT subtitles</source>
-        <translation>คำบรรยาย SRT</translation>
-    </message>
-    <message>
-        <source>SSA subtitles</source>
-        <translation>คำบรรยาย SSA</translation>
-    </message>
-    <message>
-        <source>SUB subtitles</source>
-        <translation>คำบรรยาย SUB</translation>
-    </message>
-    <message>
-        <source>TXT subtitles</source>
-        <translation>คำบรรยาย TXT</translation>
-    </message>
-    <message>
-        <source>Video AVI</source>
-        <translation>วิดีโอ AVI</translation>
-    </message>
-    <message>
-        <source>Video MKV</source>
-        <translation>วิดีโอ MKV</translation>
-    </message>
-    <message>
-        <source>Video MP4</source>
-        <translation>วิดีโอ MP4</translation>
-    </message>
-    <message>
-        <source>Video OGM</source>
-        <translation>วิดีโอ OGM</translation>
-    </message>
-    <message>
-        <source>Video 3GP</source>
-        <translation>วิดีโอ 3GP</translation>
-    </message>
-    <message>
-        <source>Video ASF</source>
-        <translation>วิดีโอ ASF</translation>
-    </message>
-    <message>
-        <source>Video RM</source>
-        <translation>วิดีโอ RM</translation>
-    </message>
-    <message>
-        <source>Video RMVB</source>
-        <translation>วิดีโอ RMVB</translation>
-    </message>
-    <message>
-        <source>Video WMV</source>
-        <translation>วิดีโอ WMV</translation>
-    </message>
-    <message>
-        <source>Video M2TS</source>
-        <translation>วิดีโอ M2TS</translation>
-    </message>
-    <message>
-        <source>Video MPEG</source>
-        <translation>วิดีโอ MPEG</translation>
-    </message>
-    <message>
-        <source>Video MPG</source>
-        <translation>วิดีโอ MPG</translation>
-    </message>
-    <message>
-        <source>Video TS</source>
-        <translation>วิดีโอ TS</translation>
-    </message>
-    <message>
-        <source>WARNING! Behavior differs on each Windows version.
-For example, on Windows 7 WMP blocked
-the ability to change video associations.</source>
-        <translation>คำเตือน! การทำงานในแต่ละ Windows จะแตกต่างกัน ตัวอย่างเช่น Windows 7 WMP จะไม่สามารถเปลี่ยนแปลงความสัมพันธ์ของแฟ้มวิดีโอ</translation>
-    </message>
-    <message>
         <source>Deselect all</source>
         <translation>ยกเลิกการเลือกทั้งหมด</translation>
     </message>
     <message>
         <source>Select all</source>
         <translation>เลือกทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Select subtitles</source>
-        <translation>เลือกคำบรรยาย</translation>
-    </message>
-    <message>
-        <source>Select video</source>
-        <translation>เลือกวิดีโอ</translation>
     </message>
     <message>
         <source>Advanced</source>
@@ -4814,13 +4806,13 @@ the ability to change video associations.</source>
         <translation>กำลังสร้างดัชนีแฟ้มวิดีโอ</translation>
     </message>
     <message>
-        <source>Video frame size is too large</source>
-        <translation>ขนาดเฟรมวิดีโอใหญ่เกินไป</translation>
-    </message>
-    <message>
         <source>Cannot get frame %i: %s</source>
         <translation>ไม่สามารถดึงเฟรม %i ได้: %s</translation>
         <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Video frame size is too large</source>
+        <translation>ขนาดเฟรมวิดีโอใหญ่เกินไป</translation>
     </message>
     <message>
         <source>Choose the track</source>
@@ -4866,8 +4858,13 @@ the ability to change video associations.</source>
         <translation>ไม่สามารถตั้งค่าดีเลย์ที่เกินระยะเวลาของเสียงได้</translation>
     </message>
     <message>
-        <source>Not enough RAM</source>
-        <translation>แรมไม่เพียงพอ</translation>
+        <source>Cannot create the audio cache %s</source>
+        <translation>ไม่สามารถสร้างแคชเสียง %s ได้</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>Not enough memory for the audio cache</source>
+        <translation>หน่วยความจำไม่เพียงพอสำหรับแคชเสียง</translation>
     </message>
     <message>
         <source>Cannot create DXVA processor service</source>
@@ -4911,6 +4908,10 @@ the ability to change video associations.</source>
         <translation>ไม่มีบัฟเฟอร์เฟรม</translation>
     </message>
     <message>
+        <source>Cannot lock texture buffer</source>
+        <translation>ไม่สามารถล็อกบัฟเฟอร์พื้นผิวได้</translation>
+    </message>
+    <message>
         <source>Cannot unlock subtitle texture buffer</source>
         <translation>ไม่สามารถปลดล็อกบัฟเฟอร์เท็กซ์เจอร์คำบรรยายได้</translation>
     </message>
@@ -4948,10 +4949,6 @@ the ability to change video associations.</source>
         <source>Track %i</source>
         <translation>แทร็ก %i</translation>
         <extra-po-flags>c-format</extra-po-flags>
-    </message>
-    <message>
-        <source>Cannot set matrix projection</source>
-        <translation>ไม่สามารถตั้งค่าเมทริกซ์ฉายภาพได้</translation>
     </message>
     <message>
         <source>Resolution</source>
@@ -5948,6 +5945,12 @@ in uppercase</source>
         <translation>การแบ่งบรรทัด</translation>
     </message>
     <message>
+        <source>Fixed the tree markers of %d line: lines with no tree description are now ordinary lines and every tree is open or closed as a whole.</source>
+        <translation>แก้ไขเครื่องหมายทรีของ %d บรรทัดแล้ว: บรรทัดที่ไม่มีคำอธิบายทรีกลายเป็นบรรทัดปกติ และแต่ละทรีจะขยายหรือยุบทั้งทรี</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+        <extra-po-msgid_plural>Fixed the tree markers of %d lines: lines with no tree description are now ordinary lines and every tree is open or closed as a whole.</extra-po-msgid_plural>
+    </message>
+    <message>
         <source>, active line %i</source>
         <translation>, บรรทัดปัจจุบัน %i</translation>
         <extra-po-flags>c-format</extra-po-flags>
@@ -6092,6 +6095,51 @@ in tag &apos;%s&apos;</source>
         <translation>ยังไม่ได้เลือกบรรทัดที่จะเลื่อน</translation>
     </message>
     <message>
+        <source>This edit would leave lines of a tree outside it, so it was not made.</source>
+        <translation>การแก้ไขนี้จะทำให้บางบรรทัดของทรีอยู่นอกทรี จึงไม่ได้ดำเนินการแก้ไข</translation>
+    </message>
+    <message>
+        <source>Trees</source>
+        <translation>ทรี</translation>
+    </message>
+    <message>
+        <source>Line %d: %s</source>
+        <translation>บรรทัด %d: %s</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+    </message>
+    <message>
+        <source>This edit would split a tree, leave some of its lines outside it or move them into another tree, so it was not made:
+%s
+
+Removing the tree deletes its description line and shows its lines as ordinary lines.</source>
+        <translation>การแก้ไขนี้จะแยกทรี ทำให้บางบรรทัดอยู่นอกทรี หรือย้ายบรรทัดไปยังทรีอื่น จึงไม่ได้ดำเนินการแก้ไข:
+%s
+
+การลบทรีจะลบบรรทัดคำอธิบายของทรี และแสดงบรรทัดในทรีเป็นบรรทัดปกติ</translation>
+        <extra-po-flags>c-format</extra-po-flags>
+        <extra-po-msgid_plural>This edit would split trees, leave some of their lines outside them or move them into another tree, so it was not made:
+%s
+
+Removing the trees deletes their description lines and shows their lines as ordinary lines.</extra-po-msgid_plural>
+    </message>
+    <message>
+        <source>Make the edit again after removing.</source>
+        <translation>โปรดแก้ไขอีกครั้งหลังจากลบทรีแล้ว</translation>
+    </message>
+    <message>
+        <source>Remove the tree</source>
+        <translation>ลบทรี</translation>
+        <extra-po-msgid_plural>Remove the trees</extra-po-msgid_plural>
+    </message>
+    <message>
+        <source>Invalid format (file may be corrupted or contain errors)</source>
+        <translation>รูปแบบไม่ถูกต้อง (แฟ้มเสียหายหรือมีข้อผิดพลาด)</translation>
+    </message>
+    <message>
+        <source>This subtitle file is plain text and will be opened as ASS subtitles</source>
+        <translation>แฟ้มคำบรรยายนี้เป็นข้อความธรรมดา และจะเปิดในรูปแบบ ASS</translation>
+    </message>
+    <message>
         <source>Are you sure you want to turn off translation mode?
 Foreign language text will be deleted.</source>
         <translation>ต้องการปิดโหมดผู้แปลหรือไม่?
@@ -6134,6 +6182,12 @@ Foreign language text will be deleted.</source>
         <translation>ปิดคำเตือน</translation>
     </message>
     <message>
+        <source>Hidden lines lie between the selected lines, so they cannot make one tree.
+Show the hidden lines or select only lines that are next to each other.</source>
+        <translation>มีบรรทัดที่ซ่อนอยู่ระหว่างบรรทัดที่เลือก จึงไม่สามารถรวมเป็นทรีเดียวได้
+โปรดแสดงบรรทัดที่ซ่อนอยู่ หรือเลือกเฉพาะบรรทัดที่อยู่ติดกัน</translation>
+    </message>
+    <message>
         <source>L.</source>
         <translation>ชั้น</translation>
     </message>
@@ -6168,14 +6222,6 @@ Foreign language text will be deleted.</source>
     <message>
         <source>Cannot show preview cause grid height is too low</source>
         <translation>ไม่สามารถแสดงตัวอย่างได้เพราะตารางคำบรรยายมีความสูงไม่เพียงพอ</translation>
-    </message>
-    <message>
-        <source>This subtitle file is plain text and will be opened as ASS subtitles</source>
-        <translation>แฟ้มคำบรรยายนี้เป็นข้อความธรรมดา และจะเปิดในรูปแบบ ASS</translation>
-    </message>
-    <message>
-        <source>Invalid format (file may be corrupted or contain errors)</source>
-        <translation>รูปแบบไม่ถูกต้อง (แฟ้มเสียหายหรือมีข้อผิดพลาด)</translation>
     </message>
     <message>
         <source>Change resolution</source>
@@ -6335,6 +6381,12 @@ Translation - text pasted into subtitles with correct timing.</source>
 ต้นฉบับ - ข้อความคำบรรยายที่กำหนดเวลาไว้ถูกต้อง ใช้
 เปรียบเทียบบรรทัดบทสนทนาที่วาง และจะถูกลบภายหลัง
 คำแปล - ข้อความที่วางลงในคำบรรยายโดยใช้เวลาที่ถูกต้อง</translation>
+    </message>
+    <message>
+        <source>Subtitles were modified by another program.
+Reload and discard the unsaved changes in this tab?</source>
+        <translation>คำบรรยายถูกแก้ไขโดยโปรแกรมอื่น
+ต้องการโหลดใหม่และละทิ้งการเปลี่ยนแปลงที่ยังไม่ได้บันทึกในแท็บนี้หรือไม่?</translation>
     </message>
     <message>
         <source>Reloading</source>
@@ -6658,8 +6710,8 @@ Translation - text pasted into subtitles with correct timing.</source>
         <translation>การจัดวางตำแหน่งแถบเครื่องมือ</translation>
     </message>
     <message>
-        <source>A new version (%s) is available. Update?</source>
-        <translation>มีเวอร์ชันใหม่ (%s) แล้ว ต้องการอัปเดตหรือไม่?</translation>
+        <source>You have the latest stable version. A newer prerelease, %s, is available.</source>
+        <translation>คุณใช้เวอร์ชันเสถียรล่าสุดอยู่แล้ว แต่มีเวอร์ชันทดสอบที่ใหม่กว่า (%s) ให้ใช้งาน</translation>
         <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
@@ -6667,24 +6719,29 @@ Translation - text pasted into subtitles with correct timing.</source>
         <translation>อัปเดต</translation>
     </message>
     <message>
-        <source>Disable updates</source>
-        <translation>ปิดการตรวจสอบอัปเดต</translation>
+        <source>Open the download page</source>
+        <translation>เปิดหน้าดาวน์โหลด</translation>
     </message>
     <message>
-        <source>Update after closing</source>
-        <translation>อัปเดตหลังปิดโปรแกรม</translation>
+        <source>A new version is available</source>
+        <translation>มีเวอร์ชันใหม่ให้ใช้งาน</translation>
     </message>
     <message>
-        <source>Cannot download the new version of HikariSub</source>
-        <translation>ไม่สามารถดาวน์โหลด HikariSub เวอร์ชันใหม่ได้</translation>
+        <source>You have version %s; version %s is available</source>
+        <translation>คุณใช้เวอร์ชัน %s อยู่ และมีเวอร์ชัน %s ให้ใช้งาน</translation>
+        <extra-po-flags>c-format</extra-po-flags>
     </message>
     <message>
-        <source>Cannot find the HikariSub updater</source>
-        <translation>ไม่พบโปรแกรมอัปเดต HikariSub</translation>
+        <source>Remind me in a week</source>
+        <translation>เตือนอีกครั้งในหนึ่งสัปดาห์</translation>
     </message>
     <message>
-        <source>Cannot close HikariSub</source>
-        <translation>ไม่สามารถปิด HikariSub ได้</translation>
+        <source>Cannot check for updates</source>
+        <translation>ไม่สามารถตรวจหาอัปเดตได้</translation>
+    </message>
+    <message>
+        <source>You already have the latest version</source>
+        <translation>คุณใช้เวอร์ชันล่าสุดอยู่แล้ว</translation>
     </message>
     <message>
         <source>Unable to retrieve information about the monitor</source>
@@ -6762,6 +6819,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Subtitle files (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt</source>
         <translation>แฟ้มคำบรรยาย (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt</translation>
+    </message>
+    <message>
+        <source>Invalid keyframes format</source>
+        <translation>รูปแบบคีย์เฟรมไม่ถูกต้อง</translation>
     </message>
     <message>
         <source>Previous video file</source>
@@ -7330,6 +7391,10 @@ greater than field &quot;Minimum value&quot;.</source>
         <translation>วิดีโอต้องกำหนดอย่างน้อยหนึ่งเฟรมหลังจากเวลาเริ่มต้นที่กำหนดไว้</translation>
     </message>
     <message>
+        <source>Cannot set matrix projection</source>
+        <translation>ไม่สามารถตั้งค่าเมทริกซ์ฉายภาพได้</translation>
+    </message>
+    <message>
         <source>Cannot read clip rectangle values.</source>
         <translation>ไม่สามารถรับค่าคลิปสี่เหลี่ยมได้</translation>
     </message>
@@ -7526,6 +7591,18 @@ What would you like to do?</source>
 The program will be terminated.</source>
         <translation>ไม่สามารถอ่านการตั้งค่าได้
 โปรแกรมจะปิดลง</translation>
+    </message>
+    <message>
+        <source>Cannot find language, language change failed</source>
+        <translation>ไม่พบภาษา เปลี่ยนภาษาไม่สำเร็จ</translation>
+    </message>
+    <message>
+        <source>wxLocale cannot initialize, language change failed</source>
+        <translation>wxLocale ไม่สามารถเริ่มต้นได้ เปลี่ยนภาษาไม่สำเร็จ</translation>
+    </message>
+    <message>
+        <source>Cannot find translation, language change failed</source>
+        <translation>ไม่พบคำแปล เปลี่ยนภาษาไม่สำเร็จ</translation>
     </message>
     <message>
         <source>Cannot read hotkeys.
