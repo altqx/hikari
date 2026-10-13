@@ -44,11 +44,6 @@ using application::PackageKind;
 
 namespace {
 
-QString tr(const char *text)
-{
-    return QCoreApplication::translate("HikariSub.MainWindow", text);
-}
-
 std::string std8(const QString &s)
 {
     return s.toStdString();
@@ -187,7 +182,7 @@ QString UpdateInstaller::start()
         if (!r.value(QStringLiteral("ok")).toBool()) {
             message = r.value(QStringLiteral("message")).toString();
             if (message.isEmpty())
-                message = tr("The update to HikariSub %1 could not be installed (error %2).")
+                message = QCoreApplication::translate("HikariSub.MainWindow", "The update to HikariSub %1 could not be installed (error %2).")
                               .arg(r.value(QStringLiteral("version")).toString())
                               .arg(r.value(QStringLiteral("code")).toInt());
         }
@@ -320,7 +315,7 @@ void UpdateInstaller::download(const QString &version, const application::Update
     if (!m_part->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         m_part.reset();
         m_interactive = interactive;
-        failDownload(tr("Cannot write the update to %1").arg(QFileInfo(d.file).absolutePath()));
+        failDownload(QCoreApplication::translate("HikariSub.MainWindow", "Cannot write the update to %1").arg(QFileInfo(d.file).absolutePath()));
         return;
     }
     m_downloading = d;
@@ -414,13 +409,13 @@ void UpdateInstaller::finishDownload()
     m_part.reset();
     if (!ok || !written) {
         QFile::remove(part);
-        failDownload(tr("Cannot download the update: %1").arg(reply->errorString()));
+        failDownload(QCoreApplication::translate("HikariSub.MainWindow", "Cannot download the update: %1").arg(reply->errorString()));
         return;
     }
     if (m_received != m_downloading.size ||
         hexOf(m_hash.result()).compare(m_downloading.sha256, Qt::CaseInsensitive) != 0) {
         QFile::remove(part);
-        failDownload(tr("The downloaded update does not match its checksum, so it was deleted."));
+        failDownload(QCoreApplication::translate("HikariSub.MainWindow", "The downloaded update does not match its checksum, so it was deleted."));
         return;
     }
     if (m_env.package.kind == PackageKind::AppImage)
@@ -430,7 +425,7 @@ void UpdateInstaller::finishDownload()
     QFile::remove(m_downloading.file);
     if (!QFile::rename(part, m_downloading.file)) {
         QFile::remove(part);
-        failDownload(tr("Cannot write the update to %1").arg(QFileInfo(m_downloading.file).absolutePath()));
+        failDownload(QCoreApplication::translate("HikariSub.MainWindow", "Cannot write the update to %1").arg(QFileInfo(m_downloading.file).absolutePath()));
         return;
     }
     makeReady(m_downloading);
@@ -528,7 +523,7 @@ UpdateInstaller::ExitAction UpdateInstaller::installNsis()
             const DWORD error = GetLastError();
             if (error != ERROR_CANCELLED) // declined: still pending
                 writeResult(m_pending.version, 4,
-                            tr("The installer of HikariSub %1 could not be started. Run %2 to install it.")
+                            QCoreApplication::translate("HikariSub.MainWindow", "The installer of HikariSub %1 could not be started. Run %2 to install it.")
                                 .arg(m_pending.version, QDir::toNativeSeparators(m_pending.file)));
         }
         return {};
@@ -543,7 +538,7 @@ UpdateInstaller::ExitAction UpdateInstaller::installNsis()
         CloseHandle(process.hProcess);
     } else {
         writeResult(m_pending.version, 2,
-                    tr("The installer of HikariSub %1 could not be started. Run %2 to install it.")
+                    QCoreApplication::translate("HikariSub.MainWindow", "The installer of HikariSub %1 could not be started. Run %2 to install it.")
                         .arg(m_pending.version, QDir::toNativeSeparators(m_pending.file)));
     }
 #endif
@@ -559,13 +554,13 @@ UpdateInstaller::ExitAction UpdateInstaller::installAppImage()
     QFile::remove(old);
     // The old image stays as .old: a hard link, else moved, else copied.
     if (::link(imagePath.constData(), oldPath.constData()) != 0 && !replaceFile(image, old) && !QFile::copy(image, old)) {
-        writeResult(version, 2, tr("Cannot keep a copy of %1, so the update was not installed.").arg(image));
+        writeResult(version, 2, QCoreApplication::translate("HikariSub.MainWindow", "Cannot keep a copy of %1, so the update was not installed.").arg(image));
         return {};
     }
     if (!replaceFile(fresh, image)) {
         if (!QFileInfo::exists(image))
             replaceFile(old, image);
-        writeResult(version, 2, tr("Cannot replace %1, so the update was not installed.").arg(image));
+        writeResult(version, 2, QCoreApplication::translate("HikariSub.MainWindow", "Cannot replace %1, so the update was not installed.").arg(image));
         return {};
     }
     // pending.json stays: the new version's first start drops it with .old.
@@ -601,7 +596,7 @@ UpdateInstaller::ExitAction UpdateInstaller::installAppImage()
     }
     replaceFile(old, image);
     writeResult(version, 1,
-                tr("HikariSub %1 did not start, so the version you had was put back.").arg(version));
+                QCoreApplication::translate("HikariSub.MainWindow", "HikariSub %1 did not start, so the version you had was put back.").arg(version));
     QProcess::startDetached(image, {}, QDir::homePath());
 #endif
     return {};
@@ -654,17 +649,17 @@ UpdateInstaller::ExitAction UpdateInstaller::installNative(const std::function<s
     switch (code) {
     case 2:
     case 3:
-        message = tr("The downloaded HikariSub %1 package did not pass its checks, so it was not installed.").arg(version);
+        message = QCoreApplication::translate("HikariSub.MainWindow", "The downloaded HikariSub %1 package did not pass its checks, so it was not installed.").arg(version);
         QFile::remove(m_pending.file);
         QFile::remove(pendingPath());
         break;
     case 5:
-        message = tr("HikariSub %1 was not installed because the package manager is busy. It will be installed when "
+        message = QCoreApplication::translate("HikariSub.MainWindow", "HikariSub %1 was not installed because the package manager is busy. It will be installed when "
                      "you next quit.")
                       .arg(version);
         break;
     default:
-        message = tr("The package manager could not install HikariSub %1 (error %2). The file is %3.")
+        message = QCoreApplication::translate("HikariSub.MainWindow", "The package manager could not install HikariSub %1 (error %2). The file is %3.")
                       .arg(version)
                       .arg(code)
                       .arg(m_pending.file);
