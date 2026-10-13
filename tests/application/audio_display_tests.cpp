@@ -1097,6 +1097,7 @@ TEST(DisplayAudio, TheDiskCacheReadsBackFramesBeforeTheyAreWritten)
     file.read(reinterpret_cast<char *>(all.data()), static_cast<std::streamsize>(all.size() * 2));
     for (std::int64_t i = 0; i < std::int64_t(kPieces) * kFrames; i += 997)
         EXPECT_EQ(all[static_cast<std::size_t>(i) * 2 + 1], sample(i, 1));
+    file.close(); // Windows refuses to remove an open file.
     std::filesystem::remove_all(dir);
 }
 
