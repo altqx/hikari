@@ -29,9 +29,10 @@ import Hikari.Ui
 // rest of the header moves the window through the window system
 // (DockSystemMoveArea.qml), so a double-click there still docks.
 //
-// The header's focus ring (K2, visual-language.md "Keyboard focus") marks
-// the group holding the keyboard focus. Loaded through the adapter's view
-// factory (ui/docking.cpp).
+// The accent corner mark (PanelFocusMark.qml; K2, visual-language.md
+// "Keyboard focus") marks the group holding the keyboard focus at the
+// header's top trailing corner, the panel's. Loaded through the adapter's
+// view factory (ui/docking.cpp).
 KDDWViews.TabBarBase {
     id: root
     objectName: "dockHeader"
@@ -268,15 +269,17 @@ KDDWViews.TabBarBase {
                     y: parent.height - 1
                     color: Theme.line
                 }
-                // K2: keyboard focus just inside the tab (visual-language.md;
-                // the tab bar would clip a ring outside it).
+                // K2: keyboard focus 1 wide, 1 inside the tab's edge
+                // (visual-language.md; the tab bar would clip a ring outside
+                // it); on the selected tab it stops 2 short of the "⋯"
+                // button, which rings itself.
                 Rectangle {
                     objectName: "tabFocusRing"
                     anchors.fill: parent
-                    anchors.margins: 2
-                    anchors.rightMargin: tab.selected ? 6 + menuButton.width + 3 : 3
+                    anchors.margins: 1
+                    anchors.rightMargin: tab.selected ? 6 + menuButton.width + 3 : 1
                     color: "transparent"
-                    border.width: 2
+                    border.width: 1
                     border.color: Theme.focus
                     visible: tab.activeFocus
                 }
@@ -405,17 +408,11 @@ KDDWViews.TabBarBase {
         onDoubleClicked: Docking.toggleFloating(root.currentName)
     }
 
-    // K2: the group holding the keyboard focus rings its header, 2 wide just
-    // inside it, in the focus role; a header control with the focus shows
-    // its own ring instead.
-    Rectangle {
-        objectName: "focusRing"
-        anchors.fill: parent
-        anchors.margins: 1
+    // K2: the group holding the keyboard focus shows the accent corner mark
+    // at the header's top trailing corner, over the toolbar; a header
+    // control with the focus rings itself as well.
+    PanelFocusMark {
         z: root.mouseAreaZ + 3
-        color: "transparent"
-        border.width: 2
-        border.color: Theme.focus
-        visible: root.panelFocused && !menuButton.activeFocus && !(root.currentTab && root.currentTab.activeFocus)
+        shown: root.panelFocused
     }
 }

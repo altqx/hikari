@@ -3,7 +3,7 @@
 # boundary colour (the palette's Mid, the `line` role; the high-contrast
 # border pick) instead of Fusion's window colour darkened, which all but
 # vanishes on the Dark and High contrast black panels; keyboard focus drawn
-# as a ring 2 wide in the theme's `focus` role, the text colour (FocusFrame,
+# as a ring 1 wide, drawn tight, in the theme's `focus` role, the text colour (FocusFrame,
 # from StyleColours, set by the theme layer), apart from the accent, which
 # keeps the default button's and a focused field's outline. Geometry and
 # fills stay Fusion's; any other control is

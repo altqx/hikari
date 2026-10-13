@@ -130,6 +130,11 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
+                // 1 inside the clipped list: its rows' focus rings show whole.
+                leftMargin: 1
+                rightMargin: 1
+                topMargin: 1
+                bottomMargin: 1
                 model: windows.app.unresolvedRestores
                 Accessible.role: Accessible.List
                 Accessible.name: unresolvedWindow.title
@@ -137,7 +142,7 @@ Item {
                     id: entry
                     required property int index
                     required property var modelData
-                    width: ListView.view.width
+                    width: ListView.view.width - 2
                     Label {
                         text: qsTr("Tab %1 (%2) – %3: %4").arg(entry.modelData.tab + 1).arg(entry.modelData.title)
                               .arg(unresolvedWindow.kindName(entry.modelData.kind)).arg(entry.modelData.path)

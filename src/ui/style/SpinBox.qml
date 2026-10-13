@@ -3,8 +3,8 @@
 // see CMakeLists.txt). Fusion draws them in Fusion.outline(), the window
 // colour darkened 140%, about 1.1:1 against the Dark and High contrast black
 // panels. Focused, its border is the accent's outline, as a field's; with
-// keyboard focus (visualFocus) the style's ring (FocusFrame: 2 wide, 3
-// beyond it, in the theme's focus role, the text colour) is drawn beside it,
+// keyboard focus (visualFocus) the style's ring (FocusFrame: 1 wide, just
+// outside it, in the theme's focus role, the text colour) is drawn beside it,
 // and its buttons keep their colour (Fusion tints them with the accent).
 // Its numbers are plain digits (below). Everything else is Fusion's.
 import QtQuick

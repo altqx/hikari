@@ -417,6 +417,11 @@ Dialog {
                 Layout.minimumWidth: 700
                 Layout.minimumHeight: 300
                 clip: true
+                // 1 inside the clipped list: its rows' focus rings show whole.
+                leftMargin: 1
+                rightMargin: 1
+                topMargin: 1
+                bottomMargin: 1
                 model: results.rows
                 Accessible.role: Accessible.List
                 Accessible.name: qsTr("Search results")
@@ -425,7 +430,7 @@ Dialog {
                     required property var modelData
                     required property int index
                     readonly property bool hidden: !modelData.header && results.folded[results.headerOf(index)] === true
-                    width: resultsList.width
+                    width: resultsList.width - 2
                     height: hidden ? 0 : resultLayout.implicitHeight
                     visible: !hidden
                     Accessible.role: Accessible.ListItem

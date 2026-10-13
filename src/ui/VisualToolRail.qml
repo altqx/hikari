@@ -20,20 +20,24 @@ Frame {
     id: rail
     objectName: "visualToolRail"
     required property VisualToolsController tools
-    padding: 2
+    // The buttons sit 1 inside the scrolled area (2 inside the frame, as
+    // before the 2026-10-13 focus ring), so a focused button's 1-wide ring
+    // is not clipped by it.
+    padding: 1
     // A Video panel too short for the eleven families shows a thin scroll bar
     // beside them: the families below the fold are reached by the mouse, and
     // the bar says that there are more. The rail widens by the bar.
     readonly property bool overflows: railScroll.contentHeight > railScroll.height + 0.5
     readonly property int barWidth: 6
-    implicitWidth: 28 + (overflows ? barWidth + 1 : 0) + leftPadding + rightPadding
+    implicitWidth: 30 + (overflows ? barWidth + 1 : 0) + leftPadding + rightPadding
 
     ScrollView {
         id: railScroll
         objectName: "visualToolRailScroll"
         anchors.fill: parent
         clip: true
-        contentWidth: 28
+        contentWidth: 30
+        contentHeight: familyColumn.implicitHeight + 2
         ScrollBar.vertical: ScrollBar {
             objectName: "visualToolRailScrollBar"
             parent: railScroll
@@ -60,6 +64,9 @@ Frame {
             }
         }
         ColumnLayout {
+            id: familyColumn
+            x: 1
+            y: 1
             width: 28
             spacing: 1
             Repeater {
@@ -109,8 +116,8 @@ Frame {
         const view = railScroll.contentItem
         if (!button || !view || view.height <= 0)
             return
-        const top = button.y
-        const bottom = button.y + button.height
+        const top = familyColumn.y + button.y - 1 // with the focus ring
+        const bottom = familyColumn.y + button.y + button.height + 1
         if (top < view.contentY)
             view.contentY = top
         else if (bottom > view.contentY + view.height)

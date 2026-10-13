@@ -2,8 +2,8 @@
 // (control.palette.mid, the line role; see CMakeLists.txt). Fusion draws it
 // in Fusion.outline(), the window colour darkened 140%, about 1.1:1 against
 // the Dark and High contrast black panels. Keyboard focus (visualFocus) is
-// the style's ring (FocusFrame: 2 wide, 3 beyond the whole control, in the theme's
-// focus role, the text colour) instead of Fusion's accent-derived outline,
+// the style's ring (FocusFrame: 1 wide, just outside the whole control, in
+// the theme's focus role, the text colour) instead of Fusion's accent-derived outline,
 // apart from the accent of selection and the default button
 // (visual-language.md: focus stays distinguishable from selection).
 // Everything else is Fusion's.

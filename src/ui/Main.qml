@@ -2158,16 +2158,18 @@ ApplicationWindow {
         Component.onCompleted: Qt.callLater(reportMinimumSize)
         activeFocusOnTab: false
         // A panel squeezed below its content's size cuts it off rather than
-        // draw over the next panel (the focus ring keeps the margin's room).
+        // draw over the next panel (the body's margin holds a control's
+        // 1-wide focus ring).
         clip: true
         Accessible.role: Accessible.Pane
         Accessible.name: accessibleName
         Accessible.description: accessibleName !== title ? title : ""
 
         // K2 (visual-language.md, "Keyboard focus"): the panel holding the
-        // focus is ringed on its dock header (DockTabBar.qml) in the focus
-        // role. D3: no frame of its own; the docking engine's 1-pixel
-        // separators are the boundaries between panels (MuseScore's).
+        // focus shows the accent corner mark on its dock header
+        // (DockTabBar.qml, PanelFocusMark.qml). D3: no frame of its own; the
+        // docking engine's 1-pixel separators are the boundaries between
+        // panels (MuseScore's).
         Rectangle {
             anchors.fill: parent
             color: panel.palette.base
@@ -3011,7 +3013,7 @@ ApplicationWindow {
                 // The wheel and the bar scroll; a mouse drag stays the text
                 // fields' selection, and touch flicks. The scrolled area
                 // takes the whole panel with the body's margin inside it, so
-                // focus rings keep the room they had at the panel's edges.
+                // a control at the panel's edge keeps its focus ring.
                 Flickable {
                     id: editorScroll
                     objectName: "editorScroll"
@@ -3040,7 +3042,7 @@ ApplicationWindow {
                     }
                     function reveal(item, rect) {
                         const r = item.mapToItem(contentItem, rect)
-                        const room = 5 // the focus ring's (FocusRing: 3 out, 2 wide)
+                        const room = 1 // the focus ring's (FocusFrame: 1 wide, touching the control)
                         let y = contentY
                         if (r.y + r.height + room > y + height)
                             y = r.y + r.height + room - height
@@ -3770,8 +3772,14 @@ ApplicationWindow {
                     // The scroll bar shows while the form is taller than the
                     // panel (the post processor and profiles lay below it unseen).
                     ScrollBar.vertical.policy: contentHeight > height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
+                    // The form 1 inside the clipped view: a focus ring at its
+                    // edge shows whole.
+                    contentWidth: shiftForm.implicitWidth + 2
+                    contentHeight: shiftForm.implicitHeight + 2
                     ColumnLayout {
                         id: shiftForm
+                        x: 1
+                        y: 1
                         width: timingPanel.width - 20
                         readonly property var settings: root.shiftTimes.settings
                         function set(key, value) {
@@ -5787,11 +5795,16 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
+                // 1 inside the clipped list: its rows' focus rings show whole.
+                leftMargin: 1
+                rightMargin: 1
+                topMargin: 1
+                bottomMargin: 1
                 model: recoveryWindow.bundles
                 delegate: RowLayout {
                     required property var modelData
                     required property int index
-                    width: ListView.view.width
+                    width: ListView.view.width - 2
                     Label {
                         Layout.fillWidth: true
                         elide: Text.ElideMiddle
@@ -5887,6 +5900,11 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
+                // 1 inside the clipped list: its rows' focus rings show whole.
+                leftMargin: 1
+                rightMargin: 1
+                topMargin: 1
+                bottomMargin: 1
                 model: temporaryFilesWindow.bundles
                 delegate: CheckBox {
                     required property var modelData
