@@ -1233,12 +1233,16 @@ void update_installer::OnStartup(wxWindow *frame)
 {
 	// The new version's window is up: say so to the watchdog, and drop
 	// the old file, which is kept until a start of the new one shows its
-	// window (4.3).
+	// window (4.3). Only once the watchdog has been told: if the report
+	// cannot be written, it puts the old file back, and needs it.
+	bool reported = true;
 	if (!healthFile.empty()) {
+		wxLogNull quiet;
 		wxFFile health(healthFile, L"wb");
+		reported = health.IsOpened() && health.Close();
 	}
 #ifndef _WIN32
-	if (Kind() == package_kind::Kind::AppImage) {
+	if (reported && Kind() == package_kind::Kind::AppImage) {
 		wxString old = AppImagePath() + L".old";
 		if (wxFileExists(old))
 			RemoveFile(old);
