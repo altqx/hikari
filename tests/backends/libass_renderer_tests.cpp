@@ -441,6 +441,41 @@ TEST(LibassRenderer, PrepareKeepsTheRendererWhileTheFontsStay)
     EXPECT_NE(renderer.engineIdentity(), engine);
 }
 
+// A reload of the system's fonts (legacy RefreshVideo(true) when the fonts
+// on the system change) reaches a kept renderer: the next prepare() of the
+// same script with the same leases makes a new library and renderer, so
+// fontconfig and libass's face and glyph caches start over, and draws as a
+// new renderer does. Until that prepare() the kept one goes on drawing.
+TEST(LibassRenderer, AReloadOfTheSystemFontsMakesTheRendererAnew)
+{
+    const auto font = testFont();
+    const auto snapshotOf = [&] {
+        return RenderSnapshot{bytesOf(heavyScript()), {FontLease{"Titillium Web", font}}, "Titillium Web", false};
+    };
+    backends::LibassRenderer renderer;
+    ASSERT_TRUE(renderer.prepare(snapshotOf()));
+    const void *engine = renderer.engineIdentity();
+    ASSERT_TRUE(renderer.render(core::DocumentTime(2'000'000), 640, 360));
+    application::reloadSubtitleFonts();
+    EXPECT_EQ(renderer.engineIdentity(), engine);
+    ASSERT_TRUE(renderer.render(core::DocumentTime(2'500'000), 640, 360));
+    ASSERT_TRUE(renderer.prepare(snapshotOf()));
+    EXPECT_NE(renderer.engineIdentity(), engine);
+    EXPECT_EQ(renderer.parsedTracks(), 1u); // the old tracks went with the old library
+    const auto frame = renderer.render(core::DocumentTime(2'000'000), 640, 360);
+    ASSERT_TRUE(frame);
+    EXPECT_FALSE(frame->changed.empty());
+    backends::LibassRenderer fresh;
+    ASSERT_TRUE(fresh.prepare(snapshotOf()));
+    const auto expected = fresh.render(core::DocumentTime(2'000'000), 640, 360);
+    ASSERT_TRUE(expected);
+    EXPECT_TRUE(frame->pixels == expected->pixels);
+    // No further reload: the renderer is kept again.
+    engine = renderer.engineIdentity();
+    ASSERT_TRUE(renderer.prepare(snapshotOf()));
+    EXPECT_EQ(renderer.engineIdentity(), engine);
+}
+
 // Edits, style changes and script resolution changes on a kept renderer
 // draw exactly what a new renderer draws; going back to a script parsed
 // before finds its track, and draws as it did.

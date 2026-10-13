@@ -263,18 +263,10 @@ void VideoSession::requestFrame(int index, bool withSubtitles,
             return done(nullptr);
         if (withSubtitles && m_hasSubtitles)
             if (const auto start = frameStart(index))
-                if (auto overlay = m_renderer.render(*start, frame->width, frame->height)) {
-                    // Premultiplied overlay over the opaque frame.
-                    for (int y = 0; y < frame->height; ++y) {
-                        auto *dst = reinterpret_cast<std::uint8_t *>(frame->bgra.data()) + y * frame->stride;
-                        const auto *src = overlay->pixels.data() + y * overlay->stride;
-                        for (int x = 0; x < frame->width * 4; x += 4) {
-                            const unsigned a = src[x + 3];
-                            for (int c = 0; c < 3; ++c)
-                                dst[x + c] = static_cast<std::uint8_t>(src[x + c] + dst[x + c] * (255 - a) / 255);
-                        }
-                    }
-                }
+                if (auto overlay = m_renderer.render(*start, frame->width, frame->height))
+                    // Premultiplied overlay over the opaque frame, as a saved snapshot lays it.
+                    compositeOverlay(*overlay, reinterpret_cast<std::uint8_t *>(frame->bgra.data()), frame->width,
+                                     frame->height, frame->stride);
         done(std::make_shared<const IndexedFrame>(std::move(*frame)));
     });
 }

@@ -100,4 +100,18 @@ public:
     virtual std::expected<OverlayFrame, RenderError> render(core::DocumentTime time, int width, int height) = 0;
 };
 
+// Legacy Notebook::RefreshVideo(true) (FontEnumerator, when the fonts on the
+// system change) made libass's library and renderer, which every tab and
+// preview shares, anew (SubtitlesProviderManager::ReloadLibraries).
+// reloadSubtitleFonts counts such a change; a renderer that keeps its font
+// setup across prepare() makes it anew at its first prepare() after one.
+void reloadSubtitleFonts();
+std::uint64_t subtitleFontsReloads();
+
+// The overlay laid source-over on an opaque BGRA picture (`stride` bytes a
+// row): each colour channel overlay + (picture * (255 - alpha) + 127) / 255,
+// the divisions rounded, as snapshotImage lays it. An empty overlay, or one
+// of another size, leaves the picture as it is.
+void compositeOverlay(const OverlayFrame &overlay, std::uint8_t *bgra, int width, int height, std::ptrdiff_t stride);
+
 } // namespace hikari::application

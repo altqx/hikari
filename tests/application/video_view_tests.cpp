@@ -274,6 +274,58 @@ TEST(VideoSnapshot, ImageIsTheFrameWithTheOverlayComposited)
     EXPECT_EQ(snapshotImage(f, &o).rgb, plain.rgb);
 }
 
+// compositeOverlay lays an overlay on a BGRA picture exactly as
+// snapshotImage lays it on the frame it saves (every division rounded),
+// whatever the stride, and leaves the alpha byte and the undrawn pixels.
+TEST(VideoSnapshot, CompositeOverlayLaysItAsTheSnapshotDoes)
+{
+    constexpr int kW = 37, kH = 11, kStride = kW * 4 + 12;
+    std::uint32_t seed = 12345;
+    const auto next = [&] { return (seed = seed * 1664525u + 1013904223u) >> 24; };
+    IndexedFrame f;
+    f.width = kW;
+    f.height = kH;
+    f.stride = kStride;
+    f.bgra.resize(static_cast<std::size_t>(kStride) * kH);
+    for (auto &b : f.bgra)
+        b = std::byte{static_cast<std::uint8_t>(next())};
+    std::vector<std::uint8_t> over(static_cast<std::size_t>(kW) * kH * 4, 0);
+    for (std::size_t i = 0; i < over.size(); i += 4) {
+        if (next() % 3 == 0)
+            continue; // nothing drawn
+        const std::uint8_t a = static_cast<std::uint8_t>(next());
+        for (int c = 0; c < 3; ++c)
+            over[i + static_cast<std::size_t>(c)] = static_cast<std::uint8_t>(a ? next() % (a + 1u) : 0);
+        over[i + 3] = a;
+    }
+    OverlayFrame o;
+    o.width = kW;
+    o.height = kH;
+    o.stride = kW * 4;
+    o.empty = false;
+    o.pixels = OverlayPixels(over);
+    const SnapshotImage expected = snapshotImage(f, &o);
+    std::vector<std::uint8_t> picture(f.bgra.size());
+    std::memcpy(picture.data(), f.bgra.data(), picture.size());
+    compositeOverlay(o, picture.data(), kW, kH, kStride);
+    for (int y = 0; y < kH; ++y)
+        for (int x = 0; x < kW; ++x) {
+            const std::uint8_t *px = picture.data() + y * kStride + x * 4;
+            const std::uint8_t *rgb = expected.rgb.data() + (static_cast<std::size_t>(y) * kW + x) * 3;
+            ASSERT_EQ(px[2], rgb[0]) << x << "," << y;
+            ASSERT_EQ(px[1], rgb[1]) << x << "," << y;
+            ASSERT_EQ(px[0], rgb[2]) << x << "," << y;
+            ASSERT_EQ(px[3], std::to_integer<std::uint8_t>(f.bgra[static_cast<std::size_t>(y * kStride + x * 4 + 3)]));
+        }
+    // An empty overlay, or one of another size, leaves the picture.
+    const std::vector<std::uint8_t> before = picture;
+    o.empty = true;
+    compositeOverlay(o, picture.data(), kW, kH, kStride);
+    o.empty = false;
+    compositeOverlay(o, picture.data(), kW - 1, kH, kStride);
+    EXPECT_EQ(picture, before);
+}
+
 // ColorMatrixDescription (ProviderFFMS2.cpp:929-948).
 TEST(VideoMatrix, Names)
 {

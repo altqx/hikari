@@ -4,8 +4,10 @@
 // libass calls.
 // - prepare() keeps the libass library and renderer (fonts, font provider,
 //   caches) while the snapshot's fonts are the same leases with the same
-//   default family and provider, and only switches the track; other fonts
-//   build a new library and renderer, and the old ones release their leases.
+//   default family and provider, and only switches the track; other fonts,
+//   or a reload of the system's fonts (application::reloadSubtitleFonts,
+//   legacy ReloadLibraries), build a new library and renderer, and the old
+//   ones release their leases.
 //   Parsed tracks are kept by a hash of the script, as legacy
 //   SubtitlesLibass::ReadTrack keeps them (ParsedScripts, three), so going
 //   back to a script parsed before needs no parse.

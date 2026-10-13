@@ -71,12 +71,14 @@ std::uint64_t scriptHash(const std::byte *data, std::size_t size)
 } // namespace
 
 // The library and renderer for one font setup, kept with their caches across
-// prepare() while the fonts stay the same; and the tracks parsed in them.
+// prepare() while the fonts stay the same and the system's fonts are not
+// reloaded (legacy ReloadLibraries); and the tracks parsed in them.
 struct LibassRenderer::Engine {
     struct Fonts {
         std::vector<std::pair<std::string, const void *>> leases;
         std::string defaultFamily;
         bool systemFonts = true;
+        std::uint64_t reloads = 0; // application::subtitleFontsReloads()
         bool operator==(const Fonts &) const = default;
     };
     struct Track {
@@ -94,7 +96,7 @@ struct LibassRenderer::Engine {
 
     static Fonts keyOf(const application::RenderSnapshot &snapshot)
     {
-        Fonts key{{}, snapshot.defaultFamily, snapshot.systemFonts};
+        Fonts key{{}, snapshot.defaultFamily, snapshot.systemFonts, application::subtitleFontsReloads()};
         for (const auto &font : snapshot.fonts)
             key.leases.emplace_back(font.family, font.bytes.get());
         return key;

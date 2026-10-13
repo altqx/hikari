@@ -86,6 +86,7 @@ struct FakeSource : IndexedSourcePort {
     Progress pendingProgress;                // V3
     int cancelled = 0;                       // V3
     std::optional<OpenFailure> failure;      // V3
+    std::uint8_t fill = 0;                   // every byte of an answered frame
     std::uint64_t open(const std::string &, Progress progress, Opened done) override
     {
         pendingOpen = std::move(done);
@@ -133,7 +134,7 @@ struct FakeSource : IndexedSourcePort {
         f.width = 4;
         f.height = 2;
         f.stride = 16;
-        f.bgra.resize(32);
+        f.bgra.assign(32, std::byte{fill});
         done(std::move(f));
     }
     void cancelOpen() override { ++cancelled; }
@@ -148,6 +149,7 @@ struct FakeSource : IndexedSourcePort {
 
 struct FakeRenderer : SubtitleRendererPort {
     std::vector<std::int64_t> renderedAt;
+    OverlayPixels pixels; // the overlay's, when it is drawn at their size
     std::expected<std::uint64_t, RenderError> prepare(RenderSnapshot) override { return 1; }
     std::expected<OverlayFrame, RenderError> render(core::DocumentTime t, int w, int h) override
     {
@@ -155,7 +157,10 @@ struct FakeRenderer : SubtitleRendererPort {
         OverlayFrame o;
         o.width = w;
         o.height = h;
+        o.stride = w * 4;
         o.empty = false;
+        if (pixels.size() == static_cast<std::size_t>(w) * h * 4)
+            o.pixels = pixels;
         return o;
     }
 };
@@ -195,6 +200,42 @@ TEST_F(VideoTest, ASeekWhileIndexingAppliesWhenReady)
     ASSERT_TRUE(presenter.shown[0].overlay);
     EXPECT_EQ(renderer.renderedAt, std::vector<std::int64_t>{120'000}); // the frame's start, not the Line's
     EXPECT_EQ(video.lastPresent()->outcome, PresentOutcome::Accepted);
+}
+
+// A frame asked for with its subtitles (Automation's get_frame) has the
+// overlay laid over it as a saved snapshot lays it, the divisions rounded:
+// half-transparent grey (premultiplied 100 at alpha 128) over 200 is
+// 100 + 200 * 127 / 255 = 199.6, so 200.
+TEST_F(VideoTest, AFrameWithSubtitlesHasTheOverlayLaidAsASnapshotLaysIt)
+{
+    source.fill = 200;
+    std::vector<std::uint8_t> overlay(32, 0);
+    for (int c = 0; c < 4; ++c)
+        overlay[static_cast<std::size_t>(c)] = c < 3 ? 100 : 128;
+    renderer.pixels = OverlayPixels(overlay);
+    video.setSubtitles({std::byte{'x'}});
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    while (!source.frames.empty())
+        source.answer();
+    std::shared_ptr<const IndexedFrame> got;
+    video.requestFrame(2, true, [&](std::shared_ptr<const IndexedFrame> f) { got = std::move(f); });
+    ASSERT_EQ(source.frames.size(), 1u);
+    source.answer();
+    ASSERT_TRUE(got);
+    const auto byte = [&](std::size_t i) { return std::to_integer<int>(got->bgra[i]); };
+    EXPECT_EQ(byte(0), 200);
+    EXPECT_EQ(byte(1), 200);
+    EXPECT_EQ(byte(2), 200);
+    EXPECT_EQ(byte(3), 200); // the frame's own alpha byte stays
+    for (std::size_t i = 4; i < 32; ++i)
+        EXPECT_EQ(byte(i), 200) << i; // nothing drawn there
+    // Without its subtitles the frame stays as decoded.
+    video.requestFrame(2, false, [&](std::shared_ptr<const IndexedFrame> f) { got = std::move(f); });
+    source.fill = 7;
+    source.answer();
+    ASSERT_TRUE(got);
+    EXPECT_EQ(std::to_integer<int>(got->bgra[0]), 7);
 }
 
 TEST_F(VideoTest, SourceGeometryOutlivesADecoderFailure)
