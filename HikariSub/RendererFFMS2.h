@@ -78,6 +78,8 @@ public:
 	void ClearObject() override;
 	Provider* GetFFMS2();
 	Provider *m_FFMS2 = nullptr;
+	// frees m_FFMS2 once the audio display no longer plays from it
+	void DeleteProvider();
 	// frames alternate between these, so the one the GPU may still be
 	// reading is never locked; m_MainSurface holds the last one filled
 	IDirect3DSurface9 *m_UploadSurfaces[2] = { nullptr, nullptr };

@@ -115,7 +115,7 @@ RendererFFMS2::~RendererFFMS2()
 #endif
 
 	m_State = None;
-	SAFE_DELETE(m_FFMS2);
+	DeleteProvider();
 }
 
 bool RendererFFMS2::DrawTexture(unsigned char *nframe, bool copy)
@@ -442,7 +442,7 @@ bool RendererFFMS2::OpenFile(const wxString &fname, int subsFlag, bool vobsub, b
 		return false;
 	}
 
-	SAFE_DELETE(m_FFMS2);
+	DeleteProvider();
 
 	if (m_State != None){
 		m_VideoResized = videoControl->m_FullScreenProgressBar = false;
@@ -647,7 +647,7 @@ void RendererFFMS2::SetVolume(int vol)
 
 int RendererFFMS2::GetVolume()
 {
-	if (m_State == None || !m_AudioPlayer){ return 0; }
+	if (m_State == None || !m_AudioPlayer || !m_AudioPlayer->player){ return 0; }
 	double dvol = m_AudioPlayer->player->GetVolume();
 	dvol = sqrt(dvol);
 	dvol *= 8100.0;
@@ -714,6 +714,18 @@ unsigned char* RendererFFMS2::GetFrame(int frame, bool subs)
 Provider* RendererFFMS2::GetFFMS2()
 {
 	return m_FFMS2;
+}
+
+void RendererFFMS2::DeleteProvider()
+{
+	if (!m_FFMS2)
+		return;
+	// the audio display may play this video's audio from the same provider;
+	// the tab's video box is destroyed before its edit box, so the edit box
+	// is still there when the video box frees this renderer
+	if (tab && tab->edit && tab->edit->ABox)
+		tab->edit->ABox->audioDisplay->ForgetVideoProvider(m_FFMS2);
+	SAFE_DELETE(m_FFMS2);
 }
 
 

@@ -93,7 +93,13 @@ TabPanel::TabPanel(wxWindow *parent, HikariSubFrame *hikari, const wxPoint &pos,
 
 TabPanel::~TabPanel(){
 	//fix of crashes caused by destroying of editbox on the end
-	if (edit->ABox){ edit->ABox->audioDisplay->Stop(false); }
+	if (edit->ABox){
+		edit->ABox->audioDisplay->Stop(false);
+		// the video box frees its provider when its children are destroyed;
+		// the audio display lets go of it now instead of relying on the video
+		// box being destroyed first
+		edit->ABox->audioDisplay->ForgetVideoProvider(video->GetFFMS2());
+	}
 }
 
 

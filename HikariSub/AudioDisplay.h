@@ -192,6 +192,8 @@ private:
 	void DrawDashedLine(D3DXVECTOR2 *vector, size_t vectorSize, D3DCOLOR fill, int dashLen = 3);
 	void UpdateSamples();
 	void Reset();
+	// stops playback and lets go of the player and the provider
+	void Unload();
 	void DrawTimescale();
 	void DrawKeyframes();
 	void DrawInactiveLines();
@@ -272,6 +274,9 @@ public:
 	void AddLead(bool in, bool out);
 
 	void SetFile(wxString file, bool fromvideo);
+	// the video renderer frees its provider: the display lets go of it first
+	// when it plays the video's audio from it
+	void ForgetVideoProvider(const Provider *videoProvider);
 	//void Reload();
 
 	void Play(int start, int end, bool pause = true);

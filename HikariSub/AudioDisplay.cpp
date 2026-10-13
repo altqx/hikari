@@ -117,7 +117,10 @@ AudioDisplay::AudioDisplay(wxWindow *parent)
 	h -= timelineHeight;
 	ProgressTimer.SetOwner(this, 7654);
 	Bind(wxEVT_TIMER, [=, this](wxTimerEvent &evt){
-		if (!provider->AudioNotInitialized()){
+		if (!provider){
+			ProgressTimer.Stop();
+		}
+		else if (!provider->AudioNotInitialized()){
 			UpdateImage(); ProgressTimer.Stop();
 		}
 		else if (provider->AudioLoadFailed()){
@@ -724,7 +727,7 @@ void AudioDisplay::DrawCursor()
 	d3dLine->End();
 	d3dLine->SetAntialias(FALSE);
 	d3dLine->SetWidth(1);
-	if (!player->IsPlaying()){
+	if (!player || !player->IsPlaying()){
 		SubsTime time;
 		time.NewTime(GetMSAtX(curpos));
 		wxString text = time.GetFormatted(ASS);
@@ -744,7 +747,7 @@ void AudioDisplay::PresentWithCursor()
 	SetView();
 	RECT view = ViewRect();
 	hr = d3dDevice->StretchRect(staticSurface, &view, backBuffer, &view, D3DTEXF_NONE);
-	if (cursorPaint && !provider->AudioNotInitialized()) {
+	if (cursorPaint && provider && !provider->AudioNotInitialized()) {
 		hr = d3dDevice->BeginScene();
 		DrawCursor();
 		hr = d3dDevice->EndScene();
@@ -1363,19 +1366,6 @@ void AudioDisplay::SetFile(wxString file, bool fromvideo) {
 			if (player->IsPlaying()){
 				Stop();
 			}
-			try {
-				player->CloseStream();
-			}
-			catch (const wxChar *e) {
-				wxLogError(e);
-			}
-			delete player;
-			if (spectrumRenderer){ delete spectrumRenderer; spectrumRenderer = nullptr; }
-			provider.Reset();
-
-			player = nullptr;
-			Reset();
-			loaded = false;
 		}
 		catch (wxString e) {
 			wxLogError(e);
@@ -1387,6 +1377,7 @@ void AudioDisplay::SetFile(wxString file, bool fromvideo) {
 			wxLogError(_T("Unknown error unloading audio"));
 		}
 	}
+	Unload();
 	// Load
 	if (!file.IsEmpty()) {
 		try {
@@ -1451,6 +1442,40 @@ void AudioDisplay::SetFile(wxString file, bool fromvideo) {
 	SetDialogue(grid->file->GetDialogue(n), n);
 }
 
+
+
+void AudioDisplay::Unload() {
+	wxCriticalSectionLocker lock(mutex);
+	ProgressTimer.Stop();
+	stopPlayThread = true;
+#ifndef _WIN32
+	LinuxPlaybackTimer.Stop();
+#endif
+	cursorPaint = false;
+	// the player and the spectrum read the provider, so they go first
+	if (player) {
+		try {
+			player->CloseStream();
+		}
+		catch (const wxChar *e) {
+			wxLogError(e);
+		}
+		delete player;
+		player = nullptr;
+	}
+	if (spectrumRenderer){ delete spectrumRenderer; spectrumRenderer = nullptr; }
+	provider.Reset();
+	Reset();
+	loaded = false;
+}
+
+void AudioDisplay::ForgetVideoProvider(const Provider *videoProvider) {
+	if (!provider.Borrows(videoProvider))
+		return;
+	// the video is not asked to stop here: it may be freeing itself
+	Unload();
+	Refresh(false);
+}
 
 
 ////////////////////
@@ -1562,7 +1587,7 @@ void AudioDisplay::Play(int start, int end, bool pause) {
 	if (pause && tab->video->GetState() == Playing){ tab->video->Pause(); }
 
 	// Check provider
-	if (!provider) {
+	if (!provider || !player) {
 		return;
 	}
 
@@ -1927,7 +1952,7 @@ void AudioDisplay::DrawWithWx(wxDC& dc, bool weak)
 		if (x >= 0 && x < w) {
 			dc.SetPen(wxPen(WX_FROM_D3DCOLOR(AudioCursor), 2));
 			dc.DrawLine(x, 0, x, h);
-			if (!player->IsPlaying()) {
+			if (!player || !player->IsPlaying()) {
 				SubsTime time;
 				time.NewTime(GetMSAtX(curpos));
 				wxString text = time.GetFormatted(ASS);
@@ -2016,7 +2041,7 @@ void AudioDisplay::OnMouseEvent(wxMouseEvent& event) {
 	if (box->arrows){ box->SetCursor(wxCURSOR_ARROW); box->arrows = false; }
 	// Leaving event
 	if (event.Leaving()) {
-		if (!player->IsPlaying())
+		if (!player || !player->IsPlaying())
 			cursorPaint = false;
 		UpdateImage(true);
 		return;
@@ -2687,7 +2712,7 @@ void AudioDisplay::UpdateTimer()
 
 	// Draw cursor
 	curpos = -1;
-	if (player->IsPlaying()) {
+	if (player && player->IsPlaying()) {
 		cursorPaint = true;
 		long long curPos = player->GetCurrentPosition();
 		if (curPos > player->GetStartPosition() && curPos < player->GetEndPosition()) {
