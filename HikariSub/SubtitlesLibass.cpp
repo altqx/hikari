@@ -235,6 +235,8 @@ bool SubtitlesLibass::OpenString(wxString *text)
 
 void SubtitlesLibass::SetVideoParameters(const wxSize & size, unsigned char format, bool isSwapped)
 {
+	// playback draws on frames ahead without the rendering lock
+	wxMutexLocker lock(openMutex);
 	m_VideoSize = size;
 	m_IsSwapped = isSwapped;
 	m_Format = format;
