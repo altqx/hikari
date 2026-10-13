@@ -669,17 +669,23 @@ namespace
 	}
 
 	// Deletes the pending record, and its file when it is still there.
-	// A pending AppImage update that another AppImage copy of the user's
-	// downloaded (IsStagedBeside): neither offered, removed nor installed
-	// here.
-	bool ForAnotherImage(const Pending &pending)
+	// A pending update of another copy of HikariSub that shares this
+	// user's cache: one of another kind (an AppImage beside a deb, an
+	// installed copy beside a portable one), or an AppImage update that
+	// another AppImage copy downloaded (IsStagedBeside). It is neither
+	// offered, removed nor installed here. A record whose kind cannot be
+	// read is no copy's, and is dropped as before.
+	bool ForAnotherCopy(const Pending &pending)
 	{
+		std::optional<package_kind::Kind> kind = package_kind::ParseToken(pending.kind);
+		if (!kind)
+			return false;
+		if (*kind != update_installer::Kind())
+			return true;
 #ifdef _WIN32
-		(void)pending;
 		return false;
 #else
-		return update_installer::Kind() == package_kind::Kind::AppImage &&
-			package_kind::ParseToken(pending.kind) == package_kind::Kind::AppImage &&
+		return *kind == package_kind::Kind::AppImage &&
 			!update_manifest::IsStagedBeside(ToUtf8(AppImagePath()), pending.file, pending.version);
 #endif
 	}
@@ -1229,7 +1235,7 @@ bool update_installer::IsPending(const std::string &version)
 	if (current && current->Version() == version)
 		return true;
 	std::optional<Pending> pending = LoadPending();
-	return pending && pending->version == version && !ForAnotherImage(*pending) &&
+	return pending && pending->version == version && !ForAnotherCopy(*pending) &&
 		wxFileExists(FromUtf8(pending->file));
 }
 
@@ -1285,8 +1291,8 @@ void update_installer::OnStartup(wxWindow *frame)
 	}
 
 	std::optional<Pending> pending = LoadPending();
-	if (pending && ForAnotherImage(*pending)) {
-		// Another AppImage copy's update: left to it.
+	if (pending && ForAnotherCopy(*pending)) {
+		// Another copy's update: left to it.
 	}
 	else if (pending) {
 		std::optional<package_kind::Kind> kind = package_kind::ParseToken(pending->kind);
@@ -1317,7 +1323,7 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 	if (handedOff || waitingForInstaller)
 		return Quit::Continue;
 	std::optional<Pending> pending = LoadPending();
-	if (!pending || ForAnotherImage(*pending))
+	if (!pending || ForAnotherCopy(*pending))
 		return Quit::Continue;
 	std::optional<package_kind::Kind> kind = package_kind::ParseToken(pending->kind);
 	if (!kind || *kind != Kind() || package_kind::FlowOf(*kind) != package_kind::Flow::Install ||
