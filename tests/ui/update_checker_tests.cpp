@@ -39,6 +39,14 @@ void write(const QString &path, const QByteArray &bytes)
 
 } // namespace
 
+// Some tests use Linux's package kinds (deb, rpm, AppImage, AUR); on
+// Windows the same choice is UpdateOffer.ByPackageKind's, with NSIS.
+#ifdef Q_OS_WIN
+#define linuxKindsOnly() QSKIP("Linux package kinds; Windows' choice is tested by UpdateOffer.ByPackageKind")
+#else
+#define linuxKindsOnly() (void)0
+#endif
+
 class UpdateCheckerTest : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
@@ -192,6 +200,7 @@ private slots:
     // offered to this codebase or with a broken manifest is passed over.
     void manifestsChooseTheReleaseAndItsPackage()
     {
+        linuxKindsOnly();
         const QString name = QStringLiteral("manifests");
         const auto legacyOnly = publish(name, QStringLiteral("0.4.0"), QJsonArray{QStringLiteral("legacy")});
         const auto broken = publish(name, QStringLiteral("0.3.0"));
@@ -224,6 +233,7 @@ private slots:
     // Without a manifest (every release before them): the assets' digests.
     void releasesWithoutManifestUseTheirDigests()
     {
+        linuxKindsOnly();
         const QString name = QStringLiteral("fallback");
         const auto plain = publish(name, QStringLiteral("0.2.0"), {}, false);
         const UpdateFeed f = feed(QJsonDocument(QJsonArray{plain.release}).toJson(), name);
@@ -233,6 +243,7 @@ private slots:
 
     void theOfferFollowsThePackageKind()
     {
+        linuxKindsOnly();
         const QString name = QStringLiteral("kinds");
         const auto r = publish(name, QStringLiteral("0.2.0"), QJsonArray{QStringLiteral("qt")}, true, QStringLiteral("2.40"));
         const UpdateFeed f = feed(QJsonDocument(QJsonArray{r.release}).toJson(), name);
@@ -266,6 +277,7 @@ private slots:
     // and says nothing until it is ready; with the option off it only tells.
     void automaticCheckDownloadsWhenInstallingIsOn()
     {
+        linuxKindsOnly();
         const QString name = QStringLiteral("automatic");
         const auto r = publish(name, QStringLiteral("0.2.0"));
         const UpdateFeed f = feed(QJsonDocument(QJsonArray{r.release}).toJson(), name);
