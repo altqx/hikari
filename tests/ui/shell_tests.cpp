@@ -15971,6 +15971,55 @@ private slots:
         QCOMPARE(text(start), QStringLiteral("0:00:02.00"));
         QVERIFY(editor.timeModified(1));
         editor.discard();
+        // The wheel over the focused Duration is OnEdit's durFocus: the
+        // draft's End is Start + Duration at once, and End shows it.
+        wheel(duration, 6, 120);
+        QCOMPARE(text(duration), QStringLiteral("0:00:05.00"));
+        QCOMPARE(text(end), QStringLiteral("0:00:06.00"));
+        QVERIFY(!editor.timeModified(0));
+        QCOMPARE(session->draftRecord()->end.value.microseconds(), 6'000'000);
+        QCOMPARE(line(0)->end.value.microseconds(), 5'000'000);
+        item("editingGrid")->forceActiveFocus(); // Esc is the text editor's key
+        QCOMPARE(session->draftRecord()->end.value.microseconds(), 6'000'000);
+        editor.discard();
+        QCOMPARE(text(end), QStringLiteral("0:00:05.00"));
+        QCOMPARE(line(0)->end.value.microseconds(), 5'000'000);
+
+        // Start, End and Duration stepped without the focus: Send takes
+        // Start, then End, then End = Start + Duration (EditBox.cpp:567-582),
+        // with live editing and without. Each round starts from the Line
+        // shown again (DurEdit keeps a typed or sent Duration until SetLine).
+        for (const bool live : {true, false}) {
+            application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), !live);
+            item("editingGrid")->forceActiveFocus();
+            press(Qt::Key_Down);
+            QTRY_COMPARE(text(start), QStringLiteral("0:00:06.00"));
+            press(Qt::Key_Up);
+            QTRY_COMPARE(text(start), QStringLiteral("0:00:01.00"));
+            QCOMPARE(text(duration), QStringLiteral("0:00:04.00"));
+            wheel(start, 6, 120);
+            wheel(end, 6, 3 * 120);
+            wheel(duration, 6, 120);
+            QCOMPARE(text(start), QStringLiteral("0:00:02.00"));
+            QCOMPARE(text(end), QStringLiteral("0:00:08.00"));
+            QCOMPARE(text(duration), QStringLiteral("0:00:05.00"));
+            QVERIFY(!session->draftLine());
+            QVERIFY(editor.applyChanges()); // one step: one Undo takes all of it back
+            QCOMPARE(line(0)->start.value.microseconds(), 2'000'000);
+            QCOMPARE(line(0)->end.value.microseconds(), 7'000'000);
+            QTRY_COMPARE(text(end), QStringLiteral("0:00:07.00"));
+            QCOMPARE(text(duration), QStringLiteral("0:00:05.00"));
+            QVERIFY(editor.undo());
+            QCOMPARE(line(0)->start.value.microseconds(), 1'000'000);
+            QCOMPARE(line(0)->end.value.microseconds(), 5'000'000);
+            QTRY_COMPARE(text(end), QStringLiteral("0:00:05.00"));
+        }
+        press(Qt::Key_Down);
+        QTRY_COMPARE(text(start), QStringLiteral("0:00:06.00"));
+        press(Qt::Key_Up);
+        QTRY_COMPARE(text(duration), QStringLiteral("0:00:04.00"));
+        application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), false);
+        duration->forceActiveFocus();
 
         // NumCtrl's wheel past the range shows nothing and keeps the move.
         wheel(marginLeft, 0, -120);
