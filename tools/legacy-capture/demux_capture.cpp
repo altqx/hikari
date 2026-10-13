@@ -8,6 +8,9 @@
 // with --wrap=FFMS_GetSubtitles, so Demux's call reaches
 // __wrap_FFMS_GetSubtitles, which hands the real one a callback that records
 // (Start, Duration, Total, Line) and then calls Demux's.
+// Each Style and Line Demux builds is also read by legacy's own
+// Styles::parseStyle and Dialogue::SetRaw (demux/legacy_parse.h), and the
+// op carries their GetRaw as "parsed".
 //
 // Usage: legacy_demux_capture <fixtures dir> < cases
 // The probe works in <fixtures dir>, so the files are named relative to it
@@ -53,10 +56,12 @@ std::vector<Op> ops;
 int choice = 0;
 int cancelAfter = 0;
 int progressCalls = 0;
-void record(const char *kind, const wxString &text, int number)
+void record(const char *kind, const wxString &text, int number, const wxString &parsed)
 {
     const auto utf8 = text.utf8_str();
-    ops.push_back({kind, std::string(utf8.data(), utf8.length()), number});
+    const auto parsedUtf8 = parsed.utf8_str();
+    ops.push_back({kind, std::string(utf8.data(), utf8.length()), number,
+                   std::string(parsedUtf8.data(), parsedUtf8.length())});
 }
 } // namespace probe
 
@@ -175,6 +180,8 @@ std::string opsJson()
             out += "," + bytesField("text", op.text);
         if (op.number || op.kind == "progress" || op.kind == "read-track")
             out += ",\"n\":" + std::to_string(op.number);
+        if (!op.parsed.empty())
+            out += "," + bytesField("parsed", op.parsed);
         out += "}";
     }
     return out + "]";

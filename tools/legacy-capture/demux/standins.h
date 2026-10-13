@@ -6,7 +6,9 @@
 // LogHandler.h's, SubsFile::AddSInfo, GetSInfo and GetSInfoP are copied
 // unchanged out of SubsFile.cpp, HikariPathName (and the HikariNormalizePath
 // it calls) out of config.h and ZEROIT
-// out of SubsDialogue.h.
+// out of SubsDialogue.h. The Style and Dialogue stand-ins also read their
+// line with legacy's own Styles::parseStyle and Dialogue::SetRaw
+// (legacy_parse.h) and record what legacy's GetRaw gives back.
 #pragma once
 
 #include <wx/arrstr.h>
@@ -40,15 +42,18 @@ enum { ASS = 1, SRT, TMP, MDVD, MPL2, FRAME = 10 };
 // SubsFile.h:28: the first edition type.
 enum { OPEN_SUBTITLES = 1 };
 
+#include "legacy_parse.h"
+
 // What the probe records, in the order Demux did it.
 namespace probe {
 struct Op {
     std::string kind; // "sinfo", "style", "line", "endload", "clearing", "message", "log", ...
     std::string text;
     int number = 0;
+    std::string parsed; // GetRaw of what legacy read from text
 };
 extern std::vector<Op> ops;
-void record(const char *kind, const wxString &text, int number = 0);
+void record(const char *kind, const wxString &text, int number = 0, const wxString &parsed = emptyString);
 // The case's answers: the chooser's choice (-1 Cancel) and the packet
 // (counted from 1) during which the progress dialog's Cancel is pressed
 // (0 never).
@@ -65,23 +70,27 @@ public:
     SInfo(wxString _Name, wxString _Val) : Name(_Name), Val(_Val) {}
 };
 
-// Styles(raw, format) (styles.h): the raw line and the layout it is read
-// with (1 ASS, 2 SSA) are what Demux decides; the parse is the format
-// reader's.
+// Styles(raw, format) (styles.h): the raw line, the layout Demux reads it
+// with (1 ASS, 2 SSA) and the Style legacy read (Styles::GetRaw).
 class Styles {
 public:
     Styles(const wxString &raw, char format)
     {
-        probe::record("style", raw, format);
+        legacy_parse::Styles parsed(raw, format);
+        probe::record("style", raw, format, parsed.GetRaw());
     }
 };
 
-// Dialogue(raw) (SubsDialogue.h): the raw line Demux builds.
+// Dialogue(raw) (SubsDialogue.h): the raw line Demux builds and the Line
+// legacy read from it (Dialogue::GetRaw).
 class Dialogue {
 public:
     explicit Dialogue(const wxString &raw)
     {
-        probe::record("line", raw);
+        legacy_parse::Dialogue parsed(raw);
+        wxString back;
+        parsed.GetRaw(&back);
+        probe::record("line", raw, 0, back);
     }
 };
 

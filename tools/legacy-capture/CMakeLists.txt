@@ -614,6 +614,32 @@ if(LEGACY_FFMS2_FOUND AND EXISTS "${LEGACY_SOURCE}/Thirdparty/ffms2/src/core/ind
         message(FATAL_ERROR "SubsDialogue.h: expected one ZEROIT definition")
     endif()
     file(WRITE "${demux_gen}/zeroit.inc" "// SubsDialogue.h, unchanged.\n${zeroit}\n")
+    # How legacy read what Demux built (demux/legacy_parse.h): the AssColor,
+    # Styles and Dialogue classes, with Styles::parseStyle and GetRaw,
+    # Dialogue::SetRaw and GetRaw and what they reach, copied unchanged.
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/styles.h" "${demux_gen}/styles_classes.inc"
+        "class AssColor" "class Styles" COMMAND_ERROR_IS_FATAL ANY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.h" "${demux_gen}/dialogue_classes.inc"
+        "enum {\n\tLAYER = 1," "class StoreHelper" "class StoreTextHelper"
+        "inline wxString operator+(const wxString &lhs, StoreTextHelper &rhs)"
+        "inline wxString operator+(const wchar_t *lhs, StoreTextHelper &rhs)"
+        "inline wxString operator+(StoreTextHelper &lhs, const wxString &rhs)"
+        "inline wxString operator+(StoreTextHelper &lhs, const wchar_t *rhs)"
+        "class TagData" "class ParseData" "class Visibility" "class Dialogue" COMMAND_ERROR_IS_FATAL ANY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/styles.cpp" "${demux_gen}/styles_defs.inc"
+        "AssColor::AssColor()" "AssColor::~AssColor()" "void AssColor::SetAss(wxString color)"
+        "wxString AssColor::GetAss(bool alpha, bool style) const"
+        "Styles::Styles(wxString styledata, char form)" "Styles::~Styles()"
+        "bool Styles::parseStyle(const wxString &styledata, char form)" "wxString Styles::GetRaw()"
+        COMMAND_ERROR_IS_FATAL ANY)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.cpp" "${demux_gen}/dialogue_defs.inc"
+        "line:std::atomic<unsigned> Visibility::s_Epoch" "line:static wxRegEx expresion1("
+        "line:static wxRegEx expresion2(" "line:static wxRegEx expresion("
+        "ParseData::~ParseData()" "Dialogue::~Dialogue()" "void Dialogue::ClearParse()"
+        "Dialogue::Dialogue(const wxString &ldial, const wxString &txttl)"
+        "void Dialogue::SetRaw(const wxString &ldial)"
+        "void Dialogue::GetRaw(wxString *txt, bool tl/*=false*/, const wxString &style/*=\"\"*/, bool hideOriginalOnVideo /*= false*/)"
+        COMMAND_ERROR_IS_FATAL ANY)
     set(legacy_flags
         -include "${LEGACY_SOURCE}/HikariSub/platform.h"
         -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
@@ -630,7 +656,7 @@ if(LEGACY_FFMS2_FOUND AND EXISTS "${LEGACY_SOURCE}/Thirdparty/ffms2/src/core/ind
     target_include_directories(legacy_demux_time PRIVATE "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
     target_compile_definitions(legacy_demux_time PRIVATE ${legacy_defs})
     target_compile_options(legacy_demux_time PRIVATE ${wx_cflags} ${legacy_flags})
-    add_executable(legacy_demux_capture demux_capture.cpp "${demux_gen}/copy/Demux.cpp"
+    add_executable(legacy_demux_capture demux_capture.cpp demux/legacy_parse.cpp "${demux_gen}/copy/Demux.cpp"
         $<TARGET_OBJECTS:legacy_demux_ffms2> $<TARGET_OBJECTS:legacy_demux_time>)
     # The stand-ins come first; the legacy directory supplies Demux.h (whose
     # own include reaches the fork's ffms.h), LogHandler.h, SubsTime.h and

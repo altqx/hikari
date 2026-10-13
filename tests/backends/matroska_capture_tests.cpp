@@ -6,8 +6,10 @@
 // total and bytes, in order), the Line legacy's packet callback built from
 // each, then the whole load as the application runs it
 // (MatroskaSubtitleLoad: the chooser and its labels, the progress percents,
-// the messages, the staged Document's Script Info, Styles and Lines), and
-// the font attachments with their names and bytes.
+// the messages, the staged Document's Script Info, and its Styles and
+// Lines field by field against what legacy's own Styles::parseStyle and
+// Dialogue::SetRaw read), and the font attachments with their names and
+// bytes.
 
 #include "hikari/application/matroska.h"
 #include "hikari/backends/ffms_matroska.h"
@@ -24,8 +26,13 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <cstdio>
+#include <expected>
+#include <functional>
 #include <optional>
 #include <string>
+#include <utility>
+#include <variant>
 #include <vector>
 
 using namespace hikari;
@@ -119,6 +126,36 @@ std::pair<std::int64_t, std::int64_t> rawTimes(const std::string &raw)
         return {ass(raw.substr(c1 + 1, c2 - c1 - 1)), ass(raw.substr(c2 + 1, c3 - c2 - 1))};
     }
     return {srt(raw.substr(0, 12)), srt(raw.substr(17, 12))};
+}
+
+// The ten fields of a Dialogue/Comment line legacy's GetRaw wrote (the text
+// keeps its commas).
+std::vector<std::string> assFields(const std::string &line)
+{
+    std::vector<std::string> out;
+    std::size_t at = line.find(' ') + 1;
+    for (int i = 0; i < 9; ++i) {
+        const auto comma = line.find(',', at);
+        out.push_back(line.substr(at, comma - at));
+        at = comma + 1;
+    }
+    out.push_back(line.substr(at));
+    return out;
+}
+
+std::string withoutNewline(std::string s)
+{
+    if (s.ends_with("\r\n"))
+        s.resize(s.size() - 2);
+    return s;
+}
+
+std::string joined(const std::vector<std::u8string> &fields)
+{
+    std::string out;
+    for (std::size_t i = 0; i < fields.size(); ++i)
+        out += (i ? "," : "") + str(fields[i]);
+    return out;
 }
 
 std::int64_t ms(core::DocumentTime t)
@@ -246,8 +283,10 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
             ++compared;
             continue;
         }
-        EXPECT_EQ(load.reading, !opsOf(c, "progress-title").empty());
-        EXPECT_EQ(str(opsOf(c, "progress-title")[0]["text"]), "Loading subtitles from Matroska.");
+        EXPECT_TRUE(load.reading);
+        const auto progressTitle = opsOf(c, "progress-title");
+        ASSERT_EQ(progressTitle.size(), 1u);
+        EXPECT_EQ(str(progressTitle[0]["text"]), "Loading subtitles from Matroska.");
         if (cancelledRead) { // Cancel in the progress dialog: nothing loaded
             EXPECT_EQ(load.ended, MatroskaFailure::Cancelled);
             EXPECT_FALSE(load.loaded);
@@ -299,8 +338,8 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
                       bytesOf(lines[headerLines + std::size_t(i)], "text"));
         }
 
-        // The staged Document: legacy's Script Info (in order), its Styles,
-        // then every Line with legacy's times and kind.
+        // The staged Document: legacy's Script Info (in order), then its
+        // Styles and Lines.
         const core::Document &doc = load.loaded->document;
         const QJsonArray sinfo = c["sinfo"].toArray();
         const auto saved = core::encodeAss(doc);
@@ -315,25 +354,62 @@ TEST_F(MatroskaCapture, ReplaysTheLegacyDemuxProbe)
             EXPECT_NE(next, std::string::npos) << key << " out of legacy's order";
             at = next == std::string::npos ? at : next + 1;
         }
+        // Each Style as legacy read it (Styles::parseStyle with the layout
+        // Demux chose, then GetRaw): the Document's Style line and its
+        // decoded values give the same fields.
         const auto styles = opsOf(c, "style");
+        std::vector<const core::StyleRecord *> styleRecords;
+        for (const auto &section : doc.sections())
+            for (const auto &record : section.records)
+                if (const auto *style = std::get_if<core::StyleRecord>(&record))
+                    styleRecords.push_back(style);
         const auto decoded = core::decodeStyles(doc);
+        ASSERT_EQ(styleRecords.size(), styles.size());
         ASSERT_EQ(decoded.size(), styles.size());
         for (std::size_t i = 0; i < styles.size(); ++i) {
-            const std::string raw = str(styles[i]["text"]);
-            EXPECT_EQ(str(decoded[i].name), raw.substr(7, raw.find(',') - 7)) << raw;
-            // Styles(next, 1): the ASS layout, for every track FFmpeg names
-            // "ass" (S_TEXT/SSA included).
-            EXPECT_EQ(styles[i]["n"].toInt(), matroskaCodec == core::MatroskaCodec::Ssa ? 2 : 1);
+            const std::string legacy = withoutNewline(bytesOf(styles[i], "parsed"));
+            SCOPED_TRACE(legacy);
+            // The record keeps its fields untrimmed: the space after "Style:".
+            EXPECT_EQ("Style:" + joined(styleRecords[i]->fields), legacy);
+            EXPECT_EQ("Style: " + joined(core::legacy::styleRawFields(decoded[i])), legacy);
         }
+
+        // Each Line as legacy read it (Dialogue::SetRaw, then GetRaw): kind,
+        // layer, times, style, name, margins, effect and text; a SubRip
+        // Line's times and text.
         const auto docLines = doc.lines();
         ASSERT_EQ(docLines.size(), lines.size());
         for (std::size_t i = 0; i < lines.size(); ++i) {
             const std::string raw = bytesOf(lines[i], "text");
+            const std::string legacy = bytesOf(lines[i], "parsed");
             SCOPED_TRACE(raw);
+            const core::LineRecord &got = *docLines[i];
+            EXPECT_FALSE(got.unparsed);
             const auto [start, end] = rawTimes(raw);
-            EXPECT_EQ(docLines[i]->comment, raw.starts_with("Comment: "));
-            EXPECT_EQ(ms(docLines[i]->start.value), start);
-            EXPECT_EQ(ms(docLines[i]->end.value), end);
+            EXPECT_EQ(ms(got.start.value), start);
+            EXPECT_EQ(ms(got.end.value), end);
+            EXPECT_EQ(rawTimes(legacy), std::make_pair(start, end));
+            if (legacy.starts_with("Dialogue: ") || legacy.starts_with("Comment: ")) {
+                const auto f = assFields(withoutNewline(legacy));
+                EXPECT_EQ(got.comment, legacy.starts_with("Comment: "));
+                EXPECT_EQ(std::to_string(got.layer.value), f[0]);
+                EXPECT_EQ(str(got.style), f[3]);
+                EXPECT_EQ(str(got.actor), f[4]);
+                EXPECT_EQ(std::to_string(got.marginLeft.value), f[5]);
+                EXPECT_EQ(std::to_string(got.marginRight.value), f[6]);
+                EXPECT_EQ(std::to_string(got.marginVertical.value), f[7]);
+                EXPECT_EQ(str(got.effect), f[8]);
+                EXPECT_EQ(str(got.text), f[9]);
+            } else {
+                // "<start> --> <end>\r\n<text, \N as \r\n>\r\n\r\n".
+                ASSERT_TRUE(legacy.ends_with("\r\n\r\n"));
+                const auto text = legacy.find("\r\n");
+                std::string expected = legacy.substr(text + 2, legacy.size() - 4 - (text + 2));
+                for (std::size_t pos = 0; (pos = expected.find("\r\n", pos)) != std::string::npos; pos += 2)
+                    expected.replace(pos, 2, "\\N");
+                EXPECT_FALSE(got.comment);
+                EXPECT_EQ(str(got.text), expected);
+            }
         }
         EXPECT_EQ(opsOf(c, "endload").size(), 1u);
         ++compared;

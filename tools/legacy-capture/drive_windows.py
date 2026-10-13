@@ -344,7 +344,11 @@ def document_scripts(legacy, spec):
         seen = len(rec["startup_records"])
         for step in case["steps"]:
             if step["do"] == "touch":
-                legacy.w.task("legacy-win-s4-touch")  # S4_SCRIPT defaults to the plan's only touched script, last
+                # The task touches S4_SCRIPT, which this driver does not set:
+                # its default, last.
+                if step["script"] != "last":
+                    raise SystemExit(f"{case['id']}: legacy-win-s4-touch touches last.lua, not {step['script']}.lua")
+                legacy.w.task("legacy-win-s4-touch")
                 rec["steps"].append({"do": "touch", "script": step["script"], "status": "done"})
                 continue
             srec = {"do": "run_last", "hotkey": keys, "windows": []}
