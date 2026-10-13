@@ -107,6 +107,13 @@ bool toBgra(const SampleFormat &f, const std::uint8_t *data, std::size_t size, b
                     std::memcpy(vRow.data(), vPlane + static_cast<std::size_t>(cy) * half, static_cast<std::size_t>(half));
                     std::memcpy(uRow.data(), uPlane + static_cast<std::size_t>(cy) * half, static_cast<std::size_t>(half));
                 }
+                // An odd width's last pixel has no chroma sample of its own
+                // in these w / 2 layouts: it takes its left neighbour's
+                // (neutral grey for a one-pixel width).
+                if (half < cw) {
+                    uRow[static_cast<std::size_t>(half)] = half > 0 ? uRow[static_cast<std::size_t>(half - 1)] : 128;
+                    vRow[static_cast<std::size_t>(half)] = half > 0 ? vRow[static_cast<std::size_t>(half - 1)] : 128;
+                }
             }
             application::yuv::row(k, luma + static_cast<std::size_t>(y) * w, uRow.data(), vRow.data(), w,
                                   dst + static_cast<std::size_t>(y) * w * 4);
