@@ -29,6 +29,7 @@
 #include <wx/dir.h>
 #include <wx/ffile.h>
 #include <wx/filename.h>
+#include <wx/log.h>
 #include <wx/process.h>
 #include <wx/sizer.h>
 #include <wx/timer.h>
@@ -84,6 +85,22 @@ namespace
 		return base + kSep + L"HikariSub" + kSep + L"Updates";
 	}
 
+	// wx logs a file it cannot remove or rename, a missing one included,
+	// as an error dialog; the updater says what failed itself.
+	void RemoveFile(const wxString &path)
+	{
+		if (!wxFileExists(path))
+			return;
+		wxLogNull quiet;
+		wxRemoveFile(path);
+	}
+
+	bool RenameFile(const wxString &from, const wxString &to)
+	{
+		wxLogNull quiet;
+		return wxRenameFile(from, to, true);
+	}
+
 	wxString PendingPath() { return CacheDir() + kSep + L"pending.json"; }
 	wxString LastResultPath() { return CacheDir() + kSep + L"last-result.json"; }
 
@@ -108,12 +125,13 @@ namespace
 	{
 		wxFileName::Mkdir(path.BeforeLast(kSep), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 		wxString temporary = path + L".tmp";
+		wxLogNull quiet;
 		{
 			wxFFile file(temporary, L"wb");
 			if (!file.IsOpened() || !file.Write(content.data(), content.size()) || !file.Flush())
 				return false;
 		}
-		return wxRenameFile(temporary, path, true);
+		return RenameFile(temporary, path);
 	}
 
 	std::optional<Pending> LoadPending()
@@ -356,8 +374,13 @@ namespace
 				Complete();
 				return true;
 			}
-			wxRemoveFile(finalPath);
-			if (!file.Open(partPath, wxFile::write)) {
+			RemoveFile(finalPath);
+			bool opened;
+			{
+				wxLogNull quiet;
+				opened = file.Open(partPath, wxFile::write);
+			}
+			if (!opened) {
 				Fail(_("The update cannot be saved: the folder is not writable."));
 				return false;
 			}
@@ -540,7 +563,7 @@ namespace
 			if (update_installer::Kind() == package_kind::Kind::AppImage)
 				chmod(partPath.fn_str(), 0755);
 #endif
-			if (!wxRenameFile(partPath, finalPath, true)) {
+			if (!RenameFile(partPath, finalPath)) {
 				Fail(_("The update cannot be saved: the folder is not writable."));
 				return;
 			}
@@ -587,7 +610,7 @@ namespace
 			stall.Stop();
 			if (file.IsOpened())
 				file.Close();
-			wxRemoveFile(partPath);
+			RemoveFile(partPath);
 			std::map<int, update_installer::Listener> waiting;
 			waiting.swap(listeners);
 			for (auto &entry : waiting) {
@@ -645,8 +668,8 @@ namespace
 	// Deletes the pending record, and its file when it is still there.
 	void DropPending(const Pending &pending)
 	{
-		wxRemoveFile(FromUtf8(pending.file));
-		wxRemoveFile(PendingPath());
+		RemoveFile(FromUtf8(pending.file));
+		RemoveFile(PendingPath());
 	}
 
 	// Removes the Updates/<V> folders, and the AppImage's staged files,
@@ -654,8 +677,8 @@ namespace
 	void ClearOldVersions()
 	{
 		wxString cache = CacheDir();
-		wxDir dir(cache);
-		if (!cache.empty() && dir.IsOpened()) {
+		if (!cache.empty() && wxDirExists(cache)) {
+			wxDir dir(cache);
 			wxString name;
 			std::vector<wxString> old;
 			for (bool more = dir.GetFirst(&name, wxEmptyString, wxDIR_DIRS); more; more = dir.GetNext(&name)) {
@@ -668,6 +691,8 @@ namespace
 		if (update_installer::Kind() != package_kind::Kind::AppImage)
 			return;
 		wxString appImage = AppImagePath();
+		if (appImage.empty() || !wxDirExists(appImage.BeforeLast(kSep)))
+			return;
 		wxDir appDir(appImage.BeforeLast(kSep));
 		if (!appDir.IsOpened())
 			return;
@@ -686,7 +711,7 @@ namespace
 				stale.push_back(appImage.BeforeLast(kSep) + kSep + name);
 		}
 		for (const wxString &file : stale)
-			wxRemoveFile(file);
+			RemoveFile(file);
 	}
 
 #ifdef _WIN32
@@ -742,6 +767,7 @@ namespace
 			return false;
 		unlink(old.c_str());
 		if (link(appImage.c_str(), old.c_str()) != 0) {
+			wxLogNull quiet;
 			if (rename(appImage.c_str(), old.c_str()) != 0 &&
 				!wxCopyFile(FromUtf8(appImage), FromUtf8(old), true))
 			{
@@ -1043,13 +1069,13 @@ void update_installer::OnStartup(wxWindow *frame)
 	if (Kind() == package_kind::Kind::AppImage) {
 		wxString old = AppImagePath() + L".old";
 		if (wxFileExists(old))
-			wxRemoveFile(old);
+			RemoveFile(old);
 	}
 #endif
 
 	std::string text;
 	if (ReadSmallFile(LastResultPath(), &text)) {
-		wxRemoveFile(LastResultPath());
+		RemoveFile(LastResultPath());
 		std::optional<LastResult> result = update_manifest::ReadLastResult(JsonValue::Parse(text));
 		if (result && !result->ok) {
 			wxString message = FromUtf8(result->message);
@@ -1071,7 +1097,7 @@ void update_installer::OnStartup(wxWindow *frame)
 			ShowUpdateReady(frame, *pending);
 	}
 	else if (wxFileExists(PendingPath())) {
-		wxRemoveFile(PendingPath());
+		RemoveFile(PendingPath());
 	}
 	ClearOldVersions();
 }
@@ -1138,7 +1164,7 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame)
 			return Quit::Continue;
 		}
 		handedOff = true;
-		wxRemoveFile(PendingPath());
+		RemoveFile(PendingPath());
 		runAppImageWatchdog = relaunch;
 		handedOffPending = *pending;
 		return Quit::Continue;
