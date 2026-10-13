@@ -41,8 +41,12 @@ function Check([string] $what, [bool] $ok, [string] $detail = '') {
 
 function Run-Setup([string] $exe, [string] $arguments) {
     $sw = [Diagnostics.Stopwatch]::StartNew()
-    $p = Start-Process -FilePath $exe -ArgumentList $arguments -PassThru -Wait
-    Write-Output "  ran $(Split-Path -Leaf $exe) $arguments -> $($p.ExitCode) in $([int]$sw.Elapsed.TotalSeconds) s"
+    # Not Start-Process -Wait: Windows PowerShell then also waits for the
+    # processes the installer starts, such as the relaunched app.
+    $p = Start-Process -FilePath $exe -ArgumentList $arguments -PassThru
+    $null = $p.Handle
+    $p.WaitForExit()
+    [Console]::WriteLine("  ran $(Split-Path -Leaf $exe) $arguments -> $($p.ExitCode) in $([int]$sw.Elapsed.TotalSeconds) s")
     return $p.ExitCode
 }
 
@@ -215,7 +219,7 @@ if ($Phase -eq 'semver') {
         foreach ($step in $SemverSequence) {
             $v = $step[0]
             $code = Run-Setup (Join-Path $SetupDir "HikariSub-$v-windows-x64-setup.exe") '/S /CURRENTUSER /COMPONENTS='
-            Check "install $v over $installed: exit $($step[1])" ($code -eq $step[1]) "got $code"
+            Check "install $v over ${installed}: exit $($step[1])" ($code -eq $step[1]) "got $code"
             if ($code -eq 0) { $installed = $v }
             $now = RegValue 'HKCU:\Software\HikariSub\Install' 'Version'
             Check "installed version is $installed" ($now -ceq $installed) "got $now"
@@ -236,6 +240,7 @@ if ($Phase -eq 'semver') {
 
     # Another app owns .srt: the installer must not take it.
     $savedSrt = RegValue "$c\.srt" ''
+    if ($savedSrt -eq 'OtherApp.srt') { $savedSrt = $null }  # left by an interrupted run
     New-Item -Force -Path "$c\.srt" | Out-Null
     Set-ItemProperty -LiteralPath "$c\.srt" -Name '(default)' -Value 'OtherApp.srt'
     foreach ($e in 'ass', 'ssa', 'sub') {
