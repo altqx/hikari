@@ -8,7 +8,7 @@ name: Qt rewrite — Windows packages
 # calls this workflow with the release version.
 on:
   push:
-    branches: [qt, inst-qt-windows]
+    branches: [qt]
     paths:
       - cmake/HikariPackageWindows.cmake
       - src/app/CMakeLists.txt
