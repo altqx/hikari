@@ -24,6 +24,74 @@
 !define HS_CHANGES  0xD0146 ; FILE_WRITE_DATA|FILE_APPEND_DATA|FILE_DELETE_CHILD|FILE_WRITE_ATTRIBUTES|DELETE|WRITE_DAC|WRITE_OWNER
 !define HS_REPLACES 0xD0040 ; FILE_DELETE_CHILD|DELETE|WRITE_DAC|WRITE_OWNER
 
+; A plain "X:\..." path, which the installer also asks of an all-users
+; folder (HS_PLAIN_PATH_FUNCTION); HS_PROTECTED_FUNCTIONS needs it inserted
+; with the same prefix.
+!macro HS_PLAIN_PATH_FUNCTION UN
+
+; $R0 = a folder. $R2 = 1 when it is a plain "X:\..." path: a drive letter,
+; one "\" between names, no "/", no "." or ".." name, no trailing "\".
+Function ${UN}HsPlainPath
+  Push $0
+  Push $1
+  Push $2
+  Push $3
+  Push $R1
+  StrCpy $R2 0
+  StrCpy $0 $R0 1
+  StrCpy $1 $R0 2 1
+  ${If} $1 == ":\"
+    ; A letter: NSIS compares strings without case.
+    StrCpy $2 "abcdefghijklmnopqrstuvwxyz"
+    StrCpy $3 0
+    ${Do}
+      StrCpy $1 $2 1 $3
+      ${If} $1 == ""
+        ${Break}
+      ${ElseIf} $1 == $0
+        StrCpy $R2 1
+        ${Break}
+      ${EndIf}
+      IntOp $3 $3 + 1
+    ${Loop}
+  ${EndIf}
+  ${If} $R2 = 1
+    ; The rest, as "\name\name": each name non-empty and not "." or "..".
+    StrCpy $0 $R0 "" 2
+    StrCpy $0 "$0\"
+    StrLen $2 $0
+    StrCpy $3 1
+    StrCpy $1 ""
+    ${Do}
+      ${If} $3 >= $2
+      ${OrIf} $R2 <> 1
+        ${Break}
+      ${EndIf}
+      StrCpy $R1 $0 1 $3
+      ${If} $R1 == "/"
+        StrCpy $R2 0
+      ${ElseIf} $R1 == "\"
+        ${If} $1 == ""
+        ${OrIf} $1 == "."
+        ${OrIf} $1 == ".."
+          StrCpy $R2 0
+        ${EndIf}
+        StrCpy $1 ""
+      ${Else}
+        StrCpy $1 "$1$R1"
+      ${EndIf}
+      IntOp $3 $3 + 1
+    ${Loop}
+  ${EndIf}
+  Pop $R1
+  Pop $3
+  Pop $2
+  Pop $1
+  Pop $0
+FunctionEnd
+
+!macroend
+
 !macro HS_PROTECTED_FUNCTIONS UN
 
 ; $R0 = a path, $R1 = rights. $R2 = 1 when this process could open $R0 with
@@ -111,67 +179,6 @@ Function ${UN}HsTreeChangeable
   ${EndIf}
   Pop $R1
   Pop $R0
-  Pop $2
-  Pop $1
-  Pop $0
-FunctionEnd
-
-; $R0 = a folder. $R2 = 1 when it is a plain "X:\..." path: a drive letter,
-; one "\" between names, no "/", no "." or ".." name, no trailing "\".
-Function ${UN}HsPlainPath
-  Push $0
-  Push $1
-  Push $2
-  Push $3
-  Push $R1
-  StrCpy $R2 0
-  StrCpy $0 $R0 1
-  StrCpy $1 $R0 2 1
-  ${If} $1 == ":\"
-    ; A letter: NSIS compares strings without case.
-    StrCpy $2 "abcdefghijklmnopqrstuvwxyz"
-    StrCpy $3 0
-    ${Do}
-      StrCpy $1 $2 1 $3
-      ${If} $1 == ""
-        ${Break}
-      ${ElseIf} $1 == $0
-        StrCpy $R2 1
-        ${Break}
-      ${EndIf}
-      IntOp $3 $3 + 1
-    ${Loop}
-  ${EndIf}
-  ${If} $R2 = 1
-    ; The rest, as "\name\name": each name non-empty and not "." or "..".
-    StrCpy $0 $R0 "" 2
-    StrCpy $0 "$0\"
-    StrLen $2 $0
-    StrCpy $3 1
-    StrCpy $1 ""
-    ${Do}
-      ${If} $3 >= $2
-      ${OrIf} $R2 <> 1
-        ${Break}
-      ${EndIf}
-      StrCpy $R1 $0 1 $3
-      ${If} $R1 == "/"
-        StrCpy $R2 0
-      ${ElseIf} $R1 == "\"
-        ${If} $1 == ""
-        ${OrIf} $1 == "."
-        ${OrIf} $1 == ".."
-          StrCpy $R2 0
-        ${EndIf}
-        StrCpy $1 ""
-      ${Else}
-        StrCpy $1 "$1$R1"
-      ${EndIf}
-      IntOp $3 $3 + 1
-    ${Loop}
-  ${EndIf}
-  Pop $R1
-  Pop $3
   Pop $2
   Pop $1
   Pop $0

@@ -7,12 +7,16 @@
 #   protected-tests.ps1 -Phase check -Exe <protected-test.exe>
 #                                        as a standard user: each folder's answer
 #   protected-tests.ps1 -Phase cleanup   elevated: removes them
+#   protected-tests.ps1 -Phase machinedir -Setup <setup.exe>
+#                                        elevated: an all-users install goes
+#                                        only to a folder under Program Files
 #
 # Prints PASS/FAIL per check and exits 1 if any check failed.
 
 param(
-    [Parameter(Mandatory)] [ValidateSet('setup', 'check', 'cleanup')] [string] $Phase,
-    [string] $Exe = ''
+    [Parameter(Mandatory)] [ValidateSet('setup', 'check', 'cleanup', 'machinedir')] [string] $Phase,
+    [string] $Exe = '',
+    [string] $Setup = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -114,6 +118,35 @@ elseif ($Phase -eq 'check') {
     } catch {
         Check 'the parent case: the user could move the app folder away' $false "$_"
     }
+}
+elseif ($Phase -eq 'machinedir') {
+    if (-not $Setup) { Write-Output 'FAIL -Setup is required'; exit 1 }
+    function Install([string] $arguments) {
+        $p = Start-Process -FilePath $Setup -ArgumentList $arguments -PassThru -Wait
+        return $p.ExitCode
+    }
+    $key = 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\HikariSub'
+    $writable = 'C:\HsWritable'
+    New-Item -ItemType Directory -Force -Path $writable | Out-Null
+    $pf = $env:ProgramFiles
+    # (NSIS turns "/" in /D= into "\" itself.)
+    foreach ($dir in @("$writable\HikariSub", "$pf\..\HsWritable\HikariSub", "$pf", "$pf\\HikariSubTest")) {
+        $code = Install "/S /ALLUSERS /D=$dir"
+        Check "all users in $dir refused" ($code -eq 2) "exit $code"
+        Check "all users in ${dir}: nothing installed" (-not (Test-Path $key))
+    }
+    Check 'nothing written to the writable folder' (@(Get-ChildItem -Force -LiteralPath $writable).Count -eq 0)
+    cmd /c rmdir /s /q $writable
+    $code = Install "/S /ALLUSERS /D=$pf\HikariSubTest"
+    Check "all users in $pf\HikariSubTest" ($code -eq 0) "exit $code"
+    $loc = (Get-ItemProperty $key -ErrorAction SilentlyContinue).InstallLocation
+    Check 'installed there' ($loc -eq "$pf\HikariSubTest") "got '$loc'"
+    # The same install again, where it is: an update in place.
+    $code = Install "/S /ALLUSERS /D=$pf\HikariSubTest"
+    Check 'updated in place' ($code -eq 0) "exit $code"
+    Start-Process -FilePath "$pf\HikariSubTest\Uninstall HikariSub.exe" -ArgumentList '/ALLUSERS /S' -Wait | Out-Null
+    for ($i = 0; $i -lt 60 -and (Test-Path $key); $i++) { Start-Sleep -Milliseconds 500 }
+    Check 'uninstalled' (-not (Test-Path $key))
 }
 else {
     if (Test-Path -LiteralPath "$Root\junction\app\link") { cmd /c rmdir "$Root\junction\app\link" }
