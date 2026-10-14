@@ -99,18 +99,22 @@ QString normalizedPaths(QString text, const QStringList &dirs, bool windows = kW
         if (windows && dir.size() > 2 && dir.at(1) == QLatin1Char(':'))
             text.replace(dir.left(2) + QLatin1Char(' ') + dir.mid(2), QStringLiteral("<stage>"), cs);
     }
-    // One separator between the parts of a path under <stage>.
-    static const QRegularExpression staged(QStringLiteral(R"(<stage>[^"'\s()]*)"));
-    static const QRegularExpression doubled(QStringLiteral("/{2,}"));
-    QString out;
-    qsizetype at = 0;
-    for (auto it = staged.globalMatch(text); it.hasNext();) {
-        const QRegularExpressionMatch m = it.next();
-        QString path = m.captured();
-        out += text.mid(at, m.capturedStart() - at) + path.replace(doubled, QStringLiteral("/"));
-        at = m.capturedEnd();
+    // On Windows, one separator between the parts of a path under <stage>;
+    // Linux messages keep theirs as they are.
+    QString out = text;
+    if (windows) {
+        static const QRegularExpression staged(QStringLiteral(R"(<stage>[^"'\s()]*)"));
+        static const QRegularExpression doubled(QStringLiteral("/{2,}"));
+        out.clear();
+        qsizetype at = 0;
+        for (auto it = staged.globalMatch(text); it.hasNext();) {
+            const QRegularExpressionMatch m = it.next();
+            QString path = m.captured();
+            out += text.mid(at, m.capturedStart() - at) + path.replace(doubled, QStringLiteral("/"));
+            at = m.capturedEnd();
+        }
+        out += text.mid(at);
     }
-    out += text.mid(at);
     // A chunk name (Lua shortens a long one to its start, so it depends
     // on where the build is): [string "/home/..."].
     static const QRegularExpression chunk(QStringLiteral(R"(\[string "[^"]*"\])"));
@@ -634,16 +638,18 @@ TEST(ThirdPartyMessages, WindowsPathsReadAsStagePaths)
               "  - \"clipper2\" (see https://example.org//clipper2)");
 }
 
-// On Linux the directories are replaced as they are, case and all; text that
-// only looks like a Windows path stays.
+// On Linux the directories are replaced as they are, case and all, doubled
+// separators kept; text that only looks like a Windows path stays.
 TEST(ThirdPartyMessages, LinuxPathsReadAsStagePaths)
 {
     const QStringList dirs{QStringLiteral("/home/u/b/stage")};
     const QString message = QStringLiteral(
         "  - \"/home/u/b/stage/Include/x.so\" (/home/u/b/stage/Include/x.so:  cannot open shared object file)\n"
+        "  - \"/home/u/b/stage/Include//y.so\"\n"
         "  - \"/HOME/u/b/stage/x.so\" C: \\Winix");
     EXPECT_EQ(normalizedPaths(message, dirs, false).toStdString(),
               "  - \"<stage>/Include/x.so\" (<stage>/Include/x.so:  cannot open shared object file)\n"
+              "  - \"<stage>/Include//y.so\"\n"
               "  - \"/HOME/u/b/stage/x.so\" C: \\Winix");
 }
 
