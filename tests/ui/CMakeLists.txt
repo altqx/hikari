@@ -315,6 +315,12 @@ foreach(scale 150 200)
     set_tests_properties(hikari_ui_icon_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
 endforeach()
+# The contact sheets on pages of three rows, as a small desktop pages them:
+# each page drawn whole and written as -pageN.
+add_test(NAME hikari_ui_icon_tests.pages COMMAND $<TARGET_FILE:hikari_ui_icon_tests> contactSheets)
+set_tests_properties(hikari_ui_icon_tests.pages PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;HIKARI_ICON_SHEET_PAGE_ROWS=3;HIKARI_ICON_SHEET_DIR=${CMAKE_BINARY_DIR}/icon-sheet-pages"
+    LABELS "qttest;offscreen" TIMEOUT 120)
 # V6: Lines timed from the video (Spix workflow).
 hikari_add_spix_test(hikari_ui_video_timing_workflow SOURCES video_timing_workflow.cpp LIBRARIES hikari_composition
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
