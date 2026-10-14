@@ -110,9 +110,16 @@ ScreenSampler::ScreenSampler(QObject *parent)
       m_grab([](QWindow *window, bool grab) { return window->setMouseGrabEnabled(grab); })
 {
     m_regrab.setInterval(kRegrabInterval);
+    // Runs only after a refusal; hidden again, the window waits for its
+    // next expose. Only real asks count against kRegrabTries.
     connect(&m_regrab, &QTimer::timeout, this, [this] {
+        if (!m_window || !m_window->isExposed()) {
+            m_regrab.stop();
+            return;
+        }
+        ++m_regrabTries;
         takePointer(false);
-        if (m_grabbed || ++m_regrabTries >= kRegrabTries)
+        if (m_regrabTries >= kRegrabTries)
             m_regrab.stop();
     });
 }
@@ -213,10 +220,8 @@ bool ScreenSampler::startTracking(QWindow *window, bool passInside)
     // window still come. Under an X11 window manager the window is not
     // viewable yet: the grab waits for its expose.
     m_grabbed = false;
-    takePointer(false);
     m_regrabTries = 0;
-    if (!m_grabbed)
-        m_regrab.start();
+    takePointer(false);
     showCursor(!passInside || !window->geometry().contains(QCursor::pos()));
     emit trackingChanged();
     return true;
@@ -244,8 +249,11 @@ void ScreenSampler::takePointer(bool again)
     if (!m_window || !m_window->isExposed() || (m_grabbed && !again))
         return;
     m_grabbed = m_grab(m_window, true);
-    qCDebug(lcDropper) << m_window << "pointer grab" << (m_grabbed ? "held" : "refused") << "exposed"
-                       << m_window->isExposed();
+    qCDebug(lcDropper) << m_window << "pointer grab" << (m_grabbed ? "held" : "refused");
+    if (m_grabbed)
+        m_regrab.stop();
+    else if (!m_regrab.isActive() && m_regrabTries < kRegrabTries)
+        m_regrab.start();
 }
 
 void ScreenSampler::showCursor(bool dropper)
@@ -281,13 +289,19 @@ bool ScreenSampler::eventFilter(QObject *watched, QEvent *event)
         emit trackingLost();
         return false;
     // The window became viewable (its expose; the window manager maps its
-    // frame and then activates it), or the pointer left it (legacy
-    // OnLeaveWindow captures again): ask for the grab again, since a grab
+    // frame and then activates it): ask for the grab again, since a grab
     // Qt reported held may have been refused.
     case QEvent::Expose:
     case QEvent::WindowActivate:
-    case QEvent::Leave:
         takePointer(true);
+        return QObject::eventFilter(watched, event);
+    // The pointer left it for outside the window, not for a child or a
+    // popup over it: legacy OnLeaveWindow captures the mouse again then.
+    // This asks even when Qt reports the grab held, as that report can be
+    // wrong.
+    case QEvent::Leave:
+        if (!m_window->geometry().contains(QCursor::pos()))
+            takePointer(true);
         return QObject::eventFilter(watched, event);
     default:
         return QObject::eventFilter(watched, event);

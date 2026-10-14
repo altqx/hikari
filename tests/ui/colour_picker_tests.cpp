@@ -6,6 +6,7 @@
 #include "screen_sampler.h"
 #include "settings_store.h"
 
+#include <QCursor>
 #include <QGuiApplication>
 #include <QMouseEvent>
 #include <QPainter>
@@ -411,20 +412,28 @@ private slots:
         QVERIFY(!asked.isEmpty());
         QVERIFY(!asked.contains(false));
 
-        // Held, as Qt reports it: the timer asks no more, but an expose, an
-        // activation and the pointer leaving ask again; entering does not.
-        QTest::qWait(3 * ui::ScreenSampler::kRegrabInterval);
+        // Held, as Qt reports it: no timer asks, but an expose, an
+        // activation and the pointer leaving for outside ask again; leaving
+        // for a spot inside (a child, a popup) and entering do not.
+        QVERIFY(!sampler.regrabbing());
         qsizetype count = asked.size();
-        QTest::qWait(3 * ui::ScreenSampler::kRegrabInterval);
-        QCOMPARE(asked.size(), count);
         QExposeEvent expose(QRegion(QRect(QPoint(), window.size())));
         QCoreApplication::sendEvent(&window, &expose);
         QCOMPARE(asked.size(), ++count);
-        for (const QEvent::Type type : {QEvent::WindowActivate, QEvent::Leave}) {
-            QEvent event(type);
-            QCoreApplication::sendEvent(&window, &event);
-            QCOMPARE(asked.size(), ++count);
-        }
+        QEvent activate(QEvent::WindowActivate);
+        QCoreApplication::sendEvent(&window, &activate);
+        QCOMPARE(asked.size(), ++count);
+        QCursor::setPos(window.geometry().center());
+        QTRY_COMPARE(QCursor::pos(), window.geometry().center());
+        count = asked.size();
+        QEvent leave(QEvent::Leave);
+        QCoreApplication::sendEvent(&window, &leave);
+        QCOMPARE(asked.size(), count);
+        QCursor::setPos(window.geometry().bottomRight() + QPoint(40, 40));
+        QTRY_COMPARE(QCursor::pos(), window.geometry().bottomRight() + QPoint(40, 40));
+        count = asked.size();
+        QCoreApplication::sendEvent(&window, &leave);
+        QCOMPARE(asked.size(), ++count);
         QEvent enter(QEvent::Enter);
         QCoreApplication::sendEvent(&window, &enter);
         QCOMPARE(asked.size(), count);
@@ -443,11 +452,10 @@ private slots:
         QTest::qWait(3 * ui::ScreenSampler::kRegrabInterval);
         QVERIFY(asked.size() > 1);
         QVERIFY(!sampler.holdsPointer());
+        QVERIFY(sampler.regrabbing());
         granted = true;
         QTRY_VERIFY(sampler.holdsPointer());
-        count = asked.size();
-        QTest::qWait(3 * ui::ScreenSampler::kRegrabInterval);
-        QCOMPARE(asked.size(), count);
+        QVERIFY(!sampler.regrabbing());
         sampler.stopTracking();
 
         // A platform that never grants a grab (offscreen, Wayland): the
@@ -456,11 +464,13 @@ private slots:
         granted = false;
         QSignalSpy events(&sampler, &ui::ScreenSampler::pointerEvent);
         QVERIFY(sampler.startTracking(&window, false));
-        QTest::qWait((ui::ScreenSampler::kRegrabTries + 10) * ui::ScreenSampler::kRegrabInterval);
-        const qsizetype tries = asked.size();
+        QVERIFY(sampler.regrabbing());
+        // Timers are coarse on Windows (about 16 ms): wait for the timer to
+        // stop, not for a fixed time.
+        QTRY_VERIFY_WITH_TIMEOUT(!sampler.regrabbing(),
+                                 4 * ui::ScreenSampler::kRegrabTries * ui::ScreenSampler::kRegrabInterval);
+        const qsizetype tries = asked.count(true);
         QVERIFY2(tries >= 1 + ui::ScreenSampler::kRegrabTries, qPrintable(QString::number(tries)));
-        QTest::qWait(5 * ui::ScreenSampler::kRegrabInterval);
-        QCOMPARE(asked.size(), tries);
         sentPosition(window, QPoint(-20, 200), QEvent::MouseMove, Qt::NoButton, Qt::NoButton);
         QCOMPARE(events.count(), 1);
         QVERIFY(sampler.tracking());

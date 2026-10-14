@@ -93,13 +93,16 @@ public:
     // manager maps it, and X refuses a grab asked at show()
     // (GrabNotViewable) while Qt's XInput 2 grab reports it held. The
     // grab waits for the window's expose; it is asked again when the
-    // window is exposed or activated and when the pointer leaves it
-    // (legacy OnLeaveWindow captures again), and every kRegrabInterval ms
-    // up to kRegrabTries times while the platform refuses it.
+    // window is exposed or activated and when the pointer leaves it for
+    // outside the window (where legacy OnLeaveWindow captures again), and,
+    // after the platform refuses it, every kRegrabInterval ms up to
+    // kRegrabTries times.
     Q_INVOKABLE bool startTracking(QWindow *window, bool passInside);
     Q_INVOKABLE void stopTracking();
     // Whether the platform reported the tracked window's grab held.
     bool holdsPointer() const { return m_grabbed; }
+    // Whether the timer is still asking after a refusal.
+    bool regrabbing() const { return m_regrab.isActive(); }
 
     static constexpr int kRegrabInterval = 50;
     static constexpr int kRegrabTries = 40;
