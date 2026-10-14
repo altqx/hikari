@@ -1,12 +1,12 @@
 #include "hikari/app/automation_shell.h"
 
 #include "hikari/application/script_resolution.h"
+#include "hikari/backends/desktop_handoff.h"
 
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QGuiApplication>
-#include <QProcess>
 #include <QUrl>
 
 #include <algorithm>
@@ -514,7 +514,7 @@ void AutomationShell::editWith(const QUrl &editorFile, const QString &script)
 void AutomationShell::startEditor(const QString &editor, const QString &script)
 {
     // wxExecute({editor, script}) without waiting.
-    if (!QProcess::startDetached(editor, {script}))
+    if (!backends::desktop::startDetached(editor, {script}))
         emit notice(QCoreApplication::translate("HikariSub.Automation", "Automation error"),
                     QCoreApplication::translate("HikariSub.Automation", "Cannot start editor."));
 }

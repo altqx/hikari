@@ -8,6 +8,7 @@
 // a macro's Style and Script Info edits are one undo step.
 
 #include "hikari/app/application.h"
+#include "desktop_guard.h"
 
 #include <QDateTime>
 #include <QDeadlineTimer>
@@ -519,10 +520,15 @@ private slots:
         QVERIFY(text.size() > QStringLiteral("Error loading Lua script: broken.lua\n").size());
         QCOMPARE(editor.size(), 1);
         QCOMPARE(editor.first().at(0).toString(), script);
-        // A file that is no program: chosen and saved, but it does not start.
+        // A file that is no program: chosen and saved, but it does not start
+        // (38e: the start is recorded, the desktop answers that it failed).
         const QString notAProgram = dir.filePath(QStringLiteral("notes.txt"));
         writeFile(notAProgram, "text");
+        hikari::test::desktop::clear();
+        hikari::test::desktop::setStartResult(false);
         app->automation().editWith(QUrl::fromLocalFile(notAProgram), script);
+        const hikari::test::desktop::Started start{QDir::toNativeSeparators(notAProgram), {script}};
+        QCOMPARE(hikari::test::desktop::started(), QList<hikari::test::desktop::Started>{start});
         QCOMPARE(notices.size(), 2);
         QCOMPARE(notices.last().at(0).toString(), QStringLiteral("Automation error"));
         QCOMPARE(notices.last().at(1).toString(), QStringLiteral("Cannot start editor."));
@@ -531,9 +537,17 @@ private slots:
         app->automation().editScript(script);
         QCOMPARE(editor.size(), 1);
         QCOMPARE(notices.size(), 3);
+        QCOMPARE(hikari::test::desktop::started(), (QList<hikari::test::desktop::Started>{start, start}));
+        // An editor that starts says nothing.
+        hikari::test::desktop::setStartResult(true);
+        app->automation().editScript(script);
+        QCOMPARE(notices.size(), 3);
+        QCOMPARE(hikari::test::desktop::started().size(), 3);
         // A missing editor is not taken (wxFileExists).
         app->automation().editWith(QUrl::fromLocalFile(dir.filePath(QStringLiteral("none.exe"))), script);
         QCOMPARE(notices.size(), 3);
+        QCOMPARE(hikari::test::desktop::started().size(), 3);
+        hikari::test::desktop::clear();
     }
 
     // Automation::Add (Automation.cpp:1153-1171): Load script lists the

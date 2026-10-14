@@ -1,9 +1,9 @@
 #include "hikari/app/update_checker.h"
 
 #include "hikari/application/update_check.h"
+#include "hikari/backends/desktop_handoff.h"
 
 #include <QDateTime>
-#include <QDesktopServices>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -293,7 +293,7 @@ void UpdateChecker::openReleasePage(const QString &url)
 {
     // Only a page this checker built from a tag, never a link from the reply.
     if (!url.isEmpty() && url.startsWith(m_feed.pageBase))
-        QDesktopServices::openUrl(QUrl(url));
+        backends::desktop::openUrl(QUrl(url));
 }
 
 void UpdateChecker::downloadOffer()

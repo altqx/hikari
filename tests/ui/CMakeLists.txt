@@ -291,6 +291,9 @@ foreach(mode offscreen xvfb native)
         set_tests_properties(hikari_ui_tab_menu_tests.${mode} PROPERTIES TIMEOUT 300)
     endif()
 endforeach()
+# 38e: no test reaches the desktop's programs (tests/support/desktop): the
+# recording handlers, the refusal that fails a run, the shell's hand-offs.
+hikari_add_qttest(hikari_ui_desktop_handoff_tests SOURCES desktop_handoff_tests.cpp LIBRARIES hikari_composition)
 # R1: subtitle comparison through the composition and the tab menu.
 hikari_add_qttest(hikari_ui_comparison_tests SOURCES comparison_tests.cpp LIBRARIES hikari_composition)
 # R2: reference navigation, linked matching and the subtitles preview.
@@ -387,11 +390,17 @@ foreach(mode offscreen xvfb)
 endforeach()
 
 # The UI tests' environment in every test and workflow above, and in any
-# added later (ui_test_environment.cpp says why).
+# added later (ui_test_environment.cpp says why), and the recorded desktop
+# (38e, tests/support/desktop/desktop_guard.h): the recording URL handlers in
+# each, the application's desktop routes in each that links the application.
 get_directory_property(hikari_ui_test_targets BUILDSYSTEM_TARGETS)
 foreach(target IN LISTS hikari_ui_test_targets)
     get_target_property(type ${target} TYPE)
     if(type STREQUAL "EXECUTABLE")
-        target_link_libraries(${target} PRIVATE hikari_ui_test_environment)
+        target_link_libraries(${target} PRIVATE hikari_ui_test_environment hikari_test_url_recorder)
+        get_target_property(libraries ${target} LINK_LIBRARIES)
+        if("hikari_composition" IN_LIST libraries OR "hikari_backends" IN_LIST libraries)
+            target_link_libraries(${target} PRIVATE hikari_test_desktop_routes)
+        endif()
     endif()
 endforeach()

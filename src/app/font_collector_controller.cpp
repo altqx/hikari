@@ -1,16 +1,15 @@
 #include "hikari/app/font_collector_controller.h"
 
+#include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/font_collector_output.h"
 #include "hikari/backends/libass_font_service.h"
 #include "hikari/core/ass_save.h"
 #include "settings_store.h"
 
 #include <QCoreApplication>
-#include <QDesktopServices>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QProcess>
 #include <QRegularExpression>
 #include <QThread>
 #include <QUrl>
@@ -1008,14 +1007,14 @@ void FontCollectorController::saveFolder()
     }
 #ifdef _WIN32
     // SHOpenFolderAndSelectItems on the path.
-    QProcess::startDetached(QStringLiteral("explorer.exe"),
-                            {QStringLiteral("/select,") + QDir::toNativeSeparators(m_copyPath)});
+    backends::desktop::startDetached(QStringLiteral("explorer.exe"),
+                                     {QStringLiteral("/select,") + QDir::toNativeSeparators(m_copyPath)});
 #else
     // SelectInFolder outside Windows opens the path's folder.
     QString target = pathDir(m_copyPath);
     if (target.isEmpty())
         target = m_copyPath;
-    QDesktopServices::openUrl(QUrl::fromLocalFile(target));
+    backends::desktop::openUrl(QUrl::fromLocalFile(target));
 #endif
 }
 

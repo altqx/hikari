@@ -1,6 +1,7 @@
 #include "hikari/backends/show_in_folder.h"
 
-#include <QDesktopServices>
+#include "hikari/backends/desktop_handoff.h"
+
 #include <QDir>
 #include <QFileInfo>
 #include <QUrl>
@@ -76,7 +77,7 @@ void selectInFolder(const QString &path, const QDBusConnection &bus, std::functi
 void selectInFolder(const QString &path)
 {
     selectInFolder(path, QDBusConnection::sessionBus(),
-                   [](const QString &folder) { QDesktopServices::openUrl(QUrl::fromLocalFile(folder)); });
+                   [](const QString &folder) { desktop::openUrl(QUrl::fromLocalFile(folder)); });
 }
 
 #endif

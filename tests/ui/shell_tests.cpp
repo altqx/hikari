@@ -2,6 +2,7 @@
 // reference, F6/Shift+F6 panel traversal and focus restoration.
 
 #include "hikari/app/application.h"
+#include "desktop_guard.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/hotkeys.h"
@@ -5025,6 +5026,19 @@ private slots:
             QCOMPARE(f.readAll(), QByteArray::fromStdString(fonts[std::size_t(index)].data));
         }
         QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorSaveFolder")->property("enabled").toBool());
+        // The folder button (SelectInFolder on the copy, FontCollector.cpp;
+        // 38e: recorded, it never reaches the desktop): Explorer with the
+        // copy's folder selected on Windows, the folder itself elsewhere.
+        hikari::test::desktop::clear();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorSaveFolder"), "click"));
+#ifdef _WIN32
+        QCOMPARE(hikari::test::desktop::started(),
+                 (QList<hikari::test::desktop::Started>{{QStringLiteral("explorer.exe"), {QStringLiteral("/select,") + folder + sep}}}));
+        QVERIFY(hikari::test::desktop::opened().isEmpty());
+#else
+        QCOMPARE(hikari::test::desktop::opened(), QList<QUrl>{QUrl::fromLocalFile(folder)});
+        QVERIFY(hikari::test::desktop::started().isEmpty());
+#endif
         // The archive: one entry per font under its name.
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption2"), "click"));
         const QString archive = QDir::toNativeSeparators(dir.filePath(QStringLiteral("mkvfonts.zip")));

@@ -1822,10 +1822,11 @@ ApplicationWindow {
             ShellMenuItem {
                 help: qsTr("Opens the HikariSub website in the default browser") // HikariSubFrame.cpp:360
                 iconRole: "help"
+                objectName: "websiteMenuItem"
                 action: Action {
                     id: websiteAction
                     text: qsTr("HikariSub &website")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HELP")) Qt.openUrlExternally("https://altqx.com")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HELP")) root.app.openWebsite()
                 }
             }
             ShellMenuItem {

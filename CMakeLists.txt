@@ -50,6 +50,7 @@ if(BUILD_TESTING)
     add_subdirectory(tests/support/fonts)
     add_subdirectory(tests/runners/image)
     add_subdirectory(tests/support/perf)
+    add_subdirectory(tests/support/desktop) # 38e: no test reaches the desktop's programs
     add_subdirectory(tests/perf)
     add_subdirectory(tests/modules)
     add_subdirectory(tests/core)

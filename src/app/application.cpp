@@ -1,5 +1,6 @@
 #include "hikari/app/application.h"
 
+#include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
 #include "hikari/backends/portaudio_output.h"
@@ -34,7 +35,6 @@
 #include "theme.h"
 
 #include <QClipboard>
-#include <QDesktopServices>
 #include <QFile>
 #include <QMetaMethod>
 #include <QSet>
@@ -2048,7 +2048,12 @@ void Application::setSaveWithVideoName(bool on)
 
 void Application::reportIssue()
 {
-    QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/altqx/hikari/issues")));
+    backends::desktop::openUrl(QUrl(QStringLiteral("https://github.com/altqx/hikari/issues")));
+}
+
+void Application::openWebsite()
+{
+    backends::desktop::openUrl(QUrl(QStringLiteral("https://altqx.com")));
 }
 
 QVariantMap Application::reviewOpen(const QString &path)

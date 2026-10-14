@@ -4,6 +4,7 @@
 // automatic download.
 
 #include "hikari/app/update_checker.h"
+#include "desktop_guard.h"
 
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -311,6 +312,15 @@ private slots:
         UpdateChecker checker({}, github, QStringLiteral("0.1.0"));
         QCOMPARE(checker.releasePageOf(QStringLiteral("0.2.0")), QStringLiteral("https://github.com/altqx/hikari/releases/tag/v0.2.0"));
         QCOMPARE(checker.releasePageOf(QStringLiteral("../x")), QString());
+        // Only the feed's own page goes to the browser (38e: recorded; it
+        // never reaches the desktop's browser).
+        hikari::test::desktop::clear();
+        checker.openReleasePage(QStringLiteral("https://example.invalid/altqx/hikari/releases/tag/v0.2.0"));
+        checker.openReleasePage(QString());
+        QVERIFY(hikari::test::desktop::opened().isEmpty());
+        checker.openReleasePage(checker.releasePageOf(QStringLiteral("0.2.0")));
+        QCOMPARE(hikari::test::desktop::opened(),
+                 QList<QUrl>{QUrl(QStringLiteral("https://github.com/altqx/hikari/releases/tag/v0.2.0"))});
     }
 };
 
