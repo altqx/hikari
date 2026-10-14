@@ -118,6 +118,9 @@ TimeCtrl::TimeCtrl(wxWindow* parent, const long int id, const wxString& val, con
 		SetSelection(0, GetValue().Length());
 		Copy();
 	}, ID_TCTLX);
+	// Backspace and Ctrl+Backspace zero digits and keep the separators: the
+	// base field's Ctrl+Backspace deletes a whole word, separators and all.
+	static_assert(ID_TCBACK == ID_TBACK + 1, "Backspace and Ctrl+Backspace bound as one range");
 	Bind(wxEVT_COMMAND_MENU_SELECTED, [=, this](wxCommandEvent &evt){
 		//napisać tutaj zerowanie przy zaznaczeniu i ogólnie cofanie kursora i zerowanie jednej cyfry
 		timeUnchanged = false;
@@ -148,7 +151,7 @@ TimeCtrl::TimeCtrl(wxWindow* parent, const long int id, const wxString& val, con
 		if (changed){
 			wxCommandEvent evt2(NUMBER_CHANGED, GetId()); AddPendingEvent(evt2);
 		}
-	}, ID_TBACK);
+	}, ID_TBACK, ID_TCBACK);
 	Bind(wxEVT_COMMAND_MENU_SELECTED, [=, this](wxCommandEvent &evt){
 		timeUnchanged = false;
 		if (form >= MDVD || showFrames){ evt.Skip(); }

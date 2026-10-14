@@ -1489,21 +1489,14 @@ void HikariTextCtrl::ContextMenu(wxPoint mpos)
 	if (id == TEXT_COPY){
 		Copy();
 	}
-	else if (id == TEXT_CUT){
-		Copy(true);
-	}
-	else if (id == TEXT_PASTE){
-		Paste();
-	}
-	else if (id == TEXT_DEL){
-		long from, to;
-		GetSelection(&from, &to);
-		KText.Remove(from, to - from);
-		DeleteStyles(from, to);
-		MoveStyles(from, -(to - from));
-		CalcWrap();
-		//SendEvent();
-		SetSelection(from, from); modified = true;
+	else if (id == TEXT_CUT || id == TEXT_PASTE || id == TEXT_DEL){
+		// Cut, Paste and Delete run as Ctrl+X, Ctrl+V and Delete do, so a
+		// field that checks those keys, as the time and number fields do,
+		// checks its menu as well.
+		wxCommandEvent edit(wxEVT_COMMAND_MENU_SELECTED,
+			(id == TEXT_CUT) ? ID_TCTLX : (id == TEXT_PASTE) ? ID_TCTLV : ID_TDEL);
+		edit.SetEventObject(this);
+		GetEventHandler()->ProcessEvent(edit);
 	}
 	else if (id == TEXT_SEEKWORDG){
 		wxString page = L"https://www.google.com/search?q=";
