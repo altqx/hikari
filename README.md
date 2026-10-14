@@ -73,7 +73,7 @@ HikariSub will stay actively maintained rather than go dormant, and its dependen
 ### Video
 
 * **Player**: frame-accurate FFMS2 playback with optional GPU colour conversion, DirectShow on Windows and GStreamer on Linux.
-* **Subtitle renderers**: libass, or xy-VSFilter through CSRI.
+* **Subtitle renderers**: libass by default, or on Windows xy-VSFilter or VSFilterMod through CSRI.
 * **Zoom**: zooms into the video, including in fullscreen, for precise clips and drawings.
 * **Fullscreen player**: chapters, next and previous file, volume, aspect ratio and a progress bar.
 * **Frames**: saves a frame as PNG or copies it to the clipboard, with or without subtitles.

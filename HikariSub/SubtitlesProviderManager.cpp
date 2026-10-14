@@ -45,7 +45,8 @@ wxString SubtitlesProviderManager::ProviderInUse()
 #ifdef _WIN32
 	// Linux loads no CSRI renderers; libass needs none of them loaded
 	wxArrayString names;
-	if (stored != LIBASS_PROVIDER)
+	// nothing stored resolves to libass too
+	if (!stored.empty() && stored != LIBASS_PROVIDER)
 		SubtitlesVSFilter::GetRendererNames(&names);
 	for (const wxString &name : names)
 		csri.push_back(name.ToStdWstring());

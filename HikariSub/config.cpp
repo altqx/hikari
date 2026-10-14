@@ -39,6 +39,7 @@
 #include <windows.h>
 #include "ConfigConverter.h"
 #include "SubtitlesProviderManager.h"
+#include "SubtitlesProviderChoice.h"
 #include <ShlObj.h>
 #include <wx/msw/private.h>
 #include <wx/mstream.h>
@@ -401,6 +402,7 @@ void config::LoadDefaultConfig(wxString * defaultOptions)
 	configTable[UPDATER_AUTO_CHECK] = update_policy::kAutoCheckDefault ? L"true" : L"false";
 	configTable[UPDATER_CHECK_FOR_STABLE] = update_policy::kStableOnlyDefault ? L"true" : L"false";
 	configTable[UPDATER_AUTO_INSTALL] = update_policy::kAutoInstallDefault ? L"true" : L"false";
+	configTable[VSFILTER_INSTANCE] = LIBASS_PROVIDER;
 }
 
 //remember, create table[colorsSize] without this size it will crash
@@ -688,6 +690,7 @@ int config::LoadOptions()
 		GetString(UPDATER_CHECK_FOR_STABLE).utf8_string(), update_policy::kStableOnlyDefault));
 	SetBool(UPDATER_AUTO_INSTALL, update_policy::ReadOption(
 		GetString(UPDATER_AUTO_INSTALL).utf8_string(), update_policy::kAutoInstallDefault));
+	MigrateSubtitlesProvider();
 
 	actualStyleDir = L"Default";
 	path = emptyString;
@@ -960,6 +963,18 @@ void config::ResetDefault()
 	for (size_t i = 0; i < configSize; i++){
 		stringConfig[i] = options[i];
 	}
+	// the defaults hold no migration value, and xy-VSFilter chosen after a
+	// reset must not be moved to libass on the next start
+	MigrateSubtitlesProvider();
+}
+
+void config::MigrateSubtitlesProvider()
+{
+	StoredSubtitlesProvider migrated = ::MigrateSubtitlesProvider({
+		stringConfig[VSFILTER_INSTANCE].ToStdWstring(),
+		stringConfig[SUBTITLES_PROVIDER_MIGRATION].ToStdWstring() });
+	stringConfig[VSFILTER_INSTANCE] = wxString(migrated.provider);
+	stringConfig[SUBTITLES_PROVIDER_MIGRATION] = wxString(migrated.migration);
 }
 
 bool config::ConfigNeedToConvert(const wxString & fullVersion)

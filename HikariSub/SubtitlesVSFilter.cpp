@@ -247,7 +247,7 @@ csri_rend *SubtitlesVSFilter::GetVSFilter()
 			return nullptr;
 		}
 		csri_info *info = csri_renderer_info(m_CsriRenderer);
-		// not the stored name: with none stored, the default renderer may be VSFilterMod
+		// not the stored name: the CSRI default may be VSFilterMod
 		wxString name = SubtitlesProviderManager::ProviderInUse();
 		if (!name.empty() && info){
 			while (info->name != name){

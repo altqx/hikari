@@ -246,6 +246,7 @@ inline wxString HikariPathJoin(const wxString& dir, const wxString& name)
 	CG(VIDEO_VISUAL_WARNINGS_OFF,)\
 	CG(VIDEO_ZOOM_PERCENT,)\
 	CG(VSFILTER_INSTANCE,)\
+	CG(SUBTITLES_PROVIDER_MIGRATION,)\
 	CG(WINDOW_MAXIMIZED,)\
 	CG(WINDOW_POSITION,)\
 	CG(WINDOW_SIZE,)\
@@ -505,6 +506,8 @@ public:
 	void LoadMissingColours(const wxString &path);
 	bool LoadAudioOpts();
 	void ResetDefault();
+	// see MigrateSubtitlesProvider in SubtitlesProviderChoice.h
+	void MigrateSubtitlesProvider();
 	void SaveAudioOpts();
 	void SaveOptions(bool cfg = true, bool style = true);
 	void SaveColors(const wxString &path = emptyString);

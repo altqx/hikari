@@ -26,16 +26,34 @@ extern const wchar_t *const VSFILTERMOD_PROVIDER;
 
 // The subtitle renderer a stored choice stands for, given the CSRI renderers
 // that loaded: the stored name when it is libass or one of them, else
-// xy-VSFilter when it loaded, else libass. A choice copied from another
-// computer, or a renderer that failed to load, then still shows and uses a
-// renderer that works. VSFilterMod renders 10 to 30 times slower than
-// xy-VSFilter, so it is used only when chosen.
+// libass. A choice copied from another computer, or a renderer that failed
+// to load, then still shows and uses a renderer that works. Neither
+// xy-VSFilter nor VSFilterMod is used unless it is the stored choice;
+// VSFilterMod renders 10 to 30 times slower than xy-VSFilter.
 std::wstring ResolveSubtitlesProvider(const std::wstring &stored,
 	const std::vector<std::wstring> &csriRenderers);
 
-// The renderers to offer, in order: xy-VSFilter when it loaded, libass, any
+// The renderers to offer, in order: libass, xy-VSFilter when it loaded, any
 // other CSRI renderer, then VSFilterMod when it loaded.
 std::vector<std::wstring> OrderSubtitlesProviders(const std::vector<std::wstring> &csriRenderers);
 
 // A renderer to offer only with a warning that it is slow.
 bool IsSlowSubtitlesProvider(const std::wstring &name);
+
+// What the options store about the renderer: the chosen name, and the
+// migration the choice has been through, empty for none.
+struct StoredSubtitlesProvider {
+	std::wstring provider;
+	std::wstring migration;
+};
+
+// The migration value MigrateSubtitlesProvider stores.
+extern const wchar_t *const SUBTITLES_PROVIDER_MIGRATION_VERSION;
+
+// libass took over from xy-VSFilter as the default renderer. Versions before
+// this one stored xy-VSFilter whenever OK was pressed on the Options page
+// without another renderer chosen, so a stored xy-VSFilter is most often the
+// old default rather than a choice. Settings with no migration value move it
+// to libass, once, and gain the migration value, so xy-VSFilter chosen again
+// afterwards stays. Any other stored name, VSFilterMod among them, stays.
+StoredSubtitlesProvider MigrateSubtitlesProvider(const StoredSubtitlesProvider &stored);

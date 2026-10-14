@@ -20,6 +20,7 @@
 const wchar_t *const LIBASS_PROVIDER = L"libass";
 const wchar_t *const XY_VSFILTER_PROVIDER = L"xy-vsfilter_textsub";
 const wchar_t *const VSFILTERMOD_PROVIDER = L"vsfiltermod_textsub";
+const wchar_t *const SUBTITLES_PROVIDER_MIGRATION_VERSION = L"1";
 
 namespace {
 
@@ -37,17 +38,15 @@ std::wstring ResolveSubtitlesProvider(const std::wstring &stored,
 		return stored;
 	if (!stored.empty() && Contains(csriRenderers, stored))
 		return stored;
-	if (Contains(csriRenderers, XY_VSFILTER_PROVIDER))
-		return XY_VSFILTER_PROVIDER;
 	return LIBASS_PROVIDER;
 }
 
 std::vector<std::wstring> OrderSubtitlesProviders(const std::vector<std::wstring> &csriRenderers)
 {
 	std::vector<std::wstring> providers;
+	providers.push_back(LIBASS_PROVIDER);
 	if (Contains(csriRenderers, XY_VSFILTER_PROVIDER))
 		providers.push_back(XY_VSFILTER_PROVIDER);
-	providers.push_back(LIBASS_PROVIDER);
 	for (const std::wstring &renderer : csriRenderers) {
 		if (renderer != XY_VSFILTER_PROVIDER && !IsSlowSubtitlesProvider(renderer) && !Contains(providers, renderer))
 			providers.push_back(renderer);
@@ -60,4 +59,14 @@ std::vector<std::wstring> OrderSubtitlesProviders(const std::vector<std::wstring
 bool IsSlowSubtitlesProvider(const std::wstring &name)
 {
 	return name == VSFILTERMOD_PROVIDER;
+}
+
+StoredSubtitlesProvider MigrateSubtitlesProvider(const StoredSubtitlesProvider &stored)
+{
+	if (!stored.migration.empty())
+		return stored;
+	StoredSubtitlesProvider migrated{ stored.provider, SUBTITLES_PROVIDER_MIGRATION_VERSION };
+	if (migrated.provider == XY_VSFILTER_PROVIDER)
+		migrated.provider = LIBASS_PROVIDER;
+	return migrated;
 }
