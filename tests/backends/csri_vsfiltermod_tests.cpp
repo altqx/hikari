@@ -19,6 +19,9 @@
 #include <QDir>
 #include <QFile>
 #include <QImage>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -33,6 +36,7 @@
 #include <mutex>
 #include <optional>
 #include <set>
+#include <span>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -315,9 +319,10 @@ std::optional<OverlayFrame> drawLeaseProbe(const std::shared_ptr<CsriRenderers> 
     return std::move(*frame);
 }
 
-// The renderer's own font selections while it draws the lease's family
-// (drawn::selectObject): the faces it selected for it.
-std::set<std::wstring> facesDrawnWithALease(const std::shared_ptr<CsriRenderers> &renderers, std::string &problem)
+// Draws `snapshot` through `renderers`' default renderer at 1 s with the
+// module's import of gdi32!SelectObject pointed at drawn::selectObject (and
+// put back before the module could go): the fonts it selected meanwhile.
+std::set<drawn::Face> readBack(const std::shared_ptr<CsriRenderers> &renderers, RenderSnapshot snapshot, std::string &problem)
 {
     HMODULE module = drawn::moduleOf(renderers);
     if (!module) {
@@ -336,23 +341,97 @@ std::set<std::wstring> facesDrawnWithALease(const std::shared_ptr<CsriRenderers>
     }
     {
         CsriRenderer r(renderers, "");
-        RenderSnapshot s = snapshotOf(script("",
-                                             "Style: Leased,Titillium Web,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,"
-                                             "0,0,0,0,100,100,0,0,1,2,2,5,20,20,20,1\n",
-                                             "Dialogue: 0,0:00:00.00,0:00:05.00,Leased,,0,0,0,,Leased read-back words\n"));
-        s.fonts = {FontLease{"Titillium Web", leasedFontBytes()}};
-        if (!r.prepare(std::move(s)))
+        if (!r.prepare(std::move(snapshot)))
             problem = "the script was refused";
         else if (const auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight); !frame || frame->empty)
             problem = "nothing was drawn";
     }
     drawn::patchImport(module, "gdi32.dll", "SelectObject", previous);
-    std::set<std::wstring> out;
     std::lock_guard guard(drawn::lock);
-    for (const auto &f : drawn::faces)
+    return drawn::faces;
+}
+
+// The renderer's own font selections while it draws the lease's family
+// (drawn::selectObject): the faces it selected for it.
+std::set<std::wstring> facesDrawnWithALease(const std::shared_ptr<CsriRenderers> &renderers, std::string &problem)
+{
+    RenderSnapshot s = snapshotOf(script("",
+                                         "Style: Leased,Titillium Web,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,"
+                                         "0,0,0,0,100,100,0,0,1,2,2,5,20,20,20,1\n",
+                                         "Dialogue: 0,0:00:00.00,0:00:05.00,Leased,,0,0,0,,Leased read-back words\n"));
+    s.fonts = {FontLease{"Titillium Web", leasedFontBytes()}};
+    std::set<std::wstring> out;
+    for (const auto &f : readBack(renderers, std::move(s), problem))
         if (_wcsicmp(f.requested.c_str(), L"Titillium Web") == 0)
             out.insert(f.selected);
     return out;
+}
+
+// The face GDI's mapper gives this process for a LOGFONT like the one the
+// renderer asked for: the family, weight and slant (the read-back's own
+// request, so a difference is the renderer's, not the request's).
+std::wstring gdiFaceFor(const drawn::Face &f)
+{
+    HDC dc = CreateCompatibleDC(nullptr);
+    LOGFONTW lf{};
+    lf.lfHeight = 40;
+    lf.lfWeight = f.weight;
+    lf.lfItalic = f.italic;
+    lf.lfCharSet = DEFAULT_CHARSET;
+    wcsncpy_s(lf.lfFaceName, f.requested.c_str(), _TRUNCATE);
+    HFONT font = CreateFontIndirectW(&lf);
+    HGDIOBJ old = SelectObject(dc, font);
+    wchar_t face[LF_FACESIZE] = {};
+    GetTextFaceW(dc, LF_FACESIZE, face);
+    SelectObject(dc, old);
+    DeleteObject(font);
+    DeleteDC(dc);
+    return face;
+}
+
+QString faceLine(const drawn::Face &f)
+{
+    const QString requested = QString::fromStdWString(f.requested), selected = QString::fromStdWString(f.selected);
+    const bool matched = requested.compare(selected, Qt::CaseInsensitive) == 0;
+    return QStringLiteral("%1 (weight %2%3) -> %4 [%5] (%6; GDI alone gives %7)")
+        .arg(requested)
+        .arg(f.weight)
+        .arg(f.italic ? QStringLiteral(", italic") : QString())
+        .arg(selected, QString::fromStdWString(f.full), matched ? QStringLiteral("matched") : QStringLiteral("substituted"),
+             QString::fromStdWString(gdiFaceFor(f)));
+}
+
+// W2 legacy captures: tests/fixtures/legacy-observations/local-w2-vsfiltermod-20261015.
+struct Capture {
+    QString fixture;
+    int ms = 0;
+};
+
+std::vector<Capture> legacyCaptures(const QString &dir)
+{
+    QFile f(dir + QStringLiteral("/captures.json"));
+    if (!f.open(QIODevice::ReadOnly))
+        return {};
+    std::vector<Capture> out;
+    for (const auto v : QJsonDocument::fromJson(f.readAll()).array()) {
+        const QJsonObject o = v.toObject();
+        out.push_back({o.value(QStringLiteral("fixture")).toString(), o.value(QStringLiteral("ms")).toInt()});
+    }
+    return out;
+}
+
+// The fixture script as the application hands it to the renderer: loaded
+// (loadAss) and written in renderer mode (encodeAss, as SubsGrid::GetVisible).
+std::optional<RenderSnapshot> appSnapshot(const QString &path)
+{
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly))
+        return std::nullopt;
+    const QByteArray bytes = f.readAll();
+    const auto loaded = core::loadAss(std::span(reinterpret_cast<const std::byte *>(bytes.constData()), std::size_t(bytes.size())));
+    RenderSnapshot s;
+    s.script = core::encodeAss(loaded.document, core::AssSaveOptions{.renderer = true});
+    return s;
 }
 
 } // namespace
@@ -681,4 +760,156 @@ TEST(VsfilterMod, DrawsTheScriptsAttachedImageAndFonts)
     std::fprintf(stderr, "38c VSFilterMod: \"HH\" covers %ld pixels, %.2f of [%d,%d]-[%d,%d]\n", covered, fill, left, top,
                  right, bottom);
     EXPECT_GT(fill, 0.9) << "\"HH\" was not drawn in the attached font";
+}
+
+// W2: the faces read back from VSFilterMod's own font selections while it
+// drew (drawn::selectObject), not what GDI would give a LOGFONT the test
+// builds: each family GDI has is drawn with that family (Arial, Arial bold
+// italic, Times New Roman), and a family it lacks with GDI's substitute for
+// it, the face GDI alone gives that request. In words no other test draws:
+// VSFilterMod keeps measured words and outlines in module-wide caches, and a
+// cached word selects no font. Written to vsfiltermod-drawn-faces.txt.
+TEST(VsfilterMod, ReadsBackTheFacesItDrewWith)
+{
+    const auto renderers = vsfilterModRenderers();
+    if (!renderers)
+        GTEST_SKIP() << "no VSFilterMod: HIKARI_VSFILTERMOD_CSRI is not set and the build did not fetch it";
+    ASSERT_NE(gdiFace(L"Hikari No Such Font"), L"Hikari No Such Font");
+    std::string problem;
+    const auto faces = readBack(
+        renderers,
+        snapshotOf(script("",
+                          "Style: Times,Times New Roman,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,"
+                          "1,2,2,8,20,20,20,1\n"
+                          "Style: Missing,Hikari No Such Font,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,"
+                          "100,0,0,1,2,2,5,20,20,20,1\n"
+                          "Style: Styled,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,-1,0,0,100,100,0,0,1,2,2,"
+                          "2,20,20,60,1\n",
+                          "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\\an7}Modreadback arial face\n"
+                          "Dialogue: 0,0:00:00.00,0:00:05.00,Times,,0,0,0,,Modreadback times face\n"
+                          "Dialogue: 0,0:00:00.00,0:00:05.00,Missing,,0,0,0,,Modreadback missing face\n"
+                          "Dialogue: 0,0:00:00.00,0:00:05.00,Styled,,0,0,0,,Modreadback styled face\n")),
+        problem);
+    ASSERT_TRUE(problem.empty()) << problem;
+    const auto out = drawn::report("vsfiltermod-drawn-faces.txt");
+    ASSERT_TRUE(out);
+    out->write("# the faces VSFilterMod selected while drawing (requested -> GDI's face [full name])\n");
+    for (const auto &f : faces) {
+        out->write((faceLine(f) + QLatin1Char('\n')).toUtf8());
+        std::fprintf(stderr, "W2 VSFilterMod drew %s\n", qPrintable(faceLine(f)));
+    }
+    const auto drawnFor = [&](const wchar_t *family, LONG weight, bool italic) {
+        std::set<std::wstring> selected;
+        for (const auto &f : faces)
+            if (_wcsicmp(f.requested.c_str(), family) == 0 && f.weight == weight && f.italic == italic)
+                selected.insert(f.selected);
+        return selected;
+    };
+    EXPECT_EQ(drawnFor(L"Arial", FW_NORMAL, false), (std::set<std::wstring>{L"Arial"})) << "Arial";
+    EXPECT_EQ(drawnFor(L"Arial", FW_BOLD, true), (std::set<std::wstring>{L"Arial"})) << "Arial bold italic";
+    EXPECT_EQ(drawnFor(L"Times New Roman", FW_NORMAL, false), (std::set<std::wstring>{L"Times New Roman"}))
+        << "Times New Roman";
+    // The real face behind Arial bold italic (the outline metrics' full name).
+    std::set<std::wstring> boldItalic;
+    for (const auto &f : faces)
+        if (_wcsicmp(f.requested.c_str(), L"Arial") == 0 && f.weight == FW_BOLD && f.italic)
+            boldItalic.insert(f.full);
+    EXPECT_EQ(boldItalic, (std::set<std::wstring>{L"Arial Bold Italic"}));
+    const auto missing = drawnFor(L"Hikari No Such Font", FW_NORMAL, false);
+    ASSERT_FALSE(missing.empty()) << "the missing family was never selected";
+    for (const auto &f : faces)
+        if (_wcsicmp(f.requested.c_str(), L"Hikari No Such Font") == 0) {
+            EXPECT_NE(_wcsicmp(f.selected.c_str(), L"Hikari No Such Font"), 0) << "a family GDI lacks is drawn with a substitute";
+            EXPECT_EQ(f.selected, gdiFaceFor(f)) << "the substitute is not the one GDI gives the request";
+        }
+}
+
+// W2: the rewrite's VSFilterMod overlay against the legacy app's own frames
+// (local-w2-vsfiltermod-20261015: the legacy package with the same fork
+// release, "Save frame with subtitles as PNG" and "Save frame as PNG" at each
+// capture time; its README has the provenance). Each fixture script goes
+// through the application's path (loadAss, encodeAss in renderer mode); the
+// overlay at the capture time, composited over legacy's plain frame, must give
+// legacy's subtitled frame within 2 levels per channel, the rounding the two
+// ways of compositing allow (OverlayMatchesDrawingOnTheFrame); the
+// differences are written to vsfiltermod-legacy.txt, and a capture that fails
+// leaves <capture>-composite.png and -diff.png in the artifacts.
+TEST(VsfilterMod, MatchesTheLegacyAppsCaptures)
+{
+    const auto renderers = vsfilterModRenderers();
+    if (!renderers)
+        GTEST_SKIP() << "no VSFilterMod: HIKARI_VSFILTERMOD_CSRI is not set and the build did not fetch it";
+    const QString dir = QStringLiteral(HIKARI_W2_LEGACY_CAPTURES);
+    const auto captures = legacyCaptures(dir);
+    ASSERT_FALSE(captures.empty()) << qPrintable(dir);
+    auto out = drawn::report("vsfiltermod-legacy.txt");
+    ASSERT_TRUE(out);
+    std::size_t compared = 0;
+    QString prepared;
+    std::optional<CsriRenderer> r;
+    for (const auto &c : captures) {
+        const QString name = QStringLiteral("%1-%2").arg(c.fixture).arg(c.ms);
+        SCOPED_TRACE(name.toStdString());
+        if (prepared != c.fixture) {
+            const auto snapshot = appSnapshot(dir + QStringLiteral("/scripts/") + c.fixture + QStringLiteral(".ass"));
+            ASSERT_TRUE(snapshot);
+            r.emplace(renderers, "");
+            ASSERT_TRUE(r->prepare(*snapshot));
+            prepared = c.fixture;
+        }
+        const QImage plain =
+            QImage(dir + QStringLiteral("/frames/") + name + QStringLiteral("-plain.png")).convertToFormat(QImage::Format_RGB32);
+        const QImage subbed =
+            QImage(dir + QStringLiteral("/frames/") + name + QStringLiteral("-subbed.png")).convertToFormat(QImage::Format_RGB32);
+        ASSERT_EQ(plain.size(), QSize(kWidth, kHeight));
+        ASSERT_EQ(subbed.size(), QSize(kWidth, kHeight));
+        const auto frame = r->render(core::DocumentTime(std::int64_t(c.ms) * 1000), kWidth, kHeight);
+        ASSERT_TRUE(frame);
+        QImage composite(kWidth, kHeight, QImage::Format_RGB32), diff(kWidth, kHeight, QImage::Format_RGB32);
+        int worst = 0;
+        std::size_t covered = 0, legacyDrawn = 0, off = 0;
+        for (int y = 0; y < kHeight; ++y) {
+            const auto *bg = reinterpret_cast<const std::uint8_t *>(plain.constScanLine(y));
+            const auto *want = reinterpret_cast<const std::uint8_t *>(subbed.constScanLine(y));
+            auto *got = reinterpret_cast<std::uint8_t *>(composite.scanLine(y));
+            auto *d = reinterpret_cast<std::uint8_t *>(diff.scanLine(y));
+            const std::uint8_t *o = frame->pixels.data() + std::size_t(y) * frame->stride;
+            for (int x = 0; x < kWidth; ++x) {
+                const int i = x * 4;
+                covered += o[i + 3] != 0;
+                legacyDrawn += std::memcmp(bg + i, want + i, 3) != 0;
+                int pixelWorst = 0;
+                for (int ch = 0; ch < 3; ++ch) {
+                    got[i + ch] = static_cast<std::uint8_t>(o[i + ch] + (bg[i + ch] * (255 - o[i + 3]) + 127) / 255);
+                    const int delta = std::abs(int(got[i + ch]) - int(want[i + ch]));
+                    pixelWorst = (std::max)(pixelWorst, delta);
+                    off += delta > 2;
+                }
+                got[i + 3] = 255;
+                worst = (std::max)(worst, pixelWorst);
+                const auto level = static_cast<std::uint8_t>((std::min)(255, pixelWorst * 32));
+                d[i] = d[i + 1] = d[i + 2] = level;
+                d[i + 3] = 255;
+            }
+        }
+        out->write(QStringLiteral("%1: %2 covered pixels, %3 pixels legacy drew on, largest channel difference %4, "
+                                  "%5 channels off by more than 2\n")
+                       .arg(name)
+                       .arg(covered)
+                       .arg(legacyDrawn)
+                       .arg(worst)
+                       .arg(off)
+                       .toUtf8());
+        std::fprintf(stderr, "W2 VSFilterMod vs legacy %s: %zu covered, %zu legacy, largest difference %d, %zu off by more than 2\n",
+                     qPrintable(name), covered, legacyDrawn, worst, off);
+        EXPECT_GT(covered, 0u);
+        EXPECT_GT(legacyDrawn, 0u) << "legacy's capture has no subtitles on it";
+        EXPECT_LE(worst, 2);
+        if (worst > 2) {
+            composite.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/") + name + QStringLiteral("-composite.png"));
+            diff.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/") + name + QStringLiteral("-diff.png"));
+        }
+        ++compared;
+    }
+    EXPECT_EQ(compared, captures.size());
 }

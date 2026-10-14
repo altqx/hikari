@@ -379,7 +379,8 @@ if(WIN32)
     target_compile_definitions(hikari_backends_vsfiltermod_tests PRIVATE
         HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/vsfiltermod"
         HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
-        HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+        HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
+        HIKARI_W2_LEGACY_CAPTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-w2-vsfiltermod-20261015")
     if(HIKARI_TEST_VSFILTERMOD_DLL)
         set(_w2_csri "${CMAKE_CURRENT_BINARY_DIR}/vsfiltermod-csri")
         add_custom_command(TARGET hikari_backends_vsfiltermod_tests POST_BUILD
