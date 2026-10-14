@@ -37,6 +37,21 @@ SubtitlesLibass* SubtitlesLibass::m_LastRenderer = nullptr;
 std::vector<SubtitlesLibass*> SubtitlesLibass::s_Instances;
 size_t SubtitlesLibass::s_AttachedFontsAdded = 0;
 wxMutex SubtitlesLibass::openMutex;
+std::shared_mutex SubtitlesLibass::s_LibraryMutex;
+
+// A parse reads the library (its style overrides and message callback) but
+// writes nothing in it: it would keep the fonts of a [Fonts] section only
+// with ass_set_extract_fonts, which HikariSub never calls. Attached fonts go
+// into the library with ass_add_font under openMutex, which a parse never reads.
+// So a parse runs outside openMutex while other tracks of the same library
+// render. The new track is not rendered until it is added under openMutex.
+// Call with s_LibraryMutex shared.
+static ASS_Track *ParseScript(ASS_Library *library, const wxString &text)
+{
+	// mb_str() can point into the text, so it outlives the parse
+	wxScopedCharBuffer buffer = text.mb_str(wxConvUTF8);
+	return ass_read_memory(library, buffer.data(), strlen(buffer), nullptr);
+}
 
 // libass calls it on every thread that parses or renders subtitles: the
 // subtitle thread, the parse-ahead worker and the main thread. It only
@@ -62,7 +77,9 @@ void MessageCallback(int level, const char *fmt, va_list args, void *) {
 unsigned int __stdcall  ProcessLibassCache(void *data)
 {
 	SubtitlesLibass * libass = (SubtitlesLibass*)data;
-	
+	// ReloadLibraries waits for it before it frees the library
+	std::shared_lock<std::shared_mutex> library(SubtitlesLibass::s_LibraryMutex);
+
 	libass->m_Libass = ass_renderer_init(libass->m_Library);
 	if (libass->m_Libass) {
 		ass_set_font_scale(libass->m_Libass, 1.);
@@ -119,7 +136,9 @@ void SubtitlesLibass::BlendImages(ASS_Image* img, unsigned char* buffer)
 	}
 }
 
-// call with openMutex locked
+// call with openMutex locked. Every render takes it: libass builds a track's
+// event index in the first ass_render_frame after the track changes, so two
+// threads must not render one track at once.
 ASS_Image* SubtitlesLibass::RenderFrame(int time, int* change)
 {
 	*change = 1;
@@ -173,18 +192,21 @@ bool SubtitlesLibass::DrawOverlay(unsigned char* overlay, int time, wxRect* dirt
 
 bool SubtitlesLibass::Open(wxString *text)
 {
-	wxMutexLocker lock(openMutex);
-	if (!m_IsReady || !m_HasParameters) {
-		SAFE_DELETE(text);
-		if (!m_HasParameters)
-			HikariLog(_("Libass works only with FFMS2"));//Libass only works with with FFMS2
-	
-		return false;
-	}
+	std::shared_lock<std::shared_mutex> library(s_LibraryMutex);
+	{
+		wxMutexLocker lock(openMutex);
+		if (!m_IsReady || !m_HasParameters) {
+			SAFE_DELETE(text);
+			if (!m_HasParameters)
+				HikariLog(_("Libass works only with FFMS2"));//Libass only works with with FFMS2
 
-	m_AssTrack = nullptr;
-	if (!text) {
-		return true;
+			return false;
+		}
+
+		if (!text) {
+			m_AssTrack = nullptr;
+			return true;
+		}
 	}
 
 	if (!ReadTrack(text)){
@@ -207,48 +229,75 @@ void SubtitlesLibass::AddAttachedFonts()
 
 bool SubtitlesLibass::ReadTrack(wxString *text)
 {
-	m_HasRendered = false;
-	AddAttachedFonts();
 	size_t hash = ScriptHash(*text);
-	m_AssTrack = m_Tracks.Find(hash);
-	if (m_AssTrack) {
-		delete text;
-		return true;
+	{
+		wxMutexLocker lock(openMutex);
+		AddAttachedFonts();
+		if (ASS_Track *track = m_Tracks.Find(hash)) {
+			m_AssTrack = track;
+			m_HasRendered = false;
+			delete text;
+			return true;
+		}
 	}
-	wxScopedCharBuffer buffer = text->mb_str(wxConvUTF8);
-	m_AssTrack = ass_read_memory(m_Library, buffer.data(), strlen(buffer), nullptr);
+	// the playback thread goes on drawing the current track meanwhile
+	ASS_Track *track = ParseScript(m_Library, *text);
 	delete text;
-	if (!m_AssTrack)
+	wxMutexLocker lock(openMutex);
+	m_HasRendered = false;
+	if (!track) {
+		m_AssTrack = nullptr;
 		return false;
-	m_Tracks.Add(hash, m_AssTrack, m_AssTrack);
+	}
+	// the parse-ahead worker may have added the same script meanwhile
+	if (ASS_Track *ready = m_Tracks.Find(hash)) {
+		ass_free_track(track);
+		track = ready;
+	}
+	else {
+		m_Tracks.Add(hash, track, m_AssTrack);
+	}
+	m_AssTrack = track;
 	return true;
 }
 
 void SubtitlesLibass::ParseAhead(wxString *text)
 {
 	size_t hash = ScriptHash(*text);
+	// the library cannot be replaced while this is held, so a track parsed
+	// with it still belongs to the library its tracks use when it is added
+	std::shared_lock<std::shared_mutex> library(s_LibraryMutex);
 	{
-		// mb_str() can point into the text, so it outlives the parse
-		wxScopedCharBuffer buffer = text->mb_str(wxConvUTF8);
 		wxMutexLocker lock(openMutex);
-		if (m_IsReady && m_Library && !m_Tracks.Find(hash)) {
-			AddAttachedFonts();
-			if (ASS_Track *track = ass_read_memory(m_Library, buffer.data(), strlen(buffer), nullptr))
-				m_Tracks.Add(hash, track, m_AssTrack);
+		if (!m_IsReady || !m_Library || m_Tracks.Find(hash)) {
+			delete text;
+			return;
 		}
+		AddAttachedFonts();
 	}
+	ASS_Track *track = ParseScript(m_Library, *text);
 	delete text;
+	if (!track)
+		return;
+	wxMutexLocker lock(openMutex);
+	// Open may have parsed the same script meanwhile
+	if (m_Tracks.Find(hash))
+		ass_free_track(track);
+	else
+		m_Tracks.Add(hash, track, m_AssTrack);
 }
 
 bool SubtitlesLibass::OpenString(wxString *text)
 {
-	wxMutexLocker lock(openMutex);
-	if (!m_IsReady) {
-		SAFE_DELETE(text);
-		return false;
+	std::shared_lock<std::shared_mutex> library(s_LibraryMutex);
+	{
+		wxMutexLocker lock(openMutex);
+		if (!m_IsReady) {
+			SAFE_DELETE(text);
+			return false;
+		}
 	}
 
-	m_AssTrack = nullptr;
 	if (!ReadTrack(text)){
 		HikariLog(_("Cannot open subtitles in Libass"));
 		return false;
@@ -279,6 +328,16 @@ void SubtitlesLibass::ForgetTracks()
 
 void SubtitlesLibass::ReloadLibraries(bool destroyExisted)
 {
+	// a new provider, possibly on the playback thread, usually finds the
+	// library there and needs not wait for a parse in progress
+	if (!destroyExisted) {
+		std::shared_lock<std::shared_mutex> library(s_LibraryMutex);
+		if (m_Library)
+			return;
+	}
+	// waits for parses and for the renderer set-up thread to finish with the
+	// library before it is freed or replaced
+	std::unique_lock<std::shared_mutex> library(s_LibraryMutex);
 	wxMutexLocker lock(openMutex);
 	if (destroyExisted) {
 		//HikariLog("Libass release");

@@ -22,6 +22,7 @@
 #include <wx/arrstr.h>
 #include <atomic>
 #include <mutex>
+#include <shared_mutex>
 #include <string_view>
 #include <thread>
 #include "ParsedScripts.h"
@@ -156,11 +157,16 @@ public:
 	wxSize m_VideoSize;
 	volatile bool m_SubsSkipped = false;
 	static wxMutex openMutex;
+	// Parses run outside openMutex holding this shared, so the library they
+	// read stays; ReloadLibraries takes it exclusively to replace the
+	// library. Taken before openMutex.
+	static std::shared_mutex s_LibraryMutex;
 private:
 	// Blends a libass image list onto an ARGB (premultiplied) overlay buffer.
 	void BlendImages(ASS_Image* img, unsigned char* buffer);
 	ASS_Image* RenderFrame(int time, int* change);
-	// call with openMutex locked; takes the text
+	// call with s_LibraryMutex shared and openMutex not locked; takes the
+	// text. The track shown so far stays until the new one is parsed.
 	bool ReadTrack(wxString* text);
 	// call with openMutex locked, libass ready: adds the attached fonts the
 	// library lacks
