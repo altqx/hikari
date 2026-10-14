@@ -180,6 +180,10 @@ public:
     // Resolves every outstanding frame and audio request as Cancelled now;
     // the helper's late results are dropped.
     virtual void cancelReads() = 0;
+    // V3: closes the source (legacy deleted its provider with the video):
+    // the open, reads and audio resolve Cancelled or go stale, and the port
+    // holds the file no longer.
+    virtual void close() {}
     virtual std::uint64_t generation() const = 0;
 };
 

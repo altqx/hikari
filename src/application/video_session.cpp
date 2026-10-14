@@ -150,6 +150,9 @@ void VideoSession::close()
     if (m_state == State::Opening)
         m_source.cancelOpen();
     m_source.cancelReads();
+    // V3: the source lets go of the file (legacy deleted its provider)
+    if (m_state != State::Closed)
+        m_source.close();
     m_state = State::Closed;
     m_path.clear();
     m_error.reset();

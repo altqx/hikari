@@ -97,6 +97,8 @@ add_executable(hikari_failing_media_helper failing_media_helper.cpp)
 target_link_libraries(hikari_failing_media_helper PRIVATE hikari_helper_endpoint)
 add_dependencies(hikari_backends_indexed_source_tests hikari_media_helper hikari_failing_media_helper
     hikari_media_fixtures)
+# V3: which files the source's helper still holds (tests/support/open_files.h).
+target_include_directories(hikari_backends_indexed_source_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 
 # N6: the real-time engine everywhere; the PortAudio stream wherever an output
 # device exists (CI Linux provides a null ALSA PCM, HIKARI_TEST_AUDIO_DEVICE).

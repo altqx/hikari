@@ -43,6 +43,7 @@ public:
     void openAudio(int track, AudioOpened done) override;
     void audio(std::int64_t start, std::int64_t count, AudioReady done) override;
     void cancelReads() override;
+    void close() override;
     void setInputMatrix(int colorSpace, int colorRange, MatrixSet done) override;
     void beginPcm(std::int64_t start, std::int64_t count, int outRate, int outChannels, PcmBegun done) override;
     void nextPcm(std::int64_t maxFrames, PcmReady done) override;
@@ -56,6 +57,7 @@ public:
                           application::DisplayAudioPort::Opened done) override;
     void displayAudio(const application::BlockRead &read, Read done) override;
     void cancelDisplay() override;
+    void closeDisplay() override;
 
     // A1: removes the open's handoffIndexFile (SourceTimeline) once the audio
     // box has read it, when it is still this source's; it also goes when the
@@ -78,6 +80,8 @@ signals:
 
 private:
     void dropHandoff();
+    // close() and closeDisplay(): the helper closes everything it has open.
+    void closeAll();
     void ensureHelper(std::function<void(bool)> ready);
     // Registers a read: the returned callback resolves it once (later calls
     // are ignored); cancelReads() resolves it as Cancelled.
