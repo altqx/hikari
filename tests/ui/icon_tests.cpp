@@ -1052,6 +1052,8 @@ Rectangle {
         if (const int rowsWanted = qEnvironmentVariableIntValue("HIKARI_ICON_SHEET_PAGE_ROWS"); rowsWanted > 0)
             fitRows = rowsWanted;
         const QStringList allRoles = roles;
+        // No roles would make no pages, and the test would pass drawing nothing.
+        QVERIFY(!allRoles.isEmpty());
         const int pageRoles = fitRows * columns;
         const int pages = int((allRoles.size() + pageRoles - 1) / pageRoles);
         const QString outDir = qEnvironmentVariable("HIKARI_ICON_SHEET_DIR");
