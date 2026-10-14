@@ -199,6 +199,30 @@ std::string WriteScanlineMatroska()
 	return out ? std::string(path) : std::string();
 }
 
+// A Matroska file with one ASS track at another TimestampScale (nanoseconds
+// per tick; FFmpeg gives the track that time base): one cluster at 0 and
+// no Cues, the blocks' times in ticks.
+std::string WriteMatroskaAt(uint64_t timestampScale, const std::vector<Block> &blocks)
+{
+	Bytes ebml = Element(0x1A45DFA3, Uint(0x4286, 1) + Uint(0x42F7, 1) + Uint(0x42F2, 4) + Uint(0x42F3, 8) +
+		Element(0x4282, "matroska") + Uint(0x4287, 4) + Uint(0x4285, 2));
+	Bytes segment = Element(0x1549A966, Uint(0x2AD7B1, timestampScale) + Element(0x4D80, "hikarisub_tests") +
+		Element(0x5741, "hikarisub_tests"));
+	segment += Element(0x1654AE6B, Element(0xAE, Uint(0xD7, 1) + Uint(0x73C5, 1001) + Uint(0x83, 0x11) +
+		Uint(0x9C, 0) + Element(0x86, "S_TEXT/ASS") + Element(0x63A2, kCodecPrivate)));
+	segment += Cluster(0, blocks);
+
+	char path[] = "/tmp/hikarisub-mkv-XXXXXX";
+	int fd = mkstemp(path);
+	if (fd < 0)
+		return {};
+	close(fd);
+	std::ofstream out(path, std::ios::binary);
+	Bytes file = ebml + Element(0x18538067, segment);
+	out.write(file.data(), std::streamsize(file.size()));
+	return out ? std::string(path) : std::string();
+}
+
 struct Read {
 	std::vector<Block> blocks;
 };
@@ -313,4 +337,46 @@ TEST(matroska_subtitles_scanline_line_draws_under_its_position)
 	// the strips of the drawing under \pos(960,1017), nothing elsewhere
 	CHECK(inside > 5000);
 	CHECK_EQ(outside, 0L);
+}
+
+// FFMS_GetSubtitles hands over milliseconds whatever the TimestampScale:
+// the old pts / AVPacket.time_base.den kept the track's own ticks, right
+// only for Matroska's default of 1 ms. Each end goes to the nearest
+// millisecond and the duration is taken between them.
+TEST(matroska_subtitles_at_a_tenth_of_a_millisecond_are_milliseconds)
+{
+	// 100000 ns ticks (1/10000): 12345 is 1234.5 ms, ending at 17345, 1734.5;
+	// 24691 is 2469.1, ending at 34692, 3469.2.
+	std::string path = WriteMatroskaAt(100000, { { 12345, 5000, "0,0,Opening TH,,0,0,0,,one" },
+		{ 24691, 10001, "1,2,Opening TH,,0,0,0,,two" } });
+	CHECK(!path.empty());
+	std::vector<Block> blocks = ReadTrack(path);
+	std::remove(path.c_str());
+	CHECK_EQ(blocks.size(), size_t(2));
+	if (blocks.size() == 2) {
+		CHECK_EQ(blocks[0].start, int64_t(1235));
+		CHECK_EQ(blocks[0].duration, int64_t(500));
+		CHECK_EQ(blocks[1].start, int64_t(2469));
+		CHECK_EQ(blocks[1].duration, int64_t(1000));
+		CHECK(DialogueOf(blocks[0]) == "Dialogue: 0,0:00:01.24,0:00:01.74,Opening TH,,0,0,0,,one\r\n");
+		CHECK(DialogueOf(blocks[1]) == "Dialogue: 2,0:00:02.47,0:00:03.47,Opening TH,,0,0,0,,two\r\n");
+	}
+}
+
+TEST(matroska_subtitles_at_ten_milliseconds_are_milliseconds)
+{
+	// 10 ms ticks (1/100): 123 is 1230 ms for 50 ticks, 500 ms; 6000 is one
+	// minute for 1 tick.
+	std::string path = WriteMatroskaAt(10000000, { { 123, 50, "0,0,Opening TH,,0,0,0,,one" },
+		{ 6000, 1, "1,0,Opening TH,,0,0,0,,two" } });
+	CHECK(!path.empty());
+	std::vector<Block> blocks = ReadTrack(path);
+	std::remove(path.c_str());
+	CHECK_EQ(blocks.size(), size_t(2));
+	if (blocks.size() == 2) {
+		CHECK_EQ(blocks[0].start, int64_t(1230));
+		CHECK_EQ(blocks[0].duration, int64_t(500));
+		CHECK_EQ(blocks[1].start, int64_t(60000));
+		CHECK_EQ(blocks[1].duration, int64_t(10));
+	}
 }

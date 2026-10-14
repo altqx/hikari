@@ -169,6 +169,7 @@ if(HIKARISUB_TESTS_MEDIA_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../Thirdp
         check_main.cpp
         LibassAttachedFontTests.cpp
         MatroskaSubtitlesTests.cpp
+        SubtitleTimeBaseTests.cpp
         ../HikariSub/ScriptAttachments.cpp
         ../Thirdparty/Build/FFMS2/indexing_additional.cpp)
     target_include_directories(hikarisub_media_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../Thirdparty/ffms2/src)

@@ -21,6 +21,8 @@
 #include "../../ffms2/include/ffms.h"
 #include "../../ffms2/src/core/indexing.h"
 
+static const AVRational kMilliseconds = { 1, 1000 };
+
 
 const char* FFMS_Indexer::GetTrackName(int Track)
 {
@@ -52,9 +54,14 @@ FFMS_Chapters* FFMS_Indexer::GetChapters()
 	Chapters->NumOfChapters = FormatContext->nb_chapters;
 	for (int i = 0; i < FormatContext->nb_chapters; i++) {
 		AVChapter* chapter = FormatContext->chapters[i];
-		int den = chapter->time_base.den / 1000.f;
-		Chapters->Chapters[i].Start = chapter->start / den;
-		Chapters->Chapters[i].End = chapter->end / den;
+		// Milliseconds, cut toward zero as the old division by time_base.den
+		// / 1000 cut Matroska's nanoseconds. That division was right only for
+		// a den that is a multiple of 1000 and a num of 1, and divided by zero
+		// for a den under 1000: QuickTime's chapter track counts in 1/600.
+		Chapters->Chapters[i].Start = av_rescale_q_rnd(chapter->start, chapter->time_base, kMilliseconds,
+			AVRounding(AV_ROUND_ZERO | AV_ROUND_PASS_MINMAX));
+		Chapters->Chapters[i].End = av_rescale_q_rnd(chapter->end, chapter->time_base, kMilliseconds,
+			AVRounding(AV_ROUND_ZERO | AV_ROUND_PASS_MINMAX));
 		AVDictionaryEntry* e = av_dict_get(chapter->metadata, "title", nullptr, 0);
 		Chapters->Chapters[i].Title = (e) ? e->value : nullptr;
 	}
@@ -108,6 +115,18 @@ void FFMS_Indexer::GetSubtitles(int Track, GetSubtitlesCallback IC, void* ICPriv
 	for (unsigned int i = 0; i < Reader->nb_streams; i++)
 		Reader->streams[i]->discard = ((int)i == Track) ? AVDISCARD_DEFAULT : AVDISCARD_ALL;
 
+	// Times go to the callback in milliseconds, which is what Demux::GetSubtitles
+	// reads them as. av_read_frame leaves AVPacket.time_base at {0, 1}: a
+	// packet's times are in its stream's time_base, which is 1/1000 only in
+	// Matroska with the default TimestampScale. Dividing by
+	// AVPacket.time_base.den (1) kept them in those units, so an MP4 or MOV
+	// track, an MPEG-TS one (1/90000) or a Matroska file with another
+	// TimestampScale gave times hundreds of times too large.
+	const AVRational TimeBase = Reader->streams[Track]->time_base;
+	// The progress total; FFmpeg leaves a Matroska subtitle track's duration
+	// AV_NOPTS_VALUE, which passes through as before.
+	const int64_t Total = av_rescale_q_rnd(Reader->streams[Track]->duration, TimeBase, kMilliseconds,
+		AVRounding(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
 	AVPacket* Packet = av_packet_alloc();
 	if (Packet) {
 		while (av_read_frame(Reader, Packet) >= 0) {
@@ -116,9 +135,22 @@ void FFMS_Indexer::GetSubtitles(int Track, GetSubtitlesCallback IC, void* ICPriv
 					av_packet_unref(Packet);
 					continue;
 				}
-				if (IC(Packet->pts / Packet->time_base.den, Packet->duration / Packet->time_base.den,
-					stream->duration / (stream->time_base.den / 1000.f),
-					(char*)Packet->data, ICPrivate) == 1)
+				// On the container's own clock, as FFMS2 gives the video's
+				// frame times: no start_time is taken off. A packet without a
+				// pts uses its dts, and one with neither starts at 0, where the
+				// old arithmetic also put it once Demux cut it to an int.
+				int64_t Start = (Packet->pts != AV_NOPTS_VALUE) ? Packet->pts : Packet->dts;
+				if (Start == AV_NOPTS_VALUE)
+					Start = 0;
+				int64_t Duration = Packet->duration;
+				if (Duration < 0 || (Start > 0 && Duration > INT64_MAX - Start))
+					Duration = 0;
+				// Both ends rounded to the nearest millisecond and the duration
+				// taken between them, so the end is the nearest millisecond to
+				// the packet's end rather than a sum of two roundings.
+				const int64_t StartMs = av_rescale_q(Start, TimeBase, kMilliseconds);
+				const int64_t EndMs = av_rescale_q(Start + Duration, TimeBase, kMilliseconds);
+				if (IC(StartMs, EndMs - StartMs, Total, (char*)Packet->data, ICPrivate) == 1)
 					break;
 			}
 			av_packet_unref(Packet);
