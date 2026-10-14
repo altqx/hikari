@@ -60,7 +60,7 @@ foreach(kind cfr vfr bframes longgop audio tracks unknown color601 color709 colo
     list(APPEND _hikari_media_fixtures "${out}")
 endforeach()
 # Y9: the Matroska subtitle and attachment fixtures, beside the media ones.
-foreach(kind subs onesub nosubs)
+foreach(kind subs onesub nosubs scanline)
     set(out "${HIKARI_MEDIA_FIXTURE_DIR}/mkv-${kind}.mkv")
     add_custom_command(OUTPUT "${out}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_MEDIA_FIXTURE_DIR}"
@@ -303,10 +303,11 @@ endif()
 
 # Y9: MKV extraction through the media helper (legacy Demux).
 hikari_add_gtest(hikari_backends_matroska_tests SOURCES matroska_tests.cpp
-    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+    LIBRARIES hikari_backends hikari_application Qt6::Core LABELS backends)
 target_include_directories(hikari_backends_matroska_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support/media")
 target_compile_definitions(hikari_backends_matroska_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
 add_dependencies(hikari_backends_matroska_tests hikari_media_helper hikari_media_fixtures)
 # Y9: the same reads against legacy Demux's run on mkvmerge-muxed files.
@@ -353,34 +354,37 @@ endif()
 hikari_add_gtest(hikari_backends_csri_tests SOURCES csri_renderer_tests.cpp
     $<$<NOT:$<PLATFORM_ID:Windows>>:${PROJECT_SOURCE_DIR}/src/backends/csri_renderer.cpp>
     LIBRARIES hikari_backends LABELS backends)
-# W2 (Windows, HIKARI_WITH_VSFILTER): the recipe's xy-VSFilter through the
-# adapter, against the legacy release's (HIKARI_LEGACY_CSRI).
-if(WIN32 AND HIKARI_WITH_VSFILTER)
-    hikari_add_gtest(hikari_backends_vsfilter_tests SOURCES csri_vsfilter_tests.cpp
+# W2 (Windows): VSFilterMod, the CSRI renderer the package ships, through the
+# adapter: from HIKARI_VSFILTERMOD_CSRI (a folder holding VSFiltermod.dll, such
+# as the payload's Csri folder) or the pinned release HIKARI_TEST_VSFILTERMOD
+# fetched; without either the tests are skipped.
+if(WIN32)
+    hikari_add_gtest(hikari_backends_vsfiltermod_tests SOURCES csri_vsfiltermod_tests.cpp
         LIBRARIES hikari_backends Qt6::Gui LABELS backends PROPERTIES TIMEOUT 300)
-    set(_w2_csri "${CMAKE_CURRENT_BINARY_DIR}/vsfilter-csri")
-    add_custom_command(TARGET hikari_backends_vsfilter_tests POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E make_directory "${_w2_csri}"
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:HikariXyVSFilter::csri>"
-            "${_w2_csri}/xy-VSFilter_hikarisub.dll"
-        VERBATIM)
-    target_compile_definitions(hikari_backends_vsfilter_tests PRIVATE HIKARI_VSFILTER_CSRI_DIR="${_w2_csri}"
-        HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/vsfilter"
+    target_compile_definitions(hikari_backends_vsfiltermod_tests PRIVATE
+        HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/vsfiltermod"
         HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+    if(HIKARI_TEST_VSFILTERMOD_DLL)
+        set(_w2_csri "${CMAKE_CURRENT_BINARY_DIR}/vsfiltermod-csri")
+        add_custom_command(TARGET hikari_backends_vsfiltermod_tests POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${_w2_csri}"
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${HIKARI_TEST_VSFILTERMOD_DLL}" "${_w2_csri}/VSFiltermod.dll"
+            VERBATIM)
+        target_compile_definitions(hikari_backends_vsfiltermod_tests PRIVATE HIKARI_VSFILTERMOD_CSRI_DIR="${_w2_csri}")
+    endif()
 endif()
-# W2: the winix vsfilter-test task sets every variable the recipe tests read
-# (on every platform: it checks the task file, not the renderer).
+# W2: the winix vsfiltermod-test task sets every variable the VSFilterMod tests
+# read (on every platform: it checks the task file, not the renderer).
 add_test(NAME vsfilter-task-environment COMMAND "${CMAKE_COMMAND}"
-    "-DTASKS=${PROJECT_SOURCE_DIR}/winix.yaml" -DTASK=vsfilter-test
-    "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/csri_vsfilter_tests.cpp"
+    "-DTASKS=${PROJECT_SOURCE_DIR}/winix.yaml" -DTASK=vsfiltermod-test
+    "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/csri_vsfiltermod_tests.cpp"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/vsfilter_task_environment.cmake")
-# Control: the task without HIKARI_VSFILTERMOD_CSRI, as it was, fails.
+# Control: the task without HIKARI_VSFILTERMOD_CSRI fails.
 add_test(NAME vsfilter-task-environment-control COMMAND "${CMAKE_COMMAND}"
-    "-DTASKS=${PROJECT_SOURCE_DIR}/winix.yaml" -DTASK=vsfilter-test
-    "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/csri_vsfilter_tests.cpp"
-    "-DDROP=$env:HIKARI_VSFILTERMOD_CSRI = $env:HIKARI_LEGACY_CSRI; "
+    "-DTASKS=${PROJECT_SOURCE_DIR}/winix.yaml" -DTASK=vsfiltermod-test
+    "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/csri_vsfiltermod_tests.cpp"
+    "-DDROP=$env:HIKARI_VSFILTERMOD_CSRI = \"$PWD/out/build/windows-x64-vsfiltermod/tests/backends/vsfiltermod-csri\"; "
     -P "${CMAKE_CURRENT_SOURCE_DIR}/vsfilter_task_environment.cmake")
-set_tests_properties(vsfilter-task-environment PROPERTIES LABELS backends TIMEOUT 60)
 set_tests_properties(vsfilter-task-environment-control PROPERTIES LABELS backends TIMEOUT 60 WILL_FAIL TRUE)
 # W1: the optional DirectShow adapter (Windows only). Its frame and seek
 # fixtures run against the default players on the same media; its manifest

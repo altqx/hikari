@@ -665,6 +665,54 @@ int FFMS_CC onSubtitle(int64_t start, int64_t duration, int64_t total, const cha
     return read->responder->cancelled() ? 1 : 0;
 }
 
+struct FormatDeleter {
+    void operator()(AVFormatContext *f) const { avformat_close_input(&f); }
+};
+
+// FFMS_GetSubtitles (indexing_additional.cpp) with its times, totals and
+// skipped packets, but read from the start of the file by a demuxer of the
+// helper's own (user decision 28, 2026-10-14). The extension seeks the
+// indexer's demuxer to 0 instead, which goes to the track's first index
+// entry; libavformat keeps one entry per timestamp, at the position the last
+// cue of that time names. When a track's first blocks share a time but sit in
+// two clusters and that cue names the later one, the blocks in the earlier
+// cluster were never read: all 38 copies of a karaoke file's first line.
+// Legacy's extension now reads the same way. False when the file cannot be
+// opened as the indexer opened it.
+bool readSubtitles(const std::string &path, int track, SubtitleRead &read)
+{
+    AVFormatContext *opened = nullptr;
+    if (avformat_open_input(&opened, path.c_str(), nullptr, nullptr) != 0)
+        return false;
+    const std::unique_ptr<AVFormatContext, FormatDeleter> fmt(opened);
+    // FFMS_CreateIndexer's stream numbers: it ran this too
+    if (avformat_find_stream_info(fmt.get(), nullptr) < 0 || track < 0 ||
+        track >= static_cast<int>(fmt->nb_streams))
+        return false;
+    for (unsigned i = 0; i < fmt->nb_streams; ++i)
+        fmt->streams[i]->discard = static_cast<int>(i) == track ? AVDISCARD_DEFAULT : AVDISCARD_ALL;
+    const AVStream *stream = fmt->streams[track];
+    // The extension's arithmetic: av_read_frame leaves AVPacket.time_base at
+    // {0, 1}, so the times stay in the stream's units (Matroska's milliseconds).
+    const auto total = static_cast<std::int64_t>(stream->duration / (stream->time_base.den / 1000.f));
+    AVPacket *packet = av_packet_alloc();
+    if (!packet)
+        return false;
+    while (av_read_frame(fmt.get(), packet) >= 0) {
+        if (packet->stream_index == track && packet->size >= 2) {
+            const std::int64_t den = packet->time_base.den ? packet->time_base.den : 1;
+            // up to the first NUL, as the extension handed the bytes over
+            const char *data = reinterpret_cast<const char *>(packet->data);
+            const std::string line(data, strnlen(data, static_cast<std::size_t>(packet->size)));
+            if (onSubtitle(packet->pts / den, packet->duration / den, total, line.c_str(), &read) == 1)
+                break;
+        }
+        av_packet_unref(packet);
+    }
+    av_packet_free(&packet);
+    return true;
+}
+
 } // namespace
 
 // The subtitle tracks in container order (Demux::GetSubtitles' list,
@@ -695,7 +743,8 @@ void subtitleTracks(Reader &in, Responder &r)
     r.terminal(Outcome::Ok, std::move(out));
 }
 
-// One track's packets and codec-private data (Demux.cpp:121, 131).
+// One track's packets and codec-private data (Demux.cpp:121, 131); the
+// packets from readSubtitles, every one in the file.
 void subtitles(Reader &in, Responder &r)
 {
     const std::string path = in.str();
@@ -709,7 +758,8 @@ void subtitles(Reader &in, Responder &r)
         FFMS_GetTrackTypeI(indexer.get(), track) != FFMS_TYPE_SUBTITLE)
         return r.terminal(Outcome::InvalidInput, bytesOf("not a subtitle track"));
     SubtitleRead read{&r, {}, 0};
-    FFMS_GetSubtitles(indexer.get(), track, &onSubtitle, &read);
+    if (!readSubtitles(path, track, read))
+        return r.terminal(Outcome::Failed, bytesOf("cannot open " + path));
     if (r.cancelled())
         return r.terminal(Outcome::Cancelled);
     auto out = Writer()

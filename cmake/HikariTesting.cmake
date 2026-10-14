@@ -77,3 +77,18 @@ function(hikari_add_spix_test target)
     target_link_libraries(${target} PRIVATE Spix::SpixQtQuick Qt6::Gui Qt6::Qml Qt6::Quick ${arg_LIBRARIES})
     _hikari_add_qt_modes(${target} ui $<TARGET_FILE:${target}>)
 endfunction()
+
+# W2: VSFilterMod, the CSRI renderer the Windows package ships, for the tests
+# that need a real CSRI renderer (the windows-x64-vsfiltermod preset turns it
+# on): the configure fetches the pinned release (HikariVsfilterMod.cmake) and
+# HIKARI_TEST_VSFILTERMOD_DLL is its DLL. Off by default, so the default
+# build downloads nothing and has no CSRI renderer.
+option(HIKARI_TEST_VSFILTERMOD "Fetch the pinned VSFilterMod for the CSRI tests (Windows)" OFF)
+set(HIKARI_TEST_VSFILTERMOD_DLL "")
+if(HIKARI_TEST_VSFILTERMOD)
+    if(NOT WIN32)
+        message(FATAL_ERROR "HIKARI_TEST_VSFILTERMOD: VSFilterMod is a Windows CSRI renderer")
+    endif()
+    include("${CMAKE_CURRENT_LIST_DIR}/HikariVsfilterMod.cmake")
+    hikari_fetch_vsfiltermod("${CMAKE_BINARY_DIR}/vsfiltermod-downloads" HIKARI_TEST_VSFILTERMOD_DLL)
+endif()

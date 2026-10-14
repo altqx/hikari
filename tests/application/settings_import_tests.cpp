@@ -905,12 +905,14 @@ TEST(SettingsImport, ForeignAndMissingPathsAreReportedNotRepaired)
 }
 
 // W2-missing-renderer-libass: a Windows profile's VSFILTER_INSTANCE names a
-// CSRI renderer; where it is not installed (Linux, or a build without the
-// Csri folder) the row stays unresolved and is not proposed, so the profile
-// keeps drawing through libass. Where it is installed it is imported.
+// CSRI renderer; where it is not installed (Linux, a build without the Csri
+// folder, or legacy's xy-VSFilter, which is not shipped: W2-no-xy-vsfilter)
+// the row stays unresolved and is not proposed, so the profile keeps drawing
+// through libass. Where it is installed (VSFilterMod in the Windows package)
+// it is imported.
 TEST(SettingsImport, ARendererThatIsNotInstalledStaysUnresolved)
 {
-    const std::string body = padding() + "VSFILTER_INSTANCE=xy-vsfilter_textsub\r\n";
+    const std::string body = padding() + "VSFILTER_INSTANCE=vsfiltermod_textsub\r\n";
     Destination noCsri = linuxHost();
     noCsri.rendererInstalled = [](std::string_view name) { return name == "libass"; };
     const Plan plan = buildPlan({config(body)}, noCsri, readBy(ReadBy::Windows));
@@ -928,14 +930,19 @@ TEST(SettingsImport, ARendererThatIsNotInstalledStaysUnresolved)
 
     Destination package = linuxHost();
     package.windowsHost = true;
-    package.rendererInstalled = [](std::string_view name) {
-        return name == "xy-vsfilter_textsub" || name == "libass" || name == "vsfiltermod_textsub";
-    };
+    package.rendererInstalled = [](std::string_view name) { return name == "libass" || name == "vsfiltermod_textsub"; };
     const Plan installed = buildPlan({config(body)}, package, readBy(ReadBy::Windows));
     EXPECT_EQ(rowOf(installed, "setting:video.subtitleProvider").disposition, Disposition::Change);
     EXPECT_TRUE(rowOf(installed, "setting:video.subtitleProvider").proposedImport);
     EXPECT_EQ(applyPlan(installed, proposedRows(installed), package).values.at("video.subtitleProvider"),
-              SettingValue(std::string("xy-vsfilter_textsub")));
+              SettingValue(std::string("vsfiltermod_textsub")));
+    // Legacy's default renderer, in most legacy Windows profiles: not
+    // installed in the package either, so it is not imported.
+    const Plan xy = buildPlan({config(padding() + "VSFILTER_INSTANCE=xy-vsfilter_textsub\r\n")}, package,
+                              readBy(ReadBy::Windows));
+    EXPECT_EQ(rowOf(xy, "setting:video.subtitleProvider").disposition, Disposition::Unresolved);
+    EXPECT_FALSE(rowOf(xy, "setting:video.subtitleProvider").proposedImport);
+    EXPECT_FALSE(applyPlan(xy, proposedRows(xy), package).values.contains("video.subtitleProvider"));
 }
 
 // ---- Keeping the destination, repeat import and later edits (S44-import)

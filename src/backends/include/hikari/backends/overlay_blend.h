@@ -9,8 +9,8 @@
 // every path; the path is chosen once at run time (AVX2 where the CPU and
 // the OS have it, else SSE2 on x86, else plain C++).
 //
-// premultiplyStraightAlpha is the CSRI adapter's pass over what xy-VSFilter
-// drew (straight alpha) into a cleared frame.
+// premultiplyStraightAlpha is the CSRI adapter's pass over what a renderer
+// that takes BGRA drew (straight alpha) into a cleared frame.
 
 #include "hikari/application/subtitle_render.h"
 

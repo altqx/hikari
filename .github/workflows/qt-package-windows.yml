@@ -134,9 +134,11 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $p = 'out/build/windows-x64-package/payload/HikariSub'
-          foreach ($f in 'HikariSub.exe', 'hikari-media-helper.exe', 'hikari-lua-helper.exe', 'Qt6Core.dll', 'vcruntime140.dll', 'msvcp140.dll', 'Dictionary/en_US.dic', 'Automation/automation', 'Csri/xy-VSFilter_hikarisub.dll', 'Csri/VSFiltermod.dll') {
+          foreach ($f in 'HikariSub.exe', 'hikari-media-helper.exe', 'hikari-lua-helper.exe', 'Qt6Core.dll', 'vcruntime140.dll', 'msvcp140.dll', 'Dictionary/en_US.dic', 'Automation/automation', 'Csri/VSFiltermod.dll') {
             if (-not (Test-Path "$p/$f")) { throw "payload lacks $f" }
           }
+          # xy-VSFilter is not shipped (user 2026-10-14): VSFilterMod is the only CSRI renderer.
+          if (Test-Path "$p/Csri/xy-VSFilter_hikarisub.dll") { throw 'payload carries xy-VSFilter' }
           foreach ($f in 'package-kind.txt', 'install-manifest.txt') {
             if (Test-Path "$p/$f") { throw "payload carries $f" }
           }

@@ -1,6 +1,6 @@
-# W2: the winix task that runs the xy-VSFilter recipe tests must set every
-# HIKARI_* variable those tests read with getenv; a variable it leaves unset
-# turns its tests into skips (HIKARI_VSFILTERMOD_CSRI skipped the VSFilterMod
+# W2: the winix task that runs the VSFilterMod tests must set every HIKARI_*
+# variable those tests read with getenv; a variable it leaves unset can turn
+# its tests into skips (HIKARI_VSFILTERMOD_CSRI skipped the VSFilterMod
 # overlay test until the task set it).
 #
 #   cmake -DTASKS=<winix.yaml> -DTASK=<task name> -DSOURCE=<test source>

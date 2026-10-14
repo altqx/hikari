@@ -4412,7 +4412,8 @@ private slots:
         QVERIFY(text.contains(QStringLiteral("Libass - Copyright")));
         QVERIFY(text.contains(QStringLiteral("Hunspell - Copyright"))); // F3: linked again (R2-hunspell)
         // W2: the CSRI line where the CSRI adapter is built (Windows); the
-        // VSFilter line only in a build that ships xy-VSFilter.
+        // VSFilter line only where VSFilterMod, a VSFilter derivative, is in
+        // the Csri folder (the package; xy-VSFilter is not shipped).
 #ifdef _WIN32
         QVERIFY(text.contains(QStringLiteral("CSRI - Copyright © David Lamparter (BSD licence).")));
 #else
@@ -4420,7 +4421,9 @@ private slots:
 #endif
         QCOMPARE(text.contains(QStringLiteral("Vsfilter - Copyright © Gabest (GNU GPL 2 or later).")),
                  application->property("includesVsfilter").toBool());
-#ifndef _WIN32
+#ifdef HIKARI_WITH_VSFILTERMOD
+        QVERIFY(application->property("includesVsfilter").toBool());
+#else
         QVERIFY(!text.contains(QStringLiteral("Vsfilter")));
 #endif
         QVERIFY(QMetaObject::invokeMethod(about, "close"));
@@ -5351,10 +5354,11 @@ private slots:
 
     // W2: the renderer switch on a loaded video (legacy OptionsDialog
     // SetOptions, OptionsDialog.cpp:1145-1152: DestroyProviders, then
-    // RefreshVideo). With xy-VSFilter in the Csri folder (Windows,
-    // HIKARI_WITH_VSFILTER) the shown frame is drawn again through it, and
-    // back through libass; elsewhere libass stays the only renderer and the
-    // setting changes nothing.
+    // RefreshVideo). Legacy's default, xy-VSFilter, is not shipped
+    // (W2-no-xy-vsfilter): choosing it keeps libass drawing. With VSFilterMod
+    // in the Csri folder (Windows, HIKARI_WITH_VSFILTERMOD) the shown frame
+    // is drawn again through it, and back through libass; elsewhere libass
+    // stays the only renderer and the setting changes nothing.
     void subtitleDisplayFilterSwitchesOnTheLoadedVideo()
     {
         const QString path = dir.filePath(QStringLiteral("renderer-switch.ass"));
@@ -5429,46 +5433,50 @@ private slots:
         QImage libassShot;
         desktopShot(QStringLiteral("libass"), libassShot, false);
         auto restore = qScopeGuard([&] { application->settingsStore()->reset(QStringLiteral("video.subtitleProvider")); });
+        // xy-VSFilter, stored by a legacy profile: not installed, so libass
+        // keeps drawing and nothing is drawn again (W2-no-xy-vsfilter,
+        // W2-missing-renderer-libass).
         application->settingsStore()->set("video.subtitleProvider", QStringLiteral("xy-vsfilter_textsub"));
-#ifdef HIKARI_WITH_VSFILTER
-        QCOMPARE(renderer.activeName(), std::string("xy-vsfilter_textsub"));
+        QVERIFY(renderer.usesLibass());
+        QCOMPARE(renderer.activeName(), std::string("libass"));
+        QCOMPARE(renderer.provider(), std::string("libass"));
+        QCOMPARE(session.lastOverlay(), libass);
+#ifdef HIKARI_WITH_VSFILTERMOD
+        QCOMPARE(renderer.providers(), (std::vector<std::string>{"libass", "vsfiltermod_textsub"}));
+        application->settingsStore()->set("video.subtitleProvider", QStringLiteral("vsfiltermod_textsub"));
+        QCOMPARE(renderer.activeName(), std::string("vsfiltermod_textsub"));
         QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() != libass && !session.lastOverlay()->empty, 20000);
-        const auto vsfilter = session.lastOverlay();
-        QImage vsfilterShot;
-        desktopShot(QStringLiteral("xy-vsfilter"), vsfilterShot, true);
+        const auto vsfiltermod = session.lastOverlay();
+        QImage vsfiltermodShot;
+        desktopShot(QStringLiteral("vsfiltermod"), vsfiltermodShot, true);
         if (!shots.isEmpty())
-            QVERIFY2(pixelsApart(libassShot, vsfilterShot) > 0, "the screen shows the same picture after the switch");
-        QCOMPARE(vsfilter->width, libass->width);
-        QCOMPARE(vsfilter->height, libass->height);
-        QVERIFY(vsfilter->pixels != libass->pixels); // another renderer drew it
-        const QString artifacts = QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/vsfilter-switch");
+            QVERIFY2(pixelsApart(libassShot, vsfiltermodShot) > 0, "the screen shows the same picture after the switch");
+        QCOMPARE(vsfiltermod->width, libass->width);
+        QCOMPARE(vsfiltermod->height, libass->height);
+        QVERIFY(vsfiltermod->pixels != libass->pixels); // another renderer drew it
+        const QString artifacts = QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/vsfiltermod-switch");
         QVERIFY(QDir().mkpath(artifacts));
-        for (const auto &[name, frame] : {std::pair{"libass", libass}, std::pair{"xy-vsfilter", vsfilter}}) {
+        for (const auto &[name, frame] : {std::pair{"libass", libass}, std::pair{"vsfiltermod", vsfiltermod}}) {
             QImage image(frame->width, frame->height, QImage::Format_ARGB32_Premultiplied);
             for (int y = 0; y < frame->height; ++y)
                 std::memcpy(image.scanLine(y), frame->pixels.data() + std::size_t(y) * std::size_t(frame->stride),
                             std::size_t(frame->width) * 4);
             QVERIFY(image.save(artifacts + QLatin1Char('/') + QLatin1String(name) + QStringLiteral(".png")));
         }
-        // A name that is not installed (VSFilterMod is not beside the
-        // tests) draws through libass (W2-missing-renderer-libass; legacy
-        // GetVSFilter used its default CSRI renderer).
-        application->settingsStore()->set("video.subtitleProvider", QStringLiteral("vsfiltermod_textsub"));
-        QVERIFY(renderer.usesLibass());
-        QCOMPARE(renderer.activeName(), std::string("libass"));
-        QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() != vsfilter, 20000);
-        QVERIFY(session.lastOverlay()->pixels == libass->pixels);
         application->settingsStore()->set("video.subtitleProvider", QStringLiteral("libass"));
         QCOMPARE(renderer.activeName(), std::string("libass"));
+        QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() != vsfiltermod, 20000);
+        QVERIFY(session.lastOverlay()->pixels == libass->pixels);
         QImage againShot;
         desktopShot(QStringLiteral("libass-again"), againShot, true);
         if (!shots.isEmpty())
             QVERIFY2(pixelsApart(libassShot, againShot) == 0, "libass's picture differs on the screen after switching back");
 #else
-        // No CSRI renderer (Linux, or Windows without the Csri folder): the
-        // name is not installed, so libass keeps drawing
+        // No CSRI renderer (Linux, or Windows without the Csri folder):
+        // VSFilterMod is not installed either, so libass keeps drawing
         // (W2-missing-renderer-libass; legacy Windows drew nothing, "Cannot
         // initialize CSRI.", and Linux used libass).
+        application->settingsStore()->set("video.subtitleProvider", QStringLiteral("vsfiltermod_textsub"));
         QVERIFY(renderer.usesLibass());
         QCOMPARE(renderer.activeName(), std::string("libass"));
         QCOMPARE(renderer.provider(), std::string("libass"));
@@ -5490,11 +5498,8 @@ private slots:
         options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
         options.catalogDir = own.filePath(QStringLiteral("Catalog"));
         options.playbackAudio = false;
-#ifdef HIKARI_WITH_VSFILTER
-        const QString stale = QStringLiteral("vsfiltermod_textsub"); // only xy-VSFilter is beside the tests
-#else
+        // Legacy's default renderer, which is not shipped (W2-no-xy-vsfilter).
         const QString stale = QStringLiteral("xy-vsfilter_textsub");
-#endif
         {
             app::Application first(options);
             first.settingsStore()->set("video.subtitleProvider", stale);
@@ -5527,10 +5532,10 @@ private slots:
         QVERIFY(renderer.usesLibass());
         const auto open = b.openSettingsDialog();
         const QVariantMap values = open.value(QStringLiteral("values")).toMap();
-#ifdef HIKARI_WITH_VSFILTER
+#ifdef HIKARI_WITH_VSFILTERMOD
         QCOMPARE(open.value(QStringLiteral("renderers")).toStringList(),
-                 (QStringList{QStringLiteral("xy-vsfilter_textsub"), QStringLiteral("libass")}));
-        QCOMPARE(values.value(QStringLiteral("video.subtitleProvider")).toInt(), 1); // libass, as it draws
+                 (QStringList{QStringLiteral("libass"), QStringLiteral("vsfiltermod_textsub")}));
+        QCOMPARE(values.value(QStringLiteral("video.subtitleProvider")).toInt(), 0); // libass, as it draws
 #else
         QCOMPARE(open.value(QStringLiteral("renderers")).toStringList(), QStringList{QStringLiteral("libass")});
         QVERIFY(!values.contains(QStringLiteral("video.subtitleProvider"))); // W2-filter-row-hidden
@@ -5538,7 +5543,7 @@ private slots:
         // VSFilterMod says what it is for; the others show their names.
         QCOMPARE(app::Application::subtitleRendererLabel("vsfiltermod_textsub"),
                  QStringLiteral("vsfiltermod_textsub (slow; only for VSFilterMod tags)"));
-        QCOMPARE(app::Application::subtitleRendererLabel("xy-vsfilter_textsub"), QStringLiteral("xy-vsfilter_textsub"));
+        QCOMPARE(app::Application::subtitleRendererLabel("other_textsub"), QStringLiteral("other_textsub"));
         QCOMPARE(app::Application::subtitleRendererLabel("libass"), QStringLiteral("libass"));
     }
 
@@ -5579,8 +5584,8 @@ private slots:
         const QString libass = check(QStringLiteral("libass"));
         QVERIFY2(libass.contains(QStringLiteral("Completed Successfully, found 1 font.")), qPrintable(libass));
         QVERIFY2(!libass.contains(note), qPrintable(libass));
-        const QString csri = check(QStringLiteral("xy-vsfilter_textsub"));
-        QVERIFY2(csri.contains(QStringLiteral("The video shows the subtitles through xy-vsfilter_textsub, whose "
+        const QString csri = check(QStringLiteral("vsfiltermod_textsub"));
+        QVERIFY2(csri.contains(QStringLiteral("The video shows the subtitles through vsfiltermod_textsub, whose "
                                               "output this check does not verify.\n")),
                  qPrintable(csri));
         QVERIFY(csri.indexOf(note) < csri.indexOf(QStringLiteral("Completed Successfully")));
@@ -8236,24 +8241,23 @@ private slots:
         QCOMPARE(dialogItem("settingsDialog", "setting_program.tabTextMaxChars")->property("value").toInt(), 40);
         QCOMPARE(dialogItem("settingsDialog", "setting_video.zoomPercent")->property("text").toString(), QStringLiteral("200"));
         QVERIFY(dialogItem("settingsDialog", "setting_grid.changeActiveOnSelection")->property("checked").toBool());
-        // W2: "Subtitle display filter" lists the CSRI renderers and libass
+        // W2: "Subtitle display filter" lists libass and the CSRI renderers
         // (VSFilterMod last, labelled), and is offered only when there is one
-        // besides libass: with the
-        // recipe's xy-VSFilter in the Csri folder beside the tests (Windows,
-        // HIKARI_WITH_VSFILTER), never elsewhere (none at all on Linux). The
-        // unset setting shows libass. Checked on the Video page, where the
-        // group's visibility is its own.
+        // besides libass: with VSFilterMod in the Csri folder beside the
+        // tests (Windows, HIKARI_WITH_VSFILTERMOD), never elsewhere (none at
+        // all on Linux). The unset setting shows libass. Checked on the Video
+        // page, where the group's visibility is its own.
         dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 3); // Video
         QTRY_VERIFY(dialogItem("settingsDialog", "setting_video.zoomPercent")->isVisible());
-#ifdef HIKARI_WITH_VSFILTER
+#ifdef HIKARI_WITH_VSFILTERMOD
         QCOMPARE(dialog->property("renderers").toStringList(),
-                 (QStringList{QStringLiteral("xy-vsfilter_textsub"), QStringLiteral("libass")}));
+                 (QStringList{QStringLiteral("libass"), QStringLiteral("vsfiltermod_textsub")}));
         QCOMPARE(dialog->property("rendererLabels").toStringList(),
-                 (QStringList{QStringLiteral("xy-vsfilter_textsub"), QStringLiteral("libass")}));
+                 (QStringList{QStringLiteral("libass"), QStringLiteral("vsfiltermod_textsub (slow; only for VSFilterMod tags)")}));
         QVERIFY(dialogItem("settingsDialog", "settingsRendererGroup")->isVisible());
         QCOMPARE(dialogItem("settingsDialog", "setting_video.subtitleProvider")->property("currentText").toString(),
                  QStringLiteral("libass"));
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("video.subtitleProvider")).toInt(), 1);
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("video.subtitleProvider")).toInt(), 0);
 #else
         QCOMPARE(dialog->property("renderers").toStringList(), QStringList{QStringLiteral("libass")});
         QVERIFY(!dialogItem("settingsDialog", "settingsRendererGroup")->isVisible());
@@ -8477,7 +8481,7 @@ private slots:
         for (const auto &s : application::settingDefinitions())
             if (s.id.starts_with("appearance."))
                 bound.insert(std::string(s.id));
-#ifndef HIKARI_WITH_VSFILTER
+#ifndef HIKARI_WITH_VSFILTERMOD
         // W2: "Subtitle display filter" holds a value only when it is offered
         // (a CSRI renderer besides libass); its control stays in the page.
         bound.erase("video.subtitleProvider");
@@ -17255,8 +17259,8 @@ private slots:
     // W2: the Video page's "Subtitle display filter" and the About notice in
     // the theme layer's Light and Dark themes (K2), written to
     // HIKARI_SURFACE_SHOT_DIR when it is set. Linux has no CSRI renderer, so
-    // the page is shown with the list a Windows build with xy-VSFilter gives
-    // (a preview, not a Windows capture).
+    // the page is shown with the list the Windows package gives (a preview,
+    // not a Windows capture).
     void w2SurfaceScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -17275,17 +17279,17 @@ private slots:
         auto *dialog = openSettings();
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
-        // The Windows package's list (W2, user 2026-10-13): xy-VSFilter,
-        // libass, VSFilterMod last with its note.
+        // The Windows package's list (W2, user 2026-10-13, 2026-10-14):
+        // libass, the default, then VSFilterMod with its note.
         QStringList renderers, labels;
-        for (const auto &name : backends::orderedProviders({"xy-vsfilter_textsub", "vsfiltermod_textsub"})) {
+        for (const auto &name : backends::orderedProviders({"vsfiltermod_textsub"})) {
             renderers << QString::fromStdString(name);
             labels << app::Application::subtitleRendererLabel(name);
         }
         dialog->setProperty("renderers", renderers);
         dialog->setProperty("rendererLabels", labels);
         auto values = settingsValues(dialog);
-        values.insert(QStringLiteral("video.subtitleProvider"), 1);
+        values.insert(QStringLiteral("video.subtitleProvider"), 0);
         dialog->setProperty("values", values);
         QVERIFY(QMetaObject::invokeMethod(dialog, "reloaded"));
         dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 3); // Video

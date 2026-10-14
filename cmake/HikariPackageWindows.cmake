@@ -7,11 +7,10 @@
 #   the app-local MSVC runtime, from the Visual Studio redistributable folder
 #   Automation/automation (the staged tree with DependencyControl's modules)
 #   Dictionary/ (legacy's dictionaries, pinned by commit and SHA-256)
-#   Csri/xy-VSFilter_hikarisub.dll, built by the hikari-xy-vsfilter recipe
-#     (HIKARI_WITH_VSFILTER, which the windows-x64-package preset sets)
-#   Csri/VSFiltermod.dll, legacy's prebuilt VSFilterMod (sorayuki/VSFilterMod
-#     r5.2.6, VSFilterMod_bin.zip x64/VSFilterMod.dll, as legacy's
-#     .github/scripts/runtime-assets.json fetches it), pinned by SHA-256
+#   Csri/VSFiltermod.dll, the prebuilt VSFilterMod release that
+#     HikariVsfilterMod.cmake pins (URL and SHA-256s); the only CSRI
+#     renderer the payload ships (xy-VSFilter was dropped, user 2026-10-14;
+#     libass is built in and the default)
 #   LICENSE
 #
 # and payload-manifest.txt beside the tree: every file, payload-relative with
@@ -47,12 +46,6 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
             HINTS "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_BINS}" NO_DEFAULT_PATH REQUIRED)
         set(_hikari_windeployqt "${_hikari_windeployqt_path}")
     endif()
-    # W2 (user 2026-10-13): the payload ships xy-VSFilter and VSFilterMod as
-    # legacy's did; without the recipe the staging refuses to run.
-    set(_hikari_csri "")
-    if(HIKARI_WITH_VSFILTER)
-        set(_hikari_csri "$<TARGET_FILE:HikariXyVSFilter::csri>")
-    endif()
     string(REPLACE ";" "|" _hikari_crt_arg "${_hikari_crt}")
     add_custom_target(hikari_package_windows
         COMMAND "${CMAKE_COMMAND}"
@@ -60,7 +53,6 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
             "-DAPP=$<TARGET_FILE:hikarisub>"
             "-DHELPERS=$<TARGET_FILE:hikari_media_helper>|$<TARGET_FILE:hikari_lua_helper>"
             "-DAUTOMATION=${HIKARI_AUTOMATION_STAGE}"
-            "-DCSRI=${_hikari_csri}"
             "-DCRT=${_hikari_crt_arg}"
             "-DWINDEPLOYQT=${_hikari_windeployqt}"
             "-DQMLDIR=${PROJECT_SOURCE_DIR}/src"
@@ -113,45 +105,13 @@ endif()
 file(MAKE_DIRECTORY "${STAGE}/Automation")
 file(COPY "${AUTOMATION}" DESTINATION "${STAGE}/Automation")
 
-# The CSRI renderers (W2, user 2026-10-13: both, as legacy shipped them).
-if(NOT CSRI)
-    message(FATAL_ERROR "HikariPackageWindows: the payload ships xy-VSFilter; configure with HIKARI_WITH_VSFILTER=ON "
-        "(the windows-x64-package preset does)")
-endif()
-file(MAKE_DIRECTORY "${STAGE}/Csri" "${DOWNLOADS}")
-file(COPY_FILE "${CSRI}" "${STAGE}/Csri/xy-VSFilter_hikarisub.dll")
-# VSFilterMod: no source build exists for it; legacy shipped this release
-# binary unverified (.github/scripts/package.py copy_external_binaries). The
-# archive and the DLL are pinned here: the hashes are those of the release
-# asset and of the Csri/VSFiltermod.dll legacy 0.0.1 shipped.
-set(vsfiltermod_url "https://github.com/sorayuki/VSFilterMod/releases/download/r5.2.6/VSFilterMod_bin.zip")
-set(vsfiltermod_zip_sha "a256dcac5d776d8ab3a592f7ccae7d9151feafb203196fea7836f71b00b48ddd")
-set(vsfiltermod_dll_sha "87a9c3c1ab7614eda22b8fb367840a87fd34c0c7fb92d7c4d3aa6bb0b2a6ee6b")
-set(vsfiltermod_zip "${DOWNLOADS}/VSFilterMod_bin-r5.2.6.zip")
-if(EXISTS "${vsfiltermod_zip}")
-    file(SHA256 "${vsfiltermod_zip}" have)
-    if(NOT have STREQUAL vsfiltermod_zip_sha)
-        file(REMOVE "${vsfiltermod_zip}")
-    endif()
-endif()
-if(NOT EXISTS "${vsfiltermod_zip}")
-    file(DOWNLOAD "${vsfiltermod_url}" "${vsfiltermod_zip}" EXPECTED_HASH SHA256=${vsfiltermod_zip_sha} TLS_VERIFY ON
-        STATUS status)
-    list(GET status 0 code)
-    if(NOT code EQUAL 0)
-        file(REMOVE "${vsfiltermod_zip}")
-        message(FATAL_ERROR "HikariPackageWindows: downloading ${vsfiltermod_url} failed: ${status}")
-    endif()
-endif()
-set(vsfiltermod_dir "${DOWNLOADS}/VSFilterMod_bin-r5.2.6")
-file(REMOVE_RECURSE "${vsfiltermod_dir}")
-file(ARCHIVE_EXTRACT INPUT "${vsfiltermod_zip}" DESTINATION "${vsfiltermod_dir}" PATTERNS "x64/VSFilterMod.dll")
-file(SHA256 "${vsfiltermod_dir}/x64/VSFilterMod.dll" have)
-if(NOT have STREQUAL vsfiltermod_dll_sha)
-    message(FATAL_ERROR "HikariPackageWindows: x64/VSFilterMod.dll in ${vsfiltermod_zip} has SHA-256 ${have}, "
-        "not ${vsfiltermod_dll_sha}")
-endif()
-file(COPY_FILE "${vsfiltermod_dir}/x64/VSFilterMod.dll" "${STAGE}/Csri/VSFiltermod.dll")
+# The CSRI renderer: VSFilterMod only (W2; xy-VSFilter dropped, user
+# 2026-10-14). No source build exists for it: the release archive and the DLL
+# in it are pinned in HikariVsfilterMod.cmake.
+include("${CMAKE_CURRENT_LIST_DIR}/HikariVsfilterMod.cmake")
+hikari_fetch_vsfiltermod("${DOWNLOADS}" vsfiltermod_dll)
+file(MAKE_DIRECTORY "${STAGE}/Csri")
+file(COPY_FILE "${vsfiltermod_dll}" "${STAGE}/Csri/VSFiltermod.dll")
 
 file(MAKE_DIRECTORY "${STAGE}/Dictionary")
 foreach(entry IN LISTS dictionaries)
@@ -229,9 +189,9 @@ if(problems)
     message(FATAL_ERROR "HikariPackageWindows: unresolved imports:\n  ${text}")
 endif()
 
-# The payload's fixed members (installers SPEC 6.5; W2: both CSRI renderers).
+# The payload's fixed members (installers SPEC 6.5; W2: the CSRI renderer).
 foreach(required HikariSub.exe hikari-media-helper.exe hikari-lua-helper.exe LICENSE Dictionary/en_US.dic
-        Csri/xy-VSFilter_hikarisub.dll Csri/VSFiltermod.dll)
+        Csri/VSFiltermod.dll)
     if(NOT required IN_LIST everything)
         message(FATAL_ERROR "HikariPackageWindows: the payload lacks ${required}")
     endif()

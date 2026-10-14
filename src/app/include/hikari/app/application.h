@@ -427,8 +427,8 @@ public:
     // 1 resample (no stretch), 2 resample (stretch).
     Q_INVOKABLE bool matchVideoResolution(int option);
     // W2: the About notice's CSRI line (the Windows CSRI adapter, after
-    // legacy CsriMod) and its VSFilter line (the build ships xy-VSFilter,
-    // HIKARI_WITH_VSFILTER).
+    // legacy CsriMod) and its VSFilter line (VSFilterMod, a VSFilter
+    // derivative, is in the program's Csri folder, as the package ships it).
     Q_PROPERTY(bool includesCsri READ includesCsri CONSTANT)
     Q_PROPERTY(bool includesVsfilter READ includesVsfilter CONSTANT)
     static bool includesCsri();
@@ -983,7 +983,7 @@ private:
     std::unique_ptr<backends::FfmsIndexedSource> m_mediaSource;
     // V3: the Video panel's source: dummy videos, else the media helper
     std::unique_ptr<application::DummyVideoSource> m_videoSource;
-    // W2: libass, or a CSRI renderer (xy-VSFilter) on Windows, by video.subtitleProvider.
+    // W2: libass, or a CSRI renderer (VSFilterMod) on Windows, by video.subtitleProvider.
     backends::SubtitleRendererSelection m_renderer;
     std::unique_ptr<ui::VideoController> m_video;
     std::unique_ptr<backends::QtGeneralPlayer> m_generalPlayer;

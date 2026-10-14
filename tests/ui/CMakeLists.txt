@@ -28,16 +28,17 @@ add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper
 if(MSVC)
     target_compile_options(hikari_ui_shell_tests PRIVATE /bigobj)
 endif()
-# W2 (Windows, HIKARI_WITH_VSFILTER): the recipe's xy-VSFilter in the Csri
-# folder beside the tests, as the application ships it, so the Video page
-# offers it and the loaded video switches renderers.
-if(WIN32 AND HIKARI_WITH_VSFILTER)
-    target_compile_definitions(hikari_ui_shell_tests PRIVATE HIKARI_WITH_VSFILTER
+# W2 (Windows, HIKARI_TEST_VSFILTERMOD): the pinned VSFilterMod in the Csri
+# folder beside the tests, as the package ships it, so the Video page offers
+# it and the loaded video switches renderers. HIKARI_WITH_VSFILTERMOD is a
+# CMake definition so moc sees it too.
+if(WIN32 AND HIKARI_TEST_VSFILTERMOD_DLL)
+    target_compile_definitions(hikari_ui_shell_tests PRIVATE HIKARI_WITH_VSFILTERMOD
         HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts")
     add_custom_command(TARGET hikari_ui_shell_tests POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E make_directory "$<TARGET_FILE_DIR:hikari_ui_shell_tests>/Csri"
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:HikariXyVSFilter::csri>"
-            "$<TARGET_FILE_DIR:hikari_ui_shell_tests>/Csri/xy-VSFilter_hikarisub.dll"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${HIKARI_TEST_VSFILTERMOD_DLL}"
+            "$<TARGET_FILE_DIR:hikari_ui_shell_tests>/Csri/VSFiltermod.dll"
         VERBATIM)
 endif()
 # The whole shell suite runs in one process (about a minute here, more on CI

@@ -1,5 +1,6 @@
 #include "hikari/backends/csri_renderer.h"
 #include "hikari/backends/overlay_blend.h"
+#include "hikari/backends/subtitle_renderer_selection.h"
 
 #include <algorithm>
 #include <cstring>
@@ -191,17 +192,25 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     if (!m_instance)
         return std::unexpected(RenderError::NoSnapshot);
     if (width != m_width || height != m_height) {
-        // SetVideoParameters with ARGB32: BGRA, else BGR_.
-        csri::Fmt fmt{csri::BGRA, static_cast<unsigned>(width), static_cast<unsigned>(height)};
-        m_pixfmt = csri::BGRA;
-        if (m_renderer->requestFmt(m_instance, &fmt) != 0) {
+        // SetVideoParameters with ARGB32: BGRA, else BGR_. VSFilterMod is
+        // asked for BGR_ only, the target legacy drew it on (r5.2.6 refused
+        // BGRA). r5.3.1 and the altqx fork take BGRA, but draw it
+        // premultiplied with inverted alpha (255 is clear) and multiply the
+        // frame's alpha by the coverage, so on a cleared frame the alpha
+        // stays 0 and the whole overlay is invisible.
+        const bool bgrOnly = isVsfilterMod(selectedName());
+        csri::Fmt fmt{bgrOnly ? csri::BGR_ : csri::BGRA, static_cast<unsigned>(width), static_cast<unsigned>(height)};
+        m_pixfmt = fmt.pixfmt;
+        bool accepted = m_renderer->requestFmt(m_instance, &fmt) == 0;
+        if (!accepted && !bgrOnly) {
             m_pixfmt = fmt.pixfmt = csri::BGR_;
-            if (m_renderer->requestFmt(m_instance, &fmt) != 0) {
-                if (m_log)
-                    m_log("CSRI does not support this format.");
-                closeInstance();
-                return std::unexpected(RenderError::BackendFailure);
-            }
+            accepted = m_renderer->requestFmt(m_instance, &fmt) == 0;
+        }
+        if (!accepted) {
+            if (m_log)
+                m_log("CSRI does not support this format.");
+            closeInstance();
+            return std::unexpected(RenderError::BackendFailure);
         }
         m_width = width;
         m_height = height;
@@ -227,7 +236,7 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     m_renderer->render(m_instance, &target, double(ms / 1000.0));
     PixelRect bounds;
     if (m_pixfmt == csri::BGR_) {
-        // BGR_ (VSFilterMod takes no other) blends into the frame and leaves
+        // BGR_ (what VSFilterMod is asked for) blends into the frame and leaves
         // no alpha. Legacy drew it onto the RGB32 video frame
         // (RendererFFMS2::GetFrameWithSubs without the overlay); the same
         // instant drawn again onto white gives each pixel's coverage, so the
