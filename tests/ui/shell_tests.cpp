@@ -8,6 +8,7 @@
 #include "hikari/application/spell_checker.h"
 #include "hikari/backends/simulated_output.h"
 #include "docking.h"
+#include "window_decorations.h"
 #include "line_grid.h"
 #include "line_table_model.h"
 #include "audio_display_item.h"
@@ -3637,6 +3638,22 @@ private slots:
         QTRY_VERIFY((floatingOptions = find(floatingTop, QAccessible::Button, QStringLiteral("Audio options"))));
         floatingOptions->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QTRY_VERIFY(menu->property("visible").toBool());
+        // The menu opens inside the floating panel's frame, past its shadow;
+        // inside a border of the window system's (Hyprland's) there is no
+        // shadow to keep clear of.
+        QWindow *floatingWindow = item("audioPanel")->window();
+        QCOMPARE(menu->property("margins").toInt(), hikari::ui::dockchrome::floatingShadow() + 1);
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        hikari::ui::windowdecorations::overrideSystemFrame(floatingWindow,
+                                                           hikari::ui::windowdecorations::SystemFrame::Border);
+        const auto unsetFrame = qScopeGuard([floatingWindow = QPointer<QWindow>(floatingWindow)] {
+            if (floatingWindow)
+                hikari::ui::windowdecorations::overrideSystemFrame(floatingWindow, std::nullopt);
+        });
+        floatingOptions->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QCOMPARE(menu->property("margins").toInt(), 1);
         QCOMPARE(named("panelOptionsFloat")->property("text").toString(), QStringLiteral("Dock"));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsFloat"), "triggered"));
         QTRY_VERIFY(!audioDock->property("isFloating").toBool());

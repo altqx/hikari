@@ -505,6 +505,16 @@ bool Docking::windowSystemTitle(QWindow *window) const
     return windowdecorations::hasSystemTitleBar(window);
 }
 
+bool Docking::windowSystemFrame(QWindow *window) const
+{
+    return windowdecorations::systemFrame(window) != windowdecorations::SystemFrame::None;
+}
+
+int Docking::windowShadow(QWindow *window) const
+{
+    return windowSystemFrame(window) ? 0 : floatingShadow();
+}
+
 bool Docking::platformUsesSystemMove(QStringView platformName)
 {
     return platformName.startsWith(u"wayland") || platformName == u"xcb" || platformName == u"windows";

@@ -5,6 +5,7 @@
 #include <QPointer>
 #include <QWindow>
 
+#include <algorithm>
 #include <memory>
 
 #ifdef HIKARI_WAYLAND_DECORATIONS
@@ -14,6 +15,8 @@
 #include <qpa/qplatformwindow_p.h>
 
 #include "qwayland-xdg-decoration-unstable-v1.h"
+
+#include <wayland-client.h>
 #endif
 
 namespace hikari::ui::windowdecorations {
@@ -43,6 +46,37 @@ public:
     }
 };
 
+// The names of the globals the compositor advertises, read once through a
+// registry of our own on a queue of our own (Qt's registry and queue are
+// left alone).
+const QStringList &compositorGlobals()
+{
+    static const QStringList globals = [] {
+        QStringList names;
+        auto *app = qGuiApp ? qGuiApp->nativeInterface<QNativeInterface::QWaylandApplication>() : nullptr;
+        ::wl_display *display = app ? app->display() : nullptr;
+        if (!display)
+            return names;
+        ::wl_event_queue *queue = wl_display_create_queue(display);
+        auto *wrapper = static_cast<::wl_display *>(wl_proxy_create_wrapper(display));
+        wl_proxy_set_queue(reinterpret_cast<::wl_proxy *>(wrapper), queue);
+        ::wl_registry *registry = wl_display_get_registry(wrapper);
+        static const ::wl_registry_listener listener = {
+            [](void *data, ::wl_registry *, uint32_t, const char *interface, uint32_t) {
+                static_cast<QStringList *>(data)->append(QString::fromUtf8(interface));
+            },
+            [](void *, ::wl_registry *, uint32_t) {},
+        };
+        wl_registry_add_listener(registry, &listener, &names);
+        wl_display_roundtrip_queue(display, queue);
+        wl_registry_destroy(registry);
+        wl_proxy_wrapper_destroy(wrapper);
+        wl_event_queue_destroy(queue);
+        return names;
+    }();
+    return globals;
+}
+
 class Tracker;
 
 // One window's zxdg_toplevel_decoration_v1, for one xdg_toplevel.
@@ -67,7 +101,7 @@ private:
 };
 #endif
 
-// Per window: whether the window system frames it, and on Wayland the
+// Per window: what the window system draws round it, and on Wayland the
 // decoration object asking it not to. A child of the window.
 class Tracker final : public QObject {
 public:
@@ -94,21 +128,21 @@ public:
         return tracker ? tracker : new Tracker(window);
     }
 
-    bool systemTitleBar() const { return m_override.value_or(m_framed); }
+    SystemFrame frame() const { return m_override.value_or(m_frame); }
 
-    void setFramed(bool framed)
+    void setFrame(SystemFrame frame)
     {
-        const bool before = systemTitleBar();
-        m_framed = framed;
-        if (before != systemTitleBar())
+        const SystemFrame before = this->frame();
+        m_frame = frame;
+        if (before != this->frame())
             emit notifier()->changed(m_window);
     }
 
-    void setOverride(std::optional<bool> framed)
+    void setOverride(std::optional<SystemFrame> frame)
     {
-        const bool before = systemTitleBar();
-        m_override = framed;
-        if (before != systemTitleBar())
+        const SystemFrame before = this->frame();
+        m_override = frame;
+        if (before != this->frame())
             emit notifier()->changed(m_window);
     }
 
@@ -118,6 +152,9 @@ public:
         if (m_watching || !QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
             return;
         m_watching = true;
+        // Read now, outside Qt's dispatch of the compositor's events (the
+        // decoration's configure reads them).
+        compositorGlobals();
         // The platform window comes with QWindow::create(); its xdg_toplevel
         // with each show. A decoration object is made before the toplevel's
         // first buffer and has to go before the toplevel does: Qt destroys
@@ -187,8 +224,8 @@ private:
     }
 
     QWindow *const m_window;
-    bool m_framed = false;
-    std::optional<bool> m_override;
+    SystemFrame m_frame = SystemFrame::None;
+    std::optional<SystemFrame> m_override;
 #ifdef HIKARI_WAYLAND_DECORATIONS
     bool m_watching = false;
     QPointer<QNativeInterface::Private::QWaylandWindow> m_platform;
@@ -199,8 +236,12 @@ private:
 #ifdef HIKARI_WAYLAND_DECORATIONS
 void ToplevelDecoration::zxdg_toplevel_decoration_v1_configure(uint32_t mode)
 {
-    qCDebug(lcDecorations) << "the compositor decorates" << (mode == mode_server_side ? "server-side" : "client-side");
-    m_tracker->setFramed(mode == mode_server_side);
+    const SystemFrame frame = mode == mode_server_side ? serverSideFrame(compositorGlobals()) : SystemFrame::None;
+    qCDebug(lcDecorations) << "the compositor decorates" << (mode == mode_server_side ? "server-side" : "client-side")
+                           << (frame == SystemFrame::TitleBar ? "with a title bar"
+                               : frame == SystemFrame::Border ? "with a border only"
+                                                              : "");
+    m_tracker->setFrame(frame);
 }
 #endif
 } // namespace
@@ -211,10 +252,23 @@ void requestNone(QWindow *window)
         Tracker::ensure(window)->watch();
 }
 
-bool hasSystemTitleBar(const QWindow *window)
+SystemFrame serverSideFrame(const QStringList &globals)
+{
+    const bool bordersOnly = std::any_of(globals.begin(), globals.end(), [](const QString &name) {
+        return name.startsWith(QLatin1String("hyprland_"));
+    });
+    return bordersOnly ? SystemFrame::Border : SystemFrame::TitleBar;
+}
+
+SystemFrame systemFrame(const QWindow *window)
 {
     const Tracker *tracker = Tracker::of(window);
-    return tracker && tracker->systemTitleBar();
+    return tracker ? tracker->frame() : SystemFrame::None;
+}
+
+bool hasSystemTitleBar(const QWindow *window)
+{
+    return systemFrame(window) == SystemFrame::TitleBar;
 }
 
 Notifier *notifier()
@@ -223,10 +277,10 @@ Notifier *notifier()
     return instance;
 }
 
-void overrideSystemTitleBar(QWindow *window, std::optional<bool> framed)
+void overrideSystemFrame(QWindow *window, std::optional<SystemFrame> frame)
 {
     if (window)
-        Tracker::ensure(window)->setOverride(framed);
+        Tracker::ensure(window)->setOverride(frame);
 }
 
 } // namespace hikari::ui::windowdecorations

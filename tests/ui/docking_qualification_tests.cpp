@@ -720,7 +720,8 @@ private slots:
     // here; the native gate (floating-forced-frame) has sway's.
     void aWindowSystemTitleBarTakesTheWindowsName()
     {
-        using hikari::ui::windowdecorations::overrideSystemTitleBar;
+        using hikari::ui::windowdecorations::overrideSystemFrame;
+        using hikari::ui::windowdecorations::SystemFrame;
         restoreInitial();
         auto *audio = dock("Audio");
         QVERIFY(audio->setProperty("isFloating", true));
@@ -735,10 +736,10 @@ private slots:
         QVERIFY(!docking()->windowSystemTitle(floating));
         const auto unset = qScopeGuard([floating = QPointer<QWindow>(floating)] {
             if (floating)
-                overrideSystemTitleBar(floating, std::nullopt);
+                overrideSystemFrame(floating, std::nullopt);
         });
         QSignalSpy changes(docking(), &hikari::ui::Docking::windowSystemTitlesChanged);
-        overrideSystemTitleBar(floating, true);
+        overrideSystemFrame(floating, SystemFrame::TitleBar);
         QCOMPARE(changes.count(), 1);
         QVERIFY(docking()->windowSystemTitle(floating));
         QTRY_VERIFY(!title->isVisible());
@@ -751,7 +752,7 @@ private slots:
         QVERIFY(!docking()->windowSystemTitle(window));
         QVERIFY(childNamed(header(QStringLiteral("Video")), QStringLiteral("dockTitleText"))->isVisible());
         // The compositor stops framing it: the title is back.
-        overrideSystemTitleBar(floating, false);
+        overrideSystemFrame(floating, SystemFrame::None);
         QTRY_VERIFY(title->isVisible());
         QVERIFY(audio->setProperty("isFloating", false));
         QTRY_VERIFY(!audio->property("isFloating").toBool());
@@ -770,14 +771,112 @@ private slots:
         QQuickItem *titleBar = itemsNamed(pair, QStringLiteral("dockTitleBar")).first();
         QQuickItem *barTitle = childNamed(titleBar, QStringLiteral("dockTitleText"));
         QVERIFY(barTitle && barTitle->isVisible());
-        overrideSystemTitleBar(pair, true);
+        overrideSystemFrame(pair, SystemFrame::TitleBar);
         QTRY_VERIFY(!barTitle->isVisible());
         QVERIFY(childNamed(titleBar, QStringLiteral("dockMenuButton"))->isVisible());
         for (const QString &panel : {QStringLiteral("Video"), QStringLiteral("Audio")})
             QVERIFY2(childNamed(header(panel), QStringLiteral("dockTitleText"))->isVisible(), qPrintable(panel));
-        overrideSystemTitleBar(pair, std::nullopt);
+        overrideSystemFrame(pair, std::nullopt);
         QTRY_VERIFY(barTitle->isVisible());
         restoreInitial();
+    }
+
+    // Native gate (Hyprland 0.56, 2026-10-13): a server-side frame is not
+    // always a title bar. Hyprland answers server_side to every window and
+    // draws only its border, round the window's whole surface: the header
+    // had dropped the panel's name for a title bar that never came, and the
+    // border went round the drawn shadow's transparent margin, 8 pixels off
+    // the panel's frame. Its globals (hyprland_*) say it draws a border
+    // only; any other compositor that answers server_side draws a title bar.
+    void serverSideFramesOfABorderOnlyCompositorHaveNoTitleBar()
+    {
+        using hikari::ui::windowdecorations::serverSideFrame;
+        using hikari::ui::windowdecorations::SystemFrame;
+        const QStringList common{QStringLiteral("wl_compositor"), QStringLiteral("xdg_wm_base"),
+                                 QStringLiteral("zxdg_decoration_manager_v1")};
+        QCOMPARE(serverSideFrame(common + QStringList{QStringLiteral("hyprland_focus_grab_manager_v1"),
+                                                      QStringLiteral("hyprland_surface_manager_v1")}),
+                 SystemFrame::Border);
+        // sway (wlroots' globals only), KWin
+        QCOMPARE(serverSideFrame(common + QStringList{QStringLiteral("zwlr_layer_shell_v1")}), SystemFrame::TitleBar);
+        QCOMPARE(serverSideFrame(common + QStringList{QStringLiteral("org_kde_kwin_server_decoration_manager")}),
+                 SystemFrame::TitleBar);
+        QCOMPARE(serverSideFrame({}), SystemFrame::TitleBar);
+    }
+
+    // The floating panel inside a border the window system draws (Hyprland's,
+    // simulated here; the native gate has Hyprland's own): the header keeps
+    // the panel's name, the panel draws no shadow inside that frame (its
+    // frame fills the window, a band inside its edge resizes it, its menu
+    // opens inside it), and the shadow is back when the border goes.
+    void aWindowSystemBorderKeepsTheNameAndDropsTheShadow()
+    {
+        using hikari::ui::windowdecorations::overrideSystemFrame;
+        using hikari::ui::windowdecorations::SystemFrame;
+        hikari::ui::dockchrome::overrideCompositing(true);
+        const auto unsetCompositing = qScopeGuard([] { hikari::ui::dockchrome::overrideCompositing(std::nullopt); });
+        restoreInitial();
+        auto *audio = dock("Audio");
+        QVERIFY(audio->setProperty("isFloating", true));
+        QQuickItem *bar = nullptr;
+        QTRY_VERIFY((bar = header(QStringLiteral("Audio"))) && bar->window() != window);
+        auto *floating = qobject_cast<QQuickWindow *>(bar->window());
+        QVERIFY(floating);
+        const auto unset = qScopeGuard([floating = QPointer<QWindow>(floating)] {
+            if (floating)
+                overrideSystemFrame(floating, std::nullopt);
+        });
+        QQuickItem *title = childNamed(bar, QStringLiteral("dockTitleText"));
+        QQuickItem *button = childNamed(bar, QStringLiteral("dockMenuButton"));
+        QQuickItem *frame = itemsNamed(floating, QStringLiteral("dockFloatingFrame")).value(0);
+        QQuickItem *chrome = itemsNamed(floating, QStringLiteral("dockFloatingWindow")).value(0);
+        QVERIFY(title && button && frame && chrome);
+        const int shadow = hikari::ui::dockchrome::floatingShadow();
+        QCOMPARE(shadow, 8);
+        QCOMPARE(docking()->windowShadow(floating), shadow);
+        QTRY_COMPARE(bar->mapToScene(QPointF()).toPoint(), QPoint(shadow + 1, shadow + 1));
+
+        QSignalSpy changes(docking(), &hikari::ui::Docking::windowSystemTitlesChanged);
+        overrideSystemFrame(floating, SystemFrame::Border);
+        QCOMPARE(changes.count(), 1);
+        QVERIFY(docking()->windowSystemFrame(floating));
+        QVERIFY(!docking()->windowSystemTitle(floating));
+        QCOMPARE(docking()->windowShadow(floating), 0);
+        // The name stays: no title bar names the window.
+        QVERIFY(bar->property("titleMode").toBool());
+        QVERIFY(!bar->property("systemTitle").toBool());
+        QVERIFY(title->isVisible());
+        QVERIFY(button->isVisible());
+        QCOMPARE(title->property("text").toString(), QStringLiteral("Audio"));
+        // No shadow inside the window system's border: the frame is the
+        // window's edge, the header just inside its 1-pixel line.
+        QTRY_COMPARE(chrome->property("shadow").toInt(), 0);
+        QTRY_COMPARE(frame->size(), QSizeF(floating->size()));
+        QCOMPARE(frame->mapToScene(QPointF()), QPointF());
+        QCOMPARE(frame->property("radius").toReal(), 0.0);
+        QTRY_COMPARE(bar->mapToScene(QPointF()).toPoint(), QPoint(1, 1));
+        QQuickItem *right = itemsNamed(floating, QStringLiteral("resizeRight")).value(0);
+        QVERIFY(right && right->isVisible());
+        QCOMPARE(right->width(), qreal(hikari::ui::dockchrome::kResizeGrip));
+        QCOMPARE(right->mapToScene(QPointF(right->width(), 0)).x(), qreal(floating->width()));
+        // The main window keeps no frame of the window system's own here.
+        QVERIFY(!docking()->windowSystemFrame(window));
+        QCOMPARE(docking()->windowShadow(window), shadow);
+
+        // A title bar of the window system's: the name goes to it, and the
+        // panel still draws no shadow inside it.
+        overrideSystemFrame(floating, SystemFrame::TitleBar);
+        QTRY_VERIFY(!title->isVisible());
+        QCOMPARE(chrome->property("shadow").toInt(), 0);
+
+        // The frame goes: the name and the shadow are back.
+        overrideSystemFrame(floating, SystemFrame::None);
+        QTRY_VERIFY(title->isVisible());
+        QTRY_COMPARE(chrome->property("shadow").toInt(), shadow);
+        QTRY_COMPARE(bar->mapToScene(QPointF()).toPoint(), QPoint(shadow + 1, shadow + 1));
+        QTRY_COMPARE(frame->mapToScene(QPointF()), QPointF(shadow, shadow));
+        QVERIFY(audio->setProperty("isFloating", false));
+        QTRY_VERIFY(!audio->property("isFloating").toBool());
     }
 
     // D3: separators are 1 pixel wide, in the theme's boundary colour.

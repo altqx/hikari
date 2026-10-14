@@ -111,8 +111,9 @@ class Docking : public QObject {
     // The panel whose menu is open (Main.qml sets it), so its "⋯" button
     // shows as pressed.
     Q_PROPERTY(QString openMenu READ openMenu WRITE setOpenMenu NOTIFY openMenuChanged FINAL)
-    // Bumped when the window system starts or stops drawing a title bar on
-    // a floating panel's window (windowSystemTitle).
+    // Bumped when the window system starts or stops drawing a frame or a
+    // title bar on a floating panel's window (windowSystemFrame,
+    // windowSystemTitle).
     Q_PROPERTY(int windowTitleRevision READ windowTitleRevision NOTIFY windowSystemTitlesChanged FINAL)
 public:
     explicit Docking(QObject *parent = nullptr);
@@ -137,6 +138,13 @@ public:
     // asked for no frame; window_decorations.h). Its headers then leave the
     // name to that title bar.
     Q_INVOKABLE bool windowSystemTitle(QWindow *window) const;
+    // Whether the window system draws a frame of its own round `window`, a
+    // title bar or only a border (Hyprland's). Its panel then draws no
+    // shadow inside that frame (windowShadow).
+    Q_INVOKABLE bool windowSystemFrame(QWindow *window) const;
+    // The width of the shadow a floating panel's window draws round its
+    // frame: floatingShadow, none inside a frame of the window system's.
+    Q_INVOKABLE int windowShadow(QWindow *window) const;
 
     // The uniqueName of the panel of tab `index` of `tabBar` (the engine's
     // TabBarView); empty when there is none.
