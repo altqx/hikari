@@ -423,7 +423,7 @@ private slots:
     // (QStyleHints, forced here); following off, the portal no longer
     // matters. A portal older than ReadOne answers Read; one too slow for
     // the first read is followed once it answers; no portal on the bus
-    // leaves the scheme unknown.
+    // leaves the scheme unknown until one takes the name.
     void followingTheSystemReadsTheSettingsPortal()
     {
 #ifndef HIKARI_COLOUR_SCHEME_PORTAL
@@ -477,10 +477,16 @@ private slots:
                 object, [&] { registered = server.registerObject(path, object, options); }, Qt::BlockingQueuedConnection);
             return registered;
         };
+        // A reader made before the portal takes its name (one still
+        // starting): unknown, then read once the name is taken.
+        PortalColourScheme early(client);
+        QCOMPARE(early.scheme(), S::Unknown);
         QVERIFY(registerOnItsThread(&portal, QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllSignals));
         QVERIFY(server.registerService(service));
-        PortalColourScheme scheme(client);
+        QTRY_COMPARE(early.scheme(), S::Dark);
         QCOMPARE(portal.reads.load(), 1);
+        PortalColourScheme scheme(client);
+        QCOMPARE(portal.reads.load(), 2);
         QCOMPARE(scheme.scheme(), S::Dark);
 
         // The theme follows it while Qt reports no scheme (the offscreen
@@ -493,6 +499,7 @@ private slots:
         ui::theme::followPortal(&scheme);
         auto restore = qScopeGuard([] {
             ui::theme::followPortal(nullptr);
+            ui::theme::forcePlatformScheme(std::nullopt);
             ui::theme::useSettings(nullptr);
             ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown);
         });
@@ -522,10 +529,14 @@ private slots:
         portal.change(2);
         QTRY_COMPARE(ui::theme::current().code, Code::Light);
 
-        // A scheme Qt reports comes first.
-        ui::theme::forceSystemScheme(S::Dark);
+        // A scheme Qt's platform theme reports comes first (GNOME, KDE,
+        // xdgdesktopportal); Unknown from it leaves the portal's.
+        ui::theme::forcePlatformScheme(S::Dark);
+        QCOMPARE(ui::theme::systemScheme(), S::Dark);
         QCOMPARE(ui::theme::current().code, Code::Dark);
-        ui::theme::forceSystemScheme(std::nullopt);
+        ui::theme::forcePlatformScheme(S::Unknown);
+        QCOMPARE(ui::theme::current().code, Code::Light);
+        ui::theme::forcePlatformScheme(std::nullopt);
         QCOMPARE(ui::theme::current().code, Code::Light);
 
         // High contrast keeps its side's pair; never turned on or off.

@@ -9,8 +9,9 @@
 // theme followed nothing there.
 //
 // The scheme is read once when made (blocking for up to a second, so the
-// first window shows on the right side; a later answer is still taken) and
-// then follows the portal's SettingChanged signal. Category hikari.theme
+// first window shows on the right side; a later answer is still taken, and a
+// portal that takes its name on the bus later is read then) and then follows
+// the portal's SettingChanged signal. Category hikari.theme
 // logs what the portal answered.
 
 #include <QDBusConnection>
@@ -18,6 +19,8 @@
 #include <QObject>
 #include <QString>
 #include <QVariant>
+
+#include <optional>
 
 namespace hikari::ui::theme {
 
@@ -50,5 +53,9 @@ private:
 // none). The theme makes its own on the session bus under the X11 and
 // Wayland platforms; tests hand it one on a private bus.
 void followPortal(PortalColourScheme *portal);
+// For tests: the scheme QStyleHints is taken to report (nullopt: what it
+// does report), so that a platform theme reporting one can be shown to come
+// before the portal's.
+void forcePlatformScheme(std::optional<Qt::ColorScheme> scheme);
 
 } // namespace hikari::ui::theme

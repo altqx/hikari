@@ -4,6 +4,7 @@
 #include <QDBusError>
 #include <QDBusMessage>
 #include <QDBusPendingCallWatcher>
+#include <QDBusServiceWatcher>
 #include <QLoggingCategory>
 
 namespace hikari::ui::theme {
@@ -65,18 +66,33 @@ PortalColourScheme::PortalColourScheme(const QDBusConnection &bus, QObject *pare
         return;
     }
     qCDebug(lcPortalScheme) << "portal" << method << "failed:" << reply.errorName() << reply.errorMessage();
-    if (reply.errorName() != QLatin1String("org.freedesktop.DBus.Error.NoReply")
-        && reply.errorName() != QLatin1String("org.freedesktop.DBus.Error.Timeout"))
+    // Asked again, its answer taken when it comes unless the portal has
+    // signalled a change since.
+    const auto readLate = [this, method] {
+        auto read = QDBusMessage::createMethodCall(kService, kPath, kSettings, method);
+        read << kNamespace << kKey;
+        auto *watcher = new QDBusPendingCallWatcher(m_bus.asyncCall(read), this);
+        connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, watcher] {
+            watcher->deleteLater();
+            const QDBusMessage late = watcher->reply();
+            qCDebug(lcPortalScheme) << "portal answered late:" << late.type() << late.arguments();
+            if (!m_signalled && late.type() == QDBusMessage::ReplyMessage && !late.arguments().isEmpty())
+                set(fromValue(late.arguments().first()));
+        });
+    };
+    if (reply.errorName() == QLatin1String("org.freedesktop.DBus.Error.NoReply")
+        || reply.errorName() == QLatin1String("org.freedesktop.DBus.Error.Timeout")) {
+        // Too slow for the first window.
+        readLate();
         return;
-    // Too slow for the first window: asked again, its answer taken when it
-    // comes.
-    auto *watcher = new QDBusPendingCallWatcher(m_bus.asyncCall(request()), this);
-    connect(watcher, &QDBusPendingCallWatcher::finished, this, [this, watcher] {
-        watcher->deleteLater();
-        const QDBusMessage late = watcher->reply();
-        qCDebug(lcPortalScheme) << "portal answered late:" << late.type() << late.arguments();
-        if (!m_signalled && late.type() == QDBusMessage::ReplyMessage && !late.arguments().isEmpty())
-            set(fromValue(late.arguments().first()));
+    }
+    // No portal yet (ServiceUnknown, NameHasNoOwner, a failed activation):
+    // read once one takes the name, as a portal still starting does.
+    auto *appears = new QDBusServiceWatcher(kService, m_bus, QDBusServiceWatcher::WatchForRegistration, this);
+    connect(appears, &QDBusServiceWatcher::serviceRegistered, this, [appears, readLate] {
+        appears->deleteLater();
+        qCDebug(lcPortalScheme) << "portal took its name: read again";
+        readLate();
     });
 }
 

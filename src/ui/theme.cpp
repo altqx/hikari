@@ -506,8 +506,10 @@ public:
         if (forcedScheme)
             return *forcedScheme;
         const auto *hints = QGuiApplication::styleHints();
-        const Qt::ColorScheme platform = hints ? hints->colorScheme() : Qt::ColorScheme::Unknown;
+        Qt::ColorScheme platform = hints ? hints->colorScheme() : Qt::ColorScheme::Unknown;
 #ifdef HIKARI_COLOUR_SCHEME_PORTAL
+        if (platformOverride)
+            platform = *platformOverride;
         if (platform == Qt::ColorScheme::Unknown && portal)
             return portal->scheme();
 #endif
@@ -532,6 +534,7 @@ public:
     }
 
     QPointer<PortalColourScheme> portal;
+    std::optional<Qt::ColorScheme> platformOverride;
 #endif
 
     void refresh(bool force = false)
@@ -762,6 +765,12 @@ void forceSystemScheme(std::optional<Qt::ColorScheme> scheme)
 void followPortal(PortalColourScheme *portal)
 {
     Hub::get().followPortal(portal);
+}
+
+void forcePlatformScheme(std::optional<Qt::ColorScheme> scheme)
+{
+    Hub::get().platformOverride = scheme;
+    Hub::get().refresh();
 }
 #endif
 
