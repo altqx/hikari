@@ -33,11 +33,11 @@
 #include <QQmlContext>
 #include <QQmlExpression>
 #include <QQmlProperty>
-#include <QScreen>
 #include <QQmlEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QRegularExpression>
+#include <QScreen>
 #include <QScopeGuard>
 #include <QStandardPaths>
 #include <QSvgRenderer>
@@ -68,7 +68,9 @@ QJsonObject readManifest()
 // The rows of cells one contact sheet holds. On a desktop the window system
 // keeps a window inside its monitor (the windows platform cuts what is below
 // the available height), so a sheet holds what fits under a window frame;
-// offscreen nothing cuts a window and one sheet holds every role.
+// offscreen nothing cuts a window and one sheet holds every role. The frame
+// allowance (title bar and the default cascade offset) is a guess: a taller
+// frame or a lower start fails the sheet's height check, not a pixel read.
 int contactSheetRows(bool desktop, int availableHeight, int cellHeight)
 {
     constexpr int frame = 80;
