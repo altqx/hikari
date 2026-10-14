@@ -9,7 +9,20 @@ hikari_add_qttest(hikari_ui_line_grid_tests SOURCES line_grid_tests.cpp LIBRARIE
 target_compile_definitions(hikari_ui_line_grid_tests PRIVATE HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts"
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 hikari_add_qttest(hikari_ui_line_grid_a11y_tests SOURCES line_grid_a11y_tests.cpp LIBRARIES hikari_ui)
-hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp LIBRARIES hikari_composition)
+# The shell tests run in parts, each its own process with its own timeout
+# (decision 38f, 2026-10-14: in one process they took about 800-850 s under
+# Xvfb on akari-rvm against a 900 s timeout). A part runs from its first
+# function up to the next part's, in shell_tests.cpp's order, so a function
+# added anywhere joins the part around it; hikari_ui_shell_tests.parts checks
+# that every function runs exactly once.
+hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp LIBRARIES hikari_composition
+    PARTS documents
+          panels=panelsFloatDockHideAndKeepTheirState
+          translation=translationModeStacksOriginalAboveTranslated
+          hotkeys=hotkeysPageMapsAndOkInstalls
+          visual=visualToolRailCrosshairAndCopyCoordinates
+          video=videoRecentListsAndDialogFolders
+    PART_TIMEOUT 600)
 hikari_add_qttest(hikari_ui_log_controller_tests SOURCES log_controller_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_tag_buttons_tests SOURCES tag_buttons_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_line_measures_tests SOURCES line_measures_tests.cpp LIBRARIES hikari_ui)
@@ -41,13 +54,6 @@ if(WIN32 AND HIKARI_TEST_VSFILTERMOD_DLL)
             "$<TARGET_FILE_DIR:hikari_ui_shell_tests>/Csri/VSFiltermod.dll"
         VERBATIM)
 endif()
-# The whole shell suite runs in one process (about a minute here, more on CI
-# runners), so it gets more than the default 60 s.
-foreach(mode offscreen xvfb)
-    if(TEST hikari_ui_shell_tests.${mode})
-        set_tests_properties(hikari_ui_shell_tests.${mode} PROPERTIES TIMEOUT 900)
-    endif()
-endforeach()
 # The Style manager and editor on a 1280 x 800 screen at 100 % and 150 %
 # (the offscreen platform's screen from a file, so Linux only).
 if(NOT WIN32)
