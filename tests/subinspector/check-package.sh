@@ -42,12 +42,23 @@ exports=$(nm -D --defined-only "$library" | awk '$2 == "T" { print $3 }' | sort 
 libass_line=$(ldd "$library" 2>/dev/null | grep -E '^\s*libass\.so\.' || true)
 [[ -n $libass_line && $libass_line != *"not found"* ]] ||
     fail "libass does not resolve for libSubInspector.so: ${libass_line:-no libass line}"
-if grep -Eqx 'libass\.so\.[0-9]+' "$package/.hikarisub-runtime-dependencies" 2>/dev/null; then
-    resolved=$(awk '{ print $3 }' <<<"$libass_line")
-    [[ $(realpath "$resolved") == "$package"/libass.so.* ]] ||
-        fail "libSubInspector.so resolves libass to $resolved, not the package's copy"
-fi
-echo "linkage: libass resolves to $(awk '{ print $3 }' <<<"$libass_line")"
+# The package bundles the libass fork (Thirdparty/build-libass-linux.sh), and
+# both the app and SubInspector must load that copy, not the host's.
+grep -Eqx 'libass\.so\.[0-9]+' "$package/.hikarisub-runtime-dependencies" ||
+    fail "the package does not bundle libass"
+resolved=$(awk '{ print $3 }' <<<"$libass_line")
+[[ $(realpath "$resolved") == "$package"/libass.so.* ]] ||
+    fail "libSubInspector.so resolves libass to $resolved, not the package's copy"
+app_libass=$(ldd "$package/hikarisub" 2>/dev/null | awk '$1 ~ /^libass\.so\./ { print $3 }')
+[[ -n $app_libass && $(realpath "$app_libass") == "$package"/libass.so.* ]] ||
+    fail "hikarisub resolves libass to ${app_libass:-nothing}, not the package's copy"
+# Only the fork exports these; upstream's version number cannot tell them apart.
+fork_exports=$(nm -D --defined-only "$(realpath "$resolved")" | awk '{ print $3 }')
+for symbol in ass_frame_pack_atlas ass_track_events_modified; do
+    grep -qx "$symbol" <<<"$fork_exports" ||
+        fail "the bundled libass does not export $symbol, so it is not the altqx fork"
+done
+echo "linkage: libass resolves to $resolved, the altqx fork"
 
 # The app links LPeg into its executable; MoonScript needs it as a module here.
 work=$(mktemp -d)

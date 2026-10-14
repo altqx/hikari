@@ -47,7 +47,8 @@ include(${wxWidgets_USE_FILE})
 # FFmpeg and FFMS2 from a private prefix win over pkg-config's system paths.
 # The release build (packaging/linux/floor) builds FFmpeg 7.1 and the
 # Thirdparty/ffms2 fork there, so the library matches the fork's headers that
-# Thirdparty/Build/FFMS2/indexing_additional.cpp is compiled against.
+# Thirdparty/Build/FFMS2/indexing_additional.cpp is compiled against. It
+# builds the libass fork there too.
 set(HIKARISUB_MEDIA_PREFIX "" CACHE PATH
     "Prefix holding FFmpeg and FFMS2 builds that win over the system's (lib/pkgconfig)")
 if(HIKARISUB_MEDIA_PREFIX)
@@ -60,7 +61,61 @@ if(HIKARISUB_MEDIA_PREFIX)
         set(ENV{PKG_CONFIG_PATH} "${HIKARISUB_MEDIA_PREFIX}/lib/pkgconfig")
     endif()
 endif()
+# libass is the Thirdparty/libass submodule, the altqx fork Windows builds
+# too, built as a shared library by Thirdparty/build-libass-linux.sh and
+# bundled with the app. Never the distribution's: that is 0.15 to 0.17 and
+# renders differently from the Windows build.
+if(HIKARISUB_MEDIA_PREFIX)
+    set(HIKARISUB_LIBASS_DEFAULT_PREFIX "${HIKARISUB_MEDIA_PREFIX}")
+else()
+    set(HIKARISUB_LIBASS_DEFAULT_PREFIX "${CMAKE_SOURCE_DIR}/build-libass-linux/prefix")
+endif()
+set(HIKARISUB_LIBASS_PREFIX "${HIKARISUB_LIBASS_DEFAULT_PREFIX}" CACHE PATH
+    "Prefix holding the libass fork built by Thirdparty/build-libass-linux.sh (lib/pkgconfig/libass.pc)")
+if(NOT EXISTS "${HIKARISUB_LIBASS_PREFIX}/lib/pkgconfig/libass.pc")
+    message(FATAL_ERROR
+        "The libass fork is missing at ${HIKARISUB_LIBASS_PREFIX}. "
+        "Run Thirdparty/build-libass-linux.sh first, or set HIKARISUB_LIBASS_PREFIX "
+        "to the prefix it built.")
+endif()
+set(ENV{PKG_CONFIG_PATH} "${HIKARISUB_LIBASS_PREFIX}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 pkg_check_modules(LIBASS REQUIRED IMPORTED_TARGET libass)
+file(REAL_PATH "${HIKARISUB_LIBASS_PREFIX}/lib" HIKARISUB_LIBASS_LIBDIR)
+list(GET LIBASS_LINK_LIBRARIES 0 HIKARISUB_LIBASS_LIBRARY)
+get_filename_component(HIKARISUB_LIBASS_FOUND_DIR "${HIKARISUB_LIBASS_LIBRARY}" DIRECTORY)
+file(REAL_PATH "${HIKARISUB_LIBASS_FOUND_DIR}" HIKARISUB_LIBASS_FOUND_DIR)
+if(NOT HIKARISUB_LIBASS_FOUND_DIR STREQUAL HIKARISUB_LIBASS_LIBDIR)
+    message(FATAL_ERROR
+        "pkg-config found libass at ${HIKARISUB_LIBASS_LIBRARY}, not in ${HIKARISUB_LIBASS_LIBDIR}.")
+endif()
+# The fork's API macros tell it from upstream; its version number cannot,
+# since upstream steps the same low byte. Linking the two fork functions
+# checks the library exports them, not just that the header declares them.
+include(CheckCSourceCompiles)
+unset(HIKARISUB_LIBASS_IS_FORK CACHE) # checked again on every configure
+set(CMAKE_REQUIRED_INCLUDES ${LIBASS_INCLUDE_DIRS})
+set(CMAKE_REQUIRED_LIBRARIES PkgConfig::LIBASS)
+check_c_source_compiles([=[
+#include <ass/ass.h>
+#if !defined(LIBASS_HAS_FRAME_ATLAS) || !defined(LIBASS_HAS_TRACK_EVENTS_MODIFIED)
+#error not the altqx libass fork
+#endif
+#if LIBASS_VERSION < 0x01705010
+#error older than the altqx libass fork HikariSub needs
+#endif
+int main(void)
+{
+    return ass_frame_pack_atlas != 0 && ass_track_events_modified != 0 ? 0 : 1;
+}
+]=] HIKARISUB_LIBASS_IS_FORK)
+unset(CMAKE_REQUIRED_INCLUDES)
+unset(CMAKE_REQUIRED_LIBRARIES)
+if(NOT HIKARISUB_LIBASS_IS_FORK)
+    message(FATAL_ERROR
+        "${HIKARISUB_LIBASS_PREFIX} does not hold the altqx libass fork (LIBASS_HAS_FRAME_ATLAS, "
+        "LIBASS_HAS_TRACK_EVENTS_MODIFIED, LIBASS_VERSION >= 0x01705010). Rebuild it with "
+        "Thirdparty/build-libass-linux.sh.")
+endif()
 pkg_check_modules(FFMS2 REQUIRED IMPORTED_TARGET ffms2)
 pkg_check_modules(HUNSPELL REQUIRED IMPORTED_TARGET hunspell)
 pkg_check_modules(UCHARDET REQUIRED IMPORTED_TARGET uchardet)

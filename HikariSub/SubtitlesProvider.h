@@ -36,6 +36,11 @@ extern "C" {
 #include <ass/ass.h>
 #endif
 }
+// Both builds use the altqx fork in Thirdparty/libass. Its API macros tell
+// it from upstream, which steps LIBASS_VERSION the same way.
+#if !defined(LIBASS_HAS_FRAME_ATLAS) || !defined(LIBASS_HAS_TRACK_EVENTS_MODIFIED) || LIBASS_VERSION < 0x01705010
+#error "HikariSub builds against the altqx libass fork in Thirdparty/libass"
+#endif
 
 class ScriptAttachments;
 

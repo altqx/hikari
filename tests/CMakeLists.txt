@@ -161,10 +161,20 @@ endif()
 # compiles (Thirdparty/Build/FFMS2/indexing_additional.cpp), and a script's
 # attached font drawn by libass, against FFMS2, FFmpeg and libass from
 # pkg-config as the application links them, and the Thirdparty/ffms2 fork's
-# private headers. Left out when any is missing, as in
-# the CI tests job.
-pkg_check_modules(HIKARISUB_TESTS_MEDIA QUIET IMPORTED_TARGET ffms2 libavformat libavcodec libavutil libass)
-if(HIKARISUB_TESTS_MEDIA_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../Thirdparty/ffms2/src/core/indexing.h")
+# private headers. Left out when any is missing, as in the CI tests job.
+# The application links the libass fork Thirdparty/build-libass-linux.sh
+# builds; so do these tests when it is there.
+set(HIKARISUB_TESTS_LIBASS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/../build-libass-linux/prefix" CACHE PATH
+    "Prefix holding the libass fork (lib/pkgconfig/libass.pc)")
+if(EXISTS "${HIKARISUB_TESTS_LIBASS_PREFIX}/lib/pkgconfig/libass.pc")
+    set(ENV{PKG_CONFIG_PATH} "${HIKARISUB_TESTS_LIBASS_PREFIX}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+endif()
+pkg_check_modules(HIKARISUB_TESTS_MEDIA QUIET IMPORTED_TARGET ffms2 libavformat libavcodec libavutil)
+# On its own, so the -L of another module (/usr/lib) cannot pick the
+# distribution's libass over the fork.
+pkg_check_modules(HIKARISUB_TESTS_LIBASS QUIET IMPORTED_TARGET libass)
+if(HIKARISUB_TESTS_MEDIA_FOUND AND HIKARISUB_TESTS_LIBASS_FOUND
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../Thirdparty/ffms2/src/core/indexing.h")
     add_executable(hikarisub_media_tests
         check_main.cpp
         LibassAttachedFontTests.cpp
@@ -175,7 +185,7 @@ if(HIKARISUB_TESTS_MEDIA_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../Thirdp
     target_include_directories(hikarisub_media_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../Thirdparty/ffms2/src)
     target_compile_definitions(hikarisub_media_tests PRIVATE
         HIKARISUB_TEST_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
-    target_link_libraries(hikarisub_media_tests PRIVATE PkgConfig::HIKARISUB_TESTS_MEDIA)
+    target_link_libraries(hikarisub_media_tests PRIVATE PkgConfig::HIKARISUB_TESTS_LIBASS PkgConfig::HIKARISUB_TESTS_MEDIA)
     add_test(NAME hikarisub_media_tests COMMAND hikarisub_media_tests)
 else()
     message(STATUS "hikarisub_media_tests left out: needs ffms2, FFmpeg and libass (pkg-config) and Thirdparty/ffms2")

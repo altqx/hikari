@@ -1,14 +1,16 @@
 #!/bin/sh
-# Builds FFmpeg 7.1 and FFMS2 (the Thirdparty/ffms2 fork) from source into one
-# prefix, for the legacy floor build in ubuntu:22.04.
+# Builds FFmpeg 7.1, FFMS2 (the Thirdparty/ffms2 fork) and libass (the
+# Thirdparty/libass fork) from source into one prefix, for the legacy floor
+# build in ubuntu:22.04.
 #
 #   packaging/linux/floor/build-media.sh <prefix> <download dir> [jobs]
 #
 # Jammy's own FFmpeg 4.4 and FFMS2 2.40 cannot be used: the app compiles
 # Thirdparty/Build/FFMS2/indexing_additional.cpp against the fork's private
 # headers (FFMS2 5.1, FFmpeg 7.1 API), so the library it links must be the
-# fork built against FFmpeg 7.1. CMakeLists.txt finds both through
-# HIKARISUB_MEDIA_PREFIX=<prefix>.
+# fork built against FFmpeg 7.1. Jammy's libass 0.15 is not used either: the
+# packages bundle the libass fork, which Windows builds too. CMakeLists.txt
+# finds all three through HIKARISUB_MEDIA_PREFIX=<prefix>.
 #
 # FFmpeg is built for decoding only, the way FFMS2 uses it: the native
 # decoders and demuxers plus dav1d for AV1, no programs, no avdevice,
@@ -74,5 +76,11 @@ PKG_CONFIG_PATH="$prefix/lib/pkgconfig" LDFLAGS="-L$prefix/lib" ./autogen.sh \
 make -j"$jobs"
 make install
 rm -f "$prefix"/lib/*.la
+
+# The libass fork, from the submodule, as the shared library the packages
+# bundle. The marker names the pin, so build.sh rebuilds when it moves.
+"$repo/Thirdparty/build-libass-linux.sh" "$prefix" "$jobs"
+rm -f "$prefix"/.libass-*
+touch "$prefix/.libass-$(git -C "$repo" rev-parse HEAD:Thirdparty/libass)"
 
 echo "FFmpeg $ffmpeg_version and FFMS2 $(PKG_CONFIG_PATH="$prefix/lib/pkgconfig" pkg-config --modversion ffms2) installed in $prefix"

@@ -273,7 +273,7 @@ library directories live in `HikariSub\HikariSub.vcxproj` under
 
 ### Linux build
 
-The Linux build uses CMake and system packages for most dependencies. wxGTK is built from the same pinned wxWidgets 3.3.4 submodule as the Windows build. It requires GCC, FFMS2, FFmpeg, libass, Hunspell, uchardet, libcurl, ICU, Boost, GStreamer 1.x, and OpenGL development packages.
+The Linux build uses CMake and system packages for most dependencies. wxGTK is built from the same pinned wxWidgets 3.3.4 submodule as the Windows build, and libass from the same `Thirdparty/libass` submodule, the altqx fork, built as a shared library the package bundles. It requires GCC, FFMS2, FFmpeg, Hunspell, uchardet, libcurl, ICU, Boost, GStreamer 1.x, and OpenGL development packages, plus what libass needs: FreeType, FriBidi, HarfBuzz, Fontconfig, NASM and autotools.
 
 #### 1. Install dependencies on Ubuntu/Debian
 
@@ -288,7 +288,14 @@ sudo apt install --no-install-recommends -y \
   git \
   pkg-config \
   libgtk-3-dev \
-  libass-dev \
+  libfreetype-dev \
+  libfribidi-dev \
+  libharfbuzz-dev \
+  libfontconfig-dev \
+  nasm \
+  autoconf \
+  automake \
+  libtool \
   libffms2-dev \
   libhunspell-dev \
   hunspell-en-us \
@@ -334,7 +341,8 @@ The exact package names vary by distribution. Install the equivalent development
 - GNU tar and gzip (used by the reproducible Linux archive target)
 - pkg-config
 - GTK 3 and OpenGL development packages for the pinned wxWidgets 3.3.4 build
-- libass
+- FreeType, FriBidi, HarfBuzz and Fontconfig, plus NASM, autoconf, automake and
+  libtool, for the libass fork (not the distribution's libass)
 - FFMS2
 - Hunspell
 - A Hunspell dictionary (the runtime copy step looks for `en_US.aff` and `en_US.dic`)
@@ -356,7 +364,8 @@ For Fedora-like systems, the package set is approximately:
 ```bash
 sudo dnf install \
   gcc gcc-c++ make cmake ninja-build gzip tar git pkgconf-pkg-config \
-  libass-devel ffms2-devel hunspell-devel hunspell-en-US uchardet-devel \
+  freetype-devel fribidi-devel harfbuzz-devel fontconfig-devel nasm autoconf automake libtool \
+  ffms2-devel hunspell-devel hunspell-en-US uchardet-devel \
   libcurl-devel libicu-devel boost-devel ffmpeg-devel mesa-libGL-devel gtk3-devel \
   gstreamer1-devel gstreamer1-plugins-base-devel \
   gstreamer1-plugins-base gstreamer1-plugins-good gettext
@@ -366,7 +375,7 @@ For Arch-like systems, the package set is approximately:
 
 ```bash
 sudo pacman -S --needed \
-  base-devel cmake ninja gzip tar git pkgconf libass ffms2 \
+  base-devel cmake ninja gzip tar git pkgconf freetype2 fribidi harfbuzz fontconfig nasm ffms2 \
   hunspell hunspell-en_us uchardet curl icu boost ffmpeg mesa gtk3 \
   gstreamer gst-plugins-base gst-plugins-good gettext
 ```
@@ -379,7 +388,6 @@ Before configuring HikariSub, confirm that pkg-config can find the required libr
 
 ```bash
 pkg-config --modversion \
-  libass \
   ffms2 \
   hunspell \
   uchardet \
@@ -410,6 +418,18 @@ The version must be 3.3.4. HikariSub's CMake configure uses this private `wx-con
 For a Debug build, run `Thirdparty/build-wxwidgets-linux.sh --debug` and
 configure HikariSub with `-DCMAKE_BUILD_TYPE=Debug`. The Debug build uses its
 own wxWidgets libraries under `build-wx-linux-debug/prefix`.
+
+Build libass from the `Thirdparty/libass` submodule, the altqx fork the Windows
+build uses too:
+
+```bash
+Thirdparty/build-libass-linux.sh
+```
+
+It installs the shared library into `build-libass-linux/prefix`, where the
+configure step requires it (`-DHIKARISUB_LIBASS_PREFIX=` names another prefix).
+The configure step rejects a libass without the fork's API, such as the
+distribution's, and the package bundles the fork's `libass.so.9`.
 
 #### 4. Configure and build
 

@@ -7,7 +7,8 @@
 #    <max glibc> (2.35 for legacy, the manifest's min_glibc);
 #  - every RPATH and RUNPATH entry is $ORIGIN-relative, so no build path
 #    ships;
-#  - no file matches packaging/linux/appimage/host-libs.txt.
+#  - no file matches packaging/linux/appimage/host-libs.txt;
+#  - it bundles one libass, the altqx fork (Thirdparty/build-libass-linux.sh).
 #
 # Needs readelf and objdump (binutils).
 set -eu
@@ -66,6 +67,24 @@ while IFS= read -r file; do
         esac
     done < "$work/globs"
 done < "$work/files"
+
+# The fork, not a distribution's libass: only it exports these, and its
+# version number cannot tell it from upstream.
+grep '/libass\.so\.[0-9.]*$' "$work/elves" > "$work/libass" || true
+if [ "$(wc -l < "$work/libass")" -ne 1 ]; then
+    echo "FAIL: expected one bundled libass, found:"
+    sed 's/^/  /' "$work/libass"
+    status=1
+else
+    libass=$(cat "$work/libass")
+    for symbol in ass_frame_pack_atlas ass_track_events_modified; do
+        if ! objdump -T "$libass" | grep -q "[[:space:]]$symbol\$"; then
+            echo "FAIL: $libass does not export $symbol; it is not the altqx libass fork"
+            status=1
+        fi
+    done
+    echo "bundled libass: $libass"
+fi
 
 [ $status -eq 0 ] && echo "payload check passed: $dir"
 exit $status

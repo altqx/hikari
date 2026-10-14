@@ -5,7 +5,8 @@
 #   packaging/linux/floor/build.sh <out dir> [jobs]
 #
 # 1. wxWidgets 3.3.3 from the submodule, into <out>/wx/prefix;
-# 2. FFmpeg 7.1 and the FFMS2 fork, into <out>/media (build-media.sh);
+# 2. FFmpeg 7.1, the FFMS2 fork and the libass fork, into <out>/media
+#    (build-media.sh);
 # 3. the app, in <out>/app, against both;
 # 4. the packages, in <out>/app/dist:
 #      hikarisub-linux-x86_64.tar.gz          (portable; renamed at release)
@@ -43,8 +44,10 @@ else
         "$src/Thirdparty/build-wxwidgets-linux.sh"
 fi
 
-if [ -f "$out/media/lib/pkgconfig/ffms2.pc" ] && ls "$out"/media/.ffmpeg-* >/dev/null 2>&1; then
-    echo "FFmpeg and FFMS2 are in $out/media"
+libass_pin=$(git -C "$src" rev-parse HEAD:Thirdparty/libass)
+if [ -f "$out/media/lib/pkgconfig/ffms2.pc" ] && ls "$out"/media/.ffmpeg-* >/dev/null 2>&1 &&
+   [ -f "$out/media/.libass-$libass_pin" ]; then
+    echo "FFmpeg, FFMS2 and libass are in $out/media"
 else
     "$here/build-media.sh" "$out/media" "$out/downloads" "$jobs"
 fi

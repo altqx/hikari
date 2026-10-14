@@ -417,10 +417,17 @@ jobs:
             libgtk-3-dev \
             libffms2-dev \
             libavformat-dev libavcodec-dev libavutil-dev libswscale-dev libswresample-dev \
-            libass-dev libhunspell-dev libuchardet-dev libcurl4-openssl-dev \
+            libhunspell-dev libuchardet-dev libcurl4-openssl-dev \
             libicu-dev libboost-all-dev \
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
-            libgl1-mesa-dev libglu1-mesa-dev
+            libgl1-mesa-dev libglu1-mesa-dev \
+            autoconf automake libtool nasm \
+            libfreetype-dev libfribidi-dev libharfbuzz-dev libfontconfig-dev
+
+      # The app links and bundles the libass fork in Thirdparty/libass, as
+      # the release packages do, never the distribution's libass.
+      - name: Build the libass fork
+        run: Thirdparty/build-libass-linux.sh "" "$(nproc)"
 
       # Only the install prefix is consumed (CMakeLists.txt finds wx-config
       # there), so that is all that is cached.
@@ -548,6 +555,7 @@ jobs:
           echo "image=${image##*@sha256:}" >> "$GITHUB_OUTPUT"
           echo "wx=$(git rev-parse HEAD:Thirdparty/wxWidgets)" >> "$GITHUB_OUTPUT"
           echo "ffms2=$(git rev-parse HEAD:Thirdparty/ffms2)" >> "$GITHUB_OUTPUT"
+          echo "libass=$(git rev-parse HEAD:Thirdparty/libass)" >> "$GITHUB_OUTPUT"
 
       # Keyed by the container image digest too: these are built in the floor
       # container and must never mix with the ubuntu-24.04 job's builds.
@@ -558,12 +566,12 @@ jobs:
           path: floor-out/wx/prefix
           key: wx-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.wx }}-${{ hashFiles('Thirdparty/build-wxwidgets-linux.sh', 'Thirdparty/wxWidgets-patches/**', 'packaging/linux/floor/build.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
 
-      - name: Cache FFmpeg and FFMS2 (floor)
+      - name: Cache FFmpeg, FFMS2 and libass (floor)
         id: media-cache
         uses: actions/cache/restore@v4
         with:
           path: floor-out/media
-          key: media-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.ffms2 }}-${{ hashFiles('packaging/linux/floor/sources.lock', 'packaging/linux/floor/build-media.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
+          key: media-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.ffms2 }}-${{ steps.keys.outputs.libass }}-${{ hashFiles('packaging/linux/floor/sources.lock', 'packaging/linux/floor/build-media.sh', 'Thirdparty/build-libass-linux.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
 
       - name: Build the floor container
         run: docker build -q --build-arg BASE="$(cat packaging/linux/floor/image)" -t hikarisub-floor packaging/linux/floor
@@ -582,12 +590,12 @@ jobs:
           path: floor-out/wx/prefix
           key: wx-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.wx }}-${{ hashFiles('Thirdparty/build-wxwidgets-linux.sh', 'Thirdparty/wxWidgets-patches/**', 'packaging/linux/floor/build.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
 
-      - name: Save FFmpeg and FFMS2 (floor)
-        if: always() && steps.media-cache.outputs.cache-hit != 'true' && hashFiles('floor-out/media/lib/pkgconfig/ffms2.pc') != ''
+      - name: Save FFmpeg, FFMS2 and libass (floor)
+        if: always() && steps.media-cache.outputs.cache-hit != 'true' && hashFiles('floor-out/media/lib/pkgconfig/ffms2.pc') != '' && hashFiles('floor-out/media/lib/pkgconfig/libass.pc') != ''
         uses: actions/cache/save@v4
         with:
           path: floor-out/media
-          key: media-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.ffms2 }}-${{ hashFiles('packaging/linux/floor/sources.lock', 'packaging/linux/floor/build-media.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
+          key: media-floor-${{ steps.keys.outputs.image }}-${{ steps.keys.outputs.ffms2 }}-${{ steps.keys.outputs.libass }}-${{ hashFiles('packaging/linux/floor/sources.lock', 'packaging/linux/floor/build-media.sh', 'Thirdparty/build-libass-linux.sh', 'packaging/linux/floor/Dockerfile', 'packaging/linux/floor/install-deps.sh') }}
 
       - name: Collect the release files
         env:
