@@ -13,6 +13,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <iterator>
@@ -254,8 +255,18 @@ TEST_F(Spelling, DictionaryFoldersInSearchOrder)
     writeFile(bundled / "en_US.dic", "1\nbundled\n");
     writeFile(bundled / "pl.aff", "");
     writeFile(bundled / "pl.dic", "1\nkot\n");
-    EXPECT_EQ(names(availableDictionaries(std::vector<fs::path>{folder, bundled})),
-              (std::vector<std::string>{"en_US", "pl"}));
+#ifdef _WIN32
+    const std::vector<std::string> listed{"en_US", "pl"};
+#else
+    // Each folder pairs in readdir's order, which a hashed directory may give
+    // as pl.dic, en_US.dic beside en_US.aff, pl.aff (no pair from it then).
+    std::vector<std::string> listed = readdirPairs(folder);
+    for (auto &symbol : readdirPairs(bundled))
+        if (std::ranges::find(listed, symbol) == listed.end())
+            listed.push_back(symbol);
+    ASSERT_EQ(listed.front(), "en_US");
+#endif
+    EXPECT_EQ(names(availableDictionaries(std::vector<fs::path>{folder, bundled})), listed);
     SpellChecker both(std::vector<fs::path>{folder, bundled}, fakes::FakeSpelling::loader(&backend));
     ASSERT_EQ(both.initialize(u"pl"), SpellChecker::Status::Ready);
     EXPECT_TRUE(both.checkWord(u"kot"));
