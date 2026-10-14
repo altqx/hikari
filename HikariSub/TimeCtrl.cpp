@@ -110,6 +110,14 @@ TimeCtrl::TimeCtrl(wxWindow* parent, const long int id, const wxString& val, con
 		SetSelection(0, GetValue().Length());
 		Copy();
 	}, ID_TCTLC);
+	// Cutting digits out of a clock time leaves text that is not a time, which
+	// OnTimeWrite's mask, made for one typed digit, cannot mend, so Ctrl+X
+	// copies the whole time as Ctrl+C does and removes nothing.
+	Bind(wxEVT_COMMAND_MENU_SELECTED, [=, this](wxCommandEvent &evt){
+		if (form >= MDVD || showFrames){ evt.Skip(); return; }
+		SetSelection(0, GetValue().Length());
+		Copy();
+	}, ID_TCTLX);
 	Bind(wxEVT_COMMAND_MENU_SELECTED, [=, this](wxCommandEvent &evt){
 		//napisać tutaj zerowanie przy zaznaczeniu i ogólnie cofanie kursora i zerowanie jednej cyfry
 		timeUnchanged = false;
