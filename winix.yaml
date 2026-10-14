@@ -270,7 +270,7 @@ tasks:
     timeoutSeconds: 180
     environment: {GATE_DISPLAY: status}
   # W2: VSFilterMod, the CSRI renderer the package ships, in its own build tree
-  # (windows-x64-vsfiltermodmod: HIKARI_TEST_VSFILTERMOD fetches the release
+  # (windows-x64-vsfiltermod: HIKARI_TEST_VSFILTERMOD fetches the release
   # cmake/HikariVsfilterMod.cmake pins and puts it beside the tests), with the
   # program and the tests that use it. xy-VSFilter is not shipped (user 2026-10-14).
   vsfiltermod-build:
