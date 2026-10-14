@@ -590,6 +590,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="Menu.h" />
     <ClInclude Include="MenuBarHitTest.h" />
     <ClInclude Include="MenuButton.h" />
+    <ClInclude Include="MicroDvdSteps.h" />
     <ClInclude Include="MispellReplacerDialog.h" />
     <ClInclude Include="OptionsPanels.h" />
     <ClInclude Include="FileTypeIcons.h" />

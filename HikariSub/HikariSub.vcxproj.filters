@@ -738,6 +738,9 @@
     <ClInclude Include="MispellReplacerDialog.h">
       <Filter>M</Filter>
     </ClInclude>
+    <ClInclude Include="MicroDvdSteps.h">
+      <Filter>M</Filter>
+    </ClInclude>
     <ClInclude Include="MisspellReplacer.h">
       <Filter>M</Filter>
     </ClInclude>

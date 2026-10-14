@@ -14,6 +14,7 @@
 //  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "SubsTime.h"
+#include "MicroDvdSteps.h"
 #include "TimeCtrlSteps.h"
 #include "config.h"
 #include "SubsDialogue.h"
@@ -93,9 +94,8 @@ void SubsTime::ParseMS(wxString raw)
 			orgframe = result;
 		}
 		else if (form == MDVD){
-			orgframe = result;
-			mstime = (result / GetMDVDFPS())*(1000.f);
-			if (orgframe < 0){ orgframe = 0; }
+			//FrameTime holds a large frame's time in an int
+			SetMDVDFrame(result);
 		}
 		else{ mstime = result * 100; }
 	}
@@ -164,6 +164,12 @@ void SubsTime::NewFrame(int frame)
 {
 	orgframe = frame;
 	if (orgframe < 0){ orgframe = 0; }
+}
+
+void SubsTime::SetMDVDFrame(int frame)
+{
+	orgframe = (frame < 0) ? 0 : frame;
+	mstime = MicroDvdSteps::FrameTime(orgframe, GetMDVDFPS());
 }
 
 char SubsTime::GetFormat()

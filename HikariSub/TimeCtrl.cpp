@@ -20,6 +20,7 @@
 #include "NumCtrl.h"
 #include "SubsDialogue.h"
 #include "Provider.h"
+#include "MicroDvdSteps.h"
 
 #include <wx/regex.h>
 #include <wx/clipbrd.h>
@@ -343,14 +344,16 @@ void TimeCtrl::OnMouseEvent(wxMouseEvent &event) {
 				changed = true;
 			}
 		}
-		int maxms = TimeCtrlSteps::MaxMs(form == MPL2 && !showFrames);
+		//MicroDVD steps the frame number, the other formats the time
+		int maxValue = (form == MDVD) ? MicroDvdSteps::MAX_FRAME : TimeCtrlSteps::MaxMs(form == MPL2 && !showFrames);
 		if (mstime < 0){ mstime = 0; }
-		else if (mstime > maxms){ mstime = maxms; }
+		else if (mstime > maxValue){ mstime = maxValue; }
 		if (mstime == (-tmpgrad)){ mstime = 0; return; }
-		else if (mstime == (maxms + tmpgrad)){ mstime = maxms; return; }
+		else if (mstime == (maxValue + tmpgrad)){ mstime = maxValue; return; }
 		
 		if (changed){
 			if (showFrames){ mTime.orgframe = mstime; }
+			else if (form == MDVD){ mTime.SetMDVDFrame(mstime); }
 			else{ mTime.mstime = mstime; }
 			SetValue(mTime.raw(showFrames ? FRAME : form), true, false);
 			wxCommandEvent evt2(NUMBER_CHANGED, GetId()); AddPendingEvent(evt2);
@@ -371,7 +374,7 @@ void TimeCtrl::OnMouseEvent(wxMouseEvent &event) {
 		bool frames = form == FRAME || form == MDVD || (form == MPL2 && showFrames);
 		grad = TimeCtrlSteps::Grad(frames, mpl2, pos.x, startPos);
 		mTime.SetRaw(GetValue(), showFrames ? FRAME : form);
-		mstime = (form == FRAME) ? mTime.orgframe : mTime.mstime;
+		mstime = (form == FRAME || form == MDVD) ? mTime.orgframe : mTime.mstime;
 		curpos = pos.x;
 		SetSelection(pos.x, pos.x);
 		SetFocus();
@@ -389,9 +392,17 @@ void TimeCtrl::OnMouseEvent(wxMouseEvent &event) {
 		grad = TimeCtrlSteps::Grad(frames, mpl2, pos.x, startPos);
 		mTime.SetRaw(GetValue(), showFrames ? FRAME : form);
 		int step = (event.GetWheelRotation() / event.GetWheelDelta())*grad;
-		if (form == FRAME || form == MDVD){ mTime.orgframe += step; }
-		else{ mTime.mstime += step; }
-		if (mTime.mstime < 0 || mTime.mstime > TimeCtrlSteps::MaxMs(mpl2) || mTime.orgframe < 0){ return; }
+		if (form == MDVD && !showFrames){
+			//the time follows the frame, so a frame stepped to 0 shows 0
+			int frame = MicroDvdSteps::StepFrame(mTime.orgframe, step);
+			if (frame == mTime.orgframe){ return; }
+			mTime.SetMDVDFrame(frame);
+		}
+		else{
+			if (form == FRAME || form == MDVD){ mTime.orgframe += step; }
+			else{ mTime.mstime += step; }
+			if (mTime.mstime < 0 || mTime.mstime > TimeCtrlSteps::MaxMs(mpl2) || mTime.orgframe < 0){ return; }
+		}
 		SetValue(mTime.raw(showFrames ? FRAME : form), true, false);
 		wxCommandEvent evt2(NUMBER_CHANGED, GetId()); AddPendingEvent(evt2);
 		timeUnchanged = false;

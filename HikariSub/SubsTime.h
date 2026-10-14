@@ -36,6 +36,8 @@ public:
 	void SetRaw(wxString rawtime, char format);
 	void NewTime(int ms);
 	void NewFrame(int frame);
+	//MicroDVD frame with the time that goes with it, 0 at frame 0
+	void SetMDVDFrame(int frame);
 	void ParseMS(wxString time);
 	wxString raw(char format = 0);
 	char GetFormat();
