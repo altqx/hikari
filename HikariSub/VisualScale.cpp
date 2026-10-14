@@ -304,11 +304,16 @@ void Scale::OnMouseEvent(wxMouseEvent &evt)
 		else if (abs(to.x - x) < 11 && abs(to.y - y) < 11){ grabbed = 2; type = 2; }
 		diffs.x = to.x - x;
 		diffs.y = to.y - y;
-		if (type == 0) { tab->video->SetCursor(wxCURSOR_SIZEWE); }
-		if (type == 1) { tab->video->SetCursor(wxCURSOR_SIZENS); }
-		if (type == 2) { tab->video->SetCursor(wxCURSOR_SIZING); }
+		// Shift changes the pointer only during a drag: while hovering, the
+		// rules above keep it.
+		bool dragging = click || holding;
+		if (dragging) {
+			if (type == 0) { tab->video->SetCursor(wxCURSOR_SIZEWE); }
+			if (type == 1) { tab->video->SetCursor(wxCURSOR_SIZENS); }
+			if (type == 2) { tab->video->SetCursor(wxCURSOR_SIZING); }
+		}
 		if (((leftc || evt.LeftIsDown()) && evt.ShiftDown()) || preserveProportions){
-			tab->video->SetCursor(wxCURSOR_SIZING);
+			if (dragging) { tab->video->SetCursor(wxCURSOR_SIZING); }
 			type = 2;
 			diffs.x = x;
 			diffs.y = y;
