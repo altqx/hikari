@@ -1,5 +1,7 @@
 // V2 playback follow-ups through the composition and the real QML (user
-// decisions 2026-10-14, items 31-32):
+// decisions 2026-10-14, items 30-32):
+// - the docked and the fullscreen seek bar dragged seek at most every 50 ms
+//   and once more where they are let go (V2-seek-bar-drag-throttle);
 // - while playing, the features that read the video's frame read the
 //   player's (legacy FrameShownAt(VideoBox::Tell())): the Line editor's time
 //   difference, inserting Lines at the video's time, the visual tools' time
@@ -20,6 +22,7 @@
 #include "video_fullscreen_controller.h"
 #include "visual_tools_controller.h"
 
+#include <QElapsedTimer>
 #include <QFile>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
@@ -170,6 +173,52 @@ class PlayingFrameTests : public QObject {
         application->clickLine(id, static_cast<int>(modifiers.toInt()));
     }
 
+    // Drags `bar` from `from` to `to` (fractions of its width) in `steps`
+    // moves `pauseMs` apart; returns the moves the bar reported, and in
+    // `held` its frame just before it was let go (where it is let go: the
+    // release is at the last move's point).
+    int drag(QQuickWindow *w, QQuickItem *bar, qreal from, qreal to, int steps, int pauseMs, int &held)
+    {
+        QSignalSpy moved(bar, SIGNAL(moved()));
+        const qreal y = bar->height() / 2;
+        auto at = [&](qreal f) { return bar->mapToScene(QPointF(bar->width() * f, y)).toPoint(); };
+        QTest::mouseMove(w, at(from));
+        QTest::mousePress(w, Qt::LeftButton, Qt::NoModifier, at(from));
+        for (int i = 1; i <= steps; ++i) {
+            QTest::mouseMove(w, at(from + (to - from) * i / steps));
+            QTest::qWait(pauseMs);
+        }
+        held = qRound(bar->property("value").toReal());
+        QTest::mouseRelease(w, Qt::LeftButton, Qt::NoModifier, at(to));
+        return static_cast<int>(moved.count());
+    }
+    // A fast drag over the bar: many moves, at most a seek per 50 ms, and
+    // the last seek exactly where it was let go.
+    void checkDrag(QQuickWindow *w, QQuickItem *bar, qreal from, qreal to)
+    {
+        auto &video = application->video();
+        QSignalSpy sought(&video, &ui::VideoController::seekBarSought);
+        QElapsedTimer clock;
+        clock.start();
+        int released = -1;
+        const int moves = drag(w, bar, from, to, 60, 4, released);
+        const qint64 elapsed = clock.elapsed();
+        qInfo("%d moves, %lld seeks in %lld ms", moves, static_cast<long long>(sought.count()),
+              static_cast<long long>(elapsed));
+        QVERIFY2(moves >= 30, "the bar followed the pointer");
+        QVERIFY(sought.count() >= 2); // during the drag, not only on release
+        QVERIFY(sought.count() <= elapsed / 50 + 3);
+        QVERIFY(sought.count() < moves / 3);
+        QCOMPARE(sought.last().first().toInt(), released);
+        QCOMPARE(session().requestedFrame().value_or(-1), released);
+        QVERIFY(std::abs(released - qRound(to * (session().frameCount() - 1))) <= 4);
+        // Nothing waits once let go, and the bar follows the frame again.
+        const auto count = sought.count();
+        QTest::qWait(120);
+        QCOMPARE(sought.count(), count);
+        QTRY_COMPARE(qRound(bar->property("value").toReal()), released);
+    }
+
 private slots:
     void init()
     {
@@ -199,6 +248,46 @@ private slots:
         engine = nullptr;
         application = nullptr;
         player = nullptr;
+    }
+
+    // Item 30: the docked seek bar, paused and playing.
+    void seekBarDragSeeksAtMostEvery50Ms()
+    {
+        auto *bar = findItem(window->contentItem(), QStringLiteral("videoSlider"));
+        QVERIFY(bar);
+        QTRY_VERIFY(bar->isVisible() && bar->isEnabled());
+        QVERIFY(bar->width() >= 120);
+        checkDrag(window, bar, 0.1, 0.8);
+        // The frame let go on is the one shown.
+        const int released = session().requestedFrame().value_or(-1);
+        QTRY_COMPARE_WITH_TIMEOUT(session().shownFrame().value_or(-1), released, 10000);
+        // Playing: the player is sought as often, and goes on from the frame
+        // let go on.
+        QVERIFY(play());
+        playerAt(5);
+        const int before = player->seeks();
+        checkDrag(window, bar, 0.9, 0.2);
+        QVERIFY(session().playing());
+        QVERIFY(player->seeks() - before <= 22);
+        QCOMPARE(player->calls.back(), "seek " + std::to_string(startMs(*session().requestedFrame()) * 1000));
+    }
+
+    // Item 30: the fullscreen seek bar the same way.
+    void fullscreenSeekBarDragSeeksAtMostEvery50Ms()
+    {
+        auto &fs = application->videoFullscreen();
+        fs.setShowToolbar(true);
+        QVERIFY(fs.toggle(0));
+        auto *fsWindow = qobject_cast<QQuickWindow *>(
+            engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("videoFullscreen")));
+        QVERIFY(fsWindow);
+        QTRY_VERIFY(fsWindow->isExposed());
+        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() - 3));
+        auto *bar = findItem(fsWindow->contentItem(), QStringLiteral("fullscreenSlider"));
+        QVERIFY(bar);
+        QTRY_VERIFY(bar->isVisible() && bar->isEnabled());
+        checkDrag(fsWindow, bar, 0.15, 0.75);
+        QVERIFY(fs.leave());
     }
 
     // Item 31: while playing, every reader of the video's frame reads the

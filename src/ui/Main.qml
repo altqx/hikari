@@ -2429,7 +2429,10 @@ ApplicationWindow {
                     enabled: root.video.hasVideo
                     focusPolicy: Qt.NoFocus
                     Accessible.name: qsTranslate("HikariSub.Video", "Video position")
-                    onMoved: root.video.showFrameAt(Math.round(value))
+                    // A drag seeks at most every 50 ms and once more where it
+                    // is let go (V2 user decision 2026-10-14).
+                    onMoved: root.video.seekBarMoved(Math.round(value), pressed)
+                    onPressedChanged: if (!pressed) root.video.seekBarReleased()
                 }
                 RowLayout {
                     Layout.fillWidth: true

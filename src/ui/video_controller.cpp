@@ -9,6 +9,7 @@
 #include <QVariantMap>
 
 #include <algorithm>
+#include <chrono>
 
 namespace hikari::ui {
 
@@ -49,6 +50,10 @@ VideoController::VideoController(application::IndexedSourcePort &source, applica
     m_textsTimer->setSingleShot(true);
     m_textsTimer->setInterval(100);
     connect(m_textsTimer, &QTimer::timeout, this, &VideoController::textsChanged);
+    m_seekTimer = new QTimer(this);
+    m_seekTimer->setSingleShot(true);
+    m_seekTimer->setTimerType(Qt::PreciseTimer);
+    connect(m_seekTimer, &QTimer::timeout, this, &VideoController::seekBarTimer);
     connect(this, &VideoController::changed, this, &VideoController::textsMayChange); // O5
 }
 
@@ -392,6 +397,44 @@ bool VideoController::showFrameAt(int frame)
     if (!hasVideo())
         return false;
     return m_session.seekFrame(frame);
+}
+
+void VideoController::seekBarMoved(int frame, bool held)
+{
+    if (!held) {
+        seekBarSeek(frame);
+        return;
+    }
+    seekBarSeek(m_seekThrottle.move(frame, application::SeekThrottle::Clock::now()));
+    seekBarTimer();
+}
+
+void VideoController::seekBarReleased()
+{
+    m_seekTimer->stop();
+    seekBarSeek(m_seekThrottle.release(application::SeekThrottle::Clock::now()));
+}
+
+void VideoController::seekBarSeek(std::optional<int> frame)
+{
+    if (!frame)
+        return;
+    showFrameAt(*frame);
+    emit seekBarSought(*frame);
+}
+
+// Seeks the waiting frame once it is due, else waits for it.
+void VideoController::seekBarTimer()
+{
+    const auto now = application::SeekThrottle::Clock::now();
+    seekBarSeek(m_seekThrottle.tick(now));
+    const auto due = m_seekThrottle.due();
+    if (!due) {
+        m_seekTimer->stop();
+        return;
+    }
+    const auto wait = std::chrono::ceil<std::chrono::milliseconds>(*due - now);
+    m_seekTimer->start(static_cast<int>(std::max<std::chrono::milliseconds::rep>(wait.count(), 1)));
 }
 
 bool VideoController::seekBy(int ms)

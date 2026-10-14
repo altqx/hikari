@@ -237,7 +237,10 @@ Window {
                     enabled: fs.shell.video.hasVideo
                     focusPolicy: Qt.NoFocus
                     Accessible.name: qsTr("Video position")
-                    onMoved: fs.shell.video.showFrameAt(Math.round(value))
+                    // A drag seeks at most every 50 ms and once more where it
+                    // is let go (V2 user decision 2026-10-14).
+                    onMoved: fs.shell.video.seekBarMoved(Math.round(value), pressed)
+                    onPressedChanged: if (!pressed) fs.shell.video.seekBarReleased()
                 }
                 RowLayout {
                     Layout.fillWidth: true
