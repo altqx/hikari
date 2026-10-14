@@ -62,6 +62,9 @@ public:
     // The overlay's subtitles (a Document's encoded ASS bytes). The shown
     // frame is rendered again.
     void setSubtitles(std::vector<std::byte> script);
+    // How many times setSubtitles gave the renderer a script (each one a
+    // parse); for tests.
+    std::uint64_t subtitleUpdates() const { return m_subtitleUpdates; }
     // Y6: fonts given to the renderer with the subtitles from the next
     // setSubtitles on (EXTERNAL_FONTS_DIRECTORY's fonts).
     void setFonts(std::vector<FontLease> fonts) { m_fonts = std::move(fonts); }
@@ -267,6 +270,7 @@ private:
     std::shared_ptr<const IndexedFrame> m_shown;
     std::shared_ptr<const OverlayFrame> m_overlay;
     bool m_hasSubtitles = false;
+    std::uint64_t m_subtitleUpdates = 0;
     float m_legacyFps = 0.f; // P10
     std::optional<PresentResult> m_lastPresent;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);

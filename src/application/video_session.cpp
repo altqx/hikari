@@ -180,6 +180,7 @@ void VideoSession::setSubtitles(std::vector<std::byte> script)
     RenderSnapshot snapshot;
     snapshot.script = std::move(script);
     snapshot.fonts = m_fonts;
+    ++m_subtitleUpdates;
     m_hasSubtitles = m_renderer.prepare(std::move(snapshot)).has_value();
     subtitlesChanged(); // after the prepare: the worker's renders from now on use it
     if (m_shown) {

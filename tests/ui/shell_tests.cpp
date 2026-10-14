@@ -2563,6 +2563,54 @@ private slots:
         QVERIFY(session.lastOverlay()->pixels == fallback->pixels);
     }
 
+    // Q2: the editor's changes in one event-loop turn reach the video as
+    // one script, by one parse (legacy EditBox::OnEdit's OpenSubsLater,
+    // flushed once by VideoBox::FlushLater): keystrokes that queued behind a
+    // slow parse are drawn together.
+    void editsInOneTurnRefreshTheVideoOnce()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        const QString path = folder.filePath(QStringLiteral("coalesced.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n[Events]\nFormat: Layer, Start, "
+                    "End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:00.00,0:00:10.00,Default,,"
+                    "0,0,0,,Wafer gym\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto &session = application->video().session();
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        session.seekTo(core::DocumentTime(1'500'000));
+        QTRY_VERIFY_WITH_TIMEOUT(session.shownFrame(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() && !session.lastOverlay()->empty, 20000);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        QCoreApplication::processEvents();
+        const auto shown = session.lastOverlay();
+        const std::uint64_t before = session.subtitleUpdates();
+
+        auto &editor = application->editor();
+        editor.textEdited(QStringLiteral("Wafer gym A"), 11);
+        editor.textEdited(QStringLiteral("Wafer gym AB"), 12);
+        editor.textEdited(QStringLiteral("Wafer gym ABC"), 13);
+        QCOMPARE(session.subtitleUpdates(), before); // nothing parsed yet
+        QTRY_COMPARE(session.subtitleUpdates(), before + 1);
+        QTRY_VERIFY(session.lastOverlay() != shown);
+        QTest::qWait(50);
+        QCOMPARE(session.subtitleUpdates(), before + 1); // one parse for the three changes
+        QVERIFY(session.lastOverlay()->pixels != shown->pixels); // the last text is drawn
+
+        // A change on its own still shows on its own.
+        editor.textEdited(QStringLiteral("Wafer gym"), 9);
+        QTRY_COMPARE(session.subtitleUpdates(), before + 2);
+        QTRY_VERIFY(session.lastOverlay()->pixels == shown->pixels);
+        editor.discard();
+    }
+
     // 38c (user decision, 2026-10-14): a script's attached fonts reach the
     // loaded video as font leases, with the renderer script that leaves
     // [Fonts] out. tests/fixtures/attachments/attached.ass draws "HH" in

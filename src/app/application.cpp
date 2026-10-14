@@ -869,8 +869,16 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_recent.set(m_settings->settings().list("recent.subtitles"));
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
+    // An edit refreshes the video once per event-loop turn, however many
+    // changes it made (legacy EditBox::OnEdit's OpenSubsLater, a CallAfter
+    // flushed by VideoBox::FlushLater, VideoBox.cpp:1861-1890): keystrokes
+    // queued behind a slow parse are shown together, by one parse.
+    m_editRefresh = new QTimer(this);
+    m_editRefresh->setSingleShot(true);
+    m_editRefresh->setInterval(0);
+    connect(m_editRefresh, &QTimer::timeout, this, &Application::refreshVideo);
     connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] {
-        refreshVideo();
+        m_editRefresh->start();
         scheduleAutosave();
     });
     // E4: the editor's time fields show frames of the open video (TimeCtrl::SetVideoBox).
@@ -1606,6 +1614,8 @@ void Application::refreshVideo()
 {
     if (m_holdVideoRefresh)
         return; // commitAndAdvance refreshes once the move is made
+    if (m_editRefresh)
+        m_editRefresh->stop(); // this refresh shows the edits it was to show
     const auto left = std::exchange(m_leftEditedLine, std::nullopt);
     const auto target = m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;
