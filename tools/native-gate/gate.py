@@ -388,7 +388,8 @@ class Hyprland(Sway):
         out = []
         for c in json.loads(self.hyprctl("clients", "-j") or "[]"):
             (x, y), (w, h) = c["at"], c["size"]
-            out.append(f'{"floating_con" if c["floating"] else "con":12} {c["class"]} '{c["title"]}' {x},{y} {w}x{h} '
+            title = "'" + c["title"] + "'"  # as swaymsg's, which client_rect reads, apostrophes and all
+            out.append(f'{"floating_con" if c["floating"] else "con":12} {c["class"]} {title} {x},{y} {w}x{h} '
                        f'client={x},{y} {w}x{h} output={mons.get(c["monitor"])} fullscreen={c["fullscreen"]} '
                        f'{"FOCUSED" if c["address"] == active else ""}')
         return "\n".join(out)
