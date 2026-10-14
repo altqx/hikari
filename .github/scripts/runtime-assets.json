@@ -40,12 +40,12 @@
  },
  "external_binaries": [
   {
-   "url": "https://github.com/altqx/VSFilterMod/releases/download/r5.3.1-hikari.1/VSFilterMod_bin.zip",
-   "sha256": "c9e6326bb6b9f133e36f7a347d9b8929aec9eec094e90124564ef50680d95391",
+   "url": "https://github.com/altqx/VSFilterMod/releases/download/r5.3.1-hikari.2/VSFilterMod_bin.zip",
+   "sha256": "48eb70065cc41b5f034c511954b6bcda9f5fa008326860e4b31ffb2f6d16bbb8",
    "member": "x64/VSFilterMod.dll",
-   "member_sha256": "68a165736707f93fafaeaba6fdf341b435d937eca1b21c6942d9353cc9e7c86d",
+   "member_sha256": "e4386c63280bac1cdbb0ef6434643a4af797d45ad3e49b194c2db002574e2bfe",
    "dest": "Csri/VSFiltermod.dll",
-   "source": "altqx/VSFilterMod r5.3.1-hikari.1, a fork of Masaiki/VSFilterMod r5.3.1"
+   "source": "altqx/VSFilterMod r5.3.1-hikari.2, a fork of Masaiki/VSFilterMod r5.3.1"
   }
  ],
  "known_gaps": [

@@ -105,9 +105,10 @@ bool SubtitlesVSFilter::DrawOverlay(unsigned char* overlay, int time, wxRect* di
 	std::lock_guard<std::recursive_mutex> lock(s_CsriMutex);
 	if (!m_CsriFrame || m_CsriFrame->pixfmt != CSRI_F_BGR_ || m_Format != ARGB32)
 		return SubtitlesProvider::DrawOverlay(overlay, time, dirty);
-	// BGR_ (VSFilterMod takes no other) blends into the frame and writes no
-	// alpha, so on a cleared overlay nothing would show; the same instant
-	// drawn onto black and onto white gives each pixel's colour and coverage
+	// BGR_ (the fallback for a renderer that refuses BGRA) blends into the
+	// frame and writes no alpha, so on a cleared overlay nothing would show;
+	// the same instant drawn onto black and onto white gives each pixel's
+	// colour and coverage
 	size_t pixels = (size_t)m_VideoSize.x * m_VideoSize.y;
 	memset(overlay, 0, pixels * 4);
 	m_WhiteOverlay.assign(pixels * 4, 255);
