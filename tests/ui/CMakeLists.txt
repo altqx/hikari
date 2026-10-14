@@ -218,6 +218,15 @@ foreach(scale 125 150 175 200)
     set_tests_properties(hikari_ui_docking_qualification_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
 endforeach()
+# The Windows native gate's declared skips cover every skip of the suites it
+# runs whole (tools/native-gate/windows/check_declared_skips.py).
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_Interpreter_FOUND)
+    add_test(NAME hikari_native_gate_windows_declared_skips
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/native-gate/windows/check_declared_skips.py"
+            "${PROJECT_SOURCE_DIR}")
+    set_tests_properties(hikari_native_gate_windows_declared_skips PROPERTIES LABELS "native-gate" TIMEOUT 60)
+endif()
 hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 # D2: the View menu's arrangements and the editor switch through the composition.

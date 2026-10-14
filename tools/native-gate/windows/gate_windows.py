@@ -1308,7 +1308,9 @@ def step_test_executables():
     # screenshots run only with HIKARI_SURFACE_SHOT_DIR.
     known = ("the compositor places windows", "a synthetic drag between windows needs the offscreen platform",
              "the window follows a declined system move only where the platform declines it",
-             "X11 only (the .xvfb run)", "HIKARI_SURFACE_SHOT_DIR is not set")
+             "X11 only (the .xvfb run)", "HIKARI_SURFACE_SHOT_DIR is not set",
+             # the floating panel across a real scale change is the dpi step's
+             "the screen's scale changes through the offscreen platform")
     unexpected = [k for k in skips if not any(reason in k for reason in known)]
     log("tests", exits, summary, skips)
     verdict("test-executables", "observed" if ok and not unexpected else "failed",
@@ -2185,7 +2187,8 @@ def step_tags():
     ev, st, typed = [], {"texts": {}}, None
     try:
         focus_main_compositor()
-        st0 = uia(do=[{"action": "invoke", "name": "Hide tags", "type": "Button"}], settle_ms=800)
+        # "Hide tags" is a check box (UIA Toggle), on in a fresh profile.
+        st0 = uia(do=[{"action": "invoke", "name": "Hide tags", "type": "CheckBox"}], settle_ms=800)
         set_focus("Line text")
         keys("home", 0.5)
         type_text("{\\")
@@ -2273,7 +2276,9 @@ def step_dialogs():
     for title, opener in (("Style manager", ("ctrl+m",)), ("Time shift", ("ctrl+i",)),
                           ("Find and replace", ("ctrl+h",)), ("Settings", None)):
         focus_main_compositor()
-        set_focus("Line text")
+        # From the Grid: in the Line text Ctrl+I is italic (legacy's edit box
+        # context), not the time shift.
+        set_focus("Subtitle lines")
         before = uia()
         if opener:
             keys(*opener, 2.0)
@@ -2319,16 +2324,21 @@ def step_reference():
         set_focus("Subtitle lines")
         keys("home", 0.5, "ctrl+q", 2.0)
         ev, st = snap("reference-0-tray")
-        for _ in range(6):
-            keys("tab", 0.9)
+        # The tray's table, then back through its header's controls.
+        set_focus("Reference lines (protected, read-only)")
+        time.sleep(1.0)
+        for _ in range(4):
+            keys("shift+tab", 0.9)
         ev += snap("reference-1-tabbed")[0]
     finally:
         speech, silent, nev = nvda_stop(nvda_log, "reference")
     want = ("Follow the editing line", "Show nearest line", "Previous match", "Next match",
             "Reference lines (protected, read-only)")
     els = st.get("elements") or []
-    present = {n: bool([e for e in els if e["n"] == n and not e["off"]]) for n in want}
     status = [e["n"] for e in els if re.match(r"(Match \d+ of \d+|No matching line|Independent navigation)$", e["n"] or "")]
+    # "Show nearest line" is shown only when no reference line matches.
+    present = {n: bool([e for e in els if e["n"] == n and not e["off"]]) for n in want
+               if n != "Show nearest line" or "No matching line" in status}
     spoken = [n for n in want + tuple(status) if any(n in l for l in speech)]
     (EVID / "reference.json").write_text(json.dumps({"present": present, "status": status, "spoken": spoken},
                                                     indent=1, ensure_ascii=False))
