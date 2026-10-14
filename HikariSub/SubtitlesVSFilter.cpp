@@ -140,13 +140,8 @@ void SubtitlesVSFilter::Draw(unsigned char* buffer, int time)
 {
 	std::lock_guard<std::recursive_mutex> lock(s_CsriMutex);
 	if (m_CsriInstance){
-		//for swap -pitch and buffer set to last element - pitch
-		m_CsriFrame->strides[0] = (m_IsSwapped) ?
-			-(m_CsriFormat->width * m_BytesPerColor)
-			: m_CsriFormat->width * m_BytesPerColor;
-		m_CsriFrame->planes[0] = (m_IsSwapped) ?
-			buffer + (m_CsriFormat->width * (m_CsriFormat->height - 1) * m_BytesPerColor)
-			: buffer;
+		SetCsriFramePlane(m_CsriFrame, buffer, m_CsriFormat->width, m_CsriFormat->height,
+			m_BytesPerColor, m_IsSwapped);
 		csri_render(m_CsriInstance, m_CsriFrame, double(time / 1000.0));
 	}
 	

@@ -150,3 +150,24 @@ TEST(csri_bgr_overlay_composites_as_the_renderer_drew_onto_the_frame)
 	}
 	CHECK(worst <= 2);
 }
+
+TEST(csri_frame_plane_of_a_swapped_buffer_steps_back_a_line)
+{
+	std::vector<unsigned char> buffer(640 * 360 * 4);
+	csri_frame frame = Frame(CSRI_F_BGRA);
+	SetCsriFramePlane(&frame, buffer.data(), 640u, 360u, 4, true);
+	CHECK_EQ(frame.strides[0], (ptrdiff_t)-2560);
+	CHECK(frame.planes[0] == buffer.data() + 2560 * 359);
+	// the top line's first pixel and the bottom line's last are in the buffer
+	CHECK(frame.planes[0] + 359 * frame.strides[0] == buffer.data());
+	CHECK(frame.planes[0] + 2559 < buffer.data() + buffer.size());
+}
+
+TEST(csri_frame_plane_of_an_upright_buffer_is_the_buffer)
+{
+	std::vector<unsigned char> buffer(64 * 32 * 4);
+	csri_frame frame = Frame(CSRI_F_BGR_);
+	SetCsriFramePlane(&frame, buffer.data(), 64u, 32u, 4, false);
+	CHECK_EQ(frame.strides[0], (ptrdiff_t)256);
+	CHECK(frame.planes[0] == buffer.data());
+}

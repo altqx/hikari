@@ -49,3 +49,17 @@ void CsriOverlayFromBlackAndWhite(unsigned char *black, const unsigned char *whi
 		p[3] = (unsigned char)a;
 	}
 }
+
+void SetCsriFramePlane(csri_frame *frame, unsigned char *buffer, unsigned width,
+	unsigned height, int bytesPerPixel, bool swapped)
+{
+	ptrdiff_t line = (ptrdiff_t)width * bytesPerPixel;
+	if (swapped && height > 0) {
+		frame->planes[0] = buffer + line * (ptrdiff_t)(height - 1);
+		frame->strides[0] = -line;
+	}
+	else {
+		frame->planes[0] = buffer;
+		frame->strides[0] = line;
+	}
+}

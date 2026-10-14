@@ -20,8 +20,8 @@
 #include <cstddef>
 #include <functional>
 
-// Asks for the frame's format; when BGRA is refused (VSFilterMod takes only
-// BGR_), asks for BGR_. request returns 0 when a format is accepted, as
+// Asks for the frame's format; when BGRA is refused (a renderer that takes
+// only BGR_), asks for BGR_. request returns 0 when a format is accepted, as
 // csri_request_fmt does. Afterwards fmt and frame both name the format that
 // was asked for last; returns whether it was accepted.
 bool RequestCsriFormat(csri_fmt *fmt, csri_frame *frame,
@@ -33,3 +33,12 @@ bool RequestCsriFormat(csri_fmt *fmt, csri_frame *frame,
 // that drawing did: alpha is 255 minus how much of the white shows through,
 // and the colour is the black drawing divided by the alpha.
 void CsriOverlayFromBlackAndWhite(unsigned char *black, const unsigned char *white, size_t pixels);
+
+// Points frame's first plane at buffer, width x height pixels of
+// bytesPerPixel bytes. CSRI frames start at the top line, so a buffer whose
+// lines are stored bottom first (swapped) starts at its last line with a
+// negative stride. The stride is a signed ptrdiff_t: worked out in the
+// unsigned width it came out as 4 GB less the line, which a renderer that
+// keeps it as ptrdiff_t steps by, far outside the buffer.
+void SetCsriFramePlane(csri_frame *frame, unsigned char *buffer, unsigned width,
+	unsigned height, int bytesPerPixel, bool swapped);
