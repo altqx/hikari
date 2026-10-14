@@ -177,20 +177,27 @@ private slots:
 
     // The guard: a run in which a URL was refused fails. The executable runs
     // again with only refuseInTheChild, which passes; the run still exits
-    // with kUnhandledExitCode and names the URL.
+    // with kUnhandledExitCode. The child's QtTest log goes to a file (on
+    // Windows its standard output does not arrive; HikariTesting.cmake).
     void aRefusalFailsTheRun()
     {
+        const QString log = dir.filePath(QStringLiteral("child-log.txt"));
         QProcess child;
         QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
         environment.insert(QString::fromLatin1(kChild), QStringLiteral("1"));
         child.setProcessEnvironment(environment);
-        child.start(QCoreApplication::applicationFilePath(), {QStringLiteral("refuseInTheChild")});
+        child.start(QCoreApplication::applicationFilePath(),
+                    {QStringLiteral("refuseInTheChild"), QStringLiteral("-o"), log + QStringLiteral(",txt")});
         QVERIFY2(child.waitForFinished(60'000), qPrintable(child.errorString()));
-        const QString out = QString::fromLocal8Bit(child.readAllStandardOutput());
         const QString err = QString::fromLocal8Bit(child.readAllStandardError());
+        qInfo().noquote() << "the child's standard error:" << err.trimmed();
+        QFile file(log);
+        QVERIFY2(file.open(QIODevice::ReadOnly), qPrintable(log));
+        const QString out = QString::fromLocal8Bit(file.readAll());
         QCOMPARE(child.exitStatus(), QProcess::NormalExit);
         QVERIFY2(out.contains(QStringLiteral("PASS   : DesktopHandoffTests::refuseInTheChild()")), qPrintable(out));
-        QVERIFY2(err.contains(QStringLiteral("hikari-guard-probe:child")), qPrintable(err));
+        // The refusal names the URL as it happens.
+        QVERIFY2(out.contains(QStringLiteral("hikari-guard-probe:child was not opened")), qPrintable(out));
         QCOMPARE(child.exitCode(), recorded::kUnhandledExitCode);
     }
     void refuseInTheChild()
