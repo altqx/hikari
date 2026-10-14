@@ -17755,26 +17755,24 @@ private slots:
 
     // V3: VIDEO_PREVIOUS_FILE / VIDEO_NEXT_FILE (legacy VideoBox::NextFile,
     // OnPrew, OnNext): the transport's buttons ask first, then the folder's
-    // next video in the file system's own listing order opens (other files
-    // skipped); past the last one the video goes back to its start and play
-    // toggles.
+    // next video in natural name order opens (V3-next-file-natural-order;
+    // other files skipped); past the last one the video goes back to its
+    // start and play toggles.
     void nextFileWalksTheVideosFolder()
     {
         restartWithoutSound();
         QTemporaryDir &own = testFolder();
         QVERIFY(own.isValid());
-        for (const char *name : {"a.mkv", "b.MKV", "c.mkv"})
+        // created out of name order, so the file system's order is not it
+        for (const char *name : {"c.mkv", "a.mkv", "b.MKV"})
             QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), own.filePath(QLatin1String(name))));
         {
             QFile f(own.filePath(QStringLiteral("notes.txt")));
             QVERIFY(f.open(QIODevice::WriteOnly));
         }
-        // the listing as legacy's wxDir::GetAllFiles reads it (unsorted)
         QStringList videos;
-        for (const QString &name : QDir(own.path()).entryList(QDir::Files, QDir::Unsorted))
-            if (!name.endsWith(QLatin1String(".txt")))
-                videos << QDir::toNativeSeparators(own.filePath(name));
-        QCOMPARE(videos.size(), 3);
+        for (const char *name : {"a.mkv", "b.MKV", "c.mkv"})
+            videos << QDir::toNativeSeparators(own.filePath(QLatin1String(name)));
         QVERIFY(application->openFile(episode));
         auto &video = application->video();
         video.openVideo(videos[0]);
@@ -17789,7 +17787,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(question, "reject"));
         QTRY_VERIFY(!question->property("opened").toBool());
         QCOMPARE(QString::fromStdString(video.session().path()), videos[0]);
-        // Yes: the listing's next video
+        // Yes: the next video by name
         QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
         QTRY_VERIFY(question->property("opened").toBool());
         QVERIFY(QMetaObject::invokeMethod(question, "accept"));
@@ -17817,17 +17815,18 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
     }
 
-    // V3: the previous/next file order against legacy's own NextFile
+    // V3: the previous/next file over legacy's own NextFile capture folder
     // (tools/legacy-capture/next_file, the observation for this platform in
     // tests/fixtures/legacy-observations/local-v3-next-file-20261013). Legacy
-    // walked wxDir::GetAllFiles(..., wxDIR_FILES) as the system enumerates the
-    // folder, unsorted (readdir on Linux, FindFirstFileW on Windows), so the
-    // observation is checked for that relation, the same folder is made here
-    // in the same order, and both walks must follow this file system's
-    // enumeration the way legacy's followed its own. On NTFS, whose
-    // enumeration is the index's order and does not depend on the creation
-    // order, the enumeration must also equal the observed one.
-    void nextFileFollowsTheLegacyObservation()
+    // (at the baseline) walked wxDir::GetAllFiles(..., wxDIR_FILES) as the
+    // system enumerates the folder, unsorted (readdir on Linux, FindFirstFileW
+    // on Windows); the observation is checked for that relation, which is what
+    // the rewrite lists. The same folder is made here in the same order, and
+    // both walks follow that listing in natural name order
+    // (V3-next-file-natural-order), not this file system's enumeration. On
+    // NTFS, whose enumeration is the index's order and does not depend on the
+    // creation order, the enumeration must also equal the observed one.
+    void nextFileWalksTheCaptureFolderInNaturalOrder()
     {
 #ifdef _WIN32
         const QString platform = QStringLiteral("windows");
@@ -17936,29 +17935,46 @@ private slots:
             && tests::folderFileSystem(folder) == QLatin1String("NTFS"))
             QCOMPARE(enumeration, observedEnumeration);
         const QStringList listing = listingOf(enumeration);
+        // V3-next-file-natural-order: the capture's names in natural name
+        // order (case left out, digit runs as numbers, then code points), the
+        // listing's entries walked in it
+        const QStringList naturalOrder{
+            QStringLiteral(".dotted.mkv"), QStringLiteral("_under.mp4"),  QStringLiteral("a.b.mkv"),
+            QStringLiteral("a.mkv"),       QStringLiteral("attr-hidden.mkv"), QStringLiteral("B.mkv"),
+            QStringLiteral("c.MKV"),       QStringLiteral("ep1.mkv"),     QStringLiteral("ep2.mkv"),
+            QStringLiteral("ep10.mkv"),    QStringLiteral("folder.mkv"),  QStringLiteral("noext"),
+            QStringLiteral("notes.txt"),   QStringLiteral("x.mkv.txt"),   QStringLiteral("~tilde.avi"),
+            QStringLiteral("\u00c4rger.mkv"), QStringLiteral("\u00e9.mkv"), QStringLiteral("\u65e5\u672c\u8a9e.mkv")};
+        QCOMPARE(QSet<QString>(naturalOrder.begin(), naturalOrder.end()), QSet<QString>(created.begin(), created.end()));
+        QStringList ordered;
+        for (const QString &name : naturalOrder)
+            if (listing.contains(name))
+                ordered << name;
+        QCOMPARE(ordered.size(), listing.size());
+        qInfo() << "walked in:" << ordered;
 
         QVERIFY(application->openFile(episode));
         auto &video = application->video();
         const auto pathOf = [&](const QString &name) { return QDir::toNativeSeparators(QDir(folder).filePath(name)); };
         for (const bool next : {true, false}) {
-            const QString start = next ? firstVideo(listing) : lastVideo(listing);
+            const QString start = next ? firstVideo(ordered) : lastVideo(ordered);
             video.openVideo(pathOf(start));
             QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), pathOf(start), 20000);
             QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
             QStringList opened;
-            for (const QString &expected : walkOf(listing, start, next)) {
+            for (const QString &expected : walkOf(ordered, start, next)) {
                 QVERIFY(application->nextVideoFile(next));
                 QTRY_COMPARE_WITH_TIMEOUT(QFileInfo(QString::fromStdString(video.session().path())).fileName(), expected,
                                           20000);
                 QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
                 opened << expected;
             }
-            QCOMPARE(opened, walkOf(listing, start, next));
+            QCOMPARE(opened, walkOf(ordered, start, next));
             // Past the end: Seek(0) and Pause(false), the file kept; again to pause.
             QVERIFY(application->nextVideoFile(next));
             QTest::qWait(200);
             QCOMPARE(QFileInfo(QString::fromStdString(video.session().path())).fileName(),
-                     next ? lastVideo(listing) : firstVideo(listing));
+                     next ? lastVideo(ordered) : firstVideo(ordered));
             QCOMPARE(video.session().requestedFrame(), std::optional<int>(0));
             if (video.playing())
                 QVERIFY(application->nextVideoFile(next));
@@ -17997,6 +18013,9 @@ private slots:
                 listing << name;
         qInfo() << "listing here:" << listing;
         QCOMPARE(listing.size(), specialListed ? 3 : 2);
+        // walked in natural name order (V3-next-file-natural-order), which
+        // for these lower-case one-letter names is the plain sort
+        listing.sort();
         const auto real = [&](const QString &name) { return name != special; };
         const auto pathOf = [&](const QString &name) { return QDir::toNativeSeparators(QDir(folder).filePath(name)); };
         const auto dottedOf = [&](const QString &name) {
@@ -18024,7 +18043,7 @@ private slots:
         }
 
         // both ways from the real videos at the ends: the listing's videos in
-        // its order, the special entry included only where legacy listed it
+        // name order, the special entry included only where legacy listed it
         // (there its open fails, which ends the walk)
         bool specialReached = false;
         for (const bool next : {true, false}) {

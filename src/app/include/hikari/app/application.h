@@ -59,6 +59,7 @@
 #include "video_controller.h"
 #include "audio_controller.h"
 
+#include <QChar>
 #include <QDate>
 #include <QFont>
 #include <QDateTime>
@@ -1237,7 +1238,9 @@ private:
     bool keyframesWithoutVideo(const QString &path, QString &problem);
     application::RecentFiles m_recentVideo;
     application::RecentFiles m_recentKeyframes;
-    application::NextFileWalker m_nextFile;
+    // the previous / next file in natural name order, letters lowered as
+    // Unicode does (V3-next-file-natural-order)
+    application::NextFileWalker m_nextFile{[](char32_t c) { return QChar::toLower(c); }};
     QString m_recentVideoSeen; // the ready video last added to the list
     void rememberRecentAudio(const QString &path);
     void trimAudioCache();
