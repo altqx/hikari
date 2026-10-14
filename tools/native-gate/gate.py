@@ -652,11 +652,12 @@ def locate_floating(title, scale=1, x_from=0, path=None):
             run = e - x
             if fw - 10 * scale <= run <= fw - 2:
                 left = x - (fw - run) // 2
-                # a 1-pixel line (not a stretch of flat background): the
-                # rows above and below differ from it at its middle
+                # a 1-pixel line (SCALE device pixels; not a stretch of
+                # flat background): the rows above and below it differ
+                # from it at its middle
                 mid = (x + e) // 2
-                ok = 0 < y < ih - 1 and raw[((y - 1) * iw + mid) * 3:((y - 1) * iw + mid) * 3 + 3] != c \
-                    and raw[((y + 1) * iw + mid) * 3:((y + 1) * iw + mid) * 3 + 3] != c
+                ok = 0 < y < ih - scale and raw[((y - 1) * iw + mid) * 3:((y - 1) * iw + mid) * 3 + 3] != c \
+                    and raw[((y + scale) * iw + mid) * 3:((y + scale) * iw + mid) * 3 + 3] != c
                 # the left boundary: the same colour down the frame's side
                 ok = ok and 0 <= left < iw
                 for k in range(1, 9):
@@ -3025,8 +3026,11 @@ STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6
          "outputs": step_outputs}
 
 if __name__ == "__main__":
-    # Every step, the sweep's before "outputs" (it removes an output).
-    everything = [n for n in STEPS if n != "outputs"] + list(SWEEP_STEPS) + ["outputs"]
+    # Every step; the sweep's before "videofs" (on sway it leaves the main
+    # window on the scale-2 output, half the size, where the main window
+    # overflows it) and "outputs" (it removes an output).
+    everything = ([n for n in STEPS if n not in ("videofs", "outputs")] + list(SWEEP_STEPS)
+                  + ["videofs", "outputs"])
     wanted = sys.argv[2:] or everything
     for name in wanted:
         log(f"--- {B.name}: {name}")
