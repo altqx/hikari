@@ -2,6 +2,7 @@ pragma Translator: "HikariSub.Documents"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Hikari.Ui
 
 // P9: legacy Notebook::LoadVideo's question when subtitles open (Notebook.cpp:
 // 1191-1222 at 20d647c4), shown inline over the Video panel so the Document
@@ -13,11 +14,19 @@ import QtQuick.Layouts
 // Escape (its escape id) answered No; this question does not take the focus
 // from the Document, so Escape answers No while the focus is in it (reached
 // with Tab, or after "Apply to All"): the key comes up from its controls.
+// It sits over the video, beside the tool rail, on the panel colour: the
+// style's Frame draws only its outline, and the rail's icons and the picture
+// showed through the question.
 Frame {
     id: offer
     objectName: "associationOffer"
     required property var video
     visible: video.offering
+    background: Rectangle {
+        objectName: "associationOfferBackground"
+        color: Theme.panel
+        border.color: Theme.line
+    }
     RowLayout {
         anchors.fill: parent
         Label {

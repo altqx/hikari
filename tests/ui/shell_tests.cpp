@@ -18089,6 +18089,20 @@ private slots:
         QVERIFY(video.indexing());
         QVERIFY(progress->isVisible());
         QCOMPARE(findItem(progress, QStringLiteral("videoIndexingProgress"))->property("indeterminate").toBool(), true);
+        // Over the picture beside the tool rail, on an opaque fill in the
+        // panel colour (the style's Frame draws only its outline; the
+        // "Associated files" question showed the rail through it).
+        {
+            QQuickItem *rail = visualItem("visualToolRail");
+            QVERIFY(rail && rail->isVisible());
+            const QRectF strip = progress->mapRectToScene(QRectF(0, 0, progress->width(), progress->height()));
+            QVERIFY(!strip.intersects(rail->mapRectToScene(QRectF(0, 0, rail->width(), rail->height()))));
+            auto *fill = findItem(progress, QStringLiteral("videoIndexingBackground"));
+            QVERIFY(fill);
+            const QColor panel = fill->property("color").value<QColor>();
+            QCOMPARE(panel.alpha(), 255);
+            QCOMPARE(panel, QGuiApplication::palette().color(QPalette::Window)); // the theme's panel
+        }
         // V3-indexing-inline: a strip inside the Video panel, not a modal
         // window (legacy ProgressSink): no modal popup or window opens
         {
