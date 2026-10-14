@@ -269,7 +269,7 @@ TEST_F(Csri, ABufferIsReusedClearedWhereItWasDrawn)
 TEST_F(Csri, BgraRefusedFallsBackToBgrx)
 {
     calls.refuse = {csri::BGRA};
-    CsriRenderer r(twoRenderers(), "vsfiltermod_textsub", logger());
+    CsriRenderer r(twoRenderers(), "other_textsub", logger());
     ASSERT_TRUE(r.prepare(snapshotOf("[Script Info]\n")));
     auto frame = r.render(core::DocumentTime(1'500'000), 4, 4);
     ASSERT_TRUE(frame);
@@ -301,6 +301,35 @@ TEST_F(Csri, BgraRefusedFallsBackToBgrx)
     ASSERT_TRUE(frame);
     EXPECT_TRUE(frame->empty);
     EXPECT_TRUE(std::ranges::all_of(frame->pixels, [](std::uint8_t b) { return b == 0; }));
+}
+
+// VSFilterMod is asked for BGR_ alone, the target legacy drew it on: r5.3.1
+// and the altqx fork take BGRA too, but draw it premultiplied with inverted
+// alpha and leave a cleared frame's alpha 0, so the overlay was invisible.
+TEST_F(Csri, VsfilterModIsAskedForBgrxEvenThoughItTakesBgra)
+{
+    CsriRenderer r(twoRenderers(), "vsfiltermod_textsub", logger());
+    ASSERT_TRUE(r.prepare(snapshotOf("[Script Info]\n")));
+    auto frame = r.render(core::DocumentTime(2'169'000), 4, 4);
+    ASSERT_TRUE(frame);
+    ASSERT_EQ(calls.requested.size(), 1u);
+    EXPECT_EQ(calls.requested[0].pixfmt, csri::BGR_);
+    EXPECT_EQ(calls.renderedFormats, (std::vector<int>{csri::BGR_, csri::BGR_}));
+    EXPECT_FALSE(frame->empty);
+    const std::uint8_t *p = &frame->pixels[1 * 16 + 4];
+    EXPECT_EQ(p[0], 100);
+    EXPECT_EQ(p[1], 50);
+    EXPECT_EQ(p[2], 25);
+    EXPECT_EQ(p[3], 128);
+    // A VSFilterMod that refuses BGR_ is not asked for BGRA.
+    calls = Calls{};
+    calls.refuse = {csri::BGR_};
+    CsriRenderer refused(twoRenderers(), "vsfiltermod_textsub", logger());
+    ASSERT_TRUE(refused.prepare(snapshotOf("[Script Info]\n")));
+    EXPECT_EQ(refused.render(core::DocumentTime(0), 4, 4).error(), RenderError::BackendFailure);
+    ASSERT_EQ(calls.requested.size(), 1u);
+    EXPECT_EQ(calls.requested[0].pixfmt, csri::BGR_);
+    EXPECT_EQ(log, (std::vector<std::string>{"CSRI does not support this format."}));
 }
 
 TEST_F(Csri, AnUnsupportedFormatClosesTheInstance)

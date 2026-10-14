@@ -521,7 +521,8 @@ TEST(VsfilterMod, AFontsReloadReachesTheKeptRenderer)
     }
 }
 
-// W2: VSFilterMod takes only BGR_, which blends into the frame and leaves no
+// W2: the adapter asks VSFilterMod for BGR_ alone (r5.3.1's BGRA leaves a
+// cleared overlay's alpha 0), which blends into the frame and leaves no
 // alpha; legacy drew it onto the RGB32 video frame. The adapter's overlay
 // (the instant drawn onto black and onto white) composited over a frame must
 // give what VSFilterMod draws onto that frame itself, on every fixture.
