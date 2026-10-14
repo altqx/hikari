@@ -164,8 +164,9 @@ void useSettings(SettingsStore *settings);
 // until endPreview (OK saves them first; Cancel just ends it).
 void preview(const QVariantMap &values);
 void endPreview();
-// The platform's colour scheme (QStyleHints::colorScheme), or one forced
-// for tests and screenshots (nullopt: the platform's again). On Windows,
+// The platform's colour scheme (QStyleHints::colorScheme; on Linux, where
+// that reports none, the XDG settings portal's: portal_colour_scheme.h), or
+// one forced for tests and screenshots (nullopt: the platform's again). On Windows,
 // while the theme does not follow the system, Qt is asked for the shown
 // theme's side (Qt draws the framed windows' title bars from it,
 // title_bars.h), and QStyleHints reports that one.

@@ -27,14 +27,31 @@
 #include <QQuickStyle>
 #include <QQuickWindow>
 #include <QScopeGuard>
+#include <QStyleHints>
 #include <QTextStream>
 #include <QWindow>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
 #include <cmath>
+#include <optional>
 #include <set>
 #include <utility>
+
+#ifdef HIKARI_COLOUR_SCHEME_PORTAL
+#include "portal_colour_scheme.h"
+
+#include <QDBusConnection>
+#include <QDBusContext>
+#include <QDBusMessage>
+#include <QDBusVariant>
+#include <QProcess>
+#include <QStandardPaths>
+#include <QTemporaryDir>
+#include <QThread>
+
+#include <atomic>
+#endif
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -71,6 +88,105 @@ QString name(const QColor &c)
 {
     return c.name(QColor::HexRgb).toUpper();
 }
+
+
+#ifdef HIKARI_COLOUR_SCHEME_PORTAL
+// The XDG settings portal, as xdg-desktop-portal answers on the session bus:
+// ReadOne (interface version 2) and the SettingChanged signal.
+class FakeSettingsPortal : public QObject {
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "org.freedesktop.portal.Settings")
+public:
+    QVariant colourScheme = QVariant::fromValue(quint32(1));
+    std::atomic<int> reads = 0;
+    void change(quint32 value, const QString &nameSpace = QStringLiteral("org.freedesktop.appearance"),
+                const QString &key = QStringLiteral("color-scheme"))
+    {
+        // QtDBus relays a signal emitted on the object's own thread only.
+        if (QThread::currentThread() != thread()) {
+            QMetaObject::invokeMethod(this, [=, this] { change(value, nameSpace, key); }, Qt::BlockingQueuedConnection);
+            return;
+        }
+        if (nameSpace == QLatin1String("org.freedesktop.appearance") && key == QLatin1String("color-scheme"))
+            colourScheme = QVariant::fromValue(value);
+        emit SettingChanged(nameSpace, key, QDBusVariant(QVariant::fromValue(value)));
+    }
+public slots:
+    QDBusVariant ReadOne(const QString &nameSpace, const QString &key)
+    {
+        ++reads;
+        if (nameSpace == QLatin1String("org.freedesktop.appearance") && key == QLatin1String("color-scheme"))
+            return QDBusVariant(colourScheme);
+        return QDBusVariant(QVariant());
+    }
+signals:
+    void SettingChanged(const QString &nameSpace, const QString &key, const QDBusVariant &value);
+};
+
+// A portal older than ReadOne: Read wraps the value in a second variant.
+class FakeOldSettingsPortal : public QObject {
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "org.freedesktop.portal.Settings")
+public slots:
+    QDBusVariant Read(const QString &, const QString &)
+    {
+        return QDBusVariant(QVariant::fromValue(QDBusVariant(QVariant::fromValue(quint32(2)))));
+    }
+};
+
+// A portal slower than the first read waits (one still starting): each
+// answer comes 1.5 s late.
+class FakeSlowSettingsPortal : public QObject, protected QDBusContext {
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "org.freedesktop.portal.Settings")
+public slots:
+    QDBusVariant ReadOne(const QString &, const QString &)
+    {
+        setDelayedReply(true);
+        const QDBusMessage reply =
+            message().createReply(QVariant::fromValue(QDBusVariant(QVariant::fromValue(quint32(2)))));
+        QTimer::singleShot(1500, this, [bus = connection(), reply] { bus.send(reply); });
+        return {};
+    }
+};
+
+// A private session bus (no service directories, so no real portal starts)
+// with a server and a client connection.
+struct PrivateBus {
+    QTemporaryDir dir;
+    QProcess daemon;
+    QString address;
+    bool start()
+    {
+        const QString program = QStandardPaths::findExecutable(QStringLiteral("dbus-daemon"));
+        if (program.isEmpty())
+            return false;
+        const QString config = dir.filePath(QStringLiteral("bus.conf"));
+        QFile f(config);
+        if (!f.open(QIODevice::WriteOnly))
+            return false;
+        f.write("<!DOCTYPE busconfig PUBLIC \"-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN\"\n"
+                " \"http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd\">\n"
+                "<busconfig><type>session</type><listen>unix:dir=" + dir.path().toUtf8() + "</listen>"
+                "<policy context=\"default\"><allow send_destination=\"*\" eavesdrop=\"true\"/>"
+                "<allow eavesdrop=\"true\"/><allow own=\"*\"/></policy></busconfig>\n");
+        f.close();
+        daemon.start(program, {QStringLiteral("--config-file=") + config, QStringLiteral("--nofork"),
+                               QStringLiteral("--print-address=1")});
+        if (!daemon.waitForStarted() || !daemon.waitForReadyRead(5000))
+            return false;
+        address = QString::fromUtf8(daemon.readLine()).trimmed();
+        return !address.isEmpty();
+    }
+    ~PrivateBus()
+    {
+        for (const char *name : {"k2-portal-server", "k2-portal-client", "k2-portal-client2"})
+            QDBusConnection::disconnectFromBus(QLatin1String(name));
+        daemon.kill();
+        daemon.waitForFinished();
+    }
+};
+#endif
 
 } // namespace
 
@@ -297,6 +413,164 @@ private slots:
         ui::theme::forceSystemScheme(S::Light);
         QCOMPARE(ui::theme::current().code, Code::Dark);
         ui::theme::useSettings(nullptr);
+    }
+
+    // Follow system theme on Linux desktops whose Qt platform theme reports
+    // no scheme (the generic theme: sway, Hyprland, i3): the XDG settings
+    // portal's color-scheme, read at the start and followed live; 1 dark,
+    // 2 light, 0 (no preference) the chosen theme. A scheme Qt reports wins
+    // (QStyleHints, forced here); following off, the portal no longer
+    // matters. A portal older than ReadOne answers Read; one too slow for
+    // the first read is followed once it answers; no portal on the bus
+    // leaves the scheme unknown.
+    void followingTheSystemReadsTheSettingsPortal()
+    {
+#ifndef HIKARI_COLOUR_SCHEME_PORTAL
+        QSKIP("the XDG settings portal is read on Linux only");
+#else
+        using S = Qt::ColorScheme;
+        using ui::theme::PortalColourScheme;
+        QCOMPARE(PortalColourScheme::fromValue(QVariant::fromValue(quint32(0))), S::Unknown);
+        QCOMPARE(PortalColourScheme::fromValue(QVariant::fromValue(quint32(1))), S::Dark);
+        QCOMPARE(PortalColourScheme::fromValue(QVariant::fromValue(quint32(2))), S::Light);
+        QCOMPARE(PortalColourScheme::fromValue(QVariant::fromValue(quint32(3))), S::Unknown);
+        QCOMPARE(PortalColourScheme::fromValue(QVariant(QStringLiteral("1"))), S::Unknown);
+        QCOMPARE(PortalColourScheme::fromValue(QVariant::fromValue(QDBusVariant(QVariant::fromValue(quint32(2))))), S::Light);
+
+        PrivateBus bus;
+        if (!bus.start())
+            QSKIP("dbus-daemon is not installed");
+        QDBusConnection server = QDBusConnection::connectToBus(bus.address, QStringLiteral("k2-portal-server"));
+        QDBusConnection client = QDBusConnection::connectToBus(bus.address, QStringLiteral("k2-portal-client"));
+        QVERIFY(server.isConnected() && client.isConnected());
+        const QString path = QStringLiteral("/org/freedesktop/portal/desktop");
+        const QString service = QStringLiteral("org.freedesktop.portal.Desktop");
+
+        {
+            // No portal on the bus: unknown (the bus answers ServiceUnknown;
+            // no bound on the time, which a loaded host stretches).
+            PortalColourScheme none(client);
+            QCOMPARE(none.scheme(), S::Unknown);
+        }
+
+        // The portal answers on its own thread, as the real one does in its
+        // own process, while the reader blocks this one.
+        QThread portalThread;
+        portalThread.start();
+        QList<QObject *> fakes;
+        auto stop = qScopeGuard([&] {
+            server.unregisterObject(path);
+            for (QObject *fake : std::as_const(fakes))
+                QMetaObject::invokeMethod(fake, [fake] { delete fake; }, Qt::BlockingQueuedConnection);
+            portalThread.quit();
+            portalThread.wait();
+        });
+        auto *fake = new FakeSettingsPortal; // prefer dark
+        fake->moveToThread(&portalThread);
+        fakes << fake;
+        FakeSettingsPortal &portal = *fake;
+        // Registered on its thread: the signal relay is made as its child.
+        const auto registerOnItsThread = [&](QObject *object, QDBusConnection::RegisterOptions options) {
+            bool registered = false;
+            QMetaObject::invokeMethod(
+                object, [&] { registered = server.registerObject(path, object, options); }, Qt::BlockingQueuedConnection);
+            return registered;
+        };
+        QVERIFY(registerOnItsThread(&portal, QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllSignals));
+        QVERIFY(server.registerService(service));
+        PortalColourScheme scheme(client);
+        QCOMPARE(portal.reads.load(), 1);
+        QCOMPARE(scheme.scheme(), S::Dark);
+
+        // The theme follows it while Qt reports no scheme (the offscreen
+        // platform's theme, like the generic one, reports none).
+        ui::theme::forceSystemScheme(std::nullopt);
+        if (QGuiApplication::styleHints()->colorScheme() != S::Unknown)
+            QSKIP("this platform's theme reports a colour scheme of its own");
+        ui::SettingsStore store;
+        ui::theme::useSettings(&store);
+        ui::theme::followPortal(&scheme);
+        auto restore = qScopeGuard([] {
+            ui::theme::followPortal(nullptr);
+            ui::theme::useSettings(nullptr);
+            ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown);
+        });
+        QVERIFY(ui::theme::systemScheme() == S::Dark);
+        QCOMPARE(ui::theme::current().code, Code::Dark);
+        int changes = 0;
+        QObject context;
+        ui::theme::onChanged(&context, [&] { ++changes; });
+
+        // gsettings color-scheme prefer-light, prefer-dark, prefer-light, live
+        portal.change(2);
+        QTRY_COMPARE(ui::theme::current().code, Code::Light);
+        QCOMPARE(changes, 1);
+        portal.change(1);
+        QTRY_COMPARE(ui::theme::current().code, Code::Dark);
+        portal.change(2);
+        QTRY_COMPARE(ui::theme::current().code, Code::Light);
+        QCOMPARE(changes, 3);
+        // Another setting changing leaves it.
+        portal.change(1, QStringLiteral("org.gnome.desktop.interface"), QStringLiteral("color-scheme"));
+        portal.change(1, QStringLiteral("org.freedesktop.appearance"), QStringLiteral("accent-color"));
+        QTest::qWait(100);
+        QCOMPARE(ui::theme::current().code, Code::Light);
+        // No preference: the chosen theme (Dark, the default).
+        portal.change(0);
+        QTRY_COMPARE(ui::theme::current().code, Code::Dark);
+        portal.change(2);
+        QTRY_COMPARE(ui::theme::current().code, Code::Light);
+
+        // A scheme Qt reports comes first.
+        ui::theme::forceSystemScheme(S::Dark);
+        QCOMPARE(ui::theme::current().code, Code::Dark);
+        ui::theme::forceSystemScheme(std::nullopt);
+        QCOMPARE(ui::theme::current().code, Code::Light);
+
+        // High contrast keeps its side's pair; never turned on or off.
+        store.setValue(QLatin1String(ui::theme::kThemeSetting), ui::theme::codeName(Code::HighContrastBlack));
+        QCOMPARE(ui::theme::current().code, Code::HighContrastWhite);
+        store.setValue(QLatin1String(ui::theme::kThemeSetting), ui::theme::codeName(Code::Dark));
+        QCOMPARE(ui::theme::current().code, Code::Light);
+
+        // Following off: the portal no longer matters.
+        store.setValue(QLatin1String(ui::theme::kFollowSystemSetting), false);
+        QCOMPARE(ui::theme::current().code, Code::Dark);
+        portal.change(1);
+        portal.change(2);
+        QTest::qWait(100);
+        QCOMPARE(ui::theme::current().code, Code::Dark);
+        store.setValue(QLatin1String(ui::theme::kFollowSystemSetting), true);
+        QCOMPARE(ui::theme::current().code, Code::Light);
+
+        // The portal gone (its object destroyed): the chosen theme.
+        ui::theme::followPortal(nullptr);
+        QCOMPARE(ui::theme::current().code, Code::Dark);
+
+        // A portal older than ReadOne: Read, its value in one more variant.
+        server.unregisterObject(path);
+        auto *old = new FakeOldSettingsPortal;
+        old->moveToThread(&portalThread);
+        fakes << old;
+        QVERIFY(registerOnItsThread(old, QDBusConnection::ExportAllSlots));
+        QDBusConnection client2 = QDBusConnection::connectToBus(bus.address, QStringLiteral("k2-portal-client2"));
+        QCOMPARE(PortalColourScheme(client2).scheme(), S::Light);
+
+        // A portal too slow for the first read: unknown at first, then its
+        // late answer, followed by the theme.
+        server.unregisterObject(path);
+        auto *slow = new FakeSlowSettingsPortal;
+        slow->moveToThread(&portalThread);
+        fakes << slow;
+        QVERIFY(registerOnItsThread(slow, QDBusConnection::ExportAllSlots));
+        PortalColourScheme late(client2);
+        QCOMPARE(late.scheme(), S::Unknown);
+        ui::theme::followPortal(&late);
+        QCOMPARE(ui::theme::current().code, Code::Dark);
+        QTRY_COMPARE_WITH_TIMEOUT(late.scheme(), S::Light, 5000);
+        QCOMPARE(ui::theme::current().code, Code::Light);
+        ui::theme::followPortal(nullptr);
+#endif
     }
 
     // The high-contrast pickers: accent, text-and-icons and border, freely
