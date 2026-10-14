@@ -45,6 +45,7 @@ private:
 	void OnMouseEvent(wxMouseEvent &event);
 	void OnPaste(wxCommandEvent& event);
 	void OnMouseLost(wxMouseCaptureLostEvent& event);
+	bool StepBy(double step);
 	double rfrom;
 	double rto;
 	bool oint;

@@ -15,6 +15,7 @@
 
 
 #include "NumCtrl.h"
+#include "NumberStep.h"
 #include "wx/clipbrd.h"
 
 wxDEFINE_EVENT(NUMBER_CHANGED, wxCommandEvent);
@@ -262,29 +263,21 @@ void NumCtrl::OnMouseEvent(wxMouseEvent &event)
 		int absx = abs(posx - oldposx);
 		if (absy >= absx){
 			if (absy >= 8){
-				double nval = (oldposy < posy) ? value - 1 : value + 1;
-				if (nval < rfrom || nval > rto){ return; }
-				HikariTextCtrl::SetValue(getdouble(nval), true, false);
+				if (!StepBy((oldposy < posy) ? -1 : 1)){ return; }
 				oldposy = posy;
 				//reset oldposx cause next time it will change it by 10 
 				//even if it's still moved in one direction
 				oldposx = posx;
-				value = nval;
 				changed = true;
 			}
 		}
 		else{
 			if (absx >= 10){
-				double nval = (oldposx > posx) ? value - 10 : value + 10;
-				if ((value == rfrom && nval < rfrom) || (value == rto && nval > rto)){ return; }
-				else if (nval < rfrom){ nval = rfrom; }
-				else if (nval > rto){ nval = rto; }
-				HikariTextCtrl::SetValue(getdouble(nval), true, false);
+				if (!StepBy((oldposx > posx) ? -10 : 10)){ return; }
 				oldposx = posx;
 				//reset oldposx cause next time it will change it by 1
 				//even if it's still moved in one direction
 				oldposy = posy;
-				value = nval;
 				changed = true;
 			}
 		}
@@ -308,14 +301,24 @@ void NumCtrl::OnMouseEvent(wxMouseEvent &event)
 	if (event.GetWheelRotation() != 0) {
 		if (style & SCROLL_ON_FOCUS && !HasFocus()){ event.Skip(); return; }
 		int step = event.GetWheelRotation() / event.GetWheelDelta();
-		value += step;
-		if (value < rfrom || value > rto){ return; }
-		HikariTextCtrl::SetValue(getdouble(value), true, false);//MarkDirty();
+		if (!StepBy(step)){ return; }
 		if (IsModified()){ wxCommandEvent evt2(NUMBER_CHANGED, GetId()); AddPendingEvent(evt2); }
 		return;
 	}
 
 	event.Skip();
+}
+
+// Moves the value by step, held to the range, and shows it. False, with
+// nothing changed, when that leaves the value as it is: at the end the step
+// goes past, or a wheel turn of less than a notch.
+bool NumCtrl::StepBy(double step)
+{
+	double nval = SteppedNumber(value, step, rfrom, rto);
+	if (nval == value){ return false; }
+	value = nval;
+	HikariTextCtrl::SetValue(getdouble(value), true, false);//MarkDirty();
+	return true;
 }
 
 void NumCtrl::OnMouseLost(wxMouseCaptureLostEvent& event)

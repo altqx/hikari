@@ -43,6 +43,7 @@ add_executable(hikarisub_tests
     LineGroupsTests.cpp
     LuaJitTests.cpp
     MenuBarHitTestTests.cpp
+    NumberStepTests.cpp
     OwnedOrBorrowedTests.cpp
     ParsedScriptsTests.cpp
     PlaybackTests.cpp

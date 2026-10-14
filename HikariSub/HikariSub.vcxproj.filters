@@ -807,6 +807,9 @@
     <ClInclude Include="NumCtrl.h">
       <Filter>N</Filter>
     </ClInclude>
+    <ClInclude Include="NumberStep.h">
+      <Filter>N</Filter>
+    </ClInclude>
     <ClInclude Include="DialogueTextEditor.h">
       <Filter>D</Filter>
     </ClInclude>
