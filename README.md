@@ -258,10 +258,8 @@ from-scratch FFmpeg compile; that is no longer part of the build. The DLLs are
 copied next to `HikariSub.exe` by a post-build step, so they must ship with the
 application.
 
-> **32-bit.** `Release|Win32` exists but is not exercised. It needs a 32-bit
-> FFmpeg developer package placed at `Thirdparty\ffmpegx32` (same `include\`
-> and `lib\` layout); `hydrate.ps1` does not fetch one. x64 is the supported
-> target.
+> **x64 only.** The solution has no 32-bit (`Win32`) configurations: they
+> were never shipped or built in CI, and their libass had no assembly.
 
 #### If the build cannot find something
 

@@ -25,7 +25,7 @@
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('x64', 'Win32')]     [string[]] $Platform      = @('x64'),
+    [ValidateSet('x64')]              [string[]] $Platform      = @('x64'),
     [ValidateSet('Release', 'Debug')] [string[]] $Configuration = @('Release'),
     [switch] $SkipSubmodules,
     [switch] $SkipWxWidgets,

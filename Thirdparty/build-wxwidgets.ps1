@@ -6,7 +6,7 @@
     HikariSub links wxWidgets statically. Rather than maintaining our own project
     files for it, this builds Thirdparty/wxWidgets/build/msw/wx_vc17.sln, which
     is upstream's own solution, and leaves the libraries where HikariSub.vcxproj
-    expects them (lib\vc_x64_lib for x64, lib\vc_lib for Win32).
+    expects them (lib\vc_x64_lib). x64 is the only platform HikariSub builds.
 
     Run this once after checking out the submodules, and again after the
     wxWidgets submodule is moved to a new tag.
@@ -15,11 +15,11 @@
     pwsh -File Thirdparty\build-wxwidgets.ps1
 
 .EXAMPLE
-    pwsh -File Thirdparty\build-wxwidgets.ps1 -Platform Win32 -Configuration Debug
+    pwsh -File Thirdparty\build-wxwidgets.ps1 -Configuration Debug
 #>
 [CmdletBinding()]
 param(
-    [ValidateSet('x64', 'Win32')]         [string[]] $Platform      = @('x64'),
+    [ValidateSet('x64')]                  [string[]] $Platform      = @('x64'),
     [ValidateSet('Release', 'Debug')]     [string[]] $Configuration = @('Release'),
     [string] $Solution = (Join-Path $PSScriptRoot 'wxWidgets\build\msw\wx_vc17.sln')
 )
@@ -78,6 +78,5 @@ foreach ($p in $Platform) {
     }
 }
 
-$libDir = if ($Platform -contains 'x64') { 'lib\vc_x64_lib' } else { 'lib\vc_lib' }
 Write-Host ''
-Write-Host "wxWidgets built. Libraries are in Thirdparty\wxWidgets\$libDir." -ForegroundColor Green
+Write-Host "wxWidgets built. Libraries are in Thirdparty\wxWidgets\lib\vc_x64_lib." -ForegroundColor Green

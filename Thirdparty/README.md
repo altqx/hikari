@@ -40,7 +40,7 @@ Each can also be run on its own.
 
 `build-wxwidgets.ps1` runs `Thirdparty\wxWidgets\build\msw\wx_vc17.sln`, the
 solution wxWidgets itself ships, and leaves the static libraries in
-`lib\vc_x64_lib` (x64) or `lib\vc_lib` (Win32). HikariSub does not maintain
+`lib\vc_x64_lib`. HikariSub does not maintain
 project files for wxWidgets and does not customise its `setup.h`; the stock
 configuration is used.
 
@@ -119,8 +119,7 @@ because a submodule would not work or would not pay:
 FFmpeg is a *shared* GPL build, so `avcodec-61.dll` and friends are copied next
 to `HikariSub.exe` by a post-build step and have to ship with the application.
 The Linux build already links the distribution's shared FFmpeg, so the two
-platforms now agree. A 32-bit build needs its own package at
-`Thirdparty/ffmpegx32`; `hydrate.ps1` does not fetch one.
+platforms now agree. The package is x64, the only platform HikariSub builds.
 
 `hydrate.ps1` verifies each archive's SHA-256 before extracting and refuses to
 continue on a mismatch. It skips what is already present; pass `-Force` to
@@ -140,8 +139,8 @@ generate:
   shadow libass's own and silently disable `CONFIG_ASM`.
 - `Build/Libass/config.h` — libass's `CONFIG_*` switches.
 - `Build/Libass/Libass.vcxproj` — passes the nasm flags upstream's meson build
-  uses (`-Dprivate_prefix=ass -DPIC=1 -DARCH_X86_64=…`, plus `-DPREFIX` on
-  32-bit) and an `-I` pointing at the libass source root so `%include
+  uses (`-Dprivate_prefix=ass -DPIC=1 -DARCH_X86_64=1`) and an `-I`
+  pointing at the libass source root so `%include
   "x86/x86inc.asm"` resolves.
 - `Build/HarfBuzz/HarfBuzz.vcxproj` — compiles upstream's `src/harfbuzz.cc`
   amalgamation, so a version bump needs no project edit.
