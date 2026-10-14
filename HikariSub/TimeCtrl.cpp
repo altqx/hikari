@@ -76,7 +76,7 @@ TimeCtrl::TimeCtrl(wxWindow* parent, const long int id, const wxString& val, con
 				wxTextDataObject data;
 				wxTheClipboard->GetData(data);
 				wxString whatpaste = data.GetText();
-				if (form >= MDVD || showFrames){
+				if (form >= MDVD || ShowsFrames()){
 					if (whatpaste.IsNumber()){
 						timeUnchanged = false;
 						evt.Skip();
@@ -107,7 +107,7 @@ TimeCtrl::TimeCtrl(wxWindow* parent, const long int id, const wxString& val, con
 		}
 	}, ID_TCTLV);
 	Bind(wxEVT_COMMAND_MENU_SELECTED, [=, this](wxCommandEvent &evt){
-		if (form >= MDVD || showFrames){ evt.Skip(); return; }
+		if (form >= MDVD || ShowsFrames()){ evt.Skip(); return; }
 		SetSelection(0, GetValue().Length());
 		Copy();
 	}, ID_TCTLC);
@@ -115,7 +115,7 @@ TimeCtrl::TimeCtrl(wxWindow* parent, const long int id, const wxString& val, con
 	// OnTimeWrite's mask, made for one typed digit, cannot mend, so Ctrl+X
 	// copies the whole time as Ctrl+C does and removes nothing.
 	Bind(wxEVT_COMMAND_MENU_SELECTED, [=, this](wxCommandEvent &evt){
-		if (form >= MDVD || showFrames){ evt.Skip(); return; }
+		if (form >= MDVD || ShowsFrames()){ evt.Skip(); return; }
 		SetSelection(0, GetValue().Length());
 		Copy();
 	}, ID_TCTLX);
@@ -125,7 +125,7 @@ TimeCtrl::TimeCtrl(wxWindow* parent, const long int id, const wxString& val, con
 	Bind(wxEVT_COMMAND_MENU_SELECTED, [=, this](wxCommandEvent &evt){
 		//napisać tutaj zerowanie przy zaznaczeniu i ogólnie cofanie kursora i zerowanie jednej cyfry
 		timeUnchanged = false;
-		if (form >= MDVD || showFrames){ evt.Skip(); return; }
+		if (form >= MDVD || ShowsFrames()){ evt.Skip(); return; }
 		long from, to;
 		GetSelection(&from, &to);
 		wxString timetxt = GetValue();
@@ -155,7 +155,7 @@ TimeCtrl::TimeCtrl(wxWindow* parent, const long int id, const wxString& val, con
 	}, ID_TBACK, ID_TCBACK);
 	Bind(wxEVT_COMMAND_MENU_SELECTED, [=, this](wxCommandEvent &evt){
 		timeUnchanged = false;
-		if (form >= MDVD || showFrames){ evt.Skip(); }
+		if (form >= MDVD || ShowsFrames()){ evt.Skip(); }
 		//napisać tutaj zerowanie przy zaznaczeniu i ogólnie nieruchomy kursor i zerowanie jednej cyfry
 		//w Aegi shit happens więc oleję.
 	}, ID_TDEL);
@@ -188,7 +188,7 @@ void TimeCtrl::OnTimeWrite(wxCommandEvent& event)
 	long selst = 0, seled = 0;
 	GetSelection(&selst, &seled);
 
-	if (selst == seled && (selst > 0) && selst < (long)txt.Len() && form < MDVD && !showFrames){
+	if (selst == seled && (selst > 0) && selst < (long)txt.Len() && form < MDVD && !ShowsFrames()){
 
 		wxString nChar = txt.Mid(selst, 1);
 
@@ -221,7 +221,7 @@ void TimeCtrl::OnTimeWrite(wxCommandEvent& event)
 void TimeCtrl::OnKeyEvent(wxKeyEvent& event)
 {
 	int key = event.GetKeyCode();
-	bool astmp = (form < MDVD && !showFrames);
+	bool astmp = (form < MDVD && !ShowsFrames());
 	if (astmp){
 		long from = 0, to = 0;
 		GetSelection(&from, &to);
@@ -294,7 +294,7 @@ void TimeCtrl::ChangeFormat(char frm, float fps)
 {
 	mTime.ChangeFormat(frm, fps);
 	form = frm;
-	SetValue(mTime.raw(showFrames ? FRAME : form), false, false);
+	SetValue(mTime.raw(ShownFormat()), false, false);
 }
 
 char TimeCtrl::GetFormat()
