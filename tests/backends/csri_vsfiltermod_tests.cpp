@@ -524,11 +524,12 @@ TEST(VsfilterMod, AFontsReloadReachesTheKeptRenderer)
     }
 }
 
-// W2: the adapter asks VSFilterMod for BGR_ alone (r5.3.1's BGRA leaves a
-// cleared overlay's alpha 0), which blends into the frame and leaves no
-// alpha; legacy drew it onto the RGB32 video frame. The adapter's overlay
-// (the instant drawn onto black and onto white) composited over a frame must
-// give what VSFilterMod draws onto that frame itself, on every fixture.
+// W2: the adapter asks VSFilterMod for BGRA, which r5.3.1-hikari.2 draws
+// with straight alpha over the cleared overlay (hikari.1 and r5.3.1 drew it
+// premultiplied with inverted alpha, invisible there). Legacy drew BGR_ onto
+// the RGB32 video frame, which blends into the frame and leaves no alpha.
+// The adapter's overlay composited over a frame must give what VSFilterMod
+// draws onto that frame itself in BGR_, on every fixture.
 TEST(VsfilterMod, OverlayMatchesDrawingOnTheFrame)
 {
     const auto renderers = vsfilterModRenderers();

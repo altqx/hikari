@@ -303,33 +303,42 @@ TEST_F(Csri, BgraRefusedFallsBackToBgrx)
     EXPECT_TRUE(std::ranges::all_of(frame->pixels, [](std::uint8_t b) { return b == 0; }));
 }
 
-// VSFilterMod is asked for BGR_ alone, the target legacy drew it on: r5.3.1
-// and the altqx fork take BGRA too, but draw it premultiplied with inverted
-// alpha and leave a cleared frame's alpha 0, so the overlay was invisible.
-TEST_F(Csri, VsfilterModIsAskedForBgrxEvenThoughItTakesBgra)
+// VSFilterMod is asked for BGRA first, like any CSRI renderer: the pinned
+// altqx r5.3.1-hikari.2 draws it with straight alpha (255 opaque) over the
+// frame's, so one drawing gives the overlay where BGR_ needs two. A
+// VSFilterMod that refuses BGRA (r5.2.6) still gets BGR_.
+TEST_F(Csri, VsfilterModIsAskedForBgraThenBgrx)
 {
     CsriRenderer r(twoRenderers(), "vsfiltermod_textsub", logger());
     ASSERT_TRUE(r.prepare(snapshotOf("[Script Info]\n")));
     auto frame = r.render(core::DocumentTime(2'169'000), 4, 4);
     ASSERT_TRUE(frame);
     ASSERT_EQ(calls.requested.size(), 1u);
-    EXPECT_EQ(calls.requested[0].pixfmt, csri::BGR_);
-    EXPECT_EQ(calls.renderedFormats, (std::vector<int>{csri::BGR_, csri::BGR_}));
+    EXPECT_EQ(calls.requested[0].pixfmt, csri::BGRA);
+    EXPECT_EQ(calls.renderedFormats, (std::vector<int>{csri::BGRA}));
     EXPECT_FALSE(frame->empty);
     const std::uint8_t *p = &frame->pixels[1 * 16 + 4];
     EXPECT_EQ(p[0], 100);
     EXPECT_EQ(p[1], 50);
     EXPECT_EQ(p[2], 25);
     EXPECT_EQ(p[3], 128);
-    // A VSFilterMod that refuses BGR_ is not asked for BGRA.
+    // A VSFilterMod that refuses BGRA is drawn through BGR_, onto black and
+    // onto white, to the same overlay pixel.
     calls = Calls{};
-    calls.refuse = {csri::BGR_};
-    CsriRenderer refused(twoRenderers(), "vsfiltermod_textsub", logger());
-    ASSERT_TRUE(refused.prepare(snapshotOf("[Script Info]\n")));
-    EXPECT_EQ(refused.render(core::DocumentTime(0), 4, 4).error(), RenderError::BackendFailure);
-    ASSERT_EQ(calls.requested.size(), 1u);
-    EXPECT_EQ(calls.requested[0].pixfmt, csri::BGR_);
-    EXPECT_EQ(log, (std::vector<std::string>{"CSRI does not support this format."}));
+    calls.refuse = {csri::BGRA};
+    CsriRenderer bgrx(twoRenderers(), "vsfiltermod_textsub", logger());
+    ASSERT_TRUE(bgrx.prepare(snapshotOf("[Script Info]\n")));
+    frame = bgrx.render(core::DocumentTime(2'169'000), 4, 4);
+    ASSERT_TRUE(frame);
+    ASSERT_EQ(calls.requested.size(), 2u);
+    EXPECT_EQ(calls.requested[1].pixfmt, csri::BGR_);
+    EXPECT_EQ(calls.renderedFormats, (std::vector<int>{csri::BGR_, csri::BGR_}));
+    p = &frame->pixels[1 * 16 + 4];
+    EXPECT_EQ(p[0], 100);
+    EXPECT_EQ(p[1], 50);
+    EXPECT_EQ(p[2], 25);
+    EXPECT_EQ(p[3], 128);
+    EXPECT_TRUE(log.empty());
 }
 
 TEST_F(Csri, AnUnsupportedFormatClosesTheInstance)

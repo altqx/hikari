@@ -1,6 +1,5 @@
 #include "hikari/backends/csri_renderer.h"
 #include "hikari/backends/overlay_blend.h"
-#include "hikari/backends/subtitle_renderer_selection.h"
 
 #include <algorithm>
 #include <cstring>
@@ -192,17 +191,15 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     if (!m_instance)
         return std::unexpected(RenderError::NoSnapshot);
     if (width != m_width || height != m_height) {
-        // SetVideoParameters with ARGB32: BGRA, else BGR_. VSFilterMod is
-        // asked for BGR_ only, the target legacy drew it on (r5.2.6 refused
-        // BGRA). r5.3.1 and the altqx fork take BGRA, but draw it
-        // premultiplied with inverted alpha (255 is clear) and multiply the
-        // frame's alpha by the coverage, so on a cleared frame the alpha
-        // stays 0 and the whole overlay is invisible.
-        const bool bgrOnly = isVsfilterMod(selectedName());
-        csri::Fmt fmt{bgrOnly ? csri::BGR_ : csri::BGRA, static_cast<unsigned>(width), static_cast<unsigned>(height)};
+        // SetVideoParameters with ARGB32: BGRA, else BGR_. VSFilterMod too:
+        // the pinned altqx r5.3.1-hikari.2 draws BGRA with straight alpha
+        // (255 opaque) over the frame's, one drawing where BGR_ needs two
+        // (r5.2.6 refused BGRA and gets BGR_; r5.3.1 and hikari.1 drew BGRA
+        // premultiplied with inverted alpha, invisible on a cleared frame).
+        csri::Fmt fmt{csri::BGRA, static_cast<unsigned>(width), static_cast<unsigned>(height)};
         m_pixfmt = fmt.pixfmt;
         bool accepted = m_renderer->requestFmt(m_instance, &fmt) == 0;
-        if (!accepted && !bgrOnly) {
+        if (!accepted) {
             m_pixfmt = fmt.pixfmt = csri::BGR_;
             accepted = m_renderer->requestFmt(m_instance, &fmt) == 0;
         }
@@ -236,8 +233,8 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     m_renderer->render(m_instance, &target, double(ms / 1000.0));
     PixelRect bounds;
     if (m_pixfmt == csri::BGR_) {
-        // BGR_ (what VSFilterMod is asked for) blends into the frame and leaves
-        // no alpha. Legacy drew it onto the RGB32 video frame
+        // BGR_ (a renderer that refuses BGRA, as r5.2.6 did) blends into the
+        // frame and leaves no alpha. Legacy drew it onto the RGB32 video frame
         // (RendererFFMS2::GetFrameWithSubs without the overlay); the same
         // instant drawn again onto white gives each pixel's coverage, so the
         // overlay composites over any frame as that drawing did.
