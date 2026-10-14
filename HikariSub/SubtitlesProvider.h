@@ -73,6 +73,9 @@ public:
 	//implementation in subtitlesVsfilter
 	static void DestroySubtitlesProvider();
 	static ASS_Renderer *m_Libass;
+	// style previews draw with their own renderer, so their sizes do not
+	// empty the caches of the one the video uses; guarded by openMutex
+	static ASS_Renderer *m_PreviewLibass;
 	static ASS_Library *m_Library;
 private:
 	SubtitlesProvider(const SubtitlesProvider &copy) = delete;
@@ -176,6 +179,8 @@ private:
 	// owns m_AssTrack
 	ParsedScripts<ASS_Track> m_Tracks{ ass_free_track };
 	bool m_HasRendered = false;
+	// a style preview's, which OpenString opens, rendered by m_PreviewLibass
+	bool m_IsPreview = false;
 	// what the last DrawOverlay drew, cleared before the next one draws
 	wxRect m_OverlayDrawn;
 	// all tabs share m_Libass, whose change detection compares with whatever it rendered last

@@ -87,11 +87,24 @@ unsigned int __stdcall  ProcessLibassCache(void *data)
 	}
 	libass->m_IsReady.store(libass->m_Libass != nullptr);
 	//reload all tabs to shows subtitles
-	wxTheApp->CallAfter([]() {
-		Notebook::RefreshVideo();
-		// style previews drew only their background while libass was not ready
-		StylePreview::RedrawAll();
-	});
+	wxTheApp->CallAfter([]() { Notebook::RefreshVideo(); });
+
+	// Style previews get a renderer of their own. A renderer empties all its
+	// caches whenever its frame size changes, so previews drawn with the
+	// video's renderer cost the next video frame every glyph and bitmap. A
+	// preview draws one line, so small caches do.
+	ASS_Renderer *preview = ass_renderer_init(libass->m_Library);
+	if (preview) {
+		ass_set_font_scale(preview, 1.);
+		ass_set_fonts(preview, "Arial", "Arial", 1, nullptr, true);
+		ass_set_cache_limits(preview, 500, 16);
+	}
+	{
+		wxMutexLocker lock(SubtitlesLibass::openMutex);
+		libass->m_PreviewLibass = preview;
+	}
+	// style previews drew only their background while their renderer was not ready
+	wxTheApp->CallAfter([]() { StylePreview::RedrawAll(); });
 
 	return 0;
 }
@@ -144,6 +157,12 @@ ASS_Image* SubtitlesLibass::RenderFrame(int time, int* change)
 	*change = 1;
 	if (!(m_IsReady.load() && m_AssTrack))
 		return nullptr;
+	if (m_IsPreview) {
+		if (!m_PreviewLibass)
+			return nullptr;
+		ass_set_frame_size(m_PreviewLibass, m_VideoSize.GetWidth(), m_VideoSize.GetHeight());
+		return ass_render_frame(m_PreviewLibass, m_AssTrack, time, change);
+	}
 	ass_set_frame_size(m_Libass, m_VideoSize.GetWidth(), m_VideoSize.GetHeight());
 	ASS_Image* img = ass_render_frame(m_Libass, m_AssTrack, time, change);
 	if (m_LastRenderer != this)
@@ -296,6 +315,7 @@ bool SubtitlesLibass::OpenString(wxString *text)
 			SAFE_DELETE(text);
 			return false;
 		}
+		m_IsPreview = true;
 	}
 
 	if (!ReadTrack(text)){
@@ -345,6 +365,10 @@ void SubtitlesLibass::ReloadLibraries(bool destroyExisted)
 		// tracks belong to the library, in every tab
 		for (SubtitlesLibass *instance : s_Instances)
 			instance->ForgetTracks();
+		if (m_PreviewLibass) {
+			ass_renderer_done(m_PreviewLibass);
+			m_PreviewLibass = nullptr;
+		}
 		if (m_Libass) {
 			ass_renderer_done(m_Libass);
 			m_Libass = nullptr;

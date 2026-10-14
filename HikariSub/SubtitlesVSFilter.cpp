@@ -32,6 +32,7 @@
 
 csri_rend *SubtitlesProvider::m_CsriRenderer = nullptr;
 ASS_Renderer *SubtitlesProvider::m_Libass = nullptr;
+ASS_Renderer *SubtitlesProvider::m_PreviewLibass = nullptr;
 ASS_Library *SubtitlesProvider::m_Library = nullptr;
 
 
@@ -39,6 +40,8 @@ void SubtitlesProvider::DestroySubtitlesProvider()
 {
 	if (m_Libass)
 		ass_renderer_done(m_Libass);
+	if (m_PreviewLibass)
+		ass_renderer_done(m_PreviewLibass);
 	if (m_Library)
 		ass_library_done(m_Library);
 
