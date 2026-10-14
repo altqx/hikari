@@ -19,6 +19,7 @@
 #include "VisualClips.h"
 
 #include "Visuals.h"
+#include "MoveTimes.h"
 #include "TabPanel.h"
 
 #include "SubsGrid.h"
@@ -551,12 +552,20 @@ D3DXVECTOR2 Visuals::CalcMovePos()
 	D3DXVECTOR2 ppos;
 	int time = tab->video->Tell();
 	if (moveValues[6] < 6){ moveValues[4] = start; moveValues[5] = end; }
-	float tmpt = time - moveValues[4];
-	float tmpt1 = moveValues[5] - moveValues[4];
+	double moveStart = moveValues[4], moveEnd = moveValues[5];
+	//a \move whose times are both 0 or less moves over the whole Line, as in libass,
+	//moveValues keeps its own times for ChangeVisual
+	int lineStart = tab->edit->line->Start.mstime;
+	if (MoveCoversWholeLine((int)moveValues[6], moveStart - lineStart, moveEnd - lineStart)){
+		moveStart = start;
+		moveEnd = end;
+	}
+	float tmpt = time - moveStart;
+	float tmpt1 = moveEnd - moveStart;
 	float actime = tmpt / tmpt1;
 	float distx, disty;
-	if (time < moveValues[4]){ distx = moveValues[0], disty = moveValues[1]; }
-	else if (time > moveValues[5]){ distx = moveValues[2], disty = moveValues[3]; }
+	if (time < moveStart){ distx = moveValues[0], disty = moveValues[1]; }
+	else if (time > moveEnd){ distx = moveValues[2], disty = moveValues[3]; }
 	else {
 		distx = moveValues[0] - ((moveValues[0] - moveValues[2]) * actime);
 		disty = moveValues[1] - ((moveValues[1] - moveValues[3]) * actime);

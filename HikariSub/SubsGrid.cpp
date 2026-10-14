@@ -1633,7 +1633,8 @@ void SubsGrid::Split(int id)
 					if (dialc->FindTag(L"move", &retval)) {
 						if (GetMultiValueFloat(retval, moveTable, 6)) {
 							hasMove = true;
-							if (!moveTable[4] && !moveTable[5]) {
+							//times both 0 or less move over the whole Line, as in libass
+							if (moveTable[4] <= 0 && moveTable[5] <= 0) {
 								moveTable[4] = dialc->Start.mstime;
 								moveTable[5] = dialc->End.mstime;
 							}

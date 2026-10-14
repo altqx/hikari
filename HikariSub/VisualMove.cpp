@@ -22,6 +22,7 @@
 #include "VisualDrawingShapes.h"
 #include "VisualClips.h"
 #include "Visuals.h"
+#include "MoveTimes.h"
 #include <wx/dc.h>
 
 Move::Move()
@@ -363,6 +364,16 @@ void Move::SetCurVisual()
 		to.y = GetCalculatedInPosY(moveValues[3]);
 	}
 	moveDistance = to - from;
+	//a \move whose times are both 0 or less moves over the whole Line, as in libass,
+	//moveValues keeps its own times for ChangeVisual
+	int lineStart = tab->edit->line->Start.mstime;
+	if (MoveCoversWholeLine((int)moveValues[6], moveValues[4] - lineStart, moveValues[5] - lineStart)){
+		int moveStartTime = 0, moveEndTime = 0;
+		GetMoveTimes(&moveStartTime, &moveEndTime);
+		moveStart = ZEROIT(lineStart) + moveStartTime;
+		moveEnd = ZEROIT(lineStart) + moveEndTime;
+		return;
+	}
 	int startIter = 4, endIter = 5;
 	if (moveValues[4] > moveValues[5]){ startIter = 5; endIter = 4; }
 	moveStart = (int)moveValues[startIter];

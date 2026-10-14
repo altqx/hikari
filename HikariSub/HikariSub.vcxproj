@@ -641,6 +641,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="NumCtrl.h" />
     <ClInclude Include="NumberStep.h" />
     <ClInclude Include="OpennWrite.h" />
+    <ClInclude Include="MoveTimes.h" />
     <ClInclude Include="OwnedOrBorrowed.h" />
     <ClInclude Include="OptionsDialog.h" />
     <ClInclude Include="ProgressDialog.h" />

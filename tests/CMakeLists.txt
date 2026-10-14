@@ -44,6 +44,7 @@ add_executable(hikarisub_tests
     LuaJitTests.cpp
     MenuBarHitTestTests.cpp
     MicroDvdStepsTests.cpp
+    MoveTimesTests.cpp
     NumberStepTests.cpp
     OwnedOrBorrowedTests.cpp
     ParsedScriptsTests.cpp

@@ -723,6 +723,9 @@
     <ClInclude Include="LogHandler.h">
       <Filter>L</Filter>
     </ClInclude>
+    <ClInclude Include="MoveTimes.h">
+      <Filter>M</Filter>
+    </ClInclude>
     <ClInclude Include="MappedButton.h">
       <Filter>M</Filter>
     </ClInclude>
