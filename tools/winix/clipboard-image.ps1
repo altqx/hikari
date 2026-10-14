@@ -17,4 +17,22 @@ $image = [System.Windows.Forms.Clipboard]::GetImage()
 if (-not $image) { Write-Output 'no image on the clipboard'; exit 4 }
 $image.Save($Out, [System.Drawing.Imaging.ImageFormat]::Png)
 Write-Output "image $($image.Width)x$($image.Height) $($image.PixelFormat) -> $Out"
+# The other renditions the owner offered, beside it for a comparison: the PNG
+# format's bytes as they are (<out>.PNG.png) and the raw CF_DIBV5 / CF_DIB
+# headers (their first 124 / 40 bytes, hex).
+foreach ($f in 'PNG', 'image/png') {
+    if ($data.GetDataPresent($f)) {
+        $s = $data.GetData($f)
+        if ($s -is [IO.MemoryStream]) { [IO.File]::WriteAllBytes("$Out.PNG.png", $s.ToArray()); Write-Output "format $f $($s.Length) bytes -> $Out.PNG.png"; break }
+    }
+}
+foreach ($f in 'Format17', 'DeviceIndependentBitmap') {
+    if ($data.GetDataPresent($f)) {
+        $s = $data.GetData($f)
+        if ($s -is [IO.MemoryStream]) {
+            $b = $s.ToArray(); $n = [Math]::Min($b.Length, 124)
+            Write-Output "format $f $($b.Length) bytes, header $(($b[0..($n - 1)] | ForEach-Object { $_.ToString('x2') }) -join '')"
+        }
+    }
+}
 exit 0

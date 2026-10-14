@@ -16,13 +16,13 @@ $dest = Join-Path $build 'review-window'
 $env:PATH = "$root/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"
 $env:QT_QPA_PLATFORM = 'windows'
 $hooks = [ordered]@{
-    'k1'       = @(@('hikari_ui_icon_tests', 'contactSheets', 'HIKARI_ICON_SHEET_DIR'))
+    'k1'       = @(,@('hikari_ui_icon_tests', 'contactSheets', 'HIKARI_ICON_SHEET_DIR'))
     'k2'       = @(@('hikari_ui_theme_tests', 'swatchSheet', 'HIKARI_THEME_SHEET_DIR'),
                    @('hikari_ui_shell_tests', 'surfaceScreenshots', 'HIKARI_SURFACE_SHOT_DIR'))
     'k2-focus' = @(@('hikari_ui_theme_tests', 'panelFocusMarkContrast', 'HIKARI_THEME_SHEET_DIR'),
                    @('hikari_ui_shell_tests', 'focusScreenshots', 'HIKARI_SURFACE_SHOT_DIR'))
-    'o5'       = @(@('hikari_ui_language_tests', 'screenshots', 'HIKARI_LANGUAGE_SHOT_DIR'))
-    'd3'       = @(@('hikari_ui_shell_tests', 'dockChromeScreenshots', 'HIKARI_SURFACE_SHOT_DIR'))
+    'o5'       = @(,@('hikari_ui_language_tests', 'screenshots', 'HIKARI_LANGUAGE_SHOT_DIR'))
+    'd3'       = @(,@('hikari_ui_shell_tests', 'dockChromeScreenshots', 'HIKARI_SURFACE_SHOT_DIR'))
 }
 $parts = if ($env:PARTS) { $env:PARTS -split ',' } else { @($hooks.Keys) }
 $code = 0
