@@ -1,7 +1,8 @@
 #pragma once
 
-// libass adapter for the SubtitleRenderer port (N3). One owner serializes all
-// libass calls.
+// libass adapter for the SubtitleRenderer port (N3). One mutex serializes the
+// rendering; prepare() parses a new script outside it, so the shown track
+// keeps rendering meanwhile (see prepare() for why that is safe).
 // - prepare() keeps the libass library and renderer (fonts, font provider,
 //   caches) while the snapshot's fonts are the same leases with the same
 //   default family and provider, and only switches the track; other fonts,
@@ -42,7 +43,8 @@ public:
 private:
     struct Engine;
 
-    mutable std::mutex m_mutex;
+    std::mutex m_prepare;     // one prepare() at a time; it parses outside m_mutex
+    mutable std::mutex m_mutex; // the engine's tracks, render() and its buffers
     std::unique_ptr<Engine> m_engine;
     std::uint64_t m_generation = 0;
     bool m_redraw = true;            // the next render draws, whatever libass says changed

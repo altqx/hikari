@@ -116,32 +116,34 @@ struct LibassRenderer::Engine {
     ASS_Track *current() const { return tracks.empty() ? nullptr : tracks.front().track; }
 
     // Legacy SubtitlesLibass::ReadTrack: the track parsed from this script
-    // before, else a new parse.
-    ASS_Track *open(const std::vector<std::byte> &script)
+    // before is shown again.
+    bool reuse(std::uint64_t hash, std::size_t size)
     {
-        const std::uint64_t hash = scriptHash(script.data(), script.size());
         for (std::size_t i = 0; i < tracks.size(); ++i)
-            if (tracks[i].hash == hash && tracks[i].size == script.size()) {
+            if (tracks[i].hash == hash && tracks[i].size == size) {
                 const auto at = tracks.begin() + static_cast<std::ptrdiff_t>(i);
                 std::rotate(tracks.begin(), at, at + 1);
-                return tracks.front().track;
+                return true;
             }
-        ASS_Track *track = ass_read_memory(library, const_cast<char *>(reinterpret_cast<const char *>(script.data())),
-                                           script.size(), nullptr);
-        if (!track)
-            return nullptr;
-        tracks.insert(tracks.begin(), Track{hash, script.size(), track});
-        // The least recently used go; the new one stays.
+        return false;
+    }
+
+    // A new parse shown first. The least recently used go (returned, for
+    // the caller to free); the new one stays.
+    std::vector<ASS_Track *> show(Track track)
+    {
+        tracks.insert(tracks.begin(), track);
         std::size_t bytes = 0, keep = 0;
         for (; keep < tracks.size(); ++keep) {
             bytes += tracks[keep].size;
             if (keep > 0 && (keep >= kTracks || bytes > kTrackBytes))
                 break;
         }
+        std::vector<ASS_Track *> gone;
         for (std::size_t i = keep; i < tracks.size(); ++i)
-            ass_free_track(tracks[i].track);
+            gone.push_back(tracks[i].track);
         tracks.resize(keep);
-        return track;
+        return gone;
     }
 
     ~Engine()
@@ -170,14 +172,39 @@ const void *LibassRenderer::engineIdentity() const
     return m_engine ? m_engine->renderer : nullptr;
 }
 
+// The parse runs outside m_mutex, so the playback worker's render() of the
+// shown track goes on while a large script is read (Q2). That is safe:
+// - A new track is seen by no other thread until it is inserted under the
+//   mutex, and from then on only render() reads it, under the mutex. So no
+//   two threads ever render one track at once, which the fork's lazily
+//   rebuilt event index forbids before a track's first render after a change.
+// - ass_read_memory writes nothing that rendering reads in the library: it
+//   reads the style overrides, and writes the library's font list only with
+//   ass_set_extract_fonts on, to add the script's [Fonts] (ass.c). Hikari
+//   never turns extract_fonts on (fonts reach libass as leases,
+//   ass_add_font), so a parse may run beside the rendering of another track
+//   of the same library. libass_renderer_tests
+//   ParsesWhileTheShownTrackRenders and TheScriptsOwnFontsAreNotExtracted pin
+//   both.
+// - m_prepare serializes prepare() itself, so the engine changes only in one
+//   prepare at a time and may be read outside m_mutex here.
 std::expected<std::uint64_t, RenderError> LibassRenderer::prepare(application::RenderSnapshot snapshot)
 {
-    std::lock_guard lock(m_mutex);
-    std::unique_ptr<Engine> fresh;
+    std::lock_guard prepareLock(m_prepare);
     Engine::Fonts key = Engine::keyOf(snapshot);
+    const std::uint64_t hash = scriptHash(snapshot.script.data(), snapshot.script.size());
+    const std::size_t size = snapshot.script.size();
+    std::unique_ptr<Engine> fresh;
     Engine *engine = m_engine.get();
-    if (!engine || engine->key != key) {
-        // Other fonts: a new library and renderer, which the old tracks do not belong to.
+    if (engine && engine->key == key) {
+        std::lock_guard lock(m_mutex);
+        if (engine->reuse(hash, size)) {
+            m_redraw = true;
+            return ++m_generation;
+        }
+    } else {
+        // Other fonts: a new library and renderer, which the old tracks do not
+        // belong to, built while the old engine still renders.
         fresh = std::make_unique<Engine>();
         fresh->key = std::move(key);
         fresh->library = ass_library_init();
@@ -199,12 +226,28 @@ std::expected<std::uint64_t, RenderError> LibassRenderer::prepare(application::R
                       snapshot.systemFonts ? ASS_FONTPROVIDER_AUTODETECT : ASS_FONTPROVIDER_NONE, nullptr, 1);
         engine = fresh.get();
     }
-    if (!engine->open(snapshot.script))
+    ASS_Track *track = ass_read_memory(engine->library,
+                                       const_cast<char *>(reinterpret_cast<const char *>(snapshot.script.data())), size,
+                                       nullptr);
+    if (!track)
         return std::unexpected(RenderError::InvalidInput); // the shown track stays
-    if (fresh)
-        m_engine = std::move(fresh); // the previous engine, its tracks and leases go here
-    m_redraw = true;
-    return ++m_generation;
+    std::vector<ASS_Track *> gone;
+    std::unique_ptr<Engine> previous;
+    std::uint64_t generation;
+    {
+        std::lock_guard lock(m_mutex);
+        gone = engine->show(Engine::Track{hash, size, track});
+        if (fresh)
+            previous = std::exchange(m_engine, std::move(fresh));
+        m_redraw = true;
+        generation = ++m_generation;
+    }
+    // Freed outside the lock (a large track takes milliseconds): render()
+    // reaches neither the dropped tracks nor the previous engine any more.
+    for (ASS_Track *t : gone)
+        ass_free_track(t);
+    previous.reset(); // its tracks, library, renderer and leases
+    return generation;
 }
 
 std::expected<OverlayFrame, RenderError> LibassRenderer::render(core::DocumentTime time, int width, int height)

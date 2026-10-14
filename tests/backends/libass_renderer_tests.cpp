@@ -23,11 +23,14 @@ extern "C" {
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <atomic>
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <optional>
 #include <string>
+#include <thread>
 
 using namespace hikari;
 using namespace hikari::application;
@@ -755,4 +758,116 @@ TEST(LibassRenderer, FramesCarryTheBoundsOfTheirImages)
     ASSERT_TRUE(none.has_value());
     EXPECT_TRUE(none->empty);
     EXPECT_FALSE(none->bounds);
+}
+
+namespace {
+
+// A script whose [Fonts] section carries `font` under `name`, uuencoded as
+// ASS writes it (6 bits a character plus 33, 80 characters a line).
+std::string withEmbeddedFont(std::string_view events, const std::vector<std::byte> &font, std::string_view name)
+{
+    std::string encoded;
+    const auto *b = reinterpret_cast<const unsigned char *>(font.data());
+    const std::size_t n = font.size();
+    for (std::size_t i = 0; i < n; i += 3) {
+        const unsigned v = (unsigned(b[i]) << 16) | (i + 1 < n ? unsigned(b[i + 1]) << 8 : 0u) | (i + 2 < n ? b[i + 2] : 0u);
+        const std::size_t chars = std::min<std::size_t>(4, n - i + 1);
+        for (std::size_t k = 0; k < chars; ++k)
+            encoded += char(((v >> (18 - 6 * k)) & 63) + 33);
+    }
+    std::string fonts = "[Fonts]\nfontname: " + std::string(name) + "\n";
+    for (std::size_t i = 0; i < encoded.size(); i += 80)
+        fonts += encoded.substr(i, 80) + "\n";
+    const std::vector<std::byte> base = scriptOf(events);
+    std::string script(reinterpret_cast<const char *>(base.data()), base.size());
+    const std::size_t events_at = script.find("[Events]");
+    script.insert(events_at, fonts + "\n");
+    return script;
+}
+
+} // namespace
+
+// Q2: the adapter never turns ass_set_extract_fonts on. A parse then writes
+// nothing into the library that rendering reads, so prepare() may parse
+// outside the render lock. A script's own [Fonts] are therefore not used:
+// with no font lease and no system fonts its text draws nothing, where a
+// library that extracts fonts draws it in the embedded font.
+TEST(LibassRenderer, TheScriptsOwnFontsAreNotExtracted)
+{
+    const auto font = testFont();
+    const std::string script = withEmbeddedFont(
+        "Dialogue: 0,0:00:00.00,0:00:05.00,D,,0,0,0,,{\\pos(10,10)}Wafer gym\n", *font, "titillium.ttf");
+
+    // The control: a library that extracts the script's fonts draws the text.
+    ASS_Library *library = ass_library_init();
+    ASSERT_NE(library, nullptr);
+    ass_set_extract_fonts(library, 1);
+    ASS_Renderer *raw = ass_renderer_init(library);
+    ASSERT_NE(raw, nullptr);
+    ass_set_fonts(raw, nullptr, nullptr, ASS_FONTPROVIDER_NONE, nullptr, 0);
+    ass_set_frame_size(raw, 96, 64);
+    ass_set_storage_size(raw, 96, 64);
+    std::string copy = script;
+    ASS_Track *track = ass_read_memory(library, copy.data(), copy.size(), nullptr);
+    ASSERT_NE(track, nullptr);
+    int change = 0;
+    EXPECT_NE(ass_render_frame(raw, track, 1000, &change), nullptr) << "the embedded font is drawn when extracted";
+    ass_free_track(track);
+    ass_renderer_done(raw);
+    ass_library_done(library);
+
+    backends::LibassRenderer renderer;
+    RenderSnapshot snap{bytesOf(script), {}, "", false};
+    ASSERT_TRUE(renderer.prepare(std::move(snap)).has_value());
+    const auto frame = renderer.render(core::DocumentTime(1'000'000), 96, 64);
+    ASSERT_TRUE(frame.has_value());
+    EXPECT_TRUE(frame->empty) << "the adapter extracted the script's [Fonts]";
+}
+
+// Q2: prepare() parses a new script outside the render lock, so render()
+// of the shown track goes on during a long parse instead of waiting for it
+// (the playback worker stalled 0.2-0.3 s per edit on a large script). With
+// the parse under the lock, one render() waits about as long as prepare()
+// takes; without it, no render() comes near that.
+TEST(LibassRenderer, ParsesWhileTheShownTrackRenders)
+{
+    backends::LibassRenderer renderer;
+    ASSERT_TRUE(renderer.prepare(snapshot(kDrawing)).has_value());
+    ASSERT_TRUE(renderer.render(core::DocumentTime(1'000'000), 96, 64).has_value());
+    std::string events;
+    for (int i = 0; i < 200'000; ++i) // one Line at 0:00:10, the others later
+        events += std::string(i ? "Dialogue: 0,1:00:00.00,1:00:01.00" : "Dialogue: 0,0:00:10.00,0:00:11.00") +
+                  ",D,,0,0,0,,{\\pos(10,10)}line " + std::to_string(i) + "\n";
+    RenderSnapshot large = snapshot(events);
+    using Clock = std::chrono::steady_clock;
+    std::atomic<bool> started = false, done = false;
+    Clock::duration preparing{};
+    std::expected<std::uint64_t, RenderError> prepared = std::unexpected(RenderError::NoSnapshot);
+    std::thread parse([&] {
+        started = true;
+        const auto t0 = Clock::now();
+        prepared = renderer.prepare(std::move(large));
+        preparing = Clock::now() - t0;
+        done = true;
+    });
+    while (!started)
+        std::this_thread::yield();
+    Clock::duration longest{};
+    int renders = 0;
+    while (!done) {
+        const auto t0 = Clock::now();
+        const auto frame = renderer.render(core::DocumentTime(1'000'000), 96, 64);
+        longest = std::max(longest, Clock::now() - t0);
+        ASSERT_TRUE(frame.has_value());
+        ++renders;
+    }
+    parse.join();
+    ASSERT_TRUE(prepared.has_value());
+    const auto ms = [](Clock::duration d) { return std::chrono::duration<double, std::milli>(d).count(); };
+    EXPECT_LT(ms(longest) * 4, ms(preparing))
+        << "a render() waited " << ms(longest) << " ms during a " << ms(preparing) << " ms prepare (" << renders
+        << " renders)";
+    const auto after = renderer.render(core::DocumentTime(10'500'000), 96, 64);
+    ASSERT_TRUE(after.has_value());
+    EXPECT_FALSE(after->empty); // the new script is shown
 }
