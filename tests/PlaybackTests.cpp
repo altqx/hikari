@@ -100,6 +100,17 @@ TEST(next_frame_far_behind_skips_to_the_frame_due_now)
 	CHECK_EQ(step.sleepMs, 0);
 }
 
+TEST(next_frame_far_behind_skips_to_the_frame_shown_now_not_a_later_one)
+{
+	Timebase tb = Pal(100);
+	// frame 25 shows from 1000 to 1040 ms; frame 26 has not started yet
+	PlaybackStep step = NextPlaybackFrame(tb, 10, 1010, 0, 100);
+	CHECK_EQ(step.frame, 25);
+	CHECK_EQ(step.sleepMs, 0);
+	CHECK_EQ(NextPlaybackFrame(tb, 10, 1039, 0, 100).frame, 25);
+	CHECK_EQ(NextPlaybackFrame(tb, 10, 1040, 0, 100).frame, 26);
+}
+
 TEST(skipping_stops_at_the_play_end)
 {
 	Timebase tb = Pal(100);

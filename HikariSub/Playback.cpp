@@ -59,9 +59,10 @@ PlaybackStep NextPlaybackFrame(const Timebase &timebase, int frame, int nowMs,
 		return { next, early };
 
 	if (early < -LATE_FRAME_MARGIN) {
-		while (next < frameCount) {
-			int frameTime = timebase.MsAt(next);
-			if (frameTime >= nowMs || (playEndMs > 0 && frameTime >= playEndMs))
+		// skip to the frame shown at nowMs, the last one that has started,
+		// not to the first one that has not
+		while (next + 1 < frameCount && timebase.MsAt(next + 1) <= nowMs) {
+			if (playEndMs > 0 && timebase.MsAt(next) >= playEndMs)
 				break;
 			next++;
 		}
