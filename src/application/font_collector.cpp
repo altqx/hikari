@@ -436,9 +436,13 @@ FontEnvironment systemEnvironment()
 }
 
 // A file name for a collected font: the provider's file, or for stream bytes
-// (DirectWrite) the installed file of the same face.
+// (DirectWrite) the installed file of the same face. Two installed files can
+// hold a face of one PostScript name (a per-user arial.ttf beside the
+// system's); legacy found the file by the face's size and bytes
+// (FontCollector.cpp:1144-1196), so the file whose bytes are the renderer's
+// names it, and the first of that name only when no file can be compared.
 void nameFile(CollectedFile &file, const CollectedFont &font, const FontCollection &from,
-              const std::vector<SystemFace> &faces)
+              const std::vector<SystemFace> &faces, const FontCollector::FileReader &read)
 {
     if (!font.path.empty()) {
         file.shown = toU16(std::u8string(font.path.begin(), font.path.end()));
@@ -446,16 +450,28 @@ void nameFile(CollectedFile &file, const CollectedFont &font, const FontCollecti
         return;
     }
     file.shown = file.name = toU16(std::u8string(font.name.begin(), font.name.end()));
+    std::vector<std::string> candidates;
     for (const auto &sel : from.selections) {
         if (sel.sha256 != font.sha256 || sel.postscriptName.empty())
             continue;
         for (const auto &f : faces)
-            if (f.postscriptName == sel.postscriptName && !f.path.empty()) {
-                file.shown = toU16(std::u8string(f.path.begin(), f.path.end()));
-                file.name = fileName(file.shown);
-                return;
-            }
+            if (f.postscriptName == sel.postscriptName && !f.path.empty() &&
+                std::find(candidates.begin(), candidates.end(), f.path) == candidates.end())
+                candidates.push_back(f.path);
     }
+    if (candidates.empty())
+        return;
+    std::string chosen = candidates.front();
+    if (candidates.size() > 1 && read && font.bytes)
+        for (const auto &path : candidates) {
+            const auto bytes = read(toU16(std::u8string(path.begin(), path.end())));
+            if (bytes && *bytes == *font.bytes) {
+                chosen = path;
+                break;
+            }
+        }
+    file.shown = toU16(std::u8string(chosen.begin(), chosen.end()));
+    file.name = fileName(file.shown);
 }
 
 } // namespace
@@ -664,7 +680,7 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
             file.bytes = font->bytes;
             file.sha256 = font->sha256;
             file.faces = font->faces;
-            nameFile(file, *font, *probe.result, faces);
+            nameFile(file, *font, *probe.result, faces, m_read);
             flc.infos.push_back({Note::Kind::FoundFile, fn, file.shown});
             const u16 ext = lower(file.shown.size() > 3 ? file.shown.substr(file.shown.size() - 3) : u16());
             review.files.push_back(file);
@@ -715,7 +731,7 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
                       std::find(file.roles.begin(), file.roles.end(), "substitute for " + r.substr(10)) != file.roles.end()))
                     addUnique(file.roles, r);
             CollectedFile named;
-            nameFile(named, font, *unionFrom[i], faces);
+            nameFile(named, font, *unionFrom[i], faces, m_read);
             file.shown = named.shown;
             if (file.family.empty())
                 file.family = named.name;
