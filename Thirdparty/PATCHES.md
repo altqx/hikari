@@ -1,9 +1,11 @@
-# The two forks, and the wxWidgets patches
+# The forks, and the wxWidgets patches
 
-Two dependencies carry HikariSub's own changes. Rather than sitting as
-unattributed copies in this tree, each is a fork repository whose `hikarisub`
-branch is *upstream at a known commit, plus commits that are the changes*. The
-submodule pins one of those commits.
+Three dependencies come from forks. ffms2 and xy-VSFilter carry HikariSub's
+own changes: rather than sitting as unattributed copies in this tree, each is a
+fork repository whose `hikarisub` branch is *upstream at a known commit, plus
+commits that are the changes*. The submodule pins one of those commits. libass
+is the altqx fork that HikariSub shares with other applications; see its
+section below.
 
 That makes the delta reviewable with ordinary git, and makes rebasing onto a
 newer upstream an ordinary rebase.
@@ -55,6 +57,46 @@ that branch and taking the one that maximised exact file matches — 940 of 998.
 The submodule path is still `xy-VSFilter-xy_sub_filter_rc5`, which is just how
 GitHub's archive happened to unpack. Renaming it means touching `HikariSub.sln`
 and every project that references it, so it is left for a separate change.
+
+## libass — [altqx/libass](https://github.com/altqx/libass), branch `master`
+
+- **Upstream:** <https://github.com/libass/libass>
+- **Pin:** `4f5ea43630bb89c9caacaf4742a8af4f3e26edf7` on `master`. The fork
+  cuts no tags for its consumers: each one pins a `master` commit, and moving
+  the pin is a one-line change here (decision of 2026-10-15).
+- **Before the fork:** upstream `4a05d81`, the 0.17.5 release.
+
+The fork is upstream `master` (merged after 0.17.5) plus a performance batch
+and a few fork-only APIs; the fork's README lists them. Its commits are checked
+frame by frame against the commit before them, so the fork renders as
+upstream `master` does. Against 0.17.5, the only rendering change found is
+upstream's own: `057a533` and `b085eeb` draw text in symbol-cmap fonts and in
+fonts with the legacy Arabic charset (178) on a Unicode cmap, which 0.17.5
+draws nothing for. The fork's grapheme-cluster parsing renders as upstream
+does since `4f5ea43`.
+
+HikariSub uses none of the fork-only APIs yet. What the fork changes for a
+consumer:
+
+- `ASS_Image` lists are valid only until the next `ass_render_frame` on that
+  renderer, as upstream documents; the nodes are reused.
+- After the first `ass_render_frame` on a track, writing an event's `Start` or
+  `Duration`, or inserting or reordering events by hand, needs
+  `ass_track_events_modified` before the next render. HikariSub only ever
+  parses whole scripts with `ass_read_memory`, so it is not affected.
+- A track must not be rendered by two threads at once until it has been
+  rendered once after its last change. HikariSub renders under one lock.
+- Feature tests use the `LIBASS_HAS_*` macros. Upstream steps the low byte of
+  `LIBASS_VERSION` for its own API additions too, so the version cannot tell
+  the fork from upstream.
+
+The Windows build compiles libass from `Thirdparty/Build/Libass/Libass.vcxproj`,
+which lists libass's sources by hand. When the pin moves, compare the list with
+the fork's `libass/meson.build` and `libass/Makefile_library.am`.
+
+`Thirdparty/Build/Libass/libass_gdi_fontselect.cpp` includes libass's internal
+`ass_fontselect.h` and `ass_utils.h`. It is excluded from every configuration,
+but a fork change to `ASS_FontProviderFuncs` would break it without notice.
 
 ## Rebasing a fork onto newer upstream
 

@@ -71,12 +71,18 @@
     <ClInclude Include="..\..\libass\libass\ass_directwrite.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\libass\libass\ass_atlas.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\libass\libass\ass.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\libass\libass\ass_arabic_charmap.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\libass\libass\ass_atlas.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\libass\libass\ass_bitmap.c">
@@ -151,6 +157,9 @@
     <ClCompile Include="..\..\libass\libass\c\c_rasterizer.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\libass\libass\c\c_shift_bitmap.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Nasm Include="..\..\libass\libass\x86\be_blur.asm">
@@ -166,6 +175,9 @@
       <Filter>Asembly Files</Filter>
     </Nasm>
     <Nasm Include="..\..\libass\libass\x86\rasterizer.asm">
+      <Filter>Asembly Files</Filter>
+    </Nasm>
+    <Nasm Include="..\..\libass\libass\x86\shift_bitmap.asm">
       <Filter>Asembly Files</Filter>
     </Nasm>
     <None Include="..\..\libass\libass\x86\x86inc.asm">

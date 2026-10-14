@@ -8,7 +8,7 @@
 	shallow = true
 [submodule "Thirdparty/libass"]
 	path = Thirdparty/libass
-	url = https://github.com/libass/libass.git
+	url = https://github.com/altqx/libass.git
 	shallow = true
 [submodule "Thirdparty/Hunspell"]
 	path = Thirdparty/Hunspell

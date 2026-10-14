@@ -56,16 +56,18 @@ libraries are listed in `AdditionalDependencies`.
 |---|---|---|
 | `freetype2` | [freetype/freetype](https://github.com/freetype/freetype) | `VER-2-14-3` |
 | `harfbuzz` | [harfbuzz/harfbuzz](https://github.com/harfbuzz/harfbuzz) | `14.4.0` |
-| `libass` | [libass/libass](https://github.com/libass/libass) | `0.17.5` |
 | `Hunspell` | [hunspell/hunspell](https://github.com/hunspell/hunspell) | `v1.7.3` |
 | `wxWidgets` | [wxWidgets/wxWidgets](https://github.com/wxWidgets/wxWidgets) | `v3.3.4` |
 | `ffms2` | **[altqx/ffms2](https://github.com/altqx/ffms2)** | branch `hikarisub` |
 | `xy-VSFilter-xy_sub_filter_rc5` | **[altqx/xy-VSFilter](https://github.com/altqx/xy-VSFilter)** | branch `hikarisub` |
+| `libass` | **[altqx/libass](https://github.com/altqx/libass)** | `4f5ea43` on `master` |
 | `SubInspector` | [TypesettingTools/SubInspector](https://github.com/TypesettingTools/SubInspector) | `51c4c7a` (0.5.2) |
 
-The first five are pinned to an upstream release tag with no commits of our
+The first four are pinned to an upstream release tag with no commits of our
 own, so they point straight at upstream. `ffms2` and `xy-VSFilter` carry HikariSub's own changes, so they point at forks whose
-`hikarisub` branch is upstream plus those changes — see [`PATCHES.md`](PATCHES.md).
+`hikarisub` branch is upstream plus those changes. `libass` is the altqx fork,
+upstream `master` plus performance work, pinned at a `master` commit — see
+[`PATCHES.md`](PATCHES.md) for all three.
 `wxWidgets` is not built untouched on Linux, though: `build-wxwidgets-linux.sh`
 applies the wxGTK fixes in `wxWidgets-patches/` to the checkout's working tree
 (the pinned commit stays upstream's tag) before it builds. `PATCHES.md` lists

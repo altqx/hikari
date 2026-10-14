@@ -184,10 +184,12 @@
     <Nasm Include="..\..\libass\libass\x86\blur.asm" />
     <Nasm Include="..\..\libass\libass\x86\cpuid.asm" />
     <Nasm Include="..\..\libass\libass\x86\rasterizer.asm" />
+    <Nasm Include="..\..\libass\libass\x86\shift_bitmap.asm" />
     <None Include="..\..\libass\libass\x86\x86inc.asm" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\libass\libass\ass.h" />
+    <ClInclude Include="..\..\libass\libass\ass_atlas.h" />
     <ClInclude Include="..\..\libass\libass\ass_bitmap.h" />
     <ClInclude Include="..\..\libass\libass\ass_cache.h" />
     <ClInclude Include="..\..\libass\libass\ass_cache_template.h" />
@@ -211,6 +213,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\libass\libass\ass.c" />
     <ClCompile Include="..\..\libass\libass\ass_arabic_charmap.c" />
+    <ClCompile Include="..\..\libass\libass\ass_atlas.c" />
     <ClCompile Include="..\..\libass\libass\ass_bitmap.c" />
     <ClCompile Include="..\..\libass\libass\ass_bitmap_engine.c" />
     <ClCompile Include="..\..\libass\libass\ass_blur.c" />
@@ -234,6 +237,7 @@
     <ClCompile Include="..\..\libass\libass\c\c_blend_bitmaps.c" />
     <ClCompile Include="..\..\libass\libass\c\c_blur.c" />
     <ClCompile Include="..\..\libass\libass\c\c_rasterizer.c" />
+    <ClCompile Include="..\..\libass\libass\c\c_shift_bitmap.c" />
     <ClCompile Include="libass_gdi_fontselect.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
