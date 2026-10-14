@@ -4170,8 +4170,25 @@ private slots:
         auto *root = engine->rootObjects().first();
         auto *window = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
         QVERIFY(window);
+        QAccessible::setActive(true);
+        const auto inactive = qScopeGuard([] { QAccessible::setActive(false); });
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
         QTRY_VERIFY(window->isVisible());
+        // The catalog box is named for assistive technology, not by the
+        // catalog it shows ("Default"), and so is its text field (the Windows
+        // native gate's dialogs step read ComboBox 'Default' with an unnamed Edit).
+        {
+            auto *catalog = window->findChild<QQuickItem *>(QStringLiteral("styleCatalog"));
+            QVERIFY(catalog);
+            QAccessibleInterface *box = QAccessible::queryAccessibleInterface(catalog);
+            QVERIFY(box);
+            QCOMPARE(box->role(), QAccessible::ComboBox);
+            QCOMPARE(box->text(QAccessible::Name), QStringLiteral("Style catalog"));
+            QAccessibleInterface *edit =
+                QAccessible::queryAccessibleInterface(catalog->property("contentItem").value<QQuickItem *>());
+            QVERIFY(edit);
+            QCOMPARE(edit->text(QAccessible::Name), QStringLiteral("Style catalog"));
+        }
         // The active Line's Style is selected.
         QCOMPARE(window->property("assSelected").toList(), QVariantList{1});
         QCOMPARE(styles.documentStyles(), (QStringList{QStringLiteral("Default"), QStringLiteral("Sign")}));
