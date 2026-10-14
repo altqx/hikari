@@ -65,6 +65,16 @@ QJsonObject readManifest()
     return QJsonDocument::fromJson(file.readAll()).object();
 }
 
+// The rows of cells one contact sheet holds. On a desktop the window system
+// keeps a window inside its monitor (the windows platform cuts what is below
+// the available height), so a sheet holds what fits under a window frame;
+// offscreen nothing cuts a window and one sheet holds every role.
+int contactSheetRows(bool desktop, int availableHeight, int cellHeight)
+{
+    constexpr int frame = 80;
+    return desktop ? std::max(1, (availableHeight - frame) / cellHeight) : 1000;
+}
+
 // Every number in an attribute value (path data, coordinates).
 QList<double> numbers(const QString &text)
 {
@@ -990,6 +1000,21 @@ Rectangle {
         QCOMPARE(difference(playRtl, play), 0);
     }
 
+    // A contact sheet on a desktop holds the rows that fit the screen's
+    // available height under a window frame (a 1024 x 768 desktop with its
+    // taskbar takes 14 rows of 44, not the whole set), and at least one;
+    // offscreen it holds every role.
+    void contactSheetsFitTheScreen()
+    {
+        QCOMPARE(contactSheetRows(true, 728, 44), 14);
+        QCOMPARE(contactSheetRows(true, 1040, 44), 21);
+        QCOMPARE(contactSheetRows(true, 100, 44), 1);
+        QCOMPARE(contactSheetRows(true, 0, 44), 1);
+        const int all = int((ui::icons::roles().size() + 7) / 8);
+        QVERIFY(all > 14); // the whole set is taller than that desktop
+        QVERIFY(contactSheetRows(false, 728, 44) >= all);
+    }
+
     // The rendering check and contact sheets: the whole set drawn by the
     // Icon item on each theme's background at this process's scale,
     // every icon equal to its SVG file drawn at the device's pixels (crisp,
@@ -998,7 +1023,9 @@ Rectangle {
     // tree's file, recoloured through SVG's color property rather than the
     // item's tint (drawnFromSource), so a wrong drawing, a wrong tint or
     // colours in the wrong layer fail here; whether the drawings look right
-    // rests on the user's review of the contact sheets written here.
+    // rests on the user's review of the contact sheets written here. Each
+    // sheet is drawn whole (its height is checked), on as many pages as the
+    // screen needs.
     void contactSheets()
     {
         auto restore = qScopeGuard([] { ui::theme::endPreview(); });
@@ -1014,12 +1041,14 @@ Rectangle {
         }
         const QString prefix = qEnvironmentVariable("HIKARI_ICON_SHEET_PREFIX", QStringLiteral("k1"));
         constexpr int columns = 8, cellWidth = 168, cellHeight = 44;
-        // A sheet taller than the screen is cut by a desktop's window system
-        // (the windows platform keeps a window inside its monitor), so the
-        // roles go on pages that fit: one page offscreen and on large screens.
+        // A sheet taller than the screen is cut by a desktop's window system,
+        // so the roles go on pages that fit it (files named -pageN);
+        // HIKARI_ICON_SHEET_PAGE_ROWS sets the rows of a page instead.
         const QScreen *screen = QGuiApplication::primaryScreen();
-        const int fitRows = screen && QGuiApplication::platformName() != QLatin1String("offscreen")
-            ? std::max(1, (screen->availableGeometry().height() - 80) / cellHeight) : 1000;
+        int fitRows = contactSheetRows(screen && QGuiApplication::platformName() != QLatin1String("offscreen"),
+                                       screen ? screen->availableGeometry().height() : 0, cellHeight);
+        if (const int rowsWanted = qEnvironmentVariableIntValue("HIKARI_ICON_SHEET_PAGE_ROWS"); rowsWanted > 0)
+            fitRows = rowsWanted;
         const QStringList allRoles = roles;
         const int pageRoles = fitRows * columns;
         const int pages = int((allRoles.size() + pageRoles - 1) / pageRoles);
@@ -1032,26 +1061,26 @@ Rectangle {
                 const QColor background = themeRoles().background;
                 const QColor text = themeRoles().text;
                 QByteArray qml = R"(
-    import QtQuick
-    import Hikari.Ui
-    Rectangle {
-        id: sheet
-        property var roles: []
-        color: "BG"
-        width: COLS * CW
-        height: ROWS * CH
-        Grid {
-            columns: COLS
-            Repeater {
-                model: sheet.roles
-                delegate: Item {
-                    required property string modelData
-                    width: CW
-                    height: CH
-                    Icon { objectName: "icon_" + parent.modelData; iconRole: parent.modelData; x: 8; y: 6 }
-                    Icon { iconRole: parent.modelData; size: 32; x: 32; y: 6 }
-                    Text { x: 72; y: 6; width: CW - 76; text: parent.modelData; color: "FG"; font.pixelSize: 11; wrapMode: Text.WrapAnywhere }
-                }
+import QtQuick
+import Hikari.Ui
+Rectangle {
+    id: sheet
+    property var roles: []
+    color: "BG"
+    width: COLS * CW
+    height: ROWS * CH
+    Grid {
+        columns: COLS
+        Repeater {
+            model: sheet.roles
+            delegate: Item {
+                required property string modelData
+                width: CW
+                height: CH
+                Icon { objectName: "icon_" + parent.modelData; iconRole: parent.modelData; x: 8; y: 6 }
+                Icon { iconRole: parent.modelData; size: 32; x: 32; y: 6 }
+                Text { x: 72; y: 6; width: CW - 76; text: parent.modelData; color: "FG"; font.pixelSize: 11; wrapMode: Text.WrapAnywhere }
+            }
         }
     }
 }
