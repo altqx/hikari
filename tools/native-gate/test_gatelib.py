@@ -172,6 +172,12 @@ class Session(unittest.TestCase):
         with open(os.path.join(HERE, name), encoding="utf-8") as f:
             return f.read()
 
+    def test_the_gate_scripts_parse(self):
+        # gate.py picks its session at import, so it is parsed, not imported.
+        import ast
+        for name in ("gate.py", "atspi_tool.py", "gatelib.py"):
+            ast.parse(self.read(name), filename=name)
+
     def test_kwin_runs_its_qt_quick_windows_in_software(self):
         # KWin aborted in QSGRenderLoop::handleContextCreationFailure when the
         # PickColor prompt opened
