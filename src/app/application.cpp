@@ -2634,7 +2634,11 @@ bool Application::autosave(application::DocumentId document)
     m_shell->setStatusText(QCoreApplication::translate("HikariSub.Session", "Autosave"));
     QTimer::singleShot(5000, Qt::PreciseTimer, this, [this] { m_shell->setStatusText(QString()); });
     application::RecoveryContent content;
-    content.bytes = core::encodeSubtitle(session->document(), m_files->saveOptions()); // E5: as SaveFile
+    // S4: legacy's autosave is SaveFile too, so it writes the active Line
+    // into the file and the open Document (SubsGridBase.cpp:1470 at 20d647c4).
+    const auto activeLine = application::activeLineToSave(*session);
+    content.bytes = core::encodeSubtitle(application::withActiveLine(session->document(), activeLine),
+                                         m_files->saveOptions()); // E5: as SaveFile
     const auto format = session->document().format();
     content.extension = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText ? "ass"
                         : format == core::SubtitleFormat::Srt                                            ? "srt"
@@ -2653,7 +2657,11 @@ bool Application::autosave(application::DocumentId document)
     if (const auto &rate = session->document().frameRate())
         content.frameRate = std::pair(rate->framesPerSecond().numerator(), rate->framesPerSecond().denominator());
     content.writtenMs = QDateTime::currentMSecsSinceEpoch();
-    return m_recovery->write(recoveryKey(document), content);
+    if (!m_recovery->write(recoveryKey(document), content))
+        return false;
+    if (activeLine)
+        session->amendScriptInfo(application::kActiveLineKey, *activeLine);
+    return true;
 }
 
 void Application::discardRecovery(application::DocumentId document)

@@ -190,6 +190,7 @@ target_compile_definitions(hikari_ui_automation_document_scripts_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
     # The legacy capture (document_scripts_capture.py) and its scripts.
     HIKARI_S4_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-s4-document-scripts-20261013/s4.json"
+    HIKARI_S4_WINDOWS_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-s4-document-scripts-20261013/s4-windows.json"
     HIKARI_S4_SCRIPTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/document-scripts")
 add_dependencies(hikari_ui_automation_document_scripts_tests hikari_lua_helper hikari_automation_stage
     hikari_media_helper hikari_media_fixtures)

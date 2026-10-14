@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <string>
 #include <string_view>
 
 namespace hikari::application {
@@ -185,10 +186,15 @@ std::expected<SavePlan, SaveRefusal> DocumentFiles::prepareSave(DocumentId docum
     auto snapshot = entry->session->prepareSave(); // commit-then-save
     if (!snapshot)
         return std::unexpected(SaveRefusal::InvalidDraft);
-    return SavePlan{document,           entry->generation,
-                    snapshot->revision, snapshot->content,
-                    destination,        core::encodeSubtitle(snapshot->document, m_saveOptions),
-                    saveAs.has_value() && *saveAs != entry->destination};
+    auto activeLine = activeLineToSave(*entry->session); // S4: as GetAssHeader
+    return SavePlan{document,
+                    entry->generation,
+                    snapshot->revision,
+                    snapshot->content,
+                    destination,
+                    core::encodeSubtitle(withActiveLine(std::move(snapshot->document), activeLine), m_saveOptions),
+                    saveAs.has_value() && *saveAs != entry->destination,
+                    std::move(activeLine)};
 }
 
 std::expected<PermitId, SaveRefusal> DocumentFiles::startSave(SavePlan plan, bool overwriteExternalChange)
@@ -210,7 +216,7 @@ std::expected<PermitId, SaveRefusal> DocumentFiles::startSave(SavePlan plan, boo
                                    ? SaveRefusal::Collision
                                    : SaveRefusal::WriteInProgress);
     m_pending.emplace(*permit, Pending{plan.document, plan.generation, plan.content, plan.destination, plan.bytes,
-                                       plan.saveAs});
+                                       plan.saveAs, plan.activeLine});
     entry->lastSave = SaveStatus{*permit, std::nullopt};
     if (!m_writes.write(*permit, std::move(plan.bytes))) {
         m_pending.erase(*permit);
@@ -240,11 +246,39 @@ void DocumentFiles::onWriteResult(const WriteResult &result)
         return; // failed or cancelled: the work stays unsaved, nothing moves
     // Only the written snapshot becomes saved; newer edits stay unsaved.
     entry->session->markSaved(pending.content);
+    // S4: the file holds the active Line, and so does the open Document now.
+    if (pending.activeLine)
+        entry->session->amendScriptInfo(kActiveLineKey, *pending.activeLine);
     entry->knownBytes = std::move(pending.bytes);
     if (pending.saveAs) {
         entry->destination = pending.destination;
         m_writes.associate(pending.document, pending.destination);
     }
+}
+
+std::optional<std::u8string> activeLineToSave(const EditSession &session)
+{
+    const core::Document &document = session.document();
+    if (document.format() != core::SubtitleFormat::Ass)
+        return std::nullopt;
+    std::size_t row = 0;
+    if (const auto active = session.selection().active) {
+        const auto lines = document.lines();
+        for (std::size_t i = 0; i < lines.size(); ++i)
+            if (lines[i]->id == *active) {
+                row = i;
+                break;
+            }
+    }
+    const std::string text = std::to_string(row); // std::to_wstring(currentLine)
+    return std::u8string(text.begin(), text.end());
+}
+
+core::Document withActiveLine(core::Document document, const std::optional<std::u8string> &row)
+{
+    if (row)
+        document.setScriptInfo(kActiveLineKey, *row);
+    return document;
 }
 
 std::optional<SaveStatus> DocumentFiles::lastSave(DocumentId document) const

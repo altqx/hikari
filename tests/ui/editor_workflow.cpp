@@ -149,6 +149,11 @@ int main(int argc, char **argv)
 
     QByteArray expected = original;
     expected.replace(",,Gate\r\n", ",,Gate edited\r\n"); // the fixture uses CRLF
+    // S4: the save also writes the active Line's row after the last property
+    // (Undo and Redo make the edited first Line active again).
+    expected.replace("YCbCr Matrix: TV.601\r\n", "YCbCr Matrix: TV.601\r\nActive Line: 0\r\n");
+    if (readAll(path) != expected)
+        std::printf("saved bytes:\n%s\n", readAll(path).constData());
     expect(readAll(path) == expected, "only the edited Line changed on disk");
 
     // Reopen in a fresh composition.

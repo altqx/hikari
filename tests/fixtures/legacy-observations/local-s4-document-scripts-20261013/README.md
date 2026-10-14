@@ -34,6 +34,18 @@ Each case runs a fresh copy of the app with Autoload emptied, the scripts of [`a
 
 These keys and edits are taken off legacy's records only (each of the three keys once; "Validated" and the edited text only in validation-false); the rewrite's records are compared whole, so a key it adds or drops on its own fails the comparison.
 
+## The Windows capture
+
+`s4-windows.json` is the same plan run on the Windows release `v0.0.1-rc.1` (`HikariSub-0.0.1-rc.1-windows-x64.zip`, sha256 `20a1b0fa…5e9a1e`, legacy `20d647c4`) in the Winix VM (Windows 11 build 26200) on 2026-10-14: winix `legacy-win-setup` job-15b77f0054d44fd181968eea9e89baf0 (tree at `9aa897065`, clean), then
+
+```
+python3 tools/legacy-capture/drive_windows.py --plan tools/legacy-capture/plan.json --out s4-windows.json --document-scripts
+```
+
+which runs each case through the `legacy-win-s4-*` tasks. All seven cases were captured, and six are the same as on Linux. In runs-last the scripts see one more Script Info key, "Active Line", in step 3 (the third press), as in four earlier Windows runs of the same plan (2026-10-14, 01:28 to 02:32 UTC). That is legacy's autosave: `SubsGrid::OnBackupTimer` saves 20 s after the first change since the last autosave (`SubsGridBase.cpp:1085-1088`) through `SaveFile`, whose `GetAssHeader` writes the active Line's row as "Active Line" into the open Document's Script Info (`SubsGridBase.cpp:1470`). The Windows driver waits 8 s after each hotkey and runs a winix task for each record read and for the touch, so the timer that step 0's run started fired before step 3; the Linux route's steps all came within the 20 s. The title stays `3*s4.ass`: an autosave does not mark the file saved.
+
+`replaysTheLegacyCapture` replays both files. With the Windows one it autosaves (`Application::autosaveNow`) before the first step whose legacy records show the key, and the rewrite's scripts then see "Active Line" too (decision 49, 2026-10-15: legacy's write is ported, autosave included). Timed autosaves are off in the replay (`autosave.maxFiles` 0), so neither file depends on how long its steps take.
+
 ## Not observed here
 
-The Windows release (`drive_windows.py --document-scripts`, the `legacy-win-s4-*` tasks, needs the Winix VM); the Automation menu itself (its items' enabled state after validation); a script editor that is set.
+The Automation menu itself (its items' enabled state after validation); a script editor that is set.

@@ -18,6 +18,8 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <string>
+#include <string_view>
 #include <vector>
 
 namespace hikari::application {
@@ -68,7 +70,28 @@ struct SavePlan {
     DestinationKey destination;
     std::vector<std::byte> bytes;
     bool saveAs = false;
+    // S4: the "Active Line" the bytes hold, which the Document takes once
+    // they are written (activeLineToSave).
+    std::optional<std::u8string> activeLine;
 };
+
+// S4: legacy SubsGrid::SaveFile, autosave included, wrote the active Line's
+// row into the open Document's Script Info before writing the header
+// (GetAssHeader with forFile, `file->AddSInfo(L"Active Line",
+// std::to_wstring(currentLine), false)`, HikariSub/SubsGridBase.cpp:1470 at
+// 20d647c4): the key's value replaced in place, or the key added after the
+// last property; no undo step, nothing marked modified. Macros run after a
+// save see it, and the next load starts on that Line. Legacy restores the
+// Script Info when the write fails (SubsGridBase.cpp:433 on main), so here
+// the Document takes it only once the write succeeded.
+inline constexpr std::u8string_view kActiveLineKey = u8"Active Line";
+// The value a save of this session writes: the active Line's 0-based row
+// among all Lines (legacy currentLine, 0 with none), for an ASS Document;
+// nullopt for the other formats, which have no Script Info (legacy wrote the
+// header only for subsFormat < SRT).
+std::optional<std::u8string> activeLineToSave(const EditSession &session);
+// `document` as a save writes it: with "Active Line" set to `row`.
+core::Document withActiveLine(core::Document document, const std::optional<std::u8string> &row);
 
 struct SaveStatus {
     PermitId permit;
@@ -128,6 +151,7 @@ private:
         DestinationKey destination;
         std::vector<std::byte> bytes;
         bool saveAs = false;
+        std::optional<std::u8string> activeLine;
     };
     std::expected<StagedOpen, OpenError> stage(const DestinationKey &destination);
     Entry *find(DocumentId document);

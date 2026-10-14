@@ -9,6 +9,7 @@
 
 #include "hikari/app/application.h"
 #include "desktop_guard.h"
+#include "settings_store.h"
 
 #include <QDateTime>
 #include <QDeadlineTimer>
@@ -617,6 +618,7 @@ private slots:
     // Linux app driven through its "Run the last loaded script" hotkey) as
     // the rewrite gives it, case by case: what the scripts saw and did, the
     // boxes, the log window, the editor picker, the modified state.
+    void replaysTheLegacyCapture_data();
     void replaysTheLegacyCapture();
 
     // L4 refused these; now (S4) a macro's Script Info and Style edits apply
@@ -659,9 +661,19 @@ private slots:
     }
 };
 
+// The Linux capture (document_scripts_capture.py) and the Windows one
+// (drive_windows.py --document-scripts on the Winix VM), the same plan.
+void AutomationDocumentScriptsTests::replaysTheLegacyCapture_data()
+{
+    QTest::addColumn<QString>("capture");
+    QTest::newRow("linux") << QStringLiteral(HIKARI_S4_OBSERVATIONS);
+    QTest::newRow("windows") << QStringLiteral(HIKARI_S4_WINDOWS_OBSERVATIONS);
+}
+
 void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
 {
-    QFile observations(QStringLiteral(HIKARI_S4_OBSERVATIONS));
+    QFETCH(QString, capture);
+    QFile observations(capture);
     QVERIFY(observations.open(QIODevice::ReadOnly));
     const QJsonArray cases =
         QJsonDocument::fromJson(observations.readAll()).object()["cases"].toArray()[0].toObject()["observations"].toArray();
@@ -738,7 +750,10 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
         // Settings of its own, as legacy's fresh copy (no script editor set).
         auto o = options();
         o.settingsFile = caseDir.filePath(QStringLiteral("hikari.ini"));
+        // Autosaves only where the replay makes one (below): none on a timer.
+        o.recoveryDir = caseDir.filePath(QStringLiteral("Recovery"));
         app = std::make_unique<app::Application>(o);
+        app->settingsStore()->set("autosave.maxFiles", 0);
         QByteArray value;
         if (!legacy["document_scripts"].isNull())
             value = legacy["document_scripts"].toString().replace(QStringLiteral("{abs}"), QDir::toNativeSeparators(absolute)).toUtf8();
@@ -789,6 +804,31 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
                 titles << w.toObject()["title"].toString();
             const bool box = titles.contains(QStringLiteral("Info")) || titles.contains(QStringLiteral("Error"));
             const bool picker = titles.contains(QStringLiteral("Select a script editor"));
+
+            // S4: legacy's autosave (SubsGrid::OnBackupTimer, 20 s after the
+            // first change, SubsGridBase.cpp:1085-1088) saves through SaveFile,
+            // which writes "Active Line" into the open Document's Script Info
+            // (GetAssHeader, SubsGridBase.cpp:1470 at 20d647c4). On Windows the
+            // driver's steps are slow (the 8 s wait after each hotkey and the
+            // winix tasks in between, drive_windows.py), so in runs-last the
+            // timer that step 0's run started fired before step 3, and the
+            // scripts see the key from there on; the Linux capture's steps all
+            // came within the 20 s. The replay autosaves where legacy's first
+            // records with the key show it did.
+            auto hasActiveLine = [](const QJsonObject &s) {
+                for (const auto &r : s["records"].toArray())
+                    if (r.toObject()["info"].toArray().contains(QStringLiteral("Active Line")))
+                        return true;
+                return false;
+            };
+            bool autosaved = false;
+            for (qsizetype m = 0; m < n; ++m)
+                autosaved = autosaved || hasActiveLine(steps[m].toObject());
+            if (hasActiveLine(step) && !autosaved) {
+                app->settingsStore()->set("autosave.maxFiles", 3);
+                QVERIFY2(app->autosaveNow(), qPrintable(where));
+                app->settingsStore()->set("autosave.maxFiles", 0);
+            }
 
             const auto before = records().size();
             const auto loadsBefore = loads();

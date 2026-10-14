@@ -7662,7 +7662,8 @@ private slots:
         application->waitForWrites();
         QFile saved(ass);
         QVERIFY(saved.open(QIODevice::ReadOnly));
-        QCOMPARE(saved.readAll(), QByteArray("[Script Info]\nTLMode: Yes\n\n") + body);
+        // S4: the save adds the active Line's row after TLMode.
+        QCOMPARE(saved.readAll(), QByteArray("[Script Info]\nTLMode: Yes\nActive Line: 0\n\n") + body);
 
         const QString text = dir.filePath(QStringLiteral("e5-plain.txt"));
         {

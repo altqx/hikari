@@ -18,6 +18,7 @@
 #include <set>
 #include <unordered_set>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -188,6 +189,12 @@ public:
     int changeState(const core::LineRecord &line) const;
     // No step is saved any more (legacy RemoveLastIterSave: the file was removed).
     void markUnsaved() { m_saved.reset(); }
+    // Legacy SubsFile::AddSInfo(key, value, false): the current step's Script
+    // Info gets the value in place (Document::setScriptInfo), with no history
+    // step; the content identity, the save point and the revision stay, so
+    // nothing becomes modified and no prepared command goes stale. False when
+    // the Document has no Script Info to hold it (not ASS).
+    bool amendScriptInfo(std::u8string_view key, std::u8string value);
     bool isDirty() const; // committed content differs from the save point, or a draft is pending
 
 private:

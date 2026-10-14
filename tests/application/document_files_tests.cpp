@@ -109,6 +109,8 @@ TEST_F(Files, OpenEditSaveReopen)
 
     std::string expected = kAss;
     expected.replace(expected.find(",one"), 4, ",edited");
+    // S4: and the active Line's row, after the last property (legacy GetAssHeader).
+    expected.replace(expected.find("Title: t\n"), 9, "Title: t\nActive Line: 0\n");
     EXPECT_EQ(text(disk.files["/a.ass"]), expected); // every other byte unchanged
     ASSERT_TRUE(service.close(doc));
     const auto again = open("/a.ass");
@@ -278,4 +280,69 @@ TEST_F(Files, ReaderDispatchFollowsTheLegacyLoader)
     disk.files["/events.txt"] = bytesOf("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n");
     EXPECT_EQ(service.session(open("/cues.ass"))->document().format(), core::SubtitleFormat::Srt);
     EXPECT_EQ(service.session(open("/events.txt"))->document().format(), core::SubtitleFormat::Ass);
+}
+
+// S4: legacy SubsGrid::SaveFile wrote the active Line's row as "Active Line"
+// into the open Document's Script Info before the header (GetAssHeader,
+// SubsGridBase.cpp:1470 at 20d647c4): in place, with no undo step and
+// nothing marked modified. The old code saved the Script Info as it was.
+TEST_F(Files, SaveWritesTheActiveLineIntoTheFileAndTheDocument)
+{
+    const auto doc = open("/a.ass");
+    EditSession &s = *service.session(doc);
+    s.setSelection(Selection{line(doc, 1), {line(doc, 1)}, line(doc, 1), {}});
+    const auto steps = s.historySize();
+    const auto revision = s.revision();
+    const auto content = s.contentId();
+
+    // A failed write puts nothing in the Document (legacy RestoreSInfo).
+    auto failed = service.prepareSave(doc);
+    ASSERT_TRUE(failed);
+    EXPECT_EQ(failed->activeLine, std::optional<std::u8string>(u8"1"));
+    ASSERT_TRUE(service.startSave(*failed));
+    EXPECT_FALSE(s.document().scriptInfo(kActiveLineKey)); // not before it is written
+    finish(WriteOutcome::Failed);
+    EXPECT_FALSE(s.document().scriptInfo(kActiveLineKey));
+    EXPECT_EQ(text(disk.files["/a.ass"]), kAss);
+
+    auto plan = service.prepareSave(doc);
+    ASSERT_TRUE(plan);
+    ASSERT_TRUE(service.startSave(*plan));
+    finish(WriteOutcome::Written);
+    std::string expected = kAss;
+    expected.replace(expected.find("Title: t\n"), 9, "Title: t\nActive Line: 1\n");
+    EXPECT_EQ(text(disk.files["/a.ass"]), expected);
+    EXPECT_EQ(s.document().scriptInfo(kActiveLineKey), std::optional<std::u8string>(u8"1"));
+    EXPECT_EQ(s.historySize(), steps); // no step
+    EXPECT_EQ(s.revision(), revision);
+    EXPECT_EQ(s.contentId(), content);
+    EXPECT_FALSE(s.isDirty());
+
+    // The next save replaces the value where it is.
+    s.setSelection(Selection{line(doc, 0), {line(doc, 0)}, line(doc, 0), {}});
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
+    finish(WriteOutcome::Written);
+    expected.replace(expected.find("Active Line: 1"), 14, "Active Line: 0");
+    EXPECT_EQ(text(disk.files["/a.ass"]), expected);
+    EXPECT_EQ(s.document().scriptInfo(kActiveLineKey), std::optional<std::u8string>(u8"0"));
+    EXPECT_FALSE(s.isDirty());
+
+    // A file that already has the key keeps it at its place.
+    disk.files["/c.ass"] = bytesOf("[Script Info]\nActive Line: 1\nTitle: t\n[Events]\n"
+                                   "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                                   "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n");
+    const auto c = open("/c.ass");
+    ASSERT_TRUE(service.startSave(*service.prepareSave(c)));
+    finish(WriteOutcome::Written);
+    EXPECT_EQ(text(disk.files["/c.ass"]).substr(0, 39), "[Script Info]\nActive Line: 0\nTitle: t\n[");
+}
+
+TEST_F(Files, OnlyAssSavesWriteTheActiveLine)
+{
+    disk.files["/a.srt"] = bytesOf("1\r\n00:00:01,000 --> 00:00:02,000\r\none\r\n\r\n");
+    const auto doc = open("/a.srt");
+    auto plan = service.prepareSave(doc);
+    ASSERT_TRUE(plan);
+    EXPECT_FALSE(plan->activeLine);
+    EXPECT_EQ(text(plan->bytes).find("Active Line"), std::string::npos);
 }

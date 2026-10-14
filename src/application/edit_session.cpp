@@ -493,6 +493,11 @@ int EditSession::changeState(const core::LineRecord &line) const
     return m_savedVersions.contains(line.changeVersion) ? 2 : 1;
 }
 
+bool EditSession::amendScriptInfo(std::u8string_view key, std::u8string value)
+{
+    return m_states[m_cursor].document.setScriptInfo(key, std::move(value));
+}
+
 bool EditSession::isDirty() const
 {
     return m_draft.has_value() || !m_saved || *m_saved != contentId();

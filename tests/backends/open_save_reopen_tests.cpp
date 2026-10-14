@@ -95,9 +95,12 @@ TEST_F(Reopen, CopiedFileOpenEditSaveReopen)
     EXPECT_EQ(service.lastSave(doc)->outcome, WriteOutcome::Written);
     EXPECT_FALSE(s.isDirty());
 
-    // Only that Line's bytes changed (C03: unknown sections stay in place).
+    // Only that Line's bytes changed (C03: unknown sections stay in place),
+    // and the save added the active Line's row after the last property (S4).
     std::string expected = original;
     expected.replace(expected.find(",,Gate"), 6, ",,Gate, edited");
+    const std::string lastProperty = "YCbCr Matrix: TV.601\r\n";
+    expected.insert(expected.find(lastProperty) + lastProperty.size(), "Active Line: 0\r\n");
     EXPECT_EQ(slurp(dir / "copy.ass"), expected);
 
     ASSERT_TRUE(service.close(doc));

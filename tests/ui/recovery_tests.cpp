@@ -8,6 +8,7 @@
 #include "hikari/app/application.h"
 
 #include <QCoreApplication>
+#include <QDirIterator>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QGuiApplication>
@@ -197,6 +198,57 @@ private slots:
         QVERIFY(running.autosaveNow());
         app::Application other(options());
         QVERIFY(other.recoveryBundles().isEmpty());
+    }
+
+    // S4: legacy's autosave is SubsGrid::SaveFile, whose GetAssHeader writes
+    // the active Line's row as "Active Line" into the open Document's Script
+    // Info (SubsGridBase.cpp:1470 at 20d647c4), so macros run after an
+    // autosave see it; the autosave holds it too. No undo step, and the
+    // Document stays as modified as it was. A Save does the same.
+    void anAutosaveWritesTheActiveLine()
+    {
+        const QString path = writeFile(dir.filePath(QStringLiteral("active.ass")), "x");
+        const QByteArray before = readAll(path);
+        {
+            app::Application a(options());
+            QVERIFY(a.openFile(path));
+            edit(a, u8"changed");
+            auto *s = a.files().session(*a.workspace().editingTarget());
+            const auto second = s->document().lines()[1]->id;
+            s->setSelection(application::Selection{second, {second}, second, {}});
+            const auto steps = s->historySize();
+            QVERIFY(!s->document().scriptInfo(application::kActiveLineKey));
+            QVERIFY(a.autosaveNow());
+            QVERIFY(s->document().scriptInfo(application::kActiveLineKey) == std::u8string(u8"1"));
+            QCOMPARE(s->historySize(), steps);
+            QVERIFY(s->isDirty());
+            QCOMPARE(readAll(path), before); // the file itself only on Save
+            // The autosave holds it.
+            bool held = false;
+            QDirIterator files(options().recoveryDir, QDir::Files, QDirIterator::Subdirectories);
+            while (!held && files.hasNext())
+                held = readAll(files.next()).contains("Active Line: 1");
+            QVERIFY(held);
+        }
+    }
+
+    void aSaveWritesTheActiveLine()
+    {
+        const QString path = writeFile(dir.filePath(QStringLiteral("saved.ass")), "x");
+        app::Application a(options());
+        QVERIFY(a.openFile(path));
+        auto *s = a.files().session(*a.workspace().editingTarget());
+        const auto second = s->document().lines()[1]->id;
+        s->setSelection(application::Selection{second, {second}, second, {}});
+        edit(a, u8"changed");
+        const auto steps = s->historySize();
+        QVERIFY(a.saveAs(path));
+        a.waitForWrites();
+        QVERIFY(readAll(path).startsWith("[Script Info]\r\nActive Line: 1\r\n") ||
+                readAll(path).startsWith("[Script Info]\nActive Line: 1\n"));
+        QVERIFY(s->document().scriptInfo(application::kActiveLineKey) == std::u8string(u8"1"));
+        QCOMPARE(s->historySize(), steps);
+        QVERIFY(!s->isDirty());
     }
 
     // P10: legacy SubsGrid::OnBackupTimer writes "Autosave" in the status
