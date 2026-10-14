@@ -116,7 +116,10 @@ class Legacy:
 
     def launch(self, exe, doc):
         self.kill()
-        started = self.w.ui("launch", exe=exe, arguments=[doc])
+        # A desktop launch (Explorer) starts in the exe's folder; without cwd
+        # winix's launch keeps its UI agent's directory, and paths legacy
+        # resolves against the working directory (S4's s4/...) miss.
+        started = self.w.ui("launch", exe=exe, arguments=[doc], cwd=exe.rsplit("\\", 1)[0])
         self.pid = started.get("pid") if isinstance(started, dict) else None
         deadline = time.time() + 90
         while time.time() < deadline:
@@ -129,6 +132,16 @@ class Legacy:
         return False
 
     def popups(self):
+        """The legacy process's other visible windows. `ui windows` lists only
+        unowned top-level windows, so a message box or dialog owned by the main
+        window (legacy's wxMessageBox "Info", "Error") is read from `ui tree`'s
+        window list for the process."""
+        tree = self.w.ui("tree", pid=self.pid, depth=0) if self.pid else None
+        if isinstance(tree, dict) and isinstance(tree.get("windows"), list):
+            # The foreground one first: the keys that answer it go there.
+            ws = sorted(tree["windows"], key=lambda w: not w.get("foreground"))
+            return [w.get("title") for w in ws
+                    if w.get("visible") and w.get("pid") == self.pid and MAIN_TITLE not in (w.get("title") or "")]
         mine = self.windows()
         if mine is None:
             return None

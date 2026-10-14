@@ -39,6 +39,7 @@
 #include <QPainter>
 #include <QPalette>
 #include <QClipboard>
+#include <QColorSpace>
 #include <QProcess>
 #include <QRasterWindow>
 #include <QScreen>
@@ -15116,39 +15117,44 @@ private slots:
             audioDock->setProperty("isFloating", false);
             QTRY_VERIFY(item("audioPanel")->window() == window);
             QTest::qWait(200);
-            // A drag: the Video panel by its header over the Grid's left part.
-            QQuickItem *video = dockHeader(QStringLiteral("Video"));
-            QVERIFY(video);
-            QQuickItem *gridGroup = groupOf(dockHeader(QStringLiteral("Grid")));
-            const QPoint start = window->mapToGlobal(video->mapToScene(QPointF(60, video->height() / 2)).toPoint());
-            const QRectF g = gridGroup->mapRectToScene(QRectF(0, 0, gridGroup->width(), gridGroup->height()));
-            const QPoint target = window->mapToGlobal(QPointF(g.left() + g.width() / 8, g.center().y()).toPoint());
-            sendMouse(window, QEvent::MouseButtonPress, start, Qt::LeftButton);
-            QWindow *receiver = window;
-            for (int i = 1; i <= 20; ++i) {
-                sendMouse(receiver, QEvent::MouseMove, start + (target - start) * i / 20, Qt::LeftButton);
-                if (QWindow *f = item("videoPanel")->window(); f != window)
-                    receiver = f;
-                QTest::qWait(20);
+            // A drag: the Video panel by its header over the Grid's left part,
+            // by events sent to the windows. A desktop's window system moves
+            // a floating window only for its own pointer (the Windows drag is
+            // the native gate's pointer step), so there it is left out.
+            if (QGuiApplication::platformName() == QLatin1String("offscreen")) {
+                QQuickItem *video = dockHeader(QStringLiteral("Video"));
+                QVERIFY(video);
+                QQuickItem *gridGroup = groupOf(dockHeader(QStringLiteral("Grid")));
+                const QPoint start = window->mapToGlobal(video->mapToScene(QPointF(60, video->height() / 2)).toPoint());
+                const QRectF g = gridGroup->mapRectToScene(QRectF(0, 0, gridGroup->width(), gridGroup->height()));
+                const QPoint target = window->mapToGlobal(QPointF(g.left() + g.width() / 8, g.center().y()).toPoint());
+                sendMouse(window, QEvent::MouseButtonPress, start, Qt::LeftButton);
+                QWindow *receiver = window;
+                for (int i = 1; i <= 20; ++i) {
+                    sendMouse(receiver, QEvent::MouseMove, start + (target - start) * i / 20, Qt::LeftButton);
+                    if (QWindow *f = item("videoPanel")->window(); f != window)
+                        receiver = f;
+                    QTest::qWait(20);
+                }
+                // The Video panel floats under the pointer, and the Grid shows
+                // where it would land.
+                QTRY_VERIFY(item("videoPanel")->window() != window);
+                QTRY_VERIFY(dropHighlightShown());
+                QTest::qWait(200);
+                QImage shot = window->grabWindow();
+                {
+                    auto *f = qobject_cast<QQuickWindow *>(item("videoPanel")->window());
+                    QVERIFY(f);
+                    QPainter p(&shot);
+                    p.setOpacity(f->opacity());
+                    const qreal dpr = window->effectiveDevicePixelRatio();
+                    const QImage dragged = f->grabWindow();
+                    p.drawImage(QRectF(QPointF(f->position() - window->position()) * dpr, QSizeF(dragged.size())), dragged);
+                }
+                QVERIFY(shot.save(prefix + QStringLiteral("drag") + suffix));
+                sendMouse(receiver, QEvent::MouseButtonRelease, target, Qt::NoButton);
+                QTest::qWait(200);
             }
-            // The Video panel floats under the pointer, and the Grid shows
-            // where it would land.
-            QTRY_VERIFY(item("videoPanel")->window() != window);
-            QTRY_VERIFY(dropHighlightShown());
-            QTest::qWait(200);
-            QImage shot = window->grabWindow();
-            {
-                auto *f = qobject_cast<QQuickWindow *>(item("videoPanel")->window());
-                QVERIFY(f);
-                QPainter p(&shot);
-                p.setOpacity(f->opacity());
-                const qreal dpr = window->effectiveDevicePixelRatio();
-                const QImage dragged = f->grabWindow();
-                p.drawImage(QRectF(QPointF(f->position() - window->position()) * dpr, QSizeF(dragged.size())), dragged);
-            }
-            QVERIFY(shot.save(prefix + QStringLiteral("drag") + suffix));
-            sendMouse(receiver, QEvent::MouseButtonRelease, target, Qt::NoButton);
-            QTest::qWait(200);
             application->workspaceLayout().resetLayout();
             QVERIFY(QMetaObject::invokeMethod(item<QObject>("referenceDock"), "open"));
             QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
@@ -18193,10 +18199,18 @@ private slots:
             }
         return out;
     }
+    // The pixels only: QImage's == also compares the colour space, which an
+    // image read back from a file carries when the file names one (the PNG
+    // .NET writes from the Windows clipboard has an sRGB chunk; the copied
+    // frame has none).
     static bool sameImage(const QImage &a, const QImage &b)
     {
-        return a.size() == b.size()
-               && a.convertToFormat(QImage::Format_RGB888) == b.convertToFormat(QImage::Format_RGB888);
+        if (a.size() != b.size())
+            return false;
+        QImage x = a.convertToFormat(QImage::Format_RGB888), y = b.convertToFormat(QImage::Format_RGB888);
+        x.setColorSpace(QColorSpace());
+        y.setColorSpace(QColorSpace());
+        return x == y;
     }
     void triggerAction(const char *menuItem)
     {
@@ -18691,6 +18705,12 @@ private slots:
             QVERIFY2(reader.exitStatus() == QProcess::NormalExit && reader.exitCode() == 0, qPrintable(said));
             const QImage read(out);
             QVERIFY2(!read.isNull(), qPrintable(QStringLiteral("%1 wrote no image").arg(program)));
+            if (!sameImage(read, expected)) {
+                // Kept beside the read-back for a comparison (the copied frame and its format).
+                expected.save(out + QStringLiteral(".expected.png"));
+                qInfo().noquote() << action << "copied frame format" << int(expected.format()) << "hasAlpha"
+                                  << expected.hasAlphaChannel() << "saved to" << out + QStringLiteral(".expected.png");
+            }
             QVERIFY2(sameImage(read, expected),
                      qPrintable(QStringLiteral("%1: read back %2x%3, copied %4x%5")
                                     .arg(QLatin1String(action))

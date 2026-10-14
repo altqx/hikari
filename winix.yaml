@@ -279,8 +279,9 @@ tasks:
   vsfilter-test:
     # The adapter, the recipe's renderer against the legacy release's
     # (legacy-win-setup's Csri folder) and the GDI faces, verbose for the
-    # per-fixture differences; the render artifacts are kept.
-    script: $env:HIKARI_LEGACY_CSRI = "$PWD/out/legacy-win/bundled/HikariSub_x64/Csri"; ./tools/winix/msvc.ps1 ctest --preset windows-x64-vsfilter -R "^(Csri|RendererSelection|VsfilterRecipe|OptionsDialog)[.]" -V
+    # per-fixture differences; the render artifacts are kept. VSFilterMod is
+    # the legacy release's (its Csri folder holds VSFiltermod.dll).
+    script: $env:HIKARI_LEGACY_CSRI = "$PWD/out/legacy-win/bundled/HikariSub_x64/Csri"; $env:HIKARI_VSFILTERMOD_CSRI = $env:HIKARI_LEGACY_CSRI; ./tools/winix/msvc.ps1 ctest --preset windows-x64-vsfilter -R "^(Csri|RendererSelection|VsfilterRecipe|OptionsDialog)[.]" -V
     timeoutSeconds: 1200
     artifacts: [out/build/windows-x64-vsfilter/tests/backends/artifacts/vsfilter]
   vsfilter-shell:
@@ -343,3 +344,39 @@ tasks:
     visualStudio: false
     timeoutSeconds: 600
     artifacts: [out/build/windows-x64-vsfilter/w2-desktop]
+  qttest-window:
+    # One QtTest executable on the interactive desktop (the windows platform, tools/winix/qttest.ps1):
+    # TEST, ARGS, TEST_TIMEOUT, FORMAT, OUT (a workspace folder for the output), REQUIRE_RUN=1 (a skip
+    # fails the task); any other --env (HIKARI_*_SHOT_DIR, ...) reaches the test.
+    script: $env:QT_QPA_PLATFORM = 'windows'; ./tools/winix/qttest.ps1
+    visualStudio: false
+    timeoutSeconds: 1800
+  ctest-regex:
+    # ctest by regex R (V=1 for -V), with the JUnit report as the artifact.
+    script: $v = if ($env:V) { '-V' } else { '--output-on-failure' }; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "$env:R" $v --output-junit results-regex.xml
+    timeoutSeconds: 2700
+    artifacts: [out/build/windows-x64-release/results-regex.xml]
+  review-window:
+    # The Windows counterparts of the review images (K1 sheets, K2 four themes and focus, O5 languages,
+    # D3 chrome) on the interactive desktop (tools/winix/review-window.ps1; PARTS selects).
+    script: ./tools/winix/review-window.ps1
+    visualStudio: false
+    timeoutSeconds: 3600
+    artifacts: [out/build/windows-x64-release/review-window]
+  vsfilter-shell-all:
+    # W2: the whole shell suite (offscreen) in the build with xy-VSFilter beside the program (vsfilter-build first).
+    script: $env:BUILD = 'windows-x64-vsfilter'; $env:TEST = 'hikari_ui_shell_tests'; $env:TEST_TIMEOUT = '2400'; $env:OUT = 'out/build/windows-x64-vsfilter/shell-all'; ./tools/winix/qttest.ps1
+    visualStudio: false
+    timeoutSeconds: 2700
+    artifacts: [out/build/windows-x64-vsfilter/shell-all]
+  workflow-window:
+    # One Spix workflow (TEST: its executable's name) on the interactive desktop (the windows platform),
+    # printing to the job log; ARGS are its arguments.
+    script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter "$env:TEST.exe" out/build/windows-x64-release | Select-Object -First 1; if (-not $exe) { Write-Output "no $env:TEST.exe"; exit 2 }; Write-Output "running $($exe.FullName) $env:ARGS"; $ErrorActionPreference = 'Continue'; $a = if ($env:ARGS) { $env:ARGS -split ' ' } else { @() }; & $exe.FullName @a 2>&1 | ForEach-Object { "$_" }; Write-Output "exit $LASTEXITCODE"; exit $LASTEXITCODE
+    visualStudio: false
+    timeoutSeconds: 600
+  cmd:
+    # One PowerShell command line from CMD (diagnostics: file listings, versions).
+    script: $ErrorActionPreference = 'Continue'; Invoke-Expression $env:CMD
+    visualStudio: false
+    timeoutSeconds: 300
