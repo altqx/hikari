@@ -64,11 +64,11 @@
       }
     },
     {
-      "name": "windows-x64-vsfilter",
+      "name": "windows-x64-vsfiltermod",
       "inherits": "windows-x64-release",
-      "displayName": "Windows x64 release with the optional xy-VSFilter renderer (W2)",
+      "displayName": "Windows x64 release with the package's VSFilterMod beside the CSRI tests (W2)",
       "cacheVariables": {
-        "HIKARI_WITH_VSFILTER": "ON"
+        "HIKARI_TEST_VSFILTERMOD": "ON"
       }
     },
     {
@@ -76,8 +76,7 @@
       "inherits": "windows-x64-release",
       "displayName": "Windows x64 release payload for the installer and the portable zip (no tests)",
       "cacheVariables": {
-        "BUILD_TESTING": "OFF",
-        "HIKARI_WITH_VSFILTER": "ON"
+        "BUILD_TESTING": "OFF"
       }
     },
     {
@@ -107,8 +106,8 @@
       "configurePreset": "windows-x64-release"
     },
     {
-      "name": "windows-x64-vsfilter",
-      "configurePreset": "windows-x64-vsfilter"
+      "name": "windows-x64-vsfiltermod",
+      "configurePreset": "windows-x64-vsfiltermod"
     },
     {
       "name": "windows-x64-package",
@@ -159,8 +158,8 @@
       }
     },
     {
-      "name": "windows-x64-vsfilter",
-      "configurePreset": "windows-x64-vsfilter",
+      "name": "windows-x64-vsfiltermod",
+      "configurePreset": "windows-x64-vsfiltermod",
       "output": {
         "outputOnFailure": true
       },
@@ -304,23 +303,6 @@
         {
           "type": "test",
           "name": "windows-x64-release"
-        }
-      ]
-    },
-    {
-      "name": "windows-x64-vsfilter",
-      "steps": [
-        {
-          "type": "configure",
-          "name": "windows-x64-vsfilter"
-        },
-        {
-          "type": "build",
-          "name": "windows-x64-vsfilter"
-        },
-        {
-          "type": "test",
-          "name": "windows-x64-vsfilter"
         }
       ]
     },

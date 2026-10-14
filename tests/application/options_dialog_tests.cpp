@@ -429,8 +429,8 @@ TEST(OptionsDialog, SetDefaultKeepsAChoiceWhoseIndexIsPastItsList)
     EXPECT_FALSE(settings.isSet("editor.dictionaryLanguage")); // no symbol to write
 }
 
-// W2: "Subtitle display filter" (OptionsDialog.cpp:616-638, 1145-1152): the
-// CSRI renderers and libass, VSFilterMod last; the selection's name is written.
+// W2: "Subtitle display filter" (OptionsDialog.cpp:616-638, 1145-1152):
+// libass and the CSRI renderers, VSFilterMod last; the selection's name is written.
 TEST(OptionsDialog, TheSubtitleDisplayFilterChoosesARendererByName)
 {
     MemorySettingsStorage storage;
@@ -452,27 +452,25 @@ TEST(OptionsDialog, TheSubtitleDisplayFilterChoosesARendererByName)
     EXPECT_EQ(settings.text("video.subtitleProvider"), "xy-vsfilter_textsub"); // kept, never rewritten
     settings.resetAll();
 
-    // The Windows package: xy-VSFilter, libass, VSFilterMod
-    // (SubtitleRendererSelection::providers).
-    l.renderers = {"xy-vsfilter_textsub", "libass", "vsfiltermod_textsub"};
+    // The Windows package: libass, then VSFilterMod
+    // (SubtitleRendererSelection::providers; xy-VSFilter is not shipped,
+    // W2-no-xy-vsfilter).
+    l.renderers = {"libass", "vsfiltermod_textsub"};
     // Unset reads as libass (W2-libass-default; legacy Windows showed the
     // first entry, its default CSRI renderer). OK writes the shown name when
     // it differs, as SetOptions does.
     state = openOptionsDialog(settings, l).state;
-    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 1);
+    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 0);
     EXPECT_TRUE(std::ranges::contains(commitOptionsDialog(settings, l, state), std::string("video.subtitleProvider")));
     EXPECT_EQ(settings.text("video.subtitleProvider"), "libass");
-    settings.set("video.subtitleProvider", std::string("xy-vsfilter_textsub"));
-    state = openOptionsDialog(settings, l).state;
-    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 0);
     // An explicit VSFilterMod choice is honoured.
     settings.set("video.subtitleProvider", std::string("vsfiltermod_textsub"));
-    EXPECT_EQ(intOf(openOptionsDialog(settings, l).state, "video.subtitleProvider"), 2);
+    EXPECT_EQ(intOf(openOptionsDialog(settings, l).state, "video.subtitleProvider"), 1);
     // Index is exact: another case is not listed, and shows libass.
     settings.set("video.subtitleProvider", std::string("LIBASS"));
     state = openOptionsDialog(settings, l).state;
-    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 1);
-    state["video.subtitleProvider"] = std::int64_t{2};
+    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 0);
+    state["video.subtitleProvider"] = std::int64_t{1};
     commitOptionsDialog(settings, l, state);
     EXPECT_EQ(settings.text("video.subtitleProvider"), "vsfiltermod_textsub");
     // Set default: the default is unset, which is libass, so the choice shows
@@ -480,23 +478,24 @@ TEST(OptionsDialog, TheSubtitleDisplayFilterChoosesARendererByName)
     // default CSRI renderer) and OK keeps the video on libass.
     settings.resetAll();
     state = refreshOptionsDialogAfterReset(settings, l, state);
-    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 1);
+    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 0);
     commitOptionsDialog(settings, l, state);
     EXPECT_EQ(settings.text("video.subtitleProvider"), "libass");
-    // libass listed first: the reset still finds it by name.
-    l.renderers = {"libass", "xy-vsfilter_textsub"};
+    // libass listed after a CSRI renderer: the reset still finds it by name.
+    l.renderers = {"other_textsub", "libass"};
     settings.resetAll();
     state = refreshOptionsDialogAfterReset(settings, l, openOptionsDialog(settings, l).state);
-    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 0);
+    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 1);
     // A name that is not installed opens on libass, which draws it
     // (W2-missing-renderer-libass; legacy opened on the first entry, the
     // default CSRI renderer), so OK names what draws and never switches to a
-    // CSRI renderer nobody chose.
-    l.renderers = {"xy-vsfilter_textsub", "libass"};
-    for (const char *stale : {"removed_textsub", "vsfiltermod_textsub"}) {
+    // CSRI renderer nobody chose. Legacy's default, xy-VSFilter, is one of
+    // them now (W2-no-xy-vsfilter).
+    l.renderers = {"libass", "vsfiltermod_textsub"};
+    for (const char *stale : {"removed_textsub", "xy-vsfilter_textsub"}) {
         settings.set("video.subtitleProvider", std::string(stale));
         state = openOptionsDialog(settings, l).state;
-        EXPECT_EQ(intOf(state, "video.subtitleProvider"), 1) << stale;
+        EXPECT_EQ(intOf(state, "video.subtitleProvider"), 0) << stale;
         commitOptionsDialog(settings, l, state);
         EXPECT_EQ(settings.text("video.subtitleProvider"), "libass") << stale;
     }

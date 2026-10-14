@@ -10,7 +10,9 @@
 // A name that is not among the installed renderers (providers()) draws
 // through libass (W2-missing-renderer-libass, user 2026-10-13): legacy fell
 // back to the default CSRI renderer (GetVSFilter), and with none at all drew
-// nothing ("Cannot initialize CSRI.").
+// nothing ("Cannot initialize CSRI."). xy-VSFilter, legacy's default, is not
+// shipped (W2-no-xy-vsfilter, user 2026-10-14), so a stored xy-VSFilter name
+// draws through libass too.
 //
 // V1: render() and prepare() may run on another thread (the playback
 // worker) while select() switches the renderer: a switch waits for a render
@@ -31,14 +33,15 @@ namespace hikari::backends {
 class CsriRenderers;
 class CsriRenderer;
 
-// VSFilterMod's CSRI renderer (Csri/VSFiltermod.dll): slow, and only needed
-// for the tags it adds, so it is never chosen by default and is listed last
-// (user 2026-10-13).
+// VSFilterMod's CSRI renderer (Csri/VSFiltermod.dll, the one CSRI renderer the
+// package ships): slow, and only needed for the tags it adds, so it is never
+// chosen by default and is listed last (user 2026-10-13, 2026-10-14).
 inline constexpr std::string_view kVsfilterModRenderer = "vsfiltermod_textsub";
 bool isVsfilterMod(std::string_view name);
-// The Video page's list from the CSRI renderers' names (in CSRI order, the
-// default first): every renderer but VSFilterMod, then "libass", then
-// VSFilterMod. Legacy GetProviders listed the CSRI names then "libass".
+// The Video page's list from the CSRI renderers' names (in CSRI order):
+// "libass", the default, first; then every other CSRI renderer in the Csri
+// folder; then VSFilterMod (W2-libass-sole-default). Legacy GetProviders listed the
+// CSRI names then "libass".
 std::vector<std::string> orderedProviders(const std::vector<std::string> &csriNames);
 // What draws for the stored name: an empty or unknown name is "libass",
 // never the first CSRI renderer (W2-libass-default,

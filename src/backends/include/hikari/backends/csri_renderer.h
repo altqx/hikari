@@ -1,7 +1,9 @@
 #pragma once
 
-// W2: the optional CSRI subtitle renderer adapter (xy-VSFilter, VSFilterMod) for the
-// SubtitleRenderer port, Windows only in the application. It reproduces the
+// W2: the optional CSRI subtitle renderer adapter for the SubtitleRenderer
+// port, Windows only in the application. The package ships one CSRI renderer,
+// VSFilterMod (xy-VSFilter was dropped, user 2026-10-14); the adapter takes
+// any renderer in the Csri folder, as legacy did. It reproduces the
 // legacy CSRI path at 20d647c4:
 // - CsriMod.cpp: the renderer list is every library under the program's Csri
 //   folder (csrilib_os_init, csrilib_enum_dir), each library adding its
@@ -13,10 +15,10 @@
 //   BGRA with BGR_ as the fallback (SetVideoParameters); the overlay drawn
 //   onto a cleared frame at the time in seconds, whole (DrawOverlay); one
 //   lock around every CSRI call (s_CsriMutex).
-// xy-VSFilter writes straight alpha into a BGRA frame (MemSubPic.cpp
-// AlphaBltOther, MSP_RGBA), which legacy blended with D3DBLEND_SRCALPHA
-// (RendererFFMS2::DrawOverlay); the port's overlay is premultiplied, so the
-// colours are multiplied by their alpha here. A renderer that takes only
+// A renderer that takes BGRA writes straight alpha into it (VSFilter's
+// MemSubPic.cpp AlphaBltOther, MSP_RGBA), which legacy blended with
+// D3DBLEND_SRCALPHA (RendererFFMS2::DrawOverlay); the port's overlay is
+// premultiplied, so the colours are multiplied by their alpha here. A renderer that takes only
 // BGR_ (VSFilterMod) blends into the frame and leaves no alpha; legacy drew
 // it onto the RGB32 video frame (GetFrameWithSubs without the overlay), so
 // the same instant is drawn onto black and onto white and the overlay is

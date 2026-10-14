@@ -1064,8 +1064,9 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
                 because(std::to_string(missing) + " missing here, kept in the list");
         }
         // W2-missing-renderer-libass: a renderer that is not installed here
-        // (a Windows profile's xy-VSFilter on Linux or in a build without
-        // the Csri folder) would draw through libass, so it is not proposed.
+        // (a profile's xy-VSFilter, which is no longer shipped, or a Windows
+        // profile's VSFilterMod on Linux) would draw through libass, so it is
+        // not proposed.
         if (def->id == std::string_view("video.subtitleProvider") && destination.rendererInstalled) {
             const std::string &name = std::get<std::string>(*row.value);
             if (!name.empty() && !destination.rendererInstalled(name)) {
