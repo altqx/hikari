@@ -36,6 +36,7 @@ add_executable(hikarisub_tests
     check_main.cpp
     AssBlendTests.cpp
     AutomationFoldersTests.cpp
+    CsriOverlayTests.cpp
     DependencyControlModulesTests.cpp
     FrameExchangeTests.cpp
     FrameQueueTests.cpp
@@ -65,6 +66,7 @@ add_executable(hikarisub_tests
     TextComparisonTests.cpp
     WaveformPeaksTests.cpp
     ../HikariSub/AssBlend.cpp
+    ../HikariSub/CsriOverlay.cpp
     ../HikariSub/FrameExchange.cpp
     ../HikariSub/JsonValue.cpp
     ../HikariSub/FrameQueue.cpp

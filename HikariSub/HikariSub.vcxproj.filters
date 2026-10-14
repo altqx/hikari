@@ -304,6 +304,9 @@
     <ClCompile Include="AssBlend.cpp">
       <Filter>A</Filter>
     </ClCompile>
+    <ClCompile Include="CsriOverlay.cpp">
+      <Filter>C</Filter>
+    </ClCompile>
     <ClCompile Include="D3D9Device.cpp">
       <Filter>F</Filter>
     </ClCompile>
@@ -779,6 +782,9 @@
     </ClInclude>
     <ClInclude Include="AssBlend.h">
       <Filter>A</Filter>
+    </ClInclude>
+    <ClInclude Include="CsriOverlay.h">
+      <Filter>C</Filter>
     </ClInclude>
     <ClInclude Include="D3D9Device.h">
       <Filter>F</Filter>

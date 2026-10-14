@@ -24,6 +24,7 @@
 #include "HikariSubFrame.h"
 #include "DshowRenderer.h"
 #include "CsriMod.h"
+#include "CsriOverlay.h"
 #include "UtilsWindows.h"
 
 
@@ -94,6 +95,24 @@ bool SubtitlesProvider::DrawOverlay(unsigned char* overlay, int time, wxRect* di
 	// without change detection the whole overlay is drawn again every time
 	memset(overlay, 0, (size_t)m_VideoSize.x * m_VideoSize.y * 4);
 	Draw(overlay, time);
+	*dirty = wxRect(0, 0, m_VideoSize.x, m_VideoSize.y);
+	return true;
+}
+
+bool SubtitlesVSFilter::DrawOverlay(unsigned char* overlay, int time, wxRect* dirty)
+{
+	std::lock_guard<std::recursive_mutex> lock(s_CsriMutex);
+	if (!m_CsriFrame || m_CsriFrame->pixfmt != CSRI_F_BGR_ || m_Format != ARGB32)
+		return SubtitlesProvider::DrawOverlay(overlay, time, dirty);
+	// BGR_ (VSFilterMod takes no other) blends into the frame and writes no
+	// alpha, so on a cleared overlay nothing would show; the same instant
+	// drawn onto black and onto white gives each pixel's colour and coverage
+	size_t pixels = (size_t)m_VideoSize.x * m_VideoSize.y;
+	memset(overlay, 0, pixels * 4);
+	m_WhiteOverlay.assign(pixels * 4, 255);
+	Draw(overlay, time);
+	Draw(m_WhiteOverlay.data(), time);
+	CsriOverlayFromBlackAndWhite(overlay, m_WhiteOverlay.data(), pixels);
 	*dirty = wxRect(0, 0, m_VideoSize.x, m_VideoSize.y);
 	return true;
 }
@@ -199,12 +218,8 @@ csri_inst *SubtitlesVSFilter::ParseInstance(wxString *text)
 		HikariLogSilent(_("Cannot create CSRI instance."));
 		return nullptr;
 	}
-	if (!m_CsriFormat || csri_request_fmt(instance, m_CsriFormat)) {
-		if (m_CsriFrame && m_CsriFrame->pixfmt == CSRI_F_BGRA) {
-			m_CsriFrame->pixfmt = CSRI_F_BGR_;
-			if (!csri_request_fmt(instance, m_CsriFormat))
-				return instance;
-		}
+	if (!m_CsriFormat || !RequestCsriFormat(m_CsriFormat, m_CsriFrame,
+		[instance](const csri_fmt *fmt) { return csri_request_fmt(instance, fmt); })) {
 		HikariLogSilent(_("CSRI does not support this format."));
 		csri_close(instance);
 		return nullptr;
@@ -305,13 +320,9 @@ void SubtitlesVSFilter::SetVideoParameters(const wxSize & size, unsigned char fo
 
 	m_CsriFormat->width = size.GetWidth();
 	m_CsriFormat->height = size.GetHeight();
-	m_CsriFormat->pixfmt = m_CsriFrame->pixfmt;
-	if (!m_CsriFormat || csri_request_fmt(m_CsriInstance, m_CsriFormat)) {
-		if (m_CsriFrame->pixfmt == CSRI_F_BGRA) {
-			m_CsriFrame->pixfmt = CSRI_F_BGR_;
-			if (!csri_request_fmt(m_CsriInstance, m_CsriFormat))
-				return;
-		}
+	csri_inst *instance = m_CsriInstance;
+	if (!RequestCsriFormat(m_CsriFormat, m_CsriFrame,
+		[instance](const csri_fmt *fmt) { return csri_request_fmt(instance, fmt); })) {
 		HikariLog(_("CSRI does not support this format."));
 		m_Instances.Remove(m_CsriInstance);
 		m_CsriInstance = nullptr;

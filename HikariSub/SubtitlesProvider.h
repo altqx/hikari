@@ -96,6 +96,7 @@ public:
 	SubtitlesVSFilter();
 	virtual ~SubtitlesVSFilter();
 	void Draw(unsigned char* buffer, int time);
+	bool DrawOverlay(unsigned char* overlay, int time, wxRect* dirty) override;
 	bool Open(wxString *text);
 	bool OpenString(wxString *text);
 	static void GetProviders(wxArrayString *providerList);
@@ -118,6 +119,8 @@ private:
 	// owned by m_Instances
 	csri_inst *m_CsriInstance = nullptr;
 	ParsedScripts<csri_inst> m_Instances{ csri_close };
+	// the second drawing of a BGR_ overlay, onto white
+	std::vector<unsigned char> m_WhiteOverlay;
 	csri_rend *GetVSFilter();
 };
 
