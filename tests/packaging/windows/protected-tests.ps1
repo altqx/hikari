@@ -160,17 +160,22 @@ elseif ($Phase -eq 'selfhold') {
     Check 'before setup runs, its file can be renamed' (Try-Rename)
     # No /S: setup waits on its first page.
     $p = Start-Process -FilePath $exe -PassThru
-    Start-Sleep -Seconds 4
-    Check 'setup is running' (-not $p.HasExited)
-    $p.Refresh()
-    Check 'setup shows its first page (the holds did not stall it)' ($p.MainWindowHandle -ne [IntPtr]::Zero)
-    Check 'while it runs, its file cannot be renamed' (-not (Try-Rename))
-    Check 'while it runs, its file cannot be opened for writing' (-not (Try-Write))
-    Check 'while it runs, its file cannot be deleted' (-not $(try { Remove-Item -LiteralPath $exe -ErrorAction Stop; $true } catch { $false }))
-    Check 'while it runs, its folder cannot be renamed' (-not (Try-RenameFolder $dir))
-    Check 'while it runs, the folder above that cannot be renamed' (-not (Try-RenameFolder $top))
-    Stop-Process -Id $p.Id -Force
-    $p.WaitForExit()
+    # Its first page is ended however the checks end: left open, it stays
+    # over the next desktop tests' windows.
+    try {
+        Start-Sleep -Seconds 4
+        Check 'setup is running' (-not $p.HasExited)
+        $p.Refresh()
+        Check 'setup shows its first page (the holds did not stall it)' ($p.MainWindowHandle -ne [IntPtr]::Zero)
+        Check 'while it runs, its file cannot be renamed' (-not (Try-Rename))
+        Check 'while it runs, its file cannot be opened for writing' (-not (Try-Write))
+        Check 'while it runs, its file cannot be deleted' (-not $(try { Remove-Item -LiteralPath $exe -ErrorAction Stop; $true } catch { $false }))
+        Check 'while it runs, its folder cannot be renamed' (-not (Try-RenameFolder $dir))
+        Check 'while it runs, the folder above that cannot be renamed' (-not (Try-RenameFolder $top))
+    } finally {
+        Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+        $p.WaitForExit()
+    }
     Start-Sleep -Seconds 1
     Check 'after it exits, its file can be renamed again' (Try-Rename)
     Check 'after it exits, its folder can be renamed again' (Try-RenameFolder $dir)

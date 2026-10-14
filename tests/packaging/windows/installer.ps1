@@ -1,7 +1,7 @@
 # Installer checks on the Winix VM (installers SPEC 8.3), run by the tasks in
 # tests/packaging/windows/winix.yaml. Every value comes from the environment:
 #
-#   ACTION    run | check-installed | check-removed | icon-ids | start-app | stop-app | state | dir | open-file | update | cleanup
+#   ACTION    run | check-installed | check-removed | icon-ids | start-app | stop-app | state | dir | open-file | update | cleanup | end-setups
 #   SETUP     run: the installer or uninstaller to start
 #   ARGS      run: its command line (NSIS rules: /D= last, unquoted)
 #   EXPECT    run: the exit code it must return (default 0)
@@ -79,7 +79,9 @@ switch ($env:ACTION) {
         $sw = [Diagnostics.Stopwatch]::StartNew()
         $p = if ($env:ARGS) { Start-Process -FilePath $env:SETUP -ArgumentList $env:ARGS -PassThru } else { Start-Process -FilePath $env:SETUP -PassThru }
         $null = $p.Handle
-        if (-not $p.WaitForExit(600000)) { Fail 'installer still running after 10 minutes'; break }
+        # A setup that never ends is ended here: left running, its window
+        # stays on the desktop over the next tests' windows.
+        if (-not $p.WaitForExit(600000)) { Fail 'installer still running after 10 minutes'; Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; break }
         # The uninstaller copies itself to %TEMP%\~nsu*.tmp\Un_*.exe, starts the
         # copy and returns at once; the copy's exit code is the result.
         $code = $p.ExitCode
@@ -91,7 +93,7 @@ switch ($env:ACTION) {
         }
         if ($copy) {
             $null = $copy.Handle
-            if (-not $copy.WaitForExit(600000)) { Fail 'uninstaller copy still running after 10 minutes' }
+            if (-not $copy.WaitForExit(600000)) { Fail 'uninstaller copy still running after 10 minutes'; Stop-Process -Id $copy.Id -Force -ErrorAction SilentlyContinue; break }
             Write-Output "uninstaller copy $($copy.Path) exit $($copy.ExitCode)"
             $code = $copy.ExitCode
         }
@@ -257,7 +259,7 @@ switch ($env:ACTION) {
             if (-not $app.WaitForExit(15000)) { $app.Kill() }
             Write-Output "app $($app.Id) exited after $([math]::Round($sw.Elapsed.TotalSeconds, 1)) s"
         }
-        if (-not $p.WaitForExit(300000)) { Fail 'installer still running after 5 minutes'; break }
+        if (-not $p.WaitForExit(300000)) { Fail 'installer still running after 5 minutes'; Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; break }
         Write-Output "exit $($p.ExitCode) after $([math]::Round($sw.Elapsed.TotalSeconds, 1)) s"
         Check ($p.ExitCode -eq $expect) "exit code $($p.ExitCode), expected $expect"
         if ($expect -eq 0) {
@@ -299,6 +301,15 @@ switch ($env:ACTION) {
             Get-ChildItem -LiteralPath $instDir | ForEach-Object { "$($_.Mode) $($_.Name)" }
             Write-Output "files: $((Get-ChildItem -Recurse -File -LiteralPath $instDir).Count)"
         } else { Write-Output "$instDir does not exist" }
+    }
+    'end-setups' {
+        # Every HikariSub setup and uninstaller still running, with its
+        # window, ended (tools/winix/end-setups.ps1): run-installer-tests.sh
+        # ends with it, and so does an interactive session (README).
+        $out = & (Join-Path $PSScriptRoot '..\..\..\tools\winix\end-setups.ps1')
+        $code = $LASTEXITCODE
+        $out | ForEach-Object { Write-Output "     $_" }
+        Check ($code -eq 0) 'no setup or uninstaller left running'
     }
     default { Fail "unknown ACTION '$env:ACTION'" }
 }

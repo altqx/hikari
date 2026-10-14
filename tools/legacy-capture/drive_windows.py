@@ -103,6 +103,11 @@ class Legacy:
         self.layout = None
 
     def setup(self):
+        # A setup or uninstaller another session left open would cover the
+        # app's windows and take the hotkeys' focus: ended first.
+        job, lines = self.w.task("end-setups")
+        if job.get("state") != "succeeded":
+            raise RuntimeError("end-setups failed:\n" + "\n".join(lines[-30:]))
         job, lines = self.w.task("legacy-win-setup")
         layout = next((l[len("LEGACY_LAYOUT "):] for l in lines if l.startswith("LEGACY_LAYOUT ")), None)
         if job.get("state") != "succeeded" or not layout:

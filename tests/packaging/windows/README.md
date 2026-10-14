@@ -28,3 +28,10 @@ the Qt SDK of the main tree (`C:/Winix/work/hikari-qt/out/sdk`) is reused read-o
 
 Jobs end their child processes, so an app that must outlive a step starts through the
 `inst-detach` task.
+
+No setup or uninstaller may stay on the desktop after a session: it covers the windows of the
+desktop tests that follow and takes their focus. `run-installer-tests.sh` ends any it leaves,
+however it stops; an interactive session ends with
+`winix --config tests/packaging/windows/winix.yaml run inst-admin --env ACTION=end-setups --wait`
+(elevated, so an all-users one goes too; `tools/winix/end-setups.ps1`). The `end-setups-test` task
+checks that script (`--env HS_SETUP=<guest path of a setup>` adds a real setup and uninstaller).

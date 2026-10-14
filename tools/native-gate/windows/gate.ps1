@@ -97,6 +97,11 @@ public static class GateWin {
 
 switch ($Action) {
     'prepare' {
+        # A setup or uninstaller another session left open would cover the
+        # app's windows and take their focus: ended first.
+        $ended = & (Join-Path $root 'tools\winix\end-setups.ps1')
+        $ended | ForEach-Object { Write-Output "end-setups: $_" }
+        if ($LASTEXITCODE) { throw 'a setup or uninstaller is still running (end-setups.ps1)' }
         $exe = Get-ChildItem -Recurse -Filter hikarisub.exe $build -ErrorAction SilentlyContinue |
             Sort-Object { $_.FullName -notlike '*\src\app\*' } | Select-Object -First 1
         $docs = Join-Path $scratch 'docs'
