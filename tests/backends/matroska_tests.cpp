@@ -6,10 +6,14 @@
 // data, the attachments byte for byte, progress, cancel and the helper's loss.
 
 #include "hikari/backends/ffms_matroska.h"
+#include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/media_protocol.h"
+#include "hikari/core/ass_save.h"
+#include "hikari/core/matroska.h"
 #include "mkv_fixture.h"
 
 #include <QCoreApplication>
+#include <QFile>
 #include <QElapsedTimer>
 #include <gtest/gtest.h>
 
@@ -308,4 +312,56 @@ TEST_F(Fixture, HelperLossResolvesTheRequestAndTheNextStartsAHelper)
     ASSERT_TRUE(again);
     EXPECT_EQ(again->size(), 8u);
     EXPECT_GT(port.helperHost()->session(), session);
+}
+
+// User decision 28 (2026-10-14): "Kage 07 - Opening TH Softsub" lost its
+// first Thai line on every renderer. Its 38 copies sat in the first cluster
+// at 0:00:00.401, more blocks of that time in the second, and the last cue
+// of that time named the second; FFMS_GetSubtitles' seek to 0 went there
+// and never read the first cluster. Every block now arrives, and the line,
+// staged as legacy built it and handed to libass as the video renders the
+// Document, draws under its \pos at 0:00:02.
+TEST_F(Fixture, BlocksBeforeTheCuedClusterArriveAndTheirLineDraws)
+{
+    const auto file = mkvfixture::scanline();
+    const auto read = subtitles(fixture("scanline"), 0);
+    ASSERT_TRUE(read) << read.error().text;
+    ASSERT_EQ(read->packets.size(), file.packets.size());
+    for (std::size_t i = 0; i < file.packets.size(); ++i) {
+        EXPECT_EQ(read->packets[i].start, file.packets[i].second.start) << i;
+        EXPECT_EQ(read->packets[i].duration, file.packets[i].second.duration) << i;
+        EXPECT_EQ(read->packets[i].line, file.packets[i].second.data) << i; // whole, 38.7 KB drawings included
+    }
+
+    std::vector<std::u8string> lines;
+    for (const auto &p : read->packets)
+        lines.push_back(core::matroskaLine(p.start, p.duration, p.line, core::MatroskaCodec::Ass));
+    const core::Document document = core::matroskaDocument(read->codecPrivate, lines, core::MatroskaCodec::Ass);
+    core::AssSaveOptions options;
+    options.renderer = true;
+    QFile font(QStringLiteral(HIKARI_TEST_FONT));
+    ASSERT_TRUE(font.open(QIODevice::ReadOnly));
+    const QByteArray fontData = font.readAll();
+    auto fontBytes = std::make_shared<std::vector<std::byte>>(static_cast<std::size_t>(fontData.size()));
+    std::memcpy(fontBytes->data(), fontData.constData(), fontBytes->size());
+    backends::LibassRenderer renderer;
+    ASSERT_TRUE(renderer.prepare(RenderSnapshot{core::encodeAss(document, options),
+                                                {FontLease{"Titillium Web", fontBytes}}, "Titillium Web", false}));
+    const auto frame = renderer.render(core::DocumentTime(2'000'000), 1920, 1080);
+    ASSERT_TRUE(frame);
+    ASSERT_FALSE(frame->empty);
+    // The drawing spans x 732..1187, y 985..1032 around \pos(960,1017), its
+    // border and blur a few pixels more; the romaji is at the top.
+    int inside = 0, outside = 0;
+    for (int y = 200; y < 1080; ++y)
+        for (int x = 0; x < 1920; ++x) {
+            if (frame->pixels.data()[static_cast<std::size_t>(y) * frame->stride + x * 4 + 3] == 0)
+                continue;
+            if (x >= 720 && x < 1200 && y >= 975 && y < 1045)
+                ++inside;
+            else
+                ++outside;
+        }
+    EXPECT_GT(inside, 5000);
+    EXPECT_EQ(outside, 0);
 }

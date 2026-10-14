@@ -4,6 +4,7 @@
 // and the tests share it, so the tests know every byte the files hold.
 
 #include <cstdint>
+#include <cstdio>
 #include <string>
 #include <utility>
 #include <vector>
@@ -25,6 +26,12 @@ struct File {
     std::vector<Track> tracks;
     std::vector<std::pair<int, Packet>> packets; // track index, packet, in file order
     std::vector<Attachment> attachments;
+    // When set, the packets go into clusters of these sizes, in order, each
+    // timed at its first packet's start minus clusterLead, and Cues before the
+    // clusters hold one point per packet, in file order. Otherwise one cluster
+    // per packet and no Cues.
+    std::vector<std::size_t> clusterSizes;
+    std::int64_t clusterLead = 0;
 };
 
 // Deterministic bytes standing in for a font (legacy never looks inside).
@@ -135,6 +142,76 @@ inline File noSubs()
     File f;
     f.tracks = {{"S_HDMV/PGS", "", "eng", ""}, {"S_TEXT/WEBVTT", "", "eng", ""}};
     f.packets = {{1, Packet{1000, 1000, "web"}}};
+    return f;
+}
+
+// One strip of a karaoke "scanline" line as "Kage 07 - Opening TH Softsub"
+// has it (user decision 28): the whole sentence as a \p1 drawing of about
+// 38.7 KB under \pos(960,1017), seen only through its shadow (fill and
+// border at alpha FE), with twelve \t and a horizontal \clip strip. The
+// drawing spans x -228..227, y -32..15 around the position.
+inline std::string scanlineText(int clipTop, int clipBottom)
+{
+    std::string text = "{\\an7\\pos(960,1017)\\shad0.1\\blur0.8\\bord3\\1a&HFE&\\3a&HFE&\\4a&H00&\\4c&HFFFFFF&"
+                       "\\clip(0," + std::to_string(clipTop) + ",1920," + std::to_string(clipBottom) +
+                       ")\\fscx100\\fscy100";
+    for (int i = 1; i <= 3; ++i) {
+        const int t = 960 * i;
+        text += "\\t(" + std::to_string(t) + "," + std::to_string(t + 42) + ",2.09,\\xshad-10.37)";
+        text += "\\t(" + std::to_string(t + 41) + "," + std::to_string(t + 84) + ",0.01,\\xshad-7.14)";
+        text += "\\t(" + std::to_string(t + 83) + "," + std::to_string(t + 126) + ",3.19,\\xshad-0.88)";
+        text += "\\t(" + std::to_string(t + 125) + ".13," + std::to_string(t + 125) + ".13,\\xshad0)";
+    }
+    text += "\\p1}";
+    for (int i = 0; text.size() < 38700; ++i) {
+        const double x = -228 + (i % 76) * 6.0, y = -32 + ((i / 76) % 4) * 12.0;
+        char shape[256];
+        std::snprintf(shape, sizeof shape,
+                      "m %.2f %.2f b %.2f %.2f %.2f %.2f %.2f %.2f l %.2f %.2f b %.2f %.2f %.2f %.2f %.2f %.2f l %.2f %.2f ",
+                      x, y, x + 1.5, y - 0.5, x + 3.5, y - 0.5, x + 4.5, y, x + 4.5, y + 10, x + 3.5, y + 10.5,
+                      x + 1.5, y + 10.5, x, y + 10, x, y);
+        text += shape;
+    }
+    return text;
+}
+
+inline const std::string kScanlinePrivate =
+    "[Script Info]\r\n"
+    "ScriptType: v4.00+\r\n"
+    "PlayResX: 1920\r\n"
+    "PlayResY: 1080\r\n"
+    "ScaledBorderAndShadow: yes\r\n"
+    "\r\n"
+    "[V4+ Styles]\r\n"
+    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+    "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+    "MarginR, MarginV, Encoding\r\n"
+    "Style: Opening TH,Titillium Web,75,&H00FFFFFF,&H000000FF,&H00000000,&H8B000000,0,0,0,0,100,100,0,0,1,0,0,2,"
+    "25,25,25,0\r\n"
+    "\r\n"
+    "[Events]\r\n"
+    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n";
+
+constexpr int kScanlineStrips = 6;
+
+// The shape of that file's start: the first line's strips at 0:00:00.401 in
+// the first cluster, two more blocks (one at the same time) in the second,
+// and Cues in file order, so the last cue at 0:00:00.401 names the second
+// cluster. libavformat keeps one index entry per timestamp, the last cue's.
+inline File scanline()
+{
+    File f;
+    f.durationMs = 8000;
+    f.tracks = {{"S_TEXT/ASS", kScanlinePrivate, "tha", "Thai Karaoke"}};
+    for (int i = 0; i < kScanlineStrips; ++i) {
+        const int top = i == 0 ? 0 : 979 + i * 10, bottom = i == kScanlineStrips - 1 ? 1080 : 989 + i * 10;
+        f.packets.push_back({0, Packet{401, 3830, std::to_string(100 + i) + ",1,Opening TH,thai,0,0,0,fx.scanline," +
+                                                      scanlineText(top, bottom)}});
+    }
+    f.packets.push_back({0, Packet{401, 3830, "0,0,Opening TH,,0,0,0,fx,{\\an5\\pos(960,100)}romaji"}});
+    f.packets.push_back({0, Packet{5731, 2000, "1,0,Opening TH,,0,0,0,,next line"}});
+    f.clusterSizes = {kScanlineStrips, 2};
+    f.clusterLead = 109;
     return f;
 }
 

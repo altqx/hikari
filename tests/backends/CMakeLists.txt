@@ -60,7 +60,7 @@ foreach(kind cfr vfr bframes longgop audio tracks unknown color601 color709 colo
     list(APPEND _hikari_media_fixtures "${out}")
 endforeach()
 # Y9: the Matroska subtitle and attachment fixtures, beside the media ones.
-foreach(kind subs onesub nosubs)
+foreach(kind subs onesub nosubs scanline)
     set(out "${HIKARI_MEDIA_FIXTURE_DIR}/mkv-${kind}.mkv")
     add_custom_command(OUTPUT "${out}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_MEDIA_FIXTURE_DIR}"
@@ -301,10 +301,11 @@ endif()
 
 # Y9: MKV extraction through the media helper (legacy Demux).
 hikari_add_gtest(hikari_backends_matroska_tests SOURCES matroska_tests.cpp
-    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+    LIBRARIES hikari_backends hikari_application Qt6::Core LABELS backends)
 target_include_directories(hikari_backends_matroska_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support/media")
 target_compile_definitions(hikari_backends_matroska_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
 add_dependencies(hikari_backends_matroska_tests hikari_media_helper hikari_media_fixtures)
 # Y9: the same reads against legacy Demux's run on mkvmerge-muxed files.

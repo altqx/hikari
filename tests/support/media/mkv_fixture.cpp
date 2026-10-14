@@ -11,6 +11,8 @@
 //                  name, two of one name, a picture)
 //          onesub  one SubRip track and one PGS track, no attachments
 //          nosubs  a PGS and a WebVTT track only
+//          scanline  one ASS track shaped like the start of a karaoke file
+//                  whose first line was lost (mkvfixture::scanline())
 //
 // The content is described by mkv_fixture.h, which the tests include.
 #include "mkv_fixture.h"
@@ -81,18 +83,56 @@ Bytes trackEntry(int number, const mkvfixture::Track &t)
     return element(0xAE, payload);
 }
 
+Bytes blockGroup(int trackNumber, std::int64_t clusterTime, const mkvfixture::Packet &p)
+{
+    Bytes block;
+    block.push_back(char(0x80 | trackNumber)); // track number as a 1-byte vint
+    const auto relative = std::uint16_t(std::int16_t(p.start - clusterTime));
+    block.push_back(char(relative >> 8));
+    block.push_back(char(relative));
+    block.push_back(0); // flags
+    block += p.data;
+    return element(0xA0, element(0xA1, block) + uintElement(0x9B, std::uint64_t(p.duration)));
+}
+
 // One cluster per packet: its time is the packet's, so any time fits the
 // block's 16-bit relative timestamp, and the file order is the list order.
 Bytes cluster(int trackNumber, const mkvfixture::Packet &p)
 {
-    Bytes block;
-    block.push_back(char(0x80 | trackNumber)); // track number as a 1-byte vint
-    block.push_back(0);                        // relative timestamp 0
-    block.push_back(0);
-    block.push_back(0); // flags
-    block += p.data;
-    const Bytes group = element(0xA0, element(0xA1, block) + uintElement(0x9B, std::uint64_t(p.duration)));
-    return element(0x1F43B675, uintElement(0xE7, std::uint64_t(p.start)) + group);
+    return element(0x1F43B675, uintElement(0xE7, std::uint64_t(p.start)) + blockGroup(trackNumber, p.start, p));
+}
+
+// File::clusterSizes: the clusters, and Cues with one point per packet naming
+// its cluster (positions from the start of the Segment's data, which the
+// clusters begin `at`).
+std::pair<Bytes, Bytes> clustersAndCues(const mkvfixture::File &file, std::uint64_t at)
+{
+    std::vector<Bytes> clusters;
+    std::vector<std::pair<std::int64_t, std::size_t>> cued; // time, cluster
+    std::size_t next = 0;
+    for (std::size_t size : file.clusterSizes) {
+        const std::int64_t time = file.packets[next].second.start - file.clusterLead;
+        Bytes payload = uintElement(0xE7, std::uint64_t(time));
+        for (std::size_t i = next; i < next + size; ++i) {
+            payload += blockGroup(file.packets[i].first + 1, time, file.packets[i].second);
+            cued.push_back({file.packets[i].second.start, clusters.size()});
+        }
+        clusters.push_back(element(0x1F43B675, payload));
+        next += size;
+    }
+    std::vector<std::uint64_t> positions;
+    for (const Bytes &c : clusters) {
+        positions.push_back(at);
+        at += c.size();
+    }
+    Bytes points;
+    for (const auto &[time, index] : cued)
+        points += element(0xBB, uintElement(0xB3, std::uint64_t(time)) +
+                                    element(0xB7, uintElement(0xF7, 1) + uintElement(0xF1, positions[index])));
+    Bytes all;
+    for (const Bytes &c : clusters)
+        all += c;
+    return {element(0x1C53BB6B, points), all};
 }
 
 Bytes attachment(int uid, const mkvfixture::Attachment &a)
@@ -118,8 +158,15 @@ int write(const std::string &out, const mkvfixture::File &file)
             list += attachment(int(i), file.attachments[i]);
         segment += element(0x1941A469, list);
     }
-    for (const auto &[track, packet] : file.packets)
-        segment += cluster(track + 1, packet);
+    if (!file.clusterSizes.empty()) {
+        // the Cues' size does not depend on the positions (8-byte integers)
+        const std::uint64_t at = segment.size() + clustersAndCues(file, 0).first.size();
+        const auto [cues, clusters] = clustersAndCues(file, at);
+        segment += cues + clusters;
+    } else {
+        for (const auto &[track, packet] : file.packets)
+            segment += cluster(track + 1, packet);
+    }
     std::ofstream f(out, std::ios::binary);
     const Bytes bytes = header() + element(0x18538067, segment);
     f.write(bytes.data(), std::streamsize(bytes.size()));
@@ -131,7 +178,7 @@ int write(const std::string &out, const mkvfixture::File &file)
 int main(int argc, char **argv)
 {
     if (argc != 3) {
-        std::fprintf(stderr, "usage: hikari_mkv_fixture <out> <subs|onesub|nosubs>\n");
+        std::fprintf(stderr, "usage: hikari_mkv_fixture <out> <subs|onesub|nosubs|scanline>\n");
         return 1;
     }
     const std::string kind = argv[2];
@@ -141,6 +188,8 @@ int main(int argc, char **argv)
         return write(argv[1], mkvfixture::oneSub());
     if (kind == "nosubs")
         return write(argv[1], mkvfixture::noSubs());
+    if (kind == "scanline")
+        return write(argv[1], mkvfixture::scanline());
     std::fprintf(stderr, "hikari_mkv_fixture: unknown kind %s\n", kind.c_str());
     return 1;
 }
