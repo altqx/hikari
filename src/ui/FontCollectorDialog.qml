@@ -19,7 +19,8 @@ Dialog {
     objectName: "fontCollectorDialog"
     required property var collector
     // FontCollectorDialog's colours: WINDOW_TEXT, WINDOW_WARNING_ELEMENTS and
-    // the success "#008000", from the theme (K2).
+    // the success "#008000" (on Dark a readable green, K2-dark-success),
+    // from the theme (K2).
     readonly property color warningColour: Theme.warning
     readonly property color successColour: Theme.success
     readonly property bool working: collector.stage === 1

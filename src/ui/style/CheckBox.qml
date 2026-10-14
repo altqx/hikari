@@ -7,6 +7,9 @@
 // apart from the accent of selection and the default button
 // (visual-language.md: focus stays distinguishable from selection).
 // Everything else is Fusion's.
+// K2-control-boundary (2026-10-15): enabled, the outline is the theme's
+// control boundary (StyleColours.control, at least 3:1 on every surface);
+// disabled, the palette's Mid, the line role.
 import QtQuick
 import QtQuick.Controls.Fusion as F
 import QtQuick.Controls.Fusion.impl as FI
@@ -18,7 +21,7 @@ F.CheckBox {
         y: control.topPadding + (control.availableHeight - height) / 2
         baseLightness: control.enabled ? 1.25 : 1.0
         control: control
-        border.color: control.palette.mid
+        border.color: (control.enabled && StyleColours.themed ? StyleColours.control : control.palette.mid)
     }
     background: Item {
         FocusFrame { control: control; shown: control.visualFocus }

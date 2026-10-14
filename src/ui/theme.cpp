@@ -80,18 +80,18 @@ Roles baseRoles(Code code)
     switch (code) {
     case Code::Light:
         return {rgb(0xE5E9EC), rgb(0xF9FAFB), rgb(0xEDF0F3), rgb(0xFFFFFF), rgb(0x202832), rgb(0x526170), rgb(0xAAB5BE),
-                {}, {}, {}, {}, rgb(0xA51F31), rgb(0x8A5A00), rgb(0x008000), rgb(0x74808B)};
+                {}, {}, {}, {}, rgb(0xA51F31), rgb(0x8A5A00), rgb(0x008000), rgb(0x74808B), rgb(0x76828D)};
     case Code::Dark:
         return {rgb(0x171B20), rgb(0x20262D), rgb(0x29313A), rgb(0x171D24), rgb(0xE8EDF2), rgb(0xA5B1BD), rgb(0x414B57),
-                {}, {}, {}, {}, rgb(0xFFADAD), rgb(0xE0A030), rgb(0x008000), rgb(0x75818D)};
+                {}, {}, {}, {}, rgb(0xFFADAD), rgb(0xE0A030), rgb(0x4DBA4D), rgb(0x75818D), rgb(0x7A8691)};
     case Code::HighContrastWhite:
         return {rgb(0xFFFFFF), rgb(0xFFFFFF), rgb(0xEBEBEB), rgb(0xFFFFFF), rgb(0x000000), rgb(0x1A1A1A), rgb(0x000000),
                 rgb(0x0037B3), rgb(0xFFFFFF), rgb(0xC9DAF8), {}, rgb(0xA00000), rgb(0x6B4500), rgb(0x005A00),
-                rgb(0x6E6E6E)};
+                rgb(0x6E6E6E), rgb(0x000000)};
     case Code::HighContrastBlack:
         return {rgb(0x000000), rgb(0x080808), rgb(0x151515), rgb(0x000000), rgb(0xFFFFFF), rgb(0xEEEEEE), rgb(0xFFFFFF),
                 rgb(0xFFFF00), rgb(0x000000), rgb(0x253F60), {}, rgb(0xFFADAD), rgb(0xFFD54A), rgb(0x7CFC7C),
-                rgb(0x8C8C8C)};
+                rgb(0x8C8C8C), rgb(0xFFFFFF)};
     }
     return {};
 }
@@ -161,7 +161,7 @@ QColor role(const Roles &r, std::size_t index)
     const QColor Roles::*members[] = {&Roles::background, &Roles::panel,  &Roles::raised,   &Roles::field,
                                       &Roles::text,       &Roles::muted,  &Roles::line,     &Roles::accent,
                                       &Roles::onAccent,   &Roles::select, &Roles::focus,    &Roles::danger,
-                                      &Roles::warning,    &Roles::success, &Roles::disabled};
+                                      &Roles::warning,    &Roles::success, &Roles::disabled, &Roles::control};
     static_assert(std::size(members) == kRoleNames.size());
     return index < std::size(members) ? r.*members[index] : QColor();
 }
@@ -255,6 +255,7 @@ Roles resolve(Code code, const Choice &choice)
             roles.text = picks[1];
         if (picks[2].isValid())
             roles.line = picks[2];
+        roles.control = roles.line; // the border pick outlines the controls too
         // Text on the accent: the theme's, or the other of black and white
         // when a picked accent leaves it unreadable.
         if (contrastRatio(roles.onAccent, roles.accent) < 4.5) {
@@ -576,6 +577,7 @@ public:
         if (!state.choice.followSystem)
             requestScheme(isDark(state.code) ? Qt::ColorScheme::Dark : Qt::ColorScheme::Light);
         style::StyleColours::setFocus(settings ? state.roles.focus : QColor());
+        style::StyleColours::setControl(settings ? state.roles.control : QColor());
         // Every time, as the system's own change (which comes here) has Qt
         // set the frames from its scheme.
         themeTitleBars(QGuiApplication::topLevelWindows());

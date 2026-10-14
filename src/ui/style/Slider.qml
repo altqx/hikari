@@ -7,6 +7,9 @@
 // Fusion's accent-tinted handle, apart from the accent of the groove's
 // filled part. Everything else is Fusion's (the handle is FI.SliderHandle's
 // drawing, its outline on itself).
+// K2-control-boundary (2026-10-15): enabled, the outline is the theme's
+// control boundary (StyleColours.control, at least 3:1 on every surface);
+// disabled, the palette's Mid, the line role.
 import QtQuick
 import QtQuick.Controls.Fusion as F
 import QtQuick.Controls.Fusion.impl as FI
@@ -20,7 +23,7 @@ F.Slider {
         implicitHeight: 13
         rotation: control.vertical ? -90 : 0
         radius: 2
-        border.color: control.palette.mid
+        border.color: (control.enabled && StyleColours.themed ? StyleColours.control : control.palette.mid)
         gradient: Gradient {
             GradientStop {
                 position: 0
@@ -49,6 +52,6 @@ F.Slider {
         control: control
         progress: control.position
         visualProgress: control.visualPosition
-        border.color: control.palette.mid
+        border.color: (control.enabled && StyleColours.themed ? StyleColours.control : control.palette.mid)
     }
 }

@@ -244,10 +244,17 @@ private slots:
         QCOMPARE(black.select, hex(0x253F60));
         QCOMPARE(black.focus, black.text); // not the spec's #00FFFF
         QCOMPARE(black.danger, hex(0xFFADAD));
-        // The success text is legacy FontCollector's "#008000" in Light and
-        // Dark (FontCollector.cpp:872, 978: the same in every legacy theme).
+        // The success text is legacy FontCollector's "#008000" in Light
+        // (FontCollector.cpp:872, 978: the same in every legacy theme); on
+        // Dark it measured 2.56:1, so Dark has a readable green of the same
+        // hue (K2-dark-success, the user's 2026-10-15 decision).
         QCOMPARE(light.success, hex(0x008000));
-        QCOMPARE(dark.success, hex(0x008000));
+        QCOMPARE(dark.success, hex(0x4DBA4D));
+        // The controls' boundary (K2-control-boundary): `line` measured 1.71:1
+        // and 1.49:1, below WCAG 1.4.11's 3:1; the border pick in high contrast.
+        QCOMPARE(light.control, hex(0x76828D));
+        QCOMPARE(dark.control, hex(0x7A8691));
+        QCOMPARE(black.control, black.line);
         // Every role is set in every theme.
         for (const auto code : ui::theme::kCodes) {
             const auto r = roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
@@ -276,6 +283,12 @@ private slots:
             QVERIFY2(lowest(r.accent, r) >= (hc ? 7.0 : 4.5), qPrintable(theme));
             QVERIFY2(lowest(r.focus, r) >= 3.0, qPrintable(theme));
             QVERIFY2(lowest(r.disabled, r) >= 3.0, qPrintable(theme));
+            // An enabled control's boundary (WCAG 1.4.11; K2-control-boundary).
+            QVERIFY2(lowest(r.control, r) >= 3.0, qPrintable(theme + QStringLiteral(" control")));
+            // Success text where it is not legacy's fixed green (K2-dark-success:
+            // Light keeps #008000).
+            if (code != Code::Light)
+                QVERIFY2(lowest(r.success, r) >= textMinimum, qPrintable(theme + QStringLiteral(" success")));
             QVERIFY2(contrastRatio(r.onAccent, r.accent) >= textMinimum, qPrintable(theme));
             QVERIFY2(contrastRatio(r.text, r.select) >= textMinimum, qPrintable(theme));
             QVERIFY2(contrastRatio(r.disabled, r.text) >= 2.0, qPrintable(theme)); // disabled looks unlike enabled
@@ -801,10 +814,14 @@ QtObject {
     }
 
     // The controls style (src/ui/style): every control outline in the
-    // theme's boundary colour (the line role, the high-contrast border pick),
-    // live; Fusion's own, its window colour darkened 140%, measures about
-    // 1.1:1 against the Dark and High contrast black panels. A focused
-    // field's outline stays Fusion's accent-derived one.
+    // theme's colours, live; Fusion's own, its window colour darkened 140%,
+    // measures about 1.1:1 against the Dark and High contrast black panels.
+    // The controls a user operates (buttons, fields, boxes, sliders) draw it
+    // in the control boundary, at least 3:1 (K2-control-boundary; `line`
+    // was 1.71:1 and 1.49:1 in Light and Dark), disabled in `line`; frames,
+    // group boxes, menus and tab bars in `line`. In high contrast both are
+    // the border pick. A focused field's outline stays Fusion's
+    // accent-derived one.
     void controlsOutlineInTheBoundaryColour()
     {
         QCOMPARE(QQuickStyle::name(), QStringLiteral("HikariStyle"));
@@ -828,7 +845,7 @@ Window {
         combo.background.border.color, check.indicator.border.color, radio.indicator.border.color,
         group.background.border.color, frame.background.border.color, menu.background.border.color,
         tab.background.border.color, tabBar.background.children[0].color, slider.background.border.color,
-        slider.handle.border.color]
+        slider.handle.border.color, off.background.border.color, offField.background.border.color]
     // A control the style leaves alone is Fusion's (the qmldir's fallback),
     // not Basic's: Fusion's switch indicator is its SwitchIndicator item.
     property string switchIndicator: String(toggle.indicator)
@@ -847,6 +864,8 @@ Window {
         Menu { id: menu; objectName: "menu" }
         Slider { id: slider }
         Switch { id: toggle }
+        Button { id: off; text: "off"; enabled: false }
+        TextField { id: offField; enabled: false }
     }
 }
 )", QUrl(QStringLiteral("qrc:/k2-controls.qml")));
@@ -860,15 +879,28 @@ Window {
             // The controls take the new application palette an event loop
             // pass later; a closed menu when it opens (as the shell's do).
             QMetaObject::invokeMethod(window->findChild<QObject *>(QStringLiteral("menu")), "open");
-            QTRY_VERIFY_WITH_TIMEOUT(std::ranges::all_of(window->property("outlines").toList(),
-                                                         [&](const QVariant &c) { return c.value<QColor>() == r.line; }),
-                                     1000);
+            // Operable and enabled: button, tool button, field, area, spin
+            // box, combo box, check box, radio button, the slider's groove
+            // and handle. The rest: group, frame, menu, tab, tab bar, and
+            // the disabled button and field.
+            const auto expected = [&](qsizetype i) { return (i < 8 || i == 13 || i == 14) ? r.control : r.line; };
+            const auto drawn = [&] {
+                const auto outlines = window->property("outlines").toList();
+                for (qsizetype i = 0; i < outlines.size(); ++i)
+                    if (outlines[i].value<QColor>() != expected(i))
+                        return false;
+                return true;
+            };
+            QTRY_VERIFY_WITH_TIMEOUT(drawn(), 1000);
             const auto outlines = window->property("outlines").toList();
-            QCOMPARE(outlines.size(), 15);
+            QCOMPARE(outlines.size(), 17);
             for (qsizetype i = 0; i < outlines.size(); ++i)
-                QVERIFY2(outlines[i].value<QColor>() == r.line,
-                         qPrintable(QStringLiteral("%1: control %2 outline %3, line %4").arg(ui::theme::codeName(code)).arg(i)
-                                        .arg(name(outlines[i].value<QColor>()), name(r.line))));
+                QVERIFY2(outlines[i].value<QColor>() == expected(i),
+                         qPrintable(QStringLiteral("%1: control %2 outline %3, expected %4").arg(ui::theme::codeName(code)).arg(i)
+                                        .arg(name(outlines[i].value<QColor>()), name(expected(i)))));
+            QVERIFY2(lowest(r.control, r) >= 3, qPrintable(ui::theme::codeName(code)));
+            if (!ui::theme::isHighContrast(code))
+                QVERIFY(r.control != r.line); // the separators stay light
             // Fusion's outline: what the controls drew before.
             const QColor fusion = r.panel.darker(140);
             if (code == Code::Dark || code == Code::HighContrastBlack)
@@ -1053,12 +1085,12 @@ Window {
                              qPrintable(where + QStringLiteral(" 2 wide: %1").arg(name(shot.pixelColor(pixelAt(1.5))))));
                 // The control's own outline stays the boundary colour.
                 if (i < 5)
-                    QTRY_VERIFY2(outline(i) == r.line, qPrintable(where));
+                    QTRY_VERIFY2(outline(i) == r.control, qPrintable(where));
             }
             // The default button keeps the accent's outline; a focused
             // field's border is the accent's outline too, with the ring
             // beside it only for keyboard focus.
-            QVERIFY2(colour("defaultOutline") != r.line, qPrintable(what));
+            QVERIFY2(colour("defaultOutline") != r.control, qPrintable(what));
             controls[Field]->forceActiveFocus(Qt::MouseFocusReason);
             QTRY_COMPARE(colour("fieldOutline"), colour("defaultOutline"));
             QVERIFY(!ring(Field)->isVisible());

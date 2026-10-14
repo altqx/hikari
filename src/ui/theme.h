@@ -74,13 +74,16 @@ struct Roles {
                        // tight, the user's 2026-10-13 decision; a focused panel's mark is the accent)
     QColor danger;     // error emphasis
     QColor warning;    // warning emphasis (legacy WINDOW_WARNING_ELEMENTS)
-    QColor success;    // success text (legacy FontCollectorDialog's "#008000")
+    QColor success;    // success text (legacy FontCollectorDialog's "#008000"; K2-dark-success)
     QColor disabled;   // disabled text and icons
+    QColor control;    // an enabled control's boundary, at least 3:1 (K2-control-boundary;
+                       // `line` stays for separators and frames; in high contrast the border pick)
     bool operator==(const Roles &) const = default;
 };
 // The roles by name, in Roles' order (the QML property names).
 inline constexpr std::array kRoleNames{"background", "panel", "raised", "field", "text", "muted", "line", "accent",
-                                       "onAccent", "select", "focus", "danger", "warning", "success", "disabled"};
+                                       "onAccent", "select", "focus", "danger", "warning", "success", "disabled",
+                                       "control"};
 QColor role(const Roles &roles, std::size_t index);
 
 // An accent preset of a mode: the accent with the roles drawn for it.
@@ -210,6 +213,7 @@ class Theme : public QObject {
     Q_PROPERTY(QColor warning READ warning NOTIFY changed FINAL)
     Q_PROPERTY(QColor success READ success NOTIFY changed FINAL)
     Q_PROPERTY(QColor disabled READ disabled NOTIFY changed FINAL)
+    Q_PROPERTY(QColor control READ control NOTIFY changed FINAL)
     Q_PROPERTY(QColor spellcheck READ spellcheck NOTIFY changed FINAL)
     // E4: the Line editor's text colours, by core::syntax::Role.
     Q_PROPERTY(QVariantList syntax READ syntax NOTIFY changed FINAL)
@@ -237,6 +241,7 @@ public:
     QColor warning() const { return roles().warning; }
     QColor success() const { return roles().success; }
     QColor disabled() const { return roles().disabled; }
+    QColor control() const { return roles().control; }
     QColor spellcheck() const { return theme::current().content.spellcheck; }
     QVariantList syntax() const;
 

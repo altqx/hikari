@@ -77,7 +77,7 @@ Measured WCAG 2.x contrast (`hikari_ui_theme_tests` accentPresetsMeetContrast; t
 
 **High contrast.** Accent, text-and-icons and border colours are freely pickable (`appearance.highContrastWhite.*` and `appearance.highContrastBlack.*`, each theme its own, "#RRGGBB"; MuseScore's low-vision exception, its non-working "Disabled text" picker left out); "Reset to default" puts the theme's back. Every other role is fixed. Text on a picked accent turns black or white to stay readable. These six are the only colour settings (`settings_tests` NoColourSettingOutsideHighContrast).
 
-**Role tables.** Every theme with its default accent, and each role's lowest contrast against the theme's four surfaces (`hikari_ui_theme_tests` rolesMeetContrast; text roles at least 4.5:1, 7:1 in high contrast; accent, icons and disabled at least 3:1; `focus` is `text`, focusIsTheTextColour). `warning` is the rewrite's warning emphasis (WINDOW_WARNING_ELEMENTS' role), `success` the Font collector's success text (legacy's fixed `#008000`, FontCollector.cpp:872, 978), `disabled` disabled text and icons.
+**Role tables.** Every theme with its default accent, and each role's lowest contrast against the theme's four surfaces (`hikari_ui_theme_tests` rolesMeetContrast; text roles at least 4.5:1, 7:1 in high contrast; accent, icons, disabled and `control` at least 3:1; `success` at least 4.5:1 outside Light (7:1 in high contrast); `focus` is `text`, focusIsTheTextColour). `warning` is the rewrite's warning emphasis (WINDOW_WARNING_ELEMENTS' role), `success` the Font collector's success text (legacy's fixed `#008000`, FontCollector.cpp:872, 978), `disabled` disabled text and icons.
 
 | Role | Light | Dark | High contrast white | High contrast black |
 | --- | --- | --- | --- | --- |
@@ -85,16 +85,17 @@ Measured WCAG 2.x contrast (`hikari_ui_theme_tests` accentPresetsMeetContrast; t
 | `text` | `#202832` 12.19 | `#E8EDF2` 11.18 | `#000000` 17.62 | `#FFFFFF` 18.26 |
 | `muted` | `#526170` 5.21 | `#A5B1BD` 6.03 | `#1A1A1A` 14.60 | `#EEEEEE` 15.74 |
 | `line` | `#AAB5BE` 1.71 | `#414B57` 1.49 | `#000000` 17.62 | `#FFFFFF` 18.26 |
+| `control` | `#76828D` 3.22 | `#7A8691` 3.54 | `#000000` 17.62 | `#FFFFFF` 18.26 |
 | `accent` | `#145C4C` 6.45 | `#9CDBC9` 8.40 | `#0037B3` 8.02 | `#FFFF00` 17.01 |
 | `onaccent` (on `accent`) | `#FFFFFF` 7.88 | `#102C24` 9.51 | `#FFFFFF` 9.56 | `#000000` 19.56 |
 | `select` (`text` on it) | `#D6EBE4` 11.95 | `#304C47` 7.92 | `#C9DAF8` 14.87 | `#253F60` 10.72 |
 | `focus` (`text`) | `#202832` 12.19 | `#E8EDF2` 11.18 | `#000000` 17.62 | `#FFFFFF` 18.26 |
 | `danger` | `#A51F31` 6.06 | `#FFADAD` 7.42 | `#A00000` 7.06 | `#FFADAD` 10.29 |
 | `warning` | `#8A5A00` 4.85 | `#E0A030` 5.79 | `#6B4500` 7.11 | `#FFD54A` 12.93 |
-| `success` | `#008000` 4.21 | `#008000` 2.56 | `#005A00` 7.15 | `#7CFC7C` 13.98 |
+| `success` | `#008000` 4.21 | `#4DBA4D` 5.30 | `#005A00` 7.15 | `#7CFC7C` 13.98 |
 | `disabled` | `#74808B` 3.31 | `#75818D` 3.31 | `#6E6E6E` 4.28 | `#8C8C8C` 5.43 |
 
-`success` in Light and Dark is legacy's fixed green, below 4.5:1 (2.56:1 on Dark); a readable dark-theme green is a proposed departure, not applied. `line` in Light and Dark is the spec's boundary token (1.71:1 and 1.49:1 at its lowest), below WCAG 1.4.11's 3:1 for a control's boundary; fields keep their own fill, and a stronger control boundary for those two themes is a proposed change, not applied. In high contrast `line` is the border pick, the control outlines included.
+`success` in Light is legacy's fixed green (4.21:1, below 4.5:1 on its darkest surface). On Dark legacy's green measured 2.56:1, so Dark has a readable green of the same hue, `#4DBA4D` (K2-dark-success, user decision 52, 2026-10-15). `line` in Light and Dark is the spec's boundary token (1.71:1 and 1.49:1 at its lowest), below WCAG 1.4.11's 3:1 for a control's boundary; it stays for separators, frames, group boxes, menus, tab bars, the panels' borders and disabled controls. The controls a user operates (button, tool button, text field and area, spin box, combo box, check box, radio button, slider groove and handle) draw their outline, while enabled, in `control`, at least 3:1 on all four surfaces (K2-control-boundary, the same decision; HikariStyle, `StyleColours.control`). In high contrast `line` and `control` are both the border pick, the control outlines included.
 
 **Keyboard focus.** A rewrite design decision, not a legacy departure: keyboard focus follows MuseScore 4's convention ([research](../../research/musescore-appearance.md): its `focusColor` is vestigial; the real ring, `NavigationFocusBorder`, is `fontPrimaryColor`), a ring in the theme's text colour (user, 2026-10-05, with the wave-5 batch-2 review). The user's 2026-10-13 decision (wave-5 visual review: the 2-wide rings looked too big and cluttered focused elements) replaces the 2026-10-05 ring's size and the panel's ring: a control's ring is 1 wide and drawn tight, the Grid's current row keeps a 1-wide ring ("grid row should still use the ring too"), and the panel holding the focus loses its ring for a small accent triangle in its top trailing corner. The `focus` role is `text` in every theme and with every accent, and follows a high-contrast text pick; the spec's focus tokens and the presets' own focus colours are withdrawn. The accent stays for selection, the default button and primary actions, the focused field's border, the tab underline, the current Line's outline and the focused panel's corner mark, so a focused control (a text-coloured ring) and selection (an accent fill, marker or outline) are told apart by colour and by shape; on a selected background the ring reads as text does (at least 4.5:1, 7:1 in high contrast).
 

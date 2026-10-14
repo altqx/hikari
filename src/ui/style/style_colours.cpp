@@ -12,6 +12,7 @@ namespace {
 // One per engine (the singleton), all showing the same colours; the GUI
 // thread's only.
 QColor g_focus;
+QColor g_control;
 std::vector<StyleColours *> g_instances;
 
 } // namespace
@@ -39,6 +40,20 @@ bool StyleColours::themed() const
 QColor StyleColours::focus() const
 {
     return g_focus;
+}
+
+QColor StyleColours::control() const
+{
+    return g_control;
+}
+
+void StyleColours::setControl(const QColor &control)
+{
+    if (control == g_control)
+        return;
+    g_control = control;
+    for (auto *instance : g_instances)
+        emit instance->changed();
 }
 
 void StyleColours::setFocus(const QColor &focus)

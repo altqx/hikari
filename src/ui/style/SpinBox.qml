@@ -7,6 +7,10 @@
 // outside it, in the theme's focus role, the text colour) is drawn beside it,
 // and its buttons keep their colour (Fusion tints them with the accent).
 // Its numbers are plain digits (below). Everything else is Fusion's.
+// K2-control-boundary (2026-10-15): enabled, the outline is the theme's
+// control boundary (StyleColours.control, at least 3:1 on every surface);
+// disabled, and the separator before the buttons, the palette's Mid, the
+// line role.
 import QtQuick
 import QtQuick.Controls.Fusion as F
 
@@ -26,7 +30,8 @@ F.SpinBox {
 
         radius: 2
         color: control.palette.base
-        border.color: control.activeFocus ? F.Fusion.highlightedOutline(control.palette) : control.palette.mid
+        border.color: control.activeFocus ? F.Fusion.highlightedOutline(control.palette)
+            : (control.enabled && StyleColours.themed ? StyleColours.control : control.palette.mid)
 
         Rectangle {
             x: 2

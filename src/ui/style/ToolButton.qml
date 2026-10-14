@@ -7,6 +7,9 @@
 // apart from the accent of selection and the default button
 // (visual-language.md: focus stays distinguishable from selection).
 // Everything else is Fusion's.
+// K2-control-boundary (2026-10-15): enabled, the outline is the theme's
+// control boundary (StyleColours.control, at least 3:1 on every surface);
+// disabled, the palette's Mid, the line role.
 import QtQuick
 import QtQuick.Controls.Fusion as F
 import QtQuick.Controls.Fusion.impl as FI
@@ -20,7 +23,7 @@ F.ToolButton {
         visible: control.down || control.checked || control.highlighted || control.visualFocus
             || (enabled && control.hovered)
         border.color: !control.enabled ? control.palette.mid
-            : highlighted ? F.Fusion.highlightedOutline(control.palette) : control.palette.mid
+            : highlighted ? F.Fusion.highlightedOutline(control.palette) : (StyleColours.themed ? StyleColours.control : control.palette.mid)
         FocusFrame { control: control; shown: control.visualFocus }
     }
 }
