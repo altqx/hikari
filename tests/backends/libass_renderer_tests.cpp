@@ -664,3 +664,61 @@ TEST(LibassRenderer, AStartEditedInPlaceShowsAtTheNewTimeOnceTheTrackIsTold)
     ass_renderer_done(renderer);
     ass_library_done(library);
 }
+
+namespace {
+
+std::shared_ptr<const std::vector<std::byte>> forkFixture(const char *name)
+{
+    QFile f(QStringLiteral(HIKARI_LIBASS_FORK_FIXTURES "/") + QLatin1StringView(name));
+    EXPECT_TRUE(f.open(QIODevice::ReadOnly)) << name;
+    const QByteArray d = f.readAll();
+    auto bytes = std::make_shared<std::vector<std::byte>>(static_cast<std::size_t>(d.size()));
+    std::memcpy(bytes->data(), d.constData(), bytes->size());
+    return bytes;
+}
+
+} // namespace
+
+// LF-libass-cmap (docs/qt/compatibility-decisions.md): the fork draws text in
+// symbol-cmap fonts at any base code and in legacy Arabic (charset 178) fonts
+// with a Unicode cmap, where libass 0.17.5, which legacy pins, draws nothing.
+// The cases are the fork's compare/fork-test/cmap.ass, one per second.
+TEST(LibassFork, SymbolAndLegacyArabicCmapFontsDraw)
+{
+    const std::string style = ",28,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,5,10,10,10,1\n";
+    const std::string script =
+        "[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\nScaledBorderAndShadow: yes\n\n"
+        "[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+        "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+        "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+        "Style: F020,ForkTest SymF020" + style + "Style: F120,ForkTest SymF120" + style +
+        "Style: S0020,ForkTest Sym0020" + style + "Style: Arabic,ForkTest Arabic" + style +
+        "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+        "Dialogue: 0,0:00:00.00,0:00:01.00,F020,,0,0,0,,ABC xyz 123\n"
+        "Dialogue: 0,0:00:01.00,0:00:02.00,F120,,0,0,0,,ABC xyz 123\n"
+        "Dialogue: 0,0:00:02.00,0:00:03.00,S0020,,0,0,0,,ABC xyz 123\n"
+        "Dialogue: 0,0:00:03.00,0:00:04.00,F120,,0,0,0,,\xEF\x80\xA1\xEF\x80\xA2\xEF\x80\xA3\n" // U+F021-F023
+        "Dialogue: 0,0:00:04.00,0:00:05.00,Arabic,,0,0,0,,\xD8\xB3\xD9\x84\xD8\xA7\xD9\x85 \xD8\xA8\xD8\xA7\xD8\xA8\n";
+    backends::LibassRenderer renderer;
+    RenderSnapshot snap{bytesOf(script),
+                        {FontLease{"ForkTest SymF020", forkFixture("forktest-symf020.ttf")},
+                         FontLease{"ForkTest SymF120", forkFixture("forktest-symf120.ttf")},
+                         FontLease{"ForkTest Sym0020", forkFixture("forktest-sym0020.ttf")},
+                         FontLease{"ForkTest Arabic", forkFixture("forktest-arabic.ttf")}},
+                        "",
+                        false};
+    ASSERT_TRUE(renderer.prepare(std::move(snap)).has_value());
+    std::vector<std::vector<std::uint8_t>> frames;
+    for (int ms : {500, 1500, 2500, 3500, 4500}) {
+        const auto frame = renderer.render(core::DocumentTime(std::int64_t(ms) * 1000), 640, 360);
+        ASSERT_TRUE(frame.has_value()) << ms;
+        EXPECT_FALSE(frame->empty) << "nothing drawn at " << ms << " ms";
+        frames.emplace_back(frame->pixels.begin(), frame->pixels.end());
+    }
+    // Each glyph draws the bits of the character it stands for, so the text
+    // reaches the right glyph through every symbol cmap: the U+F120 and
+    // U+0020 cmaps draw "ABC xyz 123" exactly as the usual U+F020 one does.
+    EXPECT_EQ(frames[1], frames[0]);
+    EXPECT_EQ(frames[2], frames[0]);
+    EXPECT_NE(frames[3], frames[0]);
+}
