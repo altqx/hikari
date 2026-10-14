@@ -6,6 +6,7 @@
 #include "screen_sampler.h"
 #include "settings_store.h"
 
+#include <QCursor>
 #include <QGuiApplication>
 #include <QMouseEvent>
 #include <QPainter>
@@ -375,6 +376,106 @@ private slots:
         QVERIFY(!sampler.tracking());
         sentPosition(window, QPoint(-5, -5), QEvent::MouseMove, Qt::NoButton, Qt::NoButton);
         QCOMPARE(events.count(), 4);
+    }
+
+    // Y7 on X11 under a window manager (openbox): the simple picker asked
+    // for the grab at show(), before the manager had mapped it; X refused
+    // it (GrabNotViewable) while Qt's XInput 2 grab reported it held, so
+    // the dropper never tracked the pointer outside the picker. The grab
+    // waits for the window's expose, is asked again when the window is
+    // exposed or activated and when the pointer leaves it (legacy
+    // OnLeaveWindow captures again), and on a timer while refused.
+    void theGrabWaitsForTheWindowToBeExposed()
+    {
+        QList<bool> asked;
+        QWindow *grabbedWindow = nullptr;
+        bool granted = true;
+        ui::ScreenSampler sampler;
+        sampler.setGrab([&](QWindow *w, bool grab) {
+            grabbedWindow = w;
+            asked.append(grab);
+            return !grab || granted;
+        });
+
+        // Not yet exposed (the window manager has not mapped it): no ask.
+        PositionWindow window;
+        window.setGeometry(QRect(50, 60, 120, 90));
+        QVERIFY(sampler.startTracking(&window, true));
+        QVERIFY(sampler.tracking());
+        QVERIFY(asked.isEmpty());
+        QVERIFY(!sampler.holdsPointer());
+        // Mapped: its expose asks, and the grab holds.
+        window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+        QTRY_VERIFY(sampler.holdsPointer());
+        QCOMPARE(grabbedWindow, &window);
+        QVERIFY(!asked.isEmpty());
+        QVERIFY(!asked.contains(false));
+
+        // Held, as Qt reports it: no timer asks, but an expose, an
+        // activation and the pointer leaving for outside ask again; leaving
+        // for a spot inside (a child, a popup) and entering do not.
+        QVERIFY(!sampler.regrabbing());
+        qsizetype count = asked.size();
+        QExposeEvent expose(QRegion(QRect(QPoint(), window.size())));
+        QCoreApplication::sendEvent(&window, &expose);
+        QCOMPARE(asked.size(), ++count);
+        QEvent activate(QEvent::WindowActivate);
+        QCoreApplication::sendEvent(&window, &activate);
+        QCOMPARE(asked.size(), ++count);
+        QCursor::setPos(window.geometry().center());
+        QTRY_COMPARE(QCursor::pos(), window.geometry().center());
+        count = asked.size();
+        QEvent leave(QEvent::Leave);
+        QCoreApplication::sendEvent(&window, &leave);
+        QCOMPARE(asked.size(), count);
+        QCursor::setPos(window.geometry().bottomRight() + QPoint(40, 40));
+        QTRY_COMPARE(QCursor::pos(), window.geometry().bottomRight() + QPoint(40, 40));
+        count = asked.size();
+        QCoreApplication::sendEvent(&window, &leave);
+        QCOMPARE(asked.size(), ++count);
+        QEvent enter(QEvent::Enter);
+        QCoreApplication::sendEvent(&window, &enter);
+        QCOMPARE(asked.size(), count);
+        QCOMPARE(asked.last(), true);
+        sampler.stopTracking();
+        QVERIFY(!sampler.holdsPointer());
+        QCOMPARE(asked.size(), count + 1);
+        QCOMPARE(asked.last(), false);
+
+        // Refused at first (the platform said no): the timer asks again
+        // until it holds.
+        asked.clear();
+        granted = false;
+        QVERIFY(sampler.startTracking(&window, true));
+        QCOMPARE(asked, QList<bool>{true});
+        QTest::qWait(3 * ui::ScreenSampler::kRegrabInterval);
+        QVERIFY(asked.size() > 1);
+        QVERIFY(!sampler.holdsPointer());
+        QVERIFY(sampler.regrabbing());
+        granted = true;
+        QTRY_VERIFY(sampler.holdsPointer());
+        QVERIFY(!sampler.regrabbing());
+        sampler.stopTracking();
+
+        // A platform that never grants a grab (offscreen, Wayland): the
+        // timer gives up, and the events over the window still come.
+        asked.clear();
+        granted = false;
+        QSignalSpy events(&sampler, &ui::ScreenSampler::pointerEvent);
+        QVERIFY(sampler.startTracking(&window, false));
+        QVERIFY(sampler.regrabbing());
+        // Timers are coarse on Windows (about 16 ms): wait for the timer to
+        // stop, not for a fixed time.
+        QTRY_VERIFY_WITH_TIMEOUT(!sampler.regrabbing(),
+                                 4 * ui::ScreenSampler::kRegrabTries * ui::ScreenSampler::kRegrabInterval);
+        const qsizetype tries = asked.count(true);
+        QVERIFY2(tries >= 1 + ui::ScreenSampler::kRegrabTries, qPrintable(QString::number(tries)));
+        sentPosition(window, QPoint(-20, 200), QEvent::MouseMove, Qt::NoButton, Qt::NoButton);
+        QCOMPARE(events.count(), 1);
+        QVERIFY(sampler.tracking());
+        QVERIFY(!sampler.holdsPointer());
+        sampler.stopTracking();
     }
 };
 

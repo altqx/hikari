@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QCursor>
 #include <QGuiApplication>
+#include <QLoggingCategory>
 #include <QMouseEvent>
 #include <QPixmap>
 #include <QScreen>
@@ -24,6 +25,8 @@
 namespace hikari::ui {
 
 namespace {
+
+Q_LOGGING_CATEGORY(lcDropper, "hikari.dropper", QtInfoMsg)
 
 #ifdef HIKARI_SCREEN_PORTAL
 const QString kPortalService = QStringLiteral("org.freedesktop.portal.Desktop");
@@ -102,7 +105,24 @@ ScreenSampler::Route ScreenSampler::routeFor(const QString &platformName, bool w
                                         "Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).")};
 }
 
-ScreenSampler::ScreenSampler(QObject *parent) : QObject(parent), m_source(grabScreen) {}
+ScreenSampler::ScreenSampler(QObject *parent)
+    : QObject(parent), m_source(grabScreen),
+      m_grab([](QWindow *window, bool grab) { return window->setMouseGrabEnabled(grab); })
+{
+    m_regrab.setInterval(kRegrabInterval);
+    // Runs only after a refusal; hidden again, the window waits for its
+    // next expose. Only real asks count against kRegrabTries.
+    connect(&m_regrab, &QTimer::timeout, this, [this] {
+        if (!m_window || !m_window->isExposed()) {
+            m_regrab.stop();
+            return;
+        }
+        ++m_regrabTries;
+        takePointer(false);
+        if (m_regrabTries >= kRegrabTries)
+            m_regrab.stop();
+    });
+}
 
 ScreenSampler::~ScreenSampler()
 {
@@ -197,8 +217,11 @@ bool ScreenSampler::startTracking(QWindow *window, bool passInside)
     m_passInside = passInside;
     window->installEventFilter(this);
     // Offscreen and Wayland grant no pointer grab; the events over the
-    // window still come.
-    window->setMouseGrabEnabled(true);
+    // window still come. Under an X11 window manager the window is not
+    // viewable yet: the grab waits for its expose.
+    m_grabbed = false;
+    m_regrabTries = 0;
+    takePointer(false);
     showCursor(!passInside || !window->geometry().contains(QCursor::pos()));
     emit trackingChanged();
     return true;
@@ -208,11 +231,29 @@ void ScreenSampler::stopTracking()
 {
     if (!m_window)
         return;
+    qCDebug(lcDropper) << m_window << "tracking stops";
+    m_regrab.stop();
     m_window->removeEventFilter(this);
-    m_window->setMouseGrabEnabled(false);
+    m_grab(m_window, false);
+    m_grabbed = false;
     m_window.clear();
     showCursor(false);
     emit trackingChanged();
+}
+
+void ScreenSampler::takePointer(bool again)
+{
+    // X refuses a grab on a window that is not viewable (GrabNotViewable),
+    // and Qt's XInput 2 grab reports success all the same: ask only once
+    // the window is exposed.
+    if (!m_window || !m_window->isExposed() || (m_grabbed && !again))
+        return;
+    m_grabbed = m_grab(m_window, true);
+    qCDebug(lcDropper) << m_window << "pointer grab" << (m_grabbed ? "held" : "refused");
+    if (m_grabbed)
+        m_regrab.stop();
+    else if (!m_regrab.isActive() && m_regrabTries < kRegrabTries)
+        m_regrab.start();
 }
 
 void ScreenSampler::showCursor(bool dropper)
@@ -244,8 +285,24 @@ bool ScreenSampler::eventFilter(QObject *watched, QEvent *event)
         kind = 2;
         break;
     case QEvent::WindowDeactivate:
+        qCDebug(lcDropper) << m_window << "deactivated: tracking lost";
         emit trackingLost();
         return false;
+    // The window became viewable (its expose; the window manager maps its
+    // frame and then activates it): ask for the grab again, since a grab
+    // Qt reported held may have been refused.
+    case QEvent::Expose:
+    case QEvent::WindowActivate:
+        takePointer(true);
+        return QObject::eventFilter(watched, event);
+    // The pointer left it for outside the window, not for a child or a
+    // popup over it: legacy OnLeaveWindow captures the mouse again then.
+    // This asks even when Qt reports the grab held, as that report can be
+    // wrong.
+    case QEvent::Leave:
+        if (!m_window->geometry().contains(QCursor::pos()))
+            takePointer(true);
+        return QObject::eventFilter(watched, event);
     default:
         return QObject::eventFilter(watched, event);
     }
