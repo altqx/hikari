@@ -39,6 +39,7 @@
 #include <QPainter>
 #include <QPalette>
 #include <QClipboard>
+#include <QColorSpace>
 #include <QProcess>
 #include <QRasterWindow>
 #include <QScreen>
@@ -17930,10 +17931,18 @@ private slots:
             }
         return out;
     }
+    // The pixels only: QImage's == also compares the colour space, which an
+    // image read back from a file carries when the file names one (the PNG
+    // .NET writes from the Windows clipboard has an sRGB chunk; the copied
+    // frame has none).
     static bool sameImage(const QImage &a, const QImage &b)
     {
-        return a.size() == b.size()
-               && a.convertToFormat(QImage::Format_RGB888) == b.convertToFormat(QImage::Format_RGB888);
+        if (a.size() != b.size())
+            return false;
+        QImage x = a.convertToFormat(QImage::Format_RGB888), y = b.convertToFormat(QImage::Format_RGB888);
+        x.setColorSpace(QColorSpace());
+        y.setColorSpace(QColorSpace());
+        return x == y;
     }
     void triggerAction(const char *menuItem)
     {
