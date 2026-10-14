@@ -16,11 +16,9 @@
 
 
 #include "TimeCtrl.h"
-#include "TimeCtrlSteps.h"
 #include "NumCtrl.h"
 #include "SubsDialogue.h"
 #include "Provider.h"
-#include "MicroDvdSteps.h"
 
 #include <wx/regex.h>
 #include <wx/clipbrd.h>
@@ -56,7 +54,8 @@ TimeCtrl::TimeCtrl(wxWindow* parent, const long int id, const wxString& val, con
 	oldposy = 0;
 	oldposx = 0;
 	curpos = 0;
-	grad = 10;
+	dragValue = 0;
+	dragStep = { false, 10, TimeCtrlSteps::MAX_MS };
 
 	Connect(wxEVT_COMMAND_TEXT_UPDATED, (wxObjectEventFunction)&TimeCtrl::OnTimeWrite);
 	Connect(wxEVT_KEY_DOWN, (wxObjectEventFunction)&TimeCtrl::OnKeyEvent);
@@ -264,7 +263,7 @@ void TimeCtrl::SetTime(const SubsTime &newtime, bool stillModified, int opt)
 			mTime.orgframe--; 
 	}
 
-	SetValue(mTime.raw(canShowFrames || (showFrames && !vb) ? FRAME : form), stillModified);
+	SetValue(mTime.raw(ShownFormat()), stillModified);
 	if (stillModified){
 		SetForegroundColour(WINDOW_WARNING_ELEMENTS);
 		changedBackGround = true;
@@ -274,7 +273,7 @@ void TimeCtrl::SetTime(const SubsTime &newtime, bool stillModified, int opt)
 SubsTime TimeCtrl::GetTime(char opt)
 {
 	bool canShowFrames = showFrames && vb && vb->GetTimebase().IsExact();
-	mTime.SetRaw(GetValue(), canShowFrames || (showFrames && !vb)? FRAME : form);
+	mTime.SetRaw(GetValue(), ShownFormat());
 	if (canShowFrames && !timeUnchanged){
 		SubsTime cpy = SubsTime(mTime);
 		cpy.ChangeFormat(form);
@@ -303,6 +302,33 @@ char TimeCtrl::GetFormat()
 	return form;
 }
 
+bool TimeCtrl::ShowsFrames()
+{
+	return showFrames && (!vb || vb->GetTimebase().IsExact());
+}
+
+char TimeCtrl::ShownFormat()
+{
+	return ShowsFrames() ? FRAME : form;
+}
+
+TimeCtrlSteps::Step TimeCtrl::StepAt(long column)
+{
+	return TimeCtrlSteps::StepAt(ShowsFrames(), form == MDVD, form == MPL2, column, (form == ASS) ? 2 : 3);
+}
+
+//shows a frame number or time a drag or wheel step made, as changed
+void TimeCtrl::SetStepped(bool frames, int value)
+{
+	if (!frames){ mTime.mstime = value; }
+	else if (ShowsFrames()){ mTime.orgframe = value; }
+	//the MicroDVD time follows its frame, so a frame stepped to 0 shows 0
+	else{ mTime.SetMDVDFrame(value); }
+	SetValue(mTime.raw(ShownFormat()), true, false);
+	wxCommandEvent evt2(NUMBER_CHANGED, GetId()); AddPendingEvent(evt2);
+	timeUnchanged = false;
+}
+
 void TimeCtrl::OnMouseEvent(wxMouseEvent &event) {
 	bool rclick = event.RightDown();
 	bool right_up = event.RightUp();
@@ -318,46 +344,29 @@ void TimeCtrl::OnMouseEvent(wxMouseEvent &event) {
 	}
 	if (holding)
 	{
-		bool changed = false;
 		int absy = abs(posy - oldposy);
 		int absx = abs(posx - oldposx);
-		int tmpgrad = grad;
+		int step = 0;
 		if (absy >= absx){
 			if (absy >= 8){
-				mstime = (oldposy < posy) ? mstime - grad : mstime + grad;
-				//HikariLog(wxString::Format("nval+-1: %f", (float)nval));
+				step = (oldposy < posy) ? -dragStep.grad : dragStep.grad;
 				oldposy = posy;
 				//reset oldposx cause next time it will change it by 10 
 				//even if it's still moved in one direction
 				oldposx = posx;
-				changed = true;
 			}
 		}
 		else{
 			if (absx >= 10){
-				tmpgrad = grad * 10;
-				mstime = (oldposx > posx) ? mstime - tmpgrad : mstime + tmpgrad;
+				step = (oldposx > posx) ? -dragStep.grad * 10 : dragStep.grad * 10;
 				oldposx = posx;
 				//reset oldposx cause next time it will change it by 1
 				//even if it's still moved in one direction
 				oldposy = posy;
-				changed = true;
 			}
 		}
-		//MicroDVD steps the frame number, the other formats the time
-		int maxValue = (form == MDVD) ? MicroDvdSteps::MAX_FRAME : TimeCtrlSteps::MaxMs(form == MPL2 && !showFrames);
-		if (mstime < 0){ mstime = 0; }
-		else if (mstime > maxValue){ mstime = maxValue; }
-		if (mstime == (-tmpgrad)){ mstime = 0; return; }
-		else if (mstime == (maxValue + tmpgrad)){ mstime = maxValue; return; }
-		
-		if (changed){
-			if (showFrames){ mTime.orgframe = mstime; }
-			else if (form == MDVD){ mTime.SetMDVDFrame(mstime); }
-			else{ mTime.mstime = mstime; }
-			SetValue(mTime.raw(showFrames ? FRAME : form), true, false);
-			wxCommandEvent evt2(NUMBER_CHANGED, GetId()); AddPendingEvent(evt2);
-			timeUnchanged = false;
+		if (step && TimeCtrlSteps::DragStep(dragValue, step, dragStep.max)){
+			SetStepped(dragStep.frames, dragValue);
 		}
 	}
 
@@ -368,13 +377,9 @@ void TimeCtrl::OnMouseEvent(wxMouseEvent &event) {
 		oldposx = posx;
 		wxPoint pos;
 		HitTest(wxPoint(posx, posy), &pos);
-		int startPos = (form == ASS) ? 2 : 3;
-		//MPL2 shows tenths of a second and steps by one of them, unless it shows frames
-		bool mpl2 = form == MPL2 && !showFrames;
-		bool frames = form == FRAME || form == MDVD || (form == MPL2 && showFrames);
-		grad = TimeCtrlSteps::Grad(frames, mpl2, pos.x, startPos);
-		mTime.SetRaw(GetValue(), showFrames ? FRAME : form);
-		mstime = (form == FRAME || form == MDVD) ? mTime.orgframe : mTime.mstime;
+		dragStep = StepAt(pos.x);
+		mTime.SetRaw(GetValue(), ShownFormat());
+		dragValue = dragStep.frames ? mTime.orgframe : mTime.mstime;
 		curpos = pos.x;
 		SetSelection(pos.x, pos.x);
 		SetFocus();
@@ -385,27 +390,13 @@ void TimeCtrl::OnMouseEvent(wxMouseEvent &event) {
 	if (event.GetWheelRotation() != 0) {
 		wxPoint pos;
 		HitTest(wxPoint(posx, posy), &pos);
-		int startPos = (form == ASS) ? 2 : 3;
-		//MPL2 shows tenths of a second and steps by one of them, unless it shows frames
-		bool mpl2 = form == MPL2 && !showFrames;
-		bool frames = form == FRAME || form == MDVD || (form == MPL2 && showFrames);
-		grad = TimeCtrlSteps::Grad(frames, mpl2, pos.x, startPos);
-		mTime.SetRaw(GetValue(), showFrames ? FRAME : form);
-		int step = (event.GetWheelRotation() / event.GetWheelDelta())*grad;
-		if (form == MDVD && !showFrames){
-			//the time follows the frame, so a frame stepped to 0 shows 0
-			int frame = MicroDvdSteps::StepFrame(mTime.orgframe, step);
-			if (frame == mTime.orgframe){ return; }
-			mTime.SetMDVDFrame(frame);
+		TimeCtrlSteps::Step wheelStep = StepAt(pos.x);
+		mTime.SetRaw(GetValue(), ShownFormat());
+		int value = wheelStep.frames ? mTime.orgframe : mTime.mstime;
+		int step = (event.GetWheelRotation() / event.GetWheelDelta()) * wheelStep.grad;
+		if (TimeCtrlSteps::WheelStep(value, step, wheelStep.max)){
+			SetStepped(wheelStep.frames, value);
 		}
-		else{
-			if (form == FRAME || form == MDVD){ mTime.orgframe += step; }
-			else{ mTime.mstime += step; }
-			if (mTime.mstime < 0 || mTime.mstime > TimeCtrlSteps::MaxMs(mpl2) || mTime.orgframe < 0){ return; }
-		}
-		SetValue(mTime.raw(showFrames ? FRAME : form), true, false);
-		wxCommandEvent evt2(NUMBER_CHANGED, GetId()); AddPendingEvent(evt2);
-		timeUnchanged = false;
 		return;
 	}
 

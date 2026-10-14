@@ -15,6 +15,7 @@
 
 #include "check.h"
 #include "../HikariSub/MicroDvdSteps.h"
+#include "../HikariSub/TimeCtrlSteps.h"
 
 #include <climits>
 #include <cmath>
@@ -38,10 +39,13 @@ int ShownFrame(int frame, int ms, float fps)
 struct Field {
 	int frame;
 	int ms;
+	// a drag step, as TimeCtrl makes it for a MicroDVD time
 	void Step(int steps)
 	{
-		frame = StepFrame(frame, steps);
-		ms = FrameTime(frame, NTSC_FILM);
+		TimeCtrlSteps::Step step = TimeCtrlSteps::StepAt(false, true, false, 0, 3);
+		CHECK(step.frames);
+		if (TimeCtrlSteps::DragStep(frame, steps * step.grad, step.max))
+			ms = FrameTime(frame, NTSC_FILM);
 	}
 	int Shown() const { return ShownFrame(frame, ms, NTSC_FILM); }
 };
@@ -85,13 +89,24 @@ TEST(MicroDvdStepsDragChangesTheFrame)
 
 TEST(MicroDvdStepsHoldTheFrameInRange)
 {
-	CHECK_EQ(StepFrame(0, -1), 0);
-	CHECK_EQ(StepFrame(5, -10), 0);
-	CHECK_EQ(StepFrame(MAX_FRAME, 1), MAX_FRAME);
-	CHECK_EQ(StepFrame(MAX_FRAME - 3, 10), MAX_FRAME);
-	CHECK_EQ(StepFrame(MAX_FRAME, -1), MAX_FRAME - 1);
-	CHECK_EQ(StepFrame(INT_MAX, 1), MAX_FRAME);
-	CHECK_EQ(StepFrame(0, -(long long)INT_MAX - 10), 0);
+	using TimeCtrlSteps::DragStep;
+	int frame = 0;
+	CHECK(!DragStep(frame, -1, MAX_FRAME));
+	CHECK_EQ(frame, 0);
+	frame = 5;
+	CHECK(DragStep(frame, -10, MAX_FRAME));
+	CHECK_EQ(frame, 0);
+	frame = MAX_FRAME;
+	CHECK(!DragStep(frame, 1, MAX_FRAME));
+	CHECK_EQ(frame, MAX_FRAME);
+	frame = MAX_FRAME - 3;
+	CHECK(DragStep(frame, 10, MAX_FRAME));
+	CHECK_EQ(frame, MAX_FRAME);
+	CHECK(DragStep(frame, -1, MAX_FRAME));
+	CHECK_EQ(frame, MAX_FRAME - 1);
+	frame = INT_MAX;
+	CHECK(DragStep(frame, 1, MAX_FRAME));
+	CHECK_EQ(frame, MAX_FRAME);
 
 	Field field = Typed(3);
 	field.Step(-10);

@@ -18,23 +18,13 @@
 #include <climits>
 
 // A MicroDVD time is a frame number. The time field's wheel and right-button
-// drag step that number, and the time in milliseconds follows the frame, so
-// SubsTime::raw never takes a 0 frame for one that was not computed yet.
+// drag step that number (TimeCtrlSteps), and the time in milliseconds follows
+// the frame, so SubsTime::raw never takes a 0 frame for one that was not
+// computed yet.
 namespace MicroDvdSteps {
 
 // the largest frame the time field takes
 constexpr int MAX_FRAME = 999999999;
-
-// the frame `steps` frames from `frame`, held in 0..MAX_FRAME
-inline int StepFrame(int frame, long long steps)
-{
-	long long next = (long long)frame + steps;
-	if (next < 0)
-		return 0;
-	if (next > MAX_FRAME)
-		return MAX_FRAME;
-	return (int)next;
-}
 
 // the time of a frame at fps, as a typed frame gets it (SubsTime::ParseMS):
 // 0 at frame 0, and INT_MAX past what an int holds

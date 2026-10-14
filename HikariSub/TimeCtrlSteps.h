@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include "MicroDvdSteps.h"
+
 #include <cmath>
 
 // The steps a time control takes for a mouse wheel notch or a right-button
@@ -54,6 +56,55 @@ inline int Grad(bool frames, bool mpl2, long pointerPos, int hoursEnd)
 inline int MaxMs(bool mpl2)
 {
 	return mpl2 ? MPL2_MAX_MS : MAX_MS;
+}
+
+// The largest frame number a field takes.
+constexpr int MAX_FRAME = MicroDvdSteps::MAX_FRAME;
+
+// What one wheel notch or one vertical drag step moves; a sideways drag step
+// moves ten of them.
+struct Step {
+	// The step moves the frame number (SubsTime::orgframe), not the time.
+	bool frames;
+	int grad;
+	// The value runs from 0 to this.
+	int max;
+};
+
+// showsFrames: the field shows frames in place of times (the Frames box, with
+// a video whose frame times are known). microDvd, mpl2: the subtitle format.
+// column: the character under the pointer; hoursEnd as for Grad.
+inline Step StepAt(bool showsFrames, bool microDvd, bool mpl2, long column, int hoursEnd)
+{
+	if (showsFrames || microDvd)
+		return { true, 1, MAX_FRAME };
+	return { false, Grad(false, mpl2, column, hoursEnd), MaxMs(mpl2) };
+}
+
+// A drag step stops at 0 and at max. False, with value as it was, when value
+// is already at the limit the step goes towards.
+inline bool DragStep(int &value, int step, int max)
+{
+	long long next = (long long)value + step;
+	if (next < 0)
+		next = 0;
+	else if (next > max)
+		next = max;
+	if (next == value)
+		return false;
+	value = (int)next;
+	return true;
+}
+
+// A wheel step that would leave 0..max is not made. False, with value as it
+// was, when no step is made.
+inline bool WheelStep(int &value, int step, int max)
+{
+	long long next = (long long)value + step;
+	if (step == 0 || next < 0 || next > max)
+		return false;
+	value = (int)next;
+	return true;
 }
 
 } // namespace TimeCtrlSteps

@@ -16,7 +16,7 @@
 #include "check.h"
 #include "../HikariSub/TimeCtrlSteps.h"
 
-#include <algorithm>
+#include <cstdlib>
 
 using namespace TimeCtrlSteps;
 
@@ -27,11 +27,10 @@ namespace {
 // or keeps the time when it would leave the range.
 int Mpl2Wheel(int shownTenths, int notches)
 {
+	Step step = StepAt(false, false, true, 0, 3);
 	int ms = shownTenths * MPL2_TENTH_MS;
-	int moved = ms + notches * Grad(false, true, 0, 3);
-	if (moved < 0 || moved > MaxMs(true))
-		return shownTenths;
-	return Mpl2Tenths(moved);
+	WheelStep(ms, notches * step.grad, step.max);
+	return Mpl2Tenths(ms);
 }
 
 // What TimeCtrl does for a right-button drag on an MPL2 time: it reads the
@@ -39,10 +38,17 @@ int Mpl2Wheel(int shownTenths, int notches)
 // sideways step, clamped to the range.
 int Mpl2Drag(int shownTenths, int verticalSteps, int sidewaysSteps)
 {
-	int grad = Grad(false, true, 0, 3);
-	int ms = shownTenths * MPL2_TENTH_MS + verticalSteps * grad + sidewaysSteps * grad * 10;
-	return Mpl2Tenths(std::clamp(ms, 0, MaxMs(true)));
+	Step step = StepAt(false, false, true, 0, 3);
+	int ms = shownTenths * MPL2_TENTH_MS;
+	for (int i = 0; i < std::abs(verticalSteps); i++)
+		DragStep(ms, verticalSteps < 0 ? -step.grad : step.grad, step.max);
+	for (int i = 0; i < std::abs(sidewaysSteps); i++)
+		DragStep(ms, (sidewaysSteps < 0 ? -step.grad : step.grad) * 10, step.max);
+	return Mpl2Tenths(ms);
 }
+
+constexpr int ASS_HOURS_END = 2;
+constexpr int SRT_HOURS_END = 3;
 
 } // namespace
 
@@ -100,4 +106,117 @@ TEST(other_formats_keep_their_steps)
 	CHECK_EQ(Grad(false, false, 8, 3), 1000);
 	CHECK_EQ(Grad(false, false, 10, 3), 10);
 	CHECK_EQ(MaxMs(false), 35999999);
+}
+
+TEST(shown_frames_step_the_frame_number_by_one_in_every_column)
+{
+	// The hours column of an ASS, SRT or TMP field: with the Frames box
+	// checked, still one frame, not an hour's worth of milliseconds.
+	for (int hoursEnd : { ASS_HOURS_END, SRT_HOURS_END }) {
+		for (long column : { 0L, 1L, 4L, 7L, 9L }) {
+			for (bool mpl2 : { false, true }) {
+				Step step = StepAt(true, false, mpl2, column, hoursEnd);
+				CHECK(step.frames);
+				CHECK_EQ(step.grad, 1);
+				CHECK_EQ(step.max, MAX_FRAME);
+			}
+		}
+	}
+}
+
+TEST(microdvd_steps_the_frame_number)
+{
+	Step step = StepAt(false, true, false, 0, SRT_HOURS_END);
+	CHECK(step.frames);
+	CHECK_EQ(step.grad, 1);
+	CHECK_EQ(step.max, MAX_FRAME);
+}
+
+TEST(times_step_by_the_unit_of_the_column)
+{
+	// "0:00:00.00"
+	CHECK_EQ(StepAt(false, false, false, 0, ASS_HOURS_END).grad, 3600000);
+	CHECK_EQ(StepAt(false, false, false, 2, ASS_HOURS_END).grad, 60000);
+	CHECK_EQ(StepAt(false, false, false, 5, ASS_HOURS_END).grad, 1000);
+	CHECK_EQ(StepAt(false, false, false, 8, ASS_HOURS_END).grad, 10);
+	// "00:00:00,000"
+	CHECK_EQ(StepAt(false, false, false, 1, SRT_HOURS_END).grad, 3600000);
+	CHECK_EQ(StepAt(false, false, false, 3, SRT_HOURS_END).grad, 60000);
+	CHECK_EQ(StepAt(false, false, false, 6, SRT_HOURS_END).grad, 1000);
+	CHECK_EQ(StepAt(false, false, false, 9, SRT_HOURS_END).grad, 10);
+
+	Step step = StepAt(false, false, false, 0, ASS_HOURS_END);
+	CHECK(!step.frames);
+	CHECK_EQ(step.max, MAX_MS);
+
+	Step mpl2 = StepAt(false, false, true, 0, SRT_HOURS_END);
+	CHECK(!mpl2.frames);
+	CHECK_EQ(mpl2.grad, MPL2_TENTH_MS);
+	CHECK_EQ(mpl2.max, MPL2_MAX_MS);
+}
+
+TEST(a_drag_moves_a_frame_number_by_one_and_sideways_by_ten)
+{
+	Step step = StepAt(true, false, false, 0, ASS_HOURS_END);
+	int frame = 1234;
+	CHECK(DragStep(frame, step.grad, step.max));
+	CHECK_EQ(frame, 1235);
+	CHECK(DragStep(frame, -step.grad * 10, step.max));
+	CHECK_EQ(frame, 1225);
+}
+
+TEST(a_drag_stops_at_the_limits)
+{
+	int frame = 5;
+	CHECK(DragStep(frame, -10, MAX_FRAME));
+	CHECK_EQ(frame, 0);
+	CHECK(!DragStep(frame, -1, MAX_FRAME));
+	CHECK_EQ(frame, 0);
+
+	frame = MAX_FRAME - 3;
+	CHECK(DragStep(frame, 10, MAX_FRAME));
+	CHECK_EQ(frame, MAX_FRAME);
+	CHECK(!DragStep(frame, 1, MAX_FRAME));
+	CHECK_EQ(frame, MAX_FRAME);
+
+	int ms = MAX_MS;
+	CHECK(!DragStep(ms, 36000000, MAX_MS));
+	CHECK_EQ(ms, MAX_MS);
+	ms = 0;
+	CHECK(!DragStep(ms, -3600000, MAX_MS));
+	CHECK_EQ(ms, 0);
+}
+
+TEST(a_wheel_step_moves_a_frame_number)
+{
+	Step step = StepAt(true, false, false, 0, SRT_HOURS_END);
+	int frame = 1234;
+	CHECK(WheelStep(frame, 3 * step.grad, step.max));
+	CHECK_EQ(frame, 1237);
+	CHECK(WheelStep(frame, -step.grad, step.max));
+	CHECK_EQ(frame, 1236);
+}
+
+TEST(a_wheel_step_past_a_limit_is_not_made)
+{
+	int frame = 0;
+	CHECK(!WheelStep(frame, -1, MAX_FRAME));
+	CHECK_EQ(frame, 0);
+	frame = MAX_FRAME;
+	CHECK(!WheelStep(frame, 1, MAX_FRAME));
+	CHECK_EQ(frame, MAX_FRAME);
+
+	int ms = 500;
+	CHECK(!WheelStep(ms, -3600000, MAX_MS));
+	CHECK_EQ(ms, 500);
+	ms = MAX_MS - 5;
+	CHECK(!WheelStep(ms, 10, MAX_MS));
+	CHECK_EQ(ms, MAX_MS - 5);
+}
+
+TEST(a_wheel_turn_under_one_notch_makes_no_step)
+{
+	int frame = 100;
+	CHECK(!WheelStep(frame, 0, MAX_FRAME));
+	CHECK_EQ(frame, 100);
 }

@@ -18,6 +18,7 @@
 #include <wx/window.h>
 #include "SubsTime.h"
 #include "HikariTextCtrl.h"
+#include "TimeCtrlSteps.h"
 //#include "VideoBox.h"
 
 class VideoBox;
@@ -50,12 +51,20 @@ private:
 	int oldposy;
 	int oldposx;
 	int curpos;
-	int mstime;
-	int grad;
+	//the frame number or time the drag steps, and how
+	int dragValue;
+	TimeCtrlSteps::Step dragStep;
 	bool showFrames;
 	bool timeUnchanged;
+	//the Frames box is on and frames can be shown: without a video, or with
+	//one whose frame times are known; else the field shows times
+	bool ShowsFrames();
+	//FRAME when the field shows frames, else the subtitle format
+	char ShownFormat();
 	void OnTimeWrite(wxCommandEvent& event);
 	void OnMouseEvent(wxMouseEvent &event);
+	TimeCtrlSteps::Step StepAt(long column);
+	void SetStepped(bool frames, int value);
 	void OnKeyEvent(wxKeyEvent& event);
 	//void OnPaste(wxCommandEvent &event);
 	//void OnCopy(wxCommandEvent &event);
