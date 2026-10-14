@@ -40,6 +40,7 @@
 #include "styles.h"
 #include "MappedButton.h"
 #include "HikariCheckBox.h"
+#include "DropperPointer.h"
 
 class ColorPickerSpectrum : public wxWindow {
 private:
@@ -277,7 +278,7 @@ class SimpleColorPickerDialog : public HikariDialog
 {
 public:
 	SimpleColorPickerDialog(wxWindow *parent, const AssColor &actualColor, int colorType = -1);
-	~SimpleColorPickerDialog(){ if (HasCapture()) ReleaseMouse(); }
+	~SimpleColorPickerDialog(){ pointerGrab.Release(); }
 	HikariChoice *colorType;
 	HikariTextCtrl *HexColor;
 	ColorPickerScreenDropper *dropper;
@@ -293,6 +294,9 @@ private:
 	void OnClose(wxCommandEvent& event);
 	AssColor color;
 	bool closed = false;
+	// Holds the pointer while it is outside the picker, so that a press there
+	// picks the colour under it.
+	DropperPointerGrab pointerGrab{ this };
 };
 
 class SimpleColorPicker

@@ -53,6 +53,21 @@
 #include <wx/defs.h>
 #define STATIC_BORDER_FLAG wxSTATIC_BORDER
 
+namespace {
+	// The cursor of the screen eyedroppers. EYEDROPPER_CURSOR is a cursor
+	// resource only Windows has: wxGTK takes the name for the path of a file,
+	// fails to load it with an error box and gives no cursor. Elsewhere the
+	// cursor is made from the eyedropper picture, with the same hotspot.
+	wxCursor EyedropperCursor()
+	{
+#ifdef _WIN32
+		return wxCursor(L"eyedropper_cursor");
+#else
+		return DropperCursorFromImage(CreateImageFromPngResource(L"eyedropper_tool"));
+#endif
+	}
+}
+
 
 
 
@@ -431,6 +446,16 @@ void ColorPickerScreenDropper::DropFromScreenXY(int x, int y)
 	// so the screen eyedropper is unsupported there (would capture black/garbage).
 	if (HikariSubIsWayland())
 		return;
+	// On X11 what the screen shows: wxScreenDC gives black there.
+	wxImage shown = ReadScreenArea(wxRect(x - resx / 2, y - resy / 2, resx, resy));
+	if (shown.IsOk()) {
+		{
+			wxMemoryDC capdc(capture);
+			capdc.DrawBitmap(wxBitmap(shown), 0, 0);
+		}
+		Refresh(false);
+		return;
+	}
 #endif
 	wxMemoryDC capdc(capture);
 	wxScreenDC screen;
@@ -1169,7 +1194,7 @@ void DialogColorPicker::OnDropperMouse(wxMouseEvent &evt)
 
 	if ((evt.LeftDown())) {
 		if (!screen_dropper_icon->HasCapture()) {
-			screen_dropper_icon->SetCursor(wxCursor(L"eyedropper_cursor"));
+			screen_dropper_icon->SetCursor(EyedropperCursor());
 			screen_dropper_icon->SetBitmap(wxNullBitmap);
 			screen_dropper_icon->CaptureMouse();
 			eyedropper_grab_point = evt.GetPosition();
@@ -1480,16 +1505,18 @@ void SimpleColorPickerDialog::OnLeaveWindow(wxMouseEvent& event)
 		wxRect windowRect = GetRect();
 		if (event.Leaving()) {
 			if (!windowRect.Contains(position)) {
-				if (!HasCapture()) {
-					CaptureMouse();
-					SetCursor(wxCursor(L"eyedropper_cursor"));
+				// Asks again also when wx reports the capture held: wxGTK
+				// reports it held when X refused the grab.
+				if (!pointerGrab.Holds()) {
+					pointerGrab.Take();
+					SetCursor(EyedropperCursor());
 				}
 			}
 		}
 		
 		if (windowRect.Contains(position)){
 			if (HasCapture()){
-				ReleaseMouse();
+				pointerGrab.Release();
 				SetCursor(wxCURSOR_ARROW);
 			}
 		}
@@ -1510,15 +1537,16 @@ void SimpleColorPickerDialog::OnLeaveWindow(wxMouseEvent& event)
 }
 
 void SimpleColorPickerDialog::OnShow(wxShowEvent& event) {
-	if (closed)
+	if (closed || !event.IsShown())
 		return;
-	CaptureMouse();
-	SetCursor(wxCursor(L"eyedropper_cursor"));
+	// On X11 the window manager has not mapped the window yet: the grab
+	// waits for the map.
+	pointerGrab.Take();
+	SetCursor(EyedropperCursor());
 }
 
 void SimpleColorPickerDialog::OnClose(wxCommandEvent& event) {
-	if (HasCapture()) 
-		ReleaseMouse();
+	pointerGrab.Release();
 	closed = true;
 	EndModal(event.GetId());
 }

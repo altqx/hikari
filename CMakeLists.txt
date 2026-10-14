@@ -77,6 +77,10 @@ pkg_check_modules(GSTREAMER REQUIRED IMPORTED_TARGET gstreamer-1.0 gstreamer-vid
 # The video window paints frames with cairo, which GTK brings and the package
 # takes from the host like the rest of the GTK stack.
 pkg_check_modules(CAIRO REQUIRED IMPORTED_TARGET cairo)
+# GDK says whether the colour picker's pointer grab was granted, which wxGTK's
+# CaptureMouse does not, and Xlib reads the screen for its eyedropper
+# (DropperPointer.cpp).
+pkg_check_modules(GTK3 REQUIRED IMPORTED_TARGET gtk+-3.0 x11)
 # LuaJIT is the vendored one, built as the Windows build builds it (Lua 5.2
 # extensions on, string.buffer off), not the distribution's: see the module.
 include(${CMAKE_SOURCE_DIR}/cmake/VendoredLuaJIT.cmake)
@@ -270,6 +274,7 @@ add_executable(hikarisub
     HikariSub/VisualClipRect.cpp
     HikariSub/StyleChange.cpp
     HikariSub/ColorPicker.cpp
+    HikariSub/DropperPointer.cpp
     HikariSub/DropFiles.cpp
     HikariSub/EditBox.cpp
     HikariSub/FontCollector.cpp
@@ -332,7 +337,7 @@ add_custom_target(hikarisub_gitparams ALL
 )
 add_dependencies(hikarisub hikarisub_gitparams
     hikarisub_depctrl_badmutex hikarisub_depctrl_precisetimer hikarisub_depctrl_downloadmanager)
-target_link_libraries(hikarisub PRIVATE ${wxWidgets_LIBRARIES} PkgConfig::LIBASS PkgConfig::FFMS2 hikarisub_luajit PkgConfig::HUNSPELL PkgConfig::UCHARDET PkgConfig::LIBCURL PkgConfig::ICU_UC PkgConfig::ICU_I18N PkgConfig::FFMPEG PkgConfig::FONTCONFIG PkgConfig::GSTREAMER PkgConfig::CAIRO Boost::filesystem Boost::locale Boost::regex $<$<BOOL:${Boost_SYSTEM_FOUND}>:Boost::system> $<$<BOOL:${Boost_THREAD_FOUND}>:Boost::thread> GL ${CMAKE_DL_LIBS})
+target_link_libraries(hikarisub PRIVATE ${wxWidgets_LIBRARIES} PkgConfig::LIBASS PkgConfig::FFMS2 hikarisub_luajit PkgConfig::HUNSPELL PkgConfig::UCHARDET PkgConfig::LIBCURL PkgConfig::ICU_UC PkgConfig::ICU_I18N PkgConfig::FFMPEG PkgConfig::FONTCONFIG PkgConfig::GSTREAMER PkgConfig::CAIRO PkgConfig::GTK3 Boost::filesystem Boost::locale Boost::regex $<$<BOOL:${Boost_SYSTEM_FOUND}>:Boost::system> $<$<BOOL:${Boost_THREAD_FOUND}>:Boost::thread> GL ${CMAKE_DL_LIBS})
 set_target_properties(hikarisub PROPERTIES
     BUILD_RPATH "$ORIGIN"
     INSTALL_RPATH "$ORIGIN"

@@ -18,6 +18,7 @@
 // keyboard's keymap. Needs the pinned wxGTK build and an X display.
 
 #include "check.h"
+#include "WxGtkApp.h"
 
 #include <wx/app.h>
 #include <wx/frame.h>
@@ -46,13 +47,7 @@ class KeyTarget
 public:
 	KeyTarget()
 	{
-		if (!wxTheApp) {
-			wxApp::SetInstance(new wxApp);
-			static int argc = 1;
-			static char arg0[] = "hikarisub_wxgtk_tests";
-			static char *argv[] = { arg0, nullptr };
-			m_initialized = wxEntryStart(argc, argv) && wxTheApp->CallOnInit();
-		}
+		m_initialized = WxGtkAppReady();
 		if (!m_initialized)
 			return;
 		m_frame = new wxFrame(nullptr, wxID_ANY, "keys");
@@ -96,7 +91,7 @@ public:
 private:
 	GtkWidget *Widget() const { return static_cast<GtkWidget *>(m_window->GetHandle()); }
 
-	static inline bool m_initialized = false;
+	bool m_initialized = false;
 	wxFrame *m_frame = nullptr;
 	wxWindow *m_window = nullptr;
 	KeyCodes m_codes;

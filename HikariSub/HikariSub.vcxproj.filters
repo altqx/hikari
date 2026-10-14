@@ -145,6 +145,9 @@
     <ClCompile Include="DropFiles.cpp">
       <Filter>D</Filter>
     </ClCompile>
+    <ClCompile Include="DropperPointer.cpp">
+      <Filter>D</Filter>
+    </ClCompile>
     <ClCompile Include="DShowPlayer.cpp">
       <Filter>D</Filter>
     </ClCompile>
@@ -598,6 +601,9 @@
       <Filter>B</Filter>
     </ClInclude>
     <ClInclude Include="DropFiles.h">
+      <Filter>D</Filter>
+    </ClInclude>
+    <ClInclude Include="DropperPointer.h">
       <Filter>D</Filter>
     </ClInclude>
     <ClInclude Include="DShowPlayer.h">

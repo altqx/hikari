@@ -447,6 +447,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClCompile Include="VisualClipRect.cpp" />
     <ClCompile Include="StyleChange.cpp" />
     <ClCompile Include="ColorPicker.cpp" />
+    <ClCompile Include="DropperPointer.cpp" />
     <ClCompile Include="DropFiles.cpp" />
     <ClCompile Include="DshowRenderer.cpp" />
     <ClCompile Include="EditBox.cpp" />
@@ -603,6 +604,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="MisspellReplacer.h" />
     <ClInclude Include="StyleChange.h" />
     <ClInclude Include="ColorPicker.h" />
+    <ClInclude Include="DropperPointer.h" />
     <ClInclude Include="DropFiles.h" />
     <ClInclude Include="DshowRenderer.h" />
     <ClInclude Include="EditBox.h" />
