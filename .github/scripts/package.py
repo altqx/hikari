@@ -186,16 +186,26 @@ def copy_ffmpeg_runtime(repo_root: Path, build_dir: Path, stage: Path) -> tuple[
 
 
 def copy_external_binaries(repo_root: Path, stage: Path) -> tuple[list[str], list[str]]:
-    """The VSFiltermod renderer (prebuilt, pinned)."""
+    """The VSFiltermod renderer (prebuilt, pinned by URL and SHA-256).
+
+    The download is cached under its hash, so an older pin's file of the same
+    name is never taken for it. A download or member whose hash differs from
+    the pin stops the packaging: a renderer that is not the pinned one must not
+    ship.
+    """
     taken: list[str] = []
     missing: list[str] = []
     plan = json.loads(MANIFEST.read_text(encoding="utf-8"))["external_binaries"]
     cache = repo_root / "Thirdparty" / ".cache" / "runtime"
     for entry in plan:
-        cached = cache / "ext" / Path(entry["url"]).name
+        cached = cache / "ext" / entry["sha256"][:16] / Path(entry["url"]).name
         if not fetch(entry["url"], cached):
             missing.append(entry["dest"])
             continue
+        got = sha256(cached)
+        if got != entry["sha256"]:
+            cached.unlink(missing_ok=True)
+            raise SystemExit(f"{entry['url']}: SHA-256 {got}, pinned {entry['sha256']}")
         out = stage / entry["dest"]
         out.parent.mkdir(parents=True, exist_ok=True)
         if cached.suffix == ".zip":
@@ -208,6 +218,9 @@ def copy_external_binaries(repo_root: Path, stage: Path) -> tuple[list[str], lis
                     shutil.copyfileobj(src, dest)
         else:
             shutil.copyfile(cached, out)
+        pinned = entry.get("member_sha256")
+        if pinned and sha256(out) != pinned:
+            raise SystemExit(f"{entry['dest']}: SHA-256 {sha256(out)}, pinned {pinned}")
         taken.append(entry["dest"])
     return taken, missing
 
