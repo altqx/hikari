@@ -132,6 +132,16 @@ class Legacy:
         return False
 
     def popups(self):
+        """The legacy process's other visible windows. `ui windows` lists only
+        unowned top-level windows, so a message box or dialog owned by the main
+        window (legacy's wxMessageBox "Info", "Error") is read from `ui tree`'s
+        window list for the process."""
+        tree = self.w.ui("tree", pid=self.pid, depth=0) if self.pid else None
+        if isinstance(tree, dict) and isinstance(tree.get("windows"), list):
+            # The foreground one first: the keys that answer it go there.
+            ws = sorted(tree["windows"], key=lambda w: not w.get("foreground"))
+            return [w.get("title") for w in ws
+                    if w.get("visible") and w.get("pid") == self.pid and MAIN_TITLE not in (w.get("title") or "")]
         mine = self.windows()
         if mine is None:
             return None
