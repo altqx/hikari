@@ -1,8 +1,5 @@
 {
- "note": "Reviewed results of automation_thirdparty_tests on Ubuntu (2026-10-05, LuaJIT with the Lua 5.2 extensions: L6-lua52-linux; SubInspector built for Linux: A33-subinspector-linux): load is ThirdPartyCorpus.ScriptsLoadAsAutoloadDoes per script, runs is ThirdPartyCorpus.MacrosApplyToTheFixtureDocument per run (\"<script> | <macro>\"). Paths read <stage>. Windows results are recorded by the tests but not pinned until they are observed there (unobserved_platforms).",
- "unobserved_platforms": [
-  "windows"
- ],
+ "note": "Reviewed results of automation_thirdparty_tests on Ubuntu (2026-10-05, LuaJIT with the Lua 5.2 extensions: L6-lua52-linux; SubInspector built for Linux: A33-subinspector-linux): load is ThirdPartyCorpus.ScriptsLoadAsAutoloadDoes per script, runs is ThirdPartyCorpus.MacrosApplyToTheFixtureDocument per run (\"<script> | <macro>\"). Paths read <stage>. Windows results were observed in the Windows VM (2026-10-14, job-a6dfbb66): they match these except where load_windows pins its own (clipper2 is looked for as clipper2.dll, with Windows' loader message). A platform not yet observed would be listed in unobserved_platforms; its results are recorded, not pinned.",
  "loaded_only": {
   "myaa.MergeScripts.moon": "DependencyControl tries to install its missing module myaa.pl (Myaamori's Penlight, not in this corpus) from the module's feed while the script loads, even with the updater off, so the reason it gives depends on the network; it fails to load either way."
  },
@@ -1218,6 +1215,23 @@
    "name": "iBus",
    "project": "unanimated-Aegisub-Scripts",
    "version": "1.7.0"
+  }
+ },
+ "load_windows": {
+  "ILL.ChangeAlign.moon": {
+   "error": "Error initializing Lua script \"ILL.ChangeAlign.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Autoload/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/Include/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Include/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/automation/tests/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/automation/tests/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"clipper2\" (cannot load module 'clipper2':  The specified module could not be found.  )",
+   "loaded": false,
+   "project": "ILL-Aegisub-Scripts"
+  },
+  "ILL.SplitText.moon": {
+   "error": "Error initializing Lua script \"ILL.SplitText.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Autoload/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/Include/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Include/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/automation/tests/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/automation/tests/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"clipper2\" (cannot load module 'clipper2':  The specified module could not be found.  )",
+   "loaded": false,
+   "project": "ILL-Aegisub-Scripts"
+  },
+  "phos.RemoveTags.moon": {
+   "error": "Error initializing Lua script \"phos.RemoveTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module phos.AssfPlus: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Autoload/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/Include/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/Include/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"<stage>/automation/tests/clipper2/clipper2/clipper2.dll\" (cannot load module '<stage>/automation/tests/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n  - \"clipper2\" (cannot load module 'clipper2':  The specified module could not be found.  )",
+   "loaded": false,
+   "project": "PhosCity-Aegisub-Scripts"
   }
  },
  "runs": {
