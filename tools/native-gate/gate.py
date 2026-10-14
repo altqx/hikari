@@ -727,14 +727,22 @@ def shadow_probe(png, r):
             "ring next to the frame vs outside (top middle)": inner_ring}
 
 
+def system_frame_shadow():
+    """The shadow a floating panel draws in this session: none inside a
+    frame the window system draws (Docking.windowShadow), which Hyprland's
+    border always is; SHADOW elsewhere."""
+    return 0 if B.name == "hyprland" else SHADOW
+
+
 def header_point(r, part="title"):
     """A point on a floating panel's header: its title (the engine's drag)
     or its free part right of the title (the window system's move), keeping
     clear of the "⋯" button."""
-    top = r[1] + SHADOW + 1
+    shadow = system_frame_shadow()
+    top = r[1] + shadow + 1
     if part == "title":
-        return r[0] + SHADOW + 1 + 22, top + HEADER // 2
-    return r[0] + r[2] - SHADOW - 1 - 12 - 20 - 2 - 24, top + HEADER // 2
+        return r[0] + shadow + 1 + 22, top + HEADER // 2
+    return r[0] + r[2] - shadow - 1 - 12 - 20 - 2 - 24, top + HEADER // 2
 
 
 # ---------------------------------------------------------------- steps
@@ -1008,7 +1016,9 @@ def step_floating():
         return
     # X11 here runs no compositing manager (openbox alone): no transparency,
     # so no shadow (Docking.floatingShadow 0); a picom run below checks it.
-    shadow = 0 if B.name == "x11" else SHADOW
+    # Inside Hyprland's border the panel draws none either: the border sits
+    # tight round its 1-pixel frame.
+    shadow = 0 if B.name == "x11" else system_frame_shadow()
     floating_frame(r, shadow, "float-0-window")
     floating_decoration("Audio", r)
     # Move, somewhere no drop is offered: away from the main window where
@@ -1141,7 +1151,7 @@ def floating_decoration(title, r):
         named = bool(ink) and ink >= 20
         verdict("floating-borderless", "observed" if named else "failed",
                 f"Hyprland's xdg-decoration answer: {log_}; Hyprland draws no title bar, only its {bs}-pixel border "
-                f"round the window's whole surface (the {SHADOW}-pixel shadow margin inside it); the header's name "
+                f"round the window's whole surface, with no shadow drawn inside it; the header's name "
                 f"(title ink {ink} in {box}, 20 or more when drawn) "
                 + ("is shown" if named else "is MISSING: the header leaves the name to a window-system title bar "
                    "that Hyprland never draws"), ["float-0-window.png"])
@@ -1241,8 +1251,11 @@ def floating_frame(r, shadow, shot, suffix=""):
                 i = (py * iw + px) * 3
                 edge.append(tuple(raw[i:i + 3]))
     black = [c for c in edge if max(c) < 16]
-    verdict("floating-no-compositor-frame", "observed" if edge and not black and len(set(edge)) <= 2 else "failed",
-            f"X11 without a compositing manager: the window's outermost pixels {sorted(set(edge))} "
+    where_ = ("X11 without a compositing manager" if B.name == "x11"
+              else f"inside {B.name}'s border (no shadow drawn in a window-system frame)")
+    verdict("floating-no-compositor-frame" if B.name == "x11" else "floating-shadow" + suffix,
+            "observed" if edge and not black and len(set(edge)) <= 2 else "failed",
+            f"{where_}: the window's outermost pixels {sorted(set(edge))} "
             f"({len(black)} of {len(edge)} black); the frame fills the window", ev0)
 
 
