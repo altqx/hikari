@@ -33,6 +33,7 @@
 #include <QQmlContext>
 #include <QQmlExpression>
 #include <QQmlProperty>
+#include <QScreen>
 #include <QQmlEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -1013,76 +1014,90 @@ Rectangle {
         }
         const QString prefix = qEnvironmentVariable("HIKARI_ICON_SHEET_PREFIX", QStringLiteral("k1"));
         constexpr int columns = 8, cellWidth = 168, cellHeight = 44;
-        const int rows = int((roles.size() + columns - 1) / columns);
+        // A sheet taller than the screen is cut by a desktop's window system
+        // (the windows platform keeps a window inside its monitor), so the
+        // roles go on pages that fit: one page offscreen and on large screens.
+        const QScreen *screen = QGuiApplication::primaryScreen();
+        const int fitRows = screen && QGuiApplication::platformName() != QLatin1String("offscreen")
+            ? std::max(1, (screen->availableGeometry().height() - 80) / cellHeight) : 1000;
+        const QStringList allRoles = roles;
+        const int pageRoles = fitRows * columns;
+        const int pages = int((allRoles.size() + pageRoles - 1) / pageRoles);
         const QString outDir = qEnvironmentVariable("HIKARI_ICON_SHEET_DIR");
-        for (const auto code : ui::theme::kCodes) {
-            useTheme(code);
-            const QColor background = themeRoles().background;
-            const QColor text = themeRoles().text;
-            QByteArray qml = R"(
-import QtQuick
-import Hikari.Ui
-Rectangle {
-    id: sheet
-    property var roles: []
-    color: "BG"
-    width: COLS * CW
-    height: ROWS * CH
-    Grid {
-        columns: COLS
-        Repeater {
-            model: sheet.roles
-            delegate: Item {
-                required property string modelData
-                width: CW
-                height: CH
-                Icon { objectName: "icon_" + parent.modelData; iconRole: parent.modelData; x: 8; y: 6 }
-                Icon { iconRole: parent.modelData; size: 32; x: 32; y: 6 }
-                Text { x: 72; y: 6; width: CW - 76; text: parent.modelData; color: "FG"; font.pixelSize: 11; wrapMode: Text.WrapAnywhere }
-            }
+        for (int page = 0; page < pages; ++page) {
+            roles = allRoles.mid(page * pageRoles, pageRoles);
+            const int rows = int((roles.size() + columns - 1) / columns);
+            for (const auto code : ui::theme::kCodes) {
+                useTheme(code);
+                const QColor background = themeRoles().background;
+                const QColor text = themeRoles().text;
+                QByteArray qml = R"(
+    import QtQuick
+    import Hikari.Ui
+    Rectangle {
+        id: sheet
+        property var roles: []
+        color: "BG"
+        width: COLS * CW
+        height: ROWS * CH
+        Grid {
+            columns: COLS
+            Repeater {
+                model: sheet.roles
+                delegate: Item {
+                    required property string modelData
+                    width: CW
+                    height: CH
+                    Icon { objectName: "icon_" + parent.modelData; iconRole: parent.modelData; x: 8; y: 6 }
+                    Icon { iconRole: parent.modelData; size: 32; x: 32; y: 6 }
+                    Text { x: 72; y: 6; width: CW - 76; text: parent.modelData; color: "FG"; font.pixelSize: 11; wrapMode: Text.WrapAnywhere }
+                }
         }
     }
 }
 )";
-            qml.replace("BG", background.name().toLatin1()).replace("FG", text.name().toLatin1());
-            qml.replace("COLS", QByteArray::number(columns)).replace("ROWS", QByteArray::number(rows));
-            qml.replace("CW", QByteArray::number(cellWidth)).replace("CH", QByteArray::number(cellHeight));
-            auto shown = show(qml, QSize(columns * cellWidth, rows * cellHeight));
-            QVERIFY(shown.root);
-            shown.root->setProperty("roles", roles);
-            QVERIFY(QTest::qWaitForWindowExposed(shown.window.get()));
-            QImage sheet;
-            QTRY_VERIFY((sheet = shown.window->grabWindow(), !sheet.isNull() && sheet.width() > 0));
-            const qreal dpr = shown.window->effectiveDevicePixelRatio();
-            QCOMPARE(sheet.width(), qRound(columns * cellWidth * dpr));
-            const QColor colour = themeRoles().text;
-            const QColor accent = themeRoles().accent;
-            int worst = 0;
-            QString worstRole;
-            for (int i = 0; i < roles.size(); ++i) {
-                // the 16-unit icon at (8, 6) of its cell, in device pixels
-                const int px = qRound((i % columns * cellWidth + 8) * dpr), py = qRound((i / columns * cellHeight + 6) * dpr);
-                const int side = qRound(16 * dpr);
-                const QImage expected = drawnFromSource(roles[i], side, colour, accent);
-                for (int y = 0; y < side; ++y)
-                    for (int x = 0; x < side; ++x) {
-                        const QColor want = composite(expected.pixel(x, y), background);
-                        const QColor got(sheet.pixel(px + x, py + y));
-                        const int d = std::max({std::abs(want.red() - got.red()), std::abs(want.green() - got.green()),
-                                                std::abs(want.blue() - got.blue())});
-                        if (d > worst) {
-                            worst = d;
-                            worstRole = roles[i];
+                qml.replace("BG", background.name().toLatin1()).replace("FG", text.name().toLatin1());
+                qml.replace("COLS", QByteArray::number(columns)).replace("ROWS", QByteArray::number(rows));
+                qml.replace("CW", QByteArray::number(cellWidth)).replace("CH", QByteArray::number(cellHeight));
+                auto shown = show(qml, QSize(columns * cellWidth, rows * cellHeight));
+                QVERIFY(shown.root);
+                shown.root->setProperty("roles", roles);
+                QVERIFY(QTest::qWaitForWindowExposed(shown.window.get()));
+                QImage sheet;
+                QTRY_VERIFY((sheet = shown.window->grabWindow(), !sheet.isNull() && sheet.width() > 0));
+                const qreal dpr = shown.window->effectiveDevicePixelRatio();
+                QCOMPARE(sheet.width(), qRound(columns * cellWidth * dpr));
+                QCOMPARE(sheet.height(), qRound(rows * cellHeight * dpr)); // not cut by the screen
+                const QColor colour = themeRoles().text;
+                const QColor accent = themeRoles().accent;
+                int worst = 0;
+                QString worstRole;
+                for (int i = 0; i < roles.size(); ++i) {
+                    // the 16-unit icon at (8, 6) of its cell, in device pixels
+                    const int px = qRound((i % columns * cellWidth + 8) * dpr), py = qRound((i / columns * cellHeight + 6) * dpr);
+                    const int side = qRound(16 * dpr);
+                    const QImage expected = drawnFromSource(roles[i], side, colour, accent);
+                    for (int y = 0; y < side; ++y)
+                        for (int x = 0; x < side; ++x) {
+                            const QColor want = composite(expected.pixel(x, y), background);
+                            const QColor got(sheet.pixel(px + x, py + y));
+                            const int d = std::max({std::abs(want.red() - got.red()), std::abs(want.green() - got.green()),
+                                                    std::abs(want.blue() - got.blue())});
+                            if (d > worst) {
+                                worst = d;
+                                worstRole = roles[i];
+                            }
                         }
-                    }
-            }
-            QVERIFY2(worst <= 8, qPrintable(QStringLiteral("%1 differs by %2").arg(worstRole).arg(worst)));
-            if (!outDir.isEmpty()) {
-                QDir().mkpath(outDir);
-                const QString name = QStringLiteral("%1/%2-%3-%4.png")
-                                         .arg(outDir, prefix, ui::theme::codeName(code))
-                                         .arg(qRound(dpr * 100));
-                QVERIFY(sheet.save(name));
+                }
+                QVERIFY2(worst <= 8, qPrintable(QStringLiteral("%1 differs by %2").arg(worstRole).arg(worst)));
+                if (!outDir.isEmpty()) {
+                    QDir().mkpath(outDir);
+                    const QString name = QStringLiteral("%1/%2-%3-%4%5.png")
+                                             .arg(outDir, prefix, ui::theme::codeName(code))
+                                             .arg(qRound(dpr * 100))
+                                             .arg(pages > 1 ? QStringLiteral("-page%1").arg(page + 1) : QString());
+                    QVERIFY(sheet.save(name));
+                }
             }
         }
     }
