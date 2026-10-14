@@ -15,6 +15,7 @@
 #include <QDir>
 #include <QFile>
 #include <QGuiApplication>
+#include <QPalette>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -764,6 +765,42 @@ private slots:
         QVERIFY(!application->video().offering());
         QTest::qWait(200);
         QVERIFY(!application->video().hasVideo()); // No: nothing loads
+    }
+
+    // The question sits over the Video panel beside the tool rail, on the
+    // panel colour: the style's Frame drew only its outline, so the rail's
+    // icons showed through "Associated files:" (evidence sweep, P9 / T1).
+    void theQuestionIsOpaqueBesideTheToolRail()
+    {
+        const QString folder = dir.filePath(QStringLiteral("opaque"));
+        QDir().mkpath(folder);
+        QFile::remove(folder + QStringLiteral("/op.mkv"));
+        QVERIFY(QFile::copy(media("cfr.mkv"), folder + QStringLiteral("/op.mkv")));
+        const QString subs = writeAss(folder + QStringLiteral("/op.ass"), "Video File: op.mkv\n", "op");
+        QVERIFY(application->openFile(subs));
+        QVERIFY(application->video().offering());
+        QQuickItem *offer = visualItem(QStringLiteral("associationOffer"));
+        QQuickItem *rail = visualItem(QStringLiteral("visualToolRail"));
+        QVERIFY(offer && rail);
+        QTRY_VERIFY(offer->isVisible() && offer->width() > 0 && offer->height() > 0);
+        QVERIFY(rail->isVisible());
+        const QRectF offerRect = offer->mapRectToScene(QRectF(0, 0, offer->width(), offer->height()));
+        const QRectF railRect = rail->mapRectToScene(QRectF(0, 0, rail->width(), rail->height()));
+        QVERIFY2(!offerRect.intersects(railRect), "the question covers the tool rail");
+        QCOMPARE(offerRect.left(), railRect.right());
+        // An opaque fill in the panel colour, drawn: inside its outline the
+        // grabbed window is that colour, not the panel body's below it.
+        auto *fill = findItem(offer, QStringLiteral("associationOfferBackground"));
+        QVERIFY(fill);
+        const QColor panel = fill->property("color").value<QColor>();
+        QCOMPARE(panel.alpha(), 255);
+        QCOMPARE(panel, QGuiApplication::palette().color(QPalette::Window)); // the theme's panel
+        const QImage shot = window->grabWindow();
+        const qreal dpr = shot.devicePixelRatio();
+        for (const QPointF at : {offerRect.topLeft() + QPointF(3, 3), offerRect.bottomLeft() + QPointF(3, -3)})
+            QCOMPARE(QColor(shot.pixel((at * dpr).toPoint())), QColor(panel.rgb()));
+        application->video().dismissOffer();
+        QVERIFY(!offer->isVisible());
     }
 
     // OpenFile on a video: subtitles of the same name beside it are offered

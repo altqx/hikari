@@ -8,6 +8,10 @@
 // (visual-language.md: focus stays distinguishable from selection).
 // Everything else is Fusion's.
 // The popup's frame takes the boundary colour too.
+// Fusion's text field inside the box (read-only unless the box is editable)
+// is the box's Edit to assistive technology (UI Automation's Edit under the
+// ComboBox); it carries the box's accessible name, as a native combo box's
+// edit does, rather than none (K1: every control named).
 import QtQuick
 import QtQuick.Controls.Fusion as F
 import QtQuick.Controls.Fusion.impl as FI
@@ -25,6 +29,11 @@ F.ComboBox {
         border.color: !control.enabled ? control.palette.mid
             : highlighted ? F.Fusion.highlightedOutline(control.palette) : control.palette.mid
         FocusFrame { control: control; shown: control.visualFocus }
+    }
+    Binding {
+        target: control.contentItem
+        property: "Accessible.name"
+        value: control.Accessible.name
     }
     Binding {
         target: control.popup ? control.popup.background : null

@@ -561,7 +561,7 @@ ApplicationWindow {
         function openFor(target, anchor) {
             dock = target
             // inside a floating panel's frame, not over its drawn shadow
-            margins = anchor.Window.window !== root ? Docking.floatingShadow + 1 : 0
+            margins = anchor.Window.window !== root ? Docking.windowShadow(anchor.Window.window) + 1 : 0
             popup(anchor, 0, anchor.height)
         }
         onAboutToShow: Docking.openMenu = dock ? dock.uniqueName : ""
@@ -2291,16 +2291,18 @@ ApplicationWindow {
 
                 // The legacy "Associated files" confirmation, inline: the
                 // Document stays editable whatever is chosen (P9: its text,
-                // buttons and "Apply to All").
+                // buttons and "Apply to All"). Over the picture, beside the
+                // tool rail, so the rail stays whole and usable.
                 AssociationOffer {
                     video: root.video
-                    anchors { left: parent.left; right: parent.right; top: parent.top }
+                    anchors { left: videoStageDock.left; right: parent.right; top: parent.top }
                     z: 1
                 }
-                // V3: the indexing's progress and Cancel.
+                // V3: the indexing's progress and Cancel, placed as the
+                // question above.
                 VideoIndexingProgress {
                     video: root.video
-                    anchors { left: parent.left; right: parent.right; top: parent.top }
+                    anchors { left: videoStageDock.left; right: parent.right; top: parent.top }
                     z: 1
                 }
                 // T1: the tool rail beside the canvas (layout A).

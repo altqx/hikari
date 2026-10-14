@@ -20,6 +20,8 @@ import subprocess
 import sys
 import time
 
+from gatelib import TEST_RUNS, default_order, drag_points, drag_steps, find_frame, unexpected_skips
+
 GATE = os.environ["GATE_DIR"]
 EVID = os.path.join(os.environ["EVIDENCE"], sys.argv[1])
 APP = os.environ["APP"]
@@ -123,6 +125,10 @@ KEYS = {
     "end": (107, "End", "End"), "home": (102, "Home", "Home"), "f11": (87, "F11", "F11"),
     "f4": (62, "F4", "F4"), "super": (125, "super", "Super_L"),
     "menu": (127, "Menu", "Menu"),
+    # E6's "{\\", Orca's modifier and KP_Enter, the Hangul key
+    "bracketleft": (26, "bracketleft", "bracketleft"), "backslash": (43, "backslash", "backslash"),
+    "insert": (110, "Insert", "Insert"), "kp_enter": (96, "KP_Enter", "KP_Enter"),
+    "hangul": (122, "Hangul", "Hangul"),
 }
 LETTERS = "qwertyuiop asdfghjkl zxcvbnm"
 CODES = {"q": 16, "w": 17, "e": 18, "r": 19, "t": 20, "y": 21, "u": 22, "i": 23, "o": 24, "p": 25,
@@ -130,6 +136,12 @@ CODES = {"q": 16, "w": 17, "e": 18, "r": 19, "t": 20, "y": 21, "u": 22, "i": 23,
          "z": 44, "x": 45, "c": 46, "v": 47, "b": 48, "n": 49, "m": 50, " ": 57, "1": 2, "2": 3, "3": 4}
 for ch, code in CODES.items():
     KEYS.setdefault(ch, (code, "space" if ch == " " else ch, "space" if ch == " " else ch))
+
+
+def caption_is(caption, title):
+    """A window's caption names TITLE; the main window is titled
+    "<document> - HikariSub" once a Document is open."""
+    return caption == title or (title == "HikariSub" and caption.endswith(" - HikariSub"))
 
 
 class Backend:
@@ -247,7 +259,7 @@ class Sway(EiBackend):
     def client_rect(self, title):
         for line in self.windows().splitlines():
             m = re.search(r"'(.*)' .* client=(-?\d+),(-?\d+) (\d+)x(\d+) output=(\S+)", line)
-            if m and m.group(1) == title:
+            if m and caption_is(m.group(1), title):
                 return tuple(int(m.group(i)) for i in range(2, 6)) + (m.group(6),)
         return None
 
@@ -281,7 +293,7 @@ class KWin(EiBackend):
         fr = frames(st).get(title)
         for line in self.windows().splitlines():
             m = re.match(r'\S+ "(.*)" (-?[\d.]+),(-?[\d.]+) (\d+)x(\d+) output=(\S+)', line)
-            if m and m.group(1) == title and fr:
+            if m and caption_is(m.group(1), title) and fr:
                 x, y, w, h = float(m.group(2)), float(m.group(3)), int(m.group(4)), int(m.group(5))
                 deco = h - fr["h"]
                 return (int(x + (w - fr["w"]) / 2), int(y + deco - (w - fr["w"]) / 2), fr["w"], fr["h"], m.group(6))
@@ -354,7 +366,43 @@ class SwayActivate(Sway):
         sh(["swaymsg", "focus_on_window_activation", "focus"])
 
 
-BACKENDS = {"sway": Sway, "sway-activate": SwayActivate, "kwin": KWin, "mutter": Mutter, "x11": X11}
+class Hyprland(Sway):
+    """Hyprland (D3), nested in KWin (sessions/hyprland-start.sh; session
+    directory "hypr"): wtype and the virtual pointer as on sway, window
+    geometry from hyprctl."""
+    name = "hyprland"
+
+    def hyprctl(self, *args):
+        return sh(["hyprctl", *args])
+
+    def extent(self):
+        mons = json.loads(self.hyprctl("monitors", "-j") or "[]")
+        if not mons:
+            return 1600, 1000
+        return (max(m["x"] + int(m["width"] / m["scale"]) for m in mons),
+                max(m["y"] + int(m["height"] / m["scale"]) for m in mons))
+
+    def windows(self):
+        mons = {m["id"]: m["name"] for m in json.loads(self.hyprctl("monitors", "-j") or "[]")}
+        active = json.loads(self.hyprctl("activewindow", "-j") or "{}").get("address")
+        out = []
+        for c in json.loads(self.hyprctl("clients", "-j") or "[]"):
+            (x, y), (w, h) = c["at"], c["size"]
+            title = "'" + c["title"] + "'"  # as swaymsg's, which client_rect reads, apostrophes and all
+            out.append(f'{"floating_con" if c["floating"] else "con":12} {c["class"]} {title} {x},{y} {w}x{h} '
+                       f'client={x},{y} {w}x{h} output={mons.get(c["monitor"])} fullscreen={c["fullscreen"]} '
+                       f'{"FOCUSED" if c["address"] == active else ""}')
+        return "\n".join(out)
+
+    def urgent(self, title):
+        return False
+
+    def focus(self, title_rx):
+        self.hyprctl("dispatch", f'hl.dsp.focus({{ window = "title:{title_rx}" }})')
+
+
+BACKENDS = {"sway": Sway, "sway-activate": SwayActivate, "kwin": KWin, "mutter": Mutter, "x11": X11,
+            "hyprland": Hyprland}
 B = BACKENDS[sys.argv[1]]()
 
 
@@ -390,9 +438,26 @@ def episode():
 PANELS = ["Video", "Audio", "Line editor", "Grid", "Reference", "Timing", "Search"]
 
 
+def park_pointer():
+    """The pointer to the bottom-left corner (3, 997: every session's screen
+    is 1000 pixels high) before a menu is walked by keys, away from the
+    menus (it may rest on the main window's status bar, where a pointer
+    selects nothing): a submenu that opens under the resting pointer highlights the item
+    there (KWin put View > Panels' submenu under it and Search, its last
+    item, took the highlight and opened, so the Downs went into Search)."""
+    try:
+        if B.name == "x11":
+            sh(["xdotool", "mousemove", "3", "997"])
+        else:
+            B.pointer("move 3 997", "wait 150")
+    except Exception as e:  # noqa: BLE001 - parking is a courtesy, never a failure
+        log(f"park_pointer: {e!r}")
+
+
 def open_view():
     """Alt+W opens the View menu ("Vie&w": Alt+V stays with legacy's &Video).
     Retried until the View menu (its "Move panel…" item) shows."""
+    park_pointer()
     for _ in range(3):
         B.keys("alt+w", 0.4)
         dump = sh(["python3", f"{GATE}/atspi_tool.py", "dump"])
@@ -413,6 +478,7 @@ def menu_to(name, opener=None):
         if not open_view():
             return False
     else:
+        park_pointer()
         B.keys(opener, 0.6)
     try:
         menus = json.loads(sh(["python3", f"{GATE}/atspi_tool.py", "menu"]) or "[]")
@@ -484,6 +550,8 @@ def focus_main_compositor():
         sh("xdotool search --onlyvisible --name 'HikariSub$' windowactivate")
     elif B.name == "kwin":
         B.script('for (const w of workspace.windowList()) if (/HikariSub$/.test(w.caption)) workspace.activeWindow = w;')
+    elif B.name == "hyprland":
+        B.focus("HikariSub$")
     else:
         r = B.client_rect("HikariSub")
         B.pointer(f"move {r[0] + 400} {r[1] - 15}", "wait 150", "down", "wait 50", "up", "wait 400")
@@ -544,7 +612,7 @@ def dismiss_notices():
 SHADOW = 8
 HEADER = 35
 ACCENT = "#9CDBC9"  # the dark theme's default (green) accent: only the drop highlight uses it
-WAYLAND = sys.argv[1] in ("sway", "sway-activate", "kwin", "mutter")
+WAYLAND = sys.argv[1] in ("sway", "sway-activate", "kwin", "mutter", "hyprland")
 
 
 def where(role, name, frame=None):
@@ -578,29 +646,10 @@ def locate_floating(title, scale=1, x_from=0, path=None):
         B.shot(path)
     iw, ih, raw = raw_pixels(path)
     fw, fh = (fr["w"] - 2 * SHADOW) * scale, (fr["h"] - 2 * SHADOW) * scale
-    for y in range(ih - fh + 1):
-        row = raw[y * iw * 3:(y + 1) * iw * 3]
-        x = x_from
-        while x < iw:
-            c = row[3 * x:3 * x + 3]
-            e = x + 1
-            while e < iw and row[3 * e:3 * e + 3] == c:
-                e += 1
-            run = e - x
-            if fw - 10 * scale <= run <= fw - 2:
-                left = x - (fw - run) // 2
-                # the left boundary: the same colour down the frame's side
-                ok = 0 <= left < iw
-                for k in range(1, 9):
-                    yy = y + k * fh // 9
-                    if not ok or yy >= ih:
-                        ok = False
-                        break
-                    ok = raw[(yy * iw + left) * 3:(yy * iw + left) * 3 + 3] == c
-                if ok:
-                    return (left - SHADOW * scale, y - SHADOW * scale, fr["w"] * scale, fr["h"] * scale, "screenshot")
-            x = e
-    return None
+    at = find_frame(raw, iw, ih, fw, fh, scale, x_from)
+    if at is None:
+        return None
+    return (at[0] - SHADOW * scale, at[1] - SHADOW * scale, fr["w"] * scale, fr["h"] * scale, "screenshot")
 
 
 def origin(frame):
@@ -620,8 +669,8 @@ def click(x, y, double=False, wait=900):
 
 def drag(sx, sy, ex, ey, steps=30, release=True):
     cmds = [f"move {sx} {sy}", "wait 250", "down", "wait 250"]
-    for i in range(1, steps + 1):
-        cmds += [f"move {sx + (ex - sx) * i // steps} {sy + (ey - sy) * i // steps}", "wait 40"]
+    for x, y in drag_points(sx, sy, ex, ey, steps):
+        cmds += [f"move {x} {y}", "wait 40"]
     cmds += [f"move {ex + 3} {ey + 3}", "wait 300", f"move {ex} {ey}", "wait 700"]
     if release:
         cmds += ["up", "wait 1200"]
@@ -678,14 +727,22 @@ def shadow_probe(png, r):
             "ring next to the frame vs outside (top middle)": inner_ring}
 
 
+def system_frame_shadow():
+    """The shadow a floating panel draws in this session: none inside a
+    frame the window system draws (Docking.windowShadow), which Hyprland's
+    border always is; SHADOW elsewhere."""
+    return 0 if B.name == "hyprland" else SHADOW
+
+
 def header_point(r, part="title"):
     """A point on a floating panel's header: its title (the engine's drag)
     or its free part right of the title (the window system's move), keeping
     clear of the "⋯" button."""
-    top = r[1] + SHADOW + 1
+    shadow = system_frame_shadow()
+    top = r[1] + shadow + 1
     if part == "title":
-        return r[0] + SHADOW + 1 + 22, top + HEADER // 2
-    return r[0] + r[2] - SHADOW - 1 - 12 - 20 - 2 - 24, top + HEADER // 2
+        return r[0] + shadow + 1 + 22, top + HEADER // 2
+    return r[0] + r[2] - shadow - 1 - 12 - 20 - 2 - 24, top + HEADER // 2
 
 
 # ---------------------------------------------------------------- steps
@@ -959,7 +1016,9 @@ def step_floating():
         return
     # X11 here runs no compositing manager (openbox alone): no transparency,
     # so no shadow (Docking.floatingShadow 0); a picom run below checks it.
-    shadow = 0 if B.name == "x11" else SHADOW
+    # Inside Hyprland's border the panel draws none either: the border sits
+    # tight round its 1-pixel frame.
+    shadow = 0 if B.name == "x11" else system_frame_shadow()
     floating_frame(r, shadow, "float-0-window")
     floating_decoration("Audio", r)
     # Move, somewhere no drop is offered: away from the main window where
@@ -975,7 +1034,9 @@ def step_floating():
         if main and not WAYLAND:
             dx = (main[0] - 40 - r[2]) - r[0] if main[0] - 40 - r[2] > 0 else (main[0] + main[2] + 40) - r[0]
             dy = 60 if part == "title" else 100
-        drag(px, py, px + dx, py + dy)
+        # steps of at most 8 pixels: the window lags the pointer by the
+        # step that crosses the drag distance
+        drag(px, py, px + dx, py + dy, steps=drag_steps(dx, dy))
         st = wait_for(lambda s: "Audio" in frames(s), timeout=3)
         r2 = origin("Audio")
         ev1, st = B.snap(f"float-1-moved-{part}")
@@ -1075,6 +1136,25 @@ def floating_decoration(title, r):
         none = "= 0, 0, 0, 0" in ext or "not found" in ext
         verdict("floating-borderless", "observed" if none else "failed",
                 f"openbox's frame extents for the floating {title}: {ext}", ["float-0-window.png"])
+    elif B.name == "hyprland":
+        # Hyprland answers xdg-decoration with server-side but draws only its
+        # border (general:border_size) round the whole surface, no title
+        # bar: the header must still show the panel's name.
+        hdr = where("text", title, title)
+        box = (r[0] + hdr[0]["x"] + 8, r[1] + hdr[0]["y"] + 6, 70, HEADER - 12) if r and hdr else None
+        ink = title_ink("float-0-window.png", box) if box else None
+        try:
+            bs = json.loads(B.hyprctl("-j", "getoption", "general:border_size")).get("int")
+        except ValueError:
+            bs = "?"
+        log_ = decoration_log()
+        named = bool(ink) and ink >= 20
+        verdict("floating-borderless", "observed" if named else "failed",
+                f"Hyprland's xdg-decoration answer: {log_}; Hyprland draws no title bar, only its {bs}-pixel border "
+                f"round the window's whole surface, with no shadow drawn inside it; the header's name "
+                f"(title ink {ink} in {box}, 20 or more when drawn) "
+                + ("is shown" if named else "is MISSING: the header leaves the name to a window-system title bar "
+                   "that Hyprland never draws"), ["float-0-window.png"])
     else:
         verdict("floating-borderless", "observed" if r and r[4] == "screenshot" else "not-observable",
                 f"mutter draws no frame for Wayland clients without xdg-decoration; the floating {title}'s own "
@@ -1171,8 +1251,11 @@ def floating_frame(r, shadow, shot, suffix=""):
                 i = (py * iw + px) * 3
                 edge.append(tuple(raw[i:i + 3]))
     black = [c for c in edge if max(c) < 16]
-    verdict("floating-no-compositor-frame", "observed" if edge and not black and len(set(edge)) <= 2 else "failed",
-            f"X11 without a compositing manager: the window's outermost pixels {sorted(set(edge))} "
+    where_ = ("X11 without a compositing manager" if B.name == "x11"
+              else f"inside {B.name}'s border (no shadow drawn in a window-system frame)")
+    verdict("floating-no-compositor-frame" if B.name == "x11" else "floating-shadow" + suffix,
+            "observed" if edge and not black and len(set(edge)) <= 2 else "failed",
+            f"{where_}: the window's outermost pixels {sorted(set(edge))} "
             f"({len(black)} of {len(edge)} black); the frame fills the window", ev0)
 
 
@@ -1435,19 +1518,7 @@ def step_menu_from_text():
 
 def step_test_executables():
     ui = os.environ["UI_TESTS"]
-    runs = [("hikari_ui_shell_tests", ["f6AndShortcutsReachAFloatingPanel", "panelsFloatDockHideAndKeepTheirState",
-                                       "placementWindowMovesTabsAndResizes",
-                                       "floatF6AndShowActivateTheFloatingPanelsWindow",
-                                       "placementWindowShowsItsDefaultsAndKeyboardChanges",
-                                       "fileDropAreaLeavesPanelDragsToTheDockingEngine",
-                                       "dockingControlsAndTheGridAreAccessible",
-                                       "floatingPanelsOffEveryScreenComeBack",
-                                       # D3
-                                       "panelMenuHoldsMoveUndockAndClose", "keyboardReachesThePanelHeaderAndItsMenu",
-                                       "doubleClickOnAHeaderFloatsAndDocks", "bottomPanelsKeepATabAndTheTrayToolbar",
-                                       "panelsKeepTheirMinimumSizes"]),
-            ("hikari_ui_docking_qualification_tests", []),
-            ("hikari_ui_workspace_layout_tests", [])]
+    runs = TEST_RUNS
     # The tests open their own windows: none of this session's HikariSub
     # over them (step fullscreen leaves it fullscreen).
     app("kill")
@@ -1473,14 +1544,8 @@ def step_test_executables():
     open(os.path.join(EVID, "test-executables.txt"), "w").write("\n".join(out))
     summary = "; ".join(re.findall(r"Totals: [^,]+, [^,]+, [^,]+", "\n".join(out)))
     skips = re.findall(r"SKIP\s*:.*", "\n".join(out))
-    # Skips the tests declare as platform limits, each observed for real by
-    # another gate item: Wayland compositors place windows (outputs); a
-    # synthetic drag between windows needs the offscreen platform (pointer);
-    # a window manager's focus-stealing policy (the F6 items; on sway, the
-    # sway-activate pass runs these tests again).
-    known = ("the compositor places windows", "a synthetic drag between windows needs the offscreen platform",
-             "refused the shell's activation request", "did not activate the main window")
-    unexpected = [k for k in skips if not any(reason in k for reason in known)]
+    # gatelib.KNOWN_TEST_SKIPS: platform limits that other gate items observe
+    unexpected = unexpected_skips(skips)
     verdict("test-executables", "observed" if ok and not unexpected else "failed",
             f"{summary}; skips: {skips}", ["test-executables.txt"])
 
@@ -2211,6 +2276,708 @@ def step_video_fullscreen():
     app("kill")
     fs_outputs_reset()
 
+# ---------------------------------------------------------------- screen reader, IME, portal and icon steps
+# Added for the wave-5 Linux sweep (2026-10-14): what a screen reader says of
+# E6's tag list and P10's status bar, R2's reference tray through AT-SPI and
+# Orca, K1's icon-only controls through AT-SPI, E6's tag list under a real
+# input method (ibus), Y7's screen dropper (a real X11 desktop; Wayland
+# through the screenshot portal's PickColor), K2's follow-system through the
+# settings portal, and D3's free-part move against the window system's edge
+# tiling.
+def orca_start(tag):
+    path = os.path.join(EVID, f"{tag}-orca-debug.out")
+    if os.path.exists(path):
+        os.unlink(path)
+    p = subprocess.Popen(["orca", "--replace", "--debug-file", path], stdout=subprocess.DEVNULL,
+                         stderr=open(os.path.join(EVID, f"{tag}-orca-stderr.txt"), "w"))
+    time.sleep(8)
+    return p, path
+
+
+def orca_stop(p, path, tag):
+    time.sleep(1.5)
+    p.terminate()
+    try:
+        p.wait(10)
+    except subprocess.TimeoutExpired:
+        p.kill()
+    text = open(path, errors="replace").read() if os.path.exists(path) else ""
+    speech = [l.strip() for l in text.splitlines() if "SPEECH OUTPUT" in l]
+    open(os.path.join(EVID, f"{tag}-orca-speech.txt"), "w").write("\n".join(speech) + "\n")
+    return speech, text
+
+
+def orca_key(key, times=1):
+    """Orca's modifier (Insert, the desktop layout's) held while KEY is
+    pressed, TIMES times in a row (Orca counts repeats within its
+    double-click time)."""
+    for _ in range(times):
+        if B.name == "x11":
+            sh(["xdotool", "keydown", "Insert", "key", KEYS[key][1], "keyup", "Insert"])
+        elif isinstance(B, Sway):
+            sh(["wtype", "-P", "Insert", "-k", KEYS[key][2], "-p", "Insert"])
+        else:
+            code = KEYS[key][0]
+            B.ei("keydown 110", f"keydown {code}", f"keyup {code}", "keyup 110")
+        time.sleep(0.12)
+
+
+def state_of(line):
+    m = re.search(r"<([^>]*)>", line or "")
+    return m.group(1).split(",") if m else []
+
+
+def show_tags():
+    """E6: the hidden-tag view refuses ASS syntax (no tag list there); the
+    Line editor's "Hide tags" switch, checked while tags are hidden, is
+    pressed off through AT-SPI when it is on."""
+    for role in ("toggle button", "button", "push button", "check box"):
+        hits = [l for l in atspi_find(role, "Hide tags") if "showing" in state_of(l)]
+        if hits:
+            if "checked" in state_of(hits[0]):
+                atspi_do(role, "Hide tags", "Press") if "Press" in hits[0] else atspi_do(role, "Hide tags")
+                time.sleep(0.8)
+            return role, "checked" in state_of((atspi_find(role, "Hide tags") or [""])[0])
+    return None, None
+
+
+def line_text():
+    return atspi()["texts"].get("Line text")
+
+
+def in_line_text(st=None):
+    """The Line text holds the keyboard focus (Qt marks its panel focused
+    too, which atspi()'s focus may name first)."""
+    return any("focused" in state_of(l) for l in atspi_find("text", "Line text"))
+
+
+def tag_list_shown():
+    return any("showing" in state_of(l) for l in atspi_find("list", "Tag list"))
+
+
+def open_tag_list():
+    """Focus the Line text at its start and type "{\\" through the compositor."""
+    atspi_do("text", "Line text", "SetFocus")
+    time.sleep(0.6)
+    B.keys("home", 0.3)
+    if isinstance(B, Sway):
+        # wtype's keymap has one level per key: Shift+[ stays "["
+        sh(["wtype", "{\\"])
+    else:
+        B.combo("shift", "bracketleft")
+        time.sleep(0.3)
+        B.combo("backslash")
+    time.sleep(1.5)
+
+
+def step_tag_list_speech():
+    """E6 (#188): the tag list's announcements (Accessible.announce from the
+    Line text, which keeps the focus) as AT-SPI announcement events and in
+    Orca's speech: the list opened by "{\\", narrowed by "b", Down, Return."""
+    path = episode()
+    fresh(path)
+    dismiss_notices()
+    ann_path = os.path.join(EVID, "tag-announcements.txt")
+    ann = subprocess.Popen(["python3", f"{GATE}/atspi_tool.py", "announcements", "120"],
+                           stdout=open(ann_path, "w"), stderr=subprocess.STDOUT)
+    time.sleep(1)
+    orca, olog = orca_start("tag")
+    focus_main_compositor()
+    role, still_hidden = show_tags()
+    open_tag_list()
+    shown0 = tag_list_shown()
+    foc = [in_line_text()]
+    ev0, st0 = B.snap("tag-0-list-open")
+    B.combo("b")
+    time.sleep(1.2)
+    foc.append(in_line_text())
+    ev1, st1 = B.snap("tag-1-narrowed-b")
+    B.keys("down", 1.2)
+    foc.append(in_line_text())
+    ev2, st2 = B.snap("tag-2-down")
+    B.keys("return", 1.2)
+    st3 = atspi()
+    ev3, _ = B.snap("tag-3-chosen")
+    speech, _ = orca_stop(orca, olog, "tag")
+    ann.terminate()
+    ann.wait(5)
+    said = [l.strip() for l in open(ann_path, errors="replace") if "announcement" in l]
+    text = st3["texts"].get("Line text")
+    kept = all(foc)
+    verdict("tag-list-completes", "observed" if shown0 and text == "{\\blurfirst" and kept else "failed",
+            f"'Hide tags' ({role}) off, still hidden {still_hidden}; '{{\\' in the Line text: Tag list shown {shown0}; "
+            f"'b', Down, Return -> Line text {text!r} (expected '{{\\blurfirst'); focus stayed in the Line text: "
+            f"{kept} {foc}", ev0 + ev1 + ev2 + ev3)
+    narrowed = [l for l in said if " of 3" in l]
+    verdict("tag-list-announced-atspi", "observed" if said and narrowed and any("blur" in l for l in narrowed)
+            else "failed", f"{len(said)} object:announcement events: {said[:6]}", ["tag-announcements.txt"])
+    spoke = [l for l in speech if " of 3" in l or " of 20" in l or "Edge blur" in l]
+    verdict("tag-list-orca", "observed" if any(" of 3" in l for l in spoke) else "failed",
+            f"Orca spoke {len(speech)} lines; tag list lines: {spoke[:6]} (tag-orca-speech.txt)",
+            ["tag-orca-speech.txt", "tag-orca-debug.out"])
+
+
+def step_status_bar_speech():
+    """P10 (#200): Orca's "present status bar" (Orca+KP_Enter twice, the
+    desktop layout) reads the status bar's fields, which take no focus."""
+    subs = video_episode()
+    fresh(subs)
+    dismiss_notices()
+    sh(["python3", f"{GATE}/atspi_tool.py", "press-showing", "Load associated"])
+    time.sleep(4)
+    fields = sh(["python3", f"{GATE}/atspi_tool.py", "statusbar"])
+    open(os.path.join(EVID, "statusbar-atspi.json"), "w").write(fields)
+    try:
+        bars = json.loads(fields or "[]")
+    except ValueError:
+        bars = []
+    texts = [c["name"] for b in bars for c in b["children"] if c["showing"] and c["name"]]
+    orca, olog = orca_start("statusbar")
+    focus_main_compositor()
+    time.sleep(1)
+    orca_key("kp_enter", times=2)
+    time.sleep(3)
+    route = "Orca+KP_Enter twice through the compositor's keyboard"
+    speech, debug = orca_stop(orca, olog, "statusbar")
+    heard = [t for t in texts if any(t in l for l in speech)]
+    handled = "present_status_bar" in debug
+    if not handled:
+        # The keys did not reach Orca (no keyboard monitor in this
+        # compositor): its D-Bus remote control runs the same command.
+        orca, olog = orca_start("statusbar-dbus")
+        focus_main_compositor()
+        time.sleep(1)
+        out = sh(["gdbus", "call", "--session", "--dest", "org.gnome.Orca1.Service", "--object-path",
+                  "/org/gnome/Orca1/Service/WhereAmIPresenter", "--method",
+                  "org.gnome.Orca1.WhereAmIPresenter.PresentStatusBar", "true"])
+        time.sleep(3)
+        speech, debug = orca_stop(orca, olog, "statusbar-dbus")
+        heard = [t for t in texts if any(t in l for l in speech)]
+        route = f"Orca's D-Bus command WhereAmIPresenter.PresentStatusBar ({out.strip()}); the keys did not reach Orca"
+    ev, _ = B.snap("statusbar-0")
+    verdict("status-bar-orca", "observed" if texts and len(heard) >= min(2, len(texts)) else "failed",
+            f"status bar fields over AT-SPI {texts}; by {route}: Orca spoke {heard} "
+            f"({[l for l in speech if any(t in l for t in texts)][:4]})",
+            ev + ["statusbar-atspi.json", "statusbar-orca-speech.txt"])
+
+
+def reference_session():
+    """Two tabs restored from LastSession.txt (session.restore 2): ref.ass,
+    then edit.ass, which is the editing target; Ctrl+Q shows ref.ass as the
+    linked reference (R2, reference_tests' fixtures)."""
+    head = "[Script Info]\nScriptType: v4.00+\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+    files = {"edit.ass": ["0:00:01.00,0:00:02.00,e1", "0:00:02.00,0:00:03.00,e2", "0:00:08.00,0:00:09.00,e3"],
+             "ref.ass": ["0:00:01.00,0:00:02.00,r0", "0:00:05.00,0:00:06.00,r1", "0:00:01.50,0:00:02.50,r2",
+                         "0:00:02.50,0:00:03.50,r3", "0:00:10.00,0:00:11.00,r4"]}
+    for name, lines in files.items():
+        with open(os.path.join(HOME, name), "w") as f:
+            f.write(head + "".join(f"Dialogue: 0,{l.rsplit(',', 1)[0]},Default,,0,0,0,,{l.rsplit(',', 1)[1]}\n"
+                                   for l in lines))
+    app("fresh")
+    conf = os.path.join(os.environ["XDG_CONFIG_HOME"], "HikariSub", "HikariSub")
+    os.makedirs(conf, exist_ok=True)
+    tabs = ""
+    for i, name in enumerate(("ref.ass", "edit.ass")):
+        tabs += (f"Tab: {i}\r\nVideo: \r\nPosition: 0\r\nFFMS2: 1\r\nSubtitles: {os.path.join(HOME, name)}\r\n"
+                 "Active: 0\r\nScroll: 0\r\nEditor: 1\r\n")
+    with open(os.path.join(conf, "LastSession.txt"), "w", encoding="utf-8-sig", newline="") as f:
+        f.write("[HikariSub v0.0.1]\r\n[Close session]\r\n" + tabs)
+    with open(os.path.join(conf, "hikari.ini"), "w") as f:
+        f.write("[registry]\nschema=1\n\n[profile]\nsession.restore=2\n")
+    app("start")
+    time.sleep(3)
+    dismiss_notices()
+
+
+def rclick(x, y, wait=1200):
+    if B.name == "x11":
+        sh(["xdotool", "mousemove", str(x), str(y), "sleep", "0.25", "click", "3"])
+        time.sleep(wait / 1000)
+    else:
+        B.pointer(f"move {x} {y}", "wait 250", "rdown", "wait 60", "rup", f"wait {wait}")
+
+
+def step_reference_speech():
+    """R2 (#194): the reference tray's names through AT-SPI (the linked
+    toggle, the match status, Previous/Next match, the protected grid, the
+    reference tab's description, Show nearest line, the occurrence menu)
+    and what Orca says while the keyboard moves through it."""
+    reference_session()
+    st = atspi()
+    title = [f["name"] for f in st["frames"]]
+    orca, olog = orca_start("reference")
+    focus_main_compositor()
+    in_grid = f6_to("Grid")
+    B.keys("ctrl+q", 2.0)
+    dump0 = sh(["python3", f"{GATE}/atspi_tool.py", "dump"])
+    open(os.path.join(EVID, "reference-0-tree.txt"), "w").write(dump0)
+    ev0, _ = B.snap("reference-0-linked")
+    names = {}
+    for role, name in (("check box", "Follow the editing line"), ("toggle button", "Follow the editing line"),
+                       ("button", "Previous match"), ("button", "Next match"), ("label", "Match 1 of 2"),
+                       ("table", "Reference lines (protected, read-only)"), ("page tab", "ref.ass")):
+        hits = atspi_find(role, name)
+        if hits:
+            names.setdefault(name, hits[0])
+    tab_desc = "Protected reference" in names.get("ref.ass", "")
+    # Next match through AT-SPI's action (the buttons take no keyboard
+    # focus), then the keyboard: F6 into the tray, Down in its grid.
+    atspi_do("button", "Next match")
+    time.sleep(1.0)
+    status2 = bool(atspi_find("label", "Match 2 of 2"))
+    in_ref = f6_to("Reference")
+    B.keys("down", 0.8, "up", 0.8)
+    # The occurrence menu: a right click on the reference grid's first row
+    # (legacy's preview menu came from the right button only).
+    tbl = where("table", "Reference lines (protected, read-only)")
+    main = origin("HikariSub")
+    if tbl and main:
+        rclick(main[0] + tbl[0]["x"] + 60, main[1] + tbl[0]["y"] + 34)
+    menus = sh(["python3", f"{GATE}/atspi_tool.py", "menu"])
+    ev1, _ = B.snap("reference-1-occurrence-menu", extra="# menus\n" + menus)
+    B.keys("escape", 0.6)
+    # Show nearest line: the editing Line e3 overlaps nothing.
+    f6_to("Grid")
+    B.keys("end", 1.2)
+    nearest = [l for l in atspi_find("button", "Show nearest line") if "showing" in state_of(l)]
+    nomatch = bool(atspi_find("label", "No matching line"))
+    ev2, _ = B.snap("reference-2-no-match")
+    speech, _ = orca_stop(orca, olog, "reference")
+    expected = ["Follow the editing line", "Previous match", "Next match", "Match 1 of 2",
+                "Reference lines (protected, read-only)"]
+    verdict("reference-names-atspi", "observed" if all(n in names for n in expected) and tab_desc and status2
+            and nearest and nomatch and menus.strip() not in ("", "[]") else "failed",
+            f"windows {title}; editing Grid focused {in_grid}; after Ctrl+Q: {json.dumps(names)}; tab ref.ass "
+            f"described 'Protected reference' {tab_desc}; Next match -> 'Match 2 of 2' {status2}; End in the Grid "
+            f"(e3): 'No matching line' {nomatch}, 'Show nearest line' {nearest[:1]}; occurrence menu {menus.strip()}",
+            ev0 + ev1 + ev2 + ["reference-0-tree.txt"])
+    spoken = [l for l in speech if any(k in l for k in ("Reference lines", "protected", "Match", "Reference", "r0",
+                                                         "r2", "r3"))]
+    verdict("reference-orca", "observed" if in_ref and any("Reference lines" in l or "protected" in l for l in speech)
+            else "failed", f"F6 into the Reference panel {in_ref}; Orca spoke {len(speech)} lines, the tray's: "
+                           f"{spoken[:8]}", ["reference-orca-speech.txt", "reference-orca-debug.out"])
+
+
+def controls_scan(tag):
+    out = sh(["python3", f"{GATE}/atspi_tool.py", "controls"], timeout=180)
+    open(os.path.join(EVID, f"icons-{tag}.json"), "w").write(out)
+    ev, _ = B.snap(f"icons-{tag}")
+    try:
+        return json.loads(out), ev
+    except ValueError:
+        return {"controls": [], "unnamed": []}, ev
+
+
+def step_icon_names():
+    """K1 (#204): every control a pointer user knows by its icon has a name
+    for assistive technology, read over AT-SPI: the main window with a
+    video and subtitles open, a floating panel's header, the fullscreen
+    video's panel and the Style manager."""
+    subs = video_episode()
+    fresh(subs)
+    dismiss_notices()
+    sh(["python3", f"{GATE}/atspi_tool.py", "press-showing", "Load associated"])
+    time.sleep(4)
+    scans, ev = {}, []
+    scans["main"], e = controls_scan("main")
+    ev += e
+    float_panel("Audio", "icons")
+    wait_for(lambda s: "Audio" in frames(s))
+    scans["floating-audio"], e = controls_scan("floating-audio")
+    ev += e
+    focus_main_compositor()
+    panel_menu("Audio", "Dock")
+    focus_main_compositor()
+    if fs_focus_video():
+        B.combo("f")
+        time.sleep(2.5)
+        scans["video-fullscreen"], e = controls_scan("video-fullscreen")
+        ev += e
+        B.combo("escape")
+        time.sleep(1.5)
+    focus_main_compositor()
+    B.keys("alt+s", 0.8)
+    try:
+        items = (json.loads(sh(["python3", f"{GATE}/atspi_tool.py", "menu"]) or "[]") or [[]])[-1]
+    except ValueError:
+        items = []
+    enabled = [i["name"] for i in items if i["enabled"]]
+    sm = next((n for n in enabled if n.startswith("Style m")), None)
+    if sm:
+        B.keys(*(["down"] * (enabled.index(sm) + 1)), "return", 2.5)
+        scans["style-manager"], e = controls_scan("style-manager")
+        ev += e
+        close_window("Style manager")
+    else:
+        log(f"icons: no Style manager item in the Subtitles menu {enabled}")
+        B.keys("escape")
+    unnamed = {k: v["unnamed"] for k, v in scans.items() if v["unnamed"]}
+    counts = {k: len(v["controls"]) for k, v in scans.items()}
+    buttons = sum(1 for v in scans.values() for c in v["controls"] if "button" in c["role"])
+    verdict("icon-controls-named", "observed" if not unnamed and len(scans) >= 3 and buttons else "failed",
+            f"controls read per surface {counts} ({buttons} buttons); unnamed: "
+            f"{json.dumps({k: [(c['role'], c['path'][-120:], c['box']) for c in v] for k, v in unnamed.items()})[:3000]}",
+            ev + [f"icons-{k}.json" for k in scans])
+
+
+def ibus_up():
+    """ibus-daemon on this session's bus with the Hangul engine starting in
+    Hangul mode; its address for the app (no machine id in the container)."""
+    sh(["gsettings", "set", "org.freedesktop.ibus.engine.hangul", "initial-input-mode", "'hangul'"])
+    sh("ibus exit >/dev/null 2>&1; true")
+    subprocess.Popen(["ibus-daemon", "--replace", "--panel", "disable", "--verbose"],
+                     stdout=open(os.path.join(EVID, "ime-ibus-daemon.log"), "w"), stderr=subprocess.STDOUT,
+                     start_new_session=True)
+    addr = ""
+    for _ in range(40):
+        addr = sh(["ibus", "address"]).strip()
+        if addr and "(null)" not in addr:
+            break
+        time.sleep(0.25)
+    sh(["ibus", "engine", "xkb:us::eng"])
+    return addr
+
+
+def step_ime():
+    """E6 (#188) with a real input method: ibus (Qt's ibus input context) and
+    ibus-hangul. With the tag list open over the Line text, the Hangul
+    engine composes 한 from g, k, s (its preedit under the list) and Space
+    commits it into the Line; the focus never leaves the Line text."""
+    if not shutil.which("ibus-daemon"):
+        verdict("ime-composition", "not-observable", "no ibus in this image")
+        return
+    # ibus-hangul's 2-set keyboard reads the key's code through a US
+    # keymap, and wtype (sway) sends codes of its own keymap: there the
+    # romaja keyboard, which reads the key's symbol, composes 한 from h, a, n.
+    jamo = ("h", "a", "n") if isinstance(B, Sway) else ("g", "k", "s")
+    sh(["gsettings", "set", "org.freedesktop.ibus.engine.hangul", "hangul-keyboard",
+        "'ro'" if isinstance(B, Sway) else "'2'"])
+    addr = ibus_up()
+    path = episode()
+    fresh(path, env={"QT_IM_MODULE": "ibus", "IBUS_ADDRESS": addr})
+    dismiss_notices()
+    focus_main_compositor()
+    role, _ = show_tags()
+    open_tag_list()
+    B.combo("b")
+    time.sleep(1.2)
+    shown0 = tag_list_shown()
+    foc = [in_line_text()]
+    ev0, st0 = B.snap("ime-0-list-open")
+    engine0 = sh(["ibus", "engine"]).strip()
+    sh(["ibus", "engine", "hangul"])
+    time.sleep(1.0)
+    B.combo(jamo[0])
+    time.sleep(0.4)
+    B.combo(jamo[1])
+    time.sleep(0.8)
+    ev1, st1 = B.snap("ime-1-composing")
+    shown1 = tag_list_shown()
+    foc.append(in_line_text())
+    text1 = st1["texts"].get("Line text")
+    B.combo(jamo[2])
+    time.sleep(0.8)
+    ev2, st2 = B.snap("ime-2-composing-more")
+    shown2 = tag_list_shown()
+    foc.append(in_line_text())
+    B.combo("space")
+    time.sleep(1.2)
+    st3 = atspi()
+    foc.append(in_line_text())
+    ev3, _ = B.snap("ime-3-committed")
+    engine1 = sh(["ibus", "engine"]).strip()
+    sh(["ibus", "engine", "xkb:us::eng"])
+    text3 = st3["texts"].get("Line text")
+    kept = all(foc)
+    log_lines = [l for l in open(os.path.join(os.environ["XDG_RUNTIME_DIR"], "app.log"), errors="replace")
+                 if "ibus" in l.lower() or "inputcontext" in l.lower()]
+    ok = shown0 and text3 is not None and "한" in text3 and kept and text3.startswith("{\\b")
+    verdict("ime-composition", "observed" if ok else "failed",
+            f"ibus at {addr!r}, engine {engine0} then {engine1}; '{{\\b' typed: Tag list shown {shown0}; "
+            f"{'romaja' if jamo[0] == 'h' else '2-set'} keyboard, {jamo[0]}, {jamo[1]} under the list: Line text "
+            f"{text1!r} (the preedit is not committed text), list shown {shown1}; {jamo[2]}: list shown "
+            f"{shown2}; Space commits: Line text {text3!r} (expected '{{\\b한 first'); focus in the Line text "
+            f"throughout {kept}; app log {log_lines[-3:]}", ev0 + ev1 + ev2 + ev3 + ["ime-ibus-daemon.log"])
+
+
+def portal_up(backend):
+    """xdg-desktop-portal with BACKEND for every interface (portals.conf),
+    restarted on this session's bus."""
+    cdir = os.path.join(os.environ["XDG_CONFIG_HOME"], "xdg-desktop-portal")
+    os.makedirs(cdir, exist_ok=True)
+    open(os.path.join(cdir, "portals.conf"), "w").write(f"[preferred]\ndefault={backend}\n")
+    for name in ("xdg-desktop-portal", f"xdg-desktop-portal-{backend}"):
+        for p in sh(["pgrep", "-x", name[:15]]).split():
+            try:
+                env = open(f"/proc/{p}/environ", "rb").read().decode(errors="replace")
+            except OSError:
+                continue
+            if f"XDG_RUNTIME_DIR={os.environ['XDG_RUNTIME_DIR']}\0" in env:
+                sh(["kill", p])
+    time.sleep(1)
+    logf = open(os.path.join(EVID, f"portal-{backend}.log"), "a")
+    # xdg-desktop-portal-kde offers Screenshot (PickColor) only in a Plasma
+    # session (XDG_CURRENT_DESKTOP=KDE).
+    env = dict(os.environ, XDG_CURRENT_DESKTOP="KDE") if backend == "kde" else None
+    import glob
+    if env and not glob.glob("/usr/lib/qt6/plugins/platforms/libqwayland*.so"):
+        # without qt6-wayland the backend's Qt cannot open the compositor;
+        # PickColor itself is KWin's (org.kde.KWin /ColorPicker)
+        env["QT_QPA_PLATFORM"] = "offscreen"
+        log("portal_up: no Qt Wayland plugin in the image; the KDE backend runs on Qt's offscreen platform")
+    impl = subprocess.Popen([f"/usr/lib/xdg-desktop-portal-{backend}"], stdout=logf, stderr=subprocess.STDOUT,
+                            start_new_session=True, env=env)
+    # The backend's bus name first: otherwise the front end activates it
+    # through D-Bus, without the environment above.
+    names = {"kde": "org.freedesktop.impl.portal.desktop.kde", "gtk": "org.freedesktop.impl.portal.desktop.gtk"}
+    for _ in range(40):
+        if names.get(backend, "") in sh(["busctl", "--user", "list", "--acquired"]) or \
+                names.get(backend, "") in sh(["gdbus", "call", "--session", "--dest", "org.freedesktop.DBus",
+                                               "--object-path", "/org/freedesktop/DBus", "--method",
+                                               "org.freedesktop.DBus.ListNames"]):
+            break
+        time.sleep(0.25)
+    else:
+        log(f"portal_up: {names.get(backend)} never appeared on the bus (backend exit {impl.poll()})")
+    front = subprocess.Popen(["/usr/lib/xdg-desktop-portal", "--replace", "--verbose"], stdout=logf,
+                             stderr=subprocess.STDOUT, start_new_session=True)
+    time.sleep(3)
+    return impl, front
+
+
+def scheme_luma(png, r):
+    """Mean brightness (0-255) of the main window's status bar row and its
+    menu bar, where the theme's window colour shows."""
+    iw, ih, raw = raw_pixels(os.path.join(EVID, png))
+    x, y, w, h = r[:4]
+    vals = []
+    for py in (y + h - 6, y + h - 12):
+        for px in range(x + 200, x + w - 200, 7):
+            if 0 <= px < iw and 0 <= py < ih:
+                i = (py * iw + px) * 3
+                vals.append(sum(raw[i:i + 3]) / 3)
+    return round(sum(vals) / len(vals)) if vals else None
+
+
+def step_follow_system():
+    """K2 (#206): "Follow system theme" (on by default) through the XDG
+    settings portal (xdg-desktop-portal-gtk reading
+    org.gnome.desktop.interface color-scheme): prefer-light, then
+    prefer-dark while the app runs, then prefer-light again; the window
+    colour follows each change without a restart."""
+    portal_up("gtk")
+    sh(["gsettings", "set", "org.gnome.desktop.interface", "color-scheme", "'prefer-light'"])
+    read = sh(["gdbus", "call", "--session", "--dest", "org.freedesktop.portal.Desktop", "--object-path",
+               "/org/freedesktop/portal/desktop", "--method", "org.freedesktop.portal.Settings.ReadOne",
+               "org.freedesktop.appearance", "color-scheme"]).strip()
+    results = {}
+    variants = {"default": {}, "gnome": {"XDG_CURRENT_DESKTOP": "GNOME", "QT_QPA_PLATFORMTHEME": "gnome"},
+                "xdgdesktopportal": {"QT_QPA_PLATFORMTHEME": "xdgdesktopportal"}}
+    for tag, env in variants.items():
+        path = episode()
+        fresh(path, env=env)
+        dismiss_notices()
+        time.sleep(2)
+        main = origin("HikariSub")
+        seq = []
+        ev = []
+        for i, scheme in enumerate(("prefer-light", "prefer-dark", "prefer-light")):
+            sh(["gsettings", "set", "org.gnome.desktop.interface", "color-scheme", f"'{scheme}'"])
+            time.sleep(3)
+            e, _ = B.snap(f"scheme-{tag}-{i}-{scheme}")
+            ev += e
+            seq.append((scheme, scheme_luma(e[0], main) if main else None))
+        app("kill")
+        results[tag] = (seq, ev)
+    def follows(seq):
+        l = [v for _, v in seq]
+        return None not in l and l[0] > 128 and l[1] < 100 and l[2] > 128
+    ok = {k: follows(v[0]) for k, v in results.items()}
+    verdict("follow-system-portal", "observed" if any(ok.values()) else "failed",
+            f"portal Settings.ReadOne(org.freedesktop.appearance, color-scheme) at prefer-light: {read}; window "
+            f"brightness per live change (this session's own platform theme): {results['default'][0]} follows "
+            f"{ok['default']}; GNOME's (XDG_CURRENT_DESKTOP=GNOME, Qt's built-in gnome theme, as the packages ship "
+            f"without qgtk3): {results['gnome'][0]} follows {ok['gnome']}; QT_QPA_PLATFORMTHEME=xdgdesktopportal: "
+            f"{results['xdgdesktopportal'][0]} follows {ok['xdgdesktopportal']}",
+            [e for v in results.values() for e in v[1]] + ["portal-gtk.log"])
+
+
+PATCH_RGB = (0x24, 0x68, 0xac)
+
+
+def colour_patch():
+    """A window of one colour (GTK 3), placed by the window system."""
+    code = ("import gi\ngi.require_version('Gtk','3.0')\nfrom gi.repository import Gtk, Gdk\n"
+            "w=Gtk.Window(title='patch')\nw.set_default_size(160,120)\n"
+            "w.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(%f,%f,%f,1))\n"
+            "w.connect('destroy', Gtk.main_quit)\nw.show_all()\nGtk.main()\n"
+            % tuple(c / 255 for c in PATCH_RGB))
+    path = os.path.join(HOME, "patch.py")
+    open(path, "w").write(code)
+    env = dict(os.environ, GDK_BACKEND="x11" if B.name == "x11" else "wayland", NO_AT_BRIDGE="1")
+    return subprocess.Popen(["python3", path], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def find_patch(png):
+    """The patch's centre in a screenshot (its colour's bounding box)."""
+    out = sh(["magick", os.path.join(EVID, png), "-alpha", "off", "-fuzz", "2%", "-fill", "black", "+opaque",
+              "#%02x%02x%02x" % PATCH_RGB, "-fill", "white", "-opaque", "#%02x%02x%02x" % PATCH_RGB,
+              "-format", "%@", "info:"]).strip()
+    m = re.match(r"(\d+)x(\d+)\+(\d+)\+(\d+)", out)
+    if not m or int(m.group(1)) < 20:
+        return None
+    w, h, x, y = map(int, m.groups())
+    return x + w // 2, y + h // 2
+
+
+def patch_centre():
+    """The patch window's centre on the screen, from the window system."""
+    if B.name == "x11":
+        wid = sh("xdotool search --onlyvisible --name '^patch$'").split()
+        if wid:
+            g = sh(["xdotool", "getwindowgeometry", "--shell", wid[0]])
+            v = dict(l.split("=", 1) for l in g.split() if "=" in l)
+            return int(v["X"]) + int(v["WIDTH"]) // 2, int(v["Y"]) + int(v["HEIGHT"]) // 2
+    elif B.name == "kwin":
+        for line in B.windows().splitlines():
+            m = re.match(r'\S+ "patch" (-?[\d.]+),(-?[\d.]+) (\d+)x(\d+)', line)
+            if m:
+                x, y, w, h = float(m.group(1)), float(m.group(2)), int(m.group(3)), int(m.group(4))
+                return int(x + w / 2), int(y + h / 2)
+    return None
+
+
+def colour_button():
+    """The Line editor's fourth colour button (changeColour3), right-clicked
+    for the simple picker: by its accessible name."""
+    for name in ("Border color",):
+        hits = where("button", name, "HikariSub")
+        if hits:
+            return name, hits[0]
+    return None, None
+
+
+def step_screen_dropper():
+    """Y7 (#190): the colour picker's screen dropper. X11 (a desktop with a
+    window manager, real pointer input through XTEST): the simple picker
+    tracks the pointer and a right press over another window picks that
+    window's pixel. Wayland: its "Pick a colour from the screen" button asks
+    the screenshot portal's PickColor (KWin: xdg-desktop-portal-kde, whose
+    PickColor hands the pick to KWin); a click on the patch answers it."""
+    portal = None
+    if B.name == "kwin":
+        portal = portal_up("kde")
+    elif WAYLAND:
+        verdict("dropper-portal", "not-observable",
+                f"{B.name}: no portal backend with PickColor runs here (GNOME's needs gnome-shell, wlroots' has none)")
+        return
+    patch = colour_patch()
+    time.sleep(2)
+    # Away from the main window and from where the picker opens: the left
+    # of X11's wide screen, KWin's second output.
+    if B.name == "x11":
+        sh("xdotool search --sync --onlyvisible --name '^patch$' windowmove 200 640")
+    elif B.name == "kwin":
+        B.script('for (const w of workspace.windowList()) if (w.caption == "patch") '
+                 'w.frameGeometry = {x: 1800, y: 200, width: 160, height: 120};')
+    time.sleep(1)
+    path = episode()
+    fresh(path)
+    dismiss_notices()
+    focus_main_compositor()
+    show_tags()
+    atspi_do("text", "Line text", "SetFocus")
+    time.sleep(0.5)
+    B.keys("home")
+    main = origin("HikariSub")
+    ev, _ = B.snap("dropper-0-patch")
+    centre = patch_centre()
+    name, btn = colour_button()
+    if not main or not btn or not centre:
+        verdict("dropper-portal" if WAYLAND else "dropper-x11", "failed",
+                f"main window {main}, colour button {name} {btn}, patch on screen at {centre}", ev)
+        patch.terminate()
+        return
+    bx, by = main[0] + btn["x"] + btn["w"] // 2, main[1] + btn["y"] + btn["h"] // 2
+    if B.name == "x11":
+        sh(["xdotool", "mousemove", str(bx), str(by), "click", "3"])
+    else:
+        rclick(bx, by, wait=900)
+    time.sleep(1.5)
+    ev1, st = B.snap("dropper-1-simple-picker")
+    picker = [f for f in st["frames"] if f["name"] == "Color picker"]
+    before = line_text()
+    route = None
+    if B.name == "x11":
+        route = "grab"
+        sh(["xdotool", "mousemove", str(centre[0]), str(centre[1])])
+        time.sleep(0.8)
+        ev2, _ = B.snap("dropper-2-tracking")
+        sh(["xdotool", "mousedown", "3", "sleep", "0.1", "mouseup", "3"])
+    else:
+        route = "portal"
+        hits = where("button", "Pick a colour from the screen")
+        fr = frames().get(hits[0]["frame"]) if hits else None
+        r = origin(hits[0]["frame"]) if hits else None
+        if hits and r:
+            click(r[0] + hits[0]["x"] + hits[0]["w"] // 2, r[1] + hits[0]["y"] + hits[0]["h"] // 2, wait=2000)
+        elif hits:
+            atspi_do("button", "Pick a colour from the screen")
+            time.sleep(2)
+        ev2, _ = B.snap("dropper-2-portal-picking", extra=f"# portal button {hits} frame {fr}")
+        click(centre[0], centre[1], wait=2000)
+    time.sleep(1.5)
+    after = line_text()
+    ev3, _ = B.snap("dropper-3-picked")
+    patch.terminate()
+    want = "&H%02X%02X%02X&" % (PATCH_RGB[2], PATCH_RGB[1], PATCH_RGB[0])
+    item = "dropper-x11" if route == "grab" else "dropper-portal"
+    verdict(item, "observed" if after and want in after else "failed",
+            f"route {route}; right click on '{name}' at {bx},{by}: simple picker windows {picker}; patch "
+            f"#{PATCH_RGB[0]:02x}{PATCH_RGB[1]:02x}{PATCH_RGB[2]:02x} at {centre}; Line text {before!r} -> {after!r} "
+            f"(expected {want} in a \\3c tag)",
+            ev + ev1 + ev2 + ev3 + ([f"portal-kde.log"] if portal else []))
+
+
+def step_edge_tiling():
+    """D3 (#207): the floating panel's free header part hands the move to
+    the window system (startSystemMove); dragged to the screen's left edge,
+    the window system's edge tiling, where it has any, applies to the
+    borderless tool window. Recorded as observed either way, with what
+    happened (the card asks for a note, not a behaviour)."""
+    fresh()
+    float_panel("Audio", "edgetile")
+    wait_for(lambda s: "Audio" in frames(s))
+    r = origin("Audio")
+    main = origin("HikariSub")
+    if not r:
+        verdict("edge-tiling-note", "not-observable", f"the floating Audio window cannot be located on {B.name}")
+        return
+    ev0, st0 = B.snap("edge-0-floating")
+    fr0 = frames(st0).get("Audio", {})
+    px, py = header_point(r, part="free")
+    # The left edge of the first output (x 0 in every session's layout).
+    drag(px, py, 1, 400, steps=40)
+    time.sleep(1.5)
+    st1 = atspi()
+    r1 = origin("Audio")
+    ev1, st1 = B.snap("edge-1-at-left-edge")
+    fr1 = frames(st1).get("Audio", {})
+    floating = "Audio" in frames(st1)
+    tiled = bool(fr1) and fr1.get("h", 0) >= fr0.get("h", 0) + 150
+    verdict("edge-tiling-note", "observed" if floating else "failed",
+            f"{B.name}: free part dragged from {px},{py} to the left edge (1,400): window {r[:4]} -> "
+            f"{r1 and r1[:4]}, size {fr0.get('w')}x{fr0.get('h')} -> {fr1.get('w')}x{fr1.get('h')}; still a "
+            f"floating panel {floating}; the window system "
+            + ("TILED it (size grew to the edge tile)" if tiled else "did not tile it (no edge tiling applied)"),
+            ev0 + ev1)
+
+
+SWEEP_STEPS = {"tagspeech": step_tag_list_speech, "statusspeech": step_status_bar_speech,
+               "refspeech": step_reference_speech, "icons": step_icon_names, "ime": step_ime,
+               "scheme": step_follow_system, "dropper": step_screen_dropper, "edgetile": step_edge_tiling}
+
+
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "menutext": step_menu_from_text, "tests": step_test_executables, "orca": step_orca,
@@ -2221,11 +2988,15 @@ STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6
          "outputs": step_outputs}
 
 if __name__ == "__main__":
-    wanted = sys.argv[2:] or list(STEPS)
+    # Every step; the sweep's before "videofs" (on sway it leaves the main
+    # window on the scale-2 output, half the size, where the main window
+    # overflows it) and "outputs" (it removes an output).
+    everything = default_order(STEPS, SWEEP_STEPS)
+    wanted = sys.argv[2:] or everything
     for name in wanted:
         log(f"--- {B.name}: {name}")
         try:
-            STEPS[name]()
+            (STEPS.get(name) or SWEEP_STEPS[name])()
         except Exception as e:  # keep going: one broken step must not hide the others
             import traceback
             traceback.print_exc()

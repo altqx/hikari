@@ -23,6 +23,35 @@ function Invoke-Checked {
     if ($LASTEXITCODE) { throw "$($args -join ' ') failed ($LASTEXITCODE)" }
 }
 
+# Git: the PATH's, else the one Visual Studio bundles, else MinGit (Git for
+# Windows' portable build, checked against the SHA-256 its release publishes)
+# unpacked into out\legacy-win\mingit. The guest's PATH has no git.
+function Resolve-Git {
+    $onPath = Get-Command git -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty Source
+    if ($onPath) { return $onPath }
+    $bundled = @('C:\VisualStudio', "${env:ProgramFiles}\Microsoft Visual Studio", "${env:ProgramFiles}\Git") |
+        Where-Object { Test-Path $_ } |
+        ForEach-Object { Get-ChildItem -Recurse -Filter git.exe $_ -ErrorAction SilentlyContinue } |
+        Where-Object { $_.DirectoryName -match '\\cmd$' } | Select-Object -First 1 -ExpandProperty FullName
+    if ($bundled) { return $bundled }
+    $mingit = Join-Path $PWD 'out\legacy-win\mingit'
+    $exe = Join-Path $mingit 'cmd\git.exe'
+    if (-not (Test-Path $exe)) {
+        $url = 'https://github.com/git-for-windows/git/releases/download/v2.56.0.windows.2/MinGit-2.56.0.2-64-bit.zip'
+        $sha = 'da35e72aa21c005a5a0d298cfbae110bc1609a815730ea0dde84b01a1b3cd3be'
+        $zip = Join-Path $PWD 'out\legacy-win\MinGit-2.56.0.2-64-bit.zip'
+        New-Item -ItemType Directory -Force (Split-Path $zip) | Out-Null
+        Invoke-WebRequest $url -OutFile $zip -UseBasicParsing
+        $got = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+        if ($got -ne $sha) { Remove-Item $zip; throw "MinGit checksum $got, its release publishes $sha" }
+        Expand-Archive $zip $mingit -Force
+    }
+    return $exe
+}
+$git = Resolve-Git
+Write-Output "git $git"
+Set-Alias git $git -Scope Script
+
 if (-not (Test-Path (Join-Path $legacy 'HikariSub\VideoBox.cpp'))) {
     if (Test-Path $legacy) { Remove-Item -Recurse -Force $legacy }
     Invoke-Checked git init -q $legacy

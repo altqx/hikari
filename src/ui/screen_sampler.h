@@ -18,6 +18,7 @@
 #include <QRect>
 #include <QPointer>
 #include <QString>
+#include <QTimer>
 #include <QVariantList>
 #include <QVariantMap>
 #include <QWindow>
@@ -87,8 +88,24 @@ public:
     // picker releases the capture over itself), otherwise every event is
     // the dropper's. The eyedropper cursor shows while the pointer is
     // outside (or everywhere without `passInside`).
+    //
+    // Under an X11 window manager the window is not viewable until the
+    // manager maps it, and X refuses a grab asked at show()
+    // (GrabNotViewable) while Qt's XInput 2 grab reports it held. The
+    // grab waits for the window's expose; it is asked again when the
+    // window is exposed or activated and when the pointer leaves it for
+    // outside the window (where legacy OnLeaveWindow captures again), and,
+    // after the platform refuses it, every kRegrabInterval ms up to
+    // kRegrabTries times.
     Q_INVOKABLE bool startTracking(QWindow *window, bool passInside);
     Q_INVOKABLE void stopTracking();
+    // Whether the platform reported the tracked window's grab held.
+    bool holdsPointer() const { return m_grabbed; }
+    // Whether the timer is still asking after a refusal.
+    bool regrabbing() const { return m_regrab.isActive(); }
+
+    static constexpr int kRegrabInterval = 50;
+    static constexpr int kRegrabTries = 40;
 
     // The portal route: the desktop picks one colour; portalPicked or,
     // unless the user cancelled, portalFailed answers while portalBusy is
@@ -107,6 +124,9 @@ public:
     void setPortalRequest(PortalRequest request) { m_portalRequest = std::move(request); }
     void answerPortal(uint response, double red = 0, double green = 0, double blue = 0);
     void failPortalCall(const QString &message);
+    // Tests: `grab` runs in place of QWindow::setMouseGrabEnabled.
+    using Grab = std::function<bool(QWindow *window, bool grab)>;
+    void setGrab(Grab grab) { m_grab = std::move(grab); }
 
 signals:
     void routeChanged();
@@ -129,6 +149,9 @@ private slots:
 
 private:
     void resolveRoute() const;
+    // Asks for the pointer grab once the window is exposed, unless it is
+    // held already (or `again`).
+    void takePointer(bool again);
     void showCursor(bool dropper);
     void finishPortal();
 
@@ -137,6 +160,10 @@ private:
     mutable Route m_route;
     QPointer<QWindow> m_window;
     bool m_passInside = false;
+    Grab m_grab;
+    bool m_grabbed = false;
+    QTimer m_regrab;
+    int m_regrabTries = 0;
     bool m_cursorShown = false;
     bool m_portalBusy = false;
     QString m_portalPath;

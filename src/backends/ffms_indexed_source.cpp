@@ -735,6 +735,35 @@ void FfmsIndexedSource::cancelDisplay()
     }
 }
 
+void FfmsIndexedSource::close()
+{
+    closeAll();
+}
+
+void FfmsIndexedSource::closeDisplay()
+{
+    closeAll();
+}
+
+void FfmsIndexedSource::closeAll()
+{
+    cancelOpen();
+    cancelReads();
+    cancelDisplay();
+    ++m_generation; // a late open of the closed source resolves Stale
+    m_open = false;
+    m_path.clear(); // nothing to restart()
+    m_audio.reset();
+    m_display.reset();
+    m_pcmChannels = 0;
+    // The helper answers in order: an open still running ends first, then
+    // its source closes. A helper still starting has opened nothing (its
+    // open resolves Stale before it is sent).
+    if (m_host && m_host->state() == HelperHost::State::Ready)
+        (void)m_host->request(m_generation, Writer().u8(static_cast<std::uint8_t>(media::Command::Close)).take(),
+                              [](std::expected<Event, HostError>) {});
+}
+
 void FfmsIndexedSource::cancelReads()
 {
     auto reads = std::move(m_reads);

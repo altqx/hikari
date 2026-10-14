@@ -14,7 +14,10 @@ import "qrc:/kddockwidgets/qtquick/views/qml/" as KDDWViews
 // through the window system (startSystemResize). On X11 without a
 // compositing manager the transparent margin would show black, so there
 // is no shadow (Docking.floatingShadow is 0) and a band inside the frame's
-// edge resizes. Loaded through the adapter's view factory.
+// edge resizes; so too where the window system frames the window all the
+// same (Docking.windowShadow: Hyprland's border went round the shadow's
+// transparent margin, 8 pixels off the frame). Loaded through the
+// adapter's view factory.
 Item {
     id: root
     objectName: "dockFloatingWindow"
@@ -22,7 +25,11 @@ Item {
     readonly property KDDW.FloatingWindowView floatingWindowCpp: parent
     readonly property KDDW.TitleBarView titleBarCpp: floatingWindowCpp ? floatingWindowCpp.titleBar : null
     readonly property KDDW.DropAreaView dropAreaCpp: floatingWindowCpp ? floatingWindowCpp.dropArea : null
-    readonly property int shadow: Docking.floatingShadow
+    // None inside a frame the window system draws all the same (a Wayland
+    // compositor that decorates server-side: Docking.windowSystemFrame).
+    // (The revision is compared, not just read: a compiled binding drops a
+    // read whose value it does not use, and the dependency with it.)
+    readonly property int shadow: Docking.windowTitleRevision >= 0 ? Docking.windowShadow(Window.window) : 0
     // Read by the engine: the title bar's height and the contents' inset.
     readonly property int titleBarHeight: titleBar.item && titleBar.item.visible ? titleBar.item.heightWhenVisible : 0
     readonly property int margins: shadow + 1
@@ -30,6 +37,10 @@ Item {
     anchors.fill: parent
 
     onTitleBarHeightChanged: {
+        if (floatingWindowCpp)
+            floatingWindowCpp.geometryUpdated()
+    }
+    onMarginsChanged: {
         if (floatingWindowCpp)
             floatingWindowCpp.geometryUpdated()
     }

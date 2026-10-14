@@ -836,6 +836,10 @@ int main()
             return subtitles(in, r);
         case media::Command::Attachments:
             return attachments(in, r);
+        case media::Command::Close:
+            session.reset();
+            source = {};
+            return r.terminal(Outcome::Ok, {});
         }
         r.terminal(Outcome::Unsupported, bytesOf("unknown command"));
     });

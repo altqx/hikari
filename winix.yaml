@@ -157,6 +157,13 @@ tasks:
     # The probe's capture lines and the legacy Config it left (drive_windows.py).
     script: ./tools/legacy-capture/windows/output.ps1
     timeoutSeconds: 120
+  end-setups:
+    # Ends a HikariSub setup or uninstaller left on the desktop by an installer
+    # test or an interactive session (tools/winix/end-setups.ps1); the desktop
+    # drivers (drive_windows.py, gate-win-prepare) start with it.
+    script: ./tools/winix/end-setups.ps1
+    visualStudio: false
+    timeoutSeconds: 120
   legacy-win-kill:
     # Ends a legacy app the desktop could not close.
     script: Get-Process HikariSub -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Output 'stopped'
@@ -241,6 +248,14 @@ tasks:
     script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_title_bar_tests.exe out/build/windows-x64-release | Select-Object -First 1; if (-not $exe) { Write-Output 'no hikari_ui_title_bar_tests.exe'; exit 2 }; $out = "$env:TEMP/title-bar-window.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "-o `"$out,txt`"" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/title-bar-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(120000)) { $p.Kill(); Write-Output 'TIMED OUT'; exit 1 }; $code = $p.ExitCode; Write-Output "exit $code"; if (-not (Test-Path $out)) { Write-Output 'no QtTest output'; Get-Content "$env:TEMP/title-bar-err.txt" -ErrorAction SilentlyContinue; exit 1 }; Get-Content $out; if (Select-String -Quiet -Pattern '^SKIP.*windowsTitleBarFollowsTheTheme' $out) { Write-Output 'skipped, so not on an interactive desktop'; exit 1 }; exit $code
     visualStudio: false
     timeoutSeconds: 300
+  k1-sheets-window:
+    # K1: hikari_ui_icon_tests contactSheets on the interactive desktop (the windows platform), where the window
+    # system keeps a window inside its monitor: the sheets go on pages that fit the screen, each drawn whole and
+    # its icons equal to their files; the sheets are written to out/build/windows-x64-release/k1-sheets-window.
+    script: $env:QT_QPA_PLATFORM = 'windows'; $dir = "$PWD/out/build/windows-x64-release/k1-sheets-window"; Remove-Item -Recurse $dir -ErrorAction SilentlyContinue; $env:HIKARI_ICON_SHEET_DIR = $dir; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_icon_tests.exe out/build/windows-x64-release | Select-Object -First 1; if (-not $exe) { Write-Output 'no hikari_ui_icon_tests.exe'; exit 2 }; $out = "$env:TEMP/k1-sheets-window.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "contactSheetsFitTheScreen contactSheets -o `"$out,txt`"" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/k1-sheets-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(300000)) { $p.Kill(); Write-Output 'TIMED OUT'; exit 1 }; $code = $p.ExitCode; Write-Output "exit $code"; if (-not (Test-Path $out)) { Write-Output 'no QtTest output'; Get-Content "$env:TEMP/k1-sheets-err.txt" -ErrorAction SilentlyContinue; exit 1 }; Get-Content $out; Get-ChildItem $dir -Filter *.png -ErrorAction SilentlyContinue | ForEach-Object { Write-Output "sheet $($_.Name)" }; exit $code
+    visualStudio: false
+    timeoutSeconds: 600
+    artifacts: [out/build/windows-x64-release/k1-sheets-window]
   gate-win-tests:
     # hikari_ui_shell_tests (D1 functions), docking qualification and workspace layout under the windows platform.
     script: ./tools/native-gate/windows/tests.ps1
@@ -280,8 +295,10 @@ tasks:
   vsfiltermod-test:
     # The adapter and VSFilterMod through it (leased fonts, the overlay against
     # drawing onto the frame), verbose for the per-fixture differences; the
-    # render artifacts are kept.
-    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-vsfiltermod -R "^(Csri|RendererSelection|VsfilterMod|OptionsDialog)[.]" -V
+    # render artifacts are kept. HIKARI_VSFILTERMOD_CSRI names the folder the
+    # build fetched the pinned release into (vsfilter-task-environment checks
+    # the task sets it, as an unset one turns the VsfilterMod tests into skips).
+    script: $env:HIKARI_VSFILTERMOD_CSRI = "$PWD/out/build/windows-x64-vsfiltermod/tests/backends/vsfiltermod-csri"; ./tools/winix/msvc.ps1 ctest --preset windows-x64-vsfiltermod -R "^(Csri|RendererSelection|VsfilterMod|OptionsDialog)[.]" -V
     timeoutSeconds: 1200
     artifacts: [out/build/windows-x64-vsfiltermod/tests/backends/artifacts/vsfiltermod]
   vsfiltermod-shell:
@@ -344,3 +361,39 @@ tasks:
     visualStudio: false
     timeoutSeconds: 600
     artifacts: [out/build/windows-x64-vsfiltermod/w2-desktop]
+  qttest-window:
+    # One QtTest executable on the interactive desktop (the windows platform, tools/winix/qttest.ps1):
+    # TEST, ARGS, TEST_TIMEOUT, FORMAT, OUT (a workspace folder for the output), REQUIRE_RUN=1 (a skip
+    # fails the task); any other --env (HIKARI_*_SHOT_DIR, ...) reaches the test.
+    script: $env:QT_QPA_PLATFORM = 'windows'; ./tools/winix/qttest.ps1
+    visualStudio: false
+    timeoutSeconds: 1800
+  ctest-regex:
+    # ctest by regex R (V=1 for -V), with the JUnit report as the artifact.
+    script: $v = if ($env:V) { '-V' } else { '--output-on-failure' }; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "$env:R" $v --output-junit results-regex.xml
+    timeoutSeconds: 2700
+    artifacts: [out/build/windows-x64-release/results-regex.xml]
+  review-window:
+    # The Windows counterparts of the review images (K1 sheets, K2 four themes and focus, O5 languages,
+    # D3 chrome) on the interactive desktop (tools/winix/review-window.ps1; PARTS selects).
+    script: ./tools/winix/review-window.ps1
+    visualStudio: false
+    timeoutSeconds: 3600
+    artifacts: [out/build/windows-x64-release/review-window]
+  vsfiltermod-shell-all:
+    # W2: the whole shell suite (offscreen) in the build with VSFilterMod beside the program (vsfiltermod-build first).
+    script: $env:BUILD = 'windows-x64-vsfiltermod'; $env:TEST = 'hikari_ui_shell_tests'; $env:TEST_TIMEOUT = '2400'; $env:OUT = 'out/build/windows-x64-vsfiltermod/shell-all'; ./tools/winix/qttest.ps1
+    visualStudio: false
+    timeoutSeconds: 2700
+    artifacts: [out/build/windows-x64-vsfiltermod/shell-all]
+  workflow-window:
+    # One Spix workflow (TEST: its executable's name) on the interactive desktop (the windows platform),
+    # printing to the job log; ARGS are its arguments.
+    script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter "$env:TEST.exe" out/build/windows-x64-release | Select-Object -First 1; if (-not $exe) { Write-Output "no $env:TEST.exe"; exit 2 }; Write-Output "running $($exe.FullName) $env:ARGS"; $ErrorActionPreference = 'Continue'; $a = if ($env:ARGS) { $env:ARGS -split ' ' } else { @() }; & $exe.FullName @a 2>&1 | ForEach-Object { "$_" }; Write-Output "exit $LASTEXITCODE"; exit $LASTEXITCODE
+    visualStudio: false
+    timeoutSeconds: 600
+  cmd:
+    # One PowerShell command line from CMD (diagnostics: file listings, versions).
+    script: $ErrorActionPreference = 'Continue'; Invoke-Expression $env:CMD
+    visualStudio: false
+    timeoutSeconds: 300

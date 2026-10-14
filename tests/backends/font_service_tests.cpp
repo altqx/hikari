@@ -282,29 +282,52 @@ TEST(FontconfigIdentity, SystemFacesAreTheProvidersView)
 
 #else
 
+// The stream's bytes are an installed file of the requested face. A machine
+// can hold the same face twice (a per-user copy of arial.ttf beside the one
+// in C:\Windows\Fonts): both answer to "Arial" at weight 400, and which one
+// the provider picks is its own choice, so any installed file of the face is
+// the right answer; bytes of no installed file never are.
 TEST(DirectWriteIdentity, StreamBytesAreTheInstalledFile)
 {
     LibassFontService service;
     const auto faces = service.systemFaces();
     ASSERT_FALSE(faces.empty());
-    auto pathOf = [&](const char *family, int weight) -> std::string {
+    auto pathsOf = [&](const char *family, int weight) {
+        std::vector<std::string> paths;
         for (const auto &f : faces)
-            if (!f.italic && f.weight == weight &&
-                std::find(f.families.begin(), f.families.end(), family) != f.families.end())
-                return f.path;
-        return {};
+            if (!f.italic && f.weight == weight && !f.path.empty() &&
+                std::find(f.families.begin(), f.families.end(), family) != f.families.end() &&
+                std::find(paths.begin(), paths.end(), f.path) == paths.end())
+                paths.push_back(f.path);
+        return paths;
     };
-    const std::string regular = pathOf("Arial", 400), bold = pathOf("Arial", 700);
-    ASSERT_FALSE(regular.empty()) << "Arial is part of every Windows install";
+    auto installedFile = [](const std::string &sha, const std::vector<std::string> &paths) {
+        for (const auto &p : paths)
+            if (sha256Of(p) == sha)
+                return p;
+        return std::string();
+    };
+    auto listed = [](const std::vector<std::string> &paths) {
+        std::string out;
+        for (const auto &p : paths)
+            out += "\n  " + p + " (" + sha256Of(p).substr(0, 12) + ")";
+        return out;
+    };
+    const auto regulars = pathsOf("Arial", 400), bolds = pathsOf("Arial", 700);
+    ASSERT_FALSE(regulars.empty()) << "Arial is part of every Windows install";
     const auto r = resolve(FontEnvironment{}, {{"Arial", false, false, "A"}, {"Arial", true, false, "A"}});
     std::fprintf(stderr, "provider: %s\n", r.provider.c_str());
     EXPECT_EQ(r.provider.rfind("directwrite", 0), 0u);
     EXPECT_EQ(face(r, 0).stage, SelectionStage::Requested);
     EXPECT_TRUE(face(r, 0).path.empty()) << "DirectWrite hands libass a stream";
-    EXPECT_EQ(face(r, 0).sha256, sha256Of(regular)) << regular;
-    if (!bold.empty()) {
-        EXPECT_EQ(face(r, 1).sha256, sha256Of(bold)) << bold;
+    const std::string regular = installedFile(face(r, 0).sha256, regulars);
+    EXPECT_FALSE(regular.empty()) << face(r, 0).sha256 << " is no installed Arial 400:" << listed(regulars);
+    std::fprintf(stderr, "Arial 400: %zu installed, the stream is %s\n", regulars.size(), regular.c_str());
+    if (!bolds.empty()) {
+        const std::string bold = installedFile(face(r, 1).sha256, bolds);
+        EXPECT_FALSE(bold.empty()) << face(r, 1).sha256 << " is no installed Arial 700:" << listed(bolds);
         EXPECT_FALSE(face(r, 1).emboldened);
+        std::fprintf(stderr, "Arial 700: %zu installed, the stream is %s\n", bolds.size(), bold.c_str());
     }
 }
 

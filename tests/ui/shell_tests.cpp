@@ -8,6 +8,7 @@
 #include "hikari/application/spell_checker.h"
 #include "hikari/backends/simulated_output.h"
 #include "docking.h"
+#include "window_decorations.h"
 #include "line_grid.h"
 #include "line_table_model.h"
 #include "audio_display_item.h"
@@ -15,6 +16,7 @@
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/core/ass_save.h"
 #include "media/mkv_fixture.h"
+#include "open_files.h"
 #include "hikari/application/video_sources.h"
 #include "hikari/application/visual_all_tags.h"
 #include "hikari/application/visual_crosshair.h"
@@ -39,6 +41,8 @@
 #include <QPainter>
 #include <QPalette>
 #include <QClipboard>
+#include <QColorSpace>
+#include <QBuffer>
 #include <QProcess>
 #include <QRasterWindow>
 #include <QScreen>
@@ -242,6 +246,55 @@ class ShellTest : public QObject {
     app::Application *application = nullptr;
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
+    // Folders of one test whose files the application opens: they outlive
+    // the test function, so they are removed after the application in
+    // cleanup() (Windows cannot remove a file that is still open).
+    std::vector<std::unique_ptr<QTemporaryDir>> testFolders;
+
+    // A folder for this test's files, removed once the application is gone.
+    // `templatePath` as QTemporaryDir's (empty: the default name).
+    QTemporaryDir &testFolder(const QString &templatePath = {})
+    {
+        auto folder = templatePath.isEmpty() ? std::make_unique<QTemporaryDir>()
+                                             : std::make_unique<QTemporaryDir>(templatePath);
+        folder->setAutoRemove(false);
+        testFolders.push_back(std::move(folder));
+        return *testFolders.back();
+    }
+    // Removes the test folders: the application and its helpers hold none
+    // of their files once it is gone (Linux names any still open; Windows
+    // cannot remove them).
+    void removeTestFolders()
+    {
+        auto folders = std::move(testFolders);
+        testFolders.clear();
+        QStringList problems;
+        for (const auto &folder : folders) {
+            const QString path = folder->path();
+            const QStringList open = openfiles::under(path);
+#ifdef _WIN32
+            // QDir::removeRecursively removes a link to a folder as a file,
+            // which Windows refuses (findReplaceInFilesTouchesOnlyItsTargets'
+            // sub/loop): the links go first, their targets stay.
+            std::error_code walkError;
+            std::vector<std::filesystem::path> links;
+            for (std::filesystem::recursive_directory_iterator it(path.toStdU16String(), walkError), end;
+                 !walkError && it != end; it.increment(walkError))
+                if (it->is_symlink())
+                    links.push_back(it->path());
+            for (const auto &link : links) {
+                std::error_code removeError;
+                std::filesystem::remove(link, removeError);
+            }
+#endif
+            // Every folder is removed before any failure is reported.
+            if (!open.isEmpty())
+                problems << QStringLiteral("still open: ") + open.join(QStringLiteral(", "));
+            if (!folder->remove())
+                problems << QStringLiteral("could not remove ") + QDir::toNativeSeparators(path);
+        }
+        QVERIFY2(problems.isEmpty(), qPrintable(problems.join(QLatin1Char('\n'))));
+    }
 
     // Docked panels may live in a floating window: look in every window.
     template <typename T = QQuickItem> T *item(const char *name) const
@@ -445,6 +498,9 @@ private slots:
     {
         delete engine;
         delete application;
+        engine = nullptr;
+        application = nullptr;
+        removeTestFolders();
     }
 
     void zeroDocumentState()
@@ -3637,6 +3693,22 @@ private slots:
         QTRY_VERIFY((floatingOptions = find(floatingTop, QAccessible::Button, QStringLiteral("Audio options"))));
         floatingOptions->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QTRY_VERIFY(menu->property("visible").toBool());
+        // The menu opens inside the floating panel's frame, past its shadow;
+        // inside a border of the window system's (Hyprland's) there is no
+        // shadow to keep clear of.
+        QWindow *floatingWindow = item("audioPanel")->window();
+        QCOMPARE(menu->property("margins").toInt(), hikari::ui::dockchrome::floatingShadow() + 1);
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        hikari::ui::windowdecorations::overrideSystemFrame(floatingWindow,
+                                                           hikari::ui::windowdecorations::SystemFrame::Border);
+        const auto unsetFrame = qScopeGuard([floatingWindow = QPointer<QWindow>(floatingWindow)] {
+            if (floatingWindow)
+                hikari::ui::windowdecorations::overrideSystemFrame(floatingWindow, std::nullopt);
+        });
+        floatingOptions->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QCOMPARE(menu->property("margins").toInt(), 1);
         QCOMPARE(named("panelOptionsFloat")->property("text").toString(), QStringLiteral("Dock"));
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsFloat"), "triggered"));
         QTRY_VERIFY(!audioDock->property("isFloating").toBool());
@@ -4170,8 +4242,26 @@ private slots:
         auto *root = engine->rootObjects().first();
         auto *window = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
         QVERIFY(window);
+        const bool wasActive = QAccessible::isActive();
+        QAccessible::setActive(true);
+        const auto restore = qScopeGuard([wasActive] { QAccessible::setActive(wasActive); });
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
         QTRY_VERIFY(window->isVisible());
+        // The catalog box is named for assistive technology, not by the
+        // catalog it shows ("Default"), and so is its text field (the Windows
+        // native gate's dialogs step read ComboBox 'Default' with an unnamed Edit).
+        {
+            auto *catalog = window->findChild<QQuickItem *>(QStringLiteral("styleCatalog"));
+            QVERIFY(catalog);
+            QAccessibleInterface *box = QAccessible::queryAccessibleInterface(catalog);
+            QVERIFY(box);
+            QCOMPARE(box->role(), QAccessible::ComboBox);
+            QCOMPARE(box->text(QAccessible::Name), QStringLiteral("Style catalog"));
+            QAccessibleInterface *edit =
+                QAccessible::queryAccessibleInterface(catalog->property("contentItem").value<QQuickItem *>());
+            QVERIFY(edit);
+            QCOMPARE(edit->text(QAccessible::Name), QStringLiteral("Style catalog"));
+        }
         // The active Line's Style is selected.
         QCOMPARE(window->property("assSelected").toList(), QVariantList{1});
         QCOMPARE(styles.documentStyles(), (QStringList{QStringLiteral("Default"), QStringLiteral("Sign")}));
@@ -6441,9 +6531,9 @@ private slots:
     // stay byte-identical.
     void findReplaceInFilesTouchesOnlyItsTargets()
     {
-        QTemporaryDir folder;
-        QTemporaryDir outside;
-        QTemporaryDir backup;
+        QTemporaryDir &folder = testFolder();
+        QTemporaryDir &outside = testFolder();
+        QTemporaryDir &backup = testFolder();
         const auto put = [](const QString &path, const QByteArray &bytes) {
             QDir().mkpath(QFileInfo(path).absolutePath());
             QFile f(path);
@@ -15120,39 +15210,44 @@ private slots:
             audioDock->setProperty("isFloating", false);
             QTRY_VERIFY(item("audioPanel")->window() == window);
             QTest::qWait(200);
-            // A drag: the Video panel by its header over the Grid's left part.
-            QQuickItem *video = dockHeader(QStringLiteral("Video"));
-            QVERIFY(video);
-            QQuickItem *gridGroup = groupOf(dockHeader(QStringLiteral("Grid")));
-            const QPoint start = window->mapToGlobal(video->mapToScene(QPointF(60, video->height() / 2)).toPoint());
-            const QRectF g = gridGroup->mapRectToScene(QRectF(0, 0, gridGroup->width(), gridGroup->height()));
-            const QPoint target = window->mapToGlobal(QPointF(g.left() + g.width() / 8, g.center().y()).toPoint());
-            sendMouse(window, QEvent::MouseButtonPress, start, Qt::LeftButton);
-            QWindow *receiver = window;
-            for (int i = 1; i <= 20; ++i) {
-                sendMouse(receiver, QEvent::MouseMove, start + (target - start) * i / 20, Qt::LeftButton);
-                if (QWindow *f = item("videoPanel")->window(); f != window)
-                    receiver = f;
-                QTest::qWait(20);
+            // A drag: the Video panel by its header over the Grid's left part,
+            // by events sent to the windows. A desktop's window system moves
+            // a floating window only for its own pointer (the Windows drag is
+            // the native gate's pointer step), so there it is left out.
+            if (QGuiApplication::platformName() == QLatin1String("offscreen")) {
+                QQuickItem *video = dockHeader(QStringLiteral("Video"));
+                QVERIFY(video);
+                QQuickItem *gridGroup = groupOf(dockHeader(QStringLiteral("Grid")));
+                const QPoint start = window->mapToGlobal(video->mapToScene(QPointF(60, video->height() / 2)).toPoint());
+                const QRectF g = gridGroup->mapRectToScene(QRectF(0, 0, gridGroup->width(), gridGroup->height()));
+                const QPoint target = window->mapToGlobal(QPointF(g.left() + g.width() / 8, g.center().y()).toPoint());
+                sendMouse(window, QEvent::MouseButtonPress, start, Qt::LeftButton);
+                QWindow *receiver = window;
+                for (int i = 1; i <= 20; ++i) {
+                    sendMouse(receiver, QEvent::MouseMove, start + (target - start) * i / 20, Qt::LeftButton);
+                    if (QWindow *f = item("videoPanel")->window(); f != window)
+                        receiver = f;
+                    QTest::qWait(20);
+                }
+                // The Video panel floats under the pointer, and the Grid shows
+                // where it would land.
+                QTRY_VERIFY(item("videoPanel")->window() != window);
+                QTRY_VERIFY(dropHighlightShown());
+                QTest::qWait(200);
+                QImage shot = window->grabWindow();
+                {
+                    auto *f = qobject_cast<QQuickWindow *>(item("videoPanel")->window());
+                    QVERIFY(f);
+                    QPainter p(&shot);
+                    p.setOpacity(f->opacity());
+                    const qreal dpr = window->effectiveDevicePixelRatio();
+                    const QImage dragged = f->grabWindow();
+                    p.drawImage(QRectF(QPointF(f->position() - window->position()) * dpr, QSizeF(dragged.size())), dragged);
+                }
+                QVERIFY(shot.save(prefix + QStringLiteral("drag") + suffix));
+                sendMouse(receiver, QEvent::MouseButtonRelease, target, Qt::NoButton);
+                QTest::qWait(200);
             }
-            // The Video panel floats under the pointer, and the Grid shows
-            // where it would land.
-            QTRY_VERIFY(item("videoPanel")->window() != window);
-            QTRY_VERIFY(dropHighlightShown());
-            QTest::qWait(200);
-            QImage shot = window->grabWindow();
-            {
-                auto *f = qobject_cast<QQuickWindow *>(item("videoPanel")->window());
-                QVERIFY(f);
-                QPainter p(&shot);
-                p.setOpacity(f->opacity());
-                const qreal dpr = window->effectiveDevicePixelRatio();
-                const QImage dragged = f->grabWindow();
-                p.drawImage(QRectF(QPointF(f->position() - window->position()) * dpr, QSizeF(dragged.size())), dragged);
-            }
-            QVERIFY(shot.save(prefix + QStringLiteral("drag") + suffix));
-            sendMouse(receiver, QEvent::MouseButtonRelease, target, Qt::NoButton);
-            QTest::qWait(200);
             application->workspaceLayout().resetLayout();
             QVERIFY(QMetaObject::invokeMethod(item<QObject>("referenceDock"), "open"));
             QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
@@ -17250,7 +17345,7 @@ private slots:
     // video's folder (A1 left).
     void videoRecentListsAndDialogFolders()
     {
-        QTemporaryDir own;
+        QTemporaryDir &own = testFolder();
         QVERIFY(own.isValid());
         const QString ini = own.filePath(QStringLiteral("hikari.ini"));
         const QString clip = own.filePath(QStringLiteral("clip.mkv"));
@@ -17442,7 +17537,7 @@ private slots:
     // the tab no longer has the video.
     void unloadVideoLeavesTheFileAndTheAudioBox()
     {
-        QTemporaryDir own;
+        QTemporaryDir &own = testFolder();
         QVERIFY(own.isValid());
         const QString clip = own.filePath(QStringLiteral("clip.mkv"));
         QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"), clip));
@@ -17493,6 +17588,9 @@ private slots:
         QVERIFY(closeAudio);
         QVERIFY(QMetaObject::invokeMethod(closeAudio, "trigger"));
         QTRY_VERIFY(!audio.hasAudio());
+        // with the video unloaded and the audio closed nothing holds the
+        // file (legacy closed its provider and could recycle the file at once)
+        QTRY_VERIFY_WITH_TIMEOUT(openfiles::nothingHolds(clip), 10000);
     }
 
     // V3: GLOBAL_OPEN_DUMMY_VIDEO (legacy DummyVideo, ProviderDummy): the
@@ -17572,7 +17670,7 @@ private slots:
     void nextFileWalksTheVideosFolder()
     {
         restartWithoutSound();
-        QTemporaryDir own;
+        QTemporaryDir &own = testFolder();
         QVERIFY(own.isValid());
         for (const char *name : {"a.mkv", "b.MKV", "c.mkv"})
             QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), own.filePath(QLatin1String(name))));
@@ -17787,7 +17885,7 @@ private slots:
     void nextFileListsWhatLegacyListed()
     {
         restartWithoutSound();
-        QTemporaryDir own;
+        QTemporaryDir &own = testFolder();
         QVERIFY(own.isValid());
         const QString folder = own.filePath(QStringLiteral("walk"));
         QVERIFY(QDir().mkpath(folder + QStringLiteral("/sub")));
@@ -18093,6 +18191,20 @@ private slots:
         QVERIFY(video.indexing());
         QVERIFY(progress->isVisible());
         QCOMPARE(findItem(progress, QStringLiteral("videoIndexingProgress"))->property("indeterminate").toBool(), true);
+        // Over the picture beside the tool rail, on an opaque fill in the
+        // panel colour (the style's Frame draws only its outline; the
+        // "Associated files" question showed the rail through it).
+        {
+            QQuickItem *rail = visualItem("visualToolRail");
+            QVERIFY(rail && rail->isVisible());
+            const QRectF strip = progress->mapRectToScene(QRectF(0, 0, progress->width(), progress->height()));
+            QVERIFY(!strip.intersects(rail->mapRectToScene(QRectF(0, 0, rail->width(), rail->height()))));
+            auto *fill = findItem(progress, QStringLiteral("videoIndexingBackground"));
+            QVERIFY(fill);
+            const QColor panel = fill->property("color").value<QColor>();
+            QCOMPARE(panel.alpha(), 255);
+            QCOMPARE(panel, QGuiApplication::palette().color(QPalette::Window)); // the theme's panel
+        }
         // V3-indexing-inline: a strip inside the Video panel, not a modal
         // window (legacy ProgressSink): no modal popup or window opens
         {
@@ -18197,10 +18309,18 @@ private slots:
             }
         return out;
     }
+    // The pixels only: QImage's == also compares the colour space, which an
+    // image read back from a file carries when the file names one (the PNG
+    // .NET writes from the Windows clipboard has an sRGB chunk; the copied
+    // frame has none).
     static bool sameImage(const QImage &a, const QImage &b)
     {
-        return a.size() == b.size()
-               && a.convertToFormat(QImage::Format_RGB888) == b.convertToFormat(QImage::Format_RGB888);
+        if (a.size() != b.size())
+            return false;
+        QImage x = a.convertToFormat(QImage::Format_RGB888), y = b.convertToFormat(QImage::Format_RGB888);
+        x.setColorSpace(QColorSpace());
+        y.setColorSpace(QColorSpace());
+        return x == y;
     }
     void triggerAction(const char *menuItem)
     {
@@ -18219,7 +18339,7 @@ private slots:
     void videoViewZoomAspectAndVolume()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(folder.isValid());
         QVERIFY(v4Open(folder));
         auto &view = application->videoView();
@@ -18498,7 +18618,7 @@ private slots:
         // A folder named with "_7_": legacy numbered every snapshot by the
         // first "_<digits>_" of the path, so each save was number 1 and
         // overwrote the last (V4-snapshot-number).
-        QTemporaryDir folder(QDir::tempPath() + QStringLiteral("/hikari_7_XXXXXX"));
+        QTemporaryDir &folder = testFolder(QDir::tempPath() + QStringLiteral("/hikari_7_XXXXXX"));
         QVERIFY(folder.isValid());
         QVERIFY(v4Open(folder));
         // The recent lists (VideoBox.cpp:952-965): the first twenty of each,
@@ -18668,7 +18788,7 @@ private slots:
                      QStringLiteral("image/png"), QStringLiteral("-o")};
 #endif
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(folder.isValid());
         QVERIFY(v4Open(folder));
         const auto &session = application->video().session();
@@ -18695,6 +18815,12 @@ private slots:
             QVERIFY2(reader.exitStatus() == QProcess::NormalExit && reader.exitCode() == 0, qPrintable(said));
             const QImage read(out);
             QVERIFY2(!read.isNull(), qPrintable(QStringLiteral("%1 wrote no image").arg(program)));
+            if (!sameImage(read, expected)) {
+                // Kept beside the read-back for a comparison (the copied frame and its format).
+                expected.save(out + QStringLiteral(".expected.png"));
+                qInfo().noquote() << action << "copied frame format" << int(expected.format()) << "hasAlpha"
+                                  << expected.hasAlphaChannel() << "saved to" << out + QStringLiteral(".expected.png");
+            }
             QVERIFY2(sameImage(read, expected),
                      qPrintable(QStringLiteral("%1: read back %2x%3, copied %4x%5")
                                     .arg(QLatin1String(action))
@@ -18706,13 +18832,44 @@ private slots:
         QFile::remove(out);
     }
 
+    // The clipboard read-back is compared by its pixels: a PNG that names
+    // sRGB (what .NET writes from the Windows clipboard) loads with that
+    // colour space, which QImage's == compares too. Legacy copies the frame
+    // as bare RGB24 (RendererVideo::SaveFrame), so only the pixels count.
+    void clipboardReadBackIsComparedByItsPixels()
+    {
+        QImage frame(8, 6, QImage::Format_RGB888);
+        for (int y = 0; y < frame.height(); ++y)
+            for (int x = 0; x < frame.width(); ++x)
+                frame.setPixel(x, y, qRgb(x * 30, y * 40, (x + y) * 15));
+        QImage tagged = frame;
+        tagged.setColorSpace(QColorSpace(QColorSpace::SRgb));
+        QByteArray png;
+        QBuffer buffer(&png);
+        QVERIFY(buffer.open(QIODevice::WriteOnly));
+        QVERIFY(tagged.save(&buffer, "PNG"));
+        QImage read = QImage::fromData(png, "PNG");
+        QVERIFY(!read.isNull());
+        QVERIFY(read.colorSpace().isValid());
+        QVERIFY(!frame.colorSpace().isValid());
+        // The comparison that failed on Windows with equal pixels.
+        QVERIFY(read.convertToFormat(QImage::Format_RGB888) != frame);
+        QVERIFY(sameImage(read, frame));
+        QVERIFY(sameImage(frame, read));
+        QVERIFY(sameImage(read.convertToFormat(QImage::Format_ARGB32), frame));
+        QImage changed = read;
+        changed.setPixel(3, 2, qRgb(1, 2, 3));
+        QVERIFY(!sameImage(changed, frame));
+        QVERIFY(!sameImage(read.copy(0, 0, 7, 6), frame));
+    }
+
     // The Script properties YCbCr matrix reaches the video's colours: the
     // shown frame is decoded again with it (legacy ProviderFFMS2::SetColorSpace
     // and Render while paused).
     void scriptPropertiesMatrixRecoloursTheVideo()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(folder.isValid());
         QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/color709.mkv"), folder.filePath(QStringLiteral("clip.mkv")));
         QFile f(folder.filePath(QStringLiteral("clip.ass")));
@@ -18778,7 +18935,7 @@ private slots:
     void untaggedHdVideoIsConvertedAsItsMatrix()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(folder.isValid());
         QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/colorhd.mkv"), folder.filePath(QStringLiteral("clip.mkv")));
         QFile f(folder.filePath(QStringLiteral("clip.ass")));
@@ -18877,7 +19034,7 @@ private slots:
     void videoFullscreenEnterAndLeave()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         keysNeverRepeat();
         auto &fs = application->videoFullscreen();
@@ -19006,7 +19163,7 @@ private slots:
     void videoFullscreenContextMenuAndOpenEditor()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         auto *session = v5Session();
@@ -19103,7 +19260,7 @@ private slots:
     void videoFullscreenDoubleClickAndVisibleLine()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         auto *session = v5Session();
@@ -19151,7 +19308,7 @@ private slots:
     void videoFullscreenPanelFollowsThePointer()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         QVERIFY(fs.toggle(0));
@@ -19212,7 +19369,7 @@ private slots:
     void videoFullscreenVolumeSlider()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         auto &view = application->videoView();
@@ -19252,7 +19409,7 @@ private slots:
     void videoFullscreenFollowsTheVideo()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         QVERIFY(fs.toggle(0));
@@ -19288,7 +19445,7 @@ private slots:
     void videoFullscreenPresentsTheFramePendingAtTheMove()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         const auto &session = application->video().session();
@@ -19334,7 +19491,7 @@ private slots:
     void videoFullscreenDialogsMenuKeyToolsAndMapping()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         QVERIFY(fs.toggle(0));
@@ -19409,7 +19566,7 @@ private slots:
     void videoFullscreenOnStartLastsOneOpen()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         auto *root = engine->rootObjects().first();

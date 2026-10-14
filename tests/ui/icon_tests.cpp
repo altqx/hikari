@@ -37,6 +37,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QRegularExpression>
+#include <QScreen>
 #include <QScopeGuard>
 #include <QStandardPaths>
 #include <QSvgRenderer>
@@ -62,6 +63,18 @@ QJsonObject readManifest()
     if (!file.open(QIODevice::ReadOnly))
         return {};
     return QJsonDocument::fromJson(file.readAll()).object();
+}
+
+// The rows of cells one contact sheet holds. On a desktop the window system
+// keeps a window inside its monitor (the windows platform cuts what is below
+// the available height), so a sheet holds what fits under a window frame;
+// offscreen nothing cuts a window and one sheet holds every role. The frame
+// allowance (title bar and the default cascade offset) is a guess: a taller
+// frame or a lower start fails the sheet's height check, not a pixel read.
+int contactSheetRows(bool desktop, int availableHeight, int cellHeight)
+{
+    constexpr int frame = 80;
+    return desktop ? std::max(1, (availableHeight - frame) / cellHeight) : 1000;
 }
 
 // Every number in an attribute value (path data, coordinates).
@@ -989,6 +1002,21 @@ Rectangle {
         QCOMPARE(difference(playRtl, play), 0);
     }
 
+    // A contact sheet on a desktop holds the rows that fit the screen's
+    // available height under a window frame (a 1024 x 768 desktop with its
+    // taskbar takes 14 rows of 44, not the whole set), and at least one;
+    // offscreen it holds every role.
+    void contactSheetsFitTheScreen()
+    {
+        QCOMPARE(contactSheetRows(true, 728, 44), 14);
+        QCOMPARE(contactSheetRows(true, 1040, 44), 21);
+        QCOMPARE(contactSheetRows(true, 100, 44), 1);
+        QCOMPARE(contactSheetRows(true, 0, 44), 1);
+        const int all = int((ui::icons::roles().size() + 7) / 8);
+        QVERIFY(all > 14); // the whole set is taller than that desktop
+        QVERIFY(contactSheetRows(false, 728, 44) >= all);
+    }
+
     // The rendering check and contact sheets: the whole set drawn by the
     // Icon item on each theme's background at this process's scale,
     // every icon equal to its SVG file drawn at the device's pixels (crisp,
@@ -997,7 +1025,9 @@ Rectangle {
     // tree's file, recoloured through SVG's color property rather than the
     // item's tint (drawnFromSource), so a wrong drawing, a wrong tint or
     // colours in the wrong layer fail here; whether the drawings look right
-    // rests on the user's review of the contact sheets written here.
+    // rests on the user's review of the contact sheets written here. Each
+    // sheet is drawn whole (its height is checked), on as many pages as the
+    // screen needs.
     void contactSheets()
     {
         auto restore = qScopeGuard([] { ui::theme::endPreview(); });
@@ -1013,13 +1043,26 @@ Rectangle {
         }
         const QString prefix = qEnvironmentVariable("HIKARI_ICON_SHEET_PREFIX", QStringLiteral("k1"));
         constexpr int columns = 8, cellWidth = 168, cellHeight = 44;
-        const int rows = int((roles.size() + columns - 1) / columns);
+        // A sheet taller than the screen is cut by a desktop's window system,
+        // so the roles go on pages that fit it (files named -pageN);
+        // HIKARI_ICON_SHEET_PAGE_ROWS sets the rows of a page instead.
+        const QScreen *screen = QGuiApplication::primaryScreen();
+        int fitRows = contactSheetRows(screen && QGuiApplication::platformName() != QLatin1String("offscreen"),
+                                       screen ? screen->availableGeometry().height() : 0, cellHeight);
+        if (const int rowsWanted = qEnvironmentVariableIntValue("HIKARI_ICON_SHEET_PAGE_ROWS"); rowsWanted > 0)
+            fitRows = rowsWanted;
+        const QStringList allRoles = roles;
+        const int pageRoles = fitRows * columns;
+        const int pages = int((allRoles.size() + pageRoles - 1) / pageRoles);
         const QString outDir = qEnvironmentVariable("HIKARI_ICON_SHEET_DIR");
-        for (const auto code : ui::theme::kCodes) {
-            useTheme(code);
-            const QColor background = themeRoles().background;
-            const QColor text = themeRoles().text;
-            QByteArray qml = R"(
+        for (int page = 0; page < pages; ++page) {
+            roles = allRoles.mid(page * pageRoles, pageRoles);
+            const int rows = int((roles.size() + columns - 1) / columns);
+            for (const auto code : ui::theme::kCodes) {
+                useTheme(code);
+                const QColor background = themeRoles().background;
+                const QColor text = themeRoles().text;
+                QByteArray qml = R"(
 import QtQuick
 import Hikari.Ui
 Rectangle {
@@ -1044,45 +1087,48 @@ Rectangle {
     }
 }
 )";
-            qml.replace("BG", background.name().toLatin1()).replace("FG", text.name().toLatin1());
-            qml.replace("COLS", QByteArray::number(columns)).replace("ROWS", QByteArray::number(rows));
-            qml.replace("CW", QByteArray::number(cellWidth)).replace("CH", QByteArray::number(cellHeight));
-            auto shown = show(qml, QSize(columns * cellWidth, rows * cellHeight));
-            QVERIFY(shown.root);
-            shown.root->setProperty("roles", roles);
-            QVERIFY(QTest::qWaitForWindowExposed(shown.window.get()));
-            QImage sheet;
-            QTRY_VERIFY((sheet = shown.window->grabWindow(), !sheet.isNull() && sheet.width() > 0));
-            const qreal dpr = shown.window->effectiveDevicePixelRatio();
-            QCOMPARE(sheet.width(), qRound(columns * cellWidth * dpr));
-            const QColor colour = themeRoles().text;
-            const QColor accent = themeRoles().accent;
-            int worst = 0;
-            QString worstRole;
-            for (int i = 0; i < roles.size(); ++i) {
-                // the 16-unit icon at (8, 6) of its cell, in device pixels
-                const int px = qRound((i % columns * cellWidth + 8) * dpr), py = qRound((i / columns * cellHeight + 6) * dpr);
-                const int side = qRound(16 * dpr);
-                const QImage expected = drawnFromSource(roles[i], side, colour, accent);
-                for (int y = 0; y < side; ++y)
-                    for (int x = 0; x < side; ++x) {
-                        const QColor want = composite(expected.pixel(x, y), background);
-                        const QColor got(sheet.pixel(px + x, py + y));
-                        const int d = std::max({std::abs(want.red() - got.red()), std::abs(want.green() - got.green()),
-                                                std::abs(want.blue() - got.blue())});
-                        if (d > worst) {
-                            worst = d;
-                            worstRole = roles[i];
+                qml.replace("BG", background.name().toLatin1()).replace("FG", text.name().toLatin1());
+                qml.replace("COLS", QByteArray::number(columns)).replace("ROWS", QByteArray::number(rows));
+                qml.replace("CW", QByteArray::number(cellWidth)).replace("CH", QByteArray::number(cellHeight));
+                auto shown = show(qml, QSize(columns * cellWidth, rows * cellHeight));
+                QVERIFY(shown.root);
+                shown.root->setProperty("roles", roles);
+                QVERIFY(QTest::qWaitForWindowExposed(shown.window.get()));
+                QImage sheet;
+                QTRY_VERIFY((sheet = shown.window->grabWindow(), !sheet.isNull() && sheet.width() > 0));
+                const qreal dpr = shown.window->effectiveDevicePixelRatio();
+                QCOMPARE(sheet.width(), qRound(columns * cellWidth * dpr));
+                QCOMPARE(sheet.height(), qRound(rows * cellHeight * dpr)); // not cut by the screen
+                const QColor colour = themeRoles().text;
+                const QColor accent = themeRoles().accent;
+                int worst = 0;
+                QString worstRole;
+                for (int i = 0; i < roles.size(); ++i) {
+                    // the 16-unit icon at (8, 6) of its cell, in device pixels
+                    const int px = qRound((i % columns * cellWidth + 8) * dpr), py = qRound((i / columns * cellHeight + 6) * dpr);
+                    const int side = qRound(16 * dpr);
+                    const QImage expected = drawnFromSource(roles[i], side, colour, accent);
+                    for (int y = 0; y < side; ++y)
+                        for (int x = 0; x < side; ++x) {
+                            const QColor want = composite(expected.pixel(x, y), background);
+                            const QColor got(sheet.pixel(px + x, py + y));
+                            const int d = std::max({std::abs(want.red() - got.red()), std::abs(want.green() - got.green()),
+                                                    std::abs(want.blue() - got.blue())});
+                            if (d > worst) {
+                                worst = d;
+                                worstRole = roles[i];
+                            }
                         }
-                    }
-            }
-            QVERIFY2(worst <= 8, qPrintable(QStringLiteral("%1 differs by %2").arg(worstRole).arg(worst)));
-            if (!outDir.isEmpty()) {
-                QDir().mkpath(outDir);
-                const QString name = QStringLiteral("%1/%2-%3-%4.png")
-                                         .arg(outDir, prefix, ui::theme::codeName(code))
-                                         .arg(qRound(dpr * 100));
-                QVERIFY(sheet.save(name));
+                }
+                QVERIFY2(worst <= 8, qPrintable(QStringLiteral("%1 differs by %2").arg(worstRole).arg(worst)));
+                if (!outDir.isEmpty()) {
+                    QDir().mkpath(outDir);
+                    const QString name = QStringLiteral("%1/%2-%3-%4%5.png")
+                                             .arg(outDir, prefix, ui::theme::codeName(code))
+                                             .arg(qRound(dpr * 100))
+                                             .arg(pages > 1 ? QStringLiteral("-page%1").arg(page + 1) : QString());
+                    QVERIFY(sheet.save(name));
+                }
             }
         }
     }

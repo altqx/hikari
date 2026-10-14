@@ -131,6 +131,12 @@ if(UNIX AND NOT APPLE)
     target_link_libraries(hikari_ui PRIVATE Qt6::DBus)
     target_compile_definitions(hikari_ui PRIVATE HIKARI_SCREEN_PORTAL)
 endif()
+# K2: Follow system theme reads the XDG settings portal's colour scheme where
+# Qt's platform theme reports none (portal_colour_scheme.h).
+if(UNIX AND NOT APPLE)
+    target_sources(hikari_ui PRIVATE portal_colour_scheme.cpp portal_colour_scheme.h)
+    target_compile_definitions(hikari_ui PRIVATE HIKARI_COLOUR_SCHEME_PORTAL)
+endif()
 # D3: the dock chrome after MuseScore 4 (docs/qt/docking.md, "Chrome"): the
 # panel header's "⋯" button, the drop highlight and the floating header's
 # system-move area.

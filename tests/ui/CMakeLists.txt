@@ -219,6 +219,15 @@ foreach(scale 125 150 175 200)
     set_tests_properties(hikari_ui_docking_qualification_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
 endforeach()
+# The Windows native gate's declared skips cover every skip of the suites it
+# runs whole (tools/native-gate/windows/check_declared_skips.py).
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_Interpreter_FOUND)
+    add_test(NAME hikari_native_gate_windows_declared_skips
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/native-gate/windows/check_declared_skips.py"
+            "${PROJECT_SOURCE_DIR}")
+    set_tests_properties(hikari_native_gate_windows_declared_skips PROPERTIES LABELS "native-gate" TIMEOUT 60)
+endif()
 hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 # D2: the View menu's arrangements and the editor switch through the composition.
@@ -295,6 +304,12 @@ target_compile_definitions(hikari_ui_icon_tests PRIVATE
 # following the system, the high-contrast pickers, content colours, the live
 # preview and the Theme singleton; the swatch sheet with HIKARI_THEME_SHEET_DIR.
 hikari_add_qttest(hikari_ui_theme_tests SOURCES theme_tests.cpp LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2 OFFSCREEN_ONLY)
+# K2 on Linux: Follow system theme through the XDG settings portal, on a
+# private bus with a fake portal (portal_colour_scheme.h).
+if(UNIX AND NOT APPLE)
+    target_link_libraries(hikari_ui_theme_tests PRIVATE Qt6::DBus)
+    target_compile_definitions(hikari_ui_theme_tests PRIVATE HIKARI_COLOUR_SCHEME_PORTAL)
+endif()
 # K2 on Windows: the window system's title bar of every framed window follows
 # the theme (title_bars.h); on Windows also read back from the window system
 # in real windows (the .windows entry, the windows platform).
@@ -316,6 +331,12 @@ foreach(scale 150 200)
     set_tests_properties(hikari_ui_icon_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
 endforeach()
+# The contact sheets on pages of three rows, as a small desktop pages them:
+# each page drawn whole and written as -pageN.
+add_test(NAME hikari_ui_icon_tests.pages COMMAND $<TARGET_FILE:hikari_ui_icon_tests> contactSheets)
+set_tests_properties(hikari_ui_icon_tests.pages PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;HIKARI_ICON_SHEET_PAGE_ROWS=3;HIKARI_ICON_SHEET_DIR=${CMAKE_BINARY_DIR}/icon-sheet-pages"
+    LABELS "qttest;offscreen" TIMEOUT 120)
 # V6: Lines timed from the video (Spix workflow).
 hikari_add_spix_test(hikari_ui_video_timing_workflow SOURCES video_timing_workflow.cpp LIBRARIES hikari_composition
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"

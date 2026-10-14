@@ -22,8 +22,7 @@
     {"plugin": "qxcb-egl-integration", "module": "qtbase", "why": "Qt Quick's OpenGL on X11 (EGL)"}
    ],
    "platformthemes": [
-    {"plugin": "qxdgdesktopportal", "module": "qtbase", "why": "the desktop's file dialogs and colour scheme through xdg-desktop-portal"},
-    {"plugin": "qgtk3", "module": "qtbase", "why": "the GTK file dialogs and colour scheme without a portal"}
+    {"plugin": "qxdgdesktopportal", "module": "qtbase", "why": "the desktop's file dialogs and colour scheme through xdg-desktop-portal"}
    ],
    "platforminputcontexts": [
     {"plugin": "ibusplatforminputcontextplugin", "module": "qtbase", "why": "input methods through IBus"},

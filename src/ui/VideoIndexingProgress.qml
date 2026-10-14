@@ -7,12 +7,19 @@ import Hikari.Ui
 // V3: legacy ProgressSink "Indexing video" (ProviderFFMS2.cpp:89-97) inline
 // in the Video panel rather than a modal window: the indexing's progress and
 // Cancel (FFMS_CancelIndexing; the panel then has no video). Subtitle
-// editing goes on meanwhile.
+// editing goes on meanwhile. Over the video beside the tool rail, on the
+// panel colour, as the "Associated files" question (the style's Frame draws
+// only its outline).
 Frame {
     id: frame
     required property VideoController video
     objectName: "videoIndexing"
     visible: video.indexing && !video.dummy
+    background: Rectangle {
+        objectName: "videoIndexingBackground"
+        color: Theme.panel
+        border.color: Theme.line
+    }
     RowLayout {
         anchors.fill: parent
         Label {

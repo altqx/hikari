@@ -97,6 +97,8 @@ add_executable(hikari_failing_media_helper failing_media_helper.cpp)
 target_link_libraries(hikari_failing_media_helper PRIVATE hikari_helper_endpoint)
 add_dependencies(hikari_backends_indexed_source_tests hikari_media_helper hikari_failing_media_helper
     hikari_media_fixtures)
+# V3: which files the source's helper still holds (tests/support/open_files.h).
+target_include_directories(hikari_backends_indexed_source_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 
 # N6: the real-time engine everywhere; the PortAudio stream wherever an output
 # device exists (CI Linux provides a null ALSA PCM, HIKARI_TEST_AUDIO_DEVICE).
@@ -371,6 +373,19 @@ if(WIN32)
         target_compile_definitions(hikari_backends_vsfiltermod_tests PRIVATE HIKARI_VSFILTERMOD_CSRI_DIR="${_w2_csri}")
     endif()
 endif()
+# W2: the winix vsfiltermod-test task sets every variable the VSFilterMod tests
+# read (on every platform: it checks the task file, not the renderer).
+add_test(NAME vsfilter-task-environment COMMAND "${CMAKE_COMMAND}"
+    "-DTASKS=${PROJECT_SOURCE_DIR}/winix.yaml" -DTASK=vsfiltermod-test
+    "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/csri_vsfiltermod_tests.cpp"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/vsfilter_task_environment.cmake")
+# Control: the task without HIKARI_VSFILTERMOD_CSRI fails.
+add_test(NAME vsfilter-task-environment-control COMMAND "${CMAKE_COMMAND}"
+    "-DTASKS=${PROJECT_SOURCE_DIR}/winix.yaml" -DTASK=vsfiltermod-test
+    "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/csri_vsfiltermod_tests.cpp"
+    "-DDROP=$env:HIKARI_VSFILTERMOD_CSRI = \"$PWD/out/build/windows-x64-vsfiltermod/tests/backends/vsfiltermod-csri\"; "
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/vsfilter_task_environment.cmake")
+set_tests_properties(vsfilter-task-environment-control PROPERTIES LABELS backends TIMEOUT 60 WILL_FAIL TRUE)
 # W1: the optional DirectShow adapter (Windows only). Its frame and seek
 # fixtures run against the default players on the same media; its manifest
 # names the libraries it loads.

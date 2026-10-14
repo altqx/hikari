@@ -490,8 +490,10 @@ void AudioBox::close()
     m_progress = 0;
     m_channels = 0;
     m_track = -1;
-    if (wasOpen)
+    if (wasOpen) {
+        m_own.closeDisplay(); // V3: the file is held no longer (legacy deleted its provider)
         notify();
+    }
 }
 
 } // namespace hikari::application

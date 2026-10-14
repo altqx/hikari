@@ -102,6 +102,10 @@ public:
     virtual void displayAudio(const BlockRead &read, Read done) = 0;
     // Resolves the box's outstanding open and reads as Cancelled now.
     virtual void cancelDisplay() = 0;
+    // V3: closes the box's audio (legacy deleted its provider when the audio
+    // closed): its open and reads resolve Cancelled, and the port holds the
+    // file no longer.
+    virtual void closeDisplay() {}
 };
 
 } // namespace hikari::application
