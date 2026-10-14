@@ -114,6 +114,7 @@ public:
     // nothing elsewhere; null when the font was not added.
     using FontLoader = std::function<std::shared_ptr<void>(const application::FontLease &)>;
     void setFontLoader(FontLoader loader) { m_fontLoader = std::move(loader); }
+    const FontLoader &fontLoader() const { return m_fontLoader; }
     std::shared_ptr<void> loadFont(const application::FontLease &font) const;
 
 private:

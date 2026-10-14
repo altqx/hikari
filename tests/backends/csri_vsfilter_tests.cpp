@@ -690,6 +690,10 @@ TEST(VsfilterRecipe, DrawsWithTheSnapshotsLeasedFonts)
 // then with the font copied into the folder and the fonts reloaded (the
 // family is drawn), then with the font deleted and the fonts reloaded (the
 // substitute again, pixel for pixel, and GDI no longer has the family).
+// Between the last two, the fonts are reloaded while the context keeps the
+// same lease (the same bytes): the adapter adds it to the process again
+// before the earlier registration goes, and the family is still drawn; a
+// prepare without a reload adds nothing.
 TEST(VsfilterRecipe, AFontsReloadReachesTheKeptRenderer)
 {
     ASSERT_TRUE(leasedFontBytes()) << HIKARI_TEST_FONT;
@@ -706,52 +710,92 @@ TEST(VsfilterRecipe, AFontsReloadReachesTheKeptRenderer)
         const auto folder = artifacts / ("reload-" + name);
         std::filesystem::remove_all(folder);
         std::filesystem::create_directories(folder);
-        CsriRenderer r(entry.second, "");
-        // Words no other test draws: xy-VSFilter keeps module-wide caches.
-        const std::string text = script("",
-                                        "Style: Reload,Titillium Web,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,"
-                                        "0,100,100,0,0,1,2,2,5,20,20,20,1\n",
-                                        "Dialogue: 0,0:00:00.00,0:00:05.00,Reload,,0,0,0,,Reloaded external words\n");
-        const auto draw = [&](const char *step) -> std::optional<OverlayFrame> {
+        // The process's own registrations (AddFontMemResourceEx), each one
+        // and its removal noted.
+        std::vector<std::string> events;
+        const CsriRenderers::FontLoader addToProcess = entry.second->fontLoader();
+        ASSERT_TRUE(addToProcess) << name;
+        entry.second->setFontLoader([&events, addToProcess](const FontLease &font) -> std::shared_ptr<void> {
+            auto handle = addToProcess(font);
+            if (!handle)
+                return nullptr;
+            events.push_back("add " + font.family);
+            return std::shared_ptr<void>(handle.get(), [&events, handle, family = font.family](void *) mutable {
+                events.push_back("remove " + family);
+                handle.reset();
+            });
+        });
+        std::vector<FontLease> leases;
+        const auto readFolder = [&](const char *step) {
             const auto load = application::loadExternalFonts(folder.u16string() + u"\\", lower);
             EXPECT_TRUE(load.opened) << name << ", " << step;
-            RenderSnapshot s = snapshotOf(text);
+            leases.clear();
             for (const auto &font : load.fonts)
-                s.fonts.push_back(FontLease{font.name, font.bytes});
-            if (!r.prepare(std::move(s))) {
-                ADD_FAILURE() << name << ", " << step << ": the script was refused";
-                return std::nullopt;
-            }
-            auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight);
-            if (!frame || frame->empty) {
-                ADD_FAILURE() << name << ", " << step << ": nothing was drawn";
-                return std::nullopt;
-            }
-            image(*frame).save(QString::fromStdU16String((artifacts / ("reload-" + name + "-" + step + ".png")).u16string()));
-            return std::move(*frame);
+                leases.push_back(FontLease{font.name, font.bytes});
         };
-        const auto before = draw("before");
-        ASSERT_TRUE(before);
-        EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << name;
+        {
+            CsriRenderer r(entry.second, "");
+            // Words no other test draws: xy-VSFilter keeps module-wide caches.
+            const std::string text = script("",
+                                            "Style: Reload,Titillium Web,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,"
+                                            "0,100,100,0,0,1,2,2,5,20,20,20,1\n",
+                                            "Dialogue: 0,0:00:00.00,0:00:05.00,Reload,,0,0,0,,Reloaded external words\n");
+            const auto draw = [&](const char *step) -> std::optional<OverlayFrame> {
+                RenderSnapshot s = snapshotOf(text);
+                s.fonts = leases;
+                if (!r.prepare(std::move(s))) {
+                    ADD_FAILURE() << name << ", " << step << ": the script was refused";
+                    return std::nullopt;
+                }
+                auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight);
+                if (!frame || frame->empty) {
+                    ADD_FAILURE() << name << ", " << step << ": nothing was drawn";
+                    return std::nullopt;
+                }
+                image(*frame).save(QString::fromStdU16String((artifacts / ("reload-" + name + "-" + step + ".png")).u16string()));
+                return std::move(*frame);
+            };
+            readFolder("before");
+            const auto before = draw("before");
+            ASSERT_TRUE(before);
+            EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << name;
 
-        std::filesystem::copy_file(std::filesystem::path(HIKARI_TEST_FONT), folder / "TitilliumWeb-Regular.ttf");
-        reloadSubtitleFonts();
-        const auto added = draw("added");
-        ASSERT_TRUE(added);
-        EXPECT_EQ(gdiFace(L"Titillium Web"), L"Titillium Web") << name << ": the added font is not in the process";
-        std::size_t differing = 0;
-        for (std::size_t i = 0; i < added->pixels.size(); ++i)
-            differing += added->pixels[i] != before->pixels[i];
-        std::fprintf(stderr, "W2 %s: after the reload that added the font, the Line differs in %zu bytes\n", name.c_str(),
-                     differing);
-        EXPECT_GT(differing, 0u) << name << ": the font added to the folder was not drawn after the reload";
+            std::filesystem::copy_file(std::filesystem::path(HIKARI_TEST_FONT), folder / "TitilliumWeb-Regular.ttf");
+            reloadSubtitleFonts();
+            readFolder("added");
+            ASSERT_EQ(leases.size(), 1u) << name;
+            const std::string family = leases.front().family;
+            const auto added = draw("added");
+            ASSERT_TRUE(added);
+            EXPECT_EQ(gdiFace(L"Titillium Web"), L"Titillium Web") << name << ": the added font is not in the process";
+            std::size_t differing = 0;
+            for (std::size_t i = 0; i < added->pixels.size(); ++i)
+                differing += added->pixels[i] != before->pixels[i];
+            std::fprintf(stderr, "W2 %s: after the reload that added the font, the Line differs in %zu bytes\n", name.c_str(),
+                         differing);
+            EXPECT_GT(differing, 0u) << name << ": the font added to the folder was not drawn after the reload";
 
-        std::filesystem::remove(folder / "TitilliumWeb-Regular.ttf");
-        reloadSubtitleFonts();
-        const auto removed = draw("removed");
-        ASSERT_TRUE(removed);
-        EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << name << ": the removed font is still in the process";
-        EXPECT_TRUE(removed->pixels == before->pixels) << name << ": the removed font is still drawn after the reload";
+            events.clear();
+            const auto unchanged = draw("unchanged");
+            ASSERT_TRUE(unchanged);
+            EXPECT_TRUE(events.empty()) << name << ": a prepare without a reload added the kept lease again";
+            reloadSubtitleFonts();
+            const auto kept = draw("kept");
+            ASSERT_TRUE(kept);
+            EXPECT_EQ(events, (std::vector<std::string>{"add " + family, "remove " + family}))
+                << name << ": a reload with the same lease did not add it to the process again";
+            EXPECT_EQ(gdiFace(L"Titillium Web"), L"Titillium Web") << name << ": the kept lease left the process";
+            EXPECT_TRUE(kept->pixels == added->pixels) << name << ": the kept lease is not drawn after the reload";
+
+            std::filesystem::remove(folder / "TitilliumWeb-Regular.ttf");
+            reloadSubtitleFonts();
+            readFolder("removed");
+            const auto removed = draw("removed");
+            ASSERT_TRUE(removed);
+            EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << name << ": the removed font is still in the process";
+            EXPECT_TRUE(removed->pixels == before->pixels) << name << ": the removed font is still drawn after the reload";
+        }
+        entry.second->setFontLoader(addToProcess);
     }
 }
 
