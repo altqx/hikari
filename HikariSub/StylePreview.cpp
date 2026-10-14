@@ -20,7 +20,9 @@
 #include <wx/dc.h>
 #include <wx/dcmemory.h>
 #include <wx/dcclient.h>
+#include <algorithm>
 
+std::vector<StylePreview*> StylePreview::s_Previews;
 
 StylePreview::StylePreview(wxWindow *parent, int id, const wxPoint& pos, const wxSize& size)
 	: wxWindow(parent, id, pos, size)
@@ -29,9 +31,11 @@ StylePreview::StylePreview(wxWindow *parent, int id, const wxPoint& pos, const w
 	m_SubtitlesProvider = SubtitlesProviderManager::Get();
 	Bind(wxEVT_SIZE, [=, this](wxSizeEvent &evt){ DrawPreview(0); });
 	Bind(wxEVT_ERASE_BACKGROUND, [=](wxEraseEvent &evt){});
+	s_Previews.push_back(this);
 }
 StylePreview::~StylePreview()
 {
+	std::erase(s_Previews, this);
 	SAFE_RELEASE(m_SubtitlesProvider);
 	wxDELETE(previewStyle);
 	wxDELETE(bmpframe);
@@ -105,6 +109,12 @@ void StylePreview::DrawPreview(Styles *style)
 	Refresh(false);
 	delete[] data;
 	data = 0;
+}
+
+void StylePreview::RedrawAll()
+{
+	for (StylePreview *preview : s_Previews)
+		preview->DrawPreview();
 }
 
 void StylePreview::OnPaint(wxPaintEvent& event)

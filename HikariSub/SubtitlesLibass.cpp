@@ -29,6 +29,7 @@
 #include "UtilsWindows.h"
 #include "AssBlend.h"
 #include "Notebook.h"
+#include "StylePreview.h"
 
 std::atomic<bool> SubtitlesLibass::m_IsReady{ false };
 SubtitlesLibass* SubtitlesLibass::m_LastRenderer = nullptr;
@@ -64,7 +65,11 @@ unsigned int __stdcall  ProcessLibassCache(void *data)
 	}
 	libass->m_IsReady.store(libass->m_Libass != nullptr);
 	//reload all tabs to shows subtitles
-	wxTheApp->CallAfter([]() { Notebook::RefreshVideo(); });
+	wxTheApp->CallAfter([]() {
+		Notebook::RefreshVideo();
+		// style previews drew only their background while libass was not ready
+		StylePreview::RedrawAll();
+	});
 
 	return 0;
 }

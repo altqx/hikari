@@ -31,10 +31,13 @@ class StylePreview : public wxWindow
 		virtual ~StylePreview();
 
 		void DrawPreview(Styles *styl = nullptr);
+		// libass starts on a thread and draws nothing until it is ready
+		static void RedrawAll();
 
 
 
 	private:
+		static std::vector<StylePreview*> s_Previews;
 		wxMutex mutex;
 		int pitch, width, height, b, g, r, b1, g1, r1;
 		
