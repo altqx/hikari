@@ -58,4 +58,5 @@ if(BUILD_TESTING)
     add_subdirectory(tests/ui)
     add_subdirectory(tests/i18n)
     add_subdirectory(tools/human/h2-listening) # H2 listening driver, built on request
+    add_subdirectory(tools/native-gate) # D1/D3 native gate: gatelib's tests
 endif()

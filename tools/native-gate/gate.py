@@ -20,6 +20,8 @@ import subprocess
 import sys
 import time
 
+from gatelib import TEST_RUNS, default_order, drag_points, drag_steps, find_frame, unexpected_skips
+
 GATE = os.environ["GATE_DIR"]
 EVID = os.path.join(os.environ["EVIDENCE"], sys.argv[1])
 APP = os.environ["APP"]
@@ -641,42 +643,10 @@ def locate_floating(title, scale=1, x_from=0, path=None):
         B.shot(path)
     iw, ih, raw = raw_pixels(path)
     fw, fh = (fr["w"] - 2 * SHADOW) * scale, (fr["h"] - 2 * SHADOW) * scale
-    for y in range(ih - fh + 1):
-        row = raw[y * iw * 3:(y + 1) * iw * 3]
-        x = x_from
-        while x < iw:
-            c = row[3 * x:3 * x + 3]
-            e = x + 1
-            while e < iw and row[3 * e:3 * e + 3] == c:
-                e += 1
-            run = e - x
-            if fw - 10 * scale <= run <= fw - 2:
-                left = x - (fw - run) // 2
-                # a 1-pixel line (SCALE device pixels; not a stretch of
-                # flat background): the rows above and below it differ
-                # from it at its middle
-                mid = (x + e) // 2
-                ok = 0 < y < ih - scale and raw[((y - 1) * iw + mid) * 3:((y - 1) * iw + mid) * 3 + 3] != c \
-                    and raw[((y + scale) * iw + mid) * 3:((y + scale) * iw + mid) * 3 + 3] != c
-                # the left boundary: the same colour down the frame's side
-                ok = ok and 0 <= left < iw
-                for k in range(1, 9):
-                    yy = y + k * fh // 9
-                    if not ok or yy >= ih:
-                        ok = False
-                        break
-                    ok = raw[(yy * iw + left) * 3:(yy * iw + left) * 3 + 3] == c
-                # and the bottom edge where the window's height puts it (a
-                # box of another height, such as the Line editor's text
-                # box, has the same top run but no bottom there)
-                by = y + fh - 1
-                if ok and by < ih:
-                    px = lambda xx: raw[(by * iw + xx) * 3:(by * iw + xx) * 3 + 3]
-                    ok = all(px(left + k * (fw - 1) // 8) == c for k in range(1, 8) if left + k * (fw - 1) // 8 < iw)
-                if ok:
-                    return (left - SHADOW * scale, y - SHADOW * scale, fr["w"] * scale, fr["h"] * scale, "screenshot")
-            x = e
-    return None
+    at = find_frame(raw, iw, ih, fw, fh, scale, x_from)
+    if at is None:
+        return None
+    return (at[0] - SHADOW * scale, at[1] - SHADOW * scale, fr["w"] * scale, fr["h"] * scale, "screenshot")
 
 
 def origin(frame):
@@ -696,8 +666,8 @@ def click(x, y, double=False, wait=900):
 
 def drag(sx, sy, ex, ey, steps=30, release=True):
     cmds = [f"move {sx} {sy}", "wait 250", "down", "wait 250"]
-    for i in range(1, steps + 1):
-        cmds += [f"move {sx + (ex - sx) * i // steps} {sy + (ey - sy) * i // steps}", "wait 40"]
+    for x, y in drag_points(sx, sy, ex, ey, steps):
+        cmds += [f"move {x} {y}", "wait 40"]
     cmds += [f"move {ex + 3} {ey + 3}", "wait 300", f"move {ex} {ey}", "wait 700"]
     if release:
         cmds += ["up", "wait 1200"]
@@ -1053,7 +1023,7 @@ def step_floating():
             dy = 60 if part == "title" else 100
         # steps of at most 8 pixels: the window lags the pointer by the
         # step that crosses the drag distance
-        drag(px, py, px + dx, py + dy, steps=max(30, max(abs(dx), abs(dy)) // 8))
+        drag(px, py, px + dx, py + dy, steps=drag_steps(dx, dy))
         st = wait_for(lambda s: "Audio" in frames(s), timeout=3)
         r2 = origin("Audio")
         ev1, st = B.snap(f"float-1-moved-{part}")
@@ -1532,19 +1502,7 @@ def step_menu_from_text():
 
 def step_test_executables():
     ui = os.environ["UI_TESTS"]
-    runs = [("hikari_ui_shell_tests", ["f6AndShortcutsReachAFloatingPanel", "panelsFloatDockHideAndKeepTheirState",
-                                       "placementWindowMovesTabsAndResizes",
-                                       "floatF6AndShowActivateTheFloatingPanelsWindow",
-                                       "placementWindowShowsItsDefaultsAndKeyboardChanges",
-                                       "fileDropAreaLeavesPanelDragsToTheDockingEngine",
-                                       "dockingControlsAndTheGridAreAccessible",
-                                       "floatingPanelsOffEveryScreenComeBack",
-                                       # D3
-                                       "panelMenuHoldsMoveUndockAndClose", "keyboardReachesThePanelHeaderAndItsMenu",
-                                       "doubleClickOnAHeaderFloatsAndDocks", "bottomPanelsKeepATabAndTheTrayToolbar",
-                                       "panelsKeepTheirMinimumSizes"]),
-            ("hikari_ui_docking_qualification_tests", []),
-            ("hikari_ui_workspace_layout_tests", [])]
+    runs = TEST_RUNS
     # The tests open their own windows: none of this session's HikariSub
     # over them (step fullscreen leaves it fullscreen).
     app("kill")
@@ -1570,20 +1528,8 @@ def step_test_executables():
     open(os.path.join(EVID, "test-executables.txt"), "w").write("\n".join(out))
     summary = "; ".join(re.findall(r"Totals: [^,]+, [^,]+, [^,]+", "\n".join(out)))
     skips = re.findall(r"SKIP\s*:.*", "\n".join(out))
-    # Skips the tests declare as platform limits, each observed for real by
-    # another gate item: Wayland compositors place windows (outputs); a
-    # synthetic drag between windows needs the offscreen platform (pointer);
-    # a window manager's focus-stealing policy (the F6 items; on sway, the
-    # sway-activate pass runs these tests again).
-    # Since D3's split header and the scale settle: a live scale change
-    # (outputs' mixed DPI), a declined system move (floating's moves) and
-    # the X11-only engine move (the x11 session's floating-move).
-    known = ("the compositor places windows", "a synthetic drag between windows needs the offscreen platform",
-             "refused the shell's activation request", "did not activate the main window",
-             "the screen's scale changes through the offscreen platform's configuration",
-             "the window follows a declined system move only where the platform declines it",
-             "X11 only (the .xvfb run)")
-    unexpected = [k for k in skips if not any(reason in k for reason in known)]
+    # gatelib.KNOWN_TEST_SKIPS: platform limits that other gate items observe
+    unexpected = unexpected_skips(skips)
     verdict("test-executables", "observed" if ok and not unexpected else "failed",
             f"{summary}; skips: {skips}", ["test-executables.txt"])
 
@@ -3029,8 +2975,7 @@ if __name__ == "__main__":
     # Every step; the sweep's before "videofs" (on sway it leaves the main
     # window on the scale-2 output, half the size, where the main window
     # overflows it) and "outputs" (it removes an output).
-    everything = ([n for n in STEPS if n not in ("videofs", "outputs")] + list(SWEEP_STEPS)
-                  + ["videofs", "outputs"])
+    everything = default_order(STEPS, SWEEP_STEPS)
     wanted = sys.argv[2:] or everything
     for name in wanted:
         log(f"--- {B.name}: {name}")

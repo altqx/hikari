@@ -85,6 +85,11 @@ socket path must fit a Unix socket address.
 
 ## Other tools
 
+- `gatelib.py`: the parts of `gate.py` that need no session (mutter's
+  frame search in a screenshot, drag steps, the test skips the gate
+  accepts, the default step order). `test_gatelib.py` tests them, also as
+  the ctest `native_gate_lib`
+  (`python3 -m unittest discover -s tools/native-gate -p 'test_*.py'`).
 - `hold.sh SECONDS TEST_EXE FUNCTION`: runs a QtTest executable under gdb,
   stops at FUNCTION and spins the Qt event loop from gdb, so a test fixture's
   window (for example the bare KDDockWidgets shell of
