@@ -3,9 +3,11 @@
 // barcode, so a decoded frame proves its own identity.
 
 #include "hikari/backends/ffms_indexed_source.h"
+#include "open_files.h"
 
 #include <QCoreApplication>
 #include <QElapsedTimer>
+#include <QTemporaryDir>
 #include <gtest/gtest.h>
 
 #include <cstdio>
@@ -279,6 +281,56 @@ TEST_F(Fixture, RestartBeforeAnyOpenIsRefused)
     EXPECT_EQ(source.restart({}, [&](auto r) { result = std::move(r); }), 0u);
     ASSERT_TRUE(result);
     EXPECT_EQ(result->error(), SourceError::NotOpen);
+}
+
+// V3: legacy deleted its provider when the video closed, and the file was
+// closed with it; the closed source's helper holds the file no longer, its
+// reads answer NotOpen, nothing restarts, and the file opens again.
+TEST_F(Fixture, CloseLetsGoOfTheFile)
+{
+    QTemporaryDir folder;
+    ASSERT_TRUE(folder.isValid());
+    const QString clip = folder.filePath(QStringLiteral("clip.mkv"));
+    ASSERT_TRUE(QFile::copy(QString::fromStdString(fixture("cfr")), clip));
+    const auto openClip = [&] {
+        std::optional<std::expected<SourceTimeline, SourceError>> result;
+        source.open(clip.toStdString(), {}, [&](auto r) { result = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
+        return result.value_or(std::unexpected(SourceError::BackendFailure));
+    };
+    ASSERT_TRUE(openClip());
+    EXPECT_EQ(barcode(*frame(3)), 3);
+    EXPECT_FALSE(openfiles::nothingHolds(clip)); // the open source holds it
+    std::optional<std::expected<IndexedFrame, SourceError>> pending;
+    source.frame(7, [&](auto r) { pending = std::move(r); });
+    source.close();
+    ASSERT_TRUE(pending.has_value());
+    EXPECT_EQ(pending->error(), SourceError::Cancelled);
+    EXPECT_TRUE(waitFor([&] { return openfiles::nothingHolds(clip); }, 5000)) << openfiles::under(folder.path()).join(u'\n').toStdString();
+    EXPECT_EQ(frame(0).error(), SourceError::NotOpen);
+    std::optional<std::expected<SourceTimeline, SourceError>> restarted;
+    EXPECT_EQ(source.restart({}, [&](auto r) { restarted = std::move(r); }), 0u);
+    ASSERT_TRUE(restarted);
+    EXPECT_EQ(restarted->error(), SourceError::NotOpen);
+    ASSERT_TRUE(openClip());
+    EXPECT_EQ(barcode(*frame(5)), 5);
+}
+
+// An open still indexing when the source closes resolves Stale, and its
+// file is let go once the helper has ended it.
+TEST_F(Fixture, CloseDuringAnOpenLetsGoOfTheFile)
+{
+    QTemporaryDir folder;
+    ASSERT_TRUE(folder.isValid());
+    const QString clip = folder.filePath(QStringLiteral("clip.mkv"));
+    ASSERT_TRUE(QFile::copy(QString::fromStdString(fixture("longgop")), clip));
+    std::optional<std::expected<SourceTimeline, SourceError>> result;
+    source.open(clip.toStdString(), {}, [&](auto r) { result = std::move(r); });
+    source.close();
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
+    EXPECT_FALSE(*result);
+    EXPECT_TRUE(waitFor([&] { return openfiles::nothingHolds(clip); }, 5000)) << openfiles::under(folder.path()).join(u'\n').toStdString();
+    EXPECT_EQ(frame(0).error(), SourceError::NotOpen);
 }
 
 TEST_F(Fixture, FrameTransferObservation)
@@ -1113,4 +1165,26 @@ TEST_F(DisplayAudioFixture, FailuresCarryTheStageAndFfms2sText)
     EXPECT_EQ(noAudio.error().error, SourceError::Unsupported);
     // a later open of the same source still works
     EXPECT_TRUE(openDisplay("audio"));
+}
+
+// V3: legacy deleted the audio box's provider when the audio closed, and the
+// file was closed with it; the box's helper holds the file no longer.
+TEST_F(DisplayAudioFixture, ClosingTheBoxLetsGoOfTheFile)
+{
+    QTemporaryDir folder;
+    ASSERT_TRUE(folder.isValid());
+    const QString clip = folder.filePath(QStringLiteral("audio.mka"));
+    ASSERT_TRUE(QFile::copy(QString::fromStdString(fixture("audioonly")), clip));
+    const auto tracks = probe(clip.toStdString());
+    ASSERT_TRUE(tracks);
+    ASSERT_EQ(tracks->audio.size(), 1u);
+    const int track = tracks->audio[0].index;
+    const auto opened = openDisplayPath(source, clip.toStdString(), track, {});
+    ASSERT_TRUE(opened) << opened.error().message;
+    ASSERT_TRUE(display(0, 56));
+    EXPECT_FALSE(openfiles::nothingHolds(clip));
+    source.closeDisplay();
+    EXPECT_TRUE(waitFor([&] { return openfiles::nothingHolds(clip); }, 5000)) << openfiles::under(folder.path()).join(u'\n').toStdString();
+    EXPECT_EQ(display(0, 56).error().error, SourceError::NotOpen);
+    EXPECT_TRUE(openDisplayPath(source, clip.toStdString(), track, {})); // and it opens again
 }

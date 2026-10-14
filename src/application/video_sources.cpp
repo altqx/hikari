@@ -457,6 +457,11 @@ void DummyVideoSource::cancelReads()
     m_media.cancelReads();
 }
 
+void DummyVideoSource::close()
+{
+    m_media.close();
+}
+
 std::uint64_t DummyVideoSource::generation() const
 {
     return m_dummy ? m_generation : m_media.generation();

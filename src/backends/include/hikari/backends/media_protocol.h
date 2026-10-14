@@ -101,22 +101,28 @@
 //         reply, per FFMS_TYPE_ATTACHMENT track in order: i32 track,
 //                      u8 hasFilename, str filename, str mimetype, bytes data
 //         terminal Ok: i32 count
+// Close   request: u8 Close (V3: legacy deleted its provider when the video or
+//                  the audio closed, and the file with it): what Open,
+//                  OpenAudio, PcmBegin and OpenDisplayAudio opened is closed,
+//                  so the helper holds no file; reads answer "not open"
+//         terminal Ok: empty
 
 #include <cstdint>
 
 namespace hikari::backends::media {
 
-inline constexpr std::uint32_t kProtocolVersion = 10; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio;
+inline constexpr std::uint32_t kProtocolVersion = 11; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio;
                                                    // 5: Probe, a chosen track, the video's audio, DisplayRead;
                                                    // 6: index files and the audio track in Open, no shared display audio;
                                                    // 7: Open's index handoff, DisplayRead into a block buffer;
                                                    // 8: SubtitleTracks, Subtitles, Attachments (Y9);
                                                    // 9: Open's failures carry their stage (V3);
-                                                   // 10: the frame's matrix in Open, InputMatrix (V4)
+                                                   // 10: the frame's matrix in Open, InputMatrix (V4);
+                                                   // 11: Close (V3)
 inline constexpr char kHelperName[] = "hikari-media-helper";
 
 enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5, PcmBegin = 6, PcmNext = 7,
                                  OpenDisplayAudio = 8, Probe = 9, DisplayRead = 11, SubtitleTracks = 12, Subtitles = 13,
-                                 Attachments = 14, InputMatrix = 15 };
+                                 Attachments = 14, InputMatrix = 15, Close = 16 };
 
 } // namespace hikari::backends::media

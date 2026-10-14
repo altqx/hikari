@@ -127,6 +127,7 @@ public:
     // matrix (legacy ProviderDummy::SetColorSpace does nothing).
     void setInputMatrix(int colorSpace, int colorRange, MatrixSet done) override;
     void cancelReads() override;
+    void close() override;
     std::uint64_t generation() const override;
     std::optional<OpenFailure> openFailure() const override;
 

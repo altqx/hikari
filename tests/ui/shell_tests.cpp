@@ -15,6 +15,7 @@
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/core/ass_save.h"
 #include "media/mkv_fixture.h"
+#include "open_files.h"
 #include "hikari/application/video_sources.h"
 #include "hikari/application/visual_all_tags.h"
 #include "hikari/application/visual_crosshair.h"
@@ -242,6 +243,36 @@ class ShellTest : public QObject {
     app::Application *application = nullptr;
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
+    // Folders of one test whose files the application opens: they outlive
+    // the test function, so they are removed after the application in
+    // cleanup() (Windows cannot remove a file that is still open).
+    std::vector<std::unique_ptr<QTemporaryDir>> testFolders;
+
+    // A folder for this test's files, removed once the application is gone.
+    // `templatePath` as QTemporaryDir's (empty: the default name).
+    QTemporaryDir &testFolder(const QString &templatePath = {})
+    {
+        auto folder = templatePath.isEmpty() ? std::make_unique<QTemporaryDir>()
+                                             : std::make_unique<QTemporaryDir>(templatePath);
+        folder->setAutoRemove(false);
+        testFolders.push_back(std::move(folder));
+        return *testFolders.back();
+    }
+    // Removes the test folders: the application and its helpers hold none
+    // of their files once it is gone (Linux names any still open; Windows
+    // cannot remove them).
+    void removeTestFolders()
+    {
+        auto folders = std::move(testFolders);
+        testFolders.clear();
+        for (const auto &folder : folders) {
+            const QString path = folder->path();
+            const QStringList open = openfiles::under(path);
+            const bool removed = folder->remove();
+            QVERIFY2(open.isEmpty(), qPrintable(QStringLiteral("still open: ") + open.join(QStringLiteral(", "))));
+            QVERIFY2(removed, qPrintable(QStringLiteral("could not remove ") + QDir::toNativeSeparators(path)));
+        }
+    }
 
     // Docked panels may live in a floating window: look in every window.
     template <typename T = QQuickItem> T *item(const char *name) const
@@ -445,6 +476,9 @@ private slots:
     {
         delete engine;
         delete application;
+        engine = nullptr;
+        application = nullptr;
+        removeTestFolders();
     }
 
     void zeroDocumentState()
@@ -6436,9 +6470,9 @@ private slots:
     // stay byte-identical.
     void findReplaceInFilesTouchesOnlyItsTargets()
     {
-        QTemporaryDir folder;
-        QTemporaryDir outside;
-        QTemporaryDir backup;
+        QTemporaryDir &folder = testFolder();
+        QTemporaryDir &outside = testFolder();
+        QTemporaryDir &backup = testFolder();
         const auto put = [](const QString &path, const QByteArray &bytes) {
             QDir().mkpath(QFileInfo(path).absolutePath());
             QFile f(path);
@@ -16983,7 +17017,7 @@ private slots:
     // video's folder (A1 left).
     void videoRecentListsAndDialogFolders()
     {
-        QTemporaryDir own;
+        QTemporaryDir &own = testFolder();
         QVERIFY(own.isValid());
         const QString ini = own.filePath(QStringLiteral("hikari.ini"));
         const QString clip = own.filePath(QStringLiteral("clip.mkv"));
@@ -17175,7 +17209,7 @@ private slots:
     // the tab no longer has the video.
     void unloadVideoLeavesTheFileAndTheAudioBox()
     {
-        QTemporaryDir own;
+        QTemporaryDir &own = testFolder();
         QVERIFY(own.isValid());
         const QString clip = own.filePath(QStringLiteral("clip.mkv"));
         QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"), clip));
@@ -17226,6 +17260,9 @@ private slots:
         QVERIFY(closeAudio);
         QVERIFY(QMetaObject::invokeMethod(closeAudio, "trigger"));
         QTRY_VERIFY(!audio.hasAudio());
+        // with the video unloaded and the audio closed nothing holds the
+        // file (legacy closed its provider and could recycle the file at once)
+        QTRY_VERIFY_WITH_TIMEOUT(openfiles::nothingHolds(clip), 10000);
     }
 
     // V3: GLOBAL_OPEN_DUMMY_VIDEO (legacy DummyVideo, ProviderDummy): the
@@ -17305,7 +17342,7 @@ private slots:
     void nextFileWalksTheVideosFolder()
     {
         restartWithoutSound();
-        QTemporaryDir own;
+        QTemporaryDir &own = testFolder();
         QVERIFY(own.isValid());
         for (const char *name : {"a.mkv", "b.MKV", "c.mkv"})
             QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), own.filePath(QLatin1String(name))));
@@ -17520,7 +17557,7 @@ private slots:
     void nextFileListsWhatLegacyListed()
     {
         restartWithoutSound();
-        QTemporaryDir own;
+        QTemporaryDir &own = testFolder();
         QVERIFY(own.isValid());
         const QString folder = own.filePath(QStringLiteral("walk"));
         QVERIFY(QDir().mkpath(folder + QStringLiteral("/sub")));
@@ -17952,7 +17989,7 @@ private slots:
     void videoViewZoomAspectAndVolume()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(folder.isValid());
         QVERIFY(v4Open(folder));
         auto &view = application->videoView();
@@ -18231,7 +18268,7 @@ private slots:
         // A folder named with "_7_": legacy numbered every snapshot by the
         // first "_<digits>_" of the path, so each save was number 1 and
         // overwrote the last (V4-snapshot-number).
-        QTemporaryDir folder(QDir::tempPath() + QStringLiteral("/hikari_7_XXXXXX"));
+        QTemporaryDir &folder = testFolder(QDir::tempPath() + QStringLiteral("/hikari_7_XXXXXX"));
         QVERIFY(folder.isValid());
         QVERIFY(v4Open(folder));
         // The recent lists (VideoBox.cpp:952-965): the first twenty of each,
@@ -18401,7 +18438,7 @@ private slots:
                      QStringLiteral("image/png"), QStringLiteral("-o")};
 #endif
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(folder.isValid());
         QVERIFY(v4Open(folder));
         const auto &session = application->video().session();
@@ -18445,7 +18482,7 @@ private slots:
     void scriptPropertiesMatrixRecoloursTheVideo()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(folder.isValid());
         QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/color709.mkv"), folder.filePath(QStringLiteral("clip.mkv")));
         QFile f(folder.filePath(QStringLiteral("clip.ass")));
@@ -18511,7 +18548,7 @@ private slots:
     void untaggedHdVideoIsConvertedAsItsMatrix()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(folder.isValid());
         QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/colorhd.mkv"), folder.filePath(QStringLiteral("clip.mkv")));
         QFile f(folder.filePath(QStringLiteral("clip.ass")));
@@ -18610,7 +18647,7 @@ private slots:
     void videoFullscreenEnterAndLeave()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         keysNeverRepeat();
         auto &fs = application->videoFullscreen();
@@ -18739,7 +18776,7 @@ private slots:
     void videoFullscreenContextMenuAndOpenEditor()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         auto *session = v5Session();
@@ -18836,7 +18873,7 @@ private slots:
     void videoFullscreenDoubleClickAndVisibleLine()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         auto *session = v5Session();
@@ -18884,7 +18921,7 @@ private slots:
     void videoFullscreenPanelFollowsThePointer()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         QVERIFY(fs.toggle(0));
@@ -18945,7 +18982,7 @@ private slots:
     void videoFullscreenVolumeSlider()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         auto &view = application->videoView();
@@ -18985,7 +19022,7 @@ private slots:
     void videoFullscreenFollowsTheVideo()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         QVERIFY(fs.toggle(0));
@@ -19021,7 +19058,7 @@ private slots:
     void videoFullscreenPresentsTheFramePendingAtTheMove()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         const auto &session = application->video().session();
@@ -19067,7 +19104,7 @@ private slots:
     void videoFullscreenDialogsMenuKeyToolsAndMapping()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         QVERIFY(fs.toggle(0));
@@ -19142,7 +19179,7 @@ private slots:
     void videoFullscreenOnStartLastsOneOpen()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
         auto &fs = application->videoFullscreen();
         auto *root = engine->rootObjects().first();
