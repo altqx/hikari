@@ -14,6 +14,10 @@
 extern "C" {
 #include <ass/ass.h>
 }
+// The font diagnostics are an altqx/libass fork API (ports/libass).
+#ifndef LIBASS_HAS_FONT_DIAGNOSTICS
+#error "libass is not the altqx fork: ass_set_font_diagnostics is missing (see ports/libass)"
+#endif
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_SFNT_NAMES_H
@@ -164,17 +168,17 @@ void collectFace(State &st, const ResolvedFace &face, const std::vector<unsigned
     }
 }
 
-SelectionStage stageOf(ASS_HikariFontStage s)
+SelectionStage stageOf(ASS_FontStage s)
 {
     switch (s) {
-    case ASS_HIKARI_FONT_DEFAULT_FAMILY: return SelectionStage::DefaultFamily;
-    case ASS_HIKARI_FONT_FALLBACK: return SelectionStage::Fallback;
-    case ASS_HIKARI_FONT_DEFAULT_PATH: return SelectionStage::DefaultPath;
+    case ASS_FONT_STAGE_DEFAULT_FAMILY: return SelectionStage::DefaultFamily;
+    case ASS_FONT_STAGE_FALLBACK: return SelectionStage::Fallback;
+    case ASS_FONT_STAGE_DEFAULT_PATH: return SelectionStage::DefaultPath;
     default: return SelectionStage::Requested;
     }
 }
 
-void onSelected(void *data, const ASS_HikariFontSelection *s)
+void onSelected(void *data, const ASS_FontSelection *s)
 {
     auto &st = *static_cast<State *>(data);
     if (s->uid >= 0 && st.uidToFace.contains(s->uid))
@@ -230,7 +234,7 @@ void onSelected(void *data, const ASS_HikariFontSelection *s)
     auto &request = st.report.requests[st.current];
     request.faces.push_back(index);
     const auto &added = st.report.faces[index];
-    if (s->stage != ASS_HIKARI_FONT_REQUESTED)
+    if (s->stage != ASS_FONT_STAGE_REQUESTED)
         request.usedFallback = true;
     else if (added.nameMatch == NameMatch::None)
         request.substituted = true; // the provider answered with a face of other names
@@ -338,9 +342,9 @@ std::expected<FontReport, FontError> LibassFontService::resolve(const applicatio
     state.report.libassVersion = version;
     state.report.provider = environment.systemFonts ? "" : "none";
     ass_set_message_cb(library, onMessage, &state);
-    const ASS_HikariFontDiagnostics callbacks{ASS_HIKARI_FONT_DIAGNOSTICS_VERSION, onSelected, onFaceOpened,
-                                              onGlyphSimulated, onGlyphMissing};
-    ass_hikari_set_font_diagnostics(library, &callbacks, &state);
+    const ASS_FontDiagnostics callbacks{ASS_FONT_DIAGNOSTICS_VERSION, onSelected, onFaceOpened, onGlyphSimulated,
+                                        onGlyphMissing};
+    ass_set_font_diagnostics(library, &callbacks, &state);
     for (const auto &a : environment.attachments) {
         if (!a.bytes)
             continue;
@@ -670,9 +674,9 @@ LibassFontService::collect(const std::vector<std::byte> &script, const applicati
     state.collection = &collection;
     state.report.provider = environment.systemFonts ? "" : "none";
     ass_set_message_cb(library, onMessage, &state);
-    const ASS_HikariFontDiagnostics callbacks{ASS_HIKARI_FONT_DIAGNOSTICS_VERSION, onSelected, onFaceOpened,
-                                              onGlyphSimulated, onGlyphMissing};
-    ass_hikari_set_font_diagnostics(library, &callbacks, &state);
+    const ASS_FontDiagnostics callbacks{ASS_FONT_DIAGNOSTICS_VERSION, onSelected, onFaceOpened, onGlyphSimulated,
+                                        onGlyphMissing};
+    ass_set_font_diagnostics(library, &callbacks, &state);
     for (const auto &a : environment.attachments) {
         if (!a.bytes)
             continue;

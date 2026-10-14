@@ -24,5 +24,5 @@ it. Windows keeps the legacy DLL as it shipped.
 
 v0.5.1 built its libass with a patch that turns off the rasterizer's
 approximated line scale (`deps/patches/0001-Don-t-use-approximation-in-rasterizer.patch`);
-the Linux build uses the rewrite's libass 0.17.5 as it is, so bounds and
+the Linux build uses the rewrite's libass (the altqx/libass fork, `ports/libass`) as it is, so bounds and
 hashes can differ from the Windows DLL's by that rasterizer's precision.

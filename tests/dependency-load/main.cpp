@@ -25,6 +25,13 @@ extern "C" {
 }
 #include <portaudio.h>
 
+// The altqx/libass fork (ports/libass): its feature macros tell it from
+// upstream libass, whose LIBASS_VERSION can carry the same number.
+#if !defined(LIBASS_HAS_TRACK_EVENTS_MODIFIED) || !defined(LIBASS_HAS_FRAME_ATLAS) \
+    || !defined(LIBASS_HAS_FONT_DIAGNOSTICS)
+#error "libass is not the altqx fork (ports/libass)"
+#endif
+
 static int fail(const char *what)
 {
     std::fprintf(stderr, "FAIL %s\n", what);
@@ -86,13 +93,38 @@ int main(int argc, char **argv)
 
     const int ass = ass_library_version();
     std::printf("libass=0x%08x\n", ass);
-    if (ass != 0x01705000)
-        return fail("libass is not 0.17.5");
+    // The version only rules out an older fork; the fork's own functions,
+    // run below, show that the linked libass is the fork.
+    if (ass < 0x01705020)
+        return fail("libass is older than the altqx fork 0x01705020");
     ASS_Library *library = ass_library_init();
     ASS_Renderer *renderer = library ? ass_renderer_init(library) : nullptr;
     if (!renderer)
         return fail("libass renderer");
     ass_set_fonts(renderer, nullptr, "sans-serif", ASS_FONTPROVIDER_AUTODETECT, nullptr, 0);
+    ass_set_frame_size(renderer, 64, 64);
+    ass_set_storage_size(renderer, 64, 64);
+    char script[] = "[Script Info]\nScriptType: v4.00+\nPlayResX: 64\nPlayResY: 64\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\an7\\pos(8,8)\\p1}m 0 0 l 16 0 16 16 0 16\n";
+    ASS_Track *track = ass_read_memory(library, script, sizeof script - 1, nullptr);
+    if (!track || track->n_events != 1)
+        return fail("libass parse");
+    int change = 0;
+    ASS_Image *images = ass_render_frame(renderer, track, 500, &change);
+    const ASS_Atlas *atlas = images ? ass_frame_pack_atlas(renderer, images, 256, 0, 1) : nullptr;
+    if (!atlas || atlas->n_instances < 1 || atlas->n_pages != 1)
+        return fail("libass fork: ass_frame_pack_atlas packs no frame");
+    std::printf("libass-fork=atlas %dx%d instances %d\n", atlas->width, atlas->height, atlas->n_instances);
+    // The event-index contract: a Start moved in place shows at the new time
+    // once the track is told.
+    track->events[0].Start = 2000;
+    ass_track_events_modified(track, 0);
+    if (!ass_render_frame(renderer, track, 2500, &change))
+        return fail("libass fork: an event moved in place does not show after ass_track_events_modified");
+    ass_set_font_diagnostics(library, nullptr, nullptr);
+    ass_frame_atlas_reset(renderer);
+    ass_free_track(track);
     ass_renderer_done(renderer);
     ass_library_done(library);
 

@@ -624,3 +624,43 @@ TEST(LibassRenderer, DrawsTheScriptsAttachedFonts)
     EXPECT_GT(with.bottom - with.top, 60);
     EXPECT_LT(with.bottom - with.top, 80);
 }
+
+// The event-index contract of the altqx libass fork (docs/qt/backends.md):
+// once a track has been rendered, an event whose Start is written in place
+// shows at its new time only after ass_track_events_modified. Hikari's
+// adapters never write ASS_Event today; this pins the rule any in-place edit
+// must follow.
+TEST(LibassRenderer, AStartEditedInPlaceShowsAtTheNewTimeOnceTheTrackIsTold)
+{
+    ASS_Library *library = ass_library_init();
+    ASSERT_NE(library, nullptr);
+    const auto font = testFont();
+    ass_add_font(library, "Titillium Web", reinterpret_cast<const char *>(font->data()), int(font->size()));
+    ASS_Renderer *renderer = ass_renderer_init(library);
+    ASSERT_NE(renderer, nullptr);
+    ass_set_fonts(renderer, nullptr, "Titillium Web", ASS_FONTPROVIDER_NONE, nullptr, 0);
+    ass_set_frame_size(renderer, 96, 64);
+    ass_set_storage_size(renderer, 96, 64);
+    std::vector<std::byte> script = scriptOf(std::string(kDrawing) +
+                                             "Dialogue: 0,0:00:20.00,0:00:25.00,D,,0,0,0,,{\\pos(50,10)\\p1}m 0 0 l 9 "
+                                             "0 9 9 0 9{\\p0}\n");
+    ASS_Track *track = ass_read_memory(library, reinterpret_cast<char *>(script.data()), script.size(), nullptr);
+    ASSERT_NE(track, nullptr);
+    ASSERT_EQ(track->n_events, 2);
+    int change = 0;
+    EXPECT_NE(ass_render_frame(renderer, track, 1000, &change), nullptr);
+    EXPECT_EQ(ass_render_frame(renderer, track, 7000, &change), nullptr);
+
+    // 0:00:00-0:00:05 moves to 0:00:06-0:00:11, written in place.
+    track->events[0].Start = 6000;
+    ass_track_events_modified(track, 0);
+    EXPECT_EQ(ass_render_frame(renderer, track, 1000, &change), nullptr);
+    const ASS_Image *moved = ass_render_frame(renderer, track, 7000, &change);
+    ASSERT_NE(moved, nullptr);
+    EXPECT_NEAR(moved->dst_x, 10, 1); // the first drawing, not the second at x 50
+    EXPECT_NE(ass_render_frame(renderer, track, 21000, &change), nullptr); // the other event is untouched
+
+    ass_free_track(track);
+    ass_renderer_done(renderer);
+    ass_library_done(library);
+}

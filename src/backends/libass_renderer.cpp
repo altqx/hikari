@@ -5,6 +5,17 @@ extern "C" {
 #include <ass/ass.h>
 }
 
+// Hikari builds against the altqx/libass fork (ports/libass) on every
+// platform. Its feature macros, not LIBASS_VERSION, tell it from upstream:
+// upstream bumps the version's low byte between releases too, so a version
+// alone could be an upstream build without the fork's API. The version check
+// only rules out an older fork.
+#if !defined(LIBASS_HAS_TRACK_EVENTS_MODIFIED) || !defined(LIBASS_HAS_FRAME_ATLAS) \
+    || !defined(LIBASS_HAS_FONT_DIAGNOSTICS)
+#error "libass is not the altqx fork (ports/libass); a distribution libass cannot be used"
+#endif
+static_assert(LIBASS_VERSION >= 0x01705020, "the altqx libass fork is older than the pinned 0x01705020");
+
 #include <algorithm>
 #include <cstring>
 #include <utility>

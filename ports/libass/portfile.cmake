@@ -1,16 +1,12 @@
-# Owned overlay of the vcpkg libass port at the locked baseline, with every
-# optional dependency explicit.
-vcpkg_from_github(
+# Owned libass port: the altqx/libass fork (upstream libass plus the perf
+# batch, the frame atlas, the event-index API and the font diagnostics the
+# collector uses), pinned at a master commit. The fork carries what used to be
+# this overlay's patches (the arm64 Windows assembly and the font diagnostics),
+# so there are none here. Optional dependencies stay explicit.
+vcpkg_from_git(
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO libass/libass
-    REF ${VERSION}
-    SHA512 8dfea8ef3043ace28efa8a6ae4d6a443fd19d49ad19a521a642e7ec3a7c6f97284cda16d479e168ce30bd560f7e05a0675c9f3fde872bb92ed650343499a57b1
-    HEAD_REF master
-    PATCHES
-        arm64-windows-asm.patch
-        # Font identity diagnostics for the collector (N4, F47-abi): which
-        # bytes, faces, fallbacks and simulations the renderer actually used.
-        hikari-font-diagnostics.patch
+    URL https://github.com/altqx/libass.git
+    REF 4f5ea43630bb89c9caacaf4742a8af4f3e26edf7
 )
 
 vcpkg_find_acquire_program(PKGCONFIG)
@@ -27,6 +23,9 @@ list(APPEND options
     # graph, so a system copy must never be picked up.
     -Dlibunibreak=disabled
     -Dcoretext=disabled
+    # The rasterizer's 16x16 tiles, as upstream's default and the golden
+    # frames the fork is checked against.
+    -Dlarge-tiles=false
 )
 if(VCPKG_TARGET_IS_WINDOWS)
     list(APPEND options -Ddirectwrite=enabled -Dfontconfig=disabled)

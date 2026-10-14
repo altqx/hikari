@@ -85,7 +85,7 @@ A failure in any of them reopens the build decision rather than substituting ano
 
 - **Entry:** `cmake --workflow --preset ubuntu-x64-release` (or `-verify` to add tests, `fedora-x64-*` on Fedora). The root `CMakeLists.txt` includes `cmake/provision/Provision.cmake` before `project()`. That include checks the declared host tools, then verifies or acquires the Qt mirror, installs Qt from it, provisions the pinned vcpkg checkout and tool, and sets the toolchain.
 - **Locks:** [`cmake/locks/qt-linux.lock.json`](../../cmake/locks/qt-linux.lock.json) (the lock proven in CI) and [`cmake/locks/vcpkg.lock.json`](../../cmake/locks/vcpkg.lock.json). `tools/qt-lock/make-lock.py` regenerates Qt locks. [`cmake/locks/qt-windows.lock.json`](../../cmake/locks/qt-windows.lock.json) (B2-W) locks `win64_msvc2022_64` with the same add-ons: 125 objects, 487 MB, reusing the shared `all_os` digests from the Linux lock. Its 18 metadata files are retained in the release [`qt-metadata-windows-6.11.2-20261002`](https://github.com/altqx/hikari/releases/tag/qt-metadata-windows-6.11.2-20261002).
-- **Dependencies:** the root [`vcpkg.json`](../../vcpkg.json) pins FFmpeg 7.1.2#5 (four features), libass 0.17.5 and the owned `ports/hikari-ffms2`, with release-only static `triplets/`. Qt never enters the vcpkg graph. `cmake/HikariDependencies.cmake` fails if `Qt6_DIR` is outside the provisioned prefix, and links libass through static pkg-config.
+- **Dependencies:** the root [`vcpkg.json`](../../vcpkg.json) pins FFmpeg 7.1.2#5 (four features), the owned `ports/libass` (the altqx/libass fork, see [libass fork](#libass-fork)) and the owned `ports/hikari-ffms2`, with release-only static `triplets/`. Qt never enters the vcpkg graph. `cmake/HikariDependencies.cmake` fails if `Qt6_DIR` is outside the provisioned prefix, and links libass through static pkg-config, only from the vcpkg installation and only when `ass.h` has the fork's feature macros.
 - **SDK state:** `out/sdk` holds the Qt mirror, the Qt installation (stamped with the lock digest), the metadata cache and the vcpkg checkout. It is shared by presets, ignored, and reconstructible. A Qt installation from a different lock stops the configure instead of being reused.
 - **Authentication:** with `QT_INSTALLER_JWT_TOKEN` set, the installer runs under a private HOME (on Windows also a private `APPDATA` and `LOCALAPPDATA`, where it keeps its account file) that is deleted afterwards. Without it, the installer uses the developer's existing Qt Account login. The owner authorized local and CI installs under the locked license set on 2026-09-29.
 - **Isolation in CI:** `cmake --workflow --preset provision` is the only step given the secret. The credential-free `*-verify` workflow then reuses the stamped installation.
@@ -129,16 +129,32 @@ The Lua helper preloads the legacy native modules. lpeg 0.10 (`HikariSub/Automat
 
 `audio_engine_tests` cover the callback half (`OutputEngine`) on every host: no allocation while rendering, silence when nothing is ready, underrun/suspend/stop/loss invalidation and untorn clock snapshots. `portaudio_tests` open a real PortAudio stream on the device named by `HIKARI_TEST_AUDIO_DEVICE` (a substring of the device name; a named device that is missing fails the tests), or else the host default. With no output device they skip and say so. They write silence only. The Linux CI jobs define a null ALSA PCM, `hikari_null`, in `~/.asoundrc` and select it. That covers the stream, rescan, reopen and loss paths, but its callbacks run unpaced, so its timings mean nothing. The Winix VM and GitHub's Windows runners have no audio endpoint, so WASAPI and DirectSound streams still need a host that has one.
 
-## libass font diagnostics patch (N4, 2026-10-03)
+## libass fork
 
-The owned libass overlay carries `ports/libass/hikari-font-diagnostics.patch`, a narrow diagnostic API (`ass_hikari_set_font_diagnostics`, version 1) that the font collector uses to verify identity (F47-abi). Per library it reports:
+Every Qt build (Windows, Ubuntu, Fedora, the Linux floor packages and the Windows packages) links the [altqx/libass](https://github.com/altqx/libass) fork, built statically by `ports/libass` with `vcpkg_from_git` at master `4f5ea43630bb89c9caacaf4742a8af4f3e26edf7` (version string `0.17.5-altqx-4f5ea436`). The user chose to pin the master commit, not a tag (2026-10-15). The port carries no patches: the fork has what used to be this overlay's two patches (the arm64 Windows assembly with clang and the font diagnostics below). The port keeps its options explicit: no libunibreak, no Core Text, DirectWrite on Windows and Fontconfig elsewhere, and `-Dlarge-tiles=false` (the rasterizer's 16x16 tiles, upstream's default).
 
-- every selection, with its stage (requested family, default family, provider fallback or default path) and a reader for stream bytes;
-- each opened face's actual index, face count and variation coordinates;
+The fork is upstream libass (0.17.5 plus upstream's later commits) with a performance batch: the event-time index (`ass_track_events_modified`), the frame atlas (`ass_frame_pack_atlas`) and the font diagnostics. On Yoru at 1080p (34,692 frames) its render CPU was 10.8-11.3 s against 17.4-19.9 s for upstream `4a05d81`, with every frame hash identical. The [event-index contract and threading rule](backends.md) apply to any code that touches an `ASS_Track`.
+
+Three gates keep a distribution's or upstream's libass out:
+
+- `cmake/HikariDependencies.cmake` stops the configure when pkg-config's libass is not under the vcpkg installation, or when its `ass.h` lacks `LIBASS_HAS_TRACK_EVENTS_MODIFIED`, `LIBASS_HAS_FRAME_ATLAS` or `LIBASS_HAS_FONT_DIAGNOSTICS`. pkg-config's `libass>=0.17.5` alone cannot tell them apart: the fork reports upstream's version.
+- `src/backends/libass_renderer.cpp` and `libass_font_service.cpp` stop the compile (`#error`) without those macros, and require `LIBASS_VERSION >= 0x01705020`.
+- `dependency-load` checks `ass_library_version() >= 0x01705020` at run time, then packs a rendered frame with `ass_frame_pack_atlas` and shows an event moved in place after `ass_track_events_modified`.
+
+The macros, not the version, prove the fork: upstream also bumps the version's low byte between releases.
+
+The legacy wx reference build (`cmake/linux-compat/LegacyWxLinux.CMakeLists.txt`, `build.yml`, `legacy-capture.yml`) is the legacy app's and still links the distribution's libass; legacy's own move to the fork is separate.
+
+### Font diagnostics (N4, 2026-10-03)
+
+The fork's font diagnostics API (`ass_set_font_diagnostics`, `ASS_FontDiagnostics` version `ASS_FONT_DIAGNOSTICS_VERSION` 1, `LIBASS_HAS_FONT_DIAGNOSTICS`) is what the font collector uses to verify identity (F47-abi). Until 2026-10-15 it was this overlay's `hikari-font-diagnostics.patch` under `ass_hikari_*` names. The user chose plain libass-style names when it moved into the fork. Per library it reports:
+
+- every selection, with its stage (`ASS_FONT_STAGE_REQUESTED`, `_DEFAULT_FAMILY`, `_FALLBACK` or `_DEFAULT_PATH`) and a reader for stream bytes;
+- each opened face's actual index, face count and variation coordinates (with FreeType 2.9 or newer);
 - glyphs libass emboldens or slants synthetically;
 - characters no face covers.
 
-Rendering is unchanged; the hooks only observe. The patch is anchored on pinned 0.17.5 sources, and a libass update must re-apply it and pass `font_service_tests`. On Linux those tests set `FONTCONFIG_FILE` to a generated configuration that lists only the build's CC0 font fixtures and the locked Qt install's OFL fonts (Georama, Titillium Web). On Windows they use DirectWrite and the installed fonts.
+Rendering is unchanged; the hooks only observe. A fork update must keep the API and pass `font_service_tests`. On Linux those tests set `FONTCONFIG_FILE` to a generated configuration that lists only the build's CC0 font fixtures and the locked Qt install's OFL fonts (Georama, Titillium Web). On Windows they use DirectWrite and the installed fonts.
 
 ## LuaJIT fusion patch (2026-10-03)
 
