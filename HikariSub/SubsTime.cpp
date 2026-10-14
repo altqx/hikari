@@ -14,6 +14,7 @@
 //  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "SubsTime.h"
+#include "TimeCtrlSteps.h"
 #include "config.h"
 #include "SubsDialogue.h"
 #include "Notebook.h"
@@ -129,7 +130,7 @@ wxString SubsTime::raw(char ft)//,float custfps
 		if (ft == MDVD && !orgframe && mstime){
 			orgframe = ceil(mstime * (GetMDVDFPS() / 1000.f));
 		}
-		rawtxt = wxString::Format(L"%i", (ft != MPL2) ? orgframe : (int)ceil(mstime * (10.0f / 1000.0f)));
+		rawtxt = wxString::Format(L"%i", (ft != MPL2) ? orgframe : TimeCtrlSteps::Mpl2Tenths(mstime));
 	}
 	//form=ft;
 	return rawtxt;

@@ -16,6 +16,7 @@
 
 
 #include "TimeCtrl.h"
+#include "TimeCtrlSteps.h"
 #include "NumCtrl.h"
 #include "SubsDialogue.h"
 #include "Provider.h"
@@ -342,10 +343,11 @@ void TimeCtrl::OnMouseEvent(wxMouseEvent &event) {
 				changed = true;
 			}
 		}
+		int maxms = TimeCtrlSteps::MaxMs(form == MPL2 && !showFrames);
 		if (mstime < 0){ mstime = 0; }
-		else if (mstime > 35999999){ mstime = 35999999; }
+		else if (mstime > maxms){ mstime = maxms; }
 		if (mstime == (-tmpgrad)){ mstime = 0; return; }
-		else if (mstime == (35999999 + tmpgrad)){ mstime = 35999999; return; }
+		else if (mstime == (maxms + tmpgrad)){ mstime = maxms; return; }
 		
 		if (changed){
 			if (showFrames){ mTime.orgframe = mstime; }
@@ -364,11 +366,10 @@ void TimeCtrl::OnMouseEvent(wxMouseEvent &event) {
 		wxPoint pos;
 		HitTest(wxPoint(posx, posy), &pos);
 		int startPos = (form == ASS) ? 2 : 3;
-		if (form == FRAME || form == MDVD || form == MPL2){ grad = 1; }
-		else if (pos.x < startPos){ grad = 3600000; }
-		else if (pos.x < startPos + 3){ grad = 60000; }
-		else if (pos.x < startPos + 6){ grad = 1000; }
-		else{ grad = 10; }
+		//MPL2 shows tenths of a second and steps by one of them, unless it shows frames
+		bool mpl2 = form == MPL2 && !showFrames;
+		bool frames = form == FRAME || form == MDVD || (form == MPL2 && showFrames);
+		grad = TimeCtrlSteps::Grad(frames, mpl2, pos.x, startPos);
 		mTime.SetRaw(GetValue(), showFrames ? FRAME : form);
 		mstime = (form == FRAME) ? mTime.orgframe : mTime.mstime;
 		curpos = pos.x;
@@ -382,16 +383,15 @@ void TimeCtrl::OnMouseEvent(wxMouseEvent &event) {
 		wxPoint pos;
 		HitTest(wxPoint(posx, posy), &pos);
 		int startPos = (form == ASS) ? 2 : 3;
-		if (form == FRAME || form == MDVD || form == MPL2){ grad = 1; }
-		else if (pos.x < startPos){ grad = 3600000; }
-		else if (pos.x < startPos + 3){ grad = 60000; }
-		else if (pos.x < startPos + 6){ grad = 1000; }
-		else{ grad = 10; }
+		//MPL2 shows tenths of a second and steps by one of them, unless it shows frames
+		bool mpl2 = form == MPL2 && !showFrames;
+		bool frames = form == FRAME || form == MDVD || (form == MPL2 && showFrames);
+		grad = TimeCtrlSteps::Grad(frames, mpl2, pos.x, startPos);
 		mTime.SetRaw(GetValue(), showFrames ? FRAME : form);
 		int step = (event.GetWheelRotation() / event.GetWheelDelta())*grad;
 		if (form == FRAME || form == MDVD){ mTime.orgframe += step; }
 		else{ mTime.mstime += step; }
-		if (mTime.mstime < 0 || mTime.mstime > 35999999 || mTime.orgframe < 0){ return; }
+		if (mTime.mstime < 0 || mTime.mstime > TimeCtrlSteps::MaxMs(mpl2) || mTime.orgframe < 0){ return; }
 		SetValue(mTime.raw(showFrames ? FRAME : form), true, false);
 		wxCommandEvent evt2(NUMBER_CHANGED, GetId()); AddPendingEvent(evt2);
 		timeUnchanged = false;

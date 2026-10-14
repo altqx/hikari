@@ -915,6 +915,9 @@
     <ClInclude Include="TimeCtrl.h">
       <Filter>T</Filter>
     </ClInclude>
+    <ClInclude Include="TimeCtrlSteps.h">
+      <Filter>T</Filter>
+    </ClInclude>
     <ClInclude Include="TLDialog.h">
       <Filter>T</Filter>
     </ClInclude>
