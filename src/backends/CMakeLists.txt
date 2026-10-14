@@ -57,7 +57,7 @@ else()
 endif()
 # W2: the renderer the video's subtitles go through (legacy
 # SubtitlesProviderManager); on Windows also the optional CSRI adapter, which
-# loads xy-VSFilter (built only with HIKARI_WITH_VSFILTER) from the Csri folder.
+# loads the CSRI renderers in the Csri folder (the package ships VSFilterMod).
 target_sources(hikari_backends PRIVATE subtitle_renderer_selection.cpp
     include/hikari/backends/subtitle_renderer_selection.h)
 if(WIN32)

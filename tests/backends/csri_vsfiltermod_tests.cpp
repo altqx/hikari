@@ -1,14 +1,12 @@
-// W2 (Windows, HIKARI_WITH_VSFILTER): the xy-VSFilter this build's recipe
-// made, through the CSRI adapter, against the legacy release's own
-// xy-VSFilter (v0.0.1-rc.1, Csri/xy-VSFilter_hikarisub.dll, built by the
-// legacy solution from the same fork commit). Both are driven the way legacy
-// SubtitlesVSFilter drove its renderer, on the same fixtures: positions,
-// styles, \clip, karaoke and the YCbCr matrix header. Fonts are the system's
-// (VSFilter resolves them through GDI); the fixtures name Arial.
+// W2 (Windows): VSFilterMod, the CSRI renderer the package ships
+// (Csri/VSFiltermod.dll, pinned in cmake/HikariVsfilterMod.cmake), through
+// the CSRI adapter. xy-VSFilter is not shipped (user 2026-10-14), so its
+// recipe comparisons against the legacy release are gone.
 //
-// HIKARI_LEGACY_CSRI: the legacy release's Csri folder (winix task
-// legacy-win-setup extracts it to out/legacy-win/bundled/HikariSub_x64/Csri).
-// Without it the comparison is skipped, never passed.
+// HIKARI_VSFILTERMOD_CSRI: a folder holding VSFiltermod.dll (the package
+// payload's Csri folder); else the pinned release, when the build fetched it
+// (HIKARI_TEST_VSFILTERMOD, the windows-x64-vsfiltermod preset). Without
+// either every test is skipped, never passed.
 
 #include "hikari/application/font_families.h"
 #include "hikari/backends/csri_renderer.h"
@@ -122,30 +120,7 @@ QImage image(const OverlayFrame &f)
     return out;
 }
 
-std::filesystem::path builtFolder()
-{
-    return std::filesystem::path(QDir(QStringLiteral(HIKARI_VSFILTER_CSRI_DIR)).absolutePath().toStdU16String());
-}
-
-// The legacy DLL under its own name in a scratch folder, so the two modules
-// cannot be mistaken for each other.
-std::filesystem::path legacyFolder()
-{
-    const char *dir = std::getenv("HIKARI_LEGACY_CSRI");
-    if (!dir || !*dir)
-        return {};
-    const auto source = std::filesystem::path(dir) / "xy-VSFilter_hikarisub.dll";
-    if (!std::filesystem::exists(source))
-        return {};
-    const auto folder = std::filesystem::path(QDir(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR)).absolutePath().toStdU16String()) /
-                        "legacy-csri";
-    std::filesystem::create_directories(folder);
-    std::filesystem::copy_file(source, folder / "legacy-xy-VSFilter.dll",
-                               std::filesystem::copy_options::overwrite_existing);
-    return folder;
-}
-
-// The faces xy-VSFilter itself selected while it drew: its module's import
+// The faces the renderer itself selected while it drew: its module's import
 // of gdi32!SelectObject is redirected, and each font it selects into a DC
 // (CMyFont's SelectFont(g_hDC, ...) for the metrics, CText's for the glyph
 // outlines, RTS.cpp:131 and :650) is read back on that DC right after the
@@ -199,10 +174,8 @@ HGDIOBJ WINAPI selectObject(HDC dc, HGDIOBJ object)
 
 // Points `module`'s import of dll!function at `replacement`; the import's
 // previous target, or null when the module does not import it by name.
-// Only the module's own import table: xy-VSFilter links MFC statically and
-// delay-loads only oleacc.dll (ports/hikari-xy-vsfilter/CMakeLists.txt, as
-// VSFilter.props has it), so its SelectFont calls go through that table; a
-// renderer reaching gdi32 another way fails the read-back, it never passes.
+// Only the module's own import table: a renderer reaching gdi32 another way
+// fails the read-back, it never passes.
 void *patchImport(HMODULE module, const char *dll, const char *function, void *replacement)
 {
     auto *base = reinterpret_cast<BYTE *>(module);
@@ -246,89 +219,6 @@ HMODULE moduleOf(const std::shared_ptr<CsriRenderers> &renderers)
     return module;
 }
 
-// A script whose styles ask for these families, in words no other test
-// draws: xy-VSFilter keeps its measured words and outlines in module-wide
-// caches, and a cached word selects no font.
-std::string probeScript()
-{
-    return script("",
-                  "Style: Times,Times New Roman,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,"
-                  "2,8,20,20,20,1\n"
-                  "Style: Missing,Hikari No Such Font,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,"
-                  "1,2,2,5,20,20,20,1\n"
-                  "Style: Styled,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,-1,0,0,100,100,0,0,1,2,2,2,20,"
-                  "20,60,1\n",
-                  "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\\an7}Readback arial face\n"
-                  "Dialogue: 0,0:00:00.00,0:00:05.00,Times,,0,0,0,,Readback times face\n"
-                  "Dialogue: 0,0:00:00.00,0:00:05.00,Missing,,0,0,0,,Readback missing face\n"
-                  "Dialogue: 0,0:00:00.00,0:00:05.00,Styled,,0,0,0,,Readback styled face\n");
-}
-
-// Draws the probe through the renderers' default renderer with the import
-// redirected (and put back before the module could go), and returns the
-// faces it selected.
-std::set<Face> readBack(const std::shared_ptr<CsriRenderers> &renderers, std::string &problem)
-{
-    HMODULE module = moduleOf(renderers);
-    if (!module) {
-        problem = "the renderer's module was not found";
-        return {};
-    }
-    void *previous = patchImport(module, "gdi32.dll", "SelectObject", reinterpret_cast<void *>(&selectObject));
-    if (!previous) {
-        problem = "the renderer does not import gdi32!SelectObject by name";
-        return {};
-    }
-    realSelectObject = reinterpret_cast<SelectObjectFn>(previous);
-    {
-        std::lock_guard guard(lock);
-        faces.clear();
-    }
-    {
-        CsriRenderer r(renderers, "");
-        if (!r.prepare(snapshotOf(probeScript())))
-            problem = "the probe script was refused";
-        else if (const auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight); !frame || frame->empty)
-            problem = "the probe drew nothing";
-    }
-    patchImport(module, "gdi32.dll", "SelectObject", previous);
-    std::lock_guard guard(lock);
-    return faces;
-}
-
-QString line(const Face &f)
-{
-    const QString requested = QString::fromStdWString(f.requested), selected = QString::fromStdWString(f.selected);
-    const bool matched = requested.compare(selected, Qt::CaseInsensitive) == 0;
-    return QStringLiteral("%1 (weight %2%3) -> %4 [%5] (%6)")
-        .arg(requested)
-        .arg(f.weight)
-        .arg(f.italic ? QStringLiteral(", italic") : QString())
-        .arg(selected, QString::fromStdWString(f.full), matched ? QStringLiteral("matched") : QStringLiteral("substituted"));
-}
-
-// The built renderer's read-back, taken once per process: its caches would
-// answer a second probe without selecting a font.
-const std::set<Face> &builtFaces(std::string &problem)
-{
-    static std::string first;
-    static const std::set<Face> faces = readBack(CsriRenderers::load(builtFolder(), {}), first);
-    problem = first;
-    return faces;
-}
-
-// The probe's own selections, by what was asked and what GDI chose (the
-// full name is reported, not compared).
-std::set<Face> probed(const std::set<Face> &faces)
-{
-    std::set<Face> out;
-    for (const auto &f : faces)
-        for (const wchar_t *family : {L"Arial", L"Times New Roman", L"Hikari No Such Font"})
-            if (_wcsicmp(f.requested.c_str(), family) == 0)
-                out.insert(Face{f.requested, f.weight, f.italic, f.selected, {}});
-    return out;
-}
-
 // A report file in the test artifacts, open for writing (closed on failure).
 std::unique_ptr<QFile> report(const char *name)
 {
@@ -341,185 +231,6 @@ std::unique_ptr<QFile> report(const char *name)
 }
 
 } // namespace drawn
-
-} // namespace
-
-TEST(VsfilterRecipe, TheBuiltRendererLoadsThroughCsri)
-{
-    std::vector<std::string> log;
-    const auto renderers = CsriRenderers::load(builtFolder(), [&](const std::string &t) { log.push_back(t); });
-    EXPECT_EQ(renderers->names(), (std::vector<std::string>{"xy-vsfilter_textsub"}));
-    for (const auto &line : log)
-        ADD_FAILURE() << line;
-    CsriRenderer r(renderers, "xy-vsfilter_textsub");
-    ASSERT_TRUE(r.prepare(snapshotOf(fixtures().front().text)));
-    const auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight);
-    ASSERT_TRUE(frame);
-    EXPECT_FALSE(frame->empty);
-}
-
-TEST(VsfilterRecipe, MatchesTheLegacyRendererOnEveryFixture)
-{
-    const auto legacy = legacyFolder();
-    if (legacy.empty())
-        GTEST_SKIP() << "HIKARI_LEGACY_CSRI does not name the legacy release's Csri folder";
-    const auto built = CsriRenderers::load(builtFolder(), {});
-    const auto old = CsriRenderers::load(legacy, {});
-    ASSERT_EQ(built->names(), (std::vector<std::string>{"xy-vsfilter_textsub"}));
-    ASSERT_EQ(old->names(), (std::vector<std::string>{"xy-vsfilter_textsub"}));
-    const QString artifacts = QStringLiteral(HIKARI_TEST_ARTIFACT_DIR);
-    QDir().mkpath(artifacts);
-    for (const auto &f : fixtures()) {
-        CsriRenderer a(built, ""), b(old, "");
-        ASSERT_TRUE(a.prepare(snapshotOf(f.text))) << f.name;
-        ASSERT_TRUE(b.prepare(snapshotOf(f.text))) << f.name;
-        for (int ms : f.times) {
-            const auto x = a.render(core::DocumentTime(std::int64_t(ms) * 1000), kWidth, kHeight);
-            const auto y = b.render(core::DocumentTime(std::int64_t(ms) * 1000), kWidth, kHeight);
-            ASSERT_TRUE(x && y) << f.name << " " << ms;
-            const QString stem = artifacts + QStringLiteral("/%1-%2").arg(QLatin1String(f.name)).arg(ms);
-            image(*x).save(stem + QStringLiteral("-built.png"));
-            image(*y).save(stem + QStringLiteral("-legacy.png"));
-            int differing = 0, maxDiff = 0;
-            for (std::size_t i = 0; i < x->pixels.size(); ++i) {
-                const int d = std::abs(int(x->pixels[i]) - int(y->pixels[i]));
-                differing += d != 0;
-                maxDiff = std::max(maxDiff, d);
-            }
-            std::fprintf(stderr, "W2 %s %d ms: drawn=%d differing bytes=%d max difference=%d\n", f.name, ms,
-                         int(!x->empty), differing, maxDiff);
-            EXPECT_EQ(x->empty, y->empty) << f.name << " " << ms;
-            EXPECT_EQ(differing, 0) << f.name << " " << ms << ": max difference " << maxDiff;
-        }
-    }
-}
-
-// Font resolution for VSFilter's output (fonts.md: CSRI/VSFilter needs its
-// own agreement evidence; a libass match does not certify it). xy-VSFilter
-// asks GDI for each style's face (c4297ed0 src/subtitles/RTS.cpp:116-138,
-// CMyFont: CreateFontIndirect with the LOGFONT STS.cpp:3719-3731 fills from
-// the style, its name, Encoding as the charset and the size as lfHeight);
-// the face GDI answers is what it draws with. Each requested family is written with the face GDI chose, and
-// a family GDI does not have is reported as substituted, never as matched.
-TEST(VsfilterRecipe, ReportsTheFacesGdiResolvesForItsOutput)
-{
-    struct Request {
-        const wchar_t *family;
-        BYTE charset;
-    };
-    // The fixtures' Encoding 1 is DEFAULT_CHARSET.
-    const Request requests[] = {{L"Arial", DEFAULT_CHARSET}, {L"Times New Roman", DEFAULT_CHARSET},
-                                {L"Hikari No Such Font", DEFAULT_CHARSET}};
-    HDC dc = CreateCompatibleDC(nullptr);
-    ASSERT_NE(dc, nullptr);
-    const QString artifacts = QStringLiteral(HIKARI_TEST_ARTIFACT_DIR);
-    QDir().mkpath(artifacts);
-    QFile report(artifacts + QStringLiteral("/vsfilter-fonts.txt"));
-    ASSERT_TRUE(report.open(QIODevice::WriteOnly | QIODevice::Text));
-    for (const auto &r : requests) {
-        LOGFONTW lf{};
-        lf.lfHeight = 36; // CMyFont: (LONG)(fontSize + 0.5)
-        lf.lfWeight = FW_NORMAL;
-        lf.lfCharSet = r.charset;
-        lf.lfOutPrecision = OUT_TT_PRECIS;
-        lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-        lf.lfQuality = ANTIALIASED_QUALITY;
-        lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-        wcsncpy_s(lf.lfFaceName, r.family, _TRUNCATE);
-        HFONT font = CreateFontIndirectW(&lf);
-        ASSERT_NE(font, nullptr);
-        HGDIOBJ old = SelectObject(dc, font);
-        wchar_t face[LF_FACESIZE] = {};
-        GetTextFaceW(dc, LF_FACESIZE, face);
-        SelectObject(dc, old);
-        DeleteObject(font);
-        const QString requested = QString::fromWCharArray(r.family), resolved = QString::fromWCharArray(face);
-        const bool matched = requested.compare(resolved, Qt::CaseInsensitive) == 0;
-        report.write(QStringLiteral("%1 -> %2 (%3)\n")
-                         .arg(requested, resolved, matched ? QStringLiteral("matched") : QStringLiteral("substituted"))
-                         .toUtf8());
-        std::fprintf(stderr, "W2 font %s -> %s\n", qPrintable(requested), qPrintable(resolved));
-        if (requested.startsWith(QLatin1String("Hikari")))
-            EXPECT_FALSE(matched) << "a family GDI does not have is substituted";
-        else
-            EXPECT_TRUE(matched) << qPrintable(requested) << " resolved to " << qPrintable(resolved);
-    }
-    DeleteDC(dc);
-    // The substituted family still draws (GDI's substitute), which is why it
-    // is reported rather than trusted.
-    const auto renderers = CsriRenderers::load(builtFolder(), {});
-    CsriRenderer r(renderers, "");
-    ASSERT_TRUE(r.prepare(snapshotOf(script("", "Style: Missing,Hikari No Such Font,36,&H00FFFFFF,&H000000FF,"
-                                                "&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1\n",
-                                            "Dialogue: 0,0:00:00.00,0:00:05.00,Missing,,0,0,0,,substitute\n"))));
-    const auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight);
-    ASSERT_TRUE(frame);
-    EXPECT_FALSE(frame->empty);
-}
-
-// The faces read back from xy-VSFilter's own font selections while it drew
-// (drawn::selectObject): each requested family GDI has is drawn with that
-// family, a family it lacks with a substitute, reported as substituted.
-// Written to vsfilter-drawn-faces.txt.
-TEST(VsfilterRecipe, ReadsBackTheFacesItDrewWith)
-{
-    std::string problem;
-    const auto &built = drawn::builtFaces(problem);
-    ASSERT_TRUE(problem.empty()) << problem;
-    const auto report = drawn::report("vsfilter-drawn-faces.txt");
-    ASSERT_TRUE(report);
-    report->write("# built: the faces xy-VSFilter selected while drawing (requested -> GDI's face [full name])\n");
-    for (const auto &f : built) {
-        report->write((drawn::line(f) + QLatin1Char('\n')).toUtf8());
-        std::fprintf(stderr, "W2 drawn %s\n", qPrintable(drawn::line(f)));
-    }
-    const auto selectedFor = [&](const wchar_t *family, LONG weight, bool italic) {
-        std::set<std::wstring> out;
-        for (const auto &f : built)
-            if (_wcsicmp(f.requested.c_str(), family) == 0 && f.weight == weight && f.italic == italic)
-                out.insert(f.selected);
-        return out;
-    };
-    const auto same = [](const std::set<std::wstring> &selected, const wchar_t *family) {
-        return selected.size() == 1 && _wcsicmp(selected.begin()->c_str(), family) == 0;
-    };
-    EXPECT_TRUE(same(selectedFor(L"Arial", FW_NORMAL, false), L"Arial")) << "Arial";
-    EXPECT_TRUE(same(selectedFor(L"Arial", FW_BOLD, true), L"Arial")) << "Arial bold italic";
-    EXPECT_TRUE(same(selectedFor(L"Times New Roman", FW_NORMAL, false), L"Times New Roman")) << "Times New Roman";
-    const auto missing = selectedFor(L"Hikari No Such Font", FW_NORMAL, false);
-    EXPECT_FALSE(missing.empty()) << "the missing family was never selected";
-    for (const auto &face : missing)
-        EXPECT_NE(_wcsicmp(face.c_str(), L"Hikari No Such Font"), 0) << "a family GDI lacks is drawn with a substitute";
-}
-
-// The same probe through the legacy release's renderer (HIKARI_LEGACY_CSRI):
-// for the probe's families (other selections, such as a DC's previous font
-// put back, are not compared) both renderers ask for the same weights and
-// slants and GDI gives them the same faces. Written to
-// vsfilter-drawn-faces-legacy.txt. Skipped without the legacy release.
-TEST(VsfilterRecipe, SelectsTheFacesTheLegacyReleaseSelects)
-{
-    const auto legacy = legacyFolder();
-    if (legacy.empty())
-        GTEST_SKIP() << "HIKARI_LEGACY_CSRI does not name the legacy release's Csri folder";
-    std::string problem;
-    const auto built = drawn::probed(drawn::builtFaces(problem));
-    ASSERT_TRUE(problem.empty()) << problem;
-    const auto old = drawn::probed(drawn::readBack(CsriRenderers::load(legacy, {}), problem));
-    ASSERT_TRUE(problem.empty()) << "legacy: " << problem;
-    const auto report = drawn::report("vsfilter-drawn-faces-legacy.txt");
-    ASSERT_TRUE(report);
-    for (const auto &[title, faces] : {std::pair{"# built", &built}, std::pair{"# legacy release (v0.0.1-rc.1)", &old}}) {
-        report->write(title);
-        report->write("\n");
-        for (const auto &f : *faces)
-            report->write((drawn::line(f) + QLatin1Char('\n')).toUtf8());
-    }
-    EXPECT_FALSE(built.empty());
-    EXPECT_EQ(built, old) << "the recipe's renderer and the legacy release's selected different faces";
-}
-
-namespace {
 
 // The face GDI gives this process for `family` now.
 std::wstring gdiFace(const wchar_t *family)
@@ -551,11 +262,16 @@ std::shared_ptr<const std::vector<std::byte>> leasedFontBytes()
     return bytes;
 }
 
-// HIKARI_VSFILTERMOD_CSRI (a folder holding the package's VSFiltermod.dll):
-// VSFilterMod loaded alone, from a copy in its own folder; null without it.
+// HIKARI_VSFILTERMOD_CSRI (a folder holding the package's VSFiltermod.dll),
+// else the pinned release HIKARI_TEST_VSFILTERMOD fetched: VSFilterMod loaded
+// alone, from a copy in its own folder; null without either.
 std::shared_ptr<CsriRenderers> vsfilterModRenderers()
 {
     const char *mod = std::getenv("HIKARI_VSFILTERMOD_CSRI");
+#ifdef HIKARI_VSFILTERMOD_CSRI_DIR
+    if (!mod || !*mod)
+        mod = HIKARI_VSFILTERMOD_CSRI_DIR;
+#endif
     if (!mod || !*mod)
         return nullptr;
     const auto folder =
@@ -596,7 +312,7 @@ std::optional<OverlayFrame> drawLeaseProbe(const std::shared_ptr<CsriRenderers> 
     return std::move(*frame);
 }
 
-// xy-VSFilter's own font selections while it draws the lease's family
+// The renderer's own font selections while it draws the lease's family
 // (drawn::selectObject): the faces it selected for it.
 std::set<std::wstring> facesDrawnWithALease(const std::shared_ptr<CsriRenderers> &renderers, std::string &problem)
 {
@@ -638,53 +354,59 @@ std::set<std::wstring> facesDrawnWithALease(const std::shared_ptr<CsriRenderers>
 
 } // namespace
 
+TEST(VsfilterMod, LoadsThroughCsri)
+{
+    const auto renderers = vsfilterModRenderers();
+    if (!renderers)
+        GTEST_SKIP() << "no VSFilterMod: HIKARI_VSFILTERMOD_CSRI is not set and the build did not fetch it";
+    EXPECT_EQ(renderers->names(), (std::vector<std::string>{"vsfiltermod_textsub"}));
+    CsriRenderer r(renderers, "vsfiltermod_textsub");
+    ASSERT_TRUE(r.prepare(snapshotOf(fixtures().front().text)));
+    const auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight);
+    ASSERT_TRUE(frame);
+    EXPECT_FALSE(frame->empty);
+    EXPECT_EQ(r.selectedName(), "vsfiltermod_textsub");
+}
+
 // W2: the snapshot's font leases (the external fonts, as legacy's
 // FontEnumerator added its folder with AddFontResourceExW(FR_PRIVATE)) reach
 // the CSRI renderer. A Line in Titillium Web, a family only the lease has,
 // is drawn while GDI has the family and differs from the same Line in Arial,
 // GDI's substitute for a missing family (without the lease the two are drawn
 // alike); the process no longer has the family once the context is gone.
-// The face each renderer selected is also read back from its own
-// selections. HIKARI_VSFILTERMOD_CSRI (a folder holding the package's
-// VSFiltermod.dll) adds VSFilterMod.
-TEST(VsfilterRecipe, DrawsWithTheSnapshotsLeasedFonts)
+// The face the renderer selected is also read back from its own selections.
+TEST(VsfilterMod, DrawsWithTheSnapshotsLeasedFonts)
 {
+    const auto list = vsfilterModRenderers();
+    if (!list)
+        GTEST_SKIP() << "no VSFilterMod: HIKARI_VSFILTERMOD_CSRI is not set and the build did not fetch it";
     ASSERT_TRUE(leasedFontBytes()) << HIKARI_TEST_FONT;
     if (gdiFace(L"Titillium Web") == L"Titillium Web")
         GTEST_SKIP() << "Titillium Web is installed on this system, so a lease proves nothing";
-    std::vector<std::pair<std::string, std::shared_ptr<CsriRenderers>>> renderers{
-        {"xy-VSFilter", CsriRenderers::load(builtFolder(), {})}};
-    if (const auto loaded = vsfilterModRenderers()) {
-        EXPECT_EQ(loaded->names(), (std::vector<std::string>{"vsfiltermod_textsub"}));
-        renderers.emplace_back("VSFilterMod", loaded);
-    }
-    for (const auto &[name, list] : renderers) {
-        std::string problem;
-        const auto arial = drawLeaseProbe(list, "Arial", false, problem);
-        ASSERT_TRUE(arial) << name << ": " << problem;
-        const auto leased = drawLeaseProbe(list, "Titillium Web", true, problem);
-        ASSERT_TRUE(leased) << name << ": " << problem;
-        std::size_t differing = 0;
-        for (std::size_t i = 0; i < leased->pixels.size(); ++i)
-            differing += leased->pixels[i] != arial->pixels[i];
-        std::fprintf(stderr, "W2 %s: the leased family's Line differs from Arial's in %zu bytes\n", name.c_str(), differing);
-        EXPECT_GT(differing, 0u) << name << ": the leased family was drawn as GDI's substitute";
-        image(*leased).save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/lease-%1-titillium.png").arg(QString::fromStdString(name)));
-        image(*arial).save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/lease-%1-arial.png").arg(QString::fromStdString(name)));
-        EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << name << ": the lease outlived its context";
-        {
-            const auto faces = facesDrawnWithALease(list, problem);
-            EXPECT_TRUE(problem.empty()) << name << ": " << problem;
-            EXPECT_EQ(faces, (std::set<std::wstring>{L"Titillium Web"})) << name;
-            EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << name << ": the lease outlived its context";
-        }
-    }
+    ASSERT_EQ(list->names(), (std::vector<std::string>{"vsfiltermod_textsub"}));
+    std::string problem;
+    const auto arial = drawLeaseProbe(list, "Arial", false, problem);
+    ASSERT_TRUE(arial) << problem;
+    const auto leased = drawLeaseProbe(list, "Titillium Web", true, problem);
+    ASSERT_TRUE(leased) << problem;
+    std::size_t differing = 0;
+    for (std::size_t i = 0; i < leased->pixels.size(); ++i)
+        differing += leased->pixels[i] != arial->pixels[i];
+    std::fprintf(stderr, "W2 VSFilterMod: the leased family's Line differs from Arial's in %zu bytes\n", differing);
+    EXPECT_GT(differing, 0u) << "the leased family was drawn as GDI's substitute";
+    image(*leased).save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/lease-VSFilterMod-titillium.png"));
+    image(*arial).save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/lease-VSFilterMod-arial.png"));
+    EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << "the lease outlived its context";
+    const auto faces = facesDrawnWithALease(list, problem);
+    EXPECT_TRUE(problem.empty()) << problem;
+    EXPECT_EQ(faces, (std::set<std::wstring>{L"Titillium Web"}));
+    EXPECT_NE(gdiFace(L"Titillium Web"), L"Titillium Web") << "the lease outlived its context";
 }
 
 // W2: a fonts reload (application::reloadSubtitleFonts, the fonts-changed
 // hook; legacy's watcher removed the external fonts from the process, added
 // the folder's anew and reopened the subtitles) reaches the kept adapter at
-// its next prepare. One adapter, as the video keeps it, draws a Line in
+// its next prepare. One VSFilterMod adapter, as the video keeps it, draws a Line in
 // Titillium Web with the external folder's fonts as the application reads
 // them (loadExternalFonts): first from an empty folder (GDI's substitute),
 // then with the font copied into the folder and the fonts reloaded (the
@@ -694,15 +416,15 @@ TEST(VsfilterRecipe, DrawsWithTheSnapshotsLeasedFonts)
 // same lease (the same bytes): the adapter adds it to the process again
 // before the earlier registration goes, and the family is still drawn; a
 // prepare without a reload adds nothing.
-TEST(VsfilterRecipe, AFontsReloadReachesTheKeptRenderer)
+TEST(VsfilterMod, AFontsReloadReachesTheKeptRenderer)
 {
+    const auto loaded = vsfilterModRenderers();
+    if (!loaded)
+        GTEST_SKIP() << "no VSFilterMod: HIKARI_VSFILTERMOD_CSRI is not set and the build did not fetch it";
     ASSERT_TRUE(leasedFontBytes()) << HIKARI_TEST_FONT;
     if (gdiFace(L"Titillium Web") == L"Titillium Web")
         GTEST_SKIP() << "Titillium Web is installed on this system, so a reload proves nothing";
-    std::vector<std::pair<std::string, std::shared_ptr<CsriRenderers>>> renderers{
-        {"xy-VSFilter", CsriRenderers::load(builtFolder(), {})}};
-    if (const auto loaded = vsfilterModRenderers())
-        renderers.emplace_back("VSFilterMod", loaded);
+    const std::vector<std::pair<std::string, std::shared_ptr<CsriRenderers>>> renderers{{"VSFilterMod", loaded}};
     const auto artifacts = std::filesystem::path(QDir(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR)).absolutePath().toStdU16String());
     const application::FontNameLower lower = [](char16_t c) { return static_cast<char16_t>(std::towlower(c)); };
     for (const auto &entry : renderers) {
@@ -735,7 +457,7 @@ TEST(VsfilterRecipe, AFontsReloadReachesTheKeptRenderer)
         };
         {
             CsriRenderer r(entry.second, "");
-            // Words no other test draws: xy-VSFilter keeps module-wide caches.
+            // Words no other test draws: VSFilter keeps module-wide caches.
             const std::string text = script("",
                                             "Style: Reload,Titillium Web,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,"
                                             "0,100,100,0,0,1,2,2,5,20,20,20,1\n",
@@ -803,11 +525,11 @@ TEST(VsfilterRecipe, AFontsReloadReachesTheKeptRenderer)
 // alpha; legacy drew it onto the RGB32 video frame. The adapter's overlay
 // (the instant drawn onto black and onto white) composited over a frame must
 // give what VSFilterMod draws onto that frame itself, on every fixture.
-TEST(VsfilterRecipe, VsfilterModOverlayMatchesDrawingOnTheFrame)
+TEST(VsfilterMod, OverlayMatchesDrawingOnTheFrame)
 {
     const auto renderers = vsfilterModRenderers();
     if (!renderers)
-        GTEST_SKIP() << "HIKARI_VSFILTERMOD_CSRI is not set";
+        GTEST_SKIP() << "no VSFilterMod: HIKARI_VSFILTERMOD_CSRI is not set and the build did not fetch it";
     ASSERT_EQ(renderers->names(), (std::vector<std::string>{"vsfiltermod_textsub"}));
     const csri::Renderer *mod = renderers->select("");
     ASSERT_TRUE(mod);

@@ -30,8 +30,8 @@ struct Calls {
     std::vector<std::ptrdiff_t> strides;
     bool failOpen = false;
     bool throwOnOpen = false;
-    // The pixel the fake draws at (1, 1): straight-alpha BGRA, as xy-VSFilter
-    // writes into an MSP_RGBA target (MemSubPic.cpp AlphaBltOther).
+    // The pixel the fake draws at (1, 1): straight-alpha BGRA, as a VSFilter
+    // that takes BGRA writes into an MSP_RGBA target (MemSubPic.cpp AlphaBltOther).
     std::uint8_t pixel[4] = {200, 100, 50, 128};
     int x = 1, y = 1;
 } calls;
@@ -63,7 +63,7 @@ void render(void *, csri::Frame *frame, double time)
     calls.strides.push_back(frame->strides[0]);
     unsigned char *p = frame->planes[0] + frame->strides[0] * calls.y + 4 * calls.x;
     if (frame->pixfmt == csri::BGR_) {
-        // BGR_ (VSFilterMod's only target, xy-VSFilter's MSP_RGB32) blends
+        // BGR_ (VSFilterMod's only target, VSFilter's MSP_RGB32) blends
         // the colour into the frame and leaves the padding byte 0.
         const unsigned a = calls.pixel[3];
         for (int c = 0; c < 3; ++c)
@@ -74,7 +74,9 @@ void render(void *, csri::Frame *frame, double time)
     std::memcpy(p, calls.pixel, 4);
 }
 
-const csri::Info xyInfo{"xy-vsfilter_textsub", "3.2", "xy-VSFilter/TextSub", "Gabest", "Copyright"};
+// Another CSRI renderer someone put in the Csri folder (the package ships
+// only VSFilterMod; xy-VSFilter is not shipped, user 2026-10-14).
+const csri::Info otherInfo{"other_textsub", "1", "Another CSRI renderer", "someone", "Copyright"};
 const csri::Info modInfo{"vsfiltermod_textsub", "1", "VSFilterMod", "someone", "Copyright"};
 
 csri::Renderer renderer(const csri::Info *info, void *rend)
@@ -93,10 +95,10 @@ int rendA = 0, rendB = 0, rendC = 0;
 
 std::shared_ptr<CsriRenderers> twoRenderers()
 {
-    // Legacy loads Csri\VSFiltermod.dll then Csri\xy-VSFilter_hikarisub.dll,
-    // each added at the front: xy-VSFilter is first, the default.
+    // Two libraries in the Csri folder, each added at the front as legacy
+    // CsriMod did: the one loaded last is first, the CSRI default.
     return std::make_shared<CsriRenderers>(
-        std::vector<csri::Renderer>{renderer(&xyInfo, &rendA), renderer(&modInfo, &rendB)});
+        std::vector<csri::Renderer>{renderer(&otherInfo, &rendA), renderer(&modInfo, &rendB)});
 }
 
 std::vector<std::byte> bytes(std::string_view s)
@@ -128,30 +130,30 @@ protected:
 TEST_F(Csri, ProvidersListTheRenderersThenLibass)
 {
     const auto renderers = twoRenderers();
-    EXPECT_EQ(renderers->names(), (std::vector<std::string>{"xy-vsfilter_textsub", "vsfiltermod_textsub"}));
+    EXPECT_EQ(renderers->names(), (std::vector<std::string>{"other_textsub", "vsfiltermod_textsub"}));
     // GetProviders lists nothing when the default renderer has no info, and
     // skips a later renderer without info.
-    EXPECT_TRUE(CsriRenderers({renderer(nullptr, &rendA), renderer(&xyInfo, &rendB)}).names().empty());
-    EXPECT_EQ(CsriRenderers({renderer(&xyInfo, &rendA), renderer(nullptr, &rendB), renderer(&modInfo, &rendC)}).names(),
-              (std::vector<std::string>{"xy-vsfilter_textsub", "vsfiltermod_textsub"}));
+    EXPECT_TRUE(CsriRenderers({renderer(nullptr, &rendA), renderer(&otherInfo, &rendB)}).names().empty());
+    EXPECT_EQ(CsriRenderers({renderer(&otherInfo, &rendA), renderer(nullptr, &rendB), renderer(&modInfo, &rendC)}).names(),
+              (std::vector<std::string>{"other_textsub", "vsfiltermod_textsub"}));
 }
 
 TEST_F(Csri, TheNamedRendererElseTheDefault)
 {
     const auto renderers = twoRenderers();
     EXPECT_EQ(renderers->select("vsfiltermod_textsub")->rend, &rendB);
-    EXPECT_EQ(renderers->select("xy-vsfilter_textsub")->rend, &rendA);
+    EXPECT_EQ(renderers->select("other_textsub")->rend, &rendA);
     EXPECT_EQ(renderers->select("")->rend, &rendA);
     EXPECT_EQ(renderers->select("not installed")->rend, &rendA); // GetVSFilter's default
     // A renderer without info ends GetVSFilter's walk and is the one used.
-    CsriRenderers gap({renderer(&xyInfo, &rendA), renderer(nullptr, &rendB), renderer(&modInfo, &rendC)});
+    CsriRenderers gap({renderer(&otherInfo, &rendA), renderer(nullptr, &rendB), renderer(&modInfo, &rendC)});
     EXPECT_EQ(gap.select("vsfiltermod_textsub")->rend, &rendB);
-    EXPECT_EQ(CsriRenderers({}).select("xy-vsfilter_textsub"), nullptr);
+    EXPECT_EQ(CsriRenderers({}).select("other_textsub"), nullptr);
 }
 
 TEST_F(Csri, NoRendererIsCannotInitializeCsri)
 {
-    CsriRenderer r(std::make_shared<CsriRenderers>(std::vector<csri::Renderer>{}), "xy-vsfilter_textsub", logger());
+    CsriRenderer r(std::make_shared<CsriRenderers>(std::vector<csri::Renderer>{}), "other_textsub", logger());
     EXPECT_EQ(r.prepare(snapshotOf("[Script Info]\n")).error(), RenderError::BackendFailure);
     EXPECT_EQ(log, (std::vector<std::string>{"Cannot initialize CSRI."}));
     EXPECT_EQ(r.render(core::DocumentTime(0), 8, 8).error(), RenderError::NoSnapshot);
@@ -337,7 +339,7 @@ TEST_F(Csri, LeasedFontsAreAddedForTheContextsLifetime)
         return FontLease{std::move(family), std::make_shared<const std::vector<std::byte>>(4, std::byte{1})};
     };
     {
-        CsriRenderer r(renderers, "xy-vsfilter_textsub", logger());
+        CsriRenderer r(renderers, "other_textsub", logger());
         RenderSnapshot first = snapshotOf("[Script Info]\n");
         first.fonts = {lease("Leased A"), lease("Leased B"), FontLease{"No bytes", nullptr}};
         ASSERT_TRUE(r.prepare(first));
@@ -379,7 +381,7 @@ TEST_F(Csri, AKeptFontHoldsItsLeasesBytes)
         events.push_back("add " + font.family);
         return std::make_shared<int>(0);
     });
-    CsriRenderer r(renderers, "xy-vsfilter_textsub", logger());
+    CsriRenderer r(renderers, "other_textsub", logger());
     std::weak_ptr<const std::vector<std::byte>> first;
     {
         RenderSnapshot s = snapshotOf("[Script Info]\n");
@@ -420,7 +422,7 @@ TEST_F(Csri, AFontsReloadAddsTheNextContextsFontsAgain)
     const auto lease = [](std::string family, std::byte b) {
         return FontLease{std::move(family), std::make_shared<const std::vector<std::byte>>(4, b)};
     };
-    CsriRenderer r(renderers, "xy-vsfilter_textsub", logger());
+    CsriRenderer r(renderers, "other_textsub", logger());
     RenderSnapshot first = snapshotOf("[Script Info]\n");
     first.fonts = {lease("Kept", std::byte{1}), lease("Removed", std::byte{2})};
     ASSERT_TRUE(r.prepare(first));
@@ -453,28 +455,33 @@ TEST_F(Csri, AFontsReloadAddsTheNextContextsFontsAgain)
     EXPECT_EQ(live, 2);
 }
 
-// The Video page's order (user 2026-10-13): xy-VSFilter, libass, VSFilterMod
-// last; an empty or uninstalled name draws through libass, never VSFilterMod
-// or the first CSRI renderer (W2-libass-default, W2-missing-renderer-libass).
+// The Video page's order (user 2026-10-13, 2026-10-14): libass, the
+// default, first, VSFilterMod last; an empty or uninstalled name draws
+// through libass, never VSFilterMod or the first CSRI renderer
+// (W2-libass-default, W2-missing-renderer-libass). xy-VSFilter is not shipped
+// (W2-no-xy-vsfilter): a stored xy-VSFilter name draws through libass.
 TEST(RendererSelection, VsfilterModIsListedLastAndNeverTheDefault)
 {
-    EXPECT_EQ(orderedProviders({"xy-vsfilter_textsub", "vsfiltermod_textsub"}),
-              (std::vector<std::string>{"xy-vsfilter_textsub", "libass", "vsfiltermod_textsub"}));
-    // Legacy's CSRI order when VSFilterMod loads last (it is then the default).
-    EXPECT_EQ(orderedProviders({"vsfiltermod_textsub", "xy-vsfilter_textsub"}),
-              (std::vector<std::string>{"xy-vsfilter_textsub", "libass", "vsfiltermod_textsub"}));
+    // The Windows package: libass, then VSFilterMod.
     EXPECT_EQ(orderedProviders({"vsfiltermod_textsub"}), (std::vector<std::string>{"libass", "vsfiltermod_textsub"}));
+    // Another renderer in the Csri folder comes after libass and before
+    // VSFilterMod, for either CSRI load order.
+    EXPECT_EQ(orderedProviders({"other_textsub", "vsfiltermod_textsub"}),
+              (std::vector<std::string>{"libass", "other_textsub", "vsfiltermod_textsub"}));
+    EXPECT_EQ(orderedProviders({"vsfiltermod_textsub", "other_textsub"}),
+              (std::vector<std::string>{"libass", "other_textsub", "vsfiltermod_textsub"}));
     EXPECT_EQ(orderedProviders({}), (std::vector<std::string>{"libass"}));
     EXPECT_TRUE(isVsfilterMod("vsfiltermod_textsub"));
-    EXPECT_FALSE(isVsfilterMod("xy-vsfilter_textsub"));
+    EXPECT_FALSE(isVsfilterMod("other_textsub"));
 
-    const std::vector<std::string> package{"xy-vsfilter_textsub", "libass", "vsfiltermod_textsub"};
+    const std::vector<std::string> package{"libass", "vsfiltermod_textsub"};
     EXPECT_EQ(resolveProvider("", package), "libass");
     EXPECT_EQ(resolveProvider("libass", package), "libass");
-    EXPECT_EQ(resolveProvider("xy-vsfilter_textsub", package), "xy-vsfilter_textsub");
     EXPECT_EQ(resolveProvider("vsfiltermod_textsub", package), "vsfiltermod_textsub"); // chosen explicitly
+    EXPECT_EQ(resolveProvider("VSFILTERMOD_TEXTSUB", package), "libass"); // exact, as vsfilters.Index
     EXPECT_EQ(resolveProvider("removed_textsub", package), "libass");
-    EXPECT_EQ(resolveProvider("XY-VSFILTER_TEXTSUB", package), "libass"); // exact, as vsfilters.Index
+    // Legacy's default renderer, stored or imported from a legacy profile.
+    EXPECT_EQ(resolveProvider("xy-vsfilter_textsub", package), "libass");
     const std::vector<std::string> onlyLibass{"libass"};
     EXPECT_EQ(resolveProvider("xy-vsfilter_textsub", onlyLibass), "libass");
     EXPECT_EQ(resolveProvider("vsfiltermod_textsub", onlyLibass), "libass");
@@ -496,6 +503,11 @@ TEST(RendererSelection, AnUninstalledNameIsLoggedOnce)
     EXPECT_FALSE(selection.select("libass"));
     EXPECT_FALSE(selection.select("vsfiltermod_textsub"));
     EXPECT_EQ(log.size(), 2u);
+    // Legacy's xy-VSFilter (W2-no-xy-vsfilter): not installed, libass draws.
+    EXPECT_FALSE(selection.select("xy-vsfilter_textsub"));
+    EXPECT_TRUE(selection.usesLibass());
+    EXPECT_EQ(selection.provider(), "libass");
+    EXPECT_EQ(log.back(), "The subtitle renderer xy-vsfilter_textsub is not installed; libass is used.");
 }
 #endif
 

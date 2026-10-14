@@ -16,9 +16,8 @@ bool isVsfilterMod(std::string_view name)
 
 std::vector<std::string> orderedProviders(const std::vector<std::string> &csriNames)
 {
-    std::vector<std::string> list;
+    std::vector<std::string> list{"libass"};
     std::ranges::copy_if(csriNames, std::back_inserter(list), [](const std::string &n) { return !isVsfilterMod(n); });
-    list.emplace_back("libass");
     std::ranges::copy_if(csriNames, std::back_inserter(list), [](const std::string &n) { return isVsfilterMod(n); });
     return list;
 }

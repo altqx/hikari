@@ -4836,8 +4836,8 @@ bool Application::includesCsri()
 
 bool Application::includesVsfilter()
 {
-#ifdef HIKARI_WITH_VSFILTER
-    return true;
+#ifdef _WIN32
+    return QFileInfo::exists(QCoreApplication::applicationDirPath() + QStringLiteral("/Csri/VSFiltermod.dll"));
 #else
     return false;
 #endif

@@ -351,20 +351,24 @@ endif()
 hikari_add_gtest(hikari_backends_csri_tests SOURCES csri_renderer_tests.cpp
     $<$<NOT:$<PLATFORM_ID:Windows>>:${PROJECT_SOURCE_DIR}/src/backends/csri_renderer.cpp>
     LIBRARIES hikari_backends LABELS backends)
-# W2 (Windows, HIKARI_WITH_VSFILTER): the recipe's xy-VSFilter through the
-# adapter, against the legacy release's (HIKARI_LEGACY_CSRI).
-if(WIN32 AND HIKARI_WITH_VSFILTER)
-    hikari_add_gtest(hikari_backends_vsfilter_tests SOURCES csri_vsfilter_tests.cpp
+# W2 (Windows): VSFilterMod, the CSRI renderer the package ships, through the
+# adapter: from HIKARI_VSFILTERMOD_CSRI (a folder holding VSFiltermod.dll, such
+# as the payload's Csri folder) or the pinned release HIKARI_TEST_VSFILTERMOD
+# fetched; without either the tests are skipped.
+if(WIN32)
+    hikari_add_gtest(hikari_backends_vsfiltermod_tests SOURCES csri_vsfiltermod_tests.cpp
         LIBRARIES hikari_backends Qt6::Gui LABELS backends PROPERTIES TIMEOUT 300)
-    set(_w2_csri "${CMAKE_CURRENT_BINARY_DIR}/vsfilter-csri")
-    add_custom_command(TARGET hikari_backends_vsfilter_tests POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E make_directory "${_w2_csri}"
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:HikariXyVSFilter::csri>"
-            "${_w2_csri}/xy-VSFilter_hikarisub.dll"
-        VERBATIM)
-    target_compile_definitions(hikari_backends_vsfilter_tests PRIVATE HIKARI_VSFILTER_CSRI_DIR="${_w2_csri}"
-        HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/vsfilter"
+    target_compile_definitions(hikari_backends_vsfiltermod_tests PRIVATE
+        HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/vsfiltermod"
         HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+    if(HIKARI_TEST_VSFILTERMOD_DLL)
+        set(_w2_csri "${CMAKE_CURRENT_BINARY_DIR}/vsfiltermod-csri")
+        add_custom_command(TARGET hikari_backends_vsfiltermod_tests POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${_w2_csri}"
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${HIKARI_TEST_VSFILTERMOD_DLL}" "${_w2_csri}/VSFiltermod.dll"
+            VERBATIM)
+        target_compile_definitions(hikari_backends_vsfiltermod_tests PRIVATE HIKARI_VSFILTERMOD_CSRI_DIR="${_w2_csri}")
+    endif()
 endif()
 # W1: the optional DirectShow adapter (Windows only). Its frame and seek
 # fixtures run against the default players on the same media; its manifest
