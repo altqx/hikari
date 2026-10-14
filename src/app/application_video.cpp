@@ -252,7 +252,9 @@ QString Application::openDummyVideo(const QVariantMap &values)
 // recent video (legacy videorec[size - 1]), listed as wxDir::GetAllFiles
 // lists it (application::legacy_dir, R5-per-platform): every entry that is
 // not a folder, hidden ones left out ('.' names on Linux, the hidden or
-// system attribute on Windows), in the file system's own order, unsorted
+// system attribute on Windows). The walker goes through it in natural name
+// order (V3-next-file-natural-order), not the file system's own order that
+// legacy walked
 // (tests/fixtures/legacy-observations/local-v3-next-file-20261013).
 bool Application::nextVideoFile(bool next)
 {

@@ -14,9 +14,11 @@
 
 #include <cstdint>
 #include <expected>
+#include <functional>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace hikari::application {
@@ -48,19 +50,36 @@ struct NextFileStep {
 enum class PathFormat { Unix, Dos };
 std::string nextFileFolder(std::string_view path, PathFormat format);
 
+// One Unicode code point lowered (the caller's case mapping; QChar::toLower
+// in the application). Empty: A-Z only.
+using NameLower = std::function<char32_t(char32_t)>;
+
+// V3-next-file-natural-order: the previous / next file's order. The UTF-8
+// names are compared by code point, letters through `lower`, and a run of
+// ASCII digits as one number (any length), so "Ep 2" comes before "Ep 10"
+// and "ep 3" before "Ep 4". Names equal that way ("a" and "A", "Ep 01" and
+// "Ep 1") are ordered by their plain bytes, so the order is total. <0, 0 or
+// >0; 0 only for equal strings. (Legacy NaturalCompare, HikariSub/NaturalOrder.cpp.)
+int naturalNameCompare(std::string_view a, std::string_view b, const NameLower &lower = {});
+
 // VideoBox::NextFile over `files`, the folder's files (wxDir::GetAllFiles with
-// wxDIR_FILES: hidden files left out, in the platform's own listing order,
-// unsorted) as full paths, or nullopt when the folder could not be opened:
-// the last listing is walked again (legacy's member `files`, cleared only
-// when wxDir opened the folder). The current file is found by exact
-// comparison; when it is not there the walk starts from the position the
-// last step remembered (legacy's member actualFile, 0 at first).
+// wxDIR_FILES: hidden files left out) as full paths, walked in natural name
+// order (naturalNameCompare; legacy walked the platform's own listing order,
+// unsorted, before V3-next-file-natural-order), or nullopt when the folder
+// could not be opened: the last listing is walked again (legacy's member
+// `files`, cleared only when wxDir opened the folder). Every path has the
+// same folder in front, so the paths sort as their names do. The current
+// file is found by exact comparison; when it is not there the walk starts
+// from the position the last step remembered (legacy's member actualFile, 0
+// at first).
 class NextFileWalker {
 public:
+    explicit NextFileWalker(NameLower lower = {}) : m_lower(std::move(lower)) {}
     NextFileStep step(std::optional<std::vector<std::string>> files, const std::string &current, bool next);
     int position() const { return m_actualFile; }
 
 private:
+    NameLower m_lower;
     std::vector<std::string> m_files;
     int m_actualFile = 0;
 };

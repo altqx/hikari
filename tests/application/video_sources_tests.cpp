@@ -11,6 +11,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <climits>
 
@@ -38,24 +39,140 @@ TEST(NextFile, LegacyVideoExtensions)
         EXPECT_FALSE(isNextFileVideo(p)) << p;
 }
 
-// VideoBox::NextFile (VideoBox.cpp:682-739) over the folder's listing as the
-// platform lists it (wxDir::GetAllFiles is unsorted).
-TEST(NextFile, WalksTheListingInItsOwnOrderSkippingOtherFiles)
+// VideoBox::NextFile (VideoBox.cpp:682-739) over the folder's listing, put in
+// natural name order (V3-next-file-natural-order; legacy walked
+// wxDir::GetAllFiles' own unsorted order).
+TEST(NextFile, WalksTheListingInNameOrderSkippingOtherFiles)
 {
     const std::vector<std::string> files{"/v/c.mkv", "/v/notes.txt", "/v/a.mkv", "/v/b.ass", "/v/b.MP4", "/v/z.avs"};
     NextFileWalker walker;
-    auto step = walker.step(files, "/v/c.mkv", true);
+    // a.mkv, b.ass, b.MP4, c.mkv, notes.txt, z.avs
+    auto step = walker.step(files, "/v/a.mkv", true);
     EXPECT_EQ(step.kind, NextFileStep::Kind::Open);
-    EXPECT_EQ(step.path, "/v/a.mkv"); // the listing's next video, not the name order
-    step = walker.step(files, "/v/a.mkv", true);
-    EXPECT_EQ(step.path, "/v/b.MP4");
-    // after the last video only files legacy does not open (avs): back to the start, play toggled
+    EXPECT_EQ(step.path, "/v/b.MP4"); // b.ass skipped
     step = walker.step(files, "/v/b.MP4", true);
+    EXPECT_EQ(step.path, "/v/c.mkv");
+    // after the last video only files legacy does not open (avs): back to the start, play toggled
+    step = walker.step(files, "/v/c.mkv", true);
     EXPECT_EQ(step.kind, NextFileStep::Kind::Restart);
+    step = walker.step(files, "/v/c.mkv", false);
+    EXPECT_EQ(step.path, "/v/b.MP4");
     step = walker.step(files, "/v/b.MP4", false);
     EXPECT_EQ(step.path, "/v/a.mkv");
-    step = walker.step(files, "/v/a.mkv", false);
-    EXPECT_EQ(step.path, "/v/c.mkv");
+    EXPECT_EQ(walker.step(files, "/v/a.mkv", false).kind, NextFileStep::Kind::Restart);
+}
+
+// V3-next-file-natural-order: episode 2 before episode 10 and case left
+// out, whatever order the folder lists them in; the listing kept for a folder
+// that cannot be opened stays in that order.
+TEST(NextFile, EpisodesInNaturalOrderWhateverTheListing)
+{
+    const std::vector<std::string> files{"/v/Ep 10.mkv", "/v/Ep 2.mkv", "/v/ep 1.mkv", "/v/Ep 3.MKV", "/v/Ep 9.mkv"};
+    NextFileWalker walker;
+    auto step = walker.step(files, "/v/ep 1.mkv", true);
+    EXPECT_EQ(step.path, "/v/Ep 2.mkv");
+    step = walker.step(files, "/v/Ep 2.mkv", true);
+    EXPECT_EQ(step.path, "/v/Ep 3.MKV");
+    step = walker.step(std::nullopt, "/v/Ep 3.MKV", true);
+    EXPECT_EQ(step.path, "/v/Ep 9.mkv");
+    step = walker.step(files, "/v/Ep 9.mkv", true);
+    EXPECT_EQ(step.path, "/v/Ep 10.mkv");
+    EXPECT_EQ(walker.step(files, "/v/Ep 10.mkv", true).kind, NextFileStep::Kind::Restart);
+    step = walker.step(files, "/v/Ep 10.mkv", false);
+    EXPECT_EQ(step.path, "/v/Ep 9.mkv");
+    step = walker.step(files, "/v/Ep 2.mkv", false);
+    EXPECT_EQ(step.path, "/v/ep 1.mkv");
+    EXPECT_EQ(walker.step(files, "/v/ep 1.mkv", false).kind, NextFileStep::Kind::Restart);
+}
+
+namespace {
+
+std::vector<std::string> naturallySorted(std::vector<std::string> names, const NameLower &lower = {})
+{
+    std::sort(names.begin(), names.end(),
+              [&](const std::string &a, const std::string &b) { return naturalNameCompare(a, b, lower) < 0; });
+    return names;
+}
+
+int sign(int v)
+{
+    return v < 0 ? -1 : v > 0 ? 1 : 0;
+}
+
+// A-Z and the non-ASCII capitals the tests use, as QChar::toLower maps them.
+char32_t testLower(char32_t c)
+{
+    if (c >= U'A' && c <= U'Z')
+        return c + (U'a' - U'A');
+    if (c == U'\u00C4' || c == U'\u00C9')
+        return c + 0x20;
+    return c;
+}
+
+} // namespace
+
+// Digit runs compare as numbers, of any length; each run of a name on its own.
+TEST(NaturalNameOrder, DigitRunsAsNumbers)
+{
+    EXPECT_LT(naturalNameCompare("Ep 2.mkv", "Ep 10.mkv"), 0);
+    EXPECT_GT(naturalNameCompare("Ep 10.mkv", "Ep 2.mkv"), 0);
+    EXPECT_LT(naturalNameCompare("ep9.mkv", "ep10.mkv"), 0);
+    EXPECT_EQ(naturallySorted({"/v/Show - 10.mkv", "/v/Show - 1.mkv", "/v/Show - 100.mkv", "/v/Show - 2.mkv",
+                               "/v/Show - 9.mkv", "/v/Show - 11.mkv"}),
+              (std::vector<std::string>{"/v/Show - 1.mkv", "/v/Show - 2.mkv", "/v/Show - 9.mkv", "/v/Show - 10.mkv",
+                                        "/v/Show - 11.mkv", "/v/Show - 100.mkv"}));
+    EXPECT_EQ(naturallySorted({"S2E1.mkv", "S10E1.mkv", "S1E10.mkv", "S1E2.mkv"}),
+              (std::vector<std::string>{"S1E2.mkv", "S1E10.mkv", "S2E1.mkv", "S10E1.mkv"}));
+    EXPECT_LT(naturalNameCompare("x99999999999999999999999.mkv", "x100000000000000000000000.mkv"), 0);
+    // a digit against a letter compares as characters ('0'-'9' before letters)
+    EXPECT_LT(naturalNameCompare("a1.mkv", "ab.mkv"), 0);
+    EXPECT_LT(naturalNameCompare("a.mkv", "a1.mkv"), 0);
+}
+
+// Letters without case (A-Z by default, the caller's mapping otherwise);
+// names equal that way or as numbers are ordered by their plain bytes.
+TEST(NaturalNameOrder, CaseLeftOutThenThePlainName)
+{
+    EXPECT_EQ(naturallySorted({"c.MKV", "B.mkv", "a.mkv", "D.mkv"}),
+              (std::vector<std::string>{"a.mkv", "B.mkv", "c.MKV", "D.mkv"}));
+    EXPECT_LT(naturalNameCompare("ep 3.mkv", "Ep 4.mkv"), 0);
+    EXPECT_GT(naturalNameCompare("EP 5.mkv", "ep 4.mkv"), 0);
+    EXPECT_LT(naturalNameCompare("A.mkv", "a.mkv"), 0);
+    EXPECT_GT(naturalNameCompare("a.mkv", "A.mkv"), 0);
+    EXPECT_LT(naturalNameCompare("Ep 01.mkv", "Ep 1.mkv"), 0);
+    EXPECT_LT(naturalNameCompare("Ep 01.mkv", "Ep 2.mkv"), 0);
+    EXPECT_EQ(naturalNameCompare("Ep 1.mkv", "Ep 1.mkv"), 0);
+    EXPECT_EQ(naturalNameCompare("", ""), 0);
+    EXPECT_LT(naturalNameCompare("", "a"), 0);
+    EXPECT_EQ(naturallySorted({"ep 1.mkv", "Ep 1.mkv", "Ep 01.mkv", "EP 001.mkv"}),
+              (std::vector<std::string>{"EP 001.mkv", "Ep 01.mkv", "Ep 1.mkv", "ep 1.mkv"}));
+    // non-ASCII letters: by code point, lowered by the caller's mapping
+    EXPECT_LT(naturalNameCompare("\u00c4rger.mkv", "\u00e9.mkv"), 0);
+    EXPECT_LT(naturalNameCompare("\u00c4b.mkv", "\u00e4a.mkv"), 0); // A-Z only: U+00C4 before U+00E4
+    EXPECT_GT(naturalNameCompare("\u00c4b.mkv", "\u00e4a.mkv", testLower), 0); // lowered alike: 'b' after 'a'
+    // bytes that are not UTF-8 compare as their own value, after ASCII
+    EXPECT_GT(naturalNameCompare("\xff.mkv", "z.mkv"), 0);
+}
+
+// The capture folder's names (tools/legacy-capture/inputs/next-file-names.txt)
+// in natural order: a strict weak order from any starting order.
+TEST(NaturalNameOrder, TheCaptureFolderInOrder)
+{
+    const std::vector<std::string> created{"ep10.mkv", "B.mkv", "notes.txt", "ep2.mkv", ".dotted.mkv", "a.b.mkv",
+                                           "\u00c4rger.mkv", "ep1.mkv", "attr-hidden.mkv", "\u65e5\u672c\u8a9e.mkv",
+                                           "c.MKV", "folder.mkv", "x.mkv.txt", "~tilde.avi", "a.mkv", "_under.mp4",
+                                           "noext", "\u00e9.mkv"};
+    const std::vector<std::string> expected{".dotted.mkv", "_under.mp4", "a.b.mkv", "a.mkv", "attr-hidden.mkv",
+                                            "B.mkv", "c.MKV", "ep1.mkv", "ep2.mkv", "ep10.mkv", "folder.mkv", "noext",
+                                            "notes.txt", "x.mkv.txt", "~tilde.avi", "\u00c4rger.mkv", "\u00e9.mkv",
+                                            "\u65e5\u672c\u8a9e.mkv"};
+    EXPECT_EQ(naturallySorted(created, testLower), expected);
+    EXPECT_EQ(naturallySorted({created.rbegin(), created.rend()}, testLower), expected);
+    for (const auto &a : created)
+        for (const auto &b : created) {
+            EXPECT_EQ(sign(naturalNameCompare(a, b, testLower)), -sign(naturalNameCompare(b, a, testLower))) << a << " " << b;
+            EXPECT_EQ(naturalNameCompare(a, b, testLower) == 0, a == b) << a << " " << b;
+        }
 }
 
 // The folder NextFile lists, wxFileName(path).GetPath() (VideoBox.cpp:692-697):

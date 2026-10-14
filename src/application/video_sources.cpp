@@ -197,10 +197,90 @@ std::string nextFileFolder(std::string_view path, PathFormat format)
     return out;
 }
 
+namespace {
+
+// One code point of UTF-8 `text` at `i`, `i` moved past it. A byte that
+// does not start a well-formed sequence is taken alone, as its own value.
+char32_t nextCodePoint(std::string_view text, std::size_t &i)
+{
+    const auto byte = [&](std::size_t k) { return static_cast<unsigned char>(text[k]); };
+    const unsigned char lead = byte(i);
+    const int length = lead < 0x80 ? 1 : (lead >> 5) == 0x6 ? 2 : (lead >> 4) == 0xE ? 3 : (lead >> 3) == 0x1E ? 4 : 0;
+    if (length > 1 && i + length <= text.size()) {
+        char32_t c = lead & (0x7F >> length);
+        bool valid = true;
+        for (int k = 1; k < length; ++k) {
+            const unsigned char next = byte(i + k);
+            valid = valid && (next & 0xC0) == 0x80;
+            c = (c << 6) | (next & 0x3F);
+        }
+        if (valid) {
+            i += length;
+            return c;
+        }
+    }
+    ++i;
+    return lead;
+}
+
+bool isDigit(char c)
+{
+    return c >= '0' && c <= '9';
+}
+
+} // namespace
+
+int naturalNameCompare(std::string_view a, std::string_view b, const NameLower &lower)
+{
+    const auto lowered = [&](char32_t c) -> char32_t {
+        if (lower)
+            return lower(c);
+        return c >= U'A' && c <= U'Z' ? c + (U'a' - U'A') : c;
+    };
+    std::size_t i = 0, j = 0;
+    while (i < a.size() && j < b.size()) {
+        if (isDigit(a[i]) && isDigit(b[j])) {
+            // one number each: leading zeros skipped, then the longer run is
+            // the larger number, and runs of one length compare digit by digit
+            std::size_t endA = i, endB = j;
+            while (endA < a.size() && isDigit(a[endA]))
+                ++endA;
+            while (endB < b.size() && isDigit(b[endB]))
+                ++endB;
+            while (i < endA && a[i] == '0')
+                ++i;
+            while (j < endB && b[j] == '0')
+                ++j;
+            if (endA - i != endB - j)
+                return endA - i < endB - j ? -1 : 1;
+            const int digits = a.substr(i, endA - i).compare(b.substr(j, endB - j));
+            if (digits != 0)
+                return digits < 0 ? -1 : 1;
+            i = endA;
+            j = endB;
+            continue;
+        }
+        const char32_t ca = lowered(nextCodePoint(a, i));
+        const char32_t cb = lowered(nextCodePoint(b, j));
+        if (ca != cb)
+            return ca < cb ? -1 : 1;
+    }
+    const bool leftA = i < a.size(), leftB = j < b.size();
+    if (leftA != leftB)
+        return leftA ? 1 : -1;
+    // equal without case and as numbers: the plain name decides
+    const int plain = a.compare(b);
+    return plain < 0 ? -1 : plain > 0 ? 1 : 0;
+}
+
 NextFileStep NextFileWalker::step(std::optional<std::vector<std::string>> listing, const std::string &current, bool next)
 {
-    if (listing)
+    if (listing) {
         m_files = std::move(*listing);
+        // V3-next-file-natural-order: name order, not the file system's
+        std::sort(m_files.begin(), m_files.end(),
+                  [this](const std::string &x, const std::string &y) { return naturalNameCompare(x, y, m_lower) < 0; });
+    }
     const std::vector<std::string> &files = m_files;
     const int count = static_cast<int>(files.size());
     for (int j = 0; j < count; ++j)

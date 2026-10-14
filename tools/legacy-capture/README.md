@@ -56,7 +56,7 @@ cmake --build <dir> --target legacy_next_file_capture
 <dir>/legacy_next_file_capture tools/legacy-capture/inputs/next-file-names.txt <new folder> > linux.json
 ```
 
-On Windows the winix task `legacy-win-next-file` ([`windows/next-file.ps1`](windows/next-file.ps1)) fetches the baseline and its wx pin into `out/legacy-win/next-file`, builds the probe with MSVC and runs it on NTFS. The reviewed captures are [`local-v3-next-file-20261013`](../../tests/fixtures/legacy-observations/local-v3-next-file-20261013/README.md); `ShellTests::nextFileFollowsTheLegacyObservation` compares the rewrite with the running platform's.
+On Windows the winix task `legacy-win-next-file` ([`windows/next-file.ps1`](windows/next-file.ps1)) fetches the baseline and its wx pin into `out/legacy-win/next-file`, builds the probe with MSVC and runs it on NTFS. The reviewed captures are [`local-v3-next-file-20261013`](../../tests/fixtures/legacy-observations/local-v3-next-file-20261013/README.md); `ShellTests::nextFileWalksTheCaptureFolderInNaturalOrder` checks the running platform's as legacy's listing and walks the same folder in natural name order (`V3-next-file-natural-order`, 2026-10-14). The probe copies `VideoBox::NextFile` alone, so it builds against the baseline checkout only: from legacy main's natural-order change on, NextFile calls `CompareNaturally` (`HikariSub/NaturalOrder.cpp`), which the probe does not compile.
 
 ### R1 subtitle comparison
 
