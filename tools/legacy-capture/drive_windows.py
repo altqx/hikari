@@ -33,6 +33,7 @@ import base64
 import json
 import ntpath
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -146,6 +147,10 @@ class Legacy:
             ws = sorted(tree["windows"], key=lambda w: not w.get("foreground"))
             return [w for w in ws
                     if w.get("visible") and w.get("pid") == self.pid and MAIN_TITLE not in (w.get("title") or "")]
+        # `ui windows` cannot see owned windows: a box legacy owns goes unseen
+        # on this path, so say so in the log.
+        print("warning: `ui tree` gave no window list; owned message boxes and dialogs are not seen",
+              file=sys.stderr)
         mine = self.windows()
         if mine is None:
             return None
