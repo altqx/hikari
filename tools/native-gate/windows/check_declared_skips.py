@@ -42,10 +42,17 @@ failures = []
 all_reasons = []
 for suite, fns in runs:
     source = root / "tests/ui" / f"{suite}.cpp"
-    reasons = re.findall(r'QSKIP\("((?:[^"\\]|\\.)*)"\)', source.read_text(encoding="utf-8"))
+    text = source.read_text(encoding="utf-8")
+    reasons = re.findall(r'QSKIP\("((?:[^"\\]|\\.)*)"\)', text)
     all_reasons += reasons
     if fns.strip():
         continue  # run by function: its skips are judged by the gate
+    # A reason built at run time (qPrintable(...), joined literals) cannot be
+    # checked against the declarations, so a whole-run suite may not have one.
+    unread = len(re.findall(r"\bQSKIP\(", text)) - len(reasons)
+    if unread:
+        failures.append(f"{source.relative_to(root)}: {unread} QSKIP whose reason is not one string literal; "
+                        f"the declared skips cannot be checked against it")
     for reason in reasons:
         if not any(k in reason for k in known):
             failures.append(f"{source.relative_to(root)}: QSKIP(\"{reason}\") is not declared in "

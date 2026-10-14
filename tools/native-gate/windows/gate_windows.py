@@ -2203,18 +2203,25 @@ def step_tags():
     finally:
         speech, silent, nev = nvda_stop(nvda_log, "tags")
     rows = [e for e in st.get("elements") or [] if e["t"] in ("ListItem", "DataItem") and not e["off"]]
-    announced = [l for l in speech if re.search(r"\d+ of \d+", l) or "Edge blur" in l]
+    # The switch was really pressed, and the list really opened: its rows
+    # are the tag names (alpha, be, blur, ...), not the grid's cells.
+    toggled = any(a.get("matches") and a.get("done") and not a.get("errors") for a in st0.get("actions") or [])
+    list_open = {"alpha", "be", "blur"} <= {e["n"] for e in rows if e["t"] == "ListItem"}
+    # A tag's announcement: "\be, Edge blur, 2 of 20" (the name, its
+    # description and its place in the list).
+    announced = [l for l in speech if re.search(r"\\+[a-z0-9]+, [^,']+(?:, [^,']+)*, \d+ of \d+", l)]
     focus_kept = "Line text" in (st1.get("focus") or "")
     (EVID / "tags.json").write_text(json.dumps({"hide-tags pressed": st0.get("actions"), "text after typing": typed,
                                                 "focus with the list open": st1.get("focus"),
                                                 "list rows in UIA": [(e["t"], e["n"]) for e in rows][:40],
                                                 "announcements": announced}, indent=1, ensure_ascii=False))
-    verdict("tag-list-raw-view", "observed" if typed and typed.startswith("{\\") else "failed",
+    verdict("tag-list-raw-view", "observed" if toggled and list_open and typed and typed.startswith("{\\") else "failed",
             f"with Hide tags pressed through UIA ({st0.get('actions')}), typing {{\\ at the start left the Line text "
-            f"{typed!r}", ["tags.json"] + ev)
-    verdict("tag-list-focus-kept", "observed" if focus_kept else "failed",
-            f"with the list open and Down pressed twice the focus is {st1.get('focus')!r}", ["tags.json"] + ev)
-    verdict("nvda-tag-list", "observed" if announced and silent else "failed",
+            f"{typed!r}, and the tag list {'opened' if list_open else 'did not open'}", ["tags.json"] + ev)
+    verdict("tag-list-focus-kept", "observed" if list_open and focus_kept else "failed",
+            f"with the list {'open' if list_open else 'not open'} and Down pressed twice the focus is "
+            f"{st1.get('focus')!r}", ["tags.json"] + ev)
+    verdict("nvda-tag-list", "observed" if list_open and any("Edge blur" in l for l in announced) and silent else "failed",
             f"NVDA spoke the tag list's selection: {announced[:6]} ({len(speech)} speech lines, silent synthesizer "
             f"{silent})", ["tags.json"] + nev + ev)
 
@@ -2283,7 +2290,9 @@ def step_dialogs():
         if opener:
             keys(*opener, 2.0)
         else:
-            ok = any(menu_to(n, opener="alt+f") for n in ("Settings…", "Settings", "Options…", "Options"))
+            # File > &Settings (Main.qml); one try, as a failed menu_to leaves
+            # the File menu open and a second Alt+F would close it.
+            ok = menu_to("Settings", opener="alt+f")
             if ok:
                 keys("return", 2.0)
         st = uia()
