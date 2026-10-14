@@ -40,6 +40,7 @@
 #include <QPalette>
 #include <QClipboard>
 #include <QColorSpace>
+#include <QBuffer>
 #include <QProcess>
 #include <QRasterWindow>
 #include <QScreen>
@@ -18738,6 +18739,37 @@ private slots:
                                     .arg(expected.height())));
         }
         QFile::remove(out);
+    }
+
+    // The clipboard read-back is compared by its pixels: a PNG that names
+    // sRGB (what .NET writes from the Windows clipboard) loads with that
+    // colour space, which QImage's == compares too. Legacy copies the frame
+    // as bare RGB24 (RendererVideo::SaveFrame), so only the pixels count.
+    void clipboardReadBackIsComparedByItsPixels()
+    {
+        QImage frame(8, 6, QImage::Format_RGB888);
+        for (int y = 0; y < frame.height(); ++y)
+            for (int x = 0; x < frame.width(); ++x)
+                frame.setPixel(x, y, qRgb(x * 30, y * 40, (x + y) * 15));
+        QImage tagged = frame;
+        tagged.setColorSpace(QColorSpace(QColorSpace::SRgb));
+        QByteArray png;
+        QBuffer buffer(&png);
+        QVERIFY(buffer.open(QIODevice::WriteOnly));
+        QVERIFY(tagged.save(&buffer, "PNG"));
+        QImage read = QImage::fromData(png, "PNG");
+        QVERIFY(!read.isNull());
+        QVERIFY(read.colorSpace().isValid());
+        QVERIFY(!frame.colorSpace().isValid());
+        // The comparison that failed on Windows with equal pixels.
+        QVERIFY(read.convertToFormat(QImage::Format_RGB888) != frame);
+        QVERIFY(sameImage(read, frame));
+        QVERIFY(sameImage(frame, read));
+        QVERIFY(sameImage(read.convertToFormat(QImage::Format_ARGB32), frame));
+        QImage changed = read;
+        changed.setPixel(3, 2, qRgb(1, 2, 3));
+        QVERIFY(!sameImage(changed, frame));
+        QVERIFY(!sameImage(read.copy(0, 0, 7, 6), frame));
     }
 
     // The Script properties YCbCr matrix reaches the video's colours: the
