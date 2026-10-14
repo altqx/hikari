@@ -8,6 +8,7 @@
 
 #include "docking.h"
 #include "icon_theme.h"
+#include "qtest_parts.h"
 #include "theme.h"
 #include "video_view_controller.h"
 #include "visual_tools_controller.h"
@@ -801,5 +802,6 @@ private slots:
     }
 };
 
-QTEST_MAIN(ViewArrangementsTest)
+// Two processes, one per part (tests/ui/CMakeLists.txt PARTS).
+HIKARI_QTEST_MAIN_IN_PARTS(ViewArrangementsTest)
 #include "view_arrangements_tests.moc"
