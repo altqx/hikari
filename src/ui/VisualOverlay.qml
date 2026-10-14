@@ -33,7 +33,18 @@ Item {
     signal fullScreenRequested()
     signal pointerMoved(real x, real y)
 
+    // The pointer is over the video area for the tools: set by the events
+    // routed to them, cleared by the Leave routed to them (sent once).
+    property bool pointerInside: false
+
     function route(kind, x, y, button, buttons, modifiers, steps) {
+        if (kind === 1) {
+            if (!pointerInside)
+                return
+            pointerInside = false
+        } else {
+            pointerInside = true
+        }
         if (!view)
             return toolsShown ? tools.pointer(kind, x, y, button, buttons, modifiers, steps ?? 0) : undefined
         const request = view.pointer(kind, x, y, button, buttons, modifiers, steps ?? 0)
@@ -58,6 +69,21 @@ Item {
     readonly property real shownScale: Window.window ? Window.window.devicePixelRatio : 1
     onShownInChanged: sync()
     onShownScaleChanged: sync()
+
+    // The pointer left the video area without the MouseArea's exited: its
+    // hover state is lost when the area moves into the fullscreen window
+    // (the main window's leave reaches it there), so it is never hovered
+    // again and goes out over the fullscreen panel with no exited. The
+    // handler follows the pointer itself, so the tools hear the Leave
+    // (the crosshair goes, the pointer is the arrow) as they do in the
+    // panel. A drag keeps the pointer until its release.
+    HoverHandler {
+        id: pointerHover
+        onHoveredChanged: {
+            if (!hovered && !pointerArea.pressed)
+                overlayItem.route(1, point.position.x, point.position.y, Qt.NoButton, Qt.NoButton, 0)
+        }
+    }
 
     MouseArea {
         id: pointerArea

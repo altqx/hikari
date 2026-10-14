@@ -136,7 +136,8 @@ void CrosshairTool::drawLines(int x, int y, const VisualHost &host)
     if (!view.hasVideo())
         return;
     const IntRect videoRect = view.videoRect();
-    if (!videoRect.contains(x, y)) {
+    // The picture alone, where the pointer is hidden (VideoView::onPicture).
+    if (!view.onPicture(x, y)) {
         m_onVideo = false;
         return;
     }

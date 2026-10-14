@@ -730,11 +730,15 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
     p.shift = (modifiers & Qt::ShiftModifier) != 0;
     p.alt = (modifiers & Qt::AltModifier) != 0;
     p.wheelSteps = wheelSteps;
+    // The crosshair's hidden pointer is the picture's only, where the cross
+    // is drawn (VideoView::onPicture): over the letterbox or pillarbox bars
+    // the pointer is the arrow. Legacy hid it over the whole video window,
+    // bars included (VideoBox.cpp:607-611), until a8a428e4c.
     if (p.kind == Pointer::Kind::Leave) {
-        m_overVideo = false;
+        m_overPicture = false;
         m_lastPointer.reset();
     } else {
-        m_overVideo = true;
+        m_overPicture = m_view.onPicture(p.x, p.y);
         m_lastPointer = QPointF(x, y);
     }
     // VideoBox::OnMouseEvent: nothing without a video (GetState() == None).
@@ -902,7 +906,7 @@ int VisualToolsController::pointerShapeCursor() const
 bool VisualToolsController::hideCursor() const
 {
     // V4: the zoom mode shows the pointer (ZoomMouseHandle's cursors).
-    return !m_view.zoomMode() && m_overVideo && m_view.hasVideo() && m_railEnabled && m_family == Family::Crosshair && tool();
+    return !m_view.zoomMode() && m_overPicture && m_view.hasVideo() && m_railEnabled && m_family == Family::Crosshair && tool();
 }
 
 QRectF VisualToolsController::videoRect() const

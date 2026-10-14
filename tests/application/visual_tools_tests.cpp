@@ -343,7 +343,13 @@ TEST(VisualCapture, ReplaysTheLegacyProbe)
             cross.pointer({Pointer::Kind::Move, dx, dy}, host);
             EXPECT_EQ(host.v.viewToScript({static_cast<float>(x), static_cast<float>(y)}), pair(p[QStringLiteral("out")]));
             EXPECT_EQ(cross.label(), u16(p[QStringLiteral("label")]));
-            EXPECT_EQ(cross.onVideo(), p[QStringLiteral("onVideo")].toBool());
+            // Legacy drew the cross on the video rectangle's right and bottom
+            // edges too; with its fix (a8a428e4c, IsOnVideoFrame) they are
+            // outside the picture, as they are here (VideoView::onPicture).
+            const IntRect &vr = host.v.videoRect();
+            const bool onEdge = x == vr.right || y == vr.bottom;
+            EXPECT_EQ(cross.onVideo(), p[QStringLiteral("onVideo")].toBool() && !onEdge);
+            EXPECT_EQ(cross.onVideo(), host.v.onPicture(x, y));
             EXPECT_EQ(cross.crossOn(), p[QStringLiteral("shown")].toBool());
             EXPECT_EQ(cross.coefficients(), pair(p[QStringLiteral("crossCoeff")]));
             if (cross.onVideo()) { // off the video legacy keeps (or never set) them
@@ -457,6 +463,38 @@ TEST(VisualCrosshair, HiddenWithoutVideoAndAfterLeaveOrRightRelease)
     EXPECT_TRUE(cross.shown());
     cross.pointer({Pointer::Kind::Release, 20, 20, Pointer::Button::Right}, host);
     EXPECT_FALSE(cross.shown());
+    // Only on the picture: its right and bottom edges, the bars and the
+    // panel are outside it (legacy IsOnVideoFrame, a8a428e4c).
+    host.v.setClient(640, 400, 40); // a 640x360 window area: the 16:9 frame fills it
+    EXPECT_EQ(host.v.videoRect(), (IntRect{0, 0, 640, 360}));
+    EXPECT_TRUE(host.v.onPicture(0, 0));
+    EXPECT_TRUE(host.v.onPicture(639, 359));
+    EXPECT_FALSE(host.v.onPicture(640, 100));
+    EXPECT_FALSE(host.v.onPicture(100, 360));
+    EXPECT_FALSE(host.v.onPicture(-1, 100));
+    EXPECT_FALSE(host.v.onPicture(100, 380)); // the panel
+    host.v.setClient(840, 400, 40); // pillarbox bars of 100 on each side
+    EXPECT_EQ(host.v.videoRect(), (IntRect{100, 0, 740, 360}));
+    EXPECT_FALSE(host.v.onPicture(50, 180));
+    EXPECT_FALSE(host.v.onPicture(99, 180));
+    EXPECT_TRUE(host.v.onPicture(100, 180));
+    EXPECT_TRUE(host.v.onPicture(739, 180));
+    EXPECT_FALSE(host.v.onPicture(740, 180));
+    EXPECT_FALSE(host.v.onPicture(790, 180));
+    cross.reset(host);
+    cross.pointer({Pointer::Kind::Move, 400, 180}, host);
+    EXPECT_TRUE(cross.shown());
+    cross.pointer({Pointer::Kind::Move, 50, 180}, host); // a bar: no cross
+    EXPECT_FALSE(cross.shown());
+    EXPECT_TRUE(cross.overlay(host).empty());
+    cross.pointer({Pointer::Kind::Move, 740, 180}, host);
+    EXPECT_FALSE(cross.shown());
+    cross.pointer({Pointer::Kind::Move, 739, 180}, host);
+    EXPECT_TRUE(cross.shown());
+    host.v.close();
+    EXPECT_FALSE(host.v.onPicture(400, 180)); // no video
+    host.v.open({1280, 720, 0, 1});
+    host.v.setClient(640, 400, 40);
     // A resize (SetCurVisual) hides it until the next move.
     cross.pointer({Pointer::Kind::Move, 20, 20}, host);
     cross.reset(host);

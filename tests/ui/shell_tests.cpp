@@ -12237,6 +12237,269 @@ private slots:
         QVERIFY(!tools.hideCursor());
     }
 
+    // The video's pointer: the crosshair's (the pointer hidden under the
+    // drawn cross and its position label) only over the picture itself; the
+    // arrow over the letterbox and pillarbox bars and over the player's
+    // controls, windowed, zoomed (by the wheel and in the zoom mode) and
+    // fullscreen, with every tool and in the player layout. Moving out of the
+    // picture and back switches each time.
+    void videoPointerIsTheToolsOnlyOverThePicture()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(folder.isValid());
+        QVERIFY(v5Open(folder));
+        auto &tools = application->visualTools();
+        auto &viewController = application->videoView();
+        QCOMPARE(tools.activeFamily(), 0); // the crosshair
+        QQuickWindow *shown = window;
+        QQuickItem *overlay = item("visualOverlay");
+        QVERIFY(overlay);
+        // The pointer at a point of the video area (its logical coordinates)
+        // or of the window, and the cursor the window then shows.
+        const auto cursorAtScene = [&](QPoint at) {
+            QTest::mouseMove(shown, at);
+            QCoreApplication::processEvents();
+            return shown->cursor().shape();
+        };
+        const auto cursorAt = [&](QPointF local) { return cursorAtScene(overlay->mapToScene(local).toPoint()); };
+        // The middle of each bar beside the picture (eight pixels at least),
+        // a point just outside each of the picture's edges that have a bar,
+        // and points inside the picture: its centre, near each corner and just
+        // inside each of those edges.
+        struct Points {
+            QList<QPointF> bars, outside, inside;
+        };
+        const auto points = [&] {
+            // A family's options row below the picture changes the panel's
+            // layout: the picture's place once it has settled.
+            QRectF last;
+            int same = 0;
+            (void)QTest::qWaitFor([&] {
+                const QRectF now = tools.videoRect();
+                same = now == last ? same + 1 : 0;
+                last = now;
+                return same >= 5;
+            }, 2000);
+            const QRectF r = tools.videoRect();
+            const qreal w = overlay->width(), h = overlay->height();
+            const qreal cx = r.center().x(), cy = r.center().y();
+            Points p;
+            p.inside << r.center() << r.topLeft() + QPointF(4, 4) << r.bottomRight() - QPointF(4, 4)
+                     << QPointF(r.right() - 4, r.top() + 4) << QPointF(r.left() + 4, r.bottom() - 4);
+            if (r.left() >= 8) {
+                p.bars << QPointF(r.left() / 2, cy) << QPointF((r.right() + w) / 2, cy);
+                p.outside << QPointF(r.left() - 3, cy) << QPointF(r.right() + 3, cy);
+                p.inside << QPointF(r.left() + 2, cy) << QPointF(r.right() - 2, cy);
+            }
+            if (r.top() >= 8) {
+                p.bars << QPointF(cx, r.top() / 2) << QPointF(cx, (r.bottom() + h) / 2);
+                p.outside << QPointF(cx, r.top() - 3) << QPointF(cx, r.bottom() + 3);
+                p.inside << QPointF(cx, r.top() + 2) << QPointF(cx, r.bottom() - 2);
+            }
+            return p;
+        };
+        const auto where = [](const char *what, QPointF at) {
+            return QStringLiteral("%1 at %2,%3").arg(QLatin1String(what)).arg(at.x()).arg(at.y());
+        };
+        // The crosshair: hidden (the cross drawn) inside, the arrow (nothing
+        // drawn) on the bars and just outside the picture, each time the
+        // pointer goes in or out.
+        const auto crosshairOnlyOverThePicture = [&](const char *what) {
+            const Points p = points();
+            QVERIFY2(!p.bars.isEmpty(), qPrintable(QDebug::toString(tools.videoRect())));
+            const auto in = [&](QPointF at) {
+                QTRY_COMPARE_WITH_TIMEOUT(cursorAt(at), Qt::BlankCursor, 2000);
+                QVERIFY2(tools.hideCursor(), qPrintable(where(what, at)));
+                QTRY_VERIFY2(!tools.overlay().isEmpty(), qPrintable(where(what, at)));
+            };
+            const auto out = [&](QPointF at) {
+                QTRY_COMPARE_WITH_TIMEOUT(cursorAt(at), Qt::ArrowCursor, 2000);
+                QVERIFY2(!tools.hideCursor(), qPrintable(where(what, at)));
+                QTRY_VERIFY2(tools.overlay().isEmpty(), qPrintable(where(what, at)));
+            };
+            // From the centre to each point outside and back.
+            const QPointF centre = p.inside.first();
+            for (const QList<QPointF> &outside : {p.bars, p.outside})
+                for (const QPointF &o : outside) {
+                    in(centre);
+                    if (QTest::currentTestFailed())
+                        return;
+                    out(o);
+                    if (QTest::currentTestFailed())
+                        return;
+                }
+            // Each point inside, coming from a bar.
+            for (const QPointF &i : p.inside) {
+                out(p.bars.first());
+                if (QTest::currentTestFailed())
+                    return;
+                in(i);
+                if (QTest::currentTestFailed())
+                    return;
+            }
+        };
+        // Every family: inside the picture the tool's own pointer (the
+        // crosshair's hidden one, the others' arrow or their handle's shape),
+        // the arrow on the bars, coming from the picture and going back.
+        const auto everyTool = [&](const char *what) {
+            for (int f = 0; f < application::visual::kFamilyCount; ++f) {
+                tools.selectFamily(f);
+                QTRY_COMPARE(tools.activeFamily(), f);
+                const Points p = points();
+                const auto in = [&](QPointF at) {
+                    const Qt::CursorShape inside = cursorAt(at);
+                    if (f == 0) {
+                        QTRY_COMPARE_WITH_TIMEOUT(cursorAt(at), Qt::BlankCursor, 2000);
+                    } else {
+                        QVERIFY2(inside != Qt::BlankCursor, qPrintable(where(what, at) + QString::number(f)));
+                        QTRY_COMPARE_WITH_TIMEOUT(cursorAt(at), Qt::CursorShape(tools.pointerShapeCursor()), 2000);
+                    }
+                };
+                for (const QPointF &bar : p.bars) {
+                    in(p.inside.first());
+                    QTRY_COMPARE_WITH_TIMEOUT(cursorAt(bar), Qt::ArrowCursor, 2000);
+                    QVERIFY2(!tools.hideCursor(), qPrintable(where(what, bar)));
+                }
+                for (const QPointF &i : p.inside)
+                    in(i);
+                if (QTest::currentTestFailed())
+                    return;
+            }
+            tools.selectFamily(0);
+            QTRY_COMPARE(tools.activeFamily(), 0);
+        };
+        // The player's controls take the arrow (a text field its I-beam),
+        // never the hidden pointer, coming from inside the picture.
+        const auto controlsTakeTheArrow = [&](std::initializer_list<const char *> names, bool fullscreen) {
+            const QPointF in = tools.videoRect().center();
+            for (const char *name : names) {
+                QQuickItem *control = fullscreen ? fullscreenItem(name) : visualItem(name);
+                QVERIFY2(control && control->isVisible(), name);
+                QTRY_COMPARE_WITH_TIMEOUT(cursorAt(in), Qt::BlankCursor, 2000);
+                QTRY_COMPARE_WITH_TIMEOUT(cursorAtScene(centreOf(control)), Qt::ArrowCursor, 2000);
+                QVERIFY2(!tools.hideCursor(), name);
+            }
+        };
+
+        // Windowed, a 4:3 picture in a panel of another shape: bars on one axis.
+        crosshairOnlyOverThePicture("windowed");
+        if (QTest::currentTestFailed())
+            return;
+        controlsTakeTheArrow({"videoSlider", "playPause", "nextFrame", "videoVolume", "visualTool1"}, false);
+        if (QTest::currentTestFailed())
+            return;
+        {
+            QQuickItem *times = item("videoTimes");
+            QTRY_COMPARE_WITH_TIMEOUT(cursorAt(tools.videoRect().center()), Qt::BlankCursor, 2000);
+            QTRY_VERIFY_WITH_TIMEOUT(cursorAtScene(centreOf(times)) != Qt::BlankCursor, 2000);
+        }
+        everyTool("windowed");
+        if (QTest::currentTestFailed())
+            return;
+        // A wide picture (7:1, the aspect dialog's widest): letterbox bars
+        // above and below; a tall one (7:10, its tallest): pillarbox bars
+        // beside it.
+        viewController.setAspectFromSlider(100000);
+        QTRY_VERIFY2(tools.videoRect().top() >= 8, qPrintable(QDebug::toString(tools.videoRect())));
+        crosshairOnlyOverThePicture("letterbox");
+        if (QTest::currentTestFailed())
+            return;
+        everyTool("letterbox");
+        if (QTest::currentTestFailed())
+            return;
+        viewController.setAspectFromSlider(1000000);
+        QTRY_VERIFY2(tools.videoRect().left() >= 8, qPrintable(QDebug::toString(tools.videoRect())));
+        crosshairOnlyOverThePicture("pillarbox");
+        if (QTest::currentTestFailed())
+            return;
+        viewController.setAspectFromSlider(525000);
+        QTRY_COMPARE(tools.videoView().aspectRatio(), 0.75f);
+
+        // Zoomed by the wheel at a point off the centre (panned there): the
+        // picture keeps its rectangle, and the rule.
+        {
+            const QRectF r = tools.videoRect();
+            wheelAt(overlay->mapToScene(r.topLeft() + QPointF(r.width() / 4, r.height() / 4)).toPoint(), 5);
+            QVERIFY(viewController.zoomPercent() > 100);
+            QVERIFY(!viewController.zoomMode());
+            QVERIFY(tools.sourceRect() != QRectF(0, 0, 320, 240));
+            crosshairOnlyOverThePicture("zoomed");
+            if (QTest::currentTestFailed())
+                return;
+            everyTool("zoomed");
+            if (QTest::currentTestFailed())
+                return;
+        }
+        // The zoom mode shows the pointer over the picture (its own arrow
+        // and edge shapes, ZoomMouseHandle) and the arrow on the bars.
+        QVERIFY(viewController.toggleZoom());
+        QVERIFY(viewController.zoomMode());
+        {
+            const Points p = points();
+            for (const QPointF &in : p.inside) {
+                QTRY_VERIFY_WITH_TIMEOUT(cursorAt(in) != Qt::BlankCursor, 2000);
+                QVERIFY(!tools.hideCursor());
+            }
+            for (const QPointF &bar : p.bars)
+                QTRY_COMPARE_WITH_TIMEOUT(cursorAt(bar), Qt::ArrowCursor, 2000);
+        }
+        QVERIFY(viewController.toggleZoom()); // out of the zoom mode, still zoomed
+        QVERIFY(!viewController.zoomMode());
+        QVERIFY(viewController.zoomed());
+
+        // Fullscreen with "Show toolbar" (the panel below the picture),
+        // still zoomed, then the whole frame.
+        auto &fs = application->videoFullscreen();
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QVERIFY(fsWindow);
+        QTRY_VERIFY(fsWindow->isExposed());
+        QVERIFY(fs.showToolbar());
+        QTRY_COMPARE(overlay->window(), fsWindow);
+        shown = fsWindow;
+        QTRY_COMPARE(overlay->height(), qreal(fsWindow->height()) - fullscreenItem("videoFullscreenPanel")->height());
+        crosshairOnlyOverThePicture("fullscreen, zoomed");
+        if (QTest::currentTestFailed())
+            return;
+        controlsTakeTheArrow({"fullscreenSlider", "fullscreenPlayPause", "fullscreenShowToolbar", "fullscreenVolume",
+                              "fullscreenTool1"},
+                             true);
+        if (QTest::currentTestFailed())
+            return;
+        QVERIFY(viewController.resetZoom());
+        QVERIFY(!viewController.zoomed());
+        crosshairOnlyOverThePicture("fullscreen");
+        if (QTest::currentTestFailed())
+            return;
+        everyTool("fullscreen");
+        if (QTest::currentTestFailed())
+            return;
+        QVERIFY(fs.leave());
+        QTRY_COMPARE(overlay->window(), window);
+        shown = window;
+
+        // The player layout: no tool, the arrow over the picture and the bars.
+        application->toggleEditor();
+        QTRY_VERIFY(!application->editorOn());
+        QTRY_VERIFY(!visualItem("visualToolRail")->isVisible());
+        {
+            const Points p = points();
+            for (const QPointF &in : p.inside)
+                QTRY_COMPARE_WITH_TIMEOUT(cursorAt(in), Qt::ArrowCursor, 2000);
+            for (const QPointF &bar : p.bars)
+                QTRY_COMPARE_WITH_TIMEOUT(cursorAt(bar), Qt::ArrowCursor, 2000);
+        }
+        application->toggleEditor();
+        QTRY_VERIFY(application->editorOn());
+        QTRY_VERIFY(visualItem("visualToolRail")->isVisible());
+        QTRY_COMPARE_WITH_TIMEOUT(cursorAt(tools.videoRect().center()), Qt::BlankCursor, 2000);
+        // Away from the picture: a move to the same point in the next test's
+        // window would be dropped as no move.
+        QTest::mouseMove(window, QPoint(window->width() - 2, window->height() - 2));
+        QTRY_VERIFY(tools.overlay().isEmpty());
+    }
+
     // T1: the transaction rule (accepted on #55) through the real panel: a
     // drag commits on release as one step, Esc during it restores the
     // pre-gesture draft, the batch picker's Lines are the targets whatever

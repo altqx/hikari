@@ -49,7 +49,7 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_PROPERTY(QString labelFamily READ labelFamily CONSTANT)
     Q_PROPERTY(int labelPixelSize READ labelPixelSize NOTIFY geometryChanged)
     // VideoBox hides the pointer over the video while the crosshair is the
-    // tool (VideoBox.cpp:607-611).
+    // tool (VideoBox.cpp:607-611); here over the picture only, not its bars.
     Q_PROPERTY(bool hideCursor READ hideCursor NOTIFY changed)
     // T2-T5: the shape the tool asked for over its handles and during its
     // drags (legacy VideoBox::SetCursor from the Visuals), a Qt::CursorShape;
@@ -269,7 +269,7 @@ private:
     application::visual::BatchPicker m_picker;
     std::optional<application::CommandRefusal> m_lastRefusal;
     bool m_railEnabled = true;
-    bool m_overVideo = false;
+    bool m_overPicture = false; // the last pointer event was over the picture (the view's video rectangle)
     std::optional<QPointF> m_lastPointer; // the last pointer event's position, until it leaves
     QFont m_labelFont;
     QString m_copied;

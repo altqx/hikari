@@ -127,6 +127,17 @@ public:
     int frameHeight() const { return m_height; } // m_Height
     const IntRect &windowRect() const { return m_windowRect; }
     const IntRect &videoRect() const { return m_videoRect; }   // m_BackBufferRect
+    // Whether a device point is on the picture: the video rectangle, its
+    // right and bottom edges outside as a RECT's are; nothing without a
+    // video. The crosshair is drawn and hides the pointer only there, the
+    // bars around it and the panel keep the arrow (legacy IsOnVideoFrame,
+    // VideoFrameArea.h, from a8a428e4c; legacy hid the pointer over the
+    // whole window and drew the cross on the edges too).
+    bool onPicture(int x, int y) const
+    {
+        return m_open && x >= m_videoRect.left && x < m_videoRect.right && y >= m_videoRect.top &&
+               y < m_videoRect.bottom;
+    }
     const IntRect &sourceRect() const { return m_sourceRect; } // m_MainStreamRect
     const EdgeRect &zoomRect() const { return m_zoomRect; }
     float zoomPercent() const { return m_zoomPercent; }
