@@ -59,8 +59,10 @@ First infrastructure work must qualify the tool integrations, native sessions, f
 | Runner | Helper | Labels | Modes |
 | --- | --- | --- | --- |
 | GoogleTest 1.18.0 (plain C++) | `hikari_add_gtest(target SOURCES … [LIBRARIES …] [LABELS …])`; each test case is its own CTest entry | `gtest` | none needed |
-| QtTest (C++ Qt) | `hikari_add_qttest(target SOURCES … [LIBRARIES …])` | `qttest` plus the mode | `offscreen` always; `xvfb` when `xvfb-run` exists |
+| QtTest (C++ Qt) | `hikari_add_qttest(target SOURCES … [LIBRARIES …] [PARTS …])` | `qttest` plus the mode | `offscreen` always; `xvfb` when `xvfb-run` exists |
 | Qt Quick Test (QML) | `hikari_add_quicktest(target QML_DIR dir)` over `tst_*.qml` | `quicktest` plus the mode | same |
+
+A long QtTest suite runs in parts (decision 38f, 2026-10-14): `PARTS <name> <name>=<first function>… PART_TIMEOUT <s>` registers `<target>.<name>.<mode>` per part, each running the executable with `-part FROM..BEFORE`: its functions from its first function up to the next part's first, in declaration order ([`tests/support/qtest_parts.h`](../../tests/support/qtest_parts.h); the source ends with `HIKARI_QTEST_MAIN_IN_PARTS` instead of `QTEST_MAIN`). A function added anywhere joins the part around it, and `<target>.parts` checks that the parts list every function exactly once. `hikari_ui_shell_tests` is split this way: in one process it took about 800-850 s under Xvfb against a 900 s timeout. Run one function as before (`hikari_ui_shell_tests <function>`); `hikari_ui_shell_tests -part FROM..BEFORE -functions` lists a part.
 
 Each runner has controls under `tests/runners/`, all labelled `control`: a case that must pass, and a deliberately failing case registered with `WILL_FAIL`. If a failing control is ever reported as a failure, the runner has stopped detecting failures. The Ubuntu CI job installs Xvfb, so the `xvfb` variants run there. The Fedora container runs offscreen only for now. Offscreen and Xvfb results are not native desktop, screen-reader or IME evidence; those stay separate human qualification cards.
 

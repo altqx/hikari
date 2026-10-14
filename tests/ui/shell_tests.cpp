@@ -17,6 +17,7 @@
 #include "hikari/core/ass_save.h"
 #include "media/mkv_fixture.h"
 #include "open_files.h"
+#include "qtest_parts.h"
 #include "hikari/application/video_sources.h"
 #include "hikari/application/visual_all_tags.h"
 #include "hikari/application/visual_crosshair.h"
@@ -19675,5 +19676,6 @@ private slots:
 
 };
 
-QTEST_MAIN(ShellTest)
+// Several processes, one per part (tests/ui/CMakeLists.txt PARTS).
+HIKARI_QTEST_MAIN_IN_PARTS(ShellTest)
 #include "shell_tests.moc"
