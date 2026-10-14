@@ -38,6 +38,9 @@ std::vector<SubtitlesLibass*> SubtitlesLibass::s_Instances;
 size_t SubtitlesLibass::s_AttachedFontsAdded = 0;
 wxMutex SubtitlesLibass::openMutex;
 
+// libass calls it on every thread that parses or renders subtitles: the
+// subtitle thread, the parse-ahead worker and the main thread. It only
+// formats into its own buffer and hands the text to the log, which locks.
 void MessageCallback(int level, const char *fmt, va_list args, void *) {
 	if (level >= 4) return;
 	char buf[1024];

@@ -86,9 +86,15 @@ void LogWindow::OnGetLog(wxThreadEvent &evt)
 			hiddenLastLog = false;
 		}
 	}
-	lastLogText->SetLabelText(handler->lastLog);
-	logText->AppendText(handler->logToAppend);
-	handler->logToAppend = emptyString;
+	// libass logs from the threads that parse and render subtitles
+	wxString lastLog, toAppend;
+	{
+		wxMutexLocker lock(handler->mutex);
+		lastLog = handler->lastLog;
+		toAppend.swap(handler->logToAppend);
+	}
+	lastLogText->SetLabelText(lastLog);
+	logText->AppendText(toAppend);
 	sizer->Fit(this);
 	if (notIsShown)
 		CenterOnParent();
@@ -103,7 +109,9 @@ LogHandler::LogHandler(wxWindow *_parent)
 	parent = _parent;
 	parent->Bind(EVT_DO_CREATE_LOG_WINDOW, [=, this](wxThreadEvent &evt){
 		if (!lWindow){
-			lWindow = new LogWindow(parent, this);
+			LogWindow *window = new LogWindow(parent, this);
+			wxMutexLocker lock(mutex);
+			lWindow = window;
 		}
 		if (lWindow->isReady){
 			wxThreadEvent evt;
@@ -156,10 +164,17 @@ void LogHandler::ShowLogWindow()
 {
 	if (sthis){
 		if (!sthis->lWindow){
-			sthis->lWindow = new LogWindow(sthis->parent, sthis);
+			LogWindow *window = new LogWindow(sthis->parent, sthis);
+			wxMutexLocker lock(sthis->mutex);
+			sthis->lWindow = window;
 		}
-		if (!sthis->logToAppend.empty())
-			sthis->lWindow->logText->AppendText(sthis->logToAppend);
+		wxString toAppend;
+		{
+			wxMutexLocker lock(sthis->mutex);
+			toAppend = sthis->logToAppend;
+		}
+		if (!toAppend.empty())
+			sthis->lWindow->logText->AppendText(toAppend);
 
 		if (!sthis->lWindow->hiddenLastLog){
 			sthis->lWindow->logText->Show();

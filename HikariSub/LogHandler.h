@@ -31,6 +31,8 @@ private:
 	wxString logToAppend;
 	wxString lastLog;
 	LogWindow *lWindow = nullptr;
+	// LogMessage runs on any thread (libass logs from the threads that parse
+	// and render); this guards logToAppend, lastLog and lWindow
 	wxMutex mutex;
 	wxWindow *parent;
 	
