@@ -11,14 +11,15 @@ dev=${1:-hikariusbaudio}
 task=${2:-audio-hotplug}
 w() { winix --config winix.yaml "$@"; }
 
-# Winix keeps a hot-plug record across VM restarts while QEMU drops the device,
-# so the device counts as present only among QEMU's peripherals; a record
-# without one is removed before the device is added again.
-listed=$(w vm device list)
-if ! grep -q "\"name\": \"$dev\"" <<<"$listed"; then
-    grep -q "\"id\": \"$dev\"" <<<"$listed" && w vm device remove "$dev"
-    w vm device add usb-audio --id "$dev"
-fi
+# The device is plugged in when QEMU lists it among its peripherals. Winix's
+# own hot-plug record outlives a VM restart, which drops the device, so the
+# record alone does not count; adding the device again replaces the record.
+plugged=$(w vm device list | python3 -c '
+import json, sys
+listing = json.load(sys.stdin)
+print("yes" if any(p.get("name") == sys.argv[1] for p in listing.get("peripherals", [])) else "no")
+' "$dev")
+[[ $plugged == yes ]] || w vm device add usb-audio --id "$dev"
 job=$(w --json run "$task" --label hotplug | python3 -c 'import json,sys; print(json.loads(sys.stdin.readline())["id"])')
 echo "job $job"
 w vm device remove "$dev" --job "$job" --marker HOTPLUG-READY
