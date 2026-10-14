@@ -101,13 +101,22 @@ void VideoController::sessionChanged()
 // Legacy refreshed the time and the slider while playing on a 100 ms timer
 // too (VideoBox::Play's m_VideoTimeTimer, HikariSub/VideoBox.cpp:220-222,
 // and RefreshTime, VideoBox.cpp:1386-1410).
+// V2 (user decision 2026-10-14): a seek while playing (the seek bar, a
+// jump, the active Line) shows at once, so the bar never shows where the
+// player was; the 100 ms pace then goes on.
 void VideoController::textsMayChange()
 {
-    if (m_session.playing()) {
+    if (m_session.playing() && m_session.playEpoch() == m_textsEpoch) {
         if (!m_textsTimer->isActive())
             m_textsTimer->start();
         return;
     }
+    textsNow();
+}
+
+void VideoController::textsNow()
+{
+    m_textsEpoch = m_session.playEpoch();
     m_textsTimer->stop();
     emit textsChanged();
 }
@@ -413,6 +422,9 @@ void VideoController::seekBarReleased()
 {
     m_seekTimer->stop();
     seekBarSeek(m_seekThrottle.release(application::SeekThrottle::Clock::now()));
+    // The bar follows the frame again: at once, not with the last texts
+    // (the frame let go on may have been sought before the release).
+    textsNow();
 }
 
 void VideoController::seekBarSeek(std::optional<int> frame)

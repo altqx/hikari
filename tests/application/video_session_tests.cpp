@@ -598,6 +598,80 @@ TEST_F(VideoTest, TheReportedFrameIsThePlayersWhilePlaying)
     EXPECT_EQ(video.reportedFrame(), 0);
 }
 
+// V2 jumps while playing (user decisions 2026-10-14, items 35-36): the
+// 5 s / 1 min jumps and the keyframe jumps start from the player's frame
+// (legacy Seek(Tell() + ms), SetPosition(NextKeyframe(Tell()))) and playback
+// goes on from their target; next/previous frame does nothing while playing
+// (RendererVideo::ChangePositionByFrame returns at once).
+TEST_F(VideoTest, JumpsWhilePlayingGoFromThePlayersFrameAndPlayOn)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    video.setPresenter(&presenter);
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer(); // frame 0; keyframes 0, 4 and 8
+    ASSERT_TRUE(video.play());
+    player.opened();
+    player.delivered();
+    video.generalFrame(playerFrame(), 285'000); // frame 7, playback started at 0
+    const auto seeks = [&] {
+        return std::count_if(player.calls.begin(), player.calls.end(),
+                             [](const std::string &c) { return c.starts_with("seek"); });
+    };
+    // 280 ms - 120 ms: frame 4, played on from.
+    ASSERT_TRUE(video.seekBy(-120));
+    EXPECT_TRUE(video.playing());
+    EXPECT_EQ(video.requestedFrame(), 4);
+    EXPECT_EQ(video.currentFrame(), 4);
+    EXPECT_EQ(player.calls.back(), "seek 160000");
+    player.delivered();
+    EXPECT_EQ(player.calls.back(), "play");
+    EXPECT_TRUE(source.frames.empty()); // no indexed frame while playing
+    video.generalFrame(playerFrame(), 205'000); // frame 5
+    // The next keyframe after frame 5 is 8; the previous one before 8 is 4.
+    ASSERT_TRUE(video.nextKeyframe());
+    EXPECT_EQ(player.calls.back(), "seek 320000");
+    EXPECT_EQ(video.currentFrame(), 8);
+    player.delivered();
+    video.generalFrame(playerFrame(), 330'000);
+    ASSERT_TRUE(video.previousKeyframe());
+    EXPECT_EQ(player.calls.back(), "seek 160000");
+    player.delivered();
+    video.generalFrame(playerFrame(), 170'000); // frame 4
+    // Past the end: the last frame.
+    ASSERT_TRUE(video.seekBy(60'000));
+    EXPECT_EQ(player.calls.back(), "seek 360000");
+    EXPECT_EQ(video.requestedFrame(), 9);
+    player.delivered();
+    video.generalFrame(playerFrame(), 365'000);
+    // Before the start: the first frame.
+    ASSERT_TRUE(video.seekBy(-5'000));
+    EXPECT_EQ(player.calls.back(), "seek 0");
+    player.delivered();
+    video.generalFrame(playerFrame(), 45'000); // frame 1
+    // Next / previous frame: nothing while playing.
+    const auto before = seeks();
+    const auto calls = player.calls.size();
+    EXPECT_FALSE(video.step(1));
+    EXPECT_FALSE(video.step(-1));
+    EXPECT_EQ(video.requestedFrame(), 0);
+    EXPECT_EQ(video.currentFrame(), 1);
+    EXPECT_EQ(seeks(), before);
+    EXPECT_EQ(player.calls.size(), calls);
+    EXPECT_TRUE(source.frames.empty());
+    // Paused, they step from the paused frame again.
+    ASSERT_TRUE(video.pause());
+    source.answer();
+    EXPECT_EQ(video.shownFrame(), 1);
+    EXPECT_TRUE(video.step(1));
+    source.answer();
+    EXPECT_EQ(video.shownFrame(), 2);
+    EXPECT_TRUE(video.seekBy(-1000));
+    source.answer();
+    EXPECT_EQ(video.shownFrame(), 0);
+}
+
 TEST_F(VideoTest, SeeksAndKeyframesFollowTheLegacyRules)
 {
     video.open("/m/ep1.mkv");

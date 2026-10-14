@@ -199,6 +199,8 @@ private:
     // V3
     void sessionChanged();
     void textsMayChange();
+    void textsNow();
+    std::uint64_t m_textsEpoch = 0; // the play epoch the texts last showed
     QTimer *m_textsTimer = nullptr; // V1: the texts' pace while playing
     // V2: the seek bar's drag
     application::SeekThrottle m_seekThrottle;

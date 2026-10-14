@@ -1,5 +1,5 @@
 // V2 playback follow-ups through the composition and the real QML (user
-// decisions 2026-10-14, items 30-32):
+// decisions 2026-10-14, items 30-32 and 35-37):
 // - the docked and the fullscreen seek bar dragged seek at most every 50 ms
 //   and once more where they are let go (V2-seek-bar-drag-throttle);
 // - while playing, the features that read the video's frame read the
@@ -8,7 +8,10 @@
 //   and warning, Set FPS from video, splitting at the video time, Shift
 //   times to the video, the audio mark from the video and a tab's video
 //   position;
-// - a player time past the last frame's start is the last frame.
+// - a player time past the last frame's start is the last frame;
+// - while playing, the jumps (L, ;, Up, Down, the keyframes) go from the
+//   player's frame and play on, next frame does nothing, and the seek bar
+//   shows a seek or a release at once.
 // A fake general player plays: each of its frames is put at a chosen time,
 // so the frame the features must read is known.
 
@@ -288,6 +291,51 @@ private slots:
         QTRY_VERIFY(bar->isVisible() && bar->isEnabled());
         checkDrag(fsWindow, bar, 0.15, 0.75);
         QVERIFY(fs.leave());
+    }
+
+    // Items 35-37 (user decisions 2026-10-14): while playing, a jump goes
+    // from the player's frame and plays on, and the seek bar shows it at
+    // once, as it shows the frame a drag lets go on at once; next frame does
+    // nothing. Before, the bar kept the last texts' frame for up to 100 ms
+    // (a jump from where playback started was not shown at all).
+    void theBarShowsASeekWhilePlayingAtOnce()
+    {
+        auto &video = application->video();
+        auto *bar = findItem(window->contentItem(), QStringLiteral("videoSlider"));
+        QVERIFY(bar);
+        auto value = [&] { return qRound(bar->property("value").toReal()); };
+        QVERIFY(video.showFrameAt(2));
+        QTRY_COMPARE(session().shownFrame().value_or(-1), 2);
+        QVERIFY(play());
+        playerAt(10);
+        QTRY_COMPARE(value(), 10);
+        // L: 5 s on from frame 10 is past the end (2 s): the last frame.
+        const int last = session().frameCount() - 1;
+        QVERIFY(video.seekBy(5000));
+        QVERIFY(video.playing());
+        QCOMPARE(session().requestedFrame(), std::optional(last));
+        QCOMPARE(player->calls.back(), "seek " + std::to_string(startMs(last) * 1000));
+        QCOMPARE(value(), last); // at once
+        player->delivered();
+        playerAt(last);
+        // ; from there: 5 s back is the first frame.
+        QVERIFY(video.seekBy(-5000));
+        QCOMPARE(player->calls.back(), std::string("seek 0"));
+        QCOMPARE(value(), 0);
+        player->delivered();
+        playerAt(20);
+        QTRY_COMPARE(value(), 20);
+        // Next frame does nothing while playing.
+        const auto calls = player->calls.size();
+        QVERIFY(!video.stepFrames(1));
+        QCOMPARE(session().requestedFrame(), std::optional(0));
+        QCOMPARE(player->calls.size(), calls);
+        // A drag let go: the bar shows the frame let go on at once.
+        int released = -1;
+        drag(window, bar, 0.85, 0.35, 30, 4, released);
+        QCOMPARE(session().requestedFrame(), std::optional(released));
+        QCOMPARE(value(), released);
+        QVERIFY(session().playing());
     }
 
     // Item 31: while playing, every reader of the video's frame reads the

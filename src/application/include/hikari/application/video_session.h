@@ -79,7 +79,7 @@ public:
     void closeSubtitles();
     bool hasSubtitles() const { return m_hasSubtitles; }
     void seekTo(core::DocumentTime start);
-    bool step(int frames); // false at either end or without video
+    bool step(int frames); // false at either end, without video or while playing (legacy ChangePositionByFrame)
     void showFrame(int index);
     // Decodes a frame without showing it (automation get_frame), with the
     // overlay rendered at its start when asked; nullptr without video.
@@ -104,6 +104,10 @@ public:
     bool pause(); // shows the indexed frame of the last delivered time
     bool stop();  // pauses, then shows the first frame (legacy Seek(0))
     bool playing() const { return m_playing; }
+    // Counts each play and each seek or pause of playback: a change means
+    // the player moved by more than playing on (the Video panel shows it at
+    // once, not at the texts' pace).
+    std::uint64_t playEpoch() const { return m_playEpoch; }
     // V3: legacy VideoBox::Tell(): while playing the last delivered frame's
     // time, else the shown frame's start, in ms (0 without video).
     int tell() const;
@@ -150,7 +154,9 @@ public:
     // video open), for player frames to look as the paused frame does.
     std::optional<LegacyColourMatrix::Input> playerColour() const;
 
-    // V2: legacy VideoBox::Seek and keyframe navigation, from the shown frame.
+    // V2: legacy VideoBox::Seek and keyframe navigation, from the requested
+    // frame; while playing from the player's frame, and playback goes on from
+    // the target (Seek(Tell() + ms), SetPosition(NextKeyframe(Tell()))).
     // A start time shows the frame at or after it (Timebase::FrameAt, 0 at or
     // before 0); an end time the frame showing 1 ms before it
     // (FrameShownAt(end - 1)); both are clamped to the video.
@@ -235,6 +241,10 @@ private:
     // Legacy FrameShownAt for a player time: the indexed frame whose
     // interval holds it, clamped to the video's frames.
     std::optional<int> frameHolding(std::int64_t us) const;
+    // V2 jumps: where they start (legacy Tell()) and their target shown, or
+    // played on from while playing.
+    std::optional<int> jumpOrigin() const;
+    void jumpTo(int frame);
     void notify();
     void present(std::optional<std::optional<PixelRect>> overlayBounds = std::nullopt);
     void render();

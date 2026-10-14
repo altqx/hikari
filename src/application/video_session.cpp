@@ -260,7 +260,8 @@ void VideoSession::seekTo(core::DocumentTime start)
 
 bool VideoSession::step(int frames)
 {
-    if (m_state != State::Ready || !m_requested)
+    // Legacy ChangePositionByFrame does nothing while playing.
+    if (m_state != State::Ready || !m_requested || m_playing)
         return false;
     const int target = *m_requested + frames;
     if (target < 0 || target >= frameCount())
@@ -618,17 +619,39 @@ void VideoSession::seekToEnd(core::DocumentTime end)
     showFrame(frame ? static_cast<int>(frame->value()) : (before.microseconds() <= 0 ? 0 : frameCount() - 1));
 }
 
+std::optional<int> VideoSession::jumpOrigin() const
+{
+    // Legacy Tell(): while playing the player's frame, else the requested one.
+    const auto from = m_playing ? currentFrame() : m_requested;
+    if (!from || *from < 0 || *from >= frameCount())
+        return std::nullopt;
+    return from;
+}
+
+void VideoSession::jumpTo(int frame)
+{
+    // RendererFFMS2::SetPosition: while playing, playback goes on from the
+    // frame (the play end reset); paused, the frame is shown.
+    if (m_playing)
+        seekFrame(frame);
+    else
+        showFrame(frame);
+}
+
 bool VideoSession::seekBy(std::int64_t ms)
 {
-    if (m_state != State::Ready || !m_requested)
+    const auto from = m_state == State::Ready ? jumpOrigin() : std::nullopt;
+    if (!from || !m_timeline)
         return false;
-    // Tell() is the shown frame's start in whole milliseconds.
-    const std::int64_t target = msOf(m_starts[static_cast<std::size_t>(*m_requested)]) + ms;
+    // Seek(Tell() + ms): Tell() is the frame's start in whole milliseconds;
+    // SeekFrame's FrameAt, 0 at or before 0, the last past the last start.
+    const std::int64_t target = msOf(m_starts[static_cast<std::size_t>(*from)]) + ms;
     if (target <= 0) {
-        showFrame(0);
+        jumpTo(0);
         return true;
     }
-    seekTo(core::DocumentTime(target * 1000));
+    const auto frame = m_timeline->frameAtOrAfter(core::DocumentTime(target * 1000));
+    jumpTo(frame ? static_cast<int>(frame->value()) : frameCount() - 1);
     return true;
 }
 
@@ -735,33 +758,36 @@ bool VideoSession::isKeyframe(int index) const
 
 bool VideoSession::nextKeyframe()
 {
-    if (m_state != State::Ready || !m_requested || m_keyframes.empty())
+    const auto from = m_state == State::Ready ? jumpOrigin() : std::nullopt;
+    if (!from || m_keyframes.empty())
         return false;
-    // Timebase::NextKeyframe on keyframe times in ms: the first after now, else the first.
-    const std::int64_t now = msOf(m_starts[static_cast<std::size_t>(*m_requested)]);
+    // Timebase::NextKeyframe(Tell()) on keyframe times in ms: the first after
+    // now, else the first; SetPosition goes there (playing on while playing).
+    const std::int64_t now = msOf(m_starts[static_cast<std::size_t>(*from)]);
     int target = m_keyframes.front();
     for (const int k : m_keyframes)
         if (msOf(m_starts[static_cast<std::size_t>(k)]) > now) {
             target = k;
             break;
         }
-    showFrame(target);
+    jumpTo(target);
     return true;
 }
 
 bool VideoSession::previousKeyframe()
 {
-    if (m_state != State::Ready || !m_requested || m_keyframes.empty())
+    const auto from = m_state == State::Ready ? jumpOrigin() : std::nullopt;
+    if (!from || m_keyframes.empty())
         return false;
-    // Timebase::PrevKeyframe: the last before now, else the last.
-    const std::int64_t now = msOf(m_starts[static_cast<std::size_t>(*m_requested)]);
+    // Timebase::PrevKeyframe(Tell()): the last before now, else the last.
+    const std::int64_t now = msOf(m_starts[static_cast<std::size_t>(*from)]);
     int target = m_keyframes.back();
     for (auto it = m_keyframes.rbegin(); it != m_keyframes.rend(); ++it)
         if (msOf(m_starts[static_cast<std::size_t>(*it)]) < now) {
             target = *it;
             break;
         }
-    showFrame(target);
+    jumpTo(target);
     return true;
 }
 
