@@ -882,7 +882,8 @@ D3DXVECTOR2 Visuals::GetPosition(Dialogue *Dial, bool *putinBracket, wxPoint *Te
 					if (!token.ToDouble(&moveTable[ipos])) { moveTable[ipos] = 0; }
 					ipos++;
 				}
-				if (ipos < 3) {
+				//x1 and y1 come before the tokens
+				if (MoveCoversWholeLine(ipos + 2, moveTable[2], moveTable[3])) {
 					moveTable[2] = Dial->Start.mstime;
 					moveTable[3] = Dial->End.mstime;
 				}

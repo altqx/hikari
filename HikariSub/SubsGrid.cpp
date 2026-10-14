@@ -30,6 +30,7 @@
 #include "AudioBox.h"
 #include "SubtitlesProviderManager.h"
 #include "UtilsWindows.h"
+#include "MoveTimes.h"
 #include <wx/intl.h>
 #include <wx/string.h>
 #include <wx/clipbrd.h>
@@ -1634,7 +1635,7 @@ void SubsGrid::Split(int id)
 						if (GetMultiValueFloat(retval, moveTable, 6)) {
 							hasMove = true;
 							//times both 0 or less move over the whole Line, as in libass
-							if (moveTable[4] <= 0 && moveTable[5] <= 0) {
+							if (MoveCoversWholeLine(6, moveTable[4], moveTable[5])) {
 								moveTable[4] = dialc->Start.mstime;
 								moveTable[5] = dialc->End.mstime;
 							}
