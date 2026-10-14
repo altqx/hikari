@@ -15,7 +15,7 @@ struct Track {
     std::string codecId, codecPrivate, language, name;
 };
 struct Packet {
-    std::int64_t start = 0, duration = 0; // milliseconds
+    std::int64_t start = 0, duration = 0; // TimestampScale ticks: milliseconds by default
     std::string data;
 };
 struct Attachment {
@@ -32,6 +32,7 @@ struct File {
     // per packet and no Cues.
     std::vector<std::size_t> clusterSizes;
     std::int64_t clusterLead = 0;
+    std::uint64_t timestampScale = 1000000; // nanoseconds per tick
 };
 
 // Deterministic bytes standing in for a font (legacy never looks inside).
@@ -214,6 +215,80 @@ inline File scanline()
     f.clusterLead = 109;
     return f;
 }
+
+// Decision 38d (2026-10-14): subtitle times in containers whose time base is
+// not 1/1000. Each file's packets are in its own ticks; `ms` is what the
+// helper must hand over for each, start and duration, every end rounded to
+// the nearest millisecond on the container's own clock.
+struct TimedPacket {
+    std::int64_t start = 0, duration = 0; // ticks
+    std::string data;
+};
+struct Expected {
+    std::int64_t start = 0, duration = 0; // milliseconds
+};
+
+inline const std::string kTimeBaseAssLine1 = "0,0,Default,,0,0,0,,one";
+inline const std::string kTimeBaseAssLine2 = "1,2,Default,,0,0,0,,two";
+
+// "scale100us": an ASS track at a TimestampScale of 100000 ns (1/10000).
+// 12345 is 1234.5 ms, ending at 17345, 1734.5; 24691 is 2469.1, ending at
+// 34692, 3469.2.
+inline File scale100us()
+{
+    File f;
+    f.timestampScale = 100000;
+    f.tracks = {{"S_TEXT/ASS", kAssPrivate, "eng", ""}};
+    f.packets = {{0, Packet{12345, 5000, kTimeBaseAssLine1}}, {0, Packet{24691, 10001, kTimeBaseAssLine2}}};
+    return f;
+}
+inline const std::vector<Expected> kScale100usMs = {{1235, 500}, {2469, 1000}};
+
+// "scale10ms": the same at 10 ms ticks (1/100): 123 for 50 is 1230 ms for
+// 500; 6000 for 1 is one minute for 10 ms.
+inline File scale10ms()
+{
+    File f;
+    f.timestampScale = 10000000;
+    f.tracks = {{"S_TEXT/ASS", kAssPrivate, "eng", ""}};
+    f.packets = {{0, Packet{123, 50, kTimeBaseAssLine1}}, {0, Packet{6000, 1, kTimeBaseAssLine2}}};
+    return f;
+}
+inline const std::vector<Expected> kScale10msMs = {{1230, 500}, {60000, 10}};
+
+// A mov_text sample: a 16-bit length, then the text.
+inline std::string movText(const std::string &text)
+{
+    return std::string(1, char(text.size() >> 8)) + char(text.size() & 0xFF) + text;
+}
+
+// hikari_media_fixture "subs-mp4": mov_text in MP4 at 1/600. 1001 is
+// 1668.33 ms, ending at 1008, 1680; 3000 is 5000 ms, ending at 3901,
+// 6501.67. The muxer fills the gaps with empty 2-byte samples, which are
+// handed over too: before the first cue and between the two.
+inline const std::vector<TimedPacket> kMp4Packets = {{1001, 7, movText("one")}, {3000, 901, movText("two")}};
+inline const std::vector<Expected> kMp4Ms = {{0, 1668}, {1668, 12}, {1680, 3320}, {5000, 1502}};
+
+// "subs-mov": mov_text in MOV at 1/90000. 111111 is 1234.57 ms, ending at
+// 156156, 1735.07: a 500 ms cue, where 45045 ticks (500.5 ms) rounded on
+// their own give 501. FFmpeg 7.1's MOV muxer (the SDK's) also ends the
+// track with an empty sample at 312222, 3469.13 ms, without a duration.
+inline const std::vector<TimedPacket> kMovPackets = {{111111, 45045, movText("one")}, {222222, 90000, movText("two")}};
+inline const std::vector<Expected> kMovMs = {{0, 1235}, {1235, 500}, {1735, 734}, {2469, 1000}, {3469, 0}};
+
+// "subs-ts": a DVB teletext stream in MPEG-TS at 1/90000 (the subtitle
+// stream MPEG-TS keeps), written with mpegts_copyts so the times stay as
+// given. MPEG-TS carries no duration, and the times stay on the transport
+// stream's clock (it starts at 1.23 s): 8100045 is 90000.5 ms.
+inline std::string teletextPacket()
+{
+    std::string data(46, char(0xFF));
+    data[0] = 0x10; // EBU data, the PES data_identifier
+    return data;
+}
+inline const std::vector<TimedPacket> kTsPackets = {
+    {111111, 0, teletextPacket()}, {222222, 0, teletextPacket()}, {8100045, 0, teletextPacket()}};
+inline const std::vector<Expected> kTsMs = {{1235, 0}, {2469, 0}, {90001, 0}};
 
 // The "mkvextract" media fixture (hikari_media_fixture): a video with an
 // ASS track (0) and a SubRip track (1), and two font attachments.
