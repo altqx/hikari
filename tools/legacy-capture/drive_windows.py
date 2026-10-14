@@ -116,7 +116,10 @@ class Legacy:
 
     def launch(self, exe, doc):
         self.kill()
-        started = self.w.ui("launch", exe=exe, arguments=[doc])
+        # A desktop launch (Explorer) starts in the exe's folder; without cwd
+        # winix's launch keeps its UI agent's directory, and paths legacy
+        # resolves against the working directory (S4's s4/...) miss.
+        started = self.w.ui("launch", exe=exe, arguments=[doc], cwd=exe.rsplit("\\", 1)[0])
         self.pid = started.get("pid") if isinstance(started, dict) else None
         deadline = time.time() + 90
         while time.time() < deadline:
