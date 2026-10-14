@@ -140,8 +140,14 @@ TimeCtrl::TimeCtrl(wxWindow* parent, const long int id, const wxString& val, con
 		if (from > 0 && (timetxt[from - 1] == L':' || timetxt[from - 1] == L'.' || timetxt[from - 1] == L',')){
 			from--;
 		}
-		SetValue(timetxt);
+		//zeroed digits are an edit like a typed one: mark the field changed,
+		//or Send and Ctrl+Enter keep the old time
+		bool changed = timetxt != GetValue();
+		SetValue(timetxt, changed);
 		SetSelection(from, from);
+		if (changed){
+			wxCommandEvent evt2(NUMBER_CHANGED, GetId()); AddPendingEvent(evt2);
+		}
 	}, ID_TBACK);
 	Bind(wxEVT_COMMAND_MENU_SELECTED, [=, this](wxCommandEvent &evt){
 		timeUnchanged = false;
