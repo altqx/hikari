@@ -3,13 +3,17 @@
 # both pinned by SHA-256. This is the only place the release is named; moving
 # to another release changes only the five HIKARI_VSFILTERMOD_* lines below.
 #
-# Now (user 2026-10-14): altqx/VSFilterMod r5.3.1-hikari.1, a fork of
-# Masaiki/VSFilterMod r5.3.1 (effb5a7) that fixes the upstream issues open
-# then (\img offsets, \img from attached images, VobSub named options), built by the
-# fork's MSVC workflow (tag run 38528631150 on d1737a93).
+# Now (user 2026-10-14, decisions 29 and 38b): altqx/VSFilterMod
+# r5.3.1-hikari.2, a fork of Masaiki/VSFilterMod r5.3.1 (effb5a7) that fixes
+# the upstream issues open then (\img offsets, \img from attached images,
+# VobSub named options) and draws CSRI_F_BGRA with straight alpha (255
+# opaque) over the frame's, built from the fork's main e51456f by its MSVC
+# workflow (run 38597504369).
 # VSFilterMod_bin.zip, member x64/VSFilterMod.dll. Its imports are Windows
-# libraries only. Before it the payload shipped sorayuki/VSFilterMod r5.2.6,
-# the DLL legacy 0.0.1 shipped (zip a256dcac..., DLL 87a9c3c1...).
+# libraries only. Before it the payload shipped r5.3.1-hikari.1 (d1737a93,
+# zip c9e6326b..., DLL 68a16573...; BGRA drawn premultiplied with inverted
+# alpha) and, before that, sorayuki/VSFilterMod r5.2.6, the DLL legacy 0.0.1
+# shipped (zip a256dcac..., DLL 87a9c3c1...).
 #
 # Users: HikariPackageWindows.cmake (the payload), the windows-x64-vsfiltermod
 # test build (HIKARI_TEST_VSFILTERMOD, tests/CMakeLists.txt), and
@@ -18,11 +22,11 @@
 
 include_guard(GLOBAL)
 
-set(HIKARI_VSFILTERMOD_RELEASE "altqx-VSFilterMod-r5.3.1-hikari.1")
-set(HIKARI_VSFILTERMOD_URL "https://github.com/altqx/VSFilterMod/releases/download/r5.3.1-hikari.1/VSFilterMod_bin.zip")
-set(HIKARI_VSFILTERMOD_ZIP_SHA256 "c9e6326bb6b9f133e36f7a347d9b8929aec9eec094e90124564ef50680d95391")
+set(HIKARI_VSFILTERMOD_RELEASE "altqx-VSFilterMod-r5.3.1-hikari.2")
+set(HIKARI_VSFILTERMOD_URL "https://github.com/altqx/VSFilterMod/releases/download/r5.3.1-hikari.2/VSFilterMod_bin.zip")
+set(HIKARI_VSFILTERMOD_ZIP_SHA256 "48eb70065cc41b5f034c511954b6bcda9f5fa008326860e4b31ffb2f6d16bbb8")
 set(HIKARI_VSFILTERMOD_MEMBER "x64/VSFilterMod.dll")
-set(HIKARI_VSFILTERMOD_DLL_SHA256 "68a165736707f93fafaeaba6fdf341b435d937eca1b21c6942d9353cc9e7c86d")
+set(HIKARI_VSFILTERMOD_DLL_SHA256 "e4386c63280bac1cdbb0ef6434643a4af797d45ad3e49b194c2db002574e2bfe")
 
 # hikari_fetch_vsfiltermod(<downloads> <out-var>): the pinned archive in
 # <downloads> (downloaded unless a copy with the pinned hash is there), its
