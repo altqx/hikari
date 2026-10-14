@@ -45,7 +45,7 @@ While playing, the GUI thread only shows results. A player hands each frame to t
 
 Two parts still run as before. Paused frames (seek, step, edit, typing) are prepared on the GUI thread. Frames are converted on the CPU: Qt's own video texture path (`VideoOutput`) is not used, because the presenter composites the libass overlay and the visual tools over its own textures.
 
-DirectShow may remain an optional Windows playback adapter and xy-VSFilter/CSRI an optional subtitle-renderer adapter. They cannot dictate core types, the default cross-platform backend or a new general-purpose plugin ecosystem. Preserve a possible later macOS implementation.
+DirectShow may remain an optional Windows playback adapter and CSRI (VSFilterMod; xy-VSFilter is not shipped, user 2026-10-14) an optional subtitle-renderer adapter; libass is the default renderer everywhere. They cannot dictate core types, the default cross-platform backend or a new general-purpose plugin ecosystem. Preserve a possible later macOS implementation.
 
 ## PortAudio, analysis and caches
 
