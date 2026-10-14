@@ -340,8 +340,9 @@ public:
     Q_INVOKABLE void moveActiveLine(qulonglong id);
 
     // Grid structural commands (G3): one undo step each, on the editing target.
-    // `timing`: "" plain, "video" (the shown frame's time, 4 s) or "frame"
-    // (copies of the selection timed to the shown frame).
+    // `timing`: "" plain, "video" (the video frame's time, 4 s) or "frame"
+    // (copies of the selection timed to the video frame). The video frame is
+    // VideoSession::reportedFrame: the player's while playing.
     Q_INVOKABLE bool insertLine(bool before, const QString &timing = {});
     Q_INVOKABLE bool duplicateLines();
     Q_INVOKABLE bool deleteLines();
@@ -353,7 +354,8 @@ public:
     Q_INVOKABLE bool swapLines();
     Q_INVOKABLE bool makeContinuous(bool withPrevious);
     // G11: GRID_SET_NEW_FPS from the FPS window's texts (digits and '.'), and
-    // GRID_SET_FPS_FROM_VIDEO with the shown video frame's time.
+    // GRID_SET_FPS_FROM_VIDEO with the video frame's time (the player's
+    // while playing).
     Q_INVOKABLE bool setNewFps(const QString &oldFps, const QString &newFps);
     Q_INVOKABLE bool setFpsFromVideo();
     // G8: GRID_FILTER with the Filtering preferences, GRID_HIDE_SELECTED,
@@ -391,8 +393,9 @@ public:
     // Documents only; empty otherwise), plus the video size for "From video"
     // and the linked-resolutions option; OK applies the edited fields.
     // F5: GLOBAL_SHIFT_TIMES with the panel's settings and the video's
-    // timebase and shown frame; an empty result means shifted, otherwise the
-    // legacy message. Frames need an exact (indexed) timebase.
+    // timebase and frame (the player's while playing); an empty result
+    // means shifted, otherwise the legacy message. Frames need an exact
+    // (indexed) timebase.
     Q_INVOKABLE QString shiftTimes();
     Q_INVOKABLE bool exactTimebase() const;
     // F6: GLOBAL_OPEN_KEYFRAMES. Empty result: loaded (or kept until a video

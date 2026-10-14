@@ -257,6 +257,12 @@ target_compile_definitions(hikari_ui_session_tabs_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
     HIKARI_SESSION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/sessions")
 add_dependencies(hikari_ui_session_tabs_tests hikari_media_fixtures hikari_media_helper)
+# V2 playback follow-ups (user decisions 2026-10-14): the player's frame for the
+# features while playing, the end of the video.
+hikari_add_qttest(hikari_ui_playing_frame_tests SOURCES playing_frame_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_playing_frame_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_playing_frame_tests hikari_media_fixtures hikari_media_helper)
 # P6: tab traversal and close review through the real UI (Spix workflow).
 hikari_add_spix_test(hikari_ui_tabs_workflow SOURCES tabs_workflow.cpp LIBRARIES hikari_composition)
 # P9: the tab menu, tab reordering, folders, drops, associated files and the

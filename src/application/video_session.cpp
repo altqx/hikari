@@ -390,8 +390,10 @@ bool VideoSession::play()
     if (!m_player || m_state != State::Ready || m_playing || dummy())
         return false;
     m_playEndMs = 0;
-    const std::int64_t fromUs = m_shown ? frameStart(m_shown->index).value_or(core::DocumentTime(0)).microseconds()
-                                        : 0;
+    // From the reported frame: a pause's indexed frame may still be on its
+    // way, with the last player frame (index -1) shown until it arrives.
+    const auto from = reportedFrame();
+    const std::int64_t fromUs = from ? frameStart(*from).value_or(core::DocumentTime(0)).microseconds() : 0;
     return startPlayback(fromUs);
 }
 
@@ -559,10 +561,9 @@ void VideoSession::showGeneral(PlaybackPipeline::Output out)
     }
     notify();
     // A4: a Line's playback pauses once its end frame is shown
-    if (m_playEndMs > 0 && m_timeline)
-        if (const auto at = m_timeline->frameContaining(core::DocumentTime(startUs)))
-            if (static_cast<std::size_t>(at->value()) < m_starts.size()
-                && m_starts[static_cast<std::size_t>(at->value())].microseconds() / 1000 >= m_playEndMs)
+    if (m_playEndMs > 0)
+        if (const auto at = frameHolding(startUs))
+            if (m_starts[static_cast<std::size_t>(*at)].microseconds() / 1000 >= m_playEndMs)
                 pause();
 }
 
@@ -576,9 +577,9 @@ bool VideoSession::pause()
     ++m_playEpoch;
     // The indexed frame whose interval holds the last delivered frame's start.
     int index = m_requested.value_or(0);
-    if (m_lastGeneralUs && m_timeline)
-        if (const auto frame = m_timeline->frameContaining(core::DocumentTime(*m_lastGeneralUs)))
-            index = static_cast<int>(frame->value());
+    if (m_lastGeneralUs)
+        if (const auto frame = frameHolding(*m_lastGeneralUs))
+            index = *frame;
     showFrame(index);
     return true;
 }
@@ -680,13 +681,37 @@ void VideoSession::seekKeepPlaying(core::DocumentTime time, bool startTime)
     startPlayback(m_starts[static_cast<std::size_t>(frame)].microseconds());
 }
 
+std::optional<int> VideoSession::frameHolding(std::int64_t us) const
+{
+    if (!m_timeline || m_starts.empty())
+        return std::nullopt;
+    const core::DocumentTime time(us);
+    if (const auto at = m_timeline->frameContaining(time))
+        return static_cast<int>(at->value());
+    // The last frame's interval has no known end: a time past its start is
+    // the last frame (legacy FrameShownAt went on counting frames past the
+    // end; the rewrite clamps, as Timebase::ClampFrame did for seeks).
+    if (time >= m_starts.back())
+        return frameCount() - 1;
+    if (time < m_starts.front())
+        return 0; // FrameShownAt: 0 before the first frame
+    return std::nullopt;
+}
+
 std::optional<int> VideoSession::currentFrame() const
 {
     // A frame from before the latest play or seek no longer counts.
-    if (m_playing && m_lastGeneralUs && m_lastGeneralEpoch == m_playEpoch && m_timeline)
-        if (const auto at = m_timeline->frameContaining(core::DocumentTime(*m_lastGeneralUs)))
-            return static_cast<int>(at->value());
+    if (m_playing && m_lastGeneralUs && m_lastGeneralEpoch == m_playEpoch)
+        if (const auto at = frameHolding(*m_lastGeneralUs))
+            return at;
     return m_requested;
+}
+
+std::optional<int> VideoSession::reportedFrame() const
+{
+    if (!m_playing && m_shown && m_shown->index >= 0)
+        return m_shown->index;
+    return currentFrame();
 }
 
 bool VideoSession::seekFrame(int index)

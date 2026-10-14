@@ -354,21 +354,9 @@ bool VideoController::stop()
     return done;
 }
 
-// The shown indexed frame when paused. While playing, the session's current
-// frame: the indexed frame holding the player's last frame. While a pause's
-// indexed frame is still on its way, also the current frame, which is then
-// the frame the pause requested.
-std::optional<int> VideoController::reportedFrame() const
-{
-    const auto shown = m_session.shownFrame();
-    if (!m_session.playing() && shown && *shown >= 0)
-        return shown;
-    return m_session.currentFrame();
-}
-
 QString VideoController::times() const
 {
-    const auto shown = reportedFrame();
+    const auto shown = m_session.reportedFrame();
     const auto start = shown ? m_session.frameStart(*shown) : std::nullopt;
     if (!start)
         return {};
@@ -395,7 +383,7 @@ QString VideoController::times() const
 
 bool VideoController::keyframeShown() const
 {
-    const auto shown = reportedFrame();
+    const auto shown = m_session.reportedFrame();
     return shown && m_session.isKeyframe(*shown);
 }
 

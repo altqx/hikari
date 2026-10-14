@@ -131,7 +131,7 @@ public:
     std::optional<Project> project() const override
     {
         Project p;
-        p.videoFrameShown = m_video.session().shownFrame().value_or(0);
+        p.videoFrameShown = m_video.session().reportedFrame().value_or(0); // FrameShownAt(Tell())
         p.videoFile = m_video.session().path();
         return p;
     }

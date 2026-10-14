@@ -188,7 +188,6 @@ private:
     // V3
     void sessionChanged();
     void textsMayChange();
-    std::optional<int> reportedFrame() const;
     QTimer *m_textsTimer = nullptr; // V1: the texts' pace while playing
     std::vector<int> chapterStarts() const;
     application::DisplayAudioPort *m_trackPort = nullptr;

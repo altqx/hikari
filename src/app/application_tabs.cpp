@@ -307,11 +307,12 @@ void Application::trackTabMedia()
 
 int Application::targetVideoPosition() const
 {
-    // VideoBox::Tell: the shown frame's time, 0 without a video.
+    // VideoBox::Tell: the reported frame's time (the player's while
+    // playing), 0 without a video.
     const auto &video = m_video->session();
     if (video.state() != application::VideoSession::State::Ready)
         return 0;
-    const auto frame = video.shownFrame() ? video.shownFrame() : video.requestedFrame();
+    const auto frame = video.reportedFrame();
     return frame ? video.legacyTimebase().msAt(*frame) : 0;
 }
 

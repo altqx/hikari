@@ -204,8 +204,19 @@ public:
     std::optional<int> requestedFrame() const { return m_requested; }
     // The frame the Video panel reports (legacy RendererVideo::GetCurrentFrame,
     // FrameShownAt(m_Time)): while playing the indexed frame whose interval
-    // holds the last delivered frame's start, else the requested frame.
+    // holds the last delivered frame's start, else the requested frame. A
+    // delivered start past the last frame's start is the last frame, and one
+    // before the first frame's start the first (V2 end of video).
     std::optional<int> currentFrame() const;
+    // The frame the features that read "the video's frame" use (legacy
+    // FrameShownAt(VideoBox::Tell()): the Line editor's time from video,
+    // inserting Lines at the video's time, the visual tools, a tab's video
+    // position, splitting, Set FPS from video, Shift times, Automation's
+    // video_position, the audio box's video time): the shown indexed frame
+    // while paused, else currentFrame(): the player's frame while playing,
+    // and the requested frame while a pause's indexed frame is on its way.
+    // shownFrame() is -1 while a player frame is shown.
+    std::optional<int> reportedFrame() const;
     // The seek bar (legacy VideoSlider::SendTime, Seek(ms, true,
     // SEEK_NO_SNAP)): shows the frame; while playing, playback goes on from
     // its start (RendererFFMS2::SetPosition). False outside the video.
@@ -221,6 +232,9 @@ public:
     std::optional<PresentResult> lastPresent() const { return m_lastPresent; }
 
 private:
+    // Legacy FrameShownAt for a player time: the indexed frame whose
+    // interval holds it, clamped to the video's frames.
+    std::optional<int> frameHolding(std::int64_t us) const;
     void notify();
     void present(std::optional<std::optional<PixelRect>> overlayBounds = std::nullopt);
     void render();
