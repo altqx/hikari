@@ -388,7 +388,7 @@ class Hyprland(Sway):
         out = []
         for c in json.loads(self.hyprctl("clients", "-j") or "[]"):
             (x, y), (w, h) = c["at"], c["size"]
-            out.append(f'{"floating_con" if c["floating"] else "con":12} {c["class"]} {c["title"]!r} {x},{y} {w}x{h} '
+            out.append(f'{"floating_con" if c["floating"] else "con":12} {c["class"]} '{c["title"]}' {x},{y} {w}x{h} '
                        f'client={x},{y} {w}x{h} output={mons.get(c["monitor"])} fullscreen={c["fullscreen"]} '
                        f'{"FOCUSED" if c["address"] == active else ""}')
         return "\n".join(out)
@@ -438,8 +438,10 @@ PANELS = ["Video", "Audio", "Line editor", "Grid", "Reference", "Timing", "Searc
 
 
 def park_pointer():
-    """The pointer away from every window before a menu is walked by keys:
-    a submenu that opens under the resting pointer highlights the item
+    """The pointer to the bottom-left corner (3, 997: every session's screen
+    is 1000 pixels high) before a menu is walked by keys, away from the
+    menus (it may rest on the main window's status bar, where a pointer
+    selects nothing): a submenu that opens under the resting pointer highlights the item
     there (KWin put View > Panels' submenu under it and Search, its last
     item, took the highlight and opened, so the Downs went into Search)."""
     try:
