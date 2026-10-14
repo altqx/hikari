@@ -439,6 +439,9 @@
     <ClCompile Include="TextComparison.cpp">
       <Filter>T</Filter>
     </ClCompile>
+    <ClCompile Include="NaturalOrder.cpp">
+      <Filter>N</Filter>
+    </ClCompile>
     <ClCompile Include="TextEditorTagList.cpp">
       <Filter>T</Filter>
     </ClCompile>
@@ -914,6 +917,9 @@
     </ClInclude>
     <ClInclude Include="TextComparison.h">
       <Filter>T</Filter>
+    </ClInclude>
+    <ClInclude Include="NaturalOrder.h">
+      <Filter>N</Filter>
     </ClInclude>
     <ClInclude Include="TagFindReplace.h">
       <Filter>T</Filter>

@@ -36,6 +36,7 @@
 #include "VideoFullscreen.h"
 #include "VideoToolbar.h"
 #include "VideoFrameArea.h"
+#include "NaturalOrder.h"
 #include "SubtitlesProviderManager.h"
 #include <wx/clipbrd.h>
 #include <wx/gdicmn.h>
@@ -706,6 +707,14 @@ void VideoBox::OnIdle(wxTimerEvent& event)
 
 
 
+// The previous and next file's order (NaturalOrder.h). Every name in the
+// listing has the same folder in front, so the whole paths compare as the
+// names do.
+static int wxCMPFUNC_CONV CompareNaturally(const wxString &first, const wxString &second)
+{
+	return NaturalCompare(first.ToStdWstring(), second.ToStdWstring());
+}
+
 void VideoBox::NextFile(bool next)
 {
 	wxMutexLocker lock(nextmutex);
@@ -722,6 +731,10 @@ void VideoBox::NextFile(bool next)
 	if (kat.IsOpened()){
 		files.Clear();
 		kat.GetAllFiles(pathwn, &files, emptyString, wxDIR_FILES);
+		// wxDir lists the folder in the file system's own order (creation
+		// order on btrfs, hashed on ext4, the index on NTFS): walk it in
+		// natural name order instead, so "Ep 2" comes before "Ep 10"
+		files.Sort(CompareNaturally);
 	}
 	for (int j = 0; j < (int)files.GetCount(); j++)
 	{

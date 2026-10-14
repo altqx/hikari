@@ -200,6 +200,7 @@ add_executable(hikarisub
     HikariSub/Playback.cpp
     HikariSub/WaveformPeaks.cpp
     HikariSub/TextComparison.cpp
+    HikariSub/NaturalOrder.cpp
     HikariSub/Provider.cpp
     HikariSub/ProviderDummy.cpp
     HikariSub/ProviderFFMS2.cpp

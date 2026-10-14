@@ -10,8 +10,10 @@ if(WIN32)
         check_main.cpp
         WindowsSaveFileTests.cpp
         AutomationFoldersTests.cpp
+        NaturalOrderTests.cpp
         update/UpdateApplyTests.cpp
         update/UpdateVerifyTests.cpp
+        ../HikariSub/NaturalOrder.cpp
         ../HikariSub/UpdateApply.cpp
         ../HikariSub/WindowsSaveFile.cpp
     )
@@ -60,6 +62,7 @@ add_executable(hikarisub_tests
     MenuBarHitTestTests.cpp
     MicroDvdStepsTests.cpp
     MoveTimesTests.cpp
+    NaturalOrderTests.cpp
     NumberStepTests.cpp
     OwnedOrBorrowedTests.cpp
     ParsedScriptsTests.cpp
@@ -85,6 +88,7 @@ add_executable(hikarisub_tests
     ../HikariSub/JsonValue.cpp
     ../HikariSub/FrameQueue.cpp
     ../HikariSub/LineGroups.cpp
+    ../HikariSub/NaturalOrder.cpp
     ../HikariSub/Playback.cpp
     ../HikariSub/SaveFile.cpp
     ../HikariSub/SubtitlesProviderChoice.cpp
