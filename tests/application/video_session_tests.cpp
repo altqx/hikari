@@ -516,6 +516,88 @@ TEST_F(VideoTest, PlayingReportsThePlayersFrameAndTheSeekBarSeeksIt)
     EXPECT_EQ(video.shownFrame(), 2);
 }
 
+// V2 end of video (user decision 2026-10-14): a player time past the last
+// frame's start is the last frame (clamped), so the panel never falls back
+// to the frame playback started from; one before the first frame's start is
+// the first (legacy FrameShownAt). Pause shows that frame too.
+TEST_F(VideoTest, APlayerTimePastTheLastFrameIsTheLastFrame)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    video.setPresenter(&presenter);
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer(); // frame 0
+    video.showFrame(2);
+    source.answer();
+    ASSERT_TRUE(video.play());
+    player.opened();
+    player.delivered();
+    video.generalFrame(playerFrame(), 360'000); // frame 9's start, the last
+    EXPECT_EQ(video.currentFrame(), 9);
+    video.generalFrame(playerFrame(), 375'000); // inside frame 9, whose end is unknown
+    EXPECT_EQ(video.currentFrame(), 9);
+    EXPECT_EQ(video.reportedFrame(), 9);
+    video.generalFrame(playerFrame(), 2'000'000); // far past it
+    EXPECT_EQ(video.currentFrame(), 9);
+    EXPECT_EQ(video.requestedFrame(), 2); // where playback started
+    ASSERT_TRUE(video.pause());
+    ASSERT_EQ(source.frames.size(), 1u);
+    EXPECT_EQ(source.frames[0].first, 9);
+    source.answer();
+    EXPECT_EQ(video.shownFrame(), 9);
+    // Before the first frame's start: the first frame.
+    ASSERT_TRUE(video.seekFrame(4));
+    source.answer();
+    ASSERT_TRUE(video.play());
+    player.delivered();
+    video.generalFrame(playerFrame(), -5'000);
+    EXPECT_EQ(video.currentFrame(), 0);
+}
+
+// V2 shown frame during playback (user decision 2026-10-14): the frame the
+// features read (reportedFrame) is the shown indexed frame while paused,
+// the player's frame while playing (shownFrame() is then -1), and the
+// pause's frame while its indexed frame is on its way. Play again before it
+// arrives goes on from that frame, not from 0.
+TEST_F(VideoTest, TheReportedFrameIsThePlayersWhilePlaying)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    video.setPresenter(&presenter);
+    EXPECT_EQ(video.reportedFrame(), std::nullopt);
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer(); // frame 0
+    video.showFrame(2);
+    source.answer();
+    EXPECT_EQ(video.reportedFrame(), 2);
+    // Paused with a seek on its way: still the shown frame.
+    video.showFrame(3);
+    EXPECT_EQ(video.reportedFrame(), 2);
+    source.answer();
+    EXPECT_EQ(video.reportedFrame(), 3);
+    ASSERT_TRUE(video.play());
+    player.opened();
+    player.delivered();
+    EXPECT_EQ(video.reportedFrame(), 3); // nothing delivered yet
+    video.generalFrame(playerFrame(), 285'000); // frame 7 (280-320 ms)
+    EXPECT_EQ(video.shownFrame(), -1);
+    EXPECT_EQ(video.reportedFrame(), 7);
+    ASSERT_TRUE(video.pause());
+    EXPECT_EQ(video.shownFrame(), -1); // frame 7 still on its way
+    EXPECT_EQ(video.reportedFrame(), 7);
+    // Play again before it arrives: from frame 7's start.
+    ASSERT_TRUE(video.play());
+    player.delivered();
+    EXPECT_EQ(player.calls[player.calls.size() - 2], "seek 280000");
+    ASSERT_TRUE(video.stop());
+    EXPECT_EQ(video.reportedFrame(), 0); // Stop's first frame, on its way
+    while (!source.frames.empty())
+        source.answer();
+    EXPECT_EQ(video.reportedFrame(), 0);
+}
+
 TEST_F(VideoTest, SeeksAndKeyframesFollowTheLegacyRules)
 {
     video.open("/m/ep1.mkv");

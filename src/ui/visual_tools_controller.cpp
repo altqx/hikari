@@ -353,8 +353,8 @@ void VisualToolsController::toolChanged()
 
 std::int64_t VisualToolsController::videoTimeMs() const
 {
-    // VideoBox::Tell: the shown frame's start.
-    const auto frame = m_video.session().shownFrame();
+    // VideoBox::Tell: the reported frame's start (the player's while playing).
+    const auto frame = m_video.session().reportedFrame();
     if (!frame)
         return 0;
     const auto start = m_video.session().frameStart(*frame);
@@ -857,7 +857,7 @@ LineWarning VisualToolsController::currentWarning() const
         if (const auto own = t->warning(*this))
             return *own;
     const auto active = activeLine();
-    const auto frame = m_video.session().shownFrame();
+    const auto frame = m_video.session().reportedFrame();
     if (!s || !active || !frame)
         return LineWarning::None;
     const auto start = m_video.session().frameStart(*frame);

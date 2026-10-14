@@ -23,6 +23,9 @@ hikari_add_gtest(hikari_application_playback_pipeline_tests SOURCES playback_pip
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_video_session_tests SOURCES video_session_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# V2: the seek bar's drag pace (user decision 2026-10-14)
+hikari_add_gtest(hikari_application_seek_throttle_tests SOURCES seek_throttle_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 # V3: video sources, tracks and chapters
 hikari_add_gtest(hikari_application_video_sources_tests SOURCES video_sources_tests.cpp
     LIBRARIES hikari_application LABELS application)

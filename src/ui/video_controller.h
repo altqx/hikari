@@ -9,6 +9,7 @@
 #include "hikari/application/display_audio_port.h"
 #include "hikari/application/general_player.h"
 #include "hikari/application/media_association.h"
+#include "hikari/application/seek_throttle.h"
 #include "hikari/application/video_session.h"
 #include "hikari/application/video_sources.h"
 
@@ -120,6 +121,14 @@ public:
     // The seek bar's own moves (never its value following playback): while
     // playing, playback goes on from the frame (legacy VideoSlider::SendTime).
     Q_INVOKABLE bool showFrameAt(int frame);
+    // V2 (user decision 2026-10-14): the docked and the fullscreen seek bar
+    // report their moves here. Held (a drag, or the press of a click), the
+    // seeks go through application::SeekThrottle: at most one every 50 ms,
+    // the newest frame once the interval is up. seekBarReleased seeks the
+    // frame of the last move unless it was just sought. A move that is not
+    // held seeks at once.
+    Q_INVOKABLE void seekBarMoved(int frame, bool held);
+    Q_INVOKABLE void seekBarReleased();
     Q_INVOKABLE bool seekBy(int ms);
     Q_INVOKABLE bool nextKeyframe() { return m_session.nextKeyframe(); }
     Q_INVOKABLE bool previousKeyframe() { return m_session.previousKeyframe(); }
@@ -172,6 +181,8 @@ signals:
     void offerAnswered(int answer, bool applyToAll);
     // A video opened on request while the question was shown.
     void offerWithdrawn();
+    // V2: each seek the seek bar made, with its frame (tests count them).
+    void seekBarSought(int frame);
 
 private:
     void open(const QString &path);
@@ -188,8 +199,12 @@ private:
     // V3
     void sessionChanged();
     void textsMayChange();
-    std::optional<int> reportedFrame() const;
     QTimer *m_textsTimer = nullptr; // V1: the texts' pace while playing
+    // V2: the seek bar's drag
+    application::SeekThrottle m_seekThrottle;
+    QTimer *m_seekTimer = nullptr; // the waiting frame's due time
+    void seekBarSeek(std::optional<int> frame);
+    void seekBarTimer();
     std::vector<int> chapterStarts() const;
     application::DisplayAudioPort *m_trackPort = nullptr;
     application::ChapterPort *m_chapterPort = nullptr;

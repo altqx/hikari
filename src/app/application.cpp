@@ -916,10 +916,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_shell->setSelection(session->selection());
         followEditingLine(); // R2: the editor's own move (E4 sends the draft before it)
     });
-    // The editor's Start/End difference measures from the frame the Video panel shows.
+    // The editor's Start/End difference measures from the frame the Video
+    // panel reports: the player's while playing (legacy EditBox::
+    // OnPasteDifferents read VideoBox::Tell).
     m_editor->setVideoTimeSource([this]() -> std::optional<std::int64_t> {
         const auto &session = m_video->session();
-        const auto frame = session.shownFrame();
+        const auto frame = session.reportedFrame();
         const auto start = frame ? session.frameStart(*frame) : std::nullopt;
         if (!start)
             return std::nullopt;
@@ -1164,8 +1166,9 @@ void Application::followVideoInAudio()
         m_audio->setKeyframes(std::move(ms));
     }
     std::optional<int> paused; // legacy VideoBox::Tell while Paused
-    if (!video.playing() && !video.stopped() && video.shownFrame())
-        paused = m_audioTimebase->msAt(*video.shownFrame());
+    if (!video.playing() && !video.stopped())
+        if (const auto frame = video.reportedFrame())
+            paused = m_audioTimebase->msAt(*frame);
     m_audio->setVideoTime(paused);
 }
 
@@ -1229,11 +1232,12 @@ void Application::setAudioFromVideo(bool mark)
 {
     if (!m_audio->hasAudio())
         return;
-    // VideoBox::Tell: the shown frame's time, 0 without video
+    // VideoBox::Tell: the reported frame's time (the player's while
+    // playing), 0 without video
     int time = 0;
     const auto &video = m_video->session();
     if (video.state() == application::VideoSession::State::Ready)
-        if (const auto frame = video.shownFrame())
+        if (const auto frame = video.reportedFrame())
             time = video.legacyTimebase().msAt(*frame);
     m_audio->showTime(time, mark);
 }
@@ -2286,9 +2290,11 @@ bool Application::insertLine(bool before, const QString &timing)
     if (timing.isEmpty()) {
         done = application::insertLine(*session, where);
     } else {
-        // Legacy needs video for these: the shown frame's start and the next one's.
+        // Legacy needs video for these: the reported frame's start and the
+        // next one's (GetFrameTime: FrameShownAt(Tell()), the player's frame
+        // while playing).
         const auto &video = m_video->session();
-        const auto frame = video.shownFrame();
+        const auto frame = video.reportedFrame();
         const auto start = frame ? video.frameStart(*frame) : std::nullopt;
         if (!start)
             return false;
@@ -2453,7 +2459,7 @@ bool Application::setFpsFromVideo()
 {
     auto *session = targetSession();
     const auto &video = m_video->session();
-    const auto frame = video.shownFrame();
+    const auto frame = video.reportedFrame(); // legacy Tell: the player's while playing
     const auto start = frame ? video.frameStart(*frame) : std::nullopt;
     if (!session || !start)
         return false;
@@ -2801,7 +2807,7 @@ bool Application::splitLines(const QString &kind)
     const auto timebase = video.legacyTimebase();
     const auto shown = shownLines();
     if (kind == QLatin1String("videoTime")) {
-        const auto frame = video.shownFrame();
+        const auto frame = video.reportedFrame(); // legacy Tell: the player's while playing
         const auto start = frame ? video.frameStart(*frame) : std::nullopt;
         if (!start)
             return false; // legacy needs the video
@@ -2951,9 +2957,10 @@ QString Application::shiftTimes()
     application::ShiftContext context;
     if (hasVideo) {
         context.timebase = &timebase;
-        // VideoBox::GetFrameTime: the shown frame's midpoint start and end times.
+        // VideoBox::GetFrameTime: the reported frame's (the player's while
+        // playing) midpoint start and end times.
         context.keyframes = video.keyframes();
-        if (const auto frame = video.shownFrame()) {
+        if (const auto frame = video.reportedFrame()) {
             context.videoFrame = *frame;
             context.videoFrameStartMs = timebase.startTimeFor(*frame);
             context.videoFrameEndMs = timebase.endTimeFor(*frame);

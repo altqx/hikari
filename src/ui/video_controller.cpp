@@ -9,6 +9,7 @@
 #include <QVariantMap>
 
 #include <algorithm>
+#include <chrono>
 
 namespace hikari::ui {
 
@@ -49,6 +50,10 @@ VideoController::VideoController(application::IndexedSourcePort &source, applica
     m_textsTimer->setSingleShot(true);
     m_textsTimer->setInterval(100);
     connect(m_textsTimer, &QTimer::timeout, this, &VideoController::textsChanged);
+    m_seekTimer = new QTimer(this);
+    m_seekTimer->setSingleShot(true);
+    m_seekTimer->setTimerType(Qt::PreciseTimer);
+    connect(m_seekTimer, &QTimer::timeout, this, &VideoController::seekBarTimer);
     connect(this, &VideoController::changed, this, &VideoController::textsMayChange); // O5
 }
 
@@ -354,21 +359,9 @@ bool VideoController::stop()
     return done;
 }
 
-// The shown indexed frame when paused. While playing, the session's current
-// frame: the indexed frame holding the player's last frame. While a pause's
-// indexed frame is still on its way, also the current frame, which is then
-// the frame the pause requested.
-std::optional<int> VideoController::reportedFrame() const
-{
-    const auto shown = m_session.shownFrame();
-    if (!m_session.playing() && shown && *shown >= 0)
-        return shown;
-    return m_session.currentFrame();
-}
-
 QString VideoController::times() const
 {
-    const auto shown = reportedFrame();
+    const auto shown = m_session.reportedFrame();
     const auto start = shown ? m_session.frameStart(*shown) : std::nullopt;
     if (!start)
         return {};
@@ -395,7 +388,7 @@ QString VideoController::times() const
 
 bool VideoController::keyframeShown() const
 {
-    const auto shown = reportedFrame();
+    const auto shown = m_session.reportedFrame();
     return shown && m_session.isKeyframe(*shown);
 }
 
@@ -404,6 +397,44 @@ bool VideoController::showFrameAt(int frame)
     if (!hasVideo())
         return false;
     return m_session.seekFrame(frame);
+}
+
+void VideoController::seekBarMoved(int frame, bool held)
+{
+    if (!held) {
+        seekBarSeek(frame);
+        return;
+    }
+    seekBarSeek(m_seekThrottle.move(frame, application::SeekThrottle::Clock::now()));
+    seekBarTimer();
+}
+
+void VideoController::seekBarReleased()
+{
+    m_seekTimer->stop();
+    seekBarSeek(m_seekThrottle.release(application::SeekThrottle::Clock::now()));
+}
+
+void VideoController::seekBarSeek(std::optional<int> frame)
+{
+    if (!frame)
+        return;
+    showFrameAt(*frame);
+    emit seekBarSought(*frame);
+}
+
+// Seeks the waiting frame once it is due, else waits for it.
+void VideoController::seekBarTimer()
+{
+    const auto now = application::SeekThrottle::Clock::now();
+    seekBarSeek(m_seekThrottle.tick(now));
+    const auto due = m_seekThrottle.due();
+    if (!due) {
+        m_seekTimer->stop();
+        return;
+    }
+    const auto wait = std::chrono::ceil<std::chrono::milliseconds>(*due - now);
+    m_seekTimer->start(static_cast<int>(std::max<std::chrono::milliseconds::rep>(wait.count(), 1)));
 }
 
 bool VideoController::seekBy(int ms)
