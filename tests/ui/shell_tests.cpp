@@ -18428,6 +18428,12 @@ private slots:
             QVERIFY2(reader.exitStatus() == QProcess::NormalExit && reader.exitCode() == 0, qPrintable(said));
             const QImage read(out);
             QVERIFY2(!read.isNull(), qPrintable(QStringLiteral("%1 wrote no image").arg(program)));
+            if (!sameImage(read, expected)) {
+                // Kept beside the read-back for a comparison (the copied frame and its format).
+                expected.save(out + QStringLiteral(".expected.png"));
+                qInfo().noquote() << action << "copied frame format" << int(expected.format()) << "hasAlpha"
+                                  << expected.hasAlphaChannel() << "saved to" << out + QStringLiteral(".expected.png");
+            }
             QVERIFY2(sameImage(read, expected),
                      qPrintable(QStringLiteral("%1: read back %2x%3, copied %4x%5")
                                     .arg(QLatin1String(action))
