@@ -366,6 +366,20 @@ if(WIN32 AND HIKARI_WITH_VSFILTER)
         HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/vsfilter"
         HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 endif()
+# W2: the winix vsfilter-test task sets every variable the recipe tests read
+# (on every platform: it checks the task file, not the renderer).
+add_test(NAME vsfilter-task-environment COMMAND "${CMAKE_COMMAND}"
+    "-DTASKS=${PROJECT_SOURCE_DIR}/winix.yaml" -DTASK=vsfilter-test
+    "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/csri_vsfilter_tests.cpp"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/vsfilter_task_environment.cmake")
+# Control: the task without HIKARI_VSFILTERMOD_CSRI, as it was, fails.
+add_test(NAME vsfilter-task-environment-control COMMAND "${CMAKE_COMMAND}"
+    "-DTASKS=${PROJECT_SOURCE_DIR}/winix.yaml" -DTASK=vsfilter-test
+    "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/csri_vsfilter_tests.cpp"
+    "-DDROP=$env:HIKARI_VSFILTERMOD_CSRI = $env:HIKARI_LEGACY_CSRI; "
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/vsfilter_task_environment.cmake")
+set_tests_properties(vsfilter-task-environment PROPERTIES LABELS backends TIMEOUT 60)
+set_tests_properties(vsfilter-task-environment-control PROPERTIES LABELS backends TIMEOUT 60 WILL_FAIL TRUE)
 # W1: the optional DirectShow adapter (Windows only). Its frame and seek
 # fixtures run against the default players on the same media; its manifest
 # names the libraries it loads.
