@@ -64,12 +64,17 @@ foreach ($s in $found) {
         if (-not $s.Process.WaitForExit(10000)) { throw 'still running 10 s after it was ended' }
         Write-Output "ended pid $($s.Id) $($s.Path) `"$($s.Title)`""
     } catch {
-        if ($s.Process.HasExited) {
+        $why = $_.Exception.Message
+        # HasExited itself throws "Access is denied" on an elevated process
+        # this task cannot open: that one is still running.
+        $exited = $false
+        try { $exited = $s.Process.HasExited } catch { }
+        if ($exited) {
             Write-Output "ended pid $($s.Id) $($s.Path) `"$($s.Title)`" (it exited by itself)"
             continue
         }
         $left++
-        Write-Output "FAIL could not end pid $($s.Id) $($s.Path) `"$($s.Title)`": $($_.Exception.Message)"
+        Write-Output "FAIL could not end pid $($s.Id) $($s.Path) `"$($s.Title)`": $why"
     }
 }
 if ($left) {
