@@ -4170,8 +4170,9 @@ private slots:
         auto *root = engine->rootObjects().first();
         auto *window = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
         QVERIFY(window);
+        const bool wasActive = QAccessible::isActive();
         QAccessible::setActive(true);
-        const auto inactive = qScopeGuard([] { QAccessible::setActive(false); });
+        const auto restore = qScopeGuard([wasActive] { QAccessible::setActive(wasActive); });
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
         QTRY_VERIFY(window->isVisible());
         // The catalog box is named for assistive technology, not by the
