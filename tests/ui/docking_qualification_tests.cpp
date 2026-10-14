@@ -200,6 +200,15 @@ class DockingQualification : public QObject {
     {
         return QStringLiteral("moved by %1,%2").arg(w->x() - before.x()).arg(w->y() - before.y());
     }
+    // Whether window `w` stays where it is for `quiet` milliseconds. A
+    // window manager can show a new window where it places it and then move
+    // it to where the application asked for it.
+    static bool holdsItsPosition(QWindow *w, int quiet = 300)
+    {
+        const QPoint at = w->position();
+        QTest::qWait(quiet);
+        return w->position() == at;
+    }
     static void sendMouse(QWindow *w, QEvent::Type type, QPoint global, Qt::MouseButtons buttons)
     {
         QCursor::setPos(global);
@@ -1183,6 +1192,9 @@ private slots:
     // asks the window system to move it. An X server without a window
     // manager that moves windows (xvfb-run's) declines, and the window then
     // follows the pointer itself; one with a window manager moves it.
+    // Openbox maps a new floating window where it places it and moves it to
+    // the position the panel asked for a moment later, so the test waits for
+    // the window to stop moving before it measures a move.
     void x11HeaderMovesThroughTheWindowSystem()
     {
         if (QGuiApplication::platformName() != QLatin1String("xcb"))
@@ -1199,6 +1211,7 @@ private slots:
         QQuickItem *moveArea = childNamed(bar, QStringLiteral("dockSystemMoveArea"));
         QVERIFY(moveArea && moveArea->isVisible() && moveArea->width() >= 48);
         const QPoint free = moveArea->mapToScene(QPointF(moveArea->width() / 2, moveArea->height() / 2)).toPoint();
+        QTRY_VERIFY(holdsItsPosition(floating));
         const QPoint before = floating->position();
         QTest::mousePress(floating, Qt::LeftButton, {}, free);
         QTest::mouseMove(floating, free + QPoint(30, 4));
