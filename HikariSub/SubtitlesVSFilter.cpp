@@ -175,6 +175,13 @@ bool SubtitlesVSFilter::OpenString(wxString *text)
 	return OpenCached(text);
 }
 
+void SubtitlesVSFilter::ForgetParsedScripts()
+{
+	std::lock_guard<std::recursive_mutex> lock(s_CsriMutex);
+	m_CsriInstance = nullptr;
+	m_Instances.Clear();
+}
+
 bool SubtitlesVSFilter::OpenCached(wxString *text)
 {
 	size_t hash = ScriptHash(*text);

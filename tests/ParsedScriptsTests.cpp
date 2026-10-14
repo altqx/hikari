@@ -74,3 +74,17 @@ TEST(the_script_in_use_is_never_released)
 	CHECK(scripts.Find(30) == &c);
 	scripts.Clear();
 }
+
+TEST(clearing_releases_the_script_in_use_too)
+{
+	// a fonts change drops every parsed script, the one shown among them
+	released.clear();
+	int shown = 1, b = 2;
+	ParsedScripts<int> scripts(Release, 3);
+	scripts.Add(10, &shown, &shown);
+	scripts.Add(20, &b, &shown);
+	scripts.Clear();
+	CHECK_EQ(released.size(), (size_t)2);
+	CHECK_EQ(scripts.Size(), (size_t)0);
+	CHECK(scripts.Find(10) == nullptr);
+}

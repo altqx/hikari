@@ -40,6 +40,15 @@ std::vector<std::wstring> OrderSubtitlesProviders(const std::vector<std::wstring
 // A renderer to offer only with a warning that it is slow.
 bool IsSlowSubtitlesProvider(const std::wstring &name);
 
+// What a change in the fonts folders asks of the renderer before the frame
+// is drawn again. libass loads its fonts again, and the subtitles open again
+// once it is ready. A CSRI renderer finds a new font only in a script parsed
+// after the change: VSFilterMod keeps the glyphs of each Line it has laid
+// out for as long as the instance lives, so the scripts parsed before are
+// dropped and the subtitles opened again.
+enum class FontsReload { ReloadLibass, ParseAgain };
+FontsReload FontsReloadFor(const std::wstring &provider);
+
 // What the options store about the renderer: the chosen name, and the
 // migration the choice has been through, empty for none.
 struct StoredSubtitlesProvider {

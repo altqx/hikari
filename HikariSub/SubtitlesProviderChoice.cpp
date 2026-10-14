@@ -61,6 +61,11 @@ bool IsSlowSubtitlesProvider(const std::wstring &name)
 	return name == VSFILTERMOD_PROVIDER;
 }
 
+FontsReload FontsReloadFor(const std::wstring &provider)
+{
+	return provider == LIBASS_PROVIDER ? FontsReload::ReloadLibass : FontsReload::ParseAgain;
+}
+
 StoredSubtitlesProvider MigrateSubtitlesProvider(const StoredSubtitlesProvider &stored)
 {
 	if (!stored.migration.empty())

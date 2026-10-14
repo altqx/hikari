@@ -58,6 +58,9 @@ public:
 	virtual bool OpenString(wxString *text){ return false; };
 	virtual void SetVideoParameters(const wxSize& size, unsigned char format, bool isSwapped) {};
 	virtual void ReloadLibraries(bool destroyExisted = false) { };
+	// drops every script parsed so far, the one shown too, so that the next
+	// Open parses again; the caller opens the subtitles again
+	virtual void ForgetParsedScripts() {}
 	virtual bool IsLibass() { return false; }
 	// Parses text on a worker thread so a later Open of the same text finds
 	// it ready; takes the text. Only providers that can do it say so.
@@ -105,6 +108,7 @@ public:
 	static void GetRendererNames(wxArrayString *names);
 	void SetVideoParameters(const wxSize& size, unsigned char format, bool isSwapped);
 	bool CanPrepare() override { return true; }
+	void ForgetParsedScripts() override;
 protected:
 	void ParseAhead(wxString *text) override;
 private:

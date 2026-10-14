@@ -60,6 +60,8 @@ public:
 	bool CanPrepare();
 	// see SubtitlesProvider::Prepare; takes the text
 	void Prepare(wxString *text);
+	// after a change in the fonts folders; see FontsReloadFor. True when the
+	// subtitles open again by themselves, false when the caller reopens them
 	static bool ReloadLibraries();
 	// the renderers to offer, in the order OrderSubtitlesProviders gives
 	static void GetProviders(wxArrayString *providerList);

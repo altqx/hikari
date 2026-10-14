@@ -172,12 +172,18 @@ void SubtitlesProviderManager::Prepare(wxString *text)
 
 bool SubtitlesProviderManager::ReloadLibraries()
 {
-	if (ProviderInUse() == LIBASS_PROVIDER) {
+	if (FontsReloadFor(ProviderInUse().ToStdWstring()) == FontsReload::ReloadLibass) {
 		if (gs_Base.size() > 0) {
 			std::lock_guard<std::mutex> lock(gs_Base[0]->m_ProviderMutex);
 			gs_Base[0]->GetProvider()->ReloadLibraries(true);
 		}
 		return true;
+	}
+	// the same text would otherwise find its instance parsed with the old fonts
+	for (auto *spm : gs_Base) {
+		std::lock_guard<std::mutex> lock(spm->m_ProviderMutex);
+		if (spm->SP)
+			spm->SP->ForgetParsedScripts();
 	}
 	return false;
 }

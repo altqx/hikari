@@ -186,3 +186,17 @@ TEST(settings_with_a_migration_value_are_not_migrated)
 	// a later migration's value, from a newer version
 	CHECK(Stores(Start({ L"xy-vsfilter_textsub", L"2" }), L"xy-vsfilter_textsub", L"2"));
 }
+
+TEST(a_fonts_change_reloads_libass)
+{
+	CHECK(FontsReloadFor(L"libass") == FontsReload::ReloadLibass);
+}
+
+TEST(a_fonts_change_parses_the_scripts_again_for_every_csri_renderer)
+{
+	// VSFilterMod kept drawing the substitute face of a Line on screen when
+	// its font was added to the fonts folder, from the instance parsed before
+	CHECK(FontsReloadFor(L"vsfiltermod_textsub") == FontsReload::ParseAgain);
+	CHECK(FontsReloadFor(L"xy-vsfilter_textsub") == FontsReload::ParseAgain);
+	CHECK(FontsReloadFor(L"other_textsub") == FontsReload::ParseAgain);
+}
