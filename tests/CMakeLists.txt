@@ -95,6 +95,18 @@ add_dependencies(hikarisub_tests
 enable_testing()
 add_test(NAME hikarisub_tests COMMAND hikarisub_tests)
 
+# Every string the sources translate, in Locale/template.pot and each catalog:
+# one missing from them shows in English in every language.
+find_package(Python3 COMPONENTS Interpreter)
+find_program(HIKARISUB_TESTS_XGETTEXT xgettext)
+find_program(HIKARISUB_TESTS_MSGCMP msgcmp)
+if(Python3_Interpreter_FOUND AND HIKARISUB_TESTS_XGETTEXT AND HIKARISUB_TESTS_MSGCMP)
+    add_test(NAME hikarisub_catalogs
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../tools/check_catalogs.py")
+else()
+    message(STATUS "hikarisub_catalogs left out: needs Python 3, xgettext and msgcmp")
+endif()
+
 # wxGTK's key events, against the pinned wxWidgets build the application uses
 # (Thirdparty/build-wxwidgets-linux.sh, which applies Thirdparty/wxWidgets-patches)
 # and under xvfb-run for a display. Left out when either is missing, as in the

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HikariSub\n"
 "Report-Msgid-Bugs-To: https://github.com/altqx/hikari/issues\n"
-"POT-Creation-Date: 2026-10-13 04:03+0700\n"
+"POT-Creation-Date: 2026-10-14 10:10+0700\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -46,7 +46,7 @@ msgstr ""
 msgid "Play the current syllable / line"
 msgstr ""
 
-#: HikariSub/AudioBox.cpp:163 HikariSub/VideoBox.cpp:161
+#: HikariSub/AudioBox.cpp:163 HikariSub/VideoBox.cpp:162
 #: HikariSub/VideoFullscreen.cpp:62
 msgid "Play the current line"
 msgstr ""
@@ -130,64 +130,64 @@ msgstr ""
 msgid "Enhance speech frequencies in the spectrum"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:319 HikariSub/RendererVideo.cpp:364
+#: HikariSub/AudioDisplay.cpp:322 HikariSub/RendererVideo.cpp:458
 msgid "Cannot create D3D9 device"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:328 HikariSub/RendererVideo.cpp:376
+#: HikariSub/AudioDisplay.cpp:331 HikariSub/RendererVideo.cpp:470
 msgid "Cannot create swap chain"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:349
+#: HikariSub/AudioDisplay.cpp:352
 msgid "One of the DirectX settings failed"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:353 HikariSub/VisualRotationXY.cpp:164
+#: HikariSub/AudioDisplay.cpp:356 HikariSub/VisualRotationXY.cpp:164
 msgid "Cannot set world matrix"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:354 HikariSub/VisualRotationXY.cpp:165
+#: HikariSub/AudioDisplay.cpp:357 HikariSub/VisualRotationXY.cpp:165
 msgid "Cannot set view matrix"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:356 HikariSub/RendererDirectShow.cpp:100
-#: HikariSub/RendererFFMS2.cpp:723 HikariSub/RendererVideo.cpp:378
+#: HikariSub/AudioDisplay.cpp:359 HikariSub/RendererDirectShow.cpp:100
+#: HikariSub/RendererFFMS2.cpp:831 HikariSub/RendererVideo.cpp:472
 msgid "Cannot create surface"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:359 HikariSub/RendererVideo.cpp:394
+#: HikariSub/AudioDisplay.cpp:362 HikariSub/RendererVideo.cpp:488
 msgid "Cannot create D3DX line"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:363 HikariSub/AudioDisplay.cpp:364
-#: HikariSub/AudioDisplay.cpp:365 HikariSub/ContextDX9.cpp:196
-#: HikariSub/RendererVideo.cpp:391 HikariSub/RendererVideo.cpp:393
-#: HikariSub/VisualCross.cpp:294 HikariSub/Visuals.cpp:541
+#: HikariSub/AudioDisplay.cpp:366 HikariSub/AudioDisplay.cpp:367
+#: HikariSub/AudioDisplay.cpp:368 HikariSub/ContextDX9.cpp:196
+#: HikariSub/RendererVideo.cpp:485 HikariSub/RendererVideo.cpp:487
+#: HikariSub/VisualCross.cpp:295 HikariSub/Visuals.cpp:542
 msgid "Cannot create D3DX font"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:366 HikariSub/AudioDisplay.cpp:367
-#: HikariSub/RendererDirectShow.cpp:739 HikariSub/RendererFFMS2.cpp:746
+#: HikariSub/AudioDisplay.cpp:369 HikariSub/AudioDisplay.cpp:370
+#: HikariSub/RendererDirectShow.cpp:739 HikariSub/RendererFFMS2.cpp:854
 msgid "Cannot create plain surface"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:390 HikariSub/RendererVideo.cpp:371
+#: HikariSub/AudioDisplay.cpp:393 HikariSub/RendererVideo.cpp:465
 msgid "Cannot reset Direct3D"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:643
+#: HikariSub/AudioDisplay.cpp:646
 msgid "Modified"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:647
+#: HikariSub/AudioDisplay.cpp:650
 msgid "Negative time"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:1115
+#: HikariSub/AudioDisplay.cpp:1118
 msgid "Cannot blit spectrum surfaces"
 msgstr ""
 
-#: HikariSub/AudioDisplay.cpp:1158 HikariSub/AudioDisplay.cpp:1804
+#: HikariSub/AudioDisplay.cpp:1161 HikariSub/AudioDisplay.cpp:1834
 msgid "Audio could not be loaded"
 msgstr ""
 
@@ -215,7 +215,7 @@ msgstr ""
 msgid "Versions"
 msgstr ""
 
-#: HikariSub/AutoSaveOpen.cpp:60 HikariSub/HikariSubFrame.cpp:1657
+#: HikariSub/AutoSaveOpen.cpp:60 HikariSub/HikariSubFrame.cpp:1663
 msgid "Open"
 msgstr ""
 
@@ -226,7 +226,7 @@ msgstr ""
 #: HikariSub/FontCatalogList.cpp:71 HikariSub/FontCatalogList.cpp:874
 #: HikariSub/FontDialog.cpp:411 HikariSub/HikariMessageBox.cpp:80
 #: HikariSub/MappedButton.cpp:40 HikariSub/NewCatalog.cpp:42
-#: HikariSub/OptionsDialog.cpp:1044 HikariSub/ProgressDialog.cpp:44
+#: HikariSub/OptionsDialog.cpp:1066 HikariSub/ProgressDialog.cpp:44
 #: HikariSub/ScriptInfo.cpp:161 HikariSub/ShiftTimes.cpp:68
 #: HikariSub/StyleChange.cpp:271 HikariSub/Stylelistbox.cpp:34
 #: HikariSub/Stylelistbox.cpp:58 HikariSub/Stylelistbox.cpp:112
@@ -241,7 +241,7 @@ msgstr ""
 msgid "Cannot open auto save folder"
 msgstr ""
 
-#: HikariSub/AutoSaveOpen.cpp:163 HikariSub/HikariSubFrame.cpp:708
+#: HikariSub/AutoSaveOpen.cpp:163 HikariSub/HikariSubFrame.cpp:712
 #: HikariSub/ProviderFFMS2.cpp:267 HikariSub/TabPanel.cpp:88
 #: HikariSub/VisualDrawingShapes.cpp:211 HikariSub/VisualDrawingShapes.cpp:275
 msgid "Untitled"
@@ -255,7 +255,7 @@ msgstr ""
 msgid "Failed to load autosave"
 msgstr ""
 
-#: HikariSub/AutoSavesRemoving.cpp:29 HikariSub/HikariSubFrame.cpp:197
+#: HikariSub/AutoSavesRemoving.cpp:29 HikariSub/HikariSubFrame.cpp:201
 msgid "Remove temporary files"
 msgstr ""
 
@@ -393,7 +393,7 @@ msgstr ""
 msgid "Cannot open temporary files folder"
 msgstr ""
 
-#: HikariSub/Automation.cpp:634
+#: HikariSub/Automation.cpp:646
 #, c-format
 msgid ""
 "Error initializing Lua script \"%s\":\n"
@@ -401,68 +401,68 @@ msgid ""
 "%s."
 msgstr ""
 
-#: HikariSub/Automation.cpp:646
+#: HikariSub/Automation.cpp:658
 msgid ""
 "You are trying to load an Automation 3 script as an Automation 4 script. "
 "Automation 3 is no longer supported."
 msgstr ""
 
-#: HikariSub/Automation.cpp:689
+#: HikariSub/Automation.cpp:701
 #, c-format
 msgid "Macro named '%s' is already defined in the script '%s'"
 msgstr ""
 
-#: HikariSub/Automation.cpp:806
+#: HikariSub/Automation.cpp:818
 msgid "An error occurred while executing the Lua script:\n"
 msgstr ""
 
-#: HikariSub/Automation.cpp:1254 HikariSub/Automation.cpp:1296
-#: HikariSub/HikariSubFrame.cpp:929 HikariSub/HikariSubFrame.cpp:2745
+#: HikariSub/Automation.cpp:1249 HikariSub/Automation.cpp:1289
+#: HikariSub/HikariSubFrame.cpp:933 HikariSub/HikariSubFrame.cpp:2768
 #, c-format
 msgid ""
 "Error loading Lua script: %s\n"
 "%s"
 msgstr ""
 
-#: HikariSub/Automation.cpp:1258 HikariSub/Automation.cpp:1300
+#: HikariSub/Automation.cpp:1253 HikariSub/Automation.cpp:1293
 #, c-format
 msgid "Unknown error loading Lua script: %s."
 msgstr ""
 
-#: HikariSub/Automation.cpp:1265
+#: HikariSub/Automation.cpp:1258
 msgid ""
 "One or more autoload scripts contain errors.\n"
 "See the script descriptions for more information."
 msgstr ""
 
-#: HikariSub/Automation.cpp:1304
+#: HikariSub/Automation.cpp:1297
 msgid ""
 "At least one script in the subtitle file contains errors.\n"
 "See the script descriptions for more information."
 msgstr ""
 
-#: HikariSub/Automation.cpp:1314
+#: HikariSub/Automation.cpp:1307
 msgid "Select a script editor"
 msgstr ""
 
-#: HikariSub/Automation.cpp:1315
+#: HikariSub/Automation.cpp:1308
 msgid "Programs (*.exe)|*.exe|All files (*.*)|*.*"
 msgstr ""
 
-#: HikariSub/Automation.cpp:1327
+#: HikariSub/Automation.cpp:1320
 msgid "Automation error"
 msgstr ""
 
-#: HikariSub/Automation.cpp:1327
+#: HikariSub/Automation.cpp:1320
 msgid "Cannot start editor."
 msgstr ""
 
-#: HikariSub/Automation.cpp:1403 HikariSub/Automation.cpp:1450
-#: HikariSub/HikariSubFrame.cpp:925 HikariSub/HikariSubFrame.cpp:929
-#: HikariSub/HikariSubFrame.cpp:2270 HikariSub/HikariSubFrame.cpp:2271
-#: HikariSub/HikariSubFrame.cpp:2715 HikariSub/HikariSubFrame.cpp:2741
-#: HikariSub/HikariSubFrame.cpp:2745 HikariSub/OptionsDialog.cpp:306
-#: HikariSub/OptionsDialog.cpp:692 HikariSub/VideoBox.cpp:1779
+#: HikariSub/Automation.cpp:1396 HikariSub/Automation.cpp:1443
+#: HikariSub/HikariSubFrame.cpp:929 HikariSub/HikariSubFrame.cpp:933
+#: HikariSub/HikariSubFrame.cpp:2276 HikariSub/HikariSubFrame.cpp:2277
+#: HikariSub/HikariSubFrame.cpp:2738 HikariSub/HikariSubFrame.cpp:2764
+#: HikariSub/HikariSubFrame.cpp:2768 HikariSub/OptionsDialog.cpp:311
+#: HikariSub/OptionsDialog.cpp:708 HikariSub/VideoBox.cpp:1791
 #: HikariSub/VisualAllTagsEdition.cpp:168
 #: HikariSub/VisualAllTagsEdition.cpp:172
 #: HikariSub/VisualAllTagsEdition.cpp:190
@@ -475,11 +475,11 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: HikariSub/Automation.cpp:1405 HikariSub/Automation.cpp:1452
+#: HikariSub/Automation.cpp:1398 HikariSub/Automation.cpp:1445
 msgid "Full Lua error description"
 msgstr ""
 
-#: HikariSub/Automation.cpp:1410 HikariSub/Automation.cpp:1457
+#: HikariSub/Automation.cpp:1403 HikariSub/Automation.cpp:1450
 #: HikariSub/EditBox.cpp:281 HikariSub/FontCatalogList.cpp:109
 #: HikariSub/VideoToolbar.cpp:510 HikariSub/VideoToolbar.cpp:528
 #: HikariSub/VideoToolbar.cpp:783 HikariSub/stylestore.cpp:89
@@ -487,7 +487,7 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#: HikariSub/Automation.cpp:1415 HikariSub/Automation.cpp:1462
+#: HikariSub/Automation.cpp:1408 HikariSub/Automation.cpp:1455
 msgid "Refresh"
 msgstr ""
 
@@ -503,7 +503,7 @@ msgstr ""
 msgid "Macro"
 msgstr ""
 
-#: HikariSub/AutomationHotkeysDialog.cpp:75 HikariSub/OptionsDialog.cpp:687
+#: HikariSub/AutomationHotkeysDialog.cpp:75 HikariSub/OptionsDialog.cpp:703
 msgid "Hotkey"
 msgstr ""
 
@@ -515,45 +515,45 @@ msgstr ""
 msgid "From subs"
 msgstr ""
 
-#: HikariSub/AutomationHotkeysDialog.cpp:145 HikariSub/OptionsDialog.cpp:699
+#: HikariSub/AutomationHotkeysDialog.cpp:145 HikariSub/OptionsDialog.cpp:715
 msgid "Map hotkey"
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:147
 #: HikariSub/AutomationHotkeysDialog.cpp:243
 #: HikariSub/AutomationHotkeysDialog.cpp:253 HikariSub/Hotkeys.cpp:487
-#: HikariSub/Hotkeys.cpp:498 HikariSub/OptionsDialog.cpp:121
-#: HikariSub/OptionsDialog.cpp:131 HikariSub/OptionsDialog.cpp:703
+#: HikariSub/Hotkeys.cpp:498 HikariSub/OptionsDialog.cpp:122
+#: HikariSub/OptionsDialog.cpp:132 HikariSub/OptionsDialog.cpp:719
 msgid "Delete hotkey"
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:215 HikariSub/Hotkeys.cpp:460
-#: HikariSub/OptionsDialog.cpp:282 HikariSub/OptionsDialog.cpp:1029
+#: HikariSub/OptionsDialog.cpp:283 HikariSub/OptionsDialog.cpp:1051
 msgid "Audio"
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:215 HikariSub/Hotkeys.cpp:460
-#: HikariSub/OptionsDialog.cpp:282 HikariSub/OptionsDialog.cpp:1024
+#: HikariSub/OptionsDialog.cpp:283 HikariSub/OptionsDialog.cpp:1046
 msgid "Editor"
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:215 HikariSub/Hotkeys.cpp:460
-#: HikariSub/OptionsDialog.cpp:282 HikariSub/OptionsDialog.cpp:679
+#: HikariSub/OptionsDialog.cpp:283 HikariSub/OptionsDialog.cpp:695
 msgid "Global"
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:215 HikariSub/Hotkeys.cpp:460
-#: HikariSub/OptionsDialog.cpp:282 HikariSub/ScriptInfo.cpp:100
+#: HikariSub/OptionsDialog.cpp:283 HikariSub/ScriptInfo.cpp:100
 msgid "Subtitles"
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:215 HikariSub/Hotkeys.cpp:460
-#: HikariSub/OptionsDialog.cpp:282 HikariSub/OptionsDialog.cpp:1028
+#: HikariSub/OptionsDialog.cpp:283 HikariSub/OptionsDialog.cpp:1050
 msgid "Video"
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:240 HikariSub/Hotkeys.cpp:484
-#: HikariSub/OptionsDialog.cpp:118
+#: HikariSub/OptionsDialog.cpp:119
 #, c-format
 msgid ""
 "This hotkey already exists for \"%s\".\n"
@@ -561,29 +561,29 @@ msgid ""
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:241
-#: HikariSub/AutomationHotkeysDialog.cpp:250 HikariSub/HikariSubFrame.cpp:1308
-#: HikariSub/HikariSubFrame.cpp:1322 HikariSub/HikariSubFrame.cpp:1499
-#: HikariSub/HikariSubFrame.cpp:2618 HikariSub/Hotkeys.cpp:485
+#: HikariSub/AutomationHotkeysDialog.cpp:250 HikariSub/HikariSubFrame.cpp:1314
+#: HikariSub/HikariSubFrame.cpp:1328 HikariSub/HikariSubFrame.cpp:1505
+#: HikariSub/HikariSubFrame.cpp:2641 HikariSub/Hotkeys.cpp:485
 #: HikariSub/Hotkeys.cpp:495 HikariSub/Notebook.cpp:1244
 #: HikariSub/Notebook.cpp:1651 HikariSub/Notebook.cpp:1655
-#: HikariSub/OptionsDialog.cpp:119 HikariSub/OptionsDialog.cpp:128
-#: HikariSub/OptionsDialog.cpp:539 HikariSub/SpellCheckerDialog.cpp:148
-#: HikariSub/SubsGrid.cpp:1256 HikariSub/SubsGridBase.cpp:538
-#: HikariSub/SubsGridBase.cpp:567 HikariSub/VideoBox.cpp:345
-#: HikariSub/VisualClips.cpp:1021 HikariSub/hikarisubApp.cpp:334
-#: HikariSub/hikarisubApp.cpp:404
+#: HikariSub/OptionsDialog.cpp:120 HikariSub/OptionsDialog.cpp:129
+#: HikariSub/OptionsDialog.cpp:553 HikariSub/SpellCheckerDialog.cpp:148
+#: HikariSub/SubsGrid.cpp:1257 HikariSub/SubsGridBase.cpp:538
+#: HikariSub/SubsGridBase.cpp:567 HikariSub/VideoBox.cpp:346
+#: HikariSub/VisualClips.cpp:1021 HikariSub/hikarisubApp.cpp:536
+#: HikariSub/hikarisubApp.cpp:606
 msgid "Warning"
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:242
 #: HikariSub/AutomationHotkeysDialog.cpp:252 HikariSub/Hotkeys.cpp:486
-#: HikariSub/Hotkeys.cpp:497 HikariSub/OptionsDialog.cpp:120
-#: HikariSub/OptionsDialog.cpp:130
+#: HikariSub/Hotkeys.cpp:497 HikariSub/OptionsDialog.cpp:121
+#: HikariSub/OptionsDialog.cpp:131
 msgid "Switch hotkeys"
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:249 HikariSub/Hotkeys.cpp:493
-#: HikariSub/OptionsDialog.cpp:127
+#: HikariSub/OptionsDialog.cpp:128
 #, c-format
 msgid ""
 "This shortcut already exists in %s as a shortcut for \"%s\".\n"
@@ -591,17 +591,17 @@ msgid ""
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:250 HikariSub/Hotkeys.cpp:494
-#: HikariSub/OptionsDialog.cpp:128
+#: HikariSub/OptionsDialog.cpp:129
 msgid "another window"
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:250 HikariSub/Hotkeys.cpp:494
-#: HikariSub/OptionsDialog.cpp:128
+#: HikariSub/OptionsDialog.cpp:129
 msgid "other windows"
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:254 HikariSub/Hotkeys.cpp:499
-#: HikariSub/OptionsDialog.cpp:132
+#: HikariSub/OptionsDialog.cpp:133
 msgid "Set anyway"
 msgstr ""
 
@@ -609,8 +609,9 @@ msgstr ""
 #: HikariSub/FontCollector.cpp:197 HikariSub/LogHandler.cpp:50
 #: HikariSub/Notebook.cpp:719 HikariSub/SelectLines.cpp:142
 #: HikariSub/SelectLines.cpp:237 HikariSub/SelectLines.cpp:279
-#: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:110
-#: HikariSub/UpdateChecker.cpp:154 HikariSub/stylestore.cpp:172
+#: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:175
+#: HikariSub/UpdateChecker.cpp:252 HikariSub/UpdateChecker.cpp:359
+#: HikariSub/UpdateInstaller.cpp:280 HikariSub/stylestore.cpp:172
 msgid "Close"
 msgstr ""
 
@@ -996,16 +997,16 @@ msgid "Comment"
 msgstr ""
 
 #: HikariSub/EditBox.cpp:285 HikariSub/FindReplaceDialog.cpp:136
-#: HikariSub/HikariSubFrame.cpp:232 HikariSub/SelectLines.cpp:76
-#: HikariSub/SubsGrid.cpp:549 HikariSub/SubsGrid.cpp:718
+#: HikariSub/HikariSubFrame.cpp:236 HikariSub/SelectLines.cpp:76
+#: HikariSub/SubsGrid.cpp:550 HikariSub/SubsGrid.cpp:719
 #: HikariSub/SubsGridWindow.cpp:321 HikariSub/SubsGridWindow.cpp:709
 #: HikariSub/SubsGridWindow.cpp:1158 HikariSub/SubsGridWindow.cpp:1327
 msgid "Actor"
 msgstr ""
 
 #: HikariSub/EditBox.cpp:291 HikariSub/FindReplaceDialog.cpp:139
-#: HikariSub/HikariSubFrame.cpp:233 HikariSub/SelectLines.cpp:77
-#: HikariSub/SubsGrid.cpp:554 HikariSub/SubsGrid.cpp:723
+#: HikariSub/HikariSubFrame.cpp:237 HikariSub/SelectLines.cpp:77
+#: HikariSub/SubsGrid.cpp:555 HikariSub/SubsGrid.cpp:724
 #: HikariSub/SubsGridWindow.cpp:325 HikariSub/SubsGridWindow.cpp:713
 #: HikariSub/SubsGridWindow.cpp:1171 HikariSub/SubsGridWindow.cpp:1340
 msgid "Effect"
@@ -1208,16 +1209,16 @@ msgid "In field"
 msgstr ""
 
 #: HikariSub/FindReplaceDialog.cpp:125 HikariSub/SelectLines.cpp:74
-#: HikariSub/SubsGrid.cpp:560 HikariSub/SubsGrid.cpp:579
-#: HikariSub/SubsGrid.cpp:586 HikariSub/SubsGrid.cpp:724
-#: HikariSub/SubsGrid.cpp:740 HikariSub/SubsGrid.cpp:749
+#: HikariSub/SubsGrid.cpp:561 HikariSub/SubsGrid.cpp:580
+#: HikariSub/SubsGrid.cpp:587 HikariSub/SubsGrid.cpp:725
+#: HikariSub/SubsGrid.cpp:741 HikariSub/SubsGrid.cpp:750
 #: HikariSub/SubsGridWindow.cpp:329 HikariSub/SubsGridWindow.cpp:719
 msgid "Text"
 msgstr ""
 
-#: HikariSub/FindReplaceDialog.cpp:130 HikariSub/HikariSubFrame.cpp:231
-#: HikariSub/SelectLines.cpp:75 HikariSub/SubsGrid.cpp:550
-#: HikariSub/SubsGrid.cpp:719 HikariSub/SubsGridWindow.cpp:320
+#: HikariSub/FindReplaceDialog.cpp:130 HikariSub/HikariSubFrame.cpp:235
+#: HikariSub/SelectLines.cpp:75 HikariSub/SubsGrid.cpp:551
+#: HikariSub/SubsGrid.cpp:720 HikariSub/SubsGridWindow.cpp:320
 #: HikariSub/SubsGridWindow.cpp:708 HikariSub/SubsGridWindow.cpp:1152
 #: HikariSub/SubsGridWindow.cpp:1321
 msgid "Styles"
@@ -1339,7 +1340,7 @@ msgstr ""
 msgid "Enter a name for the new catalog"
 msgstr ""
 
-#: HikariSub/FontCatalogList.cpp:85 HikariSub/HikariSubFrame.cpp:916
+#: HikariSub/FontCatalogList.cpp:85 HikariSub/HikariSubFrame.cpp:920
 #: HikariSub/ShiftTimes.cpp:86 HikariSub/ShiftTimes.cpp:974
 #: HikariSub/ShiftTimes.cpp:979 HikariSub/findreplace.cpp:1332
 msgid "Info"
@@ -1368,8 +1369,8 @@ msgid "Add"
 msgstr ""
 
 #: HikariSub/FontCatalogList.cpp:110 HikariSub/FontCatalogList.cpp:749
-#: HikariSub/SelectLines.cpp:128 HikariSub/SubsGrid.cpp:286
-#: HikariSub/SubsGrid.cpp:319 HikariSub/stylestore.cpp:73
+#: HikariSub/SelectLines.cpp:128 HikariSub/SubsGrid.cpp:287
+#: HikariSub/SubsGrid.cpp:320 HikariSub/stylestore.cpp:73
 #: HikariSub/stylestore.cpp:91 HikariSub/stylestore.cpp:144
 msgid "Delete"
 msgstr ""
@@ -1389,7 +1390,7 @@ msgstr ""
 
 #: HikariSub/FontCatalogList.cpp:144 HikariSub/FontCatalogList.cpp:747
 #: HikariSub/Notebook.cpp:1075 HikariSub/StyleChange.cpp:462
-#: HikariSub/hikarisubApp.cpp:532 HikariSub/hikarisubApp.cpp:538
+#: HikariSub/hikarisubApp.cpp:734 HikariSub/hikarisubApp.cpp:740
 #: HikariSub/stylestore.cpp:568
 msgid "Prompt"
 msgstr ""
@@ -1470,9 +1471,9 @@ msgstr ""
 msgid "In lines: "
 msgstr ""
 
-#: HikariSub/FontCollector.cpp:135 HikariSub/HikariSubFrame.cpp:338
-#: HikariSub/HikariSubFrame.cpp:339 HikariSub/HotkeysNaming.cpp:177
-#: HikariSub/SubsGrid.cpp:288
+#: HikariSub/FontCollector.cpp:135 HikariSub/HikariSubFrame.cpp:342
+#: HikariSub/HikariSubFrame.cpp:343 HikariSub/HotkeysNaming.cpp:177
+#: HikariSub/SubsGrid.cpp:289
 msgid "Font collector"
 msgstr ""
 
@@ -1492,7 +1493,7 @@ msgstr ""
 msgid "Zip"
 msgstr ""
 
-#: HikariSub/FontCollector.cpp:173 HikariSub/OptionsDialog.cpp:280
+#: HikariSub/FontCollector.cpp:173 HikariSub/OptionsDialog.cpp:281
 #: HikariSub/ScriptInfo.cpp:133
 msgid "Options"
 msgstr ""
@@ -1554,11 +1555,11 @@ msgstr ""
 msgid "The save path is not valid."
 msgstr ""
 
-#: HikariSub/FontCollector.cpp:520 HikariSub/HikariSubFrame.cpp:1427
-#: HikariSub/HikariSubFrame.cpp:2236 HikariSub/Notebook.cpp:1324
-#: HikariSub/SubsGrid.cpp:1217 HikariSub/SubsGridBase.cpp:557
+#: HikariSub/FontCollector.cpp:520 HikariSub/HikariSubFrame.cpp:1433
+#: HikariSub/HikariSubFrame.cpp:2242 HikariSub/Notebook.cpp:1324
+#: HikariSub/SubsGrid.cpp:1218 HikariSub/SubsGridBase.cpp:557
 #: HikariSub/SubsGridBase.cpp:1578 HikariSub/SubsGridDialogs.cpp:109
-#: HikariSub/VideoBox.cpp:909 HikariSub/VideoBox.cpp:921
+#: HikariSub/VideoBox.cpp:921 HikariSub/VideoBox.cpp:933
 #: HikariSub/VisualAllTagsEdition.cpp:152
 #: HikariSub/VisualAllTagsEdition.cpp:216 HikariSub/VisualDrawingShapes.cpp:129
 #: HikariSub/VisualDrawingShapes.cpp:193 HikariSub/findreplace.cpp:492
@@ -1843,7 +1844,7 @@ msgid "Manages font catalogs"
 msgstr ""
 
 #: HikariSub/FontDialog.cpp:432 HikariSub/HotkeysNaming.cpp:121
-#: HikariSub/StyleChange.cpp:87 HikariSub/SubsGrid.cpp:237
+#: HikariSub/StyleChange.cpp:87 HikariSub/SubsGrid.cpp:238
 msgid "Filter"
 msgstr ""
 
@@ -1901,750 +1902,750 @@ msgstr ""
 msgid "Help"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:107
+#: HikariSub/HikariSubFrame.cpp:108
 msgid "Untitled - "
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:153
+#: HikariSub/HikariSubFrame.cpp:157
 msgid "Video duration"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:153
+#: HikariSub/HikariSubFrame.cpp:157
 msgid "Video scale"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:153
+#: HikariSub/HikariSubFrame.cpp:157
 msgid "Video zoom"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:154
+#: HikariSub/HikariSubFrame.cpp:158
 msgid "Frames per second"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:154 HikariSub/SubsResampleDialog.cpp:32
+#: HikariSub/HikariSubFrame.cpp:158 HikariSub/SubsResampleDialog.cpp:32
 msgid "Subtitles resolution"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:154
+#: HikariSub/HikariSubFrame.cpp:158
 msgid "Video aspect ratio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:154
+#: HikariSub/HikariSubFrame.cpp:158
 msgid "Video file name"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:154
+#: HikariSub/HikariSubFrame.cpp:158
 msgid "Video resolution"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:161 HikariSub/HotkeysNaming.cpp:218
+#: HikariSub/HikariSubFrame.cpp:165 HikariSub/HotkeysNaming.cpp:218
 msgid "Load last session"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:162
+#: HikariSub/HikariSubFrame.cpp:166
 msgid "Loads previously loaded files"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:163
+#: HikariSub/HikariSubFrame.cpp:167
 msgid "Load session from file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:164
+#: HikariSub/HikariSubFrame.cpp:168
 msgid "Loads session from saved session file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:166
+#: HikariSub/HikariSubFrame.cpp:170
 msgid "Save session to file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:166
+#: HikariSub/HikariSubFrame.cpp:170
 msgid "Saves session to file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:169
+#: HikariSub/HikariSubFrame.cpp:173
 msgid "Ask whether to load the last session at program startup"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:170
+#: HikariSub/HikariSubFrame.cpp:174
 msgid "Asks whether to load previously loaded files at program startup"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:173
+#: HikariSub/HikariSubFrame.cpp:177
 msgid "Load last session after program start"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:174
+#: HikariSub/HikariSubFrame.cpp:178
 msgid "Loads previously loaded files at program startup"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:178
+#: HikariSub/HikariSubFrame.cpp:182
 msgid "&Open subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:179
+#: HikariSub/HikariSubFrame.cpp:183
 msgid "Open subtitle file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:180
+#: HikariSub/HikariSubFrame.cpp:184
 msgid "&Save"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:181
+#: HikariSub/HikariSubFrame.cpp:185
 msgid "Save current file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:182
+#: HikariSub/HikariSubFrame.cpp:186
 msgid "Save &all"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:183 HikariSub/HotkeysNaming.cpp:234
+#: HikariSub/HikariSubFrame.cpp:187 HikariSub/HotkeysNaming.cpp:234
 msgid "Save all subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:184
+#: HikariSub/HikariSubFrame.cpp:188
 msgid "Save &as..."
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:185
+#: HikariSub/HikariSubFrame.cpp:189
 msgid "Save as"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:186
+#: HikariSub/HikariSubFrame.cpp:190
 msgid "Save &translation"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:187 HikariSub/HotkeysNaming.cpp:237
+#: HikariSub/HikariSubFrame.cpp:191 HikariSub/HotkeysNaming.cpp:237
 msgid "Save translation"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:188
+#: HikariSub/HikariSubFrame.cpp:192
 msgid "Recently opened &subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:189 HikariSub/VideoBox.cpp:983
+#: HikariSub/HikariSubFrame.cpp:193 HikariSub/VideoBox.cpp:995
 msgid "Recently opened subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:190
+#: HikariSub/HikariSubFrame.cpp:194
 msgid "Remove subtitles from the &editor"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:191 HikariSub/HotkeysNaming.cpp:232
+#: HikariSub/HikariSubFrame.cpp:195 HikariSub/HotkeysNaming.cpp:232
 msgid "Remove subtitles from the editor"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:192 HikariSub/HikariSubFrame.cpp:193
+#: HikariSub/HikariSubFrame.cpp:196 HikariSub/HikariSubFrame.cpp:197
 #: HikariSub/HotkeysNaming.cpp:238
 msgid "Save subtitles using the video name"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:196 HikariSub/HotkeysNaming.cpp:185
+#: HikariSub/HikariSubFrame.cpp:200 HikariSub/HotkeysNaming.cpp:185
 msgid "Open auto save"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:196
+#: HikariSub/HikariSubFrame.cpp:200
 msgid "Opens the selected autosave from the list"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:198
+#: HikariSub/HikariSubFrame.cpp:202
 msgid "Opens the temporary file removal window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:199
+#: HikariSub/HikariSubFrame.cpp:203
 msgid "Show / Hide log window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:200
+#: HikariSub/HikariSubFrame.cpp:204
 msgid "Last session"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:200
+#: HikariSub/HikariSubFrame.cpp:204
 msgid "Last session options"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:202
+#: HikariSub/HikariSubFrame.cpp:206
 msgid "&Settings"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:203
+#: HikariSub/HikariSubFrame.cpp:207
 msgid "Program settings"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:204
+#: HikariSub/HikariSubFrame.cpp:208
 msgid "&Exit\tAlt-F4"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:205
+#: HikariSub/HikariSubFrame.cpp:209
 msgid "Exit the program"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:206
+#: HikariSub/HikariSubFrame.cpp:210
 msgid "&File"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:209 HikariSub/HikariSubFrame.cpp:2442
+#: HikariSub/HikariSubFrame.cpp:213 HikariSub/HikariSubFrame.cpp:2448
 msgid "&Undo"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:209 HikariSub/Hotkeys.cpp:150
+#: HikariSub/HikariSubFrame.cpp:213 HikariSub/Hotkeys.cpp:150
 #: HikariSub/HotkeysNaming.cpp:203
 msgid "Undo"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:212 HikariSub/HotkeysNaming.cpp:204
+#: HikariSub/HikariSubFrame.cpp:216 HikariSub/HotkeysNaming.cpp:204
 msgid "Undo to last save"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:214 HikariSub/HikariSubFrame.cpp:2458
+#: HikariSub/HikariSubFrame.cpp:218 HikariSub/HikariSubFrame.cpp:2464
 msgid "&Redo"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:215 HikariSub/Hotkeys.cpp:151
+#: HikariSub/HikariSubFrame.cpp:219 HikariSub/Hotkeys.cpp:151
 #: HikariSub/HotkeysNaming.cpp:230
 msgid "Redo"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:216
+#: HikariSub/HikariSubFrame.cpp:220
 msgid "&History"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:217 HikariSub/Hotkeys.cpp:152
+#: HikariSub/HikariSubFrame.cpp:221 HikariSub/Hotkeys.cpp:152
 #: HikariSub/HotkeysNaming.cpp:181 HikariSub/SubsFile.cpp:27
 #: HikariSub/SubsFile.cpp:57
 msgid "History"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:218
+#: HikariSub/HikariSubFrame.cpp:222
 msgid "Find and re&place"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:219
+#: HikariSub/HikariSubFrame.cpp:223
 msgid "Searches for the specified text phrases and replaces them"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:220
+#: HikariSub/HikariSubFrame.cpp:224
 msgid "&Find"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:221
+#: HikariSub/HikariSubFrame.cpp:225
 msgid "Searches for the specified text phrase"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:222 HikariSub/Hotkeys.cpp:165
+#: HikariSub/HikariSubFrame.cpp:226 HikariSub/Hotkeys.cpp:165
 #: HikariSub/HotkeysNaming.cpp:217
 msgid "Find next"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:223
+#: HikariSub/HikariSubFrame.cpp:227
 msgid "Finds the next occurrence of the phrase in the text"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:227 HikariSub/ShiftTimes.cpp:358
-#: HikariSub/SubsGrid.cpp:547 HikariSub/SubsGrid.cpp:578
-#: HikariSub/SubsGrid.cpp:584 HikariSub/SubsGrid.cpp:585
-#: HikariSub/SubsGrid.cpp:716 HikariSub/SubsGrid.cpp:739
-#: HikariSub/SubsGrid.cpp:747 HikariSub/SubsGrid.cpp:748
+#: HikariSub/HikariSubFrame.cpp:231 HikariSub/ShiftTimes.cpp:358
+#: HikariSub/SubsGrid.cpp:548 HikariSub/SubsGrid.cpp:579
+#: HikariSub/SubsGrid.cpp:585 HikariSub/SubsGrid.cpp:586
+#: HikariSub/SubsGrid.cpp:717 HikariSub/SubsGrid.cpp:740
+#: HikariSub/SubsGrid.cpp:748 HikariSub/SubsGrid.cpp:749
 msgid "The starting time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:228
+#: HikariSub/HikariSubFrame.cpp:232
 msgid "Sort by start time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:229 HikariSub/SelectLines.cpp:79
-#: HikariSub/ShiftTimes.cpp:359 HikariSub/SubsGrid.cpp:548
-#: HikariSub/SubsGrid.cpp:717
+#: HikariSub/HikariSubFrame.cpp:233 HikariSub/SelectLines.cpp:79
+#: HikariSub/ShiftTimes.cpp:359 HikariSub/SubsGrid.cpp:549
+#: HikariSub/SubsGrid.cpp:718
 msgid "End time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:230
+#: HikariSub/HikariSubFrame.cpp:234
 msgid "Sort by end time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:231
+#: HikariSub/HikariSubFrame.cpp:235
 msgid "Sort by styles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:232
+#: HikariSub/HikariSubFrame.cpp:236
 msgid "Sort by actor"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:233
+#: HikariSub/HikariSubFrame.cpp:237
 msgid "Sort by effect"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:234 HikariSub/SubsGrid.cpp:546
-#: HikariSub/SubsGrid.cpp:715
+#: HikariSub/HikariSubFrame.cpp:238 HikariSub/SubsGrid.cpp:547
+#: HikariSub/SubsGrid.cpp:716
 msgid "Layer"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:234
+#: HikariSub/HikariSubFrame.cpp:238
 msgid "Sort by layer"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:237
+#: HikariSub/HikariSubFrame.cpp:241
 msgid "So&rt all lines"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:238
+#: HikariSub/HikariSubFrame.cpp:242
 msgid "Sorts all lines in ASS file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:239
+#: HikariSub/HikariSubFrame.cpp:243
 msgid "So&rt selected lines"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:240
+#: HikariSub/HikariSubFrame.cpp:244
 msgid "Sorts selected lines in ASS file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:241 HikariSub/HotkeysNaming.cpp:216
+#: HikariSub/HikariSubFrame.cpp:245 HikariSub/HotkeysNaming.cpp:216
 msgid "Fix minor errors (experimental)"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:242
+#: HikariSub/HikariSubFrame.cpp:246
 msgid "Turns on multireplacer"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:243
+#: HikariSub/HikariSubFrame.cpp:247
 msgid "Select &lines"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:243
+#: HikariSub/HikariSubFrame.cpp:247
 msgid "Selects lines by expressions"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:244
+#: HikariSub/HikariSubFrame.cpp:248
 msgid "&Edit"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:247 HikariSub/Hotkeys.cpp:147
-#: HikariSub/HotkeysNaming.cpp:224 HikariSub/VideoBox.cpp:985
+#: HikariSub/HikariSubFrame.cpp:251 HikariSub/Hotkeys.cpp:147
+#: HikariSub/HotkeysNaming.cpp:224 HikariSub/VideoBox.cpp:997
 msgid "Open video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:248
+#: HikariSub/HikariSubFrame.cpp:252
 msgid "Opens video file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:250 HikariSub/HikariSubFrame.cpp:251
-#: HikariSub/VideoBox.cpp:984
+#: HikariSub/HikariSubFrame.cpp:254 HikariSub/HikariSubFrame.cpp:255
+#: HikariSub/VideoBox.cpp:996
 msgid "Recently opened videos"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:252 HikariSub/HikariSubFrame.cpp:253
+#: HikariSub/HikariSubFrame.cpp:256 HikariSub/HikariSubFrame.cpp:257
 #: HikariSub/HotkeysNaming.cpp:184
 msgid "Open keyframes"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:256
+#: HikariSub/HikariSubFrame.cpp:260
 msgid "Recently opened keyframes"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:258
+#: HikariSub/HikariSubFrame.cpp:262
 msgid "Open dummy video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:259 HikariSub/Hotkeys.cpp:158
+#: HikariSub/HikariSubFrame.cpp:263 HikariSub/Hotkeys.cpp:158
 #: HikariSub/HotkeysNaming.cpp:245
 msgid "Insert start time from video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:260
+#: HikariSub/HikariSubFrame.cpp:264
 msgid "Inserts the start time from video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:261 HikariSub/Hotkeys.cpp:159
+#: HikariSub/HikariSubFrame.cpp:265 HikariSub/Hotkeys.cpp:159
 #: HikariSub/HotkeysNaming.cpp:244
 msgid "Insert end time from video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:262
+#: HikariSub/HikariSubFrame.cpp:266
 msgid "Inserts the end time from video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:263 HikariSub/Hotkeys.cpp:161
+#: HikariSub/HikariSubFrame.cpp:267 HikariSub/Hotkeys.cpp:161
 #: HikariSub/HotkeysNaming.cpp:227
 msgid "Previous frame"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:264
+#: HikariSub/HikariSubFrame.cpp:268
 msgid "Go to previous frame"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:265 HikariSub/Hotkeys.cpp:162
+#: HikariSub/HikariSubFrame.cpp:269 HikariSub/Hotkeys.cpp:162
 #: HikariSub/HotkeysNaming.cpp:219
 msgid "Next frame"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:266
+#: HikariSub/HikariSubFrame.cpp:270
 msgid "Go to next frame"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:268 HikariSub/HotkeysNaming.cpp:247
+#: HikariSub/HikariSubFrame.cpp:272 HikariSub/HotkeysNaming.cpp:247
 msgid "Go to start time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:268
+#: HikariSub/HikariSubFrame.cpp:272
 msgid "Moves video to start time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:271 HikariSub/HotkeysNaming.cpp:248
+#: HikariSub/HikariSubFrame.cpp:275 HikariSub/HotkeysNaming.cpp:248
 msgid "Go to end time of line"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:271
+#: HikariSub/HikariSubFrame.cpp:275
 msgid "Moves video to end time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:273 HikariSub/Hotkeys.cpp:160
+#: HikariSub/HikariSubFrame.cpp:277 HikariSub/Hotkeys.cpp:160
 #: HikariSub/Hotkeys.cpp:178 HikariSub/HotkeysNaming.cpp:225
-#: HikariSub/HotkeysNaming.cpp:261 HikariSub/VideoBox.cpp:159
+#: HikariSub/HotkeysNaming.cpp:261 HikariSub/VideoBox.cpp:160
 #: HikariSub/VideoFullscreen.cpp:60
 msgid "Play / Pause"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:274
+#: HikariSub/HikariSubFrame.cpp:278
 msgid "Plays / Pauses video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:276 HikariSub/HotkeysNaming.cpp:200
+#: HikariSub/HikariSubFrame.cpp:280 HikariSub/HotkeysNaming.cpp:200
 msgid "Go to previous keyframe"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:278 HikariSub/HotkeysNaming.cpp:201
+#: HikariSub/HikariSubFrame.cpp:282 HikariSub/HotkeysNaming.cpp:201
 msgid "Go to next keyframe"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:280 HikariSub/HotkeysNaming.cpp:242
+#: HikariSub/HikariSubFrame.cpp:284 HikariSub/HotkeysNaming.cpp:242
 msgid "Set audio position to video time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:282 HikariSub/HotkeysNaming.cpp:243
+#: HikariSub/HikariSubFrame.cpp:286 HikariSub/HotkeysNaming.cpp:243
 msgid "Set audio marker to video time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:283 HikariSub/HotkeysNaming.cpp:206
+#: HikariSub/HikariSubFrame.cpp:287 HikariSub/HotkeysNaming.cpp:206
 msgid "Zoom video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:284 HikariSub/HotkeysNaming.cpp:207
+#: HikariSub/HikariSubFrame.cpp:288 HikariSub/HotkeysNaming.cpp:207
 msgid "Turn off video zoom"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:286 HikariSub/HotkeysNaming.cpp:205
+#: HikariSub/HikariSubFrame.cpp:290 HikariSub/HotkeysNaming.cpp:205
 msgid "Open video with FFMS2"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:287
+#: HikariSub/HikariSubFrame.cpp:291
 msgid "Opens video with FFMS2 for frame precision"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:290
+#: HikariSub/HikariSubFrame.cpp:294
 msgid "&Video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:293 HikariSub/HotkeysNaming.cpp:222
+#: HikariSub/HikariSubFrame.cpp:297 HikariSub/HotkeysNaming.cpp:222
 msgid "Open audio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:294
+#: HikariSub/HikariSubFrame.cpp:298
 msgid "Opens audio file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:297 HikariSub/HikariSubFrame.cpp:298
+#: HikariSub/HikariSubFrame.cpp:301 HikariSub/HikariSubFrame.cpp:302
 msgid "Recently opened audio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:299 HikariSub/HotkeysNaming.cpp:169
+#: HikariSub/HikariSubFrame.cpp:303 HikariSub/HotkeysNaming.cpp:169
 msgid "Open audio from video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:300
+#: HikariSub/HikariSubFrame.cpp:304
 msgid "Opens audio from video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:301
+#: HikariSub/HikariSubFrame.cpp:305
 msgid "Open blank 2h30m audio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:302
+#: HikariSub/HikariSubFrame.cpp:306
 msgid "Opens blank audio 2 hour and 30 minutes long"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:303 HikariSub/HotkeysNaming.cpp:174
+#: HikariSub/HikariSubFrame.cpp:307 HikariSub/HotkeysNaming.cpp:174
 msgid "Close audio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:304
+#: HikariSub/HikariSubFrame.cpp:308
 msgid "Closes audio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:305
+#: HikariSub/HikariSubFrame.cpp:309
 msgid "A&udio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:308 HikariSub/OptionsDialog.cpp:671
+#: HikariSub/HikariSubFrame.cpp:312 HikariSub/OptionsDialog.cpp:687
 msgid "All"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:308
+#: HikariSub/HikariSubFrame.cpp:312
 msgid "Shows all windows"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:309
+#: HikariSub/HikariSubFrame.cpp:313
 msgid "Shows only video window and subs window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:309
+#: HikariSub/HikariSubFrame.cpp:313
 msgid "Video and subs"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:310
+#: HikariSub/HikariSubFrame.cpp:314
 msgid "Audio and subs"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:310
+#: HikariSub/HikariSubFrame.cpp:314
 msgid "Shows only audio window and subs window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:311
+#: HikariSub/HikariSubFrame.cpp:315
 msgid "Only video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:311
+#: HikariSub/HikariSubFrame.cpp:315
 msgid "Shows only video window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:312
+#: HikariSub/HikariSubFrame.cpp:316
 msgid "Only subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:312
+#: HikariSub/HikariSubFrame.cpp:316
 msgid "Shows only the subtitle window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:313
+#: HikariSub/HikariSubFrame.cpp:317
 msgid "View"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:316 HikariSub/Hotkeys.cpp:146
+#: HikariSub/HikariSubFrame.cpp:320 HikariSub/Hotkeys.cpp:146
 #: HikariSub/HotkeysNaming.cpp:175
 msgid "Enable / Disable editor"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:317
+#: HikariSub/HikariSubFrame.cpp:321
 msgid "Enables / disables editor"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:318 HikariSub/HotkeysNaming.cpp:160
+#: HikariSub/HikariSubFrame.cpp:322 HikariSub/HotkeysNaming.cpp:160
 msgid "ASS file properties"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:319 HikariSub/ScriptInfo.cpp:25
+#: HikariSub/HikariSubFrame.cpp:323 HikariSub/ScriptInfo.cpp:25
 msgid "ASS subtitle properties"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:320
+#: HikariSub/HikariSubFrame.cpp:324
 msgid "Style &manager"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:321
+#: HikariSub/HikariSubFrame.cpp:325
 msgid "Is used to manage ASS styles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:323 HikariSub/Hotkeys.cpp:140
+#: HikariSub/HikariSubFrame.cpp:327 HikariSub/Hotkeys.cpp:140
 #: HikariSub/HotkeysNaming.cpp:164
 msgid "Convert to ASS"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:324
+#: HikariSub/HikariSubFrame.cpp:328
 msgid "Converts to ASS format"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:325 HikariSub/Hotkeys.cpp:141
+#: HikariSub/HikariSubFrame.cpp:329 HikariSub/Hotkeys.cpp:141
 #: HikariSub/HotkeysNaming.cpp:165
 msgid "Convert to SRT"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:326
+#: HikariSub/HikariSubFrame.cpp:330
 msgid "Converts to SRT format"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:327 HikariSub/Hotkeys.cpp:142
+#: HikariSub/HikariSubFrame.cpp:331 HikariSub/Hotkeys.cpp:142
 #: HikariSub/HotkeysNaming.cpp:166
 msgid "Convert to MDVD"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:328
+#: HikariSub/HikariSubFrame.cpp:332
 msgid "Converts to microDVD format"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:329 HikariSub/Hotkeys.cpp:143
+#: HikariSub/HikariSubFrame.cpp:333 HikariSub/Hotkeys.cpp:143
 #: HikariSub/HotkeysNaming.cpp:167
 msgid "Convert to MPL2"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:330
+#: HikariSub/HikariSubFrame.cpp:334
 msgid "Converts to MPL2 format"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:331 HikariSub/Hotkeys.cpp:144
+#: HikariSub/HikariSubFrame.cpp:335 HikariSub/Hotkeys.cpp:144
 #: HikariSub/HotkeysNaming.cpp:168
 msgid "Convert to TMP"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:332
+#: HikariSub/HikariSubFrame.cpp:336
 msgid "Converts to TMPlayer format (not recommended)"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:334 HikariSub/OptionsDialog.cpp:1026
+#: HikariSub/HikariSubFrame.cpp:338 HikariSub/OptionsDialog.cpp:1048
 msgid "Conversion"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:334
+#: HikariSub/HikariSubFrame.cpp:338
 msgid "Converts from one format to another"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:336
+#: HikariSub/HikariSubFrame.cpp:340
 msgid "Shift &times...\tCtrl-I"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:337
+#: HikariSub/HikariSubFrame.cpp:341
 msgid "Shifting subtitle times"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:340 HikariSub/HikariSubFrame.cpp:341
+#: HikariSub/HikariSubFrame.cpp:344 HikariSub/HikariSubFrame.cpp:345
 #: HikariSub/HotkeysNaming.cpp:202
 msgid "Resample subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:342 HikariSub/HikariSubFrame.cpp:343
+#: HikariSub/HikariSubFrame.cpp:346 HikariSub/HikariSubFrame.cpp:347
 #: HikariSub/HotkeysNaming.cpp:251
 msgid "Check spelling"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:344 HikariSub/HotkeysNaming.cpp:180
+#: HikariSub/HikariSubFrame.cpp:348 HikariSub/HotkeysNaming.cpp:180
 msgid "Hide tags"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:345
+#: HikariSub/HikariSubFrame.cpp:349
 msgid "Hides tags in ASS and MDVD"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:346
+#: HikariSub/HikariSubFrame.cpp:350
 msgid "Su&btitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:349 HikariSub/HikariSubFrame.cpp:350
+#: HikariSub/HikariSubFrame.cpp:353 HikariSub/HikariSubFrame.cpp:354
 #: HikariSub/HotkeysNaming.cpp:170
 msgid "Load script"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:351 HikariSub/HikariSubFrame.cpp:352
+#: HikariSub/HikariSubFrame.cpp:355 HikariSub/HikariSubFrame.cpp:356
 #: HikariSub/HotkeysNaming.cpp:172
 msgid "Refresh autoload scripts"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:353 HikariSub/HikariSubFrame.cpp:354
+#: HikariSub/HikariSubFrame.cpp:357 HikariSub/HikariSubFrame.cpp:358
 #: HikariSub/HotkeysNaming.cpp:186
 msgid "Run the last loaded script"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:355 HikariSub/HikariSubFrame.cpp:356
+#: HikariSub/HikariSubFrame.cpp:359 HikariSub/HikariSubFrame.cpp:360
 #: HikariSub/HotkeysNaming.cpp:171
 msgid "Open shortcut mapping window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:357
+#: HikariSub/HikariSubFrame.cpp:361
 msgid "Au&tomation"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:360
+#: HikariSub/HikariSubFrame.cpp:364
 msgid "HikariSub &website"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:361
+#: HikariSub/HikariSubFrame.cpp:365
 msgid "Opens the HikariSub website in the default browser"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:362
+#: HikariSub/HikariSubFrame.cpp:366
 msgid "&Report an issue"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:363
+#: HikariSub/HikariSubFrame.cpp:367
 msgid "Opens the HikariSub issue tracker"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:364
+#: HikariSub/HikariSubFrame.cpp:368
 msgid "Check for &updates"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:365
+#: HikariSub/HikariSubFrame.cpp:369
 msgid "Checks whether a newer version is available"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:366
+#: HikariSub/HikariSubFrame.cpp:370
 msgid "&About"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:367
+#: HikariSub/HikariSubFrame.cpp:371
 msgid "Shows program info"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:369
+#: HikariSub/HikariSubFrame.cpp:373
 msgid "&Credits"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:370
+#: HikariSub/HikariSubFrame.cpp:374
 msgid "Shows credits"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:371
+#: HikariSub/HikariSubFrame.cpp:375
 msgid "&Help"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:587 HikariSub/HikariSubFrame.cpp:604
+#: HikariSub/HikariSubFrame.cpp:591 HikariSub/HikariSubFrame.cpp:608
 #: HikariSub/ProgressDialog.cpp:110
 #, c-format
 msgid "Time elapsed: %s"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:897
+#: HikariSub/HikariSubFrame.cpp:901
 msgid "Choose script"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:899
+#: HikariSub/HikariSubFrame.cpp:903
 msgid "Script files (*.lua),(*.moon)|*.lua;*.moon;"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:916
+#: HikariSub/HikariSubFrame.cpp:920
 msgid "This subtitle file does not have any scripts added"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:925 HikariSub/HikariSubFrame.cpp:2741
+#: HikariSub/HikariSubFrame.cpp:929 HikariSub/HikariSubFrame.cpp:2764
 #, c-format
 msgid "Validation Lua script '%s' failed"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1006 HikariSub/SubsGrid.cpp:1009
-#: HikariSub/VideoBox.cpp:1121
+#: HikariSub/HikariSubFrame.cpp:1010 HikariSub/SubsGrid.cpp:1010
+#: HikariSub/VideoBox.cpp:1133
 msgid "Choose subtitle file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1009
+#: HikariSub/HikariSubFrame.cpp:1013
 msgid ""
 "Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|"
 "*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|"
 "*.mkv;*.ogm"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1046 HikariSub/HikariSubFrame.cpp:1062
-#: HikariSub/VideoBox.cpp:1106
+#: HikariSub/HikariSubFrame.cpp:1050 HikariSub/HikariSubFrame.cpp:1066
+#: HikariSub/VideoBox.cpp:1118
 msgid "Choose video file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1049
+#: HikariSub/HikariSubFrame.cpp:1053
 msgid ""
 "Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),"
 "(*.3gp),(*.mpg),(*.mpeg),(*.avs)|"
@@ -2652,26 +2653,26 @@ msgid ""
 "files (*.*)|*.*"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1065
+#: HikariSub/HikariSubFrame.cpp:1069
 msgid ""
 "Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|"
 "All files (*.*)|*.*"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1120
+#: HikariSub/HikariSubFrame.cpp:1124
 #, c-format
 msgid ""
 "HikariSub subtitle editor by altqx,\n"
 "version %s from %s"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1122
+#: HikariSub/HikariSubFrame.cpp:1128
 msgid ""
 "Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n"
 "\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1123
+#: HikariSub/HikariSubFrame.cpp:1129
 msgid ""
 "If you have noticed any bugs or have any suggestions for changes or new "
 "features,\n"
@@ -2679,187 +2680,187 @@ msgid ""
 "\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1124
+#: HikariSub/HikariSubFrame.cpp:1130
 msgid "HikariSub includes parts of the following projects:\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1126
+#: HikariSub/HikariSubFrame.cpp:1132
 msgid ""
 "Color picker, demuxing subtitles from MKV, audio box, audio player, "
 "automation,\n"
 "and several other individual features taken from Aegisub -\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1137
+#: HikariSub/HikariSubFrame.cpp:1143
 msgid "About HikariSub"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1142
+#: HikariSub/HikariSubFrame.cpp:1148
 msgid "Graphical help: (buttons, help pictures etc.)\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1143
+#: HikariSub/HikariSubFrame.cpp:1149
 msgid "- Xandros (new video buttons).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1144
+#: HikariSub/HikariSubFrame.cpp:1150
 msgid "- Devilkan (menu and toolbar buttons)\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1145
+#: HikariSub/HikariSubFrame.cpp:1151
 msgid "- Zły Los (icons for file associations and menu).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1146
+#: HikariSub/HikariSubFrame.cpp:1152
 msgid "Testers:\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1147
+#: HikariSub/HikariSubFrame.cpp:1153
 msgid ""
 "- Sacredus (first translator using translator mode,\n"
 "great help testing HikariSub on a slow computer)\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1148
+#: HikariSub/HikariSubFrame.cpp:1154
 msgid ""
 "- Devilkan (crashhunter, because of his system and habits he made HikariSub "
 "crash a lot\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1149
+#: HikariSub/HikariSubFrame.cpp:1155
 msgid ""
 "helped with typesetting tools and came up with many more improvements).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1150
+#: HikariSub/HikariSubFrame.cpp:1156
 msgid ""
 "- MatiasMovie (found some crashes and suggessted some improvements, helps "
 "with crash debugging).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1151
+#: HikariSub/HikariSubFrame.cpp:1157
 msgid "- mas1904 (found some errors and helping with crash debuging).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1152
+#: HikariSub/HikariSubFrame.cpp:1158
 msgid "- Senami (made new themes and found some bugs).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1153
+#: HikariSub/HikariSubFrame.cpp:1159
 msgid "- altinat (Thai translation).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1154
+#: HikariSub/HikariSubFrame.cpp:1160
 msgid "- labrie75 (Korean translation).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1155
+#: HikariSub/HikariSubFrame.cpp:1161
 msgid "- Niskala5570 (Malay translation).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1156
+#: HikariSub/HikariSubFrame.cpp:1162
 msgid "Thanks to other HikariSub users who reported bugs:\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1157 HikariSub/HotkeysNaming.cpp:179
-#: HikariSub/OptionsDialog.cpp:679
+#: HikariSub/HikariSubFrame.cpp:1163 HikariSub/HotkeysNaming.cpp:179
+#: HikariSub/OptionsDialog.cpp:695
 msgid "Credits"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1291
+#: HikariSub/HikariSubFrame.cpp:1297
 msgid "Subtitle file "
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1301
+#: HikariSub/HikariSubFrame.cpp:1307
 msgid "Save subtitle file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1308 HikariSub/HikariSubFrame.cpp:1322
-#: HikariSub/HikariSubFrame.cpp:2618
+#: HikariSub/HikariSubFrame.cpp:1314 HikariSub/HikariSubFrame.cpp:1328
+#: HikariSub/HikariSubFrame.cpp:2641
 msgid ""
 "Chosen file is read only,\n"
 "please save with different name or change file attribute."
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1426
+#: HikariSub/HikariSubFrame.cpp:1432
 #, c-format
 msgid "Load subtitles named \"%s\"?"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1499 HikariSub/VideoBox.cpp:1927
+#: HikariSub/HikariSubFrame.cpp:1505 HikariSub/VideoBox.cpp:1939
 msgid "Cannot open subtitle file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1663 HikariSub/OptionsDialog.cpp:756
+#: HikariSub/HikariSubFrame.cpp:1669 HikariSub/OptionsDialog.cpp:772
 #: HikariSub/ProviderFFMS2.cpp:1043 HikariSub/ProviderFFMS2.cpp:1054
 #: HikariSub/ScriptInfo.cpp:119 HikariSub/stylestore.cpp:771
 #: HikariSub/stylestore.cpp:772
 msgid "None"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2231
+#: HikariSub/HikariSubFrame.cpp:2237
 #, c-format
 msgid "Save subtitles named \"%s\" before %s?"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2232
+#: HikariSub/HikariSubFrame.cpp:2238
 msgid "exiting program"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2233
+#: HikariSub/HikariSubFrame.cpp:2239
 msgid "closing tab"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2234
+#: HikariSub/HikariSubFrame.cpp:2240
 msgid "loading new subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2235
+#: HikariSub/HikariSubFrame.cpp:2241
 msgid "removing subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2270 HikariSub/OptionsDialog.cpp:692
+#: HikariSub/HikariSubFrame.cpp:2276 HikariSub/OptionsDialog.cpp:708
 msgid "Cannot load audio hotkeys"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2271 HikariSub/OptionsDialog.cpp:306
+#: HikariSub/HikariSubFrame.cpp:2277 HikariSub/OptionsDialog.cpp:311
 #: HikariSub/ProviderFFMS2.cpp:114
 msgid "Cannot load audio configuration"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2275
+#: HikariSub/HikariSubFrame.cpp:2281
 msgid "Choose audio file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2278
+#: HikariSub/HikariSubFrame.cpp:2284
 msgid "Audio and video files"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2280
+#: HikariSub/HikariSubFrame.cpp:2286
 msgid "All files"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2439
+#: HikariSub/HikariSubFrame.cpp:2445
 msgid "Undo to "
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2455
+#: HikariSub/HikariSubFrame.cpp:2461
 msgid "Redo to "
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2601
+#: HikariSub/HikariSubFrame.cpp:2624
 msgid "Choose session file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2603 HikariSub/HikariSubFrame.cpp:2612
+#: HikariSub/HikariSubFrame.cpp:2626 HikariSub/HikariSubFrame.cpp:2635
 msgid "Session file (*.kls),|*.kls"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2611
+#: HikariSub/HikariSubFrame.cpp:2634
 msgid "Save session file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2715
+#: HikariSub/HikariSubFrame.cpp:2738
 #, c-format
 msgid "Hotkey \"%s\" it's not script hotkey."
 msgstr ""
@@ -2887,7 +2888,7 @@ msgid "Style manager"
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:153 HikariSub/HotkeysNaming.cpp:223
-#: HikariSub/VideoBox.cpp:987
+#: HikariSub/VideoBox.cpp:999
 msgid "Open subtitles"
 msgstr ""
 
@@ -2901,7 +2902,7 @@ msgid "Save as..."
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:156 HikariSub/HotkeysNaming.cpp:233
-#: HikariSub/SubsGrid.cpp:285
+#: HikariSub/SubsGrid.cpp:286
 msgid "Delete text"
 msgstr ""
 
@@ -2957,17 +2958,17 @@ msgid "Duplicate lines"
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:175 HikariSub/HotkeysNaming.cpp:112
-#: HikariSub/SubsGrid.cpp:269
+#: HikariSub/SubsGrid.cpp:270
 msgid "Copy columns"
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:176 HikariSub/HotkeysNaming.cpp:148
-#: HikariSub/SubsGrid.cpp:270
+#: HikariSub/SubsGrid.cpp:271
 msgid "Paste columns"
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:177 HikariSub/HotkeysNaming.cpp:154
-#: HikariSub/SubsGrid.cpp:277
+#: HikariSub/SubsGrid.cpp:278
 msgid "Show subtitles preview"
 msgstr ""
 
@@ -2988,12 +2989,12 @@ msgid "1 minute backward"
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:183 HikariSub/HotkeysNaming.cpp:260
-#: HikariSub/VideoBox.cpp:165 HikariSub/VideoFullscreen.cpp:66
+#: HikariSub/VideoBox.cpp:166 HikariSub/VideoFullscreen.cpp:66
 msgid "Next file"
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:184 HikariSub/HotkeysNaming.cpp:266
-#: HikariSub/VideoBox.cpp:157
+#: HikariSub/VideoBox.cpp:158
 msgid "Previous file"
 msgstr ""
 
@@ -3066,7 +3067,7 @@ msgid "Next line alt"
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:207 HikariSub/HotkeysNaming.cpp:53
-#: HikariSub/VideoBox.cpp:942
+#: HikariSub/VideoBox.cpp:954
 msgid "Play"
 msgstr ""
 
@@ -3083,8 +3084,8 @@ msgid "Play line alt"
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:211 HikariSub/HotkeysNaming.cpp:57
-#: HikariSub/HotkeysNaming.cpp:272 HikariSub/VideoBox.cpp:163
-#: HikariSub/VideoBox.cpp:949 HikariSub/VideoFullscreen.cpp:64
+#: HikariSub/HotkeysNaming.cpp:272 HikariSub/VideoBox.cpp:164
+#: HikariSub/VideoBox.cpp:961 HikariSub/VideoFullscreen.cpp:64
 msgid "Stop"
 msgstr ""
 
@@ -3265,104 +3266,104 @@ msgstr ""
 msgid "20th tag button"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:110 HikariSub/SubsGrid.cpp:263
+#: HikariSub/HotkeysNaming.cpp:110 HikariSub/SubsGrid.cpp:264
 msgid "Set times as a continuous (next line)"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:111 HikariSub/SubsGrid.cpp:262
+#: HikariSub/HotkeysNaming.cpp:111 HikariSub/SubsGrid.cpp:263
 msgid "Set times as a continuous (previous line)"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:114 HikariSub/SubsGrid.cpp:234
+#: HikariSub/HotkeysNaming.cpp:114 HikariSub/SubsGrid.cpp:235
 msgid "Hide comments"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:115 HikariSub/SubsGrid.cpp:235
+#: HikariSub/HotkeysNaming.cpp:115 HikariSub/SubsGrid.cpp:236
 msgid "Show unconfirmed"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:116 HikariSub/SubsGrid.cpp:238
+#: HikariSub/HotkeysNaming.cpp:116 HikariSub/SubsGrid.cpp:239
 msgid "Turn off filtering"
 msgstr ""
 
 #: HikariSub/HotkeysNaming.cpp:117 HikariSub/HotkeysNaming.cpp:138
-#: HikariSub/SubsGrid.cpp:233 HikariSub/SubsGrid.cpp:272
+#: HikariSub/SubsGrid.cpp:234 HikariSub/SubsGrid.cpp:273
 msgid "Hide selected lines"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:118 HikariSub/SubsGrid.cpp:231
+#: HikariSub/HotkeysNaming.cpp:118 HikariSub/SubsGrid.cpp:232
 msgid "Hide lines with styles"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:119 HikariSub/SubsGrid.cpp:236
+#: HikariSub/HotkeysNaming.cpp:119 HikariSub/SubsGrid.cpp:237
 msgid "Show untranslated"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:120 HikariSub/SubsGrid.cpp:279
+#: HikariSub/HotkeysNaming.cpp:120 HikariSub/SubsGrid.cpp:280
 msgid "Set FPS from video"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:122 HikariSub/SubsGrid.cpp:228
+#: HikariSub/HotkeysNaming.cpp:122 HikariSub/SubsGrid.cpp:229
 msgid "Filter after loading subtitles"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:123 HikariSub/SubsGrid.cpp:230
+#: HikariSub/HotkeysNaming.cpp:123 HikariSub/SubsGrid.cpp:231
 msgid "Do not reset previous filtering"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:124 HikariSub/SubsGrid.cpp:274
+#: HikariSub/HotkeysNaming.cpp:124 HikariSub/SubsGrid.cpp:275
 msgid "Ignore filtering in some actions"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:125 HikariSub/SubsGrid.cpp:229
+#: HikariSub/HotkeysNaming.cpp:125 HikariSub/SubsGrid.cpp:230
 msgid "Reverse filtering"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:126 HikariSub/SubsGrid.cpp:193
+#: HikariSub/HotkeysNaming.cpp:126 HikariSub/SubsGrid.cpp:194
 msgid "Hide actor"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:127 HikariSub/SubsGrid.cpp:199
+#: HikariSub/HotkeysNaming.cpp:127 HikariSub/SubsGrid.cpp:200
 msgid "Hide characters per second"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:128 HikariSub/SubsGrid.cpp:192
+#: HikariSub/HotkeysNaming.cpp:128 HikariSub/SubsGrid.cpp:193
 msgid "Hide end time"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:129 HikariSub/SubsGrid.cpp:198
+#: HikariSub/HotkeysNaming.cpp:129 HikariSub/SubsGrid.cpp:199
 msgid "Hide effect"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:130 HikariSub/SubsGrid.cpp:190
+#: HikariSub/HotkeysNaming.cpp:130 HikariSub/SubsGrid.cpp:191
 msgid "Hide layer"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:131 HikariSub/SubsGrid.cpp:195
+#: HikariSub/HotkeysNaming.cpp:131 HikariSub/SubsGrid.cpp:196
 msgid "Hide left margin"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:132 HikariSub/SubsGrid.cpp:196
+#: HikariSub/HotkeysNaming.cpp:132 HikariSub/SubsGrid.cpp:197
 msgid "Hide right margin"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:133 HikariSub/SubsGrid.cpp:197
+#: HikariSub/HotkeysNaming.cpp:133 HikariSub/SubsGrid.cpp:198
 msgid "Hide vertical margin"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:134 HikariSub/SubsGrid.cpp:191
+#: HikariSub/HotkeysNaming.cpp:134 HikariSub/SubsGrid.cpp:192
 msgid "Hide start time"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:135 HikariSub/SubsGrid.cpp:194
+#: HikariSub/HotkeysNaming.cpp:135 HikariSub/SubsGrid.cpp:195
 msgid "Hide style"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:136 HikariSub/SubsGrid.cpp:276
+#: HikariSub/HotkeysNaming.cpp:136 HikariSub/SubsGrid.cpp:277
 msgid "Make tree"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:137 HikariSub/SubsGrid.cpp:265
+#: HikariSub/HotkeysNaming.cpp:137 HikariSub/SubsGrid.cpp:266
 msgid "Select all lines visible on video"
 msgstr ""
 
@@ -3374,7 +3375,7 @@ msgstr ""
 msgid "Insert after with video time"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:141 HikariSub/SubsGrid.cpp:248
+#: HikariSub/HotkeysNaming.cpp:141 HikariSub/SubsGrid.cpp:249
 msgid "Insert after with video frame time"
 msgstr ""
 
@@ -3386,7 +3387,7 @@ msgstr ""
 msgid "Insert before with video time"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:144 HikariSub/SubsGrid.cpp:247
+#: HikariSub/HotkeysNaming.cpp:144 HikariSub/SubsGrid.cpp:248
 msgid "Insert before with video frame time"
 msgstr ""
 
@@ -3395,15 +3396,15 @@ msgstr ""
 msgid "Join lines"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:146 HikariSub/SubsGrid.cpp:259
+#: HikariSub/HotkeysNaming.cpp:146 HikariSub/SubsGrid.cpp:260
 msgid "Join lines and keep first"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:147 HikariSub/SubsGrid.cpp:260
+#: HikariSub/HotkeysNaming.cpp:147 HikariSub/SubsGrid.cpp:261
 msgid "Join lines and keep last"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:149 HikariSub/SubsGrid.cpp:280
+#: HikariSub/HotkeysNaming.cpp:149 HikariSub/SubsGrid.cpp:281
 msgid "Paste translation text"
 msgstr ""
 
@@ -3415,31 +3416,31 @@ msgstr ""
 msgid "Swap lines"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:152 HikariSub/SubsGrid.cpp:282
+#: HikariSub/HotkeysNaming.cpp:152 HikariSub/SubsGrid.cpp:283
 msgid "Dialogue shifting window"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:153 HikariSub/SubsGrid.cpp:278
+#: HikariSub/HotkeysNaming.cpp:153 HikariSub/SubsGrid.cpp:279
 msgid "Set new FPS"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:155 HikariSub/SubsGrid.cpp:204
+#: HikariSub/HotkeysNaming.cpp:155 HikariSub/SubsGrid.cpp:205
 msgid "Split line at video time"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:156 HikariSub/SubsGrid.cpp:206
+#: HikariSub/HotkeysNaming.cpp:156 HikariSub/SubsGrid.cpp:207
 msgid "Split lines into frames"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:157 HikariSub/SubsGrid.cpp:208
+#: HikariSub/HotkeysNaming.cpp:157 HikariSub/SubsGrid.cpp:209
 msgid "Split lines into characters"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:158 HikariSub/SubsGrid.cpp:209
+#: HikariSub/HotkeysNaming.cpp:158 HikariSub/SubsGrid.cpp:210
 msgid "Split lines into words"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:159 HikariSub/SubsGrid.cpp:210
+#: HikariSub/HotkeysNaming.cpp:159 HikariSub/SubsGrid.cpp:211
 msgid "Split lines by wraps"
 msgstr ""
 
@@ -3543,27 +3544,27 @@ msgstr ""
 msgid "Settings"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:253 HikariSub/VideoBox.cpp:994
+#: HikariSub/HotkeysNaming.cpp:253 HikariSub/VideoBox.cpp:1006
 msgid "Copy frame to clipboard"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:254 HikariSub/VideoBox.cpp:997
+#: HikariSub/HotkeysNaming.cpp:254 HikariSub/VideoBox.cpp:1009
 msgid "Remove video"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:255 HikariSub/VideoBox.cpp:993
+#: HikariSub/HotkeysNaming.cpp:255 HikariSub/VideoBox.cpp:1005
 msgid "Save frame as PNG"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:258 HikariSub/VideoBox.cpp:989
+#: HikariSub/HotkeysNaming.cpp:258 HikariSub/VideoBox.cpp:1001
 msgid "Show / hide progress bar"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:262 HikariSub/VideoBox.cpp:990
+#: HikariSub/HotkeysNaming.cpp:262 HikariSub/VideoBox.cpp:1002
 msgid "Change aspect ratio"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:267 HikariSub/VideoBox.cpp:992
+#: HikariSub/HotkeysNaming.cpp:267 HikariSub/VideoBox.cpp:1004
 msgid "Copy frame with subtitles to clipboard"
 msgstr ""
 
@@ -3571,7 +3572,7 @@ msgstr ""
 msgid "Full screen"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:271 HikariSub/VideoBox.cpp:991
+#: HikariSub/HotkeysNaming.cpp:271 HikariSub/VideoBox.cpp:1003
 msgid "Save frame with subtitles as PNG"
 msgstr ""
 
@@ -3579,7 +3580,7 @@ msgstr ""
 msgid "Log window"
 msgstr ""
 
-#: HikariSub/MappedButton.cpp:41 HikariSub/OptionsDialog.cpp:1043
+#: HikariSub/MappedButton.cpp:41 HikariSub/OptionsDialog.cpp:1065
 #: HikariSub/StyleChange.cpp:270 HikariSub/VisualAllTagsEdition.cpp:126
 #: HikariSub/VisualDrawingShapes.cpp:102
 msgid "Apply"
@@ -3926,1054 +3927,1064 @@ msgstr ""
 msgid "The file was not opened."
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:312
+#: HikariSub/OptionsDialog.cpp:317
 msgid "Open sorted subtitles"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:312
+#: HikariSub/OptionsDialog.cpp:317
 msgid "Turn spell checking"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:313
+#: HikariSub/OptionsDialog.cpp:318
 msgid ""
 "Select the line with the time line\n"
 "of the previous active tab"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:314
+#: HikariSub/OptionsDialog.cpp:319
 msgid "Always open subtitles in a new tab"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:314
+#: HikariSub/OptionsDialog.cpp:319
 msgid "Show suggestions by double-clicking on misspell"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:315
+#: HikariSub/OptionsDialog.cpp:320
 msgid "Stay on selected line when editing times"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:316
+#: HikariSub/OptionsDialog.cpp:321
 msgid ""
 "Turn off edits preview on video\n"
 "(re-opening tab is required)"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:317
+#: HikariSub/OptionsDialog.cpp:322
 msgid ""
 "Turn searching of visible line\n"
 "after switching from full screen"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:318
+#: HikariSub/OptionsDialog.cpp:323
 msgid "Change active line after add to selection"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:318
+#: HikariSub/OptionsDialog.cpp:323
 msgid "Synchronize time shifting window in all tabs"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:319
+#: HikariSub/OptionsDialog.cpp:324
 msgid "Hide original on video in translator mode"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:319
+#: HikariSub/OptionsDialog.cpp:324
 msgid "Show original in translator mode"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:320
+#: HikariSub/OptionsDialog.cpp:325
 msgid "Do not change selections when duplicating dialogue lines"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:321
+#: HikariSub/OptionsDialog.cpp:326
 msgid "Do not vertically center the active line in the subtitle grid"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:321
+#: HikariSub/OptionsDialog.cpp:326
 msgid "Use numpad shortcuts in text fields"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:322
+#: HikariSub/OptionsDialog.cpp:327
 msgid "Do not warn about resolution mismatch"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:322
+#: HikariSub/OptionsDialog.cpp:327
 msgid "Turn off visual tools warning"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:323
+#: HikariSub/OptionsDialog.cpp:328
 msgid "Compatibility with older HikariSub scripts"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:347
+#: HikariSub/OptionsDialog.cpp:352
 msgid "Language (program restart required)"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:359
+#: HikariSub/OptionsDialog.cpp:364
 msgid "Put files .dic and .aff to \"Dictionary\" folder"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:360
+#: HikariSub/OptionsDialog.cpp:365
 msgid "Spell checker language (\"Dictionary\" folder)"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:369
+#: HikariSub/OptionsDialog.cpp:374
 msgid "Updates"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:370 HikariSub/UpdateChecker.cpp:141
+#: HikariSub/OptionsDialog.cpp:375 HikariSub/UpdateChecker.cpp:233
 msgid "Check for updates automatically"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:372
+#: HikariSub/OptionsDialog.cpp:377
 msgid ""
 "When the program starts: once a day, or an hour after a check that failed"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:374 HikariSub/UpdateChecker.cpp:145
+#: HikariSub/OptionsDialog.cpp:379 HikariSub/UpdateChecker.cpp:237
 msgid "Stable versions only"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:376
+#: HikariSub/OptionsDialog.cpp:381
 msgid "A release candidate is still told about newer release candidates"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:396
+#: HikariSub/OptionsDialog.cpp:388
+msgid "Install updates automatically"
+msgstr ""
+
+#: HikariSub/OptionsDialog.cpp:390
+msgid ""
+"Downloads a new version in the background and installs it when you restart "
+"or quit"
+msgstr ""
+
+#: HikariSub/OptionsDialog.cpp:410
 msgid "0 turns off saving while editing"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:398
+#: HikariSub/OptionsDialog.cpp:412
 msgid "Number of autosaves can be set from 2 to 1000000"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:403
+#: HikariSub/OptionsDialog.cpp:417
 msgid "Number of tab name characters. Range from 20 to 150"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:417
+#: HikariSub/OptionsDialog.cpp:431
 msgid "Number of edits to save"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:420
+#: HikariSub/OptionsDialog.cpp:434
 msgid "Maximum number of autosave files"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:423
+#: HikariSub/OptionsDialog.cpp:437
 msgid "Start frame offset in ms:"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:426
+#: HikariSub/OptionsDialog.cpp:440
 msgid "End frame offset in ms:"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:429
+#: HikariSub/OptionsDialog.cpp:443
 msgid "ASS tag replacement:"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:432
+#: HikariSub/OptionsDialog.cpp:446
 msgid "Number of tab name characters"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:435
+#: HikariSub/OptionsDialog.cpp:449
 msgid "LUA scripts tracking level"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:444
+#: HikariSub/OptionsDialog.cpp:458
 msgid "Subtitle grid font:"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:451
+#: HikariSub/OptionsDialog.cpp:465
 msgid "Program font:"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:454
+#: HikariSub/OptionsDialog.cpp:468
 msgid "Calculate spaces and punctation characters for wraps"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:457
+#: HikariSub/OptionsDialog.cpp:471
 msgid "Calculate spaces and punctation characters for CPS"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:462
+#: HikariSub/OptionsDialog.cpp:476
 msgid "Autoload loading method"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:463
+#: HikariSub/OptionsDialog.cpp:477
 msgid "After open menu"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:463
+#: HikariSub/OptionsDialog.cpp:477
 msgid "After open menu asynchronously"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:463
+#: HikariSub/OptionsDialog.cpp:477
 msgid "After program start"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:463
+#: HikariSub/OptionsDialog.cpp:477
 msgid "After program start asynchronously"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:469
+#: HikariSub/OptionsDialog.cpp:483
 msgid "Folder with external fonts"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:472 HikariSub/VideoToolbar.cpp:509
+#: HikariSub/OptionsDialog.cpp:486 HikariSub/VideoToolbar.cpp:509
 #: HikariSub/VideoToolbar.cpp:527
 msgid "Choose"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:474
+#: HikariSub/OptionsDialog.cpp:488
 msgid "Choose choose external font folder"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:503
+#: HikariSub/OptionsDialog.cpp:517
 msgid "Choose catalog"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:504
+#: HikariSub/OptionsDialog.cpp:518
 msgid "Choose style"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:505
+#: HikariSub/OptionsDialog.cpp:519
 msgid "Choose FPS"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:506
+#: HikariSub/OptionsDialog.cpp:520
 msgid "Time for one letter in milliseconds"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:507
+#: HikariSub/OptionsDialog.cpp:521
 msgid "Tags to paste at the beginning of every ASS line"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:508
+#: HikariSub/OptionsDialog.cpp:522
 msgid "Resolution when converting to ASS"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:538
+#: HikariSub/OptionsDialog.cpp:552
 msgid "catalog for style"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:538
+#: HikariSub/OptionsDialog.cpp:552
 msgid "style"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:539
+#: HikariSub/OptionsDialog.cpp:553
 #, c-format
 msgid ""
 "The selected %s for conversion does not exist\n"
 "and will be changed to the default"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:568
+#: HikariSub/OptionsDialog.cpp:582
 msgid "FPS from video"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:569
+#: HikariSub/OptionsDialog.cpp:583
 msgid "New end times"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:569
+#: HikariSub/OptionsDialog.cpp:583
 msgid "Show window before conversion"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:604
+#: HikariSub/OptionsDialog.cpp:618
 msgid "Left mouse button pauses video"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:604
+#: HikariSub/OptionsDialog.cpp:618
 msgid "Open video from context menu on full screen"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:605
+#: HikariSub/OptionsDialog.cpp:619
 msgid "Convert video colours on the GPU (requires reloading)"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:605
+#: HikariSub/OptionsDialog.cpp:619
 msgid "Open video with time of active line"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:606
+#: HikariSub/OptionsDialog.cpp:620
 msgid "Preferred audio (separated by semicolons)"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:607
+#: HikariSub/OptionsDialog.cpp:621
 msgid "FFMS2 video seeking method (requires reloading)"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:607
+#: HikariSub/OptionsDialog.cpp:621
 msgid "Subtitle display filter"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:608
+#: HikariSub/OptionsDialog.cpp:622
 msgid "Start video zoom in percent."
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:627
+#: HikariSub/OptionsDialog.cpp:641
 msgid "Linear"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:627 HikariSub/ScriptInfo.cpp:144
+#: HikariSub/OptionsDialog.cpp:641 HikariSub/ScriptInfo.cpp:144
 msgid "Normal"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:628
+#: HikariSub/OptionsDialog.cpp:642
 msgid "Aggressive (fast in rewind)"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:628
+#: HikariSub/OptionsDialog.cpp:642
 msgid "Unsafe (always fast)"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:670
+#: HikariSub/OptionsDialog.cpp:686
 msgid "Choose filtering"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:671
+#: HikariSub/OptionsDialog.cpp:687
 msgid "Global shortcuts"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:671
+#: HikariSub/OptionsDialog.cpp:687
 msgid "Set shortcuts"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:672
+#: HikariSub/OptionsDialog.cpp:688
 msgid "Audio Shortcuts"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:672
+#: HikariSub/OptionsDialog.cpp:688
 msgid "Editor shortcuts"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:672
+#: HikariSub/OptionsDialog.cpp:688
 msgid "Subtitle shortcuts"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:672
+#: HikariSub/OptionsDialog.cpp:688
 msgid "Video shortcuts"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:675
+#: HikariSub/OptionsDialog.cpp:691
 msgid "Filtering mode:"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:686
+#: HikariSub/OptionsDialog.cpp:702
 msgid "Function"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:701
+#: HikariSub/OptionsDialog.cpp:717
 msgid "Restore default hotkey"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:724
+#: HikariSub/OptionsDialog.cpp:740
 msgid "Show background selection"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:724
+#: HikariSub/OptionsDialog.cpp:740
 msgid "Show seconds markers"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:724
+#: HikariSub/OptionsDialog.cpp:740
 msgid "Show time next to cursor"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:725
+#: HikariSub/OptionsDialog.cpp:741
 msgid "Follow audio during playback"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:725
+#: HikariSub/OptionsDialog.cpp:741
 msgid "Show keyframes"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:725
+#: HikariSub/OptionsDialog.cpp:741
 msgid "Show video position"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:726
+#: HikariSub/OptionsDialog.cpp:742
 msgid "Activate the audio when hover"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:726
+#: HikariSub/OptionsDialog.cpp:742
 msgid "Snap to keyframe"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:726
+#: HikariSub/OptionsDialog.cpp:742
 msgid "Snap to other lines"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:727
+#: HikariSub/OptionsDialog.cpp:743
 msgid "Do not play audio after changing the line"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:727
+#: HikariSub/OptionsDialog.cpp:743
 msgid "Merge all the \"n\" with the previous syllable"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:728
+#: HikariSub/OptionsDialog.cpp:744
 msgid "Load audio into RAM"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:728
+#: HikariSub/OptionsDialog.cpp:744
 msgid "Move syllable line after click"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:755
+#: HikariSub/OptionsDialog.cpp:771
 msgid ""
 "Range from 0 to 10000, where 0 turns off\n"
 "removing audio cache files."
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:756
+#: HikariSub/OptionsDialog.cpp:772
 msgid "All visible"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:756
+#: HikariSub/OptionsDialog.cpp:772
 msgid "Before and after the active"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:766
+#: HikariSub/OptionsDialog.cpp:782
 msgid "Audio delay in milliseconds"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:767
+#: HikariSub/OptionsDialog.cpp:783
 msgid "Audio to play before and after the marker in milliseconds"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:768 HikariSub/ShiftTimes.cpp:396
+#: HikariSub/OptionsDialog.cpp:784 HikariSub/ShiftTimes.cpp:396
 msgid "Lead-in"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:768 HikariSub/ShiftTimes.cpp:399
+#: HikariSub/OptionsDialog.cpp:784 HikariSub/ShiftTimes.cpp:399
 msgid "Lead-out"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:770
+#: HikariSub/OptionsDialog.cpp:786
 msgid "Line boundaries thickness"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:771
+#: HikariSub/OptionsDialog.cpp:787
 msgid "Audio cache files limit"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:772
+#: HikariSub/OptionsDialog.cpp:788
 msgid "The way to display inactive lines"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:796
+#: HikariSub/OptionsDialog.cpp:812
 msgid "Inactive window background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:796
+#: HikariSub/OptionsDialog.cpp:812
 msgid "Inactive window text"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:796
+#: HikariSub/OptionsDialog.cpp:812
 msgid "Window background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:796
+#: HikariSub/OptionsDialog.cpp:812
 msgid "Window text"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:797
+#: HikariSub/OptionsDialog.cpp:813
 msgid "Inactive window border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:797
+#: HikariSub/OptionsDialog.cpp:813
 msgid "Window border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:797
+#: HikariSub/OptionsDialog.cpp:813
 msgid "Window border background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:798
+#: HikariSub/OptionsDialog.cpp:814
 msgid "Inactive window border background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:798
+#: HikariSub/OptionsDialog.cpp:814
 msgid "Inactive window header text"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:798
+#: HikariSub/OptionsDialog.cpp:814
 msgid "Window header text"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:799
+#: HikariSub/OptionsDialog.cpp:815
 msgid "Window invaded element header"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:799
+#: HikariSub/OptionsDialog.cpp:815
 msgid "Window pressed element header"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:800
+#: HikariSub/OptionsDialog.cpp:816
 msgid "Window closing upon hover"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:800
+#: HikariSub/OptionsDialog.cpp:816
 msgid "Window elements warning"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:800
+#: HikariSub/OptionsDialog.cpp:816
 msgid "Window pressed closing"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:802
+#: HikariSub/OptionsDialog.cpp:818
 msgid "Subtitle background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:802
+#: HikariSub/OptionsDialog.cpp:818
 msgid "Subtitle comment background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:802
+#: HikariSub/OptionsDialog.cpp:818
 msgid "Subtitle dialogue background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:802
+#: HikariSub/OptionsDialog.cpp:818
 msgid "Subtitle text"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:803
+#: HikariSub/OptionsDialog.cpp:819
 msgid "Subtitle lines visible on video"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:803
+#: HikariSub/OptionsDialog.cpp:819
 msgid "Subtitle selection (transparency)"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:804
+#: HikariSub/OptionsDialog.cpp:820
 msgid "Subtitle active line border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:804
+#: HikariSub/OptionsDialog.cpp:820
 msgid "Subtitle colliding lines"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:804
+#: HikariSub/OptionsDialog.cpp:820
 msgid "Subtitle line border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:805
+#: HikariSub/OptionsDialog.cpp:821
 msgid "Subtitle header background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:805
+#: HikariSub/OptionsDialog.cpp:821
 msgid "Subtitle header text"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:806
+#: HikariSub/OptionsDialog.cpp:822
 msgid "Subtitle line label"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:806
+#: HikariSub/OptionsDialog.cpp:822
 msgid "Subtitle modified-line label"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:806
+#: HikariSub/OptionsDialog.cpp:822
 msgid "Subtitle saved-line label"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:807
+#: HikariSub/OptionsDialog.cpp:823
 msgid "Subtitle comparison border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:807
+#: HikariSub/OptionsDialog.cpp:823
 msgid "Subtitle spelling-error background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:807
+#: HikariSub/OptionsDialog.cpp:823
 msgid "Subtitle unconfirmed-line label"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:808
+#: HikariSub/OptionsDialog.cpp:824
 msgid "Subtitle comparison match background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:808
+#: HikariSub/OptionsDialog.cpp:824
 msgid "Subtitle comparison mismatch background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:809
+#: HikariSub/OptionsDialog.cpp:825
 msgid "Subtitle comparison comment match background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:809
+#: HikariSub/OptionsDialog.cpp:825
 msgid "Subtitle comparison comment mismatch background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:811
+#: HikariSub/OptionsDialog.cpp:827
 msgid "Editor tag names"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:811
+#: HikariSub/OptionsDialog.cpp:827
 msgid "Editor tag values"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:811
+#: HikariSub/OptionsDialog.cpp:827
 msgid "Editor text"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:812
+#: HikariSub/OptionsDialog.cpp:828
 msgid "Editor curly braces"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:812
+#: HikariSub/OptionsDialog.cpp:828
 msgid "Editor line splitting and ASS drawings"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:812
+#: HikariSub/OptionsDialog.cpp:828
 msgid "Editor tags operators"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:812
+#: HikariSub/OptionsDialog.cpp:828
 msgid "Editor template variables"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:813
+#: HikariSub/OptionsDialog.cpp:829
 msgid "Editor template code marks"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:813
+#: HikariSub/OptionsDialog.cpp:829
 msgid "Editor template functions"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:813
+#: HikariSub/OptionsDialog.cpp:829
 msgid "Editor template keywords"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:814
+#: HikariSub/OptionsDialog.cpp:830
 msgid "Editor brackets background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:814
+#: HikariSub/OptionsDialog.cpp:830
 msgid "Editor found words selection"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:814
+#: HikariSub/OptionsDialog.cpp:830
 msgid "Editor template strings"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:815
+#: HikariSub/OptionsDialog.cpp:831
 msgid "Editor background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:815
+#: HikariSub/OptionsDialog.cpp:831
 msgid "Editor inactive window selection"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:815
+#: HikariSub/OptionsDialog.cpp:831
 msgid "Editor selection"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:816
+#: HikariSub/OptionsDialog.cpp:832
 msgid "Editor border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:816
+#: HikariSub/OptionsDialog.cpp:832
 msgid "Editor border on focus"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:816
+#: HikariSub/OptionsDialog.cpp:832
 msgid "Editor spelling error background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:818
+#: HikariSub/OptionsDialog.cpp:834
 msgid "Audio background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:818
+#: HikariSub/OptionsDialog.cpp:834
 msgid "Audio end marker"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:818
+#: HikariSub/OptionsDialog.cpp:834
 msgid "Audio start marker"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:818
+#: HikariSub/OptionsDialog.cpp:834
 msgid "Audio time shift marker"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:819
+#: HikariSub/OptionsDialog.cpp:835
 msgid "Audio cursor"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:819
+#: HikariSub/OptionsDialog.cpp:835
 msgid "Audio inactive line marker"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:819
+#: HikariSub/OptionsDialog.cpp:835
 msgid "Audio keyframes"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:819
+#: HikariSub/OptionsDialog.cpp:835
 msgid "Audio seconds boundaries"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:820
+#: HikariSub/OptionsDialog.cpp:836
 msgid "Audio selection"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:820
+#: HikariSub/OptionsDialog.cpp:836
 msgid "Audio syllable marker"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:820
+#: HikariSub/OptionsDialog.cpp:836
 msgid "Audio syllable text"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:821
+#: HikariSub/OptionsDialog.cpp:837
 msgid "Audio inactive line background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:821
+#: HikariSub/OptionsDialog.cpp:837
 msgid "Audio the selection after modification"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:821
+#: HikariSub/OptionsDialog.cpp:837
 msgid "Audio waveform"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:822
+#: HikariSub/OptionsDialog.cpp:838
 msgid "Audio Inactive waveform"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:822
+#: HikariSub/OptionsDialog.cpp:838
 msgid "Audio modified waveform"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:822
+#: HikariSub/OptionsDialog.cpp:838
 msgid "Audio selected waveform"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:823
+#: HikariSub/OptionsDialog.cpp:839
 msgid "Audio spectrum"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:823
+#: HikariSub/OptionsDialog.cpp:839
 msgid "Audio spectrum background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:823
+#: HikariSub/OptionsDialog.cpp:839
 msgid "Audio spectrum echo"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:825
+#: HikariSub/OptionsDialog.cpp:841
 msgid "Text field background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:825
+#: HikariSub/OptionsDialog.cpp:841
 msgid "Text field border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:826
+#: HikariSub/OptionsDialog.cpp:842
 msgid "Text field border on focus"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:826
+#: HikariSub/OptionsDialog.cpp:842
 msgid "Text field selection"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:827 HikariSub/OptionsDialog.cpp:897
+#: HikariSub/OptionsDialog.cpp:843 HikariSub/OptionsDialog.cpp:919
 msgid "Text field inactive window selection"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:828
+#: HikariSub/OptionsDialog.cpp:844
 msgid "Button and list background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:828
+#: HikariSub/OptionsDialog.cpp:844
 msgid "Button and list background upon hover"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:829
+#: HikariSub/OptionsDialog.cpp:845
 msgid "Button and list background on focus"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:829
+#: HikariSub/OptionsDialog.cpp:845
 msgid "Button and list pushed background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:830
+#: HikariSub/OptionsDialog.cpp:846
 msgid "Button and list border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:830
+#: HikariSub/OptionsDialog.cpp:846
 msgid "Button and list border upon hover"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:831
+#: HikariSub/OptionsDialog.cpp:847
 msgid "Button and list border of pushed"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:831
+#: HikariSub/OptionsDialog.cpp:847
 msgid "Button and list border on focus"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:832
+#: HikariSub/OptionsDialog.cpp:848
 msgid "Button and list inactive border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:832
+#: HikariSub/OptionsDialog.cpp:848
 msgid "Togglebutton toggled background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:833
+#: HikariSub/OptionsDialog.cpp:849
 msgid "Scroll bar background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:833
+#: HikariSub/OptionsDialog.cpp:849
 msgid "Scroll bar slider"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:833
+#: HikariSub/OptionsDialog.cpp:849
 msgid "Togglebutton toggled border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:834
+#: HikariSub/OptionsDialog.cpp:850
 msgid "Scroll bar pushed slider"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:834
+#: HikariSub/OptionsDialog.cpp:850
 msgid "Scroll bar slider upon hover"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:835
+#: HikariSub/OptionsDialog.cpp:851
 msgid "Static list background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:835
+#: HikariSub/OptionsDialog.cpp:851
 msgid "Static list border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:835
+#: HikariSub/OptionsDialog.cpp:851
 msgid "Staticbox border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:836
+#: HikariSub/OptionsDialog.cpp:852
 msgid "Static list header background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:836
+#: HikariSub/OptionsDialog.cpp:852
 msgid "Static list header text"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:836
+#: HikariSub/OptionsDialog.cpp:852
 msgid "Static list selection"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:837
+#: HikariSub/OptionsDialog.cpp:853
 msgid "Status bar border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:839
+#: HikariSub/OptionsDialog.cpp:855
 msgid "Menu bar background 1"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:839
+#: HikariSub/OptionsDialog.cpp:855
 msgid "Menu bar background 2"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:839
+#: HikariSub/OptionsDialog.cpp:855
 msgid "Menu bar selection border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:840
+#: HikariSub/OptionsDialog.cpp:856
 msgid "Menu bar selection clicked bacground"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:840
+#: HikariSub/OptionsDialog.cpp:856
 msgid "Menu bar selection hover bacground"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:841
+#: HikariSub/OptionsDialog.cpp:857
 msgid "Menu background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:841
+#: HikariSub/OptionsDialog.cpp:857
 msgid "Menu selection background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:841
+#: HikariSub/OptionsDialog.cpp:857
 msgid "Menu selection border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:843
+#: HikariSub/OptionsDialog.cpp:859
 msgid "Tab active border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:843
+#: HikariSub/OptionsDialog.cpp:859
 msgid "Tab bar background 1"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:843
+#: HikariSub/OptionsDialog.cpp:859
 msgid "Tab bar background 2"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:844
+#: HikariSub/OptionsDialog.cpp:860
 msgid "Tab active background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:844
+#: HikariSub/OptionsDialog.cpp:860
 msgid "Tab inactive background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:844
+#: HikariSub/OptionsDialog.cpp:860
 msgid "Tab inactive border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:845
+#: HikariSub/OptionsDialog.cpp:861
 msgid "Tab background of second visible tab"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:845
+#: HikariSub/OptionsDialog.cpp:861
 msgid "Tab inactive background upon hover"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:846
+#: HikariSub/OptionsDialog.cpp:862
 msgid "Tab active text"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:846
+#: HikariSub/OptionsDialog.cpp:862
 msgid "Tab close upon hover"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:846
+#: HikariSub/OptionsDialog.cpp:862
 msgid "Tab inactive text"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:847
+#: HikariSub/OptionsDialog.cpp:863
 msgid "Tab bar arrow"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:847
+#: HikariSub/OptionsDialog.cpp:863
 msgid "Tab bar arrow background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:848
+#: HikariSub/OptionsDialog.cpp:864
 msgid "Tab bar arrow background upon hover"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:850
+#: HikariSub/OptionsDialog.cpp:866
 msgid "Slider border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:850
+#: HikariSub/OptionsDialog.cpp:866
 msgid "Slider path background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:850
+#: HikariSub/OptionsDialog.cpp:866
 msgid "Slider path border"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:851
+#: HikariSub/OptionsDialog.cpp:867
 msgid "Slider background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:851
+#: HikariSub/OptionsDialog.cpp:867
 msgid "Slider border of pushed"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:851
+#: HikariSub/OptionsDialog.cpp:867
 msgid "Slider border upon hover"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:852
+#: HikariSub/OptionsDialog.cpp:868
 msgid "Slider background of pushed"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:852
+#: HikariSub/OptionsDialog.cpp:868
 msgid "Slider background upon hover"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:854
+#: HikariSub/OptionsDialog.cpp:870
 msgid "Finding result file name background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:854
+#: HikariSub/OptionsDialog.cpp:870
 msgid "Finding result file name foreground"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:854
+#: HikariSub/OptionsDialog.cpp:870
 msgid "Resize line dots"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:855
+#: HikariSub/OptionsDialog.cpp:871
 msgid "Finding result found phrase background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:855
+#: HikariSub/OptionsDialog.cpp:871
 msgid "Finding result found phrase foreground"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:857
+#: HikariSub/OptionsDialog.cpp:873
 msgid "First color of style preview background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:857
+#: HikariSub/OptionsDialog.cpp:873
 msgid "Second color of style preview background"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:882
+#: HikariSub/OptionsDialog.cpp:904
 msgid "Theme name:"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:884
+#: HikariSub/OptionsDialog.cpp:906
 msgid ""
 "Name of the copied theme.\n"
 "Default themes, DarkSentro and LightSentro,\n"
 "cannot be edited and must be copied."
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:885 HikariSub/SelectLines.cpp:123
+#: HikariSub/OptionsDialog.cpp:907 HikariSub/SelectLines.cpp:123
 #: HikariSub/stylestore.cpp:88 HikariSub/stylestore.cpp:141
 msgid "Copy"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:894
+#: HikariSub/OptionsDialog.cpp:916
 msgid ""
 "Warning! Transparency works only on the audio spectrum,\n"
 "text field, and subtitle grid."
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:904
+#: HikariSub/OptionsDialog.cpp:926
 msgid "Name"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:905
+#: HikariSub/OptionsDialog.cpp:927
 msgid "Color"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:1011
+#: HikariSub/OptionsDialog.cpp:1032
 msgid "Deselect all"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:1011
+#: HikariSub/OptionsDialog.cpp:1032
 msgid "Select all"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:1027 HikariSub/OptionsDialog.cpp:1030
+#: HikariSub/OptionsDialog.cpp:1049 HikariSub/OptionsDialog.cpp:1052
 msgid "Advanced"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:1031
+#: HikariSub/OptionsDialog.cpp:1053
 msgid "Themes"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:1032
+#: HikariSub/OptionsDialog.cpp:1054
 msgid "Hotkeys"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:1034
+#: HikariSub/OptionsDialog.cpp:1056
 msgid "Associations"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:1036
+#: HikariSub/OptionsDialog.cpp:1058
 msgid "Subtitle properties"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:1045
+#: HikariSub/OptionsDialog.cpp:1067
 msgid "Set default"
 msgstr ""
 
@@ -5129,7 +5140,7 @@ msgstr ""
 
 #: HikariSub/RendererDirectShow.cpp:233 HikariSub/RendererDirectShow.cpp:245
 #: HikariSub/RendererDirectShow.cpp:247 HikariSub/RendererDirectShow.cpp:807
-#: HikariSub/RendererFFMS2.cpp:196
+#: HikariSub/RendererFFMS2.cpp:290
 msgid "Cannot lock texture buffer"
 msgstr ""
 
@@ -5137,12 +5148,12 @@ msgstr ""
 msgid "Cannot unlock subtitle texture buffer"
 msgstr ""
 
-#: HikariSub/RendererDirectShow.cpp:304 HikariSub/RendererFFMS2.cpp:231
+#: HikariSub/RendererDirectShow.cpp:304 HikariSub/RendererFFMS2.cpp:325
 msgid "Cannot unlock texture buffer"
 msgstr ""
 
-#: HikariSub/RendererDirectShow.cpp:798 HikariSub/RendererFFMS2.cpp:383
-#: HikariSub/RendererFFMS2.cpp:842
+#: HikariSub/RendererDirectShow.cpp:798 HikariSub/RendererFFMS2.cpp:477
+#: HikariSub/RendererFFMS2.cpp:950
 msgid "Cannot overlay surfaces"
 msgstr ""
 
@@ -5151,24 +5162,24 @@ msgstr ""
 msgid "Chapter %i"
 msgstr ""
 
-#: HikariSub/RendererGStreamer.cpp:196
+#: HikariSub/RendererGStreamer.cpp:193
 msgid "Video file does not contain a video stream"
 msgstr ""
 
-#: HikariSub/RendererGStreamer.cpp:278
+#: HikariSub/RendererGStreamer.cpp:267
 msgid "Cannot create GStreamer pipeline (playbin)"
 msgstr ""
 
-#: HikariSub/RendererGStreamer.cpp:308
+#: HikariSub/RendererGStreamer.cpp:297
 msgid "Cannot create GStreamer video display module"
 msgstr ""
 
-#: HikariSub/RendererGStreamer.cpp:340
+#: HikariSub/RendererGStreamer.cpp:329
 #, c-format
 msgid "Cannot open video file: %s"
 msgstr ""
 
-#: HikariSub/RendererGStreamer.cpp:681
+#: HikariSub/RendererGStreamer.cpp:665
 #, c-format
 msgid "Track %i"
 msgstr ""
@@ -5592,18 +5603,18 @@ msgstr ""
 msgid "Do you want to remove profile of name \"%s\""
 msgstr ""
 
-#: HikariSub/SpellChecker.cpp:122
+#: HikariSub/SpellChecker.cpp:124
 #, c-format
 msgid ""
 "No dictionary files were found in the \"%s\\Dictionary\" folder.\n"
 "Spell checking will be disabled"
 msgstr ""
 
-#: HikariSub/SpellChecker.cpp:130
+#: HikariSub/SpellChecker.cpp:132
 msgid "Unable to read the dictionary conversion format."
 msgstr ""
 
-#: HikariSub/SpellChecker.cpp:154
+#: HikariSub/SpellChecker.cpp:156
 msgid "Failed to initialize spell checker."
 msgstr ""
 
@@ -5877,18 +5888,18 @@ msgstr ""
 msgid "Rectangular border"
 msgstr ""
 
-#: HikariSub/StyleChange.cpp:716 HikariSub/SubsGrid.cpp:552
-#: HikariSub/SubsGrid.cpp:721
+#: HikariSub/StyleChange.cpp:716 HikariSub/SubsGrid.cpp:553
+#: HikariSub/SubsGrid.cpp:722
 msgid "Right margin"
 msgstr ""
 
-#: HikariSub/StyleChange.cpp:717 HikariSub/SubsGrid.cpp:551
-#: HikariSub/SubsGrid.cpp:720
+#: HikariSub/StyleChange.cpp:717 HikariSub/SubsGrid.cpp:552
+#: HikariSub/SubsGrid.cpp:721
 msgid "Left margin"
 msgstr ""
 
-#: HikariSub/StyleChange.cpp:718 HikariSub/SubsGrid.cpp:553
-#: HikariSub/SubsGrid.cpp:722
+#: HikariSub/StyleChange.cpp:718 HikariSub/SubsGrid.cpp:554
+#: HikariSub/SubsGrid.cpp:723
 msgid "Vertical margin"
 msgstr ""
 
@@ -6164,7 +6175,7 @@ msgstr ""
 msgid "Automation script"
 msgstr ""
 
-#: HikariSub/SubsFile.cpp:251 HikariSub/SubsGrid.cpp:273
+#: HikariSub/SubsFile.cpp:251 HikariSub/SubsGrid.cpp:274
 msgid "Filtering"
 msgstr ""
 
@@ -6192,112 +6203,112 @@ msgstr[1] ""
 msgid ", active line %i"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:200
+#: HikariSub/SubsGrid.cpp:201
 msgid "Hide line wraps"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:228
+#: HikariSub/SubsGrid.cpp:229
 msgid "Do not include selected lines"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:242
+#: HikariSub/SubsGrid.cpp:243
 msgid "Insert &before"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:243
+#: HikariSub/SubsGrid.cpp:244
 msgid "Insert &after"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:245
+#: HikariSub/SubsGrid.cpp:246
 msgid "Insert before with &video time"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:246
+#: HikariSub/SubsGrid.cpp:247
 msgid "Insert &after with video time"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:249
+#: HikariSub/SubsGrid.cpp:250
 msgid "Insert lines"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:251
+#: HikariSub/SubsGrid.cpp:252
 msgid "&Duplicate lines"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:253
+#: HikariSub/SubsGrid.cpp:254
 msgid "&Swap"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:255
+#: HikariSub/SubsGrid.cpp:256
 msgid "Join &lines"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:264
+#: HikariSub/SubsGrid.cpp:265
 msgid "Split lines"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:266
+#: HikariSub/SubsGrid.cpp:267
 msgid "Copy\tCtrl-C"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:267
+#: HikariSub/SubsGrid.cpp:268
 msgid "Cut\tCtrl-X"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:268
+#: HikariSub/SubsGrid.cpp:269
 msgid "Paste\tCtrl-V"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:271
+#: HikariSub/SubsGrid.cpp:272
 msgid "Hide columns"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:289
+#: HikariSub/SubsGrid.cpp:290
 msgid "Load subtitles from an MKV/OGM file"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:315
+#: HikariSub/SubsGrid.cpp:316
 msgid "Add lines"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:316
+#: HikariSub/SubsGrid.cpp:317
 msgid "Copy tree"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:317
+#: HikariSub/SubsGrid.cpp:318
 msgid "Change description"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:318
+#: HikariSub/SubsGrid.cpp:319
 msgid "Select tree lines"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:556
+#: HikariSub/SubsGrid.cpp:557
 msgid "Text into original"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:557
+#: HikariSub/SubsGrid.cpp:558
 msgid "Text into translation"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:725
+#: HikariSub/SubsGrid.cpp:726
 msgid "Text without tags"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:1011
+#: HikariSub/SubsGrid.cpp:1012
 msgid "Subtitle files (*.ass),(*.srt),(*.sub),(*.txt)|*.ass;*.srt;*.sub;*.txt"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:1216
+#: HikariSub/SubsGrid.cpp:1217
 msgid "Save the file before loading subtitles from the MKV?"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:1256
+#: HikariSub/SubsGrid.cpp:1257
 msgid "Failed to open subtitles"
 msgstr ""
 
-#: HikariSub/SubsGrid.cpp:1391 HikariSub/SubsGrid.cpp:1421
-#: HikariSub/SubsGrid.cpp:1441
+#: HikariSub/SubsGrid.cpp:1392 HikariSub/SubsGrid.cpp:1422
+#: HikariSub/SubsGrid.cpp:1442
 #, c-format
 msgid ""
 "In line %i, value '%s' cannot be scaled\n"
@@ -6541,27 +6552,31 @@ msgstr ""
 msgid "Disable warning"
 msgstr ""
 
-#: HikariSub/SubtitlesLibass.cpp:170
+#: HikariSub/SubtitlesLibass.cpp:175
 msgid "Libass works only with FFMS2"
 msgstr ""
 
-#: HikariSub/SubtitlesLibass.cpp:181
+#: HikariSub/SubtitlesLibass.cpp:186
 msgid "Libass only opens ASS and SSA subtitles"
 msgstr ""
 
-#: HikariSub/SubtitlesLibass.cpp:230
+#: HikariSub/SubtitlesLibass.cpp:235
 msgid "Cannot open subtitles in Libass"
 msgstr ""
 
-#: HikariSub/SubtitlesVSFilter.cpp:190
+#: HikariSub/SubtitlesProviderManager.cpp:72
+msgid "VSFilterMod (slow, only for VSFilterMod tags)"
+msgstr ""
+
+#: HikariSub/SubtitlesVSFilter.cpp:209
 msgid "Cannot initialize CSRI."
 msgstr ""
 
-#: HikariSub/SubtitlesVSFilter.cpp:199
+#: HikariSub/SubtitlesVSFilter.cpp:218
 msgid "Cannot create CSRI instance."
 msgstr ""
 
-#: HikariSub/SubtitlesVSFilter.cpp:208 HikariSub/SubtitlesVSFilter.cpp:313
+#: HikariSub/SubtitlesVSFilter.cpp:223 HikariSub/SubtitlesVSFilter.cpp:326
 msgid "CSRI does not support this format."
 msgstr ""
 
@@ -6623,17 +6638,17 @@ msgid ""
 "Translation - text pasted into subtitles with correct timing."
 msgstr ""
 
-#: HikariSub/TabPanel.cpp:345
+#: HikariSub/TabPanel.cpp:351
 msgid ""
 "Subtitles were modified by another program.\n"
 "Reload and discard the unsaved changes in this tab?"
 msgstr ""
 
-#: HikariSub/TabPanel.cpp:346 HikariSub/TabPanel.cpp:347
+#: HikariSub/TabPanel.cpp:352 HikariSub/TabPanel.cpp:353
 msgid "Reloading"
 msgstr ""
 
-#: HikariSub/TabPanel.cpp:347
+#: HikariSub/TabPanel.cpp:353
 msgid "Subtitles were modified by another program. Reload?"
 msgstr ""
 
@@ -6950,123 +6965,347 @@ msgstr ""
 msgid "Toolbar alignment"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:107
+#: HikariSub/UpdateChecker.cpp:172
 #, c-format
 msgid ""
 "You have the latest stable version. A newer prerelease, %s, is available."
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:108 HikariSub/UpdateChecker.cpp:273
-#: HikariSub/UpdateChecker.cpp:313 HikariSub/UpdateChecker.cpp:331
+#: HikariSub/UpdateChecker.cpp:173 HikariSub/UpdateChecker.cpp:693
+#: HikariSub/UpdateChecker.cpp:700 HikariSub/UpdateChecker.cpp:771
+#: HikariSub/UpdateInstaller.cpp:271 HikariSub/UpdateInstaller.cpp:840
+#: HikariSub/UpdateInstaller.cpp:867 HikariSub/UpdateInstaller.cpp:1055
+#: HikariSub/UpdateInstaller.cpp:1319 HikariSub/UpdateInstaller.cpp:1328
+#: HikariSub/UpdateInstaller.cpp:1365 HikariSub/UpdateInstaller.cpp:1397
 msgid "Update"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:109 HikariSub/UpdateChecker.cpp:152
+#: HikariSub/UpdateChecker.cpp:174 HikariSub/UpdateChecker.cpp:250
 msgid "Open the download page"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:119
+#: HikariSub/UpdateChecker.cpp:203 HikariSub/UpdateChecker.cpp:341
+#: HikariSub/UpdateChecker.cpp:345
 msgid "A new version is available"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:129
+#: HikariSub/UpdateChecker.cpp:215
 #, c-format
 msgid "You have version %s; version %s is available"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:153
+#: HikariSub/UpdateChecker.cpp:220
+#, c-format
+msgid "It needs %s or newer, so it cannot be installed here."
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:250
+msgid "Download and install"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:251 HikariSub/UpdateChecker.cpp:358
 msgid "Remind me in a week"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:273 HikariSub/UpdateChecker.cpp:331
+#: HikariSub/UpdateChecker.cpp:300
+msgid "Downloading..."
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:306
+#, c-format
+msgid "Downloading... %d%%"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:316 HikariSub/UpdateInstaller.cpp:415
+#: HikariSub/UpdateInstaller.cpp:420 HikariSub/UpdateInstaller.cpp:569
+msgid "Cannot download the update"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:350
+#, c-format
+msgid ""
+"HikariSub %s is a prerelease. The AUR package carries stable versions only. "
+"To try it, use the AppImage from the release page."
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:352
+#, c-format
+msgid ""
+"HikariSub %s is available; you have %s. You installed HikariSub from the "
+"AUR, so update it with your package manager or AUR helper, for example yay "
+"-Syu or paru -Syu."
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:357 HikariSub/UpdateInstaller.cpp:331
+msgid "What's new"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:693 HikariSub/UpdateChecker.cpp:771
 msgid "Cannot check for updates"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:313
+#: HikariSub/UpdateChecker.cpp:700
 msgid "You already have the latest version"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:275
+#, c-format
+msgid ""
+"HikariSub %s has been downloaded, but this system has no pkexec to ask for "
+"your password, so it cannot be installed from here.\n"
+"Update downloaded: %s"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:278
+msgid "Show in folder"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:279
+msgid "Copy install command"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:319
+msgid "Update ready"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:322
+#, c-format
+msgid "HikariSub %s is ready to install"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:326
+msgid ""
+"Restart now to install it, or it is installed when you next quit HikariSub."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:329
+msgid "Restart now"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:330
+msgid "Later"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:394
+msgid "The update cannot be saved: there is no writable folder for it."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:409 HikariSub/UpdateInstaller.cpp:590
+#: HikariSub/UpdateInstaller.cpp:609
+msgid "The update cannot be saved: the folder is not writable."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:488 HikariSub/UpdateInstaller.cpp:557
+msgid "The update took too long to download"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:560
+msgid "The update cannot be saved: the disk may be full."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:563
+msgid "The update came from somewhere other than GitHub, and was refused."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:566
+msgid "The update is larger than its release says, and was refused."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:582
+msgid "The downloaded update does not match its release, and was deleted."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:817
+msgid "The update was refused: the installer does not match its release."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:819
+#, c-format
+msgid ""
+"HikariSub %s could not be checked against its release on GitHub, so it was "
+"not installed. It is tried again at the next quit."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:822 HikariSub/UpdateInstaller.cpp:1040
+msgid "The update could not be handed to the installer."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:824 HikariSub/UpdateInstaller.cpp:1437
+#, c-format
+msgid ""
+"The installer of HikariSub %s could not be started. You can run it yourself: "
+"%s"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:842
+msgid "Checking the update..."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1020
+#, c-format
+msgid "HikariSub %s did not start, so HikariSub %s was put back."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1022
+#, c-format
+msgid ""
+"HikariSub %s did not start. The previous version is %s; rename it back to "
+"use it."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1033
+msgid "The update was refused: the package does not match its release."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1035
+#, c-format
+msgid ""
+"The package manager could not install the update. You can install it "
+"yourself: %s"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1038
+msgid ""
+"The package manager was busy with another installation. The update is "
+"installed at the next quit."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1042
+#, c-format
+msgid ""
+"The update could not be checked against its release on GitHub, so it was not "
+"installed. You can install it yourself: %s"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1045
+#, c-format
+msgid "The update could not be installed (code %d)."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1057
+msgid "Installing update..."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1081
+#, c-format
+msgid ""
+"No password prompt could be shown to install HikariSub %s. Install it "
+"yourself: %s"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1317
+#, c-format
+msgid "HikariSub %s could not be installed (code %d)."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1327
+#, c-format
+msgid ""
+"HikariSub %s was not installed: its installer did not finish. If another "
+"administrator account approved it, that account was told why."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1391
+#, c-format
+msgid ""
+"The download of HikariSub %s changed or went missing, so it was not "
+"installed. It is downloaded again at the next check."
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1431
+#, c-format
+msgid ""
+"HikariSub is installed for all users in a folder that can be changed without "
+"administrator rights, so HikariSub %s was not installed automatically. You "
+"can run its installer yourself: %s"
+msgstr ""
+
+#: HikariSub/UpdateInstaller.cpp:1448 HikariSub/UpdateInstaller.cpp:1506
+#, c-format
+msgid "HikariSub %s could not replace the AppImage. The download is at %s."
 msgstr ""
 
 #: HikariSub/UtilsWindows.cpp:63
 msgid "Unable to retrieve information about the monitor"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:112 HikariSub/VideoBox.cpp:126
+#: HikariSub/VideoBox.cpp:113 HikariSub/VideoBox.cpp:127
 #, c-format
 msgid "Aspect ratio: %5.3f"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:345
+#: HikariSub/VideoBox.cpp:346
 msgid ""
 "The file is not a valid video file or is corrupted,\n"
 "or codecs or a splitter may be missing"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:909
+#: HikariSub/VideoBox.cpp:921
 msgid "Are you sure you want to index the previous video?"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:921
+#: HikariSub/VideoBox.cpp:933
 msgid "Are you sure you want to index the next video?"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:943
+#: HikariSub/VideoBox.cpp:955
 msgid "Pause"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:946
+#: HikariSub/VideoBox.cpp:958
 msgid "Copy video position"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:951
+#: HikariSub/VideoBox.cpp:963
 msgid "Full screen\tF"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:952
+#: HikariSub/VideoBox.cpp:964
 msgid "Exit full screen\tEscape"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:960
+#: HikariSub/VideoBox.cpp:972
 #, c-format
 msgid "Switch full screen to monitor %i"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:961
+#: HikariSub/VideoBox.cpp:973
 #, c-format
 msgid "Open in full screen on monitor %i"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:965
+#: HikariSub/VideoBox.cpp:977
 msgid "Open editor"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:1007
+#: HikariSub/VideoBox.cpp:1019
 msgid "Filters"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:1007
+#: HikariSub/VideoBox.cpp:1019
 msgid "Shows used filters"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:1096
+#: HikariSub/VideoBox.cpp:1108
 msgid "Are you sure you want to move loaded video to recycle bin?"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:1096
+#: HikariSub/VideoBox.cpp:1108
 msgid "Deleting"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:1109
+#: HikariSub/VideoBox.cpp:1121
 msgid ""
 "Video files(*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),"
 "(*.3gp),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.3gp;*.avs|"
 "All files (*.*)|*.*"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:1124
+#: HikariSub/VideoBox.cpp:1136
 msgid "Subtitle files (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt"
 msgstr ""
 
-#: HikariSub/VideoBox.cpp:1779
+#: HikariSub/VideoBox.cpp:1791
 msgid "Invalid keyframes format"
 msgstr ""
 
@@ -7621,7 +7860,7 @@ msgstr ""
 msgid "Field \"shape\" cannot be empty."
 msgstr ""
 
-#: HikariSub/VisualMove.cpp:465
+#: HikariSub/VisualMove.cpp:476
 msgid "Video must be set at least one frame after the line's start time"
 msgstr ""
 
@@ -7629,30 +7868,30 @@ msgstr ""
 msgid "Cannot set matrix projection"
 msgstr ""
 
-#: HikariSub/VisualRotationZ.cpp:490 HikariSub/VisualScale.cpp:771
+#: HikariSub/VisualRotationZ.cpp:490 HikariSub/VisualScale.cpp:776
 msgid "Cannot read clip rectangle values."
 msgstr ""
 
-#: HikariSub/Visuals.cpp:485 HikariSub/Visuals.cpp:543
+#: HikariSub/Visuals.cpp:486 HikariSub/Visuals.cpp:544
 msgid ""
 "Visual editing tools\n"
 "do not work on comments"
 msgstr ""
 
-#: HikariSub/Visuals.cpp:486 HikariSub/Visuals.cpp:544
+#: HikariSub/Visuals.cpp:487 HikariSub/Visuals.cpp:545
 msgid ""
 "Line is not visible on video\n"
 "or has zero duration"
 msgstr ""
 
-#: HikariSub/config.cpp:648
+#: HikariSub/config.cpp:745
 #, c-format
 msgid ""
 "Some colors were absent from theme \"%s\" and were loaded from the default "
 "theme."
 msgstr ""
 
-#: HikariSub/config.cpp:658
+#: HikariSub/config.cpp:755
 msgid "Cannot load theme, reset to default"
 msgstr ""
 
@@ -7821,39 +8060,39 @@ msgstr ""
 msgid "Remove nonexistent styles"
 msgstr ""
 
-#: HikariSub/hikarisubApp.cpp:243 HikariSub/hikarisubApp.cpp:252
+#: HikariSub/hikarisubApp.cpp:264 HikariSub/hikarisubApp.cpp:273
 msgid "Not enough RAM. History partially deleted"
 msgstr ""
 
-#: HikariSub/hikarisubApp.cpp:334
+#: HikariSub/hikarisubApp.cpp:536
 msgid ""
 "Cannot read settings.\n"
 "The program will be terminated."
 msgstr ""
 
-#: HikariSub/hikarisubApp.cpp:361
+#: HikariSub/hikarisubApp.cpp:563
 msgid "Cannot find language, language change failed"
 msgstr ""
 
-#: HikariSub/hikarisubApp.cpp:366
+#: HikariSub/hikarisubApp.cpp:568
 msgid "wxLocale cannot initialize, language change failed"
 msgstr ""
 
-#: HikariSub/hikarisubApp.cpp:379
+#: HikariSub/hikarisubApp.cpp:581
 msgid "Cannot find translation, language change failed"
 msgstr ""
 
-#: HikariSub/hikarisubApp.cpp:404
+#: HikariSub/hikarisubApp.cpp:606
 msgid ""
 "Cannot read hotkeys.\n"
 "The program will be terminated."
 msgstr ""
 
-#: HikariSub/hikarisubApp.cpp:532
+#: HikariSub/hikarisubApp.cpp:734
 msgid "Load last session?"
 msgstr ""
 
-#: HikariSub/hikarisubApp.cpp:538
+#: HikariSub/hikarisubApp.cpp:740
 msgid ""
 "The program crashed or was closed improperly.\n"
 "Load the last session with the latest autosaved subtitles?"
