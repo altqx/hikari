@@ -24,6 +24,12 @@
 #include <vector>
 #include <set>
 #include <functional>
+#include <memory>
+#include <mutex>
+
+// ScriptAttachments.h needs C++17, and this header is also compiled as C++14
+// (Thirdparty/Build/Loki, through Provider.h)
+class ScriptAttachments;
 
 enum{
 	OPEN_SUBTITLES = 1,
@@ -133,6 +139,10 @@ private:
 	} visibleRows;
 	const VisibleRows &GetVisibleRows();
 	wxString embeddedSections;
+	// made from embeddedSections when first asked for after they change
+	std::shared_ptr<const ScriptAttachments> attachments;
+	bool attachmentsMade = false;
+	std::mutex attachmentsMutex;
 	// the edit box commits while the user types; those steps merge into one
 	bool typing = false;
 	bool lastStepTyping = false;
@@ -270,6 +280,10 @@ public:
 	// [Fonts] and [Graphics] as they were read, written back unchanged after the events
 	const wxString &GetEmbeddedSections() const { return embeddedSections; }
 	void AddEmbeddedSectionLine(const wxString &line);
+	// The fonts and images of [Fonts] and [Graphics], for the renderers;
+	// nullptr without any. The first call after a load adds the fonts to
+	// AttachedFonts. Safe from any thread.
+	std::shared_ptr<const ScriptAttachments> Attachments();
 	void SetFiltered(bool filtered = true);
 	wxString *historyNames = nullptr;
 	wxMutex *historyGuard = nullptr;

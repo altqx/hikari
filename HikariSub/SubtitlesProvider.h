@@ -25,6 +25,7 @@
 #include <string_view>
 #include <thread>
 #include "ParsedScripts.h"
+#include <memory>
 #include <vector>
 
 extern "C" {
@@ -35,7 +36,7 @@ extern "C" {
 #endif
 }
 
-
+class ScriptAttachments;
 
 inline size_t ScriptHash(const wxString &text)
 {
@@ -66,6 +67,8 @@ public:
 	// it ready; takes the text. Only providers that can do it say so.
 	virtual bool CanPrepare() { return false; }
 	void Prepare(wxString *text);
+	// the attachments of the script the next texts come from; nullptr for none
+	virtual void SetAttachments(std::shared_ptr<const ScriptAttachments> attachments) {}
 	//implementation in subtitlesVsfilter
 	static void DestroySubtitlesProvider();
 	static ASS_Renderer *m_Libass;
@@ -109,9 +112,12 @@ public:
 	void SetVideoParameters(const wxSize& size, unsigned char format, bool isSwapped);
 	bool CanPrepare() override { return true; }
 	void ForgetParsedScripts() override;
+	void SetAttachments(std::shared_ptr<const ScriptAttachments> attachments) override;
 protected:
 	void ParseAhead(wxString *text) override;
 private:
+	// the script's [Graphics] go to the renderer after the events of each text
+	std::shared_ptr<const ScriptAttachments> m_Attachments;
 	// VSFilter is not safe to call from two threads at once, so every call takes this
 	static std::recursive_mutex s_CsriMutex;
 	// a parsed instance that accepts the video format, or nullptr; takes the text
@@ -156,6 +162,11 @@ private:
 	ASS_Image* RenderFrame(int time, int* change);
 	// call with openMutex locked; takes the text
 	bool ReadTrack(wxString* text);
+	// call with openMutex locked, libass ready: adds the attached fonts the
+	// library lacks
+	void AddAttachedFonts();
+	// how many of AttachedFonts the library has; guarded by openMutex
+	static size_t s_AttachedFontsAdded;
 	// owns m_AssTrack
 	ParsedScripts<ASS_Track> m_Tracks{ ass_free_track };
 	bool m_HasRendered = false;

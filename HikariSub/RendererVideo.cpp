@@ -620,6 +620,7 @@ void RendererVideo::PrepareWholeSubtitles()
 
 wxString *RendererVideo::WholeSubtitlesText()
 {
+	m_SubsProvider->SetAttachments(tab->grid->file->Attachments());
 	wxString *text = tab->grid->GetVisible(nullptr, nullptr, nullptr, true);
 	if (text && m_Visual && m_Visual->Visual == VECTORCLIP)
 		m_Visual->AppendClipMask(text);
@@ -634,6 +635,11 @@ void RendererVideo::MarkSubtitlesOutdated()
 wxString *RendererVideo::SubtitlesText(int flag, wxString *text)
 {
 	++m_SubsGeneration;
+	// GetVisible's text leaves out the script's [Fonts] and [Graphics]: the
+	// fonts went to the renderers when the script was read, and the
+	// renderer adds the images to the texts it parses
+	if (flag != CLOSE_SUBTITLES)
+		m_SubsProvider->SetAttachments(tab->grid->file->Attachments());
 	switch (flag){
 	case OPEN_DUMMY:
 		text = tab->grid->GetVisible();

@@ -34,6 +34,7 @@ SubtitlesProvider *SubtitlesProviderManager::GetProvider()
 		else
 			SP = new SubtitlesVSFilter();
 		m_IsLibass = SP->IsLibass() ? 1 : 0;
+		SP->SetAttachments(m_Attachments);
 	}
 	return SP;
 }
@@ -168,6 +169,16 @@ void SubtitlesProviderManager::Prepare(wxString *text)
 {
 	std::lock_guard<std::mutex> lock(m_ProviderMutex);
 	GetProvider()->Prepare(text);
+}
+
+void SubtitlesProviderManager::SetAttachments(std::shared_ptr<const ScriptAttachments> attachments)
+{
+	std::lock_guard<std::mutex> lock(m_ProviderMutex);
+	if (attachments == m_Attachments)
+		return;
+	m_Attachments = attachments;
+	if (SP)
+		SP->SetAttachments(std::move(attachments));
 }
 
 bool SubtitlesProviderManager::ReloadLibraries()

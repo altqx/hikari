@@ -16,6 +16,7 @@
 
 
 #include "SubtitlesProvider.h"
+#include "ScriptAttachments.h"
 
 #include "config.h"
 
@@ -182,9 +183,15 @@ void SubtitlesVSFilter::ForgetParsedScripts()
 	m_Instances.Clear();
 }
 
+void SubtitlesVSFilter::SetAttachments(std::shared_ptr<const ScriptAttachments> attachments)
+{
+	std::lock_guard<std::recursive_mutex> lock(s_CsriMutex);
+	m_Attachments = std::move(attachments);
+}
+
 bool SubtitlesVSFilter::OpenCached(wxString *text)
 {
-	size_t hash = ScriptHash(*text);
+	size_t hash = CsriScriptHash(ScriptHash(*text), m_Attachments.get());
 	if (csri_inst *instance = m_Instances.Find(hash)) {
 		// the video format may have changed since it was parsed; if so, parse again
 		if (m_CsriFormat && !csri_request_fmt(instance, m_CsriFormat)) {
@@ -219,7 +226,15 @@ csri_inst *SubtitlesVSFilter::ParseInstance(wxString *text)
 
 	// mb_str() points into text's own conversion cache, so text must outlive it
 	wxScopedCharBuffer buffer = text->mb_str(wxConvUTF8);
-	csri_inst *instance = csri_open_mem(vobsub, buffer, strlen(buffer), nullptr);
+	csri_inst *instance;
+	if (m_Attachments && !m_Attachments->Graphics().empty()) {
+		// VSFilterMod's image tags draw the script's [Graphics]
+		std::string script = CsriScriptText(std::string_view(buffer.data(), strlen(buffer)), m_Attachments.get());
+		instance = csri_open_mem(vobsub, script.data(), script.size(), nullptr);
+	}
+	else {
+		instance = csri_open_mem(vobsub, buffer, strlen(buffer), nullptr);
+	}
 	delete text;
 	if (!instance){
 		HikariLogSilent(_("Cannot create CSRI instance."));
@@ -238,6 +253,7 @@ void SubtitlesVSFilter::ParseAhead(wxString *text)
 {
 	size_t hash = ScriptHash(*text);
 	std::lock_guard<std::recursive_mutex> lock(s_CsriMutex);
+	hash = CsriScriptHash(hash, m_Attachments.get());
 	if (!m_HasParameters || !m_CsriFormat || m_Instances.Find(hash)) {
 		delete text;
 		return;

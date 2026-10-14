@@ -19,6 +19,7 @@
 #include "wx/window.h"
 #include "wx/gdicmn.h"
 #include <atomic>
+#include <memory>
 #include <mutex>
 #include <vector>
 
@@ -33,6 +34,7 @@ enum
 };
 
 class SubtitlesProvider;
+class ScriptAttachments;
 class TabPanel;
 
 // Its methods may be called from any thread: the subtitle thread draws
@@ -60,6 +62,9 @@ public:
 	bool CanPrepare();
 	// see SubtitlesProvider::Prepare; takes the text
 	void Prepare(wxString *text);
+	// the attachments of the script the next texts come from, which a
+	// renderer made later gets too
+	void SetAttachments(std::shared_ptr<const ScriptAttachments> attachments);
 	// after a change in the fonts folders; see FontsReloadFor. True when the
 	// subtitles open again by themselves, false when the caller reopens them
 	static bool ReloadLibraries();
@@ -80,6 +85,7 @@ private:
 	// into it; taken after any lock of the renderer
 	std::mutex m_ProviderMutex;
 	SubtitlesProvider *SP = nullptr;
+	std::shared_ptr<const ScriptAttachments> m_Attachments;
 	std::atomic<bool> m_ShowsWholeSubtitles = false;
 	// whether the renderer last created is libass, -1 before one is; read
 	// without the lock, as by the thread showing frames while the one

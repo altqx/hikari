@@ -17,6 +17,7 @@
 
 
 #include "SubtitlesProvider.h"
+#include "ScriptAttachments.h"
 #include "RendererVideo.h"
 #include "OpennWrite.h"
 #include "HikariSubFrame.h"
@@ -34,6 +35,7 @@
 std::atomic<bool> SubtitlesLibass::m_IsReady{ false };
 SubtitlesLibass* SubtitlesLibass::m_LastRenderer = nullptr;
 std::vector<SubtitlesLibass*> SubtitlesLibass::s_Instances;
+size_t SubtitlesLibass::s_AttachedFontsAdded = 0;
 wxMutex SubtitlesLibass::openMutex;
 
 void MessageCallback(int level, const char *fmt, va_list args, void *) {
@@ -189,9 +191,21 @@ bool SubtitlesLibass::Open(wxString *text)
 	return true;
 }
 
+void SubtitlesLibass::AddAttachedFonts()
+{
+	// libass reads no font from a track (no ass_set_extract_fonts, which would
+	// add them again with every parse); the renderer takes up fonts added to
+	// its library at its next frame
+	s_AttachedFontsAdded = AttachedFonts::AddSince(s_AttachedFontsAdded, [](const AttachedFont &font) {
+		ass_add_font(m_Library, const_cast<char *>(font.name.c_str()),
+			const_cast<char *>((const char *)font.data->data()), (int)font.data->size());
+	});
+}
+
 bool SubtitlesLibass::ReadTrack(wxString *text)
 {
 	m_HasRendered = false;
+	AddAttachedFonts();
 	size_t hash = ScriptHash(*text);
 	m_AssTrack = m_Tracks.Find(hash);
 	if (m_AssTrack) {
@@ -215,6 +229,7 @@ void SubtitlesLibass::ParseAhead(wxString *text)
 		wxScopedCharBuffer buffer = text->mb_str(wxConvUTF8);
 		wxMutexLocker lock(openMutex);
 		if (m_IsReady && m_Library && !m_Tracks.Find(hash)) {
+			AddAttachedFonts();
 			if (ASS_Track *track = ass_read_memory(m_Library, buffer.data(), strlen(buffer), nullptr))
 				m_Tracks.Add(hash, track, m_AssTrack);
 		}
@@ -276,6 +291,8 @@ void SubtitlesLibass::ReloadLibraries(bool destroyExisted)
 			ass_library_done(m_Library);
 			m_Library = nullptr;
 		}
+		// the next library is given every attached font again
+		s_AttachedFontsAdded = 0;
 	}
 	if (!m_Library) {
 		m_IsReady.store(false);

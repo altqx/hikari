@@ -421,6 +421,9 @@
     <ClCompile Include="SubtitlesLibass.cpp">
       <Filter>S</Filter>
     </ClCompile>
+    <ClCompile Include="ScriptAttachments.cpp">
+      <Filter>S</Filter>
+    </ClCompile>
     <ClCompile Include="SubtitlesProviderChoice.cpp">
       <Filter>S</Filter>
     </ClCompile>
@@ -904,6 +907,9 @@
       <Filter>S</Filter>
     </ClInclude>
     <ClInclude Include="SubtitlesProvider.h">
+      <Filter>S</Filter>
+    </ClInclude>
+    <ClInclude Include="ScriptAttachments.h">
       <Filter>S</Filter>
     </ClInclude>
     <ClInclude Include="SubtitlesProviderChoice.h">

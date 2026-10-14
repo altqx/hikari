@@ -10,17 +10,21 @@ if(WIN32)
         check_main.cpp
         WindowsSaveFileTests.cpp
         AutomationFoldersTests.cpp
+        CsriAttachmentsTests.cpp
         NaturalOrderTests.cpp
+        ScriptAttachmentsTests.cpp
         update/UpdateApplyTests.cpp
         update/UpdateVerifyTests.cpp
         ../HikariSub/NaturalOrder.cpp
+        ../HikariSub/ScriptAttachments.cpp
         ../HikariSub/UpdateApply.cpp
         ../HikariSub/WindowsSaveFile.cpp
     )
     # HIKARISUB_TESTING: the seam that makes a volume's refusals, which the
 # application is built without
-target_compile_definitions(hikarisub_windows_tests PRIVATE UNICODE _UNICODE NOMINMAX HIKARISUB_TESTING)
-    target_link_libraries(hikarisub_windows_tests PRIVATE advapi32 bcrypt crypt32 winhttp)
+target_compile_definitions(hikarisub_windows_tests PRIVATE UNICODE _UNICODE NOMINMAX HIKARISUB_TESTING
+        HIKARISUB_TEST_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
+    target_link_libraries(hikarisub_windows_tests PRIVATE advapi32 bcrypt crypt32 gdi32 winhttp)
     enable_testing()
     add_test(NAME hikarisub_windows_tests COMMAND hikarisub_windows_tests)
 
@@ -70,6 +74,7 @@ add_executable(hikarisub_tests
     PrivateFolderTests.cpp
     SaveFileTests.cpp
     SaveTargetTests.cpp
+    ScriptAttachmentsTests.cpp
     SemVerTests.cpp
     SrtTagsTests.cpp
     SubtitlesProviderChoiceTests.cpp
@@ -91,6 +96,7 @@ add_executable(hikarisub_tests
     ../HikariSub/NaturalOrder.cpp
     ../HikariSub/Playback.cpp
     ../HikariSub/SaveFile.cpp
+    ../HikariSub/ScriptAttachments.cpp
     ../HikariSub/SubtitlesProviderChoice.cpp
     ../HikariSub/PrivateFolder.cpp
     ../HikariSub/TextComparison.cpp
@@ -105,6 +111,7 @@ target_link_libraries(hikarisub_tests PRIVATE hikarisub_luajit PkgConfig::HIKARI
 # update manifest's tests.
 target_compile_definitions(hikarisub_tests PRIVATE
     HIKARISUB_JSON_NO_WX
+    HIKARISUB_TEST_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
     HIKARISUB_TEST_AUTOMATION_INCLUDE="${CMAKE_CURRENT_SOURCE_DIR}/../Automation/automation/Include"
     HIKARISUB_TEST_DEPCTRL_DIR="${HIKARISUB_TEST_DEPCTRL_DIR}")
 add_dependencies(hikarisub_tests
@@ -151,17 +158,22 @@ else()
 endif()
 
 # Subtitles read from Matroska through the FFMS2 extension the application
-# compiles (Thirdparty/Build/FFMS2/indexing_additional.cpp), against FFMS2,
-# FFmpeg and libass from pkg-config as the application links them, and the
-# Thirdparty/ffms2 fork's private headers. Left out when any is missing, as in
+# compiles (Thirdparty/Build/FFMS2/indexing_additional.cpp), and a script's
+# attached font drawn by libass, against FFMS2, FFmpeg and libass from
+# pkg-config as the application links them, and the Thirdparty/ffms2 fork's
+# private headers. Left out when any is missing, as in
 # the CI tests job.
 pkg_check_modules(HIKARISUB_TESTS_MEDIA QUIET IMPORTED_TARGET ffms2 libavformat libavcodec libavutil libass)
 if(HIKARISUB_TESTS_MEDIA_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../Thirdparty/ffms2/src/core/indexing.h")
     add_executable(hikarisub_media_tests
         check_main.cpp
+        LibassAttachedFontTests.cpp
         MatroskaSubtitlesTests.cpp
+        ../HikariSub/ScriptAttachments.cpp
         ../Thirdparty/Build/FFMS2/indexing_additional.cpp)
     target_include_directories(hikarisub_media_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../Thirdparty/ffms2/src)
+    target_compile_definitions(hikarisub_media_tests PRIVATE
+        HIKARISUB_TEST_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures")
     target_link_libraries(hikarisub_media_tests PRIVATE PkgConfig::HIKARISUB_TESTS_MEDIA)
     add_test(NAME hikarisub_media_tests COMMAND hikarisub_media_tests)
 else()

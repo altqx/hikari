@@ -84,6 +84,9 @@ SubsLoader::SubsLoader(SubsGrid *_grid, const wxString &text, wxString &ext)
 		grid->SetSubsFormat();
 		if (validFormat)
 			grid->originalFormat = grid->subsFormat;
+		// the attached fonts reach the renderers before anything is drawn,
+		// the style previews included
+		grid->file->Attachments();
 	}
 }
 

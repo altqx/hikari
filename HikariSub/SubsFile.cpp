@@ -16,6 +16,7 @@
 
 
 #include "SubsFile.h"
+#include "ScriptAttachments.h"
 #include "HikariListCtrl.h"
 #include "MappedButton.h"
 #include "config.h"
@@ -164,12 +165,37 @@ SubsFile::~SubsFile()
 
 void SubsFile::AddEmbeddedSectionLine(const wxString &line)
 {
+	std::lock_guard<std::mutex> lock(attachmentsMutex);
 	embeddedSections << line << L"\r\n";
+	attachmentsMade = false;
+}
+
+std::shared_ptr<const ScriptAttachments> SubsFile::Attachments()
+{
+	std::lock_guard<std::mutex> lock(attachmentsMutex);
+	if (!attachmentsMade) {
+		attachmentsMade = true;
+		attachments.reset();
+		if (!embeddedSections.empty()) {
+			auto made = std::make_shared<const ScriptAttachments>(
+				std::wstring_view(embeddedSections.wc_str(), embeddedSections.length()));
+			if (!made->Empty()) {
+				AttachedFonts::Add(made->Fonts());
+				attachments = std::move(made);
+			}
+		}
+	}
+	return attachments;
 }
 
 void SubsFile::Clear(bool setup/* = true*/)
 {
-	embeddedSections.clear();
+	{
+		std::lock_guard<std::mutex> lock(attachmentsMutex);
+		embeddedSections.clear();
+		attachments.reset();
+		attachmentsMade = false;
+	}
 	if (subs) {
 		subs->Clear();
 		delete subs;
