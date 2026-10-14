@@ -143,7 +143,7 @@ Bytes attachment(int uid, const mkvfixture::Attachment &a)
 
 int write(const std::string &out, const mkvfixture::File &file)
 {
-    Bytes info = uintElement(0x2AD7B1, 1000000) + element(0x4D80, "hikari_mkv_fixture") +
+    Bytes info = uintElement(0x2AD7B1, file.timestampScale) + element(0x4D80, "hikari_mkv_fixture") +
                  element(0x5741, "hikari_mkv_fixture");
     if (file.durationMs > 0) // Duration, a big-endian double in TimestampScale units
         info += uintElement(0x4489, std::bit_cast<std::uint64_t>(file.durationMs));
@@ -178,7 +178,7 @@ int write(const std::string &out, const mkvfixture::File &file)
 int main(int argc, char **argv)
 {
     if (argc != 3) {
-        std::fprintf(stderr, "usage: hikari_mkv_fixture <out> <subs|onesub|nosubs|scanline>\n");
+        std::fprintf(stderr, "usage: hikari_mkv_fixture <out> <subs|onesub|nosubs|scanline|scale100us|scale10ms>\n");
         return 1;
     }
     const std::string kind = argv[2];
@@ -190,6 +190,10 @@ int main(int argc, char **argv)
         return write(argv[1], mkvfixture::noSubs());
     if (kind == "scanline")
         return write(argv[1], mkvfixture::scanline());
+    if (kind == "scale100us")
+        return write(argv[1], mkvfixture::scale100us());
+    if (kind == "scale10ms")
+        return write(argv[1], mkvfixture::scale10ms());
     std::fprintf(stderr, "hikari_mkv_fixture: unknown kind %s\n", kind.c_str());
     return 1;
 }

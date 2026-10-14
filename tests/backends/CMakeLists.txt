@@ -60,13 +60,26 @@ foreach(kind cfr vfr bframes longgop audio tracks unknown color601 color709 colo
     list(APPEND _hikari_media_fixtures "${out}")
 endforeach()
 # Y9: the Matroska subtitle and attachment fixtures, beside the media ones.
-foreach(kind subs onesub nosubs scanline)
+foreach(kind subs onesub nosubs scanline scale100us scale10ms)
     set(out "${HIKARI_MEDIA_FIXTURE_DIR}/mkv-${kind}.mkv")
     add_custom_command(OUTPUT "${out}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_MEDIA_FIXTURE_DIR}"
         COMMAND hikari_mkv_fixture "${out}" ${kind}
         DEPENDS hikari_mkv_fixture
         COMMENT "Generating Matroska fixture ${kind}")
+    list(APPEND _hikari_media_fixtures "${out}")
+endforeach()
+# Decision 38d: subtitle streams at time bases other than 1/1000.
+foreach(spec "subs-mp4|mp4" "subs-mov|mov" "subs-ts|ts")
+    string(REPLACE "|" ";" spec "${spec}")
+    list(GET spec 0 kind)
+    list(GET spec 1 extension)
+    set(out "${HIKARI_MEDIA_FIXTURE_DIR}/${kind}.${extension}")
+    add_custom_command(OUTPUT "${out}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_MEDIA_FIXTURE_DIR}"
+        COMMAND hikari_media_fixture "${out}" ${kind}
+        DEPENDS hikari_media_fixture
+        COMMENT "Generating media fixture ${kind}")
     list(APPEND _hikari_media_fixtures "${out}")
 endforeach()
 # W1: the cfr video in AVI and the vfr video as WMV2 in ASF, which stock

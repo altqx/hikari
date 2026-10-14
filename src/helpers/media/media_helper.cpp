@@ -19,6 +19,7 @@ extern "C" {
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -692,19 +693,38 @@ bool readSubtitles(const std::string &path, int track, SubtitleRead &read)
     for (unsigned i = 0; i < fmt->nb_streams; ++i)
         fmt->streams[i]->discard = static_cast<int>(i) == track ? AVDISCARD_DEFAULT : AVDISCARD_ALL;
     const AVStream *stream = fmt->streams[track];
-    // The extension's arithmetic: av_read_frame leaves AVPacket.time_base at
-    // {0, 1}, so the times stay in the stream's units (Matroska's milliseconds).
-    const auto total = static_cast<std::int64_t>(stream->duration / (stream->time_base.den / 1000.f));
+    // Times in milliseconds (user decision 38d, 2026-10-14). The extension
+    // divided by AVPacket.time_base.den, which av_read_frame leaves at
+    // {0, 1}, so the times stayed in the stream's units: milliseconds only in
+    // Matroska with the default TimestampScale, and hundreds of times too
+    // large in MP4, MOV, MPEG-TS (1/90000) or a Matroska file with another
+    // TimestampScale. FFmpeg leaves a Matroska subtitle track's duration
+    // AV_NOPTS_VALUE, which passes through as before.
+    constexpr AVRational ms{1, 1000};
+    const std::int64_t total = av_rescale_q_rnd(stream->duration, stream->time_base, ms,
+                                                static_cast<AVRounding>(AV_ROUND_NEAR_INF | AV_ROUND_PASS_MINMAX));
     AVPacket *packet = av_packet_alloc();
     if (!packet)
         return false;
     while (av_read_frame(fmt.get(), packet) >= 0) {
         if (packet->stream_index == track && packet->size >= 2) {
-            const std::int64_t den = packet->time_base.den ? packet->time_base.den : 1;
+            // On the container's own clock, as FFMS2 gives the video's frame
+            // times: no start_time is taken off. Without a pts the dts, and
+            // without either 0, where the old arithmetic also ended up once
+            // the application cut it to an int.
+            std::int64_t start = packet->pts != AV_NOPTS_VALUE ? packet->pts : packet->dts;
+            if (start == AV_NOPTS_VALUE)
+                start = 0;
+            std::int64_t duration = packet->duration;
+            if (duration < 0 || (start > 0 && duration > std::numeric_limits<std::int64_t>::max() - start))
+                duration = 0;
+            // Both ends to the nearest millisecond, the duration between them.
+            const std::int64_t startMs = av_rescale_q(start, stream->time_base, ms);
+            const std::int64_t endMs = av_rescale_q(start + duration, stream->time_base, ms);
             // up to the first NUL, as the extension handed the bytes over
             const char *data = reinterpret_cast<const char *>(packet->data);
             const std::string line(data, strnlen(data, static_cast<std::size_t>(packet->size)));
-            if (onSubtitle(packet->pts / den, packet->duration / den, total, line.c_str(), &read) == 1)
+            if (onSubtitle(startMs, endMs - startMs, total, line.c_str(), &read) == 1)
                 break;
         }
         av_packet_unref(packet);

@@ -91,10 +91,11 @@
 //                      i32 track, str name, str language, str codec
 //                      (FFMS_GetSubtitleFormat; any codec, bitmaps included)
 // Subtitles request: u8 Subtitles, str path, i32 track
-//         progress: i64 start, i64 total (each packet, as legacy's callback)
+//         progress: i64 start, i64 total (each packet, as legacy's callback;
+//                   milliseconds, the total AV_NOPTS_VALUE when unknown)
 //         terminal Ok: str extradata (FFMS_GetSubtitleExtradata), i32 count,
 //                      then per packet in FFMS_GetSubtitles' order: i64 start,
-//                      i64 duration, str line
+//                      i64 duration (milliseconds), str line
 //         terminal Cancelled: cancelled during or right after the read
 //         terminal InvalidInput: not a subtitle track
 // Attachments request: u8 Attachments, str path

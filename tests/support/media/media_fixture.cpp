@@ -38,6 +38,12 @@
 //                    tags (V4: legacy's guess for an untagged frame)
 //          yuv10     the cfr video as lossless FFV1 in 10-bit 4:2:0
 //                    (yuv420p10le; V1: a high bit depth player frame)
+//          subs-mp4, subs-mov, subs-ts
+//                    one subtitle stream and nothing else: mov_text in MP4 at
+//                    1/600 and in MOV at 1/90000, DVB teletext in MPEG-TS at
+//                    1/90000, the packets of mkv_fixture.h's kMp4Packets,
+//                    kMovPackets and kTsPackets (decision 38d: subtitle times
+//                    in time bases other than 1/1000)
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -173,16 +179,73 @@ int writeAudioOnly(const std::string &out)
     return 0;
 }
 
+// Decision 38d: one subtitle stream at a given time base, the packets as
+// given. Fails when the muxer does not keep the time base, so a fixture
+// cannot quietly lose the shape it is named for.
+int writeTimedSubtitles(const std::string &out, const std::string &kind)
+{
+    const char *container = nullptr;
+    AVCodecID codec = AV_CODEC_ID_MOV_TEXT;
+    AVRational timeBase{1, 90000};
+    const std::vector<mkvfixture::TimedPacket> *packets = nullptr;
+    AVDictionary *options = nullptr;
+    if (kind == "subs-mp4") {
+        container = "mp4";
+        timeBase = AVRational{1, 600};
+        packets = &mkvfixture::kMp4Packets;
+    } else if (kind == "subs-mov") {
+        container = "mov";
+        packets = &mkvfixture::kMovPackets;
+    } else {
+        container = "mpegts";
+        codec = AV_CODEC_ID_DVB_TELETEXT;
+        packets = &mkvfixture::kTsPackets;
+        av_dict_set(&options, "mpegts_copyts", "1", 0); // the times as written
+    }
+    AVFormatContext *fmt = nullptr;
+    if (avformat_alloc_output_context2(&fmt, nullptr, container, out.c_str()) < 0)
+        return fail("output context");
+    AVStream *st = avformat_new_stream(fmt, nullptr);
+    st->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+    st->codecpar->codec_id = codec;
+    st->time_base = timeBase;
+    if (avio_open(&fmt->pb, out.c_str(), AVIO_FLAG_WRITE) < 0 || avformat_write_header(fmt, &options) < 0)
+        return fail("open output");
+    av_dict_free(&options);
+    if (av_cmp_q(st->time_base, timeBase) != 0)
+        return fail("the muxer changed the subtitle time base");
+    for (const auto &p : *packets) {
+        AVPacket *pkt = av_packet_alloc();
+        if (av_new_packet(pkt, static_cast<int>(p.data.size())) < 0)
+            return fail("packet");
+        std::memcpy(pkt->data, p.data.data(), p.data.size());
+        pkt->pts = pkt->dts = p.start;
+        pkt->duration = p.duration;
+        pkt->flags = AV_PKT_FLAG_KEY;
+        pkt->stream_index = st->index;
+        if (av_interleaved_write_frame(fmt, pkt) < 0)
+            return fail("write subtitle");
+        av_packet_free(&pkt);
+    }
+    if (av_write_trailer(fmt) < 0)
+        return fail("trailer");
+    avio_closep(&fmt->pb);
+    avformat_free_context(fmt);
+    return 0;
+}
+
 } // namespace
 
 int main(int argc, char **argv)
 {
     if (argc != 3)
-        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd|yuv10>");
+        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd|yuv10|subs-mp4|subs-mov|subs-ts>");
     const std::string out = argv[1], kind = argv[2];
     av_log_set_level(AV_LOG_ERROR); // the encoders' clipping notes are noise in the build log
     if (kind == "audioonly")
         return writeAudioOnly(out);
+    if (kind == "subs-mp4" || kind == "subs-mov" || kind == "subs-ts")
+        return writeTimedSubtitles(out, kind);
     const bool delayed = kind == "audiodelay";
     const bool vfr = kind == "vfr" || kind == "dshow-vfr" || kind.ends_with("-vfr");
     // W1: containers and codecs stock DirectShow plays.

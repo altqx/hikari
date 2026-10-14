@@ -365,3 +365,57 @@ TEST_F(Fixture, BlocksBeforeTheCuedClusterArriveAndTheirLineDraws)
     EXPECT_GT(inside, 5000);
     EXPECT_EQ(outside, 0);
 }
+
+// User decision 38d (2026-10-14): the times reach the application in
+// milliseconds whatever the container's time base. The extension divided by
+// AVPacket.time_base.den, which av_read_frame leaves at {0, 1}, so it handed
+// over the stream's own ticks: right only for Matroska's default
+// TimestampScale (the cases above keep their times exactly). Each end is
+// rounded to the nearest millisecond and the duration taken between them,
+// on the container's own clock.
+TEST_F(Fixture, SubtitleTimesAreMillisecondsInEveryTimeBase)
+{
+    const struct {
+        std::string path;
+        const std::vector<mkvfixture::Expected> *ms;
+    } cases[] = {
+        {fixture("scale100us"), &mkvfixture::kScale100usMs},
+        {fixture("scale10ms"), &mkvfixture::kScale10msMs},
+        {std::string(HIKARI_MEDIA_FIXTURES) + "/subs-mp4.mp4", &mkvfixture::kMp4Ms},
+        {std::string(HIKARI_MEDIA_FIXTURES) + "/subs-mov.mov", &mkvfixture::kMovMs},
+        {std::string(HIKARI_MEDIA_FIXTURES) + "/subs-ts.ts", &mkvfixture::kTsMs},
+    };
+    for (const auto &c : cases) {
+        SCOPED_TRACE(c.path);
+        const auto t = tracks(c.path);
+        ASSERT_TRUE(t) << t.error().text;
+        ASSERT_EQ(t->size(), 1u);
+        std::vector<std::pair<std::int64_t, std::int64_t>> progress;
+        const auto read = subtitles(c.path, (*t)[0].track, &progress);
+        ASSERT_TRUE(read) << read.error().text;
+        ASSERT_EQ(read->packets.size(), c.ms->size());
+        for (std::size_t i = 0; i < c.ms->size(); ++i) {
+            EXPECT_EQ(read->packets[i].start, (*c.ms)[i].start) << i;
+            EXPECT_EQ(read->packets[i].duration, (*c.ms)[i].duration) << i;
+        }
+        ASSERT_EQ(progress.size(), c.ms->size());
+        for (std::size_t i = 0; i < c.ms->size(); ++i)
+            EXPECT_EQ(progress[i].first, (*c.ms)[i].start) << i;
+    }
+}
+
+TEST_F(Fixture, SubtitleTimesAtATenthOfAMillisecondMakeTheirLines)
+{
+    // The Matroska file at 100 us ticks, staged as legacy built the lines:
+    // 1235 ms + 5 cut to centiseconds is 0:00:01.24, the end 1735 0:00:01.74.
+    const auto read = subtitles(fixture("scale100us"), 0);
+    ASSERT_TRUE(read) << read.error().text;
+    ASSERT_EQ(read->packets.size(), 2u);
+    EXPECT_EQ(read->packets[0].line, mkvfixture::kTimeBaseAssLine1);
+    EXPECT_EQ(core::matroskaLine(read->packets[0].start, read->packets[0].duration, read->packets[0].line,
+                                 core::MatroskaCodec::Ass),
+              u8"Dialogue: 0,0:00:01.24,0:00:01.74,Default,,0,0,0,,one");
+    EXPECT_EQ(core::matroskaLine(read->packets[1].start, read->packets[1].duration, read->packets[1].line,
+                                 core::MatroskaCodec::Ass),
+              u8"Dialogue: 2,0:00:02.47,0:00:03.47,Default,,0,0,0,,two");
+}
