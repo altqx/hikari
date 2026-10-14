@@ -31,6 +31,7 @@
 #include "hikari/application/media_association.h"
 #include "hikari/application/legacy_autosaves.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/ass_attachments.h"
 #include "automation_services_qt.h"
 #include "theme.h"
 
@@ -619,6 +620,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         auto *session = targetSession();
         if (!session)
             return;
+        setVideoFonts(m_workspace.editingTarget()); // 38c
         m_video->session().setSubtitles(rendererScript(preview ? *preview : session->document())); // E5
         m_videoScript.clear(); // E4: the next refresh shows the draft again
     });
@@ -696,8 +698,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_editor->reloadFromSession();
             refreshViews();
         };
-        hooks.fonts = [this] { // Y6: the external fonts render in the preview
-            return m_fontCatalogs ? m_fontCatalogs->externalFontLeases() : std::vector<application::FontLease>();
+        hooks.fonts = [this] { // Y6: the external fonts render in the preview; 38c: the script's attached fonts too
+            return subtitleFonts(m_workspace.editingTarget());
         };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
     }
@@ -791,7 +793,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             application::reloadSubtitleFonts();
             if (!m_fontCatalogs)
                 return;
-            m_video->session().setFonts(m_fontCatalogs->externalFontLeases());
+            setVideoFonts(m_videoDocument); // 38c: with the attached fonts first
             if (m_videoDocument) {
                 m_videoRevision.reset();
                 m_videoScript.clear(); // the same script goes with the new fonts
@@ -800,7 +802,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         };
         m_fontCatalogs = std::make_unique<FontCatalogsController>(*m_settings, std::filesystem::path(dir.toStdU16String()),
                                                                   std::move(hooks));
-        m_video->session().setFonts(m_fontCatalogs->externalFontLeases());
+        setVideoFonts(std::nullopt);
     }
     // P3: this session's lock marks it as running; bundles of sessions whose
     // lock is gone or stale were left by a crash.
@@ -1530,6 +1532,10 @@ bool Application::showVideoSubtitles()
     }
     if (!session)
         return false;
+    // 38c: the script's attached fonts; a script that is the same as shown
+    // is prepared again when they change
+    if (setVideoFonts(target))
+        m_videoScript.clear();
     bool edited = false;
     // E4: live video editing (EditBox::OnEdit's OpenSubsLater, connected
     // unless DISABLE_LIVE_VIDEO_EDITING, EditBox.cpp:349-352): the video
@@ -1552,6 +1558,48 @@ bool Application::showVideoSubtitles()
         }
     }
     return edited;
+}
+
+std::vector<application::FontLease> Application::attachedFontLeases(std::optional<application::DocumentId> document)
+{
+    auto *session = document ? m_files->session(*document) : nullptr;
+    if (!session) {
+        if (document)
+            m_attachedFonts.erase(document->value); // closed
+        return {};
+    }
+    const core::Document &doc = session->document();
+    const auto generation = m_files->generation(*document);
+    const auto key = core::attachedFontsKey(doc);
+    auto &entry = m_attachedFonts[document->value];
+    if (entry.generation != generation || entry.key != key) {
+        entry = AttachedFontsEntry{generation, key, {}};
+        for (auto &font : core::attachedFonts(doc))
+            entry.leases.push_back({font.name, std::make_shared<const std::vector<std::byte>>(std::move(font.bytes))});
+    }
+    return entry.leases;
+}
+
+std::vector<application::FontLease> Application::subtitleFonts(std::optional<application::DocumentId> document)
+{
+    auto fonts = attachedFontLeases(document);
+    if (m_fontCatalogs)
+        for (auto &font : m_fontCatalogs->externalFontLeases())
+            fonts.push_back(std::move(font));
+    return fonts;
+}
+
+bool Application::setVideoFonts(std::optional<application::DocumentId> document)
+{
+    auto fonts = subtitleFonts(document);
+    const auto same = [](const application::FontLease &a, const application::FontLease &b) {
+        return a.family == b.family && a.bytes == b.bytes;
+    };
+    if (std::ranges::equal(fonts, m_videoFonts, same))
+        return false;
+    m_videoFonts = fonts;
+    m_video->session().setFonts(std::move(fonts));
+    return true;
 }
 
 void Application::refreshVideo()

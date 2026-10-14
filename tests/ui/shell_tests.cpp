@@ -2563,6 +2563,82 @@ private slots:
         QVERIFY(session.lastOverlay()->pixels == fallback->pixels);
     }
 
+    // 38c (user decision, 2026-10-14): a script's attached fonts reach the
+    // loaded video as font leases, with the renderer script that leaves
+    // [Fonts] out. tests/fixtures/attachments/attached.ass draws "HH" in
+    // HikariAttachedTest, a family only its [Fonts] has, whose letters are
+    // filled boxes: no other face fills the box "HH" takes (another face
+    // covers well under 0.75 of it, hikari_backends_libass_tests).
+    void attachedFontsReachTheLoadedVideo()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        const QString path = folder.filePath(QStringLiteral("attached.ass"));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_ATTACHMENT_FIXTURES "/attached.ass"), path));
+        QVERIFY(application->openFile(path));
+        auto &session = application->video().session();
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        session.seekTo(core::DocumentTime(1'500'000));
+        QTRY_VERIFY_WITH_TIMEOUT(session.shownFrame(), 20000);
+        QTRY_VERIFY2_WITH_TIMEOUT(session.lastOverlay() && !session.lastOverlay()->empty,
+                                  session.lastOverlay() ? "empty overlay" : "no overlay", 20000);
+        // the "HH" Line's part of the frame (x < 360 of 640): drawn in the
+        // attached font, two filled boxes
+        const auto hhFill = [](const auto &o, const char *renderer) {
+            int left = o->width, top = o->height, right = -1, bottom = -1;
+            long covered = 0;
+            for (int y = 0; y < o->height; ++y)
+                for (int x = 0; x < o->width * 360 / 640; ++x)
+                    if (o->pixels[std::size_t(y) * o->stride + std::size_t(x) * 4 + 3] >= 128) {
+                        ++covered;
+                        left = std::min(left, x);
+                        right = std::max(right, x);
+                        top = std::min(top, y);
+                        bottom = std::max(bottom, y);
+                    }
+            const double fill =
+                covered ? double(covered) / ((right - left + 1.0) * (bottom - top + 1.0)) : 0.0;
+            qInfo("38c %s: \"HH\" covers %ld pixels, %.2f of [%d,%d]-[%d,%d] in %dx%d", renderer, covered, fill, left,
+                  top, right, bottom, o->width, o->height);
+            return fill;
+        };
+        QVERIFY2(hhFill(session.lastOverlay(), "libass") > 0.9, "\"HH\" was not drawn in the attached font");
+#ifdef HIKARI_WITH_VSFILTERMOD
+        // VSFilterMod: the attached font as a lease, and \1img(red.png) from
+        // the script's [Graphics] (white when the image is missing)
+        auto &renderer = application->subtitleRenderer();
+        const auto libass = session.lastOverlay();
+        auto restore = qScopeGuard([&] { application->settingsStore()->reset(QStringLiteral("video.subtitleProvider")); });
+        application->settingsStore()->set("video.subtitleProvider", QStringLiteral("vsfiltermod_textsub"));
+        QCOMPARE(renderer.activeName(), std::string("vsfiltermod_textsub"));
+        QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() != libass && !session.lastOverlay()->empty, 20000);
+        const auto o = session.lastOverlay();
+        {
+            QImage image(o->width, o->height, QImage::Format_ARGB32_Premultiplied);
+            for (int y = 0; y < o->height; ++y)
+                std::memcpy(image.scanLine(y), o->pixels.data() + std::size_t(y) * std::size_t(o->stride),
+                            std::size_t(o->width) * 4);
+            const QString artifacts = QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/vsfiltermod-attached");
+            QVERIFY(QDir().mkpath(artifacts));
+            QVERIFY(image.save(artifacts + QStringLiteral("/vsfiltermod.png")));
+        }
+        // the square's inside, its edges aside (script 405..495 x 45..135)
+        long red = 0, inside = 0;
+        for (int y = o->height * 45 / 360; y < o->height * 135 / 360; ++y)
+            for (int x = o->width * 405 / 640; x < o->width * 495 / 640; ++x) {
+                const auto *p = o->pixels.data() + std::size_t(y) * o->stride + std::size_t(x) * 4; // B, G, R, A
+                ++inside;
+                red += p[0] < 30 && p[1] < 30 && p[2] > 225 && p[3] > 225;
+            }
+        const auto *centre = o->pixels.data() + std::size_t(o->height / 4) * o->stride + std::size_t(o->width * 450 / 640) * 4;
+        qInfo("38c vsfiltermod: %ld of %ld square pixels red; centre B,G,R,A %d,%d,%d,%d", red, inside, int(centre[0]),
+              int(centre[1]), int(centre[2]), int(centre[3]));
+        QVERIFY2(red == inside, "the \\1img square is not the attached red image");
+        QVERIFY2(hhFill(o, "vsfiltermod") > 0.9, "VSFilterMod did not draw \"HH\" in the attached font");
+#endif
+    }
+
     void colourPickerSetsColourAndAlphaAndRemembersIt()
     {
         QVERIFY(application->openFile(episode)); // "first" and "second", no Styles

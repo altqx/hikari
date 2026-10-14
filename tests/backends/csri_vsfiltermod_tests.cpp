@@ -9,6 +9,9 @@
 // either every test is skipped, never passed.
 
 #include "hikari/application/font_families.h"
+#include "hikari/core/ass_attachments.h"
+#include "hikari/core/ass_load.h"
+#include "hikari/core/ass_save.h"
 #include "hikari/backends/csri_renderer.h"
 
 #include <windows.h>
@@ -592,4 +595,89 @@ TEST(VsfilterMod, OverlayMatchesDrawingOnTheFrame)
         mod->close(direct);
     }
     EXPECT_GT(frames, 0u);
+}
+
+// 38c (user decision, 2026-10-14): a script's [Graphics] and [Fonts] reach
+// VSFilterMod as the application hands them over: the renderer script keeps
+// [Graphics] and leaves [Fonts] out, and the decoded fonts are leases.
+// tests/fixtures/attachments/attached.ass fills a 100 by 100 square at
+// (400,40) with \1img(red.png), which VSFilterMod draws white without the
+// image, and draws "HH" in HikariAttachedTest, a family only its [Fonts]
+// has, whose letters are filled boxes.
+TEST(VsfilterMod, DrawsTheScriptsAttachedImageAndFonts)
+{
+    const auto renderers = vsfilterModRenderers();
+    if (!renderers)
+        GTEST_SKIP() << "no VSFilterMod: HIKARI_VSFILTERMOD_CSRI is not set and the build did not fetch it";
+    QFile f(QStringLiteral(HIKARI_ATTACHMENT_FIXTURES "/attached.ass"));
+    ASSERT_TRUE(f.open(QIODevice::ReadOnly));
+    const QByteArray data = f.readAll();
+    std::vector<std::byte> source(static_cast<std::size_t>(data.size()));
+    std::memcpy(source.data(), data.constData(), source.size());
+    const core::Document document = core::loadAss(source).document;
+    std::vector<FontLease> leases;
+    for (auto &font : core::attachedFonts(document))
+        leases.push_back({font.name, std::make_shared<const std::vector<std::byte>>(std::move(font.bytes))});
+    ASSERT_EQ(leases.size(), 1u);
+    const auto rendererScript = core::encodeAss(document, core::AssSaveOptions{.renderer = true});
+    std::string script(reinterpret_cast<const char *>(rendererScript.data()), rendererScript.size());
+    ASSERT_EQ(script.find("[Fonts]"), std::string::npos);
+    const auto pixel = [](const OverlayFrame &frame, int x, int y) {
+        return &frame.pixels[std::size_t(y) * frame.stride + std::size_t(x) * 4];
+    };
+
+    // Without the image: the script without [Graphics] (and without the "HH"
+    // Line: VSFilterMod keeps the fonts it made, so a substitute made now
+    // would stand for the family later in the run).
+    {
+        std::string bare = script;
+        const auto graphics = bare.find("[Graphics]"), events = bare.find("[Events]");
+        ASSERT_NE(graphics, std::string::npos);
+        ASSERT_NE(events, std::string::npos);
+        bare.erase(graphics, events - graphics);
+        const auto hh = bare.find("}HH\r\n");
+        ASSERT_NE(hh, std::string::npos);
+        const auto line = bare.rfind("Dialogue:", hh);
+        bare.erase(line, hh + 5 - line);
+        CsriRenderer r(renderers, "");
+        ASSERT_TRUE(r.prepare(snapshotOf(bare)));
+        const auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight);
+        ASSERT_TRUE(frame);
+        const std::uint8_t *p = pixel(*frame, 450, 90);
+        std::fprintf(stderr, "38c VSFilterMod: without [Graphics] the square is %d,%d,%d,%d (BGRA)\n", p[0], p[1], p[2], p[3]);
+        EXPECT_TRUE(p[0] > 200 && p[1] > 200 && p[2] > 200 && p[3] > 200) << "VSFilterMod drew no white box";
+        image(*frame).save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/attached-without-graphics.png"));
+    }
+
+    CsriRenderer r(renderers, "");
+    RenderSnapshot snapshot = snapshotOf(script);
+    snapshot.fonts = leases;
+    ASSERT_TRUE(r.prepare(std::move(snapshot)));
+    const auto frame = r.render(core::DocumentTime(1'000'000), kWidth, kHeight);
+    ASSERT_TRUE(frame);
+    image(*frame).save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/attached.png"));
+    const std::uint8_t *p = pixel(*frame, 450, 90);
+    std::fprintf(stderr, "38c VSFilterMod: with [Graphics] the square is %d,%d,%d,%d (BGRA)\n", p[0], p[1], p[2], p[3]);
+    long red = 0;
+    for (int y = 45; y < 135; ++y)
+        for (int x = 405; x < 495; ++x) {
+            const std::uint8_t *q = pixel(*frame, x, y);
+            red += q[0] < 30 && q[1] < 30 && q[2] > 225 && q[3] > 225;
+        }
+    EXPECT_EQ(red, 90L * 90L) << "the square is not filled with red.png";
+    int left = kWidth, top = kHeight, right = -1, bottom = -1;
+    long covered = 0;
+    for (int y = 0; y < kHeight; ++y)
+        for (int x = 0; x < 360; ++x)
+            if (pixel(*frame, x, y)[3] >= 128) {
+                ++covered;
+                left = std::min(left, x);
+                right = std::max(right, x);
+                top = std::min(top, y);
+                bottom = std::max(bottom, y);
+            }
+    const double fill = right < left ? 0 : double(covered) / ((right - left + 1.0) * (bottom - top + 1.0));
+    std::fprintf(stderr, "38c VSFilterMod: \"HH\" covers %ld pixels, %.2f of [%d,%d]-[%d,%d]\n", covered, fill, left, top,
+                 right, bottom);
+    EXPECT_GT(fill, 0.9) << "\"HH\" was not drawn in the attached font";
 }

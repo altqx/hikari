@@ -30,6 +30,7 @@ hikari_add_gtest(hikari_backends_libass_tests SOURCES libass_renderer_tests.cpp 
 target_include_directories(hikari_backends_libass_tests PRIVATE "${_legacy_assblend}")
 target_compile_definitions(hikari_backends_libass_tests PRIVATE
     HIKARI_REFERENCE_DIR="${PROJECT_SOURCE_DIR}/tests/references"
+    HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/libass")
 # T3: the Scale and rotation tools' origin and anchor against libass's renders.
@@ -376,6 +377,7 @@ if(WIN32)
         LIBRARIES hikari_backends Qt6::Gui LABELS backends PROPERTIES TIMEOUT 300)
     target_compile_definitions(hikari_backends_vsfiltermod_tests PRIVATE
         HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/vsfiltermod"
+        HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
         HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
     if(HIKARI_TEST_VSFILTERMOD_DLL)
         set(_w2_csri "${CMAKE_CURRENT_BINARY_DIR}/vsfiltermod-csri")
