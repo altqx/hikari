@@ -205,6 +205,7 @@ TEST_F(Csri, TheOverlayIsDrawnWholeOntoAClearedBgraFrame)
     EXPECT_EQ(frame->generation, *generation);
     EXPECT_FALSE(frame->empty);
     EXPECT_EQ(frame->changed, (std::vector<PixelRect>{{0, 0, 4, 3}}));
+    EXPECT_EQ(frame->bounds, (PixelRect{1, 1, 1, 1})); // what was drawn, for the presenter
     // Straight alpha becomes premultiplied: 200 * 128 / 255 = 100.4 -> 100.
     const std::uint8_t *p = &frame->pixels[1 * 16 + 4];
     EXPECT_EQ(p[0], 100);
@@ -221,6 +222,7 @@ TEST_F(Csri, TheOverlayIsDrawnWholeOntoAClearedBgraFrame)
     ASSERT_TRUE(frame);
     EXPECT_EQ(calls.requested.size(), 1u);
     EXPECT_TRUE(frame->empty);
+    EXPECT_FALSE(frame->bounds);
     EXPECT_EQ(frame->changed, (std::vector<PixelRect>{{1, 1, 1, 1}}));
     EXPECT_TRUE(std::ranges::all_of(frame->pixels, [](std::uint8_t b) { return b == 0; }));
     // A new size is requested again.
@@ -282,6 +284,7 @@ TEST_F(Csri, BgraRefusedFallsBackToBgrx)
     EXPECT_EQ(calls.renderedFormats, (std::vector<int>{csri::BGR_, csri::BGR_}));
     EXPECT_EQ(calls.times, (std::vector<double>{1.5, 1.5}));
     EXPECT_FALSE(frame->empty);
+    EXPECT_EQ(frame->bounds, (PixelRect{1, 1, 1, 1}));
     const std::uint8_t *p = &frame->pixels[1 * 16 + 4];
     EXPECT_EQ(p[0], 100); // the same premultiplied pixel the BGRA frame gives
     EXPECT_EQ(p[1], 50);

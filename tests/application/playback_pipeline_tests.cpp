@@ -405,6 +405,30 @@ TEST(OverlayBounds, CoverTheVisiblePixels)
     EXPECT_FALSE(overlayBounds(o));
 }
 
+// A renderer's own bounds (OverlayFrame::bounds) are taken as they are,
+// clipped to the frame, instead of scanning the pixels.
+TEST(OverlayBounds, TheRenderersBoundsReplaceTheScan)
+{
+    OverlayFrame o;
+    o.width = 9;
+    o.height = 4;
+    o.stride = 36;
+    OverlayPixels::Bytes pixels(144, 0);
+    pixels[static_cast<std::size_t>(2 * o.stride + 3 * 4 + 3)] = 1; // one visible pixel at (3, 2)
+    o.pixels = pixels;
+    o.empty = false;
+    EXPECT_EQ(overlayBounds(o), (PixelRect{3, 2, 1, 1})); // scanned
+    o.bounds = PixelRect{2, 1, 4, 3};                      // the renderer's: clear pixels at its edges
+    EXPECT_EQ(overlayBounds(o), (PixelRect{2, 1, 4, 3}));
+    o.bounds = PixelRect{-2, 2, 20, 9}; // clipped to the frame
+    EXPECT_EQ(overlayBounds(o), (PixelRect{0, 2, 9, 2}));
+    o.bounds = PixelRect{9, 0, 3, 3}; // outside it: nothing visible
+    EXPECT_FALSE(overlayBounds(o));
+    o.bounds = PixelRect{2, 1, 4, 3};
+    o.empty = true;
+    EXPECT_FALSE(overlayBounds(o));
+}
+
 namespace {
 
 // The documented formula, one pixel at a time.

@@ -5,6 +5,7 @@
 // BlendAssBitmap (HikariSub/AssBlend.cpp, copied unchanged into the build)
 // onto a cleared frame, as SubtitlesLibass::DrawOverlay does.
 
+#include "hikari/application/playback_pipeline.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/ass_load.h"
@@ -721,4 +722,37 @@ TEST(LibassFork, SymbolAndLegacyArabicCmapFontsDraw)
     EXPECT_EQ(frames[1], frames[0]);
     EXPECT_EQ(frames[2], frames[0]);
     EXPECT_NE(frames[3], frames[0]);
+}
+
+// Q2: a frame carries the union of libass's images as its bounds (the
+// buffer is clear outside it), so the playback pipeline and the presenter
+// need not scan the pixels; an unchanged frame keeps them, and an empty one
+// has none.
+TEST(LibassRenderer, FramesCarryTheBoundsOfTheirImages)
+{
+    backends::LibassRenderer renderer;
+    ASSERT_TRUE(renderer.prepare(snapshot(kDrawing)).has_value());
+    const auto frame = renderer.render(core::DocumentTime(1'000'000), 96, 64);
+    ASSERT_TRUE(frame.has_value());
+    ASSERT_FALSE(frame->empty);
+    ASSERT_TRUE(frame->bounds);
+    const PixelRect b = *frame->bounds;
+    OverlayFrame scanned = *frame;
+    scanned.bounds.reset();
+    const auto visible = overlayBounds(scanned);
+    ASSERT_TRUE(visible);
+    // Every visible pixel is inside the bounds.
+    EXPECT_GE(visible->x, b.x);
+    EXPECT_GE(visible->y, b.y);
+    EXPECT_LE(visible->x + visible->width, b.x + b.width);
+    EXPECT_LE(visible->y + visible->height, b.y + b.height);
+    EXPECT_EQ(overlayBounds(*frame), b);
+    const auto again = renderer.render(core::DocumentTime(1'000'000), 96, 64); // unchanged: the shown buffer
+    ASSERT_TRUE(again.has_value());
+    ASSERT_TRUE(again->pixels.sameBuffer(frame->pixels));
+    EXPECT_EQ(again->bounds, frame->bounds);
+    const auto none = renderer.render(core::DocumentTime(9'000'000), 96, 64);
+    ASSERT_TRUE(none.has_value());
+    EXPECT_TRUE(none->empty);
+    EXPECT_FALSE(none->bounds);
 }

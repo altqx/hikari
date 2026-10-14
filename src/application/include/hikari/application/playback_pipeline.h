@@ -57,7 +57,8 @@ private:
 };
 
 // The bounds of an overlay's visible (non-zero alpha) pixels; nullopt when
-// there are none.
+// there are none. The renderer's OverlayFrame::bounds when it gave them
+// (they may also hold clear pixels at their edges), else a scan.
 std::optional<PixelRect> overlayBounds(const OverlayFrame &overlay);
 
 class PlaybackPipeline {

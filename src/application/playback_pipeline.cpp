@@ -54,6 +54,16 @@ std::optional<PixelRect> overlayBounds(const OverlayFrame &o)
     if (o.empty || o.width <= 0 || o.height <= 0 || o.stride < o.width * 4 ||
         o.pixels.size() < static_cast<std::size_t>(o.stride) * static_cast<std::size_t>(o.height))
         return std::nullopt;
+    // The renderer's own bounds, clipped to the frame; the scan below only
+    // when it gave none (a full scan costs about 1 ms at 1080p).
+    if (o.bounds) {
+        const int x0 = std::max(0, o.bounds->x), y0 = std::max(0, o.bounds->y);
+        const int x1 = std::min(o.width, o.bounds->x + o.bounds->width);
+        const int y1 = std::min(o.height, o.bounds->y + o.bounds->height);
+        if (x0 >= x1 || y0 >= y1)
+            return std::nullopt;
+        return PixelRect{x0, y0, x1 - x0, y1 - y0};
+    }
     int top = -1, bottom = -1, left = o.width, right = -1;
     const int pairs = o.width / 2;
     for (int y = 0; y < o.height; ++y) {

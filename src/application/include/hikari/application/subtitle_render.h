@@ -13,6 +13,7 @@
 #include <expected>
 #include <initializer_list>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -81,6 +82,10 @@ struct OverlayFrame {
     // A disappearing overlay reports its old bounds, so stale pixels are
     // always cleared. A new size reports the whole frame.
     std::vector<PixelRect> changed;
+    // Where the renderer drew, when it knows: every pixel outside it is
+    // clear (it may hold clear pixels too). None when nothing is drawn.
+    // Unset, a consumer scans the pixels (overlayBounds).
+    std::optional<PixelRect> bounds;
     bool empty = true;
     std::uint64_t generation = 0; // the snapshot (context) this frame came from
 };

@@ -237,6 +237,8 @@ std::expected<OverlayFrame, RenderError> LibassRenderer::render(core::DocumentTi
         // Nothing moved: the shown buffer is still current, handed out again.
         frame.pixels = OverlayPixels(m_buffers.shown()->bytes);
         frame.empty = emptyRect(m_bounds);
+        if (!frame.empty)
+            frame.bounds = m_bounds;
         return frame;
     }
     m_redraw = false;
@@ -261,6 +263,8 @@ std::expected<OverlayFrame, RenderError> LibassRenderer::render(core::DocumentTi
     }
     frame.pixels = OverlayPixels(buffer.bytes);
     frame.empty = emptyRect(bounds);
+    if (!frame.empty)
+        frame.bounds = bounds; // the images' union: the buffer is clear outside it
     if (resized) {
         frame.changed.push_back({0, 0, width, height});
     } else {

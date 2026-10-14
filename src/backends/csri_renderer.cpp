@@ -278,6 +278,8 @@ std::expected<OverlayFrame, RenderError> CsriRenderer::render(core::DocumentTime
     buffer.drawn.add(bounds);
     frame.pixels = application::OverlayPixels(buffer.bytes);
     frame.empty = bounds.width <= 0;
+    if (!frame.empty)
+        frame.bounds = bounds; // the visible pixels' (premultiplyStraightAlpha or the BGR_ pass)
     if (resized) {
         frame.changed.push_back({0, 0, width, height});
     } else {
