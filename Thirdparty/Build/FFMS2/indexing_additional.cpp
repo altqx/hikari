@@ -78,30 +78,55 @@ FFMS_Attachment* FFMS_Indexer::GetAttachment(int Track)
 	return nullptr;
 }
 
+// Every packet of a subtitle track, in file order, from the start of the
+// file. The indexer's own FormatContext cannot be rewound for this: a seek to
+// 0 goes to the track's first index entry, and libavformat keeps one entry
+// per timestamp, the position the last cue of that time names. When the
+// track's first blocks share a timestamp but sit in two clusters, the seek
+// lands in the later cluster and the blocks in the earlier one are never
+// read. A karaoke file lost all 38 copies of its first line that way: 38
+// blocks at 0:00:00.401 in the first cluster, 401 more at that time in the
+// second, and the last of the cues at that time naming the second.
+// A demuxer of its own, opened as the indexer's was, reads every block.
 void FFMS_Indexer::GetSubtitles(int Track, GetSubtitlesCallback IC, void* ICPrivate)
 {
-	if (FormatContext->streams[Track]->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-		AVPacket* Packet = av_packet_alloc();
-		AVStream* stream = FormatContext->streams[Track];
-		if (Packet) {
-			av_seek_frame(FormatContext, Track, 0, 0);
-			while (av_read_frame(FormatContext, Packet) >= 0) {
-				if (Packet->stream_index == Track) {
-					if (Packet->size < 2) {
-						av_packet_unref(Packet);
-						continue;
-					}
-					if (IC(Packet->pts / Packet->time_base.den, Packet->duration / Packet->time_base.den,
-						stream->duration / (stream->time_base.den / 1000.f),
-						(char*)Packet->data, ICPrivate) == 1)
-						break;
+	if (Track < 0 || Track >= (int)FormatContext->nb_streams)
+		return;
+	AVStream* stream = FormatContext->streams[Track];
+	if (stream->codecpar->codec_type != AVMEDIA_TYPE_SUBTITLE)
+		return;
+
+	AVFormatContext* Reader = nullptr;
+	if (avformat_open_input(&Reader, FormatContext->url, FormatContext->iformat, nullptr) != 0)
+		return;
+	// The same stream numbers as the indexer's, which ran this too
+	if (avformat_find_stream_info(Reader, nullptr) < 0 || Track >= (int)Reader->nb_streams ||
+		Reader->streams[Track]->codecpar->codec_id != stream->codecpar->codec_id) {
+		avformat_close_input(&Reader);
+		return;
+	}
+	for (unsigned int i = 0; i < Reader->nb_streams; i++)
+		Reader->streams[i]->discard = ((int)i == Track) ? AVDISCARD_DEFAULT : AVDISCARD_ALL;
+
+	AVPacket* Packet = av_packet_alloc();
+	if (Packet) {
+		while (av_read_frame(Reader, Packet) >= 0) {
+			if (Packet->stream_index == Track) {
+				if (Packet->size < 2) {
+					av_packet_unref(Packet);
+					continue;
 				}
-				av_packet_unref(Packet);
+				if (IC(Packet->pts / Packet->time_base.den, Packet->duration / Packet->time_base.den,
+					stream->duration / (stream->time_base.den / 1000.f),
+					(char*)Packet->data, ICPrivate) == 1)
+					break;
 			}
 			av_packet_unref(Packet);
-			av_packet_free(&Packet);
 		}
+		av_packet_unref(Packet);
+		av_packet_free(&Packet);
 	}
+	avformat_close_input(&Reader);
 }
 
 const char* FFMS_Indexer::GetSubtitleExtradata(int Track)

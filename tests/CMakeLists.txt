@@ -126,3 +126,21 @@ if(EXISTS "${HIKARISUB_TESTS_WX_PREFIX}/lib/cmake/wxWidgets-3.3" AND HIKARISUB_T
 else()
     message(STATUS "hikarisub_wxgtk_tests left out: needs ${HIKARISUB_TESTS_WX_PREFIX} and xvfb-run")
 endif()
+
+# Subtitles read from Matroska through the FFMS2 extension the application
+# compiles (Thirdparty/Build/FFMS2/indexing_additional.cpp), against FFMS2,
+# FFmpeg and libass from pkg-config as the application links them, and the
+# Thirdparty/ffms2 fork's private headers. Left out when any is missing, as in
+# the CI tests job.
+pkg_check_modules(HIKARISUB_TESTS_MEDIA QUIET IMPORTED_TARGET ffms2 libavformat libavcodec libavutil libass)
+if(HIKARISUB_TESTS_MEDIA_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../Thirdparty/ffms2/src/core/indexing.h")
+    add_executable(hikarisub_media_tests
+        check_main.cpp
+        MatroskaSubtitlesTests.cpp
+        ../Thirdparty/Build/FFMS2/indexing_additional.cpp)
+    target_include_directories(hikarisub_media_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../Thirdparty/ffms2/src)
+    target_link_libraries(hikarisub_media_tests PRIVATE PkgConfig::HIKARISUB_TESTS_MEDIA)
+    add_test(NAME hikarisub_media_tests COMMAND hikarisub_media_tests)
+else()
+    message(STATUS "hikarisub_media_tests left out: needs ffms2, FFmpeg and libass (pkg-config) and Thirdparty/ffms2")
+endif()
