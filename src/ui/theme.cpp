@@ -17,6 +17,10 @@
 #include <QtQml/qqmlengine.h>
 #include <QtQml/qqmlextensionplugin.h>
 
+#ifdef HIKARI_COLOUR_SCHEME_PORTAL
+#include "portal_colour_scheme.h"
+#endif
+
 #include <algorithm>
 #include <cmath>
 
@@ -495,13 +499,40 @@ public:
         refresh(true);
     }
 
+    // The platform's scheme; where Qt's platform theme reports none (Linux
+    // desktops other than GNOME and KDE), the XDG settings portal's.
     Qt::ColorScheme scheme() const
     {
         if (forcedScheme)
             return *forcedScheme;
         const auto *hints = QGuiApplication::styleHints();
-        return hints ? hints->colorScheme() : Qt::ColorScheme::Unknown;
+        const Qt::ColorScheme platform = hints ? hints->colorScheme() : Qt::ColorScheme::Unknown;
+#ifdef HIKARI_COLOUR_SCHEME_PORTAL
+        if (platform == Qt::ColorScheme::Unknown && portal)
+            return portal->scheme();
+#endif
+        return platform;
     }
+
+#ifdef HIKARI_COLOUR_SCHEME_PORTAL
+    void followPortal(PortalColourScheme *next)
+    {
+        if (portal) {
+            disconnect(portal, nullptr, this, nullptr);
+            // The hub's own reader (the session bus's) goes; a test's stays its own.
+            if (portal != next && portal->parent() == this)
+                portal->deleteLater();
+        }
+        portal = next;
+        if (next) {
+            connect(next, &PortalColourScheme::changed, this, [this] { refresh(); });
+            connect(next, &QObject::destroyed, this, [this] { refresh(); });
+        }
+        refresh();
+    }
+
+    QPointer<PortalColourScheme> portal;
+#endif
 
     void refresh(bool force = false)
     {
@@ -650,6 +681,15 @@ private:
         state.content = content(state.code, state.roles);
         if (auto *hints = QGuiApplication::styleHints())
             connect(hints, &QStyleHints::colorSchemeChanged, this, [this] { refresh(); });
+#ifdef HIKARI_COLOUR_SCHEME_PORTAL
+        // On the desktop's own platforms only: offscreen (the tests) follows
+        // no desktop.
+        const QString platform = QGuiApplication::platformName();
+        if (platform == QLatin1String("xcb") || platform.startsWith(QLatin1String("wayland")))
+            portal = new PortalColourScheme(QDBusConnection::sessionBus(), this);
+        if (portal)
+            connect(portal, &PortalColourScheme::changed, this, [this] { refresh(); });
+#endif
         if (auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance())) {
             connect(app, &QGuiApplication::focusWindowChanged, this, [this](QWindow *window) {
                 if (window)
@@ -717,6 +757,13 @@ void forceSystemScheme(std::optional<Qt::ColorScheme> scheme)
     Hub::get().forcedScheme = scheme;
     Hub::get().refresh();
 }
+
+#ifdef HIKARI_COLOUR_SCHEME_PORTAL
+void followPortal(PortalColourScheme *portal)
+{
+    Hub::get().followPortal(portal);
+}
+#endif
 
 void chooseControlsStyle()
 {

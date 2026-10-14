@@ -303,6 +303,12 @@ target_compile_definitions(hikari_ui_icon_tests PRIVATE
 # following the system, the high-contrast pickers, content colours, the live
 # preview and the Theme singleton; the swatch sheet with HIKARI_THEME_SHEET_DIR.
 hikari_add_qttest(hikari_ui_theme_tests SOURCES theme_tests.cpp LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2 OFFSCREEN_ONLY)
+# K2 on Linux: Follow system theme through the XDG settings portal, on a
+# private bus with a fake portal (portal_colour_scheme.h).
+if(UNIX AND NOT APPLE)
+    target_link_libraries(hikari_ui_theme_tests PRIVATE Qt6::DBus)
+    target_compile_definitions(hikari_ui_theme_tests PRIVATE HIKARI_COLOUR_SCHEME_PORTAL)
+endif()
 # K2 on Windows: the window system's title bar of every framed window follows
 # the theme (title_bars.h); on Windows also read back from the window system
 # in real windows (the .windows entry, the windows platform).
