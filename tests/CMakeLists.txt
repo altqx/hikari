@@ -21,6 +21,20 @@ target_compile_definitions(hikarisub_windows_tests PRIVATE UNICODE _UNICODE NOMI
     target_link_libraries(hikarisub_windows_tests PRIVATE advapi32 bcrypt crypt32 winhttp)
     enable_testing()
     add_test(NAME hikarisub_windows_tests COMMAND hikarisub_windows_tests)
+
+    # The xy-VSFilter CSRI renderer the solution builds (x64\Release\csri\xy-Vsfilter.dll),
+    # which only the Windows build job has: pass its path to test it.
+    set(HIKARISUB_TESTS_XYVSFILTER "" CACHE FILEPATH "xy-Vsfilter.dll from the solution's build, for its CSRI tests")
+    if(HIKARISUB_TESTS_XYVSFILTER)
+        add_executable(hikarisub_csri_tests check_main.cpp CsriXyVSFilterTests.cpp)
+        target_compile_definitions(hikarisub_csri_tests PRIVATE UNICODE _UNICODE NOMINMAX _CRT_SECURE_NO_WARNINGS)
+        target_link_libraries(hikarisub_csri_tests PRIVATE psapi)
+        add_test(NAME hikarisub_csri_tests COMMAND hikarisub_csri_tests)
+        # backslashes: LoadLibraryEx's altered search path takes no forward slashes
+        file(TO_NATIVE_PATH "${HIKARISUB_TESTS_XYVSFILTER}" xyvsfilter_dll)
+        set_tests_properties(hikarisub_csri_tests PROPERTIES
+            ENVIRONMENT "HIKARISUB_TEST_XYVSFILTER=${xyvsfilter_dll}")
+    endif()
     return()
 endif()
 

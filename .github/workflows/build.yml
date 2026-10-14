@@ -297,6 +297,17 @@ jobs:
           if (-not (Test-Path $exe)) { throw "not built: $exe" }
           Get-Item $exe | Format-List Name, Length, LastWriteTime
 
+      # The xy-VSFilter renderer just built, called through CSRI as HikariSub
+      # calls it (tests/CsriXyVSFilterTests.cpp).
+      - name: Test the CSRI renderer
+        if: matrix.configuration == 'Release'
+        run: |
+          $dll = Join-Path $PWD 'x64\Release\csri\xy-Vsfilter.dll'
+          if (-not (Test-Path $dll)) { throw "not built: $dll" }
+          cmake -S tests -B build-csri-tests -G "Visual Studio 17 2022" -A x64 "-DHIKARISUB_TESTS_XYVSFILTER=$dll"
+          cmake --build build-csri-tests --config Release --target hikarisub_csri_tests
+          ctest --test-dir build-csri-tests -C Release -R '^hikarisub_csri_tests$' --output-on-failure
+
       # The artifact is the shippable package: binaries plus the runtime data
       # (Automation 4 library, dictionaries, locales, CSRI renderers and the
       # runtimes Windows does not always have) assembled by .github/scripts/package.py
