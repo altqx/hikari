@@ -76,6 +76,48 @@ void writeArtifact(const QString &name, const QJsonDocument &doc)
 QString fixtureDir() { return QStringLiteral(HIKARI_THIRDPARTY_DIR); }
 QString stageDir() { return QStringLiteral(HIKARI_THIRDPARTY_STAGE); }
 
+#ifdef _WIN32
+constexpr bool kWindows = true;
+#else
+constexpr bool kWindows = false;
+#endif
+
+// Paths in messages name this run's directories (dirs); the pinned form reads
+// <stage> for each. On Windows a message may name one with either separator,
+// a drive letter in either case and, when DependencyControl's logger rethrows
+// it (Logger.moon puts a space after every colon), "C: /..."; and a search
+// path built from a directory with a trailing separator doubles separators.
+QString normalizedPaths(QString text, const QStringList &dirs, bool windows = kWindows)
+{
+    const Qt::CaseSensitivity cs = windows ? Qt::CaseInsensitive : Qt::CaseSensitive;
+    if (windows)
+        text.replace(QLatin1Char('\\'), QLatin1Char('/'));
+    for (QString dir : dirs) {
+        if (windows)
+            dir.replace(QLatin1Char('\\'), QLatin1Char('/'));
+        text.replace(dir, QStringLiteral("<stage>"), cs);
+        if (windows && dir.size() > 2 && dir.at(1) == QLatin1Char(':'))
+            text.replace(dir.left(2) + QLatin1Char(' ') + dir.mid(2), QStringLiteral("<stage>"), cs);
+    }
+    // One separator between the parts of a path under <stage>.
+    static const QRegularExpression staged(QStringLiteral(R"(<stage>[^"'\s()]*)"));
+    static const QRegularExpression doubled(QStringLiteral("/{2,}"));
+    QString out;
+    qsizetype at = 0;
+    for (auto it = staged.globalMatch(text); it.hasNext();) {
+        const QRegularExpressionMatch m = it.next();
+        QString path = m.captured();
+        out += text.mid(at, m.capturedStart() - at) + path.replace(doubled, QStringLiteral("/"));
+        at = m.capturedEnd();
+    }
+    out += text.mid(at);
+    // A chunk name (Lua shortens a long one to its start, so it depends
+    // on where the build is): [string "/home/..."].
+    static const QRegularExpression chunk(QStringLiteral(R"(\[string "[^"]*"\])"));
+    out.replace(chunk, QStringLiteral(R"([string "<chunk>"])"));
+    return out;
+}
+
 struct Script {
     QString project, file;
     bool available = true;
@@ -210,22 +252,7 @@ protected:
         return host;
     }
 
-    // Paths in messages name this run's directories; the pinned form does not.
-    QString normalized(QString text) const
-    {
-        for (const QString &dir : {stageDir(), automation, fixtureDir()}) {
-            text.replace(dir, QStringLiteral("<stage>"));
-            text.replace(QDir::toNativeSeparators(dir), QStringLiteral("<stage>"));
-        }
-#ifdef _WIN32
-        text.replace(QLatin1Char('\\'), QLatin1Char('/'));
-#endif
-        // A chunk name (Lua shortens a long one to its start, so it depends
-        // on where the build is): [string "/home/..."].
-        static const QRegularExpression chunk(QStringLiteral(R"(\[string "[^"]*"\])"));
-        text.replace(chunk, QStringLiteral(R"([string "<chunk>"])"));
-        return text;
-    }
+    QString normalized(const QString &text) const { return normalizedPaths(text, {stageDir(), automation, fixtureDir()}); }
 
     QTemporaryDir work;
     QString automation;
@@ -583,6 +610,41 @@ TEST_F(ThirdPartyCorpus, CaptureProbeRunsTheCorpus)
                       compact(pinned->toObject().value("events")))
                 << key.toStdString() << ": the probe's run and the host's differ";
         }
+}
+
+// The FFI search paths a corpus script names when clipper2 is missing, as
+// the Windows VM gave them: drive letter spaced by DependencyControl's logger,
+// separators doubled, either separator. They read as the Linux ones do.
+TEST(ThirdPartyMessages, WindowsPathsReadAsStagePaths)
+{
+    const QStringList dirs{QStringLiteral("C:/Winix/work/b/stage"),
+                           QStringLiteral("C:/Users/winix/AppData/Local/Temp/t-YMYaJt/Automation")};
+    const QString message = QStringLiteral(
+        "[string \"C:\\Winix\\work\\b\\...\"]: 32:  Search paths: \n"
+        "  - \"C: /Winix/work/b/stage/Autoload/\\\\clipper2/clipper2/clipper2.dll\" (cannot load module "
+        "'c: \\Winix\\work\\b\\stage\\Autoload\\\\clipper2\\clipper2\\clipper2.dll':  The specified module could "
+        "not be found.  )\n"
+        "  - \"C: /Users/winix/AppData/Local/Temp/t-YMYaJt/Automation//automation//tests/clipper2.dll\"\n"
+        "  - \"clipper2\" (see https://example.org//clipper2)");
+    EXPECT_EQ(normalizedPaths(message, dirs, true).toStdString(),
+              "[string \"<chunk>\"]: 32:  Search paths: \n"
+              "  - \"<stage>/Autoload/clipper2/clipper2/clipper2.dll\" (cannot load module "
+              "'<stage>/Autoload/clipper2/clipper2/clipper2.dll':  The specified module could not be found.  )\n"
+              "  - \"<stage>/automation/tests/clipper2.dll\"\n"
+              "  - \"clipper2\" (see https://example.org//clipper2)");
+}
+
+// On Linux the directories are replaced as they are, case and all; text that
+// only looks like a Windows path stays.
+TEST(ThirdPartyMessages, LinuxPathsReadAsStagePaths)
+{
+    const QStringList dirs{QStringLiteral("/home/u/b/stage")};
+    const QString message = QStringLiteral(
+        "  - \"/home/u/b/stage/Include/x.so\" (/home/u/b/stage/Include/x.so:  cannot open shared object file)\n"
+        "  - \"/HOME/u/b/stage/x.so\" C: \\Winix");
+    EXPECT_EQ(normalizedPaths(message, dirs, false).toStdString(),
+              "  - \"<stage>/Include/x.so\" (<stage>/Include/x.so:  cannot open shared object file)\n"
+              "  - \"/HOME/u/b/stage/x.so\" C: \\Winix");
 }
 
 } // namespace
