@@ -266,6 +266,45 @@ TEST(FontCollectorApply, CopyCountsFilesAndWritesEachFileOnce)
     EXPECT_FALSE(again->retrievedFonts);
 }
 
+// Stream bytes (DirectWrite) are named by the installed file holding them.
+// A per-user arial.ttf beside the system's answers to the same PostScript
+// name; legacy found the file by its size and bytes (FontCollector.cpp:
+// 1144-1196), so the file named is the one whose bytes the renderer used.
+TEST(FontCollectorApply, StreamBytesAreNamedByTheFileHoldingThem)
+{
+    FakeFonts fonts;
+    // The provider lists the per-user copy first; the renderer draws with the
+    // system file (the fake's last exact match).
+    fonts.faces = {{"Arial", 400, false, "C:/Users/u/Fonts/arial-copy.ttf", U"", "ArialMT", true},
+                   {"Arial", 400, false, "C:/Windows/Fonts/arial.ttf", U"", "ArialMT", true}};
+    std::vector<std::u16string> reads;
+    FontCollector collector(fonts, [&](const std::u16string &path) {
+        reads.push_back(path);
+        return FakeFonts::fontBytes(std::string(path.begin(), path.end()));
+    });
+    const auto review =
+        collector.prepare({tab(0, script({"Default,Arial,0,0"}, {"Default,a"}))}, CollectorAction::CopyToFolder);
+    ASSERT_TRUE(review);
+    ASSERT_EQ(review->files.size(), 1u);
+    EXPECT_EQ(*review->files[0].bytes, *FakeFonts::fontBytes("C:/Windows/Fonts/arial.ttf"));
+    EXPECT_EQ(review->files[0].shown, u"C:/Windows/Fonts/arial.ttf");
+    EXPECT_EQ(review->files[0].name, u"arial.ttf");
+
+    // One installed file of the name: it is named without reading it.
+    FakeFonts single;
+    single.faces = {{"Arial", 400, false, "C:/Windows/Fonts/arial.ttf", U"", "ArialMT", true}};
+    reads.clear();
+    FontCollector one(single, [&](const std::u16string &path) {
+        reads.push_back(path);
+        return FakeFonts::fontBytes(std::string(path.begin(), path.end()));
+    });
+    const auto named = one.prepare({tab(0, script({"Default,Arial,0,0"}, {"Default,a"}))}, CollectorAction::CopyToFolder);
+    ASSERT_TRUE(named);
+    ASSERT_EQ(named->files.size(), 1u);
+    EXPECT_EQ(named->files[0].shown, u"C:/Windows/Fonts/arial.ttf");
+    EXPECT_TRUE(reads.empty());
+}
+
 // "Cannot retrieve the font file sizes and names" ends a copy run.
 TEST(FontCollectorApply, NoProviderFilesCancelsCopying)
 {

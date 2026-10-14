@@ -35,6 +35,9 @@ struct Face {
     bool italic = false;
     std::string path;
     std::u32string glyphs; // empty: every character
+    std::string postscript; // empty: "<family>-PS"
+    bool stream = false;    // handed over as bytes with no path (DirectWrite)
+    std::string postscriptName() const { return postscript.empty() ? family + "-PS" : postscript; }
 };
 
 // Answers like the renderer: the requested family's nearest face, a
@@ -57,7 +60,7 @@ public:
     {
         std::vector<SystemFace> out;
         for (const auto &f : faces)
-            out.push_back({{f.family}, "", f.family + "-PS", f.path, 0, f.weight, f.italic});
+            out.push_back({{f.family}, "", f.postscriptName(), f.path, 0, f.weight, f.italic});
         if (fallback)
             out.push_back({{fallback->family}, "", "", fallback->path, 0, 400, false});
         return out;
@@ -73,17 +76,17 @@ public:
         r.stage = stage;
         r.requestedFamily = request;
         r.code = code;
-        r.path = f.path;
+        r.path = f.stream ? std::string() : f.path;
         r.sha256 = "sha-" + f.path;
         r.nameMatch = match;
-        r.postscriptName = f.family + "-PS";
+        r.postscriptName = f.postscriptName();
         c.selections.push_back(r);
         if (std::none_of(c.fonts.begin(), c.fonts.end(), [&](const CollectedFont &x) { return x.sha256 == r.sha256; })) {
             CollectedFont font;
             font.sha256 = r.sha256;
             font.bytes = fontBytes(f.path);
-            font.name = f.path.substr(f.path.find_last_of('/') + 1);
-            font.path = f.path;
+            font.name = f.stream ? f.postscriptName() : f.path.substr(f.path.find_last_of('/') + 1);
+            font.path = r.path;
             font.faces = {0};
             font.roles = {stage == SelectionStage::Fallback ? "fallback" : "requested " + request};
             c.fonts.push_back(font);
