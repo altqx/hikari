@@ -265,6 +265,7 @@ class ShellTest : public QObject {
     {
         auto folders = std::move(testFolders);
         testFolders.clear();
+        QStringList problems;
         for (const auto &folder : folders) {
             const QString path = folder->path();
             const QStringList open = openfiles::under(path);
@@ -283,10 +284,13 @@ class ShellTest : public QObject {
                 std::filesystem::remove(link, removeError);
             }
 #endif
-            const bool removed = folder->remove();
-            QVERIFY2(open.isEmpty(), qPrintable(QStringLiteral("still open: ") + open.join(QStringLiteral(", "))));
-            QVERIFY2(removed, qPrintable(QStringLiteral("could not remove ") + QDir::toNativeSeparators(path)));
+            // Every folder is removed before any failure is reported.
+            if (!open.isEmpty())
+                problems << QStringLiteral("still open: ") + open.join(QStringLiteral(", "));
+            if (!folder->remove())
+                problems << QStringLiteral("could not remove ") + QDir::toNativeSeparators(path);
         }
+        QVERIFY2(problems.isEmpty(), qPrintable(problems.join(QLatin1Char('\n'))));
     }
 
     // Docked panels may live in a floating window: look in every window.
