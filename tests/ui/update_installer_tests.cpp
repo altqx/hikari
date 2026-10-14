@@ -3,6 +3,7 @@
 // with stand-in programs; NSIS needs Windows and its installer).
 
 #include "hikari/app/update_installer.h"
+#include "desktop_guard.h"
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -147,6 +148,11 @@ private slots:
         const QString file = root + QStringLiteral("/cache/deb/0.2.0/") + name;
         QCOMPARE(installer.readyFile(), file);
         QCOMPARE(read(file), bytes);
+        // Show in folder: the downloaded file selected in its folder (38e:
+        // recorded; it never reaches the desktop's file manager).
+        hikari::test::desktop::clear();
+        installer.showInFolder();
+        QCOMPARE(hikari::test::desktop::revealed(), QStringList{file});
         QVERIFY(!QFileInfo::exists(file + QStringLiteral(".part")));
         const QJsonObject pending = QJsonDocument::fromJson(read(pendingOf(root, PackageKind::Deb))).object();
         QCOMPARE(pending.value(QStringLiteral("schema")).toInt(), 1);

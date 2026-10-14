@@ -11,7 +11,7 @@
 
 #include "hikari/application/associated_files.h"
 #include "hikari/application/recent_files.h"
-#include "hikari/backends/show_in_folder.h"
+#include "hikari/backends/desktop_handoff.h"
 
 #include <QCoreApplication>
 #include <QCollator>
@@ -42,7 +42,7 @@ constexpr bool kWindows = false;
 void Application::setupTabMenu(const Options &options)
 {
     m_revealInFolder = options.revealInFolder ? options.revealInFolder
-                                              : [](const QString &path) { backends::selectInFolder(path); };
+                                              : [](const QString &path) { backends::desktop::selectInFolder(path); };
     // Legacy Options.pathfull/Subs: the settings folder stands for pathfull
     // (as for Indices and AudioCache).
     m_legacyAutosaveDir = !options.legacyAutosaveDir.isEmpty() ? options.legacyAutosaveDir

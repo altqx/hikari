@@ -186,7 +186,7 @@ public:
         // directory of this Application without one (tests).
         QString fontCatalogDir;
         // P9: legacy SelectInFolder (the tab menu's folder items, a Ctrl+click
-        // on a recent file); unset: backends::selectInFolder. Tests record.
+        // on a recent file); unset: backends::desktop::selectInFolder. Tests record.
         std::function<void(const QString &path)> revealInFolder;
         // P9: legacy's autosave folder (Options.pathfull/Subs), read only;
         // empty: "Subs" beside the settings file, or none without one.
@@ -321,6 +321,8 @@ public:
     void setSaveWithVideoName(bool on);
     // GLOBAL_ANSI ("Report an issue"): the issue tracker in the browser.
     Q_INVOKABLE void reportIssue();
+    // GLOBAL_HELP ("HikariSub website"): the website in the browser.
+    Q_INVOKABLE void openWebsite();
     // Quit was reviewed and may proceed (the window then closes for good).
     Q_PROPERTY(bool quitApproved READ quitApproved NOTIFY quitApprovedChanged)
     // F1: a find and replace question waits for its answer.

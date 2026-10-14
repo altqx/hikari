@@ -49,6 +49,9 @@ endif()
 # P9: legacy SelectInFolder (Explorer's selection on Windows, the desktop
 # file manager over D-Bus with a folder fallback on Linux).
 target_sources(hikari_backends PRIVATE show_in_folder.cpp include/hikari/backends/show_in_folder.h)
+# 38e: every hand-off to a program on the desktop (URLs, a file in its folder,
+# a detached program), so tests can stand in for the desktop.
+target_sources(hikari_backends PRIVATE desktop_handoff.cpp include/hikari/backends/desktop_handoff.h)
 target_link_libraries(hikari_backends PRIVATE Qt6::Gui)
 if(WIN32)
     target_link_libraries(hikari_backends PRIVATE shell32 ole32 gdi32)

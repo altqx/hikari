@@ -104,3 +104,15 @@ A host counts as calibrated only when its fingerprint is listed in `tests/perf/r
 The harness enforces the contract minimums for warm latency workloads: ten seconds of warmup and at least 1,000 timed operations. A spec below either one throws before it runs, and a `control` self-test checks this with the ordinary tests. Each report records the warmup used. Without the warmup, the first run of the ASS-load workload was about twice as slow as the rest (a 98% p95 spread on the Ubuntu runner).
 
 First workloads, each 5×200 operations: loading a generated 50,000-Line ASS script (the G fixture size), NTSC `frameAtOrAfter` lookups timed in batches of 1,000 because one lookup is close to the clock's resolution, and painting the Grid over 50,000 Lines at 1280×720. The Ubuntu CI job keeps both `perf-report-core.json` and `perf-report-ui.json`.
+
+## The desktop in tests (38e, 2026-10-14)
+
+No test may open a real browser, file manager or editor. Every hand-off from the application to a program on the desktop goes through `backends::desktop` ([`desktop_handoff.h`](../../src/backends/include/hikari/backends/desktop_handoff.h)): `openUrl` (Help > HikariSub website, Report an issue, an update's release page, Font Collector's folder on Linux), `selectInFolder` (the tab menu's and recent files' folder items, a downloaded update's Show in folder) and `startDetached` (the Lua script editor, Explorer for Font Collector's folder on Windows). The application's own relaunches and installer runs after an update are not hand-offs.
+
+[`tests/support/desktop`](../../tests/support/desktop/desktop_guard.h) stands in for the desktop in every UI suite (`tests/ui`) and in every test executable that builds the application (`hikari_app_startup`):
+
+- recording URL handlers (`QDesktopServices::setUrlHandler`) take `file`, `http` and `https` URLs, from C++ and from QML's `Qt.openUrlExternally`;
+- where the application is linked, `backends::desktop`'s routes are replaced: URLs go to those handlers, a file to show and a program to start are recorded, and a test sets what a start answers;
+- a URL of any other scheme is refused before the desktop's handler, and the executable then exits with code 70, so the run fails (`hikari_ui_desktop_handoff_tests` checks it in a child run).
+
+Tests that exercise a hand-off assert what would have been opened (`hikari::test::desktop::opened()`, `revealed()`, `started()`). `modules.desktop-handoffs` fails when a source under `src/` opens a URL or starts a program past `backends::desktop`; its control (`modules.desktop-handoffs-violation-rejected`) must be rejected.

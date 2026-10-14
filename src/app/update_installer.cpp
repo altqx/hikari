@@ -1,7 +1,7 @@
 #include "hikari/app/update_installer.h"
 
 #include "hikari/app/update_apply.h"
-#include "hikari/backends/show_in_folder.h"
+#include "hikari/backends/desktop_handoff.h"
 
 #include <QClipboard>
 #include <QCoreApplication>
@@ -611,7 +611,7 @@ void UpdateInstaller::cancelRestart()
 void UpdateInstaller::showInFolder() const
 {
     if (!m_pending.file.isEmpty())
-        backends::selectInFolder(m_pending.file);
+        backends::desktop::selectInFolder(m_pending.file);
 }
 
 void UpdateInstaller::copyInstallCommand() const

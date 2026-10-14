@@ -8,12 +8,23 @@ add_test(NAME modules.direction-allowed-accepted
     COMMAND "${CMAKE_COMMAND}" -DCASE=allowed -P "${CMAKE_CURRENT_SOURCE_DIR}/check_direction.cmake")
 set_tests_properties(modules.direction-allowed-accepted PROPERTIES LABELS "modules;control")
 
+# 38e: every hand-off to the desktop goes through backends::desktop, whose
+# routes the tests replace; the control must be rejected.
+add_test(NAME modules.desktop-handoffs
+    COMMAND "${CMAKE_COMMAND}" -DROOT=${PROJECT_SOURCE_DIR} -P "${CMAKE_CURRENT_SOURCE_DIR}/check_desktop_handoffs.cmake")
+set_tests_properties(modules.desktop-handoffs PROPERTIES LABELS "modules")
+add_test(NAME modules.desktop-handoffs-violation-rejected
+    COMMAND "${CMAKE_COMMAND}" -DROOT=${CMAKE_CURRENT_SOURCE_DIR}/desktop-handoff-violation
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/check_desktop_handoffs.cmake")
+set_tests_properties(modules.desktop-handoffs-violation-rejected PROPERTIES WILL_FAIL TRUE LABELS "modules;control")
+
 add_test(NAME modules.qmllint
     COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --target hikari_ui_qmllint)
 set_tests_properties(modules.qmllint PROPERTIES LABELS "modules;qml" TIMEOUT 120)
 
 add_executable(hikari_app_startup startup.cpp)
-target_link_libraries(hikari_app_startup PRIVATE hikari_composition)
+target_link_libraries(hikari_app_startup PRIVATE hikari_composition
+    hikari_test_url_recorder hikari_test_desktop_routes) # 38e: the desktop recorded
 _hikari_add_qt_modes(hikari_app_startup app $<TARGET_FILE:hikari_app_startup>)
 
 # O5-first-start-ui-languages: the composition's first start reads the
