@@ -91,8 +91,11 @@ consumer:
   the fork from upstream.
 
 The Windows build compiles libass from `Thirdparty/Build/Libass/Libass.vcxproj`,
-which lists libass's sources by hand. When the pin moves, compare the list with
-the fork's `libass/meson.build` and `libass/Makefile_library.am`.
+which lists libass's sources by hand. `.github/scripts/check-libass-vcxproj.py`
+compares it with the C and x86 assembly sources the fork's `libass/meson.build`
+and `libass/Makefile_library.am` build for x64 with DirectWrite; the Windows CI
+job runs it first, so a pin that adds a source fails there rather than at the
+link.
 
 `Thirdparty/Build/Libass/libass_gdi_fontselect.cpp` includes libass's internal
 `ass_fontselect.h` and `ass_utils.h`. It is excluded from every configuration,

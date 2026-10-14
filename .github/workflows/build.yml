@@ -104,6 +104,11 @@ jobs:
         with:
           submodules: recursive
 
+      # Libass.vcxproj lists libass's sources by hand. A libass update that
+      # adds one fails here, before the build, rather than at the link.
+      - name: Check Libass.vcxproj against libass's source lists
+        run: python .github/scripts/check-libass-vcxproj.py
+
       - uses: microsoft/setup-msbuild@v2
 
       - name: Install NASM
