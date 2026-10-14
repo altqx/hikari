@@ -729,6 +729,9 @@
     <ClInclude Include="Menu.h">
       <Filter>M</Filter>
     </ClInclude>
+    <ClInclude Include="MenuBarHitTest.h">
+      <Filter>M</Filter>
+    </ClInclude>
     <ClInclude Include="MenuButton.h">
       <Filter>M</Filter>
     </ClInclude>

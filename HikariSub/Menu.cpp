@@ -16,6 +16,7 @@
 
 
 #include "Menu.h"
+#include "MenuBarHitTest.h"
 #include "Hotkeys.h"
 #include "config.h"
 #include "UtilsWindows.h"
@@ -1125,19 +1126,18 @@ void MenuBar::OnSize(wxSizeEvent& event)
 
 int MenuBar::CalcMousePos(wxPoint *pos)
 {
-	int posX = 0;
+	std::vector<int> widths;
 	for (size_t i = 0; i < Menus.size(); i++){
-		Menu *menu = Menus[i];
-		wxString desc = menu->GetTitle();
+		wxString desc = Menus[i]->GetTitle();
 		desc.Replace(L"&", emptyString);
-		wxSize te = GetTextExtent(desc);
-		if (pos->x > posX && (posX + te.x + menuIndent) > pos->x){
-			pos->x = posX, pos->y = posX + te.x + halfIndent;
-			return i;
-		}
-		posX += te.x + menuIndent;
+		widths.push_back(GetTextExtent(desc).x);
 	}
-	return -1;
+	int posX = 0;
+	int i = MenuBarTitleAt(widths, menuIndent, GetClientSize().y, pos->x, pos->y, &posX);
+	if (i >= 0){
+		pos->x = posX, pos->y = posX + widths[i] + halfIndent;
+	}
+	return i;
 }
 
 MenuItem *MenuBar::FindItem(int id, Menu** menuptr)
