@@ -305,6 +305,8 @@ Window {
                         model: manager.styles.catalogs
                         currentIndex: manager.styles.catalogs.indexOf(manager.styles.catalog)
                         ToolTip.text: qsTr("Style catalog")
+                        // Named as its tooltip, not by the catalog it shows.
+                        Accessible.name: qsTr("Style catalog")
                         onActivated: (i) => { manager.styles.chooseCatalog(model[i]); manager.storeSelected = [0] }
                     }
                     IconToolButton { objectName: "newCatalog"; iconRole: "add"; text: qsTr("New"); tip: qsTr("New style catalog"); onClicked: newCatalog.open() }

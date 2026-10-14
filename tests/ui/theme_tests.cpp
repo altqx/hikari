@@ -15,6 +15,7 @@
 
 #include "hikari/application/audio_display.h"
 
+#include <QAccessible>
 #include <QDir>
 #include <QFile>
 #include <QFont>
@@ -595,6 +596,56 @@ Window {
         store.setValue(QString::fromLatin1(ui::theme::pickSetting(Code::HighContrastBlack, ui::theme::Pick::Border)),
                        QStringLiteral("#00FF00"));
         QTRY_COMPARE(window->property("outlines").toList().front().value<QColor>(), hex(0x00FF00));
+    }
+
+    // The controls style's combo box: Fusion's text field inside it, read-only
+    // unless the box is editable, is an Edit under the ComboBox to assistive
+    // technology (UI Automation reads it). It carries the box's name, live,
+    // as a native combo box's edit does; it had none (Windows native gate,
+    // dialogs: nine unnamed Edits, one per ComboBox).
+    void comboBoxFieldCarriesTheBoxName()
+    {
+        QCOMPARE(QQuickStyle::name(), QStringLiteral("HikariStyle"));
+        const bool wasActive = QAccessible::isActive();
+        QAccessible::setActive(true);
+        auto restore = qScopeGuard([&] { QAccessible::setActive(wasActive); });
+        QQmlEngine engine;
+        QQmlComponent component(&engine);
+        component.setData(R"(
+import QtQuick
+import QtQuick.Controls
+Window {
+    width: 400; height: 200
+    property string choiceName: "Which lines"
+    Column {
+        ComboBox { objectName: "choice"; model: ["All lines", "Selected lines"]; Accessible.name: choiceName }
+        ComboBox { objectName: "editable"; editable: true; model: ["one"]; Accessible.name: "Search text:" }
+    }
+}
+)", QUrl(QStringLiteral("qrc:/k1-combo-names.qml")));
+        std::unique_ptr<QObject> window(component.create());
+        QVERIFY2(window, qPrintable(component.errorString()));
+        const auto field = [&](const char *box) -> QAccessibleInterface * {
+            auto *combo = window->findChild<QQuickItem *>(QLatin1String(box));
+            if (!combo)
+                return nullptr;
+            auto *content = combo->property("contentItem").value<QQuickItem *>();
+            return content ? QAccessible::queryAccessibleInterface(content) : nullptr;
+        };
+        for (const auto &[box, name] : {std::pair{"choice", "Which lines"}, std::pair{"editable", "Search text:"}}) {
+            QAccessibleInterface *edit = field(box);
+            QVERIFY2(edit, box);
+            QCOMPARE(edit->role(), QAccessible::EditableText);
+            QCOMPARE(edit->text(QAccessible::Name), QString::fromLatin1(name));
+            // The box itself keeps its name, and the field stays its child.
+            QAccessibleInterface *combo = edit->parent();
+            QVERIFY(combo);
+            QCOMPARE(combo->role(), QAccessible::ComboBox);
+            QCOMPARE(combo->text(QAccessible::Name), QString::fromLatin1(name));
+        }
+        // Live: a new name (a language switch) reaches the field.
+        window->setProperty("choiceName", QStringLiteral("Lines"));
+        QCOMPARE(field("choice")->text(QAccessible::Name), QStringLiteral("Lines"));
     }
 
     // K2 focus (visual-language.md, "Keyboard focus"; the user's 2026-10-05
