@@ -46,6 +46,16 @@ step() {
 }
 
 w sync "$repo" | tail -1
+# However the run ends (a failed step stops it), no setup or uninstaller is
+# left on the desktop: elevated, so all-users ones end too.
+end_setups() {
+    echo "## inst-admin ACTION=end-setups"
+    local id
+    id=$(w run inst-admin --json --env ACTION=end-setups | head -1 | python3 -c 'import json,sys; print(json.loads(sys.stdin.readline())["id"])') || return 0
+    w job wait "$id" > /dev/null || true
+    winix job logs "$id" --all | sed 's/^\[out\] //' || true
+}
+trap end_setups EXIT
 for v in "$legacy" "$v1" "$v2" "$v3"; do
     w push "$setups/HikariSub-$v-windows-x64-setup.exe" "$guest\\HikariSub-$v-windows-x64-setup.exe" > /dev/null
 done

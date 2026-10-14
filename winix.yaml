@@ -157,6 +157,13 @@ tasks:
     # The probe's capture lines and the legacy Config it left (drive_windows.py).
     script: ./tools/legacy-capture/windows/output.ps1
     timeoutSeconds: 120
+  end-setups:
+    # Ends a HikariSub setup or uninstaller left on the desktop by an installer
+    # test or an interactive session (tools/winix/end-setups.ps1); the desktop
+    # drivers (drive_windows.py, gate-win-prepare) start with it.
+    script: ./tools/winix/end-setups.ps1
+    visualStudio: false
+    timeoutSeconds: 120
   legacy-win-kill:
     # Ends a legacy app the desktop could not close.
     script: Get-Process HikariSub -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Output 'stopped'

@@ -64,6 +64,13 @@ tasks:
     script: ./tests/packaging/windows/protected-tests.ps1 -Phase selfhold -Setup $env:HS_SETUP -Exe $env:HS_EXE
     visualStudio: false
     timeoutSeconds: 300
+  # tools/winix/end-setups.ps1 against stand-ins on the desktop, and with
+  # HS_SETUP (optional, the guest path of a setup.exe) a real setup's and
+  # uninstaller's first pages.
+  end-setups-test:
+    script: if ($env:HS_SETUP) { ./tests/packaging/windows/end-setups-tests.ps1 -Setup $env:HS_SETUP } else { ./tests/packaging/windows/end-setups-tests.ps1 }
+    visualStudio: false
+    timeoutSeconds: 600
   inst-detach:
     # installer.ps1 for start-app: the app keeps running after the task ends.
     script: ./tests/packaging/windows/installer.ps1
