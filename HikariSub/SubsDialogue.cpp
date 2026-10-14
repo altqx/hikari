@@ -1271,10 +1271,9 @@ bool GetMultiValueFloat(const wxString& valuetext, float* returnValuesTable, int
 		}
 		counter++;
 	}
-	if (counter < sizeOfReturnTable - 1) {
-		for (int i = counter; i < sizeOfReturnTable; i++) {
-			returnValuesTable[counter] = 0.f;
-		}
+	//values the text lacks are 0
+	for (int i = counter; i < sizeOfReturnTable; i++) {
+		returnValuesTable[i] = 0.f;
 	}
 	return true;
 }
