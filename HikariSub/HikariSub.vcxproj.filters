@@ -948,6 +948,9 @@
     <ClInclude Include="Videobox.h">
       <Filter>V</Filter>
     </ClInclude>
+    <ClInclude Include="VideoFrameArea.h">
+      <Filter>V</Filter>
+    </ClInclude>
     <ClInclude Include="VideoFullscreen.h">
       <Filter>V</Filter>
     </ClInclude>

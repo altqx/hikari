@@ -27,6 +27,7 @@
 #include "EditBox.h"
 #include "Provider.h"
 #include "VideoFullscreen.h"
+#include "VideoFrameArea.h"
 #include <wx/dc.h>
 
 
@@ -194,8 +195,8 @@ void Cross::DrawLines(wxPoint point)
 	wxMutexLocker lock(m_MutexCrossLines);
 	
 	RECT videoRect = tab->video->GetVideoRect();
-	if (point.y < videoRect.top || point.x < videoRect.left ||
-		point.y > videoRect.bottom || point.x > videoRect.right) {
+	// where the video box shows the pointer, so the lines and it agree
+	if (!IsOnVideoFrame(videoRect, point.x, point.y)) {
 		isOnVideo = false;
 		goto done;
 	}

@@ -35,6 +35,7 @@
 
 #include "VideoFullscreen.h"
 #include "VideoToolbar.h"
+#include "VideoFrameArea.h"
 #include "SubtitlesProviderManager.h"
 #include <wx/clipbrd.h>
 #include <wx/gdicmn.h>
@@ -514,6 +515,9 @@ void VideoBox::OnMouseEvent(wxMouseEvent& event)
 	int w, h;
 	GetClientSize(&w, &h);
 	bool onVideo = m_Y < h - m_PanelHeight;
+	// the visual pointer (the position pointer's cross) belongs to the picture
+	// alone: the bars around it keep the arrow, as the player's panel does
+	bool onFrame = onVideo && IsOnVideoFrame(GetVideoRect(), m_X, m_Y);
 
 	if (event.GetWheelRotation() != 0) {
 		bool DefaultVisual = !renderer->HasVisual(true);
@@ -579,12 +583,9 @@ void VideoBox::OnMouseEvent(wxMouseEvent& event)
 		}
 		
 
-		if (!onVideo || m_VideoToolbar->IsVisualsDisabled()){
-			SetCursor(wxCURSOR_ARROW);
-		}
-		else{
-			SetCursor(wxCURSOR_BLANK);
-		}
+		// the point was in the window that is gone now: the arrow, until the
+		// pointer moves in the new one and shows where it is
+		SetCursor(wxCURSOR_ARROW);
 		return;
 	}
 
@@ -604,11 +605,13 @@ void VideoBox::OnMouseEvent(wxMouseEvent& event)
 		bool onFullVideo = m_Y < h - m_PanelHeight;
 		bool showToolbar = m_FullScreenWindow->showToolbar->GetValue();
 		bool panelIsShown = m_FullScreenWindow->panel->IsShown();
-		if (!HasArrow() && !showToolbar){
-			SetCursor(wxCURSOR_ARROW); 
+		bool onFullFrame = onFullVideo && IsOnVideoFrame(GetVideoRect(), m_X, m_Y);
+		if (showToolbar && onFullFrame && !m_IsMenuShown && !m_VideoToolbar->IsVisualsDisabled()){
+			if (HasArrow())
+				SetCursor(wxCURSOR_BLANK);
 		}
-		else if (HasArrow() && !m_IsMenuShown && showToolbar && onFullVideo && !m_VideoToolbar->IsVisualsDisabled()){
-			SetCursor(wxCURSOR_BLANK);
+		else if (!HasArrow()){
+			SetCursor(wxCURSOR_ARROW); 
 		}
 
 		if (!onFullVideo && !panelIsShown){
@@ -625,7 +628,11 @@ void VideoBox::OnMouseEvent(wxMouseEvent& event)
 		}
 	}
 	else if (tab->editor && !m_VideoToolbar->IsVisualsDisabled()){
-		if (!m_IsMenuShown && HasArrow()){
+		if (!onFrame){
+			if (!HasArrow())
+				SetCursor(wxCURSOR_ARROW);
+		}
+		else if (!m_IsMenuShown && HasArrow()){
 			SetCursor(wxCURSOR_BLANK);  
 		}
 

@@ -54,6 +54,7 @@ add_executable(hikarisub_tests
     TimebaseTests.cpp
     UndoHistoryTests.cpp
     UpdatePolicyTests.cpp
+    VideoFrameAreaTests.cpp
     update/UpdateManifestTests.cpp
     update/UpdateVerifyTests.cpp
     TextComparisonTests.cpp
