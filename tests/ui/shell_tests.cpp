@@ -268,6 +268,21 @@ class ShellTest : public QObject {
         for (const auto &folder : folders) {
             const QString path = folder->path();
             const QStringList open = openfiles::under(path);
+#ifdef _WIN32
+            // QDir::removeRecursively removes a link to a folder as a file,
+            // which Windows refuses (findReplaceInFilesTouchesOnlyItsTargets'
+            // sub/loop): the links go first, their targets stay.
+            std::error_code walkError;
+            std::vector<std::filesystem::path> links;
+            for (std::filesystem::recursive_directory_iterator it(path.toStdU16String(), walkError), end;
+                 !walkError && it != end; it.increment(walkError))
+                if (it->is_symlink())
+                    links.push_back(it->path());
+            for (const auto &link : links) {
+                std::error_code removeError;
+                std::filesystem::remove(link, removeError);
+            }
+#endif
             const bool removed = folder->remove();
             QVERIFY2(open.isEmpty(), qPrintable(QStringLiteral("still open: ") + open.join(QStringLiteral(", "))));
             QVERIFY2(removed, qPrintable(QStringLiteral("could not remove ") + QDir::toNativeSeparators(path)));
