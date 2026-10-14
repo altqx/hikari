@@ -58,3 +58,10 @@ hikari_add_gtest(hikari_core_colour_space_tests
     LIBRARIES hikari_core LABELS core)
 target_include_directories(hikari_core_colour_space_tests PRIVATE
     "${_legacy_colorspace}" "${CMAKE_CURRENT_SOURCE_DIR}/legacy-colorspace")
+
+# 38c: a script's attached fonts for the renderers, and the renderer script
+# without [Fonts].
+hikari_add_gtest(hikari_core_ass_attachments_tests SOURCES ass_attachments_tests.cpp
+    LIBRARIES hikari_core Qt6::Core LABELS core)
+target_compile_definitions(hikari_core_ass_attachments_tests PRIVATE
+    HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments")

@@ -6,6 +6,7 @@
 // onto a cleared frame, as SubtitlesLibass::DrawOverlay does.
 
 #include "hikari/backends/libass_renderer.h"
+#include "hikari/core/ass_attachments.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
 
@@ -21,6 +22,7 @@ extern "C" {
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <optional>
@@ -562,4 +564,63 @@ TEST(LibassRenderer, ANewSizeDrawsAsANewRenderer)
     EXPECT_EQ(smaller->changed, (std::vector<PixelRect>{{0, 0, 320, 180}}));
     EXPECT_TRUE(smaller->pixels == reference->pixels);
     EXPECT_EQ(smaller->pixels.size(), 320u * 180u * 4u);
+}
+
+// 38c (user decision, 2026-10-14): the fonts a script attaches reach libass
+// as the application hands them over: the renderer script without [Fonts],
+// and the decoded fonts as leases. tests/fixtures/attachments/attached.ass
+// draws "HH" in HikariAttachedTest, a family only its [Fonts] has, whose
+// letters are filled boxes; with the system's fonts another face draws "HH"
+// unless the attached font is leased (libass reads no font from a script).
+TEST(LibassRenderer, DrawsTheScriptsAttachedFonts)
+{
+    QFile f(QStringLiteral(HIKARI_ATTACHMENT_FIXTURES "/attached.ass"));
+    ASSERT_TRUE(f.open(QIODevice::ReadOnly));
+    const QByteArray data = f.readAll();
+    std::vector<std::byte> source(static_cast<std::size_t>(data.size()));
+    std::memcpy(source.data(), data.constData(), source.size());
+    const core::Document document = core::loadAss(source).document;
+    std::vector<FontLease> leases;
+    for (auto &font : core::attachedFonts(document))
+        leases.push_back({font.name, std::make_shared<const std::vector<std::byte>>(std::move(font.bytes))});
+    ASSERT_EQ(leases.size(), 1u);
+    const auto script = core::encodeAss(document, core::AssSaveOptions{.renderer = true});
+
+    struct Drawn {
+        int left = 640, top = 360, right = -1, bottom = -1;
+        long covered = 0;
+        double fill() const { return right < left ? 0 : double(covered) / ((right - left + 1.0) * (bottom - top + 1.0)); }
+    };
+    const auto draw = [&](std::vector<FontLease> fonts) {
+        backends::LibassRenderer renderer;
+        EXPECT_TRUE(renderer.prepare(RenderSnapshot{script, std::move(fonts), {}, true}));
+        const auto frame = renderer.render(core::DocumentTime(1'000'000), 640, 360);
+        Drawn d;
+        EXPECT_TRUE(frame);
+        if (!frame)
+            return d;
+        for (int y = 0; y < frame->height; ++y)
+            for (int x = 0; x < 360; ++x) // the "HH" Line's part of the frame
+                if (frame->pixels[std::size_t(y) * frame->stride + std::size_t(x) * 4 + 3] >= 128) {
+                    ++d.covered;
+                    d.left = std::min(d.left, x);
+                    d.right = std::max(d.right, x);
+                    d.top = std::min(d.top, y);
+                    d.bottom = std::max(d.bottom, y);
+                }
+        return d;
+    };
+    const Drawn without = draw({});
+    std::fprintf(stderr, "38c libass: without the lease %ld pixels, %.2f of their box; ", without.covered, without.fill());
+    EXPECT_GT(without.covered, 0);
+    EXPECT_LT(without.fill(), 0.75);
+    const Drawn with = draw(leases);
+    std::fprintf(stderr, "with it %ld pixels, %.2f of [%d,%d]-[%d,%d]\n", with.covered, with.fill(), with.left, with.top,
+                 with.right, with.bottom);
+    // two boxes of 90 by 70 pixels (100 px text, a 1000-unit em), 10 apart
+    EXPECT_GT(with.fill(), 0.9);
+    EXPECT_GT(with.right - with.left, 170);
+    EXPECT_LT(with.right - with.left, 200);
+    EXPECT_GT(with.bottom - with.top, 60);
+    EXPECT_LT(with.bottom - with.top, 80);
 }

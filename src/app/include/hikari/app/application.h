@@ -15,6 +15,7 @@
 #include "hikari/app/matroska_controller.h"
 #include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
+#include "hikari/core/ass_attachments.h"
 #include "hikari/application/associated_files.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/find_replace.h"
@@ -1098,6 +1099,23 @@ private:
     bool showOriginal(application::DocumentId document);
     void setUpTranslationControls();
     std::vector<std::byte> rendererScript(const core::Document &document) const;
+    // 38c: each Document's [Fonts] as font leases, decoded once for its file
+    // generation; the same leases (the same bytes) while the fonts stay, so
+    // the renderers keep the fonts they added.
+    struct AttachedFontsEntry {
+        std::uint64_t generation = 0;
+        core::AttachedFontsKey key;
+        std::vector<application::FontLease> leases;
+    };
+    std::map<std::uint64_t, AttachedFontsEntry> m_attachedFonts;
+    std::vector<application::FontLease> attachedFontLeases(std::optional<application::DocumentId> document);
+    // The fonts the renderers take with a Document's subtitles: its attached
+    // fonts, then the external fonts (Y6).
+    std::vector<application::FontLease> subtitleFonts(std::optional<application::DocumentId> document);
+    // Gives the video session the subtitle fonts of `document`; true when
+    // they changed.
+    bool setVideoFonts(std::optional<application::DocumentId> document);
+    std::vector<application::FontLease> m_videoFonts;
     std::unique_ptr<ui::StatusBarController> m_statusBar; // P10
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;

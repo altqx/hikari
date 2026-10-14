@@ -29,6 +29,8 @@ struct AssSaveOptions {
     // Unconfirmed), left out when hideOriginalOnVideo is on, then its
     // translation line; any other Line is one line with its text, in its own
     // Style and effect. Without "TLMode: Yes" every Line is its text alone.
+    // The [Fonts] sections are left out: the renderers take those fonts as
+    // font leases (ass_attachments.h); [Graphics] stays for VSFilterMod.
     bool renderer = false;
 };
 // An edited TLMode pair is regenerated as SubsGrid::SaveFile writes it: with a

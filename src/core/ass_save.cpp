@@ -1,4 +1,5 @@
 #include "hikari/core/ass_save.h"
+#include "hikari/core/ass_attachments.h"
 
 #include "text_util.h"
 
@@ -100,7 +101,14 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
     if (document.source().encoding == TextEncoding::Utf8WithBom)
         copy(0, 3);
     detail::NewlineTracker newlines;
+    bool fonts = false;
     for (const auto &section : document.sections()) {
+        // 38c: the renderers take the attached fonts as font leases
+        // (ass_attachments.h), so the renderer script leaves [Fonts] out,
+        // with the sections that continue them.
+        fonts = section.kind == SectionKind::Fonts || (fonts && continuesAttachment(section));
+        if (options.renderer && fonts)
+            continue;
         // E5-tlmode-needs-script-info: a Script Info section the Document
         // added at the top has no bytes; it is written as legacy's header is
         // (SubsGridBase.cpp:1490-1503): the header, its properties and a
