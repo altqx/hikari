@@ -31,12 +31,15 @@ did and are not expectations for the rewrite.
 import argparse
 import base64
 import json
+import ntpath
 import subprocess
 import time
 from pathlib import Path
 
 LEGACY_COMMIT = "20d647c4c769ab7f5d383cf3c1c33f03876a94e9"
 MAIN_TITLE = "HikariSub v"
+LOG_WINDOW = "Log window"
+LOG_CLOSE_ID = "12457"  # the log window's Close button (LogHandler.cpp)
 
 
 class Winix:
@@ -116,7 +119,10 @@ class Legacy:
 
     def launch(self, exe, doc):
         self.kill()
-        started = self.w.ui("launch", exe=exe, arguments=[doc])
+        # A desktop launch (Explorer) starts in the exe's folder; without cwd
+        # winix's launch keeps its UI agent's directory, and paths legacy
+        # resolves against the working directory (S4's s4/...) miss.
+        started = self.w.ui("launch", exe=exe, arguments=[doc], cwd=ntpath.dirname(exe))
         self.pid = started.get("pid") if isinstance(started, dict) else None
         deadline = time.time() + 90
         while time.time() < deadline:
@@ -128,11 +134,46 @@ class Legacy:
             time.sleep(2)
         return False
 
-    def popups(self):
+    def popup_windows(self):
+        """The legacy process's other visible windows (title, hwnd, bounds,
+        foreground), the foreground one first, or None if listing failed.
+        `ui windows` lists only unowned top-level windows, so a message box or
+        dialog owned by the main window (legacy's HikariMessageBox "Info",
+        "Error", the log window) is read from `ui tree`'s window list for the
+        process."""
+        tree = self.w.ui("tree", pid=self.pid, depth=0) if self.pid else None
+        if isinstance(tree, dict) and isinstance(tree.get("windows"), list):
+            ws = sorted(tree["windows"], key=lambda w: not w.get("foreground"))
+            return [w for w in ws
+                    if w.get("visible") and w.get("pid") == self.pid and MAIN_TITLE not in (w.get("title") or "")]
         mine = self.windows()
         if mine is None:
             return None
-        return [w.get("name") for w in mine if MAIN_TITLE not in (w.get("name") or "")]
+        return [{"title": w.get("name"), "hwnd": w.get("hwnd"), "bounds": w.get("bounds")}
+                for w in mine if MAIN_TITLE not in (w.get("name") or "")]
+
+    def popups(self):
+        """The titles of popup_windows()."""
+        ws = self.popup_windows()
+        return None if ws is None else [w.get("title") for w in ws]
+
+    def answer(self, win, how):
+        """Answers one of popup_windows(): brings it forward (desktop keys go to
+        the foreground window) and presses `how`, or for "Close" clicks the
+        log window's Close button."""
+        if win.get("hwnd"):
+            self.w.ui("focus", pid=self.pid, window=f"hwnd:{win['hwnd']}")
+            time.sleep(0.3)
+        if how != "Close":
+            return self.w.ui("keys", keys=how)
+        # Return does not close the log window, and Alt+F4 left it open on
+        # Windows: its Close button (LogHandler.cpp, id 12457), bottom centre.
+        r = self.w.ui("click", pid=self.pid, window=f"hwnd:{win['hwnd']}", automationId=LOG_CLOSE_ID) \
+            if win.get("hwnd") else None
+        if isinstance(r, dict) and not r.get("error"):
+            return r
+        b = win.get("bounds") or {}
+        return self.w.ui("click", x=b.get("x", 0) + b.get("width", 0) // 2, y=b.get("y", 0) + b.get("height", 0) - 22)
 
     def focus_main(self):
         # Desktop keys go to the foreground window: click the main window's
@@ -180,13 +221,10 @@ def send_keys(legacy, keys):
         if chord.startswith("type:"):
             # Desktop keys are virtual-key chords; text goes into an edit through
             # UI Automation (its value is set, not typed key by key).
+            # The dialog is owned by the main window: popups() sees it, `ui windows` does not.
             target = None
-            for w in legacy.windows() or []:
-                if MAIN_TITLE in (w.get("name") or ""):
-                    continue
-                tree = legacy.w.ui("tree", pid=legacy.pid, depth=6)
-                target = find_edit(tree)
-                break
+            if legacy.popups():
+                target = find_edit(legacy.w.ui("tree", pid=legacy.pid, depth=6))
             if target:
                 r = legacy.w.ui("type", pid=legacy.pid, automationId=target, text=chord[5:])
             else:
@@ -313,8 +351,8 @@ def document_scripts(legacy, spec):
     own copy (legacy-win-s4-setup), as document_scripts_capture.py runs them
     on Linux: GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT by its hotkey, the scripts'
     records (legacy-win-s4-output), the windows that open, each answered in
-    turn (Return, Escape for a file picker, Alt+F4 for the log window), and
-    the main window's title."""
+    turn (Return, Escape for a file picker, the Close button of the log
+    window, which is answered last), and the main window's title."""
     job, lines = legacy.w.task("legacy-win-s4-setup")
     layout = next((l[len("S4_LAYOUT "):] for l in lines if l.startswith("S4_LAYOUT ")), None)
     if job.get("state") != "succeeded" or not layout:
@@ -360,16 +398,19 @@ def document_scripts(legacy, spec):
             srec["records"] = got[seen:]
             seen = len(got)
             for n in range(6):
-                popups = legacy.popups() or []
+                popups = legacy.popup_windows() or []
                 if not popups:
                     break
-                title = popups[0]
+                # As the Linux capture answers them: a message box or picker
+                # before the log window, which can sit over the (modal) box.
+                win = next((w for w in popups if w.get("title") != LOG_WINDOW), popups[0])
+                title = win.get("title")
                 entry = {"title": title, "screenshot": legacy.shot(f"s4-{case['id']}-{len(rec['steps'])}-{n}")}
-                # The log window does not close on Return (the Linux capture):
-                # Alt+F4 closes it.
-                entry["answered"] = "ALT+F4" if title == "Log window" else \
+                # Return, Escape for a file picker, the log window's Close
+                # button (it does not close on Return).
+                entry["answered"] = "Close" if title == LOG_WINDOW else \
                     "ESCAPE" if title in FILE_PICKERS else "RETURN"
-                legacy.w.ui("keys", keys=entry["answered"])
+                entry["reply"] = legacy.answer(win, entry["answered"])
                 time.sleep(1.5)
                 more = records(case["id"])
                 if len(more) > seen:
