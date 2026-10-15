@@ -234,9 +234,10 @@ class DockingQualification : public QObject {
         int width = -1;
     };
 
-    // Offscreen: the screen's logical DPI (96: 100 %, 120: 125 %) through the
-    // platform's configuration, as a live change of the display scale.
-    static bool setScreenDpi(int dpi)
+    // Offscreen: the platform's screens (its configuration's "screens", in
+    // native pixels) changed by `edit`, as monitors are reconfigured, plugged
+    // in or removed.
+    static bool configureScreens(const std::function<void(QJsonArray &)> &edit)
     {
         QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
         using Get = QJsonObject (*)(QPlatformNativeInterface *);
@@ -249,13 +250,50 @@ class DockingQualification : public QObject {
         QJsonArray screens = config.value(QStringLiteral("screens")).toArray();
         if (screens.isEmpty())
             return false;
-        QJsonObject first = screens.first().toObject();
-        first.insert(QStringLiteral("logicalDpi"), dpi);
-        screens.replace(0, first);
+        edit(screens);
         config.insert(QStringLiteral("screens"), screens);
         set(config, native);
         QWindowSystemInterface::flushWindowSystemEvents();
         return true;
+    }
+    // Offscreen: the screen's logical DPI (96: 100 %, 120: 125 %) through the
+    // platform's configuration, as a live change of the display scale.
+    static bool setScreenDpi(int dpi)
+    {
+        return configureScreens([dpi](QJsonArray &screens) {
+            QJsonObject first = screens.first().toObject();
+            first.insert(QStringLiteral("logicalDpi"), dpi);
+            screens.replace(0, first);
+        });
+    }
+    // Offscreen: a second monitor named `name` right of the first one, at
+    // `dpi` (144: 150 %), or none (dpi 0) to remove it.
+    static bool setSideScreen(const QString &name, int dpi)
+    {
+        return configureScreens([&](QJsonArray &screens) {
+            for (qsizetype i = screens.size() - 1; i > 0; --i)
+                if (screens.at(i).toObject().value(QStringLiteral("name")).toString() == name)
+                    screens.removeAt(i);
+            if (dpi <= 0)
+                return;
+            const QJsonObject first = screens.first().toObject();
+            screens.append(QJsonObject{{QStringLiteral("name"), name},
+                                       {QStringLiteral("x"), first.value(QStringLiteral("x")).toInt()
+                                                                 + first.value(QStringLiteral("width")).toInt()},
+                                       {QStringLiteral("y"), 0},
+                                       {QStringLiteral("width"), 1920},
+                                       {QStringLiteral("height"), 1080},
+                                       {QStringLiteral("logicalDpi"), dpi},
+                                       {QStringLiteral("logicalBaseDpi"), 96},
+                                       {QStringLiteral("dpr"), 1.0}});
+        });
+    }
+    static QScreen *screenNamed(const QString &name)
+    {
+        for (QScreen *s : QGuiApplication::screens())
+            if (s->name() == name)
+                return s;
+        return nullptr;
     }
 
 private slots:
@@ -995,6 +1033,124 @@ private slots:
         QTRY_COMPARE(floating->devicePixelRatio(), 1.0);
         QTest::qWait(hikari::ui::dockchrome::kScaleSettleMs * 2);
         QCOMPARE(floating->size(), large);
+    }
+
+    // D3 (#207): a floating panel whose monitor goes away comes back whole on
+    // the main window's screen, at its size in device-independent pixels
+    // (dockchrome::kScreenLossWatchMs). Windows gate, 2026-10-15: Audio
+    // floating on a 150 % monitor right of a 100 % one; Windows' "PC screen
+    // only" moved it onto the remaining screen at a pixel size, then it came
+    // back at its size with only its left 173 px on that screen. The
+    // offscreen platform removes a screen as Qt does (its windows go to the
+    // primary screen, keeping their pixels); the test moves the window as
+    // the window system did.
+    void floatingPanelComesBackWholeWhenItsScreenGoesAway()
+    {
+        if (QGuiApplication::platformName() != QLatin1String("offscreen"))
+            QSKIP("screens come and go through the offscreen platform's configuration");
+        QCOMPARE(window->devicePixelRatio(), 1.0);
+        restoreInitial();
+        hikari::ui::dockchrome::overrideNativeScale([](QWindow *) { return std::optional<qreal>(); });
+        const QString side = QStringLiteral("Side");
+        auto *audio = dock("Audio");
+        const auto restore = qScopeGuard([&] {
+            setSideScreen(side, 0);
+            hikari::ui::dockchrome::overrideNativeScale(nullptr);
+            audio->setProperty("isFloating", false);
+        });
+        QScreen *main = window->screen();
+        const QRect mainArea = main->availableGeometry();
+        QVERIFY(setSideScreen(side, 144));
+        QScreen *sideScreen = nullptr;
+        QTRY_VERIFY((sideScreen = screenNamed(side)));
+        QCOMPARE(sideScreen->devicePixelRatio(), 1.5);
+
+        QVERIFY(audio->setProperty("isFloating", true));
+        QQuickItem *bar = nullptr;
+        QTRY_VERIFY((bar = header(QStringLiteral("Audio"))) && bar->window() != window);
+        auto *floating = qobject_cast<QQuickWindow *>(bar->window());
+        QVERIFY(QTest::qWaitForWindowExposed(floating));
+        QCOMPARE(floating->transientParent(), window);
+        KDDockWidgets::QtQuick::FloatingWindow *view = nullptr;
+        for (QQuickItem *child : floating->contentItem()->childItems())
+            if (auto *v = qobject_cast<KDDockWidgets::QtQuick::FloatingWindow *>(child))
+                view = v;
+        QVERIFY(view);
+        // On the 150 % monitor, at a size of its own (wider than half the
+        // main screen, as Audio was on the gate's).
+        const QRect sideArea = sideScreen->availableGeometry();
+        floating->setFramePosition(sideArea.topLeft() + QPoint(200, 150));
+        QTRY_COMPARE(floating->screen(), sideScreen);
+        QTRY_COMPARE(floating->devicePixelRatio(), 1.5);
+        QTest::qWait(hikari::ui::dockchrome::kScaleSettleMs * 2);
+        const QSize size = view->minSize().expandedTo(QSize(mainArea.width() * 3 / 4, 220));
+        QVERIFY(size.width() < mainArea.width() && size.height() < mainArea.height());
+        floating->resize(size);
+        QTRY_COMPARE(floating->size(), size);
+        QTest::qWait(50);
+
+        auto wholeOnMain = [&] {
+            return floating->screen() == main && mainArea.contains(floating->frameGeometry());
+        };
+        auto report = [&] {
+            return QStringLiteral("%1,%2 %3x%4 on %5, panel %6x%7")
+                .arg(floating->frameGeometry().x()).arg(floating->frameGeometry().y())
+                .arg(floating->width()).arg(floating->height())
+                .arg(floating->screen() ? floating->screen()->name() : QString())
+                .arg(static_cast<QQuickItem *>(view)->width()).arg(static_cast<QQuickItem *>(view)->height());
+        };
+        // The window system, as on the gate: the window onto the remaining
+        // screen at its pixel size, then where only 173 px of it show.
+        auto windowSystemMoves = [&](QSize pixels) {
+            floating->setGeometry(QRect(QPoint(mainArea.right() + 1 - 173, mainArea.top() + 107), pixels));
+        };
+        auto settled = [&] {
+            // What the shell does 250 ms after a screen goes away
+            // (WorkspaceLayoutController's screen check), then the keeper.
+            QTest::qWait(250);
+            hikari::ui::keepFloatingPanelsOnScreen();
+            QTest::qWait(hikari::ui::dockchrome::kScaleSettleMs * 2);
+        };
+
+        QVERIFY(setSideScreen(side, 0));
+        QTRY_COMPARE(floating->screen(), main);
+        QTRY_COMPARE(floating->devicePixelRatio(), 1.0);
+        windowSystemMoves(QSize(qRound(size.width() / 1.5), qRound(size.height() / 1.5)));
+        settled();
+        QTRY_VERIFY2(wholeOnMain(), qPrintable(report()));
+        QCOMPARE(floating->size(), size);
+        QTRY_COMPARE(static_cast<QQuickItem *>(view)->size(), QSizeF(floating->size())); // the panel whole in its window
+        QCOMPARE(bar->window(), floating);
+
+        // The window system moves it again soon after: placed again.
+        windowSystemMoves(size);
+        settled();
+        QTRY_VERIFY2(wholeOnMain(), qPrintable(report()));
+        QCOMPARE(floating->size(), size);
+
+        // Once the loss has settled, a move of the user's own stays.
+        QTest::qWait(hikari::ui::dockchrome::kScreenLossWatchMs);
+        const QPoint partlyOff(mainArea.right() + 1 - 173, mainArea.top() + 50);
+        floating->setFramePosition(partlyOff);
+        QTRY_COMPARE(floating->framePosition(), partlyOff);
+        QTest::qWait(hikari::ui::dockchrome::kScaleSettleMs * 2);
+        QCOMPARE(floating->framePosition(), partlyOff);
+
+        // Removed with nothing moving the window (Qt's own fallback): it
+        // stays where its pixels were, off every screen, until the keeper
+        // brings it back.
+        QVERIFY(setSideScreen(side, 144));
+        QTRY_VERIFY((sideScreen = screenNamed(side)));
+        floating->setFramePosition(sideScreen->availableGeometry().topLeft() + QPoint(200, 150));
+        QTRY_COMPARE(floating->devicePixelRatio(), 1.5);
+        QTest::qWait(hikari::ui::dockchrome::kScaleSettleMs * 2);
+        QCOMPARE(floating->size(), size);
+        QVERIFY(setSideScreen(side, 0));
+        QTRY_COMPARE(floating->screen(), main);
+        settled();
+        QTRY_VERIFY2(wholeOnMain(), qPrintable(report()));
+        QCOMPARE(floating->size(), size);
+        QTRY_COMPARE(static_cast<QQuickItem *>(view)->size(), QSizeF(floating->size()));
     }
 
     // D3: while a panel is dragged, the accent highlight covers the area a

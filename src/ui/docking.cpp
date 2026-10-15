@@ -24,6 +24,7 @@
 #include <kddockwidgets/qtquick/views/TabBar.h>
 
 #include <QContextMenuEvent>
+#include <QDeadlineTimer>
 #include <QGuiApplication>
 #include <QLoggingCategory>
 #include <QPointer>
@@ -218,6 +219,16 @@ std::function<std::optional<qreal>(QWindow *)> g_nativeScale; // tests
 // cut off. The keeper remembers the window's size and its scales while
 // they settle, and after a change of Qt's device pixel ratio gives the
 // window that size back.
+//
+// dockchrome::kScreenLossWatchMs: a floating window whose screen goes away
+// (a monitor unplugged, Windows' "PC screen only") is placed whole on the
+// main window's screen at its size before the loss. The Windows gate
+// (2026-10-15, a panel on a 150 % monitor beside a 100 % one) saw the window
+// system move the window onto the remaining screen at a pixel size, then the
+// window come back at its size in device-independent pixels but with only
+// its left 173 px on the screen, or as a window larger than its panel. The
+// keeper places the window once the window system has stopped moving it,
+// and again if it moves it within kScreenLossWatchMs of the loss.
 class ScaleKeeper final : public QObject {
 public:
     explicit ScaleKeeper(QWindow *window)
@@ -228,10 +239,25 @@ public:
         m_settle.setSingleShot(true);
         m_settle.setInterval(dockchrome::kScaleSettleMs);
         connect(&m_settle, &QTimer::timeout, this, &ScaleKeeper::settle);
+        connect(qGuiApp, &QGuiApplication::screenRemoved, this, &ScaleKeeper::screenRemoved);
     }
 
     bool eventFilter(QObject *, QEvent *event) override
     {
+        // After a screen loss, whatever the window system does to the window
+        // waits for it to finish, and none of it is a size to keep.
+        if (!m_lost.hasExpired()) {
+            switch (event->type()) {
+            case QEvent::Show:
+            case QEvent::Move:
+            case QEvent::Resize:
+            case QEvent::DevicePixelRatioChange:
+                m_settle.start();
+                return false;
+            default:
+                break;
+            }
+        }
         switch (event->type()) {
         case QEvent::Show:
         case QEvent::Resize:
@@ -273,7 +299,64 @@ private:
         m_size = m_window->size();
         m_dpr = m_window->devicePixelRatio();
         m_native = dockchrome::nativeScale(m_window);
+        m_screen = m_window->screen();
         m_known = true;
+    }
+
+    // Qt emits screenRemoved before it moves the screen's windows to the
+    // primary screen; on Windows the window system may have moved the
+    // window to another screen already, so the screen it was remembered on
+    // counts as well.
+    void screenRemoved(QScreen *screen)
+    {
+        if (!m_window->isVisible() || (screen != m_window->screen() && screen != m_screen))
+            return;
+        if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
+            return; // the compositor places windows (docs/qt/docking.md)
+        qCDebug(lcDocking) << "screen removed:" << m_window->title() << "was on" << screen->name()
+                           << m_window->frameGeometry();
+        m_lost.setRemainingTime(dockchrome::kScreenLossWatchMs);
+        m_settle.start();
+    }
+
+    // The main window's screen (the primary one without it).
+    QScreen *returnScreen() const
+    {
+        const QList<QScreen *> screens = QGuiApplication::screens();
+        QWindow *main = m_window->transientParent();
+        if (main && screens.contains(main->screen()))
+            return main->screen();
+        if (QScreen *primary = QGuiApplication::primaryScreen())
+            return primary;
+        return screens.isEmpty() ? nullptr : screens.first();
+    }
+
+    // The window whole on `screen`, at `size` (without its frame), as close
+    // to where it is as fits.
+    void place(QScreen *screen, QSize size)
+    {
+        const QRect available = screen->availableGeometry();
+        const QMargins margins = m_window->frameMargins();
+        size = size.boundedTo(available.size().shrunkBy(margins));
+        const QRect frame = m_window->frameGeometry();
+        const QSize outer = size.grownBy(margins);
+        const int x = std::clamp(frame.x(), available.left(), std::max(available.left(), available.right() + 1 - outer.width()));
+        const int y = std::clamp(frame.y(), available.top(), std::max(available.top(), available.bottom() + 1 - outer.height()));
+        const QRect want(QPoint(x + margins.left(), y + margins.top()), size);
+        qCDebug(lcDocking) << "returned to" << screen->name() << m_window->title() << m_window->geometry() << "->" << want;
+        if (want != m_window->geometry())
+            m_window->setGeometry(want);
+    }
+
+    // The engine's floating window view (a child of the window's content item).
+    KDDockWidgets::QtQuick::FloatingWindow *view() const
+    {
+        auto *quick = qobject_cast<QQuickWindow *>(m_window);
+        if (QQuickItem *content = quick ? quick->contentItem() : nullptr)
+            for (QQuickItem *child : content->childItems())
+                if (auto *view = qobject_cast<KDDockWidgets::QtQuick::FloatingWindow *>(child))
+                    return view;
+        return nullptr;
     }
 
     // The window's minimum size for its panels: the engine's floating window
@@ -282,15 +365,11 @@ private:
     QSize minimum() const
     {
         QSize least = m_window->minimumSize();
-        auto *quick = qobject_cast<QQuickWindow *>(m_window);
-        if (QQuickItem *content = quick ? quick->contentItem() : nullptr)
-            for (QQuickItem *child : content->childItems())
-                if (auto *view = qobject_cast<KDDockWidgets::QtQuick::FloatingWindow *>(child)) {
-                    const QSize outside(std::max(0, m_window->width() - qCeil(view->width())),
-                                        std::max(0, m_window->height() - qCeil(view->height())));
-                    least = least.expandedTo(view->minSize() + outside);
-                    break;
-                }
+        if (KDDockWidgets::QtQuick::FloatingWindow *view = this->view()) {
+            const QSize outside(std::max(0, m_window->width() - qCeil(view->width())),
+                                std::max(0, m_window->height() - qCeil(view->height())));
+            least = least.expandedTo(view->minSize() + outside);
+        }
         return least;
     }
 
@@ -298,15 +377,27 @@ private:
     {
         if (!m_window->isVisible()) {
             m_known = false;
+            m_lost = QDeadlineTimer();
             return;
         }
-        QSize want = m_size.expandedTo(minimum());
-        if (QScreen *screen = m_window->screen())
+        const bool lost = !m_lost.hasExpired();
+        QScreen *screen = lost ? returnScreen() : m_window->screen();
+        QSize want = (m_known ? m_size : m_window->size()).expandedTo(minimum());
+        if (screen)
             want = want.boundedTo(screen->availableGeometry().size());
-        qCDebug(lcDocking) << "scale change:" << m_window->title() << "dpr" << m_dpr << "->"
+        qCDebug(lcDocking) << (lost ? "screen loss:" : "scale change:") << m_window->title() << "dpr" << m_dpr << "->"
                            << m_window->devicePixelRatio() << "size" << m_window->size() << "->" << want;
-        if (want != m_window->size())
+        if (lost && screen)
+            place(screen, want);
+        else if (want != m_window->size())
             m_window->resize(want);
+        // The panel fills its window again: after a screen loss the engine's
+        // view can keep a size from before it (the gate's 800 x 672 window
+        // with the panel in its top-left two thirds). As the engine's own
+        // window does on a resize (its QuickView::updateRootItemSize).
+        if (KDDockWidgets::QtQuick::FloatingWindow *view = this->view();
+            view && static_cast<QQuickItem *>(view)->size() != QSizeF(m_window->size()))
+            view->KDDockWidgets::Core::View::setSize(m_window->size());
         remember();
     }
 
@@ -316,6 +407,8 @@ private:
     QSize m_size;
     qreal m_dpr = 1;
     std::optional<qreal> m_native;
+    QPointer<QScreen> m_screen;
+    QDeadlineTimer m_lost; // watching for the window system after a screen loss
 };
 
 // MuseScore's engine setup (its dockmodule.cpp, research §0): one header row

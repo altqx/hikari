@@ -25,7 +25,8 @@ TEST_RUNS = [
 # sway-activate pass runs these tests again). Since D3's split header and
 # the scale settle: a live scale change (outputs' mixed DPI), a declined
 # system move (floating's moves) and the X11-only engine move (the x11
-# session's floating-move).
+# session's floating-move). Since the D3 screen-loss fix: a screen removed
+# with a floating panel on it (outputs' monitor removal).
 KNOWN_TEST_SKIPS = (
     "the compositor places windows",
     "a synthetic drag between windows needs the offscreen platform",
@@ -36,6 +37,7 @@ KNOWN_TEST_SKIPS = (
     "the screen's scale changes through the offscreen platform's configuration",
     "the window follows a declined system move only where the platform declines it",
     "X11 only (the .xvfb run)",
+    "screens come and go through the offscreen platform's configuration",
 )
 
 

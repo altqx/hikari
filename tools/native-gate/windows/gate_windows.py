@@ -1310,7 +1310,9 @@ def step_test_executables():
              "the window follows a declined system move only where the platform declines it",
              "X11 only (the .xvfb run)", "HIKARI_SURFACE_SHOT_DIR is not set",
              # the floating panel across a real scale change is the dpi step's
-             "the screen's scale changes through the offscreen platform")
+             "the screen's scale changes through the offscreen platform",
+             # and across a real monitor removal the outputs step's
+             "screens come and go through the offscreen platform's configuration")
     unexpected = [k for k in skips if not any(reason in k for reason in known)]
     log("tests", exits, summary, skips)
     verdict("test-executables", "observed" if ok and not unexpected else "failed",

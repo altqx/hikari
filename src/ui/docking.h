@@ -81,6 +81,15 @@ void overrideCompositing(std::optional<bool> composites);
 // it had before it, at least its panels' minimum size and at most its
 // screen's available size.
 inline constexpr int kScaleSettleMs = 250;
+// A floating panel's window whose screen goes away (a monitor unplugged or
+// switched off, Windows' "PC screen only") is placed whole on the main
+// window's screen at its size in device-independent pixels from before the
+// loss (at most that screen's available size), kScaleSettleMs after the
+// window system last moved or resized it; for kScreenLossWatchMs after the
+// loss the window is placed again if the window system moves it again
+// (Windows gate, 2026-10-15: the window came back with only 173 px of it on
+// the remaining screen). Not on Wayland, where the compositor places windows.
+inline constexpr int kScreenLossWatchMs = 2000;
 // The window system's own scale for `window` (Windows: GetDpiForWindow /
 // 96), which can change before Qt's devicePixelRatio does: a resize the
 // window system makes for the new scale before Qt takes the new scale is
