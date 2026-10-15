@@ -471,6 +471,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="Demux.h" />
     <ClInclude Include="ZipEntryUtf8.h" />
     <ClInclude Include="DialogueTextEditor.h" />
+    <ClInclude Include="DialogueColumns.h" />
     <ClInclude Include="DummyVideo.h" />
     <ClInclude Include="ModificationChecker.h" />
     <ClInclude Include="FontCatalogList.h" />
@@ -505,6 +506,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="FindReplaceResultsDialog.h" />
     <ClInclude Include="FontEnumerator.h" />
     <ClInclude Include="GraphicsD2D.h" />
+    <ClInclude Include="GridColumnChoices.h" />
     <ClInclude Include="HikariWindowResizer.h" />
     <ClInclude Include="KeyframesLoader.h" />
     <ClInclude Include="HotkeysNaming.h" />
@@ -600,6 +602,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="StylePreview.h" />
     <ClInclude Include="SubsDialogue.h" />
     <ClInclude Include="SubsFile.h" />
+    <ClInclude Include="SubsFormats.h" />
     <ClInclude Include="TabPanel.h" />
     <ClInclude Include="SubsTime.h" />
     <ClInclude Include="Timebase.h" />

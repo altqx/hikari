@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include "SubsFormats.h"
 #include <wx/colour.h>
 
 
@@ -119,13 +120,4 @@ enum{
 	STYLE_MARGIN_RIGHT = 1 << 19,
 	STYLE_MARGIN_VERTICAL = 1 << 20,
 	STYLE_ENCODING = 1 << 21,
-};
-
-enum {
-	ASS = 1,
-	SRT,
-	TMP,
-	MDVD,
-	MPL2,
-	FRAME = 10
 };

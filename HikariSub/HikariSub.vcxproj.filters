@@ -669,6 +669,9 @@
     <ClInclude Include="GraphicsD2D.h">
       <Filter>G</Filter>
     </ClInclude>
+    <ClInclude Include="GridColumnChoices.h">
+      <Filter>G</Filter>
+    </ClInclude>
     <ClInclude Include="Hotkeys.h">
       <Filter>H</Filter>
     </ClInclude>
@@ -855,6 +858,9 @@
     <ClInclude Include="DialogueTextEditor.h">
       <Filter>D</Filter>
     </ClInclude>
+    <ClInclude Include="DialogueColumns.h">
+      <Filter>D</Filter>
+    </ClInclude>
     <ClInclude Include="Notebook.h">
       <Filter>N</Filter>
     </ClInclude>
@@ -901,6 +907,9 @@
       <Filter>S</Filter>
     </ClInclude>
     <ClInclude Include="SubsFile.h">
+      <Filter>S</Filter>
+    </ClInclude>
+    <ClInclude Include="SubsFormats.h">
       <Filter>S</Filter>
     </ClInclude>
     <ClInclude Include="SubsGrid.h">

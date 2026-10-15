@@ -21,6 +21,7 @@
 #endif
 
 #include "config.h"
+#include "DialogueColumns.h"
 #include "SubsTime.h"
 #include "styles.h"
 #include <wx/colour.h>
@@ -29,20 +30,6 @@
 #include <cstdint>
 
 enum {
-	LAYER = 1,
-	START = 2,
-	END = 4,
-	STYLE = 8,
-	ACTOR = 16,
-	MARGINL = 32,
-	MARGINR = 64,
-	MARGINV = 128,
-	EFFECT = 256,
-	CPS = 512,
-	TXT = 1024,
-	TXTTL = 2048,
-	COMMENT = 4096,
-	WRAPS = 8192,
 	NOT_VISIBLE = 0,
 	VISIBLE,
 	VISIBLE_BLOCK,

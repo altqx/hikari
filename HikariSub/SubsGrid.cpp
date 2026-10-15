@@ -31,6 +31,7 @@
 #include "SubtitlesProviderManager.h"
 #include "UtilsWindows.h"
 #include "MoveTimes.h"
+#include "GridColumnChoices.h"
 #include <wx/intl.h>
 #include <wx/string.h>
 #include <wx/clipbrd.h>
@@ -543,51 +544,9 @@ void SubsGrid::OnPaste(int id)
 	if (id == GRID_PASTE_COLUMNS){
 		wxArrayString arr;
 		wxArrayInt vals;
-		if (subsFormat == ASS) {
-			arr.Add(_("Layer"));
-			arr.Add(_("The starting time"));
-			arr.Add(_("End time"));
-			arr.Add(_("Actor"));
-			arr.Add(_("Styles"));
-			arr.Add(_("Left margin"));
-			arr.Add(_("Right margin"));
-			arr.Add(_("Vertical margin"));
-			arr.Add(_("Effect"));
-			if (hasTLMode) {
-				arr.Add(_("Text into original"));
-				arr.Add(_("Text into translation"));
-			}
-			else {
-				arr.Add(_("Text"));
-			}
-			
-			vals.Add(LAYER);
-			vals.Add(START);
-			vals.Add(END);
-			vals.Add(ACTOR);
-			vals.Add(STYLE);
-			vals.Add(MARGINL);
-			vals.Add(MARGINR);
-			vals.Add(MARGINV);
-			vals.Add(EFFECT);
-			vals.Add(TXT);
-			if (hasTLMode) {
-				vals.Add(TXTTL);
-			}
-		}
-		else if (subsFormat == TMP) {
-			arr.Add(_("The starting time"));
-			arr.Add(_("Text"));
-			vals.Add(START);
-			vals.Add(TXT);
-		}
-		else {
-			arr.Add(_("The starting time"));
-			arr.Add(_("The starting time"));
-			arr.Add(_("Text"));
-			vals.Add(START);
-			vals.Add(END);
-			vals.Add(TXT);
+		for (const GridColumnChoice &choice : PasteColumnChoices(subsFormat, hasTLMode)) {
+			arr.Add(wxGetTranslation(choice.label));
+			vals.Add(choice.column);
 		}
 		Stylelistbox slx(this, arr, false);
 		int PasteCollumnsSelections = Options.GetInt(PASTE_COLUMNS_SELECTION);
@@ -712,47 +671,9 @@ void SubsGrid::CopyRows(int id)
 	if (id == GRID_COPY_COLUMNS){
 		wxArrayString arr;
 		wxArrayInt vals;
-		if (subsFormat == ASS) {
-			arr.Add(_("Layer"));
-			arr.Add(_("The starting time"));
-			arr.Add(_("End time"));
-			arr.Add(_("Actor"));
-			arr.Add(_("Styles"));
-			arr.Add(_("Left margin"));
-			arr.Add(_("Right margin"));
-			arr.Add(_("Vertical margin"));
-			arr.Add(_("Effect"));
-			arr.Add(_("Text"));
-			arr.Add(_("Text without tags"));
-			vals.Add(LAYER);
-			vals.Add(START);
-			vals.Add(END);
-			vals.Add(ACTOR);
-			vals.Add(STYLE);
-			vals.Add(MARGINL);
-			vals.Add(MARGINR);
-			vals.Add(MARGINV);
-			vals.Add(EFFECT);
-			vals.Add(TXT);
-			vals.Add(TXTTL);
-		}
-		else if (subsFormat == TMP) {
-			arr.Add(_("The starting time"));
-			arr.Add(_("Text"));
-			//arr.Add(_("Tekst bez tagów"));
-			vals.Add(START);
-			vals.Add(TXT);
-			//vals.Add(TXTTL);
-		}
-		else{
-			arr.Add(_("The starting time"));
-			arr.Add(_("The starting time"));
-			arr.Add(_("Text"));
-			//arr.Add(_("Tekst bez tagów"));
-			vals.Add(START);
-			vals.Add(END);
-			vals.Add(TXT);
-			//vals.Add(TXTTL);
+		for (const GridColumnChoice &choice : CopyColumnChoices(subsFormat)) {
+			arr.Add(wxGetTranslation(choice.label));
+			vals.Add(choice.column);
 		}
 		Stylelistbox slx(this, arr, false);
 		int PasteCollumnsSelections = Options.GetInt(COPY_COLLUMS_SELECTIONS);

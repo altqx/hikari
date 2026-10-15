@@ -68,6 +68,7 @@ add_executable(hikarisub_tests
     DependencyControlModulesTests.cpp
     FrameExchangeTests.cpp
     FrameQueueTests.cpp
+    GridColumnChoicesTests.cpp
     HotkeysFileTests.cpp
     LayoutResTests.cpp
     LineGroupsTests.cpp
