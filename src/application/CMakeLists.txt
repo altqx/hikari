@@ -16,6 +16,8 @@ target_include_directories(hikari_application PUBLIC include)
 # overlay on a worker) and the Y'CbCr rows to BGRA the CPU paths share.
 target_sources(hikari_application PRIVATE playback_pipeline.cpp yuv_bgra.cpp
     include/hikari/application/playback_pipeline.h include/hikari/application/yuv_bgra.h)
+# V1: player frames kept as Y'CbCr planes for the presenter's GPU conversion.
+target_sources(hikari_application PRIVATE ycbcr_frame.cpp include/hikari/application/ycbcr_frame.h)
 find_package(Threads REQUIRED)
 target_link_libraries(hikari_application PUBLIC Threads::Threads)
 # F1: find and replace.

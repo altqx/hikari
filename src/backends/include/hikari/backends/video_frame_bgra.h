@@ -33,4 +33,12 @@ namespace hikari::backends {
 bool videoFrameToBgra(const QVideoFrame &frame, application::IndexedFrame &out,
                       std::optional<application::LegacyColourMatrix::Input> colour = std::nullopt);
 
+// The same frame for a presenter that converts Y'CbCr on the GPU: the layouts
+// above are copied into the frame's planes (IndexedFrame::ycbcr, 16-bit
+// samples rounded to 8 bits as above) with the matrix videoFrameToBgra would
+// use, so that application::ycbcrToBgra of the result is videoFrameToBgra's
+// output byte for byte. Other formats are made BGRA as above.
+bool videoFrameToYcbcr(const QVideoFrame &frame, application::IndexedFrame &out,
+                       std::optional<application::LegacyColourMatrix::Input> colour = std::nullopt);
+
 } // namespace hikari::backends

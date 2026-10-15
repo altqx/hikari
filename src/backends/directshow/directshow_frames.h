@@ -29,6 +29,12 @@ std::size_t sampleBytes(const SampleFormat &format);
 // False when the sample is shorter than its format says.
 bool toBgra(const SampleFormat &format, const std::uint8_t *data, std::size_t size, bool bt709,
             application::IndexedFrame &out);
+// The same sample for a presenter that converts Y'CbCr on the GPU: YV12 and
+// NV12 are copied into the frame's planes (IndexedFrame::ycbcr) with the
+// coefficients toBgra uses, so that application::ycbcrToBgra of the result
+// is toBgra's output byte for byte; RGB32 and YUY2 are made BGRA by toBgra.
+bool toYcbcr(const SampleFormat &format, const std::uint8_t *data, std::size_t size, bool bt709,
+             application::IndexedFrame &out);
 const char *subtypeName(Subtype subtype);
 
 } // namespace hikari::backends::dshow

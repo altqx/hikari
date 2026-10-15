@@ -1,5 +1,6 @@
 #include "directshow_frames.h"
 
+#include "hikari/application/ycbcr_frame.h"
 #include "hikari/application/yuv_bgra.h"
 
 #include <algorithm>
@@ -49,6 +50,7 @@ bool toBgra(const SampleFormat &f, const std::uint8_t *data, std::size_t size, b
     out.width = w;
     out.height = h;
     out.stride = w * 4;
+    out.ycbcr.reset();
     // A reused buffer of the same size is neither reallocated nor cleared.
     out.bgra.resize(static_cast<std::size_t>(out.stride) * static_cast<std::size_t>(h));
     auto *dst = reinterpret_cast<std::uint8_t *>(out.bgra.data());
@@ -122,6 +124,54 @@ bool toBgra(const SampleFormat &f, const std::uint8_t *data, std::size_t size, b
     }
     }
     return false;
+}
+
+bool toYcbcr(const SampleFormat &f, const std::uint8_t *data, std::size_t size, bool bt709,
+             application::IndexedFrame &out)
+{
+    if (f.subtype != Subtype::YV12 && f.subtype != Subtype::NV12)
+        return toBgra(f, data, size, bt709, out);
+    if (f.width <= 0 || f.height <= 0 || !data || size < sampleBytes(f))
+        return false;
+    const int w = f.width, h = f.height;
+    const bool nv12 = f.subtype == Subtype::NV12;
+    const application::YcbcrPlanes p = application::ycbcrLayout(w, h, nv12, false, bt709 ? kBt709 : kBt601);
+    out.width = w;
+    out.height = h;
+    out.stride = 0;
+    out.bgra.resize(application::ycbcrBytes(p)); // a reused buffer of the same size is not cleared
+    auto *base = reinterpret_cast<std::uint8_t *>(out.bgra.data());
+    for (int y = 0; y < h; ++y)
+        std::memcpy(base + p.offset[0] + static_cast<std::size_t>(y) * p.stride[0], data + static_cast<std::size_t>(y) * w,
+                    static_cast<std::size_t>(w));
+    // toBgra's chroma rows: the sample holds w / 2 samples a row and h / 2
+    // rows; an odd height's last row and an odd width's last pixel reuse
+    // their neighbours' (neutral grey for a one-pixel width).
+    const std::uint8_t *chroma = data + static_cast<std::size_t>(w) * h;
+    const int half = w / 2;
+    for (int r = 0; r < p.chromaHeight; ++r) {
+        const int cy = std::min(r, std::max(0, h / 2 - 1));
+        std::uint8_t *first = base + p.offset[1] + static_cast<std::size_t>(r) * p.stride[1];
+        if (nv12) {
+            std::memcpy(first, chroma + static_cast<std::size_t>(cy) * w, static_cast<std::size_t>(half) * 2);
+            if (half < p.chromaWidth) {
+                first[half * 2] = half > 0 ? first[half * 2 - 2] : 128;
+                first[half * 2 + 1] = half > 0 ? first[half * 2 - 1] : 128;
+            }
+        } else {
+            std::uint8_t *second = base + p.offset[2] + static_cast<std::size_t>(r) * p.stride[2];
+            const std::uint8_t *vPlane = chroma;
+            const std::uint8_t *uPlane = chroma + static_cast<std::size_t>(half) * (h / 2);
+            std::memcpy(first, uPlane + static_cast<std::size_t>(cy) * half, static_cast<std::size_t>(half));
+            std::memcpy(second, vPlane + static_cast<std::size_t>(cy) * half, static_cast<std::size_t>(half));
+            if (half < p.chromaWidth) {
+                first[half] = half > 0 ? first[half - 1] : 128;
+                second[half] = half > 0 ? second[half - 1] : 128;
+            }
+        }
+    }
+    out.ycbcr = p;
+    return true;
 }
 
 } // namespace hikari::backends::dshow

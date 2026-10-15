@@ -7,6 +7,7 @@
 // source was reopened or replaced) is reported as Stale, never delivered as
 // the current source's frame.
 
+#include "hikari/application/yuv_bgra.h"
 #include "hikari/core/time.h"
 
 #include <cstdint>
@@ -109,12 +110,31 @@ struct AudioBlock {
     std::vector<std::byte> samples; // interleaved
 };
 
+// V1: a player frame as 8-bit Y'CbCr planes, for the presenter to convert on
+// the GPU (ycbcr_frame.h). Plane 0 is luma, width x height; the chroma planes
+// are chromaWidth ((width + 1) / 2) x chromaHeight ((height + 1) / 2, or
+// height with fullHeightChroma): pixel (x, y) takes chroma sample
+// (x / 2, fullHeightChroma ? y : y / 2), with no interpolation, as the CPU
+// conversion (yuv_bgra.h) does. Interleaved: plane 1 holds U, V pairs
+// (NV12) and there is no plane 2. Every row starts on a 4-byte boundary.
+struct YcbcrPlanes {
+    bool interleaved = false;
+    bool fullHeightChroma = false; // 4:2:2
+    int chromaWidth = 0, chromaHeight = 0;
+    std::size_t offset[3] = {};
+    int stride[3] = {}; // bytes
+    yuv::Matrix matrix;
+};
+
 struct IndexedFrame {
     std::uint64_t generation = 0;
     int index = 0;
     std::int64_t pts = 0;
     int width = 0, height = 0, stride = 0;
     std::vector<std::byte> bgra; // owned, top-down
+    // A player frame kept as Y'CbCr: `bgra` then holds its planes, not BGRA,
+    // and `stride` is 0. Only the presenter reads a player frame's pixels.
+    std::optional<YcbcrPlanes> ycbcr;
 };
 
 // A resampled stream over a half-open source range (I3): interleaved float at

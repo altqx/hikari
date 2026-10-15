@@ -2,6 +2,7 @@
 // decoder hands over gives the same colours for the same samples (8- and
 // 16-bit, planar and semi-planar, either chroma order), with the frame's
 // matrix and range; other formats go through Qt's own conversion.
+#include "hikari/application/ycbcr_frame.h"
 #include "hikari/application/yuv_bgra.h"
 #include "hikari/backends/video_frame_bgra.h"
 
@@ -15,6 +16,7 @@
 #include <array>
 #include <cstdlib>
 #include <cstring>
+#include <random>
 
 using hikari::application::IndexedFrame;
 namespace yuv = hikari::application::yuv;
@@ -113,6 +115,37 @@ int differing(const IndexedFrame &out, std::array<int, 4> want)
                 bad += p[c] != want[static_cast<std::size_t>(c)];
         }
     return bad;
+}
+
+// A frame of `format` whose mapped bytes (every plane, padding included) are
+// random: 16-bit samples of any value, including out-of-range ones.
+QVideoFrame noisy(QVideoFrameFormat::PixelFormat format, int width, int height, unsigned seed)
+{
+    QVideoFrame frame(QVideoFrameFormat(QSize(width, height), format));
+    if (!frame.map(QVideoFrame::WriteOnly))
+        return {};
+    std::mt19937 random(seed);
+    for (int plane = 0; plane < frame.planeCount(); ++plane)
+        for (qsizetype i = 0; i < frame.mappedBytes(plane); ++i)
+            frame.bits(plane)[i] = uchar(random());
+    frame.unmap();
+    return frame;
+}
+
+// "": the same bytes; else where the first one differs.
+QString firstDifference(const IndexedFrame &a, const IndexedFrame &b)
+{
+    if (a.width != b.width || a.height != b.height)
+        return QStringLiteral("size %1x%2 against %3x%4").arg(a.width).arg(a.height).arg(b.width).arg(b.height);
+    for (int y = 0; y < a.height; ++y)
+        for (int x = 0; x < a.width * 4; ++x) {
+            const auto p = a.bgra[static_cast<std::size_t>(y) * a.stride + x];
+            const auto q = b.bgra[static_cast<std::size_t>(y) * b.stride + x];
+            if (p != q)
+                return QStringLiteral("pixel %1,%2 channel %3: %4 against %5")
+                    .arg(x / 4).arg(y).arg(x % 4).arg(int(p)).arg(int(q));
+        }
+    return {};
 }
 
 } // namespace
@@ -302,6 +335,72 @@ private slots:
         QCOMPARE(out.width, 5);
         QCOMPARE(out.height, 3);
         QCOMPARE(differing(out, {10, 20, 30, 255}), 0);
+    }
+
+    // V1, the GPU path: the planes videoFrameToYcbcr keeps (the presenter's
+    // shader input) convert to exactly videoFrameToBgra's bytes, for every
+    // layout, odd and tiny sizes, padded rows, short chroma mappings,
+    // and the indexed video's matrix or the frame's own.
+    void planesConvertToTheCpuPathsBytes_data()
+    {
+        QTest::addColumn<int>("format");
+        QTest::addColumn<QSize>("size");
+        const std::pair<const char *, QVideoFrameFormat::PixelFormat> formats[] = {
+            {"NV12", QVideoFrameFormat::Format_NV12},       {"NV21", QVideoFrameFormat::Format_NV21},
+            {"P010", QVideoFrameFormat::Format_P010},       {"P016", QVideoFrameFormat::Format_P016},
+            {"YUV420P", QVideoFrameFormat::Format_YUV420P}, {"YV12", QVideoFrameFormat::Format_YV12},
+            {"YUV420P10", QVideoFrameFormat::Format_YUV420P10}, {"YUV422P", QVideoFrameFormat::Format_YUV422P}};
+        const QSize sizes[] = {{38, 9}, {33, 17}, {64, 36}, {7, 2}, {5, 3}, {3, 2}};
+        for (const auto &[name, format] : formats)
+            for (const QSize &size : sizes)
+                QTest::addRow("%s %dx%d", name, size.width(), size.height()) << int(format) << size;
+    }
+    void planesConvertToTheCpuPathsBytes()
+    {
+        QFETCH(int, format);
+        QFETCH(QSize, size);
+        namespace ffms = hikari::application::ffms_colour;
+        using Input = hikari::application::LegacyColourMatrix::Input;
+        const std::optional<Input> colours[] = {std::nullopt, Input{ffms::kBt470bg, ffms::kRangeMpeg},
+                                                Input{ffms::kBt709, ffms::kRangeJpeg}};
+        const QVideoFrame frame = noisy(QVideoFrameFormat::PixelFormat(format), size.width(), size.height(), 7);
+        QVERIFY(frame.isValid());
+        for (const auto &colour : colours) {
+            IndexedFrame bgra, planes, back;
+            QVERIFY(hikari::backends::videoFrameToBgra(frame, bgra, colour));
+            QVERIFY(hikari::backends::videoFrameToYcbcr(frame, planes, colour));
+            QVERIFY2(planes.ycbcr.has_value(), "the frame was not kept as planes");
+            QCOMPARE(planes.stride, 0);
+            QCOMPARE(QString::fromStdString(hikari::application::ycbcrLayoutError(planes)), QString());
+            QVERIFY(hikari::application::ycbcrToBgra(planes, back));
+            const QString difference = firstDifference(back, bgra);
+            QVERIFY2(difference.isEmpty(), qPrintable(difference));
+        }
+    }
+
+    // A 1080p NV12 or YUV420P frame's planes take 1.5 bytes a pixel (the
+    // BGRA frame 4): what the presenter uploads.
+    void planesTakeOneAndAHalfBytesAPixel()
+    {
+        for (const auto format : {QVideoFrameFormat::Format_NV12, QVideoFrameFormat::Format_YUV420P}) {
+            IndexedFrame planes;
+            QVERIFY(hikari::backends::videoFrameToYcbcr(uniform(format, 1920, 1080), planes));
+            QVERIFY(planes.ycbcr);
+            QCOMPARE(hikari::application::ycbcrBytes(*planes.ycbcr), std::size_t(1920 * 1080 * 3 / 2));
+        }
+    }
+
+    // A format without planes is made BGRA, as videoFrameToBgra makes it.
+    void otherFormatsStayBgra()
+    {
+        QVideoFrame frame = noisy(QVideoFrameFormat::Format_BGRX8888, 5, 3, 3);
+        IndexedFrame bgra, kept;
+        QVERIFY(hikari::backends::videoFrameToBgra(frame, bgra));
+        QVERIFY(hikari::backends::videoFrameToYcbcr(frame, kept));
+        QVERIFY(!kept.ycbcr);
+        QCOMPARE(kept.stride, 5 * 4);
+        QVERIFY(firstDifference(kept, bgra).isEmpty());
+        QVERIFY(!hikari::backends::videoFrameToYcbcr(QVideoFrame(), kept));
     }
 
     void anInvalidFrameGivesNothing()

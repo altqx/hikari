@@ -1,5 +1,6 @@
 #include "hikari/backends/video_frame_bgra.h"
 
+#include "hikari/application/ycbcr_frame.h"
 #include "hikari/application/yuv_bgra.h"
 
 #include <QImage>
@@ -95,6 +96,7 @@ bool viaImage(const QVideoFrame &frame, application::IndexedFrame &out)
     out.width = image.width();
     out.height = image.height();
     out.stride = out.width * 4;
+    out.ycbcr.reset();
     out.bgra.resize(static_cast<std::size_t>(out.stride) * static_cast<std::size_t>(out.height));
     for (int y = 0; y < out.height; ++y) {
         auto *row = reinterpret_cast<std::uint8_t *>(out.bgra.data()) + static_cast<std::size_t>(y) * out.stride;
@@ -128,6 +130,7 @@ bool videoFrameToBgra(const QVideoFrame &source, application::IndexedFrame &out,
     out.width = w;
     out.height = h;
     out.stride = w * 4;
+    out.ycbcr.reset();
     out.bgra.resize(static_cast<std::size_t>(out.stride) * static_cast<std::size_t>(h));
     const int cw = (w + 1) / 2;
     // The chroma rows the mapping holds (an odd height may have one fewer):
@@ -200,6 +203,96 @@ bool videoFrameToBgra(const QVideoFrame &source, application::IndexedFrame &out,
                  reinterpret_cast<std::uint8_t *>(out.bgra.data()) + static_cast<std::size_t>(y) * out.stride);
     }
     frame.unmap();
+    return true;
+}
+
+bool videoFrameToYcbcr(const QVideoFrame &source, application::IndexedFrame &out,
+                       std::optional<application::LegacyColourMatrix::Input> colour)
+{
+    if (!source.isValid())
+        return false;
+    Shape shape;
+    if (!shapeOf(source.pixelFormat(), shape))
+        return viaImage(source, out);
+    QVideoFrame frame(source);
+    if (!frame.map(QVideoFrame::ReadOnly))
+        return false;
+    const int w = frame.width(), h = frame.height();
+    const bool interleaved = shape.layout == Layout::SemiPlanar;
+    if (w <= 0 || h <= 0 || frame.planeCount() < (interleaved ? 2 : 3)) {
+        frame.unmap();
+        return false;
+    }
+    // The chroma rows the mapping holds, as videoFrameToBgra counts them: a
+    // short one's last row serves the rows below it.
+    auto rows = [&frame](int plane) {
+        const int line = frame.bytesPerLine(plane);
+        return line > 0 ? static_cast<int>(frame.mappedBytes(plane) / line) : 0;
+    };
+    int ch = std::min(shape.fullHeightChroma ? h : (h + 1) / 2, rows(1));
+    if (!interleaved)
+        ch = std::min(ch, rows(2));
+    if (ch <= 0) {
+        frame.unmap();
+        return false;
+    }
+    const application::YcbcrPlanes p =
+        application::ycbcrLayout(w, h, interleaved, shape.fullHeightChroma, matrixOf(frame.surfaceFormat(), w, h, colour));
+    out.width = w;
+    out.height = h;
+    out.stride = 0;
+    out.bgra.resize(application::ycbcrBytes(p)); // a reused buffer of the same size is not cleared
+    auto *base = reinterpret_cast<std::uint8_t *>(out.bgra.data());
+    for (int y = 0; y < h; ++y) {
+        const uchar *luma = frame.bits(0) + static_cast<std::ptrdiff_t>(y) * frame.bytesPerLine(0);
+        std::uint8_t *dst = base + p.offset[0] + static_cast<std::size_t>(y) * p.stride[0];
+        if (shape.wide)
+            for (int x = 0; x < w; ++x)
+                dst[x] = narrow(words(luma)[x], shape.highBits);
+        else
+            std::memcpy(dst, luma, static_cast<std::size_t>(w));
+    }
+    const int cw = p.chromaWidth;
+    for (int r = 0; r < p.chromaHeight; ++r) {
+        const int cy = std::min(r, ch - 1);
+        std::uint8_t *first = base + p.offset[1] + static_cast<std::size_t>(r) * p.stride[1];
+        if (interleaved) {
+            const uchar *pairs = frame.bits(1) + static_cast<std::ptrdiff_t>(cy) * frame.bytesPerLine(1);
+            if (!shape.wide && !shape.swapChroma) {
+                std::memcpy(first, pairs, static_cast<std::size_t>(cw) * 2);
+                continue;
+            }
+            for (int x = 0; x < cw; ++x) {
+                std::uint8_t a, b;
+                if (shape.wide) {
+                    a = narrow(words(pairs)[2 * x], shape.highBits);
+                    b = narrow(words(pairs)[2 * x + 1], shape.highBits);
+                } else {
+                    a = pairs[2 * x];
+                    b = pairs[2 * x + 1];
+                }
+                first[2 * x] = shape.swapChroma ? b : a;
+                first[2 * x + 1] = shape.swapChroma ? a : b;
+            }
+        } else {
+            std::uint8_t *second = base + p.offset[2] + static_cast<std::size_t>(r) * p.stride[2];
+            const uchar *a = frame.bits(1) + static_cast<std::ptrdiff_t>(cy) * frame.bytesPerLine(1);
+            const uchar *b = frame.bits(2) + static_cast<std::ptrdiff_t>(cy) * frame.bytesPerLine(2);
+            const uchar *pu = shape.swapChroma ? b : a;
+            const uchar *pv = shape.swapChroma ? a : b;
+            if (shape.wide) {
+                for (int x = 0; x < cw; ++x) {
+                    first[x] = narrow(words(pu)[x], shape.highBits);
+                    second[x] = narrow(words(pv)[x], shape.highBits);
+                }
+            } else {
+                std::memcpy(first, pu, static_cast<std::size_t>(cw));
+                std::memcpy(second, pv, static_cast<std::size_t>(cw));
+            }
+        }
+    }
+    frame.unmap();
+    out.ycbcr = p;
     return true;
 }
 

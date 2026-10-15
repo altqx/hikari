@@ -403,6 +403,11 @@ add_test(NAME vsfilter-task-environment-control COMMAND "${CMAKE_COMMAND}"
     "-DDROP=$env:HIKARI_VSFILTERMOD_CSRI = \"$PWD/out/build/windows-x64-vsfiltermod/tests/backends/vsfiltermod-csri\"; "
     -P "${CMAKE_CURRENT_SOURCE_DIR}/vsfilter_task_environment.cmake")
 set_tests_properties(vsfilter-task-environment-control PROPERTIES LABELS backends TIMEOUT 60 WILL_FAIL TRUE)
+# W1 / V1: the DirectShow samples' conversions (no Windows dependency): the
+# Y'CbCr planes the presenter converts on the GPU against the CPU's BGRA.
+hikari_add_gtest(hikari_backends_directshow_frames_tests SOURCES directshow_frames_tests.cpp
+    "${PROJECT_SOURCE_DIR}/src/backends/directshow/directshow_frames.cpp" LIBRARIES hikari_application)
+target_include_directories(hikari_backends_directshow_frames_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/backends/directshow")
 # W1: the optional DirectShow adapter (Windows only). Its frame and seek
 # fixtures run against the default players on the same media; its manifest
 # names the libraries it loads.
