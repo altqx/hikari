@@ -5067,6 +5067,148 @@ private slots:
         QCOMPARE(QString::fromStdString(*application->workspace().title(target())), QStringLiteral("mkvextract.srt"));
     }
 
+    // File > Open (GLOBAL_OPEN_SUBS, HikariSubFrame.cpp:1008-1033 at
+    // 20d647c4) on an MKV file: OnMkvSubs on that file (Demux reads its
+    // subtitle track, every block of it) instead of reading the Matroska
+    // bytes as subtitle text, which found only the "Comment:" lines kept in
+    // the track's codec-private header. A tab with subtitles of a file
+    // (SubsPath, or loaded from an MKV) keeps them and the file loads into a
+    // new tab with no question; an Untitled tab takes it after the save
+    // question. ".MKV" goes the same way (Y9-open-mkv-case); an OGM file
+    // opens as a video (OpenFile).
+    void openingAnMkvFromOpenSubtitlesLoadsItsTrack()
+    {
+        auto &matroska = application->matroska();
+        auto *dialog = named("subtitlesOpenDialog");
+        QVERIFY(dialog);
+        const auto choose = [&](const QString &path) {
+            dialog->setProperty("selectedFile", QUrl::fromLocalFile(path));
+            return QMetaObject::invokeMethod(dialog, "accepted");
+        };
+        auto *question = named("mkvSaveQuestion");
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(question && chooser);
+        const auto target = [&] { return application->workspace().editingTarget(); };
+        const auto tabs = [&] { return application->workspace().tabs().size(); };
+        const auto ass = [&](application::DocumentId id) {
+            const auto bytes = core::encodeAss(application->files().session(id)->document());
+            return QByteArray(reinterpret_cast<const char *>(bytes.data()), qsizetype(bytes.size()));
+        };
+        const QByteArray signs("[Script Info]\r\nScriptType: v4.00+\r\nPlayResX: 320\r\nPlayResY: 240\r\n"
+                               "YCbCr Matrix: TV.601\r\n\r\n[V4+ Styles]\r\n"
+                               "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
+                               "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
+                               "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\r\n"
+                               "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,"
+                               "0,1,2,2,2,10,10,10,1\r\n\r\n[Events]\r\n"
+                               "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
+                               "Dialogue: 0,0:00:00.20,0:00:00.60,Default,,0,0,0,,Sign one\r\n"
+                               "Dialogue: 1,0:00:01.23,0:00:01.73,Default,Actor,0,0,0,,Sign two\r\n");
+
+        // No subtitles open, the file open as the video: the chooser lists
+        // its tracks; OK on the ASS track loads it, unsaved and named after
+        // the file, and the video stays open.
+        const QString mkv = nativeFixture("mkvextract.mkv");
+        application->video().openVideo(mkv);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready,
+                                 30000);
+        QVERIFY(!target().has_value());
+        QVERIFY(choose(mkv));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
+        QVERIFY(!question->property("visible").toBool());
+        QCOMPARE(chooser->property("labels").toStringList(),
+                 (QStringList{QStringLiteral("1 Signs (eng, ass)"), QStringLiteral("2 Full (pol, srt)")}));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
+        QTRY_VERIFY_WITH_TIMEOUT(target().has_value(), 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        const auto first = *target();
+        QCOMPARE(ass(first), signs);
+        QCOMPARE(QString::fromStdString(*application->workspace().title(first)), QStringLiteral("mkvextract.ass"));
+        QVERIFY(application->files().session(first)->isDirty());
+        QVERIFY(application->targetUntitled());
+        QCOMPARE(QDir::toNativeSeparators(application->saveDialogValues().value(QStringLiteral("file")).toUrl().toLocalFile()),
+                 QDir::toNativeSeparators(QFileInfo(mkv).absolutePath() + QStringLiteral("/mkvextract")));
+        QVERIFY(application->video().hasVideo());
+        QCOMPARE(QDir::toNativeSeparators(QString::fromStdString(application->video().session().path())), mkv);
+        QCOMPARE(tabs(), std::size_t(1));
+
+        // Y9-open-mkv-case: ".MKV" too. The tab has subtitles loaded from an
+        // MKV (SubsPath), so a new tab would take them: no save question
+        // although they are unsaved; the chooser's Cancel leaves no tab.
+        const QString upper = dir.filePath(QStringLiteral("SHOUT.MKV"));
+        QVERIFY(QFile::copy(mkv, upper));
+        QVERIFY(choose(upper));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
+        QVERIFY(!question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(chooser, "reject"));
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(target(), first);
+        QCOMPARE(tabs(), std::size_t(1));
+
+        // A tab with subtitles of a file: the SubRip track opens in a new
+        // tab; the file's tab stays.
+        const QString subs = writeFile(dir, "mkvopen.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,kept\n");
+        QVERIFY(application->openFile(subs));
+        const auto before = tabs();
+        QCOMPARE(before, std::size_t(2));
+        application->selectTab(1); // the file's tab
+        const auto file = *target();
+        QCOMPARE(QString::fromStdString(*application->workspace().title(file)), QStringLiteral("mkvopen.ass"));
+        QVERIFY(choose(upper));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
+        named("mkvTrackList")->setProperty("currentIndex", 1);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != file, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(tabs(), before + 1);
+        QVERIFY(application->files().session(file));
+        QVERIFY(ass(file).contains(",kept"));
+        auto *srt = application->files().session(*target());
+        QCOMPARE(srt->document().format(), core::SubtitleFormat::Srt);
+        QCOMPARE(srt->document().lines().size(), std::size_t(1));
+        QCOMPARE(srt->document().lines()[0]->text, std::u8string(u8"Pierwsza"));
+        QCOMPARE(QString::fromStdString(*application->workspace().title(*target())), QStringLiteral("SHOUT.srt"));
+
+        // An Untitled tab with unsaved work: the save question first. Its
+        // Cancel reads nothing (and forgets the file); No loads into the tab.
+        application->addPage();
+        const auto untitled = *target();
+        application->duplicateLines();
+        QVERIFY(application->files().session(untitled)->isDirty());
+        const auto count = tabs();
+        QVERIFY(choose(mkv));
+        QTRY_VERIFY(question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveCancel"), "click"));
+        QTRY_VERIFY(!question->property("visible").toBool());
+        QCOMPARE(matroska.state(), 0);
+        QVERIFY(!matroska.start()); // no video in the tab, and the file is forgotten
+        QCOMPARE(target(), untitled);
+        QVERIFY(choose(mkv));
+        QTRY_VERIFY(question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != untitled, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(tabs(), count);
+        QVERIFY(!application->files().session(untitled));
+        QCOMPARE(ass(*target()), signs);
+        QCOMPARE(QString::fromStdString(*application->workspace().title(*target())), QStringLiteral("mkvextract.ass"));
+
+        // OpenFile on an OGM file opens it as a video.
+        const QString ogm = dir.filePath(QStringLiteral("clip.ogm"));
+        QVERIFY(QFile::copy(nativeFixture("cfr.mkv"), ogm));
+        QVERIFY(choose(ogm));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo() &&
+                                     QDir::toNativeSeparators(QString::fromStdString(application->video().session().path())) ==
+                                         QDir::toNativeSeparators(ogm),
+                                 30000);
+        QCOMPARE(matroska.state(), 0);
+        // The dialog offers legacy's second filter.
+        QVERIFY(dialog->property("nameFilters").toStringList().contains(
+            QStringLiteral("Videos with embedded subtitles (*.mkv *.ogm)")));
+    }
+
     // Y9: the font collector's "Demux fonts from loaded MKV file"
     // (FontCollector.cpp:181-183, 440-541, 913-982): enabled for an MKV
     // video, kept in FONT_COLLECTOR_FROM_MKV (Y9-from-mkv-saved; legacy only

@@ -127,6 +127,19 @@ ApplicationWindow {
         else
             closeReview.review(result.rows)
     }
+    // File > Open (GLOBAL_OPEN_SUBS, HikariSubFrame.cpp:1008-1033 at
+    // 20d647c4): an MKV file goes to OnMkvSubs, its subtitle track loaded as
+    // GRID_SUBS_FROM_MKV loads the tab video's (in a new tab when the tab has
+    // subtitles of a file); an OGM file opens as OpenFile opens a video;
+    // anything else opens as subtitles.
+    function openChosenSubtitles(path) {
+        if (root.matroska.opensAsMatroska(path))
+            matroskaSubtitles.beginFile(path)
+        else if (/\.ogm$/i.test(path))
+            tabCommands.openVideoFile(path)
+        else
+            root.openSubtitles(path)
+    }
     // Legacy ReloadSubsIfModified when the window becomes active.
     function checkExternalChange() {
         if (root.app.externalChange() === "modified")
@@ -4605,8 +4618,11 @@ ApplicationWindow {
     FileDialog {
         id: openDialog
         objectName: "subtitlesOpenDialog"
-        nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"), qsTranslate("HikariSub.Documents", "All files (*)")]
-        onAccepted: root.openSubtitles(root.app.localPath(selectedFile))
+        // Legacy's second filter, "Videos with embedded subtitles".
+        nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
+                      qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)"),
+                      qsTranslate("HikariSub.Documents", "All files (*)")]
+        onAccepted: root.openChosenSubtitles(root.app.localPath(selectedFile))
     }
 
     // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new one.

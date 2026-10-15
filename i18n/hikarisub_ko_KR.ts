@@ -983,6 +983,10 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reloading</source>
         <translation>다시 불러오기</translation>
     </message>

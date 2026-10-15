@@ -1002,6 +1002,10 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reloading</source>
         <translation>Przeładowywanie</translation>
     </message>

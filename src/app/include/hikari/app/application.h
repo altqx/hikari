@@ -1021,7 +1021,8 @@ private:
     // until the Document has a destination.
     std::map<std::uint64_t, QString> m_matroskaPaths;
     bool m_keepVideoOnEnter = false; // replaceTarget(keepMedia) until the tab is entered
-    void applyMatroska(application::MatroskaLoaded loaded);
+    // `newTab`: File > Open's new tab (InsertTab) rather than the editing target.
+    void applyMatroska(application::MatroskaLoaded loaded, bool newTab);
     std::unique_ptr<ui::LogController> m_log;
     std::unique_ptr<ui::TagButtonsController> m_tagButtons;
     std::unique_ptr<ui::ColourPickerController> m_colourPicker;

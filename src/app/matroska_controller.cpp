@@ -58,12 +58,15 @@ MatroskaController::MatroskaController(std::unique_ptr<application::MatroskaPort
         m_lastProgress = now;
     };
     h.loaded = [this](application::MatroskaLoaded loaded) {
+        const bool newTab = !m_file.isEmpty() && m_fileNewTab;
+        m_file.clear();
         emit stateChanged();
         if (m_hooks.apply)
-            m_hooks.apply(std::move(loaded));
+            m_hooks.apply(std::move(loaded), newTab);
         emit finished(true);
     };
     h.ended = [this](application::MatroskaFailure) {
+        m_file.clear();
         emit stateChanged();
         emit finished(false);
     };
@@ -95,16 +98,41 @@ void MatroskaController::refresh()
 
 bool MatroskaController::needsSaveQuestion() const
 {
+    // File > Open's new tab is empty: nothing to save there.
+    if (!m_file.isEmpty() && m_fileNewTab)
+        return false;
     return m_hooks.modified && m_hooks.modified();
+}
+
+bool MatroskaController::opensAsMatroska(const QString &path)
+{
+    // file.AfterLast(L'.') == L"mkv" (HikariSubFrame.cpp:1026).
+    return application::isMkvExtension(QFileInfo(path).fileName().toStdU16String());
+}
+
+bool MatroskaController::beginFile(const QString &path)
+{
+    if (m_load->state() != application::MatroskaSubtitleLoad::State::Idle)
+        return false;
+    m_file = path;
+    m_fileNewTab = m_hooks.targetHasSubtitlesPath && m_hooks.targetHasSubtitlesPath();
+    return true;
 }
 
 bool MatroskaController::start()
 {
-    refresh();
-    if (!m_available || m_load->state() != application::MatroskaSubtitleLoad::State::Idle)
+    if (m_load->state() != application::MatroskaSubtitleLoad::State::Idle)
         return false;
-    // mkvpath = tab->VideoPath (SubsGrid.cpp:1143); FFMS2 gets it as UTF-8.
-    m_load->start(m_hooks.videoPath().toStdString());
+    QString path = m_file;
+    if (path.isEmpty()) {
+        refresh();
+        if (!m_available)
+            return false;
+        // mkvpath = tab->VideoPath (SubsGrid.cpp:1143).
+        path = m_hooks.videoPath();
+    }
+    // mkvpath = event.GetString() for File > Open; FFMS2 gets it as UTF-8.
+    m_load->start(path.toStdString());
     emit stateChanged();
     return true;
 }
@@ -117,6 +145,7 @@ void MatroskaController::choose(int row)
 
 void MatroskaController::cancel()
 {
+    m_file.clear(); // the question's Cancel takes back beginFile's file
     m_load->cancel();
     emit stateChanged();
 }

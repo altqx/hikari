@@ -757,7 +757,16 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             auto *session = targetSession();
             return session && session->isDirty();
         };
-        hooks.apply = [this](application::MatroskaLoaded loaded) { applyMatroska(std::move(loaded)); };
+        // File > Open on an MKV file (HikariSubFrame.cpp:1021-1025): a tab
+        // with subtitles of a file, or loaded from an MKV (OnMkvSubs' SubsPath),
+        // gets a new tab.
+        hooks.targetHasSubtitlesPath = [this] {
+            const auto target = m_workspace.editingTarget();
+            return target && (!targetUntitled() || m_matroskaPaths.contains(target->value));
+        };
+        hooks.apply = [this](application::MatroskaLoaded loaded, bool newTab) {
+            applyMatroska(std::move(loaded), newTab);
+        };
         hooks.log = [this](const QString &text) { m_log->log(text); };
         m_matroska = std::make_unique<MatroskaController>(
             std::make_unique<backends::FfmsMatroska>(mediaHelperPath(options.mediaHelper)), std::move(hooks));
@@ -2708,8 +2717,27 @@ QVariantList Application::recoveryBundles() const
     return out;
 }
 
-void Application::applyMatroska(application::MatroskaLoaded loaded)
+void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
 {
+    if (newTab) {
+        // File > Open: InsertTab then OnMkvSubs in it (HikariSubFrame.cpp:
+        // 1021-1028): a new tab after the last one, with no media, takes the
+        // loaded Document; the tab before keeps its subtitles. The tab is made
+        // only now, so a load that ends without subtitles leaves none behind.
+        const QString subsPath = QDir::toNativeSeparators(QString::fromStdString(loaded.subtitlePath));
+        const auto id = m_files->createUnsaved(std::move(loaded.document));
+        if (auto *session = m_files->session(id)) {
+            selectLegacyActiveLine(*session);
+            selectRow(id, 0); // InsertSelection(currentLine) of a new tab
+        }
+        m_workspace.add(id, QFileInfo(subsPath).fileName().toStdString());
+        m_matroskaPaths[id.value] = subsPath;
+        m_tabMedia[id.value]; // a new tab: no media of its own yet
+        m_workspace.setEditingTarget(id);
+        refreshViews();
+        QTimer::singleShot(0, this, [this] { checkResolution(); });
+        return;
+    }
     // SubsGrid::OnMkvSubs after GetSubtitles (SubsGrid.cpp:1149-1190) and
     // GetSubtitles' Clearing/EndLoad (Demux.cpp:126-164): the tab's
     // Document is replaced by the loaded one, which has unsaved work
@@ -2731,6 +2759,17 @@ void Application::applyMatroska(application::MatroskaLoaded loaded)
     if (auto *session = m_files->session(id)) {
         selectLegacyActiveLine(*session);
         selectRow(id, row);
+    }
+    if (!old) {
+        // File > Open into the empty window (legacy's first tab, with the
+        // video opened there): OnMkvSubs only loads the subtitles onto that
+        // video, which stays open, with its position and audio.
+        TabMedia media;
+        media.video = QDir::toNativeSeparators(readyVideo(m_video->session()));
+        media.position = targetVideoPosition();
+        media.audio = m_audio->hasAudio() ? QDir::toNativeSeparators(m_audio->path()) : QString();
+        m_keepVideoOnEnter = !media.video.isEmpty();
+        m_tabMedia[id.value] = media;
     }
     m_workspace.add(id, QFileInfo(subsPath).fileName().toStdString());
     m_matroskaPaths[id.value] = subsPath;

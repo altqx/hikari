@@ -23,6 +23,16 @@ Item {
     function begin() {
         if (!flow.matroska.available || flow.matroska.state !== 0)
             return
+        flow.ask()
+    }
+    // File > Open on an MKV file (HikariSubFrame.cpp:1021-1028): OnMkvSubs
+    // on that file, in a new tab when the tab has subtitles of a file.
+    function beginFile(path) {
+        if (!flow.matroska.beginFile(path))
+            return
+        flow.ask()
+    }
+    function ask() {
         if (flow.matroska.needsSaveQuestion())
             saveQuestion.open()
         else
@@ -45,6 +55,13 @@ Item {
         anchors.centerIn: parent
         // HikariMessageBox(wxYES_NO | wxCANCEL): Yes saves (Hikari->Save(false))
         // then loads, No loads, Cancel does nothing.
+        property bool answered: false
+        // Cancel, Escape or a press outside: File > Open's file is not read.
+        onClosed: {
+            if (!saveQuestion.answered)
+                flow.matroska.cancel()
+            saveQuestion.answered = false
+        }
         ColumnLayout {
             Label { text: qsTr("Save the file before loading subtitles from the MKV?") }
             WindowFooter {
@@ -53,6 +70,7 @@ Item {
                     text: qsTr("Yes")
                     DialogButtonBox.buttonRole: DialogButtonBox.YesRole
                     onClicked: {
+                        saveQuestion.answered = true
                         saveQuestion.close()
                         if (flow.save())
                             flow.waitingForSave = true
@@ -65,6 +83,7 @@ Item {
                     text: qsTr("No")
                     DialogButtonBox.buttonRole: DialogButtonBox.NoRole
                     onClicked: {
+                        saveQuestion.answered = true
                         saveQuestion.close()
                         flow.matroska.start()
                     }
