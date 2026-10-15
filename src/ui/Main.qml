@@ -2080,12 +2080,49 @@ ApplicationWindow {
                 }
             }
         }
+        // E6-ime-enter-held (decision 60): an Enter that comes with an input
+        // method's end of composition only ends it. Windows' Microsoft Korean
+        // IME commits the syllable and then passes the same Enter on as a key
+        // (E6 Windows evidence K7); ibus-hangul clears the preedit, commits
+        // and forwards it. So an Enter while composing finishes the
+        // composition, and the first key after a composition ends, if it is
+        // an Enter within compositionKeyWindow ms, is taken and does nothing:
+        // no commit, no advance, no tag put. Any other key, the release of an
+        // Enter (the Japanese IME keeps the Enter that confirms, J4, and only
+        // its release reaches the field), a click or a focus change ends the
+        // wait, so a second, separate Enter commits as usual. CodeMirror 6
+        // and ProseMirror ignore one Enter within 100 or 500 ms of
+        // compositionend the same way.
+        readonly property int compositionKeyWindow: 200
+        property double compositionEndedAt: -1
+        onInputMethodComposingChanged: compositionEndedAt = inputMethodComposing ? -1 : Date.now()
+        onActiveFocusChanged: if (!activeFocus) compositionEndedAt = -1
+        onPressed: compositionEndedAt = -1
+        function compositionKey(event) {
+            const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)
+            if (mods !== 0 || (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter))
+                return false
+            return inputMethodComposing
+                || (compositionEndedAt >= 0 && Date.now() - compositionEndedAt <= compositionKeyWindow)
+        }
+        function endComposition() {
+            if (inputMethodComposing)
+                Qt.inputMethod.commit()
+            if (inputMethodComposing)
+                Qt.inputMethod.reset() // Windows' commit() is empty; its reset() commits the composition
+            compositionEndedAt = -1
+        }
+        Keys.onReleased: event => {
+            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Escape)
+                field.compositionEndedAt = -1
+        }
         // Legacy EDITBOX bindings (O2, HotkeysController::actionFor): the
         // text field's own plain Enter (commit and go to the next line) and
         // TabPanel's fixed numpad Enter and Ctrl+numpad Enter first, then the
         // Editor's bindings, which act before the application's shortcuts;
-        // composition keeps its own Enter. Escape discards the draft and
-        // Ctrl+Z / Ctrl+Y undo and redo it (accepted transaction policy).
+        // composition keeps its own Enter (compositionKey above). Escape
+        // discards the draft and Ctrl+Z / Ctrl+Y undo and redo it (accepted
+        // transaction policy).
         function hotkeyAction(event) {
             const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)
             const enter = event.key === Qt.Key_Return || event.key === Qt.Key_Enter
@@ -2109,8 +2146,15 @@ ApplicationWindow {
             if (next && next !== field)
                 next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
         }
-        Keys.onShortcutOverride: event => event.accepted = hotkeyAction(event) !== "" || tagListPopup.takesKey(event)
+        Keys.onShortcutOverride: event => event.accepted = field.compositionKey(event) || hotkeyAction(event) !== ""
+                                                           || tagListPopup.takesKey(event)
         Keys.onPressed: event => {
+            if (field.compositionKey(event)) {
+                field.endComposition()
+                event.accepted = true
+                return
+            }
+            field.compositionEndedAt = -1 // only the first key can be the composition's
             if (tagListPopup.key(event)) {
                 event.accepted = true
                 return

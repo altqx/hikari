@@ -431,6 +431,28 @@ class ShellTest : public QObject {
         QCoreApplication::processEvents();
     }
 
+    // E6 IME keys (decision 60): what an input method sends around the end
+    // of a composition, in each platform's order, to the Line text field.
+    static void sendPreedit(QObject *field, const QString &preedit)
+    {
+        QInputMethodEvent event(preedit, {});
+        QCoreApplication::sendEvent(field, &event);
+    }
+    static void sendCommit(QObject *field, const QString &committed)
+    {
+        QInputMethodEvent event;
+        event.setCommitString(committed);
+        QCoreApplication::sendEvent(field, &event);
+    }
+    // A key the user presses on its own, well after anything an input
+    // method passes on with the end of a composition.
+    static constexpr int separateKeyDelay = 500;
+    static QString documentLineText(application::EditSession *session, int index)
+    {
+        const auto &text = session->document().lines()[index]->text;
+        return QString::fromUtf8(reinterpret_cast<const char *>(text.data()), qsizetype(text.size()));
+    }
+
     // The visible dock headers (DockTabBar.qml) of every window.
     QList<QQuickItem *> visibleDockHeaders() const
     {
@@ -983,6 +1005,9 @@ private slots:
         QCoreApplication::sendEvent(text, &commit);
         QTRY_COMPARE(list->rows(), (QStringList{"blur"}));
         QVERIFY(text->hasActiveFocus());
+        // A separate Return puts the tag (one that comes with the commit only
+        // ends the composition, E6-ime-enter-held).
+        QTest::qWait(separateKeyDelay);
         press(Qt::Key_Return);
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\blurfirst"));
         QCOMPARE(text->property("cursorPosition").toInt(), 6);
@@ -1073,6 +1098,104 @@ private slots:
         item("editingGrid")->forceActiveFocus();
         QVERIFY(!list->open());
         application->editor().discard();
+    }
+
+    // E6-ime-enter-held (decision 60, the E6 Windows evidence K7 and J4): an
+    // Enter that comes with an input method's end of composition only ends
+    // it. On Windows the Microsoft Korean IME commits the syllable
+    // (WM_IME_COMPOSITION's result: one QInputMethodEvent with the commit)
+    // and passes the same Enter on as a key; ibus-hangul on Linux clears the
+    // preedit, commits and forwards the Enter. Neither commits the Line,
+    // advances or puts the tag list's selection. A second, separate Enter
+    // commits as usual, as after the Japanese IME, which keeps its Enter.
+    void anEnterThatEndsACompositionOnlyEndsIt()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        auto &editor = application->editor();
+        auto *list = editor.tagList();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        editor.setShowTags(true);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QTest::keyClick(window, '{');
+        QTest::keyClick(window, '\\');
+        QTRY_VERIFY(list->open());
+
+        // Windows (Microsoft Korean IME, K7): preedit, the commit, then the
+        // Enter, the list open under the composition.
+        sendPreedit(text, QStringLiteral("ㅎ"));
+        sendPreedit(text, QStringLiteral("하"));
+        sendPreedit(text, QStringLiteral("한"));
+        QVERIFY(text->property("inputMethodComposing").toBool());
+        QVERIFY(list->open());
+        sendCommit(text, QStringLiteral("한"));
+        QTest::keyClick(window, Qt::Key_Return);
+        QCoreApplication::processEvents();
+        QTRY_COMPARE(editor.text(), QStringLiteral("{\\한first"));
+        QCOMPARE(text->property("text").toString(), QStringLiteral("{\\한first"));
+        QCOMPARE(session->selection().active, lines[0]->id); // no advance
+        QCOMPARE(documentLineText(session, 0), QStringLiteral("first")); // not committed
+        QVERIFY(!list->open()); // nothing starts with 한: closed, nothing put
+        // A second, separate Enter commits and goes to the next Line.
+        QTest::qWait(separateKeyDelay);
+        press(Qt::Key_Return);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("second"));
+        QCOMPARE(session->selection().active, lines[1]->id);
+        QCOMPARE(documentLineText(session, 0), QStringLiteral("{\\한first"));
+
+        // Linux (ibus-hangul): the preedit cleared, the commit, then the
+        // forwarded Enter.
+        text->setProperty("cursorPosition", 0);
+        QTest::keyClick(window, '{');
+        QTest::keyClick(window, '\\');
+        QTRY_VERIFY(list->open());
+        sendPreedit(text, QStringLiteral("한"));
+        sendPreedit(text, QString());
+        sendCommit(text, QStringLiteral("한"));
+        QTest::keyClick(window, Qt::Key_Return);
+        QCoreApplication::processEvents();
+        QTRY_COMPARE(editor.text(), QStringLiteral("{\\한second"));
+        QCOMPARE(session->selection().active, lines[1]->id);
+        QCOMPARE(documentLineText(session, 1), QStringLiteral("second"));
+        QVERIFY(!list->open());
+
+        // An Enter that reaches the field while the composition is still
+        // open finishes it and nothing more.
+        QTest::qWait(separateKeyDelay);
+        sendPreedit(text, QStringLiteral("글"));
+        QTest::keyClick(window, Qt::Key_Return);
+        QCoreApplication::processEvents();
+        QCOMPARE(session->selection().active, lines[1]->id);
+        QCOMPARE(documentLineText(session, 1), QStringLiteral("second"));
+        QVERIFY(!text->property("text").toString().contains(QLatin1Char('\n')));
+        if (text->property("inputMethodComposing").toBool()) // no platform input method offscreen
+            sendCommit(text, QStringLiteral("글"));
+        QTRY_COMPARE(editor.text(), QStringLiteral("{\\한글second"));
+
+        // Japanese (J4): the IME keeps the Enter that confirms; only its
+        // release reaches the field, and the next Enter, however quick,
+        // commits the Line.
+        QTest::qWait(separateKeyDelay);
+        sendPreedit(text, QStringLiteral("かんじ"));
+        sendPreedit(text, QStringLiteral("感じ"));
+        sendCommit(text, QStringLiteral("感じ"));
+        QTest::keyRelease(window, Qt::Key_Return);
+        press(Qt::Key_Return); // the last Line: a new Line follows
+        QTRY_COMPARE(documentLineText(session, 1), QStringLiteral("{\\한글感じsecond"));
+        QTRY_VERIFY(session->selection().active != lines[1]->id);
+
+        // A plain Enter with no composition commits at once.
+        QTest::qWait(separateKeyDelay);
+        QTest::keyClick(window, 'x');
+        QTRY_COMPARE(editor.text(), QStringLiteral("x"));
+        const auto added = session->selection().active;
+        press(Qt::Key_Return);
+        QTRY_VERIFY(session->selection().active != added);
+        QCOMPARE(documentLineText(session, 2), QStringLiteral("x"));
     }
 
     // E6: GLOBAL_HIDE_TAGS, Subtitles > Hide tags (legacy SubsGrid::
