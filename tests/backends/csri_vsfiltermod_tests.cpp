@@ -809,12 +809,17 @@ TEST(VsfilterMod, ReadsBackTheFacesItDrewWith)
     EXPECT_EQ(drawnFor(L"Arial", FW_BOLD, true), (std::set<std::wstring>{L"Arial"})) << "Arial bold italic";
     EXPECT_EQ(drawnFor(L"Times New Roman", FW_NORMAL, false), (std::set<std::wstring>{L"Times New Roman"}))
         << "Times New Roman";
-    // The real face behind Arial bold italic (the outline metrics' full name).
-    std::set<std::wstring> boldItalic;
+    // The real face behind Arial bold italic: the outline metrics' full name
+    // (GDI gives the font's unique name there, "Monotype:Arial Bold Italic
+    // (Microsoft)" on Windows 11) names the bold italic file, not a
+    // synthesised slant and weight.
+    std::size_t boldItalic = 0;
     for (const auto &f : faces)
-        if (_wcsicmp(f.requested.c_str(), L"Arial") == 0 && f.weight == FW_BOLD && f.italic)
-            boldItalic.insert(f.full);
-    EXPECT_EQ(boldItalic, (std::set<std::wstring>{L"Arial Bold Italic"}));
+        if (_wcsicmp(f.requested.c_str(), L"Arial") == 0 && f.weight == FW_BOLD && f.italic) {
+            EXPECT_NE(f.full.find(L"Arial Bold Italic"), std::wstring::npos) << QString::fromStdWString(f.full).toStdString();
+            ++boldItalic;
+        }
+    EXPECT_GT(boldItalic, 0u);
     const auto missing = drawnFor(L"Hikari No Such Font", FW_NORMAL, false);
     ASSERT_FALSE(missing.empty()) << "the missing family was never selected";
     for (const auto &f : faces)
