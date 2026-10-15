@@ -62,6 +62,8 @@ public:
 	long long m_delayFrames = 0;
 	HANDLE m_eventAudioComplete = nullptr;
 	wxString m_diskCacheFilename;
+	// the cache's name once complete, when m_diskCacheFilename is a .part this provider makes
+	wxString m_diskCacheFinishedName;
 	wxString m_colorSpace;
 	wxString m_realColorSpace;
 	wxString m_indexPath;

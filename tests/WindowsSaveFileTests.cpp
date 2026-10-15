@@ -16,6 +16,7 @@
 #ifdef _WIN32
 
 #include "check.h"
+#include "../HikariSub/AudioCacheName.h"
 #include "../HikariSub/WindowsSaveFile.h"
 
 #ifndef NOMINMAX
@@ -411,6 +412,44 @@ TEST(windowsPrivateFileIsNotOpenedWhenItCannotBeMadePrivate)
 	CHECK(file != nullptr);
 	if (file) { fclose(file); }
 	CHECK(IsPrivateAt(folder / L"cache.part"));
+}
+
+// Two tabs on one video, as ProviderFFMS2::DiskCache makes their audio
+// caches: the second opens its own .part while the first still has its .part
+// open, which the first's handle (no FILE_SHARE_DELETE) would refuse at one
+// name. The first to close renames its .part to the cache; the second then
+// finds the cache there and removes its .part, as the provider's destructor.
+TEST(windowsTwoTabsOnOneVideoEachMakeTheirOwnAudioCache)
+{
+	SharedFolder folder;
+	std::wstring cache = AudioCacheName(L"C:\\videos\\Kage 07.mkv", 1, 2, 0);
+	std::wstring firstPart = folder / AudioCachePartName(cache, ::GetCurrentProcessId(), 1);
+	std::wstring secondPart = folder / AudioCachePartName(cache, ::GetCurrentProcessId(), 2);
+	const std::string audio(4096, 'A');
+
+	FILE *first = OpenPrivateFileOnWindows(firstPart);
+	CHECK(first != nullptr);
+	if (first) {
+		CHECK(fwrite(audio.data(), 1, audio.size(), first) == audio.size());
+		fflush(first);
+		rewind(first);
+	}
+	FILE *second = OpenPrivateFileOnWindows(secondPart);
+	CHECK(second != nullptr);
+	if (first) {
+		std::string read(audio.size(), '\0');
+		CHECK(fread(&read[0], 1, read.size(), first) == audio.size());
+		CHECK(read == audio);
+		fclose(first);
+	}
+	if (second)
+		fclose(second);
+
+	CHECK(_wrename(firstPart.c_str(), (folder / cache).c_str()) == 0);
+	CHECK(_wrename(secondPart.c_str(), (folder / cache).c_str()) != 0);
+	CHECK(_wremove(secondPart.c_str()) == 0);
+	std::vector<std::wstring> names = folder.Names(L"*");
+	CHECK(names.size() == 1 && names[0] == cache);
 }
 
 TEST(windowsDescriptorComparison)

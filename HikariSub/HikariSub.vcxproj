@@ -266,6 +266,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClCompile Include="TagFindReplace.cpp" />
     <ClCompile Include="VisualAllTags.cpp" />
     <ClCompile Include="AudioBox.cpp" />
+    <ClCompile Include="AudioCacheName.cpp" />
     <ClCompile Include="AudioDeviceEnumeration.cpp" />
     <ClCompile Include="AudioDisplay.cpp" />
     <ClCompile Include="AudioPlayerDSound.cpp" />
@@ -430,6 +431,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioBox.h" />
+    <ClInclude Include="AudioCacheName.h" />
     <ClInclude Include="AudioDeviceEnumeration.h" />
     <ClInclude Include="AudioDisplay.h" />
     <ClInclude Include="AudioPlayerDSound.h" />

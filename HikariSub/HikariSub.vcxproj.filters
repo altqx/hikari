@@ -91,6 +91,9 @@
     <ClCompile Include="AudioBox.cpp">
       <Filter>A</Filter>
     </ClCompile>
+    <ClCompile Include="AudioCacheName.cpp">
+      <Filter>A</Filter>
+    </ClCompile>
     <ClCompile Include="AudioDeviceEnumeration.cpp">
       <Filter>A</Filter>
     </ClCompile>
@@ -556,6 +559,9 @@
       <Filter>C</Filter>
     </ClInclude>
     <ClInclude Include="AudioBox.h">
+      <Filter>A</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioCacheName.h">
       <Filter>A</Filter>
     </ClInclude>
     <ClInclude Include="AudioDeviceEnumeration.h">

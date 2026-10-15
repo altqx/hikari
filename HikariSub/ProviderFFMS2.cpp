@@ -25,6 +25,7 @@
 #include "Stylelistbox.h"
 #include "SubsGrid.h"
 #include "OpennWrite.h"
+#include "AudioCacheName.h"
 #include <wx/dir.h>
 #include <wx/filename.h>
 #include <wx/log.h>
@@ -46,6 +47,8 @@ namespace
 	// delete them, as Linux unlinks an open file and the .part then cannot be renamed
 	std::mutex openCachesMutex;
 	std::multiset<wxString> openCaches;
+	// numbers the providers' .part names in this process (AudioCachePartName)
+	std::atomic<unsigned long> cachePartNumber{ 0 };
 
 	void SetCacheInUse(const wxString& path, bool inUse)
 	{
@@ -576,14 +579,12 @@ ProviderFFMS2::~ProviderFFMS2()
 
 	if (m_discCache) { ClearDiskCache(); }
 	else { ClearRAMCache(); }
-	// m_stopLoadingAudio is set above whenever audio was loaded, so it cannot tell
-	if (m_discCache && m_diskCacheFilename.EndsWith(L".part")) {
-		if (m_diskCacheComplete) {
-			wxString discCacheNameWithGoodExt = m_diskCacheFilename;
-			discCacheNameWithGoodExt.RemoveLast(5);
-			_wrename(m_diskCacheFilename.wc_str(), discCacheNameWithGoodExt.wc_str());
-		}
-		else {
+	// m_stopLoadingAudio is set above whenever audio was loaded, so it cannot tell.
+	// Another tab on the same video may have finished the cache first: Windows
+	// renames over no file, and this .part is then not needed
+	if (m_discCache && !m_diskCacheFinishedName.empty()) {
+		if (!m_diskCacheComplete ||
+			_wrename(m_diskCacheFilename.wc_str(), m_diskCacheFinishedName.wc_str()) != 0) {
 			_wremove(m_diskCacheFilename.wc_str());
 		}
 	}
@@ -604,11 +605,11 @@ void ProviderFFMS2::AudioLoad(ProviderFFMS2* vf, bool newIndex, int audiotrack)
 {
 	if (vf->m_discCache) {
 		wxString sep = wxFileName::GetPathSeparator();
-		wxString baseName = wxFileName(vf->m_filename).GetName();
-		// a cache made with other channels or another delay holds other data
+		wxFileName video(vf->m_filename);
+		video.MakeAbsolute();
 		vf->m_diskCacheFilename << Options.dataPath << sep << L"AudioCache" << sep <<
-			baseName << L"_track" << audiotrack << L"_" << vf->m_channels << L"ch_" <<
-			vf->m_delayFrames << L".w64";
+			AudioCacheName(video.GetFullPath().ToStdWstring(), audiotrack, vf->m_channels,
+				vf->m_delayFrames);
 		//the cache holds the audio of the user's media: for the user only.
 		//Without a private folder for it, as on a FAT or exFAT stick that
 		//keeps no ACLs, the audio is kept in memory as with AUDIO_RAM_CACHE;
@@ -925,7 +926,10 @@ bool ProviderFFMS2::DiskCache(bool newIndex)
 		if (fileExists) {
 			_wremove(m_diskCacheFilename.wc_str());
 		}
-		m_diskCacheFilename << L".part";
+		// the provider's own .part, so a second tab on this video makes its own
+		m_diskCacheFinishedName = m_diskCacheFilename;
+		m_diskCacheFilename = AudioCachePartName(m_diskCacheFinishedName.ToStdWstring(),
+			static_cast<unsigned long>(GetCurrentProcessId()), ++cachePartNumber);
 		SetCacheInUse(m_diskCacheFilename, true);
 		m_diskCacheInUse = true;
 		//only the user may open it, also a .part left from before, see OpenPrivateFile

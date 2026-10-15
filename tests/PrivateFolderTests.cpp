@@ -16,6 +16,7 @@
 #ifndef _WIN32
 
 #include "check.h"
+#include "../HikariSub/AudioCacheName.h"
 #include "../HikariSub/PrivateFolder.h"
 
 #include <stdlib.h>
@@ -527,6 +528,85 @@ TEST(a_link_at_a_private_file_s_name_is_not_followed)
 	CHECK(OpenPrivateFileAt(hard.string()) == nullptr);
 	CHECK(ReadAll(elsewhere) == "kept");
 	CHECK(ModeOf(elsewhere) == 0644);
+}
+
+// Two tabs open at once, as ProviderFFMS2::DiskCache makes their audio
+// caches: each opens its .part with OpenPrivateFile, writes it, and reads its
+// audio from it while the other tab makes its own.
+namespace {
+
+// the cache a tab makes for video, with the provider's number n in this process
+FILE *MakeAudioCacheOfTab(const fs::path &cacheFolder, const fs::path &video, unsigned long n,
+	const std::string &audio)
+{
+	std::wstring name = AudioCachePartName(AudioCacheName(video.wstring(), 1, 2, 0),
+		static_cast<unsigned long>(getpid()), n);
+	FILE *fp = OpenPrivateFileAt((cacheFolder / name).string());
+	if (!fp)
+		return nullptr;
+	fwrite(audio.data(), 1, audio.size(), fp);
+	fflush(fp);
+	rewind(fp);
+	return fp;
+}
+
+// what the tab plays: ReadCache plays what it cannot read as silence
+std::string ReadAudioCache(FILE *fp, size_t bytes)
+{
+	std::string audio(bytes, '\0');
+	size_t read = 0;
+	if (fseek(fp, 0, SEEK_SET) == 0)
+		read = fread(&audio[0], 1, bytes, fp);
+	audio.resize(read);
+	audio.resize(bytes, '\0');
+	return audio;
+}
+
+}
+
+TEST(two_tabs_on_one_video_each_keep_their_own_audio_cache)
+{
+	PrivateScratchDir dir;
+	fs::path cacheFolder = dir.path / "AudioCache";
+	CHECK(MakePrivateFolderAt(cacheFolder.string()));
+	fs::path video = dir.path / "Kage 07.mkv";
+	const std::string audio(4096, 'A');
+
+	FILE *first = MakeAudioCacheOfTab(cacheFolder, video, 1, audio);
+	CHECK(first != nullptr);
+	// the second tab finds no finished cache, as the first has not closed
+	FILE *second = MakeAudioCacheOfTab(cacheFolder, video, 2, std::string());
+	CHECK(second != nullptr);
+	if (first)
+		CHECK(ReadAudioCache(first, audio.size()) == audio);
+
+	if (second)
+		fclose(second);
+	if (first)
+		fclose(first);
+}
+
+TEST(two_tabs_on_two_videos_of_one_name_each_keep_their_own_audio)
+{
+	PrivateScratchDir dir;
+	fs::path cacheFolder = dir.path / "AudioCache";
+	CHECK(MakePrivateFolderAt(cacheFolder.string()));
+	const std::string firstAudio(4096, 'A');
+	const std::string secondAudio(2048, 'B');
+
+	FILE *first = MakeAudioCacheOfTab(cacheFolder, dir.path / "a" / "Kage 07.mkv", 1, firstAudio);
+	CHECK(first != nullptr);
+	FILE *second = MakeAudioCacheOfTab(cacheFolder, dir.path / "b" / "Kage 07.mkv", 2, secondAudio);
+	CHECK(second != nullptr);
+	if (first)
+		CHECK(ReadAudioCache(first, firstAudio.size()) == firstAudio);
+	if (second)
+		CHECK(ReadAudioCache(second, secondAudio.size()) == secondAudio);
+
+	if (second)
+		fclose(second);
+	if (first)
+		fclose(first);
 }
 
 #endif

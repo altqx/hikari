@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(WIN32)
     add_executable(hikarisub_windows_tests
         check_main.cpp
+        AudioCacheNameTests.cpp
         WindowsSaveFileTests.cpp
         AutomationFoldersTests.cpp
         CsriAttachmentsTests.cpp
@@ -15,6 +16,7 @@ if(WIN32)
         ScriptAttachmentsTests.cpp
         update/UpdateApplyTests.cpp
         update/UpdateVerifyTests.cpp
+        ../HikariSub/AudioCacheName.cpp
         ../HikariSub/NaturalOrder.cpp
         ../HikariSub/ScriptAttachments.cpp
         ../HikariSub/UpdateApply.cpp
@@ -55,6 +57,7 @@ hikarisub_add_dependencycontrol_modules("${HIKARISUB_TEST_DEPCTRL_DIR}")
 add_executable(hikarisub_tests
     check_main.cpp
     AssBlendTests.cpp
+    AudioCacheNameTests.cpp
     AutomationFoldersTests.cpp
     CsriOverlayTests.cpp
     DependencyControlModulesTests.cpp
@@ -88,6 +91,7 @@ add_executable(hikarisub_tests
     TextComparisonTests.cpp
     WaveformPeaksTests.cpp
     ../HikariSub/AssBlend.cpp
+    ../HikariSub/AudioCacheName.cpp
     ../HikariSub/CsriOverlay.cpp
     ../HikariSub/FrameExchange.cpp
     ../HikariSub/JsonValue.cpp
