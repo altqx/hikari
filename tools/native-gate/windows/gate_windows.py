@@ -2118,11 +2118,15 @@ def nvda_stop(nvda_log, tag):
 
 
 def step_snap():
-    """D3 (#207): whether Windows Snap takes the borderless floating tool
-    window when its header's free part (the window system's move,
-    startSystemMove) is dragged to the primary monitor's left edge and to its
-    top edge, the pointer held at the edge for Snap's preview. Either answer is
-    the observation the card asks for; the window must stay a floating panel."""
+    """D3 (#207): the floating tool window's header right of its title
+    (just left of its "⋯") dragged to the primary monitor's left edge and to
+    its top edge, the pointer held at the edge 1.5 s. Since 2026-10-15 the
+    whole floating header is the engine's drag on Windows (no window-system
+    move, startSystemMove, from any part of it), so Snap is not offered by
+    design: the window follows the pointer as the engine moves it, Snap does
+    not take it (no half or maximized size) and it stays a floating panel.
+    Until then this step dragged the free part's system move and recorded
+    whether Snap took it (it never did: D3-windows-snap)."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
     placed = fullscreen("left", width=480)
@@ -2147,14 +2151,15 @@ def step_snap():
                 out.append({"edge": edge, "error": "no floating Audio or its ⋯ in UIA"})
                 continue
             sx, sy = btn["x"] - 24, btn["y"] + btn["h"] // 2
-            # Over bare desktop first (the drag distance starts the system move), then to the edge.
+            # Over bare desktop first (the drag distance starts the engine's drag), then to the edge.
             mid = (max(prim["x"] + 520, sx - 60), min(prim["y"] + prim["h"] - 200, sy + 60))
             try:
                 pointer([(sx, sy)], hold=True)
                 time.sleep(0.25)
                 pointer([(sx, sy), mid], button="none", steps=20, delayMs=40)
                 pointer([mid, target], button="none", steps=30, delayMs=40)
-                time.sleep(1.5)  # Snap shows its preview while the pointer rests at the edge
+                time.sleep(1.5)  # Snap would show its preview while the pointer rests at the edge
+                held = frames(uia()).get("Audio")  # the engine moves the window under the held pointer
                 ev, _ = snap(f"snap-{edge}-held")
                 shots += ev
             finally:
@@ -2167,20 +2172,32 @@ def step_snap():
             half = bool(after) and abs(after["x"] - prim["x"]) <= 12 and abs(after["w"] - prim["w"] // 2) <= 24 \
                 and after["h"] >= prim["h"] - 90
             full = bool(after) and after["w"] >= prim["w"] - 24 and after["h"] >= prim["h"] - 90
+            # The engine's drag keeps the pressed point under the pointer, so the
+            # window follows it by the pointer's travel; its size does not change.
+            want = (before["x"] + target[0] - sx, before["y"] + target[1] - sy)
+            follows = bool(held) and abs(held["x"] - want[0]) <= 24 and abs(held["y"] - want[1]) <= 24
             out.append({"edge": edge, "pressed": [sx, sy], "to": list(target),
                         "before": before and [before["x"], before["y"], before["w"], before["h"]],
+                        "held": held and [held["x"], held["y"], held["w"], held["h"]],
+                        "expected while held": list(want), "follows the pointer": follows,
                         "after": after and [after["x"], after["y"], after["w"], after["h"]],
                         "snapped": "left half" if edge == "left" and half else "maximized" if edge == "top" and full
-                        else "no", "still floating": bool(after)})
+                        else "no", "still floating": bool(after),
+                        "size kept": bool(after) and (after["w"], after["h"]) == (before["w"], before["h"])})
             if after:  # back to the middle of the free desktop for the next edge
                 fullscreen("left", width=480)
         (EVID / "snap.json").write_text(json.dumps({"monitors": mons, "drags": out}, indent=1))
         floating = all(o.get("still floating") for o in out)
+        follows = all(o.get("follows the pointer") for o in out)
+        unsnapped = all(o.get("snapped") == "no" and o.get("size kept") for o in out)
         taken = [o["edge"] + ": " + o.get("snapped", "?") for o in out]
-        verdict("floating-snap", "observed" if out and floating and not any("error" in o for o in out) else "failed",
-                f"the floating Audio window's free part dragged to the primary monitor's left and top edges and "
-                f"held there 1.5 s: Snap took it {taken}; still a floating panel after each: {floating} "
-                f"(snap.json: window rectangles before and after)", ["snap.json"] + shots)
+        ok = out and floating and follows and unsnapped and not any("error" in o for o in out)
+        verdict("floating-snap", "observed" if ok else "failed",
+                f"the floating Audio window's header right of its title dragged to the primary monitor's left and "
+                f"top edges and held there 1.5 s: the engine's drag (the window followed the pointer: {follows}); "
+                f"Snap took it {taken} (expected no: not offered on Windows since 2026-10-15); size kept and still a "
+                f"floating panel after each: {unsnapped and floating} (snap.json: window rectangles before, while "
+                f"held and after)", ["snap.json"] + shots)
     finally:
         fullscreen("off")
 
