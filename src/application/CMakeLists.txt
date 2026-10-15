@@ -5,6 +5,8 @@ add_library(hikari_application STATIC module.cpp write_coordinator.cpp edit_sess
 target_sources(hikari_application PRIVATE hotkeys.cpp)
 # A3: the audio box's timing.
 target_sources(hikari_application PRIVATE audio_timing.cpp)
+# H2: the output device both audio paths follow (decision 60).
+target_sources(hikari_application PRIVATE audio_devices.cpp include/hikari/application/audio_devices.h)
 # A4: the audio box's playback.
 target_sources(hikari_application PRIVATE audio_playback.cpp)
 # A5: the audio box's karaoke mode.
