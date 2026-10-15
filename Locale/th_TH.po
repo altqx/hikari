@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HikariSub\n"
 "Report-Msgid-Bugs-To: https://github.com/altqx/hikari/issues\n"
-"POT-Creation-Date: 2026-10-15 15:15+0700\n"
+"POT-Creation-Date: 2026-10-16 05:50+0700\n"
 "PO-Revision-Date: 2026-09-26 19:00+0700\n"
 "Last-Translator: altqx <al@altqx.com>\n"
 "Language-Team: Thai\n"
@@ -639,7 +639,7 @@ msgid "Set anyway"
 msgstr "กำหนดต่อไป"
 
 #: HikariSub/AutomationProgress.cpp:471 HikariSub/FindReplaceDialog.cpp:222
-#: HikariSub/FontCollector.cpp:197 HikariSub/LogHandler.cpp:50
+#: HikariSub/FontCollector.cpp:217 HikariSub/LogHandler.cpp:50
 #: HikariSub/Notebook.cpp:719 HikariSub/SelectLines.cpp:142
 #: HikariSub/SelectLines.cpp:237 HikariSub/SelectLines.cpp:279
 #: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:175
@@ -1210,7 +1210,7 @@ msgstr "ตัวกรอง:"
 msgid "Subtitle search folder:"
 msgstr "โฟลเดอร์สำหรับค้นหาคำบรรยาย:"
 
-#: HikariSub/FindReplaceDialog.cpp:86 HikariSub/FontCollector.cpp:425
+#: HikariSub/FindReplaceDialog.cpp:86 HikariSub/FontCollector.cpp:445
 msgid "Choose save folder"
 msgstr "เลือกโฟลเดอร์บันทึก"
 
@@ -1511,51 +1511,51 @@ msgstr "ลบเนื้อหาทั้งหมดของแคตตา
 msgid "Add fonts from all open subtitles"
 msgstr "เพิ่มแบบอักษรจากคำบรรยายทั้งหมดที่เปิดอยู่"
 
-#: HikariSub/FontCollector.cpp:100
+#: HikariSub/FontCollector.cpp:120
 msgid "In styles:\n"
 msgstr "ในสไตล์:\n"
 
-#: HikariSub/FontCollector.cpp:105 HikariSub/FontCollector.cpp:331
-#: HikariSub/FontCollector.cpp:378
+#: HikariSub/FontCollector.cpp:125 HikariSub/FontCollector.cpp:351
+#: HikariSub/FontCollector.cpp:398
 msgid " tabs: "
 msgstr " แท็บ: "
 
-#: HikariSub/FontCollector.cpp:114
+#: HikariSub/FontCollector.cpp:134
 msgid "In lines: "
 msgstr "ในบรรทัด: "
 
-#: HikariSub/FontCollector.cpp:135 HikariSub/HikariSubFrame.cpp:343
+#: HikariSub/FontCollector.cpp:155 HikariSub/HikariSubFrame.cpp:343
 #: HikariSub/HikariSubFrame.cpp:344 HikariSub/HotkeysNaming.cpp:177
 #: HikariSub/SubsGrid.cpp:291
 msgid "Font collector"
 msgstr "ตัวรวบรวมแบบอักษร"
 
-#: HikariSub/FontCollector.cpp:161
+#: HikariSub/FontCollector.cpp:181
 msgid "Select a folder"
 msgstr "เลือกโฟลเดอร์"
 
-#: HikariSub/FontCollector.cpp:169
+#: HikariSub/FontCollector.cpp:189
 msgid "Check availability of fonts"
 msgstr "ตรวจสอบความพร้อมของแบบอักษร"
 
-#: HikariSub/FontCollector.cpp:170
+#: HikariSub/FontCollector.cpp:190
 msgid "Copy to selected folder"
 msgstr "คัดลอกไปยังโฟลเดอร์ที่เลือก"
 
-#: HikariSub/FontCollector.cpp:171
+#: HikariSub/FontCollector.cpp:191
 msgid "Zip"
 msgstr "บีบอัด"
 
-#: HikariSub/FontCollector.cpp:173 HikariSub/OptionsDialog.cpp:281
+#: HikariSub/FontCollector.cpp:193 HikariSub/OptionsDialog.cpp:281
 #: HikariSub/ScriptInfo.cpp:133
 msgid "Options"
 msgstr "ตัวเลือก"
 
-#: HikariSub/FontCollector.cpp:177
+#: HikariSub/FontCollector.cpp:197
 msgid "Save to video / subtitles folder."
 msgstr "บันทึกลงในโฟลเดอร์ของวิดีโอ / คำบรรยาย"
 
-#: HikariSub/FontCollector.cpp:178
+#: HikariSub/FontCollector.cpp:198
 msgid ""
 "Saves to the video folder\n"
 "when demuxing fonts from an MKV file."
@@ -1563,54 +1563,54 @@ msgstr ""
 "บันทึกลงในโฟลเดอร์ของวิดีโอ\n"
 "เมื่อแยกแฟ้มแบบอักษรมาจากแฟ้ม MKV แล้ว"
 
-#: HikariSub/FontCollector.cpp:183
+#: HikariSub/FontCollector.cpp:203
 msgid "Demux fonts from loaded MKV file"
 msgstr "แยกแบบอักษรจากแฟ้ม MKV ที่โหลดมา"
 
-#: HikariSub/FontCollector.cpp:192 HikariSub/SubsGridWindow.cpp:315
+#: HikariSub/FontCollector.cpp:212 HikariSub/SubsGridWindow.cpp:315
 #: HikariSub/SubsGridWindow.cpp:703 HikariSub/SubsGridWindow.cpp:1132
 #: HikariSub/SubsGridWindow.cpp:1139 HikariSub/SubsGridWindow.cpp:1301
 #: HikariSub/SubsGridWindow.cpp:1308
 msgid "Start"
 msgstr "เริ่มต้น"
 
-#: HikariSub/FontCollector.cpp:194
+#: HikariSub/FontCollector.cpp:214
 msgid "Start on tabs"
 msgstr "เริ่มบนแท็บ"
 
-#: HikariSub/FontCollector.cpp:195
+#: HikariSub/FontCollector.cpp:215
 msgid "Save folder"
 msgstr "โฟลเดอร์บันทึก"
 
-#: HikariSub/FontCollector.cpp:428
+#: HikariSub/FontCollector.cpp:448
 msgid "Select the name of the archive"
 msgstr "ตั้งชื่อของแฟ้มบีบอัด"
 
-#: HikariSub/FontCollector.cpp:431
+#: HikariSub/FontCollector.cpp:451
 msgid "Archive files (*.zip)|*.zip"
 msgstr "แฟ้มบีบอัด (*.zip)|*.zip"
 
-#: HikariSub/FontCollector.cpp:463
+#: HikariSub/FontCollector.cpp:483
 msgid "No video or subtitles loaded"
 msgstr "ไม่มีวิดีโอหรือคำบรรยายโหลดไว้"
 
-#: HikariSub/FontCollector.cpp:468
+#: HikariSub/FontCollector.cpp:488
 msgid "Select the folder where you want to copy fonts"
 msgstr "เลือกโฟลเดอร์ที่ต้องการคัดลอกแบบอักษร"
 
-#: HikariSub/FontCollector.cpp:474
+#: HikariSub/FontCollector.cpp:494
 msgid "No subtitles loaded. Load subtitles or deselect this option."
 msgstr "ยังไม่ได้โหลดคำบรรยาย โปรดโหลดคำบรรยายหรือยกเลิกตัวเลือกนี้"
 
-#: HikariSub/FontCollector.cpp:480
+#: HikariSub/FontCollector.cpp:500
 msgid "Choose a name for the archive"
 msgstr "ตั้งชื่อแฟ้มบีบอัด"
 
-#: HikariSub/FontCollector.cpp:499
+#: HikariSub/FontCollector.cpp:519
 msgid "The save path is not valid."
 msgstr "ตำแหน่งที่บันทึกไม่ถูกต้อง"
 
-#: HikariSub/FontCollector.cpp:520 HikariSub/HikariSubFrame.cpp:1434
+#: HikariSub/FontCollector.cpp:540 HikariSub/HikariSubFrame.cpp:1434
 #: HikariSub/HikariSubFrame.cpp:2243 HikariSub/Notebook.cpp:1324
 #: HikariSub/SubsGrid.cpp:1141 HikariSub/SubsGridBase.cpp:559
 #: HikariSub/SubsGridBase.cpp:1580 HikariSub/SubsGridDialogs.cpp:109
@@ -1625,20 +1625,20 @@ msgstr "ตำแหน่งที่บันทึกไม่ถูกต้
 msgid "Confirmation"
 msgstr "การยืนยัน"
 
-#: HikariSub/FontCollector.cpp:520
+#: HikariSub/FontCollector.cpp:540
 msgid "The zip file already exists, delete it?"
 msgstr "มีแฟ้ม ZIP อยู่แล้ว ต้องการลบหรือไม่?"
 
-#: HikariSub/FontCollector.cpp:596 HikariSub/FontCollector.cpp:653
+#: HikariSub/FontCollector.cpp:616 HikariSub/FontCollector.cpp:673
 msgid "Font not found \""
 msgstr "ไม่พบแบบอักษร \""
 
-#: HikariSub/FontCollector.cpp:609 HikariSub/FontCollector.cpp:668
+#: HikariSub/FontCollector.cpp:629 HikariSub/FontCollector.cpp:688
 #, c-format
 msgid "Found font \"%s\"\n"
 msgstr "พบแบบอักษร \"%s\"\n"
 
-#: HikariSub/FontCollector.cpp:734 HikariSub/FontCollector.cpp:746
+#: HikariSub/FontCollector.cpp:754 HikariSub/FontCollector.cpp:766
 msgid ""
 "Cannot retrieve the font file sizes and names;\n"
 "copying will be canceled.\n"
@@ -1646,7 +1646,7 @@ msgstr ""
 "ไม่สามารถโหลดขนาดและชื่อแฟ้มของแบบอักษร\n"
 "การคัดลอกถูกยกเลิก\n"
 
-#: HikariSub/FontCollector.cpp:738 HikariSub/FontCollector.cpp:795
+#: HikariSub/FontCollector.cpp:758 HikariSub/FontCollector.cpp:815
 #, c-format
 msgid ""
 "Retrieved sizes and names of %i fonts, elapsed time %sms.\n"
@@ -1655,11 +1655,11 @@ msgstr ""
 "อ่านขนาดและชื่อแบบอักษร %i รายการแล้ว ใช้เวลา %s มิลลิวินาที\n"
 "\n"
 
-#: HikariSub/FontCollector.cpp:829
+#: HikariSub/FontCollector.cpp:849
 msgid "Path is not available"
 msgstr "ตำแหน่งไม่พร้อมใช้งาน"
 
-#: HikariSub/FontCollector.cpp:842
+#: HikariSub/FontCollector.cpp:862
 #, c-format
 msgid ""
 "Font \"%s\" belongs to a style\n"
@@ -1668,73 +1668,78 @@ msgstr ""
 "แบบอักษร \"%s\" มาจาก\n"
 "สไตล์ที่ไม่ได้ใช้"
 
-#: HikariSub/FontCollector.cpp:851
+#: HikariSub/FontCollector.cpp:871
 msgid "Some fonts do not contain all glyphs used in the text.\n"
 msgstr "บางแบบอักษรไม่มีอักขระที่ใช้ในข้อความ\n"
 
-#: HikariSub/FontCollector.cpp:858
+#: HikariSub/FontCollector.cpp:878
 #, c-format
 msgid "Finished, %s %s.\n"
 msgstr "เสร็จสมบูรณ์แล้ว %s %s\n"
 
-#: HikariSub/FontCollector.cpp:858 HikariSub/FontCollector.cpp:877
+#: HikariSub/FontCollector.cpp:878 HikariSub/FontCollector.cpp:904
 msgid "copied"
 msgstr "คัดลอกแล้ว"
 
-#: HikariSub/FontCollector.cpp:858 HikariSub/FontCollector.cpp:877
+#: HikariSub/FontCollector.cpp:878 HikariSub/FontCollector.cpp:904
 msgid "found"
 msgstr "พบ"
 
-#: HikariSub/FontCollector.cpp:860 HikariSub/FontCollector.cpp:879
+#: HikariSub/FontCollector.cpp:880 HikariSub/FontCollector.cpp:906
 #, c-format
 msgctxt "found or copied"
 msgid "%d font"
 msgid_plural "%d fonts"
 msgstr[0] "%d แบบอักษร"
 
-#: HikariSub/FontCollector.cpp:862
+#: HikariSub/FontCollector.cpp:882
 #, c-format
 msgid "Not found %s.\n"
 msgstr "ไม่พบ %s\n"
 
-#: HikariSub/FontCollector.cpp:864 HikariSub/FontCollector.cpp:869
+#: HikariSub/FontCollector.cpp:884 HikariSub/FontCollector.cpp:889
 #, c-format
 msgctxt "not found or not copied"
 msgid "%d font"
 msgid_plural "%d fonts"
 msgstr[0] "%d แบบอักษร"
 
-#: HikariSub/FontCollector.cpp:867
+#: HikariSub/FontCollector.cpp:887
 #, c-format
 msgid "Cannot copy %s.\n"
 msgstr "ไม่สามารถคัดลอก %s ได้\n"
 
-#: HikariSub/FontCollector.cpp:876
+#: HikariSub/FontCollector.cpp:896
+#, c-format
+msgid "Different fonts have the same file name: %s. Each was saved under a name of its own.\n"
+msgstr "แบบอักษรที่ต่างกันมีชื่อไฟล์เดียวกัน: %s แต่ละแบบอักษรถูกบันทึกด้วยชื่อของตัวเอง\n"
+
+#: HikariSub/FontCollector.cpp:903
 #, c-format
 msgid "Completed Successfully, %s %s.\n"
 msgstr "เสร็จสมบูรณ์แล้ว %s %s\n"
 
-#: HikariSub/FontCollector.cpp:894
+#: HikariSub/FontCollector.cpp:920
 #, c-format
 msgid "Added font \"%s\" to the archive."
 msgstr "เพิ่มแบบอักษร \"%s\" ไปยังแฟ้มบีบอัดแล้ว"
 
-#: HikariSub/FontCollector.cpp:903
+#: HikariSub/FontCollector.cpp:929
 #, c-format
 msgid "Cannot zip font \"%s\"."
 msgstr "ไม่สามารถบีบอัดแบบอักษร \"%s\" ได้"
 
-#: HikariSub/FontCollector.cpp:909
+#: HikariSub/FontCollector.cpp:935
 #, c-format
 msgid "Copied font \"%s\"."
 msgstr "คัดลอกแบบอักษร \"%s\" แล้ว"
 
-#: HikariSub/FontCollector.cpp:914
+#: HikariSub/FontCollector.cpp:940
 #, c-format
 msgid "Cannot copy font \"%s\"."
 msgstr "ไม่สามารถคัดลอกแบบอักษร \"%s\" ได้"
 
-#: HikariSub/FontCollector.cpp:928
+#: HikariSub/FontCollector.cpp:954
 #, c-format
 msgid ""
 "Video: %s\n"
@@ -1743,27 +1748,27 @@ msgstr ""
 "วิดีโอ: %s\n"
 "\n"
 
-#: HikariSub/FontCollector.cpp:945
+#: HikariSub/FontCollector.cpp:971
 msgid "This video is not an MKV file."
 msgstr "วิดีโอนี้ไม่ใช่แฟ้ม MKV"
 
-#: HikariSub/FontCollector.cpp:950
+#: HikariSub/FontCollector.cpp:976
 msgid "Cannot open MKV file"
 msgstr "ไม่สามารถเปิดแฟ้ม MKV ได้"
 
-#: HikariSub/FontCollector.cpp:956
+#: HikariSub/FontCollector.cpp:982
 msgid "Loaded MKV file does not have any fonts."
 msgstr "แฟ้ม MKV ที่โหลดมาไม่พบแบบอักษรใด ๆ"
 
-#: HikariSub/FontCollector.cpp:971
+#: HikariSub/FontCollector.cpp:997
 msgid "Saved a font named \""
 msgstr "บันทึกแบบอักษรชื่อ \""
 
-#: HikariSub/FontCollector.cpp:975
+#: HikariSub/FontCollector.cpp:1001
 msgid "Cannot save font named \""
 msgstr "ไม่สามารถบันทึกแบบอักษรชื่อ \""
 
-#: HikariSub/FontCollector.cpp:981
+#: HikariSub/FontCollector.cpp:1007
 #, c-format
 msgid ""
 "Completed, copied %i fonts.\n"
@@ -1772,21 +1777,26 @@ msgstr ""
 "คัดลอกแบบอักษรสำเร็จ %i รายการ\n"
 "คัดลอกไม่สำเร็จ %i รายการ"
 
-#: HikariSub/FontCollector.cpp:985
+#: HikariSub/FontCollector.cpp:1011
 #, c-format
 msgid "Completed successfully and copied %i fonts."
 msgstr "คัดลอกแบบอักษรเสร็จสิ้น %i"
 
-#: HikariSub/FontCollector.cpp:1012
+#: HikariSub/FontCollector.cpp:1043
+#, c-format
+msgid "A different font has the same file name \"%s\"; this one is saved as \"%s\"."
+msgstr "แบบอักษรอื่นมีชื่อไฟล์ \"%s\" เหมือนกัน แบบอักษรนี้จึงบันทึกเป็น \"%s\""
+
+#: HikariSub/FontCollector.cpp:1056
 msgid "Cannot create folder."
 msgstr "ไม่สามารถสร้างโฟลเดอร์ได้"
 
-#: HikariSub/FontCollector.cpp:1095
+#: HikariSub/FontCollector.cpp:1139
 #, c-format
 msgid "Found font \"%s\"."
 msgstr "พบแบบอักษร \"%s\""
 
-#: HikariSub/FontCollector.cpp:1103
+#: HikariSub/FontCollector.cpp:1147
 msgid ""
 "\n"
 "Will not be copied."
@@ -1794,7 +1804,7 @@ msgstr ""
 "\n"
 "จะไม่ถูกคัดลอก"
 
-#: HikariSub/FontCollector.cpp:1103
+#: HikariSub/FontCollector.cpp:1147
 #, c-format
 msgid ""
 "Font \"%s\" belongs to a style\n"
@@ -1803,71 +1813,71 @@ msgstr ""
 "แบบอักษร \"%s\" มาจาก\n"
 "สไตล์ที่ไม่ได้ใช้ %s"
 
-#: HikariSub/FontCollector.cpp:1111
+#: HikariSub/FontCollector.cpp:1155
 #, c-format
 msgid "Font \"%s\" is missing normal style."
 msgstr "แบบอักษร \"%s\" ขาดรูปแบบปกติ"
 
-#: HikariSub/FontCollector.cpp:1114
+#: HikariSub/FontCollector.cpp:1158
 #, c-format
 msgid "Font \"%s\" is missing bold italics."
 msgstr "แบบอักษร \"%s\" ขาดรูปแบบตัวหนาเอียง"
 
-#: HikariSub/FontCollector.cpp:1117
+#: HikariSub/FontCollector.cpp:1161
 #, c-format
 msgid "Font \"%s\" is missing bold."
 msgstr "แบบอักษร \"%s\" ขาดรูปแบบตัวหนา"
 
-#: HikariSub/FontCollector.cpp:1120
+#: HikariSub/FontCollector.cpp:1164
 #, c-format
 msgid "Font \"%s\" is missing italics."
 msgstr "แบบอักษร \"%s\" ขาดรูปแบบตัวเอียง"
 
-#: HikariSub/FontCollector.cpp:1134
+#: HikariSub/FontCollector.cpp:1178
 #, c-format
 msgid "Cannot check the characters in font \"%s\"."
 msgstr "ไม่สามารถตรวจสอบอักขระในแบบอักษร \"%s\" ได้"
 
-#: HikariSub/FontCollector.cpp:1138
+#: HikariSub/FontCollector.cpp:1182
 #, c-format
 msgid "Font \"%s\" does not contain characters: \"%s\"."
 msgstr "แบบอักษร \"%s\" ไม่มีอักขระ: \"%s\""
 
-#: HikariSub/FontCollector.cpp:1150
+#: HikariSub/FontCollector.cpp:1194
 #, c-format
 msgid "Cannot get the contents of font \"%s\"."
 msgstr "ไม่สามารถอ่านข้อมูลแบบอักษร \"%s\" ได้"
 
-#: HikariSub/FontCollector.cpp:1175
-#, c-format
-msgid "Cannot open file \"%s\"."
-msgstr "ไม่สามารถเปิดแฟ้ม \"%s\" ได้"
-
-#: HikariSub/FontCollector.cpp:1183
-#, c-format
-msgid "Size of font \"%s\" is different."
-msgstr "ขนาดของแบบอักษร \"%s\" แตกต่างกัน"
-
-#: HikariSub/FontCollector.cpp:1190
+#: HikariSub/FontCollector.cpp:1232
 #, c-format
 msgid "Could not read \"%s\" font from the Fonts folder."
 msgstr "ไม่สามารถอ่านแบบอักษร \"%s\" จากโฟลเดอร์ Fonts ได้"
 
-#: HikariSub/FontCollector.cpp:1196 HikariSub/FontCollector.cpp:1219
+#: HikariSub/FontCollector.cpp:1242
+#, c-format
+msgid "Cannot open file \"%s\"."
+msgstr "ไม่สามารถเปิดแฟ้ม \"%s\" ได้"
+
+#: HikariSub/FontCollector.cpp:1246
+#, c-format
+msgid "Size of font \"%s\" is different."
+msgstr "ขนาดของแบบอักษร \"%s\" แตกต่างกัน"
+
+#: HikariSub/FontCollector.cpp:1252 HikariSub/FontCollector.cpp:1279
 #, c-format
 msgid "Found \"%s\" font file."
 msgstr "พบแฟ้มแบบอักษร \"%s\""
 
-#: HikariSub/FontCollector.cpp:1236
+#: HikariSub/FontCollector.cpp:1300
 #, c-format
 msgid "Cannot find \"%s\" font in Fonts folder."
 msgstr "ไม่พบแบบอักษร \"%s\" ในโฟลเดอร์แบบอักษร"
 
-#: HikariSub/FontCollector.cpp:1287
+#: HikariSub/FontCollector.cpp:1351
 msgid "Could not create process. Muxing canceled"
 msgstr "ไม่สามารถสร้างกระบวนการได้ ยกเลิกการผนวกแล้ว"
 
-#: HikariSub/FontCollector.cpp:1342
+#: HikariSub/FontCollector.cpp:1406
 #, c-format
 msgid ""
 "\n"

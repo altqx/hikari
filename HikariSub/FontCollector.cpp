@@ -33,6 +33,7 @@
 #include <wx/dirdlg.h>
 #include <wx/filedlg.h>
 #include <wx/wfstream.h>
+#include <wx/ffile.h>
 #include <wx/dir.h>
 #include <wx/regex.h>
 #include <wx/utils.h>
@@ -41,6 +42,25 @@
 wxDEFINE_EVENT(EVT_APPEND_MESSAGE, wxThreadEvent);
 wxDEFINE_EVENT(EVT_ENABLE_BUTTONS, wxThreadEvent);
 wxDEFINE_EVENT(EVT_ENABLE_OPEN_FOLDER, wxThreadEvent);
+
+// Whether two font files hold the same bytes.
+static bool SameFontBytes(const wxString &first, const wxString &second)
+{
+	wxFFile a(first, L"rb");
+	wxFFile b(second, L"rb");
+	if (!a.IsOpened() || !b.IsOpened() || a.Length() != b.Length())
+		return false;
+	std::vector<char> bufferA(1 << 16);
+	std::vector<char> bufferB(1 << 16);
+	for (;;) {
+		size_t readA = a.Read(bufferA.data(), bufferA.size());
+		size_t readB = b.Read(bufferB.data(), bufferB.size());
+		if (readA != readB || memcmp(bufferA.data(), bufferB.data(), readA) != 0)
+			return false;
+		if (readA < bufferA.size())
+			return a.Eof() && b.Eof();
+	}
+}
 
 SubsFont::SubsFont(const wxString &_name, const LOGFONTW &_logFont, int _bold, bool _italic){
 	name = _name;
@@ -852,7 +872,7 @@ void FontCollector::CheckOrCopyFonts()
 
 	bool checkFonts = (operation & CHECK_FONTS);
 
-	if (notFound || !allglyphs){
+	if (notFound || !allglyphs || renamedFonts.size()){
 		wxString message;
 		
 		message += L"\n" + wxString::Format(_("Finished, %s %s.\n"), (checkFonts) ? _("found") : _("copied"),
@@ -869,6 +889,13 @@ void FontCollector::CheckOrCopyFonts()
 					"%d font", "%d fonts", notCopied), notCopied));
 		}
 		
+		if (renamedFonts.size()){
+			wxString names;
+			for (const wxString &name : renamedFonts)
+				names << (names.empty() ? emptyString : wxString(L", ")) << name;
+			message += wxString::Format(_("Different fonts have the same file name: %s. Each was saved under a name of its own.\n"),
+				names);
+		}
 		message += noglyphs;
 		SendMessageD(message, fcd->warning);
 	}
@@ -881,9 +908,8 @@ void FontCollector::CheckOrCopyFonts()
 	fontnames.clear();
 }
 
-bool FontCollector::SaveFont(const wxString &fontPath, FontLogContent *flc)
+bool FontCollector::SaveFont(const wxString &fontPath, const wxString &fn, FontLogContent *flc)
 {
-	wxString fn = HikariPathName(fontPath);
 	if (zip){
 		wxFFileInputStream in(fontPath);
 		bool isgood = in.IsOk();
@@ -1002,6 +1028,24 @@ void FontCollector::ClearTables()
 	for (auto cur = foundFonts.begin(); cur != foundFonts.end(); cur++)
 		delete cur->second;
 	foundFonts.clear();
+	outputNames.Clear();
+	renamedFonts.Clear();
+}
+
+wxString FontCollector::OutputName(const wxString &fontPath, FontLogContent *flc, bool *alreadySaved)
+{
+	wxString fileName = HikariPathName(fontPath);
+	FontOutputNames::Result output = outputNames.Add(fontPath.ToStdWstring(), fileName.ToStdWstring(),
+		[&](const std::wstring &earlier) { return SameFontBytes(wxString(earlier), fontPath); });
+	*alreadySaved = output.outcome == FontOutputNames::SAME_FONT;
+	wxString name(output.name);
+	if (output.outcome == FontOutputNames::RENAMED){
+		flc->AppendWarnings(wxString::Format(_("A different font has the same file name \"%s\"; this one is saved as \"%s\"."),
+			fileName, name));
+		if (renamedFonts.Index(fileName, false) == wxNOT_FOUND)
+			renamedFonts.Add(fileName);
+	}
+	return name;
 }
 
 bool FontCollector::MakeDirectory(bool isZip)
@@ -1161,36 +1205,48 @@ bool FontCollector::CheckPathAndGlyphs(int *found, int *notFound, int *notCopied
 			bool succeeded = false;
 
 			for (auto fontSize = fontSizes.equal_range(size).first; fontSize != fontSizes.equal_range(size).second; ++fontSize){
-				wxString fullpath = fontfolder + fontSize->second;
-				FILE *fp = _wfopen(fullpath.wc_str(), L"rb");
-				if (!fp){
-					fullpath = fontFolderLocal + fontSize->second;
-					fp = _wfopen(fullpath.wc_str(), L"rb");
-				}
-				if (!fp && hasExternalFolder) {
-					fullpath = fontFolderExternal + fontSize->second;
-					fp = _wfopen(fullpath.wc_str(), L"rb");
-				}
-				if (!fp){ 
-					flc->AppendWarnings(wxString::Format(_("Cannot open file \"%s\"."), fontSize->second));
-					//goto done; 
-					continue;
-				}
-				fseek(fp, 0, SEEK_END);
-				long lSize = ftell(fp);
-				rewind(fp);
-				if (lSize != size){
-					flc->AppendWarnings(wxString::Format(_("Size of font \"%s\" is different."), fn));
+				// the file of this name whose bytes are the font's: the system,
+				// the per-user and the external fonts folder can each hold one,
+				// and only the first that opened was compared
+				wxString fullpath;
+				bool opened = false;
+				bool sameSize = false;
+				bool matched = false;
+				const wxString folders[] = { fontfolder, fontFolderLocal,
+					hasExternalFolder ? fontFolderExternal : emptyString };
+				for (size_t f = 0; f < 3 && !matched; f++){
+					if (f > 0 && folders[f].empty())
+						continue;
+					wxString path = folders[f] + fontSize->second;
+					FILE *fp = _wfopen(path.wc_str(), L"rb");
+					if (!fp)
+						continue;
+					opened = true;
+					fseek(fp, 0, SEEK_END);
+					long lSize = ftell(fp);
+					rewind(fp);
+					if (lSize == size){
+						sameSize = true;
+						size_t result = fread(&file_buffer[0], 1, size, fp);
+						if (result != size){
+							flc->AppendWarnings(wxString::Format(_("Could not read \"%s\" font from the Fonts folder."), fn));
+						}
+						else if (memcmp(&file_buffer[0], &buffer[0], size) == 0){
+							fullpath = path;
+							matched = true;
+						}
+					}
 					fclose(fp);
-					//goto done;
+				}
+				if (!opened){ 
+					flc->AppendWarnings(wxString::Format(_("Cannot open file \"%s\"."), fontSize->second));
 					continue;
 				}
-				int result = fread(&file_buffer[0], 1, size, fp);
-				if (result != size){
-					flc->AppendWarnings(wxString::Format(_("Could not read \"%s\" font from the Fonts folder."), fn));
+				if (!sameSize){
+					flc->AppendWarnings(wxString::Format(_("Size of font \"%s\" is different."), fn));
+					continue;
 				}
-				fclose(fp);
-				if (memcmp(&file_buffer[0], &buffer[0], size) == 0) {
+				if (matched) {
 					if (fontnames.Index(fullpath, true) == -1){
 						fontnames.Add(fullpath);
 						flc->AppendInfo(wxString::Format(_("Found \"%s\" font file."), fullpath));
@@ -1205,10 +1261,14 @@ bool FontCollector::CheckPathAndGlyphs(int *found, int *notFound, int *notCopied
 							needInit = false;
 						}
 						if (operation & COPY_FONTS){ 
-							if (!SaveFont(fullpath, flc))
-								(*notCopied)++;
-							else
-								(*found)++;
+							bool alreadySaved = false;
+							wxString outputName = OutputName(fullpath, flc, &alreadySaved);
+							if (!alreadySaved){
+								if (!SaveFont(fullpath, outputName, flc))
+									(*notCopied)++;
+								else
+									(*found)++;
+							}
 						}
 						wxString ext = fontSize->second.AfterLast(L'.').Lower();
 						if (ext == L"pfm" || ext == L"pfb"){
@@ -1218,10 +1278,14 @@ bool FontCollector::CheckPathAndGlyphs(int *found, int *notFound, int *notCopied
 							fontnames.Add(secondPath);
 							flc->AppendInfo(wxString::Format(_("Found \"%s\" font file."), secondPath));
 							if (operation & COPY_FONTS){
-								if (!SaveFont(secondPath, flc))
-									(*notCopied)++;
-								else
-									(*found)++;
+								bool alreadySaved = false;
+								wxString outputName = OutputName(secondPath, flc, &alreadySaved);
+								if (!alreadySaved){
+									if (!SaveFont(secondPath, outputName, flc))
+										(*notCopied)++;
+									else
+										(*found)++;
+								}
 							}
 						}
 					}

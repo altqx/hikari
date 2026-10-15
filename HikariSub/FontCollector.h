@@ -20,6 +20,7 @@
 #include "MappedButton.h"
 #include "HikariTextCtrl.h"
 #include "HikariDialog.h"
+#include "FontOutputNames.h"
 #include <vector>
 #include <map>
 #include <set>
@@ -175,7 +176,10 @@ private:
 	void PutChars(const wxString &txt, const wxString &fn);
 	
 	bool CheckPathAndGlyphs(int *found, int *notfound, int *notcopied);
-	bool SaveFont(const wxString &fontname, FontLogContent *flc);
+	bool SaveFont(const wxString &fontPath, const wxString &outputName, FontLogContent *flc);
+	// The name fontPath is saved under (FontOutputNames); alreadySaved when
+	// the same bytes are saved under it already
+	wxString OutputName(const wxString &fontPath, FontLogContent *flc, bool *alreadySaved);
 	void EnumerateFonts();
 	bool AddFont(const wxString &string);
 	void CopyMKVFontsFromTab(const wxString &path);
@@ -186,6 +190,9 @@ private:
 
 	wxArrayString facenames;
 	wxArrayString fontnames;
+	FontOutputNames outputNames;
+	// file names that different fonts had, so some were saved under new names
+	wxArrayString renamedFonts;
 	std::vector<LOGFONTW> logFonts;
 	std::map<wxString, FontLogContent*> notFindFontsLog;
 	std::map<wxString, FontLogContent*> findFontsLog;

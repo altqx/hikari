@@ -12,6 +12,7 @@ if(WIN32)
         WindowsSaveFileTests.cpp
         AutomationFoldersTests.cpp
         CsriAttachmentsTests.cpp
+        FontOutputNamesTests.cpp
         NaturalOrderTests.cpp
         ReplaceBackupTests.cpp
         ScriptAttachmentsTests.cpp
@@ -66,6 +67,7 @@ add_executable(hikarisub_tests
     ChosenStylesTests.cpp
     CsriOverlayTests.cpp
     DependencyControlModulesTests.cpp
+    FontOutputNamesTests.cpp
     FrameExchangeTests.cpp
     FrameQueueTests.cpp
     GridColumnChoicesTests.cpp

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HikariSub\n"
 "Report-Msgid-Bugs-To: https://github.com/altqx/hikari/issues\n"
-"POT-Creation-Date: 2026-10-15 15:15+0700\n"
+"POT-Creation-Date: 2026-10-16 05:50+0700\n"
 "PO-Revision-Date: 2026-09-26 19:00+0700\n"
 "Last-Translator: altqx <al@altqx.com>\n"
 "Language-Team: Korean\n"
@@ -640,7 +640,7 @@ msgid "Set anyway"
 msgstr "계속 설정"
 
 #: HikariSub/AutomationProgress.cpp:471 HikariSub/FindReplaceDialog.cpp:222
-#: HikariSub/FontCollector.cpp:197 HikariSub/LogHandler.cpp:50
+#: HikariSub/FontCollector.cpp:217 HikariSub/LogHandler.cpp:50
 #: HikariSub/Notebook.cpp:719 HikariSub/SelectLines.cpp:142
 #: HikariSub/SelectLines.cpp:237 HikariSub/SelectLines.cpp:279
 #: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:175
@@ -1211,7 +1211,7 @@ msgstr "필터:"
 msgid "Subtitle search folder:"
 msgstr "자막 찾기 폴더:"
 
-#: HikariSub/FindReplaceDialog.cpp:86 HikariSub/FontCollector.cpp:425
+#: HikariSub/FindReplaceDialog.cpp:86 HikariSub/FontCollector.cpp:445
 msgid "Choose save folder"
 msgstr "저장 폴더 선택"
 
@@ -1512,51 +1512,51 @@ msgstr "목록의 모든 내용 제거"
 msgid "Add fonts from all open subtitles"
 msgstr "열려 있는 모든 자막에서 글꼴 추가"
 
-#: HikariSub/FontCollector.cpp:100
+#: HikariSub/FontCollector.cpp:120
 msgid "In styles:\n"
 msgstr "스타일:\n"
 
-#: HikariSub/FontCollector.cpp:105 HikariSub/FontCollector.cpp:331
-#: HikariSub/FontCollector.cpp:378
+#: HikariSub/FontCollector.cpp:125 HikariSub/FontCollector.cpp:351
+#: HikariSub/FontCollector.cpp:398
 msgid " tabs: "
 msgstr " 탭: "
 
-#: HikariSub/FontCollector.cpp:114
+#: HikariSub/FontCollector.cpp:134
 msgid "In lines: "
 msgstr "줄에서: "
 
-#: HikariSub/FontCollector.cpp:135 HikariSub/HikariSubFrame.cpp:343
+#: HikariSub/FontCollector.cpp:155 HikariSub/HikariSubFrame.cpp:343
 #: HikariSub/HikariSubFrame.cpp:344 HikariSub/HotkeysNaming.cpp:177
 #: HikariSub/SubsGrid.cpp:291
 msgid "Font collector"
 msgstr "글꼴 수집"
 
-#: HikariSub/FontCollector.cpp:161
+#: HikariSub/FontCollector.cpp:181
 msgid "Select a folder"
 msgstr "폴더 선택"
 
-#: HikariSub/FontCollector.cpp:169
+#: HikariSub/FontCollector.cpp:189
 msgid "Check availability of fonts"
 msgstr "글꼴 사용 가능 여부 확인"
 
-#: HikariSub/FontCollector.cpp:170
+#: HikariSub/FontCollector.cpp:190
 msgid "Copy to selected folder"
 msgstr "선택한 폴더에 복사"
 
-#: HikariSub/FontCollector.cpp:171
+#: HikariSub/FontCollector.cpp:191
 msgid "Zip"
 msgstr "Zip"
 
-#: HikariSub/FontCollector.cpp:173 HikariSub/OptionsDialog.cpp:281
+#: HikariSub/FontCollector.cpp:193 HikariSub/OptionsDialog.cpp:281
 #: HikariSub/ScriptInfo.cpp:133
 msgid "Options"
 msgstr "선택"
 
-#: HikariSub/FontCollector.cpp:177
+#: HikariSub/FontCollector.cpp:197
 msgid "Save to video / subtitles folder."
 msgstr "영상 / 자막 폴더에 저장."
 
-#: HikariSub/FontCollector.cpp:178
+#: HikariSub/FontCollector.cpp:198
 msgid ""
 "Saves to the video folder\n"
 "when demuxing fonts from an MKV file."
@@ -1564,54 +1564,54 @@ msgstr ""
 "MKV 파일에서 글꼴을 추출 할 때\n"
 "영상과 함께 폴더에 저장."
 
-#: HikariSub/FontCollector.cpp:183
+#: HikariSub/FontCollector.cpp:203
 msgid "Demux fonts from loaded MKV file"
 msgstr "로드 된 MKV 파일에서 글꼴 추출"
 
-#: HikariSub/FontCollector.cpp:192 HikariSub/SubsGridWindow.cpp:315
+#: HikariSub/FontCollector.cpp:212 HikariSub/SubsGridWindow.cpp:315
 #: HikariSub/SubsGridWindow.cpp:703 HikariSub/SubsGridWindow.cpp:1132
 #: HikariSub/SubsGridWindow.cpp:1139 HikariSub/SubsGridWindow.cpp:1301
 #: HikariSub/SubsGridWindow.cpp:1308
 msgid "Start"
 msgstr "시작 시간"
 
-#: HikariSub/FontCollector.cpp:194
+#: HikariSub/FontCollector.cpp:214
 msgid "Start on tabs"
 msgstr "탭으로 시작"
 
-#: HikariSub/FontCollector.cpp:195
+#: HikariSub/FontCollector.cpp:215
 msgid "Save folder"
 msgstr "저장 폴더"
 
-#: HikariSub/FontCollector.cpp:428
+#: HikariSub/FontCollector.cpp:448
 msgid "Select the name of the archive"
 msgstr "보관 파일 이름 선택"
 
-#: HikariSub/FontCollector.cpp:431
+#: HikariSub/FontCollector.cpp:451
 msgid "Archive files (*.zip)|*.zip"
 msgstr "압축 파일 (*.zip)|*.zip"
 
-#: HikariSub/FontCollector.cpp:463
+#: HikariSub/FontCollector.cpp:483
 msgid "No video or subtitles loaded"
 msgstr "불러온 영상 또는 자막이 없습니다"
 
-#: HikariSub/FontCollector.cpp:468
+#: HikariSub/FontCollector.cpp:488
 msgid "Select the folder where you want to copy fonts"
 msgstr "글꼴을 복사 할 폴더를 선택하십시오"
 
-#: HikariSub/FontCollector.cpp:474
+#: HikariSub/FontCollector.cpp:494
 msgid "No subtitles loaded. Load subtitles or deselect this option."
 msgstr "불러 온 자막이 없습니다. 자막을 불러오거나 이 옵션을 선택 취소하세요."
 
-#: HikariSub/FontCollector.cpp:480
+#: HikariSub/FontCollector.cpp:500
 msgid "Choose a name for the archive"
 msgstr "이름 선택"
 
-#: HikariSub/FontCollector.cpp:499
+#: HikariSub/FontCollector.cpp:519
 msgid "The save path is not valid."
 msgstr "저장 경로가 잘못되었습니다."
 
-#: HikariSub/FontCollector.cpp:520 HikariSub/HikariSubFrame.cpp:1434
+#: HikariSub/FontCollector.cpp:540 HikariSub/HikariSubFrame.cpp:1434
 #: HikariSub/HikariSubFrame.cpp:2243 HikariSub/Notebook.cpp:1324
 #: HikariSub/SubsGrid.cpp:1141 HikariSub/SubsGridBase.cpp:559
 #: HikariSub/SubsGridBase.cpp:1580 HikariSub/SubsGridDialogs.cpp:109
@@ -1626,20 +1626,20 @@ msgstr "저장 경로가 잘못되었습니다."
 msgid "Confirmation"
 msgstr "확인해주세요"
 
-#: HikariSub/FontCollector.cpp:520
+#: HikariSub/FontCollector.cpp:540
 msgid "The zip file already exists, delete it?"
 msgstr "Zip 파일이 이미 있습니다. 삭제 하시겠습니까?"
 
-#: HikariSub/FontCollector.cpp:596 HikariSub/FontCollector.cpp:653
+#: HikariSub/FontCollector.cpp:616 HikariSub/FontCollector.cpp:673
 msgid "Font not found \""
 msgstr "글꼴을 찾을 수 없음 \""
 
-#: HikariSub/FontCollector.cpp:609 HikariSub/FontCollector.cpp:668
+#: HikariSub/FontCollector.cpp:629 HikariSub/FontCollector.cpp:688
 #, c-format
 msgid "Found font \"%s\"\n"
 msgstr "찾은 글꼴 \"%s\"\n"
 
-#: HikariSub/FontCollector.cpp:734 HikariSub/FontCollector.cpp:746
+#: HikariSub/FontCollector.cpp:754 HikariSub/FontCollector.cpp:766
 msgid ""
 "Cannot retrieve the font file sizes and names;\n"
 "copying will be canceled.\n"
@@ -1647,7 +1647,7 @@ msgstr ""
 "글꼴 파일 크기와 이름을 얻을 수 없습니다,\n"
 "복사가 취소되었습니다.\n"
 
-#: HikariSub/FontCollector.cpp:738 HikariSub/FontCollector.cpp:795
+#: HikariSub/FontCollector.cpp:758 HikariSub/FontCollector.cpp:815
 #, c-format
 msgid ""
 "Retrieved sizes and names of %i fonts, elapsed time %sms.\n"
@@ -1656,11 +1656,11 @@ msgstr ""
 "%i 글꼴의 크기와 이름을 가져 왔으며 %s ms가 걸렸습니다.\n"
 "\n"
 
-#: HikariSub/FontCollector.cpp:829
+#: HikariSub/FontCollector.cpp:849
 msgid "Path is not available"
 msgstr "경로를 사용할 수 없음"
 
-#: HikariSub/FontCollector.cpp:842
+#: HikariSub/FontCollector.cpp:862
 #, c-format
 msgid ""
 "Font \"%s\" belongs to a style\n"
@@ -1669,73 +1669,78 @@ msgstr ""
 "\"%s\" 글꼴은 사용되지 않는\n"
 "스타일에 속합니다."
 
-#: HikariSub/FontCollector.cpp:851
+#: HikariSub/FontCollector.cpp:871
 msgid "Some fonts do not contain all glyphs used in the text.\n"
 msgstr "일부 글꼴은 모든 글자가 포함되지 않을 수 있음.\n"
 
-#: HikariSub/FontCollector.cpp:858
+#: HikariSub/FontCollector.cpp:878
 #, c-format
 msgid "Finished, %s %s.\n"
 msgstr "완료, %s: %s.\n"
 
-#: HikariSub/FontCollector.cpp:858 HikariSub/FontCollector.cpp:877
+#: HikariSub/FontCollector.cpp:878 HikariSub/FontCollector.cpp:904
 msgid "copied"
 msgstr "복사함"
 
-#: HikariSub/FontCollector.cpp:858 HikariSub/FontCollector.cpp:877
+#: HikariSub/FontCollector.cpp:878 HikariSub/FontCollector.cpp:904
 msgid "found"
 msgstr "찾음"
 
-#: HikariSub/FontCollector.cpp:860 HikariSub/FontCollector.cpp:879
+#: HikariSub/FontCollector.cpp:880 HikariSub/FontCollector.cpp:906
 #, c-format
 msgctxt "found or copied"
 msgid "%d font"
 msgid_plural "%d fonts"
 msgstr[0] "글꼴 %d개"
 
-#: HikariSub/FontCollector.cpp:862
+#: HikariSub/FontCollector.cpp:882
 #, c-format
 msgid "Not found %s.\n"
 msgstr "%s을(를) 찾을 수 없습니다.\n"
 
-#: HikariSub/FontCollector.cpp:864 HikariSub/FontCollector.cpp:869
+#: HikariSub/FontCollector.cpp:884 HikariSub/FontCollector.cpp:889
 #, c-format
 msgctxt "not found or not copied"
 msgid "%d font"
 msgid_plural "%d fonts"
 msgstr[0] "글꼴 %d개"
 
-#: HikariSub/FontCollector.cpp:867
+#: HikariSub/FontCollector.cpp:887
 #, c-format
 msgid "Cannot copy %s.\n"
 msgstr "%s를(을) 복사 할 수 없음\n"
 
-#: HikariSub/FontCollector.cpp:876
+#: HikariSub/FontCollector.cpp:896
+#, c-format
+msgid "Different fonts have the same file name: %s. Each was saved under a name of its own.\n"
+msgstr "서로 다른 글꼴이 같은 파일 이름을 사용합니다: %s. 각 글꼴은 서로 다른 이름으로 저장되었습니다.\n"
+
+#: HikariSub/FontCollector.cpp:903
 #, c-format
 msgid "Completed Successfully, %s %s.\n"
 msgstr "성공적으로 완료되었습니다. %s: %s.\n"
 
-#: HikariSub/FontCollector.cpp:894
+#: HikariSub/FontCollector.cpp:920
 #, c-format
 msgid "Added font \"%s\" to the archive."
 msgstr "\"%s\"글꼴이 목록에 추가되었습니다."
 
-#: HikariSub/FontCollector.cpp:903
+#: HikariSub/FontCollector.cpp:929
 #, c-format
 msgid "Cannot zip font \"%s\"."
 msgstr "글꼴 \"%s\"을(를) 압축 할 수 없습니다."
 
-#: HikariSub/FontCollector.cpp:909
+#: HikariSub/FontCollector.cpp:935
 #, c-format
 msgid "Copied font \"%s\"."
 msgstr "복사 된 글꼴 \"%s\"."
 
-#: HikariSub/FontCollector.cpp:914
+#: HikariSub/FontCollector.cpp:940
 #, c-format
 msgid "Cannot copy font \"%s\"."
 msgstr "\"%s\"글꼴을 복사 할 수 없습니다."
 
-#: HikariSub/FontCollector.cpp:928
+#: HikariSub/FontCollector.cpp:954
 #, c-format
 msgid ""
 "Video: %s\n"
@@ -1744,27 +1749,27 @@ msgstr ""
 "영상: %s\n"
 "\n"
 
-#: HikariSub/FontCollector.cpp:945
+#: HikariSub/FontCollector.cpp:971
 msgid "This video is not an MKV file."
 msgstr "MKV 파일이 아닙니다."
 
-#: HikariSub/FontCollector.cpp:950
+#: HikariSub/FontCollector.cpp:976
 msgid "Cannot open MKV file"
 msgstr "MKV 파일을 열 수 없음"
 
-#: HikariSub/FontCollector.cpp:956
+#: HikariSub/FontCollector.cpp:982
 msgid "Loaded MKV file does not have any fonts."
 msgstr "불러온 MKV 파일에 글꼴이 없습니다."
 
-#: HikariSub/FontCollector.cpp:971
+#: HikariSub/FontCollector.cpp:997
 msgid "Saved a font named \""
 msgstr "이름이 \"인 글꼴을 저장"
 
-#: HikariSub/FontCollector.cpp:975
+#: HikariSub/FontCollector.cpp:1001
 msgid "Cannot save font named \""
 msgstr "이름으로 글꼴을 저장할 수 없습니다 \""
 
-#: HikariSub/FontCollector.cpp:981
+#: HikariSub/FontCollector.cpp:1007
 #, c-format
 msgid ""
 "Completed, copied %i fonts.\n"
@@ -1773,21 +1778,26 @@ msgstr ""
 "%i 글꼴을 복사했습니다.\n"
 "%i 글꼴을 복사하지 못했습니다."
 
-#: HikariSub/FontCollector.cpp:985
+#: HikariSub/FontCollector.cpp:1011
 #, c-format
 msgid "Completed successfully and copied %i fonts."
 msgstr "성공적으로 %i 글꼴을 복사했습니다."
 
-#: HikariSub/FontCollector.cpp:1012
+#: HikariSub/FontCollector.cpp:1043
+#, c-format
+msgid "A different font has the same file name \"%s\"; this one is saved as \"%s\"."
+msgstr "다른 글꼴이 같은 파일 이름 \"%s\"을(를) 사용합니다. 이 글꼴은 \"%s\"(으)로 저장됩니다."
+
+#: HikariSub/FontCollector.cpp:1056
 msgid "Cannot create folder."
 msgstr "폴더를 만들 수 없음."
 
-#: HikariSub/FontCollector.cpp:1095
+#: HikariSub/FontCollector.cpp:1139
 #, c-format
 msgid "Found font \"%s\"."
 msgstr "찾은 글꼴 \"%s\"."
 
-#: HikariSub/FontCollector.cpp:1103
+#: HikariSub/FontCollector.cpp:1147
 msgid ""
 "\n"
 "Will not be copied."
@@ -1795,7 +1805,7 @@ msgstr ""
 "\n"
 "복사되지 않음."
 
-#: HikariSub/FontCollector.cpp:1103
+#: HikariSub/FontCollector.cpp:1147
 #, c-format
 msgid ""
 "Font \"%s\" belongs to a style\n"
@@ -1804,71 +1814,71 @@ msgstr ""
 "\"%s\" 글꼴은 사용되지 않는\n"
 "스타일에 속합니다.%s"
 
-#: HikariSub/FontCollector.cpp:1111
+#: HikariSub/FontCollector.cpp:1155
 #, c-format
 msgid "Font \"%s\" is missing normal style."
 msgstr "\"%s\" 글꼴에는 일반 스타일이 없습니다."
 
-#: HikariSub/FontCollector.cpp:1114
+#: HikariSub/FontCollector.cpp:1158
 #, c-format
 msgid "Font \"%s\" is missing bold italics."
 msgstr "\"%s\" 글꼴에는 굵은 기울임 스타일이 없습니다."
 
-#: HikariSub/FontCollector.cpp:1117
+#: HikariSub/FontCollector.cpp:1161
 #, c-format
 msgid "Font \"%s\" is missing bold."
 msgstr "\"%s\" 글꼴에는 굵은 스타일이 없습니다."
 
-#: HikariSub/FontCollector.cpp:1120
+#: HikariSub/FontCollector.cpp:1164
 #, c-format
 msgid "Font \"%s\" is missing italics."
 msgstr "\"%s\" 글꼴에는 기울임 스타일이 없습니다."
 
-#: HikariSub/FontCollector.cpp:1134
+#: HikariSub/FontCollector.cpp:1178
 #, c-format
 msgid "Cannot check the characters in font \"%s\"."
 msgstr "\"%s\"글꼴 문자를 확인할 수 없습니다."
 
-#: HikariSub/FontCollector.cpp:1138
+#: HikariSub/FontCollector.cpp:1182
 #, c-format
 msgid "Font \"%s\" does not contain characters: \"%s\"."
 msgstr "\"%s\"글꼴에 \"%s\" 문자가 없습니다."
 
-#: HikariSub/FontCollector.cpp:1150
+#: HikariSub/FontCollector.cpp:1194
 #, c-format
 msgid "Cannot get the contents of font \"%s\"."
 msgstr "\"%s\"글꼴 내용을 가져올 수 없습니다."
 
-#: HikariSub/FontCollector.cpp:1175
-#, c-format
-msgid "Cannot open file \"%s\"."
-msgstr "\"%s\" 파일을 열 수 없습니다."
-
-#: HikariSub/FontCollector.cpp:1183
-#, c-format
-msgid "Size of font \"%s\" is different."
-msgstr "글꼴 \"%s\"의 크기가 다릅니다."
-
-#: HikariSub/FontCollector.cpp:1190
+#: HikariSub/FontCollector.cpp:1232
 #, c-format
 msgid "Could not read \"%s\" font from the Fonts folder."
 msgstr "글꼴 폴더에서 \"%s\" 글꼴을 읽을 수 없습니다."
 
-#: HikariSub/FontCollector.cpp:1196 HikariSub/FontCollector.cpp:1219
+#: HikariSub/FontCollector.cpp:1242
+#, c-format
+msgid "Cannot open file \"%s\"."
+msgstr "\"%s\" 파일을 열 수 없습니다."
+
+#: HikariSub/FontCollector.cpp:1246
+#, c-format
+msgid "Size of font \"%s\" is different."
+msgstr "글꼴 \"%s\"의 크기가 다릅니다."
+
+#: HikariSub/FontCollector.cpp:1252 HikariSub/FontCollector.cpp:1279
 #, c-format
 msgid "Found \"%s\" font file."
 msgstr "\"%s\" 글꼴을 찾았습니다."
 
-#: HikariSub/FontCollector.cpp:1236
+#: HikariSub/FontCollector.cpp:1300
 #, c-format
 msgid "Cannot find \"%s\" font in Fonts folder."
 msgstr "글꼴 폴더에서 \"%s\" 글꼴을 찾을 수 없습니다."
 
-#: HikariSub/FontCollector.cpp:1287
+#: HikariSub/FontCollector.cpp:1351
 msgid "Could not create process. Muxing canceled"
 msgstr "프로세스를 만들 수 없음. Muxing은 취소됨"
 
-#: HikariSub/FontCollector.cpp:1342
+#: HikariSub/FontCollector.cpp:1406
 #, c-format
 msgid ""
 "\n"
