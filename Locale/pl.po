@@ -1892,7 +1892,7 @@ msgstr "Zarządzaj"
 
 #: HikariSub/FontDialog.cpp:430
 msgid "Manages font catalogs"
-msgstr "Umorzliwia zarządzanie katalogami stylów"
+msgstr "Zarządza katalogami czcionek"
 
 #: HikariSub/FontDialog.cpp:432 HikariSub/HotkeysNaming.cpp:121
 #: HikariSub/StyleChange.cpp:87 HikariSub/SubsGrid.cpp:240
@@ -5359,7 +5359,7 @@ msgstr "Nie zawiera"
 
 #: HikariSub/SelectLines.cpp:78
 msgid "Start time"
-msgstr "Czas Początkowy"
+msgstr "Czas początkowy"
 
 #: HikariSub/SelectLines.cpp:102
 msgid "Dialogue / comments"
@@ -5802,7 +5802,7 @@ msgstr "Czcionka i rozmiar:"
 
 #: HikariSub/StyleChange.cpp:86
 msgid "Allows managing font catalogs"
-msgstr "Umorzliwia zarządzanie katalogami czcionek"
+msgstr "Umożliwia zarządzanie katalogami czcionek"
 
 #: HikariSub/StyleChange.cpp:141
 msgid "Colors and transparency:"
@@ -6684,7 +6684,7 @@ msgstr "Nie można otworzyć napisów w Libass"
 
 #: HikariSub/SubtitlesProviderManager.cpp:74
 msgid "VSFilterMod (slow, only for VSFilterMod tags)"
-msgstr "VSFilterMod (wolny, tylko dla tagów VSFilterMod)"
+msgstr "VSFilterMod (powolny, tylko dla tagów VSFilterMod)"
 
 #: HikariSub/SubtitlesVSFilter.cpp:222
 msgid "Cannot initialize CSRI."
@@ -7160,7 +7160,7 @@ msgstr "Nie można pobrać aktualizacji"
 #: HikariSub/UpdateChecker.cpp:352
 #, c-format
 msgid "HikariSub %s is a prerelease. The AUR package carries stable versions only. To try it, use the AppImage from the release page."
-msgstr "HikariSub %s jest wersją przedpremierową. Pakiet AUR zawiera tylko wersje stabilne. Aby ją wypróbować, użyj AppImage ze strony wydania."
+msgstr "HikariSub %s jest wersją przedpremierową. Pakiet AUR dostarcza tylko wersje stabilne. Aby ją wypróbować, użyj pliku AppImage ze strony wydania."
 
 #: HikariSub/UpdateChecker.cpp:354
 #, c-format
@@ -7253,7 +7253,7 @@ msgstr "Aktualizacja została odrzucona: instalator nie zgadza się ze swoim wyd
 #: HikariSub/UpdateInstaller.cpp:819
 #, c-format
 msgid "HikariSub %s could not be checked against its release on GitHub, so it was not installed. It is tried again at the next quit."
-msgstr "Nie można było sprawdzić HikariSub %s z jego wydaniem na GitHubie, więc nie został zainstalowany. Kolejna próba nastąpi przy następnym zamknięciu."
+msgstr "Nie można było sprawdzić zgodności HikariSub %s z jego wydaniem na GitHubie, więc nie został zainstalowany. Kolejna próba nastąpi przy następnym zamknięciu."
 
 #: HikariSub/UpdateInstaller.cpp:822 HikariSub/UpdateInstaller.cpp:1040
 msgid "The update could not be handed to the installer."
@@ -7266,7 +7266,7 @@ msgstr "Nie można było uruchomić instalatora HikariSub %s. Możesz uruchomić
 
 #: HikariSub/UpdateInstaller.cpp:842
 msgid "Checking the update..."
-msgstr "Sprawdzanie aktualizacji..."
+msgstr "Weryfikowanie aktualizacji..."
 
 #: HikariSub/UpdateInstaller.cpp:1020
 #, c-format
@@ -7276,7 +7276,7 @@ msgstr "HikariSub %s nie uruchomił się, więc przywrócono HikariSub %s."
 #: HikariSub/UpdateInstaller.cpp:1022
 #, c-format
 msgid "HikariSub %s did not start. The previous version is %s; rename it back to use it."
-msgstr "HikariSub %s nie uruchomił się. Poprzednia wersja to %s; przywróć jej nazwę, aby jej używać."
+msgstr "HikariSub %s nie uruchomił się. Poprzednia wersja to %s; przywróć jej pierwotną nazwę, aby z niej korzystać."
 
 #: HikariSub/UpdateInstaller.cpp:1033
 msgid "The update was refused: the package does not match its release."
@@ -7294,7 +7294,7 @@ msgstr "Menedżer pakietów był zajęty inną instalacją. Aktualizacja zostani
 #: HikariSub/UpdateInstaller.cpp:1042
 #, c-format
 msgid "The update could not be checked against its release on GitHub, so it was not installed. You can install it yourself: %s"
-msgstr "Nie można było sprawdzić aktualizacji z jej wydaniem na GitHubie, więc nie została zainstalowana. Możesz zainstalować ją samodzielnie: %s"
+msgstr "Nie można było sprawdzić zgodności aktualizacji z jej wydaniem na GitHubie, więc nie została zainstalowana. Możesz zainstalować ją samodzielnie: %s"
 
 #: HikariSub/UpdateInstaller.cpp:1045
 #, c-format
@@ -7333,7 +7333,7 @@ msgstr "HikariSub jest zainstalowany dla wszystkich użytkowników w folderze, k
 #: HikariSub/UpdateInstaller.cpp:1473 HikariSub/UpdateInstaller.cpp:1531
 #, c-format
 msgid "HikariSub %s could not replace the AppImage. The download is at %s."
-msgstr "HikariSub %s nie mógł zastąpić pliku AppImage. Pobrany plik znajduje się w %s."
+msgstr "HikariSub %s nie mógł zastąpić pliku AppImage. Pobrany plik: %s."
 
 #: HikariSub/UtilsWindows.cpp:63
 msgid "Unable to retrieve information about the monitor"
@@ -8335,7 +8335,7 @@ msgstr "Nazwa stylu została zmieniona, czy chcesz zmienić ją także w napisac
 #: HikariSub/stylestore.cpp:568
 #, c-format
 msgid "Do you really want to delete the catalog named \"%s\"?"
-msgstr "Naprawdę chcesz usunąć katalog o nazwie \"%s\"?"
+msgstr "Czy na pewno chcesz usunąć katalog stylów o nazwie \"%s\"?"
 
 #: HikariSub/stylestore.cpp:612
 msgid "Choose ASS file"
