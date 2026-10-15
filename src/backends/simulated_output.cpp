@@ -103,9 +103,20 @@ void SimulatedOutput::render() const
     const auto due = static_cast<std::int64_t>((now - m_startedAt) * format.sampleRate) + kBufferFrames;
     while (m_rendered < due) {
         const double stream = double(m_rendered) / format.sampleRate;
-        m_engine->render(m_buffer, {stream + kLatencySeconds, stream, m_startedAt + stream, false});
+        if (!m_engine->render(m_buffer, {stream + kLatencySeconds, stream, m_startedAt + stream, false})) {
+            // an aborted stream ends, as a host ends it when its device goes
+            m_engine->streamFinished();
+            m_running = false;
+            return;
+        }
         m_rendered += kBufferFrames;
     }
+}
+
+void SimulatedOutput::simulateDeviceLoss()
+{
+    if (m_engine)
+        m_engine->injectLoss();
 }
 
 } // namespace hikari::backends
