@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HikariSub\n"
 "Report-Msgid-Bugs-To: https://github.com/altqx/hikari/issues\n"
-"POT-Creation-Date: 2026-10-14 10:10+0700\n"
+"POT-Creation-Date: 2026-10-15 15:15+0700\n"
 "PO-Revision-Date: 2026-09-26 19:00+0700\n"
 "Last-Translator: altqx <al@altqx.com>\n"
 "Language-Team: Thai\n"
@@ -38,119 +38,119 @@ msgstr ""
 "X-Poedit-SearchPathExcluded-9: HikariSub.vcxproj.filters\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
-#: HikariSub/AudioBox.cpp:93
+#: HikariSub/AudioBox.cpp:94
 msgid "Search bar"
 msgstr "แถบค้นหา"
 
-#: HikariSub/AudioBox.cpp:107
+#: HikariSub/AudioBox.cpp:108
 msgid "Horizontal stretching"
 msgstr "ยืดในแนวนอน"
 
-#: HikariSub/AudioBox.cpp:113
+#: HikariSub/AudioBox.cpp:114
 msgid "Vertical stretching"
 msgstr "ยืดในแนวตั้ง"
 
-#: HikariSub/AudioBox.cpp:115
+#: HikariSub/AudioBox.cpp:116
 msgid "Volume"
 msgstr "ระดับเสียง"
 
-#: HikariSub/AudioBox.cpp:124
+#: HikariSub/AudioBox.cpp:125
 msgid "Link the volume and stretch sliders"
 msgstr "เชื่อมแถบเลื่อนระดับเสียงกับแถบเลื่อนการยืดเสียง"
 
-#: HikariSub/AudioBox.cpp:151
+#: HikariSub/AudioBox.cpp:152
 msgid "Play the previous line"
 msgstr "เล่นบรรทัดก่อนหน้า"
 
-#: HikariSub/AudioBox.cpp:155
+#: HikariSub/AudioBox.cpp:156
 msgid "Play the next line"
 msgstr "เล่นบรรทัดถัดไป"
 
-#: HikariSub/AudioBox.cpp:159
+#: HikariSub/AudioBox.cpp:160
 msgid "Play the current syllable / line"
 msgstr "เล่นพยางค์หรือบรรทัดปัจจุบัน"
 
-#: HikariSub/AudioBox.cpp:163 HikariSub/VideoBox.cpp:162
+#: HikariSub/AudioBox.cpp:164 HikariSub/VideoBox.cpp:163
 #: HikariSub/VideoFullscreen.cpp:62
 msgid "Play the current line"
 msgstr "เล่นบรรทัดปัจจุบัน"
 
-#: HikariSub/AudioBox.cpp:165
+#: HikariSub/AudioBox.cpp:166
 msgid "Stop playback"
 msgstr "หยุดเล่น"
 
-#: HikariSub/AudioBox.cpp:168
+#: HikariSub/AudioBox.cpp:169
 msgid "Play before the tag"
 msgstr "เล่นเสียงก่อนเครื่องหมาย"
 
-#: HikariSub/AudioBox.cpp:170
+#: HikariSub/AudioBox.cpp:171
 msgid "Play after the tag"
 msgstr "เล่นเสียงหลังเครื่องหมาย"
 
-#: HikariSub/AudioBox.cpp:173
+#: HikariSub/AudioBox.cpp:174
 msgid "Play 500ms before the start time"
 msgstr "เล่นเสียง 500 มิลลิวินาทีก่อนเวลาเริ่มต้น"
 
-#: HikariSub/AudioBox.cpp:175
+#: HikariSub/AudioBox.cpp:176
 msgid "Play 500 ms after the start time"
 msgstr "เล่นเสียง 500 มิลลิวินาทีหลังเวลาเริ่มต้น"
 
-#: HikariSub/AudioBox.cpp:177
+#: HikariSub/AudioBox.cpp:178
 msgid "Play 500ms before the end time"
 msgstr "เล่นเสียง 500 มิลลิวินาทีก่อนเวลาสิ้นสุด"
 
-#: HikariSub/AudioBox.cpp:179
+#: HikariSub/AudioBox.cpp:180
 msgid "Play 500ms after the end time"
 msgstr "เล่นเสียง 500 มิลลิวินาทีหลังเวลาสิ้นสุด"
 
-#: HikariSub/AudioBox.cpp:181 HikariSub/Hotkeys.cpp:221
+#: HikariSub/AudioBox.cpp:182 HikariSub/Hotkeys.cpp:221
 #: HikariSub/HotkeysNaming.cpp:67
 msgid "Play to the end"
 msgstr "เล่นจนจบ"
 
-#: HikariSub/AudioBox.cpp:184
+#: HikariSub/AudioBox.cpp:185
 msgid "Add lead-in to the active line"
 msgstr "เพิ่มช่วงนำก่อนบรรทัดปัจจุบัน"
 
-#: HikariSub/AudioBox.cpp:186
+#: HikariSub/AudioBox.cpp:187
 msgid "Add lead-out to the active line"
 msgstr "เพิ่มช่วงต่อท้ายบรรทัดปัจจุบัน"
 
-#: HikariSub/AudioBox.cpp:191 HikariSub/Hotkeys.cpp:197
+#: HikariSub/AudioBox.cpp:192 HikariSub/Hotkeys.cpp:197
 #: HikariSub/HotkeysNaming.cpp:77
 msgid "Apply changes"
 msgstr "นำการเปลี่ยนแปลงไปใช้"
 
-#: HikariSub/AudioBox.cpp:193 HikariSub/Hotkeys.cpp:212
+#: HikariSub/AudioBox.cpp:194 HikariSub/Hotkeys.cpp:212
 #: HikariSub/HotkeysNaming.cpp:58
 msgid "Go to selection"
 msgstr "ไปยังส่วนที่เลือก"
 
-#: HikariSub/AudioBox.cpp:196
+#: HikariSub/AudioBox.cpp:197
 msgid "Enable / disable karaoke creation"
 msgstr "เปิดหรือปิดการสร้างคาราโอเกะ"
 
-#: HikariSub/AudioBox.cpp:200
+#: HikariSub/AudioBox.cpp:201
 msgid "Enable / Disable automatic splitting of syllables"
 msgstr "เปิดหรือปิดการแบ่งพยางค์อัตโนมัติ"
 
-#: HikariSub/AudioBox.cpp:205
+#: HikariSub/AudioBox.cpp:206
 msgid "Automatically apply changes"
 msgstr "ใช้การเปลี่ยนแปลงโดยอัตโนมัติ"
 
-#: HikariSub/AudioBox.cpp:209
+#: HikariSub/AudioBox.cpp:210
 msgid "Go to the next line after applying changes"
 msgstr "ไปยังบรรทัดถัดไปหลังใช้การเปลี่ยนแปลง"
 
-#: HikariSub/AudioBox.cpp:213
+#: HikariSub/AudioBox.cpp:214
 msgid "Auto-scroll to the active line"
 msgstr "เลื่อนอัตโนมัติไปยังบรรทัดปัจจุบัน"
 
-#: HikariSub/AudioBox.cpp:217
+#: HikariSub/AudioBox.cpp:218
 msgid "Spectrum mode"
 msgstr "โหมดสเปกตรัม"
 
-#: HikariSub/AudioBox.cpp:221
+#: HikariSub/AudioBox.cpp:222
 msgid "Enhance speech frequencies in the spectrum"
 msgstr "เน้นย่านความถี่เสียงพูดในสเปกตรัม"
 
@@ -239,24 +239,24 @@ msgstr "แฟ้ม"
 msgid "Versions"
 msgstr "เวอร์ชัน"
 
-#: HikariSub/AutoSaveOpen.cpp:60 HikariSub/HikariSubFrame.cpp:1663
+#: HikariSub/AutoSaveOpen.cpp:60 HikariSub/HikariSubFrame.cpp:1664
 msgid "Open"
 msgstr "เปิด"
 
 #: HikariSub/AutoSaveOpen.cpp:61 HikariSub/AutomationHotkeysDialog.cpp:149
-#: HikariSub/AutomationProgress.cpp:319 HikariSub/ColorPicker.cpp:657
-#: HikariSub/ColorPicker.cpp:1422 HikariSub/DummyVideo.cpp:102
+#: HikariSub/AutomationProgress.cpp:319 HikariSub/ColorPicker.cpp:682
+#: HikariSub/ColorPicker.cpp:1447 HikariSub/DummyVideo.cpp:102
 #: HikariSub/EditBox.cpp:96 HikariSub/EditBox.cpp:1803
 #: HikariSub/FontCatalogList.cpp:71 HikariSub/FontCatalogList.cpp:874
 #: HikariSub/FontDialog.cpp:411 HikariSub/HikariMessageBox.cpp:80
 #: HikariSub/MappedButton.cpp:40 HikariSub/NewCatalog.cpp:42
-#: HikariSub/OptionsDialog.cpp:1066 HikariSub/ProgressDialog.cpp:44
-#: HikariSub/ScriptInfo.cpp:161 HikariSub/ShiftTimes.cpp:68
+#: HikariSub/OptionsDialog.cpp:1070 HikariSub/ProgressDialog.cpp:44
+#: HikariSub/ScriptInfo.cpp:161 HikariSub/ShiftTimes.cpp:69
 #: HikariSub/StyleChange.cpp:271 HikariSub/Stylelistbox.cpp:34
 #: HikariSub/Stylelistbox.cpp:58 HikariSub/Stylelistbox.cpp:112
-#: HikariSub/Stylelistbox.cpp:147 HikariSub/SubsFile.cpp:47
+#: HikariSub/Stylelistbox.cpp:147 HikariSub/SubsFile.cpp:48
 #: HikariSub/SubsGridDialogs.cpp:55 HikariSub/SubsGridDialogs.cpp:86
-#: HikariSub/SubsGridDialogs.cpp:123 HikariSub/SubsResampleDialog.cpp:158
+#: HikariSub/SubsGridDialogs.cpp:123 HikariSub/SubsResampleDialog.cpp:159
 #: HikariSub/VisualAllTagsEdition.cpp:128 HikariSub/VisualDrawingShapes.cpp:104
 msgid "Cancel"
 msgstr "ยกเลิก"
@@ -265,8 +265,8 @@ msgstr "ยกเลิก"
 msgid "Cannot open auto save folder"
 msgstr "ไม่สามารถเปิดโฟลเดอร์บันทึกอัตโนมัติได้"
 
-#: HikariSub/AutoSaveOpen.cpp:163 HikariSub/HikariSubFrame.cpp:712
-#: HikariSub/ProviderFFMS2.cpp:267 HikariSub/TabPanel.cpp:88
+#: HikariSub/AutoSaveOpen.cpp:163 HikariSub/HikariSubFrame.cpp:713
+#: HikariSub/ProviderFFMS2.cpp:270 HikariSub/TabPanel.cpp:88
 #: HikariSub/VisualDrawingShapes.cpp:211 HikariSub/VisualDrawingShapes.cpp:275
 msgid "Untitled"
 msgstr "ไม่มีชื่อ"
@@ -279,7 +279,7 @@ msgstr "โฟลเดอร์บันทึกอัตโนมัติว
 msgid "Failed to load autosave"
 msgstr "โหลดบันทึกอัตโนมัติไม่สำเร็จ"
 
-#: HikariSub/AutoSavesRemoving.cpp:29 HikariSub/HikariSubFrame.cpp:201
+#: HikariSub/AutoSavesRemoving.cpp:29 HikariSub/HikariSubFrame.cpp:202
 msgid "Remove temporary files"
 msgstr "ลบแฟ้มชั่วคราว"
 
@@ -415,7 +415,7 @@ msgstr "เลือกแฟ้มที่จะลบ"
 msgid "Cannot open temporary files folder"
 msgstr "ไม่สามารถเปิดโฟลเดอร์แฟ้มชั่วคราวได้"
 
-#: HikariSub/Automation.cpp:646
+#: HikariSub/Automation.cpp:650
 #, c-format
 msgid ""
 "Error initializing Lua script \"%s\":\n"
@@ -426,21 +426,21 @@ msgstr ""
 "\n"
 "%s."
 
-#: HikariSub/Automation.cpp:658
+#: HikariSub/Automation.cpp:662
 msgid "You are trying to load an Automation 3 script as an Automation 4 script. Automation 3 is no longer supported."
 msgstr "คุณกำลังพยายามโหลดสคริปต์ Automation 3 ในฐานะสคริปต์ Automation 4 ซึ่งไม่รองรับ Automation 3 แล้ว"
 
-#: HikariSub/Automation.cpp:701
+#: HikariSub/Automation.cpp:705
 #, c-format
 msgid "Macro named '%s' is already defined in the script '%s'"
 msgstr "มาโครชื่อ '%s' ได้ถูกกำหนดไว้แล้วในสคริปต์ '%s'"
 
-#: HikariSub/Automation.cpp:818
+#: HikariSub/Automation.cpp:822
 msgid "An error occurred while executing the Lua script:\n"
 msgstr "เกิดข้อผิดพลาดขณะเรียกใช้สคริปต์ Lua:\n"
 
-#: HikariSub/Automation.cpp:1249 HikariSub/Automation.cpp:1289
-#: HikariSub/HikariSubFrame.cpp:933 HikariSub/HikariSubFrame.cpp:2768
+#: HikariSub/Automation.cpp:1253 HikariSub/Automation.cpp:1293
+#: HikariSub/HikariSubFrame.cpp:934 HikariSub/HikariSubFrame.cpp:2769
 #, c-format
 msgid ""
 "Error loading Lua script: %s\n"
@@ -449,12 +449,12 @@ msgstr ""
 "เกิดข้อผิดพลาดในการโหลดสคริปต์ Lua: %s\n"
 "%s"
 
-#: HikariSub/Automation.cpp:1253 HikariSub/Automation.cpp:1293
+#: HikariSub/Automation.cpp:1257 HikariSub/Automation.cpp:1297
 #, c-format
 msgid "Unknown error loading Lua script: %s."
 msgstr "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุขณะโหลดสคริปต์ Lua: %s."
 
-#: HikariSub/Automation.cpp:1258
+#: HikariSub/Automation.cpp:1262
 msgid ""
 "One or more autoload scripts contain errors.\n"
 "See the script descriptions for more information."
@@ -462,7 +462,7 @@ msgstr ""
 "สคริปต์อัตโนมัติอย่างน้อยหนึ่งรายการมีข้อผิดพลาด\n"
 "ดูคำอธิบายของสคริปต์สำหรับข้อมูลเพิ่มเติม"
 
-#: HikariSub/Automation.cpp:1297
+#: HikariSub/Automation.cpp:1301
 msgid ""
 "At least one script in the subtitle file contains errors.\n"
 "See the script descriptions for more information."
@@ -470,28 +470,28 @@ msgstr ""
 "สคริปต์อัตโนมัติอย่างน้อยหนึ่งรายการจากแฟ้มคำบรรยายเกิดข้อผิดพลาด\n"
 "ดูคำอธิบายของสคริปต์สำหรับข้อมูลเพิ่มเติม"
 
-#: HikariSub/Automation.cpp:1307
+#: HikariSub/Automation.cpp:1311
 msgid "Select a script editor"
 msgstr "เลือกตัวแก้ไขสคริปต์"
 
-#: HikariSub/Automation.cpp:1308
+#: HikariSub/Automation.cpp:1312
 msgid "Programs (*.exe)|*.exe|All files (*.*)|*.*"
 msgstr "โปรแกรม (*.exe)|*.exe|แฟ้มทั้งหมด (*.*)|*.*"
 
-#: HikariSub/Automation.cpp:1320
+#: HikariSub/Automation.cpp:1324
 msgid "Automation error"
 msgstr "ข้อผิดพลาดของ Automation"
 
-#: HikariSub/Automation.cpp:1320
+#: HikariSub/Automation.cpp:1324
 msgid "Cannot start editor."
 msgstr "ไม่สามารถเรียกใช้ตัวแก้ไขได้"
 
-#: HikariSub/Automation.cpp:1396 HikariSub/Automation.cpp:1443
-#: HikariSub/HikariSubFrame.cpp:929 HikariSub/HikariSubFrame.cpp:933
-#: HikariSub/HikariSubFrame.cpp:2276 HikariSub/HikariSubFrame.cpp:2277
-#: HikariSub/HikariSubFrame.cpp:2738 HikariSub/HikariSubFrame.cpp:2764
-#: HikariSub/HikariSubFrame.cpp:2768 HikariSub/OptionsDialog.cpp:311
-#: HikariSub/OptionsDialog.cpp:708 HikariSub/VideoBox.cpp:1791
+#: HikariSub/Automation.cpp:1400 HikariSub/Automation.cpp:1447
+#: HikariSub/HikariSubFrame.cpp:930 HikariSub/HikariSubFrame.cpp:934
+#: HikariSub/HikariSubFrame.cpp:2277 HikariSub/HikariSubFrame.cpp:2278
+#: HikariSub/HikariSubFrame.cpp:2739 HikariSub/HikariSubFrame.cpp:2765
+#: HikariSub/HikariSubFrame.cpp:2769 HikariSub/OptionsDialog.cpp:311
+#: HikariSub/OptionsDialog.cpp:712 HikariSub/VideoBox.cpp:1820
 #: HikariSub/VisualAllTagsEdition.cpp:168
 #: HikariSub/VisualAllTagsEdition.cpp:172
 #: HikariSub/VisualAllTagsEdition.cpp:190
@@ -504,11 +504,11 @@ msgstr "ไม่สามารถเรียกใช้ตัวแก้ไ
 msgid "Error"
 msgstr "ข้อผิดพลาด"
 
-#: HikariSub/Automation.cpp:1398 HikariSub/Automation.cpp:1445
+#: HikariSub/Automation.cpp:1402 HikariSub/Automation.cpp:1449
 msgid "Full Lua error description"
 msgstr "รายละเอียดข้อผิดพลาดของ Lua"
 
-#: HikariSub/Automation.cpp:1403 HikariSub/Automation.cpp:1450
+#: HikariSub/Automation.cpp:1407 HikariSub/Automation.cpp:1454
 #: HikariSub/EditBox.cpp:281 HikariSub/FontCatalogList.cpp:109
 #: HikariSub/VideoToolbar.cpp:510 HikariSub/VideoToolbar.cpp:528
 #: HikariSub/VideoToolbar.cpp:783 HikariSub/stylestore.cpp:89
@@ -516,7 +516,7 @@ msgstr "รายละเอียดข้อผิดพลาดของ Lu
 msgid "Edit"
 msgstr "แก้ไข"
 
-#: HikariSub/Automation.cpp:1408 HikariSub/Automation.cpp:1455
+#: HikariSub/Automation.cpp:1412 HikariSub/Automation.cpp:1459
 msgid "Refresh"
 msgstr "รีเฟรช"
 
@@ -532,7 +532,7 @@ msgstr "ตำแหน่งและชื่อสคริปต์"
 msgid "Macro"
 msgstr "มาโคร"
 
-#: HikariSub/AutomationHotkeysDialog.cpp:75 HikariSub/OptionsDialog.cpp:703
+#: HikariSub/AutomationHotkeysDialog.cpp:75 HikariSub/OptionsDialog.cpp:707
 msgid "Hotkey"
 msgstr "ปุ่มลัด"
 
@@ -544,7 +544,7 @@ msgstr "โฟลเดอร์โหลดอัตโนมัติ"
 msgid "From subs"
 msgstr "จากคำบรรยาย"
 
-#: HikariSub/AutomationHotkeysDialog.cpp:145 HikariSub/OptionsDialog.cpp:715
+#: HikariSub/AutomationHotkeysDialog.cpp:145 HikariSub/OptionsDialog.cpp:719
 msgid "Map hotkey"
 msgstr "กำหนดปุ่มลัด"
 
@@ -552,22 +552,22 @@ msgstr "กำหนดปุ่มลัด"
 #: HikariSub/AutomationHotkeysDialog.cpp:243
 #: HikariSub/AutomationHotkeysDialog.cpp:253 HikariSub/Hotkeys.cpp:487
 #: HikariSub/Hotkeys.cpp:498 HikariSub/OptionsDialog.cpp:122
-#: HikariSub/OptionsDialog.cpp:132 HikariSub/OptionsDialog.cpp:719
+#: HikariSub/OptionsDialog.cpp:132 HikariSub/OptionsDialog.cpp:723
 msgid "Delete hotkey"
 msgstr "ลบปุ่มลัด"
 
 #: HikariSub/AutomationHotkeysDialog.cpp:215 HikariSub/Hotkeys.cpp:460
-#: HikariSub/OptionsDialog.cpp:283 HikariSub/OptionsDialog.cpp:1051
+#: HikariSub/OptionsDialog.cpp:283 HikariSub/OptionsDialog.cpp:1055
 msgid "Audio"
 msgstr "เสียง"
 
 #: HikariSub/AutomationHotkeysDialog.cpp:215 HikariSub/Hotkeys.cpp:460
-#: HikariSub/OptionsDialog.cpp:283 HikariSub/OptionsDialog.cpp:1046
+#: HikariSub/OptionsDialog.cpp:283 HikariSub/OptionsDialog.cpp:1050
 msgid "Editor"
 msgstr "ตัวแก้ไข"
 
 #: HikariSub/AutomationHotkeysDialog.cpp:215 HikariSub/Hotkeys.cpp:460
-#: HikariSub/OptionsDialog.cpp:283 HikariSub/OptionsDialog.cpp:695
+#: HikariSub/OptionsDialog.cpp:283 HikariSub/OptionsDialog.cpp:699
 msgid "Global"
 msgstr "ส่วนกลาง"
 
@@ -577,7 +577,7 @@ msgid "Subtitles"
 msgstr "คำบรรยาย"
 
 #: HikariSub/AutomationHotkeysDialog.cpp:215 HikariSub/Hotkeys.cpp:460
-#: HikariSub/OptionsDialog.cpp:283 HikariSub/OptionsDialog.cpp:1050
+#: HikariSub/OptionsDialog.cpp:283 HikariSub/OptionsDialog.cpp:1054
 msgid "Video"
 msgstr "วิดีโอ"
 
@@ -592,15 +592,15 @@ msgstr ""
 "ต้องการทำอย่างไร?"
 
 #: HikariSub/AutomationHotkeysDialog.cpp:241
-#: HikariSub/AutomationHotkeysDialog.cpp:250 HikariSub/HikariSubFrame.cpp:1314
-#: HikariSub/HikariSubFrame.cpp:1328 HikariSub/HikariSubFrame.cpp:1505
-#: HikariSub/HikariSubFrame.cpp:2641 HikariSub/Hotkeys.cpp:485
+#: HikariSub/AutomationHotkeysDialog.cpp:250 HikariSub/HikariSubFrame.cpp:1315
+#: HikariSub/HikariSubFrame.cpp:1329 HikariSub/HikariSubFrame.cpp:1506
+#: HikariSub/HikariSubFrame.cpp:2642 HikariSub/Hotkeys.cpp:485
 #: HikariSub/Hotkeys.cpp:495 HikariSub/Notebook.cpp:1244
 #: HikariSub/Notebook.cpp:1651 HikariSub/Notebook.cpp:1655
 #: HikariSub/OptionsDialog.cpp:120 HikariSub/OptionsDialog.cpp:129
-#: HikariSub/OptionsDialog.cpp:553 HikariSub/SpellCheckerDialog.cpp:148
-#: HikariSub/SubsGrid.cpp:1257 HikariSub/SubsGridBase.cpp:538
-#: HikariSub/SubsGridBase.cpp:567 HikariSub/VideoBox.cpp:346
+#: HikariSub/OptionsDialog.cpp:557 HikariSub/SpellCheckerDialog.cpp:148
+#: HikariSub/SubsGrid.cpp:1180 HikariSub/SubsGridBase.cpp:540
+#: HikariSub/SubsGridBase.cpp:569 HikariSub/VideoBox.cpp:347
 #: HikariSub/VisualClips.cpp:1021 HikariSub/hikarisubApp.cpp:536
 #: HikariSub/hikarisubApp.cpp:606
 msgid "Warning"
@@ -638,12 +638,12 @@ msgstr "หน้าต่างอื่น"
 msgid "Set anyway"
 msgstr "กำหนดต่อไป"
 
-#: HikariSub/AutomationProgress.cpp:471 HikariSub/FindReplaceDialog.cpp:221
+#: HikariSub/AutomationProgress.cpp:471 HikariSub/FindReplaceDialog.cpp:222
 #: HikariSub/FontCollector.cpp:197 HikariSub/LogHandler.cpp:50
 #: HikariSub/Notebook.cpp:719 HikariSub/SelectLines.cpp:142
 #: HikariSub/SelectLines.cpp:237 HikariSub/SelectLines.cpp:279
 #: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:175
-#: HikariSub/UpdateChecker.cpp:252 HikariSub/UpdateChecker.cpp:359
+#: HikariSub/UpdateChecker.cpp:252 HikariSub/UpdateChecker.cpp:361
 #: HikariSub/UpdateInstaller.cpp:280 HikariSub/stylestore.cpp:172
 msgid "Close"
 msgstr "ปิด"
@@ -669,54 +669,54 @@ msgstr "ไม่มีตัวชี้คำบรรยาย"
 msgid "Shortcut can be set using Shift + Click"
 msgstr "กด Shift พร้อมคลิกเพื่อกำหนดปุ่มลัด"
 
-#: HikariSub/ColorPicker.cpp:456
+#: HikariSub/ColorPicker.cpp:481
 msgid "Picking a color from the screen is not supported on Wayland"
 msgstr "ไม่รองรับการเลือกสีจากหน้าจอบน Wayland"
 
-#: HikariSub/ColorPicker.cpp:487
+#: HikariSub/ColorPicker.cpp:512
 msgid "Choose color"
 msgstr "เลือกสี"
 
-#: HikariSub/ColorPicker.cpp:519
+#: HikariSub/ColorPicker.cpp:544
 msgid "Spectrum color"
 msgstr "สีสเปกตรัม"
 
-#: HikariSub/ColorPicker.cpp:529
+#: HikariSub/ColorPicker.cpp:554
 msgid "RGB color"
 msgstr "สี RGB"
 
-#: HikariSub/ColorPicker.cpp:534
+#: HikariSub/ColorPicker.cpp:559
 msgid "HSL color"
 msgstr "สี HSL"
 
-#: HikariSub/ColorPicker.cpp:539
+#: HikariSub/ColorPicker.cpp:564
 msgid "HSV color"
 msgstr "สี HSV"
 
-#: HikariSub/ColorPicker.cpp:559 HikariSub/ColorPicker.cpp:1391
+#: HikariSub/ColorPicker.cpp:584 HikariSub/ColorPicker.cpp:1416
 #: HikariSub/EditBox.cpp:190 HikariSub/HotkeysNaming.cpp:70
 #: HikariSub/StyleChange.cpp:703 HikariSub/TextEditorTagList.cpp:346
 msgid "Border color"
 msgstr "สีเส้นขอบ"
 
-#: HikariSub/ColorPicker.cpp:559 HikariSub/ColorPicker.cpp:1391
+#: HikariSub/ColorPicker.cpp:584 HikariSub/ColorPicker.cpp:1416
 #: HikariSub/EditBox.cpp:182 HikariSub/HotkeysNaming.cpp:71
 #: HikariSub/StyleChange.cpp:701 HikariSub/TextEditorTagList.cpp:344
 msgid "Primary color"
 msgstr "สีหลัก"
 
-#: HikariSub/ColorPicker.cpp:559 HikariSub/ColorPicker.cpp:1391
+#: HikariSub/ColorPicker.cpp:584 HikariSub/ColorPicker.cpp:1416
 #: HikariSub/TextEditorTagList.cpp:345
 msgid "Secondary color"
 msgstr "สีรอง"
 
-#: HikariSub/ColorPicker.cpp:559 HikariSub/ColorPicker.cpp:1391
+#: HikariSub/ColorPicker.cpp:584 HikariSub/ColorPicker.cpp:1416
 #: HikariSub/EditBox.cpp:194 HikariSub/HotkeysNaming.cpp:73
 #: HikariSub/StyleChange.cpp:704 HikariSub/TextEditorTagList.cpp:347
 msgid "Shadow color"
 msgstr "สีเงา"
 
-#: HikariSub/ColorPicker.cpp:575
+#: HikariSub/ColorPicker.cpp:600
 msgid ""
 "Swap shortcuts between the color picker\n"
 "and the color selection window"
@@ -724,7 +724,7 @@ msgstr ""
 "สลับปุ่มลัดระหว่างตัวเลือกสี\n"
 "กับหน้าต่างเลือกสี"
 
-#: HikariSub/ColorPicker.cpp:577
+#: HikariSub/ColorPicker.cpp:602
 msgid ""
 "Checking this option opens the color picker on left-click,\n"
 "and the color selection window on right-click."
@@ -732,43 +732,43 @@ msgstr ""
 "เมื่อเลือกตัวเลือกนี้ คลิกซ้ายจะเปิดตัวเลือกสี\n"
 "และคลิกขวาจะเปิดหน้าต่างเลือกสี"
 
-#: HikariSub/ColorPicker.cpp:587
+#: HikariSub/ColorPicker.cpp:612
 msgid "Selected color:"
 msgstr "สีที่เลือก:"
 
-#: HikariSub/ColorPicker.cpp:599
+#: HikariSub/ColorPicker.cpp:624
 msgid "Red:"
 msgstr "แดง:"
 
-#: HikariSub/ColorPicker.cpp:601
+#: HikariSub/ColorPicker.cpp:626
 msgid "Green:"
 msgstr "เขียว:"
 
-#: HikariSub/ColorPicker.cpp:603
+#: HikariSub/ColorPicker.cpp:628
 msgid "Blue:"
 msgstr "น้ำเงิน:"
 
-#: HikariSub/ColorPicker.cpp:620 HikariSub/ColorPicker.cpp:630
+#: HikariSub/ColorPicker.cpp:645 HikariSub/ColorPicker.cpp:655
 msgid "Hue:"
 msgstr "เฉดสี:"
 
-#: HikariSub/ColorPicker.cpp:622 HikariSub/ColorPicker.cpp:632
+#: HikariSub/ColorPicker.cpp:647 HikariSub/ColorPicker.cpp:657
 msgid "Saturation:"
 msgstr "ความอิ่มตัว:"
 
-#: HikariSub/ColorPicker.cpp:624
+#: HikariSub/ColorPicker.cpp:649
 msgid "Lightness:"
 msgstr "ความสว่าง:"
 
-#: HikariSub/ColorPicker.cpp:634 HikariSub/VisualAllTagsEdition.cpp:70
+#: HikariSub/ColorPicker.cpp:659 HikariSub/VisualAllTagsEdition.cpp:70
 msgid "Value:"
 msgstr "ค่า:"
 
-#: HikariSub/ColorPicker.cpp:1387
+#: HikariSub/ColorPicker.cpp:1412
 msgid "Color picker"
 msgstr "ตัวเลือกสี"
 
-#: HikariSub/ColorPicker.cpp:1418
+#: HikariSub/ColorPicker.cpp:1443
 msgid ""
 "Move the window\n"
 "to the color selection location"
@@ -776,8 +776,8 @@ msgstr ""
 "ย้ายหน้าต่าง\n"
 "ไปยังตำแหน่งที่เลือกสี"
 
-#: HikariSub/Demux.cpp:46 HikariSub/ProviderFFMS2.cpp:194
-#: HikariSub/ProviderFFMS2.cpp:347
+#: HikariSub/Demux.cpp:46 HikariSub/ProviderFFMS2.cpp:197
+#: HikariSub/ProviderFFMS2.cpp:350
 #, c-format
 msgid "Indexing error occurred: %s"
 msgstr "เกิดข้อผิดพลาดขณะสร้างดัชนี: %s"
@@ -1003,11 +1003,11 @@ msgstr "การแบ่งบรรทัด: 0/86"
 msgid "Characters per second: 0<=15"
 msgstr "อักขระต่อวินาที: 0<=15"
 
-#: HikariSub/EditBox.cpp:223 HikariSub/ShiftTimes.cpp:310
+#: HikariSub/EditBox.cpp:223 HikariSub/ShiftTimes.cpp:309
 msgid "Time"
 msgstr "เวลา"
 
-#: HikariSub/EditBox.cpp:226 HikariSub/ShiftTimes.cpp:316
+#: HikariSub/EditBox.cpp:226 HikariSub/ShiftTimes.cpp:315
 msgid "Frames"
 msgstr "เฟรม"
 
@@ -1035,17 +1035,17 @@ msgstr "ย้ายแท็ก"
 msgid "Comment"
 msgstr "ความคิดเห็น"
 
-#: HikariSub/EditBox.cpp:285 HikariSub/FindReplaceDialog.cpp:136
-#: HikariSub/HikariSubFrame.cpp:236 HikariSub/SelectLines.cpp:76
-#: HikariSub/SubsGrid.cpp:550 HikariSub/SubsGrid.cpp:719
+#: HikariSub/EditBox.cpp:285 HikariSub/FindReplaceDialog.cpp:137
+#: HikariSub/GridColumnChoices.h:45 HikariSub/GridColumnChoices.h:82
+#: HikariSub/HikariSubFrame.cpp:237 HikariSub/SelectLines.cpp:76
 #: HikariSub/SubsGridWindow.cpp:321 HikariSub/SubsGridWindow.cpp:709
 #: HikariSub/SubsGridWindow.cpp:1158 HikariSub/SubsGridWindow.cpp:1327
 msgid "Actor"
 msgstr "ผู้พูด"
 
-#: HikariSub/EditBox.cpp:291 HikariSub/FindReplaceDialog.cpp:139
-#: HikariSub/HikariSubFrame.cpp:237 HikariSub/SelectLines.cpp:77
-#: HikariSub/SubsGrid.cpp:555 HikariSub/SubsGrid.cpp:724
+#: HikariSub/EditBox.cpp:291 HikariSub/FindReplaceDialog.cpp:140
+#: HikariSub/GridColumnChoices.h:50 HikariSub/GridColumnChoices.h:87
+#: HikariSub/HikariSubFrame.cpp:238 HikariSub/SelectLines.cpp:77
 #: HikariSub/SubsGridWindow.cpp:325 HikariSub/SubsGridWindow.cpp:713
 #: HikariSub/SubsGridWindow.cpp:1171 HikariSub/SubsGridWindow.cpp:1340
 msgid "Effect"
@@ -1182,17 +1182,17 @@ msgstr "คำบรรยาย SUB"
 msgid "TXT subtitles"
 msgstr "คำบรรยาย TXT"
 
-#: HikariSub/FindReplaceDialog.cpp:45 HikariSub/FindReplaceDialog.cpp:48
+#: HikariSub/FindReplaceDialog.cpp:46 HikariSub/FindReplaceDialog.cpp:49
 #: HikariSub/SelectLines.cpp:55
 msgid "Search text:"
 msgstr "ค้นหาข้อความ:"
 
-#: HikariSub/FindReplaceDialog.cpp:57 HikariSub/FindReplaceDialog.cpp:60
+#: HikariSub/FindReplaceDialog.cpp:58 HikariSub/FindReplaceDialog.cpp:61
 #: HikariSub/FontCatalogList.cpp:67
 msgid "Replace with:"
 msgstr "แทนที่ด้วย:"
 
-#: HikariSub/FindReplaceDialog.cpp:69
+#: HikariSub/FindReplaceDialog.cpp:70
 msgid ""
 "Windows search filters separated by semicolons, e.g. \"*.ass; *.srt\".\n"
 "Because of the large video file,\n"
@@ -1202,78 +1202,78 @@ msgstr ""
 "เนื่องจากแฟ้มวิดีโอมีขนาดใหญ่\n"
 "การค้นหาทุกอย่างด้วย \"*.*\" จะถูกเปลี่ยนเป็น *.ass"
 
-#: HikariSub/FindReplaceDialog.cpp:72
+#: HikariSub/FindReplaceDialog.cpp:73
 msgid "Filters:"
 msgstr "ตัวกรอง:"
 
-#: HikariSub/FindReplaceDialog.cpp:80
+#: HikariSub/FindReplaceDialog.cpp:81
 msgid "Subtitle search folder:"
 msgstr "โฟลเดอร์สำหรับค้นหาคำบรรยาย:"
 
-#: HikariSub/FindReplaceDialog.cpp:85 HikariSub/FontCollector.cpp:425
+#: HikariSub/FindReplaceDialog.cpp:86 HikariSub/FontCollector.cpp:425
 msgid "Choose save folder"
 msgstr "เลือกโฟลเดอร์บันทึก"
 
-#: HikariSub/FindReplaceDialog.cpp:89 HikariSub/stylestore.cpp:68
+#: HikariSub/FindReplaceDialog.cpp:90 HikariSub/stylestore.cpp:68
 msgid "Catalog:"
 msgstr "แคตตาล็อก:"
 
-#: HikariSub/FindReplaceDialog.cpp:99 HikariSub/MisspellReplacer.cpp:50
+#: HikariSub/FindReplaceDialog.cpp:100 HikariSub/MisspellReplacer.cpp:50
 #: HikariSub/SelectLines.cpp:61
 msgid "Match case"
 msgstr "ตรงตามตัวพิมพ์ใหญ่-เล็ก"
 
-#: HikariSub/FindReplaceDialog.cpp:101 HikariSub/SelectLines.cpp:63
+#: HikariSub/FindReplaceDialog.cpp:102 HikariSub/SelectLines.cpp:63
 msgid "Regular expressions"
 msgstr "นิพจน์ทั่วไป"
 
-#: HikariSub/FindReplaceDialog.cpp:103
+#: HikariSub/FindReplaceDialog.cpp:104
 msgid "Beginning of text"
 msgstr "จุดเริ่มของข้อความ"
 
-#: HikariSub/FindReplaceDialog.cpp:105
+#: HikariSub/FindReplaceDialog.cpp:106
 msgid "End of text"
 msgstr "จุดสิ้นสุดของข้อความ"
 
-#: HikariSub/FindReplaceDialog.cpp:111
+#: HikariSub/FindReplaceDialog.cpp:112
 msgid "Include comments"
 msgstr "รวมความคิดเห็น"
 
-#: HikariSub/FindReplaceDialog.cpp:113
+#: HikariSub/FindReplaceDialog.cpp:114
 msgid "Skip tags"
 msgstr "ข้ามแท็ก"
 
-#: HikariSub/FindReplaceDialog.cpp:115
+#: HikariSub/FindReplaceDialog.cpp:116
 msgid "Skip text"
 msgstr "ข้ามข้อความ"
 
-#: HikariSub/FindReplaceDialog.cpp:122 HikariSub/SelectLines.cpp:71
+#: HikariSub/FindReplaceDialog.cpp:123 HikariSub/SelectLines.cpp:71
 msgid "In field"
 msgstr "ในช่อง"
 
-#: HikariSub/FindReplaceDialog.cpp:125 HikariSub/SelectLines.cpp:74
-#: HikariSub/SubsGrid.cpp:561 HikariSub/SubsGrid.cpp:580
-#: HikariSub/SubsGrid.cpp:587 HikariSub/SubsGrid.cpp:725
-#: HikariSub/SubsGrid.cpp:741 HikariSub/SubsGrid.cpp:750
+#: HikariSub/FindReplaceDialog.cpp:126 HikariSub/GridColumnChoices.h:57
+#: HikariSub/GridColumnChoices.h:64 HikariSub/GridColumnChoices.h:70
+#: HikariSub/GridColumnChoices.h:88 HikariSub/GridColumnChoices.h:95
+#: HikariSub/GridColumnChoices.h:101 HikariSub/SelectLines.cpp:74
 #: HikariSub/SubsGridWindow.cpp:329 HikariSub/SubsGridWindow.cpp:719
 msgid "Text"
 msgstr "ข้อความ"
 
-#: HikariSub/FindReplaceDialog.cpp:130 HikariSub/HikariSubFrame.cpp:235
-#: HikariSub/SelectLines.cpp:75 HikariSub/SubsGrid.cpp:551
-#: HikariSub/SubsGrid.cpp:720 HikariSub/SubsGridWindow.cpp:320
+#: HikariSub/FindReplaceDialog.cpp:131 HikariSub/GridColumnChoices.h:46
+#: HikariSub/GridColumnChoices.h:83 HikariSub/HikariSubFrame.cpp:236
+#: HikariSub/SelectLines.cpp:75 HikariSub/SubsGridWindow.cpp:320
 #: HikariSub/SubsGridWindow.cpp:708 HikariSub/SubsGridWindow.cpp:1152
 #: HikariSub/SubsGridWindow.cpp:1321
 msgid "Styles"
 msgstr "สไตล์"
 
-#: HikariSub/FindReplaceDialog.cpp:161 HikariSub/FindReplaceDialog.cpp:413
-#: HikariSub/FindReplaceDialog.cpp:427 HikariSub/Hotkeys.cpp:148
+#: HikariSub/FindReplaceDialog.cpp:162 HikariSub/FindReplaceDialog.cpp:414
+#: HikariSub/FindReplaceDialog.cpp:428 HikariSub/Hotkeys.cpp:148
 #: HikariSub/HotkeysNaming.cpp:239 HikariSub/SelectLines.cpp:52
 msgid "Find"
 msgstr "ค้นหา"
 
-#: HikariSub/FindReplaceDialog.cpp:169
+#: HikariSub/FindReplaceDialog.cpp:170
 msgid ""
 "Find in all open\n"
 "subtitles"
@@ -1281,7 +1281,7 @@ msgstr ""
 "ค้นหาในคำบรรยาย\n"
 "ที่เปิดอยู่ทั้งหมด"
 
-#: HikariSub/FindReplaceDialog.cpp:171
+#: HikariSub/FindReplaceDialog.cpp:172
 msgid ""
 "Find all\n"
 "in current subtitles"
@@ -1289,16 +1289,16 @@ msgstr ""
 "ค้นหาทั้งหมด\n"
 "ในคำบรรยายปัจจุบัน"
 
-#: HikariSub/FindReplaceDialog.cpp:185
+#: HikariSub/FindReplaceDialog.cpp:186
 msgid "Replace next"
 msgstr "แทนที่ถัดไป"
 
-#: HikariSub/FindReplaceDialog.cpp:186 HikariSub/SpellCheckerDialog.cpp:57
-#: HikariSub/SubsFile.cpp:244
+#: HikariSub/FindReplaceDialog.cpp:187 HikariSub/SpellCheckerDialog.cpp:57
+#: HikariSub/SubsFile.cpp:270
 msgid "Replace all"
 msgstr "แทนที่ทั้งหมด"
 
-#: HikariSub/FindReplaceDialog.cpp:188
+#: HikariSub/FindReplaceDialog.cpp:189
 msgid ""
 "Replace in all open\n"
 "subtitles"
@@ -1306,20 +1306,20 @@ msgstr ""
 "แทนที่ในคำบรรยาย\n"
 "ที่เปิดอยู่ทั้งหมด"
 
-#: HikariSub/FindReplaceDialog.cpp:206 HikariSub/FindReplaceDialog.cpp:414
-#: HikariSub/FindReplaceDialog.cpp:429
+#: HikariSub/FindReplaceDialog.cpp:207 HikariSub/FindReplaceDialog.cpp:415
+#: HikariSub/FindReplaceDialog.cpp:430
 msgid "Find in subtitles"
 msgstr "ค้นหาในคำบรรยาย"
 
-#: HikariSub/FindReplaceDialog.cpp:208
+#: HikariSub/FindReplaceDialog.cpp:209
 msgid "Replace in subtitles"
 msgstr "แทนที่ในคำบรรยาย"
 
-#: HikariSub/FindReplaceDialog.cpp:226
+#: HikariSub/FindReplaceDialog.cpp:227
 msgid "Search in subfolders"
 msgstr "ค้นหาในโฟลเดอร์ย่อย"
 
-#: HikariSub/FindReplaceDialog.cpp:228
+#: HikariSub/FindReplaceDialog.cpp:229
 msgid ""
 "Search in hidden\n"
 "folders"
@@ -1327,25 +1327,25 @@ msgstr ""
 "ค้นหาในโฟลเดอร์\n"
 "ที่ซ่อนไว้"
 
-#: HikariSub/FindReplaceDialog.cpp:244
+#: HikariSub/FindReplaceDialog.cpp:245
 msgid "Lines"
 msgstr "บรรทัด"
 
-#: HikariSub/FindReplaceDialog.cpp:246 HikariSub/MisspellReplacer.cpp:104
-#: HikariSub/ShiftTimes.cpp:268
+#: HikariSub/FindReplaceDialog.cpp:247 HikariSub/MisspellReplacer.cpp:104
+#: HikariSub/ShiftTimes.cpp:267
 msgid "All lines"
 msgstr "บรรทัดทั้งหมด"
 
-#: HikariSub/FindReplaceDialog.cpp:249 HikariSub/MisspellReplacer.cpp:104
-#: HikariSub/ShiftTimes.cpp:269
+#: HikariSub/FindReplaceDialog.cpp:250 HikariSub/MisspellReplacer.cpp:104
+#: HikariSub/ShiftTimes.cpp:268
 msgid "Selected lines"
 msgstr "บรรทัดที่เลือก"
 
-#: HikariSub/FindReplaceDialog.cpp:252
+#: HikariSub/FindReplaceDialog.cpp:253
 msgid "From selected"
 msgstr "เริ่มจากบรรทัดที่เลือก"
 
-#: HikariSub/FindReplaceDialog.cpp:414 HikariSub/FindReplaceDialog.cpp:428
+#: HikariSub/FindReplaceDialog.cpp:415 HikariSub/FindReplaceDialog.cpp:429
 #: HikariSub/Hotkeys.cpp:149 HikariSub/HotkeysNaming.cpp:176
 msgid "Find and replace"
 msgstr "ค้นหาและแทนที่"
@@ -1367,7 +1367,7 @@ msgstr "ยกเลิกการเลือกทั้งหมด"
 
 #: HikariSub/FindReplaceResultsDialog.cpp:49
 #: HikariSub/MispellReplacerDialog.cpp:215 HikariSub/SpellCheckerDialog.cpp:56
-#: HikariSub/SubsFile.cpp:243
+#: HikariSub/SubsFile.cpp:269
 msgid "Replace"
 msgstr "แทนที่"
 
@@ -1379,7 +1379,7 @@ msgstr "แทนที่"
 msgid "Line %i: "
 msgstr "บรรทัด %i: "
 
-#: HikariSub/FontCatalogList.cpp:58 HikariSub/ShiftTimes.cpp:51
+#: HikariSub/FontCatalogList.cpp:58 HikariSub/ShiftTimes.cpp:52
 msgid "Select the name of the profile"
 msgstr "เลือกชื่อของโปรไฟล์"
 
@@ -1391,9 +1391,9 @@ msgstr "ป้อนชื่อแคตตาล็อกใหม่"
 msgid "Enter a name for the new catalog"
 msgstr "โปรดป้อนชื่อของแคตตาล็อกใหม่"
 
-#: HikariSub/FontCatalogList.cpp:85 HikariSub/HikariSubFrame.cpp:920
-#: HikariSub/ShiftTimes.cpp:86 HikariSub/ShiftTimes.cpp:974
-#: HikariSub/ShiftTimes.cpp:979 HikariSub/findreplace.cpp:1332
+#: HikariSub/FontCatalogList.cpp:85 HikariSub/HikariSubFrame.cpp:921
+#: HikariSub/ShiftTimes.cpp:87 HikariSub/ShiftTimes.cpp:973
+#: HikariSub/ShiftTimes.cpp:978 HikariSub/findreplace.cpp:1351
 msgid "Info"
 msgstr "ข้อมูล"
 
@@ -1420,8 +1420,8 @@ msgid "Add"
 msgstr "เพิ่ม"
 
 #: HikariSub/FontCatalogList.cpp:110 HikariSub/FontCatalogList.cpp:749
-#: HikariSub/SelectLines.cpp:128 HikariSub/SubsGrid.cpp:287
-#: HikariSub/SubsGrid.cpp:320 HikariSub/stylestore.cpp:73
+#: HikariSub/SelectLines.cpp:128 HikariSub/SubsGrid.cpp:289
+#: HikariSub/SubsGrid.cpp:322 HikariSub/stylestore.cpp:73
 #: HikariSub/stylestore.cpp:91 HikariSub/stylestore.cpp:144
 msgid "Delete"
 msgstr "ลบ"
@@ -1458,7 +1458,7 @@ msgstr "แคตตาล็อก:"
 msgid "Find:"
 msgstr "ค้นหา:"
 
-#: HikariSub/FontCatalogList.cpp:202 HikariSub/SubsGridBase.cpp:1941
+#: HikariSub/FontCatalogList.cpp:202 HikariSub/SubsGridBase.cpp:1951
 msgid "Autosave"
 msgstr "บันทึกอัตโนมัติ"
 
@@ -1524,9 +1524,9 @@ msgstr " แท็บ: "
 msgid "In lines: "
 msgstr "ในบรรทัด: "
 
-#: HikariSub/FontCollector.cpp:135 HikariSub/HikariSubFrame.cpp:342
-#: HikariSub/HikariSubFrame.cpp:343 HikariSub/HotkeysNaming.cpp:177
-#: HikariSub/SubsGrid.cpp:289
+#: HikariSub/FontCollector.cpp:135 HikariSub/HikariSubFrame.cpp:343
+#: HikariSub/HikariSubFrame.cpp:344 HikariSub/HotkeysNaming.cpp:177
+#: HikariSub/SubsGrid.cpp:291
 msgid "Font collector"
 msgstr "ตัวรวบรวมแบบอักษร"
 
@@ -1610,16 +1610,16 @@ msgstr "ตั้งชื่อแฟ้มบีบอัด"
 msgid "The save path is not valid."
 msgstr "ตำแหน่งที่บันทึกไม่ถูกต้อง"
 
-#: HikariSub/FontCollector.cpp:520 HikariSub/HikariSubFrame.cpp:1433
-#: HikariSub/HikariSubFrame.cpp:2242 HikariSub/Notebook.cpp:1324
-#: HikariSub/SubsGrid.cpp:1218 HikariSub/SubsGridBase.cpp:557
-#: HikariSub/SubsGridBase.cpp:1578 HikariSub/SubsGridDialogs.cpp:109
-#: HikariSub/VideoBox.cpp:921 HikariSub/VideoBox.cpp:933
+#: HikariSub/FontCollector.cpp:520 HikariSub/HikariSubFrame.cpp:1434
+#: HikariSub/HikariSubFrame.cpp:2243 HikariSub/Notebook.cpp:1324
+#: HikariSub/SubsGrid.cpp:1141 HikariSub/SubsGridBase.cpp:559
+#: HikariSub/SubsGridBase.cpp:1580 HikariSub/SubsGridDialogs.cpp:109
+#: HikariSub/VideoBox.cpp:950 HikariSub/VideoBox.cpp:962
 #: HikariSub/VisualAllTagsEdition.cpp:152
 #: HikariSub/VisualAllTagsEdition.cpp:216 HikariSub/VisualDrawingShapes.cpp:129
-#: HikariSub/VisualDrawingShapes.cpp:193 HikariSub/findreplace.cpp:492
-#: HikariSub/findreplace.cpp:499 HikariSub/findreplace.cpp:1482
-#: HikariSub/findreplace.cpp:1486 HikariSub/stylestore.cpp:290
+#: HikariSub/VisualDrawingShapes.cpp:193 HikariSub/findreplace.cpp:508
+#: HikariSub/findreplace.cpp:515 HikariSub/findreplace.cpp:1501
+#: HikariSub/findreplace.cpp:1505 HikariSub/stylestore.cpp:290
 #: HikariSub/stylestore.cpp:322 HikariSub/stylestore.cpp:361
 #: HikariSub/stylestore.cpp:509 HikariSub/stylestore.cpp:653
 msgid "Confirmation"
@@ -1913,7 +1913,7 @@ msgid "Manages font catalogs"
 msgstr "จัดการแคตตาล็อกแบบอักษร"
 
 #: HikariSub/FontDialog.cpp:432 HikariSub/HotkeysNaming.cpp:121
-#: HikariSub/StyleChange.cpp:87 HikariSub/SubsGrid.cpp:238
+#: HikariSub/StyleChange.cpp:87 HikariSub/SubsGrid.cpp:240
 msgid "Filter"
 msgstr "ตัวกรอง"
 
@@ -1950,6 +1950,52 @@ msgstr "กำลังโหลดแบบอักษรจากโฟลเ
 msgid "Cannot load external font folder"
 msgstr "ไม่สามารถโหลดโฟลเดอร์แบบอักษรภายนอกได้"
 
+#: HikariSub/GridColumnChoices.h:42 HikariSub/GridColumnChoices.h:79
+#: HikariSub/HikariSubFrame.cpp:239
+msgid "Layer"
+msgstr "ชั้น"
+
+#: HikariSub/GridColumnChoices.h:43 HikariSub/GridColumnChoices.h:63
+#: HikariSub/GridColumnChoices.h:68 HikariSub/GridColumnChoices.h:80
+#: HikariSub/GridColumnChoices.h:94 HikariSub/GridColumnChoices.h:99
+#: HikariSub/HikariSubFrame.cpp:232 HikariSub/ShiftTimes.cpp:357
+msgid "The starting time"
+msgstr "เวลาเริ่มต้น"
+
+#: HikariSub/GridColumnChoices.h:44 HikariSub/GridColumnChoices.h:69
+#: HikariSub/GridColumnChoices.h:81 HikariSub/GridColumnChoices.h:100
+#: HikariSub/HikariSubFrame.cpp:234 HikariSub/SelectLines.cpp:79
+#: HikariSub/ShiftTimes.cpp:358
+msgid "End time"
+msgstr "เวลาสิ้นสุด"
+
+#: HikariSub/GridColumnChoices.h:47 HikariSub/GridColumnChoices.h:84
+#: HikariSub/StyleChange.cpp:717
+msgid "Left margin"
+msgstr "ขอบซ้าย"
+
+#: HikariSub/GridColumnChoices.h:48 HikariSub/GridColumnChoices.h:85
+#: HikariSub/StyleChange.cpp:716
+msgid "Right margin"
+msgstr "ระยะขอบขวา"
+
+#: HikariSub/GridColumnChoices.h:49 HikariSub/GridColumnChoices.h:86
+#: HikariSub/StyleChange.cpp:718
+msgid "Vertical margin"
+msgstr "ระยะขอบแนวตั้ง"
+
+#: HikariSub/GridColumnChoices.h:53
+msgid "Text into original"
+msgstr "เปลี่ยนเป็นข้อความต้นฉบับ"
+
+#: HikariSub/GridColumnChoices.h:54
+msgid "Text into translation"
+msgstr "เปลี่ยนเป็นข้อความแปล"
+
+#: HikariSub/GridColumnChoices.h:89
+msgid "Text without tags"
+msgstr "เปลี่ยนเป็นข้อความที่ไม่มีแท็ก"
+
 #: HikariSub/HikariMessageBox.cpp:39
 msgid "Apply to All"
 msgstr "นำไปใช้ทั้งหมด"
@@ -1971,755 +2017,736 @@ msgstr "ไม่"
 msgid "Help"
 msgstr "ช่วยเหลือ"
 
-#: HikariSub/HikariSubFrame.cpp:108
+#: HikariSub/HikariSubFrame.cpp:109
 msgid "Untitled - "
 msgstr "ไม่มีชื่อ - "
 
-#: HikariSub/HikariSubFrame.cpp:157
+#: HikariSub/HikariSubFrame.cpp:158
 msgid "Video duration"
 msgstr "ระยะเวลาวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:157
+#: HikariSub/HikariSubFrame.cpp:158
 msgid "Video scale"
 msgstr "ขนาดวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:157
+#: HikariSub/HikariSubFrame.cpp:158
 msgid "Video zoom"
 msgstr "ซูมวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:158
+#: HikariSub/HikariSubFrame.cpp:159
 msgid "Frames per second"
 msgstr "เฟรมต่อวินาที"
 
-#: HikariSub/HikariSubFrame.cpp:158 HikariSub/SubsResampleDialog.cpp:32
+#: HikariSub/HikariSubFrame.cpp:159 HikariSub/SubsResampleDialog.cpp:33
 msgid "Subtitles resolution"
 msgstr "ความละเอียดคำบรรยาย"
 
-#: HikariSub/HikariSubFrame.cpp:158
+#: HikariSub/HikariSubFrame.cpp:159
 msgid "Video aspect ratio"
 msgstr "อัตราส่วนภาพวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:158
+#: HikariSub/HikariSubFrame.cpp:159
 msgid "Video file name"
 msgstr "ชื่อแฟ้มวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:158
+#: HikariSub/HikariSubFrame.cpp:159
 msgid "Video resolution"
 msgstr "ความละเอียดวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:165 HikariSub/HotkeysNaming.cpp:218
+#: HikariSub/HikariSubFrame.cpp:166 HikariSub/HotkeysNaming.cpp:218
 msgid "Load last session"
 msgstr "โหลดเซสชันล่าสุด"
 
-#: HikariSub/HikariSubFrame.cpp:166
+#: HikariSub/HikariSubFrame.cpp:167
 msgid "Loads previously loaded files"
 msgstr "เปิดแฟ้มที่โหลดก่อนหน้านี้"
 
-#: HikariSub/HikariSubFrame.cpp:167
+#: HikariSub/HikariSubFrame.cpp:168
 msgid "Load session from file"
 msgstr "โหลดเซสชันจากไฟล์"
 
-#: HikariSub/HikariSubFrame.cpp:168
+#: HikariSub/HikariSubFrame.cpp:169
 msgid "Loads session from saved session file"
 msgstr "โหลดเซสชันจากไฟล์เซสชันที่บันทึกไว้ก่อนหน้านี้"
 
-#: HikariSub/HikariSubFrame.cpp:170
+#: HikariSub/HikariSubFrame.cpp:171
 msgid "Save session to file"
 msgstr "บันทึกเซสชันเป็นไฟล์"
 
-#: HikariSub/HikariSubFrame.cpp:170
+#: HikariSub/HikariSubFrame.cpp:171
 msgid "Saves session to file"
 msgstr "บันทึกเซสชันเป็นไฟล์"
 
-#: HikariSub/HikariSubFrame.cpp:173
+#: HikariSub/HikariSubFrame.cpp:174
 msgid "Ask whether to load the last session at program startup"
 msgstr "ถามว่าจะโหลดเซสชันล่าสุดเมื่อเริ่มโปรแกรมหรือไม่"
 
-#: HikariSub/HikariSubFrame.cpp:174
+#: HikariSub/HikariSubFrame.cpp:175
 msgid "Asks whether to load previously loaded files at program startup"
 msgstr "ถามว่าจะโหลดแฟ้มที่เปิดล่าสุดเมื่อเริ่มโปรแกรมหรือไม่"
 
-#: HikariSub/HikariSubFrame.cpp:177
+#: HikariSub/HikariSubFrame.cpp:178
 msgid "Load last session after program start"
 msgstr "โหลดเซสชันล่าสุดเมื่อเริ่มโปรแกรม"
 
-#: HikariSub/HikariSubFrame.cpp:178
+#: HikariSub/HikariSubFrame.cpp:179
 msgid "Loads previously loaded files at program startup"
 msgstr "โหลดแฟ้มที่เปิดไว้ก่อนหน้าเมื่อเริ่มโปรแกรม"
 
-#: HikariSub/HikariSubFrame.cpp:182
+#: HikariSub/HikariSubFrame.cpp:183
 msgid "&Open subtitles"
 msgstr "เ&ปิดคำบรรยาย"
 
-#: HikariSub/HikariSubFrame.cpp:183
+#: HikariSub/HikariSubFrame.cpp:184
 msgid "Open subtitle file"
 msgstr "เปิดแฟ้มคำบรรยาย"
 
-#: HikariSub/HikariSubFrame.cpp:184
+#: HikariSub/HikariSubFrame.cpp:185
 msgid "&Save"
 msgstr "&บันทึก"
 
-#: HikariSub/HikariSubFrame.cpp:185
+#: HikariSub/HikariSubFrame.cpp:186
 msgid "Save current file"
 msgstr "บันทึกแฟ้มปัจจุบัน"
 
-#: HikariSub/HikariSubFrame.cpp:186
+#: HikariSub/HikariSubFrame.cpp:187
 msgid "Save &all"
 msgstr "บันทึก&ทั้งหมด"
 
-#: HikariSub/HikariSubFrame.cpp:187 HikariSub/HotkeysNaming.cpp:234
+#: HikariSub/HikariSubFrame.cpp:188 HikariSub/HotkeysNaming.cpp:234
 msgid "Save all subtitles"
 msgstr "บันทึกคำบรรยายทั้งหมด"
 
-#: HikariSub/HikariSubFrame.cpp:188
+#: HikariSub/HikariSubFrame.cpp:189
 msgid "Save &as..."
 msgstr "บันทึกเ&ป็น…"
 
-#: HikariSub/HikariSubFrame.cpp:189
+#: HikariSub/HikariSubFrame.cpp:190
 msgid "Save as"
 msgstr "บันทึกเป็น"
 
-#: HikariSub/HikariSubFrame.cpp:190
+#: HikariSub/HikariSubFrame.cpp:191
 msgid "Save &translation"
 msgstr "บันทึก&การแปล"
 
-#: HikariSub/HikariSubFrame.cpp:191 HikariSub/HotkeysNaming.cpp:237
+#: HikariSub/HikariSubFrame.cpp:192 HikariSub/HotkeysNaming.cpp:237
 msgid "Save translation"
 msgstr "บันทึกการแปล"
 
-#: HikariSub/HikariSubFrame.cpp:192
+#: HikariSub/HikariSubFrame.cpp:193
 msgid "Recently opened &subtitles"
 msgstr "คำบรรยายที่เพิ่งเ&ปิด"
 
-#: HikariSub/HikariSubFrame.cpp:193 HikariSub/VideoBox.cpp:995
+#: HikariSub/HikariSubFrame.cpp:194 HikariSub/VideoBox.cpp:1024
 msgid "Recently opened subtitles"
 msgstr "คำบรรยายที่เพิ่งเปิด"
 
-#: HikariSub/HikariSubFrame.cpp:194
+#: HikariSub/HikariSubFrame.cpp:195
 msgid "Remove subtitles from the &editor"
 msgstr "นำคำบรรยายออกจากตัวแก้ไ&ข"
 
-#: HikariSub/HikariSubFrame.cpp:195 HikariSub/HotkeysNaming.cpp:232
+#: HikariSub/HikariSubFrame.cpp:196 HikariSub/HotkeysNaming.cpp:232
 msgid "Remove subtitles from the editor"
 msgstr "นำคำบรรยายออกจากตัวแก้ไข"
 
-#: HikariSub/HikariSubFrame.cpp:196 HikariSub/HikariSubFrame.cpp:197
+#: HikariSub/HikariSubFrame.cpp:197 HikariSub/HikariSubFrame.cpp:198
 #: HikariSub/HotkeysNaming.cpp:238
 msgid "Save subtitles using the video name"
 msgstr "บันทึกคำบรรยายด้วยชื่อวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:200 HikariSub/HotkeysNaming.cpp:185
+#: HikariSub/HikariSubFrame.cpp:201 HikariSub/HotkeysNaming.cpp:185
 msgid "Open auto save"
 msgstr "เปิดแฟ้มบันทึกอัตโนมัติ"
 
-#: HikariSub/HikariSubFrame.cpp:200
+#: HikariSub/HikariSubFrame.cpp:201
 msgid "Opens the selected autosave from the list"
 msgstr "เปิดแฟ้มบันทึกอัตโนมัติที่เลือกจากรายการ"
 
-#: HikariSub/HikariSubFrame.cpp:202
+#: HikariSub/HikariSubFrame.cpp:203
 msgid "Opens the temporary file removal window"
 msgstr "เปิดหน้าต่างลบแฟ้มชั่วคราว"
 
-#: HikariSub/HikariSubFrame.cpp:203
+#: HikariSub/HikariSubFrame.cpp:204
 msgid "Show / Hide log window"
 msgstr "แสดง / ซ่อนหน้าต่างบันทึก"
 
-#: HikariSub/HikariSubFrame.cpp:204
+#: HikariSub/HikariSubFrame.cpp:205
 msgid "Last session"
 msgstr "เซสชันสุดท้าย"
 
-#: HikariSub/HikariSubFrame.cpp:204
+#: HikariSub/HikariSubFrame.cpp:205
 msgid "Last session options"
 msgstr "ตัวเลือกเซสชันสุดท้าย"
 
-#: HikariSub/HikariSubFrame.cpp:206
+#: HikariSub/HikariSubFrame.cpp:207
 msgid "&Settings"
 msgstr "&การตั้งค่า"
 
-#: HikariSub/HikariSubFrame.cpp:207
+#: HikariSub/HikariSubFrame.cpp:208
 msgid "Program settings"
 msgstr "การตั้งค่าโปรแกรม"
 
-#: HikariSub/HikariSubFrame.cpp:208
+#: HikariSub/HikariSubFrame.cpp:209
 msgid "&Exit\tAlt-F4"
 msgstr "&ออก\tAlt-F4"
 
-#: HikariSub/HikariSubFrame.cpp:209
+#: HikariSub/HikariSubFrame.cpp:210
 msgid "Exit the program"
 msgstr "ออกจากโปรแกรม"
 
-#: HikariSub/HikariSubFrame.cpp:210
+#: HikariSub/HikariSubFrame.cpp:211
 msgid "&File"
 msgstr "&แฟ้ม"
 
-#: HikariSub/HikariSubFrame.cpp:213 HikariSub/HikariSubFrame.cpp:2448
+#: HikariSub/HikariSubFrame.cpp:214 HikariSub/HikariSubFrame.cpp:2449
 msgid "&Undo"
 msgstr "&เลิกทำ"
 
-#: HikariSub/HikariSubFrame.cpp:213 HikariSub/Hotkeys.cpp:150
+#: HikariSub/HikariSubFrame.cpp:214 HikariSub/Hotkeys.cpp:150
 #: HikariSub/HotkeysNaming.cpp:203
 msgid "Undo"
 msgstr "เลิกทำ"
 
-#: HikariSub/HikariSubFrame.cpp:216 HikariSub/HotkeysNaming.cpp:204
+#: HikariSub/HikariSubFrame.cpp:217 HikariSub/HotkeysNaming.cpp:204
 msgid "Undo to last save"
 msgstr "ย้อนกลับไปยังสถานะที่บันทึกล่าสุด"
 
-#: HikariSub/HikariSubFrame.cpp:218 HikariSub/HikariSubFrame.cpp:2464
+#: HikariSub/HikariSubFrame.cpp:219 HikariSub/HikariSubFrame.cpp:2465
 msgid "&Redo"
 msgstr "&ทำซ้ำ"
 
-#: HikariSub/HikariSubFrame.cpp:219 HikariSub/Hotkeys.cpp:151
+#: HikariSub/HikariSubFrame.cpp:220 HikariSub/Hotkeys.cpp:151
 #: HikariSub/HotkeysNaming.cpp:230
 msgid "Redo"
 msgstr "ทำซ้ำ"
 
-#: HikariSub/HikariSubFrame.cpp:220
+#: HikariSub/HikariSubFrame.cpp:221
 msgid "&History"
 msgstr "&ประวัติ"
 
-#: HikariSub/HikariSubFrame.cpp:221 HikariSub/Hotkeys.cpp:152
-#: HikariSub/HotkeysNaming.cpp:181 HikariSub/SubsFile.cpp:27
-#: HikariSub/SubsFile.cpp:57
+#: HikariSub/HikariSubFrame.cpp:222 HikariSub/Hotkeys.cpp:152
+#: HikariSub/HotkeysNaming.cpp:181 HikariSub/SubsFile.cpp:28
+#: HikariSub/SubsFile.cpp:58
 msgid "History"
 msgstr "ประวัติ"
 
-#: HikariSub/HikariSubFrame.cpp:222
+#: HikariSub/HikariSubFrame.cpp:223
 msgid "Find and re&place"
 msgstr "ค้นหาและแ&ทนที่"
 
-#: HikariSub/HikariSubFrame.cpp:223
+#: HikariSub/HikariSubFrame.cpp:224
 msgid "Searches for the specified text phrases and replaces them"
 msgstr "ค้นหาและแทนที่วลีข้อความที่ระบุ"
 
-#: HikariSub/HikariSubFrame.cpp:224
+#: HikariSub/HikariSubFrame.cpp:225
 msgid "&Find"
 msgstr "&ค้นหา"
 
-#: HikariSub/HikariSubFrame.cpp:225
+#: HikariSub/HikariSubFrame.cpp:226
 msgid "Searches for the specified text phrase"
 msgstr "ค้นหาวลีข้อความที่ระบุ"
 
-#: HikariSub/HikariSubFrame.cpp:226 HikariSub/Hotkeys.cpp:165
+#: HikariSub/HikariSubFrame.cpp:227 HikariSub/Hotkeys.cpp:165
 #: HikariSub/HotkeysNaming.cpp:217
 msgid "Find next"
 msgstr "ค้นหาถัดไป"
 
-#: HikariSub/HikariSubFrame.cpp:227
+#: HikariSub/HikariSubFrame.cpp:228
 msgid "Finds the next occurrence of the phrase in the text"
 msgstr "ค้นหาตำแหน่งถัดไปของวลีในข้อความ"
 
-#: HikariSub/HikariSubFrame.cpp:231 HikariSub/ShiftTimes.cpp:358
-#: HikariSub/SubsGrid.cpp:548 HikariSub/SubsGrid.cpp:579
-#: HikariSub/SubsGrid.cpp:585 HikariSub/SubsGrid.cpp:586
-#: HikariSub/SubsGrid.cpp:717 HikariSub/SubsGrid.cpp:740
-#: HikariSub/SubsGrid.cpp:748 HikariSub/SubsGrid.cpp:749
-msgid "The starting time"
-msgstr "เวลาเริ่มต้น"
-
-#: HikariSub/HikariSubFrame.cpp:232
+#: HikariSub/HikariSubFrame.cpp:233
 msgid "Sort by start time"
 msgstr "เรียงตามเวลาเริ่มต้น"
 
-#: HikariSub/HikariSubFrame.cpp:233 HikariSub/SelectLines.cpp:79
-#: HikariSub/ShiftTimes.cpp:359 HikariSub/SubsGrid.cpp:549
-#: HikariSub/SubsGrid.cpp:718
-msgid "End time"
-msgstr "เวลาสิ้นสุด"
-
-#: HikariSub/HikariSubFrame.cpp:234
+#: HikariSub/HikariSubFrame.cpp:235
 msgid "Sort by end time"
 msgstr "จัดเรียงตามเวลาสิ้นสุด"
 
-#: HikariSub/HikariSubFrame.cpp:235
+#: HikariSub/HikariSubFrame.cpp:236
 msgid "Sort by styles"
 msgstr "จัดเรียงตามสไตล์"
 
-#: HikariSub/HikariSubFrame.cpp:236
+#: HikariSub/HikariSubFrame.cpp:237
 msgid "Sort by actor"
 msgstr "จัดเรียงตามผู้พูด"
 
-#: HikariSub/HikariSubFrame.cpp:237
+#: HikariSub/HikariSubFrame.cpp:238
 msgid "Sort by effect"
 msgstr "จัดเรียงตามเอฟเฟกต์"
 
-#: HikariSub/HikariSubFrame.cpp:238 HikariSub/SubsGrid.cpp:547
-#: HikariSub/SubsGrid.cpp:716
-msgid "Layer"
-msgstr "ชั้น"
-
-#: HikariSub/HikariSubFrame.cpp:238
+#: HikariSub/HikariSubFrame.cpp:239
 msgid "Sort by layer"
 msgstr "จัดเรียงตามชั้น"
 
-#: HikariSub/HikariSubFrame.cpp:241
+#: HikariSub/HikariSubFrame.cpp:242
 msgid "So&rt all lines"
 msgstr "จัดเ&รียงทุกบรรทัด"
 
-#: HikariSub/HikariSubFrame.cpp:242
+#: HikariSub/HikariSubFrame.cpp:243
 msgid "Sorts all lines in ASS file"
 msgstr "จัดเรียงบรรทัดคำบรรยายทั้งหมดในแฟ้ม ASS"
 
-#: HikariSub/HikariSubFrame.cpp:243
+#: HikariSub/HikariSubFrame.cpp:244
 msgid "So&rt selected lines"
 msgstr "จัดเ&รียงบรรทัดที่เลือก"
 
-#: HikariSub/HikariSubFrame.cpp:244
+#: HikariSub/HikariSubFrame.cpp:245
 msgid "Sorts selected lines in ASS file"
 msgstr "จัดเรียงบรรทัดคำบรรยาย ASS ที่เลือก"
 
-#: HikariSub/HikariSubFrame.cpp:245 HikariSub/HotkeysNaming.cpp:216
+#: HikariSub/HikariSubFrame.cpp:246 HikariSub/HotkeysNaming.cpp:216
 msgid "Fix minor errors (experimental)"
 msgstr "แก้ไขข้อผิดพลาดเล็กน้อย (ทดลอง)"
 
-#: HikariSub/HikariSubFrame.cpp:246
+#: HikariSub/HikariSubFrame.cpp:247
 msgid "Turns on multireplacer"
 msgstr "เปิดเครื่องมือแทนที่หลายรายการ"
 
-#: HikariSub/HikariSubFrame.cpp:247
+#: HikariSub/HikariSubFrame.cpp:248
 msgid "Select &lines"
 msgstr "เลือก&บรรทัด"
 
-#: HikariSub/HikariSubFrame.cpp:247
+#: HikariSub/HikariSubFrame.cpp:248
 msgid "Selects lines by expressions"
 msgstr "เลือกบรรทัดตามนิพจน์"
 
-#: HikariSub/HikariSubFrame.cpp:248
+#: HikariSub/HikariSubFrame.cpp:249
 msgid "&Edit"
 msgstr "&แก้ไข"
 
-#: HikariSub/HikariSubFrame.cpp:251 HikariSub/Hotkeys.cpp:147
-#: HikariSub/HotkeysNaming.cpp:224 HikariSub/VideoBox.cpp:997
+#: HikariSub/HikariSubFrame.cpp:252 HikariSub/Hotkeys.cpp:147
+#: HikariSub/HotkeysNaming.cpp:224 HikariSub/VideoBox.cpp:1026
 msgid "Open video"
 msgstr "เปิดวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:252
+#: HikariSub/HikariSubFrame.cpp:253
 msgid "Opens video file"
 msgstr "เปิดแฟ้มวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:254 HikariSub/HikariSubFrame.cpp:255
-#: HikariSub/VideoBox.cpp:996
+#: HikariSub/HikariSubFrame.cpp:255 HikariSub/HikariSubFrame.cpp:256
+#: HikariSub/VideoBox.cpp:1025
 msgid "Recently opened videos"
 msgstr "วิดีโอที่เพิ่งเปิด"
 
-#: HikariSub/HikariSubFrame.cpp:256 HikariSub/HikariSubFrame.cpp:257
+#: HikariSub/HikariSubFrame.cpp:257 HikariSub/HikariSubFrame.cpp:258
 #: HikariSub/HotkeysNaming.cpp:184
 msgid "Open keyframes"
 msgstr "เปิดคีย์เฟรม"
 
-#: HikariSub/HikariSubFrame.cpp:260
+#: HikariSub/HikariSubFrame.cpp:261
 msgid "Recently opened keyframes"
 msgstr "คีย์เฟรมที่เพิ่งเปิด"
 
-#: HikariSub/HikariSubFrame.cpp:262
+#: HikariSub/HikariSubFrame.cpp:263
 msgid "Open dummy video"
 msgstr "เปิดวิดีโอจำลอง"
 
-#: HikariSub/HikariSubFrame.cpp:263 HikariSub/Hotkeys.cpp:158
+#: HikariSub/HikariSubFrame.cpp:264 HikariSub/Hotkeys.cpp:158
 #: HikariSub/HotkeysNaming.cpp:245
 msgid "Insert start time from video"
 msgstr "แทรกเวลาเริ่มต้นจากวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:264
+#: HikariSub/HikariSubFrame.cpp:265
 msgid "Inserts the start time from video"
 msgstr "แทรกเวลาเริ่มต้นจากวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:265 HikariSub/Hotkeys.cpp:159
+#: HikariSub/HikariSubFrame.cpp:266 HikariSub/Hotkeys.cpp:159
 #: HikariSub/HotkeysNaming.cpp:244
 msgid "Insert end time from video"
 msgstr "แทรกเวลาสิ้นสุดจากวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:266
+#: HikariSub/HikariSubFrame.cpp:267
 msgid "Inserts the end time from video"
 msgstr "แทรกเวลาสิ้นสุดจากวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:267 HikariSub/Hotkeys.cpp:161
+#: HikariSub/HikariSubFrame.cpp:268 HikariSub/Hotkeys.cpp:161
 #: HikariSub/HotkeysNaming.cpp:227
 msgid "Previous frame"
 msgstr "เฟรมก่อนหน้า"
 
-#: HikariSub/HikariSubFrame.cpp:268
+#: HikariSub/HikariSubFrame.cpp:269
 msgid "Go to previous frame"
 msgstr "ถอยหลังหนึ่งเฟรม"
 
-#: HikariSub/HikariSubFrame.cpp:269 HikariSub/Hotkeys.cpp:162
+#: HikariSub/HikariSubFrame.cpp:270 HikariSub/Hotkeys.cpp:162
 #: HikariSub/HotkeysNaming.cpp:219
 msgid "Next frame"
 msgstr "เฟรมถัดไป"
 
-#: HikariSub/HikariSubFrame.cpp:270
+#: HikariSub/HikariSubFrame.cpp:271
 msgid "Go to next frame"
 msgstr "ไปข้างหน้าหนึ่งเฟรม"
 
-#: HikariSub/HikariSubFrame.cpp:272 HikariSub/HotkeysNaming.cpp:247
+#: HikariSub/HikariSubFrame.cpp:273 HikariSub/HotkeysNaming.cpp:247
 msgid "Go to start time"
 msgstr "ไปยังเวลาเริ่มต้น"
 
-#: HikariSub/HikariSubFrame.cpp:272
+#: HikariSub/HikariSubFrame.cpp:273
 msgid "Moves video to start time"
 msgstr "ย้ายวิดีโอไปยังเวลาเริ่มต้นของบรรทัด"
 
-#: HikariSub/HikariSubFrame.cpp:275 HikariSub/HotkeysNaming.cpp:248
+#: HikariSub/HikariSubFrame.cpp:276 HikariSub/HotkeysNaming.cpp:248
 msgid "Go to end time of line"
 msgstr "ไปยังเวลาสิ้นสุด"
 
-#: HikariSub/HikariSubFrame.cpp:275
+#: HikariSub/HikariSubFrame.cpp:276
 msgid "Moves video to end time"
 msgstr "ย้ายวิดีโอไปยังเวลาสิ้นสุดของบรรทัด"
 
-#: HikariSub/HikariSubFrame.cpp:277 HikariSub/Hotkeys.cpp:160
+#: HikariSub/HikariSubFrame.cpp:278 HikariSub/Hotkeys.cpp:160
 #: HikariSub/Hotkeys.cpp:178 HikariSub/HotkeysNaming.cpp:225
-#: HikariSub/HotkeysNaming.cpp:261 HikariSub/VideoBox.cpp:160
+#: HikariSub/HotkeysNaming.cpp:261 HikariSub/VideoBox.cpp:161
 #: HikariSub/VideoFullscreen.cpp:60
 msgid "Play / Pause"
 msgstr "เล่น / หยุดชั่วคราว"
 
-#: HikariSub/HikariSubFrame.cpp:278
+#: HikariSub/HikariSubFrame.cpp:279
 msgid "Plays / Pauses video"
 msgstr "เล่น / หยุดวิดีโอชั่วคราว"
 
-#: HikariSub/HikariSubFrame.cpp:280 HikariSub/HotkeysNaming.cpp:200
+#: HikariSub/HikariSubFrame.cpp:281 HikariSub/HotkeysNaming.cpp:200
 msgid "Go to previous keyframe"
 msgstr "ไปยังคีย์เฟรมก่อนหน้า"
 
-#: HikariSub/HikariSubFrame.cpp:282 HikariSub/HotkeysNaming.cpp:201
+#: HikariSub/HikariSubFrame.cpp:283 HikariSub/HotkeysNaming.cpp:201
 msgid "Go to next keyframe"
 msgstr "ไปยังคีย์เฟรมถัดไป"
 
-#: HikariSub/HikariSubFrame.cpp:284 HikariSub/HotkeysNaming.cpp:242
+#: HikariSub/HikariSubFrame.cpp:285 HikariSub/HotkeysNaming.cpp:242
 msgid "Set audio position to video time"
 msgstr "เลื่อนตำแหน่งเสียงให้ตรงกับเวลาวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:286 HikariSub/HotkeysNaming.cpp:243
+#: HikariSub/HikariSubFrame.cpp:287 HikariSub/HotkeysNaming.cpp:243
 msgid "Set audio marker to video time"
 msgstr "เลื่อนเครื่องหมายเสียงให้ตรงกับเวลาวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:287 HikariSub/HotkeysNaming.cpp:206
+#: HikariSub/HikariSubFrame.cpp:288 HikariSub/HotkeysNaming.cpp:206
 msgid "Zoom video"
 msgstr "ซูมวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:288 HikariSub/HotkeysNaming.cpp:207
+#: HikariSub/HikariSubFrame.cpp:289 HikariSub/HotkeysNaming.cpp:207
 msgid "Turn off video zoom"
 msgstr "ปิดการซูมวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:290 HikariSub/HotkeysNaming.cpp:205
+#: HikariSub/HikariSubFrame.cpp:291 HikariSub/HotkeysNaming.cpp:205
 msgid "Open video with FFMS2"
 msgstr "เปิดวิดีโอผ่าน FFMS2"
 
-#: HikariSub/HikariSubFrame.cpp:291
+#: HikariSub/HikariSubFrame.cpp:292
 msgid "Opens video with FFMS2 for frame precision"
 msgstr "เปิดวิดีโอด้วย FFMS2 เพื่อความแม่นยำของเฟรม"
 
-#: HikariSub/HikariSubFrame.cpp:294
+#: HikariSub/HikariSubFrame.cpp:295
 msgid "&Video"
 msgstr "&วิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:297 HikariSub/HotkeysNaming.cpp:222
+#: HikariSub/HikariSubFrame.cpp:298 HikariSub/HotkeysNaming.cpp:222
 msgid "Open audio"
 msgstr "เปิดเสียง"
 
-#: HikariSub/HikariSubFrame.cpp:298
+#: HikariSub/HikariSubFrame.cpp:299
 msgid "Opens audio file"
 msgstr "เปิดแฟ้มเสียง"
 
-#: HikariSub/HikariSubFrame.cpp:301 HikariSub/HikariSubFrame.cpp:302
+#: HikariSub/HikariSubFrame.cpp:302 HikariSub/HikariSubFrame.cpp:303
 msgid "Recently opened audio"
 msgstr "เสียงที่เพิ่งเปิด"
 
-#: HikariSub/HikariSubFrame.cpp:303 HikariSub/HotkeysNaming.cpp:169
+#: HikariSub/HikariSubFrame.cpp:304 HikariSub/HotkeysNaming.cpp:169
 msgid "Open audio from video"
 msgstr "เปิดเสียงจากวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:304
+#: HikariSub/HikariSubFrame.cpp:305
 msgid "Opens audio from video"
 msgstr "เปิดเสียงจากวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:305
+#: HikariSub/HikariSubFrame.cpp:306
 msgid "Open blank 2h30m audio"
 msgstr "เปิดเสียงเปล่ายาว 2:30 ชั่วโมง"
 
-#: HikariSub/HikariSubFrame.cpp:306
+#: HikariSub/HikariSubFrame.cpp:307
 msgid "Opens blank audio 2 hour and 30 minutes long"
 msgstr "เปิดเสียงเปล่าที่ยาวเป็นเวลา 2:30 ชั่วโมง"
 
-#: HikariSub/HikariSubFrame.cpp:307 HikariSub/HotkeysNaming.cpp:174
+#: HikariSub/HikariSubFrame.cpp:308 HikariSub/HotkeysNaming.cpp:174
 msgid "Close audio"
 msgstr "นำเสียงออก"
 
-#: HikariSub/HikariSubFrame.cpp:308
+#: HikariSub/HikariSubFrame.cpp:309
 msgid "Closes audio"
 msgstr "ปิดแฟ้มเสียง"
 
-#: HikariSub/HikariSubFrame.cpp:309
+#: HikariSub/HikariSubFrame.cpp:310
 msgid "A&udio"
 msgstr "เ&สียง"
 
-#: HikariSub/HikariSubFrame.cpp:312 HikariSub/OptionsDialog.cpp:687
+#: HikariSub/HikariSubFrame.cpp:313 HikariSub/OptionsDialog.cpp:691
 msgid "All"
 msgstr "ทั้งหมด"
 
-#: HikariSub/HikariSubFrame.cpp:312
+#: HikariSub/HikariSubFrame.cpp:313
 msgid "Shows all windows"
 msgstr "แสดงหน้าต่างทั้งหมด"
 
-#: HikariSub/HikariSubFrame.cpp:313
+#: HikariSub/HikariSubFrame.cpp:314
 msgid "Shows only video window and subs window"
 msgstr "แสดงเฉพาะหน้าต่างวิดีโอและหน้าต่างคำบรรยาย"
 
-#: HikariSub/HikariSubFrame.cpp:313
+#: HikariSub/HikariSubFrame.cpp:314
 msgid "Video and subs"
 msgstr "วิดีโอและคำบรรยาย"
 
-#: HikariSub/HikariSubFrame.cpp:314
+#: HikariSub/HikariSubFrame.cpp:315
 msgid "Audio and subs"
 msgstr "เสียงและคำบรรยาย"
 
-#: HikariSub/HikariSubFrame.cpp:314
+#: HikariSub/HikariSubFrame.cpp:315
 msgid "Shows only audio window and subs window"
 msgstr "แสดงเฉพาะหน้าต่างเสียงและหน้าต่างคำบรรยาย"
 
-#: HikariSub/HikariSubFrame.cpp:315
+#: HikariSub/HikariSubFrame.cpp:316
 msgid "Only video"
 msgstr "วิดีโอเท่านั้น"
 
-#: HikariSub/HikariSubFrame.cpp:315
+#: HikariSub/HikariSubFrame.cpp:316
 msgid "Shows only video window"
 msgstr "แสดงเฉพาะหน้าต่างวิดีโอเท่านั้น"
 
-#: HikariSub/HikariSubFrame.cpp:316
+#: HikariSub/HikariSubFrame.cpp:317
 msgid "Only subtitles"
 msgstr "คำบรรยายเท่านั้น"
 
-#: HikariSub/HikariSubFrame.cpp:316
+#: HikariSub/HikariSubFrame.cpp:317
 msgid "Shows only the subtitle window"
 msgstr "แสดงเฉพาะหน้าต่างคำบรรยายเท่านั้น"
 
-#: HikariSub/HikariSubFrame.cpp:317
+#: HikariSub/HikariSubFrame.cpp:318
 msgid "View"
 msgstr "มุมมอง"
 
-#: HikariSub/HikariSubFrame.cpp:320 HikariSub/Hotkeys.cpp:146
+#: HikariSub/HikariSubFrame.cpp:321 HikariSub/Hotkeys.cpp:146
 #: HikariSub/HotkeysNaming.cpp:175
 msgid "Enable / Disable editor"
 msgstr "เปิด / ปิดใช้งานตัวแก้ไข"
 
-#: HikariSub/HikariSubFrame.cpp:321
+#: HikariSub/HikariSubFrame.cpp:322
 msgid "Enables / disables editor"
 msgstr "เปิด / ปิดตัวแก้ไข"
 
-#: HikariSub/HikariSubFrame.cpp:322 HikariSub/HotkeysNaming.cpp:160
+#: HikariSub/HikariSubFrame.cpp:323 HikariSub/HotkeysNaming.cpp:160
 msgid "ASS file properties"
 msgstr "คุณสมบัติแฟ้ม ASS"
 
-#: HikariSub/HikariSubFrame.cpp:323 HikariSub/ScriptInfo.cpp:25
+#: HikariSub/HikariSubFrame.cpp:324 HikariSub/ScriptInfo.cpp:25
 msgid "ASS subtitle properties"
 msgstr "คุณสมบัติของคำบรรยาย ASS"
 
-#: HikariSub/HikariSubFrame.cpp:324
+#: HikariSub/HikariSubFrame.cpp:325
 msgid "Style &manager"
 msgstr "&ตัวจัดการสไตล์"
 
-#: HikariSub/HikariSubFrame.cpp:325
+#: HikariSub/HikariSubFrame.cpp:326
 msgid "Is used to manage ASS styles"
 msgstr "ใช้สำหรับจัดการสไตล์ ASS"
 
-#: HikariSub/HikariSubFrame.cpp:327 HikariSub/Hotkeys.cpp:140
+#: HikariSub/HikariSubFrame.cpp:328 HikariSub/Hotkeys.cpp:140
 #: HikariSub/HotkeysNaming.cpp:164
 msgid "Convert to ASS"
 msgstr "แปลงเป็น ASS"
 
-#: HikariSub/HikariSubFrame.cpp:328
+#: HikariSub/HikariSubFrame.cpp:329
 msgid "Converts to ASS format"
 msgstr "แปลงเป็นรูปแบบ ASS"
 
-#: HikariSub/HikariSubFrame.cpp:329 HikariSub/Hotkeys.cpp:141
+#: HikariSub/HikariSubFrame.cpp:330 HikariSub/Hotkeys.cpp:141
 #: HikariSub/HotkeysNaming.cpp:165
 msgid "Convert to SRT"
 msgstr "แปลงเป็น SRT"
 
-#: HikariSub/HikariSubFrame.cpp:330
+#: HikariSub/HikariSubFrame.cpp:331
 msgid "Converts to SRT format"
 msgstr "แปลงเป็นรูปแบบ SRT"
 
-#: HikariSub/HikariSubFrame.cpp:331 HikariSub/Hotkeys.cpp:142
+#: HikariSub/HikariSubFrame.cpp:332 HikariSub/Hotkeys.cpp:142
 #: HikariSub/HotkeysNaming.cpp:166
 msgid "Convert to MDVD"
 msgstr "แปลงเป็น MDVD"
 
-#: HikariSub/HikariSubFrame.cpp:332
+#: HikariSub/HikariSubFrame.cpp:333
 msgid "Converts to microDVD format"
 msgstr "แปลงเป็นรูปแบบ microDVD"
 
-#: HikariSub/HikariSubFrame.cpp:333 HikariSub/Hotkeys.cpp:143
+#: HikariSub/HikariSubFrame.cpp:334 HikariSub/Hotkeys.cpp:143
 #: HikariSub/HotkeysNaming.cpp:167
 msgid "Convert to MPL2"
 msgstr "แปลงเป็น MPL2"
 
-#: HikariSub/HikariSubFrame.cpp:334
+#: HikariSub/HikariSubFrame.cpp:335
 msgid "Converts to MPL2 format"
 msgstr "แปลงเป็นรูปแบบ MPL2"
 
-#: HikariSub/HikariSubFrame.cpp:335 HikariSub/Hotkeys.cpp:144
+#: HikariSub/HikariSubFrame.cpp:336 HikariSub/Hotkeys.cpp:144
 #: HikariSub/HotkeysNaming.cpp:168
 msgid "Convert to TMP"
 msgstr "แปลงเป็น TMP"
 
-#: HikariSub/HikariSubFrame.cpp:336
+#: HikariSub/HikariSubFrame.cpp:337
 msgid "Converts to TMPlayer format (not recommended)"
 msgstr "แปลงเป็นรูปแบบ TMPlayer (ไม่แนะนำ)"
 
-#: HikariSub/HikariSubFrame.cpp:338 HikariSub/OptionsDialog.cpp:1048
+#: HikariSub/HikariSubFrame.cpp:339 HikariSub/OptionsDialog.cpp:1052
 msgid "Conversion"
 msgstr "การแปลง"
 
-#: HikariSub/HikariSubFrame.cpp:338
+#: HikariSub/HikariSubFrame.cpp:339
 msgid "Converts from one format to another"
 msgstr "แปลงจากรูปแบบหนึ่งเป็นอีกรูปแบบหนึ่ง"
 
-#: HikariSub/HikariSubFrame.cpp:340
+#: HikariSub/HikariSubFrame.cpp:341
 msgid "Shift &times...\tCtrl-I"
 msgstr "เลื่อน&เวลา…\tCtrl-I"
 
-#: HikariSub/HikariSubFrame.cpp:341
+#: HikariSub/HikariSubFrame.cpp:342
 msgid "Shifting subtitle times"
 msgstr "เลื่อนเวลาคำบรรยาย"
 
-#: HikariSub/HikariSubFrame.cpp:344 HikariSub/HikariSubFrame.cpp:345
+#: HikariSub/HikariSubFrame.cpp:345 HikariSub/HikariSubFrame.cpp:346
 #: HikariSub/HotkeysNaming.cpp:202
 msgid "Resample subtitles"
 msgstr "เปลี่ยนความละเอียดของคำบรรยาย"
 
-#: HikariSub/HikariSubFrame.cpp:346 HikariSub/HikariSubFrame.cpp:347
+#: HikariSub/HikariSubFrame.cpp:347 HikariSub/HikariSubFrame.cpp:348
 #: HikariSub/HotkeysNaming.cpp:251
 msgid "Check spelling"
 msgstr "ตรวจการสะกด"
 
-#: HikariSub/HikariSubFrame.cpp:348 HikariSub/HotkeysNaming.cpp:180
+#: HikariSub/HikariSubFrame.cpp:349 HikariSub/HotkeysNaming.cpp:180
 msgid "Hide tags"
 msgstr "ซ่อนแท็ก"
 
-#: HikariSub/HikariSubFrame.cpp:349
+#: HikariSub/HikariSubFrame.cpp:350
 msgid "Hides tags in ASS and MDVD"
 msgstr "ซ่อนแท็กในวงเล็บ ASS และ MDVD"
 
-#: HikariSub/HikariSubFrame.cpp:350
+#: HikariSub/HikariSubFrame.cpp:351
 msgid "Su&btitles"
 msgstr "&คำบรรยาย"
 
-#: HikariSub/HikariSubFrame.cpp:353 HikariSub/HikariSubFrame.cpp:354
+#: HikariSub/HikariSubFrame.cpp:354 HikariSub/HikariSubFrame.cpp:355
 #: HikariSub/HotkeysNaming.cpp:170
 msgid "Load script"
 msgstr "โหลดสคริปต์"
 
-#: HikariSub/HikariSubFrame.cpp:355 HikariSub/HikariSubFrame.cpp:356
+#: HikariSub/HikariSubFrame.cpp:356 HikariSub/HikariSubFrame.cpp:357
 #: HikariSub/HotkeysNaming.cpp:172
 msgid "Refresh autoload scripts"
 msgstr "รีเฟรชสคริปต์อัตโนมัติ"
 
-#: HikariSub/HikariSubFrame.cpp:357 HikariSub/HikariSubFrame.cpp:358
+#: HikariSub/HikariSubFrame.cpp:358 HikariSub/HikariSubFrame.cpp:359
 #: HikariSub/HotkeysNaming.cpp:186
 msgid "Run the last loaded script"
 msgstr "เรียกใช้สคริปต์ล่าสุด"
 
-#: HikariSub/HikariSubFrame.cpp:359 HikariSub/HikariSubFrame.cpp:360
+#: HikariSub/HikariSubFrame.cpp:360 HikariSub/HikariSubFrame.cpp:361
 #: HikariSub/HotkeysNaming.cpp:171
 msgid "Open shortcut mapping window"
 msgstr "เปิดหน้าต่างกำหนดปุ่มลัด"
 
-#: HikariSub/HikariSubFrame.cpp:361
+#: HikariSub/HikariSubFrame.cpp:362
 msgid "Au&tomation"
 msgstr "สคริปต์&อัตโนมัติ"
 
-#: HikariSub/HikariSubFrame.cpp:364
+#: HikariSub/HikariSubFrame.cpp:365
 msgid "HikariSub &website"
 msgstr "&เว็บไซต์ HikariSub"
 
-#: HikariSub/HikariSubFrame.cpp:365
+#: HikariSub/HikariSubFrame.cpp:366
 msgid "Opens the HikariSub website in the default browser"
 msgstr "เปิดเว็บไซต์ HikariSub ในเบราว์เซอร์เริ่มต้น"
 
-#: HikariSub/HikariSubFrame.cpp:366
+#: HikariSub/HikariSubFrame.cpp:367
 msgid "&Report an issue"
 msgstr "&รายงานปัญหา"
 
-#: HikariSub/HikariSubFrame.cpp:367
+#: HikariSub/HikariSubFrame.cpp:368
 msgid "Opens the HikariSub issue tracker"
 msgstr "เปิดหน้าติดตามปัญหาของ HikariSub"
 
-#: HikariSub/HikariSubFrame.cpp:368
+#: HikariSub/HikariSubFrame.cpp:369
 msgid "Check for &updates"
 msgstr "&ตรวจหาอัปเดต"
 
-#: HikariSub/HikariSubFrame.cpp:369
+#: HikariSub/HikariSubFrame.cpp:370
 msgid "Checks whether a newer version is available"
 msgstr "ตรวจสอบว่ามีเวอร์ชันที่ใหม่กว่าหรือไม่"
 
-#: HikariSub/HikariSubFrame.cpp:370
+#: HikariSub/HikariSubFrame.cpp:371
 msgid "&About"
 msgstr "&เกี่ยวกับ"
 
-#: HikariSub/HikariSubFrame.cpp:371
+#: HikariSub/HikariSubFrame.cpp:372
 msgid "Shows program info"
 msgstr "แสดงข้อมูลโปรแกรม"
 
-#: HikariSub/HikariSubFrame.cpp:373
+#: HikariSub/HikariSubFrame.cpp:374
 msgid "&Credits"
 msgstr "&เครดิต"
 
-#: HikariSub/HikariSubFrame.cpp:374
+#: HikariSub/HikariSubFrame.cpp:375
 msgid "Shows credits"
 msgstr "แสดงรายชื่อของผู้ที่มีส่วนร่วมในการสร้างโปรแกรม"
 
-#: HikariSub/HikariSubFrame.cpp:375
+#: HikariSub/HikariSubFrame.cpp:376
 msgid "&Help"
 msgstr "&ช่วยเหลือ"
 
-#: HikariSub/HikariSubFrame.cpp:591 HikariSub/HikariSubFrame.cpp:608
+#: HikariSub/HikariSubFrame.cpp:592 HikariSub/HikariSubFrame.cpp:609
 #: HikariSub/ProgressDialog.cpp:110
 #, c-format
 msgid "Time elapsed: %s"
 msgstr "ใช้เวลาไปแล้ว: %s"
 
-#: HikariSub/HikariSubFrame.cpp:901
+#: HikariSub/HikariSubFrame.cpp:902
 msgid "Choose script"
 msgstr "เลือกสคริปต์อัตโนมัติ"
 
-#: HikariSub/HikariSubFrame.cpp:903
+#: HikariSub/HikariSubFrame.cpp:904
 msgid "Script files (*.lua),(*.moon)|*.lua;*.moon;"
 msgstr "แฟ้มสคริปต์ (*.lua),(*.moon)|*.lua;*.moon;"
 
-#: HikariSub/HikariSubFrame.cpp:920
+#: HikariSub/HikariSubFrame.cpp:921
 msgid "This subtitle file does not have any scripts added"
 msgstr "คำบรรยายนี้ไม่ได้เพิ่มสคริปต์ใด ๆ"
 
-#: HikariSub/HikariSubFrame.cpp:929 HikariSub/HikariSubFrame.cpp:2764
+#: HikariSub/HikariSubFrame.cpp:930 HikariSub/HikariSubFrame.cpp:2765
 #, c-format
 msgid "Validation Lua script '%s' failed"
 msgstr "การตรวจสอบสคริปต์ Lua '%s' ไม่ผ่าน"
 
-#: HikariSub/HikariSubFrame.cpp:1010 HikariSub/SubsGrid.cpp:1010
-#: HikariSub/VideoBox.cpp:1133
+#: HikariSub/HikariSubFrame.cpp:1011 HikariSub/SubsGrid.cpp:933
+#: HikariSub/VideoBox.cpp:1162
 msgid "Choose subtitle file"
 msgstr "เลือกแฟ้มคำบรรยาย"
 
-#: HikariSub/HikariSubFrame.cpp:1013
+#: HikariSub/HikariSubFrame.cpp:1014
 msgid "Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm"
 msgstr "แฟ้มคำบรรยาย (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|วิดีโอที่มีคำบรรยาย (*.mkv),(*.ogm)|*.mkv;*.ogm"
 
-#: HikariSub/HikariSubFrame.cpp:1050 HikariSub/HikariSubFrame.cpp:1066
-#: HikariSub/VideoBox.cpp:1118
+#: HikariSub/HikariSubFrame.cpp:1051 HikariSub/HikariSubFrame.cpp:1067
+#: HikariSub/VideoBox.cpp:1147
 msgid "Choose video file"
 msgstr "เลือกแฟ้มวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:1053
+#: HikariSub/HikariSubFrame.cpp:1054
 msgid "Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|All files (*.*)|*.*"
 msgstr "แฟ้มวิดีโอ (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|แฟ้มทั้งหมด (*.*)|*.*"
 
-#: HikariSub/HikariSubFrame.cpp:1069
+#: HikariSub/HikariSubFrame.cpp:1070
 msgid "Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*"
 msgstr "แฟ้มคีย์เฟรม (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|แฟ้มทั้งหมด (*.*)|*.*"
 
-#: HikariSub/HikariSubFrame.cpp:1124
+#: HikariSub/HikariSubFrame.cpp:1125
 #, c-format
 msgid ""
 "HikariSub subtitle editor by altqx,\n"
@@ -2728,7 +2755,7 @@ msgstr ""
 "โปรแกรมแก้ไขคำบรรยาย HikariSub โดย altqx\n"
 "เวอร์ชัน %s วันที่ %s"
 
-#: HikariSub/HikariSubFrame.cpp:1128
+#: HikariSub/HikariSubFrame.cpp:1129
 msgid ""
 "Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n"
 "\n"
@@ -2736,7 +2763,7 @@ msgstr ""
 "พัฒนาต่อยอดจาก Kainote ของ Marcin Drob หรือ Bakura หรือ Bjakja\n"
 "\n"
 
-#: HikariSub/HikariSubFrame.cpp:1129
+#: HikariSub/HikariSubFrame.cpp:1130
 msgid ""
 "If you have noticed any bugs or have any suggestions for changes or new features,\n"
 "open an issue at https://github.com/altqx/hikari/issues.\n"
@@ -2746,11 +2773,11 @@ msgstr ""
 "โปรดแจ้งได้ที่ https://github.com/altqx/hikari/issues\n"
 "\n"
 
-#: HikariSub/HikariSubFrame.cpp:1130
+#: HikariSub/HikariSubFrame.cpp:1131
 msgid "HikariSub includes parts of the following projects:\n"
 msgstr "HikariSub มีบางส่วนของโครงการดังต่อไปนี้:\n"
 
-#: HikariSub/HikariSubFrame.cpp:1132
+#: HikariSub/HikariSubFrame.cpp:1133
 msgid ""
 "Color picker, demuxing subtitles from MKV, audio box, audio player, automation,\n"
 "and several other individual features taken from Aegisub -\n"
@@ -2758,31 +2785,31 @@ msgstr ""
 "ตัวเลือกสี การแยกคำบรรยายจาก MKV หน้าต่างเสียง เครื่องเล่นเสียง Automation\n"
 "และคุณสมบัติอื่น ๆ อีกหลายรายการที่นำมาจาก Aegisub -\n"
 
-#: HikariSub/HikariSubFrame.cpp:1143
+#: HikariSub/HikariSubFrame.cpp:1144
 msgid "About HikariSub"
 msgstr "เกี่ยวกับ HikariSub"
 
-#: HikariSub/HikariSubFrame.cpp:1148
+#: HikariSub/HikariSubFrame.cpp:1149
 msgid "Graphical help: (buttons, help pictures etc.)\n"
 msgstr "ความช่วยเหลือด้านกราฟิก: (ปุ่ม, รูปภาพช่วยเหลือ ฯลฯ )\n"
 
-#: HikariSub/HikariSubFrame.cpp:1149
+#: HikariSub/HikariSubFrame.cpp:1150
 msgid "- Xandros (new video buttons).\n"
 msgstr "- Xandros (ปุ่มวิดีโอ)\n"
 
-#: HikariSub/HikariSubFrame.cpp:1150
+#: HikariSub/HikariSubFrame.cpp:1151
 msgid "- Devilkan (menu and toolbar buttons)\n"
 msgstr "- Devilkan (ไอคอนเมนูและแถบเครื่องมือ)\n"
 
-#: HikariSub/HikariSubFrame.cpp:1151
+#: HikariSub/HikariSubFrame.cpp:1152
 msgid "- Zły Los (icons for file associations and menu).\n"
 msgstr "- Zły Los (ไอคอนแฟ้มและเมนู)\n"
 
-#: HikariSub/HikariSubFrame.cpp:1152
+#: HikariSub/HikariSubFrame.cpp:1153
 msgid "Testers:\n"
 msgstr "ผู้ทดสอบ:\n"
 
-#: HikariSub/HikariSubFrame.cpp:1153
+#: HikariSub/HikariSubFrame.cpp:1154
 msgid ""
 "- Sacredus (first translator using translator mode,\n"
 "great help testing HikariSub on a slow computer)\n"
@@ -2790,57 +2817,57 @@ msgstr ""
 "- Sacredus (นักแปลคนแรกที่ใช้โหมดการแปล\n"
 "ช่วยได้มากในการทดสอบ HikariSub บนคอมพิวเตอร์ช้า)\n"
 
-#: HikariSub/HikariSubFrame.cpp:1154
+#: HikariSub/HikariSubFrame.cpp:1155
 msgid "- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n"
 msgstr "- Devilkan (ผู้ค้นหาข้อขัดข้อง ซึ่งพบข้อขัดข้องจำนวนมากจากระบบและพฤติกรรมการใช้งานของตน\n"
 
-#: HikariSub/HikariSubFrame.cpp:1155
+#: HikariSub/HikariSubFrame.cpp:1156
 msgid "helped with typesetting tools and came up with many more improvements).\n"
 msgstr "และช่วยปรับปรุงการทำงานของเครื่องมือจัดวางตัวอักษร รวมถึงเสนอการปรับปรุงอื่น ๆ อีกมากมาย)\n"
 
-#: HikariSub/HikariSubFrame.cpp:1156
+#: HikariSub/HikariSubFrame.cpp:1157
 msgid "- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n"
 msgstr "- MatiasMovie (พบข้อขัดข้องบางส่วน เสนอการปรับปรุงหลายรายการ และช่วยดีบักข้อขัดข้อง)\n"
 
-#: HikariSub/HikariSubFrame.cpp:1157
+#: HikariSub/HikariSubFrame.cpp:1158
 msgid "- mas1904 (found some errors and helping with crash debuging).\n"
 msgstr "- mas1904 (พบข้อผิดพลาดบางส่วนและช่วยดีบักข้อขัดข้อง)\n"
 
-#: HikariSub/HikariSubFrame.cpp:1158
+#: HikariSub/HikariSubFrame.cpp:1159
 msgid "- Senami (made new themes and found some bugs).\n"
 msgstr "- Senami (สร้างธีมใหม่และเป็นผู้พบข้อบกพร่องหลายอย่าง)\n"
 
-#: HikariSub/HikariSubFrame.cpp:1159
+#: HikariSub/HikariSubFrame.cpp:1160
 msgid "- altinat (Thai translation).\n"
 msgstr "- altinat (ผู้แปลภาษาไทย)\n"
 
-#: HikariSub/HikariSubFrame.cpp:1160
+#: HikariSub/HikariSubFrame.cpp:1161
 msgid "- labrie75 (Korean translation).\n"
 msgstr "- labrie75 (ผู้แปลภาษาเกาหลี)\n"
 
-#: HikariSub/HikariSubFrame.cpp:1161
+#: HikariSub/HikariSubFrame.cpp:1162
 msgid "- Niskala5570 (Malay translation).\n"
 msgstr "- Niskala5570 (ผู้แปลภาษามาเลย์)\n"
 
-#: HikariSub/HikariSubFrame.cpp:1162
+#: HikariSub/HikariSubFrame.cpp:1163
 msgid "Thanks to other HikariSub users who reported bugs:\n"
 msgstr "ขอขอบพระคุณผู้ที่ใช้โปรแกรมนี้และรายงานข้อผิดพลาด:\n"
 
-#: HikariSub/HikariSubFrame.cpp:1163 HikariSub/HotkeysNaming.cpp:179
-#: HikariSub/OptionsDialog.cpp:695
+#: HikariSub/HikariSubFrame.cpp:1164 HikariSub/HotkeysNaming.cpp:179
+#: HikariSub/OptionsDialog.cpp:699
 msgid "Credits"
 msgstr "เครดิต"
 
-#: HikariSub/HikariSubFrame.cpp:1297
+#: HikariSub/HikariSubFrame.cpp:1298
 msgid "Subtitle file "
 msgstr "แฟ้มคำบรรยาย "
 
-#: HikariSub/HikariSubFrame.cpp:1307
+#: HikariSub/HikariSubFrame.cpp:1308
 msgid "Save subtitle file"
 msgstr "บันทึกแฟ้มคำบรรยาย"
 
-#: HikariSub/HikariSubFrame.cpp:1314 HikariSub/HikariSubFrame.cpp:1328
-#: HikariSub/HikariSubFrame.cpp:2641
+#: HikariSub/HikariSubFrame.cpp:1315 HikariSub/HikariSubFrame.cpp:1329
+#: HikariSub/HikariSubFrame.cpp:2642
 msgid ""
 "Chosen file is read only,\n"
 "please save with different name or change file attribute."
@@ -2848,85 +2875,85 @@ msgstr ""
 "แฟ้มที่เลือกเป็นแบบอ่านอย่างเดียว\n"
 "โปรดบันทึกโดยใช้ชื่ออื่นหรือเปลี่ยนคุณสมบัติของแฟ้ม"
 
-#: HikariSub/HikariSubFrame.cpp:1432
+#: HikariSub/HikariSubFrame.cpp:1433
 #, c-format
 msgid "Load subtitles named \"%s\"?"
 msgstr "ต้องการโหลดคำบรรยายชื่อ \"%s\" หรือไม่?"
 
-#: HikariSub/HikariSubFrame.cpp:1505 HikariSub/VideoBox.cpp:1939
+#: HikariSub/HikariSubFrame.cpp:1506 HikariSub/VideoBox.cpp:1968
 msgid "Cannot open subtitle file"
 msgstr "ไม่สามารถเปิดแฟ้มคำบรรยายได้"
 
-#: HikariSub/HikariSubFrame.cpp:1669 HikariSub/OptionsDialog.cpp:772
-#: HikariSub/ProviderFFMS2.cpp:1043 HikariSub/ProviderFFMS2.cpp:1054
+#: HikariSub/HikariSubFrame.cpp:1670 HikariSub/OptionsDialog.cpp:776
+#: HikariSub/ProviderFFMS2.cpp:1047 HikariSub/ProviderFFMS2.cpp:1058
 #: HikariSub/ScriptInfo.cpp:119 HikariSub/stylestore.cpp:771
 #: HikariSub/stylestore.cpp:772
 msgid "None"
 msgstr "ไม่มี"
 
-#: HikariSub/HikariSubFrame.cpp:2237
+#: HikariSub/HikariSubFrame.cpp:2238
 #, c-format
 msgid "Save subtitles named \"%s\" before %s?"
 msgstr "ต้องการบันทึกคำบรรยาย \"%s\" ก่อน %s หรือไม่?"
 
-#: HikariSub/HikariSubFrame.cpp:2238
+#: HikariSub/HikariSubFrame.cpp:2239
 msgid "exiting program"
 msgstr "กำลังออกจากโปรแกรม"
 
-#: HikariSub/HikariSubFrame.cpp:2239
+#: HikariSub/HikariSubFrame.cpp:2240
 msgid "closing tab"
 msgstr "กำลังปิดแท็บ"
 
-#: HikariSub/HikariSubFrame.cpp:2240
+#: HikariSub/HikariSubFrame.cpp:2241
 msgid "loading new subtitles"
 msgstr "กำลังโหลดคำบรรยายใหม่"
 
-#: HikariSub/HikariSubFrame.cpp:2241
+#: HikariSub/HikariSubFrame.cpp:2242
 msgid "removing subtitles"
 msgstr "กำลังลบคำบรรยาย"
 
-#: HikariSub/HikariSubFrame.cpp:2276 HikariSub/OptionsDialog.cpp:708
+#: HikariSub/HikariSubFrame.cpp:2277 HikariSub/OptionsDialog.cpp:712
 msgid "Cannot load audio hotkeys"
 msgstr "ไม่สามารถโหลดปุ่มลัดเสียงได้"
 
-#: HikariSub/HikariSubFrame.cpp:2277 HikariSub/OptionsDialog.cpp:311
-#: HikariSub/ProviderFFMS2.cpp:114
+#: HikariSub/HikariSubFrame.cpp:2278 HikariSub/OptionsDialog.cpp:311
+#: HikariSub/ProviderFFMS2.cpp:117
 msgid "Cannot load audio configuration"
 msgstr "ไม่สามารถโหลดการตั้งค่าเสียงได้"
 
-#: HikariSub/HikariSubFrame.cpp:2281
+#: HikariSub/HikariSubFrame.cpp:2282
 msgid "Choose audio file"
 msgstr "เลือกแฟ้มเสียง"
 
-#: HikariSub/HikariSubFrame.cpp:2284
+#: HikariSub/HikariSubFrame.cpp:2285
 msgid "Audio and video files"
 msgstr "แฟ้มเสียงและวิดีโอ"
 
-#: HikariSub/HikariSubFrame.cpp:2286
+#: HikariSub/HikariSubFrame.cpp:2287
 msgid "All files"
 msgstr "แฟ้มทั้งหมด"
 
-#: HikariSub/HikariSubFrame.cpp:2445
+#: HikariSub/HikariSubFrame.cpp:2446
 msgid "Undo to "
 msgstr "เลิกทำจนถึง "
 
-#: HikariSub/HikariSubFrame.cpp:2461
+#: HikariSub/HikariSubFrame.cpp:2462
 msgid "Redo to "
 msgstr "ทำซ้ำจนถึง "
 
-#: HikariSub/HikariSubFrame.cpp:2624
+#: HikariSub/HikariSubFrame.cpp:2625
 msgid "Choose session file"
 msgstr "เลือกแฟ้มเซสชัน"
 
-#: HikariSub/HikariSubFrame.cpp:2626 HikariSub/HikariSubFrame.cpp:2635
+#: HikariSub/HikariSubFrame.cpp:2627 HikariSub/HikariSubFrame.cpp:2636
 msgid "Session file (*.kls),|*.kls"
 msgstr "แฟ้มเซสชัน (*.kls),|*.kls"
 
-#: HikariSub/HikariSubFrame.cpp:2634
+#: HikariSub/HikariSubFrame.cpp:2635
 msgid "Save session file"
 msgstr "บันทึกแฟ้มเซสชัน"
 
-#: HikariSub/HikariSubFrame.cpp:2738
+#: HikariSub/HikariSubFrame.cpp:2739
 #, c-format
 msgid "Hotkey \"%s\" it's not script hotkey."
 msgstr "ปุ่มลัด \"%s\" ไม่ใช่ปุ่มลัดของสคริปต์"
@@ -2954,7 +2981,7 @@ msgid "Style manager"
 msgstr "ตัวจัดการสไตล์"
 
 #: HikariSub/Hotkeys.cpp:153 HikariSub/HotkeysNaming.cpp:223
-#: HikariSub/VideoBox.cpp:999
+#: HikariSub/VideoBox.cpp:1028
 msgid "Open subtitles"
 msgstr "เปิดคำบรรยาย"
 
@@ -2968,7 +2995,7 @@ msgid "Save as..."
 msgstr "บันทึกเป็น…"
 
 #: HikariSub/Hotkeys.cpp:156 HikariSub/HotkeysNaming.cpp:233
-#: HikariSub/SubsGrid.cpp:286
+#: HikariSub/SubsGrid.cpp:288
 msgid "Delete text"
 msgstr "ลบข้อความ"
 
@@ -3024,17 +3051,17 @@ msgid "Duplicate lines"
 msgstr "ทำบรรทัดซ้ำ"
 
 #: HikariSub/Hotkeys.cpp:175 HikariSub/HotkeysNaming.cpp:112
-#: HikariSub/SubsGrid.cpp:270
+#: HikariSub/SubsGrid.cpp:272
 msgid "Copy columns"
 msgstr "คัดลอกคอลัมน์"
 
 #: HikariSub/Hotkeys.cpp:176 HikariSub/HotkeysNaming.cpp:148
-#: HikariSub/SubsGrid.cpp:271
+#: HikariSub/SubsGrid.cpp:273
 msgid "Paste columns"
 msgstr "วางคอลัมน์"
 
 #: HikariSub/Hotkeys.cpp:177 HikariSub/HotkeysNaming.cpp:154
-#: HikariSub/SubsGrid.cpp:278
+#: HikariSub/SubsGrid.cpp:280
 msgid "Show subtitles preview"
 msgstr "แสดงตัวอย่างคำบรรยาย"
 
@@ -3055,12 +3082,12 @@ msgid "1 minute backward"
 msgstr "ย้อนหลังไป 1 นาที"
 
 #: HikariSub/Hotkeys.cpp:183 HikariSub/HotkeysNaming.cpp:260
-#: HikariSub/VideoBox.cpp:166 HikariSub/VideoFullscreen.cpp:66
+#: HikariSub/VideoBox.cpp:167 HikariSub/VideoFullscreen.cpp:66
 msgid "Next file"
 msgstr "แฟ้มถัดไป"
 
 #: HikariSub/Hotkeys.cpp:184 HikariSub/HotkeysNaming.cpp:266
-#: HikariSub/VideoBox.cpp:158
+#: HikariSub/VideoBox.cpp:159
 msgid "Previous file"
 msgstr "แฟ้มก่อนหน้า"
 
@@ -3133,7 +3160,7 @@ msgid "Next line alt"
 msgstr "บรรทัดถัดไป (ทางเลือก)"
 
 #: HikariSub/Hotkeys.cpp:207 HikariSub/HotkeysNaming.cpp:53
-#: HikariSub/VideoBox.cpp:954
+#: HikariSub/VideoBox.cpp:983
 msgid "Play"
 msgstr "เล่น"
 
@@ -3150,8 +3177,8 @@ msgid "Play line alt"
 msgstr "เล่นบรรทัด (ทางเลือก)"
 
 #: HikariSub/Hotkeys.cpp:211 HikariSub/HotkeysNaming.cpp:57
-#: HikariSub/HotkeysNaming.cpp:272 HikariSub/VideoBox.cpp:164
-#: HikariSub/VideoBox.cpp:961 HikariSub/VideoFullscreen.cpp:64
+#: HikariSub/HotkeysNaming.cpp:272 HikariSub/VideoBox.cpp:165
+#: HikariSub/VideoBox.cpp:990 HikariSub/VideoFullscreen.cpp:64
 msgid "Stop"
 msgstr "หยุด"
 
@@ -3330,104 +3357,104 @@ msgstr "ปุ่มแท็กที่สิบเก้า"
 msgid "20th tag button"
 msgstr "ปุ่มแท็กที่ยี่สิบ"
 
-#: HikariSub/HotkeysNaming.cpp:110 HikariSub/SubsGrid.cpp:264
+#: HikariSub/HotkeysNaming.cpp:110 HikariSub/SubsGrid.cpp:266
 msgid "Set times as a continuous (next line)"
 msgstr "กำหนดค่าเวลาเป็นแบบต่อเนื่อง (บรรทัดถัดไป)"
 
-#: HikariSub/HotkeysNaming.cpp:111 HikariSub/SubsGrid.cpp:263
+#: HikariSub/HotkeysNaming.cpp:111 HikariSub/SubsGrid.cpp:265
 msgid "Set times as a continuous (previous line)"
 msgstr "กำหนดค่าเวลาเป็นแบบต่อเนื่อง (บรรทัดก่อนหน้า)"
 
-#: HikariSub/HotkeysNaming.cpp:114 HikariSub/SubsGrid.cpp:235
+#: HikariSub/HotkeysNaming.cpp:114 HikariSub/SubsGrid.cpp:237
 msgid "Hide comments"
 msgstr "ซ่อนความคิดเห็น"
 
-#: HikariSub/HotkeysNaming.cpp:115 HikariSub/SubsGrid.cpp:236
+#: HikariSub/HotkeysNaming.cpp:115 HikariSub/SubsGrid.cpp:238
 msgid "Show unconfirmed"
 msgstr "แสดงบรรทัดที่ยังไม่ยืนยัน"
 
-#: HikariSub/HotkeysNaming.cpp:116 HikariSub/SubsGrid.cpp:239
+#: HikariSub/HotkeysNaming.cpp:116 HikariSub/SubsGrid.cpp:241
 msgid "Turn off filtering"
 msgstr "ปิดใช้งานการกรอง"
 
 #: HikariSub/HotkeysNaming.cpp:117 HikariSub/HotkeysNaming.cpp:138
-#: HikariSub/SubsGrid.cpp:234 HikariSub/SubsGrid.cpp:273
+#: HikariSub/SubsGrid.cpp:236 HikariSub/SubsGrid.cpp:275
 msgid "Hide selected lines"
 msgstr "ซ่อนบรรทัดที่เลือก"
 
-#: HikariSub/HotkeysNaming.cpp:118 HikariSub/SubsGrid.cpp:232
+#: HikariSub/HotkeysNaming.cpp:118 HikariSub/SubsGrid.cpp:234
 msgid "Hide lines with styles"
 msgstr "ซ่อนบรรทัดตามสไตล์"
 
-#: HikariSub/HotkeysNaming.cpp:119 HikariSub/SubsGrid.cpp:237
+#: HikariSub/HotkeysNaming.cpp:119 HikariSub/SubsGrid.cpp:239
 msgid "Show untranslated"
 msgstr "แสดงบรรทัดที่ยังไม่ได้แปล"
 
-#: HikariSub/HotkeysNaming.cpp:120 HikariSub/SubsGrid.cpp:280
+#: HikariSub/HotkeysNaming.cpp:120 HikariSub/SubsGrid.cpp:282
 msgid "Set FPS from video"
 msgstr "กำหนดค่า FPS จากวิดีโอ"
 
-#: HikariSub/HotkeysNaming.cpp:122 HikariSub/SubsGrid.cpp:229
+#: HikariSub/HotkeysNaming.cpp:122 HikariSub/SubsGrid.cpp:231
 msgid "Filter after loading subtitles"
 msgstr "ใช้ตัวกรองหลังจากโหลดคำบรรยาย"
 
-#: HikariSub/HotkeysNaming.cpp:123 HikariSub/SubsGrid.cpp:231
+#: HikariSub/HotkeysNaming.cpp:123 HikariSub/SubsGrid.cpp:233
 msgid "Do not reset previous filtering"
 msgstr "อย่ารีเซ็ตตัวกรองก่อนหน้า"
 
-#: HikariSub/HotkeysNaming.cpp:124 HikariSub/SubsGrid.cpp:275
+#: HikariSub/HotkeysNaming.cpp:124 HikariSub/SubsGrid.cpp:277
 msgid "Ignore filtering in some actions"
 msgstr "ไม่ใช้ตัวกรองกับการดำเนินการบางอย่าง"
 
-#: HikariSub/HotkeysNaming.cpp:125 HikariSub/SubsGrid.cpp:230
+#: HikariSub/HotkeysNaming.cpp:125 HikariSub/SubsGrid.cpp:232
 msgid "Reverse filtering"
 msgstr "กรองย้อนกลับ"
 
-#: HikariSub/HotkeysNaming.cpp:126 HikariSub/SubsGrid.cpp:194
+#: HikariSub/HotkeysNaming.cpp:126 HikariSub/SubsGrid.cpp:196
 msgid "Hide actor"
 msgstr "ซ่อนผู้พูด"
 
-#: HikariSub/HotkeysNaming.cpp:127 HikariSub/SubsGrid.cpp:200
+#: HikariSub/HotkeysNaming.cpp:127 HikariSub/SubsGrid.cpp:202
 msgid "Hide characters per second"
 msgstr "ซ่อนอักขระต่อวินาที"
 
-#: HikariSub/HotkeysNaming.cpp:128 HikariSub/SubsGrid.cpp:193
+#: HikariSub/HotkeysNaming.cpp:128 HikariSub/SubsGrid.cpp:195
 msgid "Hide end time"
 msgstr "ซ่อนเวลาสิ้นสุด"
 
-#: HikariSub/HotkeysNaming.cpp:129 HikariSub/SubsGrid.cpp:199
+#: HikariSub/HotkeysNaming.cpp:129 HikariSub/SubsGrid.cpp:201
 msgid "Hide effect"
 msgstr "ซ่อนเอฟเฟกต์"
 
-#: HikariSub/HotkeysNaming.cpp:130 HikariSub/SubsGrid.cpp:191
+#: HikariSub/HotkeysNaming.cpp:130 HikariSub/SubsGrid.cpp:193
 msgid "Hide layer"
 msgstr "ซ่อนชั้น"
 
-#: HikariSub/HotkeysNaming.cpp:131 HikariSub/SubsGrid.cpp:196
+#: HikariSub/HotkeysNaming.cpp:131 HikariSub/SubsGrid.cpp:198
 msgid "Hide left margin"
 msgstr "ซ่อนระยะขอบซ้าย"
 
-#: HikariSub/HotkeysNaming.cpp:132 HikariSub/SubsGrid.cpp:197
+#: HikariSub/HotkeysNaming.cpp:132 HikariSub/SubsGrid.cpp:199
 msgid "Hide right margin"
 msgstr "ซ่อนระยะขอบขวา"
 
-#: HikariSub/HotkeysNaming.cpp:133 HikariSub/SubsGrid.cpp:198
+#: HikariSub/HotkeysNaming.cpp:133 HikariSub/SubsGrid.cpp:200
 msgid "Hide vertical margin"
 msgstr "ซ่อนระยะขอบแนวตั้ง"
 
-#: HikariSub/HotkeysNaming.cpp:134 HikariSub/SubsGrid.cpp:192
+#: HikariSub/HotkeysNaming.cpp:134 HikariSub/SubsGrid.cpp:194
 msgid "Hide start time"
 msgstr "ซ่อนเวลาเริ่มต้น"
 
-#: HikariSub/HotkeysNaming.cpp:135 HikariSub/SubsGrid.cpp:195
+#: HikariSub/HotkeysNaming.cpp:135 HikariSub/SubsGrid.cpp:197
 msgid "Hide style"
 msgstr "ซ่อนสไตล์"
 
-#: HikariSub/HotkeysNaming.cpp:136 HikariSub/SubsGrid.cpp:277
+#: HikariSub/HotkeysNaming.cpp:136 HikariSub/SubsGrid.cpp:279
 msgid "Make tree"
 msgstr "สร้างโครงสร้างต้นไม้"
 
-#: HikariSub/HotkeysNaming.cpp:137 HikariSub/SubsGrid.cpp:266
+#: HikariSub/HotkeysNaming.cpp:137 HikariSub/SubsGrid.cpp:268
 msgid "Select all lines visible on video"
 msgstr "เลือกบรรทัดทั้งหมดที่ปรากฏในวิดีโอ"
 
@@ -3439,7 +3466,7 @@ msgstr "แทรกหลัง"
 msgid "Insert after with video time"
 msgstr "แทรกหลังด้วยเวลาวิดีโอ"
 
-#: HikariSub/HotkeysNaming.cpp:141 HikariSub/SubsGrid.cpp:249
+#: HikariSub/HotkeysNaming.cpp:141 HikariSub/SubsGrid.cpp:251
 msgid "Insert after with video frame time"
 msgstr "แทรกหลังด้วยเฟรมวิดีโอ"
 
@@ -3451,7 +3478,7 @@ msgstr "แทรกก่อน"
 msgid "Insert before with video time"
 msgstr "แทรกก่อนด้วยเวลาวิดีโอ"
 
-#: HikariSub/HotkeysNaming.cpp:144 HikariSub/SubsGrid.cpp:248
+#: HikariSub/HotkeysNaming.cpp:144 HikariSub/SubsGrid.cpp:250
 msgid "Insert before with video frame time"
 msgstr "แทรกก่อนด้วยเฟรมวิดีโอ"
 
@@ -3460,15 +3487,15 @@ msgstr "แทรกก่อนด้วยเฟรมวิดีโอ"
 msgid "Join lines"
 msgstr "รวมบรรทัด"
 
-#: HikariSub/HotkeysNaming.cpp:146 HikariSub/SubsGrid.cpp:260
+#: HikariSub/HotkeysNaming.cpp:146 HikariSub/SubsGrid.cpp:262
 msgid "Join lines and keep first"
 msgstr "รวมบรรทัดโดยคงข้อความของบรรทัดแรก"
 
-#: HikariSub/HotkeysNaming.cpp:147 HikariSub/SubsGrid.cpp:261
+#: HikariSub/HotkeysNaming.cpp:147 HikariSub/SubsGrid.cpp:263
 msgid "Join lines and keep last"
 msgstr "รวมบรรทัดโดยคงข้อความของบรรทัดสุดท้าย"
 
-#: HikariSub/HotkeysNaming.cpp:149 HikariSub/SubsGrid.cpp:281
+#: HikariSub/HotkeysNaming.cpp:149 HikariSub/SubsGrid.cpp:283
 msgid "Paste translation text"
 msgstr "วางข้อความแปล"
 
@@ -3480,31 +3507,31 @@ msgstr "โหลดคำบรรยายจากแฟ้ม MKV"
 msgid "Swap lines"
 msgstr "สลับบรรทัด"
 
-#: HikariSub/HotkeysNaming.cpp:152 HikariSub/SubsGrid.cpp:283
+#: HikariSub/HotkeysNaming.cpp:152 HikariSub/SubsGrid.cpp:285
 msgid "Dialogue shifting window"
 msgstr "หน้าต่างเลื่อนบทสนทนา"
 
-#: HikariSub/HotkeysNaming.cpp:153 HikariSub/SubsGrid.cpp:279
+#: HikariSub/HotkeysNaming.cpp:153 HikariSub/SubsGrid.cpp:281
 msgid "Set new FPS"
 msgstr "กำหนดค่า FPS ใหม่"
 
-#: HikariSub/HotkeysNaming.cpp:155 HikariSub/SubsGrid.cpp:205
+#: HikariSub/HotkeysNaming.cpp:155 HikariSub/SubsGrid.cpp:207
 msgid "Split line at video time"
 msgstr "แบ่งบรรทัดตามเวลาวิดีโอ"
 
-#: HikariSub/HotkeysNaming.cpp:156 HikariSub/SubsGrid.cpp:207
+#: HikariSub/HotkeysNaming.cpp:156 HikariSub/SubsGrid.cpp:209
 msgid "Split lines into frames"
 msgstr "แบ่งบรรทัดเป็นเฟรม"
 
-#: HikariSub/HotkeysNaming.cpp:157 HikariSub/SubsGrid.cpp:209
+#: HikariSub/HotkeysNaming.cpp:157 HikariSub/SubsGrid.cpp:211
 msgid "Split lines into characters"
 msgstr "แบ่งบรรทัดเป็นอักขระ"
 
-#: HikariSub/HotkeysNaming.cpp:158 HikariSub/SubsGrid.cpp:210
+#: HikariSub/HotkeysNaming.cpp:158 HikariSub/SubsGrid.cpp:212
 msgid "Split lines into words"
 msgstr "แบ่งบรรทัดเป็นคำ"
 
-#: HikariSub/HotkeysNaming.cpp:159 HikariSub/SubsGrid.cpp:211
+#: HikariSub/HotkeysNaming.cpp:159 HikariSub/SubsGrid.cpp:213
 msgid "Split lines by wraps"
 msgstr "แบ่งบรรทัดตามจุดแบ่งบรรทัด"
 
@@ -3608,27 +3635,27 @@ msgstr "เลือกบรรทัด"
 msgid "Settings"
 msgstr "การตั้งค่า"
 
-#: HikariSub/HotkeysNaming.cpp:253 HikariSub/VideoBox.cpp:1006
+#: HikariSub/HotkeysNaming.cpp:253 HikariSub/VideoBox.cpp:1035
 msgid "Copy frame to clipboard"
 msgstr "คัดลอกเฟรมไปยังคลิปบอร์ด"
 
-#: HikariSub/HotkeysNaming.cpp:254 HikariSub/VideoBox.cpp:1009
+#: HikariSub/HotkeysNaming.cpp:254 HikariSub/VideoBox.cpp:1038
 msgid "Remove video"
 msgstr "นำวิดีโอออก"
 
-#: HikariSub/HotkeysNaming.cpp:255 HikariSub/VideoBox.cpp:1005
+#: HikariSub/HotkeysNaming.cpp:255 HikariSub/VideoBox.cpp:1034
 msgid "Save frame as PNG"
 msgstr "บันทึกเฟรมเป็น PNG"
 
-#: HikariSub/HotkeysNaming.cpp:258 HikariSub/VideoBox.cpp:1001
+#: HikariSub/HotkeysNaming.cpp:258 HikariSub/VideoBox.cpp:1030
 msgid "Show / hide progress bar"
 msgstr "แสดงหรือซ่อนแถบความคืบหน้า"
 
-#: HikariSub/HotkeysNaming.cpp:262 HikariSub/VideoBox.cpp:1002
+#: HikariSub/HotkeysNaming.cpp:262 HikariSub/VideoBox.cpp:1031
 msgid "Change aspect ratio"
 msgstr "เปลี่ยนอัตราส่วนภาพ"
 
-#: HikariSub/HotkeysNaming.cpp:267 HikariSub/VideoBox.cpp:1004
+#: HikariSub/HotkeysNaming.cpp:267 HikariSub/VideoBox.cpp:1033
 msgid "Copy frame with subtitles to clipboard"
 msgstr "คัดลอกเฟรมพร้อมคำบรรยายไปยังคลิปบอร์ด"
 
@@ -3636,7 +3663,7 @@ msgstr "คัดลอกเฟรมพร้อมคำบรรยายไ
 msgid "Full screen"
 msgstr "เต็มหน้าจอ"
 
-#: HikariSub/HotkeysNaming.cpp:271 HikariSub/VideoBox.cpp:1003
+#: HikariSub/HotkeysNaming.cpp:271 HikariSub/VideoBox.cpp:1032
 msgid "Save frame with subtitles as PNG"
 msgstr "บันทึกเฟรมพร้อมคำบรรยายเป็น PNG"
 
@@ -3644,7 +3671,7 @@ msgstr "บันทึกเฟรมพร้อมคำบรรยายเ
 msgid "Log window"
 msgstr "หน้าต่างบันทึก"
 
-#: HikariSub/MappedButton.cpp:41 HikariSub/OptionsDialog.cpp:1065
+#: HikariSub/MappedButton.cpp:41 HikariSub/OptionsDialog.cpp:1069
 #: HikariSub/StyleChange.cpp:270 HikariSub/VisualAllTagsEdition.cpp:126
 #: HikariSub/VisualDrawingShapes.cpp:102
 msgid "Apply"
@@ -3710,15 +3737,15 @@ msgstr "ค้นหากฎ"
 msgid "Rule replace"
 msgstr "แทนที่กฎ"
 
-#: HikariSub/MisspellReplacer.cpp:103 HikariSub/ShiftTimes.cpp:267
+#: HikariSub/MisspellReplacer.cpp:103 HikariSub/ShiftTimes.cpp:266
 msgid "Which lines"
 msgstr "บรรทัดใด"
 
-#: HikariSub/MisspellReplacer.cpp:104 HikariSub/ShiftTimes.cpp:273
+#: HikariSub/MisspellReplacer.cpp:104 HikariSub/ShiftTimes.cpp:272
 msgid "According to the selected styles"
 msgstr "ตามสไตล์ที่เลือก"
 
-#: HikariSub/MisspellReplacer.cpp:104 HikariSub/ShiftTimes.cpp:270
+#: HikariSub/MisspellReplacer.cpp:104 HikariSub/ShiftTimes.cpp:269
 msgid "From the selected line"
 msgstr "บรรทัดที่เลือกเป็นต้นไป"
 
@@ -3783,8 +3810,8 @@ msgstr ""
 "ไม่สามารถเปลี่ยนกฎ\n"
 "ขณะที่หน้าต่างผลลัพธ์การค้นหาเปิดอยู่"
 
-#: HikariSub/MisspellReplacer.cpp:613 HikariSub/findreplace.cpp:279
-#: HikariSub/findreplace.cpp:1753
+#: HikariSub/MisspellReplacer.cpp:613 HikariSub/findreplace.cpp:295
+#: HikariSub/findreplace.cpp:1772
 #, c-format
 msgid ""
 "Line %i cannot be replaced,\n"
@@ -4113,144 +4140,144 @@ msgstr "ตรวจหาอัปเดตโดยอัตโนมัติ
 msgid "When the program starts: once a day, or an hour after a check that failed"
 msgstr "เมื่อเริ่มโปรแกรม: วันละครั้ง หรือหนึ่งชั่วโมงหลังจากการตรวจสอบที่ล้มเหลว"
 
-#: HikariSub/OptionsDialog.cpp:379 HikariSub/UpdateChecker.cpp:237
+#: HikariSub/OptionsDialog.cpp:383 HikariSub/UpdateChecker.cpp:237
 msgid "Stable versions only"
 msgstr "เฉพาะเวอร์ชันเสถียร"
 
-#: HikariSub/OptionsDialog.cpp:381
+#: HikariSub/OptionsDialog.cpp:385
 msgid "A release candidate is still told about newer release candidates"
 msgstr "หากใช้รุ่น Release Candidate อยู่ จะยังได้รับแจ้งเมื่อมีรุ่น Release Candidate ที่ใหม่กว่า"
 
-#: HikariSub/OptionsDialog.cpp:388
+#: HikariSub/OptionsDialog.cpp:392
 msgid "Install updates automatically"
 msgstr "ติดตั้งอัปเดตโดยอัตโนมัติ"
 
-#: HikariSub/OptionsDialog.cpp:390
+#: HikariSub/OptionsDialog.cpp:394
 msgid "Downloads a new version in the background and installs it when you restart or quit"
 msgstr "ดาวน์โหลดเวอร์ชันใหม่ในเบื้องหลังและติดตั้งเมื่อคุณเริ่มโปรแกรมใหม่หรือออกจากโปรแกรม"
 
-#: HikariSub/OptionsDialog.cpp:410
+#: HikariSub/OptionsDialog.cpp:414
 msgid "0 turns off saving while editing"
 msgstr "0 ปิดการบันทึกขณะแก้ไข"
 
-#: HikariSub/OptionsDialog.cpp:412
+#: HikariSub/OptionsDialog.cpp:416
 msgid "Number of autosaves can be set from 2 to 1000000"
 msgstr "จำนวนแฟ้มบันทึกอัตโนมัติสามารถกำหนดค่าได้ตั้งแต่ 2 ถึง 1000000"
 
-#: HikariSub/OptionsDialog.cpp:417
+#: HikariSub/OptionsDialog.cpp:421
 msgid "Number of tab name characters. Range from 20 to 150"
 msgstr "จำนวนตัวอักษรชื่อของแท็บสามารถกำหนดค่าได้ตั้งแต่ 20 ถึง 150"
 
-#: HikariSub/OptionsDialog.cpp:431
+#: HikariSub/OptionsDialog.cpp:435
 msgid "Number of edits to save"
 msgstr "จำนวนการแก้ไขที่จะบันทึก"
 
-#: HikariSub/OptionsDialog.cpp:434
+#: HikariSub/OptionsDialog.cpp:438
 msgid "Maximum number of autosave files"
 msgstr "จำนวนแฟ้มบันทึกอัตโนมัติสูงสุด"
 
-#: HikariSub/OptionsDialog.cpp:437
+#: HikariSub/OptionsDialog.cpp:441
 msgid "Start frame offset in ms:"
 msgstr "ค่าชดเชยเฟรมเริ่มต้น (มิลลิวินาที):"
 
-#: HikariSub/OptionsDialog.cpp:440
+#: HikariSub/OptionsDialog.cpp:444
 msgid "End frame offset in ms:"
 msgstr "ค่าชดเชยเฟรมสิ้นสุด (มิลลิวินาที):"
 
-#: HikariSub/OptionsDialog.cpp:443
+#: HikariSub/OptionsDialog.cpp:447
 msgid "ASS tag replacement:"
 msgstr "แทนที่แท็ก ASS:"
 
-#: HikariSub/OptionsDialog.cpp:446
+#: HikariSub/OptionsDialog.cpp:450
 msgid "Number of tab name characters"
 msgstr "จำนวนอักขระในชื่อแท็บ"
 
-#: HikariSub/OptionsDialog.cpp:449
+#: HikariSub/OptionsDialog.cpp:453
 msgid "LUA scripts tracking level"
 msgstr "ระดับการติดตามของสคริปต์ Lua"
 
-#: HikariSub/OptionsDialog.cpp:458
+#: HikariSub/OptionsDialog.cpp:462
 msgid "Subtitle grid font:"
 msgstr "แบบอักษรของตารางคำบรรยาย:"
 
-#: HikariSub/OptionsDialog.cpp:465
+#: HikariSub/OptionsDialog.cpp:469
 msgid "Program font:"
 msgstr "แบบอักษรของโปรแกรม:"
 
-#: HikariSub/OptionsDialog.cpp:468
+#: HikariSub/OptionsDialog.cpp:472
 msgid "Calculate spaces and punctation characters for wraps"
 msgstr "นับช่องว่างและเครื่องหมายวรรคตอนในการแบ่งบรรทัด"
 
-#: HikariSub/OptionsDialog.cpp:471
+#: HikariSub/OptionsDialog.cpp:475
 msgid "Calculate spaces and punctation characters for CPS"
 msgstr "นับช่องว่างและเครื่องหมายวรรคตอนสำหรับ CPS"
 
-#: HikariSub/OptionsDialog.cpp:476
+#: HikariSub/OptionsDialog.cpp:480
 msgid "Autoload loading method"
 msgstr "วิธีโหลดสคริปต์อัตโนมัติ"
 
-#: HikariSub/OptionsDialog.cpp:477
+#: HikariSub/OptionsDialog.cpp:481
 msgid "After open menu"
 msgstr "หลังจากเปิดเมนู"
 
-#: HikariSub/OptionsDialog.cpp:477
+#: HikariSub/OptionsDialog.cpp:481
 msgid "After open menu asynchronously"
 msgstr "หลังจากเปิดเมนูอะซิงโครนัส"
 
-#: HikariSub/OptionsDialog.cpp:477
+#: HikariSub/OptionsDialog.cpp:481
 msgid "After program start"
 msgstr "หลังจากโปรแกรมเริ่มต้น"
 
-#: HikariSub/OptionsDialog.cpp:477
+#: HikariSub/OptionsDialog.cpp:481
 msgid "After program start asynchronously"
 msgstr "หลังจากโปรแกรมเริ่มต้นอะซิงโครนัส"
 
-#: HikariSub/OptionsDialog.cpp:483
+#: HikariSub/OptionsDialog.cpp:487
 msgid "Folder with external fonts"
 msgstr "โฟลเดอร์ที่มีแบบอักษรภายนอก"
 
-#: HikariSub/OptionsDialog.cpp:486 HikariSub/VideoToolbar.cpp:509
+#: HikariSub/OptionsDialog.cpp:490 HikariSub/VideoToolbar.cpp:509
 #: HikariSub/VideoToolbar.cpp:527
 msgid "Choose"
 msgstr "เลือก"
 
-#: HikariSub/OptionsDialog.cpp:488
+#: HikariSub/OptionsDialog.cpp:492
 msgid "Choose choose external font folder"
 msgstr "เลือกโฟลเดอร์แบบอักษรภายนอก"
 
-#: HikariSub/OptionsDialog.cpp:517
+#: HikariSub/OptionsDialog.cpp:521
 msgid "Choose catalog"
 msgstr "เลือกแคตตาล็อก"
 
-#: HikariSub/OptionsDialog.cpp:518
+#: HikariSub/OptionsDialog.cpp:522
 msgid "Choose style"
 msgstr "เลือกสไตล์"
 
-#: HikariSub/OptionsDialog.cpp:519
+#: HikariSub/OptionsDialog.cpp:523
 msgid "Choose FPS"
 msgstr "เลือก FPS"
 
-#: HikariSub/OptionsDialog.cpp:520
+#: HikariSub/OptionsDialog.cpp:524
 msgid "Time for one letter in milliseconds"
 msgstr "เวลาต่ออักขระหนึ่งตัว (มิลลิวินาที)"
 
-#: HikariSub/OptionsDialog.cpp:521
+#: HikariSub/OptionsDialog.cpp:525
 msgid "Tags to paste at the beginning of every ASS line"
 msgstr "แท็ก ASS ที่จะแทรกในจุดเริ่มต้นของทุกบรรทัด"
 
-#: HikariSub/OptionsDialog.cpp:522
+#: HikariSub/OptionsDialog.cpp:526
 msgid "Resolution when converting to ASS"
 msgstr "ความละเอียดเมื่อแปลงเป็น ASS"
 
-#: HikariSub/OptionsDialog.cpp:552
+#: HikariSub/OptionsDialog.cpp:556
 msgid "catalog for style"
 msgstr "แคตตาล็อกของสไตล์"
 
-#: HikariSub/OptionsDialog.cpp:552
+#: HikariSub/OptionsDialog.cpp:556
 msgid "style"
 msgstr "สไตล์"
 
-#: HikariSub/OptionsDialog.cpp:553
+#: HikariSub/OptionsDialog.cpp:557
 #, c-format
 msgid ""
 "The selected %s for conversion does not exist\n"
@@ -4259,159 +4286,159 @@ msgstr ""
 "การตั้งค่า %s ที่เลือกไม่มีอยู่\n"
 "จะเปลี่ยนเป็นค่าเริ่มต้น"
 
-#: HikariSub/OptionsDialog.cpp:582
+#: HikariSub/OptionsDialog.cpp:586
 msgid "FPS from video"
 msgstr "FPS ตามวิดีโอ"
 
-#: HikariSub/OptionsDialog.cpp:583
+#: HikariSub/OptionsDialog.cpp:587
 msgid "New end times"
 msgstr "เวลาสิ้นสุดใหม่"
 
-#: HikariSub/OptionsDialog.cpp:583
+#: HikariSub/OptionsDialog.cpp:587
 msgid "Show window before conversion"
 msgstr "แสดงหน้าต่างก่อนการแปลง"
 
-#: HikariSub/OptionsDialog.cpp:618
+#: HikariSub/OptionsDialog.cpp:622
 msgid "Left mouse button pauses video"
 msgstr "คลิกซ้ายเพื่อหยุดวิดีโอชั่วคราว"
 
-#: HikariSub/OptionsDialog.cpp:618
+#: HikariSub/OptionsDialog.cpp:622
 msgid "Open video from context menu on full screen"
 msgstr "เปิดวิดีโอจากเมนูบริบทแบบเต็มหน้าจอ"
 
-#: HikariSub/OptionsDialog.cpp:619
+#: HikariSub/OptionsDialog.cpp:623
 msgid "Convert video colours on the GPU (requires reloading)"
 msgstr "แปลงสีวิดีโอด้วย GPU (ต้องโหลดใหม่)"
 
-#: HikariSub/OptionsDialog.cpp:619
+#: HikariSub/OptionsDialog.cpp:623
 msgid "Open video with time of active line"
 msgstr "เปิดวิดีโอตามเวลาของบรรทัดปัจจุบัน"
 
-#: HikariSub/OptionsDialog.cpp:620
+#: HikariSub/OptionsDialog.cpp:624
 msgid "Preferred audio (separated by semicolons)"
 msgstr "แทร็กเสียงที่ต้องการ (คั่นด้วยเครื่องหมายอัฒภาค)"
 
-#: HikariSub/OptionsDialog.cpp:621
+#: HikariSub/OptionsDialog.cpp:625
 msgid "FFMS2 video seeking method (requires reloading)"
 msgstr "วิธีค้นหาวิดีโอใน FFMS2 (ต้องโหลดใหม่)"
 
-#: HikariSub/OptionsDialog.cpp:621
+#: HikariSub/OptionsDialog.cpp:625
 msgid "Subtitle display filter"
 msgstr "ตัวกรองการแสดงผลคำบรรยาย"
 
-#: HikariSub/OptionsDialog.cpp:622
+#: HikariSub/OptionsDialog.cpp:626
 msgid "Start video zoom in percent."
 msgstr "การซูมวิดีโอเริ่มต้นเป็นเปอร์เซ็นต์"
 
-#: HikariSub/OptionsDialog.cpp:641
+#: HikariSub/OptionsDialog.cpp:645
 msgid "Linear"
 msgstr "เชิงเส้น"
 
-#: HikariSub/OptionsDialog.cpp:641 HikariSub/ScriptInfo.cpp:144
+#: HikariSub/OptionsDialog.cpp:645 HikariSub/ScriptInfo.cpp:144
 msgid "Normal"
 msgstr "ปกติ"
 
-#: HikariSub/OptionsDialog.cpp:642
+#: HikariSub/OptionsDialog.cpp:646
 msgid "Aggressive (fast in rewind)"
 msgstr "เชิงรุก (กรอกลับได้เร็ว)"
 
-#: HikariSub/OptionsDialog.cpp:642
+#: HikariSub/OptionsDialog.cpp:646
 msgid "Unsafe (always fast)"
 msgstr "ไม่ปลอดภัย (เร็วเสมอ)"
 
-#: HikariSub/OptionsDialog.cpp:686
+#: HikariSub/OptionsDialog.cpp:690
 msgid "Choose filtering"
 msgstr "เลือกการกรอง"
 
-#: HikariSub/OptionsDialog.cpp:687
+#: HikariSub/OptionsDialog.cpp:691
 msgid "Global shortcuts"
 msgstr "ปุ่มลัดส่วนกลาง"
 
-#: HikariSub/OptionsDialog.cpp:687
+#: HikariSub/OptionsDialog.cpp:691
 msgid "Set shortcuts"
 msgstr "ตั้งค่าปุ่มลัด"
 
-#: HikariSub/OptionsDialog.cpp:688
+#: HikariSub/OptionsDialog.cpp:692
 msgid "Audio Shortcuts"
 msgstr "ปุ่มลัดเสียง"
 
-#: HikariSub/OptionsDialog.cpp:688
+#: HikariSub/OptionsDialog.cpp:692
 msgid "Editor shortcuts"
 msgstr "ปุ่มลัดตัวแก้ไข"
 
-#: HikariSub/OptionsDialog.cpp:688
+#: HikariSub/OptionsDialog.cpp:692
 msgid "Subtitle shortcuts"
 msgstr "ปุ่มลัดคำบรรยาย"
 
-#: HikariSub/OptionsDialog.cpp:688
+#: HikariSub/OptionsDialog.cpp:692
 msgid "Video shortcuts"
 msgstr "ปุ่มลัดวิดีโอ"
 
-#: HikariSub/OptionsDialog.cpp:691
+#: HikariSub/OptionsDialog.cpp:695
 msgid "Filtering mode:"
 msgstr "โหมดการกรอง:"
 
-#: HikariSub/OptionsDialog.cpp:702
+#: HikariSub/OptionsDialog.cpp:706
 msgid "Function"
 msgstr "ฟังก์ชัน"
 
-#: HikariSub/OptionsDialog.cpp:717
+#: HikariSub/OptionsDialog.cpp:721
 msgid "Restore default hotkey"
 msgstr "คืนค่าปุ่มลัดเป็นค่าเริ่มต้น"
 
-#: HikariSub/OptionsDialog.cpp:740
+#: HikariSub/OptionsDialog.cpp:744
 msgid "Show background selection"
 msgstr "แสดงการเลือกพื้นหลัง"
 
-#: HikariSub/OptionsDialog.cpp:740
+#: HikariSub/OptionsDialog.cpp:744
 msgid "Show seconds markers"
 msgstr "แสดงเครื่องหมายวินาที"
 
-#: HikariSub/OptionsDialog.cpp:740
+#: HikariSub/OptionsDialog.cpp:744
 msgid "Show time next to cursor"
 msgstr "แสดงเวลาที่เคอร์เซอร์"
 
-#: HikariSub/OptionsDialog.cpp:741
+#: HikariSub/OptionsDialog.cpp:745
 msgid "Follow audio during playback"
 msgstr "เลื่อนกราฟเสียงตามในระหว่างการเล่น"
 
-#: HikariSub/OptionsDialog.cpp:741
+#: HikariSub/OptionsDialog.cpp:745
 msgid "Show keyframes"
 msgstr "แสดงคีย์เฟรม"
 
-#: HikariSub/OptionsDialog.cpp:741
+#: HikariSub/OptionsDialog.cpp:745
 msgid "Show video position"
 msgstr "แสดงตำแหน่งวิดีโอ"
 
-#: HikariSub/OptionsDialog.cpp:742
+#: HikariSub/OptionsDialog.cpp:746
 msgid "Activate the audio when hover"
 msgstr "ใช้งานหน้าต่างเสียงเมื่อวางเมาส์ไว้เหนือ"
 
-#: HikariSub/OptionsDialog.cpp:742
+#: HikariSub/OptionsDialog.cpp:746
 msgid "Snap to keyframe"
 msgstr "ปรับให้ตรงกับคีย์เฟรม"
 
-#: HikariSub/OptionsDialog.cpp:742
+#: HikariSub/OptionsDialog.cpp:746
 msgid "Snap to other lines"
 msgstr "ปรับให้ตรงกับบรรทัดอื่น"
 
-#: HikariSub/OptionsDialog.cpp:743
+#: HikariSub/OptionsDialog.cpp:747
 msgid "Do not play audio after changing the line"
 msgstr "อย่าเล่นเสียงหลังจากเปลี่ยนบรรทัด"
 
-#: HikariSub/OptionsDialog.cpp:743
+#: HikariSub/OptionsDialog.cpp:747
 msgid "Merge all the \"n\" with the previous syllable"
 msgstr "รวม \"n\" ทั้งหมดกับพยางค์ก่อนหน้า"
 
-#: HikariSub/OptionsDialog.cpp:744
+#: HikariSub/OptionsDialog.cpp:748
 msgid "Load audio into RAM"
 msgstr "โหลดเสียงลงในแรม"
 
-#: HikariSub/OptionsDialog.cpp:744
+#: HikariSub/OptionsDialog.cpp:748
 msgid "Move syllable line after click"
 msgstr "ย้ายบรรทัดพยางค์หลังจากคลิก"
 
-#: HikariSub/OptionsDialog.cpp:771
+#: HikariSub/OptionsDialog.cpp:775
 msgid ""
 "Range from 0 to 10000, where 0 turns off\n"
 "removing audio cache files."
@@ -4419,603 +4446,603 @@ msgstr ""
 "ป้อน 0 ถึง 10000 โดยที่ 0 จะปิด\n"
 "การลบแฟ้มแคชเสียง"
 
-#: HikariSub/OptionsDialog.cpp:772
+#: HikariSub/OptionsDialog.cpp:776
 msgid "All visible"
 msgstr "มองเห็นทั้งหมด"
 
-#: HikariSub/OptionsDialog.cpp:772
+#: HikariSub/OptionsDialog.cpp:776
 msgid "Before and after the active"
 msgstr "ก่อนและหลังบรรทัดปัจจุบัน"
 
-#: HikariSub/OptionsDialog.cpp:782
+#: HikariSub/OptionsDialog.cpp:786
 msgid "Audio delay in milliseconds"
 msgstr "ดีเลย์เสียงในหน่วยมิลลิวินาที"
 
-#: HikariSub/OptionsDialog.cpp:783
+#: HikariSub/OptionsDialog.cpp:787
 msgid "Audio to play before and after the marker in milliseconds"
 msgstr "ช่วงเสียงที่จะเล่นก่อนและหลังเครื่องหมาย (มิลลิวินาที)"
 
-#: HikariSub/OptionsDialog.cpp:784 HikariSub/ShiftTimes.cpp:396
+#: HikariSub/OptionsDialog.cpp:788 HikariSub/ShiftTimes.cpp:395
 msgid "Lead-in"
 msgstr "ช่วงนำ"
 
-#: HikariSub/OptionsDialog.cpp:784 HikariSub/ShiftTimes.cpp:399
+#: HikariSub/OptionsDialog.cpp:788 HikariSub/ShiftTimes.cpp:398
 msgid "Lead-out"
 msgstr "ช่วงต่อท้าย"
 
-#: HikariSub/OptionsDialog.cpp:786
+#: HikariSub/OptionsDialog.cpp:790
 msgid "Line boundaries thickness"
 msgstr "ความหนาของเส้นขอบ"
 
-#: HikariSub/OptionsDialog.cpp:787
+#: HikariSub/OptionsDialog.cpp:791
 msgid "Audio cache files limit"
 msgstr "ขีดจำกัดของแฟ้มแคชเสียง"
 
-#: HikariSub/OptionsDialog.cpp:788
+#: HikariSub/OptionsDialog.cpp:792
 msgid "The way to display inactive lines"
 msgstr "การแสดงบรรทัดที่ไม่ถูกใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:812
+#: HikariSub/OptionsDialog.cpp:816
 msgid "Inactive window background"
 msgstr "หน้าต่าง พื้นหลังขณะไม่ได้ใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:812
+#: HikariSub/OptionsDialog.cpp:816
 msgid "Inactive window text"
 msgstr "หน้าต่าง ข้อความขณะไม่ได้ใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:812
+#: HikariSub/OptionsDialog.cpp:816
 msgid "Window background"
 msgstr "หน้าต่าง พื้นหลัง"
 
-#: HikariSub/OptionsDialog.cpp:812
+#: HikariSub/OptionsDialog.cpp:816
 msgid "Window text"
 msgstr "หน้าต่าง ข้อความ"
 
-#: HikariSub/OptionsDialog.cpp:813
+#: HikariSub/OptionsDialog.cpp:817
 msgid "Inactive window border"
 msgstr "หน้าต่าง ขอบขณะไม่ได้ใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:813
+#: HikariSub/OptionsDialog.cpp:817
 msgid "Window border"
 msgstr "หน้าต่าง ขอบ"
 
-#: HikariSub/OptionsDialog.cpp:813
+#: HikariSub/OptionsDialog.cpp:817
 msgid "Window border background"
 msgstr "หน้าต่าง พื้นหลังขอบ"
 
-#: HikariSub/OptionsDialog.cpp:814
+#: HikariSub/OptionsDialog.cpp:818
 msgid "Inactive window border background"
 msgstr "หน้าต่าง พื้นหลังขอบขณะไม่ได้ใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:814
+#: HikariSub/OptionsDialog.cpp:818
 msgid "Inactive window header text"
 msgstr "หน้าต่าง ข้อความส่วนหัวขณะไม่ได้ใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:814
+#: HikariSub/OptionsDialog.cpp:818
 msgid "Window header text"
 msgstr "หน้าต่าง ข้อความส่วนหัว"
 
-#: HikariSub/OptionsDialog.cpp:815
+#: HikariSub/OptionsDialog.cpp:819
 msgid "Window invaded element header"
 msgstr "หน้าต่าง ส่วนหัวของหน้าต่างองค์ประกอบขณะวางเมาส์ไว้เหนือ"
 
-#: HikariSub/OptionsDialog.cpp:815
+#: HikariSub/OptionsDialog.cpp:819
 msgid "Window pressed element header"
 msgstr "หน้าต่าง ส่วนหัวของหน้าต่างองค์ประกอบเมื่อคลิก"
 
-#: HikariSub/OptionsDialog.cpp:816
+#: HikariSub/OptionsDialog.cpp:820
 msgid "Window closing upon hover"
 msgstr "หน้าต่าง ปุ่มปิดขณะวางเมาส์ไว้เหนือ"
 
-#: HikariSub/OptionsDialog.cpp:816
+#: HikariSub/OptionsDialog.cpp:820
 msgid "Window elements warning"
 msgstr "หน้าต่าง คำเตือนต่าง ๆ"
 
-#: HikariSub/OptionsDialog.cpp:816
+#: HikariSub/OptionsDialog.cpp:820
 msgid "Window pressed closing"
 msgstr "หน้าต่าง ปุ่มปิดเมื่อคลิก"
 
-#: HikariSub/OptionsDialog.cpp:818
+#: HikariSub/OptionsDialog.cpp:822
 msgid "Subtitle background"
 msgstr "คำบรรยาย พื้นหลัง"
 
-#: HikariSub/OptionsDialog.cpp:818
+#: HikariSub/OptionsDialog.cpp:822
 msgid "Subtitle comment background"
 msgstr "คำบรรยาย พื้นหลังความคิดเห็น"
 
-#: HikariSub/OptionsDialog.cpp:818
+#: HikariSub/OptionsDialog.cpp:822
 msgid "Subtitle dialogue background"
 msgstr "คำบรรยาย พื้นหลังบทบรรยาย"
 
-#: HikariSub/OptionsDialog.cpp:818
+#: HikariSub/OptionsDialog.cpp:822
 msgid "Subtitle text"
 msgstr "คำบรรยาย ข้อความ"
 
-#: HikariSub/OptionsDialog.cpp:819
+#: HikariSub/OptionsDialog.cpp:823
 msgid "Subtitle lines visible on video"
 msgstr "คำบรรยาย บรรทัดที่ปรากฏบนวิดีโอ"
 
-#: HikariSub/OptionsDialog.cpp:819
+#: HikariSub/OptionsDialog.cpp:823
 msgid "Subtitle selection (transparency)"
 msgstr "คำบรรยาย การเลือก (โปร่งใส)"
 
-#: HikariSub/OptionsDialog.cpp:820
+#: HikariSub/OptionsDialog.cpp:824
 msgid "Subtitle active line border"
 msgstr "คำบรรยาย ขอบบรรทัดปัจจุบัน"
 
-#: HikariSub/OptionsDialog.cpp:820
+#: HikariSub/OptionsDialog.cpp:824
 msgid "Subtitle colliding lines"
 msgstr "คำบรรยาย บรรทัดที่ทับซ้อนกัน"
 
-#: HikariSub/OptionsDialog.cpp:820
+#: HikariSub/OptionsDialog.cpp:824
 msgid "Subtitle line border"
 msgstr "คำบรรยาย ขอบบรรทัด"
 
-#: HikariSub/OptionsDialog.cpp:821
+#: HikariSub/OptionsDialog.cpp:825
 msgid "Subtitle header background"
 msgstr "คำบรรยาย พื้นหลังส่วนหัว"
 
-#: HikariSub/OptionsDialog.cpp:821
+#: HikariSub/OptionsDialog.cpp:825
 msgid "Subtitle header text"
 msgstr "คำบรรยาย ข้อความส่วนหัว"
 
-#: HikariSub/OptionsDialog.cpp:822
+#: HikariSub/OptionsDialog.cpp:826
 msgid "Subtitle line label"
 msgstr "คำบรรยาย ป้ายกำกับบรรทัด"
 
-#: HikariSub/OptionsDialog.cpp:822
+#: HikariSub/OptionsDialog.cpp:826
 msgid "Subtitle modified-line label"
 msgstr "คำบรรยาย บรรทัดที่ถูกแก้ไข"
 
-#: HikariSub/OptionsDialog.cpp:822
+#: HikariSub/OptionsDialog.cpp:826
 msgid "Subtitle saved-line label"
 msgstr "คำบรรยาย บรรทัดที่ถูกบันทึก"
 
-#: HikariSub/OptionsDialog.cpp:823
+#: HikariSub/OptionsDialog.cpp:827
 msgid "Subtitle comparison border"
 msgstr "คำบรรยาย เส้นขอบขณะเปรียบเทียบ"
 
-#: HikariSub/OptionsDialog.cpp:823
+#: HikariSub/OptionsDialog.cpp:827
 msgid "Subtitle spelling-error background"
 msgstr "คำบรรยาย พื้นหลังคำสะกดผิด"
 
-#: HikariSub/OptionsDialog.cpp:823
+#: HikariSub/OptionsDialog.cpp:827
 msgid "Subtitle unconfirmed-line label"
 msgstr "คำบรรยาย บรรทัดที่ต้องตรวจทาน"
 
-#: HikariSub/OptionsDialog.cpp:824
+#: HikariSub/OptionsDialog.cpp:828
 msgid "Subtitle comparison match background"
 msgstr "คำบรรยาย พื้นหลังเมื่อเปรียบเทียบตรงกัน"
 
-#: HikariSub/OptionsDialog.cpp:824
+#: HikariSub/OptionsDialog.cpp:828
 msgid "Subtitle comparison mismatch background"
 msgstr "คำบรรยาย พื้นหลังเมื่อเปรียบเทียบไม่ตรงกัน"
 
-#: HikariSub/OptionsDialog.cpp:825
+#: HikariSub/OptionsDialog.cpp:829
 msgid "Subtitle comparison comment match background"
 msgstr "คำบรรยาย พื้นหลังความคิดเห็นเมื่อเปรียบเทียบตรงกัน"
 
-#: HikariSub/OptionsDialog.cpp:825
+#: HikariSub/OptionsDialog.cpp:829
 msgid "Subtitle comparison comment mismatch background"
 msgstr "คำบรรยาย พื้นหลังความคิดเห็นเมื่อเปรียบเทียบไม่ตรงกัน"
 
-#: HikariSub/OptionsDialog.cpp:827
+#: HikariSub/OptionsDialog.cpp:831
 msgid "Editor tag names"
 msgstr "ตัวแก้ไข ชื่อแท็ก"
 
-#: HikariSub/OptionsDialog.cpp:827
+#: HikariSub/OptionsDialog.cpp:831
 msgid "Editor tag values"
 msgstr "ตัวแก้ไข ค่าแท็ก"
 
-#: HikariSub/OptionsDialog.cpp:827
+#: HikariSub/OptionsDialog.cpp:831
 msgid "Editor text"
 msgstr "ตัวแก้ไข ข้อความ"
 
-#: HikariSub/OptionsDialog.cpp:828
+#: HikariSub/OptionsDialog.cpp:832
 msgid "Editor curly braces"
 msgstr "ตัวแก้ไข วงเล็บปีกกา"
 
-#: HikariSub/OptionsDialog.cpp:828
+#: HikariSub/OptionsDialog.cpp:832
 msgid "Editor line splitting and ASS drawings"
 msgstr "ตัวแก้ไข การแบ่งเส้นและภาพวาด ASS"
 
-#: HikariSub/OptionsDialog.cpp:828
+#: HikariSub/OptionsDialog.cpp:832
 msgid "Editor tags operators"
 msgstr "ตัวแก้ไข ตัวทำงานแท็ก"
 
-#: HikariSub/OptionsDialog.cpp:828
+#: HikariSub/OptionsDialog.cpp:832
 msgid "Editor template variables"
 msgstr "ตัวแก้ไข ตัวแปรแม่แบบ"
 
-#: HikariSub/OptionsDialog.cpp:829
+#: HikariSub/OptionsDialog.cpp:833
 msgid "Editor template code marks"
 msgstr "ตัวแก้ไข แท็กรหัสแม่แบบ"
 
-#: HikariSub/OptionsDialog.cpp:829
+#: HikariSub/OptionsDialog.cpp:833
 msgid "Editor template functions"
 msgstr "ตัวแก้ไข ฟังก์ชันแม่แบบ"
 
-#: HikariSub/OptionsDialog.cpp:829
+#: HikariSub/OptionsDialog.cpp:833
 msgid "Editor template keywords"
 msgstr "ตัวแก้ไข คำสำคัญแม่แบบ"
 
-#: HikariSub/OptionsDialog.cpp:830
+#: HikariSub/OptionsDialog.cpp:834
 msgid "Editor brackets background"
 msgstr "ตัวแก้ไข พื้นหลังวงเล็บ"
 
-#: HikariSub/OptionsDialog.cpp:830
+#: HikariSub/OptionsDialog.cpp:834
 msgid "Editor found words selection"
 msgstr "ตัวแก้ไข คำที่เลือกเมื่อพบ"
 
-#: HikariSub/OptionsDialog.cpp:830
+#: HikariSub/OptionsDialog.cpp:834
 msgid "Editor template strings"
 msgstr "ตัวแก้ไข สตริงแม่แบบ"
 
-#: HikariSub/OptionsDialog.cpp:831
+#: HikariSub/OptionsDialog.cpp:835
 msgid "Editor background"
 msgstr "ตัวแก้ไข พื้นหลัง"
 
-#: HikariSub/OptionsDialog.cpp:831
+#: HikariSub/OptionsDialog.cpp:835
 msgid "Editor inactive window selection"
 msgstr "ตัวแก้ไข การเลือกขณะหน้าต่างไม่ได้ใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:831
+#: HikariSub/OptionsDialog.cpp:835
 msgid "Editor selection"
 msgstr "ตัวแก้ไข การเลือก"
 
-#: HikariSub/OptionsDialog.cpp:832
+#: HikariSub/OptionsDialog.cpp:836
 msgid "Editor border"
 msgstr "ตัวแก้ไข ขอบ"
 
-#: HikariSub/OptionsDialog.cpp:832
+#: HikariSub/OptionsDialog.cpp:836
 msgid "Editor border on focus"
 msgstr "ตัวแก้ไข ขอบในหน้าต่างที่ใช้งานอยู่"
 
-#: HikariSub/OptionsDialog.cpp:832
+#: HikariSub/OptionsDialog.cpp:836
 msgid "Editor spelling error background"
 msgstr "ตัวแก้ไข พื้นหลังคำสะกดผิด"
 
-#: HikariSub/OptionsDialog.cpp:834
+#: HikariSub/OptionsDialog.cpp:838
 msgid "Audio background"
 msgstr "เสียง พื้นหลัง"
 
-#: HikariSub/OptionsDialog.cpp:834
+#: HikariSub/OptionsDialog.cpp:838
 msgid "Audio end marker"
 msgstr "เสียง สิ้นสุดจุดมาร์ค"
 
-#: HikariSub/OptionsDialog.cpp:834
+#: HikariSub/OptionsDialog.cpp:838
 msgid "Audio start marker"
 msgstr "เสียง เริ่มจุดมาร์ค"
 
-#: HikariSub/OptionsDialog.cpp:834
+#: HikariSub/OptionsDialog.cpp:838
 msgid "Audio time shift marker"
 msgstr "เสียง จุดมาร์คเลื่อนเวลา"
 
-#: HikariSub/OptionsDialog.cpp:835
+#: HikariSub/OptionsDialog.cpp:839
 msgid "Audio cursor"
 msgstr "เสียง เคอร์เซอร์"
 
-#: HikariSub/OptionsDialog.cpp:835
+#: HikariSub/OptionsDialog.cpp:839
 msgid "Audio inactive line marker"
 msgstr "เสียง จุดมาร์คบรรทัดที่ไม่ได้ใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:835
+#: HikariSub/OptionsDialog.cpp:839
 msgid "Audio keyframes"
 msgstr "เสียง คีย์เฟรม"
 
-#: HikariSub/OptionsDialog.cpp:835
+#: HikariSub/OptionsDialog.cpp:839
 msgid "Audio seconds boundaries"
 msgstr "เสียง ขอบเขตวินาที"
 
-#: HikariSub/OptionsDialog.cpp:836
+#: HikariSub/OptionsDialog.cpp:840
 msgid "Audio selection"
 msgstr "เสียง การเลือก"
 
-#: HikariSub/OptionsDialog.cpp:836
+#: HikariSub/OptionsDialog.cpp:840
 msgid "Audio syllable marker"
 msgstr "เสียง จุดมาร์คพยางค์"
 
-#: HikariSub/OptionsDialog.cpp:836
+#: HikariSub/OptionsDialog.cpp:840
 msgid "Audio syllable text"
 msgstr "เสียง ข้อความพยางค์"
 
-#: HikariSub/OptionsDialog.cpp:837
+#: HikariSub/OptionsDialog.cpp:841
 msgid "Audio inactive line background"
 msgstr "เสียง พื้นหลังบรรทัดที่ไม่ได้ใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:837
+#: HikariSub/OptionsDialog.cpp:841
 msgid "Audio the selection after modification"
 msgstr "เสียง การเลือกหลังจากมีการเปลี่ยนแปลง"
 
-#: HikariSub/OptionsDialog.cpp:837
+#: HikariSub/OptionsDialog.cpp:841
 msgid "Audio waveform"
 msgstr "เสียง แผนภูมิคลื่นเสียง"
 
-#: HikariSub/OptionsDialog.cpp:838
+#: HikariSub/OptionsDialog.cpp:842
 msgid "Audio Inactive waveform"
 msgstr "เสียง แผนภูมิคลื่นเสียงขณะไม่ได้ใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:838
+#: HikariSub/OptionsDialog.cpp:842
 msgid "Audio modified waveform"
 msgstr "เสียง แผนภูมิรูปคลื่นเสียงเมื่อเปลี่ยนแปลงแล้ว"
 
-#: HikariSub/OptionsDialog.cpp:838
+#: HikariSub/OptionsDialog.cpp:842
 msgid "Audio selected waveform"
 msgstr "เสียง แผนภูมิคลื่นเสียงเมื่อถูกเลือก"
 
-#: HikariSub/OptionsDialog.cpp:839
+#: HikariSub/OptionsDialog.cpp:843
 msgid "Audio spectrum"
 msgstr "เสียง สเปกตรัม"
 
-#: HikariSub/OptionsDialog.cpp:839
+#: HikariSub/OptionsDialog.cpp:843
 msgid "Audio spectrum background"
 msgstr "เสียง พื้นหลังสเปกตรัม"
 
-#: HikariSub/OptionsDialog.cpp:839
+#: HikariSub/OptionsDialog.cpp:843
 msgid "Audio spectrum echo"
 msgstr "เสียง การกระหึมของสเปกตรัม"
 
-#: HikariSub/OptionsDialog.cpp:841
+#: HikariSub/OptionsDialog.cpp:845
 msgid "Text field background"
 msgstr "กล่องข้อความ พื้นหลัง"
 
-#: HikariSub/OptionsDialog.cpp:841
+#: HikariSub/OptionsDialog.cpp:845
 msgid "Text field border"
 msgstr "กล่องข้อความ ขอบ"
 
-#: HikariSub/OptionsDialog.cpp:842
+#: HikariSub/OptionsDialog.cpp:846
 msgid "Text field border on focus"
 msgstr "กล่องข้อความ ขอบกล่องข้อความที่ใช้งานอยู่"
 
-#: HikariSub/OptionsDialog.cpp:842
+#: HikariSub/OptionsDialog.cpp:846
 msgid "Text field selection"
 msgstr "กล่องข้อความ การเลือก"
 
-#: HikariSub/OptionsDialog.cpp:843 HikariSub/OptionsDialog.cpp:919
+#: HikariSub/OptionsDialog.cpp:847 HikariSub/OptionsDialog.cpp:923
 msgid "Text field inactive window selection"
 msgstr "กล่องข้อความ การเลือกขณะหน้าต่างไม่ได้ใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:844
+#: HikariSub/OptionsDialog.cpp:848
 msgid "Button and list background"
 msgstr "ปุ่มและรายการ พื้นหลัง"
 
-#: HikariSub/OptionsDialog.cpp:844
+#: HikariSub/OptionsDialog.cpp:848
 msgid "Button and list background upon hover"
 msgstr "ปุ่มและรายการ พื้นหลังเมื่อวางเมาส์ไว้เหนือ"
 
-#: HikariSub/OptionsDialog.cpp:845
+#: HikariSub/OptionsDialog.cpp:849
 msgid "Button and list background on focus"
 msgstr "ปุ่มและรายการ พื้นหลังที่ใช้งานอยู่"
 
-#: HikariSub/OptionsDialog.cpp:845
+#: HikariSub/OptionsDialog.cpp:849
 msgid "Button and list pushed background"
 msgstr "ปุ่มและรายการ พื้นหลังเมื่อคลิก"
 
-#: HikariSub/OptionsDialog.cpp:846
+#: HikariSub/OptionsDialog.cpp:850
 msgid "Button and list border"
 msgstr "ปุ่มและรายการ ขอบ"
 
-#: HikariSub/OptionsDialog.cpp:846
+#: HikariSub/OptionsDialog.cpp:850
 msgid "Button and list border upon hover"
 msgstr "ปุ่มและรายการ ขอบเมื่อวางเมาส์ไว้เหนือ"
 
-#: HikariSub/OptionsDialog.cpp:847
+#: HikariSub/OptionsDialog.cpp:851
 msgid "Button and list border of pushed"
 msgstr "ปุ่มและรายการ ขอบเมื่อคลิก"
 
-#: HikariSub/OptionsDialog.cpp:847
+#: HikariSub/OptionsDialog.cpp:851
 msgid "Button and list border on focus"
 msgstr "ปุ่มและรายการ ขอบที่ใช้งานอยู่"
 
-#: HikariSub/OptionsDialog.cpp:848
+#: HikariSub/OptionsDialog.cpp:852
 msgid "Button and list inactive border"
 msgstr "ปุ่มและรายการ ขอบที่ไม่ได้ใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:848
+#: HikariSub/OptionsDialog.cpp:852
 msgid "Togglebutton toggled background"
 msgstr "พื้นหลังปุ่มเปิดปิดเมื่อเปิดอยู่"
 
-#: HikariSub/OptionsDialog.cpp:849
+#: HikariSub/OptionsDialog.cpp:853
 msgid "Scroll bar background"
 msgstr "แถบเลื่อน พื้นหลัง"
 
-#: HikariSub/OptionsDialog.cpp:849
+#: HikariSub/OptionsDialog.cpp:853
 msgid "Scroll bar slider"
 msgstr "ตัวเลื่อนแถบเลื่อน"
 
-#: HikariSub/OptionsDialog.cpp:849
+#: HikariSub/OptionsDialog.cpp:853
 msgid "Togglebutton toggled border"
 msgstr "ขอบปุ่มเปิดปิดเมื่อเปิดอยู่"
 
-#: HikariSub/OptionsDialog.cpp:850
+#: HikariSub/OptionsDialog.cpp:854
 msgid "Scroll bar pushed slider"
 msgstr "แถบเลื่อน เมื่อคลิก"
 
-#: HikariSub/OptionsDialog.cpp:850
+#: HikariSub/OptionsDialog.cpp:854
 msgid "Scroll bar slider upon hover"
 msgstr "แถบเลื่อน เมื่อวางเมาส์ไว้เหนือ"
 
-#: HikariSub/OptionsDialog.cpp:851
+#: HikariSub/OptionsDialog.cpp:855
 msgid "Static list background"
 msgstr "พื้นหลังรายการคงที่"
 
-#: HikariSub/OptionsDialog.cpp:851
+#: HikariSub/OptionsDialog.cpp:855
 msgid "Static list border"
 msgstr "ขอบรายการคงที่"
 
-#: HikariSub/OptionsDialog.cpp:851
+#: HikariSub/OptionsDialog.cpp:855
 msgid "Staticbox border"
 msgstr "ขอบกรอบข้อความ"
 
-#: HikariSub/OptionsDialog.cpp:852
+#: HikariSub/OptionsDialog.cpp:856
 msgid "Static list header background"
 msgstr "พื้นหลังส่วนหัวรายการคงที่"
 
-#: HikariSub/OptionsDialog.cpp:852
+#: HikariSub/OptionsDialog.cpp:856
 msgid "Static list header text"
 msgstr "ข้อความส่วนหัวรายการคงที่"
 
-#: HikariSub/OptionsDialog.cpp:852
+#: HikariSub/OptionsDialog.cpp:856
 msgid "Static list selection"
 msgstr "ส่วนที่เลือกในรายการคงที่"
 
-#: HikariSub/OptionsDialog.cpp:853
+#: HikariSub/OptionsDialog.cpp:857
 msgid "Status bar border"
 msgstr "ขอบแถบสถานะ"
 
-#: HikariSub/OptionsDialog.cpp:855
+#: HikariSub/OptionsDialog.cpp:859
 msgid "Menu bar background 1"
 msgstr "แถบเมนู พื้นหลัง 1"
 
-#: HikariSub/OptionsDialog.cpp:855
+#: HikariSub/OptionsDialog.cpp:859
 msgid "Menu bar background 2"
 msgstr "แถบเมนู พื้นหลัง 2"
 
-#: HikariSub/OptionsDialog.cpp:855
+#: HikariSub/OptionsDialog.cpp:859
 msgid "Menu bar selection border"
 msgstr "แถบเมนู ขอบเมื่อเลือก"
 
-#: HikariSub/OptionsDialog.cpp:856
+#: HikariSub/OptionsDialog.cpp:860
 msgid "Menu bar selection clicked bacground"
 msgstr "แถบเมนู พื้นหลังเมื่อคลิก"
 
-#: HikariSub/OptionsDialog.cpp:856
+#: HikariSub/OptionsDialog.cpp:860
 msgid "Menu bar selection hover bacground"
 msgstr "แถบเมนู พื้นหลังเมื่อวางเมาส์ไว้เหนือ"
 
-#: HikariSub/OptionsDialog.cpp:857
+#: HikariSub/OptionsDialog.cpp:861
 msgid "Menu background"
 msgstr "เมนู พื้นหลัง"
 
-#: HikariSub/OptionsDialog.cpp:857
+#: HikariSub/OptionsDialog.cpp:861
 msgid "Menu selection background"
 msgstr "เมนู พื้นหลังเมื่อเลือก"
 
-#: HikariSub/OptionsDialog.cpp:857
+#: HikariSub/OptionsDialog.cpp:861
 msgid "Menu selection border"
 msgstr "เมนู ขอบเมื่อเลือก"
 
-#: HikariSub/OptionsDialog.cpp:859
+#: HikariSub/OptionsDialog.cpp:863
 msgid "Tab active border"
 msgstr "แท็บ ขอบแท็บปัจจุบัน"
 
-#: HikariSub/OptionsDialog.cpp:859
+#: HikariSub/OptionsDialog.cpp:863
 msgid "Tab bar background 1"
 msgstr "แถบแท็บ พื้นหลัง 1"
 
-#: HikariSub/OptionsDialog.cpp:859
+#: HikariSub/OptionsDialog.cpp:863
 msgid "Tab bar background 2"
 msgstr "แถบแท็บ พื้นหลัง 2"
 
-#: HikariSub/OptionsDialog.cpp:860
+#: HikariSub/OptionsDialog.cpp:864
 msgid "Tab active background"
 msgstr "แท็บ พื้นหลังแท็บปัจจุบัน"
 
-#: HikariSub/OptionsDialog.cpp:860
+#: HikariSub/OptionsDialog.cpp:864
 msgid "Tab inactive background"
 msgstr "แท็บ พื้นหลังแท็บที่ไม่ถูกใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:860
+#: HikariSub/OptionsDialog.cpp:864
 msgid "Tab inactive border"
 msgstr "แท็บ ขอบแท็บที่ไม่ถูกใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:861
+#: HikariSub/OptionsDialog.cpp:865
 msgid "Tab background of second visible tab"
 msgstr "แท็บ พื้นหลังแท็บที่สองที่มองเห็น"
 
-#: HikariSub/OptionsDialog.cpp:861
+#: HikariSub/OptionsDialog.cpp:865
 msgid "Tab inactive background upon hover"
 msgstr "แท็บ พื้นหลังแท็บที่ไม่ถูกใช้งานเมื่อวางเมาส์ไว้เหนือ"
 
-#: HikariSub/OptionsDialog.cpp:862
+#: HikariSub/OptionsDialog.cpp:866
 msgid "Tab active text"
 msgstr "แท็บ ข้อความของแท็บปัจจุบัน"
 
-#: HikariSub/OptionsDialog.cpp:862
+#: HikariSub/OptionsDialog.cpp:866
 msgid "Tab close upon hover"
 msgstr "แท็บ ปุ่มปิดเมื่อวางเมาส์ไว้เหนือ"
 
-#: HikariSub/OptionsDialog.cpp:862
+#: HikariSub/OptionsDialog.cpp:866
 msgid "Tab inactive text"
 msgstr "แท็บ ข้อความของแท็บที่ไม่ถูกใช้งาน"
 
-#: HikariSub/OptionsDialog.cpp:863
+#: HikariSub/OptionsDialog.cpp:867
 msgid "Tab bar arrow"
 msgstr "แถบแท็บ ลูกศร"
 
-#: HikariSub/OptionsDialog.cpp:863
+#: HikariSub/OptionsDialog.cpp:867
 msgid "Tab bar arrow background"
 msgstr "แถบแท็บ พื้นหลังลูกศร"
 
-#: HikariSub/OptionsDialog.cpp:864
+#: HikariSub/OptionsDialog.cpp:868
 msgid "Tab bar arrow background upon hover"
 msgstr "แถบแท็บ พื้นหลังลูกศรเมื่อวางเมาส์ไว้เหนือ"
 
-#: HikariSub/OptionsDialog.cpp:866
+#: HikariSub/OptionsDialog.cpp:870
 msgid "Slider border"
 msgstr "ตัวเลื่อน ขอบ"
 
-#: HikariSub/OptionsDialog.cpp:866
+#: HikariSub/OptionsDialog.cpp:870
 msgid "Slider path background"
 msgstr "แถบเลื่อน พื้นหลังเส้นทาง"
 
-#: HikariSub/OptionsDialog.cpp:866
+#: HikariSub/OptionsDialog.cpp:870
 msgid "Slider path border"
 msgstr "แถบเลื่อน ขอบเส้นทาง"
 
-#: HikariSub/OptionsDialog.cpp:867
+#: HikariSub/OptionsDialog.cpp:871
 msgid "Slider background"
 msgstr "แถบเลื่อน พื้นหลัง"
 
-#: HikariSub/OptionsDialog.cpp:867
+#: HikariSub/OptionsDialog.cpp:871
 msgid "Slider border of pushed"
 msgstr "แถบเลื่อน ขอบเมื่อคลิก"
 
-#: HikariSub/OptionsDialog.cpp:867
+#: HikariSub/OptionsDialog.cpp:871
 msgid "Slider border upon hover"
 msgstr "แถบเลื่อน ขอบเมื่อวางเมาส์ไว้เหนือ"
 
-#: HikariSub/OptionsDialog.cpp:868
+#: HikariSub/OptionsDialog.cpp:872
 msgid "Slider background of pushed"
 msgstr "แถบเลื่อน พื้นหลังเมื่อคลิก"
 
-#: HikariSub/OptionsDialog.cpp:868
+#: HikariSub/OptionsDialog.cpp:872
 msgid "Slider background upon hover"
 msgstr "แถบเลื่อน พื้นหลังเมื่อวางเมาส์ไว้เหนือ"
 
-#: HikariSub/OptionsDialog.cpp:870
+#: HikariSub/OptionsDialog.cpp:874
 msgid "Finding result file name background"
 msgstr "การค้นหา พื้นหลังชื่อแฟ้มผลลัพธ์"
 
-#: HikariSub/OptionsDialog.cpp:870
+#: HikariSub/OptionsDialog.cpp:874
 msgid "Finding result file name foreground"
 msgstr "การค้นหา เบื้องหน้าชื่อแฟ้มผลลัพธ์"
 
-#: HikariSub/OptionsDialog.cpp:870
+#: HikariSub/OptionsDialog.cpp:874
 msgid "Resize line dots"
 msgstr "เปลี่ยนขนาดจุดบรรทัด"
 
-#: HikariSub/OptionsDialog.cpp:871
+#: HikariSub/OptionsDialog.cpp:875
 msgid "Finding result found phrase background"
 msgstr "การค้นหา พื้นหลังนิพจน์ผลลัพธ์"
 
-#: HikariSub/OptionsDialog.cpp:871
+#: HikariSub/OptionsDialog.cpp:875
 msgid "Finding result found phrase foreground"
 msgstr "การค้นหา เบื้องหน้านิพจน์ผลลัพธ์"
 
-#: HikariSub/OptionsDialog.cpp:873
+#: HikariSub/OptionsDialog.cpp:877
 msgid "First color of style preview background"
 msgstr "สีแรกสำหรับตัวอย่างสไตล์"
 
-#: HikariSub/OptionsDialog.cpp:873
+#: HikariSub/OptionsDialog.cpp:877
 msgid "Second color of style preview background"
 msgstr "สีที่สองสำหรับตัวอย่างสไตล์"
 
-#: HikariSub/OptionsDialog.cpp:904
+#: HikariSub/OptionsDialog.cpp:908
 msgid "Theme name:"
 msgstr "ชื่อชุดรูปแบบ:"
 
-#: HikariSub/OptionsDialog.cpp:906
+#: HikariSub/OptionsDialog.cpp:910
 msgid ""
 "Name of the copied theme.\n"
 "Default themes, DarkSentro and LightSentro,\n"
@@ -5025,12 +5052,12 @@ msgstr ""
 "ชุดรูปแบบเริ่มต้น: DarkSentro และ LightSentro\n"
 "ไม่สามารถแก้ไขได้ โปรดคัดลอกก่อน"
 
-#: HikariSub/OptionsDialog.cpp:907 HikariSub/SelectLines.cpp:123
+#: HikariSub/OptionsDialog.cpp:911 HikariSub/SelectLines.cpp:123
 #: HikariSub/stylestore.cpp:88 HikariSub/stylestore.cpp:141
 msgid "Copy"
 msgstr "คัดลอก"
 
-#: HikariSub/OptionsDialog.cpp:916
+#: HikariSub/OptionsDialog.cpp:920
 msgid ""
 "Warning! Transparency works only on the audio spectrum,\n"
 "text field, and subtitle grid."
@@ -5038,43 +5065,43 @@ msgstr ""
 "หมายเหตุ! ความโปร่งใสทำงานบนสเปกตรัมเสียง\n"
 "และในช่องคำบรรยายเท่านั้น"
 
-#: HikariSub/OptionsDialog.cpp:926
+#: HikariSub/OptionsDialog.cpp:930
 msgid "Name"
 msgstr "ชื่อ"
 
-#: HikariSub/OptionsDialog.cpp:927
+#: HikariSub/OptionsDialog.cpp:931
 msgid "Color"
 msgstr "สี"
 
-#: HikariSub/OptionsDialog.cpp:1032
+#: HikariSub/OptionsDialog.cpp:1036
 msgid "Deselect all"
 msgstr "ยกเลิกการเลือกทั้งหมด"
 
-#: HikariSub/OptionsDialog.cpp:1032
+#: HikariSub/OptionsDialog.cpp:1036
 msgid "Select all"
 msgstr "เลือกทั้งหมด"
 
-#: HikariSub/OptionsDialog.cpp:1049 HikariSub/OptionsDialog.cpp:1052
+#: HikariSub/OptionsDialog.cpp:1053 HikariSub/OptionsDialog.cpp:1056
 msgid "Advanced"
 msgstr "ขั้นสูง"
 
-#: HikariSub/OptionsDialog.cpp:1053
+#: HikariSub/OptionsDialog.cpp:1057
 msgid "Themes"
 msgstr "ชุดรูปแบบ"
 
-#: HikariSub/OptionsDialog.cpp:1054
+#: HikariSub/OptionsDialog.cpp:1058
 msgid "Hotkeys"
 msgstr "ปุ่มลัด"
 
-#: HikariSub/OptionsDialog.cpp:1056
+#: HikariSub/OptionsDialog.cpp:1060
 msgid "Associations"
 msgstr "การเชื่อมโยงชนิดแฟ้ม"
 
-#: HikariSub/OptionsDialog.cpp:1058
+#: HikariSub/OptionsDialog.cpp:1062
 msgid "Subtitle properties"
 msgstr "คุณสมบัติของคำบรรยาย"
 
-#: HikariSub/OptionsDialog.cpp:1067
+#: HikariSub/OptionsDialog.cpp:1071
 msgid "Set default"
 msgstr "ตั้งเป็นค่าเริ่มต้น"
 
@@ -5121,69 +5148,69 @@ msgstr "แจ้งให้เปลี่ยนข้อมูลคำบร
 msgid "Time elapsed: 00:00:00.00"
 msgstr "ใช้เวลาไปแล้ว: 00:00:00.00"
 
-#: HikariSub/ProviderFFMS2.cpp:120
+#: HikariSub/ProviderFFMS2.cpp:123
 msgid "Indexing video"
 msgstr "กำลังสร้างดัชนีแฟ้มวิดีโอ"
 
-#: HikariSub/ProviderFFMS2.cpp:146
+#: HikariSub/ProviderFFMS2.cpp:149
 #, c-format
 msgid "Cannot get frame %i: %s"
 msgstr "ไม่สามารถดึงเฟรม %i ได้: %s"
 
-#: HikariSub/ProviderFFMS2.cpp:169
+#: HikariSub/ProviderFFMS2.cpp:172
 msgid "Video frame size is too large"
 msgstr "ขนาดเฟรมวิดีโอใหญ่เกินไป"
 
-#: HikariSub/ProviderFFMS2.cpp:282
+#: HikariSub/ProviderFFMS2.cpp:285
 msgid "Choose the track"
 msgstr "เลือกแทร็ก"
 
-#: HikariSub/ProviderFFMS2.cpp:369
+#: HikariSub/ProviderFFMS2.cpp:372
 #, c-format
 msgid "Cannot save index, error %s occurred"
 msgstr "ไม่สามารถบันทึกดัชนีได้ เนื่องจากเกิดข้อผิดพลาด %s"
 
-#: HikariSub/ProviderFFMS2.cpp:396
+#: HikariSub/ProviderFFMS2.cpp:399
 msgid "Cannot create VideoSource."
 msgstr "ไม่สามารถสร้าง VideoSource ได้"
 
-#: HikariSub/ProviderFFMS2.cpp:435 HikariSub/ProviderFFMS2.cpp:654
+#: HikariSub/ProviderFFMS2.cpp:438 HikariSub/ProviderFFMS2.cpp:655
 msgid "Cannot convert video to RGBA"
 msgstr "ไม่สามารถแปลงวิดีโอเป็น RGBA ได้"
 
-#: HikariSub/ProviderFFMS2.cpp:451 HikariSub/ProviderFFMS2.cpp:457
-#: HikariSub/ProviderFFMS2.cpp:1087
+#: HikariSub/ProviderFFMS2.cpp:454 HikariSub/ProviderFFMS2.cpp:460
+#: HikariSub/ProviderFFMS2.cpp:1091
 msgid "Cannot change YCbCr matrix"
 msgstr "ไม่สามารถเปลี่ยนเมทริกซ์ YCbCr ได้"
 
-#: HikariSub/ProviderFFMS2.cpp:475
+#: HikariSub/ProviderFFMS2.cpp:478
 msgid "You cannot load the video track"
 msgstr "ไม่สามารถรับแทร็กวิดีโอได้"
 
-#: HikariSub/ProviderFFMS2.cpp:480
+#: HikariSub/ProviderFFMS2.cpp:483
 msgid "You cannot get information about the video"
 msgstr "ไม่สามารถรับข้อมูลวิดีโอได้"
 
-#: HikariSub/ProviderFFMS2.cpp:510
+#: HikariSub/ProviderFFMS2.cpp:513
 #, c-format
 msgid "An error occurred when creating audio source: %s"
 msgstr "เกิดข้อผิดพลาดขณะสร้างต้นทางเสียง: %s"
 
-#: HikariSub/ProviderFFMS2.cpp:521
+#: HikariSub/ProviderFFMS2.cpp:524
 #, c-format
 msgid "An error occurred when converting audio: %s"
 msgstr "เกิดข้อผิดพลาดขณะแปลงเสียง: %s"
 
-#: HikariSub/ProviderFFMS2.cpp:537
+#: HikariSub/ProviderFFMS2.cpp:540
 msgid "Delay failed, it's longer than audio duration time"
 msgstr "ไม่สามารถตั้งค่าดีเลย์ที่เกินระยะเวลาของเสียงได้"
 
-#: HikariSub/ProviderFFMS2.cpp:635
+#: HikariSub/ProviderFFMS2.cpp:636
 #, c-format
 msgid "Cannot create the audio cache %s"
 msgstr "ไม่สามารถสร้างแคชเสียง %s ได้"
 
-#: HikariSub/ProviderFFMS2.cpp:636
+#: HikariSub/ProviderFFMS2.cpp:637
 msgid "Not enough memory for the audio cache"
 msgstr "หน่วยความจำไม่เพียงพอสำหรับแคชเสียง"
 
@@ -5419,7 +5446,7 @@ msgstr "เพิ่ม %i บรรทัดในส่วนที่เล�
 msgid "%i lines deselected."
 msgstr "มี %i บรรทัดถูกยกเลิกการเลือก"
 
-#: HikariSub/ShiftTimes.cpp:55
+#: HikariSub/ShiftTimes.cpp:56
 msgid ""
 "Write the name of the profile\n"
 "or select existing profile to overwrite"
@@ -5427,75 +5454,75 @@ msgstr ""
 "ป้อนชื่อโปรไฟล์\n"
 "หรือเลือกที่มีอยู่เพื่อเขียนทับ"
 
-#: HikariSub/ShiftTimes.cpp:85
+#: HikariSub/ShiftTimes.cpp:86
 #, c-format
 msgid "Do you want to overwrite profile of name %s"
 msgstr "ต้องการเขียนทับโปรไฟล์ชื่อ %s หรือไม่?"
 
-#: HikariSub/ShiftTimes.cpp:259
+#: HikariSub/ShiftTimes.cpp:258
 msgid "Post processor"
 msgstr "โพสต์โปรเซสเซอร์"
 
-#: HikariSub/ShiftTimes.cpp:259
+#: HikariSub/ShiftTimes.cpp:258
 msgid "Shift times"
 msgstr "เลื่อนเวลา"
 
-#: HikariSub/ShiftTimes.cpp:271
+#: HikariSub/ShiftTimes.cpp:270
 msgid "All times higher and equal"
 msgstr "เวลาที่มากกว่าหรือเท่ากับ"
 
-#: HikariSub/ShiftTimes.cpp:272
+#: HikariSub/ShiftTimes.cpp:271
 msgid "All times lower and equal"
 msgstr "เวลาที่น้อยกว่าหรือเท่ากับ"
 
-#: HikariSub/ShiftTimes.cpp:287
+#: HikariSub/ShiftTimes.cpp:286
 msgid "Profile editing"
 msgstr "แก้ไขโปรไฟล์"
 
-#: HikariSub/ShiftTimes.cpp:288
+#: HikariSub/ShiftTimes.cpp:287
 msgid "Adding and editing profiles"
 msgstr "เพิ่มและแก้ไขโปรไฟล์"
 
-#: HikariSub/ShiftTimes.cpp:291
+#: HikariSub/ShiftTimes.cpp:290
 msgid "Removing profiles"
 msgstr "นำโปรไฟล์ออก"
 
-#: HikariSub/ShiftTimes.cpp:312
+#: HikariSub/ShiftTimes.cpp:311
 msgid "Shift"
 msgstr "เลื่อน"
 
-#: HikariSub/ShiftTimes.cpp:312
+#: HikariSub/ShiftTimes.cpp:311
 msgid "Shift subtitle times"
 msgstr "เลื่อนเวลาคำบรรยาย"
 
-#: HikariSub/ShiftTimes.cpp:314
+#: HikariSub/ShiftTimes.cpp:313
 msgid "Forward"
 msgstr "ไปข้างหน้า"
 
-#: HikariSub/ShiftTimes.cpp:315
+#: HikariSub/ShiftTimes.cpp:314
 msgid "Backward"
 msgstr "ย้อนกลับ"
 
-#: HikariSub/ShiftTimes.cpp:317
+#: HikariSub/ShiftTimes.cpp:316
 msgid "Tag times"
 msgstr "เวลาแท็ก"
 
-#: HikariSub/ShiftTimes.cpp:331
+#: HikariSub/ShiftTimes.cpp:330
 msgid "Shift by video / audio"
 msgstr "เลื่อนตามเวลาวิดีโอหรือเสียง"
 
-#: HikariSub/ShiftTimes.cpp:334
+#: HikariSub/ShiftTimes.cpp:333
 msgid "Beginning"
 msgstr "เริ่มต้น"
 
-#: HikariSub/ShiftTimes.cpp:335 HikariSub/SubsGridWindow.cpp:317
+#: HikariSub/ShiftTimes.cpp:334 HikariSub/SubsGridWindow.cpp:317
 #: HikariSub/SubsGridWindow.cpp:705 HikariSub/SubsGridWindow.cpp:1139
 #: HikariSub/SubsGridWindow.cpp:1146 HikariSub/SubsGridWindow.cpp:1308
 #: HikariSub/SubsGridWindow.cpp:1315
 msgid "End"
 msgstr "สิ้นสุด"
 
-#: HikariSub/ShiftTimes.cpp:340
+#: HikariSub/ShiftTimes.cpp:339
 msgid ""
 "Move the marker\n"
 "to video time"
@@ -5503,7 +5530,7 @@ msgstr ""
 "เลื่อนจุดมาร์ก\n"
 "ไปยังเวลาวิดีโอ"
 
-#: HikariSub/ShiftTimes.cpp:344
+#: HikariSub/ShiftTimes.cpp:343
 msgid ""
 "Move the marker\n"
 "to audio time"
@@ -5511,91 +5538,91 @@ msgstr ""
 "เลื่อนจุดมาร์ก\n"
 "ไปยังเวลาเสียง"
 
-#: HikariSub/ShiftTimes.cpp:355
+#: HikariSub/ShiftTimes.cpp:354
 msgid "A method of time shift"
 msgstr "วิธีเลื่อนเวลา"
 
-#: HikariSub/ShiftTimes.cpp:357
+#: HikariSub/ShiftTimes.cpp:356
 msgid "Both times"
 msgstr "ทั้งสองเวลา"
 
-#: HikariSub/ShiftTimes.cpp:366
+#: HikariSub/ShiftTimes.cpp:365
 msgid "Correction end times"
 msgstr "แก้ไขเวลาสิ้นสุด"
 
-#: HikariSub/ShiftTimes.cpp:368
+#: HikariSub/ShiftTimes.cpp:367
 msgid "Leave unchanged"
 msgstr "ไม่เปลี่ยนแปลง"
 
-#: HikariSub/ShiftTimes.cpp:369
+#: HikariSub/ShiftTimes.cpp:368
 msgid "Adjust overlapping times"
 msgstr "ปรับเวลาที่ทับซ้อนกัน"
 
-#: HikariSub/ShiftTimes.cpp:370
+#: HikariSub/ShiftTimes.cpp:369
 msgid "New times"
 msgstr "เวลาใหม่"
 
-#: HikariSub/ShiftTimes.cpp:391
+#: HikariSub/ShiftTimes.cpp:390
 msgid "Lead-in/lead-out"
 msgstr "ส่วนนำ/ส่วนสิ้นสุด"
 
-#: HikariSub/ShiftTimes.cpp:392
+#: HikariSub/ShiftTimes.cpp:391
 msgid "Run post processor"
 msgstr "เรียกใช้โพสต์โปรเซสเซอร์"
 
-#: HikariSub/ShiftTimes.cpp:411
+#: HikariSub/ShiftTimes.cpp:410
 msgid "Set times as continuous"
 msgstr "กำหนดค่าเวลาเป็นแบบต่อเนื่อง"
 
-#: HikariSub/ShiftTimes.cpp:412 HikariSub/ShiftTimes.cpp:431
+#: HikariSub/ShiftTimes.cpp:411 HikariSub/ShiftTimes.cpp:430
 msgid "Enable"
 msgstr "เปิดใช้งาน"
 
-#: HikariSub/ShiftTimes.cpp:422
+#: HikariSub/ShiftTimes.cpp:421
 msgid "Start time threshold"
 msgstr "เกณฑ์เวลาเริ่มต้น"
 
-#: HikariSub/ShiftTimes.cpp:424
+#: HikariSub/ShiftTimes.cpp:423
 msgid "End time threshold"
 msgstr "เกณฑ์เวลาสิ้นสุด"
 
-#: HikariSub/ShiftTimes.cpp:430
+#: HikariSub/ShiftTimes.cpp:429
 msgid "Snap to keyframes"
 msgstr "ปรับเวลาให้ตรงกับคีย์เฟรม"
 
-#: HikariSub/ShiftTimes.cpp:445
+#: HikariSub/ShiftTimes.cpp:444
 msgid "Before the start of time"
 msgstr "ก่อนเวลาเริ่มต้น"
 
-#: HikariSub/ShiftTimes.cpp:447
+#: HikariSub/ShiftTimes.cpp:446
 msgid "After the start time"
 msgstr "หลังเวลาเริ่มต้น"
 
-#: HikariSub/ShiftTimes.cpp:449
+#: HikariSub/ShiftTimes.cpp:448
 msgid "Before the end time"
 msgstr "ก่อนเวลาสิ้นสุด"
 
-#: HikariSub/ShiftTimes.cpp:451
+#: HikariSub/ShiftTimes.cpp:450
 msgid "After the end time"
 msgstr "หลังเวลาสิ้นสุด"
 
-#: HikariSub/ShiftTimes.cpp:551
+#: HikariSub/ShiftTimes.cpp:550
 msgid "The choice of lines to move"
 msgstr "เลือกบรรทัดที่จะเลื่อน"
 
-#: HikariSub/ShiftTimes.cpp:552
+#: HikariSub/ShiftTimes.cpp:551
 msgid "Select a style from the list"
 msgstr "เลือกสไตล์จากรายการ"
 
-#: HikariSub/ShiftTimes.cpp:553
+#: HikariSub/ShiftTimes.cpp:552
 msgid "Move according to the following styles (separated by a coma)"
 msgstr "เลื่อนเฉพาะสไตล์ต่อไปนี้ (คั่นด้วยจุลภาค)"
 
-#: HikariSub/ShiftTimes.cpp:555
+#: HikariSub/ShiftTimes.cpp:554
 msgid "Time shifts"
 msgstr "เลื่อนเวลา"
 
-#: HikariSub/ShiftTimes.cpp:556
+#: HikariSub/ShiftTimes.cpp:555
 msgid ""
 "Move the selected line \n"
 "to the time video ± time shift"
@@ -5603,7 +5630,7 @@ msgstr ""
 "เลื่อนบรรทัดที่เลือก\n"
 "ไปยังเวลาของวิดีโอ ± เวลาที่เลื่อน"
 
-#: HikariSub/ShiftTimes.cpp:557
+#: HikariSub/ShiftTimes.cpp:556
 msgid ""
 "Move the selected lines to\n"
 "mark time audio ± time shift"
@@ -5611,27 +5638,27 @@ msgstr ""
 "เลื่อนบรรทัดที่เลือก\n"
 "ไปยังเวลาของเสียง ± เวลาที่เลื่อน"
 
-#: HikariSub/ShiftTimes.cpp:558
+#: HikariSub/ShiftTimes.cpp:557
 msgid "Move the start time to the time video / audio"
 msgstr "เลื่อนเวลาเริ่มต้นไปยังเวลาของวิดีโอ / เสียง"
 
-#: HikariSub/ShiftTimes.cpp:559
+#: HikariSub/ShiftTimes.cpp:558
 msgid "Moves the end time to the video/audio time"
 msgstr "เลื่อนเวลาสิ้นสุดไปยังเวลาของวิดีโอ / เสียง"
 
-#: HikariSub/ShiftTimes.cpp:560
+#: HikariSub/ShiftTimes.cpp:559
 msgid "Delays subtitles"
 msgstr "เลื่อนคำบรรยายให้ช้าลง"
 
-#: HikariSub/ShiftTimes.cpp:561
+#: HikariSub/ShiftTimes.cpp:560
 msgid "Speeds up subtitles"
 msgstr "เลื่อนคำบรรยายให้เร็วขึ้น"
 
-#: HikariSub/ShiftTimes.cpp:562
+#: HikariSub/ShiftTimes.cpp:561
 msgid "Shift times by time / frames"
 msgstr "เลื่อนเวลาตามเวลา / เฟรม"
 
-#: HikariSub/ShiftTimes.cpp:563
+#: HikariSub/ShiftTimes.cpp:562
 msgid ""
 "Shifts \\move, \\t, and \\fad tag times\n"
 "so their positions on video do not change\n"
@@ -5641,39 +5668,39 @@ msgstr ""
 "เพื่อให้ตำแหน่งในวิดีโอเหมือนเดิมโดยไม่เปลี่ยน\n"
 "(อาจทำให้การเลื่อนเวลาช้าลง)"
 
-#: HikariSub/ShiftTimes.cpp:564
+#: HikariSub/ShiftTimes.cpp:563
 msgid "The choice of times to move"
 msgstr "เลือกเวลาที่จะเลื่อน"
 
-#: HikariSub/ShiftTimes.cpp:565
+#: HikariSub/ShiftTimes.cpp:564
 msgid "Correction end times, when they are improper or overlap each other"
 msgstr "แก้ไขเวลาสิ้นสุดเมื่อไม่ถูกต้องหรือทับซ้อนกัน"
 
-#: HikariSub/ShiftTimes.cpp:568
+#: HikariSub/ShiftTimes.cpp:567
 msgid "Inserts introduction to the start time (good when using fad)"
 msgstr "เพิ่มช่วงนำก่อนเวลาเริ่มต้น (เหมาะกับการใช้ \\fad)"
 
-#: HikariSub/ShiftTimes.cpp:569
+#: HikariSub/ShiftTimes.cpp:568
 msgid "Introduction time in milliseconds"
 msgstr "ระยะเวลาช่วงนำ (มิลลิวินาที)"
 
-#: HikariSub/ShiftTimes.cpp:570
+#: HikariSub/ShiftTimes.cpp:569
 msgid "Inserts introduction to the end time (good when using fad)"
 msgstr "เพิ่มช่วงต่อท้ายหลังเวลาสิ้นสุด (เหมาะกับการใช้ \\fad)"
 
-#: HikariSub/ShiftTimes.cpp:571
+#: HikariSub/ShiftTimes.cpp:570
 msgid "End time in milliseconds"
 msgstr "ระยะเวลาช่วงต่อท้าย (มิลลิวินาที)"
 
-#: HikariSub/ShiftTimes.cpp:572
+#: HikariSub/ShiftTimes.cpp:571
 msgid "Start time extension threshold"
 msgstr "ขีดจำกัดของการเลื่อนเวลาเริ่มต้น"
 
-#: HikariSub/ShiftTimes.cpp:573
+#: HikariSub/ShiftTimes.cpp:572
 msgid "End time extension threshold"
 msgstr "ขีดจำกัดของการเลื่อนเวลาสิ้นสุด"
 
-#: HikariSub/ShiftTimes.cpp:574
+#: HikariSub/ShiftTimes.cpp:573
 msgid ""
 "The maximum shift to a keyframe \n"
 "before the start time in milliseconds"
@@ -5681,7 +5708,7 @@ msgstr ""
 "เปลี่ยนเวลาสูงสุดเป็นคีย์เฟรม\n"
 "ก่อนเวลาเริ่มต้นเป็นมิลลิวินาที"
 
-#: HikariSub/ShiftTimes.cpp:575
+#: HikariSub/ShiftTimes.cpp:574
 msgid ""
 "The maximum shift to a keyframe \n"
 "after the start time in milliseconds"
@@ -5689,7 +5716,7 @@ msgstr ""
 "เปลี่ยนเวลาสูงสุดของคีย์เฟรม\n"
 "หลังเวลาเริ่มต้นเป็นมิลลิวินาที"
 
-#: HikariSub/ShiftTimes.cpp:576
+#: HikariSub/ShiftTimes.cpp:575
 msgid ""
 "The maximum shift to a keyframe \n"
 "before the end time in milliseconds"
@@ -5697,7 +5724,7 @@ msgstr ""
 "เปลี่ยนเวลาสูงสุดของคีย์เฟรม\n"
 "ก่อนเวลาสิ้นสุดเป็นมิลลิวินาที"
 
-#: HikariSub/ShiftTimes.cpp:577
+#: HikariSub/ShiftTimes.cpp:576
 msgid ""
 "The maximum shift to a keyframe \n"
 "after the end time in milliseconds"
@@ -5705,11 +5732,11 @@ msgstr ""
 "เปลี่ยนเวลาสูงสุดของคีย์เฟรม\n"
 "หลังเวลาสิ้นสุดเป็นมิลลิวินาที"
 
-#: HikariSub/ShiftTimes.cpp:973
+#: HikariSub/ShiftTimes.cpp:972
 msgid "There is no selected profile to remove"
 msgstr "ยังไม่ได้เลือกโปรไฟล์ที่จะลบในรายการ"
 
-#: HikariSub/ShiftTimes.cpp:978
+#: HikariSub/ShiftTimes.cpp:977
 #, c-format
 msgid "Do you want to remove profile of name \"%s\""
 msgstr "คุณแน่ใจหรือไม่ว่าต้องการลบโปรไฟล์ที่ชื่อ \"%s\""
@@ -5751,7 +5778,7 @@ msgstr "คำสะกดผิด:"
 msgid "Replace to:"
 msgstr "แทนที่เป็น:"
 
-#: HikariSub/SpellCheckerDialog.cpp:58 HikariSub/findreplace.cpp:1489
+#: HikariSub/SpellCheckerDialog.cpp:58 HikariSub/findreplace.cpp:1508
 msgid "Ignore"
 msgstr "ละเว้น"
 
@@ -5779,7 +5806,7 @@ msgstr "ไม่พบคำสะกดผิด"
 msgid "Words added to dictionary"
 msgstr "คำที่เพิ่มลงในพจนานุกรม"
 
-#: HikariSub/StyleChange.cpp:46 HikariSub/SubsFile.cpp:230
+#: HikariSub/StyleChange.cpp:46 HikariSub/SubsFile.cpp:256
 msgid "Style editing"
 msgstr "แก้ไขสไตล์"
 
@@ -6003,21 +6030,6 @@ msgstr "ระยะห่างระหว่างตัวอักษรเ
 msgid "Rectangular border"
 msgstr "ขอบแบบกรอบสี่เหลี่ยม"
 
-#: HikariSub/StyleChange.cpp:716 HikariSub/SubsGrid.cpp:553
-#: HikariSub/SubsGrid.cpp:722
-msgid "Right margin"
-msgstr "ระยะขอบขวา"
-
-#: HikariSub/StyleChange.cpp:717 HikariSub/SubsGrid.cpp:552
-#: HikariSub/SubsGrid.cpp:721
-msgid "Left margin"
-msgstr "ขอบซ้าย"
-
-#: HikariSub/StyleChange.cpp:718 HikariSub/SubsGrid.cpp:554
-#: HikariSub/SubsGrid.cpp:723
-msgid "Vertical margin"
-msgstr "ระยะขอบแนวตั้ง"
-
 #: HikariSub/StyleChange.cpp:719
 msgid "Bottom left"
 msgstr "ล่างซ้าย"
@@ -6067,407 +6079,395 @@ msgstr "เลือกสไตล์"
 msgid "Select columns"
 msgstr "เลือกคอลัมน์"
 
-#: HikariSub/SubsFile.cpp:38
+#: HikariSub/SubsFile.cpp:39
 msgid "Set"
 msgstr "กำหนดค่า"
 
-#: HikariSub/SubsFile.cpp:58
+#: HikariSub/SubsFile.cpp:59
 #, c-format
 msgid "%d element"
 msgid_plural "%d elements"
 msgstr[0] "%d รายการ"
 
-#: HikariSub/SubsFile.cpp:195
+#: HikariSub/SubsFile.cpp:221
 msgid "Opening subtitles"
 msgstr "เปิดคำบรรยาย"
 
-#: HikariSub/SubsFile.cpp:196
+#: HikariSub/SubsFile.cpp:222
 msgid "New subtitles"
 msgstr "คำบรรยายใหม่"
 
-#: HikariSub/SubsFile.cpp:197
+#: HikariSub/SubsFile.cpp:223
 msgid "Line editing"
 msgstr "แก้ไขบรรทัด"
 
-#: HikariSub/SubsFile.cpp:198
+#: HikariSub/SubsFile.cpp:224
 msgid "Editing multiple lines"
 msgstr "แก้ไขหลายบรรทัด"
 
-#: HikariSub/SubsFile.cpp:199
+#: HikariSub/SubsFile.cpp:225
 msgid "Correcting spelling errors in the text field"
 msgstr "กำลังแก้ไขข้อผิดพลาดในการสะกดคำในช่องข้อความ"
 
-#: HikariSub/SubsFile.cpp:200
+#: HikariSub/SubsFile.cpp:226
 msgid "Duplicating lines"
 msgstr "กำลังทำบรรทัดซ้ำ"
 
-#: HikariSub/SubsFile.cpp:201
+#: HikariSub/SubsFile.cpp:227
 msgid "Joining lines"
 msgstr "กำลังต่อบรรทัด"
 
-#: HikariSub/SubsFile.cpp:202
+#: HikariSub/SubsFile.cpp:228
 msgid "Joining line with the previous line"
 msgstr "กำลังต่อกับบรรทัดก่อนหน้า"
 
-#: HikariSub/SubsFile.cpp:203
+#: HikariSub/SubsFile.cpp:229
 msgid "Joining line with the next line"
 msgstr "กำลังต่อกับบรรทัดต่อไป"
 
-#: HikariSub/SubsFile.cpp:204
+#: HikariSub/SubsFile.cpp:230
 msgid "Joining lines and keeping the first"
 msgstr "กำลังต่อบรรทัดและเก็บบรรทัดแรกไว้"
 
-#: HikariSub/SubsFile.cpp:205
+#: HikariSub/SubsFile.cpp:231
 msgid "Joining lines and keeping the last"
 msgstr "กำลังต่อบรรทัดและเก็บบรรทัดสุดท้ายไว้"
 
-#: HikariSub/SubsFile.cpp:206
+#: HikariSub/SubsFile.cpp:232
 msgid "Pasting lines"
 msgstr "กำลังวางบรรทัด"
 
-#: HikariSub/SubsFile.cpp:207
+#: HikariSub/SubsFile.cpp:233
 msgid "Pasting columns"
 msgstr "กำลังวางคอลัมน์"
 
-#: HikariSub/SubsFile.cpp:208
+#: HikariSub/SubsFile.cpp:234
 msgid "Pasting translation"
 msgstr "กำลังวางการแปล"
 
-#: HikariSub/SubsFile.cpp:209
+#: HikariSub/SubsFile.cpp:235
 msgid "Moving translation text"
 msgstr "กำลังย้ายข้อความแปล"
 
-#: HikariSub/SubsFile.cpp:210
+#: HikariSub/SubsFile.cpp:236
 msgid "Setting line times as continuous"
 msgstr "กำลังกำหนดเวลาของบรรทัดให้ต่อเนื่อง"
 
-#: HikariSub/SubsFile.cpp:211
+#: HikariSub/SubsFile.cpp:237
 msgid "Setting FPS from video"
 msgstr "กำลังกำหนดค่า FPS โดยคำนวณจากวิดีโอ"
 
-#: HikariSub/SubsFile.cpp:212
+#: HikariSub/SubsFile.cpp:238
 msgid "Setting custom FPS"
 msgstr "กำลังกำหนดค่า FPS ด้วยตัวเอง"
 
-#: HikariSub/SubsFile.cpp:213
+#: HikariSub/SubsFile.cpp:239
 msgid "Swapping lines"
 msgstr "กำลังสลับบรรทัด"
 
-#: HikariSub/SubsFile.cpp:214
+#: HikariSub/SubsFile.cpp:240
 msgid "Subtitles conversion"
 msgstr "แปลงคำบรรยาย"
 
-#: HikariSub/SubsFile.cpp:215
+#: HikariSub/SubsFile.cpp:241
 msgid "Sorting subtitles"
 msgstr "กำลังจัดเรียงคำบรรยาย"
 
-#: HikariSub/SubsFile.cpp:216
+#: HikariSub/SubsFile.cpp:242
 msgid "Deleting lines"
 msgstr "กำลังลบบรรทัด"
 
-#: HikariSub/SubsFile.cpp:217
+#: HikariSub/SubsFile.cpp:243
 msgid "Deleting text"
 msgstr "กำลังลบข้อความ"
 
-#: HikariSub/SubsFile.cpp:218
+#: HikariSub/SubsFile.cpp:244
 msgid "Setting start time"
 msgstr "กำลังกำหนดค่าเวลาเริ่มต้น"
 
-#: HikariSub/SubsFile.cpp:219
+#: HikariSub/SubsFile.cpp:245
 msgid "Setting end time"
 msgstr "กำลังกำหนดค่าเวลาสิ้นสุด"
 
-#: HikariSub/SubsFile.cpp:220
+#: HikariSub/SubsFile.cpp:246
 msgid "Turning on translator mode"
 msgstr "เปิดโหมดผู้แปล"
 
-#: HikariSub/SubsFile.cpp:221
+#: HikariSub/SubsFile.cpp:247
 msgid "Turning off translator mode"
 msgstr "ปิดโหมดผู้แปล"
 
-#: HikariSub/SubsFile.cpp:222
+#: HikariSub/SubsFile.cpp:248
 msgid "Adding a new line"
 msgstr "กำลังเพิ่มบรรทัดใหม่"
 
-#: HikariSub/SubsFile.cpp:223
+#: HikariSub/SubsFile.cpp:249
 msgid "Inserting line"
 msgstr "กำลังแทรกบรรทัด"
 
-#: HikariSub/SubsFile.cpp:224
+#: HikariSub/SubsFile.cpp:250
 msgid "Changing time on audio spectrum"
 msgstr "กำลังเปลี่ยนเวลาในสเปกตรัมเสียง"
 
-#: HikariSub/SubsFile.cpp:225
+#: HikariSub/SubsFile.cpp:251
 msgid "Snapping to keyframe"
 msgstr "กำลังปรับเวลาให้ตรงกับคีย์เฟรม"
 
-#: HikariSub/SubsFile.cpp:226
+#: HikariSub/SubsFile.cpp:252
 msgid "Changing the subtitle header"
 msgstr "กำลังเปลี่ยนคุณสมบัติคำบรรยาย"
 
-#: HikariSub/SubsFile.cpp:227
+#: HikariSub/SubsFile.cpp:253
 msgid "Selecting lines"
 msgstr "การดำเนินการเลือกบรรทัด"
 
-#: HikariSub/SubsFile.cpp:228
+#: HikariSub/SubsFile.cpp:254
 msgid "Shifting times"
 msgstr "กำลังเลื่อนเวลา"
 
-#: HikariSub/SubsFile.cpp:229
+#: HikariSub/SubsFile.cpp:255
 msgid "Correcting spelling errors"
 msgstr "กำลังแก้ไขข้อผิดพลาดในการสะกด"
 
-#: HikariSub/SubsFile.cpp:231
+#: HikariSub/SubsFile.cpp:257
 msgid "Changing subtitles resolution"
 msgstr "กำลังเปลี่ยนความละเอียดของคำบรรยาย"
 
-#: HikariSub/SubsFile.cpp:232
+#: HikariSub/SubsFile.cpp:258
 msgid "Visual positioning tool"
 msgstr "เครื่องมือ การวางตำแหน่ง"
 
-#: HikariSub/SubsFile.cpp:233
+#: HikariSub/SubsFile.cpp:259
 msgid "Visual movement tool"
 msgstr "เครื่องมือ ย้ายตำแหน่ง"
 
-#: HikariSub/SubsFile.cpp:234
+#: HikariSub/SubsFile.cpp:260
 msgid "Visual scaling tool"
 msgstr "เครื่องมือ ปรับขนาด"
 
-#: HikariSub/SubsFile.cpp:235
+#: HikariSub/SubsFile.cpp:261
 msgid "Visual Z-axis rotation tool"
 msgstr "เครื่องมือหมุนตามแกน Z"
 
-#: HikariSub/SubsFile.cpp:236
+#: HikariSub/SubsFile.cpp:262
 msgid "Visual X/Y-axis rotation tool"
 msgstr "เครื่องมือหมุนตามแกน X/Y"
 
-#: HikariSub/SubsFile.cpp:237
+#: HikariSub/SubsFile.cpp:263
 msgid "Visual rectangular clipping tool"
 msgstr "เครื่องมือ ตัดรูปสี่เหลี่ยม"
 
-#: HikariSub/SubsFile.cpp:238
+#: HikariSub/SubsFile.cpp:264
 msgid "Visual vector clipping tool"
 msgstr "เครื่องมือ ตัดเวกเตอร์"
 
-#: HikariSub/SubsFile.cpp:239
+#: HikariSub/SubsFile.cpp:265
 msgid "Visual vector drawing tool"
 msgstr "เครื่องมือ วาดภาพเวกเตอร์"
 
-#: HikariSub/SubsFile.cpp:240
+#: HikariSub/SubsFile.cpp:266
 msgid "Visual position adjustment tool"
 msgstr "เครื่องมือ เลื่อนตำแหน่ง"
 
-#: HikariSub/SubsFile.cpp:241
+#: HikariSub/SubsFile.cpp:267
 msgid "Visual scale and rotation adjustment tool"
 msgstr "เครื่องมือ ปรับขนาดและหมุน"
 
-#: HikariSub/SubsFile.cpp:242
+#: HikariSub/SubsFile.cpp:268
 msgid "Visual Hydra tool"
 msgstr "เครื่องมือ ไฮดรา"
 
-#: HikariSub/SubsFile.cpp:245
+#: HikariSub/SubsFile.cpp:271
 msgid "Fixing minor errors"
 msgstr "การแก้ไขข้อผิดพลาดเล็กน้อย"
 
-#: HikariSub/SubsFile.cpp:246
+#: HikariSub/SubsFile.cpp:272
 msgid "Adding tree"
 msgstr "แทรกทรี"
 
-#: HikariSub/SubsFile.cpp:247
+#: HikariSub/SubsFile.cpp:273
 msgid "Setting tree description"
 msgstr "ตั้งคำอธิบายทรี"
 
-#: HikariSub/SubsFile.cpp:248
+#: HikariSub/SubsFile.cpp:274
 msgid "Adding line to tree"
 msgstr "เพิ่มบรรทัดลงในทรี"
 
-#: HikariSub/SubsFile.cpp:249
+#: HikariSub/SubsFile.cpp:275
 msgid "Removing tree"
 msgstr "ลบทรี"
 
-#: HikariSub/SubsFile.cpp:250
+#: HikariSub/SubsFile.cpp:276
 msgid "Automation script"
 msgstr "สคริปต์อัตโนมัติ"
 
-#: HikariSub/SubsFile.cpp:251 HikariSub/SubsGrid.cpp:274
+#: HikariSub/SubsFile.cpp:277 HikariSub/SubsGrid.cpp:276
 msgid "Filtering"
 msgstr "การกรอง"
 
-#: HikariSub/SubsFile.cpp:252
+#: HikariSub/SubsFile.cpp:278
 msgid "Removing filtering"
 msgstr "การลบการกรอง"
 
-#: HikariSub/SubsFile.cpp:253
+#: HikariSub/SubsFile.cpp:279
 msgid "Splitting lines"
 msgstr "การแบ่งบรรทัด"
 
-#: HikariSub/SubsFile.cpp:628
+#: HikariSub/SubsFile.cpp:654
 #, c-format
 msgid "Fixed the tree markers of %d line: lines with no tree description are now ordinary lines and every tree is open or closed as a whole."
 msgid_plural "Fixed the tree markers of %d lines: lines with no tree description are now ordinary lines and every tree is open or closed as a whole."
 msgstr[0] "แก้ไขเครื่องหมายทรีของ %d บรรทัดแล้ว: บรรทัดที่ไม่มีคำอธิบายทรีกลายเป็นบรรทัดปกติ และแต่ละทรีจะขยายหรือยุบทั้งทรี"
 
-#: HikariSub/SubsFile.cpp:839
+#: HikariSub/SubsFile.cpp:865
 #, c-format
 msgid ", active line %i"
 msgstr ", บรรทัดปัจจุบัน %i"
 
-#: HikariSub/SubsGrid.cpp:201
+#: HikariSub/SubsGrid.cpp:203
 msgid "Hide line wraps"
 msgstr "ซ่อนตัวแบ่งบรรทัด"
 
-#: HikariSub/SubsGrid.cpp:229
+#: HikariSub/SubsGrid.cpp:231
 msgid "Do not include selected lines"
 msgstr "ไม่รวมบรรทัดที่เลือก"
 
-#: HikariSub/SubsGrid.cpp:243
+#: HikariSub/SubsGrid.cpp:245
 msgid "Insert &before"
 msgstr "แทรก&ก่อน"
 
-#: HikariSub/SubsGrid.cpp:244
+#: HikariSub/SubsGrid.cpp:246
 msgid "Insert &after"
 msgstr "แทรก&หลัง"
 
-#: HikariSub/SubsGrid.cpp:246
+#: HikariSub/SubsGrid.cpp:248
 msgid "Insert before with &video time"
 msgstr "แทรกก่อนด้วย&เวลาวิดีโอ"
 
-#: HikariSub/SubsGrid.cpp:247
+#: HikariSub/SubsGrid.cpp:249
 msgid "Insert &after with video time"
 msgstr "แทรก&หลังด้วยเวลาวิดีโอ"
 
-#: HikariSub/SubsGrid.cpp:250
+#: HikariSub/SubsGrid.cpp:252
 msgid "Insert lines"
 msgstr "แทรกบรรทัด"
 
-#: HikariSub/SubsGrid.cpp:252
+#: HikariSub/SubsGrid.cpp:254
 msgid "&Duplicate lines"
 msgstr "&สร้างบรรทัดซ้ำ"
 
-#: HikariSub/SubsGrid.cpp:254
+#: HikariSub/SubsGrid.cpp:256
 msgid "&Swap"
 msgstr "&สลับ"
 
-#: HikariSub/SubsGrid.cpp:256
+#: HikariSub/SubsGrid.cpp:258
 msgid "Join &lines"
 msgstr "ต่อ&บรรทัด"
 
-#: HikariSub/SubsGrid.cpp:265
+#: HikariSub/SubsGrid.cpp:267
 msgid "Split lines"
 msgstr "แบ่งบรรทัด"
 
-#: HikariSub/SubsGrid.cpp:267
+#: HikariSub/SubsGrid.cpp:269
 msgid "Copy\tCtrl-C"
 msgstr "คัดลอก\tCtrl-C"
 
-#: HikariSub/SubsGrid.cpp:268
+#: HikariSub/SubsGrid.cpp:270
 msgid "Cut\tCtrl-X"
 msgstr "ตัด\tCtrl-X"
 
-#: HikariSub/SubsGrid.cpp:269
+#: HikariSub/SubsGrid.cpp:271
 msgid "Paste\tCtrl-V"
 msgstr "วาง\tCtrl-V"
 
-#: HikariSub/SubsGrid.cpp:272
+#: HikariSub/SubsGrid.cpp:274
 msgid "Hide columns"
 msgstr "ซ่อนคอลัมน์"
 
-#: HikariSub/SubsGrid.cpp:290
+#: HikariSub/SubsGrid.cpp:292
 msgid "Load subtitles from an MKV/OGM file"
 msgstr "โหลดคำบรรยายจากแฟ้ม MKV / OGM"
 
-#: HikariSub/SubsGrid.cpp:316
+#: HikariSub/SubsGrid.cpp:318
 msgid "Add lines"
 msgstr "เพิ่มบรรทัด"
 
-#: HikariSub/SubsGrid.cpp:317
+#: HikariSub/SubsGrid.cpp:319
 msgid "Copy tree"
 msgstr "คัดลอกทรี"
 
-#: HikariSub/SubsGrid.cpp:318
+#: HikariSub/SubsGrid.cpp:320
 msgid "Change description"
 msgstr "เปลี่ยนคำอธิบาย"
 
-#: HikariSub/SubsGrid.cpp:319
+#: HikariSub/SubsGrid.cpp:321
 msgid "Select tree lines"
 msgstr "เลือกบรรทัดในทรี"
 
-#: HikariSub/SubsGrid.cpp:557
-msgid "Text into original"
-msgstr "เปลี่ยนเป็นข้อความต้นฉบับ"
-
-#: HikariSub/SubsGrid.cpp:558
-msgid "Text into translation"
-msgstr "เปลี่ยนเป็นข้อความแปล"
-
-#: HikariSub/SubsGrid.cpp:726
-msgid "Text without tags"
-msgstr "เปลี่ยนเป็นข้อความที่ไม่มีแท็ก"
-
-#: HikariSub/SubsGrid.cpp:1012
+#: HikariSub/SubsGrid.cpp:935
 msgid "Subtitle files (*.ass),(*.srt),(*.sub),(*.txt)|*.ass;*.srt;*.sub;*.txt"
 msgstr "แฟ้มคำบรรยาย (*.ass),(*.srt),(*.sub),(*.txt)|*.ass;*.srt;*.sub;*.txt"
 
-#: HikariSub/SubsGrid.cpp:1217
+#: HikariSub/SubsGrid.cpp:1140
 msgid "Save the file before loading subtitles from the MKV?"
 msgstr "ต้องการบันทึกแฟ้มก่อนจะโหลดคำบรรยายจาก MKV หรือไม่?"
 
-#: HikariSub/SubsGrid.cpp:1257
+#: HikariSub/SubsGrid.cpp:1180
 msgid "Failed to open subtitles"
 msgstr "ไม่สามารถเปิดคำบรรยาย"
 
-#: HikariSub/SubsGrid.cpp:1392 HikariSub/SubsGrid.cpp:1422
-#: HikariSub/SubsGrid.cpp:1442
+#: HikariSub/SubsGrid.cpp:1315 HikariSub/SubsGrid.cpp:1345
+#: HikariSub/SubsGrid.cpp:1365
 #, c-format
 msgid ""
 "In line %i, value '%s' cannot be scaled\n"
 "in tag '%s'"
 msgstr "ไม่สามารถปรับขนาดบรรทัด %i ด้วยขนาด '%s' ในแท็ก '%s'"
 
-#: HikariSub/SubsGridBase.cpp:214
+#: HikariSub/SubsGridBase.cpp:216
 msgid "Invalid FPS. Correct it in options and try again."
 msgstr "ค่า FPS ไม่ถูกต้อง แก้ไขตัวเลือกแล้วลองอีกครั้ง"
 
-#: HikariSub/SubsGridBase.cpp:503 HikariSub/SubsGridBase.cpp:533
+#: HikariSub/SubsGridBase.cpp:505 HikariSub/SubsGridBase.cpp:535
 msgid "Video was not loaded using FFMS2"
 msgstr "วิดีโอไม่ได้โหลดด้วย FFMS2"
 
-#: HikariSub/SubsGridBase.cpp:538
+#: HikariSub/SubsGridBase.cpp:540
 msgid "No styles selected for time shifting"
 msgstr "ยังไม่ได้เลือกสไตล์สำหรับการเลื่อนเวลา"
 
-#: HikariSub/SubsGridBase.cpp:556
+#: HikariSub/SubsGridBase.cpp:558
 #, c-format
 msgid "Do you really want to shift only %s times?"
 msgstr "ต้องการเลื่อนเฉพาะเวลา%sหรือไม่?"
 
-#: HikariSub/SubsGridBase.cpp:557
+#: HikariSub/SubsGridBase.cpp:559
 msgid "end"
 msgstr "สิ้นสุด"
 
-#: HikariSub/SubsGridBase.cpp:557
+#: HikariSub/SubsGridBase.cpp:559
 msgid "start"
 msgstr "เริ่มต้น"
 
-#: HikariSub/SubsGridBase.cpp:567
+#: HikariSub/SubsGridBase.cpp:569
 msgid "No lines selected for shifting"
 msgstr "ยังไม่ได้เลือกบรรทัดที่จะเลื่อน"
 
-#: HikariSub/SubsGridBase.cpp:1324
+#: HikariSub/SubsGridBase.cpp:1326
 msgid "This edit would leave lines of a tree outside it, so it was not made."
 msgstr "การแก้ไขนี้จะทำให้บางบรรทัดของทรีอยู่นอกทรี จึงไม่ได้ดำเนินการแก้ไข"
 
-#: HikariSub/SubsGridBase.cpp:1325 HikariSub/SubsGridBase.cpp:1345
+#: HikariSub/SubsGridBase.cpp:1327 HikariSub/SubsGridBase.cpp:1347
 #: HikariSub/SubsGridFiltering.cpp:186
 msgid "Trees"
 msgstr "ทรี"
 
-#: HikariSub/SubsGridBase.cpp:1336
+#: HikariSub/SubsGridBase.cpp:1338
 #, c-format
 msgid "Line %d: %s"
 msgstr "บรรทัด %d: %s"
 
-#: HikariSub/SubsGridBase.cpp:1339
+#: HikariSub/SubsGridBase.cpp:1341
 #, c-format
 msgid ""
 "This edit would split a tree, leave some of its lines outside it or move them into another tree, so it was not made:\n"
@@ -6485,24 +6485,24 @@ msgstr[0] ""
 "\n"
 "การลบทรีจะลบบรรทัดคำอธิบายของทรี และแสดงบรรทัดในทรีเป็นบรรทัดปกติ"
 
-#: HikariSub/SubsGridBase.cpp:1344
+#: HikariSub/SubsGridBase.cpp:1346
 msgid "Make the edit again after removing."
 msgstr "โปรดแก้ไขอีกครั้งหลังจากลบทรีแล้ว"
 
-#: HikariSub/SubsGridBase.cpp:1346
+#: HikariSub/SubsGridBase.cpp:1348
 msgid "Remove the tree"
 msgid_plural "Remove the trees"
 msgstr[0] "ลบทรี"
 
-#: HikariSub/SubsGridBase.cpp:1432
+#: HikariSub/SubsGridBase.cpp:1434
 msgid "Invalid format (file may be corrupted or contain errors)"
 msgstr "รูปแบบไม่ถูกต้อง (แฟ้มเสียหายหรือมีข้อผิดพลาด)"
 
-#: HikariSub/SubsGridBase.cpp:1508
+#: HikariSub/SubsGridBase.cpp:1510
 msgid "This subtitle file is plain text and will be opened as ASS subtitles"
 msgstr "แฟ้มคำบรรยายนี้เป็นข้อความธรรมดา และจะเปิดในรูปแบบ ASS"
 
-#: HikariSub/SubsGridBase.cpp:1577
+#: HikariSub/SubsGridBase.cpp:1579
 msgid ""
 "Are you sure you want to turn off translation mode?\n"
 "Foreign language text will be deleted."
@@ -6595,39 +6595,39 @@ msgstr "ข้อความแปล"
 msgid "Cannot show preview cause grid height is too low"
 msgstr "ไม่สามารถแสดงตัวอย่างได้เพราะตารางคำบรรยายมีความสูงไม่เพียงพอ"
 
-#: HikariSub/SubsResampleDialog.cpp:27
+#: HikariSub/SubsResampleDialog.cpp:28
 msgid "Change resolution"
 msgstr "เปลี่ยนความละเอียด"
 
-#: HikariSub/SubsResampleDialog.cpp:33
+#: HikariSub/SubsResampleDialog.cpp:34
 msgid "Target resolution"
 msgstr "ความละเอียดเป้าหมาย"
 
-#: HikariSub/SubsResampleDialog.cpp:37
+#: HikariSub/SubsResampleDialog.cpp:38
 msgid "From subtitles"
 msgstr "จากคำบรรยาย"
 
-#: HikariSub/SubsResampleDialog.cpp:55
+#: HikariSub/SubsResampleDialog.cpp:56
 msgid "Get from video"
 msgstr "ใช้ค่าจากวิดีโอ"
 
-#: HikariSub/SubsResampleDialog.cpp:71
+#: HikariSub/SubsResampleDialog.cpp:72
 msgid "No stretch"
 msgstr "อย่ายืด"
 
-#: HikariSub/SubsResampleDialog.cpp:72
+#: HikariSub/SubsResampleDialog.cpp:73
 msgid "Stretch"
 msgstr "ยืด"
 
-#: HikariSub/SubsResampleDialog.cpp:73 HikariSub/SubsResampleDialog.cpp:183
+#: HikariSub/SubsResampleDialog.cpp:74 HikariSub/SubsResampleDialog.cpp:184
 msgid "Resample options"
 msgstr "ตัวเลือกการปรับความละเอียด"
 
-#: HikariSub/SubsResampleDialog.cpp:169
+#: HikariSub/SubsResampleDialog.cpp:170
 msgid "Incompatible resolution"
 msgstr "ความละเอียดไม่ตรงกัน"
 
-#: HikariSub/SubsResampleDialog.cpp:173
+#: HikariSub/SubsResampleDialog.cpp:174
 #, c-format
 msgid ""
 "The video and subtitle resolutions are different.\n"
@@ -6646,55 +6646,55 @@ msgstr ""
 "\n"
 "ต้องการปรับความละเอียดคำบรรยายให้ตรงกับวิดีโอหรือไม่?\n"
 
-#: HikariSub/SubsResampleDialog.cpp:178
+#: HikariSub/SubsResampleDialog.cpp:179
 msgid "Change only the subtitle resolution"
 msgstr "เปลี่ยนความละเอียดของคำบรรยายเท่านั้น"
 
-#: HikariSub/SubsResampleDialog.cpp:179
+#: HikariSub/SubsResampleDialog.cpp:180
 msgid "Resample subtitles (no stretch)"
 msgstr "ปรับความละเอียดคำบรรยายโดยไม่ยืดภาพ"
 
-#: HikariSub/SubsResampleDialog.cpp:181
+#: HikariSub/SubsResampleDialog.cpp:182
 msgid "Resample subtitles (stretch)"
 msgstr "ปรับความละเอียดคำบรรยายพร้อมยืดภาพ"
 
-#: HikariSub/SubsResampleDialog.cpp:185
+#: HikariSub/SubsResampleDialog.cpp:186
 msgid "Change"
 msgstr "เปลี่ยน"
 
-#: HikariSub/SubsResampleDialog.cpp:190
+#: HikariSub/SubsResampleDialog.cpp:191
 msgid "Do not change"
 msgstr "อย่าเปลี่ยน"
 
-#: HikariSub/SubsResampleDialog.cpp:191
+#: HikariSub/SubsResampleDialog.cpp:192
 msgid "Disable warning"
 msgstr "ปิดใช้งานคำเตือน"
 
-#: HikariSub/SubtitlesLibass.cpp:175
+#: HikariSub/SubtitlesLibass.cpp:220
 msgid "Libass works only with FFMS2"
 msgstr "Libass ใช้งานได้กับ FFMS2 เท่านั้น"
 
-#: HikariSub/SubtitlesLibass.cpp:186
+#: HikariSub/SubtitlesLibass.cpp:232
 msgid "Libass only opens ASS and SSA subtitles"
 msgstr "Libass เปิดได้เฉพาะแฟ้มคำบรรยาย ASS และ SSA"
 
-#: HikariSub/SubtitlesLibass.cpp:235
+#: HikariSub/SubtitlesLibass.cpp:322
 msgid "Cannot open subtitles in Libass"
 msgstr "ไม่สามารถเปิดคำบรรยายใน Libass ได้"
 
-#: HikariSub/SubtitlesProviderManager.cpp:72
+#: HikariSub/SubtitlesProviderManager.cpp:74
 msgid "VSFilterMod (slow, only for VSFilterMod tags)"
 msgstr "VSFilterMod (ช้า ใช้เฉพาะกับแท็ก VSFilterMod)"
 
-#: HikariSub/SubtitlesVSFilter.cpp:209
+#: HikariSub/SubtitlesVSFilter.cpp:222
 msgid "Cannot initialize CSRI."
 msgstr "ไม่สามารถเริ่มต้น CSRI ได้"
 
-#: HikariSub/SubtitlesVSFilter.cpp:218
+#: HikariSub/SubtitlesVSFilter.cpp:239
 msgid "Cannot create CSRI instance."
 msgstr "ไม่สามารถสร้างอินสแตนซ์ CSRI ได้"
 
-#: HikariSub/SubtitlesVSFilter.cpp:223 HikariSub/SubtitlesVSFilter.cpp:326
+#: HikariSub/SubtitlesVSFilter.cpp:244 HikariSub/SubtitlesVSFilter.cpp:348
 msgid "CSRI does not support this format."
 msgstr "CSRI ไม่รองรับรูปแบบนี้"
 
@@ -7107,12 +7107,12 @@ msgstr "การจัดวางตำแหน่งแถบเครื่
 msgid "You have the latest stable version. A newer prerelease, %s, is available."
 msgstr "คุณใช้เวอร์ชันเสถียรล่าสุดอยู่แล้ว แต่มีเวอร์ชันทดสอบที่ใหม่กว่า (%s) ให้ใช้งาน"
 
-#: HikariSub/UpdateChecker.cpp:173 HikariSub/UpdateChecker.cpp:693
-#: HikariSub/UpdateChecker.cpp:700 HikariSub/UpdateChecker.cpp:771
+#: HikariSub/UpdateChecker.cpp:173 HikariSub/UpdateChecker.cpp:695
+#: HikariSub/UpdateChecker.cpp:702 HikariSub/UpdateChecker.cpp:774
 #: HikariSub/UpdateInstaller.cpp:271 HikariSub/UpdateInstaller.cpp:840
 #: HikariSub/UpdateInstaller.cpp:867 HikariSub/UpdateInstaller.cpp:1055
-#: HikariSub/UpdateInstaller.cpp:1319 HikariSub/UpdateInstaller.cpp:1328
-#: HikariSub/UpdateInstaller.cpp:1365 HikariSub/UpdateInstaller.cpp:1397
+#: HikariSub/UpdateInstaller.cpp:1344 HikariSub/UpdateInstaller.cpp:1353
+#: HikariSub/UpdateInstaller.cpp:1390 HikariSub/UpdateInstaller.cpp:1422
 msgid "Update"
 msgstr "อัปเดต"
 
@@ -7120,8 +7120,8 @@ msgstr "อัปเดต"
 msgid "Open the download page"
 msgstr "เปิดหน้าดาวน์โหลด"
 
-#: HikariSub/UpdateChecker.cpp:203 HikariSub/UpdateChecker.cpp:341
-#: HikariSub/UpdateChecker.cpp:345
+#: HikariSub/UpdateChecker.cpp:203 HikariSub/UpdateChecker.cpp:343
+#: HikariSub/UpdateChecker.cpp:347
 msgid "A new version is available"
 msgstr "มีเวอร์ชันใหม่ให้ใช้งาน"
 
@@ -7139,7 +7139,7 @@ msgstr "ต้องใช้ %s ขึ้นไป จึงไม่สาม�
 msgid "Download and install"
 msgstr "ดาวน์โหลดและติดตั้ง"
 
-#: HikariSub/UpdateChecker.cpp:251 HikariSub/UpdateChecker.cpp:358
+#: HikariSub/UpdateChecker.cpp:251 HikariSub/UpdateChecker.cpp:360
 msgid "Remind me in a week"
 msgstr "เตือนอีกครั้งในหนึ่งสัปดาห์"
 
@@ -7157,25 +7157,25 @@ msgstr "กำลังดาวน์โหลด... %d%%"
 msgid "Cannot download the update"
 msgstr "ไม่สามารถดาวน์โหลดอัปเดตได้"
 
-#: HikariSub/UpdateChecker.cpp:350
+#: HikariSub/UpdateChecker.cpp:352
 #, c-format
 msgid "HikariSub %s is a prerelease. The AUR package carries stable versions only. To try it, use the AppImage from the release page."
 msgstr "HikariSub %s เป็นเวอร์ชันทดสอบ แพ็กเกจ AUR มีเฉพาะเวอร์ชันเสถียร หากต้องการลองใช้ ให้ใช้ AppImage จากหน้าเผยแพร่ของเวอร์ชันนี้"
 
-#: HikariSub/UpdateChecker.cpp:352
+#: HikariSub/UpdateChecker.cpp:354
 #, c-format
 msgid "HikariSub %s is available; you have %s. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu."
 msgstr "มี HikariSub %s ให้ใช้งาน คุณใช้ %s อยู่ คุณติดตั้ง HikariSub จาก AUR จึงต้องอัปเดตด้วยตัวจัดการแพ็กเกจหรือตัวช่วย AUR ของคุณ เช่น yay -Syu หรือ paru -Syu"
 
-#: HikariSub/UpdateChecker.cpp:357 HikariSub/UpdateInstaller.cpp:331
+#: HikariSub/UpdateChecker.cpp:359 HikariSub/UpdateInstaller.cpp:331
 msgid "What's new"
 msgstr "มีอะไรใหม่"
 
-#: HikariSub/UpdateChecker.cpp:693 HikariSub/UpdateChecker.cpp:771
+#: HikariSub/UpdateChecker.cpp:695 HikariSub/UpdateChecker.cpp:774
 msgid "Cannot check for updates"
 msgstr "ไม่สามารถตรวจหาอัปเดตได้"
 
-#: HikariSub/UpdateChecker.cpp:700
+#: HikariSub/UpdateChecker.cpp:702
 msgid "You already have the latest version"
 msgstr "คุณใช้เวอร์ชันล่าสุดอยู่แล้ว"
 
@@ -7259,7 +7259,7 @@ msgstr "ไม่สามารถตรวจสอบ HikariSub %s กับ�
 msgid "The update could not be handed to the installer."
 msgstr "ไม่สามารถส่งอัปเดตให้ตัวติดตั้งได้"
 
-#: HikariSub/UpdateInstaller.cpp:824 HikariSub/UpdateInstaller.cpp:1437
+#: HikariSub/UpdateInstaller.cpp:824 HikariSub/UpdateInstaller.cpp:1462
 #, c-format
 msgid "The installer of HikariSub %s could not be started. You can run it yourself: %s"
 msgstr "ไม่สามารถเริ่มตัวติดตั้งของ HikariSub %s ได้ คุณสามารถเรียกใช้เองได้: %s"
@@ -7310,27 +7310,27 @@ msgstr "กำลังติดตั้งอัปเดต..."
 msgid "No password prompt could be shown to install HikariSub %s. Install it yourself: %s"
 msgstr "ไม่สามารถแสดงหน้าต่างขอรหัสผ่านเพื่อติดตั้ง HikariSub %s ได้ ให้ติดตั้งเอง: %s"
 
-#: HikariSub/UpdateInstaller.cpp:1317
+#: HikariSub/UpdateInstaller.cpp:1342
 #, c-format
 msgid "HikariSub %s could not be installed (code %d)."
 msgstr "ไม่สามารถติดตั้ง HikariSub %s ได้ (รหัส %d)"
 
-#: HikariSub/UpdateInstaller.cpp:1327
+#: HikariSub/UpdateInstaller.cpp:1352
 #, c-format
 msgid "HikariSub %s was not installed: its installer did not finish. If another administrator account approved it, that account was told why."
 msgstr "ไม่ได้ติดตั้ง HikariSub %s: ตัวติดตั้งทำงานไม่เสร็จ หากบัญชีผู้ดูแลระบบอื่นเป็นผู้อนุมัติ บัญชีนั้นได้รับแจ้งเหตุผลแล้ว"
 
-#: HikariSub/UpdateInstaller.cpp:1391
+#: HikariSub/UpdateInstaller.cpp:1416
 #, c-format
 msgid "The download of HikariSub %s changed or went missing, so it was not installed. It is downloaded again at the next check."
 msgstr "แฟ้มที่ดาวน์โหลดของ HikariSub %s เปลี่ยนไปหรือหายไป จึงไม่ได้ติดตั้ง จะดาวน์โหลดอีกครั้งเมื่อตรวจหาครั้งถัดไป"
 
-#: HikariSub/UpdateInstaller.cpp:1431
+#: HikariSub/UpdateInstaller.cpp:1456
 #, c-format
 msgid "HikariSub is installed for all users in a folder that can be changed without administrator rights, so HikariSub %s was not installed automatically. You can run its installer yourself: %s"
 msgstr "HikariSub ติดตั้งไว้สำหรับผู้ใช้ทุกคนในโฟลเดอร์ที่เปลี่ยนแปลงได้โดยไม่ต้องมีสิทธิ์ผู้ดูแลระบบ จึงไม่ได้ติดตั้ง HikariSub %s โดยอัตโนมัติ คุณสามารถเรียกใช้ตัวติดตั้งเองได้: %s"
 
-#: HikariSub/UpdateInstaller.cpp:1448 HikariSub/UpdateInstaller.cpp:1506
+#: HikariSub/UpdateInstaller.cpp:1473 HikariSub/UpdateInstaller.cpp:1531
 #, c-format
 msgid "HikariSub %s could not replace the AppImage. The download is at %s."
 msgstr "HikariSub %s ไม่สามารถแทนที่ AppImage ได้ แฟ้มที่ดาวน์โหลดอยู่ที่ %s"
@@ -7339,12 +7339,12 @@ msgstr "HikariSub %s ไม่สามารถแทนที่ AppImage ไ�
 msgid "Unable to retrieve information about the monitor"
 msgstr "ไม่สามารถดึงข้อมูลจอภาพได้"
 
-#: HikariSub/VideoBox.cpp:113 HikariSub/VideoBox.cpp:127
+#: HikariSub/VideoBox.cpp:114 HikariSub/VideoBox.cpp:128
 #, c-format
 msgid "Aspect ratio: %5.3f"
 msgstr "อัตราส่วนหน้าจอ: %5.3f"
 
-#: HikariSub/VideoBox.cpp:346
+#: HikariSub/VideoBox.cpp:347
 msgid ""
 "The file is not a valid video file or is corrupted,\n"
 "or codecs or a splitter may be missing"
@@ -7352,69 +7352,69 @@ msgstr ""
 "แฟ้มดังกล่าวไม่ใช่แฟ้มวิดีโอที่ถูกต้องหรืออาจเสียหาย\n"
 "ตัวแปลงสัญญาณหรือตัวแยกสัญญาณอาจขาดหายไป"
 
-#: HikariSub/VideoBox.cpp:921
+#: HikariSub/VideoBox.cpp:950
 msgid "Are you sure you want to index the previous video?"
 msgstr "ต้องการสร้างดัชนีวิดีโอก่อนหน้าหรือไม่?"
 
-#: HikariSub/VideoBox.cpp:933
+#: HikariSub/VideoBox.cpp:962
 msgid "Are you sure you want to index the next video?"
 msgstr "ต้องการสร้างดัชนีวิดีโอถัดไปหรือไม่?"
 
-#: HikariSub/VideoBox.cpp:955
+#: HikariSub/VideoBox.cpp:984
 msgid "Pause"
 msgstr "หยุดชั่วคราว"
 
-#: HikariSub/VideoBox.cpp:958
+#: HikariSub/VideoBox.cpp:987
 msgid "Copy video position"
 msgstr "คัดลอกตำแหน่งวิดีโอ"
 
-#: HikariSub/VideoBox.cpp:963
+#: HikariSub/VideoBox.cpp:992
 msgid "Full screen\tF"
 msgstr "เต็มหน้าจอ\tF"
 
-#: HikariSub/VideoBox.cpp:964
+#: HikariSub/VideoBox.cpp:993
 msgid "Exit full screen\tEscape"
 msgstr "ออกจากเต็มหน้าจอ\tEscape"
 
-#: HikariSub/VideoBox.cpp:972
+#: HikariSub/VideoBox.cpp:1001
 #, c-format
 msgid "Switch full screen to monitor %i"
 msgstr "ย้ายโหมดเต็มหน้าจอไปยังจอภาพ %i"
 
-#: HikariSub/VideoBox.cpp:973
+#: HikariSub/VideoBox.cpp:1002
 #, c-format
 msgid "Open in full screen on monitor %i"
 msgstr "เปิดแบบเต็มหน้าจอบนจอภาพ %i"
 
-#: HikariSub/VideoBox.cpp:977
+#: HikariSub/VideoBox.cpp:1006
 msgid "Open editor"
 msgstr "เปิดตัวแก้ไข"
 
-#: HikariSub/VideoBox.cpp:1019
+#: HikariSub/VideoBox.cpp:1048
 msgid "Filters"
 msgstr "ตัวกรอง"
 
-#: HikariSub/VideoBox.cpp:1019
+#: HikariSub/VideoBox.cpp:1048
 msgid "Shows used filters"
 msgstr "แสดงตัวกรองที่ใช้"
 
-#: HikariSub/VideoBox.cpp:1108
+#: HikariSub/VideoBox.cpp:1137
 msgid "Are you sure you want to move loaded video to recycle bin?"
 msgstr "แน่ใจหรือไม่ว่าต้องการย้ายวิดีโอที่โหลดไปยังถังขยะ?"
 
-#: HikariSub/VideoBox.cpp:1108
+#: HikariSub/VideoBox.cpp:1137
 msgid "Deleting"
 msgstr "กำลังลบ"
 
-#: HikariSub/VideoBox.cpp:1121
+#: HikariSub/VideoBox.cpp:1150
 msgid "Video files(*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.3gp;*.avs|All files (*.*)|*.*"
 msgstr "แฟ้มวิดีโอ (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.3gp;*.avs|แฟ้มทั้งหมด (*.*)|*.*"
 
-#: HikariSub/VideoBox.cpp:1136
+#: HikariSub/VideoBox.cpp:1165
 msgid "Subtitle files (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt"
 msgstr "แฟ้มคำบรรยาย (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt"
 
-#: HikariSub/VideoBox.cpp:1791
+#: HikariSub/VideoBox.cpp:1820
 msgid "Invalid keyframes format"
 msgstr "รูปแบบคีย์เฟรมไม่ถูกต้อง"
 
@@ -8029,12 +8029,12 @@ msgstr ""
 "บรรทัดไม่ปรากฏในวิดีโอ\n"
 "หรืออาจมีเวลาเป็นศูนย์"
 
-#: HikariSub/config.cpp:745
+#: HikariSub/config.cpp:748
 #, c-format
 msgid "Some colors were absent from theme \"%s\" and were loaded from the default theme."
 msgstr "สีบางรายการไม่มีในชุดรูปแบบ \"%s\" จึงใช้สีจากชุดรูปแบบเริ่มต้น"
 
-#: HikariSub/config.cpp:755
+#: HikariSub/config.cpp:758
 msgid "Cannot load theme, reset to default"
 msgstr "ไม่สามารถโหลดชุดรูปแบบได้ จึงคืนค่าเป็นชุดรูปแบบเริ่มต้น"
 
@@ -8151,26 +8151,26 @@ msgstr "ไม่สามารถรับชื่อตัวกรองไ
 msgid "Cannot get filter configuration"
 msgstr "ไม่สามารถรับการกำหนดค่าตัวกรองได้"
 
-#: HikariSub/findreplace.cpp:492
+#: HikariSub/findreplace.cpp:508
 msgid "Reached end. Search from the beginning?"
 msgstr "ค้นหาจนถึงจุดสิ้นสุดแล้ว ต้องการเริ่มค้นหาจากต้นไฟล์หรือไม่?"
 
-#: HikariSub/findreplace.cpp:499
+#: HikariSub/findreplace.cpp:515
 msgid "Could not find the specified phrase \""
 msgstr "ไม่พบวลี \""
 
-#: HikariSub/findreplace.cpp:937 HikariSub/findreplace.cpp:1285
-#: HikariSub/findreplace.cpp:1325
+#: HikariSub/findreplace.cpp:956 HikariSub/findreplace.cpp:1304
+#: HikariSub/findreplace.cpp:1344
 msgid "Find and Replace"
 msgstr "ค้นหาและแทนที่"
 
-#: HikariSub/findreplace.cpp:937 HikariSub/findreplace.cpp:1285
-#: HikariSub/findreplace.cpp:1325
+#: HikariSub/findreplace.cpp:956 HikariSub/findreplace.cpp:1304
+#: HikariSub/findreplace.cpp:1344
 #, c-format
 msgid "Replaced %i times."
 msgstr "แทนที่แล้ว %i ครั้ง"
 
-#: HikariSub/findreplace.cpp:1332
+#: HikariSub/findreplace.cpp:1351
 msgid ""
 "Are you sure you want to make changes in all subtitle files?\n"
 "If you make a mistake, backups are in the 'ReplaceBackup' folder."
@@ -8178,11 +8178,11 @@ msgstr ""
 "แน่ใจหรือไม่ว่าต้องการเปลี่ยนแปลงคำบรรยายทั้งหมด?\n"
 "หากเกิดข้อผิดพลาด สำเนาสำรองจะอยู่ในโฟลเดอร์ 'ReplaceBackup'"
 
-#: HikariSub/findreplace.cpp:1453
+#: HikariSub/findreplace.cpp:1472
 msgid "Search path is invalid"
 msgstr "ตำแหน่งการค้นหาไม่ถูกต้อง"
 
-#: HikariSub/findreplace.cpp:1482
+#: HikariSub/findreplace.cpp:1501
 msgid ""
 "None of the selected styles exist in the subtitles being searched,\n"
 "so nothing will be found.\n"
@@ -8192,11 +8192,11 @@ msgstr ""
 "จึงจะไม่พบผลลัพธ์ใด ๆ\n"
 "ต้องการทำอย่างไร?"
 
-#: HikariSub/findreplace.cpp:1483 HikariSub/findreplace.cpp:1488
+#: HikariSub/findreplace.cpp:1502 HikariSub/findreplace.cpp:1507
 msgid "Remove styles"
 msgstr "นำสไตล์ออก"
 
-#: HikariSub/findreplace.cpp:1486
+#: HikariSub/findreplace.cpp:1505
 #, c-format
 msgid ""
 "Styles named \"%s\" do not exist in the subtitles being searched,\n"
@@ -8207,7 +8207,7 @@ msgstr ""
 "ซึ่งอาจทำให้ผลการค้นหาลดลงอย่างมาก\n"
 "ต้องการดำเนินการอย่างไร?"
 
-#: HikariSub/findreplace.cpp:1487
+#: HikariSub/findreplace.cpp:1506
 msgid "Remove nonexistent styles"
 msgstr "ลบสไตล์ที่ไม่มีอยู่"
 
