@@ -42,6 +42,7 @@
 #include "AutomationProgress.h"
 
 #include "AutomationUtils.h"
+#include "AutomationFolders.h"
 #include "AutomationScriptReader.h"
 #include "HikariMessageBox.h"
 #include "AutomationHotkeysDialog.h"
@@ -209,15 +210,18 @@ namespace Auto{
 		// (installers spec, 1.7). A portable copy has both in one folder.
 		wxString firstAutomation = HikariPathJoin(Options.pathfull, L"Automation");
 		wxString userAutomation = HikariPathJoin(Options.dataPath, L"Automation");
-		if (path[0] == L'?'){
-			if (path[1] == L'a' && path[4] == L'i') path.replace(0, 6, (tab) ? HikariPathDir(tab->AudioPath) : wxString(L""));
-			else if (path[1] == L'd' && path[4] == L'a') path.replace(0, 5, firstAutomation);
-			else if (path[1] == L'd' && path[4] == L't') path.replace(0, 11, HikariPathJoin(Options.pathfull, L"Dictionary"));
-			else if (path[1] == L'l' && path[4] == L'a') path.replace(0, 6, userAutomation);
-			else if (path[1] == L's' && path[4] == L'i') path.replace(0, 7, (tab) ? HikariPathDir(tab->SubsPath) : wxString(L""));
-			else if (path[1] == L't' && path[4] == L'p') path.replace(0, 5, HikariPathJoin(userAutomation, L"temp"));
-			else if (path[1] == L'u' && path[4] == L'r') path.replace(0, 5, userAutomation);
-			else if (path[1] == L'v' && path[4] == L'e') path.replace(0, 6, (tab) ? HikariPathDir(tab->VideoPath) : wxString(L""));
+		using automation_folders::PathPrefix;
+		automation_folders::DecodedPrefix prefix = automation_folders::DecodePrefix(path.ToStdWstring());
+		switch (prefix.prefix) {
+		case PathPrefix::Audio: path.replace(0, prefix.length, (tab) ? HikariPathDir(tab->AudioPath) : wxString(L"")); break;
+		case PathPrefix::Data: path.replace(0, prefix.length, firstAutomation); break;
+		case PathPrefix::Dictionary: path.replace(0, prefix.length, HikariPathJoin(Options.pathfull, L"Dictionary")); break;
+		case PathPrefix::Local: path.replace(0, prefix.length, userAutomation); break;
+		case PathPrefix::Script: path.replace(0, prefix.length, (tab) ? HikariPathDir(tab->SubsPath) : wxString(L"")); break;
+		case PathPrefix::Temp: path.replace(0, prefix.length, HikariPathJoin(userAutomation, L"temp")); break;
+		case PathPrefix::User: path.replace(0, prefix.length, userAutomation); break;
+		case PathPrefix::Video: path.replace(0, prefix.length, (tab) ? HikariPathDir(tab->VideoPath) : wxString(L"")); break;
+		case PathPrefix::None: break;
 		}
 		push_value(L, path);
 		return 1;

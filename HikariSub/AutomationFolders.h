@@ -155,4 +155,34 @@ namespace automation_folders
 			paths.push_back(entry.second);
 		return paths;
 	}
+
+	// The folder a path given to aegisub.decode_path starts with: ?audio,
+	// ?data, ?dictionary, ?local, ?script, ?temp, ?user or ?video, told apart
+	// by the second and fifth characters, so "?axxi" is ?audio as well.
+	enum class PathPrefix { None, Audio, Data, Dictionary, Local, Script, Temp, User, Video };
+
+	struct DecodedPrefix
+	{
+		PathPrefix prefix = PathPrefix::None;
+		// The characters decode_path replaces with the folder.
+		size_t length = 0;
+	};
+
+	inline DecodedPrefix DecodePrefix(const std::wstring &path)
+	{
+		// The fifth character is read: a shorter path has no prefix, as the
+		// shortest ones, ?data, ?temp and ?user, are five characters.
+		if (path.length() < 5 || path[0] != L'?')
+			return {};
+		wchar_t second = path[1], fifth = path[4];
+		if (second == L'a' && fifth == L'i') return { PathPrefix::Audio, 6 };
+		if (second == L'd' && fifth == L'a') return { PathPrefix::Data, 5 };
+		if (second == L'd' && fifth == L't') return { PathPrefix::Dictionary, 11 };
+		if (second == L'l' && fifth == L'a') return { PathPrefix::Local, 6 };
+		if (second == L's' && fifth == L'i') return { PathPrefix::Script, 7 };
+		if (second == L't' && fifth == L'p') return { PathPrefix::Temp, 5 };
+		if (second == L'u' && fifth == L'r') return { PathPrefix::User, 5 };
+		if (second == L'v' && fifth == L'e') return { PathPrefix::Video, 6 };
+		return {};
+	}
 }

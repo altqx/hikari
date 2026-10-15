@@ -163,3 +163,41 @@ TEST(automation_folders_portable_copy_loads_its_folder_as_it_lists_it)
 	CHECK(!IsScriptName("script.lua.bak"));
 	CHECK(IsScriptName(".lua"));
 }
+
+TEST(automation_folders_decode_path_reads_the_prefix)
+{
+	CHECK(DecodePrefix(L"?audio/a.wav").prefix == PathPrefix::Audio);
+	CHECK(DecodePrefix(L"?audio/a.wav").length == 6);
+	CHECK(DecodePrefix(L"?data/a.lua").prefix == PathPrefix::Data);
+	CHECK(DecodePrefix(L"?data/a.lua").length == 5);
+	CHECK(DecodePrefix(L"?dictionary/en.dic").prefix == PathPrefix::Dictionary);
+	CHECK(DecodePrefix(L"?dictionary/en.dic").length == 11);
+	CHECK(DecodePrefix(L"?local/cfg").prefix == PathPrefix::Local);
+	CHECK(DecodePrefix(L"?local/cfg").length == 6);
+	CHECK(DecodePrefix(L"?script/out.ass").prefix == PathPrefix::Script);
+	CHECK(DecodePrefix(L"?script/out.ass").length == 7);
+	CHECK(DecodePrefix(L"?temp/t").prefix == PathPrefix::Temp);
+	CHECK(DecodePrefix(L"?temp/t").length == 5);
+	CHECK(DecodePrefix(L"?user").prefix == PathPrefix::User);
+	CHECK(DecodePrefix(L"?user").length == 5);
+	CHECK(DecodePrefix(L"?video/v.mkv").prefix == PathPrefix::Video);
+	CHECK(DecodePrefix(L"?video/v.mkv").length == 6);
+	// Only the second and fifth characters are compared.
+	CHECK(DecodePrefix(L"?axxix/f").prefix == PathPrefix::Audio);
+	CHECK(DecodePrefix(L"?other/f").prefix == PathPrefix::None);
+	CHECK(DecodePrefix(L"/home/a/x.ass").prefix == PathPrefix::None);
+}
+
+TEST(automation_folders_decode_path_leaves_a_short_path)
+{
+	for (const wchar_t *path : { L"", L"?", L"?a", L"?au", L"?aud", L"?u", L"?use" }) {
+		DecodedPrefix decoded = DecodePrefix(path);
+		CHECK(decoded.prefix == PathPrefix::None);
+		CHECK(decoded.length == 0);
+	}
+	// "?a" shortened in place, its buffer still holding "?a\0xi": what is
+	// past its end is not read, or it would be ?audio.
+	std::wstring shortened = L"?axxi/f";
+	shortened.resize(2);
+	CHECK(DecodePrefix(shortened).prefix == PathPrefix::None);
+}
