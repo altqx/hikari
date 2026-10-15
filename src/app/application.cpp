@@ -492,7 +492,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // overlay, and a pause hands back to the exact indexed frame.
     m_generalPlayer = std::make_unique<backends::QtGeneralPlayer>(options.playbackAudio);
     m_video->session().setGeneralPlayer(m_generalPlayer.get());
-    // Its frames are made BGRA and their overlay rendered on the session's
+    // Its frames are made BGRA (or kept as Y'CbCr planes when the presenter
+    // converts them on the GPU) and their overlay rendered on the session's
     // worker; the results come back to this thread, the newest only.
     m_video->session().setFrameWorker([this](std::function<void()> task) {
         QMetaObject::invokeMethod(this, std::move(task), Qt::QueuedConnection);
@@ -501,11 +502,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         const qint64 end = frame.endTime();
         // The paused frame's matrix and range (V4's), so playing does not change the colours.
         const auto colour = m_video->session().playerColour();
+        const bool planes = m_video->session().presenterConvertsYcbcr();
         m_video->session().submitGeneralFrame(
             frame.startTime(), end > frame.startTime() ? std::optional<std::int64_t>(end) : std::nullopt,
-            [frame, colour](application::FramePool &pool) -> std::shared_ptr<application::IndexedFrame> {
+            [frame, colour, planes](application::FramePool &pool) -> std::shared_ptr<application::IndexedFrame> {
                 auto out = pool.acquire();
-                return backends::videoFrameToBgra(frame, *out, colour) ? out : nullptr;
+                const bool made = planes ? backends::videoFrameToYcbcr(frame, *out, colour)
+                                         : backends::videoFrameToBgra(frame, *out, colour);
+                return made ? out : nullptr;
             });
     });
     m_automation = std::make_unique<AutomationShell>(

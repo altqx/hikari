@@ -80,6 +80,10 @@ void Application::choosePlayer()
             // Its frames are shown as the general player's are (their
             // overlay rendered on the session's worker).
             m_directShow->setFrameSink([this](std::shared_ptr<application::IndexedFrame> frame, std::int64_t startUs) {
+                // V1: the next samples as Y'CbCr planes while the presenter
+                // converts them on the GPU (a frame the presenter cannot
+                // convert there it converts on the CPU).
+                m_directShow->setYcbcrFrames(m_video->session().presenterConvertsYcbcr());
                 m_video->session().submitGeneralFrame(startUs, std::nullopt,
                                                       [frame = std::move(frame)](application::FramePool &) { return frame; });
             });

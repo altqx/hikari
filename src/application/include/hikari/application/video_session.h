@@ -156,6 +156,10 @@ public:
     // (the last input matrix set, else the source's own; nullopt with no
     // video open), for player frames to look as the paused frame does.
     std::optional<LegacyColourMatrix::Input> playerColour() const;
+    // V1: whether the presenter converts frames kept as Y'CbCr planes on the
+    // GPU, so a player's frames are better handed over as planes
+    // (IndexedFrame::ycbcr) than converted to BGRA on the worker.
+    bool presenterConvertsYcbcr() const { return m_presenter && m_presenter->convertsYcbcr(); }
 
     // V2: legacy VideoBox::Seek and keyframe navigation, from the requested
     // frame; while playing from the player's frame, and playback goes on from

@@ -657,6 +657,11 @@ void DirectShowPlayer::setColorSpace(const std::string &matrix)
     d->bridge->bt709 = matrix == "TV.709";
 }
 
+void DirectShowPlayer::setYcbcrFrames(bool planes)
+{
+    d->bridge->ycbcr = planes;
+}
+
 std::vector<DirectShowPlayer::Filter> DirectShowPlayer::filters() const
 {
     // Legacy DShowPlayer::EnumFilters.

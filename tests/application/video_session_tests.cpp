@@ -171,6 +171,8 @@ struct FakeRenderer : SubtitleRendererPort {
 
 struct FakePresenter : PresenterPort {
     std::vector<Presentation> shown;
+    bool ycbcr = false;
+    bool convertsYcbcr() const override { return ycbcr; }
     void present(Presentation p, Done done) override
     {
         shown.push_back(p);
@@ -184,6 +186,15 @@ struct VideoTest : ::testing::Test {
     FakePresenter presenter;
     VideoSession video{source, renderer};
 };
+
+TEST_F(VideoTest, PlayerFramesAreKeptAsPlanesOnlyForAPresenterThatConvertsThem)
+{
+    EXPECT_FALSE(video.presenterConvertsYcbcr()); // no presenter yet
+    video.setPresenter(&presenter);
+    EXPECT_FALSE(video.presenterConvertsYcbcr());
+    presenter.ycbcr = true;
+    EXPECT_TRUE(video.presenterConvertsYcbcr());
+}
 
 TEST_F(VideoTest, ASeekWhileIndexingAppliesWhenReady)
 {

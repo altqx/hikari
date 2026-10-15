@@ -38,6 +38,9 @@ struct Bridge {
     std::shared_ptr<application::FramePool> pool = application::FramePool::create();
     std::function<void()> endOfStream;     // likewise
     std::atomic<bool> bt709{false};
+    // V1: YV12 and NV12 samples are kept as Y'CbCr planes (the presenter
+    // converts them on the GPU), not converted to BGRA here.
+    std::atomic<bool> ycbcr{false};
     std::atomic<std::uint64_t> requestedSerial{0};
 };
 

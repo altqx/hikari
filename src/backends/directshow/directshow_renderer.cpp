@@ -113,8 +113,9 @@ void VideoRenderer::deliver(IMediaSample *sample)
     Delivery d;
     d.serial = m_serial;
     d.frame = m_bridge->pool->acquire();
-    if (!toBgra(format, buffer, static_cast<std::size_t>(sample->GetActualDataLength()), m_bridge->bt709,
-                *d.frame))
+    const auto convert = m_bridge->ycbcr ? toYcbcr : toBgra;
+    if (!convert(format, buffer, static_cast<std::size_t>(sample->GetActualDataLength()), m_bridge->bt709,
+                 *d.frame))
         return;
     d.frame->index = -1;
     const REFERENCE_TIME segment = m_pInputPin ? m_pInputPin->CurrentStartTime() : 0;

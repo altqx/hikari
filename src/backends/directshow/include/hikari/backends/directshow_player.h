@@ -84,6 +84,10 @@ public:
     // Legacy RendererDirectShow::SetColorSpace: "TV.709" converts with
     // BT.709, anything else with BT.601.
     void setColorSpace(const std::string &matrix);
+    // V1: whether YV12 and NV12 samples are delivered as Y'CbCr planes
+    // (IndexedFrame::ycbcr) for a presenter that converts them on the GPU,
+    // instead of BGRA. Any thread; the next sample follows it.
+    void setYcbcrFrames(bool planes);
     // Legacy EnumFilters (the graph in enumeration order) and FilterConfig:
     // the named filter's property pages in a modal property frame owned by
     // `ownerWindow` (an HWND) at (x, y) in its client area. False without
