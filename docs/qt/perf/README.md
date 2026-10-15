@@ -10,9 +10,9 @@ This folder holds evidence for [H3 #126](https://github.com/altqx/hikari/issues/
 | Platform | Host | Bound | Calibration |
 | --- | --- | --- | --- |
 | Linux | [sapphire](hosts/sapphire.md) (Ryzen 5 5600, GTX 1070 Ti, Hyprland/Wayland, PipeWire) | 2026-10-04, by the maintainer's decision on #126 | **Uncalibrated.** There are no presentation traces and no A/V loopback capture. Results are observations. |
-| Windows | none | — | — |
+| Windows | [ruby](hosts/ruby.md) (Ryzen 5 5600, GTX 1070 Ti, Windows 11 Pro 26H2, WASAPI) | 2026-10-16, by the owner's decision on #126 (decision 60) | **Uncalibrated.** There is no Windows perf harness build, no presentation traces and no A/V loopback capture. Results are observations. |
 
-sapphire exceeds the accepted reference class: 6 physical cores rather than 4, 31 GiB RAM rather than 8 GiB, and a discrete GPU rather than integrated graphics. The decision binds it anyway. A result there cannot show that a lower-class machine meets a gate.
+sapphire exceeds the accepted reference class: 6 physical cores rather than 4, 31 GiB RAM rather than 8 GiB, and a discrete GPU rather than integrated graphics. The decision binds it anyway. ruby is the same class of machine (6 cores, 32 GiB, a discrete GPU, a 144 Hz primary display) and is bound on the same terms. A result there cannot show that a lower-class machine meets a gate.
 
 The harness reports `calibrated: true` only for a fingerprint listed in `tests/perf/reference-hosts.json`. That list stays empty: binding records the host, while calibration needs measurement tooling that does not exist yet.
 
