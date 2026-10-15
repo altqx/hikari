@@ -20,6 +20,7 @@
 #include "FindReplace.h"
 #include "HikariSubFrame.h"
 #include "Stylelistbox.h"
+#include "ChosenStyles.h"
 #include "HikariStaticBoxSizer.h"
 #include "EditBox.h"
 #include "TabPanel.h"
@@ -406,7 +407,7 @@ void TabWindow::Reset(wxCommandEvent& evt)
 
 void TabWindow::OnStylesChoose(wxCommandEvent& event)
 {
-	ChoosenStyleText->SetValue(GetCheckedElements(FR->Hikari));
+	PutChosenStyles(*ChoosenStyleText, GetCheckedElements(FR->Hikari));
 }
 
 FindReplaceDialog::FindReplaceDialog(HikariSubFrame *_Hikari, int whichWindow)

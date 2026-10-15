@@ -747,6 +747,9 @@
     <ClInclude Include="MoveTimes.h">
       <Filter>M</Filter>
     </ClInclude>
+    <ClInclude Include="ChosenStyles.h">
+      <Filter>C</Filter>
+    </ClInclude>
     <ClInclude Include="MappedButton.h">
       <Filter>M</Filter>
     </ClInclude>

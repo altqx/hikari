@@ -18,6 +18,7 @@
 #include "ShiftTimes.h"
 #include "config.h"
 #include "Stylelistbox.h"
+#include "ChosenStyles.h"
 #include "HikariSubFrame.h"
 #include "EditBox.h"
 #include "HikariDialog.h"
@@ -201,9 +202,7 @@ void ShiftTimes::Contents(bool addopts)
 
 void ShiftTimes::OnAddStyles(wxCommandEvent& event)
 {
-	wxString result = GetCheckedElements(Hikari);
-	Stylestext->SetValue(result);
-	if (result != emptyString){ 
+	if (PutChosenStyles(*Stylestext, GetCheckedElements(Hikari))){
 		WhichLines->SetSelection(5); 
 		OnEdition(event);
 	}
