@@ -54,6 +54,24 @@ std::string_view packageKey(PackageKind kind, bool windows);
 // only say that one exists.
 bool installsUpdates(PackageKind kind);
 
+// The channel of an AUR install, from aur-channel.txt beside the executable,
+// which the PKGBUILD writes: "stable" (hikarisub-stable-bin, stable releases
+// only) or "beta" (hikarisub-beta-bin, every release). The file's one token
+// with an optional trailing newline; anything else is no channel.
+enum class AurChannel { Stable, Beta };
+std::optional<AurChannel> parseAurChannel(std::string_view content);
+// "Stable versions only" as a check applies it: an AUR install with a
+// channel follows its package (hikarisub-beta-bin is told about prereleases,
+// hikarisub-stable-bin only about stable releases) whatever the option says;
+// every other copy follows the option.
+bool stableOnlyFor(bool option, PackageKind kind, std::optional<AurChannel> channel);
+// Whether the option means anything here: not for an AUR install with a
+// channel, whose package decides.
+bool hasStableOnlyOption(PackageKind kind, std::optional<AurChannel> channel);
+// Whether the install's AUR package carries a release: a stable one always,
+// a prerelease only hikarisub-beta-bin. The AUR notice says when it does not.
+bool aurCarries(bool prerelease, std::optional<AurChannel> channel);
+
 // Every asset name, and a tag that may go into a URL.
 bool isValidAssetName(std::string_view name);
 bool isValidUrlTag(std::string_view tag);

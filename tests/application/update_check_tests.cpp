@@ -135,6 +135,41 @@ TEST(UpdateCheck, PackageKindMarker)
     EXPECT_FALSE(installsUpdates(PackageKind::Portable));
 }
 
+// The two AUR packages (installers spec, 4.5 and 5.5): aur-channel.txt
+// decides which releases an AUR install is told about.
+TEST(UpdateCheck, AurChannel)
+{
+    EXPECT_EQ(parseAurChannel("beta\n"), AurChannel::Beta);
+    EXPECT_EQ(parseAurChannel("stable"), AurChannel::Stable);
+    EXPECT_EQ(parseAurChannel("stable\r\n"), AurChannel::Stable);
+    for (const char *bad : {"", "\n", "Beta", "beta\n\n", " beta", "arch"})
+        EXPECT_FALSE(parseAurChannel(bad)) << bad;
+
+    const std::vector<ReleaseEntry> feed{release("v0.1.0"), release("v0.1.1-beta.1", {}, true)};
+    const auto offered = [&](bool option, PackageKind kind, std::optional<AurChannel> channel) {
+        return updateCandidates(feed, "0.1.0", stableOnlyFor(option, kind, channel)).size();
+    };
+    // hikarisub-beta-bin on a stable version is told about the next
+    // prerelease, hikarisub-stable-bin is not, whatever the option says.
+    EXPECT_EQ(offered(true, PackageKind::Arch, AurChannel::Beta), 1u);
+    EXPECT_EQ(offered(false, PackageKind::Arch, AurChannel::Stable), 0u);
+    // Without a channel, and for every other kind, the option decides.
+    EXPECT_EQ(offered(true, PackageKind::Arch, std::nullopt), 0u);
+    EXPECT_EQ(offered(false, PackageKind::Arch, std::nullopt), 1u);
+    EXPECT_EQ(offered(true, PackageKind::Deb, AurChannel::Beta), 0u);
+
+    EXPECT_FALSE(hasStableOnlyOption(PackageKind::Arch, AurChannel::Beta));
+    EXPECT_FALSE(hasStableOnlyOption(PackageKind::Arch, AurChannel::Stable));
+    EXPECT_TRUE(hasStableOnlyOption(PackageKind::Arch, std::nullopt));
+    EXPECT_TRUE(hasStableOnlyOption(PackageKind::AppImage, std::nullopt));
+
+    EXPECT_TRUE(aurCarries(false, AurChannel::Stable));
+    EXPECT_TRUE(aurCarries(true, AurChannel::Beta));
+    EXPECT_FALSE(aurCarries(true, AurChannel::Stable));
+    EXPECT_FALSE(aurCarries(true, std::nullopt));
+    EXPECT_TRUE(aurCarries(false, std::nullopt));
+}
+
 TEST(UpdateCheck, AssetNamesTagsAndHosts)
 {
     EXPECT_EQ(assetNameFor("nsis", "0.1.0-beta.2"), "HikariSub-0.1.0-beta.2-windows-x64-setup.exe");

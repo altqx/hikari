@@ -27,6 +27,11 @@ PackageInfo fromMarker(const QByteArray &marker, const QString &appImageEnv)
     return info;
 }
 
+std::optional<application::AurChannel> channelOf(const QByteArray &content)
+{
+    return application::parseAurChannel(std::string_view(content.constData(), std::size_t(content.size())));
+}
+
 } // namespace
 
 bool onWindows()
@@ -45,15 +50,25 @@ PackageInfo detectPackageKind(const QString &exeDir, const QString &appImageEnv)
         return {};
     // One token and a newline; a longer file is no marker.
     const QByteArray bytes = marker.read(64);
-    return fromMarker(bytes, appImageEnv);
+    PackageInfo info = fromMarker(bytes, appImageEnv);
+    if (info.kind == PackageKind::Arch) {
+        QFile channel(exeDir + QStringLiteral("/aur-channel.txt"));
+        if (channel.open(QIODevice::ReadOnly))
+            info.aurChannel = channelOf(channel.read(64));
+    }
+    return info;
 }
 
 PackageInfo currentPackageKind()
 {
     const QString appImage = qEnvironmentVariable("APPIMAGE");
 #ifdef HIKARI_UPDATE_TEST_FEED
-    if (const QByteArray forced = qgetenv("HIKARISUB_PACKAGE_KIND"); !forced.isEmpty())
-        return fromMarker(forced, appImage);
+    if (const QByteArray forced = qgetenv("HIKARISUB_PACKAGE_KIND"); !forced.isEmpty()) {
+        PackageInfo info = fromMarker(forced, appImage);
+        if (info.kind == PackageKind::Arch)
+            info.aurChannel = channelOf(qgetenv("HIKARISUB_AUR_CHANNEL"));
+        return info;
+    }
 #endif
     return detectPackageKind(QCoreApplication::applicationDirPath(), appImage);
 }

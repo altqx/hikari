@@ -9,18 +9,22 @@
 
 #include <QString>
 
+#include <optional>
+
 namespace hikari::app {
 
 struct PackageInfo {
     application::PackageKind kind = application::PackageKind::Portable;
     QString appImage; // with AppImage: the image file ($APPIMAGE)
+    // with Arch: aur-channel.txt beside the executable, when it names one
+    std::optional<application::AurChannel> aurChannel;
 };
 
 // The kind of the copy in `exeDir`, with `appImageEnv` as $APPIMAGE.
 PackageInfo detectPackageKind(const QString &exeDir, const QString &appImageEnv);
 // This process's kind. Test builds (HIKARI_UPDATE_TEST_FEED) take
-// HIKARISUB_PACKAGE_KIND first, so the AUR notice and the other flows can
-// be tried without installing a package.
+// HIKARISUB_PACKAGE_KIND (and HIKARISUB_AUR_CHANNEL) first, so the AUR
+// notice and the other flows can be tried without installing a package.
 PackageInfo currentPackageKind();
 
 bool onWindows();

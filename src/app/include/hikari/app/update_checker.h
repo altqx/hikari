@@ -49,6 +49,9 @@ class UpdateChecker : public QObject {
     Q_PROPERTY(QString versionLabel READ versionLabel CONSTANT)
     // Whether this kind installs updates ("Install updates automatically" shows).
     Q_PROPERTY(bool installsUpdates READ installsUpdates CONSTANT)
+    // Whether "Stable versions only" shows: not for an AUR install with a
+    // channel (aur-channel.txt), whose package decides.
+    Q_PROPERTY(bool stableOnlyOption READ stableOnlyOption CONSTANT)
     Q_PROPERTY(QObject *installer READ installerObject CONSTANT)
 public:
     // The GitHub release list.
@@ -72,6 +75,7 @@ public:
     QString version() const { return m_version; }
     QString versionLabel() const;
     bool installsUpdates() const;
+    bool stableOnlyOption() const;
     qint64 nextCheck() const { return m_nextCheck; }
     void setNextCheck(qint64 secondsSinceEpoch);
     UpdateInstaller &installer() { return *m_installer; }
@@ -99,7 +103,7 @@ public:
 signals:
     void optionsChanged();
     void checkingChanged();
-    // "available" with {name, tag, version, url, notes, prerelease, offer,
+    // "available" with {name, tag, version, url, notes, prerelease, aurCarries, offer,
     // requirement, requirementIsOs}, "current" or "failed". Without
     // `interactive` only "available" is reported. `offer` is "install",
     // "notify", "requirement" or "aur".

@@ -1,8 +1,9 @@
 pragma Translator: "HikariSub.MainWindow"
 // ADR 0019: a copy installed from the AUR is updated by the package manager,
 // never by the program: the notice names the new version and how to get it.
-// The AUR package carries stable versions only, so a prerelease points at
-// the AppImage instead.
+// hikarisub-stable-bin carries stable versions only, so a prerelease that
+// the install's package does not carry (aurCarries) points at the AppImage
+// instead; hikarisub-beta-bin carries prereleases too.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -25,7 +26,7 @@ Dialog {
             objectName: "updateAurText"
             Layout.preferredWidth: 460
             wrapMode: Text.WordWrap
-            text: notice.release.prerelease
+            text: notice.release.prerelease && !notice.release.aurCarries
                   ? qsTr("HikariSub %1 is a prerelease. The AUR package carries stable versions only. To try it, use the AppImage from the release page.").arg(notice.release.version || "")
                   : qsTr("HikariSub %1 is available; you have %2. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu.").arg(notice.release.version || "").arg(notice.updates.version)
         }

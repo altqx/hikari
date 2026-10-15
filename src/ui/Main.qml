@@ -5114,6 +5114,7 @@ ApplicationWindow {
             }
             CheckBox {
                 objectName: "updateStableOnly"
+                visible: root.updates.stableOnlyOption
                 text: qsTr("Stable versions only")
                 checked: root.updates.stableOnly
                 onToggled: root.updates.stableOnly = checked

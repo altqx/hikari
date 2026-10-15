@@ -311,6 +311,36 @@ bool installsUpdates(PackageKind kind)
     return kind != PackageKind::Portable && kind != PackageKind::Arch;
 }
 
+std::optional<AurChannel> parseAurChannel(std::string_view content)
+{
+    if (content.ends_with("\r\n"))
+        content.remove_suffix(2);
+    else if (content.ends_with('\n'))
+        content.remove_suffix(1);
+    if (content == "stable")
+        return AurChannel::Stable;
+    if (content == "beta")
+        return AurChannel::Beta;
+    return std::nullopt;
+}
+
+bool stableOnlyFor(bool option, PackageKind kind, std::optional<AurChannel> channel)
+{
+    if (kind == PackageKind::Arch && channel)
+        return *channel == AurChannel::Stable;
+    return option;
+}
+
+bool hasStableOnlyOption(PackageKind kind, std::optional<AurChannel> channel)
+{
+    return !(kind == PackageKind::Arch && channel);
+}
+
+bool aurCarries(bool prerelease, std::optional<AurChannel> channel)
+{
+    return !prerelease || channel == AurChannel::Beta;
+}
+
 bool isValidAssetName(std::string_view name)
 {
     if (name.empty() || !isAlphanumeric(name[0]))

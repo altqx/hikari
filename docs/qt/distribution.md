@@ -14,7 +14,7 @@ Every release publishes these assets, where `<V>` is the version without its `v`
 | deb | `hikarisub-<V>-linux-amd64.deb` | `/opt/hikarisub`, `/usr/bin/hikarisub` | In the app, through `pkexec` |
 | rpm | `hikarisub-<V>-linux-x86_64.rpm` | `/opt/hikarisub`, `/usr/bin/hikarisub` | In the app, through `pkexec` |
 | Linux portable | `hikarisub-<V>-linux-x86_64.tar.gz` | Where it is extracted | Notice and release page |
-| Arch Linux | AUR package `hikarisub-bin`, built from the tar.gz | `/opt/hikarisub`, `/usr/bin/hikarisub` | Notice: update with the package manager |
+| Arch Linux | AUR package `hikarisub-stable-bin` (stable releases) or `hikarisub-beta-bin` (every release), built from the tar.gz | `/opt/hikarisub`, `/usr/bin/hikarisub` | Notice: update with the package manager |
 
 The release also carries `SHA256SUMS`, the AppImage's `.zsync` for external AppImage updaters, and `hikarisub-update.json`, the update manifest. Nothing is code-signed.
 
@@ -47,7 +47,7 @@ URLs are built from the tag and the asset name (`https://github.com/altqx/hikari
 What the first passing release offers depends on the package kind:
 
 - **NSIS, AppImage, deb, rpm** with a package for the kind: the download. A package that needs a newer Windows (`min_os`) or glibc (`min_glibc`) than the system has is only named, with the requirement.
-- **AUR:** "HikariSub `<V>` is available; you have `<old>`. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu." A prerelease points at the AppImage instead, as the AUR package carries stable versions only. Nothing is downloaded.
+- **AUR:** "HikariSub `<V>` is available; you have `<old>`. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu." `aur-channel.txt` beside the executable names the package's channel: `hikarisub-beta-bin` ("beta") is told about prereleases and `hikarisub-stable-bin` ("stable") only about stable releases, whatever "Stable versions only" says, and the option is hidden for them. A prerelease that the install's package does not carry points at the AppImage instead, as that package carries stable versions only. Nothing is downloaded.
 - **Portable**, or "Install updates automatically" off: the notice and the release page.
 
 ## Seamless update
@@ -71,7 +71,7 @@ A portable copy keeps the Automation folder beside the program, as legacy does. 
 
 ## Versions and the move from legacy
 
-Legacy stays at 0.0.x and the rewrite starts at 0.1.0; `HIKARI_VERSION_SUFFIX` adds a prerelease (`0.1.0-beta.2`). deb and rpm versions put `~` before the prerelease inside the package (`0.1.0~beta.2-1`), never in the file name. Moving from legacy to the rewrite is an ordinary upgrade of one package (`hikarisub`, or `hikarisub-bin` on the AUR) or one installation.
+Legacy stays at 0.0.x and the rewrite starts at 0.1.0; `HIKARI_VERSION_SUFFIX` adds a prerelease (`0.1.0-beta.2`). deb and rpm versions put `~` before the prerelease inside the package (`0.1.0~beta.2-1`), never in the file name. Moving from legacy to the rewrite is an ordinary upgrade of one package (`hikarisub`, or `hikarisub-stable-bin` and `hikarisub-beta-bin` on the AUR, whose `pkgver` is the version without its `-`: `0.1.0-beta.2` is `0.1.0beta.2`, which vercmp sorts above every legacy 0.0.x and below `0.1.0`) or one installation.
 
 A rewrite release names `"offer_to": ["qt"]` until the owner sets `HIKARISUB_OFFER_QT_TO_LEGACY`; then `["qt", "legacy"]`. Legacy 0.0.1 knows nothing of manifests and offers the highest stable SemVer release it finds, so no stable rewrite release is published before the rewrite is meant for every legacy user.
 
@@ -81,6 +81,6 @@ Packages are staged from CMake install rules and Qt's QML deployment support, an
 
 ## Testing an update
 
-A test build (`-DHIKARI_UPDATE_TEST_FEED=ON`; off in releases, whose CI fails if the binary names `HIKARISUB_UPDATE_FEED`) reads `HIKARISUB_UPDATE_FEED=<base URL>`: `<base>releases.json` for the list, `<base>download/v<V>/<asset>` for the files and `<base>releases/tag/v<V>` for the pages. It also reads `HIKARISUB_PACKAGE_KIND=<token>` in place of the marker, so the AUR notice and the other flows can be tried without installing a package. `tools/update-feed/make-feed.py` builds such a feed from a folder of packages.
+A test build (`-DHIKARI_UPDATE_TEST_FEED=ON`; off in releases, whose CI fails if the binary names `HIKARISUB_UPDATE_FEED`) reads `HIKARISUB_UPDATE_FEED=<base URL>`: `<base>releases.json` for the list, `<base>download/v<V>/<asset>` for the files and `<base>releases/tag/v<V>` for the pages. It also reads `HIKARISUB_PACKAGE_KIND=<token>` in place of the marker (and `HIKARISUB_AUR_CHANNEL` in place of `aur-channel.txt`), so the AUR notice and the other flows can be tried without installing a package. `tools/update-feed/make-feed.py` builds such a feed from a folder of packages.
 
 **Verification status:** the update logic and its hand-offs have unit tests; installers, packages and the update flows still need their release tests on every claimed platform.

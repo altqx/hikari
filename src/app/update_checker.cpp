@@ -260,6 +260,12 @@ QString UpdateChecker::versionLabel() const
     return QStringLiteral("%1 (%2)").arg(m_version, packageKindLabel(m_installer->environment().package.kind));
 }
 
+bool UpdateChecker::stableOnlyOption() const
+{
+    const PackageInfo &package = m_installer->environment().package;
+    return a::hasStableOnlyOption(package.kind, package.aurChannel);
+}
+
 bool UpdateChecker::installsUpdates() const
 {
     return a::installsUpdates(m_installer->environment().package.kind);
@@ -402,7 +408,9 @@ void UpdateChecker::pageFinished()
         requestPage(m_run->page + 1);
         return;
     }
-    m_run->candidates = a::updateCandidates(m_run->releases, m_version.toStdString(), m_stableOnly);
+    const PackageInfo &package = m_installer->environment().package;
+    m_run->candidates = a::updateCandidates(m_run->releases, m_version.toStdString(),
+                                            a::stableOnlyFor(m_stableOnly, package.kind, package.aurChannel));
     if (m_run->candidates.size() > a::kMaxCandidates)
         m_run->candidates.resize(a::kMaxCandidates);
     m_run->next = 0;
@@ -479,6 +487,7 @@ void UpdateChecker::offer(const a::ReleaseEntry &release, const a::ReleasePackag
                           {QStringLiteral("url"), pageUrl(tag)},
                           {QStringLiteral("notes"), qs(release.notes)},
                           {QStringLiteral("prerelease"), a::isPrerelease(release)},
+                          {QStringLiteral("aurCarries"), a::aurCarries(a::isPrerelease(release), env.package.aurChannel)},
                           {QStringLiteral("offer"), offerName(chosen.kind)},
                           {QStringLiteral("requirement"), qs(chosen.requirement)},
                           {QStringLiteral("requirementIsOs"), chosen.requirementIsOs}};
