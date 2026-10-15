@@ -81,6 +81,7 @@ add_executable(hikarisub_tests
     SemVerTests.cpp
     SrtTagsTests.cpp
     SubtitlesProviderChoiceTests.cpp
+    TagBlocksTests.cpp
     TimebaseTests.cpp
     TimeCtrlStepsTests.cpp
     UndoHistoryTests.cpp

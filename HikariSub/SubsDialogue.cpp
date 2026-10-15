@@ -16,6 +16,7 @@
 #include "SubsDialogue.h"
 #include "config.h"
 #include "UtilsWindows.h"
+#include "TagBlocks.h"
 #include <wx/tokenzr.h>
 #include <wx/regex.h>
 #include <wx/log.h>
@@ -293,74 +294,9 @@ void Dialogue::GetFirstTagsBlock(wxString* tagBlock, const wxString& text/* = L"
 
 void Dialogue::MergeTagBlocks(wxString* output, const wxString& blockToMerge)
 {
-	if (blockToMerge.empty())
-		return;
-
-	if (output->Len() < 3) {
-		*output = blockToMerge;
-		return;
-	}
-
-	
-	wxStringTokenizer token(blockToMerge.substr(1, blockToMerge.Len() - 2), L"\\", wxTOKEN_STRTOK);
-	while (token.HasMoreTokens()) {
-		wxString curToken = token.NextToken();
-		wxString tag;
-		GetTagName(curToken, &tag);
-		wxRegEx re;
-		if(tag == L"c" || tag == L"1c")
-			re.Compile(L"(\\\\1?c&[^\\\\}]*)", wxRE_ADVANCED | wxRE_ICASE);
-		else if(tag == L"fr" || tag == L"frz")
-			re.Compile(L"(\\\\frz?[^\\\\}]*)", wxRE_ADVANCED | wxRE_ICASE);
-		else
-			re.Compile(L"(\\\\" + tag + L"[^\\\\}]*)", wxRE_ADVANCED | wxRE_ICASE);
-
-		if (!re.IsValid()) {
-			HikariLogSilent("Regex tag seeking is invalid '\\\\" + tag + L"([^\\}]*)'");
-			continue;
-		}//wxRegEx replace, replaceall sux
-		if (re.Matches(*output)) {
-			size_t start, len;
-			if (re.GetMatch(&start, &len)) {
-				wxString tagvalue = output->substr(start, len);
-				wxString foundTag;
-				GetTagName(tagvalue, &foundTag);
-				wxString slashTag = L"\\" + tag;
-				if(slashTag == foundTag)
-					output->replace(start, len, L"\\" + curToken);
-			}
-		}
-		else {
-			output->insert((output->Len() - 1), L"\\" + curToken);
-		}
-	}
-}
-
-void Dialogue::GetTagName(const wxString& tagWithValue, wxString* name)
-{
-	if (tagWithValue.StartsWith(L"fn")) {
-		*name = L"fn";
-	}
-	else if (tagWithValue.StartsWith(L"\\fn")) {
-		*name = L"\\fn";
-	}
-	else {
-		size_t len = tagWithValue.Len();
-		if (len < 1)
-			return;
-
-		wxString delims = L"0123456789-.(&";
-		*name << tagWithValue[0];
-		size_t i = 1;
-		while (i < len) {
-			wxUniChar ch = tagWithValue[i];
-			if (delims.find(ch) != -1)
-				break;
-
-			*name << ch;
-			i++;
-		}
-	}
+	std::wstring merged = output->ToStdWstring();
+	::MergeTagBlocks(merged, blockToMerge.ToStdWstring());
+	*output = merged;
 }
 
 bool Dialogue::GetTaggedTextExtents(Styles* lineStyle, const wxString& text, float* _width, float* _height, 

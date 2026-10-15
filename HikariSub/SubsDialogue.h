@@ -387,7 +387,6 @@ public:
 	void GetFirstTagsBlock(wxString* tagBlock, const wxString& text = L"");
 	//output is first bock to be merged second block
 	void MergeTagBlocks(wxString* output, const wxString & blockToMerge);
-	void GetTagName(const wxString& tagWithValue, wxString* name);
 	bool GetTaggedTextExtents(Styles* lineStyle, const wxString& text, 
 		float* width, float* height, float* descent = nullptr, float* extlead = nullptr, bool copyStyle = true);
 	Dialogue();
