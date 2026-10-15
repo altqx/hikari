@@ -1088,7 +1088,12 @@ def pointer_floating_move_resize():
         grid = panel(st, "Grid")
         if btn and grid and grid["frame"] == MAIN:
             sx, sy = btn["x"] - 24, btn["y"] + btn["h"] // 2
-            gx, gy = grid["x"] + grid["w"] // 2, grid["y"] + grid["h"] // 2 - 15
+            # The centre of the Grid's visible part: the main window placed at
+            # 480 pixels is narrower than the docked layout's minimum, so the
+            # Grid (1280 wide) runs on past the window's right edge, cut off.
+            mw = frames(st).get(MAIN) or {"x": grid["x"], "w": grid["w"]}
+            vx0, vx1 = max(grid["x"], mw["x"]), min(grid["x"] + grid["w"], mw["x"] + mw["w"])
+            gx, gy = (vx0 + vx1) // 2, grid["y"] + grid["h"] // 2 - 15
             try:
                 pointer([(sx, sy)], hold=True)
                 time.sleep(0.25)
@@ -2150,7 +2155,11 @@ def step_snap():
             if not before or not btn:
                 out.append({"edge": edge, "error": "no floating Audio or its ⋯ in UIA"})
                 continue
-            sx, sy = btn["x"] - 24, btn["y"] + btn["h"] // 2
+            # Right of the title, just left of the "⋯"; the tablet reaches the
+            # primary monitor only, so no further right than its edge (the
+            # floating window placed at 649 reached into the second monitor,
+            # and a press at 1223 landed at 1023).
+            sx, sy = min(btn["x"] - 24, prim["x"] + prim["w"] - 8), btn["y"] + btn["h"] // 2
             # Over bare desktop first (the drag distance starts the engine's drag), then to the edge.
             mid = (max(prim["x"] + 520, sx - 60), min(prim["y"] + prim["h"] - 200, sy + 60))
             try:
