@@ -1,0 +1,28 @@
+# Tools the Windows build job (.github/workflows/build.yml, windows) takes
+# from their own release downloads rather than from Chocolatey, whose
+# community feed failed runs with 5xx and 504 answers. KEY=VALUE lines, as
+# in tools.lock. fetch-build-tools.ps1 downloads each file, checks its
+# SHA-256 and unpacks it; the job caches the downloads under a key made of
+# the versions and SHA-256s below.
+
+# NASM, for the libass fork's assembly (Thirdparty/Build/Libass/nasm.targets
+# calls nasm.exe from PATH). The SHA-256 is of the zip nasm.us serves.
+NASM_VERSION=3.02
+NASM_URL=https://www.nasm.us/pub/nasm/releasebuilds/3.02/win64/nasm-3.02-win64.zip
+NASM_SHA256=161d0bfaff53c2f9e9f3e69fd0672323ebabafd1268976a5cec11be92a19aee7
+
+# YASM, for the VirtualDub libraries' SIMD kernels (xy-VSFilter's
+# src/YASM.props calls yasm from PATH). yasm publishes its Windows build as a
+# bare executable, yasm-1.2.0-win64.exe, which is saved as yasm.exe: the
+# build the Chocolatey package installed. The SHA-256 is of the file
+# tortall.net serves.
+YASM_VERSION=1.2.0
+YASM_URL=https://www.tortall.net/projects/yasm/releases/yasm-1.2.0-win64.exe
+YASM_SHA256=3d13e2d42ea5e54beef62964f76a7c582d89e46978c5b3d4cbb0f118fc54aaf2
+
+# gettext, whose msgfmt compiles Locale/*.po into the .mo files: the mlocati
+# build the Chocolatey package installed, as its portable zip. The SHA-256 is
+# the one GitHub lists for the release asset.
+GETTEXT_VERSION=1.0-iconv1.19
+GETTEXT_URL=https://github.com/mlocati/gettext-iconv-windows/releases/download/v1.0-v1.19/gettext1.0-iconv1.19-shared-64.zip
+GETTEXT_SHA256=c2f195fc4ed3df4070fb08ff88c2f724afd1eed4e28f859efae1000bb7ba1152

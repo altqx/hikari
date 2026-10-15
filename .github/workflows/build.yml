@@ -111,32 +111,60 @@ jobs:
 
       - uses: microsoft/setup-msbuild@v2
 
-      - name: Install NASM
-        run: choco install nasm --no-progress -y
-      - name: Add NASM to PATH
-        run: echo "C:\Program Files\NASM" >> $env:GITHUB_PATH
+      # NASM, YASM and gettext come from their own release downloads, pinned
+      # with their SHA-256s in packaging/windows/build-tools.lock, not from
+      # Chocolatey: its community feed failed runs with 5xx and 504 answers.
+      # The downloads are cached under their versions and SHA-256s, and
+      # fetch-build-tools.ps1 checks a cached file's SHA-256 as it checks a
+      # downloaded one's.
+      - name: Resolve the pinned build tools
+        id: build-tools
+        run: |
+          $lock = @{}
+          foreach ($line in Get-Content packaging/windows/build-tools.lock) {
+            if ($line -match '^([A-Z0-9_]+)=(.*)$') { $lock[$Matches[1]] = $Matches[2] }
+          }
+          $key = 'build-tools'
+          foreach ($tool in 'NASM', 'YASM', 'GETTEXT') {
+            $key += "-$($tool.ToLowerInvariant())-$($lock["${tool}_VERSION"])-$($lock["${tool}_SHA256"].Substring(0, 16))"
+          }
+          echo "key=$key" >> $env:GITHUB_OUTPUT
+          echo "downloads=${{ runner.temp }}\build-tools-downloads" >> $env:GITHUB_OUTPUT
+          echo "tools=${{ runner.temp }}\build-tools" >> $env:GITHUB_OUTPUT
 
-      # The VirtualDub libraries assemble their SIMD kernels with YASM, through
-      # the vsyasm integration the xy-VSFilter fork carries as
-      # src/YASM.{props,targets,xml} -- that one calls yasm from PATH.  The
-      # chocolatey package provides the assembler itself: yasm publishes its
-      # Windows build as yasm-1.2.0-win64.exe, not as an installer.
+      - name: Cache the build tool downloads
+        id: build-tools-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ steps.build-tools.outputs.downloads }}
+          key: ${{ steps.build-tools.outputs.key }}
+
+      # The libass fork's assembly (Thirdparty/Build/Libass/nasm.targets) and
+      # the VirtualDub libraries' SIMD kernels, through the vsyasm
+      # integration the xy-VSFilter fork carries as src/YASM.{props,targets,xml},
+      # call nasm and yasm from PATH. yasm publishes its Windows build as
+      # yasm-1.2.0-win64.exe, not as an installer; it is saved as yasm.exe.
+      - name: Install NASM and YASM
+        run: >
+          ./packaging/windows/fetch-build-tools.ps1
+          -Downloads '${{ steps.build-tools.outputs.downloads }}'
+          -Tools '${{ steps.build-tools.outputs.tools }}'
+          -Name NASM, YASM
+
       # msgfmt compiles Locale/*.po into the .mo files HikariSub loads at run time;
       # the pre-build event skips that when msgfmt is missing.  Non-fatal, so a
-      # package hiccup costs the artifact its translations, not the build.
+      # download hiccup costs the artifact its translations, not the build.
       - name: Install gettext
         continue-on-error: true
         run: |
-          choco install gettext --no-progress -y
+          ./packaging/windows/fetch-build-tools.ps1 `
+            -Downloads '${{ steps.build-tools.outputs.downloads }}' `
+            -Tools '${{ steps.build-tools.outputs.tools }}' `
+            -Name GETTEXT
 
-          # The install lands outside this process's PATH (choco edits only the
-          # machine one), so look for msgfmt.exe itself: asking `where` here
-          # reports it missing and fails the step even though the install
-          # worked and later steps can find it.
-          $dir = @(
-              "$env:ProgramFiles\gettext-iconv\bin",
-              "${env:ProgramFiles(x86)}\gettext-iconv\bin",
-              "C:\ProgramData\chocolatey\bin") |
+          # Look for msgfmt.exe itself, as the step did when it came from
+          # Chocolatey, so a missing one fails here with its own message.
+          $dir = @("${{ steps.build-tools.outputs.tools }}\gettext\bin") |
             Where-Object { Test-Path (Join-Path $_ 'msgfmt.exe') } |
             Select-Object -First 1
 
@@ -144,12 +172,16 @@ jobs:
             throw 'msgfmt.exe is not where gettext installs it; the package will ship without compiled catalogs'
           }
 
-          $dir | Out-File -Append $env:GITHUB_PATH
           $env:PATH = "$dir;$env:PATH"
+          (Get-Command msgfmt).Source
           msgfmt --version
 
-      - name: Install YASM
-        run: choco install yasm --no-progress -y
+      - name: Check NASM and YASM
+        run: |
+          (Get-Command nasm).Source
+          nasm -v
+          (Get-Command yasm).Source
+          yasm --version
 
       # D3DXCreateFontW / D3DXCreateLine live in the June 2010 DirectX SDK,
       # which no Windows SDK replaced and no runner image carries.  Its
@@ -262,6 +294,13 @@ jobs:
       # every Windows job here has failed at least once on the way to a green
       # build, so nothing was ever cached.  Restore above, save here with
       # if: always(), which is what makes a failing run still worth something.
+      - name: Save the build tool downloads
+        if: always() && steps.build-tools-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ steps.build-tools.outputs.downloads }}
+          key: ${{ steps.build-tools.outputs.key }}
+
       - name: Save DirectX SDK
         if: always() && steps.dxsdk-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
