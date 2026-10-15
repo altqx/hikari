@@ -4146,7 +4146,7 @@ msgstr "เฉพาะเวอร์ชันเสถียร"
 
 #: HikariSub/OptionsDialog.cpp:385
 msgid "A release candidate is still told about newer release candidates"
-msgstr "หากใช้รุ่น Release Candidate อยู่ จะยังได้รับแจ้งเมื่อมีรุ่น Release Candidate ที่ใหม่กว่า"
+msgstr "หากใช้เวอร์ชัน Release Candidate อยู่ จะยังได้รับแจ้งเมื่อมีเวอร์ชัน Release Candidate ที่ใหม่กว่า"
 
 #: HikariSub/OptionsDialog.cpp:392
 msgid "Install updates automatically"
@@ -5694,11 +5694,11 @@ msgstr "ระยะเวลาช่วงต่อท้าย (มิลล�
 
 #: HikariSub/ShiftTimes.cpp:571
 msgid "Start time extension threshold"
-msgstr "ขีดจำกัดของการเลื่อนเวลาเริ่มต้น"
+msgstr "ขีดจำกัดของการขยายเวลาเริ่มต้น"
 
 #: HikariSub/ShiftTimes.cpp:572
 msgid "End time extension threshold"
-msgstr "ขีดจำกัดของการเลื่อนเวลาสิ้นสุด"
+msgstr "ขีดจำกัดของการขยายเวลาสิ้นสุด"
 
 #: HikariSub/ShiftTimes.cpp:573
 msgid ""
@@ -7133,7 +7133,7 @@ msgstr "คุณใช้เวอร์ชัน %s อยู่ และม�
 #: HikariSub/UpdateChecker.cpp:220
 #, c-format
 msgid "It needs %s or newer, so it cannot be installed here."
-msgstr "ต้องใช้ %s ขึ้นไป จึงไม่สามารถติดตั้งที่นี่ได้"
+msgstr "เวอร์ชันนี้ต้องใช้ %s ขึ้นไป จึงไม่สามารถติดตั้งบนระบบนี้ได้"
 
 #: HikariSub/UpdateChecker.cpp:250
 msgid "Download and install"
@@ -7165,7 +7165,7 @@ msgstr "HikariSub %s เป็นเวอร์ชันทดสอบ แพ�
 #: HikariSub/UpdateChecker.cpp:354
 #, c-format
 msgid "HikariSub %s is available; you have %s. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu."
-msgstr "มี HikariSub %s ให้ใช้งาน คุณใช้ %s อยู่ คุณติดตั้ง HikariSub จาก AUR จึงต้องอัปเดตด้วยตัวจัดการแพ็กเกจหรือตัวช่วย AUR ของคุณ เช่น yay -Syu หรือ paru -Syu"
+msgstr "มี HikariSub %s ให้ใช้งานแล้ว คุณใช้เวอร์ชัน %s อยู่ เนื่องจากคุณติดตั้ง HikariSub จาก AUR จึงต้องอัปเดตด้วยตัวจัดการแพ็กเกจหรือตัวช่วย AUR ของคุณ เช่น yay -Syu หรือ paru -Syu"
 
 #: HikariSub/UpdateChecker.cpp:359 HikariSub/UpdateInstaller.cpp:331
 msgid "What's new"
@@ -7185,8 +7185,8 @@ msgid ""
 "HikariSub %s has been downloaded, but this system has no pkexec to ask for your password, so it cannot be installed from here.\n"
 "Update downloaded: %s"
 msgstr ""
-"ดาวน์โหลด HikariSub %s แล้ว แต่ระบบนี้ไม่มี pkexec สำหรับขอรหัสผ่านของคุณ จึงไม่สามารถติดตั้งจากที่นี่ได้\n"
-"อัปเดตที่ดาวน์โหลด: %s"
+"ดาวน์โหลด HikariSub %s แล้ว แต่ระบบนี้ไม่มี pkexec สำหรับขอรหัสผ่านของคุณ จึงไม่สามารถติดตั้งจากภายในโปรแกรมได้\n"
+"แฟ้มอัปเดตที่ดาวน์โหลด: %s"
 
 #: HikariSub/UpdateInstaller.cpp:278
 msgid "Show in folder"
@@ -7240,7 +7240,7 @@ msgstr "อัปเดตมาจากแหล่งอื่นที่ไ
 
 #: HikariSub/UpdateInstaller.cpp:566
 msgid "The update is larger than its release says, and was refused."
-msgstr "อัปเดตมีขนาดใหญ่กว่าที่ระบุไว้ในหน้าเผยแพร่ จึงถูกปฏิเสธ"
+msgstr "อัปเดตมีขนาดใหญ่กว่าที่ระบุไว้ในข้อมูลที่เผยแพร่ จึงถูกปฏิเสธ"
 
 #: HikariSub/UpdateInstaller.cpp:582
 msgid "The downloaded update does not match its release, and was deleted."
@@ -7253,7 +7253,7 @@ msgstr "อัปเดตถูกปฏิเสธ: ตัวติดตั�
 #: HikariSub/UpdateInstaller.cpp:819
 #, c-format
 msgid "HikariSub %s could not be checked against its release on GitHub, so it was not installed. It is tried again at the next quit."
-msgstr "ไม่สามารถตรวจสอบ HikariSub %s กับที่เผยแพร่ไว้บน GitHub ได้ จึงไม่ได้ติดตั้ง จะลองอีกครั้งเมื่อออกจากโปรแกรมครั้งถัดไป"
+msgstr "ไม่สามารถตรวจสอบ HikariSub %s เทียบกับที่เผยแพร่ไว้บน GitHub ได้ จึงไม่ได้ติดตั้ง จะลองอีกครั้งเมื่อออกจากโปรแกรมครั้งถัดไป"
 
 #: HikariSub/UpdateInstaller.cpp:822 HikariSub/UpdateInstaller.cpp:1040
 msgid "The update could not be handed to the installer."
@@ -7271,12 +7271,12 @@ msgstr "กำลังตรวจสอบอัปเดต..."
 #: HikariSub/UpdateInstaller.cpp:1020
 #, c-format
 msgid "HikariSub %s did not start, so HikariSub %s was put back."
-msgstr "HikariSub %s ไม่เริ่มทำงาน จึงนำ HikariSub %s กลับมาใช้แทน"
+msgstr "HikariSub %s เริ่มทำงานไม่สำเร็จ จึงนำ HikariSub %s กลับมาใช้แทน"
 
 #: HikariSub/UpdateInstaller.cpp:1022
 #, c-format
 msgid "HikariSub %s did not start. The previous version is %s; rename it back to use it."
-msgstr "HikariSub %s ไม่เริ่มทำงาน เวอร์ชันก่อนหน้าคือ %s ให้เปลี่ยนชื่อกลับเพื่อใช้งาน"
+msgstr "HikariSub %s เริ่มทำงานไม่สำเร็จ เวอร์ชันก่อนหน้าอยู่ที่ %s หากต้องการใช้งาน โปรดเปลี่ยนชื่อแฟ้มกลับเป็นชื่อเดิม"
 
 #: HikariSub/UpdateInstaller.cpp:1033
 msgid "The update was refused: the package does not match its release."
@@ -7289,12 +7289,12 @@ msgstr "ตัวจัดการแพ็กเกจไม่สามาร
 
 #: HikariSub/UpdateInstaller.cpp:1038
 msgid "The package manager was busy with another installation. The update is installed at the next quit."
-msgstr "ตัวจัดการแพ็กเกจกำลังติดตั้งรายการอื่นอยู่ อัปเดตจะถูกติดตั้งเมื่อออกจากโปรแกรมครั้งถัดไป"
+msgstr "ตัวจัดการแพ็กเกจกำลังติดตั้งรายการอื่นอยู่ จะติดตั้งอัปเดตเมื่อออกจากโปรแกรมครั้งถัดไป"
 
 #: HikariSub/UpdateInstaller.cpp:1042
 #, c-format
 msgid "The update could not be checked against its release on GitHub, so it was not installed. You can install it yourself: %s"
-msgstr "ไม่สามารถตรวจสอบอัปเดตกับที่เผยแพร่ไว้บน GitHub ได้ จึงไม่ได้ติดตั้ง คุณสามารถติดตั้งเองได้: %s"
+msgstr "ไม่สามารถตรวจสอบอัปเดตเทียบกับที่เผยแพร่ไว้บน GitHub ได้ จึงไม่ได้ติดตั้ง คุณสามารถติดตั้งเองได้: %s"
 
 #: HikariSub/UpdateInstaller.cpp:1045
 #, c-format
@@ -7308,7 +7308,7 @@ msgstr "กำลังติดตั้งอัปเดต..."
 #: HikariSub/UpdateInstaller.cpp:1081
 #, c-format
 msgid "No password prompt could be shown to install HikariSub %s. Install it yourself: %s"
-msgstr "ไม่สามารถแสดงหน้าต่างขอรหัสผ่านเพื่อติดตั้ง HikariSub %s ได้ ให้ติดตั้งเอง: %s"
+msgstr "ไม่สามารถแสดงหน้าต่างขอรหัสผ่านเพื่อติดตั้ง HikariSub %s ได้ โปรดติดตั้งด้วยตนเอง: %s"
 
 #: HikariSub/UpdateInstaller.cpp:1342
 #, c-format
@@ -7323,7 +7323,7 @@ msgstr "ไม่ได้ติดตั้ง HikariSub %s: ตัวติด
 #: HikariSub/UpdateInstaller.cpp:1416
 #, c-format
 msgid "The download of HikariSub %s changed or went missing, so it was not installed. It is downloaded again at the next check."
-msgstr "แฟ้มที่ดาวน์โหลดของ HikariSub %s เปลี่ยนไปหรือหายไป จึงไม่ได้ติดตั้ง จะดาวน์โหลดอีกครั้งเมื่อตรวจหาครั้งถัดไป"
+msgstr "แฟ้มที่ดาวน์โหลดของ HikariSub %s เปลี่ยนไปหรือหายไป จึงไม่ได้ติดตั้ง จะดาวน์โหลดอีกครั้งเมื่อตรวจหาอัปเดตครั้งถัดไป"
 
 #: HikariSub/UpdateInstaller.cpp:1456
 #, c-format
