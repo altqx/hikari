@@ -179,6 +179,7 @@ if(HIKARISUB_TESTS_MEDIA_FOUND AND HIKARISUB_TESTS_LIBASS_FOUND
         check_main.cpp
         LibassAttachedFontTests.cpp
         MatroskaSubtitlesTests.cpp
+        LibassForkTests.cpp
         SubtitleTimeBaseTests.cpp
         ../HikariSub/ScriptAttachments.cpp
         ../Thirdparty/Build/FFMS2/indexing_additional.cpp)
