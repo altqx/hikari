@@ -26,6 +26,7 @@
 
 #include "SubsTime.h"
 #include "ScriptInfo.h"
+#include "LayoutRes.h"
 #include "config.h"
 #include "OptionsDialog.h"
 #include "DropFiles.h"
@@ -1246,7 +1247,7 @@ void HikariSubFrame::OnAssProps()
 		if (sci.width->IsModified()){ ngrid->file->AddSInfo(L"PlayResX", wxString::Format(L"%i", newx)); }
 		if (sci.height->IsModified()){ ngrid->file->AddSInfo(L"PlayResY", wxString::Format(L"%i", newy)); }
 		bool link = Options.GetBool(LINK_RESOLUTIONS);
-		bool linkAndLayoutExists = link && (!ngrid->file->GetSInfo(L"LayoutResX").empty() || !ngrid->file->GetSInfo(L"LayoutResX").empty());
+		bool linkAndLayoutExists = link && HasLayoutRes(*ngrid->file);
 		if (sci.layoutWidth->IsModified() || linkAndLayoutExists) { ngrid->file->AddSInfo(L"LayoutResX", wxString::Format(L"%i", link? newx : newlx)); }
 		if (sci.layoutHeight->IsModified() || linkAndLayoutExists) { ngrid->file->AddSInfo(L"LayoutResY", wxString::Format(L"%i", link ? newy : newly)); }
 		int newMatrix = sci.matrix->GetSelection();

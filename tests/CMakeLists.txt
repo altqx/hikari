@@ -69,6 +69,7 @@ add_executable(hikarisub_tests
     FrameExchangeTests.cpp
     FrameQueueTests.cpp
     HotkeysFileTests.cpp
+    LayoutResTests.cpp
     LineGroupsTests.cpp
     LuaJitTests.cpp
     MenuBarHitTestTests.cpp

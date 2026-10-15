@@ -565,6 +565,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="TagFindReplace.h" />
     <ClInclude Include="TextComparison.h" />
     <ClInclude Include="NaturalOrder.h" />
+    <ClInclude Include="LayoutRes.h" />
     <ClInclude Include="ReplaceBackup.h" />
     <ClInclude Include="TextEditorTagList.h" />
     <ClInclude Include="Toolbar.h" />

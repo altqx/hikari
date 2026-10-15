@@ -22,6 +22,7 @@
 #include "Notebook.h"
 #include "HikariStaticText.h"
 #include "TabPanel.h"
+#include "LayoutRes.h"
 
 SubsResampleDialog::SubsResampleDialog(wxWindow *parent, const wxSize &subsSize, const wxSize &videoSize, const wxString &subsMatrix, const wxString &videoMatrix)
 	: HikariDialog(parent, -1, _("Change resolution"))
@@ -146,7 +147,7 @@ SubsResampleDialog::SubsResampleDialog(wxWindow *parent, const wxSize &subsSize,
 			videoSizeY / (float)subsSizeY, resamplingOptions->IsEnabled() &&
 			resamplingOptions->GetSelection() == 1);
 
-		if (!grid->file->GetSInfo(L"LayoutResX").empty() || !grid->file->GetSInfo(L"LayoutResX").empty()) {
+		if (HasLayoutRes(*grid->file)) {
 			grid->file->AddSInfo(L"LayoutResX", std::to_wstring(videoSizeX));
 			grid->file->AddSInfo(L"LayoutResY", std::to_wstring(videoSizeY));
 		}
@@ -193,7 +194,7 @@ SubsMismatchResolutionDialog::SubsMismatchResolutionDialog(wxWindow *parent, con
 		SubsGrid *grid = Notebook::GetTab()->grid;
 		grid->file->AddSInfo(L"PlayResX", std::to_wstring(videoSize.x));
 		grid->file->AddSInfo(L"PlayResY", std::to_wstring(videoSize.y));
-		if (!grid->file->GetSInfo(L"LayoutResX").empty() || !grid->file->GetSInfo(L"LayoutResX").empty()) {
+		if (HasLayoutRes(*grid->file)) {
 			grid->file->AddSInfo(L"LayoutResX", std::to_wstring(videoSize.x));
 			grid->file->AddSInfo(L"LayoutResY", std::to_wstring(videoSize.y));
 		}

@@ -17,6 +17,7 @@
 
 
 #include "AppendedLine.h"
+#include "LayoutRes.h"
 #include "SubsFile.h"
 #include "SubsGrid.h"
 #include "SubsGridPreview.h"
@@ -1997,7 +1998,7 @@ void SubsGrid::SetLayoutFromSubsRes()
 	if (!Options.GetBool(LINK_RESOLUTIONS))
 		return;
 
-	if (file->GetSInfo(L"LayoutResX").empty() && file->GetSInfo(L"LayoutResX").empty())
+	if (!HasLayoutRes(*file))
 		return;
 
 	int x;

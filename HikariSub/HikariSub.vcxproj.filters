@@ -945,6 +945,9 @@
     <ClInclude Include="NaturalOrder.h">
       <Filter>N</Filter>
     </ClInclude>
+    <ClInclude Include="LayoutRes.h">
+      <Filter>L</Filter>
+    </ClInclude>
     <ClInclude Include="ReplaceBackup.h">
       <Filter>R</Filter>
     </ClInclude>
