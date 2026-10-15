@@ -109,7 +109,8 @@ class Docking : public QObject {
     QML_SINGLETON
     // The free part of a floating panel's header moves its window through
     // the window system (startSystemMove) while its title or tabs stay the
-    // engine's drag: on Wayland, X11 and Windows (platformUsesSystemMove).
+    // engine's drag: on Wayland and X11 (platformUsesSystemMove). On
+    // Windows, offscreen and minimal the whole header is the engine's drag.
     // Tests set it on the offscreen platform (setSystemMove).
     Q_PROPERTY(bool systemMove READ systemMove NOTIFY systemMoveChanged FINAL)
     // The width of the floating window's drawn shadow.
@@ -129,7 +130,9 @@ public:
 
     // Whether a floating panel's header splits on the platform named
     // `platformName` (QGuiApplication::platformName(), the running one by
-    // default): on the window systems, not on offscreen or minimal.
+    // default): on Wayland and X11, not on Windows (the owner's choice of
+    // 2026-10-15: Snap never takes the borderless tool window there), nor
+    // on offscreen or minimal.
     static bool platformUsesSystemMove(QStringView platformName);
     static bool platformUsesSystemMove();
     bool systemMove() const { return m_systemMove; }

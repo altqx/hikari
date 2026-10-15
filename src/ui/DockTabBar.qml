@@ -388,9 +388,10 @@ KDDWViews.TabBarBase {
         }
     }
 
-    // A floating panel: the header's free part moves the window through
-    // the window system (right of a lone panel's title, up to the "⋯"
-    // button; right of the tabs, up to the toolbar). The title and the tabs
+    // A floating panel on Wayland and X11 (Docking.systemMove; on Windows
+    // the whole header is the engine's drag): the header's free part moves
+    // the window through the window system (right of a lone panel's title,
+    // up to the "⋯" button; right of the tabs, up to the toolbar). The title and the tabs
     // stay the engine's drag, which docks. Short of room, a long title
     // gives way to keep the free part 48 pixels wide, but keeps 48 itself.
     DockSystemMoveArea {

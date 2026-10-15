@@ -424,11 +424,14 @@ private:
 // through the window system (startSystemResize from the shadow). A
 // header's title or tabs move them by the engine's drag, which tracks the
 // pointer to show the drop highlight and dock (on Wayland, where the engine
-// cannot place windows, a drag-and-drop). The rest of the header moves the
-// window through the window system (startSystemMove,
+// cannot place windows, a drag-and-drop). On Wayland and X11 the rest of
+// the header moves the window through the window system (startSystemMove,
 // DockSystemMoveArea.qml), so its snapping and tiling apply there; a system
 // move hands the pointer to the window system, so that part does not dock
-// (the user's choice of 2026-10-12, docs/qt/docking.md). The engine's
+// (the user's choice of 2026-10-12, docs/qt/docking.md). On Windows the
+// whole header is the engine's drag (the owner's choice of 2026-10-15):
+// Snap never takes the borderless tool window, so the split only cost
+// docking there (Docking::platformUsesSystemMove). The engine's
 // Aero-snap frame (Flag_AeroSnapWithClientDecos) is not used: it keeps the
 // system's frame, which the borderless window has not.
 void configureEngine()
@@ -610,7 +613,10 @@ int Docking::windowShadow(QWindow *window) const
 
 bool Docking::platformUsesSystemMove(QStringView platformName)
 {
-    return platformName.startsWith(u"wayland") || platformName == u"xcb" || platformName == u"windows";
+    // Not on Windows: Snap never takes the borderless tool window (the VM
+    // gate and real hardware, 2026-10-15), and a press right of the title
+    // that never docks lost the owner's first drag to dock.
+    return platformName.startsWith(u"wayland") || platformName == u"xcb";
 }
 
 bool Docking::platformUsesSystemMove()

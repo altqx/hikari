@@ -923,9 +923,9 @@ def step_pointer():
             f"double-click on the docked Video title at {pt}: floated={dfloat} (by {how1}); double-click its "
             f"floating title: redocked={redock} (by {how2}); tablet attempts, seconds between the two clicks' "
             f"calls: {gaps}", ev1 + ev2)
-    # Drag the floating Audio panel by its title onto the Grid's centre (the
-    # title is the engine's drag; the header's free part, 48 px in, logical,
-    # is the window system's move, which does not dock).
+    # Drag the floating Audio panel by its title onto the Grid's centre (on
+    # Windows the whole header is the engine's drag since 2026-10-15; the part
+    # right of the title is pointer_floating_move_resize's).
     st = uia()
     src = title_point(st, "Audio", "Audio", dx=30)
     grid = panel(st, "Grid")
@@ -1016,9 +1016,11 @@ def shadow_check(png, f, mons):
 def pointer_floating_move_resize():
     """D3: a floating panel is a borderless tool window (no caption or system
     frame) with a drawn shadow; dragging its header's title moves it (the
-    engine's drag), dragging the header's free part moves it through the
-    window system (startSystemMove, since 2026-10-12), dragging the shadow
-    resizes it (startSystemResize)."""
+    engine's drag), dragging the header right of its title shows the drop
+    highlight and docks it as the title does (on Windows the whole header is
+    the engine's drag: the owner's choice of 2026-10-15, as Snap never takes
+    the tool window; until then that part was the window system's move),
+    dragging the shadow resizes it (startSystemResize)."""
     placed = fullscreen("left", width=480)
     log("main window on the left:", placed)
     try:
@@ -1030,7 +1032,7 @@ def pointer_floating_move_resize():
         st = uia(dpi=True)
         fa = frames(st).get("Audio")
         if not fa:
-            for item in ("floating-borderless", "floating-shadow", "floating-move", "floating-system-move",
+            for item in ("floating-borderless", "floating-shadow", "floating-move", "floating-free-part-docks",
                          "floating-resize"):
                 verdict(item, "not-observable", "Audio did not float")
             return
@@ -1076,34 +1078,41 @@ def pointer_floating_move_resize():
         if not fb:
             verdict("floating-resize", "not-observable", "the floating Audio window is gone after the move")
             return
-        # The header's free part, just left of its ⋯: the window system's move
-        # (SC_DRAGMOVE), which starts once the pointer has moved the drag
-        # distance, so the window lags the pointer by that much. It goes left
-        # and down: the ⋯ sits a few pixels inside the primary monitor's right
-        # edge after the move above, and the tablet reaches the primary only, so
-        # a move to the right would put the ⋯ the next item clicks out of reach.
+        # The header right of its title, just left of its ⋯: the engine's drag
+        # as from the title (the whole header since 2026-10-15; until then the
+        # window system's move, which never docked, and the owner's first drag
+        # to dock on real hardware started there). Dragged onto the Grid's
+        # centre and held for the drop highlight, then released: it docks.
+        # Floated again for the items below.
         btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == "Audio"), None)
-        if btn:
+        grid = panel(st, "Grid")
+        if btn and grid and grid["frame"] == MAIN:
             sx, sy = btn["x"] - 24, btn["y"] + btn["h"] // 2
-            tx, ty = sx - 40, sy + 160
+            gx, gy = grid["x"] + grid["w"] // 2, grid["y"] + grid["h"] // 2 - 15
             try:
                 pointer([(sx, sy)], hold=True)
                 time.sleep(0.25)
-                pointer([(sx, sy), (tx + 3, ty + 3), (tx, ty)], button="none", steps=25, delayMs=40)
-                time.sleep(0.5)
+                pointer([(sx, sy), (gx + 3, gy + 3), (gx, gy)], button="none", steps=30, delayMs=40)
+                time.sleep(0.7)
+                evh, _ = snap("ptr-9-free-part-over-grid")  # the drop highlight, button still held
             finally:
                 release()
-                time.sleep(1.2)
-            st = uia()
-            fs = frames(st).get("Audio")
-            moved = bool(fs) and abs(fs["x"] - (fb["x"] - 40)) <= 16 and abs(fs["y"] - (fb["y"] + 160)) <= 16
-            ev, st = snap("ptr-9-floating-system-moved")
-            verdict("floating-system-move", "observed" if moved else "failed",
-                    f"tablet drag of the floating Audio header's free part from {sx},{sy} by -40,160: window "
-                    f"{fb['x']},{fb['y']} -> {fs and (fs['x'], fs['y'])}, still floating {bool(fs)}", ev)
-            fb = fs or fb
+                time.sleep(1.5)
+                pointer([(gx + 5, gy + 5)], button="none")
+            ev, st = snap("ptr-9-free-part-docked")
+            docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == MAIN
+            verdict("floating-free-part-docks", "observed" if docked else "failed",
+                    f"tablet drag of the floating Audio header right of its title (just left of its ⋯) from "
+                    f"{sx},{sy} to the Grid centre {gx},{gy} and release: docked={docked}, windows {list(frames(st))} "
+                    f"(drop highlight: ptr-9-free-part-over-grid.png)", evh + ev)
+            if docked:
+                focus_main_compositor()
+                float_panel("Audio", "move")
+                st = wait_for(lambda s: "Audio" in frames(s), timeout=4)
+            fb = frames(st).get("Audio") or fb
         else:
-            verdict("floating-system-move", "not-observable", "the floating Audio header's ⋯ is not in UIA")
+            verdict("floating-free-part-docks", "not-observable",
+                    f"the floating Audio header's ⋯ ({bool(btn)}) or the docked Grid ({grid}) is not in UIA")
         # The floating header's ⋯ by the tablet: its menu (Main.qml's, in the
         # main window) opens under the button, in the floating panel's place.
         btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == "Audio"), None)
@@ -1303,8 +1312,9 @@ def step_test_executables():
     # Skips declared as platform limits, each observed for real by another
     # item (as in the Linux gate): a synthetic drag between windows needs the
     # offscreen platform (pointer); the window follows the pointer itself only
-    # where the platform declines a system move, which Windows does not
-    # (floating-system-move); the X11 system move is the Linux gate's. D2's
+    # where the platform declines a system move, and Windows makes none (its
+    # whole header is the engine's drag, floating-free-part-docks); the X11
+    # system move is the Linux gate's. D2's
     # screenshots run only with HIKARI_SURFACE_SHOT_DIR.
     known = ("the compositor places windows", "a synthetic drag between windows needs the offscreen platform",
              "the window follows a declined system move only where the platform declines it",

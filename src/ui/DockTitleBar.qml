@@ -11,8 +11,8 @@ import Hikari.Ui
 // the header's look (docs/research/musescore-docking.md §1), with the move
 // cursor. Dragging its title moves the window and docks it where the
 // highlight shows, double-clicking docks it. As on a panel's header
-// (DockTabBar.qml), the rest of the bar moves the window through the
-// window system. The bar draws no keyboard focus mark: the group holding
+// (DockTabBar.qml), on Wayland and X11 the rest of the bar moves the window
+// through the window system; on Windows the whole bar is the drag. The bar draws no keyboard focus mark: the group holding
 // the focus in the window shows the accent corner mark on its own header
 // (K2, PanelFocusMark.qml), one mark for one focus. Loaded through the
 // adapter's view factory (ui/docking.cpp).
