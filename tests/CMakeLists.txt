@@ -60,6 +60,7 @@ add_executable(hikarisub_tests
     check_main.cpp
     AssBlendTests.cpp
     AudioCacheNameTests.cpp
+    AudioCommitTests.cpp
     AutomationFoldersTests.cpp
     ChosenStylesTests.cpp
     CsriOverlayTests.cpp

@@ -433,6 +433,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
   <ItemGroup>
     <ClInclude Include="AudioBox.h" />
     <ClInclude Include="AudioCacheName.h" />
+    <ClInclude Include="AudioCommit.h" />
     <ClInclude Include="AudioDeviceEnumeration.h" />
     <ClInclude Include="AudioDisplay.h" />
     <ClInclude Include="AudioPlayerDSound.h" />

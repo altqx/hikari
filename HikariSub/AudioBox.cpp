@@ -40,6 +40,7 @@
 
 #include "EditBox.h"
 #include "AudioBox.h"
+#include "AudioCommit.h"
 //#include "HikariSubFrame.h"
 #include "Notebook.h"
 #include "MappedButton.h"
@@ -456,7 +457,7 @@ void AudioBox::OnPlayToEnd(wxCommandEvent &event) {
 // Commit changes
 void AudioBox::OnCommit(wxCommandEvent &event) {
 	audioDisplay->SetFocus();
-	audioDisplay->CommitChanges(true);
+	audioDisplay->CommitChanges(AudioCommitGoesToNextLine(Options.GetBool(AUDIO_NEXT_LINE_ON_COMMIT)));
 }
 
 

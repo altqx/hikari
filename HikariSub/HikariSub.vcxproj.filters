@@ -567,6 +567,9 @@
     <ClInclude Include="AudioCacheName.h">
       <Filter>A</Filter>
     </ClInclude>
+    <ClInclude Include="AudioCommit.h">
+      <Filter>A</Filter>
+    </ClInclude>
     <ClInclude Include="AudioDeviceEnumeration.h">
       <Filter>A</Filter>
     </ClInclude>
