@@ -565,7 +565,7 @@ void StyleStore::OnDeleteCatalog(wxCommandEvent& event)
 	if (cat == -1){ return; }
 	wxString Cat = catalogList->GetString(cat);
 	if (Cat == L"Default"){ wxBell(); return; }
-	if (HikariMessageBox(wxString::Format((L"Naprawdę chcesz usunąć katalog o nazwie \"%s\"?"), Cat), _("Prompt"),
+	if (HikariMessageBox(wxString::Format(_("Do you really want to delete the catalog named \"%s\"?"), Cat), _("Prompt"),
 		wxYES_NO, nullptr, wxDefaultPosition, wxNO) == wxNO)
 		return;
 

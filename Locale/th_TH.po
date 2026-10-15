@@ -8327,6 +8327,11 @@ msgstr "มีสไตล์ชื่อ \"%s\" อยู่แล้ว"
 msgid "Style name modified. Do you want to change all instances to the new name?"
 msgstr "เปลี่ยนชื่อสไตล์แล้ว ต้องการเปลี่ยนชื่อดังกล่าวทุกแห่งด้วยหรือไม่?"
 
+#: HikariSub/stylestore.cpp:568
+#, c-format
+msgid "Do you really want to delete the catalog named \"%s\"?"
+msgstr "ต้องการลบแคตตาล็อกชื่อ \"%s\" จริงหรือไม่?"
+
 #: HikariSub/stylestore.cpp:612
 msgid "Choose ASS file"
 msgstr "เลือกแฟ้ม ASS"

@@ -7,6 +7,10 @@ hand, so strings added since then went missing without anything failing.  This
 extracts the sources as that regeneration did and fails while any string is
 missing from the template, or any template string from a catalog.
 
+It also fails while a message box's text holds a literal in a language other
+than English, the catalogs' source language, outside _(): no catalog can
+translate it, so it shows in that language in every language.
+
 --update regenerates the template, keeping its header, and merges the catalogs
 against it without fuzzy matching, so a new string never borrows the
 translation of a different old one; strings that left the sources stay in the
@@ -76,6 +80,50 @@ def missing(defined, used, name):
     return found or [run.stderr.strip()]
 
 
+TOKEN = re.compile(r'//[^\n]*|/\*.*?\*/|(?:u8|L|u|U)?"(?:\\.|[^"\\\n])*"'
+                   r"|'(?:\\.|[^'\\\n])*'|[(),]", re.S)
+MESSAGE_BOX = re.compile(r"\b(?:HikariMessageBox|wxMessageBox)\s*$")
+TRANSLATE = re.compile(r"\b(?:_|wxTRANSLATE|wxPLURAL|wxGETTEXT_IN_CONTEXT"
+                       r"|wxGETTEXT_IN_CONTEXT_PLURAL)\s*$")
+
+
+def untranslated_prompts():
+    """Returns the message box texts the catalogs cannot translate, one line each.
+
+    A literal outside _() in a message box's text that holds a non-ASCII
+    letter is in a language other than English, so it shows untranslated in
+    every language.
+    """
+    found = []
+    for path in sorted(p for pattern in ("*.cpp", "*.h")
+                       for p in (ROOT / "HikariSub").glob(pattern)):
+        src = path.read_text(encoding="utf-8")
+        # Each open parenthesis: whether it is _()'s, and whether it starts a
+        # message box's arguments with the text, its first one, still to end.
+        stack = []
+        for token in TOKEN.finditer(src):
+            text = token.group(0)
+            if text.startswith(("//", "/*", "'")):
+                continue
+            if text == "(":
+                before = src[max(0, token.start() - 40):token.start()]
+                stack.append({"translated": bool(TRANSLATE.search(before)),
+                              "box": bool(MESSAGE_BOX.search(before))})
+            elif text == ")":
+                if stack:
+                    stack.pop()
+            elif text == ",":
+                if stack:
+                    stack[-1]["box"] = False
+            elif (any(level["box"] for level in stack)
+                  and not any(level["translated"] for level in stack)
+                  and any(c.isalpha() and ord(c) > 127 for c in text)):
+                line = src.count("\n", 0, token.start()) + 1
+                found.append("HikariSub/%s:%d: message box text %s is not in _()"
+                             % (path.name, line, text))
+    return found
+
+
 def update(locale, extracted):
     template = locale / "template.pot"
     head = template.read_text(encoding="utf-8").split("\n\n", 1)[0]
@@ -104,10 +152,16 @@ def main():
         failures = missing(locale / "template.pot", extracted, "Locale/template.pot")
         for po in sorted(locale.glob("*.po")):
             failures += missing(po, locale / "template.pot", "Locale/" + po.name)
+    prompts = untranslated_prompts()
+    if prompts:
+        print("\n".join(prompts))
+        print("Message boxes show text no catalog can translate; pass it "
+              "to _() in English and translate it in the catalogs.")
     if failures:
         print("\n".join(failures))
         print("Strings are missing from the template or the catalogs; "
               "run tools/check_catalogs.py --update and translate the new ones.")
+    if prompts or failures:
         return 1
     print("Locale/template.pot and Locale/*.po hold every translatable string.")
     return 0

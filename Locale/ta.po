@@ -8337,6 +8337,11 @@ msgstr "\"%s\" என்று பெயரிடப்பட்ட பாணி
 msgid "Style name modified. Do you want to change all instances to the new name?"
 msgstr "பாணி பெயர் மாற்றியமைக்கப்பட்டது. எல்லா நிகழ்வுகளையும் புதிய பெயருக்கு மாற்ற விரும்புகிறீர்களா?"
 
+#: HikariSub/stylestore.cpp:568
+#, c-format
+msgid "Do you really want to delete the catalog named \"%s\"?"
+msgstr "\"%s\" என்ற பட்டியலை உண்மையில் நீக்க விரும்புகிறீர்களா?"
+
 #: HikariSub/stylestore.cpp:612
 msgid "Choose ASS file"
 msgstr "ASS கோப்பைத் தேர்வுசெய்க"

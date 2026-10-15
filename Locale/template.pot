@@ -8171,6 +8171,11 @@ msgid ""
 "Style name modified. Do you want to change all instances to the new name?"
 msgstr ""
 
+#: HikariSub/stylestore.cpp:568
+#, c-format
+msgid "Do you really want to delete the catalog named \"%s\"?"
+msgstr ""
+
 #: HikariSub/stylestore.cpp:612
 msgid "Choose ASS file"
 msgstr ""
