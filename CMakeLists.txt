@@ -257,6 +257,7 @@ add_executable(hikarisub
     HikariSub/WaveformPeaks.cpp
     HikariSub/TextComparison.cpp
     HikariSub/NaturalOrder.cpp
+    HikariSub/ReplaceBackup.cpp
     HikariSub/Provider.cpp
     HikariSub/ProviderDummy.cpp
     HikariSub/ProviderFFMS2.cpp

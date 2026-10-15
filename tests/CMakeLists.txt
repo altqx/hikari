@@ -13,11 +13,13 @@ if(WIN32)
         AutomationFoldersTests.cpp
         CsriAttachmentsTests.cpp
         NaturalOrderTests.cpp
+        ReplaceBackupTests.cpp
         ScriptAttachmentsTests.cpp
         update/UpdateApplyTests.cpp
         update/UpdateVerifyTests.cpp
         ../HikariSub/AudioCacheName.cpp
         ../HikariSub/NaturalOrder.cpp
+        ../HikariSub/ReplaceBackup.cpp
         ../HikariSub/ScriptAttachments.cpp
         ../HikariSub/UpdateApply.cpp
         ../HikariSub/WindowsSaveFile.cpp
@@ -76,6 +78,7 @@ add_executable(hikarisub_tests
     ParsedScriptsTests.cpp
     PlaybackTests.cpp
     PrivateFolderTests.cpp
+    ReplaceBackupTests.cpp
     SaveFileTests.cpp
     SaveTargetTests.cpp
     ScriptAttachmentsTests.cpp
@@ -105,6 +108,7 @@ add_executable(hikarisub_tests
     ../HikariSub/ScriptAttachments.cpp
     ../HikariSub/SubtitlesProviderChoice.cpp
     ../HikariSub/PrivateFolder.cpp
+    ../HikariSub/ReplaceBackup.cpp
     ../HikariSub/TextComparison.cpp
     ../HikariSub/Timebase.cpp
     ../HikariSub/WaveformPeaks.cpp

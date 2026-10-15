@@ -22,6 +22,7 @@
 #include "FindReplaceDialog.h"
 #include "FindReplaceResultsDialog.h"
 #include "OpennWrite.h"
+#include "ReplaceBackup.h"
 #include "SubsGrid.h"
 #include "TabPanel.h"
 #include <wx/clipbrd.h>
@@ -60,6 +61,21 @@ wxString RealPath(const wxString &path)
 	}
 #endif
 	return path;
+}
+
+//the backup of the subtitles at subsPath in the replace backup folder
+//copyPath, in a private folder of its own for the subtitles' folder, so that
+//same-named files from other folders do not replace each other's backup;
+//empty when that folder is not private, and then no backup is made
+wxString ReplaceBackupPath(const wxString &copyPath, const wxString &subsPath)
+{
+	wxString folder = HikariPathJoin(copyPath, ReplaceBackupFolderName(subsPath.ToStdWstring()));
+	if (!MakePrivateFolder(folder)) {
+		HikariLogSilent(wxString::Format(L"The replace backup folder is not private, no backup is made: %s",
+			folder));
+		return wxString();
+	}
+	return HikariPathJoin(folder, HikariPathName(subsPath));
 }
 
 //collects every file once, by its real path, and skips links and already
@@ -841,8 +857,11 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 			token.clear();
 		}//while
 		if (SubsAllReplacements){
-			if (!fr->CopyPath.empty())
-				CopyToPrivateFile(subsPath, HikariPathJoin(fr->CopyPath, HikariPathName(subsPath)));
+			if (!fr->CopyPath.empty()) {
+				wxString backup = ReplaceBackupPath(fr->CopyPath, subsPath);
+				if (!backup.empty())
+					CopyToPrivateFile(subsPath, backup);
+			}
 			//count only the replacements that reached the file
 			if (ow.FileWrite(subsPath, replacedText))
 				fr->AllReplacements.fetch_add(SubsAllReplacements);
@@ -1807,8 +1826,11 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 	}
 
 	if (numOfChanges){
-		if (!copyPath.empty())
-			CopyToPrivateFile(path, HikariPathJoin(copyPath, HikariPathName(path)));
+		if (!copyPath.empty()) {
+			wxString backup = ReplaceBackupPath(copyPath, path);
+			if (!backup.empty())
+				CopyToPrivateFile(path, backup);
+		}
 		//count only the replacements that reached the file
 		if (!ow.FileWrite(path, replacedText))
 			numOfChanges = 0;
