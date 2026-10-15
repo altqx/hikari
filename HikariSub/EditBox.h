@@ -27,6 +27,7 @@
 #include "HikariDialog.h"
 #include "HikariStaticText.h"
 #include "MenuButton.h"
+#include "EditCommit.h"
 #include "ColorPicker.h"
 #include "HikariWindowResizer.h"
 #include "HikariPanel.h"
@@ -85,6 +86,8 @@ public:
 	void SetLine(int Row, bool setaudio = true, bool save = true, bool nochangeline = false, bool autoPlay = false);
 	void SetTlMode(bool tl, bool dummyTlMode = false);
 	void Send(unsigned char editionType, bool selline = true, bool dummy = false, bool visualdummy = false);
+	// whether Send has a field to write to the Line
+	bool HasChangesToSend();
 	void RefreshStyle(bool resetline = false);
 	void HideControls();
 	void UpdateChars();
@@ -170,6 +173,12 @@ private:
 	void ChangeFont(Styles *retStyle, Styles *editedStyle);
 	void OnCommit(wxCommandEvent& event);
 	void OnNewline(wxCommandEvent& event);
+	// Apply changes and Enter: whether the commit may go on (EditCommit)
+	EditCommit PlanCommit();
+	// the Line's times with the typed ones, as Send writes them
+	void TypedTimes(SubsTime &start, SubsTime &end);
+	// saving while typing waits for an End before the Start (SaveWhileTyping)
+	bool typingSaveWaiting = false;
 	void OnFontClick(wxCommandEvent& event);
 	void OnColorClick(wxCommandEvent& event);
 	void OnColorRightClick(wxMouseEvent& event);

@@ -48,8 +48,8 @@ msgstr "Odtwórz następną linijkę"
 msgid "Play the current syllable / line"
 msgstr "Odtwórz aktualną sylabę / linijkę"
 
-#: HikariSub/AudioBox.cpp:164 HikariSub/VideoBox.cpp:163
-#: HikariSub/VideoFullscreen.cpp:62
+#: HikariSub/AudioBox.cpp:164 HikariSub/VideoBox.cpp:164
+#: HikariSub/VideoFullscreen.cpp:63
 msgid "Play the current line"
 msgstr "Odtwórz aktywną linię"
 
@@ -153,7 +153,7 @@ msgid "Cannot set view matrix"
 msgstr "Nie można ustawić macierzy widoku"
 
 #: HikariSub/AudioDisplay.cpp:359 HikariSub/RendererDirectShow.cpp:100
-#: HikariSub/RendererFFMS2.cpp:831 HikariSub/RendererVideo.cpp:472
+#: HikariSub/RendererFFMS2.cpp:830 HikariSub/RendererVideo.cpp:472
 msgid "Cannot create surface"
 msgstr "Nie można stworzyć powierzchni"
 
@@ -169,7 +169,7 @@ msgid "Cannot create D3DX font"
 msgstr "Nie można stworzyć czcionki D3DX"
 
 #: HikariSub/AudioDisplay.cpp:369 HikariSub/AudioDisplay.cpp:370
-#: HikariSub/RendererDirectShow.cpp:739 HikariSub/RendererFFMS2.cpp:854
+#: HikariSub/RendererDirectShow.cpp:739 HikariSub/RendererFFMS2.cpp:853
 msgid "Cannot create plain surface"
 msgstr "Nie można stworzyć plain surface"
 
@@ -224,7 +224,7 @@ msgstr "Otwórz"
 #: HikariSub/AutoSaveOpen.cpp:61 HikariSub/AutomationHotkeysDialog.cpp:149
 #: HikariSub/AutomationProgress.cpp:319 HikariSub/ColorPicker.cpp:682
 #: HikariSub/ColorPicker.cpp:1447 HikariSub/DummyVideo.cpp:102
-#: HikariSub/EditBox.cpp:96 HikariSub/EditBox.cpp:1803
+#: HikariSub/EditBox.cpp:96 HikariSub/EditBox.cpp:1866
 #: HikariSub/FontCatalogList.cpp:71 HikariSub/FontCatalogList.cpp:874
 #: HikariSub/FontDialog.cpp:411 HikariSub/HikariMessageBox.cpp:80
 #: HikariSub/MappedButton.cpp:40 HikariSub/NewCatalog.cpp:42
@@ -465,12 +465,12 @@ msgid "Cannot start editor."
 msgstr "Nie można uruchomić edytora."
 
 #: HikariSub/Automation.cpp:1400 HikariSub/Automation.cpp:1447
-#: HikariSub/HikariSubFrame.cpp:930 HikariSub/HikariSubFrame.cpp:934
-#: HikariSub/HikariSubFrame.cpp:2277 HikariSub/HikariSubFrame.cpp:2278
-#: HikariSub/HikariSubFrame.cpp:2739 HikariSub/HikariSubFrame.cpp:2765
-#: HikariSub/HikariSubFrame.cpp:2769 HikariSub/OptionsDialog.cpp:311
-#: HikariSub/OptionsDialog.cpp:712 HikariSub/VideoBox.cpp:1820
-#: HikariSub/VisualAllTagsEdition.cpp:168
+#: HikariSub/EditBox.cpp:688 HikariSub/HikariSubFrame.cpp:930
+#: HikariSub/HikariSubFrame.cpp:934 HikariSub/HikariSubFrame.cpp:2277
+#: HikariSub/HikariSubFrame.cpp:2278 HikariSub/HikariSubFrame.cpp:2739
+#: HikariSub/HikariSubFrame.cpp:2765 HikariSub/HikariSubFrame.cpp:2769
+#: HikariSub/OptionsDialog.cpp:311 HikariSub/OptionsDialog.cpp:712
+#: HikariSub/VideoBox.cpp:1850 HikariSub/VisualAllTagsEdition.cpp:168
 #: HikariSub/VisualAllTagsEdition.cpp:172
 #: HikariSub/VisualAllTagsEdition.cpp:190
 #: HikariSub/VisualAllTagsEdition.cpp:297
@@ -578,7 +578,7 @@ msgstr ""
 #: HikariSub/OptionsDialog.cpp:120 HikariSub/OptionsDialog.cpp:129
 #: HikariSub/OptionsDialog.cpp:557 HikariSub/SpellCheckerDialog.cpp:148
 #: HikariSub/SubsGrid.cpp:1180 HikariSub/SubsGridBase.cpp:540
-#: HikariSub/SubsGridBase.cpp:569 HikariSub/VideoBox.cpp:347
+#: HikariSub/SubsGridBase.cpp:569 HikariSub/VideoBox.cpp:348
 #: HikariSub/VisualClips.cpp:1021 HikariSub/hikarisubApp.cpp:536
 #: HikariSub/hikarisubApp.cpp:606
 msgid "Warning"
@@ -1029,86 +1029,90 @@ msgstr "Aktor"
 msgid "Effect"
 msgstr "Efekt"
 
-#: HikariSub/EditBox.cpp:412
+#: HikariSub/EditBox.cpp:413
 #, c-format
 msgid "Line: %i"
 msgstr "Linia: %i"
 
-#: HikariSub/EditBox.cpp:514
+#: HikariSub/EditBox.cpp:515
 msgid "Wraps: "
 msgstr "Łamania: "
 
-#: HikariSub/EditBox.cpp:517
+#: HikariSub/EditBox.cpp:518
 #, c-format
 msgid "Characters per second: %i<=15"
 msgstr "Znaki na sekundę: %i<=15"
 
-#: HikariSub/EditBox.cpp:1251 HikariSub/TextEditorTagList.cpp:362
+#: HikariSub/EditBox.cpp:688
+msgid "End is before Start."
+msgstr "Czas końcowy jest wcześniejszy niż czas początkowy."
+
+#: HikariSub/EditBox.cpp:1305 HikariSub/TextEditorTagList.cpp:362
 #: HikariSub/TextEditorTagList.cpp:400
 msgid "Text position"
 msgstr "Położenie tekstu"
 
-#: HikariSub/EditBox.cpp:1252
+#: HikariSub/EditBox.cpp:1306
 msgid "Translator mode displays and saves both foreign text and translation text"
 msgstr "Tryb tłumacza wyświetla i zapisuje zarówno tekst obcojęzyczny, jak i tekst tłumaczenia"
 
-#: HikariSub/EditBox.cpp:1253
+#: HikariSub/EditBox.cpp:1307
 msgid "Copies all foreign-language text to the translation field"
 msgstr "Kopiuje cały tekst obcojęzyczny do pola z tłumaczeniem"
 
-#: HikariSub/EditBox.cpp:1254
+#: HikariSub/EditBox.cpp:1308
 msgid "Copies the selected foreign-language text to the translation field"
 msgstr "Kopiuje zaznaczony tekst obcojęzyczny do pola z tłumaczeniem"
 
-#: HikariSub/EditBox.cpp:1255
+#: HikariSub/EditBox.cpp:1309
 msgid "Sets the line as a comment. Comments are not shown"
 msgstr "Ustawia linijkę jako komentarz. Komentarze nie są wyświetlane"
 
-#: HikariSub/EditBox.cpp:1256
+#: HikariSub/EditBox.cpp:1310
 msgid "Line layer. Higher layers are on top"
 msgstr "Warstwa linijki, wyższe warstwy są na wierzchu"
 
-#: HikariSub/EditBox.cpp:1257
+#: HikariSub/EditBox.cpp:1311
 msgid "Line start time"
 msgstr "Czas początkowy linijki"
 
-#: HikariSub/EditBox.cpp:1258
+#: HikariSub/EditBox.cpp:1312
 msgid "Line end time"
 msgstr "Czas końcowy linijki"
 
-#: HikariSub/EditBox.cpp:1259
+#: HikariSub/EditBox.cpp:1313
 msgid "Line duration"
 msgstr "Czas trwania linijki"
 
-#: HikariSub/EditBox.cpp:1260
+#: HikariSub/EditBox.cpp:1314
 msgid "Line style"
 msgstr "Styl linijki"
 
-#: HikariSub/EditBox.cpp:1261
+#: HikariSub/EditBox.cpp:1315
 msgid "Allows quick editing of the current line's style"
 msgstr "Umożliwia szybką edycję stylu linijki"
 
-#: HikariSub/EditBox.cpp:1262
+#: HikariSub/EditBox.cpp:1316
 msgid "Line actor label. Does not affect the appearance of the subtitles"
 msgstr "Oznaczenie aktora linijki. Nie wpływa na wygląd napisów"
 
-#: HikariSub/EditBox.cpp:1263
+#: HikariSub/EditBox.cpp:1317
 msgid "Line left margin"
 msgstr "Margines lewy linijki"
 
-#: HikariSub/EditBox.cpp:1264
+#: HikariSub/EditBox.cpp:1318
 msgid "Line right margin"
 msgstr "Margines prawy linijki"
 
-#: HikariSub/EditBox.cpp:1265
+#: HikariSub/EditBox.cpp:1319
 msgid "Line top and bottom margins"
 msgstr "Margines górny i dolny linijki"
 
-#: HikariSub/EditBox.cpp:1266
+#: HikariSub/EditBox.cpp:1320
 msgid "Line effect. Used to mark lines to which karaoke or VSFilter effects should be applied"
 msgstr "Efekt linijki. Służy do oznaczania linijek, na których zastosowane ma być karaoke bądź efekty VSFiltra"
 
-#: HikariSub/EditBox.cpp:1267
+#: HikariSub/EditBox.cpp:1321
 msgid ""
 "Number of characters in each line.\n"
 "No more than 43 characters per line (maximum 2 lines)."
@@ -1116,7 +1120,7 @@ msgstr ""
 "Ilość znaków w każdej linijce.\n"
 "Nie więcej niż 43 znaki na linijkę (maksymalnie 2 linijki)"
 
-#: HikariSub/EditBox.cpp:1268
+#: HikariSub/EditBox.cpp:1322
 msgid ""
 "Characters per second.\n"
 "Should not exceed 15 characters per second"
@@ -1124,19 +1128,19 @@ msgstr ""
 "Znaki na sekundę.\n"
 "Nie powinny przekraczać 15 znaków na sekundę"
 
-#: HikariSub/EditBox.cpp:1797 HikariSub/EditBox.cpp:2098
+#: HikariSub/EditBox.cpp:1860 HikariSub/EditBox.cpp:2161
 msgid "Change number of buttons"
 msgstr "Zmień ilość przycisków"
 
-#: HikariSub/EditBox.cpp:2035
+#: HikariSub/EditBox.cpp:2098
 msgid "No unconfirmed lines found"
 msgstr "Nie znaleziono niepewnych"
 
-#: HikariSub/EditBox.cpp:2057
+#: HikariSub/EditBox.cpp:2120
 msgid "No untranslated lines found"
 msgstr "Nie znaleziono nieprzetłumaczonych"
 
-#: HikariSub/EditBox.cpp:2100
+#: HikariSub/EditBox.cpp:2163
 msgid "Manage tag buttons"
 msgstr "Zarządzaj przyciskami tagów"
 
@@ -1592,7 +1596,7 @@ msgstr "Wybrana ścieżka zapisu jest niepoprawna."
 #: HikariSub/HikariSubFrame.cpp:2243 HikariSub/Notebook.cpp:1324
 #: HikariSub/SubsGrid.cpp:1141 HikariSub/SubsGridBase.cpp:559
 #: HikariSub/SubsGridBase.cpp:1580 HikariSub/SubsGridDialogs.cpp:109
-#: HikariSub/VideoBox.cpp:950 HikariSub/VideoBox.cpp:962
+#: HikariSub/VideoBox.cpp:952 HikariSub/VideoBox.cpp:964
 #: HikariSub/VisualAllTagsEdition.cpp:152
 #: HikariSub/VisualAllTagsEdition.cpp:216 HikariSub/VisualDrawingShapes.cpp:129
 #: HikariSub/VisualDrawingShapes.cpp:193 HikariSub/findreplace.cpp:508
@@ -2129,7 +2133,7 @@ msgstr "Zapisz tłumaczenie"
 msgid "Recently opened &subtitles"
 msgstr "Ostatnio otwa&rte napisy"
 
-#: HikariSub/HikariSubFrame.cpp:194 HikariSub/VideoBox.cpp:1024
+#: HikariSub/HikariSubFrame.cpp:194 HikariSub/VideoBox.cpp:1052
 msgid "Recently opened subtitles"
 msgstr "Ostatnio otwarte napisy"
 
@@ -2308,7 +2312,7 @@ msgid "&Edit"
 msgstr "&Edycja"
 
 #: HikariSub/HikariSubFrame.cpp:252 HikariSub/Hotkeys.cpp:147
-#: HikariSub/HotkeysNaming.cpp:224 HikariSub/VideoBox.cpp:1026
+#: HikariSub/HotkeysNaming.cpp:224 HikariSub/VideoBox.cpp:1054
 msgid "Open video"
 msgstr "Otwórz wideo"
 
@@ -2317,7 +2321,7 @@ msgid "Opens video file"
 msgstr "Otwiera wybrane wideo"
 
 #: HikariSub/HikariSubFrame.cpp:255 HikariSub/HikariSubFrame.cpp:256
-#: HikariSub/VideoBox.cpp:1025
+#: HikariSub/VideoBox.cpp:1053
 msgid "Recently opened videos"
 msgstr "Ostatnio otwarte wideo"
 
@@ -2388,8 +2392,8 @@ msgstr "Przechodzi wideo do czasu końcowego linii"
 
 #: HikariSub/HikariSubFrame.cpp:278 HikariSub/Hotkeys.cpp:160
 #: HikariSub/Hotkeys.cpp:178 HikariSub/HotkeysNaming.cpp:225
-#: HikariSub/HotkeysNaming.cpp:261 HikariSub/VideoBox.cpp:161
-#: HikariSub/VideoFullscreen.cpp:60
+#: HikariSub/HotkeysNaming.cpp:261 HikariSub/VideoBox.cpp:162
+#: HikariSub/VideoFullscreen.cpp:61
 msgid "Play / Pause"
 msgstr "Odtwórz / Pauza"
 
@@ -2717,7 +2721,7 @@ msgid "Validation Lua script '%s' failed"
 msgstr "Warunki skryptu Lua '%s' nie zostały spełnione"
 
 #: HikariSub/HikariSubFrame.cpp:1011 HikariSub/SubsGrid.cpp:933
-#: HikariSub/VideoBox.cpp:1162
+#: HikariSub/VideoBox.cpp:1190
 msgid "Choose subtitle file"
 msgstr "Wybierz plik napisów"
 
@@ -2726,7 +2730,7 @@ msgid "Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;
 msgstr "Pliki napisów (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Pliki wideo z wbudowanymi napisami (*.mkv),(*.ogm)|*.mkv;*.ogm"
 
 #: HikariSub/HikariSubFrame.cpp:1051 HikariSub/HikariSubFrame.cpp:1067
-#: HikariSub/VideoBox.cpp:1147
+#: HikariSub/VideoBox.cpp:1175
 msgid "Choose video file"
 msgstr "Wybierz plik wideo"
 
@@ -2872,7 +2876,7 @@ msgstr ""
 msgid "Load subtitles named \"%s\"?"
 msgstr "Wczytać napisy o nazwie \"%s\"?"
 
-#: HikariSub/HikariSubFrame.cpp:1506 HikariSub/VideoBox.cpp:1968
+#: HikariSub/HikariSubFrame.cpp:1506 HikariSub/VideoBox.cpp:1998
 msgid "Cannot open subtitle file"
 msgstr "Nie można otworzyć napisów"
 
@@ -2973,7 +2977,7 @@ msgid "Style manager"
 msgstr "Menedżer stylów"
 
 #: HikariSub/Hotkeys.cpp:153 HikariSub/HotkeysNaming.cpp:223
-#: HikariSub/VideoBox.cpp:1028
+#: HikariSub/VideoBox.cpp:1056
 msgid "Open subtitles"
 msgstr "Otwórz napisy"
 
@@ -3074,12 +3078,12 @@ msgid "1 minute backward"
 msgstr "Minuta do tyłu"
 
 #: HikariSub/Hotkeys.cpp:183 HikariSub/HotkeysNaming.cpp:260
-#: HikariSub/VideoBox.cpp:167 HikariSub/VideoFullscreen.cpp:66
+#: HikariSub/VideoBox.cpp:168 HikariSub/VideoFullscreen.cpp:67
 msgid "Next file"
 msgstr "Następny plik"
 
 #: HikariSub/Hotkeys.cpp:184 HikariSub/HotkeysNaming.cpp:266
-#: HikariSub/VideoBox.cpp:159
+#: HikariSub/VideoBox.cpp:160
 msgid "Previous file"
 msgstr "Poprzedni plik"
 
@@ -3152,7 +3156,7 @@ msgid "Next line alt"
 msgstr "Następna linijka zastępcze"
 
 #: HikariSub/Hotkeys.cpp:207 HikariSub/HotkeysNaming.cpp:53
-#: HikariSub/VideoBox.cpp:983
+#: HikariSub/VideoBox.cpp:1011
 msgid "Play"
 msgstr "Odtwarzaj"
 
@@ -3169,8 +3173,8 @@ msgid "Play line alt"
 msgstr "Odtwarzaj linię zastępcze"
 
 #: HikariSub/Hotkeys.cpp:211 HikariSub/HotkeysNaming.cpp:57
-#: HikariSub/HotkeysNaming.cpp:272 HikariSub/VideoBox.cpp:165
-#: HikariSub/VideoBox.cpp:990 HikariSub/VideoFullscreen.cpp:64
+#: HikariSub/HotkeysNaming.cpp:272 HikariSub/VideoBox.cpp:166
+#: HikariSub/VideoBox.cpp:1018 HikariSub/VideoFullscreen.cpp:65
 msgid "Stop"
 msgstr "Zatrzymaj"
 
@@ -3627,27 +3631,27 @@ msgstr "Zaznacz linijki"
 msgid "Settings"
 msgstr "Ustawienia"
 
-#: HikariSub/HotkeysNaming.cpp:253 HikariSub/VideoBox.cpp:1035
+#: HikariSub/HotkeysNaming.cpp:253 HikariSub/VideoBox.cpp:1063
 msgid "Copy frame to clipboard"
 msgstr "Kopiuj klatkę do schowka"
 
-#: HikariSub/HotkeysNaming.cpp:254 HikariSub/VideoBox.cpp:1038
+#: HikariSub/HotkeysNaming.cpp:254 HikariSub/VideoBox.cpp:1066
 msgid "Remove video"
 msgstr "Usuń plik wideo"
 
-#: HikariSub/HotkeysNaming.cpp:255 HikariSub/VideoBox.cpp:1034
+#: HikariSub/HotkeysNaming.cpp:255 HikariSub/VideoBox.cpp:1062
 msgid "Save frame as PNG"
 msgstr "Zapisz klatkę jako PNG"
 
-#: HikariSub/HotkeysNaming.cpp:258 HikariSub/VideoBox.cpp:1030
+#: HikariSub/HotkeysNaming.cpp:258 HikariSub/VideoBox.cpp:1058
 msgid "Show / hide progress bar"
 msgstr "Ukryj / pokaż pasek postępu"
 
-#: HikariSub/HotkeysNaming.cpp:262 HikariSub/VideoBox.cpp:1031
+#: HikariSub/HotkeysNaming.cpp:262 HikariSub/VideoBox.cpp:1059
 msgid "Change aspect ratio"
 msgstr "Zmień proporcje wideo"
 
-#: HikariSub/HotkeysNaming.cpp:267 HikariSub/VideoBox.cpp:1033
+#: HikariSub/HotkeysNaming.cpp:267 HikariSub/VideoBox.cpp:1061
 msgid "Copy frame with subtitles to clipboard"
 msgstr "Kopiuj klatkę z napisami do schowka"
 
@@ -3655,7 +3659,7 @@ msgstr "Kopiuj klatkę z napisami do schowka"
 msgid "Full screen"
 msgstr "Pełny ekran"
 
-#: HikariSub/HotkeysNaming.cpp:271 HikariSub/VideoBox.cpp:1032
+#: HikariSub/HotkeysNaming.cpp:271 HikariSub/VideoBox.cpp:1060
 msgid "Save frame with subtitles as PNG"
 msgstr "Zapisz klatkę z napisami jako PNG"
 
@@ -5249,7 +5253,7 @@ msgstr "Brak bufora klatki"
 
 #: HikariSub/RendererDirectShow.cpp:233 HikariSub/RendererDirectShow.cpp:245
 #: HikariSub/RendererDirectShow.cpp:247 HikariSub/RendererDirectShow.cpp:807
-#: HikariSub/RendererFFMS2.cpp:290
+#: HikariSub/RendererFFMS2.cpp:291
 msgid "Cannot lock texture buffer"
 msgstr "Nie można zablokować bufora tekstury"
 
@@ -5257,12 +5261,12 @@ msgstr "Nie można zablokować bufora tekstury"
 msgid "Cannot unlock subtitle texture buffer"
 msgstr "Nie można odblokować bufora tekstury napisów"
 
-#: HikariSub/RendererDirectShow.cpp:304 HikariSub/RendererFFMS2.cpp:325
+#: HikariSub/RendererDirectShow.cpp:304 HikariSub/RendererFFMS2.cpp:326
 msgid "Cannot unlock texture buffer"
 msgstr "Nie można odblokować bufora tekstury"
 
-#: HikariSub/RendererDirectShow.cpp:798 HikariSub/RendererFFMS2.cpp:477
-#: HikariSub/RendererFFMS2.cpp:950
+#: HikariSub/RendererDirectShow.cpp:798 HikariSub/RendererFFMS2.cpp:478
+#: HikariSub/RendererFFMS2.cpp:949
 msgid "Cannot overlay surfaces"
 msgstr "Nie można nałożyć powierzchni na siebie"
 
@@ -7349,12 +7353,12 @@ msgstr "HikariSub %s nie mógł zastąpić pliku AppImage. Pobrany plik: %s."
 msgid "Unable to retrieve information about the monitor"
 msgstr "Nie można pobrać informacji o monitorze"
 
-#: HikariSub/VideoBox.cpp:114 HikariSub/VideoBox.cpp:128
+#: HikariSub/VideoBox.cpp:115 HikariSub/VideoBox.cpp:129
 #, c-format
 msgid "Aspect ratio: %5.3f"
 msgstr "Proporcje ekranu: %5.3f"
 
-#: HikariSub/VideoBox.cpp:347
+#: HikariSub/VideoBox.cpp:348
 msgid ""
 "The file is not a valid video file or is corrupted,\n"
 "or codecs or a splitter may be missing"
@@ -7362,77 +7366,77 @@ msgstr ""
 "Plik nie jest poprawnym plikiem wideo albo jest uszkodzony,\n"
 "bądź brakuje kodeków czy też splittera"
 
-#: HikariSub/VideoBox.cpp:950
+#: HikariSub/VideoBox.cpp:952
 msgid "Are you sure you want to index the previous video?"
 msgstr "Czy na pewno chcesz zindeksować poprzednie wideo?"
 
-#: HikariSub/VideoBox.cpp:962
+#: HikariSub/VideoBox.cpp:964
 msgid "Are you sure you want to index the next video?"
 msgstr "Czy na pewno chcesz zindeksować następne wideo?"
 
-#: HikariSub/VideoBox.cpp:984
+#: HikariSub/VideoBox.cpp:1012
 msgid "Pause"
 msgstr "Pauza"
 
-#: HikariSub/VideoBox.cpp:987
+#: HikariSub/VideoBox.cpp:1015
 msgid "Copy video position"
 msgstr "Kopiuj pozycję na wideo"
 
-#: HikariSub/VideoBox.cpp:992
+#: HikariSub/VideoBox.cpp:1020
 msgid "Full screen\tF"
 msgstr "Pełny ekran\tF"
 
-#: HikariSub/VideoBox.cpp:993
+#: HikariSub/VideoBox.cpp:1021
 msgid "Exit full screen\tEscape"
 msgstr "Wyłącz pełny ekran\tEscape"
 
-#: HikariSub/VideoBox.cpp:1001
+#: HikariSub/VideoBox.cpp:1029
 #, c-format
 msgid "Switch full screen to monitor %i"
 msgstr "Przełącz pełny ekran na %i monitor"
 
-#: HikariSub/VideoBox.cpp:1002
+#: HikariSub/VideoBox.cpp:1030
 #, c-format
 msgid "Open in full screen on monitor %i"
 msgstr "Włącz pełny ekran na %i monitorze"
 
-#: HikariSub/VideoBox.cpp:1006
+#: HikariSub/VideoBox.cpp:1034
 msgid "Open editor"
 msgstr "Otwórz edytor"
 
-#: HikariSub/VideoBox.cpp:1048
+#: HikariSub/VideoBox.cpp:1076
 msgid "Filters"
 msgstr "Filtry"
 
-#: HikariSub/VideoBox.cpp:1048
+#: HikariSub/VideoBox.cpp:1076
 msgid "Shows used filters"
 msgstr "Wyświetla użyte filtry"
 
-#: HikariSub/VideoBox.cpp:1137
+#: HikariSub/VideoBox.cpp:1165
 msgid "Are you sure you want to move loaded video to recycle bin?"
 msgstr "Czy na pewno chcesz przenieść wczytany plik wideo do kosza?"
 
-#: HikariSub/VideoBox.cpp:1137
+#: HikariSub/VideoBox.cpp:1165
 msgid "Deleting"
 msgstr "Usuwanie"
 
-#: HikariSub/VideoBox.cpp:1150
+#: HikariSub/VideoBox.cpp:1178
 msgid "Video files(*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.3gp;*.avs|All files (*.*)|*.*"
 msgstr "Pliki wideo(*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.3gp;*.avs|Wszystkie pliki (*.*)|*.*"
 
-#: HikariSub/VideoBox.cpp:1165
+#: HikariSub/VideoBox.cpp:1193
 msgid "Subtitle files (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt"
 msgstr "Pliki napisów (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt"
 
-#: HikariSub/VideoBox.cpp:1820
+#: HikariSub/VideoBox.cpp:1850
 msgid "Invalid keyframes format"
 msgstr "Nieprawidłowy format klatek kluczowych"
 
-#: HikariSub/VideoFullscreen.cpp:58
+#: HikariSub/VideoFullscreen.cpp:59
 msgid "Previous video file"
 msgstr "Poprzedni plik wideo"
 
-#: HikariSub/VideoFullscreen.cpp:68
+#: HikariSub/VideoFullscreen.cpp:69
 msgid "Show toolbar"
 msgstr "Pokaż pasek narzędzi"
 

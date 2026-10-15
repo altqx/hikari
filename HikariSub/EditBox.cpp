@@ -381,9 +381,10 @@ void EditBox::SetLine(int Row, bool setaudio, bool save, bool nochangeline, bool
 			SetTlMode(grid->hasTLMode, true);
 		}
 
-		if (Options.GetInt(GRID_SAVE_AFTER_CHARACTER_COUNT) > 1 && rowChanged && save) {
+		if ((Options.GetInt(GRID_SAVE_AFTER_CHARACTER_COUNT) > 1 || typingSaveWaiting) && rowChanged && save) {
 			Send(EDITBOX_LINE_EDITION, false);
 		}
+		typingSaveWaiting = false;
 		size_t gridCount = grid->file->GetCount();
 		if (currentLine < gridCount) {
 			Dialogue *prevDial = grid->file->GetDialogue(currentLine);
@@ -642,6 +643,51 @@ void EditBox::Send(unsigned char editionType, bool gotoNextLine, bool dummy, boo
 		}
 	}
 	else if (gotoNextLine){ grid->NextLine(); }
+}
+
+// The same fields Send writes, read without writing them
+bool EditBox::HasChangesToSend()
+{
+	if (line->IsComment != Comment->GetValue())
+		return true;
+	if (LayerEdit->IsModified() || StartEdit->IsModified() || EndEdit->IsModified() || DurEdit->IsModified())
+		return true;
+	wxString checkstyle = StyleChoice->GetString(StyleChoice->GetSelection());
+	if (line->Style != checkstyle && checkstyle != emptyString || StyleChoice->HasFocus())
+		return true;
+	if (ActorEdit->IsModified() || MarginLEdit->IsModified() || MarginREdit->IsModified() ||
+		MarginVEdit->IsModified() || EffectEdit->IsModified())
+		return true;
+	if (TextEditOrig->IsShown() && (TextEditOrig->IsModified() || (splittedTags && TextEdit->IsModified())))
+		return true;
+	return TextEdit->IsModified() || (splittedTags && TextEditOrig->IsModified());
+}
+
+void EditBox::TypedTimes(SubsTime &start, SubsTime &end)
+{
+	// a typed duration sets the End
+	start = line->Start;
+	end = line->End;
+	if (StartEdit->IsModified())
+		start = StartEdit->GetTime(1);
+	if (EndEdit->IsModified())
+		end = EndEdit->GetTime(2);
+	if (DurEdit->IsModified())
+		end = start + DurEdit->GetTime();
+}
+
+EditCommit EditBox::PlanCommit()
+{
+	SubsTime start, end;
+	TypedTimes(start, end);
+	EditCommit plan = PlanEditCommit(HasChangesToSend(), start.mstime, end.mstime);
+	if (plan == EditCommit::REFUSED){
+		// the typed times stay, End in the warning colour as while typing
+		EndEdit->SetForegroundColour(WINDOW_WARNING_ELEMENTS);
+		EndEdit->changedBackGround = true;
+		HikariMessageBox(_("End is before Start."), _("Error"), wxOK, this);
+	}
+	return plan;
 }
 
 
@@ -1022,7 +1068,13 @@ void EditBox::OnCommit(wxCommandEvent& event)
 	if (splittedTags && (TextEdit->IsModified() || TextEditOrig->IsModified())){
 		TextEdit->SetModified(); TextEditOrig->SetModified(); splittedTags = false;
 	}
+	EditCommit plan = PlanCommit();
+	if (plan == EditCommit::REFUSED)
+		return;
 	Send(EDITBOX_LINE_EDITION, false, false, Visual != 0);
+	// nothing sent: the visual tool and the audio display stay as they are
+	if (plan == EditCommit::NOTHING)
+		return;
 	if (event.GetId() == ID_COMMENT){
 		TextEdit->SetState((!line->IsComment) ? 0 : 
 			(line->Effect->StartsWith(L"template")) ? 2 : 
@@ -1042,6 +1094,8 @@ void EditBox::OnNewline(wxCommandEvent& event)
 		TextEdit->SetModified(); 
 		TextEditOrig->SetModified(); 
 	}
+	if (PlanCommit() == EditCommit::REFUSED)
+		return;
 	bool noNewLine = !(StartEdit->HasFocus() || EndEdit->HasFocus() || 
 		DurEdit->HasFocus()) || !Options.GetBool(EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT);
 	if (!noNewLine && ABox){ ABox->audioDisplay->SetDialogue(line, currentLine); }
@@ -1612,7 +1666,16 @@ void EditBox::OnEdit(wxCommandEvent& event)
 	}
 
 	int saveAfter = Options.GetInt(GRID_SAVE_AFTER_CHARACTER_COUNT);
-	if (saveAfter && EditCounter >= saveAfter){
+	bool saveNow = saveAfter && EditCounter >= saveAfter;
+	if (saveNow){
+		// an End before the Start waits: Apply refuses it, leaving the
+		// Line sends it as before
+		SubsTime start, end;
+		TypedTimes(start, end);
+		typingSaveWaiting = !SaveWhileTyping(start.mstime, end.mstime);
+		saveNow = !typingSaveWaiting;
+	}
+	if (saveNow){
 		grid->file->SetTyping(true);
 		Send(EDITBOX_LINE_EDITION, false, false, true);
 		grid->file->SetTyping(false);

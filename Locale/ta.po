@@ -74,8 +74,8 @@ msgstr "அடுத்த வரியை விளையாடுங்கள�
 msgid "Play the current syllable / line"
 msgstr "தற்போதைய அசை / வரியை இயக்கவும்"
 
-#: HikariSub/AudioBox.cpp:164 HikariSub/VideoBox.cpp:163
-#: HikariSub/VideoFullscreen.cpp:62
+#: HikariSub/AudioBox.cpp:164 HikariSub/VideoBox.cpp:164
+#: HikariSub/VideoFullscreen.cpp:63
 msgid "Play the current line"
 msgstr "தற்போதைய வரியை விளையாடுங்கள்"
 
@@ -179,7 +179,7 @@ msgid "Cannot set view matrix"
 msgstr "பார்வை மேட்ரிக்சை அமைக்க முடியாது"
 
 #: HikariSub/AudioDisplay.cpp:359 HikariSub/RendererDirectShow.cpp:100
-#: HikariSub/RendererFFMS2.cpp:831 HikariSub/RendererVideo.cpp:472
+#: HikariSub/RendererFFMS2.cpp:830 HikariSub/RendererVideo.cpp:472
 msgid "Cannot create surface"
 msgstr "மேற்பரப்பை உருவாக்க முடியாது"
 
@@ -195,7 +195,7 @@ msgid "Cannot create D3DX font"
 msgstr "D3DX எழுத்துருவை உருவாக்க முடியாது"
 
 #: HikariSub/AudioDisplay.cpp:369 HikariSub/AudioDisplay.cpp:370
-#: HikariSub/RendererDirectShow.cpp:739 HikariSub/RendererFFMS2.cpp:854
+#: HikariSub/RendererDirectShow.cpp:739 HikariSub/RendererFFMS2.cpp:853
 msgid "Cannot create plain surface"
 msgstr "வெற்று மேற்பரப்பை உருவாக்க முடியாது"
 
@@ -250,7 +250,7 @@ msgstr "திற"
 #: HikariSub/AutoSaveOpen.cpp:61 HikariSub/AutomationHotkeysDialog.cpp:149
 #: HikariSub/AutomationProgress.cpp:319 HikariSub/ColorPicker.cpp:682
 #: HikariSub/ColorPicker.cpp:1447 HikariSub/DummyVideo.cpp:102
-#: HikariSub/EditBox.cpp:96 HikariSub/EditBox.cpp:1803
+#: HikariSub/EditBox.cpp:96 HikariSub/EditBox.cpp:1866
 #: HikariSub/FontCatalogList.cpp:71 HikariSub/FontCatalogList.cpp:874
 #: HikariSub/FontDialog.cpp:411 HikariSub/HikariMessageBox.cpp:80
 #: HikariSub/MappedButton.cpp:40 HikariSub/NewCatalog.cpp:42
@@ -491,12 +491,12 @@ msgid "Cannot start editor."
 msgstr "எடிட்டரைத் தொடங்க முடியாது."
 
 #: HikariSub/Automation.cpp:1400 HikariSub/Automation.cpp:1447
-#: HikariSub/HikariSubFrame.cpp:930 HikariSub/HikariSubFrame.cpp:934
-#: HikariSub/HikariSubFrame.cpp:2277 HikariSub/HikariSubFrame.cpp:2278
-#: HikariSub/HikariSubFrame.cpp:2739 HikariSub/HikariSubFrame.cpp:2765
-#: HikariSub/HikariSubFrame.cpp:2769 HikariSub/OptionsDialog.cpp:311
-#: HikariSub/OptionsDialog.cpp:712 HikariSub/VideoBox.cpp:1820
-#: HikariSub/VisualAllTagsEdition.cpp:168
+#: HikariSub/EditBox.cpp:688 HikariSub/HikariSubFrame.cpp:930
+#: HikariSub/HikariSubFrame.cpp:934 HikariSub/HikariSubFrame.cpp:2277
+#: HikariSub/HikariSubFrame.cpp:2278 HikariSub/HikariSubFrame.cpp:2739
+#: HikariSub/HikariSubFrame.cpp:2765 HikariSub/HikariSubFrame.cpp:2769
+#: HikariSub/OptionsDialog.cpp:311 HikariSub/OptionsDialog.cpp:712
+#: HikariSub/VideoBox.cpp:1850 HikariSub/VisualAllTagsEdition.cpp:168
 #: HikariSub/VisualAllTagsEdition.cpp:172
 #: HikariSub/VisualAllTagsEdition.cpp:190
 #: HikariSub/VisualAllTagsEdition.cpp:297
@@ -604,7 +604,7 @@ msgstr ""
 #: HikariSub/OptionsDialog.cpp:120 HikariSub/OptionsDialog.cpp:129
 #: HikariSub/OptionsDialog.cpp:557 HikariSub/SpellCheckerDialog.cpp:148
 #: HikariSub/SubsGrid.cpp:1180 HikariSub/SubsGridBase.cpp:540
-#: HikariSub/SubsGridBase.cpp:569 HikariSub/VideoBox.cpp:347
+#: HikariSub/SubsGridBase.cpp:569 HikariSub/VideoBox.cpp:348
 #: HikariSub/VisualClips.cpp:1021 HikariSub/hikarisubApp.cpp:536
 #: HikariSub/hikarisubApp.cpp:606
 msgid "Warning"
@@ -1055,86 +1055,90 @@ msgstr "நடிகர்"
 msgid "Effect"
 msgstr "விளைவு"
 
-#: HikariSub/EditBox.cpp:412
+#: HikariSub/EditBox.cpp:413
 #, c-format
 msgid "Line: %i"
 msgstr "வரி: %i"
 
-#: HikariSub/EditBox.cpp:514
+#: HikariSub/EditBox.cpp:515
 msgid "Wraps: "
 msgstr "மடக்குகள்: "
 
-#: HikariSub/EditBox.cpp:517
+#: HikariSub/EditBox.cpp:518
 #, c-format
 msgid "Characters per second: %i<=15"
 msgstr "நொடிக்கு எழுத்துக்கள்: %i <= 15"
 
-#: HikariSub/EditBox.cpp:1251 HikariSub/TextEditorTagList.cpp:362
+#: HikariSub/EditBox.cpp:688
+msgid "End is before Start."
+msgstr "முடிவு நேரம் தொடக்க நேரத்திற்கு முன் உள்ளது."
+
+#: HikariSub/EditBox.cpp:1305 HikariSub/TextEditorTagList.cpp:362
 #: HikariSub/TextEditorTagList.cpp:400
 msgid "Text position"
 msgstr "உரை நிலை"
 
-#: HikariSub/EditBox.cpp:1252
+#: HikariSub/EditBox.cpp:1306
 msgid "Translator mode displays and saves both foreign text and translation text"
 msgstr "மொழிபெயர்ப்பாளர் பயன்முறை வெளிநாட்டு உரை மற்றும் மொழிபெயர்ப்பு உரை இரண்டையும் காண்பிக்கும் மற்றும் சேமிக்கிறது"
 
-#: HikariSub/EditBox.cpp:1253
+#: HikariSub/EditBox.cpp:1307
 msgid "Copies all foreign-language text to the translation field"
 msgstr "வெளிநாட்டு மொழியின் முழு உரையையும் மொழிபெயர்ப்பு துறையில் நகலெடுக்கிறது"
 
-#: HikariSub/EditBox.cpp:1254
+#: HikariSub/EditBox.cpp:1308
 msgid "Copies the selected foreign-language text to the translation field"
 msgstr "மொழிபெயர்ப்பு துறையில் தேர்ந்தெடுக்கப்பட்ட உரை வெளிநாட்டு மொழியை நகல்கள்"
 
-#: HikariSub/EditBox.cpp:1255
+#: HikariSub/EditBox.cpp:1309
 msgid "Sets the line as a comment. Comments are not shown"
 msgstr "ஒரு கருத்தாக வரியை அமைக்கிறது. கருத்துகள் காட்டப்படவில்லை"
 
-#: HikariSub/EditBox.cpp:1256
+#: HikariSub/EditBox.cpp:1310
 msgid "Line layer. Higher layers are on top"
 msgstr "அடுக்கு வரி. அதிக அடுக்குகள் மேலே உள்ளன"
 
-#: HikariSub/EditBox.cpp:1257
+#: HikariSub/EditBox.cpp:1311
 msgid "Line start time"
 msgstr "வரி தொடக்க நேரம்"
 
-#: HikariSub/EditBox.cpp:1258
+#: HikariSub/EditBox.cpp:1312
 msgid "Line end time"
 msgstr "வரி இறுதி நேரம்"
 
-#: HikariSub/EditBox.cpp:1259
+#: HikariSub/EditBox.cpp:1313
 msgid "Line duration"
 msgstr "வரி காலம்"
 
-#: HikariSub/EditBox.cpp:1260
+#: HikariSub/EditBox.cpp:1314
 msgid "Line style"
 msgstr "வரி நடை"
 
-#: HikariSub/EditBox.cpp:1261
+#: HikariSub/EditBox.cpp:1315
 msgid "Allows quick editing of the current line's style"
 msgstr "தற்போதைய வரிக்கான பாணியை விரைவாக திருத்தலாம்"
 
-#: HikariSub/EditBox.cpp:1262
+#: HikariSub/EditBox.cpp:1316
 msgid "Line actor label. Does not affect the appearance of the subtitles"
 msgstr "குறிக்கும் நடிகர். இது வசன வரிகள் தோற்றத்தை பாதிக்காது"
 
-#: HikariSub/EditBox.cpp:1263
+#: HikariSub/EditBox.cpp:1317
 msgid "Line left margin"
 msgstr "இடது விளிம்பு வரி"
 
-#: HikariSub/EditBox.cpp:1264
+#: HikariSub/EditBox.cpp:1318
 msgid "Line right margin"
 msgstr "வலது விளிம்பு வரி"
 
-#: HikariSub/EditBox.cpp:1265
+#: HikariSub/EditBox.cpp:1319
 msgid "Line top and bottom margins"
 msgstr "மேல் மற்றும் கீழ் விளிம்பு வரி"
 
-#: HikariSub/EditBox.cpp:1266
+#: HikariSub/EditBox.cpp:1320
 msgid "Line effect. Used to mark lines to which karaoke or VSFilter effects should be applied"
 msgstr "வரி விளைவு. இது கோடுகளைக் குறிக்கப் பயன்படுகிறது, இது கரோக்கி அல்லது வி.எச்.பில்டர் விளைவுகளாக இருந்தது"
 
-#: HikariSub/EditBox.cpp:1267
+#: HikariSub/EditBox.cpp:1321
 msgid ""
 "Number of characters in each line.\n"
 "No more than 43 characters per line (maximum 2 lines)."
@@ -1142,7 +1146,7 @@ msgstr ""
 "ஒவ்வொரு வரியிலும் எழுத்துகளின் எண்ணிக்கை.\n"
 " ஒரு வரிக்கு 43 எழுத்துகளுக்கு மேல் இல்லை (அதிகபட்சம் 2 கோடுகள்)."
 
-#: HikariSub/EditBox.cpp:1268
+#: HikariSub/EditBox.cpp:1322
 msgid ""
 "Characters per second.\n"
 "Should not exceed 15 characters per second"
@@ -1150,19 +1154,19 @@ msgstr ""
 "ஒரு நொடிக்கு எழுத்துக்கள்.\n"
 " நொடிக்கு 15 எழுத்துகளுக்கு மிகாமல் இருக்கக்கூடாது"
 
-#: HikariSub/EditBox.cpp:1797 HikariSub/EditBox.cpp:2098
+#: HikariSub/EditBox.cpp:1860 HikariSub/EditBox.cpp:2161
 msgid "Change number of buttons"
 msgstr "பொத்தான்களின் அளவை மாற்றவும்"
 
-#: HikariSub/EditBox.cpp:2035
+#: HikariSub/EditBox.cpp:2098
 msgid "No unconfirmed lines found"
 msgstr "உறுதிப்படுத்தப்படாத வரிகள் எதுவும் கிடைக்கவில்லை"
 
-#: HikariSub/EditBox.cpp:2057
+#: HikariSub/EditBox.cpp:2120
 msgid "No untranslated lines found"
 msgstr "மொழிபெயர்க்கப்படாதது கிடைக்கவில்லை"
 
-#: HikariSub/EditBox.cpp:2100
+#: HikariSub/EditBox.cpp:2163
 msgid "Manage tag buttons"
 msgstr "குறிச்சொல் பொத்தான்களை நிர்வகிக்கவும்"
 
@@ -1618,7 +1622,7 @@ msgstr "சேமிப்புப் பாதை செல்லுபடி�
 #: HikariSub/HikariSubFrame.cpp:2243 HikariSub/Notebook.cpp:1324
 #: HikariSub/SubsGrid.cpp:1141 HikariSub/SubsGridBase.cpp:559
 #: HikariSub/SubsGridBase.cpp:1580 HikariSub/SubsGridDialogs.cpp:109
-#: HikariSub/VideoBox.cpp:950 HikariSub/VideoBox.cpp:962
+#: HikariSub/VideoBox.cpp:952 HikariSub/VideoBox.cpp:964
 #: HikariSub/VisualAllTagsEdition.cpp:152
 #: HikariSub/VisualAllTagsEdition.cpp:216 HikariSub/VisualDrawingShapes.cpp:129
 #: HikariSub/VisualDrawingShapes.cpp:193 HikariSub/findreplace.cpp:508
@@ -2153,7 +2157,7 @@ msgstr "மொழிபெயர்ப்பைச் சேமிக்கவ�
 msgid "Recently opened &subtitles"
 msgstr "அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள் (&s)"
 
-#: HikariSub/HikariSubFrame.cpp:194 HikariSub/VideoBox.cpp:1024
+#: HikariSub/HikariSubFrame.cpp:194 HikariSub/VideoBox.cpp:1052
 msgid "Recently opened subtitles"
 msgstr "அண்மைக் காலத்தில் திறக்கப்பட்ட வசன வரிகள்"
 
@@ -2332,7 +2336,7 @@ msgid "&Edit"
 msgstr "திருத்து (&e)"
 
 #: HikariSub/HikariSubFrame.cpp:252 HikariSub/Hotkeys.cpp:147
-#: HikariSub/HotkeysNaming.cpp:224 HikariSub/VideoBox.cpp:1026
+#: HikariSub/HotkeysNaming.cpp:224 HikariSub/VideoBox.cpp:1054
 msgid "Open video"
 msgstr "வீடியோவைத் திற"
 
@@ -2341,7 +2345,7 @@ msgid "Opens video file"
 msgstr "வீடியோ கோப்பைத் திறக்கவும்"
 
 #: HikariSub/HikariSubFrame.cpp:255 HikariSub/HikariSubFrame.cpp:256
-#: HikariSub/VideoBox.cpp:1025
+#: HikariSub/VideoBox.cpp:1053
 msgid "Recently opened videos"
 msgstr "அண்மைக் காலத்தில் திறக்கப்பட்ட வீடியோக்கள்"
 
@@ -2412,8 +2416,8 @@ msgstr "வீடியோவை இறுதி நேரத்திற்க�
 
 #: HikariSub/HikariSubFrame.cpp:278 HikariSub/Hotkeys.cpp:160
 #: HikariSub/Hotkeys.cpp:178 HikariSub/HotkeysNaming.cpp:225
-#: HikariSub/HotkeysNaming.cpp:261 HikariSub/VideoBox.cpp:161
-#: HikariSub/VideoFullscreen.cpp:60
+#: HikariSub/HotkeysNaming.cpp:261 HikariSub/VideoBox.cpp:162
+#: HikariSub/VideoFullscreen.cpp:61
 msgid "Play / Pause"
 msgstr "விளையாடு / இடைநிறுத்தம்"
 
@@ -2741,7 +2745,7 @@ msgid "Validation Lua script '%s' failed"
 msgstr "சரிபார்ப்பு லுவா ச்கிரிப்ட் '%s' தோல்வியடைந்தது"
 
 #: HikariSub/HikariSubFrame.cpp:1011 HikariSub/SubsGrid.cpp:933
-#: HikariSub/VideoBox.cpp:1162
+#: HikariSub/VideoBox.cpp:1190
 msgid "Choose subtitle file"
 msgstr "வசன வரிகளைத் தேர்வுசெய்க"
 
@@ -2750,7 +2754,7 @@ msgid "Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;
 msgstr "வசன கோப்புகள் (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|உள்ளிணைந்த வசனங்களுடன் வீடியோக்கள் (*.mkv),(*.ogm)|*.mkv;*.ogm"
 
 #: HikariSub/HikariSubFrame.cpp:1051 HikariSub/HikariSubFrame.cpp:1067
-#: HikariSub/VideoBox.cpp:1147
+#: HikariSub/VideoBox.cpp:1175
 msgid "Choose video file"
 msgstr "வீடியோ கோப்பைத் தேர்வுசெய்க"
 
@@ -2896,7 +2900,7 @@ msgstr ""
 msgid "Load subtitles named \"%s\"?"
 msgstr "%s என்ற வசன வரிகள் ஏற்ற விரும்புகிறீர்களா?"
 
-#: HikariSub/HikariSubFrame.cpp:1506 HikariSub/VideoBox.cpp:1968
+#: HikariSub/HikariSubFrame.cpp:1506 HikariSub/VideoBox.cpp:1998
 msgid "Cannot open subtitle file"
 msgstr "வசன கோப்பைத் திறக்க முடியாது"
 
@@ -2997,7 +3001,7 @@ msgid "Style manager"
 msgstr "பாணி மேனேசர்"
 
 #: HikariSub/Hotkeys.cpp:153 HikariSub/HotkeysNaming.cpp:223
-#: HikariSub/VideoBox.cpp:1028
+#: HikariSub/VideoBox.cpp:1056
 msgid "Open subtitles"
 msgstr "வசன வரிகள் திற"
 
@@ -3098,12 +3102,12 @@ msgid "1 minute backward"
 msgstr "1 மணித்துளி பின்தங்கிய"
 
 #: HikariSub/Hotkeys.cpp:183 HikariSub/HotkeysNaming.cpp:260
-#: HikariSub/VideoBox.cpp:167 HikariSub/VideoFullscreen.cpp:66
+#: HikariSub/VideoBox.cpp:168 HikariSub/VideoFullscreen.cpp:67
 msgid "Next file"
 msgstr "அடுத்த கோப்பு"
 
 #: HikariSub/Hotkeys.cpp:184 HikariSub/HotkeysNaming.cpp:266
-#: HikariSub/VideoBox.cpp:159
+#: HikariSub/VideoBox.cpp:160
 msgid "Previous file"
 msgstr "முந்தைய கோப்பு"
 
@@ -3176,7 +3180,7 @@ msgid "Next line alt"
 msgstr "அடுத்த வரி ஆல்ட்"
 
 #: HikariSub/Hotkeys.cpp:207 HikariSub/HotkeysNaming.cpp:53
-#: HikariSub/VideoBox.cpp:983
+#: HikariSub/VideoBox.cpp:1011
 msgid "Play"
 msgstr "விளையாடுங்கள்"
 
@@ -3193,8 +3197,8 @@ msgid "Play line alt"
 msgstr "வரி அல்ட் விளையாடுங்கள்"
 
 #: HikariSub/Hotkeys.cpp:211 HikariSub/HotkeysNaming.cpp:57
-#: HikariSub/HotkeysNaming.cpp:272 HikariSub/VideoBox.cpp:165
-#: HikariSub/VideoBox.cpp:990 HikariSub/VideoFullscreen.cpp:64
+#: HikariSub/HotkeysNaming.cpp:272 HikariSub/VideoBox.cpp:166
+#: HikariSub/VideoBox.cpp:1018 HikariSub/VideoFullscreen.cpp:65
 msgid "Stop"
 msgstr "நிறுத்து"
 
@@ -3651,27 +3655,27 @@ msgstr "வரிகளைத் தேர்ந்தெடுக்கவு�
 msgid "Settings"
 msgstr "அமைப்புகள்"
 
-#: HikariSub/HotkeysNaming.cpp:253 HikariSub/VideoBox.cpp:1035
+#: HikariSub/HotkeysNaming.cpp:253 HikariSub/VideoBox.cpp:1063
 msgid "Copy frame to clipboard"
 msgstr "இடைநிலைப்பலகைக்கு சட்டத்தை நகலெடுக்கவும்"
 
-#: HikariSub/HotkeysNaming.cpp:254 HikariSub/VideoBox.cpp:1038
+#: HikariSub/HotkeysNaming.cpp:254 HikariSub/VideoBox.cpp:1066
 msgid "Remove video"
 msgstr "வீடியோவை அகற்று"
 
-#: HikariSub/HotkeysNaming.cpp:255 HikariSub/VideoBox.cpp:1034
+#: HikariSub/HotkeysNaming.cpp:255 HikariSub/VideoBox.cpp:1062
 msgid "Save frame as PNG"
 msgstr "சட்டகத்தை PNG ஆகச் சேமிக்கவும்"
 
-#: HikariSub/HotkeysNaming.cpp:258 HikariSub/VideoBox.cpp:1030
+#: HikariSub/HotkeysNaming.cpp:258 HikariSub/VideoBox.cpp:1058
 msgid "Show / hide progress bar"
 msgstr "முன்னேற்றப் பட்டியைக் காட்டவும் / மறைக்கவும்"
 
-#: HikariSub/HotkeysNaming.cpp:262 HikariSub/VideoBox.cpp:1031
+#: HikariSub/HotkeysNaming.cpp:262 HikariSub/VideoBox.cpp:1059
 msgid "Change aspect ratio"
 msgstr "அம்ச விகிதத்தை மாற்றவும்"
 
-#: HikariSub/HotkeysNaming.cpp:267 HikariSub/VideoBox.cpp:1033
+#: HikariSub/HotkeysNaming.cpp:267 HikariSub/VideoBox.cpp:1061
 msgid "Copy frame with subtitles to clipboard"
 msgstr "இடைநிலைப்பலகைக்கு வசன வரிகளுடன் சட்டகத்தை நகலெடுக்கவும்"
 
@@ -3679,7 +3683,7 @@ msgstr "இடைநிலைப்பலகைக்கு வசன வரி�
 msgid "Full screen"
 msgstr "முழுத் திரை"
 
-#: HikariSub/HotkeysNaming.cpp:271 HikariSub/VideoBox.cpp:1032
+#: HikariSub/HotkeysNaming.cpp:271 HikariSub/VideoBox.cpp:1060
 msgid "Save frame with subtitles as PNG"
 msgstr "வசன வரிகளுடன் சட்டகத்தை PNG ஆகச் சேமிக்கவும்"
 
@@ -5273,7 +5277,7 @@ msgstr "பிரேம் பஃபர் இல்லை"
 
 #: HikariSub/RendererDirectShow.cpp:233 HikariSub/RendererDirectShow.cpp:245
 #: HikariSub/RendererDirectShow.cpp:247 HikariSub/RendererDirectShow.cpp:807
-#: HikariSub/RendererFFMS2.cpp:290
+#: HikariSub/RendererFFMS2.cpp:291
 msgid "Cannot lock texture buffer"
 msgstr "அமைப்பு இடையகத்தை பூட்ட முடியாது"
 
@@ -5281,12 +5285,12 @@ msgstr "அமைப்பு இடையகத்தை பூட்ட மு
 msgid "Cannot unlock subtitle texture buffer"
 msgstr "வசன வரிகள் அமைப்பு இடையகத்தைத் திறக்க முடியாது"
 
-#: HikariSub/RendererDirectShow.cpp:304 HikariSub/RendererFFMS2.cpp:325
+#: HikariSub/RendererDirectShow.cpp:304 HikariSub/RendererFFMS2.cpp:326
 msgid "Cannot unlock texture buffer"
 msgstr "அமைப்பு இடையகத்தைத் திறக்க முடியாது"
 
-#: HikariSub/RendererDirectShow.cpp:798 HikariSub/RendererFFMS2.cpp:477
-#: HikariSub/RendererFFMS2.cpp:950
+#: HikariSub/RendererDirectShow.cpp:798 HikariSub/RendererFFMS2.cpp:478
+#: HikariSub/RendererFFMS2.cpp:949
 msgid "Cannot overlay surfaces"
 msgstr "மேற்பரப்புகளை மேலெழுத முடியாது"
 
@@ -7364,12 +7368,12 @@ msgstr "HikariSub %s-ஆல் AppImage-ஐ மாற்ற முடியவ�
 msgid "Unable to retrieve information about the monitor"
 msgstr "மானிட்டர் பற்றிய தகவல்களை மீட்டெடுக்க முடியவில்லை"
 
-#: HikariSub/VideoBox.cpp:114 HikariSub/VideoBox.cpp:128
+#: HikariSub/VideoBox.cpp:115 HikariSub/VideoBox.cpp:129
 #, c-format
 msgid "Aspect ratio: %5.3f"
 msgstr "விகித விகிதம்: %5.3f"
 
-#: HikariSub/VideoBox.cpp:347
+#: HikariSub/VideoBox.cpp:348
 msgid ""
 "The file is not a valid video file or is corrupted,\n"
 "or codecs or a splitter may be missing"
@@ -7377,77 +7381,77 @@ msgstr ""
 "கோப்பு சரியான வீடியோ கோப்பு அல்ல அல்லது சிதைந்துள்ளது \n"
 "அல்லது கோடெக்குகள் அல்லது ச்ப்ளிட்டர் காணாமல் போகலாம்"
 
-#: HikariSub/VideoBox.cpp:950
+#: HikariSub/VideoBox.cpp:952
 msgid "Are you sure you want to index the previous video?"
 msgstr "முந்தைய வீடியோவை குறியிட விரும்புகிறீர்களா?"
 
-#: HikariSub/VideoBox.cpp:962
+#: HikariSub/VideoBox.cpp:964
 msgid "Are you sure you want to index the next video?"
 msgstr "அடுத்த வீடியோவை குறியிட விரும்புகிறீர்களா?"
 
-#: HikariSub/VideoBox.cpp:984
+#: HikariSub/VideoBox.cpp:1012
 msgid "Pause"
 msgstr "இடைநிறுத்தம்"
 
-#: HikariSub/VideoBox.cpp:987
+#: HikariSub/VideoBox.cpp:1015
 msgid "Copy video position"
 msgstr "வீடியோ நிலையை நகலெடுக்கவும்"
 
-#: HikariSub/VideoBox.cpp:992
+#: HikariSub/VideoBox.cpp:1020
 msgid "Full screen\tF"
 msgstr "முழுத் திரை\tF"
 
-#: HikariSub/VideoBox.cpp:993
+#: HikariSub/VideoBox.cpp:1021
 msgid "Exit full screen\tEscape"
 msgstr "முழுத் திரையிலிருந்து வெளியேறு\tEscape"
 
-#: HikariSub/VideoBox.cpp:1001
+#: HikariSub/VideoBox.cpp:1029
 #, c-format
 msgid "Switch full screen to monitor %i"
 msgstr "முழுத் திரையை மானிட்டர் %i க்கு மாற்றவும்"
 
-#: HikariSub/VideoBox.cpp:1002
+#: HikariSub/VideoBox.cpp:1030
 #, c-format
 msgid "Open in full screen on monitor %i"
 msgstr "மானிட்டர் %i இல் முழுத் திரையில் திறக்கவும்"
 
-#: HikariSub/VideoBox.cpp:1006
+#: HikariSub/VideoBox.cpp:1034
 msgid "Open editor"
 msgstr "எடிட்டரைத் திற"
 
-#: HikariSub/VideoBox.cpp:1048
+#: HikariSub/VideoBox.cpp:1076
 msgid "Filters"
 msgstr "வடிப்பான்கள்"
 
-#: HikariSub/VideoBox.cpp:1048
+#: HikariSub/VideoBox.cpp:1076
 msgid "Shows used filters"
 msgstr "பயன்படுத்தப்பட்ட வடிப்பான்களைக் காட்டுகிறது"
 
-#: HikariSub/VideoBox.cpp:1137
+#: HikariSub/VideoBox.cpp:1165
 msgid "Are you sure you want to move loaded video to recycle bin?"
 msgstr "ஏற்றப்பட்ட வீடியோவை மறுசுழற்சி தொட்டிக்கு நகர்த்த விரும்புகிறீர்களா?"
 
-#: HikariSub/VideoBox.cpp:1137
+#: HikariSub/VideoBox.cpp:1165
 msgid "Deleting"
 msgstr "நீக்குதல்"
 
-#: HikariSub/VideoBox.cpp:1150
+#: HikariSub/VideoBox.cpp:1178
 msgid "Video files(*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.3gp;*.avs|All files (*.*)|*.*"
 msgstr "வீடியோ கோப்புகள் (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.3gp;*.avs|அனைத்து கோப்புகளும் (*.*)|*.*"
 
-#: HikariSub/VideoBox.cpp:1165
+#: HikariSub/VideoBox.cpp:1193
 msgid "Subtitle files (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt"
 msgstr "வசன கோப்புகள் (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt"
 
-#: HikariSub/VideoBox.cpp:1820
+#: HikariSub/VideoBox.cpp:1850
 msgid "Invalid keyframes format"
 msgstr "தவறான கீஃப்ரேம்கள் வடிவம்"
 
-#: HikariSub/VideoFullscreen.cpp:58
+#: HikariSub/VideoFullscreen.cpp:59
 msgid "Previous video file"
 msgstr "முந்தைய வீடியோ கோப்பு"
 
-#: HikariSub/VideoFullscreen.cpp:68
+#: HikariSub/VideoFullscreen.cpp:69
 msgid "Show toolbar"
 msgstr "கருவிப்பட்டி சின்னங்களைக் காட்டு"
 

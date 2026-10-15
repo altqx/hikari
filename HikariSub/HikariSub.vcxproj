@@ -547,6 +547,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="DropFiles.h" />
     <ClInclude Include="DshowRenderer.h" />
     <ClInclude Include="EditBox.h" />
+    <ClInclude Include="EditCommit.h" />
     <ClInclude Include="EnumFactory.h" />
     <ClInclude Include="FontCollector.h" />
     <ClInclude Include="FontOutputNames.h" />

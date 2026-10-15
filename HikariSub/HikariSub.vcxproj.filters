@@ -639,6 +639,9 @@
     <ClInclude Include="EditBox.h">
       <Filter>E</Filter>
     </ClInclude>
+    <ClInclude Include="EditCommit.h">
+      <Filter>E</Filter>
+    </ClInclude>
     <ClInclude Include="EnumFactory.h">
       <Filter>E</Filter>
     </ClInclude>

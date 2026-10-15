@@ -67,6 +67,7 @@ add_executable(hikarisub_tests
     ChosenStylesTests.cpp
     CsriOverlayTests.cpp
     DependencyControlModulesTests.cpp
+    EditCommitTests.cpp
     FontOutputNamesTests.cpp
     FrameExchangeTests.cpp
     FrameQueueTests.cpp
