@@ -827,7 +827,8 @@ TEST(VsfilterMod, ReadsBackTheFacesItDrewWith)
 // W2: the rewrite's VSFilterMod overlay against the legacy app's own frames
 // (local-w2-vsfiltermod-20261015: the legacy package with the same fork
 // release, "Save frame with subtitles as PNG" and "Save frame as PNG" at each
-// capture time; its README has the provenance). Each fixture script goes
+// capture time, every plain frame the same: frames/background.png; its
+// README has the provenance). Each fixture script goes
 // through the application's path (loadAss, encodeAss in renderer mode); the
 // overlay at the capture time, composited over legacy's plain frame, must give
 // legacy's subtitled frame within 2 levels per channel, the rounding the two
@@ -844,6 +845,9 @@ TEST(VsfilterMod, MatchesTheLegacyAppsCaptures)
     ASSERT_FALSE(captures.empty()) << qPrintable(dir);
     auto out = drawn::report("vsfiltermod-legacy.txt");
     ASSERT_TRUE(out);
+    // Every capture's "Save frame as PNG" gave these bytes (observations.jsonl).
+    const QImage plain = QImage(dir + QStringLiteral("/frames/background.png")).convertToFormat(QImage::Format_RGB32);
+    ASSERT_EQ(plain.size(), QSize(kWidth, kHeight));
     std::size_t compared = 0;
     QString prepared;
     std::optional<CsriRenderer> r;
@@ -857,11 +861,8 @@ TEST(VsfilterMod, MatchesTheLegacyAppsCaptures)
             ASSERT_TRUE(r->prepare(*snapshot));
             prepared = c.fixture;
         }
-        const QImage plain =
-            QImage(dir + QStringLiteral("/frames/") + name + QStringLiteral("-plain.png")).convertToFormat(QImage::Format_RGB32);
         const QImage subbed =
-            QImage(dir + QStringLiteral("/frames/") + name + QStringLiteral("-subbed.png")).convertToFormat(QImage::Format_RGB32);
-        ASSERT_EQ(plain.size(), QSize(kWidth, kHeight));
+            QImage(dir + QStringLiteral("/frames/") + name + QStringLiteral(".png")).convertToFormat(QImage::Format_RGB32);
         ASSERT_EQ(subbed.size(), QSize(kWidth, kHeight));
         const auto frame = r->render(core::DocumentTime(std::int64_t(c.ms) * 1000), kWidth, kHeight);
         ASSERT_TRUE(frame);
