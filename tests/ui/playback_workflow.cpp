@@ -10,6 +10,7 @@
 // seeks). The GUI thread's CPU time while playing is reported.
 
 #include "hikari/app/application.h"
+#include "hikari/application/ycbcr_frame.h"
 #include "docking.h"
 #include "status_bar_controller.h"
 #include "visual_tools_controller.h"
@@ -52,8 +53,12 @@ using namespace std::chrono_literals;
 
 namespace {
 
-int barcode(const hikari::application::IndexedFrame &f)
+int barcode(const hikari::application::IndexedFrame &shown)
 {
+    // A player frame may be kept as Y'CbCr planes for the presenter's shader:
+    // read it as the CPU conversion shows it.
+    hikari::application::IndexedFrame converted;
+    const auto &f = shown.ycbcr && hikari::application::ycbcrToBgra(shown, converted) ? converted : shown;
     const QImage image =
         QImage(reinterpret_cast<const uchar *>(f.bgra.data()), f.width, f.height, f.stride, QImage::Format_RGB32)
             .copy();
