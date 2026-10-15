@@ -34,6 +34,7 @@ Dialog {
     property var styles: []
     property var renderers: [] // W2: the CSRI renderers' names and "libass", VSFilterMod last
     property var rendererLabels: [] // W2: as shown, VSFilterMod's with its note
+    property var outputDevices: [] // H2: System default, the connected devices, a missing choice
     property var warnings: []
     signal reloaded()
 
@@ -45,6 +46,7 @@ Dialog {
         styles = r.styles
         renderers = r.renderers
         rendererLabels = r.rendererLabels
+        outputDevices = r.outputDevices
         values = r.values
         reloaded()
         hotkeyFilter.currentIndex = 0 // a new dialog's filter choice
@@ -581,20 +583,45 @@ Dialog {
                     SettingCheck { setting: "audio.mergeEveryNWithSyllable"; text: qsTr("Merge all the \"n\" with the previous syllable") }
                     SettingCheck { setting: "audio.karaokeMoveOnClick"; text: qsTr("Move syllable line after click") }
                     SettingCheck { setting: "audio.ramCache"; text: qsTr("Load audio into RAM") }
-                    // A4-wasapi-default (Windows): the audio box's output API;
-                    // a change applies when the output next opens.
-                    Loader {
-                        active: Qt.platform.os === "windows"
+                    // H2-output-device: the device both the audio box and
+                    // video playback play through (System default follows
+                    // the system's default); A4-wasapi-default (Windows): the
+                    // audio box's output API, which applies when the output
+                    // next opens.
+                    GroupBox {
+                        objectName: "audioOutputBox"
+                        title: qsTr("Audio output")
                         Layout.fillWidth: true
-                        sourceComponent: GroupBox {
-                            objectName: "audioOutputHostApiBox"
-                            title: qsTr("Audio output")
+                        GridLayout {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            columns: 2
+                            columnSpacing: 12
+                            Label {
+                                text: qsTr("Device")
+                                Layout.alignment: Qt.AlignVCenter
+                            }
                             SettingChoice {
-                                setting: "audio.outputHostApi"
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                model: ["WASAPI", "DirectSound"]
-                                Accessible.name: qsTr("Audio output")
+                                setting: "audio.outputDevice"
+                                model: dialog.outputDevices
+                                Layout.fillWidth: true
+                                Accessible.name: qsTr("Device")
+                            }
+                            Label {
+                                visible: Qt.platform.os === "windows"
+                                text: qsTr("API")
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+                            Loader {
+                                objectName: "audioOutputHostApiBox"
+                                active: Qt.platform.os === "windows"
+                                visible: active
+                                Layout.fillWidth: true
+                                sourceComponent: SettingChoice {
+                                    setting: "audio.outputHostApi"
+                                    model: ["WASAPI", "DirectSound"]
+                                    Accessible.name: qsTr("API")
+                                }
                             }
                         }
                     }

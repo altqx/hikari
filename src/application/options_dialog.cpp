@@ -114,6 +114,9 @@ constexpr OptionsBinding kBindings[] = {
     // resolution a macro reads is set from the video without asking, on the
     // Editor page after the automation compatibility option.
     {"automation.scriptResolutionFromVideo", Check, Editor},
+    // H2-output-device (decision 60): the device both audio paths play
+    // through, on the Audio page; empty follows the system default.
+    {"audio.outputDevice", OutputDevice, Audio},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.
@@ -326,6 +329,15 @@ OptionsOpening openOptionsDialog(Settings &settings, const OptionsLists &lists)
             state[id] = select(std::int64_t{-1}, sel, lists.styles.size());
             break;
         }
+        case OutputDevice: {
+            if (lists.outputDevices.empty())
+                break; // not offered
+            // The stored id's entry; System default (the first) for an id
+            // the list does not have.
+            const auto it = std::ranges::find(lists.outputDevices, settings.text(id), &OutputDeviceChoice::id);
+            state[id] = it == lists.outputDevices.end() ? std::int64_t{0} : std::int64_t(it - lists.outputDevices.begin());
+            break;
+        }
         case Renderer: {
             if (lists.renderers.size() < 2)
                 break; // not offered
@@ -402,6 +414,19 @@ std::vector<std::string> commitOptionsDialog(Settings &settings, const OptionsLi
                 write(id, values[std::size_t(sel)]);
             break;
         }
+        case OutputDevice: {
+            // The entry's id, with its name beside it (shown while the device
+            // is not connected, and PortAudio's name for it).
+            const std::int64_t sel = intOf(state, id);
+            if (sel < 0 || sel >= std::int64_t(lists.outputDevices.size()))
+                break;
+            const auto &choice = lists.outputDevices[std::size_t(sel)];
+            if (settings.text(id) != choice.id) {
+                write(id, choice.id);
+                write("audio.outputDeviceName", choice.name);
+            }
+            break;
+        }
         case Catalog:
         case Style:
         case Renderer: {
@@ -467,6 +492,13 @@ OptionsState refreshOptionsDialogAfterReset(const Settings &settings, const Opti
             // Cast to HikariTextCtrl: its SetValue (not virtual) shows the raw text.
             state[id] = zoomText(settings, id);
             break;
+        case OutputDevice: {
+            if (!state.contains(id))
+                break; // not offered
+            const auto it = std::ranges::find(lists.outputDevices, settings.text(id), &OutputDeviceChoice::id);
+            state[id] = it == lists.outputDevices.end() ? std::int64_t{0} : std::int64_t(it - lists.outputDevices.begin());
+            break;
+        }
         case Renderer:
             if (!state.contains(id))
                 break; // not offered

@@ -256,6 +256,13 @@ const std::vector<SettingDefinition> &definitions()
         // an unplugged device as lost), 1 DirectSound (legacy's player). The
         // user's choice, 2026-10-04 (A4-wasapi-default).
         {"audio.outputHostApi", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        // H2-output-device (decision 60, 2026-10-16): the output device both
+        // audio paths play through, by its stable id (QAudioDevice::id: the
+        // endpoint id on Windows, the sink name on Linux); empty follows the
+        // system default. Its name is kept beside it to show it while it is
+        // not connected and to find it in PortAudio's list.
+        {"audio.outputDevice", "", String, Profile, Mapped, false, std::string()},
+        {"audio.outputDeviceName", "", String, Profile, Mapped, false, std::string()},
         // W1: the player that plays video (Windows): 0 the built-in general
         // player, 1 the optional DirectShow adapter (legacy's player when
         // indexing was off). Chosen here only, never as a fallback; other

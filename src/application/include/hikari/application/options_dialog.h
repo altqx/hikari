@@ -18,6 +18,7 @@
 // Themes (excluded), Hotkeys (O2) and the Windows Associations page are not
 // bound here.
 
+#include "hikari/application/audio_devices.h"
 #include "hikari/application/settings.h"
 
 #include <cstdint>
@@ -44,6 +45,7 @@ enum class OptionsControl {
     ComboText,   // HikariChoice with HIKARI_COMBO_BOX (conversion FPS): its text
     Font,        // FontPickerButton: face name in `setting`, point size in `sizeSetting`
     Renderer,    // W2: ID_VSFILTER_PROVIDER, the selection's renderer name
+    OutputDevice, // H2-output-device: the selection's device id, its name beside it
 };
 
 // The pages, in the legacy tree's order (AddPage/AddSubPage).
@@ -59,8 +61,9 @@ struct OptionsBinding {
     std::string_view sizeSetting;  // Font
 };
 
-// Every bound control, in the legacy ConOpt order; on Windows the rewrite's
-// audio.outputHostApi and video.playbackPlayer (W1) choices follow them.
+// Every bound control, in the legacy ConOpt order; the rewrite's own follow
+// them: automation.scriptResolutionFromVideo (Y4), audio.outputDevice (H2)
+// and, on Windows, audio.outputHostApi and video.playbackPlayer (W1).
 std::span<const OptionsBinding> optionsBindings();
 const OptionsBinding *findOptionsBinding(std::string_view setting);
 
@@ -83,6 +86,12 @@ struct OptionsLists {
     // or Windows without a CSRI renderer). A stored name that is not listed
     // shows libass, as it draws.
     std::vector<std::string> renderers;
+    // H2-output-device: Settings > Audio's device choice (outputDeviceChoices:
+    // System default, the connected devices, a chosen one not connected).
+    // Empty: not offered. OK stores the entry's id in audio.outputDevice and
+    // its name in audio.outputDeviceName (both empty for System default); a
+    // stored id the list does not have shows System default.
+    std::vector<OutputDeviceChoice> outputDevices;
     // config::FindLanguage.
     std::function<std::string(std::string_view)> findLanguage;
     // HikariChoice::FindString's wxArrayString::Index(text, false):

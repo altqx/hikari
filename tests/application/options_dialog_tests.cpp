@@ -152,16 +152,20 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
 {
     const auto all = optionsBindings();
     // The rewrite's own after legacy's: Y4-playres-ask's check box on the
-    // Editor page, then (Windows) A4-wasapi-default's output host API and
-    // W1's video player.
-    ASSERT_GT(all.size(), std::size(kLegacy));
+    // Editor page, H2-output-device's device choice on the Audio page, then
+    // (Windows) A4-wasapi-default's output host API and W1's video player.
+    ASSERT_GT(all.size(), std::size(kLegacy) + 1);
     const auto &fromVideo = all[std::size(kLegacy)];
     EXPECT_EQ(fromVideo.setting, "automation.scriptResolutionFromVideo");
     EXPECT_EQ(fromVideo.control, OptionsControl::Check);
     EXPECT_EQ(fromVideo.page, OptionsPage::Editor);
+    const auto &device = all[std::size(kLegacy) + 1];
+    EXPECT_EQ(device.setting, "audio.outputDevice");
+    EXPECT_EQ(device.control, OptionsControl::OutputDevice);
+    EXPECT_EQ(device.page, OptionsPage::Audio);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 3);
-    const auto &hostApi = all[std::size(kLegacy) + 1];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 4);
+    const auto &hostApi = all[std::size(kLegacy) + 2];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -172,7 +176,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 1);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 2);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
     const auto bindings = all.first(std::size(kLegacy));
@@ -499,6 +503,64 @@ TEST(OptionsDialog, TheSubtitleDisplayFilterChoosesARendererByName)
         commitOptionsDialog(settings, l, state);
         EXPECT_EQ(settings.text("video.subtitleProvider"), "libass") << stale;
     }
+}
+
+// H2-output-device (decision 60): Settings > Audio's output device. The
+// choice lists "System default", the connected devices and a chosen device
+// that is not connected; OK stores the device's id with its name, and
+// System default stores neither (the outputs follow the default).
+TEST(OptionsDialog, TheOutputDeviceIsChosenByIdWithItsName)
+{
+    using Kind = OutputDeviceChoice::Kind;
+    MemorySettingsStorage storage;
+    Settings settings(storage);
+    auto l = lists();
+    // Without a list (no device service) the choice is not offered.
+    auto state = openOptionsDialog(settings, l).state;
+    EXPECT_FALSE(state.contains("audio.outputDevice"));
+    EXPECT_FALSE(std::ranges::contains(commitOptionsDialog(settings, l, state), std::string("audio.outputDevice")));
+
+    l.outputDevices = {{Kind::SystemDefault, "", ""},
+                       {Kind::Device, "{0.0.0.00000000}.{F2906D39}", "22E1W (NVIDIA High Definition Audio)"},
+                       {Kind::Device, "{0.0.0.00000000}.{C244E1FF}", "Speakers (Razer BlackShark V2 X USB)"}};
+    // Unset: System default; OK writes nothing.
+    state = openOptionsDialog(settings, l).state;
+    EXPECT_EQ(intOf(state, "audio.outputDevice"), 0);
+    EXPECT_TRUE(commitOptionsDialog(settings, l, state).empty());
+    EXPECT_FALSE(settings.isSet("audio.outputDevice"));
+    // A device: its id and name are stored.
+    state["audio.outputDevice"] = std::int64_t{2};
+    EXPECT_EQ(commitOptionsDialog(settings, l, state),
+              (std::vector<std::string>{"audio.outputDevice", "audio.outputDeviceName"}));
+    EXPECT_EQ(settings.text("audio.outputDevice"), "{0.0.0.00000000}.{C244E1FF}");
+    EXPECT_EQ(settings.text("audio.outputDeviceName"), "Speakers (Razer BlackShark V2 X USB)");
+    EXPECT_EQ(intOf(openOptionsDialog(settings, l).state, "audio.outputDevice"), 2);
+    // The chosen device is not connected: the app lists it as missing, and
+    // OK keeps it.
+    l.outputDevices.erase(l.outputDevices.begin() + 2);
+    l.outputDevices.push_back({Kind::Missing, "{0.0.0.00000000}.{C244E1FF}", "Speakers (Razer BlackShark V2 X USB)"});
+    state = openOptionsDialog(settings, l).state;
+    EXPECT_EQ(intOf(state, "audio.outputDevice"), 2);
+    EXPECT_TRUE(commitOptionsDialog(settings, l, state).empty());
+    EXPECT_EQ(settings.text("audio.outputDevice"), "{0.0.0.00000000}.{C244E1FF}");
+    // A stored id the list does not have at all shows System default.
+    l.outputDevices.pop_back();
+    EXPECT_EQ(intOf(openOptionsDialog(settings, l).state, "audio.outputDevice"), 0);
+    // Back to System default: both are cleared.
+    state["audio.outputDevice"] = std::int64_t{0};
+    commitOptionsDialog(settings, l, state);
+    EXPECT_EQ(settings.text("audio.outputDevice"), "");
+    EXPECT_EQ(settings.text("audio.outputDeviceName"), "");
+    // Set default shows System default.
+    settings.set("audio.outputDevice", std::string("{0.0.0.00000000}.{F2906D39}"));
+    state["audio.outputDevice"] = std::int64_t{1};
+    settings.resetAll();
+    EXPECT_EQ(intOf(refreshOptionsDialogAfterReset(settings, l, state), "audio.outputDevice"), 0);
+    // The setting is a profile setting kept between runs.
+    const auto *definition = findSetting("audio.outputDevice");
+    ASSERT_NE(definition, nullptr);
+    EXPECT_EQ(definition->scope, SettingScope::Profile);
+    EXPECT_NE(findSetting("audio.outputDeviceName"), nullptr);
 }
 
 TEST(OptionsDialog, ChangingTheCatalogListsItsStyles)
