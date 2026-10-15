@@ -5687,11 +5687,11 @@ msgstr "종료 시간에 추가(ms)"
 
 #: HikariSub/ShiftTimes.cpp:571
 msgid "Start time extension threshold"
-msgstr "시작 시간 임계값"
+msgstr "시작 시간 연장 임계값"
 
 #: HikariSub/ShiftTimes.cpp:572
 msgid "End time extension threshold"
-msgstr "종료 시간 임계값"
+msgstr "종료 시간 연장 임계값"
 
 #: HikariSub/ShiftTimes.cpp:573
 msgid ""
@@ -7123,7 +7123,7 @@ msgstr "현재 버전은 %s이며, %s 버전을 사용할 수 있습니다"
 #: HikariSub/UpdateChecker.cpp:220
 #, c-format
 msgid "It needs %s or newer, so it cannot be installed here."
-msgstr "%s 이상이 필요하므로 여기에 설치할 수 없습니다."
+msgstr "이 버전은 %s 이상이 필요하므로 이 시스템에 설치할 수 없습니다."
 
 #: HikariSub/UpdateChecker.cpp:250
 msgid "Download and install"
@@ -7150,7 +7150,7 @@ msgstr "업데이트를 다운로드할 수 없음"
 #: HikariSub/UpdateChecker.cpp:352
 #, c-format
 msgid "HikariSub %s is a prerelease. The AUR package carries stable versions only. To try it, use the AppImage from the release page."
-msgstr "HikariSub %s은(는) 시험판입니다. AUR 패키지는 안정 버전만 제공합니다. 사용해 보려면 릴리스 페이지의 AppImage를 사용하십시오."
+msgstr "HikariSub %s은(는) 시험판입니다. AUR 패키지는 안정 버전만 제공합니다. 사용해 보려면 릴리스 페이지의 AppImage를 이용하십시오."
 
 #: HikariSub/UpdateChecker.cpp:354
 #, c-format
@@ -7197,7 +7197,7 @@ msgstr "HikariSub %s을(를) 설치할 준비가 되었습니다"
 
 #: HikariSub/UpdateInstaller.cpp:326
 msgid "Restart now to install it, or it is installed when you next quit HikariSub."
-msgstr "지금 다시 시작하여 설치하거나, 다음에 HikariSub를 종료할 때 설치됩니다."
+msgstr "지금 다시 시작하면 설치되며, 그렇지 않으면 다음에 HikariSub를 종료할 때 설치됩니다."
 
 #: HikariSub/UpdateInstaller.cpp:329
 msgid "Restart now"
@@ -7256,7 +7256,7 @@ msgstr "HikariSub %s 설치 프로그램을 시작할 수 없습니다. 직접 �
 
 #: HikariSub/UpdateInstaller.cpp:842
 msgid "Checking the update..."
-msgstr "업데이트 확인 중..."
+msgstr "업데이트 검증 중..."
 
 #: HikariSub/UpdateInstaller.cpp:1020
 #, c-format
@@ -7266,7 +7266,7 @@ msgstr "HikariSub %s이(가) 시작되지 않아 HikariSub %s(으)로 되돌렸�
 #: HikariSub/UpdateInstaller.cpp:1022
 #, c-format
 msgid "HikariSub %s did not start. The previous version is %s; rename it back to use it."
-msgstr "HikariSub %s이(가) 시작되지 않았습니다. 이전 버전은 %s입니다. 사용하려면 이름을 원래대로 바꾸십시오."
+msgstr "HikariSub %s이(가) 시작되지 않았습니다. 이전 버전 파일은 %s입니다. 사용하려면 이름을 원래대로 바꾸십시오."
 
 #: HikariSub/UpdateInstaller.cpp:1033
 msgid "The update was refused: the package does not match its release."
@@ -7308,12 +7308,12 @@ msgstr "HikariSub %s을(를) 설치할 수 없습니다(코드 %d)."
 #: HikariSub/UpdateInstaller.cpp:1352
 #, c-format
 msgid "HikariSub %s was not installed: its installer did not finish. If another administrator account approved it, that account was told why."
-msgstr "HikariSub %s을(를) 설치하지 않았습니다: 설치 프로그램이 완료되지 않았습니다. 다른 관리자 계정이 승인했다면 그 계정에 이유를 알렸습니다."
+msgstr "HikariSub %s이(가) 설치되지 않았습니다: 설치 프로그램이 완료되지 않았습니다. 다른 관리자 계정이 승인했다면 해당 계정에 그 이유가 표시되었습니다."
 
 #: HikariSub/UpdateInstaller.cpp:1416
 #, c-format
 msgid "The download of HikariSub %s changed or went missing, so it was not installed. It is downloaded again at the next check."
-msgstr "HikariSub %s 다운로드 파일이 변경되었거나 사라져 설치하지 않았습니다. 다음 확인 때 다시 다운로드합니다."
+msgstr "HikariSub %s 다운로드 파일이 변경되었거나 사라져 설치하지 않았습니다. 다음 업데이트 확인 때 다시 다운로드합니다."
 
 #: HikariSub/UpdateInstaller.cpp:1456
 #, c-format
@@ -8316,7 +8316,7 @@ msgstr "스타일 이름이 수정되었습니다. 모두 새 이름으로 변�
 #: HikariSub/stylestore.cpp:568
 #, c-format
 msgid "Do you really want to delete the catalog named \"%s\"?"
-msgstr "\"%s\" 목록을 정말 삭제하시겠습니까?"
+msgstr "\"%s\" 스타일 목록을 정말 삭제하시겠습니까?"
 
 #: HikariSub/stylestore.cpp:612
 msgid "Choose ASS file"
