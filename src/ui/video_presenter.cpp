@@ -1,5 +1,7 @@
 #include "video_presenter.h"
 
+#include "ycbcr_node.h"
+
 #include <QImage>
 #include <QPointer>
 #include <QQuickWindow>
@@ -10,6 +12,7 @@
 #include <rhi/qrhi.h>
 
 #include "hikari/application/playback_pipeline.h"
+#include "hikari/application/ycbcr_frame.h"
 
 namespace hikari::ui {
 
@@ -145,16 +148,44 @@ private:
 class PresentNode : public QSGNode {
 public:
     QSGRectangleNode *background = nullptr;
+    // The frame layer: a BGRA texture, or Y'CbCr planes converted on the GPU
+    // (one of the two in the tree, after the background).
     QSGSimpleTextureNode *frame = nullptr;
+    YcbcrNode *ycbcr = nullptr;
     QSGSimpleTextureNode *overlay = nullptr; // in the tree only while it draws something
     std::shared_ptr<const application::IndexedFrame> frameLease;
+    // The BGRA the frame texture shows: the frame's own, or its Y'CbCr
+    // planes converted on the CPU.
+    std::shared_ptr<const application::IndexedFrame> bgraLease;
     std::shared_ptr<const application::OverlayFrame> overlayLease; // null: no overlay drawn
     QRect overlayRegion; // the frame pixels the overlay texture holds
+    bool frameAttached = true;
+    bool ycbcrAttached = false;
     bool overlayAttached = false;
     ~PresentNode() override
     {
+        if (!frameAttached)
+            delete frame;
+        if (!ycbcrAttached)
+            delete ycbcr;
         if (!overlayAttached)
             delete overlay;
+    }
+    // The frame layer shows the GPU-converted planes, or the BGRA texture.
+    void showPlanes(bool planes)
+    {
+        QSGNode *show = planes ? static_cast<QSGNode *>(ycbcr) : frame;
+        QSGNode *hide = planes ? static_cast<QSGNode *>(frame) : ycbcr;
+        bool &shown = planes ? ycbcrAttached : frameAttached;
+        bool &hidden = planes ? frameAttached : ycbcrAttached;
+        if (hidden) {
+            removeChildNode(hide);
+            hidden = false;
+        }
+        if (!shown) {
+            insertChildNodeAfter(show, background);
+            shown = true;
+        }
     }
 };
 
@@ -170,9 +201,13 @@ QString layoutError(const application::Presentation &p)
     const auto &f = p.frame;
     if (!f)
         return QStringLiteral("no frame");
-    if (f->width <= 0 || f->height <= 0 || f->stride < f->width * 4 ||
-        f->bgra.size() < static_cast<std::size_t>(f->stride) * static_cast<std::size_t>(f->height))
+    if (f->ycbcr) {
+        if (!application::ycbcrLayoutError(*f).empty())
+            return QStringLiteral("frame layout does not match its buffer");
+    } else if (f->width <= 0 || f->height <= 0 || f->stride < f->width * 4 ||
+               f->bgra.size() < static_cast<std::size_t>(f->stride) * static_cast<std::size_t>(f->height)) {
         return QStringLiteral("frame layout does not match its buffer");
+    }
     if (p.overlay && !p.overlay->empty) {
         const auto &o = *p.overlay;
         if (o.width != f->width || o.height != f->height || o.stride < o.width * 4 ||
@@ -315,6 +350,8 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
     // software renderer makes images.
     QRhi *rhi = win->rhi();
     const bool inPlace = rhi && rhi->isTextureFormatSupported(QRhiTexture::BGRA8);
+    const bool planes = ycbcrSupported(rhi);
+    m_convertsYcbcr = planes;
     if (!node) {
         node = new PresentNode;
         node->background = win->createRectangleNode();
@@ -328,10 +365,45 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
         upload = true;
     }
     if (upload) {
-        const auto &f = *m_shown.frame;
         // The same frame again (new subtitles over it): its texture stays.
         auto *kept = dynamic_cast<UpdatableTexture *>(node->frame->texture());
-        if (node->frameLease != m_shown.frame || !node->frame->texture() || (kept && kept->failed())) {
+        const bool gpuPlanes = m_shown.frame->ycbcr && planes;
+        const bool same = node->frameLease == m_shown.frame &&
+                          (gpuPlanes ? node->ycbcrAttached && !node->ycbcr->failed()
+                                     : node->frameAttached && node->frame->texture() && !(kept && kept->failed()));
+        if (!same && gpuPlanes) {
+            if (!node->ycbcr)
+                node->ycbcr = new YcbcrNode(
+                    [stats = m_stats](std::size_t bytes) {
+                        std::lock_guard lock(stats->mutex);
+                        ++stats->frameUploads;
+                        ++stats->planarFrameUploads;
+                        stats->lastFrameBytes = bytes;
+                    },
+                    [stats = m_stats] {
+                        std::lock_guard lock(stats->mutex);
+                        stats->failed = true;
+                    });
+            node->ycbcr->setFrame(m_shown.frame);
+            node->showPlanes(true);
+            node->frameLease = m_shown.frame;
+            node->bgraLease = nullptr;
+        } else if (!same) {
+            node->showPlanes(false);
+            std::shared_ptr<const application::IndexedFrame> bgra = m_shown.frame;
+            if (bgra->ycbcr) { // no GPU conversion here: the CPU's, to the same pixels
+                auto converted = std::make_shared<application::IndexedFrame>();
+                if (!application::ycbcrToBgra(*bgra, *converted)) {
+                    if (uploaded)
+                        resolveLater(std::move(uploaded->done), {m_shown.generation, PresentOutcome::Error,
+                                                                 PresentStage::Submitted, "texture upload failed"});
+                    return node;
+                }
+                bgra = std::move(converted);
+                std::lock_guard lock(m_stats->mutex);
+                ++m_stats->cpuConvertedFrames;
+            }
+            const auto &f = *bgra;
             const QImage frameImage(reinterpret_cast<const uchar *>(f.bgra.data()), f.width, f.height, f.stride,
                                     QImage::Format_RGB32);
             if (inPlace) {
@@ -339,9 +411,10 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
                 if (!texture) {
                     texture = new UpdatableTexture(
                         false,
-                        [stats = m_stats](const QRect &) {
+                        [stats = m_stats](const QRect &region) {
                             std::lock_guard lock(stats->mutex);
                             ++stats->frameUploads;
+                            stats->lastFrameBytes = static_cast<std::size_t>(region.width()) * region.height() * 4;
                         },
                         [stats = m_stats] {
                             std::lock_guard lock(stats->mutex);
@@ -350,7 +423,7 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
                     texture->setFiltering(QSGTexture::Linear);
                     node->frame->setTexture(texture);
                 }
-                texture->setFrame(frameImage, m_shown.frame);
+                texture->setFrame(frameImage, bgra);
                 node->frame->markDirty(QSGNode::DirtyMaterial);
             } else {
                 QSGTexture *frameTexture = win->createTextureFromImage(frameImage);
@@ -364,8 +437,10 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
                 node->frame->setTexture(frameTexture);
                 std::lock_guard lock(m_stats->mutex);
                 ++m_stats->frameUploads;
+                m_stats->lastFrameBytes = static_cast<std::size_t>(f.width) * f.height * 4;
             }
             node->frameLease = m_shown.frame;
+            node->bgraLease = std::move(bgra);
         }
         // The overlay: none, or nothing visible, draws nothing.
         const auto overlay = m_shown.overlay && !m_shown.overlay->empty ? m_shown.overlay : nullptr;
@@ -425,11 +500,15 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
     }
     const QRectF target = frameRect();
     node->background->setRect(boundingRect());
-    node->frame->setRect(target);
     // T1: the zoomed part of the frame (and of its overlay, made at its size).
     const QRectF whole(0, 0, m_shown.frame->width, m_shown.frame->height);
     const QRectF source = m_sourceRect.isEmpty() ? whole : m_sourceRect;
-    node->frame->setSourceRect(source);
+    if (node->ycbcrAttached) {
+        node->ycbcr->place(target, source);
+    } else {
+        node->frame->setRect(target);
+        node->frame->setSourceRect(source);
+    }
     // The overlay's region of the frame, where the shown part of the frame covers it.
     QRectF visible;
     if (node->overlayLease && source.width() > 0 && source.height() > 0)
@@ -463,7 +542,8 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
 VideoPresenter::UploadStats VideoPresenter::uploadStats() const
 {
     std::lock_guard lock(m_stats->mutex);
-    return {m_stats->frameUploads, m_stats->overlayUploads, m_stats->lastOverlayUpload};
+    return {m_stats->frameUploads,       m_stats->overlayUploads,     m_stats->lastOverlayUpload,
+            m_stats->planarFrameUploads, m_stats->cpuConvertedFrames, m_stats->lastFrameBytes};
 }
 
 void VideoPresenter::onFrameSwapped()

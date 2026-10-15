@@ -26,6 +26,13 @@ qt_add_qml_module(hikari_ui
 # E6: the Line editor's tag list.
 qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
 target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE Qt6::QuickControls2 KDAB::kddockwidgets)
+# V1: the presenter converts player frames kept as Y'CbCr planes in a shader.
+find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS ShaderTools)
+target_sources(hikari_ui PRIVATE ycbcr_node.cpp ycbcr_node.h)
+qt_add_shaders(hikari_ui "hikari_ui_shaders"
+    BATCHABLE
+    PREFIX "/hikari/ui"
+    FILES shaders/ycbcr.vert shaders/ycbcr.frag)
 # D3: whether X11 composites (QPlatformNativeInterface, ui/docking.cpp).
 target_link_libraries(hikari_ui PRIVATE Qt6::GuiPrivate)
 # Some engine headers include their siblings relative to the kddockwidgets directory.

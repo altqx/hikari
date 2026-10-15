@@ -14,6 +14,10 @@
 // it) not at all, and an overlay only where it or the one before it has
 // visible pixels. An overlay with nothing visible is not drawn. The software
 // renderer makes an image of the frame and of the overlay's visible part.
+//
+// A player frame kept as Y'CbCr planes (IndexedFrame::ycbcr) is converted in
+// a shader where the RHI backend has R8 and RG8 textures (ycbcr_node.h), and
+// on the CPU elsewhere (the software renderer), to the same pixels.
 
 #include "hikari/application/presenter.h"
 
@@ -45,6 +49,7 @@ public:
     ~VideoPresenter() override;
 
     void present(application::Presentation presentation, Done done) override;
+    bool convertsYcbcr() const override { return m_convertsYcbcr.load(); }
 
     quint64 presentedGeneration() const { return m_presentedGeneration; }
     // Where the frame is drawn, in item coordinates (empty with no frame).
@@ -60,6 +65,9 @@ public:
         int frameUploads = 0;
         int overlayUploads = 0;
         QRect lastOverlayUpload;
+        int planarFrameUploads = 0;    // of frameUploads, Y'CbCr planes converted on the GPU
+        int cpuConvertedFrames = 0;    // Y'CbCr frames converted on the CPU (no GPU path)
+        std::size_t lastFrameBytes = 0; // the bytes the last frame upload sent
     };
     UploadStats uploadStats() const;
 
@@ -90,6 +98,7 @@ private:
     std::optional<Submission> m_pending;      // touched on the GUI thread and during sync
     application::Presentation m_shown;        // what the node shows (or will after upload)
     std::atomic<std::uint64_t> m_surfaceEpoch{1};
+    std::atomic<bool> m_convertsYcbcr{false}; // the last render's backend can (render thread)
     std::mutex m_renderMutex;
     std::optional<Resolved> m_awaitingRender; // uploaded, waiting for its frame to be swapped
     QMetaObject::Connection m_swapped, m_invalidated;

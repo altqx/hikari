@@ -3,6 +3,12 @@
 // composited source-over), in the software renderer (offscreen) and the RHI
 // renderer of a real window (xvfb). Also: superseded and stale submissions,
 // resize placement, and invalid input. The start of M50-present.
+//
+// V1, the GPU path: a player frame kept as Y'CbCr planes shows as the BGRA
+// the CPU conversion makes of it, with its overlay, scaled and zoomed, in
+// the shader where the backend has one (the RHI renderer) and converted on
+// the CPU where it has not (the software renderer).
+#include "hikari/application/ycbcr_frame.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/libass_renderer.h"
 #include "image_compare.h"
@@ -16,6 +22,7 @@
 
 #include <cstring>
 #include <optional>
+#include <random>
 
 using namespace hikari;
 using application::OverlayFrame;
@@ -98,19 +105,48 @@ QImage cpuReference(const application::IndexedFrame &f, const OverlayFrame *o)
 }
 
 // A premultiplied half-transparent grey box over `rect`, nothing elsewhere.
-std::shared_ptr<const OverlayFrame> box(const QRect &rect)
+std::shared_ptr<const OverlayFrame> box(const QRect &rect, int w = kW, int h = kH)
 {
     auto o = std::make_shared<OverlayFrame>();
-    o->width = kW;
-    o->height = kH;
-    o->stride = kW * 4;
-    OverlayPixels::Bytes pixels(static_cast<std::size_t>(o->stride) * kH, 0);
+    o->width = w;
+    o->height = h;
+    o->stride = w * 4;
+    OverlayPixels::Bytes pixels(static_cast<std::size_t>(o->stride) * h, 0);
     o->empty = false;
     for (int y = rect.top(); y <= rect.bottom(); ++y)
         for (int x = rect.left(); x <= rect.right(); ++x)
             std::memset(&pixels[static_cast<std::size_t>(y) * o->stride + x * 4], 128, 4);
     o->pixels = std::move(pixels);
     return o;
+}
+
+// The Y'CbCr layouts a player hands over.
+enum class Planes { Nv12, Yuv420p, Yuv422p };
+
+// A frame kept as Y'CbCr planes of random samples (every byte, the rows'
+// padding too) with `matrix`.
+std::shared_ptr<application::IndexedFrame> planar(Planes kind, int w, int h, const application::yuv::Matrix &matrix,
+                                                  unsigned seed = 1)
+{
+    auto f = std::make_shared<application::IndexedFrame>();
+    f->width = w;
+    f->height = h;
+    f->index = -1;
+    f->ycbcr = application::ycbcrLayout(w, h, kind == Planes::Nv12, kind == Planes::Yuv422p, matrix);
+    f->bgra.resize(application::ycbcrBytes(*f->ycbcr));
+    std::mt19937 random(seed);
+    for (auto &b : f->bgra)
+        b = std::byte(random());
+    return f;
+}
+
+// The BGRA the CPU makes of a planar frame.
+std::shared_ptr<application::IndexedFrame> converted(const application::IndexedFrame &f)
+{
+    auto out = std::make_shared<application::IndexedFrame>();
+    if (!application::ycbcrToBgra(f, *out))
+        return nullptr;
+    return out;
 }
 
 Presentation withBounds(std::uint64_t generation, std::shared_ptr<const application::IndexedFrame> frame,
@@ -366,6 +402,180 @@ private slots:
         QCOMPARE(presenter->frameRect().isEmpty(), false);
     }
 
+    // V1: a planar frame shows as its CPU conversion does, with the overlay
+    // over it: every layout, the 13-bit matrices and DirectShow's 8-bit one,
+    // even and odd sizes. The reference is the same presenter showing the
+    // CPU's BGRA, so only the frame's path differs.
+    void ycbcrFramesShowAsTheirCpuConversion_data()
+    {
+        QTest::addColumn<int>("kind");
+        QTest::addColumn<QSize>("size");
+        QTest::addColumn<int>("matrix");
+        const std::pair<const char *, Planes> kinds[] = {
+            {"NV12", Planes::Nv12}, {"YUV420P", Planes::Yuv420p}, {"YUV422P", Planes::Yuv422p}};
+        const QSize sizes[] = {{96, 64}, {95, 63}, {33, 17}, {2, 1}};
+        for (const auto &[name, kind] : kinds)
+            for (const QSize &size : sizes)
+                for (int matrix = 0; matrix < 3; ++matrix)
+                    QTest::addRow("%s %dx%d m%d", name, size.width(), size.height(), matrix)
+                        << int(kind) << size << matrix;
+    }
+    void ycbcrFramesShowAsTheirCpuConversion()
+    {
+        QFETCH(int, kind);
+        QFETCH(QSize, size);
+        QFETCH(int, matrix);
+        namespace yuv = application::yuv;
+        const yuv::Matrix matrices[] = {yuv::matrix(yuv::Space::Bt709, false), yuv::matrix(yuv::Space::Bt601, true),
+                                        yuv::Matrix{298, 409, -100, -208, 516, 16, 8}}; // DirectShow's BT.601
+        const int w = size.width(), h = size.height();
+        const auto frame = planar(Planes(kind), w, h, matrices[matrix], unsigned(w * 7 + h + matrix));
+        const auto cpu = converted(*frame);
+        QVERIFY(cpu);
+        const QRect boxed(w / 4, h / 3, std::max(1, w / 2), std::max(1, h / 3));
+        const auto overlay = box(boxed, w, h);
+        presenter->setSize(QSizeF(w, h));
+        QVERIFY(presentAndWait(withBounds(1, cpu, overlay, boxed)));
+        const QImage reference = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, w, h);
+        QVERIFY(testing::compareImages(reference, cpuReference(*cpu, overlay.get()), {2, 0}).withinTolerance);
+        const auto before = presenter->uploadStats();
+        const auto result = presentAndWait(withBounds(2, frame, overlay, boxed));
+        QVERIFY(result);
+        QCOMPARE(result->outcome, PresentOutcome::Accepted);
+        QCOMPARE(result->stage, PresentStage::Rendered);
+        const auto after = presenter->uploadStats();
+        if (presenter->convertsYcbcr()) { // the planes went to the GPU
+            QCOMPARE(after.planarFrameUploads, before.planarFrameUploads + 1);
+            QCOMPARE(after.lastFrameBytes, application::ycbcrBytes(*frame->ycbcr));
+            QCOMPARE(after.cpuConvertedFrames, before.cpuConvertedFrames);
+        } else { // converted on the CPU, uploaded as BGRA
+            QCOMPARE(after.cpuConvertedFrames, before.cpuConvertedFrames + 1);
+            QCOMPARE(after.planarFrameUploads, before.planarFrameUploads);
+        }
+        const QImage grabbed = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, w, h);
+        const auto comparison = testing::compareImages(grabbed, reference, {2, 0});
+        if (!comparison.withinTolerance) {
+            QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
+            grabbed.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/ycbcr-actual.png"));
+            reference.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/ycbcr-reference.png"));
+        }
+        QVERIFY2(comparison.withinTolerance, qPrintable(QStringLiteral("%1 pixels differ, max delta %2 (%3)")
+                                                            .arg(comparison.differingPixels)
+                                                            .arg(comparison.maxChannelDelta)
+                                                            .arg(presenter->convertsYcbcr() ? "GPU" : "CPU")));
+        // At one frame pixel per window pixel the GPU's texels are the CPU's bytes.
+        QVERIFY2(comparison.maxChannelDelta <= 1, qPrintable(QString::number(comparison.maxChannelDelta)));
+    }
+
+    // V1: scaled into the visual tools' view and zoomed into part of the frame
+    // (T1's videoRect and sourceRect), at odd sizes and offsets, the planar
+    // frame and its overlay still show as the CPU's BGRA does: no offset, no
+    // colour shift, the same sampling between pixels.
+    void ycbcrFramesFollowZoomAndPlacement()
+    {
+        const int w = 95, h = 63;
+        const auto frame = planar(Planes::Nv12, w, h, application::yuv::matrix(application::yuv::Space::Bt709, false), 3);
+        const auto cpu = converted(*frame);
+        QVERIFY(cpu);
+        const QRect boxed(20, 11, 41, 23);
+        const auto overlay = box(boxed, w, h);
+        window->resize(200, 150);
+        presenter->setSize(QSizeF(200, 150));
+        QVERIFY(QTest::qWaitFor([&] { return window->grabWindow().size() == QSize(200, 150); }, 10'000));
+        struct Placement {
+            QRectF video, source;
+        };
+        const Placement placements[] = {
+            {QRectF(7, 5, 181, 121), QRectF()},              // scaled up by an odd factor
+            {QRectF(3, 9, 150, 100), QRectF(13, 7, 50, 31)}, // zoomed into an odd part
+            {QRectF(11, 2, 60, 41), QRectF(1, 3, 90, 59)},   // scaled down
+        };
+        for (const Placement &place : placements) {
+            presenter->setVideoRect(place.video);
+            presenter->setSourceRect(place.source);
+            QVERIFY(presentAndWait(withBounds(1, cpu, overlay, boxed)));
+            const QImage reference = window->grabWindow().convertToFormat(QImage::Format_RGB32);
+            const auto shown = presentAndWait(withBounds(2, frame, overlay, boxed));
+            QVERIFY(shown);
+            QCOMPARE(shown->outcome, PresentOutcome::Accepted);
+            const QImage grabbed = window->grabWindow().convertToFormat(QImage::Format_RGB32);
+            const auto comparison = testing::compareImages(grabbed, reference, {2, 0});
+            if (!comparison.withinTolerance) {
+                QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
+                grabbed.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/ycbcr-placed-actual.png"));
+                reference.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/ycbcr-placed-reference.png"));
+            }
+            QVERIFY2(comparison.withinTolerance,
+                     qPrintable(QStringLiteral("%1,%2 %3x%4: %5 pixels differ, max delta %6")
+                                    .arg(place.video.x()).arg(place.video.y()).arg(place.video.width())
+                                    .arg(place.video.height()).arg(comparison.differingPixels)
+                                    .arg(comparison.maxChannelDelta)));
+        }
+        presenter->setVideoRect({});
+        presenter->setSourceRect({});
+    }
+
+    // V1: new subtitles over the same planar frame (paused, or an edit)
+    // upload only the overlay; a new frame uploads its planes.
+    void aPlanarFrameShownAgainIsNotUploadedAgain()
+    {
+        const auto frame = planar(Planes::Nv12, kW, kH, application::yuv::matrix(application::yuv::Space::Bt709, false));
+        const QRect a(10, 10, 8, 6), b(50, 30, 10, 4);
+        const auto shown = presentAndWait(withBounds(1, frame, box(a), a));
+        QVERIFY(shown);
+        QCOMPARE(shown->outcome, PresentOutcome::Accepted);
+        const auto first = presenter->uploadStats();
+        QVERIFY(presentAndWait(withBounds(2, frame, box(b), b)));
+        const auto second = presenter->uploadStats();
+        QCOMPARE(second.frameUploads, first.frameUploads);
+        QCOMPARE(second.planarFrameUploads, first.planarFrameUploads);
+        QCOMPARE(second.cpuConvertedFrames, first.cpuConvertedFrames);
+        QCOMPARE(second.overlayUploads, first.overlayUploads + 1);
+        const QImage grabbed = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, kW, kH);
+        QVERIFY(testing::compareImages(grabbed, cpuReference(*converted(*frame), box(b).get()), {2, 0}).withinTolerance);
+        // Back to a BGRA frame and to planes again: each shows.
+        QVERIFY(presentAndWait({3, quadrants(), nullptr, {}}));
+        const QImage bgra = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, kW, kH);
+        QVERIFY(testing::compareImages(bgra, cpuReference(*quadrants(), nullptr), {2, 0}).withinTolerance);
+        const auto next = planar(Planes::Yuv420p, kW, kH, application::yuv::matrix(application::yuv::Space::Bt601, false), 9);
+        QVERIFY(presentAndWait({4, next, nullptr, {}}));
+        const QImage again = window->grabWindow().convertToFormat(QImage::Format_RGB32).copy(0, 0, kW, kH);
+        QVERIFY(testing::compareImages(again, cpuReference(*converted(*next), nullptr), {2, 0}).withinTolerance);
+    }
+
+    // V1: the presenter says whether it converts planes on the GPU: with an
+    // RHI backend that has R8 and RG8 textures, and never in the software
+    // renderer.
+    void theGpuPathIsChosenByTheBackend()
+    {
+        QVERIFY(presentAndWait({1, quadrants(), nullptr, {}}));
+        QRhi *rhi = window->rhi();
+        const bool expected = rhi && rhi->isTextureFormatSupported(QRhiTexture::R8) &&
+                              rhi->isTextureFormatSupported(QRhiTexture::RG8);
+        qInfo().noquote() << "graphics:" << (rhi ? rhi->backendName() : QStringLiteral("software"))
+                          << "converts Y'CbCr:" << presenter->convertsYcbcr();
+        QCOMPARE(presenter->convertsYcbcr(), expected);
+    }
+
+    // V1: a plane texture the backend cannot make fails the present.
+    void aPlaneThatCannotBeMadeFailsThePresent()
+    {
+        QVERIFY(presentAndWait({1, quadrants(), nullptr, {}}));
+        if (!presenter->convertsYcbcr())
+            QSKIP("planes are uploaded only with the GPU path");
+        const int largest = window->rhi()->resourceLimit(QRhi::TextureSizeMax);
+        const auto failed = presentAndWait(
+            {2, planar(Planes::Nv12, largest + 2, 2, application::yuv::matrix(application::yuv::Space::Bt709, false)),
+             nullptr, {}});
+        QVERIFY(failed);
+        QCOMPARE(failed->outcome, PresentOutcome::Error);
+        QCOMPARE(failed->message, std::string("texture upload failed"));
+        const auto shown = presentAndWait(
+            {3, planar(Planes::Nv12, kW, kH, application::yuv::matrix(application::yuv::Space::Bt709, false)), nullptr, {}});
+        QVERIFY(shown);
+        QCOMPARE(shown->outcome, PresentOutcome::Accepted);
+    }
+
     void invalidInputIsRefusedAtSubmission()
     {
         auto broken = quadrants();
@@ -383,6 +593,13 @@ private slots:
         const auto mismatched = presentAndWait({6, quadrants(), wrongOverlay, {}});
         QVERIFY(mismatched);
         QCOMPARE(mismatched->outcome, PresentOutcome::Error);
+        // V1: planes that do not fit their buffer.
+        auto shortPlanes = planar(Planes::Nv12, kW, kH, application::yuv::matrix(application::yuv::Space::Bt709, false));
+        shortPlanes->bgra.resize(shortPlanes->bgra.size() - 1);
+        const auto planesResult = presentAndWait({6, shortPlanes, nullptr, {}});
+        QVERIFY(planesResult);
+        QCOMPARE(planesResult->outcome, PresentOutcome::Error);
+        QCOMPARE(planesResult->stage, PresentStage::Submitted);
     }
 };
 
