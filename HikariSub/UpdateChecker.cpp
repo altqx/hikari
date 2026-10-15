@@ -337,7 +337,9 @@ namespace
 	class AurNoticeDialog : public HikariDialog
 	{
 	public:
-		AurNoticeDialog(wxWindow *parent, const ReleaseInfo &release, bool prerelease)
+		// notCarried: a prerelease that the install's AUR package does not
+		// carry (only hikarisub-beta-bin carries prereleases).
+		AurNoticeDialog(wxWindow *parent, const ReleaseInfo &release, bool notCarried)
 			: HikariDialog(parent, -1, _("A new version is available"))
 			, tag(release.tag)
 		{
@@ -346,7 +348,7 @@ namespace
 			title->SetFont(title->GetFont().Bold());
 			sizer->Add(title, 0, wxEXPAND | wxALL, 4);
 			wxString version = release.tag.Mid(1);
-			wxString body = prerelease ?
+			wxString body = notCarried ?
 				wxString::Format(_("HikariSub %s is a prerelease. The AUR package carries stable versions only. To try it, use the AppImage from the release page."),
 					version) :
 				wxString::Format(_("HikariSub %s is available; you have %s. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu."),
@@ -394,7 +396,7 @@ namespace
 	public:
 		explicit UpdateRequest(wxWindow *parent)
 			: parent(parent)
-			, pages(VersionHikariSub, Options.GetBool(UPDATER_CHECK_FOR_STABLE))
+			, pages(VersionHikariSub, update_installer::StableOnly())
 			, deadline(this)
 		{
 			Bind(wxEVT_WEBREQUEST_DATA, &UpdateRequest::OnData, this);
@@ -719,7 +721,8 @@ namespace
 				update_installer::GetSystemInfo());
 			switch (offer.type) {
 			case update_manifest::OfferType::AurNotice: {
-				AurNoticeDialog dialog(parent, *info, update_manifest::IsPrerelease(release));
+				AurNoticeDialog dialog(parent, *info,
+					!package_kind::AurCarries(update_manifest::IsPrerelease(release), update_installer::AurChannel()));
 				dialog.SaveChoices(dialog.ShowModal());
 				return;
 			}

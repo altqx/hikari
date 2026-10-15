@@ -376,12 +376,16 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		autoCheck->SetValue(Options.GetBool(UPDATER_AUTO_CHECK));
 		autoCheck->SetToolTip(_("When the program starts: once a day, or an hour after a check that failed"));
 		ConOpt(autoCheck, UPDATER_AUTO_CHECK);
-		HikariCheckBox* stableOnly = new HikariCheckBox(GLOBAL_EDITOR, -1, _("Stable versions only"));
-		stableOnly->SetValue(Options.GetBool(UPDATER_CHECK_FOR_STABLE));
-		stableOnly->SetToolTip(_("A release candidate is still told about newer release candidates"));
-		ConOpt(stableOnly, UPDATER_CHECK_FOR_STABLE);
 		updatesSizer->Add(autoCheck, 0, wxALL, 2);
-		updatesSizer->Add(stableOnly, 0, wxALL, 2);
+		// Not for an AUR install with a channel: its package decides
+		// (hikarisub-stable-bin or hikarisub-beta-bin).
+		if (package_kind::HasStableOnlyOption(update_installer::Kind(), update_installer::AurChannel())){
+			HikariCheckBox* stableOnly = new HikariCheckBox(GLOBAL_EDITOR, -1, _("Stable versions only"));
+			stableOnly->SetValue(Options.GetBool(UPDATER_CHECK_FOR_STABLE));
+			stableOnly->SetToolTip(_("A release candidate is still told about newer release candidates"));
+			ConOpt(stableOnly, UPDATER_CHECK_FOR_STABLE);
+			updatesSizer->Add(stableOnly, 0, wxALL, 2);
+		}
 		// Only where the program installs updates itself: an AUR or a
 		// portable copy is only ever told about them.
 		if (package_kind::HasAutoInstallOption(update_installer::Kind())){

@@ -1174,6 +1174,31 @@ package_kind::Kind update_installer::Kind()
 	return *kind;
 }
 
+std::optional<package_kind::AurChannel> update_installer::AurChannel()
+{
+	static std::optional<std::optional<package_kind::AurChannel>> channel;
+	if (!channel) {
+		channel.emplace();
+		if (Kind() == package_kind::Kind::Arch) {
+			wxString path = Options.pathfull + wxFileName::GetPathSeparator() +
+				wxString(package_kind::kAurChannelFile.data());
+			wxFFile file;
+			if (wxFileExists(path) && file.Open(path, L"rb")) {
+				char content[64];
+				size_t read = file.Read(content, sizeof(content));
+				if (read < sizeof(content))
+					*channel = package_kind::ParseAurChannel(std::string_view(content, read));
+			}
+		}
+	}
+	return *channel;
+}
+
+bool update_installer::StableOnly()
+{
+	return package_kind::StableOnly(Options.GetBool(UPDATER_CHECK_FOR_STABLE), Kind(), AurChannel());
+}
+
 update_manifest::SystemInfo update_installer::GetSystemInfo()
 {
 	update_manifest::SystemInfo info;

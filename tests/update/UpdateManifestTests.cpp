@@ -162,6 +162,49 @@ TEST(package_kind_flows)
 	CHECK(package_kind::AboutName(Kind::AppImage) == "AppImage");
 }
 
+// The two AUR packages (installers spec, 4.5 and 5.5): aur-channel.txt
+// decides which releases an AUR install is told about.
+TEST(update_aur_channel)
+{
+	using package_kind::Kind;
+	using package_kind::AurChannel;
+	using package_kind::ParseAurChannel;
+	CHECK(ParseAurChannel("beta\n") == AurChannel::Beta);
+	CHECK(ParseAurChannel("stable") == AurChannel::Stable);
+	CHECK(ParseAurChannel("stable\r\n") == AurChannel::Stable);
+	CHECK(!ParseAurChannel(""));
+	CHECK(!ParseAurChannel("Beta\n"));
+	CHECK(!ParseAurChannel("beta\n\n"));
+	CHECK(!ParseAurChannel("arch\n"));
+
+	using package_kind::StableOnly;
+	using update_policy::SkipsPrereleases;
+	// hikarisub-beta-bin on a stable version is told about the next
+	// prerelease, whatever the option says; hikarisub-stable-bin is not,
+	// whatever the option says.
+	CHECK(!SkipsPrereleases(StableOnly(true, Kind::Arch, AurChannel::Beta), "0.0.2"));
+	CHECK(SkipsPrereleases(StableOnly(false, Kind::Arch, AurChannel::Stable), "0.0.2"));
+	CHECK(!SkipsPrereleases(StableOnly(true, Kind::Arch, AurChannel::Beta), "0.0.2-rc.1"));
+	// Without a channel (a PKGBUILD from before the two packages), and for
+	// every other kind, the option decides.
+	CHECK(SkipsPrereleases(StableOnly(true, Kind::Arch, std::nullopt), "0.0.2"));
+	CHECK(!SkipsPrereleases(StableOnly(false, Kind::Arch, std::nullopt), "0.0.2"));
+	CHECK(SkipsPrereleases(StableOnly(true, Kind::Deb, AurChannel::Beta), "0.0.2"));
+	CHECK(!package_kind::HasStableOnlyOption(Kind::Arch, AurChannel::Beta));
+	CHECK(!package_kind::HasStableOnlyOption(Kind::Arch, AurChannel::Stable));
+	CHECK(package_kind::HasStableOnlyOption(Kind::Arch, std::nullopt));
+	CHECK(package_kind::HasStableOnlyOption(Kind::AppImage, std::nullopt));
+
+	// The notice says the package carries stable versions only just when
+	// that is so.
+	using package_kind::AurCarries;
+	CHECK(AurCarries(false, AurChannel::Stable));
+	CHECK(AurCarries(true, AurChannel::Beta));
+	CHECK(!AurCarries(true, AurChannel::Stable));
+	CHECK(!AurCarries(true, std::nullopt));
+	CHECK(AurCarries(false, std::nullopt));
+}
+
 TEST(update_asset_names)
 {
 	CHECK(AssetName("nsis", "0.1.0-beta.2") == "HikariSub-0.1.0-beta.2-windows-x64-setup.exe");

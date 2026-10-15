@@ -33,7 +33,7 @@ namespace package_kind
 		AppImage,
 		Deb,
 		Rpm,
-		// The AUR package, hikarisub-bin.
+		// The AUR packages, hikarisub-stable-bin and hikarisub-beta-bin.
 		Arch,
 		// No marker: the zip or the tar.gz.
 		PortableWindows,
@@ -138,6 +138,58 @@ namespace package_kind
 			return Flow::Notify;
 		}
 		return Flow::Notify;
+	}
+
+	// The channel of an AUR install, from aur-channel.txt beside the
+	// executable, which the PKGBUILD writes: "stable" (hikarisub-stable-bin,
+	// stable releases only) or "beta" (hikarisub-beta-bin, every release).
+	enum class AurChannel
+	{
+		Stable,
+		Beta,
+	};
+
+	constexpr std::string_view kAurChannelFile = "aur-channel.txt";
+
+	// The file's content: one token and, at most, one line ending after it.
+	// Anything else is no channel.
+	constexpr std::optional<AurChannel> ParseAurChannel(std::string_view content)
+	{
+		if (content.size() >= 2 && content.substr(content.size() - 2) == "\r\n")
+			content.remove_suffix(2);
+		else if (!content.empty() && content.back() == '\n')
+			content.remove_suffix(1);
+		if (content == "stable")
+			return AurChannel::Stable;
+		if (content == "beta")
+			return AurChannel::Beta;
+		return std::nullopt;
+	}
+
+	// "Stable versions only" as a check applies it. An AUR install with a
+	// channel follows its package: hikarisub-beta-bin is told about
+	// prereleases, hikarisub-stable-bin only about stable releases, whatever
+	// the option says. Every other copy follows the option.
+	constexpr bool StableOnly(bool option, Kind kind, std::optional<AurChannel> channel)
+	{
+		if (kind == Kind::Arch && channel)
+			return *channel == AurChannel::Stable;
+		return option;
+	}
+
+	// Whether the "Stable versions only" option means anything here: not
+	// for an AUR install, whose package decides.
+	constexpr bool HasStableOnlyOption(Kind kind, std::optional<AurChannel> channel)
+	{
+		return !(kind == Kind::Arch && channel);
+	}
+
+	// Whether the AUR package of this install carries the release: a stable
+	// one always, a prerelease only hikarisub-beta-bin. When it does not,
+	// the AUR notice says so (installers spec, 4.5).
+	constexpr bool AurCarries(bool prerelease, std::optional<AurChannel> channel)
+	{
+		return !prerelease || channel == AurChannel::Beta;
 	}
 
 	// The key of the update manifest's package for this kind, or "" when it

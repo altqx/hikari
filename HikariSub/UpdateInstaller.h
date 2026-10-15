@@ -27,6 +27,7 @@
 
 #include <wx/string.h>
 #include <functional>
+#include <optional>
 #include <string>
 
 class wxWindow;
@@ -35,6 +36,14 @@ namespace update_installer
 {
 	// This copy's kind, resolved once from the marker and $APPIMAGE.
 	package_kind::Kind Kind();
+
+	// An AUR install's channel, from aur-channel.txt beside the executable;
+	// nothing for every other kind, or without the file.
+	std::optional<package_kind::AurChannel> AurChannel();
+
+	// "Stable versions only" as a check applies it: the option, or for an
+	// AUR install with a channel, its package (installers spec, 4.5).
+	bool StableOnly();
 
 	update_manifest::SystemInfo GetSystemInfo();
 
