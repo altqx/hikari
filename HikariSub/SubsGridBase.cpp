@@ -16,6 +16,7 @@
 
 
 
+#include "AppendedLine.h"
 #include "SubsFile.h"
 #include "SubsGrid.h"
 #include "SubsGridPreview.h"
@@ -1662,11 +1663,19 @@ void SubsGrid::NextLine(int direction)
 		if (direction < 0)
 			return;
 
-		size_t lastvisible = file->GetElementByKey(size - 1);
+		// a copy of the last shown line, the active one here; hidden lines
+		// may follow it
+		size_t lastvisible = AppendedLineSource(size, [this](size_t i){
+			return file->GetDialogue(i)->isVisible != NOT_VISIBLE; });
 		Dialogue *tmp = file->GetDialogue(lastvisible)->Copy();
-		// a new line, which joins a tree only where it is put
+		// a new line, which joins a tree only where it is put: after the
+		// last line, so in an opened tree only when that line is in one
 		tmp->RenewLineId();
-		if (tmp->treeState == TREE_DESCRIPTION){ tmp->treeState = 0; }
+		if (tmp->treeState != TREE_OPENED || file->GetDialogue(size - 1)->treeState != TREE_OPENED){
+			tmp->treeState = 0;
+		}
+		// only when no line is shown is the copied line hidden
+		if (tmp->isVisible == NOT_VISIBLE){ tmp->isVisible.Init(VISIBLE); }
 		int eend = tmp->End.mstime;
 		tmp->Start.NewTime(eend);
 		tmp->End.NewTime(eend + 5000);

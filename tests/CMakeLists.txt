@@ -58,6 +58,7 @@ hikarisub_add_dependencycontrol_modules("${HIKARISUB_TEST_DEPCTRL_DIR}")
 # Headless tests for the modules that need neither wxWidgets nor a window.
 add_executable(hikarisub_tests
     check_main.cpp
+    AppendedLineTests.cpp
     AssBlendTests.cpp
     AudioCacheNameTests.cpp
     AudioCommitTests.cpp

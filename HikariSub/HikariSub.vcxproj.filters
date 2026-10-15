@@ -561,6 +561,9 @@
     <ClInclude Include="ConfigConverter.h">
       <Filter>C</Filter>
     </ClInclude>
+    <ClInclude Include="AppendedLine.h">
+      <Filter>A</Filter>
+    </ClInclude>
     <ClInclude Include="AudioBox.h">
       <Filter>A</Filter>
     </ClInclude>
