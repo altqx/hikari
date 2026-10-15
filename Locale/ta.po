@@ -1389,7 +1389,7 @@ msgstr "சுயவிவரத்தின் பெயரைத் தேர�
 
 #: HikariSub/FontCatalogList.cpp:62
 msgid "Choose new catalog name"
-msgstr "புதிய அட்டவணை பெயரைத் தேர்வுசெய்க"
+msgstr "புதிய பட்டியல் பெயரைத் தேர்வுசெய்க"
 
 #: HikariSub/FontCatalogList.cpp:85
 msgid "Enter a name for the new catalog"
@@ -1966,7 +1966,7 @@ msgstr "அடுக்கு"
 #: HikariSub/GridColumnChoices.h:94 HikariSub/GridColumnChoices.h:99
 #: HikariSub/HikariSubFrame.cpp:232 HikariSub/ShiftTimes.cpp:357
 msgid "The starting time"
-msgstr "அந்தத் தொடக்க நேரம்"
+msgstr "தொடக்க நேரம்"
 
 #: HikariSub/GridColumnChoices.h:44 HikariSub/GridColumnChoices.h:69
 #: HikariSub/GridColumnChoices.h:81 HikariSub/GridColumnChoices.h:100
@@ -7348,7 +7348,7 @@ msgstr "நிர்வாகி உரிமைகள் இல்லாமல�
 #: HikariSub/UpdateInstaller.cpp:1473 HikariSub/UpdateInstaller.cpp:1531
 #, c-format
 msgid "HikariSub %s could not replace the AppImage. The download is at %s."
-msgstr "HikariSub %s-ஆல் AppImage-ஐ மாற்ற முடியவில்லை. பதிவிறக்கம் %s-இல் உள்ளது."
+msgstr "HikariSub %s-ஆல் AppImage-ஐ மாற்ற முடியவில்லை. பதிவிறக்கம் இங்கே உள்ளது: %s."
 
 #: HikariSub/UtilsWindows.cpp:63
 msgid "Unable to retrieve information about the monitor"
