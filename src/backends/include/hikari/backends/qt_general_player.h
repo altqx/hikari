@@ -7,8 +7,9 @@
 // taken on the thread that renders them and handed to this object's thread
 // latest first: while one waits a newer one replaces it, so a busy GUI
 // thread never works through a backlog of old frames (a seek drops the one
-// waiting). Audio goes to the default output device when one exists;
-// without one playback is silent.
+// waiting). Audio goes to the output device setOutputDevice names (H2): the
+// device with that id, else the system default; without a device playback is
+// silent.
 
 #include "hikari/application/general_player.h"
 
@@ -48,6 +49,18 @@ public:
     void setVolume(double linear) override;
     double volume() const { return m_volume; }
 
+    // H2 (decision 60): the output device by its QAudioDevice id (empty: the
+    // system default), applied at once, mid-playback too: Qt reopens its
+    // audio sink and playback goes on. An id the system does not list plays
+    // through the default. The application calls this again whenever the
+    // device list or the default changes (AudioOutputRouting), which moves
+    // the sound off a removed device (B7: Qt stayed on the invalidated one).
+    void setOutputDevice(const std::string &id);
+    // The last request, and the id of the device the output uses (empty
+    // without an output).
+    const std::string &outputDeviceRequest() const { return m_outputRequest; }
+    std::string outputDeviceId() const;
+
     // The player's own sink (presentation reads frames from here).
     QVideoSink *videoSink() { return &m_sink; }
     QString subtitleText() const { return m_sink.subtitleText(); }
@@ -73,6 +86,8 @@ private:
     QMediaPlayer m_player;
     QVideoSink m_sink;
     std::unique_ptr<QAudioOutput> m_audio;
+    bool m_useAudioOutput = true;
+    std::string m_outputRequest;
     std::uint64_t m_generation = 0;
     std::uint64_t m_epoch = 0;
     std::uint64_t m_delivered = 0;

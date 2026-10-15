@@ -6,7 +6,9 @@
 #include "hikari/backends/qt_general_player.h"
 #include "hikari/backends/video_frame_bgra.h"
 
+#include <QAudioDevice>
 #include <QImage>
+#include <QMediaDevices>
 #include <QSignalSpy>
 #include <QVideoFrame>
 #include <QtTest>
@@ -318,6 +320,33 @@ private slots:
         std::optional<std::expected<SeekResult, PlayerError>> seeked;
         player.seek(0, [&](auto r) { seeked = std::move(r); });
         QVERIFY(seeked && !seeked->has_value());
+    }
+
+    // H2 (decision 60): the output device follows the request: a device the
+    // system lists by its id, else the default (System default, or a chosen
+    // device that is not connected). Nothing plays, so nothing sounds.
+    // Without a device (CI) there is no output to move and the request waits.
+    void outputDeviceFollowsTheRequest()
+    {
+        QtGeneralPlayer silent(false); // no audio output: never opens a device
+        silent.setOutputDevice("");
+        QCOMPARE(silent.outputDeviceId(), std::string());
+        QtGeneralPlayer player(true);
+        player.setOutputDevice("no-such-device");
+        QCOMPARE(player.outputDeviceRequest(), std::string("no-such-device"));
+        const auto outputs = QMediaDevices::audioOutputs();
+        if (outputs.isEmpty()) {
+            QCOMPARE(player.outputDeviceId(), std::string());
+            QSKIP("no audio output device on this host: the request is kept, there is nothing to move");
+        }
+        const std::string defaultId = QMediaDevices::defaultAudioOutput().id().toStdString();
+        QCOMPARE(player.outputDeviceId(), defaultId);
+        for (const QAudioDevice &device : outputs) {
+            player.setOutputDevice(device.id().toStdString());
+            QCOMPARE(player.outputDeviceId(), device.id().toStdString());
+        }
+        player.setOutputDevice("");
+        QCOMPARE(player.outputDeviceId(), defaultId);
     }
 
     void chaptersComeFromTheMediaHelper()
