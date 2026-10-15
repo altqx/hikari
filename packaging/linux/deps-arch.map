@@ -1,4 +1,4 @@
-# Arch dependencies of the legacy hikarisub-bin AUR package
+# Arch dependencies of the legacy AUR packages, hikarisub-stable-bin and hikarisub-beta-bin
 # (packaging/linux/aur/render-pkgbuild.sh, through resolve-deps.sh).
 # One line per host soname the app tree needs: "<soname> <package>". The
 # render fails on a soname that has no line here.

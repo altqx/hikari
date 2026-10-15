@@ -1,60 +1,130 @@
 #!/bin/sh
-# Renders the AUR package hikarisub-bin for one stable release.
+# Renders one of the two AUR packages for one release (installers spec, 5.5):
 #
-#   packaging/linux/aur/render-pkgbuild.sh [--offline] <version> <tar.gz> [out dir]
+#   hikarisub-stable-bin  stable releases (X.Y.Z) only; channel "stable"
+#   hikarisub-beta-bin    every release, prereleases included; channel "beta"
 #
-# <tar.gz> is the release's hikarisub-<version>-linux-x86_64.tar.gz (the
-# package's source). Writes <out dir>/PKGBUILD from PKGBUILD.in, with the
-# version, the tarball's SHA-256 and the dependencies: the host libraries the
-# tree needs (tools/release/host-sonames.sh) mapped by
-# packaging/linux/deps-arch.map, plus its runtime section. Then writes
-# <out dir>/.SRCINFO with makepkg --printsrcinfo, as a non-root user; without
-# a local makepkg that runs in the archlinux container pinned in
-# packaging/linux/tools.lock. <out dir> defaults to
-# packaging/linux/aur/hikarisub-bin, the folder the owner pushes to the AUR.
+#   packaging/linux/aur/render-pkgbuild.sh [--offline] [--deps-map <file>] <package> <version> <tar.gz> [out dir]
+#   packaging/linux/aur/render-pkgbuild.sh --packages <version>
+#   packaging/linux/aur/render-pkgbuild.sh --pkgver <version>
 #
-# Refuses a prerelease (the AUR package carries stable releases only) and a
-# version lower than the one on the AUR, so that a late legacy release cannot
-# downgrade AUR users once Qt has taken the package over. --offline skips
-# that AUR check, for test renders only.
+# <version> is the release version without the "v": X.Y.Z or
+# X.Y.Z-{alpha,beta,rc}.N. <tar.gz> is the release's
+# hikarisub-<version>-linux-x86_64.tar.gz (the package's source). Writes
+# <out dir>/PKGBUILD from PKGBUILD.in, with the package name, the version,
+# the channel, the tarball's SHA-256 and the dependencies: the host libraries
+# the tree needs (tools/release/host-sonames.sh) mapped by
+# packaging/linux/deps-arch.map (or --deps-map), plus its runtime section.
+# Then writes <out dir>/.SRCINFO with makepkg --printsrcinfo, as a non-root
+# user; without a local makepkg that runs in the archlinux container pinned
+# in packaging/linux/tools.lock. <out dir> defaults to
+# packaging/linux/aur/<package>.
+#
+# pkgver cannot hold a "-": it is the version without it, so 0.0.2-rc.1 is
+# 0.0.2rc.1, which vercmp sorts below 0.0.2 and above 0.0.1. The source URL
+# keeps the real version (_version in the PKGBUILD).
+#
+# --packages prints the packages a release goes to, one per line;
+# --pkgver prints the pkgver of a version.
+#
+# Exits 1 for a version the package does not carry (a prerelease for
+# hikarisub-stable-bin, or a version that is not of the form above), and 3
+# for a version lower than the package's version on the AUR (read from the
+# AUR RPC, $AUR_RPC or https://aur.archlinux.org/rpc/v5/info), so that a late
+# release cannot downgrade AUR users. --offline skips that AUR check, for
+# test renders only.
 #
 # This file has the same bytes on the legacy (main) and Qt (qt) branches.
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
 linux=$(cd "$here/.." && pwd)
+
+valid_version() {
+    printf '%s\n' "$1" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc)\.[0-9]+)?$'
+}
+is_prerelease() {
+    case $1 in *-*) return 0 ;; *) return 1 ;; esac
+}
+pkgver_of() {
+    printf '%s\n' "$1" | sed 's/-//'
+}
+# vercmp <a> <b>: pacman's own comparison, here or in the archlinux container.
+run_vercmp() {
+    if command -v vercmp >/dev/null 2>&1; then
+        vercmp "$1" "$2"
+    else
+        docker run --rm "$("$linux/fetch-tool.sh" --image archlinux)" vercmp "$1" "$2"
+    fi
+}
+
+case ${1-} in
+--packages | --pkgver)
+    [ $# -eq 2 ] || { echo "usage: $0 $1 <version>" >&2; exit 2; }
+    valid_version "$2" || { echo "error: $2 is not X.Y.Z or X.Y.Z-{alpha,beta,rc}.N" >&2; exit 1; }
+    if [ "$1" = --pkgver ]; then
+        pkgver_of "$2"
+    else
+        is_prerelease "$2" || echo hikarisub-stable-bin
+        echo hikarisub-beta-bin
+    fi
+    exit 0
+    ;;
+esac
+
 offline=false
-if [ "${1-}" = --offline ]; then
-    offline=true
-    shift
-fi
-if [ $# -lt 2 ] || [ $# -gt 3 ]; then
-    echo "usage: $0 [--offline] <version> <tar.gz> [out dir]" >&2
+map=$linux/deps-arch.map
+while [ $# -gt 0 ]; do
+    case $1 in
+    --offline) offline=true; shift ;;
+    --deps-map) map=$2; shift 2 ;;
+    -*) echo "unknown option $1" >&2; exit 2 ;;
+    *) break ;;
+    esac
+done
+if [ $# -lt 3 ] || [ $# -gt 4 ]; then
+    echo "usage: $0 [--offline] [--deps-map <file>] <package> <version> <tar.gz> [out dir]" >&2
     exit 2
 fi
-version=$1 tarball=$2 out=${3:-$here/hikarisub-bin}
+package=$1 version=$2 tarball=$3 out=${4:-$here/$1}
 
-if ! printf '%s\n' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-    echo "error: $version is not a stable X.Y.Z version; the AUR package carries stable releases only" >&2
+case $package in
+hikarisub-stable-bin)
+    channel=stable
+    pkgdesc='Subtitle editor for ASS/SSA, SRT and MicroDVD (prebuilt from the GitHub release)'
+    ;;
+hikarisub-beta-bin)
+    channel=beta
+    pkgdesc='Subtitle editor for ASS/SSA, SRT and MicroDVD (prebuilt from the newest GitHub release, prereleases included)'
+    ;;
+*) echo "error: unknown package $package (hikarisub-stable-bin or hikarisub-beta-bin)" >&2; exit 2 ;;
+esac
+if ! valid_version "$version"; then
+    echo "error: $version is not X.Y.Z or X.Y.Z-{alpha,beta,rc}.N" >&2
+    exit 1
+fi
+if [ $channel = stable ] && is_prerelease "$version"; then
+    echo "error: $version is a prerelease; $package carries stable releases only" >&2
     exit 1
 fi
 [ -f "$tarball" ] || { echo "error: no such file: $tarball" >&2; exit 2; }
+[ -f "$map" ] || { echo "error: no such map file: $map" >&2; exit 2; }
+pkgver=$(pkgver_of "$version")
 
 # Lower than the AUR's version: refuse.
 if [ "$offline" = false ]; then
-    reply=$(curl -fsSL --retry 3 'https://aur.archlinux.org/rpc/v5/info?arg[]=hikarisub-bin')
+    reply=$(curl -fsSL --retry 3 "${AUR_RPC:-https://aur.archlinux.org/rpc/v5/info}?arg[]=$package")
     aur=$(printf '%s' "$reply" | python3 -c 'import json, sys
 r = json.load(sys.stdin)["results"]
-print(r[0]["Version"].split("-")[0] if r else "")')
+print(r[0]["Version"].rsplit("-", 1)[0] if r else "")')
     if [ -n "$aur" ]; then
-        lowest=$(printf '%s\n%s\n' "$aur" "$version" | sort -V | head -n 1)
-        if [ "$lowest" = "$version" ] && [ "$aur" != "$version" ]; then
-            echo "error: $version is lower than hikarisub-bin $aur on the AUR" >&2
-            exit 1
+        if [ "$(run_vercmp "$pkgver" "$aur")" -lt 0 ]; then
+            echo "error: $pkgver is lower than $package $aur on the AUR" >&2
+            exit 3
         fi
-        echo "The AUR has hikarisub-bin $aur"
+        echo "The AUR has $package $aur"
     else
-        echo "The AUR has no hikarisub-bin yet"
+        echo "The AUR has no $package yet"
     fi
 fi
 
@@ -65,7 +135,7 @@ tree=$work/hikarisub-linux-x86_64
 [ -x "$tree/hikarisub" ] || { echo "error: $tarball is not a hikarisub-linux-x86_64 tree" >&2; exit 1; }
 rm -rf "$tree/share" "$tree/install-desktop-integration.sh" "$tree/SHA256SUMS"
 
-"$linux/resolve-deps.sh" arch "$linux/deps-arch.map" 0 "$tree" > "$work/deps"
+"$linux/resolve-deps.sh" arch "$map" 0 "$tree" > "$work/deps"
 quote() { sed "s/'/'\\\\''/g; s/.*/'&'/" | tr '\n' ' ' | sed 's/ $//'; }
 depends=$(awk -F '\t' '$1 == "depends" { print $2 }' "$work/deps" | quote)
 optdepends=$(awk -F '\t' '$1 == "optdepends" { print $2 }' "$work/deps" | quote)
@@ -73,14 +143,15 @@ sha256=$(sha256sum "$tarball" | cut -d ' ' -f 1)
 
 mkdir -p "$out"
 out=$(cd "$out" && pwd)
-python3 - "$here/PKGBUILD.in" "$out/PKGBUILD" "$version" "$sha256" "$depends" "$optdepends" <<'EOF'
+python3 - "$here/PKGBUILD.in" "$out/PKGBUILD" "$package" "$version" "$channel" "$pkgver" "'$pkgdesc'" \
+    "$sha256" "$depends" "$optdepends" <<'EOF'
 import sys
-src, dst, version, sha256, depends, optdepends = sys.argv[1:]
+src, dst = sys.argv[1:3]
+keys = ("@PKGNAME@", "@VERSION@", "@CHANNEL@", "@PKGVER@", "@PKGDESC@", "@SHA256@", "@DEPENDS@", "@OPTDEPENDS@")
 text = open(src).read()
-for key, value in (("@VERSION@", version), ("@SHA256@", sha256),
-                   ("@DEPENDS@", depends), ("@OPTDEPENDS@", optdepends)):
+for key, value in zip(keys, sys.argv[3:]):
     text = text.replace(key, value)
-for key in ("@VERSION@", "@SHA256@", "@DEPENDS@", "@OPTDEPENDS@"):
+for key in keys:
     if key in text:
         sys.exit("unfilled placeholder " + key)
 open(dst, "w").write(text)
@@ -98,4 +169,4 @@ else
         su builder -c "cd /home/builder && makepkg --printsrcinfo" > /pkg/.SRCINFO
         chown --reference=/pkg/PKGBUILD /pkg/.SRCINFO'
 fi
-echo "Rendered $out/PKGBUILD and $out/.SRCINFO for hikarisub-bin $version"
+echo "Rendered $out/PKGBUILD and $out/.SRCINFO for $package $pkgver ($version, channel $channel)"

@@ -30,7 +30,7 @@ HikariSub will stay actively maintained rather than go dormant, and its dependen
 * **Themes**: every colour in the interface can be themed. The bundled themes can be copied and edited in the settings.
 * **Localisation**: the interface is available in English, Polish, Korean, Thai and Tamil.
 * **Windows integration**: registers file associations for subtitle types.
-* **Update check**: when the program starts, once a day at most, it asks GitHub (api.github.com) for the list of HikariSub releases and says when a newer one is out. If GitHub could not be reached, it asks again at a start an hour later. What happens next depends on how HikariSub was installed. The Windows installer, the AppImage, and the deb and rpm packages download the new version from github.com in the background, check it against the SHA-256 the release lists, and install it when you choose Restart now or the next time you quit (an AppImage at the next start after that quit, so that a version that cannot start is put back). Before it installs, the part that installs checks the download once more by itself against the release's `SHA256SUMS` on GitHub, so nothing another program put in your download folder runs with administrator rights: on Windows that is the installed HikariSub, which an all-users installation starts through the administrator prompt, only when its folder cannot be changed without administrator rights, and which then runs the installer (if you start HikariSub while that installer runs, it starts when the installer is done); on Linux it is the deb and rpm packages' update helper, which asks for your password through the system's prompt (pkexec) and installs the package only if it is that release's own file. The AUR package says a new version is out; update it with your AUR helper or pacman as usual. A portable copy (zip or tar.gz) says a new version is out and opens the release page. GitHub sees your IP address and "HikariSub" as the user agent, and nothing about the build. The check is on by default; turn it off in File > Settings, on the Editor page, under Updates, where turning off "Install updates automatically" makes an installed copy only say a new version is out, as a portable copy does. Help > Check for updates checks at any time.
+* **Update check**: when the program starts, once a day at most, it asks GitHub (api.github.com) for the list of HikariSub releases and says when a newer one is out. If GitHub could not be reached, it asks again at a start an hour later. What happens next depends on how HikariSub was installed. The Windows installer, the AppImage, and the deb and rpm packages download the new version from github.com in the background, check it against the SHA-256 the release lists, and install it when you choose Restart now or the next time you quit (an AppImage at the next start after that quit, so that a version that cannot start is put back). Before it installs, the part that installs checks the download once more by itself against the release's `SHA256SUMS` on GitHub, so nothing another program put in your download folder runs with administrator rights: on Windows that is the installed HikariSub, which an all-users installation starts through the administrator prompt, only when its folder cannot be changed without administrator rights, and which then runs the installer (if you start HikariSub while that installer runs, it starts when the installer is done); on Linux it is the deb and rpm packages' update helper, which asks for your password through the system's prompt (pkexec) and installs the package only if it is that release's own file. The AUR packages say a new version is out (hikarisub-stable-bin only for stable releases, hikarisub-beta-bin for release candidates too); update with your AUR helper or pacman as usual. A portable copy (zip or tar.gz) says a new version is out and opens the release page. GitHub sees your IP address and "HikariSub" as the user agent, and nothing about the build. The check is on by default; turn it off in File > Settings, on the Editor page, under Updates, where turning off "Install updates automatically" makes an installed copy only say a new version is out, as a portable copy does. Help > Check for updates checks at any time.
 
 ### Subtitle grid
 
@@ -161,9 +161,14 @@ has these Linux x86_64 packages. All of them need glibc 2.35 or newer: Ubuntu
   On Fedora and openSUSE, H.264, AAC and other patented formats play only
   with the full codec sets from RPM Fusion or Packman; the FFMS2 path used for
   typesetting and timing decodes them either way.
-* **Arch Linux**: install the AUR package `hikarisub-bin` with an AUR helper
-  (`yay -S hikarisub-bin` or `paru -S hikarisub-bin`), and update it as any
-  other package (`yay -Syu`). It carries stable releases only.
+* **Arch Linux**: install one of the two AUR packages with an AUR helper, and
+  update it as any other package (`yay -Syu`):
+  * `hikarisub-stable-bin` (`yay -S hikarisub-stable-bin`) carries stable
+    releases only;
+  * `hikarisub-beta-bin` (`yay -S hikarisub-beta-bin`) carries every release,
+    release candidates included, so it always has the newest one.
+
+  They conflict with each other: install one.
 * **Portable** (`hikarisub-<version>-linux-x86_64.tar.gz`): extract it
   anywhere and run `./hikarisub`. It uses the system's GTK and GStreamer, so
   install those first (see "Package names on other Linux distributions"
@@ -176,8 +181,10 @@ leaves your settings in your home directory alone.
 
 When a new release is out, HikariSub tells you. The AppImage replaces itself,
 and the deb and rpm download the new package and install it after the
-system's password prompt. The AUR package only tells you; update it with your
-AUR helper as usual.
+system's password prompt. The AUR packages only tell you; update with your
+AUR helper as usual. `hikarisub-stable-bin` is told about stable releases
+only and `hikarisub-beta-bin` about release candidates too, so the "Stable
+versions only" option is not shown for them.
 
 ## Building from Source
 
@@ -538,3 +545,24 @@ Under Wayland specifically (these work normally on X11):
 - "Fullscreen on a specific monitor" falls back to fullscreen on the current output.
 - Auto-pause-on-minimize and the B-key minimize do nothing a Wayland client cannot minimize itself.
 - The screen-pixel colour eyedropper is unavailable Wayland forbids reading pixels outside the app's own surface.
+
+## Publishing to the AUR (maintainers)
+
+The release job publishes each release to the AUR: `hikarisub-beta-bin` always,
+`hikarisub-stable-bin` too for a stable version. It needs an AUR account whose
+SSH key is the repository secret `AUR_SSH_PRIVATE_KEY`. Without one, or when the
+AUR refuses the key, the release still comes out and the job only warns. To
+publish later:
+
+1. Register at <https://aur.archlinux.org/register> and add the public key
+   (`~/.ssh/aur_ed25519.pub`) under My Account, SSH Public Key.
+2. Run the AUR publish workflow for the newest release, for example
+   `gh workflow run aur-publish.yml -f tag=v0.0.2-rc.1` (add `-f dry_run=true`
+   to see the commits without pushing them).
+
+It takes the release's tar.gz from GitHub, checks it against the release's
+`SHA256SUMS`, builds and installs each package in an Arch container, and pushes
+it. It refuses an older tag when a newer release of the same channel exists, and
+a version lower than the one on the AUR. The packages follow legacy until the
+repository variable `HIKARISUB_OFFER_QT_TO_LEGACY` is `true`, then the Qt
+rewrite.

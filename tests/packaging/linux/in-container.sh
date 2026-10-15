@@ -384,6 +384,9 @@ test_aur() {
     work=$uhome/aur
     mkdir -p "$work"
     cp /aur/PKGBUILD /aur/.SRCINFO "$work/"
+    # hikarisub-stable-bin or hikarisub-beta-bin, and its channel.
+    pkgname=$(sed -n 's/^pkgname = //p' /aur/.SRCINFO)
+    channel=$(sed -n "s/^_channel=//p" /aur/PKGBUILD)
     # makepkg takes the source from beside the PKGBUILD and still checks its
     # SHA-256 (installers spec, 8.2).
     cp "$(ls /dist/hikarisub-"$version"-linux-x86_64.tar.gz)" "$work/"
@@ -391,7 +394,7 @@ test_aur() {
     as_user "cd aur && makepkg --printsrcinfo | diff - .SRCINFO" || fail "aur: .SRCINFO is not makepkg --printsrcinfo"
     pass "aur: .SRCINFO matches the PKGBUILD"
     as_user "cd aur && makepkg -s --noconfirm" > "$log/makepkg.txt" 2>&1 || { tail -n 40 "$log/makepkg.txt"; fail "aur: makepkg"; }
-    pkg=$(ls "$work"/hikarisub-bin-*.pkg.tar.zst)
+    pkg=$(ls "$work"/"$pkgname"-*.pkg.tar.zst)
     pass "aur: makepkg built $(basename "$pkg")"
 
     as_user "cd aur && namcap PKGBUILD; namcap $(basename "$pkg")" > "$log/namcap.txt" 2>&1 || true
@@ -407,10 +410,12 @@ test_aur() {
 
     pacman -U --noconfirm "$pkg" > "$log/install.txt" 2>&1 || { cat "$log/install.txt"; fail "aur: pacman -U"; }
     pass "aur: pacman -U installs it with its dependencies"
-    [ -f /usr/share/licenses/hikarisub-bin/LICENSE ] || fail "aur: the license is not in /usr/share/licenses/hikarisub-bin"
+    [ -f "/usr/share/licenses/$pkgname/LICENSE" ] || fail "aur: the license is not in /usr/share/licenses/$pkgname"
+    [ "$(cat /opt/hikarisub/aur-channel.txt)" = "$channel" ] || fail "aur: aur-channel.txt is not $channel"
+    pass "aur: $pkgname carries its license and the channel marker $channel"
     native_checks aur arch
     validate_desktop_files aur
-    pacman -R --noconfirm hikarisub-bin >/dev/null
+    pacman -R --noconfirm "$pkgname" >/dev/null
     removed aur
 }
 

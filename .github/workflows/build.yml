@@ -531,15 +531,15 @@ jobs:
   # (glibc 2.35, g++-12; packaging/linux/floor) so they run on Ubuntu 22.04,
   # Debian 12 and everything newer: the portable tar.gz, the AppImage (with
   # GTK, GLib and GStreamer inside), the deb and rpm (nFPM) and the AUR
-  # PKGBUILD. FFmpeg 7.1 and the FFMS2 fork are built from source there.
+  # PKGBUILDs. FFmpeg 7.1 and the FFMS2 fork are built from source there.
   # The artifact hikarisub-linux-packages holds the files under their release
-  # asset names, plus aur/PKGBUILD and aur/.SRCINFO for a stable version.
+  # asset names; hikarisub-linux-package-tests holds the rendered AUR
+  # packages (aur-test/<package>) for the container test.
   linux-packages:
     name: Linux packages
     runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.keys.outputs.version }}
-      stable: ${{ steps.keys.outputs.stable }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -550,7 +550,6 @@ jobs:
         run: |
           version=$(sed -n 's/^#define[[:space:]]*VersionHikariSub[[:space:]]*"\(.*\)".*/\1/p' HikariSub/VersionHikariSub.h)
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "stable=$([[ "$version" == *-* ]] && echo false || echo true)" >> "$GITHUB_OUTPUT"
           image=$(cat packaging/linux/floor/image)
           echo "image=${image##*@sha256:}" >> "$GITHUB_OUTPUT"
           echo "wx=$(git rev-parse HEAD:Thirdparty/wxWidgets)" >> "$GITHUB_OUTPUT"
@@ -646,24 +645,19 @@ jobs:
           grep -a -q 'gh-releases-zsync|altqx|hikari|latest|HikariSub-\*-linux-x86_64.AppImage.zsync' \
             "linux-packages/HikariSub-$VERSION-linux-x86_64.AppImage"
 
-      # A stable version gets the AUR files the owner commits and pushes
-      # (installers spec, 5.5). A prerelease is never rendered; its run
-      # renders a test PKGBUILD for X.Y.Z offline, only for the container test.
-      - name: Render the AUR package
+      # The AUR packages this version goes to (installers spec, 5.5), rendered
+      # offline from this build's tar.gz for the container test:
+      # hikarisub-beta-bin always, hikarisub-stable-bin too for a stable
+      # version. The release job renders the published tar.gz and publishes.
+      - name: Render the AUR packages
         env:
           VERSION: ${{ steps.keys.outputs.version }}
-          STABLE: ${{ steps.keys.outputs.stable }}
         run: |
-          if [[ "$STABLE" == true ]]; then
-            packaging/linux/aur/render-pkgbuild.sh "$VERSION" "linux-packages/hikarisub-$VERSION-linux-x86_64.tar.gz" linux-packages/aur
-            aur_dir=linux-packages/aur aur_version=$VERSION
-          else
-            aur_version=${VERSION%%-*}
-            mkdir -p aur-test
-            cp "linux-packages/hikarisub-$VERSION-linux-x86_64.tar.gz" "aur-test/hikarisub-$aur_version-linux-x86_64.tar.gz"
-            packaging/linux/aur/render-pkgbuild.sh --offline "$aur_version" "aur-test/hikarisub-$aur_version-linux-x86_64.tar.gz" aur-test/aur
-          fi
-          cat linux-packages/aur/PKGBUILD 2>/dev/null || cat aur-test/aur/PKGBUILD
+          for package in $(packaging/linux/aur/render-pkgbuild.sh --packages "$VERSION"); do
+            packaging/linux/aur/render-pkgbuild.sh --offline "$package" "$VERSION" \
+              "linux-packages/hikarisub-$VERSION-linux-x86_64.tar.gz" "aur-test/$package"
+            cat "aur-test/$package/PKGBUILD"
+          done
 
       - name: Upload the packages
         uses: actions/upload-artifact@v4
@@ -677,7 +671,7 @@ jobs:
         run: |
           mkdir -p test-helpers
           cp -a floor-out/test/. test-helpers/
-          if [[ -d aur-test ]]; then cp -a aur-test test-helpers/; fi
+          cp -a aur-test test-helpers/
 
       - uses: actions/upload-artifact@v4
         with:
@@ -726,23 +720,27 @@ jobs:
       - name: Test
         env:
           VERSION: ${{ needs.linux-packages.outputs.version }}
-          STABLE: ${{ needs.linux-packages.outputs.stable }}
         run: |
           args=(--gst-check helpers/gst-check)
           case "${{ matrix.test }}" in
             deb|rpm) args+=(--upgrade helpers/upgrade) ;;
           esac
-          dist=dist version=$VERSION
           if [[ "${{ matrix.test }}" == aur ]]; then
-            if [[ "$STABLE" == true ]]; then
-              args+=(--aur dist/aur)
-            else
-              version=${VERSION%%-*}
-              dist=helpers/aur-test
-              args+=(--aur helpers/aur-test/aur)
-            fi
+            args+=(--aur helpers/aur-test/hikarisub-beta-bin)
           fi
-          tests/packaging/linux/run.sh "${args[@]}" "${{ matrix.test }}" "${{ matrix.image }}" "$dist" "$version"
+          tests/packaging/linux/run.sh "${args[@]}" "${{ matrix.test }}" "${{ matrix.image }}" dist "$VERSION"
+
+  # The AUR scripts (packaging/linux/aur) without the AUR: the channel rules,
+  # pkgver, the downgrade and newest-release refusals, and publishing to
+  # local repositories (installers spec, 8.2).
+  aur-scripts:
+    name: AUR scripts
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test
+        run: tests/packaging/linux/aur-scripts-test.sh
 
   # Runs alongside the builds so a tag that does not match the source fails
   # straight away rather than after them. Legacy stays at 0.0.x, and a
@@ -781,13 +779,12 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "prerelease=$([[ "$version" == *-* ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
-  # Publishes the release, then its update manifest, then for a stable
-  # release the AUR package's PKGBUILD (installers spec, section 7). The
-  # packages come from the linux-packages and windows-installer jobs under
-  # their release names.
+  # Publishes the release, then its update manifest, then the AUR packages
+  # (installers spec, section 7). The packages come from the linux-packages
+  # and windows-installer jobs under their release names.
   release:
     name: Release
-    needs: [release-version, tests, windows-tests, update-helper-tests, windows, windows-installer, linux, linux-packages, linux-package-tests]
+    needs: [release-version, tests, windows-tests, update-helper-tests, windows, windows-installer, linux, linux-packages, linux-package-tests, aur-scripts]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -926,34 +923,29 @@ jobs:
           echo "Publishing with $flag"
           gh release edit "$GITHUB_REF_NAME" --draft=false "$flag"
 
-      # The AUR package follows legacy until Qt replaces it for users. Its
-      # PKGBUILD is rendered from the published tar.gz and built against
-      # the published URL; the release stays published if this fails.
-      - name: Render and build the AUR package
-        if: env.PRERELEASE != 'true' && vars.HIKARISUB_OFFER_QT_TO_LEGACY != 'true'
+      # The AUR packages (installers spec, 5.5), while they follow legacy
+      # (until HIKARISUB_OFFER_QT_TO_LEGACY): hikarisub-beta-bin for every
+      # release, hikarisub-stable-bin too for a stable one. Each is rendered
+      # from the published tar.gz, built and started in the pinned archlinux
+      # container from the published URL, then pushed to the AUR. A missing
+      # or refused key, a newer version on the AUR or a newer release of the
+      # channel is a warning: the release is out already, and the owner can
+      # publish it later with the AUR publish workflow (aur-publish.yml).
+      - name: Publish to the AUR
+        if: vars.HIKARISUB_OFFER_QT_TO_LEGACY != 'true'
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
         run: |
-          packaging/linux/aur/render-pkgbuild.sh "$VERSION" "release/hikarisub-$VERSION-linux-x86_64.tar.gz"
-          aur=packaging/linux/aur/hikarisub-bin
-          test -f "$aur/PKGBUILD" && test -f "$aur/.SRCINFO"
-          docker run --rm -v "$PWD/$aur:/aur:ro" -e VERSION archlinux:latest bash -euo pipefail -c '
-            pacman -Syu --noconfirm --needed base-devel sudo >/dev/null
-            useradd -m builder
-            echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
-            cp /aur/PKGBUILD /home/builder/
-            chown -R builder /home/builder
-            cd /home/builder
-            sudo -u builder makepkg -si --noconfirm
-            got=$(/usr/bin/hikarisub --version)
-            test "$got" = "$VERSION (arch)" || { echo "hikarisub --version: $got"; exit 1; }
-          '
-          mkdir aur-artifact
-          cp "$aur/PKGBUILD" "$aur/.SRCINFO" aur-artifact/
+          gh api --paginate "repos/$GH_REPO/releases?per_page=100" \
+            --jq '.[] | {tag_name, draft, prerelease}' | jq -s . > releases.json
+          packaging/linux/aur/release-aur.sh --releases releases.json \
+            "$VERSION" "release/hikarisub-$VERSION-linux-x86_64.tar.gz" aur-artifact
 
       - name: Upload the AUR files
-        if: env.PRERELEASE != 'true' && vars.HIKARISUB_OFFER_QT_TO_LEGACY != 'true'
+        if: always() && vars.HIKARISUB_OFFER_QT_TO_LEGACY != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: hikarisub-aur
           path: aur-artifact/
           include-hidden-files: true
-          if-no-files-found: error
+          if-no-files-found: warn
