@@ -63,3 +63,7 @@ Host bound as `docs/qt/perf/hosts/ruby.md/.json` in this branch. Everything is *
   - Keystroke latency: no presentation or ETW traces.
   - Cold starts.
   - A/V: needs calibrated loopback capture (light sensor and audio into one capture device, ≤5 ms).
+
+## Follow-ups
+
+Two D3 fixes were pushed to `qt` after this session: `366189ea5` (live monitor removal) and `7812c180f` (whole header docks on Windows). Their status, CI results and what is left: [FOLLOW-UPS.md](FOLLOW-UPS.md).
