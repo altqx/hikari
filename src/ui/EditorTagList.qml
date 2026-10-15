@@ -86,6 +86,14 @@ Item {
         return false
     }
 
+    // E6-ime-esc-list-first: an Escape that ends a composition closes the
+    // list, and the text the composition committed does not open it again.
+    function dismiss() {
+        tags.composedFrom = field.text
+        tags.composedAt = field.cursorPosition
+        controller.close()
+    }
+
     function afterTyped() {
         const typed = tags.typedKey
         tags.typedKey = ""

@@ -2093,6 +2093,10 @@ ApplicationWindow {
         // wait, so a second, separate Enter commits as usual. CodeMirror 6
         // and ProseMirror ignore one Enter within 100 or 500 ms of
         // compositionend the same way.
+        // E6-ime-esc-list-first (decision 60): Escape the same way cancels
+        // the composition and closes the tag list, keeping the draft (K8;
+        // the Japanese IME keeps its Escape, J5); a second, separate Escape
+        // reverts the draft as usual (K10).
         readonly property int compositionKeyWindow: 200
         property double compositionEndedAt: -1
         onInputMethodComposingChanged: compositionEndedAt = inputMethodComposing ? -1 : Date.now()
@@ -2100,16 +2104,19 @@ ApplicationWindow {
         onPressed: compositionEndedAt = -1
         function compositionKey(event) {
             const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)
-            if (mods !== 0 || (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter))
+            if (mods !== 0 || (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter
+                               && event.key !== Qt.Key_Escape))
                 return false
             return inputMethodComposing
                 || (compositionEndedAt >= 0 && Date.now() - compositionEndedAt <= compositionKeyWindow)
         }
-        function endComposition() {
-            if (inputMethodComposing)
+        function endComposition(cancel) {
+            if (inputMethodComposing && !cancel)
                 Qt.inputMethod.commit()
             if (inputMethodComposing)
                 Qt.inputMethod.reset() // Windows' commit() is empty; its reset() commits the composition
+            if (cancel)
+                tagListPopup.dismiss()
             compositionEndedAt = -1
         }
         Keys.onReleased: event => {
@@ -2150,7 +2157,7 @@ ApplicationWindow {
                                                            || tagListPopup.takesKey(event)
         Keys.onPressed: event => {
             if (field.compositionKey(event)) {
-                field.endComposition()
+                field.endComposition(event.key === Qt.Key_Escape)
                 event.accepted = true
                 return
             }

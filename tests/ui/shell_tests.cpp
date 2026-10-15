@@ -1198,6 +1198,82 @@ private slots:
         QCOMPARE(documentLineText(session, 2), QStringLiteral("x"));
     }
 
+    // E6-ime-esc-list-first (decision 60, the E6 Windows evidence K8 to K10
+    // and J5): an Escape during a composition, or the one an input method
+    // passes on as it ends a composition, cancels the composition and closes
+    // the tag list; the draft stays. A second, separate Escape reverts the
+    // draft as usual.
+    void anEscapeThatEndsACompositionKeepsTheDraft()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        auto &editor = application->editor();
+        auto *list = editor.tagList();
+        editor.setShowTags(true);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        text->forceActiveFocus();
+        const auto openList = [&] {
+            text->setProperty("cursorPosition", 0);
+            QTest::keyClick(window, '{');
+            QTest::keyClick(window, '\\');
+            QTRY_VERIFY(list->open());
+            QTRY_COMPARE(editor.text(), QStringLiteral("{\\first"));
+        };
+
+        // Windows (Microsoft Korean IME, K8): the IME leaves Escape to the
+        // field while the syllable is still composed under the open list.
+        openList();
+        QVERIFY(!QTest::currentTestFailed());
+        sendPreedit(text, QStringLiteral("한"));
+        QVERIFY(list->open());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QCoreApplication::processEvents();
+        QVERIFY(!list->open());
+        QTRY_COMPARE(text->property("text").toString().left(2), QStringLiteral("{\\"));
+        QVERIFY(editor.text().startsWith(QStringLiteral("{\\"))); // the draft stays
+        if (text->property("inputMethodComposing").toBool()) // no platform input method offscreen
+            sendPreedit(text, QString());
+        QTRY_VERIFY(editor.text().startsWith(QStringLiteral("{\\")));
+        QTest::qWait(separateKeyDelay);
+        press(Qt::Key_Escape); // the second one reverts the draft
+        QTRY_COMPARE(editor.text(), QStringLiteral("first"));
+
+        // Linux (ibus-hangul): the preedit cleared, the syllable committed,
+        // then the forwarded Escape.
+        QTest::qWait(separateKeyDelay);
+        openList();
+        QVERIFY(!QTest::currentTestFailed());
+        sendPreedit(text, QStringLiteral("한"));
+        sendPreedit(text, QString());
+        sendCommit(text, QStringLiteral("한"));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QCoreApplication::processEvents();
+        QVERIFY(!list->open());
+        QTRY_COMPARE(editor.text(), QStringLiteral("{\\한first"));
+        QCOMPARE(text->property("text").toString(), QStringLiteral("{\\한first"));
+
+        // Without the list (K10): the composition's Escape keeps the draft
+        // too; a second, separate one reverts it.
+        QTest::qWait(separateKeyDelay);
+        press(Qt::Key_Escape);
+        QTRY_COMPARE(editor.text(), QStringLiteral("first"));
+        QTest::qWait(separateKeyDelay);
+        text->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, '1');
+        QTest::keyClick(window, '2');
+        QTRY_COMPARE(editor.text(), QStringLiteral("first12"));
+        QVERIFY(!list->open());
+        sendPreedit(text, QStringLiteral("한"));
+        sendCommit(text, QStringLiteral("한"));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QCoreApplication::processEvents();
+        QTRY_COMPARE(editor.text(), QStringLiteral("first12한"));
+        QTest::qWait(separateKeyDelay);
+        press(Qt::Key_Escape);
+        QTRY_COMPARE(editor.text(), QStringLiteral("first"));
+    }
+
     // E6: GLOBAL_HIDE_TAGS, Subtitles > Hide tags (legacy SubsGrid::
     // HideOverrideTags): the Grid's text with each block swapped for
     // GRID_TAGS_SWAP_CHARACTER, kept in GRID_HIDE_TAGS.
