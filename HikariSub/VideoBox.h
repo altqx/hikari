@@ -78,6 +78,9 @@ public:
 	void OnAccelerator(wxCommandEvent& event);
 	//void OnVButton(wxCommandEvent& event);
 	void OnVolume(wxScrollEvent& event);
+	// the video volume sliders show the volume set elsewhere: the volume bar
+	// of the audio box for a video FFMS2 plays, the other slider otherwise
+	void SyncVolumeSliders();
 	void OnSMinus();
 	void OnSPlus();
 	void ChangeStream();

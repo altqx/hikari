@@ -1035,6 +1035,9 @@
     <ClInclude Include="VideoFullscreen.h">
       <Filter>V</Filter>
     </ClInclude>
+    <ClInclude Include="VideoVolume.h">
+      <Filter>V</Filter>
+    </ClInclude>
     <ClInclude Include="VideoSlider.h">
       <Filter>V</Filter>
     </ClInclude>

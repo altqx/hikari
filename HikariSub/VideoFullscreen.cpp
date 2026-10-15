@@ -22,6 +22,7 @@
 #include "RendererFFMS2.h"
 #include "hikarisubApp.h"
 #include "config.h"
+#include "VideoVolume.h"
 #include <wx/dcclient.h>
 #include <wx/event.h>
 
@@ -161,11 +162,8 @@ void Fullscreen::OnSize()
 	//}
 	//
 	vslider->SetSize(wxSize(wxMax(0, asize.x), wxMax(0, toolBarHeight - 8)));
-	if(vc->IsDirectShow()){
-		volslider->Show(); 
-		volslider->SetPosition(wxPoint(asize.x - 110, toolBarHeight - 5));
-	}
-	else{volslider->Show(false);}
+	volslider->Show(FullscreenShowsVolumeSlider(vc->IsDirectShow()));
+	volslider->SetPosition(wxPoint(asize.x - 110, toolBarHeight - 5));
 }
 
 void Fullscreen::HideToolbar(bool hide){

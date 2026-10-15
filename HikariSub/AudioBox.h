@@ -107,6 +107,7 @@ private:
 	void OnLeadIn(wxCommandEvent &event);
 	void OnLeadOut(wxCommandEvent &event);
 	void OnVolume(wxScrollEvent &event);
+	void SyncVideoVolume();
 	void OnAutoGoto(wxCommandEvent &event);
 	void OnAutoCommit(wxCommandEvent &event);
 	void OnSpectrumMode(wxCommandEvent &event);

@@ -99,6 +99,7 @@ add_executable(hikarisub_tests
     UndoHistoryTests.cpp
     UpdatePolicyTests.cpp
     VideoFrameAreaTests.cpp
+    VideoVolumeTests.cpp
     update/UpdateManifestTests.cpp
     update/UpdateVerifyTests.cpp
     TextComparisonTests.cpp

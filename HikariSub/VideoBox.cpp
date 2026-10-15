@@ -29,6 +29,7 @@
 #include "Notebook.h"
 #include "HikariSlider.h"
 #include "AudioBox.h"
+#include "VideoVolume.h"
 #include "KeyframesLoader.h"
 //#include "EditBox.h"
 //#include "SubsGrid.h"
@@ -551,6 +552,7 @@ void VideoBox::OnMouseEvent(wxMouseEvent& event)
 					int step = event.GetWheelRotation() / event.GetWheelDelta();
 					vol += (step * 3);
 					box->SetVolume(vol);
+					SyncVolumeSliders();
 				}
 			}
 			else if (m_IsFullscreen){ m_FullScreenWindow->volslider->OnMouseEvent(event); }
@@ -852,7 +854,7 @@ void VideoBox::SetFullscreen(int monitor)
 			m_FullScreenWindow->SetSize(rt.GetSize());
 		}
 		m_FullScreenWindow->OnSize();
-		m_FullScreenWindow->volslider->SetValue(Options.GetInt(VIDEO_VOLUME));
+		SyncVolumeSliders();
 		m_FullScreenWindow->vToolbar->Synchronize(m_VideoToolbar);
 		if (!m_PanelOnFullscreen){ m_FullScreenWindow->panel->Hide(); }
 		m_FullScreenWindow->Show();
@@ -969,9 +971,35 @@ void VideoBox::OnVolume(wxScrollEvent& event)
 {
 	if (renderer) {
 		int pos = event.GetPosition();
+		if (!m_IsDirectShow){
+			// FFMS2 plays the audio box's audio: the fullscreen slider sets
+			// its volume bar (RendererFFMS2::SetVolume), VIDEO_VOLUME stays
+			// the other players' volume
+			renderer->SetVolume(-(pos * pos));
+			return;
+		}
 		Options.SetInt(VIDEO_VOLUME, pos);
 		renderer->SetVolume(-(pos * pos));
+		// the main window's and the fullscreen slider show the same volume;
+		// the one moved is left as it is
+		m_VolumeSlider->SetValue(pos);
+		if (m_FullScreenWindow){ m_FullScreenWindow->volslider->SetValue(pos); }
 	}
+}
+
+void VideoBox::SyncVolumeSliders()
+{
+	int value = Options.GetInt(VIDEO_VOLUME);
+	if (!m_IsDirectShow){
+		AudioBox *box = tab->edit->ABox;
+		if (!box)
+			return;
+		value = VideoSliderFromAudioVolume(box->GetVolume());
+	}
+	else{
+		m_VolumeSlider->SetValue(value);
+	}
+	if (m_FullScreenWindow){ m_FullScreenWindow->volslider->SetValue(value); }
 }
 
 void VideoBox::ContextMenu(const wxPoint &pos)
@@ -1260,6 +1288,7 @@ void VideoBox::OnSMinus()
 			vol -= 2;
 			if (vol >= 0){
 				box->SetVolume(vol);
+				SyncVolumeSliders();
 			}
 		}
 	}
@@ -1287,6 +1316,7 @@ void VideoBox::OnSPlus()
 			vol += 2;
 			if (vol < 102){
 				box->SetVolume(vol);
+				SyncVolumeSliders();
 			}
 		}
 

@@ -288,6 +288,7 @@ void AudioBox::OnVerticalZoom(wxScrollEvent &event) {
 			audioDisplay->player->SetVolume(PlaybackVolumeFromSlider(pos));
 		VolumeBar->SetValue(VerticalZoom->GetValue());
 		Options.SetInt(AUDIO_VOLUME, pos);
+		SyncVideoVolume();
 	}
 	Options.SetInt(AUDIO_VERTICAL_ZOOM, pos);
 	if (event.GetEventType() == wxEVT_SCROLL_THUMBRELEASE)
@@ -314,6 +315,15 @@ void AudioBox::OnVolume(wxScrollEvent &event) {
 		audioDisplay->SetScale(AudioDisplayScaleFromSlider(pos));
 		Options.SetInt(AUDIO_VERTICAL_ZOOM, pos);
 	}
+	SyncVideoVolume();
+}
+
+// a video FFMS2 plays has this audio: its fullscreen volume slider follows
+void AudioBox::SyncVideoVolume()
+{
+	TabPanel *tab = audioDisplay->tab;
+	if (tab && tab->video)
+		tab->video->SyncVolumeSliders();
 }
 
 
@@ -329,6 +339,7 @@ void AudioBox::OnVerticalLink(wxCommandEvent &event) {
 		//VolumeBar->SetValue(pos);
 		VolumeBar->SetValue(VerticalZoom->GetValue());
 		Options.SetInt(AUDIO_VOLUME, pos);
+		SyncVideoVolume();
 	}
 
 	Options.SetBool(AUDIO_LINK, VerticalLink->GetValue());

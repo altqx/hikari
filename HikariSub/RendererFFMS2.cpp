@@ -23,6 +23,7 @@
 #include "OpennWrite.h"
 #include "DshowRenderer.h"
 #include "RendererFFMS2.h"
+#include "VideoVolume.h"
 #include "VisualDrawingShapes.h"
 #include "Visuals.h"
 #include "VideoFullscreen.h"
@@ -733,9 +734,7 @@ void RendererFFMS2::SetVolume(int vol)
 {
 	if (m_State == None || !m_AudioPlayer){ return; }
 	
-	vol = 7600 + vol;
-	double dvol = vol / 7600.0;
-	int sliderValue = (dvol * 99) + 1;
+	int sliderValue = AudioVolumeFromVideoVolume(vol);
 	if (tab->edit->ABox){
 		tab->edit->ABox->SetVolume(sliderValue);
 	}
