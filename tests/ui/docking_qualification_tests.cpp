@@ -28,6 +28,8 @@
 
 #include <functional>
 #include <QAccessible>
+#include <QFont>
+#include <QFontMetricsF>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -1521,8 +1523,16 @@ private slots:
         QVERIFY2(moveArea->x() >= text->x() + text->property("contentWidth").toReal() && moveArea->width() >= 48
                      && moveArea->x() + moveArea->width() <= button->x(),
                  qPrintable(split()));
-        // a title longer than the header
-        QVERIFY(audio->setProperty("title", QStringLiteral("Audio waveform, spectrum, karaoke syllables and the keyframes of the current video, with every audio track")));
+        // a title longer than the header, in a window as wide as a window
+        // system may make it (sway gave this one 779 pixels, where a fixed
+        // title of 650 fitted whole): the title is made twice the header's width
+        floating->resize(qMax(floating->width(), 1600), floating->height());
+        QTRY_VERIFY2(bar->width() > 1500, qPrintable(split()));
+        const QFontMetricsF metrics(text->property("font").value<QFont>());
+        QString longTitle = QStringLiteral("Audio waveform, spectrum, karaoke syllables and the keyframes of the current video, with every audio track");
+        while (metrics.horizontalAdvance(longTitle) < 2 * bar->width())
+            longTitle += QStringLiteral(", ") + longTitle;
+        QVERIFY(audio->setProperty("title", longTitle));
         QTRY_VERIFY2(text->property("truncated").toBool(), qPrintable(split()));
         QTRY_VERIFY2(qAbs(moveArea->width() - 48) < 0.5 && moveArea->x() - text->x() >= 48, qPrintable(split()));
         QVERIFY2(moveArea->x() + moveArea->width() <= button->x(), qPrintable(split()));
