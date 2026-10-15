@@ -1,6 +1,9 @@
 #!/bin/bash
-# The AUR package hikarisub-bin in archlinux:latest (installers spec 8.2).
-# Run as root; container-test.sh --tests aur calls it.
+# The AUR package hikarisub-beta-bin in archlinux:latest (installers spec
+# 8.2), which every release goes to; hikarisub-stable-bin, rendered from the
+# same template, differs in its name and channel only
+# (tests/packaging/linux/aur-scripts-test.sh). Run as root; the Linux
+# packages workflow calls it.
 #
 #   aur-test.sh --dist <dir> --version <V> [--expect-version-switch] [--published]
 #
@@ -11,8 +14,8 @@
 #    release (spec 7, step 5).
 # 3. namcap on the PKGBUILD and the package; only the accepted findings.
 # 4. makepkg --printsrcinfo matches .SRCINFO.
-# 5. pacman -U from the repositories alone; the app starts, the marker is
-#    "arch", no update helper or polkit policy.
+# 5. pacman -U from the repositories alone; the app starts, the markers are
+#    "arch" and "beta", no update helper or polkit policy.
 # 6. pacman -R: /opt/hikarisub gone, $HOME untouched.
 set -euo pipefail
 
@@ -56,25 +59,28 @@ fi
 chown -R builder "$work"
 
 # 1. Render.
-runuser -u builder -- "$work/src/packaging/linux/aur/render-pkgbuild.sh" "$version" "$tarball" "$work/pkg"
+pkgver=$("$work/src/packaging/linux/aur/render-pkgbuild.sh" --pkgver "$version")
+runuser -u builder -- "$work/src/packaging/linux/aur/render-pkgbuild.sh" --offline hikarisub-beta-bin "$version" \
+    "$tarball" "$work/pkg"
 cat "$work/pkg/PKGBUILD"
-grep -q "^pkgver=$version\$" "$work/pkg/PKGBUILD" || fail "pkgver"
+grep -q "^pkgver=$pkgver\$" "$work/pkg/PKGBUILD" || fail "pkgver"
+grep -q "^_version=$version\$" "$work/pkg/PKGBUILD" || fail "_version"
 grep -q "^sha256sums=('$(sha256sum "$tarball" | cut -d' ' -f1)')\$" "$work/pkg/PKGBUILD" || fail "sha256sums"
 pass "rendered PKGBUILD $version"
 
-# A prerelease is refused.
-if runuser -u builder -- "$work/src/packaging/linux/aur/render-pkgbuild.sh" --offline \
-        "$version-rc.1" "$tarball" "$work/pre" > /dev/null 2>&1; then
-    fail "render-pkgbuild.sh accepted a prerelease"
+# hikarisub-stable-bin refuses a prerelease.
+if runuser -u builder -- "$work/src/packaging/linux/aur/render-pkgbuild.sh" --offline hikarisub-stable-bin \
+        "${version%%-*}-rc.1" "$tarball" "$work/pre" > /dev/null 2>&1; then
+    fail "render-pkgbuild.sh accepted a prerelease for hikarisub-stable-bin"
 fi
-pass "render-pkgbuild.sh refuses a prerelease"
+pass "render-pkgbuild.sh refuses a prerelease for hikarisub-stable-bin"
 
 # 2. Build. The local tar.gz stands in for the download under its source name.
 [ $published = 1 ] || cp "$tarball" "$work/pkg/hikarisub-$version-linux-x86_64.tar.gz"
 chown -R builder "$work"
 (cd "$work/pkg" && runuser -u builder -- makepkg -s --noconfirm > "$work/makepkg.log" 2>&1) ||
     { cat "$work/makepkg.log" >&2; fail "makepkg"; }
-pkgfile=$(ls "$work"/pkg/hikarisub-bin-"$version"-1-x86_64.pkg.tar.* | head -1)
+pkgfile=$(ls "$work"/pkg/hikarisub-beta-bin-"$pkgver"-1-x86_64.pkg.tar.* | head -1)
 pass "makepkg built ${pkgfile##*/}"
 
 # 3. namcap: only the /opt error and the $CARCH hint are accepted.
@@ -109,14 +115,15 @@ pacman -U --noconfirm "$pkgfile" > /dev/null
 [ "$(readlink /usr/bin/hikarisub)" = /opt/hikarisub/hikarisub ] || fail "/usr/bin/hikarisub"
 [ ! -e /opt/hikarisub/libexec/hikarisub-update-helper ] || fail "the AUR package ships the update helper"
 [ ! -e /usr/share/polkit-1/actions/io.github.altqx.HikariSub.update.policy ] || fail "the AUR package ships the polkit policy"
-[ -f /usr/share/licenses/hikarisub-bin/LICENSE ] || fail "no license"
+[ -f /usr/share/licenses/hikarisub-beta-bin/LICENSE ] || fail "no license"
+[ "$(cat /opt/hikarisub/aur-channel.txt)" = beta ] || fail "aur-channel.txt is not beta"
 grep -q '^Exec=hikarisub %f$' /usr/share/applications/io.github.altqx.HikariSub.desktop || fail "Exec="
 desktop-file-validate /usr/share/applications/io.github.altqx.HikariSub.desktop || fail "desktop-file-validate"
 appstreamcli validate --no-net /usr/share/metainfo/io.github.altqx.HikariSub.metainfo.xml || fail "appstreamcli"
 unresolved=$(find /opt/hikarisub -type f \( -name '*.so*' -o -perm -u+x \) -print0 | xargs -0 -r ldd 2>/dev/null |
              grep 'not found' | sort -u || true)
 [ -z "$unresolved" ] || fail "missing after pacman -U: $unresolved"
-pass "pacman -U: marker arch, no helper or policy, every library resolves, desktop files valid"
+pass "pacman -U: markers arch and beta, no helper or policy, every library resolves, desktop files valid"
 
 home=/home/tester
 as_tester() { runuser -u tester -- env HOME=$home "$@"; }
@@ -144,7 +151,7 @@ for platform in xcb offscreen; do
 done
 
 # 6. Remove.
-pacman -R --noconfirm hikarisub-bin > /dev/null
+pacman -R --noconfirm hikarisub-beta-bin > /dev/null
 [ ! -e /opt/hikarisub ] || fail "/opt/hikarisub is still there"
 [ "$(cat $home/.local/share/hikari-test-marker)" = keep ] || fail "\$HOME changed"
 pass "pacman -R: /opt/hikarisub gone, \$HOME untouched"

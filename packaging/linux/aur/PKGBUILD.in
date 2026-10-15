@@ -1,8 +1,10 @@
 # Maintainer: altqx
-pkgname=hikarisub-bin
-pkgver=@VERSION@
+pkgname=@PKGNAME@
+_version=@VERSION@
+_channel=@CHANNEL@
+pkgver=@PKGVER@
 pkgrel=1
-pkgdesc='Subtitle editor for ASS/SSA, SRT and MicroDVD (prebuilt from the GitHub release)'
+pkgdesc=@PKGDESC@
 arch=('x86_64')
 url='https://github.com/altqx/hikari'
 license=('GPL-3.0-or-later')
@@ -11,7 +13,7 @@ optdepends=(@OPTDEPENDS@)
 provides=('hikarisub')
 conflicts=('hikarisub')
 options=('!strip' '!debug')
-source=("hikarisub-${pkgver}-linux-x86_64.tar.gz::https://github.com/altqx/hikari/releases/download/v${pkgver}/hikarisub-${pkgver}-linux-x86_64.tar.gz")
+source=("hikarisub-${_version}-linux-x86_64.tar.gz::https://github.com/altqx/hikari/releases/download/v${_version}/hikarisub-${_version}-linux-x86_64.tar.gz")
 sha256sums=('@SHA256@')
 
 package() {
@@ -22,5 +24,6 @@ package() {
   rm -rf share install-desktop-integration.sh SHA256SUMS
   cp -a --no-preserve=ownership . "$pkgdir/opt/hikarisub/"
   printf 'arch\n' > "$pkgdir/opt/hikarisub/package-kind.txt"
+  printf '%s\n' "$_channel" > "$pkgdir/opt/hikarisub/aur-channel.txt"
   ln -s /opt/hikarisub/hikarisub "$pkgdir/usr/bin/hikarisub"
 }
