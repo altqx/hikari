@@ -4507,6 +4507,14 @@ after switching from full screen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>API</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio delay in milliseconds</source>
         <translation>மில்லி விநாடிகளில் ஆடியோ நேரந்தவறுகை</translation>
     </message>
@@ -4729,6 +4737,15 @@ and will be changed to the default</source>
     <message>
         <source>style</source>
         <translation>பாணி</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (not connected)</source>
+        <extracomment>An output device chosen in Settings &gt; Audio that is not plugged in; %1 is its name</extracomment>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (slow; only for VSFilterMod tags)</source>
