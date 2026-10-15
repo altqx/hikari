@@ -68,3 +68,47 @@ int NaturalCompare(std::wstring_view first, std::wstring_view second)
 	const int plain = first.compare(second);
 	return plain < 0 ? -1 : plain > 0 ? 1 : 0;
 }
+
+namespace {
+
+// the name after the last separator
+std::wstring_view NameOf(std::wstring_view path, bool windowsNames)
+{
+	const size_t last = windowsNames ? path.find_last_of(L"\\/") : path.find_last_of(L'/');
+	return last == std::wstring_view::npos ? path : path.substr(last + 1);
+}
+
+bool SameWithoutCase(std::wstring_view first, std::wstring_view second)
+{
+	if (first.size() != second.size())
+		return false;
+	for (size_t i = 0; i < first.size(); ++i) {
+		if (std::towlower(static_cast<std::wint_t>(first[i])) != std::towlower(static_cast<std::wint_t>(second[i])))
+			return false;
+	}
+	return true;
+}
+
+} // namespace
+
+ListingPlace FindInListing(const std::vector<std::wstring> &files, std::wstring_view path, bool windowsNames)
+{
+	const std::wstring_view name = NameOf(path, windowsNames);
+	for (size_t j = 0; j < files.size(); ++j) {
+		if (NameOf(files[j], windowsNames) == name)
+			return { j, true };
+	}
+	if (windowsNames) {
+		for (size_t j = 0; j < files.size(); ++j) {
+			if (SameWithoutCase(NameOf(files[j], windowsNames), name))
+				return { j, true };
+		}
+	}
+	// not there: where the name sorts
+	size_t before = 0;
+	for (const std::wstring &file : files) {
+		if (NaturalCompare(NameOf(file, windowsNames), name) < 0)
+			++before;
+	}
+	return { before, false };
+}

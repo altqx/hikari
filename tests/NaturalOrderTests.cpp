@@ -121,3 +121,84 @@ TEST(NaturalOrderIsConsistent)
 			L"Ep 2a.mkv", L"Ep 10.mkv", L"Ep.mkv", L"notes.txt", L"~tilde.avi", L"\u00c4rger.mkv", L"\u00e9.mkv",
 			L"\u65e5\u672c\u8a9e.mkv" }));
 }
+
+namespace {
+
+// a folder of 250 characters, as on Windows a long folder of episodes
+std::wstring LongFolder()
+{
+	std::wstring folder = L"C:\\Videos\\";
+	while (folder.size() < 250)
+		folder += L"Some show with a long name\\";
+	return folder.substr(0, 249) + L"\\";
+}
+
+} // namespace
+
+// The previous / next file finds the current file when wxDir lists the folder
+// as wxFileName::GetPath writes it: "\\?\" in front on Windows once the
+// folder has 248 characters or more, the video's own path without it.
+TEST(NaturalOrderFindsFileInExtendedListing)
+{
+	const std::wstring folder = LongFolder();
+	const std::vector<std::wstring> files{ L"\\\\?\\" + folder + L"Ep 1.mkv", L"\\\\?\\" + folder + L"Ep 2.mkv",
+		L"\\\\?\\" + folder + L"Ep 5.mkv", L"\\\\?\\" + folder + L"Ep 10.mkv" };
+	ListingPlace place = FindInListing(files, folder + L"Ep 5.mkv", true);
+	CHECK(place.found);
+	CHECK_EQ(place.index, (size_t)2);
+	// a network share: "\\?\UNC\server\share\..." against "\\server\share\..."
+	const std::vector<std::wstring> share{ L"\\\\?\\UNC\\server\\share\\" + folder.substr(3) + L"a.mkv",
+		L"\\\\?\\UNC\\server\\share\\" + folder.substr(3) + L"b.mkv" };
+	place = FindInListing(share, L"\\\\server\\share\\" + folder.substr(3) + L"b.mkv", true);
+	CHECK(place.found);
+	CHECK_EQ(place.index, (size_t)1);
+	// the folder written with '/' in the video's path
+	std::wstring slashes = folder;
+	std::replace(slashes.begin(), slashes.end(), L'\\', L'/');
+	place = FindInListing(files, slashes + L"Ep 10.mkv", true);
+	CHECK(place.found);
+	CHECK_EQ(place.index, (size_t)3);
+}
+
+// On Windows a name equal without case is the same file (NTFS), but an exact
+// match comes first; on Linux names keep their case and '\' is part of one.
+TEST(NaturalOrderFindsFileByCase)
+{
+	const std::vector<std::wstring> files{ L"\\\\?\\C:\\v\\EP 1.mkv", L"\\\\?\\C:\\v\\ep 2.mkv" };
+	ListingPlace place = FindInListing(files, L"C:\\v\\Ep 2.MKV", true);
+	CHECK(place.found);
+	CHECK_EQ(place.index, (size_t)1);
+	const std::vector<std::wstring> both{ L"/v/Ep 1.mkv", L"/v/ep 1.mkv" };
+	place = FindInListing(both, L"/v/ep 1.mkv", true);
+	CHECK(place.found);
+	CHECK_EQ(place.index, (size_t)1);
+	place = FindInListing(both, L"/v/ep 1.mkv", false);
+	CHECK(place.found);
+	CHECK_EQ(place.index, (size_t)1);
+	place = FindInListing(both, L"/v/EP 1.mkv", false);
+	CHECK(!place.found);
+	const std::vector<std::wstring> unixNames{ L"/v/a\\b.mkv", L"/v/b.mkv" };
+	place = FindInListing(unixNames, L"/v/a\\b.mkv", false);
+	CHECK(place.found);
+	CHECK_EQ(place.index, (size_t)0);
+}
+
+// A current file that is not in the listing (moved or renamed) gets the place
+// its name sorts to, so previous and next take its neighbours and never a
+// position left from another folder.
+TEST(NaturalOrderPlacesMissingFile)
+{
+	const std::vector<std::wstring> files{ L"/v/Ep 1.mkv", L"/v/Ep 2.mkv", L"/v/Ep 10.mkv" };
+	ListingPlace place = FindInListing(files, L"/v/Ep 3.mkv", false);
+	CHECK(!place.found);
+	CHECK_EQ(place.index, (size_t)2);
+	place = FindInListing(files, L"/v/Ep 0.mkv", false);
+	CHECK(!place.found);
+	CHECK_EQ(place.index, (size_t)0);
+	place = FindInListing(files, L"/v/Ep 11.mkv", false);
+	CHECK(!place.found);
+	CHECK_EQ(place.index, (size_t)3);
+	place = FindInListing({}, L"/v/Ep 1.mkv", false);
+	CHECK(!place.found);
+	CHECK_EQ(place.index, (size_t)0);
+}

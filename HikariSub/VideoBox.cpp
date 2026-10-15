@@ -735,10 +735,26 @@ void VideoBox::NextFile(bool next)
 		// order on btrfs, hashed on ext4, the index on NTFS): walk it in
 		// natural name order instead, so "Ep 2" comes before "Ep 10"
 		files.Sort(CompareNaturally);
+		// found by name: GetPath writes a folder of 248 characters or more
+		// with "\\?\" in front on Windows, so the listing's paths need not
+		// start as the video's does. A video no longer in its folder takes
+		// the place its name sorts to, never a position from another folder.
+		std::vector<std::wstring> listing;
+		listing.reserve(files.GetCount());
+		for (size_t j = 0; j < files.GetCount(); j++)
+			listing.push_back(files[j].ToStdWstring());
+		ListingPlace place = FindInListing(listing, path.ToStdWstring(), !wxFileName::IsCaseSensitive());
+		if (place.found)
+			actualFile = place.index;
+		else
+			actualFile = next ? (int)place.index - 1 : (int)place.index;
 	}
-	for (int j = 0; j < (int)files.GetCount(); j++)
-	{
-		if (files[j] == path){ actualFile = j; break; }
+	else{
+		// no folder to list (a dummy video): the last listing again
+		for (int j = 0; j < (int)files.GetCount(); j++)
+		{
+			if (files[j] == path){ actualFile = j; break; }
+		}
 	}
 	if (next && actualFile >= (int)files.GetCount() - 1){
 		Seek(0);
