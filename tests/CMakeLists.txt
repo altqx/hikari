@@ -166,6 +166,12 @@ if(EXISTS "${HIKARISUB_TESTS_WX_PREFIX}/lib/cmake/wxWidgets-3.3" AND HIKARISUB_T
     add_test(NAME hikarisub_wxgtk_tests
         COMMAND "${HIKARISUB_TESTS_XVFB_RUN}" -a $<TARGET_FILE:hikarisub_wxgtk_tests>)
     set_tests_properties(hikarisub_wxgtk_tests PROPERTIES ENVIRONMENT "GDK_BACKEND=x11")
+
+    # The keyframes files, read with wxWidgets' strings and tokenizer.
+    add_executable(hikarisub_wxbase_tests check_main.cpp KeyframesLoaderTests.cpp
+        ../HikariSub/KeyframesLoader.cpp ../HikariSub/Timebase.cpp ../HikariSub/SaveFile.cpp)
+    target_link_libraries(hikarisub_wxbase_tests PRIVATE wx::base)
+    add_test(NAME hikarisub_wxbase_tests COMMAND hikarisub_wxbase_tests)
 else()
     message(STATUS "hikarisub_wxgtk_tests left out: needs ${HIKARISUB_TESTS_WX_PREFIX} and xvfb-run")
 endif()

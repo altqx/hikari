@@ -58,9 +58,12 @@ void KeyframeLoader::LoadFile(const wxString &filename)
 
 void KeyframeLoader::OpenAegisubKeyframes(wxStringTokenizer *kftokenizer)
 {
+	//the "fps N" line and any other line that is not a whole number is no keyframe
 	while (kftokenizer->HasMoreTokens()){
-		int keyframe = wxAtoi(kftokenizer->GetNextToken());
-		keyframes->push_back(timebase.MsAt(keyframe));
+		wxString token = kftokenizer->GetNextToken().Trim();
+		long keyframe;
+		if (token.ToLong(&keyframe))
+			keyframes->push_back(timebase.MsAt(keyframe));
 	}
 }
 
@@ -75,9 +78,10 @@ void KeyframeLoader::OpenOtherKeyframes(int type, wxStringTokenizer *kftokenizer
 			frameType = token[0];
 		else if(type == TYPE_DIVX){
 			frameType = L'#';
-			for (size_t i = 0; i < 3; i++){
-				size_t result = token.find(frameChars);
-				if (result != -1){
+			//the first of I, P or B found in the line, in that order
+			for (size_t i = 0; i < frameChars.size(); i++){
+				size_t result = token.find(frameChars[i]);
+				if (result != wxString::npos){
 					frameType = tolower(token[result]);
 					break;
 				}
