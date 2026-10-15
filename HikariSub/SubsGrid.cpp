@@ -32,6 +32,7 @@
 #include "UtilsWindows.h"
 #include "MoveTimes.h"
 #include "GridColumnChoices.h"
+#include "InsertTimes.h"
 #include <wx/intl.h>
 #include <wx/string.h>
 #include <wx/clipbrd.h>
@@ -365,7 +366,8 @@ void SubsGrid::OnInsertBefore()
 	dialog->TextTl = emptyString;
 	dialog->End = dialog->Start;
 	Dialogue *previousDialogue = GetDialogueWithOffset(rw, -1);
-	if (previousDialogue && previousDialogue->End > dialog->Start){
+	// the new Line ends at the active Line's Start and fills only a gap before it
+	if (previousDialogue && InsertBeforeFillsGap(previousDialogue->End.mstime, dialog->End.mstime)){
 		dialog->Start = previousDialogue->End;
 	}
 	else{ dialog->Start.Change(-4000); }

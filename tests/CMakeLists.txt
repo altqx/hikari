@@ -70,6 +70,7 @@ add_executable(hikarisub_tests
     FrameQueueTests.cpp
     GridColumnChoicesTests.cpp
     HotkeysFileTests.cpp
+    InsertTimesTests.cpp
     LayoutResTests.cpp
     LineGroupsTests.cpp
     LuaJitTests.cpp

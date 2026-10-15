@@ -915,6 +915,9 @@
     <ClInclude Include="SubsGrid.h">
       <Filter>S</Filter>
     </ClInclude>
+    <ClInclude Include="InsertTimes.h">
+      <Filter>S</Filter>
+    </ClInclude>
     <ClInclude Include="SubsGridDialogs.h">
       <Filter>S</Filter>
     </ClInclude>
