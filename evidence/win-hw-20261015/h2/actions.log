@@ -1,0 +1,52 @@
+18:17:59.128 invoked Play the current line
+18:19:08.227 invoked Play 500ms before the start time
+18:20:59.585 invoked Play 500 ms after the start time
+18:21:59.574 invoked Play 500ms before the end time
+18:22:58.876 invoked Play 500ms after the end time
+18:24:45.849 invoked Play the current line
+18:25:06.714 invoked Play to the end
+18:25:07.702 invoked Stop playback
+18:29:48.606 invoked Play to the end
+18:30:23 default now: 22E1W {0.0.0.00000000}.{f2906d39-0a17-4963-8afb-70934f90ec4b}
+18:32:12.744 invoked Play to the end
+18:32:12.926 default output: 22E1W
+18:32:17.103 default output: Speakers
+18:32:25.376 default output: 22E1W
+18:35:06.624 default output: Speakers ({c244e1ff-30cd-4919-b0b5-4f2d13da9b90})
+18:35:06.738 invoked Play the current line
+18:36:13.284 default output: Speakers ({c244e1ff-30cd-4919-b0b5-4f2d13da9b90})
+18:36:13.456 invoked Play the current line
+18:37:35.740 invoked Play to the end
+18:37:37.640 razer=Unknown appResponding=True
+18:38:01.781 default output: 22E1W ({f2906d39-0a17-4963-8afb-70934f90ec4b})
+18:38:55.824 razer=OK
+18:38:56.271 default output: Speakers ({c244e1ff-30cd-4919-b0b5-4f2d13da9b90})
+18:38:56.394 invoked Play the current line
+18:39:57.789 invoked Play to the end
+18:39:59.095 razer=OK appResponding=True
+18:40:00.472 razer=Unknown appResponding=True
+18:40:24.368 default output: 22E1W ({f2906d39-0a17-4963-8afb-70934f90ec4b})
+18:41:56.371 razer=OK
+18:41:56.578 default output: Speakers ({c244e1ff-30cd-4919-b0b5-4f2d13da9b90})
+18:41:56.702 invoked Play the current line
+18:42:21.008 default output: Speakers ({c244e1ff-30cd-4919-b0b5-4f2d13da9b90})
+18:42:21.114 invoked Stop
+18:42:22.190 invoked Pause
+18:43:45.276 invoked Play the current line
+18:43:51.798 invoked Pause
+18:45:26.942 invoked Pause
+18:45:27.389 default output: Speakers ({c244e1ff-30cd-4919-b0b5-4f2d13da9b90})
+18:45:33.362 default output: 22E1W ({f2906d39-0a17-4963-8afb-70934f90ec4b})
+18:45:36.336 default output: Speakers ({c244e1ff-30cd-4919-b0b5-4f2d13da9b90})
+18:45:37.679 default output: 22E1W ({f2906d39-0a17-4963-8afb-70934f90ec4b})
+18:45:38.678 default output: Speakers ({c244e1ff-30cd-4919-b0b5-4f2d13da9b90})
+18:45:39.349 default output: 22E1W ({f2906d39-0a17-4963-8afb-70934f90ec4b})
+18:45:39.692 default output: Speakers ({c244e1ff-30cd-4919-b0b5-4f2d13da9b90})
+18:45:40.036 default output: 22E1W ({f2906d39-0a17-4963-8afb-70934f90ec4b})
+18:45:47.297 default output: Speakers ({c244e1ff-30cd-4919-b0b5-4f2d13da9b90})
+18:47:09.564 invoked Pause
+18:47:10.921 22E1W-audio=OK appResponding=True
+18:47:17.270 22E1W-audio=Unknown appResponding=True
+18:48:31.859 22E1W-audio=OK
+18:48:32.310 default output: 22E1W ({f2906d39-0a17-4963-8afb-70934f90ec4b})
+18:48:33.012 invoked Pause

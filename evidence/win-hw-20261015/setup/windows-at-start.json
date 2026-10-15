@@ -1,0 +1,6 @@
+[{"hwnd":264544,"title":"Untitled - HikariSub","class":"Qt6112QWindowIcon","visible":true,"x":632,"y":85,"w":1296,"h":839,"dpi":96,"owner":0,"style":"0x96CF0000","exstyle":"0x100","zoomed":false,"iconic":false},
+{"hwnd":330136,"title":"_q_titlebar","class":"_q_titlebar","visible":false,"x":0,"y":0,"w":1296,"h":31,"dpi":96,"owner":0,"style":"0x4C00000","exstyle":"0x8080120","zoomed":false,"iconic":false},
+{"hwnd":526622,"title":"","class":"Qt6112ThemeChangeObserverWindow","visible":false,"x":52,"y":52,"w":1920,"h":753,"dpi":96,"owner":0,"style":"0x4C00000","exstyle":"0x100","zoomed":false,"iconic":false},
+{"hwnd":1114438,"title":"","class":"Qt6112ScreenChangeObserverWindow","visible":false,"x":26,"y":26,"w":1920,"h":753,"dpi":96,"owner":0,"style":"0x4C00000","exstyle":"0x100","zoomed":false,"iconic":false},
+{"hwnd":395974,"title":"MSCTFIME UI","class":"MSCTFIME UI","visible":false,"x":0,"y":0,"w":0,"h":0,"dpi":96,"owner":1116442,"style":"0x8C000000","exstyle":"0x0","zoomed":false,"iconic":false},
+{"hwnd":1116442,"title":"Default IME","class":"IME","visible":false,"x":0,"y":0,"w":0,"h":0,"dpi":96,"owner":264544,"style":"0x8C000000","exstyle":"0x0","zoomed":false,"iconic":false}]

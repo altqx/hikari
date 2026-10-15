@@ -1,0 +1,80 @@
+{
+ "startup-warm-20.json": {
+  "windowVisibleMs": {
+   "n": 20,
+   "min": 895,
+   "median": 929,
+   "p95": 964,
+   "max": 1036
+  },
+  "lineTextInUiaMs": {
+   "n": 20,
+   "min": 895,
+   "median": 929,
+   "p95": 964,
+   "max": 1036
+  },
+  "privateMiB": {
+   "n": 20,
+   "min": 262.5,
+   "median": 264.7,
+   "p95": 267.8,
+   "max": 268.9
+  },
+  "exitCodes": [
+   0
+  ]
+ },
+ "startup-warm-20-contaminated-textinputhost.json": {
+  "windowVisibleMs": {
+   "n": 20,
+   "min": 1096,
+   "median": 1124,
+   "p95": 1158,
+   "max": 1171
+  },
+  "privateMiB": {
+   "n": 20,
+   "min": 263.8,
+   "median": 264.9,
+   "p95": 295.1,
+   "max": 296.7
+  },
+  "exitCodes": [
+   0
+  ]
+ },
+ "open-g50k-warm-20.json": {
+  "windowVisibleMs": {
+   "n": 20,
+   "min": 1186,
+   "median": 1208,
+   "p95": 1232,
+   "max": 1235
+  },
+  "gridRowsMs": {
+   "n": 20,
+   "min": 1726,
+   "median": 1753,
+   "p95": 1795,
+   "max": 1795
+  },
+  "logMarkMs": {
+   "n": 20,
+   "min": 311,
+   "median": 332,
+   "p95": 339,
+   "max": 346
+  },
+  "privateMiB": {
+   "n": 20,
+   "min": 398.4,
+   "median": 401.2,
+   "p95": 404.4,
+   "max": 405.6
+  },
+  "exitCodes": [
+   0
+  ]
+ }
+}

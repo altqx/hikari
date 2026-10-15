@@ -1,0 +1,27 @@
+[
+  {
+    "FriendlyName": "LM30-E330C (NVIDIA High Definition Audio)",
+    "Status": "Unknown",
+    "InstanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{F0C5A44B-C543-4237-9240-6443768CE275}"
+  },
+  {
+    "FriendlyName": "Microphone (USB Headphone Set)",
+    "Status": "OK",
+    "InstanceId": "SWD\\MMDEVAPI\\{0.0.1.00000000}.{E29F6703-A27A-409D-A783-6F801A7A7CD7}"
+  },
+  {
+    "FriendlyName": "22E1W (NVIDIA High Definition Audio)",
+    "Status": "OK",
+    "InstanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{F2906D39-0A17-4963-8AFB-70934F90EC4B}"
+  },
+  {
+    "FriendlyName": "Realtek Digital Output (Realtek(R) Audio)",
+    "Status": "Unknown",
+    "InstanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{BC5B95E8-EAB7-41EE-9A97-9EC1305BFA60}"
+  },
+  {
+    "FriendlyName": "Speakers (Razer BlackShark V2 X USB)",
+    "Status": "OK",
+    "InstanceId": "SWD\\MMDEVAPI\\{0.0.0.00000000}.{C244E1FF-30CD-4919-B0B5-4F2D13DA9B90}"
+  }
+]
