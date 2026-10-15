@@ -4430,10 +4430,16 @@ private slots:
         }
         // The check sees a cut-off control: below its minimum (the engine
         // told a smaller one) the Video panel cuts its controls off. (The
-        // Line editor scrolls instead.)
+        // Line editor scrolls instead.) The panel goes to its own minimum
+        // first, where the follow choices wrap as far as they go: wider, they
+        // take fewer rows, and squeezing then makes the panel report the
+        // taller minimum again, which puts its real minimum back over the
+        // smaller one (Hyprland's 1558-pixel window: 461x216, nothing cut off).
         {
             QQuickItem *panel = item("videoPanel");
             const QString dock = panel->property("dockName").toString();
+            QVERIFY(docking->resizeInLayout(dock, 0, 0, -2000, -2000));
+            QTRY_VERIFY(settled(panel));
             QVERIFY(docking->setMinimumSize(dock, QSize(40, 40)));
             QVERIFY(docking->resizeInLayout(dock, 0, 0, -2000, -2000));
             QVERIFY(docking->resizeInLayout(dock, -2000, -2000, 0, 0));
