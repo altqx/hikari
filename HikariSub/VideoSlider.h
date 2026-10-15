@@ -17,6 +17,8 @@
 
 #include <wx/window.h>
 #include <wx/bitmap.h>
+#include <wx/timer.h>
+#include "SeekThrottle.h"
 
 class VideoBox;
 
@@ -38,6 +40,13 @@ protected:
 	//void OnKeyPress(wxKeyEvent& event);
 	void OnSize(wxSizeEvent& event);
 	void OnEraseBackground(wxEraseEvent& rEvent){}
+	// dragging the thumb: seeks at most every 50 ms (SeekThrottle)
+	void DragSeek(int msTimePos);
+	void EndDragSeek();
+	void OnSeekTimer(wxTimerEvent& event);
+	void StartSeekTimer();
+	SeekThrottle seekThrottle;
+	wxTimer seekTimer;
 	int position = 0;
 	int msTimePosition = 0;
 	int labelpos;

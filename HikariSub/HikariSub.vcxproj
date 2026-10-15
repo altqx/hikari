@@ -616,6 +616,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="VideoFrameArea.h" />
     <ClInclude Include="VideoFullscreen.h" />
     <ClInclude Include="VideoSlider.h" />
+    <ClInclude Include="SeekThrottle.h" />
     <ClInclude Include="VideoToolbar.h" />
     <ClInclude Include="VisualAllTagsControls.h" />
     <ClInclude Include="VisualAllTagsEdition.h" />

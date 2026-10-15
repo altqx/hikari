@@ -89,6 +89,7 @@ add_executable(hikarisub_tests
     SaveFileTests.cpp
     SaveTargetTests.cpp
     ScriptAttachmentsTests.cpp
+    SeekThrottleTests.cpp
     SemVerTests.cpp
     SrtTagsTests.cpp
     SubtitlesProviderChoiceTests.cpp

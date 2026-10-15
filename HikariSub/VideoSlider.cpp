@@ -35,6 +35,8 @@ VideoSlider::VideoSlider(wxWindow *parent, const long int id, const wxPoint& pos
 	prbh = CreateBitmapFromPngResource(L"pbarhandle");
 	showlabel = false;
 	onslider = false;
+	seekTimer.SetOwner(this);
+	Bind(wxEVT_TIMER, &VideoSlider::OnSeekTimer, this, seekTimer.GetId());
 }
 
 VideoSlider::~VideoSlider()
@@ -158,7 +160,8 @@ void VideoSlider::OnMouseEvent(wxMouseEvent& event)
 		if (left_up && holding) {
 			holding = false;
 			if (block){
-				SendTime(msTimePosition);
+				DragSeek(msTimePosition);
+				EndDragSeek();
 				block = false;
 			}
 			ReleaseMouse();
@@ -185,7 +188,7 @@ void VideoSlider::OnMouseEvent(wxMouseEvent& event)
 		if (holding && isOnSlider || (holding && block)){
 			block = true;
 			position = MID(0, curX - 15 + positionDiff, w - 30);
-			if (!VB->IsDirectShow()){ SendTime(msTimePosition); }
+			DragSeek(msTimePosition);
 			//Refresh(false);
 		}
 		//move thumb by clicking on slider
@@ -258,11 +261,49 @@ void VideoSlider::SendTime(int msTimePos)
 {
 	VB->Seek(msTimePos, true, SEEK_NO_SNAP);
 }
+
+void VideoSlider::DragSeek(int msTimePos)
+{
+	std::optional<int> seek = seekThrottle.Move(msTimePos, SeekThrottle::Clock::now());
+	if (seek)
+		SendTime(*seek);
+	StartSeekTimer();
+}
+
+// the thumb is let go: the last position is sought unless it just was
+void VideoSlider::EndDragSeek()
+{
+	seekTimer.Stop();
+	std::optional<int> seek = seekThrottle.Release(SeekThrottle::Clock::now());
+	if (seek && VB->GetState() != None)
+		SendTime(*seek);
+}
+
+void VideoSlider::StartSeekTimer()
+{
+	std::optional<SeekThrottle::Clock::time_point> due = seekThrottle.Due();
+	if (!due){
+		seekTimer.Stop();
+		return;
+	}
+	auto wait = std::chrono::ceil<std::chrono::milliseconds>(*due - SeekThrottle::Clock::now()).count();
+	seekTimer.StartOnce(wait < 1 ? 1 : (int)wait);
+}
+
+void VideoSlider::OnSeekTimer(wxTimerEvent& event)
+{
+	std::optional<int> seek = seekThrottle.Tick(SeekThrottle::Clock::now());
+	if (seek && VB->GetState() != None)
+		SendTime(*seek);
+	StartSeekTimer();
+}
 void VideoSlider::OnMouseLeave(wxMouseCaptureLostEvent& event)
 {
 	if (HasCapture()){
 		ReleaseMouse();
 	}
+	if (block)
+		EndDragSeek();
 	holding = false;
 	block = false;
 	showlabel = false;
