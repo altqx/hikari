@@ -262,8 +262,9 @@ public:
         case QEvent::Show:
         case QEvent::Resize:
             // A device pixel ratio that changed without its event (the
-            // window's screen's scale taken another way) settles as well.
-            if (m_known && !qFuzzyCompare(m_window->devicePixelRatio(), m_dpr)) {
+            // window's screen's scale taken another way) settles as well,
+            // and so does a resize for a new screen's scale.
+            if (m_known && (!qFuzzyCompare(m_window->devicePixelRatio(), m_dpr) || screenRunsAhead())) {
                 if (!m_settle.isActive())
                     m_settle.start();
                 break;
@@ -292,6 +293,19 @@ private:
         const std::optional<qreal> native = dockchrome::nativeScale(m_window);
         return native && m_native && !qFuzzyCompare(*native, *m_native)
             && qFuzzyCompare(m_window->devicePixelRatio(), m_dpr);
+    }
+
+    // The window on a screen of another scale than it was remembered at,
+    // before it takes that scale. Outside Windows, Qt resizes a window that
+    // moved to such a screen first (its pixels at the new screen's scale:
+    // QWindowPrivate's screenChanged handler) and updates its device pixel
+    // ratio after; that resize, read at the old ratio, is not the size to
+    // keep. The CI's offscreen runs on Linux: a 600 x 220 panel moved onto
+    // a 150 % screen was kept at 400 x 147.
+    bool screenRunsAhead() const
+    {
+        const QScreen *screen = m_window->screen();
+        return screen && screen != m_screen && !qFuzzyCompare(screen->devicePixelRatio(), m_dpr);
     }
 
     void remember()
