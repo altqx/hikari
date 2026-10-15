@@ -439,7 +439,7 @@ Dialog {
                     implicitWidth: 32
                     implicitHeight: 32
                     color: "transparent"
-                    border.color: Theme.line
+                    border.color: enabled ? Theme.control : Theme.line
                     enabled: dialog.sampler.available && !dialog.sampler.portalBusy
                     Accessible.role: Accessible.Button
                     Accessible.name: qsTr("Pick a colour from the screen")

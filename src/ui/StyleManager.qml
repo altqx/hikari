@@ -607,7 +607,7 @@ Window {
                                         ToolTip.text: modelData
                                         background: Rectangle {
                                             color: Qt.rgba(colour.r / 255, colour.g / 255, colour.b / 255, 1)
-                                            border.color: Theme.line
+                                            border.color: Theme.control
                                             radius: 2
                                         }
                                         onClicked: manager.colourClick(index + 1, true)

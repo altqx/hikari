@@ -160,7 +160,7 @@ Window {
             color: bright < 2 ? "white" : "black"
             background: Rectangle {
                 color: Qt.rgba(window.colour.r / 255, window.colour.g / 255, window.colour.b / 255, 1)
-                border.color: Theme.line
+                border.color: Theme.control
             }
         }
         RowLayout {
