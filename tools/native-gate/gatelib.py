@@ -10,6 +10,7 @@ TEST_RUNS = [
         "placementWindowMovesTabsAndResizes", "floatF6AndShowActivateTheFloatingPanelsWindow",
         "placementWindowShowsItsDefaultsAndKeyboardChanges", "fileDropAreaLeavesPanelDragsToTheDockingEngine",
         "dockingControlsAndTheGridAreAccessible", "floatingPanelsOffEveryScreenComeBack",
+        "panelMenuMovesTabsWithinTheirGroup",
         # D3
         "panelMenuHoldsMoveUndockAndClose", "keyboardReachesThePanelHeaderAndItsMenu",
         "doubleClickOnAHeaderFloatsAndDocks", "bottomPanelsKeepATabAndTheTrayToolbar",
