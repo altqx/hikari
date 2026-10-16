@@ -175,6 +175,16 @@ public:
     Q_INVOKABLE bool setMinimumSize(const QString &uniqueName, QSize size);
     // The panel's minimum size as the engine has it (its dock widget's).
     Q_INVOKABLE QSize minimumSize(const QString &uniqueName) const;
+    // Decision 63: from now on the window holding main window `mainName`
+    // (the DockingArea's uniqueName) keeps a minimum size of the docked
+    // layout's minimum plus the window's own rows outside the docking area,
+    // within its screen, following every panel docked, floated, shown or
+    // hidden; a smaller window grows to it. False when there is no such
+    // main window.
+    Q_INVOKABLE bool followLayoutMinimum(const QString &mainName);
+    // The docked layout's minimum size of main window `mainName` as the
+    // engine computes it (its panels' minimums, headers and separators).
+    Q_INVOKABLE QSize layoutMinimumSize(const QString &mainName) const;
 
     // D3: how a panel's header looks. A horizontal panel (the Grid, the
     // Reference tray, Search) keeps a one-tab bar even alone; `toolbar` is

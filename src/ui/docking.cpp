@@ -3,6 +3,7 @@
 
 #include <kddockwidgets/Config.h>
 #include <kddockwidgets/KDDockWidgets.h>
+#include <kddockwidgets/LayoutSaver.h>
 // Private engine headers, isolated here: re-initializing the platform for a
 // new QML engine has no public entry point (the engine's own
 // tests_deinitPlatform does the same, in developer builds only).
@@ -723,6 +724,124 @@ bool Docking::resizeInLayout(const QString &uniqueName, int left, int top, int r
         return false;
     dock->resizeInLayout(left, top, right, bottom);
     return true;
+}
+
+namespace {
+KDDockWidgets::Core::MainWindow *mainWindowByName(const QString &uniqueName)
+{
+    auto *registry = KDDockWidgets::Core::Platform::instance() ? KDDockWidgets::DockRegistry::self() : nullptr;
+    return registry ? registry->mainWindowByName(uniqueName) : nullptr;
+}
+
+// Decision 63: the window holding a main window's docking area is never
+// smaller than the docked layout's minimum, so no docked panel is cut off
+// past the window's edge. The engine sizes only a main window that is its
+// window's root item ("there's no layout propagation" in QtQuick), and the
+// DockingArea sits in an ApplicationWindow under its menu bar, so the
+// window's minimum stayed 0 x 0 (the Windows gate, 2026-10-16: the window
+// at 480 wide with the Grid and the Line editor past its right edge).
+// The layout's view reports every change of its minimum (a panel docked,
+// floated, shown or hidden, a panel's own minimum changed) as
+// geometryUpdated; the window's minimum is that minimum plus whatever of the
+// window lies outside the docking area (the menu bar, the status bar),
+// within the screen's available area. A window already smaller (a size set
+// by a program, a restored geometry) grows to it.
+class LayoutMinimumKeeper final : public QObject {
+public:
+    explicit LayoutMinimumKeeper(KDDockWidgets::Core::MainWindow *main, KDDockWidgets::QtQuick::View *view)
+        : QObject(view)
+        , m_main(main)
+        , m_view(view)
+    {
+        setObjectName(QStringLiteral("hikariLayoutMinimumKeeper"));
+        // A layout change reports several intermediate minimums (Reset layout
+        // and a restore take panels out and put them back one by one), and
+        // the window would grow to the largest of them, so the window follows
+        // the layout once it has been still for a moment.
+        m_settle.setSingleShot(true);
+        m_settle.setInterval(kSettleMs);
+        connect(&m_settle, &QTimer::timeout, this, &LayoutMinimumKeeper::apply);
+        connect(view, &KDDockWidgets::QtQuick::View::geometryUpdated, this, &LayoutMinimumKeeper::schedule);
+        connect(view, &QQuickItem::widthChanged, this, &LayoutMinimumKeeper::schedule);
+        connect(view, &QQuickItem::heightChanged, this, &LayoutMinimumKeeper::schedule);
+        connect(view, &QQuickItem::windowChanged, this, &LayoutMinimumKeeper::schedule);
+        apply();
+    }
+
+    static LayoutMinimumKeeper *of(KDDockWidgets::QtQuick::View *view)
+    {
+        // The class has no Q_OBJECT, so it is found by its object name.
+        return view ? static_cast<LayoutMinimumKeeper *>(view->findChild<QObject *>(QStringLiteral("hikariLayoutMinimumKeeper"), Qt::FindDirectChildrenOnly)) : nullptr;
+    }
+
+    // The window's minimum as the layout needs it; empty while the docking
+    // area has no size yet.
+    QSize wanted() const
+    {
+        QQuickWindow *window = item()->window();
+        if (!window || m_view->width() <= 0 || m_view->height() <= 0)
+            return {};
+        const QSize outside(std::max(0, window->width() - qCeil(m_view->width())),
+                            std::max(0, window->height() - qCeil(m_view->height())));
+        QSize least = m_main->layout()->layoutMinimumSize() + outside;
+        if (QScreen *screen = window->screen())
+            least = least.boundedTo(screen->availableGeometry().size());
+        return least;
+    }
+
+    void apply()
+    {
+        if (KDDockWidgets::LayoutSaver::restoreInProgress()) {
+            m_settle.start();
+            return;
+        }
+        QQuickWindow *window = item()->window();
+        const QSize least = wanted();
+        if (!window || least.isEmpty())
+            return;
+        if (window->minimumSize() != least) {
+            qCDebug(lcDocking) << "main window minimum" << window->minimumSize() << "->" << least;
+            window->setMinimumSize(least);
+        }
+        if (window->width() < least.width() || window->height() < least.height())
+            window->resize(window->size().expandedTo(least));
+    }
+
+private:
+    // KDDockWidgets' View hides QQuickItem::window() with its own.
+    QQuickItem *item() const { return m_view; }
+
+    void schedule() { m_settle.start(); }
+
+    static constexpr int kSettleMs = 100;
+    KDDockWidgets::Core::MainWindow *m_main;
+    KDDockWidgets::QtQuick::View *m_view;
+    QTimer m_settle;
+};
+
+KDDockWidgets::QtQuick::View *mainWindowView(KDDockWidgets::Core::MainWindow *main)
+{
+    return main ? qobject_cast<KDDockWidgets::QtQuick::View *>(KDDockWidgets::QtQuick::asQQuickItem(main->view())) : nullptr;
+}
+} // namespace
+
+bool Docking::followLayoutMinimum(const QString &mainName)
+{
+    KDDockWidgets::Core::MainWindow *main = mainWindowByName(mainName);
+    KDDockWidgets::QtQuick::View *view = mainWindowView(main);
+    if (!view)
+        return false;
+    if (LayoutMinimumKeeper *keeper = LayoutMinimumKeeper::of(view))
+        keeper->apply();
+    else
+        new LayoutMinimumKeeper(main, view);
+    return true;
+}
+
+QSize Docking::layoutMinimumSize(const QString &mainName) const
+{
+    KDDockWidgets::Core::MainWindow *main = mainWindowByName(mainName);
+    return main ? QSize(main->layout()->layoutMinimumSize()) : QSize();
 }
 
 namespace {

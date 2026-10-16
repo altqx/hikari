@@ -4097,6 +4097,9 @@ ApplicationWindow {
         root.workspaceLayout.captureDefault()
         root.workspaceLayout.restoreSaved()
         Docking.guardClose(root, root.admitClose)
+        // Decision 63: the window is never smaller than the docked layout's
+        // minimum, so no docked panel is cut off past its edge.
+        Docking.followLayoutMinimum(dockingArea.uniqueName)
         // D2: HikariSubFrame's constructor, `if (!EDITOR_ON) HideEditor(false)`.
         if (!root.app.editorOn)
             root.applyEditor(false)

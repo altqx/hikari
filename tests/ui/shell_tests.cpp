@@ -4472,6 +4472,93 @@ private slots:
         QVERIFY2(clippedIn(video).isEmpty(), qPrintable(clippedIn(video).join(u"; ")));
     }
 
+    // Decision 63: the main window is never smaller than its docked
+    // layout's minimum plus its rows outside the docking area (the menu bar,
+    // the status bar), so no docked panel is cut off past its right or
+    // bottom edge (the Windows gate's window at 480 wide cut the Grid and the
+    // Line editor off). The minimum follows the panels docked, floated,
+    // hidden and shown, and a window made smaller grows back to it.
+    void mainWindowKeepsTheDockedLayoutsMinimum()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
+        QVERIFY(docking);
+        QQuickItem *area = item("dockingArea");
+        const QString mainName = area->property("uniqueName").toString();
+        const auto outside = [&] {
+            return QSize(window->width() - qCeil(area->width()), window->height() - qCeil(area->height()));
+        };
+        const auto expected = [&] {
+            return (docking->layoutMinimumSize(mainName) + outside()).boundedTo(window->screen()->availableGeometry().size());
+        };
+        const auto describe = [&] {
+            const QRect screen = window->screen()->availableGeometry();
+            return QStringLiteral("window %1x%2 minimum %3x%4 layout %5x%6 outside %7x%8 screen %9x%10")
+                .arg(window->width()).arg(window->height()).arg(window->minimumWidth()).arg(window->minimumHeight())
+                .arg(docking->layoutMinimumSize(mainName).width()).arg(docking->layoutMinimumSize(mainName).height())
+                .arg(outside().width()).arg(outside().height()).arg(screen.width()).arg(screen.height());
+        };
+        const QSize docked = docking->layoutMinimumSize(mainName);
+        QVERIFY2(docked.width() > 300 && docked.height() > 200, qPrintable(describe()));
+        QTRY_VERIFY2(window->minimumSize() == expected(), qPrintable(describe()));
+        // The window's rows outside the docking area, while the window holds
+        // the whole layout.
+        const QSize rows = outside();
+        // A window made smaller than the minimum grows back to it, and every
+        // docked panel lies inside it. Where the screen cannot hold the
+        // layout (the offscreen platform's 800 x 800 screen against the
+        // default arrangement's width) the window stops at the screen's
+        // available area and the panels are checked once the layout fits.
+        const char *const panels[] = {"videoPanel", "audioPanel", "editorPanel", "gridPanel"};
+        int fitted = 0;
+        const auto shrinkAndCheck = [&]() -> bool {
+            const QSize was = window->size();
+            window->resize(480, 300);
+            [&] { QTRY_VERIFY2(window->width() >= expected().width() && window->height() >= expected().height(), qPrintable(describe())); }();
+            if (QTest::currentTestFailed())
+                return false;
+            const QSize least = docking->layoutMinimumSize(mainName) + rows;
+            if (least == least.boundedTo(window->screen()->availableGeometry().size())) {
+                ++fitted;
+                for (const char *name : panels) {
+                    QQuickItem *panel = item(name);
+                    if (!panel || !panel->isVisible() || panel->window() != window)
+                        continue;
+                    const auto inside = [&] {
+                        const QRectF r = panel->mapRectToScene(QRectF(0, 0, panel->width(), panel->height()));
+                        return r.right() <= window->width() + 0.5 && r.bottom() <= window->height() + 0.5;
+                    };
+                    [&] { QTRY_VERIFY2(inside(), qPrintable(QStringLiteral("step %1 ").arg(fitted) + QLatin1String(name) + QLatin1Char(' ') + describe())); }();
+                    if (QTest::currentTestFailed())
+                        return false;
+                }
+            }
+            window->resize(was);
+            return true;
+        };
+        QVERIFY(shrinkAndCheck());
+        // Floating the Line editor and closing the Audio panel take their
+        // minimums out of the layout's: the window's minimum follows it.
+        auto *editorDock = item<QObject>("editorDock");
+        QVERIFY(editorDock->setProperty("isFloating", true));
+        QTRY_VERIFY(item("editorPanel")->window() != window);
+        QTRY_VERIFY2(docking->layoutMinimumSize(mainName) != docked, qPrintable(describe()));
+        QTRY_VERIFY2(window->minimumSize() == expected(), qPrintable(describe()));
+        QVERIFY(shrinkAndCheck());
+        auto *audioDock = item<QObject>("audioDock");
+        const QSize floated = docking->layoutMinimumSize(mainName);
+        QVERIFY(QMetaObject::invokeMethod(audioDock, "close"));
+        QTRY_VERIFY2(docking->layoutMinimumSize(mainName) != floated, qPrintable(describe()));
+        QTRY_VERIFY2(window->minimumSize() == expected(), qPrintable(describe()));
+        QVERIFY(shrinkAndCheck());
+        QVERIFY2(fitted > 0, qPrintable(describe()));
+        // Back in the default arrangement: the docked minimum again.
+        application->workspaceLayout().resetLayout();
+        QTRY_VERIFY(item("editorPanel")->window() == window);
+        QTRY_COMPARE(docking->layoutMinimumSize(mainName), docked);
+        QTRY_VERIFY2(window->minimumSize() == expected(), qPrintable(describe()));
+    }
+
     // D1 native gate: a floating panel no screen shows (a removed monitor, a
     // layout from other screens) comes back onto the main window's screen,
     // and Show brings it back there too.
