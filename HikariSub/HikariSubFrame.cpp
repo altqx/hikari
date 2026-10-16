@@ -1753,6 +1753,9 @@ void HikariSubFrame::OnSize(wxSizeEvent& event)
 	int toolbarAlignment = Options.GetInt(TOOLBAR_ALIGNMENT);
 	borders.y += menuHeight;
 	borders.height += statusbarHeight;
+	// Frozen, the windows below paint once after they are all resized, not
+	// at each Update() their size handlers call on the way
+	Freeze();
 	Menubar->SetSize(fborder, ftopBorder, wxMax(0, size.x - (fborder * 2)), menuHeight);
 	switch (toolbarAlignment){
 	case 0://left
@@ -1785,6 +1788,7 @@ void HikariSubFrame::OnSize(wxSizeEvent& event)
 		wxMax(0, size.x - borders.GetX() - borders.width), wxMax(0, size.y - borders.y - borders.height));
 	StatusBar->SetSize(fborder, wxMax(0, size.y - statusbarHeight - fborder),
 		wxMax(0, size.x - (fborder * 2)), statusbarHeight);
+	Thaw();
 	borders.height += Tabs->GetHeight();
 	event.Skip();
 }
