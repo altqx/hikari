@@ -502,6 +502,15 @@ ApplicationWindow {
         return true
     }
 
+    // D1 Move before/after: the panel `step` places along its group's tabs;
+    // it stays the shown tab and keeps the focus.
+    function moveTab(dock, step) {
+        if (!Docking.moveTab(dock.uniqueName, step))
+            return false
+        root.showPanel(dock)
+        return true
+    }
+
     // View > Panels > Show: open the panel, bring its window up and focus it.
     function showPanel(dock) {
         dock.open()
@@ -571,8 +580,15 @@ ApplicationWindow {
                                          && (dock.options & KDDW.KDDockWidgets.DockWidgetOption_NotClosable) === 0
         readonly property bool dockable: dock !== null
                                          && (dock.options & KDDW.KDDockWidgets.DockWidgetOption_NotDockable) === 0
+        // The panel's place among its group's tabs, read as the menu opens.
+        property int tabIndex: -1
+        property int tabCount: 0
+        // Left is toward the first tab, unless the layout is mirrored.
+        readonly property int leftStep: Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1
         function openFor(target, anchor) {
             dock = target
+            tabIndex = Docking.tabIndex(target.uniqueName)
+            tabCount = Docking.tabCount(target.uniqueName)
             // inside a floating panel's frame, not over its drawn shadow
             margins = anchor.Window.window !== root ? Docking.windowShadow(anchor.Window.window) + 1 : 0
             popup(anchor, 0, anchor.height)
@@ -604,6 +620,27 @@ ApplicationWindow {
             // D2: not in the player layout, as View > Move panel….
             enabled: panelOptionsMenu.dockable && root.app.editorOn
             onTriggered: placementWindow.openFor(panelOptionsMenu.dock)
+        }
+        // D1 Move before/after: a tab one place along its tab bar, kept
+        // current and focused; only in a group of tabs, off at its end.
+        ShellMenuItem {
+            id: panelOptionsTabLeft
+            objectName: "panelOptionsTabLeft"
+            text: qsTranslate("HikariSub.Workspace", "Move tab left")
+            visible: panelOptionsMenu.tabCount > 1
+            height: visible ? implicitHeight : 0
+            enabled: panelOptionsMenu.tabIndex + panelOptionsMenu.leftStep >= 0
+                     && panelOptionsMenu.tabIndex + panelOptionsMenu.leftStep < panelOptionsMenu.tabCount
+            onTriggered: root.moveTab(panelOptionsMenu.dock, panelOptionsMenu.leftStep)
+        }
+        ShellMenuItem {
+            objectName: "panelOptionsTabRight"
+            text: qsTranslate("HikariSub.Workspace", "Move tab right")
+            visible: panelOptionsTabLeft.visible
+            height: visible ? implicitHeight : 0
+            enabled: panelOptionsMenu.tabIndex - panelOptionsMenu.leftStep >= 0
+                     && panelOptionsMenu.tabIndex - panelOptionsMenu.leftStep < panelOptionsMenu.tabCount
+            onTriggered: root.moveTab(panelOptionsMenu.dock, -panelOptionsMenu.leftStep)
         }
         ShellMenuItem {
             objectName: "panelOptionsFloat"

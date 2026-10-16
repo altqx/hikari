@@ -198,6 +198,14 @@ public:
     // Floats panel `uniqueName`, or docks it when it floats (a double-click
     // on a header the engine does not see: a floating header's free part).
     Q_INVOKABLE bool toggleFloating(const QString &uniqueName);
+    // D1 Move before/after: panel `uniqueName`'s index among its group's
+    // tabs and the group's number of tabs (-1 and 0 when it is in no group).
+    Q_INVOKABLE int tabIndex(const QString &uniqueName) const;
+    Q_INVOKABLE int tabCount(const QString &uniqueName) const;
+    // Moves panel `uniqueName` `step` places along its group's tabs (toward
+    // the first when negative), as its group's current tab; false when
+    // there is no tab there.
+    Q_INVOKABLE bool moveTab(const QString &uniqueName, int step);
     // Has the window system move the window holding `from` (the free part
     // of a floating header); whether the platform took it (X11 without a
     // window manager that moves windows, and offscreen, do not).

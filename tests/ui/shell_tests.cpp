@@ -4192,6 +4192,91 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
     }
 
+    // D1 Move before/after (docs/qt/docking.md, keyboard contract): in a
+    // group of tabs the "⋯" menu moves the panel's tab one place left or
+    // right, off at the bar's end; the moved panel stays the shown tab with
+    // the focus, and the order is part of the saved layout. A lone panel's
+    // menu has neither item.
+    void panelMenuMovesTabsWithinTheirGroup()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *videoDock = item<QObject>("videoDock");
+        for (const char *name : {"audioDock", "editorDock"}) { // the placement window's Tab with
+            QVariant placed;
+            QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "placePanel", Q_RETURN_ARG(QVariant, placed),
+                                              Q_ARG(QVariant, QVariant::fromValue(item<QObject>(name))), Q_ARG(QVariant, 0),
+                                              Q_ARG(QVariant, QVariant::fromValue(videoDock))));
+            QVERIFY(placed.toBool());
+        }
+        ui::Docking docking;
+        const auto order = [&] {
+            QStringList names(docking.tabCount(QStringLiteral("Video")));
+            for (const QString name : {QStringLiteral("Video"), QStringLiteral("Audio"), QStringLiteral("Editor")}) {
+                const int at = docking.tabIndex(name);
+                if (at < 0 || at >= names.size())
+                    return QStringList{name + QStringLiteral(" not in Video's group")};
+                names[at] = name;
+            }
+            return names;
+        };
+        QTRY_COMPARE(order(), (QStringList{QStringLiteral("Video"), QStringLiteral("Audio"), QStringLiteral("Editor")}));
+        auto *menu = named("panelOptionsMenu");
+
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("audioDock"), "setAsCurrentTab"));
+        QVERIFY(openPanelMenu(QStringLiteral("Audio")));
+        QCOMPARE(panelMenuItems(), QStringList({QStringLiteral("Move panel…"), QStringLiteral("Move tab left"),
+                                                QStringLiteral("Move tab right"), QStringLiteral("Undock"),
+                                                QStringLiteral("Close")}));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsTabLeft"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_COMPARE(order(), (QStringList{QStringLiteral("Audio"), QStringLiteral("Video"), QStringLiteral("Editor")}));
+        QTRY_VERIFY(item("audioPanel")->isVisible());
+        QTRY_VERIFY(item("audioPanel")->hasActiveFocus());
+        QCOMPARE(dockHeader(QStringLiteral("Audio"))->property("currentName").toString(), QStringLiteral("Audio"));
+        // The header draws the tabs in the new order, Audio selected.
+        for (int i = 0; i < 3; ++i) {
+            QQuickItem *tab = findItem(dockHeader(QStringLiteral("Audio")), QStringLiteral("dockTab%1").arg(i));
+            QVERIFY(tab);
+            QCOMPARE(tab->property("selected").toBool(), i == 0);
+        }
+        QCOMPARE(findItem(dockHeader(QStringLiteral("Audio")), QStringLiteral("dockTab0"))->property("text").toString(),
+                 item<QObject>("audioDock")->property("title").toString());
+
+        // First: Move tab left is off.
+        QVERIFY(openPanelMenu(QStringLiteral("Audio")));
+        QCOMPARE(panelMenuItems(), QStringList({QStringLiteral("Move panel…"), QStringLiteral("Move tab left (off)"),
+                                                QStringLiteral("Move tab right"), QStringLiteral("Undock"),
+                                                QStringLiteral("Close")}));
+        // To the end, two places right.
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsTabRight"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_COMPARE(order(), (QStringList{QStringLiteral("Video"), QStringLiteral("Audio"), QStringLiteral("Editor")}));
+        QVERIFY(openPanelMenu(QStringLiteral("Audio")));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsTabRight"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_COMPARE(order(), (QStringList{QStringLiteral("Video"), QStringLiteral("Editor"), QStringLiteral("Audio")}));
+        QTRY_VERIFY(item("audioPanel")->hasActiveFocus());
+        QVERIFY(openPanelMenu(QStringLiteral("Audio")));
+        QCOMPARE(panelMenuItems(), QStringList({QStringLiteral("Move panel…"), QStringLiteral("Move tab left"),
+                                                QStringLiteral("Move tab right (off)"), QStringLiteral("Undock"),
+                                                QStringLiteral("Close")}));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QVERIFY(!docking.moveTab(QStringLiteral("Audio"), 1));
+        QCOMPARE(order(), (QStringList{QStringLiteral("Video"), QStringLiteral("Editor"), QStringLiteral("Audio")}));
+
+        // The order is in the layout: a restore brings it back.
+        application->workspaceLayout().holdArrangement(); // the engine's serialized layout
+        QVERIFY(docking.moveTab(QStringLiteral("Audio"), -2));
+        QTRY_COMPARE(order(), (QStringList{QStringLiteral("Audio"), QStringLiteral("Video"), QStringLiteral("Editor")}));
+        QVERIFY(application->workspaceLayout().releaseArrangement());
+        QTRY_COMPARE(order(), (QStringList{QStringLiteral("Video"), QStringLiteral("Editor"), QStringLiteral("Audio")}));
+
+        // A lone panel: neither item.
+        QVERIFY(openPanelMenu(QStringLiteral("Grid")));
+        QVERIFY(!panelMenuItems().join(QLatin1Char(',')).contains(QStringLiteral("Move tab")));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+    }
+
     // D3: the keyboard reaches a panel's header and its menu: Shift+Tab
     // from the panel's content to its header (the selected tab of a tab
     // bar), Right to the "⋯" button, Space to open the menu, Escape back to

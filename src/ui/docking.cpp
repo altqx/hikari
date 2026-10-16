@@ -15,6 +15,7 @@
 #include <kddockwidgets/core/Layout.h>
 #include <kddockwidgets/core/MainWindow.h>
 #include <kddockwidgets/core/Platform.h>
+#include <kddockwidgets/core/TabBar.h>
 #include <kddockwidgets/core/indicators/ClassicDropIndicatorOverlay.h>
 #include <kddockwidgets/core/views/ClassicIndicatorWindowViewInterface.h>
 #include <kddockwidgets/qtquick/Platform.h>
@@ -971,6 +972,62 @@ bool Docking::toggleFloating(const QString &uniqueName)
     if (!dock)
         return false;
     return dock->setFloating(!dock->isFloating());
+}
+
+namespace {
+KDDockWidgets::Core::Group *groupOf(KDDockWidgets::Core::DockWidget *dock)
+{
+    if (!dock)
+        return nullptr;
+    for (KDDockWidgets::Core::Group *group : KDDockWidgets::DockRegistry::self()->groups())
+        if (group->containsDockWidget(dock))
+            return group;
+    return nullptr;
+}
+} // namespace
+
+int Docking::tabIndex(const QString &uniqueName) const
+{
+    KDDockWidgets::Core::DockWidget *dock = dockByName(uniqueName);
+    KDDockWidgets::Core::Group *group = groupOf(dock);
+    return group ? group->indexOfDockWidget(dock) : -1;
+}
+
+int Docking::tabCount(const QString &uniqueName) const
+{
+    KDDockWidgets::Core::Group *group = groupOf(dockByName(uniqueName));
+    return group ? group->dockWidgetCount() : 0;
+}
+
+bool Docking::moveTab(const QString &uniqueName, int step)
+{
+    KDDockWidgets::Core::DockWidget *dock = dockByName(uniqueName);
+    KDDockWidgets::Core::Group *group = groupOf(dock);
+    if (!group || step == 0)
+        return false;
+    const int from = group->indexOfDockWidget(dock);
+    const int to = from + step;
+    if (from < 0 || to < 0 || to >= group->dockWidgetCount())
+        return false;
+    // The engine's TabBar::moveTabTo moves the tab in its own list only (the
+    // pinned QtQuick frontend's view of it is a stub), so the tab bar's model
+    // takes the panel out and back in at its new place. Taking the panel out
+    // of its group and back in does not work: the engine's reparenting on
+    // insertion takes a panel out of the group it is in.
+    auto *bar = qobject_cast<KDDockWidgets::QtQuick::TabBar *>(KDDockWidgets::QtQuick::asQQuickItem(group->tabBar()->view()));
+    if (!bar)
+        return false;
+    group->tabBar()->moveTabTo(from, to);
+    bar->dockWidgetModel()->remove(dock);
+    bar->dockWidgetModel()->insert(dock, to);
+    // While the panel's row was out the header made its neighbour current
+    // (in the model, not in the engine): the panel is current again in both,
+    // and the header's index follows it.
+    bar->setCurrentIndex(to);
+    group->setCurrentDockWidget(dock);
+    if (QQuickItem *header = bar->tabBarQmlItem())
+        header->setProperty("currentTabIndex", to);
+    return group->indexOfDockWidget(dock) == to;
 }
 
 } // namespace hikari::ui
