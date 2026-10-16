@@ -4522,6 +4522,14 @@ po wyjściu z pełnego ekranu</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>API</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio delay in milliseconds</source>
         <translation>Opóźnienie audio w ms</translation>
     </message>
@@ -4744,6 +4752,15 @@ zostanie zmieniony na domyślny</translation>
     <message>
         <source>style</source>
         <translation>styl</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (not connected)</source>
+        <extracomment>An output device chosen in Settings &gt; Audio that is not plugged in; %1 is its name</extracomment>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 (slow; only for VSFilterMod tags)</source>

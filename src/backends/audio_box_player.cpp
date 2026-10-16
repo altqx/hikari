@@ -4,6 +4,7 @@
 #include <chrono>
 
 #include <QMetaObject>
+#include <QTimer>
 
 namespace hikari::backends {
 
@@ -47,7 +48,7 @@ AudioBoxPlayer::~AudioBoxPlayer()
     {
         const std::scoped_lock lock(m_lock);
         m_quit = true;
-        if (m_playing)
+        if (m_playing && m_output)
             m_output->stop();
         m_playing = false;
         m_playingAudio.reset();
@@ -110,11 +111,9 @@ bool AudioBoxPlayer::openOutput(const application::DisplayAudio &audio)
 {
     const application::OutputFormat want{audio.sampleRate(), audio.channels()};
     const auto status = output().status();
-    if (status.open && !status.deviceLost && want == m_srcFormat)
+    if (status.open && !status.deviceLost && want == m_srcFormat && !m_rescan)
         return true;
-    if (status.open)
-        output().close();
-    const auto opened = output().open(m_device, want);
+    const auto opened = openDevice(want);
     if (!opened) {
         m_srcFormat = m_outFormat = {0, 0};
         fail(QStringLiteral("Failed creating audio playback device."));
@@ -123,6 +122,37 @@ bool AudioBoxPlayer::openOutput(const application::DisplayAudio &audio)
     m_srcFormat = want;
     m_outFormat = *opened;
     return true;
+}
+
+// H2: the chosen device by its name in the host's list (in the default
+// device's host API), else the default. The host is rescanned first when
+// the devices changed, as PortAudio enumerates once per initialization and
+// would otherwise open the default it saw then (A10 in the H2 evidence).
+std::expected<application::OutputFormat, application::OutputError>
+AudioBoxPlayer::openDevice(application::OutputFormat want)
+{
+    auto &out = output();
+    if (out.status().open)
+        out.close();
+    std::string id;
+    if (m_rescan || !m_deviceName.empty()) {
+        const auto devices = out.devices(); // no stream of ours is open: a rescan
+        m_rescan = false;
+        if (!m_deviceName.empty()) {
+            std::string hostApi;
+            if (const auto d = std::ranges::find(devices, true, &application::OutputDevice::isDefault); d != devices.end())
+                hostApi = d->hostApi;
+            for (const auto &device : devices)
+                if (device.name == m_deviceName && (hostApi.empty() || device.hostApi == hostApi)) {
+                    id = device.id;
+                    break;
+                }
+        }
+    }
+    auto opened = out.open(id, want);
+    if (!opened && !id.empty())
+        opened = out.open({}, want); // the chosen device refused: the default
+    return opened;
 }
 
 // Legacy DirectSoundPlayer2Thread::Play and its start event: the buffer is
@@ -138,7 +168,9 @@ void AudioBoxPlayer::play(std::int64_t start, std::int64_t count)
             return;
         output().stop();
         m_playingAudio = std::move(audio);
-        m_start = m_next = start;
+        m_start = m_base = m_next = start;
+        m_waiting = false;
+        m_attempts = 0;
         m_end = start + count;
         m_written = 0;
         m_pending.clear();
@@ -179,10 +211,97 @@ void AudioBoxPlayer::halt()
 {
     m_playing = false;
     m_started = false;
+    m_waiting = false;
     m_pending.clear();
     m_playingAudio.reset();
     if (m_reopen)
         releaseOutput();
+}
+
+void AudioBoxPlayer::setOutputDevice(std::string name)
+{
+    const std::scoped_lock lock(m_lock);
+    m_deviceName = std::move(name);
+}
+
+void AudioBoxPlayer::switchOutput()
+{
+    const std::scoped_lock lock(m_lock);
+    m_rescan = true;
+    if (m_playing) {
+        m_attempts = 0;
+        resumeLocked(m_waiting ? m_base : heardLocked());
+        return;
+    }
+    if (m_output && m_srcFormat.sampleRate > 0)
+        m_output->close();
+    m_srcFormat = m_outFormat = {0, 0};
+}
+
+// The output opens again (after a rescan) and the range goes on from source
+// frame `frame`; the rest of the range then the silence, as before. While
+// no device opens the player waits there and tries again.
+void AudioBoxPlayer::resumeLocked(std::int64_t frame)
+{
+    const application::OutputFormat want = m_srcFormat;
+    if (m_output)
+        m_output->stop();
+    if (m_reopen)
+        releaseOutput(); // a changed audio.outputHostApi applies now
+    m_rescan = true;
+    m_base = m_next = frame;
+    m_written = 0;
+    m_pending.clear();
+    m_primed = false;
+    m_phase = 0;
+    m_started = false;
+    const auto opened = openDevice(want);
+    m_srcFormat = want;
+    if (!opened) {
+        m_waiting = true;
+        if (++m_attempts >= m_maxAttempts) {
+            halt();
+            m_srcFormat = m_outFormat = {0, 0};
+            fail(QStringLiteral("Audio player failed."));
+            return;
+        }
+        if (!std::exchange(m_retryQueued, true))
+            QTimer::singleShot(m_retryMs, this, [this] { retry(); });
+        return;
+    }
+    m_outFormat = *opened;
+    m_waiting = false;
+    m_baseConsumed = output().status().framesConsumed;
+    m_rangeFrames = std::max<std::int64_t>(0, m_end - frame) * m_outFormat.sampleRate / std::max(1, m_srcFormat.sampleRate);
+    fill();
+}
+
+// The stream ended without a stop (WASAPI's unplug; a start that failed):
+// the frames the device took are what was heard. The reopen needs a rescan,
+// which runs on the owner's thread.
+void AudioBoxPlayer::lostLocked()
+{
+    m_base = heardLocked();
+    m_waiting = true;
+    m_started = false;
+    m_pending.clear();
+    if (!std::exchange(m_retryQueued, true))
+        QMetaObject::invokeMethod(this, [this] { retry(); }, Qt::QueuedConnection);
+}
+
+void AudioBoxPlayer::retry()
+{
+    const std::scoped_lock lock(m_lock);
+    m_retryQueued = false;
+    if (m_playing && m_waiting)
+        resumeLocked(m_base);
+}
+
+void AudioBoxPlayer::setRecovery(int attempts, int intervalMs)
+{
+    const std::scoped_lock lock(m_lock);
+    m_maxAttempts = attempts;
+    m_retryMs = intervalMs;
 }
 
 void AudioBoxPlayer::reopenOutput()
@@ -267,13 +386,14 @@ void AudioBoxPlayer::pump()
 
 void AudioBoxPlayer::pumpLocked()
 {
-    if (!m_playing)
+    if (!m_playing || m_waiting)
         return;
     if (output().status().deviceLost) {
-        halt();
-        fail(QStringLiteral("Audio player failed."));
+        lostLocked(); // H2: reopened on the owner's thread, no failure
         return;
     }
+    if (m_attempts > 0 && m_started && consumed() > 0)
+        m_attempts = 0; // the reopened device takes frames
     // Legacy's single-buffer playback stops once its time has passed.
     if (m_oneShot && m_started && consumed() >= m_rangeFrames) {
         stopLocked();
@@ -347,30 +467,54 @@ void AudioBoxPlayer::fill()
     }
     if (m_playing && !m_started && m_written > 0) {
         if (!output().start()) {
-            halt();
-            fail(QStringLiteral("Audio player failed."));
+            // H2: a device that will not start is reopened like a lost one,
+            // up to the retry limit
+            if (++m_attempts >= m_maxAttempts) {
+                halt();
+                fail(QStringLiteral("Audio player failed."));
+                return;
+            }
+            lostLocked();
             return;
         }
         m_started = true;
     }
 }
 
+// Output frames heard since this output run began, from the clock estimate.
+std::int64_t AudioBoxPlayer::clockFrames(const application::ClockEstimate &clock) const
+{
+    const double rate = m_outFormat.sampleRate;
+    double heard = (double(clock.framesConsumed) - double(m_baseConsumed))
+                   + (m_now() - clock.monotonicSeconds - (clock.dacTimeSeconds - clock.streamTimeSeconds)) * rate;
+    heard = std::clamp(heard, 0.0, double(std::max<std::int64_t>(0, consumed())));
+    return static_cast<std::int64_t>(heard);
+}
+
 // Legacy GetCurrentPosition: 0 while stopped, the start until the output
-// reports.
+// reports (after a reopen, the frame it went on from).
 std::int64_t AudioBoxPlayer::position() const
 {
     const std::scoped_lock lock(m_lock);
     if (!m_playing)
         return 0;
+    if (!m_started || !m_output || m_outFormat.sampleRate <= 0)
+        return m_base;
     const auto clock = m_output->clock();
-    if (!m_started || !clock.valid || m_outFormat.sampleRate <= 0)
-        return m_start;
-    const double rate = m_outFormat.sampleRate;
-    double heard = (double(clock.framesConsumed) - double(m_baseConsumed))
-                   + (m_now() - clock.monotonicSeconds - (clock.dacTimeSeconds - clock.streamTimeSeconds)) * rate;
-    heard = std::clamp(heard, 0.0, double(std::max<std::int64_t>(0, consumed())));
-    const auto frames = static_cast<std::int64_t>(heard);
-    return m_start + frames * m_srcFormat.sampleRate / m_outFormat.sampleRate;
+    if (!clock.valid)
+        return m_base;
+    return m_base + clockFrames(clock) * m_srcFormat.sampleRate / m_outFormat.sampleRate;
+}
+
+// H2: where a reopen goes on: the frame being heard, or without a clock
+// estimate (a lost or stalled stream) the frames the device took.
+std::int64_t AudioBoxPlayer::heardLocked() const
+{
+    if (!m_started || !m_output || m_outFormat.sampleRate <= 0 || m_srcFormat.sampleRate <= 0)
+        return m_base;
+    const auto clock = m_output->clock();
+    const std::int64_t frames = clock.valid ? clockFrames(clock) : std::max<std::int64_t>(0, consumed());
+    return m_base + frames * m_srcFormat.sampleRate / m_outFormat.sampleRate;
 }
 
 } // namespace hikari::backends

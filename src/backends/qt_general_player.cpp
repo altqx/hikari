@@ -59,14 +59,10 @@ std::vector<PlayerTrack> tracksOf(const QList<QMediaMetaData> &list, bool video)
 
 } // namespace
 
-QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject(parent)
+QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject(parent), m_useAudioOutput(useAudioOutput)
 {
     m_player.setVideoSink(&m_sink);
-    if (useAudioOutput && !QMediaDevices::audioOutputs().isEmpty()) {
-        m_audio = std::make_unique<QAudioOutput>();
-        m_player.setAudioOutput(m_audio.get());
-        m_audio->setVolume(static_cast<float>(m_volume));
-    }
+    setOutputDevice({});
     connect(&m_player, &QMediaPlayer::mediaStatusChanged, this, &QtGeneralPlayer::onStatus);
     connect(&m_player, &QMediaPlayer::playbackStateChanged, this, [this] {
         ++m_epoch; // a stop, pause or start re-anchors the clock
@@ -97,6 +93,39 @@ QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject
             QMetaObject::invokeMethod(this, &QtGeneralPlayer::takeFrame, Qt::QueuedConnection);
     }, Qt::DirectConnection);
     connect(&m_sink, &QVideoSink::subtitleTextChanged, this, &QtGeneralPlayer::subtitleTextChanged);
+}
+
+// The device with the requested id, else the default. The output is made
+// once a device exists (none at start on a host without sound).
+void QtGeneralPlayer::setOutputDevice(const std::string &id)
+{
+    m_outputRequest = id;
+    if (!m_useAudioOutput)
+        return;
+    const QList<QAudioDevice> outputs = QMediaDevices::audioOutputs();
+    if (outputs.isEmpty())
+        return;
+    QAudioDevice device = QMediaDevices::defaultAudioOutput();
+    if (!id.empty()) {
+        const QByteArray wanted = QByteArray::fromStdString(id);
+        for (const QAudioDevice &candidate : outputs)
+            if (candidate.id() == wanted)
+                device = candidate;
+    }
+    if (device.isNull())
+        device = outputs.front();
+    if (!m_audio) {
+        m_audio = std::make_unique<QAudioOutput>(device);
+        m_audio->setVolume(static_cast<float>(m_volume));
+        m_player.setAudioOutput(m_audio.get());
+        return;
+    }
+    m_audio->setDevice(device);
+}
+
+std::string QtGeneralPlayer::outputDeviceId() const
+{
+    return m_audio ? m_audio->device().id().toStdString() : std::string();
 }
 
 QtGeneralPlayer::~QtGeneralPlayer()

@@ -87,6 +87,9 @@ hikari_add_gtest(hikari_application_audio_display_tests SOURCES audio_display_te
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_audio_spectrum_tests SOURCES audio_spectrum_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# H2: the output device both audio paths follow (fake device lists).
+hikari_add_gtest(hikari_application_audio_devices_tests SOURCES audio_devices_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 # A4: the audio box's playback modes, Stop and the playback cursor.
 hikari_add_gtest(hikari_application_audio_playback_tests SOURCES audio_playback_tests.cpp
     LIBRARIES hikari_application LABELS application)

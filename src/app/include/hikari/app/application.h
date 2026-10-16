@@ -17,6 +17,7 @@
 #include "hikari/app/automation_shell.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/application/associated_files.h"
+#include "hikari/application/audio_devices.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/find_replace.h"
 #include "hikari/application/grid_commands.h"
@@ -158,6 +159,10 @@ public:
         // Whether audio.outputHostApi chooses the host API (Windows; tests
         // elsewhere may say so).
         bool outputHostApiSetting = backends::PortAudioOutput::onWindows;
+        // H2 (decision 60): the system's output devices both audio paths
+        // follow (tests give a fake); unset: Qt's QMediaDevices, or with
+        // playbackAudio off none.
+        std::function<std::unique_ptr<application::AudioDevicesPort>()> makeAudioDevices;
         // P8: the release list the update check reads (tests: a file).
         UpdateFeed updateFeed = UpdateFeed::github();
         // ADR 0019: the package kind, update cache and installers; the
@@ -723,6 +728,11 @@ public:
     // W2: a renderer as the Video page's choice shows it: its name, and for
     // VSFilterMod a note that it is slow and only for its own tags.
     static QString subtitleRendererLabel(const std::string &name);
+    // H2: an entry of Settings > Audio's output device choice as shown.
+    static QString outputDeviceLabel(const application::OutputDeviceChoice &choice);
+    // tests: the route both audio paths follow now
+    application::OutputRoute audioRoute() const { return m_audioRouting->route(); }
+    backends::AudioBoxPlayer &audioPlayer() { return *m_audioPlayer; }
     ui::LogController &log() { return *m_log; }
     // O5: the interface language (PROGRAM_LANGUAGE, switched live) and
     // aegisub.gettext's catalog.
@@ -1229,6 +1239,11 @@ private:
     std::unique_ptr<application::AudioOutputPort> m_audioOutput;
     std::string m_audioOutputHostApi; // the host API m_audioOutput was made for
     std::unique_ptr<backends::AudioBoxPlayer> m_audioPlayer;
+    // H2: the system's output devices and the route both audio paths follow
+    // (audio.outputDevice, else the default).
+    std::unique_ptr<application::AudioDevicesPort> m_audioDevices;
+    std::unique_ptr<application::AudioOutputRouting> m_audioRouting;
+    void routeAudio(const application::OutputRoute &route, bool move);
     void refreshAudio();
     void followVideoInAudio();
     // V3 (application_video.cpp)

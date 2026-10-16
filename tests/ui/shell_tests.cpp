@@ -8990,6 +8990,7 @@ private slots:
               {"audio.mergeEveryNWithSyllable", "Merge all the \"n\" with the previous syllable"},
               {"audio.karaokeMoveOnClick", "Move syllable line after click"},
               {"audio.ramCache", "Load audio into RAM"},
+              {"audio.outputDevice", nullptr}, // H2-output-device
 #ifdef _WIN32
               {"audio.outputHostApi", nullptr}, // A4-wasapi-default, Windows only
 #endif
@@ -12676,6 +12677,170 @@ private slots:
         QCOMPARE(backends::PortAudioOutput::hostApiForSetting(1, false), backends::PortAudioOutput::defaultHostApi());
         QCOMPARE(backends::PortAudioOutput::hostApiForSetting(1, true), std::string("Windows DirectSound"));
         QCOMPARE(backends::PortAudioOutput::hostApiForSetting(0, true), std::string("Windows WASAPI"));
+    }
+
+    // H2 (decision 60, "Follow + device picker"): both audio paths follow the
+    // system's output devices, and Settings > Audio chooses one. A fake device
+    // list stands in for QMediaDevices; the audio box plays through an output
+    // without a device that records its opens and rescans.
+    void audioOutputDeviceFollowsTheSystemAndTheChoice()
+    {
+        delete engine;
+        delete application;
+        engine = nullptr;
+        application = nullptr;
+        struct Devices final : application::AudioDevicesPort {
+            std::vector<application::SystemOutputDevice> &list;
+            std::function<void()> &changed;
+            Devices(std::vector<application::SystemOutputDevice> &l, std::function<void()> &c) : list(l), changed(c) {}
+            std::vector<application::SystemOutputDevice> outputs() const override { return list; }
+            void setChangedCallback(std::function<void()> callback) override { changed = std::move(callback); }
+        };
+        struct Output final : application::AudioOutputPort {
+            backends::SimulatedOutput inner;
+            int &opens;
+            int &rescans;
+            Output(int &o, int &r) : opens(o), rescans(r) {}
+            std::vector<application::OutputDevice> devices() override
+            {
+                ++rescans;
+                return inner.devices();
+            }
+            std::expected<application::OutputFormat, application::OutputError> open(const std::string &id,
+                                                                                    application::OutputFormat f) override
+            {
+                ++opens;
+                return inner.open(id, f);
+            }
+            std::expected<void, application::OutputError> start() override { return inner.start(); }
+            void stop() override { inner.stop(); }
+            void close() override { inner.close(); }
+            application::OutputFormat format() const override { return inner.format(); }
+            std::size_t write(std::span<const float> s) override { return inner.write(s); }
+            application::OutputStatus status() const override { return inner.status(); }
+            application::ClockEstimate clock() const override { return inner.clock(); }
+        };
+        const application::SystemOutputDevice monitor{"dev-monitor", "22E1W (NVIDIA High Definition Audio)", true};
+        const application::SystemOutputDevice headset{"dev-headset", "Speakers (Razer BlackShark V2 X USB)", false};
+        std::vector<application::SystemOutputDevice> list{monitor, headset};
+        std::function<void()> changed;
+        int opens = 0, rescans = 0;
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        options.catalogDir = own.filePath(QStringLiteral("Catalog"));
+        options.makeAudioDevices = [&] { return std::make_unique<Devices>(list, changed); };
+        options.makeAudioOutput = [&](const backends::PortAudioOutput::Options &) {
+            return std::make_unique<Output>(opens, rescans);
+        };
+        // The application holds the fake devices, which refer to this
+        // function's list and callback: it goes before they do.
+        const auto close = qScopeGuard([this] {
+            delete engine;
+            delete application;
+            engine = nullptr;
+            application = nullptr;
+        });
+        const auto start = [&] {
+            application = new app::Application(options);
+            engine = new QQmlApplicationEngine;
+            hikari::ui::attachDocking(*engine);
+            engine->setInitialProperties(application->qmlProperties());
+            engine->loadFromModule("Hikari.Ui", "Main");
+            QVERIFY(!engine->rootObjects().isEmpty());
+            window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        };
+        start();
+        using Route = application::OutputRoute;
+        // System default: both paths take the default.
+        QCOMPARE(application->audioRoute(), (Route{monitor.id, monitor.name, true}));
+        QCOMPARE(application->generalPlayer().outputDeviceRequest(), monitor.id);
+        // The default changes: both move (A9/A10/B6).
+        list[0].isDefault = false;
+        list[1].isDefault = true;
+        changed();
+        QCOMPARE(application->audioRoute(), (Route{headset.id, headset.name, true}));
+        QCOMPARE(application->generalPlayer().outputDeviceRequest(), headset.id);
+        // The picker: System default, then the devices; OK stores the choice.
+        auto &settings = *application->settingsStore();
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("outputDevices").toStringList(),
+                 (QStringList{QStringLiteral("System default"), QString::fromStdString(monitor.name),
+                              QString::fromStdString(headset.name)}));
+        auto *choice = dialogItem("settingsDialog", "setting_audio.outputDevice");
+        QVERIFY(choice);
+        QCOMPARE(choice->property("currentIndex").toInt(), 0);
+        QVERIFY(QMetaObject::invokeMethod(choice, "activated", Q_ARG(int, 1)));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("audio.outputDevice"), QString::fromStdString(monitor.id));
+        QCOMPARE(settings.text("audio.outputDeviceName"), QString::fromStdString(monitor.name));
+        QCOMPARE(application->audioRoute(), (Route{monitor.id, monitor.name, false}));
+        QCOMPARE(application->generalPlayer().outputDeviceRequest(), monitor.id);
+        // The audio box plays; the chosen device is unplugged mid-play: the
+        // editor output reopens on the default after a rescan and plays on.
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        audio.playLine();
+        QVERIFY(audio.playing());
+        const int opensBefore = opens, rescansBefore = rescans;
+        list.erase(list.begin()); // the monitor goes (B7)
+        changed();
+        QCOMPARE(application->audioRoute(), (Route{headset.id, headset.name, true}));
+        QCOMPARE(application->generalPlayer().outputDeviceRequest(), headset.id);
+        QVERIFY(audio.playing());
+        QCOMPARE(opens, opensBefore + 1);
+        QVERIFY(rescans > rescansBefore);
+        audio.stopPlayback();
+        // While it is unplugged the picker lists it as not connected, and OK keeps it.
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("outputDevices").toStringList(),
+                 (QStringList{QStringLiteral("System default"), QString::fromStdString(headset.name),
+                              QString::fromStdString(monitor.name) + QStringLiteral(" (not connected)")}));
+        QCOMPARE(dialogItem("settingsDialog", "setting_audio.outputDevice")->property("currentIndex").toInt(), 2);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("audio.outputDevice"), QString::fromStdString(monitor.id));
+        // It is plugged in again: both go back to it.
+        list.push_back(monitor);
+        list.back().isDefault = false;
+        changed();
+        QCOMPARE(application->audioRoute(), (Route{monitor.id, monitor.name, false}));
+        QCOMPARE(application->generalPlayer().outputDeviceRequest(), monitor.id);
+        // The choice persists: the next run starts on it, or on the default
+        // while it is missing.
+        delete engine;
+        delete application;
+        engine = nullptr;
+        application = nullptr;
+        start();
+        QCOMPARE(application->settingsStore()->text("audio.outputDevice"), QString::fromStdString(monitor.id));
+        QCOMPARE(application->audioRoute(), (Route{monitor.id, monitor.name, false}));
+        QCOMPARE(application->generalPlayer().outputDeviceRequest(), monitor.id);
+        delete engine;
+        delete application;
+        engine = nullptr;
+        application = nullptr;
+        list.pop_back();
+        start();
+        QCOMPARE(application->audioRoute(), (Route{headset.id, headset.name, true}));
+        QCOMPARE(application->generalPlayer().outputDeviceRequest(), headset.id);
+        // System default again: nothing is stored.
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "setting_audio.outputDevice"), "activated",
+                                          Q_ARG(int, 0)));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(application->settingsStore()->text("audio.outputDevice"), QString());
+        QCOMPARE(application->audioRoute(), (Route{headset.id, headset.name, true}));
     }
 
     // T1: the tool rail, the shared view placing the frame, the crosshair

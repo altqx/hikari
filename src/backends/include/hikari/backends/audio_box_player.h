@@ -32,6 +32,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <expected>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -67,8 +68,24 @@ public:
     void setPumping(Pumping pumping);
 
     void setClock(Clock now) { m_now = std::move(now); }
-    // The output device (empty: the default); used at the next open.
-    void setDevice(std::string id) { m_device = std::move(id); }
+    // H2 (decision 60): the output device by the system's name for it
+    // (Settings > Audio; empty: the system default). An open looks it up in
+    // the host's list, in the default device's host API, and opens the
+    // default instead while it is absent or refuses. Used at the next open
+    // (switchOutput moves a playing output at once).
+    void setOutputDevice(std::string name);
+    // The system's devices changed (the default changed, the device in use
+    // went away, the chosen one returned): the output opens again after a
+    // rescan, so PortAudio sees the change. While playing it reopens at once
+    // and goes on from the frame being heard; while idle it is closed and the
+    // next play opens it. Owner thread.
+    void switchOutput();
+    // A lost device (the stream ended without a stop: WASAPI's unplug) is
+    // reopened the same way, on the owner's thread. While no device opens
+    // the player waits on its frame, trying again every `intervalMs` (and at
+    // each switchOutput), and after `attempts` tries it stops with legacy's
+    // "Audio player failed." (default 12 tries, 250 ms apart).
+    void setRecovery(int attempts, int intervalMs);
     // Closes the output; the next play opens it again.
     void close() override;
     // The output is made again (the factory asked anew) at the next play:
@@ -103,6 +120,12 @@ signals:
 private:
     // The calls below run with m_lock held.
     bool openOutput(const application::DisplayAudio &audio);
+    std::expected<application::OutputFormat, application::OutputError> openDevice(application::OutputFormat want);
+    std::int64_t clockFrames(const application::ClockEstimate &clock) const;
+    std::int64_t heardLocked() const; // the frame being heard, for a reopen
+    void resumeLocked(std::int64_t frame); // reopen and go on from `frame`
+    void lostLocked();                     // the device went away
+    void retry();                          // owner thread
     void pumpLocked();
     void fill();
     void stopLocked();
@@ -119,7 +142,14 @@ private:
     SharedAudio m_audio;
     std::shared_ptr<const application::DisplayAudio> m_playingAudio; // held while playing
     Clock m_now;
-    std::string m_device;
+    std::string m_deviceName; // H2: the chosen device's name; empty: the default
+    bool m_rescan = false;    // the devices changed: rescan before the next open
+    std::int64_t m_base = 0;  // the source frame this output run began at (m_start, or where a reopen went on)
+    bool m_waiting = false;   // playing, waiting for a device to reopen on
+    bool m_retryQueued = false;
+    int m_attempts = 0;
+    int m_maxAttempts = 12;
+    int m_retryMs = 250;
     application::OutputFormat m_srcFormat{0, 0};
     application::OutputFormat m_outFormat{0, 0};
     std::atomic<bool> m_playing = false;

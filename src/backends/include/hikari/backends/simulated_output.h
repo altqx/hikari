@@ -38,10 +38,13 @@ public:
 
     // Renders the buffers due by now (each call's first step).
     void render() const;
+    // Fault injection (H2): the next buffer aborts the stream, as a host
+    // ends it when its device goes away; reopening recovers.
+    void simulateDeviceLoss();
 
 private:
     std::unique_ptr<OutputEngine> m_engine;
-    bool m_running = false;
+    mutable bool m_running = false;
     double m_startedAt = 0;              // steady seconds at start
     mutable std::int64_t m_rendered = 0; // frames rendered since start
     mutable std::vector<float> m_buffer;

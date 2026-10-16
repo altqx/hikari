@@ -14,6 +14,7 @@
 #include <chrono>
 #include <cmath>
 #include <memory>
+#include <algorithm>
 #include <optional>
 #include <thread>
 
@@ -33,13 +34,25 @@ public:
     int opens = 0, closes = 0, starts = 0;
     std::vector<float> rendered;
     double stream = 0;
+    // H2: the host's list (devices() is a rescan) and the ids opened.
+    std::vector<OutputDevice> list;
+    std::vector<std::string> refuseIds; // listed, but refusing to open
+    int rescans = 0;
+    std::vector<std::string> opened;
 
-    std::vector<OutputDevice> devices() override { return {}; }
-    std::expected<OutputFormat, OutputError> open(const std::string &, OutputFormat format) override
+    std::vector<OutputDevice> devices() override
+    {
+        ++rescans;
+        return list;
+    }
+    std::expected<OutputFormat, OutputError> open(const std::string &id, OutputFormat format) override
     {
         ++opens;
         if (refuseOpen)
             return std::unexpected(OutputError::NoDevice);
+        if (std::ranges::find(refuseIds, id) != refuseIds.end())
+            return std::unexpected(OutputError::DeviceUnavailable);
+        opened.push_back(id);
         if (refuseRateWith)
             format.sampleRate = refuseRateWith->sampleRate;
         m_engine.emplace(format, 0.05, 0.5);
@@ -286,15 +299,26 @@ TEST_F(BoxPlayer, FailuresAreLogged)
     device.refuseOpen = false;
     player.play(0, 48000);
     ASSERT_TRUE(player.playing());
+    EXPECT_EQ(device.opens, 2);
+    // H2: a device lost with none to reopen on fails after the retries
+    // (LosingTheDeviceInUseGoesOnOnTheDefault for the recovery)
+    player.setRecovery(2, 1);
+    device.refuseOpen = true;
     device.loseDevice();
     device.render();
     player.pump();
+    QElapsedTimer t;
+    t.start();
+    while (failures.size() < 2 && t.elapsed() < 2000)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
     EXPECT_FALSE(player.playing());
     EXPECT_EQ(failures.last(), QStringLiteral("Audio player failed."));
+    EXPECT_EQ(device.opens, 4);
     // the next play opens the device again
+    device.refuseOpen = false;
     player.play(0, 48000);
     EXPECT_TRUE(player.playing());
-    EXPECT_EQ(device.opens, 3);
+    EXPECT_EQ(device.opens, 5);
     // without audio nothing plays
     audio.reset();
     player.stop();
@@ -363,4 +387,180 @@ TEST_F(BoxPlayer, ThePlayedAudioIsHeldUntilTheStop)
     held.pump();
     held.stop();
     EXPECT_TRUE(watch.expired());
+}
+
+// H2 (#125, decision 60): the output follows the system's devices. A change
+// while idle (the default changed, A10 in the H2 evidence: a new audition
+// still played on the old default) closes the output; the next play rescans
+// the host, so PortAudio sees the new default, and opens it.
+TEST_F(BoxPlayer, ADefaultChangeWhileIdleReopensAtTheNextPlay)
+{
+    player.play(0, 4800);
+    run(4);
+    player.stop();
+    ASSERT_EQ(device.opens, 1);
+    EXPECT_EQ(device.rescans, 0);
+    player.switchOutput();
+    EXPECT_EQ(device.closes, 1); // let go at once
+    EXPECT_FALSE(player.playing());
+    player.play(0, 4800);
+    EXPECT_EQ(device.rescans, 1); // the host rescanned before the open
+    EXPECT_EQ(device.opens, 2);
+    EXPECT_EQ(device.opened.back(), ""); // the (new) default
+    run(4);
+    EXPECT_FLOAT_EQ(device.rendered[device.rendered.size() - 1024 * 2 + 2], 1 / 32768.0f); // frame 1, left
+    // without a change the open output is kept
+    player.play(0, 4800);
+    EXPECT_EQ(device.opens, 2);
+    EXPECT_EQ(device.rescans, 1);
+}
+
+// A change while playing (A9/B6: the default changed during playback) reopens
+// at once after a rescan and goes on from the frame being heard, with no
+// failure logged.
+TEST_F(BoxPlayer, ADefaultChangeWhilePlayingGoesOnFromThePosition)
+{
+    player.play(48000, 48000 * 5);
+    run(40); // 10240 frames taken
+    const auto heard = player.position();
+    EXPECT_NEAR(heard, 48000 + 10240 - 2400, 1);
+    const std::size_t before = device.rendered.size();
+    player.switchOutput();
+    EXPECT_TRUE(player.playing());
+    EXPECT_EQ(device.rescans, 1);
+    EXPECT_EQ(device.opens, 2);
+    EXPECT_EQ(device.closes, 1);
+    EXPECT_EQ(device.starts, 2);
+    EXPECT_EQ(player.position(), heard); // until the new output reports
+    EXPECT_EQ(player.startPosition(), 48000);
+    EXPECT_EQ(player.endPosition(), 48000 * 6);
+    run(8);
+    // the new device's first frame is the one that was being heard
+    ASSERT_GE(device.rendered.size(), before + 2048 * 2);
+    for (std::size_t i = 0; i < 2048; i++)
+        ASSERT_FLOAT_EQ(device.rendered[before + 2 * i], float((heard + std::int64_t(i)) % 30000) / 32768.0f) << i;
+    device.nowOffset = 0.05;
+    EXPECT_NEAR(player.position(), heard + 2048, 1);
+    EXPECT_EQ(device.status().underruns, 0u);
+    EXPECT_TRUE(failures.isEmpty());
+}
+
+// The device in use goes away while playing (A11 on WASAPI: the stream ended
+// and "Audio player failed." was shown): the player reopens on the default
+// and goes on from where the device stopped taking frames, without a failure.
+TEST_F(BoxPlayer, LosingTheDeviceInUseGoesOnOnTheDefault)
+{
+    player.play(0, 48000 * 5);
+    run(40); // 10240 frames taken
+    device.loseDevice();
+    device.render(); // the host aborts the stream
+    player.pump();
+    EXPECT_TRUE(player.playing());
+    QCoreApplication::processEvents(); // the recovery runs on the owner's thread
+    EXPECT_TRUE(player.playing());
+    EXPECT_EQ(device.opens, 2);
+    EXPECT_EQ(device.rescans, 1);
+    EXPECT_TRUE(failures.isEmpty());
+    const auto resumed = player.position();
+    EXPECT_GE(resumed, 10240 - 2400);
+    EXPECT_LE(resumed, 10240);
+    const std::size_t before = device.rendered.size();
+    run(4);
+    EXPECT_FLOAT_EQ(device.rendered[before], float(resumed % 30000) / 32768.0f);
+    EXPECT_TRUE(failures.isEmpty());
+}
+
+// No device to reopen on yet (Windows had not picked a new default): the
+// player waits on the frame it stopped at and goes on when the devices
+// change.
+TEST_F(BoxPlayer, ALostDeviceWaitsForTheNextOne)
+{
+    player.setRecovery(100, 1000);
+    player.play(0, 48000 * 5);
+    run(40);
+    device.refuseOpen = true;
+    device.loseDevice();
+    device.render();
+    player.pump();
+    QCoreApplication::processEvents();
+    EXPECT_TRUE(player.playing());
+    const auto waiting = player.position();
+    EXPECT_GT(waiting, 0);
+    device.refuseOpen = false;
+    player.switchOutput(); // a device arrived
+    EXPECT_TRUE(player.playing());
+    EXPECT_EQ(player.position(), waiting);
+    const std::size_t before = device.rendered.size();
+    run(4);
+    EXPECT_FLOAT_EQ(device.rendered[before], float(waiting % 30000) / 32768.0f);
+    EXPECT_TRUE(failures.isEmpty());
+}
+
+// A chosen device opens by its name in the default's host API (the system's
+// name for it, Settings > Audio); while it is absent, or when it refuses, the
+// default plays instead, with no failure.
+TEST_F(BoxPlayer, AChosenDeviceOpensByNameElseTheDefault)
+{
+    device.list = {{"Windows DirectSound/3/Speakers (Razer BlackShark V2 X USB)", "Speakers (Razer BlackShark V2 X USB)",
+                    "Windows DirectSound", false, 2, 48000},
+                   {"Windows WASAPI/7/22E1W (NVIDIA High Definition Audio)", "22E1W (NVIDIA High Definition Audio)",
+                    "Windows WASAPI", true, 2, 48000},
+                   {"Windows WASAPI/8/Speakers (Razer BlackShark V2 X USB)", "Speakers (Razer BlackShark V2 X USB)",
+                    "Windows WASAPI", false, 2, 48000}};
+    // missing at start: the default, no failure
+    player.setOutputDevice("Realtek Digital Output (Realtek(R) Audio)");
+    player.play(0, 4800);
+    EXPECT_TRUE(player.playing());
+    EXPECT_EQ(device.opened.back(), "");
+    EXPECT_TRUE(failures.isEmpty());
+    player.stop();
+    // connected: that device, in the default's host API
+    player.setOutputDevice("Speakers (Razer BlackShark V2 X USB)");
+    player.switchOutput();
+    player.play(0, 48000);
+    EXPECT_EQ(device.opened.back(), "Windows WASAPI/8/Speakers (Razer BlackShark V2 X USB)");
+    run(4);
+    // unplugged while playing: the default
+    device.list.pop_back();
+    player.switchOutput();
+    EXPECT_TRUE(player.playing());
+    EXPECT_EQ(device.opened.back(), "");
+    // listed but refusing to open: the default
+    device.list.push_back({"Windows WASAPI/9/Speakers (Razer BlackShark V2 X USB)",
+                           "Speakers (Razer BlackShark V2 X USB)", "Windows WASAPI", false, 2, 48000});
+    device.refuseIds = {"Windows WASAPI/9/Speakers (Razer BlackShark V2 X USB)"};
+    player.switchOutput();
+    EXPECT_TRUE(player.playing());
+    EXPECT_EQ(device.opened.back(), "");
+    // back to the system default
+    device.refuseIds.clear();
+    player.setOutputDevice("");
+    player.switchOutput();
+    EXPECT_EQ(device.opened.back(), "");
+    EXPECT_TRUE(failures.isEmpty());
+}
+
+// The fill thread notices the loss; the reopen runs on the owner's thread
+// while playback goes on there.
+TEST_F(BoxPlayer, TheFillThreadRecoversALostDevice)
+{
+    backends::SimulatedOutput output;
+    AudioBoxPlayer threaded(output, [this]() -> const DisplayAudio * { return &*audio; });
+    QStringList threadedFailures;
+    QObject::connect(&threaded, &AudioBoxPlayer::failed, [&](const QString &m) { threadedFailures << m; });
+    threaded.play(0, 48000 * 3);
+    QElapsedTimer t;
+    t.start();
+    while (t.elapsed() < 200)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
+    output.simulateDeviceLoss();
+    t.restart();
+    while (t.elapsed() < 300)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
+    EXPECT_TRUE(threaded.playing());
+    EXPECT_TRUE(output.status().running);
+    EXPECT_FALSE(output.status().deviceLost);
+    EXPECT_GT(threaded.position(), 48000 * 0.2);
+    threaded.stop();
+    EXPECT_TRUE(threadedFailures.isEmpty());
 }

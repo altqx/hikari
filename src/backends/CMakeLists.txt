@@ -34,6 +34,8 @@ set_target_properties(hikari_backends PROPERTIES AUTOMOC ON)
 # A4: the audio box's player through the editor output, and an output without a device.
 target_sources(hikari_backends PRIVATE audio_box_player.cpp include/hikari/backends/audio_box_player.h
     simulated_output.cpp include/hikari/backends/simulated_output.h)
+# H2: the system's output devices (QMediaDevices) both audio paths follow.
+target_sources(hikari_backends PRIVATE qt_audio_devices.cpp include/hikari/backends/qt_audio_devices.h)
 target_link_libraries(hikari_backends PUBLIC hikari_application hikari_helper_endpoint hikari_lua_protocol Qt6::Core
     Qt6::Multimedia
     PRIVATE Hikari::media_deps Hikari::portaudio Hikari::uchardet Hikari::hunspell Boost::locale ICU::i18n ICU::uc ICU::data)

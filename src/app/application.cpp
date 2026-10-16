@@ -4,6 +4,7 @@
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
 #include "hikari/backends/portaudio_output.h"
+#include "hikari/backends/qt_audio_devices.h"
 #include "hikari/backends/simulated_output.h"
 #include "hikari/backends/video_frame_bgra.h"
 #include "hikari/application/hotkeys.h"
@@ -1020,6 +1021,21 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_audioConnections << connect(m_audioPlayer.get(), &backends::AudioBoxPlayer::failed, this,
                                       [this](const QString &message) { m_log->log(message); });
     }
+    // H2 (decision 60): both audio paths follow the system's output devices:
+    // the chosen device (audio.outputDevice) while it is connected, else the
+    // default. A change of the route moves them at once, mid-playback too.
+    {
+        if (options.makeAudioDevices)
+            m_audioDevices = options.makeAudioDevices();
+        else if (options.playbackAudio)
+            m_audioDevices = std::make_unique<backends::QtAudioDevices>();
+        else
+            m_audioDevices = std::make_unique<application::NoAudioDevices>();
+        m_audioRouting = std::make_unique<application::AudioOutputRouting>(
+            *m_audioDevices, [this] { return m_settings->settings().text("audio.outputDevice"); },
+            [this](const application::OutputRoute &route) { routeAudio(route, true); });
+        routeAudio(m_audioRouting->route(), false);
+    }
     m_recentAudio.set(m_settings->settings().list("recent.audio")); // AUDIO_RECENT_FILES
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::opened, this,
                                   [this](const QString &path, bool) { rememberRecentAudio(path); });
@@ -1094,6 +1110,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
 // A1: legacy AudioDisplay::SetDialogue runs when the active Line changes or
 // the editor commits (EditBox::SetLine, Send); every redraw shades the other
 // Lines. The controller redraws only when what it shows changed.
+// H2: general playback takes the route's device by its id (Qt's own), the
+// editor output by its name in PortAudio's list, or PortAudio's default while
+// the route follows the system default.
+void Application::routeAudio(const application::OutputRoute &route, bool move)
+{
+    m_generalPlayer->setOutputDevice(route.id);
+    m_audioPlayer->setOutputDevice(route.systemDefault ? std::string() : route.name);
+    if (move)
+        m_audioPlayer->switchOutput();
+}
+
 void Application::refreshAudio()
 {
     if (!m_audio)
@@ -1323,6 +1350,7 @@ Application::~Application()
         disconnect(connection);
     m_video->setOpenFilter(nullptr);
     m_audio.reset();
+    m_audioRouting.reset(); // H2: no route change after this
     m_audioPlayer.reset(); // A4: the player stops before its output goes
     m_audioOutput.reset();
     m_audioSource.reset();
@@ -4819,6 +4847,8 @@ void Application::settingChanged(const QString &id)
 {
     if (id == QLatin1String("audio.outputHostApi") && m_audioPlayer)
         m_audioPlayer->reopenOutput();
+    if (id == QLatin1String("audio.outputDevice") && m_audioRouting)
+        m_audioRouting->refresh(); // H2: the outputs move to the chosen device
     if (id == QLatin1String("video.playbackPlayer"))
         choosePlayer(); // W1
     if (id == QLatin1String("subtitles.saveWithVideoName"))
@@ -5010,6 +5040,10 @@ QVariantMap Application::openSettingsDialog()
     }
     lists.styles = stdList(m_styleManager->storeStyles());
     lists.renderers = m_renderer.providers(); // W2: GetProviders
+    // H2: System default, the connected devices, a chosen one not connected.
+    lists.outputDevices = application::outputDeviceChoices(m_audioDevices->outputs(),
+                                                           m_settings->settings().text("audio.outputDevice"),
+                                                           m_settings->settings().text("audio.outputDeviceName"));
 #ifdef _WIN32
     lists.pathSeparator = '\\';
     lists.slashesForBackslashes = false;
@@ -5036,6 +5070,9 @@ QVariantMap Application::openSettingsDialog()
     QStringList rendererLabels;
     for (const auto &name : lists.renderers)
         rendererLabels << subtitleRendererLabel(name);
+    QStringList outputDeviceLabels;
+    for (const auto &choice : lists.outputDevices)
+        outputDeviceLabels << outputDeviceLabel(choice);
     return {{QStringLiteral("values"), values},
             {QStringLiteral("languages"), qList(lists.languageNames)},
             {QStringLiteral("dictionaries"), qList(lists.dictionaryNames)},
@@ -5043,7 +5080,23 @@ QVariantMap Application::openSettingsDialog()
             {QStringLiteral("styles"), qList(lists.styles)},
             {QStringLiteral("renderers"), qList(lists.renderers)},
             {QStringLiteral("rendererLabels"), rendererLabels},
+            {QStringLiteral("outputDevices"), outputDeviceLabels},
             {QStringLiteral("warnings"), warnings}};
+}
+
+QString Application::outputDeviceLabel(const application::OutputDeviceChoice &choice)
+{
+    using Kind = application::OutputDeviceChoice::Kind;
+    switch (choice.kind) {
+    case Kind::SystemDefault:
+        return QCoreApplication::translate("HikariSub.Options", "System default");
+    case Kind::Missing:
+        //: An output device chosen in Settings > Audio that is not plugged in; %1 is its name
+        return QCoreApplication::translate("HikariSub.Options", "%1 (not connected)").arg(QString::fromStdString(choice.name));
+    case Kind::Device:
+        break;
+    }
+    return QString::fromStdString(choice.name);
 }
 
 QString Application::subtitleRendererLabel(const std::string &name)
