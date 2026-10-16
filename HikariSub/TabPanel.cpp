@@ -221,6 +221,25 @@ void TabPanel::OnFocus(wxChildFocusEvent& event)
 	event.Skip();
 }
 
+// One layout lays out the nested sizers too. On wxGTK, where the resizer runs
+// this at every mouse move, Update() in the size handlers of the windows it
+// resizes paints every window waiting for a paint, so the tab is frozen to
+// paint them once after; the size event the wxGTK port posts after is sent
+// there only. On Windows, Update() paints one window, and Thaw() would
+// repaint every window of the tab, moved or not.
+static void LayoutAfterResize(TabPanel *tab)
+{
+#ifdef _WIN32
+	tab->Layout();
+#else
+	tab->Freeze();
+	tab->Layout();
+	tab->Thaw();
+	tab->SendSizeEvent(wxSEND_EVENT_POST);
+#endif
+	tab->Refresh(false);
+}
+
 void TabPanel::SetVideoWindowSizes(int w, int h, bool allTabs)
 {
 	Notebook *nb = Notebook::GetTabs();
@@ -240,14 +259,7 @@ void TabPanel::SetVideoWindowSizes(int w, int h, bool allTabs)
 	if (wxSizerItem *item = MainSizer->GetItem(VideoEditboxSizer)){
 		item->SetMinSize(wxSize(-1, h));
 	}
-	// One layout lays out the nested sizers too. Frozen, the windows it
-	// resizes paint once after it instead of at each Update() in their size
-	// handlers; on Linux the resizer runs this at every mouse move.
-	Freeze();
-	Layout();
-	Thaw();
-	SendSizeEvent(wxSEND_EVENT_POST);
-	Refresh(false);
+	LayoutAfterResize(this);
 	if (!allTabs)
 		return;
 
@@ -267,11 +279,7 @@ void TabPanel::SetVideoWindowSizes(int w, int h, bool allTabs)
 		if (wxSizerItem *item = tab->MainSizer->GetItem(tab->VideoEditboxSizer)){
 			item->SetMinSize(wxSize(-1, h));
 		}
-		tab->Freeze();
-		tab->Layout();
-		tab->Thaw();
-		tab->SendSizeEvent(wxSEND_EVENT_POST);
-		tab->Refresh(false);
+		LayoutAfterResize(tab);
 	}
 }
 

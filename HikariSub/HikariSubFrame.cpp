@@ -1753,9 +1753,13 @@ void HikariSubFrame::OnSize(wxSizeEvent& event)
 	int toolbarAlignment = Options.GetInt(TOOLBAR_ALIGNMENT);
 	borders.y += menuHeight;
 	borders.height += statusbarHeight;
-	// Frozen, the windows below paint once after they are all resized, not
-	// at each Update() their size handlers call on the way
+#ifndef _WIN32
+	// Frozen, the windows below paint once after they are all resized, not at
+	// each Update() their size handlers call on the way, which on wxGTK paints
+	// every window waiting for a paint. On Windows, Update() paints one window
+	// and Thaw() would repaint every window, moved or not, at each size.
 	Freeze();
+#endif
 	Menubar->SetSize(fborder, ftopBorder, wxMax(0, size.x - (fborder * 2)), menuHeight);
 	switch (toolbarAlignment){
 	case 0://left
@@ -1788,7 +1792,9 @@ void HikariSubFrame::OnSize(wxSizeEvent& event)
 		wxMax(0, size.x - borders.GetX() - borders.width), wxMax(0, size.y - borders.y - borders.height));
 	StatusBar->SetSize(fborder, wxMax(0, size.y - statusbarHeight - fborder),
 		wxMax(0, size.x - (fborder * 2)), statusbarHeight);
+#ifndef _WIN32
 	Thaw();
+#endif
 	borders.height += Tabs->GetHeight();
 	event.Skip();
 }
