@@ -2164,8 +2164,11 @@ def step_snap():
             verdict("floating-snap", "not-observable", "Audio did not float")
             return
         out, shots = [], []
-        for edge, target in (("left", (prim["x"] + 1, prim["y"] + prim["h"] // 2)),
-                             ("top", (prim["x"] + prim["w"] // 2, prim["y"] + 1))):
+        # Top first: the left drag leaves the window mostly off the monitor
+        # (x -403), where the tablet cannot press its header for a second
+        # drag; after the top one the window comes back to y 0.
+        for edge, target in (("top", (prim["x"] + prim["w"] // 2, prim["y"] + 1)),
+                             ("left", (prim["x"] + 1, prim["y"] + prim["h"] // 2))):
             st = uia()
             before = frames(st).get("Audio")
             btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == "Audio"), None)
