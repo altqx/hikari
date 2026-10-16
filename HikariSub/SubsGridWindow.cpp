@@ -1740,7 +1740,11 @@ void SubsGrid::OnSize(wxSizeEvent& event)
 		preview->SetSize(wxSize(size.x, -1));
 	}
 	Refresh(false);
+#ifdef _WIN32
+	// wxGTK's Update() paints every window waiting for a paint, not only the
+	// grid, at each size event of a layout
 	Update();
+#endif
 }
 
 void SubsGrid::SelectRow(int row, bool addToSelected /*= false*/, bool select /*= true*/, bool norefresh /*= false*/)

@@ -2636,7 +2636,8 @@ void AudioDisplay::OnSize(wxSizeEvent &event) {
 	int nw;
 	int nh;
 	GetClientSize(&nw, &nh);
-	if (nw == w && nw == h)
+	// h is the waveform's height, without the timeline under it
+	if (nw == w && nh - timelineHeight == h)
 		return;
 
 	wxCriticalSectionLocker lock(mutex);

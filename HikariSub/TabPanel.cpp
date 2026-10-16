@@ -240,10 +240,12 @@ void TabPanel::SetVideoWindowSizes(int w, int h, bool allTabs)
 	if (wxSizerItem *item = MainSizer->GetItem(VideoEditboxSizer)){
 		item->SetMinSize(wxSize(-1, h));
 	}
-	VideoEditboxSizer->Layout();
-	GridShiftTimesSizer->Layout();
-	MainSizer->Layout();
+	// One layout lays out the nested sizers too. Frozen, the windows it
+	// resizes paint once after it instead of at each Update() in their size
+	// handlers; on Linux the resizer runs this at every mouse move.
+	Freeze();
 	Layout();
+	Thaw();
 	SendSizeEvent(wxSEND_EVENT_POST);
 	Refresh(false);
 	if (!allTabs)
@@ -265,10 +267,9 @@ void TabPanel::SetVideoWindowSizes(int w, int h, bool allTabs)
 		if (wxSizerItem *item = tab->MainSizer->GetItem(tab->VideoEditboxSizer)){
 			item->SetMinSize(wxSize(-1, h));
 		}
-		tab->VideoEditboxSizer->Layout();
-		tab->GridShiftTimesSizer->Layout();
-		tab->MainSizer->Layout();
+		tab->Freeze();
 		tab->Layout();
+		tab->Thaw();
 		tab->SendSizeEvent(wxSEND_EVENT_POST);
 		tab->Refresh(false);
 	}
