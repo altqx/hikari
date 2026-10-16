@@ -7941,6 +7941,14 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Move tab left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move tab right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Undock</source>
         <translation type="unfinished"></translation>
     </message>
