@@ -1021,7 +1021,7 @@ def pointer_floating_move_resize():
     the engine's drag: the owner's choice of 2026-10-15, as Snap never takes
     the tool window; until then that part was the window system's move),
     dragging the shadow resizes it (startSystemResize)."""
-    placed = fullscreen("left", width=480)
+    placed = narrow_main()
     log("main window on the left:", placed)
     try:
         time.sleep(1.0)
@@ -1088,9 +1088,8 @@ def pointer_floating_move_resize():
         grid = panel(st, "Grid")
         if btn and grid and grid["frame"] == MAIN:
             sx, sy = btn["x"] - 24, btn["y"] + btn["h"] // 2
-            # The centre of the Grid's visible part: the main window placed at
-            # 480 pixels is narrower than the docked layout's minimum, so the
-            # Grid (1280 wide) runs on past the window's right edge, cut off.
+            # The centre of the Grid's visible part (before decision 63 the
+            # Grid ran on past the narrowed main window's right edge, cut off).
             mw = frames(st).get(MAIN) or {"x": grid["x"], "w": grid["w"]}
             vx0, vx1 = max(grid["x"], mw["x"]), min(grid["x"] + grid["w"], mw["x"] + mw["w"])
             gx, gy = (vx0 + vx1) // 2, grid["y"] + grid["h"] // 2 - 15
@@ -1160,7 +1159,7 @@ def pointer_floating_move_resize():
         verdict("floating-resize", "observed" if all(grew) else "failed",
                 f"tablet drags on the shadow edges of the floating Audio window: {out}", shots)
     finally:
-        fullscreen("off")
+        wide_main()
 
 
 def step_video():
@@ -1258,6 +1257,24 @@ def fullscreen(mode, width=None):
     _, lines = W.task("gate-win-fullscreen", env=env)
     raw = line_value(lines, "FULLSCREEN_RESULT ")
     return json.loads(raw) if raw else {"error": lines[-10:]}
+
+
+def narrow_main(hidden=("Video", "Line editor")):
+    """The main window on the left at 480 pixels, with bare desktop right of
+    it on the 1024-pixel primary. Since decision 63 (2026-10-16) the main
+    window is at least as large as its docked layout's minimum (1005 x 720
+    with Video, the Line editor and the Grid docked), so the panels in
+    `hidden` are hidden first (View > Panels > NAME > Hide); wide_main() shows
+    them again."""
+    for name in hidden:
+        panel_menu(name, "Hide")
+    return fullscreen("left", width=480)
+
+
+def wide_main(hidden=("Video", "Line editor")):
+    fullscreen("off")
+    for name in hidden:
+        panel_menu(name, "Show")
 
 
 def step_fullscreen():
@@ -2134,7 +2151,7 @@ def step_snap():
     whether Snap took it (it never did: D3-windows-snap)."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
-    placed = fullscreen("left", width=480)
+    placed = narrow_main()
     log("main window on the left:", placed)
     try:
         time.sleep(1.0)
@@ -2208,7 +2225,7 @@ def step_snap():
                 f"floating panel after each: {unsnapped and floating} (snap.json: window rectangles before, while "
                 f"held and after)", ["snap.json"] + shots)
     finally:
-        fullscreen("off")
+        wide_main()
 
 
 def step_tags():
