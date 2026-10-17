@@ -219,7 +219,11 @@ void HikariCheckBox::OnSetFocus(wxFocusEvent& event)
 void HikariCheckBox::OnSize(wxSizeEvent& event)
 {
 	Refresh(false);
+#ifdef _WIN32
+	// wxGTK's Update() paints every window waiting for a paint, not only this
+	// one, at each size event of a layout
 	Update();
+#endif
 }
 
 bool HikariCheckBox::Enable(bool enable)

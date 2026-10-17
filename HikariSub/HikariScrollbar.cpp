@@ -124,7 +124,11 @@ void HikariScrollbar::SetScrollbar(int pos, int visible, int range, int _pageSiz
 		thumbPos = 0;
 
 	Refresh(false);
+#ifdef _WIN32
+	// wxGTK's Update() paints every window waiting for a paint, as blank those
+	// frozen while their tab panel lays out
 	Update();
+#endif
 }
 
 void HikariScrollbar::SetTwoscrolbars(bool _twoScrollbars)
@@ -209,7 +213,11 @@ void HikariScrollbar::OnSize(wxSizeEvent& evt)
 	else
 		thumbPos = 0;
 	Refresh(false);
+#ifdef _WIN32
+	// wxGTK's Update() paints every window waiting for a paint, not only this
+	// one, at each size event of a layout
 	Update();
+#endif
 }
 
 void HikariScrollbar::OnPaint(wxPaintEvent& evt)

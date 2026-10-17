@@ -82,7 +82,7 @@ protected:
 	void CalcWrapsD2D(GraphicsContext *gc, int windowWidth);
 	void FindWord(int pos, int *start, int *end);
 	int FindBracket(wxUniChar sbrkt, wxUniChar ebrkt, int pos, bool fromback = false);
-	void MakeCursorVisible();
+	void MakeCursorVisible(bool update = true);
 	bool CheckIfKeyword(const wxString &word);
 	void SeekSelected(const wxString &word);
 	void DrawWordRectangles(int type, wxDC &dc, int h, int posX);

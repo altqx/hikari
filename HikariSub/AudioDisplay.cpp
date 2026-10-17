@@ -2651,7 +2651,14 @@ void AudioDisplay::OnSize(wxSizeEvent &event) {
 	if (samples) {
 		UpdatePosition(PositionSample / samples);
 	}
+#ifdef _WIN32
 	UpdateImage(false);
+#else
+	// without the Update() of UpdateImage: wxGTK's paints the whole window, and
+	// the tab panel, frozen while it lays out, as blank
+	needImageUpdateWeak = false;
+	Refresh(false);
+#endif
 
 	// Update scrollbar
 	UpdateScrollbar();

@@ -1042,7 +1042,13 @@ void TextEditor::OnSize(wxSizeEvent& event)
 	CalcWraps(false, false);
 	Cursor.y = FindY(Cursor.x);
 	Selend.y = FindY(Selend.x);
+#ifdef _WIN32
 	MakeCursorVisible();
+#else
+	// wxGTK's Update() paints the whole window, and the tab panel, frozen while
+	// it lays out, as blank
+	MakeCursorVisible(false);
+#endif
 }
 
 int TextEditor::FindY(int x)
@@ -2605,7 +2611,7 @@ void TextEditor::ClearSpellcheckerTable()
 	Refresh(false);
 }
 
-void TextEditor::MakeCursorVisible()
+void TextEditor::MakeCursorVisible(bool update)
 {
 	wxSize size = GetClientSize();
 	size.y -= statusBarHeight;
@@ -2625,7 +2631,8 @@ void TextEditor::MakeCursorVisible()
 		if (scrollPositionV > bitmaph){ scrollPositionV = bitmaph; }
 	}
 	Refresh(false);
-	Update();
+	if (update)
+		Update();
 }
 
 bool TextEditor::CheckIfKeyword(const wxString &word)

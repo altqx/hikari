@@ -461,7 +461,7 @@ EVT_MOUSE_EVENTS(HikariToolbar::OnMouseEvent)
 EVT_PAINT(HikariToolbar::OnPaint)
 EVT_SIZE(HikariToolbar::OnSize)
 EVT_MENU(32566, HikariToolbar::OnToolbarOpts)
-//EVT_ERASE_BACKGROUND(HikariToolbar::OnEraseBackground)
+EVT_ERASE_BACKGROUND(HikariToolbar::OnEraseBackground)
 END_EVENT_TABLE()
 
 ToolbarMenu::ToolbarMenu(HikariToolbar*_parent, const wxPoint &pos, const wxSize &size, int height)
