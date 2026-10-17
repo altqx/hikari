@@ -16,6 +16,7 @@
 
 
 #include "RendererVideo.h"
+#include "VideoTrace.h"
 #include "VideoToolbar.h"
 #include "HikariSubFrame.h"
 #include "CsriMod.h"
@@ -392,6 +393,9 @@ void RendererVideo::UpdateVideoWindow()
 	return;
 #endif
 
+	VideoTrace("resize window=%ldx%ld backbuffer=%ld,%ld,%ld,%ld fits=%d state=%d %s", m_WindowRect.right, m_WindowRect.bottom,
+		m_BackBufferRect.left, m_BackBufferRect.top, m_BackBufferRect.right, m_BackBufferRect.bottom,
+		FitsBackBuffer() ? 1 : 0, (int)m_State, VideoTraceWindow(m_HWND));
 	if (FitsBackBuffer()) {
 		SetProjection();
 		WindowResized();
@@ -423,6 +427,7 @@ void RendererVideo::UpdateVideoWindow()
 bool RendererVideo::InitDX()
 {
 	wxCriticalSectionLocker lock(m_MutexRendering);
+	VideoTrace("initdx dev=%p shared=%d", (void *)m_D3DDevice, m_SharedDevice ? 1 : 0);
 	if (m_D3DDevice){
 		Clear(false);
 	}
@@ -528,6 +533,7 @@ bool RendererVideo::BeginFrame()
 	if (!m_SharedDevice)
 		return true;
 	if (SharedD3D9Device::Generation(SharedDeviceKind::Video) != m_DeviceGeneration) {
+		VideoTrace("beginframe generation changed");
 		Clear(true);
 		m_DeviceLost = true;
 		return false;

@@ -26,6 +26,7 @@
 #include "VideoVolume.h"
 #include "VisualDrawingShapes.h"
 #include "Visuals.h"
+#include "VideoTrace.h"
 #include "VideoFullscreen.h"
 #include "SubtitlesProviderManager.h"
 #include <algorithm>
@@ -437,6 +438,8 @@ void RendererFFMS2::Render(bool redrawSubsOnFrame, bool wait)
 	wxCriticalSectionLocker lock(m_MutexRendering);
 	m_VideoResized = false;
 	HRESULT hr = S_OK;
+	VideoTrace("render frame=%d time=%d redraw=%d lost=%d dev=%p nv12=%d main=%p", (int)m_Frame, (int)m_Time, redrawSubsOnFrame ? 1 : 0,
+		m_DeviceLost ? 1 : 0, (void *)m_D3DDevice, m_Nv12 ? 1 : 0, (void *)m_MainSurface);
 
 	if (m_DeviceLost)
 	{
@@ -465,6 +468,7 @@ void RendererFFMS2::Render(bool redrawSubsOnFrame, bool wait)
 	}
 
 	if (!BeginFrame()){
+		VideoTrace("render beginframe failed");
 		Render(true, false);
 		return;
 	}
@@ -475,6 +479,7 @@ void RendererFFMS2::Render(bool redrawSubsOnFrame, bool wait)
 		BlitNv12();
 	else {
 		hr = m_D3DDevice->StretchRect(m_MainSurface, &m_MainStreamRect, m_BlackBarsSurface, &m_BackBufferRect, D3DTEXF_LINEAR);
+		VideoTrace("render stretchrect hr=%08lx", (unsigned long)hr);
 		if (FAILED(hr)){ HikariLog(_("Cannot overlay surfaces")); }
 	}
 
@@ -502,6 +507,10 @@ void RendererFFMS2::Render(bool redrawSubsOnFrame, bool wait)
 	// End the scene
 	hr = m_D3DDevice->EndScene();
 	hr = PresentFrame();
+	VideoTrace("render present hr=%08lx window=%ld,%ld,%ld,%ld backbuffer=%ld,%ld,%ld,%ld buffer=%ux%u swapchain=%p %s", (unsigned long)hr,
+		m_WindowRect.left, m_WindowRect.top, m_WindowRect.right, m_WindowRect.bottom,
+		m_BackBufferRect.left, m_BackBufferRect.top, m_BackBufferRect.right, m_BackBufferRect.bottom,
+		m_BackBufferWidth, m_BackBufferHeight, (void *)m_SwapChain, VideoTraceWindow(m_HWND));
 	if (D3DERR_DEVICELOST == hr || IsD3D9DeviceRemoved(hr) ||
 		D3DERR_DRIVERINTERNALERROR == hr){
 		if (!m_DeviceLost){
@@ -945,7 +954,11 @@ void RendererFFMS2::BlitNv12()
 	sample.SrcRect = m_MainStreamRect;
 	sample.DstRect = m_BackBufferRect;
 	sample.PlanarAlpha = DXVA2_Fixed32OpaqueAlpha();
-	if (FAILED(m_DXVAProcessor->VideoProcessBlt(m_BlackBarsSurface, &blt, &sample, 1, nullptr)))
+	HRESULT bltResult = m_DXVAProcessor->VideoProcessBlt(m_BlackBarsSurface, &blt, &sample, 1, nullptr);
+	VideoTrace("render dxvablt hr=%08lx target=%ld,%ld,%ld,%ld dst=%ld,%ld,%ld,%ld src=%p", (unsigned long)bltResult,
+		blt.TargetRect.left, blt.TargetRect.top, blt.TargetRect.right, blt.TargetRect.bottom,
+		sample.DstRect.left, sample.DstRect.top, sample.DstRect.right, sample.DstRect.bottom, (void *)m_MainSurface);
+	if (FAILED(bltResult))
 		HikariLog(_("Cannot overlay surfaces"));
 #endif
 }
