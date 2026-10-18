@@ -3,12 +3,15 @@
 #include "theme.h"
 
 #include "hikari/app/application.h"
+#include "hikari/app/forwarded_launches.h"
+#include "hikari/app/single_instance.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/update_apply.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/update_check.h"
 #include "hikari/backends/legacy_spelling.h"
 
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
@@ -79,24 +82,30 @@ std::function<void()> showInstalling(QQmlApplicationEngine &engine)
 int runWindow(int argc, char **argv, StartupMode mode, const application::StartupArguments &startup,
               UpdateInstaller::ExitAction &exitAction)
 {
+    // WS5: the launcher's Wayland activation token, before Qt takes it.
+    const QString activationToken = qEnvironmentVariable("XDG_ACTIVATION_TOKEN");
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
     QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
+    // The start's files, absolute: its arguments without Qt's options and
+    // the program's own switches.
+    const QStringList files = launchFiles(QCoreApplication::arguments().mid(1), QDir::currentPath());
 #ifndef _WIN32
     // ADR 0019: an AppImage update that an ordinary quit left installs now,
     // before anything of this version starts, with the new image watched as
     // after Restart now; this start's files go to whichever version runs.
     if (mode == StartupMode::Run) {
-        QStringList files;
-        for (const auto &argument : startup.rest) {
-            const QString path = QString::fromLocal8Bit(argument);
-            files << (QFileInfo::exists(path) ? QFileInfo(path).absoluteFilePath() : path);
-        }
         UpdateInstaller early(UpdateEnvironment::current(), QStringLiteral(HIKARI_VERSION));
         if (early.installAppImageAtStart(files))
             return 0;
     }
 #endif
+    // WS5: one instance per user session. A later start hands its files to
+    // it and leaves; a new version's first start after an update must show
+    // its own window to the old one's watchdog, so it never hands over.
+    SingleInstance instance(mode == StartupMode::Run ? SingleInstance::forSession() : SingleInstance::Location{});
+    if (instance.claim({files, activationToken}, startup.healthFile.empty()) == SingleInstance::Role::Forwarded)
+        return 0;
 
     Application::Options options;
     options.autoload = true; // legacy: the Autoload scripts load at start
@@ -129,11 +138,13 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     }
 #endif
     Application application(options);
-    application.setStartedWithPaths(!startup.rest.empty()); // P6: no session at start then
+    application.setStartedWithPaths(!files.isEmpty()); // P6: no session at start then
+    ForwardedLaunches forwarded(application);
+    QObject::connect(&instance, &SingleInstance::requested, &forwarded, &ForwardedLaunches::take);
     // A path on the command line opens as the editing target. V5: a video
     // opens as legacy OpenFiles opens one file (hikarisubApp.cpp:483-487),
     // fullscreen with video.fullScreenOnStart, once the window is up.
-    const QString startPath = startup.rest.empty() ? QString() : QString::fromLocal8Bit(startup.rest.front());
+    const QString startPath = files.isEmpty() ? QString() : files.front();
     const bool startVideo = !startPath.isEmpty() && openStartFile(application, startPath);
 
     // K2: the controls draw with the theme layer's palette.
@@ -150,6 +161,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
         return 2;
     if (startVideo)
         openStartVideo(engine.rootObjects().first(), startPath);
+    forwarded.setWindow(qobject_cast<QWindow *>(engine.rootObjects().first()));
     if (mode == StartupMode::ExitAfterWindowCreated) {
         QTimer::singleShot(0, &app, [] { QCoreApplication::exit(0); });
         return app.exec();
@@ -172,6 +184,8 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
                 },
                 Qt::SingleShotConnection);
     const int code = app.exec();
+    // WS5: the next start is the instance, an update's new version included.
+    instance.release();
     // ADR 0019: a ready update installs after a normal quit, every document
     // reviewed and the main window closed.
     if (code == 0)
