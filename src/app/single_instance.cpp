@@ -307,11 +307,17 @@ bool SingleInstance::handOver(const Request &request, int timeoutMs)
     if (!socket.getChar(&answer) || answer != kAck)
         return false;
     // From here this start hands over: the holder opens the files once it
-    // has the commit.
+    // has the commit, which it takes as long as the connection stays. Only a
+    // holder that drops the connection before taking it opens nothing, and
+    // then this start runs alone.
     socket.putChar(kCommit);
-    while (socket.bytesToWrite() > 0)
-        if (!socket.waitForBytesWritten(kCommitMs))
-            return false;
+    QElapsedTimer committing;
+    committing.start();
+    while (socket.bytesToWrite() > 0 && socket.state() == QLocalSocket::ConnectedState &&
+           committing.elapsed() < kCommitMs)
+        socket.waitForBytesWritten(int(qMax<qint64>(kCommitMs - committing.elapsed(), 1)));
+    if (socket.bytesToWrite() > 0 && socket.state() != QLocalSocket::ConnectedState)
+        return false;
     // The holder closes once it has read the commit; a pipe closed first may
     // lose what is still in it.
     if (socket.state() == QLocalSocket::ConnectedState)
