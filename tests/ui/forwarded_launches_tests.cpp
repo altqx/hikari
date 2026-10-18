@@ -313,6 +313,31 @@ private slots:
         QTRY_COMPARE(titles(), (QStringList{QStringLiteral("last.ass"), QStringLiteral("h.ass")}));
     }
 
+    // Files handed over while the quit is reviewed are not opened in the
+    // closing window: once the quit goes ahead they are left for the next
+    // start (composition hands them on).
+    void filesTheQuitLeavesGoToTheNextStart()
+    {
+        start();
+        application->addPage();
+        edit(0, "work");
+        const QVariantList rows = application->reviewClose(QStringLiteral("quit"));
+        QCOMPARE(rows.size(), 1);
+        const QString file = writeAss(dir.filePath(QStringLiteral("q/late.ass")), "q");
+        take({file});
+        staysWaiting({QStringLiteral("Untitled")});
+        QVariantList discard;
+        for (const QVariant &row : rows)
+            discard << QVariantMap{{QStringLiteral("id"), row.toMap().value(QStringLiteral("id"))},
+                                   {QStringLiteral("save"), false}};
+        application->resolveClose(discard);
+        QTRY_VERIFY(application->quitApproved());
+        QTest::qWait(500);
+        QCOMPARE(titles(), QStringList{QStringLiteral("Untitled")});
+        QCOMPARE(forwarded->takeUnopened(), QStringList{file});
+        QVERIFY(!forwarded->pending());
+    }
+
     // The window comes forward: a minimized one is restored. A start without
     // files does nothing else.
     void theWindowComesForward()

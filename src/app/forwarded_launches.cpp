@@ -75,6 +75,12 @@ void ForwardedLaunches::take(const SingleInstance::Request &request)
         m_timer.start(kGatherMs);
 }
 
+QStringList ForwardedLaunches::takeUnopened()
+{
+    m_timer.stop();
+    return std::exchange(m_files, QStringList());
+}
+
 bool ForwardedLaunches::busy() const
 {
     return m_application.forwardedOpenWaits() || QGuiApplication::modalWindow() || modalPopupOpen(m_window);

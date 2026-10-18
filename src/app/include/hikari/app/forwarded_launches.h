@@ -30,6 +30,9 @@ public:
     void take(const SingleInstance::Request &request);
     // Files taken and not opened yet.
     bool pending() const { return !m_files.isEmpty(); }
+    // At exit: the files taken and not opened (the quit came first), which
+    // are no longer opened here.
+    QStringList takeUnopened();
 
     // Brings `window` (or the modal window over it) forward: restored when
     // minimized, raised and activated, with the start's Wayland activation

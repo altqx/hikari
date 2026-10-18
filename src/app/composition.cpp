@@ -16,6 +16,7 @@
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QLocale>
+#include <QProcess>
 #include <QQmlApplicationEngine>
 #include <QQmlComponent>
 #include <QQuickWindow>
@@ -77,6 +78,26 @@ std::function<void()> showInstalling(QQmlApplicationEngine &engine)
     // closing quits the application meanwhile.
     QGuiApplication::setQuitOnLastWindowClosed(false);
     return [window] { delete window; };
+}
+
+// WS5: files handed over that the window did not open (the quit came
+// first) go to the next start, which opens them: the new version a deb or
+// rpm update execs in this process's place, else a start of this program
+// (for an AppImage the image, whose mount goes with this process).
+void handOn(UpdateInstaller::ExitAction &exitAction, const QStringList &files)
+{
+#ifndef _WIN32
+    if (!exitAction.program.isEmpty()) {
+        exitAction.arguments += files;
+        return;
+    }
+#else
+    Q_UNUSED(exitAction);
+#endif
+    QString program = qEnvironmentVariable("APPIMAGE");
+    if (program.isEmpty())
+        program = QCoreApplication::applicationFilePath();
+    QProcess::startDetached(program, files);
 }
 
 int runWindow(int argc, char **argv, StartupMode mode, const application::StartupArguments &startup,
@@ -186,10 +207,13 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     const int code = app.exec();
     // WS5: the next start is the instance, an update's new version included.
     instance.release();
+    const QStringList unopened = forwarded.takeUnopened();
     // ADR 0019: a ready update installs after a normal quit, every document
     // reviewed and the main window closed.
     if (code == 0)
         exitAction = application.updates().installer().installAtExit([&engine] { return showInstalling(engine); });
+    if (!unopened.isEmpty())
+        handOn(exitAction, unopened);
     return code;
 }
 
