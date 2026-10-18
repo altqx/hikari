@@ -1,0 +1,301 @@
+// WS5: what a later start hands over, on the instance's holder, through the
+// composition and the real QML (ForwardedLaunches, Application::openForwarded):
+// files open in new Document tabs and never replace a tab's work; they wait
+// while a review, a modal dialog or the startup session question has the
+// next word (legacy hikarisubApp::OnOpen waited while IsBusy); the window
+// comes forward.
+
+#include "hikari/app/application.h"
+#include "hikari/app/forwarded_launches.h"
+#include "hikari/application/session_file.h"
+#include "docking.h"
+
+#include <QDir>
+#include <QFile>
+#include <QQmlApplicationEngine>
+#include <QQuickWindow>
+#include <QSignalSpy>
+#include <QTemporaryDir>
+#include <QtQml/qqmlextensionplugin.h>
+#include <QtTest>
+
+#include <memory>
+
+Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
+
+using namespace hikari;
+
+namespace {
+
+QString writeAss(const QString &path, const char *text)
+{
+    QDir().mkpath(QFileInfo(path).absolutePath());
+    QFile f(path);
+    if (!f.open(QIODevice::WriteOnly))
+        return {};
+    f.write("[Script Info]\nScriptType: v4.00+\n"
+            "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+            "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,," +
+            QByteArray(text) + "\n");
+    return path;
+}
+
+QString media(const char *name)
+{
+    return QStringLiteral(HIKARI_MEDIA_FIXTURES "/") + QLatin1String(name);
+}
+
+} // namespace
+
+class ForwardedLaunchesTests : public QObject {
+    Q_OBJECT
+
+    QTemporaryDir home; // the settings folder (LastSession.txt)
+    QTemporaryDir dir;  // subtitles and media
+    app::Application *application = nullptr;
+    app::ForwardedLaunches *forwarded = nullptr;
+    QQmlApplicationEngine *engine = nullptr;
+    QQuickWindow *window = nullptr;
+
+    // `restore`: the session setting before the window starts (P6).
+    void start(int restore = 0)
+    {
+        app::Application::Options o;
+        o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+        o.playbackAudio = false;
+        o.spellingBackend = {}; // no spell checker, so no notice over the window
+        application = new app::Application(o);
+        application->setSessionRestore(restore);
+        forwarded = new app::ForwardedLaunches(*application);
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(window);
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        forwarded->setWindow(window);
+    }
+    QObject *named(const char *name) const
+    {
+        for (QObject *o : engine->rootObjects().first()->findChildren<QObject *>())
+            if (o->objectName() == QLatin1String(name))
+                return o;
+        return nullptr;
+    }
+    QStringList titles() const
+    {
+        QStringList out;
+        for (const QVariant &tab : application->tabs())
+            out << tab.toMap().value(QStringLiteral("title")).toString();
+        return out;
+    }
+    application::EditSession *session(int tab) const
+    {
+        return application->files().session(application->workspace().tabs()[std::size_t(tab)]);
+    }
+    void edit(int tab, const char *text)
+    {
+        auto *s = session(tab);
+        QVERIFY(s);
+        const auto line = s->document().lines().front()->id;
+        QVERIFY(s->editDraftText(line, std::u8string(reinterpret_cast<const char8_t *>(text))));
+        QVERIFY(s->commitDraft());
+        QVERIFY(s->isDirty());
+    }
+    void take(const QStringList &files) { forwarded->take({files, {}}); }
+    // Nothing opens for a while (the gathering time and more).
+    void staysWaiting(const QStringList &before)
+    {
+        QTest::qWait(1000);
+        QCOMPARE(titles(), before);
+        QVERIFY(forwarded->pending());
+    }
+
+private slots:
+    void initTestCase() { QVERIFY(home.isValid() && dir.isValid()); }
+    void cleanup()
+    {
+        delete engine;
+        engine = nullptr;
+        delete forwarded;
+        forwarded = nullptr;
+        delete application;
+        application = nullptr;
+        QFile::remove(home.filePath(QStringLiteral("hikari.ini")));
+        QFile::remove(home.filePath(QStringLiteral("LastSession.txt")));
+    }
+
+    // With no tab the file opens as the only one; an untouched empty tab
+    // (a new tab, P6) takes the file, as at a start.
+    void theUntouchedEmptyTabTakesTheFile()
+    {
+        start();
+        QVERIFY(titles().isEmpty());
+        take({writeAss(dir.filePath(QStringLiteral("a.ass")), "a")});
+        QTRY_COMPARE(titles(), QStringList{QStringLiteral("a.ass")});
+        application->addPage();
+        QCOMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("Untitled")}));
+        take({writeAss(dir.filePath(QStringLiteral("b.ass")), "b")});
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass")}));
+        QCOMPARE(application->currentTab(), 1);
+    }
+
+    // A tab with work keeps it: the subtitles open in a new tab after the
+    // last, shown, with nothing asked (File > Open with "Open subtitles in a
+    // new tab"). The new tab is in the session.
+    void aTabWithWorkKeepsIt()
+    {
+        start();
+        take({writeAss(dir.filePath(QStringLiteral("a.ass")), "a")});
+        QTRY_COMPARE(titles(), QStringList{QStringLiteral("a.ass")});
+        edit(0, "mine");
+        application->addPage(); // an Untitled tab with work too
+        edit(1, "draft");
+        take({writeAss(dir.filePath(QStringLiteral("b.ass")), "b")});
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("Untitled"), QStringLiteral("b.ass")}));
+        QCOMPARE(application->currentTab(), 2);
+        QVERIFY(session(0)->isDirty() && session(1)->isDirty());
+        const QByteArray last = [&] {
+            QFile f(application->lastSessionPath());
+            return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+        }();
+        QVERIFY(last.contains("b.ass"));
+    }
+
+    // Starts that come one after the other (a file manager's %f, one start
+    // per file) open together, each in its own tab, sorted (OpenFiles).
+    void startsInARowOpenTogether()
+    {
+        start();
+        application->addPage();
+        edit(0, "work");
+        take({writeAss(dir.filePath(QStringLiteral("row/d.ass")), "d")});
+        take({writeAss(dir.filePath(QStringLiteral("row/c.ass")), "c")});
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("Untitled"), QStringLiteral("c.ass"), QStringLiteral("d.ass")}));
+        QVERIFY(session(0)->isDirty());
+    }
+
+    // A video opens in a new tab as a start's video does (openSingleVideo):
+    // subtitles named as it are offered for that tab.
+    void aVideoOpensInANewTab()
+    {
+        start();
+        take({writeAss(dir.filePath(QStringLiteral("a.ass")), "a")});
+        QTRY_COMPARE(titles(), QStringList{QStringLiteral("a.ass")});
+        const QString video = dir.filePath(QStringLiteral("v/clip.mkv"));
+        QDir().mkpath(QFileInfo(video).absolutePath());
+        QFile::remove(video);
+        QVERIFY(QFile::copy(media("cfr.mkv"), video));
+        writeAss(dir.filePath(QStringLiteral("v/clip.ass")), "c");
+        take({video});
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("Untitled")}));
+        QCOMPARE(application->currentTab(), 1);
+        QObject *prompt = named("subtitlesFromVideoPrompt");
+        QVERIFY(prompt);
+        QTRY_VERIFY(prompt->property("opened").toBool());
+        QMetaObject::invokeMethod(prompt, "reject");
+    }
+
+    // A review waits for its answer, and the files wait with it.
+    void filesWaitForAReview()
+    {
+        start();
+        application->addPage();
+        edit(0, "work");
+        const QVariantList rows = application->reviewClose(QStringLiteral("close"));
+        QCOMPARE(rows.size(), 1);
+        take({writeAss(dir.filePath(QStringLiteral("e.ass")), "e")});
+        staysWaiting({QStringLiteral("Untitled")});
+        application->cancelClose();
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("Untitled"), QStringLiteral("e.ass")}));
+    }
+
+    // A modal dialog over the window holds them too.
+    void filesWaitForAModalDialog()
+    {
+        start();
+        application->addPage();
+        edit(0, "work");
+        QObject *prompt = named("closeAllPrompt");
+        QVERIFY(prompt);
+        QMetaObject::invokeMethod(prompt, "open");
+        QTRY_VERIFY(prompt->property("opened").toBool());
+        take({writeAss(dir.filePath(QStringLiteral("f.ass")), "f")});
+        staysWaiting({QStringLiteral("Untitled")});
+        QMetaObject::invokeMethod(prompt, "reject");
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("Untitled"), QStringLiteral("f.ass")}));
+    }
+
+    // "Load last session?" (P6) is answered first: the session's tabs
+    // would replace the files' otherwise. A "No" lets them open.
+    void filesWaitForTheStartupQuestion()
+    {
+        {
+            app::Application::Options o;
+            o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+            o.playbackAudio = false;
+            app::Application before(o);
+            QVERIFY(before.openFile(writeAss(dir.filePath(QStringLiteral("s/last.ass")), "l")));
+        }
+        start(1);
+        QObject *prompt = named("loadSessionPrompt");
+        QVERIFY(prompt);
+        QTRY_VERIFY(prompt->property("visible").toBool());
+        take({writeAss(dir.filePath(QStringLiteral("s/g.ass")), "g")});
+        staysWaiting({});
+        QMetaObject::invokeMethod(prompt, "reject");
+        QTRY_COMPARE(titles(), QStringList{QStringLiteral("g.ass")});
+    }
+
+    // A session loaded at the start (P6, "Always") comes first, and the
+    // files open after its tabs.
+    void filesOpenAfterTheStartupSession()
+    {
+        {
+            app::Application::Options o;
+            o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+            o.playbackAudio = false;
+            app::Application before(o);
+            QVERIFY(before.openFile(writeAss(dir.filePath(QStringLiteral("s/last.ass")), "l")));
+        }
+        app::Application::Options o;
+        o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+        o.playbackAudio = false;
+        o.spellingBackend = {};
+        application = new app::Application(o);
+        application->setSessionRestore(2);
+        forwarded = new app::ForwardedLaunches(*application);
+        // Handed over before the window is up: it waits for the window, then
+        // for the session.
+        forwarded->take({{writeAss(dir.filePath(QStringLiteral("s/h.ass")), "h")}, {}});
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        forwarded->setWindow(window);
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("last.ass"), QStringLiteral("h.ass")}));
+    }
+
+    // The window comes forward: a minimized one is restored. A start without
+    // files does nothing else.
+    void theWindowComesForward()
+    {
+        start();
+        window->setWindowStates(Qt::WindowMinimized);
+        take({});
+        QVERIFY(!(window->windowStates() & Qt::WindowMinimized));
+        QVERIFY(window->isVisible());
+        QVERIFY(!forwarded->pending());
+        QVERIFY(titles().isEmpty());
+        window->setWindowStates(Qt::WindowMaximized | Qt::WindowMinimized);
+        take({});
+        QCOMPARE(window->windowStates(), Qt::WindowStates(Qt::WindowMaximized)); // as it was
+    }
+};
+
+QTEST_MAIN(ForwardedLaunchesTests)
+#include "forwarded_launches_tests.moc"

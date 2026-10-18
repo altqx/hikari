@@ -293,6 +293,13 @@ foreach(mode offscreen xvfb native)
         set_tests_properties(hikari_ui_tab_menu_tests.${mode} PROPERTIES TIMEOUT 300)
     endif()
 endforeach()
+# WS5: one instance per user session: the hand-over, a crashed or silent
+# holder, the session's own socket; and what is handed over, on the holder.
+hikari_add_qttest(hikari_ui_single_instance_tests SOURCES single_instance_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_forwarded_launches_tests SOURCES forwarded_launches_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_forwarded_launches_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari_media_helper)
 # 38e: no test reaches the desktop's programs (tests/support/desktop): the
 # recording handlers, the refusal that fails a run, the shell's hand-offs.
 hikari_add_qttest(hikari_ui_desktop_handoff_tests SOURCES desktop_handoff_tests.cpp LIBRARIES hikari_composition)
