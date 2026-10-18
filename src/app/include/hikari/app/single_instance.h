@@ -13,7 +13,8 @@
 //     for the user and the session, taking a socket file a crash left;
 //   - a start that cannot hand over (the holder is not answering, or the
 //     socket is not the user's own) starts its own window without claiming,
-//     so startup is never blocked.
+//     so startup is never blocked; so does a start that holds the lock but
+//     cannot listen, which gives the lock up.
 //
 // The installer's running-app check is another object, the Global\ mutex
 // composition.cpp creates (distribution.md).
@@ -85,6 +86,7 @@ private:
     bool tryLock();
     void unlock();
     bool listen();
+    Role serve();
     bool handOver(const Request &request, int timeoutMs);
     void accept();
     void read(QLocalSocket *socket);

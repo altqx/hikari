@@ -219,6 +219,24 @@ private slots:
         hung->waitForFinished(10000);
     }
 
+    // A start that holds the lock but cannot listen (its socket or pipe name
+    // is refused) gives the instance up and runs alone, so the next start is
+    // the instance.
+    void aStartThatCannotListenGivesTheInstanceUp()
+    {
+#ifdef _WIN32
+        const QString refused = QStringLiteral("hikari-test-") + QString(300, QLatin1Char('x'));
+#else
+        const QString refused = dir.filePath(QString(200, QLatin1Char('x')) + QStringLiteral(".socket"));
+#endif
+        app::SingleInstance deaf({refused, location.lock});
+        QCOMPARE(deaf.claim({}), Role::Alone);
+        QVERIFY(!deaf.listening());
+        app::SingleInstance next(location);
+        QCOMPARE(next.claim({}, false), Role::Primary);
+        QVERIFY(next.listening());
+    }
+
     // The holder gives the instance up (at exit, before an update starts the
     // new version): the next start is the instance.
     void releaseLetsTheNextStartClaim()
@@ -286,6 +304,14 @@ private slots:
         const auto w1 = app::SingleInstance::forSession();
         QVERIFY(x0.server != x1.server && x0.lock != x1.lock);
         QVERIFY(w1.server != x1.server && w1.server != x0.server);
+        // Nor one where the socket's path would be longer than a socket address holds.
+        const QString deep = runtimeDir.path() + QLatin1Char('/') + QString(100, QLatin1Char('r'));
+        QVERIFY(::mkdir(QFile::encodeName(deep).constData(), 0700) == 0);
+        qputenv("XDG_RUNTIME_DIR", QFile::encodeName(deep));
+        const auto tooLong = app::SingleInstance::forSession();
+        QVERIFY(tooLong.server.startsWith(QDir::tempPath() + QStringLiteral("/hikarisub-")));
+        QVERIFY(QFile::encodeName(tooLong.server).size() < 108);
+        qputenv("XDG_RUNTIME_DIR", QFile::encodeName(runtimeDir.path()));
         // A runtime folder others may enter is not used: a private one in the temporary folder is.
         QVERIFY(::chmod(QFile::encodeName(runtimeDir.path()).constData(), 0755) == 0);
         const auto fallback = app::SingleInstance::forSession();

@@ -28,6 +28,7 @@
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/un.h>
 #include <unistd.h>
 #endif
 
@@ -161,6 +162,12 @@ bool privateFolder(const QString &path, bool create)
         return false;
     return S_ISDIR(info.st_mode) && info.st_uid == ::getuid() && (info.st_mode & 077) == 0;
 }
+
+// The socket's path fits the system's socket address (108 bytes on Linux).
+bool fitsSocket(const QString &path)
+{
+    return QFile::encodeName(path).size() < qsizetype(sizeof(sockaddr_un::sun_path));
+}
 #endif
 
 } // namespace
@@ -202,19 +209,25 @@ SingleInstance::Location SingleInstance::forSession()
     // The pipe namespace spans the sessions; the Local\ one is the session's.
     return {name + QLatin1Char('-') + QString::number(session), QStringLiteral("Local\\") + name};
 #else
-    QString folder = qEnvironmentVariable("XDG_RUNTIME_DIR");
-    if (folder.isEmpty() || !QDir::isAbsolutePath(folder) || !privateFolder(folder, false)) {
-        folder = QDir::tempPath() + QStringLiteral("/hikarisub-") + QString::number(::getuid());
-        if (!privateFolder(folder, true))
-            return {};
-    }
     // The graphical session: its Wayland display, else its X display.
     QString display = qEnvironmentVariable("WAYLAND_DISPLAY");
     display = display.isEmpty() ? QStringLiteral("x11:") + qEnvironmentVariable("DISPLAY") : QStringLiteral("wayland:") + display;
     const QString tag =
         QString::fromLatin1(QCryptographicHash::hash(display.toUtf8(), QCryptographicHash::Sha256).toHex().left(16));
-    const QString base = folder + QLatin1Char('/') + prefix + tag;
-    return {base + QStringLiteral(".socket"), base + QStringLiteral(".lock")};
+    auto in = [&](const QString &folder) -> Location {
+        const QString base = folder + QLatin1Char('/') + prefix + tag;
+        return {base + QStringLiteral(".socket"), base + QStringLiteral(".lock")};
+    };
+    // $XDG_RUNTIME_DIR when only the user can enter it and the socket's path
+    // fits there; else a private folder in the temporary folder.
+    const QString runtime = qEnvironmentVariable("XDG_RUNTIME_DIR");
+    if (!runtime.isEmpty() && QDir::isAbsolutePath(runtime) && fitsSocket(in(runtime).server) &&
+        privateFolder(runtime, false))
+        return in(runtime);
+    const QString own = QDir::tempPath() + QStringLiteral("/hikarisub-") + QString::number(::getuid());
+    if (fitsSocket(in(own).server) && privateFolder(own, true))
+        return in(own);
+    return {};
 #endif
 }
 
@@ -233,10 +246,8 @@ SingleInstance::Role SingleInstance::claim(const Request &request, bool handOver
 {
     if (m_location.server.isEmpty() || m_location.lock.isEmpty())
         return Role::Alone;
-    if (tryLock()) {
-        listen();
-        return Role::Primary;
-    }
+    if (tryLock())
+        return serve();
     if (!handOver)
         return Role::Alone;
     QElapsedTimer waited;
@@ -245,14 +256,22 @@ SingleInstance::Role SingleInstance::claim(const Request &request, bool handOver
         if (this->handOver(request, int(qMax<qint64>(timeoutMs - waited.elapsed(), 0))))
             return Role::Forwarded;
         // The holder may have just exited (or crashed): then this start is the instance.
-        if (tryLock()) {
-            listen();
-            return Role::Primary;
-        }
+        if (tryLock())
+            return serve();
         if (waited.elapsed() >= timeoutMs)
             return Role::Alone;
         QThread::msleep(50);
     }
+}
+
+SingleInstance::Role SingleInstance::serve()
+{
+    if (listen())
+        return Role::Primary;
+    // No later start could reach this one: it gives the instance up and runs
+    // alone, and the next start claims it.
+    unlock();
+    return Role::Alone;
 }
 
 bool SingleInstance::handOver(const Request &request, int timeoutMs)
