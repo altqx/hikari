@@ -527,12 +527,21 @@ QString Application::startupSession() const
     // legacy reached the CheckLastSession prompt below, as here.
     if (m_startedWithPaths || lastSessionPath().isEmpty())
         return {};
+    QString kind;
     switch (sessionRestore()) {
-    case 2: return QStringLiteral("load");
-    case 1: return QStringLiteral("ask"); // a "No" goes on to the crash check
-    default: break;
+    case 2: kind = QStringLiteral("load"); break;
+    case 1: kind = QStringLiteral("ask"); break; // a "No" goes on to the crash check
+    default: kind = lastSessionCrashed() ? QStringLiteral("crash") : QString(); break;
     }
-    return lastSessionCrashed() ? QStringLiteral("crash") : QString();
+    m_startupSessionPending = !kind.isEmpty(); // WS5: until startupSessionDecided()
+    return kind;
+}
+
+bool Application::forwardedOpenWaits() const
+{
+    // A review (close, open, session, dropped files) waits for its answer;
+    // so does the startup session, which would replace the tabs (P6).
+    return m_startupSessionPending || !m_closeThen.isEmpty() || m_quitApproved;
 }
 
 QVariantMap Application::reviewSession(const QUrl &file)
