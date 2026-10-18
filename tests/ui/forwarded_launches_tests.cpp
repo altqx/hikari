@@ -177,6 +177,39 @@ private slots:
         QVERIFY(session(0)->isDirty());
     }
 
+    // A tab restored without its missing subtitles (Untitled, with Retry
+    // and Relink) and a tab with only keyframes are not empty: the file
+    // opens beside them, and the restore's entry stays.
+    void tabsWithSomethingOfTheirOwnKeepIt()
+    {
+        {
+            app::Application::Options o;
+            o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+            o.playbackAudio = false;
+            app::Application before(o);
+            QVERIFY(before.openFile(writeAss(dir.filePath(QStringLiteral("m/gone.ass")), "g")));
+        }
+        QVERIFY(QFile::remove(dir.filePath(QStringLiteral("m/gone.ass"))));
+        start(2);
+        QTRY_COMPARE(application->unresolvedRestores().size(), 1);
+        QTRY_VERIFY(!application->forwardedOpenWaits());
+        QCOMPARE(titles(), QStringList{QStringLiteral("Untitled")});
+        take({writeAss(dir.filePath(QStringLiteral("m/b.ass")), "b")});
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("Untitled"), QStringLiteral("b.ass")}));
+        QCOMPARE(application->unresolvedRestores().size(), 1);
+
+        application->addPage();
+        const QString keyframes = dir.filePath(QStringLiteral("m/k.txt"));
+        QFile k(keyframes);
+        QVERIFY(k.open(QIODevice::WriteOnly));
+        k.write("# keyframe format v1\nfps 0\n0\n24\n");
+        k.close();
+        application->openKeyframes(QUrl::fromLocalFile(keyframes));
+        take({writeAss(dir.filePath(QStringLiteral("m/c.ass")), "c")});
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("Untitled"), QStringLiteral("b.ass"), QStringLiteral("Untitled"),
+                                            QStringLiteral("c.ass")}));
+    }
+
     // A video opens in a new tab as a start's video does (openSingleVideo):
     // subtitles named as it are offered for that tab.
     void aVideoOpensInANewTab()

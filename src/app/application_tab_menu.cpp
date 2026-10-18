@@ -512,11 +512,18 @@ Application::PendingFiles Application::stageFiles(const QStringList &files)
 
 bool Application::targetUntouched() const
 {
-    // P6's untouched empty tab (openFile), without a video or audio of its own.
+    // P6's untouched empty tab (openFile), without media of its own (a
+    // video, audio, keyframes) and not a restored tab whose files are
+    // missing: its Retry / Relink entry would go with it (forgetTab).
     const auto target = m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;
-    return session && targetUntitled() && !session->isDirty() && session->historySize() == 1 &&
-           tabVideo(*target).isEmpty() && !m_audio->hasAudio();
+    if (!session || !targetUntitled() || session->isDirty() || session->historySize() != 1 || m_audio->hasAudio())
+        return false;
+    if (const auto it = m_tabMedia.find(target->value); it != m_tabMedia.end() &&
+        (!it->second.video.isEmpty() || !it->second.audio.isEmpty() || !it->second.keyframes.isEmpty()))
+        return false;
+    return std::none_of(m_unresolved.begin(), m_unresolved.end(),
+                        [&](const UnresolvedRestore &u) { return u.document == *target; });
 }
 
 QVariantMap Application::openForwarded(const QStringList &paths)
