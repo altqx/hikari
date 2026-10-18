@@ -41,7 +41,13 @@ constexpr qsizetype kMagicSize = sizeof(kMagic) - 1;
 constexpr quint32 kVersion = 1;
 constexpr quint32 kMaxPayload = 1 << 20;
 constexpr char kAck = '\1';
-// A connection that has not sent its whole request by then is dropped.
+// The sender's answer to the ack: it hands over and exits. A sender that gave
+// up before the ack (it runs alone) never sends it, so its request is dropped.
+constexpr char kCommit = '\2';
+// How long a sender that has the ack waits to send the commit and for the
+// holder to close.
+constexpr int kCommitMs = 1000;
+// A connection that has not sent its whole request and commit by then is dropped.
 constexpr int kReadTimeoutMs = 5000;
 
 QByteArray encode(const SingleInstance::Request &request)
@@ -298,7 +304,19 @@ bool SingleInstance::handOver(const Request &request, int timeoutMs)
         if (!socket.waitForReadyRead(left()))
             return false;
     char answer = 0;
-    return socket.getChar(&answer) && answer == kAck;
+    if (!socket.getChar(&answer) || answer != kAck)
+        return false;
+    // From here this start hands over: the holder opens the files once it
+    // has the commit.
+    socket.putChar(kCommit);
+    while (socket.bytesToWrite() > 0)
+        if (!socket.waitForBytesWritten(kCommitMs))
+            return false;
+    // The holder closes once it has read the commit; a pipe closed first may
+    // lose what is still in it.
+    if (socket.state() == QLocalSocket::ConnectedState)
+        socket.waitForDisconnected(kCommitMs);
+    return true;
 }
 
 bool SingleInstance::tryLock()
@@ -397,6 +415,20 @@ void SingleInstance::accept()
 
 void SingleInstance::read(QLocalSocket *socket)
 {
+    const QVariant acked = socket->property("hikariAcked");
+    if (acked.isValid()) {
+        char commit = 0;
+        if (!socket->getChar(&commit))
+            return;
+        socket->setProperty("hikariAcked", QVariant());
+        if (commit != kCommit || socket->bytesAvailable() > 0) {
+            socket->abort();
+            return;
+        }
+        socket->disconnectFromServer();
+        emit requested(acked.value<Request>());
+        return;
+    }
     QByteArray buffer = socket->property("hikariRequest").toByteArray() + socket->readAll();
     Request request;
     bool bad = false;
@@ -409,9 +441,11 @@ void SingleInstance::read(QLocalSocket *socket)
         return;
     }
     socket->setProperty("hikariRequest", QVariant());
+    // The request is opened only once its sender commits: one that has given
+    // up waiting (and runs alone) is gone or never answers.
+    socket->setProperty("hikariAcked", QVariant::fromValue(request));
     socket->putChar(kAck);
     socket->flush();
-    emit requested(request);
 }
 
 } // namespace hikari::app

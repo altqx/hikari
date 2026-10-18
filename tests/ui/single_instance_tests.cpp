@@ -219,6 +219,28 @@ private slots:
         hung->waitForFinished(10000);
     }
 
+    // A start that gave up waiting (the holder's event loop was busy past the
+    // wait) runs alone: once the holder answers, it does not open the files
+    // a second time.
+    void aStartThatGaveUpIsNotOpenedLater()
+    {
+        app::SingleInstance holder(location);
+        QCOMPARE(holder.claim({}), Role::Primary);
+        QSignalSpy requested(&holder, &app::SingleInstance::requested);
+        // This event loop does not run while the start waits for its answer.
+        QProcess *late = start("send", {dir.filePath(QStringLiteral("e.ass"))});
+        QVERIFY(late->waitForFinished(15000));
+        QCOMPARE(late->exitCode(), code(Role::Alone));
+        QTest::qWait(1000);
+        QCOMPARE(requested.size(), 0);
+        const QString next = dir.filePath(QStringLiteral("f.ass"));
+        QCOMPARE(run({next}), code(Role::Forwarded));
+        QTRY_COMPARE(requested.size(), 1);
+        QCOMPARE(requested.at(0).at(0).value<app::SingleInstance::Request>().files, QStringList{next});
+        QTest::qWait(500);
+        QCOMPARE(requested.size(), 1);
+    }
+
     // A start that holds the lock but cannot listen (its socket or pipe name
     // is refused) gives the instance up and runs alone, so the next start is
     // the instance.

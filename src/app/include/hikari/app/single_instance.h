@@ -21,7 +21,9 @@
 //
 // Each message is "HIKARISUB-OPEN\1", a 32-bit big-endian length and a
 // QDataStream of the files (absolute) and the launch's activation token; the
-// holder answers one byte once it has the request.
+// holder answers one byte once it has the request, and opens the files only
+// once the sender answers that with its commit byte (a sender that gave up
+// waiting runs alone, so its request is dropped).
 
 #include <QObject>
 #include <QString>
