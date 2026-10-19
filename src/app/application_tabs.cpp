@@ -638,9 +638,12 @@ void Application::applySession()
         // for the shared Workspace: the last tab, the active one, sets it.
         editorAfter = tab.editor || qs(tab.video).isEmpty();
         if (const QString video = qs(tab.video); !video.isEmpty()) {
-            if (isFile(video) || application::isDummyVideo(video.toStdString())) {
-                // AV3: a dummy video is restored too, and brings its own audio
-                media.video = application::isDummyVideo(video.toStdString()) ? video : QDir::toNativeSeparators(video);
+            // AV3: a dummy video is restored too (one that opens: a broken
+            // entry is unresolved), and brings its own audio
+            const bool dummy = application::isDummyVideo(video.toStdString()) &&
+                               application::parseDummyVideo(video.toStdString());
+            if (isFile(video) || dummy) {
+                media.video = dummy ? video : QDir::toNativeSeparators(video);
                 media.position = tab.position;
             } else {
                 m_unresolved.push_back({*id, QStringLiteral("video"), video, 0, tab.position});

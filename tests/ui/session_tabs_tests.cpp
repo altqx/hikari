@@ -500,6 +500,22 @@ private slots:
         QVERIFY(c.unresolvedRestores().isEmpty());
         QTRY_VERIFY(c.audio().ready());
         QCOMPARE(c.audio().box().audio()->sampleCount(), 396'900'000);
+
+        // A dummy entry that does not open is unresolved, as a missing file is.
+        QTemporaryDir broken;
+        writeSubtitles(broken.filePath(QStringLiteral("broken.ass")), "broken");
+        app::Application e(options(broken));
+        writeSession(e.lastSessionPath(),
+                     "\xEF\xBB\xBF" + QStringLiteral("[HikariSub v0.0.1]\r\n"
+                                                    "Tab: 0\r\nVideo: ?garbage\r\nPosition: 0\r\nFFMS2: 1\r\n"
+                                                    "Subtitles: %1/broken.ass\r\nActive: 0\r\nScroll: 0\r\nEditor: 1\r\n")
+                                             .arg(QDir::fromNativeSeparators(broken.path()))
+                                             .toUtf8());
+        QVERIFY(loadSession(e));
+        const auto unresolved = e.unresolvedRestores();
+        QCOMPARE(unresolved.size(), 1);
+        QCOMPARE(unresolved[0].toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("video"));
+        QCOMPARE(unresolved[0].toMap().value(QStringLiteral("path")).toString(), QStringLiteral("?garbage"));
     }
 
     // Loading replaces every open tab only after their unsaved work is
