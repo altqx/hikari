@@ -387,7 +387,8 @@ constexpr NameRow kNames[] = {
         {5022, "Convert to TMP"}, // GLOBAL_CONVERT_TO_TMP
         {5018, "Open audio from video"}, // GLOBAL_AUDIO_FROM_VIDEO
         {5036, "Load script"}, // GLOBAL_AUTOMATION_LOAD_SCRIPT
-        {5039, "Open shortcut mapping window"}, // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW
+        // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW (5039, "Open shortcut mapping
+        // window") is retired (AM1-hotkeys-window-retired): never listed.
         {5037, "Refresh autoload scripts"}, // GLOBAL_AUTOMATION_RELOAD_AUTOLOAD
         {5030, "Time shift window"}, // GLOBAL_SHOW_SHIFT_TIMES
         {5019, "Close audio"}, // GLOBAL_CLOSE_AUDIO
@@ -751,7 +752,8 @@ const std::map<int, std::string> &hotkeyNames()
 
 bool isRetiredHotkey(int id)
 {
-    return id == 5015; // GLOBAL_VIDEO_INDEXING
+    return id == 5015    // GLOBAL_VIDEO_INDEXING
+           || id == 5039; // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW
 }
 
 std::vector<std::pair<HotkeyId, Hotkey>> dropRetiredHotkeys(HotkeyMap &map)
@@ -1188,6 +1190,7 @@ void HotkeyList::filter(int mode)
         case 4: visible = r->key.type == EditorHotkey; break;
         case 5: visible = r->key.type == VideoHotkey; break;
         case 6: visible = r->key.type == AudioHotkey; break;
+        case 7: visible = r->key.id >= kFirstScriptHotkey; break; // AM1: Automation shortcuts
         default: break;
         }
         r->visible = visible ? 1 : 0;

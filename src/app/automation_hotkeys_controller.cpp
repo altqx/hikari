@@ -24,6 +24,24 @@ QString fileNameOf(const std::string &path)
     return QFileInfo(QString::fromStdString(path)).fileName();
 }
 
+QString problemText(application::AliasProblem problem)
+{
+    using application::AliasProblem;
+    switch (problem) {
+    case AliasProblem::MissingScript:
+        return QCoreApplication::translate("HikariSub.Automation", "No loaded script has this macro");
+    case AliasProblem::BasenameCollision:
+        return QCoreApplication::translate("HikariSub.Automation", "Several loaded scripts have this file name");
+    case AliasProblem::OrdinalOutOfRange:
+        return QCoreApplication::translate("HikariSub.Automation", "The script has no such macro");
+    case AliasProblem::RegistrationChanged:
+        return QCoreApplication::translate("HikariSub.Automation", "The script or its macro changed");
+    case AliasProblem::MalformedAlias:
+        break;
+    }
+    return QCoreApplication::translate("HikariSub.Automation", "Not a macro shortcut");
+}
+
 } // namespace
 
 AutomationHotkeysController::AutomationHotkeysController(AutomationShell &automation, ui::SettingsStore &settings,
@@ -31,12 +49,11 @@ AutomationHotkeysController::AutomationHotkeysController(AutomationShell &automa
     : QObject(parent), m_automation(automation), m_settings(settings)
 {
     load();
-    m_staged = m_committed;
     m_installed = m_committed;
     // Scripts loading or reloading change what resolves (the manager's single
     // observer belongs to the manager tool, which announces each change).
     connect(m_automation.managerController(), &ui::AutomationManagerController::changed, this, [this] {
-        emit rowsChanged();
+        emit bindingsChanged();
         emit shortcutsChanged();
     });
 }
@@ -64,12 +81,14 @@ void AutomationHotkeysController::save() const
     m_settings.set(application::kAutomationHotkeysSetting.data(), rows);
 }
 
-std::optional<std::pair<std::string, int>>
-AutomationHotkeysController::resolve(const application::MacroBinding &binding) const
+application::AliasResolution AutomationHotkeysController::resolution(const application::MacroBinding &binding) const
 {
     const auto alias = application::aliasOfLegacyName(binding.legacyName);
-    if (!alias)
-        return std::nullopt;
+    if (!alias) {
+        application::AliasResolution none;
+        none.problem = application::AliasProblem::MalformedAlias;
+        return none;
+    }
     std::optional<application::MacroIdentity> recorded;
     if (!binding.macroName.empty()) {
         application::MacroIdentity r;
@@ -77,38 +96,47 @@ AutomationHotkeysController::resolve(const application::MacroBinding &binding) c
         r.scriptSha256 = binding.scriptSha256;
         recorded = r;
     }
-    const auto resolution = m_automation.manager().registry().resolve(*alias, recorded);
-    if (!resolution.identity)
-        return std::nullopt;
-    return std::pair(resolution.identity->scriptPath, resolution.identity->ordinal);
+    return m_automation.manager().registry().resolve(*alias, recorded);
 }
 
-QVariantList AutomationHotkeysController::rows() const
+std::optional<std::pair<std::string, int>>
+AutomationHotkeysController::resolve(const application::MacroBinding &binding) const
+{
+    const auto r = resolution(binding);
+    if (!r.identity)
+        return std::nullopt;
+    return std::pair(r.identity->scriptPath, r.identity->ordinal);
+}
+
+QString AutomationHotkeysController::scriptLabel(const std::string &path) const
+{
+    for (const auto &s : m_automation.manager().scripts())
+        if (s.path == path && !s.info.name.empty())
+            return qs(s.info.name);
+    return fileNameOf(path);
+}
+
+QVariantMap AutomationHotkeysController::keys() const
+{
+    QVariantMap out;
+    for (const auto &[name, b] : m_committed)
+        if (resolve(b))
+            out.insert(qs(name), qs(b.keys));
+    return out;
+}
+
+QVariantList AutomationHotkeysController::missing() const
 {
     QVariantList out;
-    std::set<std::string> shown;
-    for (const auto &m : m_automation.manager().registry().macros()) {
-        const std::string name = application::legacyNameOf(fileNameOf(m.scriptPath).toStdString(), m.ordinal);
-        const auto it = m_staged.find(name);
-        QString problem;
-        if (it != m_staged.end() && !resolve(it->second))
-            problem = QCoreApplication::translate("HikariSub.Automation", "Unresolved: the script or its macros changed");
+    for (const auto &[name, b] : m_committed) {
+        const auto r = resolution(b);
+        if (r.identity)
+            continue;
         out << QVariantMap{{QStringLiteral("legacyName"), qs(name)},
-                           {QStringLiteral("script"), qs(m.scriptPath)},
-                           {QStringLiteral("macro"), qs(m.name)},
-                           {QStringLiteral("keys"), it != m_staged.end() ? qs(it->second.keys) : QString()},
-                           {QStringLiteral("problem"), problem}};
-        shown.insert(name);
+                           {QStringLiteral("macro"), qs(b.macroName)},
+                           {QStringLiteral("keys"), qs(b.keys)},
+                           {QStringLiteral("problem"), problemText(r.problem.value_or(application::AliasProblem::MissingScript))}};
     }
-    // Bindings whose macro is not loaded stay visible.
-    for (const auto &[name, b] : m_staged)
-        if (!shown.contains(name))
-            out << QVariantMap{{QStringLiteral("legacyName"), qs(name)},
-                               {QStringLiteral("script"), QString()},
-                               {QStringLiteral("macro"), qs(b.macroName)},
-                               {QStringLiteral("keys"), qs(b.keys)},
-                               {QStringLiteral("problem"), QCoreApplication::translate("HikariSub.Automation",
-                                                                                       "Unresolved: no loaded script has this macro")}};
     return out;
 }
 
@@ -121,59 +149,36 @@ QVariantList AutomationHotkeysController::shortcuts() const
     return out;
 }
 
-void AutomationHotkeysController::begin()
+std::vector<std::string> AutomationHotkeysController::unboundMacros() const
 {
-    m_staged = m_committed;
-    emit rowsChanged();
+    std::vector<std::string> out;
+    std::set<std::string> seen;
+    for (const auto &m : m_automation.manager().registry().macros()) {
+        const std::string name = application::legacyNameOf(fileNameOf(m.scriptPath).toStdString(), m.ordinal);
+        if (!m_committed.contains(name) && seen.insert(name).second)
+            out.push_back(name);
+    }
+    return out;
 }
 
-QString AutomationHotkeysController::conflict(const QString &legacyName, const QString &keys) const
+QVariantMap AutomationHotkeysController::describe(const std::string &legacyName) const
 {
-    for (const auto &[name, b] : m_staged)
-        if (qs(name) != legacyName && qs(b.keys) == keys)
-            return qs(name);
-    return {};
-}
-
-void AutomationHotkeysController::setKeys(const QString &legacyName, const QString &keys)
-{
-    if (keys.isEmpty())
-        return clearKeys(legacyName);
-    for (auto it = m_staged.begin(); it != m_staged.end();)
-        it = qs(it->first) != legacyName && qs(it->second.keys) == keys ? m_staged.erase(it) : std::next(it);
-    application::MacroBinding b;
-    b.legacyName = legacyName.toStdString();
-    b.keys = keys.toStdString();
-    // Recorded with the registration it was made for.
-    for (const auto &m : m_automation.manager().registry().macros())
-        if (application::legacyNameOf(fileNameOf(m.scriptPath).toStdString(), m.ordinal) == b.legacyName) {
-            b.macroName = m.name;
-            b.scriptSha256 = m.scriptSha256;
-        }
-    m_staged[b.legacyName] = b;
-    emit rowsChanged();
-}
-
-void AutomationHotkeysController::clearKeys(const QString &legacyName)
-{
-    m_staged.erase(legacyName.toStdString());
-    emit rowsChanged();
-}
-
-void AutomationHotkeysController::commit()
-{
-    // Legacy's OK acts on the whole map only after a change in the window.
-    std::map<std::string, std::string> staged;
-    for (const auto &[name, b] : m_staged)
-        staged[name] = b.keys;
-    const bool changed = staged != committedKeys();
-    m_committed = m_staged;
-    save();
-    m_installed = m_committed;
-    emit rowsChanged();
-    emit shortcutsChanged();
-    if (changed)
-        emit committed();
+    const auto it = m_committed.find(legacyName);
+    application::MacroBinding binding;
+    if (it != m_committed.end())
+        binding = it->second;
+    else
+        binding.legacyName = legacyName; // an unbound macro: by its alias alone
+    const auto r = resolution(binding);
+    if (r.identity)
+        return {{QStringLiteral("script"), scriptLabel(r.identity->scriptPath)},
+                {QStringLiteral("macro"), qs(r.identity->name)},
+                {QStringLiteral("problem"), QString()}};
+    const auto alias = application::aliasOfLegacyName(legacyName);
+    const QString file = alias ? qs(alias->substr(0, alias->rfind(':'))) : qs(legacyName);
+    return {{QStringLiteral("script"), file},
+            {QStringLiteral("macro"), qs(binding.macroName)},
+            {QStringLiteral("problem"), problemText(r.problem.value_or(application::AliasProblem::MissingScript))}};
 }
 
 std::map<std::string, std::string> AutomationHotkeysController::committedKeys() const
@@ -206,8 +211,7 @@ void AutomationHotkeysController::replaceCommitted(const std::map<std::string, s
         next[name] = std::move(b);
     }
     m_committed = std::move(next);
-    m_staged = m_committed;
-    emit rowsChanged();
+    emit bindingsChanged();
 }
 
 void AutomationHotkeysController::install()
@@ -221,10 +225,18 @@ QString AutomationHotkeysController::legacyNameFor(const QString &scriptPath, in
     return qs(application::legacyNameOf(QFileInfo(scriptPath).fileName().toStdString(), ordinal));
 }
 
-void AutomationHotkeysController::cancel()
+void AutomationHotkeysController::commitChange()
 {
-    m_staged = m_committed;
-    emit rowsChanged();
+    save();
+    emit bindingsChanged();
+    emit committed(); // the shortcut editor saves and installs the whole map
+}
+
+void AutomationHotkeysController::clearKeys(const QString &legacyName)
+{
+    if (m_committed.erase(legacyName.toStdString()) == 0)
+        return;
+    commitChange();
 }
 
 bool AutomationHotkeysController::run(const QString &legacyName)
@@ -245,17 +257,18 @@ int AutomationHotkeysController::importLegacy(const QString &path)
     const QByteArray bytes = f.readAll();
     int added = 0;
     for (auto &b : application::parseLegacyScriptHotkeys(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())))) {
-        if (m_staged.contains(b.legacyName))
+        if (m_committed.contains(b.legacyName))
             continue; // the current binding is kept
         bool taken = false;
-        for (const auto &[name, existing] : m_staged)
+        for (const auto &[name, existing] : m_committed)
             taken = taken || existing.keys == b.keys;
         if (taken)
             continue; // the keys already belong to another macro
-        m_staged[b.legacyName] = std::move(b);
+        m_committed[b.legacyName] = std::move(b);
         ++added;
     }
-    emit rowsChanged();
+    if (added > 0)
+        commitChange();
     return added;
 }
 

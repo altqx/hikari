@@ -1,8 +1,9 @@
 // S1 workflow through the real UI (Spix): macros run from the shell on the
 // editing target. The bundled edgeblur applies as one undo step; a macro's
 // dialog is answered in the fixed QML window while the macro reads the open
-// video through host services; Cancel in the progress window and a lost
-// helper leave the Document unchanged and editable.
+// video through host services; Cancel in the Automation panel's run status
+// (AM1: it opens with the run) and a lost helper leave the Document
+// unchanged and editable.
 
 #include "hikari/app/application.h"
 #include "docking.h"
@@ -104,13 +105,13 @@ protected:
             if (waitForItem("automationDialog/dialogButton0", 10s)) {
                 mouseClick("automationDialog/dialogButton0");
                 observed.push_back(waitForCompletion(2) ? firstText() : "dialog macro did not finish"); // 1
-                observed.push_back(getStringProperty("automationProgress/automationLog", "text")); // 2
+                observed.push_back(getStringProperty("mainWindow/automationLog", "text")); // 2
             }
-            // 3. Cancel from the progress window.
+            // 3. Cancel from the panel's run status.
             runMacro(fixture, 1);
-            if (waitForItem("automationProgress/automationCancel", 10s)) {
+            if (waitForItem("mainWindow/automationCancel", 10s)) {
                 wait(500ms);
-                mouseClick("automationProgress/automationCancel");
+                mouseClick("mainWindow/automationCancel");
                 observed.push_back(waitForCompletion(3) ? "cancelled" : "cancel did not finish"); // 3
             }
             // 4. The helper is lost while the macro runs.

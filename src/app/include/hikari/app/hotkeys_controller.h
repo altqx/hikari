@@ -124,7 +124,8 @@ public:
     void resetDefaults();
 
     // HkeysDialog::OnKeyPress for a Qt key press in `window`:
-    // {result: "ignored" | "refused" | "accepted", accel, message}.
+    // {result: "ignored" | "refused" | "accepted", accel, keys (the Qt
+    // portable text), message}.
     Q_INVOKABLE QVariantMap capture(int key, int modifiers, int window) const;
 
     // Hotkeys::OnMapHkey. The last input was a click on a button or menu
@@ -142,6 +143,14 @@ public:
     Q_INVOKABLE QVariantMap gestureTarget(const QString &symbolOrScript, bool second = false) const;
     Q_INVOKABLE QVariantMap gestureConflict(int id, const QString &accel, int type) const;
     Q_INVOKABLE void gestureMap(int id, const QString &name, const QString &accel, int type, const QString &answer);
+
+    // AM1, the Automation panel: the actions other than `id` whose binding
+    // (in any window, the scripts' included) is the legacy accelerator
+    // `accel`, as shown ("Save", "Play line (Audio)", a macro's name); and the
+    // command whose installed Global binding takes the portable `keys` from
+    // a macro ("" when none).
+    Q_INVOKABLE QStringList holdersOf(const QString &accel, int id) const;
+    Q_INVOKABLE QString globalHolder(const QString &keys) const;
 
     // GRID_FILTER_IGNORE_IN_ACTIONS through a hotkey (SubsGrid::OnAccelerator):
     // "ignore filtering" becomes the opposite of the stored option.

@@ -297,6 +297,11 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     connect(&m_manager, &backends::AutomationManager::dialogWithdrawn, this, [this] { m_dialogs.withdraw(); });
     connect(&m_manager, &backends::AutomationManager::servicesWithdrawn, this, [this] { m_router.withdraw(); });
     m_managerController = std::make_unique<ui::AutomationManagerController>(*this);
+    // AM1: the panel lists the Document scripts apart from autoload's (the
+    // list changes only with a load, reload or unload, which refresh it).
+    m_managerController->setDocumentScript([this](const std::string &path) {
+        return std::ranges::find(m_documentScripts.scripts(), path) != m_documentScripts.scripts().end();
+    });
 }
 
 void AutomationShell::setAudioBox(std::function<const application::AudioBox *()> box)

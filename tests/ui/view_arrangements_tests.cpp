@@ -501,6 +501,10 @@ private slots:
         QTRY_VERIFY(isOpen(QStringLiteral("referenceDock")));
         QVERIFY(QMetaObject::invokeMethod(root(), "openSearch", Q_ARG(QVariant, 0)));
         QTRY_VERIFY(isOpen(QStringLiteral("searchDock")));
+        // AM1: the Automation panel goes with them, and comes back.
+        QVERIFY(QMetaObject::invokeMethod(root(), "showPanel",
+                                          Q_ARG(QVariant, QVariant::fromValue(named(QStringLiteral("automationDock"))))));
+        QTRY_VERIFY(isOpen(QStringLiteral("automationDock")));
         QVERIFY(QMetaObject::invokeMethod(named(QStringLiteral("selectLinesMenuItem"))->property("action").value<QObject *>(),
                                           "trigger"));
         QObject *selectLines = named(QStringLiteral("selectLinesDialog"));
@@ -514,7 +518,7 @@ private slots:
         application->toggleEditor();
         QTRY_VERIFY(!application->editorOn());
         QTRY_COMPARE(openCore(), (QStringList{"videoDock"}));
-        for (const char *name : {"referenceDock", "timingDock", "searchDock"})
+        for (const char *name : {"referenceDock", "timingDock", "searchDock", "automationDock"})
             QVERIFY2(!isOpen(QLatin1String(name)), name);
         QTRY_VERIFY(!selectLines->property("visible").toBool());
         QTRY_VERIFY(!styles->property("visible").toBool());
@@ -524,6 +528,7 @@ private slots:
         QTRY_COMPARE(openCore(), kCore);
         QTRY_VERIFY(isOpen(QStringLiteral("referenceDock")));
         QVERIFY(!isOpen(QStringLiteral("searchDock")));
+        QTRY_VERIFY(isOpen(QStringLiteral("automationDock"))); // a workspace tool: back in the arrangement
         QVERIFY(!selectLines->property("visible").toBool());
         QVERIFY(!styles->property("visible").toBool());
         stop();

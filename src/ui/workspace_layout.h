@@ -41,9 +41,9 @@ class WorkspaceLayoutController : public QObject {
     Q_PROPERTY(bool holding READ holding NOTIFY changed)
 public:
     static constexpr int kSchema = 1;
-    static constexpr int kPanelRegistry = 3; // 2: Timing (F5), 3: Search (F1)
+    static constexpr int kPanelRegistry = 4; // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1)
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
-    static const QStringList &panelIds(); // Video, Audio, Editor, Grid, Reference, Timing, Search
+    static const QStringList &panelIds(); // Video, Audio, Editor, Grid, Reference, Timing, Search, Automation
 
     // `layoutFile` empty: nothing is persisted (tests, a profile without settings).
     explicit WorkspaceLayoutController(QString layoutFile = {}, QObject *parent = nullptr);

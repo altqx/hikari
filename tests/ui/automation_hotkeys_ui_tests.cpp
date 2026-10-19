@@ -1,10 +1,13 @@
-// S2 through the composition with real Lua scripts: every registered macro is
-// listed under its legacy name; mapping is staged until OK and a taken
-// shortcut moves; bindings persist and run their macro; a binding whose script
-// is gone stays visibly unresolved (S44-macro-alias); a legacy Hotkeys.txt
-// adds only what has no binding yet.
+// S2, AM1 through the composition with real Lua scripts: a macro's
+// shortcut is set through the shortcut editor's gesture path (the Automation
+// panel records it there) at once, saved and installed; a taken shortcut
+// asks first and moves; bindings persist and run their macro; a binding
+// whose script is gone stays visible as missing (S44-macro-alias); a legacy
+// Hotkeys.txt adds only what has no binding yet; Settings → Hotkeys lists
+// every macro, by name, under the Automation filter.
 
 #include "hikari/app/application.h"
+#include "hikari/app/hotkeys_controller.h"
 
 #include <QDeadlineTimer>
 #include <QFile>
@@ -42,12 +45,28 @@ bool loadScripts(app::Application &a)
     return false;
 }
 
-QVariantMap row(app::AutomationHotkeysController &c, const char *name)
+QString keysOf(app::AutomationHotkeysController &c, const char *name)
 {
-    for (const QVariant &v : c.rows())
+    return c.keys().value(QLatin1String(name)).toString();
+}
+
+QVariantMap missing(app::AutomationHotkeysController &c, const char *name)
+{
+    for (const QVariant &v : c.missing())
         if (v.toMap().value(QStringLiteral("legacyName")).toString() == QLatin1String(name))
             return v.toMap();
     return {};
+}
+
+// The panel's Enter: the gesture's question, then the answer ("cancel"
+// sets the keys when nothing holds them).
+QVariantMap map(app::HotkeysController &h, const char *name, const char *accel, const char *answer = "cancel")
+{
+    const QVariantMap target = h.gestureTarget(QLatin1String(name));
+    const QVariantMap conflict = h.gestureConflict(target.value("id").toInt(), QLatin1String(accel), 0);
+    h.gestureMap(target.value("id").toInt(), target.value("name").toString(), QLatin1String(accel), 0,
+                 conflict.isEmpty() ? QStringLiteral("cancel") : QLatin1String(answer));
+    return conflict;
 }
 
 } // namespace
@@ -79,34 +98,75 @@ private slots:
         {
             app::Application a(options());
             QVERIFY(loadScripts(a));
-            auto &hotkeys = a.automationHotkeys();
-            hotkeys.begin();
-            QCOMPARE(row(hotkeys, kEdgeblur).value(QStringLiteral("macro")).toString().isEmpty(), false);
-            QCOMPARE(row(hotkeys, kWait).value(QStringLiteral("macro")).toString(), QStringLiteral("Wait for cancel"));
-            hotkeys.setKeys(QLatin1String(kPrefix), QStringLiteral("Ctrl+Shift+P"));
-            // A taken shortcut: reported, and moved when set anyway.
-            QCOMPARE(hotkeys.conflict(QLatin1String(kEdgeblur), QStringLiteral("Ctrl+Shift+P")), QLatin1String(kPrefix));
-            hotkeys.setKeys(QLatin1String(kEdgeblur), QStringLiteral("Ctrl+Shift+P"));
-            QCOMPARE(row(hotkeys, kPrefix).value(QStringLiteral("keys")).toString(), QString());
-            QCOMPARE(row(hotkeys, kEdgeblur).value(QStringLiteral("keys")).toString(), QStringLiteral("Ctrl+Shift+P"));
-            // Nothing applies before OK; Cancel drops the edits.
-            QVERIFY(hotkeys.shortcuts().isEmpty());
-            hotkeys.cancel();
-            QCOMPARE(row(hotkeys, kEdgeblur).value(QStringLiteral("keys")).toString(), QString());
-            hotkeys.setKeys(QLatin1String(kEdgeblur), QStringLiteral("Ctrl+Shift+E"));
-            hotkeys.setKeys(QStringLiteral("Script gone.lua-0"), QStringLiteral("F8"));
-            hotkeys.commit();
-            QCOMPARE(hotkeys.shortcuts().size(), qsizetype(1)); // the missing script's binding does not resolve
+            auto &macros = a.automationHotkeys();
+            auto &h = a.hotkeys();
+            QVERIFY(map(h, kPrefix, "Ctrl-Shift-P").isEmpty());
+            // At once: saved and installed, no OK.
+            QCOMPARE(keysOf(macros, kPrefix), QStringLiteral("Ctrl+Shift+P"));
+            QCOMPARE(macros.shortcuts().size(), qsizetype(1));
+            // A taken shortcut asks; "delete" (the panel's Reassign) moves it.
+            QVERIFY(!map(h, kEdgeblur, "Ctrl-Shift-P", "delete").isEmpty());
+            QCOMPARE(keysOf(macros, kPrefix), QString());
+            QCOMPARE(keysOf(macros, kEdgeblur), QStringLiteral("Ctrl+Shift+P"));
+            QCOMPARE(h.holdersOf(QStringLiteral("Ctrl-Shift-P"), h.gestureTarget(QLatin1String(kPrefix)).value("id").toInt()),
+                     QStringList{QStringLiteral("Add edgeblur")});
+            // A Global command's keys: the holder is named, and its binding
+            // takes them from a macro that keeps them anyway.
+            QCOMPARE(h.holdersOf(QStringLiteral("Ctrl-S"), -1), QStringList{QStringLiteral("Save")});
+            QCOMPARE(h.globalHolder(QStringLiteral("Ctrl+S")), QStringLiteral("Save"));
+            QCOMPARE(h.globalHolder(QStringLiteral("Ctrl+Shift+P")), QString());
+            QVERIFY(map(h, kEdgeblur, "Ctrl-Shift-E").isEmpty());
+            macros.replaceCommitted({{kEdgeblur, "Ctrl+Shift+E"}, {"Script gone.lua-0", "F8"}});
+            macros.save();
+            macros.install();
+            QCOMPARE(macros.shortcuts().size(), qsizetype(1)); // the missing script's binding does not resolve
+            // Clear: at once.
+            QVERIFY(map(h, kWait, "Ctrl-Alt-Q").isEmpty());
+            QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+Q"));
+            macros.clearKeys(QLatin1String(kWait));
+            QCOMPARE(keysOf(macros, kWait), QString());
+            QCOMPARE(macros.shortcuts().size(), qsizetype(1));
         }
         app::Application again(options());
-        auto &hotkeys = again.automationHotkeys();
+        auto &macros = again.automationHotkeys();
         QVERIFY(again.openFile(path));
         QVERIFY(loadScripts(again));
-        QCOMPARE(hotkeys.shortcuts().size(), qsizetype(1));
-        QVERIFY(!row(hotkeys, "Script gone.lua-0").value(QStringLiteral("problem")).toString().isEmpty());
+        QCOMPARE(macros.shortcuts().size(), qsizetype(1));
+        QCOMPARE(keysOf(macros, kEdgeblur), QStringLiteral("Ctrl+Shift+E"));
+        const QVariantMap gone = missing(macros, "Script gone.lua-0");
+        QCOMPARE(gone.value(QStringLiteral("keys")).toString(), QStringLiteral("F8"));
+        QCOMPARE(gone.value(QStringLiteral("problem")).toString(), QStringLiteral("No loaded script has this macro"));
+        // Settings → Hotkeys: every macro is listed by name, the bound and
+        // the unbound, and the missing one with why.
+        auto &h = again.hotkeys();
+        h.beginOptions();
+        h.filter(7);
+        QStringList shown;
+        QString goneNote;
+        for (const QVariant &v : h.rows()) {
+            const QVariantMap r = v.toMap();
+            QVERIFY(r.contains(QStringLiteral("script")));
+            shown << r.value(QStringLiteral("script")).toString() + " > " + r.value(QStringLiteral("macro")).toString() + " = " +
+                         r.value(QStringLiteral("accel")).toString();
+            if (r.value(QStringLiteral("text")).toString() == QStringLiteral("Global Script gone.lua-0"))
+                goneNote = r.value(QStringLiteral("note")).toString();
+        }
+        QVERIFY2(shown.contains(QStringLiteral("Shell fixture > Wait for cancel = ")), qPrintable(shown.join('\n')));
+        QVERIFY2(shown.contains(QStringLiteral("Add edgeblur > Add edgeblur = Ctrl-Shift-E")), qPrintable(shown.join('\n')));
+        QCOMPARE(goneNote, QStringLiteral("No loaded script has this macro"));
+        // An unbound macro's row maps there too, into the same binding.
+        int waitRow = -1;
+        for (int i = 0; i < h.rows().size(); ++i)
+            if (h.rows().at(i).toMap().value(QStringLiteral("macro")).toString() == QStringLiteral("Wait for cancel"))
+                waitRow = i;
+        QVERIFY(waitRow >= 0);
+        h.select(waitRow);
+        h.optionsMap(QStringLiteral("Ctrl-Alt-W"), 0, QStringLiteral("cancel"));
+        h.commitOptions();
+        QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+W"));
         // The shortcut runs its macro on the editing target.
         QSignalSpy done(&again.automation(), &app::AutomationShell::runCompleted);
-        QVERIFY(hotkeys.run(QLatin1String(kEdgeblur)));
+        QVERIFY(macros.run(QLatin1String(kEdgeblur)));
         QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 30'000);
         QVERIFY(done.first().at(0).toBool());
         const auto &text = again.files().session(*again.workspace().editingTarget())->document().lines().front()->text;
@@ -118,7 +178,7 @@ private slots:
         app::Application a(options()); // keeps Ctrl+Shift+E on edgeblur from the test above
         QVERIFY(loadScripts(a));
         auto &hotkeys = a.automationHotkeys();
-        hotkeys.begin();
+        hotkeys.clearKeys(QLatin1String(kWait));
         const QString legacy = dir.filePath(QStringLiteral("Hotkeys.txt"));
         {
             QFile f(legacy);
@@ -128,10 +188,13 @@ private slots:
                     "Script shell-fixture.lua-0=Ctrl-Shift-E\r\n"  // keys taken: skipped
                     "Script shell-fixture.lua-1=Ctrl-Alt-W\r\n");  // added
         }
+        QSignalSpy committed(&hotkeys, &app::AutomationHotkeysController::committed);
         QCOMPARE(hotkeys.importLegacy(legacy), 1);
-        QCOMPARE(row(hotkeys, kEdgeblur).value(QStringLiteral("keys")).toString(), QStringLiteral("Ctrl+Shift+E"));
-        QCOMPARE(row(hotkeys, kWait).value(QStringLiteral("keys")).toString(), QStringLiteral("Ctrl+Alt+W"));
-        QCOMPARE(row(hotkeys, kPrefix).value(QStringLiteral("keys")).toString(), QString());
+        QCOMPARE(committed.size(), 1); // saved and installed at once
+        QCOMPARE(keysOf(hotkeys, kEdgeblur), QStringLiteral("Ctrl+Shift+E"));
+        QCOMPARE(keysOf(hotkeys, kWait), QStringLiteral("Ctrl+Alt+W"));
+        QCOMPARE(keysOf(hotkeys, kPrefix), QString());
+        QCOMPARE(hotkeys.shortcuts().size(), qsizetype(2));
         QCOMPARE(hotkeys.keysOf(Qt::Key_K, Qt::ControlModifier | Qt::ShiftModifier), QStringLiteral("Ctrl+Shift+K"));
         QCOMPARE(hotkeys.keysOf(Qt::Key_Shift, Qt::ShiftModifier), QString());
     }

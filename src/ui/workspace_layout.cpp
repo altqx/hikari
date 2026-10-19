@@ -68,7 +68,7 @@ const QStringList &WorkspaceLayoutController::panelIds()
 {
     static const QStringList ids{QStringLiteral("Video"), QStringLiteral("Audio"), QStringLiteral("Editor"),
                                  QStringLiteral("Grid"), QStringLiteral("Reference"), QStringLiteral("Timing"),
-                                 QStringLiteral("Search")};
+                                 QStringLiteral("Search"), QStringLiteral("Automation")};
     return ids;
 }
 

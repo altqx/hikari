@@ -7652,12 +7652,10 @@ private slots:
         const std::vector<Buttons> footers{
             {{"historySet", Apply}, {"historyOk", Accept}, {"historyCancel", Reject}},
             {{"closeSaveAll", Accept}, {"closeDiscardAll", Destructive}, {"closeContinue", Action}, {"closeCancel", Reject}},
-            {{"automationForceStop", Destructive}, {"automationCancel", Reject}},
+            {{"automationReassignOk", Accept}, {"automationReassignKeepBoth", Action}, {"automationReassignCancel", Reject}},
             {{"fpsOk", Accept}, {"fpsCancel", Reject}},
             {{"columnsOk", Accept}, {"columnsCancel", Reject}},
             {{"groupBreakRemove", Destructive}, {"groupBreakCancel", Reject}},
-            {{"automationHotkeysOk", Accept}, {"mapHotkey", Action}, {"deleteHotkey", Action},
-             {"importLegacyHotkeys", Action}, {"automationHotkeysCancel", Reject}},
             {{"reloadYes", Yes}, {"reloadNo", No}},
             {{"styleEditorOk", Accept}, {"styleManagerOk", Accept}, {"styleEditorApply", Apply},
              {"styleEditorCancel", Reject}, {"styleManagerClose", Reject}},
@@ -7675,9 +7673,15 @@ private slots:
             {{"findAnswerOk", Accept}, {"findAnswerYes", Yes}, {"findAnswerNo", No}, {"findAnswerCancel", Reject}},
             {{"replaceYesToAll", Yes}, {"replaceYes", Yes}, {"replaceNo", No}, {"Cancel", Reject}},
         };
-        // The find question lives in the Search tool's dock: open it.
+        // The find question lives in the Search tool's dock: open it. The
+        // Automation panel's Reassign question has no items until it opens.
         press(Qt::Key_F, Qt::ControlModifier);
         QTRY_VERIFY(item<QObject>("searchDock")->property("isOpen").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("automationDock")))));
+        QTRY_VERIFY(item<QObject>("automationDock")->property("isOpen").toBool());
+        QObject *reassign = item<QObject>("automationReassign");
+        QVERIFY(reassign && QMetaObject::invokeMethod(reassign, "open"));
+        QTRY_VERIFY(reassign->property("opened").toBool());
         for (const Buttons &buttons : footers) {
             const char *first = buttons.front().first;
             QObject *found = named(first);
@@ -7699,6 +7703,7 @@ private slots:
                          qPrintable(QStringLiteral("%1: role %2").arg(name).arg(roleOf(button))));
             }
         }
+        QVERIFY(QMetaObject::invokeMethod(reassign, "close"));
 
         // History: Set (apply), OK (accept), Cancel (reject), at the right edge.
         auto *history = root->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
@@ -10676,7 +10681,7 @@ private slots:
         QCOMPARE(names, (QStringList{"Editor", "Conversion", "Advanced", "Video", "Audio", "Advanced", "Appearance",
                                      "Hotkeys", "Subtitle properties"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 225); // V3: "Open video with FFMS2" retired, never listed
+        QCOMPARE(hotkeyRows().size(), 224); // V3: "Open video with FFMS2" and AM1: "Open shortcut mapping window" retired, never listed
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -11094,15 +11099,15 @@ private slots:
         h.gestureMap(30101, QStringLiteral("Script b.lua-0"), QStringLiteral("Ctrl-Shift-F"), 0, QStringLiteral("switch"));
         QCOMPARE(scripts.committedKeys().at("Script b.lua-0"), std::string("Ctrl+Shift+F"));
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString()); // switched with b's none
-        // The automation window's OK after a change saves and installs the
+        // A change in the Automation panel (AM1) saves and installs the
         // whole map, here the defaults "Set default" left in memory.
         h.resetDefaults();
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
-        scripts.begin();
-        scripts.commit(); // no change: nothing else
+        scripts.clearKeys(QStringLiteral("Script c.lua-0")); // no binding: nothing else
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
-        scripts.setKeys(QStringLiteral("Script c.lua-0"), QStringLiteral("Ctrl+Shift+Y"));
-        scripts.commit();
+        scripts.replaceCommitted({{"Script c.lua-0", "Ctrl+Shift+Y"}}); // in memory only
+        QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
+        scripts.clearKeys(QStringLiteral("Script c.lua-0"));
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QStringLiteral("Ctrl-F"));
         QVERIFY(application->settingsStore()->list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_SEARCH G=Ctrl-F")));
     }
@@ -11469,7 +11474,8 @@ private slots:
     }
 
     // A macro's menu item: Shift maps its hotkey (OnMapHkey(-1, "Script
-    // <file>-<n>"), no window choice), a S2 binding run from the shell.
+    // <file>-<n>")), a S2 binding run from the shell; AM1: in the Automation
+    // panel, which opens recording it.
     void hotkeyGestureOnAMacro()
     {
         QVERIFY(application->openFile(episode));
@@ -11480,15 +11486,187 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("automationMenu"), "open"));
         QTRY_VERIFY(macro->isVisible() && macro->width() > 0 && macro->isEnabled());
         clickWith(macro, Qt::ShiftModifier);
-        auto *mapping = mappingWindow("hotkeyMapping");
-        QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
-                 QStringLiteral("Please enter a hotkey for \"Script shell-fixture.lua-0\"."));
-        QVERIFY(!in(mapping, "hotkeyWindowChoice")->isVisible());
-        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
-        QTRY_VERIFY(!mapping->isVisible());
+        QVERIFY(!mappingWindow("hotkeyMapping")->isVisible());
+        QTRY_VERIFY(item<QObject>("automationDock")->property("isOpen").toBool());
+        QCOMPARE(named("automationTool")->property("recording").toString(), QStringLiteral("Script shell-fixture.lua-0"));
+        auto *recorder = visualItem("automationRecorder");
+        QTRY_VERIFY(recorder->hasActiveFocus());
+        keyTo(recorder, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        keyTo(recorder, Qt::Key_Return);
         QCOMPARE(application->automationHotkeys().committedKeys().at("Script shell-fixture.lua-0"), std::string("Ctrl+Alt+J"));
         QVERIFY(!application->automation().running());
+    }
+
+    // AM1: the Automation panel, closed by default and opened from
+    // Automation > Show panel. A macro's shortcut is recorded on its row and
+    // applies at once; a taken one asks to reassign; Esc leaves it; a Global
+    // command's keys are named as taking it; a run opens the closed panel on
+    // its run status (AM1-run-status). The shortcut window and its command
+    // are gone (AM1-hotkeys-window-retired).
+    void automationPanelSetsMacroShortcuts()
+    {
+        QVERIFY(application->openFile(episode));
+        QVERIFY(!named("automationHotkeysWindow"));
+        QVERIFY(!named("automationManagerWindow"));
+        QVERIFY(!named("automationProgress"));
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(dock);
+        QVERIFY(!dock->property("isOpen").toBool());
+        const QString fixture = QStringLiteral(HIKARI_LUA_FIXTURES "/shell-fixture.lua");
+        application->automation().load(fixture.toStdString());
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_Prefix from dialog"), 30000);
+        auto *show = named("automationManagerMenuItem")->property("action").value<QObject *>();
+        QVERIFY(show && QMetaObject::invokeMethod(show, "trigger"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        // The fixture's rows: its index among the loaded scripts.
+        int script = -1;
+        QTRY_VERIFY([&] {
+            for (int i = 0; i < 10 && script < 0; ++i)
+                if (auto *row = visualItem(qPrintable(QStringLiteral("macro_%1_0").arg(i)));
+                    row && row->property("text").toString() == QStringLiteral("Prefix from dialog"))
+                    script = i;
+            return script >= 0;
+        }());
+        const auto name = [&](const char *what, int ordinal) {
+            return QStringLiteral("%1_%2_%3").arg(QLatin1String(what)).arg(script).arg(ordinal).toLatin1();
+        };
+        auto *recorder = visualItem("automationRecorder");
+        QVERIFY(recorder);
+        const auto record = [&](int ordinal, Qt::Key key, Qt::KeyboardModifiers mods) {
+            auto *keys = visualItem(name("keys", ordinal).constData());
+            QVERIFY(keys);
+            QVERIFY(QMetaObject::invokeMethod(keys, "clicked"));
+            QTRY_VERIFY(recorder->hasActiveFocus());
+            keyTo(recorder, key, mods);
+        };
+        const auto committed = [&](const char *legacyName) {
+            const auto &keys = application->automationHotkeys().committedKeys();
+            const auto it = keys.find(legacyName);
+            return it == keys.end() ? std::string() : it->second;
+        };
+        // Recorded and set at once.
+        record(0, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        keyTo(recorder, Qt::Key_Return);
+        QCOMPARE(committed("Script shell-fixture.lua-0"), std::string("Ctrl+Alt+J"));
+        QTRY_COMPARE(visualItem(name("keys", 0).constData())->property("text").toString(), QStringLiteral("Ctrl+Alt+J"));
+        // Esc leaves the binding as it was.
+        record(0, Qt::Key_K, Qt::ControlModifier | Qt::AltModifier);
+        keyTo(recorder, Qt::Key_Escape);
+        QCOMPARE(committed("Script shell-fixture.lua-0"), std::string("Ctrl+Alt+J"));
+        // A taken shortcut: named while recording, then Reassign moves it.
+        record(1, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_COMPARE(visualItem(name("keysNote", 1).constData())->property("text").toString(),
+                     QStringLiteral("Already assigned to: Prefix from dialog"));
+        keyTo(recorder, Qt::Key_Return);
+        auto *reassign = named("automationReassign");
+        QVERIFY(reassign);
+        QTRY_VERIFY(reassign->property("opened").toBool());
+        QCOMPARE(named("automationReassignText")->property("text").toString(),
+                 QStringLiteral("Ctrl+Alt+J is assigned to Prefix from dialog. Assign it to Wait for cancel instead?"));
+        QVERIFY(QMetaObject::invokeMethod(named("automationReassignOk"), "clicked"));
+        QTRY_VERIFY(!reassign->property("visible").toBool());
+        QCOMPARE(committed("Script shell-fixture.lua-0"), std::string());
+        QCOMPARE(committed("Script shell-fixture.lua-1"), std::string("Ctrl+Alt+J"));
+        // A Global command's keys (a carried-over binding: the panel's
+        // Reassign would take them from it): it takes them, the row says so.
+        auto &macros = application->automationHotkeys();
+        macros.replaceCommitted({{"Script shell-fixture.lua-0", "Ctrl+S"}, {"Script shell-fixture.lua-1", "Ctrl+Alt+J"}});
+        macros.install();
+        QTRY_COMPARE(visualItem(name("keysNote", 0).constData())->property("text").toString(),
+                     QStringLiteral("Save also uses Ctrl+S and takes it."));
+        // A run opens the closed panel on its run status; Cancel ends it.
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
+        QVERIFY(application->automation().run(QDir::toNativeSeparators(fixture).toStdString(), 1));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *run = visualItem("automationRun");
+        QTRY_VERIFY(run && run->isVisible());
+        auto *cancel = visualItem("automationCancel");
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
+        // What the run said stays until Close (S1's window kept it too).
+        QCOMPARE(visualItem("automationTask")->property("text").toString(),
+                 QStringLiteral("The macro was cancelled; nothing was changed."));
+        QCOMPARE(cancel->property("text").toString(), QStringLiteral("Close"));
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY(!run->isVisible());
+    }
+
+    // AM1: the Automation panel in the four themes, written to
+    // HIKARI_AUTOMATION_SHOT_DIR when it is set (tools/review: the user's
+    // visual review): a Document script and two autoload ones, one failed;
+    // a shortcut, one a Global command takes, one recording on a taken
+    // shortcut, one whose macro is missing (automation-panel-<theme>.png);
+    // a macro running (automation-run-<theme>.png); Settings → Hotkeys
+    // under "Automation shortcuts" (automation-settings-<theme>.png).
+    void automationPanelScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_AUTOMATION_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_AUTOMATION_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        auto &settings = *application->settingsStore();
+        auto &automation = application->automation();
+        QVERIFY(application->openFile(episode));
+        const QString fixture = QStringLiteral(HIKARI_LUA_FIXTURES "/shell-fixture.lua");
+        automation.loadScript(QUrl::fromLocalFile(fixture));
+        automation.load(HIKARI_LUA_FIXTURES "/host-fixture.lua");
+        automation.load(HIKARI_LUA_FIXTURES "/syntax-error.lua");
+        QTRY_VERIFY_WITH_TIMEOUT(automation.scripts().size() == 3 && std::ranges::none_of(automation.scripts(), [](const auto &s) {
+                                     return s.state == application::ScriptStatus::State::Loading;
+                                 }),
+                                 30000);
+        auto &macros = application->automationHotkeys();
+        macros.replaceCommitted({{"Script shell-fixture.lua-0", "Ctrl+Alt+P"},
+                                 {"Script host-fixture.lua-2", "Ctrl+S"},
+                                 {"Script removed.lua-0", "F8"}});
+        macros.install();
+        auto *root = engine->rootObjects().first();
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        dock->setProperty("isFloating", true);
+        auto *panel = item("automationPanel");
+        QTRY_VERIFY(panel && panel->window() != window);
+        QQuickWindow *floating = panel->window();
+        floating->resize(460, 760);
+        auto *tool = item<QObject>("automationTool");
+        QVERIFY(QMetaObject::invokeMethod(tool, "record", Q_ARG(QVariant, QStringLiteral("Script shell-fixture.lua-1"))));
+        auto *recorder = item("automationRecorder");
+        QTRY_VERIFY(recorder->hasActiveFocus());
+        keyTo(recorder, Qt::Key_P, Qt::ControlModifier | Qt::AltModifier);
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto shoot = [&](QQuickWindow *w, const QString &name) {
+            for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+                settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(300);
+                QImage shot;
+                QTRY_VERIFY((shot = w->grabWindow(), !shot.isNull() && shot.width() > 0));
+                QVERIFY(shot.save(out + QStringLiteral("/automation-") + name + QLatin1Char('-') + QLatin1String(code) +
+                                  QStringLiteral(".png")));
+            }
+        };
+        shoot(floating, QStringLiteral("panel"));
+        keyTo(recorder, Qt::Key_Escape);
+        // A macro running: the run status at the top.
+        QVERIFY(automation.run(QDir::toNativeSeparators(fixture).toStdString(), 1));
+        QTRY_VERIFY(item("automationRun")->isVisible());
+        QTest::qWait(500);
+        shoot(floating, QStringLiteral("run"));
+        QVERIFY(QMetaObject::invokeMethod(item("automationCancel"), "clicked"));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        // Settings → Hotkeys, Automation shortcuts: what the panel's menu opens.
+        auto *settingsDialog = root->findChild<QObject *>(QStringLiteral("settingsDialog"));
+        QVERIFY(QMetaObject::invokeMethod(settingsDialog, "openDialog", Q_ARG(QVariant, QStringLiteral("hotkeys")),
+                                          Q_ARG(QVariant, 7)));
+        QTRY_VERIFY(settingsDialog->property("opened").toBool());
+        QCOMPARE(application->hotkeys().filterMode(), 7);
+        shoot(window, QStringLiteral("settings"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        dock->setProperty("isFloating", false);
     }
 
     // S4: Automation > "Run the last loaded script" (HikariSubFrame.cpp:353,
@@ -11636,8 +11814,8 @@ private slots:
         QVERIFY(doc.scriptInfo(u8"PlayResX") == std::u8string(u8"640"));
         QVERIFY(doc.scriptInfo(u8"PlayResY") == std::u8string(u8"480"));
         QVERIFY(!application->settingsStore()->boolean("automation.scriptResolutionFromVideo"));
-        // The progress window closes: nothing to say.
-        QTRY_VERIFY(!mappingWindow("automationProgress")->isVisible());
+        // The Automation panel's run status goes: nothing to say (AM1).
+        QTRY_VERIFY(!qobject_cast<QQuickItem *>(named("automationRun"))->isVisible());
 
         // Return on Cancel, and Escape, stop the macro, quietly.
         application->editor().undo();
@@ -11658,7 +11836,7 @@ private slots:
             const auto &after = application->files().session(*application->workspace().editingTarget())->document();
             QVERIFY(!after.scriptInfo(u8"PlayResX"));
             QVERIFY(after.lines().front()->text == std::u8string(u8"first"));
-            QTRY_VERIFY(!mappingWindow("automationProgress")->isVisible());
+            QTRY_VERIFY(!qobject_cast<QQuickItem *>(named("automationRun"))->isVisible());
         }
     }
 
@@ -15707,7 +15885,7 @@ private slots:
         QCOMPARE(titleIcon->property("iconRole").toString(), QStringLiteral("settings"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         // The windows' icons.
-        for (const char *w : {"historyWindow", "styleManager", "automationManagerWindow"}) {
+        for (const char *w : {"historyWindow", "styleManager"}) {
             auto *shown = root->findChild<QQuickWindow *>(QLatin1String(w));
             QVERIFY2(shown && !shown->icon().isNull(), w);
         }

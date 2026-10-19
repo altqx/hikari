@@ -38,7 +38,10 @@ Dialog {
     property var warnings: []
     signal reloaded()
 
-    function openDialog() {
+    // AM1: `page` "hotkeys" opens on the Hotkeys page with the filter
+    // `filter` chosen (the Automation panel's "Shortcuts in Settings…",
+    // MuseScore's deep link from a plugin to its shortcut).
+    function openDialog(page, filter) {
         const r = app.openSettingsDialog()
         languages = r.languages
         dictionaries = r.dictionaries
@@ -51,6 +54,11 @@ Dialog {
         reloaded()
         hotkeyFilter.currentIndex = 0 // a new dialog's filter choice
         pageList.currentIndex = 0 // legacy ChangeSelection(0)
+        if (page === "hotkeys") {
+            pageList.currentIndex = 7
+            hotkeyFilter.currentIndex = filter ?? 0
+            hotkeys.filter(hotkeyFilter.currentIndex)
+        }
         open()
         warnings = r.warnings
         showWarning()
@@ -699,7 +707,8 @@ Dialog {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         model: [qsTr("All"), qsTr("Set shortcuts"), qsTr("Global shortcuts"), qsTr("Subtitle shortcuts"),
-                                qsTr("Editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio Shortcuts")]
+                                qsTr("Editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio Shortcuts"),
+                                qsTr("Automation shortcuts")]
                         ToolTip.text: qsTr("Filtering mode:")
                         ToolTip.visible: hovered
                         Accessible.name: qsTr("Choose filtering")
@@ -760,7 +769,11 @@ Dialog {
                             dialog.hotkeys.select(index)
                             dialog.mapHotkey()
                         }
-                        Accessible.name: modelData.text + " " + modelData.accel
+                        // AM1: a macro's row names its script and macro, and
+                        // says in the warning colour why its keys do not run it.
+                        readonly property bool macro: modelData.script !== undefined
+                        Accessible.name: (macro ? modelData.script + " " + modelData.macro : modelData.text) + " " + modelData.accel
+                                         + (macro && modelData.note.length > 0 ? ", " + modelData.note : "")
                         contentItem: RowLayout {
                             Item {
                                 // the block's line beside rows shown from it
@@ -780,7 +793,10 @@ Dialog {
                             Label {
                                 id: hotkeyText
                                 objectName: "hotkeyText"
-                                text: modelData.text
+                                text: hotkeyRow.macro
+                                      ? (modelData.macro.length > 0 ? modelData.script + " › " + modelData.macro
+                                                                    : modelData.script + " › " + qsTr("Missing macro"))
+                                      : modelData.text
                                 // On the selection, the selection's text colour (the
                                 // window text was unreadable on the highlight).
                                 color: hotkeyRow.highlighted ? palette.highlightedText
@@ -789,19 +805,22 @@ Dialog {
                                 Layout.preferredWidth: hotkeyList.width * 0.7
                                 HoverHandler { id: textHover }
                                 ToolTip.visible: textHover.hovered && truncated
-                                ToolTip.text: modelData.text.substring(0, 1000)
+                                ToolTip.text: (hotkeyRow.macro ? hotkeyText.text : modelData.text).substring(0, 1000)
                             }
                             Label {
                                 id: hotkeyKeys
                                 objectName: "hotkeyKeys"
-                                text: modelData.accel
+                                text: hotkeyRow.macro && modelData.note.length > 0
+                                      ? (modelData.accel.length > 0 ? modelData.accel + " · " + modelData.note : modelData.note)
+                                      : modelData.accel
                                 color: hotkeyRow.highlighted ? palette.highlightedText
-                                     : modelData.keyModified ? dialog.warningColour : palette.windowText
+                                     : modelData.keyModified || (hotkeyRow.macro && modelData.note.length > 0) ? dialog.warningColour
+                                     : palette.windowText
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                                 HoverHandler { id: keysHover }
                                 ToolTip.visible: keysHover.hovered && truncated
-                                ToolTip.text: modelData.accel
+                                ToolTip.text: hotkeyKeys.text
                             }
                         }
                         // the box for the gap after this row

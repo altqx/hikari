@@ -84,9 +84,12 @@ const std::map<int, std::string> &hotkeyNames();
 // HotkeysNaming::GetName: "" when the id has no name (scripts, GLOBAL_QUIT...).
 std::string hotkeyName(int id);
 // V3: GLOBAL_VIDEO_INDEXING ("Open video with FFMS2") is retired (wave-5
-// decision 2026-10-05): the rewrite always indexes. It keeps its IDS symbol,
-// so stored lines naming it are recognised, but has no name (never listed in
-// the Options page) and its bindings are dropped as the lists are read.
+// decision 2026-10-05): the rewrite always indexes. AM1:
+// GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW ("Open shortcut mapping window") is
+// retired with its window (each macro's shortcut is in the Automation
+// panel). Each keeps its IDS symbol, so stored lines naming it are
+// recognised, but has no name (never listed in the Options page) and its
+// bindings are dropped as the lists are read.
 bool isRetiredHotkey(int id);
 // Removes the retired actions' bindings from `map` and returns them, for the
 // notice the reader gives.
@@ -219,7 +222,8 @@ public:
     bool modified() const { return m_modified; }
     int filterMode() const { return m_filterMode; }
     // FilterList(1, mode): 0 All, 1 Set shortcuts, 2 Global, 3 Subtitles,
-    // 4 Editor, 5 Video, 6 Audio. The selection goes to the first shown row.
+    // 4 Editor, 5 Video, 6 Audio; AM1: 7 Automation (the macros' rows). The
+    // selection goes to the first shown row.
     void filter(int mode);
     // GetSelection: the selected row, or -1.
     int selection() const;

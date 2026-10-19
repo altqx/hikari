@@ -190,7 +190,8 @@ HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::S
         for (const QString &notice : std::exchange(m_retiredNotices, {}))
             m_log(notice);
     logInvalid(); // the frame's SetAccels(false) at startup
-    // OK in the automation hotkeys window: SetHotkeysMap, SetAccels(true), SaveHkeys().
+    // A change in the Automation panel (AM1; legacy's automation hotkeys
+    // window's OK): SetHotkeysMap, SetAccels(true), SaveHkeys().
     connect(&m_scripts, &AutomationHotkeysController::committed, this, [this] {
         m_settings.set(kMainSetting, qLines(application::hotkeyLines(m_live, false)));
         setAccels();
@@ -219,11 +220,16 @@ void HotkeysController::load()
         application::loadDefaultHotkeys(m_live, true);
     // V3-indexing-retired: a binding of "Open video with FFMS2" (legacy
     // GLOBAL_VIDEO_INDEXING, from a carried-over Hotkeys.txt) is dropped with
-    // a notice, and the list is written without it so the notice is given once.
+    // a notice, and the list is written without it so the notice is given
+    // once. AM1-hotkeys-window-retired: so is one of "Open shortcut mapping
+    // window" (GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW).
     const auto dropped = application::dropRetiredHotkeys(m_live);
     for (const auto &[key, hotkey] : dropped)
-        m_retiredNotices << QCoreApplication::translate("HikariSub.Hotkeys",
-                                                        "The shortcut %1 of \"Open video with FFMS2\" was removed: the command is retired and videos are always indexed.")
+        m_retiredNotices << (key.id == application::hotkeyIdOf("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW")
+                                 ? QCoreApplication::translate("HikariSub.Hotkeys",
+                                                               "The shortcut %1 of \"Open shortcut mapping window\" was removed: the window is gone and each macro's shortcut is set in the Automation panel.")
+                                 : QCoreApplication::translate("HikariSub.Hotkeys",
+                                                               "The shortcut %1 of \"Open video with FFMS2\" was removed: the command is retired and videos are always indexed."))
                                 .arg(qs(hotkey.accel));
     if (!dropped.empty())
         m_settings.set(kMainSetting, qLines(application::hotkeyLines(m_live, false)));
@@ -430,7 +436,17 @@ void HotkeysController::beginOptions()
     // with it (legacy's static hotkeysCopy outlived the dialog).
     m_copy.clear();
     m_list = std::make_unique<application::HotkeyList>(m_copy);
-    m_list->build(bindings());
+    // AM1: every registered macro is listed, a macro without a binding as a
+    // script row without keys (an id after the bound ones), so it can be
+    // mapped here as in the Automation panel.
+    auto listed = bindings();
+    int next = application::kFirstScriptHotkey;
+    for (const auto &[key, hotkey] : listed)
+        if (key.id >= application::kFirstScriptHotkey)
+            next = std::max(next, key.id + 1);
+    for (const auto &name : m_scripts.unboundMacros())
+        listed[HotkeyId{next++, application::GlobalHotkey}] = application::Hotkey{name, {}};
+    m_list->build(listed);
     emit rowsChanged();
 }
 
@@ -443,13 +459,34 @@ QVariantList HotkeysController::rows() const
     int position = 0;
     for (const int i : m_list->shown()) {
         const auto &r = m_list->row(i);
-        out << QVariantMap{{QStringLiteral("row"), i},
-                           {QStringLiteral("text"), qs(r.text)},
-                           {QStringLiteral("accel"), qs(r.accel)},
-                           {QStringLiteral("textModified"), r.textModified},
-                           {QStringLiteral("keyModified"), r.keyModified},
-                           {QStringLiteral("block"), filtered ? m_list->hiddenBlock(position) : 0},
-                           {QStringLiteral("inBlock"), filtered && r.visible == 2}};
+        QVariantMap row{{QStringLiteral("row"), i},
+                        {QStringLiteral("text"), qs(r.text)},
+                        {QStringLiteral("accel"), qs(r.accel)},
+                        {QStringLiteral("textModified"), r.textModified},
+                        {QStringLiteral("keyModified"), r.keyModified},
+                        {QStringLiteral("block"), filtered ? m_list->hiddenBlock(position) : 0},
+                        {QStringLiteral("inBlock"), filtered && r.visible == 2}};
+        // AM1: a macro's row shows its script and macro by name ("script"
+        // and "macro"), and a note in the warning colour when the binding
+        // does not resolve or a Global command's binding of the same keys
+        // takes them (the static table comes first, as the shell installs it).
+        if (r.key.id >= application::kFirstScriptHotkey) {
+            const QVariantMap macro = m_scripts.describe(r.name);
+            row.insert(QStringLiteral("script"), macro.value(QStringLiteral("script")));
+            row.insert(QStringLiteral("macro"), macro.value(QStringLiteral("macro")));
+            QString note = macro.value(QStringLiteral("problem")).toString();
+            if (note.isEmpty() && !r.accel.empty())
+                for (std::size_t j = 0; j < m_list->rowCount(); ++j) {
+                    const auto &other = m_list->row(int(j));
+                    if (other.key.type == application::GlobalHotkey && other.key.id < application::kFirstScriptHotkey &&
+                        sameChord(other.accel, r.accel)) {
+                        note = QCoreApplication::translate("HikariSub.Hotkeys", "%1 takes it").arg(qs(other.name));
+                        break;
+                    }
+                }
+            row.insert(QStringLiteral("note"), note);
+        }
+        out << row;
         ++position;
     }
     return out;
@@ -598,6 +635,7 @@ QVariantMap HotkeysController::capture(int key, int modifiers, int window) const
                                                                                     : "ignored";
     return {{QStringLiteral("result"), QLatin1String(result)},
             {QStringLiteral("accel"), qs(c.accel)},
+            {QStringLiteral("keys"), qs(application::qtKeysOfAccel(c.accel))},
             {QStringLiteral("message"), qs(c.message)}};
 }
 
@@ -672,6 +710,38 @@ void HotkeysController::gestureMap(int id, const QString &name, const QString &a
     if (r.saveAudio)
         saveAudio();
     emit rowsChanged();
+}
+
+QStringList HotkeysController::holdersOf(const QString &accel, int id) const
+{
+    QStringList out;
+    for (const auto &[key, hotkey] : bindings()) {
+        if (key.id == id || key.type < 0 || key.type >= application::kHotkeyWindows || !sameChord(hotkey.accel, accel.toStdString()))
+            continue;
+        if (key.id >= application::kFirstScriptHotkey) {
+            const QString macro = m_scripts.describe(hotkey.name).value(QStringLiteral("macro")).toString();
+            out << (macro.isEmpty() ? qs(hotkey.name) : macro);
+        } else {
+            const std::string name = application::hotkeyName(key.id);
+            const QString shown = qs(name.empty() ? symbolOf(key.id) : name);
+            out << (key.type == application::GlobalHotkey
+                        ? shown
+                        : QStringLiteral("%1 (%2)").arg(shown, qs(std::string(application::hotkeyWindowName(key.type)))));
+        }
+    }
+    return out;
+}
+
+QString HotkeysController::globalHolder(const QString &keys) const
+{
+    for (const auto &v : globalShortcuts()) {
+        const QVariantMap m = v.toMap();
+        if (m.value(QStringLiteral("keys")).toString() != keys)
+            continue;
+        const std::string name = application::hotkeyName(application::hotkeyIdOf(m.value(QStringLiteral("symbol")).toString().toStdString()));
+        return name.empty() ? m.value(QStringLiteral("symbol")).toString() : qs(name);
+    }
+    return {};
 }
 
 bool HotkeysController::ignoreFilteringFromOption() const
