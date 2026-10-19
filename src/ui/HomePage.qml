@@ -16,6 +16,9 @@ FocusScope {
     required property var app
     // SH3 (#223): What's new, shown in the right-hand column when set.
     property Component whatsNew: null
+    // The height of the empty space right above the page (the Document tab
+    // bar, kept while Home shows).
+    property real spaceAbove: 0
     // The clock "Today" and "Yesterday" count from; tests set it.
     property date now: new Date()
 
@@ -94,6 +97,8 @@ FocusScope {
         id: page
         anchors.fill: parent
         anchors.margins: 24
+        // The empty tab bar above counts toward the top margin.
+        anchors.topMargin: Math.max(0, 24 - home.spaceAbove)
         anchors.leftMargin: Math.max(24, (home.width - 1120) / 2)
         anchors.rightMargin: anchors.leftMargin
         spacing: 16

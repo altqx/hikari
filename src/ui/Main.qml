@@ -2346,6 +2346,7 @@ ApplicationWindow {
         anchors.fill: dockingArea
         z: 1.5
         visible: root.app.home
+        spaceAbove: documentTabBar.height
         onNewRequested: root.app.addPage()
         onOpenRequested: openAction.trigger()
         onOpenVideoRequested: openVideoAction.trigger()
@@ -4204,6 +4205,7 @@ ApplicationWindow {
         spacing: 0
         // P6: the open Documents' tabs (legacy Notebook's bar).
         DocumentTabBar {
+            id: documentTabBar
             app: root.app
             Layout.fillWidth: true
             onCloseRequested: index => root.closeTab(index)
