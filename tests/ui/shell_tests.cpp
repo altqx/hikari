@@ -12328,9 +12328,10 @@ private slots:
         for (const auto &b : legacyDefaults())
             if (!keys.contains(QString::fromLatin1(b.accel)))
                 keys.append(QString::fromLatin1(b.accel));
-        // Asked on #244: in legacy the frame's Shift+Delete deleted the Line
-        // from the text field too; the rewrite's field cuts the selection.
-        const QStringList askedOwner = {QStringLiteral("Editor Shift-Delete: nothing, legacy GLOBAL_REMOVE_LINES")};
+        // KB3-line-text-shift-delete (#244): in legacy the frame's Shift+Delete
+        // deleted the Lines from the text field too; the rewrite's field cuts
+        // the selection (checked below).
+        const QStringList departures = {QStringLiteral("Editor Shift-Delete: nothing, legacy GLOBAL_REMOVE_LINES")};
         QStringList differences;
         hotkeys.setRehearsing(true);
         auto rehearsing = qScopeGuard([&] { hotkeys.setRehearsing(false); });
@@ -12353,11 +12354,36 @@ private slots:
                     application->videoFullscreen().toggle(0);
             }
         }
-        for (const QString &asked : askedOwner)
-            if (differences.removeAll(asked))
-                qInfo("KB3, asked on #244: %s", qPrintable(asked));
+        for (const QString &departure : departures)
+            QVERIFY2(differences.removeAll(departure), qPrintable(departure));
         rehearsing.dismiss();
         hotkeys.setRehearsing(false);
+
+        // In the Line text Shift+Delete cuts the selected text and Ctrl+Delete
+        // deletes the word after the cursor, as legacy's ID_CDELETE did; no
+        // Line goes.
+        {
+            auto *session = application->files().session(*application->workspace().editingTarget());
+            const auto lines = session->document().lines().size();
+            auto *text = item("lineText");
+            text->forceActiveFocus();
+            QVERIFY(QMetaObject::invokeMethod(text, "selectAll"));
+            for (const char c : std::string_view("Hello world again"))
+                QTest::keyClick(window, c);
+            QTRY_COMPARE(text->property("text").toString(), QStringLiteral("Hello world again"));
+            text->setProperty("cursorPosition", 6);
+            reached.clear();
+            QTest::keyClick(window, Qt::Key_Delete, Qt::ControlModifier);
+            QTRY_COMPARE(text->property("text").toString(), QStringLiteral("Hello again"));
+            QVERIFY(QMetaObject::invokeMethod(text, "select", Q_ARG(int, 6), Q_ARG(int, 11)));
+            QGuiApplication::clipboard()->clear();
+            QTest::keyClick(window, Qt::Key_Delete, Qt::ShiftModifier);
+            QTRY_COMPARE(text->property("text").toString(), QStringLiteral("Hello "));
+            QCOMPARE(QGuiApplication::clipboard()->text(), QStringLiteral("again"));
+            QCOMPARE(session->document().lines().size(), lines);
+            QVERIFY2(reached.isEmpty(), qPrintable(reached.join(QLatin1Char(' '))));
+            application->editor().discard();
+        }
 
         // Each binding run in its own window's context. Quitting is left out:
         // it would end the shell under test.
