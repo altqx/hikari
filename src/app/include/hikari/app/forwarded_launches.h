@@ -33,6 +33,10 @@ public:
     // At exit: the files taken and not opened (the quit came first), which
     // are no longer opened here.
     QStringList takeUnopened();
+    // At exit: a start without files came while the quit was reviewed or
+    // going ahead, and the quit went ahead: the user still asked for the
+    // program (a cancelled quit keeps the window, which came forward).
+    bool startAfterQuit() const { return m_afterQuit; }
 
     // Brings `window` (or the modal window over it) forward: restored when
     // minimized, raised and activated, with the start's Wayland activation
@@ -49,6 +53,7 @@ private:
     QStringList m_files;
     QString m_token;
     bool m_activate = false;
+    bool m_afterQuit = false;
     QTimer m_timer;
 };
 

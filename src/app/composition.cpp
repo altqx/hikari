@@ -93,9 +93,10 @@ QString handedOnPath()
            QStringLiteral(".txt");
 }
 
-// WS5: the files a quit left (saved) are opened by the next start that
-// opens a window: the new version an update execs (deb, rpm) or starts
-// (Restart now; an AppImage's new image), the start an update's setup makes
+// WS5: the files a quit left (saved), or a start without files that came
+// during the quit, are taken up by the next start that opens a window: the
+// new version an update execs (deb, rpm) or starts (Restart now; an
+// AppImage's new image), the start an update's setup makes
 // once it is done when asked (Windows), else a start of this program made
 // for them (for an AppImage the image, whose mount goes with this process).
 void startForHandedOn(const UpdateInstaller::ExitAction &exitAction, bool updateStarts)
@@ -239,7 +240,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     const bool updateStarts = code == 0 && application.updates().installer().restartRequested();
     if (code == 0)
         exitAction = application.updates().installer().installAtExit([&engine] { return showInstalling(engine); });
-    if (!unopened.isEmpty())
+    if (!unopened.isEmpty() || forwarded.startAfterQuit())
         startForHandedOn(exitAction, updateStarts);
     return code;
 }

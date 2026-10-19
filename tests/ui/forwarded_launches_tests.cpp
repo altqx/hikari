@@ -363,6 +363,34 @@ private slots:
         QVERIFY(!forwarded->pending());
     }
 
+    // A start without files while the quit is reviewed still asks for the
+    // program: once the quit goes ahead the next start is made for it; a
+    // cancelled quit keeps the window, which came forward.
+    void aStartWithoutFilesDuringTheQuitOutlivesIt()
+    {
+        start();
+        application->addPage();
+        edit(0, "work");
+        QVariantList rows = application->reviewClose(QStringLiteral("quit"));
+        QCOMPARE(rows.size(), 1);
+        take({});
+        QVERIFY(forwarded->startAfterQuit());
+        application->cancelClose();
+        QTRY_VERIFY(!forwarded->startAfterQuit());
+
+        rows = application->reviewClose(QStringLiteral("quit"));
+        take({});
+        QVariantList discard;
+        for (const QVariant &row : rows)
+            discard << QVariantMap{{QStringLiteral("id"), row.toMap().value(QStringLiteral("id"))},
+                                   {QStringLiteral("save"), false}};
+        application->resolveClose(discard);
+        QTRY_VERIFY(application->quitApproved());
+        QTest::qWait(300);
+        QVERIFY(forwarded->startAfterQuit());
+        QVERIFY(forwarded->takeUnopened().isEmpty());
+    }
+
     // The window comes forward: a minimized one is restored. A start without
     // files does nothing else.
     void theWindowComesForward()

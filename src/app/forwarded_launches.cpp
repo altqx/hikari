@@ -73,6 +73,11 @@ void ForwardedLaunches::take(const SingleInstance::Request &request)
     }
     if (!m_files.isEmpty() && m_window)
         m_timer.start(kGatherMs);
+    if (request.files.isEmpty() && m_application.quitting()) {
+        m_afterQuit = true; // watched until the quit is cancelled
+        if (!m_timer.isActive())
+            m_timer.start(kBusyRetryMs);
+    }
 }
 
 QStringList ForwardedLaunches::takeUnopened()
@@ -88,8 +93,13 @@ bool ForwardedLaunches::busy() const
 
 void ForwardedLaunches::open()
 {
-    if (!m_window || m_files.isEmpty())
+    if (m_afterQuit && !m_application.quitting())
+        m_afterQuit = false; // the quit was cancelled: the window stays
+    if (!m_window || m_files.isEmpty()) {
+        if (m_afterQuit)
+            m_timer.start(kBusyRetryMs);
         return;
+    }
     if (busy()) {
         m_timer.start(kBusyRetryMs);
         return;

@@ -251,6 +251,8 @@ public:
     // True while a review or a startup session question has the next word:
     // forwarded files wait (legacy hikarisubApp::OnOpen waited while IsBusy).
     bool forwardedOpenWaits() const;
+    // WS5: the quit is being reviewed or has gone ahead.
+    bool quitting() const { return m_quitApproved || m_closeThen == QLatin1String("quit"); }
     // P9: opening a video (legacy OpenFile on a video): subtitles named as
     // the video beside it (FindFile) are offered first, {subtitles} ("" when
     // none, or when the tab already has them). Then openVideo(path), or, on
