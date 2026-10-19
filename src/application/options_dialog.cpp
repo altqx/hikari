@@ -117,6 +117,11 @@ constexpr OptionsBinding kBindings[] = {
     // H2-output-device (decision 60): the device both audio paths play
     // through, on the Audio page; empty follows the system default.
     {"audio.outputDevice", OutputDevice, Audio},
+    // LE2: the Times/Frames switch (EDITBOX_TIMES_TO_FRAMES_SWITCH), which
+    // left the Line editor for the Editor page and the Video panel's menu.
+    {"editor.timesToFramesSwitch", Check, Editor},
+    // LE3-tags-shown: the Line editor's hidden-tag view (shown by default).
+    {"editor.hideTags", Check, Editor},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.

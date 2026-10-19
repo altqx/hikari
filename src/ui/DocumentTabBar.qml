@@ -4,7 +4,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// P6: legacy Notebook's tab bar below the workspace. One tab per Document
+// P6: legacy Notebook's tab bar, which sat below the workspace; WS4 made it
+// the window's first row under the menu bar (Main.qml). One tab per Document
 // (the protected reference has its own tray). A click shows a tab; the
 // active tab's close mark or a middle click closes a tab through the close
 // review; "+" and a double click on the empty bar add a tab (both write the
@@ -27,7 +28,10 @@ Item {
     signal saveAllRequested()
     signal closeAllRequested()
 
-    implicitHeight: row.implicitHeight
+    // The tabs stand a little in from the window's left edge and below the
+    // menu bar (WS4).
+    readonly property int inset: 4
+    implicitHeight: row.implicitHeight + inset
     Accessible.role: Accessible.PageTabList
     Accessible.name: qsTr("Open documents")
 
@@ -153,6 +157,8 @@ Item {
     Flickable {
         id: flick
         anchors.fill: parent
+        anchors.topMargin: bar.inset
+        anchors.leftMargin: bar.inset
         contentWidth: row.implicitWidth
         clip: true
         flickableDirection: Flickable.HorizontalFlick

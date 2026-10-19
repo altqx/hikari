@@ -572,7 +572,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);
     // E4: the options the Line editor reads, and its Times/Frames switch
-    // (EDITBOX_TIMES_TO_FRAMES_SWITCH, saved when it is switched).
+    // (EDITBOX_TIMES_TO_FRAMES_SWITCH, saved when it is switched; LE2: from
+    // the Video panel's menu or Settings > Editor).
     m_editor->setOptionsSource([this] {
         ui::LineEditorController::Options o;
         o.liveEditing = !m_settings->boolean("video.disableLiveEditing");
@@ -583,6 +584,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     m_editor->setShowFramesSetting(m_settings->boolean("editor.timesToFramesSwitch"),
                                    [this](bool on) { m_settings->set("editor.timesToFramesSwitch", on); });
+    // LE3-tags-shown: the editor's hidden-tag view as stored (shown by
+    // default), saved when it is switched (EDITBOX_HIDE_TAGS, Settings > Editor).
+    m_editor->setShowTagsSetting(!m_settings->boolean("editor.hideTags"),
+                                 [this](bool show) { m_settings->set("editor.hideTags", !show); });
     connect(m_editor.get(), &ui::LineEditorController::frameDisplayChanged, this, [this] {
         const auto *frames = m_editor->frameTimebase();
         m_shell->setFrameTimebase(frames ? std::optional(*frames) : std::nullopt);
@@ -938,6 +943,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return;
         session->setSelection(gridSelection().plain(session->selection(), core::LineId{id}));
         m_shell->setSelection(session->selection());
+        m_editor->selectionChanged(); // LE4: no longer mixed
         followEditingLine(); // R2: the editor's own move (E4 sends the draft before it)
     });
     // The editor's Start/End difference measures from the frame the Video
@@ -1528,6 +1534,7 @@ void Application::protectReference()
 void Application::refreshViews()
 {
     protectReference();
+    showTabArrangement(); // WS1: the tab's own panel arrangement
     // F3: legacy creates the spell checker when the Grid first paints a Line.
     if (m_workspace.editingTarget())
         spellChecker();
@@ -1543,8 +1550,10 @@ void Application::refreshViews()
                      referenceSession ? &referenceSession->document() : nullptr,
                      target ? m_comparison.table(*target) : nullptr,
                      reference ? m_comparison.table(*reference) : nullptr);
-    if (targetSession)
+    if (targetSession) {
         m_shell->setSelection(targetSession->selection());
+        m_editor->selectionChanged(); // LE4: the mixed position
+    }
     if (referenceSession) // R2: the reference's own selection
         m_shell->setReferenceSelection(referenceSession->selection());
     followEditingLine(); // R2: a linked reference follows the active Line
@@ -2305,6 +2314,7 @@ bool Application::applySelection(application::Selection next)
         return false; // e.g. a draft that cannot be committed
     session->setSelection(std::move(next));
     m_shell->setSelection(session->selection());
+    m_editor->selectionChanged(); // LE4: the mixed position
     refreshVideo();
     followEditingLine(); // R2
     return true;
@@ -4869,6 +4879,12 @@ void Application::settingChanged(const QString &id)
         m_editor->optionsChanged(); // E4: the counters and Duration follow at once
         refreshVideo();             // live editing on or off: the draft or the committed Lines
     }
+    // LE2, LE3: Settings > Editor switches the Line editor's view; Set default
+    // leaves it as shown, as legacy's EditBox kept its radios.
+    else if (id == QLatin1String("editor.hideTags") && !m_resettingSettings)
+        m_editor->setShowTags(!m_settings->boolean("editor.hideTags"));
+    else if (id == QLatin1String("editor.timesToFramesSwitch") && !m_resettingSettings)
+        m_editor->setShowFrames(m_settings->boolean("editor.timesToFramesSwitch"));
     else if (id == QLatin1String("grid.hideTags") || id == QLatin1String("grid.tagsSwapCharacter"))
         m_shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
     else if (id == QLatin1String("program.language")) // O5: live, wherever it is written

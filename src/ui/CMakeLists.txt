@@ -27,6 +27,8 @@ qt_add_qml_module(hikari_ui
 qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
 # E6: the Line editor's tag list.
 qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
+# LE5: the custom tag buttons, as the strip shows them, and their popover.
+qt_target_qml_sources(hikari_ui QML_FILES TagButton.qml TagButtonEditor.qml)
 target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE Qt6::QuickControls2 KDAB::kddockwidgets)
 # V1: the presenter converts player frames kept as Y'CbCr planes in a shader.
 find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS ShaderTools)

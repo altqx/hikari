@@ -35,8 +35,8 @@ if not known:
 
 # @{ exe = 'hikari_ui_X_tests'; fns = @(...) } -> whether the run lists functions
 runs = re.findall(r"exe\s*=\s*'hikari_ui_(\w+)';\s*fns\s*=\s*@\(([^)]*)\)", tests_ps1.read_text(encoding="utf-8"))
-if len(runs) != 5:
-    sys.exit(f"expected the 5 test executables of {tests_ps1}, found {[r[0] for r in runs]}")
+if len(runs) != 6:
+    sys.exit(f"expected the 6 test executables of {tests_ps1}, found {[r[0] for r in runs]}")
 
 failures = []
 all_reasons = []
