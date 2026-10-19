@@ -1546,6 +1546,7 @@ void Application::protectReference()
 void Application::refreshViews()
 {
     protectReference();
+    showTabArrangement(); // WS1: the tab's own panel arrangement
     // F3: legacy creates the spell checker when the Grid first paints a Line.
     if (m_workspace.editingTarget())
         spellChecker();

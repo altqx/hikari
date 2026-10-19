@@ -129,6 +129,8 @@ KEYS = {
     "bracketleft": (26, "bracketleft", "bracketleft"), "backslash": (43, "backslash", "backslash"),
     "insert": (110, "Insert", "Insert"), "kp_enter": (96, "KP_Enter", "KP_Enter"),
     "hangul": (122, "Hangul", "Hangul"),
+    # WS1: Ctrl+PgUp / Ctrl+PgDn (GLOBAL_PREVIOUS_TAB / GLOBAL_NEXT_TAB)
+    "pageup": (104, "Prior", "Prior"), "pagedown": (109, "Next", "Next"),
 }
 LETTERS = "qwertyuiop asdfghjkl zxcvbnm"
 CODES = {"q": 16, "w": 17, "e": 18, "r": 19, "t": 20, "y": 21, "u": 22, "i": 23, "o": 24, "p": 25,
@@ -2009,6 +2011,52 @@ def step_editor():
             f"focus on {focus_on}; Line text {draft!r} -> {text!r}", evidence)
 
 
+# ---------------------------------------------------------------- WS1 (#215)
+def step_tabs():
+    """WS1 (ADR 0020): each Document tab keeps its own panel arrangement.
+    Audio floats in the first tab; Ctrl+T opens a tab that copies it (the
+    same windows, nothing restored); there Audio docks again and the Line
+    editor floats. Ctrl+PgUp and Ctrl+PgDn through the compositor's keyboard
+    switch back and forth: each time the tab's panels come back in the same
+    windows with the same rectangles and window sizes (within 2 px; on X11
+    the floating windows' positions too, on Wayland the compositor places
+    them), and the panels a tab does not float are docked again."""
+    fresh(episode())
+    dismiss_notices()
+    float_panel("Audio", "tabs")
+    first = settled_arrangement(lambda s: "Audio" in frames(s))
+    ev0, _ = B.snap("tabs-0-first-tab", extra="# arrangement\n" + json.dumps(first, indent=1))
+    focus_main()
+    B.keys("ctrl+t", 1.5)
+    copy = settled_arrangement(lambda s: "Audio" in frames(s))
+    ev1, st = B.snap("tabs-1-new-tab", extra="# arrangement\n" + json.dumps(copy, indent=1))
+    copied = arrangement_differences(first, copy)
+    panel_menu("Audio", "Dock")
+    float_panel("Line editor", "tabs")
+    second = settled_arrangement(lambda s: "Line editor" in frames(s) and "Audio" not in frames(s))
+    ev2, _ = B.snap("tabs-2-second-tab-own", extra="# arrangement\n" + json.dumps(second, indent=1))
+    focus_main()
+    B.keys("ctrl+pageup", 1.5)
+    back = settled_arrangement(lambda s: "Audio" in frames(s) and "Line editor" not in frames(s))
+    ev3, _ = B.snap("tabs-3-first-tab-again", extra="# arrangement\n" + json.dumps(back, indent=1))
+    focus_main()
+    B.keys("ctrl+pagedown", 1.5)
+    again = settled_arrangement(lambda s: "Line editor" in frames(s) and "Audio" not in frames(s))
+    ev4, _ = B.snap("tabs-4-second-tab-again", extra="# arrangement\n" + json.dumps(again, indent=1))
+    to_first = arrangement_differences(first, back)
+    to_second = arrangement_differences(second, again)
+    distinct = bool(arrangement_differences(first, second))
+    where = ("floating windows' positions compared (X11)" if B.name == "x11" else
+             "floating windows' positions not compared: on Wayland the compositor places them")
+    verdict("tab-new-copies-arrangement", "observed" if not copied else "failed",
+            "Ctrl+T: the new tab shows the first tab's arrangement, Audio floating"
+            + (f"; differences: {copied}" if copied else ""), ev0 + ev1)
+    verdict("tab-switch-floating", "observed" if distinct and not to_first and not to_second else "failed",
+            f"tabs differ ({distinct}); Ctrl+PgUp back to the first tab: same windows and rectangles {not to_first}"
+            + (f" {to_first}" if to_first else "") + f"; Ctrl+PgDn to the second: {not to_second}"
+            + (f" {to_second}" if to_second else "") + f"; {where}", ev0 + ev2 + ev3 + ev4)
+
+
 # ---------------------------------------------------------------- V5 (#184)
 def video_document():
     """cfr.mkv (barcode frames) as ep1.mkv beside ep1.ass naming it."""
@@ -2986,7 +3034,7 @@ STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "menutext": step_menu_from_text, "tests": step_test_executables, "orca": step_orca,
          "a11y": step_a11y, "floating": step_floating, "header": step_header_keys,
-         "views": step_views, "editor": step_editor, "videofs": step_video_fullscreen,
+         "views": step_views, "editor": step_editor, "tabs": step_tabs, "videofs": step_video_fullscreen,
          # last: it removes an output, after which sway's virtual pointer
          # still maps absolute positions over the old layout
          "outputs": step_outputs}

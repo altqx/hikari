@@ -1,4 +1,4 @@
-// P6: tabs and session restore over the shared Workspace (legacy Notebook,
+// P6: tabs and session restore (legacy Notebook,
 // HikariSubFrame and hikarisubApp at 20d647c4).
 //
 // The tabs are the Workspace's Documents but the protected reference; the
@@ -16,9 +16,13 @@
 // stays visible with Retry, Relink and Remove (the accepted 2026-09-29
 // lifecycle choice) and is written back to the session until removed; the
 // tab itself is kept as legacy kept it (Untitled when its subtitles are gone).
+//
+// WS1 (ADR 0020): each tab also has its own panel arrangement, swapped with
+// its content and written to the Session on the tab's "Layout: " line.
 
 #include "hikari/app/application.h"
 
+#include "hikari/application/grid_clipboard.h"
 #include "hikari/application/session_file.h"
 
 #include <QCoreApplication>
@@ -189,6 +193,7 @@ void Application::closeDocument(application::DocumentId document)
 void Application::forgetTab(application::DocumentId document)
 {
     m_tabMedia.erase(document.value);
+    m_workspaceLayout->forgetTab(document.value); // WS1
     m_matroskaPaths.erase(document.value);
     m_originalColumns.erase(document.value); // E5: the tab's Grid goes with it
     m_offers.erase(document.value); // P9: its unanswered association question
@@ -228,6 +233,9 @@ void Application::replaceTarget(application::DocumentId replacement, bool keepMe
     discardRecovery(*old);
     m_files->close(*old);
     m_workspace.replace(*old, replacement);
+    // WS1: the tab keeps its arrangement; a TLMode file opened into it
+    // starts with the Translation preset, as in a tab of its own.
+    replaceTabArrangement(*old, replacement, tabStart(replacement));
     // R1: SubsGrid::Clearing deletes the tab's table; CG1/CG2 still name the
     // tab (HikariSubFrame.cpp:1386-1395 then finds no table to remove).
     m_comparison.replaced(*old, replacement);
@@ -242,6 +250,39 @@ void Application::setTargetScroll(int row)
         return; // the Grid has not shown this tab's scroll yet
     if (const auto target = m_workspace.editingTarget())
         m_tabMedia[target->value].scroll = std::max(0, row);
+}
+
+// --- each tab's panel arrangement (WS1) -----------------------------------------
+
+ui::WorkspaceLayoutController::TabStart Application::tabStart(application::DocumentId document) const
+{
+    const auto *session = m_files->session(document);
+    return session && application::translationMode(*session) ? ui::WorkspaceLayoutController::TabStart::Translation
+                                                             : ui::WorkspaceLayoutController::TabStart::Copy;
+}
+
+void Application::replaceTabArrangement(application::DocumentId old, application::DocumentId replacement,
+                                        ui::WorkspaceLayoutController::TabStart start)
+{
+    m_workspaceLayout->replaceTab(old.value, replacement.value, start);
+    if (m_layoutDocument == old)
+        m_layoutDocument = replacement;
+}
+
+void Application::registerTabArrangements()
+{
+    for (const auto id : m_workspace.tabs())
+        m_workspaceLayout->addTab(id.value, tabStart(id));
+}
+
+void Application::showTabArrangement()
+{
+    registerTabArrangements(); // background tabs opened since too
+    const auto target = m_workspace.editingTarget();
+    if (!target || target == m_layoutDocument)
+        return;
+    m_layoutDocument = target;
+    m_workspaceLayout->showTab(target->value, tabStart(*target));
 }
 
 // --- each tab's media ---------------------------------------------------------
@@ -421,6 +462,7 @@ bool Application::saveLastSession(bool closing, const QString &path)
     if (file.isEmpty())
         return false;
     const auto target = m_workspace.editingTarget();
+    registerTabArrangements(); // WS1: a tab opened since the last refresh has its own
     std::vector<application::SessionTab> tabs;
     for (const auto id : m_workspace.tabs()) {
         application::SessionTab tab;
@@ -463,6 +505,8 @@ bool Application::saveLastSession(bool closing, const QString &path)
         tab.keyframes = utf8(media.keyframes);
         if (const auto *u = unresolved("keyframes"); u && media.keyframes.isEmpty())
             tab.keyframes = utf8(u->path);
+        if (const auto arrangement = m_workspaceLayout->tabArrangement(id.value))
+            tab.layout = arrangement->serialise().toStdString(); // WS1
         tabs.push_back(std::move(tab));
     }
     const std::string bytes =
@@ -593,6 +637,8 @@ void Application::applySession()
         m_workspace.remove(id);
     }
     m_tabMedia.clear();
+    m_workspaceLayout->forgetTabs(); // WS1: each loaded tab brings its own
+    m_layoutDocument.reset();
     m_originalColumns.clear(); // E5: every tab's Grid is destroyed
     m_unresolved.clear();
     std::optional<application::DocumentId> last;
@@ -635,7 +681,7 @@ void Application::applySession()
         // Notebook::LoadSession: each tab starts with the editor (AddPage,
         // TabPanel's editor(true)) and `if (!hasEditor) HideEditor()` turns
         // it off before the tab's video (Notebook.cpp:1458-1459). One switch
-        // for the shared Workspace: the last tab, the active one, sets it.
+        // for every tab: the last tab, the active one, sets it.
         editorAfter = tab.editor || qs(tab.video).isEmpty();
         if (const QString video = qs(tab.video); !video.isEmpty()) {
             // AV3: a dummy video is restored too (one that opens: a broken
@@ -658,6 +704,13 @@ void Application::applySession()
                 m_unresolved.push_back({*id, QStringLiteral("audio"), audio, 0, 0});
         }
         m_tabMedia[id->value] = media;
+        // WS1: the tab's arrangement; without one (a legacy session) the
+        // tab starts as a new one does when it is first shown.
+        if (!tab.layout.empty()) {
+            const std::string *title = m_workspace.title(*id);
+            m_workspaceLayout->setTabArrangement(id->value, QByteArray::fromStdString(tab.layout),
+                                                 title ? qs(*title) : QString());
+        }
         last = id;
     }
     // AddPage(false) made each loaded tab the active one: the last stays active.
@@ -728,6 +781,7 @@ bool Application::retryRestore(int row)
         discardRecovery(entry.document);
         m_files->close(entry.document);
         m_workspace.replace(entry.document, *id);
+        replaceTabArrangement(entry.document, *id, ui::WorkspaceLayoutController::TabStart::Copy); // WS1: the Session's stays
         m_comparison.replaced(entry.document, *id); // R1: as replaceTarget
         m_tabMedia.erase(entry.document.value);
         m_originalColumns.erase(entry.document.value); // E5: as forgetTab
