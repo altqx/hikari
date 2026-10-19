@@ -124,6 +124,16 @@
 | Change aspect ratio | aspect-ratio (new) |
 | Filters (submenu, DirectShow) | video-filters (new) |
 
+### A tag button's menu (Line editor)
+
+LE5 ([#230](https://github.com/altqx/hikari/issues/230)) replaced the Manage tag buttons menu with the strip's "+" popover and this menu, merged into IC1 from `qt` f621d55a.
+
+| Item | Role |
+| --- | --- |
+| Edit... | edit (LE5's) |
+| Move left / Move right | move-left / move-right (new: move-up's arrow turned) |
+| Remove | remove (LE5's) |
+
 ### Font catalogs, visual tools
 
 | Item | Role |
@@ -134,11 +144,9 @@
 ## Items left without an icon
 
 - **Check items** (checkable): Last session's two startup choices, the Grid's filtering switches, filters and hidden columns, the comparison criteria, the Spellchecker's languages, the tag list's options, the layout presets, streams and chapters, the font catalogs, the reference tray's occurrences, a visual tool's choices, the document tabs in the tab menu. Their check mark stands in the icon's place, as in MuseScore 4's menus. Some check items that had an icon keep it (Save subtitles using the video name, Spellchecker).
-- **Entries named by their data**, under a submenu that has the icon: recent subtitles, videos, keyframes and audio, and the empty list's "None"; the macros of the loaded scripts; the sort keys under Sort all lines and Sort selected lines; the panels under View › Panels; the spelling suggestions; the DirectShow filters under Filters; the user's tag buttons.
+- **Entries named by their data**, under a submenu that has the icon: recent subtitles, videos, keyframes and audio, and the empty list's "None"; the macros of the loaded scripts; the sort keys under Sort all lines and Sort selected lines; the panels under View › Panels; the spelling suggestions; the DirectShow filters under Filters.
 - **Menus themselves**: the menu bar's titles and the context menus that open on their own.
-- **Items another wave-6 card removes or replaces**, left for it:
-  - Audio › Open blank 2h30m audio: AV3 [#240](https://github.com/altqx/hikari/issues/240) removes the dummy audio.
-  - The Line editor's tag buttons menu, Change number of buttons: LE5 [#230](https://github.com/altqx/hikari/issues/230) replaces the menu.
+- **Items another wave-6 card removes**, left for it: Audio › Open blank 2h30m audio, which AV3 [#240](https://github.com/altqx/hikari/issues/240) removes with the dummy audio.
 
 ## Notes for other cards
 
