@@ -763,6 +763,17 @@ private slots:
         b.audio().openDummy();
         QCOMPARE(b.tabs().size(), qsizetype(1));
         QVERIFY(b.targetUntitled());
+
+        // A protected reference opened as no tab is a Document: no Home, and
+        // media opens as before SH2, without an editing target.
+        app::Application c(options(home));
+        QVERIFY(c.home());
+        QVERIFY(c.openReference(writeSubtitles(dir.filePath(QStringLiteral("media-reference.ass")), "r")));
+        QVERIFY(c.tabs().isEmpty());
+        QVERIFY(!c.home());
+        c.video().openVideo(media("cfr.mkv"));
+        QVERIFY(c.tabs().isEmpty());
+        QVERIFY(!c.workspace().editingTarget());
     }
 };
 

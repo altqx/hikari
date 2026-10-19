@@ -31,7 +31,7 @@ Item {
     // SH2: empty and inert while the Home page shows (no Document open),
     // whose New the "+" would repeat. The bar keeps its height, so the
     // docked panels are not resized when the first Document opens.
-    readonly property bool shown: bar.app.tabs.length > 0
+    readonly property bool shown: !bar.app.home
     Accessible.role: Accessible.PageTabList
     Accessible.name: qsTr("Open documents")
     Accessible.ignored: !shown

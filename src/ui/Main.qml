@@ -2345,7 +2345,7 @@ ApplicationWindow {
         app: root.app
         anchors.fill: dockingArea
         z: 1.5
-        visible: root.app.tabs.length === 0
+        visible: root.app.home
         onNewRequested: root.app.addPage()
         onOpenRequested: openAction.trigger()
         onOpenVideoRequested: openVideoAction.trigger()

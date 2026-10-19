@@ -1107,7 +1107,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // SH2: media opened while the Home page shows (no Document open) opens
     // in a new Untitled Document, as legacy's always-present tab held it.
     const auto documentForMedia = [this] {
-        if (m_workspace.tabs().empty())
+        if (home())
             newDocument();
     };
     m_video->setBeforeOpen(documentForMedia);

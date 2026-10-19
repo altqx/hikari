@@ -778,6 +778,9 @@ public:
     // characters), title, current, tip (subtitles and video paths)}.
     Q_PROPERTY(QVariantList tabs READ tabs NOTIFY tabsChanged)
     Q_PROPERTY(int currentTab READ currentTab NOTIFY tabsChanged)
+    // SH2: no Document is open, neither a tab nor a protected reference
+    // (whose tray needs the panels): the Home page shows.
+    Q_PROPERTY(bool home READ home NOTIFY tabsChanged)
     // LAST_SESSION_CONFIG (session.restore): 0 nothing, 1 ask, 2 load at start.
     Q_PROPERTY(int sessionRestore READ sessionRestore WRITE setSessionRestore NOTIFY sessionRestoreChanged)
     // Session entries a restore could not resolve (L58 "unresolved restores
@@ -794,6 +797,7 @@ public:
     // HikariSubFrame::HideEditor: the switch flips.
     Q_INVOKABLE void toggleEditor();
     QVariantList tabs() const;
+    bool home() const { return m_workspace.tabs().empty() && !m_workspace.reference(); }
     int currentTab() const;
     int sessionRestore() const;
     void setSessionRestore(int value);
