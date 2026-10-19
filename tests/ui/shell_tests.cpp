@@ -2,6 +2,7 @@
 // reference, F6/Shift+F6 panel traversal and focus restoration.
 
 #include "hikari/app/application.h"
+#include "hikari/app/style_manager_controller.h"
 #include "desktop_guard.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/application/options_dialog.h"
@@ -16113,6 +16114,117 @@ private slots:
             QVERIFY(save(dialogShot.copy(cropOf(dialogRoot, 8).intersected(dialogShot.rect())), QStringLiteral("swatch"), theme));
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
+    }
+
+    // SY2/SY3 review images in the four themes (HIKARI_SURFACE_SHOT_DIR):
+    // the colour popover under a Style editor swatch, compact and with
+    // More…, under a Line editor colour button, and the Style editor's font
+    // list open with the sample line.
+    void colourAndFontScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const QString path = dir.filePath(QStringLiteral("shots.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,DejaVu Sans,48,&H0000D7FF,&H000000FF,&H00402010,&H80000000,0,0,0,0,100,100,0,0,1,3,2,2,"
+                    "10,10,10,1\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n");
+        }
+        QVERIFY(application->openFile(path));
+        app::attachStylePreview(*engine, application->styleManager()); // the sample line, as the program has it
+        for (const auto &[r, g, b] : {std::tuple{255, 215, 0}, {16, 32, 64}, {255, 0, 0}, {0, 128, 255}, {0, 255, 0}})
+            application->colourPicker().addRecent(QVariantMap{{QStringLiteral("r"), r}, {QStringLiteral("g"), g},
+                                                              {QStringLiteral("b"), b}, {QStringLiteral("a"), 0}});
+        auto *root = engine->rootObjects().first();
+        const auto crop = [](QQuickWindow *w, QRectF r) {
+            const qreal dpr = w->effectiveDevicePixelRatio();
+            return w->grabWindow().copy(QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect());
+        };
+        const auto around = [](QQuickItem *a, QQuickItem *b, int margin) {
+            QRectF r = a->mapRectToScene(QRectF(0, 0, a->width(), a->height()));
+            r = r.united(b->mapRectToScene(QRectF(0, 0, b->width(), b->height())));
+            return r.adjusted(-margin, -margin, margin, margin);
+        };
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+
+            // The Line editor's border colour button.
+            item("editingGrid")->forceActiveFocus();
+            press(Qt::Key_Home);
+            item("lineText")->forceActiveFocus();
+            auto *popover = named("colourPopover");
+            popover->setProperty("expanded", false);
+            QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour3"), "click"));
+            QTRY_VERIFY(popover->property("opened").toBool());
+            QTest::qWait(150);
+            auto *frame = popover->property("background").value<QQuickItem *>();
+            QVERIFY(crop(window, around(visualItem("changeColour3"), frame, 16))
+                        .save(out + QStringLiteral("/sy2-editor-popover-") + theme + QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(popover, "reject"));
+            QTRY_VERIFY(!popover->property("visible").toBool());
+
+            // The Style editor: a swatch's popover, compact and with More….
+            auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+            QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+            QTRY_VERIFY(manager->isVisible());
+            const QVariantMap values = application->styleManager().beginEdit(false, 0);
+            QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+            auto *content = manager->contentItem();
+            auto *stylePopover = manager->findChild<QObject *>(QStringLiteral("styleColourPopover"));
+            stylePopover->setProperty("expanded", false);
+            auto *swatch = findItem(content, QStringLiteral("styleColour1"));
+            QVERIFY(QMetaObject::invokeMethod(swatch, "click"));
+            QTRY_VERIFY(stylePopover->property("opened").toBool());
+            QTest::qWait(150);
+            auto *styleFrame = stylePopover->property("background").value<QQuickItem *>();
+            QVERIFY(crop(manager, around(swatch, styleFrame, 16))
+                        .save(out + QStringLiteral("/sy2-style-popover-") + theme + QStringLiteral(".png")));
+            stylePopover->setProperty("expanded", true);
+            QTest::qWait(200);
+            QVERIFY(crop(manager, around(swatch, styleFrame, 16))
+                        .save(out + QStringLiteral("/sy2-style-popover-more-") + theme + QStringLiteral(".png")));
+            stylePopover->setProperty("expanded", false);
+            QVERIFY(QMetaObject::invokeMethod(stylePopover, "reject"));
+            QTRY_VERIFY(!stylePopover->property("visible").toBool());
+
+            // SY3: the font list open, the sample line following the family
+            // under the keyboard.
+            auto *font = findItem(content, QStringLiteral("styleFont"));
+            QStringList families = QFontDatabase::families();
+            families.removeIf([](const QString &f) { return QFontDatabase::isPrivateFamily(f); });
+            font->setProperty("model", families);
+            font->setProperty("editText", values.value(QStringLiteral("fontname")));
+            auto *popup = font->property("popup").value<QObject *>();
+            QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+            QTRY_VERIFY(popup->property("opened").toBool());
+            for (int i = 0; i < 3; ++i)
+                QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
+            QTest::qWait(250);
+            auto *list = popup->property("contentItem").value<QQuickItem *>();
+            QVERIFY(crop(manager, around(font, list, 12))
+                        .save(out + QStringLiteral("/sy3-font-list-") + theme + QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+            QTRY_VERIFY(!popup->property("visible").toBool());
+            QTest::qWait(150);
+            QVERIFY(manager->grabWindow().save(out + QStringLiteral("/sy3-style-editor-") + theme + QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+            QTRY_VERIFY(!manager->isVisible());
         }
     }
 
