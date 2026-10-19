@@ -277,18 +277,26 @@ ApplicationWindow {
     readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock, searchDock]
 
     // A preset is the Editing arrangement with the panels it leaves closed
-    // (Timing: Video; Translation and Typesetting: Audio).
+    // (Timing: Video; Translation and Typesetting: Audio), for the current
+    // Document tab only (WS1).
     function applyPreset(name) {
         // Before the first frame the default arrangement and the saved
         // layout are not in place yet: settle them first.
         root.settleArrangement()
-        root.workspaceLayout.resetLayout()
-        if (name === "Timing")
-            videoDock.close()
-        else if (name === "Translation" || name === "Typesetting")
-            audioDock.close()
-        root.workspaceLayout.preset = name
-        root.workspaceLayout.save()
+        root.workspaceLayout.applyPreset(name)
+    }
+    // WS1: another tab's arrangement is shown. The Reference tray follows the
+    // comparison, not the tab (shown with the Grid while there is one), and
+    // Only video's hidden Timing tool belonged to the arrangement left.
+    Connections {
+        target: root.workspaceLayout
+        function onArrangementSwapped() {
+            root.timingHiddenByArrangement = false
+            if (root.shell.hasReference && !root.workspaceLayout.holding && gridDock.isOpen)
+                referenceDock.open()
+            else if (referenceDock.isOpen)
+                referenceDock.close()
+        }
     }
 
     // D2: legacy View menu (HikariSubFrame.cpp:308-312) as named panel

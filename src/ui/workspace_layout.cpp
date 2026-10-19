@@ -3,7 +3,9 @@
 #include "docking.h"
 
 #include <kddockwidgets/LayoutSaver.h>
+#include <kddockwidgets/core/DockRegistry.h>
 #include <kddockwidgets/core/DockWidget.h>
+#include <kddockwidgets/core/Platform.h>
 #include <kddockwidgets/qtquick/DockWidgetInstantiator.h>
 #include <kddockwidgets/kddockwidgets_version.h>
 
@@ -103,16 +105,48 @@ QObject *WorkspaceLayoutController::focusWindow() const
     return QGuiApplication::focusWindow();
 }
 
-QByteArray WorkspaceLayoutController::envelope(const QByteArray &payload, const QString &preset)
+namespace {
+
+QJsonObject envelopeObject(const QByteArray &payload, const QString &preset)
 {
     QJsonObject o;
-    o.insert(QStringLiteral("schema"), kSchema);
-    o.insert(QStringLiteral("panelRegistry"), kPanelRegistry);
+    o.insert(QStringLiteral("schema"), WorkspaceLayoutController::kSchema);
+    o.insert(QStringLiteral("panelRegistry"), WorkspaceLayoutController::kPanelRegistry);
     o.insert(QStringLiteral("engine"), engineVersion());
     o.insert(QStringLiteral("preset"), preset);
-    o.insert(QStringLiteral("panels"), QJsonArray::fromStringList(panelIds()));
-    o.insert(QStringLiteral("payload"), QJsonDocument::fromJson(payload).object());
-    return QJsonDocument(o).toJson(QJsonDocument::Indented);
+    o.insert(QStringLiteral("panels"), QJsonArray::fromStringList(WorkspaceLayoutController::panelIds()));
+    if (!payload.isEmpty())
+        o.insert(QStringLiteral("payload"), QJsonDocument::fromJson(payload).object());
+    return o;
+}
+
+} // namespace
+
+QByteArray WorkspaceLayoutController::envelope(const QByteArray &payload, const QString &preset)
+{
+    return QJsonDocument(envelopeObject(payload, preset)).toJson(QJsonDocument::Indented);
+}
+
+QByteArray WorkspaceArrangement::serialise() const
+{
+    return QJsonDocument(envelopeObject(payload, preset)).toJson(QJsonDocument::Compact);
+}
+
+std::optional<WorkspaceArrangement> WorkspaceArrangement::parse(const QByteArray &bytes, QString *problem)
+{
+    // A preset alone has no payload; one with a payload is checked as the saved file is.
+    const QJsonObject o = QJsonDocument::fromJson(bytes).object();
+    if (!o.isEmpty() && !o.contains(QStringLiteral("payload"))) {
+        if (o.value(QStringLiteral("schema")).toInt(-1) == WorkspaceLayoutController::kSchema &&
+            WorkspaceLayoutController::presets().contains(o.value(QStringLiteral("preset")).toString()))
+            return WorkspaceArrangement{o.value(QStringLiteral("preset")).toString(), {}};
+    }
+    WorkspaceArrangement arrangement;
+    const auto payload = WorkspaceLayoutController::payloadOf(bytes, problem, &arrangement.preset);
+    if (!payload)
+        return std::nullopt;
+    arrangement.payload = *payload;
+    return arrangement;
 }
 
 const QStringList &WorkspaceLayoutController::presets()
@@ -194,7 +228,7 @@ bool WorkspaceLayoutController::restorePayload(const QByteArray &payload, bool i
                 : KDDockWidgets::RestoreOptions(KDDockWidgets::RestoreOption_None);
     const bool restored = KDDockWidgets::LayoutSaver(options).restoreLayout(payload);
     if (!restored && !m_default.isEmpty())
-        KDDockWidgets::LayoutSaver().restoreLayout(m_default); // rebuild a known arrangement
+        KDDockWidgets::LayoutSaver(options).restoreLayout(m_default); // rebuild a known arrangement
     m_restoring = false;
     // D1: the floating windows' layouts at their windows' size (native
     // gate: the floating Audio panel came back 35 pixels short on Wayland).
@@ -210,6 +244,24 @@ bool WorkspaceLayoutController::restorePayload(const QByteArray &payload, bool i
 bool WorkspaceLayoutController::restoreSaved()
 {
     m_loaded = true;
+    const bool restored = restoreSavedFile();
+    // WS1: the current tab's own arrangement (from the Session, or the
+    // Translation preset of a TLMode file opened before the first frame);
+    // without one the tab takes the arrangement just restored.
+    if (m_tab) {
+        Tab &shown = m_tabs[*m_tab];
+        if (shown.arrangement) {
+            m_full = shown.full;
+            showArrangement(*shown.arrangement);
+        } else {
+            shown.arrangement = shownArrangement();
+        }
+    }
+    return restored;
+}
+
+bool WorkspaceLayoutController::restoreSavedFile()
+{
     if (m_file.isEmpty())
         return false;
     const auto bytes = readFile(m_file);
@@ -260,6 +312,10 @@ bool WorkspaceLayoutController::save()
 bool WorkspaceLayoutController::saveForQuit()
 {
     const bool saved = save();
+    // The Session written after this (endSession) names this arrangement
+    // for the current tab, not the closed panels of the window going down.
+    if (m_loaded)
+        m_quitArrangement = shownArrangement();
     m_quitting = true;
     return saved;
 }
@@ -271,6 +327,37 @@ bool WorkspaceLayoutController::resetLayout()
     m_full.clear();
     const bool done = restorePayload(m_default);
     dismissNotice();
+    save();
+    return done;
+}
+
+bool WorkspaceLayoutController::buildPreset(const QString &name, bool inPlace)
+{
+    if (m_default.isEmpty())
+        return false;
+    const bool done = restorePayload(m_default, inPlace);
+    // The Editing arrangement with the panels the preset leaves closed
+    // (docs/qt/ux/workspaces.md): Timing without Video, Translation and
+    // Typesetting without Audio.
+    QString closed;
+    if (name == QLatin1String("Timing"))
+        closed = QStringLiteral("Video");
+    else if (name == QLatin1String("Translation") || name == QLatin1String("Typesetting"))
+        closed = QStringLiteral("Audio");
+    if (!closed.isEmpty() && KDDockWidgets::Core::Platform::instance())
+        if (auto *dock = KDDockWidgets::DockRegistry::self()->dockByName(closed); dock && dock->isOpen())
+            dock->close();
+    return done;
+}
+
+bool WorkspaceLayoutController::applyPreset(const QString &name)
+{
+    if (!presets().contains(name) || m_default.isEmpty())
+        return false;
+    m_full.clear();
+    const bool done = buildPreset(name, false);
+    dismissNotice();
+    setPreset(name);
     save();
     return done;
 }
@@ -364,7 +451,7 @@ void WorkspaceLayoutController::holdArrangement()
 {
     if (holding())
         return;
-    m_held = KDDockWidgets::LayoutSaver().serializeLayout();
+    m_held = WorkspaceArrangement{m_preset, KDDockWidgets::LayoutSaver().serializeLayout()};
     emit changed();
 }
 
@@ -372,10 +459,163 @@ bool WorkspaceLayoutController::releaseArrangement()
 {
     if (!holding())
         return false;
-    const QByteArray held = std::exchange(m_held, QByteArray());
-    const bool restored = restorePayload(held, true);
+    // WS1: the tab shown now may not be the one the hold began in.
+    const WorkspaceArrangement held = *std::exchange(m_held, std::nullopt);
+    const bool restored = held.payload.isEmpty() ? buildPreset(held.preset, true) : restorePayload(held.payload, true);
+    if (held.preset != m_preset) {
+        m_preset = held.preset;
+        m_lastSaved.clear();
+    }
     emit changed();
     return restored;
+}
+
+// --- WS1: each Document tab's arrangement -----------------------------------
+
+WorkspaceArrangement WorkspaceLayoutController::shownArrangement() const
+{
+    if (m_quitArrangement)
+        return *m_quitArrangement;
+    if (m_held)
+        return *m_held; // the editing arrangement the player layout holds
+    return {m_preset, KDDockWidgets::LayoutSaver().serializeLayout()};
+}
+
+bool WorkspaceLayoutController::showArrangement(WorkspaceArrangement arrangement) // a copy: it may be the tab's own, reset below
+{
+    bool shown = true;
+    if (holding()) {
+        m_held = arrangement; // shown when the editor comes back
+    } else if (arrangement.payload.isEmpty()) {
+        shown = buildPreset(arrangement.preset, true);
+    } else if (arrangement.payload != KDDockWidgets::LayoutSaver().serializeLayout()) {
+        // In place: the main window keeps its geometry, the floating panels
+        // take theirs; nothing is drawn between taking the panels out and
+        // putting them back.
+        shown = restorePayload(arrangement.payload, true);
+    }
+    const QString preset = shown ? arrangement.preset : QStringLiteral("Editing");
+    if (!shown) {
+        // restorePayload rebuilt the default arrangement (partial restore).
+        if (m_tab)
+            m_tabs[*m_tab].arrangement = WorkspaceArrangement{};
+        keepUnrestored(arrangement.serialise(),
+                       QCoreApplication::translate("HikariSub.Workspace", "the docking engine could not restore it"), {});
+    }
+    if (preset != m_preset) {
+        m_preset = preset;
+        m_lastSaved.clear();
+    }
+    emit changed();
+    emit arrangementSwapped();
+    return shown;
+}
+
+void WorkspaceLayoutController::keepUnrestored(const QByteArray &bytes, const QString &problem, const QString &title)
+{
+    m_notice = title.isEmpty()
+                   ? QCoreApplication::translate("HikariSub.Workspace",
+                                                 "The panel layout of this tab was not restored because %1. The tab shows the Editing layout.")
+                         .arg(problem)
+                   : QCoreApplication::translate("HikariSub.Workspace",
+                                                 "The panel layout of %1 was not restored because %2. The tab shows the Editing layout.")
+                         .arg(title, problem);
+    // A copy is kept for diagnosis; the Session is written with the tab's
+    // Editing layout from now on.
+    if (!m_file.isEmpty()) {
+        const QString kept = m_file + QStringLiteral(".tab.unrestored");
+        if (writeAtomically(kept, bytes))
+            m_notice += QLatin1Char(' ') + QCoreApplication::translate("HikariSub.Workspace", "The layout is kept at %1.")
+                                               .arg(QDir::toNativeSeparators(kept));
+    }
+    emit changed();
+}
+
+void WorkspaceLayoutController::showTab(std::uint64_t tab, TabStart start)
+{
+    if (m_tab == tab)
+        return;
+    if (m_tab) {
+        Tab &left = m_tabs[*m_tab];
+        if (m_loaded)
+            left.arrangement = shownArrangement();
+        left.full = m_full;
+    }
+    m_tab = tab;
+    Tab &shown = m_tabs[tab];
+    if (!shown.arrangement) {
+        if (start == TabStart::Translation) {
+            shown.arrangement = WorkspaceArrangement{QStringLiteral("Translation"), {}};
+            shown.full.clear();
+        } else {
+            // A copy of the arrangement shown: nothing moves. Before the
+            // first arrangement the tab takes the one restoreSaved shows.
+            if (m_loaded)
+                shown.arrangement = shownArrangement();
+            shown.full = m_full;
+            return;
+        }
+    }
+    if (!m_loaded)
+        return;
+    m_full = shown.full;
+    showArrangement(*shown.arrangement);
+}
+
+void WorkspaceLayoutController::replaceTab(std::uint64_t tab, std::uint64_t replacement, TabStart start)
+{
+    Tab moved;
+    if (auto node = m_tabs.extract(tab))
+        moved = std::move(node.mapped());
+    if (m_tab == tab)
+        m_tab = replacement;
+    if (start == TabStart::Translation) {
+        moved.arrangement = WorkspaceArrangement{QStringLiteral("Translation"), {}};
+        moved.full.clear();
+    }
+    m_tabs[replacement] = moved;
+    if (start == TabStart::Translation && m_tab == replacement && m_loaded) {
+        m_full.clear();
+        showArrangement(*moved.arrangement);
+    }
+}
+
+void WorkspaceLayoutController::forgetTab(std::uint64_t tab)
+{
+    m_tabs.erase(tab);
+    if (m_tab == tab)
+        m_tab.reset();
+}
+
+void WorkspaceLayoutController::forgetTabs()
+{
+    m_tabs.clear();
+    m_tab.reset();
+}
+
+std::optional<WorkspaceArrangement> WorkspaceLayoutController::tabArrangement(std::uint64_t tab) const
+{
+    if (m_tab == tab && m_loaded)
+        return shownArrangement();
+    const auto it = m_tabs.find(tab);
+    return it == m_tabs.end() ? std::nullopt : it->second.arrangement;
+}
+
+void WorkspaceLayoutController::setTabArrangement(std::uint64_t tab, const QByteArray &serialised, const QString &title)
+{
+    QString problem;
+    auto arrangement = WorkspaceArrangement::parse(serialised, &problem);
+    if (!arrangement) {
+        keepUnrestored(serialised, problem, title);
+        arrangement = WorkspaceArrangement{};
+    }
+    Tab &t = m_tabs[tab];
+    t.arrangement = arrangement;
+    t.full.clear();
+    if (m_tab == tab && m_loaded) {
+        m_full.clear();
+        showArrangement(*arrangement);
+    }
 }
 
 void WorkspaceLayoutController::rememberFullArrangement()

@@ -5,6 +5,12 @@
 // envelope, written atomically, with the previous valid file kept as a
 // backup. A layout that fails validation or restore is never overwritten:
 // the default arrangement is used and a notice names the kept file.
+//
+// WS1 (ADR 0020): each Document tab has its own arrangement. The engine
+// shows the current tab's; the others are kept as WorkspaceArrangement
+// values and swapped in when their tab is shown. The saved file holds the
+// arrangement shown last, which the first tab of a start without a Session
+// takes.
 
 #include <QByteArray>
 #include <QObject>
@@ -14,9 +20,27 @@
 #include <QTimer>
 #include <QtQml/qqmlregistration.h>
 
+#include <cstdint>
+#include <map>
 #include <optional>
 
 namespace hikari::ui {
+
+// WS1: one Document tab's panel arrangement, a value apart from the engine
+// (the Session's "Layout: " line, WS2's [Hikari] section): the built-in
+// template it started from and the engine's payload. A value without a
+// payload is the template itself, built when the tab is shown.
+struct WorkspaceArrangement {
+    QString preset = QStringLiteral("Editing");
+    QByteArray payload; // the engine's layout (JSON), or empty: the preset as built in
+
+    // The envelope in one line (compact JSON).
+    QByteArray serialise() const;
+    // The envelope's arrangement, validated as the saved file is; a missing
+    // "payload" is the preset alone. nullopt with `problem` naming why.
+    static std::optional<WorkspaceArrangement> parse(const QByteArray &bytes, QString *problem = nullptr);
+    bool operator==(const WorkspaceArrangement &) const = default;
+};
 
 class WorkspaceLayoutController : public QObject {
     Q_OBJECT
@@ -40,6 +64,9 @@ class WorkspaceLayoutController : public QObject {
     // so the saved layout stays the editing one.
     Q_PROPERTY(bool holding READ holding NOTIFY changed)
 public:
+    // WS1: how a tab shown for the first time starts.
+    enum class TabStart { Copy, Translation };
+
     static constexpr int kSchema = 1;
     static constexpr int kPanelRegistry = 3; // 2: Timing (F5), 3: Search (F1)
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
@@ -62,6 +89,9 @@ public:
     // this one writes that over the saved layout.
     Q_INVOKABLE bool saveForQuit();
     Q_INVOKABLE bool resetLayout();
+    // A built-in template (Editing, Timing, Translation, Typesetting) for the
+    // current tab: the default arrangement with the panels it leaves closed.
+    Q_INVOKABLE bool applyPreset(const QString &name);
     Q_INVOKABLE bool restoreBackup();
     Q_INVOKABLE void dismissNotice();
     // Keyboard resize (docs/qt/docking.md): a docked panel's size in its
@@ -81,7 +111,7 @@ public:
     // gives it back; false when nothing is held or it does not restore.
     Q_INVOKABLE void holdArrangement();
     Q_INVOKABLE bool releaseArrangement();
-    bool holding() const { return !m_held.isEmpty(); }
+    bool holding() const { return m_held.has_value(); }
     // D2: the arrangement as it was when Video, Audio, Editor and Grid were
     // last all shown (the shell remembers it before an arrangement hides
     // one, and while they stay shown); an arrangement that shows a hidden
@@ -90,6 +120,25 @@ public:
     // the backup and the saved layout at start forget it.
     Q_INVOKABLE void rememberFullArrangement();
     Q_INVOKABLE bool restoreFullArrangement();
+
+    // WS1: the Document tab `tab` (its Document's id) is the one shown. The
+    // tab shown so far keeps the arrangement it has now; `tab` gets its own
+    // back, or, the first time, `start`: a copy of the arrangement shown, or
+    // the Translation preset (a TLMode file). Before the shell's first
+    // arrangement (restoreSaved) only the values change.
+    void showTab(std::uint64_t tab, TabStart start = TabStart::Copy);
+    // The tab's Document was replaced by another (opened into the tab): the
+    // tab keeps its arrangement, or takes the Translation preset.
+    void replaceTab(std::uint64_t tab, std::uint64_t replacement, TabStart start = TabStart::Copy);
+    void forgetTab(std::uint64_t tab);
+    void forgetTabs();
+    // The tab's arrangement (the one shown for the current tab); nullopt for
+    // a tab that has none yet.
+    std::optional<WorkspaceArrangement> tabArrangement(std::uint64_t tab) const;
+    // A Session's arrangement for `tab` ("Layout: "). One that does not
+    // validate gives the tab the Editing preset, keeps the text for
+    // diagnosis and says so in the notice, naming `title`.
+    void setTabArrangement(std::uint64_t tab, const QByteArray &serialised, const QString &title = {});
 
     QString notice() const { return m_notice; }
     QString preset() const { return m_preset; }
@@ -107,15 +156,32 @@ signals:
     void changed();
     void focusWindowChanged();
     void menuHasFocusChanged();
+    // WS1: another tab's arrangement replaced the one shown (the shell puts
+    // the panels that follow the application, such as the Reference tray,
+    // back as they must be).
+    void arrangementSwapped();
 
 private:
     bool restorePayload(const QByteArray &payload, bool inPlace = false);
+    bool restoreSavedFile();
+    bool buildPreset(const QString &name, bool inPlace);
+    bool showArrangement(WorkspaceArrangement arrangement);
+    WorkspaceArrangement shownArrangement() const;
+    void keepUnrestored(const QByteArray &bytes, const QString &problem, const QString &title);
     QString backupFile() const { return m_file + QStringLiteral(".bak"); }
+
+    struct Tab {
+        std::optional<WorkspaceArrangement> arrangement;
+        QByteArray full; // m_full while the tab was shown
+    };
+    std::map<std::uint64_t, Tab> m_tabs;
+    std::optional<std::uint64_t> m_tab; // the tab the engine shows
+    std::optional<WorkspaceArrangement> m_quitArrangement; // shown when the close went ahead
 
     QString m_file;
     QByteArray m_default;
     QByteArray m_lastSaved;
-    QByteArray m_held;
+    std::optional<WorkspaceArrangement> m_held;
     QByteArray m_full;
     QString m_notice;
     QString m_preset = QStringLiteral("Editing");
