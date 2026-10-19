@@ -1259,6 +1259,8 @@ private:
     // system default plays (application_audio.cpp).
     void noticeAudioRoute(const application::OutputRoute &before, const application::OutputRoute &after);
     application::OutputRoute m_noticedRoute;
+    QString m_audioRouteNotice; // the unplugged device's notice while it shows
+    int m_audioRouteNoticeSerial = 0;
     // AV2 (#239, application_audio.cpp): with the sync toggle on, the audio
     // cursor follows the playing video, and the paused video shows the frame
     // the playing audio box is at: one frame asked for at a time, the newest

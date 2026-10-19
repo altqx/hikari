@@ -13209,7 +13209,22 @@ private slots:
         QCOMPARE(labels(), (QStringList{QStringLiteral("System default"), QString::fromStdString(headset.name),
                                         QString::fromStdString(monitor.name) + QStringLiteral(" (not connected)")}));
         QCOMPARE(checkedRow(), 2); // still the choice, as the dialog keeps it
-        QTRY_COMPARE_WITH_TIMEOUT(application->shell().statusText(), QString(), 7000);
+        // Plugged back in, it plays again and the notice goes at once; out
+        // again, the new notice stays its 5 s (the first one's time is not its).
+        list[0].isDefault = false;
+        list.insert(list.begin(), monitor);
+        changed();
+        QCOMPARE(application->audioRoute(), (Route{monitor.id, monitor.name, false}));
+        QCOMPARE(application->shell().statusText(), QString());
+        QTest::qWait(3000);
+        list.erase(list.begin());
+        list[0].isDefault = true;
+        changed();
+        const QString notice = application->shell().statusText();
+        QVERIFY(notice.startsWith(QString::fromStdString(monitor.name)));
+        QTest::qWait(3000); // past the first notice's 5 s
+        QCOMPARE(application->shell().statusText(), notice);
+        QTRY_COMPARE_WITH_TIMEOUT(application->shell().statusText(), QString(), 4000);
         // A device plugged in while the menu is open moves its rows; the entry
         // clicked is the device it showed.
         QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));

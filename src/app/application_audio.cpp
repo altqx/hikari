@@ -49,6 +49,9 @@ void Application::noticeAudioRoute(const application::OutputRoute &before, const
     if (before == after)
         return;
     emit audioOutputChanged();
+    // A notice of a device that is back (or replaced) no longer holds.
+    if (!m_audioRouteNotice.isEmpty() && m_shell->statusText() == std::exchange(m_audioRouteNotice, QString()))
+        m_shell->setStatusText(QString());
     // The chosen device went away (the choice is still stored): the default plays.
     if (before.systemDefault || !after.systemDefault || m_settings->settings().text("audio.outputDevice").empty())
         return;
@@ -62,10 +65,15 @@ void Application::noticeAudioRoute(const application::OutputRoute &before, const
         text = QCoreApplication::translate("HikariSub.Audio", "%1 is not connected. Audio plays through %2.")
                    .arg(name, QString::fromStdString(after.name));
     m_shell->setStatusText(text);
-    // As legacy's status messages, it goes after 5 s unless something replaced it.
-    QTimer::singleShot(5000, Qt::PreciseTimer, this, [this, text] {
+    m_audioRouteNotice = text;
+    // As legacy's status messages, it goes after 5 s unless something replaced
+    // it (a later notice of the same words too: it has its own 5 s).
+    QTimer::singleShot(5000, Qt::PreciseTimer, this, [this, text, serial = ++m_audioRouteNoticeSerial] {
+        if (serial != m_audioRouteNoticeSerial)
+            return;
         if (m_shell->statusText() == text)
             m_shell->setStatusText(QString());
+        m_audioRouteNotice.clear();
     });
 }
 
