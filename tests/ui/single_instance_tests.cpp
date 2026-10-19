@@ -30,6 +30,7 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#include <sddl.h>
 #else
 #include <sys/stat.h>
 #include <unistd.h>
@@ -394,6 +395,65 @@ private slots:
         QCOMPARE(run({dir.filePath(QStringLiteral("r.ass"))}), code(Role::Forwarded));
         QCOMPARE(requested.size(), 1);
         QVERIFY(!holder.listening());
+    }
+
+    // A start at a lower integrity level (sandboxed, or the user's
+    // unelevated start beside an elevated instance) hands the holder
+    // nothing: it runs alone. Windows only (elsewhere a peer is another
+    // user or not).
+    void aLowerIntegrityStartHandsNothingOver()
+    {
+#ifdef _WIN32
+        app::SingleInstance holder(location);
+        QCOMPARE(holder.claim({}), Role::Primary);
+        QSignalSpy requested(&holder, &app::SingleInstance::requested);
+        // This process's token at low integrity, for a "send" child.
+        HANDLE own = nullptr, low = nullptr;
+        QVERIFY(::OpenProcessToken(::GetCurrentProcess(),
+                                   TOKEN_DUPLICATE | TOKEN_QUERY | TOKEN_ASSIGN_PRIMARY | TOKEN_ADJUST_DEFAULT, &own));
+        auto closeOwn = qScopeGuard([own] { ::CloseHandle(own); });
+        QVERIFY(::DuplicateTokenEx(own, 0, nullptr, SecurityImpersonation, TokenPrimary, &low));
+        auto closeLow = qScopeGuard([low] { ::CloseHandle(low); });
+        PSID lowSid = nullptr;
+        QVERIFY(::ConvertStringSidToSidW(L"S-1-16-4096", &lowSid));
+        auto freeSid = qScopeGuard([lowSid] { ::LocalFree(lowSid); });
+        TOKEN_MANDATORY_LABEL label{};
+        label.Label.Attributes = SE_GROUP_INTEGRITY;
+        label.Label.Sid = lowSid;
+        QVERIFY(::SetTokenInformation(low, TokenIntegrityLevel, &label, sizeof(label) + ::GetLengthSid(lowSid)));
+        // The child reads its mode and location from the environment it
+        // inherits.
+        qputenv(kChild, "send");
+        qputenv(kServer, location.server.toUtf8());
+        qputenv(kLock, location.lock.toUtf8());
+        auto unset = qScopeGuard([] {
+            qunsetenv(kChild);
+            qunsetenv(kServer);
+            qunsetenv(kLock);
+        });
+        const QString program = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+        std::wstring commandLine = (QLatin1Char('"') + program + QStringLiteral("\" \"") +
+                                    QDir::toNativeSeparators(dir.filePath(QStringLiteral("low.ass"))) + QLatin1Char('"'))
+                                       .toStdWString();
+        STARTUPINFOW startup{};
+        startup.cb = sizeof(startup);
+        PROCESS_INFORMATION started{};
+        QVERIFY(::CreateProcessAsUserW(low, reinterpret_cast<LPCWSTR>(program.utf16()), commandLine.data(), nullptr,
+                                       nullptr, FALSE, 0, nullptr, nullptr, &startup, &started));
+        ::CloseHandle(started.hThread);
+        auto closeProcess = qScopeGuard([&started] { ::CloseHandle(started.hProcess); });
+        QElapsedTimer waited;
+        waited.start();
+        while (::WaitForSingleObject(started.hProcess, 0) == WAIT_TIMEOUT && waited.elapsed() < 15000)
+            QTest::qWait(20); // the holder answers from this event loop
+        DWORD status = 0;
+        QVERIFY(::GetExitCodeProcess(started.hProcess, &status));
+        QCOMPARE(int(status), code(Role::Alone));
+        QCOMPARE(requested.size(), 0);
+        QVERIFY(holder.listening());
+#else
+        QSKIP("Windows integrity levels");
+#endif
     }
 
     // A commit the holder reads too long after its ack (it was held up) is

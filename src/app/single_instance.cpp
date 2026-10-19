@@ -134,14 +134,32 @@ PSID sidOf(std::vector<char> &user)
     return reinterpret_cast<TOKEN_USER *>(user.data())->User.Sid;
 }
 
-// The pipe's server is this user's, in this session; it may then take the
-// foreground (the start that the user launched still may give it away).
-bool acceptServer(QLocalSocket &socket)
+// The process token's integrity level (its mandatory label's RID); 0 when
+// it cannot be read.
+DWORD integrityLevel(HANDLE process)
 {
-    const auto pipe = reinterpret_cast<HANDLE>(socket.socketDescriptor());
-    ULONG pid = 0;
-    if (!::GetNamedPipeServerProcessId(pipe, &pid))
-        return false;
+    HANDLE token = nullptr;
+    if (!::OpenProcessToken(process, TOKEN_QUERY, &token))
+        return 0;
+    DWORD size = 0;
+    ::GetTokenInformation(token, TokenIntegrityLevel, nullptr, 0, &size);
+    std::vector<char> buffer(size);
+    DWORD level = 0;
+    if (size > 0 && ::GetTokenInformation(token, TokenIntegrityLevel, buffer.data(), size, &size)) {
+        const PSID label = reinterpret_cast<TOKEN_MANDATORY_LABEL *>(buffer.data())->Label.Sid;
+        const UCHAR count = *::GetSidSubAuthorityCount(label);
+        if (count > 0)
+            level = *::GetSidSubAuthority(label, count - 1);
+    }
+    ::CloseHandle(token);
+    return level;
+}
+
+// The other end of the pipe, process `pid`, is this user's, in this session,
+// and runs at this process's integrity level or above: an unelevated (or
+// sandboxed) process hands an elevated one nothing, and gets nothing from it.
+bool trusted(ULONG pid)
+{
     DWORD ours = 0, theirs = 0;
     if (!::ProcessIdToSessionId(::GetCurrentProcessId(), &ours) || !::ProcessIdToSessionId(pid, &theirs) ||
         ours != theirs)
@@ -149,13 +167,31 @@ bool acceptServer(QLocalSocket &socket)
     HANDLE process = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
     if (!process)
         return false;
-    auto server = tokenUser(process);
+    auto other = tokenUser(process);
+    const DWORD level = integrityLevel(process);
     ::CloseHandle(process);
     auto self = tokenUser(::GetCurrentProcess());
-    if (server.empty() || self.empty() || !::EqualSid(sidOf(server), sidOf(self)))
+    return !other.empty() && !self.empty() && ::EqualSid(sidOf(other), sidOf(self)) && level != 0 &&
+           level >= integrityLevel(::GetCurrentProcess());
+}
+
+// The pipe's server is trusted; it may then take the foreground (the start
+// that the user launched still may give it away).
+bool acceptServer(QLocalSocket &socket)
+{
+    ULONG pid = 0;
+    if (!::GetNamedPipeServerProcessId(reinterpret_cast<HANDLE>(socket.socketDescriptor()), &pid) || !trusted(pid))
         return false;
     ::AllowSetForegroundWindow(pid);
     return true;
+}
+
+// The pipe's client is trusted: the pipe's access list lets in any process
+// of this user, an unelevated one into an elevated instance too.
+bool acceptClient(QLocalSocket &socket)
+{
+    ULONG pid = 0;
+    return ::GetNamedPipeClientProcessId(reinterpret_cast<HANDLE>(socket.socketDescriptor()), &pid) && trusted(pid);
 }
 #else
 // The other end is this user's (the folder is private already).
@@ -272,13 +308,18 @@ SingleInstance::Location SingleInstance::forSession()
     const QString prefix = QStringLiteral("io.github.altqx.HikariSub.Instance-");
 #ifdef _WIN32
     auto user = tokenUser(::GetCurrentProcess());
+    const DWORD level = integrityLevel(::GetCurrentProcess());
     DWORD session = 0;
     LPWSTR sid = nullptr;
-    if (user.empty() || !::ProcessIdToSessionId(::GetCurrentProcessId(), &session) ||
+    if (user.empty() || level == 0 || !::ProcessIdToSessionId(::GetCurrentProcessId(), &session) ||
         !::ConvertSidToStringSidW(sidOf(user), &sid))
         return {};
-    const QString name = prefix + QString::fromWCharArray(sid);
+    // Each integrity level its own instance: an elevated HikariSub and the
+    // user's unelevated one never hand each other anything.
+    QString name = prefix + QString::fromWCharArray(sid);
     ::LocalFree(sid);
+    if (level != SECURITY_MANDATORY_MEDIUM_RID)
+        name += QStringLiteral("-IL") + QString::number(level, 16);
     // The pipe namespace spans the sessions; the Local\ one is the session's.
     return {name + QLatin1Char('-') + QString::number(session), QStringLiteral("Local\\") + name};
 #else
@@ -504,13 +545,16 @@ void SingleInstance::accept()
         // Owned by this object, not the server: release() may end the server
         // while a request is being read.
         socket->setParent(this);
-#ifndef _WIN32
-        if (!sameUser(*socket)) {
+#ifdef _WIN32
+        const bool peer = acceptClient(*socket);
+#else
+        const bool peer = sameUser(*socket);
+#endif
+        if (!peer) {
             socket->abort();
             socket->deleteLater();
             continue;
         }
-#endif
         QTimer::singleShot(kReadTimeoutMs, socket, [socket] {
             if (!socket->property("hikariAcked").isValid() && !socket->property("hikariTaken").toBool())
                 socket->abort();

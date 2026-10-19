@@ -10,7 +10,10 @@
 //     flock on a file in a folder only the user can enter
 //     ($XDG_RUNTIME_DIR, or a private folder in the temporary folder);
 //   - the holder listens on a local socket (a named pipe on Windows) named
-//     for the user and the session, taking a socket file a crash left;
+//     for the user and the session, taking a socket file a crash left; each
+//     end takes the other only when it is the same user's (on Windows also
+//     in the same session and at the same integrity level or above, so an
+//     unelevated process hands an elevated instance nothing);
 //   - a start that cannot hand over (the holder is not answering, or the
 //     socket is not the user's own) starts its own window without claiming,
 //     so startup is never blocked; so does a start that holds the lock but
@@ -61,10 +64,11 @@ public:
         QString server;
         QString lock;
     };
-    // This user's and this session's: on Windows named for the user's SID
-    // and the session id; elsewhere for the user and the display
+    // This user's and this session's: on Windows named for the user's SID,
+    // the session id and the integrity level (other than medium: an elevated
+    // instance is another); elsewhere for the user and the display
     // ($WAYLAND_DISPLAY, else $DISPLAY). Empty when no private folder could
-    // be had.
+    // be had (or the Windows token could not be read).
     static Location forSession();
 
     // What a start hands over.
