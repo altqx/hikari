@@ -277,6 +277,9 @@ bool WorkspaceLayoutController::restorePayload(const QByteArray &payload, bool i
     // A layout saved with another set of screens may place a floating panel
     // where none shows it.
     hikari::ui::keepFloatingPanelsOnScreen();
+    // WS3: the shell puts the Reference tray back as the comparison has it
+    // (a preset or a backup restores it closed, as every payload has it).
+    emit arrangementSwapped();
     return restored;
 }
 
@@ -500,6 +503,8 @@ bool WorkspaceLayoutController::showArrangement(const WorkspaceArrangement &arra
         // take theirs; nothing is drawn between taking the panels out and
         // putting them back.
         shown = restorePayload(arrangement.payload, true);
+    } else {
+        emit arrangementSwapped(); // the same panels (restorePayload says so otherwise)
     }
     if (!shown)
         refuseArrangement(arrangement);
@@ -511,7 +516,6 @@ bool WorkspaceLayoutController::showArrangement(const WorkspaceArrangement &arra
         m_lastSaved.clear();
     }
     emit changed();
-    emit arrangementSwapped();
     return shown;
 }
 

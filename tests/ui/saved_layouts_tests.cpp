@@ -412,6 +412,18 @@ private slots:
         QVERIFY(isOpen("gridDock"));
         QVERIFY(application->openReference(writeSubtitles(dir.filePath(QStringLiteral("ref.ass")))));
         QTRY_VERIFY(isOpen("referenceDock"));
+        // A preset, Reset this layout and Restore the previous layout bring
+        // back panels without the tray: it comes back with the Grid.
+        for (const QString &step : {QStringLiteral("viewLayoutPresetTiming"), QStringLiteral("viewLayoutReset"),
+                                    QStringLiteral("backup")}) {
+            if (step == QLatin1String("backup"))
+                QVERIFY(layouts().restoreBackup());
+            else
+                trigger(step);
+            QTest::qWait(200);
+            QVERIFY2(isOpen("gridDock"), qPrintable(step));
+            QVERIFY2(isOpen("referenceDock"), qPrintable(step));
+        }
         stop();
     }
 

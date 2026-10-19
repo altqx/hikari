@@ -287,8 +287,9 @@ ApplicationWindow {
         root.settleArrangement()
         root.workspaceLayout.resetCurrentLayout()
     }
-    // WS1: another tab's arrangement is shown. The Reference tray follows the
-    // comparison, not the tab (shown with the Grid while there is one).
+    // WS1: another arrangement is shown (another tab's, a preset, a saved
+    // layout, the backup). The Reference tray follows the comparison, not
+    // the arrangement (shown with the Grid while there is one).
     Connections {
         target: root.workspaceLayout
         function onArrangementSwapped() {

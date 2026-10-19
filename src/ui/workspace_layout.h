@@ -196,9 +196,10 @@ signals:
     void focusWindowChanged();
     void menuHasFocusChanged();
     void savedLayoutsChanged();
-    // WS1: another tab's arrangement replaced the one shown (the shell puts
-    // the panels that follow the application, such as the Reference tray,
-    // back as they must be).
+    // WS1: another arrangement replaced the one shown: another tab's, a
+    // preset, a saved layout, the backup (the shell puts the panels that
+    // follow the application, such as the Reference tray, back as they must
+    // be).
     void arrangementSwapped();
 
 private:
