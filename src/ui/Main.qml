@@ -6521,6 +6521,19 @@ ApplicationWindow {
         case "GRID_FILTER_IGNORE_IN_ACTIONS":
             root.gridFilter.ignoreInActions = root.hotkeys.ignoreFilteringFromOption()
             return true
+        // KB3: these ran only from the Grid menu, so their keys did nothing
+        // (SubsGrid::OnAccelerator, SubsGrid.cpp:839-881, 938).
+        case "GRID_COPY_COLUMNS": columnsWindow.choose(false); return true
+        case "GRID_PASTE_COLUMNS": columnsWindow.choose(true); return true
+        case "GRID_SET_NEW_FPS": fpsWindow.show(); return true
+        case "GRID_SET_FPS_FROM_VIDEO": if (video) root.app.setFpsFromVideo(); return true
+        case "GRID_PASTE_TRANSLATION":
+            if (root.app.canPasteTranslation()) {
+                translationFileDialog.currentFolder = root.app.targetFolder()
+                translationFileDialog.open()
+            }
+            return true
+        case "GRID_TRANSLATION_DIALOG": if (root.app.canShiftTranslation()) translationShiftWindow.show(); return true
         }
         if (action.startsWith("EDITBOX_"))
             return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
