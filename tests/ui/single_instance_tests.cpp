@@ -354,6 +354,48 @@ private slots:
         QVERIFY(sender.readAll().isEmpty()); // no receipt
     }
 
+    // A request the holder has taken keeps its connection until its sender
+    // has read the receipt and closed it, past the holder's deadlines for
+    // the request and the commit (a named pipe's disconnect would drop the
+    // receipt unread).
+    void aTakenRequestIsLeftForItsSenderToClose()
+    {
+        app::SingleInstance holder(location);
+        QCOMPARE(holder.claim({}), Role::Primary);
+        QSignalSpy requested(&holder, &app::SingleInstance::requested);
+        QLocalSocket sender;
+        sender.connectToServer(location.server);
+        QVERIFY(sender.waitForConnected(3000));
+        QTest::qWait(4700); // the request comes near the holder's read deadline
+        sender.write(request({dir.filePath(QStringLiteral("t.ass"))}));
+        sender.flush();
+        QTRY_VERIFY(sender.bytesAvailable() > 0 || sender.waitForReadyRead(10));
+        char answer = 0;
+        QVERIFY(sender.getChar(&answer) && answer == '\1');
+        sender.write(commit(10000));
+        sender.flush();
+        QTRY_COMPARE(requested.size(), 1);
+        QTest::qWait(5500); // past the read deadline and the commit window
+        QCOMPARE(sender.state(), QLocalSocket::ConnectedState);
+        QTRY_VERIFY(sender.bytesAvailable() > 0 || sender.waitForReadyRead(10));
+        QVERIFY(sender.getChar(&answer) && answer == '\3');
+        sender.disconnectFromServer();
+    }
+
+    // A holder that gives the instance up as soon as it has taken a request
+    // (the quit came then) still hands the receipt over: the start does not
+    // run alone with files the holder keeps for the next start.
+    void aReleaseRightAfterTakingKeepsTheReceipt()
+    {
+        app::SingleInstance holder(location);
+        QCOMPARE(holder.claim({}), Role::Primary);
+        QSignalSpy requested(&holder, &app::SingleInstance::requested);
+        connect(&holder, &app::SingleInstance::requested, &holder, [&holder] { holder.release(); });
+        QCOMPARE(run({dir.filePath(QStringLiteral("r.ass"))}), code(Role::Forwarded));
+        QCOMPARE(requested.size(), 1);
+        QVERIFY(!holder.listening());
+    }
+
     // A commit the holder reads too long after its ack (it was held up) is
     // not taken: the start has given up waiting for the receipt by then.
     void aLateCommitIsNotTaken()
