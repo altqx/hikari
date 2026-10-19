@@ -1,0 +1,429 @@
+# winix job job-7831365b4ba847a2b49d8f6d9eef9a24 (succeeded)
+### hikari_ui_shell_tests f6AndShortcutsReachAFloatingPanel panelsFloatDockHideAndKeepTheirState placementWindowMovesTabsAndResizes floatF6AndShowActivateTheFloatingPanelsWindow placementWindowShowsItsDefaultsAndKeyboardChanges fileDropAreaLeavesPanelDragsToTheDockingEngine dockingControlsAndTheGridAreAccessible floatingPanelsOffEveryScreenComeBack menuArrowsOpenAndCloseSubmenus panelMenuHoldsMoveUndockAndClose keyboardReachesThePanelHeaderAndItsMenu doubleClickOnAHeaderFloatsAndDocks bottomPanelsKeepATabAndTheTrayToolbar panelsKeepTheirMinimumSizes (exit 0)
+********* Start testing of ShellTest *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (x86_64-little_endian-llp64 shared (dynamic) release build; by MSVC 2022), windows 11
+PASS   : ShellTest::initTestCase()
+QINFO  : ShellTest::f6AndShortcutsReachAFloatingPanel() qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.5 LGPL version 2.1 or later
+QWARN  : ShellTest::f6AndShortcutsReachAFloatingPanel() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::f6AndShortcutsReachAFloatingPanel() hikari.docking: main window minimum QSize(0, 0) -> QSize(546, 445)
+PASS   : ShellTest::f6AndShortcutsReachAFloatingPanel()
+QWARN  : ShellTest::panelsFloatDockHideAndKeepTheirState() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::panelsFloatDockHideAndKeepTheirState() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+PASS   : ShellTest::panelsFloatDockHideAndKeepTheirState()
+QWARN  : ShellTest::placementWindowMovesTabsAndResizes() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+PASS   : ShellTest::placementWindowMovesTabsAndResizes()
+QWARN  : ShellTest::floatF6AndShowActivateTheFloatingPanelsWindow() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::floatF6AndShowActivateTheFloatingPanelsWindow() hikari.docking: main window minimum QSize(0, 0) -> QSize(546, 445)
+QDEBUG : ShellTest::floatF6AndShowActivateTheFloatingPanelsWindow() hikari.docking: floating window "Line editor" QRect(649,253 639x143) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+QDEBUG : ShellTest::floatF6AndShowActivateTheFloatingPanelsWindow() hikari.docking: main window minimum QSize(546, 445) -> QSize(989, 468)
+QDEBUG : ShellTest::floatF6AndShowActivateTheFloatingPanelsWindow() hikari.docking: main window minimum QSize(989, 468) -> QSize(546, 445)
+PASS   : ShellTest::floatF6AndShowActivateTheFloatingPanelsWindow()
+QWARN  : ShellTest::placementWindowShowsItsDefaultsAndKeyboardChanges() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::placementWindowShowsItsDefaultsAndKeyboardChanges() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+PASS   : ShellTest::placementWindowShowsItsDefaultsAndKeyboardChanges()
+QWARN  : ShellTest::fileDropAreaLeavesPanelDragsToTheDockingEngine() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+PASS   : ShellTest::fileDropAreaLeavesPanelDragsToTheDockingEngine()
+QWARN  : ShellTest::dockingControlsAndTheGridAreAccessible() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+PASS   : ShellTest::dockingControlsAndTheGridAreAccessible()
+QWARN  : ShellTest::floatingPanelsOffEveryScreenComeBack() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::floatingPanelsOffEveryScreenComeBack() hikari.docking: floating window "Line editor" QRect(2447,300 639x143) reachable false screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+QDEBUG : ShellTest::floatingPanelsOffEveryScreenComeBack() hikari.docking: moved onto "QXL0001 (1)" at QPoint(385,300)
+QDEBUG : ShellTest::floatingPanelsOffEveryScreenComeBack() hikari.docking: floating window "Line editor" QRect(385,300 639x143) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+QDEBUG : ShellTest::floatingPanelsOffEveryScreenComeBack() hikari.docking: floating window "Line editor" QRect(-3000,-2000 639x143) reachable false screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+QDEBUG : ShellTest::floatingPanelsOffEveryScreenComeBack() hikari.docking: moved onto "QXL0001 (1)" at QPoint(0,0)
+PASS   : ShellTest::floatingPanelsOffEveryScreenComeBack()
+QWARN  : ShellTest::menuArrowsOpenAndCloseSubmenus() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::menuArrowsOpenAndCloseSubmenus() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+PASS   : ShellTest::menuArrowsOpenAndCloseSubmenus()
+QWARN  : ShellTest::panelMenuHoldsMoveUndockAndClose() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::panelMenuHoldsMoveUndockAndClose() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 602)
+QWARN  : ShellTest::panelMenuHoldsMoveUndockAndClose() Mouse event at 769, 27 occurs outside target window (330x300).
+QDEBUG : ShellTest::panelMenuHoldsMoveUndockAndClose() hikari.docking: main window minimum QSize(989, 602) -> QSize(534, 602)
+QDEBUG : ShellTest::panelMenuHoldsMoveUndockAndClose() hikari.docking: main window minimum QSize(534, 602) -> QSize(989, 602)
+PASS   : ShellTest::panelMenuHoldsMoveUndockAndClose()
+QWARN  : ShellTest::keyboardReachesThePanelHeaderAndItsMenu() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::keyboardReachesThePanelHeaderAndItsMenu() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 602)
+PASS   : ShellTest::keyboardReachesThePanelHeaderAndItsMenu()
+QWARN  : ShellTest::doubleClickOnAHeaderFloatsAndDocks() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::doubleClickOnAHeaderFloatsAndDocks() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 445)
+QDEBUG : ShellTest::doubleClickOnAHeaderFloatsAndDocks() hikari.docking: main window minimum QSize(989, 445) -> QSize(989, 468)
+PASS   : ShellTest::doubleClickOnAHeaderFloatsAndDocks()
+QWARN  : ShellTest::bottomPanelsKeepATabAndTheTrayToolbar() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::bottomPanelsKeepATabAndTheTrayToolbar() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 602)
+PASS   : ShellTest::bottomPanelsKeepATabAndTheTrayToolbar()
+QWARN  : ShellTest::panelsKeepTheirMinimumSizes() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ShellTest::panelsKeepTheirMinimumSizes() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : ShellTest::panelsKeepTheirMinimumSizes() hikari.docking: main window minimum QSize(989, 468) -> QSize(615, 468)
+QDEBUG : ShellTest::panelsKeepTheirMinimumSizes() hikari.docking: main window minimum QSize(615, 468) -> QSize(989, 468)
+PASS   : ShellTest::panelsKeepTheirMinimumSizes()
+PASS   : ShellTest::cleanupTestCase()
+Totals: 16 passed, 0 failed, 0 skipped, 0 blacklisted, 59038ms
+********* Finished testing of ShellTest *********
+# stderr (last 30 lines)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [000001E7AD2F20B0]: Warning: no style named 'Sign' found, using 'Default'
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [000001E7AD017CC0]: Warning: no style named 'Sign' found, using 'Default'
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [000001E7AD0435B0]: Warning: no style named 'Sign' found, using 'Default'
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [000001E79A6A09C0]: Warning: no style named 'Sign' found, using 'Default'
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Track has custom format line(s). 'ScaledBorderAndShadow' will default to 'yes'.
+[ass] [000001E7B0679FD0]: Warning: no style named 'Sign' found, using 'Default'
+### hikari_ui_line_grid_a11y_tests  (exit 0)
+********* Start testing of LineGridA11yTest *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (x86_64-little_endian-llp64 shared (dynamic) release build; by MSVC 2022), windows 11
+PASS   : LineGridA11yTest::initTestCase()
+PASS   : LineGridA11yTest::isATableOfAllLines()
+PASS   : LineGridA11yTest::cellsAndTableAreFragmentsOfTheWindow()
+PASS   : LineGridA11yTest::hiddenColumnsLeaveTheTable()
+PASS   : LineGridA11yTest::cellsKeepLineIdentityThroughFiltering()
+PASS   : LineGridA11yTest::selectionIncludesOnlyShownRowsAndCountsHidden()
+PASS   : LineGridA11yTest::cellCacheIsBounded()
+PASS   : LineGridA11yTest::announcesTheCellFirstAndCountsOnlyWhenTheyChange()
+PASS   : LineGridA11yTest::keyboardNavigationRequestsActiveLines()
+PASS   : LineGridA11yTest::hiddenCurrentLineMovesToTheNearestShownRow()
+PASS   : LineGridA11yTest::cleanupTestCase()
+Totals: 11 passed, 0 failed, 0 skipped, 0 blacklisted, 3891ms
+********* Finished testing of LineGridA11yTest *********
+### hikari_ui_docking_qualification_tests  (exit 0)
+********* Start testing of DockingQualification *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (x86_64-little_endian-llp64 shared (dynamic) release build; by MSVC 2022), windows 11
+PASS   : DockingQualification::initTestCase()
+PASS   : DockingQualification::defaultArrangementHasEveryPanelOpenAndDocked()
+PASS   : DockingQualification::floatsAndRedocks()
+PASS   : DockingQualification::closesAndReopensWithoutLosingTheGuest()
+PASS   : DockingQualification::tabsTwoPanels()
+PASS   : DockingQualification::movesADockedPanel()
+PASS   : DockingQualification::savedLayoutRestores()
+QWARN  : DockingQualification::corruptLayoutIsRefusedAndTheLiveOneStays() Failed to parse json data
+QWARN  : DockingQualification::corruptLayoutIsRefusedAndTheLiveOneStays() Serialization format is too old {}, current={} 9999 3
+PASS   : DockingQualification::corruptLayoutIsRefusedAndTheLiveOneStays()
+PASS   : DockingQualification::oneHeaderRowPerGroup()
+PASS   : DockingQualification::headerFollowsThePanelsDescription()
+PASS   : DockingQualification::headersAreAccessible()
+PASS   : DockingQualification::theMenuIsReachedByPointerAndKeyboard()
+PASS   : DockingQualification::doubleClickFloatsAndDocks()
+PASS   : DockingQualification::floatingPanelsAreBorderlessToolWindows()
+PASS   : DockingQualification::floatingPanelsWithoutCompositingHaveNoShadow()
+PASS   : DockingQualification::aWindowSystemTitleBarTakesTheWindowsName()
+PASS   : DockingQualification::serverSideFramesOfABorderOnlyCompositorHaveNoTitleBar()
+PASS   : DockingQualification::aWindowSystemBorderKeepsTheNameAndDropsTheShadow()
+PASS   : DockingQualification::separatorsAreOnePixel()
+PASS   : DockingQualification::minimumSizesHoldTheLayout()
+SKIP   : DockingQualification::floatingPanelKeepsItsSizeAcrossAScaleChange() the screen's scale changes through the offscreen platform's configuration
+C:\Winix\work\hikari-qt\tests\ui\docking_qualification_tests.cpp(976) : failure location
+SKIP   : DockingQualification::floatingPanelComesBackWholeWhenItsScreenGoesAway() screens come and go through the offscreen platform's configuration
+C:\Winix\work\hikari-qt\tests\ui\docking_qualification_tests.cpp(1052) : failure location
+SKIP   : DockingQualification::dragShowsTheDropHighlight() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)
+C:\Winix\work\hikari-qt\tests\ui\docking_qualification_tests.cpp(1166) : failure location
+PASS   : DockingQualification::headerSplitsOnWaylandAndX11()
+SKIP   : DockingQualification::wholeFloatingHeaderDocksWhereItDoesNotSplit() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)
+C:\Winix\work\hikari-qt\tests\ui\docking_qualification_tests.cpp(1247) : failure location
+SKIP   : DockingQualification::floatingHeaderDocksByItsTitleAndMovesByTheRest() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)
+C:\Winix\work\hikari-qt\tests\ui\docking_qualification_tests.cpp(1377) : failure location
+SKIP   : DockingQualification::floatingTabBarMovesRightOfItsTabs() the window follows a declined system move only where the platform declines it (offscreen)
+C:\Winix\work\hikari-qt\tests\ui\docking_qualification_tests.cpp(1457) : failure location
+PASS   : DockingQualification::floatingTitleKeepsItsRoom()
+SKIP   : DockingQualification::x11HeaderMovesThroughTheWindowSystem() X11 only (the .xvfb run)
+C:\Winix\work\hikari-qt\tests\ui\docking_qualification_tests.cpp(1598) : failure location
+PASS   : DockingQualification::floatingWindowOfGroupsHasItsOwnMenu()
+QWARN  : DockingQualification::crowdedTabsKeepTheSelectedOneWhole() qrc:/qt/qml/Hikari/Ui/DockTabBar.qml:236:21: QML QQuickText: Binding loop detected for property "width"
+PASS   : DockingQualification::crowdedTabsKeepTheSelectedOneWhole()
+PASS   : DockingQualification::cleanupTestCase()
+Totals: 25 passed, 0 failed, 7 skipped, 0 blacklisted, 8888ms
+********* Finished testing of DockingQualification *********
+### hikari_ui_workspace_layout_tests  (exit 0)
+********* Start testing of WorkspaceLayoutTest *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (x86_64-little_endian-llp64 shared (dynamic) release build; by MSVC 2022), windows 11
+PASS   : WorkspaceLayoutTest::initTestCase()
+PASS   : WorkspaceLayoutTest::envelopeValidation()
+QINFO  : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.5 LGPL version 2.1 or later
+QWARN  : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QWARN  : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() hikari.docking: floating window "Audio" QRect(649,59 639x178) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+QDEBUG : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 445)
+PASS   : WorkspaceLayoutTest::theArrangementTheWindowClosedWithIsTheLastSaved()
+QWARN  : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QWARN  : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.docking: restored floating window "Line editor" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.docking: floating window "Line editor" QRect(649,273 639x198) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.docking: main window minimum QSize(0, 0) -> QSize(454, 445)
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.docking: main window minimum QSize(454, 445) -> QSize(454, 419)
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.docking: restored floating window "Line editor" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession() hikari.docking: floating window "Line editor" QRect(649,273 639x198) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+PASS   : WorkspaceLayoutTest::aFloatedPanelComesBackNextSession()
+QWARN  : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.docking: main window minimum QSize(989, 468) -> QSize(989, 445)
+QWARN  : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.docking: floating window "Audio" QRect(649,59 640x260) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 445)
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow() hikari.docking: floating window "Audio" QRect(649,59 640x260) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+PASS   : WorkspaceLayoutTest::aFloatingPanelComesBackFillingItsWindow()
+QWARN  : WorkspaceLayoutTest::aFloatingPanelSavedOffScreenComesBackOnScreen() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelSavedOffScreenComesBackOnScreen() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QWARN  : WorkspaceLayoutTest::aFloatingPanelSavedOffScreenComesBackOnScreen() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelSavedOffScreenComesBackOnScreen() hikari.docking: restored floating window "Line editor" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelSavedOffScreenComesBackOnScreen() hikari.docking: floating window "Line editor" QRect(1003,100 639x198) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+QDEBUG : WorkspaceLayoutTest::aFloatingPanelSavedOffScreenComesBackOnScreen() hikari.docking: main window minimum QSize(0, 0) -> QSize(546, 445)
+PASS   : WorkspaceLayoutTest::aFloatingPanelSavedOffScreenComesBackOnScreen()
+QWARN  : WorkspaceLayoutTest::presetsAreStartingArrangementsAndPersist() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::presetsAreStartingArrangementsAndPersist() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QWARN  : WorkspaceLayoutTest::presetsAreStartingArrangementsAndPersist() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::presetsAreStartingArrangementsAndPersist() hikari.docking: main window minimum QSize(0, 0) -> QSize(534, 468)
+PASS   : WorkspaceLayoutTest::presetsAreStartingArrangementsAndPersist()
+QWARN  : WorkspaceLayoutTest::aSaveBeforeTheSavedLayoutIsRestoredKeepsIt() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aSaveBeforeTheSavedLayoutIsRestoredKeepsIt() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QWARN  : WorkspaceLayoutTest::aSaveBeforeTheSavedLayoutIsRestoredKeepsIt() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::aSaveBeforeTheSavedLayoutIsRestoredKeepsIt() hikari.docking: main window minimum QSize(0, 0) -> QSize(534, 468)
+PASS   : WorkspaceLayoutTest::aSaveBeforeTheSavedLayoutIsRestoredKeepsIt()
+QWARN  : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(corrupt) qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(corrupt) hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+PASS   : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(corrupt)
+QWARN  : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(newer) qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(newer) hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+PASS   : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(newer)
+QWARN  : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(other engine) qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(other engine) hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+PASS   : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(other engine)
+QWARN  : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(engine refuses) qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QWARN  : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(engine refuses) Serialization format is too old {}, current={} 1 3
+QDEBUG : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(engine refuses) hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+PASS   : WorkspaceLayoutTest::anUnusableLayoutIsKeptAndNamed(engine refuses)
+PASS   : WorkspaceLayoutTest::cleanupTestCase()
+Totals: 13 passed, 0 failed, 0 skipped, 0 blacklisted, 58915ms
+********* Finished testing of WorkspaceLayoutTest *********
+### hikari_ui_view_arrangements_tests  (exit 0)
+********* Start testing of ViewArrangementsTest *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (x86_64-little_endian-llp64 shared (dynamic) release build; by MSVC 2022), windows 11
+PASS   : ViewArrangementsTest::initTestCase()
+PASS   : ViewArrangementsTest::arrangementsShowLegacysPanels()
+QINFO  : ViewArrangementsTest::viewMenuItemsAreEnabledAsLegacys() qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.5 LGPL version 2.1 or later
+QWARN  : ViewArrangementsTest::viewMenuItemsAreEnabledAsLegacys() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ViewArrangementsTest::viewMenuItemsAreEnabledAsLegacys() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : ViewArrangementsTest::viewMenuItemsAreEnabledAsLegacys() hikari.docking: main window minimum QSize(989, 468) -> QSize(1024, 486)
+QDEBUG : ViewArrangementsTest::viewMenuItemsAreEnabledAsLegacys() hikari.docking: main window minimum QSize(1024, 486) -> QSize(1024, 468)
+PASS   : ViewArrangementsTest::viewMenuItemsAreEnabledAsLegacys()
+QWARN  : ViewArrangementsTest::arrangementsShowHideAndRoundTrip() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ViewArrangementsTest::arrangementsShowHideAndRoundTrip() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : ViewArrangementsTest::arrangementsShowHideAndRoundTrip() hikari.docking: main window minimum QSize(989, 468) -> QSize(1024, 620)
+QDEBUG : ViewArrangementsTest::arrangementsShowHideAndRoundTrip() hikari.docking: main window minimum QSize(1024, 620) -> QSize(1024, 579)
+QINFO  : ViewArrangementsTest::arrangementsShowHideAndRoundTrip() qt.multimedia.playbackengine.codec: "No HW decoder found"
+QDEBUG : ViewArrangementsTest::arrangementsShowHideAndRoundTrip() hikari.docking: main window minimum QSize(1024, 579) -> QSize(514, 522)
+QDEBUG : ViewArrangementsTest::arrangementsShowHideAndRoundTrip() hikari.docking: main window minimum QSize(514, 522) -> QSize(1024, 620)
+PASS   : ViewArrangementsTest::arrangementsShowHideAndRoundTrip()
+QWARN  : ViewArrangementsTest::anArrangementIsTheSavedLayout() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ViewArrangementsTest::anArrangementIsTheSavedLayout() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : ViewArrangementsTest::anArrangementIsTheSavedLayout() hikari.docking: main window minimum QSize(989, 468) -> QSize(534, 342)
+QWARN  : ViewArrangementsTest::anArrangementIsTheSavedLayout() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ViewArrangementsTest::anArrangementIsTheSavedLayout() hikari.docking: main window minimum QSize(0, 0) -> QSize(534, 342)
+PASS   : ViewArrangementsTest::anArrangementIsTheSavedLayout()
+QWARN  : ViewArrangementsTest::editorSwitchHoldsTheArrangement() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ViewArrangementsTest::editorSwitchHoldsTheArrangement() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : ViewArrangementsTest::editorSwitchHoldsTheArrangement() hikari.docking: main window minimum QSize(989, 468) -> QSize(989, 445)
+QDEBUG : ViewArrangementsTest::editorSwitchHoldsTheArrangement() hikari.docking: main window minimum QSize(989, 445) -> QSize(454, 285)
+QDEBUG : ViewArrangementsTest::editorSwitchHoldsTheArrangement() hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : ViewArrangementsTest::editorSwitchHoldsTheArrangement() hikari.docking: floating window "Audio" QRect(649,59 639x178) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+QDEBUG : ViewArrangementsTest::editorSwitchHoldsTheArrangement() hikari.docking: main window minimum QSize(454, 285) -> QSize(989, 445)
+PASS   : ViewArrangementsTest::editorSwitchHoldsTheArrangement()
+QWARN  : ViewArrangementsTest::editorOffClosesTheEditingTools() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ViewArrangementsTest::editorOffClosesTheEditingTools() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : ViewArrangementsTest::editorOffClosesTheEditingTools() hikari.docking: main window minimum QSize(989, 468) -> QSize(989, 720)
+PASS   : ViewArrangementsTest::editorOffClosesTheEditingTools()
+QWARN  : ViewArrangementsTest::aReferenceOpenedInThePlayerLayoutWaitsForTheGrid() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ViewArrangementsTest::aReferenceOpenedInThePlayerLayoutWaitsForTheGrid() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : ViewArrangementsTest::aReferenceOpenedInThePlayerLayoutWaitsForTheGrid() hikari.docking: main window minimum QSize(989, 468) -> QSize(454, 285)
+PASS   : ViewArrangementsTest::aReferenceOpenedInThePlayerLayoutWaitsForTheGrid()
+QWARN  : ViewArrangementsTest::playerLayoutKeepsTheVideoPanel() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ViewArrangementsTest::playerLayoutKeepsTheVideoPanel() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : ViewArrangementsTest::playerLayoutKeepsTheVideoPanel() hikari.docking: main window minimum QSize(989, 468) -> QSize(454, 285)
+QDEBUG : ViewArrangementsTest::playerLayoutKeepsTheVideoPanel() hikari.docking: main window minimum QSize(454, 285) -> QSize(524, 285)
+QDEBUG : ViewArrangementsTest::playerLayoutKeepsTheVideoPanel() hikari.docking: main window minimum QSize(524, 285) -> QSize(1024, 468)
+PASS   : ViewArrangementsTest::playerLayoutKeepsTheVideoPanel()
+QWARN  : ViewArrangementsTest::playerLayoutWithAVideo() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ViewArrangementsTest::playerLayoutWithAVideo() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : ViewArrangementsTest::playerLayoutWithAVideo() hikari.docking: main window minimum QSize(989, 468) -> QSize(454, 285)
+QDEBUG : ViewArrangementsTest::playerLayoutWithAVideo() hikari.docking: main window minimum QSize(454, 285) -> QSize(524, 285)
+PASS   : ViewArrangementsTest::playerLayoutWithAVideo()
+QWARN  : ViewArrangementsTest::playerLayoutPersists() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ViewArrangementsTest::playerLayoutPersists() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : ViewArrangementsTest::playerLayoutPersists() hikari.docking: main window minimum QSize(989, 468) -> QSize(989, 334)
+QWARN  : ViewArrangementsTest::playerLayoutPersists() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ViewArrangementsTest::playerLayoutPersists() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 334)
+PASS   : ViewArrangementsTest::playerLayoutPersists()
+QWARN  : ViewArrangementsTest::sessionLoadSetsTheSwitchFromTheActiveTab() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : ViewArrangementsTest::sessionLoadSetsTheSwitchFromTheActiveTab() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : ViewArrangementsTest::sessionLoadSetsTheSwitchFromTheActiveTab() hikari.docking: main window minimum QSize(989, 468) -> QSize(454, 285)
+QDEBUG : ViewArrangementsTest::sessionLoadSetsTheSwitchFromTheActiveTab() hikari.docking: main window minimum QSize(454, 285) -> QSize(989, 468)
+PASS   : ViewArrangementsTest::sessionLoadSetsTheSwitchFromTheActiveTab()
+SKIP   : ViewArrangementsTest::surfaceScreenshots() HIKARI_SURFACE_SHOT_DIR is not set
+C:\Winix\work\hikari-qt\tests\ui\view_arrangements_tests.cpp(739) : failure location
+PASS   : ViewArrangementsTest::cleanupTestCase()
+Totals: 13 passed, 0 failed, 1 skipped, 0 blacklisted, 83771ms
+********* Finished testing of ViewArrangementsTest *********
+# stderr (last 30 lines)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Added subtitle file: <memory> (1 styles, 2 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Added subtitle file: <memory> (1 styles, 2 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Added subtitle file: <memory> (1 styles, 2 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Added subtitle file: <memory> (1 styles, 2 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Added subtitle file: <memory> (1 styles, 2 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Added subtitle file: <memory> (1 styles, 2 events)
+### hikari_ui_tab_layouts_tests  (exit 0)
+********* Start testing of TabLayoutsTest *********
+Config: Using QtTest library 6.11.2, Qt 6.11.2 (x86_64-little_endian-llp64 shared (dynamic) release build; by MSVC 2022), windows 11
+PASS   : TabLayoutsTest::initTestCase()
+QINFO  : TabLayoutsTest::switchingTabsSwapsTheirArrangements() qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.5 LGPL version 2.1 or later
+QWARN  : TabLayoutsTest::switchingTabsSwapsTheirArrangements() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::switchingTabsSwapsTheirArrangements() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : TabLayoutsTest::switchingTabsSwapsTheirArrangements() hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : TabLayoutsTest::switchingTabsSwapsTheirArrangements() hikari.docking: floating window "Audio" QRect(649,59 639x178) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+QDEBUG : TabLayoutsTest::switchingTabsSwapsTheirArrangements() hikari.docking: restored floating window "Line editor" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : TabLayoutsTest::switchingTabsSwapsTheirArrangements() hikari.docking: floating window "Line editor" QRect(479,273 809x198) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+PASS   : TabLayoutsTest::switchingTabsSwapsTheirArrangements()
+QWARN  : TabLayoutsTest::tabsThatLookTheSameLeaveThePanelsAlone() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::tabsThatLookTheSameLeaveThePanelsAlone() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+PASS   : TabLayoutsTest::tabsThatLookTheSameLeaveThePanelsAlone()
+QWARN  : TabLayoutsTest::aTranslationFileStartsWithTheTranslationPreset() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::aTranslationFileStartsWithTheTranslationPreset() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : TabLayoutsTest::aTranslationFileStartsWithTheTranslationPreset() hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : TabLayoutsTest::aTranslationFileStartsWithTheTranslationPreset() hikari.docking: floating window "Audio" QRect(649,59 639x178) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+PASS   : TabLayoutsTest::aTranslationFileStartsWithTheTranslationPreset()
+QWARN  : TabLayoutsTest::aBackgroundTabCopiesTheArrangementItOpenedWith() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::aBackgroundTabCopiesTheArrangementItOpenedWith() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : TabLayoutsTest::aBackgroundTabCopiesTheArrangementItOpenedWith() hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : TabLayoutsTest::aBackgroundTabCopiesTheArrangementItOpenedWith() hikari.docking: floating window "Audio" QRect(649,59 639x178) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+PASS   : TabLayoutsTest::aBackgroundTabCopiesTheArrangementItOpenedWith()
+QWARN  : TabLayoutsTest::aMultiFileOpenKeepsTheReusedTabsArrangement() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::aMultiFileOpenKeepsTheReusedTabsArrangement() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : TabLayoutsTest::aMultiFileOpenKeepsTheReusedTabsArrangement() hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : TabLayoutsTest::aMultiFileOpenKeepsTheReusedTabsArrangement() hikari.docking: floating window "Audio" QRect(649,59 639x178) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+PASS   : TabLayoutsTest::aMultiFileOpenKeepsTheReusedTabsArrangement()
+QWARN  : TabLayoutsTest::presetsChangeTheCurrentTabOnly() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::presetsChangeTheCurrentTabOnly() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+PASS   : TabLayoutsTest::presetsChangeTheCurrentTabOnly()
+QWARN  : TabLayoutsTest::theHiddenTimingToolGoesWithItsTab() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::theHiddenTimingToolGoesWithItsTab() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : TabLayoutsTest::theHiddenTimingToolGoesWithItsTab() hikari.docking: main window minimum QSize(989, 468) -> QSize(1024, 468)
+QDEBUG : TabLayoutsTest::theHiddenTimingToolGoesWithItsTab() hikari.docking: main window minimum QSize(1024, 468) -> QSize(524, 285)
+PASS   : TabLayoutsTest::theHiddenTimingToolGoesWithItsTab()
+QWARN  : TabLayoutsTest::theSessionKeepsEachTabsArrangement() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::theSessionKeepsEachTabsArrangement() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QWARN  : TabLayoutsTest::theSessionKeepsEachTabsArrangement() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::theSessionKeepsEachTabsArrangement() hikari.docking: main window minimum QSize(0, 0) -> QSize(534, 468)
+QDEBUG : TabLayoutsTest::theSessionKeepsEachTabsArrangement() hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : TabLayoutsTest::theSessionKeepsEachTabsArrangement() hikari.docking: floating window "Audio" QRect(649,59 639x178) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+PASS   : TabLayoutsTest::theSessionKeepsEachTabsArrangement()
+QWARN  : TabLayoutsTest::theClosingSessionNamesTheArrangementShown() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::theClosingSessionNamesTheArrangementShown() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+PASS   : TabLayoutsTest::theClosingSessionNamesTheArrangementShown()
+QWARN  : TabLayoutsTest::anUnusableTabArrangementShowsEditing(corrupt) qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(corrupt) hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(corrupt) hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(corrupt) hikari.docking: floating window "Audio" QRect(8,59 1280x178) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+PASS   : TabLayoutsTest::anUnusableTabArrangementShowsEditing(corrupt)
+QWARN  : TabLayoutsTest::anUnusableTabArrangementShowsEditing(newer) qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(newer) hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(newer) hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(newer) hikari.docking: floating window "Audio" QRect(8,59 1280x178) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+PASS   : TabLayoutsTest::anUnusableTabArrangementShowsEditing(newer)
+QWARN  : TabLayoutsTest::anUnusableTabArrangementShowsEditing(unknown panel) qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(unknown panel) hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(unknown panel) hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(unknown panel) hikari.docking: floating window "Audio" QRect(8,59 1280x178) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+PASS   : TabLayoutsTest::anUnusableTabArrangementShowsEditing(unknown panel)
+QWARN  : TabLayoutsTest::anUnusableTabArrangementShowsEditing(engine refuses) qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(engine refuses) hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QWARN  : TabLayoutsTest::anUnusableTabArrangementShowsEditing(engine refuses) Serialization format is too old {}, current={} 1 3
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(engine refuses) hikari.docking: restored floating window "Audio" layout QSize(782, 747) area QSize(782, 782)
+QDEBUG : TabLayoutsTest::anUnusableTabArrangementShowsEditing(engine refuses) hikari.docking: floating window "Audio" QRect(8,59 1280x178) reachable true screens QList("QXL0001 (1) 0,0 1024x720", "QXL0001 (2) 1024,0 1024x720")
+PASS   : TabLayoutsTest::anUnusableTabArrangementShowsEditing(engine refuses)
+QWARN  : TabLayoutsTest::aTabArrangementRefusedInThePlayerLayoutShowsEditing() qrc:/qt/qml/Hikari/Ui/Main.qml:4533:5: QML AutomationFilePicker: Cannot set  as a selected file because it doesn't exist
+QDEBUG : TabLayoutsTest::aTabArrangementRefusedInThePlayerLayoutShowsEditing() hikari.docking: main window minimum QSize(0, 0) -> QSize(989, 468)
+QDEBUG : TabLayoutsTest::aTabArrangementRefusedInThePlayerLayoutShowsEditing() hikari.docking: main window minimum QSize(989, 468) -> QSize(454, 285)
+QWARN  : TabLayoutsTest::aTabArrangementRefusedInThePlayerLayoutShowsEditing() Serialization format is too old {}, current={} 1 3
+PASS   : TabLayoutsTest::aTabArrangementRefusedInThePlayerLayoutShowsEditing()
+PASS   : TabLayoutsTest::cleanupTestCase()
+Totals: 16 passed, 0 failed, 0 skipped, 0 blacklisted, 101622ms
+********* Finished testing of TabLayoutsTest *********
+# stderr (last 30 lines)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+[ass] libass API version: 0x1705020
+[ass] libass source: meson, commit: failed to determine (>= 0.17.5)
+[ass] Shaper: FriBidi 1.0.17 (SIMPLE) HarfBuzz-ng 14.5.0 (COMPLEX)
+[ass] Using font provider directwrite (with GDI)
+[ass] Added subtitle file: <memory> (2 styles, 1 events)
+[ass] Added subtitle file: <memory> (1 styles, 3 events)
+### end
