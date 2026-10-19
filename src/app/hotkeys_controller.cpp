@@ -196,6 +196,9 @@ HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::S
         m_settings.set(kMainSetting, qLines(application::hotkeyLines(m_live, false)));
         setAccels();
     });
+    // A script that registers while Settings → Hotkeys is open lists its
+    // macros there too, the page's edits kept.
+    connect(&m_scripts, &AutomationHotkeysController::bindingsChanged, this, &HotkeysController::listNewMacros);
     QCoreApplication::instance()->installEventFilter(this);
 }
 
@@ -440,6 +443,32 @@ void HotkeysController::beginOptions()
     m_copy.clear();
     m_list = std::make_unique<application::HotkeyList>(m_copy);
     m_list->build(listed());
+    emit rowsChanged();
+}
+
+void HotkeysController::listNewMacros()
+{
+    if (!m_list)
+        return;
+    std::set<std::string> listed;
+    int next = application::kFirstScriptHotkey;
+    for (std::size_t i = 0; i < m_list->rowCount(); ++i) {
+        const auto &r = m_list->row(int(i));
+        if (r.key.id >= application::kFirstScriptHotkey) {
+            listed.insert(r.name);
+            next = std::max(next, r.key.id + 1);
+        }
+    }
+    for (const auto &[key, hotkey] : bindings())
+        if (key.id >= application::kFirstScriptHotkey)
+            next = std::max(next, key.id + 1);
+    HotkeyMap more;
+    for (const auto &name : m_scripts.unboundMacros())
+        if (!listed.contains(name))
+            more[HotkeyId{next++, application::GlobalHotkey}] = application::Hotkey{name, {}};
+    if (more.empty())
+        return;
+    m_list->addRows(more);
     emit rowsChanged();
 }
 

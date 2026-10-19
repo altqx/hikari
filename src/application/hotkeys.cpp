@@ -1181,6 +1181,46 @@ std::vector<int> HotkeyList::shown() const
     return out;
 }
 
+namespace {
+
+bool shownByFilter(int mode, const HotkeyList::Row &r)
+{
+    switch (mode) {
+    case 1: return !r.accel.empty();
+    case 2: return r.key.type == GlobalHotkey;
+    case 3: return r.key.type == GridHotkey;
+    case 4: return r.key.type == EditorHotkey;
+    case 5: return r.key.type == VideoHotkey;
+    case 6: return r.key.type == AudioHotkey;
+    case 7: return r.key.id >= kFirstScriptHotkey; // AM1: Automation shortcuts
+    default: return true;
+    }
+}
+
+} // namespace
+
+void HotkeyList::addRows(const HotkeyMap &more)
+{
+    const RowPtr selected = m_sel >= 0 && std::size_t(m_sel) < m_filtered.size() ? m_filtered[std::size_t(m_sel)] : nullptr;
+    for (const auto &[key, hotkey] : more) {
+        auto row = std::make_shared<Row>();
+        row->text = std::string(hotkeyWindowName(key.type)) + " " + hotkey.name;
+        row->name = hotkey.name;
+        row->accel = hotkey.accel;
+        row->key = key;
+        row->visible = shownByFilter(m_filterMode, *row) ? 1 : 0;
+        m_isFiltered = m_isFiltered || !row->visible;
+        m_rows.push_back(row);
+        for (auto &step : m_history)
+            step.push_back(row);
+    }
+    rebuildFiltered();
+    if (selected) {
+        const auto it = std::ranges::find(m_filtered, selected);
+        m_sel = it != m_filtered.end() ? int(it - m_filtered.begin()) : m_sel;
+    }
+}
+
 void HotkeyList::filter(int mode)
 {
     // FilterList(1, mode) with ItemHotkey::OnVisibilityChange.
@@ -1188,17 +1228,7 @@ void HotkeyList::filter(int mode)
     m_sel = 0;
     m_isFiltered = false;
     for (auto &r : m_rows) {
-        bool visible = true;
-        switch (mode) {
-        case 1: visible = !r->accel.empty(); break;
-        case 2: visible = r->key.type == GlobalHotkey; break;
-        case 3: visible = r->key.type == GridHotkey; break;
-        case 4: visible = r->key.type == EditorHotkey; break;
-        case 5: visible = r->key.type == VideoHotkey; break;
-        case 6: visible = r->key.type == AudioHotkey; break;
-        case 7: visible = r->key.id >= kFirstScriptHotkey; break; // AM1: Automation shortcuts
-        default: break;
-        }
+        const bool visible = shownByFilter(mode, *r);
         r->visible = visible ? 1 : 0;
         if (!visible)
             m_isFiltered = true;

@@ -170,6 +170,8 @@ private:
     void split(const application::HotkeyMap &combined);
     // The Options page's list: bindings() and the loaded macros without one.
     application::HotkeyMap listed() const;
+    // The macros registered since the page's list was built, added to it.
+    void listNewMacros();
     bool eventFilter(QObject *watched, QEvent *event) override;
 
     AutomationHotkeysController &m_scripts;

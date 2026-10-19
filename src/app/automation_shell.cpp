@@ -588,6 +588,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     m_task.clear();
     m_log.clear();
     m_lastMessage.clear();
+    m_lastOutcome.clear();
     m_progress = 0;
     if (m_documentChanged)
         m_documentChanged();
@@ -698,6 +699,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     }
     bool ok = false;
     QString text;
+    QString ended;
     switch (outcome) {
     case Outcome::Ok: {
         const auto *host = m_manager.host(run.path);
@@ -707,10 +709,15 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
             if (!ok)
                 text = refusalText(applied.error());
         }
+        ended = ok ? QStringLiteral("applied") : QStringLiteral("refused");
         break;
     }
-    case Outcome::Failed: text = message; break;
+    case Outcome::Failed:
+        text = message;
+        ended = QStringLiteral("failed");
+        break;
     case Outcome::Cancelled:
+        ended = run.declined && !resolutionSet ? QStringLiteral("declined") : QStringLiteral("cancelled");
         // A user who declined to set the script resolution chose not to run it.
         // A resolution the user set before cancelling is kept as its own step.
         if (resolutionSet)
@@ -721,12 +728,15 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
         break;
     case Outcome::HelperLost:
         text = QCoreApplication::translate("HikariSub.Automation", "The script's helper ended; reload the script to use it again.");
+        ended = QStringLiteral("lost");
         break;
     case Outcome::ForceStopped:
         text = QCoreApplication::translate("HikariSub.Automation",
                                            "The macro was force stopped; reload the script to use it again.");
+        ended = QStringLiteral("stopped");
         break;
     case Outcome::NotValid:
+        ended = QStringLiteral("invalid");
         // LuaCommand::Validate logs a runtime error (Automation.cpp:953); the
         // menu says nothing more (RunScript), a hotkey and "Run the last
         // loaded script" say validation failed (HikariSubFrame.cpp:929, 2641).
@@ -743,6 +753,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     if (!text.isEmpty())
         m_log += (m_log.isEmpty() || m_log.endsWith(QLatin1Char('\n')) ? QString() : QStringLiteral("\n")) + text;
     m_lastMessage = text;
+    m_lastOutcome = ended;
     m_editor.reloadFromSession();
     if (m_documentChanged)
         m_documentChanged();

@@ -315,7 +315,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1 cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its validation did not let it run; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -237,6 +237,43 @@ private slots:
                                       QStringLiteral("Wait for cancel = ")}));
     }
 
+    // A script that registers while Settings → Hotkeys is open: its macros
+    // are listed there too, and what the page changed meanwhile stays.
+    void aMacroRegisteredWhileSettingsIsOpenIsListed()
+    {
+        app::Application::Options o = options();
+        o.settingsFile = dir.filePath(QStringLiteral("live.ini"));
+        app::Application a(o);
+        a.automation().load(HIKARI_AUTOLOAD_DIR "/macro-1-edgeblur.lua");
+        QTRY_VERIFY_WITH_TIMEOUT(!a.automationHotkeys().unboundMacros().empty(), 30'000);
+        auto &h = a.hotkeys();
+        h.beginOptions();
+        h.filter(7);
+        const auto macros = [&] {
+            QStringList out;
+            for (const QVariant &v : h.rows())
+                out << v.toMap().value(QStringLiteral("macro")).toString() + " = " + v.toMap().value(QStringLiteral("accel")).toString();
+            out.sort();
+            return out;
+        };
+        QCOMPARE(macros(), QStringList{QStringLiteral("Add edgeblur = ")});
+        h.select(0);
+        h.optionsMap(QStringLiteral("Ctrl-Alt-E"), 0, QStringLiteral("cancel"));
+        a.automation().load(HIKARI_LUA_FIXTURES "/shell-fixture.lua");
+        QTRY_COMPARE_WITH_TIMEOUT(macros(), (QStringList{QStringLiteral("Add edgeblur = Ctrl-Alt-E"),
+                                                          QStringLiteral("Prefix from dialog = "),
+                                                          QStringLiteral("Wait for cancel = ")}),
+                                  30'000);
+        // A new macro's row maps like the others; OK applies both.
+        for (int i = 0; i < h.rows().size(); ++i)
+            if (h.rows().at(i).toMap().value(QStringLiteral("macro")).toString() == QStringLiteral("Wait for cancel"))
+                h.select(i);
+        h.optionsMap(QStringLiteral("Ctrl-Alt-W"), 0, QStringLiteral("cancel"));
+        h.commitOptions();
+        QCOMPARE(keysOf(a.automationHotkeys(), kEdgeblur), QStringLiteral("Ctrl+Alt+E"));
+        QCOMPARE(keysOf(a.automationHotkeys(), kWait), QStringLiteral("Ctrl+Alt+W"));
+    }
+
     // AM1-hotkeys-window-retired: the window's command given Audio keys (the
     // Audio list is stored apart) is dropped there too, once.
     void retiredWindowAudioBindingIsDropped()

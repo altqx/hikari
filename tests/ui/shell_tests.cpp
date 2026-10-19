@@ -11947,6 +11947,7 @@ private slots:
         // What the run said stays until Close (S1's window kept it too).
         QCOMPARE(visualItem("automationTask")->property("text").toString(),
                  QStringLiteral("The macro was cancelled; nothing was changed."));
+        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Wait for cancel cancelled"));
         QCOMPARE(cancel->property("text").toString(), QStringLiteral("Close"));
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
         QTRY_VERIFY(!run->isVisible());
@@ -11964,6 +11965,27 @@ private slots:
         QTRY_VERIFY(run->isVisible());
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
         QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY(!run->isVisible());
+        // A macro whose validation does not let it run (from the panel or
+        // the menu, which say nothing else): the run status says so.
+        QTemporaryDir scripts;
+        const QString invalid = QDir::toNativeSeparators(scripts.filePath(QStringLiteral("invalid.lua")));
+        {
+            QFile f(invalid);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("aegisub.register_macro(\"Guarded\", \"\", function() end, function() return false end)\n");
+        }
+        application->automation().load(invalid.toStdString());
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_Guarded"), 30000);
+        QVERIFY(application->automation().run(invalid.toStdString(), 0));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
+        QTRY_VERIFY(run->isVisible());
+        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Guarded failed"));
+        QCOMPARE(visualItem("automationTask")->property("text").toString(),
+                 QStringLiteral("Its validation did not let it run; nothing was changed."));
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY(!run->isVisible());
     }
 
     // AM1: the Automation panel in the four themes, written to

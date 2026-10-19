@@ -45,6 +45,11 @@ class AutomationShell : public QObject, public application::AutomationServicePor
     Q_PROPERTY(double progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(QString log READ log NOTIFY progressChanged)
     Q_PROPERTY(QString lastMessage READ lastMessage NOTIFY progressChanged)
+    // How the last run ended (AM1, the panel's run status): "applied",
+    // "refused", "failed", "invalid" (validation answered no or raised),
+    // "cancelled", "declined" (the script resolution question declined),
+    // "lost", "stopped"; empty while one runs or before any.
+    Q_PROPERTY(QString lastOutcome READ lastOutcome NOTIFY progressChanged)
     Q_PROPERTY(bool forceStopOffered READ forceStopOffered NOTIFY progressChanged)
     Q_PROPERTY(bool canRerun READ canRerun NOTIFY progressChanged)
 public:
@@ -124,6 +129,7 @@ public:
     double progress() const { return m_progress; }
     QString log() const { return m_log; }
     QString lastMessage() const { return m_lastMessage; }
+    QString lastOutcome() const { return m_lastOutcome; }
     bool forceStopOffered() const;
     bool canRerun() const { return m_last.has_value() && !m_run; }
 
@@ -199,7 +205,7 @@ private:
     std::optional<std::string> m_pendingLast; // waiting for this script to load
     std::function<void(const QString &)> m_logLine;
     ui::SettingsStore *m_settings = nullptr;
-    QString m_title, m_task, m_log, m_lastMessage;
+    QString m_title, m_task, m_log, m_lastMessage, m_lastOutcome;
     double m_progress = 0;
 };
 

@@ -218,6 +218,10 @@ public:
     // ClearList (the list's own history and modified flag are not reset).
     void build(const HotkeyMap &live);
     void clear();
+    // AM1: rows added while the page is open (a macro registered meanwhile),
+    // at the end and in every step of the history, shown as the filter shows
+    // them; the edits, the history and the selection stay.
+    void addRows(const HotkeyMap &more);
 
     std::size_t rowCount() const { return m_rows.size(); }
     const Row &row(int index) const { return *m_rows[std::size_t(index)]; }

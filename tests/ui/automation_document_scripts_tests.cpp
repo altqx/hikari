@@ -233,6 +233,8 @@ private slots:
         app->automation().run(QDir::toNativeSeparators(script).toStdString(), 0);
         QTRY_COMPARE_WITH_TIMEOUT(done.size(), 2, 30'000);
         QCOMPARE(notices.size(), 1);
+        // AM1: the Automation panel's run status still says it failed.
+        QCOMPARE(app->automation().lastOutcome(), QStringLiteral("invalid"));
         // A script hotkey says so (HikariSubFrame::OnRunScript,
         // HikariSubFrame.cpp:2636-2642 at 20d647c4).
         auto &hotkeys = app->automationHotkeys();

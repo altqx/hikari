@@ -45,8 +45,11 @@ Pane {
     property string refusal: ""
     // Section keys folded away; the missing shortcuts start folded.
     property var folded: ({ missing: true })
-    // A failed run's box stays until dismissed; the log shows on demand.
-    property bool keepFailure: false
+    // A run that changed nothing (failed, refused, not valid, cancelled,
+    // lost or stopped) keeps its box until dismissed; the log shows on demand.
+    property bool keepResult: false
+    readonly property string outcome: automation !== null && !running ? automation.lastOutcome : ""
+    readonly property bool cancelled: outcome === "cancelled"
     property bool showLog: false
     property string runTarget: ""
 
@@ -155,7 +158,7 @@ Pane {
 
     onRunningChanged: {
         if (running) {
-            keepFailure = false
+            keepResult = false
             runTarget = documentName
         }
     }
@@ -163,8 +166,10 @@ Pane {
         target: root.automation
         ignoreUnknownSignals: true
         function onRunCompleted(ok, message) {
-            root.keepFailure = !ok && message.length > 0
-            if (root.keepFailure)
+            // Not when the user declined the resolution question: the
+            // macro did not start.
+            root.keepResult = !ok && root.automation.lastOutcome !== "declined"
+            if (root.keepResult)
                 root.showLog = false
         }
     }
@@ -210,11 +215,12 @@ Pane {
             }
         }
 
-        // The run: while a macro runs, and after one failed until dismissed.
+        // The run: while a macro runs, and after one that changed nothing
+        // until dismissed.
         Rectangle {
             id: runBox
             objectName: "automationRun"
-            visible: root.running || root.keepFailure
+            visible: root.running || root.keepResult
             Layout.fillWidth: true
             Layout.leftMargin: 8
             Layout.rightMargin: 8
@@ -222,7 +228,7 @@ Pane {
             implicitHeight: runColumn.implicitHeight + 16
             color: Theme.panel
             border.width: 1
-            border.color: root.keepFailure && !root.running ? Theme.danger : Theme.line
+            border.color: root.keepResult && !root.running && !root.cancelled ? Theme.danger : Theme.line
             Accessible.role: Accessible.Grouping
             Accessible.name: runTitle.text
 
@@ -239,9 +245,10 @@ Pane {
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                         font.bold: true
-                        color: root.running ? Theme.text : Theme.danger
+                        color: root.running || root.cancelled ? Theme.text : Theme.danger
                         text: !root.automation ? ""
                               : root.running ? root.automation.runTitle
+                              : root.cancelled ? qsTr("%1 cancelled").arg(root.automation.runTitle)
                               : qsTr("%1 failed").arg(root.automation.runTitle)
                     }
                     Label {
@@ -255,9 +262,13 @@ Pane {
                     Layout.fillWidth: true
                     visible: text.length > 0
                     wrapMode: Text.Wrap
-                    color: root.running ? Theme.muted : Theme.danger
+                    color: root.running || root.cancelled ? Theme.muted : Theme.danger
                     font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 1)
-                    text: !root.automation ? "" : root.running ? root.automation.task : root.automation.lastMessage
+                    // Validation says nothing itself (legacy's menu neither);
+                    // its error, if any, is in the log.
+                    text: !root.automation ? "" : root.running ? root.automation.task
+                          : root.outcome === "invalid" ? qsTr("Its validation did not let it run; nothing was changed.")
+                          : root.automation.lastMessage
                 }
                 ProgressBar {
                     objectName: "automationProgressBar"
@@ -299,7 +310,7 @@ Pane {
                             if (root.running)
                                 root.automation.cancelRun()
                             else
-                                root.keepFailure = false
+                                root.keepResult = false
                         }
                     }
                 }
