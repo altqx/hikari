@@ -75,6 +75,15 @@ std::u8string sourceNewline(const std::vector<std::byte> &src)
     return u8"\n";
 }
 
+// The output so far ends with an empty line ("\n\n" or "\n\r\n").
+bool endsWithBlankLine(const std::vector<std::byte> &out)
+{
+    const std::size_t n = out.size();
+    if (n < 2 || out[n - 1] != std::byte{'\n'})
+        return false;
+    return out[n - 2] == std::byte{'\n'} || (n >= 3 && out[n - 2] == std::byte{'\r'} && out[n - 3] == std::byte{'\n'});
+}
+
 } // namespace
 
 std::vector<std::byte> encodeAss(const Document &document)
@@ -109,6 +118,9 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
         fonts = section.kind == SectionKind::Fonts || (fonts && continuesAttachment(section));
         if (options.renderer && fonts)
             continue;
+        // WS2: the [Hikari] section is the editor's, not the renderers'.
+        if (options.renderer && section.kind == SectionKind::Hikari)
+            continue;
         // E5-tlmode-needs-script-info: a Script Info section the Document
         // added at the top has no bytes; it is written as legacy's header is
         // (SubsGridBase.cpp:1490-1503): the header, its properties and a
@@ -117,6 +129,16 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
         if (section.headerSpan) {
             copy(section.headerSpan->offset, section.headerSpan->length + section.headerSpan->terminatorLength);
             newlines.see(*section.headerSpan);
+        } else if (added && section.kind == SectionKind::Hikari) {
+            // WS2: a [Hikari] section the Document added (at the end, or
+            // before trailing embedded data): after a blank line, in the line
+            // ends of the record before it.
+            if (newlines.openEnd)
+                append(newlines.newline);
+            if (!out.empty() && !endsWithBlankLine(out))
+                append(newlines.newline);
+            append(section.header + newlines.newline);
+            newlines.openEnd = false;
         } else if (added) {
             newlines.newline = sourceNewline(src);
             append(newlines.wrap(section.header));
@@ -130,7 +152,7 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
             // Legacy GetSInfos and Styles::GetRaw text for added or changed records.
             std::optional<std::u8string> generated;
             if (property && (property->inserted || property->edited))
-                generated = property->key + u8": " + property->value;
+                generated = property->key + (section.kind == SectionKind::Hikari ? u8"=" : u8": ") + property->value;
             if (style && (style->inserted || style->edited)) {
                 std::u8string text = u8"Style: ";
                 for (std::size_t i = 0; i < style->fields.size(); ++i)
@@ -253,7 +275,9 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
                 copy(span.offset, span.length + span.terminatorLength);
             }
         }
-        if (added)
+        // The added Script Info at the top, and an added [Hikari] before
+        // embedded data, end with a blank line before the next section.
+        if (added && (section.kind != SectionKind::Hikari || &section != &document.sections().back()))
             append(newlines.newline);
     }
     return out;

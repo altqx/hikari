@@ -1,4 +1,5 @@
 #include "hikari/core/ass_load.h"
+#include "hikari/core/ass_attachments.h"
 
 #include "text_util.h"
 
@@ -99,6 +100,60 @@ bool Document::removeScriptInfo(std::u8string_view key)
                            return p && p->key == key;
                        }) > 0;
     return removed;
+}
+
+std::optional<std::u8string> Document::hikariProperty(std::u8string_view key) const
+{
+    std::optional<std::u8string> value;
+    for (const auto &section : m_sections)
+        if (section.kind == SectionKind::Hikari)
+            for (const auto &record : section.records)
+                if (const auto *p = std::get_if<PropertyRecord>(&record); p && p->key == key)
+                    value = p->value; // as scriptInfo: the last one wins
+    return value;
+}
+
+bool Document::setHikariProperty(std::u8string_view key, std::u8string value)
+{
+    if (m_format != SubtitleFormat::Ass)
+        return false;
+    PropertyRecord *last = nullptr;
+    Section *hikari = nullptr;
+    for (auto &section : m_sections) {
+        if (section.kind != SectionKind::Hikari)
+            continue;
+        hikari = &section;
+        for (auto &record : section.records)
+            if (auto *p = std::get_if<PropertyRecord>(&record); p && p->key == key)
+                last = p;
+    }
+    if (last) {
+        if (last->value != value) {
+            last->value = std::move(value);
+            last->edited = true;
+        }
+        return true;
+    }
+    if (!hikari) {
+        // At the end, before the embedded data that may end the file: libass
+        // keeps reading lines after [Fonts] as font data until a header it
+        // knows, so a section after them would become part of the last font.
+        auto at = m_sections.end();
+        while (at != m_sections.begin()) {
+            const Section &before = *std::prev(at);
+            if (before.kind != SectionKind::Fonts && before.kind != SectionKind::Graphics && !continuesAttachment(before))
+                break;
+            --at;
+        }
+        hikari = &*m_sections.insert(at, Section{SectionKind::Hikari, u8"[Hikari]", std::nullopt, {}});
+    }
+    std::size_t at = 0;
+    for (std::size_t i = 0; i < hikari->records.size(); ++i)
+        if (std::holds_alternative<PropertyRecord>(hikari->records[i]))
+            at = i + 1;
+    PropertyRecord added{std::u8string(key), std::move(value), SourceSpan{endOfRecord(*hikari, at), 0, 0}, true, true};
+    hikari->records.insert(hikari->records.begin() + static_cast<std::ptrdiff_t>(at), std::move(added));
+    return true;
 }
 
 bool Document::appendStyle(std::vector<std::u8string> fields)
@@ -486,6 +541,8 @@ SectionKind headerKind(u8sv header)
         return SectionKind::Fonts;
     if (startsWith(header, u8"[Graphics]"))
         return SectionKind::Graphics;
+    if (startsWith(header, u8"[Hikari]"))
+        return SectionKind::Hikari;
     return SectionKind::Unknown;
 }
 
@@ -624,6 +681,15 @@ private:
                 const auto colon = view.find(u8':');
                 section.records.push_back(PropertyRecord{str(trim(view.substr(0, colon))),
                                                          str(trim(view.substr(colon + 1))), span});
+                return;
+            }
+            break;
+        case SectionKind::Hikari:
+            // WS2: "key=value"; anything else stays as it is.
+            if (!view.empty() && view.front() != u8';' && view.find(u8'=') != u8sv::npos) {
+                const auto equals = view.find(u8'=');
+                section.records.push_back(PropertyRecord{str(trim(view.substr(0, equals))),
+                                                         str(trim(view.substr(equals + 1))), span});
                 return;
             }
             break;
