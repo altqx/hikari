@@ -206,10 +206,16 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     // fullscreen with video.fullScreenOnStart, once the window is up.
     // Several open together once the window is up, as legacy OnInit's
     // OpenFiles(paths) and as files handed over (the files a quit left go
-    // to the next start this way).
-    const QString startPath = files.size() == 1 ? files.front() : QString();
+    // to the next start this way), and so does one that is neither
+    // subtitles nor a video: a script goes to Automation, keyframes to the
+    // tab, a refused file is refused (OpenFiles sorted them so).
+    const auto startKind = files.size() == 1 ? application::openKindOf(files.front().toStdString(), true)
+                                             : application::OpenKind::Refused;
+    const QString startPath =
+        startKind == application::OpenKind::Subtitles || startKind == application::OpenKind::Video ? files.front()
+                                                                                                   : QString();
     const bool startVideo = !startPath.isEmpty() && openStartFile(application, startPath);
-    if (files.size() > 1)
+    if (startPath.isEmpty() && !files.isEmpty())
         forwarded.take({files, {}});
 
     // K2: the controls draw with the theme layer's palette.
