@@ -8102,6 +8102,10 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The saved layouts were not changed: together they would be larger than %1 bytes. Delete layouts you no longer use first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The saved layouts could not be written to %1.</source>
         <translation type="unfinished"></translation>
     </message>

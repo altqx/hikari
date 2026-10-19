@@ -453,6 +453,26 @@ private slots:
         QVERIFY(namesInFile(layoutsFile()).isEmpty());
         QCOMPARE(switcherText(), QStringLiteral("Editing"));
         stop();
+
+        // Nor is a file larger than the next start reads: the layouts would be lost.
+        QJsonObject padding{{QStringLiteral("name"), QStringLiteral("Padding")},
+                            {QStringLiteral("arrangement"),
+                             QJsonObject{{QStringLiteral("pad"),
+                                          QString(ui::WorkspaceLayoutController::kMaximumBytes - 20000, QLatin1Char('x'))}}}};
+        const QByteArray nearlyFull = QJsonDocument(QJsonObject{{QStringLiteral("schema"), 1},
+                                                                {QStringLiteral("layouts"), QJsonArray{padding}}})
+                                          .toJson(QJsonDocument::Indented);
+        QVERIFY(writeAll(layoutsFile(), nearlyFull));
+        start();
+        QCOMPARE(layouts().savedLayouts().size(), 1);
+        QVERIFY(!layouts().saveLayoutAs(QStringLiteral("Big")));
+        QVERIFY2(layouts().notice().contains(QStringLiteral("larger than")), qPrintable(layouts().notice()));
+        QCOMPARE(layouts().savedLayouts().size(), 1);
+        QCOMPARE(switcherText(), QStringLiteral("Editing"));
+        QCOMPARE(readAll(layoutsFile()), nearlyFull);
+        QVERIFY(layouts().deleteSavedLayout(QStringLiteral("Padding")));
+        QVERIFY(layouts().saveLayoutAs(QStringLiteral("Big")));
+        stop();
     }
 
     // The names Save layout as… and Manage layouts… refuse, and saving under
