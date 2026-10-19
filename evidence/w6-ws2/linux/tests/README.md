@@ -1,0 +1,3 @@
+- `ui-all.log`: every `hikari_ui_*` test (offscreen, `.xvfb`, screens/scales) on the final head a7db6fba5 under a private Xvfb: 149 of 153; `ui-all-rerun.log`: the four failures one at a time (desktop_handoff passes).
+- `qt-baseline-xvfb.log`: the three that still fail, on `qt` at baec3e14b without WS2, in the same environment: the same three failures (they pass in CI).
+- `akari-rvm-summary.txt`: every test outside the offscreen UI suites on akari-rvm (tree 0c0dcf7b6): 13 `hikari_ui_*` failures, 11 of them `.xvfb` timeouts at load 50+, all passing in `ui-all.log`; `language_tests.xvfb` is the failure fixed in da3a43698.
