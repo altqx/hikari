@@ -3514,7 +3514,7 @@ ApplicationWindow {
                             editor: root.editor
                             hotkeys: root.hotkeys
                             Layout.fillWidth: true
-                            onStyleEditRequested: style => styleManagerWindow.showFor(style)
+                            onStyleEditRequested: style => styleManagerWindow.editStyle(style) // LE6
                         }
 
                         Label {

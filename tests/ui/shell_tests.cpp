@@ -7691,6 +7691,7 @@ private slots:
             {{"mkvSaveYes", Yes}, {"mkvSaveNo", No}, {"mkvSaveCancel", Reject}},
             {{"findAnswerOk", Accept}, {"findAnswerYes", Yes}, {"findAnswerNo", No}, {"findAnswerCancel", Reject}},
             {{"replaceYesToAll", Yes}, {"replaceYes", Yes}, {"replaceNo", No}, {"Cancel", Reject}},
+            {{"styleCreateYes", Accept}, {"styleCreateCancel", Reject}}, // LE6
         };
         // The find question lives in the Search tool's dock: open it.
         press(Qt::Key_F, Qt::ControlModifier);

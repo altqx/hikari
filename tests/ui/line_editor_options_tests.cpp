@@ -5,9 +5,11 @@
 // - LE3 (#228, LE3-tags-shown): the Line editor shows tags by default; hiding
 //   them is editor.hideTags and GLOBAL_EDITOR_HIDE_TAGS;
 // - LE5 (#230): the custom tag buttons' "+" popover, context menu and
-//   Settings > Editor list.
+//   Settings > Editor list;
+// - LE6 (#231): Edit style opens the Style editor on the Line's Style.
 
 #include "hikari/app/application.h"
+#include "hikari/app/style_manager_controller.h"
 #include "hikari/application/hotkeys.h"
 
 #include "docking.h"
@@ -54,6 +56,8 @@ class LineEditorOptionsTest : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
     QString tagged;
+    QString signLine;
+    QString missingStyle;
     std::unique_ptr<app::Application> application;
     std::unique_ptr<QQmlApplicationEngine> engine;
     QQuickWindow *window = nullptr;
@@ -225,12 +229,15 @@ class LineEditorOptionsTest : public QObject {
             return !add || !add->isVisible() || last->mapToScene({}).x() + last->width() <= add->mapToScene({}).x();
         }());
     }
+    QQuickWindow *styleWindow() const { return root()->findChild<QQuickWindow *>(QStringLiteral("styleManager")); }
 
 private slots:
     void initTestCase()
     {
         QVERIFY(dir.isValid());
         tagged = writeFile(dir, "tagged.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}Hi{\\i0} there\n");
+        signLine = writeFile(dir, "sign.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,sign\n");
+        missingStyle = writeFile(dir, "missing.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Karaoke,,0,0,0,,sung\n");
     }
     void init()
     {
@@ -446,6 +453,72 @@ private slots:
         restart();
         QCOMPARE(application->tagButtons().count(), 2);
         QCOMPARE(application->tagButtons().button(1).tag, QStringLiteral("\\u1"));
+    }
+
+    // LE6: one click on Edit style lands in the Style editor on the Line's
+    // Style, its name field focused, also when the manager is open on
+    // another Style.
+    void editStyleOpensTheLinesStyle()
+    {
+        QVERIFY(showLine(signLine));
+        auto *styles = styleWindow();
+        QVERIFY(styles);
+        // Already open, editing Default.
+        QVERIFY(QMetaObject::invokeMethod(styles, "editStyle", Q_ARG(QVariant, QStringLiteral("Default"))));
+        QTRY_VERIFY(styles->isVisible());
+        QVERIFY(styles->property("editing").toBool());
+        auto *nameField = findItem(styles->contentItem(), QStringLiteral("styleName"));
+        QVERIFY(nameField);
+        QCOMPARE(nameField->property("text").toString(), QStringLiteral("Default"));
+        QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
+        QTRY_COMPARE(nameField->property("text").toString(), QStringLiteral("Sign"));
+        QVERIFY(styles->property("editing").toBool());
+        QCOMPARE(styles->property("assSelected").toList().value(0).toInt(), 1);
+        QTRY_VERIFY(nameField->hasActiveFocus());
+        styles->close();
+        // From closed: the same.
+        QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
+        QTRY_VERIFY(styles->isVisible());
+        QTRY_COMPARE(nameField->property("text").toString(), QStringLiteral("Sign"));
+        QTRY_VERIFY(nameField->hasActiveFocus());
+        styles->close();
+    }
+
+    // LE6: a Style the Document lacks: the question; Cancel does nothing,
+    // Create adds it from Default and opens it.
+    void editStyleOffersToCreateAMissingStyle()
+    {
+        QVERIFY(showLine(missingStyle));
+        auto &controller = application->styleManager();
+        QCOMPARE(controller.documentStyles(), (QStringList{QStringLiteral("Default"), QStringLiteral("Sign")}));
+        auto *styles = styleWindow();
+        auto *question = styles->findChild<QObject *>(QStringLiteral("styleCreateQuestion"));
+        QVERIFY(question);
+        QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
+        QTRY_VERIFY(question->property("opened").toBool());
+        QVERIFY(!styles->property("editing").toBool());
+        auto *footer = question->property("footer").value<QQuickItem *>();
+        QVERIFY(QMetaObject::invokeMethod(findItem(footer, QStringLiteral("styleCreateCancel")), "click"));
+        QTRY_VERIFY(!question->property("visible").toBool());
+        QVERIFY(!styles->property("editing").toBool());
+        QCOMPARE(controller.documentStyles().size(), 2);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
+        QTRY_VERIFY(question->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(findItem(footer, QStringLiteral("styleCreateYes")), "click"));
+        QTRY_COMPARE(controller.documentStyles(),
+                     (QStringList{QStringLiteral("Default"), QStringLiteral("Sign"), QStringLiteral("Karaoke")}));
+        QCOMPARE(session->historySize(), steps + 1);
+        QVERIFY(styles->property("editing").toBool());
+        auto *nameField = findItem(styles->contentItem(), QStringLiteral("styleName"));
+        QCOMPARE(nameField->property("text").toString(), QStringLiteral("Karaoke"));
+        QTRY_VERIFY(nameField->hasActiveFocus());
+        // Prefilled from Default (alignment 2; Sign's is 8).
+        const auto values = styles->property("values").toMap();
+        QCOMPARE(values.value(QStringLiteral("alignment")).toString(), QStringLiteral("2"));
+        QCOMPARE(values.value(QStringLiteral("fontname")).toString(), QStringLiteral("Arial"));
+        styles->close();
     }
 };
 
