@@ -586,19 +586,16 @@ Window {
                                     required property string modelData
                                     required property int index
                                     property var colour: ({ r: 0, g: 0, b: 0, a: 0 })
-                                    // The alpha the button was last given (its background
-                                    // wxColour's, UpdateValues and UpdateColor); a typed
-                                    // transparency does not change it.
-                                    property int buttonAlpha: 0
+                                    property Item swatch: swatchButton
                                     function setColour(c) {
                                         colour = c
-                                        buttonAlpha = c.a
                                     }
                                     Layout.preferredWidth: geometry.columnWidth(index)
                                     // The colour's name above its swatch (a label drawn on the
                                     // swatch was unreadable on light or dark colours).
                                     Label { text: modelData }
                                     Button {
+                                        id: swatchButton
                                         objectName: "styleColour" + (index + 1)
                                         Accessible.name: modelData
                                         Layout.fillWidth: true
@@ -706,9 +703,9 @@ Window {
                             Label { Layout.row: 4; Layout.column: 0; Layout.topMargin: 6; text: qsTr("Left margin:") }
                             Label { Layout.row: 4; Layout.column: 1; Layout.topMargin: 6; text: qsTr("Right:") }
                             Label { Layout.row: 4; Layout.column: 2; Layout.topMargin: 6; text: qsTr("Vertical:") }
-                            StyleField { id: marginLeft; objectName: "styleMarginLeft"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 0; Accessible.name: qsTr("Left margin:") }
-                            StyleField { id: marginRight; objectName: "styleMarginRight"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 1; Accessible.name: qsTr("Right:") }
-                            StyleField { id: marginVertical; objectName: "styleMarginVertical"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 2; Accessible.name: qsTr("Vertical:") }
+                            StyleField { id: marginLeft; objectName: "styleMarginLeft"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 0; Accessible.name: qsTr("Left margin:"); onTextEdited: manager.updatePreview() }
+                            StyleField { id: marginRight; objectName: "styleMarginRight"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 1; Accessible.name: qsTr("Right:"); onTextEdited: manager.updatePreview() }
+                            StyleField { id: marginVertical; objectName: "styleMarginVertical"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 2; Accessible.name: qsTr("Vertical:"); onTextEdited: manager.updatePreview() }
                         }
                     }
                     GroupBox {
@@ -820,17 +817,6 @@ Window {
             lastColour = { r: c.r, g: c.g, b: c.b, a: c.a }
             return lastColour
         }
-        // SimpleColorPicker(this, actualColor, ...) (374): the button's
-        // colour with the alpha it was last given.
-        function beginSimple(n) {
-            const c = begin(n)
-            return { r: c.r, g: c.g, b: c.b, a: colours.itemAt(n - 1).buttonAlpha }
-        }
-        // COLOR_TYPE_CHANGED (351-357, 385-391): that colour with its
-        // transparency becomes lastColor; the colour shown before keeps
-        // its changes.
-        function switchColour(n) { return begin(n) }
-        function simplePickerColour(n) { return begin(n) }
         // COLOR_CHANGED: UpdateColor (737-746) sets the button, the
         // transparency and the preview.
         function changeColour(c) {
@@ -844,15 +830,9 @@ Window {
                 changeColour(lastColour)
         }
     }
-    ColourPickerDialog {
-        id: styleColourDialog
-        objectName: "styleColourDialog"
-        picker: manager.colourPicker
-        anchors.centerIn: parent
-    }
-    SimpleColourPicker {
-        id: styleSimplePicker
-        objectName: "styleSimpleColourPicker"
+    ColourPopover {
+        id: stylePopover
+        objectName: "styleColourPopover"
         picker: manager.colourPicker
     }
     Dialog {
