@@ -113,6 +113,195 @@ QString nativeFixture(const char *name)
     return QDir::toNativeSeparators(QStringLiteral(HIKARI_MEDIA_FIXTURES "/") + QLatin1String(name));
 }
 
+// KB3: the hotkey audit. Every key legacy's defaults bind (Hotkeys::
+// LoadDefault, here as its table) is pressed with the focus in each of
+// the five hotkey contexts, rehearsing (the shell reports the command a
+// key reaches and runs nothing), and must reach the command legacy's
+// tables give it there: the context's own binding (TabPanel::SetAccels'
+// routing: the Grid also takes the Video play and seek bindings and the
+// Audio ones but Commit to Next, an _ALT binding runs its main command),
+// else the Line text field's own keys (DialogueTextEditor's table) or
+// the Grid's (SubsGrid::OnKeyPress), else the Global binding, else
+// VIDEO_PLAY_PAUSE's key from everywhere (KB2-space-plays-everywhere).
+// Then every binding runs, outside rehearsal, in its own window's context
+// and must run its labelled command and report it handled.
+struct DefaultBinding {
+    char window; // G S E V A, as Hotkeys.txt names them
+    const char *symbol;
+    const char *accel;
+};
+const std::vector<DefaultBinding> &legacyDefaults()
+{
+    static const std::vector<DefaultBinding> rows = {
+        {'G', "GLOBAL_QUIT", "Alt-F4"},
+        {'G', "GLOBAL_ADD_PAGE", "Ctrl-T"},
+        {'G', "GLOBAL_CLOSE_PAGE", "Ctrl-W"},
+        {'G', "GLOBAL_SHOW_SHIFT_TIMES", "Ctrl-I"},
+        {'G', "GLOBAL_CONVERT_TO_ASS", "F9"},
+        {'G', "GLOBAL_CONVERT_TO_SRT", "F8"},
+        {'G', "GLOBAL_CONVERT_TO_MDVD", "F10"},
+        {'G', "GLOBAL_CONVERT_TO_MPL2", "F11"},
+        {'G', "GLOBAL_CONVERT_TO_TMP", "Ctrl-F12"},
+        {'G', "GLOBAL_OPEN_STYLE_MANAGER", "Ctrl-M"},
+        {'G', "GLOBAL_EDITOR", "Ctrl-E"},
+        {'G', "GLOBAL_OPEN_VIDEO", "Ctrl-Shift-O"},
+        {'G', "GLOBAL_SEARCH", "Ctrl-F"},
+        {'G', "GLOBAL_FIND_REPLACE", "Ctrl-H"},
+        {'G', "GLOBAL_UNDO", "Ctrl-Z"},
+        {'G', "GLOBAL_REDO", "Ctrl-Y"},
+        {'G', "GLOBAL_HISTORY", "Ctrl-Shift-H"},
+        {'G', "GLOBAL_OPEN_SUBS", "Ctrl-O"},
+        {'G', "GLOBAL_SAVE_SUBS", "Ctrl-S"},
+        {'G', "GLOBAL_SAVE_SUBS_AS", "Ctrl-Shift-S"},
+        {'G', "GLOBAL_REMOVE_TEXT", "Alt-Delete"},
+        {'G', "GLOBAL_REMOVE_LINES", "Shift-Delete"},
+        {'G', "GLOBAL_SET_START_TIME", "Ctrl-Left"},
+        {'G', "GLOBAL_SET_END_TIME", "Ctrl-Right"},
+        {'G', "GLOBAL_PLAY_PAUSE", "Alt-Space"},
+        {'G', "GLOBAL_PREVIOUS_FRAME", "Left"},
+        {'G', "GLOBAL_NEXT_FRAME", "Right"},
+        {'G', "GLOBAL_PREVIOUS_LINE", "Ctrl-Up"},
+        {'G', "GLOBAL_NEXT_LINE", "Ctrl-Down"},
+        {'G', "GLOBAL_FIND_NEXT", "F3"},
+        {'G', "GLOBAL_JOIN_WITH_PREVIOUS", "F4"},
+        {'G', "GLOBAL_JOIN_WITH_NEXT", "F5"},
+        {'G', "GLOBAL_SNAP_WITH_START", "Shift-Left"},
+        {'G', "GLOBAL_SNAP_WITH_END", "Shift-Right"},
+        {'G', "GLOBAL_NEXT_TAB", "Ctrl-PgDn"},
+        {'G', "GLOBAL_PREVIOUS_TAB", "Ctrl-PgUp"},
+        {'G', "GLOBAL_SELECT_FROM_VIDEO", "F2"},
+        {'G', "GLOBAL_HELP", "F1"},
+        {'S', "GRID_DUPLICATE_LINES", "Ctrl-D"},
+        {'S', "GRID_COPY_COLUMNS", "Ctrl-Shift-C"},
+        {'S', "GRID_PASTE_COLUMNS", "Ctrl-Shift-V"},
+        {'S', "GRID_SHOW_PREVIEW", "Ctrl-Q"},
+        {'V', "VIDEO_PLAY_PAUSE", "Space"},
+        {'V', "VIDEO_5_SECONDS_FORWARD", "L"},
+        {'V', "VIDEO_5_SECONDS_BACKWARD", ";"},
+        {'V', "VIDEO_MINUTE_FORWARD", "Up"},
+        {'V', "VIDEO_MINUTE_BACKWARD", "Down"},
+        {'V', "VIDEO_NEXT_FILE", "."},
+        {'V', "VIDEO_PREVIOUS_FILE", ","},
+        {'V', "VIDEO_VOLUME_PLUS", "Num ."},
+        {'V', "VIDEO_VOLUME_MINUS", "Num 0"},
+        {'V', "VIDEO_NEXT_CHAPTER", "M"},
+        {'V', "VIDEO_PREVIOUS_CHAPTER", "N"},
+        {'E', "EDITBOX_INSERT_BOLD", "Ctrl-B"},
+        {'E', "EDITBOX_INSERT_ITALIC", "Ctrl-I"},
+        {'E', "EDITBOX_SPLIT_LINE", "Shift-Enter"},
+        {'E', "EDITBOX_START_DIFFERENCE", "Ctrl-,"},
+        {'E', "EDITBOX_END_DIFFERENCE", "Ctrl-."},
+        {'E', "EDITBOX_FIND_NEXT_DOUBTFUL", "Ctrl-D"},
+        {'E', "EDITBOX_FIND_NEXT_UNTRANSLATED", "Ctrl-R"},
+        {'E', "EDITBOX_SET_DOUBTFUL", "Alt-Down"},
+        {'E', "EDITBOX_COMMIT", "Ctrl-Enter"},
+        {'E', "EDITBOX_COMMIT_GO_NEXT_LINE", "Enter"},
+        {'A', "AUDIO_COMMIT", "Enter"},
+        {'A', "AUDIO_COMMIT_ALT", "G"},
+        {'A', "AUDIO_PREVIOUS", "Left"},
+        {'A', "AUDIO_PREVIOUS_ALT", "Z"},
+        {'A', "AUDIO_NEXT", "Right"},
+        {'A', "AUDIO_NEXT_ALT", "X"},
+        {'A', "AUDIO_PLAY", "Down"},
+        {'A', "AUDIO_PLAY_ALT", "S"},
+        {'A', "AUDIO_PLAY_LINE", "Up"},
+        {'A', "AUDIO_PLAY_LINE_ALT", "R"},
+        {'A', "AUDIO_STOP", "H"},
+        {'A', "AUDIO_GOTO", "B"},
+        {'A', "AUDIO_SCROLL_RIGHT", "A"},
+        {'A', "AUDIO_SCROLL_LEFT", "F"},
+        {'A', "AUDIO_PLAY_BEFORE_MARK", "Num 0"},
+        {'A', "AUDIO_PLAY_AFTER_MARK", "Num ."},
+        {'A', "AUDIO_PLAY_500MS_FIRST", "E"},
+        {'A', "AUDIO_PLAY_500MS_LAST", "D"},
+        {'A', "AUDIO_PLAY_500MS_BEFORE", "Q"},
+        {'A', "AUDIO_PLAY_500MS_AFTER", "W"},
+        {'A', "AUDIO_PLAY_TO_END", "T"},
+        {'A', "AUDIO_LEAD_IN", "C"},
+        {'A', "AUDIO_LEAD_OUT", "V"},
+    };
+    return rows;
+}
+// A Hotkeys.txt accelerator as a Qt key press.
+std::pair<Qt::Key, Qt::KeyboardModifiers> pressOf(const QString &accel)
+{
+    Qt::KeyboardModifiers mods;
+    QString key = accel;
+    for (const auto &[prefix, mod] : {std::pair{QStringLiteral("Ctrl-"), Qt::ControlModifier},
+                                      std::pair{QStringLiteral("Shift-"), Qt::ShiftModifier},
+                                      std::pair{QStringLiteral("Alt-"), Qt::AltModifier}})
+        while (key.startsWith(prefix) && key.size() > prefix.size()) {
+            mods |= mod;
+            key = key.mid(prefix.size());
+        }
+    if (key.startsWith(QStringLiteral("Num ")))
+        return {key.endsWith('.') ? Qt::Key_Period : Qt::Key(Qt::Key_0 + key.back().digitValue()),
+                mods | Qt::KeypadModifier};
+    static const QHash<QString, Qt::Key> named = {
+        {QStringLiteral("Left"), Qt::Key_Left},       {QStringLiteral("Right"), Qt::Key_Right},
+        {QStringLiteral("Up"), Qt::Key_Up},           {QStringLiteral("Down"), Qt::Key_Down},
+        {QStringLiteral("PgUp"), Qt::Key_PageUp},     {QStringLiteral("PgDn"), Qt::Key_PageDown},
+        {QStringLiteral("Delete"), Qt::Key_Delete},   {QStringLiteral("Space"), Qt::Key_Space},
+        {QStringLiteral("Enter"), Qt::Key_Return},    {QStringLiteral(";"), Qt::Key_Semicolon},
+        {QStringLiteral("."), Qt::Key_Period},        {QStringLiteral(","), Qt::Key_Comma},
+    };
+    if (named.contains(key))
+        return {named.value(key), mods};
+    if (key.size() > 1 && key.front() == 'F')
+        return {Qt::Key(Qt::Key_F1 + key.mid(1).toInt() - 1), mods};
+    return {Qt::Key(key.front().toUpper().unicode()), mods};
+}
+// The command legacy's tables give `accel` with the focus in `context`
+// (0 Global, 1 Grid, 2 Editor, 3 Video, 4 Audio); empty: none.
+QString legacyCommand(int context, const QString &accel)
+{
+    const auto mainOf = [](const QString &symbol) {
+        return symbol.endsWith(QStringLiteral("_ALT")) ? symbol.chopped(4) : symbol;
+    };
+    // TabPanel::SetAccels and AudioBox::SetAccels: the tables a window holds.
+    const auto inTable = [&](const DefaultBinding &b) {
+        const QString symbol = QString::fromLatin1(b.symbol);
+        switch (context) {
+        case 1: // the Grid's, and the Video play/seek and the Audio ones bar Commit to Next
+            return b.window == 'S' ||
+                   (b.window == 'V' && QStringList{"VIDEO_PLAY_PAUSE", "VIDEO_STOP", "VIDEO_5_SECONDS_FORWARD",
+                                                   "VIDEO_5_SECONDS_BACKWARD"}
+                                           .contains(symbol)) ||
+                   (b.window == 'A' && !QStringList{"AUDIO_COMMIT", "AUDIO_PREVIOUS", "AUDIO_NEXT",
+                                                     "AUDIO_PLAY", "AUDIO_PLAY_LINE"}
+                                            .contains(symbol));
+        case 2: return b.window == 'E';
+        case 3: return b.window == 'V';
+        case 4: return b.window == 'A';
+        default: return false;
+        }
+    };
+    for (const auto &b : legacyDefaults())
+        if (QString::fromLatin1(b.accel) == accel && inTable(b))
+            return mainOf(QString::fromLatin1(b.symbol));
+    // DialogueTextEditor's own keys come before EditBox's frame's table.
+    static const QStringList textField = {"Delete", "Left", "Right", "Up", "Down", "Ctrl-Left", "Ctrl-Right",
+                                          "Shift-Left", "Shift-Right", "Shift-Up", "Shift-Down",
+                                          "Ctrl-Shift-Left", "Ctrl-Shift-Right", "Ctrl-A", "Ctrl-V",
+                                          "Ctrl-C", "Ctrl-X", "Enter", "Num 0", "Num ."};
+    if (context == 2 && textField.contains(accel))
+        return {};
+    // The rewrite's field: Undo and Redo go through its draft first, then
+    // the Document's history (editor-shortcuts.md, accepted policy), and a
+    // space is typed (KB2).
+    if (context == 2 && QStringList{"Ctrl-Z", "Ctrl-Y", "Space"}.contains(accel))
+        return {};
+    // SubsGrid::OnKeyPress: the Line moves.
+    if (context == 1 && QStringList{"Up", "Down", "PgUp", "PgDn", "Home", "End"}.contains(accel))
+        return {};
+    for (const auto &b : legacyDefaults())
+        if (QString::fromLatin1(b.accel) == accel && b.window == 'G')
+            return QString::fromLatin1(b.symbol);
+    if (accel == QLatin1String("Space"))
+        return QStringLiteral("VIDEO_PLAY_PAUSE"); // KB2
+    return {};
+}
+
 // T1: a batch tool for the rail's gesture rule. A left press begins a
 // gesture on the batch picker's targets, each move stages \pos at the
 // pointer before each target's text, the release commits it.
@@ -12105,6 +12294,127 @@ private slots:
         press(Qt::Key_Up); // the Grid's previous Line, not AUDIO_PLAY_LINE
         QTRY_VERIFY(session->selection().active != active);
         QVERIFY(!audio.playing());
+    }
+
+    // KB3: the hotkey audit (legacyDefaults, legacyCommand).
+    void everyDefaultBindingReachesItsCommand()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        auto &video = application->video();
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        closeMismatchQuestion();
+        keysNeverRepeat();
+        QTest::mouseMove(window, QPoint(0, 0)); // over no panel (KB1)
+        auto &hotkeys = application->hotkeys();
+        QStringList reached;
+        connect(&hotkeys, &app::HotkeysController::ran, this,
+                [&](const QString &symbol, bool) { reached.append(symbol); });
+        // The Global context: the focus outside every panel (the frame's).
+        auto *frame = new QQuickItem(window->contentItem()); // the window's to delete
+        const QList<std::pair<const char *, QQuickItem *>> contexts = {
+            {"Global", frame},
+            {"Grid", item("editingGrid")},
+            {"Editor", item("lineText")},
+            {"Video", item("videoPanel")},
+            {"Audio", item("audioDisplay")},
+        };
+        QStringList keys;
+        for (const auto &b : legacyDefaults())
+            if (!keys.contains(QString::fromLatin1(b.accel)))
+                keys.append(QString::fromLatin1(b.accel));
+        // Asked on #244: in legacy the frame's Shift+Delete deleted the Line
+        // from the text field too; the rewrite's field cuts the selection.
+        const QStringList askedOwner = {QStringLiteral("Editor Shift-Delete: nothing, legacy GLOBAL_REMOVE_LINES")};
+        QStringList differences;
+        hotkeys.setRehearsing(true);
+        auto rehearsing = qScopeGuard([&] { hotkeys.setRehearsing(false); });
+        for (int context = 0; context < contexts.size(); ++context) {
+            for (const QString &accel : keys) {
+                contexts[context].second->forceActiveFocus();
+                reached.clear();
+                const auto [key, mods] = pressOf(accel);
+                QTest::keyClick(window, key, mods);
+                QCoreApplication::processEvents();
+                reached.removeDuplicates();
+                const QString expected = legacyCommand(context, accel);
+                const QString got = reached.join(QLatin1Char('+'));
+                if (got != expected)
+                    differences.append(QStringLiteral("%1 %2: %3, legacy %4")
+                                           .arg(QLatin1String(contexts[context].first), accel,
+                                                got.isEmpty() ? QStringLiteral("nothing") : got,
+                                                expected.isEmpty() ? QStringLiteral("nothing") : expected));
+                if (application->videoFullscreen().active()) // the Video panel's own F
+                    application->videoFullscreen().toggle(0);
+            }
+        }
+        for (const QString &asked : askedOwner)
+            if (differences.removeAll(asked))
+                qInfo("KB3, asked on #244: %s", qPrintable(asked));
+        rehearsing.dismiss();
+        hotkeys.setRehearsing(false);
+
+        // Each binding run in its own window's context. Quitting is left out:
+        // it would end the shell under test.
+        const auto fresh = [&] {
+            restartWithoutSound();
+            QVERIFY(application->openFile(episode));
+            application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
+            QTRY_VERIFY_WITH_TIMEOUT(application->audio().ready(), 20000);
+            QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+            closeMismatchQuestion();
+            keysNeverRepeat();
+            QTest::mouseMove(window, QPoint(0, 0));
+        };
+        QList<std::pair<QString, bool>> runs;
+        bool changed = true; // the shell a command left changed starts again
+        for (const auto &b : legacyDefaults()) {
+            const QString symbol = QString::fromLatin1(b.symbol);
+            if (symbol == QLatin1String("GLOBAL_QUIT"))
+                continue;
+            if (changed) {
+                fresh();
+                if (QTest::currentTestFailed())
+                    return;
+                connect(&application->hotkeys(), &app::HotkeysController::ran, this,
+                        [&](const QString &ran, bool handled) { runs.append({ran, handled}); });
+                changed = false;
+            }
+            const int context = QStringLiteral("GSEVA").indexOf(QLatin1Char(b.window));
+            QQuickItem *target = context == 0   ? new QQuickItem(window->contentItem())
+                                 : context == 1 ? item("editingGrid")
+                                 : context == 2 ? item("lineText")
+                                 : context == 3 ? item("videoPanel")
+                                                : item("audioDisplay");
+            target->forceActiveFocus();
+            runs.clear();
+            const auto [key, mods] = pressOf(QString::fromLatin1(b.accel));
+            QTest::keyClick(window, key, mods);
+            QCoreApplication::processEvents();
+            const QString command = symbol.endsWith(QLatin1String("_ALT")) ? symbol.chopped(4) : symbol;
+            const auto run = std::find_if(runs.begin(), runs.end(), [&](const auto &r) { return r.first == command; });
+            if (run == runs.end())
+                differences.append(QStringLiteral("%1 %2 in its window: did not run").arg(symbol, QLatin1String(b.accel)));
+            else if (!std::any_of(runs.begin(), runs.end(), [&](const auto &r) { return r.first == command && r.second; }))
+                differences.append(QStringLiteral("%1 %2 in its window: not handled").arg(symbol, QLatin1String(b.accel)));
+            // what the command opened closes again
+            for (QObject *o : engine->rootObjects().first()->findChildren<QObject *>())
+                if (o->inherits("QQuickPopup") && o->property("opened").toBool())
+                    QMetaObject::invokeMethod(o, "close");
+            for (QWindow *w : QGuiApplication::topLevelWindows())
+                if (w != window && w->isVisible())
+                    w->close();
+            if (application->videoFullscreen().active())
+                application->videoFullscreen().toggle(0);
+            window->requestActivate(); // the shell's table acts in the main window
+            (void)QTest::qWaitFor([&] { return QGuiApplication::focusWindow() == window; }, 2000); // checked below
+            changed = QGuiApplication::focusWindow() != window || !window->isVisible() || !application->editorOn() || application->tabs().size() != 1 ||
+                      application->video().indexing() || !application->video().hasVideo();
+        }
+        QVERIFY2(differences.isEmpty(), qPrintable(QLatin1Char('\n') + differences.join(QLatin1Char('\n'))));
     }
 
     // A4: legacy Play pauses a playing video; Stop pauses it and leaves the
