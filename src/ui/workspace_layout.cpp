@@ -678,8 +678,10 @@ void WorkspaceLayoutController::readSavedLayouts()
         SavedLayout saved;
         saved.name = record.value(QStringLiteral("name")).toString().trimmed();
         saved.record = record;
-        if (!value.isObject() || saved.name.isEmpty() || savedLayoutIndex(saved.name) >= 0) {
-            skipped = true; // not a record, no name, or one already listed: not a layout to offer
+        // Not a record, a name Save layout as… refuses (none, too long, a
+        // line break, a preset's), or one already listed: not offered.
+        if (!value.isObject() || !layoutNameProblem(saved.name).isEmpty() || savedLayoutIndex(saved.name) >= 0) {
+            skipped = true;
             continue;
         }
         const QByteArray arrangement =
@@ -699,7 +701,7 @@ void WorkspaceLayoutController::readSavedLayouts()
             return;
         }
         m_notice = QCoreApplication::translate("HikariSub.Workspace",
-                                               "Some saved layouts were not read: they have no name, or a name listed before. The file as it was is kept at %1.")
+                                               "Some saved layouts were not read: their names cannot name a layout, or were listed before. The file as it was is kept at %1.")
                        .arg(QDir::toNativeSeparators(kept));
     }
 }

@@ -8259,7 +8259,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Some saved layouts were not read: they have no name, or a name listed before. The file as it was is kept at %1.</source>
+        <source>Some saved layouts were not read: their names cannot name a layout, or were listed before. The file as it was is kept at %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -581,10 +581,16 @@ private slots:
         stop();
 
         // Records the list cannot offer (not a record, no name, a name listed
-        // before) are not written away: the file as it was is kept aside, and
+        // before, a name Save layout as… refuses: a preset's, too long, a line
+        // break) are not written away: the file as it was is kept aside, and
         // the other layouts are used.
-        QJsonArray odd{written[0], QJsonObject{{QStringLiteral("arrangement"), written[0].toObject().value(QStringLiteral("arrangement"))}},
-                       written[0], 42};
+        const QJsonValue usable = written[0].toObject().value(QStringLiteral("arrangement"));
+        const auto named = [&](const QString &name) {
+            return QJsonObject{{QStringLiteral("name"), name}, {QStringLiteral("arrangement"), usable}};
+        };
+        QJsonArray odd{written[0], QJsonObject{{QStringLiteral("arrangement"), usable}}, written[0], 42,
+                       named(QStringLiteral("timing")), named(QString(65, QLatin1Char('n'))),
+                       named(QStringLiteral("two\nlines"))};
         const QByteArray withOdd = QJsonDocument(QJsonObject{{QStringLiteral("schema"), 1}, {QStringLiteral("layouts"), odd}}).toJson();
         QVERIFY(writeAll(layoutsFile(), withOdd));
         start();
