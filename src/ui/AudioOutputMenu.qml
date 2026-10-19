@@ -25,7 +25,7 @@ ShellMenu {
             checked: modelData.checked
             keepsMenuOpen: false
             onTriggered: {
-                menu.app.chooseAudioOutput(index)
+                menu.app.chooseAudioOutput(modelData.id, modelData.name)
                 menu.rows = menu.app.audioOutputMenu()
             }
         }

@@ -23,21 +23,19 @@ QVariantList Application::audioOutputMenu() const
     for (const auto &choice :
          application::outputDeviceChoices(m_audioDevices->outputs(), chosen, settings.text("audio.outputDeviceName")))
         rows << QVariantMap{{QStringLiteral("label"), outputDeviceLabel(choice)},
-                            {QStringLiteral("checked"), choice.id == chosen}};
+                            {QStringLiteral("checked"), choice.id == chosen},
+                            {QStringLiteral("id"), QString::fromStdString(choice.id)},
+                            {QStringLiteral("name"), QString::fromStdString(choice.name)}};
     return rows;
 }
 
-void Application::chooseAudioOutput(int row)
+// By the entry's id, not its row: a device plugged in or out while the menu
+// is open moves the rows under it.
+void Application::chooseAudioOutput(const QString &id, const QString &name)
 {
-    const auto &settings = m_settings->settings();
-    const auto choices = application::outputDeviceChoices(m_audioDevices->outputs(), settings.text("audio.outputDevice"),
-                                                          settings.text("audio.outputDeviceName"));
-    if (row < 0 || row >= static_cast<int>(choices.size()))
-        return;
-    const auto &choice = choices[static_cast<std::size_t>(row)];
     // The name first: the id's change moves the outputs (settingChanged).
-    m_settings->set("audio.outputDeviceName", QString::fromStdString(choice.name));
-    m_settings->set("audio.outputDevice", QString::fromStdString(choice.id));
+    m_settings->set("audio.outputDeviceName", name);
+    m_settings->set("audio.outputDevice", id);
 }
 
 QString Application::audioOutputName() const

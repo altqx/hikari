@@ -735,10 +735,11 @@ public:
     // tests: the route both audio paths follow now
     application::OutputRoute audioRoute() const { return m_audioRouting->route(); }
     // AV1 (#238, application_audio.cpp): the audio panel's output menu, the
-    // entries of Settings > Audio's device choice: {label, checked} each, the
-    // stored choice checked. Choosing one stores it as the dialog's OK does.
+    // entries of Settings > Audio's device choice: {label, checked, id, name}
+    // each, the stored choice checked. Choosing one (its id and name, as the
+    // menu showed it) stores it as the dialog's OK does.
     Q_INVOKABLE QVariantList audioOutputMenu() const;
-    Q_INVOKABLE void chooseAudioOutput(int row);
+    Q_INVOKABLE void chooseAudioOutput(const QString &id, const QString &name);
     // The device audio plays through now, as the speaker button's tooltip names it.
     Q_PROPERTY(QString audioOutputName READ audioOutputName NOTIFY audioOutputChanged)
     QString audioOutputName() const;

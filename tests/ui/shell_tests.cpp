@@ -13210,6 +13210,19 @@ private slots:
                                         QString::fromStdString(monitor.name) + QStringLiteral(" (not connected)")}));
         QCOMPARE(checkedRow(), 2); // still the choice, as the dialog keeps it
         QTRY_COMPARE_WITH_TIMEOUT(application->shell().statusText(), QString(), 7000);
+        // A device plugged in while the menu is open moves its rows; the entry
+        // clicked is the device it showed.
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+        QTRY_COMPARE(named("audioOutput1")->property("text").toString(), QString::fromStdString(headset.name));
+        const application::SystemOutputDevice hdmi{"dev-hdmi", "HDMI (Intel Display Audio)", false};
+        list.insert(list.begin(), hdmi);
+        changed();
+        QCOMPARE(labels()[1], QString::fromStdString(hdmi.name));
+        QVERIFY(QMetaObject::invokeMethod(named("audioOutput1"), "triggered"));
+        QCOMPARE(settings.text("audio.outputDevice"), QString::fromStdString(headset.id));
+        QCOMPARE(settings.text("audio.outputDeviceName"), QString::fromStdString(headset.name));
+        QCOMPARE(application->audioRoute(), (Route{headset.id, headset.name, false}));
+        QCOMPARE(checkedRow(), 2);
         // System default from the menu: nothing stored, and no notice.
         QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
         QTRY_VERIFY(named("audioOutput0"));
