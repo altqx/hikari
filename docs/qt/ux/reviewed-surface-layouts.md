@@ -2,7 +2,7 @@
 
 **Accepted placements, 2026-09-27.** The twelve user comments below were posted between 06:00 and 06:18 UTC. They settle the presentation alternatives identified here. Older prototype notes saying “human reaction pending” describe their publication state; they no longer mean these layout choices are unanswered. Approval of a placement does not approve every sample algorithm, transaction policy or compatibility departure beside it.
 
-These surfaces refine the accepted [shared Workspace](workspaces.md) and [Compact Studio visual language](visual-language.md): Classic menus and local controls, Video upper-left, Audio above Editor on the right, and the full-width Grid below. Editing remains the normal destination; Home and protected comparison are optional. Movable/floating tools follow Editing by default, with an optional named pin. Content commands keep an explicit writable target; focus on a Protected reference does not grant write access. Local scrolling must keep detailed controls from stretching Video and pushing the Grid out of the editing composition.
+These surfaces refine the accepted [Workspace](workspaces.md) (one per Document tab since ADR 0020) and [Compact Studio visual language](visual-language.md): Classic menus and local controls, Video upper-left, Audio above Editor on the right, and the full-width Grid below. Editing remains the normal destination; Home and protected comparison are optional. Movable/floating tools follow Editing by default, with an optional named pin. Content commands keep an explicit writable target; focus on a Protected reference does not grant write access. Local scrolling must keep detailed controls from stretching Video and pushing the Grid out of the editing composition.
 
 ## Accepted presentation
 

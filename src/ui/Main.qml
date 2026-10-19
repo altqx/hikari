@@ -277,18 +277,25 @@ ApplicationWindow {
     readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock, searchDock]
 
     // A preset is the Editing arrangement with the panels it leaves closed
-    // (Timing: Video; Translation and Typesetting: Audio).
+    // (Timing: Video; Translation and Typesetting: Audio), for the current
+    // Document tab only (WS1).
     function applyPreset(name) {
         // Before the first frame the default arrangement and the saved
         // layout are not in place yet: settle them first.
         root.settleArrangement()
-        root.workspaceLayout.resetLayout()
-        if (name === "Timing")
-            videoDock.close()
-        else if (name === "Translation" || name === "Typesetting")
-            audioDock.close()
-        root.workspaceLayout.preset = name
-        root.workspaceLayout.save()
+        root.workspaceLayout.applyPreset(name)
+    }
+    // WS1: another tab's arrangement is shown. The Reference tray follows the
+    // comparison, not the tab (shown with the Grid while there is one); the
+    // Timing tool Only video hid goes with the tab (the controller keeps it).
+    Connections {
+        target: root.workspaceLayout
+        function onArrangementSwapped() {
+            if (root.shell.hasReference && !root.workspaceLayout.holding && gridDock.isOpen)
+                referenceDock.open()
+            else if (referenceDock.isOpen)
+                referenceDock.close()
+        }
     }
 
     // D2: legacy View menu (HikariSubFrame.cpp:308-312) as named panel
@@ -322,7 +329,6 @@ ApplicationWindow {
     // next arrangement that shows the Grid when it was open. A hidden video
     // pauses. The focus stays where it is when that panel is still shown,
     // otherwise it goes to the Grid, or the first shown panel in F6 order.
-    property bool timingHiddenByArrangement: false
     function applyArrangement(symbol) {
         const shown = root.workspaceLayout.arrangementPanels(symbol)
         if (shown.length === 0 || !root.arrangementEnabled(symbol))
@@ -361,10 +367,10 @@ ApplicationWindow {
             referenceDock.close()
         if (!subs && timingDock.isOpen) {
             timingDock.close()
-            root.timingHiddenByArrangement = true
-        } else if (subs && root.timingHiddenByArrangement) {
+            root.workspaceLayout.timingHiddenByArrangement = true
+        } else if (subs && root.workspaceLayout.timingHiddenByArrangement) {
             timingDock.open()
-            root.timingHiddenByArrangement = false
+            root.workspaceLayout.timingHiddenByArrangement = false
         }
         root.keepFocusOnAShownPanel(focused)
         root.workspaceLayout.save()
@@ -4172,12 +4178,23 @@ ApplicationWindow {
         }
     }
 
-    // D1: a layout that could not be restored is named here, with the way back.
-    // ADR 0019: below it, a downloaded update that is ready to install.
+    // WS4: the window's top rows under the menu bar (SH1's title bar will sit
+    // above them): the open Documents' tabs, as in MuseScore and IDEs, then
+    // the notices, each shown only while it has something to say.
     header: ColumnLayout {
-        objectName: "noticeArea"
+        objectName: "windowTop"
         spacing: 0
-        visible: layoutNotice.visible || updateReadyBar.visible
+        // P6: the open Documents' tabs (legacy Notebook's bar).
+        DocumentTabBar {
+            app: root.app
+            Layout.fillWidth: true
+            onCloseRequested: index => root.closeTab(index)
+            // P9: the tab menu's Save, Save all and Close all tabs.
+            onSaveRequested: id => root.saveSubtitles(id)
+            onSaveAllRequested: root.saveAllTabs()
+            onCloseAllRequested: tabCommands.confirmCloseAll()
+        }
+        // D1: a layout that could not be restored is named here, with the way back.
         Pane {
             id: layoutNotice
             objectName: "layoutNotice"
@@ -4204,6 +4221,7 @@ ApplicationWindow {
                 }
             }
         }
+        // ADR 0019: a downloaded update that is ready to install.
         UpdateReadyBar {
             id: updateReadyBar
             updates: root.updates
@@ -4217,30 +4235,17 @@ ApplicationWindow {
         }
     }
 
-    footer: ColumnLayout {
-      spacing: 0
-      // P6: the open Documents' tabs (legacy Notebook's bar).
-      DocumentTabBar {
-        app: root.app
-        Layout.fillWidth: true
-        onCloseRequested: index => root.closeTab(index)
-        // P9: the tab menu's Save, Save all and Close all tabs.
-        onSaveRequested: id => root.saveSubtitles(id)
-        onSaveAllRequested: root.saveAllTabs()
-        onCloseAllRequested: tabCommands.confirmCloseAll()
-      }
-      // P10: legacy's status bar. Its first field is help and progress text
-      // (Automation's set_status_text, menu help, "Autosave"), never the
-      // editing target, which the Document tab and the window title name.
-      StatusBar {
+    // P10: legacy's status bar, the window's bottom row. Its first field is
+    // help and progress text (Automation's set_status_text, menu help,
+    // "Autosave"), never the editing target, which the Document tab and the
+    // window title name.
+    footer: StatusBar {
         shell: root.shell
         fieldsController: root.statusBar
         selectionText: root.shell.selectionStatus
         // The last save's message only: the tab's modified mark says
         // "Modified" (said once, visual-language.md).
         saveText: root.editor.saveStatus
-        Layout.fillWidth: true
-      }
     }
 
     // Legacy HistoryDialog: every step, the current one selected; Set and a

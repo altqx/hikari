@@ -609,6 +609,47 @@ private slots:
         QCOMPARE(activeRow(a), 2);
     }
 
+    // WS1 without the shell: each tab's arrangement is a value the Session
+    // carries. A TLMode file's tab is the Translation preset, a tab with no
+    // arrangement yet writes no "Layout: " line, and a loaded tab's line is
+    // written back as it came (a valid one) or as the Editing preset.
+    void eachTabsArrangementGoesWithTheSession()
+    {
+        QTemporaryDir home;
+        app::Application a(options(home));
+        QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("plain.ass")), "plain")));
+        const QString tl = dir.filePath(QStringLiteral("tl.ass"));
+        {
+            QFile f(tl);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nTLMode: Yes\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, "
+                    "MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,line\n");
+        }
+        a.addPage();
+        QVERIFY(a.openFile(tl));
+        auto saved = readSession(a.lastSessionPath());
+        QCOMPARE(saved.tabs.size(), std::size_t(2));
+        QCOMPARE(saved.tabs[0].layout, std::string()); // never shown by a shell
+        const auto translation = ui::WorkspaceArrangement::parse(QByteArray::fromStdString(saved.tabs[1].layout));
+        QVERIFY(translation);
+        QCOMPARE(translation->preset, QStringLiteral("Translation"));
+        QVERIFY(translation->payload.isEmpty());
+
+        const QByteArray typesetting = ui::WorkspaceArrangement{QStringLiteral("Typesetting"), {}}.serialise();
+        saved.tabs[0].layout = typesetting.toStdString();
+        saved.tabs[1].layout = "{not a layout";
+        const QString kls = home.filePath(QStringLiteral("layouts.kls"));
+        writeSession(kls, QByteArray::fromStdString(application::writeSession("HikariSub v1", false, saved.tabs)));
+        QVERIFY(loadSession(a, QUrl::fromLocalFile(kls)));
+        QVERIFY(a.workspaceLayout().notice().contains(QStringLiteral("tl.ass")));
+        const auto again = readSession(a.lastSessionPath());
+        QCOMPARE(again.tabs.size(), std::size_t(2));
+        QCOMPARE(QByteArray::fromStdString(again.tabs[0].layout), typesetting);
+        const auto fallback = ui::WorkspaceArrangement::parse(QByteArray::fromStdString(again.tabs[1].layout));
+        QVERIFY(fallback);
+        QCOMPARE(fallback->preset, QStringLiteral("Editing"));
+    }
+
     // hikarisubApp::OnInit: LAST_SESSION_CONFIG 2 loads, 1 asks, otherwise a
     // session left without "[Close session]" asks about the crash; never
     // when paths were given.
