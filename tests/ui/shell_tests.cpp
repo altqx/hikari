@@ -7927,6 +7927,9 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(item("shiftAmountSectionHeader"), "click"));
         QTRY_VERIFY(!item("shiftTime")->isVisible());
         QCOMPARE(application->settingsStore()->list("shiftTimes.collapsedSections"), QStringList{QStringLiteral("amount")});
+        // Space is the header's when the keyboard moved there (KB2): the
+        // header already holds the focus, so it leaves and Tab brings it back.
+        item("editingGrid")->forceActiveFocus();
         item("shiftAmountSectionHeader")->forceActiveFocus(Qt::TabFocusReason);
         press(Qt::Key_Space);
         QTRY_VERIFY(item("shiftTime")->isVisible());
