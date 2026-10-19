@@ -4111,10 +4111,14 @@ private slots:
         QCOMPARE(findItem(referenceHeader, QStringLiteral("dockMenuButton"))->property("contentItem").value<QObject *>()
                      ->property("iconRole").toString(),
                  QStringLiteral("panel-menu"));
-        // The "⋯" button shows as pressed while its menu is open.
+        // The "⋯" button shows as pressed while its menu is open. The Video
+        // panel's own items are LE2's Times/Frames choice, off without a video.
+        const QStringList videoOwn{QStringLiteral("Show times (off) (on)"), QStringLiteral("Show frames (off)"),
+                                   QStringLiteral("|")};
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
         QVERIFY(findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("checked").toBool());
-        QCOMPARE(panelMenuItems(), (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close")}));
+        QCOMPARE(panelMenuItems(),
+                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY(!findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("checked").toBool());
 
@@ -4122,7 +4126,8 @@ private slots:
         auto *videoDock = item<QObject>("videoDock");
         QVERIFY(videoDock->setProperty("options", 1)); // DockWidgetOption_NotClosable
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
-        QCOMPARE(panelMenuItems(), (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close (off)")}));
+        QCOMPARE(panelMenuItems(),
+                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close (off)")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QVERIFY(videoDock->setProperty("options", 0));
 
@@ -4141,7 +4146,8 @@ private slots:
             QTRY_VERIFY(narrow->width() < wide);
         }
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
-        QCOMPARE(panelMenuItems(), (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Dock"), QStringLiteral("Close")}));
+        QCOMPARE(panelMenuItems(),
+                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Dock"), QStringLiteral("Close")}));
         // Native gate (sway): the menu opens in the floating panel's window,
         // under its button, not in the main window where Main.qml declares it.
         {
@@ -8320,7 +8326,8 @@ private slots:
             }
         };
         collect(content);
-        QVERIFY2(controls.size() >= 25, qPrintable(QString::number(controls.size())));
+        // (LE2 took the Times/Frames radios out.)
+        QVERIFY2(controls.size() >= 23, qPrintable(QString::number(controls.size())));
         for (QQuickItem *control : std::as_const(controls))
             scrollTheEditorTo(control);
         scrollTheEditorTo(controls.first()); // and back up
@@ -9021,7 +9028,9 @@ private slots:
               {"video.dontAskForBadResolution", "Do not warn about resolution mismatch"},
               {"automation.oldScriptsCompatibility", "Compatibility with older HikariSub scripts"},
               // Y4-playres-ask, the rewrite's own
-              {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"}}},
+              {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"},
+              // LE2: the Times/Frames switch, out of the Line editor
+              {"editor.timesToFramesSwitch", "Show video frames instead of times in the Line editor and the Grid"}}},
             {"settingsPageConversion",
              {{"convert.styleCatalog", nullptr},
               {"convert.style", nullptr},
@@ -17951,6 +17960,8 @@ private slots:
     // timebase the fields and the Grid show frames (TimeCtrl::SetTime,
     // SubsGridWindow.cpp:348-357), typed frames take the legacy midpoint
     // times (StartTimeFor/EndTimeFor, ZEROIT), and the switch is saved.
+    // LE2: it is the Video panel's "⋯" menu choice (and Settings > Editor's
+    // check box), no longer radios under the Line editor.
     void framesSwitchShowsVideoFrames_data()
     {
         QTest::addColumn<QString>("video");
@@ -17981,13 +17992,25 @@ private slots:
         application->video().openVideo(nativeFixture(qPrintable(video)));
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
         QTRY_VERIFY(application->editor().framesAvailable());
-        QVERIFY(item<QObject>("showFrames")->property("enabled").toBool());
-        const auto click = [&](const char *name) {
-            auto *radio = item(name);
-            QTest::mouseClick(window, Qt::LeftButton, {}, radio->mapToScene(QPointF(10, radio->height() / 2)).toPoint());
+        QVERIFY(!item("showFrames")); // LE2: not in the Line editor any more
+        QVERIFY(!item("showTimes"));
+        auto *menu = named("panelOptionsMenu");
+        const auto choose = [&](const char *name) {
+            QVERIFY(openPanelMenu(QStringLiteral("Video")));
+            QVERIFY(panelMenuItems().mid(0, 2).join(QLatin1Char(',')).contains(QStringLiteral("(on)")));
+            auto *entry = qobject_cast<QQuickItem *>(named(name));
+            QVERIFY(entry && entry->isEnabled());
+            QTest::mouseClick(entry->window(), Qt::LeftButton, {},
+                              entry->mapToScene(QPointF(entry->width() / 2, entry->height() / 2)).toPoint());
+            QTRY_VERIFY(!menu->property("visible").toBool()); // a choice closes the menu
         };
-        click("showFrames");
+        choose("panelOptions_showFrames");
         QTRY_VERIFY(application->editor().showFrames());
+        // The menu's check follows the state.
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QCOMPARE(panelMenuItems().mid(0, 2), (QStringList{QStringLiteral("Show times"), QStringLiteral("Show frames (on)")}));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
         QCOMPARE(application->settingsStore()->value(QStringLiteral("editor.timesToFramesSwitch")).toBool(), true);
         QFETCH(QString, start);
         QFETCH(QString, end);
@@ -18013,10 +18036,46 @@ private slots:
         press(Qt::Key_Return);
         QCOMPARE(session->document().lines()[0]->start.value.microseconds() / 1000, typedStartMs);
         // Back to times: the Grid and the fields show times again.
-        click("showTimes");
+        choose("panelOptions_showTimes");
         QTRY_VERIFY(!application->editor().showFrames());
         QCOMPARE(model->index(0, ui::LineTableModel::StartColumn).data().toString(),
                  QString::fromUtf8(reinterpret_cast<const char *>(core::legacy::assTimeText(typedStartMs).c_str())));
+        QCOMPARE(application->settingsStore()->value(QStringLiteral("editor.timesToFramesSwitch")).toBool(), false);
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QCOMPARE(panelMenuItems().mid(0, 2), (QStringList{QStringLiteral("Show times (on)"), QStringLiteral("Show frames")}));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        // Settings > Editor's check box switches the same state live: the
+        // fields and the Grid show frames after OK, and the menu agrees.
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *check = dialogItem("settingsDialog", "setting_editor.timesToFramesSwitch");
+        QVERIFY(check);
+        QVERIFY(!check->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(check, "click"));
+        QVERIFY(!application->editor().showFrames()); // staged until OK
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(application->editor().showFrames());
+        QCOMPARE(application->settingsStore()->value(QStringLiteral("editor.timesToFramesSwitch")).toBool(), true);
+        // Frames, not times, in the Grid and the field (Return went on to
+        // the next Line, so they show different Lines).
+        QVERIFY(!model->index(0, ui::LineTableModel::StartColumn).data().toString().contains(QLatin1Char(':')));
+        QVERIFY(!item<QObject>("startField")->property("text").toString().contains(QLatin1Char(':')));
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QCOMPARE(panelMenuItems().mid(0, 2), (QStringList{QStringLiteral("Show times"), QStringLiteral("Show frames (on)")}));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        // and back off from Settings.
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        check = dialogItem("settingsDialog", "setting_editor.timesToFramesSwitch");
+        QVERIFY(check->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(check, "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!application->editor().showFrames());
         QCOMPARE(application->settingsStore()->value(QStringLiteral("editor.timesToFramesSwitch")).toBool(), false);
     }
 

@@ -354,6 +354,9 @@ Dialog {
                     SettingCheck { setting: "automation.oldScriptsCompatibility"; text: qsTr("Compatibility with older HikariSub scripts") }
                     // Y4-playres-ask: the script resolution question's "Always" choice.
                     SettingCheck { setting: "automation.scriptResolutionFromVideo"; text: qsTr("Set a missing script resolution from the video without asking") }
+                    // LE2: legacy's Time / Frames radios under the Line editor
+                    // (EDITBOX_TIMES_TO_FRAMES_SWITCH); the Video panel's "⋯" menu has it too.
+                    SettingCheck { setting: "editor.timesToFramesSwitch"; text: qsTr("Show video frames instead of times in the Line editor and the Grid") }
                 }
             }
 

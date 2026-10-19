@@ -551,7 +551,17 @@ ApplicationWindow {
     // An item's `enabled` is a function its entry follows, so the list itself
     // stays put while the menu is open (a new list would remake the entries,
     // the one being chosen too).
+    // LE2: the Video panel's Times/Frames choice (legacy's radios under the
+    // Line editor, EDITBOX_TIMES_TO_FRAMES_SWITCH), enabled once a video was
+    // opened; the Line editor and the Grid follow it.
     function panelOwnItems(dock) {
+        if (dock === videoDock)
+            return [{ name: "showTimes", text: qsTranslate("HikariSub.Editor", "Show times"), checkable: true, radio: true,
+                      checked: () => !root.editor.showFrames, enabled: () => root.editor.framesAvailable,
+                      run: () => root.editor.showFrames = false },
+                    { name: "showFrames", text: qsTranslate("HikariSub.Editor", "Show frames"), checkable: true, radio: true,
+                      checked: () => root.editor.showFrames, enabled: () => root.editor.framesAvailable,
+                      run: () => root.editor.showFrames = true }]
         if (dock === referenceDock)
             return [{ name: "compareWithReference", text: qsTranslate("HikariSub.Reference", "Compare with reference"),
                       enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference() }]
@@ -602,9 +612,16 @@ ApplicationWindow {
                 objectName: "panelOptions_" + modelData.name
                 text: modelData.text
                 checkable: modelData.checkable === true
-                checked: modelData.checked === true
+                checked: typeof modelData.checked === "function" ? modelData.checked() : modelData.checked === true
+                // A choice among items (radio) closes the menu, as legacy's ITEM_RADIO.
+                keepsMenuOpen: checkable && modelData.radio !== true
                 enabled: typeof modelData.enabled === "function" ? modelData.enabled() : modelData.enabled !== false
-                onTriggered: modelData.run()
+                onTriggered: {
+                    modelData.run()
+                    // The item's check follows its state, not the click's toggle.
+                    if (typeof modelData.checked === "function")
+                        checked = Qt.binding(() => modelData.checked())
+                }
             }
             onObjectAdded: (index, object) => panelOptionsMenu.insertItem(index, object)
             onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
