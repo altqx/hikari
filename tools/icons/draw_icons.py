@@ -442,9 +442,25 @@ icon("colour-outline", "Border color", ["kolor3.png"], [EDITOR],
      roboto_a() + accent(rect(4.5, 12.5, 7, 2, 0.5)))
 icon("colour-shadow", "Shadow color", ["kolor4.png"], [EDITOR],
      roboto_a() + rect(4.5, 11.5, 6, 2, 0.5) + accent(fill("M11 12h1v3H5v-1h6z")))
-icon("alignment", "Alignment (\\an)", [], [EDITOR],
-     frect(2, 2, 2, 2) + frect(7, 2, 2, 2) + frect(12, 2, 2, 2) + frect(2, 7, 2, 2) + frect(7, 7, 2, 2)
-     + frect(12, 7, 2, 2) + frect(2, 12, 2, 2) + frect(12, 12, 2, 2) + accent(frect(6.5, 11.5, 3, 3, 0.5)))
+# LE4: the Line editor's alignment picker (\an1-\an9 in numpad layout):
+# the 3 x 3 cells as small squares, the chosen one larger in the accent; the
+# mixed icon (several Lines with different alignments) has no chosen cell.
+ALIGN_CELLS = {7: (3, 3), 8: (8, 3), 9: (13, 3), 4: (3, 8), 5: (8, 8), 6: (13, 8), 1: (3, 13), 2: (8, 13), 3: (13, 13)}
+ALIGN_NAMES = {1: "Bottom-left", 2: "Bottom-center", 3: "Bottom-right", 4: "Middle-left", 5: "Center",
+               6: "Middle-right", 7: "Top-left", 8: "Top-center", 9: "Top-right"}
+
+
+def alignment_grid(chosen=None):
+    cells = "".join(frect(x - 1, y - 1, 2, 2) for n, (x, y) in sorted(ALIGN_CELLS.items()) if n != chosen)
+    if chosen is None:
+        return cells
+    x, y = ALIGN_CELLS[chosen]
+    return cells + accent(frect(x - 1.5, y - 1.5, 3, 3, 0.5))
+
+
+for n in range(1, 10):
+    icon("alignment-%d" % n, "%s (an%d)" % (ALIGN_NAMES[n], n), [], [EDITOR], alignment_grid(n))
+icon("alignment-mixed", "Text position (mixed)", [], [EDITOR], alignment_grid())
 
 # Subtitles and timing menus
 icon("editor", "Enable / Disable editor", ["editor.png"], [SUBS, "settings-dialog"],
@@ -636,9 +652,11 @@ icon("copy-to-ass", "Copy style from storage to ASS", [], [STYLEDLG],
 icon("copy-to-all-ass", "Copy style from storage to every open ASS file", [], [STYLEDLG],
      rect(1.5, 1.5, 12, 3, 1) + rect(1.5, 12.5, 10, 2, 1) + stroke("M3.5 10.5h9a1 1 0 0 1 1 1v1")
      + accent(stroke("M7.5 6v3M5 6.5L7.5 9 10 6.5")))
-icon("menu-more", "More", [], [EDITOR], stroke("M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"))
+# LE5 retired menu-more (a double chevron), drawn for the Line editor's
+# "Manage tag buttons" list, which the "+" popover and the buttons' context
+# menu replaced.
 # D3: a panel header's "⋯" menu (MuseScore's MenuButton): three dots in a
-# row, distinct from menu-more's double chevron, which drops a list open.
+# row.
 icon("panel-menu", "Panel options", [], ["dock-headers"], dot(3.5, 8, 1.25) + dot(8, 8, 1.25) + dot(12.5, 8, 1.25))
 
 # Generic list and edit commands
