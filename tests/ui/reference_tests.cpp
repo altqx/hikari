@@ -15,7 +15,9 @@
 
 #include "hikari/app/application.h"
 #include "docking.h"
+#include "line_grid.h"
 #include "line_table_model.h"
+#include "theme.h"
 
 #include <QAccessible>
 #include <QClipboard>
@@ -23,6 +25,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QImage>
+#include <QPainter>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -263,6 +267,35 @@ private slots:
     {
         delete engine;
         delete application;
+    }
+
+    // GR4: the reference tray's Grid paints a Comment row on the theme's
+    // comment background as the editing Grid does, the selection blended
+    // over it when the row is selected.
+    void theReferenceHighlightsCommentRows()
+    {
+        application->selectTab(1);
+        QVERIFY(application->editor().setComment(true)); // r0, before it is protected
+        application->selectTab(0);
+        QVERIFY(application->showPreview());
+        auto *grid = qobject_cast<ui::LineGrid *>(item("referenceGrid"));
+        QVERIFY(grid);
+        QTRY_COMPARE(grid->model()->rowCount(), 5);
+        const QModelIndex first = grid->model()->index(0, 0);
+        QVERIFY(first.data(ui::LineTableModel::CommentRole).toBool());
+        QTRY_VERIFY(grid->width() > 0 && grid->height() > 2 * grid->rowHeight());
+        QImage image(grid->size().toSize(), QImage::Format_ARGB32);
+        QPainter painter(&image);
+        grid->paint(&painter);
+        painter.end();
+        const auto &content = ui::theme::current().content;
+        const QColor expected = first.data(ui::LineTableModel::SelectedRole).toBool()
+                                    ? ui::selectionOver(content.gridComment, content.comparisonSelection)
+                                    : content.gridComment;
+        const QRectF text = grid->cellRect(0, grid->columnCount() - 1);
+        QCOMPARE(image.pixelColor(int(text.right()) - 3, int(text.center().y())), expected);
+        const QRectF dialogue = grid->cellRect(1, grid->columnCount() - 1);
+        QVERIFY(image.pixelColor(int(dialogue.right()) - 3, int(dialogue.center().y())) != content.gridComment);
     }
 
     // SubsGrid.cpp:277 and 884-887: "Show subtitles preview" with more than

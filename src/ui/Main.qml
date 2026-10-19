@@ -3443,11 +3443,16 @@ ApplicationWindow {
                                 objectName: "tagButtonMenu"
                                 property Item button: null
                                 property int index: -1
+                                // Left is toward the first button, unless the layout is mirrored.
+                                readonly property int leftStep: Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1
                                 // At the click, inside the button it is for.
                                 function openFor(b, i, at) {
                                     button = b
                                     index = i
                                     popup(b, at)
+                                }
+                                function canMove(step) {
+                                    return index >= 0 && index + step >= 0 && index + step < root.tagButtons.count
                                 }
                                 ShellMenuItem {
                                     objectName: "tagButtonEdit"
@@ -3459,14 +3464,14 @@ ApplicationWindow {
                                 ShellMenuItem {
                                     objectName: "tagButtonMoveLeft"
                                     text: qsTranslate("HikariSub.Editor", "Move left")
-                                    enabled: tagButtonMenu.index > 0
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -1)
+                                    enabled: tagButtonMenu.canMove(tagButtonMenu.leftStep)
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, tagButtonMenu.leftStep)
                                 }
                                 ShellMenuItem {
                                     objectName: "tagButtonMoveRight"
                                     text: qsTranslate("HikariSub.Editor", "Move right")
-                                    enabled: tagButtonMenu.index >= 0 && tagButtonMenu.index < root.tagButtons.count - 1
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, 1)
+                                    enabled: tagButtonMenu.canMove(-tagButtonMenu.leftStep)
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -tagButtonMenu.leftStep)
                                 }
                                 MenuSeparator {}
                                 ShellMenuItem {
@@ -3873,6 +3878,17 @@ ApplicationWindow {
                             id: hideColumnsMenu
                             objectName: "hideColumnsMenu"
                             title: qsTranslate("HikariSub.Grid", "Hide columns")
+                            // GR3 (Aegisub's convention): columns empty in
+                            // the whole Document hide themselves; the same
+                            // setting as Settings > Editor's.
+                            ShellMenuItem {
+                                objectName: "hideEmptyColumns"
+                                text: qsTranslate("HikariSub.Grid", "Hide empty columns")
+                                checkable: true
+                                checked: root.shell.autoHideColumns
+                                onTriggered: root.shell.autoHideColumns = checked
+                            }
+                            MenuSeparator {}
                             Instantiator {
                                 model: [
                                     { bit: 1, label: qsTranslate("HikariSub.Grid", "Hide layer"), ass: true, symbol: "GRID_HIDE_LAYER" },
@@ -3896,7 +3912,7 @@ ApplicationWindow {
                                     enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.end || root.shell.endColumn)
                                     onTriggered: if (!root.gridGesture(this, modelData.symbol)) root.shell.toggleColumn(modelData.bit)
                                 }
-                                onObjectAdded: (index, object) => hideColumnsMenu.insertItem(index, object)
+                                onObjectAdded: (index, object) => hideColumnsMenu.insertItem(2 + index, object)
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }

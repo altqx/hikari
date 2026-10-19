@@ -890,6 +890,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     connect(m_shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
             [this] { m_settings->set("grid.hideColumns", m_shell->hiddenColumns()); });
+    // GR3: the Grid menu's and Settings' "Hide empty columns", one setting.
+    m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
+    connect(m_shell.get(), &ui::ShellController::autoHideColumnsChanged, this, [this] {
+        // Only a change: Set default's re-sync leaves the key unset.
+        if (m_settings->boolean("grid.autoHideColumns") != m_shell->autoHideColumns())
+            m_settings->set("grid.autoHideColumns", m_shell->autoHideColumns());
+    });
     m_recent.set(m_settings->settings().list("recent.subtitles"));
     m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened")); // SH2
     m_copyColumns = m_settings->integer("grid.copyColumns");
@@ -903,6 +910,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_editRefresh->setInterval(0);
     connect(m_editRefresh, &QTimer::timeout, this, &Application::refreshVideo);
     connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] {
+        // GR2: the Grid row shows the draft as it is typed, uncommitted.
+        if (const auto *session = targetSession())
+            m_shell->setDraft(session->draftRecord());
         m_editRefresh->start();
         scheduleAutosave();
     });
@@ -1566,6 +1576,7 @@ void Application::refreshViews()
                      target ? m_comparison.table(*target) : nullptr,
                      reference ? m_comparison.table(*reference) : nullptr);
     if (targetSession) {
+        m_shell->setDraft(targetSession->draftRecord()); // GR2
         m_shell->setSelection(targetSession->selection());
         m_editor->selectionChanged(); // LE4: the mixed position
     }
@@ -4939,6 +4950,8 @@ void Application::settingChanged(const QString &id)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles")); // SubsGridBase autosave
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+    else if (id == QLatin1String("grid.autoHideColumns") && !m_resettingSettings)
+        m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
     else if (id == QLatin1String("video.disableLiveEditing") || id.startsWith(QLatin1String("grid.calcSpaces"))) {
         m_editor->optionsChanged(); // E4: the counters and Duration follow at once
         refreshVideo();             // live editing on or off: the draft or the committed Lines
@@ -5321,6 +5334,8 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
     m_gridFilter->settingsReset(); // per-grid "ignore filtering" is kept (SubsGrid::ignoreFiltered)
     m_updates->reload();
+    // GR3: empty-column hiding has no legacy owner; both Grids take the default.
+    m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
     // SelectLines, once created, keeps its controls and recent searches:
     // the options go back at its close (legacy: at exit or DestroyDialogs),
     // the recent searches at its next selection. Before that, the dialog

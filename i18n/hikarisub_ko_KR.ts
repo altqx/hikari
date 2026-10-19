@@ -2515,6 +2515,10 @@ Failed to copy %2 fonts.</source>
         <translation>구분 열 숨김</translation>
     </message>
     <message>
+        <source>Hide empty columns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide layer</source>
         <translation>레이어</translation>
     </message>
@@ -2708,6 +2712,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>bookmarked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>uncommitted</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
@@ -4426,6 +4434,10 @@ after switching from full screen</source>
     <message>
         <source>Do not vertically center the active line in the subtitle grid</source>
         <translation>자막보기의 중앙에 행을 배치하지 마십시오</translation>
+    </message>
+    <message>
+        <source>Hide empty columns in the subtitle grid</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Use numpad shortcuts in text fields</source>

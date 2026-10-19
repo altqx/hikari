@@ -1750,6 +1750,64 @@ private slots:
         QTRY_COMPARE(state(0), 0);
     }
 
+    // GR2: the Grid row shows the Line editor's draft as it is typed, with a
+    // triangle in place of the changed-Line circle; the Document, its
+    // history and the changed-Line state wait for the commit. Revert brings
+    // the committed text back; Save commits the draft.
+    void draftLinesShowLiveInTheGrid()
+    {
+        const QString copy = dir.filePath(QStringLiteral("draft.ass"));
+        QFile::remove(copy);
+        QVERIFY(QFile::copy(episode, copy));
+        QVERIFY(application->openFile(copy));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        auto *model = grid->model();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto shown = [&](int row) { return model->index(row, ui::LineTableModel::TextColumn).data().toString(); };
+        const auto drafted = [&](int row) { return model->index(row, 0).data(ui::LineTableModel::DraftRole).toBool(); };
+        const auto state = [&](int row) { return model->index(row, 0).data(ui::LineTableModel::LineStateRole).toInt(); };
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        const auto steps = session->historySize();
+        const auto revision = session->revision();
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, '!');
+        QTRY_COMPARE(shown(0), QStringLiteral("first!"));
+        QVERIFY(drafted(0));
+        QCOMPARE(grid->rowStateText(0), QStringLiteral("uncommitted"));
+        QTest::keyClick(window, '?');
+        QTRY_COMPARE(shown(0), QStringLiteral("first!?")); // every keystroke
+        QCOMPARE(session->historySize(), steps);
+        QCOMPARE(session->revision(), revision);
+        QCOMPARE(documentLineText(session, 0), QStringLiteral("first"));
+        QCOMPARE(state(0), 0);
+        QVERIFY(!drafted(1));
+        QCOMPARE(shown(1), QStringLiteral("second"));
+
+        // Revert: the committed text and no triangle.
+        QTest::qWait(separateKeyDelay);
+        press(Qt::Key_Escape);
+        QTRY_COMPARE(application->editor().text(), QStringLiteral("first"));
+        QTRY_VERIFY(!drafted(0));
+        QCOMPARE(shown(0), QStringLiteral("first"));
+        QCOMPARE(session->historySize(), steps);
+
+        // Save commits the draft (accepted policy): one step, the row no
+        // longer a draft, its Line changed and saved.
+        text->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, '!');
+        QTRY_VERIFY(drafted(0));
+        QVERIFY(application->editor().save());
+        application->waitForWrites();
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(documentLineText(session, 0), QStringLiteral("first!"));
+        QTRY_VERIFY(!drafted(0));
+        QCOMPARE(shown(0), QStringLiteral("first!"));
+        QTRY_COMPARE(state(0), 2);
+    }
+
     void boldWrapsTheSelectionWithTagsHidden()
     {
         application->editor().setShowTags(false); // the hidden-tag view (no longer the default, LE3-tags-shown)
@@ -8121,6 +8179,10 @@ private slots:
 
     void hideColumnsMenuTogglesGridColumns()
     {
+        // Every column of the episode shows (GR3's auto-hide off): this
+        // checks the manual hides.
+        application->shell().setAutoHideColumns(false);
+        auto restoreAutoHide = qScopeGuard([&] { application->shell().setAutoHideColumns(true); });
         QVERIFY(application->openFile(episode));
         auto *root = engine->rootObjects().first();
         auto *grid = item("editingGrid");
@@ -8138,12 +8200,65 @@ private slots:
         application->shell().setHiddenColumns(0);
     }
 
+    // GR3 (Aegisub's convention): with the default on, the columns the
+    // whole Document leaves empty hide themselves and come back as soon as
+    // a committed Line fills one; the Grid's Hide columns > Hide empty
+    // columns and Settings write one setting, and manual hides stay on top.
+    void emptyColumnsHideThemselves()
+    {
+        auto &settings = *application->settingsStore();
+        QCOMPARE(std::get<bool>(application::findSetting("grid.autoHideColumns")->defaultValue), true);
+        QVERIFY(settings.boolean("grid.autoHideColumns"));
+        QVERIFY(application->shell().autoHideColumns());
+        QVERIFY(application->openFile(episode)); // Layer, Actor, margins and Effect all empty
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        const auto titles = [&] {
+            QStringList out;
+            for (int c = 0; c < grid->columnCount(); ++c)
+                out << grid->columnTitle(c);
+            return out;
+        };
+        const QStringList empty{"#", "Start", "End", "Styles", "CPS", "Wraps", "Text"};
+        QTRY_COMPARE(titles(), empty);
+
+        // A committed Actor shows its column, live; Undo hides it again.
+        QTRY_COMPARE(application->editor().text(), QStringLiteral("first"));
+        QVERIFY(application->editor().chooseActor(QStringLiteral("Ann")));
+        QTRY_VERIFY(titles().contains(QStringLiteral("Actor")));
+        QCOMPARE(titles().size(), empty.size() + 1);
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(titles(), empty);
+
+        // The menu's toggle: off shows every column, and the setting follows.
+        QObject *toggle = named("hideEmptyColumns");
+        QVERIFY(toggle);
+        QVERIFY(toggle->property("checked").toBool());
+        toggle->setProperty("checked", false);
+        QVERIFY(QMetaObject::invokeMethod(toggle, "triggered"));
+        QVERIFY(!settings.boolean("grid.autoHideColumns"));
+        QTRY_COMPARE(grid->columnCount(), 13);
+        // Settings writes the same one; the menu shows it.
+        settings.set("grid.autoHideColumns", true);
+        QTRY_COMPARE(titles(), empty);
+        QTRY_VERIFY(toggle->property("checked").toBool());
+        // A manual hide applies on top.
+        application->shell().toggleColumn(512); // CPS
+        QTRY_COMPARE(grid->columnCount(), int(empty.size()) - 1);
+        application->shell().setHiddenColumns(0);
+        QCOMPARE(settings.integer("grid.hideColumns"), 0);
+    }
+
     // The Grid's abbreviated headings name their column on hover (legacy's
     // Hide columns names, SubsGrid.cpp:199-200 and 501-508): the pointer over
     // "L." shows "Layer" below it, in the interface language; a heading that
     // is a word shows nothing.
     void gridHeadingsNameTheirColumnOnHover()
     {
+        // Every column of the episode shows (GR3's auto-hide off): the
+        // abbreviated headings are there to hover.
+        application->shell().setAutoHideColumns(false);
+        auto restoreAutoHide = qScopeGuard([&] { application->shell().setAutoHideColumns(true); });
         QVERIFY(application->openFile(episode));
         auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
         QVERIFY(grid);
@@ -8359,6 +8474,10 @@ private slots:
     // its help. (A Shift+click closes them: hotkeyGestureOnMenus.)
     void checkItemsKeepTheirMenuOpen()
     {
+        // Every column of the episode shows (GR3's auto-hide off): this
+        // checks the manual hides.
+        application->shell().setAutoHideColumns(false);
+        auto restoreAutoHide = qScopeGuard([&] { application->shell().setAutoHideColumns(true); });
         QStyleHints *hints = QGuiApplication::styleHints();
         const bool hoverHint = hints->useHoverEffects();
         auto restoreHover = qScopeGuard([&] { hints->setUseHoverEffects(hoverHint); });
@@ -9598,6 +9717,7 @@ private slots:
               {"translation.hideOriginalOnVideo", "Hide original on video in translator mode"},
               {"grid.duplicationDontChangeSelection", "Do not change selections when duplicating dialogue lines"},
               {"grid.dontCenterActiveLine", "Do not vertically center the active line in the subtitle grid"},
+              {"grid.autoHideColumns", "Hide empty columns in the subtitle grid"}, // GR3
               {"editor.allowNumpadHotkeys", "Use numpad shortcuts in text fields"},
               {"video.visualWarningsOff", "Turn off visual tools warning"},
               {"video.dontAskForBadResolution", "Do not warn about resolution mismatch"},
@@ -10063,6 +10183,7 @@ private slots:
         a.gridFilter().setIgnoreInActions(true);
         a.gridFilter().setInverted(true);
         a.shell().toggleColumn(1);
+        a.shell().setAutoHideColumns(false);
         const QVariantMap red{{QStringLiteral("r"), 255}, {QStringLiteral("g"), 0}, {QStringLiteral("b"), 0}, {QStringLiteral("a"), 0}};
         a.colourPicker().addRecent(red); // no picker yet: the option is the list
 
@@ -10095,6 +10216,10 @@ private slots:
         QVERIFY(!settings.contains("grid.hideColumns"));
         a.shell().toggleColumn(8192);
         QCOMPARE(settings.integer("grid.hideColumns"), 8193);
+        // GR3: empty columns hide themselves again (no legacy owner keeps it),
+        // and the option stays reset: the re-sync does not write it back.
+        QVERIFY(a.shell().autoHideColumns());
+        QVERIFY(!settings.contains("grid.autoHideColumns"));
 
         // Once opened, SelectLines keeps its options and recent searches:
         // the options go back when it closes, the recent searches at the

@@ -2534,6 +2534,10 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation>Ukryj kolumny</translation>
     </message>
     <message>
+        <source>Hide empty columns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide layer</source>
         <translation>Ukryj warstwę</translation>
     </message>
@@ -2727,6 +2731,10 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>bookmarked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>uncommitted</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
@@ -4455,6 +4463,10 @@ po wyjściu z pełnego ekranu</translation>
     <message>
         <source>Do not vertically center the active line in the subtitle grid</source>
         <translation>Nie wypośrodkowuj aktywnej linii w polu napisów</translation>
+    </message>
+    <message>
+        <source>Hide empty columns in the subtitle grid</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Use numpad shortcuts in text fields</source>
