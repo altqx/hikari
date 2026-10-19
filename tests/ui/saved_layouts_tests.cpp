@@ -76,6 +76,11 @@ class SavedLayoutsTest : public QObject {
 
     QString settingsFile() const { return dir.filePath(QStringLiteral("hikari.ini")); }
     QString layoutsFile() const { return dir.filePath(QStringLiteral("layouts.json")); }
+    // The saved layout file's envelope (layout.json, beside layouts.json).
+    QJsonObject layoutEnvelope() const
+    {
+        return QJsonDocument::fromJson(readAll(dir.filePath(QStringLiteral("layout.json")))).object();
+    }
     void start()
     {
         app::Application::Options options;
@@ -408,6 +413,16 @@ private slots:
         trigger(QStringLiteral("viewLayoutReset"));
         QVERIFY(isOpen("audioDock")); // Editing's, not Foo's
         QCOMPARE(switcherText(), QStringLiteral("Editing"));
+        // The same panels under another name (the backup is the saved file
+        // without its layout): the saved file names the restored one too, as
+        // the next start reads it.
+        saveAs(QStringLiteral("Bar"));
+        QJsonObject backup = layoutEnvelope();
+        QCOMPARE(backup.take(QStringLiteral("layout")).toString(), QStringLiteral("Bar"));
+        QVERIFY(writeAll(dir.filePath(QStringLiteral("layout.json.bak")), QJsonDocument(backup).toJson()));
+        QVERIFY(layouts().restoreBackup());
+        QTRY_COMPARE(switcherText(), QStringLiteral("Editing"));
+        QVERIFY(layoutEnvelope().value(QStringLiteral("layout")).toString().isEmpty());
         stop();
     }
 

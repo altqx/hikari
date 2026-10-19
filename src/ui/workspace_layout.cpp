@@ -410,6 +410,7 @@ bool WorkspaceLayoutController::restoreBackup()
     if (preset != m_preset || layout != m_layout) {
         m_preset = preset;
         m_layout = layout;
+        m_lastSaved.clear(); // the saved file names the other one, panels alike or not
         emit changed();
     }
     dismissNotice();
