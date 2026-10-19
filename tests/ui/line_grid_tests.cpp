@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <vector>
 
 using namespace hikari;
 using namespace hikari::ui;
@@ -274,7 +275,7 @@ private slots:
             };
             expect(right, int(grid.geometry().headerHeight / 2), roles.raised, "header");
             expect(right, rowY(0), roles.panel, "row");
-            expect(right, rowY(1), content.gridAlternate, "alternate row");
+            expect(right, rowY(1), content.gridComment, "comment row"); // GR4
             if (!theme::isHighContrast(code)) // high contrast does not shade every other row
                 QVERIFY(content.gridAlternate != roles.panel);
             expect(right, rowY(2), roles.select, "selected row");
@@ -286,6 +287,83 @@ private slots:
             expect(719, rowY(3), roles.accent, "active outline (right)");
             expect(right, rowY(3), content.gridAlternate, "active row");
             expect(right, 155, roles.panel, "below the rows");
+        }
+    }
+
+    // GR4: a Comment row is painted on the theme's comment background
+    // (legacy GRID_COMMENT), whatever its parity, in secondary text that
+    // reads on it; selected, the selection blends over it (GetColorWithAlpha),
+    // with the accent marker. Every theme; screenshots for the card.
+    void paintsCommentRows()
+    {
+        const char *script = "[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,dialogue\n"
+                             "Comment: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,a comment\n"
+                             "Comment: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,another comment\n"
+                             "Comment: 0,0:00:04.00,0:00:05.00,Default,,0,0,0,,a selected comment\n"
+                             "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,selected dialogue\n";
+        std::vector<std::byte> bytes(std::strlen(script));
+        std::memcpy(bytes.data(), script, bytes.size());
+        LineTableModel model;
+        model.setDocument(core::loadAss(bytes).document);
+        model.setSelection({core::LineId{4}, {core::LineId{4}, core::LineId{5}}}, core::LineId{4});
+        LineGrid grid;
+        grid.setSize(QSizeF(720, 160));
+        grid.setModel(&model);
+        SettingsStore store;
+        auto restore = qScopeGuard([] { theme::useSettings(nullptr); });
+        theme::useSettings(&store);
+        store.setValue(QStringLiteral("appearance.followSystem"), false);
+        const double rh = grid.rowHeight();
+        const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
+        const int right = int(grid.cellRect(0, 6).left()) - 6; // between the Actor and Left columns' text
+        QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
+        for (const auto code : theme::kCodes) {
+            store.setValue(QStringLiteral("appearance.theme"), theme::codeName(code));
+            const auto &roles = theme::current().roles;
+            const auto &content = theme::current().content;
+            const QString name = theme::codeName(code);
+            const QColor selectedComment = selectionOver(content.gridComment, content.comparisonSelection);
+            // The comment colour stands apart from the rows around it and
+            // from the selection, and both text roles read on it. Selected,
+            // the Comment's ink (secondary, or the primary text where the
+            // blend leaves secondary short) reads at 4.5:1 with every accent.
+            for (const QColor &other : {roles.panel, content.gridAlternate, roles.select})
+                QVERIFY2(content.gridComment != other, qPrintable(name));
+            for (const QColor &ink : {roles.text, roles.muted})
+                QVERIFY2(theme::contrastRatio(ink, content.gridComment) >= 4.5,
+                         qPrintable(name + QLatin1Char(' ') + ink.name() + QLatin1Char(' ') + content.gridComment.name()));
+            QCOMPARE(commentInk(roles, content.gridComment), roles.muted);
+            const auto presets = theme::isHighContrast(code) ? std::vector<QColor>{roles.accent} : [&] {
+                std::vector<QColor> out;
+                for (const auto &a : theme::accents(theme::isDark(code)))
+                    out.push_back(a.accent);
+                return out;
+            }();
+            for (QColor accent : presets) {
+                accent.setAlpha(content.comparisonSelection.alpha());
+                const QColor blended = selectionOver(content.gridComment, accent);
+                QVERIFY2(theme::contrastRatio(commentInk(roles, blended), blended) >= 4.5,
+                         qPrintable(name + QLatin1Char(' ') + accent.name() + QLatin1Char(' ') + blended.name()));
+            }
+            QImage image(720, 160, QImage::Format_ARGB32);
+            QPainter painter(&image);
+            grid.paint(&painter);
+            painter.end();
+            const auto expect = [&](int x, int y, const QColor &colour, const char *what) {
+                QVERIFY2(image.pixelColor(x, y) == colour,
+                         qPrintable(QStringLiteral("%1 %2: %3, expected %4")
+                                        .arg(name, QLatin1String(what), image.pixelColor(x, y).name(), colour.name())));
+            };
+            expect(right, rowY(0), roles.panel, "dialogue");
+            expect(right, rowY(1), content.gridComment, "comment (odd row)");
+            expect(right, rowY(2), content.gridComment, "comment (even row)");
+            expect(right, rowY(3), selectedComment, "selected comment");
+            QCOMPARE(commentInk(roles, selectedComment) == roles.muted,
+                     theme::contrastRatio(roles.muted, selectedComment) >= 4.5);
+            expect(1, rowY(3), roles.accent, "selected comment's marker");
+            expect(right, rowY(4), roles.select, "selected dialogue");
+            QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-comments-%1.png").arg(name)));
         }
     }
 

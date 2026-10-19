@@ -622,9 +622,17 @@ std::optional<QColor> comparisonBackground(int state, bool comment, bool selecte
     // kol = comparison ? ComparisonBG : ComparisonBGMatch, and the comment
     // colours on a Comment (SubsGridWindow.cpp:422-426).
     const int slot = comment ? (state == 2 ? 3 : 4) : (state == 2 ? 1 : 2);
-    QColor colour = colours.value(slot).value<QColor>();
-    if (!selected)
-        return colour;
+    const QColor colour = colours.value(slot).value<QColor>();
+    return selected ? selectionOver(colour, selection) : colour;
+}
+
+QColor commentInk(const theme::Roles &roles, const QColor &background)
+{
+    return theme::contrastRatio(roles.muted, background) >= 4.5 ? roles.muted : roles.text;
+}
+
+QColor selectionOver(const QColor &colour, const QColor &selection)
+{
     // GetColorWithAlpha(seldial, kol), in its integer arithmetic.
     const int r = selection.red(), g = selection.green(), b = selection.blue(), invA = 0xFF - selection.alpha();
     return QColor(colour.red() * invA / 0xFF + (r - invA * r / 0xFF), colour.green() * invA / 0xFF + (g - invA * g / 0xFF),
@@ -749,7 +757,9 @@ void LineGrid::paint(QPainter *painter)
     // K2: the theme's roles: rows on the panel surface (every other one a
     // shade apart), the header raised with secondary text, a selected row on
     // the selected background with the leading accent marker, the active
-    // Line outlined in the accent, a Comment in secondary text. While the
+    // Line outlined in the accent, a Comment in secondary text (the primary
+    // where secondary would not read) on the comment background (GR4), the
+    // selection blended over it. While the
     // Grid has keyboard focus its focused cell, the active Line's row,
     // carries the focus ring (visual-language.md, "Keyboard focus"; the
     // user's 2026-10-13 decision): 1 wide in the focus role, the text
@@ -789,12 +799,15 @@ void LineGrid::paint(QPainter *painter)
         const bool active = idx.data(LineTableModel::ActiveRole).toBool();
         const bool comment = idx.data(LineTableModel::CommentRole).toBool();
         QColor background = row % 2 ? content.gridAlternate : roles.panel;
-        if (selected)
+        if (comment) // GR4: legacy kol = comm, the selection blended over it (SubsGridWindow.cpp:426-429)
+            background = selected ? selectionOver(content.gridComment, content.comparisonSelection) : content.gridComment;
+        else if (selected)
             background = roles.select;
         const int comparison = idx.data(LineTableModel::ComparisonRole).toInt();
         painter->fillRect(QRectF(0, top, bounds.width(), rh), background);
-        if (const auto compared =
-                comparisonBackground(comparison, comment, selected, comparisonColours, content.comparisonSelection)) {
+        const auto compared =
+            comparisonBackground(comparison, comment, selected, comparisonColours, content.comparisonSelection);
+        if (compared) {
             // Legacy paints column 0, the number, in its label colour and the
             // other columns in kol (SubsGridWindow.cpp:495, j == 0 && !isHeadline
             // ? label : kol); the number cell takes its label colour (E6).
@@ -804,7 +817,7 @@ void LineGrid::paint(QPainter *painter)
         if (numberShown)
             drawLabel(painter, QRectF(m_markWidth, top, widths[0], rh), idx.data(LineTableModel::LineStateRole).toInt(),
                       idx.data(LineTableModel::DraftRole).toBool(), labelColours);
-        painter->setPen(comment ? roles.muted : roles.text);
+        painter->setPen(comment ? commentInk(roles, compared.value_or(background)) : roles.text);
         x = m_markWidth;
         for (int c = 0; c < columns; ++c) {
             const int mc = modelColumn(c);

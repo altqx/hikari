@@ -6,6 +6,7 @@
 // Row commands, shell integration and accessibility are separate cards.
 
 #include "hikari/core/document.h"
+#include "theme.h"
 
 #include <QAbstractItemModel>
 #include <QColor>
@@ -41,6 +42,12 @@ struct GridGeometry {
 // alpha: K2 makes it the theme's accent (a selection-type mark).
 std::optional<QColor> comparisonBackground(int state, bool comment, bool selected, const QVariantList &colours,
                                            const QColor &selection);
+// GR4 and R1: `selection` (GRID_SELECTION with its alpha) over a row's
+// colour, as legacy's GetColorWithAlpha blends it.
+QColor selectionOver(const QColor &colour, const QColor &selection);
+// GR4: a Comment's text: secondary where it reads on the row at 4.5:1,
+// otherwise the primary text (a selection blended over the comment colour).
+QColor commentInk(const theme::Roles &roles, const QColor &background);
 
 class LineGrid : public QQuickPaintedItem {
     Q_OBJECT
