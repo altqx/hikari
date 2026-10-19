@@ -9743,8 +9743,10 @@ private slots:
         QVERIFY(!settings.contains("grid.hideColumns"));
         a.shell().toggleColumn(8192);
         QCOMPARE(settings.integer("grid.hideColumns"), 8193);
-        // GR3: empty columns hide themselves again (no legacy owner keeps it).
+        // GR3: empty columns hide themselves again (no legacy owner keeps it),
+        // and the option stays reset: the re-sync does not write it back.
         QVERIFY(a.shell().autoHideColumns());
+        QVERIFY(!settings.contains("grid.autoHideColumns"));
 
         // Once opened, SelectLines keeps its options and recent searches:
         // the options go back when it closes, the recent searches at the

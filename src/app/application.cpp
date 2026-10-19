@@ -887,8 +887,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             [this] { m_settings->set("grid.hideColumns", m_shell->hiddenColumns()); });
     // GR3: the Grid menu's and Settings' "Hide empty columns", one setting.
     m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
-    connect(m_shell.get(), &ui::ShellController::autoHideColumnsChanged, this,
-            [this] { m_settings->set("grid.autoHideColumns", m_shell->autoHideColumns()); });
+    connect(m_shell.get(), &ui::ShellController::autoHideColumnsChanged, this, [this] {
+        // Only a change: Set default's re-sync leaves the key unset.
+        if (m_settings->boolean("grid.autoHideColumns") != m_shell->autoHideColumns())
+            m_settings->set("grid.autoHideColumns", m_shell->autoHideColumns());
+    });
     m_recent.set(m_settings->settings().list("recent.subtitles"));
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
