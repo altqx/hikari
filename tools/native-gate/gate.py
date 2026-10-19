@@ -1937,9 +1937,13 @@ def step_views():
     sh(["python3", f"{GATE}/atspi_tool.py", "press-showing", "Load associated"])
     time.sleep(5)
     focus_main()
-    # Blank audio after the video (a video without audio closes the box).
-    blank = menu_to("Open blank 2h30m audio", opener="alt+u")
+    # Audio for the box: a dummy video after the episode brings its own
+    # silent audio (AV3 #240 retired "Open blank 2h30m audio").
+    blank = menu_to("Open dummy video", opener="alt+v")
     B.keys("return", 2.5)
+    sh(["python3", f"{GATE}/atspi_tool.py", "press-showing", "OK"])
+    time.sleep(3)
+    focus_main()
     draft = type_draft()
     ev, st = B.snap("views-0-editing")
     evidence = list(ev)
@@ -1961,7 +1965,7 @@ def step_views():
         rows.append(f"{label}: reached={reached} shown={sorted(shown)} focus={focus} Line text={text!r}")
     back = same_places(core_panels(st), base)
     open(os.path.join(EVID, "views.txt"), "w").write(
-        f"blank audio from the keyboard: {blank}\nediting: {base}\nafter All: {core_panels(st)}\n" + "\n".join(rows))
+        f"dummy video with its silence from the keyboard: {blank}\nediting: {base}\nafter All: {core_panels(st)}\n" + "\n".join(rows))
     evidence.append("views.txt")
     detail = "; ".join(rows)
     verdict("view-arrangements", "observed" if shown_ok and base and set(base) == set(CORE) else "failed",
