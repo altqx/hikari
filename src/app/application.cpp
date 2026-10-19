@@ -1737,6 +1737,8 @@ QVariantList Application::reviewClose(const QString &then)
 {
     endFindOpen(false); // another review replaces the file result's
     m_closeThen = then;
+    if (then == QLatin1String("quit"))
+        ++m_quitReviews; // WS5
     m_closing.clear();
     if (then != QLatin1String("open")) {
         m_pendingOpen.reset();

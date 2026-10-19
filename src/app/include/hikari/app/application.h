@@ -253,6 +253,9 @@ public:
     bool forwardedOpenWaits() const;
     // WS5: the quit is being reviewed or has gone ahead.
     bool quitting() const { return m_quitApproved || m_closeThen == QLatin1String("quit"); }
+    // WS5: the quit reviews so far, the one going on (or that went ahead)
+    // last: what came during a quit belongs to that one only.
+    int quitReviews() const { return m_quitReviews; }
     // P9: opening a video (legacy OpenFile on a video): subtitles named as
     // the video beside it (FindFile) are offered first, {subtitles} ("" when
     // none, or when the tab already has them). Then openVideo(path), or, on
@@ -1201,6 +1204,7 @@ private:
     };
     QString m_closeThen;
     std::vector<Closing> m_closing;
+    int m_quitReviews = 0; // WS5
     bool m_quitApproved = false;
     // P2: the subtitles waiting for the review to replace the editing target.
     std::optional<application::StagedOpen> m_pendingOpen;

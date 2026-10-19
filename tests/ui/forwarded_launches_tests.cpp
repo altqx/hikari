@@ -364,29 +364,45 @@ private slots:
     }
 
     // A start without files while the quit is reviewed still asks for the
-    // program: once the quit goes ahead the next start is made for it; a
-    // cancelled quit keeps the window, which came forward.
+    // program: once that quit goes ahead the next start is made for it. A
+    // cancelled quit keeps the window, which came forward, and a later quit
+    // is the user's own, at once too (before any timer of this one runs).
     void aStartWithoutFilesDuringTheQuitOutlivesIt()
     {
         start();
         application->addPage();
         edit(0, "work");
-        QVariantList rows = application->reviewClose(QStringLiteral("quit"));
+        auto quit = [this] {
+            const QVariantList rows = application->reviewClose(QStringLiteral("quit"));
+            QVariantList discard;
+            for (const QVariant &row : rows)
+                discard << QVariantMap{{QStringLiteral("id"), row.toMap().value(QStringLiteral("id"))},
+                                       {QStringLiteral("save"), false}};
+            return discard;
+        };
+        QVariantList discard = quit();
+        QCOMPARE(discard.size(), 1);
+        take({});
+        QVERIFY(!forwarded->startAfterQuit()); // not yet: the quit may be cancelled
+        application->cancelClose();
+        discard = quit();
+        application->resolveClose(discard);
+        QVERIFY(application->quitApproved());
+        QVERIFY(!forwarded->startAfterQuit());
+        QVERIFY(forwarded->takeUnopened().isEmpty());
+    }
+
+    void aStartWithoutFilesBeforeTheQuitGoesAheadOutlivesIt()
+    {
+        start();
+        application->addPage();
+        edit(0, "work");
+        const QVariantList rows = application->reviewClose(QStringLiteral("quit"));
         QCOMPARE(rows.size(), 1);
         take({});
-        QVERIFY(forwarded->startAfterQuit());
-        application->cancelClose();
-        QTRY_VERIFY(!forwarded->startAfterQuit());
-
-        rows = application->reviewClose(QStringLiteral("quit"));
-        take({});
-        QVariantList discard;
-        for (const QVariant &row : rows)
-            discard << QVariantMap{{QStringLiteral("id"), row.toMap().value(QStringLiteral("id"))},
-                                   {QStringLiteral("save"), false}};
-        application->resolveClose(discard);
-        QTRY_VERIFY(application->quitApproved());
-        QTest::qWait(300);
+        application->resolveClose({QVariantMap{{QStringLiteral("id"), rows.first().toMap().value(QStringLiteral("id"))},
+                                               {QStringLiteral("save"), false}}});
+        QVERIFY(application->quitApproved());
         QVERIFY(forwarded->startAfterQuit());
         QVERIFY(forwarded->takeUnopened().isEmpty());
     }
