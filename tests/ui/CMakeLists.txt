@@ -258,6 +258,8 @@ target_include_directories(hikari_ui_view_arrangements_tests PRIVATE "${PROJECT_
 target_compile_definitions(hikari_ui_view_arrangements_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_view_arrangements_tests hikari_media_fixtures hikari_media_helper)
+# Wave 6's Line editor cards (LE2-LE6) through the composition, with restarts.
+hikari_add_qttest(hikari_ui_line_editor_options_tests SOURCES line_editor_options_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cpp LIBRARIES hikari_composition)
 # ADR 0019: the download, its checks and the hand-off per package kind.
 hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_tests.cpp LIBRARIES hikari_composition)
