@@ -421,6 +421,26 @@ private slots:
         QVERIFY(next.listening());
     }
 
+    // A start that runs alone (an update's watched start, which never hands
+    // over) becomes the instance once its holder has gone, and serves the
+    // starts after it.
+    void anAloneStartTakesTheInstanceOnceFree()
+    {
+        QProcess *first = start("hold");
+        QVERIFY(holding(first));
+        app::SingleInstance watched(location);
+        QCOMPARE(watched.claim({}, false), Role::Alone);
+        QVERIFY(!watched.reclaim());
+        QVERIFY(!watched.listening());
+        first->kill();
+        QVERIFY(first->waitForFinished(10000));
+        QTRY_VERIFY(watched.reclaim());
+        QVERIFY(watched.listening());
+        QSignalSpy requested(&watched, &app::SingleInstance::requested);
+        QCOMPARE(run({dir.filePath(QStringLiteral("k.ass"))}), code(Role::Forwarded));
+        QTRY_COMPARE(requested.size(), 1);
+    }
+
     // The holder gives the instance up (at exit, before an update starts the
     // new version): the next start is the instance.
     void releaseLetsTheNextStartClaim()

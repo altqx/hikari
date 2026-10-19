@@ -86,6 +86,9 @@ public:
     // of a second more for the receipt of a commit sent at the end). Without
     // `handOver` a start that cannot claim runs Alone.
     Role claim(const Request &request, bool handOver = true, int timeoutMs = 5000);
+    // A start that runs Alone claims the instance when its lock is free
+    // (the holder has gone); true once this start holds it and listens.
+    bool reclaim();
     // The holder stops listening, drops the requests it has not taken and
     // gives the instance up (at exit, before an update starts its new
     // version).

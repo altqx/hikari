@@ -143,8 +143,19 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     // it and leaves; a new version's first start after an update must show
     // its own window to the old one's watchdog, so it never hands over.
     SingleInstance instance(mode == StartupMode::Run ? SingleInstance::forSession() : SingleInstance::Location{});
-    if (instance.claim({files, activationToken}, startup.healthFile.empty()) == SingleInstance::Role::Forwarded)
+    const SingleInstance::Role role = instance.claim({files, activationToken}, startup.healthFile.empty());
+    if (role == SingleInstance::Role::Forwarded)
         return 0;
+    // A start that runs alone (an update's watched start, or one whose
+    // holder did not answer) becomes the instance once the lock is free.
+    QTimer reclaim;
+    if (role == SingleInstance::Role::Alone && mode == StartupMode::Run) {
+        QObject::connect(&reclaim, &QTimer::timeout, &instance, [&reclaim, &instance] {
+            if (instance.reclaim())
+                reclaim.stop();
+        });
+        reclaim.start(1000);
+    }
 
     Application::Options options;
     options.autoload = true; // legacy: the Autoload scripts load at start
@@ -229,6 +240,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
                 Qt::SingleShotConnection);
     const int code = app.exec();
     // WS5: the next start is the instance, an update's new version included.
+    reclaim.stop();
     instance.release();
     // WS5: what was handed over and not opened (the quit came first) is
     // saved before an update can start a new version.

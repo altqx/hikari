@@ -335,6 +335,15 @@ SingleInstance::Role SingleInstance::claim(const Request &request, bool handOver
     }
 }
 
+bool SingleInstance::reclaim()
+{
+    if (listening())
+        return true;
+    if (m_location.server.isEmpty() || m_location.lock.isEmpty() || !tryLock())
+        return false;
+    return serve() == Role::Primary;
+}
+
 SingleInstance::Role SingleInstance::serve()
 {
     if (listen())
