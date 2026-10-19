@@ -4035,6 +4035,7 @@ ApplicationWindow {
                     loadAction: loadScriptAction
                     refreshAction: reloadAutoloadAction
                     documentName: root.shell.editingTitle
+                    documentTab: root.app.currentTab
                 }
             }
         }

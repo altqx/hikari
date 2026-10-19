@@ -32,6 +32,8 @@ Pane {
     property Action refreshAction: null
     // The editing target's name, for the run's read-only note.
     property string documentName: ""
+    // The current tab: the editing target changes with it.
+    property int documentTab: -1
     implicitWidth: 340
     implicitHeight: 420
     padding: 0
@@ -55,6 +57,19 @@ Pane {
 
     readonly property bool running: automation !== null && automation.running
     readonly property string filterText: filter.text.trim().toLowerCase()
+
+    // The Document's scripts (its Script Info) are read as the panel shows
+    // and as the editing target changes while it shows: legacy read them as
+    // the Automation menu opened (Automation.cpp:1359), and the panel stays
+    // open, restored with a layout or a tab's arrangement.
+    function readDocumentScripts() {
+        if (automation && visible)
+            automation.addFromDocument()
+    }
+    // After the change: the tab and its name change before the target does.
+    onVisibleChanged: Qt.callLater(readDocumentScripts)
+    onDocumentNameChanged: Qt.callLater(readDocumentScripts)
+    onDocumentTabChanged: Qt.callLater(readDocumentScripts)
 
     // A macro row runs (Run, a double click, Enter) when its script is ready
     // and no macro is running.
@@ -928,7 +943,8 @@ Pane {
             close()
             root.stopRecording()
         }
-        onClosed: if (root.recording.length > 0) recorder.forceActiveFocus(Qt.OtherFocusReason)
+        // Escape closes it as Cancel does: the recording ends.
+        onClosed: if (root.recording.length > 0) root.stopRecording()
         background: Rectangle {
             color: Theme.panel
             border.width: 1

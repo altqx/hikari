@@ -11834,6 +11834,55 @@ private slots:
         QVERIFY(!application->automation().running());
     }
 
+    // AM1: the panel reads the Document's scripts (Script Info "Automation
+    // Scripts") as it shows and as the editing target changes while it
+    // shows, as the Automation menu opening does (Automation.cpp:1359).
+    void automationPanelReadsTheDocumentScripts()
+    {
+        QTemporaryDir scripts;
+        const auto document = [&](const QString &name) {
+            const QString script = QDir::toNativeSeparators(scripts.filePath(name + QStringLiteral(".lua")));
+            QFile lua(script);
+            if (!lua.open(QIODevice::WriteOnly))
+                return QString();
+            lua.write("aegisub.register_macro(\"" + name.toUtf8() + "\", \"\", function() end)\n");
+            const QString ass = scripts.filePath(name + QStringLiteral(".ass"));
+            QFile f(ass);
+            if (!f.open(QIODevice::WriteOnly))
+                return QString();
+            f.write("[Script Info]\nScriptType: v4.00+\nAutomation Scripts: |" + script.toUtf8() +
+                    "\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+            return ass;
+        };
+        const auto listed = [&](const char *name) {
+            const auto &all = application->automation().documentScripts().scripts();
+            const std::string script = QDir::toNativeSeparators(scripts.filePath(QLatin1String(name) + ".lua")).toStdString();
+            return std::ranges::find(all, script) != all.end();
+        };
+        const QString first = document(QStringLiteral("First"));
+        const QString second = document(QStringLiteral("Second"));
+        QVERIFY(!first.isEmpty() && !second.isEmpty());
+        QVERIFY(application->openFile(first));
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(dock);
+        QVERIFY(!dock->property("isOpen").toBool());
+        QTest::qWait(100);
+        QVERIFY(!listed("First")); // closed: nothing reads them
+        QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        QTRY_VERIFY(listed("First"));
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_First"), 30000);
+        // Another tab while it shows: its Document's scripts are read as it
+        // becomes the editing target.
+        QVERIFY(application->openFile(second));
+        QVERIFY(!listed("Second"));
+        application->selectTab(1);
+        QTRY_COMPARE(visualItem("automationTool")->property("documentName").toString(), QStringLiteral("Second.ass"));
+        QVERIFY(dock->property("isOpen").toBool());
+        QTRY_VERIFY(listed("Second"));
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_Second"), 30000);
+    }
+
     // AM1: the Automation panel, closed by default and opened from
     // Automation > Show panel. A macro's shortcut is recorded on its row and
     // applies at once; a taken one asks to reassign; Esc leaves it; a Global
@@ -11911,6 +11960,15 @@ private slots:
         keyTo(recorder, Qt::Key_Return);
         QTRY_COMPARE(tool->property("recording").toString(), QString());
         QVERIFY(!reassign->property("visible").toBool());
+        QCOMPARE(committed("Script shell-fixture.lua-1"), std::string("Ctrl+Alt+J"));
+        // Escape on the question is its Cancel: the recording ends, nothing moves.
+        record(0, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        keyTo(recorder, Qt::Key_Return);
+        QTRY_VERIFY(reassign->property("opened").toBool());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!reassign->property("visible").toBool());
+        QTRY_COMPARE(tool->property("recording").toString(), QString());
+        QCOMPARE(committed("Script shell-fixture.lua-0"), std::string());
         QCOMPARE(committed("Script shell-fixture.lua-1"), std::string("Ctrl+Alt+J"));
         // A macro the filter hides (Shift+click in the Automation menu):
         // the filter goes, so the row recording it shows.
