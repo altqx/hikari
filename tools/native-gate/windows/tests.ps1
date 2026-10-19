@@ -21,8 +21,8 @@ $runs = @(
     @{ exe = 'hikari_ui_line_grid_a11y_tests'; fns = @() },
     @{ exe = 'hikari_ui_docking_qualification_tests'; fns = @() },
     @{ exe = 'hikari_ui_workspace_layout_tests'; fns = @() },
-    # D2: the View menu's arrangements and the editor switch.
-    @{ exe = 'hikari_ui_view_arrangements_tests'; fns = @() },
+    # WS3: the layout presets and saved layouts; the retired View arrangements.
+    @{ exe = 'hikari_ui_saved_layouts_tests'; fns = @() },
     # WS1: each Document tab's arrangement.
     @{ exe = 'hikari_ui_tab_layouts_tests'; fns = @() }
 )
