@@ -8,6 +8,9 @@
 #include <QCoreApplication>
 #include <QTimer>
 
+#include <algorithm>
+#include <utility>
+
 namespace hikari::app {
 
 QVariantList Application::audioOutputMenu() const
@@ -64,6 +67,49 @@ void Application::noticeAudioRoute(const application::OutputRoute &before, const
         if (m_shell->statusText() == text)
             m_shell->setStatusText(QString());
     });
+}
+
+// AV2 (#239): the video's side of the sync toggle, on each change of the
+// video. While it plays, the audio cursor is at its time (legacy Tell(): the
+// last delivered frame's); a frame the playing box wanted while another was
+// on its way is asked for once that one arrived.
+void Application::syncAudioWithVideo()
+{
+    const auto &video = m_video->session();
+    const bool ready = video.state() == application::VideoSession::State::Ready;
+    m_audio->setPlayingVideoTime(ready && video.playing() ? std::optional(video.tellMs()) : std::nullopt);
+    if (!ready || video.playing() || !m_audio->playing()) {
+        m_audioWantsFrame.reset();
+        return;
+    }
+    if (m_audioWantsFrame && video.requestedFrame() == video.shownFrame()) {
+        const int frame = *std::exchange(m_audioWantsFrame, std::nullopt);
+        if (frame != video.requestedFrame())
+            m_video->session().showFrame(frame);
+    }
+}
+
+// AV2: the playing box's time on each tick: the paused video shows the frame
+// there (legacy FrameShownAt). A playing video keeps its own clock; the box
+// paused it when it started anyway (AudioDisplay::Play).
+void Application::showVideoAtAudio(int ms)
+{
+    auto &video = m_video->session();
+    // the box's timebase over this video (followVideoInAudio keeps it)
+    if (video.state() != application::VideoSession::State::Ready || video.playing() || video.frameCount() <= 0
+        || !m_audioTimebase || m_audioTimebasePath != video.path())
+        return;
+    const int frame = std::clamp(m_audioTimebase->frameShownAt(ms), 0, video.frameCount() - 1);
+    if (frame == video.requestedFrame()) {
+        m_audioWantsFrame.reset();
+        return;
+    }
+    if (video.requestedFrame() != video.shownFrame()) {
+        m_audioWantsFrame = frame; // one decode at a time; the newest waits
+        return;
+    }
+    m_audioWantsFrame.reset();
+    video.showFrame(frame);
 }
 
 } // namespace hikari::app

@@ -2376,6 +2376,17 @@
    "surfaces": [
     "audio-box"
    ]
+  },
+  {
+   "role": "audio-video-sync",
+   "file": "audio-video-sync.svg",
+   "label": "Sync the video and audio cursors",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
   }
  ],
  "notReplaced": {

@@ -3030,6 +3030,17 @@ ApplicationWindow {
                         tip: qsTranslate("HikariSub.Audio", "Auto-scroll to the active line")
                         onToggled: { root.audio.setAutoScroll(checked); audioDisplay.forceActiveFocus() }
                     }
+                    // AV2 (#239): the video and audio cursors follow each
+                    // other while playing (audio.syncVideo, on by default).
+                    AudioButton {
+                        objectName: "audioSyncVideo"
+                        iconRole: "audio-video-sync"
+                        text: qsTranslate("HikariSub.Audio", "Sync with video")
+                        checkable: true
+                        checked: root.audio.syncVideo
+                        tip: qsTranslate("HikariSub.Audio", "Sync the video and audio cursors")
+                        onToggled: root.audio.setSyncVideo(checked)
+                    }
                     AudioButton {
                         objectName: "audioSpectrumMode"
                         iconRole: "spectrum"

@@ -725,9 +725,13 @@ icon("hotkeys", "Hotkeys", [], ["settings-dialog"],
 
 
 # Audio panel, wave 6 (#213): the output device menu (AV1 #238), a speaker
-# cabinet so that volume's cone keeps its one meaning.
+# cabinet so that volume's cone keeps its one meaning; the cursor sync toggle
+# (AV2 #239), one playhead through a video frame and a waveform.
 icon("audio-output", "Output device", [], [AUDIOBOX],
      rect(3.5, 1.5, 9, 13, 1) + circle(8, 4.75, 1.25) + accent(circle(8, 10.25, 2.75)))
+icon("audio-video-sync", "Sync the video and audio cursors", [], [AUDIOBOX],
+     rect(1.5, 1.5, 13, 5, 1) + stroke("M2.5 11.25v1.5M4.5 10v4M6.5 10.75v2.5M10.5 10.5v3M12.5 11.25v1.5")
+     + accent(stroke("M8.5 1v14")))
 
 # The legacy bitmaps the set does not replace, and why (the card's Excluded:
 # the application and file-type icons stay, and controls Qt draws itself).

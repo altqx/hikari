@@ -1073,6 +1073,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.seekVideo = [this](int ms) { seekVideoFromAudio(ms); };
         m_audio->setTimingHooks(std::move(hooks));
     }
+    m_audio->setFollowAudio([this](int ms) { showVideoAtAudio(ms); }); // AV2
     // Legacy RendererFFMS2::OpenFile: a file with audio and no video goes to
     // the audio box (as audio from video: SetRecent, the box's own provider),
     // and the open video stays. Otherwise legacy ProviderFFMS2::Init chose the
@@ -1198,6 +1199,7 @@ void Application::followVideoInAudio()
             m_audio->setKeyframeSnapTimes({}); // A3
         }
         m_audio->setVideoTime(std::nullopt);
+        syncAudioWithVideo(); // AV2
         return;
     }
     if (!m_audioTimebase || m_audioTimebasePath != video.path() || m_audioKeyframes != video.keyframes()) {
@@ -1221,6 +1223,7 @@ void Application::followVideoInAudio()
         if (const auto frame = video.reportedFrame())
             paused = m_audioTimebase->msAt(*frame);
     m_audio->setVideoTime(paused);
+    syncAudioWithVideo(); // AV2
 }
 
 void Application::rememberRecentAudio(const QString &path)

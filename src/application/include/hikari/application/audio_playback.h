@@ -132,4 +132,16 @@ private:
     float m_x = -1;
 };
 
+// AV2 (#239): the audio cursor at the playing video's position (the sync
+// toggle). As UpdateTimer keeps the playback cursor in sight, the view moves
+// to kEdge columns before the position when it comes within kEdge columns of
+// either edge; unlike it, a view that cannot move (at the audio's start or
+// end) is not redrawn again, and the cursor shows wherever it is in view.
+struct FollowedCursor {
+    bool moved = false;     // the view moved: the image is drawn again
+    std::optional<float> x; // the cursor's column; nothing out of view
+    bool operator==(const FollowedCursor &) const = default;
+};
+FollowedCursor followCursor(AudioView &view, std::int64_t sample, int scrollbarThickness);
+
 } // namespace hikari::application

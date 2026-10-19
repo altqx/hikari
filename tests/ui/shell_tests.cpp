@@ -11855,6 +11855,110 @@ private slots:
         QVERIFY(!audio.playing());
     }
 
+    // AV2 (#239): the sync toggle, on by default. The audio cursor follows
+    // the playing video, a playback cursor without a time, and the view keeps
+    // it in sight; the paused video shows the frame the playing box is at.
+    // Off, each keeps to itself; the state persists. Which mode plays does
+    // not change (ADR 0009): the box's play still pauses the video, and the
+    // video never plays from the box.
+    void audioAndVideoCursorsFollowEachOther()
+    {
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        options.spellingBackend = {}; // no Dictionary folder there: no notice over the window
+        // the application writes its settings into `own`: it goes first
+        const auto close = qScopeGuard([this] {
+            delete engine;
+            delete application;
+            engine = nullptr;
+            application = nullptr;
+        });
+        restartWith(options);
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        auto &video = application->video();
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTRY_VERIFY(video.session().shownFrame());
+        // (the resolution question the video asks, which comes a moment later)
+        auto *mismatch = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mismatchDialog"));
+        if (mismatch && QTest::qWaitFor([&] { return mismatch->property("visible").toBool(); }, 3000))
+            QMetaObject::invokeMethod(mismatch, "close");
+        QTRY_VERIFY(!mismatch || !mismatch->property("visible").toBool());
+        QTest::mouseMove(window, QPoint(0, 0)); // the pointer away from the display
+        auto *toggle = qobject_cast<QQuickItem *>(named("audioSyncVideo"));
+        QVERIFY(toggle);
+        QTRY_VERIFY(toggle->isVisible() && toggle->width() > 0);
+        QCOMPARE(toggle->property("iconRole").toString(), QStringLiteral("audio-video-sync"));
+        QCOMPARE(toggle->property("display").toInt(), 0); // AbstractButton.IconOnly
+        QVERIFY(toggle->property("checked").toBool());
+        QVERIFY(audio.syncVideo());
+        QVERIFY(application->settingsStore()->boolean("audio.syncVideo"));
+        audio.setHorizontalZoom(10); // a few samples a column: the video outruns the view
+        audio.setScrollPosition(0);  // the view at the start (the active line put it elsewhere)
+
+        // The video plays: the cursor is at its time, the view moves with it.
+        QTRY_COMPARE(audio.view().position(), 0);
+        QVERIFY(video.play());
+        QTRY_VERIFY_WITH_TIMEOUT(audio.cursor().has_value(), 10000);
+        QVERIFY(audio.cursorIsPlayback());
+        QVERIFY(!audio.playing());
+        QTRY_VERIFY_WITH_TIMEOUT(audio.view().position() > 0, 10000);
+        QVERIFY(video.playing());
+        {
+            const int ms = video.session().tellMs();
+            const auto *display = audio.box().audio();
+            QVERIFY(display);
+            QVERIFY(audio.cursor());
+            QVERIFY(qAbs(*audio.cursor() - audio.view().xAtSample(std::int64_t(ms) * display->sampleRate() / 1000)) < 1.f);
+            QVERIFY(*audio.cursor() >= 0.f && *audio.cursor() < float(audio.view().width()));
+        }
+        QVERIFY(video.pause());
+        QTRY_VERIFY(!audio.cursor().has_value());
+
+        // The box plays: the paused video shows the frame it is at.
+        QVERIFY(video.session().seekToMs(0));
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(0));
+        const auto timebase = video.session().legacyTimebase();
+        audio.playRange(500, -1);
+        QVERIFY(audio.playing());
+        QVERIFY(!video.playing());
+        QTRY_VERIFY_WITH_TIMEOUT(video.session().shownFrame().value_or(0) >= timebase.frameShownAt(800), 10000);
+        QVERIFY(!video.playing());
+        audio.stopPlayback();
+        QVERIFY(!audio.playing());
+
+        // Off: neither follows the other.
+        clickWith(toggle, Qt::NoModifier);
+        QTRY_VERIFY(!audio.syncVideo());
+        QVERIFY(!toggle->property("checked").toBool());
+        QVERIFY(!application->settingsStore()->boolean("audio.syncVideo"));
+        QTest::mouseMove(window, QPoint(0, 0));
+        const auto viewAt = audio.view().position();
+        QVERIFY(video.play());
+        QTRY_VERIFY_WITH_TIMEOUT(video.session().tellMs() > 300, 10000);
+        QTest::qWait(200);
+        QVERIFY(!audio.cursor().has_value());
+        QCOMPARE(audio.view().position(), viewAt);
+        QVERIFY(video.pause());
+        QVERIFY(video.session().seekToMs(0));
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(0));
+        audio.playRange(500, -1);
+        QTest::qWait(700);
+        QCOMPARE(video.session().shownFrame(), std::optional<int>(0));
+        audio.stopPlayback();
+
+        // It persists: the next run starts off, and on again once switched on.
+        restartWith(options);
+        QVERIFY(!application->audio().syncVideo());
+        application->audio().setSyncVideo(true);
+        restartWith(options);
+        QVERIFY(application->audio().syncVideo());
+    }
+
     // O2 with A2-A4: the audio box's keys are its window's bindings in the
     // hotkey registry (AudioBox::SetAccels), and the Grid takes the Audio
     // bindings but AUDIO_COMMIT to AUDIO_NEXT (TabPanel::SetAccels, handed

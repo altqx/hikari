@@ -1258,6 +1258,13 @@ private:
     // system default plays (application_audio.cpp).
     void noticeAudioRoute(const application::OutputRoute &before, const application::OutputRoute &after);
     application::OutputRoute m_noticedRoute;
+    // AV2 (#239, application_audio.cpp): with the sync toggle on, the audio
+    // cursor follows the playing video, and the paused video shows the frame
+    // the playing audio box is at: one frame asked for at a time, the newest
+    // wanted one once it arrived.
+    void syncAudioWithVideo();
+    void showVideoAtAudio(int ms);
+    std::optional<int> m_audioWantsFrame;
     void refreshAudio();
     void followVideoInAudio();
     // V3 (application_video.cpp)
