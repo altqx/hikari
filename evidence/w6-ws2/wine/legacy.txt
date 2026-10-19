@@ -1,0 +1,6 @@
+Legacy HikariSub v0.0.1-rc.1 (HEAD 20d647c, release zip sha256 20a1b0fa164026522feab399cef521242203c6a1adaced0e6dddd3cb315e9a1e) under wine 11.20-1 on a private Xvfb (vx11).
+Each fixture copy: opened (opened.png), ' x' appended to line 1 (edited.png), Ctrl+S (saved.png), killed.
+fonts.ass vs fonts-hikari.ass saves: byte-identical
+plain.ass vs plain-hikari.ass saves: byte-identical
+[Hikari] / Layout= lines in any save: 0
+[Fonts] data of fonts-hikari.ass's save equals fonts.ass's input: yes
