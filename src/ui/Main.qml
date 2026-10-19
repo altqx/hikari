@@ -1891,7 +1891,7 @@ ApplicationWindow {
                 objectName: "hideEditorTagsMenuItem"
                 action: Action {
                     id: hideEditorTagsAction
-                    text: qsTr("Hide tags in the Line editor")
+                    text: qsTr("Hide tags in the line editor")
                     checkable: true
                     checked: !root.editor.showTags
                     onToggled: {
@@ -3436,7 +3436,7 @@ ApplicationWindow {
                             }
                             // LE3-tags-shown: the hidden-tag view's switch left the
                             // strip for Settings > Editor and GLOBAL_EDITOR_HIDE_TAGS
-                            // (Subtitles > "Hide tags in the Line editor").
+                            // (Subtitles > "Hide tags in the line editor").
                         }
                         // E5: legacy BoxSizer5, the row under the tag buttons
                         // that holds "Translator mode" (EditBox.cpp:233-239, 308).

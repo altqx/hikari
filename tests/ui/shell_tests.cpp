@@ -9044,9 +9044,9 @@ private slots:
               // Y4-playres-ask, the rewrite's own
               {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"},
               // LE2: the Times/Frames switch, out of the Line editor
-              {"editor.timesToFramesSwitch", "Show video frames instead of times in the Line editor and the Grid"},
+              {"editor.timesToFramesSwitch", "Show video frames instead of times in the line editor and the subtitle grid"},
               // LE3-tags-shown
-              {"editor.hideTags", "Hide tags in the Line editor"}}},
+              {"editor.hideTags", "Hide tags in the line editor"}}},
             {"settingsPageConversion",
              {{"convert.styleCatalog", nullptr},
               {"convert.style", nullptr},
@@ -10702,7 +10702,7 @@ private slots:
                                      "Hotkeys", "Subtitle properties"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" retired, never listed; LE3's
-        // "Hide tags in the Line editor" listed.
+        // "Hide tags in the line editor" listed.
         QCOMPARE(hotkeyRows().size(), 226);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);

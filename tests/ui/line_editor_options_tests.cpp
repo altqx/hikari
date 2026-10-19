@@ -282,7 +282,7 @@ private slots:
         auto *action = named("hideEditorTagsMenuItem")->property("action").value<QObject *>();
         QVERIFY(action);
         QVERIFY(!action->property("checked").toBool());
-        // The command (Subtitles > Hide tags in the Line editor).
+        // The command (Subtitles > Hide tags in the line editor).
         QVERIFY(runGlobal(QStringLiteral("GLOBAL_EDITOR_HIDE_TAGS")));
         QVERIFY(!application->editor().showTags());
         QTRY_COMPARE(shownText(), QStringLiteral("Hi there"));
@@ -316,9 +316,9 @@ private slots:
         QVERIFY(showLine(tagged));
         const int id = application::hotkeyIdOf("GLOBAL_EDITOR_HIDE_TAGS");
         QVERIFY(id > 0);
-        QCOMPARE(QString::fromStdString(application::hotkeyName(id)), QStringLiteral("Hide tags in the Line editor"));
+        QCOMPARE(QString::fromStdString(application::hotkeyName(id)), QStringLiteral("Hide tags in the line editor"));
         QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_EDITOR_HIDE_TAGS"), 0), QString());
-        application->hotkeys().gestureMap(id, QStringLiteral("Hide tags in the Line editor"), QStringLiteral("Ctrl-Shift-Y"),
+        application->hotkeys().gestureMap(id, QStringLiteral("Hide tags in the line editor"), QStringLiteral("Ctrl-Shift-Y"),
                                           0, QStringLiteral("cancel"));
         QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_EDITOR_HIDE_TAGS"), 0),
                  QStringLiteral("Ctrl-Shift-Y"));

@@ -495,7 +495,7 @@ constexpr NameRow kNames[] = {
         {2019, "Save frame with subtitles as PNG"}, // VIDEO_SAVE_SUBBED_FRAME_TO_PNG
         {2001, "Stop"}, // VIDEO_STOP
         // The rewrite's own (LE3-tags-shown).
-        {5169, "Hide tags in the Line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
+        {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
 };
 
 struct DefaultRow {

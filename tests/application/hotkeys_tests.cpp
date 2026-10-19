@@ -125,7 +125,7 @@ TEST(Hotkeys, NamesTableIsHotkeysNaming)
     EXPECT_EQ(legacy.at(ids().at("VIDEO_DELETE_FILE")), "Remove video");
     legacy[ids().at("VIDEO_DELETE_FILE")] = "Unload video";
     // The rewrite's own commands are named too (LE3).
-    legacy[5169] = "Hide tags in the Line editor";
+    legacy[5169] = "Hide tags in the line editor";
     EXPECT_EQ(hotkeyNames(), legacy);
     EXPECT_EQ(hotkeyName(kSave), "Save");
     EXPECT_EQ(hotkeyName(kGlobalQuit), ""); // not named: never listed
@@ -328,7 +328,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     ASSERT_EQ(list.rowCount(), 226u);
     EXPECT_EQ(list.row(0).text, "Global Close current tab");
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
-    EXPECT_EQ(rowNamed(list, "Global Hide tags in the Line editor").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
     EXPECT_EQ(list.row(int(list.rowCount()) - 1).text, "Audio Commit alt");
     EXPECT_EQ(list.find("Global Exit"), -1);
     EXPECT_EQ(list.selection(), 0);

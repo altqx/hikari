@@ -404,10 +404,10 @@ Dialog {
                     SettingCheck { setting: "automation.scriptResolutionFromVideo"; text: qsTr("Set a missing script resolution from the video without asking") }
                     // LE2: legacy's Time / Frames radios under the Line editor
                     // (EDITBOX_TIMES_TO_FRAMES_SWITCH); the Video panel's "⋯" menu has it too.
-                    SettingCheck { setting: "editor.timesToFramesSwitch"; text: qsTr("Show video frames instead of times in the Line editor and the Grid") }
+                    SettingCheck { setting: "editor.timesToFramesSwitch"; text: qsTr("Show video frames instead of times in the line editor and the subtitle grid") }
                     // LE3-tags-shown: the Line editor shows ASS override tags unless this is on
-                    // (Subtitles > "Hide tags in the Line editor" switches it too).
-                    SettingCheck { setting: "editor.hideTags"; text: qsTr("Hide tags in the Line editor") }
+                    // (Subtitles > "Hide tags in the line editor" switches it too).
+                    SettingCheck { setting: "editor.hideTags"; text: qsTr("Hide tags in the line editor") }
                     // LE5: the Line editor's custom tag buttons, in strip order.
                     GroupBox {
                         objectName: "settingsTagButtons"
