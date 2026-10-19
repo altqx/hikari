@@ -259,10 +259,6 @@
 <context>
     <name>HikariSub.Automation</name>
     <message>
-        <source>A script is running</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
     </message>
@@ -283,19 +279,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Ready</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Failed to load</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unavailable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -307,7 +295,155 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>In this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Autoload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcuts for missing macros</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter macros</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rerun last macro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is read-only until the macro ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No macros match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Macros</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Folded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unfolded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The script&apos;s process ended. Reload to start it again; its macro is not rerun.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show full error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcut %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press a shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Already assigned to: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 also uses %2 and takes it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set shortcut…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reassign shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is assigned to %2. Assign it to %3 instead?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reassign</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep both</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -331,10 +467,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Automation manager</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Close</source>
         <translation>மூடு</translation>
     </message>
@@ -344,42 +476,46 @@
     </message>
     <message>
         <source>List of automation shortcuts</source>
-        <translation>ஆட்டோமேசன் குறுக்குவழிகளின் பட்டியல்</translation>
+        <translation type="vanished">ஆட்டோமேசன் குறுக்குவழிகளின் பட்டியல்</translation>
     </message>
     <message>
         <source>Path and script name</source>
-        <translation>பாதை மற்றும் ச்கிரிப்ட் பெயர்</translation>
+        <translation type="vanished">பாதை மற்றும் ச்கிரிப்ட் பெயர்</translation>
     </message>
     <message>
         <source>Macro</source>
-        <translation>குறுநிரல்</translation>
+        <translation type="vanished">குறுநிரல்</translation>
     </message>
     <message>
         <source>Hotkey</source>
-        <translation>ஆட்ச்கி</translation>
+        <translation type="vanished">ஆட்ச்கி</translation>
     </message>
     <message>
         <source>Map hotkey</source>
-        <translation>வரைபட ஆட்ச்கி</translation>
+        <translation type="vanished">வரைபட ஆட்ச்கி</translation>
     </message>
     <message>
         <source>Delete hotkey</source>
-        <translation>ஆட்ச்கியை நீக்கு</translation>
+        <translation type="vanished">ஆட்ச்கியை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Refresh autoload scripts</source>
+        <translation type="unfinished">ஆட்டோலோட் ச்கிரிப்ட்களை புதுப்பிக்கவும்</translation>
+    </message>
+    <message>
+        <source>Shortcuts in Settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import legacy hotkeys…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Automation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hotkeys (Hotkeys.txt)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unresolved: the script or its macros changed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unresolved: no loaded script has this macro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -475,6 +611,26 @@
     <message>
         <source>Set</source>
         <translation type="unfinished">அமை</translation>
+    </message>
+    <message>
+        <source>No loaded script has this macro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Several loaded scripts have this file name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The script has no such macro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The script or its macro changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a macro shortcut</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2782,12 +2938,20 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Shortcut &quot;%1&quot; is invalid</source>
         <translation type="unfinished">விசை &quot;%1&quot; செல்லுபடியாகாது</translation>
+    </message>
+    <message>
+        <source>%1 takes it</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2982,7 +3146,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open shortcut mapping window</source>
-        <translation>குறுக்குவழி மேப்பிங் சாளரத்தைத் திறக்கவும்</translation>
+        <translation type="vanished">குறுக்குவழி மேப்பிங் சாளரத்தைத் திறக்கவும்</translation>
     </message>
     <message>
         <source>&amp;Load script…</source>
@@ -2994,10 +3158,6 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Rerun last macro</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Automation &amp;manager</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3463,6 +3623,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Load script</source>
         <translation>ச்கிரிப்டை ஏற்றவும்</translation>
+    </message>
+    <message>
+        <source>Show &amp;panel</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Go to previous frame</source>
@@ -4617,6 +4781,10 @@ removing audio cache files.</source>
         <translation>ஆடியோ குறுக்குவழிகள்</translation>
     </message>
     <message>
+        <source>Automation shortcuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Filtering mode:</source>
         <translation>வடிகட்டுதல் பயன்முறை:</translation>
     </message>
@@ -4635,6 +4803,10 @@ removing audio cache files.</source>
     <message>
         <source>Hotkey</source>
         <translation>ஆட்ச்கி</translation>
+    </message>
+    <message>
+        <source>Missing macro</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Map hotkey</source>
