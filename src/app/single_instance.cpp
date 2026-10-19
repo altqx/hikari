@@ -222,6 +222,29 @@ bool privateFolder(const QString &path, bool create)
     return S_ISDIR(info.st_mode) && info.st_uid == ::getuid() && (info.st_mode & 077) == 0;
 }
 
+// The graphical session: its Wayland display (a name in $XDG_RUNTIME_DIR,
+// or the socket's path), else its X server: ":0", ":0.0" and "unix:0" are
+// one session (a screen is not one of its own).
+QString sessionDisplay()
+{
+    const QString wayland = qEnvironmentVariable("WAYLAND_DISPLAY");
+    if (!wayland.isEmpty()) {
+        const QString runtime = qEnvironmentVariable("XDG_RUNTIME_DIR");
+        const bool named = !QDir::isAbsolutePath(wayland) && !runtime.isEmpty();
+        return QStringLiteral("wayland:") + QDir::cleanPath(named ? runtime + QLatin1Char('/') + wayland : wayland);
+    }
+    QString display = qEnvironmentVariable("DISPLAY");
+    if (const qsizetype colon = display.lastIndexOf(QLatin1Char(':')); colon >= 0) {
+        QString host = display.left(colon), number = display.mid(colon + 1);
+        if (const qsizetype dot = number.indexOf(QLatin1Char('.')); dot >= 0)
+            number.truncate(dot);
+        if (host == QLatin1String("unix"))
+            host.clear();
+        display = host + QLatin1Char(':') + number;
+    }
+    return QStringLiteral("x11:") + display;
+}
+
 // The socket's path fits the system's socket address (108 bytes on Linux).
 bool fitsSocket(const QString &path)
 {
@@ -323,11 +346,8 @@ SingleInstance::Location SingleInstance::forSession()
     // The pipe namespace spans the sessions; the Local\ one is the session's.
     return {name + QLatin1Char('-') + QString::number(session), QStringLiteral("Local\\") + name};
 #else
-    // The graphical session: its Wayland display, else its X display.
-    QString display = qEnvironmentVariable("WAYLAND_DISPLAY");
-    display = display.isEmpty() ? QStringLiteral("x11:") + qEnvironmentVariable("DISPLAY") : QStringLiteral("wayland:") + display;
-    const QString tag =
-        QString::fromLatin1(QCryptographicHash::hash(display.toUtf8(), QCryptographicHash::Sha256).toHex().left(16));
+    const QString tag = QString::fromLatin1(
+        QCryptographicHash::hash(sessionDisplay().toUtf8(), QCryptographicHash::Sha256).toHex().left(16));
     auto in = [&](const QString &folder) -> Location {
         const QString base = folder + QLatin1Char('/') + prefix + tag;
         return {base + QStringLiteral(".socket"), base + QStringLiteral(".lock")};

@@ -616,6 +616,19 @@ private slots:
         const auto w1 = app::SingleInstance::forSession();
         QVERIFY(x0.server != x1.server && x0.lock != x1.lock);
         QVERIFY(w1.server != x1.server && w1.server != x0.server);
+        // One session however its display is spelled: an X server's screen
+        // or "unix:" host, a Wayland display by name or by path.
+        qputenv("WAYLAND_DISPLAY", QFile::encodeName(runtimeDir.path() + QStringLiteral("/wayland-1")));
+        QCOMPARE(app::SingleInstance::forSession().server, w1.server);
+        qunsetenv("WAYLAND_DISPLAY");
+        for (const char *same : {":0.0", ":0.1", "unix:0", "unix:0.0"}) {
+            qputenv("DISPLAY", same);
+            QCOMPARE(app::SingleInstance::forSession().server, x0.server);
+        }
+        qputenv("DISPLAY", ":10");
+        QVERIFY(app::SingleInstance::forSession().server != x1.server);
+        qputenv("DISPLAY", ":1");
+        qputenv("WAYLAND_DISPLAY", "wayland-1");
         // Nor one where the socket's path would be longer than a socket address holds.
         const QString deep = runtimeDir.path() + QLatin1Char('/') + QString(100, QLatin1Char('r'));
         QVERIFY(::mkdir(QFile::encodeName(deep).constData(), 0700) == 0);
