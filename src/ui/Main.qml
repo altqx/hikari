@@ -3407,11 +3407,16 @@ ApplicationWindow {
                                 objectName: "tagButtonMenu"
                                 property Item button: null
                                 property int index: -1
+                                // Left is toward the first button, unless the layout is mirrored.
+                                readonly property int leftStep: Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1
                                 // At the click, inside the button it is for.
                                 function openFor(b, i, at) {
                                     button = b
                                     index = i
                                     popup(b, at)
+                                }
+                                function canMove(step) {
+                                    return index >= 0 && index + step >= 0 && index + step < root.tagButtons.count
                                 }
                                 ShellMenuItem {
                                     objectName: "tagButtonEdit"
@@ -3423,14 +3428,14 @@ ApplicationWindow {
                                 ShellMenuItem {
                                     objectName: "tagButtonMoveLeft"
                                     text: qsTranslate("HikariSub.Editor", "Move left")
-                                    enabled: tagButtonMenu.index > 0
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -1)
+                                    enabled: tagButtonMenu.canMove(tagButtonMenu.leftStep)
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, tagButtonMenu.leftStep)
                                 }
                                 ShellMenuItem {
                                     objectName: "tagButtonMoveRight"
                                     text: qsTranslate("HikariSub.Editor", "Move right")
-                                    enabled: tagButtonMenu.index >= 0 && tagButtonMenu.index < root.tagButtons.count - 1
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, 1)
+                                    enabled: tagButtonMenu.canMove(-tagButtonMenu.leftStep)
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -tagButtonMenu.leftStep)
                                 }
                                 MenuSeparator {}
                                 ShellMenuItem {
