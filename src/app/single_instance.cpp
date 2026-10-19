@@ -44,8 +44,9 @@ constexpr char kAck = '\1';
 // The sender's answer to the ack: it hands over and exits. A sender that gave
 // up before the ack (it runs alone) never sends it, so its request is dropped.
 constexpr char kCommit = '\2';
-// How long a sender that has the ack waits to send the commit and for the
-// holder to close.
+// The holder's receipt for the commit: it has taken the request.
+constexpr char kTaken = '\3';
+// How long a sender that has the ack waits for the receipt.
 constexpr int kCommitMs = 1000;
 // A connection that has not sent its whole request and commit by then is dropped.
 constexpr int kReadTimeoutMs = 5000;
@@ -306,23 +307,24 @@ bool SingleInstance::handOver(const Request &request, int timeoutMs)
     char answer = 0;
     if (!socket.getChar(&answer) || answer != kAck)
         return false;
-    // From here this start hands over: the holder opens the files once it
-    // has the commit, which it takes as long as the connection stays. Only a
-    // holder that drops the connection before taking it opens nothing, and
-    // then this start runs alone.
-    socket.putChar(kCommit);
+    // The holder opens the files once it has the commit, and answers it
+    // with its receipt. Without the receipt this start hands over only while
+    // the holder is still connected (it takes the commit when it can); a
+    // holder that closed or crashed before taking it opens nothing, so this
+    // start goes on (and may become the instance).
+    if (!socket.putChar(kCommit))
+        return false;
+    socket.flush();
     QElapsedTimer committing;
     committing.start();
-    while (socket.bytesToWrite() > 0 && socket.state() == QLocalSocket::ConnectedState &&
+    while (socket.bytesAvailable() < 1 && socket.state() == QLocalSocket::ConnectedState &&
            committing.elapsed() < kCommitMs)
-        socket.waitForBytesWritten(int(qMax<qint64>(kCommitMs - committing.elapsed(), 1)));
-    if (socket.bytesToWrite() > 0 && socket.state() != QLocalSocket::ConnectedState)
-        return false;
-    // The holder closes once it has read the commit; a pipe closed first may
-    // lose what is still in it.
-    if (socket.state() == QLocalSocket::ConnectedState)
-        socket.waitForDisconnected(kCommitMs);
-    return true;
+        socket.waitForReadyRead(int(qMax<qint64>(kCommitMs - committing.elapsed(), 1)));
+    if (socket.bytesAvailable() > 0) {
+        char receipt = 0;
+        return socket.getChar(&receipt) && receipt == kTaken;
+    }
+    return socket.state() == QLocalSocket::ConnectedState;
 }
 
 bool SingleInstance::tryLock()
@@ -431,7 +433,8 @@ void SingleInstance::read(QLocalSocket *socket)
             socket->abort();
             return;
         }
-        socket->disconnectFromServer();
+        socket->putChar(kTaken);
+        socket->disconnectFromServer(); // after what is still to write
         emit requested(acked.value<Request>());
         return;
     }

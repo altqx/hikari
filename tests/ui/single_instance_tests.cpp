@@ -10,6 +10,7 @@
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QLocalServer>
 #include <QLocalSocket>
 #include <QProcess>
 #include <QScopeGuard>
@@ -17,6 +18,7 @@
 #include <QTemporaryDir>
 #include <QThread>
 #include <QUuid>
+#include <QtEndian>
 #include <QtTest>
 
 #include <cstdio>
@@ -239,6 +241,40 @@ private slots:
         QCOMPARE(requested.at(0).at(0).value<app::SingleInstance::Request>().files, QStringList{next});
         QTest::qWait(500);
         QCOMPARE(requested.size(), 1);
+    }
+
+    // A holder that answers the request but closes before taking the
+    // commit (it quit or crashed) has not opened the files: the start does
+    // not leave as if it had.
+    void aHolderThatClosesBeforeTheCommitIsNotTrusted()
+    {
+        // The lock is held, and at the socket a holder that acks and drops.
+        app::SingleInstance holder({location.server + QStringLiteral("-elsewhere"), location.lock});
+        QCOMPARE(holder.claim({}), Role::Primary);
+        QLocalServer dropping;
+        QLocalServer::removeServer(location.server);
+        QVERIFY(dropping.listen(location.server));
+        int dropped = 0;
+        connect(&dropping, &QLocalServer::newConnection, this, [&] {
+            while (QLocalSocket *socket = dropping.nextPendingConnection()) {
+                connect(socket, &QLocalSocket::readyRead, socket, [socket, &dropped] {
+                    QByteArray buffer = socket->property("got").toByteArray() + socket->readAll();
+                    socket->setProperty("got", buffer);
+                    if (socket->property("acked").toBool()) {
+                        ++dropped; // the commit: closed without the receipt
+                        socket->abort();
+                        return;
+                    }
+                    if (buffer.size() < 19 || buffer.size() < 19 + qFromBigEndian<quint32>(buffer.constData() + 15))
+                        return;
+                    socket->setProperty("acked", true);
+                    socket->putChar('\1');
+                    socket->flush();
+                });
+            }
+        });
+        QCOMPARE(run({dir.filePath(QStringLiteral("g.ass"))}), code(Role::Alone));
+        QVERIFY(dropped > 0);
     }
 
     // A start that holds the lock but cannot listen (its socket or pipe name

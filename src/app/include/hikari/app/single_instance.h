@@ -23,7 +23,8 @@
 // QDataStream of the files (absolute) and the launch's activation token; the
 // holder answers one byte once it has the request, and opens the files only
 // once the sender answers that with its commit byte (a sender that gave up
-// waiting runs alone, so its request is dropped).
+// waiting runs alone, so its request is dropped); its receipt for the commit
+// tells the sender the files are taken.
 
 #include <QObject>
 #include <QString>
