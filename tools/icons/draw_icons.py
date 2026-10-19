@@ -258,7 +258,7 @@ TRANSPORT, FULLSCREEN, AUDIOBOX, EDITOR, VISUAL, PICKER, TABS = (
 
 # File
 icon("open-subtitles", "Open subtitles", ["opensubs.png"], [FILE, "video-context-menu"], page(True) + plus_badge())
-icon("save", "Save", ["Save.png"], [FILE, "tab-menu"], floppy())
+icon("save", "Save", ["Save.png"], [FILE, "tab-menu", "shift-times-panel"], floppy())
 icon("save-all", "Save all subtitles", ["SaveAll.png"], [FILE, "tab-menu"],
      stroke("M4.5 3.5v-2h8l2 2v8h-2") + stroke("M1.5 4.5h9l2 2v8h-11z") + stroke("M4.5 4.5v2.5h4V4.5")
      + stroke("M3.5 14.5v-3h6v3"))
