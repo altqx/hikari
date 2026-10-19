@@ -238,6 +238,10 @@ if(Python3_Interpreter_FOUND)
 endif()
 hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
+# WS1 (ADR 0020): each Document tab's panel arrangement, its Session round
+# trip and recovery.
+hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
 # D2: the View menu's arrangements and the editor switch through the composition.
 # Two parts, each its own process under the default 60 s (decision 38g,
 # 2026-10-14). Every function starts the application and its QML (13 starts,
