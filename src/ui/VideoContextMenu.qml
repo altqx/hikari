@@ -126,7 +126,7 @@ ShellMenu {
         iconRole: "editor"
         text: qsTr("Open editor")
         enabled: videoMenu.fullscreen
-        onTriggered: videoMenu.shell.app.openEditorFromFullScreen()
+        onTriggered: videoMenu.shell.openEditorFromFullScreen()
     }
     ShellMenu {
         id: recentSubtitlesMenu

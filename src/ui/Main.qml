@@ -384,6 +384,13 @@ ApplicationWindow {
     }
 
     // View > Panels > Show: open the panel, bring its window up and focus it.
+    // GLOBAL_EDITOR's VideoBox::OpenEditor (fullscreen's Open editor): out
+    // of fullscreen to the Line editor, shown even where the tab's layout
+    // has it closed (WS3).
+    function openEditorFromFullScreen() {
+        if (root.app.openEditorFromFullScreen())
+            root.showPanel(editorDock)
+    }
     function showPanel(dock) {
         dock.open()
         root.workspaceLayout.keepFloatingPanelsOnScreen()

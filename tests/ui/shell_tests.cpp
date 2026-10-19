@@ -20281,12 +20281,16 @@ private slots:
 
     // The context menu in fullscreen: "Exit full screen", "Open editor" and
     // "Show / hide progress bar" enabled, no "Copy video position"; Open
-    // editor pauses, selects the Line shown at the video's time and leaves.
+    // editor pauses, selects the Line shown at the video's time and leaves,
+    // to the Line editor even where the layout has it closed (WS3).
     void videoFullscreenContextMenuAndOpenEditor()
     {
         restartWithoutSound();
         QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
+        QObject *editorDock = named("editorDock");
+        QVERIFY(QMetaObject::invokeMethod(editorDock, "close"));
+        QTRY_VERIFY(!editorDock->property("isOpen").toBool());
         auto &fs = application->videoFullscreen();
         auto *session = v5Session();
         const auto lines = session->document().lines();
@@ -20362,6 +20366,8 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("fullscreenMenuOpenEditor"), "triggered"));
         QVERIFY(!fs.active());
         QTRY_COMPARE(session->selection().active, std::optional(lines[1]->id));
+        QTRY_VERIFY(editorDock->property("isOpen").toBool());
+        QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
     }
 
     // A double click on the picture switches fullscreen; leaving that way
