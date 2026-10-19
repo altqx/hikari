@@ -165,8 +165,13 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     // A path on the command line opens as the editing target. V5: a video
     // opens as legacy OpenFiles opens one file (hikarisubApp.cpp:483-487),
     // fullscreen with video.fullScreenOnStart, once the window is up.
-    const QString startPath = files.isEmpty() ? QString() : files.front();
+    // Several open together once the window is up, as legacy OnInit's
+    // OpenFiles(paths) and as files handed over (the files a quit left go
+    // to the next start this way).
+    const QString startPath = files.size() == 1 ? files.front() : QString();
     const bool startVideo = !startPath.isEmpty() && openStartFile(application, startPath);
+    if (files.size() > 1)
+        forwarded.take({files, {}});
 
     // K2: the controls draw with the theme layer's palette.
     hikari::ui::theme::chooseControlsStyle();
