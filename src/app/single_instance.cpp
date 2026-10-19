@@ -206,8 +206,10 @@ bool sameUser(QLocalSocket &socket)
 #endif
 }
 
-// A folder only this user can enter: no link, the user's own, no group or
-// other permissions. `create` makes it first when it is missing.
+// A folder only this user can enter, and can use for the lock and the
+// socket: no link, the user's own, read, write and search for the user and
+// nothing for the group or others. `create` makes it first when it is
+// missing.
 bool privateFolder(const QString &path, bool create)
 {
     const QByteArray name = QFile::encodeName(path);
@@ -216,7 +218,7 @@ bool privateFolder(const QString &path, bool create)
     struct stat info{};
     if (::lstat(name.constData(), &info) != 0)
         return false;
-    return S_ISDIR(info.st_mode) && info.st_uid == ::getuid() && (info.st_mode & 077) == 0;
+    return S_ISDIR(info.st_mode) && info.st_uid == ::getuid() && (info.st_mode & 0777) == 0700;
 }
 
 // The graphical session: its Wayland display (a name in $XDG_RUNTIME_DIR,

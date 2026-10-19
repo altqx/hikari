@@ -656,6 +656,13 @@ private slots:
         struct stat info{};
         QVERIFY(::lstat(QFile::encodeName(own).constData(), &info) == 0);
         QCOMPARE(int(info.st_mode & 0777), 0700);
+        // Nor one the user cannot write in or search: the lock and socket
+        // could not be made there.
+        for (const int mode : {0500, 0600}) {
+            QVERIFY(::chmod(QFile::encodeName(runtimeDir.path()).constData(), mode_t(mode)) == 0);
+            QVERIFY(app::SingleInstance::forSession().server.startsWith(own + QLatin1Char('/')));
+        }
+        QVERIFY(::chmod(QFile::encodeName(runtimeDir.path()).constData(), 0700) == 0);
 #endif
     }
 };
