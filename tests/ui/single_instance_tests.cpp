@@ -389,9 +389,15 @@ private slots:
         QCOMPARE(app::takeHandedOn(kept), (QStringList{a, b}));
         QVERIFY(!QFile::exists(kept));
         QVERIFY(app::takeHandedOn(kept).isEmpty());
+        // Any character a path may have, a line break included.
+        const QString odd = dir.filePath(QStringLiteral("two\nlines.ass"));
+        app::saveHandedOn(kept, {odd});
+        QCOMPARE(app::takeHandedOn(kept), QStringList{odd});
         QFile old(kept);
         QVERIFY(old.open(QIODevice::WriteOnly));
-        old.write(QByteArray::number(QDateTime::currentSecsSinceEpoch() - 7200) + "\n" + a.toUtf8() + "\n");
+        QDataStream stale(&old);
+        stale.setVersion(QDataStream::Qt_6_0);
+        stale << QDateTime::currentSecsSinceEpoch() - 7200 << QStringList{a};
         old.close();
         QVERIFY(app::takeHandedOn(kept).isEmpty());
         QVERIFY(!QFile::exists(kept));

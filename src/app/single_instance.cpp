@@ -216,18 +216,20 @@ QStringList launchFiles(const QStringList &arguments, const QString &workingDire
 
 namespace {
 
-// The first line is when the files were kept (seconds since the epoch, UTC),
-// then one file per line.
+// A QDataStream (Qt 6.0) of when the files were kept (seconds since the
+// epoch, UTC) and the files, so any path keeps its every character.
 QStringList readHandedOn(const QString &path, qint64 maxAgeSeconds)
 {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly))
         return {};
-    QStringList lines = QString::fromUtf8(file.readAll()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
-    bool ok = false;
-    const qint64 kept = lines.isEmpty() ? 0 : lines.takeFirst().toLongLong(&ok);
+    QDataStream in(&file);
+    in.setVersion(QDataStream::Qt_6_0);
+    qint64 kept = 0;
+    QStringList files;
+    in >> kept >> files;
     const qint64 age = QDateTime::currentSecsSinceEpoch() - kept;
-    return ok && age >= 0 && age <= maxAgeSeconds ? lines : QStringList();
+    return in.status() == QDataStream::Ok && age >= 0 && age <= maxAgeSeconds ? files : QStringList();
 }
 
 } // namespace
@@ -236,15 +238,15 @@ void saveHandedOn(const QString &path, const QStringList &files)
 {
     QStringList kept = readHandedOn(path, std::numeric_limits<qint64>::max());
     for (const QString &file : files)
-        if (!file.contains(QLatin1Char('\n')) && !kept.contains(file))
+        if (!kept.contains(file))
             kept << file;
     QDir().mkpath(QFileInfo(path).absolutePath());
     QSaveFile out(path);
     if (!out.open(QIODevice::WriteOnly))
         return;
-    out.write(QByteArray::number(QDateTime::currentSecsSinceEpoch()) + '\n');
-    for (const QString &file : kept)
-        out.write(file.toUtf8() + '\n');
+    QDataStream stream(&out);
+    stream.setVersion(QDataStream::Qt_6_0);
+    stream << QDateTime::currentSecsSinceEpoch() << kept;
     out.commit();
 }
 
