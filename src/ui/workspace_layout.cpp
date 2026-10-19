@@ -32,12 +32,28 @@ QString engineVersion()
     return QStringLiteral("KDDockWidgets %1").arg(QStringLiteral(KDDOCKWIDGETS_VERSION_STRING));
 }
 
-std::optional<QByteArray> readFile(const QString &path)
+// A file's bytes, at most kMaximumBytes + 1 (a larger file is refused);
+// nullopt when there is none, or when it is there but cannot be read
+// (`unreadable`: then nothing may write over it).
+std::optional<QByteArray> readFile(const QString &path, bool *unreadable = nullptr)
 {
     QFile f(path);
-    if (!f.exists() || !f.open(QIODevice::ReadOnly))
+    if (!f.exists())
         return std::nullopt;
+    if (!f.open(QIODevice::ReadOnly)) {
+        if (unreadable)
+            *unreadable = true;
+        return std::nullopt;
+    }
     return f.read(WorkspaceLayoutController::kMaximumBytes + 1);
+}
+
+// The whole of a file refused at start copied aside (over an older copy)
+// before anything can write over it; false when it could not be.
+bool keepAside(const QString &path, const QString &kept)
+{
+    QFile::remove(kept);
+    return QFile::copy(path, kept);
 }
 
 bool writeAtomically(const QString &path, const QByteArray &bytes)
@@ -290,22 +306,30 @@ bool WorkspaceLayoutController::restoreSavedFile()
 {
     if (m_file.isEmpty())
         return false;
-    const auto bytes = readFile(m_file);
-    if (!bytes)
+    bool unreadable = false;
+    const auto bytes = readFile(m_file, &unreadable);
+    if (!bytes && !unreadable)
         return false;
     QString problem, preset, layout;
-    const auto payload = payloadOf(*bytes, &problem, &preset, &layout);
+    const auto payload = bytes ? payloadOf(*bytes, &problem, &preset, &layout) : std::nullopt;
     if (!payload || !restorePayload(*payload)) {
         if (problem.isEmpty())
             problem = QCoreApplication::translate("HikariSub.Workspace", "the docking engine could not restore it");
-        // A copy is kept for diagnosis before anything can overwrite the
-        // file; saving resumes once the user changes or resets the layout.
+        // A copy of the whole file is kept for diagnosis before anything can
+        // overwrite it; saving resumes once the user changes or resets the
+        // layout. A file that cannot be read or copied is not written over.
         const QString kept = m_file + QStringLiteral(".unrestored");
-        writeAtomically(kept, *bytes);
         m_lastSaved = KDDockWidgets::LayoutSaver().serializeLayout();
-        m_notice = QCoreApplication::translate("HikariSub.Workspace",
-                                               "The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.")
-                       .arg(problem, QDir::toNativeSeparators(kept));
+        if (unreadable || !keepAside(m_file, kept)) {
+            m_fileLocked = true;
+            m_notice = QCoreApplication::translate("HikariSub.Workspace",
+                                                   "The saved panel layout at %1 could not be read or copied: it is not restored and not changed. The Editing layout is shown.")
+                           .arg(QDir::toNativeSeparators(m_file));
+        } else {
+            m_notice = QCoreApplication::translate("HikariSub.Workspace",
+                                                   "The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.")
+                           .arg(problem, QDir::toNativeSeparators(kept));
+        }
         emit changed();
         return false;
     }
@@ -320,7 +344,7 @@ bool WorkspaceLayoutController::restoreSavedFile()
 
 bool WorkspaceLayoutController::save()
 {
-    if (m_file.isEmpty() || m_restoring || !m_loaded || m_quitting)
+    if (m_file.isEmpty() || m_fileLocked || m_restoring || !m_loaded || m_quitting)
         return false;
     const QByteArray current = KDDockWidgets::LayoutSaver().serializeLayout();
     if (current == m_lastSaved)
@@ -613,7 +637,12 @@ void WorkspaceLayoutController::readSavedLayouts()
     m_saved.clear();
     if (m_savedFile.isEmpty())
         return;
-    const auto bytes = readFile(m_savedFile);
+    bool unreadable = false;
+    const auto bytes = readFile(m_savedFile, &unreadable);
+    if (unreadable) {
+        lockSavedLayouts();
+        return;
+    }
     if (!bytes)
         return;
     QJsonParseError error{};
@@ -631,9 +660,13 @@ void WorkspaceLayoutController::readSavedLayouts()
     else if (!o.value(QStringLiteral("layouts")).isArray())
         problem = QCoreApplication::translate("HikariSub.Workspace", "it is not a layouts file");
     if (!problem.isEmpty()) {
-        // Kept for diagnosis before a saved layout can overwrite the file.
+        // The whole file kept for diagnosis before a saved layout can
+        // overwrite it; one that cannot be copied is not written over.
         const QString kept = m_savedFile + QStringLiteral(".unrestored");
-        writeAtomically(kept, *bytes);
+        if (!keepAside(m_savedFile, kept)) {
+            lockSavedLayouts();
+            return;
+        }
         m_notice = QCoreApplication::translate("HikariSub.Workspace",
                                                "The saved layouts were not read because %1. The file is kept at %2.")
                        .arg(problem, QDir::toNativeSeparators(kept));
@@ -655,10 +688,23 @@ void WorkspaceLayoutController::readSavedLayouts()
     }
 }
 
+void WorkspaceLayoutController::lockSavedLayouts()
+{
+    m_savedLocked = true;
+    m_notice = QCoreApplication::translate("HikariSub.Workspace",
+                                           "The saved layouts at %1 could not be read or copied: they are not used and not changed.")
+                   .arg(QDir::toNativeSeparators(m_savedFile));
+}
+
 bool WorkspaceLayoutController::writeSavedLayouts()
 {
     if (m_savedFile.isEmpty())
         return true; // nothing is persisted
+    if (m_savedLocked) {
+        lockSavedLayouts(); // the notice again
+        emit changed();
+        return false;
+    }
     QJsonArray layouts;
     for (const SavedLayout &saved : m_saved) {
         if (!saved.arrangement) {

@@ -216,6 +216,9 @@ private:
         QJsonObject record;
     };
     void readSavedLayouts();
+    // The layouts file could not be read or kept aside: nothing writes over
+    // it this session, and the notice says so.
+    void lockSavedLayouts();
     bool writeSavedLayouts();
     int savedLayoutIndex(const QString &name) const; // any case; -1: none
     // Every arrangement (each tab's, the shown one's) that started from
@@ -223,6 +226,7 @@ private:
     void renameLayoutOrigin(const QString &from, const QString &to);
     std::vector<SavedLayout> m_saved;
     QString m_savedFile;
+    bool m_savedLocked = false;
 
     struct Tab {
         std::optional<WorkspaceArrangement> arrangement;
@@ -254,6 +258,7 @@ private:
     bool m_restoring = false;
     bool m_loaded = false; // restoreSaved() has run
     bool m_quitting = false; // saveForQuit() has run
+    bool m_fileLocked = false; // the saved file could not be read or copied: never written over
     bool m_menuHasFocus = false;
     QTimer m_screenCheck;
 };

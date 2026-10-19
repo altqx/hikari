@@ -8084,6 +8084,10 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The saved panel layout at %1 could not be read or copied: it is not restored and not changed. The Editing layout is shown.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8105,6 +8109,10 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>The saved layouts were not read because %1. The file is kept at %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The saved layouts at %1 could not be read or copied: they are not used and not changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -19,6 +19,7 @@
 #include "workspace_layout.h"
 
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -554,9 +555,13 @@ private slots:
         QCOMPARE(written[1].toObject(), newer); // as it was read
         stop();
 
-        // A broken file, or one without its list of layouts, is kept aside.
+        // A broken file, one without its list of layouts, or one too large
+        // to read is kept aside whole.
+        // (No raw strings with unbalanced braces here: moc misreads them.)
+        const QByteArray tooLarge = QByteArray("{\"schema\": 1, \"layouts\": [], \"pad\": \"")
+                                    + QByteArray(ui::WorkspaceLayoutController::kMaximumBytes + 100, 'x') + "\"}";
         for (const QByteArray &broken : {QByteArray("{not json"), QByteArray(R"({"schema": 1, "layouts": {}})"),
-                                         QByteArray(R"({"schema": 1})")}) {
+                                         QByteArray(R"({"schema": 1})"), tooLarge}) {
             QVERIFY(writeAll(layoutsFile(), broken));
             start();
             QVERIFY(layouts().savedLayouts().isEmpty());
@@ -564,6 +569,33 @@ private slots:
             QCOMPARE(readAll(layoutsFile() + QStringLiteral(".unrestored")), broken);
             stop();
         }
+    }
+
+    // A layouts file or a saved layout file that is there but cannot be
+    // read (here the name is a folder's) is neither used nor written over.
+    void unreadableFilesAreNotWrittenOver()
+    {
+        QVERIFY(QDir().mkdir(layoutsFile()));
+        start();
+        QVERIFY2(layouts().notice().contains(QStringLiteral("could not be read or copied")), qPrintable(layouts().notice()));
+        QVERIFY(layouts().savedLayouts().isEmpty());
+        QVERIFY(!layouts().saveLayoutAs(QStringLiteral("First")));
+        QVERIFY(layouts().savedLayouts().isEmpty());
+        QCOMPARE(switcherText(), QStringLiteral("Editing"));
+        stop();
+        QVERIFY(QFileInfo(layoutsFile()).isDir());
+        QVERIFY(QDir().rmdir(layoutsFile()));
+
+        const QString layoutFile = dir.filePath(QStringLiteral("layout.json"));
+        QFile::remove(layoutFile);
+        QVERIFY(QDir().mkdir(layoutFile));
+        start();
+        QVERIFY2(layouts().notice().contains(QStringLiteral("could not be read or copied")), qPrintable(layouts().notice()));
+        close("audioDock");
+        QVERIFY(!layouts().save());
+        stop();
+        QVERIFY(QFileInfo(layoutFile).isDir());
+        QVERIFY(QDir().rmdir(layoutFile));
     }
 
     // The retired commands: no name in the shortcut editor, no default
