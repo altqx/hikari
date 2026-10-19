@@ -3338,6 +3338,20 @@ private slots:
             QTRY_VERIFY2(text->property("text").toString().contains(tag),
                          qPrintable(QStringLiteral("%1: %2 lacks %3").arg(field, text->property("text").toString(), tag)));
         }
+        // Enter on a palette swatch picks it and keeps it, as elsewhere.
+        text->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QCOMPARE(popover->property("popupType").toInt(), 0); // in the main window
+        auto *paletteGrid = in("palette");
+        paletteGrid->forceActiveFocus(Qt::TabFocusReason);
+        paletteGrid->setProperty("current", 5); // red
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(popover->property("red").toInt(), 255);
+        QCOMPARE(popover->property("green").toInt(), 0);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H0000FF&")));
+        QCOMPARE(application->colourPicker().recent().value(0).toMap().value(QStringLiteral("r")).toInt(), 255);
         // A press outside keeps a value still being typed too.
         text->forceActiveFocus();
         QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));

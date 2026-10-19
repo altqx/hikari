@@ -1,6 +1,7 @@
 // SY2: a grid of colour swatches (the colour popover's palette and recent
-// colours). One tab stop: the arrow keys move the current swatch, Space or
-// Enter picks it, as a click does. Each colour is {r, g, b, a} with a the ASS
+// colours). One tab stop: the arrow keys move the current swatch, Space
+// picks it, as a click does, and Enter picks it and goes on to the
+// container (the popover keeps the colour). Each colour is {r, g, b, a} with a the ASS
 // alpha; `names` gives each its accessible name.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Colours"
@@ -44,8 +45,8 @@ Item {
     Keys.onUpPressed: move(-columns)
     Keys.onDownPressed: move(columns)
     Keys.onSpacePressed: pick(current)
-    Keys.onReturnPressed: pick(current)
-    Keys.onEnterPressed: pick(current)
+    Keys.onReturnPressed: event => { pick(current); event.accepted = false }
+    Keys.onEnterPressed: event => { pick(current); event.accepted = false }
     onColoursChanged: current = Math.min(current, Math.max(0, colours.length - 1))
 
     Repeater {
