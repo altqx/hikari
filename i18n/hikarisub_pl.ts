@@ -1141,6 +1141,10 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
         <translation>Położenie tekstu</translation>
     </message>
     <message>
+        <source>mixed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Number of characters in each line.
 No more than 43 characters per line (maximum 2 lines).</source>
         <translation>Ilość znaków w każdej linijce.
@@ -1154,7 +1158,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Time</source>
-        <translation>Czas</translation>
+        <translation type="vanished">Czas</translation>
     </message>
     <message>
         <source>Show times</source>
@@ -1162,7 +1166,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Frames</source>
-        <translation>Klatki</translation>
+        <translation type="vanished">Klatki</translation>
     </message>
     <message>
         <source>Show frames</source>
@@ -1278,7 +1282,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation>Ukryj tagi w nawiasach</translation>
+        <translation type="vanished">Ukryj tagi w nawiasach</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
@@ -1357,12 +1361,32 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Kolor cienia</translation>
     </message>
     <message>
+        <source>Add a tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Manage tag buttons</source>
-        <translation>Zarządzaj przyciskami tagów</translation>
+        <translation type="vanished">Zarządzaj przyciskami tagów</translation>
     </message>
     <message>
         <source>Change number of buttons</source>
-        <translation>Zmień ilość przycisków</translation>
+        <translation type="vanished">Zmień ilość przycisków</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -1398,7 +1422,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Enter ASS tag</source>
-        <translation>Wpisz tag ASS</translation>
+        <translation type="vanished">Wpisz tag ASS</translation>
     </message>
     <message>
         <source>Tag inserted in place of cursor</source>
@@ -1421,16 +1445,44 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Nazwa przycisku</translation>
     </message>
     <message>
+        <source>Enter a name or choose an icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">Nazwa</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Button tag</source>
         <translation>Tag przycisku</translation>
     </message>
     <message>
-        <source>Save tag</source>
-        <translation>Zapisz tag</translation>
+        <source>Insert</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Number of buttons</source>
+        <source>Icon</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">Brak</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">Podgląd</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">Zapisz</translation>
+    </message>
+    <message>
+        <source>Save tag</source>
+        <translation type="vanished">Zapisz tag</translation>
     </message>
     <message>
         <source>Select whole characters.</source>
@@ -1562,6 +1614,22 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>%1, active line %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the text the button puts in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the tag, for example \blur2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out the braces: the button puts the tag in an override block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A tag starts with a backslash, for example \blur2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3647,6 +3715,10 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation>Konwersja z jednego formatu napisów na inny</translation>
     </message>
     <message>
+        <source>Hide tags in the line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opens the HikariSub website in the default browser</source>
         <translation>Otwiera stronę HikariSub w domyślnej przeglądarce</translation>
     </message>
@@ -4402,6 +4474,42 @@ po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
         <source>Set a missing script resolution from the video without asking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show video frames instead of times in the line editor and the subtitle grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide tags in the line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No tag buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit the tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the tag button</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6155,6 +6263,18 @@ Spell checking will be disabled</source>
         <translation>Anuluj</translation>
     </message>
     <message>
+        <source>Missing style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The document has no style named &quot;%1&quot;. Create it from Default?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Prompt</source>
         <translation>Pytanie</translation>
     </message>
@@ -7054,6 +7174,40 @@ Usunięte style:
         <translation>Które linijki</translation>
     </message>
     <message>
+        <source>Amount</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time shifts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift times by time / frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delays subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speeds up subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shifts %1, %2, and %3 tag times
+so their positions on video do not change
+(slows down time shifting)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished">Linijki</translation>
+    </message>
+    <message>
+        <source>The choice of lines to move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>All lines</source>
         <translation>Wszystkie linijki</translation>
     </message>
@@ -7078,12 +7232,24 @@ Usunięte style:
         <translation>Według wybranych stylów</translation>
     </message>
     <message>
+        <source>Select a style from the list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Styles, separated by commas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move according to the following styles (separated by a coma)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>A method of time shift</source>
         <translation>Sposób przesuwania czasów</translation>
+    </message>
+    <message>
+        <source>The choice of times to move</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Both times</source>
@@ -7092,6 +7258,10 @@ Usunięte style:
     <message>
         <source>Correction end times</source>
         <translation>Korekcja czasów końcowych</translation>
+    </message>
+    <message>
+        <source>Correction end times, when they are improper or overlap each other</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Leave unchanged</source>
@@ -7104,6 +7274,66 @@ Usunięte style:
     <message>
         <source>New times</source>
         <translation>Nowe czasy</translation>
+    </message>
+    <message>
+        <source>Move the start time to the time video / audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end time to the video/audio time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in/lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inserts introduction to the start time (good when using fad)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Introduction time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inserts introduction to the end time (good when using fad)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start time extension threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time extension threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+before the start time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+after the start time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+before the end time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+after the end time in milliseconds</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Run post processor</source>
