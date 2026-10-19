@@ -538,6 +538,226 @@ private slots:
         QCOMPARE(item<QObject>("statusText")->property("text").toString(), QString());
     }
 
+    // SH2: the Home page covers the panels while no Document is open: at
+    // start, after the last tab closes and after Close all tabs. The Document
+    // tab bar shows only with a Document; the panels under Home take no input.
+    void homePageShowsWhileNoDocumentIsOpen()
+    {
+        auto *home = item("homePage");
+        QVERIFY(home->isVisible());
+        QVERIFY(!item("documentTabBar")->isVisible());
+        QVERIFY(!item("dockingArea")->isEnabled());
+        QCOMPARE(home->size(), item("dockingArea")->size());
+        // With no recent file the focus starts on New.
+        QTRY_COMPARE(window->activeFocusItem(), item("homeNew"));
+        QVERIFY(application->openFile(episode));
+        QTRY_VERIFY(!home->isVisible());
+        QVERIFY(item("documentTabBar")->isVisible());
+        QVERIFY(item("dockingArea")->isEnabled());
+        // The last tab closes: Home comes back, the list (now with the file)
+        // takes the focus.
+        QVERIFY(application->reviewCloseTab(0).isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(home->isVisible());
+        QVERIFY(!item("documentTabBar")->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("HikariSub"));
+        QTRY_VERIFY(item("homeRecentList")->hasActiveFocus()); // its current row
+        // New: an Untitled tab.
+        QVERIFY(QMetaObject::invokeMethod(item("homeNew"), "clicked"));
+        QTRY_VERIFY(!home->isVisible());
+        QCOMPARE(application->tabs().size(), qsizetype(1));
+        QVERIFY(application->targetUntitled());
+        // Close all tabs.
+        application->addPage();
+        QVERIFY(application->reviewCloseAll().isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(home->isVisible());
+        QVERIFY(application->tabs().isEmpty());
+        // F6 stays on the page.
+        item("homeNew")->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_F6);
+        QTRY_VERIFY(item("homeRecentList")->hasActiveFocus());
+    }
+
+    // SH2: the recent subtitles with their last-opened time; a missing file
+    // stays, marked "Missing", cannot be opened and has Remove; the filter
+    // narrows the list by name and path.
+    void homePageListsTheRecentFiles()
+    {
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("home"))));
+        const QString kept = writeFile(dir, "home/kept.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,k\n");
+        const QString gone = writeFile(dir, "home/gone.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,g\n");
+        QVERIFY(application->openFile(gone));
+        QVERIFY(application->openFile(kept));
+        QVERIFY(QFile::remove(gone));
+        QVERIFY(application->reviewCloseAll().isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(item("homePage")->isVisible());
+        auto *list = item("homeRecentList");
+        QTRY_COMPARE(list->property("count").toInt(), 2);
+        QTRY_VERIFY(visualItem("homeRecentRow1"));
+        QVERIFY(visualItem("homeOpened0")->property("text").toString().startsWith(QStringLiteral("Today ")));
+        QVERIFY(!visualItem("homeMissing0")->isVisible());
+        QVERIFY(visualItem("homeMissing1")->isVisible());
+        QVERIFY(visualItem("homeRemove1")->isVisible());
+        QVERIFY(!visualItem("homeRemove0")->isVisible());
+        // A missing file is not opened by Enter.
+        list->setProperty("currentIndex", 1);
+        list->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Return);
+        QVERIFY(application->tabs().isEmpty());
+        // The rows are named for assistive technology.
+        QAccessibleInterface *listFace = QAccessible::queryAccessibleInterface(list);
+        QVERIFY(listFace);
+        QCOMPARE(listFace->text(QAccessible::Name), QStringLiteral("Recent files"));
+        QAccessibleInterface *rowFace = QAccessible::queryAccessibleInterface(visualItem("homeRecentRow1"));
+        QVERIFY(rowFace);
+        QCOMPARE(rowFace->role(), QAccessible::ListItem);
+        QVERIFY(rowFace->text(QAccessible::Name).startsWith(QStringLiteral("gone.ass, ") + QDir::toNativeSeparators(gone)));
+        QVERIFY(rowFace->text(QAccessible::Name).endsWith(QStringLiteral(", missing")));
+        // Filter.
+        auto *filter = item("homeFilter");
+        filter->setProperty("text", QStringLiteral("kept"));
+        QTRY_COMPARE(list->property("count").toInt(), 1);
+        filter->setProperty("text", QStringLiteral("nothing like it"));
+        QTRY_VERIFY(item("homeNoRecent")->isVisible());
+        QCOMPARE(item("homeNoRecent")->property("text").toString(), QStringLiteral("No matching files"));
+        filter->setProperty("text", QString());
+        QTRY_COMPARE(list->property("count").toInt(), 2);
+        // Remove on the missing row.
+        QTRY_VERIFY(visualItem("homeRemove1"));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("homeRemove1"), "clicked"));
+        QTRY_COMPARE(list->property("count").toInt(), 1);
+        QCOMPARE(application->homeRecent().size(), qsizetype(1));
+        // The last one by Delete: the empty list says so, without the filter.
+        list->forceActiveFocus(Qt::TabFocusReason);
+        list->setProperty("currentIndex", 0);
+        press(Qt::Key_Delete);
+        QTRY_VERIFY(item("homeNoRecent")->isVisible());
+        QCOMPARE(item("homeNoRecent")->property("text").toString(), QStringLiteral("No recent files"));
+        QVERIFY(!filter->isVisible());
+    }
+
+    // SH2: keyboard. The list takes the focus with a file in it; Up and Down
+    // move, Enter opens, the Menu key opens the row's menu; Tab goes New →
+    // Open… → Open video… → (Restore) → Filter → the list.
+    void homePageKeyboard()
+    {
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("keys"))));
+        const QString a = writeFile(dir, "keys/a.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        const QString b = writeFile(dir, "keys/b.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,b\n");
+        QVERIFY(application->openFile(a));
+        QVERIFY(application->openFile(b)); // b first
+        QVERIFY(application->reviewCloseAll().isEmpty());
+        application->finishClose();
+        auto *list = item("homeRecentList");
+        QTRY_VERIFY(list->hasActiveFocus());
+        QCOMPARE(list->property("currentIndex").toInt(), 0);
+        QVERIFY(!visualItem("homeRowFocus")->isVisible()); // no ring until the keyboard moves
+        press(Qt::Key_Down);
+        QCOMPARE(list->property("currentIndex").toInt(), 1);
+        QTRY_VERIFY(findItem(visualItem("homeRecentRow1"), QStringLiteral("homeRowFocus"))->isVisible());
+        press(Qt::Key_Home);
+        QCOMPARE(list->property("currentIndex").toInt(), 0);
+        press(Qt::Key_End);
+        QCOMPARE(list->property("currentIndex").toInt(), 1);
+        // The row's menu.
+        press(Qt::Key_Menu);
+        QTRY_VERIFY(item<QObject>("homeRowMenu")->property("visible").toBool());
+        QVERIFY(item<QObject>("homeMenuOpen")->property("enabled").toBool());
+        QVERIFY(!item<QObject>("homeMenuRemoveMissing")->property("enabled").toBool());
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!item<QObject>("homeRowMenu")->property("visible").toBool());
+        // Backwards through the page.
+        list->forceActiveFocus(Qt::TabFocusReason);
+        const QStringList order{QStringLiteral("homeFilter"), QStringLiteral("homeOpenVideo"), QStringLiteral("homeOpen"),
+                                QStringLiteral("homeNew")};
+        for (const QString &name : order) {
+            press(Qt::Key_Tab, Qt::ShiftModifier);
+            QQuickItem *focused = window->activeFocusItem();
+            while (focused && focused->objectName().isEmpty())
+                focused = focused->parentItem();
+            QVERIFY(focused);
+            QCOMPARE(focused->objectName(), name);
+        }
+        // Enter opens the current file.
+        list->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Return);
+        QTRY_VERIFY(!item("homePage")->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("a.ass - HikariSub"));
+    }
+
+    // SH2: Last session with Restore, when the last session has a Document.
+    void homePageRestoresTheLastSession()
+    {
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("home-session"))));
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("home-session/hikari.ini"));
+        options.playbackAudio = false;
+        {
+            app::Application first(options);
+            QVERIFY(first.openFile(episode));
+        } // an orderly end writes the session
+        restartWith(options);
+        QTRY_VERIFY(item("homePage")->isVisible());
+        QTRY_VERIFY(item("homeSession")->isVisible());
+        QCOMPARE(item("homeSessionDocuments")->property("text").toString(), QStringLiteral("1 document · episode.ass"));
+        QVERIFY(QMetaObject::invokeMethod(item("homeRestore"), "clicked"));
+        QTRY_VERIFY(!item("homePage")->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("episode.ass - HikariSub"));
+        // After the last tab closes there is nothing left to restore.
+        QVERIFY(application->reviewCloseTab(0).isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(item("homePage")->isVisible());
+        QTRY_VERIFY(!item("homeSession")->isVisible());
+        restartWith(app::Application::Options());
+    }
+
+    // SH2: the Home page in the four themes, written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (home-<theme>.png), at 1280 ×
+    // 800 with a recent file, a missing one and the last session, and at 900
+    // × 680 (home-narrow-<theme>.png).
+    void homePageScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("shots"))));
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("shots/hikari.ini"));
+        options.playbackAudio = false;
+        const QString gone = writeFile(dir, "shots/Frieren - 26 signs.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,g\n");
+        {
+            app::Application first(options);
+            QVERIFY(first.openFile(gone));
+            QVERIFY(first.openFile(writeFile(dir, "shots/Dandadan OP karaoke.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,d\n")));
+            first.addPage();
+            QVERIFY(first.openFile(writeFile(dir, "shots/Frieren - 26 [1080p].ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,f\n")));
+            first.addPage();
+            QVERIFY(first.openFile(writeFile(dir, "shots/Frieren - 27 [1080p].ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,f\n")));
+        }
+        QVERIFY(QFile::remove(gone));
+        restartWith(options);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        for (const QSize size : {QSize(1280, 800), QSize(900, 680)}) {
+            window->resize(size);
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTRY_VERIFY(item("homeSession")->isVisible());
+                item("homeRecentList")->forceActiveFocus(Qt::TabFocusReason);
+                QTest::qWait(200);
+                const QString name = size.width() < 1000 ? QStringLiteral("/home-narrow-") : QStringLiteral("/home-");
+                QVERIFY(window->grabWindow().save(out + name + ui::theme::codeName(code) + QStringLiteral(".png")));
+            }
+        }
+        restartWith(app::Application::Options());
+    }
+
     void labelsNameTheEditingTargetAndTheProtectedReference()
     {
         QVERIFY(application->openFile(episode));

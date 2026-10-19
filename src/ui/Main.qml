@@ -657,6 +657,8 @@ ApplicationWindow {
     }
 
     function cyclePanels(step) {
+        if (homePage.visible) // SH2: the Home page is the one region
+            return homePage.takeFocus()
         const shown = panels.filter(p => p.visible)
         // The panel with focus in the focus window: the main one or a
         // floating panel group (D1). Window.active cannot tell them apart:
@@ -2333,6 +2335,38 @@ ApplicationWindow {
         Component.onCompleted: Qt.callLater(() => dropAreaCpp = Docking.mainDropArea(dockingArea.uniqueName))
     }
 
+    // SH2: the Home page over the docked panels while no Document is open,
+    // under the file drop area (z), so files dropped on it open. The panels
+    // under it stay laid out (their layout is saved as it is) but take no
+    // input.
+    HomePage {
+        id: homePage
+        objectName: "homePage"
+        app: root.app
+        anchors.fill: dockingArea
+        z: 1.5
+        visible: root.app.tabs.length === 0
+        onNewRequested: root.app.addPage()
+        onOpenRequested: openAction.trigger()
+        onOpenVideoRequested: openVideoAction.trigger()
+        onRestoreRequested: sessionWindows.load()
+        // P9: Ctrl+click shows the file in its folder, as in File > Recent.
+        onRecentChosen: path => { if (!root.app.revealRecent(path)) root.openSubtitles(path) }
+        onVisibleChanged: visible ? Qt.callLater(takeFocus) : Qt.callLater(root.focusAfterHome)
+        Component.onCompleted: if (visible) Qt.callLater(takeFocus)
+    }
+    // The first Document opened from Home: the focus, left nowhere when the
+    // page went, goes to the Grid (else the first shown panel), unless the
+    // opening put it somewhere.
+    function focusAfterHome() {
+        if (homePage.visible || (root.activeFocusItem && root.activeFocusItem !== root.contentItem))
+            return
+        const shown = root.panels.filter(p => p.visible)
+        const next = shown.includes(gridPanel) ? gridPanel : shown[0]
+        if (next)
+            root.focusPanel(next, Qt.OtherFocusReason)
+    }
+
     // D1: the Classic panels dock, float, tab and close (KDDockWidgets behind
     // ui/docking.h; docs/qt/docking.md). Closing a panel hides its view; its
     // controller and any draft stay.
@@ -2341,6 +2375,7 @@ ApplicationWindow {
         objectName: "dockingArea"
         anchors.fill: parent
         uniqueName: "Classic"
+        enabled: !homePage.visible // SH2
 
         KDDW.DockWidget {
             id: videoDock

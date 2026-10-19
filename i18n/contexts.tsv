@@ -14,6 +14,7 @@ HikariSub.Documents	Opening, saving, closing and reloading Documents; Untitled D
 HikariSub.Editor	The line editor panel: text fields and their menu, the line inspector, counters, alignment, tag buttons
 HikariSub.Fonts	The font collector, font catalogs, fonts from subtitles and the font chooser
 HikariSub.Grid	The subtitle grid: headings, line states, selection, line groups, copy and paste of columns
+HikariSub.Home	The Home page while no Document is open: New and Open, the last session, the recent files and their menu
 HikariSub.Hotkeys	Hotkey mapping and shortcut hints
 HikariSub.MainWindow	The main window: title, menu bar and menu help, About, Credits, updates, the log and history windows
 HikariSub.Matroska	Subtitles from Matroska files

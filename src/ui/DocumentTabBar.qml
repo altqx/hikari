@@ -28,6 +28,9 @@ Item {
     signal closeAllRequested()
 
     implicitHeight: row.implicitHeight
+    // SH2: hidden while the Home page shows (no Document open), whose New
+    // the "+" would repeat.
+    visible: bar.app.tabs.length > 0
     Accessible.role: Accessible.PageTabList
     Accessible.name: qsTr("Open documents")
 
