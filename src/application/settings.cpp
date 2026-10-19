@@ -277,6 +277,10 @@ const std::vector<SettingDefinition> &definitions()
         // open video's size without asking, both keys (the question's
         // "Always set it from the video"; Settings > Editor).
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
+        // LE3-tags-shown (owner, 2026-10-18): the Line editor shows ASS
+        // override tags unless this is on (Settings > Editor, and the
+        // EDITBOX_HIDE_TAGS command); legacy hid them on every start.
+        {"editor.hideTags", "", Bool, Profile, Mapped, false, false},
     };
     return table;
 }

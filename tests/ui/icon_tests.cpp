@@ -279,7 +279,7 @@ private slots:
                                  // the UI polish's roles: the batch picker, the list and edit
                                  // commands, the folders, the menus and the Options pages
                                  "pick-lines", "clear", "move-to-top", "move-up", "move-down", "move-to-bottom",
-                                 "menu-more", "panel-menu", "add", "remove", "edit", "duplicate", "delete", "import", "refresh",
+                                 "panel-menu", "add", "remove", "edit", "duplicate", "delete", "import", "refresh",
                                  "filter", "edit-copy", "edit-cut", "edit-paste", "folder-open", "find-in-files",
                                  "show-in-folder", "compare", "reference", "extract-subtitles", "multireplace",
                                  "close-video", "frame-snapshot", "zoom-reset", "volume", "match-previous",

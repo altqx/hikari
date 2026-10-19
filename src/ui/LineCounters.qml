@@ -1,9 +1,9 @@
-// E4: the Line editor's counters and its Times/Frames switch (legacy
-// EditBox's BoxSizer5, EditBox.cpp:216-237): "Wraps: ..." and "Characters per
-// second: ..." (EditBox::UpdateChars, in the warning colour over 43
-// characters a wrap or three wraps, and over 15 characters per second; empty
-// for a comment), then Time and Frames (EDITBOX_TIMES_TO_FRAMES_SWITCH),
-// enabled once a video was opened (Notebook::LoadVideo).
+// E4: the Line editor's counters (legacy EditBox's BoxSizer5,
+// EditBox.cpp:216-237): "Wraps: ..." and "Characters per second: ..."
+// (EditBox::UpdateChars, in the warning colour over 43 characters a wrap or
+// three wraps, and over 15 characters per second; empty for a comment).
+// LE2: legacy's Time and Frames radios (EDITBOX_TIMES_TO_FRAMES_SWITCH) left
+// this row for Settings > Editor and the Video panel's "⋯" menu.
 pragma Translator: "HikariSub.Editor"
 import QtQuick
 import QtQuick.Controls
@@ -39,27 +39,5 @@ RowLayout {
         ToolTip.visible: cpsHover.hovered
         ToolTip.text: Accessible.description
         ToolTip.delay: 500
-    }
-    Item { Layout.fillWidth: true }
-    ButtonGroup { id: timeDisplay }
-    RadioButton {
-        objectName: "showTimes"
-        text: qsTr("Time")
-        ButtonGroup.group: timeDisplay
-        checked: !counters.editor.showFrames
-        enabled: counters.editor.framesAvailable
-        focusPolicy: Qt.TabFocus
-        Accessible.name: qsTr("Show times")
-        onToggled: if (checked) counters.editor.showFrames = false
-    }
-    RadioButton {
-        objectName: "showFrames"
-        text: qsTr("Frames")
-        ButtonGroup.group: timeDisplay
-        checked: counters.editor.showFrames
-        enabled: counters.editor.framesAvailable
-        focusPolicy: Qt.TabFocus
-        Accessible.name: qsTr("Show frames")
-        onToggled: if (checked) counters.editor.showFrames = true
     }
 }

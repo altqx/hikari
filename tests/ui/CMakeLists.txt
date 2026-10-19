@@ -253,6 +253,8 @@ hikari_add_qttest(hikari_ui_saved_layouts_tests SOURCES saved_layouts_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets
     PARTS layouts kept=unusableLayoutsAreKept)
 target_include_directories(hikari_ui_saved_layouts_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+# Wave 6's Line editor cards (LE2-LE6) through the composition, with restarts.
+hikari_add_qttest(hikari_ui_line_editor_options_tests SOURCES line_editor_options_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cpp LIBRARIES hikari_composition)
 # ADR 0019: the download, its checks and the hand-off per package kind.
 hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_tests.cpp LIBRARIES hikari_composition)

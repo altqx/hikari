@@ -1049,10 +1049,109 @@
    ]
   },
   {
-   "role": "alignment",
-   "file": "alignment.svg",
-   "label": "Alignment (\\an)",
+   "role": "alignment-1",
+   "file": "alignment-1.svg",
+   "label": "Bottom-left (an1)",
    "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-2",
+   "file": "alignment-2.svg",
+   "label": "Bottom-center (an2)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-3",
+   "file": "alignment-3.svg",
+   "label": "Bottom-right (an3)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-4",
+   "file": "alignment-4.svg",
+   "label": "Middle-left (an4)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-5",
+   "file": "alignment-5.svg",
+   "label": "Center (an5)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-6",
+   "file": "alignment-6.svg",
+   "label": "Middle-right (an6)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-7",
+   "file": "alignment-7.svg",
+   "label": "Top-left (an7)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-8",
+   "file": "alignment-8.svg",
+   "label": "Top-center (an8)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-9",
+   "file": "alignment-9.svg",
+   "label": "Top-right (an9)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "alignment-mixed",
+   "file": "alignment-mixed.svg",
+   "label": "Text position (mixed)",
+   "accent": false,
    "mirror": false,
    "legacy": [],
    "surfaces": [
@@ -1953,12 +2052,12 @@
   {
    "role": "menu-more",
    "file": "menu-more.svg",
-   "label": "More",
+   "label": "Layouts",
    "accent": false,
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "line-editor"
+    "status-bar"
    ]
   },
   {

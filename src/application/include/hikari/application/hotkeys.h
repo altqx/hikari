@@ -67,19 +67,23 @@ inline constexpr int kGridFirst = 4001;
 inline constexpr int kGridFilterIgnoreInActions = 4546;
 inline constexpr int kGlobalFirst = 5000;
 inline constexpr int kGlobalQuit = 5108;
+inline constexpr int kLegacyHotkeyActions = 243;
 inline constexpr int kFirstScriptHotkey = 30100;
 
 struct HotkeyAction {
     std::string_view symbol;
     int id;
 };
-// IDS in declaration order (243 symbols).
+// IDS in declaration order (243 symbols, kLegacyHotkeyActions), then the
+// rewrite's own commands on ids legacy left unused: GLOBAL_EDITOR_HIDE_TAGS
+// (LE3, 5169).
 std::span<const HotkeyAction> hotkeyActions();
 // GetIdValue: 0 for an unknown symbol.
 int hotkeyIdOf(std::string_view symbol);
 // GetString: "" for an id without a symbol.
 std::string_view hotkeySymbol(int id);
-// HotkeysNaming (English): the names the Options list shows, by id.
+// HotkeysNaming (English): the names the Options list shows, by id, and the
+// rewrite's own commands' names.
 const std::map<int, std::string> &hotkeyNames();
 // HotkeysNaming::GetName: "" when the id has no name (scripts, GLOBAL_QUIT...).
 std::string hotkeyName(int id);
