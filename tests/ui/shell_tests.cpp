@@ -891,6 +891,85 @@ private slots:
         }
     }
 
+    // WS4: the Document tabs are the window's first row under the menu bar,
+    // as in MuseScore and IDEs (SH1's title bar will come above them), with
+    // the notices under them; the status bar stays the bottom row. The tabs
+    // work there as they did at the bottom: a click shows a tab, a middle
+    // click and the close mark close one, a right click opens the tab menu,
+    // and a full bar scrolls with the wheel.
+    void documentTabsSitUnderTheMenuBar()
+    {
+        auto *root = engine->rootObjects().first();
+        auto *menuBar = root->property("menuBar").value<QQuickItem *>();
+        auto *header = root->property("header").value<QQuickItem *>();
+        auto *footer = root->property("footer").value<QQuickItem *>();
+        auto *content = root->property("contentItem").value<QQuickItem *>();
+        QVERIFY(menuBar && header && footer && content);
+        QCOMPARE(header->objectName(), QStringLiteral("windowTop"));
+        QCOMPARE(footer->objectName(), QStringLiteral("statusBar"));
+        QQuickItem *bar = visualItem("documentTabBar");
+        QVERIFY(bar && bar->isVisible());
+        const auto rows = header->childItems();
+        QCOMPARE(rows.value(0), bar);
+        // D1's layout notice and ADR 0019's update bar under the tabs, hidden
+        // with nothing to say.
+        QQuickItem *layoutNotice = visualItem("layoutNotice");
+        QQuickItem *updateBar = visualItem("updateReadyBar");
+        QVERIFY(layoutNotice && !layoutNotice->isVisible() && updateBar && !updateBar->isVisible());
+        QCOMPARE(rows.indexOf(layoutNotice), 1);
+        QCOMPARE(rows.indexOf(updateBar), 2);
+        const auto top = [](QQuickItem *i) { return qRound(i->mapToScene(QPointF()).y()); };
+        QTRY_COMPARE(top(bar), qRound(menuBar->height()));
+        QCOMPARE(top(bar) + qRound(bar->height()), top(content));
+        QCOMPARE(top(footer), top(content) + qRound(content->height()));
+
+        const auto tabCount = [&] { return int(application->tabs().size()); };
+        const auto centre = [&](const QString &name) {
+            QQuickItem *tab = findItem(window->contentItem(), name);
+            return tab ? tab->mapToScene(QPointF(tab->width() / 2, tab->height() / 2)).toPoint() : QPoint();
+        };
+        QVERIFY(application->openFile(episode));
+        application->addPage();
+        QTRY_COMPARE(tabCount(), 2);
+        // The row lays the new tabs out on its next polish.
+        QTRY_VERIFY(centre(QStringLiteral("documentTab1")).x() > centre(QStringLiteral("documentTab0")).x());
+        QCOMPARE(application->currentTab(), 1);
+        QTest::mouseClick(window, Qt::LeftButton, {}, centre(QStringLiteral("documentTab0")));
+        QTRY_COMPARE(application->currentTab(), 0);
+        // A middle click closes the clean Untitled tab, the close mark the
+        // current one.
+        QTest::mouseClick(window, Qt::MiddleButton, {}, centre(QStringLiteral("documentTab1")));
+        QTRY_COMPARE(tabCount(), 1);
+        application->addPage();
+        QTRY_COMPARE(tabCount(), 2);
+        QTRY_VERIFY(centre(QStringLiteral("documentTab1")).x() > centre(QStringLiteral("documentTab0")).x());
+        QTRY_VERIFY(visualItem("documentTabClose1") && visualItem("documentTabClose1")->isEnabled());
+        QTest::mouseClick(window, Qt::LeftButton, {}, centre(QStringLiteral("documentTabClose1")));
+        QTRY_COMPARE(tabCount(), 1);
+        // The tab menu opens where the tab is.
+        QTest::mouseClick(window, Qt::RightButton, {}, centre(QStringLiteral("documentTab0")));
+        QObject *menu = named("documentTabMenu");
+        QTRY_VERIFY(menu && menu->property("opened").toBool());
+        QMetaObject::invokeMethod(menu, "close");
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        // Overflow: more tabs than fit, and the wheel over the bar scrolls it.
+        while (tabCount() < 30)
+            application->addPage();
+        QQuickItem *flick = nullptr;
+        for (auto *child : bar->childItems())
+            if (child->inherits("QQuickFlickable"))
+                flick = child;
+        QVERIFY(flick);
+        QTRY_VERIFY(flick->property("contentWidth").toReal() > flick->width());
+        flick->setProperty("contentX", 0);
+        const QPoint over = bar->mapToScene(QPointF(bar->width() / 2, bar->height() / 2)).toPoint();
+        QWheelEvent wheel(over, window->mapToGlobal(over), QPoint(), QPoint(0, -120), Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &wheel);
+        QTRY_VERIFY(flick->property("contentX").toReal() > 0);
+        QCOMPARE(top(bar), qRound(menuBar->height()));
+    }
+
     // P10: legacy's nine status fields without and with media: the help
     // field, the subtitles' resolution of an ASS Document, then the video's
     // scale, zoom, duration, FPS, resolution, aspect ratio and file name,
@@ -908,13 +987,16 @@ private slots:
             QVERIFY2(f && !f->isVisible(), name);
         }
         // No main toolbar (user decision 2026-10-05, P10-no-main-toolbar):
-        // under the menu bar the window shows no row (its header is only
-        // D1's layout notice and ADR 0019's update bar, hidden without
-        // either); the status bar is its bottom row, as legacy's.
+        // under the menu bar the window shows only the Document tabs (WS4;
+        // D1's layout notice and ADR 0019's update bar under them are hidden
+        // without either); the status bar is its bottom row, as legacy's.
         auto *root = engine->rootObjects().first();
         QVERIFY(root->property("menuBar").value<QObject *>());
         auto *header = root->property("header").value<QQuickItem *>();
-        QVERIFY(!header || (header->objectName() == QLatin1String("noticeArea") && !header->isVisible()));
+        QVERIFY(header && header->objectName() == QLatin1String("windowTop"));
+        for (auto *row : header->childItems())
+            QVERIFY2(row->objectName() == QLatin1String("documentTabBar") || !row->isVisible(),
+                     qPrintable(row->objectName()));
         QQuickItem *strip = visualItem("statusBar");
         QVERIFY(strip && strip->isVisible());
         QTRY_COMPARE(qRound(strip->mapToScene(QPointF(0, strip->height())).y()), qRound(window->contentItem()->height()));
@@ -16031,6 +16113,54 @@ private slots:
                         .save(out + QStringLiteral("/appearance-page") + suffix));
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
+    }
+
+    // WS4: the Document tabs under the menu bar in the four themes, written
+    // to HIKARI_SURFACE_SHOT_DIR when it is set: the window
+    // (document-tabs-<theme>.png) and its top rows, the menu bar and the
+    // tabs (document-tabs-top-<theme>.png). Three tabs, the second current
+    // and modified.
+    void documentTabsScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        window->resize(1280, 800);
+        QVERIFY(application->openFile(episode));
+        application->addPage();
+        QVERIFY(application->openFile(original)); // into the new Untitled tab
+        application->addPage();
+        QTRY_COMPARE(int(application->tabs().size()), 3);
+        application->selectTab(1);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("ref"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 3);
+        QTest::keyClick(window, 'x');
+        press(Qt::Key_Return, Qt::ControlModifier); // a modified tab
+        QTRY_VERIFY(visualItem("documentTabModified1") && visualItem("documentTabModified1")->isVisible());
+        auto *root = engine->rootObjects().first();
+        auto *header = root->property("header").value<QQuickItem *>();
+        QVERIFY(header);
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+            item("editingGrid")->forceActiveFocus(Qt::TabFocusReason);
+            QTest::qWait(200);
+            const QImage shot = window->grabWindow();
+            QVERIFY(shot.save(out + QStringLiteral("/document-tabs") + suffix));
+            const qreal dpr = window->effectiveDevicePixelRatio();
+            const qreal bottom = header->mapToScene(QPointF(0, header->height())).y() + 24;
+            QVERIFY(shot.copy(QRectF(0, 0, window->width() * dpr, bottom * dpr).toAlignedRect())
+                        .save(out + QStringLiteral("/document-tabs-top") + suffix));
         }
     }
 
