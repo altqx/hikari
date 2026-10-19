@@ -46,8 +46,15 @@ Window {
     // Style, its name field focused, whatever the window showed; a Style
     // the Document lacks is offered for creation, from its Default.
     function editStyle(styleName) {
-        showFor(styleName)
+        styles.refreshLists()
         const row = styles.documentStyles.indexOf(styleName)
+        // An open manager keeps its selection until a Style is created.
+        if (row >= 0 || !visible) {
+            showFor(styleName)
+        } else {
+            raise()
+            requestActivate()
+        }
         if (row >= 0) {
             editDocumentStyle(row)
         } else if (styleName.length > 0 && styles.available) {

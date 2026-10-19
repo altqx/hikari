@@ -509,6 +509,17 @@ private slots:
         QTRY_VERIFY(!question->property("visible").toBool());
         QVERIFY(!styles->property("editing").toBool());
         QCOMPARE(controller.documentStyles().size(), 2);
+        // Open on Sign: Cancel leaves its selection and its editor alone.
+        QVERIFY(QMetaObject::invokeMethod(styles, "editStyle", Q_ARG(QVariant, QStringLiteral("Sign"))));
+        QTRY_VERIFY(styles->property("editing").toBool());
+        QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
+        QTRY_VERIFY(question->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(findItem(footer, QStringLiteral("styleCreateCancel")), "click"));
+        QTRY_VERIFY(!question->property("visible").toBool());
+        QCOMPARE(styles->property("assSelected").toList().value(0).toInt(), 1);
+        QCOMPARE(findItem(styles->contentItem(), QStringLiteral("styleName"))->property("text").toString(),
+                 QStringLiteral("Sign"));
+        QVERIFY(QMetaObject::invokeMethod(styles, "endEditing")); // nothing changed
         auto *session = application->files().session(*application->workspace().editingTarget());
         const auto steps = session->historySize();
         QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
