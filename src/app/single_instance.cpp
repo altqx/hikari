@@ -46,9 +46,13 @@ constexpr char kAck = '\1';
 constexpr char kCommit = '\2';
 // The holder's receipt for the commit: it has taken the request.
 constexpr char kTaken = '\3';
-// How long a sender that has the ack waits for the receipt.
-constexpr int kCommitMs = 1000;
-// A connection that has not sent its whole request and commit by then is dropped.
+// The holder takes a commit only this long after its ack, and the sender
+// waits twice as long for the receipt (or the connection's end): a commit
+// the holder took is always receipted before the sender gives up, and a
+// sender that gave up never has its files taken.
+constexpr int kCommitWindowMs = 5000;
+constexpr int kReceiptWaitMs = 2 * kCommitWindowMs;
+// A connection that has not sent its whole request by then is dropped.
 constexpr int kReadTimeoutMs = 5000;
 
 QByteArray encode(const SingleInstance::Request &request)
@@ -242,6 +246,7 @@ SingleInstance::SingleInstance(Location location, QObject *parent)
     : QObject(parent)
     , m_location(std::move(location))
 {
+    m_clock.start();
 }
 
 SingleInstance::~SingleInstance()
@@ -308,23 +313,25 @@ bool SingleInstance::handOver(const Request &request, int timeoutMs)
     if (!socket.getChar(&answer) || answer != kAck)
         return false;
     // The holder opens the files once it has the commit, and answers it
-    // with its receipt. Without the receipt this start hands over only while
-    // the holder is still connected (it takes the commit when it can); a
-    // holder that closed or crashed before taking it opens nothing, so this
-    // start goes on (and may become the instance).
+    // with its receipt; only the receipt hands over. A holder that closed,
+    // crashed or gave the instance up first (release) opens nothing, and one
+    // that has not answered in time takes the commit no more: this start
+    // goes on (and may become the instance).
     if (!socket.putChar(kCommit))
         return false;
     socket.flush();
     QElapsedTimer committing;
     committing.start();
     while (socket.bytesAvailable() < 1 && socket.state() == QLocalSocket::ConnectedState &&
-           committing.elapsed() < kCommitMs)
-        socket.waitForReadyRead(int(qMax<qint64>(kCommitMs - committing.elapsed(), 1)));
-    if (socket.bytesAvailable() > 0) {
-        char receipt = 0;
-        return socket.getChar(&receipt) && receipt == kTaken;
-    }
-    return socket.state() == QLocalSocket::ConnectedState;
+           committing.elapsed() < kReceiptWaitMs)
+        socket.waitForReadyRead(int(qMax<qint64>(kReceiptWaitMs - committing.elapsed(), 1)));
+    if (socket.bytesAvailable() < 1 && socket.state() == QLocalSocket::ConnectedState)
+        socket.waitForReadyRead(0); // a receipt that came while this start was held up
+    char receipt = 0;
+    const bool taken = socket.bytesAvailable() > 0 && socket.getChar(&receipt) && receipt == kTaken;
+    if (!taken)
+        socket.abort();
+    return taken;
 }
 
 bool SingleInstance::tryLock()
@@ -398,6 +405,14 @@ void SingleInstance::release()
         m_server->close();
         m_server.reset();
     }
+    // Nothing more is taken: a start whose request is still open sees the
+    // connection end without a receipt and goes on, and claims the instance
+    // once it is free.
+    for (QLocalSocket *socket : findChildren<QLocalSocket *>(Qt::FindDirectChildrenOnly)) {
+        socket->disconnect(this);
+        socket->abort();
+        socket->deleteLater();
+    }
     unlock();
 }
 
@@ -414,7 +429,10 @@ void SingleInstance::accept()
             continue;
         }
 #endif
-        QTimer::singleShot(kReadTimeoutMs, socket, [socket] { socket->abort(); });
+        QTimer::singleShot(kReadTimeoutMs, socket, [socket] {
+            if (!socket->property("hikariAcked").isValid())
+                socket->abort();
+        });
         connect(socket, &QLocalSocket::readyRead, this, [this, socket] { read(socket); });
         connect(socket, &QLocalSocket::disconnected, socket, &QObject::deleteLater);
         read(socket);
@@ -429,7 +447,10 @@ void SingleInstance::read(QLocalSocket *socket)
         if (!socket->getChar(&commit))
             return;
         socket->setProperty("hikariAcked", QVariant());
-        if (commit != kCommit || socket->bytesAvailable() > 0) {
+        // Late (this holder was held up past the window): the sender has
+        // given up waiting for the receipt, or will before it comes.
+        const bool late = m_clock.elapsed() - socket->property("hikariAckedAt").toLongLong() > kCommitWindowMs;
+        if (commit != kCommit || socket->bytesAvailable() > 0 || late) {
             socket->abort();
             return;
         }
@@ -453,6 +474,8 @@ void SingleInstance::read(QLocalSocket *socket)
     // The request is opened only once its sender commits: one that has given
     // up waiting (and runs alone) is gone or never answers.
     socket->setProperty("hikariAcked", QVariant::fromValue(request));
+    socket->setProperty("hikariAckedAt", m_clock.elapsed());
+    QTimer::singleShot(kCommitWindowMs, socket, [socket] { socket->abort(); });
     socket->putChar(kAck);
     socket->flush();
 }

@@ -26,6 +26,7 @@
 // waiting runs alone, so its request is dropped); its receipt for the commit
 // tells the sender the files are taken.
 
+#include <QElapsedTimer>
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -76,8 +77,9 @@ public:
     // `timeoutMs` for an answer (the holder may still be starting). Without
     // `handOver` a start that cannot claim runs Alone.
     Role claim(const Request &request, bool handOver = true, int timeoutMs = 5000);
-    // The holder stops listening and gives the instance up (before an
-    // update starts its new version, and at exit).
+    // The holder stops listening, drops the requests it has not taken and
+    // gives the instance up (at exit, before an update starts its new
+    // version).
     void release();
     bool listening() const;
 
@@ -96,6 +98,7 @@ private:
 
     Location m_location;
     std::unique_ptr<QLocalServer> m_server;
+    QElapsedTimer m_clock; // when each request was acked
 #ifdef _WIN32
     void *m_mutex = nullptr;
     bool m_owned = false;

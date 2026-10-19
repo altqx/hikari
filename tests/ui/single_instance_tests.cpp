@@ -7,6 +7,7 @@
 #include "hikari/app/single_instance.h"
 
 #include <QCoreApplication>
+#include <QDataStream>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
@@ -104,6 +105,18 @@ class SingleInstanceTests : public QObject {
         return process->state() == QProcess::NotRunning && process->exitStatus() == QProcess::NormalExit
                    ? process->exitCode()
                    : -1;
+    }
+    // A request as a start sends it (single_instance.cpp's protocol).
+    static QByteArray request(const QStringList &files)
+    {
+        QByteArray payload;
+        QDataStream out(&payload, QIODevice::WriteOnly);
+        out.setVersion(QDataStream::Qt_6_0);
+        out << quint32(1) << files << QString();
+        QByteArray frame("HIKARISUB-OPEN\1");
+        QDataStream length(&frame, QIODevice::Append);
+        length << quint32(payload.size());
+        return frame + payload;
     }
     static bool holding(QProcess *process)
     {
@@ -275,6 +288,54 @@ private slots:
         });
         QCOMPARE(run({dir.filePath(QStringLiteral("g.ass"))}), code(Role::Alone));
         QVERIFY(dropped > 0);
+    }
+
+    // A request the holder has answered but whose commit it has not taken
+    // when it gives the instance up (it quits) is dropped: the start sees
+    // the connection end without a receipt and goes on.
+    void releaseDropsWhatItHasNotTaken()
+    {
+        app::SingleInstance holder(location);
+        QCOMPARE(holder.claim({}), Role::Primary);
+        QSignalSpy requested(&holder, &app::SingleInstance::requested);
+        QLocalSocket sender;
+        sender.connectToServer(location.server);
+        QVERIFY(sender.waitForConnected(3000));
+        sender.write(request({dir.filePath(QStringLiteral("h.ass"))}));
+        sender.flush();
+        QTRY_VERIFY(sender.bytesAvailable() > 0 || sender.waitForReadyRead(10));
+        char ack = 0;
+        QVERIFY(sender.getChar(&ack) && ack == '\1');
+        holder.release();
+        sender.putChar('\2');
+        sender.flush();
+        QTRY_COMPARE(sender.state(), QLocalSocket::UnconnectedState);
+        QTest::qWait(200);
+        QCOMPARE(requested.size(), 0);
+        QVERIFY(sender.readAll().isEmpty()); // no receipt
+    }
+
+    // A commit the holder reads too long after its ack (it was held up) is
+    // not taken: the start has given up waiting for the receipt by then.
+    void aLateCommitIsNotTaken()
+    {
+        app::SingleInstance holder(location);
+        QCOMPARE(holder.claim({}), Role::Primary);
+        QSignalSpy requested(&holder, &app::SingleInstance::requested);
+        QLocalSocket sender;
+        sender.connectToServer(location.server);
+        QVERIFY(sender.waitForConnected(3000));
+        sender.write(request({dir.filePath(QStringLiteral("i.ass"))}));
+        sender.flush();
+        QTRY_VERIFY(sender.bytesAvailable() > 0 || sender.waitForReadyRead(10));
+        char ack = 0;
+        QVERIFY(sender.getChar(&ack) && ack == '\1');
+        sender.putChar('\2');
+        QVERIFY(sender.waitForBytesWritten(3000) || sender.bytesToWrite() == 0);
+        QThread::msleep(5500); // the holder's event loop is held up
+        QTRY_COMPARE(sender.state(), QLocalSocket::UnconnectedState);
+        QCOMPARE(requested.size(), 0);
+        QVERIFY(sender.readAll().isEmpty());
     }
 
     // A start that holds the lock but cannot listen (its socket or pipe name
