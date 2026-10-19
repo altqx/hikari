@@ -295,7 +295,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>In this file</source>
+        <source>Subtitle scripts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -420,10 +420,6 @@
     </message>
     <message>
         <source>Unload</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Remove from this file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

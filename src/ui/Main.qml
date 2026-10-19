@@ -6497,7 +6497,9 @@ ApplicationWindow {
                 // The scripts' entries follow the static ones in the frame's
                 // table (map order: ids from 30100), so a static Global
                 // binding of the same keys wins.
-                enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes(modelData.keys)
+                // Off with the editor, as the Automation menu's macros
+                // (legacy's OnMenuOpened disables them there).
+                enabled: root.app.editorOn && !root.menuHasKeys && !root.hotkeys.globalSequences.includes(modelData.keys)
                 onActivated: root.automationHotkeys.run(modelData.legacyName)
             }
         }

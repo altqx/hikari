@@ -233,6 +233,9 @@ void HotkeysController::load()
                                 .arg(qs(hotkey.accel));
     if (!dropped.empty())
         m_settings.set(kMainSetting, qLines(application::hotkeyLines(m_live, false)));
+    // The window's command could be given Audio keys too (Audio's own list).
+    if (std::ranges::any_of(dropped, [](const auto &d) { return d.first.type == application::AudioHotkey; }))
+        m_settings.set(kAudioSetting, qLines(application::hotkeyLines(m_live, true)));
 }
 
 void HotkeysController::saveMain()
@@ -436,18 +439,23 @@ void HotkeysController::beginOptions()
     // with it (legacy's static hotkeysCopy outlived the dialog).
     m_copy.clear();
     m_list = std::make_unique<application::HotkeyList>(m_copy);
-    // AM1: every registered macro is listed, a macro without a binding as a
-    // script row without keys (an id after the bound ones), so it can be
-    // mapped here as in the Automation panel.
-    auto listed = bindings();
+    m_list->build(listed());
+    emit rowsChanged();
+}
+
+// AM1: every registered macro is listed, a macro without a binding as a
+// script row without keys (an id after the bound ones), so it can be mapped
+// here as in the Automation panel.
+HotkeyMap HotkeysController::listed() const
+{
+    auto out = bindings();
     int next = application::kFirstScriptHotkey;
-    for (const auto &[key, hotkey] : listed)
+    for (const auto &[key, hotkey] : out)
         if (key.id >= application::kFirstScriptHotkey)
             next = std::max(next, key.id + 1);
     for (const auto &name : m_scripts.unboundMacros())
-        listed[HotkeyId{next++, application::GlobalHotkey}] = application::Hotkey{name, {}};
-    m_list->build(listed);
-    emit rowsChanged();
+        out[HotkeyId{next++, application::GlobalHotkey}] = application::Hotkey{name, {}};
+    return out;
 }
 
 QVariantList HotkeysController::rows() const
@@ -604,6 +612,14 @@ void HotkeysController::commitOptions()
 {
     if (!m_list)
         return;
+    // AM1: a macro's row given keys here is a binding made for the macro
+    // loaded now, as one recorded in the Automation panel.
+    std::vector<QString> mapped;
+    for (std::size_t i = 0; i < m_list->rowCount(); ++i) {
+        const auto &r = m_list->row(int(i));
+        if (r.keyModified && r.key.id >= application::kFirstScriptHotkey && !r.accel.empty())
+            mapped.push_back(qs(r.name));
+    }
     const auto committed = m_list->commit();
     if (!committed)
         return;
@@ -612,6 +628,8 @@ void HotkeysController::commitOptions()
     saveMain();
     saveAudio();
     setAccels();
+    for (const QString &name : mapped)
+        m_scripts.renew(name);
     emit rowsChanged();
 }
 
@@ -622,7 +640,7 @@ void HotkeysController::resetDefaults()
     split(application::defaultHotkeys());
     if (m_list) {
         m_list->clear();
-        m_list->build(bindings());
+        m_list->build(listed()); // the loaded macros stay listed, unbound
     }
     emit rowsChanged();
 }

@@ -186,7 +186,8 @@ private slots:
             app::Application a(o);
             a.settingsStore()->set(application::kAutomationHotkeysSetting.data(),
                                    QStringList{QStringLiteral("Script shell-fixture.lua-0\tCtrl+Alt+K\tPrefix from dialog\tearlier"),
-                                               QStringLiteral("Script shell-fixture.lua-1\tCtrl+Alt+L\tWait for cancel\tearlier")});
+                                               QStringLiteral("Script shell-fixture.lua-1\tCtrl+Alt+L\tWait for cancel\tearlier"),
+                                               QStringLiteral("Script macro-1-edgeblur.lua-0\tCtrl+Alt+E\tAdd edgeblur\tearlier")});
         }
         app::Application a(o);
         QVERIFY(loadScripts(a));
@@ -203,11 +204,51 @@ private slots:
         QVERIFY(map(h, kWait, "Ctrl-Alt-L").isEmpty());
         QCOMPARE(committed.size(), 1); // saved and installed at once
         QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+L"));
-        QVERIFY(macros.missing().isEmpty());
+        QCOMPARE(macros.missing().size(), qsizetype(1));
         QCOMPARE(macros.shortcuts().size(), qsizetype(2));
         // Recorded again as it now is: nothing to save.
         QVERIFY(map(h, kWait, "Ctrl-Alt-L").isEmpty());
         QCOMPARE(committed.size(), 1);
+        // The same in Settings → Hotkeys, its keys given again there.
+        h.beginOptions();
+        h.filter(7);
+        int edgeblur = -1;
+        for (int i = 0; i < h.rows().size(); ++i)
+            if (h.rows().at(i).toMap().value(QStringLiteral("text")).toString() == QStringLiteral("Global ") + kEdgeblur)
+                edgeblur = i;
+        QVERIFY(edgeblur >= 0);
+        h.select(edgeblur);
+        h.optionsMap(QStringLiteral("Ctrl-Alt-E"), 0, QStringLiteral("cancel"));
+        h.commitOptions();
+        QCOMPARE(keysOf(macros, kEdgeblur), QStringLiteral("Ctrl+Alt+E"));
+        QVERIFY(macros.missing().isEmpty());
+        QCOMPARE(macros.shortcuts().size(), qsizetype(3));
+        // Set default clears them (in memory); the loaded macros stay
+        // listed there, unbound, to be mapped again.
+        h.beginOptions();
+        h.resetDefaults();
+        h.filter(7);
+        QStringList listed;
+        for (const QVariant &v : h.rows())
+            if (v.toMap().contains(QStringLiteral("script")))
+                listed << v.toMap().value(QStringLiteral("macro")).toString() + " = " + v.toMap().value(QStringLiteral("accel")).toString();
+        listed.sort();
+        QCOMPARE(listed, (QStringList{QStringLiteral("Add edgeblur = "), QStringLiteral("Prefix from dialog = "),
+                                      QStringLiteral("Wait for cancel = ")}));
+    }
+
+    // AM1-hotkeys-window-retired: the window's command given Audio keys (the
+    // Audio list is stored apart) is dropped there too, once.
+    void retiredWindowAudioBindingIsDropped()
+    {
+        app::Application::Options o = options();
+        o.settingsFile = dir.filePath(QStringLiteral("retired.ini"));
+        ui::SettingsStore(o.settingsFile)
+            .set(application::kAudioHotkeysSetting.data(),
+                 QStringList{QStringLiteral("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW A=Ctrl-Shift-H"), QStringLiteral("AUDIO_COMMIT_ALT A=G")});
+        app::Application a(o);
+        QVERIFY(a.log().history().contains(QStringLiteral("Open shortcut mapping window")));
+        QCOMPARE(a.settingsStore()->list(application::kAudioHotkeysSetting.data()), QStringList{QStringLiteral("AUDIO_COMMIT_ALT A=G")});
     }
 
     void legacyImportAddsOnlyWhatIsFree()

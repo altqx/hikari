@@ -168,6 +168,8 @@ private:
     void setAccels();
     void logInvalid() const;
     void split(const application::HotkeyMap &combined);
+    // The Options page's list: bindings() and the loaded macros without one.
+    application::HotkeyMap listed() const;
     bool eventFilter(QObject *watched, QEvent *event) override;
 
     AutomationHotkeysController &m_scripts;

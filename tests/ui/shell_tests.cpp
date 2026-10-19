@@ -11567,6 +11567,29 @@ private slots:
         QTRY_VERIFY(!reassign->property("visible").toBool());
         QCOMPARE(committed("Script shell-fixture.lua-0"), std::string());
         QCOMPARE(committed("Script shell-fixture.lua-1"), std::string("Ctrl+Alt+J"));
+        // The keys it has already: nothing to ask, the binding kept.
+        auto *tool = named("automationTool");
+        record(1, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QCOMPARE(visualItem(name("keysNote", 1).constData())->property("text").toString(), QString());
+        keyTo(recorder, Qt::Key_Return);
+        QTRY_COMPARE(tool->property("recording").toString(), QString());
+        QVERIFY(!reassign->property("visible").toBool());
+        QCOMPARE(committed("Script shell-fixture.lua-1"), std::string("Ctrl+Alt+J"));
+        // A macro the filter hides (Shift+click in the Automation menu):
+        // the filter goes, so the row recording it shows.
+        auto *filter = visualItem("automationFilter");
+        filter->setProperty("text", QStringLiteral("no such macro"));
+        QTRY_VERIFY(!visualItem(name("keys", 0).constData()));
+        QVERIFY(QMetaObject::invokeMethod(tool, "record", Q_ARG(QVariant, QStringLiteral("Script shell-fixture.lua-0"))));
+        QCOMPARE(filter->property("text").toString(), QString());
+        QCOMPARE(tool->property("recording").toString(), QStringLiteral("Script shell-fixture.lua-0"));
+        QTRY_VERIFY(visualItem(name("keys", 0).constData()));
+        QTRY_VERIFY(recorder->hasActiveFocus());
+        keyTo(recorder, Qt::Key_Escape);
+        QTRY_COMPARE(tool->property("recording").toString(), QString());
+        // One no loaded script has: nothing to record.
+        QVERIFY(QMetaObject::invokeMethod(tool, "record", Q_ARG(QVariant, QStringLiteral("Script removed.lua-0"))));
+        QCOMPARE(tool->property("recording").toString(), QString());
         // A Global command's keys (a carried-over binding: the panel's
         // Reassign would take them from it): it takes them, the row says so.
         auto &macros = application->automationHotkeys();
@@ -11590,6 +11613,20 @@ private slots:
         QCOMPARE(cancel->property("text").toString(), QStringLiteral("Close"));
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
         QTRY_VERIFY(!run->isVisible());
+        // Off with the editor (the player layout has no run status), as the
+        // Automation menu's macros are.
+        QTest::keyClick(window, Qt::Key_E, Qt::ControlModifier);
+        QTRY_VERIFY(!application->editorOn());
+        QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QTest::qWait(200);
+        QVERIFY(!application->automation().running());
+        QTest::keyClick(window, Qt::Key_E, Qt::ControlModifier);
+        QTRY_VERIFY(application->editorOn());
+        QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_VERIFY_WITH_TIMEOUT(application->automation().running(), 30000);
+        QTRY_VERIFY(run->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
     }
 
     // AM1: the Automation panel in the four themes, written to

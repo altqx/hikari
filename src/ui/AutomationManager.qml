@@ -1,6 +1,7 @@
 // The Automation panel (L1, AM1 #248; the design approved on the card):
-// the loaded scripts in two sections, the Document's ("In this file") and
-// autoload's, each script's macros with their shortcuts, the run under way
+// the loaded scripts in two sections, the Document scripts ("Subtitle
+// scripts": named by a Document's Script Info or added with Load script, one
+// list for the application as legacy's) and autoload's, each script's macros with their shortcuts, the run under way
 // and the shortcuts whose macro is missing. A macro runs from its row (Enter,
 // a double click or its Run button); its shortcut is recorded in place
 // through the shortcut editor (legacy's one hotkey map, the Shift+click
@@ -55,14 +56,21 @@ Pane {
     // Starts recording `legacyName`'s shortcut (the Automation menu's
     // Shift+click on a macro opens the panel on it).
     function record(legacyName) {
+        const indexOf = () => rows.findIndex(r => r.kind === "macro" && r.legacyName === legacyName)
+        let i = indexOf()
+        if (i < 0) {
+            // Its row is shown first: the filter goes, its section unfolds.
+            filter.text = ""
+            folded = ({ missing: folded.missing === true })
+            i = indexOf()
+        }
+        if (i < 0)
+            return // no loaded macro has it
         recording = legacyName
         pressed = null
         refusal = ""
-        const i = rows.findIndex(r => r.kind === "macro" && r.legacyName === legacyName)
-        if (i >= 0) {
-            list.currentIndex = i
-            list.positionViewAtIndex(i, ListView.Contain)
-        }
+        list.currentIndex = i
+        list.positionViewAtIndex(i, ListView.Contain)
         Qt.callLater(() => recorder.forceActiveFocus(Qt.OtherFocusReason))
     }
     function stopRecording() {
@@ -79,7 +87,9 @@ Pane {
             return
         const target = hotkeys.gestureTarget(recording)
         const conflict = hotkeys.gestureConflict(target.id, pressed.accel, 0)
-        if (conflict.message === undefined) {
+        // The keys it has already (legacy's question counts the binding
+        // itself): nothing to ask; the binding is kept, made for this macro.
+        if (conflict.message === undefined || hotkeys.holdersOf(pressed.accel, target.id).length === 0) {
             hotkeys.gestureMap(target.id, target.name, pressed.accel, 0, "cancel")
             stopRecording()
         } else {
@@ -107,7 +117,7 @@ Pane {
         const out = []
         const scripts = controller.scripts
         const sections = [
-            { key: "document", title: qsTr("In this file"), inDocument: true },
+            { key: "document", title: qsTr("Subtitle scripts"), inDocument: true },
             { key: "autoload", title: qsTr("Autoload"), inDocument: false }
         ]
         for (const section of sections) {
@@ -811,8 +821,8 @@ Pane {
         onActiveFocusChanged: if (!activeFocus && root.recording.length > 0 && !reassign.visible) root.stopRecording()
     }
 
-    // The script's menu: Reload, Edit script, and Remove from this file (a
-    // Document script) or Unload (autoload's).
+    // The script's menu: Reload, Edit script, and Unload (legacy
+    // Automation::Remove for a Document script: the Script Info keeps it).
     ShellMenu {
         id: scriptMenu
         objectName: "automationScriptMenu"
@@ -839,7 +849,7 @@ Pane {
         ShellMenuItem {
             objectName: "scriptMenuUnload"
             iconRole: "unload"
-            text: scriptMenu.script && scriptMenu.script.inDocument ? qsTr("Remove from this file") : qsTr("Unload")
+            text: qsTr("Unload")
             enabled: scriptMenu.script !== null && scriptMenu.script.state !== "running"
             onTriggered: root.controller.unload(scriptMenu.script.path)
         }
