@@ -12036,9 +12036,16 @@ private slots:
         // Off under a modal dialog (Settings), which keeps the run status
         // out of reach.
         QVERIFY(!application->workspaceLayout().modalOpen());
+        auto *runLast = named("loadLastScriptMenuItem")->property("action").value<QObject *>();
+        QVERIFY(runLast->property("enabled").toBool());
         QVERIFY(openSettings());
         QTRY_VERIFY(application->workspaceLayout().modalOpen());
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QTest::qWait(200);
+        QVERIFY(!application->automation().running());
+        // The Global command running the last loaded script too.
+        QVERIFY(!runLast->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(runLast, "trigger"));
         QTest::qWait(200);
         QVERIFY(!application->automation().running());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));

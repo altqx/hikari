@@ -1353,8 +1353,9 @@ ApplicationWindow {
                     id: loadLastScriptAction
                     text: qsTr("Run the last loaded script")
                     // Legacy's modal progress dialog blocks it while a macro
-                    // runs; D2: OnMenuOpened disables m_AutoMenu's items.
-                    enabled: root.app.editorOn && !root.automation.running
+                    // runs; D2: OnMenuOpened disables m_AutoMenu's items. AM1:
+                    // off under a modal dialog, as the macros' shortcuts.
+                    enabled: root.app.editorOn && !root.automation.running && !root.workspaceLayout.modalOpen
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT")) root.automation.runLastLoadedScript()
                 }
             }
@@ -1362,7 +1363,7 @@ ApplicationWindow {
                 objectName: "rerunMenuItem"
                 action: Action {
                     text: qsTr("Rerun last macro")
-                    enabled: root.app.editorOn && root.automation.canRerun
+                    enabled: root.app.editorOn && root.automation.canRerun && !root.workspaceLayout.modalOpen
                     onTriggered: root.automation.rerunLast()
                 }
             }
