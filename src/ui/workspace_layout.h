@@ -63,6 +63,9 @@ class WorkspaceLayoutController : public QObject {
     // arrangement until the editor comes back; nothing is saved meanwhile,
     // so the saved layout stays the editing one.
     Q_PROPERTY(bool holding READ holding NOTIFY changed)
+    // D2: the Timing tool an arrangement without the Grid closed, opened
+    // again by the next one that shows it; the current tab's (WS1).
+    Q_PROPERTY(bool timingHiddenByArrangement MEMBER m_timingHidden NOTIFY changed)
 public:
     // WS1: how a tab shown for the first time starts.
     enum class TabStart { Copy, Translation };
@@ -173,6 +176,7 @@ private:
     struct Tab {
         std::optional<WorkspaceArrangement> arrangement;
         QByteArray full; // m_full while the tab was shown
+        bool timingHidden = false; // m_timingHidden while the tab was shown
     };
     std::map<std::uint64_t, Tab> m_tabs;
     std::optional<std::uint64_t> m_tab; // the tab the engine shows
@@ -183,6 +187,7 @@ private:
     QByteArray m_lastSaved;
     std::optional<WorkspaceArrangement> m_held;
     QByteArray m_full;
+    bool m_timingHidden = false;
     QString m_notice;
     QString m_preset = QStringLiteral("Editing");
     bool m_restoring = false;

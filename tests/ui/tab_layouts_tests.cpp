@@ -122,6 +122,24 @@ class TabLayoutsTest : public QObject {
         QVERIFY(QMetaObject::invokeMethod(window(), "applyPreset", Q_ARG(QVariant, QLatin1String(name))));
     }
     QString preset() const { return application->workspaceLayout().preset(); }
+    void openVideo()
+    {
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        // The resolution question the video may ask a moment later.
+        auto *mismatch = window()->findChild<QObject *>(QStringLiteral("mismatchDialog"));
+        if (mismatch && QTest::qWaitFor([&] { return mismatch->property("visible").toBool(); }, 3000)) {
+            QMetaObject::invokeMethod(mismatch, "close");
+            QTRY_VERIFY(!mismatch->property("visible").toBool());
+        }
+    }
+    bool arrange(const char *symbol)
+    {
+        QVariant applied;
+        return QMetaObject::invokeMethod(window(), "applyArrangement", Q_RETURN_ARG(QVariant, applied),
+                                         Q_ARG(QVariant, QLatin1String(symbol)))
+               && applied.toBool();
+    }
     void loadSession(const QString &path)
     {
         const QVariantMap review = application->reviewSession(QUrl::fromLocalFile(path));
@@ -260,6 +278,28 @@ private slots:
         QCOMPARE(preset(), QStringLiteral("Timing"));
         QVERIFY(!isOpen("videoDock"));
         QVERIFY(isOpen("audioDock"));
+        stop();
+    }
+
+    // D2's Timing tool that Only video hid comes back with the next
+    // arrangement showing the Grid in its own tab, after another tab was
+    // shown in between.
+    void theHiddenTimingToolGoesWithItsTab()
+    {
+        start();
+        openVideo();
+        QVERIFY(QMetaObject::invokeMethod(dock("timingDock"), "open"));
+        QTRY_VERIFY(isOpen("timingDock"));
+        QVERIFY(arrange("GLOBAL_VIEW_ONLY_VIDEO"));
+        QTRY_VERIFY(!isOpen("gridDock"));
+        QVERIFY(!isOpen("timingDock"));
+        application->addPage();
+        application->selectTab(0);
+        QVERIFY(!isOpen("timingDock"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000); // the tab's video again
+        QVERIFY(arrange("GLOBAL_VIEW_ALL"));
+        QTRY_VERIFY(isOpen("gridDock"));
+        QVERIFY(isOpen("timingDock"));
         stop();
     }
 

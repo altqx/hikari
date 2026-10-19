@@ -286,12 +286,11 @@ ApplicationWindow {
         root.workspaceLayout.applyPreset(name)
     }
     // WS1: another tab's arrangement is shown. The Reference tray follows the
-    // comparison, not the tab (shown with the Grid while there is one), and
-    // Only video's hidden Timing tool belonged to the arrangement left.
+    // comparison, not the tab (shown with the Grid while there is one); the
+    // Timing tool Only video hid goes with the tab (the controller keeps it).
     Connections {
         target: root.workspaceLayout
         function onArrangementSwapped() {
-            root.timingHiddenByArrangement = false
             if (root.shell.hasReference && !root.workspaceLayout.holding && gridDock.isOpen)
                 referenceDock.open()
             else if (referenceDock.isOpen)
@@ -330,7 +329,6 @@ ApplicationWindow {
     // next arrangement that shows the Grid when it was open. A hidden video
     // pauses. The focus stays where it is when that panel is still shown,
     // otherwise it goes to the Grid, or the first shown panel in F6 order.
-    property bool timingHiddenByArrangement: false
     function applyArrangement(symbol) {
         const shown = root.workspaceLayout.arrangementPanels(symbol)
         if (shown.length === 0 || !root.arrangementEnabled(symbol))
@@ -369,10 +367,10 @@ ApplicationWindow {
             referenceDock.close()
         if (!subs && timingDock.isOpen) {
             timingDock.close()
-            root.timingHiddenByArrangement = true
-        } else if (subs && root.timingHiddenByArrangement) {
+            root.workspaceLayout.timingHiddenByArrangement = true
+        } else if (subs && root.workspaceLayout.timingHiddenByArrangement) {
             timingDock.open()
-            root.timingHiddenByArrangement = false
+            root.workspaceLayout.timingHiddenByArrangement = false
         }
         root.keepFocusOnAShownPanel(focused)
         root.workspaceLayout.save()

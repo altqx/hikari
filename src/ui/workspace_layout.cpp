@@ -252,6 +252,7 @@ bool WorkspaceLayoutController::restoreSaved()
         Tab &shown = m_tabs[*m_tab];
         if (shown.arrangement) {
             m_full = shown.full;
+            m_timingHidden = shown.timingHidden;
             showArrangement(*shown.arrangement);
         } else {
             shown.arrangement = shownArrangement();
@@ -540,6 +541,7 @@ void WorkspaceLayoutController::showTab(std::uint64_t tab, TabStart start)
         if (m_loaded)
             left.arrangement = shownArrangement();
         left.full = m_full;
+        left.timingHidden = m_timingHidden;
     }
     m_tab = tab;
     Tab &shown = m_tabs[tab];
@@ -547,18 +549,21 @@ void WorkspaceLayoutController::showTab(std::uint64_t tab, TabStart start)
         if (start == TabStart::Translation) {
             shown.arrangement = WorkspaceArrangement{QStringLiteral("Translation"), {}};
             shown.full.clear();
+            shown.timingHidden = false;
         } else {
             // A copy of the arrangement shown: nothing moves. Before the
             // first arrangement the tab takes the one restoreSaved shows.
             if (m_loaded)
                 shown.arrangement = shownArrangement();
             shown.full = m_full;
+            shown.timingHidden = m_timingHidden;
             return;
         }
     }
     if (!m_loaded)
         return;
     m_full = shown.full;
+    m_timingHidden = shown.timingHidden;
     showArrangement(*shown.arrangement);
 }
 
@@ -572,10 +577,12 @@ void WorkspaceLayoutController::replaceTab(std::uint64_t tab, std::uint64_t repl
     if (start == TabStart::Translation) {
         moved.arrangement = WorkspaceArrangement{QStringLiteral("Translation"), {}};
         moved.full.clear();
+        moved.timingHidden = false;
     }
     m_tabs[replacement] = moved;
     if (start == TabStart::Translation && m_tab == replacement && m_loaded) {
         m_full.clear();
+        m_timingHidden = false;
         showArrangement(*moved.arrangement);
     }
 }
@@ -612,8 +619,10 @@ void WorkspaceLayoutController::setTabArrangement(std::uint64_t tab, const QByte
     Tab &t = m_tabs[tab];
     t.arrangement = arrangement;
     t.full.clear();
+    t.timingHidden = false;
     if (m_tab == tab && m_loaded) {
         m_full.clear();
+        m_timingHidden = false;
         showArrangement(*arrangement);
     }
 }
