@@ -140,6 +140,15 @@ public:
     // state keep the committed Line. setDocument drops it.
     void setDraft(std::optional<core::LineRecord> draft);
     void setHiddenColumns(int mask);
+    // GR3 (Aegisub's convention): a column that carries nothing in the whole
+    // Document hides itself, on top of the manual hides: Layer when every
+    // Line's is 0, Actor and Effect when every one is blank, each margin when
+    // every one is 0. A draft that fills one shows it (GR2). Off until set
+    // (the application sets grid.autoHideColumns, on by default).
+    void setAutoHideColumns(bool on);
+    bool autoHideColumns() const { return m_autoHide; }
+    // The hideBit()s of the columns hidden now because they are empty.
+    int emptyColumns() const;
     // E5: legacy SubsGrid::showOriginal (application::OriginalColumns).
     // Applied from the next setDocument.
     void setShowOriginal(bool show)
@@ -226,6 +235,8 @@ private:
     bool m_filtered = false;
     int m_headerBlock = 0;
     int m_hidden = 0;
+    bool m_autoHide = false; // GR3
+    int m_empty = 0;        // GR3: the bits of the columns every committed Line leaves empty
     std::optional<application::LegacyTimebase> m_frames;
     ComparisonColours m_comparisonColours = themeComparisonColours();
     LabelColours m_labelColours = themeLabelColours();

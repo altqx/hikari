@@ -880,6 +880,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     connect(m_shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
             [this] { m_settings->set("grid.hideColumns", m_shell->hiddenColumns()); });
+    // GR3: the Grid menu's and Settings' "Hide empty columns", one setting.
+    m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
+    connect(m_shell.get(), &ui::ShellController::autoHideColumnsChanged, this,
+            [this] { m_settings->set("grid.autoHideColumns", m_shell->autoHideColumns()); });
     m_recent.set(m_settings->settings().list("recent.subtitles"));
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
@@ -4870,6 +4874,8 @@ void Application::settingChanged(const QString &id)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles")); // SubsGridBase autosave
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+    else if (id == QLatin1String("grid.autoHideColumns") && !m_resettingSettings)
+        m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
     else if (id == QLatin1String("video.disableLiveEditing") || id.startsWith(QLatin1String("grid.calcSpaces"))) {
         m_editor->optionsChanged(); // E4: the counters and Duration follow at once
         refreshVideo();             // live editing on or off: the draft or the committed Lines

@@ -7607,6 +7607,10 @@ private slots:
 
     void hideColumnsMenuTogglesGridColumns()
     {
+        // Every column of the episode shows (GR3's auto-hide off): this
+        // checks the manual hides.
+        application->shell().setAutoHideColumns(false);
+        auto restoreAutoHide = qScopeGuard([&] { application->shell().setAutoHideColumns(true); });
         QVERIFY(application->openFile(episode));
         auto *root = engine->rootObjects().first();
         auto *grid = item("editingGrid");
@@ -7624,12 +7628,65 @@ private slots:
         application->shell().setHiddenColumns(0);
     }
 
+    // GR3 (Aegisub's convention): with the default on, the columns the
+    // whole Document leaves empty hide themselves and come back as soon as
+    // a committed Line fills one; the Grid's Hide columns > Hide empty
+    // columns and Settings write one setting, and manual hides stay on top.
+    void emptyColumnsHideThemselves()
+    {
+        auto &settings = *application->settingsStore();
+        QCOMPARE(std::get<bool>(application::findSetting("grid.autoHideColumns")->defaultValue), true);
+        QVERIFY(settings.boolean("grid.autoHideColumns"));
+        QVERIFY(application->shell().autoHideColumns());
+        QVERIFY(application->openFile(episode)); // Layer, Actor, margins and Effect all empty
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        const auto titles = [&] {
+            QStringList out;
+            for (int c = 0; c < grid->columnCount(); ++c)
+                out << grid->columnTitle(c);
+            return out;
+        };
+        const QStringList empty{"#", "Start", "End", "Styles", "CPS", "Wraps", "Text"};
+        QTRY_COMPARE(titles(), empty);
+
+        // A committed Actor shows its column, live; Undo hides it again.
+        QTRY_COMPARE(application->editor().text(), QStringLiteral("first"));
+        QVERIFY(application->editor().chooseActor(QStringLiteral("Ann")));
+        QTRY_VERIFY(titles().contains(QStringLiteral("Actor")));
+        QCOMPARE(titles().size(), empty.size() + 1);
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(titles(), empty);
+
+        // The menu's toggle: off shows every column, and the setting follows.
+        QObject *toggle = named("hideEmptyColumns");
+        QVERIFY(toggle);
+        QVERIFY(toggle->property("checked").toBool());
+        toggle->setProperty("checked", false);
+        QVERIFY(QMetaObject::invokeMethod(toggle, "triggered"));
+        QVERIFY(!settings.boolean("grid.autoHideColumns"));
+        QTRY_COMPARE(grid->columnCount(), 13);
+        // Settings writes the same one; the menu shows it.
+        settings.set("grid.autoHideColumns", true);
+        QTRY_COMPARE(titles(), empty);
+        QTRY_VERIFY(toggle->property("checked").toBool());
+        // A manual hide applies on top.
+        application->shell().toggleColumn(512); // CPS
+        QTRY_COMPARE(grid->columnCount(), int(empty.size()) - 1);
+        application->shell().setHiddenColumns(0);
+        QCOMPARE(settings.integer("grid.hideColumns"), 0);
+    }
+
     // The Grid's abbreviated headings name their column on hover (legacy's
     // Hide columns names, SubsGrid.cpp:199-200 and 501-508): the pointer over
     // "L." shows "Layer" below it, in the interface language; a heading that
     // is a word shows nothing.
     void gridHeadingsNameTheirColumnOnHover()
     {
+        // Every column of the episode shows (GR3's auto-hide off): the
+        // abbreviated headings are there to hover.
+        application->shell().setAutoHideColumns(false);
+        auto restoreAutoHide = qScopeGuard([&] { application->shell().setAutoHideColumns(true); });
         QVERIFY(application->openFile(episode));
         auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
         QVERIFY(grid);
@@ -7844,6 +7901,10 @@ private slots:
     // its help. (A Shift+click closes them: hotkeyGestureOnMenus.)
     void checkItemsKeepTheirMenuOpen()
     {
+        // Every column of the episode shows (GR3's auto-hide off): this
+        // checks the manual hides.
+        application->shell().setAutoHideColumns(false);
+        auto restoreAutoHide = qScopeGuard([&] { application->shell().setAutoHideColumns(true); });
         QStyleHints *hints = QGuiApplication::styleHints();
         const bool hoverHint = hints->useHoverEffects();
         auto restoreHover = qScopeGuard([&] { hints->setUseHoverEffects(hoverHint); });
@@ -9074,6 +9135,7 @@ private slots:
               {"translation.hideOriginalOnVideo", "Hide original on video in translator mode"},
               {"grid.duplicationDontChangeSelection", "Do not change selections when duplicating dialogue lines"},
               {"grid.dontCenterActiveLine", "Do not vertically center the active line in the subtitle grid"},
+              {"grid.autoHideColumns", "Hide empty columns in the subtitle grid"}, // GR3
               {"editor.allowNumpadHotkeys", "Use numpad shortcuts in text fields"},
               {"video.visualWarningsOff", "Turn off visual tools warning"},
               {"video.dontAskForBadResolution", "Do not warn about resolution mismatch"},

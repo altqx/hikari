@@ -11,7 +11,9 @@
 #include <QTest>
 
 #include <cstring>
+#include <string>
 #include <string_view>
+#include <utility>
 
 using namespace hikari;
 using namespace hikari::ui;
@@ -135,6 +137,87 @@ private slots:
         QVERIFY(shown(LineTableModel::StyleColumn));
         QVERIFY(shown(LineTableModel::NumberColumn)); // # and Text are always shown
         QVERIFY(shown(LineTableModel::TextColumn));
+    }
+
+    // GR3 (Aegisub's convention): with auto-hide on, Layer, Actor, Effect
+    // and each margin hide when the whole Document leaves them empty
+    // (comments included), and come back as soon as one Line fills them.
+    // Manual hides apply on top; the other columns never hide themselves.
+    void emptyColumnsHideThemselves()
+    {
+        using M = LineTableModel;
+        LineTableModel model;
+        auto shown = [&](int c) { return model.headerData(c, Qt::Horizontal, M::ColumnShownRole).toBool(); };
+        const int all = M::hideBit(M::LayerColumn) | M::hideBit(M::ActorColumn) | M::hideBit(M::MarginLeftColumn) |
+                        M::hideBit(M::MarginRightColumn) | M::hideBit(M::MarginVerticalColumn) |
+                        M::hideBit(M::EffectColumn);
+        constexpr std::string_view empty = "[Events]\n"
+                                           "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                                           "Comment: 0,0:00:02.00,0:00:03.00,Sign,  ,0000,0,0,,two\n";
+        model.setDocument(load(empty));
+        QVERIFY(!model.autoHideColumns()); // off until the application sets it
+        QCOMPARE(model.emptyColumns(), 0);
+        for (int c = 0; c < M::TranslationColumn; ++c)
+            QVERIFY(shown(c));
+        QSignalSpy header(&model, &QAbstractItemModel::headerDataChanged);
+        model.setAutoHideColumns(true);
+        QCOMPARE(header.size(), 1);
+        QCOMPARE(model.emptyColumns(), all);
+        for (const int c : {M::LayerColumn, M::ActorColumn, M::MarginLeftColumn, M::MarginRightColumn,
+                            M::MarginVerticalColumn, M::EffectColumn})
+            QVERIFY2(!shown(c), qPrintable(model.headerData(c, Qt::Horizontal).toString()));
+        for (const int c : {M::NumberColumn, M::StartColumn, M::EndColumn, M::StyleColumn, M::CpsColumn,
+                            M::WrapsColumn, M::TextColumn})
+            QVERIFY2(shown(c), qPrintable(model.headerData(c, Qt::Horizontal).toString()));
+
+        // Each column comes back on its own, a Comment's value included.
+        const std::pair<std::string_view, M::Column> filled[] = {
+            {"Comment: 2,0:00:02.00,0:00:03.00,Sign,,0,0,0,,two\n", M::LayerColumn},
+            {"Comment: 0,0:00:02.00,0:00:03.00,Sign,Ann,0,0,0,,two\n", M::ActorColumn},
+            {"Comment: 0,0:00:02.00,0:00:03.00,Sign,,10,0,0,,two\n", M::MarginLeftColumn},
+            {"Comment: 0,0:00:02.00,0:00:03.00,Sign,,0,10,0,,two\n", M::MarginRightColumn},
+            {"Comment: 0,0:00:02.00,0:00:03.00,Sign,,0,0,10,,two\n", M::MarginVerticalColumn},
+            {"Comment: 0,0:00:02.00,0:00:03.00,Sign,,0,0,0,fx,two\n", M::EffectColumn},
+        };
+        for (const auto &[line, column] : filled) {
+            model.setDocument(load(std::string("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n") +
+                                   std::string(line)));
+            QCOMPARE(model.emptyColumns(), all & ~M::hideBit(column));
+            QVERIFY(shown(column));
+        }
+
+        // Manual hides stay on top: a filled column hidden by hand stays
+        // hidden, and turning auto-hide off brings back only the empty ones.
+        model.setDocument(load(std::string("[Events]\n") + std::string(filled[0].first)));
+        model.setHiddenColumns(M::hideBit(M::LayerColumn) | M::hideBit(M::StyleColumn));
+        QVERIFY(!shown(M::LayerColumn));
+        QVERIFY(!shown(M::StyleColumn));
+        QVERIFY(!shown(M::ActorColumn));
+        header.clear();
+        model.setAutoHideColumns(false);
+        QCOMPARE(header.size(), 1);
+        QVERIFY(!shown(M::LayerColumn));
+        QVERIFY(!shown(M::StyleColumn));
+        QVERIFY(shown(M::ActorColumn));
+        model.setHiddenColumns(0);
+
+        // GR2: a draft that fills an empty column shows it until it is
+        // reverted; the committed Lines decide again after it.
+        model.setAutoHideColumns(true);
+        model.setDocument(load(empty));
+        core::LineRecord draft = *model.recordAt(0);
+        draft.actor = u8"Ann";
+        header.clear();
+        model.setDraft(draft);
+        QCOMPARE(header.size(), 1);
+        QVERIFY(shown(M::ActorColumn));
+        QCOMPARE(model.index(0, M::ActorColumn).data().toString(), QStringLiteral("Ann"));
+        draft.text = u8"typing on";
+        header.clear();
+        model.setDraft(draft);
+        QCOMPARE(header.size(), 0); // nothing new to show
+        model.setDraft(std::nullopt);
+        QVERIFY(!shown(M::ActorColumn));
     }
 
     // E5: the translation column (legacy SubsGridWindow.cpp:329-330 and
