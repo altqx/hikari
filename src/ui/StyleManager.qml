@@ -562,6 +562,11 @@ Window {
                                         target: fontField.popup
                                         function onVisibleChanged() { manager.updatePreview() }
                                     }
+                                    // A refresh of the fonts: each row's face asked again.
+                                    Connections {
+                                        target: manager.catalogs
+                                        function onFontsChanged() { FontFaces.forget() }
+                                    }
                                     // SY3: each family in its own face. The list makes
                                     // rows only for what it shows, so a large font set
                                     // costs no more than a screenful of faces.

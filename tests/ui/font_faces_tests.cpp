@@ -61,6 +61,19 @@ private slots:
         QCOMPARE(faces.lookups(), 5);
         QCOMPARE(faces.face(text), own);
         QCOMPARE(faces.lookups(), 5);
+
+        // The fonts change (Qt's database, or a catalog refresh calling
+        // forget()): the answers go and the rows ask again.
+        QSignalSpy revision(&faces, &ui::FontFaces::revisionChanged);
+        const int before = faces.revision();
+        faces.forget();
+        QCOMPARE(faces.lookups(), 0);
+        QCOMPARE(faces.revision(), before + 1);
+        QCOMPARE(faces.face(text), own);
+        QCOMPARE(faces.lookups(), 1);
+        QFontDatabase::removeApplicationFont(QFontDatabase::addApplicationFont(QString::fromUtf8(HIKARI_SYMBOL_FONT)));
+        QTRY_VERIFY(revision.size() >= 2);
+        QCOMPARE(faces.lookups(), 0);
     }
 };
 

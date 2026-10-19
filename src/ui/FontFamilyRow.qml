@@ -1,6 +1,6 @@
 // SY3: a font list's row, the family's name drawn in its own face
-// (FontFaces): a face without Latin draws the name in the interface font and
-// a sample in its own script after it, and a family the system's font
+// (FontFaces): a symbol font, or a face without the letters of its name,
+// draws the name in the interface font and a sample after it, and a family the system's font
 // database lacks (an external font only the renderer leases) draws its name
 // in the interface font. Rows have one height whatever the face's metrics,
 // and clip what a tall face draws beyond it.
@@ -12,7 +12,8 @@ import Hikari.Ui
 ItemDelegate {
     id: row
     required property string family
-    readonly property var face: FontFaces.face(family)
+    // Asked again when the fonts change (FontFaces.revision).
+    readonly property var face: FontFaces.revision >= 0 ? FontFaces.face(family) : ({})
     implicitHeight: 28
     clip: true
     Accessible.name: family

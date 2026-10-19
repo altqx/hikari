@@ -2784,6 +2784,12 @@ private slots:
         QCOMPARE(findItem(unknown, QStringLiteral("fontFamilyName"))->property("font").value<QFont>().family(),
                  unknown->property("font").value<QFont>().family());
 
+        // A refresh of the fonts: the faces asked again.
+        const int revision = faces->revision();
+        application->fontCatalogs().refreshFonts();
+        QTRY_VERIFY(faces->revision() > revision);
+        QTRY_VERIFY(rows() > 0);
+
         // The open list: the sample line shows the family highlighted.
         // (With the list open the arrows move the highlight, not the choice.)
         int key = styles.previewKey();

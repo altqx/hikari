@@ -9,7 +9,9 @@
 // can draw its own name, otherwise a short text in the face's own script (a
 // symbol font, or one without the name's letters, draws its name in the
 // interface font and the sample after it in its own face). Answers are kept,
-// so each family is looked up once, and only for the rows a list creates.
+// so each family is looked up once, and only for the rows a list creates,
+// until the fonts change: Qt's font database, or a refresh of the font
+// catalogs (forget()); `revision` then moves so the rows ask again.
 
 #include <QHash>
 #include <QObject>
@@ -23,14 +25,22 @@ class FontFaces : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
+    Q_PROPERTY(int revision READ revision NOTIFY revisionChanged)
 public:
-    using QObject::QObject;
+    explicit FontFaces(QObject *parent = nullptr);
     Q_INVOKABLE QVariantMap face(const QString &family);
+    // Drops the answers kept (the fonts changed).
+    Q_INVOKABLE void forget();
+    int revision() const { return m_revision; }
     // The families looked up so far (the rows a list created).
     Q_INVOKABLE int lookups() const { return int(m_faces.size()); }
 
+signals:
+    void revisionChanged();
+
 private:
     QHash<QString, QVariantMap> m_faces;
+    int m_revision = 0;
 };
 
 } // namespace hikari::ui

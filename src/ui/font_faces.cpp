@@ -2,6 +2,7 @@
 
 #include <QFont>
 #include <QFontDatabase>
+#include <QGuiApplication>
 #include <QRawFont>
 
 
@@ -25,6 +26,18 @@ bool symbolCmap(const QRawFont &font)
 }
 
 } // namespace
+
+FontFaces::FontFaces(QObject *parent) : QObject(parent)
+{
+    connect(qApp, &QGuiApplication::fontDatabaseChanged, this, &FontFaces::forget);
+}
+
+void FontFaces::forget()
+{
+    m_faces.clear();
+    ++m_revision;
+    emit revisionChanged();
+}
 
 QVariantMap FontFaces::face(const QString &family)
 {
