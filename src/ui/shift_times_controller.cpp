@@ -73,6 +73,7 @@ void ShiftTimesController::load()
     for (const auto &b : kBits)
         map.insert(QLatin1String(b.name), (options & b.bit) != 0);
     m_profiles = m_store->list("shiftTimes.profiles");
+    m_collapsed = m_store->list("shiftTimes.collapsedSections");
     assign(map);
     emit changed();
 }
@@ -188,6 +189,15 @@ void ShiftTimesController::removeProfile(const QString &name)
     m_profiles = next;
     save();
     emit changed();
+}
+
+void ShiftTimesController::setCollapsedSections(const QStringList &ids)
+{
+    if (ids == m_collapsed)
+        return;
+    m_collapsed = ids;
+    m_store->set("shiftTimes.collapsedSections", m_collapsed);
+    emit collapsedSectionsChanged();
 }
 
 void ShiftTimesController::save() const

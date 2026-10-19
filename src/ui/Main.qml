@@ -492,7 +492,7 @@ ApplicationWindow {
             shiftConfirm.open()
             return
         }
-        shiftMessage.text = root.app.shiftTimes()
+        shiftTimesPanel.message = root.app.shiftTimes()
     }
 
     // The dock of the panel with the focus (the Grid's otherwise).
@@ -575,7 +575,17 @@ ApplicationWindow {
     // An item's `enabled` is a function its entry follows, so the list itself
     // stays put while the menu is open (a new list would remake the entries,
     // the one being chosen too).
+    // LE2: the Video panel's Times/Frames choice (legacy's radios under the
+    // Line editor, EDITBOX_TIMES_TO_FRAMES_SWITCH), enabled once a video was
+    // opened; the Line editor and the Grid follow it.
     function panelOwnItems(dock) {
+        if (dock === videoDock)
+            return [{ name: "showTimes", text: qsTranslate("HikariSub.Editor", "Show times"), checkable: true, radio: true,
+                      checked: () => !root.editor.showFrames, enabled: () => root.editor.framesAvailable,
+                      run: () => root.editor.showFrames = false },
+                    { name: "showFrames", text: qsTranslate("HikariSub.Editor", "Show frames"), checkable: true, radio: true,
+                      checked: () => root.editor.showFrames, enabled: () => root.editor.framesAvailable,
+                      run: () => root.editor.showFrames = true }]
         if (dock === referenceDock)
             return [{ name: "compareWithReference", text: qsTranslate("HikariSub.Reference", "Compare with reference"),
                       enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference() }]
@@ -626,9 +636,16 @@ ApplicationWindow {
                 objectName: "panelOptions_" + modelData.name
                 text: modelData.text
                 checkable: modelData.checkable === true
-                checked: modelData.checked === true
+                checked: typeof modelData.checked === "function" ? modelData.checked() : modelData.checked === true
+                // A choice among items (radio) closes the menu, as legacy's ITEM_RADIO.
+                keepsMenuOpen: checkable && modelData.radio !== true
                 enabled: typeof modelData.enabled === "function" ? modelData.enabled() : modelData.enabled !== false
-                onTriggered: modelData.run()
+                onTriggered: {
+                    modelData.run()
+                    // The item's check follows its state, not the click's toggle.
+                    if (typeof modelData.checked === "function")
+                        checked = Qt.binding(() => modelData.checked())
+                }
             }
             onObjectAdded: (index, object) => panelOptionsMenu.insertItem(index, object)
             onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
@@ -1889,6 +1906,24 @@ ApplicationWindow {
                 text: qsTr("Hide tags")
                 enabled: root.app.editorOn // D2: OnMenuOpened's SubsMenu
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_HIDE_TAGS")) root.app.toggleHideTags()
+            }
+            // LE3-tags-shown: the Line editor's hidden-tag view, a setting
+            // (editor.hideTags) and this command; the Grid's switch above
+            // stays its own.
+            ShellMenuItem {
+                iconRole: "hide-tags"
+                objectName: "hideEditorTagsMenuItem"
+                action: Action {
+                    id: hideEditorTagsAction
+                    text: qsTr("Hide tags in the line editor")
+                    checkable: true
+                    checked: !root.editor.showTags
+                    onToggled: {
+                        if (!root.hotkeyGesture("GLOBAL_EDITOR_HIDE_TAGS"))
+                            root.editor.showTags = !checked
+                        checked = Qt.binding(() => !root.editor.showTags)
+                    }
+                }
             }
         }
         ShellMenu {
@@ -3348,71 +3383,96 @@ ApplicationWindow {
                                 editor: root.editor
                                 onChosen: (root.editor.translationMode && root.editor.translationText.length ? translationText : lineText).forceActiveFocus()
                             }
-                            // E2: custom tag buttons; right click (or a button
-                            // without a tag) edits it.
+                            // E2: custom tag buttons. LE5: a button without a tag
+                            // opens its popover; the right click its menu.
                             Repeater {
                                 model: root.tagButtons.buttons
-                                ToolButton {
+                                TagButton {
+                                    id: tagButton
                                     required property var modelData
                                     required property int index
                                     objectName: "tagButton" + index
                                     text: modelData.name
+                                    iconRole: modelData.icon
                                     focusPolicy: Qt.NoFocus
                                     enabled: root.editor.editable
-                                    Accessible.name: modelData.name
+                                    // An icon-only button reads as its tag, as in Settings' list.
+                                    Accessible.name: modelData.name.length > 0 ? modelData.name : modelData.tag
                                     Accessible.description: modelData.tag
-                                    ToolTip.visible: hovered && modelData.tag.length > 0
-                                    ToolTip.text: root.mappedTip(modelData.tag, "EDITBOX_TAG_BUTTON" + (index + 1), 2)
+                                    tip: root.mappedTip(modelData.name.length > 0 && modelData.icon.length > 0
+                                                        ? modelData.name + ": " + modelData.tag : modelData.tag,
+                                                        "EDITBOX_TAG_BUTTON" + (index + 1), 2)
                                     onClicked: {
                                         if (root.hotkeyGesture("EDITBOX_TAG_BUTTON" + (index + 1), 2, true))
                                             return
                                         if (modelData.tag.length === 0)
-                                            tagButtonDialog.editButton(index)
+                                            tagButtonEditor.openFor(tagButton, index, modelData)
                                         else
                                             root.applyTagButton(index)
                                     }
                                     TapHandler {
                                         acceptedButtons: Qt.RightButton
-                                        onTapped: tagButtonDialog.editButton(index)
+                                        onTapped: eventPoint => tagButtonMenu.openFor(tagButton, tagButton.index, eventPoint.position)
                                     }
                                 }
                             }
-                            IconToolButton { // legacy's square MenuButton with ARROW_LIST_DOUBLE
-                                objectName: "manageTagButtons"
-                                iconRole: "menu-more"
-                                text: qsTranslate("HikariSub.Editor", "Manage tag buttons")
-                                focusPolicy: Qt.NoFocus
-                                onClicked: tagButtonsMenu.popup()
-                                ShellMenu {
-                                    id: tagButtonsMenu
-                                    Instantiator {
-                                        model: root.tagButtons.buttons
-                                        delegate: ShellMenuItem {
-                                            required property var modelData
-                                            required property int index
-                                            text: modelData.name
-                                            onTriggered: root.applyTagButton(index)
-                                        }
-                                        onObjectAdded: (index, object) => tagButtonsMenu.insertItem(index, object)
-                                        onObjectRemoved: (index, object) => tagButtonsMenu.removeItem(object)
-                                    }
-                                    ShellMenuItem {
-                                        objectName: "changeTagButtonCount"
-                                        text: qsTranslate("HikariSub.Editor", "Change number of buttons")
-                                        onTriggered: tagButtonCountDialog.open()
-                                    }
-                                }
-                            }
-                            // The hidden-tag view's switch (E6: the hide-tags icon,
-                            // checked while tags are hidden).
                             IconToolButton {
-                                objectName: "showTags"
-                                iconRole: "hide-tags"
-                                text: qsTranslate("HikariSub.Editor", "Hide tags")
-                                checkable: true
-                                checked: !root.editor.showTags
-                                onToggled: root.editor.showTags = !checked
+                                id: addTagButton
+                                objectName: "addTagButton"
+                                iconRole: "add"
+                                text: qsTranslate("HikariSub.Editor", "Add a tag button")
+                                focusPolicy: Qt.NoFocus
+                                visible: root.tagButtons.count < root.tagButtons.maximum
+                                onClicked: tagButtonEditor.openFor(addTagButton, -1, null)
                             }
+                            TagButtonEditor {
+                                id: tagButtonEditor
+                                tagButtons: root.tagButtons
+                                onSaved: (index, b) => index < 0 ? root.tagButtons.add(b.name, b.tag, b.type, b.icon)
+                                                                 : root.tagButtons.edit(index, b.name, b.tag, b.type, b.icon)
+                            }
+                            // LE5: a button's context menu.
+                            ShellMenu {
+                                id: tagButtonMenu
+                                objectName: "tagButtonMenu"
+                                property Item button: null
+                                property int index: -1
+                                // At the click, inside the button it is for.
+                                function openFor(b, i, at) {
+                                    button = b
+                                    index = i
+                                    popup(b, at)
+                                }
+                                ShellMenuItem {
+                                    objectName: "tagButtonEdit"
+                                    iconRole: "edit"
+                                    text: qsTranslate("HikariSub.Editor", "Edit...")
+                                    onTriggered: tagButtonEditor.openFor(tagButtonMenu.button, tagButtonMenu.index,
+                                                                         root.tagButtons.buttons[tagButtonMenu.index])
+                                }
+                                ShellMenuItem {
+                                    objectName: "tagButtonMoveLeft"
+                                    text: qsTranslate("HikariSub.Editor", "Move left")
+                                    enabled: tagButtonMenu.index > 0
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -1)
+                                }
+                                ShellMenuItem {
+                                    objectName: "tagButtonMoveRight"
+                                    text: qsTranslate("HikariSub.Editor", "Move right")
+                                    enabled: tagButtonMenu.index >= 0 && tagButtonMenu.index < root.tagButtons.count - 1
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, 1)
+                                }
+                                MenuSeparator {}
+                                ShellMenuItem {
+                                    objectName: "tagButtonRemove"
+                                    iconRole: "remove"
+                                    text: qsTranslate("HikariSub.Editor", "Remove")
+                                    onTriggered: root.tagButtons.remove(tagButtonMenu.index)
+                                }
+                            }
+                            // LE3-tags-shown: the hidden-tag view's switch left the
+                            // strip for Settings > Editor and GLOBAL_EDITOR_HIDE_TAGS
+                            // (Subtitles > "Hide tags in the line editor").
                         }
                         // E5: legacy BoxSizer5, the row under the tag buttons
                         // that holds "Translator mode" (EditBox.cpp:233-239, 308).
@@ -3492,7 +3552,7 @@ ApplicationWindow {
                             editor: root.editor
                             hotkeys: root.hotkeys
                             Layout.fillWidth: true
-                            onStyleEditRequested: style => styleManagerWindow.showFor(style)
+                            onStyleEditRequested: style => styleManagerWindow.editStyle(style) // LE6
                         }
 
                         Label {
@@ -3918,207 +3978,18 @@ ApplicationWindow {
                 id: timingPanel
                 objectName: "timingPanel"
                 dockName: "Timing"
-                minimumBodySize: Qt.size(shiftForm.implicitWidth + 20, 120) // the form scrolls
+                minimumBodySize: shiftTimesPanel.minimumBodySize // the form scrolls
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.TimeShift", "Shift times")
-                ScrollView {
-                    id: shiftScroll
+                // TS1: the form and its run button.
+                ShiftTimesPanel {
+                    id: shiftTimesPanel
                     anchors.fill: parent
-                    clip: true
-                    // The scroll bar shows while the form is taller than the
-                    // panel (the post processor and profiles lay below it unseen).
-                    ScrollBar.vertical.policy: contentHeight > height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
-                    // The form 1 inside the clipped view: a focus ring at its
-                    // edge shows whole.
-                    contentWidth: shiftForm.implicitWidth + 2
-                    contentHeight: shiftForm.implicitHeight + 2
-                    ColumnLayout {
-                        id: shiftForm
-                        x: 1
-                        y: 1
-                        width: timingPanel.width - 20
-                        readonly property var settings: root.shiftTimes.settings
-                        function set(key, value) {
-                            const next = Object.assign({}, settings)
-                            next[key] = value
-                            root.shiftTimes.settings = next
-                        }
-                        // Legacy time control: h:mm:ss.cc, or frames when shown as frames.
-                        function timeText(ms) {
-                            const cs = Math.floor(ms / 10) % 100, s = Math.floor(ms / 1000) % 60
-                            const m = Math.floor(ms / 60000) % 60, h = Math.floor(ms / 3600000)
-                            return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0") + "." + String(cs).padStart(2, "0")
-                        }
-                        function parseTime(text) {
-                            const m = /^(\d+):(\d{1,2}):(\d{1,2})(?:[.,](\d{1,2}))?$/.exec(text.trim())
-                            if (!m)
-                                return -1
-                            return ((+m[1] * 60 + +m[2]) * 60 + +m[3]) * 1000 + (m[4] ? +m[4].padEnd(2, "0") * 10 : 0)
-                        }
-                        RowLayout {
-                            Label { text: shiftForm.settings.byFrames ? qsTranslate("HikariSub.TimeShift", "Frames") : qsTranslate("HikariSub.TimeShift", "Time") }
-                            TextField {
-                                id: shiftTime
-                                objectName: "shiftTime"
-                                Layout.fillWidth: true
-                                Accessible.name: qsTranslate("HikariSub.TimeShift", "Shift subtitle times")
-                                text: shiftForm.settings.byFrames ? String(shiftForm.settings.frames)
-                                                                  : shiftForm.timeText(shiftForm.settings.timeMs)
-                                onEditingFinished: {
-                                    if (shiftForm.settings.byFrames) {
-                                        shiftForm.set("frames", Math.max(0, parseInt(text) || 0))
-                                    } else {
-                                        const ms = shiftForm.parseTime(text)
-                                        if (ms >= 0)
-                                            shiftForm.set("timeMs", ms)
-                                    }
-                                }
-                            }
-                            Button {
-                                objectName: "shiftApply"
-                                text: qsTranslate("HikariSub.TimeShift", "Shift")
-                                Accessible.description: qsTranslate("HikariSub.TimeShift", "Shift subtitle times")
-                                onClicked: root.runShiftTimes()
-                            }
-                        }
-                        RowLayout {
-                            RadioButton { objectName: "shiftForward"; text: qsTranslate("HikariSub.TimeShift", "Forward"); checked: shiftForm.settings.forward; onToggled: if (checked) shiftForm.set("forward", true) }
-                            RadioButton { objectName: "shiftBackward"; text: qsTranslate("HikariSub.TimeShift", "Backward"); checked: !shiftForm.settings.forward; onToggled: if (checked) shiftForm.set("forward", false) }
-                        }
-                        RowLayout {
-                            CheckBox {
-                                objectName: "shiftFrames"
-                                text: qsTranslate("HikariSub.TimeShift", "Frames")
-                                checked: shiftForm.settings.byFrames
-                                enabled: checked || root.app.exactTimebase()
-                                onToggled: shiftForm.set("byFrames", checked)
-                            }
-                            CheckBox { objectName: "shiftTagTimes"; text: qsTranslate("HikariSub.TimeShift", "Tag times"); checked: shiftForm.settings.tagTimes; onToggled: shiftForm.set("tagTimes", checked) }
-                        }
-                        GroupBox {
-                            title: qsTranslate("HikariSub.TimeShift", "Shift by video / audio")
-                            Layout.fillWidth: true
-                            ColumnLayout {
-                                RowLayout {
-                                    RadioButton { text: qsTranslate("HikariSub.TimeShift", "Beginning"); checked: shiftForm.settings.fromStartTime; onToggled: if (checked) shiftForm.set("fromStartTime", true) }
-                                    RadioButton { text: qsTranslate("HikariSub.TimeShift", "End"); checked: !shiftForm.settings.fromStartTime; onToggled: if (checked) shiftForm.set("fromStartTime", false) }
-                                }
-                                CheckBox { objectName: "shiftToVideo"; text: qsTranslate("HikariSub.TimeShift", "Move the marker to video time"); checked: shiftForm.settings.moveToVideoTime; onToggled: shiftForm.set("moveToVideoTime", checked) }
-                                CheckBox { objectName: "shiftToAudio"; text: qsTranslate("HikariSub.TimeShift", "Move the marker to audio time"); enabled: root.audio.hasMark /* A3: ShiftTimes::Contents */; checked: shiftForm.settings.moveToAudioTime; onToggled: shiftForm.set("moveToAudioTime", checked) }
-                            }
-                        }
-                        Label { text: qsTranslate("HikariSub.TimeShift", "Which lines") }
-                        ComboBox {
-                            objectName: "shiftWhichLines"
-                            Layout.fillWidth: true
-                            Accessible.name: qsTranslate("HikariSub.TimeShift", "Which lines")
-                            model: [qsTranslate("HikariSub.TimeShift", "All lines"), qsTranslate("HikariSub.TimeShift", "Selected lines"), qsTranslate("HikariSub.TimeShift", "From the selected line"),
-                                    qsTranslate("HikariSub.TimeShift", "All times higher and equal"), qsTranslate("HikariSub.TimeShift", "All times lower and equal"),
-                                    qsTranslate("HikariSub.TimeShift", "According to the selected styles")]
-                            currentIndex: shiftForm.settings.whichLines
-                            onActivated: (index) => shiftForm.set("whichLines", index)
-                        }
-                        TextField {
-                            objectName: "shiftStyles"
-                            Layout.fillWidth: true
-                            visible: shiftForm.settings.whichLines === 5
-                            placeholderText: qsTranslate("HikariSub.TimeShift", "Styles, separated by commas")
-                            Accessible.name: qsTranslate("HikariSub.TimeShift", "Styles")
-                            text: shiftForm.settings.styles
-                            onEditingFinished: shiftForm.set("styles", text)
-                        }
-                        Label { text: qsTranslate("HikariSub.TimeShift", "A method of time shift") }
-                        ComboBox {
-                            objectName: "shiftWhichTimes"
-                            Layout.fillWidth: true
-                            Accessible.name: qsTranslate("HikariSub.TimeShift", "A method of time shift")
-                            model: [qsTranslate("HikariSub.TimeShift", "Both times"), qsTranslate("HikariSub.TimeShift", "The starting time"), qsTranslate("HikariSub.TimeShift", "End time")]
-                            currentIndex: shiftForm.settings.whichTimes
-                            onActivated: (index) => shiftForm.set("whichTimes", index)
-                        }
-                        Label { text: qsTranslate("HikariSub.TimeShift", "Correction end times") }
-                        ComboBox {
-                            objectName: "shiftEndCorrection"
-                            Layout.fillWidth: true
-                            Accessible.name: qsTranslate("HikariSub.TimeShift", "Correction end times")
-                            model: [qsTranslate("HikariSub.TimeShift", "Leave unchanged"), qsTranslate("HikariSub.TimeShift", "Adjust overlapping times"), qsTranslate("HikariSub.TimeShift", "New times")]
-                            currentIndex: shiftForm.settings.correctEndTimes
-                            onActivated: (index) => shiftForm.set("correctEndTimes", index)
-                        }
-                        // F6: legacy "Post processor" (the panel switches between shift and postprocessor).
-                        CheckBox {
-                            objectName: "postprocessorOn"
-                            text: qsTranslate("HikariSub.TimeShift", "Run post processor")
-                            checked: (shiftForm.settings.postprocessor & 16) !== 0
-                            onToggled: shiftForm.set("postprocessor", checked ? (shiftForm.settings.postprocessor | 16)
-                                                                              : (shiftForm.settings.postprocessor & ~16))
-                        }
-                        GroupBox {
-                            title: qsTranslate("HikariSub.TimeShift", "Post processor")
-                            Layout.fillWidth: true
-                            visible: (shiftForm.settings.postprocessor & 16) !== 0
-                            GridLayout {
-                                anchors.fill: parent
-                                columns: 2
-                                component FlagBox: CheckBox {
-                                    property int bit
-                                    checked: (shiftForm.settings.postprocessor & bit) !== 0
-                                    onToggled: shiftForm.set("postprocessor", checked ? (shiftForm.settings.postprocessor | bit)
-                                                                                      : (shiftForm.settings.postprocessor & ~bit))
-                                }
-                                component MsBox: SpinBox {
-                                    property string key
-                                    from: 0; to: 100000; stepSize: 10; editable: true
-                                    value: shiftForm.settings[key]
-                                    onValueModified: shiftForm.set(key, value)
-                                }
-                                FlagBox { objectName: "ppLeadIn"; bit: 1; text: qsTranslate("HikariSub.TimeShift", "Lead-in") }
-                                MsBox { key: "leadIn"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Lead-in") }
-                                FlagBox { objectName: "ppLeadOut"; bit: 2; text: qsTranslate("HikariSub.TimeShift", "Lead-out") }
-                                MsBox { key: "leadOut"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Lead-out") }
-                                FlagBox { objectName: "ppContinuous"; bit: 4; text: qsTranslate("HikariSub.TimeShift", "Set times as continuous"); Layout.columnSpan: 2 }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "Start time threshold") }
-                                MsBox { key: "thresholdStart"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Start time threshold") }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "End time threshold") }
-                                MsBox { key: "thresholdEnd"; Accessible.name: qsTranslate("HikariSub.TimeShift", "End time threshold") }
-                                FlagBox { objectName: "ppSnap"; bit: 8; text: qsTranslate("HikariSub.TimeShift", "Snap to keyframes"); enabled: root.app.exactTimebase(); Layout.columnSpan: 2 }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "Before the start of time") }
-                                MsBox { key: "keyframeBeforeStart"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Before the start of time") }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "After the start time") }
-                                MsBox { key: "keyframeAfterStart"; Accessible.name: qsTranslate("HikariSub.TimeShift", "After the start time") }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "Before the end time") }
-                                MsBox { key: "keyframeBeforeEnd"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Before the end time") }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "After the end time") }
-                                MsBox { key: "keyframeAfterEnd"; Accessible.name: qsTranslate("HikariSub.TimeShift", "After the end time") }
-                            }
-                        }
-                        GroupBox {
-                            title: qsTranslate("HikariSub.TimeShift", "Profiles")
-                            Layout.fillWidth: true
-                            RowLayout {
-                                anchors.fill: parent
-                                ComboBox {
-                                    id: shiftProfile
-                                    objectName: "shiftProfile"
-                                    Layout.fillWidth: true
-                                    Accessible.name: qsTranslate("HikariSub.TimeShift", "Profiles")
-                                    editable: true
-                                    model: root.shiftTimes.profiles
-                                    onActivated: (index) => root.shiftTimes.loadProfile(textAt(index))
-                                }
-                                IconToolButton { objectName: "shiftProfileSave"; iconRole: "add"; text: qsTranslate("HikariSub.TimeShift", "Adding and editing profiles"); onClicked: root.shiftTimes.saveProfile(shiftProfile.editText) }
-                                IconToolButton { objectName: "shiftProfileRemove"; iconRole: "remove"; text: qsTranslate("HikariSub.TimeShift", "Removing profiles"); onClicked: root.shiftTimes.removeProfile(shiftProfile.editText) }
-                            }
-                        }
-                        Label {
-                            id: shiftMessage
-                            objectName: "shiftMessage"
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
-                            color: palette.highlight
-                            Accessible.role: Accessible.AlertMessage
-                        }
-                    }
+                    shiftTimes: root.shiftTimes
+                    app: root.app
+                    hasVideo: root.video.hasVideo
+                    audioHasMark: root.audio.hasMark
+                    onRun: root.runShiftTimes()
                 }
             }
         }
@@ -5149,7 +5020,7 @@ ApplicationWindow {
         anchors.centerIn: parent
         standardButtons: Dialog.Yes | Dialog.No
         Label { text: qsTranslate("HikariSub.TimeShift", "Do you really want to shift only %1 times?").arg(shiftConfirm.which === 1 ? qsTranslate("HikariSub.TimeShift", "start") : qsTranslate("HikariSub.TimeShift", "end")) }
-        onAccepted: shiftMessage.text = root.app.shiftTimes()
+        onAccepted: shiftTimesPanel.message = root.app.shiftTimes()
     }
     // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
     // and failures; the automatic one speaks only for a newer release.
@@ -5572,6 +5443,7 @@ ApplicationWindow {
         id: settingsDialog
         app: root.app
         hotkeys: root.hotkeys
+        tagButtons: root.tagButtons
         anchors.centerIn: parent
     }
     // Y8: the font collector; a double click on a Style in its log opens the
@@ -5731,94 +5603,6 @@ ApplicationWindow {
         } else {
             colourDialog.openFor(root.editor, number, c)
             root.app.colourPickerOpened()
-        }
-    }
-
-    // Legacy TagButtonDialog ("Enter ASS tag").
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: tagButtonDialog
-        objectName: "tagButtonDialog"
-        title: qsTranslate("HikariSub.Editor", "Enter ASS tag")
-        width: 320
-        height: 240
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
-        property int index: -1
-        function editButton(i) {
-            const b = root.tagButtons.buttons[i]
-            index = i
-            tagType.currentIndex = b.type
-            tagName.text = b.name
-            tagText.text = b.tag
-            show()
-            tagText.selectAll()
-            tagText.forceActiveFocus()
-        }
-        function saveTag() {
-            root.tagButtons.edit(index, tagName.text, tagText.text, tagType.currentIndex)
-            close()
-        }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            ComboBox {
-                id: tagType
-                objectName: "tagType"
-                Layout.fillWidth: true
-                model: [qsTranslate("HikariSub.Editor", "Tag inserted in place of cursor"), qsTranslate("HikariSub.Editor", "Insert Tag at text beginning"), qsTranslate("HikariSub.Editor", "Plain text")]
-                Accessible.name: qsTranslate("HikariSub.Editor", "Insertion")
-            }
-            Label { text: qsTranslate("HikariSub.Editor", "Button name") }
-            TextField {
-                id: tagName
-                objectName: "tagName"
-                Layout.fillWidth: true
-                Accessible.name: qsTranslate("HikariSub.Editor", "Button name")
-                onAccepted: tagButtonDialog.saveTag()
-            }
-            Label { text: qsTranslate("HikariSub.Editor", "Button tag") }
-            TextField {
-                id: tagText
-                objectName: "tagText"
-                Layout.fillWidth: true
-                Accessible.name: qsTranslate("HikariSub.Editor", "Button tag")
-                onAccepted: tagButtonDialog.saveTag()
-            }
-            WindowFooter {
-                Button {
-                    objectName: "saveTag"
-                    text: qsTranslate("HikariSub.Editor", "Save tag")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: tagButtonDialog.saveTag()
-                }
-                Button {
-                    objectName: "cancelTag"
-                    text: qsTranslate("HikariSub.Editor", "Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: tagButtonDialog.close()
-                }
-            }
-        }
-    }
-
-    // Legacy NumTagButtons ("Change number of buttons", 0 to 20).
-    Dialog {
-        id: tagButtonCountDialog
-        objectName: "tagButtonCountDialog"
-        title: qsTranslate("HikariSub.Editor", "Change number of buttons")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        onAboutToShow: tagButtonCount.value = root.tagButtons.storedCount()
-        onAccepted: root.tagButtons.setCount(tagButtonCount.value)
-        SpinBox {
-            id: tagButtonCount
-            objectName: "tagButtonCount"
-            from: 0
-            to: 20
-            editable: true
-            Accessible.name: qsTranslate("HikariSub.Editor", "Number of buttons")
         }
     }
 
@@ -6211,6 +5995,7 @@ ApplicationWindow {
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: websiteAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
+        GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction, // LE3
         // P6: OnPageClose (the rewrite's File > Close).
         GLOBAL_CLOSE_PAGE: closeAction
     }

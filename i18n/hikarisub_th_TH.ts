@@ -1122,6 +1122,10 @@ please save with different name or change file attribute.</source>
         <translation>ตำแหน่งข้อความ</translation>
     </message>
     <message>
+        <source>mixed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Number of characters in each line.
 No more than 43 characters per line (maximum 2 lines).</source>
         <translation>จำนวนอักขระในแต่ละบรรทัด
@@ -1135,7 +1139,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Time</source>
-        <translation>เวลา</translation>
+        <translation type="vanished">เวลา</translation>
     </message>
     <message>
         <source>Show times</source>
@@ -1143,7 +1147,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Frames</source>
-        <translation>เฟรม</translation>
+        <translation type="vanished">เฟรม</translation>
     </message>
     <message>
         <source>Show frames</source>
@@ -1259,7 +1263,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation>ซ่อนแท็ก</translation>
+        <translation type="vanished">ซ่อนแท็ก</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
@@ -1338,12 +1342,32 @@ Should not exceed 15 characters per second</source>
         <translation>สีเงา</translation>
     </message>
     <message>
+        <source>Add a tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Manage tag buttons</source>
-        <translation>จัดการปุ่มแท็ก</translation>
+        <translation type="vanished">จัดการปุ่มแท็ก</translation>
     </message>
     <message>
         <source>Change number of buttons</source>
-        <translation>เปลี่ยนจำนวนปุ่ม</translation>
+        <translation type="vanished">เปลี่ยนจำนวนปุ่ม</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -1379,7 +1403,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Enter ASS tag</source>
-        <translation>ป้อนแท็ก ASS</translation>
+        <translation type="vanished">ป้อนแท็ก ASS</translation>
     </message>
     <message>
         <source>Tag inserted in place of cursor</source>
@@ -1402,16 +1426,44 @@ Should not exceed 15 characters per second</source>
         <translation>ชื่อปุ่ม</translation>
     </message>
     <message>
+        <source>Enter a name or choose an icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">ชื่อ</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Button tag</source>
         <translation>แท็กของปุ่ม</translation>
     </message>
     <message>
-        <source>Save tag</source>
-        <translation>บันทึกแท็ก</translation>
+        <source>Insert</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Number of buttons</source>
+        <source>Icon</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">ไม่มี</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">ตัวอย่าง</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">บันทึก</translation>
+    </message>
+    <message>
+        <source>Save tag</source>
+        <translation type="vanished">บันทึกแท็ก</translation>
     </message>
     <message>
         <source>Select whole characters.</source>
@@ -1543,6 +1595,22 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>%1, active line %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the text the button puts in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the tag, for example \blur2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out the braces: the button puts the tag in an override block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A tag starts with a backslash, for example \blur2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3509,6 +3577,10 @@ Failed to copy %2 fonts.</source>
         <translation>แปลงจากรูปแบบหนึ่งเป็นอีกรูปแบบหนึ่ง</translation>
     </message>
     <message>
+        <source>Hide tags in the line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opens the HikariSub website in the default browser</source>
         <translation>เปิดเว็บไซต์ HikariSub ในเบราว์เซอร์เริ่มต้น</translation>
     </message>
@@ -4264,6 +4336,42 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Set a missing script resolution from the video without asking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show video frames instead of times in the line editor and the subtitle grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide tags in the line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No tag buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit the tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the tag button</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6021,6 +6129,18 @@ Spell checking will be disabled</source>
         <translation>ยกเลิก</translation>
     </message>
     <message>
+        <source>Missing style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The document has no style named &quot;%1&quot;. Create it from Default?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Prompt</source>
         <translation>คำถาม</translation>
     </message>
@@ -6920,6 +7040,40 @@ Styles deleted:
         <translation>บรรทัดใด</translation>
     </message>
     <message>
+        <source>Amount</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time shifts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift times by time / frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delays subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speeds up subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shifts %1, %2, and %3 tag times
+so their positions on video do not change
+(slows down time shifting)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished">บรรทัด</translation>
+    </message>
+    <message>
+        <source>The choice of lines to move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>All lines</source>
         <translation>บรรทัดทั้งหมด</translation>
     </message>
@@ -6944,12 +7098,24 @@ Styles deleted:
         <translation>ตามสไตล์ที่เลือก</translation>
     </message>
     <message>
+        <source>Select a style from the list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Styles, separated by commas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move according to the following styles (separated by a coma)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>A method of time shift</source>
         <translation>วิธีเลื่อนเวลา</translation>
+    </message>
+    <message>
+        <source>The choice of times to move</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Both times</source>
@@ -6958,6 +7124,10 @@ Styles deleted:
     <message>
         <source>Correction end times</source>
         <translation>แก้ไขเวลาสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Correction end times, when they are improper or overlap each other</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Leave unchanged</source>
@@ -6970,6 +7140,66 @@ Styles deleted:
     <message>
         <source>New times</source>
         <translation>เวลาใหม่</translation>
+    </message>
+    <message>
+        <source>Move the start time to the time video / audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end time to the video/audio time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in/lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inserts introduction to the start time (good when using fad)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Introduction time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inserts introduction to the end time (good when using fad)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start time extension threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time extension threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+before the start time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+after the start time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+before the end time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+after the end time in milliseconds</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Run post processor</source>
