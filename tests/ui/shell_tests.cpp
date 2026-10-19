@@ -2792,16 +2792,18 @@ private slots:
 
         // The open list: the sample line shows the family highlighted.
         // (With the list open the arrows move the highlight, not the choice.)
+        // No hover: the rows scrolled under a pointer resting over the list
+        // would move the highlight (CI's virtual screens).
+        font->setProperty("hoverEnabled", false);
         int key = styles.previewKey();
         QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
         QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
-        const int highlighted = font->property("highlightedIndex").toInt();
-        QVERIFY(highlighted >= 0);
+        QVERIFY(font->property("highlightedIndex").toInt() >= 0);
         QTRY_VERIFY(styles.previewKey() > key);
         QCOMPARE(font->property("editText").toString(), typed); // nothing chosen yet
         QVariant browsed;
         QVERIFY(QMetaObject::invokeMethod(font, "browsedFont", Q_RETURN_ARG(QVariant, browsed)));
-        QCOMPARE(browsed.toString(), big.at(highlighted));
+        QCOMPARE(browsed.toString(), big.at(font->property("highlightedIndex").toInt()));
         key = styles.previewKey();
         QVERIFY(QMetaObject::invokeMethod(popup, "close"));
         QTRY_VERIFY(!popup->property("visible").toBool());
