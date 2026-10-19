@@ -38,6 +38,11 @@ ShellMenu {
             ShellMenus.stackBefore(itemAt(i), itemAt(i + 1))
     }
 
+    // The presets' names as the Instantiator below translates them (also
+    // presetLabel's literals), marked here for the context lint.
+    readonly property var presetTexts: [QT_TRANSLATE_NOOP("HikariSub.Workspace", "Editing"),
+        QT_TRANSLATE_NOOP("HikariSub.Workspace", "Timing"), QT_TRANSLATE_NOOP("HikariSub.Workspace", "Translation"),
+        QT_TRANSLATE_NOOP("HikariSub.Workspace", "Typesetting")]
     Instantiator {
         model: menu.presets
         delegate: ShellMenuItem {
