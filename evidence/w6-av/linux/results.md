@@ -51,7 +51,11 @@ clip with a burnt-in timecode and frame number and a 440 Hz tone
   under System default, once of those with AV1's notice compiled out). With
   `QT_AUDIO_BACKEND=pulseaudio` the stream moves to the new default and the app
   goes on; the unplug-while-playing shots above were taken that way. Raised on
-  #238 for the owner.
+  #238 for the owner. **Fixed** after the owner's "Approved migrate to
+  pulseaudio" (ledger AV1-linux-pulseaudio, 1952427d): on Linux the app now
+  starts Qt Multimedia on its PulseAudio backend unless `QT_AUDIO_BACKEND` is
+  set, and with no override the app went on through a sink removal while
+  playing.
 - Light theme: `light-output-menu.png`, `light-sync-tooltip.png`.
 
 ## AV2 — the cursors follow each other
