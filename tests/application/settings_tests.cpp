@@ -151,8 +151,9 @@ TEST(SettingsRegistry, EveryLegacyOptionHasAStableId)
         }
         EXPECT_EQ(findSetting(s.id), &s);
     }
-    // The 207 rows of the migration map (34 AudioConfig.txt, 173 Config.txt).
-    EXPECT_EQ(legacyCount, 207u);
+    // The 207 rows of the migration map (34 AudioConfig.txt, 173 Config.txt)
+    // less WS3's retired EDITOR_ON.
+    EXPECT_EQ(legacyCount, 206u);
     EXPECT_EQ(findSetting("no.such"), nullptr);
     EXPECT_EQ(findLegacySetting(""), nullptr);
 }
