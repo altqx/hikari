@@ -17,6 +17,7 @@
 #include <QTimer>
 #include <QUrl>
 
+#include <algorithm>
 #include <limits>
 #include <string>
 #include <vector>
@@ -45,17 +46,21 @@ constexpr qsizetype kMagicSize = sizeof(kMagic) - 1;
 constexpr quint32 kVersion = 1;
 constexpr quint32 kMaxPayload = 1 << 20;
 constexpr char kAck = '\1';
-// The sender's answer to the ack: it hands over and exits. A sender that gave
-// up before the ack (it runs alone) never sends it, so its request is dropped.
+// The sender's answer to the ack, with how long it waits for the receipt (a
+// 32-bit big-endian count of milliseconds): it hands over and exits. A
+// sender that gave up before the ack (it runs alone) never sends it, so its
+// request is dropped.
 constexpr char kCommit = '\2';
+constexpr qsizetype kCommitSize = 1 + 4;
 // The holder's receipt for the commit: it has taken the request.
 constexpr char kTaken = '\3';
-// The holder takes a commit only this long after its ack, and the sender
-// waits twice as long for the receipt (or the connection's end): a commit
-// the holder took is always receipted before the sender gives up, and a
-// sender that gave up never has its files taken.
-constexpr int kCommitWindowMs = 5000;
-constexpr int kReceiptWaitMs = 2 * kCommitWindowMs;
+// The holder takes a commit only within half the sender's wait after its
+// ack (and never later than this): a commit the holder took is always
+// receipted before the sender gives up, and a sender that gave up never has
+// its files taken. The sender's wait is what is left of its own (claim's
+// timeout), but not less than kMinReceiptWaitMs.
+constexpr int kMaxCommitWindowMs = 5000;
+constexpr int kMinReceiptWaitMs = 200;
 // A connection that has not sent its whole request by then is dropped.
 constexpr int kReadTimeoutMs = 5000;
 
@@ -369,14 +374,17 @@ bool SingleInstance::handOver(const Request &request, int timeoutMs)
     // crashed or gave the instance up first (release) opens nothing, and one
     // that has not answered in time takes the commit no more: this start
     // goes on (and may become the instance).
-    if (!socket.putChar(kCommit))
+    const int wait = std::clamp(left(), kMinReceiptWaitMs, 2 * kMaxCommitWindowMs);
+    QByteArray commit(1, kCommit);
+    QDataStream(&commit, QIODevice::Append) << quint32(wait);
+    if (socket.write(commit) != kCommitSize)
         return false;
     socket.flush();
     QElapsedTimer committing;
     committing.start();
     while (socket.bytesAvailable() < 1 && socket.state() == QLocalSocket::ConnectedState &&
-           committing.elapsed() < kReceiptWaitMs)
-        socket.waitForReadyRead(int(qMax<qint64>(kReceiptWaitMs - committing.elapsed(), 1)));
+           committing.elapsed() < wait)
+        socket.waitForReadyRead(int(qMax<qint64>(wait - committing.elapsed(), 1)));
     if (socket.bytesAvailable() < 1 && socket.state() == QLocalSocket::ConnectedState)
         socket.waitForReadyRead(0); // a receipt that came while this start was held up
     char receipt = 0;
@@ -495,14 +503,17 @@ void SingleInstance::read(QLocalSocket *socket)
 {
     const QVariant acked = socket->property("hikariAcked");
     if (acked.isValid()) {
-        char commit = 0;
-        if (!socket->getChar(&commit))
+        if (socket->bytesAvailable() < kCommitSize)
             return;
+        const QByteArray commit = socket->read(kCommitSize);
         socket->setProperty("hikariAcked", QVariant());
+        quint32 wait = 0;
+        QDataStream(commit.mid(1)) >> wait;
         // Late (this holder was held up past the window): the sender has
         // given up waiting for the receipt, or will before it comes.
-        const bool late = m_clock.elapsed() - socket->property("hikariAckedAt").toLongLong() > kCommitWindowMs;
-        if (commit != kCommit || socket->bytesAvailable() > 0 || late) {
+        const qint64 window = qMin<qint64>(wait / 2, kMaxCommitWindowMs);
+        const bool late = m_clock.elapsed() - socket->property("hikariAckedAt").toLongLong() > window;
+        if (commit.at(0) != kCommit || socket->bytesAvailable() > 0 || late) {
             socket->abort();
             return;
         }
@@ -527,7 +538,7 @@ void SingleInstance::read(QLocalSocket *socket)
     // up waiting (and runs alone) is gone or never answers.
     socket->setProperty("hikariAcked", QVariant::fromValue(request));
     socket->setProperty("hikariAckedAt", m_clock.elapsed());
-    QTimer::singleShot(kCommitWindowMs, socket, [socket] { socket->abort(); });
+    QTimer::singleShot(kMaxCommitWindowMs, socket, [socket] { socket->abort(); });
     socket->putChar(kAck);
     socket->flush();
 }

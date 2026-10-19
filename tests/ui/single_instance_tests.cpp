@@ -119,6 +119,13 @@ class SingleInstanceTests : public QObject {
         length << quint32(payload.size());
         return frame + payload;
     }
+    // A commit as a start sends it: waiting `waitMs` for the receipt.
+    static QByteArray commit(quint32 waitMs)
+    {
+        QByteArray bytes(1, '\2');
+        QDataStream(&bytes, QIODevice::Append) << waitMs;
+        return bytes;
+    }
     static bool holding(QProcess *process)
     {
         return process->waitForReadyRead(10000) && process->readLine().trimmed() == "holding";
@@ -291,6 +298,37 @@ private slots:
         QVERIFY(dropped > 0);
     }
 
+    // A holder that acks and then never takes the commit holds the start
+    // no longer than its wait (claim's timeout, 3 s for the children), and
+    // the start goes on without handing over.
+    void aStartWaitsNoLongerThanItsTimeout()
+    {
+        app::SingleInstance holder({location.server + QStringLiteral("-elsewhere"), location.lock});
+        QCOMPARE(holder.claim({}), Role::Primary);
+        QLocalServer silent;
+        QLocalServer::removeServer(location.server);
+        QVERIFY(silent.listen(location.server));
+        connect(&silent, &QLocalServer::newConnection, this, [&] {
+            while (QLocalSocket *socket = silent.nextPendingConnection()) {
+                connect(socket, &QLocalSocket::readyRead, socket, [socket] {
+                    if (socket->property("acked").toBool())
+                        return; // the commit: never taken, never answered
+                    QByteArray buffer = socket->property("got").toByteArray() + socket->readAll();
+                    socket->setProperty("got", buffer);
+                    if (buffer.size() < 19 || buffer.size() < 19 + qFromBigEndian<quint32>(buffer.constData() + 15))
+                        return;
+                    socket->setProperty("acked", true);
+                    socket->putChar('\1');
+                    socket->flush();
+                });
+            }
+        });
+        QElapsedTimer took;
+        took.start();
+        QCOMPARE(run({dir.filePath(QStringLiteral("j.ass"))}), code(Role::Alone));
+        QVERIFY2(took.elapsed() < 6000, qPrintable(QString::number(took.elapsed())));
+    }
+
     // A request the holder has answered but whose commit it has not taken
     // when it gives the instance up (it quits) is dropped: the start sees
     // the connection end without a receipt and goes on.
@@ -308,7 +346,7 @@ private slots:
         char ack = 0;
         QVERIFY(sender.getChar(&ack) && ack == '\1');
         holder.release();
-        sender.putChar('\2');
+        sender.write(commit(10000));
         sender.flush();
         QTRY_COMPARE(sender.state(), QLocalSocket::UnconnectedState);
         QTest::qWait(200);
@@ -331,7 +369,7 @@ private slots:
         QTRY_VERIFY(sender.bytesAvailable() > 0 || sender.waitForReadyRead(10));
         char ack = 0;
         QVERIFY(sender.getChar(&ack) && ack == '\1');
-        sender.putChar('\2');
+        sender.write(commit(10000));
         QVERIFY(sender.waitForBytesWritten(3000) || sender.bytesToWrite() == 0);
         QThread::msleep(5500); // the holder's event loop is held up
         QTRY_COMPARE(sender.state(), QLocalSocket::UnconnectedState);

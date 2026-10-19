@@ -19,7 +19,7 @@
 // The installer's running-app check is another object, the Global\ mutex
 // composition.cpp creates (distribution.md).
 //
-// Each message is "HIKARISUB-OPEN\1", a 32-bit big-endian length and a
+// Each request is "HIKARISUB-OPEN\1", a 32-bit big-endian length and a
 // QDataStream of the files (absolute) and the launch's activation token; the
 // holder answers one byte once it has the request, and opens the files only
 // once the sender answers that with its commit byte (a sender that gave up
@@ -82,7 +82,8 @@ public:
     ~SingleInstance() override;
 
     // Claims the instance or hands `request` to its holder, waiting at most
-    // `timeoutMs` for an answer (the holder may still be starting). Without
+    // `timeoutMs` for an answer (the holder may still be starting; a fifth
+    // of a second more for the receipt of a commit sent at the end). Without
     // `handOver` a start that cannot claim runs Alone.
     Role claim(const Request &request, bool handOver = true, int timeoutMs = 5000);
     // The holder stops listening, drops the requests it has not taken and
