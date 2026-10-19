@@ -628,6 +628,8 @@ void WorkspaceLayoutController::readSavedLayouts()
         problem = schema > kSavedLayoutsSchema
                       ? QCoreApplication::translate("HikariSub.Workspace", "it was written by a newer version")
                       : QCoreApplication::translate("HikariSub.Workspace", "its format is not known");
+    else if (!o.value(QStringLiteral("layouts")).isArray())
+        problem = QCoreApplication::translate("HikariSub.Workspace", "it is not a layouts file");
     if (!problem.isEmpty()) {
         // Kept for diagnosis before a saved layout can overwrite the file.
         const QString kept = m_savedFile + QStringLiteral(".unrestored");

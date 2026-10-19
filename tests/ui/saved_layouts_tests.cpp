@@ -534,12 +534,16 @@ private slots:
         QCOMPARE(written[1].toObject(), newer); // as it was read
         stop();
 
-        QVERIFY(writeAll(layoutsFile(), "{not json"));
-        start();
-        QVERIFY(layouts().savedLayouts().isEmpty());
-        QVERIFY2(layouts().notice().contains(QStringLiteral("layouts.json.unrestored")), qPrintable(layouts().notice()));
-        QCOMPARE(readAll(layoutsFile() + QStringLiteral(".unrestored")), QByteArray("{not json"));
-        stop();
+        // A broken file, or one without its list of layouts, is kept aside.
+        for (const QByteArray &broken : {QByteArray("{not json"), QByteArray(R"({"schema": 1, "layouts": {}})"),
+                                         QByteArray(R"({"schema": 1})")}) {
+            QVERIFY(writeAll(layoutsFile(), broken));
+            start();
+            QVERIFY(layouts().savedLayouts().isEmpty());
+            QVERIFY2(layouts().notice().contains(QStringLiteral("layouts.json.unrestored")), qPrintable(layouts().notice()));
+            QCOMPARE(readAll(layoutsFile() + QStringLiteral(".unrestored")), broken);
+            stop();
+        }
     }
 
     // The retired commands: no name in the shortcut editor, no default
