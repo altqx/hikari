@@ -701,15 +701,22 @@ void HotkeysController::gestureMap(int id, const QString &name, const QString &a
     auto combined = bindings();
     const auto r = application::mapHotkeyNow(combined, id, name.toStdString(), accel.toStdString(), type,
                                              answerOf(answer));
-    if (!r.changed)
-        return;
-    // SetAccels(true), SaveHkeys(), and SaveHkeys(true) when Audio was involved.
-    split(combined);
-    setAccels();
-    saveMain();
-    if (r.saveAudio)
-        saveAudio();
-    emit rowsChanged();
+    if (r.changed) {
+        // SetAccels(true), SaveHkeys(), and SaveHkeys(true) when Audio was involved.
+        split(combined);
+        setAccels();
+        saveMain();
+        if (r.saveAudio)
+            saveAudio();
+    }
+    // AM1: a macro's shortcut recorded is a binding made for the macro loaded
+    // now, its keys new or not, so one missing since its script changed
+    // resolves again (saved and installed when that changes it).
+    const bool renewed = id >= application::kFirstScriptHotkey &&
+                         m_scripts.committedKeys()[name.toStdString()] == application::qtKeysOfAccel(accel.toStdString()) &&
+                         m_scripts.renew(name);
+    if (r.changed || renewed)
+        emit rowsChanged();
 }
 
 QStringList HotkeysController::holdersOf(const QString &accel, int id) const

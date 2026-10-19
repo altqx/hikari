@@ -63,7 +63,13 @@ public:
     // replacing them changes neither the stored nor the installed bindings
     // until save() and install() (legacy SaveHkeys, SetAccels).
     std::map<std::string, std::string> committedKeys() const;
+    // Keys that change are a binding made now: it records the macro loaded
+    // now, as recording the shortcut in the panel does.
     void replaceCommitted(const std::map<std::string, std::string> &keys);
+    // A shortcut recorded again with the keys it has: the binding is made for
+    // the macro loaded now (one missing since its script changed resolves
+    // again), saved and installed. False when nothing changed.
+    bool renew(const QString &legacyName);
     void save() const;
     void install();
 
@@ -84,6 +90,7 @@ private:
     void load();
     application::AliasResolution resolution(const application::MacroBinding &binding) const;
     std::optional<std::pair<std::string, int>> resolve(const application::MacroBinding &binding) const;
+    void recordIdentity(application::MacroBinding &binding) const;
     QString scriptLabel(const std::string &path) const;
     void commitChange();
 

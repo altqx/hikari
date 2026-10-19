@@ -189,6 +189,17 @@ std::map<std::string, std::string> AutomationHotkeysController::committedKeys() 
     return out;
 }
 
+// The registration a binding made now is for: the loaded macro its legacy
+// name names (what it had is kept while no loaded macro has it).
+void AutomationHotkeysController::recordIdentity(application::MacroBinding &binding) const
+{
+    for (const auto &m : m_automation.manager().registry().macros())
+        if (application::legacyNameOf(fileNameOf(m.scriptPath).toStdString(), m.ordinal) == binding.legacyName) {
+            binding.macroName = m.name;
+            binding.scriptSha256 = m.scriptSha256;
+        }
+}
+
 void AutomationHotkeysController::replaceCommitted(const std::map<std::string, std::string> &keys)
 {
     std::map<std::string, application::MacroBinding> next;
@@ -197,21 +208,33 @@ void AutomationHotkeysController::replaceCommitted(const std::map<std::string, s
             continue;
         const auto kept = m_committed.find(name);
         application::MacroBinding b;
-        if (kept != m_committed.end()) {
+        if (kept != m_committed.end())
             b = kept->second; // the registration it was made for
-        } else {
+        else
             b.legacyName = name;
-            for (const auto &m : m_automation.manager().registry().macros())
-                if (application::legacyNameOf(fileNameOf(m.scriptPath).toStdString(), m.ordinal) == name) {
-                    b.macroName = m.name;
-                    b.scriptSha256 = m.scriptSha256;
-                }
-        }
+        // New keys are a binding made now, for the macro loaded now: one left
+        // missing by a changed script resolves again once remapped.
+        if (kept == m_committed.end() || kept->second.keys != k)
+            recordIdentity(b);
         b.keys = k;
         next[name] = std::move(b);
     }
     m_committed = std::move(next);
     emit bindingsChanged();
+}
+
+bool AutomationHotkeysController::renew(const QString &legacyName)
+{
+    const auto it = m_committed.find(legacyName.toStdString());
+    if (it == m_committed.end())
+        return false;
+    application::MacroBinding b = it->second;
+    recordIdentity(b);
+    if (b.macroName == it->second.macroName && b.scriptSha256 == it->second.scriptSha256)
+        return false;
+    it->second = std::move(b);
+    commitChange();
+    return true;
 }
 
 void AutomationHotkeysController::install()

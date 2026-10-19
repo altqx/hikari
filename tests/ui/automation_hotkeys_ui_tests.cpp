@@ -4,10 +4,12 @@
 // asks first and moves; bindings persist and run their macro; a binding
 // whose script is gone stays visible as missing (S44-macro-alias); a legacy
 // Hotkeys.txt adds only what has no binding yet; Settings → Hotkeys lists
-// every macro, by name, under the Automation filter.
+// every macro, by name, under the Automation filter; a binding left missing
+// by a changed script resolves again once its shortcut is recorded.
 
 #include "hikari/app/application.h"
 #include "hikari/app/hotkeys_controller.h"
+#include "hikari/application/settings.h"
 
 #include <QDeadlineTimer>
 #include <QFile>
@@ -171,6 +173,41 @@ private slots:
         QVERIFY(done.first().at(0).toBool());
         const auto &text = again.files().session(*again.workspace().editingTarget())->document().lines().front()->text;
         QVERIFY(std::u8string_view(text) != u8"Gate");
+    }
+
+    // A binding made for an earlier version of its script is missing until
+    // its shortcut is recorded again, with new keys or the same: it is then
+    // made for the macro loaded now.
+    void rerecordingAChangedMacroBindsItAgain()
+    {
+        app::Application::Options o = options();
+        o.settingsFile = dir.filePath(QStringLiteral("changed.ini"));
+        {
+            app::Application a(o);
+            a.settingsStore()->set(application::kAutomationHotkeysSetting.data(),
+                                   QStringList{QStringLiteral("Script shell-fixture.lua-0\tCtrl+Alt+K\tPrefix from dialog\tearlier"),
+                                               QStringLiteral("Script shell-fixture.lua-1\tCtrl+Alt+L\tWait for cancel\tearlier")});
+        }
+        app::Application a(o);
+        QVERIFY(loadScripts(a));
+        auto &macros = a.automationHotkeys();
+        auto &h = a.hotkeys();
+        QCOMPARE(missing(macros, kPrefix).value(QStringLiteral("problem")).toString(),
+                 QStringLiteral("The script or its macro changed"));
+        QCOMPARE(missing(macros, kWait).value(QStringLiteral("keys")).toString(), QStringLiteral("Ctrl+Alt+L"));
+        QVERIFY(macros.shortcuts().isEmpty());
+        QVERIFY(map(h, kPrefix, "Ctrl-Alt-M").isEmpty());
+        QCOMPARE(keysOf(macros, kPrefix), QStringLiteral("Ctrl+Alt+M"));
+        QVERIFY(missing(macros, kPrefix).isEmpty());
+        QSignalSpy committed(&macros, &app::AutomationHotkeysController::committed);
+        QVERIFY(map(h, kWait, "Ctrl-Alt-L").isEmpty());
+        QCOMPARE(committed.size(), 1); // saved and installed at once
+        QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+L"));
+        QVERIFY(macros.missing().isEmpty());
+        QCOMPARE(macros.shortcuts().size(), qsizetype(2));
+        // Recorded again as it now is: nothing to save.
+        QVERIFY(map(h, kWait, "Ctrl-Alt-L").isEmpty());
+        QCOMPARE(committed.size(), 1);
     }
 
     void legacyImportAddsOnlyWhatIsFree()
