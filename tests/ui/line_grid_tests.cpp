@@ -16,7 +16,9 @@
 #include <QQuickWindow>
 #include <QScopeGuard>
 #include <QSignalSpy>
+#include <QStyleHints>
 #include <QTest>
+#include <QWheelEvent>
 
 #include <algorithm>
 #include <cstdio>
@@ -391,6 +393,59 @@ private slots:
     // V6: a press and a double click report whether they are in the End
     // column (legacy SubsGrid::SetVideoLineTime seeks to the end there,
     // SubsGridWindow.cpp:1382-1395); a double click is reported as such.
+    // GR1: a notch scrolls the system's lines per notch, whatever the
+    // modifiers (legacy SubsGridWindow.cpp:1460-1466 ignores them, Ctrl
+    // included); a touchpad's pixel deltas scroll by pixels; a sideways
+    // delta is not the Grid's; the selection and active Line stay.
+    void wheelScrollsTheGrid()
+    {
+        struct Grid : LineGrid {
+            using LineGrid::wheelEvent;
+        };
+        LineTableModel model;
+        model.setDocument(generate(200));
+        Grid grid;
+        grid.setSize(QSizeF(400, 300));
+        grid.setModel(&model);
+        const qreal row = grid.rowHeight();
+        const qreal notch = QGuiApplication::styleHints()->wheelScrollLines() * row;
+        QSignalSpy requests(&grid, &LineGrid::activeLineRequested);
+        QSignalSpy clicks(&grid, &LineGrid::lineClicked);
+        auto wheel = [&](QPoint pixels, QPoint angle, Qt::KeyboardModifiers mods = Qt::NoModifier) {
+            const QPointF at(200, 150);
+            QWheelEvent event(at, at, pixels, angle, Qt::NoButton, mods, Qt::NoScrollPhase, false);
+            event.setAccepted(false);
+            grid.wheelEvent(&event);
+            return event.isAccepted();
+        };
+        QVERIFY(wheel({}, {0, -120}));
+        QCOMPARE(grid.contentY(), notch);
+        QVERIFY(wheel({}, {0, -240}, Qt::ControlModifier));
+        QCOMPARE(grid.contentY(), 3 * notch);
+        QVERIFY(wheel({}, {0, -120}, Qt::ShiftModifier));
+        QCOMPARE(grid.contentY(), 4 * notch);
+        QVERIFY(wheel({}, {0, 120}));
+        QCOMPARE(grid.contentY(), 3 * notch);
+        // A high-resolution wheel's eighth of a notch moves an eighth.
+        QVERIFY(wheel({}, {0, -15}));
+        QCOMPARE(grid.contentY(), 3 * notch + notch / 8);
+        // Pixel deltas win over the angle a touchpad also reports.
+        const qreal before = grid.contentY();
+        QVERIFY(wheel({0, -7}, {0, -56}));
+        QCOMPARE(grid.contentY(), before + 7);
+        // Sideways only: not handled, nothing moves.
+        QVERIFY(!wheel({}, {-120, 0}));
+        QVERIFY(!wheel({-30, 0}, {-240, 0}));
+        QCOMPARE(grid.contentY(), before + 7);
+        // Clamped at both ends.
+        QVERIFY(wheel({}, {0, 120 * 1000}));
+        QCOMPARE(grid.contentY(), 0.0);
+        QVERIFY(wheel({}, {0, -120 * 1000}));
+        QCOMPARE(grid.contentY(), grid.contentHeight() - 300);
+        QCOMPARE(requests.size(), 0);
+        QCOMPARE(clicks.size(), 0);
+    }
+
     void pressesReportTheEndColumnAndDoubleClicks()
     {
         struct Grid : LineGrid {

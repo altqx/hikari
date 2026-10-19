@@ -9,9 +9,12 @@
 #include <QAbstractProxyModel>
 #include <QAccessible>
 #include <QFontMetricsF>
+#include <QGuiApplication>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QStyleHints>
+#include <QWheelEvent>
 
 #include <algorithm>
 #include <cmath>
@@ -329,6 +332,26 @@ void LineGrid::keyPressEvent(QKeyEvent *event)
     scrollToRow(target);
     if (const auto id = lineAtRow(target))
         emit activeLineRequested(id->value);
+    event->accept();
+}
+
+void LineGrid::wheelEvent(QWheelEvent *event)
+{
+    // GR1: legacy scrolls three rows a notch whatever the modifiers, Ctrl and
+    // Shift included (SubsGridWindow.cpp:1460-1466). A notch here is the
+    // system's lines per notch; a touchpad's pixel deltas scroll by pixels.
+    // The Grid has no horizontal scrolling, so a sideways delta is left to
+    // the items under it. Scrolling never moves the selection.
+    const QPoint pixels = event->pixelDelta();
+    const qreal dy = !pixels.isNull()
+                         ? pixels.y()
+                         : event->angleDelta().y() / qreal(QWheelEvent::DefaultDeltasPerStep)
+                               * QGuiApplication::styleHints()->wheelScrollLines() * m_geometry.rowHeight;
+    if (dy == 0) {
+        event->ignore();
+        return;
+    }
+    setContentY(m_contentY - dy);
     event->accept();
 }
 

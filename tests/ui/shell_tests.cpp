@@ -51,6 +51,7 @@
 #include <QStandardPaths>
 #include <QCursor>
 #include <QStyleHints>
+#include <QWheelEvent>
 #include <QDirIterator>
 #include <QContextMenuEvent>
 #include <QJsonArray>
@@ -78,6 +79,7 @@
 #include <cmath>
 #include <cstring>
 #include <algorithm>
+#include <string>
 #include <array>
 #include <filesystem>
 #include <functional>
@@ -1435,6 +1437,52 @@ private slots:
         QCOMPARE(added->end.value.microseconds(), 11'000'000);
         press(Qt::Key_Up, Qt::ControlModifier);
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("three"));
+    }
+
+    // GR1: the wheel over the Grid scrolls it through the window's own
+    // delivery: a notch is the system's lines per notch, Ctrl+wheel scrolls
+    // like legacy's Grid, and a touchpad's pixels scroll by pixels. The
+    // selection and active Line stay; each tab keeps its own scroll.
+    void wheelOverTheGridScrollsIt()
+    {
+        std::string many;
+        for (int i = 0; i < 300; ++i)
+            many += "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,line " + std::to_string(i) + "\n";
+        QVERIFY(application->openFile(writeFile(dir, "wheel.ass", many.c_str())));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *grid = item("editingGrid");
+        QTRY_VERIFY(grid->property("contentHeight").toReal() > grid->height());
+        QTRY_COMPARE(session->selection().active, session->document().lines()[0]->id);
+        const auto selection = session->selection();
+        const qreal row = grid->property("rowHeight").toReal();
+        const qreal notch = QGuiApplication::styleHints()->wheelScrollLines() * row;
+        auto wheel = [&](QPoint pixels, QPoint angle, Qt::KeyboardModifiers mods = Qt::NoModifier) {
+            const QPointF at = grid->mapToScene(QPointF(grid->width() / 2, grid->height() / 2));
+            QWheelEvent event(at, window->mapToGlobal(at), pixels, angle, Qt::NoButton, mods, Qt::NoScrollPhase, false);
+            QCoreApplication::sendEvent(window, &event);
+        };
+        QCoreApplication::processEvents(); // the opened tab's scroll restore (P6) comes first
+        grid->setProperty("contentY", 0);
+        wheel({}, {0, -120});
+        QCOMPARE(grid->property("contentY").toReal(), notch);
+        wheel({}, {0, -120}, Qt::ControlModifier);
+        QCOMPARE(grid->property("contentY").toReal(), 2 * notch);
+        wheel({0, -5}, {0, -40});
+        QCOMPARE(grid->property("contentY").toReal(), 2 * notch + 5);
+        wheel({}, {0, 120});
+        QCOMPARE(grid->property("contentY").toReal(), notch + 5);
+        QCOMPARE(session->selection().active, selection.active);
+        QCOMPARE(session->selection().selected, selection.selected);
+        // The tab's scroll, in whole rows, comes back after another tab.
+        wheel({}, {0, -1200});
+        const qreal scrolled = grid->property("contentY").toReal();
+        const int topRow = int(std::floor(scrolled / row));
+        QVERIFY(topRow > 0);
+        application->addPage();
+        QVERIFY(application->openFile(episode));
+        QTRY_COMPARE(grid->property("contentY").toReal(), 0.0);
+        application->selectTab(0);
+        QTRY_COMPARE(grid->property("contentY").toReal(), topRow * row);
     }
 
     // E6: GLOBAL_REMOVE_TEXT (Alt+Delete; the Grid menu's "Delete text"):
