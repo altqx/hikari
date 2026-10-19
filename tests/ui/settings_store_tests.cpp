@@ -258,6 +258,28 @@ private slots:
         shift.setSettingsMap(map);
         QCOMPARE(SettingsStore(ini).integer("shiftTimes.options"), 128 | 4);
     }
+
+    // TS1: the panel's collapsed sections are kept apart from the shift's
+    // options: all open by default, stored only when one closes, read back.
+    void shiftTimesRemembersCollapsedSections()
+    {
+        QTemporaryDir dir;
+        const QString ini = dir.filePath(QStringLiteral("hikari.ini"));
+        {
+            SettingsStore store(ini);
+            ui::ShiftTimesController shift(store);
+            QVERIFY(shift.collapsedSections().isEmpty());
+            QSignalSpy spy(&shift, &ui::ShiftTimesController::collapsedSectionsChanged);
+            shift.setCollapsedSections({QStringLiteral("amount"), QStringLiteral("snap")});
+            QCOMPARE(spy.count(), 1);
+            shift.setCollapsedSections({QStringLiteral("amount"), QStringLiteral("snap")});
+            QCOMPARE(spy.count(), 1); // unchanged
+            QVERIFY(!store.contains("shiftTimes.options"));
+            QVERIFY(!store.contains("shiftTimes.time"));
+        }
+        ui::ShiftTimesController shift(ini);
+        QCOMPARE(shift.collapsedSections(), (QStringList{QStringLiteral("amount"), QStringLiteral("snap")}));
+    }
 };
 
 QTEST_GUILESS_MAIN(SettingsStoreTests)
