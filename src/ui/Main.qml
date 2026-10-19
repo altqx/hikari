@@ -275,6 +275,20 @@ ApplicationWindow {
                                           searchPanel]
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock, searchDock]
+    // KB2 (key_router.h): a panel's bindings act before the control it has
+    // focused (a clicked button keeps no Space of its own), and the Video
+    // window's VIDEO_PLAY_PAUSE (Space by default) acts from every panel;
+    // never while a text field or a control the keyboard moved to has focus.
+    KeyRouter {
+        id: keyRouter
+        objectName: "keyRouter"
+        fallbackTarget: videoPanel
+        fallbackAccepts: (key, modifiers) => root.hotkeys.actionFor(3, key, modifiers) === "VIDEO_PLAY_PAUSE"
+        Component.onCompleted: {
+            for (const panel of root.panels)
+                keyRouter.addPanel(panel, panel.keyTarget)
+        }
+    }
 
     // A preset is the Editing arrangement with the panels it leaves closed
     // (Timing: Video; Translation and Typesetting: Audio), for the current
@@ -2257,6 +2271,9 @@ ApplicationWindow {
         // it into clipping its controls.
         property string dockName
         property size minimumBodySize: Qt.size(0, 0)
+        // The item holding the panel's key handlers (KeyRouter), when not
+        // the panel itself.
+        property Item keyTarget: null
         readonly property size minimumSize: Qt.size(Math.ceil(minimumBodySize.width) + 2 * body.anchors.margins,
                                                     Math.ceil(minimumBodySize.height) + 2 * body.anchors.margins)
         function reportMinimumSize() {
@@ -2633,6 +2650,7 @@ ApplicationWindow {
                         iconRole: "frame-previous"
                         text: qsTranslate("HikariSub.Video", "Previous frame")
                         enabled: root.video.hasVideo && root.video.frame > 0
+                        focusPolicy: Qt.NoFocus // KB2: a click left Space to the button
                         onClicked: root.video.stepFrames(-1)
                     }
                     Label {
@@ -2646,6 +2664,7 @@ ApplicationWindow {
                         iconRole: "frame-next"
                         text: qsTranslate("HikariSub.Video", "Next frame")
                         enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
+                        focusPolicy: Qt.NoFocus // KB2: a click left Space to the button
                         onClicked: root.video.stepFrames(1)
                     }
                     VideoVolumeSlider { // V4: legacy VolSlider at the right
@@ -3500,6 +3519,7 @@ ApplicationWindow {
                 title: shell.hasEditingTarget ? qsTranslate("HikariSub.Grid", "Editing: %1").arg(shell.editingTitle) : qsTranslate("HikariSub.Grid", "No document open")
                 accessibleName: qsTranslate("HikariSub.Grid", "Grid")
                 focus: true
+                keyTarget: grid
                 HikariGrid {
                     id: grid
                     objectName: "editingGrid"
@@ -3857,6 +3877,7 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "referencePanel"
                 dockName: "Reference"
+                keyTarget: referenceTray.grid
                 minimumBodySize: Qt.size(240, referenceTray.grid.rowHeight * 3)
                 visible: shell.hasReference
                 title: qsTranslate("HikariSub.Reference", "Reference (protected, read-only): %1").arg(shell.referenceTitle)

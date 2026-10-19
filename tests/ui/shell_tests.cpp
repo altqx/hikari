@@ -11968,6 +11968,63 @@ private slots:
         press(Qt::Key_H);
     }
 
+    // KB2: Space (the Video window's VIDEO_PLAY_PAUSE) plays and pauses with
+    // the focus in the Grid, the video, the audio and on the Line editor's
+    // controls, and on a button the mouse pressed. The frame buttons take no
+    // focus: one kept it from a click and took Space as a press, so Space
+    // stepped a frame back. A text field types the space.
+    void spacePlaysAndPausesFromEveryPanel()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        video.openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        closeMismatchQuestion();
+        keysNeverRepeat();
+        const auto playsAndPauses = [&](const char *where) {
+            QVERIFY2(!video.playing(), where);
+            press(Qt::Key_Space);
+            QVERIFY2(video.playing(), where);
+            press(Qt::Key_Space);
+            QVERIFY2(!video.playing(), where);
+        };
+        item("editingGrid")->forceActiveFocus();
+        playsAndPauses("Grid");
+        item("videoPanel")->forceActiveFocus();
+        playsAndPauses("Video");
+        item("audioPanel")->forceActiveFocus();
+        playsAndPauses("Audio");
+        // The frame buttons: a click steps and leaves the focus where it was.
+        QVERIFY(video.showFrameAt(10));
+        QTRY_COMPARE(video.frame(), 10);
+        item("editingGrid")->forceActiveFocus();
+        clickWith(item("previousFrame"), Qt::NoModifier);
+        QTRY_COMPARE(video.frame(), 9);
+        QVERIFY(item("editingGrid")->hasActiveFocus());
+        clickWith(item("nextFrame"), Qt::NoModifier);
+        QTRY_COMPARE(video.frame(), 10);
+        QVERIFY(item("editingGrid")->hasActiveFocus());
+        playsAndPauses("after the frame buttons");
+        QVERIFY(!item("previousFrame")->hasActiveFocus() && !item("nextFrame")->hasActiveFocus());
+        // A check box the mouse focused keeps its focus but not Space.
+        auto *comment = item("commentBox");
+        const bool commented = !comment->property("checked").toBool();
+        comment->setProperty("checked", commented);
+        comment->forceActiveFocus(Qt::MouseFocusReason);
+        QVERIFY(comment->hasActiveFocus());
+        QVERIFY(!comment->property("visualFocus").toBool());
+        playsAndPauses("a mouse-focused check box");
+        QCOMPARE(comment->property("checked").toBool(), commented);
+        // The Line text types it.
+        auto *text = item("lineText");
+        text->forceActiveFocus();
+        const QString before = text->property("text").toString();
+        press(Qt::Key_Space);
+        QVERIFY(!video.playing());
+        QCOMPARE(text->property("text").toString().size(), before.size() + 1);
+    }
+
     // A4: legacy Play pauses a playing video; Stop pauses it and leaves the
     // audio alone.
     void audioPlaybackPausesThePlayingVideo()
