@@ -3375,6 +3375,87 @@ private slots:
         QTRY_VERIFY2(text->property("text").toString().contains(kept), qPrintable(text->property("text").toString()));
     }
 
+    // SY2: a colour action while the popover is open (a colour hotkey, or
+    // another Style editor swatch): the colour open before ends, kept, and
+    // only then the next edit begins, so each change reaches its own colour.
+    void colourPopoverReopenedEndsTheOneBefore()
+    {
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        application->editor().setShowTags(true);
+        application->colourPicker().setSwitchClicks(false);
+        auto *root = engine->rootObjects().first();
+        auto *popover = named("colourPopover");
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        // A change still waiting to be applied, then the border colour.
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(root, "colourClick", Q_ARG(QVariant, 3), Q_ARG(QVariant, true),
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(text))));
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H0000FF&")));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QCOMPARE(popover->property("anchor").value<QQuickItem *>(), visualItem("changeColour3"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 255), Q_ARG(QVariant, 0)));
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\3c&H00FF00&")));
+        // Esc takes back the border colour's change only.
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTRY_VERIFY(!text->property("text").toString().contains(QStringLiteral("\\3c")));
+        QVERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H0000FF&")));
+    }
+    // The same in the Style editor: the next swatch's change reaches that
+    // swatch, and Esc takes back that one only.
+    void stylePopoverReopenedEndsTheOneBefore()
+    {
+        auto *root = engine->rootObjects().first();
+        const QString path = dir.filePath(QStringLiteral("reopen.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *content = manager->contentItem();
+        const auto colour = [&](int n) {
+            const QVariantMap c = findItem(content, QStringLiteral("styleColour%1").arg(n))->parentItem()->property("colour").toMap();
+            return QList<int>{c.value(QStringLiteral("r")).toInt(), c.value(QStringLiteral("g")).toInt(),
+                              c.value(QStringLiteral("b")).toInt()};
+        };
+        auto *stylePopover = manager->findChild<QObject *>(QStringLiteral("styleColourPopover"));
+        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("styleColour1")), "click"));
+        QTRY_VERIFY(stylePopover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(stylePopover, "setRgb", Q_ARG(QVariant, 1), Q_ARG(QVariant, 2), Q_ARG(QVariant, 3)));
+        QVERIFY(QMetaObject::invokeMethod(manager, "colourClick", Q_ARG(QVariant, 2), Q_ARG(QVariant, true)));
+        QTRY_COMPARE(colour(1), (QList<int>{1, 2, 3}));
+        QTRY_VERIFY(stylePopover->property("visible").toBool());
+        QCOMPARE(stylePopover->property("red").toInt(), 255); // the second colour, &H000000FF
+        QVERIFY(QMetaObject::invokeMethod(stylePopover, "setRgb", Q_ARG(QVariant, 4), Q_ARG(QVariant, 5), Q_ARG(QVariant, 6)));
+        QTRY_COMPARE(colour(2), (QList<int>{4, 5, 6}));
+        QCOMPARE(colour(1), (QList<int>{1, 2, 3}));
+        QTest::keyClick(manager, Qt::Key_Escape);
+        QTRY_VERIFY(!stylePopover->property("visible").toBool());
+        QTRY_COMPARE(colour(2), (QList<int>{255, 0, 0}));
+        QCOMPARE(colour(1), (QList<int>{1, 2, 3}));
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+    }
+
     // SY2 on a line format (MicroDVD: one colour, written as {C:BBGGRR};
     // SRT takes no colour, E1-nonass-font): a change writes the markup at
     // once and Esc takes it back.

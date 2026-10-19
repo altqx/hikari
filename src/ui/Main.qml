@@ -5687,12 +5687,13 @@ ApplicationWindow {
     function colourClick(number, leftClick, field) {
         if (root.colourPicker.switchClicks)
             leftClick = !leftClick
-        const c = root.editor.beginColour(number, field.role, field.selectionStart, field.selectionEnd)
-        if (c.r === undefined)
-            return
-        root.app.colourPickerOpened()
         const button = colourButtons.itemAt(number - 1)
-        colourPopover.openFor(button, root.editor, c, { title: button ? button.text : "", dropper: !leftClick, focus: field })
+        colourPopover.openFor(button, root.editor, () => {
+            const c = root.editor.beginColour(number, field.role, field.selectionStart, field.selectionEnd)
+            if (c.r !== undefined)
+                root.app.colourPickerOpened()
+            return c
+        }, { title: button ? button.text : "", dropper: !leftClick, focus: field })
     }
 
     // Legacy TagButtonDialog ("Enter ASS tag").

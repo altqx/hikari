@@ -468,15 +468,18 @@ Window {
             // SY2: the colour popover at the value; its alpha is the ASS
             // transparency (255 - the colour's own alpha).
             function pick() {
-                const before = Qt.rgba(value.r, value.g, value.b, value.a) // a copy: `value` reads back live
                 const row = colorRow
-                window.colourPicker.opened("automation")
+                let before = null
                 colourPopover.openFor(pickButton, {
                     changeColour: c => row.value = Qt.rgba(c.r / 255, c.g / 255, c.b / 255, row.alpha ? (255 - c.a) / 255 : 1),
                     endDialog: accepted => { if (!accepted) row.value = before }
-                }, { r: Math.round(before.r * 255), g: Math.round(before.g * 255), b: Math.round(before.b * 255),
-                     a: alpha ? 255 - Math.round(before.a * 255) : 0 },
-                { title: spec.hint || spec.name, alpha: alpha, focus: pickButton })
+                }, () => {
+                    // A copy, once the colour open before has ended: `value` reads back live.
+                    before = Qt.rgba(row.value.r, row.value.g, row.value.b, row.value.a)
+                    window.colourPicker.opened("automation")
+                    return { r: Math.round(before.r * 255), g: Math.round(before.g * 255), b: Math.round(before.b * 255),
+                             a: row.alpha ? 255 - Math.round(before.a * 255) : 0 }
+                }, { title: spec.hint || spec.name, alpha: alpha, focus: pickButton })
             }
             Rectangle {
                 implicitWidth: 28

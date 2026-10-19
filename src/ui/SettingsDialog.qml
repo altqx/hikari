@@ -83,12 +83,15 @@ Dialog {
     // the colour popover at `anchor`). Each change is staged at once as
     // "#RRGGBB" and previewed; Esc puts the colour before back.
     function pickThemeColour(setting, colour, anchor, name) {
-        themeColourTarget.setting = setting
-        themeColourTarget.before = colour
-        colourPicker.opened("settings")
-        const c = colourPicker.htmlColour(colour)
-        themeColourPopover.openFor(anchor, themeColourTarget, { r: c.r, g: c.g, b: c.b, a: 0 },
-                                   { title: name, alpha: false, focus: anchor })
+        themeColourPopover.openFor(anchor, themeColourTarget, () => {
+            // The staged colour once the one open before has ended.
+            const now = values[setting] ?? colour
+            themeColourTarget.setting = setting
+            themeColourTarget.before = now
+            colourPicker.opened("settings")
+            const c = colourPicker.htmlColour(now)
+            return { r: c.r, g: c.g, b: c.b, a: 0 }
+        }, { title: name, alpha: false, focus: anchor })
     }
     // Apply keeps the controls as they are (legacy does not refresh them).
     function apply() {

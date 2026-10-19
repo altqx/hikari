@@ -846,10 +846,11 @@ Window {
     function colourClick(number, leftClick) {
         if (colourPicker.switchClicks)
             leftClick = !leftClick
-        colourPicker.opened("styleEditor") // DialogColorPicker::Get(this, ...)
         const column = colours.itemAt(number - 1)
-        stylePopover.openFor(column.swatch, styleColours, styleColours.begin(number),
-                             { title: column.modelData, dropper: !leftClick, focus: column.swatch })
+        stylePopover.openFor(column.swatch, styleColours, () => {
+            colourPicker.opened("styleEditor") // DialogColorPicker::Get(this, ...)
+            return styleColours.begin(number)
+        }, { title: column.modelData, dropper: !leftClick, focus: column.swatch })
     }
     // The popover's target: one of the four colours of the edited Style.
     QtObject {

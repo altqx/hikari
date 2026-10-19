@@ -75,21 +75,27 @@ Popup {
     readonly property color shown: Qt.rgba(red / 255, green / 255, blue / 255, 1)
     readonly property int compactRecent: 16
 
-    // `owner` edits `c` ({r, g, b, a}); `options`: title, alpha (false: no
-    // alpha), dropper (true: start the eyedropper at once, the colour
-    // buttons' right click), focus (the item to give the keyboard back to).
-    function openFor(anchorItem, owner, c, options) {
+    // `owner` edits the colour `begin()` gives ({r, g, b, a}; one without r
+    // opens nothing). `begin` runs only once the colour open before has
+    // ended, so a caller's edit session (the Line editor's beginColour, the
+    // Style editor's swatch) never starts under the one still open.
+    // `options`: title, alpha (false: no alpha), dropper (true: start the
+    // eyedropper at once, the colour buttons' right click), focus (the item
+    // to give the keyboard back to).
+    function openFor(anchorItem, owner, begin, options) {
         if (active)
             finish(true)
         // The click of a press that closed the popover on its own anchor
         // (a popover in its own window lets that press through to the host):
-        // the anchor toggles, so it ends there, the session just begun with it.
+        // the anchor toggles, so it ends there and nothing begins.
         if (anchorItem && anchorItem === pressedAnchor && Date.now() - pressedAt < 1000) {
             pressedAnchor = null
-            owner.endDialog(true)
             return
         }
         pressedAnchor = null
+        const c = begin()
+        if (!c || c.r === undefined)
+            return
         const o = options || {}
         target = owner
         title = o.title || ""

@@ -119,13 +119,16 @@ Dialog {
                 }
                 contentItem: Item {}
                 onClicked: {
-                    const before = colour.text
-                    const c = dialog.rgb(before) || dialog.rgb(dialog.defaults.colour) || { red: 0, green: 0, blue: 0 }
-                    dialog.colourPicker.opened("dummyVideo")
+                    let before = colour.text
                     colourPopover.openFor(swatch, {
                         changeColour: v => colour.text = dialog.colourPicker.assText(v, false),
                         endDialog: accepted => { if (!accepted) colour.text = before }
-                    }, { r: c.red, g: c.green, b: c.blue, a: 0 }, { title: qsTr("Color:"), alpha: false, focus: swatch })
+                    }, () => {
+                        before = colour.text
+                        const c = dialog.rgb(before) || dialog.rgb(dialog.defaults.colour) || { red: 0, green: 0, blue: 0 }
+                        dialog.colourPicker.opened("dummyVideo")
+                        return { r: c.red, g: c.green, b: c.blue, a: 0 }
+                    }, { title: qsTr("Color:"), alpha: false, focus: swatch })
                 }
             }
             TextField {
