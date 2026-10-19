@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TS1 Shift times: mockup</title>
+<style>
+  :root { --font: "Segoe UI", "Noto Sans", "DejaVu Sans", sans-serif; --mono: "Consolas", "DejaVu Sans Mono", monospace; }
+  .light  { --bg:#E5E9EC; --panel:#F9FAFB; --raised:#EDF0F3; --field:#FFFFFF; --text:#202832; --muted:#526170; --line:#AAB5BE; --control:#76828D; --accent:#145C4C; --onaccent:#FFFFFF; --select:#D6EBE4; --danger:#A51F31; --disabled:#74808B; }
+  .dark   { --bg:#171B20; --panel:#20262D; --raised:#29313A; --field:#171D24; --text:#E8EDF2; --muted:#A5B1BD; --line:#414B57; --control:#7A8691; --accent:#9CDBC9; --onaccent:#102C24; --select:#304C47; --danger:#FFADAD; --disabled:#75818D; }
+  .hcw    { --bg:#FFFFFF; --panel:#FFFFFF; --raised:#EBEBEB; --field:#FFFFFF; --text:#000000; --muted:#1A1A1A; --line:#000000; --control:#000000; --accent:#0037B3; --onaccent:#FFFFFF; --select:#C9DAF8; --danger:#A00000; --disabled:#6E6E6E; }
+  .hcb    { --bg:#000000; --panel:#080808; --raised:#151515; --field:#000000; --text:#FFFFFF; --muted:#EEEEEE; --line:#FFFFFF; --control:#FFFFFF; --accent:#FFFF00; --onaccent:#000000; --select:#253F60; --danger:#FFADAD; --disabled:#8C8C8C; }
+
+  body { margin:0; background:#3a3f45; font-family:var(--font); font-size:12px; }
+  .sheet { display:grid; grid-template-columns: 110px repeat(4, 300px); gap:16px 20px; padding:20px; align-items:start; width:max-content; }
+  .colhead, .rowhead { color:#e8edf2; font-size:13px; font-weight:600; }
+  .colhead { text-align:center; padding-bottom:2px; }
+  .rowhead { padding-top:10px; line-height:1.4; }
+  .rowhead small { display:block; font-weight:400; color:#b9c3cc; font-size:11px; margin-top:6px; }
+
+  /* the docked panel: header row + body, framed by the 1px separators around it */
+  .dock { background:var(--bg); padding:3px; color:var(--text); }
+  .panel { background:var(--field); border:1px solid var(--line); display:flex; flex-direction:column; height:var(--h, 700px); position:relative; }
+  .hdr { height:34px; border-bottom:1px solid var(--line); display:flex; align-items:center; padding:0 12px; gap:4px; cursor:move; flex:none; }
+  .hdr .title { font-weight:650; flex:1; }
+  .hdr .more { width:20px; height:20px; display:grid; place-items:center; color:var(--text); }
+  .scroll > * { flex:none; }
+  .sbar { position:absolute; right:2px; width:4px; border-radius:2px; background:var(--control); opacity:.8; }
+  .scroll { flex:1; overflow:hidden; padding:12px 12px 0 12px; display:flex; flex-direction:column; gap:12px; }
+  .footer { flex:none; border-top:1px solid var(--line); padding:12px; display:flex; flex-direction:column; gap:8px; }
+  .status { color:var(--danger); line-height:1.35; }
+
+  .seg { display:flex; height:30px; border:1px solid var(--control); border-radius:1px; }
+  .seg > div { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; color:var(--text); border-left:1px solid var(--control); white-space:nowrap; }
+  .seg > div:first-child { border-left:0; }
+  .seg > div.on { background:var(--select); font-weight:600; box-shadow: inset 0 -2px 0 var(--accent); }
+  .seg > div.off { color:var(--disabled); }
+  .seg.compact > div { flex:none; padding:0 10px; }
+
+  .sec { display:flex; flex-direction:column; gap:8px; }
+  .sec + .sec { border-top:1px solid var(--line); padding-top:12px; }
+  .sechead { display:flex; align-items:center; gap:4px; font-weight:650; }
+  .sechead svg { flex:none; }
+  .sechead.collapsed svg { transform:rotate(-90deg); }
+  .lbl { color:var(--muted); font-size:11px; margin-bottom:-4px; line-height:1.3; }
+  .lbl.off { color:var(--disabled); }
+  .row { display:flex; gap:8px; align-items:flex-end; }
+  .half { flex:1; display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .ctl { height:30px; box-sizing:border-box; border:1px solid var(--control); border-radius:1px; background:var(--field); display:flex; align-items:center; padding:0 8px; gap:6px; color:var(--text); min-width:0; }
+  .ctl.grow { flex:1; }
+  .ctl.mono { font-family:var(--mono); font-variant-numeric:tabular-nums; }
+  .ctl .val { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ctl .unit { color:var(--muted); }
+  .ctl.off { border-color:var(--line); color:var(--disabled); }
+  .ctl.off .unit { color:var(--disabled); }
+  .ctl.focus { border-color:var(--accent); }
+  .placeholder { color:var(--muted); }
+  .spin { display:flex; flex-direction:column; gap:0; margin-right:-4px; }
+  .spin svg { display:block; }
+  .ibtn { width:30px; height:30px; box-sizing:border-box; border:1px solid var(--control); border-radius:1px; display:grid; place-items:center; color:var(--text); flex:none; background:var(--raised); }
+  .chk { display:flex; align-items:center; gap:6px; min-height:20px; }
+  .box { width:14px; height:14px; border:1px solid var(--control); border-radius:1px; display:grid; place-items:center; flex:none; background:var(--field); }
+  .box.on { background:var(--accent); border-color:var(--accent); }
+  .chk.off { color:var(--disabled); }
+  .chk.off .box { border-color:var(--line); }
+  .btn { height:30px; border-radius:1px; display:flex; align-items:center; justify-content:center; font-weight:600; background:var(--accent); color:var(--onaccent); gap:6px; }
+  .btn .key { font-weight:400; opacity:.8; }
+  .mark { position:absolute; top:-1px; right:-1px; width:0; height:0; border-top:8px solid var(--accent); border-left:8px solid transparent; }
+  .tip { position:absolute; background:var(--panel); color:var(--text); border:1px solid var(--line); padding:4px 7px; font-size:11px; box-shadow:0 4px 12px rgba(0,0,0,.35); white-space:nowrap; z-index:2; }
+  .pop { position:absolute; background:var(--panel); border:1px solid var(--line); box-shadow:0 10px 30px rgba(0,0,0,.33); border-radius:5px; padding:4px 0; z-index:2; width:200px; }
+  .pop .it { display:flex; align-items:center; gap:8px; padding:5px 10px; }
+  .pop .sep { border-top:1px solid var(--line); margin:4px 0; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="more" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r="1.25" fill="currentColor"/><circle cx="8" cy="8" r="1.25" fill="currentColor"/><circle cx="12.5" cy="8" r="1.25" fill="currentColor"/></symbol>
+    <symbol id="chev" viewBox="0 0 16 16"><path d="M4.5 6.5L8 10l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="add" viewBox="0 0 16 16"><path d="M7.5 2.5v10M2.5 7.5h10" fill="none" stroke="currentColor" stroke-linecap="round"/></symbol>
+    <symbol id="remove" viewBox="0 0 16 16"><path d="M2.5 7.5h10" fill="none" stroke="currentColor" stroke-linecap="round"/></symbol>
+    <symbol id="save" viewBox="0 0 16 16"><path d="M2.5 2.5h9l2 2v9h-11z M5 2.5v3.5h5V2.5 M5 13.5V9.5h6v4" fill="none" stroke="currentColor" stroke-linejoin="round"/></symbol>
+    <symbol id="fwd" viewBox="0 0 16 16"><path d="M2.5 8h10M10 5.5L12.5 8 10 10.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="back" viewBox="0 0 16 16"><path d="M13.5 8h-10M6 5.5L3.5 8 6 10.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="up" viewBox="0 0 10 7"><path d="M2 5l3-3 3 3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="down" viewBox="0 0 10 7"><path d="M2 2l3 3 3-3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="tick" viewBox="0 0 12 12"><path d="M2.5 6.2l2.4 2.3 4.6-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="leadin" viewBox="0 0 16 16"><path d="M13.5 2.5h-2v11h2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 8h-8M4 5.5L1.5 8 4 10.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="sheet" id="sheet"></div>
+
+<template id="shift">
+  <div class="dock"><div class="panel" style="--h:716px">
+    <div class="hdr"><span class="title">Shift times</span><span class="more"><svg width="16" height="16"><use href="#more"/></svg></span></div>
+    <div class="scroll">
+      <div class="seg" title="Mode"><div class="on">Shift</div><div>Post processor</div></div>
+
+      <div class="sec">
+        <div class="lbl">Profile</div>
+        <div class="row">
+          <div class="ctl grow"><span class="val">Episode 4 sync</span><svg width="16" height="16"><use href="#chev"/></svg></div>
+          <div class="ibtn" title="Adding and editing profiles"><svg width="16" height="16"><use href="#save"/></svg></div>
+          <div class="ibtn" title="Removing profiles"><svg width="16" height="16"><use href="#remove"/></svg></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sechead"><svg width="16" height="16"><use href="#chev"/></svg>Amount</div>
+        <div class="row">
+          <div class="ctl grow mono focus"><span class="val">0:00:02.35</span></div>
+          <div class="seg compact" data-frames><div class="on">Time</div><div>Frames</div></div>
+        </div>
+        <div class="seg"><div class="on"><svg width="16" height="16"><use href="#fwd"/></svg>Forward</div><div><svg width="16" height="16"><use href="#back"/></svg>Backward</div></div>
+        <div class="chk"><span class="box on" style="color:var(--onaccent)"><svg width="12" height="12"><use href="#tick"/></svg></span>Tag times</div>
+      </div>
+
+      <div class="sec" data-lines>
+        <div class="sechead"><svg width="16" height="16"><use href="#chev"/></svg>Lines</div>
+        <div class="lbl">Which lines</div>
+        <div class="ctl"><span class="val" data-which>Selected lines</span><svg width="16" height="16"><use href="#chev"/></svg></div>
+        <div class="lbl">A method of time shift</div>
+        <div class="ctl"><span class="val">Both times</span><svg width="16" height="16"><use href="#chev"/></svg></div>
+        <div class="lbl">Correction end times</div>
+        <div class="ctl"><span class="val">Adjust overlapping times</span><svg width="16" height="16"><use href="#chev"/></svg></div>
+      </div>
+
+      <div class="sec">
+        <div class="sechead"><svg width="16" height="16"><use href="#chev"/></svg>Shift by video / audio</div>
+        <div class="seg"><div class="on">Beginning</div><div>End</div></div>
+        <div class="chk"><span class="box"></span>Move the marker to video time</div>
+        <div class="chk off"><span class="box"></span>Move the marker to audio time</div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="btn">Shift</div>
+    </div>
+  </div></div>
+</template>
+
+<template id="post">
+  <div class="dock"><div class="panel" style="--h:716px">
+    <div class="hdr"><span class="title">Shift times</span><span class="more"><svg width="16" height="16"><use href="#more"/></svg></span></div>
+    <div class="scroll">
+      <div class="seg"><div>Shift</div><div class="on">Post processor</div></div>
+
+      <div class="sec">
+        <div class="sechead"><svg width="16" height="16"><use href="#chev"/></svg>Lines</div>
+        <div class="lbl">Which lines</div>
+        <div class="ctl"><span class="val">All lines</span><svg width="16" height="16"><use href="#chev"/></svg></div>
+      </div>
+
+      <div class="sec">
+        <div class="sechead"><svg width="16" height="16"><use href="#chev"/></svg>Lead-in/lead-out</div>
+        <div class="row">
+          <div class="half"><div class="chk"><span class="box on" style="color:var(--onaccent)"><svg width="12" height="12"><use href="#tick"/></svg></span>Lead-in</div>
+            <div class="ctl mono"><span class="val">200</span><span class="unit">ms</span><span class="spin"><svg width="10" height="7"><use href="#up"/></svg><svg width="10" height="7"><use href="#down"/></svg></span></div></div>
+          <div class="half"><div class="chk"><span class="box"></span>Lead-out</div>
+            <div class="ctl mono off"><span class="val">300</span><span class="unit">ms</span><span class="spin"><svg width="10" height="7"><use href="#up"/></svg><svg width="10" height="7"><use href="#down"/></svg></span></div></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sechead"><svg width="16" height="16"><use href="#chev"/></svg>Set times as continuous</div>
+        <div class="chk"><span class="box on" style="color:var(--onaccent)"><svg width="12" height="12"><use href="#tick"/></svg></span>Enable</div>
+        <div class="row">
+          <div class="half"><div class="lbl">Start time threshold</div>
+            <div class="ctl mono"><span class="val">300</span><span class="unit">ms</span><span class="spin"><svg width="10" height="7"><use href="#up"/></svg><svg width="10" height="7"><use href="#down"/></svg></span></div></div>
+          <div class="half"><div class="lbl">End time threshold</div>
+            <div class="ctl mono"><span class="val">300</span><span class="unit">ms</span><span class="spin"><svg width="10" height="7"><use href="#up"/></svg><svg width="10" height="7"><use href="#down"/></svg></span></div></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="sechead"><svg width="16" height="16"><use href="#chev"/></svg>Snap to keyframes</div>
+        <div class="chk"><span class="box on" style="color:var(--onaccent)"><svg width="12" height="12"><use href="#tick"/></svg></span>Enable</div>
+        <div class="row">
+          <div class="half"><div class="lbl">Before the start of time</div>
+            <div class="ctl mono"><span class="val">200</span><span class="unit">ms</span><span class="spin"><svg width="10" height="7"><use href="#up"/></svg><svg width="10" height="7"><use href="#down"/></svg></span></div></div>
+          <div class="half"><div class="lbl">After the start time</div>
+            <div class="ctl mono"><span class="val">300</span><span class="unit">ms</span><span class="spin"><svg width="10" height="7"><use href="#up"/></svg><svg width="10" height="7"><use href="#down"/></svg></span></div></div>
+        </div>
+        <div class="row">
+          <div class="half"><div class="lbl">Before the end time</div>
+            <div class="ctl mono"><span class="val">300</span><span class="unit">ms</span><span class="spin"><svg width="10" height="7"><use href="#up"/></svg><svg width="10" height="7"><use href="#down"/></svg></span></div></div>
+          <div class="half"><div class="lbl">After the end time</div>
+            <div class="ctl mono"><span class="val">900</span><span class="unit">ms</span><span class="spin"><svg width="10" height="7"><use href="#up"/></svg><svg width="10" height="7"><use href="#down"/></svg></span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="btn">Run post processor</div>
+    </div>
+  </div></div>
+</template>
+
+<script>
+  const themes = [["light","Light"],["dark","Dark"],["hcw","High contrast white"],["hcb","High contrast black"]];
+  const sheet = document.getElementById("sheet");
+  const add = (html, cls) => { const d = document.createElement("div"); d.className = cls || ""; d.innerHTML = html; sheet.appendChild(d); return d; };
+  add("");
+  for (const [, name] of themes) add(name, "colhead");
+
+  const rows = [
+    ["shift", "Shift mode", "Default state. Each section can collapse; the Shift button stays pinned at the bottom."],
+    ["post", "Post processor mode", "Same panel, second mode. Lines is shared with Shift mode."],
+    ["states", "States", "Light: the styles field with legacy's “+” style picker.<br>Dark: an error under the button.<br>HC white: the “⋯” menu.<br>HC black: a short dock (sections collapsed)."],
+  ];
+  for (const [tpl, title, note] of rows) {
+    add(title + "<small>" + note + "</small>", "rowhead");
+    themes.forEach(([cls], i) => {
+      const t = document.getElementById(tpl === "states" ? "shift" : tpl);
+      const cell = document.createElement("div");
+      cell.className = cls;
+      cell.appendChild(t.content.cloneNode(true));
+      sheet.appendChild(cell);
+      if (tpl !== "states") {
+        if (tpl === "shift" && i === 3) cell.querySelector(".panel").insertAdjacentHTML("beforeend", '<span class="mark"></span>');
+        return;
+      }
+      const panel = cell.querySelector(".panel");
+      if (i === 0) {
+        cell.querySelector("[data-which]").textContent = "According to the selected styles";
+        const lines = cell.querySelector("[data-lines] .ctl");
+        lines.insertAdjacentHTML("afterend",
+          '<div class="row"><div class="ibtn" title="Select a style from the list"><svg width="16" height="16"><use href="#add"/></svg></div>' +
+          '<div class="ctl grow"><span class="val">Default, Signs</span></div></div>');
+        const r = lines.nextElementSibling.querySelector(".ibtn").getBoundingClientRect();
+      } else if (i === 1) {
+        const f = panel.querySelector(".footer");
+        f.insertAdjacentHTML("afterbegin", '<div class="status">No lines selected for shifting</div>');
+        panel.querySelector("[data-frames] div:last-child").className = "off";
+      } else if (i === 2) {
+        panel.insertAdjacentHTML("beforeend",
+          '<div class="pop" style="top:30px; right:6px">' +
+          '<div class="it">Close</div><div class="it">Undock</div></div>');
+      } else if (i === 3) {
+        panel.style.setProperty("--h", "420px");
+        const secs = panel.querySelectorAll(".sec");
+        for (const s of [secs[2], secs[3]]) {
+          const head = s.querySelector(".sechead");
+          head.classList.add("collapsed");
+          [...s.children].forEach(c => { if (c !== head) c.remove(); });
+        }
+      }
+    });
+  }
+  // a form taller than its dock shows the thin scroll bar (visual-language: a scrolling form shows its bar)
+  requestAnimationFrame(() => {
+    for (const sc of document.querySelectorAll(".scroll")) {
+      if (sc.scrollHeight <= sc.clientHeight + 1) continue;
+      const panel = sc.closest(".panel"), top = sc.offsetTop;
+      const bar = document.createElement("div");
+      bar.className = "sbar";
+      bar.style.top = (top + 2) + "px";
+      bar.style.height = Math.round((sc.clientHeight - 4) * sc.clientHeight / sc.scrollHeight) + "px";
+      panel.appendChild(bar);
+    }
+  });
+  // the Light styles state needs a popup anchored to its "+" button
+  requestAnimationFrame(() => {
+    const cell = sheet.querySelectorAll(".light")[2];
+    const btn = cell.querySelector('[title="Select a style from the list"]');
+    const panel = cell.querySelector(".panel");
+    const pr = panel.getBoundingClientRect(), br = btn.getBoundingClientRect();
+    const pop = document.createElement("div");
+    pop.className = "pop";
+    pop.style.left = (br.left - pr.left) + "px";
+    pop.style.top = (br.bottom - pr.top + 2) + "px";
+    pop.innerHTML = ["Default", "Signs", "Notes", "OP", "ED"].map((s, k) =>
+      '<div class="it"><span class="box' + (k < 2 ? ' on" style="color:var(--onaccent)' : '') + '">' + (k < 2 ? '<svg width="12" height="12"><use href="#tick"/></svg>' : '') + '</span>' + s + '</div>').join("");
+    panel.appendChild(pop);
+  });
+</script>
+</body>
+</html>
