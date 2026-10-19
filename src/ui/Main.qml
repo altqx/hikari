@@ -4161,12 +4161,23 @@ ApplicationWindow {
         }
     }
 
-    // D1: a layout that could not be restored is named here, with the way back.
-    // ADR 0019: below it, a downloaded update that is ready to install.
+    // WS4: the window's top rows under the menu bar (SH1's title bar will sit
+    // above them): the open Documents' tabs, as in MuseScore and IDEs, then
+    // the notices, each shown only while it has something to say.
     header: ColumnLayout {
-        objectName: "noticeArea"
+        objectName: "windowTop"
         spacing: 0
-        visible: layoutNotice.visible || updateReadyBar.visible
+        // P6: the open Documents' tabs (legacy Notebook's bar).
+        DocumentTabBar {
+            app: root.app
+            Layout.fillWidth: true
+            onCloseRequested: index => root.closeTab(index)
+            // P9: the tab menu's Save, Save all and Close all tabs.
+            onSaveRequested: id => root.saveSubtitles(id)
+            onSaveAllRequested: root.saveAllTabs()
+            onCloseAllRequested: tabCommands.confirmCloseAll()
+        }
+        // D1: a layout that could not be restored is named here, with the way back.
         Pane {
             id: layoutNotice
             objectName: "layoutNotice"
@@ -4193,6 +4204,7 @@ ApplicationWindow {
                 }
             }
         }
+        // ADR 0019: a downloaded update that is ready to install.
         UpdateReadyBar {
             id: updateReadyBar
             updates: root.updates
@@ -4206,30 +4218,17 @@ ApplicationWindow {
         }
     }
 
-    footer: ColumnLayout {
-      spacing: 0
-      // P6: the open Documents' tabs (legacy Notebook's bar).
-      DocumentTabBar {
-        app: root.app
-        Layout.fillWidth: true
-        onCloseRequested: index => root.closeTab(index)
-        // P9: the tab menu's Save, Save all and Close all tabs.
-        onSaveRequested: id => root.saveSubtitles(id)
-        onSaveAllRequested: root.saveAllTabs()
-        onCloseAllRequested: tabCommands.confirmCloseAll()
-      }
-      // P10: legacy's status bar. Its first field is help and progress text
-      // (Automation's set_status_text, menu help, "Autosave"), never the
-      // editing target, which the Document tab and the window title name.
-      StatusBar {
+    // P10: legacy's status bar, the window's bottom row. Its first field is
+    // help and progress text (Automation's set_status_text, menu help,
+    // "Autosave"), never the editing target, which the Document tab and the
+    // window title name.
+    footer: StatusBar {
         shell: root.shell
         fieldsController: root.statusBar
         selectionText: root.shell.selectionStatus
         // The last save's message only: the tab's modified mark says
         // "Modified" (said once, visual-language.md).
         saveText: root.editor.saveStatus
-        Layout.fillWidth: true
-      }
     }
 
     // Legacy HistoryDialog: every step, the current one selected; Set and a
