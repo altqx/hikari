@@ -2214,8 +2214,15 @@ ApplicationWindow {
             if (next && next !== field)
                 next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
         }
+        // Undo and Redo go through the draft first (editor-shortcuts.md):
+        // the field takes Ctrl+Z, Ctrl+Y and Ctrl+Shift+Z whatever the
+        // platform's own keys, or xcb's Ctrl+Y would reach GLOBAL_REDO (KB3).
+        function undoRedoKey(event) {
+            return (event.modifiers & ~Qt.ShiftModifier) === Qt.ControlModifier
+                   && (event.key === Qt.Key_Z || (event.key === Qt.Key_Y && !(event.modifiers & Qt.ShiftModifier)))
+        }
         Keys.onShortcutOverride: event => event.accepted = field.compositionKey(event) || hotkeyAction(event) !== ""
-                                                           || tagListPopup.takesKey(event)
+                                                           || tagListPopup.takesKey(event) || field.undoRedoKey(event)
         Keys.onPressed: event => {
             if (field.compositionKey(event)) {
                 field.endComposition(event.key === Qt.Key_Escape)
