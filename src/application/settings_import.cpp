@@ -356,8 +356,10 @@ bool isRetiredOption(std::string_view legacyKey)
 
 bool isRetiredAction(int id)
 {
-    // User decision 2026-10-05: GLOBAL_VIDEO_INDEXING is retired.
-    return id == hotkeyIdOf("GLOBAL_VIDEO_INDEXING");
+    // The commands whose stored bindings the hotkeys drop as they are read
+    // (GLOBAL_VIDEO_INDEXING, user decision 2026-10-05;
+    // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW, AM1 2026-10-19).
+    return isRetiredHotkey(id);
 }
 
 bool isPathSetting(std::string_view id)
@@ -1314,7 +1316,10 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         row.destination = std::string(symbol) + " (" + std::string(hotkeyWindowName(record->window)) + ")";
         if (isRetiredAction(id)) {
             row.disposition = Disposition::Retired;
-            because("retired: the rewrite has no FFMS2 indexing command (user decision, 2026-10-05)");
+            because(id == hotkeyIdOf("GLOBAL_VIDEO_INDEXING")
+                        ? "retired: the rewrite has no FFMS2 indexing command (user decision, 2026-10-05)"
+                        : "retired: the shortcut mapping window is gone; each macro's shortcut is set in the "
+                          "Automation panel (user decision, 2026-10-19)");
             add(std::move(row));
             continue;
         }
@@ -1362,7 +1367,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
             row.disposition = Disposition::Missing;
             if (isRetiredAction(key.id)) {
                 row.disposition = Disposition::Retired;
-                row.reason = "retired (user decision, 2026-10-05)";
+                row.reason = "retired (user decision)";
                 add(std::move(row));
                 continue;
             }

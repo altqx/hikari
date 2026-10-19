@@ -274,6 +274,31 @@ private slots:
         QCOMPARE(keysOf(a.automationHotkeys(), kWait), QStringLiteral("Ctrl+Alt+W"));
     }
 
+    // A bound macro whose script loads while Settings → Hotkeys is open: its
+    // row, listed as missing, names the macro once it registers.
+    void aBoundMacroLoadedWhileSettingsIsOpenResolves()
+    {
+        app::Application::Options o = options();
+        o.settingsFile = dir.filePath(QStringLiteral("bound.ini"));
+        app::Application a(o);
+        a.automationHotkeys().replaceCommitted({{kEdgeblur, "Ctrl+Alt+E"}});
+        auto &h = a.hotkeys();
+        h.beginOptions();
+        h.filter(7);
+        const auto row = [&] {
+            for (const QVariant &v : h.rows())
+                if (v.toMap().value(QStringLiteral("text")).toString() == QStringLiteral("Global ") + QLatin1String(kEdgeblur))
+                    return v.toMap();
+            return QVariantMap{};
+        };
+        QCOMPARE(row().value(QStringLiteral("note")).toString(), QStringLiteral("No loaded script has this macro"));
+        QSignalSpy refreshed(&h, &app::HotkeysController::rowsChanged);
+        a.automation().load(HIKARI_AUTOLOAD_DIR "/macro-1-edgeblur.lua");
+        QTRY_VERIFY_WITH_TIMEOUT(!refreshed.isEmpty() && row().value(QStringLiteral("note")).toString().isEmpty(), 30'000);
+        QCOMPARE(row().value(QStringLiteral("macro")).toString(), QStringLiteral("Add edgeblur"));
+        QCOMPARE(row().value(QStringLiteral("accel")).toString(), QStringLiteral("Alt-Ctrl-E")); // legacy's order
+    }
+
     // A macro given Exit's keys (a carried configuration): Settings says
     // Exit takes them, though the page does not list Exit.
     void aMacroOnTheExitKeysSaysExitTakesThem()

@@ -476,9 +476,10 @@ void HotkeysController::listNewMacros()
     for (const auto &name : m_scripts.unboundMacros())
         if (!listed.contains(name))
             more[HotkeyId{next++, application::GlobalHotkey}] = application::Hotkey{name, {}};
-    if (more.empty())
-        return;
-    m_list->addRows(more);
+    if (!more.empty())
+        m_list->addRows(more);
+    // The rows listed already show their macro by name, or why it is
+    // missing, from the registrations: a script that loads changes them too.
     emit rowsChanged();
 }
 
