@@ -103,6 +103,7 @@ protected:
             // 2. A dialog macro: the fixed window, answered with OK.
             runMacro(fixture, 0);
             if (waitForItem("automationDialog/dialogButton0", 10s)) {
+                wait(500ms); // the run opens the Automation panel too: let the layout settle
                 mouseClick("automationDialog/dialogButton0");
                 observed.push_back(waitForCompletion(2) ? firstText() : "dialog macro did not finish"); // 1
                 observed.push_back(getStringProperty("mainWindow/automationLog", "text")); // 2
