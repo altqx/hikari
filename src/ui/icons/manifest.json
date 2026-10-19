@@ -2055,17 +2055,6 @@
    ]
   },
   {
-   "role": "menu-more",
-   "file": "menu-more.svg",
-   "label": "More",
-   "accent": false,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "line-editor"
-   ]
-  },
-  {
    "role": "panel-menu",
    "file": "panel-menu.svg",
    "label": "Panel options",

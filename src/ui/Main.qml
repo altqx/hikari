@@ -3347,59 +3347,89 @@ ApplicationWindow {
                                 editor: root.editor
                                 onChosen: (root.editor.translationMode && root.editor.translationText.length ? translationText : lineText).forceActiveFocus()
                             }
-                            // E2: custom tag buttons; right click (or a button
-                            // without a tag) edits it.
+                            // E2: custom tag buttons. LE5: a button without a tag
+                            // opens its popover; the right click its menu.
                             Repeater {
                                 model: root.tagButtons.buttons
-                                ToolButton {
+                                TagButton {
+                                    id: tagButton
                                     required property var modelData
                                     required property int index
                                     objectName: "tagButton" + index
                                     text: modelData.name
+                                    iconRole: modelData.icon
                                     focusPolicy: Qt.NoFocus
                                     enabled: root.editor.editable
-                                    Accessible.name: modelData.name
                                     Accessible.description: modelData.tag
-                                    ToolTip.visible: hovered && modelData.tag.length > 0
-                                    ToolTip.text: root.mappedTip(modelData.tag, "EDITBOX_TAG_BUTTON" + (index + 1), 2)
+                                    tip: root.mappedTip(modelData.name.length > 0 && modelData.icon.length > 0
+                                                        ? modelData.name + ": " + modelData.tag : modelData.tag,
+                                                        "EDITBOX_TAG_BUTTON" + (index + 1), 2)
                                     onClicked: {
                                         if (root.hotkeyGesture("EDITBOX_TAG_BUTTON" + (index + 1), 2, true))
                                             return
                                         if (modelData.tag.length === 0)
-                                            tagButtonDialog.editButton(index)
+                                            tagButtonEditor.openFor(tagButton, index, modelData)
                                         else
                                             root.applyTagButton(index)
                                     }
                                     TapHandler {
                                         acceptedButtons: Qt.RightButton
-                                        onTapped: tagButtonDialog.editButton(index)
+                                        onTapped: eventPoint => tagButtonMenu.openFor(tagButton, tagButton.index, eventPoint.position)
                                     }
                                 }
                             }
-                            IconToolButton { // legacy's square MenuButton with ARROW_LIST_DOUBLE
-                                objectName: "manageTagButtons"
-                                iconRole: "menu-more"
-                                text: qsTranslate("HikariSub.Editor", "Manage tag buttons")
+                            IconToolButton {
+                                id: addTagButton
+                                objectName: "addTagButton"
+                                iconRole: "add"
+                                text: qsTranslate("HikariSub.Editor", "Add a tag button")
                                 focusPolicy: Qt.NoFocus
-                                onClicked: tagButtonsMenu.popup()
-                                ShellMenu {
-                                    id: tagButtonsMenu
-                                    Instantiator {
-                                        model: root.tagButtons.buttons
-                                        delegate: ShellMenuItem {
-                                            required property var modelData
-                                            required property int index
-                                            text: modelData.name
-                                            onTriggered: root.applyTagButton(index)
-                                        }
-                                        onObjectAdded: (index, object) => tagButtonsMenu.insertItem(index, object)
-                                        onObjectRemoved: (index, object) => tagButtonsMenu.removeItem(object)
-                                    }
-                                    ShellMenuItem {
-                                        objectName: "changeTagButtonCount"
-                                        text: qsTranslate("HikariSub.Editor", "Change number of buttons")
-                                        onTriggered: tagButtonCountDialog.open()
-                                    }
+                                visible: root.tagButtons.count < root.tagButtons.maximum
+                                onClicked: tagButtonEditor.openFor(addTagButton, -1, null)
+                            }
+                            TagButtonEditor {
+                                id: tagButtonEditor
+                                tagButtons: root.tagButtons
+                                onSaved: (index, b) => index < 0 ? root.tagButtons.add(b.name, b.tag, b.type, b.icon)
+                                                                 : root.tagButtons.edit(index, b.name, b.tag, b.type, b.icon)
+                            }
+                            // LE5: a button's context menu.
+                            ShellMenu {
+                                id: tagButtonMenu
+                                objectName: "tagButtonMenu"
+                                property Item button: null
+                                property int index: -1
+                                // At the click, inside the button it is for.
+                                function openFor(b, i, at) {
+                                    button = b
+                                    index = i
+                                    popup(b, at)
+                                }
+                                ShellMenuItem {
+                                    objectName: "tagButtonEdit"
+                                    iconRole: "edit"
+                                    text: qsTranslate("HikariSub.Editor", "Edit...")
+                                    onTriggered: tagButtonEditor.openFor(tagButtonMenu.button, tagButtonMenu.index,
+                                                                         root.tagButtons.buttons[tagButtonMenu.index])
+                                }
+                                ShellMenuItem {
+                                    objectName: "tagButtonMoveLeft"
+                                    text: qsTranslate("HikariSub.Editor", "Move left")
+                                    enabled: tagButtonMenu.index > 0
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -1)
+                                }
+                                ShellMenuItem {
+                                    objectName: "tagButtonMoveRight"
+                                    text: qsTranslate("HikariSub.Editor", "Move right")
+                                    enabled: tagButtonMenu.index >= 0 && tagButtonMenu.index < root.tagButtons.count - 1
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, 1)
+                                }
+                                MenuSeparator {}
+                                ShellMenuItem {
+                                    objectName: "tagButtonRemove"
+                                    iconRole: "remove"
+                                    text: qsTranslate("HikariSub.Editor", "Remove")
+                                    onTriggered: root.tagButtons.remove(tagButtonMenu.index)
                                 }
                             }
                             // LE3-tags-shown: the hidden-tag view's switch left the
@@ -5563,6 +5593,7 @@ ApplicationWindow {
         id: settingsDialog
         app: root.app
         hotkeys: root.hotkeys
+        tagButtons: root.tagButtons
         anchors.centerIn: parent
     }
     // Y8: the font collector; a double click on a Style in its log opens the
@@ -5722,94 +5753,6 @@ ApplicationWindow {
         } else {
             colourDialog.openFor(root.editor, number, c)
             root.app.colourPickerOpened()
-        }
-    }
-
-    // Legacy TagButtonDialog ("Enter ASS tag").
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: tagButtonDialog
-        objectName: "tagButtonDialog"
-        title: qsTranslate("HikariSub.Editor", "Enter ASS tag")
-        width: 320
-        height: 240
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
-        property int index: -1
-        function editButton(i) {
-            const b = root.tagButtons.buttons[i]
-            index = i
-            tagType.currentIndex = b.type
-            tagName.text = b.name
-            tagText.text = b.tag
-            show()
-            tagText.selectAll()
-            tagText.forceActiveFocus()
-        }
-        function saveTag() {
-            root.tagButtons.edit(index, tagName.text, tagText.text, tagType.currentIndex)
-            close()
-        }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            ComboBox {
-                id: tagType
-                objectName: "tagType"
-                Layout.fillWidth: true
-                model: [qsTranslate("HikariSub.Editor", "Tag inserted in place of cursor"), qsTranslate("HikariSub.Editor", "Insert Tag at text beginning"), qsTranslate("HikariSub.Editor", "Plain text")]
-                Accessible.name: qsTranslate("HikariSub.Editor", "Insertion")
-            }
-            Label { text: qsTranslate("HikariSub.Editor", "Button name") }
-            TextField {
-                id: tagName
-                objectName: "tagName"
-                Layout.fillWidth: true
-                Accessible.name: qsTranslate("HikariSub.Editor", "Button name")
-                onAccepted: tagButtonDialog.saveTag()
-            }
-            Label { text: qsTranslate("HikariSub.Editor", "Button tag") }
-            TextField {
-                id: tagText
-                objectName: "tagText"
-                Layout.fillWidth: true
-                Accessible.name: qsTranslate("HikariSub.Editor", "Button tag")
-                onAccepted: tagButtonDialog.saveTag()
-            }
-            WindowFooter {
-                Button {
-                    objectName: "saveTag"
-                    text: qsTranslate("HikariSub.Editor", "Save tag")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: tagButtonDialog.saveTag()
-                }
-                Button {
-                    objectName: "cancelTag"
-                    text: qsTranslate("HikariSub.Editor", "Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: tagButtonDialog.close()
-                }
-            }
-        }
-    }
-
-    // Legacy NumTagButtons ("Change number of buttons", 0 to 20).
-    Dialog {
-        id: tagButtonCountDialog
-        objectName: "tagButtonCountDialog"
-        title: qsTranslate("HikariSub.Editor", "Change number of buttons")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        onAboutToShow: tagButtonCount.value = root.tagButtons.storedCount()
-        onAccepted: root.tagButtons.setCount(tagButtonCount.value)
-        SpinBox {
-            id: tagButtonCount
-            objectName: "tagButtonCount"
-            from: 0
-            to: 20
-            editable: true
-            Accessible.name: qsTranslate("HikariSub.Editor", "Number of buttons")
         }
     }
 

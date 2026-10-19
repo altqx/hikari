@@ -652,9 +652,11 @@ icon("copy-to-ass", "Copy style from storage to ASS", [], [STYLEDLG],
 icon("copy-to-all-ass", "Copy style from storage to every open ASS file", [], [STYLEDLG],
      rect(1.5, 1.5, 12, 3, 1) + rect(1.5, 12.5, 10, 2, 1) + stroke("M3.5 10.5h9a1 1 0 0 1 1 1v1")
      + accent(stroke("M7.5 6v3M5 6.5L7.5 9 10 6.5")))
-icon("menu-more", "More", [], [EDITOR], stroke("M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"))
+# LE5 retired menu-more (a double chevron), drawn for the Line editor's
+# "Manage tag buttons" list, which the "+" popover and the buttons' context
+# menu replaced.
 # D3: a panel header's "⋯" menu (MuseScore's MenuButton): three dots in a
-# row, distinct from menu-more's double chevron, which drops a list open.
+# row.
 icon("panel-menu", "Panel options", [], ["dock-headers"], dot(3.5, 8, 1.25) + dot(8, 8, 1.25) + dot(12.5, 8, 1.25))
 
 # Generic list and edit commands

@@ -3,7 +3,9 @@
 // - LE2 (#227): the Times/Frames switch (EDITBOX_TIMES_TO_FRAMES_SWITCH) out
 //   of the Line editor, into Settings > Editor and the Video panel's menu;
 // - LE3 (#228, LE3-tags-shown): the Line editor shows tags by default; hiding
-//   them is editor.hideTags and GLOBAL_EDITOR_HIDE_TAGS.
+//   them is editor.hideTags and GLOBAL_EDITOR_HIDE_TAGS;
+// - LE5 (#230): the custom tag buttons' "+" popover, context menu and
+//   Settings > Editor list.
 
 #include "hikari/app/application.h"
 #include "hikari/application/hotkeys.h"
@@ -11,6 +13,7 @@
 #include "docking.h"
 #include "line_editor_controller.h"
 #include "settings_store.h"
+#include "tag_buttons_controller.h"
 
 #include <QFile>
 #include <QQmlApplicationEngine>
@@ -155,6 +158,74 @@ class LineEditorOptionsTest : public QObject {
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
+    // A control inside a popup (popups keep their items under contentItem).
+    static QQuickItem *inside(QObject *popup, const char *name)
+    {
+        auto *content = popup ? popup->property("contentItem").value<QQuickItem *>() : nullptr;
+        if (!content)
+            return nullptr;
+        return findItem(content, QLatin1String(name));
+    }
+    void click(QQuickItem *control, Qt::MouseButton button = Qt::LeftButton)
+    {
+        QVERIFY(control);
+        auto *w = control->window();
+        QTRY_VERIFY(control->isVisible());
+        QTest::mouseClick(w, button, {}, control->mapToScene(QPointF(control->width() / 2, control->height() / 2)).toPoint());
+    }
+    // Types `text` into the popover's field, replacing what it holds.
+    void typeInto(QQuickItem *field, const QString &text)
+    {
+        QVERIFY(field);
+        field->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(field, "selectAll"));
+        QTest::keyClick(field->window(), Qt::Key_Backspace);
+        for (const QChar c : text) // keyClicks takes widgets only
+            QTest::keyClick(field->window(), c.toLatin1());
+        QCOMPARE(field->property("text").toString(), text);
+    }
+    // The strip's popover after "+" or Edit...: name, tag, then Save.
+    void fillTagButton(QObject *popover, const QString &name, const QString &tag, const char *icon = nullptr)
+    {
+        QTRY_VERIFY(popover->property("opened").toBool());
+        typeInto(inside(popover, "tagName"), name);
+        typeInto(inside(popover, "tagText"), tag);
+        if (icon)
+            click(inside(popover, icon));
+        click(inside(popover, "saveTag"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+    }
+    // A context menu's item, chosen: the menu closes, then the item runs.
+    void choose(QObject *menu, const char *item)
+    {
+        auto *entry = named(item);
+        QVERIFY(entry);
+        QVERIFY(entry->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QVERIFY(QMetaObject::invokeMethod(entry, "triggered"));
+    }
+    // The tag strip laid out again after its buttons changed (new delegates
+    // take their places at the next polish): `count` buttons side by side.
+    void waitForStrip(int count)
+    {
+        QTRY_VERIFY([&] {
+            for (int i = 0; i < count; ++i) {
+                auto *b = item(qPrintable(QStringLiteral("tagButton%1").arg(i)));
+                if (!b || !b->isVisible())
+                    return false;
+                if (i > 0) {
+                    auto *a = item(qPrintable(QStringLiteral("tagButton%1").arg(i - 1)));
+                    if (b->mapToScene({}).x() < a->mapToScene({}).x() + a->width())
+                        return false;
+                }
+            }
+            // and the last one before "+".
+            auto *last = item(qPrintable(QStringLiteral("tagButton%1").arg(count - 1)));
+            auto *add = item("addTagButton");
+            return !add || !add->isVisible() || last->mapToScene({}).x() + last->width() <= add->mapToScene({}).x();
+        }());
+    }
+
 private slots:
     void initTestCase()
     {
@@ -252,6 +323,129 @@ private slots:
         restart();
         QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_EDITOR_HIDE_TAGS"), 0),
                  QStringLiteral("Ctrl-Shift-Y"));
+    }
+
+    // LE5: "+" opens the popover; a tag text it cannot take keeps Save off
+    // and says why; Save adds the button at the strip's end, with its icon;
+    // the right click's menu edits, moves and removes; the next start reads it.
+    void tagButtonsFromThePopoverAndTheMenu()
+    {
+        QVERIFY(showLine(tagged));
+        auto &buttons = application->tagButtons();
+        QCOMPARE(buttons.count(), 0);
+        QVERIFY(!item("manageTagButtons"));
+        auto *popover = named("tagButtonEditor");
+        QVERIFY(popover);
+        click(item("addTagButton"));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        // No backslash: the problem shows and Save is off.
+        typeInto(inside(popover, "tagName"), QStringLiteral("Blur"));
+        typeInto(inside(popover, "tagText"), QStringLiteral("blur2"));
+        QTRY_VERIFY(inside(popover, "tagProblem")->isVisible());
+        QVERIFY(!inside(popover, "saveTag")->isEnabled());
+        QTest::keyClick(inside(popover, "tagText")->window(), Qt::Key_Return);
+        QVERIFY(popover->property("visible").toBool());
+        QCOMPARE(buttons.count(), 0);
+        typeInto(inside(popover, "tagText"), QStringLiteral("\\blur2"));
+        QVERIFY(!inside(popover, "tagProblem")->isVisible());
+        QCOMPARE(inside(popover, "tagPreview")->property("text").toString(), QStringLiteral("Blur"));
+        click(inside(popover, "saveTag"));
+        QTRY_COMPARE(buttons.count(), 1);
+        QCOMPARE(buttons.button(0).tag, QStringLiteral("\\blur2"));
+        // A second, with an icon: the strip shows the icon, the name is its tooltip.
+        click(item("addTagButton"));
+        fillTagButton(popover, QStringLiteral("Bold"), QStringLiteral("\\b1"), "tagIcon_tag-bold");
+        QCOMPARE(buttons.count(), 2);
+        QTRY_VERIFY(item("tagButton1"));
+        QCOMPARE(item("tagButton1")->property("iconRole").toString(), QStringLiteral("tag-bold"));
+        QCOMPARE(item("tagButton1")->property("text").toString(), QStringLiteral("Bold"));
+        // The context menu: Move left, Edit..., Remove.
+        auto *menu = named("tagButtonMenu");
+        QVERIFY(menu);
+        waitForStrip(2);
+        click(item("tagButton1"), Qt::RightButton);
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QVERIFY(!named("tagButtonMoveRight")->property("enabled").toBool());
+        choose(menu, "tagButtonMoveLeft");
+        QTRY_COMPARE(buttons.button(0).name, QStringLiteral("Bold"));
+        QCOMPARE(buttons.button(1).name, QStringLiteral("Blur"));
+        // The Repeater makes its delegates again for the new order.
+        QTRY_COMPARE(item("tagButton1")->property("text").toString(), QStringLiteral("Blur"));
+        waitForStrip(2);
+        click(item("tagButton1"), Qt::RightButton);
+        QTRY_VERIFY(menu->property("opened").toBool());
+        choose(menu, "tagButtonEdit");
+        QTRY_VERIFY(popover->property("opened").toBool());
+        QCOMPARE(inside(popover, "tagName")->property("text").toString(), QStringLiteral("Blur"));
+        QCOMPARE(inside(popover, "tagText")->property("text").toString(), QStringLiteral("\\blur2"));
+        fillTagButton(popover, QStringLiteral("Soft"), QStringLiteral("\\blur4"));
+        QCOMPARE(buttons.count(), 2);
+        QCOMPARE(buttons.button(1).name, QStringLiteral("Soft"));
+        QCOMPARE(buttons.button(1).tag, QStringLiteral("\\blur4"));
+        restart();
+        QVERIFY(showLine(tagged));
+        QCOMPARE(application->tagButtons().count(), 2);
+        QCOMPARE(application->tagButtons().button(0).icon, QStringLiteral("tag-bold"));
+        QCOMPARE(application->tagButtons().button(1).name, QStringLiteral("Soft"));
+        // Remove: the strip closes up.
+        auto *menuAgain = named("tagButtonMenu");
+        QTRY_COMPARE(item("tagButton0")->property("text").toString(), QStringLiteral("Bold"));
+        waitForStrip(2);
+        click(item("tagButton0"), Qt::RightButton);
+        QTRY_VERIFY(menuAgain->property("opened").toBool());
+        choose(menuAgain, "tagButtonRemove");
+        QTRY_COMPARE(application->tagButtons().count(), 1);
+        QCOMPARE(application->tagButtons().button(0).name, QStringLiteral("Soft"));
+        QTRY_COMPARE(item("tagButton0")->property("text").toString(), QStringLiteral("Soft"));
+        waitForStrip(1);
+        // Pressing it puts its tag.
+        item("lineText")->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(item("lineText"), "select", Q_ARG(int, 0), Q_ARG(int, 0)));
+        click(item("tagButton0"));
+        QTRY_VERIFY(shownText().contains(QStringLiteral("\\blur4")));
+    }
+
+    // LE5: Settings > Editor lists the buttons; its changes stay staged until
+    // OK, then the strip shows them.
+    void tagButtonsListInSettings()
+    {
+        auto &buttons = application->tagButtons();
+        QVERIFY(buttons.add(QStringLiteral("One"), QStringLiteral("\\b1"), 0));
+        QVERIFY(buttons.add(QStringLiteral("Two"), QStringLiteral("\\i1"), 0, QStringLiteral("tag-italic")));
+        auto *action = named("settingsMenuItem")->property("action").value<QObject *>();
+        QVERIFY(action && QMetaObject::invokeMethod(action, "trigger"));
+        auto *dialog = named("settingsDialog");
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *content = dialog->property("contentItem").value<QQuickItem *>();
+        auto *list = findItem(content, QStringLiteral("settingsTagButtonList"));
+        QVERIFY(list);
+        QTRY_COMPARE(list->property("count").toInt(), 2);
+        // Move "Two" up, remove "One", add "Three".
+        list->setProperty("currentIndex", 1);
+        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("settingsMoveTagButtonUp")), "click"));
+        QCOMPARE(list->property("currentIndex").toInt(), 0);
+        list->setProperty("currentIndex", 1);
+        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("settingsRemoveTagButton")), "click"));
+        QCOMPARE(list->property("count").toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("settingsAddTagButton")), "click"));
+        auto *popover = named("settingsTagButtonEditor");
+        QVERIFY(popover);
+        fillTagButton(popover, QStringLiteral("Three"), QStringLiteral("\\u1"), "tagIcon_tag-underline");
+        QCOMPARE(list->property("count").toInt(), 2);
+        // Staged: the strip still has the two it had.
+        QCOMPARE(buttons.count(), 2);
+        QCOMPARE(buttons.button(0).name, QStringLiteral("One"));
+        auto *footer = dialog->property("footer").value<QQuickItem *>();
+        QVERIFY(QMetaObject::invokeMethod(findItem(footer, QStringLiteral("settingsOk")), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(buttons.count(), 2);
+        QCOMPARE(buttons.button(0).name, QStringLiteral("Two"));
+        QCOMPARE(buttons.button(0).icon, QStringLiteral("tag-italic"));
+        QCOMPARE(buttons.button(1).name, QStringLiteral("Three"));
+        QCOMPARE(buttons.button(1).icon, QStringLiteral("tag-underline"));
+        restart();
+        QCOMPARE(application->tagButtons().count(), 2);
+        QCOMPARE(application->tagButtons().button(1).tag, QStringLiteral("\\u1"));
     }
 };
 
