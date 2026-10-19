@@ -9597,6 +9597,7 @@ private slots:
         a.gridFilter().setIgnoreInActions(true);
         a.gridFilter().setInverted(true);
         a.shell().toggleColumn(1);
+        a.shell().setAutoHideColumns(false);
         const QVariantMap red{{QStringLiteral("r"), 255}, {QStringLiteral("g"), 0}, {QStringLiteral("b"), 0}, {QStringLiteral("a"), 0}};
         a.colourPicker().addRecent(red); // no picker yet: the option is the list
 
@@ -9629,6 +9630,8 @@ private slots:
         QVERIFY(!settings.contains("grid.hideColumns"));
         a.shell().toggleColumn(8192);
         QCOMPARE(settings.integer("grid.hideColumns"), 8193);
+        // GR3: empty columns hide themselves again (no legacy owner keeps it).
+        QVERIFY(a.shell().autoHideColumns());
 
         // Once opened, SelectLines keeps its options and recent searches:
         // the options go back when it closes, the recent searches at the

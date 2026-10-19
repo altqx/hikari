@@ -5252,6 +5252,8 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
     m_gridFilter->settingsReset(); // per-grid "ignore filtering" is kept (SubsGrid::ignoreFiltered)
     m_updates->reload();
+    // GR3: empty-column hiding has no legacy owner; both Grids take the default.
+    m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
     // SelectLines, once created, keeps its controls and recent searches:
     // the options go back at its close (legacy: at exit or DestroyDialogs),
     // the recent searches at its next selection. Before that, the dialog
