@@ -11963,6 +11963,31 @@ private slots:
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
         QTRY_VERIFY_WITH_TIMEOUT(application->automation().running(), 30000);
         QTRY_VERIFY(run->isVisible());
+        // Enter on a macro row leaves the key alone while a macro runs, as
+        // Run and a double click are off then.
+        auto *list = visualItem("scripts");
+        QVERIFY(QMetaObject::invokeMethod(list, "step", Q_ARG(QVariant, 1)));
+        QVERIFY(list->property("currentIndex").toInt() >= 0);
+        QKeyEvent enter(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+        QCoreApplication::sendEvent(list, &enter);
+        QVERIFY(!enter.isAccepted());
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY(!run->isVisible());
+        // Off under a modal dialog (Settings), which keeps the run status
+        // out of reach.
+        QVERIFY(!application->workspaceLayout().modalOpen());
+        QVERIFY(openSettings());
+        QTRY_VERIFY(application->workspaceLayout().modalOpen());
+        QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QTest::qWait(200);
+        QVERIFY(!application->automation().running());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!application->workspaceLayout().modalOpen());
+        QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_VERIFY_WITH_TIMEOUT(application->automation().running(), 30000);
+        QTRY_VERIFY(run->isVisible());
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
         QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));

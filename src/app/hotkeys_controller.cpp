@@ -177,6 +177,16 @@ std::string symbolOf(int id)
     return s.empty() ? std::to_string(id) : std::string(s);
 }
 
+// A command as the user knows it: its Hotkeys page name; GLOBAL_QUIT, never
+// listed there, by its menu item (File > Exit); else its symbol.
+QString commandName(int id)
+{
+    if (id == application::kGlobalQuit)
+        return QCoreApplication::translate("HikariSub.Hotkeys", "Exit");
+    const std::string name = application::hotkeyName(id);
+    return qs(name.empty() ? symbolOf(id) : name);
+}
+
 } // namespace
 
 HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
@@ -521,6 +531,21 @@ QVariantList HotkeysController::rows() const
                         break;
                     }
                 }
+            // A Global binding the page does not list (GLOBAL_QUIT) takes
+            // them too, as the shell installs it.
+            const auto listedKey = [this](const HotkeyId &key) {
+                for (std::size_t j = 0; j < m_list->rowCount(); ++j)
+                    if (m_list->row(int(j)).key.id == key.id && m_list->row(int(j)).key.type == key.type)
+                        return true;
+                return false;
+            };
+            if (note.isEmpty() && !r.accel.empty())
+                for (const auto &[key, hotkey] : bindings())
+                    if (key.type == application::GlobalHotkey && key.id < application::kFirstScriptHotkey &&
+                        !listedKey(key) && sameChord(hotkey.accel, r.accel)) {
+                        note = QCoreApplication::translate("HikariSub.Hotkeys", "%1 takes it").arg(commandName(key.id));
+                        break;
+                    }
             row.insert(QStringLiteral("note"), note);
         }
         out << row;
@@ -776,8 +801,7 @@ QStringList HotkeysController::holdersOf(const QString &accel, int id) const
             const QString macro = m_scripts.describe(hotkey.name).value(QStringLiteral("macro")).toString();
             out << (macro.isEmpty() ? qs(hotkey.name) : macro);
         } else {
-            const std::string name = application::hotkeyName(key.id);
-            const QString shown = qs(name.empty() ? symbolOf(key.id) : name);
+            const QString shown = commandName(key.id);
             out << (key.type == application::GlobalHotkey
                         ? shown
                         : QStringLiteral("%1 (%2)").arg(shown, qs(std::string(application::hotkeyWindowName(key.type)))));
@@ -792,8 +816,7 @@ QString HotkeysController::globalHolder(const QString &keys) const
         const QVariantMap m = v.toMap();
         if (m.value(QStringLiteral("keys")).toString() != keys)
             continue;
-        const std::string name = application::hotkeyName(application::hotkeyIdOf(m.value(QStringLiteral("symbol")).toString().toStdString()));
-        return name.empty() ? m.value(QStringLiteral("symbol")).toString() : qs(name);
+        return commandName(application::hotkeyIdOf(m.value(QStringLiteral("symbol")).toString().toStdString()));
     }
     return {};
 }

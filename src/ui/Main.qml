@@ -6288,8 +6288,10 @@ ApplicationWindow {
                 // table (map order: ids from 30100), so a static Global
                 // binding of the same keys wins.
                 // Off with the editor, as the Automation menu's macros
-                // (legacy's OnMenuOpened disables them there).
-                enabled: root.app.editorOn && !root.menuHasKeys && !root.hotkeys.globalSequences.includes(modelData.keys)
+                // (legacy's OnMenuOpened disables them there), and under a
+                // modal dialog, which keeps the panel's run controls out of reach.
+                enabled: root.app.editorOn && !root.menuHasKeys && !root.workspaceLayout.modalOpen
+                         && !root.hotkeys.globalSequences.includes(modelData.keys)
                 onActivated: root.automationHotkeys.run(modelData.legacyName)
             }
         }

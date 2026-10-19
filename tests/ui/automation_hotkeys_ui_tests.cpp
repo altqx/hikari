@@ -274,6 +274,28 @@ private slots:
         QCOMPARE(keysOf(a.automationHotkeys(), kWait), QStringLiteral("Ctrl+Alt+W"));
     }
 
+    // A macro given Exit's keys (a carried configuration): Settings says
+    // Exit takes them, though the page does not list Exit.
+    void aMacroOnTheExitKeysSaysExitTakesThem()
+    {
+        app::Application::Options o = options();
+        o.settingsFile = dir.filePath(QStringLiteral("exit.ini"));
+        app::Application a(o);
+        a.automation().load(HIKARI_AUTOLOAD_DIR "/macro-1-edgeblur.lua");
+        QTRY_VERIFY_WITH_TIMEOUT(!a.automationHotkeys().unboundMacros().empty(), 30'000);
+        a.automationHotkeys().replaceCommitted({{kEdgeblur, "Alt+F4"}});
+        a.automationHotkeys().install();
+        QCOMPARE(a.hotkeys().globalHolder(QStringLiteral("Alt+F4")), QStringLiteral("Exit"));
+        auto &h = a.hotkeys();
+        h.beginOptions();
+        h.filter(7);
+        QString note;
+        for (const QVariant &v : h.rows())
+            if (v.toMap().value(QStringLiteral("macro")).toString() == QStringLiteral("Add edgeblur"))
+                note = v.toMap().value(QStringLiteral("note")).toString();
+        QCOMPARE(note, QStringLiteral("Exit takes it"));
+    }
+
     // AM1-hotkeys-window-retired: the window's command given Audio keys (the
     // Audio list is stored apart) is dropped there too, once.
     void retiredWindowAudioBindingIsDropped()

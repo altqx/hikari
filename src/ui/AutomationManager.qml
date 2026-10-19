@@ -56,6 +56,12 @@ Pane {
     readonly property bool running: automation !== null && automation.running
     readonly property string filterText: filter.text.trim().toLowerCase()
 
+    // A macro row runs (Run, a double click, Enter) when its script is ready
+    // and no macro is running.
+    function runnable(row) {
+        return row.script.state === "ready" && !root.controller.busy
+    }
+
     // Starts recording `legacyName`'s shortcut (the Automation menu's
     // Shift+click on a macro opens the panel on it).
     function record(legacyName) {
@@ -400,7 +406,7 @@ Pane {
                 const row = list.current
                 if (!row || row.kind !== "macro")
                     return
-                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && root.runnable(row)) {
                     root.controller.run(row.script.path, row.macro.ordinal)
                     event.accepted = true
                 } else if (event.key === Qt.Key_F2) {
@@ -580,7 +586,7 @@ Pane {
             readonly property bool recordingHere: root.recording.length > 0 && root.recording === row.legacyName
             readonly property string keys: root.keysOf(row.legacyName)
             readonly property string takenBy: keys.length > 0 && root.hotkeys ? root.hotkeys.globalHolder(keys) : ""
-            readonly property bool runnable: row.script.state === "ready" && !root.controller.busy
+            readonly property bool runnable: root.runnable(row)
             objectName: "macro_" + row.index + "_" + row.macro.ordinal
             text: row.macro.name
             highlighted: current

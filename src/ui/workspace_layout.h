@@ -59,6 +59,11 @@ class WorkspaceLayoutController : public QObject {
     // the shell's while one is open: the shell's shortcuts stay off then, as
     // legacy's menu took every key while it was shown (D1 Windows gate).
     Q_PROPERTY(bool menuHasFocus READ menuHasFocus NOTIFY menuHasFocusChanged)
+    // AM1: whether a modal popup (a dialog over its window, Popup.Item) is
+    // open in a shown window. The application-wide macro shortcuts stay off
+    // then: a macro started behind it shows its run controls in the
+    // Automation panel, which the modal keeps out of reach.
+    Q_PROPERTY(bool modalOpen READ modalOpen NOTIFY modalOpenChanged)
     // D2: the player layout (GLOBAL_EDITOR off) holds the editing
     // arrangement until the editor comes back; nothing is saved meanwhile,
     // so the saved layout stays the editing one.
@@ -155,6 +160,7 @@ public:
     static const QStringList &presets();
     QObject *focusWindow() const;
     bool menuHasFocus() const { return m_menuHasFocus; }
+    bool modalOpen() const { return m_modalOpen; }
     bool hasBackup() const;
 
     // The envelope around an engine payload, and its validation.
@@ -165,12 +171,14 @@ signals:
     void changed();
     void focusWindowChanged();
     void menuHasFocusChanged();
+    void modalOpenChanged();
     // WS1: another tab's arrangement replaced the one shown (the shell puts
     // the panels that follow the application, such as the Reference tray,
     // back as they must be).
     void arrangementSwapped();
 
 private:
+    void checkModal();
     bool restorePayload(const QByteArray &payload, bool inPlace = false);
     bool restoreSavedFile();
     bool buildPreset(const QString &name, bool inPlace);
@@ -201,6 +209,7 @@ private:
     bool m_loaded = false; // restoreSaved() has run
     bool m_quitting = false; // saveForQuit() has run
     bool m_menuHasFocus = false;
+    bool m_modalOpen = false;
     QTimer m_screenCheck;
 };
 
