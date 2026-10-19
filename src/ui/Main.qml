@@ -275,15 +275,19 @@ ApplicationWindow {
                                           searchPanel]
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock, searchDock]
-    // KB2 (key_router.h): a panel's bindings act before the control it has
-    // focused (a clicked button keeps no Space of its own), and the Video
-    // window's VIDEO_PLAY_PAUSE (Space by default) acts from every panel;
-    // never while a text field or a control the keyboard moved to has focus.
+    // KB2, KB1 (key_router.h): a panel's bindings act before the control
+    // it has focused (a clicked button keeps no Space of its own), on the
+    // hovered panel rather than the focused one, and the Video window's
+    // VIDEO_PLAY_PAUSE (Space by default) acts from every panel; never while
+    // a text field or a control the keyboard moved to has focus.
     KeyRouter {
         id: keyRouter
         objectName: "keyRouter"
         fallbackTarget: videoPanel
         fallbackAccepts: (key, modifiers) => root.hotkeys.actionFor(3, key, modifiers) === "VIDEO_PLAY_PAUSE"
+        // AUDIO_AUTO_FOCUS folded in: legacy's audio took the focus under
+        // the pointer; now no panel does, and the hotkeys follow it.
+        followsPointer: () => root.app.settings.value("audio.autoFocus")
         Component.onCompleted: {
             for (const panel of root.panels)
                 keyRouter.addPanel(panel, panel.keyTarget)

@@ -576,7 +576,7 @@ Dialog {
                     SettingCheck { setting: "audio.drawVideoPosition"; text: qsTr("Show video position") }
                     SettingCheck { setting: "audio.drawKeyframes"; text: qsTr("Show keyframes") }
                     SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
-                    SettingCheck { setting: "audio.autoFocus"; text: qsTr("Activate the audio when hover") }
+                    SettingCheck { setting: "audio.autoFocus"; text: qsTr("Hotkeys follow the panel under the pointer") } // KB1
                     SettingCheck { setting: "audio.snapToKeyframes"; text: qsTr("Snap to keyframe") }
                     SettingCheck { setting: "audio.snapToOtherLines"; text: qsTr("Snap to other lines") }
                     SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Do not play audio after changing the line") }

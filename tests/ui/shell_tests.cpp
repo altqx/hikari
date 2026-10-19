@@ -9204,7 +9204,7 @@ private slots:
               {"audio.drawVideoPosition", "Show video position"},
               {"audio.drawKeyframes", "Show keyframes"},
               {"audio.lockScrollOnCursor", "Follow audio during playback"},
-              {"audio.autoFocus", "Activate the audio when hover"},
+              {"audio.autoFocus", "Hotkeys follow the panel under the pointer"}, // KB1
               {"audio.snapToKeyframes", "Snap to keyframe"},
               {"audio.snapToOtherLines", "Snap to other lines"},
               {"audio.dontPlayWhenLineChanges", "Do not play audio after changing the line"},
@@ -11940,7 +11940,7 @@ private slots:
         QTest::mouseDClick(window, Qt::MiddleButton, Qt::NoModifier, display->mapToScene(QPointF(200, 10)).toPoint());
         QCOMPARE(range(), (PlayRange{48000, 48000}));
         press(Qt::Key_H);
-        // (the mouse leaves: over the waveform it takes the focus, AUDIO_AUTO_FOCUS)
+        // (the mouse leaves: over the audio the hotkeys follow it, KB1)
         QTest::mouseMove(window, QPoint(0, 0));
 
         // from the Grid: the letters and the keypad (not Down and Up, which
@@ -12023,6 +12023,88 @@ private slots:
         press(Qt::Key_Space);
         QVERIFY(!video.playing());
         QCOMPARE(text->property("text").toString().size(), before.size() + 1);
+    }
+
+    // KB1: no panel takes the focus under the pointer; the hotkeys follow
+    // it. Over the audio its bindings act while the Grid keeps the focus, and
+    // a Grid binding the hovered panel does not have is not the Grid's then;
+    // outside the panels the focused one has its keys again. A text field
+    // keeps its typing whatever the pointer is over, and with
+    // audio.autoFocus off (AUDIO_AUTO_FOCUS, folded in) hover routes nothing.
+    void hotkeysFollowTheHoveredPanel()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        auto &video = application->video();
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        closeMismatchQuestion();
+        keysNeverRepeat();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        QTRY_COMPARE(session->selection().active, lines[0]->id);
+        auto *router = named("keyRouter");
+        const auto hover = [&](const char *name) {
+            QQuickItem *over = item(name);
+            QTest::mouseMove(window, over->mapToScene(QPointF(over->width() / 2, over->height() / 2)).toPoint());
+            QCoreApplication::processEvents();
+        };
+        const auto hovered = [&] {
+            auto *p = router->property("hoveredPanel").value<QQuickItem *>();
+            return p ? p->objectName() : QString();
+        };
+        item("editingGrid")->forceActiveFocus();
+        hover("audioDisplay");
+        QCOMPARE(hovered(), QStringLiteral("audioPanel"));
+        QCOMPARE(focusedPanel(), QStringLiteral("gridPanel")); // hover takes no focus
+        press(Qt::Key_Down); // AUDIO_PLAY, not the Grid's next Line
+        QVERIFY(audio.playing());
+        QCOMPARE(session->selection().active, lines[0]->id);
+        press(Qt::Key_H); // AUDIO_STOP
+        QVERIFY(!audio.playing());
+        QCOMPARE(focusedPanel(), QStringLiteral("gridPanel"));
+        // Over the video: its bindings; the Grid's Ctrl+D is out of context.
+        hover("videoPanel");
+        QCOMPARE(hovered(), QStringLiteral("videoPanel"));
+        const int frame = video.frame();
+        press(Qt::Key_Up); // VIDEO_MINUTE_FORWARD
+        QTRY_VERIFY(video.frame() > frame);
+        const auto steps = session->historySize();
+        press(Qt::Key_D, Qt::ControlModifier);
+        QCOMPARE(session->historySize(), steps);
+        QCOMPARE(session->document().lines().size(), lines.size());
+        // Outside the panels: the focused Grid's keys.
+        QTest::mouseMove(window, QPoint(0, 0));
+        QCoreApplication::processEvents();
+        QCOMPARE(hovered(), QString());
+        press(Qt::Key_Down);
+        QTRY_COMPARE(session->selection().active, lines[1]->id);
+        QVERIFY(!audio.playing());
+        // Focus in the audio, the pointer over the Grid: the Grid's Ctrl+D.
+        item("audioDisplay")->forceActiveFocus();
+        hover("editingGrid");
+        QCOMPARE(hovered(), QStringLiteral("gridPanel"));
+        press(Qt::Key_D, Qt::ControlModifier); // GRID_DUPLICATE_LINES
+        QTRY_COMPARE(session->document().lines().size(), lines.size() + 1);
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        // A text field keeps its typing under any panel.
+        auto *text = item("lineText");
+        text->forceActiveFocus();
+        hover("audioDisplay");
+        const QString typed = text->property("text").toString();
+        press(Qt::Key_S); // AUDIO_PLAY_ALT over the audio, a letter here
+        QVERIFY(!audio.playing());
+        QCOMPARE(text->property("text").toString().size(), typed.size() + 1);
+        QVERIFY(text->hasActiveFocus());
+        // audio.autoFocus off: the focused panel's keys under the pointer too.
+        QVERIFY(application->settingsStore()->setValue(QStringLiteral("audio.autoFocus"), false));
+        item("editingGrid")->forceActiveFocus();
+        const auto active = session->selection().active;
+        press(Qt::Key_Up); // the Grid's previous Line, not AUDIO_PLAY_LINE
+        QTRY_VERIFY(session->selection().active != active);
+        QVERIFY(!audio.playing());
     }
 
     // A4: legacy Play pauses a playing video; Stop pauses it and leaves the
@@ -17750,7 +17832,7 @@ private slots:
         QTRY_VERIFY(tools.railEnabled());
         tools.selectFamily(1);
         QCOMPARE(tools.activeFamily(), 1);
-        // Off the display, which takes the focus under the pointer (AUDIO_AUTO_FOCUS).
+        // Off the audio, whose hotkeys would follow the pointer (KB1).
         QTest::mouseMove(window, start->mapToScene(QPointF(start->width() / 2, start->height() / 2)).toPoint());
         start->forceActiveFocus();
         press(Qt::Key_Return, Qt::ControlModifier); // EDITBOX_COMMIT
@@ -17777,6 +17859,8 @@ private slots:
 
         // With auto commit the Send follows at once: no colour stays.
         application->settingsStore()->setValue(QStringLiteral("audio.autoCommit"), true);
+        // Back over the audio, whose hotkeys V reaches (KB1).
+        QTest::mouseMove(window, display->mapToScene(QPointF(display->width() / 2, display->height() / 2)).toPoint());
         display->forceActiveFocus();
         QTest::keyClick(window, Qt::Key_V);
         QCOMPARE(editor.endText(), QStringLiteral("0:00:02.30"));
