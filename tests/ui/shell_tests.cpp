@@ -3276,6 +3276,85 @@ private slots:
         QTRY_COMPARE(text->property("text").toString(), before);
     }
 
+    // SY2: Enter in any of the popover's editors (Hex, ASS, HTML, the
+    // RGB, HSL and HSV values, Alpha) takes the typed value and keeps it,
+    // closing the popover as Enter does anywhere in it.
+    void colourPopoverEnterInEveryEditorKeeps()
+    {
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        application->editor().setShowTags(true);
+        auto *popover = named("colourPopover");
+        const auto in = [&](const char *name) { return dialogItem("colourPopover", name); };
+        popover->setProperty("expanded", true);
+        // The field's own text input: the item that takes the keys.
+        const auto input = [](QQuickItem *field) {
+            QQuickItem *edit = field;
+            const QVariant content = field->property("contentItem");
+            if (auto *c = content.value<QQuickItem *>(); c && c->property("cursorPosition").isValid())
+                edit = c;
+            return edit;
+        };
+        // Each field, what is typed, and the popover value it gives.
+        struct Case { const char *field; const char *typed; const char *property; int value; };
+        const QList<Case> cases{
+            {"hexColour", "#102030", "blue", 0x30},
+            {"assText", "&H405060&", "red", 0x60},
+            {"htmlText", "#708090", "green", 0x80},
+            {"red", "17", "red", 17},
+            {"hslHue", "9", "hslHue", 9},
+            {"hsvValue", "34", "hsvValue", 34},
+            {"alpha", "80", "alpha", 80},
+        };
+        const auto hex2 = [](int v) { return QStringLiteral("%1").arg(v, 2, 16, QLatin1Char('0')).toUpper(); };
+        for (const auto &c : cases) {
+            text->forceActiveFocus();
+            text->setProperty("cursorPosition", 0);
+            QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+            QTRY_VERIFY(popover->property("visible").toBool());
+            const QByteArray field(c.field);
+            if (field.startsWith("hsl"))
+                QVERIFY(QMetaObject::invokeMethod(in("modeHsl"), "click"));
+            else if (field.startsWith("hsv"))
+                QVERIFY(QMetaObject::invokeMethod(in("modeHsv"), "click"));
+            else if (field == "red")
+                QVERIFY(QMetaObject::invokeMethod(in("modeRgb"), "click"));
+            auto *edit = input(in(c.field));
+            QTRY_VERIFY(edit->isVisible());
+            edit->forceActiveFocus();
+            QTRY_VERIFY(edit->hasActiveFocus());
+            edit->setProperty("text", QString::fromLatin1(c.typed));
+            QTest::keyClick(window, Qt::Key_Return);
+            QTRY_VERIFY2(!popover->property("visible").toBool(), c.field);
+            QCOMPARE(popover->property(c.property).toInt(), c.value);
+            // The Line has the colour kept.
+            const int r = popover->property("red").toInt(), g = popover->property("green").toInt(),
+                      b = popover->property("blue").toInt();
+            const QString tag = field == "alpha" ? QStringLiteral("\\1a&H%1&").arg(hex2(c.value))
+                                                 : QStringLiteral("\\1c&H%1%2%3&").arg(hex2(b), hex2(g), hex2(r));
+            QTRY_VERIFY2(text->property("text").toString().contains(tag),
+                         qPrintable(QStringLiteral("%1: %2 lacks %3").arg(field, text->property("text").toString(), tag)));
+        }
+        // A press outside keeps a value still being typed too.
+        text->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(in("modeRgb"), "click"));
+        auto *green = input(in("green"));
+        green->forceActiveFocus();
+        QTRY_VERIFY(green->hasActiveFocus());
+        green->setProperty("text", QStringLiteral("66"));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(item("editingGrid")));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(popover->property("green").toInt(), 66);
+        const QString kept = QStringLiteral("\\1c&H%1%2%3&").arg(hex2(popover->property("blue").toInt()), hex2(66),
+                                                                 hex2(popover->property("red").toInt()));
+        QTRY_VERIFY2(text->property("text").toString().contains(kept), qPrintable(text->property("text").toString()));
+    }
+
     // SY2 on a line format (MicroDVD: one colour, written as {C:BBGGRR};
     // SRT takes no colour, E1-nonass-font): a change writes the markup at
     // once and Esc takes it back.

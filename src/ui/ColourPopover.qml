@@ -213,6 +213,10 @@ Popup {
     function finish(accepted) {
         if (!active)
             return
+        // Kept: the value being typed first. An editable SpinBox takes its
+        // text when it loses the keyboard, which Enter alone does not do.
+        if (accepted)
+            editEnd.forceActiveFocus()
         active = false
         stopDropper()
         portalAsked = false
@@ -322,6 +326,8 @@ Popup {
         Keys.onEscapePressed: popover.reject()
         Keys.onReturnPressed: popover.accept()
         Keys.onEnterPressed: popover.accept()
+        // Takes the keyboard from an editor at the end (finish()).
+        Item { id: editEnd; activeFocusOnTab: false }
         RowLayout {
             id: content
             anchors.fill: parent
