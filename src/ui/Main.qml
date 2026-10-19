@@ -554,7 +554,7 @@ ApplicationWindow {
     function panelOwnItems(dock) {
         if (dock === referenceDock)
             return [{ name: "compareWithReference", text: qsTranslate("HikariSub.Reference", "Compare with reference"),
-                      enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference() }]
+                      enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference(), iconRole: "compare" }]
         return []
     }
     function closePanel(dock) {
@@ -600,6 +600,7 @@ ApplicationWindow {
             delegate: ShellMenuItem {
                 required property var modelData
                 objectName: "panelOptions_" + modelData.name
+                iconRole: modelData.iconRole ?? ""
                 text: modelData.text
                 checkable: modelData.checkable === true
                 checked: modelData.checked === true
@@ -615,6 +616,7 @@ ApplicationWindow {
             height: visible ? implicitHeight : 0
         }
         ShellMenuItem {
+            iconRole: "panel-move"
             objectName: "panelOptionsMove"
             text: qsTranslate("HikariSub.Workspace", "Move panel…")
             // D2: not in the player layout, as View > Move panel….
@@ -625,6 +627,7 @@ ApplicationWindow {
         // current and focused; only in a group of tabs, off at its end.
         ShellMenuItem {
             id: panelOptionsTabLeft
+            iconRole: "tab-move-left"
             objectName: "panelOptionsTabLeft"
             text: qsTranslate("HikariSub.Workspace", "Move tab left")
             visible: panelOptionsMenu.tabCount > 1
@@ -634,6 +637,7 @@ ApplicationWindow {
             onTriggered: root.moveTab(panelOptionsMenu.dock, panelOptionsMenu.leftStep)
         }
         ShellMenuItem {
+            iconRole: "tab-move-right"
             objectName: "panelOptionsTabRight"
             text: qsTranslate("HikariSub.Workspace", "Move tab right")
             visible: panelOptionsTabLeft.visible
@@ -643,12 +647,14 @@ ApplicationWindow {
             onTriggered: root.moveTab(panelOptionsMenu.dock, -panelOptionsMenu.leftStep)
         }
         ShellMenuItem {
+            iconRole: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? "panel-dock" : "panel-float"
             objectName: "panelOptionsFloat"
             text: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? qsTranslate("HikariSub.Workspace", "Dock") : qsTranslate("HikariSub.Workspace", "Undock")
             enabled: panelOptionsMenu.dock !== null && (!panelOptionsMenu.dock.isFloating || panelOptionsMenu.dockable)
             onTriggered: root.setPanelFloating(panelOptionsMenu.dock, !panelOptionsMenu.dock.isFloating)
         }
         ShellMenuItem {
+            iconRole: "tab-close"
             objectName: "panelOptionsClose"
             text: panelOptionsMenu.dock === referenceDock ? qsTranslate("HikariSub.Workspace", "Close reference") : qsTranslate("HikariSub.Workspace", "Close")
             enabled: panelOptionsMenu.closable
@@ -1022,6 +1028,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     help: qsTr("Opens the selected autosave from the list") // HikariSubFrame.cpp:196
+                    iconRole: "autosave"
                     objectName: "openAutoSaveMenuItem"
                     action: Action {
                         id: openAutoSaveAction
@@ -1031,6 +1038,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     help: qsTr("Opens the temporary file removal window") // HikariSubFrame.cpp:197
+                    iconRole: "remove-temporary"
                     objectName: "removeTemporaryMenuItem"
                     action: Action {
                         id: removeTemporaryAction
@@ -1039,6 +1047,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    iconRole: "log"
                     objectName: "logMenuItem"
                     action: Action {
                         text: qsTr("Show / Hide log window")
@@ -1062,6 +1071,7 @@ ApplicationWindow {
                     ShellMenuItem {
                         help: qsTr("Loads session from saved session file") // HikariSubFrame.cpp:163
                         id: loadSessionFileItem
+                        iconRole: "session-open"
                         objectName: "loadSessionFileMenuItem"
                         text: qsTr("Load session from file")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_EXTERNAL_SESSION")) sessionWindows.chooseSessionToLoad()
@@ -1069,6 +1079,7 @@ ApplicationWindow {
                     ShellMenuItem {
                         help: qsTr("Saves session to file") // HikariSubFrame.cpp:165
                         id: saveSessionFileItem
+                        iconRole: "session-save"
                         objectName: "saveSessionFileMenuItem"
                         text: qsTr("Save session to file")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_EXTERNAL_SESSION")) sessionWindows.chooseSessionToSave()
@@ -1105,6 +1116,7 @@ ApplicationWindow {
                 }
                 // O3: the one-shot legacy settings importer (no legacy item).
                 ShellMenuItem {
+                    iconRole: "import"
                     objectName: "importSettingsMenuItem"
                     text: qsTr("Import legacy settings...")
                     enabled: root.settingsImport.available
@@ -1317,6 +1329,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "rerun-macro"
                 objectName: "rerunMenuItem"
                 action: Action {
                     text: qsTr("Rerun last macro")
@@ -1325,6 +1338,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "automation-manager"
                 objectName: "automationManagerMenuItem"
                 action: Action {
                     text: qsTr("Automation &manager")
@@ -1403,6 +1417,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "dummy-video"
                 objectName: "dummyVideoMenuItem"
                 action: Action {
                     id: dummyVideoAction
@@ -1672,6 +1687,7 @@ ApplicationWindow {
             // Enable(editor)).
             ShellMenu {
                 id: panelsMenu
+                iconRole: "panels"
                 objectName: "panelsMenu"
                 enabled: root.app.editorOn
                 title: qsTr("&Panels")
@@ -1682,23 +1698,27 @@ ApplicationWindow {
                         objectName: "panelMenu" + modelData.uniqueName
                         title: modelData.title
                         ShellMenuItem {
+                            iconRole: "show"
                             objectName: "panelShow" + modelData.uniqueName
                             text: qsTr("Show")
                             onTriggered: root.showPanel(modelData)
                         }
                         ShellMenuItem {
+                            iconRole: "hide"
                             objectName: "panelHide" + modelData.uniqueName
                             text: qsTr("Hide")
                             enabled: modelData.isOpen
                             onTriggered: modelData.close()
                         }
                         ShellMenuItem {
+                            iconRole: "panel-float"
                             objectName: "panelFloat" + modelData.uniqueName
                             text: qsTr("Float")
                             enabled: modelData.isOpen && !modelData.isFloating
                             onTriggered: root.setPanelFloating(modelData, true)
                         }
                         ShellMenuItem {
+                            iconRole: "panel-dock"
                             objectName: "panelDock" + modelData.uniqueName
                             text: qsTr("Dock")
                             enabled: modelData.isOpen && modelData.isFloating
@@ -1710,6 +1730,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "panel-move"
                 objectName: "movePanel"
                 enabled: root.app.editorOn
                 text: qsTr("&Move panel…")
@@ -1719,6 +1740,7 @@ ApplicationWindow {
             // tools they open come with the tool cards.
             ShellMenu {
                 id: presetMenu
+                iconRole: "layout-preset"
                 objectName: "layoutPresetMenu"
                 enabled: root.app.editorOn
                 title: qsTr("Layout &preset")
@@ -1743,12 +1765,14 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "layout-reset"
                 objectName: "resetLayout"
                 enabled: root.app.editorOn
                 text: qsTr("&Reset layout")
                 onTriggered: root.applyPreset(root.workspaceLayout.preset)
             }
             ShellMenuItem {
+                iconRole: "layout-restore"
                 objectName: "restoreLayoutBackup"
                 text: qsTr("Restore the previous layout")
                 enabled: root.app.editorOn && root.workspaceLayout.hasBackup
@@ -1782,6 +1806,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 id: runShiftTimesItem
+                iconRole: "shift-times-run"
                 objectName: "runShiftTimes"
                 text: qsTr("Shift times / run time post processor")
                 enabled: root.app.editorOn && root.shell.hasEditingTarget
@@ -2049,6 +2074,7 @@ ApplicationWindow {
                 model: field.spelled ? 1 : 0
                 delegate: ShellMenu {
                     id: languagesMenu
+                    iconRole: "dictionary"
                     objectName: field.objectName + "Languages"
                     title: qsTranslate("HikariSub.Editor", "Installed languages")
                     property var languages: []
@@ -2081,6 +2107,7 @@ ApplicationWindow {
                 onObjectRemoved: (index, object) => editMenu.removeMenu(object)
             }
             ShellMenuItem {
+                iconRole: "dictionary-add"
                 objectName: field.objectName + "AddWord"
                 text: qsTranslate("HikariSub.Editor", "&Add word \"%1\" to dictionary").arg(field.misspell.word || "")
                 visible: !!field.misspell.word
@@ -3526,14 +3553,15 @@ ApplicationWindow {
                         id: groupMenu
                         objectName: "groupMenu"
                         property var description: 0
-                        ShellMenuItem { objectName: "groupAddLines"; text: qsTranslate("HikariSub.Grid", "Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
-                        ShellMenuItem { objectName: "groupCopy"; text: qsTranslate("HikariSub.Grid", "Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
+                        ShellMenuItem { iconRole: "tree-add-lines"; objectName: "groupAddLines"; text: qsTranslate("HikariSub.Grid", "Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
+                        ShellMenuItem { iconRole: "edit-copy"; objectName: "groupCopy"; text: qsTranslate("HikariSub.Grid", "Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
                         ShellMenuItem {
+                            iconRole: "edit"
                             objectName: "groupRename"; text: qsTranslate("HikariSub.Grid", "Change description")
                             onTriggered: groupDescriptionDialog.edit(groupMenu.description)
                         }
-                        ShellMenuItem { objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
-                        ShellMenuItem { objectName: "groupDelete"; text: qsTranslate("HikariSub.Grid", "Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
+                        ShellMenuItem { iconRole: "tree-select"; objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
+                        ShellMenuItem { iconRole: "delete"; objectName: "groupDelete"; text: qsTranslate("HikariSub.Grid", "Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
                     }
                     // The Grid's accelerators (TabPanel::SetAccels): the fixed
                     // clipboard keys (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X,
@@ -3575,22 +3603,27 @@ ApplicationWindow {
                             canShiftTranslation = root.app.canShiftTranslation()
                         }
                         ShellMenu {
+                            iconRole: "add"
                             title: qsTranslate("HikariSub.Grid", "&Insert")
-                            ShellMenuItem { objectName: "insertBefore"; text: qsTranslate("HikariSub.Grid", "Insert &before"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE")) root.app.insertLine(true) }
-                            ShellMenuItem { objectName: "insertAfter"; text: qsTranslate("HikariSub.Grid", "Insert &after"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER")) root.app.insertLine(false) }
+                            ShellMenuItem { iconRole: "insert-before"; objectName: "insertBefore"; text: qsTranslate("HikariSub.Grid", "Insert &before"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE")) root.app.insertLine(true) }
+                            ShellMenuItem { iconRole: "insert-after"; objectName: "insertAfter"; text: qsTranslate("HikariSub.Grid", "Insert &after"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER")) root.app.insertLine(false) }
                             ShellMenuItem {
+                                iconRole: "insert-before"
                                 objectName: "insertBeforeVideo"; text: qsTranslate("HikariSub.Grid", "Insert before with &video time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_VIDEO")) root.app.insertLine(true, "video")
                             }
                             ShellMenuItem {
+                                iconRole: "insert-after"
                                 objectName: "insertAfterVideo"; text: qsTranslate("HikariSub.Grid", "Insert after with video time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_VIDEO")) root.app.insertLine(false, "video")
                             }
                             ShellMenuItem {
+                                iconRole: "insert-before"
                                 objectName: "insertBeforeFrame"; text: qsTranslate("HikariSub.Grid", "Insert before with video frame time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME")) root.app.insertLine(true, "frame")
                             }
                             ShellMenuItem {
+                                iconRole: "insert-after"
                                 objectName: "insertAfterFrame"; text: qsTranslate("HikariSub.Grid", "Insert after with video frame time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_WITH_VIDEO_FRAME")) root.app.insertLine(false, "frame")
                             }
@@ -3603,44 +3636,52 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Grid", "&Duplicate lines") + (keys.length ? "\t" + keys : "")
                             onTriggered: if (!root.gridGesture(this, "GRID_DUPLICATE_LINES")) root.app.duplicateLines()
                         }
-                        ShellMenuItem { objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "&Swap"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
-                        ShellMenuItem { objectName: "joinLines"; text: qsTranslate("HikariSub.Grid", "Join &lines"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
-                        ShellMenuItem { objectName: "joinFirst"; text: qsTranslate("HikariSub.Grid", "Join lines and keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
-                        ShellMenuItem { objectName: "joinLast"; text: qsTranslate("HikariSub.Grid", "Join lines and keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
+                        ShellMenuItem { iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "&Swap"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
+                        ShellMenuItem { iconRole: "join-lines"; objectName: "joinLines"; text: qsTranslate("HikariSub.Grid", "Join &lines"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
+                        ShellMenuItem { iconRole: "join-keep-first"; objectName: "joinFirst"; text: qsTranslate("HikariSub.Grid", "Join lines and keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
+                        ShellMenuItem { iconRole: "join-keep-last"; objectName: "joinLast"; text: qsTranslate("HikariSub.Grid", "Join lines and keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
                         ShellMenuItem {
+                            iconRole: "continuous-previous"
                             objectName: "continuousPrevious"; text: qsTranslate("HikariSub.Grid", "Set times as a continuous (previous line)")
                             onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_PREVIOUS_LINE")) root.app.makeContinuous(true)
                         }
                         ShellMenuItem {
+                            iconRole: "continuous-next"
                             objectName: "continuousNext"; text: qsTranslate("HikariSub.Grid", "Set times as a continuous (next line)")
                             onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
                         }
                         // Legacy "Split lines" (GRID_SPLIT_BY_*).
                         ShellMenu {
+                            iconRole: "split-lines"
                             title: qsTranslate("HikariSub.Grid", "Split lines")
                             ShellMenuItem {
+                                iconRole: "split-at-video"
                                 objectName: "splitAtVideoTime"
                                 text: qsTranslate("HikariSub.Grid", "Split line at video time")
                                 enabled: root.video.hasVideo
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_VIDEO_TIME")) root.app.splitLines("videoTime")
                             }
                             ShellMenuItem {
+                                iconRole: "split-frames"
                                 objectName: "splitIntoFrames"
                                 text: qsTranslate("HikariSub.Grid", "Split lines into frames")
                                 enabled: root.video.hasVideo
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_FRAME")) root.app.splitLines("frames")
                             }
                             ShellMenuItem {
+                                iconRole: "split-characters"
                                 objectName: "splitIntoCharacters"
                                 text: qsTranslate("HikariSub.Grid", "Split lines into characters")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_CHARS")) root.app.splitLines("chars")
                             }
                             ShellMenuItem {
+                                iconRole: "split-words"
                                 objectName: "splitIntoWords"
                                 text: qsTranslate("HikariSub.Grid", "Split lines into words")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WORDS")) root.app.splitLines("words")
                             }
                             ShellMenuItem {
+                                iconRole: "split-wraps"
                                 objectName: "splitByWraps"
                                 text: qsTranslate("HikariSub.Grid", "Split lines by wraps")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
@@ -3648,10 +3689,11 @@ ApplicationWindow {
                         }
                         // V6: after "Split lines", as legacy's menu (SubsGrid.cpp:264-265).
                         ShellMenuItem {
+                            iconRole: "select-visible"
                             objectName: "selectVisibleLines"; text: qsTranslate("HikariSub.Grid", "Select all lines visible on video")
                             onTriggered: if (!root.gridGesture(this, "GRID_SELECT_VISIBLE_LINES")) root.app.selectLinesVisibleOnVideo()
                         }
-                        ShellMenuItem { objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
+                        ShellMenuItem { iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         // R2: legacy's in-Grid preview, here another tab in the reference tray (SubsGrid.cpp:277).
                         ShellMenuItem {
                             iconRole: "reference"
@@ -3663,6 +3705,7 @@ ApplicationWindow {
                         }
                         // E3: GRID_PASTE_TRANSLATION and GRID_TRANSLATION_DIALOG.
                         ShellMenuItem {
+                            iconRole: "paste-translation"
                             objectName: "pasteTranslation"
                             text: qsTranslate("HikariSub.Grid", "Paste translation text")
                             enabled: gridMenu.canPasteTranslation
@@ -3675,12 +3718,13 @@ ApplicationWindow {
                             }
                         }
                         ShellMenuItem {
+                            iconRole: "translation-shift"
                             objectName: "translationDialog"
                             text: qsTranslate("HikariSub.Grid", "Dialogue shifting window")
                             enabled: gridMenu.canShiftTranslation
                             onTriggered: if (!root.gridGesture(this, "GRID_TRANSLATION_DIALOG")) translationShiftWindow.show()
                         }
-                        ShellMenuItem { objectName: "hideSelectedLines"; text: qsTranslate("HikariSub.Grid", "Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
+                        ShellMenuItem { iconRole: "hide"; objectName: "hideSelectedLines"; text: qsTranslate("HikariSub.Grid", "Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
                         // Legacy Filtering submenu (GRID_FILTER_*).
                         ShellMenu {
                             id: filteringMenu
@@ -3713,6 +3757,7 @@ ApplicationWindow {
                             }
                             ShellMenu {
                                 id: filterStylesMenu
+                                iconRole: "styles"
                                 title: qsTranslate("HikariSub.Grid", "Hide lines with styles")
                                 enabled: root.shell.assColumns
                                 Instantiator {
@@ -3751,8 +3796,9 @@ ApplicationWindow {
                                 onObjectAdded: (index, object) => filteringMenu.insertItem(4 + index, object)
                                 onObjectRemoved: (index, object) => filteringMenu.removeItem(object)
                             }
-                            ShellMenuItem { objectName: "filter"; text: qsTranslate("HikariSub.Grid", "Filter"); onTriggered: if (!root.gridGesture(this, "GRID_FILTER")) root.app.filterLines() }
+                            ShellMenuItem { iconRole: "filter"; objectName: "filter"; text: qsTranslate("HikariSub.Grid", "Filter"); onTriggered: if (!root.gridGesture(this, "GRID_FILTER")) root.app.filterLines() }
                             ShellMenuItem {
+                                iconRole: "filter-off"
                                 objectName: "turnOffFiltering"
                                 text: qsTranslate("HikariSub.Grid", "Turn off filtering")
                                 enabled: root.shell.filtered
@@ -3769,6 +3815,7 @@ ApplicationWindow {
                         // Legacy "Hide columns" (GRID_HIDE_LAYER ... GRID_HIDE_WRAPS).
                         ShellMenu {
                             id: hideColumnsMenu
+                            iconRole: "columns"
                             objectName: "hideColumnsMenu"
                             title: qsTranslate("HikariSub.Grid", "Hide columns")
                             Instantiator {
@@ -3798,18 +3845,19 @@ ApplicationWindow {
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }
-                        ShellMenuItem { objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) fpsWindow.show() }
+                        ShellMenuItem { iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) fpsWindow.show() }
                         ShellMenuItem {
+                            iconRole: "fps-from-video"
                             objectName: "setFpsFromVideo"; text: qsTranslate("HikariSub.Grid", "Set FPS from video")
                             enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_SET_FPS_FROM_VIDEO")) root.app.setFpsFromVideo()
                         }
                         ShellMenuItem { iconRole: "edit-copy"; objectName: "copyLines"; text: qsTranslate("HikariSub.Grid", "Copy\tCtrl+C"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
                         ShellMenuItem { iconRole: "edit-cut"; objectName: "cutLines"; text: qsTranslate("HikariSub.Grid", "Cut\tCtrl+X"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
                         ShellMenuItem { iconRole: "edit-paste"; objectName: "pasteLines"; text: qsTranslate("HikariSub.Grid", "Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
-                        ShellMenuItem { objectName: "copyColumns"; text: qsTranslate("HikariSub.Grid", "Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
-                        ShellMenuItem { objectName: "pasteColumns"; text: qsTranslate("HikariSub.Grid", "Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
+                        ShellMenuItem { iconRole: "columns-copy"; objectName: "copyColumns"; text: qsTranslate("HikariSub.Grid", "Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
+                        ShellMenuItem { iconRole: "columns-paste"; objectName: "pasteColumns"; text: qsTranslate("HikariSub.Grid", "Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
                         // E6: SubsGrid's menu, "Delete text" before "Delete" (SubsGrid.cpp:285-286).
-                        ShellMenuItem { objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
+                        ShellMenuItem { iconRole: "clear"; objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
                         ShellMenuItem { iconRole: "delete"; objectName: "deleteLines"; text: qsTranslate("HikariSub.Grid", "Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
                         // Y8: SubsGrid's menu (SubsGrid.cpp:286-288).
                         MenuSeparator {}

@@ -87,6 +87,7 @@ ShellMenu {
     }
     ShellMenu {
         id: stylesMenu
+        iconRole: "styles"
         objectName: "compareStylesMenu"
         title: qsTr("Compare by selected styles")
         enabled: comparison.menuState.canCompare === true
@@ -111,12 +112,14 @@ ShellMenu {
         }
     }
     ShellMenuItem {
+        iconRole: "compare"
         objectName: "compareSubtitles"
         text: qsTr("Compare")
         enabled: comparison.menuState.canCompare === true
         onTriggered: comparison.app.compareWithTab(comparison.tabIndex)
     }
     ShellMenuItem {
+        iconRole: "compare-off"
         objectName: "turnOffComparison"
         text: qsTr("Turn off comparison")
         enabled: comparison.menuState.active === true
