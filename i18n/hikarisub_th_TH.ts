@@ -4677,6 +4677,10 @@ removing audio cache files.</source>
         <translation>แจ้งให้เปลี่ยนข้อมูลคำบรรยายเสมอ</translation>
     </message>
     <message>
+        <source>Save panel layout in subtitle files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Choose choose external font folder</source>
         <translation>เลือกโฟลเดอร์แบบอักษรภายนอก</translation>
     </message>
@@ -8069,6 +8073,10 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>The layout is kept at %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The panel layout saved in %1 was not used because %2.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
