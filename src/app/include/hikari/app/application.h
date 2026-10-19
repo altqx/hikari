@@ -679,10 +679,10 @@ public:
     // sent (VideoBox.cpp:555-559: Send(EDITBOX_LINE_EDITION, false), then
     // SelVideoLine).
     Q_INVOKABLE bool selectVisibleLineAfterFullScreen();
-    // V5: the fullscreen context menu's "Open editor" (GLOBAL_EDITOR in
-    // fullscreen, VideoBox::OpenEditor, VideoBox.cpp:1116-1130): pauses,
-    // turns the editor on (EDITOR_ON), selects the Line shown at the video's
-    // time when the Document has a file, and leaves fullscreen.
+    // V5: the fullscreen context menu's "Open editor" (legacy GLOBAL_EDITOR
+    // in fullscreen, VideoBox::OpenEditor, VideoBox.cpp:1116-1130): pauses,
+    // selects the Line shown at the video's time when the Document has a
+    // file, and leaves fullscreen (WS3: no editor switch to turn on).
     Q_INVOKABLE bool openEditorFromFullScreen();
     Q_INVOKABLE bool selectLinesVisibleOnVideo();
     Q_INVOKABLE bool snapToKeyframe(bool start);
@@ -774,15 +774,6 @@ public:
     // stay visible"): {row, tab, title, kind ("subtitles", "video", "audio",
     // "keyframes"), path}.
     Q_PROPERTY(QVariantList unresolvedRestores READ unresolvedRestores NOTIFY unresolvedRestoresChanged)
-    // D2: GLOBAL_EDITOR "Enable / Disable editor" (legacy TabPanel::editor
-    // and EDITOR_ON, workspace.editorOn). Off is legacy's video player
-    // layout. One switch for every tab (D2-one-editor-switch; WS1: the
-    // player layout holds the current tab's arrangement), saved at each
-    // change as HideEditor(save) did.
-    Q_PROPERTY(bool editorOn READ editorOn NOTIFY editorOnChanged)
-    bool editorOn() const;
-    // HikariSubFrame::HideEditor: the switch flips.
-    Q_INVOKABLE void toggleEditor();
     QVariantList tabs() const;
     int currentTab() const;
     int sessionRestore() const;
@@ -917,7 +908,6 @@ public:
     bool saveLastSession(bool closing = false, const QString &path = {});
 signals:
     void tabsChanged();
-    void editorOnChanged();
     void sessionRestoreChanged();
     void unresolvedRestoresChanged();
     // A tab became active: its Grid scroll to show again.
@@ -929,11 +919,8 @@ private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
     void rememberRecent(const std::string &path);
-    // Subtitles opened while the editor is off turn it on (legacy OpenFile
-    // and OpenFiles: `if (!tab->editor) HideEditor()`).
-    void editorOnForSubtitles();
     // The editing target's subtitles over the video (its draft, the visual
-    // tool's preview), none with the editor off; whether the Document
+    // tool's preview); whether the Document
     // changed since the video last showed it (V6).
     bool showVideoSubtitles();
     void recordFileTime(application::DocumentId document);

@@ -13,8 +13,9 @@ import Hikari.Ui
 // V5: "Full screen" / "Exit full screen" (VIDEO_FULL_SCREEN, "F" or
 // "Escape" unless it has a binding of its own), one entry per monitor after
 // the first ("Open in full screen on monitor %i", in fullscreen "Switch full
-// screen to monitor %i", numbered from 2) and "Open editor" (GLOBAL_EDITOR,
-// fullscreen only) after Stop; "Copy video position" only out of fullscreen;
+// screen to monitor %i", numbered from 2) and "Open editor" (legacy
+// GLOBAL_EDITOR's VideoBox::OpenEditor, fullscreen only, with no binding since
+// WS3 retired the command) after Stop; "Copy video position" only out of fullscreen;
 // "Show / hide progress bar" in fullscreen only. The fullscreen window has
 // its own instance (`itemPrefix` names its items). The root's id is not
 // `menu`: inside a delegate that name is the MenuItem's own `menu` property
@@ -122,9 +123,8 @@ ShellMenu {
     }
     ShellMenuItem {
         objectName: videoMenu.itemPrefix + "OpenEditor"
-        // menu->SetWindow(GLOBAL_HOTKEY): the Global binding.
-        text: qsTr("Open editor") + (videoMenu.shell.boundKeys("GLOBAL_EDITOR", 0).length
-                                     ? "\t" + videoMenu.shell.boundKeys("GLOBAL_EDITOR", 0) : "")
+        iconRole: "editor"
+        text: qsTr("Open editor")
         enabled: videoMenu.fullscreen
         onTriggered: videoMenu.shell.app.openEditorFromFullScreen()
     }

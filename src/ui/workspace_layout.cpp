@@ -77,6 +77,9 @@ const QStringList &WorkspaceLayoutController::panelIds()
 WorkspaceLayoutController::WorkspaceLayoutController(QString layoutFile, QObject *parent)
     : QObject(parent), m_file(std::move(layoutFile))
 {
+    if (!m_file.isEmpty())
+        m_savedFile = QFileInfo(m_file).absolutePath() + QStringLiteral("/layouts.json");
+    readSavedLayouts();
     if (auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance())) {
         connect(app, &QGuiApplication::focusWindowChanged, this, &WorkspaceLayoutController::focusWindowChanged);
         connect(app, &QGuiApplication::focusObjectChanged, this, [this](QObject *focus) {
@@ -107,13 +110,15 @@ QObject *WorkspaceLayoutController::focusWindow() const
 
 namespace {
 
-QJsonObject envelopeObject(const QByteArray &payload, const QString &preset)
+QJsonObject envelopeObject(const QByteArray &payload, const QString &preset, const QString &layout)
 {
     QJsonObject o;
     o.insert(QStringLiteral("schema"), WorkspaceLayoutController::kSchema);
     o.insert(QStringLiteral("panelRegistry"), WorkspaceLayoutController::kPanelRegistry);
     o.insert(QStringLiteral("engine"), engineVersion());
     o.insert(QStringLiteral("preset"), preset);
+    if (!layout.isEmpty())
+        o.insert(QStringLiteral("layout"), layout); // WS3: the saved layout it started from
     o.insert(QStringLiteral("panels"), QJsonArray::fromStringList(WorkspaceLayoutController::panelIds()));
     if (!payload.isEmpty())
         o.insert(QStringLiteral("payload"), QJsonDocument::fromJson(payload).object());
@@ -122,14 +127,14 @@ QJsonObject envelopeObject(const QByteArray &payload, const QString &preset)
 
 } // namespace
 
-QByteArray WorkspaceLayoutController::envelope(const QByteArray &payload, const QString &preset)
+QByteArray WorkspaceLayoutController::envelope(const QByteArray &payload, const QString &preset, const QString &layout)
 {
-    return QJsonDocument(envelopeObject(payload, preset)).toJson(QJsonDocument::Indented);
+    return QJsonDocument(envelopeObject(payload, preset, layout)).toJson(QJsonDocument::Indented);
 }
 
 QByteArray WorkspaceArrangement::serialise() const
 {
-    return QJsonDocument(envelopeObject(payload, preset)).toJson(QJsonDocument::Compact);
+    return QJsonDocument(envelopeObject(payload, preset, layout)).toJson(QJsonDocument::Compact);
 }
 
 std::optional<WorkspaceArrangement> WorkspaceArrangement::parse(const QByteArray &bytes, QString *problem)
@@ -139,10 +144,11 @@ std::optional<WorkspaceArrangement> WorkspaceArrangement::parse(const QByteArray
     if (!o.isEmpty() && !o.contains(QStringLiteral("payload"))) {
         if (o.value(QStringLiteral("schema")).toInt(-1) == WorkspaceLayoutController::kSchema &&
             WorkspaceLayoutController::presets().contains(o.value(QStringLiteral("preset")).toString()))
-            return WorkspaceArrangement{o.value(QStringLiteral("preset")).toString(), {}};
+            return WorkspaceArrangement{o.value(QStringLiteral("preset")).toString(), {},
+                                        o.value(QStringLiteral("layout")).toString()};
     }
     WorkspaceArrangement arrangement;
-    const auto payload = WorkspaceLayoutController::payloadOf(bytes, problem, &arrangement.preset);
+    const auto payload = WorkspaceLayoutController::payloadOf(bytes, problem, &arrangement.preset, &arrangement.layout);
     if (!payload)
         return std::nullopt;
     arrangement.payload = *payload;
@@ -156,16 +162,31 @@ const QStringList &WorkspaceLayoutController::presets()
     return names;
 }
 
+QString WorkspaceLayoutController::presetLabel(const QString &name)
+{
+    if (name == QLatin1String("Editing"))
+        return QCoreApplication::translate("HikariSub.Workspace", "Editing");
+    if (name == QLatin1String("Timing"))
+        return QCoreApplication::translate("HikariSub.Workspace", "Timing");
+    if (name == QLatin1String("Translation"))
+        return QCoreApplication::translate("HikariSub.Workspace", "Translation");
+    if (name == QLatin1String("Typesetting"))
+        return QCoreApplication::translate("HikariSub.Workspace", "Typesetting");
+    return name;
+}
+
 void WorkspaceLayoutController::setPreset(const QString &preset)
 {
-    if (!presets().contains(preset) || preset == m_preset)
+    if (!presets().contains(preset) || (preset == m_preset && m_layout.isEmpty()))
         return;
     m_preset = preset;
+    m_layout.clear();
     m_lastSaved.clear(); // the envelope changes even when the arrangement does not
     emit changed();
 }
 
-std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray &file, QString *problem, QString *preset)
+std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray &file, QString *problem, QString *preset,
+                                                               QString *layout)
 {
     auto fail = [&](const QString &why) {
         if (problem)
@@ -209,6 +230,8 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
         const QString named = o.value(QStringLiteral("preset")).toString();
         *preset = presets().contains(named) ? named : QStringLiteral("Editing");
     }
+    if (layout)
+        *layout = o.value(QStringLiteral("layout")).toString();
     return QJsonDocument(payload).toJson(QJsonDocument::Compact);
 }
 
@@ -251,8 +274,6 @@ bool WorkspaceLayoutController::restoreSaved()
     if (m_tab) {
         Tab &shown = m_tabs[*m_tab];
         if (shown.arrangement) {
-            m_full = shown.full;
-            m_timingHidden = shown.timingHidden;
             showArrangement(*shown.arrangement);
         } else {
             shown.arrangement = shownArrangement();
@@ -260,11 +281,8 @@ bool WorkspaceLayoutController::restoreSaved()
     }
     // Tabs opened in the background before it copy it too.
     for (auto &[id, t] : m_tabs)
-        if (!t.arrangement && m_tab != id) {
+        if (!t.arrangement && m_tab != id)
             t.arrangement = shownArrangement();
-            t.full = m_full;
-            t.timingHidden = m_timingHidden;
-        }
     return restored;
 }
 
@@ -275,9 +293,8 @@ bool WorkspaceLayoutController::restoreSavedFile()
     const auto bytes = readFile(m_file);
     if (!bytes)
         return false;
-    QString problem, preset;
-    const auto payload = payloadOf(*bytes, &problem, &preset);
-    m_full.clear();
+    QString problem, preset, layout;
+    const auto payload = payloadOf(*bytes, &problem, &preset, &layout);
     if (!payload || !restorePayload(*payload)) {
         if (problem.isEmpty())
             problem = QCoreApplication::translate("HikariSub.Workspace", "the docking engine could not restore it");
@@ -293,8 +310,9 @@ bool WorkspaceLayoutController::restoreSavedFile()
         return false;
     }
     m_lastSaved = KDDockWidgets::LayoutSaver().serializeLayout();
-    if (preset != m_preset) {
+    if (preset != m_preset || layout != m_layout) {
         m_preset = preset;
+        m_layout = layout;
         emit changed();
     }
     return true;
@@ -302,7 +320,7 @@ bool WorkspaceLayoutController::restoreSavedFile()
 
 bool WorkspaceLayoutController::save()
 {
-    if (m_file.isEmpty() || m_restoring || !m_loaded || m_quitting || holding())
+    if (m_file.isEmpty() || m_restoring || !m_loaded || m_quitting)
         return false;
     const QByteArray current = KDDockWidgets::LayoutSaver().serializeLayout();
     if (current == m_lastSaved)
@@ -310,7 +328,7 @@ bool WorkspaceLayoutController::save()
     // The previous valid file becomes the backup.
     if (const auto old = readFile(m_file); old && payloadOf(*old, nullptr))
         writeAtomically(backupFile(), *old);
-    if (!writeAtomically(m_file, envelope(current, m_preset)))
+    if (!writeAtomically(m_file, envelope(current, m_preset, m_layout)))
         return false;
     m_lastSaved = current;
     emit changed();
@@ -332,8 +350,12 @@ bool WorkspaceLayoutController::resetLayout()
 {
     if (m_default.isEmpty())
         return false;
-    m_full.clear();
     const bool done = restorePayload(m_default);
+    if (!m_layout.isEmpty()) {
+        m_layout.clear();
+        m_lastSaved.clear();
+        emit changed();
+    }
     dismissNotice();
     save();
     return done;
@@ -362,7 +384,6 @@ bool WorkspaceLayoutController::applyPreset(const QString &name)
 {
     if (!presets().contains(name) || m_default.isEmpty())
         return false;
-    m_full.clear();
     const bool done = buildPreset(name, false);
     dismissNotice();
     setPreset(name);
@@ -381,7 +402,6 @@ bool WorkspaceLayoutController::restoreBackup()
     const auto payload = bytes ? payloadOf(*bytes, nullptr) : std::nullopt;
     if (!payload)
         return false;
-    m_full.clear();
     if (!restorePayload(*payload))
         return false;
     dismissNotice();
@@ -426,79 +446,19 @@ bool WorkspaceLayoutController::resizePanel(QObject *dock, int width, int height
     return true;
 }
 
-const QStringList &WorkspaceLayoutController::arrangements()
-{
-    // Legacy ViewMenu's order (HikariSubFrame.cpp:308-312).
-    static const QStringList names{QStringLiteral("GLOBAL_VIEW_ALL"), QStringLiteral("GLOBAL_VIEW_VIDEO"),
-                                   QStringLiteral("GLOBAL_VIEW_AUDIO"), QStringLiteral("GLOBAL_VIEW_ONLY_VIDEO"),
-                                   QStringLiteral("GLOBAL_VIEW_SUBS")};
-    return names;
-}
-
-QStringList WorkspaceLayoutController::arrangementPanels(const QString &arrangement)
-{
-    // HikariSubFrame::OnMenuSelected: the video for ALL, VIDEO and
-    // ONLY_VIDEO; the audio box for ALL and AUDIO; the Line editor and the
-    // Grid for all but ONLY_VIDEO.
-    const QString video = QStringLiteral("Video"), audio = QStringLiteral("Audio"), editor = QStringLiteral("Editor"),
-                  grid = QStringLiteral("Grid");
-    if (arrangement == QLatin1String("GLOBAL_VIEW_ALL"))
-        return {video, audio, editor, grid};
-    if (arrangement == QLatin1String("GLOBAL_VIEW_VIDEO"))
-        return {video, editor, grid};
-    if (arrangement == QLatin1String("GLOBAL_VIEW_AUDIO"))
-        return {audio, editor, grid};
-    if (arrangement == QLatin1String("GLOBAL_VIEW_ONLY_VIDEO"))
-        return {video};
-    if (arrangement == QLatin1String("GLOBAL_VIEW_SUBS"))
-        return {editor, grid};
-    return {};
-}
-
-void WorkspaceLayoutController::holdArrangement()
-{
-    if (holding())
-        return;
-    m_held = WorkspaceArrangement{m_preset, KDDockWidgets::LayoutSaver().serializeLayout()};
-    emit changed();
-}
-
-bool WorkspaceLayoutController::releaseArrangement()
-{
-    if (!holding())
-        return false;
-    // WS1: the tab shown now may not be the one the hold began in, and its
-    // arrangement (from a Session loaded meanwhile) is only restored now.
-    const WorkspaceArrangement held = *std::exchange(m_held, std::nullopt);
-    const bool restored = held.payload.isEmpty() ? buildPreset(held.preset, true) : restorePayload(held.payload, true);
-    if (!restored)
-        refuseArrangement(held);
-    const QString preset = restored ? held.preset : QStringLiteral("Editing");
-    if (preset != m_preset) {
-        m_preset = preset;
-        m_lastSaved.clear();
-    }
-    emit changed();
-    return true; // the editing arrangement is back, or the Editing layout in its place
-}
-
 // --- WS1: each Document tab's arrangement -----------------------------------
 
 WorkspaceArrangement WorkspaceLayoutController::shownArrangement() const
 {
     if (m_quitArrangement)
         return *m_quitArrangement;
-    if (m_held)
-        return *m_held; // the editing arrangement the player layout holds
-    return {m_preset, KDDockWidgets::LayoutSaver().serializeLayout()};
+    return {m_preset, KDDockWidgets::LayoutSaver().serializeLayout(), m_layout};
 }
 
 bool WorkspaceLayoutController::showArrangement(const WorkspaceArrangement &arrangement)
 {
     bool shown = true;
-    if (holding()) {
-        m_held = arrangement; // shown when the editor comes back
-    } else if (arrangement.payload.isEmpty()) {
+    if (arrangement.payload.isEmpty()) {
         shown = buildPreset(arrangement.preset, true);
     } else if (arrangement.payload != KDDockWidgets::LayoutSaver().serializeLayout()) {
         // In place: the main window keeps its geometry, the floating panels
@@ -509,8 +469,10 @@ bool WorkspaceLayoutController::showArrangement(const WorkspaceArrangement &arra
     if (!shown)
         refuseArrangement(arrangement);
     const QString preset = shown ? arrangement.preset : QStringLiteral("Editing");
-    if (preset != m_preset) {
+    const QString layout = shown ? arrangement.layout : QString();
+    if (preset != m_preset || layout != m_layout) {
         m_preset = preset;
+        m_layout = layout;
         m_lastSaved.clear();
     }
     emit changed();
@@ -526,8 +488,6 @@ void WorkspaceLayoutController::refuseArrangement(const WorkspaceArrangement &ar
     const QByteArray rejected = arrangement.serialise();
     if (m_tab)
         m_tabs[*m_tab].arrangement = WorkspaceArrangement{};
-    m_full.clear();
-    m_timingHidden = false;
     keepUnrestored(rejected, QCoreApplication::translate("HikariSub.Workspace", "the docking engine could not restore it"), {});
 }
 
@@ -555,34 +515,23 @@ void WorkspaceLayoutController::showTab(std::uint64_t tab, TabStart start)
 {
     if (m_tab == tab)
         return;
-    if (m_tab) {
-        Tab &left = m_tabs[*m_tab];
-        if (m_loaded)
-            left.arrangement = shownArrangement();
-        left.full = m_full;
-        left.timingHidden = m_timingHidden;
-    }
+    if (m_tab && m_loaded)
+        m_tabs[*m_tab].arrangement = shownArrangement();
     m_tab = tab;
     Tab &shown = m_tabs[tab];
     if (!shown.arrangement) {
         if (start == TabStart::Translation) {
             shown.arrangement = WorkspaceArrangement{QStringLiteral("Translation"), {}};
-            shown.full.clear();
-            shown.timingHidden = false;
         } else {
             // A copy of the arrangement shown: nothing moves. Before the
             // first arrangement the tab takes the one restoreSaved shows.
             if (m_loaded)
                 shown.arrangement = shownArrangement();
-            shown.full = m_full;
-            shown.timingHidden = m_timingHidden;
             return;
         }
     }
     if (!m_loaded)
         return;
-    m_full = shown.full;
-    m_timingHidden = shown.timingHidden;
     showArrangement(*shown.arrangement);
 }
 
@@ -593,13 +542,11 @@ void WorkspaceLayoutController::addTab(std::uint64_t tab, TabStart start)
     Tab &added = m_tabs[tab];
     if (added.arrangement)
         return;
-    if (start == TabStart::Translation) {
+    if (start == TabStart::Translation)
         added.arrangement = WorkspaceArrangement{QStringLiteral("Translation"), {}};
-    } else if (m_loaded) {
+    else if (m_loaded)
         added.arrangement = shownArrangement();
-        added.full = m_full;
-        added.timingHidden = m_timingHidden;
-    } // else restoreSaved gives it the arrangement it shows
+    // else restoreSaved gives it the arrangement it shows
 }
 
 void WorkspaceLayoutController::replaceTab(std::uint64_t tab, std::uint64_t replacement, TabStart start)
@@ -609,17 +556,11 @@ void WorkspaceLayoutController::replaceTab(std::uint64_t tab, std::uint64_t repl
         moved = std::move(node.mapped());
     if (m_tab == tab)
         m_tab = replacement;
-    if (start == TabStart::Translation) {
+    if (start == TabStart::Translation)
         moved.arrangement = WorkspaceArrangement{QStringLiteral("Translation"), {}};
-        moved.full.clear();
-        moved.timingHidden = false;
-    }
     m_tabs[replacement] = moved;
-    if (start == TabStart::Translation && m_tab == replacement && m_loaded) {
-        m_full.clear();
-        m_timingHidden = false;
+    if (start == TabStart::Translation && m_tab == replacement && m_loaded)
         showArrangement(*moved.arrangement);
-    }
 }
 
 void WorkspaceLayoutController::forgetTab(std::uint64_t tab)
@@ -651,26 +592,241 @@ void WorkspaceLayoutController::setTabArrangement(std::uint64_t tab, const QByte
         keepUnrestored(serialised, problem, title);
         arrangement = WorkspaceArrangement{};
     }
-    Tab &t = m_tabs[tab];
-    t.arrangement = arrangement;
-    t.full.clear();
-    t.timingHidden = false;
-    if (m_tab == tab && m_loaded) {
-        m_full.clear();
-        m_timingHidden = false;
+    m_tabs[tab].arrangement = arrangement;
+    if (m_tab == tab && m_loaded)
         showArrangement(*arrangement);
+}
+
+// --- WS3: the user's saved layouts -----------------------------------------
+
+void WorkspaceLayoutController::readSavedLayouts()
+{
+    m_saved.clear();
+    if (m_savedFile.isEmpty())
+        return;
+    const auto bytes = readFile(m_savedFile);
+    if (!bytes)
+        return;
+    QJsonParseError error{};
+    const QJsonDocument doc = QJsonDocument::fromJson(*bytes, &error);
+    const QJsonObject o = doc.object();
+    QString problem;
+    if (bytes->size() > kMaximumBytes)
+        problem = QCoreApplication::translate("HikariSub.Workspace", "the file is larger than %1 bytes").arg(kMaximumBytes);
+    else if (error.error != QJsonParseError::NoError || !doc.isObject())
+        problem = QCoreApplication::translate("HikariSub.Workspace", "it is not a layouts file");
+    else if (const int schema = o.value(QStringLiteral("schema")).toInt(-1); schema != kSavedLayoutsSchema)
+        problem = schema > kSavedLayoutsSchema
+                      ? QCoreApplication::translate("HikariSub.Workspace", "it was written by a newer version")
+                      : QCoreApplication::translate("HikariSub.Workspace", "its format is not known");
+    if (!problem.isEmpty()) {
+        // Kept for diagnosis before a saved layout can overwrite the file.
+        const QString kept = m_savedFile + QStringLiteral(".unrestored");
+        writeAtomically(kept, *bytes);
+        m_notice = QCoreApplication::translate("HikariSub.Workspace",
+                                               "The saved layouts were not read because %1. The file is kept at %2.")
+                       .arg(problem, QDir::toNativeSeparators(kept));
+        return;
+    }
+    for (const auto &value : o.value(QStringLiteral("layouts")).toArray()) {
+        const QJsonObject record = value.toObject();
+        SavedLayout saved;
+        saved.name = record.value(QStringLiteral("name")).toString().trimmed();
+        saved.record = record;
+        if (saved.name.isEmpty() || savedLayoutIndex(saved.name) >= 0)
+            continue; // no name, or one already listed: not a layout to offer
+        const QByteArray arrangement =
+            QJsonDocument(record.value(QStringLiteral("arrangement")).toObject()).toJson(QJsonDocument::Compact);
+        saved.arrangement = WorkspaceArrangement::parse(arrangement, &saved.problem);
+        if (saved.arrangement)
+            saved.arrangement->layout = saved.name;
+        m_saved.push_back(std::move(saved));
     }
 }
 
-void WorkspaceLayoutController::rememberFullArrangement()
+bool WorkspaceLayoutController::writeSavedLayouts()
 {
-    if (!m_restoring && !holding())
-        m_full = KDDockWidgets::LayoutSaver().serializeLayout();
+    if (m_savedFile.isEmpty())
+        return true; // nothing is persisted
+    QJsonArray layouts;
+    for (const SavedLayout &saved : m_saved) {
+        if (!saved.arrangement) {
+            layouts.append(saved.record); // as read: this version cannot use it
+            continue;
+        }
+        QJsonObject record;
+        record.insert(QStringLiteral("name"), saved.name);
+        record.insert(QStringLiteral("arrangement"), QJsonDocument::fromJson(saved.arrangement->serialise()).object());
+        layouts.append(record);
+    }
+    QJsonObject o;
+    o.insert(QStringLiteral("schema"), kSavedLayoutsSchema);
+    o.insert(QStringLiteral("layouts"), layouts);
+    if (writeAtomically(m_savedFile, QJsonDocument(o).toJson(QJsonDocument::Indented)))
+        return true;
+    m_notice = QCoreApplication::translate("HikariSub.Workspace", "The saved layouts could not be written to %1.")
+                   .arg(QDir::toNativeSeparators(m_savedFile));
+    emit changed();
+    return false;
 }
 
-bool WorkspaceLayoutController::restoreFullArrangement()
+int WorkspaceLayoutController::savedLayoutIndex(const QString &name) const
 {
-    return !m_full.isEmpty() && restorePayload(m_full, true);
+    const QString wanted = name.trimmed();
+    for (std::size_t i = 0; i < m_saved.size(); ++i)
+        if (m_saved[i].name.compare(wanted, Qt::CaseInsensitive) == 0)
+            return static_cast<int>(i);
+    return -1;
+}
+
+QString WorkspaceLayoutController::savedLayoutNamed(const QString &name) const
+{
+    const int index = savedLayoutIndex(name);
+    return index < 0 ? QString() : m_saved[static_cast<std::size_t>(index)].name;
+}
+
+QVariantList WorkspaceLayoutController::savedLayouts() const
+{
+    QVariantList rows;
+    for (const SavedLayout &saved : m_saved)
+        rows << QVariantMap{{QStringLiteral("name"), saved.name},
+                            {QStringLiteral("usable"), saved.arrangement.has_value()},
+                            {QStringLiteral("problem"), saved.problem}};
+    return rows;
+}
+
+QString WorkspaceLayoutController::layout() const
+{
+    // A layout since deleted, or named by an arrangement from elsewhere (a
+    // Session of another profile): the preset's.
+    return savedLayoutIndex(m_layout) >= 0 ? savedLayoutNamed(m_layout) : QString();
+}
+
+QString WorkspaceLayoutController::layoutLabel() const
+{
+    const QString saved = layout();
+    return saved.isEmpty() ? presetLabel(m_preset) : saved;
+}
+
+QString WorkspaceLayoutController::layoutNameProblem(const QString &name, const QString &renaming) const
+{
+    const QString trimmed = name.trimmed();
+    if (trimmed.isEmpty())
+        return QCoreApplication::translate("HikariSub.Workspace", "Enter a name for the layout.");
+    if (trimmed.size() > kMaximumNameLength)
+        return QCoreApplication::translate("HikariSub.Workspace", "The name is longer than %1 characters.")
+            .arg(kMaximumNameLength);
+    for (const QChar c : trimmed)
+        if (c.category() == QChar::Other_Control || c == QChar::LineSeparator || c == QChar::ParagraphSeparator)
+            return QCoreApplication::translate("HikariSub.Workspace", "The name cannot hold line breaks or tabs.");
+    for (const QString &preset : presets())
+        if (trimmed.compare(preset, Qt::CaseInsensitive) == 0 ||
+            trimmed.compare(presetLabel(preset), Qt::CaseInsensitive) == 0)
+            return QCoreApplication::translate("HikariSub.Workspace", "%1 is a built-in layout.").arg(presetLabel(preset));
+    if (!renaming.isEmpty()) {
+        const int index = savedLayoutIndex(trimmed);
+        if (index >= 0 && index != savedLayoutIndex(renaming))
+            return QCoreApplication::translate("HikariSub.Workspace", "A layout named %1 already exists.")
+                .arg(m_saved[static_cast<std::size_t>(index)].name);
+    }
+    return {};
+}
+
+void WorkspaceLayoutController::renameLayoutOrigin(const QString &from, const QString &to)
+{
+    auto rename = [&](std::optional<WorkspaceArrangement> &arrangement) {
+        if (arrangement && arrangement->layout.compare(from, Qt::CaseInsensitive) == 0)
+            arrangement->layout = to;
+    };
+    for (auto &[id, tab] : m_tabs)
+        rename(tab.arrangement);
+    rename(m_quitArrangement);
+    if (m_layout.compare(from, Qt::CaseInsensitive) == 0) {
+        m_layout = to;
+        m_lastSaved.clear(); // the saved file names it
+    }
+}
+
+bool WorkspaceLayoutController::saveLayoutAs(const QString &name)
+{
+    const QString trimmed = name.trimmed();
+    if (!m_loaded || !layoutNameProblem(trimmed).isEmpty())
+        return false;
+    WorkspaceArrangement arrangement = shownArrangement();
+    arrangement.layout = trimmed;
+    if (const int index = savedLayoutIndex(trimmed); index >= 0) {
+        // Replaced in its place in the list, under the name as typed now.
+        SavedLayout &saved = m_saved[static_cast<std::size_t>(index)];
+        renameLayoutOrigin(saved.name, trimmed);
+        saved = SavedLayout{trimmed, arrangement, {}, {}};
+    } else {
+        m_saved.push_back(SavedLayout{trimmed, arrangement, {}, {}});
+    }
+    const bool written = writeSavedLayouts();
+    m_layout = trimmed;
+    m_lastSaved.clear();
+    emit savedLayoutsChanged();
+    emit changed();
+    save();
+    return written;
+}
+
+bool WorkspaceLayoutController::applySavedLayout(const QString &name)
+{
+    const int index = savedLayoutIndex(name);
+    if (index < 0 || !m_loaded || m_default.isEmpty())
+        return false;
+    const auto &arrangement = m_saved[static_cast<std::size_t>(index)].arrangement;
+    if (!arrangement)
+        return false;
+    dismissNotice();
+    // In place, as a tab's arrangement is shown (the main window keeps its
+    // geometry); the shell then puts the Reference tray as the comparison has it.
+    const bool shown = showArrangement(*arrangement);
+    save();
+    return shown;
+}
+
+bool WorkspaceLayoutController::resetCurrentLayout()
+{
+    if (const QString saved = layout(); !saved.isEmpty() && m_saved[static_cast<std::size_t>(savedLayoutIndex(saved))].arrangement)
+        return applySavedLayout(saved);
+    return applyPreset(m_preset);
+}
+
+bool WorkspaceLayoutController::renameSavedLayout(const QString &from, const QString &to)
+{
+    const int index = savedLayoutIndex(from);
+    const QString trimmed = to.trimmed();
+    if (index < 0 || !layoutNameProblem(trimmed, from).isEmpty())
+        return false;
+    SavedLayout &saved = m_saved[static_cast<std::size_t>(index)];
+    renameLayoutOrigin(saved.name, trimmed);
+    saved.name = trimmed;
+    if (saved.arrangement)
+        saved.arrangement->layout = trimmed;
+    else
+        saved.record.insert(QStringLiteral("name"), trimmed);
+    const bool written = writeSavedLayouts();
+    emit savedLayoutsChanged();
+    emit changed();
+    save();
+    return written;
+}
+
+bool WorkspaceLayoutController::deleteSavedLayout(const QString &name)
+{
+    const int index = savedLayoutIndex(name);
+    if (index < 0)
+        return false;
+    // The tabs keep their arrangements; they started from their presets now.
+    renameLayoutOrigin(m_saved[static_cast<std::size_t>(index)].name, {});
+    m_saved.erase(m_saved.begin() + index);
+    const bool written = writeSavedLayouts();
+    emit savedLayoutsChanged();
+    emit changed();
+    save();
+    return written;
 }
 
 int WorkspaceLayoutController::keepFloatingPanelsOnScreen()

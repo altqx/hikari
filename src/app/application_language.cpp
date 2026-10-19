@@ -67,6 +67,7 @@ void Application::languageSwitched()
     m_video->retranslate();
     m_audio->retranslate();
     m_statusBar->retranslate();
+    m_workspaceLayout->retranslate();
     emit tabsChanged();
     // The Options dialog's dictionary choice names its empty case.
     if (m_optionsLists.dictionarySymbols.empty() && !m_optionsLists.dictionaryNames.empty()) {
