@@ -451,6 +451,28 @@ private slots:
         stop();
     }
 
+    // A file opened as the reference keeps its arrangement for when it
+    // becomes a tab, which then shows it (and a save writes it back).
+    void aFileOpenedAsTheReferenceKeepsItsArrangement()
+    {
+        const QByteArray layout = fileLayout();
+        const QString file = write(path("ref.ass"), kAss + "\n[Hikari]\nLayout=" + layout + "\n");
+        start();
+        QVERIFY(application->openFile(write(path("main.ass"), kAss)));
+        QVERIFY(application->openReference(file));
+        QVERIFY(isOpen("videoDock"));
+        QVERIFY(!isFloating("audioDock"));
+        application->closeReference(); // the reference stays as a tab
+        QCOMPARE(application->tabs().size(), qsizetype(2));
+        application->selectTab(1);
+        QTRY_VERIFY(!isOpen("videoDock"));
+        QVERIFY(isFloating("audioDock"));
+        application->selectTab(0);
+        QTRY_VERIFY(isOpen("videoDock"));
+        QVERIFY(!isFloating("audioDock"));
+        stop();
+    }
+
     // Off, a file's arrangement is not used, and a save leaves an existing
     // section exactly as it was (and adds none to a file without one).
     void theSettingOffNeitherReadsNorWrites()

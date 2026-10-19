@@ -1461,10 +1461,10 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
     }
     m_workspace.add(*id, QFileInfo(path).fileName().toStdString(), asReference);
     // WS2: the tab takes the arrangement its file keeps (a Session's, set
-    // after this, takes precedence).
-    if (!asReference)
-        if (const auto file = fileArrangement(*id, true))
-            m_workspaceLayout->setFileArrangement(id->value, *file);
+    // after this, takes precedence). A file opened as the reference keeps it
+    // for when it becomes a tab (closeReference, promoteReference).
+    if (const auto file = fileArrangement(*id, true))
+        m_workspaceLayout->setFileArrangement(id->value, *file);
     recordFileTime(*id);
     if (!asReference)
         rememberRecent(QFileInfo(path).absoluteFilePath().toStdString());
