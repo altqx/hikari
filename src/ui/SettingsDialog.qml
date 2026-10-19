@@ -20,6 +20,8 @@ Dialog {
     id: dialog
     objectName: "settingsDialog"
     required property var app
+    // SY2: the Appearance page's colour popover.
+    required property ColourPickerController colourPicker
     property var hotkeys: null // O2: the Hotkeys page's HotkeysController
     title: qsTr("Options")
     // K1: the title with the set's settings icon (legacy OptionsDialog SetIcon(SETTINGS)).
@@ -77,11 +79,16 @@ Dialog {
         if (setting.startsWith("appearance."))
             Theme.preview(values)
     }
-    // The Appearance page's colour picker for a high-contrast colour.
-    function pickThemeColour(setting, colour) {
-        themeColourDialog.setting = setting
-        themeColourDialog.selectedColor = colour
-        themeColourDialog.open()
+    // The Appearance page's colour picker for a high-contrast colour (SY2:
+    // the colour popover at `anchor`). Each change is staged at once as
+    // "#RRGGBB" and previewed; Esc puts the colour before back.
+    function pickThemeColour(setting, colour, anchor, name) {
+        themeColourTarget.setting = setting
+        themeColourTarget.before = colour
+        colourPicker.opened("settings")
+        const c = colourPicker.htmlColour(colour)
+        themeColourPopover.openFor(anchor, themeColourTarget, { r: c.r, g: c.g, b: c.b, a: 0 },
+                                   { title: name, alpha: false, focus: anchor })
     }
     // Apply keeps the controls as they are (legacy does not refresh them).
     function apply() {
@@ -909,12 +916,23 @@ Dialog {
         }
     }
 
-    ColorDialog {
-        id: themeColourDialog
-        objectName: "themeColourDialog"
+    QtObject {
+        id: themeColourTarget
         property string setting: ""
-        // the picked colour as "#RRGGBB"
-        onAccepted: dialog.put(setting, selectedColor.toString().toUpperCase())
+        property string before: ""
+        function changeColour(c) {
+            dialog.put(setting, dialog.colourPicker.htmlText(c))
+            return true
+        }
+        function endDialog(accepted) {
+            if (!accepted)
+                dialog.put(setting, before)
+        }
+    }
+    ColourPopover {
+        id: themeColourPopover
+        objectName: "themeColourPopover"
+        picker: dialog.colourPicker
     }
 
     HotkeyMapping {

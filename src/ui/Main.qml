@@ -4524,6 +4524,7 @@ ApplicationWindow {
     AutomationDialog {
         objectName: "automationDialog"
         controller: root.automationDialogs
+        colourPicker: root.colourPicker
     }
     AutomationFilePicker {
         picker: root.automationPicker
@@ -4633,6 +4634,7 @@ ApplicationWindow {
     DummyVideoDialog {
         id: dummyVideoDialog
         app: root.app
+        colourPicker: root.colourPicker
         anchors.centerIn: parent
         onRefused: message => root.log.log(message)
     }
@@ -5536,6 +5538,7 @@ ApplicationWindow {
         id: settingsDialog
         app: root.app
         hotkeys: root.hotkeys
+        colourPicker: root.colourPicker
         anchors.centerIn: parent
     }
     // Y8: the font collector; a double click on a Style in its log opens the

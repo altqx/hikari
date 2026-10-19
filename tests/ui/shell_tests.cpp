@@ -12383,10 +12383,34 @@ private slots:
                                  "highContrastPick_appearance.highContrastBlack.text",
                                  "highContrastPick_appearance.highContrastBlack.border"})
             QVERIFY2(dialogItem("settingsDialog", pick), pick);
-        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("appearance.highContrastBlack.accent")),
-                                          Q_ARG(QVariant, QStringLiteral("#00FF00"))));
+        // SY2: "Choose…" opens the colour popover under it, with no alpha;
+        // each change is staged and previewed at once, Esc puts the colour
+        // before back, a pick kept stays staged.
+        auto *themePopover = named("themeColourPopover");
+        QVERIFY(themePopover);
+        const QString accentBefore = settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString();
+        click("highContrastChoose_appearance.highContrastBlack.accent");
+        QTRY_VERIFY(themePopover->property("visible").toBool());
+        QCOMPARE(themePopover->property("anchor").value<QQuickItem *>(),
+                 dialogItem("settingsDialog", "highContrastChoose_appearance.highContrastBlack.accent"));
+        QVERIFY(!dialogItem("themeColourPopover", "alpha")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(themePopover, "setRgb", Q_ARG(QVariant, 0x12), Q_ARG(QVariant, 0x34), Q_ARG(QVariant, 0x56)));
+        QTRY_COMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
+                     QStringLiteral("#123456"));
+        QCOMPARE(accent(), QColor(0x12, 0x34, 0x56));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!themePopover->property("visible").toBool());
+        QVERIFY(dialog->property("visible").toBool()); // Esc was the popover's
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(), accentBefore);
+        click("highContrastChoose_appearance.highContrastBlack.accent");
+        QTRY_VERIFY(themePopover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(themePopover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 255), Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(themePopover, "accept"));
+        QTRY_VERIFY(!themePopover->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("appearance.highContrastBlack.border")),
                                           Q_ARG(QVariant, QStringLiteral("#FF00FF"))));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
+                 QStringLiteral("#00FF00"));
         QCOMPARE(accent(), QColor(0x00, 0xFF, 0x00));
         QCOMPARE(ui::theme::current().roles.line, QColor(0xFF, 0x00, 0xFF));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
@@ -18455,6 +18479,21 @@ private slots:
         dialogItem("dummyVideoDialog", "dummyColour")->setProperty("text", QStringLiteral("&H0000FF&"));
         QCOMPARE(swatch->property("color").value<QColor>(), QColor(255, 0, 0));
         dialogItem("dummyVideoDialog", "dummyColour")->setProperty("text", QStringLiteral("&HFEA32F&"));
+        // SY2: the swatch opens the colour popover at that colour, with no
+        // alpha; a change writes the text, Esc puts it back
+        QVERIFY(QMetaObject::invokeMethod(swatch, "click"));
+        auto *dummyPopover = named("dummyColourPopover");
+        QTRY_VERIFY(dummyPopover->property("visible").toBool());
+        QCOMPARE(dummyPopover->property("anchor").value<QQuickItem *>(), swatch);
+        QCOMPARE(dummyPopover->property("red").toInt(), 47);
+        QCOMPARE(dummyPopover->property("blue").toInt(), 254);
+        QVERIFY(!dialogItem("dummyColourPopover", "alpha")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dummyPopover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
+        QTRY_COMPARE(dialogItem("dummyVideoDialog", "dummyColour")->property("text").toString(), QStringLiteral("&H0000FF&"));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!dummyPopover->property("visible").toBool());
+        QVERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyColour")->property("text").toString(), QStringLiteral("&HFEA32F&"));
         // a preset fills the size (OnResolutionChoose)
         auto *resolution = dialogItem("dummyVideoDialog", "dummyResolution");
         resolution->setProperty("currentIndex", 0);
