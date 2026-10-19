@@ -395,10 +395,12 @@ void LineTableModel::setDraft(std::optional<core::LineRecord> draft)
         // its own measures, shown text and spelling marks.
         Row shown = m_rows[static_cast<std::size_t>(*row)];
         // R1's comparison is the committed Line's: it holds while the draft
-        // leaves what the comparison reads (compareSubtitles) as it was, and
-        // the row shows none otherwise until the commit compares it again.
+        // leaves what the comparison reads (compareSubtitles: the compared
+        // text, the times, the style) as it was, and the row shows none
+        // otherwise until the commit compares it again.
         const core::LineRecord &committed = shown.line;
-        if (draft->text != committed.text || draft->translation != committed.translation ||
+        if (application::comparedText(*draft, m_translationMode) !=
+                application::comparedText(committed, m_translationMode) ||
             draft->start.value != committed.start.value || draft->end.value != committed.end.value ||
             draft->style != committed.style) {
             shown.comparison = 0;

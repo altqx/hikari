@@ -542,8 +542,7 @@ private slots:
 
         for (const auto change : {+[](core::LineRecord &l) { l.start.value = core::DocumentTime(1); },
                                   +[](core::LineRecord &l) { l.end.value = core::DocumentTime(9'000'000); },
-                                  +[](core::LineRecord &l) { l.style = u8"Other"; },
-                                  +[](core::LineRecord &l) { l.translation = u8"other"; }}) {
+                                  +[](core::LineRecord &l) { l.style = u8"Other"; }}) {
             draft = *model.recordAt(0);
             change(draft);
             model.setDraft(draft);
@@ -554,6 +553,32 @@ private slots:
         QCOMPARE(comparison(0), 1);
         QCOMPARE(comparison(1), 2);
         QCOMPARE(marks(1), (QVariantList{0, 1}));
+        draft = *model.recordAt(0);
+        draft.translation = u8"other"; // compared only in translation mode
+        model.setDraft(draft);
+        QCOMPARE(comparison(0), 1);
+
+        // Translation mode compares a translated Line's translation, and an
+        // untranslated one's text (comparedText).
+        model.setDocument(load("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Gate\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Brama\n"
+                               "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,Wall\n"
+                               "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,\n"),
+                          &table);
+        QVERIFY(!model.recordAt(0)->translation.empty());
+        QVERIFY(model.recordAt(1)->translation.empty());
+        draft = *model.recordAt(0);
+        draft.text += u8"!"; // the original of a translated Line
+        model.setDraft(draft);
+        QCOMPARE(comparison(0), 1);
+        draft.translation += u8"!";
+        model.setDraft(draft);
+        QCOMPARE(comparison(0), 0);
+        draft = *model.recordAt(1);
+        draft.text += u8"!"; // an untranslated Line's text
+        model.setDraft(draft);
+        QCOMPARE(comparison(1), 0);
     }
 
     // GR2: the drafted row's cached shown text follows hidden tags as the
