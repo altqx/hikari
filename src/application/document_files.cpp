@@ -187,14 +187,21 @@ std::expected<SavePlan, SaveRefusal> DocumentFiles::prepareSave(DocumentId docum
     if (!snapshot)
         return std::unexpected(SaveRefusal::InvalidDraft);
     auto activeLine = activeLineToSave(*entry->session); // S4: as GetAssHeader
+    std::optional<std::u8string> layout;
+    if (m_layoutSource && snapshot->document.format() == core::SubtitleFormat::Ass)
+        layout = m_layoutSource(document);
+    core::Document saved = withActiveLine(std::move(snapshot->document), activeLine);
+    if (layout)
+        saved.setHikariProperty(kLayoutKey, *layout);
     return SavePlan{document,
                     entry->generation,
                     snapshot->revision,
                     snapshot->content,
                     destination,
-                    core::encodeSubtitle(withActiveLine(std::move(snapshot->document), activeLine), m_saveOptions),
+                    core::encodeSubtitle(saved, m_saveOptions),
                     saveAs.has_value() && *saveAs != entry->destination,
-                    std::move(activeLine)};
+                    std::move(activeLine),
+                    std::move(layout)};
 }
 
 std::expected<PermitId, SaveRefusal> DocumentFiles::startSave(SavePlan plan, bool overwriteExternalChange)
@@ -216,7 +223,7 @@ std::expected<PermitId, SaveRefusal> DocumentFiles::startSave(SavePlan plan, boo
                                    ? SaveRefusal::Collision
                                    : SaveRefusal::WriteInProgress);
     m_pending.emplace(*permit, Pending{plan.document, plan.generation, plan.content, plan.destination, plan.bytes,
-                                       plan.saveAs, plan.activeLine});
+                                       plan.saveAs, plan.activeLine, plan.layout});
     entry->lastSave = SaveStatus{*permit, std::nullopt};
     if (!m_writes.write(*permit, std::move(plan.bytes))) {
         m_pending.erase(*permit);
@@ -249,6 +256,8 @@ void DocumentFiles::onWriteResult(const WriteResult &result)
     // S4: the file holds the active Line, and so does the open Document now.
     if (pending.activeLine)
         entry->session->amendScriptInfo(kActiveLineKey, *pending.activeLine);
+    if (pending.layout) // WS2: and the panel arrangement
+        entry->session->amendHikariProperty(kLayoutKey, *pending.layout);
     entry->knownBytes = std::move(pending.bytes);
     if (pending.saveAs) {
         entry->destination = pending.destination;

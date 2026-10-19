@@ -15,6 +15,7 @@
 #include "hikari/core/ass_save.h"
 
 #include <expected>
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -73,6 +74,8 @@ struct SavePlan {
     // S4: the "Active Line" the bytes hold, which the Document takes once
     // they are written (activeLineToSave).
     std::optional<std::u8string> activeLine;
+    // WS2: the [Hikari] "Layout" the bytes hold, taken the same way.
+    std::optional<std::u8string> layout;
 };
 
 // S4: legacy SubsGrid::SaveFile, autosave included, wrote the active Line's
@@ -92,6 +95,15 @@ inline constexpr std::u8string_view kActiveLineKey = u8"Active Line";
 std::optional<std::u8string> activeLineToSave(const EditSession &session);
 // `document` as a save writes it: with "Active Line" set to `row`.
 core::Document withActiveLine(core::Document document, const std::optional<std::u8string> &row);
+
+// WS2: a save of an ASS Document writes its Document tab's panel arrangement
+// into the [Hikari] section ("Layout="), like the active Line: changing the
+// arrangement marks nothing modified, the next save writes it, and the
+// Document takes it once the write succeeded. The application gives the
+// value (nullopt: the section is left as it is, the setting being off or the
+// Document having no tab).
+inline constexpr std::u8string_view kLayoutKey = u8"Layout";
+using LayoutSource = std::function<std::optional<std::u8string>(DocumentId)>;
 
 struct SaveStatus {
     PermitId permit;
@@ -135,6 +147,8 @@ public:
     // TL_MODE_HIDE_ORIGINAL_ON_VIDEO at every save).
     void setSaveOptions(const core::AssSaveOptions &options) { m_saveOptions = options; }
     const core::AssSaveOptions &saveOptions() const { return m_saveOptions; }
+    // WS2: where prepareSave takes the panel arrangement an ASS save writes.
+    void setLayoutSource(LayoutSource source) { m_layoutSource = std::move(source); }
 
 private:
     struct Entry {
@@ -152,6 +166,7 @@ private:
         std::vector<std::byte> bytes;
         bool saveAs = false;
         std::optional<std::u8string> activeLine;
+        std::optional<std::u8string> layout;
     };
     std::expected<StagedOpen, OpenError> stage(const DestinationKey &destination);
     Entry *find(DocumentId document);
@@ -162,6 +177,7 @@ private:
     std::map<PermitId, Pending> m_pending;
     std::uint64_t m_nextDocument = 1;
     core::AssSaveOptions m_saveOptions;
+    LayoutSource m_layoutSource;
 };
 
 } // namespace hikari::application
