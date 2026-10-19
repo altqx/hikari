@@ -253,6 +253,23 @@ private slots:
         QTRY_VERIFY(!popover->property("visible").toBool());
         QVERIFY(window->isVisible());
         QTRY_COMPARE(control(1)->property("value").value<QColor>(), QColor(0, 0, 255));
+        // A press on the anchor back in the dialog keeps the colour and
+        // closes the popover, without the button opening it again.
+        auto *anchor = qobject_cast<QQuickItem *>(pick);
+        QVERIFY(QMetaObject::invokeMethod(pick, "clicked"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 128), Q_ARG(QVariant, 0)));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                          anchor->mapToScene(QPointF(anchor->width() / 2, anchor->height() / 2)).toPoint());
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTest::qWait(100);
+        QVERIFY(!popover->property("visible").toBool());
+        QTRY_COMPARE(control(1)->property("value").value<QColor>(), QColor(0, 128, 0));
+        QVERIFY(QMetaObject::invokeMethod(pick, "clicked"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 0), Q_ARG(QVariant, 255)));
+        QTest::keyClick(content->window(), Qt::Key_Return);
+        QTRY_VERIFY(!popover->property("visible").toBool());
         press(0);
         QVERIFY(result);
         QCOMPARE(std::get<std::string>(result->values[0]), std::string("#800000FF"));

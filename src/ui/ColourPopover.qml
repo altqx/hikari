@@ -81,6 +81,15 @@ Popup {
     function openFor(anchorItem, owner, c, options) {
         if (active)
             finish(true)
+        // The click of a press that closed the popover on its own anchor
+        // (a popover in its own window lets that press through to the host):
+        // the anchor toggles, so it ends there, the session just begun with it.
+        if (anchorItem && anchorItem === pressedAnchor && Date.now() - pressedAt < 1000) {
+            pressedAnchor = null
+            owner.endDialog(true)
+            return
+        }
+        pressedAnchor = null
         const o = options || {}
         target = owner
         title = o.title || ""
@@ -267,7 +276,19 @@ Popup {
     margins: 8
     // Esc is the popover's own (Cancel); a press outside keeps the colour.
     closePolicy: Popup.CloseOnPressOutside
-    onClosed: finish(true)
+    // A press outside: OK. On the anchor of a popover in its own window the
+    // same press reaches the anchor too (openFor).
+    onClosed: {
+        const pressed = active && popupType === Popup.Window
+        const was = anchor
+        finish(true)
+        if (pressed) {
+            pressedAnchor = was
+            pressedAt = Date.now()
+        }
+    }
+    property Item pressedAnchor: null
+    property double pressedAt: 0
 
     Timer {
         id: changeTimer
