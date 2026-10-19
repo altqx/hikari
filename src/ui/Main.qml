@@ -3837,6 +3837,17 @@ ApplicationWindow {
                             id: hideColumnsMenu
                             objectName: "hideColumnsMenu"
                             title: qsTranslate("HikariSub.Grid", "Hide columns")
+                            // GR3 (Aegisub's convention): columns empty in
+                            // the whole Document hide themselves; the same
+                            // setting as Settings > Editor's.
+                            ShellMenuItem {
+                                objectName: "hideEmptyColumns"
+                                text: qsTranslate("HikariSub.Grid", "Hide empty columns")
+                                checkable: true
+                                checked: root.shell.autoHideColumns
+                                onTriggered: root.shell.autoHideColumns = checked
+                            }
+                            MenuSeparator {}
                             Instantiator {
                                 model: [
                                     { bit: 1, label: qsTranslate("HikariSub.Grid", "Hide layer"), ass: true, symbol: "GRID_HIDE_LAYER" },
@@ -3860,7 +3871,7 @@ ApplicationWindow {
                                     enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.end || root.shell.endColumn)
                                     onTriggered: if (!root.gridGesture(this, modelData.symbol)) root.shell.toggleColumn(modelData.bit)
                                 }
-                                onObjectAdded: (index, object) => hideColumnsMenu.insertItem(index, object)
+                                onObjectAdded: (index, object) => hideColumnsMenu.insertItem(2 + index, object)
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }

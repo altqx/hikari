@@ -233,6 +233,8 @@ QString LineGrid::rowStateText(int row) const
         words << QCoreApplication::translate("HikariSub.Grid", "unconfirmed");
     if (state & 8)
         words << QCoreApplication::translate("HikariSub.Grid", "bookmarked");
+    if (m_model->index(row, 0).data(LineTableModel::DraftRole).toBool())
+        words << QCoreApplication::translate("HikariSub.Grid", "uncommitted");
     return words.join(QStringLiteral(", "));
 }
 
@@ -620,9 +622,17 @@ std::optional<QColor> comparisonBackground(int state, bool comment, bool selecte
     // kol = comparison ? ComparisonBG : ComparisonBGMatch, and the comment
     // colours on a Comment (SubsGridWindow.cpp:422-426).
     const int slot = comment ? (state == 2 ? 3 : 4) : (state == 2 ? 1 : 2);
-    QColor colour = colours.value(slot).value<QColor>();
-    if (!selected)
-        return colour;
+    const QColor colour = colours.value(slot).value<QColor>();
+    return selected ? selectionOver(colour, selection) : colour;
+}
+
+QColor commentInk(const theme::Roles &roles, const QColor &background)
+{
+    return theme::contrastRatio(roles.muted, background) >= 4.5 ? roles.muted : roles.text;
+}
+
+QColor selectionOver(const QColor &colour, const QColor &selection)
+{
     // GetColorWithAlpha(seldial, kol), in its integer arithmetic.
     const int r = selection.red(), g = selection.green(), b = selection.blue(), invA = 0xFF - selection.alpha();
     return QColor(colour.red() * invA / 0xFF + (r - invA * r / 0xFF), colour.green() * invA / 0xFF + (g - invA * g / 0xFF),
@@ -645,14 +655,17 @@ static QColor labelInk(const QColor &label)
 // over selection and comparison colours alike. The rewrite adds a shape for
 // the changed-Line mark, so it does not rest on colour alone (subtitle-grid.md):
 // a filled dot for a changed Line, a ring for a changed and saved one
-// (E6-mark-shape). The mark takes the label's ink (labelInk).
-void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, const QVariantList &colours) const
+// (E6-mark-shape). GR2: while the row shows the Line editor's uncommitted
+// draft, a filled triangle pointing right takes the mark's place, whatever
+// the Line's State; the label colour stays the committed Line's. The mark
+// takes the label's ink (labelInk).
+void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, bool draft, const QVariantList &colours) const
 {
     const QColor label = colours.value(LineTableModel::labelSlot(state)).value<QColor>();
     if (colours.size() == 4)
         painter->fillRect(cell, label);
     const int changed = state & 3;
-    if (!changed)
+    if (!changed && !draft)
         return;
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
@@ -664,6 +677,15 @@ void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, const
     const QPointF centre = device.map(QPointF(cell.right() - 6.5, cell.center().y()));
     const QPointF snapped = device.inverted().map(QPointF(std::round(centre.x()), std::round(centre.y())));
     const QRectF dot(snapped.x() - 2.5, snapped.y() - 2.5, 5, 5);
+    if (draft) {
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(mark);
+        const QPointF triangle[] = {QPointF(dot.left(), snapped.y() - 3.5), QPointF(dot.right() + 0.5, snapped.y()),
+                                    QPointF(dot.left(), snapped.y() + 3.5)};
+        painter->drawPolygon(triangle, 3);
+        painter->restore();
+        return;
+    }
     if (changed == 1) {
         painter->setPen(Qt::NoPen);
         painter->setBrush(mark);
@@ -735,7 +757,9 @@ void LineGrid::paint(QPainter *painter)
     // K2: the theme's roles: rows on the panel surface (every other one a
     // shade apart), the header raised with secondary text, a selected row on
     // the selected background with the leading accent marker, the active
-    // Line outlined in the accent, a Comment in secondary text. While the
+    // Line outlined in the accent, a Comment in secondary text (the primary
+    // where secondary would not read) on the comment background (GR4), the
+    // selection blended over it. While the
     // Grid has keyboard focus its focused cell, the active Line's row,
     // carries the focus ring (visual-language.md, "Keyboard focus"; the
     // user's 2026-10-13 decision): 1 wide in the focus role, the text
@@ -775,12 +799,15 @@ void LineGrid::paint(QPainter *painter)
         const bool active = idx.data(LineTableModel::ActiveRole).toBool();
         const bool comment = idx.data(LineTableModel::CommentRole).toBool();
         QColor background = row % 2 ? content.gridAlternate : roles.panel;
-        if (selected)
+        if (comment) // GR4: legacy kol = comm, the selection blended over it (SubsGridWindow.cpp:426-429)
+            background = selected ? selectionOver(content.gridComment, content.comparisonSelection) : content.gridComment;
+        else if (selected)
             background = roles.select;
         const int comparison = idx.data(LineTableModel::ComparisonRole).toInt();
         painter->fillRect(QRectF(0, top, bounds.width(), rh), background);
-        if (const auto compared =
-                comparisonBackground(comparison, comment, selected, comparisonColours, content.comparisonSelection)) {
+        const auto compared =
+            comparisonBackground(comparison, comment, selected, comparisonColours, content.comparisonSelection);
+        if (compared) {
             // Legacy paints column 0, the number, in its label colour and the
             // other columns in kol (SubsGridWindow.cpp:495, j == 0 && !isHeadline
             // ? label : kol); the number cell takes its label colour (E6).
@@ -789,8 +816,8 @@ void LineGrid::paint(QPainter *painter)
         }
         if (numberShown)
             drawLabel(painter, QRectF(m_markWidth, top, widths[0], rh), idx.data(LineTableModel::LineStateRole).toInt(),
-                      labelColours);
-        painter->setPen(comment ? roles.muted : roles.text);
+                      idx.data(LineTableModel::DraftRole).toBool(), labelColours);
+        painter->setPen(comment ? commentInk(roles, compared.value_or(background)) : roles.text);
         x = m_markWidth;
         for (int c = 0; c < columns; ++c) {
             const int mc = modelColumn(c);
