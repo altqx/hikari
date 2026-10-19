@@ -3449,12 +3449,14 @@ ApplicationWindow {
                                 }
                                 ShellMenuItem {
                                     objectName: "tagButtonMoveLeft"
+                                    iconRole: "move-left"
                                     text: qsTranslate("HikariSub.Editor", "Move left")
                                     enabled: tagButtonMenu.index > 0
                                     onTriggered: root.tagButtons.move(tagButtonMenu.index, -1)
                                 }
                                 ShellMenuItem {
                                     objectName: "tagButtonMoveRight"
+                                    iconRole: "move-right"
                                     text: qsTranslate("HikariSub.Editor", "Move right")
                                     enabled: tagButtonMenu.index >= 0 && tagButtonMenu.index < root.tagButtons.count - 1
                                     onTriggered: root.tagButtons.move(tagButtonMenu.index, 1)

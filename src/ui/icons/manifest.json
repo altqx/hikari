@@ -2026,6 +2026,28 @@
    ]
   },
   {
+   "role": "move-left",
+   "file": "move-left.svg",
+   "label": "Move left",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "move-right",
+   "file": "move-right.svg",
+   "label": "Move right",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
    "role": "copy-to-storage",
    "file": "copy-to-storage.svg",
    "label": "Copy style from ASS to storage",
@@ -2091,7 +2113,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "shift-times-panel"
+    "shift-times-panel",
+    "line-editor"
    ]
   },
   {

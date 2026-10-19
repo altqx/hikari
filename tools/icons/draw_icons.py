@@ -641,6 +641,11 @@ icon("move-up", "Move up", ["arrow_list.png"], [STYLEDLG], stroke("M7.5 13.5v-11
 icon("move-down", "Move down", [], [STYLEDLG], stroke("M7.5 2.5v11M3 9l4.5 4.5L12 9"))
 icon("move-to-bottom", "Move to end", [], [STYLEDLG],
      accent(stroke("M2.5 14.5h10")) + stroke("M7.5 1.5v10M3 7l4.5 4.5L12 7"))
+# IC1: LE5's tag buttons move along their strip (the button's context menu):
+# move-up's arrow turned, for "Move left" and "Move right" as they read, so
+# they do not mirror (a panel's Move tab left is tab-move-left, a tab).
+icon("move-left", "Move left", [], [EDITOR], stroke("M13.5 7.5h-11M7 3L2.5 7.5 7 12"))
+icon("move-right", "Move right", [], [EDITOR], stroke("M2.5 7.5h11M9 3l4.5 4.5L9 12"))
 # Transfers between the Style manager's two lists (legacy drew them with the
 # same arrow_list.png as the moves, stylestore.cpp:73-88): the two lists as
 # boxes, the copied style's direction between them in the accent, so a
@@ -663,7 +668,7 @@ icon("panel-menu", "Panel options", [], ["dock-headers"], dot(3.5, 8, 1.25) + do
 
 # Generic list and edit commands
 icon("add", "Add", [], [SHIFTPANEL, LISTS, "font-catalog", GRIDMENU], stroke("M7.5 2.5v10M2.5 7.5h10"))
-icon("remove", "Remove", [], [SHIFTPANEL], stroke("M2.5 7.5h10"))
+icon("remove", "Remove", [], [SHIFTPANEL, EDITOR], stroke("M2.5 7.5h10"))
 icon("edit", "Edit", [], [EDITOR, LISTS, GRIDMENU, VISUAL],
      stroke("M11 2l3 3-8.5 8.5-3.5 1 1-3.5z") + accent(stroke("M9.5 3.5l3 3")))
 icon("duplicate", "Copy", [], [LISTS],
