@@ -105,9 +105,9 @@ QString handedOnPath()
 // for them (for an AppImage the image, whose mount goes with this process).
 // `files` are those that could not be saved: they go on the command line,
 // of the deb and rpm exec (exitAction.arguments) or of a start made for
-// them, which hands them to an AppImage's new image, running by now. The
-// start an update's setup makes cannot take them (Windows; a start before
-// it would hold the setup up).
+// them, which hands them to an AppImage's new image, running by now. On
+// Windows the update then waits (runWindow): the start its setup makes
+// cannot take them.
 void startForHandedOn(const UpdateInstaller::ExitAction &exitAction, bool updateStarts, const QStringList &files)
 {
     if (!exitAction.program.isEmpty())
@@ -267,12 +267,20 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     const QStringList unopened = forwarded.takeUnopened();
     const QString kept = handedOnPath();
     const bool saved = unopened.isEmpty() || (!kept.isEmpty() && saveHandedOn(kept, unopened));
+    const QStringList carried = saved ? QStringList() : unopened;
     // ADR 0019: a ready update installs after a normal quit, every document
     // reviewed and the main window closed.
-    const bool updateStarts = code == 0 && application.updates().installer().restartRequested();
-    if (code == 0)
+#ifdef _WIN32
+    // WS5: the start an update's setup makes cannot take files, so with
+    // files that could not be kept (an elevated HikariSub keeps none) the
+    // update waits for the next quit and this version starts for them.
+    const bool install = code == 0 && carried.isEmpty();
+#else
+    const bool install = code == 0;
+#endif
+    const bool updateStarts = install && application.updates().installer().restartRequested();
+    if (install)
         exitAction = application.updates().installer().installAtExit([&engine] { return showInstalling(engine); });
-    const QStringList carried = saved ? QStringList() : unopened;
     exitAction.arguments += carried;
     if (!unopened.isEmpty() || forwarded.startAfterQuit())
         startForHandedOn(exitAction, updateStarts, carried);
