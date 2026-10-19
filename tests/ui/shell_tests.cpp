@@ -52,6 +52,8 @@
 #include <QCursor>
 #include <QStyleHints>
 #include <QWheelEvent>
+#include <QElapsedTimer>
+#include <QTimer>
 #include <QDirIterator>
 #include <QContextMenuEvent>
 #include <QJsonArray>
@@ -19651,6 +19653,55 @@ private slots:
         QCOMPARE(video.chapterCount(), 0);
         QVERIFY(!named("videoChaptersMenu")->property("enabled").toBool());
         QVERIFY(!video.nextChapter());
+    }
+
+    // AV4: indexing a video leaves the interface responsive. FFMS2 reports
+    // progress at every packet; each report redrew the shell, and a long
+    // video froze the app until its index was done. A timer on the UI thread
+    // ticks every 10 ms from the open until the video is shown: no tick may
+    // come more than 100 ms late, and the progress the interface shows
+    // changes at most once a thousandth.
+    void indexingLeavesTheInterfaceResponsive()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        // The new shell's own start (its first palette reaching every popup)
+        // is over before the measured open.
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        QTest::qWait(500);
+        QElapsedTimer clock;
+        qint64 last = 0, worst = 0, worstAt = 0;
+        QTimer tick;
+        tick.setInterval(10);
+        connect(&tick, &QTimer::timeout, this, [&] {
+            const qint64 now = clock.elapsed();
+            if (now - last > worst) {
+                worst = now - last;
+                worstAt = now;
+            }
+            last = now;
+        });
+        int reports = 0;
+        double shown = -1;
+        const auto counter = connect(&video, &hikari::ui::VideoController::changed, this, [&] {
+            if (video.indexing() && video.indexingProgress() != shown) {
+                shown = video.indexingProgress();
+                ++reports;
+            }
+        });
+        clock.start();
+        tick.start();
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/long.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 120000);
+        const qint64 opened = clock.elapsed();
+        tick.stop();
+        disconnect(counter);
+        qInfo("AV4: indexed and shown in %lld ms; worst UI gap %lld ms (at %lld ms); %d progress changes", opened,
+              worst, worstAt, reports);
+        QVERIFY2(reports > 1, "the indexing showed no progress");
+        QVERIFY2(reports <= 1001, qPrintable(QString::number(reports)));
+        QVERIFY2(worst <= 100, qPrintable(QStringLiteral("the UI thread stalled %1 ms").arg(worst)));
     }
 
     // V3: indexing shows its progress with Cancel in the Video panel (legacy
