@@ -23,7 +23,7 @@ The navigation entry for an open Document.
 _Avoid_: Tab as a synonym for the Document's content or Workspace.
 
 **Session**:
-A restorable set of open Documents and associated media and view positions.
+A restorable set of open Documents and associated media, view positions and each tab's Workspace.
 _Avoid_: Project file, Workspace layout or complete undo archive.
 
 **Script properties**:
@@ -41,8 +41,8 @@ _Avoid_: Filter without qualification where automation or presentation is also d
 ### Workspace and targeting
 
 **Workspace**:
-The application's shared arrangement of subtitle-editing panels and tools, independent of which document is the editing target.
-_Avoid_: Document layout when referring to this shared arrangement.
+The arrangement of subtitle-editing panels and tools in the main window and its floating panels. Each Document tab has its own, and switching tabs shows that tab's ([ADR 0020](docs/adr/0020-per-document-tab-layouts.md)); it places panels and never changes which Document is the editing target.
+_Avoid_: Document layout (the arrangement belongs to the tab, not to the Document's content); Workspace as a name for the set of open Documents.
 
 **Editing target**:
 The subtitle document to which ordinary editing commands apply. A tool with an explicit pinned target may name a different unprotected document. It is distinct from the control or panel that currently has keyboard focus.

@@ -1328,7 +1328,7 @@ def step_test_executables():
     text = "\n".join(lines)
     (EVID / "test-executables.txt").write_text(f"# winix job {job.get('id')} ({job.get('state')})\n{text}\n")
     exits = re.findall(r"^### (\S+) .*\(exit (.+)\)$", text, re.M)
-    ok = len(exits) == 5 and all(code == "0" for _, code in exits)
+    ok = len(exits) == 6 and all(code == "0" for _, code in exits)
     summary = "; ".join(re.findall(r"Totals: [^,]+, [^,]+, [^,]+", text))
     skips = re.findall(r"SKIP\s*:.*", text)
     # Skips declared as platform limits, each observed for real by another
@@ -1959,6 +1959,86 @@ def step_editor():
             f"focus on {focus_on}; Line text {draft!r} -> {text!r}", evidence)
 
 
+# ---------------------------------------------------------------- WS1 (#215)
+def tab_arrangement(st):
+    """Each shown panel's window (the main window or its floating one), its
+    rectangle in that window, and each floating window's rectangle."""
+    fr = frames(st)
+    out = {}
+    for p in st["panels"]:
+        if p["id"] not in PANELS or p["id"] in out:
+            continue
+        f = fr.get(p["frame"], {})
+        entry = {"window": "main" if p["frame"] == MAIN else "floating",
+                 "rect": (p["x"] - f.get("x", 0), p["y"] - f.get("y", 0), p["w"], p["h"])}
+        if p["frame"] != MAIN:
+            entry["frame"] = (f.get("x"), f.get("y"), f.get("w"), f.get("h"))
+        out[p["id"]] = entry
+    return out
+
+
+def tab_differences(before, after, tolerance=2):
+    diffs = []
+    for pid in sorted(set(before) | set(after)):
+        a, b = before.get(pid), after.get(pid)
+        if a is None or b is None:
+            diffs.append(f"{pid}: {'shown' if a else 'not shown'} before, {'shown' if b else 'not shown'} after")
+        elif a["window"] != b["window"]:
+            diffs.append(f"{pid}: {a['window']} before, {b['window']} after")
+        else:
+            for key in ("rect", "frame"):
+                if key in a and not all(x is not None and y is not None and abs(x - y) <= tolerance
+                                        for x, y in zip(a[key], b.get(key, ()))):
+                    diffs.append(f"{pid}: {key} {a[key]} before, {b.get(key)} after")
+    return diffs
+
+
+def step_tabs():
+    """WS1 (ADR 0020): each Document tab keeps its own panel arrangement.
+    Audio floats in the first tab; Ctrl+T opens a tab that copies it; there
+    Audio docks again and the Line editor floats. Ctrl+PgUp and Ctrl+PgDn
+    (SendInput) switch back and forth: each time the tab's panels come back
+    in the same windows with the same rectangles, and the floating windows
+    at the same place and size (within 2 px)."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    float_panel("Audio", "tabs")
+    st = wait_for(lambda s: "Audio" in frames(s))
+    time.sleep(1)
+    ev0, st = snap("tabs-0-first-tab")
+    first = tab_arrangement(st)
+    focus_main()
+    keys("ctrl+t", 1.5)
+    ev1, st = snap("tabs-1-new-tab")
+    copied = tab_differences(first, tab_arrangement(st))
+    panel_menu("Audio", "Dock")
+    float_panel("Line editor", "tabs")
+    st = wait_for(lambda s: "Line editor" in frames(s) and "Audio" not in frames(s))
+    time.sleep(1)
+    ev2, st = snap("tabs-2-second-tab-own")
+    second = tab_arrangement(st)
+    focus_main()
+    keys("ctrl+pgup", 1.5)
+    st = wait_for(lambda s: "Audio" in frames(s) and "Line editor" not in frames(s))
+    time.sleep(1)
+    ev3, st = snap("tabs-3-first-tab-again")
+    to_first = tab_differences(first, tab_arrangement(st))
+    focus_main()
+    keys("ctrl+pgdn", 1.5)
+    st = wait_for(lambda s: "Line editor" in frames(s) and "Audio" not in frames(s))
+    time.sleep(1)
+    ev4, st = snap("tabs-4-second-tab-again")
+    to_second = tab_differences(second, tab_arrangement(st))
+    distinct = bool(tab_differences(first, second))
+    verdict("tab-new-copies-arrangement", "observed" if not copied else "failed",
+            "Ctrl+T: the new tab shows the first tab's arrangement, Audio floating"
+            + (f"; differences: {copied}" if copied else ""), ev0 + ev1)
+    verdict("tab-switch-floating", "observed" if distinct and not to_first and not to_second else "failed",
+            f"tabs differ ({distinct}); Ctrl+PgUp back to the first tab: same windows, rectangles and floating "
+            f"windows {not to_first}" + (f" {to_first}" if to_first else "") + f"; Ctrl+PgDn to the second: "
+            f"{not to_second}" + (f" {to_second}" if to_second else ""), ev0 + ev2 + ev3 + ev4)
+
+
 # ---------------------------------------------------------------- V5 (#184)
 def fs_frames(st, mons):
     """(fullscreen, main): the fullscreen video window carries the main
@@ -2420,7 +2500,7 @@ STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "outputs": step_outputs, "nvda": step_nvda, "menutext": step_menu_from_text,
          "tests": step_test_executables, "a11y": step_a11y, "header": step_header, "dpi": step_dpi, "dark": step_dark,
-         "views": step_views, "editor": step_editor, "videofs": step_video_fullscreen,
+         "views": step_views, "editor": step_editor, "tabs": step_tabs, "videofs": step_video_fullscreen,
          "snap": step_snap, "tags": step_tags, "statusbar": step_statusbar, "dialogs": step_dialogs,
          "reference": step_reference}
 
