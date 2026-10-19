@@ -707,6 +707,33 @@ private slots:
         QCOMPARE(changed.size(), 2);
     }
 
+    // SH2: saving keeps the time the file was last opened (legacy SetRecent
+    // after a save moves it to the top); a file first saved, as by Save As,
+    // is stamped then.
+    void savingKeepsTheRecentOpenedTime()
+    {
+        QTemporaryDir home;
+        const QString file = writeSubtitles(dir.filePath(QStringLiteral("recent-saved.ass")), "s");
+        const QString copy = dir.filePath(QStringLiteral("recent-saved-copy.ass"));
+        app::Application a(options(home));
+        QVERIFY(a.openFile(file));
+        const QDateTime opened = a.homeRecent()[0].toMap().value(QStringLiteral("opened")).toDateTime();
+        QVERIFY(opened.isValid());
+        QTest::qWait(50);
+        QSignalSpy changed(&a, &app::Application::recentChanged);
+        QVERIFY(a.saveAs(file));
+        a.waitForWrites();
+        QTRY_COMPARE(changed.size(), 1);
+        QCOMPARE(a.homeRecent()[0].toMap().value(QStringLiteral("opened")).toDateTime(), opened);
+        QVERIFY(a.saveAs(copy));
+        a.waitForWrites();
+        QTRY_COMPARE(changed.size(), 2);
+        const QVariantMap first = a.homeRecent()[0].toMap();
+        QCOMPARE(first.value(QStringLiteral("path")).toString(), QDir::toNativeSeparators(copy));
+        QVERIFY(first.value(QStringLiteral("opened")).toDateTime() > opened);
+        QCOMPARE(a.homeRecent()[1].toMap().value(QStringLiteral("opened")).toDateTime(), opened);
+    }
+
     // SH2: media opened while no Document is open (the Home page's Open
     // video…, File > Open video, Open audio) opens in a new Untitled
     // Document, as legacy's always-present tab held it.

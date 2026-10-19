@@ -942,7 +942,9 @@ signals:
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
-    void rememberRecent(const std::string &path);
+    // SH2: an open stamps the last-opened time; a save keeps the file's time
+    // (a file first saved there, as by Save As, is stamped then).
+    void rememberRecent(const std::string &path, bool opened = true);
     void storeRecent();
     // Subtitles opened while the editor is off turn it on (legacy OpenFile
     // and OpenFiles: `if (!tab->editor) HideEditor()`).

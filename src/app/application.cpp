@@ -1838,7 +1838,7 @@ void Application::writeFinished(const application::WriteResult &result)
         refreshViews();
     // Save As of an Untitled or renamed Document: the title follows the file.
     if (result.outcome == application::WriteOutcome::Written) {
-        rememberRecent(result.destination.value); // legacy SetRecent after a save
+        rememberRecent(result.destination.value, false); // legacy SetRecent after a save
         if (auto *session = m_files->session(result.document); session && !session->isDirty())
             discardRecovery(result.document); // the work is in the file
         if (const auto destination = m_files->destination(result.document);
@@ -2208,9 +2208,10 @@ bool recentMissing(const std::string &path)
 
 } // namespace
 
-void Application::rememberRecent(const std::string &path)
+void Application::rememberRecent(const std::string &path, bool opened)
 {
-    m_recent.add(path, QDateTime::currentMSecsSinceEpoch());
+    const auto kept = opened ? std::nullopt : m_recent.opened(path);
+    m_recent.add(path, kept ? *kept : QDateTime::currentMSecsSinceEpoch());
     storeRecent();
 }
 
