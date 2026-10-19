@@ -114,6 +114,10 @@ public:
     Q_INVOKABLE static QString presetLabel(const QString &name);
     // A language switch: layoutLabel reads the new language's preset names.
     void retranslate() { emit changed(); }
+    // WS3: the presets' names in every shipped language, refused as saved
+    // layouts' names (a switch to that language would show two); the saved
+    // layouts are read again under them.
+    void reservePresetNames(const QStringList &names);
     // WS3: Reset this layout, for the current tab: the saved layout its
     // arrangement started from, else its preset.
     Q_INVOKABLE bool resetCurrentLayout();
@@ -226,6 +230,7 @@ private:
     void renameLayoutOrigin(const QString &from, const QString &to);
     // `name` as a saved layout of this profile names it, or empty.
     QString knownLayout(const QString &name) const;
+    QStringList m_reservedNames;
     std::vector<SavedLayout> m_saved;
     QString m_savedFile;
     bool m_savedLocked = false;

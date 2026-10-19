@@ -17,6 +17,9 @@ namespace hikari::app {
 void Application::startLocalisation()
 {
     m_localisation = std::make_unique<Localisation>();
+    // WS3: no saved layout takes a preset's name in any shipped language.
+    m_workspaceLayout->reservePresetNames(m_localisation->translationsOf(
+        "HikariSub.Workspace", ui::WorkspaceLayoutController::presets()));
     // Legacy turns the old "0" and "1" values into English (hikarisubApp.cpp:329-334).
     if (const QString stored = m_settings->text("program.language"); stored == u"0" || stored == u"1")
         m_settings->set("program.language", QString());

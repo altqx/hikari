@@ -159,6 +159,22 @@ QStringList Localisation::catalogLanguages() const
     return out;
 }
 
+QStringList Localisation::translationsOf(const char *context, const QStringList &sources) const
+{
+    QStringList out;
+    for (const QString &language : catalogLanguages()) {
+        QTranslator catalog;
+        if (!catalog.load(QStringLiteral("hikarisub_") + language, m_dir))
+            continue;
+        for (const QString &source : sources) {
+            const QString text = catalog.translate(context, source.toUtf8().constData());
+            if (!text.isEmpty() && text != source && !out.contains(text))
+                out << text;
+        }
+    }
+    return out;
+}
+
 QString Localisation::resolve(const QString &tag, const QStringList &available, bool *found)
 {
     if (found)

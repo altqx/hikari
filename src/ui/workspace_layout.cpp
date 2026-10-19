@@ -640,6 +640,21 @@ QString WorkspaceLayoutController::knownLayout(const QString &name) const
     return savedLayoutIndex(name) >= 0 ? savedLayoutNamed(name) : QString();
 }
 
+void WorkspaceLayoutController::reservePresetNames(const QStringList &names)
+{
+    if (names == m_reservedNames)
+        return;
+    m_reservedNames = names;
+    // The saved layouts again, under the names now reserved.
+    readSavedLayouts();
+    m_layout = knownLayout(m_layout);
+    for (auto &[id, tab] : m_tabs)
+        if (tab.arrangement)
+            tab.arrangement->layout = knownLayout(tab.arrangement->layout);
+    emit savedLayoutsChanged();
+    emit changed();
+}
+
 // --- WS3: the user's saved layouts -----------------------------------------
 
 void WorkspaceLayoutController::readSavedLayouts()
@@ -815,6 +830,11 @@ QString WorkspaceLayoutController::layoutNameProblem(const QString &name, const 
         if (trimmed.compare(preset, Qt::CaseInsensitive) == 0 ||
             trimmed.compare(presetLabel(preset), Qt::CaseInsensitive) == 0)
             return QCoreApplication::translate("HikariSub.Workspace", "%1 is a built-in layout.").arg(presetLabel(preset));
+    // A preset's name in another language: the menus would show two after a
+    // switch to it.
+    for (const QString &reserved : m_reservedNames)
+        if (trimmed.compare(reserved, Qt::CaseInsensitive) == 0)
+            return QCoreApplication::translate("HikariSub.Workspace", "%1 is a built-in layout.").arg(reserved);
     if (!renaming.isEmpty()) {
         const int index = savedLayoutIndex(trimmed);
         if (index >= 0 && index != savedLayoutIndex(renaming))
