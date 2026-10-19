@@ -6248,6 +6248,23 @@ ApplicationWindow {
         target: root.hotkeys
         function onInstalledChanged() { root.applyMenuShortcuts() }
     }
+    // KB3: each command a key reaches is reported (HotkeysController::ran,
+    // the hotkey audit's record); rehearsing, it is only reported.
+    function runGlobalHotkey(symbol) {
+        return root.hotkeys.report(symbol, root.hotkeys.rehearsing() || root.globalHotkey(symbol))
+    }
+    function runEditorHotkey(action, field) {
+        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.editorHotkey(action, field))
+    }
+    function runVideoHotkey(action) {
+        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.videoHotkey(action))
+    }
+    function runGridHotkey(action) {
+        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.gridHotkey(action))
+    }
+    function runAudioHotkey(action) {
+        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.audioHotkey(action))
+    }
     // The frame's handlers of the Global window's bindings (HikariSubFrame:
     // OnMenuSelected, OnMenuSelected1, OnChangeLine, OnDelete, OnPageChange,
     // OnPageAdd, OnPageClose, OnAudioSnap, OnUseWindowHotkey), reached from
@@ -6255,7 +6272,7 @@ ApplicationWindow {
     // 5000 runs in its own window (OnUseWindowHotkey,
     // HikariSubFrame.cpp:1802-1814). A Global action the rewrite does not
     // have yet still takes its key, as legacy's accelerator does.
-    function runGlobalHotkey(symbol) {
+    function globalHotkey(symbol) {
         const field = translationText.activeFocus ? translationText : lineText
         if (symbol.startsWith("AUDIO_"))
             return root.audio.loaded && root.runAudioHotkey(symbol) // only with an audio box
@@ -6355,7 +6372,7 @@ ApplicationWindow {
     // EditBox::OnAccelerator for an Editor binding in `field` (the focused
     // text field); Video actions bound for the Editor go to the video.
     // False for an action the rewrite does not have yet.
-    function runEditorHotkey(action, field) {
+    function editorHotkey(action, field) {
         if (action.startsWith("GLOBAL_"))
             return root.runGlobalHotkey(action) // the event goes up to the frame
         const tags = { EDITBOX_INSERT_BOLD: "b", EDITBOX_INSERT_ITALIC: "i", EDITBOX_CHANGE_UNDERLINE: "u",
@@ -6401,7 +6418,7 @@ ApplicationWindow {
     }
     // VideoBox::OnAccelerator; Editor and Grid actions bound for the Video
     // window go to theirs.
-    function runVideoHotkey(action) {
+    function videoHotkey(action) {
         if (action.startsWith("GLOBAL_"))
             return root.runGlobalHotkey(action) // the event goes up to the frame
         if (root.hotkeys.repeatedKey(action, 50)) // VideoBox::OnAccelerator (VideoBox.cpp:1137)
@@ -6443,7 +6460,7 @@ ApplicationWindow {
     }
     // SubsGrid::OnAccelerator; Editor and Video actions bound for the Grid
     // go to theirs.
-    function runGridHotkey(action) {
+    function gridHotkey(action) {
         if (action.startsWith("GLOBAL_"))
             return root.runGlobalHotkey(action) // the event goes up to the frame
         // SubsGrid::OnAccelerator hands audio ids to the audio box (when
@@ -6511,7 +6528,7 @@ ApplicationWindow {
     }
     // AudioBox::OnAccelerator; Video, Editor and Grid actions bound for the
     // Audio window go to theirs (AudioBox::SetAccels).
-    function runAudioHotkey(action) {
+    function audioHotkey(action) {
         if (action.startsWith("GLOBAL_"))
             return root.runGlobalHotkey(action) // the event goes up to the frame
         if (action.startsWith("AUDIO_"))
