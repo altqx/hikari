@@ -113,6 +113,9 @@ TEST(Hotkeys, NamesTableIsHotkeysNaming)
     // never listed; VIDEO_DELETE_FILE is "Unload video".
     EXPECT_EQ(legacy.at(ids().at("GLOBAL_VIDEO_INDEXING")), "Open video with FFMS2");
     legacy.erase(ids().at("GLOBAL_VIDEO_INDEXING"));
+    // AM1-hotkeys-window-retired: so is the automation hotkeys window's.
+    EXPECT_EQ(legacy.at(ids().at("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW")), "Open shortcut mapping window");
+    legacy.erase(ids().at("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW"));
     EXPECT_EQ(legacy.at(ids().at("VIDEO_DELETE_FILE")), "Remove video");
     legacy[ids().at("VIDEO_DELETE_FILE")] = "Unload video";
     EXPECT_EQ(hotkeyNames(), legacy);
@@ -389,7 +392,7 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     EXPECT_EQ(list.shown().size(), 84u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 225u);
+    EXPECT_EQ(list.shown().size(), 224u);
 }
 
 TEST(Hotkeys, MapSetsTheBindingAndCommitWritesTheCopy)
@@ -628,7 +631,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 225u); // every row shown, the filter choice as it was
+    EXPECT_EQ(third.shown().size(), 224u); // every row shown, the filter choice as it was
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());

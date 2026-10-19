@@ -11513,7 +11513,7 @@ private slots:
         QVERIFY(dock);
         QVERIFY(!dock->property("isOpen").toBool());
         const QString fixture = QStringLiteral(HIKARI_LUA_FIXTURES "/shell-fixture.lua");
-        application->automation().load(fixture.toStdString());
+        application->automation().load(QDir::toNativeSeparators(fixture).toStdString()); // as run() names it
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_Prefix from dialog"), 30000);
         auto *show = named("automationManagerMenuItem")->property("action").value<QObject *>();
         QVERIFY(show && QMetaObject::invokeMethod(show, "trigger"));
