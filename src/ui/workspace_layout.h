@@ -14,6 +14,7 @@
 
 #include <QByteArray>
 #include <QObject>
+#include <QPoint>
 #include <QSize>
 #include <QString>
 #include <QStringList>
@@ -39,6 +40,18 @@ struct WorkspaceArrangement {
     // The envelope's arrangement, validated as the saved file is; a missing
     // "payload" is the preset alone. nullopt with `problem` naming why.
     static std::optional<WorkspaceArrangement> parse(const QByteArray &bytes, QString *problem = nullptr);
+    // WS2: the arrangement as an ASS file's [Hikari] section holds it
+    // ("Layout="): the envelope in base64 (RFC 4648), which has no ':' for
+    // legacy LoadASS to take into Script Info. No screen positions: the
+    // screens, each window's screen and the main window's position are left
+    // out, and a floating panel keeps its place from the main window's
+    // top-left corner. The main window's size stays, so the docked panels
+    // keep their proportions in a window of another size.
+    QByteArray serialiseForFile() const;
+    // WS2: an arrangement serialiseForFile wrote, validated as parse does,
+    // its floating panels placed from `origin` (the main window's top-left).
+    static std::optional<WorkspaceArrangement> parseFromFile(const QByteArray &text, QPoint origin,
+                                                             QString *problem = nullptr);
     bool operator==(const WorkspaceArrangement &) const = default;
 };
 
@@ -148,6 +161,13 @@ public:
     // validate gives the tab the Editing preset, keeps the text for
     // diagnosis and says so in the notice, naming `title`.
     void setTabArrangement(std::uint64_t tab, const QByteArray &serialised, const QString &title = {});
+    // WS2: the tab's arrangement as its subtitle file keeps it
+    // (serialiseForFile); empty for a tab that has none yet.
+    QByteArray fileArrangement(std::uint64_t tab) const;
+    // WS2: the arrangement `tab`'s subtitle file holds, its floating panels
+    // placed from the main window as it is now. One that does not validate
+    // leaves the tab as it was: false, with `problem` naming why.
+    bool setFileArrangement(std::uint64_t tab, const QByteArray &text, QString *problem = nullptr);
 
     QString notice() const { return m_notice; }
     QString preset() const { return m_preset; }
@@ -178,6 +198,7 @@ private:
     WorkspaceArrangement shownArrangement() const;
     void refuseArrangement(const WorkspaceArrangement &arrangement);
     void keepUnrestored(const QByteArray &bytes, const QString &problem, const QString &title);
+    void giveTab(std::uint64_t tab, const WorkspaceArrangement &arrangement);
     QString backupFile() const { return m_file + QStringLiteral(".bak"); }
 
     struct Tab {

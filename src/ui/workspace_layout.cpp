@@ -149,6 +149,95 @@ std::optional<WorkspaceArrangement> WorkspaceArrangement::parse(const QByteArray
     return arrangement;
 }
 
+namespace {
+
+// WS2: a saved rectangle ({"x", "y", "width", "height"}) under `key`, moved
+// by `by`; an empty one (a window that never had a place) stays.
+void moveRect(QJsonObject &holder, const QString &key, QPoint by)
+{
+    QJsonObject rect = holder.value(key).toObject();
+    if (rect.value(QStringLiteral("width")).toInt() <= 0 || rect.value(QStringLiteral("height")).toInt() <= 0)
+        return;
+    rect.insert(QStringLiteral("x"), rect.value(QStringLiteral("x")).toInt() + by.x());
+    rect.insert(QStringLiteral("y"), rect.value(QStringLiteral("y")).toInt() + by.y());
+    holder.insert(key, rect);
+}
+
+// The Classic main window's top-left in an engine payload.
+QPoint mainWindowPosition(const QJsonObject &payload)
+{
+    for (const auto &w : payload.value(QStringLiteral("mainWindows")).toArray()) {
+        const QJsonObject window = w.toObject();
+        if (window.value(QStringLiteral("uniqueName")).toString() == QStringLiteral("Classic")) {
+            const QJsonObject geometry = window.value(QStringLiteral("geometry")).toObject();
+            return {geometry.value(QStringLiteral("x")).toInt(), geometry.value(QStringLiteral("y")).toInt()};
+        }
+    }
+    return {};
+}
+
+// The payload's windows moved by `by`: the main windows, the floating
+// windows and the places closed panels float again at. `forFile` also
+// leaves out the screens and each window's screen.
+QByteArray moveWindows(const QByteArray &payload, QPoint by, bool forFile)
+{
+    QJsonObject o = QJsonDocument::fromJson(payload).object();
+    const QString screen = QStringLiteral("screenIndex"), screenSize = QStringLiteral("screenSize");
+    auto windows = [&](const QString &key) {
+        QJsonArray list = o.value(key).toArray();
+        for (qsizetype i = 0; i < list.size(); ++i) {
+            QJsonObject window = list.at(i).toObject();
+            moveRect(window, QStringLiteral("geometry"), by);
+            moveRect(window, QStringLiteral("normalGeometry"), by);
+            if (forFile) {
+                window.remove(screen);
+                window.remove(screenSize);
+            }
+            list.replace(i, window);
+        }
+        o.insert(key, list);
+    };
+    windows(QStringLiteral("mainWindows"));
+    windows(QStringLiteral("floatingWindows"));
+    QJsonArray docks = o.value(QStringLiteral("allDockWidgets")).toArray();
+    for (qsizetype i = 0; i < docks.size(); ++i) {
+        QJsonObject dock = docks.at(i).toObject();
+        QJsonObject position = dock.value(QStringLiteral("lastPosition")).toObject();
+        moveRect(position, QStringLiteral("lastFloatingGeometry"), by);
+        dock.insert(QStringLiteral("lastPosition"), position);
+        docks.replace(i, dock);
+    }
+    o.insert(QStringLiteral("allDockWidgets"), docks);
+    if (forFile)
+        o.remove(QStringLiteral("screenInfo"));
+    return QJsonDocument(o).toJson(QJsonDocument::Compact);
+}
+
+} // namespace
+
+QByteArray WorkspaceArrangement::serialiseForFile() const
+{
+    WorkspaceArrangement placed = *this;
+    if (!payload.isEmpty())
+        placed.payload = moveWindows(payload, -mainWindowPosition(QJsonDocument::fromJson(payload).object()), true);
+    return placed.serialise().toBase64();
+}
+
+std::optional<WorkspaceArrangement> WorkspaceArrangement::parseFromFile(const QByteArray &text, QPoint origin,
+                                                                        QString *problem)
+{
+    const auto decoded = QByteArray::fromBase64Encoding(text.trimmed(), QByteArray::AbortOnBase64DecodingErrors);
+    if (!decoded || decoded.decoded.isEmpty()) {
+        if (problem)
+            *problem = QCoreApplication::translate("HikariSub.Workspace", "it is not a layout file");
+        return std::nullopt;
+    }
+    auto arrangement = parse(decoded.decoded, problem);
+    if (arrangement && !arrangement->payload.isEmpty())
+        arrangement->payload = moveWindows(arrangement->payload, origin, false);
+    return arrangement;
+}
+
 const QStringList &WorkspaceLayoutController::presets()
 {
     static const QStringList names{QStringLiteral("Editing"), QStringLiteral("Timing"), QStringLiteral("Translation"),
@@ -651,6 +740,11 @@ void WorkspaceLayoutController::setTabArrangement(std::uint64_t tab, const QByte
         keepUnrestored(serialised, problem, title);
         arrangement = WorkspaceArrangement{};
     }
+    giveTab(tab, *arrangement);
+}
+
+void WorkspaceLayoutController::giveTab(std::uint64_t tab, const WorkspaceArrangement &arrangement)
+{
     Tab &t = m_tabs[tab];
     t.arrangement = arrangement;
     t.full.clear();
@@ -658,8 +752,27 @@ void WorkspaceLayoutController::setTabArrangement(std::uint64_t tab, const QByte
     if (m_tab == tab && m_loaded) {
         m_full.clear();
         m_timingHidden = false;
-        showArrangement(*arrangement);
+        showArrangement(arrangement);
     }
+}
+
+QByteArray WorkspaceLayoutController::fileArrangement(std::uint64_t tab) const
+{
+    const auto arrangement = tabArrangement(tab);
+    return arrangement ? arrangement->serialiseForFile() : QByteArray();
+}
+
+bool WorkspaceLayoutController::setFileArrangement(std::uint64_t tab, const QByteArray &text, QString *problem)
+{
+    // Where the main window is now, as the engine would save it.
+    QPoint origin;
+    if (KDDockWidgets::Core::Platform::instance())
+        origin = mainWindowPosition(QJsonDocument::fromJson(KDDockWidgets::LayoutSaver().serializeLayout()).object());
+    const auto arrangement = WorkspaceArrangement::parseFromFile(text, origin, problem);
+    if (!arrangement)
+        return false;
+    giveTab(tab, *arrangement);
+    return true;
 }
 
 void WorkspaceLayoutController::rememberFullArrangement()
