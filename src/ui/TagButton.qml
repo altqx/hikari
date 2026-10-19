@@ -9,7 +9,8 @@ ToolButton {
     id: button
     property string iconRole
     property string tip: text
-    Accessible.name: text
+    // An icon-only button (no name) is named by its icon.
+    Accessible.name: text.length > 0 ? text : IconTheme.label(iconRole)
     ToolTip.visible: hovered && tip.length > 0
     ToolTip.text: tip
     contentItem: Item {

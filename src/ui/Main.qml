@@ -3360,6 +3360,8 @@ ApplicationWindow {
                                     iconRole: modelData.icon
                                     focusPolicy: Qt.NoFocus
                                     enabled: root.editor.editable
+                                    // An icon-only button reads as its tag, as in Settings' list.
+                                    Accessible.name: modelData.name.length > 0 ? modelData.name : modelData.tag
                                     Accessible.description: modelData.tag
                                     tip: root.mappedTip(modelData.name.length > 0 && modelData.icon.length > 0
                                                         ? modelData.name + ": " + modelData.tag : modelData.tag,

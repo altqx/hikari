@@ -17,6 +17,7 @@
 #include "settings_store.h"
 #include "tag_buttons_controller.h"
 
+#include <QAccessible>
 #include <QFile>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
@@ -410,6 +411,12 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(item("lineText"), "select", Q_ARG(int, 0), Q_ARG(int, 0)));
         click(item("tagButton0"));
         QTRY_VERIFY(shownText().contains(QStringLiteral("\\blur4")));
+        // An icon-only button reads as its tag.
+        QVERIFY(application->tagButtons().add(QString(), QStringLiteral("\\i1"), 0, QStringLiteral("tag-italic")));
+        QTRY_VERIFY(item("tagButton1"));
+        auto *iconOnly = QAccessible::queryAccessibleInterface(item("tagButton1"));
+        QVERIFY(iconOnly);
+        QCOMPARE(iconOnly->text(QAccessible::Name), QStringLiteral("\\i1"));
     }
 
     // LE5: Settings > Editor lists the buttons; its changes stay staged until
