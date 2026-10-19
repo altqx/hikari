@@ -27,7 +27,8 @@
    ],
    "surfaces": [
     "menu:file",
-    "tab-menu"
+    "tab-menu",
+    "shift-times-panel"
    ]
   },
   {
