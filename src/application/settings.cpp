@@ -278,6 +278,12 @@ const std::vector<SettingDefinition> &definitions()
         // open video's size without asking, both keys (the question's
         // "Always set it from the video"; Settings > Editor).
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
+        // WS2 (owner decision 2026-10-18, #216): "Save panel layout in
+        // subtitle files": an ASS file keeps its Document tab's panel
+        // arrangement in a [Hikari] section, written at each save and taken
+        // when the file opens. Off, the section is neither read nor written
+        // (an existing one is kept as it is).
+        {"subtitles.layoutInFile", "", Bool, Profile, Mapped, false, true},
     };
     return table;
 }

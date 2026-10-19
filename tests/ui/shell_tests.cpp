@@ -9189,7 +9189,9 @@ private slots:
               {"scriptProperties.timingOn", nullptr},
               {"scriptProperties.update", nullptr},
               {"scriptProperties.updateOn", nullptr},
-              {"scriptProperties.askForChange", "Always ask before changing subtitle information"}}},
+              {"scriptProperties.askForChange", "Always ask before changing subtitle information"},
+              // WS2, the rewrite's own
+              {"subtitles.layoutInFile", "Save panel layout in subtitle files"}}},
         };
         std::set<std::string> shown;
         for (const auto &[pageName, controls] : pages) {

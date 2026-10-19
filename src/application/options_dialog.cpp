@@ -117,6 +117,9 @@ constexpr OptionsBinding kBindings[] = {
     // H2-output-device (decision 60): the device both audio paths play
     // through, on the Audio page; empty follows the system default.
     {"audio.outputDevice", OutputDevice, Audio},
+    // WS2: the panel layout in the subtitle file ([Hikari]), on the
+    // Subtitle properties page with the other things a save writes there.
+    {"subtitles.layoutInFile", Check, SubtitleProperties},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.
