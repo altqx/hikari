@@ -101,6 +101,14 @@ int main(int argc, char **argv)
     if (engine.rootObjects().isEmpty())
         return 2;
     auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+    // Where the keys go: Spix posts plain key presses to the window, so they
+    // reach the focused item.
+    QObject::connect(window, &QQuickWindow::activeFocusItemChanged, window, [window] {
+        const auto *f = window->activeFocusItem();
+        std::printf("focus %s\n", f ? qPrintable(f->objectName().isEmpty() ? QString::fromLatin1(f->metaObject()->className())
+                                                                            : f->objectName())
+                                     : "none");
+    });
     window->requestActivate();
     QDeadlineTimer deadline(10'000);
     while (!(window->isExposed() && window->isActive()) && !deadline.hasExpired())
@@ -148,6 +156,8 @@ int main(int argc, char **argv)
         expect(history[5] == QStringLiteral("Changing time on audio spectrum, active line 3"), "lead-in, Line 3");
         expect(history[7] == QStringLiteral("Adding a new line, active line 3"), "Enter on the last Line");
     }
+    std::printf("editor text \"%s\", audio selection from %lld\n", qPrintable(application.editor().text()),
+                static_cast<long long>(application.audio().selectionStart()));
     expect(application.editor().text() == QStringLiteral("Three"), "Z, Z and Right end on the third Line");
     expect(application.audio().selectionStart() == 4800, "the box follows the active Line");
     expect(!application.audio().modified(), "nothing left to commit");
