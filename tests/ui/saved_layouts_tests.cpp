@@ -390,6 +390,31 @@ private slots:
         stop();
     }
 
+    // The Reference tray is part of the Grid: a comparison opened in a layout
+    // with the Grid closed leaves the tray closed; with the Grid, it shows.
+    void aReferenceFollowsTheGrid()
+    {
+        start();
+        openEpisode();
+        close("gridDock");
+        saveAs(QStringLiteral("No grid"));
+        QVERIFY(application->openReference(writeSubtitles(dir.filePath(QStringLiteral("ref.ass")))));
+        QTRY_VERIFY(application->shell().hasReference());
+        QTest::qWait(300);
+        QVERIFY(!isOpen("referenceDock"));
+        QVERIFY(!isOpen("gridDock"));
+        QCOMPARE(switcherText(), QStringLiteral("No grid"));
+        stop();
+
+        QVERIFY(QFile::remove(dir.filePath(QStringLiteral("layout.json"))));
+        start();
+        openEpisode();
+        QVERIFY(isOpen("gridDock"));
+        QVERIFY(application->openReference(writeSubtitles(dir.filePath(QStringLiteral("ref.ass")))));
+        QTRY_VERIFY(isOpen("referenceDock"));
+        stop();
+    }
+
     // Restore the previous layout takes back the arrangement the backup
     // names too: the switcher and Reset this layout follow it.
     void theBackupNamesItsLayout()

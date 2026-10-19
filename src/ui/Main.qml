@@ -252,10 +252,12 @@ ApplicationWindow {
     }
     Connections {
         target: root.shell
+        // The tray is part of the Grid: a comparison opened while the
+        // tab's layout has the Grid closed leaves it closed too.
         function onHasReferenceChanged() {
-            if (root.shell.hasReference)
+            if (root.shell.hasReference && gridDock.isOpen)
                 referenceDock.open()
-            else
+            else if (referenceDock.isOpen)
                 referenceDock.close()
         }
     }
