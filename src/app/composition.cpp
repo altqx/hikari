@@ -279,6 +279,12 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     const bool install = code == 0;
 #endif
     const bool updateStarts = install && application.updates().installer().restartRequested();
+    // WS5: whichever start comes after the quit (this program's, an
+    // update's exec or new image) inherits the activation token of the
+    // start that came during it, to come forward on Wayland.
+    if (const QString token = forwarded.activationTokenAfterQuit();
+        !token.isEmpty() && (!unopened.isEmpty() || forwarded.startAfterQuit()))
+        qputenv("XDG_ACTIVATION_TOKEN", token.toUtf8());
     if (install)
         exitAction = application.updates().installer().installAtExit([&engine] { return showInstalling(engine); });
     exitAction.arguments += carried;

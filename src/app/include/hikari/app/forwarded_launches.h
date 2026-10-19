@@ -38,6 +38,10 @@ public:
     // program (a cancelled quit keeps the window, which came forward, and a
     // later quit is the user's own).
     bool startAfterQuit() const;
+    // At exit: the activation token of the last start that came during the
+    // quit that went ahead, for the start made after it (Wayland); empty
+    // otherwise.
+    QString activationTokenAfterQuit() const;
 
     // Brings `window` (or the modal window over it) forward: restored when
     // minimized, raised and activated, with the start's Wayland activation
@@ -55,6 +59,8 @@ private:
     QString m_token;
     bool m_activate = false;
     int m_afterQuitReview = 0; // the quit review a start without files came during
+    QString m_quitToken;       // the last token taken during a quit
+    int m_quitTokenReview = 0; // and that quit's review
     QTimer m_timer;
 };
 

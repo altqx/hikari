@@ -380,15 +380,17 @@ private slots:
                                        {QStringLiteral("save"), false}};
             return discard;
         };
+        forwarded->take({{}, QStringLiteral("before")}); // no quit: the window's own
         QVariantList discard = quit();
         QCOMPARE(discard.size(), 1);
-        take({});
+        forwarded->take({{}, QStringLiteral("cancelled")});
         QVERIFY(!forwarded->startAfterQuit()); // not yet: the quit may be cancelled
         application->cancelClose();
         discard = quit();
         application->resolveClose(discard);
         QVERIFY(application->quitApproved());
         QVERIFY(!forwarded->startAfterQuit());
+        QVERIFY(forwarded->activationTokenAfterQuit().isEmpty());
         QVERIFY(forwarded->takeUnopened().isEmpty());
     }
 
@@ -399,11 +401,13 @@ private slots:
         edit(0, "work");
         const QVariantList rows = application->reviewClose(QStringLiteral("quit"));
         QCOMPARE(rows.size(), 1);
-        take({});
+        // Its activation token goes to the start made after the quit.
+        forwarded->take({{}, QStringLiteral("token")});
         application->resolveClose({QVariantMap{{QStringLiteral("id"), rows.first().toMap().value(QStringLiteral("id"))},
                                                {QStringLiteral("save"), false}}});
         QVERIFY(application->quitApproved());
         QVERIFY(forwarded->startAfterQuit());
+        QCOMPARE(forwarded->activationTokenAfterQuit(), QStringLiteral("token"));
         QVERIFY(forwarded->takeUnopened().isEmpty());
     }
 

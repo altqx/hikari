@@ -65,11 +65,19 @@ void ForwardedLaunches::setWindow(QWindow *window)
 void ForwardedLaunches::take(const SingleInstance::Request &request)
 {
     m_files += request.files;
+    // During a quit the start's activation token is kept for the start made
+    // after it (startAfterQuit, or the files the quit leaves): the window
+    // it would bring forward is closing.
+    QString token = request.activationToken;
+    if (m_application.quitting() && !token.isEmpty()) {
+        m_quitToken = std::exchange(token, QString());
+        m_quitTokenReview = m_application.quitReviews();
+    }
     if (m_window)
-        activate(m_window, request.activationToken);
+        activate(m_window, token);
     else {
         m_activate = true;
-        m_token = request.activationToken;
+        m_token = token;
     }
     if (!m_files.isEmpty() && m_window)
         m_timer.start(kGatherMs);
@@ -80,6 +88,11 @@ void ForwardedLaunches::take(const SingleInstance::Request &request)
 bool ForwardedLaunches::startAfterQuit() const
 {
     return m_afterQuitReview > 0 && m_afterQuitReview == m_application.quitReviews() && m_application.quitApproved();
+}
+
+QString ForwardedLaunches::activationTokenAfterQuit() const
+{
+    return m_quitTokenReview == m_application.quitReviews() && m_application.quitApproved() ? m_quitToken : QString();
 }
 
 QStringList ForwardedLaunches::takeUnopened()
