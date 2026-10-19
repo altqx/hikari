@@ -904,7 +904,7 @@ icon("accent-colour", "Accent color", [], ["settings-dialog"],
      stroke("M8 1.5c2.5 3.5 5 6 5 8.5a5 5 0 0 1-10 0C3 7.5 5.5 5 8 1.5z") + accent(fill("M4.5 10a3.5 3.5 0 0 0 7 0z")))
 icon("ui-colours", "UI colors", [], ["settings-dialog"],
      rect(1.5, 2.5, 4, 4, 0.5) + rect(1.5, 9.5, 4, 4, 0.5) + stroke("M8 4.5h6.5M8 11.5h6.5")
-     + accent(frect(2, 3, 3, 3, 0.5), frect(2, 10, 3, 3, 0.5)), mirror=True)
+     + accent(frect(2, 3, 3, 3), frect(2, 10, 3, 3)), mirror=True)
 icon("restore-default", "Restore default", [], ["settings-dialog"],
      stroke("M2.5 8a5.5 5.5 0 1 0 1.75-4") + stroke("M2.5 1.5v3h3") + accent(dot(8, 8, 1.5)), mirror=True)
 
