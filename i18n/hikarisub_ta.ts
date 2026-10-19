@@ -481,31 +481,119 @@
     <name>HikariSub.Colours</name>
     <message>
         <source>Choose color</source>
-        <translation>வண்ணத்தைத் தேர்வுசெய்க</translation>
-    </message>
-    <message>
-        <source>Colour</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">வண்ணத்தைத் தேர்வுசெய்க</translation>
     </message>
     <message>
         <source>Primary color</source>
-        <translation>முதன்மை நிறம்</translation>
+        <translation type="vanished">முதன்மை நிறம்</translation>
     </message>
     <message>
         <source>Secondary color</source>
-        <translation>இரண்டாம் நிலை நிறம்</translation>
+        <translation type="vanished">இரண்டாம் நிலை நிறம்</translation>
     </message>
     <message>
         <source>Border color</source>
-        <translation>எல்லை நிறம்</translation>
+        <translation type="vanished">எல்லை நிறம்</translation>
     </message>
     <message>
         <source>Shadow color</source>
-        <translation>நிழல் நிறம்</translation>
+        <translation type="vanished">நிழல் நிறம்</translation>
     </message>
     <message>
         <source>Spectrum color</source>
-        <translation>ச்பெக்ட்ரம் நிறம்</translation>
+        <translation type="vanished">ச்பெக்ட்ரம் நிறம்</translation>
+    </message>
+    <message>
+        <source>Previous colour %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New colour %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Palette</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>White</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Black</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yellow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cyan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Magenta</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orange</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lime</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spring green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Azure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Violet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0 is opaque, 255 fully transparent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fewer colour options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More colour options</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saturation and value</source>
@@ -513,6 +601,34 @@
     </message>
     <message>
         <source>Hue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>RGB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSV</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ASS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HTML</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -529,15 +645,15 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Selected color:</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட நிறம்:</translation>
+        <translation type="vanished">தேர்ந்தெடுக்கப்பட்ட நிறம்:</translation>
     </message>
     <message>
         <source>RGB color</source>
-        <translation>ஆர்சிபி நிறம்</translation>
+        <translation type="vanished">ஆர்சிபி நிறம்</translation>
     </message>
     <message>
         <source>Red:</source>
-        <translation>சிவப்பு:</translation>
+        <translation type="vanished">சிவப்பு:</translation>
     </message>
     <message>
         <source>Red</source>
@@ -545,7 +661,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Green:</source>
-        <translation>பச்சை:</translation>
+        <translation type="vanished">பச்சை:</translation>
     </message>
     <message>
         <source>Green</source>
@@ -553,14 +669,10 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Blue:</source>
-        <translation>நீலம்:</translation>
+        <translation type="vanished">நீலம்:</translation>
     </message>
     <message>
         <source>Blue</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Alpha:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -568,15 +680,7 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>ASS:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>ASS colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>HTML:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -585,11 +689,11 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSL color</source>
-        <translation>எச்.எச்.எல் நிறம்</translation>
+        <translation type="vanished">எச்.எச்.எல் நிறம்</translation>
     </message>
     <message>
         <source>Hue:</source>
-        <translation>சாயல்:</translation>
+        <translation type="vanished">சாயல்:</translation>
     </message>
     <message>
         <source>HSL hue</source>
@@ -597,7 +701,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Saturation:</source>
-        <translation>செறிவு:</translation>
+        <translation type="vanished">செறிவு:</translation>
     </message>
     <message>
         <source>HSL saturation</source>
@@ -605,7 +709,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Lightness:</source>
-        <translation>லேசான தன்மை:</translation>
+        <translation type="vanished">லேசான தன்மை:</translation>
     </message>
     <message>
         <source>Lightness</source>
@@ -613,7 +717,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSV color</source>
-        <translation>HSV நிறம்</translation>
+        <translation type="vanished">HSV நிறம்</translation>
     </message>
     <message>
         <source>HSV hue</source>
@@ -625,7 +729,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Value:</source>
-        <translation>மதிப்பு:</translation>
+        <translation type="vanished">மதிப்பு:</translation>
     </message>
     <message>
         <source>Value</source>
@@ -636,30 +740,22 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Recent colors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Screen pixels around the pointer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Color picker</source>
-        <translation>வண்ண தேர்வாளர்</translation>
+        <translation type="vanished">வண்ண தேர்வாளர்</translation>
     </message>
     <message>
         <source>Move the window
 to the color selection location</source>
-        <translation>சாளரத்தை நகர்த்தவும் 
+        <translation type="vanished">சாளரத்தை நகர்த்தவும் 
 வண்ண தேர்வுக்கு பதிலாக</translation>
     </message>
     <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Cancel</source>
-        <translation>ரத்துசெய்</translation>
+        <translation type="vanished">ரத்துசெய்</translation>
     </message>
     <message>
         <source>Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).</source>
@@ -7313,6 +7409,10 @@ Foreign language text will be deleted.</source>
     <message>
         <source>Color:</source>
         <translation>வண்ணம்:</translation>
+    </message>
+    <message>
+        <source>Choose the colour</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Checkerboard pattern</source>
