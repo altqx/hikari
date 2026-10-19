@@ -309,6 +309,8 @@ void VideoController::dismissOffer()
 
 void VideoController::openVideo(const QString &path)
 {
+    if (m_beforeOpen)
+        m_beforeOpen();
     const bool withdrawn = !m_offer.isEmpty();
     m_offer.clear();
     open(application::isDummyVideo(path.toStdString()) ? path : QDir::toNativeSeparators(path));

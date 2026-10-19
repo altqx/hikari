@@ -258,12 +258,22 @@ public:
     Q_INVOKABLE bool revealRecent(const QString &path);
     // P9: legacy SelectInFolder.
     Q_INVOKABLE void showInFolder(const QString &path);
+    // SH2: the Home page's "Copy path".
+    Q_INVOKABLE void copyText(const QString &text);
     // P9: the "Associated files" question's answer for the editing target
     // (0 load associated, 1 load from directory, 2 no); with Apply to All
     // the same answer goes to the other questions of the same opening.
     void answerAssociation(int answer, bool applyToAll);
-    // GLOBAL_RECENT_SUBS: {path, label} rows, missing local files pruned first.
+    // GLOBAL_RECENT_SUBS: {path, label} rows. Missing local files are left
+    // out but kept in the list, where the Home page shows them (SH2).
     Q_INVOKABLE QVariantList recentSubtitles();
+    // SH2: the Home page's recent files, most recent first: {path, name,
+    // folder, opened (a QDateTime, invalid for an entry carried over from
+    // legacy), missing}.
+    Q_INVOKABLE QVariantList homeRecent();
+    // SH2: Home's Remove (one entry) and "Remove missing files".
+    Q_INVOKABLE void removeRecent(const QString &path);
+    Q_INVOKABLE void removeMissingRecent();
     std::vector<std::string> recentEntries() const { return m_recent.entries(); }
     // The legacy check when the window activates (TabPanel::ReloadSubsIfModified):
     // "modified" when the editing target's file is newer than when it was
@@ -812,6 +822,10 @@ public:
     // At startup (legacy hikarisubApp::OnInit): "load", "ask" or "crash" (the
     // last session did not end with "[Close session]"), or "".
     Q_INVOKABLE QString startupSession() const;
+    // SH2: what Load last session would open, for the Home page: {names (each
+    // Document's file name, or its video's for a tab without subtitles)}; no
+    // names when the last session has no Document with a file.
+    Q_INVOKABLE QVariantMap lastSessionSummary() const;
     Q_INVOKABLE bool lastSessionCrashed() const;
     void setStartedWithPaths(bool paths) { m_startedWithPaths = paths; }
     // The unresolved entry `row`: try again, choose another file, or forget it.
@@ -845,7 +859,7 @@ public:
     Q_INVOKABLE qulonglong tabDocument(int index) const;
     // MENU_CHOOSE - 1, "Close all tabs" (after legacy's "All tabs will be
     // closed, continue?"): the close review's rows for every tab; with none,
-    // finishClose() closes them all and leaves one new Untitled tab.
+    // finishClose() closes them all and the Home page shows (SH2).
     Q_INVOKABLE QVariantList reviewCloseAll();
     // P9: GLOBAL_OPEN_AUTO_SAVE's legacy autosaves (the Subs folder, read
     // only): [{name, versions: [{written, file}]}], and the Files list's
@@ -929,6 +943,7 @@ private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
     void rememberRecent(const std::string &path);
+    void storeRecent();
     // Subtitles opened while the editor is off turn it on (legacy OpenFile
     // and OpenFiles: `if (!tab->editor) HideEditor()`).
     void editorOnForSubtitles();

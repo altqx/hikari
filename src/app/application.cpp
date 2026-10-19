@@ -881,6 +881,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
             [this] { m_settings->set("grid.hideColumns", m_shell->hiddenColumns()); });
     m_recent.set(m_settings->settings().list("recent.subtitles"));
+    m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened")); // SH2
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
     // An edit refreshes the video once per event-loop turn, however many
@@ -1103,6 +1104,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             });
         });
     });
+    // SH2: media opened while the Home page shows (no Document open) opens
+    // in a new Untitled Document, as legacy's always-present tab held it.
+    const auto documentForMedia = [this] {
+        if (m_workspace.tabs().empty())
+            newDocument();
+    };
+    m_video->setBeforeOpen(documentForMedia);
+    m_audio->setBeforeOpen(documentForMedia);
     trackTabMedia(); // P6
     trackVideoSources(); // V3
     trackVideoFollow(); // V6
@@ -1353,6 +1362,7 @@ Application::~Application()
     for (const auto &connection : std::as_const(m_audioConnections))
         disconnect(connection);
     m_video->setOpenFilter(nullptr);
+    m_video->setBeforeOpen(nullptr);
     m_audio.reset();
     m_audioRouting.reset(); // H2: no route change after this
     m_audioPlayer.reset(); // A4: the player stops before its output goes
@@ -2178,38 +2188,86 @@ QVariantMap Application::reviewOpen(const QString &path)
     return {{QStringLiteral("ok"), true}, {QStringLiteral("problem"), QString()}, {QStringLiteral("rows"), rows}};
 }
 
+namespace {
+
+// Legacy IsMissingLocalFile with this platform's checks.
+bool recentMissing(const std::string &path)
+{
+    return application::isMissingLocalFile(
+        path, [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); },
+        [](char drive) {
+#ifdef _WIN32
+            const wchar_t root[] = {static_cast<wchar_t>(drive), L':', L'\\', 0};
+            return ::GetDriveTypeW(root) == DRIVE_REMOTE;
+#else
+            (void)drive;
+            return false;
+#endif
+        });
+}
+
+} // namespace
+
 void Application::rememberRecent(const std::string &path)
 {
-    m_recent.add(path);
+    m_recent.add(path, QDateTime::currentMSecsSinceEpoch());
+    storeRecent();
+}
+
+void Application::storeRecent()
+{
     m_settings->settings().set("recent.subtitles", m_recent.entries());
+    m_settings->settings().set("recent.subtitlesOpened", m_recent.openedRecords());
     emit recentChanged();
 }
 
 QVariantList Application::recentSubtitles()
 {
-    const bool pruned = m_recent.prune([](const std::string &path) {
-        return application::isMissingLocalFile(
-            path, [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); },
-            [](char drive) {
-#ifdef _WIN32
-                const wchar_t root[] = {static_cast<wchar_t>(drive), L':', L'\\', 0};
-                return ::GetDriveTypeW(root) == DRIVE_REMOTE;
-#else
-                (void)drive;
-                return false;
-#endif
-            });
-    });
-    if (pruned)
-        m_settings->settings().set("recent.subtitles", m_recent.entries());
+    // SH2: legacy AppendRecent dropped missing local files from the list
+    // here; they stay for the Home page, which marks them and removes them.
     QVariantList rows;
     int n = 0;
     for (const auto &entry : m_recent.entries()) {
+        if (recentMissing(entry))
+            continue;
         const QString path = QString::fromStdString(entry);
         rows << QVariantMap{{QStringLiteral("path"), path},
                             {QStringLiteral("label"), QStringLiteral("%1 %2").arg(++n).arg(QFileInfo(path).fileName())}};
     }
     return rows;
+}
+
+QVariantList Application::homeRecent()
+{
+    QVariantList rows;
+    for (const auto &entry : m_recent.entries()) {
+        const QString path = QString::fromStdString(entry);
+        const QFileInfo info(path);
+        const auto opened = m_recent.opened(entry);
+        rows << QVariantMap{{QStringLiteral("path"), QDir::toNativeSeparators(path)},
+                            {QStringLiteral("name"), info.fileName()},
+                            {QStringLiteral("folder"), QDir::toNativeSeparators(info.path())},
+                            {QStringLiteral("opened"), opened ? QDateTime::fromMSecsSinceEpoch(*opened) : QDateTime()},
+                            {QStringLiteral("missing"), recentMissing(entry)}};
+    }
+    return rows;
+}
+
+void Application::removeRecent(const QString &path)
+{
+    // Home shows native separators; the list keeps the path as it was added.
+    for (const auto &entry : m_recent.entries())
+        if (QDir::toNativeSeparators(QString::fromStdString(entry)) == path) {
+            m_recent.remove(entry);
+            storeRecent();
+            return;
+        }
+}
+
+void Application::removeMissingRecent()
+{
+    if (m_recent.prune(recentMissing))
+        storeRecent();
 }
 
 void Application::recordFileTime(application::DocumentId document)
@@ -5222,7 +5280,7 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     auto &store = m_settings->settings();
     std::vector<std::pair<std::string_view, application::SettingValue>> kept;
     // The appearance is not an option: ResetDefault leaves it, as it left the theme.
-    std::vector<std::string_view> keep{"recent.subtitles", "recent.video", "recent.audio",
+    std::vector<std::string_view> keep{"recent.subtitles", "recent.subtitlesOpened", "recent.video", "recent.audio",
                                        application::kAutomationHotkeysSetting, application::kHotkeysSetting,
                                        application::kAudioHotkeysSetting};
     const auto appearance = appearanceSettings();
