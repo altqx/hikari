@@ -19,6 +19,7 @@
 //   Editor: 1
 //   Audio: <path>              <- only an audio file other than the video
 //   Keyframes: <path>          <- only when a keyframes file was opened
+//   Layout: <json>             <- WS1: the tab's panel arrangement, one line
 //   Tab: 1
 //   ...
 //
@@ -28,6 +29,10 @@
 // line (numbers through wxAtoi); a tab is finished by the next "Tab: " line
 // other than "Tab: 0" or by the last line, so a session with no tab lines
 // still gives one empty tab, and lines the reader does not know are skipped.
+//
+// "Layout: " is the rewrite's own field (WS1-session-layout): each Document
+// tab's panel arrangement (ui::WorkspaceArrangement, its compact envelope).
+// Legacy skips the line as it skips every line it does not know.
 //
 // Departures (approved, docs/qt/compatibility-decisions.md):
 // - C05-audio-association: legacy never reset the Audio field between tabs,
@@ -55,6 +60,7 @@ struct SessionTab {
     bool editor = true;    // "Editor: " (0: the video player layout)
     std::string audio;     // "Audio: "; written only when not "" and not the video
     std::string keyframes; // "Keyframes: "
+    std::string layout;    // "Layout: " (WS1), written only when not ""
     bool operator==(const SessionTab &) const = default;
 };
 
