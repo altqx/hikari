@@ -493,15 +493,28 @@ private slots:
         QStringList lines = application->settingsStore()->list("shortcuts.hotkeys");
         lines << QStringLiteral("GLOBAL_VIEW_ALL G=Ctrl-Alt-1") << QStringLiteral("GLOBAL_EDITOR G=Ctrl-E");
         application->settingsStore()->set("shortcuts.hotkeys", lines);
+        // The shortcut editor binds any command for the Audio window too: that
+        // binding is in the audio list.
+        QStringList audio = application->settingsStore()->list("shortcuts.audioHotkeys");
+        audio << QStringLiteral("GLOBAL_VIEW_SUBS A=Ctrl-Alt-5");
+        application->settingsStore()->set("shortcuts.audioHotkeys", audio);
         stop();
         start();
         const QString log = application->log().history();
         QVERIFY2(log.contains(QStringLiteral("The shortcut Ctrl-Alt-1 of \"View all\" was removed")), qPrintable(log));
         QVERIFY2(log.contains(QStringLiteral("The shortcut Ctrl-E of \"Enable / Disable editor\" was removed")),
                  qPrintable(log));
-        for (const QString &line : application->settingsStore()->list("shortcuts.hotkeys"))
-            QVERIFY2(!line.startsWith(QLatin1String("GLOBAL_VIEW_")) && !line.startsWith(QLatin1String("GLOBAL_EDITOR ")),
-                     qPrintable(line));
+        QVERIFY2(log.contains(QStringLiteral("The shortcut Ctrl-Alt-5 of \"View only subtitles\" was removed")),
+                 qPrintable(log));
+        for (const char *list : {"shortcuts.hotkeys", "shortcuts.audioHotkeys"})
+            for (const QString &line : application->settingsStore()->list(list))
+                QVERIFY2(!line.startsWith(QLatin1String("GLOBAL_VIEW_")) && !line.startsWith(QLatin1String("GLOBAL_EDITOR ")),
+                         qPrintable(line));
+        // Given once: the next start reads the lists without them.
+        stop();
+        start();
+        QVERIFY2(!application->log().history().contains(QStringLiteral("was removed")),
+                 qPrintable(application->log().history()));
         QVERIFY(application->hotkeys().accelOf(QStringLiteral("GLOBAL_EDITOR"), 0).isEmpty());
         for (const QString &symbol : retired) {
             QVariant ran;

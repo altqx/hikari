@@ -242,12 +242,18 @@ void HotkeysController::load()
     // GLOBAL_VIDEO_INDEXING, from a carried-over Hotkeys.txt) is dropped with
     // a notice, and the list is written without it so the notice is given once.
     // WS3-view-arrangements-retired: the same for the View arrangements and
-    // the editor switch.
+    // the editor switch. A binding for the Audio window is in the audio
+    // list, which is written again too.
     const auto dropped = application::dropRetiredHotkeys(m_live);
-    for (const auto &[key, hotkey] : dropped)
+    bool main = false, audio = false;
+    for (const auto &[key, hotkey] : dropped) {
         m_retiredNotices << retiredNotice(key.id).arg(qs(hotkey.accel));
-    if (!dropped.empty())
+        (key.type == application::AudioHotkey ? audio : main) = true;
+    }
+    if (main)
         m_settings.set(kMainSetting, qLines(application::hotkeyLines(m_live, false)));
+    if (audio)
+        m_settings.set(kAudioSetting, qLines(application::hotkeyLines(m_live, true)));
 }
 
 void HotkeysController::saveMain()
