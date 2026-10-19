@@ -1309,6 +1309,10 @@ void Application::openAudioFromVideo()
 {
     const auto &video = m_video->session();
     if (video.state() == application::VideoSession::State::Ready) {
+        // AV3: a dummy video's audio is its silence, the video's own as when
+        // it opened (no AudioPath of the tab's)
+        if (const QString own = dummyVideoAudio(QString::fromStdString(video.path())); !own.isEmpty())
+            return m_audio->openAudio(own);
         m_audio->openAudio(QString::fromStdString(video.path()));
         // P9: legacy AudioPath = VideoPath (OpenAudioInTab with no path).
         if (const auto target = m_workspace.editingTarget())
