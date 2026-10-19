@@ -12,6 +12,7 @@
 #include <QDeadlineTimer>
 #include <QFile>
 #include <QGuiApplication>
+#include <QKeyEvent>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QTemporaryDir>
@@ -67,6 +68,30 @@ protected:
     }
 };
 
+QString nameOf(const QObject *o)
+{
+    if (!o)
+        return QStringLiteral("none");
+    if (!o->objectName().isEmpty())
+        return o->objectName();
+    if (const auto *w = qobject_cast<const QWindow *>(o); w && !w->title().isEmpty())
+        return w->title();
+    return QString::fromLatin1(o->metaObject()->className());
+}
+
+// Each key a window receives, with the item it goes to.
+class KeyLog : public QObject {
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override
+    {
+        if (event->type() == QEvent::KeyPress)
+            if (auto *w = qobject_cast<QQuickWindow *>(watched))
+                std::printf("key %d to %s, focus %s\n", static_cast<QKeyEvent *>(event)->key(), qPrintable(nameOf(w)),
+                            qPrintable(nameOf(w->activeFocusItem())));
+        return false;
+    }
+};
+
 std::int64_t ms(hikari::core::DocumentTime t)
 {
     return t.microseconds() / 1000;
@@ -103,12 +128,17 @@ int main(int argc, char **argv)
     auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
     // Where the keys go: Spix posts plain key presses to the window, so they
     // reach the focused item.
-    QObject::connect(window, &QQuickWindow::activeFocusItemChanged, window, [window] {
-        const auto *f = window->activeFocusItem();
-        std::printf("focus %s\n", f ? qPrintable(f->objectName().isEmpty() ? QString::fromLatin1(f->metaObject()->className())
-                                                                            : f->objectName())
-                                     : "none");
+    QObject::connect(window, &QQuickWindow::activeFocusItemChanged, window,
+                     [window] { std::printf("focus %s\n", qPrintable(nameOf(window->activeFocusItem()))); });
+    QObject::connect(&app, &QGuiApplication::focusWindowChanged, &app, [](QWindow *w) {
+        QStringList shown;
+        for (const QWindow *t : QGuiApplication::topLevelWindows())
+            if (t->isVisible())
+                shown.append(nameOf(t));
+        std::printf("focus window %s (shown: %s)\n", qPrintable(nameOf(w)), qPrintable(shown.join(QStringLiteral(", "))));
     });
+    KeyLog keys;
+    app.installEventFilter(&keys);
     window->requestActivate();
     QDeadlineTimer deadline(10'000);
     while (!(window->isExposed() && window->isActive()) && !deadline.hasExpired())
