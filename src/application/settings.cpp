@@ -268,6 +268,10 @@ const std::vector<SettingDefinition> &definitions()
         // indexing was off). Chosen here only, never as a fallback; other
         // platforms ignore it.
         {"video.playbackPlayer", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        // SH2: when each recent subtitles file was last opened, for the Home
+        // page: "<ms since the epoch> <path>" per entry of recent.subtitles
+        // (RecentFiles::openedRecords). Legacy kept the paths only.
+        {"recent.subtitlesOpened", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // ADR 0019: "Install updates automatically": an installer, AppImage,
         // deb or rpm copy downloads an update and installs it at the next
         // quit; off, it only says that one exists. Legacy keeps it as

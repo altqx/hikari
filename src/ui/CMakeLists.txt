@@ -25,6 +25,8 @@ qt_add_qml_module(hikari_ui
         DocumentTabBar.qml SessionWindows.qml)
 # TS1: the Shift times panel and the dock-form pieces it is built from.
 qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
+# SH2: the Home page, while no Document is open.
+qt_target_qml_sources(hikari_ui QML_FILES HomePage.qml)
 # E6: the Line editor's tag list.
 qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
 # LE5: the custom tag buttons, as the strip shows them, and their popover.
