@@ -594,6 +594,7 @@ private slots:
         QVERIFY(l.deleteSavedLayout(QStringLiteral("First")));
         QVERIFY(namesInFile(layoutsFile()).isEmpty());
         QCOMPARE(switcherText(), QStringLiteral("Editing"));
+        QVERIFY2(l.notice().isEmpty(), qPrintable(l.notice())); // the write went through
         stop();
 
         // Nor is a file larger than the next start reads: the layouts would be lost.

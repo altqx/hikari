@@ -780,15 +780,21 @@ bool WorkspaceLayoutController::writeSavedLayouts()
     o.insert(QStringLiteral("layouts"), layouts);
     const QByteArray bytes = QJsonDocument(o).toJson(QJsonDocument::Indented);
     // A file larger than the next start reads would lose every saved layout.
-    if (bytes.size() > kMaximumBytes)
+    if (bytes.size() > kMaximumBytes) {
         m_notice = QCoreApplication::translate("HikariSub.Workspace",
                                                "The saved layouts were not changed: together they would be larger than %1 bytes. Delete layouts you no longer use first.")
                        .arg(kMaximumBytes);
-    else if (writeAtomically(m_savedFile, bytes))
+    } else if (writeAtomically(m_savedFile, bytes)) {
+        // An earlier write's failure is over (the caller says changed()).
+        if (!m_writeFailure.isEmpty() && m_notice == m_writeFailure)
+            m_notice.clear();
+        m_writeFailure.clear();
         return true;
-    else
+    } else {
         m_notice = QCoreApplication::translate("HikariSub.Workspace", "The saved layouts could not be written to %1.")
                        .arg(QDir::toNativeSeparators(m_savedFile));
+    }
+    m_writeFailure = m_notice;
     emit changed();
     return false;
 }

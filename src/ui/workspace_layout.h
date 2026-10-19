@@ -235,6 +235,7 @@ private:
     std::vector<SavedLayout> m_saved;
     QString m_savedFile;
     bool m_savedLocked = false;
+    QString m_writeFailure; // the notice of the last saved-layouts write that failed
 
     struct Tab {
         std::optional<WorkspaceArrangement> arrangement;
