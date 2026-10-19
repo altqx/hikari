@@ -266,6 +266,27 @@ private slots:
         QCOMPARE(topLeft(placed.value(QStringLiteral("mainWindows")).toArray().first().toObject()), QPoint(10, 20));
         QCOMPARE(topLeft(placed.value(QStringLiteral("floatingWindows")).toArray().first().toObject()), QPoint(210, 80));
         QCOMPARE(lastFloating(placed.value(QStringLiteral("allDockWidgets")).toArray().at(0)).value(QStringLiteral("x")).toInt(), 30);
+        // A maximized main window: its normal place is a screen position too,
+        // kept at the main window's top-left and read back from the origin.
+        QJsonObject maximized = QJsonDocument::fromJson(arrangement.payload).object();
+        QJsonArray mains = maximized.value(QStringLiteral("mainWindows")).toArray();
+        QJsonObject full = mains.first().toObject();
+        full.insert(QStringLiteral("geometry"), QJsonObject({{"x", 0}, {"y", 0}, {"width", 2560}, {"height", 1440}}));
+        mains.replace(0, full);
+        maximized.insert(QStringLiteral("mainWindows"), mains);
+        const QByteArray maximizedText =
+            ui::WorkspaceArrangement{QStringLiteral("Timing"), QJsonDocument(maximized).toJson(QJsonDocument::Compact)}
+                .serialiseForFile();
+        const QJsonObject maximizedMain = QJsonDocument::fromJson(QByteArray::fromBase64(maximizedText))
+                                              .object().value(QStringLiteral("payload")).toObject()
+                                              .value(QStringLiteral("mainWindows")).toArray().first().toObject();
+        QCOMPARE(maximizedMain.value(QStringLiteral("normalGeometry")).toObject(),
+                 QJsonObject({{"x", 0}, {"y", 0}, {"width", 1200}, {"height", 800}}));
+        const auto maximizedRead = ui::WorkspaceArrangement::parseFromFile(maximizedText, QPoint(10, 20));
+        QVERIFY(maximizedRead);
+        QCOMPARE(QJsonDocument::fromJson(maximizedRead->payload).object().value(QStringLiteral("mainWindows")).toArray()
+                     .first().toObject().value(QStringLiteral("normalGeometry")).toObject(),
+                 QJsonObject({{"x", 10}, {"y", 20}, {"width", 1200}, {"height", 800}}));
         // A preset alone, and text that is not one.
         const auto alone = ui::WorkspaceArrangement::parseFromFile(ui::WorkspaceArrangement{QStringLiteral("Translation"), {}}.serialiseForFile(), {});
         QVERIFY(alone && alone->payload.isEmpty() && alone->preset == QStringLiteral("Translation"));
@@ -391,6 +412,42 @@ private slots:
         QCOMPARE(application->tabs().size(), qsizetype(1));
         QTRY_VERIFY(!isOpen("videoDock"));
         QVERIFY(isFloating("audioDock"));
+        stop();
+    }
+
+    // A file opened before the window's first arrangement (from the command
+    // line, before the window exists) places its floating panels from where
+    // the main window then comes, not from the screen's corner.
+    void aFileOpenedBeforeTheWindowPlacesItsPanelsFromIt()
+    {
+        const QByteArray layout = fileLayout();
+        const QPoint offset = floatingOffset(payloadOf(layout));
+        const QString file = write(path("early.ass"), kAss + "\n[Hikari]\nLayout=" + layout + "\n");
+        // A layout file with the main window away from the corner.
+        start();
+        window()->setPosition(140, 90);
+        QTRY_COMPARE(window()->position(), QPoint(140, 90));
+        QVERIFY(application->workspaceLayout().save());
+        application->endSession();
+        engine.reset();
+        application.reset();
+
+        app::Application::Options options;
+        options.settingsFile = path("hikari.ini");
+        options.playbackAudio = false;
+        application = std::make_unique<app::Application>(options);
+        QVERIFY(application->openFile(file)); // as composition.cpp does, before attachDocking
+        engine = std::make_unique<QQmlApplicationEngine>();
+        QVERIFY(ui::attachDocking(*engine));
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(QTest::qWaitForWindowExposed(window()));
+        QTRY_VERIFY(window()->property("arrangementSettled").toBool());
+        QTRY_COMPARE(window()->position(), QPoint(140, 90));
+        QTRY_VERIFY(!isOpen("videoDock"));
+        QVERIFY(isFloating("audioDock"));
+        QTRY_COMPARE(shownFloatingOffset(), offset);
         stop();
     }
 

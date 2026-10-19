@@ -23,6 +23,8 @@
 #include <QScreen>
 #include <QTimer>
 
+#include <utility>
+
 namespace hikari::ui {
 
 namespace {
@@ -153,6 +155,12 @@ namespace {
 
 // WS2: a saved rectangle ({"x", "y", "width", "height"}) under `key`, moved
 // by `by`; an empty one (a window that never had a place) stays.
+QPoint rectTopLeft(const QJsonObject &holder, const QString &key)
+{
+    const QJsonObject rect = holder.value(key).toObject();
+    return {rect.value(QStringLiteral("x")).toInt(), rect.value(QStringLiteral("y")).toInt()};
+}
+
 void moveRect(QJsonObject &holder, const QString &key, QPoint by)
 {
     QJsonObject rect = holder.value(key).toObject();
@@ -183,12 +191,15 @@ QByteArray moveWindows(const QByteArray &payload, QPoint by, bool forFile)
 {
     QJsonObject o = QJsonDocument::fromJson(payload).object();
     const QString screen = QStringLiteral("screenIndex"), screenSize = QStringLiteral("screenSize");
-    auto windows = [&](const QString &key) {
+    auto windows = [&](const QString &key, bool main) {
         QJsonArray list = o.value(key).toArray();
         for (qsizetype i = 0; i < list.size(); ++i) {
             QJsonObject window = list.at(i).toObject();
             moveRect(window, QStringLiteral("geometry"), by);
-            moveRect(window, QStringLiteral("normalGeometry"), by);
+            // A maximized main window's normal place is a screen position of
+            // its own: the file keeps it at the main window's top-left too.
+            const QString normal = QStringLiteral("normalGeometry");
+            moveRect(window, normal, forFile && main ? -rectTopLeft(window, normal) : by);
             if (forFile) {
                 window.remove(screen);
                 window.remove(screenSize);
@@ -197,8 +208,8 @@ QByteArray moveWindows(const QByteArray &payload, QPoint by, bool forFile)
         }
         o.insert(key, list);
     };
-    windows(QStringLiteral("mainWindows"));
-    windows(QStringLiteral("floatingWindows"));
+    windows(QStringLiteral("mainWindows"), true);
+    windows(QStringLiteral("floatingWindows"), false);
     QJsonArray docks = o.value(QStringLiteral("allDockWidgets")).toArray();
     for (qsizetype i = 0; i < docks.size(); ++i) {
         QJsonObject dock = docks.at(i).toObject();
@@ -334,6 +345,12 @@ bool WorkspaceLayoutController::restoreSaved()
 {
     m_loaded = true;
     const bool restored = restoreSavedFile();
+    // WS2: files opened before this place their windows from the main
+    // window's top-left now.
+    const QPoint origin = mainWindowPosition(QJsonDocument::fromJson(KDDockWidgets::LayoutSaver().serializeLayout()).object());
+    for (auto &[id, t] : m_tabs)
+        if (std::exchange(t.unplaced, false) && t.arrangement && !t.arrangement->payload.isEmpty())
+            t.arrangement->payload = moveWindows(t.arrangement->payload, origin, false);
     // WS1: the current tab's own arrangement (from the Session, or the
     // Translation preset of a TLMode file opened before the first frame);
     // without one the tab takes the arrangement just restored.
@@ -749,6 +766,7 @@ void WorkspaceLayoutController::giveTab(std::uint64_t tab, const WorkspaceArrang
     t.arrangement = arrangement;
     t.full.clear();
     t.timingHidden = false;
+    t.unplaced = false;
     if (m_tab == tab && m_loaded) {
         m_full.clear();
         m_timingHidden = false;
@@ -764,14 +782,17 @@ QByteArray WorkspaceLayoutController::fileArrangement(std::uint64_t tab) const
 
 bool WorkspaceLayoutController::setFileArrangement(std::uint64_t tab, const QByteArray &text, QString *problem)
 {
-    // Where the main window is now, as the engine would save it.
+    // Where the main window is now, as the engine would save it. A file
+    // opened before its first arrangement (from the command line, before
+    // the window exists) is placed when restoreSaved has put it somewhere.
     QPoint origin;
-    if (KDDockWidgets::Core::Platform::instance())
+    if (m_loaded)
         origin = mainWindowPosition(QJsonDocument::fromJson(KDDockWidgets::LayoutSaver().serializeLayout()).object());
     const auto arrangement = WorkspaceArrangement::parseFromFile(text, origin, problem);
     if (!arrangement)
         return false;
     giveTab(tab, *arrangement);
+    m_tabs[tab].unplaced = !m_loaded;
     return true;
 }
 

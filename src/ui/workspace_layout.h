@@ -165,8 +165,9 @@ public:
     // (serialiseForFile); empty for a tab that has none yet.
     QByteArray fileArrangement(std::uint64_t tab) const;
     // WS2: the arrangement `tab`'s subtitle file holds, its floating panels
-    // placed from the main window as it is now. One that does not validate
-    // leaves the tab as it was: false, with `problem` naming why.
+    // placed from the main window as it is now (before the window's first
+    // arrangement, from where restoreSaved puts it). One that does not
+    // validate leaves the tab as it was: false, with `problem` naming why.
     bool setFileArrangement(std::uint64_t tab, const QByteArray &text, QString *problem = nullptr);
 
     QString notice() const { return m_notice; }
@@ -205,6 +206,9 @@ private:
         std::optional<WorkspaceArrangement> arrangement;
         QByteArray full; // m_full while the tab was shown
         bool timingHidden = false; // m_timingHidden while the tab was shown
+        // WS2: a file's arrangement taken before the main window had its
+        // place, its windows still from (0, 0) until restoreSaved.
+        bool unplaced = false;
     };
     std::map<std::uint64_t, Tab> m_tabs;
     std::optional<std::uint64_t> m_tab; // the tab the engine shows
