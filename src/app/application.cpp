@@ -664,6 +664,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_log->log(QCoreApplication::translate("HikariSub.Video", "Cannot change YCbCr matrix"));
     });
     setUpTranslationControls(); // E5
+    setUpFileArrangements();    // WS2
     // P10: the status bar's fields from the video, its view and the editing target.
     m_statusBar = std::make_unique<ui::StatusBarController>(*m_video, *m_visualTools, [this]() -> const core::Document * {
         auto *session = targetSession();
@@ -1428,6 +1429,11 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
         (void)application::filterLines(*session, settings, {}, true);
     }
     m_workspace.add(*id, QFileInfo(path).fileName().toStdString(), asReference);
+    // WS2: the tab takes the arrangement its file keeps (a Session's, set
+    // after this, takes precedence).
+    if (!asReference)
+        if (const auto file = fileArrangement(*id, true))
+            m_workspaceLayout->setFileArrangement(id->value, *file);
     recordFileTime(*id);
     if (!asReference)
         rememberRecent(QFileInfo(path).absoluteFilePath().toStdString());

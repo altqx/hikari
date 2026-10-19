@@ -1328,6 +1328,17 @@ private:
     void replaceTabArrangement(application::DocumentId old, application::DocumentId replacement,
                                ui::WorkspaceLayoutController::TabStart start);
     ui::WorkspaceLayoutController::TabStart tabStart(application::DocumentId document) const;
+    // WS2: each ASS file keeps its tab's arrangement in a [Hikari] section
+    // ("Save panel layout in subtitle files", subtitles.layoutInFile). A
+    // save writes the tab's; an opened file's tab takes the file's, the
+    // Session's taking precedence when a Session is restored.
+    void setUpFileArrangements();
+    // The arrangement the Document's file holds, when the setting is on and
+    // it validates; `report`: one that does not is named in the log.
+    std::optional<QByteArray> fileArrangement(application::DocumentId document, bool report = false);
+    // A file opened into the tab of `old`: the arrangement its file holds,
+    // else WS1's start.
+    void openIntoTabArrangement(application::DocumentId old, application::DocumentId replacement);
 
     // O5 (application_language.cpp): the language from PROGRAM_LANGUAGE at
     // start and whenever the setting changes; the strings the application

@@ -234,8 +234,9 @@ void Application::replaceTarget(application::DocumentId replacement, bool keepMe
     m_files->close(*old);
     m_workspace.replace(*old, replacement);
     // WS1: the tab keeps its arrangement; a TLMode file opened into it
-    // starts with the Translation preset, as in a tab of its own.
-    replaceTabArrangement(*old, replacement, tabStart(replacement));
+    // starts with the Translation preset, as in a tab of its own. WS2: a
+    // file that keeps an arrangement brings it.
+    openIntoTabArrangement(*old, replacement);
     // R1: SubsGrid::Clearing deletes the tab's table; CG1/CG2 still name the
     // tab (HikariSubFrame.cpp:1386-1395 then finds no table to remove).
     m_comparison.replaced(*old, replacement);
@@ -273,6 +274,55 @@ void Application::registerTabArrangements()
 {
     for (const auto id : m_workspace.tabs())
         m_workspaceLayout->addTab(id.value, tabStart(id));
+}
+
+// --- each tab's arrangement in its ASS file (WS2) --------------------------------
+
+namespace {
+constexpr const char *kLayoutInFile = "subtitles.layoutInFile";
+} // namespace
+
+void Application::setUpFileArrangements()
+{
+    m_files->setLayoutSource([this](application::DocumentId document) -> std::optional<std::u8string> {
+        if (!m_settings->boolean(kLayoutInFile))
+            return std::nullopt; // an existing section stays as it is
+        const QByteArray text = m_workspaceLayout->fileArrangement(document.value);
+        if (text.isEmpty())
+            return std::nullopt;
+        return std::u8string(reinterpret_cast<const char8_t *>(text.constData()), static_cast<std::size_t>(text.size()));
+    });
+}
+
+std::optional<QByteArray> Application::fileArrangement(application::DocumentId document, bool report)
+{
+    // Off, a file's arrangement is neither used nor written: one the saves
+    // no longer update would come back at every open.
+    if (!m_settings->boolean(kLayoutInFile))
+        return std::nullopt;
+    const auto *session = m_files->session(document);
+    const auto layout = session ? session->document().hikariProperty(application::kLayoutKey) : std::nullopt;
+    if (!layout)
+        return std::nullopt;
+    const QByteArray text(reinterpret_cast<const char *>(layout->data()), static_cast<qsizetype>(layout->size()));
+    QString problem;
+    if (ui::WorkspaceArrangement::parseFromFile(text, {}, &problem))
+        return text;
+    if (report) {
+        const std::string *title = m_workspace.title(document);
+        m_log->log(QCoreApplication::translate("HikariSub.Workspace", "The panel layout saved in %1 was not used because %2.")
+                       .arg(title ? qs(*title) : QString(), problem),
+                   true); // silent: the tab opens as any other
+    }
+    return std::nullopt;
+}
+
+void Application::openIntoTabArrangement(application::DocumentId old, application::DocumentId replacement)
+{
+    const auto file = fileArrangement(replacement);
+    replaceTabArrangement(old, replacement, file ? ui::WorkspaceLayoutController::TabStart::Copy : tabStart(replacement));
+    if (file)
+        m_workspaceLayout->setFileArrangement(replacement.value, *file);
 }
 
 void Application::showTabArrangement()
