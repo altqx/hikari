@@ -399,11 +399,19 @@ bool WorkspaceLayoutController::hasBackup() const
 bool WorkspaceLayoutController::restoreBackup()
 {
     const auto bytes = readFile(backupFile());
-    const auto payload = bytes ? payloadOf(*bytes, nullptr) : std::nullopt;
+    QString preset, layout;
+    const auto payload = bytes ? payloadOf(*bytes, nullptr, &preset, &layout) : std::nullopt;
     if (!payload)
         return false;
     if (!restorePayload(*payload))
         return false;
+    // WS3: the arrangement the backup names comes back with it (the switcher,
+    // Reset this layout and the next save read them).
+    if (preset != m_preset || layout != m_layout) {
+        m_preset = preset;
+        m_layout = layout;
+        emit changed();
+    }
     dismissNotice();
     save();
     return true;

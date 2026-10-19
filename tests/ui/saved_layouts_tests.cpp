@@ -384,6 +384,33 @@ private slots:
         stop();
     }
 
+    // Restore the previous layout takes back the arrangement the backup
+    // names too: the switcher and Reset this layout follow it.
+    void theBackupNamesItsLayout()
+    {
+        start();
+        close("audioDock");
+        saveAs(QStringLiteral("Foo"));
+        trigger(QStringLiteral("viewLayoutPresetEditing"));
+        QTRY_VERIFY(isOpen("audioDock"));
+        QVERIFY(QMetaObject::invokeMethod(savedItem("viewLayout", QStringLiteral("Foo")), "triggered"));
+        QTRY_COMPARE(switcherText(), QStringLiteral("Foo"));
+        QVERIFY(!isOpen("audioDock"));
+        QVERIFY(layouts().restoreBackup()); // Editing, as it was before Foo
+        QTRY_VERIFY(isOpen("audioDock"));
+        QCOMPARE(switcherText(), QStringLiteral("Editing"));
+        QVERIFY(layouts().layout().isEmpty());
+        QVERIFY(layouts().restoreBackup()); // Foo again (each restore saves: the backup is the other)
+        QTRY_VERIFY(!isOpen("audioDock"));
+        QCOMPARE(switcherText(), QStringLiteral("Foo"));
+        QVERIFY(layouts().restoreBackup());
+        QTRY_COMPARE(switcherText(), QStringLiteral("Editing"));
+        trigger(QStringLiteral("viewLayoutReset"));
+        QVERIFY(isOpen("audioDock")); // Editing's, not Foo's
+        QCOMPARE(switcherText(), QStringLiteral("Editing"));
+        stop();
+    }
+
     // The names Save layout as… and Manage layouts… refuse, and saving under
     // a name in use (in any case) replaces that layout.
     void namesAndReplacing()
