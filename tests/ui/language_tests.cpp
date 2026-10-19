@@ -48,6 +48,14 @@ QByteArray readAll(const QString &path)
     return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
 }
 
+// A saved ASS file without the [Hikari] section a save adds at its end (WS2):
+// the tab's arrangement, which is not document content.
+QByteArray withoutLayout(const QByteArray &saved)
+{
+    const qsizetype at = saved.lastIndexOf("[Hikari]");
+    return at < 0 ? saved : saved.left(at);
+}
+
 // Every source text the rewrite's catalogs key (i18n/migration/keys.ts, the
 // keys lupdate extracts from the sources).
 QSet<QString> catalogSources()
@@ -747,7 +755,8 @@ private slots:
                 const QString path = dir.filePath(QStringLiteral("saved-%1-%2.ass").arg(QLatin1String(tag)).arg(int(pseudo)));
                 QVERIFY(application->saveAs(path));
                 application->waitForWrites();
-                QCOMPARE(readAll(path), readAll(english));
+                QVERIFY(readAll(path).contains("[Hikari]"));
+                QCOMPARE(withoutLayout(readAll(path)), withoutLayout(readAll(english)));
             }
             application->localisation().setPseudo(app::Localisation::Pseudo::None);
         }

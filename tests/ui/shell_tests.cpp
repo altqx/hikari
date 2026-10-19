@@ -8263,8 +8263,13 @@ private slots:
         application->waitForWrites();
         QFile saved(ass);
         QVERIFY(saved.open(QIODevice::ReadOnly));
-        // S4: the save adds the active Line's row after TLMode.
-        QCOMPARE(saved.readAll(), QByteArray("[Script Info]\nTLMode: Yes\nActive Line: 0\n\n") + body);
+        // S4: the save adds the active Line's row after TLMode; WS2: and the
+        // tab's arrangement at the end.
+        const QByteArray bytes = saved.readAll();
+        const QByteArray expected = QByteArray("[Script Info]\nTLMode: Yes\nActive Line: 0\n\n") + body + "\n[Hikari]\nLayout=";
+        QCOMPARE(bytes.left(expected.size()), expected);
+        QCOMPARE(bytes.count('\n'), expected.count('\n') + 1);
+        QVERIFY(bytes.endsWith("\n"));
 
         const QString text = dir.filePath(QStringLiteral("e5-plain.txt"));
         {
