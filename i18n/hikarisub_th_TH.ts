@@ -8112,6 +8112,10 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Some saved layouts were not read: they have no name, or a name listed before. The file as it was is kept at %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The saved layouts at %1 could not be read or copied: they are not used and not changed.</source>
         <translation type="unfinished"></translation>
     </message>

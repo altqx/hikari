@@ -672,19 +672,35 @@ void WorkspaceLayoutController::readSavedLayouts()
                        .arg(problem, QDir::toNativeSeparators(kept));
         return;
     }
+    bool skipped = false;
     for (const auto &value : o.value(QStringLiteral("layouts")).toArray()) {
         const QJsonObject record = value.toObject();
         SavedLayout saved;
         saved.name = record.value(QStringLiteral("name")).toString().trimmed();
         saved.record = record;
-        if (saved.name.isEmpty() || savedLayoutIndex(saved.name) >= 0)
-            continue; // no name, or one already listed: not a layout to offer
+        if (!value.isObject() || saved.name.isEmpty() || savedLayoutIndex(saved.name) >= 0) {
+            skipped = true; // not a record, no name, or one already listed: not a layout to offer
+            continue;
+        }
         const QByteArray arrangement =
             QJsonDocument(record.value(QStringLiteral("arrangement")).toObject()).toJson(QJsonDocument::Compact);
         saved.arrangement = WorkspaceArrangement::parse(arrangement, &saved.problem);
         if (saved.arrangement)
             saved.arrangement->layout = saved.name;
         m_saved.push_back(std::move(saved));
+    }
+    // The next write leaves out what was skipped: the file as it was is kept
+    // aside first, or not written over at all.
+    if (skipped) {
+        const QString kept = m_savedFile + QStringLiteral(".unrestored");
+        if (!keepAside(m_savedFile, kept)) {
+            m_saved.clear();
+            lockSavedLayouts();
+            return;
+        }
+        m_notice = QCoreApplication::translate("HikariSub.Workspace",
+                                               "Some saved layouts were not read: they have no name, or a name listed before. The file as it was is kept at %1.")
+                       .arg(QDir::toNativeSeparators(kept));
     }
 }
 

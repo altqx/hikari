@@ -555,6 +555,21 @@ private slots:
         QCOMPARE(written[1].toObject(), newer); // as it was read
         stop();
 
+        // Records the list cannot offer (not a record, no name, a name listed
+        // before) are not written away: the file as it was is kept aside, and
+        // the other layouts are used.
+        QJsonArray odd{written[0], QJsonObject{{QStringLiteral("arrangement"), written[0].toObject().value(QStringLiteral("arrangement"))}},
+                       written[0], 42};
+        const QByteArray withOdd = QJsonDocument(QJsonObject{{QStringLiteral("schema"), 1}, {QStringLiteral("layouts"), odd}}).toJson();
+        QVERIFY(writeAll(layoutsFile(), withOdd));
+        start();
+        QCOMPARE(layouts().savedLayouts().size(), 1);
+        QVERIFY2(layouts().notice().contains(QStringLiteral("layouts.json.unrestored")), qPrintable(layouts().notice()));
+        QCOMPARE(readAll(layoutsFile() + QStringLiteral(".unrestored")), withOdd);
+        saveAs(QStringLiteral("Odd ones kept"));
+        QCOMPARE(readAll(layoutsFile() + QStringLiteral(".unrestored")), withOdd);
+        stop();
+
         // A broken file, one without its list of layouts, or one too large
         // to read is kept aside whole.
         // (No raw strings with unbalanced braces here: moc misreads them.)
