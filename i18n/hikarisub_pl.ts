@@ -1293,6 +1293,10 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
         <translation>Położenie tekstu</translation>
     </message>
     <message>
+        <source>mixed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Number of characters in each line.
 No more than 43 characters per line (maximum 2 lines).</source>
         <translation>Ilość znaków w każdej linijce.
@@ -1306,7 +1310,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Time</source>
-        <translation>Czas</translation>
+        <translation type="vanished">Czas</translation>
     </message>
     <message>
         <source>Show times</source>
@@ -1314,7 +1318,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Frames</source>
-        <translation>Klatki</translation>
+        <translation type="vanished">Klatki</translation>
     </message>
     <message>
         <source>Show frames</source>
@@ -1430,7 +1434,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation>Ukryj tagi w nawiasach</translation>
+        <translation type="vanished">Ukryj tagi w nawiasach</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
@@ -1509,12 +1513,32 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Kolor cienia</translation>
     </message>
     <message>
+        <source>Add a tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Manage tag buttons</source>
-        <translation>Zarządzaj przyciskami tagów</translation>
+        <translation type="vanished">Zarządzaj przyciskami tagów</translation>
     </message>
     <message>
         <source>Change number of buttons</source>
-        <translation>Zmień ilość przycisków</translation>
+        <translation type="vanished">Zmień ilość przycisków</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -1550,7 +1574,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Enter ASS tag</source>
-        <translation>Wpisz tag ASS</translation>
+        <translation type="vanished">Wpisz tag ASS</translation>
     </message>
     <message>
         <source>Tag inserted in place of cursor</source>
@@ -1573,16 +1597,44 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
         <translation>Nazwa przycisku</translation>
     </message>
     <message>
+        <source>Enter a name or choose an icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">Nazwa</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Button tag</source>
         <translation>Tag przycisku</translation>
     </message>
     <message>
-        <source>Save tag</source>
-        <translation>Zapisz tag</translation>
+        <source>Insert</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Number of buttons</source>
+        <source>Icon</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">Brak</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">Podgląd</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">Zapisz</translation>
+    </message>
+    <message>
+        <source>Save tag</source>
+        <translation type="vanished">Zapisz tag</translation>
     </message>
     <message>
         <source>Select whole characters.</source>
@@ -1714,6 +1766,22 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>%1, active line %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the text the button puts in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the tag, for example \blur2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out the braces: the button puts the tag in an override block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A tag starts with a backslash, for example \blur2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3692,6 +3760,10 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation>Konwersja z jednego formatu napisów na inny</translation>
     </message>
     <message>
+        <source>Hide tags in the line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opens the HikariSub website in the default browser</source>
         <translation>Otwiera stronę HikariSub w domyślnej przeglądarce</translation>
     </message>
@@ -4447,6 +4519,42 @@ po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
         <source>Set a missing script resolution from the video without asking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show video frames instead of times in the line editor and the subtitle grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide tags in the line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No tag buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit the tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the tag button</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6206,6 +6314,18 @@ Spell checking will be disabled</source>
     <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Missing style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The document has no style named &quot;%1&quot;. Create it from Default?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Prompt</source>
@@ -8252,6 +8372,18 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The panel layout of this tab was not restored because %1. The tab shows the Editing layout.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The panel layout of %1 was not restored because %2. The tab shows the Editing layout.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The layout is kept at %1.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
