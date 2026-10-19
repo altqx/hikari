@@ -727,6 +727,9 @@ private slots:
     void documentIgnoresTheLanguage()
     {
         start();
+        // Every save writes the tab's arrangement ([Hikari], WS2), which the
+        // tab has once the window's first arrangement is shown.
+        QTRY_VERIFY(window->property("arrangementSettled").toBool());
         QVERIFY(application->openFile(episode));
         auto *session = application->files().session(*application->workspace().editingTarget());
         QVERIFY(session);
