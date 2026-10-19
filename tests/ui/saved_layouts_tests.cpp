@@ -411,6 +411,35 @@ private slots:
         stop();
     }
 
+    // A change the layouts file cannot take (here the file's name is a
+    // folder's) is undone with the notice: the saved layouts stay as the file
+    // has them, so the change can be made again once the file can be written.
+    void aChangeNotWrittenIsUndone()
+    {
+        start();
+        auto &l = layouts();
+        saveAs(QStringLiteral("First"));
+        QTRY_COMPARE(switcherText(), QStringLiteral("First"));
+        QVERIFY(QFile::remove(layoutsFile()));
+        QVERIFY(QDir().mkdir(layoutsFile()));
+        QVERIFY(!l.saveLayoutAs(QStringLiteral("Second")));
+        QVERIFY2(l.notice().contains(QStringLiteral("could not be written")), qPrintable(l.notice()));
+        QCOMPARE(l.savedLayouts().size(), 1);
+        QCOMPARE(switcherText(), QStringLiteral("First"));
+        QVERIFY(!l.renameSavedLayout(QStringLiteral("First"), QStringLiteral("Other")));
+        QCOMPARE(l.savedLayoutNamed(QStringLiteral("First")), QStringLiteral("First"));
+        QCOMPARE(switcherText(), QStringLiteral("First"));
+        QVERIFY(!l.deleteSavedLayout(QStringLiteral("First")));
+        QCOMPARE(l.savedLayouts().size(), 1);
+        QCOMPARE(switcherText(), QStringLiteral("First"));
+        QVERIFY(named("viewLayoutManage")->property("enabled").toBool());
+        QVERIFY(QDir().rmdir(layoutsFile()));
+        QVERIFY(l.deleteSavedLayout(QStringLiteral("First")));
+        QVERIFY(namesInFile(layoutsFile()).isEmpty());
+        QCOMPARE(switcherText(), QStringLiteral("Editing"));
+        stop();
+    }
+
     // The names Save layout as… and Manage layouts… refuse, and saving under
     // a name in use (in any case) replaces that layout.
     void namesAndReplacing()

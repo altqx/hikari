@@ -231,6 +231,20 @@ private:
     std::optional<std::uint64_t> m_tab; // the tab the engine shows
     std::optional<WorkspaceArrangement> m_quitArrangement; // shown when the close went ahead
 
+    // WS3: what a change to the saved layouts touches, taken before it. When
+    // the file cannot be written the change is undone, so the saved layouts
+    // stay as the file has them and the change can be made again.
+    struct SavedLayoutsState {
+        std::vector<SavedLayout> saved;
+        std::map<std::uint64_t, Tab> tabs;
+        std::optional<WorkspaceArrangement> quitArrangement;
+        QString layout;
+        QByteArray lastSaved;
+    };
+    SavedLayoutsState savedLayoutsState() const;
+    // The saved layouts written, or `before` put back (with the notice).
+    bool commitSavedLayouts(SavedLayoutsState before);
+
     QString m_file;
     QByteArray m_default;
     QByteArray m_lastSaved;

@@ -755,11 +755,33 @@ void WorkspaceLayoutController::renameLayoutOrigin(const QString &from, const QS
     }
 }
 
+WorkspaceLayoutController::SavedLayoutsState WorkspaceLayoutController::savedLayoutsState() const
+{
+    return {m_saved, m_tabs, m_quitArrangement, m_layout, m_lastSaved};
+}
+
+bool WorkspaceLayoutController::commitSavedLayouts(SavedLayoutsState before)
+{
+    const bool written = writeSavedLayouts();
+    if (!written) {
+        m_saved = std::move(before.saved);
+        m_tabs = std::move(before.tabs);
+        m_quitArrangement = std::move(before.quitArrangement);
+        m_layout = std::move(before.layout);
+        m_lastSaved = std::move(before.lastSaved);
+    }
+    emit savedLayoutsChanged();
+    emit changed();
+    save();
+    return written;
+}
+
 bool WorkspaceLayoutController::saveLayoutAs(const QString &name)
 {
     const QString trimmed = name.trimmed();
     if (!m_loaded || !layoutNameProblem(trimmed).isEmpty())
         return false;
+    SavedLayoutsState before = savedLayoutsState();
     WorkspaceArrangement arrangement = shownArrangement();
     arrangement.layout = trimmed;
     if (const int index = savedLayoutIndex(trimmed); index >= 0) {
@@ -770,13 +792,9 @@ bool WorkspaceLayoutController::saveLayoutAs(const QString &name)
     } else {
         m_saved.push_back(SavedLayout{trimmed, arrangement, {}, {}});
     }
-    const bool written = writeSavedLayouts();
     m_layout = trimmed;
     m_lastSaved.clear();
-    emit savedLayoutsChanged();
-    emit changed();
-    save();
-    return written;
+    return commitSavedLayouts(std::move(before));
 }
 
 bool WorkspaceLayoutController::applySavedLayout(const QString &name)
@@ -808,6 +826,7 @@ bool WorkspaceLayoutController::renameSavedLayout(const QString &from, const QSt
     const QString trimmed = to.trimmed();
     if (index < 0 || !layoutNameProblem(trimmed, from).isEmpty())
         return false;
+    SavedLayoutsState before = savedLayoutsState();
     SavedLayout &saved = m_saved[static_cast<std::size_t>(index)];
     renameLayoutOrigin(saved.name, trimmed);
     saved.name = trimmed;
@@ -815,11 +834,7 @@ bool WorkspaceLayoutController::renameSavedLayout(const QString &from, const QSt
         saved.arrangement->layout = trimmed;
     else
         saved.record.insert(QStringLiteral("name"), trimmed);
-    const bool written = writeSavedLayouts();
-    emit savedLayoutsChanged();
-    emit changed();
-    save();
-    return written;
+    return commitSavedLayouts(std::move(before));
 }
 
 bool WorkspaceLayoutController::deleteSavedLayout(const QString &name)
@@ -827,14 +842,11 @@ bool WorkspaceLayoutController::deleteSavedLayout(const QString &name)
     const int index = savedLayoutIndex(name);
     if (index < 0)
         return false;
+    SavedLayoutsState before = savedLayoutsState();
     // The tabs keep their arrangements; they started from their presets now.
     renameLayoutOrigin(m_saved[static_cast<std::size_t>(index)].name, {});
     m_saved.erase(m_saved.begin() + index);
-    const bool written = writeSavedLayouts();
-    emit savedLayoutsChanged();
-    emit changed();
-    save();
-    return written;
+    return commitSavedLayouts(std::move(before));
 }
 
 int WorkspaceLayoutController::keepFloatingPanelsOnScreen()
