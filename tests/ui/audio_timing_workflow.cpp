@@ -8,6 +8,7 @@
 
 #include "hikari/app/application.h"
 #include "docking.h"
+#include "log_controller.h"
 
 #include <QDeadlineTimer>
 #include <QFile>
@@ -136,6 +137,12 @@ int main(int argc, char **argv)
             if (t->isVisible())
                 shown.append(nameOf(t));
         std::printf("focus window %s (shown: %s)\n", qPrintable(nameOf(w)), qPrintable(shown.join(QStringLiteral(", "))));
+    });
+    // A message that is not silent opens the log window, which takes the
+    // activation from the main window.
+    QObject::connect(&application.log(), &hikari::ui::LogController::changed, &app, [&application] {
+        std::printf("log%s: %s\n", application.log().shown() ? " (shown)" : "",
+                    qPrintable(application.log().lastMessage()));
     });
     KeyLog keys;
     app.installEventFilter(&keys);
