@@ -269,8 +269,15 @@ void Application::replaceTabArrangement(application::DocumentId old, application
         m_layoutDocument = replacement;
 }
 
+void Application::registerTabArrangements()
+{
+    for (const auto id : m_workspace.tabs())
+        m_workspaceLayout->addTab(id.value, tabStart(id));
+}
+
 void Application::showTabArrangement()
 {
+    registerTabArrangements(); // background tabs opened since too
     const auto target = m_workspace.editingTarget();
     if (!target || target == m_layoutDocument)
         return;
@@ -459,6 +466,7 @@ bool Application::saveLastSession(bool closing, const QString &path)
     if (file.isEmpty())
         return false;
     const auto target = m_workspace.editingTarget();
+    registerTabArrangements(); // WS1: a tab opened since the last refresh has its own
     std::vector<application::SessionTab> tabs;
     for (const auto id : m_workspace.tabs()) {
         application::SessionTab tab;

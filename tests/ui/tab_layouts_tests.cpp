@@ -274,6 +274,31 @@ private slots:
         stop();
     }
 
+    // A file opened beside the current tab (it has a file) starts as the
+    // current tab was then, in the Session written at once as well, however
+    // the current tab changes before it is first shown.
+    void aBackgroundTabCopiesTheArrangementItOpenedWith()
+    {
+        start();
+        QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("a.ass")))));
+        float_("audioDock", true);
+        QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("b.ass")))));
+        QCOMPARE(application->tabs().size(), qsizetype(2));
+        QCOMPARE(application->currentTab(), 0);
+        QVERIFY(application->saveLastSession());
+        const auto session = readSession(application->lastSessionPath());
+        QCOMPARE(session.tabs.size(), std::size_t(2));
+        QCOMPARE(layoutOf(session.tabs[1]).preset, QStringLiteral("Editing"));
+        QCOMPARE(QJsonDocument::fromJson(layoutOf(session.tabs[1]).payload).object().value(QStringLiteral("floatingWindows")).toArray().size(), 1);
+        applyPreset("Timing");
+        QTRY_VERIFY(!isOpen("videoDock"));
+        application->selectTab(1);
+        QCOMPARE(preset(), QStringLiteral("Editing"));
+        QVERIFY(isOpen("videoDock"));
+        QVERIFY(isFloating("audioDock"));
+        stop();
+    }
+
     // Several files dropped at once: the first goes into the untouched tab,
     // which keeps its arrangement, also in the Session written meanwhile;
     // the last, a TLMode file in a new tab, is shown with Translation.

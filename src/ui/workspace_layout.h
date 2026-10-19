@@ -132,6 +132,10 @@ public:
     // the Translation preset (a TLMode file). Before the shell's first
     // arrangement (restoreSaved) only the values change.
     void showTab(std::uint64_t tab, TabStart start = TabStart::Copy);
+    // A tab opened, shown or not: unless it has an arrangement, it takes
+    // `start` now (a copy of the arrangement shown, or the Translation
+    // preset), so a background tab starts as the tab was when it opened.
+    void addTab(std::uint64_t tab, TabStart start = TabStart::Copy);
     // The tab's Document was replaced by another (opened into the tab): the
     // tab keeps its arrangement, or takes the Translation preset.
     void replaceTab(std::uint64_t tab, std::uint64_t replacement, TabStart start = TabStart::Copy);

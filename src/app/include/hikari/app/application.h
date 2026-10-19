@@ -1322,6 +1322,7 @@ private:
     // starts its own (the Translation preset for a TLMode file).
     std::optional<application::DocumentId> m_layoutDocument;
     void showTabArrangement();
+    void registerTabArrangements(); // each tab opened takes its start now
     // A tab's Document replaced (opened into it, a retried restore): the
     // tab keeps its arrangement under the new Document's id.
     void replaceTabArrangement(application::DocumentId old, application::DocumentId replacement,

@@ -258,6 +258,13 @@ bool WorkspaceLayoutController::restoreSaved()
             shown.arrangement = shownArrangement();
         }
     }
+    // Tabs opened in the background before it copy it too.
+    for (auto &[id, t] : m_tabs)
+        if (!t.arrangement && m_tab != id) {
+            t.arrangement = shownArrangement();
+            t.full = m_full;
+            t.timingHidden = m_timingHidden;
+        }
     return restored;
 }
 
@@ -577,6 +584,22 @@ void WorkspaceLayoutController::showTab(std::uint64_t tab, TabStart start)
     m_full = shown.full;
     m_timingHidden = shown.timingHidden;
     showArrangement(*shown.arrangement);
+}
+
+void WorkspaceLayoutController::addTab(std::uint64_t tab, TabStart start)
+{
+    if (m_tab == tab)
+        return; // showTab's
+    Tab &added = m_tabs[tab];
+    if (added.arrangement)
+        return;
+    if (start == TabStart::Translation) {
+        added.arrangement = WorkspaceArrangement{QStringLiteral("Translation"), {}};
+    } else if (m_loaded) {
+        added.arrangement = shownArrangement();
+        added.full = m_full;
+        added.timingHidden = m_timingHidden;
+    } // else restoreSaved gives it the arrangement it shows
 }
 
 void WorkspaceLayoutController::replaceTab(std::uint64_t tab, std::uint64_t replacement, TabStart start)
