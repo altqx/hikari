@@ -540,26 +540,30 @@ private slots:
 
     // SH2: the Home page covers the panels while no Document is open: at
     // start, after the last tab closes and after Close all tabs. The Document
-    // tab bar shows only with a Document; the panels under Home take no input.
+    // tab bar shows only with a Document, keeping its height, so the panels
+    // under Home (which take no input) are not resized when one opens.
     void homePageShowsWhileNoDocumentIsOpen()
     {
         auto *home = item("homePage");
+        auto *bar = item("documentTabBar");
         QVERIFY(home->isVisible());
-        QVERIFY(!item("documentTabBar")->isVisible());
+        QVERIFY(!bar->property("shown").toBool());
         QVERIFY(!item("dockingArea")->isEnabled());
         QCOMPARE(home->size(), item("dockingArea")->size());
+        const QSizeF area = item("dockingArea")->size();
         // With no recent file the focus starts on New.
         QTRY_COMPARE(window->activeFocusItem(), item("homeNew"));
         QVERIFY(application->openFile(episode));
         QTRY_VERIFY(!home->isVisible());
-        QVERIFY(item("documentTabBar")->isVisible());
+        QVERIFY(bar->property("shown").toBool());
         QVERIFY(item("dockingArea")->isEnabled());
+        QCOMPARE(item("dockingArea")->size(), area);
         // The last tab closes: Home comes back, the list (now with the file)
         // takes the focus.
         QVERIFY(application->reviewCloseTab(0).isEmpty());
         application->finishClose();
         QTRY_VERIFY(home->isVisible());
-        QVERIFY(!item("documentTabBar")->isVisible());
+        QVERIFY(!bar->property("shown").toBool());
         QCOMPARE(window->title(), QStringLiteral("HikariSub"));
         QTRY_VERIFY(item("homeRecentList")->hasActiveFocus()); // its current row
         // New: an Untitled tab.

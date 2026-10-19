@@ -28,18 +28,22 @@ Item {
     signal closeAllRequested()
 
     implicitHeight: row.implicitHeight
-    // SH2: hidden while the Home page shows (no Document open), whose New
-    // the "+" would repeat.
-    visible: bar.app.tabs.length > 0
+    // SH2: empty and inert while the Home page shows (no Document open),
+    // whose New the "+" would repeat. The bar keeps its height, so the
+    // docked panels are not resized when the first Document opens.
+    readonly property bool shown: bar.app.tabs.length > 0
     Accessible.role: Accessible.PageTabList
     Accessible.name: qsTr("Open documents")
+    Accessible.ignored: !shown
 
     TapHandler {
         // A double click where there is no tab (legacy i == -1).
+        enabled: bar.shown
         onDoubleTapped: bar.app.addPage(true)
     }
     TapHandler {
         // A right click where there is no tab: the tab menu for none (-1).
+        enabled: bar.shown
         acceptedButtons: Qt.RightButton
         onTapped: eventPoint => bar.openTabMenu(-1, bar, eventPoint.position.x, eventPoint.position.y)
     }
@@ -126,6 +130,7 @@ Item {
     DragHandler {
         id: tabDrag
         objectName: "tabDragHandler"
+        enabled: bar.shown // SH2
         target: null
         yAxis.enabled: false
         acceptedButtons: Qt.LeftButton
@@ -156,6 +161,8 @@ Item {
     Flickable {
         id: flick
         anchors.fill: parent
+        opacity: bar.shown ? 1 : 0 // SH2
+        enabled: bar.shown
         contentWidth: row.implicitWidth
         clip: true
         flickableDirection: Flickable.HorizontalFlick
