@@ -394,6 +394,16 @@ void LineTableModel::setDraft(std::optional<core::LineRecord> draft)
         // The committed row's marks and state, with the draft's content and
         // its own measures, shown text and spelling marks.
         Row shown = m_rows[static_cast<std::size_t>(*row)];
+        // R1's comparison is the committed Line's: it holds while the draft
+        // leaves what the comparison reads (compareSubtitles) as it was, and
+        // the row shows none otherwise until the commit compares it again.
+        const core::LineRecord &committed = shown.line;
+        if (draft->text != committed.text || draft->translation != committed.translation ||
+            draft->start.value != committed.start.value || draft->end.value != committed.end.value ||
+            draft->style != committed.style) {
+            shown.comparison = 0;
+            shown.comparisonMarks.clear();
+        }
         shown.line = std::move(*draft);
         shown.measures.reset();
         shown.spellMarks.reset();

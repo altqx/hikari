@@ -513,6 +513,49 @@ private slots:
             QVERIFY(!draftAt(row));
     }
 
+    // GR2 with R1: the comparison and its marks are the committed Line's. A
+    // draft that leaves the compared text, times and style keeps them; one
+    // that changes any of them shows none until it is committed.
+    void draftDropsAStaleComparison()
+    {
+        LineTableModel model;
+        std::vector<application::LineComparison> table(2);
+        table[0].differences = false; // a match
+        table[1].marks = {1, 0, 1};   // a mismatch
+        model.setDocument(load(kLines), &table);
+        const auto comparison = [&](int row) { return model.index(row, 0).data(LineTableModel::ComparisonRole).toInt(); };
+        const auto marks = [&](int row) {
+            return model.index(row, 0).data(LineTableModel::ComparisonMarksRole).toList();
+        };
+
+        core::LineRecord draft = *model.recordAt(1);
+        draft.actor = u8"Someone"; // not compared
+        model.setDraft(draft);
+        QCOMPARE(comparison(1), 2);
+        QCOMPARE(marks(1), (QVariantList{0, 1}));
+
+        draft.text += u8"!";
+        model.setDraft(draft);
+        QCOMPARE(comparison(1), 0);
+        QVERIFY(marks(1).isEmpty());
+        QCOMPARE(comparison(0), 1); // the other rows keep theirs
+
+        for (const auto change : {+[](core::LineRecord &l) { l.start.value = core::DocumentTime(1); },
+                                  +[](core::LineRecord &l) { l.end.value = core::DocumentTime(9'000'000); },
+                                  +[](core::LineRecord &l) { l.style = u8"Other"; },
+                                  +[](core::LineRecord &l) { l.translation = u8"other"; }}) {
+            draft = *model.recordAt(0);
+            change(draft);
+            model.setDraft(draft);
+            QCOMPARE(comparison(0), 0);
+        }
+        // Reverted, the committed comparison is back.
+        model.setDraft(std::nullopt);
+        QCOMPARE(comparison(0), 1);
+        QCOMPARE(comparison(1), 2);
+        QCOMPARE(marks(1), (QVariantList{0, 1}));
+    }
+
     // GR2: the drafted row's cached shown text follows hidden tags as the
     // others do.
     void draftFollowsHiddenTags()
