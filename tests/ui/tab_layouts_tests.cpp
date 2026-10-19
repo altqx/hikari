@@ -16,10 +16,12 @@
 #include <kddockwidgets/core/FloatingWindow.h>
 
 #include <QFile>
+#include <QGuiApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QQmlApplicationEngine>
+#include <QQuickItem>
 #include <QQuickWindow>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -126,12 +128,24 @@ class TabLayoutsTest : public QObject {
     {
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
-        // The resolution question the video may ask a moment later.
+        dismissMismatch();
+    }
+    // The resolution question a video opened may ask a moment later.
+    void dismissMismatch()
+    {
         auto *mismatch = window()->findChild<QObject *>(QStringLiteral("mismatchDialog"));
         if (mismatch && QTest::qWaitFor([&] { return mismatch->property("visible").toBool(); }, 3000)) {
             QMetaObject::invokeMethod(mismatch, "close");
             QTRY_VERIFY(!mismatch->property("visible").toBool());
         }
+    }
+    QString focusedPanel() const
+    {
+        auto *q = qobject_cast<QQuickWindow *>(QGuiApplication::focusWindow());
+        for (QQuickItem *p = q ? q->activeFocusItem() : nullptr; p; p = p->parentItem())
+            if (p->objectName().endsWith(QLatin1String("Panel")))
+                return p->objectName();
+        return {};
     }
     bool arrange(const char *symbol)
     {
@@ -455,7 +469,8 @@ private slots:
 
     // A tab shown in the player layout (the editor off): its arrangement
     // from the Session waits for the editor, and one the engine refuses then
-    // shows the Editing layout with the notice and the kept text as well.
+    // shows the Editing layout with the notice and the kept text as well;
+    // the editor comes back to it as to any arrangement (the focus on the Grid).
     void aTabArrangementRefusedInThePlayerLayoutShowsEditing()
     {
         start();
@@ -478,8 +493,12 @@ private slots:
         QCOMPARE(application->currentTab(), 1);
         QTRY_VERIFY(!application->editorOn());
         QVERIFY(application->workspaceLayout().holding());
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        dismissMismatch();
         application->selectTab(0); // shown while the player layout holds it
         QVERIFY(application->workspaceLayout().notice().isEmpty());
+        window()->requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(window()));
         application->toggleEditor();
         QTRY_VERIFY(application->editorOn());
         QVERIFY(!application->workspaceLayout().holding());
@@ -489,6 +508,7 @@ private slots:
         QCOMPARE(preset(), QStringLiteral("Editing"));
         for (const char *name : {"videoDock", "audioDock", "editorDock", "gridDock"})
             QVERIFY2(isOpen(name) && !isFloating(name), name);
+        QTRY_COMPARE(focusedPanel(), QStringLiteral("gridPanel"));
         QVERIFY(application->saveLastSession());
         QCOMPARE(layoutOf(readSession(application->lastSessionPath()).tabs.at(0)).preset, QStringLiteral("Editing"));
         stop();

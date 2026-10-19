@@ -111,7 +111,9 @@ public:
     Q_INVOKABLE static QStringList arrangementPanels(const QString &arrangement);
     static const QStringList &arrangements();
     // D2: holds the current arrangement (the player layout follows), and
-    // gives it back; false when nothing is held or it does not restore.
+    // gives it back; false when nothing is held. One the engine refuses
+    // (WS1: a tab's from the Session, held meanwhile) gives the Editing
+    // layout with the notice, and the editor comes back to it all the same.
     Q_INVOKABLE void holdArrangement();
     Q_INVOKABLE bool releaseArrangement();
     bool holding() const { return m_held.has_value(); }

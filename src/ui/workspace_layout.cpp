@@ -472,7 +472,7 @@ bool WorkspaceLayoutController::releaseArrangement()
         m_lastSaved.clear();
     }
     emit changed();
-    return restored;
+    return true; // the editing arrangement is back, or the Editing layout in its place
 }
 
 // --- WS1: each Document tab's arrangement -----------------------------------
