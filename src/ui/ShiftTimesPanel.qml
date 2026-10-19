@@ -18,7 +18,9 @@ Item {
     id: panel
     required property ShiftTimesController shiftTimes
     required property var app
-    // A3: ShiftTimes::Contents, "Move the marker to audio time" needs a mark.
+    // ShiftTimes::Contents: "Move the marker to video time" needs a video
+    // (VideoBox state not None), "... to audio time" the audio mark (A3).
+    property bool hasVideo: false
     property bool audioHasMark: false
     // The last run's refusal (Application::shiftTimes), empty after a run.
     property alias message: shiftMessage.text
@@ -291,6 +293,7 @@ Item {
                 CheckBox {
                     objectName: "shiftToVideo"
                     text: qsTr("Move the marker to video time")
+                    enabled: panel.hasVideo
                     checked: panel.settings.moveToVideoTime
                     onToggled: panel.set("moveToVideoTime", checked)
                 }

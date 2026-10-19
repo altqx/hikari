@@ -3889,6 +3889,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     shiftTimes: root.shiftTimes
                     app: root.app
+                    hasVideo: root.video.hasVideo
                     audioHasMark: root.audio.hasMark
                     onRun: root.runShiftTimes()
                 }

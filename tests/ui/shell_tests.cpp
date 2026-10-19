@@ -7553,8 +7553,10 @@ private slots:
         QVERIFY(!item("ppLeadSection")->isVisible());
         QCOMPARE(apply->property("text").toString(), QStringLiteral("Shift"));
         QVERIFY(visualItem("shiftModeShift")->property("checked").toBool());
-        // Frames need an exact timebase (no video here).
+        // Frames need an exact timebase and moving to video time a video
+        // (ShiftTimes::Contents; no video here).
         QVERIFY(!visualItem("shiftFrames")->property("enabled").toBool());
+        QVERIFY(!item("shiftToVideo")->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(visualItem("shiftModePostprocessor"), "click"));
         QCOMPARE(application->shiftTimesSettings().settings().postprocessor, 16);
         QTRY_VERIFY(item("ppLeadSection")->isVisible());
