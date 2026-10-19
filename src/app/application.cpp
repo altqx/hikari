@@ -1172,6 +1172,10 @@ void Application::followVideoInAudio()
     if (state == application::VideoSession::State::Opening) {
         m_audioFollowedVideo.clear();
         m_pendingIndexHandoff.clear(); // the source's new open removed it
+    } else if (state == application::VideoSession::State::Closed) {
+        // AV3: a dummy video opens at once (never seen Opening), so a new
+        // open of it is known by the close before it
+        m_audioFollowedVideo.clear();
     }
     if (state == application::VideoSession::State::Ready && m_audioFollowedVideo != QString::fromStdString(video.path())) {
         // an indexed video brings its track into the box, opened from the
@@ -1180,8 +1184,12 @@ void Application::followVideoInAudio()
         if (keepTabAudio(m_audioFollowedVideo)) {
             // P6: a restored tab's own audio file stays (legacy dontLoadAudio)
         } else if (video.dummy()) {
-            // V3: legacy loads the dummy without changing the audio
-            // (Notebook::LoadVideo's dontLoadAudio, HikariSubFrame.cpp:1073)
+            // AV3 (#240, AV3-dummy-video-audio): a dummy video brings its own
+            // silent audio of its length (legacy loaded the dummy without
+            // changing the audio, Notebook::LoadVideo's dontLoadAudio).
+            if (const QString own = dummyVideoAudio(m_audioFollowedVideo);
+                !own.isEmpty() && !(m_audio->hasAudio() && m_audio->path() == own))
+                m_audio->openAudio(own);
         } else if (video.hasAudio()) {
             m_audio->openFromVideo(m_audioFollowedVideo, video.audioTrack(), video.newIndex(),
                                    QString::fromStdString(video.indexHandoff()));

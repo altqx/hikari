@@ -30,7 +30,8 @@
 // colour key: per-colour theme settings are gone, the theme layer owns
 // appearance). The wave-5 retirements (user decisions, 2026-10-05) are dropped
 // with a notice: GLOBAL_VIDEO_INDEXING bindings, and TOOLBAR_IDS /
-// TOOLBAR_ALIGNMENT (no main toolbar). Unknown and invalid records stay
+// TOOLBAR_ALIGNMENT (no main toolbar); so are GLOBAL_OPEN_DUMMY_AUDIO
+// bindings (AV3, owner 2026-10-18). Unknown and invalid records stay
 // visible as unresolved.
 
 #include "hikari/application/hotkeys.h"

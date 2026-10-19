@@ -86,10 +86,12 @@ public:
     // O5: the interface language changed (status reads it).
     void retranslate() { emit textsChanged(); }
 
-    // GLOBAL_OPEN_AUDIO (a file), GLOBAL_OPEN_DUMMY_AUDIO, GLOBAL_CLOSE_AUDIO.
+    // GLOBAL_OPEN_AUDIO (a file, or a dummy video's silence), GLOBAL_CLOSE_AUDIO.
     Q_INVOKABLE void openAudio(const QString &path);
     Q_INVOKABLE void openAudioUrl(const QUrl &url) { openAudio(url.toLocalFile()); }
-    Q_INVOKABLE void openDummy() { openAudio(QString::fromLatin1(application::AudioBox::kDummyName)); }
+    // Legacy's 2 h 30 min blank audio (the retired GLOBAL_OPEN_DUMMY_AUDIO,
+    // AV3), for tests that need audio without a file.
+    void openDummy() { openAudio(QString::fromLatin1(application::AudioBox::kDummyName)); }
     Q_INVOKABLE void closeAudio();
     // An indexed video's audio (legacy RendererFFMS2::OpenFile's
     // OpenAudioInTab(40000): the video's provider and track): the video's

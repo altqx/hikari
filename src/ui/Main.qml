@@ -1558,7 +1558,8 @@ ApplicationWindow {
             }
         }
         // A1: legacy Audio menu (GLOBAL_OPEN_AUDIO, GLOBAL_RECENT_AUDIO,
-        // GLOBAL_AUDIO_FROM_VIDEO, GLOBAL_OPEN_DUMMY_AUDIO, GLOBAL_CLOSE_AUDIO).
+        // GLOBAL_AUDIO_FROM_VIDEO, GLOBAL_CLOSE_AUDIO). AV3 (#240) retired
+        // GLOBAL_OPEN_DUMMY_AUDIO: a dummy video brings its own silent audio.
         ShellMenu {
             id: audioMenu
             objectName: "audioMenu"
@@ -1618,16 +1619,6 @@ ApplicationWindow {
                     text: qsTr("Open audio from video")
                     enabled: root.app.editorOn && root.video.hasVideo
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUDIO_FROM_VIDEO")) root.app.openAudioFromVideo()
-                }
-            }
-            ShellMenuItem {
-                help: qsTr("Opens blank audio 2 hour and 30 minutes long") // HikariSubFrame.cpp:301
-                objectName: "dummyAudioMenuItem"
-                action: Action {
-                    id: dummyAudioAction
-                    text: qsTr("Open blank 2h30m audio")
-                    enabled: root.app.editorOn
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_AUDIO")) root.audio.openDummy()
                 }
             }
             ShellMenuItem {
@@ -6201,7 +6192,7 @@ ApplicationWindow {
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction, // V4
         GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
-        GLOBAL_OPEN_DUMMY_AUDIO: dummyAudioAction, GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
+        GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction, // V3
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: websiteAction,
@@ -6271,7 +6262,7 @@ ApplicationWindow {
         // GLOBAL_SELECT_FROM_VIDEO..GLOBAL_STYLE_MANAGER_CLEAN_STYLE) pass
         // CheckLastKeyEvent (HikariSubFrame.cpp:1005).
         const menuSelected1 = ["GLOBAL_OPEN_SUBS", "GLOBAL_OPEN_VIDEO", "GLOBAL_OPEN_KEYFRAMES", "GLOBAL_OPEN_DUMMY_VIDEO",
-                               "GLOBAL_OPEN_DUMMY_AUDIO", "GLOBAL_OPEN_AUTO_SAVE", "GLOBAL_DELETE_TEMPORARY_FILES",
+                               "GLOBAL_OPEN_AUTO_SAVE", "GLOBAL_DELETE_TEMPORARY_FILES",
                                "GLOBAL_SETTINGS", "GLOBAL_QUIT", "GLOBAL_EDITOR", "GLOBAL_ABOUT", "GLOBAL_HELPERS",
                                "GLOBAL_HELP", "GLOBAL_ANSI", "GLOBAL_CHECK_FOR_UPDATES", "GLOBAL_SELECT_FROM_VIDEO",
                                "GLOBAL_PLAY_ACTUAL_LINE", "GLOBAL_STYLE_MANAGER_CLEAN_STYLE"]

@@ -1263,6 +1263,11 @@ private:
     // the playing audio box is at: one frame asked for at a time, the newest
     // wanted one once it arrived.
     void syncAudioWithVideo();
+    // AV3 (#240): a dummy video's own silent audio (its AudioBox name), empty
+    // for another video; and whether `audio` is the video's own (the video's
+    // file, or a dummy video's silence), which a tab does not keep as its own.
+    static QString dummyVideoAudio(const QString &videoPath);
+    static bool isVideoAudio(const QString &audio, const QString &videoPath);
     void showVideoAtAudio(int ms);
     std::optional<int> m_audioWantsFrame;
     void refreshAudio();

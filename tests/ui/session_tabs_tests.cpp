@@ -446,6 +446,62 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(b.video().session().shownFrame().value_or(-1), 12, 10000);
     }
 
+    // AV3 (#240): a dummy video brings its own silent audio, as long as the
+    // video. The session keeps the video alone (the silence is the video's,
+    // as a file's own track is), and restoring it brings both back; a tab
+    // switch leaves the silence with its tab. An older session's blank
+    // 2 h 30 min audio still restores.
+    void aDummyVideoRestoresWithItsSilence()
+    {
+        QTemporaryDir home;
+        const QString dummy = QStringLiteral("?dummy:25.000000:50:320:240:47:163:254:");
+        const QString silence = QStringLiteral("dummy-audio:silence?sr=44100&bd=16&ch=1&ln=88200");
+        auto a = std::make_unique<app::Application>(options(home));
+        QVERIFY(a->openFile(writeSubtitles(dir.filePath(QStringLiteral("d1.ass")), "d1")));
+        a->video().openVideo(dummy);
+        QTRY_VERIFY_WITH_TIMEOUT(a->video().hasVideo(), 10000);
+        QTRY_VERIFY(a->audio().ready());
+        QCOMPARE(a->audio().path(), silence);
+        QCOMPARE(a->audio().box().audio()->sampleCount(), 88200);
+        a->endSession();
+        const auto written = readSession(a->lastSessionPath());
+        QCOMPARE(written.tabs.size(), std::size_t(1));
+        QCOMPARE(QString::fromStdString(written.tabs[0].video), dummy);
+        QCOMPARE(written.tabs[0].audio, std::string());
+        a.reset();
+
+        app::Application b(options(home));
+        QVERIFY(loadSession(b));
+        QVERIFY(b.unresolvedRestores().isEmpty());
+        QTRY_VERIFY_WITH_TIMEOUT(b.video().hasVideo(), 10000);
+        QVERIFY(b.video().dummy());
+        QTRY_VERIFY(b.audio().ready());
+        QCOMPARE(b.audio().path(), silence);
+        b.addPage();
+        QVERIFY(!b.audio().hasAudio());
+        b.changeTab(-1);
+        QTRY_VERIFY_WITH_TIMEOUT(b.video().hasVideo(), 10000);
+        QTRY_VERIFY(b.audio().ready());
+        QCOMPARE(b.audio().path(), silence);
+
+        // An older session's "Open blank 2h30m audio".
+        QTemporaryDir older;
+        const QString d = QDir::fromNativeSeparators(older.path());
+        writeSubtitles(older.filePath(QStringLiteral("old.ass")), "old");
+        app::Application c(options(older));
+        writeSession(c.lastSessionPath(),
+                     "\xEF\xBB\xBF" + QStringLiteral("[HikariSub v0.0.1]\r\n"
+                                                    "Tab: 0\r\nVideo: \r\nPosition: 0\r\nFFMS2: 1\r\nSubtitles: %1/old.ass\r\n"
+                                                    "Active: 0\r\nScroll: 0\r\nEditor: 1\r\n"
+                                                    "Audio: dummy-audio:silence?sr=44100&bd=16&ch=1&ln=396900000\r\n")
+                                             .arg(d)
+                                             .toUtf8());
+        QVERIFY(loadSession(c));
+        QVERIFY(c.unresolvedRestores().isEmpty());
+        QTRY_VERIFY(c.audio().ready());
+        QCOMPARE(c.audio().box().audio()->sampleCount(), 396'900'000);
+    }
+
     // Loading replaces every open tab only after their unsaved work is
     // reviewed as for Quit (approved P6-session-review; legacy destroyed the
     // tabs without asking). Cancel keeps everything.

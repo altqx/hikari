@@ -290,7 +290,7 @@ void Application::trackTabMedia()
         const QString native = QDir::toNativeSeparators(path);
         const QString video = QString::fromStdString(m_video->session().path());
         TabMedia &media = m_tabMedia[target->value];
-        const bool fromVideo = native == QDir::toNativeSeparators(video);
+        const bool fromVideo = isVideoAudio(native, video); // AV3: a dummy video's silence too
         media.audio = fromVideo ? QString() : native;
         if (!fromVideo)
             media.audioFromVideo = false; // P9: another file is the tab's AudioPath now
@@ -370,13 +370,9 @@ void Application::enterTabMedia(std::optional<application::DocumentId> previous,
     }
     const QString shown = m_audio->hasAudio() ? QDir::toNativeSeparators(m_audio->path()) : QString();
     if (!media.audio.isEmpty()) {
-        if (shown != media.audio) {
-            if (media.audio == QLatin1String(application::AudioBox::kDummyName))
-                m_audio->openDummy();
-            else
-                m_audio->openAudio(media.audio);
-        }
-    } else if (!shown.isEmpty() && shown != media.video) {
+        if (shown != media.audio)
+            m_audio->openAudio(media.audio); // a file, or an older session's blank audio
+    } else if (!shown.isEmpty() && !isVideoAudio(shown, media.video)) {
         // Another tab's audio: the tab's video brings its own back when it is ready.
         m_audio->closeAudio();
     }
@@ -642,8 +638,9 @@ void Application::applySession()
         // for the shared Workspace: the last tab, the active one, sets it.
         editorAfter = tab.editor || qs(tab.video).isEmpty();
         if (const QString video = qs(tab.video); !video.isEmpty()) {
-            if (isFile(video)) {
-                media.video = QDir::toNativeSeparators(video);
+            if (isFile(video) || application::isDummyVideo(video.toStdString())) {
+                // AV3: a dummy video is restored too, and brings its own audio
+                media.video = application::isDummyVideo(video.toStdString()) ? video : QDir::toNativeSeparators(video);
                 media.position = tab.position;
             } else {
                 m_unresolved.push_back({*id, QStringLiteral("video"), video, 0, tab.position});
@@ -651,8 +648,9 @@ void Application::applySession()
         }
         // C05-audio-association: only the tab's own "Audio:" line.
         if (const QString audio = qs(tab.audio); !audio.isEmpty()) {
-            if (isFile(audio) || audio == QLatin1String(application::AudioBox::kDummyName))
-                media.audio = audio == QLatin1String(application::AudioBox::kDummyName) ? audio : QDir::toNativeSeparators(audio);
+            const bool blank = application::AudioBox::isDummyName(audio.toStdString()); // older sessions' blank audio
+            if (isFile(audio) || blank)
+                media.audio = blank ? audio : QDir::toNativeSeparators(audio);
             else
                 m_unresolved.push_back({*id, QStringLiteral("audio"), audio, 0, 0});
         }
@@ -696,7 +694,7 @@ bool Application::retryRestore(int row)
         return false;
     const UnresolvedRestore entry = m_unresolved[static_cast<std::size_t>(row)];
     const auto isTarget = [&] { return m_workspace.editingTarget() == entry.document; };
-    const bool dummyAudio = entry.kind == QLatin1String("audio") && entry.path == QLatin1String(application::AudioBox::kDummyName);
+    const bool dummyAudio = entry.kind == QLatin1String("audio") && application::AudioBox::isDummyName(entry.path.toStdString());
     if (!isFile(entry.path) && !dummyAudio) {
         m_log->log(QCoreApplication::translate("HikariSub.Session", "Could not find %1").arg(QDir::toNativeSeparators(entry.path)));
         return false;
@@ -750,9 +748,7 @@ bool Application::retryRestore(int row)
             }
         } else if (entry.kind == QLatin1String("audio")) {
             media.audio = native;
-            if (isTarget() && dummyAudio)
-                m_audio->openDummy();
-            else if (isTarget())
+            if (isTarget())
                 m_audio->openAudio(native);
         } else if (entry.kind == QLatin1String("keyframes")) {
             media.keyframes = native;

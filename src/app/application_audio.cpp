@@ -4,8 +4,10 @@
 // the routing then moves both audio paths. When the chosen device goes away
 // and the system default plays instead, the status bar says so.
 #include "hikari/app/application.h"
+#include "hikari/application/audio_box.h"
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QTimer>
 
 #include <algorithm>
@@ -67,6 +69,23 @@ void Application::noticeAudioRoute(const application::OutputRoute &before, const
         if (m_shell->statusText() == text)
             m_shell->setStatusText(QString());
     });
+}
+
+QString Application::dummyVideoAudio(const QString &videoPath)
+{
+    const std::string path = videoPath.toStdString();
+    const auto dummy = application::isDummyVideo(path) ? application::parseDummyVideo(path) : std::nullopt;
+    if (!dummy)
+        return {};
+    return QString::fromStdString(application::AudioBox::dummyName(
+        application::dummyVideoAudioFrames(*dummy, application::AudioBox::kDummyRate)));
+}
+
+bool Application::isVideoAudio(const QString &audio, const QString &videoPath)
+{
+    if (audio.isEmpty() || videoPath.isEmpty())
+        return false;
+    return QDir::toNativeSeparators(audio) == QDir::toNativeSeparators(videoPath) || audio == dummyVideoAudio(videoPath);
 }
 
 // AV2 (#239): the video's side of the sync toggle, on each change of the

@@ -18695,9 +18695,11 @@ private slots:
 
     // V3: GLOBAL_OPEN_DUMMY_VIDEO (legacy DummyVideo, ProviderDummy): the
     // dialog's defaults and frame count, a refused frame rate logged, the
-    // dummy's frames, duration and colour, the audio box left as it was, the
-    // recent list taking the dummy's text (and pruning it when shown, as
-    // legacy's IsMissingLocalFile does).
+    // dummy's frames, duration and colour, the recent list taking the dummy's
+    // text (and pruning it when shown, as legacy's IsMissingLocalFile does).
+    // AV3 (#240, AV3-dummy-video-audio): the dummy brings its own silent
+    // audio, as long as it, in place of the box's (legacy left the box as it
+    // was); the Audio menu has no blank audio entry.
     void dummyVideoFromItsDialog()
     {
         QVERIFY(application->openFile(episode));
@@ -18755,11 +18757,30 @@ private slots:
         QCOMPARE(int(frame->bgra[0]), 254);
         QCOMPARE(int(frame->bgra[1]), 163);
         QCOMPARE(int(frame->bgra[2]), 47);
-        QVERIFY(audio.ready()); // legacy loads the dummy without the audio (dontLoadAudio)
-        QCOMPARE(audio.path(), nativeFixture("audioonly.mkv"));
+        QTRY_VERIFY(audio.ready());
+        QCOMPARE(audio.path(), QStringLiteral("dummy-audio:silence?sr=44100&bd=16&ch=1&ln=88200")); // 2 s
+        QCOMPARE(audio.box().audio()->sampleCount(), 88200);
+        QCOMPARE(audio.box().audio()->sampleRate(), 44100);
+        // the same dummy opened again over another audio brings its silence back
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready() && audio.path().endsWith(QStringLiteral("audioonly.mkv")), 20000);
+        video.openVideo(QStringLiteral("?dummy:25.000000:50:320:240:47:163:254:"));
+        QTRY_COMPARE(audio.path(), QStringLiteral("dummy-audio:silence?sr=44100&bd=16&ch=1&ln=88200"));
+        QTRY_VERIFY(audio.ready());
+        QVERIFY(!named("dummyAudioMenuItem"));
         QVERIFY(!video.play()); // no file for the general player
         QCOMPARE(application->settingsStore()->list("recent.video").first(), QStringLiteral("?dummy:25.000000:50:320:240:47:163:254:"));
         QVERIFY(application->recentVideos().isEmpty()); // not a file: pruned when shown
+        // AV3: a stored binding of the retired blank-audio command is dropped with a notice
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        const QString ini = own.filePath(QStringLiteral("hikari.ini"));
+        ui::SettingsStore(ini).set("shortcuts.hotkeys", QStringList{QStringLiteral("GLOBAL_OPEN_DUMMY_AUDIO G=Ctrl-Alt-B"),
+                                                                    QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")});
+        restartWithSettings(ini);
+        QVERIFY(application->log().history().contains(QStringLiteral("Ctrl-Alt-B")));
+        QVERIFY(application->log().history().contains(QStringLiteral("Open blank 2h30m audio")));
+        QCOMPARE(application->settingsStore()->list("shortcuts.hotkeys"), QStringList{QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")});
     }
 
     // V3: VIDEO_PREVIOUS_FILE / VIDEO_NEXT_FILE (legacy VideoBox::NextFile,
