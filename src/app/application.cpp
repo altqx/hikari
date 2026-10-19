@@ -2310,6 +2310,7 @@ bool Application::applySelection(application::Selection next)
         return false; // e.g. a draft that cannot be committed
     session->setSelection(std::move(next));
     m_shell->setSelection(session->selection());
+    m_editor->selectionChanged(); // LE4: the mixed position
     refreshVideo();
     followEditingLine(); // R2
     return true;

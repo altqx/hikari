@@ -17858,6 +17858,8 @@ private slots:
 
     // EditBox::SetAlignment and OnAnChoice: the shown Line's position (the
     // Style's, or its text's \an), and a choice puts \an<n> in the first block.
+    // LE4: the choice is one icon button with a 3 x 3 grid in numpad layout,
+    // opened by a click, by the keyboard or on hover.
     void alignmentChoiceTagsTheText()
     {
         QVERIFY(application->openFile(writeStyled("an.ass",
@@ -17867,27 +17869,87 @@ private slots:
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
         QTRY_VERIFY(application->editor().hasLine());
-        auto *choice = item<QObject>("alignmentChoice");
-        QCOMPARE(choice->property("currentIndex").toInt(), 7); // Sign's alignment 8
-        QVERIFY(QMetaObject::invokeMethod(choice, "activated", Q_ARG(int, 2)));
-        QCOMPARE(choice->property("currentIndex").toInt(), 2);
+        auto *choice = item("alignmentChoice");
+        auto *grid = named("alignmentGrid");
+        QVERIFY(choice && grid);
+        QCOMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-8")); // Sign's alignment 8
+        QCOMPARE(choice->property("tip").toString(), QStringLiteral("Text position: Top-center (an8)"));
+        // The cells are Repeater delegates in the grid's popup: walk its items.
+        const auto cell = [&](int n) {
+            return findItem(grid->property("contentItem").value<QQuickItem *>(), QStringLiteral("alignmentCell%1").arg(n));
+        };
+        // A click opens the grid, the shown position checked; a cell chooses.
+        QVERIFY(QMetaObject::invokeMethod(choice, "clicked"));
+        QTRY_VERIFY(grid->property("opened").toBool());
+        QVERIFY(cell(8)->property("checked").toBool());
+        QVERIFY(!cell(3)->property("checked").toBool());
+        // Numpad layout: 7 8 9 above 4 5 6 above 1 2 3.
+        QVERIFY(cell(7)->mapToScene({}).y() < cell(4)->mapToScene({}).y());
+        QVERIFY(cell(4)->mapToScene({}).y() < cell(1)->mapToScene({}).y());
+        QVERIFY(cell(1)->mapToScene({}).x() < cell(2)->mapToScene({}).x());
+        QVERIFY(cell(2)->mapToScene({}).x() < cell(3)->mapToScene({}).x());
+        QTest::mouseClick(cell(3)->window(), Qt::LeftButton, {},
+                          cell(3)->mapToScene(QPointF(cell(3)->width() / 2, cell(3)->height() / 2)).toPoint());
+        QTRY_VERIFY(!grid->property("visible").toBool());
         QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->draftRecord()->text.c_str())),
                  QStringLiteral("{\\an3}first"));
+        QCOMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-3"));
         QVERIFY(item("lineText")->hasActiveFocus());
         application->editor().commit();
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Down);
-        QTRY_COMPARE(choice->property("currentIndex").toInt(), 3); // the text's \an4
-        QVERIFY(QMetaObject::invokeMethod(choice, "activated", Q_ARG(int, 8)));
+        QTRY_COMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-4")); // the text's \an4
+        // The keyboard: Enter on the button opens the grid with the focus;
+        // 9 (either row or the numpad) chooses at once.
+        choice->forceActiveFocus();
+        press(Qt::Key_Return);
+        QTRY_VERIFY(grid->property("opened").toBool());
+        QCOMPARE(grid->property("highlighted").toInt(), 4);
+        press(Qt::Key_9, Qt::KeypadModifier);
+        QTRY_VERIFY(!grid->property("visible").toBool());
         QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->draftRecord()->text.c_str())),
                  QStringLiteral("{\\an9\\b1}second")); // replaced in place
         application->editor().discard();
-        // Several Lines: each one's first block, as one "Editing multiple lines" step.
+        // Esc closes it and nothing changes.
+        choice->forceActiveFocus();
+        press(Qt::Key_Space);
+        QTRY_VERIFY(grid->property("opened").toBool());
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!grid->property("visible").toBool());
+        QVERIFY(!session->draftRecord());
+        // Several Lines with different positions: the mixed icon; the arrows
+        // move from the centre and Enter chooses, each Line's first block, as
+        // one "Editing multiple lines" step.
         application->selectAllLines();
-        QVERIFY(QMetaObject::invokeMethod(choice, "activated", Q_ARG(int, 0)));
+        QTRY_COMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-mixed"));
+        QCOMPARE(choice->property("tip").toString(), QStringLiteral("Text position: mixed"));
+        choice->forceActiveFocus();
+        press(Qt::Key_Return);
+        QTRY_VERIFY(grid->property("opened").toBool());
+        QCOMPARE(grid->property("highlighted").toInt(), 5);
+        for (int n = 1; n <= 9; ++n)
+            QVERIFY(!cell(n)->property("checked").toBool());
+        press(Qt::Key_Left);
+        press(Qt::Key_Left); // stays at the edge
+        QCOMPARE(grid->property("highlighted").toInt(), 4);
+        press(Qt::Key_Down);
+        QCOMPARE(grid->property("highlighted").toInt(), 1);
+        press(Qt::Key_Return);
+        QTRY_VERIFY(!grid->property("visible").toBool());
         QCOMPARE(session->history().back().name, std::string("Editing multiple lines"));
         QCOMPARE(session->document().lines()[0]->text, u8"{\\an1}first");
         QCOMPARE(session->document().lines()[1]->text, u8"{\\an1\\b1}second");
+        QTRY_COMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-1"));
+        // Hover opens it after a short delay without taking the focus, and
+        // leaving it closes it.
+        item("lineText")->forceActiveFocus();
+        QTest::mouseMove(window, choice->mapToScene(QPointF(choice->width() / 2, choice->height() / 2)).toPoint());
+        QVERIFY(!grid->property("visible").toBool());
+        QTRY_VERIFY(grid->property("opened").toBool());
+        QVERIFY(item("lineText")->hasActiveFocus());
+        QTest::mouseMove(window, item("lineText")->mapToScene(QPointF(10, 10)).toPoint());
+        QTRY_VERIFY(!grid->property("visible").toBool());
+        QVERIFY(item("lineText")->hasActiveFocus());
     }
 
     // SubsGrid::ChangeLine: with several Lines selected the sent fields go to

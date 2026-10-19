@@ -70,7 +70,8 @@ private slots:
         expect(QAccessible::EditableText, "Right margin");
         expect(QAccessible::EditableText, "Vertical margin");
         expect(QAccessible::ComboBox, "Effect");
-        expect(QAccessible::ComboBox, "Text position");
+        // LE4: the icon button that opens the position grid.
+        expect(QAccessible::Button, "Text position");
         // LE2: no Time / Frames radios here (the Video panel's menu has them).
         QVERIFY2(!hasNode(nodes, QAccessible::RadioButton, QStringLiteral("Show times")), qPrintable(tree));
         QVERIFY2(!hasNode(nodes, QAccessible::RadioButton, QStringLiteral("Show frames")), qPrintable(tree));

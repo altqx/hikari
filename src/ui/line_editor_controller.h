@@ -28,6 +28,7 @@
 
 #include <functional>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -82,6 +83,9 @@ class LineEditorController : public QObject {
     Q_PROPERTY(QStringList effects READ effects NOTIFY changed)
     // 0..8 for "Bottom-left (an1)" .. "Top-right (an9)", -1 for none.
     Q_PROPERTY(int alignmentIndex READ alignmentIndex NOTIFY changed)
+    // LE4: several Lines selected whose alignments differ (the picker's
+    // mixed icon); the shown Line's is alignmentIndex.
+    Q_PROPERTY(bool alignmentMixed READ alignmentMixed NOTIFY changed)
     // The counters (EditBox::UpdateChars): "Wraps: ..." and "Characters per
     // second: ..." with their warnings; empty for a comment.
     Q_PROPERTY(QString charsText READ charsText NOTIFY changed)
@@ -168,6 +172,9 @@ public:
     void setOptionsSource(std::function<Options()> source) { m_options = std::move(source); }
     // An option the editor reads changed: the counters and Duration follow at once.
     void optionsChanged() { refresh(); }
+    // LE4: the selected Lines changed (the active one may not have): what
+    // depends on them, alignmentMixed among it, is read again.
+    void selectionChanged() { emit changed(); }
     // The open video's timebase (legacy TimeCtrl::SetVideoBox), or none.
     void setVideoTimebase(std::optional<application::LegacyTimebase> timebase);
     // EDITBOX_TIMES_TO_FRAMES_SWITCH as stored; the editor saves the switch through `store`.
@@ -190,6 +197,7 @@ public:
     QStringList actors() const { return m_actors; }
     QStringList effects() const { return m_effects; }
     int alignmentIndex() const { return m_alignment >= 1 && m_alignment <= 9 ? m_alignment - 1 : -1; }
+    bool alignmentMixed() const;
     QString charsText() const;
     bool charsWarning() const;
     QString cpsText() const;
@@ -510,6 +518,15 @@ private:
     std::optional<core::LineId> m_shownLine;
     core::syntax::TextState m_textState = core::syntax::TextState::Dialogue;
     void updateTextState(); // TextEditor::SetState from the Line's Comment and Effect
+    // LE4: alignmentMixed for a revision and selection, kept until either changes.
+    struct MixedAlignment {
+        const application::EditSession *session = nullptr;
+        std::uint64_t revision = 0;
+        int shownAlignment = 0;
+        std::set<core::LineId> selected;
+        bool mixed = false;
+    };
+    mutable std::optional<MixedAlignment> m_mixedAlignment;
 
     application::DocumentFiles &m_files;
     std::optional<application::DocumentId> m_document;
