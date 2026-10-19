@@ -593,6 +593,16 @@ private slots:
         DWORD session = 0;
         QVERIFY(::ProcessIdToSessionId(::GetCurrentProcessId(), &session));
         QVERIFY(here.server.endsWith(QLatin1Char('-') + QString::number(session)));
+        // An elevated process is its own instance and takes no files from
+        // the user's folders (the unelevated programs can write there).
+        HANDLE token = nullptr;
+        TOKEN_ELEVATION elevation{};
+        DWORD size = 0;
+        QVERIFY(::OpenProcessToken(::GetCurrentProcess(), TOKEN_QUERY, &token));
+        QVERIFY(::GetTokenInformation(token, TokenElevation, &elevation, sizeof(elevation), &size));
+        ::CloseHandle(token);
+        QCOMPARE(here.lock.contains(QLatin1String("-IL")), bool(elevation.TokenIsElevated));
+        QCOMPARE(app::SingleInstance::trustsUserFiles(), !elevation.TokenIsElevated);
         QVERIFY(here.server.startsWith(here.lock.mid(6)));
 #else
         const QByteArray wayland = qgetenv("WAYLAND_DISPLAY"), display = qgetenv("DISPLAY"),
@@ -607,6 +617,7 @@ private slots:
         qputenv("XDG_RUNTIME_DIR", QFile::encodeName(runtimeDir.path()));
         qunsetenv("WAYLAND_DISPLAY");
         qputenv("DISPLAY", ":0");
+        QVERIFY(app::SingleInstance::trustsUserFiles());
         const auto x0 = app::SingleInstance::forSession();
         QVERIFY(x0.server.startsWith(runtimeDir.path() + QLatin1Char('/')));
         QVERIFY(x0.lock.startsWith(runtimeDir.path() + QLatin1Char('/')));

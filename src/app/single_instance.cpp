@@ -362,6 +362,16 @@ SingleInstance::Location SingleInstance::forSession()
 #endif
 }
 
+bool SingleInstance::trustsUserFiles()
+{
+#ifdef _WIN32
+    const DWORD level = integrityLevel(::GetCurrentProcess());
+    return level != 0 && level <= SECURITY_MANDATORY_MEDIUM_RID;
+#else
+    return true;
+#endif
+}
+
 SingleInstance::SingleInstance(Location location, QObject *parent)
     : QObject(parent)
     , m_location(std::move(location))

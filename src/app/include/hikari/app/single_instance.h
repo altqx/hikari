@@ -70,6 +70,12 @@ public:
     // ($WAYLAND_DISPLAY, else $DISPLAY). Empty when no private folder could
     // be had (or the Windows token could not be read).
     static Location forSession();
+    // False on Windows when this process runs above the user's ordinary
+    // (medium) integrity level, or its level cannot be read: the user's
+    // unelevated programs can write the user's files, so an elevated
+    // HikariSub takes no files from them (the files a quit left). True
+    // elsewhere.
+    static bool trustsUserFiles();
 
     // What a start hands over.
     struct Request {

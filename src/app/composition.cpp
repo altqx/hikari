@@ -83,10 +83,14 @@ std::function<void()> showInstalling(QQmlApplicationEngine &engine)
 
 // WS5: where the files a quit left wait for the next start (saveHandedOn):
 // the session's own, as its instance is (another graphical session of the
-// user does not take them).
+// user does not take them). None for an elevated HikariSub on Windows:
+// the user's unelevated programs could put a script there for it to run
+// (its files go on the next start's command line instead).
 QString handedOnPath()
 {
     const QString session = SingleInstance::forSession().server;
+    if (session.isEmpty() || !SingleInstance::trustsUserFiles())
+        return {};
     const QString tag =
         QString::fromLatin1(QCryptographicHash::hash(session.toUtf8(), QCryptographicHash::Sha256).toHex().left(16));
     return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/HandedOn-") + tag +
@@ -137,8 +141,8 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     // the program's own switches.
     // WS5: and the files a quit left for the next start, which this is.
     QStringList files = launchFiles(QCoreApplication::arguments().mid(1), QDir::currentPath());
-    if (mode == StartupMode::Run)
-        files += takeHandedOn(handedOnPath());
+    if (const QString kept = mode == StartupMode::Run ? handedOnPath() : QString(); !kept.isEmpty())
+        files += takeHandedOn(kept);
 #ifndef _WIN32
     // ADR 0019: an AppImage update that an ordinary quit left installs now,
     // before anything of this version starts, with the new image watched as
@@ -261,7 +265,8 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     // WS5: what was handed over and not opened (the quit came first) is
     // saved before an update can start a new version.
     const QStringList unopened = forwarded.takeUnopened();
-    const bool saved = unopened.isEmpty() || saveHandedOn(handedOnPath(), unopened);
+    const QString kept = handedOnPath();
+    const bool saved = unopened.isEmpty() || (!kept.isEmpty() && saveHandedOn(kept, unopened));
     // ADR 0019: a ready update installs after a normal quit, every document
     // reviewed and the main window closed.
     const bool updateStarts = code == 0 && application.updates().installer().restartRequested();
