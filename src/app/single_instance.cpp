@@ -63,9 +63,6 @@ constexpr int kMaxCommitWindowMs = 5000;
 constexpr int kMinReceiptWaitMs = 200;
 // A connection that has not sent its whole request by then is dropped.
 constexpr int kReadTimeoutMs = 5000;
-// How long release() gives the sender of a taken request to read its
-// receipt and close.
-constexpr int kReceiptReadMs = 200;
 
 QByteArray encode(const SingleInstance::Request &request)
 {
@@ -545,13 +542,16 @@ void SingleInstance::release()
     // once it is free.
     for (QLocalSocket *socket : findChildren<QLocalSocket *>(Qt::FindDirectChildrenOnly)) {
         socket->disconnect(this);
-        // A taken request's sender reads its receipt first: its files are
-        // opened here (or kept for the next start), so it must not run
-        // alone with them.
-        if (socket->property("hikariTaken").toBool()) {
-            if (socket->bytesToWrite() > 0)
-                socket->waitForBytesWritten(kReceiptReadMs);
-            socket->waitForDisconnected(kReceiptReadMs);
+        // A taken request's sender reads its receipt and closes first: its
+        // files are opened here (or kept for the next start), so it must
+        // not run alone with them. Waited for no longer than the sender
+        // waits for the receipt.
+        if (const QVariant until = socket->property("hikariTakenUntil"); until.isValid()) {
+            auto left = [&] { return int(qMax<qint64>(until.toLongLong() - m_clock.elapsed(), 0)); };
+            if (socket->bytesToWrite() > 0 && left() > 0)
+                socket->waitForBytesWritten(left());
+            if (socket->state() != QLocalSocket::UnconnectedState && left() > 0)
+                socket->waitForDisconnected(left());
         }
         socket->abort();
         socket->deleteLater();
@@ -576,7 +576,7 @@ void SingleInstance::accept()
             continue;
         }
         QTimer::singleShot(kReadTimeoutMs, socket, [socket] {
-            if (!socket->property("hikariAcked").isValid() && !socket->property("hikariTaken").toBool())
+            if (!socket->property("hikariAcked").isValid() && !socket->property("hikariTakenUntil").isValid())
                 socket->abort();
         });
         connect(socket, &QLocalSocket::readyRead, this, [this, socket] { read(socket); });
@@ -587,7 +587,7 @@ void SingleInstance::accept()
 
 void SingleInstance::read(QLocalSocket *socket)
 {
-    if (socket->property("hikariTaken").toBool()) {
+    if (socket->property("hikariTakenUntil").isValid()) {
         socket->readAll(); // one request a connection
         return;
     }
@@ -611,10 +611,11 @@ void SingleInstance::read(QLocalSocket *socket)
         // Closing it here could drop the receipt unread (a named pipe's
         // disconnect discards what is in it), and no deadline ends it
         // before the sender's wait is over.
-        socket->setProperty("hikariTaken", true);
+        const int left = int(qMin<quint32>(wait, 2 * kMaxCommitWindowMs));
+        socket->setProperty("hikariTakenUntil", m_clock.elapsed() + left);
         socket->putChar(kTaken);
         socket->flush();
-        QTimer::singleShot(int(qMin<quint32>(wait, 2 * kMaxCommitWindowMs)), socket, [socket] { socket->abort(); });
+        QTimer::singleShot(left, socket, [socket] { socket->abort(); });
         emit requested(acked.value<Request>());
         return;
     }
@@ -635,7 +636,7 @@ void SingleInstance::read(QLocalSocket *socket)
     socket->setProperty("hikariAcked", QVariant::fromValue(request));
     socket->setProperty("hikariAckedAt", m_clock.elapsed());
     QTimer::singleShot(kMaxCommitWindowMs, socket, [socket] {
-        if (!socket->property("hikariTaken").toBool())
+        if (!socket->property("hikariTakenUntil").isValid())
             socket->abort();
     });
     socket->putChar(kAck);
