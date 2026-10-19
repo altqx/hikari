@@ -92,6 +92,11 @@ Popup {
         setColour(original)
         portalNote = ""
         active = true
+        // A host window too small for the popover with More… open (a short
+        // Automation dialog): the popover in a window of its own, which can
+        // reach past the host.
+        const host = parent ? parent.Window.window : null
+        popupType = host && (host.width < fullSize.width || host.height < fullSize.height) ? Popup.Window : Popup.Item
         open()
         place()
         if (o.dropper)
@@ -110,9 +115,26 @@ Popup {
             return
         }
         x = 0
-        const top = anchor.mapToItem(null, 0, 0).y
-        const below = win ? win.height - (top + anchor.height + 4) - 8 : h
+        // Below the anchor, or above it when only there is room: in the host
+        // window, or on the screen for a popover in its own window.
+        const own = popupType === Popup.Window && win && win.screen
+        const top = own ? anchor.mapToGlobal(0, 0).y - win.screen.virtualY : anchor.mapToItem(null, 0, 0).y
+        const room = own ? win.screen.desktopAvailableHeight : win ? win.height : top + anchor.height + 4 + h + 8
+        const below = room - (top + anchor.height + 4) - 8
         y = below >= h || top - 4 - 8 < h ? anchor.height + 4 : -h - 4
+    }
+    // The popover's size with More… open, margins included (measured when it
+    // shows so, first an estimate): what a host window must hold for it.
+    property size fullSize: Qt.size(560, 540)
+    function measure() {
+        if (expanded && visible && implicitWidth > 0)
+            fullSize = Qt.size(implicitWidth + 2 * margins, implicitHeight + 2 * margins)
+    }
+    onImplicitWidthChanged: measure()
+    onImplicitHeightChanged: {
+        measure()
+        if (visible)
+            place()
     }
     function colour() {
         return { r: red, g: green, b: blue, a: hasAlpha ? alpha : 0 }
@@ -246,7 +268,6 @@ Popup {
     // Esc is the popover's own (Cancel); a press outside keeps the colour.
     closePolicy: Popup.CloseOnPressOutside
     onClosed: finish(true)
-    onImplicitHeightChanged: if (visible) place()
 
     Timer {
         id: changeTimer

@@ -226,13 +226,19 @@ private slots:
         auto *pick = findNamed(controlItem(0), QStringLiteral("colorPick"));
         QVERIFY(QMetaObject::invokeMethod(pick, "clicked"));
         QTRY_VERIFY(popover->property("visible").toBool());
+        // A dialog this small cannot hold the popover with More… open: it
+        // opens in a window of its own (Popup.Window), the keys go there.
+        QCOMPARE(popover->property("popupType").toInt(), 1);
+        QQuickWindow *own = content->window();
+        QVERIFY(own && own != window);
+        QTRY_VERIFY(own->isVisible());
         QCOMPARE(popover->property("blue").toInt(), 255);
         QCOMPARE(popover->property("red").toInt(), 0);
         QCOMPARE(popover->property("alpha").toInt(), 0x80);
         QVERIFY(alphaField->isVisible());
         QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
         QTRY_COMPARE(control(0)->property("value").value<QColor>(), QColor(255, 0, 0, 255 - 0x80));
-        QTest::keyClick(window, Qt::Key_Escape);
+        QTest::keyClick(content->window(), Qt::Key_Escape);
         QTRY_VERIFY(!popover->property("visible").toBool());
         QVERIFY(window->isVisible()); // Esc was the popover's, not the dialog's
         QCOMPARE(control(0)->property("value").value<QColor>(), QColor(0, 0, 255, 255 - 0x80));
@@ -243,7 +249,7 @@ private slots:
         QVERIFY(!alphaField->isVisible());
         QCOMPARE(popover->property("green").toInt(), 255);
         QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 0), Q_ARG(QVariant, 255)));
-        QTest::keyClick(window, Qt::Key_Return);
+        QTest::keyClick(content->window(), Qt::Key_Return);
         QTRY_VERIFY(!popover->property("visible").toBool());
         QVERIFY(window->isVisible());
         QTRY_COMPARE(control(1)->property("value").value<QColor>(), QColor(0, 0, 255));
