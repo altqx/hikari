@@ -220,8 +220,12 @@ bool KeyRouter::eventFilter(QObject *watched, QEvent *event)
         return filtered;
     }
     case QEvent::KeyPress: {
-        auto *window = qobject_cast<QQuickWindow *>(watched);
-        if (!window)
+        // A key from the platform comes to the window after its override.
+        // A posted key (Spix, a synthesized press) has passed the window
+        // when the agent offers the override to the focus item, so the
+        // route waits for the press at the item; left over, it would take
+        // the next press of the same key.
+        if (!qobject_cast<QQuickWindow *>(watched) && !(m_routed && qobject_cast<QQuickItem *>(watched)))
             return false;
         return keyPress(static_cast<QKeyEvent *>(event));
     }

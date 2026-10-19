@@ -12531,6 +12531,18 @@ private slots:
         press(Qt::Key_D, Qt::ControlModifier); // GRID_DUPLICATE_LINES
         QTRY_COMPARE(session->document().lines().size(), lines.size() + 1);
         QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        // A posted key (Spix, a synthesized press) meets its override at the
+        // focus item after passing the window: routed the same, once a press.
+        const auto post = [&](Qt::Key key, Qt::KeyboardModifiers mods) {
+            QCoreApplication::postEvent(window, new QKeyEvent(QEvent::KeyPress, key, mods));
+            QCoreApplication::postEvent(window, new QKeyEvent(QEvent::KeyRelease, key, mods));
+            QCoreApplication::processEvents();
+        };
+        post(Qt::Key_D, Qt::ControlModifier);
+        QTRY_COMPARE(session->document().lines().size(), lines.size() + 2);
+        post(Qt::Key_D, Qt::ControlModifier);
+        QTRY_COMPARE(session->document().lines().size(), lines.size() + 3);
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
         // A text field keeps its typing under any panel.
         auto *text = item("lineText");
         text->forceActiveFocus();
