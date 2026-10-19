@@ -7047,6 +7047,40 @@ Styles deleted:
         <translation>எந்த கோடுகள்</translation>
     </message>
     <message>
+        <source>Amount</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time shifts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift times by time / frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delays subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speeds up subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shifts %1, %2, and %3 tag times
+so their positions on video do not change
+(slows down time shifting)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished">வரிகள்</translation>
+    </message>
+    <message>
+        <source>The choice of lines to move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>All lines</source>
         <translation>அனைத்து வரிகளும்</translation>
     </message>
@@ -7071,12 +7105,24 @@ Styles deleted:
         <translation>தேர்ந்தெடுக்கப்பட்ட பாணிகளின்படி</translation>
     </message>
     <message>
+        <source>Select a style from the list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Styles, separated by commas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move according to the following styles (separated by a coma)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>A method of time shift</source>
         <translation>நேர மாற்றத்தின் முறை</translation>
+    </message>
+    <message>
+        <source>The choice of times to move</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Both times</source>
@@ -7085,6 +7131,10 @@ Styles deleted:
     <message>
         <source>Correction end times</source>
         <translation>திருத்தம் இறுதி நேரங்கள்</translation>
+    </message>
+    <message>
+        <source>Correction end times, when they are improper or overlap each other</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Leave unchanged</source>
@@ -7097,6 +7147,66 @@ Styles deleted:
     <message>
         <source>New times</source>
         <translation>புதிய நேரங்கள்</translation>
+    </message>
+    <message>
+        <source>Move the start time to the time video / audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end time to the video/audio time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in/lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inserts introduction to the start time (good when using fad)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Introduction time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inserts introduction to the end time (good when using fad)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start time extension threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time extension threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+before the start time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+after the start time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+before the end time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+after the end time in milliseconds</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Run post processor</source>
