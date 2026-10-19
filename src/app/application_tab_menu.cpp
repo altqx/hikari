@@ -526,6 +526,7 @@ void Application::applyFiles(PendingFiles files, bool skipFirst)
             discardRecovery(*original);
             m_files->close(*original);
             m_workspace.replace(*original, *id);
+            replaceTabArrangement(*original, *id, tabStart(*id)); // WS1: as replaceTarget
             m_comparison.replaced(*original, *id);
             forgetTab(*original);
             m_tabMedia[id->value] = media;

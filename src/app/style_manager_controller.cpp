@@ -290,6 +290,19 @@ QVariantMap StyleManagerController::beginNew(bool store)
     return valuesOf(m_edit->opened);
 }
 
+QVariantMap StyleManagerController::beginNamed(const QString &name)
+{
+    std::optional<StyleList> doc;
+    const auto *styles = list(false, doc);
+    if (!styles || name.isEmpty())
+        return {};
+    const auto from = std::find_if(styles->begin(), styles->end(), [](const auto &s) { return s.name == u8"Default"; });
+    auto style = from != styles->end() ? *from : application::defaultStyle();
+    style.name = u8(name);
+    m_edit = Edit{false, std::nullopt, style};
+    return valuesOf(style);
+}
+
 QVariantMap StyleManagerController::beginCopy(bool store, int row)
 {
     std::optional<StyleList> doc;

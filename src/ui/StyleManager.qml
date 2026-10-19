@@ -42,6 +42,59 @@ Window {
         raise()
         requestActivate()
     }
+    // LE6 (#231): the Line editor's Edit style: the editor on the Line's
+    // Style, its name field focused, whatever the window showed; a Style
+    // the Document lacks is offered for creation, from its Default.
+    function editStyle(styleName) {
+        styles.refreshLists()
+        const row = styles.documentStyles.indexOf(styleName)
+        // An open manager keeps its selection until a Style is created.
+        if (row >= 0 || !visible) {
+            showFor(styleName)
+        } else {
+            raise()
+            requestActivate()
+        }
+        if (row >= 0) {
+            editDocumentStyle(row)
+        } else if (styleName.length > 0 && styles.available) {
+            createQuestion.name = styleName
+            createQuestion.open()
+        }
+    }
+    function editDocumentStyle(row) {
+        assSelected = [row]
+        beginEditing(styles.beginEdit(false, row), false)
+        nameField.forceActiveFocus()
+        nameField.selectAll()
+    }
+    function createStyle(styleName) {
+        const v = styles.beginNamed(styleName)
+        if (v.name === undefined)
+            return
+        const problem = styles.commitEdit(v, [], false, false)
+        if (problem !== "") {
+            styles.endEdit()
+            message.text = problem
+            message.open()
+            return
+        }
+        editDocumentStyle(styles.documentStyles.indexOf(styleName))
+    }
+    Dialog {
+        id: createQuestion
+        objectName: "styleCreateQuestion"
+        property string name: ""
+        title: qsTr("Missing style")
+        modal: true
+        anchors.centerIn: parent
+        Label { text: qsTr("The document has no style named \"%1\". Create it from Default?").arg(createQuestion.name) }
+        footer: DialogButtonBox {
+            Button { objectName: "styleCreateYes"; text: qsTr("Create"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
+            Button { objectName: "styleCreateCancel"; text: qsTr("Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
+        }
+        onAccepted: manager.createStyle(name)
+    }
     function closeManager() {
         styles.saveCatalog() // OnClose saves the store
         endEditing()

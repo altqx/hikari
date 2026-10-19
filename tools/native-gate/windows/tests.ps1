@@ -22,7 +22,9 @@ $runs = @(
     @{ exe = 'hikari_ui_docking_qualification_tests'; fns = @() },
     @{ exe = 'hikari_ui_workspace_layout_tests'; fns = @() },
     # D2: the View menu's arrangements and the editor switch.
-    @{ exe = 'hikari_ui_view_arrangements_tests'; fns = @() }
+    @{ exe = 'hikari_ui_view_arrangements_tests'; fns = @() },
+    # WS1: each Document tab's arrangement.
+    @{ exe = 'hikari_ui_tab_layouts_tests'; fns = @() }
 )
 foreach ($run in $runs) {
     $exe = Get-ChildItem -Recurse -Filter "$($run.exe).exe" $build | Select-Object -First 1
