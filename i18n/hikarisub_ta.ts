@@ -2457,6 +2457,10 @@ Failed to copy %2 fonts.</source>
         <translation>நெடுவரிசைகளை மறைக்கவும்</translation>
     </message>
     <message>
+        <source>Hide empty columns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide layer</source>
         <translation>அடுக்கு மறைக்க</translation>
     </message>
@@ -2650,6 +2654,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>bookmarked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>uncommitted</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
@@ -4257,6 +4265,10 @@ after switching from full screen</source>
     <message>
         <source>Do not vertically center the active line in the subtitle grid</source>
         <translation>வசன வரிகள் கட்டத்தில் செங்குத்தாக செயலில் உள்ள வரியை மையப்படுத்த வேண்டாம்</translation>
+    </message>
+    <message>
+        <source>Hide empty columns in the subtitle grid</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Use numpad shortcuts in text fields</source>
