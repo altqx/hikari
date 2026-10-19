@@ -80,24 +80,31 @@ std::function<void()> showInstalling(QQmlApplicationEngine &engine)
     return [window] { delete window; };
 }
 
-// WS5: files handed over that the window did not open (the quit came
-// first) go to the next start, which opens them: the new version a deb or
-// rpm update execs in this process's place, else a start of this program
-// (for an AppImage the image, whose mount goes with this process).
-void handOn(UpdateInstaller::ExitAction &exitAction, const QStringList &files)
+// WS5: where the files a quit left wait for the next start (saveHandedOn).
+QString handedOnPath()
 {
-#ifndef _WIN32
-    if (!exitAction.program.isEmpty()) {
-        exitAction.arguments += files;
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/HandedOn.txt");
+}
+
+// WS5: the files a quit left (saved) are opened by the next start that
+// opens a window: the new version an update execs (deb, rpm) or starts
+// (Restart now; an AppImage's new image), the start an update's setup makes
+// once it is done when asked (Windows), else a start of this program made
+// for them (for an AppImage the image, whose mount goes with this process).
+void startForHandedOn(const UpdateInstaller::ExitAction &exitAction, bool updateStarts)
+{
+    if (!exitAction.program.isEmpty() || updateStarts)
+        return;
+#ifdef _WIN32
+    if (update_apply::setupRunning()) {
+        update_apply::askStartAfterSetup();
         return;
     }
-#else
-    Q_UNUSED(exitAction);
 #endif
     QString program = qEnvironmentVariable("APPIMAGE");
     if (program.isEmpty())
         program = QCoreApplication::applicationFilePath();
-    QProcess::startDetached(program, files);
+    QProcess::startDetached(program, {});
 }
 
 int runWindow(int argc, char **argv, StartupMode mode, const application::StartupArguments &startup,
@@ -110,7 +117,10 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
     // The start's files, absolute: its arguments without Qt's options and
     // the program's own switches.
-    const QStringList files = launchFiles(QCoreApplication::arguments().mid(1), QDir::currentPath());
+    // WS5: and the files a quit left for the next start, which this is.
+    QStringList files = launchFiles(QCoreApplication::arguments().mid(1), QDir::currentPath());
+    if (mode == StartupMode::Run)
+        files += takeHandedOn(handedOnPath());
 #ifndef _WIN32
     // ADR 0019: an AppImage update that an ordinary quit left installs now,
     // before anything of this version starts, with the new image watched as
@@ -212,13 +222,18 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     const int code = app.exec();
     // WS5: the next start is the instance, an update's new version included.
     instance.release();
+    // WS5: what was handed over and not opened (the quit came first) is
+    // saved before an update can start a new version.
     const QStringList unopened = forwarded.takeUnopened();
+    if (!unopened.isEmpty())
+        saveHandedOn(handedOnPath(), unopened);
     // ADR 0019: a ready update installs after a normal quit, every document
     // reviewed and the main window closed.
+    const bool updateStarts = code == 0 && application.updates().installer().restartRequested();
     if (code == 0)
         exitAction = application.updates().installer().installAtExit([&engine] { return showInstalling(engine); });
     if (!unopened.isEmpty())
-        handOn(exitAction, unopened);
+        startForHandedOn(exitAction, updateStarts);
     return code;
 }
 

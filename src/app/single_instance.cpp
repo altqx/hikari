@@ -2,7 +2,9 @@
 
 #include "hikari/application/update_check.h"
 
+#include <QCoreApplication>
 #include <QCryptographicHash>
+#include <QDateTime>
 #include <QDataStream>
 #include <QDir>
 #include <QElapsedTimer>
@@ -10,10 +12,12 @@
 #include <QFileInfo>
 #include <QLocalServer>
 #include <QLocalSocket>
+#include <QSaveFile>
 #include <QThread>
 #include <QTimer>
 #include <QUrl>
 
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -202,6 +206,54 @@ QStringList launchFiles(const QStringList &arguments, const QString &workingDire
         }
         files << QDir::cleanPath(base.absoluteFilePath(path));
     }
+    return files;
+}
+
+namespace {
+
+// The first line is when the files were kept (seconds since the epoch, UTC),
+// then one file per line.
+QStringList readHandedOn(const QString &path, qint64 maxAgeSeconds)
+{
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly))
+        return {};
+    QStringList lines = QString::fromUtf8(file.readAll()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+    bool ok = false;
+    const qint64 kept = lines.isEmpty() ? 0 : lines.takeFirst().toLongLong(&ok);
+    const qint64 age = QDateTime::currentSecsSinceEpoch() - kept;
+    return ok && age >= 0 && age <= maxAgeSeconds ? lines : QStringList();
+}
+
+} // namespace
+
+void saveHandedOn(const QString &path, const QStringList &files)
+{
+    QStringList kept = readHandedOn(path, std::numeric_limits<qint64>::max());
+    for (const QString &file : files)
+        if (!file.contains(QLatin1Char('\n')) && !kept.contains(file))
+            kept << file;
+    QDir().mkpath(QFileInfo(path).absolutePath());
+    QSaveFile out(path);
+    if (!out.open(QIODevice::WriteOnly))
+        return;
+    out.write(QByteArray::number(QDateTime::currentSecsSinceEpoch()) + '\n');
+    for (const QString &file : kept)
+        out.write(file.toUtf8() + '\n');
+    out.commit();
+}
+
+QStringList takeHandedOn(const QString &path, qint64 maxAgeSeconds)
+{
+    if (!QFile::exists(path))
+        return {};
+    // Taken by one start only: two that come at once cannot both rename it.
+    const QString taken = path + QStringLiteral(".") + QString::number(QCoreApplication::applicationPid());
+    QFile::remove(taken);
+    if (!QFile::rename(path, taken))
+        return {};
+    const QStringList files = readHandedOn(taken, maxAgeSeconds);
+    QFile::remove(taken);
     return files;
 }
 

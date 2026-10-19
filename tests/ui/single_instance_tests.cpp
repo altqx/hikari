@@ -8,6 +8,7 @@
 
 #include <QCoreApplication>
 #include <QDataStream>
+#include <QDateTime>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
@@ -336,6 +337,26 @@ private slots:
         QTRY_COMPARE(sender.state(), QLocalSocket::UnconnectedState);
         QCOMPARE(requested.size(), 0);
         QVERIFY(sender.readAll().isEmpty());
+    }
+
+    // The files a quit left are kept for the next start: added to what is
+    // kept, taken once, and dropped when that start never came.
+    void handedOnFilesWaitForTheNextStart()
+    {
+        const QString kept = dir.filePath(QStringLiteral("handed/HandedOn.txt"));
+        const QString a = dir.filePath(QStringLiteral("a.ass")), b = dir.filePath(QStringLiteral("字幕 b.ass"));
+        QVERIFY(app::takeHandedOn(kept).isEmpty());
+        app::saveHandedOn(kept, {a});
+        app::saveHandedOn(kept, {b, a});
+        QCOMPARE(app::takeHandedOn(kept), (QStringList{a, b}));
+        QVERIFY(!QFile::exists(kept));
+        QVERIFY(app::takeHandedOn(kept).isEmpty());
+        QFile old(kept);
+        QVERIFY(old.open(QIODevice::WriteOnly));
+        old.write(QByteArray::number(QDateTime::currentSecsSinceEpoch() - 7200) + "\n" + a.toUtf8() + "\n");
+        old.close();
+        QVERIFY(app::takeHandedOn(kept).isEmpty());
+        QVERIFY(!QFile::exists(kept));
     }
 
     // A start that holds the lock but cannot listen (its socket or pipe name
