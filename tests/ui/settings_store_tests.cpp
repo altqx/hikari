@@ -196,7 +196,8 @@ private slots:
 
     // K2: the colour settings K2 withdrew (A2's audio.spectrum* colours,
     // K1's icons.<appearance>.<state> colours) leave a profile that saved
-    // them: no saved colour overrides the theme. Other values stay.
+    // them: no saved colour overrides the theme. WS3's editor switch
+    // (workspace.editorOn) leaves the workspace. Other values stay.
     void withdrawnColourSettingsLeaveTheProfile()
     {
         QTemporaryDir dir;
@@ -209,6 +210,8 @@ private slots:
                            QStringLiteral("#112233"));
             s.setValue(QStringLiteral("profile/appearance.highContrastBlack.accent"), QStringLiteral("#00FF00"));
             s.setValue(QStringLiteral("profile/audio.spectrumOn"), true);
+            s.setValue(QStringLiteral("workspace/workspace.editorOn"), false);
+            s.setValue(QStringLiteral("workspace/workspace.audioBoxHeight"), 230);
         }
         {
             SettingsStore store(ini);
@@ -221,6 +224,8 @@ private slots:
                      id.data());
         QCOMPARE(s.value(QStringLiteral("profile/appearance.highContrastBlack.accent")).toString(), QStringLiteral("#00FF00"));
         QVERIFY(s.value(QStringLiteral("profile/audio.spectrumOn")).toBool());
+        QVERIFY(!s.contains(QStringLiteral("workspace/workspace.editorOn")));
+        QCOMPARE(s.value(QStringLiteral("workspace/workspace.audioBoxHeight")).toInt(), 230);
     }
 
     // The panel reads the legacy options (SHIFT_TIMES_TIME 2000, backward

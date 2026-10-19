@@ -113,6 +113,18 @@ TEST(Hotkeys, NamesTableIsHotkeysNaming)
     // never listed; VIDEO_DELETE_FILE is "Unload video".
     EXPECT_EQ(legacy.at(ids().at("GLOBAL_VIDEO_INDEXING")), "Open video with FFMS2");
     legacy.erase(ids().at("GLOBAL_VIDEO_INDEXING"));
+    // WS3-view-arrangements-retired (2026-10-18): the View arrangements and
+    // the editor switch are retired and never listed.
+    for (const auto &[symbol, name] : std::initializer_list<std::pair<const char *, const char *>>{
+             {"GLOBAL_VIEW_ALL", "View all"},
+             {"GLOBAL_VIEW_AUDIO", "View audio and subtitles"},
+             {"GLOBAL_VIEW_SUBS", "View only subtitles"},
+             {"GLOBAL_VIEW_VIDEO", "View video and subtitles"},
+             {"GLOBAL_VIEW_ONLY_VIDEO", "View only video"},
+             {"GLOBAL_EDITOR", "Enable / Disable editor"}}) {
+        EXPECT_EQ(legacy.at(ids().at(symbol)), name);
+        legacy.erase(ids().at(symbol));
+    }
     EXPECT_EQ(legacy.at(ids().at("VIDEO_DELETE_FILE")), "Remove video");
     legacy[ids().at("VIDEO_DELETE_FILE")] = "Unload video";
     EXPECT_EQ(hotkeyNames(), legacy);
@@ -132,11 +144,14 @@ TEST(Hotkeys, DefaultsAreLoadDefault)
     for (std::sregex_iterator it(src.begin(), src.end(), assign), last; it != last; ++it)
         legacy[HotkeyId{ids().at((*it)[1]), windowOf((*it)[2])}] = Hotkey{(*it)[3], (*it)[4]};
     EXPECT_EQ(legacy.size(), 86u);
+    // WS3-view-arrangements-retired: the editor switch's Ctrl-E is no default.
+    EXPECT_EQ(legacy.at(HotkeyId{ids().at("GLOBAL_EDITOR"), GlobalHotkey}).accel, "Ctrl-E");
+    legacy.erase(HotkeyId{ids().at("GLOBAL_EDITOR"), GlobalHotkey});
     EXPECT_EQ(defaultHotkeys(), legacy);
     HotkeyMap main, audio;
     loadDefaultHotkeys(main, false);
     loadDefaultHotkeys(audio, true);
-    EXPECT_EQ(main.size(), 63u);
+    EXPECT_EQ(main.size(), 62u);
     EXPECT_EQ(audio.size(), 23u);
     for (const auto &[k, h] : audio)
         EXPECT_EQ(k.type, AudioHotkey);
@@ -835,4 +850,43 @@ TEST(Hotkeys, RetiredIndexingBindingsAreDropped)
     // nothing writes it back
     for (const auto &line : hotkeyLines(map, false))
         EXPECT_EQ(line.find("GLOBAL_VIDEO_INDEXING"), std::string::npos);
+}
+
+// WS3-view-arrangements-retired: stored bindings of the View arrangements
+// (GLOBAL_VIEW_ALL..GLOBAL_VIEW_SUBS) and the editor switch (GLOBAL_EDITOR),
+// by symbol or by number, are recognised and dropped for the notice; the
+// commands next to them stay.
+TEST(Hotkeys, RetiredViewAndEditorBindingsAreDropped)
+{
+    HotkeyMap map;
+    readHotkeyLines(map, {"GLOBAL_VIEW_ALL G=Ctrl-1", "GLOBAL_VIEW_VIDEO G=Ctrl-2", "GLOBAL_VIEW_AUDIO G=Ctrl-3",
+                          "5034 G=Ctrl-4", "GLOBAL_VIEW_SUBS G=Ctrl-5", "GLOBAL_EDITOR G=Ctrl-E",
+                          "GLOBAL_SAVE_SUBS G=Ctrl-S"});
+    std::vector<int> retired;
+    for (const char *symbol : {"GLOBAL_VIEW_ALL", "GLOBAL_VIEW_AUDIO", "GLOBAL_VIEW_VIDEO", "GLOBAL_VIEW_ONLY_VIDEO",
+                               "GLOBAL_VIEW_SUBS", "GLOBAL_EDITOR"}) {
+        const int id = ids().at(symbol);
+        EXPECT_TRUE(isRetiredHotkey(id)) << symbol;
+        EXPECT_EQ(hotkeyName(id), "") << symbol;
+        EXPECT_EQ(defaultHotkey(HotkeyId{id, GlobalHotkey}), "") << symbol;
+        retired.push_back(id);
+    }
+    EXPECT_EQ(ids().at("GLOBAL_VIEW_ONLY_VIDEO"), 5034);
+    // The ids beside them stay.
+    EXPECT_FALSE(isRetiredHotkey(ids().at("GLOBAL_SAVE_SUBS")));
+    EXPECT_FALSE(isRetiredHotkey(5030));
+    EXPECT_FALSE(isRetiredHotkey(5036));
+    EXPECT_FALSE(isRetiredHotkey(5108));
+    EXPECT_FALSE(isRetiredHotkey(5110));
+    const auto dropped = dropRetiredHotkeys(map);
+    ASSERT_EQ(dropped.size(), 6u);
+    for (const auto &[key, hotkey] : dropped)
+        EXPECT_NE(std::find(retired.begin(), retired.end(), key.id), retired.end()) << key.id;
+    EXPECT_TRUE(map.contains(HotkeyId{ids().at("GLOBAL_SAVE_SUBS"), GlobalHotkey}));
+    for (const int id : retired)
+        EXPECT_FALSE(map.contains(HotkeyId{id, GlobalHotkey})) << id;
+    for (const auto &line : hotkeyLines(map, false)) {
+        EXPECT_EQ(line.find("GLOBAL_VIEW_"), std::string::npos) << line;
+        EXPECT_NE(line.rfind("GLOBAL_EDITOR ", 0), 0u) << line;
+    }
 }

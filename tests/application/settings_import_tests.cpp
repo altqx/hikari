@@ -305,6 +305,14 @@ TEST(SettingsImport, EveryWorksheetOptionReachesADestinationOrADisposition)
         const std::string &key = csv.at(1);
         audio += csv.at(2) == "AudioConfig.txt";
         const SettingDefinition *def = findLegacySetting(key);
+        if (key == "EDITOR_ON") {
+            // WS3 retired the editor switch with its setting: no definition
+            // writes it here, the importer retires the record
+            // (RetiredViewArrangementsAndEditorSwitchAreDroppedWithANotice).
+            EXPECT_EQ(def, nullptr);
+            EXPECT_TRUE(isRetiredOption(key));
+            continue;
+        }
         ASSERT_NE(def, nullptr) << key;
         EXPECT_EQ(def->legacyAudioFile, csv.at(2) == "AudioConfig.txt") << key;
         const auto found = rowsKeyed(plan, key);
@@ -408,8 +416,8 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         const PlanRow &row = rowOf(plan, rowId);
         EXPECT_EQ(row.binding, (HotkeyId{id, type})) << symbol;
         EXPECT_EQ(row.destination, symbol + " (" + std::string(hotkeyWindowName(type)) + ")");
-        if (symbol == "GLOBAL_VIDEO_INDEXING") {
-            EXPECT_EQ(row.disposition, Disposition::Retired);
+        if (isRetiredHotkey(id)) {
+            EXPECT_EQ(row.disposition, Disposition::Retired) << symbol;
             EXPECT_FALSE(row.selectable);
         } else {
             EXPECT_EQ(row.disposition, Disposition::Change) << symbol << " " << row.reason;
@@ -426,14 +434,14 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
     int bound = 0;
     for (const auto &a : hotkeyActions()) {
         const auto it = map.find(HotkeyId{a.id, hotkeyType(a.id)});
-        if (a.symbol == "GLOBAL_VIDEO_INDEXING") {
-            EXPECT_EQ(it, map.end());
+        if (isRetiredHotkey(a.id)) {
+            EXPECT_EQ(it, map.end()) << a.symbol;
             continue;
         }
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 242);
+    EXPECT_EQ(bound, 236); // 243 less V3's GLOBAL_VIDEO_INDEXING and WS3's five View arrangements and editor switch
 }
 
 // ---- Config.txt / AudioConfig.txt readings
@@ -669,6 +677,41 @@ TEST(SettingsImport, RetiredOptionsAndActionsAreDroppedWithANotice)
     EXPECT_FALSE(profile.values.contains("toolbar.actions"));
     EXPECT_FALSE(profile.values.contains("toolbar.alignment"));
     EXPECT_FALSE(profile.values.contains(std::string(kHotkeysSetting)));
+}
+
+// WS3-view-arrangements-retired (owner decision, 2026-10-18): layout presets
+// and saved layouts replace the View arrangements, and the editor is always
+// shown: their bindings and EDITOR_ON are retired, each with its reason, and
+// nothing of them is written.
+TEST(SettingsImport, RetiredViewArrangementsAndEditorSwitchAreDroppedWithANotice)
+{
+    const Plan plan = buildPlan({config(padding() + "EDITOR_ON=0\r\n"),
+                                 hotkeys("GLOBAL_VIEW_ALL G=Ctrl-1\r\nGLOBAL_VIEW_VIDEO G=Ctrl-2\r\n"
+                                         "GLOBAL_VIEW_AUDIO G=Ctrl-3\r\n5034 G=Ctrl-4\r\nGLOBAL_VIEW_SUBS G=Ctrl-5\r\n"
+                                         "GLOBAL_EDITOR G=Ctrl-E\r\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n")},
+                                linuxHost(), readBy(ReadBy::Windows));
+    const PlanRow &editorOn = rowOf(plan, "setting:EDITOR_ON");
+    EXPECT_EQ(editorOn.disposition, Disposition::Retired);
+    EXPECT_FALSE(editorOn.selectable);
+    EXPECT_NE(editorOn.reason.find("editor is always shown"), std::string::npos) << editorOn.reason;
+    for (const auto *symbol : {"GLOBAL_VIEW_ALL", "GLOBAL_VIEW_VIDEO", "GLOBAL_VIEW_AUDIO", "GLOBAL_VIEW_ONLY_VIDEO",
+                               "GLOBAL_VIEW_SUBS"}) {
+        const PlanRow &row = rowOf(plan, std::string("shortcut:") + symbol + ":G");
+        EXPECT_EQ(row.disposition, Disposition::Retired) << symbol;
+        EXPECT_FALSE(row.selectable) << symbol;
+        EXPECT_NE(row.reason.find("saved layouts replace the View arrangements"), std::string::npos) << row.reason;
+    }
+    const PlanRow &editor = rowOf(plan, "shortcut:GLOBAL_EDITOR:G");
+    EXPECT_EQ(editor.disposition, Disposition::Retired);
+    EXPECT_NE(editor.reason.find("editor is always shown"), std::string::npos) << editor.reason;
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_SAVE_SUBS:G").disposition, Disposition::Change);
+    const Profile profile = applyPlan(plan, proposedRows(plan), linuxHost());
+    EXPECT_FALSE(profile.values.contains("workspace.editorOn"));
+    HotkeyMap map;
+    readHotkeyLines(map, std::get<std::vector<std::string>>(profile.values.at(std::string(kHotkeysSetting))));
+    EXPECT_EQ(map.at(HotkeyId{hotkeyIdOf("GLOBAL_SAVE_SUBS"), GlobalHotkey}).accel, "Ctrl-Alt-S");
+    for (const auto *symbol : {"GLOBAL_VIEW_ALL", "GLOBAL_VIEW_ONLY_VIDEO", "GLOBAL_EDITOR"})
+        EXPECT_FALSE(map.contains(HotkeyId{hotkeyIdOf(symbol), GlobalHotkey})) << symbol;
 }
 
 // ---- Hotkeys.txt / AudioHotkeys.txt

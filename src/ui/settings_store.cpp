@@ -78,10 +78,12 @@ SettingsStore::SettingsStore(QString file, QObject *parent) : QObject(parent), m
         auto ini = std::make_unique<IniSettingsStorage>(m_file);
         migrateInterimKeys(ini->ini());
         // K2: the withdrawn colour settings leave the profile (no saved
-        // colour overrides the theme any more).
+        // colour overrides the theme any more); WS3: the editor switch
+        // leaves the workspace.
         for (const auto id : application::retiredSettings())
-            if (ini->ini().contains(QStringLiteral("profile/") + qs(id)))
-                ini->ini().remove(QStringLiteral("profile/") + qs(id));
+            for (const auto *scope : {"profile/", "workspace/"})
+                if (ini->ini().contains(QLatin1String(scope) + qs(id)))
+                    ini->ini().remove(QLatin1String(scope) + qs(id));
         m_storage = std::move(ini);
     }
     m_settings = std::make_unique<application::Settings>(*m_storage);

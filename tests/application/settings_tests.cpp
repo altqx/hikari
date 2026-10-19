@@ -228,7 +228,8 @@ TEST(SettingsRegistry, NoColourSettingOutsideHighContrast)
     // is dropped by the INI store, settings_store_tests).
     MemorySettingsStorage storage;
     Settings settings(storage);
-    EXPECT_EQ(retiredSettings().size(), 15u);
+    EXPECT_EQ(retiredSettings().size(), 16u); // and WS3's workspace.editorOn
+    EXPECT_EQ(findLegacySetting("EDITOR_ON"), nullptr);
     for (const auto id : retiredSettings()) {
         EXPECT_EQ(findSetting(id), nullptr) << id;
         EXPECT_FALSE(settings.set(id, std::string("#123456"))) << id;

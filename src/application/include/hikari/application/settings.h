@@ -122,8 +122,9 @@ inline constexpr std::string_view kHotkeysSetting = "shortcuts.hotkeys";
 inline constexpr std::string_view kAudioHotkeysSetting = "shortcuts.audioHotkeys";
 
 // K2 withdrew the per-colour settings (A2's audio.spectrum* colours, K1's
-// icons.<appearance>.<state> colours) for the theme layer's fixed colours:
-// their ids, which a profile may still hold (the INI store drops them).
+// icons.<appearance>.<state> colours) for the theme layer's fixed colours,
+// and WS3 the editor switch (workspace.editorOn): their ids, which a profile
+// may still hold (the INI store drops them).
 std::span<const std::string_view> retiredSettings();
 // wxColour::Set's "#RRGGBB" (and "#RRGGBBAA") as 0xAARRGGBB; nothing when it
 // is not one.

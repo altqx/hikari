@@ -177,6 +177,27 @@ std::string symbolOf(int id)
     return s.empty() ? std::to_string(id) : std::string(s);
 }
 
+// The notice for a dropped binding of a retired command (%1: its keys).
+QString retiredNotice(int id)
+{
+    switch (id) {
+    case 5031: // GLOBAL_VIEW_ALL
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View all\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+    case 5032: // GLOBAL_VIEW_AUDIO
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View audio and subtitles\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+    case 5033: // GLOBAL_VIEW_VIDEO
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View video and subtitles\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+    case 5034: // GLOBAL_VIEW_ONLY_VIDEO
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View only video\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+    case 5035: // GLOBAL_VIEW_SUBS
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View only subtitles\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+    case 5109: // GLOBAL_EDITOR
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Enable / Disable editor\" was removed: the editor is always shown; hide panels or choose a layout instead.");
+    default: // GLOBAL_VIDEO_INDEXING
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Open video with FFMS2\" was removed: the command is retired and videos are always indexed.");
+    }
+}
+
 } // namespace
 
 HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
@@ -220,11 +241,11 @@ void HotkeysController::load()
     // V3-indexing-retired: a binding of "Open video with FFMS2" (legacy
     // GLOBAL_VIDEO_INDEXING, from a carried-over Hotkeys.txt) is dropped with
     // a notice, and the list is written without it so the notice is given once.
+    // WS3-view-arrangements-retired: the same for the View arrangements and
+    // the editor switch.
     const auto dropped = application::dropRetiredHotkeys(m_live);
     for (const auto &[key, hotkey] : dropped)
-        m_retiredNotices << QCoreApplication::translate("HikariSub.Hotkeys",
-                                                        "The shortcut %1 of \"Open video with FFMS2\" was removed: the command is retired and videos are always indexed.")
-                                .arg(qs(hotkey.accel));
+        m_retiredNotices << retiredNotice(key.id).arg(qs(hotkey.accel));
     if (!dropped.empty())
         m_settings.set(kMainSetting, qLines(application::hotkeyLines(m_live, false)));
 }
