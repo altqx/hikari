@@ -519,9 +519,12 @@ QVariantMap Application::lastSessionSummary() const
     if (const auto text = readSessionText(lastSessionPath()))
         if (const auto session = application::parseSession(*text))
             for (const auto &tab : session->tabs) {
-                // A tab with neither subtitles nor video is an Untitled one,
-                // which restores as nothing worth offering.
-                const QString file = !tab.subtitles.empty() ? qs(tab.subtitles) : qs(tab.video);
+                // A tab with neither subtitles nor a video file is an
+                // Untitled one, which restores as nothing worth offering; a
+                // dummy video ("?dummy:...") is not a file applySession
+                // reopens.
+                const bool dummy = tab.subtitles.empty() && tab.video.starts_with("?dummy");
+                const QString file = !tab.subtitles.empty() ? qs(tab.subtitles) : dummy ? QString() : qs(tab.video);
                 if (!file.isEmpty())
                     names << QFileInfo(file).fileName();
             }

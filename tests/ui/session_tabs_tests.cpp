@@ -663,6 +663,15 @@ private slots:
         QVERIFY(b.tabs().isEmpty());
         QCOMPARE(b.lastSessionSummary().value(QStringLiteral("names")).toStringList(),
                  (QStringList{QStringLiteral("s1.ass"), QStringLiteral("cfr.mkv")}));
+        // A tab with only a dummy video is not offered: restoring reopens no
+        // file for it.
+        application::SessionTab dummy;
+        dummy.video = "?dummy:23.976000:40000:1280:720:47:163:254:";
+        QFile file(b.lastSessionPath());
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        file.write(QByteArray::fromStdString(application::writeSession("HikariSub", true, {dummy})));
+        file.close();
+        QVERIFY(b.lastSessionSummary().value(QStringLiteral("names")).toStringList().isEmpty());
     }
 
     // SH2-recent-opened-and-missing: the recent subtitles remember when each
