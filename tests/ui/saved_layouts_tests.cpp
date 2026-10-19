@@ -16,6 +16,7 @@
 #include "qtest_parts.h"
 #include "settings_store.h"
 #include "theme.h"
+#include "video_controller.h"
 #include "workspace_layout.h"
 
 #include <QFile>
@@ -424,6 +425,52 @@ private slots:
             QVERIFY2(isOpen("gridDock"), qPrintable(step));
             QVERIFY2(isOpen("referenceDock"), qPrintable(step));
         }
+        stop();
+    }
+
+    // A layout, a preset or Reset that hides the Video panel pauses a
+    // playing video (no transport shows it playing), and a panel with the
+    // focus that it hides gives the focus to the Grid.
+    void aHiddenVideoPausesAndTheFocusStaysShown()
+    {
+        start();
+        openEpisode();
+        auto &video = application->video();
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(video.session().lastFrame() != nullptr, 20000);
+        close("videoDock");
+        saveAs(QStringLiteral("No video"));
+        trigger(QStringLiteral("viewLayoutPresetEditing"));
+        QTRY_VERIFY(isOpen("videoDock"));
+        QVERIFY(video.play());
+        QVERIFY(QMetaObject::invokeMethod(savedItem("viewLayout", QStringLiteral("No video")), "triggered"));
+        QTRY_VERIFY(!isOpen("videoDock"));
+        QVERIFY(!video.playing());
+        trigger(QStringLiteral("viewLayoutPresetEditing"));
+        QTRY_VERIFY(isOpen("videoDock"));
+        QVERIFY(video.play());
+        trigger(QStringLiteral("viewLayoutPresetTiming"));
+        QTRY_VERIFY(!isOpen("videoDock"));
+        QVERIFY(!video.playing());
+        // A preset that keeps Video leaves it playing.
+        trigger(QStringLiteral("viewLayoutPresetEditing"));
+        QTRY_VERIFY(isOpen("videoDock"));
+        QVERIFY(video.play());
+        trigger(QStringLiteral("viewLayoutPresetTranslation"));
+        QTRY_VERIFY(!isOpen("audioDock"));
+        QVERIFY(video.playing());
+        video.pause();
+
+        trigger(QStringLiteral("viewLayoutPresetEditing"));
+        QTRY_VERIFY(isOpen("audioDock"));
+        auto *audioPanel = qobject_cast<QQuickItem *>(named("audioPanel"));
+        auto *gridPanel = qobject_cast<QQuickItem *>(named("gridPanel"));
+        QVERIFY(audioPanel && gridPanel);
+        audioPanel->forceActiveFocus();
+        QTRY_VERIFY(audioPanel->hasActiveFocus());
+        QVERIFY(QMetaObject::invokeMethod(window(), "applyPreset", Q_ARG(QVariant, QStringLiteral("Typesetting"))));
+        QTRY_VERIFY(!isOpen("audioDock"));
+        QTRY_VERIFY(gridPanel->hasActiveFocus());
         stop();
     }
 

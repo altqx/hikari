@@ -253,6 +253,9 @@ hikari_add_qttest(hikari_ui_saved_layouts_tests SOURCES saved_layouts_tests.cpp
     LIBRARIES hikari_composition hikari_translations KDAB::kddockwidgets # WS3: the presets' names in every catalog
     PARTS layouts kept=unusableLayoutsAreKept)
 target_include_directories(hikari_ui_saved_layouts_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+target_compile_definitions(hikari_ui_saved_layouts_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_saved_layouts_tests hikari_media_helper hikari_media_fixtures)
 # Wave 6's Line editor cards (LE2-LE6) through the composition, with restarts.
 hikari_add_qttest(hikari_ui_line_editor_options_tests SOURCES line_editor_options_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cpp LIBRARIES hikari_composition)

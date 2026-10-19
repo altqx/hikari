@@ -275,21 +275,35 @@ ApplicationWindow {
         // Before the first frame the default arrangement and the saved
         // layout are not in place yet: settle them first.
         root.settleArrangement()
-        root.workspaceLayout.applyPreset(name)
+        root.keepFocusShown(() => root.workspaceLayout.applyPreset(name))
     }
     // WS3: a saved layout for the current tab, and Reset this layout (the
     // saved layout the tab's arrangement started from, else its preset).
     function applySavedLayout(name) {
         root.settleArrangement()
-        root.workspaceLayout.applySavedLayout(name)
+        root.keepFocusShown(() => root.workspaceLayout.applySavedLayout(name))
     }
     function resetLayout() {
         root.settleArrangement()
-        root.workspaceLayout.resetCurrentLayout()
+        root.keepFocusShown(() => root.workspaceLayout.resetCurrentLayout())
+    }
+    // A panel with the focus that the new layout hides gives it to the
+    // Grid, else to the first shown panel in F6 order (as the retired
+    // arrangements did).
+    function keepFocusShown(apply) {
+        const focused = root.panels.find(p => p.visible && p.activeFocus) ?? null
+        apply()
+        if (!focused || focused.visible)
+            return
+        const shown = root.panels.filter(p => p.visible)
+        const next = shown.includes(gridPanel) ? gridPanel : shown[0]
+        if (next)
+            root.focusPanel(next, Qt.OtherFocusReason)
     }
     // WS1: another arrangement is shown (another tab's, a preset, a saved
     // layout, the backup). The Reference tray follows the comparison, not
-    // the arrangement (shown with the Grid while there is one).
+    // the arrangement (shown with the Grid while there is one), and a video
+    // the arrangement hides pauses (no transport shows it playing).
     Connections {
         target: root.workspaceLayout
         function onArrangementSwapped() {
@@ -297,6 +311,8 @@ ApplicationWindow {
                 referenceDock.open()
             else if (referenceDock.isOpen)
                 referenceDock.close()
+            if (!videoDock.isOpen && root.video.playing)
+                root.video.pause()
         }
     }
 
