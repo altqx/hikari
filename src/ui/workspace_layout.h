@@ -168,8 +168,9 @@ private:
     bool restorePayload(const QByteArray &payload, bool inPlace = false);
     bool restoreSavedFile();
     bool buildPreset(const QString &name, bool inPlace);
-    bool showArrangement(WorkspaceArrangement arrangement);
+    bool showArrangement(const WorkspaceArrangement &arrangement);
     WorkspaceArrangement shownArrangement() const;
+    void refuseArrangement(const WorkspaceArrangement &arrangement);
     void keepUnrestored(const QByteArray &bytes, const QString &problem, const QString &title);
     QString backupFile() const { return m_file + QStringLiteral(".bak"); }
 

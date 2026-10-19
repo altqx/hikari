@@ -426,6 +426,47 @@ private slots:
         QVERIFY(isOpen("editorDock"));
         stop();
     }
+
+    // A tab shown in the player layout (the editor off): its arrangement
+    // from the Session waits for the editor, and one the engine refuses then
+    // shows the Editing layout with the notice and the kept text as well.
+    void aTabArrangementRefusedInThePlayerLayoutShowsEditing()
+    {
+        start();
+        const ui::WorkspaceArrangement refused{
+            QStringLiteral("Typesetting"), R"({"serializationVersion":1,"mainWindows":[{"uniqueName":"Classic"}],"allDockWidgets":[]})"};
+        application::SessionTab first, player;
+        first.subtitles = QDir::toNativeSeparators(writeSubtitles(dir.filePath(QStringLiteral("p.ass")))).toStdString();
+        first.layout = refused.serialise().toStdString();
+        // The active tab: a video in the player layout, so the editor stays off.
+        player.subtitles = QDir::toNativeSeparators(writeSubtitles(dir.filePath(QStringLiteral("v.ass")))).toStdString();
+        player.video = QDir::toNativeSeparators(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv")).toStdString();
+        player.editor = false;
+        const QString kls = dir.filePath(QStringLiteral("player.kls"));
+        {
+            QFile f(kls);
+            QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            f.write(QByteArray::fromStdString(application::writeSession("HikariSub v1", false, {first, player})));
+        }
+        loadSession(kls);
+        QCOMPARE(application->currentTab(), 1);
+        QTRY_VERIFY(!application->editorOn());
+        QVERIFY(application->workspaceLayout().holding());
+        application->selectTab(0); // shown while the player layout holds it
+        QVERIFY(application->workspaceLayout().notice().isEmpty());
+        application->toggleEditor();
+        QTRY_VERIFY(application->editorOn());
+        QVERIFY(!application->workspaceLayout().holding());
+        const QString notice = application->workspaceLayout().notice();
+        QVERIFY2(notice.contains(QStringLiteral("could not restore")), qPrintable(notice));
+        QCOMPARE(readAll(layoutFile() + QStringLiteral(".tab.unrestored")), refused.serialise());
+        QCOMPARE(preset(), QStringLiteral("Editing"));
+        for (const char *name : {"videoDock", "audioDock", "editorDock", "gridDock"})
+            QVERIFY2(isOpen(name) && !isFloating(name), name);
+        QVERIFY(application->saveLastSession());
+        QCOMPARE(layoutOf(readSession(application->lastSessionPath()).tabs.at(0)).preset, QStringLiteral("Editing"));
+        stop();
+    }
 };
 
 QTEST_MAIN(TabLayoutsTest)

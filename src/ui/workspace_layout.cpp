@@ -460,11 +460,15 @@ bool WorkspaceLayoutController::releaseArrangement()
 {
     if (!holding())
         return false;
-    // WS1: the tab shown now may not be the one the hold began in.
+    // WS1: the tab shown now may not be the one the hold began in, and its
+    // arrangement (from a Session loaded meanwhile) is only restored now.
     const WorkspaceArrangement held = *std::exchange(m_held, std::nullopt);
     const bool restored = held.payload.isEmpty() ? buildPreset(held.preset, true) : restorePayload(held.payload, true);
-    if (held.preset != m_preset) {
-        m_preset = held.preset;
+    if (!restored)
+        refuseArrangement(held);
+    const QString preset = restored ? held.preset : QStringLiteral("Editing");
+    if (preset != m_preset) {
+        m_preset = preset;
         m_lastSaved.clear();
     }
     emit changed();
@@ -482,7 +486,7 @@ WorkspaceArrangement WorkspaceLayoutController::shownArrangement() const
     return {m_preset, KDDockWidgets::LayoutSaver().serializeLayout()};
 }
 
-bool WorkspaceLayoutController::showArrangement(WorkspaceArrangement arrangement) // a copy: it may be the tab's own, reset below
+bool WorkspaceLayoutController::showArrangement(const WorkspaceArrangement &arrangement)
 {
     bool shown = true;
     if (holding()) {
@@ -495,14 +499,9 @@ bool WorkspaceLayoutController::showArrangement(WorkspaceArrangement arrangement
         // putting them back.
         shown = restorePayload(arrangement.payload, true);
     }
+    if (!shown)
+        refuseArrangement(arrangement);
     const QString preset = shown ? arrangement.preset : QStringLiteral("Editing");
-    if (!shown) {
-        // restorePayload rebuilt the default arrangement (partial restore).
-        if (m_tab)
-            m_tabs[*m_tab].arrangement = WorkspaceArrangement{};
-        keepUnrestored(arrangement.serialise(),
-                       QCoreApplication::translate("HikariSub.Workspace", "the docking engine could not restore it"), {});
-    }
     if (preset != m_preset) {
         m_preset = preset;
         m_lastSaved.clear();
@@ -510,6 +509,19 @@ bool WorkspaceLayoutController::showArrangement(WorkspaceArrangement arrangement
     emit changed();
     emit arrangementSwapped();
     return shown;
+}
+
+void WorkspaceLayoutController::refuseArrangement(const WorkspaceArrangement &arrangement)
+{
+    // restorePayload rebuilt the default arrangement (a partial restore): the
+    // tab shows the Editing layout from now on. (Serialised first: it may be
+    // the tab's own.)
+    const QByteArray rejected = arrangement.serialise();
+    if (m_tab)
+        m_tabs[*m_tab].arrangement = WorkspaceArrangement{};
+    m_full.clear();
+    m_timingHidden = false;
+    keepUnrestored(rejected, QCoreApplication::translate("HikariSub.Workspace", "the docking engine could not restore it"), {});
 }
 
 void WorkspaceLayoutController::keepUnrestored(const QByteArray &bytes, const QString &problem, const QString &title)
