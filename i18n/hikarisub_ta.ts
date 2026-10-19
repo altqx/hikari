@@ -8162,7 +8162,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Editing</source>
-        <translation type="unfinished">புதுப்பித்தார்</translation>
+        <translation>புதுப்பித்தார்</translation>
     </message>
     <message>
         <source>Timing</source>
@@ -8170,7 +8170,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Translation</source>
-        <translation type="unfinished">மொழிபெயர்ப்பு</translation>
+        <translation>மொழிபெயர்ப்பு</translation>
     </message>
     <message>
         <source>Typesetting</source>

@@ -493,25 +493,31 @@ private slots:
     }
 
     // A saved layout under a preset's name in another shipped language
-    // (Polish "Edycja": Editing) is not offered once the names are known: a
-    // switch to that language would list it twice. The file as it was is
-    // kept aside, and Save layout as… refuses the name.
+    // (Polish "Edycja": Editing) is not offered: a switch to that language
+    // would list it twice. The file as it was is kept aside, and Save layout
+    // as… refuses the name.
     void presetNamesInOtherLanguagesAreRefused()
     {
         start();
         saveAs(QStringLiteral("Mine"));
-        saveAs(QStringLiteral("Edycja"));
-        const QByteArray before = readAll(layoutsFile());
+        QCOMPARE(layouts().layoutNameProblem(QStringLiteral("edycja")), QStringLiteral("Edycja is a built-in layout."));
+        QVERIFY(!layouts().saveLayoutAs(QStringLiteral("EDYCJA")));
+        stop();
+        QJsonObject file = QJsonDocument::fromJson(readAll(layoutsFile())).object();
+        QJsonArray list = file.value(QStringLiteral("layouts")).toArray();
+        QJsonObject polish = list.first().toObject();
+        polish.insert(QStringLiteral("name"), QStringLiteral("Edycja"));
+        list.append(polish);
+        file.insert(QStringLiteral("layouts"), list);
+        const QByteArray before = QJsonDocument(file).toJson();
+        QVERIFY(writeAll(layoutsFile(), before));
+        start();
         auto &l = layouts();
-        l.reservePresetNames({QStringLiteral("Edycja")});
         QCOMPARE(l.savedLayouts().size(), 1);
         QCOMPARE(l.savedLayouts().first().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("Mine"));
         QVERIFY2(l.notice().contains(QStringLiteral("layouts.json.unrestored")), qPrintable(l.notice()));
         QCOMPARE(readAll(layoutsFile() + QStringLiteral(".unrestored")), before);
         QVERIFY(!savedItem("viewLayout", QStringLiteral("Edycja")));
-        QVERIFY(l.layout().isEmpty()); // the tab's origin is no longer listed
-        QCOMPARE(l.layoutNameProblem(QStringLiteral("edycja")), QStringLiteral("Edycja is a built-in layout."));
-        QVERIFY(!l.saveLayoutAs(QStringLiteral("EDYCJA")));
         stop();
     }
 

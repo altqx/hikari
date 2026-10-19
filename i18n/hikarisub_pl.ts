@@ -8176,7 +8176,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Editing</source>
-        <translation type="unfinished">Edycja</translation>
+        <translation>Edycja</translation>
     </message>
     <message>
         <source>Timing</source>
@@ -8184,7 +8184,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Translation</source>
-        <translation type="unfinished">Tekst tłumaczenia</translation>
+        <translation>Tekst tłumaczenia</translation>
     </message>
     <message>
         <source>Typesetting</source>

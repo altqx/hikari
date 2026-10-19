@@ -8149,7 +8149,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Editing</source>
-        <translation type="unfinished">แก้ไข</translation>
+        <translation>แก้ไข</translation>
     </message>
     <message>
         <source>Timing</source>
@@ -8157,7 +8157,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Translation</source>
-        <translation type="unfinished">ข้อความแปล</translation>
+        <translation>ข้อความแปล</translation>
     </message>
     <message>
         <source>Typesetting</source>

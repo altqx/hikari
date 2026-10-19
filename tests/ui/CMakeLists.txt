@@ -250,7 +250,7 @@ add_dependencies(hikari_ui_tab_layouts_tests hikari_media_fixtures hikari_media_
 # Every function starts the application and its QML, as D2's suite did, so
 # it runs in two parts under the default 60 s (decision 38g, 2026-10-14).
 hikari_add_qttest(hikari_ui_saved_layouts_tests SOURCES saved_layouts_tests.cpp
-    LIBRARIES hikari_composition KDAB::kddockwidgets
+    LIBRARIES hikari_composition hikari_translations KDAB::kddockwidgets # WS3: the presets' names in every catalog
     PARTS layouts kept=unusableLayoutsAreKept)
 target_include_directories(hikari_ui_saved_layouts_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 # Wave 6's Line editor cards (LE2-LE6) through the composition, with restarts.

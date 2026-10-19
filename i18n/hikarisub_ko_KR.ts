@@ -8143,7 +8143,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Editing</source>
-        <translation type="unfinished">갱신 정보</translation>
+        <translation>갱신 정보</translation>
     </message>
     <message>
         <source>Timing</source>
@@ -8151,7 +8151,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Translation</source>
-        <translation type="unfinished">번역본</translation>
+        <translation>번역본</translation>
     </message>
     <message>
         <source>Typesetting</source>
