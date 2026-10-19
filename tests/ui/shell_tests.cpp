@@ -18833,6 +18833,9 @@ private slots:
         application->openAudioFromVideo();
         QTRY_VERIFY(audio.ready());
         QCOMPARE(audio.path(), QStringLiteral("dummy-audio:silence?sr=44100&bd=16&ch=1&ln=88200"));
+        // generated, it is no recent audio file
+        for (const QString &recent : application->settingsStore()->list("recent.audio"))
+            QVERIFY2(!recent.startsWith(QStringLiteral("dummy")), qPrintable(recent));
         QVERIFY(!named("dummyAudioMenuItem"));
         QVERIFY(!video.play()); // no file for the general player
         QCOMPARE(application->settingsStore()->list("recent.video").first(), QStringLiteral("?dummy:25.000000:50:320:240:47:163:254:"));

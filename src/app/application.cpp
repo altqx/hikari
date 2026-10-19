@@ -1236,6 +1236,8 @@ void Application::followVideoInAudio()
 
 void Application::rememberRecentAudio(const QString &path)
 {
+    if (application::AudioBox::isDummyName(path.toStdString()))
+        return; // AV3: a dummy video's generated silence is no file to reopen
     m_recentAudio.add(path.toStdString());
     m_settings->settings().set("recent.audio", m_recentAudio.entries()); // SetRecent's SetTable
 }
