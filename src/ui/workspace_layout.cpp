@@ -48,12 +48,25 @@ std::optional<QByteArray> readFile(const QString &path, bool *unreadable = nullp
     return f.read(WorkspaceLayoutController::kMaximumBytes + 1);
 }
 
-// The whole of a file refused at start copied aside (over an older copy)
-// before anything can write over it; false when it could not be.
+// The whole of a file refused at start copied aside before anything can
+// write over it; false when it could not be. An older copy is replaced only
+// once the new one is complete (a full disk leaves it as it was).
 bool keepAside(const QString &path, const QString &kept)
 {
-    QFile::remove(kept);
-    return QFile::copy(path, kept);
+    QFile from(path);
+    if (!from.open(QIODevice::ReadOnly))
+        return false;
+    QSaveFile to(kept);
+    if (!to.open(QIODevice::WriteOnly))
+        return false;
+    while (!from.atEnd()) {
+        const QByteArray chunk = from.read(1 << 16);
+        if (chunk.isEmpty() || to.write(chunk) != chunk.size()) {
+            to.cancelWriting();
+            return false;
+        }
+    }
+    return to.commit();
 }
 
 bool writeAtomically(const QString &path, const QByteArray &bytes)
