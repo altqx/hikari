@@ -490,7 +490,8 @@
     "video-transport",
     "video-fullscreen",
     "menu:video",
-    "video-context-menu"
+    "video-context-menu",
+    "automation-panel"
    ]
   },
   {
@@ -527,7 +528,7 @@
     "video-fullscreen",
     "audio-box",
     "video-context-menu",
-    "automation-manager"
+    "automation-panel"
    ]
   },
   {
@@ -1267,7 +1268,7 @@
    ],
    "surfaces": [
     "menu:automation",
-    "automation-manager"
+    "automation-panel"
    ]
   },
   {
@@ -1998,7 +1999,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "shift-times-panel"
+    "shift-times-panel",
+    "automation-panel"
    ]
   },
   {
@@ -2010,7 +2012,8 @@
    "legacy": [],
    "surfaces": [
     "line-editor",
-    "style-manager"
+    "style-manager",
+    "automation-panel"
    ]
   },
   {
@@ -2057,7 +2060,8 @@
    "legacy": [],
    "surfaces": [
     "style-manager",
-    "visual-tools"
+    "visual-tools",
+    "automation-panel"
    ]
   },
   {
@@ -2069,7 +2073,7 @@
    "legacy": [],
    "surfaces": [
     "font-catalog",
-    "automation-manager"
+    "automation-panel"
    ]
   },
   {
@@ -2308,7 +2312,7 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "automation-manager"
+    "automation-panel"
    ]
   },
   {
@@ -2319,7 +2323,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "menu:automation"
+    "menu:automation",
+    "automation-panel"
    ]
   },
   {
@@ -2363,7 +2368,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "settings-dialog"
+    "settings-dialog",
+    "automation-panel"
    ]
   }
  ],
