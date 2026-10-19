@@ -9,6 +9,7 @@
 #include "hikari/application/session_file.h"
 
 #include <QCryptographicHash>
+#include <QDateTime>
 #include <QDeadlineTimer>
 #include <QDir>
 #include <QFile>
@@ -249,11 +250,13 @@ private slots:
         QCOMPARE(a.shell().editingTitle(), QStringLiteral("c.ass"));
         QVERIFY(a.reviewCloseTab(0).isEmpty());
         a.finishClose();
-        // Notebook::DeletePage: with no tab left, a new empty one.
-        QCOMPARE(titles(a), (QStringList{"Untitled"}));
-        QVERIFY(a.targetUntitled());
-        QVERIFY(!target(a)->isDirty());
-        QCOMPARE(readSession(a.lastSessionPath()).tabs.size(), std::size_t(1));
+        // SH2-last-tab-home: with no tab left the Home page shows, where
+        // legacy Notebook::DeletePage made a new empty one. The session
+        // written has no Document to offer.
+        QVERIFY(titles(a).isEmpty());
+        QVERIFY(!a.workspace().editingTarget());
+        QVERIFY(a.tabs().isEmpty());
+        QVERIFY(a.lastSessionSummary().value(QStringLiteral("names")).toStringList().isEmpty());
     }
 
     // Opening subtitles into the active tab (P2 review) keeps its place.
@@ -609,6 +612,47 @@ private slots:
         QCOMPARE(activeRow(a), 2);
     }
 
+    // WS1 without the shell: each tab's arrangement is a value the Session
+    // carries. A TLMode file's tab is the Translation preset, a tab with no
+    // arrangement yet writes no "Layout: " line, and a loaded tab's line is
+    // written back as it came (a valid one) or as the Editing preset.
+    void eachTabsArrangementGoesWithTheSession()
+    {
+        QTemporaryDir home;
+        app::Application a(options(home));
+        QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("plain.ass")), "plain")));
+        const QString tl = dir.filePath(QStringLiteral("tl.ass"));
+        {
+            QFile f(tl);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nTLMode: Yes\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, "
+                    "MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,line\n");
+        }
+        a.addPage();
+        QVERIFY(a.openFile(tl));
+        auto saved = readSession(a.lastSessionPath());
+        QCOMPARE(saved.tabs.size(), std::size_t(2));
+        QCOMPARE(saved.tabs[0].layout, std::string()); // never shown by a shell
+        const auto translation = ui::WorkspaceArrangement::parse(QByteArray::fromStdString(saved.tabs[1].layout));
+        QVERIFY(translation);
+        QCOMPARE(translation->preset, QStringLiteral("Translation"));
+        QVERIFY(translation->payload.isEmpty());
+
+        const QByteArray typesetting = ui::WorkspaceArrangement{QStringLiteral("Typesetting"), {}}.serialise();
+        saved.tabs[0].layout = typesetting.toStdString();
+        saved.tabs[1].layout = "{not a layout";
+        const QString kls = home.filePath(QStringLiteral("layouts.kls"));
+        writeSession(kls, QByteArray::fromStdString(application::writeSession("HikariSub v1", false, saved.tabs)));
+        QVERIFY(loadSession(a, QUrl::fromLocalFile(kls)));
+        QVERIFY(a.workspaceLayout().notice().contains(QStringLiteral("tl.ass")));
+        const auto again = readSession(a.lastSessionPath());
+        QCOMPARE(again.tabs.size(), std::size_t(2));
+        QCOMPARE(QByteArray::fromStdString(again.tabs[0].layout), typesetting);
+        const auto fallback = ui::WorkspaceArrangement::parse(QByteArray::fromStdString(again.tabs[1].layout));
+        QVERIFY(fallback);
+        QCOMPARE(fallback->preset, QStringLiteral("Editing"));
+    }
+
     // hikarisubApp::OnInit: LAST_SESSION_CONFIG 2 loads, 1 asks, otherwise a
     // session left without "[Close session]" asks about the crash; never
     // when paths were given.
@@ -633,6 +677,144 @@ private slots:
         QVERIFY(!b.lastSessionCrashed());
         QCOMPARE(b.startupSession(), QString());
         QCOMPARE(b.sessionRestore(), 0);
+    }
+
+    // SH2: the Home page offers the last session when it has a Document with
+    // a file, named by its files (a video's for a tab without subtitles).
+    void theLastSessionIsSummarisedForTheHomePage()
+    {
+        QTemporaryDir home;
+        {
+            app::Application a(options(home));
+            QVERIFY(a.lastSessionSummary().value(QStringLiteral("names")).toStringList().isEmpty()); // none yet
+            QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("s1.ass")), "s1")));
+            a.addPage();
+            a.video().openVideo(media("cfr.mkv"));
+            QTRY_VERIFY_WITH_TIMEOUT(a.video().hasVideo(), 30000);
+            a.addPage(); // an Untitled tab without media: not named
+        }
+        app::Application b(options(home));
+        QCOMPARE(b.lastSessionSummary().value(QStringLiteral("names")).toStringList(),
+                 (QStringList{QStringLiteral("s1.ass"), QStringLiteral("cfr.mkv")}));
+        // Close all writes no session (legacy OnTabSel), so Home still
+        // offers the closed tabs back.
+        QVERIFY(loadSession(b));
+        QVERIFY(b.reviewCloseAll().isEmpty());
+        b.finishClose();
+        QVERIFY(b.tabs().isEmpty());
+        QCOMPARE(b.lastSessionSummary().value(QStringLiteral("names")).toStringList(),
+                 (QStringList{QStringLiteral("s1.ass"), QStringLiteral("cfr.mkv")}));
+        // A tab with only a dummy video is not offered: restoring reopens no
+        // file for it.
+        application::SessionTab dummy;
+        dummy.video = "?dummy:23.976000:40000:1280:720:47:163:254:";
+        QFile file(b.lastSessionPath());
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        file.write(QByteArray::fromStdString(application::writeSession("HikariSub", true, {dummy})));
+        file.close();
+        QVERIFY(b.lastSessionSummary().value(QStringLiteral("names")).toStringList().isEmpty());
+    }
+
+    // SH2-recent-opened-and-missing: the recent subtitles remember when each
+    // was last opened, across runs; a missing file stays in the list for the
+    // Home page (File > Recent leaves it out) until it is removed there.
+    void recentFilesKeepTheirTimesAndMissingEntries()
+    {
+        QTemporaryDir home;
+        const QString kept = writeSubtitles(dir.filePath(QStringLiteral("recent-kept.ass")), "k");
+        const QString gone = writeSubtitles(dir.filePath(QStringLiteral("recent-gone.ass")), "g");
+        const QDateTime before = QDateTime::currentDateTime().addSecs(-1);
+        {
+            app::Application a(options(home));
+            QVERIFY(a.openFile(gone));
+            QVERIFY(a.openFile(kept));
+        }
+        QVERIFY(QFile::remove(gone));
+        app::Application b(options(home));
+        const QVariantList rows = b.homeRecent();
+        QCOMPARE(rows.size(), qsizetype(2));
+        const QVariantMap first = rows[0].toMap(), second = rows[1].toMap();
+        QCOMPARE(first.value(QStringLiteral("path")).toString(), QDir::toNativeSeparators(kept));
+        QCOMPARE(first.value(QStringLiteral("name")).toString(), QStringLiteral("recent-kept.ass"));
+        QCOMPARE(first.value(QStringLiteral("folder")).toString(), QDir::toNativeSeparators(dir.path()));
+        QVERIFY(!first.value(QStringLiteral("missing")).toBool());
+        QVERIFY(first.value(QStringLiteral("opened")).toDateTime() >= before);
+        QVERIFY(first.value(QStringLiteral("opened")).toDateTime() <= QDateTime::currentDateTime());
+        QVERIFY(second.value(QStringLiteral("missing")).toBool());
+        QVERIFY(second.value(QStringLiteral("opened")).toDateTime().isValid());
+        // The menu leaves the missing file out without dropping it.
+        const QVariantList menu = b.recentSubtitles();
+        QCOMPARE(menu.size(), qsizetype(1));
+        QCOMPARE(menu[0].toMap().value(QStringLiteral("label")).toString(), QStringLiteral("1 recent-kept.ass"));
+        QCOMPARE(b.homeRecent().size(), qsizetype(2));
+        // Remove missing files drops it; Remove drops any one entry.
+        QSignalSpy changed(&b, &app::Application::recentChanged);
+        b.removeMissingRecent();
+        QCOMPARE(changed.size(), 1);
+        QCOMPARE(b.homeRecent().size(), qsizetype(1));
+        b.removeRecent(QDir::toNativeSeparators(kept));
+        QVERIFY(b.homeRecent().isEmpty());
+        QCOMPARE(changed.size(), 2);
+    }
+
+    // SH2: saving keeps the time the file was last opened (legacy SetRecent
+    // after a save moves it to the top); a file first saved, as by Save As,
+    // is stamped then.
+    void savingKeepsTheRecentOpenedTime()
+    {
+        QTemporaryDir home;
+        const QString file = writeSubtitles(dir.filePath(QStringLiteral("recent-saved.ass")), "s");
+        const QString copy = dir.filePath(QStringLiteral("recent-saved-copy.ass"));
+        app::Application a(options(home));
+        QVERIFY(a.openFile(file));
+        const QDateTime opened = a.homeRecent()[0].toMap().value(QStringLiteral("opened")).toDateTime();
+        QVERIFY(opened.isValid());
+        QTest::qWait(50);
+        QSignalSpy changed(&a, &app::Application::recentChanged);
+        QVERIFY(a.saveAs(file));
+        a.waitForWrites();
+        QTRY_COMPARE(changed.size(), 1);
+        QCOMPARE(a.homeRecent()[0].toMap().value(QStringLiteral("opened")).toDateTime(), opened);
+        QVERIFY(a.saveAs(copy));
+        a.waitForWrites();
+        QTRY_COMPARE(changed.size(), 2);
+        const QVariantMap first = a.homeRecent()[0].toMap();
+        QCOMPARE(first.value(QStringLiteral("path")).toString(), QDir::toNativeSeparators(copy));
+        QVERIFY(first.value(QStringLiteral("opened")).toDateTime() > opened);
+        QCOMPARE(a.homeRecent()[1].toMap().value(QStringLiteral("opened")).toDateTime(), opened);
+    }
+
+    // SH2: media opened while no Document is open (the Home page's Open
+    // video…, File > Open video, Open audio) opens in a new Untitled
+    // Document, as legacy's always-present tab held it.
+    void mediaOpenedWithoutADocumentGetsOne()
+    {
+        QTemporaryDir home;
+        app::Application a(options(home));
+        QVERIFY(a.tabs().isEmpty());
+        a.video().openVideo(media("cfr.mkv"));
+        QCOMPARE(a.tabs().size(), qsizetype(1));
+        QVERIFY(a.targetUntitled());
+        QTRY_VERIFY_WITH_TIMEOUT(a.video().hasVideo(), 30000); // the new tab keeps it
+        a.video().openVideo(media("cfr.mkv"));
+        QCOMPARE(a.tabs().size(), qsizetype(1)); // with a Document open, none is added
+
+        app::Application b(options(home));
+        QVERIFY(b.tabs().isEmpty());
+        b.audio().openDummy();
+        QCOMPARE(b.tabs().size(), qsizetype(1));
+        QVERIFY(b.targetUntitled());
+
+        // A protected reference opened as no tab is a Document: no Home, and
+        // media opens as before SH2, without an editing target.
+        app::Application c(options(home));
+        QVERIFY(c.home());
+        QVERIFY(c.openReference(writeSubtitles(dir.filePath(QStringLiteral("media-reference.ass")), "r")));
+        QVERIFY(c.tabs().isEmpty());
+        QVERIFY(!c.home());
+        c.video().openVideo(media("cfr.mkv"));
+        QVERIFY(c.tabs().isEmpty());
+        QVERIFY(!c.workspace().editingTarget());
     }
 };
 

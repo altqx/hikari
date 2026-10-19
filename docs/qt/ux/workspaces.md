@@ -1,8 +1,10 @@
-# Shared workspace and protected comparison
+# Workspace and protected comparison
+
+**Per-Document-tab layouts, 2026-10-18** ([ADR 0020](../../adr/0020-per-document-tab-layouts.md), [WS1 #215](https://github.com/altqx/hikari/issues/215)): each Document tab keeps its own panel arrangement, which replaces the shared arrangement accepted below. The rest of this contract stands: Documents, selection, media context, tool targets and the protected reference keep their ownership rules, and the Workspace still never rewrites subtitles or changes the editing target. Where the text below says the arrangement is shared, the [ownership contract](#ownership-contract) now says how it follows the tab.
 
 Accepted on 2026-09-27: [“shared workspace with optional protected comparison is fine”](https://github.com/altqx/hikari/issues/31#issuecomment-5849397748). Subsequent live reviews chose movable/floating panels (B), follow-editing tools with optional pinning, optional Home, Classic menus/local controls/status, and the named tool/dialog grouping. The default Editing layout follows the current program: video left, audio above the editor on the right, and the subtitle grid across the bottom. Timing, Translation and Typesetting are accepted optional presets. This settles the top-level [information architecture](https://github.com/altqx/hikari/issues/31); detailed comparison navigation continues in [Prototype translation mode and protected comparison navigation](https://github.com/altqx/hikari/issues/49).
 
-The accepted model combines the shared-layout behavior demonstrated by A with an optional protected reference demonstrated by C in the [reviewed prototype](https://github.com/altqx/hikari/blob/163faf7c699c81a12338b04acea9433f356f0814/docs/prototypes/workspace-model.html). The visual baseline is [Compact Studio](visual-language.md). Per-document layouts and always-on comparison are not the chosen defaults.
+The accepted model combines the shared-layout behavior demonstrated by A with an optional protected reference demonstrated by C in the [reviewed prototype](https://github.com/altqx/hikari/blob/163faf7c699c81a12338b04acea9433f356f0814/docs/prototypes/workspace-model.html). The visual baseline is [Compact Studio](visual-language.md). Always-on comparison is not the chosen default. Per-document layouts were not chosen then either; ADR 0020 has since chosen them, per Document tab.
 
 ## Default editing arrangement
 
@@ -10,7 +12,7 @@ The user corrected the initial mockup in the live review: **“the default layou
 
 The default **Editing** preset shows Video, Audio, Editor and Grid together. Start with approximately 44% of the upper area for video and 56% for the audio/editor stack; the audio is the shallow upper section, while the editor takes the remaining right-hand height. The grid spans the workspace width below both. These are adjustable starting proportions, not fixed sizes that clip text or prevent scaling.
 
-Styles, Search, Timing and History remain available movable/floating tools and start closed in this default, leaving the core editing arrangement unobstructed. Hiding/showing or rearranging a panel preserves document state. Keep the accepted Compact Studio appearance, shared ownership, follow/pin targets and optional Home/protected comparison.
+Styles, Search, Timing and History remain available movable/floating tools and start closed in this default, leaving the core editing arrangement unobstructed. Hiding/showing or rearranging a panel preserves document state. Keep the accepted Compact Studio appearance, application-owned Documents and targets, follow/pin targets and optional Home/protected comparison.
 
 Timing, Translation and Typesetting were subsequently accepted as optional presets; none replaces Editing as the default. The five legacy visibility combinations remain available. The earlier question about making task-preset defaults the primary experience is superseded by the default-layout correction.
 
@@ -26,7 +28,7 @@ Runnable references for this correction: [Editing workspace](https://github.com/
 
 ## Ownership contract
 
-The workspace belongs to the application. Switching the editing document changes displayed content, selection and media context while retaining the shared panel arrangement. A workspace change rearranges tools; it does not rewrite subtitles, switch their format or discard a draft.
+Each Document tab has its own Workspace (ADR 0020). Switching tabs changes displayed content, selection and media context, and shows that tab's panel arrangement: its docked, tabbed and floating panels at their sizes, in the same main window, which keeps its geometry. A tab opened or created starts with the Translation preset when its file has `TLMode: Yes`, otherwise with a copy of the current tab's arrangement; opening a file into the current tab counts as opening it. Presets, Reset layout, the View arrangements and the layout backup change the current tab only. The Session saves each tab's arrangement, and a tab whose saved arrangement is invalid or restores only in part shows the Editing preset with a notice ([docking contract](../docking.md#save-restore-and-recovery)). A workspace change rearranges tools; it does not rewrite subtitles, switch their format or discard a draft. Panels that follow application state rather than the tab stay with that state: the Reference tray shows with the Grid while there is a comparison, whichever tab's arrangement is shown, and the player layout (the editor switch off) holds the current tab's editing arrangement until the editor comes back.
 
 Each document retains its own selection and associated media context. The editing target identifies the document receiving content-changing commands. Keyboard focus can visit other UI regions without implicitly changing that target.
 
@@ -36,7 +38,7 @@ Translation mode remains a document capability with original/translated text and
 
 ## Movable and floating panels
 
-Accepted in the live tool-placement review: **B / movable and floating panels**. Tools can be rearranged, hidden, restored and detached from the main workspace. Preserve keyboard-accessible placement actions alongside pointer interactions. A shared workspace keeps the chosen arrangement when the editing document changes.
+Accepted in the live tool-placement review: **B / movable and floating panels**. Tools can be rearranged, hidden, restored and detached from the main workspace. Preserve keyboard-accessible placement actions alongside pointer interactions. Each Document tab keeps the arrangement chosen in it (ADR 0020).
 
 The [reviewed HTML follow-up](https://github.com/altqx/hikari/blob/9781b3cb51fb87d9640366a9619b9c5589ff1e26/docs/prototypes/workspace-tools.html) illustrates Left/Right/Bottom and Float positions. Its floating cards stay inside the browser page; this acceptance chooses the UX capability, not that simulation as a native implementation. The [accepted native docking contract](../docking.md) selects KDDockWidgets behind Hikari’s adapter, including persistence/recovery and cross-window ownership. Native accessibility, monitor and Qt integration qualification remain required.
 
@@ -46,7 +48,16 @@ Accepted in the live review: Styles, Search, Timing and History **follow the edi
 
 The sample permits a deliberately pinned tool to apply to an inactive, unprotected document after showing that target in Preview. Treat a tool's explicit target separately from the application's editing target; general editing shortcuts still use the editing target. Review detailed per-tool scope, confirmation and stale-preview rules in their surface tickets.
 
-**Home is optional**, with the workspace as the normal editing destination. Home provides recent-file and recovery entry points without discarding the open documents or shared arrangement. It is not a mandatory start screen. Actual startup/session restoration, file recovery and unsaved-close flows retain their data and lifecycle contracts.
+**Home is optional**, with the workspace as the normal editing destination. Home provides recent-file and recovery entry points without discarding the open documents or their arrangements. It is not a mandatory start screen. Actual startup/session restoration, file recovery and unsaved-close flows retain their data and lifecycle contracts.
+
+**Home page (SH2, [#221](https://github.com/altqx/hikari/issues/221)), owner-approved mockup 2026-10-19.** Home is the main area's content while no Document is open (a protected reference counts, its tray needing the panels), and only then: at start without subtitles, after the last tab closes and after Close all tabs. There is no Home tab to return to while Documents are open, and the Document tab bar is empty while it shows (keeping its height, so the panels do not resize when a Document opens). It covers the docked panels, which keep their layout but take no input; F6 stays on the page. From the top, within 24 margins and at most 1120 wide, centred:
+
+- **New** (the accent button, an Untitled Document as Ctrl+T makes), **Open…** and **Open video…** (File's commands; media opened with no Document opens in a new Untitled one).
+- **Last session**, only when the last session has a Document with a file: how many and their names, with **Restore** (File > Last session > Load last session, with its review). The startup prompts are unchanged.
+- **Recent files**: the recent subtitles list (up to 20), name over path (middle-elided), the last-opened time ("Today 23:41", "Yesterday 18:52", then the date), a **Filter** field. A missing file keeps its row, marked **Missing** in the warning colour, cannot be opened, and has **Remove**; Delete removes the current row; the row's menu has Open, Show in folder, Copy path, Remove from list and Remove missing files. Show in folder also shows on the hovered row. An empty list says "No recent files".
+- **What's new** (SH3, [#223](https://github.com/altqx/hikari/issues/223)): a 320-wide column on the right (under the list below 1000 wide), `HomePage.whatsNew`; nothing shows until SH3 fills it.
+
+Keyboard: the list has the focus when it has a file (else New); Tab order New → Open… → Open video… → Restore → Filter → the list → What's new; Up/Down/Home/End move, Enter opens, Delete removes, the Menu key or Shift+F10 opens the row's menu. The list is "Recent files"; a row reads "name, path, last opened time" and ", missing" for a missing file. Departures: SH2-last-tab-home and SH2-recent-opened-and-missing in [compatibility-decisions.md](../compatibility-decisions.md).
 
 ## Shell commands, properties and task grouping
 
@@ -68,7 +79,7 @@ These demonstrations clarify the ownership model. They do not establish real fil
 
 The [translation/comparison contract](translation-comparison.md) now accepts stacked fields, a bottom reference tray and independent navigation by default; draft, export and detailed matching behavior continue in its prototype ticket. Individual surface prototypes now exist and their accepted placements are recorded in [reviewed surface layouts](reviewed-surface-layouts.md). Remaining behavioral questions refine that accepted structure without reopening workspace ownership, default arrangement or Classic shell placement.
 
-The [capability-placement worksheet](https://github.com/altqx/hikari/blob/12bb79bba302f0ccbb6558f2ab508b46ce111685/docs/prototypes/ia-capability-placement.md) is still a proposal for these remaining choices. It is not adopted wholesale by the narrower ownership answer. Subsequent prototype tickets must preserve the accepted shared/protected model and ask only about the unresolved behavior.
+The [capability-placement worksheet](https://github.com/altqx/hikari/blob/12bb79bba302f0ccbb6558f2ab508b46ce111685/docs/prototypes/ia-capability-placement.md) is still a proposal for these remaining choices. It is not adopted wholesale by the narrower ownership answer. Subsequent prototype tickets must preserve the accepted ownership/protected model (with ADR 0020's per-tab arrangements) and ask only about the unresolved behavior.
 
 ## Detailed layout approvals on 2026-09-27
 

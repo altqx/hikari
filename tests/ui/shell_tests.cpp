@@ -425,6 +425,20 @@ class ShellTest : public QObject {
         auto t = std::make_shared<qint64>(0);
         application->hotkeys().setKeyClock([t] { return *t += 1000; });
     }
+    // TS1: opens Shift times, docked, and waits for its form.
+    void showShiftTimes()
+    {
+        QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
+        QTRY_VERIFY(item<QObject>("timingDock")->property("isOpen").toBool());
+        QTRY_VERIFY(item("shiftApply") && item("shiftApply")->isVisible());
+    }
+    void setShift(const char *key, const QVariant &value)
+    {
+        auto map = application->shiftTimesSettings().settingsMap();
+        map.insert(QLatin1String(key), value);
+        application->shiftTimesSettings().setSettingsMap(map);
+    }
+
     void press(Qt::Key key, Qt::KeyboardModifiers mods = Qt::NoModifier)
     {
         QTest::keyClick(window, key, mods);
@@ -538,6 +552,238 @@ private slots:
         QCOMPARE(item<QObject>("statusText")->property("text").toString(), QString());
     }
 
+    // SH2: the Home page covers the panels while no Document is open: at
+    // start, after the last tab closes and after Close all tabs. The Document
+    // tab bar shows only with a Document, keeping its height, so the panels
+    // under Home (which take no input) are not resized when one opens.
+    void homePageShowsWhileNoDocumentIsOpen()
+    {
+        auto *home = item("homePage");
+        auto *bar = item("documentTabBar");
+        QVERIFY(home->isVisible());
+        QVERIFY(!bar->property("shown").toBool());
+        QVERIFY(!item("dockingArea")->isEnabled());
+        QCOMPARE(home->size(), item("dockingArea")->size());
+        const QSizeF area = item("dockingArea")->size();
+        // With no recent file the focus starts on New.
+        QTRY_COMPARE(window->activeFocusItem(), item("homeNew"));
+        QVERIFY(application->openFile(episode));
+        QTRY_VERIFY(!home->isVisible());
+        QVERIFY(bar->property("shown").toBool());
+        QVERIFY(item("dockingArea")->isEnabled());
+        QCOMPARE(item("dockingArea")->size(), area);
+        // The last tab closes: Home comes back, the list (now with the file)
+        // takes the focus.
+        QVERIFY(application->reviewCloseTab(0).isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(home->isVisible());
+        QVERIFY(!bar->property("shown").toBool());
+        QCOMPARE(window->title(), QStringLiteral("HikariSub"));
+        QTRY_VERIFY(item("homeRecentList")->hasActiveFocus()); // its current row
+        // New: an Untitled tab.
+        QVERIFY(QMetaObject::invokeMethod(item("homeNew"), "clicked"));
+        QTRY_VERIFY(!home->isVisible());
+        QCOMPARE(application->tabs().size(), qsizetype(1));
+        QVERIFY(application->targetUntitled());
+        // Close all tabs.
+        application->addPage();
+        QVERIFY(application->reviewCloseAll().isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(home->isVisible());
+        QVERIFY(application->tabs().isEmpty());
+        // F6 stays on the page.
+        item("homeNew")->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_F6);
+        QTRY_VERIFY(item("homeRecentList")->hasActiveFocus());
+    }
+
+    // SH2: the recent subtitles with their last-opened time; a missing file
+    // stays, marked "Missing", cannot be opened and has Remove; the filter
+    // narrows the list by name and path.
+    void homePageListsTheRecentFiles()
+    {
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("home"))));
+        const QString kept = writeFile(dir, "home/kept.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,k\n");
+        const QString gone = writeFile(dir, "home/gone.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,g\n");
+        QVERIFY(application->openFile(gone));
+        QVERIFY(application->openFile(kept));
+        QVERIFY(QFile::remove(gone));
+        QVERIFY(application->reviewCloseAll().isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(item("homePage")->isVisible());
+        auto *list = item("homeRecentList");
+        QTRY_COMPARE(list->property("count").toInt(), 2);
+        QTRY_VERIFY(visualItem("homeRecentRow1"));
+        QVERIFY(visualItem("homeOpened0")->property("text").toString().startsWith(QStringLiteral("Today ")));
+        // The page's clock moves on at midnight: a clock set to just before
+        // a midnight (the times read as a later day's, so as a date) is
+        // brought to now when that midnight passes.
+        auto *home = item("homePage");
+        const QDateTime beforeMidnight(QDate::currentDate().addDays(-1), QTime(23, 59, 59));
+        home->setProperty("now", beforeMidnight);
+        QTRY_VERIFY(!visualItem("homeOpened0")->property("text").toString().startsWith(QStringLiteral("Today ")));
+        QTRY_VERIFY_WITH_TIMEOUT(visualItem("homeOpened0")->property("text").toString().startsWith(QStringLiteral("Today ")), 5000);
+        QVERIFY(!visualItem("homeMissing0")->isVisible());
+        QVERIFY(visualItem("homeMissing1")->isVisible());
+        QVERIFY(visualItem("homeRemove1")->isVisible());
+        QVERIFY(!visualItem("homeRemove0")->isVisible());
+        // A missing file is not opened by Enter.
+        list->setProperty("currentIndex", 1);
+        list->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Return);
+        QVERIFY(application->tabs().isEmpty());
+        // The rows are named for assistive technology.
+        QAccessibleInterface *listFace = QAccessible::queryAccessibleInterface(list);
+        QVERIFY(listFace);
+        QCOMPARE(listFace->text(QAccessible::Name), QStringLiteral("Recent files"));
+        QAccessibleInterface *rowFace = QAccessible::queryAccessibleInterface(visualItem("homeRecentRow1"));
+        QVERIFY(rowFace);
+        QCOMPARE(rowFace->role(), QAccessible::ListItem);
+        QVERIFY(rowFace->text(QAccessible::Name).startsWith(QStringLiteral("gone.ass, ") + QDir::toNativeSeparators(gone)));
+        QVERIFY(rowFace->text(QAccessible::Name).endsWith(QStringLiteral(", missing")));
+        // Filter.
+        auto *filter = item("homeFilter");
+        filter->setProperty("text", QStringLiteral("kept"));
+        QTRY_COMPARE(list->property("count").toInt(), 1);
+        filter->setProperty("text", QStringLiteral("nothing like it"));
+        QTRY_VERIFY(item("homeNoRecent")->isVisible());
+        QCOMPARE(item("homeNoRecent")->property("text").toString(), QStringLiteral("No matching files"));
+        filter->setProperty("text", QString());
+        QTRY_COMPARE(list->property("count").toInt(), 2);
+        // Remove on the missing row.
+        QTRY_VERIFY(visualItem("homeRemove1"));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("homeRemove1"), "clicked"));
+        QTRY_COMPARE(list->property("count").toInt(), 1);
+        QCOMPARE(application->homeRecent().size(), qsizetype(1));
+        // The last one by Delete: the empty list says so, without the filter.
+        list->forceActiveFocus(Qt::TabFocusReason);
+        list->setProperty("currentIndex", 0);
+        press(Qt::Key_Delete);
+        QTRY_VERIFY(item("homeNoRecent")->isVisible());
+        QCOMPARE(item("homeNoRecent")->property("text").toString(), QStringLiteral("No recent files"));
+        QVERIFY(!filter->isVisible());
+    }
+
+    // SH2: keyboard. The list takes the focus with a file in it; Up and Down
+    // move, Enter opens, the Menu key opens the row's menu; Tab goes New →
+    // Open… → Open video… → (Restore) → Filter → the list.
+    void homePageKeyboard()
+    {
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("keys"))));
+        const QString a = writeFile(dir, "keys/a.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        const QString b = writeFile(dir, "keys/b.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,b\n");
+        QVERIFY(application->openFile(a));
+        QVERIFY(application->openFile(b)); // b first
+        QVERIFY(application->reviewCloseAll().isEmpty());
+        application->finishClose();
+        auto *list = item("homeRecentList");
+        QTRY_VERIFY(list->hasActiveFocus());
+        QCOMPARE(list->property("currentIndex").toInt(), 0);
+        QVERIFY(!visualItem("homeRowFocus")->isVisible()); // no ring until the keyboard moves
+        press(Qt::Key_Down);
+        QCOMPARE(list->property("currentIndex").toInt(), 1);
+        QTRY_VERIFY(findItem(visualItem("homeRecentRow1"), QStringLiteral("homeRowFocus"))->isVisible());
+        press(Qt::Key_Home);
+        QCOMPARE(list->property("currentIndex").toInt(), 0);
+        press(Qt::Key_End);
+        QCOMPARE(list->property("currentIndex").toInt(), 1);
+        // The row's menu.
+        press(Qt::Key_Menu);
+        QTRY_VERIFY(item<QObject>("homeRowMenu")->property("visible").toBool());
+        QVERIFY(item<QObject>("homeMenuOpen")->property("enabled").toBool());
+        QVERIFY(!item<QObject>("homeMenuRemoveMissing")->property("enabled").toBool());
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!item<QObject>("homeRowMenu")->property("visible").toBool());
+        // Backwards through the page.
+        list->forceActiveFocus(Qt::TabFocusReason);
+        const QStringList order{QStringLiteral("homeFilter"), QStringLiteral("homeOpenVideo"), QStringLiteral("homeOpen"),
+                                QStringLiteral("homeNew")};
+        for (const QString &name : order) {
+            press(Qt::Key_Tab, Qt::ShiftModifier);
+            QQuickItem *focused = window->activeFocusItem();
+            while (focused && focused->objectName().isEmpty())
+                focused = focused->parentItem();
+            QVERIFY(focused);
+            QCOMPARE(focused->objectName(), name);
+        }
+        // Enter opens the current file.
+        list->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Return);
+        QTRY_VERIFY(!item("homePage")->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("a.ass - HikariSub"));
+    }
+
+    // SH2: Last session with Restore, when the last session has a Document.
+    void homePageRestoresTheLastSession()
+    {
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("home-session"))));
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("home-session/hikari.ini"));
+        options.playbackAudio = false;
+        {
+            app::Application first(options);
+            QVERIFY(first.openFile(episode));
+        } // an orderly end writes the session
+        restartWith(options);
+        QTRY_VERIFY(item("homePage")->isVisible());
+        QTRY_VERIFY(item("homeSession")->isVisible());
+        QCOMPARE(item("homeSessionDocuments")->property("text").toString(), QStringLiteral("1 document · episode.ass"));
+        QVERIFY(QMetaObject::invokeMethod(item("homeRestore"), "clicked"));
+        QTRY_VERIFY(!item("homePage")->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("episode.ass - HikariSub"));
+        // After the last tab closes there is nothing left to restore.
+        QVERIFY(application->reviewCloseTab(0).isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(item("homePage")->isVisible());
+        QTRY_VERIFY(!item("homeSession")->isVisible());
+        restartWith(app::Application::Options());
+    }
+
+    // SH2: the Home page in the four themes, written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (home-<theme>.png), at 1280 ×
+    // 800 with a recent file, a missing one and the last session, and at 900
+    // × 680 (home-narrow-<theme>.png).
+    void homePageScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("shots"))));
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("shots/hikari.ini"));
+        options.playbackAudio = false;
+        const QString gone = writeFile(dir, "shots/Frieren - 26 signs.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,g\n");
+        {
+            app::Application first(options);
+            QVERIFY(first.openFile(gone));
+            QVERIFY(first.openFile(writeFile(dir, "shots/Dandadan OP karaoke.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,d\n")));
+            first.addPage();
+            QVERIFY(first.openFile(writeFile(dir, "shots/Frieren - 26 [1080p].ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,f\n")));
+            first.addPage();
+            QVERIFY(first.openFile(writeFile(dir, "shots/Frieren - 27 [1080p].ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,f\n")));
+        }
+        QVERIFY(QFile::remove(gone));
+        restartWith(options);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        for (const QSize size : {QSize(1280, 800), QSize(900, 680)}) {
+            window->resize(size);
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTRY_VERIFY(item("homeSession")->isVisible());
+                item("homeRecentList")->forceActiveFocus(Qt::TabFocusReason);
+                QTest::qWait(200);
+                const QString name = size.width() < 1000 ? QStringLiteral("/home-narrow-") : QStringLiteral("/home-");
+                QVERIFY(window->grabWindow().save(out + name + ui::theme::codeName(code) + QStringLiteral(".png")));
+            }
+        }
+        restartWith(app::Application::Options());
+    }
+
     void labelsNameTheEditingTargetAndTheProtectedReference()
     {
         QVERIFY(application->openFile(episode));
@@ -616,11 +862,11 @@ private slots:
     void focusReturnsToWhereItWasInAPanel()
     {
         QVERIFY(application->openFile(episode));
-        item("showTags")->forceActiveFocus();
+        item("styleChoice")->forceActiveFocus();
         press(Qt::Key_F6); // to the Grid
         QCOMPARE(focusedPanel(), QStringLiteral("gridPanel"));
         press(Qt::Key_F6, Qt::ShiftModifier); // back to the editor
-        QVERIFY(item("showTags")->hasActiveFocus());
+        QVERIFY(item("styleChoice")->hasActiveFocus());
         press(Qt::Key_F6);
         QVERIFY(item("editingGrid")->hasActiveFocus());
     }
@@ -667,6 +913,85 @@ private slots:
         }
     }
 
+    // WS4: the Document tabs are the window's first row under the menu bar,
+    // as in MuseScore and IDEs (SH1's title bar will come above them), with
+    // the notices under them; the status bar stays the bottom row. The tabs
+    // work there as they did at the bottom: a click shows a tab, a middle
+    // click and the close mark close one, a right click opens the tab menu,
+    // and a full bar scrolls with the wheel.
+    void documentTabsSitUnderTheMenuBar()
+    {
+        auto *root = engine->rootObjects().first();
+        auto *menuBar = root->property("menuBar").value<QQuickItem *>();
+        auto *header = root->property("header").value<QQuickItem *>();
+        auto *footer = root->property("footer").value<QQuickItem *>();
+        auto *content = root->property("contentItem").value<QQuickItem *>();
+        QVERIFY(menuBar && header && footer && content);
+        QCOMPARE(header->objectName(), QStringLiteral("windowTop"));
+        QCOMPARE(footer->objectName(), QStringLiteral("statusBar"));
+        QQuickItem *bar = visualItem("documentTabBar");
+        QVERIFY(bar && bar->isVisible());
+        const auto rows = header->childItems();
+        QCOMPARE(rows.value(0), bar);
+        // D1's layout notice and ADR 0019's update bar under the tabs, hidden
+        // with nothing to say.
+        QQuickItem *layoutNotice = visualItem("layoutNotice");
+        QQuickItem *updateBar = visualItem("updateReadyBar");
+        QVERIFY(layoutNotice && !layoutNotice->isVisible() && updateBar && !updateBar->isVisible());
+        QCOMPARE(rows.indexOf(layoutNotice), 1);
+        QCOMPARE(rows.indexOf(updateBar), 2);
+        const auto top = [](QQuickItem *i) { return qRound(i->mapToScene(QPointF()).y()); };
+        QTRY_COMPARE(top(bar), qRound(menuBar->height()));
+        QCOMPARE(top(bar) + qRound(bar->height()), top(content));
+        QCOMPARE(top(footer), top(content) + qRound(content->height()));
+
+        const auto tabCount = [&] { return int(application->tabs().size()); };
+        const auto centre = [&](const QString &name) {
+            QQuickItem *tab = findItem(window->contentItem(), name);
+            return tab ? tab->mapToScene(QPointF(tab->width() / 2, tab->height() / 2)).toPoint() : QPoint();
+        };
+        QVERIFY(application->openFile(episode));
+        application->addPage();
+        QTRY_COMPARE(tabCount(), 2);
+        // The row lays the new tabs out on its next polish.
+        QTRY_VERIFY(centre(QStringLiteral("documentTab1")).x() > centre(QStringLiteral("documentTab0")).x());
+        QCOMPARE(application->currentTab(), 1);
+        QTest::mouseClick(window, Qt::LeftButton, {}, centre(QStringLiteral("documentTab0")));
+        QTRY_COMPARE(application->currentTab(), 0);
+        // A middle click closes the clean Untitled tab, the close mark the
+        // current one.
+        QTest::mouseClick(window, Qt::MiddleButton, {}, centre(QStringLiteral("documentTab1")));
+        QTRY_COMPARE(tabCount(), 1);
+        application->addPage();
+        QTRY_COMPARE(tabCount(), 2);
+        QTRY_VERIFY(centre(QStringLiteral("documentTab1")).x() > centre(QStringLiteral("documentTab0")).x());
+        QTRY_VERIFY(visualItem("documentTabClose1") && visualItem("documentTabClose1")->isEnabled());
+        QTest::mouseClick(window, Qt::LeftButton, {}, centre(QStringLiteral("documentTabClose1")));
+        QTRY_COMPARE(tabCount(), 1);
+        // The tab menu opens where the tab is.
+        QTest::mouseClick(window, Qt::RightButton, {}, centre(QStringLiteral("documentTab0")));
+        QObject *menu = named("documentTabMenu");
+        QTRY_VERIFY(menu && menu->property("opened").toBool());
+        QMetaObject::invokeMethod(menu, "close");
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        // Overflow: more tabs than fit, and the wheel over the bar scrolls it.
+        while (tabCount() < 30)
+            application->addPage();
+        QQuickItem *flick = nullptr;
+        for (auto *child : bar->childItems())
+            if (child->inherits("QQuickFlickable"))
+                flick = child;
+        QVERIFY(flick);
+        QTRY_VERIFY(flick->property("contentWidth").toReal() > flick->width());
+        flick->setProperty("contentX", 0);
+        const QPoint over = bar->mapToScene(QPointF(bar->width() / 2, bar->height() / 2)).toPoint();
+        QWheelEvent wheel(over, window->mapToGlobal(over), QPoint(), QPoint(0, -120), Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &wheel);
+        QTRY_VERIFY(flick->property("contentX").toReal() > 0);
+        QCOMPARE(top(bar), qRound(menuBar->height()));
+    }
+
     // P10: legacy's nine status fields without and with media: the help
     // field, the subtitles' resolution of an ASS Document, then the video's
     // scale, zoom, duration, FPS, resolution, aspect ratio and file name,
@@ -684,13 +1009,16 @@ private slots:
             QVERIFY2(f && !f->isVisible(), name);
         }
         // No main toolbar (user decision 2026-10-05, P10-no-main-toolbar):
-        // under the menu bar the window shows no row (its header is only
-        // D1's layout notice and ADR 0019's update bar, hidden without
-        // either); the status bar is its bottom row, as legacy's.
+        // under the menu bar the window shows only the Document tabs (WS4;
+        // D1's layout notice and ADR 0019's update bar under them are hidden
+        // without either); the status bar is its bottom row, as legacy's.
         auto *root = engine->rootObjects().first();
         QVERIFY(root->property("menuBar").value<QObject *>());
         auto *header = root->property("header").value<QQuickItem *>();
-        QVERIFY(!header || (header->objectName() == QLatin1String("noticeArea") && !header->isVisible()));
+        QVERIFY(header && header->objectName() == QLatin1String("windowTop"));
+        for (auto *row : header->childItems())
+            QVERIFY2(row->objectName() == QLatin1String("documentTabBar") || !row->isVisible(),
+                     qPrintable(row->objectName()));
         QQuickItem *strip = visualItem("statusBar");
         QVERIFY(strip && strip->isVisible());
         QTRY_COMPARE(qRound(strip->mapToScene(QPointF(0, strip->height())).y()), qRound(window->contentItem()->height()));
@@ -964,6 +1292,7 @@ private slots:
     // options menu, Escape to close; the field keeps focus throughout.
     void tagListCompletesTagsInTheRawText()
     {
+        application->editor().setShowTags(false); // the hidden-tag view (no longer the default, LE3-tags-shown)
         QVERIFY(application->openFile(episode));
         auto *text = item("lineText");
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
@@ -1301,9 +1630,16 @@ private slots:
         QVERIFY(ran.toBool());
         QCOMPARE(shown(), QStringLiteral("{\\i1}Hi{\\i0} there"));
         QVERIFY(!application->settingsStore()->boolean("grid.hideTags"));
-        // The Line editor's own hidden-tag view has the set's icon.
-        QCOMPARE(item("showTags")->property("iconRole").toString(), QStringLiteral("hide-tags"));
-        QCOMPARE(item("showTags")->property("checked").toBool(), !application->editor().showTags());
+        // The Line editor's own hidden-tag view is a separate command with
+        // the set's icon (LE3-tags-shown), not changed by the Grid's switch.
+        QVERIFY(!item("showTags")); // no button in the editor's strip any more
+        auto *editorItem = named("hideEditorTagsMenuItem");
+        QVERIFY(editorItem);
+        QCOMPARE(editorItem->property("iconRole").toString(), QStringLiteral("hide-tags"));
+        QVERIFY(application->editor().showTags());
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_HIDE_TAGS"))));
+        QVERIFY(application->editor().showTags());
     }
 
     // E6: GLOBAL_PREVIOUS_LINE / GLOBAL_NEXT_LINE (Ctrl+Up / Ctrl+Down,
@@ -1414,8 +1750,67 @@ private slots:
         QTRY_COMPARE(state(0), 0);
     }
 
+    // GR2: the Grid row shows the Line editor's draft as it is typed, with a
+    // triangle in place of the changed-Line circle; the Document, its
+    // history and the changed-Line state wait for the commit. Revert brings
+    // the committed text back; Save commits the draft.
+    void draftLinesShowLiveInTheGrid()
+    {
+        const QString copy = dir.filePath(QStringLiteral("draft.ass"));
+        QFile::remove(copy);
+        QVERIFY(QFile::copy(episode, copy));
+        QVERIFY(application->openFile(copy));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        auto *model = grid->model();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto shown = [&](int row) { return model->index(row, ui::LineTableModel::TextColumn).data().toString(); };
+        const auto drafted = [&](int row) { return model->index(row, 0).data(ui::LineTableModel::DraftRole).toBool(); };
+        const auto state = [&](int row) { return model->index(row, 0).data(ui::LineTableModel::LineStateRole).toInt(); };
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        const auto steps = session->historySize();
+        const auto revision = session->revision();
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, '!');
+        QTRY_COMPARE(shown(0), QStringLiteral("first!"));
+        QVERIFY(drafted(0));
+        QCOMPARE(grid->rowStateText(0), QStringLiteral("uncommitted"));
+        QTest::keyClick(window, '?');
+        QTRY_COMPARE(shown(0), QStringLiteral("first!?")); // every keystroke
+        QCOMPARE(session->historySize(), steps);
+        QCOMPARE(session->revision(), revision);
+        QCOMPARE(documentLineText(session, 0), QStringLiteral("first"));
+        QCOMPARE(state(0), 0);
+        QVERIFY(!drafted(1));
+        QCOMPARE(shown(1), QStringLiteral("second"));
+
+        // Revert: the committed text and no triangle.
+        QTest::qWait(separateKeyDelay);
+        press(Qt::Key_Escape);
+        QTRY_COMPARE(application->editor().text(), QStringLiteral("first"));
+        QTRY_VERIFY(!drafted(0));
+        QCOMPARE(shown(0), QStringLiteral("first"));
+        QCOMPARE(session->historySize(), steps);
+
+        // Save commits the draft (accepted policy): one step, the row no
+        // longer a draft, its Line changed and saved.
+        text->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, '!');
+        QTRY_VERIFY(drafted(0));
+        QVERIFY(application->editor().save());
+        application->waitForWrites();
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(documentLineText(session, 0), QStringLiteral("first!"));
+        QTRY_VERIFY(!drafted(0));
+        QCOMPARE(shown(0), QStringLiteral("first!"));
+        QTRY_COMPARE(state(0), 2);
+    }
+
     void boldWrapsTheSelectionWithTagsHidden()
     {
+        application->editor().setShowTags(false); // the hidden-tag view (no longer the default, LE3-tags-shown)
         QVERIFY(application->openFile(episode));
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home); // the first Line, "first"
@@ -1810,6 +2205,7 @@ private slots:
                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"
                     "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,def\n");
         }
+        application->editor().setShowTags(false); // the hidden-tag view (no longer the default, LE3-tags-shown)
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         item("editingGrid")->forceActiveFocus();
@@ -3760,6 +4156,7 @@ private slots:
     // D1: the keyboard placement window expresses drag placements and resizes.
     void placementWindowMovesTabsAndResizes()
     {
+        QVERIFY(application->openFile(episode)); // SH2: the panels, not Home
         auto *root = engine->rootObjects().first();
         auto *placement = root->findChild<QQuickWindow *>(QStringLiteral("placementWindow"));
         QVERIFY(placement);
@@ -4111,10 +4508,14 @@ private slots:
         QCOMPARE(findItem(referenceHeader, QStringLiteral("dockMenuButton"))->property("contentItem").value<QObject *>()
                      ->property("iconRole").toString(),
                  QStringLiteral("panel-menu"));
-        // The "⋯" button shows as pressed while its menu is open.
+        // The "⋯" button shows as pressed while its menu is open. The Video
+        // panel's own items are LE2's Times/Frames choice, off without a video.
+        const QStringList videoOwn{QStringLiteral("Show times (off) (on)"), QStringLiteral("Show frames (off)"),
+                                   QStringLiteral("|")};
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
         QVERIFY(findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("checked").toBool());
-        QCOMPARE(panelMenuItems(), (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close")}));
+        QCOMPARE(panelMenuItems(),
+                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY(!findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("checked").toBool());
 
@@ -4122,7 +4523,8 @@ private slots:
         auto *videoDock = item<QObject>("videoDock");
         QVERIFY(videoDock->setProperty("options", 1)); // DockWidgetOption_NotClosable
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
-        QCOMPARE(panelMenuItems(), (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close (off)")}));
+        QCOMPARE(panelMenuItems(),
+                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close (off)")}));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QVERIFY(videoDock->setProperty("options", 0));
 
@@ -4141,7 +4543,8 @@ private slots:
             QTRY_VERIFY(narrow->width() < wide);
         }
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
-        QCOMPARE(panelMenuItems(), (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Dock"), QStringLiteral("Close")}));
+        QCOMPARE(panelMenuItems(),
+                 (videoOwn + QStringList{QStringLiteral("Move panel…"), QStringLiteral("Dock"), QStringLiteral("Close")}));
         // Native gate (sway): the menu opens in the floating panel's window,
         // under its button, not in the main window where Main.qml declares it.
         {
@@ -5482,21 +5885,26 @@ private slots:
                                "Dialogue: 0,0:00:00.20,0:00:00.60,Default,,0,0,0,,Sign one\r\n"
                                "Dialogue: 1,0:00:01.23,0:00:01.73,Default,Actor,0,0,0,,Sign two\r\n");
 
-        // No subtitles open, the file open as the video: the chooser lists
-        // its tracks; OK on the ASS track loads it, unsaved and named after
-        // the file, and the video stays open.
+        // No subtitles open, the file open as the video (SH2: in a new
+        // Untitled Document): the chooser lists its tracks; OK on the ASS
+        // track loads it, unsaved and named after the file, and the video
+        // stays open.
         const QString mkv = nativeFixture("mkvextract.mkv");
         application->video().openVideo(mkv);
         QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready,
                                  30000);
-        QVERIFY(!target().has_value());
+        QVERIFY(target().has_value());
+        QVERIFY(application->targetUntitled());
+        QCOMPARE(tabs(), std::size_t(1));
         QVERIFY(choose(mkv));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
         QVERIFY(!question->property("visible").toBool());
         QCOMPARE(chooser->property("labels").toStringList(),
                  (QStringList{QStringLiteral("1 Signs (eng, ass)"), QStringLiteral("2 Full (pol, srt)")}));
         QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
-        QTRY_VERIFY_WITH_TIMEOUT(target().has_value(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(target().has_value() && application->workspace().title(*target()) &&
+                                     *application->workspace().title(*target()) == "mkvextract.ass",
+                                 20000);
         QTRY_COMPARE(matroska.state(), 0);
         const auto first = *target();
         QCOMPARE(ass(first), signs);
@@ -6477,6 +6885,7 @@ private slots:
                                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold\n"
                                        "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,Teh {\\i1}text\n"
                                        "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,good}\n");
+        application->editor().setShowTags(false); // the hidden-tag view (no longer the default, LE3-tags-shown)
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *grid = application->shell().lines();
@@ -7316,6 +7725,20 @@ private slots:
         QVERIFY(!application->targetUntitled());
         auto *opened = application->files().session(*application->workspace().editingTarget());
         QCOMPARE(opened->selection().active, std::optional(opened->document().lines()[0]->id));
+        // SH2: from the Home page (no Document open) a file result opens the
+        // file as the editing target, and Home goes.
+        QVERIFY(application->reviewCloseAll().isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(item("homePage")->isVisible());
+        application->runFindReplace(QStringLiteral("findInFiles"),
+                                    {{QStringLiteral("tab"), 2},
+                                     {QStringLiteral("find"), QStringLiteral("a dog")},
+                                     {QStringLiteral("filters"), QStringLiteral("one.ass")},
+                                     {QStringLiteral("folder"), folder.path()}});
+        application->showFindResult(1);
+        QCOMPARE(application->tabs().size(), qsizetype(1));
+        QTRY_VERIFY(!item("homePage")->isVisible());
+        QVERIFY(application->editor().hasLine()); // the editor shows the found Line
         // An invalid folder says so.
         application->runFindReplace(QStringLiteral("findInFiles"),
                                     {{QStringLiteral("tab"), 2},
@@ -7465,10 +7888,10 @@ private slots:
         // The panel starts from the legacy options: 2 s backward (SHIFT_TIMES_TIME
         // 2000, SHIFT_TIMES_OPTIONS unset), storing nothing until it changes.
         QCOMPARE(application->shiftTimesSettings().settings().timeMs, 2000);
-        QVERIFY(item("shiftBackward")->property("checked").toBool());
+        QVERIFY(visualItem("shiftBackward")->property("checked").toBool());
         QVERIFY(!application->settingsStore()->contains("shiftTimes.time"));
         QVERIFY(!application->settingsStore()->contains("shiftTimes.options"));
-        QVERIFY(QMetaObject::invokeMethod(item("shiftForward"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("shiftForward"), "click"));
         QVERIFY(application->shiftTimesSettings().settings().forward);
         auto *time = item("shiftTime");
         time->setProperty("text", QStringLiteral("0:00:01.50"));
@@ -7524,6 +7947,213 @@ private slots:
         QCOMPARE(a->end.value.microseconds() / 1000, 2300);
     }
 
+    // TS1: legacy's two panels come back as the form's two modes (its
+    // "Post processor" / "Shift times" button, POSTPROCESSOR_ON's 16): each
+    // shows its own options, the Lines are shared, and the run button says
+    // what it runs. The postprocessor's features stay set across the switch.
+    void timingPanelSwitchesBetweenItsModes()
+    {
+        QVERIFY(application->openFile(episode));
+        showShiftTimes();
+        auto *apply = item("shiftApply");
+        QVERIFY(item("shiftAmountSection")->isVisible());
+        QVERIFY(item("shiftVideoAudioSection")->isVisible());
+        QVERIFY(item("shiftProfile")->isVisible());
+        QVERIFY(!item("ppLeadSection")->isVisible());
+        QCOMPARE(apply->property("text").toString(), QStringLiteral("Shift"));
+        QVERIFY(visualItem("shiftModeShift")->property("checked").toBool());
+        // Frames need an exact timebase and moving to video time a video
+        // (ShiftTimes::Contents; no video here).
+        QVERIFY(!visualItem("shiftFrames")->property("enabled").toBool());
+        QVERIFY(!item("shiftToVideo")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(visualItem("shiftModePostprocessor"), "click"));
+        QCOMPARE(application->shiftTimesSettings().settings().postprocessor, 16);
+        QTRY_VERIFY(item("ppLeadSection")->isVisible());
+        QVERIFY(item("ppContinuousSection")->isVisible());
+        QVERIFY(item("ppSnapSection")->isVisible());
+        QVERIFY(item("shiftLinesSection")->isVisible());
+        QVERIFY(item("shiftWhichLines")->isVisible());
+        QVERIFY(!item("shiftWhichTimes")->isVisible());
+        QVERIFY(!item("shiftEndCorrection")->isVisible());
+        QVERIFY(!item("shiftAmountSection")->isVisible());
+        QVERIFY(!item("shiftVideoAudioSection")->isVisible());
+        QVERIFY(!item("shiftProfile")->isVisible());
+        QCOMPARE(apply->property("text").toString(), QStringLiteral("Run post processor"));
+        QVERIFY(visualItem("shiftModePostprocessor")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(item("ppLeadIn"), "click"));
+        QCOMPARE(application->shiftTimesSettings().settings().postprocessor, 16 | 1);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("shiftModeShift"), "click"));
+        QCOMPARE(application->shiftTimesSettings().settings().postprocessor, 1);
+        QTRY_VERIFY(item("shiftAmountSection")->isVisible());
+        QCOMPARE(apply->property("text").toString(), QStringLiteral("Shift"));
+    }
+
+    // TS1: a section closes from its header, by click or by Space, and the
+    // panel remembers it (shiftTimes.collapsedSections).
+    void timingPanelSectionsCollapseAndStayCollapsed()
+    {
+        QVERIFY(application->openFile(episode));
+        showShiftTimes();
+        QVERIFY(item("shiftTime")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(item("shiftAmountSectionHeader"), "click"));
+        QTRY_VERIFY(!item("shiftTime")->isVisible());
+        QCOMPARE(application->settingsStore()->list("shiftTimes.collapsedSections"), QStringList{QStringLiteral("amount")});
+        item("shiftAmountSectionHeader")->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Space);
+        QTRY_VERIFY(item("shiftTime")->isVisible());
+        QVERIFY(application->settingsStore()->list("shiftTimes.collapsedSections").isEmpty());
+        application->shiftTimesSettings().setCollapsedSections({QStringLiteral("lines")});
+        QTRY_VERIFY(!item("shiftWhichLines")->isVisible());
+        application->shiftTimesSettings().setCollapsedSections({});
+        QTRY_VERIFY(item("shiftWhichLines")->isVisible());
+    }
+
+    // TS1: legacy's "+" beside the styles (ShiftTimes::OnAddStyles,
+    // GetCheckedElements): the Document's styles, none checked; OK puts the
+    // checked ones in the field and shifts by styles, Cancel empties it.
+    void timingPanelPicksStylesFromTheDocument()
+    {
+        const QString path = dir.filePath(QStringLiteral("styles.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "Style: Sign,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
+        }
+        QVERIFY(application->openFile(path));
+        showShiftTimes();
+        QVERIFY(!item("shiftStylesPick")->isVisible()); // only while shifting by styles
+        setShift("whichLines", 5);
+        QTRY_VERIFY(item("shiftStylesPick")->isVisible());
+        auto *popup = item<QObject>("shiftStylesPopup");
+        const auto choose = [&](const QStringList &names, bool ok) {
+            QVERIFY(QMetaObject::invokeMethod(item("shiftStylesPick"), "click"));
+            QTRY_VERIFY(popup->property("opened").toBool());
+            QCOMPARE(popup->property("names").toStringList(), (QStringList{QStringLiteral("Default"), QStringLiteral("Sign")}));
+            auto *content = popup->property("contentItem").value<QQuickItem *>();
+            std::function<void(QQuickItem *)> walk = [&](QQuickItem *from) {
+                if (from->inherits("QQuickCheckBox")) {
+                    QVERIFY(!from->property("checked").toBool()); // none checked
+                    if (names.contains(from->property("text").toString()))
+                        QVERIFY(QMetaObject::invokeMethod(from, "click"));
+                }
+                for (QQuickItem *child : from->childItems())
+                    walk(child);
+            };
+            walk(content);
+            QVERIFY(QMetaObject::invokeMethod(popup, "finish", Q_ARG(QVariant, ok)));
+            QTRY_VERIFY(!popup->property("visible").toBool());
+        };
+        choose({QStringLiteral("Sign")}, true);
+        QCOMPARE(application->shiftTimesSettings().settings().styles, std::u8string(u8"Sign"));
+        QCOMPARE(item("shiftStyles")->property("text").toString(), QStringLiteral("Sign"));
+        choose({QStringLiteral("Default"), QStringLiteral("Sign")}, true);
+        QCOMPARE(application->shiftTimesSettings().settings().styles, std::u8string(u8"Default,Sign"));
+        choose({QStringLiteral("Default")}, false);
+        QCOMPARE(application->shiftTimesSettings().settings().styles, std::u8string());
+        QCOMPARE(application->shiftTimesSettings().settings().whichLines, 5);
+        // OK with a style switches to shifting by styles (legacy SetSelection(5)).
+        setShift("whichLines", 5);
+        choose({QStringLiteral("Sign")}, true);
+        QCOMPARE(application->shiftTimesSettings().settings().whichLines, 5);
+        // The shift moves only that style's Line.
+        setShift("forward", true);
+        setShift("timeMs", 1000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QTRY_COMPARE(session->history().back().name, std::string("Shifting times"));
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds() / 1000, 2000);
+        QCOMPARE(session->document().lines()[1]->start.value.microseconds() / 1000, 3000);
+    }
+
+    // TS1: a refusal shows over the run button in the danger colour, and the
+    // next run that goes through clears it.
+    void timingPanelShowsARefusalOverItsButton()
+    {
+        QVERIFY(application->openFile(episode));
+        showShiftTimes();
+        auto *message = item("shiftMessage");
+        QVERIFY(!message->isVisible());
+        setShift("whichLines", 5);
+        setShift("styles", QString());
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QTRY_VERIFY(message->isVisible());
+        QCOMPARE(message->property("text").toString(), QStringLiteral("No styles selected for time shifting"));
+        QCOMPARE(message->property("color").value<QColor>(), ui::theme::current().roles.danger);
+        const auto top = [](QQuickItem *it) { return it->mapToScene(QPointF(0, 0)).y(); };
+        QVERIFY(top(message) < top(item("shiftApply")));
+        setShift("whichLines", 0);
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QTRY_VERIFY(!message->isVisible());
+    }
+
+    // TS1: Shift times in its two modes, and with a refusal, in the four
+    // themes, for review: written to HIKARI_SURFACE_SHOT_DIR when it is set
+    // (shift-times-<state>-<theme>.png), the panel floating at its form's size.
+    void shiftTimesScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        QVERIFY(application->openFile(episode));
+        showShiftTimes();
+        auto *dock = item<QObject>("timingDock");
+        dock->setProperty("isFloating", true);
+        QTRY_VERIFY(item("timingPanel")->window() != window);
+        QQuickWindow *floating = item("timingPanel")->window();
+        floating->resize(340, 800);
+        setShift("timeMs", 2350);
+        setShift("whichLines", 1);
+        setShift("correctEndTimes", 1);
+        setShift("tagTimes", true);
+        setShift("postprocessor", 1 | 4);
+        setShift("leadIn", 200);
+        setShift("leadOut", 300);
+        setShift("thresholdStart", 300);
+        setShift("thresholdEnd", 300);
+        auto *root = engine->rootObjects().first();
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const auto shot = [&](const QString &state) {
+                QTest::qWait(300);
+                QVERIFY(floating->grabWindow().save(out + QStringLiteral("/shift-times-") + state + QLatin1Char('-') + theme
+                                                    + QStringLiteral(".png")));
+            };
+            setShift("whichLines", 1);
+            QVERIFY(QMetaObject::invokeMethod(findItem(floating->contentItem(), QStringLiteral("shiftModeShift")), "click"));
+            QTRY_VERIFY(item("shiftAmountSection")->isVisible());
+            item("shiftTime")->forceActiveFocus(Qt::TabFocusReason);
+            shot(QStringLiteral("shift"));
+            QVERIFY(QMetaObject::invokeMethod(findItem(floating->contentItem(), QStringLiteral("shiftModePostprocessor")), "click"));
+            QTRY_VERIFY(item("ppLeadSection")->isVisible());
+            shot(QStringLiteral("postprocessor"));
+            QVERIFY(QMetaObject::invokeMethod(findItem(floating->contentItem(), QStringLiteral("shiftModeShift")), "click"));
+            setShift("whichLines", 5);
+            setShift("styles", QString());
+            QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+            QTRY_VERIFY(item("shiftMessage")->isVisible());
+            shot(QStringLiteral("refusal"));
+            item<QQuickItem>("shiftMessage")->setProperty("text", QString());
+        }
+    }
+
     // F6: a keyframe file opened before the video applies when the video is ready.
     void keyframeFilesReplaceTheVideosKeyframes()
     {
@@ -7549,6 +8179,10 @@ private slots:
 
     void hideColumnsMenuTogglesGridColumns()
     {
+        // Every column of the episode shows (GR3's auto-hide off): this
+        // checks the manual hides.
+        application->shell().setAutoHideColumns(false);
+        auto restoreAutoHide = qScopeGuard([&] { application->shell().setAutoHideColumns(true); });
         QVERIFY(application->openFile(episode));
         auto *root = engine->rootObjects().first();
         auto *grid = item("editingGrid");
@@ -7566,12 +8200,65 @@ private slots:
         application->shell().setHiddenColumns(0);
     }
 
+    // GR3 (Aegisub's convention): with the default on, the columns the
+    // whole Document leaves empty hide themselves and come back as soon as
+    // a committed Line fills one; the Grid's Hide columns > Hide empty
+    // columns and Settings write one setting, and manual hides stay on top.
+    void emptyColumnsHideThemselves()
+    {
+        auto &settings = *application->settingsStore();
+        QCOMPARE(std::get<bool>(application::findSetting("grid.autoHideColumns")->defaultValue), true);
+        QVERIFY(settings.boolean("grid.autoHideColumns"));
+        QVERIFY(application->shell().autoHideColumns());
+        QVERIFY(application->openFile(episode)); // Layer, Actor, margins and Effect all empty
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        const auto titles = [&] {
+            QStringList out;
+            for (int c = 0; c < grid->columnCount(); ++c)
+                out << grid->columnTitle(c);
+            return out;
+        };
+        const QStringList empty{"#", "Start", "End", "Styles", "CPS", "Wraps", "Text"};
+        QTRY_COMPARE(titles(), empty);
+
+        // A committed Actor shows its column, live; Undo hides it again.
+        QTRY_COMPARE(application->editor().text(), QStringLiteral("first"));
+        QVERIFY(application->editor().chooseActor(QStringLiteral("Ann")));
+        QTRY_VERIFY(titles().contains(QStringLiteral("Actor")));
+        QCOMPARE(titles().size(), empty.size() + 1);
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(titles(), empty);
+
+        // The menu's toggle: off shows every column, and the setting follows.
+        QObject *toggle = named("hideEmptyColumns");
+        QVERIFY(toggle);
+        QVERIFY(toggle->property("checked").toBool());
+        toggle->setProperty("checked", false);
+        QVERIFY(QMetaObject::invokeMethod(toggle, "triggered"));
+        QVERIFY(!settings.boolean("grid.autoHideColumns"));
+        QTRY_COMPARE(grid->columnCount(), 13);
+        // Settings writes the same one; the menu shows it.
+        settings.set("grid.autoHideColumns", true);
+        QTRY_COMPARE(titles(), empty);
+        QTRY_VERIFY(toggle->property("checked").toBool());
+        // A manual hide applies on top.
+        application->shell().toggleColumn(512); // CPS
+        QTRY_COMPARE(grid->columnCount(), int(empty.size()) - 1);
+        application->shell().setHiddenColumns(0);
+        QCOMPARE(settings.integer("grid.hideColumns"), 0);
+    }
+
     // The Grid's abbreviated headings name their column on hover (legacy's
     // Hide columns names, SubsGrid.cpp:199-200 and 501-508): the pointer over
     // "L." shows "Layer" below it, in the interface language; a heading that
     // is a word shows nothing.
     void gridHeadingsNameTheirColumnOnHover()
     {
+        // Every column of the episode shows (GR3's auto-hide off): the
+        // abbreviated headings are there to hover.
+        application->shell().setAutoHideColumns(false);
+        auto restoreAutoHide = qScopeGuard([&] { application->shell().setAutoHideColumns(true); });
         QVERIFY(application->openFile(episode));
         auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
         QVERIFY(grid);
@@ -7674,6 +8361,7 @@ private slots:
             {{"mkvSaveYes", Yes}, {"mkvSaveNo", No}, {"mkvSaveCancel", Reject}},
             {{"findAnswerOk", Accept}, {"findAnswerYes", Yes}, {"findAnswerNo", No}, {"findAnswerCancel", Reject}},
             {{"replaceYesToAll", Yes}, {"replaceYes", Yes}, {"replaceNo", No}, {"Cancel", Reject}},
+            {{"styleCreateYes", Accept}, {"styleCreateCancel", Reject}}, // LE6
         };
         // The find question lives in the Search tool's dock: open it.
         press(Qt::Key_F, Qt::ControlModifier);
@@ -7786,6 +8474,10 @@ private slots:
     // its help. (A Shift+click closes them: hotkeyGestureOnMenus.)
     void checkItemsKeepTheirMenuOpen()
     {
+        // Every column of the episode shows (GR3's auto-hide off): this
+        // checks the manual hides.
+        application->shell().setAutoHideColumns(false);
+        auto restoreAutoHide = qScopeGuard([&] { application->shell().setAutoHideColumns(true); });
         QStyleHints *hints = QGuiApplication::styleHints();
         const bool hoverHint = hints->useHoverEffects();
         auto restoreHover = qScopeGuard([&] { hints->setUseHoverEffects(hoverHint); });
@@ -7999,6 +8691,7 @@ private slots:
                     "Comment: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Gate {\\i1}keeper\n"
                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
         }
+        application->editor().setShowTags(false); // the hidden-tag view (no longer the default, LE3-tags-shown)
         QVERIFY(application->openFile(path));
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
@@ -8287,15 +8980,18 @@ private slots:
     }
 
     // The Line editor in a dock shorter than its rows (translation mode in
-    // the default 1280 x 800 layout) scrolls them: every control is reached
-    // by the wheel, and each one Tab reaches lies whole in the editor's view.
-    // The default proportions stay (legacy's 170 px audio box), and the dock
-    // keeps room for the tag buttons and the text fields when squeezed.
+    // the Editing layout at the default 1280 x 800) scrolls them: every
+    // control is reached by the wheel, and each one Tab reaches lies whole in
+    // the editor's view. The default proportions stay (legacy's 170 px audio
+    // box), and the dock keeps room for the tag buttons and the text fields
+    // when squeezed. (WS1: the file's tab starts with the Translation preset,
+    // which leaves Audio closed; Editing brings the squeeze back.)
     void lineEditorScrollsWhatItsDockCannotShow()
     {
         QCOMPARE(window->size(), QSize(1280, 800));
         QVERIFY(application->openFile(writeTranslationFile("e5-overflow.ass")));
         QTRY_VERIFY(application->editor().translationMode());
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
         auto *panel = item("editorPanel");
         auto *view = item("editorScroll");
         auto *content = item("editorContent");
@@ -8320,7 +9016,8 @@ private slots:
             }
         };
         collect(content);
-        QVERIFY2(controls.size() >= 25, qPrintable(QString::number(controls.size())));
+        // (LE2 and LE3 took the Times/Frames radios and Hide tags out.)
+        QVERIFY2(controls.size() >= 22, qPrintable(QString::number(controls.size())));
         for (QQuickItem *control : std::as_const(controls))
             scrollTheEditorTo(control);
         scrollTheEditorTo(controls.first()); // and back up
@@ -8391,6 +9088,9 @@ private slots:
     {
         QVERIFY(application->openFile(writeTranslationFile("tab-out.ass")));
         QTRY_VERIFY(application->editor().translationMode());
+        // A fold to scroll past: the Editing layout (WS1: not the Translation
+        // preset the file's tab starts with).
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
         auto *original = item("lineText");
         auto *translated = item("translationText");
         auto *layer = item("layerField");
@@ -8803,6 +9503,7 @@ private slots:
                     "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,three\n"
                     "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,\n");
         }
+        application->editor().setShowTags(false); // the hidden-tag view (no longer the default, LE3-tags-shown)
         QVERIFY(application->openFile(path));
         auto &editor = application->editor();
         item("editingGrid")->forceActiveFocus();
@@ -9016,12 +9717,17 @@ private slots:
               {"translation.hideOriginalOnVideo", "Hide original on video in translator mode"},
               {"grid.duplicationDontChangeSelection", "Do not change selections when duplicating dialogue lines"},
               {"grid.dontCenterActiveLine", "Do not vertically center the active line in the subtitle grid"},
+              {"grid.autoHideColumns", "Hide empty columns in the subtitle grid"}, // GR3
               {"editor.allowNumpadHotkeys", "Use numpad shortcuts in text fields"},
               {"video.visualWarningsOff", "Turn off visual tools warning"},
               {"video.dontAskForBadResolution", "Do not warn about resolution mismatch"},
               {"automation.oldScriptsCompatibility", "Compatibility with older HikariSub scripts"},
               // Y4-playres-ask, the rewrite's own
-              {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"}}},
+              {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"},
+              // LE2: the Times/Frames switch, out of the Line editor
+              {"editor.timesToFramesSwitch", "Show video frames instead of times in the line editor and the subtitle grid"},
+              // LE3-tags-shown
+              {"editor.hideTags", "Hide tags in the line editor"}}},
             {"settingsPageConversion",
              {{"convert.styleCatalog", nullptr},
               {"convert.style", nullptr},
@@ -9477,6 +10183,7 @@ private slots:
         a.gridFilter().setIgnoreInActions(true);
         a.gridFilter().setInverted(true);
         a.shell().toggleColumn(1);
+        a.shell().setAutoHideColumns(false);
         const QVariantMap red{{QStringLiteral("r"), 255}, {QStringLiteral("g"), 0}, {QStringLiteral("b"), 0}, {QStringLiteral("a"), 0}};
         a.colourPicker().addRecent(red); // no picker yet: the option is the list
 
@@ -9509,6 +10216,10 @@ private slots:
         QVERIFY(!settings.contains("grid.hideColumns"));
         a.shell().toggleColumn(8192);
         QCOMPARE(settings.integer("grid.hideColumns"), 8193);
+        // GR3: empty columns hide themselves again (no legacy owner keeps it),
+        // and the option stays reset: the re-sync does not write it back.
+        QVERIFY(a.shell().autoHideColumns());
+        QVERIFY(!settings.contains("grid.autoHideColumns"));
 
         // Once opened, SelectLines keeps its options and recent searches:
         // the options go back when it closes, the recent searches at the
@@ -10676,7 +11387,9 @@ private slots:
         QCOMPARE(names, (QStringList{"Editor", "Conversion", "Advanced", "Video", "Audio", "Advanced", "Appearance",
                                      "Hotkeys", "Subtitle properties"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 225); // V3: "Open video with FFMS2" retired, never listed
+        // V3: "Open video with FFMS2" retired, never listed; LE3's
+        // "Hide tags in the line editor" listed.
+        QCOMPARE(hotkeyRows().size(), 226);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -12150,11 +12863,16 @@ private slots:
         auto *mark = item<QObject>("setAudioMarkFromVideoMenuItem");
         QVERIFY(position && mark);
         auto &audio = application->audio();
-        audio.openDummy();
-        QVERIFY(audio.ready());
         QVERIFY(!application->workspace().editingTarget());
         QVERIFY(!position->property("enabled").toBool());
         QVERIFY(!mark->property("enabled").toBool());
+        // SH2: audio opened with no Document opens in a new Untitled one (the
+        // tab legacy always had), so the box comes with an editor.
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QVERIFY(application->workspace().editingTarget());
+        QVERIFY(position->property("enabled").toBool());
+        QVERIFY(mark->property("enabled").toBool());
         QVERIFY(application->openFile(episode));
         QVERIFY(position->property("enabled").toBool());
         QVERIFY(mark->property("enabled").toBool());
@@ -15481,6 +16199,7 @@ private slots:
     void videoTransportIconsFollowTheThemeLive()
     {
         restartWithoutSound(); // play / pause below plays the fixture
+        QVERIFY(application->openFile(episode)); // SH2: the panels, not Home
         auto &settings = *application->settingsStore();
         const auto setTheme = [&](const char *code) {
             settings.setValue(QStringLiteral("appearance.followSystem"), false);
@@ -15795,6 +16514,54 @@ private slots:
                         .save(out + QStringLiteral("/appearance-page") + suffix));
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
+    }
+
+    // WS4: the Document tabs under the menu bar in the four themes, written
+    // to HIKARI_SURFACE_SHOT_DIR when it is set: the window
+    // (document-tabs-<theme>.png) and its top rows, the menu bar and the
+    // tabs (document-tabs-top-<theme>.png). Three tabs, the second current
+    // and modified.
+    void documentTabsScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        window->resize(1280, 800);
+        QVERIFY(application->openFile(episode));
+        application->addPage();
+        QVERIFY(application->openFile(original)); // into the new Untitled tab
+        application->addPage();
+        QTRY_COMPARE(int(application->tabs().size()), 3);
+        application->selectTab(1);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("ref"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 3);
+        QTest::keyClick(window, 'x');
+        press(Qt::Key_Return, Qt::ControlModifier); // a modified tab
+        QTRY_VERIFY(visualItem("documentTabModified1") && visualItem("documentTabModified1")->isVisible());
+        auto *root = engine->rootObjects().first();
+        auto *header = root->property("header").value<QQuickItem *>();
+        QVERIFY(header);
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+            item("editingGrid")->forceActiveFocus(Qt::TabFocusReason);
+            QTest::qWait(200);
+            const QImage shot = window->grabWindow();
+            QVERIFY(shot.save(out + QStringLiteral("/document-tabs") + suffix));
+            const qreal dpr = window->effectiveDevicePixelRatio();
+            const qreal bottom = header->mapToScene(QPointF(0, header->height())).y() + 24;
+            QVERIFY(shot.copy(QRectF(0, 0, window->width() * dpr, bottom * dpr).toAlignedRect())
+                        .save(out + QStringLiteral("/document-tabs-top") + suffix));
         }
     }
 
@@ -17832,6 +18599,8 @@ private slots:
 
     // EditBox::SetAlignment and OnAnChoice: the shown Line's position (the
     // Style's, or its text's \an), and a choice puts \an<n> in the first block.
+    // LE4: the choice is one icon button with a 3 x 3 grid in numpad layout,
+    // opened by a click, by the keyboard or on hover.
     void alignmentChoiceTagsTheText()
     {
         QVERIFY(application->openFile(writeStyled("an.ass",
@@ -17841,27 +18610,97 @@ private slots:
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
         QTRY_VERIFY(application->editor().hasLine());
-        auto *choice = item<QObject>("alignmentChoice");
-        QCOMPARE(choice->property("currentIndex").toInt(), 7); // Sign's alignment 8
-        QVERIFY(QMetaObject::invokeMethod(choice, "activated", Q_ARG(int, 2)));
-        QCOMPARE(choice->property("currentIndex").toInt(), 2);
+        auto *choice = item("alignmentChoice");
+        auto *grid = named("alignmentGrid");
+        QVERIFY(choice && grid);
+        QCOMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-8")); // Sign's alignment 8
+        QCOMPARE(choice->property("tip").toString(), QStringLiteral("Text position: Top-center (an8)"));
+        // The cells are Repeater delegates in the grid's popup: walk its items.
+        const auto cell = [&](int n) {
+            return findItem(grid->property("contentItem").value<QQuickItem *>(), QStringLiteral("alignmentCell%1").arg(n));
+        };
+        // A click opens the grid, the shown position checked; a cell chooses.
+        QVERIFY(QMetaObject::invokeMethod(choice, "clicked"));
+        QTRY_VERIFY(grid->property("opened").toBool());
+        QVERIFY(cell(8)->property("checked").toBool());
+        QVERIFY(!cell(3)->property("checked").toBool());
+        // Numpad layout: 7 8 9 above 4 5 6 above 1 2 3.
+        QVERIFY(cell(7)->mapToScene({}).y() < cell(4)->mapToScene({}).y());
+        QVERIFY(cell(4)->mapToScene({}).y() < cell(1)->mapToScene({}).y());
+        QVERIFY(cell(1)->mapToScene({}).x() < cell(2)->mapToScene({}).x());
+        QVERIFY(cell(2)->mapToScene({}).x() < cell(3)->mapToScene({}).x());
+        QTest::mouseClick(cell(3)->window(), Qt::LeftButton, {},
+                          cell(3)->mapToScene(QPointF(cell(3)->width() / 2, cell(3)->height() / 2)).toPoint());
+        QTRY_VERIFY(!grid->property("visible").toBool());
         QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->draftRecord()->text.c_str())),
                  QStringLiteral("{\\an3}first"));
+        QCOMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-3"));
         QVERIFY(item("lineText")->hasActiveFocus());
         application->editor().commit();
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Down);
-        QTRY_COMPARE(choice->property("currentIndex").toInt(), 3); // the text's \an4
-        QVERIFY(QMetaObject::invokeMethod(choice, "activated", Q_ARG(int, 8)));
+        QTRY_COMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-4")); // the text's \an4
+        // The keyboard: Enter on the button opens the grid with the focus;
+        // 9 (either row or the numpad) chooses at once.
+        choice->forceActiveFocus();
+        press(Qt::Key_Return);
+        QTRY_VERIFY(grid->property("opened").toBool());
+        QCOMPARE(grid->property("highlighted").toInt(), 4);
+        press(Qt::Key_9, Qt::KeypadModifier);
+        QTRY_VERIFY(!grid->property("visible").toBool());
         QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->draftRecord()->text.c_str())),
                  QStringLiteral("{\\an9\\b1}second")); // replaced in place
+        QVERIFY(item("lineText")->hasActiveFocus()); // typing goes on in the text
         application->editor().discard();
-        // Several Lines: each one's first block, as one "Editing multiple lines" step.
+        // Esc closes it and nothing changes.
+        choice->forceActiveFocus();
+        press(Qt::Key_Space);
+        QTRY_VERIFY(grid->property("opened").toBool());
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!grid->property("visible").toBool());
+        QVERIFY(!session->draftRecord());
+        QVERIFY(choice->hasActiveFocus()); // Esc gives the focus back
+        // Several Lines with different positions: the mixed icon; the arrows
+        // move from the centre and Enter chooses, each Line's first block, as
+        // one "Editing multiple lines" step.
         application->selectAllLines();
-        QVERIFY(QMetaObject::invokeMethod(choice, "activated", Q_ARG(int, 0)));
+        QTRY_COMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-mixed"));
+        QCOMPARE(choice->property("tip").toString(), QStringLiteral("Text position: mixed"));
+        choice->forceActiveFocus();
+        press(Qt::Key_Return);
+        QTRY_VERIFY(grid->property("opened").toBool());
+        QCOMPARE(grid->property("highlighted").toInt(), 5);
+        for (int n = 1; n <= 9; ++n)
+            QVERIFY(!cell(n)->property("checked").toBool());
+        press(Qt::Key_Left);
+        press(Qt::Key_Left); // stays at the edge
+        QCOMPARE(grid->property("highlighted").toInt(), 4);
+        press(Qt::Key_Down);
+        QCOMPARE(grid->property("highlighted").toInt(), 1);
+        press(Qt::Key_Return);
+        QTRY_VERIFY(!grid->property("visible").toBool());
         QCOMPARE(session->history().back().name, std::string("Editing multiple lines"));
         QCOMPARE(session->document().lines()[0]->text, u8"{\\an1}first");
         QCOMPARE(session->document().lines()[1]->text, u8"{\\an1\\b1}second");
+        QTRY_COMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-1"));
+        // Hover opens it after a short delay without taking the focus, and
+        // leaving it closes it.
+        item("lineText")->forceActiveFocus();
+        QTest::mouseMove(window, choice->mapToScene(QPointF(choice->width() / 2, choice->height() / 2)).toPoint());
+        QVERIFY(!grid->property("visible").toBool());
+        QTRY_VERIFY(grid->property("opened").toBool());
+        QVERIFY(item("lineText")->hasActiveFocus());
+        QTest::mouseMove(window, item("lineText")->mapToScene(QPointF(10, 10)).toPoint());
+        QTRY_VERIFY(!grid->property("visible").toBool());
+        QVERIFY(item("lineText")->hasActiveFocus());
+        // The editor's own move (Enter, Ctrl+Up or Down) makes a mixed selection
+        // plain: the icon shows the one Line it moved to.
+        QVERIFY(application->editor().undo()); // back to {\an3}first and {\an4\b1}second
+        application->selectAllLines();
+        QTRY_COMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-mixed"));
+        QVERIFY(application->editor().nextLine(-1)); // from the second Line
+        QCOMPARE(session->selection().selected.size(), std::size_t(1));
+        QTRY_COMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-3"));
     }
 
     // SubsGrid::ChangeLine: with several Lines selected the sent fields go to
@@ -17951,6 +18790,8 @@ private slots:
     // timebase the fields and the Grid show frames (TimeCtrl::SetTime,
     // SubsGridWindow.cpp:348-357), typed frames take the legacy midpoint
     // times (StartTimeFor/EndTimeFor, ZEROIT), and the switch is saved.
+    // LE2: it is the Video panel's "⋯" menu choice (and Settings > Editor's
+    // check box), no longer radios under the Line editor.
     void framesSwitchShowsVideoFrames_data()
     {
         QTest::addColumn<QString>("video");
@@ -17981,13 +18822,25 @@ private slots:
         application->video().openVideo(nativeFixture(qPrintable(video)));
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
         QTRY_VERIFY(application->editor().framesAvailable());
-        QVERIFY(item<QObject>("showFrames")->property("enabled").toBool());
-        const auto click = [&](const char *name) {
-            auto *radio = item(name);
-            QTest::mouseClick(window, Qt::LeftButton, {}, radio->mapToScene(QPointF(10, radio->height() / 2)).toPoint());
+        QVERIFY(!item("showFrames")); // LE2: not in the Line editor any more
+        QVERIFY(!item("showTimes"));
+        auto *menu = named("panelOptionsMenu");
+        const auto choose = [&](const char *name) {
+            QVERIFY(openPanelMenu(QStringLiteral("Video")));
+            QVERIFY(panelMenuItems().mid(0, 2).join(QLatin1Char(',')).contains(QStringLiteral("(on)")));
+            auto *entry = qobject_cast<QQuickItem *>(named(name));
+            QVERIFY(entry && entry->isEnabled());
+            QTest::mouseClick(entry->window(), Qt::LeftButton, {},
+                              entry->mapToScene(QPointF(entry->width() / 2, entry->height() / 2)).toPoint());
+            QTRY_VERIFY(!menu->property("visible").toBool()); // a choice closes the menu
         };
-        click("showFrames");
+        choose("panelOptions_showFrames");
         QTRY_VERIFY(application->editor().showFrames());
+        // The menu's check follows the state.
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QCOMPARE(panelMenuItems().mid(0, 2), (QStringList{QStringLiteral("Show times"), QStringLiteral("Show frames (on)")}));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
         QCOMPARE(application->settingsStore()->value(QStringLiteral("editor.timesToFramesSwitch")).toBool(), true);
         QFETCH(QString, start);
         QFETCH(QString, end);
@@ -18013,10 +18866,46 @@ private slots:
         press(Qt::Key_Return);
         QCOMPARE(session->document().lines()[0]->start.value.microseconds() / 1000, typedStartMs);
         // Back to times: the Grid and the fields show times again.
-        click("showTimes");
+        choose("panelOptions_showTimes");
         QTRY_VERIFY(!application->editor().showFrames());
         QCOMPARE(model->index(0, ui::LineTableModel::StartColumn).data().toString(),
                  QString::fromUtf8(reinterpret_cast<const char *>(core::legacy::assTimeText(typedStartMs).c_str())));
+        QCOMPARE(application->settingsStore()->value(QStringLiteral("editor.timesToFramesSwitch")).toBool(), false);
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QCOMPARE(panelMenuItems().mid(0, 2), (QStringList{QStringLiteral("Show times (on)"), QStringLiteral("Show frames")}));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        // Settings > Editor's check box switches the same state live: the
+        // fields and the Grid show frames after OK, and the menu agrees.
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *check = dialogItem("settingsDialog", "setting_editor.timesToFramesSwitch");
+        QVERIFY(check);
+        QVERIFY(!check->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(check, "click"));
+        QVERIFY(!application->editor().showFrames()); // staged until OK
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(application->editor().showFrames());
+        QCOMPARE(application->settingsStore()->value(QStringLiteral("editor.timesToFramesSwitch")).toBool(), true);
+        // Frames, not times, in the Grid and the field (Return went on to
+        // the next Line, so they show different Lines).
+        QVERIFY(!model->index(0, ui::LineTableModel::StartColumn).data().toString().contains(QLatin1Char(':')));
+        QVERIFY(!item<QObject>("startField")->property("text").toString().contains(QLatin1Char(':')));
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QCOMPARE(panelMenuItems().mid(0, 2), (QStringList{QStringLiteral("Show times"), QStringLiteral("Show frames (on)")}));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        // and back off from Settings.
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        check = dialogItem("settingsDialog", "setting_editor.timesToFramesSwitch");
+        QVERIFY(check->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(check, "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!application->editor().showFrames());
         QCOMPARE(application->settingsStore()->value(QStringLiteral("editor.timesToFramesSwitch")).toBool(), false);
     }
 

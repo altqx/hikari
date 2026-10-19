@@ -17,6 +17,7 @@ TEST_RUNS = [
         "panelsKeepTheirMinimumSizes"]),
     ("hikari_ui_docking_qualification_tests", []),
     ("hikari_ui_workspace_layout_tests", []),
+    ("hikari_ui_tab_layouts_tests", []),  # WS1
 ]
 
 # Skips the tests declare as platform limits, each observed for real by

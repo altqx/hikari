@@ -21,6 +21,7 @@ Dialog {
     objectName: "settingsDialog"
     required property var app
     property var hotkeys: null // O2: the Hotkeys page's HotkeysController
+    property TagButtonsController tagButtons: null // LE5: the Editor page's tag button list
     title: qsTr("Options")
     // K1: the title with the set's settings icon (legacy OptionsDialog SetIcon(SETTINGS)).
     header: IconDialogHeader { objectName: "settingsDialogTitle"; iconRole: "settings"; text: dialog.title }
@@ -36,6 +37,9 @@ Dialog {
     property var rendererLabels: [] // W2: as shown, VSFilterMod's with its note
     property var outputDevices: [] // H2: System default, the connected devices, a missing choice
     property var warnings: []
+    // LE5: the tag buttons as the Editor page holds them, {name, tag, type,
+    // icon} each, written on OK or Apply where they differ.
+    property var tagButtonList: []
     signal reloaded()
 
     function openDialog() {
@@ -48,6 +52,7 @@ Dialog {
         rendererLabels = r.rendererLabels
         outputDevices = r.outputDevices
         values = r.values
+        copyTagButtons()
         reloaded()
         hotkeyFilter.currentIndex = 0 // a new dialog's filter choice
         pageList.currentIndex = 0 // legacy ChangeSelection(0)
@@ -86,6 +91,44 @@ Dialog {
     // Apply keeps the controls as they are (legacy does not refresh them).
     function apply() {
         app.applySettings(values)
+        commitTagButtons()
+    }
+    function copyTagButtons() {
+        tagButtonList = tagButtons ? tagButtons.buttons.map(b => Object.assign({}, b)) : []
+    }
+    function commitTagButtons() {
+        if (!tagButtons)
+            return
+        const shown = tagButtons.buttons
+        const same = shown.length === tagButtonList.length && shown.every((b, i) => {
+            const t = tagButtonList[i]
+            return b.name === t.name && b.tag === t.tag && b.type === t.type && b.icon === t.icon
+        })
+        if (!same)
+            tagButtons.replace(tagButtonList)
+    }
+    function stageTagButton(index, b) {
+        const list = tagButtonList.slice()
+        if (index < 0)
+            list.push(b)
+        else
+            list[index] = b
+        tagButtonList = list
+        tagButtonRows.currentIndex = index < 0 ? list.length - 1 : index
+    }
+    function removeTagButton(index) {
+        const list = tagButtonList.slice()
+        list.splice(index, 1)
+        tagButtonList = list
+        tagButtonRows.currentIndex = Math.min(index, list.length - 1)
+    }
+    function moveTagButton(index, step) {
+        const list = tagButtonList.slice()
+        const b = list[index]
+        list[index] = list[index + step]
+        list[index + step] = b
+        tagButtonList = list
+        tagButtonRows.currentIndex = index + step
     }
     // O2: OnMapHkey for the selected row: the mapping window, then the
     // question when the keys are taken (ItemHotkey::OnMapHotkey).
@@ -118,6 +161,8 @@ Dialog {
             Layout.leftMargin: 12
             onClicked: {
                 dialog.values = dialog.app.resetSettings(dialog.values)
+                // The shown tag buttons stay (EditBox keeps what SetTagButtons built).
+                dialog.copyTagButtons()
                 dialog.reloaded()
             }
         }
@@ -131,7 +176,10 @@ Dialog {
             onApplied: dialog.apply()
         }
     }
-    onAccepted: app.applySettings(values)
+    onAccepted: {
+        app.applySettings(values)
+        commitTagButtons()
+    }
     // K2: the preview ends with the dialog: after OK or Apply the saved
     // appearance shows, after Cancel the one before.
     onClosed: Theme.endPreview()
@@ -348,12 +396,134 @@ Dialog {
                     SettingCheck { setting: "translation.hideOriginalOnVideo"; text: qsTr("Hide original on video in translator mode") }
                     SettingCheck { setting: "grid.duplicationDontChangeSelection"; text: qsTr("Do not change selections when duplicating dialogue lines") }
                     SettingCheck { setting: "grid.dontCenterActiveLine"; text: qsTr("Do not vertically center the active line in the subtitle grid") }
+                    // GR3: the Grid's Hide columns > Hide empty columns, one setting.
+                    SettingCheck { setting: "grid.autoHideColumns"; text: qsTr("Hide empty columns in the subtitle grid") }
                     SettingCheck { setting: "editor.allowNumpadHotkeys"; text: qsTr("Use numpad shortcuts in text fields") }
                     SettingCheck { setting: "video.visualWarningsOff"; text: qsTr("Turn off visual tools warning") }
                     SettingCheck { setting: "video.dontAskForBadResolution"; text: qsTr("Do not warn about resolution mismatch") }
                     SettingCheck { setting: "automation.oldScriptsCompatibility"; text: qsTr("Compatibility with older HikariSub scripts") }
                     // Y4-playres-ask: the script resolution question's "Always" choice.
                     SettingCheck { setting: "automation.scriptResolutionFromVideo"; text: qsTr("Set a missing script resolution from the video without asking") }
+                    // LE2: legacy's Time / Frames radios under the Line editor
+                    // (EDITBOX_TIMES_TO_FRAMES_SWITCH); the Video panel's "⋯" menu has it too.
+                    SettingCheck { setting: "editor.timesToFramesSwitch"; text: qsTr("Show video frames instead of times in the line editor and the subtitle grid") }
+                    // LE3-tags-shown: the Line editor shows ASS override tags unless this is on
+                    // (Subtitles > "Hide tags in the line editor" switches it too).
+                    SettingCheck { setting: "editor.hideTags"; text: qsTr("Hide tags in the line editor") }
+                    // LE5: the Line editor's custom tag buttons, in strip order.
+                    GroupBox {
+                        objectName: "settingsTagButtons"
+                        title: qsTr("Tag buttons")
+                        Layout.fillWidth: true
+                        visible: dialog.tagButtons !== null
+                        ColumnLayout {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            spacing: 4
+                            ListView {
+                                id: tagButtonRows
+                                objectName: "settingsTagButtonList"
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: Math.min(Math.max(count, 2), 6) * 28
+                                clip: true
+                                model: dialog.tagButtonList
+                                currentIndex: -1
+                                keyNavigationEnabled: true
+                                activeFocusOnTab: true
+                                Accessible.name: qsTr("Tag buttons")
+                                ScrollBar.vertical: ScrollBar {}
+                                delegate: ItemDelegate {
+                                    id: row
+                                    required property var modelData
+                                    required property int index
+                                    objectName: "settingsTagButton" + index
+                                    width: ListView.view.width
+                                    height: 28
+                                    highlighted: ListView.isCurrentItem
+                                    Accessible.name: modelData.name.length > 0 ? modelData.name : modelData.tag
+                                    onClicked: tagButtonRows.currentIndex = index
+                                    onDoubleClicked: tagButtonEditor.openFor(editTagButton, index, modelData)
+                                    // On the selection's colour, one colour reads.
+                                    contentItem: RowLayout {
+                                        spacing: 8
+                                        Icon {
+                                            iconRole: row.modelData.icon
+                                            opacity: row.modelData.icon.length > 0 ? 1 : 0
+                                            color: row.highlighted ? row.palette.highlightedText : IconTheme.normal
+                                            accentColor: row.highlighted ? row.palette.highlightedText : IconTheme.accent
+                                        }
+                                        Label {
+                                            text: row.modelData.name
+                                            color: row.highlighted ? row.palette.highlightedText : row.palette.windowText
+                                            Layout.preferredWidth: 120
+                                            elide: Text.ElideRight
+                                        }
+                                        Label {
+                                            text: row.modelData.tag
+                                            color: row.highlighted ? row.palette.highlightedText : Theme.muted
+                                            Layout.fillWidth: true
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+                                }
+                                Label {
+                                    parent: tagButtonRows // over the view, not in its content
+                                    anchors.centerIn: parent
+                                    visible: tagButtonRows.count === 0
+                                    text: qsTr("No tag buttons")
+                                    color: Theme.muted
+                                }
+                            }
+                            RowLayout {
+                                spacing: 2
+                                readonly property int current: tagButtonRows.currentIndex
+                                readonly property bool chosen: current >= 0 && current < tagButtonRows.count
+                                IconToolButton {
+                                    id: addTagButton
+                                    objectName: "settingsAddTagButton"
+                                    iconRole: "add"
+                                    text: qsTr("Add a tag button")
+                                    enabled: tagButtonRows.count < (dialog.tagButtons ? dialog.tagButtons.maximum : 0)
+                                    onClicked: tagButtonEditor.openFor(addTagButton, -1, null)
+                                }
+                                IconToolButton {
+                                    id: editTagButton
+                                    objectName: "settingsEditTagButton"
+                                    iconRole: "edit"
+                                    text: qsTr("Edit the tag button")
+                                    enabled: parent.chosen
+                                    onClicked: tagButtonEditor.openFor(editTagButton, parent.current, dialog.tagButtonList[parent.current])
+                                }
+                                IconToolButton {
+                                    objectName: "settingsMoveTagButtonUp"
+                                    iconRole: "move-up"
+                                    text: qsTr("Move up")
+                                    enabled: parent.chosen && parent.current > 0
+                                    onClicked: dialog.moveTagButton(parent.current, -1)
+                                }
+                                IconToolButton {
+                                    objectName: "settingsMoveTagButtonDown"
+                                    iconRole: "move-down"
+                                    text: qsTr("Move down")
+                                    enabled: parent.chosen && parent.current < tagButtonRows.count - 1
+                                    onClicked: dialog.moveTagButton(parent.current, 1)
+                                }
+                                IconToolButton {
+                                    objectName: "settingsRemoveTagButton"
+                                    iconRole: "remove"
+                                    text: qsTr("Remove the tag button")
+                                    enabled: parent.chosen
+                                    onClicked: dialog.removeTagButton(parent.current)
+                                }
+                            }
+                            TagButtonEditor {
+                                id: tagButtonEditor
+                                objectName: "settingsTagButtonEditor"
+                                tagButtons: dialog.tagButtons
+                                onSaved: (index, b) => dialog.stageTagButton(index, b)
+                            }
+                        }
+                    }
                 }
             }
 

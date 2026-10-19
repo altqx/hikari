@@ -45,6 +45,69 @@ TEST(RecentFiles, PruningDropsWhatIsMissing)
     EXPECT_FALSE(recent.prune([](const std::string &) { return false; }));
 }
 
+// SH2: the Home page shows when each file was last opened and removes
+// entries one by one; legacy kept paths only.
+TEST(RecentFiles, RemembersWhenEachWasLastOpened)
+{
+    RecentFiles recent;
+    recent.add("a.ass", 1000);
+    recent.add("b.ass", 2000);
+    recent.add("a.ass", 3000);
+    EXPECT_EQ(recent.entries(), (std::vector<std::string>{"a.ass", "b.ass"}));
+    EXPECT_EQ(recent.opened("a.ass"), std::optional<std::int64_t>(3000));
+    EXPECT_EQ(recent.opened("b.ass"), std::optional<std::int64_t>(2000));
+    // Added again without a time (another list's way): the old one goes.
+    recent.add("b.ass");
+    EXPECT_EQ(recent.opened("b.ass"), std::nullopt);
+    EXPECT_EQ(recent.opened("c.ass"), std::nullopt);
+}
+
+TEST(RecentFiles, OpenedTimesAreStoredBesideTheList)
+{
+    RecentFiles recent;
+    recent.add("/subs/with space.ass", 1700000000000);
+    recent.add("legacy.ass");
+    recent.add("C:\\subs\\b.ass", 1700000001000);
+    // One record per entry with a time, in the list's order; a path keeps
+    // its spaces (only the first one separates).
+    const auto records = recent.openedRecords();
+    EXPECT_EQ(records, (std::vector<std::string>{"1700000001000 C:\\subs\\b.ass", "1700000000000 /subs/with space.ass"}));
+
+    RecentFiles loaded;
+    loaded.set({"C:\\subs\\b.ass", "legacy.ass", "/subs/with space.ass"});
+    loaded.setOpenedRecords({"1700000000000 /subs/with space.ass", "garbage", "12x /bad.ass", "5 /not/listed.ass",
+                             "1700000001000 C:\\subs\\b.ass"});
+    EXPECT_EQ(loaded.opened("/subs/with space.ass"), std::optional<std::int64_t>(1700000000000));
+    EXPECT_EQ(loaded.opened("C:\\subs\\b.ass"), std::optional<std::int64_t>(1700000001000));
+    EXPECT_EQ(loaded.opened("legacy.ass"), std::nullopt); // carried over from legacy
+    EXPECT_EQ(loaded.opened("/not/listed.ass"), std::nullopt);
+    EXPECT_EQ(loaded.openedRecords(), records);
+}
+
+TEST(RecentFiles, RemovingAnEntryForgetsItsTime)
+{
+    RecentFiles recent;
+    recent.add("a.ass", 1);
+    recent.add("b.ass", 2);
+    EXPECT_TRUE(recent.remove("a.ass"));
+    EXPECT_FALSE(recent.remove("a.ass"));
+    EXPECT_EQ(recent.entries(), (std::vector<std::string>{"b.ass"}));
+    EXPECT_EQ(recent.opened("a.ass"), std::nullopt);
+    EXPECT_EQ(recent.openedRecords(), (std::vector<std::string>{"2 b.ass"}));
+}
+
+TEST(RecentFiles, EntriesPastTheCapacityOrPrunedForgetTheirTimes)
+{
+    RecentFiles recent;
+    for (int i = 0; i < 21; ++i)
+        recent.add(std::to_string(i) + ".ass", i);
+    EXPECT_EQ(recent.opened("0.ass"), std::nullopt);
+    EXPECT_EQ(recent.openedRecords().size(), RecentFiles::kCapacity);
+    recent.prune([](const std::string &p) { return p == "20.ass"; });
+    EXPECT_EQ(recent.opened("20.ass"), std::nullopt);
+    EXPECT_EQ(recent.openedRecords().size(), RecentFiles::kCapacity - 1);
+}
+
 TEST(RecentFiles, NetworkPathsAreNotChecked)
 {
     const auto exists = [](const std::string &) { return false; };

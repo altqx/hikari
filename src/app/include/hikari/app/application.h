@@ -274,12 +274,22 @@ public:
     Q_INVOKABLE bool revealRecent(const QString &path);
     // P9: legacy SelectInFolder.
     Q_INVOKABLE void showInFolder(const QString &path);
+    // SH2: the Home page's "Copy path".
+    Q_INVOKABLE void copyText(const QString &text);
     // P9: the "Associated files" question's answer for the editing target
     // (0 load associated, 1 load from directory, 2 no); with Apply to All
     // the same answer goes to the other questions of the same opening.
     void answerAssociation(int answer, bool applyToAll);
-    // GLOBAL_RECENT_SUBS: {path, label} rows, missing local files pruned first.
+    // GLOBAL_RECENT_SUBS: {path, label} rows. Missing local files are left
+    // out but kept in the list, where the Home page shows them (SH2).
     Q_INVOKABLE QVariantList recentSubtitles();
+    // SH2: the Home page's recent files, most recent first: {path, name,
+    // folder, opened (a QDateTime, invalid for an entry carried over from
+    // legacy), missing}.
+    Q_INVOKABLE QVariantList homeRecent();
+    // SH2: Home's Remove (one entry) and "Remove missing files".
+    Q_INVOKABLE void removeRecent(const QString &path);
+    Q_INVOKABLE void removeMissingRecent();
     std::vector<std::string> recentEntries() const { return m_recent.entries(); }
     // The legacy check when the window activates (TabPanel::ReloadSubsIfModified):
     // "modified" when the editing target's file is newer than when it was
@@ -784,6 +794,9 @@ public:
     // characters), title, current, tip (subtitles and video paths)}.
     Q_PROPERTY(QVariantList tabs READ tabs NOTIFY tabsChanged)
     Q_PROPERTY(int currentTab READ currentTab NOTIFY tabsChanged)
+    // SH2: no Document is open, neither a tab nor a protected reference
+    // (whose tray needs the panels): the Home page shows.
+    Q_PROPERTY(bool home READ home NOTIFY tabsChanged)
     // LAST_SESSION_CONFIG (session.restore): 0 nothing, 1 ask, 2 load at start.
     Q_PROPERTY(int sessionRestore READ sessionRestore WRITE setSessionRestore NOTIFY sessionRestoreChanged)
     // Session entries a restore could not resolve (L58 "unresolved restores
@@ -792,14 +805,15 @@ public:
     Q_PROPERTY(QVariantList unresolvedRestores READ unresolvedRestores NOTIFY unresolvedRestoresChanged)
     // D2: GLOBAL_EDITOR "Enable / Disable editor" (legacy TabPanel::editor
     // and EDITOR_ON, workspace.editorOn). Off is legacy's video player
-    // layout. One switch for the shared Workspace (docs/qt/ux/workspaces.md:
-    // a tab change keeps the panel arrangement), saved at each change as
-    // HideEditor(save) did.
+    // layout. One switch for every tab (D2-one-editor-switch; WS1: the
+    // player layout holds the current tab's arrangement), saved at each
+    // change as HideEditor(save) did.
     Q_PROPERTY(bool editorOn READ editorOn NOTIFY editorOnChanged)
     bool editorOn() const;
     // HikariSubFrame::HideEditor: the switch flips.
     Q_INVOKABLE void toggleEditor();
     QVariantList tabs() const;
+    bool home() const { return m_workspace.tabs().empty() && !m_workspace.reference(); }
     int currentTab() const;
     int sessionRestore() const;
     void setSessionRestore(int value);
@@ -831,6 +845,10 @@ public:
     // The shell has carried out what startupSession() asked (loaded the
     // session, or the prompts were answered).
     Q_INVOKABLE void startupSessionDecided() { m_startupSessionPending = false; }
+    // SH2: what Load last session would open, for the Home page: {names (each
+    // Document's file name, or its video's for a tab without subtitles)}; no
+    // names when the last session has no Document with a file.
+    Q_INVOKABLE QVariantMap lastSessionSummary() const;
     Q_INVOKABLE bool lastSessionCrashed() const;
     void setStartedWithPaths(bool paths) { m_startedWithPaths = paths; }
     // The unresolved entry `row`: try again, choose another file, or forget it.
@@ -864,7 +882,7 @@ public:
     Q_INVOKABLE qulonglong tabDocument(int index) const;
     // MENU_CHOOSE - 1, "Close all tabs" (after legacy's "All tabs will be
     // closed, continue?"): the close review's rows for every tab; with none,
-    // finishClose() closes them all and leaves one new Untitled tab.
+    // finishClose() closes them all and the Home page shows (SH2).
     Q_INVOKABLE QVariantList reviewCloseAll();
     // P9: GLOBAL_OPEN_AUTO_SAVE's legacy autosaves (the Subs folder, read
     // only): [{name, versions: [{written, file}]}], and the Files list's
@@ -947,7 +965,10 @@ signals:
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
-    void rememberRecent(const std::string &path);
+    // SH2: an open stamps the last-opened time; a save keeps the file's time
+    // (a file first saved there, as by Save As, is stamped then).
+    void rememberRecent(const std::string &path, bool opened = true);
+    void storeRecent();
     // Subtitles opened while the editor is off turn it on (legacy OpenFile
     // and OpenFiles: `if (!tab->editor) HideEditor()`).
     void editorOnForSubtitles();
@@ -1341,6 +1362,16 @@ private:
     bool keepTabAudio(const QString &videoPath);
     void trackTabMedia();
     int targetVideoPosition() const;
+    // WS1: the tab whose panel arrangement the shell shows, and how a tab
+    // starts its own (the Translation preset for a TLMode file).
+    std::optional<application::DocumentId> m_layoutDocument;
+    void showTabArrangement();
+    void registerTabArrangements(); // each tab opened takes its start now
+    // A tab's Document replaced (opened into it, a retried restore): the
+    // tab keeps its arrangement under the new Document's id.
+    void replaceTabArrangement(application::DocumentId old, application::DocumentId replacement,
+                               ui::WorkspaceLayoutController::TabStart start);
+    ui::WorkspaceLayoutController::TabStart tabStart(application::DocumentId document) const;
 
     // O5 (application_language.cpp): the language from PROGRAM_LANGUAGE at
     // start and whenever the setting changes; the strings the application

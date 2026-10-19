@@ -1122,6 +1122,10 @@ please save with different name or change file attribute.</source>
         <translation>글자 위치</translation>
     </message>
     <message>
+        <source>mixed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Number of characters in each line.
 No more than 43 characters per line (maximum 2 lines).</source>
         <translation>각 줄의 글자 수.
@@ -1135,7 +1139,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Time</source>
-        <translation>시간</translation>
+        <translation type="vanished">시간</translation>
     </message>
     <message>
         <source>Show times</source>
@@ -1143,7 +1147,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Frames</source>
-        <translation>프레임</translation>
+        <translation type="vanished">프레임</translation>
     </message>
     <message>
         <source>Show frames</source>
@@ -1259,7 +1263,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation>태그 숨김</translation>
+        <translation type="vanished">태그 숨김</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
@@ -1338,12 +1342,32 @@ Should not exceed 15 characters per second</source>
         <translation>그림자 색상</translation>
     </message>
     <message>
+        <source>Add a tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Manage tag buttons</source>
-        <translation>상용구 등록</translation>
+        <translation type="vanished">상용구 등록</translation>
     </message>
     <message>
         <source>Change number of buttons</source>
-        <translation>상용구 등록버튼 개수 지정</translation>
+        <translation type="vanished">상용구 등록버튼 개수 지정</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -1379,7 +1403,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Enter ASS tag</source>
-        <translation>태그 / 글자</translation>
+        <translation type="vanished">태그 / 글자</translation>
     </message>
     <message>
         <source>Tag inserted in place of cursor</source>
@@ -1402,16 +1426,44 @@ Should not exceed 15 characters per second</source>
         <translation>버튼 이름</translation>
     </message>
     <message>
+        <source>Enter a name or choose an icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">이름</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Button tag</source>
         <translation>내용</translation>
     </message>
     <message>
-        <source>Save tag</source>
-        <translation>태그 저장</translation>
+        <source>Insert</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Number of buttons</source>
+        <source>Icon</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">없음</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">미리보기</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">저장</translation>
+    </message>
+    <message>
+        <source>Save tag</source>
+        <translation type="vanished">태그 저장</translation>
     </message>
     <message>
         <source>Select whole characters.</source>
@@ -1543,6 +1595,22 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>%1, active line %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the text the button puts in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the tag, for example \blur2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out the braces: the button puts the tag in an override block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A tag starts with a backslash, for example \blur2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2447,6 +2515,10 @@ Failed to copy %2 fonts.</source>
         <translation>구분 열 숨김</translation>
     </message>
     <message>
+        <source>Hide empty columns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide layer</source>
         <translation>레이어</translation>
     </message>
@@ -2642,6 +2714,10 @@ Failed to copy %2 fonts.</source>
         <source>bookmarked</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>uncommitted</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
         <source>%n selected, %1 hidden</source>
         <translation type="unfinished">
@@ -2700,6 +2776,119 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Line wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Home</name>
+    <message>
+        <source>Today %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yesterday %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">추가</translation>
+    </message>
+    <message>
+        <source>New subtitles in a new tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last session</source>
+        <translation type="unfinished">마지막 작업</translation>
+    </message>
+    <message>
+        <source>1 document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n documents</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">필터</translation>
+    </message>
+    <message>
+        <source>Filter recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">이름</translation>
+    </message>
+    <message>
+        <source>Last opened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>last opened %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">열기</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove missing files</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3509,6 +3698,10 @@ Failed to copy %2 fonts.</source>
         <translation>다른 자막 형식으로 변환</translation>
     </message>
     <message>
+        <source>Hide tags in the line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opens the HikariSub website in the default browser</source>
         <translation>기본 브라우저에서 HikariSub 웹사이트를 엽니다</translation>
     </message>
@@ -4243,6 +4436,10 @@ after switching from full screen</source>
         <translation>자막보기의 중앙에 행을 배치하지 마십시오</translation>
     </message>
     <message>
+        <source>Hide empty columns in the subtitle grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Use numpad shortcuts in text fields</source>
         <translation>키패드 단축키 지정 사용</translation>
     </message>
@@ -4260,6 +4457,42 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Set a missing script resolution from the video without asking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show video frames instead of times in the line editor and the subtitle grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide tags in the line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No tag buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit the tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the tag button</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6011,6 +6244,18 @@ Spell checking will be disabled</source>
         <translation>취소</translation>
     </message>
     <message>
+        <source>Missing style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The document has no style named &quot;%1&quot;. Create it from Default?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Prompt</source>
         <translation>질문</translation>
     </message>
@@ -6910,6 +7155,40 @@ Styles deleted:
         <translation>변경 선택</translation>
     </message>
     <message>
+        <source>Amount</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time shifts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift times by time / frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delays subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speeds up subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shifts %1, %2, and %3 tag times
+so their positions on video do not change
+(slows down time shifting)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished">검색 위치</translation>
+    </message>
+    <message>
+        <source>The choice of lines to move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>All lines</source>
         <translation>모든 줄</translation>
     </message>
@@ -6934,12 +7213,24 @@ Styles deleted:
         <translation>선택한 스타일에 따라</translation>
     </message>
     <message>
+        <source>Select a style from the list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Styles, separated by commas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move according to the following styles (separated by a coma)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>A method of time shift</source>
         <translation>조정 시간</translation>
+    </message>
+    <message>
+        <source>The choice of times to move</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Both times</source>
@@ -6948,6 +7239,10 @@ Styles deleted:
     <message>
         <source>Correction end times</source>
         <translation>종료 시간 수정</translation>
+    </message>
+    <message>
+        <source>Correction end times, when they are improper or overlap each other</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Leave unchanged</source>
@@ -6960,6 +7255,66 @@ Styles deleted:
     <message>
         <source>New times</source>
         <translation>새로운 시간</translation>
+    </message>
+    <message>
+        <source>Move the start time to the time video / audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end time to the video/audio time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in/lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inserts introduction to the start time (good when using fad)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Introduction time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inserts introduction to the end time (good when using fad)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start time extension threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time extension threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+before the start time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+after the start time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+before the end time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+after the end time in milliseconds</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Run post processor</source>
@@ -8051,6 +8406,18 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The panel layout of this tab was not restored because %1. The tab shows the Editing layout.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The panel layout of %1 was not restored because %2. The tab shows the Editing layout.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The layout is kept at %1.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -238,6 +238,13 @@ if(Python3_Interpreter_FOUND)
 endif()
 hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
+# WS1 (ADR 0020): each Document tab's panel arrangement, its Session round
+# trip and recovery.
+hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
+target_compile_definitions(hikari_ui_tab_layouts_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_tab_layouts_tests hikari_media_fixtures hikari_media_helper)
 # D2: the View menu's arrangements and the editor switch through the composition.
 # Two parts, each its own process under the default 60 s (decision 38g,
 # 2026-10-14). Every function starts the application and its QML (13 starts,
@@ -251,6 +258,8 @@ target_include_directories(hikari_ui_view_arrangements_tests PRIVATE "${PROJECT_
 target_compile_definitions(hikari_ui_view_arrangements_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_view_arrangements_tests hikari_media_fixtures hikari_media_helper)
+# Wave 6's Line editor cards (LE2-LE6) through the composition, with restarts.
+hikari_add_qttest(hikari_ui_line_editor_options_tests SOURCES line_editor_options_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cpp LIBRARIES hikari_composition)
 # ADR 0019: the download, its checks and the hand-off per package kind.
 hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_tests.cpp LIBRARIES hikari_composition)

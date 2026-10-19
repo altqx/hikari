@@ -13,6 +13,7 @@
 #include "hikari/application/recent_files.h"
 #include "hikari/backends/desktop_handoff.h"
 
+#include <QClipboard>
 #include <QCoreApplication>
 #include <QCollator>
 #include <QDir>
@@ -171,8 +172,7 @@ QVariantList Application::reviewCloseAll()
 void Application::closeAllTabs()
 {
     // OnTabSel's MENU_CHOOSE - 1 (Notebook.cpp:978-1018): every tab goes,
-    // each removing the comparison, and one new (Untitled) tab is made when
-    // none is left. Legacy wrote no session here.
+    // each removing the comparison. Legacy wrote no session here.
     m_comparison.remove();
     for (const auto id : m_workspace.tabs()) {
         m_comparison.forget(id);
@@ -181,11 +181,8 @@ void Application::closeAllTabs()
         m_workspace.remove(id);
         forgetTab(id);
     }
-    if (m_workspace.tabs().empty()) {
-        const auto id = m_files->createNew();
-        m_workspace.add(id, QCoreApplication::translate("HikariSub.Documents", "Untitled").toStdString());
-        m_workspace.setEditingTarget(id);
-    }
+    // SH2-last-tab-home: the Home page shows, where legacy left one new
+    // Untitled tab.
     refreshViews();
 }
 
@@ -195,6 +192,11 @@ void Application::showInFolder(const QString &path)
 {
     if (!path.isEmpty())
         m_revealInFolder(QDir::toNativeSeparators(path));
+}
+
+void Application::copyText(const QString &text)
+{
+    QGuiApplication::clipboard()->setText(text);
 }
 
 bool Application::revealRecent(const QString &path)
@@ -606,6 +608,7 @@ void Application::applyFiles(PendingFiles files, bool skipFirst)
             discardRecovery(*original);
             m_files->close(*original);
             m_workspace.replace(*original, *id);
+            replaceTabArrangement(*original, *id, tabStart(*id)); // WS1: as replaceTarget
             m_comparison.replaced(*original, *id);
             forgetTab(*original);
             m_tabMedia[id->value] = media;

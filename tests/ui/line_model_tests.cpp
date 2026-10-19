@@ -11,7 +11,9 @@
 #include <QTest>
 
 #include <cstring>
+#include <string>
 #include <string_view>
+#include <utility>
 
 using namespace hikari;
 using namespace hikari::ui;
@@ -135,6 +137,87 @@ private slots:
         QVERIFY(shown(LineTableModel::StyleColumn));
         QVERIFY(shown(LineTableModel::NumberColumn)); // # and Text are always shown
         QVERIFY(shown(LineTableModel::TextColumn));
+    }
+
+    // GR3 (Aegisub's convention): with auto-hide on, Layer, Actor, Effect
+    // and each margin hide when the whole Document leaves them empty
+    // (comments included), and come back as soon as one Line fills them.
+    // Manual hides apply on top; the other columns never hide themselves.
+    void emptyColumnsHideThemselves()
+    {
+        using M = LineTableModel;
+        LineTableModel model;
+        auto shown = [&](int c) { return model.headerData(c, Qt::Horizontal, M::ColumnShownRole).toBool(); };
+        const int all = M::hideBit(M::LayerColumn) | M::hideBit(M::ActorColumn) | M::hideBit(M::MarginLeftColumn) |
+                        M::hideBit(M::MarginRightColumn) | M::hideBit(M::MarginVerticalColumn) |
+                        M::hideBit(M::EffectColumn);
+        constexpr std::string_view empty = "[Events]\n"
+                                           "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                                           "Comment: 0,0:00:02.00,0:00:03.00,Sign,  ,0000,0,0,,two\n";
+        model.setDocument(load(empty));
+        QVERIFY(!model.autoHideColumns()); // off until the application sets it
+        QCOMPARE(model.emptyColumns(), 0);
+        for (int c = 0; c < M::TranslationColumn; ++c)
+            QVERIFY(shown(c));
+        QSignalSpy header(&model, &QAbstractItemModel::headerDataChanged);
+        model.setAutoHideColumns(true);
+        QCOMPARE(header.size(), 1);
+        QCOMPARE(model.emptyColumns(), all);
+        for (const int c : {M::LayerColumn, M::ActorColumn, M::MarginLeftColumn, M::MarginRightColumn,
+                            M::MarginVerticalColumn, M::EffectColumn})
+            QVERIFY2(!shown(c), qPrintable(model.headerData(c, Qt::Horizontal).toString()));
+        for (const int c : {M::NumberColumn, M::StartColumn, M::EndColumn, M::StyleColumn, M::CpsColumn,
+                            M::WrapsColumn, M::TextColumn})
+            QVERIFY2(shown(c), qPrintable(model.headerData(c, Qt::Horizontal).toString()));
+
+        // Each column comes back on its own, a Comment's value included.
+        const std::pair<std::string_view, M::Column> filled[] = {
+            {"Comment: 2,0:00:02.00,0:00:03.00,Sign,,0,0,0,,two\n", M::LayerColumn},
+            {"Comment: 0,0:00:02.00,0:00:03.00,Sign,Ann,0,0,0,,two\n", M::ActorColumn},
+            {"Comment: 0,0:00:02.00,0:00:03.00,Sign,,10,0,0,,two\n", M::MarginLeftColumn},
+            {"Comment: 0,0:00:02.00,0:00:03.00,Sign,,0,10,0,,two\n", M::MarginRightColumn},
+            {"Comment: 0,0:00:02.00,0:00:03.00,Sign,,0,0,10,,two\n", M::MarginVerticalColumn},
+            {"Comment: 0,0:00:02.00,0:00:03.00,Sign,,0,0,0,fx,two\n", M::EffectColumn},
+        };
+        for (const auto &[line, column] : filled) {
+            model.setDocument(load(std::string("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n") +
+                                   std::string(line)));
+            QCOMPARE(model.emptyColumns(), all & ~M::hideBit(column));
+            QVERIFY(shown(column));
+        }
+
+        // Manual hides stay on top: a filled column hidden by hand stays
+        // hidden, and turning auto-hide off brings back only the empty ones.
+        model.setDocument(load(std::string("[Events]\n") + std::string(filled[0].first)));
+        model.setHiddenColumns(M::hideBit(M::LayerColumn) | M::hideBit(M::StyleColumn));
+        QVERIFY(!shown(M::LayerColumn));
+        QVERIFY(!shown(M::StyleColumn));
+        QVERIFY(!shown(M::ActorColumn));
+        header.clear();
+        model.setAutoHideColumns(false);
+        QCOMPARE(header.size(), 1);
+        QVERIFY(!shown(M::LayerColumn));
+        QVERIFY(!shown(M::StyleColumn));
+        QVERIFY(shown(M::ActorColumn));
+        model.setHiddenColumns(0);
+
+        // GR2: a draft that fills an empty column shows it until it is
+        // reverted; the committed Lines decide again after it.
+        model.setAutoHideColumns(true);
+        model.setDocument(load(empty));
+        core::LineRecord draft = *model.recordAt(0);
+        draft.actor = u8"Ann";
+        header.clear();
+        model.setDraft(draft);
+        QCOMPARE(header.size(), 1);
+        QVERIFY(shown(M::ActorColumn));
+        QCOMPARE(model.index(0, M::ActorColumn).data().toString(), QStringLiteral("Ann"));
+        draft.text = u8"typing on";
+        header.clear();
+        model.setDraft(draft);
+        QCOMPARE(header.size(), 0); // nothing new to show
+        model.setDraft(std::nullopt);
+        QVERIFY(!shown(M::ActorColumn));
     }
 
     // E5: the translation column (legacy SubsGridWindow.cpp:329-330 and
@@ -373,6 +456,143 @@ private slots:
         QCOMPARE(colours[2].value<QColor>(), QColor(0x20, 0x22, 0x25));
         QCOMPARE(colours[3].value<QColor>(), QColor(0x92, 0x5B, 0x1F));
         QCOMPARE(LineTableModel::themeLabelColours(false)[1], QColor(0xB0, 0xAD, 0xD8));
+    }
+
+    // GR2: the Line editor's draft shows in its row, live, until it is
+    // committed or reverted. Only the shown cells follow it: the record, the
+    // Grid filter and the changed-Line state stay the committed Line's.
+    void draftShowsInItsRowUncommitted()
+    {
+        LineTableModel model;
+        QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+        LineFilterModel filter;
+        filter.setLineModel(&model);
+        // Shows the Lines whose committed text is not "zulu".
+        filter.setPredicate([](const core::LineRecord &l) { return l.text != u8"zulu"; });
+        model.setDocument(load(kLines));
+        const auto text = [&](int row) { return model.index(row, LineTableModel::TextColumn).data().toString(); };
+        const auto draftAt = [&](int row) { return model.index(row, 0).data(LineTableModel::DraftRole).toBool(); };
+        core::LineRecord draft = *model.recordAt(2);
+        draft.text = u8"zulu, longer and faster";
+        draft.end.value = core::DocumentTime(5'500'000);
+        QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
+        model.setDraft(draft);
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(changed.at(0).at(0).toModelIndex().row(), 2);
+        QCOMPARE(text(2), QStringLiteral("zulu, longer and faster"));
+        QCOMPARE(model.index(2, LineTableModel::EndColumn).data().toString(), QStringLiteral("0:00:05.50"));
+        QVERIFY(model.index(2, 0).data(LineTableModel::CpsTooHighRole).toBool()); // measured from the draft
+        QVERIFY(draftAt(2));
+        QVERIFY(!draftAt(0) && !draftAt(1));
+        QCOMPARE(model.recordAt(2)->text, std::u8string(u8"bravo")); // committed
+        QCOMPARE(filter.rowCount(), 3);                              // the filter reads the committed text
+        QCOMPARE(model.index(2, 0).data(LineTableModel::LineStateRole).toInt(), 0);
+        QCOMPARE(text(0), QStringLiteral("charlie"));
+
+        // Another Line's draft moves the row; none restores it.
+        draft = *model.recordAt(0);
+        draft.text = u8"charlie!";
+        changed.clear();
+        model.setDraft(draft);
+        QCOMPARE(changed.count(), 2);
+        QCOMPARE(text(2), QStringLiteral("bravo"));
+        QVERIFY(!draftAt(2));
+        QCOMPARE(text(0), QStringLiteral("charlie!"));
+        model.setDraft(std::nullopt);
+        QCOMPARE(text(0), QStringLiteral("charlie"));
+        QVERIFY(!draftAt(0));
+
+        // A new snapshot drops it; a draft of a Line not in the Document shows nothing.
+        model.setDraft(draft);
+        model.setDocument(load(kLines));
+        QCOMPARE(text(0), QStringLiteral("charlie"));
+        QVERIFY(!draftAt(0));
+        draft.id = core::LineId{99};
+        model.setDraft(draft);
+        for (int row = 0; row < model.rowCount(); ++row)
+            QVERIFY(!draftAt(row));
+    }
+
+    // GR2 with R1: the comparison and its marks are the committed Line's. A
+    // draft that leaves the compared text, times and style keeps them; one
+    // that changes any of them shows none until it is committed.
+    void draftDropsAStaleComparison()
+    {
+        LineTableModel model;
+        std::vector<application::LineComparison> table(2);
+        table[0].differences = false; // a match
+        table[1].marks = {1, 0, 1};   // a mismatch
+        model.setDocument(load(kLines), &table);
+        const auto comparison = [&](int row) { return model.index(row, 0).data(LineTableModel::ComparisonRole).toInt(); };
+        const auto marks = [&](int row) {
+            return model.index(row, 0).data(LineTableModel::ComparisonMarksRole).toList();
+        };
+
+        core::LineRecord draft = *model.recordAt(1);
+        draft.actor = u8"Someone"; // not compared
+        model.setDraft(draft);
+        QCOMPARE(comparison(1), 2);
+        QCOMPARE(marks(1), (QVariantList{0, 1}));
+
+        draft.text += u8"!";
+        model.setDraft(draft);
+        QCOMPARE(comparison(1), 0);
+        QVERIFY(marks(1).isEmpty());
+        QCOMPARE(comparison(0), 1); // the other rows keep theirs
+
+        for (const auto change : {+[](core::LineRecord &l) { l.start.value = core::DocumentTime(1); },
+                                  +[](core::LineRecord &l) { l.end.value = core::DocumentTime(9'000'000); },
+                                  +[](core::LineRecord &l) { l.style = u8"Other"; }}) {
+            draft = *model.recordAt(0);
+            change(draft);
+            model.setDraft(draft);
+            QCOMPARE(comparison(0), 0);
+        }
+        // Reverted, the committed comparison is back.
+        model.setDraft(std::nullopt);
+        QCOMPARE(comparison(0), 1);
+        QCOMPARE(comparison(1), 2);
+        QCOMPARE(marks(1), (QVariantList{0, 1}));
+        draft = *model.recordAt(0);
+        draft.translation = u8"other"; // compared only in translation mode
+        model.setDraft(draft);
+        QCOMPARE(comparison(0), 1);
+
+        // Translation mode compares a translated Line's translation, and an
+        // untranslated one's text (comparedText).
+        model.setDocument(load("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Gate\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Brama\n"
+                               "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,Wall\n"
+                               "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,\n"),
+                          &table);
+        QVERIFY(!model.recordAt(0)->translation.empty());
+        QVERIFY(model.recordAt(1)->translation.empty());
+        draft = *model.recordAt(0);
+        draft.text += u8"!"; // the original of a translated Line
+        model.setDraft(draft);
+        QCOMPARE(comparison(0), 1);
+        draft.translation += u8"!";
+        model.setDraft(draft);
+        QCOMPARE(comparison(0), 0);
+        draft = *model.recordAt(1);
+        draft.text += u8"!"; // an untranslated Line's text
+        model.setDraft(draft);
+        QCOMPARE(comparison(1), 0);
+    }
+
+    // GR2: the drafted row's cached shown text follows hidden tags as the
+    // others do.
+    void draftFollowsHiddenTags()
+    {
+        LineTableModel model;
+        model.setDocument(load(kLines));
+        core::LineRecord draft = *model.recordAt(0);
+        draft.text = u8"{\\b1}charlie";
+        model.setDraft(draft);
+        QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("{\\b1}charlie"));
+        model.setHideTags(true, QStringLiteral("*"));
+        QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("*charlie"));
     }
 };
 

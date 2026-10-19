@@ -4,7 +4,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// P6: legacy Notebook's tab bar below the workspace. One tab per Document
+// P6: legacy Notebook's tab bar, which sat below the workspace; WS4 made it
+// the window's first row under the menu bar (Main.qml). One tab per Document
 // (the protected reference has its own tray). A click shows a tab; the
 // active tab's close mark or a middle click closes a tab through the close
 // review; "+" and a double click on the empty bar add a tab (both write the
@@ -27,16 +28,26 @@ Item {
     signal saveAllRequested()
     signal closeAllRequested()
 
-    implicitHeight: row.implicitHeight
+    // The tabs stand a little in from the window's left edge and below the
+    // menu bar (WS4).
+    readonly property int inset: 4
+    implicitHeight: row.implicitHeight + inset
+    // SH2: empty and inert while the Home page shows (no Document open),
+    // whose New the "+" would repeat. The bar keeps its height, so the
+    // docked panels are not resized when the first Document opens.
+    readonly property bool shown: !bar.app.home
     Accessible.role: Accessible.PageTabList
     Accessible.name: qsTr("Open documents")
+    Accessible.ignored: !shown
 
     TapHandler {
         // A double click where there is no tab (legacy i == -1).
+        enabled: bar.shown
         onDoubleTapped: bar.app.addPage(true)
     }
     TapHandler {
         // A right click where there is no tab: the tab menu for none (-1).
+        enabled: bar.shown
         acceptedButtons: Qt.RightButton
         onTapped: eventPoint => bar.openTabMenu(-1, bar, eventPoint.position.x, eventPoint.position.y)
     }
@@ -123,6 +134,7 @@ Item {
     DragHandler {
         id: tabDrag
         objectName: "tabDragHandler"
+        enabled: bar.shown // SH2
         target: null
         yAxis.enabled: false
         acceptedButtons: Qt.LeftButton
@@ -153,6 +165,10 @@ Item {
     Flickable {
         id: flick
         anchors.fill: parent
+        anchors.topMargin: bar.inset
+        anchors.leftMargin: bar.inset
+        opacity: bar.shown ? 1 : 0 // SH2
+        enabled: bar.shown
         contentWidth: row.implicitWidth
         clip: true
         flickableDirection: Flickable.HorizontalFlick
