@@ -385,7 +385,9 @@ private slots:
         QCOMPARE(discard.size(), 1);
         forwarded->take({{}, QStringLiteral("cancelled")});
         QVERIFY(!forwarded->startAfterQuit()); // not yet: the quit may be cancelled
-        application->cancelClose();
+        QSignalSpy cancelled(application, &app::Application::quitCancelled);
+        application->cancelClose(); // the window stays and comes forward with the token
+        QCOMPARE(cancelled.size(), 1);
         discard = quit();
         application->resolveClose(discard);
         QVERIFY(application->quitApproved());

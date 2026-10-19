@@ -86,6 +86,9 @@ signals:
     // O1: a changed program font destroyed the Select dialog (DestroyDialogs).
     void selectLinesDestroyed();
     void quitApprovedChanged();
+    // WS5: a quit review ended without the quit (cancelled, a save failed,
+    // or another review took its place).
+    void quitCancelled();
     void saveWithVideoNameChanged();
     void askForBadResolutionChanged();
     // Y4: the open video's size differs from the editing target's PlayRes

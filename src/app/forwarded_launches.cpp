@@ -49,6 +49,14 @@ ForwardedLaunches::ForwardedLaunches(Application &application, QObject *parent)
 {
     m_timer.setSingleShot(true);
     connect(&m_timer, &QTimer::timeout, this, &ForwardedLaunches::open);
+    // A quit that does not go ahead: the window stays, and comes forward
+    // with the token kept for the start after the quit.
+    connect(&m_application, &Application::quitCancelled, this, [this] {
+        if (m_quitToken.isEmpty() || m_quitTokenReview != m_application.quitReviews())
+            return;
+        m_quitTokenReview = 0;
+        activate(m_window, std::exchange(m_quitToken, QString()));
+    });
 }
 
 void ForwardedLaunches::setWindow(QWindow *window)

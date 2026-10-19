@@ -1771,7 +1771,10 @@ void Application::endFindOpen(bool opened)
 QVariantList Application::reviewClose(const QString &then)
 {
     endFindOpen(false); // another review replaces the file result's
+    const bool quitReplaced = m_closeThen == QLatin1String("quit");
     m_closeThen = then;
+    if (quitReplaced)
+        emit quitCancelled(); // WS5
     if (then == QLatin1String("quit"))
         ++m_quitReviews; // WS5
     m_closing.clear();
@@ -1919,6 +1922,8 @@ void Application::finishClose()
     m_closing.clear();
     m_closeThen.clear();
     if (!kept.isEmpty()) {
+        if (then == QLatin1String("quit"))
+            emit quitCancelled(); // WS5
         refreshViews();
         emit closeFinished(false, QCoreApplication::translate("HikariSub.Documents",
                                                               "Not closed, because saving failed or there is newer work: %1")
@@ -1989,7 +1994,10 @@ void Application::cancelClose()
 {
     // Saves already completed stay completed (accepted quit review).
     m_closing.clear();
+    const bool quit = m_closeThen == QLatin1String("quit");
     m_closeThen.clear();
+    if (quit)
+        emit quitCancelled(); // WS5
     m_pendingOpen.reset();
     m_pendingOpenPath.clear();
     m_pendingSession.reset(); // P6
