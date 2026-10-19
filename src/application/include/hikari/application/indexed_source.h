@@ -153,6 +153,16 @@ struct PcmChunk {
     bool end = false;
 };
 
+// AV4: indexing progress in thousandths of its total (-1 without one), the
+// finest step a progress display shows. FFMS2 reports every packet; a report
+// that leaves this unchanged is not worth a redraw.
+constexpr std::int64_t progressPermille(std::int64_t done, std::int64_t total)
+{
+    if (total <= 0)
+        return -1;
+    return done <= 0 ? 0 : done >= total ? 1000 : done * 1000 / total;
+}
+
 class IndexedSourcePort {
 public:
     using Progress = std::function<void(std::int64_t done, std::int64_t total)>;

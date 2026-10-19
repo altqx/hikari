@@ -279,8 +279,12 @@ void AudioBox::openTrack(std::uint64_t request, int track)
         : settings.indexDir.empty()              ? std::string()
                                                  : toUtf8(settings.indexDir / fromUtf8(legacyIndexName(m_path, track)));
     m_own.openDisplayAudio(m_path, track, indexFile, guard(request, [this](std::int64_t indexed, std::int64_t total) {
+                               // AV4: a redraw only when the shown progress moves
+                               const bool moved = progressPermille(m_indexing.first, m_indexing.second) !=
+                                                  progressPermille(indexed, total);
                                m_indexing = {indexed, total};
-                               notify();
+                               if (moved)
+                                   notify();
                            }),
                            std::move(done));
 }
