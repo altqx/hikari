@@ -204,7 +204,10 @@ Item {
                     text: qsTr("Tag times")
                     checked: panel.settings.tagTimes
                     ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Shifts \\move, \\t, and \\fad tag times\nso their positions on video do not change\n(slows down time shifting)")
+                    // The tag names as arguments: lupdate reads "\\" in a QML
+                    // string as one backslash and keys the text wrongly.
+                    ToolTip.text: qsTr("Shifts %1, %2, and %3 tag times\nso their positions on video do not change\n(slows down time shifting)")
+                                      .arg("\\move").arg("\\t").arg("\\fad")
                     onToggled: panel.set("tagTimes", checked)
                 }
             }
