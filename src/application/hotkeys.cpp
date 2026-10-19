@@ -255,6 +255,10 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SHIFT_TIMES", 5300},
         {"GLOBAL_ADD_PAGE", 5301},
         {"GLOBAL_CLOSE_PAGE", 5302},
+        // The rewrite's own commands, after legacy's IDS, on ids legacy left
+        // unused in its windows' ranges (listed among their neighbours).
+        // LE3-tags-shown: the Line editor's hidden-tag view (editor.hideTags).
+        {"GLOBAL_EDITOR_HIDE_TAGS", 5169},
 };
 
 struct NameRow {
@@ -490,6 +494,8 @@ constexpr NameRow kNames[] = {
         {2007, "Volume down"}, // VIDEO_VOLUME_MINUS
         {2019, "Save frame with subtitles as PNG"}, // VIDEO_SAVE_SUBBED_FRAME_TO_PNG
         {2001, "Stop"}, // VIDEO_STOP
+        // The rewrite's own (LE3-tags-shown).
+        {5169, "Hide tags in the Line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
 };
 
 struct DefaultRow {

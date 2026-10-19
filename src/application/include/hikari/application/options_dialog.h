@@ -63,8 +63,8 @@ struct OptionsBinding {
 
 // Every bound control, in the legacy ConOpt order; the rewrite's own follow
 // them: automation.scriptResolutionFromVideo (Y4), audio.outputDevice (H2),
-// editor.timesToFramesSwitch (LE2) and, on Windows, audio.outputHostApi and
-// video.playbackPlayer (W1).
+// editor.timesToFramesSwitch (LE2), editor.hideTags (LE3) and, on Windows,
+// audio.outputHostApi and video.playbackPlayer (W1).
 std::span<const OptionsBinding> optionsBindings();
 const OptionsBinding *findOptionsBinding(std::string_view setting);
 

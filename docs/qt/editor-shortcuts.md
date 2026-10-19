@@ -22,5 +22,6 @@ Coverage of the legacy `EDITBOX_*` actions in the [UI inventory](https://github.
 | 3003, 3004 | `EDITBOX_PASTE_ALL_TO_TRANSLATION` / `PASTE_SELECTION_TO_TRANSLATION` | none | Paste all and Paste the selected buttons (translation mode): the Original's raw text replaces the Translated text; the Original's selection is inserted at the Translated caret | `shell_tests` |
 | 3005 | `EDITBOX_HIDE_ORIGINAL` (renamed **Comment out original**, E63-comment-original) | none | Comment out original button: wraps the raw Original in braces | `shell_tests` |
 | 3100–3119 | `EDITBOX_TAG_BUTTON1`…`20` | none | Not yet: custom tag buttons and their preferences | — |
+| 5169 | `GLOBAL_EDITOR_HIDE_TAGS` Hide tags in the Line editor (the rewrite's own command, LE3-tags-shown) | — | none: switches `editor.hideTags`; Subtitles > "Hide tags in the Line editor" | `line_editor_options_tests`, `hotkeys_tests` |
 
 A "Not yet" row is unfinished, not dropped: each is assigned to the card or surface named.

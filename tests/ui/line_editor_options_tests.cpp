@@ -1,9 +1,12 @@
 // Wave 6's Line editor cards through the composition, with a settings file
 // so that a restart reads what the last run stored:
 // - LE2 (#227): the Times/Frames switch (EDITBOX_TIMES_TO_FRAMES_SWITCH) out
-//   of the Line editor, into Settings > Editor and the Video panel's menu.
+//   of the Line editor, into Settings > Editor and the Video panel's menu;
+// - LE3 (#228, LE3-tags-shown): the Line editor shows tags by default; hiding
+//   them is editor.hideTags and GLOBAL_EDITOR_HIDE_TAGS.
 
 #include "hikari/app/application.h"
+#include "hikari/application/hotkeys.h"
 
 #include "docking.h"
 #include "line_editor_controller.h"
@@ -126,6 +129,13 @@ class LineEditorOptionsTest : public QObject {
         QTest::keyClick(window, Qt::Key_Home);
         return QTest::qWaitFor([&] { return application->editor().hasLine(); });
     }
+    QString shownText() const { return item("lineText")->property("text").toString(); }
+    bool runGlobal(const QString &symbol)
+    {
+        QVariant ran;
+        return QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran), Q_ARG(QVariant, symbol))
+               && ran.toBool();
+    }
     // Settings: File > Settings, then the dialog's check box for `setting`
     // clicked and OK.
     void clickSettingAndOk(const char *setting, bool expectedBefore)
@@ -178,6 +188,70 @@ private slots:
         QVERIFY(!application->editor().showFrames());
         restart();
         QVERIFY(!application->editor().showFrames());
+    }
+
+    // LE3-tags-shown: a first run shows the Line's tags; the editor strip has
+    // no Hide tags button; the command and the setting switch the same
+    // state, which the next start reads.
+    void tagsShownByDefaultAndTheChoicePersists()
+    {
+        QVERIFY(!application->settingsStore()->contains("editor.hideTags"));
+        QVERIFY(application->editor().showTags());
+        QVERIFY(showLine(tagged));
+        QCOMPARE(shownText(), QStringLiteral("{\\i1}Hi{\\i0} there"));
+        QVERIFY(!item("showTags"));
+        auto *action = named("hideEditorTagsMenuItem")->property("action").value<QObject *>();
+        QVERIFY(action);
+        QVERIFY(!action->property("checked").toBool());
+        // The command (Subtitles > Hide tags in the Line editor).
+        QVERIFY(runGlobal(QStringLiteral("GLOBAL_EDITOR_HIDE_TAGS")));
+        QVERIFY(!application->editor().showTags());
+        QTRY_COMPARE(shownText(), QStringLiteral("Hi there"));
+        QVERIFY(action->property("checked").toBool());
+        QVERIFY(application->settingsStore()->boolean("editor.hideTags"));
+        // The Grid's own switch is separate.
+        QVERIFY(!application->settingsStore()->boolean("grid.hideTags"));
+        restart();
+        QVERIFY(!application->editor().showTags());
+        QVERIFY(showLine(tagged));
+        QCOMPARE(shownText(), QStringLiteral("Hi there"));
+        // Settings > Editor shows the choice and shows the tags again.
+        clickSettingAndOk("editor.hideTags", true);
+        QVERIFY(application->editor().showTags());
+        QTRY_COMPARE(shownText(), QStringLiteral("{\\i1}Hi{\\i0} there"));
+        action = named("hideEditorTagsMenuItem")->property("action").value<QObject *>();
+        QVERIFY(!action->property("checked").toBool());
+        // The menu item switches it too.
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QVERIFY(!application->editor().showTags());
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QVERIFY(application->editor().showTags());
+        restart();
+        QVERIFY(application->editor().showTags());
+    }
+
+    // LE3: the command is in the shortcut editor ("Global Hide tags in the
+    // Line editor", no key by default) and a key mapped to it runs it.
+    void hideTagsCommandIsBindable()
+    {
+        QVERIFY(showLine(tagged));
+        const int id = application::hotkeyIdOf("GLOBAL_EDITOR_HIDE_TAGS");
+        QVERIFY(id > 0);
+        QCOMPARE(QString::fromStdString(application::hotkeyName(id)), QStringLiteral("Hide tags in the Line editor"));
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_EDITOR_HIDE_TAGS"), 0), QString());
+        application->hotkeys().gestureMap(id, QStringLiteral("Hide tags in the Line editor"), QStringLiteral("Ctrl-Shift-Y"),
+                                          0, QStringLiteral("cancel"));
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_EDITOR_HIDE_TAGS"), 0),
+                 QStringLiteral("Ctrl-Shift-Y"));
+        QTRY_COMPARE(named("hideEditorTagsMenuItem")->property("shortcutText").toString(), QStringLiteral("Ctrl-Shift-Y"));
+        item("editingGrid")->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Y, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_VERIFY(!application->editor().showTags());
+        QTest::keyClick(window, Qt::Key_Y, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_VERIFY(application->editor().showTags());
+        restart();
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_EDITOR_HIDE_TAGS"), 0),
+                 QStringLiteral("Ctrl-Shift-Y"));
     }
 };
 

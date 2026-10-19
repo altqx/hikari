@@ -616,11 +616,11 @@ private slots:
     void focusReturnsToWhereItWasInAPanel()
     {
         QVERIFY(application->openFile(episode));
-        item("showTags")->forceActiveFocus();
+        item("styleChoice")->forceActiveFocus();
         press(Qt::Key_F6); // to the Grid
         QCOMPARE(focusedPanel(), QStringLiteral("gridPanel"));
         press(Qt::Key_F6, Qt::ShiftModifier); // back to the editor
-        QVERIFY(item("showTags")->hasActiveFocus());
+        QVERIFY(item("styleChoice")->hasActiveFocus());
         press(Qt::Key_F6);
         QVERIFY(item("editingGrid")->hasActiveFocus());
     }
@@ -964,6 +964,7 @@ private slots:
     // options menu, Escape to close; the field keeps focus throughout.
     void tagListCompletesTagsInTheRawText()
     {
+        application->editor().setShowTags(false); // the hidden-tag view (no longer the default, LE3-tags-shown)
         QVERIFY(application->openFile(episode));
         auto *text = item("lineText");
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
@@ -1301,9 +1302,16 @@ private slots:
         QVERIFY(ran.toBool());
         QCOMPARE(shown(), QStringLiteral("{\\i1}Hi{\\i0} there"));
         QVERIFY(!application->settingsStore()->boolean("grid.hideTags"));
-        // The Line editor's own hidden-tag view has the set's icon.
-        QCOMPARE(item("showTags")->property("iconRole").toString(), QStringLiteral("hide-tags"));
-        QCOMPARE(item("showTags")->property("checked").toBool(), !application->editor().showTags());
+        // The Line editor's own hidden-tag view is a separate command with
+        // the set's icon (LE3-tags-shown), not changed by the Grid's switch.
+        QVERIFY(!item("showTags")); // no button in the editor's strip any more
+        auto *editorItem = named("hideEditorTagsMenuItem");
+        QVERIFY(editorItem);
+        QCOMPARE(editorItem->property("iconRole").toString(), QStringLiteral("hide-tags"));
+        QVERIFY(application->editor().showTags());
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_HIDE_TAGS"))));
+        QVERIFY(application->editor().showTags());
     }
 
     // E6: GLOBAL_PREVIOUS_LINE / GLOBAL_NEXT_LINE (Ctrl+Up / Ctrl+Down,
@@ -1416,6 +1424,7 @@ private slots:
 
     void boldWrapsTheSelectionWithTagsHidden()
     {
+        application->editor().setShowTags(false); // the hidden-tag view (no longer the default, LE3-tags-shown)
         QVERIFY(application->openFile(episode));
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home); // the first Line, "first"
@@ -1810,6 +1819,7 @@ private slots:
                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"
                     "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,def\n");
         }
+        application->editor().setShowTags(false); // the hidden-tag view (no longer the default, LE3-tags-shown)
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         item("editingGrid")->forceActiveFocus();
@@ -6483,6 +6493,7 @@ private slots:
                                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold\n"
                                        "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,Teh {\\i1}text\n"
                                        "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,good}\n");
+        application->editor().setShowTags(false); // the hidden-tag view (no longer the default, LE3-tags-shown)
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *grid = application->shell().lines();
@@ -8005,6 +8016,7 @@ private slots:
                     "Comment: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Gate {\\i1}keeper\n"
                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
         }
+        application->editor().setShowTags(false); // the hidden-tag view (no longer the default, LE3-tags-shown)
         QVERIFY(application->openFile(path));
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
@@ -8326,8 +8338,8 @@ private slots:
             }
         };
         collect(content);
-        // (LE2 took the Times/Frames radios out.)
-        QVERIFY2(controls.size() >= 23, qPrintable(QString::number(controls.size())));
+        // (LE2 and LE3 took the Times/Frames radios and Hide tags out.)
+        QVERIFY2(controls.size() >= 22, qPrintable(QString::number(controls.size())));
         for (QQuickItem *control : std::as_const(controls))
             scrollTheEditorTo(control);
         scrollTheEditorTo(controls.first()); // and back up
@@ -8810,6 +8822,7 @@ private slots:
                     "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,three\n"
                     "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,\n");
         }
+        application->editor().setShowTags(false); // the hidden-tag view (no longer the default, LE3-tags-shown)
         QVERIFY(application->openFile(path));
         auto &editor = application->editor();
         item("editingGrid")->forceActiveFocus();
@@ -9030,7 +9043,9 @@ private slots:
               // Y4-playres-ask, the rewrite's own
               {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"},
               // LE2: the Times/Frames switch, out of the Line editor
-              {"editor.timesToFramesSwitch", "Show video frames instead of times in the Line editor and the Grid"}}},
+              {"editor.timesToFramesSwitch", "Show video frames instead of times in the Line editor and the Grid"},
+              // LE3-tags-shown
+              {"editor.hideTags", "Hide tags in the Line editor"}}},
             {"settingsPageConversion",
              {{"convert.styleCatalog", nullptr},
               {"convert.style", nullptr},
@@ -10685,7 +10700,9 @@ private slots:
         QCOMPARE(names, (QStringList{"Editor", "Conversion", "Advanced", "Video", "Audio", "Advanced", "Appearance",
                                      "Hotkeys", "Subtitle properties"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 225); // V3: "Open video with FFMS2" retired, never listed
+        // V3: "Open video with FFMS2" retired, never listed; LE3's
+        // "Hide tags in the Line editor" listed.
+        QCOMPARE(hotkeyRows().size(), 226);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.

@@ -1883,6 +1883,24 @@ ApplicationWindow {
                 enabled: root.app.editorOn // D2: OnMenuOpened's SubsMenu
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_HIDE_TAGS")) root.app.toggleHideTags()
             }
+            // LE3-tags-shown: the Line editor's hidden-tag view, a setting
+            // (editor.hideTags) and this command; the Grid's switch above
+            // stays its own.
+            ShellMenuItem {
+                iconRole: "hide-tags"
+                objectName: "hideEditorTagsMenuItem"
+                action: Action {
+                    id: hideEditorTagsAction
+                    text: qsTr("Hide tags in the Line editor")
+                    checkable: true
+                    checked: !root.editor.showTags
+                    onToggled: {
+                        if (!root.hotkeyGesture("GLOBAL_EDITOR_HIDE_TAGS"))
+                            root.editor.showTags = !checked
+                        checked = Qt.binding(() => !root.editor.showTags)
+                    }
+                }
+            }
         }
         ShellMenu {
             title: qsTr("&Help")
@@ -3384,16 +3402,9 @@ ApplicationWindow {
                                     }
                                 }
                             }
-                            // The hidden-tag view's switch (E6: the hide-tags icon,
-                            // checked while tags are hidden).
-                            IconToolButton {
-                                objectName: "showTags"
-                                iconRole: "hide-tags"
-                                text: qsTranslate("HikariSub.Editor", "Hide tags")
-                                checkable: true
-                                checked: !root.editor.showTags
-                                onToggled: root.editor.showTags = !checked
-                            }
+                            // LE3-tags-shown: the hidden-tag view's switch left the
+                            // strip for Settings > Editor and GLOBAL_EDITOR_HIDE_TAGS
+                            // (Subtitles > "Hide tags in the Line editor").
                         }
                         // E5: legacy BoxSizer5, the row under the tag buttons
                         // that holds "Translator mode" (EditBox.cpp:233-239, 308).
@@ -6191,6 +6202,7 @@ ApplicationWindow {
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: websiteAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
+        GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction, // LE3
         // P6: OnPageClose (the rewrite's File > Close).
         GLOBAL_CLOSE_PAGE: closeAction
     }

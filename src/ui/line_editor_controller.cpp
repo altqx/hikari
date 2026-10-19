@@ -171,6 +171,18 @@ void LineEditorController::setShowTags(bool show)
         return;
     m_showTags = show;
     m_tagList.close(); // E6: the list belongs to the raw text it was opened in
+    if (m_storeShowTags)
+        m_storeShowTags(show);
+    refresh();
+}
+
+void LineEditorController::setShowTagsSetting(bool show, std::function<void(bool)> store)
+{
+    m_storeShowTags = std::move(store);
+    if (m_showTags == show)
+        return;
+    m_showTags = show;
+    m_tagList.close();
     refresh();
 }
 

@@ -584,6 +584,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     m_editor->setShowFramesSetting(m_settings->boolean("editor.timesToFramesSwitch"),
                                    [this](bool on) { m_settings->set("editor.timesToFramesSwitch", on); });
+    // LE3-tags-shown: the editor's hidden-tag view as stored (shown by
+    // default), saved when it is switched (EDITBOX_HIDE_TAGS, Settings > Editor).
+    m_editor->setShowTagsSetting(!m_settings->boolean("editor.hideTags"),
+                                 [this](bool show) { m_settings->set("editor.hideTags", !show); });
     connect(m_editor.get(), &ui::LineEditorController::frameDisplayChanged, this, [this] {
         const auto *frames = m_editor->frameTimebase();
         m_shell->setFrameTimebase(frames ? std::optional(*frames) : std::nullopt);
@@ -4870,8 +4874,10 @@ void Application::settingChanged(const QString &id)
         m_editor->optionsChanged(); // E4: the counters and Duration follow at once
         refreshVideo();             // live editing on or off: the draft or the committed Lines
     }
-    // LE2: Settings > Editor switches the Line editor's Times/Frames; Set
-    // default leaves it as shown, as legacy's EditBox kept its radios.
+    // LE2, LE3: Settings > Editor switches the Line editor's view; Set default
+    // leaves it as shown, as legacy's EditBox kept its radios.
+    else if (id == QLatin1String("editor.hideTags") && !m_resettingSettings)
+        m_editor->setShowTags(!m_settings->boolean("editor.hideTags"));
     else if (id == QLatin1String("editor.timesToFramesSwitch") && !m_resettingSettings)
         m_editor->setShowFrames(m_settings->boolean("editor.timesToFramesSwitch"));
     else if (id == QLatin1String("grid.hideTags") || id == QLatin1String("grid.tagsSwapCharacter"))

@@ -148,6 +148,9 @@ public:
     bool editable() const { return m_editable && hasLine(); }
     bool showTags() const { return m_showTags; }
     void setShowTags(bool show);
+    // LE3-tags-shown: the stored choice (editor.hideTags inverted); the
+    // editor saves each switch through `store`.
+    void setShowTagsSetting(bool show, std::function<void(bool)> store);
     QString text() const { return m_shown[0]; }
     bool translationMode() const;
     QString translationText() const { return m_shown[1]; }
@@ -511,7 +514,8 @@ private:
     application::DocumentFiles &m_files;
     std::optional<application::DocumentId> m_document;
     bool m_editable = false;
-    bool m_showTags = false; // tags hidden by default
+    bool m_showTags = true; // LE3-tags-shown: tags shown by default
+    std::function<void(bool)> m_storeShowTags;
     TagListController m_tagList;
     QString m_shown[2];      // what the Original and Translated fields show
     QString m_problem;
