@@ -7628,6 +7628,20 @@ private slots:
         QVERIFY(!application->targetUntitled());
         auto *opened = application->files().session(*application->workspace().editingTarget());
         QCOMPARE(opened->selection().active, std::optional(opened->document().lines()[0]->id));
+        // SH2: from the Home page (no Document open) a file result opens the
+        // file as the editing target, and Home goes.
+        QVERIFY(application->reviewCloseAll().isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(item("homePage")->isVisible());
+        application->runFindReplace(QStringLiteral("findInFiles"),
+                                    {{QStringLiteral("tab"), 2},
+                                     {QStringLiteral("find"), QStringLiteral("a dog")},
+                                     {QStringLiteral("filters"), QStringLiteral("one.ass")},
+                                     {QStringLiteral("folder"), folder.path()}});
+        application->showFindResult(1);
+        QCOMPARE(application->tabs().size(), qsizetype(1));
+        QTRY_VERIFY(!item("homePage")->isVisible());
+        QVERIFY(application->editor().hasLine()); // the editor shows the found Line
         // An invalid folder says so.
         application->runFindReplace(QStringLiteral("findInFiles"),
                                     {{QStringLiteral("tab"), 2},

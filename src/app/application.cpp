@@ -387,8 +387,13 @@ public:
             return done(found);
         const auto target = m_app.m_workspace.editingTarget();
         if (!target || !m_app.targetUntitled()) {
-            if (const auto id = m_app.open(name))
+            if (const auto id = m_app.open(name)) {
+                // With no Document open (SH2: from the Home page) it became
+                // the editing target, which showLine then finds unchanged.
+                if (!target)
+                    m_app.refreshViews();
                 return done(id);
+            }
             m_app.newDocument(); // InsertTab came first
             return done(m_app.m_workspace.editingTarget());
         }
