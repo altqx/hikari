@@ -89,6 +89,8 @@ public:
         // changed, 2 changed and saved (the session's changeState), 4
         // Unconfirmed, 8 bookmarked, or'ed together; 0 none.
         LineStateRole,
+        // GR2: the row shows the Line editor's uncommitted draft.
+        DraftRole,
     };
     // E6: the number cell's colour index in LabelColoursRole for a State
     // (SubsGridWindow.cpp:478-479): 0 normal, 1 modified, 2 saved, 3 doubtful
@@ -132,6 +134,11 @@ public:
     void setHideTags(bool hide, const QString &swap);
     bool hideTags() const { return m_hideTags; }
     void setSelection(const application::Selection &selection, std::optional<core::LineId> anchor);
+    // GR2: the Line editor's pending draft (EditSession::draftRecord), shown
+    // in its Line's row until it is committed or reverted; nullopt for none.
+    // Only the shown cells follow it: recordAt, filters and the changed-Line
+    // state keep the committed Line. setDocument drops it.
+    void setDraft(std::optional<core::LineRecord> draft);
     void setHiddenColumns(int mask);
     // E5: legacy SubsGrid::showOriginal (application::OriginalColumns).
     // Applied from the next setDocument.
@@ -142,6 +149,8 @@ public:
         m_showOriginal = show;
         for (const Row &row : m_rows)
             row.shownText.reset(); // E6's cache of the Text column
+        if (m_draft)
+            m_draft->shownText.reset();
     }
     bool showOriginal() const { return m_showOriginal; }
     // F3: legacy TextData::Init for the Grid: the marks of a Line's text in
@@ -193,6 +202,9 @@ private:
         mutable std::optional<QString> shownText; // E6: the Text column, tags swapped when hidden
     };
     const QString &shownTextOf(const Row &row) const;
+    // The row as shown: the draft's for the drafted row (GR2).
+    const Row &shownRow(int row) const;
+    void emitRowChanged(int row);
     bool tagsSwapped() const { return m_hideTags && !m_translationMode; }
     const Measures &measuresOf(const Row &row) const;
     const QVariantList &spellMarksOf(const Row &row) const;
@@ -204,6 +216,8 @@ private:
 
     std::vector<Row> m_rows;
     std::unordered_map<std::uint64_t, int> m_rowById;
+    std::optional<Row> m_draft; // GR2: the drafted row, its caches its own
+    int m_draftRow = -1;
     application::Selection m_selection;
     std::optional<core::LineId> m_anchor;
     core::SubtitleFormat m_format = core::SubtitleFormat::Ass;

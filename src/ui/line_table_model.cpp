@@ -182,6 +182,10 @@ void LineTableModel::setHideTags(bool hide, const QString &swap)
         row.shownText.reset();
         row.spellMarks.reset();
     }
+    if (m_draft) {
+        m_draft->shownText.reset();
+        m_draft->spellMarks.reset();
+    }
     if (!m_rows.empty())
         emit dataChanged(index(0, TextColumn), index(rowCount() - 1, TextColumn), {Qt::DisplayRole, SpellMarksRole});
 }
@@ -265,6 +269,8 @@ void LineTableModel::setDocument(const core::Document &document,
     beginResetModel();
     m_rows.clear();
     m_rowById.clear();
+    m_draft.reset();
+    m_draftRow = -1;
     m_format = document.format();
     // Legacy measures the translation when translation mode shows one.
     m_translationMode = document.scriptInfo(u8"TLMode") == u8"Yes";
@@ -328,6 +334,38 @@ void LineTableModel::setSelection(const application::Selection &selection, std::
     emitStateChanged(touched);
 }
 
+void LineTableModel::setDraft(std::optional<core::LineRecord> draft)
+{
+    const int previous = m_draftRow;
+    m_draft.reset();
+    m_draftRow = -1;
+    if (const auto row = draft ? rowOf(draft->id) : std::nullopt) {
+        // The committed row's marks and state, with the draft's content and
+        // its own measures, shown text and spelling marks.
+        Row shown = m_rows[static_cast<std::size_t>(*row)];
+        shown.line = std::move(*draft);
+        shown.measures.reset();
+        shown.spellMarks.reset();
+        shown.shownText.reset();
+        m_draft = std::move(shown);
+        m_draftRow = *row;
+    }
+    if (previous >= 0 && previous != m_draftRow)
+        emitRowChanged(previous);
+    if (m_draftRow >= 0)
+        emitRowChanged(m_draftRow);
+}
+
+const LineTableModel::Row &LineTableModel::shownRow(int row) const
+{
+    return row == m_draftRow && m_draft ? *m_draft : m_rows[static_cast<std::size_t>(row)];
+}
+
+void LineTableModel::emitRowChanged(int row)
+{
+    emit dataChanged(index(row, 0), index(row, ColumnCount - 1));
+}
+
 void LineTableModel::emitStateChanged(const std::vector<core::LineId> &ids)
 {
     for (const auto &id : ids)
@@ -370,7 +408,7 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
 {
     if (!checkIndex(index, CheckIndexOption::IndexIsValid | CheckIndexOption::ParentIsInvalid))
         return {};
-    const Row &r = m_rows[static_cast<std::size_t>(index.row())];
+    const Row &r = shownRow(index.row());
     const core::LineRecord &line = r.line;
     switch (role) {
     case Qt::DisplayRole:
@@ -436,6 +474,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return r.comparisonMarks;
     case LineStateRole:
         return r.state;
+    case DraftRole:
+        return index.row() == m_draftRow;
     default:
         return {};
     }
@@ -517,7 +557,8 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {SpellMarksRole, "spellMarks"},
                   {ComparisonRole, "comparison"},
                   {ComparisonMarksRole, "comparisonMarks"},
-                  {LineStateRole, "lineState"}});
+                  {LineStateRole, "lineState"},
+                  {DraftRole, "draft"}});
     return roles;
 }
 

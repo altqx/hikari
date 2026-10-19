@@ -233,6 +233,8 @@ QString LineGrid::rowStateText(int row) const
         words << QCoreApplication::translate("HikariSub.Grid", "unconfirmed");
     if (state & 8)
         words << QCoreApplication::translate("HikariSub.Grid", "bookmarked");
+    if (m_model->index(row, 0).data(LineTableModel::DraftRole).toBool())
+        words << QCoreApplication::translate("HikariSub.Grid", "uncommitted");
     return words.join(QStringLiteral(", "));
 }
 
@@ -645,14 +647,17 @@ static QColor labelInk(const QColor &label)
 // over selection and comparison colours alike. The rewrite adds a shape for
 // the changed-Line mark, so it does not rest on colour alone (subtitle-grid.md):
 // a filled dot for a changed Line, a ring for a changed and saved one
-// (E6-mark-shape). The mark takes the label's ink (labelInk).
-void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, const QVariantList &colours) const
+// (E6-mark-shape). GR2: while the row shows the Line editor's uncommitted
+// draft, a filled triangle pointing right takes the mark's place, whatever
+// the Line's State; the label colour stays the committed Line's. The mark
+// takes the label's ink (labelInk).
+void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, bool draft, const QVariantList &colours) const
 {
     const QColor label = colours.value(LineTableModel::labelSlot(state)).value<QColor>();
     if (colours.size() == 4)
         painter->fillRect(cell, label);
     const int changed = state & 3;
-    if (!changed)
+    if (!changed && !draft)
         return;
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
@@ -664,6 +669,15 @@ void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, const
     const QPointF centre = device.map(QPointF(cell.right() - 6.5, cell.center().y()));
     const QPointF snapped = device.inverted().map(QPointF(std::round(centre.x()), std::round(centre.y())));
     const QRectF dot(snapped.x() - 2.5, snapped.y() - 2.5, 5, 5);
+    if (draft) {
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(mark);
+        const QPointF triangle[] = {QPointF(dot.left(), snapped.y() - 3.5), QPointF(dot.right() + 0.5, snapped.y()),
+                                    QPointF(dot.left(), snapped.y() + 3.5)};
+        painter->drawPolygon(triangle, 3);
+        painter->restore();
+        return;
+    }
     if (changed == 1) {
         painter->setPen(Qt::NoPen);
         painter->setBrush(mark);
@@ -789,7 +803,7 @@ void LineGrid::paint(QPainter *painter)
         }
         if (numberShown)
             drawLabel(painter, QRectF(m_markWidth, top, widths[0], rh), idx.data(LineTableModel::LineStateRole).toInt(),
-                      labelColours);
+                      idx.data(LineTableModel::DraftRole).toBool(), labelColours);
         painter->setPen(comment ? roles.muted : roles.text);
         x = m_markWidth;
         for (int c = 0; c < columns; ++c) {

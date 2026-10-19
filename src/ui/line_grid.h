@@ -90,7 +90,8 @@ public:
     int hiddenSelectedCount() const;
     QString cellText(int row, int column) const;
     // E6: the row's legacy State in words for assistive technology ("changed",
-    // "changed, saved", "unconfirmed", "bookmarked"), empty for none.
+    // "changed, saved", "unconfirmed", "bookmarked"; GR2: "uncommitted" while
+    // it shows the Line editor's draft), empty for none.
     QString rowStateText(int row) const;
     QString columnTitle(int column) const;
     int columnCount() const;
@@ -161,7 +162,7 @@ private:
     void updateRowHeight();
     std::vector<double> columnWidths(double total) const;
     void drawBlockMark(QPainter *painter, double borderY, int mark, double width) const;
-    void drawLabel(QPainter *painter, const QRectF &cell, int state, const QVariantList &colours) const;
+    void drawLabel(QPainter *painter, const QRectF &cell, int state, bool draft, const QVariantList &colours) const;
     void drawSpellMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const;
     void drawComparisonMarks(QPainter *painter, const QRectF &cell, const QString &text, const QVariantList &marks,
                              const QColor &outline) const;

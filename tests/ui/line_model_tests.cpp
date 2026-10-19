@@ -374,6 +374,75 @@ private slots:
         QCOMPARE(colours[3].value<QColor>(), QColor(0x92, 0x5B, 0x1F));
         QCOMPARE(LineTableModel::themeLabelColours(false)[1], QColor(0xB0, 0xAD, 0xD8));
     }
+
+    // GR2: the Line editor's draft shows in its row, live, until it is
+    // committed or reverted. Only the shown cells follow it: the record, the
+    // Grid filter and the changed-Line state stay the committed Line's.
+    void draftShowsInItsRowUncommitted()
+    {
+        LineTableModel model;
+        QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+        LineFilterModel filter;
+        filter.setLineModel(&model);
+        // Shows the Lines whose committed text is not "zulu".
+        filter.setPredicate([](const core::LineRecord &l) { return l.text != u8"zulu"; });
+        model.setDocument(load(kLines));
+        const auto text = [&](int row) { return model.index(row, LineTableModel::TextColumn).data().toString(); };
+        const auto draftAt = [&](int row) { return model.index(row, 0).data(LineTableModel::DraftRole).toBool(); };
+        core::LineRecord draft = *model.recordAt(2);
+        draft.text = u8"zulu, longer and faster";
+        draft.end.value = core::DocumentTime(5'500'000);
+        QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
+        model.setDraft(draft);
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(changed.at(0).at(0).toModelIndex().row(), 2);
+        QCOMPARE(text(2), QStringLiteral("zulu, longer and faster"));
+        QCOMPARE(model.index(2, LineTableModel::EndColumn).data().toString(), QStringLiteral("0:00:05.50"));
+        QVERIFY(model.index(2, 0).data(LineTableModel::CpsTooHighRole).toBool()); // measured from the draft
+        QVERIFY(draftAt(2));
+        QVERIFY(!draftAt(0) && !draftAt(1));
+        QCOMPARE(model.recordAt(2)->text, std::u8string(u8"bravo")); // committed
+        QCOMPARE(filter.rowCount(), 3);                              // the filter reads the committed text
+        QCOMPARE(model.index(2, 0).data(LineTableModel::LineStateRole).toInt(), 0);
+        QCOMPARE(text(0), QStringLiteral("charlie"));
+
+        // Another Line's draft moves the row; none restores it.
+        draft = *model.recordAt(0);
+        draft.text = u8"charlie!";
+        changed.clear();
+        model.setDraft(draft);
+        QCOMPARE(changed.count(), 2);
+        QCOMPARE(text(2), QStringLiteral("bravo"));
+        QVERIFY(!draftAt(2));
+        QCOMPARE(text(0), QStringLiteral("charlie!"));
+        model.setDraft(std::nullopt);
+        QCOMPARE(text(0), QStringLiteral("charlie"));
+        QVERIFY(!draftAt(0));
+
+        // A new snapshot drops it; a draft of a Line not in the Document shows nothing.
+        model.setDraft(draft);
+        model.setDocument(load(kLines));
+        QCOMPARE(text(0), QStringLiteral("charlie"));
+        QVERIFY(!draftAt(0));
+        draft.id = core::LineId{99};
+        model.setDraft(draft);
+        for (int row = 0; row < model.rowCount(); ++row)
+            QVERIFY(!draftAt(row));
+    }
+
+    // GR2: the drafted row's cached shown text follows hidden tags as the
+    // others do.
+    void draftFollowsHiddenTags()
+    {
+        LineTableModel model;
+        model.setDocument(load(kLines));
+        core::LineRecord draft = *model.recordAt(0);
+        draft.text = u8"{\\b1}charlie";
+        model.setDraft(draft);
+        QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("{\\b1}charlie"));
+        model.setHideTags(true, QStringLiteral("*"));
+        QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("*charlie"));
+    }
 };
 
 QTEST_MAIN(LineModelTest)

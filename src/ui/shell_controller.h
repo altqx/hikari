@@ -151,6 +151,10 @@ public:
         m_referenceLines.setSpelling(spelling);
     }
 
+    // GR2: the editing target's pending draft, shown live in its Grid row
+    // until it is committed or reverted (set again after each refresh).
+    void setDraft(std::optional<core::LineRecord> draft) { m_lines.setDraft(std::move(draft)); }
+
     // The editing target's Grid asked for a Line to become active.
     Q_INVOKABLE void activateLine(qulonglong id);
     // Marks a Line active and selected in the editing target's Grid.

@@ -1414,6 +1414,64 @@ private slots:
         QTRY_COMPARE(state(0), 0);
     }
 
+    // GR2: the Grid row shows the Line editor's draft as it is typed, with a
+    // triangle in place of the changed-Line circle; the Document, its
+    // history and the changed-Line state wait for the commit. Revert brings
+    // the committed text back; Save commits the draft.
+    void draftLinesShowLiveInTheGrid()
+    {
+        const QString copy = dir.filePath(QStringLiteral("draft.ass"));
+        QFile::remove(copy);
+        QVERIFY(QFile::copy(episode, copy));
+        QVERIFY(application->openFile(copy));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        auto *model = grid->model();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto shown = [&](int row) { return model->index(row, ui::LineTableModel::TextColumn).data().toString(); };
+        const auto drafted = [&](int row) { return model->index(row, 0).data(ui::LineTableModel::DraftRole).toBool(); };
+        const auto state = [&](int row) { return model->index(row, 0).data(ui::LineTableModel::LineStateRole).toInt(); };
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        const auto steps = session->historySize();
+        const auto revision = session->revision();
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, '!');
+        QTRY_COMPARE(shown(0), QStringLiteral("first!"));
+        QVERIFY(drafted(0));
+        QCOMPARE(grid->rowStateText(0), QStringLiteral("uncommitted"));
+        QTest::keyClick(window, '?');
+        QTRY_COMPARE(shown(0), QStringLiteral("first!?")); // every keystroke
+        QCOMPARE(session->historySize(), steps);
+        QCOMPARE(session->revision(), revision);
+        QCOMPARE(documentLineText(session, 0), QStringLiteral("first"));
+        QCOMPARE(state(0), 0);
+        QVERIFY(!drafted(1));
+        QCOMPARE(shown(1), QStringLiteral("second"));
+
+        // Revert: the committed text and no triangle.
+        QTest::qWait(separateKeyDelay);
+        press(Qt::Key_Escape);
+        QTRY_COMPARE(application->editor().text(), QStringLiteral("first"));
+        QTRY_VERIFY(!drafted(0));
+        QCOMPARE(shown(0), QStringLiteral("first"));
+        QCOMPARE(session->historySize(), steps);
+
+        // Save commits the draft (accepted policy): one step, the row no
+        // longer a draft, its Line changed and saved.
+        text->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, '!');
+        QTRY_VERIFY(drafted(0));
+        QVERIFY(application->editor().save());
+        application->waitForWrites();
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(documentLineText(session, 0), QStringLiteral("first!"));
+        QTRY_VERIFY(!drafted(0));
+        QCOMPARE(shown(0), QStringLiteral("first!"));
+        QTRY_COMPARE(state(0), 2);
+    }
+
     void boldWrapsTheSelectionWithTagsHidden()
     {
         QVERIFY(application->openFile(episode));

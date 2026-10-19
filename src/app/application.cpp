@@ -892,6 +892,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_editRefresh->setInterval(0);
     connect(m_editRefresh, &QTimer::timeout, this, &Application::refreshVideo);
     connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] {
+        // GR2: the Grid row shows the draft as it is typed, uncommitted.
+        if (const auto *session = targetSession())
+            m_shell->setDraft(session->draftRecord());
         m_editRefresh->start();
         scheduleAutosave();
     });
@@ -1543,8 +1546,10 @@ void Application::refreshViews()
                      referenceSession ? &referenceSession->document() : nullptr,
                      target ? m_comparison.table(*target) : nullptr,
                      reference ? m_comparison.table(*reference) : nullptr);
-    if (targetSession)
+    if (targetSession) {
+        m_shell->setDraft(targetSession->draftRecord()); // GR2
         m_shell->setSelection(targetSession->selection());
+    }
     if (referenceSession) // R2: the reference's own selection
         m_shell->setReferenceSelection(referenceSession->selection());
     followEditingLine(); // R2: a linked reference follows the active Line

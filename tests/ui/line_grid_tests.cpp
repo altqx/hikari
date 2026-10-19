@@ -7,6 +7,7 @@
 #include "hikari/core/ass_load.h"
 
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFont>
 #include <QFontDatabase>
 #include <QGuiApplication>
@@ -539,6 +540,122 @@ private slots:
         QCOMPARE(grid.rowStateText(3), QStringLiteral("bookmarked"));
         QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
         QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-changed-lines.png")));
+    }
+
+    // GR2: a row showing the Line editor's uncommitted draft paints its text
+    // live and a triangle in place of the changed-Line circle, on the
+    // committed Line's label colour; reverting brings the circle back.
+    void paintsTheDraftTriangle()
+    {
+        const char *script = "[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,plain\n"
+                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,changed\n";
+        std::vector<std::byte> bytes(std::strlen(script));
+        std::memcpy(bytes.data(), script, bytes.size());
+        LineTableModel model;
+        model.setChangeState([](const core::LineRecord &l) { return l.id.value == 2 ? 1 : 0; });
+        model.setDocument(core::loadAss(bytes).document);
+        LineGrid grid;
+        grid.setSize(QSizeF(720, 100));
+        grid.setModel(&model);
+        const auto colours = LineTableModel::themeLabelColours(true);
+        const double rh = grid.rowHeight();
+        const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
+        const int markX = int(grid.cellRect(0, 0).right() - 6.5);
+        const auto render = [&] {
+            QImage image(720, 100, QImage::Format_ARGB32);
+            QPainter painter(&image);
+            grid.paint(&painter);
+            return image;
+        };
+        // The mark's ink around its centre: its box, and how tall it is at
+        // the box's left and right columns. The triangle is 7 tall at its
+        // left side and comes to a point; the 5-wide circle is symmetric.
+        struct Shape {
+            int height = 0, left = 0, right = 0;
+        };
+        const auto shape = [&](const QImage &image, int row, const QColor &label) {
+            const auto ink = [&](int x, int y) {
+                const QColor c = image.pixelColor(x, y);
+                return std::abs(c.red() - label.red()) + std::abs(c.green() - label.green()) +
+                           std::abs(c.blue() - label.blue()) > 90;
+            };
+            int x0 = 1000, x1 = -1, y0 = 1000, y1 = -1;
+            for (int y = rowY(row) - 6; y <= rowY(row) + 6; ++y)
+                for (int x = markX - 6; x <= markX + 6; ++x)
+                    if (ink(x, y)) {
+                        x0 = std::min(x0, x), x1 = std::max(x1, x), y0 = std::min(y0, y), y1 = std::max(y1, y);
+                    }
+            Shape out;
+            if (x1 < 0)
+                return out;
+            out.height = y1 - y0 + 1;
+            for (int y = y0; y <= y1; ++y)
+                out.left += ink(x0, y), out.right += ink(x1, y);
+            return out;
+        };
+        const auto triangle = [&](const QImage &image, int row, const QColor &label) {
+            const Shape s = shape(image, row, label);
+            return s.height >= 6 && s.left >= s.right + 3;
+        };
+        const auto circle = [&](const QImage &image, int row, const QColor &label) {
+            const Shape s = shape(image, row, label);
+            return s.height >= 3 && s.height <= 6 && std::abs(s.left - s.right) <= 1;
+        };
+        QImage before = render();
+        QVERIFY(circle(before, 1, colours[1]));
+        QCOMPARE(before.pixelColor(markX, rowY(0)), colours[0]); // no mark
+
+        auto first = *model.recordAt(0);
+        first.text = u8"typed but not committed";
+        model.setDraft(first);
+        QCOMPARE(grid.cellText(0, grid.columnCount() - 1), QStringLiteral("typed but not committed"));
+        QImage drafted = render();
+        QVERIFY(triangle(drafted, 0, colours[0]));
+        QCOMPARE(drafted.pixelColor(3, rowY(0)), colours[0]); // the committed Line's label
+        QCOMPARE(grid.rowStateText(0), QStringLiteral("uncommitted"));
+        QVERIFY(circle(drafted, 1, colours[1]));
+
+        auto second = *model.recordAt(1);
+        second.text = u8"changed again";
+        model.setDraft(second);
+        drafted = render();
+        QVERIFY(triangle(drafted, 1, colours[1]));
+        QCOMPARE(grid.rowStateText(1), QStringLiteral("changed, uncommitted"));
+        QCOMPARE(drafted.pixelColor(markX, rowY(0)), colours[0]); // the first row is back to no mark
+        QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
+        QVERIFY(drafted.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-draft-line.png")));
+
+        model.setDraft(std::nullopt);
+        QVERIFY(circle(render(), 1, colours[1]));
+        QCOMPARE(grid.rowStateText(1), QStringLiteral("changed"));
+    }
+
+    // GR2: typing in a 10k-Line Document repaints one row: a keystroke's
+    // draft and the Grid's paint stay far below a frame.
+    void draftKeystrokesStayCheapOnALargeDocument()
+    {
+        LineTableModel model;
+        model.setDocument(generate(10000));
+        LineGrid grid;
+        grid.setSize(QSizeF(1200, 800));
+        grid.setModel(&model);
+        grid.setContentY(5000 * grid.rowHeight());
+        auto draft = *model.recordAt(5005);
+        QImage image(1200, 800, QImage::Format_ARGB32);
+        QElapsedTimer timer;
+        timer.start();
+        constexpr int keystrokes = 200;
+        for (int i = 0; i < keystrokes; ++i) {
+            draft.text += u8"x";
+            model.setDraft(draft);
+            QPainter painter(&image);
+            grid.paint(&painter);
+        }
+        const double perKeystroke = double(timer.elapsed()) / keystrokes;
+        qInfo("GR2: %.2f ms per keystroke (draft and paint) on 10000 Lines", perKeystroke);
+        QVERIFY2(perKeystroke < 16, qPrintable(QString::number(perKeystroke)));
+        QCOMPARE(model.index(5005, LineTableModel::TextColumn).data().toString().size(), qsizetype(9 + keystrokes));
     }
 
     // E6 (E6-mark-shape): the dot and the ring take the theme layer's roles,
