@@ -1132,6 +1132,10 @@ please save with different name or change file attribute.</source>
         <translation>உரை நிலை</translation>
     </message>
     <message>
+        <source>mixed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Number of characters in each line.
 No more than 43 characters per line (maximum 2 lines).</source>
         <translation>ஒவ்வொரு வரியிலும் எழுத்துகளின் எண்ணிக்கை.
@@ -1145,7 +1149,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Time</source>
-        <translation>நேரம்</translation>
+        <translation type="vanished">நேரம்</translation>
     </message>
     <message>
         <source>Show times</source>
@@ -1153,7 +1157,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Frames</source>
-        <translation>சட்டங்கள்</translation>
+        <translation type="vanished">சட்டங்கள்</translation>
     </message>
     <message>
         <source>Show frames</source>
@@ -1269,7 +1273,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation>குறிச்சொற்களை மறைக்கவும்</translation>
+        <translation type="vanished">குறிச்சொற்களை மறைக்கவும்</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
@@ -1348,12 +1352,32 @@ Should not exceed 15 characters per second</source>
         <translation>நிழல் நிறம்</translation>
     </message>
     <message>
+        <source>Add a tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Manage tag buttons</source>
-        <translation>குறிச்சொல் பொத்தான்களை நிர்வகிக்கவும்</translation>
+        <translation type="vanished">குறிச்சொல் பொத்தான்களை நிர்வகிக்கவும்</translation>
     </message>
     <message>
         <source>Change number of buttons</source>
-        <translation>பொத்தான்களின் அளவை மாற்றவும்</translation>
+        <translation type="vanished">பொத்தான்களின் அளவை மாற்றவும்</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -1389,7 +1413,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Enter ASS tag</source>
-        <translation>ASS குறிச்சொல்லை உள்ளிடவும்</translation>
+        <translation type="vanished">ASS குறிச்சொல்லை உள்ளிடவும்</translation>
     </message>
     <message>
         <source>Tag inserted in place of cursor</source>
@@ -1412,16 +1436,44 @@ Should not exceed 15 characters per second</source>
         <translation>பொத்தான் பெயர்</translation>
     </message>
     <message>
+        <source>Enter a name or choose an icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">பெயர்</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Button tag</source>
         <translation>பொத்தானின் குறிச்சொல்</translation>
     </message>
     <message>
-        <source>Save tag</source>
-        <translation>குறிச்சொல்லைச் சேமிக்கவும்</translation>
+        <source>Insert</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Number of buttons</source>
+        <source>Icon</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">எதுவுமில்லை</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">முன்னோட்டம்</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">சேமி</translation>
+    </message>
+    <message>
+        <source>Save tag</source>
+        <translation type="vanished">குறிச்சொல்லைச் சேமிக்கவும்</translation>
     </message>
     <message>
         <source>Select whole characters.</source>
@@ -1553,6 +1605,22 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>%1, active line %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the text the button puts in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the tag, for example \blur2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out the braces: the button puts the tag in an override block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A tag starts with a backslash, for example \blur2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3521,6 +3589,10 @@ Failed to copy %2 fonts.</source>
         <translation>ஒரு வடிவத்திலிருந்து இன்னொரு வடிவத்திற்கு மாற்றுகிறது</translation>
     </message>
     <message>
+        <source>Hide tags in the line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opens the HikariSub website in the default browser</source>
         <translation>இயல்பு உலாவியில் HikariSub இணையதளத்தைத் திறக்கிறது</translation>
     </message>
@@ -4276,6 +4348,42 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Set a missing script resolution from the video without asking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show video frames instead of times in the line editor and the subtitle grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide tags in the line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No tag buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit the tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the tag button</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6030,6 +6138,18 @@ Spell checking will be disabled</source>
     <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Missing style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The document has no style named &quot;%1&quot;. Create it from Default?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Prompt</source>

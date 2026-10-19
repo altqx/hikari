@@ -1122,6 +1122,10 @@ please save with different name or change file attribute.</source>
         <translation>글자 위치</translation>
     </message>
     <message>
+        <source>mixed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Number of characters in each line.
 No more than 43 characters per line (maximum 2 lines).</source>
         <translation>각 줄의 글자 수.
@@ -1135,7 +1139,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Time</source>
-        <translation>시간</translation>
+        <translation type="vanished">시간</translation>
     </message>
     <message>
         <source>Show times</source>
@@ -1143,7 +1147,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Frames</source>
-        <translation>프레임</translation>
+        <translation type="vanished">프레임</translation>
     </message>
     <message>
         <source>Show frames</source>
@@ -1259,7 +1263,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation>태그 숨김</translation>
+        <translation type="vanished">태그 숨김</translation>
     </message>
     <message>
         <source>&amp;Copy</source>
@@ -1338,12 +1342,32 @@ Should not exceed 15 characters per second</source>
         <translation>그림자 색상</translation>
     </message>
     <message>
+        <source>Add a tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Manage tag buttons</source>
-        <translation>상용구 등록</translation>
+        <translation type="vanished">상용구 등록</translation>
     </message>
     <message>
         <source>Change number of buttons</source>
-        <translation>상용구 등록버튼 개수 지정</translation>
+        <translation type="vanished">상용구 등록버튼 개수 지정</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -1379,7 +1403,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Enter ASS tag</source>
-        <translation>태그 / 글자</translation>
+        <translation type="vanished">태그 / 글자</translation>
     </message>
     <message>
         <source>Tag inserted in place of cursor</source>
@@ -1402,16 +1426,44 @@ Should not exceed 15 characters per second</source>
         <translation>버튼 이름</translation>
     </message>
     <message>
+        <source>Enter a name or choose an icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">이름</translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Button tag</source>
         <translation>내용</translation>
     </message>
     <message>
-        <source>Save tag</source>
-        <translation>태그 저장</translation>
+        <source>Insert</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Number of buttons</source>
+        <source>Icon</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">없음</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">미리보기</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">저장</translation>
+    </message>
+    <message>
+        <source>Save tag</source>
+        <translation type="vanished">태그 저장</translation>
     </message>
     <message>
         <source>Select whole characters.</source>
@@ -1543,6 +1595,22 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>%1, active line %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the text the button puts in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the tag, for example \blur2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out the braces: the button puts the tag in an override block</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A tag starts with a backslash, for example \blur2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3509,6 +3577,10 @@ Failed to copy %2 fonts.</source>
         <translation>다른 자막 형식으로 변환</translation>
     </message>
     <message>
+        <source>Hide tags in the line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opens the HikariSub website in the default browser</source>
         <translation>기본 브라우저에서 HikariSub 웹사이트를 엽니다</translation>
     </message>
@@ -4260,6 +4332,42 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Set a missing script resolution from the video without asking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show video frames instead of times in the line editor and the subtitle grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide tags in the line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No tag buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit the tag button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the tag button</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6013,6 +6121,18 @@ Spell checking will be disabled</source>
     <message>
         <source>Cancel</source>
         <translation>취소</translation>
+    </message>
+    <message>
+        <source>Missing style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The document has no style named &quot;%1&quot;. Create it from Default?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Prompt</source>

@@ -70,9 +70,13 @@ private slots:
         expect(QAccessible::EditableText, "Right margin");
         expect(QAccessible::EditableText, "Vertical margin");
         expect(QAccessible::ComboBox, "Effect");
-        expect(QAccessible::ComboBox, "Text position");
-        expect(QAccessible::RadioButton, "Show times");
-        expect(QAccessible::RadioButton, "Show frames");
+        // LE4: the icon button that opens the position grid.
+        expect(QAccessible::Button, "Text position");
+        // LE5: the custom tag buttons' "+".
+        expect(QAccessible::Button, "Add a tag button");
+        // LE2: no Time / Frames radios here (the Video panel's menu has them).
+        QVERIFY2(!hasNode(nodes, QAccessible::RadioButton, QStringLiteral("Show times")), qPrintable(tree));
+        QVERIFY2(!hasNode(nodes, QAccessible::RadioButton, QStringLiteral("Show frames")), qPrintable(tree));
         // The counters read as their text (EditBox::UpdateChars).
         expect(QAccessible::StaticText, "Wraps: 5/43");
         expect(QAccessible::StaticText, "Characters per second: 5<=15");

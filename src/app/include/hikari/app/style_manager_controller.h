@@ -58,6 +58,10 @@ public:
     // The editor. begin* return the values it opens with ({} when refused).
     Q_INVOKABLE QVariantMap beginEdit(bool store, int row);
     Q_INVOKABLE QVariantMap beginNew(bool store);
+    // LE6: a new Document Style named `name`, prefilled from the Document's
+    // "Default" Style (the default Style when it has none); committed, it is
+    // added to the Document.
+    Q_INVOKABLE QVariantMap beginNamed(const QString &name);
     Q_INVOKABLE QVariantMap beginCopy(bool store, int row);
     // What a commit would ask: {fields (bits changed since the editor
     // opened), rename (an existing Document Style renamed)}.

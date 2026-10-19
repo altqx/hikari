@@ -117,6 +117,11 @@ constexpr OptionsBinding kBindings[] = {
     // H2-output-device (decision 60): the device both audio paths play
     // through, on the Audio page; empty follows the system default.
     {"audio.outputDevice", OutputDevice, Audio},
+    // LE2: the Times/Frames switch (EDITBOX_TIMES_TO_FRAMES_SWITCH), which
+    // left the Line editor for the Editor page and the Video panel's menu.
+    {"editor.timesToFramesSwitch", Check, Editor},
+    // LE3-tags-shown: the Line editor's hidden-tag view (shown by default).
+    {"editor.hideTags", Check, Editor},
     // WS2: the panel layout in the subtitle file ([Hikari]), on the
     // Subtitle properties page with the other things a save writes there.
     {"subtitles.layoutInFile", Check, SubtitleProperties},
