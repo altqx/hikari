@@ -3049,6 +3049,27 @@ ApplicationWindow {
                         onToggled: { root.audio.setSpectrumNonLinear(checked); audioDisplay.forceActiveFocus() }
                     }
                     Item { Layout.fillWidth: true }
+                    // AV1 (#238): the output device menu, at the strip's end
+                    // (MuseScore's playback device sits beside its mixer).
+                    AudioButton {
+                        id: audioOutputButton
+                        objectName: "audioOutputButton"
+                        iconRole: "audio-output"
+                        text: qsTranslate("HikariSub.Audio", "Output device")
+                        //: The audio panel's speaker button; %1 is the device audio plays through now
+                        tip: root.app.audioOutputName.length
+                             ? qsTranslate("HikariSub.Audio", "Output device: %1").arg(root.app.audioOutputName)
+                             : qsTranslate("HikariSub.Audio", "Output device")
+                        gap: 0
+                        down: audioOutputMenu.visible
+                        onRun: audioOutputMenu.popup(audioOutputButton, 0, audioOutputButton.height)
+                        AudioOutputMenu {
+                            id: audioOutputMenu
+                            objectName: "audioOutputMenu"
+                            app: root.app
+                            onSettingsRequested: settingsDialog.openDialog(4) // the Audio page
+                        }
+                    }
                 }
                 // Legacy AudioBox's accelerator table (AudioBox::SetAccels:
                 // its window's bindings in the hotkey registry, O2), acting

@@ -724,6 +724,11 @@ icon("hotkeys", "Hotkeys", [], ["settings-dialog"],
      rect(1.5, 3.5, 13, 9, 1) + stroke("M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1") + accent(stroke("M6.5 9.5h3")))
 
 
+# Audio panel, wave 6 (#213): the output device menu (AV1 #238), a speaker
+# cabinet so that volume's cone keeps its one meaning.
+icon("audio-output", "Output device", [], [AUDIOBOX],
+     rect(3.5, 1.5, 9, 13, 1) + circle(8, 4.75, 1.25) + accent(circle(8, 10.25, 2.75)))
+
 # The legacy bitmaps the set does not replace, and why (the card's Excluded:
 # the application and file-type icons stay, and controls Qt draws itself).
 NOT_REPLACED = {

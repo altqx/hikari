@@ -38,7 +38,9 @@ Dialog {
     property var warnings: []
     signal reloaded()
 
-    function openDialog() {
+    // `page`: the page list's row to show (AV1's "Audio settings…" asks for
+    // Audio); legacy opened on the first.
+    function openDialog(page) {
         const r = app.openSettingsDialog()
         languages = r.languages
         dictionaries = r.dictionaries
@@ -50,7 +52,7 @@ Dialog {
         values = r.values
         reloaded()
         hotkeyFilter.currentIndex = 0 // a new dialog's filter choice
-        pageList.currentIndex = 0 // legacy ChangeSelection(0)
+        pageList.currentIndex = page ?? 0 // legacy ChangeSelection(0)
         open()
         warnings = r.warnings
         showWarning()

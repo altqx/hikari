@@ -2365,6 +2365,17 @@
    "surfaces": [
     "settings-dialog"
    ]
+  },
+  {
+   "role": "audio-output",
+   "file": "audio-output.svg",
+   "label": "Output device",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
   }
  ],
  "notReplaced": {

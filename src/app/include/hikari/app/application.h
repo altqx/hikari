@@ -104,6 +104,8 @@ signals:
     void playbackPlayerChanged();
     // W1: DirectShow could not open the video: legacy's warning box.
     void playerNotice(const QString &message);
+    // AV1: the route both audio paths follow changed.
+    void audioOutputChanged();
     // F1: find and replace shows a legacy message box (kind: 0 message, 1
     // "Reached end", 2 missing styles, 3 no style found, 4 replace in files);
     // a question (kinds 1-4) waits for answerFindQuestion(id, ...), a message
@@ -732,6 +734,14 @@ public:
     static QString outputDeviceLabel(const application::OutputDeviceChoice &choice);
     // tests: the route both audio paths follow now
     application::OutputRoute audioRoute() const { return m_audioRouting->route(); }
+    // AV1 (#238, application_audio.cpp): the audio panel's output menu, the
+    // entries of Settings > Audio's device choice: {label, checked} each, the
+    // stored choice checked. Choosing one stores it as the dialog's OK does.
+    Q_INVOKABLE QVariantList audioOutputMenu() const;
+    Q_INVOKABLE void chooseAudioOutput(int row);
+    // The device audio plays through now, as the speaker button's tooltip names it.
+    Q_PROPERTY(QString audioOutputName READ audioOutputName NOTIFY audioOutputChanged)
+    QString audioOutputName() const;
     backends::AudioBoxPlayer &audioPlayer() { return *m_audioPlayer; }
     ui::LogController &log() { return *m_log; }
     // O5: the interface language (PROGRAM_LANGUAGE, switched live) and
@@ -1244,6 +1254,10 @@ private:
     std::unique_ptr<application::AudioDevicesPort> m_audioDevices;
     std::unique_ptr<application::AudioOutputRouting> m_audioRouting;
     void routeAudio(const application::OutputRoute &route, bool move);
+    // AV1: the status bar says so when the chosen device went away and the
+    // system default plays (application_audio.cpp).
+    void noticeAudioRoute(const application::OutputRoute &before, const application::OutputRoute &after);
+    application::OutputRoute m_noticedRoute;
     void refreshAudio();
     void followVideoInAudio();
     // V3 (application_video.cpp)

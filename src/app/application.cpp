@@ -1123,6 +1123,7 @@ void Application::routeAudio(const application::OutputRoute &route, bool move)
     m_audioPlayer->setOutputDevice(route.systemDefault ? std::string() : route.name);
     if (move)
         m_audioPlayer->switchOutput();
+    noticeAudioRoute(std::exchange(m_noticedRoute, route), route);
 }
 
 void Application::refreshAudio()
