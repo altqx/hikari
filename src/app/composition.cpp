@@ -11,6 +11,7 @@
 #include "hikari/application/update_check.h"
 #include "hikari/backends/legacy_spelling.h"
 
+#include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -80,10 +81,16 @@ std::function<void()> showInstalling(QQmlApplicationEngine &engine)
     return [window] { delete window; };
 }
 
-// WS5: where the files a quit left wait for the next start (saveHandedOn).
+// WS5: where the files a quit left wait for the next start (saveHandedOn):
+// the session's own, as its instance is (another graphical session of the
+// user does not take them).
 QString handedOnPath()
 {
-    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/HandedOn.txt");
+    const QString session = SingleInstance::forSession().server;
+    const QString tag =
+        QString::fromLatin1(QCryptographicHash::hash(session.toUtf8(), QCryptographicHash::Sha256).toHex().left(16));
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/HandedOn-") + tag +
+           QStringLiteral(".txt");
 }
 
 // WS5: the files a quit left (saved) are opened by the next start that
