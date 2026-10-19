@@ -52,6 +52,14 @@ void openStartVideo(QObject *mainWindow, const QString &path)
     QMetaObject::invokeMethod(mainWindow, "openSingleVideo", Q_ARG(QVariant, path));
 }
 
+void preferPulseAudioBackend()
+{
+#ifdef Q_OS_LINUX
+    if (!qEnvironmentVariableIsSet("QT_AUDIO_BACKEND"))
+        qputenv("QT_AUDIO_BACKEND", "pulseaudio");
+#endif
+}
+
 namespace {
 
 #ifdef HIKARI_UPDATE_TEST_FEED
@@ -79,6 +87,7 @@ std::function<void()> showInstalling(QQmlApplicationEngine &engine)
 int runWindow(int argc, char **argv, StartupMode mode, const application::StartupArguments &startup,
               UpdateInstaller::ExitAction &exitAction)
 {
+    preferPulseAudioBackend(); // before Qt Multimedia picks its audio backend
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
     QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));

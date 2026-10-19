@@ -13032,6 +13032,30 @@ private slots:
         QCOMPARE(application->audioRoute(), (Route{headset.id, headset.name, true}));
     }
 
+    // AV1 (AV1-linux-pulseaudio): on Linux the application starts Qt
+    // Multimedia on its PulseAudio backend, unless QT_AUDIO_BACKEND names one.
+    void linuxAudioPrefersPulseAudio()
+    {
+#ifndef Q_OS_LINUX
+        QSKIP("Linux only");
+#else
+        const QByteArray before = qgetenv("QT_AUDIO_BACKEND");
+        const bool wasSet = qEnvironmentVariableIsSet("QT_AUDIO_BACKEND");
+        const auto restore = qScopeGuard([&] {
+            if (wasSet)
+                qputenv("QT_AUDIO_BACKEND", before);
+            else
+                qunsetenv("QT_AUDIO_BACKEND");
+        });
+        qunsetenv("QT_AUDIO_BACKEND");
+        app::preferPulseAudioBackend();
+        QCOMPARE(qgetenv("QT_AUDIO_BACKEND"), QByteArray("pulseaudio"));
+        qputenv("QT_AUDIO_BACKEND", "pipewire"); // the user's own choice stays
+        app::preferPulseAudioBackend();
+        QCOMPARE(qgetenv("QT_AUDIO_BACKEND"), QByteArray("pipewire"));
+#endif
+    }
+
     // AV1 (#238): the speaker button in the audio panel's tool strip opens
     // the output device list (Settings > Audio's choice), marks the stored
     // one and ends with "Audio settings…". Choosing a device moves both audio
