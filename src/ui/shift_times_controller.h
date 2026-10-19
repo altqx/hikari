@@ -27,6 +27,9 @@ class ShiftTimesController : public QObject {
     //  keyframeBeforeStart, keyframeAfterStart, keyframeBeforeEnd, keyframeAfterEnd}
     Q_PROPERTY(QVariantMap settings READ settingsMap WRITE setSettingsMap NOTIFY changed)
     Q_PROPERTY(QStringList profiles READ profileNames NOTIFY changed)
+    // TS1: the panel's collapsed sections, by id (shiftTimes.collapsedSections).
+    Q_PROPERTY(QStringList collapsedSections READ collapsedSections WRITE setCollapsedSections NOTIFY
+                   collapsedSectionsChanged)
 public:
     explicit ShiftTimesController(QString settingsFile = {}, QObject *parent = nullptr);
     explicit ShiftTimesController(SettingsStore &settings, QObject *parent = nullptr);
@@ -39,9 +42,12 @@ public:
     Q_INVOKABLE void saveProfile(const QString &name);
     Q_INVOKABLE void loadProfile(const QString &name);
     Q_INVOKABLE void removeProfile(const QString &name);
+    QStringList collapsedSections() const { return m_collapsed; }
+    void setCollapsedSections(const QStringList &ids);
 
 signals:
     void changed();
+    void collapsedSectionsChanged();
 
 private:
     void load();
@@ -52,6 +58,7 @@ private:
     SettingsStore *m_store;
     application::ShiftTimesSettings m_settings;
     QStringList m_profiles; // legacy profile lines
+    QStringList m_collapsed;
 };
 
 } // namespace hikari::ui

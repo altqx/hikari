@@ -33,6 +33,8 @@ class ShellController : public QObject {
     Q_PROPERTY(QString selectionStatus READ selectionStatus NOTIFY activeLineChanged)
     // GRID_HIDE_COLUMNS: legacy column bits hidden in both Grids (G7).
     Q_PROPERTY(int hiddenColumns READ hiddenColumns WRITE setHiddenColumns NOTIFY hiddenColumnsChanged)
+    // GR3: empty columns hide themselves in both Grids (grid.autoHideColumns).
+    Q_PROPERTY(bool autoHideColumns READ autoHideColumns WRITE setAutoHideColumns NOTIFY autoHideColumnsChanged)
     // The editing target's format has the ASS columns (Layer ... Effect), and an End time.
     Q_PROPERTY(bool assColumns READ assColumns NOTIFY targetsChanged)
     Q_PROPERTY(bool endColumn READ endColumn NOTIFY targetsChanged)
@@ -121,6 +123,15 @@ public:
         m_referenceLines.setHiddenColumns(mask);
         emit hiddenColumnsChanged();
     }
+    bool autoHideColumns() const { return m_lines.autoHideColumns(); }
+    void setAutoHideColumns(bool on)
+    {
+        if (on == m_lines.autoHideColumns())
+            return;
+        m_lines.setAutoHideColumns(on);
+        m_referenceLines.setAutoHideColumns(on);
+        emit autoHideColumnsChanged();
+    }
     // Legacy toggles one column's bit (GRID_HIDE_LAYER ... GRID_HIDE_WRAPS).
     Q_INVOKABLE void toggleColumn(int bit) { setHiddenColumns(hiddenColumns() ^ bit); }
     // E4: the Grid's Start/End as frames (the editor's Times/Frames switch).
@@ -150,6 +161,10 @@ public:
         m_lines.setSpelling(spelling);
         m_referenceLines.setSpelling(spelling);
     }
+
+    // GR2: the editing target's pending draft, shown live in its Grid row
+    // until it is committed or reverted (set again after each refresh).
+    void setDraft(std::optional<core::LineRecord> draft) { m_lines.setDraft(std::move(draft)); }
 
     // The editing target's Grid asked for a Line to become active.
     Q_INVOKABLE void activateLine(qulonglong id);
@@ -183,6 +198,7 @@ signals:
     void activeLineChanged();
     void statusTextChanged();
     void hiddenColumnsChanged();
+    void autoHideColumnsChanged();
     void hideTagsChanged();
     void referenceNavigationChanged();
     // R2: a seek made this reference Line active: the tray brings it into view.

@@ -156,7 +156,9 @@ private slots:
         options.settingsFile = settings;
         app::Application again(options);
         QCOMPARE(again.recentEntries().size(), std::size_t(3));
-        // Shown: missing files are pruned, labels number the file names.
+        // Shown: missing files are left out, labels number the file names.
+        // SH2-recent-opened-and-missing: the missing file stays in the list
+        // (legacy pruned it) until Home's Remove missing files.
         QVERIFY(QFile::remove(b1));
         const auto rows = again.recentSubtitles();
         QCOMPARE(rows.size(), qsizetype(2));
@@ -164,6 +166,11 @@ private slots:
         QCOMPARE(rows[1].toMap().value(QStringLiteral("label")).toString(), QStringLiteral("2 a.ass"));
         app::Application::Options third;
         third.settingsFile = settings;
+        {
+            app::Application kept(third);
+            QCOMPARE(kept.recentEntries().size(), std::size_t(3));
+            kept.removeMissingRecent();
+        }
         QCOMPARE(app::Application(third).recentEntries().size(), std::size_t(2));
     }
 

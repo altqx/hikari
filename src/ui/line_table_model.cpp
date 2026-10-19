@@ -11,6 +11,7 @@
 #include <QCoreApplication>
 #include <QString>
 
+#include <algorithm>
 #include <cmath>
 #include <iterator>
 
@@ -84,7 +85,7 @@ bool LineTableModel::columnShown(int column) const
     default:
         break;
     }
-    return !(m_hidden & hideBit(static_cast<Column>(column)));
+    return !((m_hidden | emptyColumns()) & hideBit(static_cast<Column>(column)));
 }
 
 void LineTableModel::setHiddenColumns(int mask)
@@ -92,6 +93,53 @@ void LineTableModel::setHiddenColumns(int mask)
     if (mask == m_hidden)
         return;
     m_hidden = mask;
+    emit headerDataChanged(Qt::Horizontal, 0, ColumnCount - 1);
+}
+
+namespace {
+
+// GR3: the columns that hide themselves when empty (hideBit's Layer, Actor,
+// Left, Right, Vertical and Effect).
+constexpr int kAutoHideBits = 1 | 16 | 32 | 64 | 128 | 256;
+
+bool blank(const std::u8string &text)
+{
+    return std::all_of(text.begin(), text.end(), [](char8_t c) { return c == u8' ' || c == u8'\t'; });
+}
+
+// The auto-hidden columns' bits a Line leaves empty.
+int emptyColumnsOf(const core::LineRecord &line)
+{
+    int bits = 0;
+    if (line.layer.value == 0)
+        bits |= LineTableModel::hideBit(LineTableModel::LayerColumn);
+    if (blank(line.actor))
+        bits |= LineTableModel::hideBit(LineTableModel::ActorColumn);
+    if (line.marginLeft.value == 0)
+        bits |= LineTableModel::hideBit(LineTableModel::MarginLeftColumn);
+    if (line.marginRight.value == 0)
+        bits |= LineTableModel::hideBit(LineTableModel::MarginRightColumn);
+    if (line.marginVertical.value == 0)
+        bits |= LineTableModel::hideBit(LineTableModel::MarginVerticalColumn);
+    if (blank(line.effect))
+        bits |= LineTableModel::hideBit(LineTableModel::EffectColumn);
+    return bits;
+}
+
+} // namespace
+
+int LineTableModel::emptyColumns() const
+{
+    if (!m_autoHide)
+        return 0;
+    return m_draft ? m_empty & emptyColumnsOf(m_draft->line) : m_empty;
+}
+
+void LineTableModel::setAutoHideColumns(bool on)
+{
+    if (on == m_autoHide)
+        return;
+    m_autoHide = on;
     emit headerDataChanged(Qt::Horizontal, 0, ColumnCount - 1);
 }
 
@@ -182,6 +230,10 @@ void LineTableModel::setHideTags(bool hide, const QString &swap)
         row.shownText.reset();
         row.spellMarks.reset();
     }
+    if (m_draft) {
+        m_draft->shownText.reset();
+        m_draft->spellMarks.reset();
+    }
     if (!m_rows.empty())
         emit dataChanged(index(0, TextColumn), index(rowCount() - 1, TextColumn), {Qt::DisplayRole, SpellMarksRole});
 }
@@ -265,11 +317,15 @@ void LineTableModel::setDocument(const core::Document &document,
     beginResetModel();
     m_rows.clear();
     m_rowById.clear();
+    m_draft.reset();
+    m_draftRow = -1;
     m_format = document.format();
     // Legacy measures the translation when translation mode shows one.
     m_translationMode = document.scriptInfo(u8"TLMode") == u8"Yes";
     const auto lines = document.lines();
+    m_empty = kAutoHideBits;
     for (const core::LineRecord *line : lines) {
+        m_empty &= emptyColumnsOf(*line);
         m_rowById.emplace(line->id.value, static_cast<int>(m_rows.size()));
         m_rows.push_back(Row{*line, std::nullopt, 0});
         // E6: Dialogue::GetState: the changed-Line mark (bits 1 and 2), 4
@@ -328,6 +384,53 @@ void LineTableModel::setSelection(const application::Selection &selection, std::
     emitStateChanged(touched);
 }
 
+void LineTableModel::setDraft(std::optional<core::LineRecord> draft)
+{
+    const int previous = m_draftRow;
+    const int empty = emptyColumns();
+    m_draft.reset();
+    m_draftRow = -1;
+    if (const auto row = draft ? rowOf(draft->id) : std::nullopt) {
+        // The committed row's marks and state, with the draft's content and
+        // its own measures, shown text and spelling marks.
+        Row shown = m_rows[static_cast<std::size_t>(*row)];
+        // R1's comparison is the committed Line's: it holds while the draft
+        // leaves what the comparison reads (compareSubtitles: the compared
+        // text, the times, the style) as it was, and the row shows none
+        // otherwise until the commit compares it again.
+        const core::LineRecord &committed = shown.line;
+        if (application::comparedText(*draft, m_translationMode) !=
+                application::comparedText(committed, m_translationMode) ||
+            draft->start.value != committed.start.value || draft->end.value != committed.end.value ||
+            draft->style != committed.style) {
+            shown.comparison = 0;
+            shown.comparisonMarks.clear();
+        }
+        shown.line = std::move(*draft);
+        shown.measures.reset();
+        shown.spellMarks.reset();
+        shown.shownText.reset();
+        m_draft = std::move(shown);
+        m_draftRow = *row;
+    }
+    if (previous >= 0 && previous != m_draftRow)
+        emitRowChanged(previous);
+    if (m_draftRow >= 0)
+        emitRowChanged(m_draftRow);
+    if (emptyColumns() != empty) // GR3: the draft fills or empties an auto-hidden column
+        emit headerDataChanged(Qt::Horizontal, 0, ColumnCount - 1);
+}
+
+const LineTableModel::Row &LineTableModel::shownRow(int row) const
+{
+    return row == m_draftRow && m_draft ? *m_draft : m_rows[static_cast<std::size_t>(row)];
+}
+
+void LineTableModel::emitRowChanged(int row)
+{
+    emit dataChanged(index(row, 0), index(row, ColumnCount - 1));
+}
+
 void LineTableModel::emitStateChanged(const std::vector<core::LineId> &ids)
 {
     for (const auto &id : ids)
@@ -370,7 +473,7 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
 {
     if (!checkIndex(index, CheckIndexOption::IndexIsValid | CheckIndexOption::ParentIsInvalid))
         return {};
-    const Row &r = m_rows[static_cast<std::size_t>(index.row())];
+    const Row &r = shownRow(index.row());
     const core::LineRecord &line = r.line;
     switch (role) {
     case Qt::DisplayRole:
@@ -436,6 +539,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return r.comparisonMarks;
     case LineStateRole:
         return r.state;
+    case DraftRole:
+        return index.row() == m_draftRow;
     default:
         return {};
     }
@@ -517,7 +622,8 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {SpellMarksRole, "spellMarks"},
                   {ComparisonRole, "comparison"},
                   {ComparisonMarksRole, "comparisonMarks"},
-                  {LineStateRole, "lineState"}});
+                  {LineStateRole, "lineState"},
+                  {DraftRole, "draft"}});
     return roles;
 }
 

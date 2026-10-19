@@ -74,6 +74,10 @@ public:
     // video stays. A later open supersedes one the filter has not let through.
     using OpenFilter = std::function<void(const QString &path, std::function<void(application::IndexRequest)> asVideo)>;
     void setOpenFilter(OpenFilter filter) { m_filter = std::move(filter); }
+    // SH2: runs as openVideo starts, before the open is requested, so that a
+    // video opened while no Document is open (from the Home page) first gets
+    // one to belong to: a later editing target change would close it.
+    void setBeforeOpen(std::function<void()> before) { m_beforeOpen = std::move(before); }
 
     // The editing target changed: closes the video and withdraws the question.
     void resetForTarget();
@@ -186,6 +190,7 @@ private:
 
     application::VideoSession m_session;
     OpenFilter m_filter;
+    std::function<void()> m_beforeOpen;
     std::uint64_t m_openRequest = 0;
     QString m_offer; // the question's text; empty: none
     QString m_offerAssociated;

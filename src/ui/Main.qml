@@ -340,7 +340,7 @@ ApplicationWindow {
             shiftConfirm.open()
             return
         }
-        shiftMessage.text = root.app.shiftTimes()
+        shiftTimesPanel.message = root.app.shiftTimes()
     }
 
     // The dock of the panel with the focus (the Grid's otherwise).
@@ -552,6 +552,8 @@ ApplicationWindow {
     }
 
     function cyclePanels(step) {
+        if (homePage.visible) // SH2: the Home page is the one region
+            return homePage.takeFocus()
         const shown = panels.filter(p => p.visible)
         // The panel with focus in the focus window: the main one or a
         // floating panel group (D1). Window.active cannot tell them apart:
@@ -2174,6 +2176,39 @@ ApplicationWindow {
         Component.onCompleted: Qt.callLater(() => dropAreaCpp = Docking.mainDropArea(dockingArea.uniqueName))
     }
 
+    // SH2: the Home page over the docked panels while no Document is open,
+    // under the file drop area (z), so files dropped on it open. The panels
+    // under it stay laid out (their layout is saved as it is) but take no
+    // input.
+    HomePage {
+        id: homePage
+        objectName: "homePage"
+        app: root.app
+        anchors.fill: dockingArea
+        z: 1.5
+        visible: root.app.home
+        spaceAbove: documentTabBar.height
+        onNewRequested: root.app.addPage()
+        onOpenRequested: openAction.trigger()
+        onOpenVideoRequested: openVideoAction.trigger()
+        onRestoreRequested: sessionWindows.load()
+        // P9: Ctrl+click shows the file in its folder, as in File > Recent.
+        onRecentChosen: path => { if (!root.app.revealRecent(path)) root.openSubtitles(path) }
+        onVisibleChanged: visible ? Qt.callLater(takeFocus) : Qt.callLater(root.focusAfterHome)
+        Component.onCompleted: if (visible) Qt.callLater(takeFocus)
+    }
+    // The first Document opened from Home: the focus, left nowhere when the
+    // page went, goes to the Grid (else the first shown panel), unless the
+    // opening put it somewhere.
+    function focusAfterHome() {
+        if (homePage.visible || (root.activeFocusItem && root.activeFocusItem !== root.contentItem))
+            return
+        const shown = root.panels.filter(p => p.visible)
+        const next = shown.includes(gridPanel) ? gridPanel : shown[0]
+        if (next)
+            root.focusPanel(next, Qt.OtherFocusReason)
+    }
+
     // D1: the Classic panels dock, float, tab and close (KDDockWidgets behind
     // ui/docking.h; docs/qt/docking.md). Closing a panel hides its view; its
     // controller and any draft stay.
@@ -2182,6 +2217,7 @@ ApplicationWindow {
         objectName: "dockingArea"
         anchors.fill: parent
         uniqueName: "Classic"
+        enabled: !homePage.visible // SH2
 
         KDDW.DockWidget {
             id: videoDock
@@ -3196,11 +3232,16 @@ ApplicationWindow {
                                 objectName: "tagButtonMenu"
                                 property Item button: null
                                 property int index: -1
+                                // Left is toward the first button, unless the layout is mirrored.
+                                readonly property int leftStep: Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1
                                 // At the click, inside the button it is for.
                                 function openFor(b, i, at) {
                                     button = b
                                     index = i
                                     popup(b, at)
+                                }
+                                function canMove(step) {
+                                    return index >= 0 && index + step >= 0 && index + step < root.tagButtons.count
                                 }
                                 ShellMenuItem {
                                     objectName: "tagButtonEdit"
@@ -3212,14 +3253,14 @@ ApplicationWindow {
                                 ShellMenuItem {
                                     objectName: "tagButtonMoveLeft"
                                     text: qsTranslate("HikariSub.Editor", "Move left")
-                                    enabled: tagButtonMenu.index > 0
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -1)
+                                    enabled: tagButtonMenu.canMove(tagButtonMenu.leftStep)
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, tagButtonMenu.leftStep)
                                 }
                                 ShellMenuItem {
                                     objectName: "tagButtonMoveRight"
                                     text: qsTranslate("HikariSub.Editor", "Move right")
-                                    enabled: tagButtonMenu.index >= 0 && tagButtonMenu.index < root.tagButtons.count - 1
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, 1)
+                                    enabled: tagButtonMenu.canMove(-tagButtonMenu.leftStep)
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -tagButtonMenu.leftStep)
                                 }
                                 MenuSeparator {}
                                 ShellMenuItem {
@@ -3626,6 +3667,17 @@ ApplicationWindow {
                             id: hideColumnsMenu
                             objectName: "hideColumnsMenu"
                             title: qsTranslate("HikariSub.Grid", "Hide columns")
+                            // GR3 (Aegisub's convention): columns empty in
+                            // the whole Document hide themselves; the same
+                            // setting as Settings > Editor's.
+                            ShellMenuItem {
+                                objectName: "hideEmptyColumns"
+                                text: qsTranslate("HikariSub.Grid", "Hide empty columns")
+                                checkable: true
+                                checked: root.shell.autoHideColumns
+                                onTriggered: root.shell.autoHideColumns = checked
+                            }
+                            MenuSeparator {}
                             Instantiator {
                                 model: [
                                     { bit: 1, label: qsTranslate("HikariSub.Grid", "Hide layer"), ass: true, symbol: "GRID_HIDE_LAYER" },
@@ -3649,7 +3701,7 @@ ApplicationWindow {
                                     enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.end || root.shell.endColumn)
                                     onTriggered: if (!root.gridGesture(this, modelData.symbol)) root.shell.toggleColumn(modelData.bit)
                                 }
-                                onObjectAdded: (index, object) => hideColumnsMenu.insertItem(index, object)
+                                onObjectAdded: (index, object) => hideColumnsMenu.insertItem(2 + index, object)
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }
@@ -3735,207 +3787,18 @@ ApplicationWindow {
                 id: timingPanel
                 objectName: "timingPanel"
                 dockName: "Timing"
-                minimumBodySize: Qt.size(shiftForm.implicitWidth + 20, 120) // the form scrolls
+                minimumBodySize: shiftTimesPanel.minimumBodySize // the form scrolls
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.TimeShift", "Shift times")
-                ScrollView {
-                    id: shiftScroll
+                // TS1: the form and its run button.
+                ShiftTimesPanel {
+                    id: shiftTimesPanel
                     anchors.fill: parent
-                    clip: true
-                    // The scroll bar shows while the form is taller than the
-                    // panel (the post processor and profiles lay below it unseen).
-                    ScrollBar.vertical.policy: contentHeight > height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
-                    // The form 1 inside the clipped view: a focus ring at its
-                    // edge shows whole.
-                    contentWidth: shiftForm.implicitWidth + 2
-                    contentHeight: shiftForm.implicitHeight + 2
-                    ColumnLayout {
-                        id: shiftForm
-                        x: 1
-                        y: 1
-                        width: timingPanel.width - 20
-                        readonly property var settings: root.shiftTimes.settings
-                        function set(key, value) {
-                            const next = Object.assign({}, settings)
-                            next[key] = value
-                            root.shiftTimes.settings = next
-                        }
-                        // Legacy time control: h:mm:ss.cc, or frames when shown as frames.
-                        function timeText(ms) {
-                            const cs = Math.floor(ms / 10) % 100, s = Math.floor(ms / 1000) % 60
-                            const m = Math.floor(ms / 60000) % 60, h = Math.floor(ms / 3600000)
-                            return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0") + "." + String(cs).padStart(2, "0")
-                        }
-                        function parseTime(text) {
-                            const m = /^(\d+):(\d{1,2}):(\d{1,2})(?:[.,](\d{1,2}))?$/.exec(text.trim())
-                            if (!m)
-                                return -1
-                            return ((+m[1] * 60 + +m[2]) * 60 + +m[3]) * 1000 + (m[4] ? +m[4].padEnd(2, "0") * 10 : 0)
-                        }
-                        RowLayout {
-                            Label { text: shiftForm.settings.byFrames ? qsTranslate("HikariSub.TimeShift", "Frames") : qsTranslate("HikariSub.TimeShift", "Time") }
-                            TextField {
-                                id: shiftTime
-                                objectName: "shiftTime"
-                                Layout.fillWidth: true
-                                Accessible.name: qsTranslate("HikariSub.TimeShift", "Shift subtitle times")
-                                text: shiftForm.settings.byFrames ? String(shiftForm.settings.frames)
-                                                                  : shiftForm.timeText(shiftForm.settings.timeMs)
-                                onEditingFinished: {
-                                    if (shiftForm.settings.byFrames) {
-                                        shiftForm.set("frames", Math.max(0, parseInt(text) || 0))
-                                    } else {
-                                        const ms = shiftForm.parseTime(text)
-                                        if (ms >= 0)
-                                            shiftForm.set("timeMs", ms)
-                                    }
-                                }
-                            }
-                            Button {
-                                objectName: "shiftApply"
-                                text: qsTranslate("HikariSub.TimeShift", "Shift")
-                                Accessible.description: qsTranslate("HikariSub.TimeShift", "Shift subtitle times")
-                                onClicked: root.runShiftTimes()
-                            }
-                        }
-                        RowLayout {
-                            RadioButton { objectName: "shiftForward"; text: qsTranslate("HikariSub.TimeShift", "Forward"); checked: shiftForm.settings.forward; onToggled: if (checked) shiftForm.set("forward", true) }
-                            RadioButton { objectName: "shiftBackward"; text: qsTranslate("HikariSub.TimeShift", "Backward"); checked: !shiftForm.settings.forward; onToggled: if (checked) shiftForm.set("forward", false) }
-                        }
-                        RowLayout {
-                            CheckBox {
-                                objectName: "shiftFrames"
-                                text: qsTranslate("HikariSub.TimeShift", "Frames")
-                                checked: shiftForm.settings.byFrames
-                                enabled: checked || root.app.exactTimebase()
-                                onToggled: shiftForm.set("byFrames", checked)
-                            }
-                            CheckBox { objectName: "shiftTagTimes"; text: qsTranslate("HikariSub.TimeShift", "Tag times"); checked: shiftForm.settings.tagTimes; onToggled: shiftForm.set("tagTimes", checked) }
-                        }
-                        GroupBox {
-                            title: qsTranslate("HikariSub.TimeShift", "Shift by video / audio")
-                            Layout.fillWidth: true
-                            ColumnLayout {
-                                RowLayout {
-                                    RadioButton { text: qsTranslate("HikariSub.TimeShift", "Beginning"); checked: shiftForm.settings.fromStartTime; onToggled: if (checked) shiftForm.set("fromStartTime", true) }
-                                    RadioButton { text: qsTranslate("HikariSub.TimeShift", "End"); checked: !shiftForm.settings.fromStartTime; onToggled: if (checked) shiftForm.set("fromStartTime", false) }
-                                }
-                                CheckBox { objectName: "shiftToVideo"; text: qsTranslate("HikariSub.TimeShift", "Move the marker to video time"); checked: shiftForm.settings.moveToVideoTime; onToggled: shiftForm.set("moveToVideoTime", checked) }
-                                CheckBox { objectName: "shiftToAudio"; text: qsTranslate("HikariSub.TimeShift", "Move the marker to audio time"); enabled: root.audio.hasMark /* A3: ShiftTimes::Contents */; checked: shiftForm.settings.moveToAudioTime; onToggled: shiftForm.set("moveToAudioTime", checked) }
-                            }
-                        }
-                        Label { text: qsTranslate("HikariSub.TimeShift", "Which lines") }
-                        ComboBox {
-                            objectName: "shiftWhichLines"
-                            Layout.fillWidth: true
-                            Accessible.name: qsTranslate("HikariSub.TimeShift", "Which lines")
-                            model: [qsTranslate("HikariSub.TimeShift", "All lines"), qsTranslate("HikariSub.TimeShift", "Selected lines"), qsTranslate("HikariSub.TimeShift", "From the selected line"),
-                                    qsTranslate("HikariSub.TimeShift", "All times higher and equal"), qsTranslate("HikariSub.TimeShift", "All times lower and equal"),
-                                    qsTranslate("HikariSub.TimeShift", "According to the selected styles")]
-                            currentIndex: shiftForm.settings.whichLines
-                            onActivated: (index) => shiftForm.set("whichLines", index)
-                        }
-                        TextField {
-                            objectName: "shiftStyles"
-                            Layout.fillWidth: true
-                            visible: shiftForm.settings.whichLines === 5
-                            placeholderText: qsTranslate("HikariSub.TimeShift", "Styles, separated by commas")
-                            Accessible.name: qsTranslate("HikariSub.TimeShift", "Styles")
-                            text: shiftForm.settings.styles
-                            onEditingFinished: shiftForm.set("styles", text)
-                        }
-                        Label { text: qsTranslate("HikariSub.TimeShift", "A method of time shift") }
-                        ComboBox {
-                            objectName: "shiftWhichTimes"
-                            Layout.fillWidth: true
-                            Accessible.name: qsTranslate("HikariSub.TimeShift", "A method of time shift")
-                            model: [qsTranslate("HikariSub.TimeShift", "Both times"), qsTranslate("HikariSub.TimeShift", "The starting time"), qsTranslate("HikariSub.TimeShift", "End time")]
-                            currentIndex: shiftForm.settings.whichTimes
-                            onActivated: (index) => shiftForm.set("whichTimes", index)
-                        }
-                        Label { text: qsTranslate("HikariSub.TimeShift", "Correction end times") }
-                        ComboBox {
-                            objectName: "shiftEndCorrection"
-                            Layout.fillWidth: true
-                            Accessible.name: qsTranslate("HikariSub.TimeShift", "Correction end times")
-                            model: [qsTranslate("HikariSub.TimeShift", "Leave unchanged"), qsTranslate("HikariSub.TimeShift", "Adjust overlapping times"), qsTranslate("HikariSub.TimeShift", "New times")]
-                            currentIndex: shiftForm.settings.correctEndTimes
-                            onActivated: (index) => shiftForm.set("correctEndTimes", index)
-                        }
-                        // F6: legacy "Post processor" (the panel switches between shift and postprocessor).
-                        CheckBox {
-                            objectName: "postprocessorOn"
-                            text: qsTranslate("HikariSub.TimeShift", "Run post processor")
-                            checked: (shiftForm.settings.postprocessor & 16) !== 0
-                            onToggled: shiftForm.set("postprocessor", checked ? (shiftForm.settings.postprocessor | 16)
-                                                                              : (shiftForm.settings.postprocessor & ~16))
-                        }
-                        GroupBox {
-                            title: qsTranslate("HikariSub.TimeShift", "Post processor")
-                            Layout.fillWidth: true
-                            visible: (shiftForm.settings.postprocessor & 16) !== 0
-                            GridLayout {
-                                anchors.fill: parent
-                                columns: 2
-                                component FlagBox: CheckBox {
-                                    property int bit
-                                    checked: (shiftForm.settings.postprocessor & bit) !== 0
-                                    onToggled: shiftForm.set("postprocessor", checked ? (shiftForm.settings.postprocessor | bit)
-                                                                                      : (shiftForm.settings.postprocessor & ~bit))
-                                }
-                                component MsBox: SpinBox {
-                                    property string key
-                                    from: 0; to: 100000; stepSize: 10; editable: true
-                                    value: shiftForm.settings[key]
-                                    onValueModified: shiftForm.set(key, value)
-                                }
-                                FlagBox { objectName: "ppLeadIn"; bit: 1; text: qsTranslate("HikariSub.TimeShift", "Lead-in") }
-                                MsBox { key: "leadIn"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Lead-in") }
-                                FlagBox { objectName: "ppLeadOut"; bit: 2; text: qsTranslate("HikariSub.TimeShift", "Lead-out") }
-                                MsBox { key: "leadOut"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Lead-out") }
-                                FlagBox { objectName: "ppContinuous"; bit: 4; text: qsTranslate("HikariSub.TimeShift", "Set times as continuous"); Layout.columnSpan: 2 }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "Start time threshold") }
-                                MsBox { key: "thresholdStart"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Start time threshold") }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "End time threshold") }
-                                MsBox { key: "thresholdEnd"; Accessible.name: qsTranslate("HikariSub.TimeShift", "End time threshold") }
-                                FlagBox { objectName: "ppSnap"; bit: 8; text: qsTranslate("HikariSub.TimeShift", "Snap to keyframes"); enabled: root.app.exactTimebase(); Layout.columnSpan: 2 }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "Before the start of time") }
-                                MsBox { key: "keyframeBeforeStart"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Before the start of time") }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "After the start time") }
-                                MsBox { key: "keyframeAfterStart"; Accessible.name: qsTranslate("HikariSub.TimeShift", "After the start time") }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "Before the end time") }
-                                MsBox { key: "keyframeBeforeEnd"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Before the end time") }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "After the end time") }
-                                MsBox { key: "keyframeAfterEnd"; Accessible.name: qsTranslate("HikariSub.TimeShift", "After the end time") }
-                            }
-                        }
-                        GroupBox {
-                            title: qsTranslate("HikariSub.TimeShift", "Profiles")
-                            Layout.fillWidth: true
-                            RowLayout {
-                                anchors.fill: parent
-                                ComboBox {
-                                    id: shiftProfile
-                                    objectName: "shiftProfile"
-                                    Layout.fillWidth: true
-                                    Accessible.name: qsTranslate("HikariSub.TimeShift", "Profiles")
-                                    editable: true
-                                    model: root.shiftTimes.profiles
-                                    onActivated: (index) => root.shiftTimes.loadProfile(textAt(index))
-                                }
-                                IconToolButton { objectName: "shiftProfileSave"; iconRole: "add"; text: qsTranslate("HikariSub.TimeShift", "Adding and editing profiles"); onClicked: root.shiftTimes.saveProfile(shiftProfile.editText) }
-                                IconToolButton { objectName: "shiftProfileRemove"; iconRole: "remove"; text: qsTranslate("HikariSub.TimeShift", "Removing profiles"); onClicked: root.shiftTimes.removeProfile(shiftProfile.editText) }
-                            }
-                        }
-                        Label {
-                            id: shiftMessage
-                            objectName: "shiftMessage"
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
-                            color: palette.highlight
-                            Accessible.role: Accessible.AlertMessage
-                        }
-                    }
+                    shiftTimes: root.shiftTimes
+                    app: root.app
+                    hasVideo: root.video.hasVideo
+                    audioHasMark: root.audio.hasMark
+                    onRun: root.runShiftTimes()
                 }
             }
         }
@@ -4016,6 +3879,7 @@ ApplicationWindow {
         spacing: 0
         // P6: the open Documents' tabs (legacy Notebook's bar).
         DocumentTabBar {
+            id: documentTabBar
             app: root.app
             Layout.fillWidth: true
             onCloseRequested: index => root.closeTab(index)
@@ -4979,7 +4843,7 @@ ApplicationWindow {
         anchors.centerIn: parent
         standardButtons: Dialog.Yes | Dialog.No
         Label { text: qsTranslate("HikariSub.TimeShift", "Do you really want to shift only %1 times?").arg(shiftConfirm.which === 1 ? qsTranslate("HikariSub.TimeShift", "start") : qsTranslate("HikariSub.TimeShift", "end")) }
-        onAccepted: shiftMessage.text = root.app.shiftTimes()
+        onAccepted: shiftTimesPanel.message = root.app.shiftTimes()
     }
     // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
     // and failures; the automatic one speaks only for a newer release.
