@@ -204,6 +204,8 @@ std::optional<Session> parseSession(std::string_view text)
             tab.audio = rest;
         else if (startsWith(token, "Keyframes: ", &rest))
             tab.keyframes = rest;
+        else if (startsWith(token, "Layout: ", &rest))
+            tab.layout = rest;
         // Checked after every token, as legacy did; `rest` keeps the last
         // field's value when this token is not a "Tab: " line.
         const bool last = !hasMoreTokens();
@@ -254,6 +256,8 @@ std::string writeSession(std::string_view program, bool closed, const std::vecto
             out += "Audio: " + tab.audio + "\r\n";
         if (!tab.keyframes.empty())
             out += "Keyframes: " + tab.keyframes + "\r\n";
+        if (!tab.layout.empty())
+            out += "Layout: " + tab.layout + "\r\n";
         ++number;
     }
     return out;
