@@ -17951,6 +17951,14 @@ private slots:
         QTest::mouseMove(window, item("lineText")->mapToScene(QPointF(10, 10)).toPoint());
         QTRY_VERIFY(!grid->property("visible").toBool());
         QVERIFY(item("lineText")->hasActiveFocus());
+        // The editor's own move (Enter, Ctrl+Up or Down) makes a mixed selection
+        // plain: the icon shows the one Line it moved to.
+        QVERIFY(application->editor().undo()); // back to {\an3}first and {\an4\b1}second
+        application->selectAllLines();
+        QTRY_COMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-mixed"));
+        QVERIFY(application->editor().nextLine(-1)); // from the second Line
+        QCOMPARE(session->selection().selected.size(), std::size_t(1));
+        QTRY_COMPARE(choice->property("iconRole").toString(), QStringLiteral("alignment-3"));
     }
 
     // SubsGrid::ChangeLine: with several Lines selected the sent fields go to

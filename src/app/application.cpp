@@ -943,6 +943,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return;
         session->setSelection(gridSelection().plain(session->selection(), core::LineId{id}));
         m_shell->setSelection(session->selection());
+        m_editor->selectionChanged(); // LE4: no longer mixed
         followEditingLine(); // R2: the editor's own move (E4 sends the draft before it)
     });
     // The editor's Start/End difference measures from the frame the Video
@@ -1548,8 +1549,10 @@ void Application::refreshViews()
                      referenceSession ? &referenceSession->document() : nullptr,
                      target ? m_comparison.table(*target) : nullptr,
                      reference ? m_comparison.table(*reference) : nullptr);
-    if (targetSession)
+    if (targetSession) {
         m_shell->setSelection(targetSession->selection());
+        m_editor->selectionChanged(); // LE4: the mixed position
+    }
     if (referenceSession) // R2: the reference's own selection
         m_shell->setReferenceSelection(referenceSession->selection());
     followEditingLine(); // R2: a linked reference follows the active Line
