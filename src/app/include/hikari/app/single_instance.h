@@ -45,8 +45,9 @@ QStringList launchFiles(const QStringList &arguments, const QString &workingDire
 
 // The files a quitting instance was handed and did not open, kept at `path`
 // (in the user's data folder) for the next start that opens a window: added
-// to what is kept there already.
-void saveHandedOn(const QString &path, const QStringList &files);
+// to what is kept there already. False when they could not be kept (the
+// folder cannot be written, or the disk is full).
+bool saveHandedOn(const QString &path, const QStringList &files);
 // The files kept at `path`, taken: the file goes, and files kept longer than
 // `maxAgeSeconds` ago are dropped (the start they were kept for never came).
 QStringList takeHandedOn(const QString &path, qint64 maxAgeSeconds = 3600);

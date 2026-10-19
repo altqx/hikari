@@ -426,14 +426,14 @@ private slots:
         const QString kept = dir.filePath(QStringLiteral("handed/HandedOn.txt"));
         const QString a = dir.filePath(QStringLiteral("a.ass")), b = dir.filePath(QStringLiteral("字幕 b.ass"));
         QVERIFY(app::takeHandedOn(kept).isEmpty());
-        app::saveHandedOn(kept, {a});
-        app::saveHandedOn(kept, {b, a});
+        QVERIFY(app::saveHandedOn(kept, {a}));
+        QVERIFY(app::saveHandedOn(kept, {b, a}));
         QCOMPARE(app::takeHandedOn(kept), (QStringList{a, b}));
         QVERIFY(!QFile::exists(kept));
         QVERIFY(app::takeHandedOn(kept).isEmpty());
         // Any character a path may have, a line break included.
         const QString odd = dir.filePath(QStringLiteral("two\nlines.ass"));
-        app::saveHandedOn(kept, {odd});
+        QVERIFY(app::saveHandedOn(kept, {odd}));
         QCOMPARE(app::takeHandedOn(kept), QStringList{odd});
         QFile old(kept);
         QVERIFY(old.open(QIODevice::WriteOnly));
@@ -443,6 +443,12 @@ private slots:
         old.close();
         QVERIFY(app::takeHandedOn(kept).isEmpty());
         QVERIFY(!QFile::exists(kept));
+        // A place that cannot be written says so (the quit then hands the
+        // files to the next start's command line).
+        QFile plain(dir.filePath(QStringLiteral("plain")));
+        QVERIFY(plain.open(QIODevice::WriteOnly));
+        plain.close();
+        QVERIFY(!app::saveHandedOn(plain.fileName() + QStringLiteral("/HandedOn.txt"), {a}));
     }
 
     // A start that holds the lock but cannot listen (its socket or pipe name

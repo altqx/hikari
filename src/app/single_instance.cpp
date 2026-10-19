@@ -237,7 +237,7 @@ QStringList readHandedOn(const QString &path, qint64 maxAgeSeconds)
 
 } // namespace
 
-void saveHandedOn(const QString &path, const QStringList &files)
+bool saveHandedOn(const QString &path, const QStringList &files)
 {
     QStringList kept = readHandedOn(path, std::numeric_limits<qint64>::max());
     for (const QString &file : files)
@@ -246,11 +246,11 @@ void saveHandedOn(const QString &path, const QStringList &files)
     QDir().mkpath(QFileInfo(path).absolutePath());
     QSaveFile out(path);
     if (!out.open(QIODevice::WriteOnly))
-        return;
+        return false;
     QDataStream stream(&out);
     stream.setVersion(QDataStream::Qt_6_0);
     stream << QDateTime::currentSecsSinceEpoch() << kept;
-    out.commit();
+    return stream.status() == QDataStream::Ok && out.commit();
 }
 
 QStringList takeHandedOn(const QString &path, qint64 maxAgeSeconds)

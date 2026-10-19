@@ -99,20 +99,30 @@ QString handedOnPath()
 // AppImage's new image), the start an update's setup makes
 // once it is done when asked (Windows), else a start of this program made
 // for them (for an AppImage the image, whose mount goes with this process).
-void startForHandedOn(const UpdateInstaller::ExitAction &exitAction, bool updateStarts)
+// `files` are those that could not be saved: they go on the command line,
+// of the deb and rpm exec (exitAction.arguments) or of a start made for
+// them, which hands them to an AppImage's new image, running by now. The
+// start an update's setup makes cannot take them (Windows; a start before
+// it would hold the setup up).
+void startForHandedOn(const UpdateInstaller::ExitAction &exitAction, bool updateStarts, const QStringList &files)
 {
-    if (!exitAction.program.isEmpty() || updateStarts)
+    if (!exitAction.program.isEmpty())
         return;
 #ifdef _WIN32
+    if (updateStarts)
+        return;
     if (update_apply::setupRunning()) {
         update_apply::askStartAfterSetup();
         return;
     }
+#else
+    if (updateStarts && files.isEmpty())
+        return;
 #endif
     QString program = qEnvironmentVariable("APPIMAGE");
     if (program.isEmpty())
         program = QCoreApplication::applicationFilePath();
-    QProcess::startDetached(program, {});
+    QProcess::startDetached(program, files);
 }
 
 int runWindow(int argc, char **argv, StartupMode mode, const application::StartupArguments &startup,
@@ -245,15 +255,16 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     // WS5: what was handed over and not opened (the quit came first) is
     // saved before an update can start a new version.
     const QStringList unopened = forwarded.takeUnopened();
-    if (!unopened.isEmpty())
-        saveHandedOn(handedOnPath(), unopened);
+    const bool saved = unopened.isEmpty() || saveHandedOn(handedOnPath(), unopened);
     // ADR 0019: a ready update installs after a normal quit, every document
     // reviewed and the main window closed.
     const bool updateStarts = code == 0 && application.updates().installer().restartRequested();
     if (code == 0)
         exitAction = application.updates().installer().installAtExit([&engine] { return showInstalling(engine); });
+    const QStringList carried = saved ? QStringList() : unopened;
+    exitAction.arguments += carried;
     if (!unopened.isEmpty() || forwarded.startAfterQuit())
-        startForHandedOn(exitAction, updateStarts);
+        startForHandedOn(exitAction, updateStarts, carried);
     return code;
 }
 
