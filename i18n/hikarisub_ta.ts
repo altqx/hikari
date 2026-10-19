@@ -2525,6 +2525,10 @@ Failed to copy %2 fonts.</source>
         <translation>நெடுவரிசைகளை மறைக்கவும்</translation>
     </message>
     <message>
+        <source>Hide empty columns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide layer</source>
         <translation>அடுக்கு மறைக்க</translation>
     </message>
@@ -2720,6 +2724,10 @@ Failed to copy %2 fonts.</source>
         <source>bookmarked</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>uncommitted</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
         <source>%n selected, %1 hidden</source>
         <translation type="unfinished">
@@ -2780,6 +2788,120 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Line wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Home</name>
+    <message>
+        <source>Today %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yesterday %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">புதிய</translation>
+    </message>
+    <message>
+        <source>New subtitles in a new tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last session</source>
+        <translation type="unfinished">கடைசி அமர்வு</translation>
+    </message>
+    <message>
+        <source>1 document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n documents</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">வடிப்பி</translation>
+    </message>
+    <message>
+        <source>Filter recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">பெயர்</translation>
+    </message>
+    <message>
+        <source>Last opened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>last opened %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">திற</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove missing files</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4329,6 +4451,10 @@ after switching from full screen</source>
     <message>
         <source>Do not vertically center the active line in the subtitle grid</source>
         <translation>வசன வரிகள் கட்டத்தில் செங்குத்தாக செயலில் உள்ள வரியை மையப்படுத்த வேண்டாம்</translation>
+    </message>
+    <message>
+        <source>Hide empty columns in the subtitle grid</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Use numpad shortcuts in text fields</source>

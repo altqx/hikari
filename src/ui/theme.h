@@ -131,6 +131,9 @@ struct Content {
     QColor spellcheck;   // GRID_SPELLCHECKER / EDITOR_SPELLCHECKER
     QColor gridAlternate; // the Grid's every other row
     QColor gridWarning;   // a fast CPS or bad wraps cell
+    // GR4: a Comment row's background (legacy GRID_COMMENT), fixed per theme;
+    // the text and secondary-text roles read on it at 4.5:1.
+    QColor gridComment;
     std::array<QColor, 5> comparison; // GRID_COMPARISON_*: outline, mismatch, match, comment mismatch, comment match
     QColor comparisonSelection;       // GRID_SELECTION over a compared row (with alpha)
     // E4: the Line editor's text colours by core::syntax::Role (EDITOR_TEXT,

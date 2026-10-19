@@ -680,6 +680,8 @@ ApplicationWindow {
     }
 
     function cyclePanels(step) {
+        if (homePage.visible) // SH2: the Home page is the one region
+            return homePage.takeFocus()
         const shown = panels.filter(p => p.visible)
         // The panel with focus in the focus window: the main one or a
         // floating panel group (D1). Window.active cannot tell them apart:
@@ -2374,6 +2376,39 @@ ApplicationWindow {
         Component.onCompleted: Qt.callLater(() => dropAreaCpp = Docking.mainDropArea(dockingArea.uniqueName))
     }
 
+    // SH2: the Home page over the docked panels while no Document is open,
+    // under the file drop area (z), so files dropped on it open. The panels
+    // under it stay laid out (their layout is saved as it is) but take no
+    // input.
+    HomePage {
+        id: homePage
+        objectName: "homePage"
+        app: root.app
+        anchors.fill: dockingArea
+        z: 1.5
+        visible: root.app.home
+        spaceAbove: documentTabBar.height
+        onNewRequested: root.app.addPage()
+        onOpenRequested: openAction.trigger()
+        onOpenVideoRequested: openVideoAction.trigger()
+        onRestoreRequested: sessionWindows.load()
+        // P9: Ctrl+click shows the file in its folder, as in File > Recent.
+        onRecentChosen: path => { if (!root.app.revealRecent(path)) root.openSubtitles(path) }
+        onVisibleChanged: visible ? Qt.callLater(takeFocus) : Qt.callLater(root.focusAfterHome)
+        Component.onCompleted: if (visible) Qt.callLater(takeFocus)
+    }
+    // The first Document opened from Home: the focus, left nowhere when the
+    // page went, goes to the Grid (else the first shown panel), unless the
+    // opening put it somewhere.
+    function focusAfterHome() {
+        if (homePage.visible || (root.activeFocusItem && root.activeFocusItem !== root.contentItem))
+            return
+        const shown = root.panels.filter(p => p.visible)
+        const next = shown.includes(gridPanel) ? gridPanel : shown[0]
+        if (next)
+            root.focusPanel(next, Qt.OtherFocusReason)
+    }
+
     // D1: the Classic panels dock, float, tab and close (KDDockWidgets behind
     // ui/docking.h; docs/qt/docking.md). Closing a panel hides its view; its
     // controller and any draft stay.
@@ -2382,6 +2417,7 @@ ApplicationWindow {
         objectName: "dockingArea"
         anchors.fill: parent
         uniqueName: "Classic"
+        enabled: !homePage.visible // SH2
 
         KDDW.DockWidget {
             id: videoDock
@@ -3407,11 +3443,16 @@ ApplicationWindow {
                                 objectName: "tagButtonMenu"
                                 property Item button: null
                                 property int index: -1
+                                // Left is toward the first button, unless the layout is mirrored.
+                                readonly property int leftStep: Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1
                                 // At the click, inside the button it is for.
                                 function openFor(b, i, at) {
                                     button = b
                                     index = i
                                     popup(b, at)
+                                }
+                                function canMove(step) {
+                                    return index >= 0 && index + step >= 0 && index + step < root.tagButtons.count
                                 }
                                 ShellMenuItem {
                                     objectName: "tagButtonEdit"
@@ -3423,14 +3464,14 @@ ApplicationWindow {
                                 ShellMenuItem {
                                     objectName: "tagButtonMoveLeft"
                                     text: qsTranslate("HikariSub.Editor", "Move left")
-                                    enabled: tagButtonMenu.index > 0
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -1)
+                                    enabled: tagButtonMenu.canMove(tagButtonMenu.leftStep)
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, tagButtonMenu.leftStep)
                                 }
                                 ShellMenuItem {
                                     objectName: "tagButtonMoveRight"
                                     text: qsTranslate("HikariSub.Editor", "Move right")
-                                    enabled: tagButtonMenu.index >= 0 && tagButtonMenu.index < root.tagButtons.count - 1
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, 1)
+                                    enabled: tagButtonMenu.canMove(-tagButtonMenu.leftStep)
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -tagButtonMenu.leftStep)
                                 }
                                 MenuSeparator {}
                                 ShellMenuItem {
@@ -3837,6 +3878,17 @@ ApplicationWindow {
                             id: hideColumnsMenu
                             objectName: "hideColumnsMenu"
                             title: qsTranslate("HikariSub.Grid", "Hide columns")
+                            // GR3 (Aegisub's convention): columns empty in
+                            // the whole Document hide themselves; the same
+                            // setting as Settings > Editor's.
+                            ShellMenuItem {
+                                objectName: "hideEmptyColumns"
+                                text: qsTranslate("HikariSub.Grid", "Hide empty columns")
+                                checkable: true
+                                checked: root.shell.autoHideColumns
+                                onTriggered: root.shell.autoHideColumns = checked
+                            }
+                            MenuSeparator {}
                             Instantiator {
                                 model: [
                                     { bit: 1, label: qsTranslate("HikariSub.Grid", "Hide layer"), ass: true, symbol: "GRID_HIDE_LAYER" },
@@ -3860,7 +3912,7 @@ ApplicationWindow {
                                     enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.end || root.shell.endColumn)
                                     onTriggered: if (!root.gridGesture(this, modelData.symbol)) root.shell.toggleColumn(modelData.bit)
                                 }
-                                onObjectAdded: (index, object) => hideColumnsMenu.insertItem(index, object)
+                                onObjectAdded: (index, object) => hideColumnsMenu.insertItem(2 + index, object)
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }
@@ -4046,6 +4098,7 @@ ApplicationWindow {
         spacing: 0
         // P6: the open Documents' tabs (legacy Notebook's bar).
         DocumentTabBar {
+            id: documentTabBar
             app: root.app
             Layout.fillWidth: true
             onCloseRequested: index => root.closeTab(index)
