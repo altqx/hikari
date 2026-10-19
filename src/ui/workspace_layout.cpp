@@ -300,6 +300,14 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
         classic = classic || w.toObject().value(QStringLiteral("uniqueName")).toString() == QStringLiteral("Classic");
     if (!classic)
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no Classic arrangement"));
+    // The engine takes a floating window's parent from its own main windows
+    // by this index without a check (LayoutSaver::restoreLayout), and a file
+    // can come from anyone: Hikari's one main window, or none.
+    for (const auto &f : payload.value(QStringLiteral("floatingWindows")).toArray()) {
+        const QJsonValue parent = f.toObject().value(QStringLiteral("parentIndex"));
+        if (!parent.isUndefined() && !(parent.isDouble() && (parent.toDouble() == -1 || parent.toDouble() == 0)))
+            return fail(QCoreApplication::translate("HikariSub.Workspace", "it puts a floating panel in a window that does not exist"));
+    }
     for (const auto &d : payload.value(QStringLiteral("allDockWidgets")).toArray()) {
         const QString name = d.toObject().value(QStringLiteral("uniqueName")).toString();
         if (!panelIds().contains(name))

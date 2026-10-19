@@ -540,6 +540,45 @@ private slots:
         stop();
     }
 
+    // The engine takes a floating panel's window by index without a check:
+    // a file naming one Hikari does not have is refused before the engine
+    // sees it (the tab follows the new-tab rule) instead of ending the
+    // program.
+    void aFloatingPanelInAMissingWindowIsRefused_data()
+    {
+        QTest::addColumn<QJsonValue>("parent");
+        QTest::newRow("far") << QJsonValue(2147483647);
+        QTest::newRow("second window") << QJsonValue(1);
+        QTest::newRow("below") << QJsonValue(-2);
+        QTest::newRow("not a number") << QJsonValue(QStringLiteral("0"));
+    }
+    void aFloatingPanelInAMissingWindowIsRefused()
+    {
+        QFETCH(QJsonValue, parent);
+        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(fileLayout())).object();
+        QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
+        QJsonArray floating = payload.value(QStringLiteral("floatingWindows")).toArray();
+        QJsonObject window = floating.first().toObject();
+        QCOMPARE(window.value(QStringLiteral("parentIndex")).toInt(-5), 0); // as Hikari writes it
+        window.insert(QStringLiteral("parentIndex"), parent);
+        floating.replace(0, window);
+        payload.insert(QStringLiteral("floatingWindows"), floating);
+        envelope.insert(QStringLiteral("payload"), payload);
+        const QByteArray layout = QJsonDocument(envelope).toJson(QJsonDocument::Compact).toBase64();
+        QString problem;
+        QVERIFY(!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem));
+        QVERIFY2(problem.contains(QStringLiteral("window that does not exist")), qPrintable(problem));
+
+        const QString file = write(path("parent.ass"), kAss + "\n[Hikari]\nLayout=" + layout + "\n");
+        start();
+        application->addPage();
+        QVERIFY(application->openFile(file));
+        QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
+        QVERIFY(!isFloating("audioDock"));
+        QVERIFY(application->log().history().contains(QStringLiteral("parent.ass")));
+        stop();
+    }
+
     // SRT and the other formats keep the arrangement only in the Session.
     void otherFormatsKeepItOnlyInTheSession()
     {
