@@ -283,7 +283,9 @@ Popup {
     // Esc is the popover's own (Cancel); a press outside keeps the colour.
     closePolicy: Popup.CloseOnPressOutside
     // A press outside: OK. On the anchor of a popover in its own window the
-    // same press reaches the anchor too (openFor).
+    // same press reaches the anchor too (openFor). Once that press has been
+    // delivered, only an anchor it went to stays recorded: a press anywhere
+    // else leaves the next click on the anchor free to open the popover.
     onClosed: {
         const pressed = active && popupType === Popup.Window
         const was = anchor
@@ -291,7 +293,12 @@ Popup {
         if (pressed) {
             pressedAnchor = was
             pressedAt = Date.now()
+            Qt.callLater(keepPressedAnchor)
         }
+    }
+    function keepPressedAnchor() {
+        if (pressedAnchor && !pressedAnchor.pressed)
+            pressedAnchor = null
     }
     property Item pressedAnchor: null
     property double pressedAt: 0

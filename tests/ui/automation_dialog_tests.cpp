@@ -265,7 +265,14 @@ private slots:
         QTest::qWait(100);
         QVERIFY(!popover->property("visible").toBool());
         QTRY_COMPARE(control(1)->property("value").value<QColor>(), QColor(0, 128, 0));
+        // A press elsewhere closes it too; a click on the anchor straight
+        // after opens it again.
         QVERIFY(QMetaObject::invokeMethod(pick, "clicked"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, QPoint(2, 2));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                          anchor->mapToScene(QPointF(anchor->width() / 2, anchor->height() / 2)).toPoint());
         QTRY_VERIFY(popover->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 0), Q_ARG(QVariant, 255)));
         QTest::keyClick(content->window(), Qt::Key_Return);
