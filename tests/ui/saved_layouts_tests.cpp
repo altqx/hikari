@@ -452,6 +452,34 @@ private slots:
         stop();
     }
 
+    // A layout the profile has not saved (a saved file or a Session from
+    // another profile names it) is not the tab's origin: one saved later
+    // under that name, from another tab, is not it, and Reset this layout
+    // gives the tab's preset.
+    void aMissingLayoutIsNoOrigin()
+    {
+        start();
+        stop();
+        QJsonObject envelope = layoutEnvelope();
+        envelope.insert(QStringLiteral("layout"), QStringLiteral("Ghost"));
+        QVERIFY(writeAll(dir.filePath(QStringLiteral("layout.json")), QJsonDocument(envelope).toJson()));
+        start();
+        auto &l = layouts();
+        QVERIFY(l.layout().isEmpty());
+        constexpr std::uint64_t other = 999999; // a tab the Session gives
+        l.setTabArrangement(other, ui::WorkspaceArrangement{QStringLiteral("Timing"), {}, QStringLiteral("Ghost")}.serialise());
+        QVERIFY(l.tabArrangement(other));
+        QVERIFY(l.tabArrangement(other)->layout.isEmpty());
+        application->addPage();
+        trigger(QStringLiteral("viewLayoutPresetTypesetting"));
+        saveAs(QStringLiteral("Ghost"));
+        QVERIFY(l.tabArrangement(other)->layout.isEmpty());
+        application->selectTab(0);
+        QTRY_COMPARE(switcherText(), QStringLiteral("Editing"));
+        QVERIFY(l.layout().isEmpty());
+        stop();
+    }
+
     // A change the layouts file cannot take (here the file's name is a
     // folder's) is undone with the notice: the saved layouts stay as the file
     // has them, so the change can be made again once the file can be written.

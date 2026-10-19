@@ -334,6 +334,7 @@ bool WorkspaceLayoutController::restoreSavedFile()
         return false;
     }
     m_lastSaved = KDDockWidgets::LayoutSaver().serializeLayout();
+    layout = knownLayout(layout);
     if (preset != m_preset || layout != m_layout) {
         m_preset = preset;
         m_layout = layout;
@@ -431,6 +432,7 @@ bool WorkspaceLayoutController::restoreBackup()
         return false;
     // WS3: the arrangement the backup names comes back with it (the switcher,
     // Reset this layout and the next save read them).
+    layout = knownLayout(layout);
     if (preset != m_preset || layout != m_layout) {
         m_preset = preset;
         m_layout = layout;
@@ -502,7 +504,7 @@ bool WorkspaceLayoutController::showArrangement(const WorkspaceArrangement &arra
     if (!shown)
         refuseArrangement(arrangement);
     const QString preset = shown ? arrangement.preset : QStringLiteral("Editing");
-    const QString layout = shown ? arrangement.layout : QString();
+    const QString layout = shown ? knownLayout(arrangement.layout) : QString();
     if (preset != m_preset || layout != m_layout) {
         m_preset = preset;
         m_layout = layout;
@@ -625,9 +627,17 @@ void WorkspaceLayoutController::setTabArrangement(std::uint64_t tab, const QByte
         keepUnrestored(serialised, problem, title);
         arrangement = WorkspaceArrangement{};
     }
+    // A layout this profile has not saved (a Session from another profile)
+    // is not the tab's origin: one saved later under that name is not it.
+    arrangement->layout = knownLayout(arrangement->layout);
     m_tabs[tab].arrangement = arrangement;
     if (m_tab == tab && m_loaded)
         showArrangement(*arrangement);
+}
+
+QString WorkspaceLayoutController::knownLayout(const QString &name) const
+{
+    return savedLayoutIndex(name) >= 0 ? savedLayoutNamed(name) : QString();
 }
 
 // --- WS3: the user's saved layouts -----------------------------------------

@@ -224,6 +224,8 @@ private:
     // Every arrangement (each tab's, the shown one's) that started from
     // saved layout `from` starts from `to` now (empty: its preset).
     void renameLayoutOrigin(const QString &from, const QString &to);
+    // `name` as a saved layout of this profile names it, or empty.
+    QString knownLayout(const QString &name) const;
     std::vector<SavedLayout> m_saved;
     QString m_savedFile;
     bool m_savedLocked = false;
