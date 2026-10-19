@@ -119,6 +119,30 @@ TEST(SessionFile, AudioIsWrittenOnlyWhenItIsNotTheVideo)
               "\r\nActive: 0\r\nScroll: 0\r\nEditor: 0\r\nAudio: a.wav\r\nKeyframes: k.txt\r\n");
 }
 
+// WS1-session-layout: each tab's panel arrangement on a "Layout: " line of
+// its own, last in the tab, and read back into the same tab; a tab without
+// one writes none, so a session without arrangements keeps legacy's bytes.
+TEST(SessionFile, EachTabKeepsItsLayoutLine)
+{
+    SessionTab first;
+    first.subtitles = "a.ass";
+    first.layout = R"({"schema":1,"preset":"Translation"})";
+    SessionTab second;
+    second.subtitles = "b.ass";
+    const std::string bytes = writeSession("HikariSub v1", false, {first, second});
+    EXPECT_NE(bytes.find("Editor: 1\r\nLayout: {\"schema\":1,\"preset\":\"Translation\"}\r\nTab: 1\r\n"),
+              std::string::npos);
+    EXPECT_EQ(bytes.find("Layout:", bytes.find("Tab: 1")), std::string::npos);
+    const auto s = parseSession(*decodeSessionBytes(bytes));
+    ASSERT_TRUE(s);
+    EXPECT_EQ(s->tabs, (std::vector<SessionTab>{first, second}));
+    // The line may be the file's last one.
+    const auto last = parseSession("[HikariSub x]\nTab: 0\nSubtitles: c.ass\nLayout: {}");
+    ASSERT_TRUE(last);
+    ASSERT_EQ(last->tabs.size(), 1u);
+    EXPECT_EQ(last->tabs[0].layout, "{}");
+}
+
 TEST(SessionFile, ACorruptHeaderIsRefused)
 {
     const auto text = decodeSessionBytes(fixture("corrupt.txt"));

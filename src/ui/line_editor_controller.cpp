@@ -171,6 +171,18 @@ void LineEditorController::setShowTags(bool show)
         return;
     m_showTags = show;
     m_tagList.close(); // E6: the list belongs to the raw text it was opened in
+    if (m_storeShowTags)
+        m_storeShowTags(show);
+    refresh();
+}
+
+void LineEditorController::setShowTagsSetting(bool show, std::function<void(bool)> store)
+{
+    m_storeShowTags = std::move(store);
+    if (m_showTags == show)
+        return;
+    m_showTags = show;
+    m_tagList.close();
     refresh();
 }
 
@@ -620,9 +632,30 @@ bool LineEditorController::nextLine(int direction)
     }
 }
 
+namespace {
+
+// EditBox::SetAlignment: the Style's alignment (GetStyle(0, name): the first
+// Style of that name, else the first Style), unless the text has \an.
+int shownAlignment(const core::LineRecord &line, const std::vector<core::StyleValues> &styles)
+{
+    int styleAlignment = 2; // a Document without Styles gets a default one
+    const core::StyleValues *chosen = styles.empty() ? nullptr : &styles.front();
+    for (const auto &style : styles)
+        if (style.name == line.style) {
+            chosen = &style;
+            break;
+        }
+    if (chosen)
+        styleAlignment = std::atoi(reinterpret_cast<const char *>(chosen->alignment.c_str()));
+    return application::legacyAlignment(line, styleAlignment);
+}
+
+} // namespace
+
 void LineEditorController::discard()
 {
-    if (auto *s = session())
+    auto *s = session();
+    if (s)
         s->discardDraft();
     clearTimeWarnings(); // the shown times are the Line's again
     dropStepped();
@@ -633,6 +666,9 @@ void LineEditorController::discard()
     m_draftUndo.clear();
     m_draftRedo.clear();
     m_attempted.clear();
+    // LE4: the position shown is the Line's again, not the discarded choice.
+    if (const auto r = s ? committedRecord() : std::nullopt)
+        m_alignment = shownAlignment(*r, core::decodeStyles(s->document()));
     refresh();
     emit discarded();
 }
@@ -1630,19 +1666,35 @@ void LineEditorController::lineShown()
     m_textState = r ? core::syntax::textState(r->comment, core::toUtf16(r->effect)) : core::syntax::TextState::Dialogue;
     if (!r)
         return;
-    // EditBox::SetAlignment: the Style's alignment (GetStyle(0, name): the
-    // first Style of that name, else the first Style), unless the text has \an.
-    int styleAlignment = 2; // a Document without Styles gets a default one
-    const auto styles = core::decodeStyles(session()->document());
-    const core::StyleValues *chosen = styles.empty() ? nullptr : &styles.front();
-    for (const auto &style : styles)
-        if (style.name == r->style) {
-            chosen = &style;
+    m_alignment = shownAlignment(*r, core::decodeStyles(session()->document()));
+}
+
+bool LineEditorController::alignmentMixed() const
+{
+    const auto *s = session();
+    if (!s || s->selection().selected.size() < 2 || !hasLine())
+        return false;
+    if (m_mixedAlignment && m_mixedAlignment->session == s && m_mixedAlignment->revision == s->revision()
+        && m_mixedAlignment->shownAlignment == m_alignment && m_mixedAlignment->selected == s->selection().selected)
+        return m_mixedAlignment->mixed;
+    // The shown Line as the editor holds it (its draft), the others as committed.
+    const auto styles = core::decodeStyles(s->document());
+    const auto shown = record();
+    std::optional<int> first;
+    bool mixed = false;
+    for (const auto *l : s->document().lines()) {
+        if (!s->selection().selected.contains(l->id))
+            continue;
+        const int a = shown && shown->id == l->id ? m_alignment : shownAlignment(*l, styles);
+        if (!first)
+            first = a;
+        else if (a != *first) {
+            mixed = true;
             break;
         }
-    if (chosen)
-        styleAlignment = std::atoi(reinterpret_cast<const char *>(chosen->alignment.c_str()));
-    m_alignment = application::legacyAlignment(*r, styleAlignment);
+    }
+    m_mixedAlignment = MixedAlignment{s, s->revision(), m_alignment, s->selection().selected, mixed};
+    return mixed;
 }
 
 QString LineEditorController::charsText() const
