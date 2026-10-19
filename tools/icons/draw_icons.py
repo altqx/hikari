@@ -447,7 +447,9 @@ icon("alignment", "Alignment (\\an)", [], [EDITOR],
      + frect(12, 7, 2, 2) + frect(2, 12, 2, 2) + frect(12, 12, 2, 2) + accent(frect(6.5, 11.5, 3, 3, 0.5)))
 
 # Subtitles and timing menus
-icon("editor", "Enable / Disable editor", ["editor.png"], [SUBS, "settings-dialog"],
+# The Line editor: its Options page and fullscreen's Open editor (WS3
+# retired the Subtitles menu's editor switch it was drawn for).
+icon("editor", "Line editor", ["editor.png"], ["video-context-menu", "settings-dialog"],
      rect(1.5, 2.5, 13, 11, 1) + stroke("M4 6.5h5M4 9.5h7") + accent(stroke("M11.5 5v3")), mirror=True)
 icon("script-properties", "ASS file properties", ["Assprops.png"], [SUBS, "script-properties", "settings-dialog"],
      page() + stroke("M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"), mirror=True)
@@ -492,17 +494,19 @@ icon("about", "About", ["About.png"], [HELP, "about", "translation-matching"],
 icon("credits", "Credits", ["Helpers.png"], [HELP, "credits"],
      circle(6, 5, 2.5) + stroke("M1.5 13.5a4.5 4.5 0 0 1 9 0") + accent(circle(11.5, 5.5, 2), stroke("M12 9.5a3 3 0 0 1 2.5 3")))
 
-# View menu (arrangements; legacy draws these items without icons)
-VID = triangle(6.5, 4, 3, 3.5)
-SUBLINES = stroke("M4 10.5h8M4 12h5")
-icon("view-all", "All", [], [VIEW],
-     layout(stroke("M1.5 8.5h13M8 2.5v6"), triangle(4, 4, 2.5, 3), accent(stroke("M10 4.5v2M11.5 4v3M13 5v1")),
-            stroke("M4 11h8")))
-icon("view-video-subs", "Video and subs", [], [VIEW], layout(stroke("M1.5 8.5h13"), VID, stroke("M4 11h8")))
-icon("view-audio-subs", "Audio and subs", [], [VIEW],
-     layout(stroke("M1.5 8.5h13"), accent(stroke("M5 4.5v2M6.5 4v3M8 3.5v4M9.5 4.5v2M11 4v3")), stroke("M4 11h8")))
-icon("view-only-video", "Only video", [], [VIEW], layout(triangle(6.5, 5, 4, 6)))
-icon("view-only-subs", "Only subtitles", [], [VIEW], layout(stroke("M4 5.5h8M4 8h8M4 10.5h5")), mirror=True)
+# Layouts (WS3 #217: the layout switcher and View > Layout, which replace
+# legacy's View arrangements; their icons were retired with them). The cut
+# window and the refresh badge are IC1's (#226) for the same commands.
+LAYOUT_CUT = (stroke("M8.5 13.5h-6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v5") + stroke("M1.5 6h13M6 6v7.5"))
+icon("layout", "Layout", [], [VIEW, "status-bar"],
+     rect(1.5, 1.5, 5, 5, 1) + rect(9.5, 1.5, 5, 5, 1) + rect(1.5, 9.5, 5, 5, 1)
+     + stroke("M1.5 3.5h5M9.5 3.5h5M1.5 11.5h5") + accent(rect(9.5, 9.5, 5, 5, 1), stroke("M9.5 11.5h5")))
+icon("layout-save", "Save layout as", [], [VIEW, "status-bar", "save-layout"],
+     LAYOUT_CUT + accent(stroke("M12.5 9.5v5M10 12h5")))
+icon("layout-reset", "Reset this layout", [], [VIEW, "status-bar"],
+     LAYOUT_CUT + accent(stroke("M14.5 12a2.5 2.5 0 1 1-.75-1.75"), stroke("M14 9v1.5h-1.5")))
+icon("layout-manage", "Manage layouts", [], [VIEW, "status-bar", "manage-layouts"],
+     LAYOUT_CUT + accent(stroke("M10 10.5h4.5M10 12.5h4.5M10 14.5h4.5")))
 
 # Visual tools (the visual tool rail and its sub-toolbars)
 icon("tool-crosshair", "Position pointer", ["Cross.png"], [VISUAL],
