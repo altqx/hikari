@@ -789,9 +789,9 @@ public:
     Q_PROPERTY(QVariantList unresolvedRestores READ unresolvedRestores NOTIFY unresolvedRestoresChanged)
     // D2: GLOBAL_EDITOR "Enable / Disable editor" (legacy TabPanel::editor
     // and EDITOR_ON, workspace.editorOn). Off is legacy's video player
-    // layout. One switch for the shared Workspace (docs/qt/ux/workspaces.md:
-    // a tab change keeps the panel arrangement), saved at each change as
-    // HideEditor(save) did.
+    // layout. One switch for every tab (D2-one-editor-switch; WS1: the
+    // player layout holds the current tab's arrangement), saved at each
+    // change as HideEditor(save) did.
     Q_PROPERTY(bool editorOn READ editorOn NOTIFY editorOnChanged)
     bool editorOn() const;
     // HikariSubFrame::HideEditor: the switch flips.
@@ -1339,6 +1339,16 @@ private:
     bool keepTabAudio(const QString &videoPath);
     void trackTabMedia();
     int targetVideoPosition() const;
+    // WS1: the tab whose panel arrangement the shell shows, and how a tab
+    // starts its own (the Translation preset for a TLMode file).
+    std::optional<application::DocumentId> m_layoutDocument;
+    void showTabArrangement();
+    void registerTabArrangements(); // each tab opened takes its start now
+    // A tab's Document replaced (opened into it, a retried restore): the
+    // tab keeps its arrangement under the new Document's id.
+    void replaceTabArrangement(application::DocumentId old, application::DocumentId replacement,
+                               ui::WorkspaceLayoutController::TabStart start);
+    ui::WorkspaceLayoutController::TabStart tabStart(application::DocumentId document) const;
 
     // O5 (application_language.cpp): the language from PROGRAM_LANGUAGE at
     // start and whenever the setting changes; the strings the application

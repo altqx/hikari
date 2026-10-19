@@ -8599,15 +8599,18 @@ private slots:
     }
 
     // The Line editor in a dock shorter than its rows (translation mode in
-    // the default 1280 x 800 layout) scrolls them: every control is reached
-    // by the wheel, and each one Tab reaches lies whole in the editor's view.
-    // The default proportions stay (legacy's 170 px audio box), and the dock
-    // keeps room for the tag buttons and the text fields when squeezed.
+    // the Editing layout at the default 1280 x 800) scrolls them: every
+    // control is reached by the wheel, and each one Tab reaches lies whole in
+    // the editor's view. The default proportions stay (legacy's 170 px audio
+    // box), and the dock keeps room for the tag buttons and the text fields
+    // when squeezed. (WS1: the file's tab starts with the Translation preset,
+    // which leaves Audio closed; Editing brings the squeeze back.)
     void lineEditorScrollsWhatItsDockCannotShow()
     {
         QCOMPARE(window->size(), QSize(1280, 800));
         QVERIFY(application->openFile(writeTranslationFile("e5-overflow.ass")));
         QTRY_VERIFY(application->editor().translationMode());
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
         auto *panel = item("editorPanel");
         auto *view = item("editorScroll");
         auto *content = item("editorContent");
@@ -8703,6 +8706,9 @@ private slots:
     {
         QVERIFY(application->openFile(writeTranslationFile("tab-out.ass")));
         QTRY_VERIFY(application->editor().translationMode());
+        // A fold to scroll past: the Editing layout (WS1: not the Translation
+        // preset the file's tab starts with).
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
         auto *original = item("lineText");
         auto *translated = item("translationText");
         auto *layer = item("layerField");

@@ -8201,6 +8201,18 @@ bądź brakuje kodeków czy też splittera</translation>
         <source>The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>The panel layout of this tab was not restored because %1. The tab shows the Editing layout.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The panel layout of %1 was not restored because %2. The tab shows the Editing layout.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The layout is kept at %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>QGuiApplication</name>
