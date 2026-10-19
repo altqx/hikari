@@ -369,6 +369,11 @@ hikari_add_spix_test(hikari_ui_video_timing_workflow SOURCES video_timing_workfl
 add_dependencies(hikari_ui_video_timing_workflow hikari_media_helper hikari_media_fixtures)
 # Y7: the colour picker's option, simple-picker recent colour and screen sampler.
 hikari_add_qttest(hikari_ui_colour_picker_tests SOURCES colour_picker_tests.cpp LIBRARIES hikari_ui)
+# SY3: font lists drawing each family in its own face.
+hikari_add_qttest(hikari_ui_font_faces_tests SOURCES font_faces_tests.cpp LIBRARIES hikari_ui)
+target_compile_definitions(hikari_ui_font_faces_tests PRIVATE
+    HIKARI_SYMBOL_FONT="${PROJECT_SOURCE_DIR}/tests/fixtures/libass-fork/forktest-symf020.ttf"
+    HIKARI_NO_LETTERS_FONT="${PROJECT_SOURCE_DIR}/tests/fixtures/libass-fork/forktest-arabic.ttf")
 # O5: the interface language over the embedded catalogs (live switching,
 # aegisub.gettext through the application, pseudolocalized and right-to-left
 # layouts, the program font).

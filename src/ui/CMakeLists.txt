@@ -134,6 +134,9 @@ target_sources(hikari_ui PRIVATE screen_sampler.cpp screen_sampler.h)
 qt_target_qml_sources(hikari_ui QML_FILES ScreenDropperView.qml)
 # SY2: the one colour picker, a popover, and its swatch grids.
 qt_target_qml_sources(hikari_ui QML_FILES ColourPopover.qml ColourSwatchGrid.qml)
+# SY3: font lists drawing each family in its own face.
+target_sources(hikari_ui PRIVATE font_faces.cpp font_faces.h)
+qt_target_qml_sources(hikari_ui QML_FILES FontFamilyRow.qml)
 if(UNIX AND NOT APPLE)
     find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS DBus)
     target_link_libraries(hikari_ui PRIVATE Qt6::DBus)

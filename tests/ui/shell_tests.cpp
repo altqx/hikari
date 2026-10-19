@@ -33,6 +33,7 @@
 #include "shape_editor.h"
 #include "theme.h"
 #include "colour_picker_controller.h"
+#include "font_faces.h"
 #include "screen_sampler.h"
 #include "video_presenter.h"
 #include "hikari/app/composition.h"
@@ -69,6 +70,8 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QtQml/qqmlextensionplugin.h>
+#include <QElapsedTimer>
+#include <QFontDatabase>
 #include <QtTest>
 
 #ifndef _WIN32
@@ -2667,6 +2670,169 @@ private slots:
         QTRY_VERIFY(!popover->property("visible").toBool());
         picker.setSwitchClicks(false);
         QCOMPARE(colour(1), (QList<int>{0x10, 0x20, 0x30, 0x40}));
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+    }
+
+    // SY3: the Style editor's font list draws each family in its own face,
+    // a family the font database lacks in the interface font; it makes rows
+    // only for what it shows, so a large font set opens and scrolls at once;
+    // while it is open the sample line shows the family under the keyboard.
+    // The sample line follows every field and its text is kept
+    // (STYLE_PREVIEW_TEXT, legacy StylePreview.cpp:136-141).
+    void styleEditorFontListAndLiveSample()
+    {
+        const QString path = dir.filePath(QStringLiteral("style-fonts.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *root = engine->rootObjects().first();
+        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *content = manager->contentItem();
+        auto &styles = application->styleManager();
+
+        // A large font set: the system's families, then names no font has,
+        // 6000 in all.
+        QStringList installed = QFontDatabase::families();
+        installed.removeIf([](const QString &f) { return QFontDatabase::isPrivateFamily(f); });
+        QVERIFY(!installed.isEmpty());
+        QStringList big = installed.mid(0, 40);
+        while (big.size() < 6000)
+            big << QStringLiteral("Not a font %1").arg(big.size());
+        auto *font = findItem(content, QStringLiteral("styleFont"));
+        const QString typed = font->property("editText").toString();
+        font->setProperty("model", big);
+        font->setProperty("editText", typed);
+        auto *faces = engine->singletonInstance<ui::FontFaces *>("Hikari.Ui", "FontFaces");
+        QVERIFY(faces);
+        const int looked = faces->lookups();
+        auto *popup = font->property("popup").value<QObject *>();
+        QElapsedTimer timer;
+        timer.start();
+        QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+        QTRY_VERIFY(popup->property("opened").toBool());
+        auto *list = popup->property("contentItem").value<QQuickItem *>();
+        QVERIFY(list);
+        // The rows the list made (its delegates, in the item tree).
+        const auto rowItems = [&] {
+            QList<QQuickItem *> found;
+            const std::function<void(QQuickItem *)> walk = [&](QQuickItem *it) {
+                for (auto *child : it->childItems()) {
+                    if (child->objectName() == QLatin1String("styleFontRow")) {
+                        if (child->isVisible())
+                            found << child;
+                    } else {
+                        walk(child);
+                    }
+                }
+            };
+            walk(list);
+            return found;
+        };
+        const auto rows = [&] { return int(rowItems().size()); };
+        QTRY_VERIFY(rows() > 0);
+        const qint64 openMs = timer.elapsed();
+        const int shown = rows();
+        QVERIFY2(shown < 120, qPrintable(QStringLiteral("%1 rows made for %2 families").arg(shown).arg(big.size())));
+        QVERIFY(faces->lookups() - looked < 120);
+        // To the end and back: still a screenful.
+        timer.restart();
+        QVERIFY(QMetaObject::invokeMethod(list, "positionViewAtEnd"));
+        QTRY_VERIFY(rows() > 0);
+        QVERIFY(QMetaObject::invokeMethod(list, "positionViewAtBeginning"));
+        QTRY_VERIFY(rows() > 0);
+        qInfo("SY3 font list: %lld families, %d rows, %lld ms to open, %lld ms to the end and back", qlonglong(big.size()),
+              shown, qlonglong(openMs), qlonglong(timer.elapsed()));
+        QVERIFY(rows() < 120);
+        // Each row in its own face; a name no font has in the interface font.
+        QQuickItem *first = nullptr;
+        QQuickItem *unknown = nullptr;
+        for (auto *row : rowItems()) {
+            const QString family = row->property("family").toString();
+            if (family == big.first())
+                first = row;
+            else if (family.startsWith(QStringLiteral("Not a font")) && !unknown)
+                unknown = row;
+        }
+        QVERIFY(first);
+        const QVariantMap face = faces->face(big.first());
+        auto *name = findItem(first, QStringLiteral("fontFamilyName"));
+        if (face.value(QStringLiteral("sample")).toString().isEmpty())
+            QCOMPARE(name->property("font").value<QFont>().family(), big.first());
+        QCOMPARE(QAccessible::queryAccessibleInterface(first)->text(QAccessible::Name), big.first());
+        QVERIFY(QMetaObject::invokeMethod(list, "positionViewAtIndex", Q_ARG(int, 100), Q_ARG(int, 0)));
+        QTRY_VERIFY([&] {
+            for (auto *row : rowItems())
+                if (row->isVisible() && row->property("family").toString().startsWith(QStringLiteral("Not a font")))
+                    return (unknown = row) != nullptr;
+            return false;
+        }());
+        QCOMPARE(findItem(unknown, QStringLiteral("fontFamilyName"))->property("font").value<QFont>().family(),
+                 unknown->property("font").value<QFont>().family());
+
+        // The open list: the sample line shows the family highlighted.
+        // (With the list open the arrows move the highlight, not the choice.)
+        int key = styles.previewKey();
+        QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
+        QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
+        const int highlighted = font->property("highlightedIndex").toInt();
+        QVERIFY(highlighted >= 0);
+        QTRY_VERIFY(styles.previewKey() > key);
+        QCOMPARE(font->property("editText").toString(), typed); // nothing chosen yet
+        QVariant browsed;
+        QVERIFY(QMetaObject::invokeMethod(font, "browsedFont", Q_RETURN_ARG(QVariant, browsed)));
+        QCOMPARE(browsed.toString(), big.at(highlighted));
+        key = styles.previewKey();
+        QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QTRY_VERIFY(styles.previewKey() > key); // back to the typed font
+        QVERIFY(QMetaObject::invokeMethod(font, "browsedFont", Q_RETURN_ARG(QVariant, browsed)));
+        QCOMPARE(browsed.toString(), QString());
+
+        // Every field refreshes the sample line, the margins and the
+        // encoding included.
+        for (const char *field : {"styleSize", "styleOutline", "styleShadow", "styleScaleX", "styleScaleY", "styleAngle",
+                                  "styleSpacing", "styleMarginLeft", "styleMarginRight", "styleMarginVertical", "styleName"}) {
+            auto *f = findItem(content, QLatin1String(field));
+            QVERIFY2(f, field);
+            key = styles.previewKey();
+            QVERIFY2(QMetaObject::invokeMethod(f, "textEdited"), field);
+            QVERIFY2(styles.previewKey() > key, field);
+        }
+        for (const char *box : {"styleBold", "styleOpaqueBox"}) {
+            key = styles.previewKey();
+            QVERIFY2(QMetaObject::invokeMethod(findItem(content, QLatin1String(box)), "toggled"), box);
+            QVERIFY2(styles.previewKey() > key, box);
+        }
+        auto *encoding = findItem(content, QStringLiteral("styleEncoding"));
+        QVERIFY(encoding);
+        key = styles.previewKey();
+        QVERIFY(QMetaObject::invokeMethod(encoding, "activated", Q_ARG(int, 0)));
+        QVERIFY(styles.previewKey() > key);
+
+        // The sample line's text: each keystroke refreshes it, and it is kept.
+        auto *sample = findItem(content, QStringLiteral("stylePreviewText"));
+        QVERIFY(sample);
+        key = styles.previewKey();
+        sample->setProperty("text", QStringLiteral("Sample ąę 日本"));
+        QVERIFY(QMetaObject::invokeMethod(sample, "textEdited"));
+        QVERIFY(styles.previewKey() > key);
+        QVERIFY(QMetaObject::invokeMethod(sample, "editingFinished"));
+        QCOMPARE(application->settingsStore()->text("styles.previewText"), QStringLiteral("Sample ąę 日本"));
+        QCOMPARE(application->fontCatalogs().previewText(), QStringLiteral("Sample ąę 日本"));
         QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
     }
 

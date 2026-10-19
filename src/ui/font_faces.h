@@ -1,0 +1,36 @@
+#pragma once
+
+// SY3: how a font list draws each family in its own typeface (the Style
+// editor's font list). face(family) answers {family, sample}: `family` is the
+// face to draw the name in, "" when the system's font database has no such
+// family (an external font that only the renderer leases, or a name no font
+// has) or the face draws neither its name nor a sample, so the name stays in
+// the interface font; `sample` is "" when the face
+// can draw its own name, otherwise a short text in the face's own script (a
+// symbol font, or one without the name's letters, draws its name in the
+// interface font and the sample after it in its own face). Answers are kept,
+// so each family is looked up once, and only for the rows a list creates.
+
+#include <QHash>
+#include <QObject>
+#include <QString>
+#include <QVariantMap>
+#include <QtQml/qqmlregistration.h>
+
+namespace hikari::ui {
+
+class FontFaces : public QObject {
+    Q_OBJECT
+    QML_ELEMENT
+    QML_SINGLETON
+public:
+    using QObject::QObject;
+    Q_INVOKABLE QVariantMap face(const QString &family);
+    // The families looked up so far (the rows a list created).
+    Q_INVOKABLE int lookups() const { return int(m_faces.size()); }
+
+private:
+    QHash<QString, QVariantMap> m_faces;
+};
+
+} // namespace hikari::ui
