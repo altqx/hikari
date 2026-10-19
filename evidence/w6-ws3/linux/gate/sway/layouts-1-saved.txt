@@ -1,0 +1,56 @@
+# compositor windows
+con          id=8 hikarisub 'episode.ass - HikariSub' 0,27 1600x973 client=2,27 1596x971 output=HEADLESS-1 fullscreen=0 FOCUSED visible=True border=normal
+
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "episode.ass - HikariSub",
+   "id": "HikariSub",
+   "active": true,
+   "x": 0,
+   "y": 0,
+   "w": 1596,
+   "h": 971
+  }
+ ],
+ "panels": [
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 671,
+   "w": 1596,
+   "h": 266
+  },
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 97,
+   "w": 798,
+   "h": 530
+  },
+  {
+   "name": "Line editor: episode.ass",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 799,
+   "y": 97,
+   "w": 797,
+   "h": 530
+  }
+ ],
+ "focus": null,
+ "focusPath": null,
+ "texts": {
+  "Line text": "first",
+  "Start": "0:00:01.00",
+  "End": "0:00:02.00"
+ },
+ "labels": [
+  "Video times"
+ ]
+}

@@ -1,0 +1,82 @@
+{
+ "layouts-menus": {
+  "status": "observed",
+  "detail": "View: ['Layout', 'Panels', 'Move panel\u2026', 'Restore the previous layout']; Subtitles has the editor switch: False; View > Layout (enabled): {'Editing': True, 'Timing': True, 'Translation': True, 'Typesetting': True, 'Save layout as\u2026': True, 'Reset this layout': True, 'Manage layouts\u2026': False}; switcher: 'Layout: Editing'",
+  "evidence": [
+   "layouts-0-editing.png",
+   "layouts-0-editing.txt"
+  ],
+  "at": "2026-10-19T11:57:47"
+ },
+ "layouts-editor-key-retired": {
+  "status": "observed",
+  "detail": "Ctrl+E: panels before ['Audio', 'Grid', 'Line editor', 'Video'], after ['Audio', 'Grid', 'Line editor', 'Video']",
+  "evidence": [
+   "layouts-0-editing.png",
+   "layouts-0-editing.txt"
+  ],
+  "at": "2026-10-19T11:57:47"
+ },
+ "layouts-save-apply": {
+  "status": "observed",
+  "detail": "from the keyboard: saved ['Grid', 'Line editor', 'Video'] as 'no audio' (switcher 'Layout: no audio'); Timing: ['Audio', 'Grid', 'Line editor'] ('Layout: Timing'); no audio again: ['Grid', 'Line editor', 'Video'] ('Layout: no audio')",
+  "evidence": [
+   "layouts-0-editing.png",
+   "layouts-0-editing.txt",
+   "layouts-1-saved.png",
+   "layouts-1-saved.txt",
+   "layouts-2-timing.png",
+   "layouts-2-timing.txt",
+   "layouts-3-saved-applied.png",
+   "layouts-3-saved-applied.txt"
+  ],
+  "at": "2026-10-19T11:58:24"
+ },
+ "layouts-persist": {
+  "status": "observed",
+  "detail": "after a restart View > Layout: {'Editing': True, 'Timing': True, 'Translation': True, 'Typesetting': True, 'no audio': True, 'Save layout as\u2026': True, 'Reset this layout': True, 'Manage layouts\u2026': True}; files: '/tmp/gate-home-mutter/.config/HikariSub/HikariSub/layouts.json 26350'",
+  "evidence": [
+   "layouts-0-editing.png",
+   "layouts-0-editing.txt",
+   "layouts-1-saved.png",
+   "layouts-1-saved.txt",
+   "layouts-2-timing.png",
+   "layouts-2-timing.txt",
+   "layouts-3-saved-applied.png",
+   "layouts-3-saved-applied.txt",
+   "layouts-4-restarted.png",
+   "layouts-4-restarted.txt"
+  ],
+  "at": "2026-10-19T11:58:48"
+ },
+ "layouts-rename-delete": {
+  "status": "observed",
+  "detail": "renamed: {'Editing': True, 'Timing': True, 'Translation': True, 'Typesetting': True, 'quiet': True, 'Save layout as\u2026': True, 'Reset this layout': True, 'Manage layouts\u2026': True} ('Layout: quiet'); deleted: {'Editing': True, 'Timing': True, 'Translation': True, 'Typesetting': True, 'Save layout as\u2026': True, 'Reset this layout': True, 'Manage layouts\u2026': False} ('Layout: Editing')",
+  "evidence": [
+   "layouts-0-editing.png",
+   "layouts-0-editing.txt",
+   "layouts-1-saved.png",
+   "layouts-1-saved.txt",
+   "layouts-2-timing.png",
+   "layouts-2-timing.txt",
+   "layouts-3-saved-applied.png",
+   "layouts-3-saved-applied.txt",
+   "layouts-4-restarted.png",
+   "layouts-4-restarted.txt",
+   "layouts-5-manage.png",
+   "layouts-5-manage.txt",
+   "layouts-6-deleted.png",
+   "layouts-6-deleted.txt",
+   "layouts.txt"
+  ],
+  "at": "2026-10-19T11:59:24"
+ },
+ "test-executables": {
+  "status": "observed",
+  "detail": "Totals: 14 passed, 0 failed, 2 skipped; Totals: 25 passed, 0 failed, 7 skipped; Totals: 12 passed, 0 failed, 1 skipped; Totals: 14 passed, 0 failed, 0 skipped; skips: [\"SKIP   : ShellTest::floatF6AndShowActivateTheFloatingPanelsWindow() The window manager refused the shell's activation request (its focus-stealing policy)\", 'SKIP   : ShellTest::floatingPanelsOffEveryScreenComeBack() On Wayland the compositor places windows (docs/qt/docking.md)', \"SKIP   : DockingQualification::floatingPanelKeepsItsSizeAcrossAScaleChange() the screen's scale changes through the offscreen platform's configuration\", \"SKIP   : DockingQualification::floatingPanelComesBackWholeWhenItsScreenGoesAway() screens come and go through the offscreen platform's configuration\", 'SKIP   : DockingQualification::dragShowsTheDropHighlight() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)', 'SKIP   : DockingQualification::wholeFloatingHeaderDocksWhereItDoesNotSplit() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)', 'SKIP   : DockingQualification::floatingHeaderDocksByItsTitleAndMovesByTheRest() a synthetic drag between windows needs the offscreen platform (the native gate drags for real)', 'SKIP   : DockingQualification::floatingTabBarMovesRightOfItsTabs() the window follows a declined system move only where the platform declines it (offscreen)', 'SKIP   : DockingQualification::x11HeaderMovesThroughTheWindowSystem() X11 only (the .xvfb run)', 'SKIP   : WorkspaceLayoutTest::aFloatingPanelSavedOffScreenComesBackOnScreen() On Wayland the compositor places windows (docs/qt/docking.md)']",
+  "evidence": [
+   "test-executables.txt"
+  ],
+  "at": "2026-10-19T12:00:49"
+ }
+}
