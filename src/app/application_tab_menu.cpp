@@ -555,7 +555,14 @@ QVariantMap Application::openForwarded(const QStringList &paths)
             if (!untouched)
                 addPage();
             return openResult(QStringLiteral("video"), file);
-        default: // a script, keyframes or a refused file: as when dropped
+        case application::OpenKind::Keyframes:
+            // The tab's own, as a video is: a tab's keyframes stay.
+            if (!untouched)
+                addPage();
+            if (const QString problem = openKeyframes(QUrl::fromLocalFile(file)); !problem.isEmpty())
+                m_log->log(problem);
+            return openResult(QString());
+        default: // a script (the Automation manager's, no tab's) or a refused file: as when dropped
             return openDropped({QUrl::fromLocalFile(file)});
         }
     }

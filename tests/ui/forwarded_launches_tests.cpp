@@ -231,6 +231,31 @@ private slots:
         QMetaObject::invokeMethod(prompt, "reject");
     }
 
+    // A keyframes file is a tab's own too: it opens in a new tab, and the
+    // tab with work keeps what it had.
+    void aKeyframesFileOpensInANewTab()
+    {
+        start();
+        take({writeAss(dir.filePath(QStringLiteral("k/a.ass")), "a")});
+        QTRY_COMPARE(titles(), QStringList{QStringLiteral("a.ass")});
+        const QString keyframes = dir.filePath(QStringLiteral("k/clip_keyframes.txt"));
+        QFile k(keyframes);
+        QVERIFY(k.open(QIODevice::WriteOnly));
+        k.write("# keyframe format v1\nfps 0\n0\n24\n");
+        k.close();
+        take({keyframes});
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("Untitled")}));
+        QCOMPARE(application->currentTab(), 1);
+        auto kinds = [&](int tab) {
+            QStringList out;
+            for (const QVariant &folder : application->tabMenu(tab).value(QStringLiteral("folders")).toList())
+                out << folder.toMap().value(QStringLiteral("kind")).toString();
+            return out;
+        };
+        QVERIFY(!kinds(0).contains(QStringLiteral("keyframes")));
+        QVERIFY(kinds(1).contains(QStringLiteral("keyframes")));
+    }
+
     // A review waits for its answer, and the files wait with it.
     void filesWaitForAReview()
     {
