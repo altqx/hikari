@@ -428,8 +428,9 @@ private slots:
     }
 
     // MENU_CHOOSE - 1: "All tabs will be closed, continue?" (No keeps
-    // everything), then every tab's work is reviewed and one new Untitled
-    // tab is left; no session is written.
+    // everything), then every tab's work is reviewed and no tab is left
+    // (SH2-last-tab-home: legacy left one new Untitled tab); no session is
+    // written.
     void closeAllTabsAsksThenReviews()
     {
         restoreThreeTabs();
@@ -458,7 +459,7 @@ private slots:
                                                {QStringLiteral("save"), false},
                                                {QStringLiteral("path"), QString()}}});
         QTRY_COMPARE(finished.size(), 1);
-        QCOMPARE(titles(), QStringList{QStringLiteral("Untitled")});
+        QVERIFY(titles().isEmpty());
         QCOMPARE(readAll(application->lastSessionPath()), before);
         QVERIFY(!readAll(dir.filePath(QStringLiteral("tabs/c.ass"))).contains("c changed"));
         QMetaObject::invokeMethod(review, "close");

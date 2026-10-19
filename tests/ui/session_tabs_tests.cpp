@@ -655,12 +655,14 @@ private slots:
         app::Application b(options(home));
         QCOMPARE(b.lastSessionSummary().value(QStringLiteral("names")).toStringList(),
                  (QStringList{QStringLiteral("s1.ass"), QStringLiteral("cfr.mkv")}));
-        // Closing every tab writes a session with nothing left to restore.
+        // Close all writes no session (legacy OnTabSel), so Home still
+        // offers the closed tabs back.
         QVERIFY(loadSession(b));
         QVERIFY(b.reviewCloseAll().isEmpty());
         b.finishClose();
         QVERIFY(b.tabs().isEmpty());
-        QVERIFY(b.lastSessionSummary().value(QStringLiteral("names")).toStringList().isEmpty());
+        QCOMPARE(b.lastSessionSummary().value(QStringLiteral("names")).toStringList(),
+                 (QStringList{QStringLiteral("s1.ass"), QStringLiteral("cfr.mkv")}));
     }
 
     // SH2-recent-opened-and-missing: the recent subtitles remember when each

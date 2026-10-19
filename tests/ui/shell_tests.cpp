@@ -3984,6 +3984,7 @@ private slots:
     // D1: the keyboard placement window expresses drag placements and resizes.
     void placementWindowMovesTabsAndResizes()
     {
+        QVERIFY(application->openFile(episode)); // SH2: the panels, not Home
         auto *root = engine->rootObjects().first();
         auto *placement = root->findChild<QQuickWindow *>(QStringLiteral("placementWindow"));
         QVERIFY(placement);
@@ -5706,21 +5707,26 @@ private slots:
                                "Dialogue: 0,0:00:00.20,0:00:00.60,Default,,0,0,0,,Sign one\r\n"
                                "Dialogue: 1,0:00:01.23,0:00:01.73,Default,Actor,0,0,0,,Sign two\r\n");
 
-        // No subtitles open, the file open as the video: the chooser lists
-        // its tracks; OK on the ASS track loads it, unsaved and named after
-        // the file, and the video stays open.
+        // No subtitles open, the file open as the video (SH2: in a new
+        // Untitled Document): the chooser lists its tracks; OK on the ASS
+        // track loads it, unsaved and named after the file, and the video
+        // stays open.
         const QString mkv = nativeFixture("mkvextract.mkv");
         application->video().openVideo(mkv);
         QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready,
                                  30000);
-        QVERIFY(!target().has_value());
+        QVERIFY(target().has_value());
+        QVERIFY(application->targetUntitled());
+        QCOMPARE(tabs(), std::size_t(1));
         QVERIFY(choose(mkv));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
         QVERIFY(!question->property("visible").toBool());
         QCOMPARE(chooser->property("labels").toStringList(),
                  (QStringList{QStringLiteral("1 Signs (eng, ass)"), QStringLiteral("2 Full (pol, srt)")}));
         QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
-        QTRY_VERIFY_WITH_TIMEOUT(target().has_value(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(target().has_value() && application->workspace().title(*target()) &&
+                                     *application->workspace().title(*target()) == "mkvextract.ass",
+                                 20000);
         QTRY_COMPARE(matroska.state(), 0);
         const auto first = *target();
         QCOMPARE(ass(first), signs);
@@ -12374,11 +12380,16 @@ private slots:
         auto *mark = item<QObject>("setAudioMarkFromVideoMenuItem");
         QVERIFY(position && mark);
         auto &audio = application->audio();
-        audio.openDummy();
-        QVERIFY(audio.ready());
         QVERIFY(!application->workspace().editingTarget());
         QVERIFY(!position->property("enabled").toBool());
         QVERIFY(!mark->property("enabled").toBool());
+        // SH2: audio opened with no Document opens in a new Untitled one (the
+        // tab legacy always had), so the box comes with an editor.
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QVERIFY(application->workspace().editingTarget());
+        QVERIFY(position->property("enabled").toBool());
+        QVERIFY(mark->property("enabled").toBool());
         QVERIFY(application->openFile(episode));
         QVERIFY(position->property("enabled").toBool());
         QVERIFY(mark->property("enabled").toBool());
@@ -15705,6 +15716,7 @@ private slots:
     void videoTransportIconsFollowTheThemeLive()
     {
         restartWithoutSound(); // play / pause below plays the fixture
+        QVERIFY(application->openFile(episode)); // SH2: the panels, not Home
         auto &settings = *application->settingsStore();
         const auto setTheme = [&](const char *code) {
             settings.setValue(QStringLiteral("appearance.followSystem"), false);
