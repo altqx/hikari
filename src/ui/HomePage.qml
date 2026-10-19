@@ -74,6 +74,20 @@ FocusScope {
         recentList.currentIndex = Math.min(index, recentList.count - 1)
     }
 
+    // The day turns while Home shows: "Today" and "Yesterday" move on at
+    // the next local midnight (a timer that fires early is set again).
+    Timer {
+        objectName: "homeMidnight"
+        running: home.visible
+        repeat: true
+        interval: {
+            const n = home.now
+            const next = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1)
+            return Math.max(1000, next.getTime() - n.getTime() + 1000)
+        }
+        onTriggered: home.now = new Date()
+    }
+
     // Later: a close writes the session after the tabs change.
     onVisibleChanged: if (visible) Qt.callLater(reload)
     Component.onCompleted: reload()

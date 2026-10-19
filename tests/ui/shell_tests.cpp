@@ -615,6 +615,14 @@ private slots:
         QTRY_COMPARE(list->property("count").toInt(), 2);
         QTRY_VERIFY(visualItem("homeRecentRow1"));
         QVERIFY(visualItem("homeOpened0")->property("text").toString().startsWith(QStringLiteral("Today ")));
+        // The page's clock moves on at midnight: a clock set to just before
+        // a midnight (the times read as a later day's, so as a date) is
+        // brought to now when that midnight passes.
+        auto *home = item("homePage");
+        const QDateTime beforeMidnight(QDate::currentDate().addDays(-1), QTime(23, 59, 59));
+        home->setProperty("now", beforeMidnight);
+        QTRY_VERIFY(!visualItem("homeOpened0")->property("text").toString().startsWith(QStringLiteral("Today ")));
+        QTRY_VERIFY_WITH_TIMEOUT(visualItem("homeOpened0")->property("text").toString().startsWith(QStringLiteral("Today ")), 5000);
         QVERIFY(!visualItem("homeMissing0")->isVisible());
         QVERIFY(visualItem("homeMissing1")->isVisible());
         QVERIFY(visualItem("homeRemove1")->isVisible());
