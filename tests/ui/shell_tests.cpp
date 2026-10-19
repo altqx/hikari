@@ -18797,7 +18797,7 @@ private slots:
         QVERIFY(item("lineText")->hasActiveFocus()); // typing goes on in the text
         application->editor().discard();
         // Esc closes it and nothing changes.
-        choice->forceActiveFocus();
+        choice->forceActiveFocus(Qt::TabFocusReason); // Space is a focused control's when the keyboard moved there (KB2)
         press(Qt::Key_Space);
         QTRY_VERIFY(grid->property("opened").toBool());
         press(Qt::Key_Escape);
