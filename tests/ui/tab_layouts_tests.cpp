@@ -260,6 +260,32 @@ private slots:
         stop();
     }
 
+    // Several files dropped at once: the first goes into the untouched tab,
+    // which keeps its arrangement, also in the Session written meanwhile;
+    // the last, a TLMode file in a new tab, is shown with Translation.
+    void aMultiFileOpenKeepsTheReusedTabsArrangement()
+    {
+        start();
+        float_("audioDock", true);
+        const QVariantMap opened = application->openDropped(
+            {QUrl::fromLocalFile(writeSubtitles(dir.filePath(QStringLiteral("a.ass")))),
+             QUrl::fromLocalFile(writeSubtitles(dir.filePath(QStringLiteral("b.ass")), true))});
+        QCOMPARE(opened.value(QStringLiteral("kind")).toString(), QStringLiteral("files"));
+        QCOMPARE(application->tabs().size(), qsizetype(2));
+        QCOMPARE(application->currentTab(), 1);
+        QCOMPARE(preset(), QStringLiteral("Translation"));
+        QVERIFY(application->saveLastSession());
+        const auto session = readSession(application->lastSessionPath());
+        QCOMPARE(session.tabs.size(), std::size_t(2));
+        QCOMPARE(layoutOf(session.tabs[0]).preset, QStringLiteral("Editing"));
+        QCOMPARE(QJsonDocument::fromJson(layoutOf(session.tabs[0]).payload).object().value(QStringLiteral("floatingWindows")).toArray().size(), 1);
+        application->selectTab(0);
+        QCOMPARE(preset(), QStringLiteral("Editing"));
+        QVERIFY(isOpen("audioDock"));
+        QVERIFY(isFloating("audioDock"));
+        stop();
+    }
+
     // A preset, Reset layout included, changes the current tab only.
     void presetsChangeTheCurrentTabOnly()
     {

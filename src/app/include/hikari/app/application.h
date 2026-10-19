@@ -1322,6 +1322,10 @@ private:
     // starts its own (the Translation preset for a TLMode file).
     std::optional<application::DocumentId> m_layoutDocument;
     void showTabArrangement();
+    // A tab's Document replaced (opened into it, a retried restore): the
+    // tab keeps its arrangement under the new Document's id.
+    void replaceTabArrangement(application::DocumentId old, application::DocumentId replacement,
+                               ui::WorkspaceLayoutController::TabStart start);
     ui::WorkspaceLayoutController::TabStart tabStart(application::DocumentId document) const;
 
     // O5 (application_language.cpp): the language from PROGRAM_LANGUAGE at

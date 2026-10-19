@@ -235,8 +235,7 @@ void Application::replaceTarget(application::DocumentId replacement, bool keepMe
     m_workspace.replace(*old, replacement);
     // WS1: the tab keeps its arrangement; a TLMode file opened into it
     // starts with the Translation preset, as in a tab of its own.
-    m_workspaceLayout->replaceTab(old->value, replacement.value, tabStart(replacement));
-    m_layoutDocument = replacement;
+    replaceTabArrangement(*old, replacement, tabStart(replacement));
     // R1: SubsGrid::Clearing deletes the tab's table; CG1/CG2 still name the
     // tab (HikariSubFrame.cpp:1386-1395 then finds no table to remove).
     m_comparison.replaced(*old, replacement);
@@ -260,6 +259,14 @@ ui::WorkspaceLayoutController::TabStart Application::tabStart(application::Docum
     const auto *session = m_files->session(document);
     return session && application::translationMode(*session) ? ui::WorkspaceLayoutController::TabStart::Translation
                                                              : ui::WorkspaceLayoutController::TabStart::Copy;
+}
+
+void Application::replaceTabArrangement(application::DocumentId old, application::DocumentId replacement,
+                                        ui::WorkspaceLayoutController::TabStart start)
+{
+    m_workspaceLayout->replaceTab(old.value, replacement.value, start);
+    if (m_layoutDocument == old)
+        m_layoutDocument = replacement;
 }
 
 void Application::showTabArrangement()
@@ -765,9 +772,7 @@ bool Application::retryRestore(int row)
         discardRecovery(entry.document);
         m_files->close(entry.document);
         m_workspace.replace(entry.document, *id);
-        m_workspaceLayout->replaceTab(entry.document.value, id->value); // WS1: the Session's arrangement stays
-        if (m_layoutDocument == entry.document)
-            m_layoutDocument = *id;
+        replaceTabArrangement(entry.document, *id, ui::WorkspaceLayoutController::TabStart::Copy); // WS1: the Session's stays
         m_comparison.replaced(entry.document, *id); // R1: as replaceTarget
         m_tabMedia.erase(entry.document.value);
         m_originalColumns.erase(entry.document.value); // E5: as forgetTab
