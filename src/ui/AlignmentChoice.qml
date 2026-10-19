@@ -51,9 +51,11 @@ IconToolButton {
             return
         grid.highlighted = current > 0 ? current : 5
         grid.withKeys = withKeys
+        grid.chose = false
         grid.open()
     }
     function choose(n) {
+        grid.chose = true
         grid.close()
         editor.chooseAlignment(n - 1)
         alignment.chosen()
@@ -83,6 +85,9 @@ IconToolButton {
         objectName: "alignmentGrid"
         property int highlighted: 5
         property bool withKeys: false
+        // A choice sends the focus to the text (chosen()); Esc gives it back
+        // to the button.
+        property bool chose: false
         y: alignment.height
         x: Math.round((alignment.width - width) / 2)
         margins: 0
@@ -90,7 +95,7 @@ IconToolButton {
         // A grid the pointer opened leaves the keyboard focus where it was.
         focus: withKeys
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
-        onClosed: if (withKeys && alignment.enabled) alignment.forceActiveFocus()
+        onClosed: if (withKeys && !chose && alignment.enabled) alignment.forceActiveFocus()
         HoverHandler { id: gridHover }
         contentItem: Grid {
             id: cells

@@ -17910,6 +17910,7 @@ private slots:
         QTRY_VERIFY(!grid->property("visible").toBool());
         QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->draftRecord()->text.c_str())),
                  QStringLiteral("{\\an9\\b1}second")); // replaced in place
+        QVERIFY(item("lineText")->hasActiveFocus()); // typing goes on in the text
         application->editor().discard();
         // Esc closes it and nothing changes.
         choice->forceActiveFocus();
@@ -17918,6 +17919,7 @@ private slots:
         press(Qt::Key_Escape);
         QTRY_VERIFY(!grid->property("visible").toBool());
         QVERIFY(!session->draftRecord());
+        QVERIFY(choice->hasActiveFocus()); // Esc gives the focus back
         // Several Lines with different positions: the mixed icon; the arrows
         // move from the centre and Enter chooses, each Line's first block, as
         // one "Editing multiple lines" step.
