@@ -11928,6 +11928,16 @@ private slots:
         QVERIFY(!video.playing());
         QTRY_VERIFY_WITH_TIMEOUT(video.session().shownFrame().value_or(0) >= timebase.frameShownAt(800), 10000);
         QVERIFY(!video.playing());
+        // Switched off while the box plays, the video stays at the frame asked
+        // for then (one the box wanted while it was on its way is dropped).
+        {
+            const auto asked = video.session().requestedFrame();
+            audio.setSyncVideo(false);
+            QTest::qWait(500);
+            QCOMPARE(video.session().shownFrame(), asked);
+            QCOMPARE(video.session().requestedFrame(), asked);
+            audio.setSyncVideo(true);
+        }
         audio.stopPlayback();
         QVERIFY(!audio.playing());
 

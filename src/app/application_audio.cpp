@@ -103,7 +103,8 @@ void Application::syncAudioWithVideo()
     const auto &video = m_video->session();
     const bool ready = video.state() == application::VideoSession::State::Ready;
     m_audio->setPlayingVideoTime(ready && video.playing() ? std::optional(video.tellMs()) : std::nullopt);
-    if (!ready || video.playing() || !m_audio->playing()) {
+    // Off, the box's playback asks for no frame (a queued one is dropped).
+    if (!ready || video.playing() || !m_audio->playing() || !m_audio->syncVideo()) {
         m_audioWantsFrame.reset();
         return;
     }
