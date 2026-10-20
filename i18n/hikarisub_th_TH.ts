@@ -33,18 +33,26 @@
     </message>
     <message>
         <source>Horizontal stretching</source>
-        <translation>ยืดในแนวนอน</translation>
+        <translation type="vanished">ยืดในแนวนอน</translation>
     </message>
     <message>
         <source>Vertical stretching</source>
-        <translation>ยืดในแนวตั้ง</translation>
+        <translation type="vanished">ยืดในแนวตั้ง</translation>
     </message>
     <message>
         <source>Volume</source>
         <translation>ระดับเสียง</translation>
     </message>
     <message>
-        <source>Link</source>
+        <source>Linked to vertical stretch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio settings…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -88,56 +96,28 @@
         <translation>หยุดเล่น</translation>
     </message>
     <message>
-        <source>Before mark</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play before the tag</source>
         <translation>เล่นเสียงก่อนเครื่องหมาย</translation>
-    </message>
-    <message>
-        <source>After mark</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play after the tag</source>
         <translation>เล่นเสียงหลังเครื่องหมาย</translation>
     </message>
     <message>
-        <source>500 before</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play 500ms before the start time</source>
         <translation>เล่นเสียง 500 มิลลิวินาทีก่อนเวลาเริ่มต้น</translation>
-    </message>
-    <message>
-        <source>500 first</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
         <translation>เล่นเสียง 500 มิลลิวินาทีหลังเวลาเริ่มต้น</translation>
     </message>
     <message>
-        <source>500 last</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play 500ms before the end time</source>
         <translation>เล่นเสียง 500 มิลลิวินาทีก่อนเวลาสิ้นสุด</translation>
     </message>
     <message>
-        <source>500 after</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play 500ms after the end time</source>
         <translation>เล่นเสียง 500 มิลลิวินาทีหลังเวลาสิ้นสุด</translation>
-    </message>
-    <message>
-        <source>To end</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -168,10 +148,6 @@
         <translation>นำการเปลี่ยนแปลงไปใช้</translation>
     </message>
     <message>
-        <source>Go</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Go to selection</source>
         <translation>ไปยังส่วนที่เลือก</translation>
     </message>
@@ -192,16 +168,8 @@
         <translation>เปิดหรือปิดการแบ่งพยางค์อัตโนมัติ</translation>
     </message>
     <message>
-        <source>Auto</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Automatically apply changes</source>
         <translation>ใช้การเปลี่ยนแปลงโดยอัตโนมัติ</translation>
-    </message>
-    <message>
-        <source>Next</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Go to the next line after applying changes</source>
@@ -220,8 +188,73 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1×</source>
+        <extracomment>The audio panel&apos;s zoom readout; %1 is the magnification</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back to line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play around</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play 500 ms before the start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play the first 500 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play the last 500 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play before the mark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play after the mark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Commit options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waveform mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Spectrum mode</source>
         <translation>โหมดสเปกตรัม</translation>
+    </message>
+    <message>
+        <source>Sync with video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sync the video and audio cursors</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Speech</source>
@@ -230,6 +263,52 @@
     <message>
         <source>Enhance speech frequencies in the spectrum</source>
         <translation>เน้นย่านความถี่เสียงพูดในสเปกตรัม</translation>
+    </message>
+    <message>
+        <source>More audio options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speech (non-linear spectrum)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom: horizontal and vertical stretching</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Horizontal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift+wheel and Ctrl+wheel on the waveform zoom too</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume and output device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume: %1
+Output device: %2</source>
+        <extracomment>The audio panel&apos;s speaker button; %1 is the volume (1 to 100), %2 the device audio plays through now</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose audio file</source>
@@ -253,6 +332,16 @@
     </message>
     <message>
         <source>Indexing video %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is not connected. No output device is available.</source>
+        <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is not connected. Audio plays through %2.</source>
+        <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3135,6 +3224,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3530,7 +3623,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open blank 2h30m audio</source>
-        <translation>เปิดเสียงเปล่ายาว 2:30 ชั่วโมง</translation>
+        <translation type="vanished">เปิดเสียงเปล่ายาว 2:30 ชั่วโมง</translation>
     </message>
     <message>
         <source>Close audio</source>
@@ -3906,7 +3999,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens blank audio 2 hour and 30 minutes long</source>
-        <translation>เปิดเสียงเปล่าที่ยาวเป็นเวลา 2:30 ชั่วโมง</translation>
+        <translation type="vanished">เปิดเสียงเปล่าที่ยาวเป็นเวลา 2:30 ชั่วโมง</translation>
     </message>
     <message>
         <source>Closes audio</source>
