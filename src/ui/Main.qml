@@ -1880,6 +1880,9 @@ ApplicationWindow {
         id: field
         required property int role
         readonly property string shown: role === 0 ? root.editor.text : root.editor.translationText
+        // TM1: the field Tab or Shift+Tab reaches across panels, when set.
+        property Item tabNext: null
+        property Item tabPrevious: null
         readOnly: !root.editor.editable
         wrapMode: TextEdit.Wrap
         selectByMouse: true
@@ -2137,8 +2140,11 @@ ApplicationWindow {
         // focus). Its window change flag (Ctrl) reached EditBox's
         // HikariContainer::OnNavigation first (HikariPanel.cpp:23), which
         // ignores it, so Ctrl+Tab and Ctrl+Shift+Tab move the same way.
+        // TM1: from the Original text panel, Tab goes on to the Translated
+        // text, and Shift+Tab comes back, as in legacy's one EditBox.
         function tabOut(forward) {
-            const next = field.nextItemInFocusChain(forward)
+            const linked = forward ? field.tabNext : field.tabPrevious
+            const next = linked && linked.visible ? linked : field.nextItemInFocusChain(forward)
             if (next && next !== field)
                 next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
         }
@@ -3507,6 +3513,7 @@ ApplicationWindow {
                                 anchors.fill: parent
                                 role: 0
                                 focus: true
+                                tabNext: root.originalShown ? translationText : null
                                 Accessible.name: root.editor.translationMode ? qsTranslate("HikariSub.Editor", "Original text") : qsTranslate("HikariSub.Editor", "Line text")
                             }
                         }
@@ -3515,6 +3522,7 @@ ApplicationWindow {
                             objectName: "translationText"
                             role: 1
                             visible: root.editor.translationMode
+                            tabPrevious: root.originalShown ? lineText : null
                             Accessible.name: qsTranslate("HikariSub.Editor", "Translated text")
                         }
                         // Legacy translation-mode buttons (EDITBOX_PASTE_*,
@@ -4922,7 +4930,7 @@ ApplicationWindow {
                 model: root.dockList
                 textRole: "title"
                 displayText: placementWindow.visible && currentIndex >= 0 ? root.dockList[currentIndex].title : ""
-                currentIndex: 3 // the Grid
+                currentIndex: root.dockList.indexOf(gridDock)
                 Accessible.name: qsTranslate("HikariSub.Workspace", "Next to panel")
             }
             Item { Layout.fillWidth: true }
