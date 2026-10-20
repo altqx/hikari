@@ -51,8 +51,8 @@ QVariantList Application::checkKaraoke() const
                                                 "A karaoke tag has no duration, or its override block is never closed");
             break;
         case Kind::TotalNotDuration:
-            check = QCoreApplication::translate("HikariSub.Karaoke", "Syllables don't match the Line");
-            detail = QCoreApplication::translate("HikariSub.Karaoke", "The syllables last %1 s; the Line lasts %2 s")
+            check = QCoreApplication::translate("HikariSub.Karaoke", "Syllables don't match the line");
+            detail = QCoreApplication::translate("HikariSub.Karaoke", "The syllables last %1 s; the line lasts %2 s")
                          .arg(seconds(problem.totalMs), seconds(problem.durationMs));
             break;
         case Kind::ZeroLength:
@@ -60,7 +60,7 @@ QVariantList Application::checkKaraoke() const
             detail = syllables(problem.syllables);
             break;
         case Kind::OutsideLine:
-            check = QCoreApplication::translate("HikariSub.Karaoke", "Syllable outside the Line");
+            check = QCoreApplication::translate("HikariSub.Karaoke", "Syllable outside the line");
             detail = syllables(problem.syllables);
             break;
         }

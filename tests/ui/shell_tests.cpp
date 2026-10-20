@@ -7618,9 +7618,9 @@ private slots:
         };
         const Expected expected[] = {
                 {2, "Unclosed syllable", "A karaoke tag has no duration, or its override block is never closed"},
-                {3, "Syllables don't match the Line", "The syllables last 0.70 s; the Line lasts 1.00 s"},
+                {3, "Syllables don't match the line", "The syllables last 0.70 s; the line lasts 1.00 s"},
                 {4, "Zero-length syllable", "Syllable 1"},
-                {5, "Syllable outside the Line", "Syllables 1, 2"},
+                {5, "Syllable outside the line", "Syllables 1, 2"},
         };
         const QVariantList problems = dialog->property("problems").toList();
         QCOMPARE(problems.size(), qsizetype(std::size(expected)));

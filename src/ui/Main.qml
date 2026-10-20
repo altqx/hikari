@@ -1717,7 +1717,7 @@ ApplicationWindow {
             }
             // KA7: the Karaoke check window, after Check spelling.
             ShellMenuItem {
-                help: qsTr("Checks the karaoke syllables of every Line")
+                help: qsTr("Checks the karaoke syllables of every line")
                 id: checkKaraokeItem
                 iconRole: "karaoke"
                 objectName: "checkKaraokeMenuItem"

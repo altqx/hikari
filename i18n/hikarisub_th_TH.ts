@@ -1155,7 +1155,7 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>its lines would make a Document over %1 times the size of the file</source>
+        <source>it is too large for a lyrics file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3162,11 +3162,11 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Syllables don&apos;t match the Line</source>
+        <source>Syllables don&apos;t match the line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The syllables last %1 s; the Line lasts %2 s</source>
+        <source>The syllables last %1 s; the line lasts %2 s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3174,7 +3174,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Syllable outside the Line</source>
+        <source>Syllable outside the line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3933,7 +3933,7 @@ Failed to copy %2 fonts.</source>
         <translation>แปลงจากรูปแบบหนึ่งเป็นอีกรูปแบบหนึ่ง</translation>
     </message>
     <message>
-        <source>Checks the karaoke syllables of every Line</source>
+        <source>Checks the karaoke syllables of every line</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
