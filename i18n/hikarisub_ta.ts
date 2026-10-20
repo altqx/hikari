@@ -216,6 +216,14 @@
         <translation>செயலில் உள்ள வரிக்கு தானாக ச்க்ரோல்</translation>
     </message>
     <message>
+        <source>Sync with video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sync the video and audio cursors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Spectrum</source>
         <translation type="unfinished"></translation>
     </message>
@@ -230,6 +238,15 @@
     <message>
         <source>Enhance speech frequencies in the spectrum</source>
         <translation>ச்பெக்ட்ரம் பேச்சு அதிர்வெண் மேம்பாடு</translation>
+    </message>
+    <message>
+        <source>Output device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output device: %1</source>
+        <extracomment>The audio panel&apos;s speaker button; %1 is the device audio plays through now</extracomment>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose audio file</source>
@@ -253,6 +270,20 @@
     </message>
     <message>
         <source>Indexing video %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is not connected. No output device is available.</source>
+        <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is not connected. Audio plays through %2.</source>
+        <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio settings…</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3068,6 +3099,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3392,7 +3427,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open blank 2h30m audio</source>
-        <translation>வெற்று 2h30M ஆடியோவைத் திறக்கவும்</translation>
+        <translation type="vanished">வெற்று 2h30M ஆடியோவைத் திறக்கவும்</translation>
     </message>
     <message>
         <source>Close audio</source>
@@ -3780,7 +3815,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens blank audio 2 hour and 30 minutes long</source>
-        <translation>வெற்று ஆடியோவை 2 மணி நேரம் 30 நிமிடங்கள் நீளமாக திறக்கிறது</translation>
+        <translation type="vanished">வெற்று ஆடியோவை 2 மணி நேரம் 30 நிமிடங்கள் நீளமாக திறக்கிறது</translation>
     </message>
     <message>
         <source>Closes audio</source>
@@ -8124,8 +8159,69 @@ or codecs or a splitter may be missing</source>
         <translation>திருத்தப்பட்ட குறிச்சொல்</translation>
     </message>
     <message>
+        <source>Rectangle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tags</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">மாற்று</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished">தொடங்கு</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation type="unfinished">முடிவு</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Pick selected lines (%n lines picked: the tools edit them, not the active line)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>1 line picked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines picked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>1 line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>New tag name</source>
@@ -8324,6 +8420,14 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Free drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit shapes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shape: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8339,23 +8443,9 @@ or codecs or a splitter may be missing</source>
         <source>Pick selected lines</source>
         <translation type="unfinished"></translation>
     </message>
-    <message numerus="yes">
-        <source>Pick selected lines (%n line(s) picked: the tools edit them, not the active line)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Pick selected lines (the tools edit them, not the active line)</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) picked</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
     </message>
     <message>
         <source>Clear picked lines</source>
