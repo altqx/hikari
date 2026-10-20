@@ -245,6 +245,16 @@ hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
 target_compile_definitions(hikari_ui_tab_layouts_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_tab_layouts_tests hikari_media_fixtures hikari_media_helper)
+# WS2: the tab's arrangement in an ASS file's [Hikari] section. Seven parts,
+# each its own process under the default 60 s (decision 38g): a refusal row
+# starts the application as the other functions do, and in one process the
+# suite took 55 s here and timed out in CI on both platforms.
+hikari_add_qttest(hikari_ui_file_layouts_tests SOURCES file_layouts_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets
+    PARTS arrangements refusals=anUnusableFileArrangementFollowsTheNewTabRule
+          bounds=aLayoutLargerThanThePanelsIsRefused tree=aLayoutTheEngineCannotReadIsRefused
+          positions=aPanelPositionTheEngineCannotReadIsRefused places=aWindowPlaceNoWindowCanHaveIsRefused recovery=aRecoveredCopyKeepsItsArrangement)
+target_include_directories(hikari_ui_file_layouts_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 # TM1 (#232): Translation mode through the Translation preset, the Original
 # text panel and Subtitles > Translation mode.
 hikari_add_qttest(hikari_ui_translation_preset_tests SOURCES translation_preset_tests.cpp

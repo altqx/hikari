@@ -17,6 +17,12 @@ target_compile_definitions(hikari_core_ass_save_tests PRIVATE
     HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures"
     HIKARI_LEGACY_OUTPUTS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/run-36591631319/outputs")
 
+# WS2: the [Hikari] section (the tab's panel arrangement in ASS files).
+hikari_add_gtest(hikari_core_hikari_section_tests SOURCES hikari_section_tests.cpp
+    LIBRARIES hikari_core Qt6::Core LABELS core)
+target_compile_definitions(hikari_core_hikari_section_tests PRIVATE
+    HIKARI_SECTION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/hikari-section")
+
 hikari_add_gtest(hikari_core_srt_tests SOURCES srt_tests.cpp LIBRARIES hikari_core Qt6::Core LABELS core)
 target_compile_definitions(hikari_core_srt_tests PRIVATE
     HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures"
