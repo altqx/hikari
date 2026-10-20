@@ -356,8 +356,9 @@ bool isRetiredOption(std::string_view legacyKey)
 
 bool isRetiredAction(int id)
 {
-    // User decision 2026-10-05: GLOBAL_VIDEO_INDEXING is retired.
-    return id == hotkeyIdOf("GLOBAL_VIDEO_INDEXING");
+    // User decision 2026-10-05: GLOBAL_VIDEO_INDEXING is retired; AV3 (owner
+    // 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO, as a dummy video brings its own audio.
+    return id == hotkeyIdOf("GLOBAL_VIDEO_INDEXING") || id == hotkeyIdOf("GLOBAL_OPEN_DUMMY_AUDIO");
 }
 
 bool isPathSetting(std::string_view id)
@@ -1314,7 +1315,9 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         row.destination = std::string(symbol) + " (" + std::string(hotkeyWindowName(record->window)) + ")";
         if (isRetiredAction(id)) {
             row.disposition = Disposition::Retired;
-            because("retired: the rewrite has no FFMS2 indexing command (user decision, 2026-10-05)");
+            because(id == hotkeyIdOf("GLOBAL_OPEN_DUMMY_AUDIO")
+                        ? "retired: a dummy video brings its own silent audio (owner decision, 2026-10-18)"
+                        : "retired: the rewrite has no FFMS2 indexing command (user decision, 2026-10-05)");
             add(std::move(row));
             continue;
         }

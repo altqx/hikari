@@ -333,3 +333,38 @@ TEST(AudioPlayback, CachedFramesForPlayback)
     blank.readFrames(0, 3, out.data());
     EXPECT_EQ(out, (std::vector<std::int16_t>{0, 0, 0}));
 }
+
+// AV2 (#239): the cursor at the playing video's position, the view kept
+// around it as UpdateTimer keeps the playback cursor in sight.
+TEST(AudioPlayback, FollowedCursorKeepsTheVideoPositionInSight)
+{
+    AudioView view = minuteView(); // 1440 samples a column, 1000 columns
+    // in view: drawn there, the view stays
+    EXPECT_EQ(followCursor(view, 144000, 16), (FollowedCursor{false, 100.f}));
+    EXPECT_EQ(view.position(), 0);
+    // within 50 columns of the right edge: the view moves to 50 columns before it
+    const auto near = followCursor(view, 1400000, 16);
+    EXPECT_TRUE(near.moved);
+    EXPECT_EQ(view.position(), 1328000 / 1440);
+    ASSERT_TRUE(near.x);
+    EXPECT_NEAR(*near.x, 1400000.0 / 1440 - 922, 1e-3);
+    // a jump back out of view (a seek): the view follows at once
+    const auto back = followCursor(view, 48000 * 5, 16);
+    EXPECT_TRUE(back.moved);
+    EXPECT_EQ(view.position(), (48000 * 5 - 50 * 1440) / 1440);
+    EXPECT_NEAR(*back.x, 50.f, 1.f);
+}
+
+// At the audio's start the view cannot move: it is not drawn again each
+// time, and the cursor shows in the first 50 columns (legacy's playback
+// cursor does not).
+TEST(AudioPlayback, FollowedCursorAtTheStartDoesNotRedrawEachTime)
+{
+    AudioView view = minuteView();
+    EXPECT_EQ(followCursor(view, 48000, 16), (FollowedCursor{false, 48000.f / 1440}));
+    EXPECT_EQ(followCursor(view, 0, 16), (FollowedCursor{false, 0.f}));
+    EXPECT_EQ(view.position(), 0);
+    // without audio: nothing
+    AudioView empty;
+    EXPECT_EQ(followCursor(empty, 48000, 16), FollowedCursor{});
+}

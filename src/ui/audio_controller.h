@@ -69,6 +69,8 @@ class AudioController : public QObject {
     Q_PROPERTY(bool karaoke READ karaoke NOTIFY boxControlsChanged)
     Q_PROPERTY(bool karaokeSplitMode READ karaokeSplitMode NOTIFY boxControlsChanged)
     Q_PROPERTY(int currentSyllable READ currentSyllable NOTIFY displayChanged)
+    // AV2 (#239): the sync toggle (audio.syncVideo, on by default).
+    Q_PROPERTY(bool syncVideo READ syncVideo NOTIFY boxControlsChanged)
 public:
     explicit AudioController(application::DisplayAudioPort &own, QObject *parent = nullptr);
 
@@ -84,13 +86,15 @@ public:
     // O5: the interface language changed (status reads it).
     void retranslate() { emit textsChanged(); }
 
-    // GLOBAL_OPEN_AUDIO (a file), GLOBAL_OPEN_DUMMY_AUDIO, GLOBAL_CLOSE_AUDIO.
+    // GLOBAL_OPEN_AUDIO (a file, or a dummy video's silence), GLOBAL_CLOSE_AUDIO.
     Q_INVOKABLE void openAudio(const QString &path);
     // SH2: runs as openAudio starts, so that audio opened while no Document
     // is open first gets one to belong to (VideoController::setBeforeOpen).
     void setBeforeOpen(std::function<void()> before) { m_beforeOpen = std::move(before); }
     Q_INVOKABLE void openAudioUrl(const QUrl &url) { openAudio(url.toLocalFile()); }
-    Q_INVOKABLE void openDummy() { openAudio(QString::fromLatin1(application::AudioBox::kDummyName)); }
+    // Legacy's 2 h 30 min blank audio (the retired GLOBAL_OPEN_DUMMY_AUDIO,
+    // AV3), for tests that need audio without a file.
+    void openDummy() { openAudio(QString::fromLatin1(application::AudioBox::kDummyName)); }
     Q_INVOKABLE void closeAudio();
     // An indexed video's audio (legacy RendererFFMS2::OpenFile's
     // OpenAudioInTab(40000): the video's provider and track): the video's
@@ -118,6 +122,19 @@ public:
     void setLines(std::vector<application::AudioLineSpan> lines, int active, bool reselect);
     void setKeyframes(std::vector<int> keyframesMs);
     void setVideoTime(std::optional<int> pausedMs);
+    // AV2 (#239): the cursors follow each other while the sync toggle is on.
+    // The playing video's time (nothing while it is not playing): the cursor
+    // there and the view kept around it, unless the box plays itself (its
+    // own cursor shows). While the box plays, `showVideoAt` gets the time it
+    // is at on each tick, for the video to show that frame. Neither changes
+    // which mode owns the clock (ADR 0009): each plays on its own output.
+    bool syncVideo() const { return m_syncVideo; }
+    Q_INVOKABLE void setSyncVideo(bool on);
+    void setPlayingVideoTime(std::optional<int> ms);
+    void setFollowAudio(std::function<void(int ms)> showVideoAt) { m_showVideoAt = std::move(showVideoAt); }
+    // The cursor is a playback cursor (no time beside it): the box plays, or
+    // it follows the playing video.
+    bool cursorIsPlayback() const { return playing() || m_followingVideo; }
     application::AudioMarks marks() const;
 
     // The display item: its size, the mouse cursor, focus and the wheel.
@@ -336,6 +353,7 @@ private:
     void tick();         // legacy UpdateTimer
     void focusAndPlay(application::PlayMode mode);
     void playbackStateChanged();
+    void stopFollowingVideo();
     void releasePlayer(); // legacy SetFile's unload: Stop, then the player goes
 
     application::AudioBox m_box;
@@ -402,6 +420,10 @@ private:
     QTimer m_playTimer;
     bool m_wasPlaying = false;
     std::uint64_t m_playedSerial = 0; // the audio the player last played
+    // AV2
+    bool m_syncVideo = true;
+    bool m_followingVideo = false; // the cursor shows the playing video's time
+    std::function<void(int)> m_showVideoAt;
     // A5
     application::AudioKaraoke m_karaoke;
     bool m_hasKara = false, m_karaAuto = true;

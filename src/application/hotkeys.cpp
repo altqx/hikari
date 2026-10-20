@@ -757,7 +757,7 @@ const std::map<int, std::string> &hotkeyNames()
 
 bool isRetiredHotkey(int id)
 {
-    return id == 5015; // GLOBAL_VIDEO_INDEXING
+    return id == 5015 || id == 5104; // GLOBAL_VIDEO_INDEXING, GLOBAL_OPEN_DUMMY_AUDIO (AV3)
 }
 
 std::vector<std::pair<HotkeyId, Hotkey>> dropRetiredHotkeys(HotkeyMap &map)

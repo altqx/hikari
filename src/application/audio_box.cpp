@@ -1,6 +1,7 @@
 #include "hikari/application/audio_box.h"
 
 #include <algorithm>
+#include <charconv>
 #include <cmath>
 
 namespace hikari::application {
@@ -125,6 +126,24 @@ std::string legacyAudioCacheName(const std::string &path, int track, int channel
            std::to_string(delayFrames) + ".w64";
 }
 
+std::string AudioBox::dummyName(std::int64_t samples)
+{
+    return "dummy-audio:silence?sr=44100&bd=16&ch=1&ln=" + std::to_string(std::max<std::int64_t>(1, samples));
+}
+
+std::int64_t AudioBox::dummySamples(std::string_view name)
+{
+    const auto at = name.find("ln=");
+    if (at == std::string_view::npos)
+        return kDummySamples;
+    const auto digits = name.substr(at + 3);
+    std::int64_t samples = 0;
+    const auto [end, error] = std::from_chars(digits.data(), digits.data() + digits.size(), samples);
+    if (error != std::errc() || samples <= 0 || (end != digits.data() + digits.size() && *end != '&'))
+        return kDummySamples;
+    return samples;
+}
+
 std::string legacyIndexName(const std::string &path, int track)
 {
     const auto slash = path.find_last_of("/\\");
@@ -176,8 +195,8 @@ void AudioBox::open(const std::string &path)
     m_videoNewIndex = false;
     m_videoIndexFile.clear();
     // legacy Provider::Get
-    if (path.starts_with("dummy")) {
-        m_audio = std::make_shared<DisplayAudio>(DisplayAudio::silence(kDummyRate, kDummySamples));
+    if (isDummyName(path)) {
+        m_audio = std::make_shared<DisplayAudio>(DisplayAudio::silence(kDummyRate, dummySamples(path)));
         m_progress = 1.f;
         m_state = State::Ready;
         return notify();

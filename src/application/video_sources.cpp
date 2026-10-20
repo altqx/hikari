@@ -6,6 +6,7 @@
 #include <cctype>
 #include <charconv>
 #include <climits>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -424,6 +425,12 @@ std::vector<int> dummyVideoTimecodes(const DummyVideo &video)
     for (int i = 0; i < video.frames; ++i)
         out.push_back(saturate(i * static_cast<double>(duration)));
     return out;
+}
+
+std::int64_t dummyVideoAudioFrames(const DummyVideo &video, int sampleRate)
+{
+    const double duration = video.fps > 0.f ? static_cast<double>(1000.f / video.fps) : 0.0;
+    return std::llround(std::max(video.frames, 0) * duration * sampleRate / 1000.0);
 }
 
 // DummyVideoSource

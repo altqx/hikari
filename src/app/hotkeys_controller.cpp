@@ -220,10 +220,14 @@ void HotkeysController::load()
     // V3-indexing-retired: a binding of "Open video with FFMS2" (legacy
     // GLOBAL_VIDEO_INDEXING, from a carried-over Hotkeys.txt) is dropped with
     // a notice, and the list is written without it so the notice is given once.
+    // AV3: the same for "Open blank 2h30m audio" (GLOBAL_OPEN_DUMMY_AUDIO).
     const auto dropped = application::dropRetiredHotkeys(m_live);
     for (const auto &[key, hotkey] : dropped)
-        m_retiredNotices << QCoreApplication::translate("HikariSub.Hotkeys",
-                                                        "The shortcut %1 of \"Open video with FFMS2\" was removed: the command is retired and videos are always indexed.")
+        m_retiredNotices << (key.id == application::hotkeyIdOf("GLOBAL_OPEN_DUMMY_AUDIO")
+                                 ? QCoreApplication::translate("HikariSub.Hotkeys",
+                                                               "The shortcut %1 of \"Open blank 2h30m audio\" was removed: the command is retired and a dummy video brings its own silent audio.")
+                                 : QCoreApplication::translate("HikariSub.Hotkeys",
+                                                               "The shortcut %1 of \"Open video with FFMS2\" was removed: the command is retired and videos are always indexed."))
                                 .arg(qs(hotkey.accel));
     if (!dropped.empty())
         m_settings.set(kMainSetting, qLines(application::hotkeyLines(m_live, false)));

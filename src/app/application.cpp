@@ -1095,6 +1095,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.seekVideo = [this](int ms) { seekVideoFromAudio(ms); };
         m_audio->setTimingHooks(std::move(hooks));
     }
+    m_audio->setFollowAudio([this](int ms) { showVideoAtAudio(ms); }); // AV2
     // Legacy RendererFFMS2::OpenFile: a file with audio and no video goes to
     // the audio box (as audio from video: SetRecent, the box's own provider),
     // and the open video stays. Otherwise legacy ProviderFFMS2::Init chose the
@@ -1153,6 +1154,7 @@ void Application::routeAudio(const application::OutputRoute &route, bool move)
     m_audioPlayer->setOutputDevice(route.systemDefault ? std::string() : route.name);
     if (move)
         m_audioPlayer->switchOutput();
+    noticeAudioRoute(std::exchange(m_noticedRoute, route), route);
 }
 
 void Application::refreshAudio()
@@ -1200,6 +1202,10 @@ void Application::followVideoInAudio()
     if (state == application::VideoSession::State::Opening) {
         m_audioFollowedVideo.clear();
         m_pendingIndexHandoff.clear(); // the source's new open removed it
+    } else if (state == application::VideoSession::State::Closed) {
+        // AV3: a dummy video opens at once (never seen Opening), so a new
+        // open of it is known by the close before it
+        m_audioFollowedVideo.clear();
     }
     if (state == application::VideoSession::State::Ready && m_audioFollowedVideo != QString::fromStdString(video.path())) {
         // an indexed video brings its track into the box, opened from the
@@ -1208,8 +1214,12 @@ void Application::followVideoInAudio()
         if (keepTabAudio(m_audioFollowedVideo)) {
             // P6: a restored tab's own audio file stays (legacy dontLoadAudio)
         } else if (video.dummy()) {
-            // V3: legacy loads the dummy without changing the audio
-            // (Notebook::LoadVideo's dontLoadAudio, HikariSubFrame.cpp:1073)
+            // AV3 (#240, AV3-dummy-video-audio): a dummy video brings its own
+            // silent audio of its length (legacy loaded the dummy without
+            // changing the audio, Notebook::LoadVideo's dontLoadAudio).
+            if (const QString own = dummyVideoAudio(m_audioFollowedVideo);
+                !own.isEmpty() && !(m_audio->hasAudio() && m_audio->path() == own))
+                m_audio->openAudio(own);
         } else if (video.hasAudio()) {
             m_audio->openFromVideo(m_audioFollowedVideo, video.audioTrack(), video.newIndex(),
                                    QString::fromStdString(video.indexHandoff()));
@@ -1227,6 +1237,7 @@ void Application::followVideoInAudio()
             m_audio->setKeyframeSnapTimes({}); // A3
         }
         m_audio->setVideoTime(std::nullopt);
+        syncAudioWithVideo(); // AV2
         return;
     }
     if (!m_audioTimebase || m_audioTimebasePath != video.path() || m_audioKeyframes != video.keyframes()) {
@@ -1250,10 +1261,13 @@ void Application::followVideoInAudio()
         if (const auto frame = video.reportedFrame())
             paused = m_audioTimebase->msAt(*frame);
     m_audio->setVideoTime(paused);
+    syncAudioWithVideo(); // AV2
 }
 
 void Application::rememberRecentAudio(const QString &path)
 {
+    if (application::AudioBox::isDummyName(path.toStdString()))
+        return; // AV3: a dummy video's generated silence is no file to reopen
     m_recentAudio.add(path.toStdString());
     m_settings->settings().set("recent.audio", m_recentAudio.entries()); // SetRecent's SetTable
 }
@@ -1327,6 +1341,10 @@ void Application::openAudioFromVideo()
 {
     const auto &video = m_video->session();
     if (video.state() == application::VideoSession::State::Ready) {
+        // AV3: a dummy video's audio is its silence, the video's own as when
+        // it opened (no AudioPath of the tab's)
+        if (const QString own = dummyVideoAudio(QString::fromStdString(video.path())); !own.isEmpty())
+            return m_audio->openAudio(own);
         m_audio->openAudio(QString::fromStdString(video.path()));
         // P9: legacy AudioPath = VideoPath (OpenAudioInTab with no path).
         if (const auto target = m_workspace.editingTarget())

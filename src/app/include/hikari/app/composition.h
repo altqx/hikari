@@ -14,6 +14,12 @@ enum class StartupMode {
 
 int run(int argc, char **argv, StartupMode mode);
 
+// AV1 (#238, AV1-linux-pulseaudio): on Linux, Qt Multimedia's audio goes
+// through its PulseAudio backend (pipewire-pulse on a PipeWire desktop) unless
+// QT_AUDIO_BACKEND chooses one: Qt 6.11's PipeWire backend crashes when the
+// sink a playing stream is on goes away. run() calls it before Qt starts.
+void preferPulseAudioBackend();
+
 // The path given on the command line (hikarisubApp.cpp:483-487, legacy
 // OpenFiles with one file). openStartFile, before the main window is made,
 // opens anything but a video as the editing target and returns false; for a

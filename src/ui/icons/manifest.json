@@ -2489,6 +2489,28 @@
    ]
   },
   {
+   "role": "audio-output",
+   "file": "audio-output.svg",
+   "label": "Output device",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "audio-video-sync",
+   "file": "audio-video-sync.svg",
+   "label": "Sync the video and audio cursors",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
    "role": "autosave",
    "file": "autosave.svg",
    "label": "Open auto save",
