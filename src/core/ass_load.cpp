@@ -1,4 +1,5 @@
 #include "hikari/core/ass_load.h"
+#include "hikari/core/ass_attachments.h"
 
 #include "text_util.h"
 
@@ -44,6 +45,23 @@ std::size_t endOfRecord(const Section &section, std::size_t count)
         std::visit([&](const auto &r) { offset = std::max(offset, r.span.offset + r.span.length + r.span.terminatorLength); },
                    section.records[i]);
     return offset;
+}
+
+// The sections libass reads as embedded data: a [Fonts] or [Graphics]
+// section and every section after it up to a header libass knows.
+std::vector<bool> embeddedData(const std::vector<Section> &sections)
+{
+    std::vector<bool> data;
+    bool in = false;
+    for (const auto &section : sections) {
+        if (section.kind == SectionKind::Fonts || section.kind == SectionKind::Graphics)
+            in = true;
+        else if (section.kind == SectionKind::ScriptInfo || section.kind == SectionKind::Styles ||
+                 section.kind == SectionKind::SsaStyles || section.kind == SectionKind::Events)
+            in = false;
+        data.push_back(in);
+    }
+    return data;
 }
 
 } // namespace
@@ -99,6 +117,84 @@ bool Document::removeScriptInfo(std::u8string_view key)
                            return p && p->key == key;
                        }) > 0;
     return removed;
+}
+
+std::optional<std::u8string_view> Document::hikariProperty(std::u8string_view key) const
+{
+    const PropertyRecord *last = nullptr;
+    for (const auto &section : m_sections)
+        if (section.kind == SectionKind::Hikari)
+            for (const auto &record : section.records)
+                if (const auto *p = std::get_if<PropertyRecord>(&record); p && p->key == key)
+                    last = p; // as scriptInfo: the last one wins
+    if (!last)
+        return std::nullopt;
+    return std::u8string_view(last->value);
+}
+
+bool Document::setHikariProperty(std::u8string_view key, std::u8string value)
+{
+    if (m_format != SubtitleFormat::Ass)
+        return false;
+    // A [Hikari] section inside embedded data is part of the data to libass
+    // (and, after [Fonts], to the attachment as legacy reads it): the key's
+    // lines leave it, with the section when nothing else is in it, and the
+    // value goes in a section outside the data.
+    auto data = embeddedData(m_sections);
+    for (std::size_t i = m_sections.size(); i-- > 0;) {
+        auto &records = m_sections[i].records;
+        if (!data[i] || m_sections[i].kind != SectionKind::Hikari)
+            continue;
+        const bool removed = std::erase_if(records, [&](const Record &r) {
+                                 const auto *p = std::get_if<PropertyRecord>(&r);
+                                 return p && p->key == key;
+                             }) > 0;
+        const auto blank = [&](const Record &r) {
+            const auto *opaque = std::get_if<OpaqueRecord>(&r);
+            return opaque && std::all_of(m_source.bytes.begin() + static_cast<std::ptrdiff_t>(opaque->span.offset),
+                                         m_source.bytes.begin() +
+                                             static_cast<std::ptrdiff_t>(opaque->span.offset + opaque->span.length),
+                                         [](std::byte b) { return b == std::byte{' '} || b == std::byte{'\t'}; });
+        };
+        if (removed && std::ranges::all_of(records, blank))
+            m_sections.erase(m_sections.begin() + static_cast<std::ptrdiff_t>(i));
+    }
+    data = embeddedData(m_sections);
+    PropertyRecord *last = nullptr;
+    Section *hikari = nullptr;
+    for (std::size_t i = 0; i < m_sections.size(); ++i) {
+        auto &section = m_sections[i];
+        if (section.kind != SectionKind::Hikari || data[i])
+            continue;
+        hikari = &section;
+        for (auto &record : section.records)
+            if (auto *p = std::get_if<PropertyRecord>(&record); p && p->key == key)
+                last = p;
+    }
+    if (last) {
+        if (last->value != value) {
+            last->value = std::move(value);
+            last->edited = true;
+        }
+        return true;
+    }
+    if (!hikari) {
+        // At the end, before the embedded data that may end the file: libass
+        // keeps reading lines after [Fonts] as font data until a header it
+        // knows, so a section after them would become part of the last font.
+        std::size_t at = m_sections.size();
+        while (at > 0 && data[at - 1])
+            --at;
+        hikari = &*m_sections.insert(m_sections.begin() + static_cast<std::ptrdiff_t>(at),
+                                     Section{SectionKind::Hikari, u8"[Hikari]", std::nullopt, {}});
+    }
+    std::size_t at = 0;
+    for (std::size_t i = 0; i < hikari->records.size(); ++i)
+        if (std::holds_alternative<PropertyRecord>(hikari->records[i]))
+            at = i + 1;
+    PropertyRecord added{std::u8string(key), std::move(value), SourceSpan{endOfRecord(*hikari, at), 0, 0}, true, true};
+    hikari->records.insert(hikari->records.begin() + static_cast<std::ptrdiff_t>(at), std::move(added));
+    return true;
 }
 
 bool Document::appendStyle(std::vector<std::u8string> fields)
@@ -486,6 +582,8 @@ SectionKind headerKind(u8sv header)
         return SectionKind::Fonts;
     if (startsWith(header, u8"[Graphics]"))
         return SectionKind::Graphics;
+    if (startsWith(header, u8"[Hikari]"))
+        return SectionKind::Hikari;
     return SectionKind::Unknown;
 }
 
@@ -624,6 +722,15 @@ private:
                 const auto colon = view.find(u8':');
                 section.records.push_back(PropertyRecord{str(trim(view.substr(0, colon))),
                                                          str(trim(view.substr(colon + 1))), span});
+                return;
+            }
+            break;
+        case SectionKind::Hikari:
+            // WS2: "key=value"; anything else stays as it is.
+            if (!view.empty() && view.front() != u8';' && view.find(u8'=') != u8sv::npos) {
+                const auto equals = view.find(u8'=');
+                section.records.push_back(PropertyRecord{str(trim(view.substr(0, equals))),
+                                                         str(trim(view.substr(equals + 1))), span});
                 return;
             }
             break;

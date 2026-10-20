@@ -195,6 +195,10 @@ public:
     // nothing becomes modified and no prepared command goes stale. False when
     // the Document has no Script Info to hold it (not ASS).
     bool amendScriptInfo(std::u8string_view key, std::u8string value);
+    // WS2: the same for the [Hikari] section (Document::setHikariProperty),
+    // which a save writes the tab's panel arrangement into. False when the
+    // Document is not ASS.
+    bool amendHikariProperty(std::u8string_view key, std::u8string value);
     bool isDirty() const; // committed content differs from the save point, or a draft is pending
 
 private:

@@ -3,7 +3,9 @@
 
 #include "text_util.h"
 
+#include <algorithm>
 #include <cstdio>
+#include <functional>
 
 namespace hikari::core {
 
@@ -75,6 +77,21 @@ std::u8string sourceNewline(const std::vector<std::byte> &src)
     return u8"\n";
 }
 
+// Runs at the end of a record's iteration, `continue` included.
+struct RecordEnd {
+    std::function<void()> run;
+    ~RecordEnd() { run(); }
+};
+
+// The output so far ends with an empty line ("\n\n" or "\n\r\n").
+bool endsWithBlankLine(const std::vector<std::byte> &out)
+{
+    const std::size_t n = out.size();
+    if (n < 2 || out[n - 1] != std::byte{'\n'})
+        return false;
+    return out[n - 2] == std::byte{'\n'} || (n >= 3 && out[n - 2] == std::byte{'\r'} && out[n - 3] == std::byte{'\n'});
+}
+
 } // namespace
 
 std::vector<std::byte> encodeAss(const Document &document)
@@ -90,18 +107,32 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
     const auto &src = document.source().bytes;
     std::vector<std::byte> out;
     out.reserve(src.size() + 64);
+    // The renderer script's Lines outside an [Events] section, held for the
+    // next one (SubsGrid::GetVisible writes every Line under [Events]).
+    std::vector<std::byte> held;
+    std::vector<std::byte> *sink = &out;
     auto copy = [&](std::size_t from, std::size_t count) {
-        out.insert(out.end(), src.begin() + static_cast<std::ptrdiff_t>(from),
-                   src.begin() + static_cast<std::ptrdiff_t>(from + count));
+        sink->insert(sink->end(), src.begin() + static_cast<std::ptrdiff_t>(from),
+                     src.begin() + static_cast<std::ptrdiff_t>(from + count));
     };
     auto append = [&](const std::u8string &text) {
         for (char8_t c : text)
-            out.push_back(static_cast<std::byte>(c));
+            sink->push_back(static_cast<std::byte>(c));
     };
     if (document.source().encoding == TextEncoding::Utf8WithBom)
         copy(0, 3);
     detail::NewlineTracker newlines;
+    auto flushHeld = [&] {
+        if (held.empty())
+            return;
+        if (newlines.openEnd)
+            append(newlines.newline);
+        out.insert(out.end(), held.begin(), held.end());
+        held.clear();
+        newlines.openEnd = false;
+    };
     bool fonts = false;
+    bool inEvents = false; // the last header written is an [Events] one
     for (const auto &section : document.sections()) {
         // 38c: the renderers take the attached fonts as font leases
         // (ass_attachments.h), so the renderer script leaves [Fonts] out,
@@ -109,14 +140,42 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
         fonts = section.kind == SectionKind::Fonts || (fonts && continuesAttachment(section));
         if (options.renderer && fonts)
             continue;
+        // WS2: the [Hikari] section's header and properties are the
+        // editor's, not the renderers'. A Line in it is a Line (LoadASS reads
+        // events in any section), drawn as the others are.
+        const bool editorOnly = options.renderer && section.kind == SectionKind::Hikari;
+        if (!editorOnly && (section.headerSpan || !section.header.empty()))
+            inEvents = section.kind == SectionKind::Events;
+        // The renderers read events only under [Events]: Lines held from
+        // other sections go into the next one, after its Format line, or
+        // before its first Line when it has none.
+        const bool takesHeld = options.renderer && !editorOnly && section.kind == SectionKind::Events;
+        const bool formatted = takesHeld && std::ranges::any_of(section.records, [](const auto &record) {
+                                   return std::holds_alternative<FormatRecord>(record);
+                               });
+        // Its own Lines before the Format line wait with the held ones, so
+        // the renderers have every Line in the Document's order.
+        bool holdsOwn = formatted && !held.empty();
         // E5-tlmode-needs-script-info: a Script Info section the Document
         // added at the top has no bytes; it is written as legacy's header is
         // (SubsGridBase.cpp:1490-1503): the header, its properties and a
         // blank line before the next section, in the source's line ends.
         const bool added = !section.headerSpan && !section.header.empty();
-        if (section.headerSpan) {
+        if (editorOnly) {
+            // no header: its Lines continue the section before it
+        } else if (section.headerSpan) {
             copy(section.headerSpan->offset, section.headerSpan->length + section.headerSpan->terminatorLength);
             newlines.see(*section.headerSpan);
+        } else if (added && section.kind == SectionKind::Hikari) {
+            // WS2: a [Hikari] section the Document added (at the end, or
+            // before trailing embedded data): after a blank line, in the line
+            // ends of the record before it.
+            if (newlines.openEnd)
+                append(newlines.newline);
+            if (!out.empty() && !endsWithBlankLine(out))
+                append(newlines.newline);
+            append(section.header + newlines.newline);
+            newlines.openEnd = false;
         } else if (added) {
             newlines.newline = sourceNewline(src);
             append(newlines.wrap(section.header));
@@ -126,11 +185,36 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
             const auto *line = std::get_if<LineRecord>(&record);
             const auto *property = std::get_if<PropertyRecord>(&record);
             const auto *style = std::get_if<StyleRecord>(&record);
+            if (editorOnly && !line)
+                continue;
+            const bool format = std::holds_alternative<FormatRecord>(record);
+            if (format)
+                holdsOwn = false;
+            if (takesHeld && !formatted && line)
+                flushHeld();
+            // A renderer Line outside [Events] goes to `held`, ending with a
+            // line end; the output's own open end is kept for what follows.
+            const bool hold = options.renderer && line && (!inEvents || holdsOwn);
+            const bool openBefore = newlines.openEnd;
+            if (hold) {
+                sink = &held;
+                newlines.openEnd = false;
+            }
+            const RecordEnd recordEnd{[&] {
+                if (hold) {
+                    if (!held.empty() && held.back() != std::byte{'\n'})
+                        append(newlines.newline);
+                    sink = &out;
+                    newlines.openEnd = openBefore;
+                } else if (takesHeld && format) {
+                    flushHeld();
+                }
+            }};
             const SourceSpan &span = std::visit([](const auto &r) -> const SourceSpan & { return r.span; }, record);
             // Legacy GetSInfos and Styles::GetRaw text for added or changed records.
             std::optional<std::u8string> generated;
             if (property && (property->inserted || property->edited))
-                generated = property->key + u8": " + property->value;
+                generated = property->key + (section.kind == SectionKind::Hikari ? u8"=" : u8": ") + property->value;
             if (style && (style->inserted || style->edited)) {
                 std::u8string text = u8"Style: ";
                 for (std::size_t i = 0; i < style->fields.size(); ++i)
@@ -253,8 +337,22 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
                 copy(span.offset, span.length + span.terminatorLength);
             }
         }
-        if (added)
+        // The added Script Info at the top, and an added [Hikari] before
+        // embedded data, end with a blank line before the next section.
+        if (takesHeld)
+            flushHeld();
+        if (added && !editorOnly && (section.kind != SectionKind::Hikari || &section != &document.sections().back()))
             append(newlines.newline);
+    }
+    if (!held.empty()) {
+        // No [Events] section after them: one of their own at the end.
+        if (newlines.openEnd)
+            append(newlines.newline);
+        if (!out.empty() && !endsWithBlankLine(out))
+            append(newlines.newline);
+        append(u8"[Events]" + newlines.newline);
+        newlines.openEnd = false;
+        flushHeld();
     }
     return out;
 }

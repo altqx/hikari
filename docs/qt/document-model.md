@@ -19,7 +19,7 @@ LineIds survive reorder, filtering and edits; duplication creates new IDs, delet
 
 Application state owns selection/active/marker LineIds, Grid filters, edit drafts, targets, undo and view positions. Hidden Lines remain content; command scope explicitly supplies included IDs and hidden-line policy. Protected references cannot receive mutations. Commands change semantic records and invalidate affected raw spans/caches together; source spans never become competing mutable truth.
 
-Application resource context owns media/keyframe/automation paths, provenance, resolved locations and missing-resource diagnostics. Preserve recognized ASS/session association fields on export; decoding handles/caches and Workspace layout are not document content. Styles belong to Documents; external Style/font catalogs retain separate readers. Existing session/autosave readers remain required; no new Project format or invented legacy autosave index.
+Application resource context owns media/keyframe/automation paths, provenance, resolved locations and missing-resource diagnostics. Preserve recognized ASS/session association fields on export; decoding handles/caches and Workspace layout are not document content. The exception, by the owner's decision (WS2-hikari-section): an ASS file's `[Hikari]` section, which a save writes the tab's arrangement into, is source the Document keeps like Script Info; changing the arrangement is not an edit. Styles belong to Documents; external Style/font catalogs retain separate readers. Existing session/autosave readers remain required; no new Project format or invented legacy autosave index.
 
 ## Interfaces and ownership
 
