@@ -259,6 +259,8 @@ constexpr HotkeyAction kActions[] = {
         // unused in its windows' ranges (listed among their neighbours).
         // LE3-tags-shown: the Line editor's hidden-tag view (editor.hideTags).
         {"GLOBAL_EDITOR_HIDE_TAGS", 5169},
+        // FS1-bar-mode: the fullscreen bar's Auto / Always / Never (video.fullscreenBar).
+        {"VIDEO_FULLSCREEN_BAR", 2021},
 };
 
 struct NameRow {
@@ -496,6 +498,8 @@ constexpr NameRow kNames[] = {
         {2001, "Stop"}, // VIDEO_STOP
         // The rewrite's own (LE3-tags-shown).
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
+        // FS1-bar-mode.
+        {2021, "Full screen bar: Auto / Always / Never"}, // VIDEO_FULLSCREEN_BAR
 };
 
 struct DefaultRow {
@@ -558,6 +562,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {2006, VideoHotkey, "Volume up", "Num ."}, // VIDEO_VOLUME_PLUS
         {2007, VideoHotkey, "Volume down", "Num 0"}, // VIDEO_VOLUME_MINUS
         {2011, VideoHotkey, "Next chapter", "M"}, // VIDEO_NEXT_CHAPTER
+        {2021, VideoHotkey, "Full screen bar: Auto / Always / Never", "Tab"}, // VIDEO_FULLSCREEN_BAR (FS1-bar-mode)
         {2010, VideoHotkey, "Previous chapter", "N"}, // VIDEO_PREVIOUS_CHAPTER
         {3012, EditorHotkey, "Add bold", "Ctrl-B"}, // EDITBOX_INSERT_BOLD
         {3013, EditorHotkey, "Add italic", "Ctrl-I"}, // EDITBOX_INSERT_ITALIC

@@ -433,7 +433,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 242); // 241 legacy actions (AV3 retires GLOBAL_OPEN_DUMMY_AUDIO) and the rewrite's GLOBAL_EDITOR_HIDE_TAGS (LE3)
+    EXPECT_EQ(bound, 243); // 241 legacy actions (AV3 retires GLOBAL_OPEN_DUMMY_AUDIO) and the rewrite's GLOBAL_EDITOR_HIDE_TAGS (LE3) and VIDEO_FULLSCREEN_BAR (FS1)
 }
 
 // ---- Config.txt / AudioConfig.txt readings
