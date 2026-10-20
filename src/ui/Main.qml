@@ -1884,6 +1884,20 @@ ApplicationWindow {
     // One text role of the Line editor (Original or Translated). The field
     // mirrors the editor's projection; user changes go to the controller,
     // which maps them onto the raw source. Programmatic updates are not edits.
+    // TM1: the dotted underline of a suggested run (RoleField).
+    component SuggestionDots: Row {
+        id: dots
+        spacing: 2
+        height: 2
+        Repeater {
+            model: Math.max(0, Math.floor((dots.width + 2) / 4))
+            Rectangle {
+                width: 2
+                height: 2
+                color: Theme.accent
+            }
+        }
+    }
     component RoleField: TextArea {
         id: field
         required property int role
@@ -1953,28 +1967,28 @@ ApplicationWindow {
                 required property var modelData
                 anchors.fill: parent
                 z: 2
+                // Every suggestion Tab would place is shown, a wrapped one
+                // over two rows as a placed run's underline is.
                 Item {
                     id: suggestion
                     readonly property int from: field.role === 1 ? run.modelData.suggestedStart : -1
                     readonly property int to: field.role === 1 ? run.modelData.suggestedEnd : -1
                     readonly property rect first: { field.text; field.width; return field.positionToRectangle(from) }
                     readonly property rect last: { field.text; field.width; return field.positionToRectangle(to) }
+                    readonly property bool wraps: last.y > first.y
                     objectName: field.objectName + "Run" + run.modelData.number + "Suggestion"
-                    visible: from >= 0 && to > from && to <= field.length && last.y === first.y
-                    x: first.x
-                    y: first.y + first.height - 1
-                    width: last.x - first.x
-                    height: 2
-                    Row {
-                        spacing: 2
-                        Repeater {
-                            model: Math.max(0, Math.floor((suggestion.width + 2) / 4))
-                            Rectangle {
-                                width: 2
-                                height: 2
-                                color: Theme.accent
-                            }
-                        }
+                    visible: from >= 0 && to > from && to <= field.length
+                    anchors.fill: parent
+                    SuggestionDots {
+                        x: suggestion.first.x
+                        y: suggestion.first.y + suggestion.first.height - 1
+                        width: (suggestion.wraps ? field.width - field.rightPadding : suggestion.last.x) - suggestion.first.x
+                    }
+                    SuggestionDots {
+                        visible: suggestion.wraps
+                        x: field.leftPadding
+                        y: suggestion.last.y + suggestion.last.height - 1
+                        width: suggestion.last.x - field.leftPadding
                     }
                 }
                 Item {
