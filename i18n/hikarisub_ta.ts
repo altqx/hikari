@@ -4250,6 +4250,34 @@ great help testing HikariSub on a slow computer)
         <source>Installing update...</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Application menu</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -4272,6 +4300,10 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Load subtitles from an MKV/OGM file</source>
+        <translation type="unfinished">MKV / OGM கோப்பின் வசன வரிகள் ஏற்றவும்</translation>
     </message>
     <message>
         <source>The file does not contain any subtitle tracks.</source>
@@ -4497,6 +4529,18 @@ when find results window is open</source>
     </message>
     <message>
         <source>%1 (contrast %2:1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use system title bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off by default on Windows, KDE Plasma and GNOME; on by default on tiling window managers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4918,6 +4962,10 @@ after switching from full screen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Choose external font folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Activate the audio when hover</source>
         <translation type="vanished">சுட்டி மேலே இருக்கும்போது ஆடியோவைச் செயல்படுத்தவும்</translation>
     </message>
@@ -5133,7 +5181,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Choose choose external font folder</source>
-        <translation>வெளிப்புற எழுத்துரு கோப்புறையைத் தேர்வுசெய்க</translation>
+        <translation type="vanished">வெளிப்புற எழுத்துரு கோப்புறையைத் தேர்வுசெய்க</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -5458,7 +5506,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Choose save folder</source>
-        <translation>சேமி கோப்புறையைத் தேர்வுசெய்க</translation>
+        <translation type="vanished">சேமி கோப்புறையைத் தேர்வுசெய்க</translation>
     </message>
     <message>
         <source>Match case</source>
@@ -5583,6 +5631,10 @@ and will be changed to the default</source>
     <message>
         <source>Replace</source>
         <translation>மாற்று</translation>
+    </message>
+    <message>
+        <source>Choose subtitle search folder</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove nonexistent styles</source>
@@ -7952,6 +8004,10 @@ Foreign language text will be deleted.</source>
         <translation>அடுத்த கோப்பு</translation>
     </message>
     <message>
+        <source>Choose keyframes file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Warning</source>
         <translation>எச்சரிக்கை</translation>
     </message>
@@ -7965,7 +8021,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Choose video file</source>
-        <translation>வீடியோ கோப்பைத் தேர்வுசெய்க</translation>
+        <translation type="vanished">வீடியோ கோப்பைத் தேர்வுசெய்க</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
