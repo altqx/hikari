@@ -267,6 +267,24 @@ ApplicationWindow {
                                           searchPanel]
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock, searchDock]
+    // KB2, KB1 (key_router.h): a panel's bindings act before the control
+    // it has focused (a clicked button keeps no Space of its own), on the
+    // hovered panel rather than the focused one, and the Video window's
+    // VIDEO_PLAY_PAUSE (Space by default) acts from every panel; never while
+    // a text field or a control the keyboard moved to has focus.
+    KeyRouter {
+        id: keyRouter
+        objectName: "keyRouter"
+        fallbackTarget: videoPanel
+        fallbackAccepts: (key, modifiers) => root.hotkeys.actionFor(3, key, modifiers) === "VIDEO_PLAY_PAUSE"
+        // AUDIO_AUTO_FOCUS folded in: legacy's audio took the focus under
+        // the pointer; now no panel does, and the hotkeys follow it.
+        followsPointer: () => root.app.settings.value("audio.autoFocus")
+        Component.onCompleted: {
+            for (const panel of root.panels)
+                keyRouter.addPanel(panel, panel.keyTarget)
+        }
+    }
 
     // A preset is the Editing arrangement with the panels it leaves closed
     // (Timing: Video; Translation and Typesetting: Audio), for the current
@@ -2050,8 +2068,15 @@ ApplicationWindow {
             if (next && next !== field)
                 next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
         }
+        // Undo and Redo go through the draft first (editor-shortcuts.md):
+        // the field takes Ctrl+Z, Ctrl+Y and Ctrl+Shift+Z whatever the
+        // platform's own keys, or xcb's Ctrl+Y would reach GLOBAL_REDO (KB3).
+        function undoRedoKey(event) {
+            return (event.modifiers & ~Qt.ShiftModifier) === Qt.ControlModifier
+                   && (event.key === Qt.Key_Z || (event.key === Qt.Key_Y && !(event.modifiers & Qt.ShiftModifier)))
+        }
         Keys.onShortcutOverride: event => event.accepted = field.compositionKey(event) || hotkeyAction(event) !== ""
-                                                           || tagListPopup.takesKey(event)
+                                                           || tagListPopup.takesKey(event) || field.undoRedoKey(event)
         Keys.onPressed: event => {
             if (field.compositionKey(event)) {
                 field.endComposition(event.key === Qt.Key_Escape)
@@ -2111,6 +2136,9 @@ ApplicationWindow {
         // it into clipping its controls.
         property string dockName
         property size minimumBodySize: Qt.size(0, 0)
+        // The item holding the panel's key handlers (KeyRouter), when not
+        // the panel itself.
+        property Item keyTarget: null
         readonly property size minimumSize: Qt.size(Math.ceil(minimumBodySize.width) + 2 * body.anchors.margins,
                                                     Math.ceil(minimumBodySize.height) + 2 * body.anchors.margins)
         function reportMinimumSize() {
@@ -2510,6 +2538,7 @@ ApplicationWindow {
                         iconRole: "frame-previous"
                         text: qsTranslate("HikariSub.Video", "Previous frame")
                         enabled: root.video.hasVideo && root.video.frame > 0
+                        focusPolicy: Qt.NoFocus // KB2: a click left Space to the button
                         onClicked: root.video.stepFrames(-1)
                     }
                     Label {
@@ -2523,6 +2552,7 @@ ApplicationWindow {
                         iconRole: "frame-next"
                         text: qsTranslate("HikariSub.Video", "Next frame")
                         enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
+                        focusPolicy: Qt.NoFocus // KB2: a click left Space to the button
                         onClicked: root.video.stepFrames(1)
                     }
                     VideoVolumeSlider { // V4: legacy VolSlider at the right
@@ -3442,6 +3472,7 @@ ApplicationWindow {
                 title: shell.hasEditingTarget ? qsTranslate("HikariSub.Grid", "Editing: %1").arg(shell.editingTitle) : qsTranslate("HikariSub.Grid", "No document open")
                 accessibleName: qsTranslate("HikariSub.Grid", "Grid")
                 focus: true
+                keyTarget: grid
                 HikariGrid {
                     id: grid
                     objectName: "editingGrid"
@@ -3831,6 +3862,7 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "referencePanel"
                 dockName: "Reference"
+                keyTarget: referenceTray.grid
                 minimumBodySize: Qt.size(240, referenceTray.grid.rowHeight * 3)
                 visible: shell.hasReference
                 title: qsTranslate("HikariSub.Reference", "Reference (protected, read-only): %1").arg(shell.referenceTitle)
@@ -5933,6 +5965,23 @@ ApplicationWindow {
         target: root.hotkeys
         function onInstalledChanged() { root.applyMenuShortcuts() }
     }
+    // KB3: each command a key reaches is reported (HotkeysController::ran,
+    // the hotkey audit's record); rehearsing, it is only reported.
+    function runGlobalHotkey(symbol) {
+        return root.hotkeys.report(symbol, root.hotkeys.rehearsing() || root.globalHotkey(symbol))
+    }
+    function runEditorHotkey(action, field) {
+        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.editorHotkey(action, field))
+    }
+    function runVideoHotkey(action) {
+        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.videoHotkey(action))
+    }
+    function runGridHotkey(action) {
+        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.gridHotkey(action))
+    }
+    function runAudioHotkey(action) {
+        return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.audioHotkey(action))
+    }
     // The frame's handlers of the Global window's bindings (HikariSubFrame:
     // OnMenuSelected, OnMenuSelected1, OnChangeLine, OnDelete, OnPageChange,
     // OnPageAdd, OnPageClose, OnAudioSnap, OnUseWindowHotkey), reached from
@@ -5940,7 +5989,7 @@ ApplicationWindow {
     // 5000 runs in its own window (OnUseWindowHotkey,
     // HikariSubFrame.cpp:1802-1814). A Global action the rewrite does not
     // have yet still takes its key, as legacy's accelerator does.
-    function runGlobalHotkey(symbol) {
+    function globalHotkey(symbol) {
         const field = translationText.activeFocus ? translationText : lineText
         if (symbol.startsWith("AUDIO_"))
             return root.audio.loaded && root.runAudioHotkey(symbol) // only with an audio box
@@ -6027,7 +6076,7 @@ ApplicationWindow {
     // EditBox::OnAccelerator for an Editor binding in `field` (the focused
     // text field); Video actions bound for the Editor go to the video.
     // False for an action the rewrite does not have yet.
-    function runEditorHotkey(action, field) {
+    function editorHotkey(action, field) {
         if (action.startsWith("GLOBAL_"))
             return root.runGlobalHotkey(action) // the event goes up to the frame
         const tags = { EDITBOX_INSERT_BOLD: "b", EDITBOX_INSERT_ITALIC: "i", EDITBOX_CHANGE_UNDERLINE: "u",
@@ -6073,7 +6122,7 @@ ApplicationWindow {
     }
     // VideoBox::OnAccelerator; Editor and Grid actions bound for the Video
     // window go to theirs.
-    function runVideoHotkey(action) {
+    function videoHotkey(action) {
         if (action.startsWith("GLOBAL_"))
             return root.runGlobalHotkey(action) // the event goes up to the frame
         if (root.hotkeys.repeatedKey(action, 50)) // VideoBox::OnAccelerator (VideoBox.cpp:1137)
@@ -6114,7 +6163,7 @@ ApplicationWindow {
     }
     // SubsGrid::OnAccelerator; Editor and Video actions bound for the Grid
     // go to theirs.
-    function runGridHotkey(action) {
+    function gridHotkey(action) {
         if (action.startsWith("GLOBAL_"))
             return root.runGlobalHotkey(action) // the event goes up to the frame
         // SubsGrid::OnAccelerator hands audio ids to the audio box (when
@@ -6175,6 +6224,19 @@ ApplicationWindow {
         case "GRID_FILTER_IGNORE_IN_ACTIONS":
             root.gridFilter.ignoreInActions = root.hotkeys.ignoreFilteringFromOption()
             return true
+        // KB3: these ran only from the Grid menu, so their keys did nothing
+        // (SubsGrid::OnAccelerator, SubsGrid.cpp:839-881, 938).
+        case "GRID_COPY_COLUMNS": columnsWindow.choose(false); return true
+        case "GRID_PASTE_COLUMNS": columnsWindow.choose(true); return true
+        case "GRID_SET_NEW_FPS": fpsWindow.show(); return true
+        case "GRID_SET_FPS_FROM_VIDEO": if (video) root.app.setFpsFromVideo(); return true
+        case "GRID_PASTE_TRANSLATION":
+            if (root.app.canPasteTranslation()) {
+                translationFileDialog.currentFolder = root.app.targetFolder()
+                translationFileDialog.open()
+            }
+            return true
+        case "GRID_TRANSLATION_DIALOG": if (root.app.canShiftTranslation()) translationShiftWindow.show(); return true
         }
         if (action.startsWith("EDITBOX_"))
             return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
@@ -6182,7 +6244,7 @@ ApplicationWindow {
     }
     // AudioBox::OnAccelerator; Video, Editor and Grid actions bound for the
     // Audio window go to theirs (AudioBox::SetAccels).
-    function runAudioHotkey(action) {
+    function audioHotkey(action) {
         if (action.startsWith("GLOBAL_"))
             return root.runGlobalHotkey(action) // the event goes up to the frame
         if (action.startsWith("AUDIO_"))

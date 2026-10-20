@@ -4804,8 +4804,12 @@ after switching from full screen</source>
         <translation>재생 중 소리 따라 가기</translation>
     </message>
     <message>
+        <source>Hotkeys follow the panel under the pointer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Activate the audio when hover</source>
-        <translation>마우스 오버시 소리 활성화</translation>
+        <translation type="vanished">마우스 오버시 소리 활성화</translation>
     </message>
     <message>
         <source>Snap to keyframe</source>
