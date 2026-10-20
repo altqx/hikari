@@ -188,6 +188,23 @@ TEST(HikariSection, TheRendererScriptKeepsItsLines)
     EXPECT_EQ(text(encodeAss(loaded.document)), input);
 }
 
+// The same for a [Hikari] section before [Events]: its Lines go under
+// [Events], after the Format line, as the renderers read events only there.
+TEST(HikariSection, TheRendererScriptPutsItsLinesUnderEvents)
+{
+    const std::string info = "[Script Info]\nScriptType: v4.00+\n";
+    const std::string events = "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n";
+    const std::string line = "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n";
+    const std::string input = info + "\n[Hikari]\nLayout=QUJD\n" + line + "\n" + events;
+    const auto loaded = loadAss(bytesOf(input));
+    ASSERT_EQ(loaded.document.lines().size(), 2u);
+    EXPECT_EQ(text(encodeAss(loaded.document, AssSaveOptions{.renderer = true})),
+              info + "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n" +
+                  line + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n");
+    EXPECT_EQ(text(encodeAss(loaded.document)), input);
+}
+
 namespace {
 
 std::string fixture(const char *name)

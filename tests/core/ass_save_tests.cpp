@@ -261,6 +261,32 @@ TEST(AssSave, RendererScriptFollowsGetVisible)
               plain);
 }
 
+// LoadASS reads a Dialogue or Comment in any section as a Line, which the
+// Grid shows; the renderers read events only under [Events]. The renderer
+// script writes such Lines into the next [Events] section after its Format
+// line, in the Grid's order (GetVisible writes every Line under [Events]),
+// or into an [Events] section of their own at the end. The saved file keeps
+// every byte where it was.
+TEST(AssSave, RendererScriptPutsEveryLineUnderEvents)
+{
+    const std::string input = "[Script Info]\r\nTitle: t\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r\n"
+                              "\r\n[Events]\r\n"
+                              "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
+                              "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\r\n"
+                              "\r\n[Aegisub Project Garbage]\r\nComment: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,after";
+    auto r = loadAss(bytesOf(input));
+    ASSERT_EQ(r.document.lines().size(), 3u);
+    EXPECT_EQ(text(encodeAss(r.document)), input);
+    EXPECT_EQ(text(encodeAss(r.document, AssSaveOptions{.renderer = true})),
+              "[Script Info]\r\nTitle: t\r\n"
+              "\r\n[Events]\r\n"
+              "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r\n"
+              "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\r\n"
+              "\r\n[Aegisub Project Garbage]\r\n"
+              "\r\n[Events]\r\nComment: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,after\r\n");
+}
+
 TEST(AssLoad, TLModePairingEdges)
 {
     const auto r = loadAss(bytesOf("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
