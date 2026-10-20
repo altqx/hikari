@@ -13910,7 +13910,7 @@ private slots:
                     "    local l = subs[i]\n"
                     "    if l.class == \"dialogue\" then l.text = l.text .. \"x\"; subs[i] = l; break end\n"
                     "  end\n"
-                    "  hikari.report('{\"report\":\"karaoke-templater\",\"version\":1,\"mode\":\"all\",\"seconds\":0.5,'\n"
+                    "  aegisub.hikari.report('{\"report\":\"karaoke-templater\",\"version\":1,\"mode\":\"all\",\"seconds\":0.5,'\n"
                     "    .. '\"prepare_seconds\":0.1,\"karaoke_lines\":1,\"generated\":2,\"problems\":1,\"templates\":['\n"
                     "    .. '{\"line\":2,\"effect\":\"template syl\",\"style\":\"Default\",\"seconds\":0.4,\"generated\":2}]}')\n"
                     "end)\n");
@@ -13919,7 +13919,8 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_Templated"), 30000);
         QVERIFY(application->automation().run(templated.toStdString(), 0));
         QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QCOMPARE(application->automation().lastOutcome(), QStringLiteral("applied"));
+        QVERIFY2(application->automation().lastOutcome() == QStringLiteral("applied"),
+                 qPrintable(application->automation().lastMessage()));
         QVERIFY(application->automation().keepLog());
         QTRY_VERIFY(run->isVisible());
         QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Templated named problems"));
