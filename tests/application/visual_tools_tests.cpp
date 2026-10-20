@@ -463,6 +463,16 @@ TEST(VisualCrosshair, HiddenWithoutVideoAndAfterLeaveOrRightRelease)
     EXPECT_TRUE(cross.shown());
     cross.pointer({Pointer::Kind::Release, 20, 20, Pointer::Button::Right}, host);
     EXPECT_FALSE(cross.shown());
+    // VT1: the bar's readout and Copy keep the last position past the
+    // cross (the pointer leaves the video to reach them); a reset (a new
+    // view, video or Line) drops them with it (Codex on #293).
+    EXPECT_FALSE(cross.values(host)[0].text.empty());
+    EXPECT_TRUE(cross.options(host)[0].enabled);
+    cross.reset(host);
+    EXPECT_TRUE(cross.values(host)[0].text.empty());
+    EXPECT_TRUE(cross.values(host)[1].text.empty());
+    EXPECT_FALSE(cross.options(host)[0].enabled);
+    EXPECT_TRUE(cross.copyText().empty());
     // Only on the picture: its right and bottom edges, the bars and the
     // panel are outside it (legacy IsOnVideoFrame, a8a428e4c).
     host.v.setClient(640, 400, 40); // a 640x360 window area: the 16:9 frame fills it

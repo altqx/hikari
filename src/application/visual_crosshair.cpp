@@ -87,8 +87,13 @@ void CrosshairTool::computeCoefficients(const VisualHost &host)
 
 void CrosshairTool::reset(VisualHost &host)
 {
-    // Cross::SetCurVisual (VisualCross.cpp:244-282): hidden until the next move.
+    // Cross::SetCurVisual (VisualCross.cpp:244-282): hidden until the next
+    // move. VT1: the bar's readout and Copy with it, as the view the
+    // position was taken in may be gone (leaving the video keeps them).
     m_cross = false;
+    m_x.clear();
+    m_y.clear();
+    m_coords.clear();
     computeCoefficients(host);
     host.toolChanged();
 }
