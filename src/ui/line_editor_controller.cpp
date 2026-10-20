@@ -270,12 +270,26 @@ bool LineEditorController::translationMode() const
     return s && s->document().scriptInfo(u8"TLMode") == u8"Yes";
 }
 
-QString LineEditorController::videoText() const
+std::optional<core::LineRecord> LineEditorController::videoRecord() const
 {
     // The session's (the draft applied, as Application::showVideoSubtitles
     // renders it; without live editing the committed Line), not E5's split,
     // which is shown only until an edit makes it the draft.
-    const auto r = options().liveEditing ? sessionRecord() : committedRecord();
+    return options().liveEditing ? sessionRecord() : committedRecord();
+}
+
+QString LineEditorController::videoTimes() const
+{
+    const auto r = videoRecord();
+    if (!r)
+        return {};
+    const auto times = application::editorTimeTexts(*r, session()->document().format(), frameTimebase());
+    return times.end.empty() ? qs(times.start) : qs(times.start) + QStringLiteral(" – ") + qs(times.end);
+}
+
+QString LineEditorController::videoText() const
+{
+    const auto r = videoRecord();
     if (!r)
         return {};
     // Only the part FS1's label reads, cut before the conversion.

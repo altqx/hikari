@@ -461,9 +461,8 @@ Window {
                         spacing: 8
                         clip: true // a narrow window: the times and the text give way, never the buttons
                         Accessible.role: Accessible.StaticText
-                        //: The full screen bar's current line: %1 its number, %2 and %3 its times, %4 its text
-                        Accessible.name: qsTr("Line %1, %2 to %3: %4").arg(lineNumber.text).arg(fs.shell.editor.startText)
-                                         .arg(fs.shell.editor.endText).arg(lineText.text)
+                        //: The full screen bar's current line: %1 its number, %2 its times, %3 its text
+                        Accessible.name: qsTr("Line %1, %2: %3").arg(lineNumber.text).arg(fs.shell.editor.videoTimes).arg(lineText.text)
                         Label {
                             id: lineNumber
                             objectName: "fullscreenLineNumber"
@@ -481,9 +480,7 @@ Window {
                         }
                         Label {
                             objectName: "fullscreenLineTimes"
-                            text: fs.shell.editor.endText.length
-                                  ? fs.shell.editor.startText + " – " + fs.shell.editor.endText
-                                  : fs.shell.editor.startText
+                            text: fs.shell.editor.videoTimes // the video's: committed without live editing
                             color: Theme.muted
                             Layout.minimumWidth: 0
                             Layout.maximumWidth: implicitWidth

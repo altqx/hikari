@@ -23134,8 +23134,15 @@ private slots:
         // Without live editing the video shows the committed Line, and so does the label.
         application->settingsStore()->set("video.disableLiveEditing", true);
         QTRY_COMPARE(editor.videoText(), QStringLiteral("tl two"));
+        // Its times too: an applied Start is the draft's, not yet the video's.
+        const QString committedTimes = editor.videoTimes();
+        QCOMPARE(committedTimes, QStringLiteral("0:00:01.00 – 0:00:02.00"));
+        editor.setStartText(QStringLiteral("0:00:01.50"));
+        QTRY_COMPARE(editor.startText(), QStringLiteral("0:00:01.50"));
+        QCOMPARE(editor.videoTimes(), committedTimes);
         application->settingsStore()->set("video.disableLiveEditing", false);
         QTRY_COMPARE(editor.videoText(), QStringLiteral("tl draft"));
+        QTRY_COMPARE(editor.videoTimes(), QStringLiteral("0:00:01.50 – 0:00:02.00"));
         // Only what the label reads, cut before the conversion.
         const QString huge(3 * int(application::kFullscreenLineInputBytes), QLatin1Char('a'));
         editor.translationEdited(huge, int(huge.size()));
