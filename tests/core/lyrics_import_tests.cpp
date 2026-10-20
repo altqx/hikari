@@ -419,7 +419,11 @@ TEST(LyricsImport, ClockMinutesAndSecondsStayUnder60)
     EXPECT_EQ(problemOf("[00:99.00]x", u8"lrc").kind, Kind::UnreadableTime);
     EXPECT_EQ(problemOf("[1:60:00.00]x", u8"lrc").kind, Kind::UnreadableTime);
     EXPECT_EQ(problemOf("[00:01.00]<00:61.00>x", u8"lrc").kind, Kind::UnreadableTime);
-    EXPECT_TRUE(importLrc(bytes("[75:02.00]x\n[1:02:03.50]y")).has_value());
+    EXPECT_TRUE(importLrc(bytes("[75:02.00]x\n[1:02:03.50]y\n[1:02:04.123]z")).has_value());
+    // A fraction is tenths to milliseconds; a fourth digit would be cut.
+    EXPECT_EQ(problemOf("[00:01.1234]x", u8"lrc").kind, Kind::UnreadableTime);
+    EXPECT_EQ(problemOf("[00:01:1234]x", u8"lrc").kind, Kind::UnreadableTime);
+    EXPECT_EQ(problemOf("[00:01.00]<00:01.5000>x", u8"lrc").kind, Kind::UnreadableTime);
     const std::string ttml = "<tt><body><p begin=\"";
     EXPECT_EQ(problemOf(ttml + "0:99\" end=\"1:40\">x</p></body></tt>", u8"ttml").kind, Kind::UnreadableTime);
     EXPECT_EQ(problemOf(ttml + "1:60:00\" end=\"2:00:00\">x</p></body></tt>", u8"ttml").kind, Kind::UnreadableTime);
@@ -559,6 +563,13 @@ TEST(LyricsImport, TtmlXmlSpacePreserveKeepsWhitespace)
                                         "<p begin=\"2\" end=\"3\">x</p></body></tt>"));
     ASSERT_TRUE(blank.has_value());
     EXPECT_EQ(rows(*blank).size(), 1u);
+    // The text that gives an edge decides: a kept space from a nested scope
+    // is a hard space at the Line's end too, and a space inside the Line.
+    EXPECT_EQ(text("><p begin=\"1\" end=\"2\"><span xml:space=\"preserve\">  a  </span></p>"), "\\h\\ha\\h\\h");
+    EXPECT_EQ(text("><p begin=\"1\" end=\"2\"> x <span xml:space=\"preserve\">  </span> y </p>"), "x    y");
+    EXPECT_EQ(text("><p begin=\"1\" end=\"3\"><span begin=\"1\" end=\"2\" xml:space=\"preserve\"> a</span> "
+                   "<span begin=\"2\" end=\"3\">b</span></p>"),
+              "{\\k100}\\ha {\\k100}b");
     // Only xml:space counts, not another prefix's "space".
     EXPECT_EQ(text("><p begin=\"1\" end=\"2\" x:space=\"preserve\">a  b</p>"), "a b");
 }
@@ -582,10 +593,23 @@ TEST(LyricsImport, TtmlBackgroundVocalsNameTheirOwnAgent)
     };
     EXPECT_EQ(actors(" ttm:agent=\"v2\""), (std::vector<std::string>{"Lead", "Choir"}));
     EXPECT_EQ(actors(""), (std::vector<std::string>{"Lead", "Lead"}));
+    // A background vocal inside a word's span is a Line of its own too.
+    const auto nested = importTtml(bytes("<tt><body><p begin=\"1\" end=\"3\"><span begin=\"1\" end=\"2\">lead"
+                                         "<span ttm:role=\"x-bg\"><span begin=\"2\" end=\"3\">back</span></span></span>"
+                                         "</p></body></tt>"));
+    ASSERT_TRUE(nested.has_value());
+    ASSERT_EQ(rows(*nested).size(), 2u);
+    EXPECT_EQ(rows(*nested)[1].text, "{\\k100}back");
 }
 
 TEST(LyricsImport, LrcAngleAndSquareBracketsThatAreNotStamps)
 {
+    // A colon must have a digit after it to make a stamp.
+    {
+        const auto result = importLrc(bytes("[00:01.00]Meet me <12: tonight>\n[00:03.00]"));
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(rows(*result), (std::vector<Row>{{1000, 3000, "", "Meet me <12: tonight>"}}));
+    }
     // Only a stamp's shape (digits, then a colon) is a stamp.
     const auto plain = importLrc(bytes("[00:01.00]I <3 you, <12 roses>\n"));
     ASSERT_TRUE(plain.has_value());
