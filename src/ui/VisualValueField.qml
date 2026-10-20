@@ -109,6 +109,16 @@ RowLayout {
                 sent = text
                 input.text = text
             }
+            // A scrub whose gesture the controller ended (the active Line or
+            // the Document changed under it: refresh() escapes) is over: its
+            // later moves and its release write nothing (Codex on #293).
+            Connections {
+                target: field.tools
+                function onChanged() {
+                    if (scrub.active && !scrub.cancelled && scrub.sent.length > 0 && !field.tools.gestureActive)
+                        scrub.cancelled = true
+                }
+            }
             onReleased: {
                 if (active && !cancelled && sent.length > 0)
                     field.tools.setValue(field.name, sent)
