@@ -11503,8 +11503,12 @@ private slots:
         click(face); // repeats it
         QCOMPARE(range(), afterRange);
         audio.stopPlayback();
-        // a hotkey plays its range but leaves the face
+        // a hotkey plays its range but leaves the face. The keys go by the
+        // focus: the pointer over no panel (hotkeys follow the panel under
+        // it, KB1), wherever earlier tests or popups left it.
+        QTest::mouseMove(window, kOverNoPanel);
         item("audioDisplay")->forceActiveFocus();
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
         press(Qt::Key_Q);
         QCOMPARE(range(), before);
         press(Qt::Key_H);
@@ -11631,6 +11635,10 @@ private slots:
         QCOMPARE(audio.lineOutOfView(), 1); // 1.00 is column 4410, past the right edge
         QVERIFY(chip->isVisible());
         QVERIFY(chip->x() > item("audioDisplay")->width() / 2);
+        // the popovers above have come and gone: the key by the focus again
+        QTest::mouseMove(window, kOverNoPanel);
+        item("audioDisplay")->forceActiveFocus();
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
         press(Qt::Key_B); // AUDIO_GOTO
         QCOMPARE(audio.lineOutOfView(), 0);
         audio.setHorizontalZoom(50);
