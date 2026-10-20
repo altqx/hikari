@@ -15329,13 +15329,17 @@ private slots:
             Points p;
             p.inside << r.center() << r.topLeft() + QPointF(4, 4) << r.bottomRight() - QPointF(4, 4)
                      << QPointF(r.right() - 4, r.top() + 4) << QPointF(r.left() + 4, r.bottom() - 4);
+            // The bars' points are off the picture's middle: the tools'
+            // handles are around the Line's position there, and Scale's
+            // arrows reach into a bar (their shapes show there, as legacy's).
+            const qreal by = r.top() + r.height() / 8, bx = r.left() + r.width() / 8;
             if (r.left() >= 8) {
-                p.bars << QPointF(r.left() / 2, cy) << QPointF((r.right() + w) / 2, cy);
+                p.bars << QPointF(r.left() / 2, by) << QPointF((r.right() + w) / 2, by);
                 p.outside << QPointF(r.left() - 3, cy) << QPointF(r.right() + 3, cy);
                 p.inside << QPointF(r.left() + 2, cy) << QPointF(r.right() - 2, cy);
             }
             if (r.top() >= 8) {
-                p.bars << QPointF(cx, r.top() / 2) << QPointF(cx, (r.bottom() + h) / 2);
+                p.bars << QPointF(bx, r.top() / 2) << QPointF(bx, (r.bottom() + h) / 2);
                 p.outside << QPointF(cx, r.top() - 3) << QPointF(cx, r.bottom() + 3);
                 p.inside << QPointF(cx, r.top() + 2) << QPointF(cx, r.bottom() - 2);
             }
@@ -15400,7 +15404,11 @@ private slots:
                 };
                 for (const QPointF &bar : p.bars) {
                     in(p.inside.first());
-                    QTRY_COMPARE_WITH_TIMEOUT(cursorAt(bar), Qt::ArrowCursor, 2000);
+                    QTRY_VERIFY2_WITH_TIMEOUT(cursorAt(bar) == Qt::ArrowCursor,
+                                              qPrintable(where(what, bar) + QStringLiteral(" family %1, cursor %2, picture ")
+                                                             .arg(f).arg(int(cursorAt(bar)))
+                                                         + QDebug::toString(tools.videoRect())),
+                                              2000);
                     QVERIFY2(!tools.hideCursor(), qPrintable(where(what, bar)));
                 }
                 for (const QPointF &i : p.inside)
