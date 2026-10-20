@@ -1827,6 +1827,29 @@ TEST(VisualTransformValues, ChangeAllFromAZeroScaleIsRefused)
     EXPECT_EQ(textOf().find("nan"), std::string::npos) << textOf();
 }
 
+// VT1 (Codex on #293): with "Preserve proportions" each sample is in
+// proportion to the press's scale, so a scrub through zero comes back with
+// both axes.
+TEST(VisualTransformValues, AProportionalScrubThroughZeroKeepsTheProportion)
+{
+    TestHost host;
+    setUp(host, caseNamed("scale-width-left-drag"));
+    ScaleTool tool;
+    tool.setToggled(6 | 64);
+    tool.selected(host);
+    tool.reset(host);
+    ASSERT_EQ(valueText(tool, host, "fscy"), u"100");
+    EXPECT_TRUE(tool.setValue("fscx", u"50", host, ValueEdit::Sample));
+    EXPECT_TRUE(tool.setValue("fscx", u"0", host, ValueEdit::Sample));
+    EXPECT_TRUE(tool.setValue("fscx", u"10", host, ValueEdit::Sample));
+    EXPECT_TRUE(tool.setValue("fscx", u"10", host, ValueEdit::Commit));
+    EXPECT_FALSE(host.g);
+    const std::u8string &t = lineOf(*host.s, *host.activeLine())->text;
+    const std::string text(t.begin(), t.end());
+    EXPECT_NE(text.find("\\fscx10"), std::string::npos) << text;
+    EXPECT_NE(text.find("\\fscy10"), std::string::npos) << text;
+}
+
 // VT1 (Codex on #293): with "two points" on and its points not both placed,
 // a typed origin still writes \org (only the angle waits for the points).
 TEST(VisualTransformValues, TheOriginIsTypedWithTwoPointsOn)

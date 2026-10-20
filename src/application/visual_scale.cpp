@@ -915,10 +915,12 @@ bool ScaleTool::setValue(const std::string &name, const std::u16string &text, Vi
         m_lastScale = m_scale;
     const float scale = static_cast<float>(value / 100);
     if (m_preserveProportions) {
-        const float was = x ? m_scale.x : m_scale.y;
-        const float ratio = was != 0 ? scale / was : 1.f;
+        // In proportion to the press's scale, not the last sample's: a scrub
+        // through zero comes back in proportion (Codex on #293).
+        const float pressed = x ? m_lastScale.x : m_lastScale.y;
+        const float ratio = pressed != 0 ? scale / pressed : 1.f;
         m_type = 2;
-        m_scale = x ? PointF{scale, m_scale.y * ratio} : PointF{m_scale.x * ratio, scale};
+        m_scale = x ? PointF{scale, m_lastScale.y * ratio} : PointF{m_lastScale.x * ratio, scale};
     } else {
         m_type = x ? 0 : 1;
         (x ? m_scale.x : m_scale.y) = scale;
