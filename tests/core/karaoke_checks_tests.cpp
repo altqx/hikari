@@ -49,14 +49,14 @@ Document oneLine(std::string_view times, std::string_view text, std::string_view
 struct Found {
     std::size_t row = 0;
     Kind kind = Kind::Unclosed;
-    std::int64_t totalCs = 0, durationCs = 0;
+    std::int64_t totalMs = 0, durationMs = 0;
     std::vector<std::size_t> syllables;
     bool operator==(const Found &) const = default;
 };
 
 void PrintTo(const Found &f, std::ostream *os)
 {
-    *os << "row " << f.row << " kind " << int(f.kind) << " " << f.totalCs << "/" << f.durationCs << " syllables";
+    *os << "row " << f.row << " kind " << int(f.kind) << " " << f.totalMs << "/" << f.durationMs << " syllables";
     for (auto s : f.syllables)
         *os << " " << s;
 }
@@ -67,7 +67,7 @@ std::vector<Found> found(const Document &document)
     const auto lines = document.lines();
     for (const KaraokeProblem &p : checkKaraoke(document)) {
         EXPECT_EQ(p.line, lines.at(p.row)->id);
-        out.push_back({p.row, p.kind, p.totalCs, p.durationCs, p.syllables});
+        out.push_back({p.row, p.kind, p.totalMs, p.durationMs, p.syllables});
     }
     return out;
 }
@@ -80,9 +80,9 @@ TEST(KaraokeChecks, EachCheckFindsItsLineInTheSample)
         // Row 0, a template Line, and row 1, a sound one: nothing.
         {2, Kind::Unclosed, 0, 0, {}},                 // "{\k100tle": the block never closes
         {3, Kind::Unclosed, 0, 0, {}},                 // "{\k}": a tag with no number
-        {4, Kind::TotalNotDuration, 250, 300, {}},     // \k, \kf and \ko add up to 2.50 s of 3 s
+        {4, Kind::TotalNotDuration, 2500, 3000, {}},   // \k, \kf and \ko add up to 2.50 s of 3 s
         {5, Kind::ZeroLength, 0, 0, {2}},              // "{\K0}"
-        {6, Kind::TotalNotDuration, 130, 100, {}},     // the second syllable starts at the end...
+        {6, Kind::TotalNotDuration, 1300, 1000, {}},   // the second syllable starts at the end...
         {6, Kind::OutsideLine, 0, 0, {2}},             // ...so it is outside the Line too
         {7, Kind::OutsideLine, 0, 0, {1, 2}},          // "{\k-20}": both start before the Line
         // Rows 8-10: a timed pause, a plain Line and other tags beside \k: nothing.
@@ -113,7 +113,7 @@ TEST(KaraokeChecks, SyllablesAddUpInCentiseconds)
     // Several tags in one block are each a syllable.
     EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.50", "{\\k50\\k50}a{\\kf50}b")).empty());
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.50", "{\\k50}a{\\k50}b")),
-              (std::vector<Found>{{0, Kind::TotalNotDuration, 100, 150, {}}}));
+              (std::vector<Found>{{0, Kind::TotalNotDuration, 1000, 1500, {}}}));
     // A syllable ending exactly at the Line's end is inside; a zero-length
     // one at the end is only zero-length.
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k100}a{\\k0}")),
@@ -128,7 +128,21 @@ TEST(KaraokeChecks, SignedAndOversizedValuesRead)
               (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}}));
     // A huge value counts as 10^9 centiseconds, so the sum cannot overflow.
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k99999999999999999999999}a{\\k99999999999999999999999}b")),
-              (std::vector<Found>{{0, Kind::TotalNotDuration, 2'000'000'000, 100, {}}, {0, Kind::OutsideLine, 0, 0, {2}}}));
+              (std::vector<Found>{{0, Kind::TotalNotDuration, 20'000'000'000, 1000, {}}, {0, Kind::OutsideLine, 0, 0, {2}}}));
+    // Parentheses and fractions, as the tag parser reads them.
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k(50)}a{\\kf(+50)}b")).empty());
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k50.5}a{\\K49.5}b")).empty());
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k12.34}a")),
+              (std::vector<Found>{{0, Kind::TotalNotDuration, 123, 1000, {}}}));
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k(}a{\\k100}b")),
+              (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}}));
+    // Other tags that start with k are not karaoke; a bare "\\k" or "\\ko" is
+    // one with no number.
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\keep}text {\\kfoo\\Kx}more")).empty());
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k50\\keep}a{\\k50}b")).empty());
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\keep unclosed")).empty());
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k100}a{\\ko\\i1}b")),
+              (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}}));
 }
 
 TEST(KaraokeChecks, TranslatedLinesAreCheckedOnTheirTranslation)
@@ -141,5 +155,5 @@ TEST(KaraokeChecks, TranslatedLinesAreCheckedOnTheirTranslation)
     const Document document = loadAss(bytes(ass)).document;
     ASSERT_EQ(document.lines().size(), 1u);
     ASSERT_FALSE(document.lines()[0]->translation.empty());
-    EXPECT_EQ(found(document), (std::vector<Found>{{0, Kind::TotalNotDuration, 90, 100, {}}}));
+    EXPECT_EQ(found(document), (std::vector<Found>{{0, Kind::TotalNotDuration, 900, 1000, {}}}));
 }

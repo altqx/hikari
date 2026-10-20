@@ -30,23 +30,44 @@ bool isTemplateLine(const LineRecord &line)
     return first == u8"template" || first == u8"code" || first == u8"mixin";
 }
 
-// Whether a block holds a karaoke tag: "\k" or "\K" not followed by "t"
-// (\kt sets an absolute time; it is not a syllable).
+// The karaoke tag whose backslash is at block[i]: where its value starts,
+// after "k", "K", "kf" or "ko"; npos for another tag ("\kt", which sets an
+// absolute time, or an unknown "\keep"). As the tag parser reads tags
+// (lua_helper's karaoke tags), the name is followed by its value ("(", a
+// sign, a digit or "."), or by nothing at all, a tag with no number.
+std::size_t karaokeValue(u8sv block, std::size_t i)
+{
+    if (i + 1 >= block.size() || block[i] != u8'\\' || (block[i + 1] != u8'k' && block[i + 1] != u8'K'))
+        return u8sv::npos;
+    auto valueOrEnd = [&](std::size_t at) {
+        if (at >= block.size())
+            return true;
+        const char8_t c = block[at];
+        return c == u8'\\' || c == u8'}' || c == u8'(' || c == u8'+' || c == u8'-' || c == u8'.' || isDigit(c);
+    };
+    const std::size_t j = i + 2;
+    if (valueOrEnd(j))
+        return j;
+    if (block[i + 1] == u8'k' && (block[j] == u8'f' || block[j] == u8'o') && valueOrEnd(j + 1))
+        return j + 1;
+    return u8sv::npos;
+}
+
+// Whether a block holds a karaoke tag.
 bool hasKaraokeTag(u8sv block)
 {
-    for (std::size_t i = 0; i + 1 < block.size(); ++i)
-        if (block[i] == u8'\\' && (block[i + 1] == u8'k' || block[i + 1] == u8'K') &&
-            !(block[i + 1] == u8'k' && i + 2 < block.size() && block[i + 2] == u8't'))
+    for (std::size_t i = 0; i < block.size(); ++i)
+        if (karaokeValue(block, i) != u8sv::npos)
             return true;
     return false;
 }
 
-// Longer syllables count as this long (over 115 days), so adding them up
-// cannot overflow.
-constexpr std::int64_t kLongestSyllable = 1'000'000'000;
+// Longer syllables count as this long (over 115 days, in milliseconds), so
+// adding them up cannot overflow.
+constexpr std::int64_t kLongestSyllable = 10'000'000'000;
 
 struct Syllables {
-    std::vector<std::int64_t> values; // centiseconds
+    std::vector<std::int64_t> values; // milliseconds (the tags count centiseconds)
     bool unclosed = false;
 };
 
@@ -65,25 +86,36 @@ Syllables syllablesOf(u8sv text)
         }
         const u8sv block = text.substr(pos + 1, close - pos - 1);
         for (std::size_t i = 0; i + 1 < block.size(); ++i) {
-            if (block[i] != u8'\\' || (block[i + 1] != u8'k' && block[i + 1] != u8'K'))
+            std::size_t j = karaokeValue(block, i);
+            if (j == u8sv::npos)
                 continue;
-            std::size_t j = i + 2;
-            if (block[i + 1] == u8'k' && j < block.size() && block[j] == u8't')
-                continue;
-            if (block[i + 1] == u8'k' && j < block.size() && (block[j] == u8'f' || block[j] == u8'o'))
+            // The value: "(" optional, a sign, digits and a fraction.
+            const bool parenthesised = j < block.size() && block[j] == u8'(';
+            if (parenthesised)
                 ++j;
             const bool negative = j < block.size() && block[j] == u8'-';
             if (j < block.size() && (block[j] == u8'-' || block[j] == u8'+'))
                 ++j;
-            const std::size_t digits = j;
-            std::int64_t value = 0;
-            for (; j < block.size() && isDigit(block[j]); ++j)
-                value = std::min<std::int64_t>(value * 10 + (block[j] - u8'0'), kLongestSyllable);
-            if (j == digits) {
+            std::int64_t ms = 0;
+            bool digits = false;
+            for (; j < block.size() && isDigit(block[j]); ++j, digits = true)
+                ms = std::min<std::int64_t>(ms * 10 + (block[j] - u8'0') * 10, kLongestSyllable);
+            if (j < block.size() && block[j] == u8'.') {
+                // Tenths of a centisecond are milliseconds; the next digit rounds.
+                std::size_t place = 0;
+                for (++j; j < block.size() && isDigit(block[j]); ++j, ++place, digits = true)
+                    if (place == 0)
+                        ms = std::min<std::int64_t>(ms + (block[j] - u8'0'), kLongestSyllable);
+                    else if (place == 1 && block[j] >= u8'5')
+                        ms = std::min<std::int64_t>(ms + 1, kLongestSyllable);
+            }
+            if (!digits) {
                 out.unclosed = true; // "\k" with no number
                 continue;
             }
-            out.values.push_back(negative ? -value : value);
+            if (parenthesised && j < block.size() && block[j] == u8')')
+                ++j;
+            out.values.push_back(negative ? -ms : ms);
             i = j - 1;
         }
         pos = close + 1;
@@ -115,8 +147,7 @@ std::vector<KaraokeProblem> checkKaraoke(const Document &document)
         };
         if (syllables.unclosed)
             problems.push_back(problem(Kind::Unclosed));
-        const std::int64_t durationMs = (line.end.value.microseconds() - line.start.value.microseconds()) / 1000;
-        const std::int64_t duration = (durationMs + (durationMs < 0 ? -5 : 5)) / 10;
+        const std::int64_t duration = (line.end.value.microseconds() - line.start.value.microseconds()) / 1000;
         std::int64_t total = 0;
         KaraokeProblem zero = problem(Kind::ZeroLength);
         KaraokeProblem outside = problem(Kind::OutsideLine);
@@ -130,8 +161,8 @@ std::vector<KaraokeProblem> checkKaraoke(const Document &document)
         }
         if (!syllables.values.empty() && total != duration) {
             KaraokeProblem p = problem(Kind::TotalNotDuration);
-            p.totalCs = total;
-            p.durationCs = duration;
+            p.totalMs = total;
+            p.durationMs = duration;
             problems.push_back(std::move(p));
         }
         if (!zero.syllables.empty())

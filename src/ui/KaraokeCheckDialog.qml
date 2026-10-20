@@ -28,12 +28,13 @@ Dialog {
         recheck()
         problemList.forceActiveFocus()
     }
-    // A row's Line, selected as a click in the Grid selects it. A Line that
-    // has gone since the check (an edit, another tab) checks again instead.
+    // A row's Line, selected as a click in the Grid selects it. When the
+    // editing target is another Document now, or the Line has gone since the
+    // check, the window checks again instead.
     function choose(index) {
         if (index < 0 || index >= problems.length)
             return
-        if (!app.showKaraokeLine(problems[index].line))
+        if (!app.showKaraokeLine(problems[index].document, problems[index].line))
             recheck()
     }
 

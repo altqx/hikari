@@ -7645,8 +7645,13 @@ private slots:
             QCOMPARE(session->selection().selected, std::set<core::LineId>{line});
             QCOMPARE(row.value(QStringLiteral("line")).toULongLong(), line.value);
         }
-        // A Line the target no longer has is not selected.
-        QVERIFY(!application->showKaraokeLine(987654321));
+        // A row is only for the Document it checked: a Line the target no
+        // longer has, or the same Line id in another Document, is not selected.
+        const qulonglong document = application->workspace().editingTarget()->value;
+        QCOMPARE(problems[0].toMap().value(QStringLiteral("document")).toULongLong(), document);
+        QVERIFY(!application->showKaraokeLine(document, 987654321));
+        QVERIFY(!application->showKaraokeLine(document + 1, lines[0]->id.value));
+        QCOMPARE(session->selection().active, std::optional(lines[4]->id));
 
         // Fixed Lines leave the list at Re-check; the command opens the window too.
         for (std::size_t row = 1; row <= 4; ++row) {

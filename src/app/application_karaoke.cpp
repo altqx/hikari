@@ -1,6 +1,7 @@
 // KA7: the Karaoke check window's rows. The checks themselves are
 // core::checkKaraoke; here each problem becomes a row the window lists, and
-// choosing one selects its Line as a click in the Grid does.
+// choosing one selects its Line as a click in the Grid does, while the
+// Document checked is still the editing target.
 
 #include "hikari/app/application.h"
 
@@ -15,10 +16,10 @@ namespace hikari::app {
 
 namespace {
 
-// Centiseconds as seconds, "2.50".
-QString seconds(std::int64_t centiseconds)
+// Milliseconds as seconds: "2.50", or "2.505" for a fractional centisecond.
+QString seconds(std::int64_t ms)
 {
-    return QString::number(static_cast<double>(centiseconds) / 100.0, 'f', 2);
+    return QString::number(static_cast<double>(ms) / 1000.0, 'f', ms % 10 != 0 ? 3 : 2);
 }
 
 QString syllables(const std::vector<std::size_t> &numbers)
@@ -36,7 +37,8 @@ QString syllables(const std::vector<std::size_t> &numbers)
 QVariantList Application::checkKaraoke() const
 {
     QVariantList rows;
-    const auto *session = targetSession();
+    const auto target = m_workspace.editingTarget();
+    const auto *session = target ? m_files->session(*target) : nullptr;
     if (!session)
         return rows;
     using Kind = core::KaraokeProblem::Kind;
@@ -51,7 +53,7 @@ QVariantList Application::checkKaraoke() const
         case Kind::TotalNotDuration:
             check = QCoreApplication::translate("HikariSub.Karaoke", "Syllables don't match the Line");
             detail = QCoreApplication::translate("HikariSub.Karaoke", "The syllables last %1 s; the Line lasts %2 s")
-                         .arg(seconds(problem.totalCs), seconds(problem.durationCs));
+                         .arg(seconds(problem.totalMs), seconds(problem.durationMs));
             break;
         case Kind::ZeroLength:
             check = QCoreApplication::translate("HikariSub.Karaoke", "Zero-length syllable");
@@ -62,7 +64,8 @@ QVariantList Application::checkKaraoke() const
             detail = syllables(problem.syllables);
             break;
         }
-        rows << QVariantMap{{QStringLiteral("line"), QVariant::fromValue<qulonglong>(problem.line.value)},
+        rows << QVariantMap{{QStringLiteral("document"), QVariant::fromValue<qulonglong>(target->value)},
+                            {QStringLiteral("line"), QVariant::fromValue<qulonglong>(problem.line.value)},
                             {QStringLiteral("number"), static_cast<int>(problem.row) + 1},
                             {QStringLiteral("check"), check},
                             {QStringLiteral("detail"), detail}};
@@ -70,15 +73,16 @@ QVariantList Application::checkKaraoke() const
     return rows;
 }
 
-bool Application::showKaraokeLine(qulonglong id)
+bool Application::showKaraokeLine(qulonglong document, qulonglong line)
 {
-    const auto *session = targetSession();
+    const auto target = m_workspace.editingTarget();
+    const auto *session = target && target->value == document ? m_files->session(*target) : nullptr;
     if (!session)
         return false;
     const auto lines = session->document().lines();
-    if (std::ranges::none_of(lines, [id](const core::LineRecord *line) { return line->id.value == id; }))
+    if (std::ranges::none_of(lines, [line](const core::LineRecord *record) { return record->id.value == line; }))
         return false;
-    selectLine(id);
+    selectLine(line);
     return true;
 }
 
