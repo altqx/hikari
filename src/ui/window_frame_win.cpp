@@ -161,8 +161,10 @@ private:
         if ((style & kCaptionStyles) != kCaptionStyles)
             SetWindowLongPtrW(hwnd(), GWL_STYLE, style | kCaptionStyles);
         // A one-pixel frame extended into the client area: DWM draws the
-        // window's shadow and its rounded corners (Windows 11).
-        const MARGINS shadow{1, 1, 1, 1};
+        // window's shadow and its rounded corners (Windows 11). The bottom
+        // edge's alone: a frame extended at the top takes the caption
+        // buttons for DWM's, and the snap layouts never come over Maximise.
+        const MARGINS shadow{0, 0, 0, 1};
         DwmExtendFrameIntoClientArea(hwnd(), &shadow);
         SetWindowPos(hwnd(), nullptr, 0, 0, 0, 0,
                      SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
