@@ -240,7 +240,9 @@ private:
                     advance(9);
                     ok = !done() && isSpace(m_s[m_pos]);
                     skipSpace();
-                    ok = ok && name().has_value();
+                    if (ok)
+                        m_doctypeName = name();
+                    ok = ok && m_doctypeName.has_value();
                 }
                 // Quoted literals (system ids, entity values) and comments
                 // in the internal subset may hold "]" and ">".
@@ -408,6 +410,10 @@ private:
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken());
                 }
+                if (open.empty() && m_doctypeName && *tag != *m_doctypeName) {
+                    std::tie(m_pos, m_line) = start;
+                    return std::unexpected(broken()); // the root is not the one the DOCTYPE names
+                }
                 node.name = *tag;
                 bool empty = false;
                 for (;;) {
@@ -502,6 +508,7 @@ private:
     std::size_t m_nodesLeft = 0;
     std::size_t m_start = 0; // after the byte order mark
     bool m_doctype = false;
+    std::optional<std::u8string> m_doctypeName; // the root the DOCTYPE names
 };
 
 // A TTML time: clock time ("hh:mm:ss.fff", and the "mm:ss.fff" and
@@ -786,7 +793,10 @@ private:
     // The words of a <p> (or of a background span), and the background
     // vocals inside it, each a Line of its own.
     // `preserve`: whether the node keeps its whitespace (xml:space).
-    std::expected<void, LyricsProblem> collect(const XmlNode &node, Words &into, Backgrounds &backgrounds, bool preserve)
+    // `spanEnd`: the end of the nearest timed span around the node, which
+    // ends a word inside it that has no end of its own.
+    std::expected<void, LyricsProblem> collect(const XmlNode &node, Words &into, Backgrounds &backgrounds, bool preserve,
+                                               std::optional<std::int64_t> spanEnd)
     {
         for (const XmlNode &child : node.children) {
             if (child.isText()) {
@@ -810,21 +820,31 @@ private:
                 if (!t)
                     return std::unexpected(t.error());
                 const std::int64_t begin = *t->first;
-                if (!into.words.empty() && begin < into.words.back().begin)
-                    return std::unexpected(LyricsProblem{Kind::TimeGoesBack, child.line,
-                                                         std::u8string(*attribute(child, u8"begin"))});
                 const bool kept = preserves(child, preserve);
                 const std::u8string text = spanText(child, preserve);
                 const u8sv word = detail::trimLeft(text);
                 if (word.size() < text.size()) // spaces before a word stay with the text before it
                     addText(into, kept ? u8sv(text).substr(0, text.size() - word.size()) : u8sv(u8" "), kept);
+                if (word.empty())
+                    continue; // a timed span with no lyric is no word; the gaps come from the words
+                if (!into.words.empty() && begin < into.words.back().begin)
+                    return std::unexpected(LyricsProblem{Kind::TimeGoesBack, child.line,
+                                                         std::u8string(*attribute(child, u8"begin"))});
                 append(into.plain, word, kept);
                 into.words.push_back(LyricWord{begin, 0, std::u8string(word)});
-                into.ends.push_back(t->second);
+                into.ends.push_back(t->second ? t->second : spanEnd);
                 into.lines.push_back(child.line);
                 continue;
             }
-            if (auto ok = collect(child, into, backgrounds, preserves(child, preserve)); !ok)
+            std::optional<std::int64_t> innerEnd = spanEnd;
+            if (attribute(child, u8"begin") || attribute(child, u8"end")) {
+                const auto t = times(child);
+                if (!t)
+                    return std::unexpected(t.error());
+                if (t->second)
+                    innerEnd = t->second;
+            }
+            if (auto ok = collect(child, into, backgrounds, preserves(child, preserve), innerEnd); !ok)
                 return ok;
         }
         return {};
@@ -848,7 +868,7 @@ private:
         Words words;
         Backgrounds backgrounds;
         const bool preserve = preserves(node, inherited);
-        if (auto ok = collect(node, words, backgrounds, preserve); !ok)
+        if (auto ok = collect(node, words, backgrounds, preserve, std::nullopt); !ok)
             return ok;
         LyricLine out;
         out.actor = actor;
