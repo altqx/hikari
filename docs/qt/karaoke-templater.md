@@ -23,7 +23,7 @@ Each change is a named departure in the [compatibility decisions](compatibility-
 | Departure | What changes |
 | --- | --- |
 | KE1-no-50-line-gate | "Apply karaoke template" is offered when any Line is a template or code Line. 2.1.7 looked at the first 50 dialogue lines only. |
-| KE1-template-problems | Each problem with a template or code Line ends with `Template Line: N` or `Code Line: N`, N being the Line's number in the Grid. A run that had problems selects those Lines, the first active, and its progress window stays open so the log can be read. |
+| KE1-template-problems | Each problem with a template or code Line ends with `Template Line: N` or `Code Line: N`, N being the Line's number in the Grid. A named line template made of several Lines names the Line whose text the variable or expression is in. A run that had problems selects those Lines, the first active, and its progress window stays open so the log can be read. |
 | KE1-regenerate-selected | "Apply karaoke template to selected lines" replaces only the selected karaoke Lines' generated Lines, as one undo step. |
 | KE1-template-timing | A run reports its time and, per template or code Line, the time it took and the Lines it generated. The report goes to the status bar and the log window. |
 | KE1-render-cost-overlay | "Show / hide render cost" in the Video menu and the video's context menu (GLOBAL_VIDEO_RENDER_COST) draws over the video what the shown frame's subtitles cost to draw. |
@@ -39,7 +39,7 @@ The templater marks each generated Line with the karaoke Line it came from. The 
 3. Replace each selected Line's old generated Lines with its new ones, where the first old one was. A Line that had none gets them at the end.
 4. Report problems with the numbers the Lines have after the run.
 
-A Document opened from a file has no marks. Its generated Lines are then matched against what the templates give the other unmarked karaoke Lines now, compared as the saved file would read them back. The generated Lines left unmatched are the selected Lines' output. If another karaoke Line's output is not there as the templates give it now, the run is cancelled with an explanation and nothing changes. That happens when the template or those Lines changed, or when the template uses random values. A whole run marks every generated Line, and after that selected Lines can be regenerated on their own.
+A Document opened from a file has no marks. Its generated Lines are then matched against what the templates give the other unmarked karaoke Lines now, compared as the saved file would read them back, a TLMode translation included. A run generates in karaoke Line order, so identical generated Lines go to the karaoke Lines in file order: each takes the first one still free. The generated Lines left unmatched are the selected Lines' output. If another karaoke Line's output is not there as the templates give it now, the run is cancelled with an explanation and nothing changes. That happens when the template or those Lines changed, or when the template uses random values. A whole run marks every generated Line, and after that selected Lines can be regenerated on their own.
 
 Selecting every Line gives the whole run's Document. The one difference is that generated Lines already in the file are replaced where they were instead of at the end.
 
@@ -55,7 +55,7 @@ The templater attaches a JSON report to its result (version 1):
 
 - `mode` is `all` or `selected`.
 - `prepare_seconds` is karaskel's measuring of the karaoke Lines.
-- `line` is the template or code Line's number in the Grid after the run.
+- `line` is the template or code Line's number in the Grid after the run. A named line template made of several Lines is one template, listed under its first Line.
 
 Times come from a steady clock in the helper, so they include waits for the host's text measurements. A selected-Lines run counts the selected Lines' work only.
 
@@ -67,9 +67,9 @@ Over the video's top left corner the overlay shows:
 
 - how long the frame's subtitles took to draw;
 - with libass, the events shown, the bitmaps it drew and their area;
-- how many of the shown events use `\blur` or `\be`, or a drawing `\clip` or `\iclip`.
+- how many of the shown events use `\blur` or `\be` above 0, or a drawing `\clip` or `\iclip`, in an override block.
 
-The renderer selection times every render. A CSRI renderer on Windows reports its time only. The setting is `video.renderCost`, off by default. The command has no key by default.
+The renderer selection times every render. Counting walks every event of the track, so libass counts only while the overlay is shown, and the time shown leaves the counting out. A CSRI renderer on Windows reports its time only. The setting is `video.renderCost`, off by default. The command has no key by default.
 
 ## For scripts: `aegisub.hikari`
 
