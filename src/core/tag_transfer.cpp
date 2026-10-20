@@ -332,18 +332,47 @@ TagState defaultsFor(const StyleValues *style)
 // One component's value after a tag.
 struct Assignment {
     std::size_t order = 0;
-    std::u16string component, value, tag;
+    std::u16string value, tag;
+};
+// Each component's assignments in tag order.
+using History = std::map<std::u16string, std::vector<Assignment>>;
+
+std::size_t unitsOf(const TagState &state)
+{
+    std::size_t units = 0;
+    for (const auto &[component, value] : state)
+        units += component.size() + value.size();
+    return units;
+}
+
+// What reading a text may copy, in UTF-16 units: the formatting state each
+// text piece keeps, the Style a reset takes (its font name has no bound) and
+// the history. A text past it is read as having no runs, however its tags
+// stay within kMaxTagTransferTags.
+constexpr std::size_t kMaxTagTransferWork = std::size_t(1) << 20;
+
+struct Budget {
+    std::size_t left = kMaxTagTransferWork;
+    bool spend(std::size_t units)
+    {
+        if (units > left)
+            return false;
+        left -= units;
+        return true;
+    }
 };
 
-// Applies `tag`, appending what it set to `history` when given.
-void apply(TagState &state, const Tag &tag, const TagState &defaults, const std::map<std::u16string, TagState> &named,
-           std::vector<Assignment> *history)
+// Applies `tag`, appending what it set to `history` when given. Returns the
+// units it copied.
+std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
+                  const std::map<std::u16string, TagState> &named, History *history)
 {
     const auto effect = effectOf(tag.name);
     std::vector<std::u16string> touched = effect.components;
+    std::size_t copied = 0;
     switch (effect.kind) {
     case Kind::None:
-        return;
+        return 0;
     case Kind::Reset: {
         for (const auto &[component, value] : state)
             touched.push_back(component);
@@ -352,6 +381,7 @@ void apply(TagState &state, const Tag &tag, const TagState &defaults, const std:
         state = it != named.end() ? it->second : defaults;
         if (!style.empty())
             state[u"r"] = style;
+        copied += unitsOf(state);
         for (const auto &[component, value] : state)
             touched.push_back(component);
         break;
@@ -384,8 +414,12 @@ void apply(TagState &state, const Tag &tag, const TagState &defaults, const std:
         }
     }
     if (history)
-        for (const auto &component : touched)
-            history->push_back({tag.order, component, valueIn(state, component), tag.text});
+        for (const auto &component : touched) {
+            auto value = valueIn(state, component);
+            copied += value.size() + tag.text.size();
+            (*history)[component].push_back({tag.order, std::move(value), tag.text});
+        }
+    return copied;
 }
 
 TagState differences(const TagState &state, const TagState &base)
@@ -495,14 +529,33 @@ std::vector<RunPlacement> validPlacements(const OriginalTags &tags, const Transl
     return out;
 }
 
-TagSetter lastSetter(const std::vector<Assignment> &history, const std::u16string &component, std::size_t before,
+// The last tag before the `before`th to give `component` the value.
+TagSetter lastSetter(const History &history, const std::u16string &component, std::size_t before,
                      const std::u16string &value)
 {
-    TagSetter found;
-    for (const auto &a : history)
-        if (a.order < before && a.component == component && a.value == value)
-            found = {a.order, a.tag};
-    return found;
+    const auto it = history.find(component);
+    if (it == history.end())
+        return {};
+    const auto &assignments = it->second;
+    auto end = std::ranges::lower_bound(assignments, before, {}, &Assignment::order);
+    for (auto a = end; a != assignments.begin();)
+        if ((--a)->value == value)
+            return {a->order, a->tag};
+    return {};
+}
+
+// The first tag from the `from`th on to give `component` the value.
+TagSetter firstSetter(const History &history, const std::u16string &component, std::size_t from,
+                      const std::u16string &value)
+{
+    const auto it = history.find(component);
+    if (it == history.end())
+        return {};
+    const auto &assignments = it->second;
+    for (auto a = std::ranges::lower_bound(assignments, from, {}, &Assignment::order); a != assignments.end(); ++a)
+        if (a->value == value)
+            return {a->order, a->tag};
+    return {};
 }
 
 } // namespace
@@ -524,14 +577,24 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
         out.malformed = true;
         return out;
     }
+    Budget budget;
+    const auto tooMuch = [&] {
+        out = {};
+        out.defaults = defaultsFor(style);
+        out.malformed = true;
+        return out;
+    };
     for (const auto &piece : tokens.pieces) {
         for (const auto &tag : piece.tags) {
             if (effectOf(tag.name).kind == Kind::Reset) {
                 const auto name = std::u16string(trimmed(tag.args));
                 const auto u8name = toUtf8(name);
                 const auto named = std::ranges::find_if(styles, [&](const StyleValues &s) { return s.name == u8name; });
-                if (!name.empty() && named != styles.end() && !out.named.contains(name))
+                if (!name.empty() && named != styles.end() && !out.named.contains(name)) {
                     out.named[name] = defaultsFor(&*named);
+                    if (!budget.spend(unitsOf(out.named[name])))
+                        return tooMuch();
+                }
             }
             if (tag.name == u"p" && normalised(Kind::Number, tag.args) != u"0" && !trimmed(tag.args).empty()) {
                 out.drawing = true;
@@ -551,7 +614,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
 
     TagState state = out.defaults;
     bool baseSet = false;
-    std::vector<Assignment> history;
+    History history;
     std::map<std::u16string, TagSetter> leadingSetters;
     std::u16string leading, hoisted, trailing;
     std::vector<Segment> segments;
@@ -564,8 +627,11 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             baseSet = true;
         }
         if (!piece.block) {
-            if (!isLeading && !isTrailing && !out.karaoke)
+            if (!isLeading && !isTrailing && !out.karaoke) {
+                if (!budget.spend(unitsOf(state)))
+                    return tooMuch();
                 segments.push_back({piece.rawStart, piece.rawEnd, tagsSeen, state, hasVisible(original, piece)});
+            }
             continue;
         }
         tagsSeen += piece.tags.size();
@@ -585,7 +651,8 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                 if (std::ranges::any_of(effect.components, [&](const auto &c) { return leadingSetters.contains(c); }))
                     trailing += tag.text;
             }
-            apply(state, tag, out.defaults, out.named, &history);
+            if (!budget.spend(apply(state, tag, out.defaults, out.named, &history)))
+                return tooMuch();
         }
     }
     if (!baseSet)
@@ -604,7 +671,6 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                          [](const Segment &s) { return s.visible; }))
             continue;
         TagRun run;
-        run.number = static_cast<int>(out.runs.size()) + 1;
         run.differs = firstSegment.differs;
         auto start = displayOffset(projection, firstSegment.rawStart);
         auto end = displayOffset(projection, lastSegment.rawEnd);
@@ -617,24 +683,25 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
         run.rawStart = firstSegment.rawStart;
         run.rawEnd = lastSegment.rawEnd;
         run.text = projection.text.substr(start, end - start);
+        bool closable = true;
         for (const auto &[component, value] : run.differs) {
             run.opens[component] = lastSetter(history, component, firstSegment.order, value);
             const auto baseValue = valueIn(out.base, component);
-            TagSetter close;
-            for (const auto &a : history) {
-                if (a.order >= lastSegment.order && a.component == component && a.value == baseValue) {
-                    close = {a.order, a.tag};
-                    break;
-                }
-            }
+            TagSetter close = firstSetter(history, component, lastSegment.order, baseValue);
             if (close.tag.empty()) {
                 if (const auto it = leadingSetters.find(component); it != leadingSetters.end())
                     close = {it->second.order, it->second.tag, false};
                 else if (component != u"t" && component != u"r" && baseValue == valueIn(out.defaults, component))
                     close = {lastSegment.order, u"\\" + component, false};
             }
+            closable = closable && !close.tag.empty();
             run.closes[component] = close;
         }
+        // A run nothing can end (a \t the Original never resets) would go on
+        // past the text it is placed on: it is not offered.
+        if (!closable)
+            continue;
+        run.number = static_cast<int>(out.runs.size()) + 1;
         out.runs.push_back(std::move(run));
     }
     return out;
@@ -721,12 +788,17 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
     // The translation's own formatting, matched to the runs.
     std::vector<Segment> segments;
     TagState state = tags.base;
+    Budget budget;
     for (const auto &piece : tokens.pieces) {
-        if (piece.block)
+        if (piece.block) {
             for (const auto &tag : piece.tags)
-                apply(state, tag, tags.defaults, tags.named, nullptr);
-        else
+                if (!budget.spend(apply(state, tag, tags.defaults, tags.named, nullptr)))
+                    return plain;
+        } else {
             segments.push_back({piece.rawStart, piece.rawEnd, 0, differences(state, tags.base), true});
+            if (!budget.spend(unitsOf(segments.back().differs)))
+                return plain;
+        }
     }
     std::vector<int> labels(segments.size(), 0); // a run, 0 for the base, -1 for the translator's own
     std::vector<bool> used(tags.runs.size(), false);
@@ -899,6 +971,30 @@ std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const Tran
             out.push_back(p);
     }
     std::ranges::sort(out, {}, &RunPlacement::start);
+    return out;
+}
+
+std::vector<int> matchRuns(const OriginalTags &before, const OriginalTags &now)
+{
+    std::vector<int> out(before.runs.size(), 0);
+    std::vector<bool> taken(now.runs.size(), false);
+    for (std::size_t i = 0; i < before.runs.size(); ++i) {
+        const auto &run = before.runs[i];
+        for (std::size_t j = 0; j < now.runs.size(); ++j) {
+            if (!taken[j] && now.runs[j].differs == run.differs && now.runs[j].text == run.text) {
+                taken[j] = true;
+                out[i] = now.runs[j].number;
+                break;
+            }
+        }
+    }
+    if (before.runs.size() == now.runs.size())
+        for (std::size_t i = 0; i < before.runs.size(); ++i)
+            if (out[i] == 0 && !taken[i]
+                && (now.runs[i].differs == before.runs[i].differs || now.runs[i].text == before.runs[i].text)) {
+                taken[i] = true;
+                out[i] = now.runs[i].number;
+            }
     return out;
 }
 

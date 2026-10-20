@@ -14,8 +14,9 @@
 //   - runs: each stretch of visible text whose formatting differs from the
 //     line's base, numbered from 1 in reading order. Run boundaries come from
 //     formatting state, not from tag names.
-// Brace comments, \N and karaoke tags are not carried. A drawing or malformed
-// Original text carries nothing.
+// Brace comments, \N and karaoke tags are not carried, nor a run nothing in
+// the Original ends (a \t never reset). A drawing or malformed Original text
+// carries nothing.
 //
 // The saved translation is plain ASS: the leading block, the typed body with
 // each placed run's tags around its text, and the trailing block. Placements
@@ -63,7 +64,8 @@ struct OriginalTags {
     bool karaoke = false;   // \k tags were left out
     bool drawing = false;   // nothing carried
     // Nothing carried: unbalanced braces, or a text longer or with more tags
-    // than kMaxTagTransferUnits / kMaxTagTransferTags.
+    // than kMaxTagTransferUnits / kMaxTagTransferTags, or whose formatting
+    // (the Styles its resets name) would copy too much to read.
     bool malformed = false;
 };
 
@@ -123,6 +125,13 @@ std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const Tran
 // Grid's "runs not placed" mark). An empty translation has none, and so has
 // one whose own leading or trailing tags differ (the translator's, shown whole).
 bool hasUnplacedRuns(const OriginalTags &tags, std::u16string_view translation);
+// For an Original text edited from `before` to `now`: the run of `now` each
+// run of `before` became (index number - 1), or 0 where none did. A run is
+// the one with the same formatting and text; failing that, with the runs as
+// many as before, the one in its place when its formatting or its text is
+// unchanged. Run numbers alone are positions: a run put in before the others
+// renumbers them.
+std::vector<int> matchRuns(const OriginalTags &before, const OriginalTags &now);
 // The run numbers of `placements` in text order, as composeTranslation wrote them.
 std::vector<int> runOrder(std::span<const RunPlacement> placements);
 // Runs with the same formatting read back as the first unused of them, so a

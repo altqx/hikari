@@ -345,8 +345,10 @@ TEST(TagTransfer, ManyTransformsStayCheapAndTooManyTagsCarryNothing)
     std::u16string many = u"{\\an8}a";
     for (int i = 0; i < 400; ++i)
         many += u"{\\t(0,10,\\fs20)}b";
+    many += u"{\\r}c"; // what ends them
     const auto tags = readOriginalTags(many);
     ASSERT_FALSE(tags.malformed);
+    EXPECT_EQ(tags.runs.size(), 400u);
     for (const auto &run : tags.runs)
         for (const auto &[component, value] : run.differs)
             EXPECT_LT(value.size(), 64u) << u8(component);
@@ -380,4 +382,45 @@ TEST(TagTransfer, EqualRunsKeepTheNumberTheTranslatorChose)
     auto other = readTranslation(tags, saved);
     relabelRuns(tags, other, std::vector<int>{2, 1});
     EXPECT_EQ(other.placements[0].run, 1);
+}
+
+TEST(TagTransfer, ARunNothingEndsIsNotOffered)
+{
+    // No tag after it gives the transform back: placed on a word, it would
+    // animate the rest of the translation too.
+    EXPECT_TRUE(readOriginalTags(u"a {\\t(\\fs40)}b").runs.empty());
+    const auto reset = readOriginalTags(u"a {\\t(\\fs40)}b{\\r} c");
+    ASSERT_EQ(reset.runs.size(), 1u);
+    EXPECT_EQ(u8(reset.runs[0].text), "b");
+    expectRoundTrip(reset, draft(u"x y", {{0, 1, 1}}));
+}
+
+TEST(TagTransfer, LongStylesResetOftenCarryNothing)
+{
+    // A Style's font name has no length bound: each reset to it copies it.
+    StyleValues a, b;
+    a.name = u8"A";
+    b.name = u8"B";
+    a.fontname = std::u8string(8000, u8'a');
+    b.fontname = std::u8string(8000, u8'b');
+    const std::vector<StyleValues> styles{a, b};
+    std::u16string text;
+    for (int i = 0; i < 500; ++i)
+        text += i % 2 ? u"{\\rA}x" : u"{\\rB}x";
+    EXPECT_TRUE(readOriginalTags(text, &a, styles).malformed);
+    EXPECT_FALSE(readOriginalTags(u"{\\rB}x{\\rA}y", &a, styles).malformed);
+}
+
+TEST(TagTransfer, AnEditedOriginalsRunsAreMatchedByFormattingAndText)
+{
+    const auto before = readOriginalTags(u"Say {\\i1}one{\\i0} now");
+    ASSERT_EQ(before.runs.size(), 1u);
+    // A run put in before it: the italic run is run 2 now.
+    EXPECT_EQ(matchRuns(before, readOriginalTags(u"{\\b1}So{\\b0} say {\\i1}one{\\i0} now")), std::vector<int>{2});
+    // Its formatting changed, or its text: still the run in its place.
+    EXPECT_EQ(matchRuns(before, readOriginalTags(u"Say {\\b1}one{\\b0} now")), std::vector<int>{1});
+    EXPECT_EQ(matchRuns(before, readOriginalTags(u"Say {\\i1}uno{\\i0} now")), std::vector<int>{1});
+    // Both changed, or gone: no run.
+    EXPECT_EQ(matchRuns(before, readOriginalTags(u"Say {\\b1}uno{\\b0} now")), std::vector<int>{0});
+    EXPECT_EQ(matchRuns(before, readOriginalTags(u"Say one now")), std::vector<int>{0});
 }
