@@ -410,7 +410,10 @@ public:
     // number: number, text, kind (what it changes: "Italic", "Bold, Colour"),
     // colour ("#rrggbb" for a primary colour run, else empty), placed, and
     // where it is in each field as the field shows its text: originalStart
-    // and originalEnd, start and end in the Translated field (-1 unplaced).
+    // and originalEnd, start and end in the Translated field (-1 unplaced),
+    // and suggestedStart and suggestedEnd (-1 none): an unplaced run whose
+    // text the translation has once, as a whole word (core::suggestPlacements),
+    // until dismissed.
     QVariantList tagRuns() const;
     // Places run `number` (0: the lowest-numbered one not placed) on the
     // Translated field's [selectionStart, selectionEnd), as a draft change:
@@ -418,6 +421,10 @@ public:
     // same selection. The selection stays on the same text. False without
     // a selection, carried tags or that run.
     Q_INVOKABLE bool placeRun(int number, int selectionStart, int selectionEnd);
+    // The suggested placements: all placed in one draft change (Tab), or
+    // dismissed for the active Line (Escape). False when there are none.
+    Q_INVOKABLE bool acceptSuggestedRuns();
+    Q_INVOKABLE bool dismissSuggestedRuns();
     void setVisualToolActive(std::function<bool()> active) { m_visualToolActive = std::move(active); }
     Q_INVOKABLE bool findNextUnconfirmed();
     Q_INVOKABLE bool findNextUntranslated();
@@ -457,6 +464,9 @@ private:
     // The active Line's Original tags read with its Style, for its runs;
     // nullopt when nothing is carried.
     std::optional<core::OriginalTags> runTags() const;
+    // core::suggestPlacements for the active Line, less the dismissed ones.
+    std::vector<core::RunPlacement> suggestedRuns(const core::OriginalTags &tags,
+                                                  const core::TranslationDraft &draft) const;
     // The translation a Translated field text stands for.
     static std::u8string carried(const Carry &carry, std::u8string body);
     std::size_t carriedLead() const; // UTF-16 units of the carried leading block before the field's text
@@ -465,6 +475,8 @@ private:
     std::function<bool()> m_visualToolActive;
     void evaluateCarry(); // what legacy SetTextWithTags did on SetLine
     bool m_carryFocus = false; // an untranslated Line asks for the Translated field's focus
+    std::optional<core::LineId> m_dismissedFor; // the Line whose suggestions were dismissed
+    std::set<int> m_dismissedRuns;
     void refresh();
     void fail(const QString &problem, const QString &attempted = {});
     bool setRaw(int role, std::u8string raw);

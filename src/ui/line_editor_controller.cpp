@@ -216,6 +216,18 @@ QVariantList LineEditorController::tagRuns() const
     const auto lead = tags->leading.size();
     const auto inner = core::project(core::toUtf16(record()->translation));
     const auto original = core::project(core::toUtf16(real->text));
+    // A suggestion is in the draft's body, which has the field's visible text.
+    std::vector<core::RunPlacement> suggested;
+    core::Projection body;
+    if (!full.empty()) {
+        const auto draft = core::readTranslation(*tags, full);
+        suggested = suggestedRuns(*tags, draft);
+        body = core::project(draft.body);
+    }
+    auto inField = [&](std::size_t at, bool start) {
+        const auto shown = core::displayOffset(body, at);
+        return static_cast<int>(m_showTags ? core::rawOffset(inner, shown, start) : shown);
+    };
     for (const auto &run : tags->runs) {
         auto originalStart = run.displayStart, originalEnd = run.displayEnd;
         if (m_showTags) {
@@ -229,6 +241,13 @@ QVariantList LineEditorController::tagRuns() const
             start = static_cast<int>(m_showTags ? p.start - lead : core::displayOffset(inner, p.start - lead));
             end = static_cast<int>(m_showTags ? p.end - lead : core::displayOffset(inner, p.end - lead));
         }
+        int suggestedStart = -1, suggestedEnd = -1;
+        for (const auto &p : suggested) {
+            if (p.run == run.number) {
+                suggestedStart = inField(p.start, true);
+                suggestedEnd = inField(p.end, false);
+            }
+        }
         out << QVariantMap{{QStringLiteral("number"), run.number},
                            {QStringLiteral("text"), qs16(run.text)},
                            {QStringLiteral("kind"), runKind(run)},
@@ -237,7 +256,9 @@ QVariantList LineEditorController::tagRuns() const
                            {QStringLiteral("originalStart"), static_cast<int>(originalStart)},
                            {QStringLiteral("originalEnd"), static_cast<int>(originalEnd)},
                            {QStringLiteral("start"), start},
-                           {QStringLiteral("end"), end}};
+                           {QStringLiteral("end"), end},
+                           {QStringLiteral("suggestedStart"), suggestedStart},
+                           {QStringLiteral("suggestedEnd"), suggestedEnd}};
     }
     return out;
 }
@@ -276,6 +297,51 @@ bool LineEditorController::placeRun(int number, int selectionStart, int selectio
     m_selectionEnd = static_cast<int>(m_showTags ? core::rawOffset(after, to, false) : to);
     m_selectionRole = 1;
     emit selectionRequested();
+    return true;
+}
+
+std::vector<core::RunPlacement> LineEditorController::suggestedRuns(const core::OriginalTags &tags,
+                                                                    const core::TranslationDraft &draft) const
+{
+    auto out = core::suggestPlacements(tags, draft);
+    const auto real = sessionRecord();
+    if (real && m_dismissedFor == real->id)
+        std::erase_if(out, [&](const core::RunPlacement &p) { return m_dismissedRuns.contains(p.run); });
+    return out;
+}
+
+bool LineEditorController::acceptSuggestedRuns()
+{
+    const auto tags = runTags();
+    const auto real = sessionRecord();
+    if (!editable() || !tags || !real || real->translation.empty())
+        return false;
+    auto draft = core::readTranslation(*tags, core::toUtf16(real->translation));
+    const auto suggested = suggestedRuns(*tags, draft);
+    if (suggested.empty())
+        return false;
+    for (const auto &p : suggested)
+        core::placeRun(draft.placements, p.start, p.end, p.run);
+    draft.carried = false; // setRaw adds the carried tags
+    return setRaw(1, core::toUtf8(core::composeTranslation(*tags, draft)));
+}
+
+bool LineEditorController::dismissSuggestedRuns()
+{
+    const auto tags = runTags();
+    const auto real = sessionRecord();
+    if (!tags || !real || real->translation.empty())
+        return false;
+    const auto suggested = suggestedRuns(*tags, core::readTranslation(*tags, core::toUtf16(real->translation)));
+    if (suggested.empty())
+        return false;
+    if (m_dismissedFor != real->id) {
+        m_dismissedFor = real->id;
+        m_dismissedRuns.clear();
+    }
+    for (const auto &p : suggested)
+        m_dismissedRuns.insert(p.run);
+    emit changed();
     return true;
 }
 

@@ -10095,6 +10095,45 @@ private slots:
         QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
     }
 
+    // TM1: a run whose text comes back unchanged is suggested (a dotted
+    // underline): Tab places it, Escape dismisses it, and without
+    // suggestions both keys do what they always do.
+    void tagsFromOriginalSuggestsUnchangedRunText()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tm1-suggest.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // "{\i1}Wall {\b1}high"
+        auto *translated = item("translationText");
+        QTRY_VERIFY(translated->hasActiveFocus());
+        const auto run = [&] { return application->editor().tagRuns()[0].toMap(); };
+        application->editor().translationEdited(QStringLiteral("Mur high"), 8);
+        QTRY_COMPARE(run().value("suggestedStart").toInt(), 4);
+        QCOMPARE(run().value("suggestedEnd").toInt(), 8);
+        QTRY_VERIFY(visualItem("translationTextRun1Suggestion") && visualItem("translationTextRun1Suggestion")->isVisible());
+        press(Qt::Key_Tab);
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\b1}high"));
+        QVERIFY(translated->hasActiveFocus());
+        QVERIFY(run().value("placed").toBool());
+        QCOMPARE(run().value("suggestedStart").toInt(), -1);
+        // Taken off again, it is suggested again; Escape dismisses it and
+        // keeps the draft.
+        QVERIFY(QMetaObject::invokeMethod(translated, "select", Q_ARG(int, 4), Q_ARG(int, 8)));
+        press(Qt::Key_1, Qt::AltModifier);
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur high"));
+        QTRY_COMPARE(run().value("suggestedStart").toInt(), 4);
+        press(Qt::Key_Escape);
+        QTRY_COMPARE(run().value("suggestedStart").toInt(), -1);
+        QVERIFY(!visualItem("translationTextRun1Suggestion")->isVisible());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur high"));
+        // Nothing suggested: Tab moves on.
+        press(Qt::Key_Tab);
+        QTRY_VERIFY(!translated->hasActiveFocus());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur high"));
+    }
+
     // TM1: Paste all puts the Original's text in the Translated field with
     // its runs; a translation whose own tags differ from the Original's is
     // shown whole and left alone.

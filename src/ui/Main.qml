@@ -1943,52 +1943,83 @@ ApplicationWindow {
         }
         // TM1: the Original's runs (editor.tagRuns): a numbered badge where
         // each starts in the Original text, and in the Translated text a
-        // badge and an underline under the text it is placed on.
+        // badge and an underline under the text it is placed on, or a dotted
+        // underline under the same text found unplaced (a suggestion: Tab
+        // places it, Escape dismisses it).
         Repeater {
             model: root.editor.translationMode ? root.editor.tagRuns : []
             delegate: Item {
-                id: mark
+                id: run
                 required property var modelData
-                readonly property int from: field.role === 0 ? modelData.originalStart : modelData.start
-                readonly property int to: field.role === 0 ? modelData.originalEnd : modelData.end
-                readonly property rect first: { field.text; field.width; return field.positionToRectangle(from) }
-                readonly property rect last: { field.text; field.width; return field.positionToRectangle(to) }
-                objectName: field.objectName + "Run" + modelData.number
-                visible: from >= 0 && to > from && to <= field.length
                 anchors.fill: parent
                 z: 2
-                Rectangle {
-                    objectName: mark.objectName + "Badge"
-                    x: mark.first.x - width / 2
-                    y: mark.first.y - height / 2
-                    width: Math.max(badgeText.implicitWidth + 4, height)
-                    height: badgeText.implicitHeight
-                    radius: height / 2
-                    color: Theme.accent
-                    Label {
-                        id: badgeText
-                        anchors.centerIn: parent
-                        text: mark.modelData.number
-                        font.pixelSize: Math.max(8, field.font.pixelSize * 0.6)
-                        color: Theme.onAccent
+                Item {
+                    id: suggestion
+                    readonly property int from: field.role === 1 ? run.modelData.suggestedStart : -1
+                    readonly property int to: field.role === 1 ? run.modelData.suggestedEnd : -1
+                    readonly property rect first: { field.text; field.width; return field.positionToRectangle(from) }
+                    readonly property rect last: { field.text; field.width; return field.positionToRectangle(to) }
+                    objectName: field.objectName + "Run" + run.modelData.number + "Suggestion"
+                    visible: from >= 0 && to > from && to <= field.length && last.y === first.y
+                    x: first.x
+                    y: first.y + first.height - 1
+                    width: last.x - first.x
+                    height: 2
+                    Row {
+                        spacing: 2
+                        Repeater {
+                            model: Math.max(0, Math.floor((suggestion.width + 2) / 4))
+                            Rectangle {
+                                width: 2
+                                height: 2
+                                color: Theme.accent
+                            }
+                        }
                     }
                 }
-                // The underline, over two rows at most (a wrapped run).
-                Rectangle {
-                    visible: field.role === 1
-                    x: mark.first.x
-                    y: mark.first.y + mark.first.height - 1
-                    width: (mark.last.y === mark.first.y ? mark.last.x : field.width - field.rightPadding) - mark.first.x
-                    height: 2
-                    color: Theme.accent
-                }
-                Rectangle {
-                    visible: field.role === 1 && mark.last.y > mark.first.y
-                    x: field.leftPadding
-                    y: mark.last.y + mark.last.height - 1
-                    width: mark.last.x - field.leftPadding
-                    height: 2
-                    color: Theme.accent
+                Item {
+                    id: mark
+                    readonly property var modelData: run.modelData
+                    readonly property int from: field.role === 0 ? modelData.originalStart : modelData.start
+                    readonly property int to: field.role === 0 ? modelData.originalEnd : modelData.end
+                    readonly property rect first: { field.text; field.width; return field.positionToRectangle(from) }
+                    readonly property rect last: { field.text; field.width; return field.positionToRectangle(to) }
+                    objectName: field.objectName + "Run" + modelData.number
+                    visible: from >= 0 && to > from && to <= field.length
+                    anchors.fill: parent
+                    Rectangle {
+                        objectName: mark.objectName + "Badge"
+                        x: mark.first.x - width / 2
+                        y: mark.first.y - height / 2
+                        width: Math.max(badgeText.implicitWidth + 4, height)
+                        height: badgeText.implicitHeight
+                        radius: height / 2
+                        color: Theme.accent
+                        Label {
+                            id: badgeText
+                            anchors.centerIn: parent
+                            text: mark.modelData.number
+                            font.pixelSize: Math.max(8, field.font.pixelSize * 0.6)
+                            color: Theme.onAccent
+                        }
+                    }
+                    // The underline, over two rows at most (a wrapped run).
+                    Rectangle {
+                        visible: field.role === 1
+                        x: mark.first.x
+                        y: mark.first.y + mark.first.height - 1
+                        width: (mark.last.y === mark.first.y ? mark.last.x : field.width - field.rightPadding) - mark.first.x
+                        height: 2
+                        color: Theme.accent
+                    }
+                    Rectangle {
+                        visible: field.role === 1 && mark.last.y > mark.first.y
+                        x: field.leftPadding
+                        y: mark.last.y + mark.last.height - 1
+                        width: mark.last.x - field.leftPadding
+                        height: 2
+                        color: Theme.accent
+                    }
                 }
             }
         }
@@ -2237,8 +2268,15 @@ ApplicationWindow {
             }
             const ctrl = event.modifiers & Qt.ControlModifier
             const action = hotkeyAction(event)
+            // TM1: a plain Tab places the suggested runs and Escape dismisses
+            // them; without suggestions they move on and discard as usual.
+            const plain = (event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) === 0
             if (action !== "") {
                 root.runEditorHotkey(action, field) // an action not here yet still takes the key
+                event.accepted = true
+            } else if (plain && field.role === 1 && event.key === Qt.Key_Tab && root.editor.acceptSuggestedRuns()) {
+                event.accepted = true
+            } else if (plain && field.role === 1 && event.key === Qt.Key_Escape && root.editor.dismissSuggestedRuns()) {
                 event.accepted = true
             } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
                 field.tabOut(event.key === Qt.Key_Tab && !(event.modifiers & Qt.ShiftModifier))
