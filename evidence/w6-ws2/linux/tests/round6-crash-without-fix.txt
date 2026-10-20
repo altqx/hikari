@@ -1,0 +1,25 @@
+=== aPanelPlacedInAMissingMainWindowIsRefused:another window (opened by the unfixed program)
+PASS   : FileLayoutsTest::initTestCase()
+Received signal 11 (SIGSEGV), code SEGV_MAPERR, at instruction address 0x000055baebd8d490, accessing address 0x0000000000000020
+rc=139
+=== aLayoutTheEngineCannotReadIsRefused:a child not an object (opened by the unfixed program)
+PASS   : FileLayoutsTest::initTestCase()
+FAIL!  : FileLayoutsTest::aLayoutTheEngineCannotReadIsRefused() Caught unhandled exception
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 1810ms
+terminate called after throwing an instance of 'nlohmann::json_abi_v3_12_0::detail::type_error'
+  what():  [json.exception.type_error.306] cannot use value() with number
+rc=134
+=== aLayoutTheEngineCannotReadIsRefused:a size as text (opened by the unfixed program)
+PASS   : FileLayoutsTest::initTestCase()
+FAIL!  : FileLayoutsTest::aLayoutTheEngineCannotReadIsRefused() Caught unhandled exception
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 1893ms
+terminate called after throwing an instance of 'nlohmann::json_abi_v3_12_0::detail::type_error'
+  what():  [json.exception.type_error.302] type must be number, but is string
+rc=134
+=== aLayoutTheEngineCannotReadIsRefused:no orientation (opened by the unfixed program)
+PASS   : FileLayoutsTest::initTestCase()
+FAIL!  : FileLayoutsTest::aLayoutTheEngineCannotReadIsRefused() Caught unhandled exception
+Totals: 1 passed, 1 failed, 0 skipped, 0 blacklisted, 1803ms
+terminate called after throwing an instance of 'nlohmann::json_abi_v3_12_0::detail::type_error'
+  what():  [json.exception.type_error.302] type must be number, but is null
+rc=134

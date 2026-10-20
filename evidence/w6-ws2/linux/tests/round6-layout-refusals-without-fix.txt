@@ -1,0 +1,41 @@
+=== anUnusableFileArrangementFollowsTheNewTabRule:too long
+PASS   : FileLayoutsTest::initTestCase()
+FAIL!  : FileLayoutsTest::anUnusableFileArrangementFollowsTheNewTabRule(too long) 'history.contains(QStringLiteral("bad.ass")) && history.contains(reason)' returned FALSE. (12:13:32 The panel layout saved in bad.ass was not used because it is not a layout file.
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(573)]
+PASS   : FileLayoutsTest::cleanupTestCase()
+Totals: 2 passed, 1 failed, 0 skipped, 0 blacklisted, 1122ms
+rc=1
+=== aPanelPlacedInAMissingMainWindowIsRefused
+PASS   : FileLayoutsTest::initTestCase()
+FAIL!  : FileLayoutsTest::aPanelPlacedInAMissingMainWindowIsRefused(another window) '!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(664)]
+FAIL!  : FileLayoutsTest::aPanelPlacedInAMissingMainWindowIsRefused(no window) '!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(664)]
+FAIL!  : FileLayoutsTest::aPanelPlacedInAMissingMainWindowIsRefused(floating as text) '!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(664)]
+FAIL!  : FileLayoutsTest::aPanelPlacedInAMissingMainWindowIsRefused(not an object) '!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(664)]
+PASS   : FileLayoutsTest::cleanupTestCase()
+Totals: 2 passed, 4 failed, 0 skipped, 0 blacklisted, 3710ms
+rc=4
+=== aLayoutTheEngineCannotReadIsRefused
+PASS   : FileLayoutsTest::initTestCase()
+FAIL!  : FileLayoutsTest::aLayoutTheEngineCannotReadIsRefused(a child not an object) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(817)]
+FAIL!  : FileLayoutsTest::aLayoutTheEngineCannotReadIsRefused(visibility as text) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(817)]
+FAIL!  : FileLayoutsTest::aLayoutTheEngineCannotReadIsRefused(a size as text) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(817)]
+FAIL!  : FileLayoutsTest::aLayoutTheEngineCannotReadIsRefused(no orientation) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(817)]
+FAIL!  : FileLayoutsTest::aLayoutTheEngineCannotReadIsRefused(a group under another id) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(817)]
+FAIL!  : FileLayoutsTest::aLayoutTheEngineCannotReadIsRefused(a group in two items) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(817)]
+FAIL!  : FileLayoutsTest::aLayoutTheEngineCannotReadIsRefused(the central group) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(817)]
+FAIL!  : FileLayoutsTest::aLayoutTheEngineCannotReadIsRefused(an affinity) '!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem)' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(817)]
+PASS   : FileLayoutsTest::cleanupTestCase()
+Totals: 2 passed, 8 failed, 0 skipped, 0 blacklisted, 7346ms
+rc=8
