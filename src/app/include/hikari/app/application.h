@@ -1384,7 +1384,7 @@ private:
     // The arrangement the Document's file holds, when the setting is on and
     // it validates; `report`: one that does not is named in the log.
     std::optional<QByteArray> fileArrangement(application::DocumentId document, bool report = false);
-    // A tab made from a file's bytes (opened, recovered, a Matroska track)
+    // A tab made from a file's bytes (opened, or recovered from an autosave)
     // starts with the arrangement the file holds; one that does not
     // validate is named in the log.
     void takeFileArrangement(application::DocumentId document);

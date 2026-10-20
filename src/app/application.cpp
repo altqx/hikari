@@ -2870,7 +2870,6 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
             selectRow(id, 0); // InsertSelection(currentLine) of a new tab
         }
         m_workspace.add(id, QFileInfo(subsPath).fileName().toStdString());
-        takeFileArrangement(id); // WS2: as a file opened in a new tab
         m_matroskaPaths[id.value] = subsPath;
         m_tabMedia[id.value]; // a new tab: no media of its own yet
         m_workspace.setEditingTarget(id);
