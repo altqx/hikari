@@ -1282,3 +1282,25 @@ TEST(AudioBox, BlankAudio)
     EXPECT_EQ(f.box.state(), AudioBox::State::Closed);
     EXPECT_EQ(f.box.error(), SourceError::Unsupported);
 }
+
+// AV3 (#240): a dummy video's own silence, as long as its name says.
+TEST(AudioBox, BlankAudioOfAGivenLength)
+{
+    BoxFixture f("blank");
+    const std::string name = AudioBox::dummyName(88200);
+    EXPECT_EQ(name, "dummy-audio:silence?sr=44100&bd=16&ch=1&ln=88200");
+    EXPECT_TRUE(AudioBox::isDummyName(name));
+    EXPECT_FALSE(AudioBox::isDummyName("?dummy:25.000000:50:320:240:47:163:254:"));
+    f.box.open(name);
+    EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
+    EXPECT_TRUE(f.source.probedPath.empty());
+    EXPECT_EQ(f.box.audio()->sampleCount(), 88200); // 2 s
+    EXPECT_EQ(f.box.path(), name);
+    // the older sessions' name keeps its 2 h 30 min; a name without a usable length too
+    EXPECT_EQ(AudioBox::dummySamples(AudioBox::kDummyName), AudioBox::kDummySamples);
+    EXPECT_EQ(AudioBox::dummySamples("dummy"), AudioBox::kDummySamples);
+    EXPECT_EQ(AudioBox::dummySamples("dummy-audio:silence?ln=0"), AudioBox::kDummySamples);
+    EXPECT_EQ(AudioBox::dummySamples("dummy-audio:silence?ln=12x"), AudioBox::kDummySamples);
+    EXPECT_EQ(AudioBox::dummySamples("dummy-audio:silence?ln=12&sr=44100"), 12);
+    EXPECT_EQ(AudioBox::dummyName(0), "dummy-audio:silence?sr=44100&bd=16&ch=1&ln=1");
+}

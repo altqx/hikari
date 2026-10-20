@@ -73,13 +73,6 @@ QVariantList Application::tabs() const
         QString video;
         if (const auto it = m_tabMedia.find(id.value); it != m_tabMedia.end() && !it->second.video.isEmpty())
             video = QFileInfo(it->second.video).fileName();
-        // D2: with the editor off the active tab is named after its video
-        // (HikariSubFrame::Label(0, true) from HideEditor and VideoBox's
-        // OpenVideo: the name without the history step).
-        if (!editorOn() && target == id && !video.isEmpty()) {
-            label = video;
-            label.truncate(m_tabTextMax);
-        }
         rows << QVariantMap{{QStringLiteral("id"), QVariant::fromValue<qulonglong>(id.value)},
                             {QStringLiteral("label"), label},
                             {QStringLiteral("title"), name},
@@ -92,27 +85,6 @@ QVariantList Application::tabs() const
                             {QStringLiteral("video"), video}};
     }
     return rows;
-}
-
-bool Application::editorOn() const
-{
-    return m_settings->boolean("workspace.editorOn");
-}
-
-void Application::toggleEditor()
-{
-    // HideEditor: cur->editor = !cur->editor, then Options.SetBool(EDITOR_ON).
-    m_settings->set("workspace.editorOn", !editorOn());
-    showVideoSubtitles();
-    m_video->setEditorOn(editorOn()); // the times field (VideoBox::ShowTimes)
-    emit editorOnChanged();
-    emit tabsChanged(); // Label(): the tab's name
-}
-
-void Application::editorOnForSubtitles()
-{
-    if (!editorOn())
-        toggleEditor();
 }
 
 int Application::currentTab() const
@@ -383,7 +355,7 @@ void Application::trackTabMedia()
         const QString native = QDir::toNativeSeparators(path);
         const QString video = QString::fromStdString(m_video->session().path());
         TabMedia &media = m_tabMedia[target->value];
-        const bool fromVideo = native == QDir::toNativeSeparators(video);
+        const bool fromVideo = isVideoAudio(native, video); // AV3: a dummy video's silence too
         media.audio = fromVideo ? QString() : native;
         if (!fromVideo)
             media.audioFromVideo = false; // P9: another file is the tab's AudioPath now
@@ -463,13 +435,9 @@ void Application::enterTabMedia(std::optional<application::DocumentId> previous,
     }
     const QString shown = m_audio->hasAudio() ? QDir::toNativeSeparators(m_audio->path()) : QString();
     if (!media.audio.isEmpty()) {
-        if (shown != media.audio) {
-            if (media.audio == QLatin1String(application::AudioBox::kDummyName))
-                m_audio->openDummy();
-            else
-                m_audio->openAudio(media.audio);
-        }
-    } else if (!shown.isEmpty() && shown != media.video) {
+        if (shown != media.audio)
+            m_audio->openAudio(media.audio); // a file, or an older session's blank audio
+    } else if (!shown.isEmpty() && !isVideoAudio(shown, media.video)) {
         // Another tab's audio: the tab's video brings its own back when it is ready.
         m_audio->closeAudio();
     }
@@ -557,7 +525,7 @@ bool Application::saveLastSession(bool closing, const QString &path)
         tab.audio = utf8(media.audio);
         if (const auto *u = unresolved("audio"); u && media.audio.isEmpty())
             tab.audio = utf8(u->path);
-        tab.editor = editorOn(); // "Editor: ", the Workspace's switch
+        tab.editor = true; // "Editor: 1" for legacy: WS3 retired the player layout
         tab.keyframes = utf8(media.keyframes);
         if (const auto *u = unresolved("keyframes"); u && media.keyframes.isEmpty())
             tab.keyframes = utf8(u->path);
@@ -725,7 +693,6 @@ void Application::applySession()
     m_originalColumns.clear(); // E5: every tab's Grid is destroyed
     m_unresolved.clear();
     std::optional<application::DocumentId> last;
-    bool editorAfter = true;
     for (std::size_t i = 0; i < pending.tabs.size(); ++i) {
         const auto &tab = pending.tabs[i];
         const QString subtitles = qs(tab.subtitles);
@@ -761,14 +728,15 @@ void Application::applySession()
             else
                 m_unresolved.push_back({*id, QStringLiteral("keyframes"), keyframes, 0, 0});
         }
-        // Notebook::LoadSession: each tab starts with the editor (AddPage,
-        // TabPanel's editor(true)) and `if (!hasEditor) HideEditor()` turns
-        // it off before the tab's video (Notebook.cpp:1458-1459). One switch
-        // for every tab: the last tab, the active one, sets it.
-        editorAfter = tab.editor || qs(tab.video).isEmpty();
+        // WS3: a tab's "Editor: 0" (legacy's player layout) is read as the
+        // editor shown; the rewrite has no player layout.
         if (const QString video = qs(tab.video); !video.isEmpty()) {
-            if (isFile(video)) {
-                media.video = QDir::toNativeSeparators(video);
+            // AV3: a dummy video is restored too (one that opens: a broken
+            // entry is unresolved), and brings its own audio
+            const bool dummy = application::isDummyVideo(video.toStdString()) &&
+                               application::parseDummyVideo(video.toStdString());
+            if (isFile(video) || dummy) {
+                media.video = dummy ? video : QDir::toNativeSeparators(video);
                 media.position = tab.position;
             } else {
                 m_unresolved.push_back({*id, QStringLiteral("video"), video, 0, tab.position});
@@ -776,8 +744,9 @@ void Application::applySession()
         }
         // C05-audio-association: only the tab's own "Audio:" line.
         if (const QString audio = qs(tab.audio); !audio.isEmpty()) {
-            if (isFile(audio) || audio == QLatin1String(application::AudioBox::kDummyName))
-                media.audio = audio == QLatin1String(application::AudioBox::kDummyName) ? audio : QDir::toNativeSeparators(audio);
+            const bool blank = application::AudioBox::isDummyName(audio.toStdString()); // older sessions' blank audio
+            if (isFile(audio) || blank)
+                media.audio = blank ? audio : QDir::toNativeSeparators(audio);
             else
                 m_unresolved.push_back({*id, QStringLiteral("audio"), audio, 0, 0});
         }
@@ -796,8 +765,6 @@ void Application::applySession()
         m_workspace.setEditingTarget(*last);
     else
         newDocument();
-    if (editorAfter != editorOn())
-        toggleEditor();
     refreshViews();
     trimAudioCache();
     saveLastSession();
@@ -828,7 +795,7 @@ bool Application::retryRestore(int row)
         return false;
     const UnresolvedRestore entry = m_unresolved[static_cast<std::size_t>(row)];
     const auto isTarget = [&] { return m_workspace.editingTarget() == entry.document; };
-    const bool dummyAudio = entry.kind == QLatin1String("audio") && entry.path == QLatin1String(application::AudioBox::kDummyName);
+    const bool dummyAudio = entry.kind == QLatin1String("audio") && application::AudioBox::isDummyName(entry.path.toStdString());
     if (!isFile(entry.path) && !dummyAudio) {
         m_log->log(QCoreApplication::translate("HikariSub.Session", "Could not find %1").arg(QDir::toNativeSeparators(entry.path)));
         return false;
@@ -888,9 +855,7 @@ bool Application::retryRestore(int row)
             }
         } else if (entry.kind == QLatin1String("audio")) {
             media.audio = native;
-            if (isTarget() && dummyAudio)
-                m_audio->openDummy();
-            else if (isTarget())
+            if (isTarget())
                 m_audio->openAudio(native);
         } else if (entry.kind == QLatin1String("keyframes")) {
             media.keyframes = native;

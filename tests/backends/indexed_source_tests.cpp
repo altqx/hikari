@@ -201,6 +201,26 @@ TEST_F(Fixture, IndexingReportsProgressAndCanBeCancelled)
     ASSERT_TRUE(open("cfr")) << "the helper still serves the next open";
 }
 
+// AV4: FFMS2 reports every packet (24000 in the long fixture); the helper
+// sends a report only when it moves the progress by a thousandth, so the UI
+// thread gets at most 1001 of them however long the video.
+TEST_F(Fixture, IndexingProgressComesOnceAThousandth)
+{
+    std::vector<std::pair<std::int64_t, std::int64_t>> reports;
+    std::optional<std::expected<SourceTimeline, SourceError>> result;
+    source.open(fixture("long"), [&](std::int64_t done, std::int64_t total) { reports.emplace_back(done, total); },
+                [&](auto r) { result = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }, 60000));
+    ASSERT_TRUE(*result);
+    EXPECT_EQ((*result)->pts.size(), 24000u);
+    EXPECT_GT(reports.size(), 10u);
+    EXPECT_LE(reports.size(), 1001u);
+    for (std::size_t i = 1; i < reports.size(); ++i)
+        EXPECT_NE(progressPermille(reports[i - 1].first, reports[i - 1].second),
+                  progressPermille(reports[i].first, reports[i].second))
+            << "report " << i;
+}
+
 TEST_F(Fixture, ASupersededOpenResolvesStale)
 {
     std::optional<std::expected<SourceTimeline, SourceError>> first, second;

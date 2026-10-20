@@ -350,14 +350,41 @@ std::span<const KnownSource> knownSources()
 
 bool isRetiredOption(std::string_view legacyKey)
 {
+    return !retiredOptionReason(legacyKey).empty();
+}
+
+std::string_view retiredOptionReason(std::string_view legacyKey)
+{
     // User decision 2026-10-05: no main toolbar.
-    return legacyKey == "TOOLBAR_IDS" || legacyKey == "TOOLBAR_ALIGNMENT";
+    if (legacyKey == "TOOLBAR_IDS" || legacyKey == "TOOLBAR_ALIGNMENT")
+        return "retired: the rewrite has no main toolbar (user decision, 2026-10-05)";
+    // WS3 (#217, owner 2026-10-18): no editor switch.
+    if (legacyKey == "EDITOR_ON")
+        return "retired: the editor is always shown, layouts replace the editor switch (owner decision, 2026-10-18)";
+    return {};
 }
 
 bool isRetiredAction(int id)
 {
+    return !retiredActionReason(id).empty();
+}
+
+std::string_view retiredActionReason(int id)
+{
     // User decision 2026-10-05: GLOBAL_VIDEO_INDEXING is retired.
-    return id == hotkeyIdOf("GLOBAL_VIDEO_INDEXING");
+    if (id == hotkeyIdOf("GLOBAL_VIDEO_INDEXING"))
+        return "retired: the rewrite has no FFMS2 indexing command (user decision, 2026-10-05)";
+    // AV3 (owner 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO, as a dummy video brings its own audio.
+    if (id == hotkeyIdOf("GLOBAL_OPEN_DUMMY_AUDIO"))
+        return "retired: a dummy video brings its own silent audio (owner decision, 2026-10-18)";
+    // WS3 (#217, owner 2026-10-18): the View arrangements and the editor switch.
+    for (const auto *symbol : {"GLOBAL_VIEW_ALL", "GLOBAL_VIEW_VIDEO", "GLOBAL_VIEW_AUDIO", "GLOBAL_VIEW_ONLY_VIDEO",
+                               "GLOBAL_VIEW_SUBS"})
+        if (id == hotkeyIdOf(symbol))
+            return "retired: layout presets and saved layouts replace the View arrangements (owner decision, 2026-10-18)";
+    if (id == hotkeyIdOf("GLOBAL_EDITOR"))
+        return "retired: the editor is always shown, layouts replace the editor switch (owner decision, 2026-10-18)";
+    return {};
 }
 
 bool isPathSetting(std::string_view id)
@@ -987,7 +1014,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
             row.id = "setting:" + record->label;
             row.destination = def ? std::string(def->id) : std::string();
             row.disposition = Disposition::Retired;
-            because("retired: the rewrite has no main toolbar (user decision, 2026-10-05)");
+            because(std::string(retiredOptionReason(record->label)));
             add(std::move(row));
             continue;
         }
@@ -1314,7 +1341,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         row.destination = std::string(symbol) + " (" + std::string(hotkeyWindowName(record->window)) + ")";
         if (isRetiredAction(id)) {
             row.disposition = Disposition::Retired;
-            because("retired: the rewrite has no FFMS2 indexing command (user decision, 2026-10-05)");
+            because(std::string(retiredActionReason(id)));
             add(std::move(row));
             continue;
         }
@@ -1362,7 +1389,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
             row.disposition = Disposition::Missing;
             if (isRetiredAction(key.id)) {
                 row.disposition = Disposition::Retired;
-                row.reason = "retired (user decision, 2026-10-05)";
+                row.reason = std::string(retiredActionReason(key.id));
                 add(std::move(row));
                 continue;
             }

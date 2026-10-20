@@ -125,6 +125,11 @@ std::vector<std::byte> dummyVideoFrame(const DummyVideo &video);
 // at n * (1000 / fps) ms, truncated.
 std::vector<int> dummyVideoTimecodes(const DummyVideo &video);
 
+// AV3 (#240): the frames at `sampleRate` of a dummy video's own silent audio,
+// as long as the video: its frames times the frame duration of its
+// timecodes, rounded.
+std::int64_t dummyVideoAudioFrames(const DummyVideo &video, int sampleRate);
+
 // An IndexedSourcePort that serves dummy videos and passes every other path
 // to the media helper's port (legacy's RendererFFMS2 made a ProviderDummy for
 // a "?" path, ProviderFFMS2 otherwise). Its results arrive at once; it has no

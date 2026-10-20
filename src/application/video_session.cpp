@@ -69,6 +69,10 @@ void VideoSession::open(const std::string &path, IndexRequest index)
     auto progress = [this, alive](std::int64_t done, std::int64_t total) {
         if (alive.expired() || m_state != State::Opening)
             return;
+        // AV4: one report per packet came to a notify each, and the UI
+        // thread spent the indexing redrawing
+        if (m_progress && progressPermille(m_progress->first, m_progress->second) == progressPermille(done, total))
+            return;
         m_progress = std::pair(done, total);
         notify();
     };

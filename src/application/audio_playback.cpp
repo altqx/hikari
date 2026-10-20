@@ -137,4 +137,22 @@ AudioPlayback::Redraw AudioPlayback::tick(AudioView &view, int scrollbarThicknes
     return Redraw::Cursor;
 }
 
+FollowedCursor followCursor(AudioView &view, std::int64_t sample, int scrollbarThickness)
+{
+    FollowedCursor out;
+    if (!view.hasSource() || view.samples() <= 0)
+        return out;
+    constexpr int edge = AudioPlayback::kEdge;
+    const float at = view.xAtSample(sample);
+    if (at < edge || at > view.width() - edge) {
+        const std::int64_t before = view.position();
+        view.updatePosition(std::max<std::int64_t>(0, sample - std::int64_t{edge} * view.samples()), true,
+                            scrollbarThickness);
+        out.moved = view.position() != before;
+    }
+    if (const float x = view.xAtSample(sample); x >= 0.f && x < static_cast<float>(view.width()))
+        out.x = x;
+    return out;
+}
+
 } // namespace hikari::application

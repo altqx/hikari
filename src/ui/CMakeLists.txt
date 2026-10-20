@@ -16,7 +16,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     tag_list_controller.cpp tag_list_controller.h
     all_tags_editor.cpp all_tags_editor.h time_field_mask.cpp time_field_mask.h
     script_resolution_prompt.cpp script_resolution_prompt.h
-    number_field_mouse.cpp number_field_mouse.h)
+    number_field_mouse.cpp number_field_mouse.h key_router.cpp key_router.h)
 target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
@@ -88,6 +88,10 @@ qt_target_qml_sources(hikari_ui QML_FILES AllTagsEditionDialog.qml)
 # video dialog.
 qt_target_qml_sources(hikari_ui QML_FILES RecentFilesMenu.qml VideoStreamsMenu.qml VideoChaptersMenu.qml
     VideoIndexingProgress.qml VideoFileQuestion.qml DummyVideoDialog.qml)
+# WS3: the layout switcher, its menu (also View > Layout) and the Save layout
+# and Manage layouts dialogs.
+qt_target_qml_sources(hikari_ui QML_FILES LayoutSwitcher.qml LayoutMenu.qml SaveLayoutDialog.qml
+    ManageLayoutsDialog.qml)
 # P10: the status bar (legacy HikariStatusBar's nine fields) and the help
 # text the menus and tool buttons show in its first field.
 target_sources(hikari_ui PRIVATE status_bar_controller.cpp status_bar_controller.h)
@@ -131,6 +135,8 @@ qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog
     VideoVolumeSlider.qml)
 # V6: the video toolbar's seek-after and play-after lists.
 qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)
+# AV1: the audio panel's output device menu.
+qt_target_qml_sources(hikari_ui QML_FILES AudioOutputMenu.qml)
 # E5: the Line editor's Translator mode check box and its Not confirmed and
 # Moving tags buttons.
 qt_target_qml_sources(hikari_ui QML_FILES TranslatorModeCheck.qml TranslationToggles.qml)

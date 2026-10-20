@@ -44,7 +44,9 @@ Dialog {
     property var tagButtonList: []
     signal reloaded()
 
-    function openDialog() {
+    // `page`: the page list's row to show (AV1's "Audio settings…" asks for
+    // Audio); legacy opened on the first.
+    function openDialog(page) {
         const r = app.openSettingsDialog()
         languages = r.languages
         dictionaries = r.dictionaries
@@ -57,7 +59,7 @@ Dialog {
         copyTagButtons()
         reloaded()
         hotkeyFilter.currentIndex = 0 // a new dialog's filter choice
-        pageList.currentIndex = 0 // legacy ChangeSelection(0)
+        pageList.currentIndex = page ?? 0 // legacy ChangeSelection(0)
         open()
         warnings = r.warnings
         showWarning()
@@ -756,7 +758,7 @@ Dialog {
                     SettingCheck { setting: "audio.drawVideoPosition"; text: qsTr("Show video position") }
                     SettingCheck { setting: "audio.drawKeyframes"; text: qsTr("Show keyframes") }
                     SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
-                    SettingCheck { setting: "audio.autoFocus"; text: qsTr("Activate the audio when hover") }
+                    SettingCheck { setting: "audio.autoFocus"; text: qsTr("Hotkeys follow the panel under the pointer") } // KB1
                     SettingCheck { setting: "audio.snapToKeyframes"; text: qsTr("Snap to keyframe") }
                     SettingCheck { setting: "audio.snapToOtherLines"; text: qsTr("Snap to other lines") }
                     SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Do not play audio after changing the line") }

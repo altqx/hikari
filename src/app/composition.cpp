@@ -57,6 +57,14 @@ void openStartVideo(QObject *mainWindow, const QString &path)
     QMetaObject::invokeMethod(mainWindow, "openSingleVideo", Q_ARG(QVariant, path));
 }
 
+void preferPulseAudioBackend()
+{
+#ifdef Q_OS_LINUX
+    if (!qEnvironmentVariableIsSet("QT_AUDIO_BACKEND"))
+        qputenv("QT_AUDIO_BACKEND", "pulseaudio");
+#endif
+}
+
 namespace {
 
 #ifdef HIKARI_UPDATE_TEST_FEED
@@ -132,6 +140,7 @@ void startForHandedOn(const UpdateInstaller::ExitAction &exitAction, bool update
 int runWindow(int argc, char **argv, StartupMode mode, const application::StartupArguments &startup,
               UpdateInstaller::ExitAction &exitAction)
 {
+    preferPulseAudioBackend(); // before Qt Multimedia picks its audio backend
     // WS5: the launcher's Wayland activation token, before Qt takes it.
     const QString activationToken = qEnvironmentVariable("XDG_ACTIVATION_TOKEN");
     QGuiApplication app(argc, argv);

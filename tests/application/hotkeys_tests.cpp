@@ -122,6 +122,18 @@ TEST(Hotkeys, NamesTableIsHotkeysNaming)
     // never listed; VIDEO_DELETE_FILE is "Unload video".
     EXPECT_EQ(legacy.at(ids().at("GLOBAL_VIDEO_INDEXING")), "Open video with FFMS2");
     legacy.erase(ids().at("GLOBAL_VIDEO_INDEXING"));
+    // WS3-view-arrangements-retired (2026-10-18): the View arrangements and
+    // the editor switch are retired and never listed.
+    for (const auto &[symbol, name] : std::initializer_list<std::pair<const char *, const char *>>{
+             {"GLOBAL_VIEW_ALL", "View all"},
+             {"GLOBAL_VIEW_AUDIO", "View audio and subtitles"},
+             {"GLOBAL_VIEW_SUBS", "View only subtitles"},
+             {"GLOBAL_VIEW_VIDEO", "View video and subtitles"},
+             {"GLOBAL_VIEW_ONLY_VIDEO", "View only video"},
+             {"GLOBAL_EDITOR", "Enable / Disable editor"}}) {
+        EXPECT_EQ(legacy.at(ids().at(symbol)), name);
+        legacy.erase(ids().at(symbol));
+    }
     EXPECT_EQ(legacy.at(ids().at("VIDEO_DELETE_FILE")), "Remove video");
     legacy[ids().at("VIDEO_DELETE_FILE")] = "Unload video";
     // The rewrite's own commands are named too (LE3).
@@ -143,11 +155,14 @@ TEST(Hotkeys, DefaultsAreLoadDefault)
     for (std::sregex_iterator it(src.begin(), src.end(), assign), last; it != last; ++it)
         legacy[HotkeyId{ids().at((*it)[1]), windowOf((*it)[2])}] = Hotkey{(*it)[3], (*it)[4]};
     EXPECT_EQ(legacy.size(), 86u);
+    // WS3-view-arrangements-retired: the editor switch's Ctrl-E is no default.
+    EXPECT_EQ(legacy.at(HotkeyId{ids().at("GLOBAL_EDITOR"), GlobalHotkey}).accel, "Ctrl-E");
+    legacy.erase(HotkeyId{ids().at("GLOBAL_EDITOR"), GlobalHotkey});
     EXPECT_EQ(defaultHotkeys(), legacy);
     HotkeyMap main, audio;
     loadDefaultHotkeys(main, false);
     loadDefaultHotkeys(audio, true);
-    EXPECT_EQ(main.size(), 63u);
+    EXPECT_EQ(main.size(), 62u);
     EXPECT_EQ(audio.size(), 23u);
     for (const auto &[k, h] : audio)
         EXPECT_EQ(k.type, AudioHotkey);
@@ -193,7 +208,7 @@ TEST(Hotkeys, StoredLinesAreSaveHkeys)
     map[HotkeyId{ids().at("AUDIO_PLAY"), GlobalHotkey}] = Hotkey{"", "Ctrl-P"}; // main file: not an Audio binding
     const auto main = hotkeyLines(map, false);
     const auto audio = hotkeyLines(map, true);
-    EXPECT_EQ(main.size(), 63u + 2u - 1u + 1u);
+    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u); // WS3: the defaults bind no Ctrl-E
     EXPECT_EQ(audio.size(), 23u);
     EXPECT_EQ(main.front(), "AUDIO_PLAY G=Ctrl-P"); // map order: window, then id
     EXPECT_NE(std::ranges::find(main, "GLOBAL_SAVE_SUBS G=Ctrl-S"), main.end());
@@ -324,8 +339,9 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     auto live = defaultHotkeys();
     list.build(live);
     // The names table from the highest id down; no GLOBAL_QUIT.
-    // V3: no "Open video with FFMS2" row; LE3's command has its own.
-    ASSERT_EQ(list.rowCount(), 226u);
+    // V3: no "Open video with FFMS2" row; WS3: none for the five View
+    // arrangements and the editor switch; LE3's command has its own.
+    ASSERT_EQ(list.rowCount(), 220u);
     EXPECT_EQ(list.row(0).text, "Global Close current tab");
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
@@ -349,7 +365,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 228u); // V3: 226 named rows and these two
+    ASSERT_EQ(more.rowCount(), 222u); // 220 named rows and these two
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -365,7 +381,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 225u); // V3: 226 named rows less Commit alt
+    EXPECT_EQ(cut.rowCount(), 219u); // 220 named rows less Commit alt
     EXPECT_EQ(cut.find("Audio Commit alt"), -1);
     // A binding in a window legacy cannot name (-1) is never listed, and so
     // the list never ends early.
@@ -373,7 +389,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 226u);
+    EXPECT_EQ(whole.rowCount(), 220u);
 }
 
 TEST(Hotkeys, FilterModesAndSelection)
@@ -386,7 +402,7 @@ TEST(Hotkeys, FilterModesAndSelection)
         list.filter(mode);
         return list.shown().size();
     };
-    EXPECT_EQ(count(1), 85u); // set shortcuts (GLOBAL_QUIT is not listed)
+    EXPECT_EQ(count(1), 84u); // set shortcuts (GLOBAL_QUIT is not listed; WS3: no Ctrl-E)
     EXPECT_EQ(count(3), std::size_t(std::ranges::count_if(hotkeyNames(), [](const auto &n) { return hotkeyType(n.first) == GridHotkey; })));
     EXPECT_EQ(count(6), 23u);
     list.filter(5);
@@ -397,12 +413,12 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     const int first = list.selection();
     list.remove(first, live);
-    EXPECT_EQ(list.shown().size(), 85u);
+    EXPECT_EQ(list.shown().size(), 84u);
     EXPECT_EQ(list.row(first).accel, "");
     list.filter(1);
-    EXPECT_EQ(list.shown().size(), 84u);
+    EXPECT_EQ(list.shown().size(), 83u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 226u);
+    EXPECT_EQ(list.shown().size(), 220u);
 }
 
 TEST(Hotkeys, MapSetsTheBindingAndCommitWritesTheCopy)
@@ -538,8 +554,8 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S"); // the Global row keeps its keys
-    ASSERT_EQ(list.rowCount(), 227u);
-    const auto &added = list.row(226);
+    ASSERT_EQ(list.rowCount(), 221u);
+    const auto &added = list.row(220);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
@@ -547,9 +563,9 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     // Again: that row changes and is selected.
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 227u);
-    EXPECT_EQ(list.row(226).accel, "F6");
-    EXPECT_EQ(list.selection(), 226);
+    EXPECT_EQ(list.rowCount(), 221u);
+    EXPECT_EQ(list.row(220).accel, "F6");
+    EXPECT_EQ(list.selection(), 220);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -641,7 +657,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 226u); // every row shown, the filter choice as it was
+    EXPECT_EQ(third.shown().size(), 220u); // every row shown, the filter choice as it was
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());
@@ -848,4 +864,68 @@ TEST(Hotkeys, RetiredIndexingBindingsAreDropped)
     // nothing writes it back
     for (const auto &line : hotkeyLines(map, false))
         EXPECT_EQ(line.find("GLOBAL_VIDEO_INDEXING"), std::string::npos);
+}
+
+// WS3-view-arrangements-retired: stored bindings of the View arrangements
+// (GLOBAL_VIEW_ALL..GLOBAL_VIEW_SUBS) and the editor switch (GLOBAL_EDITOR),
+// by symbol or by number, are recognised and dropped for the notice; the
+// commands next to them stay.
+TEST(Hotkeys, RetiredViewAndEditorBindingsAreDropped)
+{
+    HotkeyMap map;
+    readHotkeyLines(map, {"GLOBAL_VIEW_ALL G=Ctrl-1", "GLOBAL_VIEW_VIDEO G=Ctrl-2", "GLOBAL_VIEW_AUDIO G=Ctrl-3",
+                          "5034 G=Ctrl-4", "GLOBAL_VIEW_SUBS G=Ctrl-5", "GLOBAL_EDITOR G=Ctrl-E",
+                          "GLOBAL_SAVE_SUBS G=Ctrl-S"});
+    std::vector<int> retired;
+    for (const char *symbol : {"GLOBAL_VIEW_ALL", "GLOBAL_VIEW_AUDIO", "GLOBAL_VIEW_VIDEO", "GLOBAL_VIEW_ONLY_VIDEO",
+                               "GLOBAL_VIEW_SUBS", "GLOBAL_EDITOR"}) {
+        const int id = ids().at(symbol);
+        EXPECT_TRUE(isRetiredHotkey(id)) << symbol;
+        EXPECT_EQ(hotkeyName(id), "") << symbol;
+        EXPECT_EQ(defaultHotkey(HotkeyId{id, GlobalHotkey}), "") << symbol;
+        retired.push_back(id);
+    }
+    EXPECT_EQ(ids().at("GLOBAL_VIEW_ONLY_VIDEO"), 5034);
+    // The ids beside them stay.
+    EXPECT_FALSE(isRetiredHotkey(ids().at("GLOBAL_SAVE_SUBS")));
+    EXPECT_FALSE(isRetiredHotkey(5030));
+    EXPECT_FALSE(isRetiredHotkey(5036));
+    EXPECT_FALSE(isRetiredHotkey(5108));
+    EXPECT_FALSE(isRetiredHotkey(5110));
+    const auto dropped = dropRetiredHotkeys(map);
+    ASSERT_EQ(dropped.size(), 6u);
+    for (const auto &[key, hotkey] : dropped)
+        EXPECT_NE(std::find(retired.begin(), retired.end(), key.id), retired.end()) << key.id;
+    EXPECT_TRUE(map.contains(HotkeyId{ids().at("GLOBAL_SAVE_SUBS"), GlobalHotkey}));
+    for (const int id : retired)
+        EXPECT_FALSE(map.contains(HotkeyId{id, GlobalHotkey})) << id;
+    for (const auto &line : hotkeyLines(map, false)) {
+        EXPECT_EQ(line.find("GLOBAL_VIEW_"), std::string::npos) << line;
+        EXPECT_NE(line.rfind("GLOBAL_EDITOR ", 0), 0u) << line;
+    }
+}
+
+// AV3-dummy-video-audio (owner 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO ("Open
+// blank 2h30m audio") is retired the same way: a dummy video brings its own
+// silent audio. A stored binding is recognised and dropped; it never had a name.
+TEST(Hotkeys, RetiredBlankAudioBindingsAreDropped)
+{
+    HotkeyMap map;
+    readHotkeyLines(map, {"GLOBAL_OPEN_DUMMY_AUDIO G=Ctrl-Alt-B", "GLOBAL_SAVE_SUBS G=Ctrl-S"});
+    const int blank = ids().at("GLOBAL_OPEN_DUMMY_AUDIO");
+    EXPECT_TRUE(map.contains(HotkeyId{blank, GlobalHotkey}));
+    EXPECT_TRUE(isRetiredHotkey(blank));
+    EXPECT_FALSE(isRetiredHotkey(ids().at("GLOBAL_OPEN_DUMMY_VIDEO")));
+    const auto dropped = dropRetiredHotkeys(map);
+    ASSERT_EQ(dropped.size(), 1u);
+    EXPECT_EQ(dropped[0].first, (HotkeyId{blank, GlobalHotkey}));
+    EXPECT_EQ(dropped[0].second.accel, "Ctrl-Alt-B");
+    EXPECT_EQ(map.size(), 1u);
+    EXPECT_EQ(hotkeyName(blank), "");
+    for (const auto &line : hotkeyLines(map, false))
+        EXPECT_EQ(line.find("GLOBAL_OPEN_DUMMY_AUDIO"), std::string::npos);
+    // no default binds it
+    HotkeyMap defaults;
+    loadDefaultHotkeys(defaults, false);
+    EXPECT_FALSE(defaults.contains(HotkeyId{blank, GlobalHotkey}));
 }

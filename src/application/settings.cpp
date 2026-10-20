@@ -101,7 +101,6 @@ const std::vector<SettingDefinition> &definitions()
         {"video.dontAskForBadResolution", "DONT_ASK_FOR_BAD_RESOLUTION", Bool, Profile, Mapped, false, false},
         {"editor.suggestionsOnDoubleClick", "EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK", Bool, Profile, Mapped, false, false},
         {"editor.timesToFramesSwitch", "EDITBOX_TIMES_TO_FRAMES_SWITCH", Bool, Profile, Mapped, false, false},
-        {"workspace.editorOn", "EDITOR_ON", Bool, Workspace, Mapped, false, true},
         {"findInSubs.recentFilters", "FIND_IN_SUBS_FILTERS_RECENT", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"findInSubs.recentPaths", "FIND_IN_SUBS_PATHS_RECENT", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"find.styles", "FIND_REPLACE_STYLES", String, Profile, Mapped, false, std::string()},
@@ -263,6 +262,9 @@ const std::vector<SettingDefinition> &definitions()
         // not connected and to find it in PortAudio's list.
         {"audio.outputDevice", "", String, Profile, Mapped, false, std::string()},
         {"audio.outputDeviceName", "", String, Profile, Mapped, false, std::string()},
+        // AV2 (#239): the audio panel's sync toggle: the audio cursor follows
+        // the playing video and the video the playing audio box. On by default.
+        {"audio.syncVideo", "", Bool, Profile, Mapped, false, true},
         // W1: the player that plays video (Windows): 0 the built-in general
         // player, 1 the optional DirectShow adapter (legacy's player when
         // indexing was off). Chosen here only, never as a fallback; other
@@ -345,13 +347,14 @@ std::optional<std::uint32_t> parseSettingColour(std::string_view text)
 
 std::span<const std::string_view> retiredSettings()
 {
-    // A2's spectrum colours and K1's icon colours, withdrawn by K2.
+    // A2's spectrum colours and K1's icon colours, withdrawn by K2; the
+    // editor switch (legacy EDITOR_ON), retired by WS3.
     static const std::string_view ids[] = {
         "audio.spectrumBackground", "audio.spectrumEcho", "audio.spectrumInner",
         "icons.light.normal", "icons.light.accent", "icons.light.active", "icons.light.disabled",
         "icons.dark.normal", "icons.dark.accent", "icons.dark.active", "icons.dark.disabled",
         "icons.highContrast.normal", "icons.highContrast.accent", "icons.highContrast.active",
-        "icons.highContrast.disabled"};
+        "icons.highContrast.disabled", "workspace.editorOn"};
     return ids;
 }
 

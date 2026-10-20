@@ -378,8 +378,9 @@ void AudioDisplayItem::geometryChange(const QRectF &newGeometry, const QRectF &o
 }
 
 // Legacy OnMouseEvent's cursor drawing: over the waveform the cursor follows
-// the mouse (and the display takes focus, AUDIO_AUTO_FOCUS); over the ruler
-// it is not drawn.
+// the mouse; over the ruler it is not drawn. KB1: the display no longer takes
+// the focus under the pointer (AUDIO_AUTO_FOCUS); its hotkeys follow the
+// pointer instead (KeyRouter).
 void AudioDisplayItem::hoverMoveEvent(QHoverEvent *event)
 {
     if (!m_controller)
@@ -387,8 +388,6 @@ void AudioDisplayItem::hoverMoveEvent(QHoverEvent *event)
     const QPointF p = event->position();
     const int h = m_controller->view().height();
     const bool over = p.x() >= 0 && p.y() >= 0 && p.x() < width() && p.y() < h;
-    if (over && !hasActiveFocus())
-        forceActiveFocus(Qt::MouseFocusReason);
     const auto result = timingEvent(event, static_cast<int>(application::AudioMouse::Type::Move));
     // A5: in karaoke mode legacy can return before the cursor is drawn, and
     // draws none over the syllables' letters
@@ -521,7 +520,7 @@ QSGNode *AudioDisplayItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
     };
     auto cursorShapes = [this] {
         return m_controller->cursor() && m_controller->ready()
-                   ? application::audioCursor(m_controller->view(), *m_controller->cursor(), m_controller->playing(),
+                   ? application::audioCursor(m_controller->view(), *m_controller->cursor(), m_controller->cursorIsPlayback(),
                                                          m_controller->options(), m_controller->karaoke())
                    : std::vector<AudioShape>{};
     };

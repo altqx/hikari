@@ -572,9 +572,9 @@ SUBMENU = {"key": "right", "checked": False}
 
 def menu_to(name, opener=None):
     """Open a menu (the View menu by default) and press Down until the
-    highlight is on the item NAME. D2 put the five arrangements first in the
-    View menu, enabled by what is open, and Down skips disabled items, so the
-    Downs are counted among the enabled popup menu items UI Automation lists."""
+    highlight is on the item NAME. Down skips disabled items (items enabled
+    by what is open, Manage layouts… with nothing saved), so the Downs are
+    counted among the enabled popup menu items UI Automation lists."""
     if opener is None:
         if not open_view():
             return False
@@ -1336,7 +1336,7 @@ def step_test_executables():
     # offscreen platform (pointer); the window follows the pointer itself only
     # where the platform declines a system move, and Windows makes none (its
     # whole header is the engine's drag, floating-free-part-docks); the X11
-    # system move is the Linux gate's. D2's
+    # system move is the Linux gate's. WS3's
     # screenshots run only with HIKARI_SURFACE_SHOT_DIR.
     known = ("the compositor places windows", "a synthetic drag between windows needs the offscreen platform",
              "the window follows a declined system move only where the platform declines it",
@@ -1849,14 +1849,12 @@ def step_header():
             f"docked={docked}; focus {st['focusPath']}", ev2 + ev3)
 
 
-# ---------------------------------------------------------------- D2
+# ---------------------------------------------------------------- WS3 (#217)
 CORE = ("Video", "Audio", "Line editor", "Grid")
-# Legacy's View menu (HikariSubFrame.cpp:308-312) and the core panels each
-# arrangement shows (OnMenuSelected, HikariSubFrame.cpp:849-892), in the
-# order the gate applies them (All last: the round trip). As gate.py.
-ARRANGEMENTS = [("Only subtitles", {"Line editor", "Grid"}), ("Only video", {"Video"}),
-                ("Video and subs", {"Video", "Line editor", "Grid"}), ("Audio and subs", {"Audio", "Line editor", "Grid"}),
-                ("All", set(CORE))]
+# View > Layout's presets and the items WS3 retired. As gate.py.
+PRESETS = ("Editing", "Timing", "Translation", "Typesetting")
+RETIRED_VIEW_ITEMS = ("All", "Video and subs", "Audio and subs", "Only video", "Only subtitles")
+RETIRED_EDITOR_ITEM = "Enable / Disable editor"
 
 
 def core_panels(st):
@@ -1864,99 +1862,166 @@ def core_panels(st):
     return {p["id"]: (p["x"], p["y"], p["w"], p["h"]) for p in st["panels"] if p["id"] in CORE and p["frame"] == MAIN}
 
 
-def same_places(a, b, slack=2):
-    return set(a) == set(b) and all(all(abs(x - y) <= slack for x, y in zip(a[k], b[k])) for k in a)
+def popup_items(st):
+    """The menu items showing in popup menus (not the menu bar's)."""
+    els = st.get("elements") or []
+    return [e for e in els if e["t"] == "MenuItem" and not e["off"]
+            and not any(a["t"] in ("MenuBar", "TitleBar") for a in ancestors(els, e))]
 
 
-def type_draft():
-    """A draft in the Line editor (" draft" typed at the end of the Line
-    text), then F6 to the Grid, where the menus open from."""
-    set_focus("Line text")
-    keys("end")
-    type_text(" draft")
-    time.sleep(0.8)
-    keys("f6", 0.5)
-    return uia()["texts"].get("Line text")
+def layout_menu(st):
+    """The View > Layout submenu's items, when it shows: the items beside its presets."""
+    items = popup_items(st)
+    parent = next((e["p"] for e in items if e["n"] in PRESETS), None)
+    return [e for e in items if parent is not None and e["p"] == parent]
 
 
-def step_views():
-    """D2: View > All, Video and subs, Audio and subs, Only video and Only
-    subtitles from the keyboard over the docked Workspace: the panels each
-    shows, the focus on a shown panel, the draft kept, and All back to the
-    places the panels had."""
-    if not LAYOUT.get("ep1_ass"):
-        verdict("view-arrangements", "error", "no cfr.mkv media fixture in the VM's build tree (run the test task once)")
-        return
-    fresh(LAYOUT["ep1_ass"])
-    dismiss_notices()
-    uia(do=[{"action": "invoke", "name": "Load associated", "type": "Button", "all": True}])
-    time.sleep(5)
-    focus_main()
-    # Blank audio after the video (a video without audio closes the box).
-    blank = menu_to("Open blank 2h30m audio", opener="alt+u")
-    keys("return", 2.5)
-    draft = type_draft()
-    ev, st = snap("views-0-editing")
-    evidence = list(ev)
-    base = core_panels(st)
-    rows, shown_ok, focus_ok, draft_ok = [], True, True, True
-    for i, (label, want) in enumerate(ARRANGEMENTS, 1):
-        reached = view_to(label)
-        keys("return", 1.5)
-        st = wait_for(lambda s: set(core_panels(s)) == want, timeout=5)
-        ev, st = snap(f"views-{i}-" + label.lower().replace(" ", "-"))
-        evidence += ev
-        shown = set(core_panels(st))
-        focus = panel_of(st["focusPath"])
-        text = st["texts"].get("Line text")
-        shown_ok &= reached and shown == want
-        focus_ok &= focus in want
-        if "Line editor" in want:
-            draft_ok &= text == draft
-        rows.append(f"{label}: reached={reached} shown={sorted(shown)} focus={focus} Line text={text!r}")
-    back = same_places(core_panels(st), base)
-    (EVID / "views.txt").write_text(
-        f"blank audio from the keyboard: {blank}\nediting: {base}\nafter All: {core_panels(st)}\n" + "\n".join(rows))
-    evidence.append("views.txt")
-    detail = "; ".join(rows)
-    verdict("view-arrangements", "observed" if shown_ok and base and set(base) == set(CORE) else "failed",
-            f"from the keyboard, the core panels each arrangement shows: {detail}", evidence)
-    verdict("view-focus-on-shown-panel", "observed" if focus_ok else "failed",
-            f"the focus after each arrangement is on a shown panel: {detail}", evidence)
-    verdict("view-draft-kept", "observed" if draft_ok and draft and draft.endswith(" draft") else "failed",
-            f"Line text with the draft {draft!r}: {detail}", evidence)
-    verdict("view-all-round-trip", "observed" if back else "failed",
-            f"View > All returns each panel to its place (2 px): before {base}, after {core_panels(st)}", evidence)
+def layout_to(name):
+    """View > Layout > NAME from the keyboard: the submenu key opens it with
+    its first item highlighted; the Downs are counted among its enabled
+    items (Down skips Manage layouts… while nothing is saved)."""
+    if not menu_to("Layout"):
+        return False
+    keys(SUBMENU["key"], 0.6)
+    items = layout_menu(uia())
+    enabled = [e["n"] for e in items if e["en"]]
+    if name not in enabled:
+        log(f"layout_to: {name!r} is not an enabled item of {[(e['n'], e['en']) for e in items]}")
+        return False
+    if enabled.index(name):
+        keys(*(["down"] * enabled.index(name)), delay=0.3)
+    return True
 
 
-def step_editor():
-    """D2: GLOBAL_EDITOR (Ctrl+E, SendInput): the player layout (only the
-    Video panel, with the focus), and back to the arrangement it held, the
-    focus on the Grid and the draft kept."""
+def layout_items():
+    """View > Layout's items, {name: enabled}, then the menus closed."""
+    items = {}
+    if menu_to("Layout"):
+        keys(SUBMENU["key"], 0.6)
+        items = {e["n"]: e["en"] for e in layout_menu(uia())}
+    keys("escape", "escape", "escape", 0.4)
+    return items
+
+
+def menu_names(opener):
+    """Every item name of the popup menus a key opens, then the menus closed."""
+    if opener == "view":
+        open_view()
+    else:
+        park_pointer()
+        keys(opener, 0.6)
+    names = [e["n"] for e in popup_items(uia())]
+    keys("escape", "escape", 0.4)
+    return names
+
+
+def switcher_label(st=None):
+    """The layout switcher's accessible name ("Layout: NAME") in the status bar."""
+    st = st or uia()
+    return next((e["n"] for e in st.get("elements") or [] if not e["off"] and (e["n"] or "").startswith("Layout: ")),
+                None)
+
+
+def step_layouts():
+    """WS3 (#217): as gate.py's step_layouts, through SendInput and UI
+    Automation: the View arrangements and the editor switch gone (menus and
+    Ctrl+E); View > Layout > Save layout as…, a preset, the saved layout
+    back; the saved layout after a restart; Manage layouts… renames (F2) and
+    deletes (Delete)."""
     fresh(LAYOUT["episode"])
     dismiss_notices()
-    draft = type_draft()
-    ev0, st = snap("editor-0-on")
+    focus_main()
+    ev, st = snap("layouts-0-editing")
+    evidence = list(ev)
     base = core_panels(st)
-    keys("ctrl+e", 1.5)
-    st = wait_for(lambda s: set(core_panels(s)) == {"Video"}, timeout=5)
-    ev1, st = snap("editor-1-off")
-    off = set(core_panels(st))
-    focus_off = panel_of(st["focusPath"])
-    keys("ctrl+e", 1.5)
-    st = wait_for(lambda s: set(core_panels(s)) == set(base), timeout=5)
-    time.sleep(1)
-    ev2, st = snap("editor-2-on-again")
-    on = core_panels(st)
-    focus_on = panel_of(st["focusPath"])
-    text = st["texts"].get("Line text")
-    evidence = ev0 + ev1 + ev2
-    verdict("editor-player-layout", "observed" if off == {"Video"} and focus_off == "Video" else "failed",
-            f"Ctrl+E: panels shown {sorted(off)}, focus on {focus_off}", evidence)
-    verdict("editor-round-trip", "observed" if base and same_places(on, base) else "failed",
-            f"Ctrl+E again: before {base}, after {on}", evidence)
-    verdict("editor-focus-and-draft", "observed" if focus_on == "Grid" and draft and text == draft else "failed",
-            f"focus on {focus_on}; Line text {draft!r} -> {text!r}", evidence)
+    view = menu_names("view")
+    subtitles = menu_names("alt+s")
+    first = layout_items()
+    switch0 = switcher_label()
+    focus_main()
+    keys("ctrl+e", 1.5)  # legacy's editor switch: bound to nothing now
+    after_e = core_panels(uia())
+    gone = not set(RETIRED_VIEW_ITEMS) & set(view) and RETIRED_EDITOR_ITEM not in subtitles
+    listed = all(first.get(p) for p in PRESETS) and first.get("Save layout as…") and first.get("Manage layouts…") is False
+    verdict("layouts-menus", "observed" if gone and listed and "Layout" in view and switch0 == "Layout: Editing"
+            else "failed",
+            f"View: {view}; Subtitles has the editor switch: {RETIRED_EDITOR_ITEM in subtitles}; View > Layout "
+            f"(enabled): {first}; switcher: {switch0!r}", evidence)
+    verdict("layouts-editor-key-retired", "observed" if base and set(after_e) == set(base) else "failed",
+            f"Ctrl+E: panels before {sorted(base)}, after {sorted(after_e)}", evidence)
+
+    # Audio hidden, saved as "no audio"; Timing; the saved layout back. The
+    # names are lowercase, as on Linux (a typed capital lost its Shift there).
+    panel_menu("Audio", "Hide")
+    st = wait_for(lambda s: "Audio" not in core_panels(s), timeout=5)
+    saved = set(core_panels(st))
+    reached = layout_to("Save layout as…")
+    keys("return", 1.2)
+    type_text("no audio")
+    time.sleep(0.5)
+    keys("return", 1.5)
+    switch1 = switcher_label()
+    ev, st = snap("layouts-1-saved")
+    evidence += ev
+    reached &= layout_to("Timing")
+    keys("return", 1.5)
+    st = wait_for(lambda s: set(core_panels(s)) != saved, timeout=5)
+    timing, switch2 = set(core_panels(st)), switcher_label(st)
+    ev, st = snap("layouts-2-timing")
+    evidence += ev
+    reached &= layout_to("no audio")
+    keys("return", 1.5)
+    st = wait_for(lambda s: set(core_panels(s)) == saved, timeout=5)
+    back, switch3 = set(core_panels(st)), switcher_label(st)
+    ev, st = snap("layouts-3-saved-applied")
+    evidence += ev
+    rows = [f"saved {sorted(saved)} as 'no audio' (switcher {switch1!r})",
+            f"Timing: {sorted(timing)} ({switch2!r})", f"no audio again: {sorted(back)} ({switch3!r})"]
+    verdict("layouts-save-apply", "observed" if reached and "Audio" not in saved and timing != saved
+            and back == saved and switch1 == switch3 == "Layout: no audio" and switch2 == "Layout: Timing"
+            else "failed", "from the keyboard: " + "; ".join(rows), evidence)
+
+    # A restart: the saved layout is still listed (layouts.json).
+    focus_main_compositor()
+    keys("alt+f4")
+    time.sleep(2.5)
+    status = app_status()
+    if status["alive"]:
+        time.sleep(6)
+        app_kill()
+        status = app_status()
+    cfg = "\n".join(status["layout_files"])
+    app_start()
+    dismiss_notices()
+    focus_main()
+    restarted = layout_items()
+    ev, _ = snap("layouts-4-restarted", extra="# layout files\n" + cfg)
+    evidence += ev
+    verdict("layouts-persist", "observed" if restarted.get("no audio") and "layouts.json" in cfg else "failed",
+            f"after a restart View > Layout: {restarted}; files: {cfg.strip()!r}", evidence)
+
+    reached = layout_to("Manage layouts…")
+    keys("return", 1.2)
+    ev, _ = snap("layouts-5-manage")
+    evidence += ev
+    keys("f2", 0.4, "ctrl+a", 0.3)
+    type_text("quiet")
+    time.sleep(0.5)
+    keys("return", 1.0, "escape", 0.8)
+    renamed, switch4 = layout_items(), switcher_label()
+    reached &= layout_to("Manage layouts…")
+    keys("return", 1.2, "delete", 1.2)
+    deleted, switch5 = layout_items(), switcher_label()
+    ev, _ = snap("layouts-6-deleted")
+    evidence += ev
+    (EVID / "layouts.txt").write_text(
+        f"View: {view}\nSubtitles: {subtitles}\nfirst: {first}\n" + "\n".join(rows)
+        + f"\nrestarted: {restarted}\nrenamed: {renamed} ({switch4!r})\ndeleted: {deleted} ({switch5!r})\n")
+    evidence.append("layouts.txt")
+    verdict("layouts-rename-delete", "observed" if reached and renamed.get("quiet") and "no audio" not in renamed
+            and switch4 == "Layout: quiet" and "quiet" not in deleted and deleted.get("Manage layouts…") is False
+            and switch5 == "Layout: Editing" else "failed",
+            f"renamed: {renamed} ({switch4!r}); deleted: {deleted} ({switch5!r})", evidence)
 
 
 # ---------------------------------------------------------------- WS1 (#215)
@@ -2500,7 +2565,7 @@ STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "outputs": step_outputs, "nvda": step_nvda, "menutext": step_menu_from_text,
          "tests": step_test_executables, "a11y": step_a11y, "header": step_header, "dpi": step_dpi, "dark": step_dark,
-         "views": step_views, "editor": step_editor, "tabs": step_tabs, "videofs": step_video_fullscreen,
+         "layouts": step_layouts, "tabs": step_tabs, "videofs": step_video_fullscreen,
          "snap": step_snap, "tags": step_tags, "statusbar": step_statusbar, "dialogs": step_dialogs,
          "reference": step_reference}
 

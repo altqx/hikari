@@ -8,6 +8,9 @@
 //          vfr       48 frames with irregular timestamps (1 ms timebase)
 //          bframes   24000/1001, 48 frames, 2 B-frames per anchor, GOP 12
 //          longgop   24000/1001, 300 frames, one keyframe
+//          long      24000/1001, 24000 frames (about 17 minutes) at 64x48
+//                    and a low bit rate: a small file whose index takes
+//                    as many packets as a long episode's (AV4)
 //          audio     the cfr video plus 2 s of 48 kHz stereo PCM whose left
 //                    channel is the sample index modulo 32768
 //          tracks    the audio fixture with a second audio track (languages
@@ -239,7 +242,7 @@ int writeTimedSubtitles(const std::string &out, const std::string &kind)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd|yuv10|subs-mp4|subs-mov|subs-ts>");
+        return fail("usage: <out> <cfr|vfr|bframes|longgop|long|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd|yuv10|subs-mp4|subs-mov|subs-ts>");
     const std::string out = argv[1], kind = argv[2];
     av_log_set_level(AV_LOG_ERROR); // the encoders' clipping notes are noise in the build log
     if (kind == "audioonly")
@@ -299,7 +302,12 @@ int main(int argc, char **argv)
         kWidth = 1280;
         kHeight = 720;
     }
-    const int frames = kind == "longgop" ? 300 : color ? 12 : 48;
+    const bool longVideo = kind == "long";
+    if (longVideo) {
+        kWidth = 64;
+        kHeight = 48;
+    }
+    const int frames = longVideo ? 24000 : kind == "longgop" ? 300 : color ? 12 : 48;
 
     AVFormatContext *fmt = nullptr;
     if (avformat_alloc_output_context2(&fmt, nullptr, container, out.c_str()) < 0)
@@ -319,7 +327,7 @@ int main(int argc, char **argv)
     if (codecId == AV_CODEC_ID_MPEG1VIDEO) // MPEG-1 has no 24000/1001 timebase in a stream
         enc->time_base = AVRational{1001, 24000};
     enc->max_b_frames = kind == "bframes" ? 2 : 0;
-    enc->bit_rate = 2'000'000;
+    enc->bit_rate = longVideo ? 32'000 : 2'000'000;
     if (kind == "sar") // T1: an anamorphic frame
         enc->sample_aspect_ratio = AVRational{32, 27};
     if (untagged) {
