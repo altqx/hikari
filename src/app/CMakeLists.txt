@@ -48,6 +48,9 @@ target_sources(hikari_composition PRIVATE settings_import_store.cpp include/hika
     settings_import_controller.cpp include/hikari/app/settings_import_controller.h)
 # Y6: Font catalogs, the font picker's lists and the external fonts folder.
 target_sources(hikari_composition PRIVATE font_catalogs_controller.cpp include/hikari/app/font_catalogs_controller.h)
+# WS5: one instance per user session; later starts hand their files to it.
+target_sources(hikari_composition PRIVATE single_instance.cpp include/hikari/app/single_instance.h
+    forwarded_launches.cpp include/hikari/app/forwarded_launches.h)
 # Y9: GRID_SUBS_FROM_MKV.
 target_sources(hikari_composition PRIVATE matroska_controller.cpp include/hikari/app/matroska_controller.h)
 # V6: timing and selecting Lines from the video, and the video following the active Line.

@@ -481,31 +481,119 @@
     <name>HikariSub.Colours</name>
     <message>
         <source>Choose color</source>
-        <translation>색상 선택</translation>
-    </message>
-    <message>
-        <source>Colour</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">색상 선택</translation>
     </message>
     <message>
         <source>Primary color</source>
-        <translation>첫 번째 색상</translation>
+        <translation type="vanished">첫 번째 색상</translation>
     </message>
     <message>
         <source>Secondary color</source>
-        <translation>두 번째 색상</translation>
+        <translation type="vanished">두 번째 색상</translation>
     </message>
     <message>
         <source>Border color</source>
-        <translation>테두리 색상</translation>
+        <translation type="vanished">테두리 색상</translation>
     </message>
     <message>
         <source>Shadow color</source>
-        <translation>그림자 색상</translation>
+        <translation type="vanished">그림자 색상</translation>
     </message>
     <message>
         <source>Spectrum color</source>
-        <translation>스펙트럼 색상</translation>
+        <translation type="vanished">스펙트럼 색상</translation>
+    </message>
+    <message>
+        <source>Previous colour %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New colour %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Palette</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>White</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Black</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yellow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cyan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Magenta</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orange</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lime</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spring green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Azure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Violet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0 is opaque, 255 fully transparent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fewer colour options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More colour options</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saturation and value</source>
@@ -513,6 +601,34 @@
     </message>
     <message>
         <source>Hue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>RGB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSV</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ASS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HTML</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -529,15 +645,15 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Selected color:</source>
-        <translation>선택 색상:</translation>
+        <translation type="vanished">선택 색상:</translation>
     </message>
     <message>
         <source>RGB color</source>
-        <translation>RGB</translation>
+        <translation type="vanished">RGB</translation>
     </message>
     <message>
         <source>Red:</source>
-        <translation>빨간색:</translation>
+        <translation type="vanished">빨간색:</translation>
     </message>
     <message>
         <source>Red</source>
@@ -545,7 +661,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Green:</source>
-        <translation>녹색:</translation>
+        <translation type="vanished">녹색:</translation>
     </message>
     <message>
         <source>Green</source>
@@ -553,14 +669,10 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Blue:</source>
-        <translation>파란색:</translation>
+        <translation type="vanished">파란색:</translation>
     </message>
     <message>
         <source>Blue</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Alpha:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -568,15 +680,7 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>ASS:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>ASS colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>HTML:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -585,11 +689,11 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSL color</source>
-        <translation>HSL</translation>
+        <translation type="vanished">HSL</translation>
     </message>
     <message>
         <source>Hue:</source>
-        <translation>색조:</translation>
+        <translation type="vanished">색조:</translation>
     </message>
     <message>
         <source>HSL hue</source>
@@ -597,7 +701,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Saturation:</source>
-        <translation>채도:</translation>
+        <translation type="vanished">채도:</translation>
     </message>
     <message>
         <source>HSL saturation</source>
@@ -605,7 +709,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Lightness:</source>
-        <translation>명도:</translation>
+        <translation type="vanished">명도:</translation>
     </message>
     <message>
         <source>Lightness</source>
@@ -613,7 +717,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSV color</source>
-        <translation>HSV</translation>
+        <translation type="vanished">HSV</translation>
     </message>
     <message>
         <source>HSV hue</source>
@@ -625,7 +729,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Value:</source>
-        <translation>명도:</translation>
+        <translation type="vanished">명도:</translation>
     </message>
     <message>
         <source>Value</source>
@@ -636,30 +740,22 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Recent colors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Screen pixels around the pointer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Color picker</source>
-        <translation>색상 선택기</translation>
+        <translation type="vanished">색상 선택기</translation>
     </message>
     <message>
         <source>Move the window
 to the color selection location</source>
-        <translation>색상 선택기에서
+        <translation type="vanished">색상 선택기에서
 창을 이동합니다</translation>
     </message>
     <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Cancel</source>
-        <translation>취소</translation>
+        <translation type="vanished">취소</translation>
     </message>
     <message>
         <source>Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).</source>
@@ -2515,6 +2611,10 @@ Failed to copy %2 fonts.</source>
         <translation>구분 열 숨김</translation>
     </message>
     <message>
+        <source>Hide empty columns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide layer</source>
         <translation>레이어</translation>
     </message>
@@ -2710,6 +2810,10 @@ Failed to copy %2 fonts.</source>
         <source>bookmarked</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>uncommitted</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
         <source>%n selected, %1 hidden</source>
         <translation type="unfinished">
@@ -2768,6 +2872,119 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Line wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Home</name>
+    <message>
+        <source>Today %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yesterday %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">추가</translation>
+    </message>
+    <message>
+        <source>New subtitles in a new tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last session</source>
+        <translation type="unfinished">마지막 작업</translation>
+    </message>
+    <message>
+        <source>1 document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n documents</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">필터</translation>
+    </message>
+    <message>
+        <source>Filter recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">이름</translation>
+    </message>
+    <message>
+        <source>Last opened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>last opened %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">열기</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove missing files</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4313,6 +4530,10 @@ after switching from full screen</source>
     <message>
         <source>Do not vertically center the active line in the subtitle grid</source>
         <translation>자막보기의 중앙에 행을 배치하지 마십시오</translation>
+    </message>
+    <message>
+        <source>Hide empty columns in the subtitle grid</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Use numpad shortcuts in text fields</source>
@@ -7030,6 +7251,40 @@ Styles deleted:
         <translation>변경 선택</translation>
     </message>
     <message>
+        <source>Amount</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time shifts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift times by time / frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delays subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speeds up subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shifts %1, %2, and %3 tag times
+so their positions on video do not change
+(slows down time shifting)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished">검색 위치</translation>
+    </message>
+    <message>
+        <source>The choice of lines to move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>All lines</source>
         <translation>모든 줄</translation>
     </message>
@@ -7054,12 +7309,24 @@ Styles deleted:
         <translation>선택한 스타일에 따라</translation>
     </message>
     <message>
+        <source>Select a style from the list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Styles, separated by commas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move according to the following styles (separated by a coma)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>A method of time shift</source>
         <translation>조정 시간</translation>
+    </message>
+    <message>
+        <source>The choice of times to move</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Both times</source>
@@ -7068,6 +7335,10 @@ Styles deleted:
     <message>
         <source>Correction end times</source>
         <translation>종료 시간 수정</translation>
+    </message>
+    <message>
+        <source>Correction end times, when they are improper or overlap each other</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Leave unchanged</source>
@@ -7080,6 +7351,66 @@ Styles deleted:
     <message>
         <source>New times</source>
         <translation>새로운 시간</translation>
+    </message>
+    <message>
+        <source>Move the start time to the time video / audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end time to the video/audio time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in/lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inserts introduction to the start time (good when using fad)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Introduction time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inserts introduction to the end time (good when using fad)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start time extension threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time extension threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+before the start time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+after the start time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+before the end time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+after the end time in milliseconds</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Run post processor</source>
@@ -7416,6 +7747,10 @@ Foreign language text will be deleted.</source>
     <message>
         <source>Color:</source>
         <translation>색상:</translation>
+    </message>
+    <message>
+        <source>Choose the colour</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Checkerboard pattern</source>

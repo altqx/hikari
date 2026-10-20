@@ -12,6 +12,7 @@ ShellMenu {
     id: menu
     required property VideoController video
     property var rows: []
+    iconRole: "chapters"
     title: qsTr("Chapters")
     enabled: video.hasVideo && video.chapterCount > 0
     onAboutToShow: rows = video.chapters()

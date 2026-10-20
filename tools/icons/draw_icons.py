@@ -83,6 +83,7 @@ FONT = {
     "V": ["101", "101", "101", "101", "010"],
     "L": ["100", "100", "100", "100", "111"],
     "2": ["110", "001", "010", "100", "111"],
+    "F": ["111", "100", "110", "100", "100"],
 }
 
 
@@ -257,7 +258,7 @@ TRANSPORT, FULLSCREEN, AUDIOBOX, EDITOR, VISUAL, PICKER, TABS = (
 
 # File
 icon("open-subtitles", "Open subtitles", ["opensubs.png"], [FILE, "video-context-menu"], page(True) + plus_badge())
-icon("save", "Save", ["Save.png"], [FILE, "tab-menu"], floppy())
+icon("save", "Save", ["Save.png"], [FILE, "tab-menu", "shift-times-panel"], floppy())
 icon("save-all", "Save all subtitles", ["SaveAll.png"], [FILE, "tab-menu"],
      stroke("M4.5 3.5v-2h8l2 2v8h-2") + stroke("M1.5 4.5h9l2 2v8h-11z") + stroke("M4.5 4.5v2.5h4V4.5")
      + stroke("M3.5 14.5v-3h6v3"))
@@ -463,11 +464,12 @@ for n in range(1, 10):
 icon("alignment-mixed", "Text position (mixed)", [], [EDITOR], alignment_grid())
 
 # Subtitles and timing menus
-icon("editor", "Enable / Disable editor", ["editor.png"], [SUBS, "settings-dialog"],
+icon("editor", "Enable / Disable editor", ["editor.png"], [SUBS, "settings-dialog", "video-context-menu"],
      rect(1.5, 2.5, 13, 11, 1) + stroke("M4 6.5h5M4 9.5h7") + accent(stroke("M11.5 5v3")), mirror=True)
 icon("script-properties", "ASS file properties", ["Assprops.png"], [SUBS, "script-properties", "settings-dialog"],
      page() + stroke("M5.5 7.5h1M8 7.5h2.5M5.5 10h1M8 10h2.5M5.5 12.5h1M8 12.5h2.5"), mirror=True)
-icon("styles", "Style manager", ["Style.png"], [SUBS, "style-manager", "search-tool", "select-lines", "misspell-replacer"],
+icon("styles", "Style manager", ["Style.png"], [SUBS, "style-manager", "search-tool", "select-lines", "misspell-replacer",
+                                                "grid-menu", "tab-menu"],
      stroke("M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.75 1.5-1.5s-.5-1-.5-1.75.75-1.25 1.5-1.25H12a2.5 2.5 0 0 0 2.5-2.5C14.5 4 11.5 1.5 8 1.5z")
      + accent(dot(4.75, 7.5, 1), dot(6.75, 4.5, 1), dot(10, 4.5, 1)))
 CONVERT = stroke("M2.5 3.5h9M9.5 1.5l2 2-2 2")
@@ -616,7 +618,7 @@ icon("original-frame", "Set a custom rectangle for the current scale", ["Origina
 icon("eyedropper", "Pick a colour from the screen", ["eyedropper.png"], [PICKER],
      stroke("M10.5 3.5l1.75-1.75a1.75 1.75 0 0 1 2.5 2.5L13 6") + stroke("M9 3l4 4")
      + stroke("M10 4l-6.5 6.5-1 3 3-1L12 6") + accent(stroke("M4.75 11.25l3.25-3.25")))
-icon("tab-close", "Close tab", [], [TABS, FILE], stroke("M4.5 4.5l7 7M11.5 4.5l-7 7"))
+icon("tab-close", "Close tab", [], [TABS, FILE, "dock-headers"], stroke("M4.5 4.5l7 7M11.5 4.5l-7 7"))
 icon("tab-new", "Open new tab", [], [TABS], stroke("M8 3v10M3 8h10"))
 icon("document-modified", "Modified", [], [TABS], accent(dot(8, 8, 3)))
 
@@ -639,6 +641,11 @@ icon("move-up", "Move up", ["arrow_list.png"], [STYLEDLG], stroke("M7.5 13.5v-11
 icon("move-down", "Move down", [], [STYLEDLG], stroke("M7.5 2.5v11M3 9l4.5 4.5L12 9"))
 icon("move-to-bottom", "Move to end", [], [STYLEDLG],
      accent(stroke("M2.5 14.5h10")) + stroke("M7.5 1.5v10M3 7l4.5 4.5L12 7"))
+# IC1: LE5's tag buttons move along their strip (the button's context menu):
+# move-up's arrow turned, for "Move left" and "Move right" as they read, so
+# they do not mirror (a panel's Move tab left is tab-move-left, a tab).
+icon("move-left", "Move left", [], [EDITOR], stroke("M13.5 7.5h-11M7 3L2.5 7.5 7 12"))
+icon("move-right", "Move right", [], [EDITOR], stroke("M2.5 7.5h11M9 3l4.5 4.5L9 12"))
 # Transfers between the Style manager's two lists (legacy drew them with the
 # same arrow_list.png as the moves, stylestore.cpp:73-88): the two lists as
 # boxes, the copied style's direction between them in the accent, so a
@@ -660,9 +667,9 @@ icon("copy-to-all-ass", "Copy style from storage to every open ASS file", [], [S
 icon("panel-menu", "Panel options", [], ["dock-headers"], dot(3.5, 8, 1.25) + dot(8, 8, 1.25) + dot(12.5, 8, 1.25))
 
 # Generic list and edit commands
-icon("add", "Add", [], [SHIFTPANEL, LISTS, "font-catalog"], stroke("M7.5 2.5v10M2.5 7.5h10"))
-icon("remove", "Remove", [], [SHIFTPANEL], stroke("M2.5 7.5h10"))
-icon("edit", "Edit", [], [EDITOR, LISTS],
+icon("add", "Add", [], [SHIFTPANEL, LISTS, "font-catalog", GRIDMENU], stroke("M7.5 2.5v10M2.5 7.5h10"))
+icon("remove", "Remove", [], [SHIFTPANEL, EDITOR], stroke("M2.5 7.5h10"))
+icon("edit", "Edit", [], [EDITOR, LISTS, GRIDMENU, VISUAL],
      stroke("M11 2l3 3-8.5 8.5-3.5 1 1-3.5z") + accent(stroke("M9.5 3.5l3 3")))
 icon("duplicate", "Copy", [], [LISTS],
      stroke("M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2") + rect(2.5, 4.5, 8, 10, 1)
@@ -670,10 +677,10 @@ icon("duplicate", "Copy", [], [LISTS],
 icon("delete", "Delete", [], [LISTS, GRIDMENU, TEXTMENU],
      stroke("M2.5 4h11M6 4V2.5h4V4") + stroke("M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9")
      + stroke("M6.75 7v5M9.25 7v5"))
-icon("import", "Load", [], [LISTS],
+icon("import", "Load", [], [LISTS, FILE],
      stroke("M5.5 9.5h-3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3")
      + accent(stroke("M7.5 4.5v10M4.5 11.5l3 3 3-3")))
-icon("clear", "Clear", [], [LISTS, VISUAL],
+icon("clear", "Clear", [], [LISTS, VISUAL, GRIDMENU],
      stroke("M9 2l5 5-6.5 6.5-5-5z") + accent(stroke("M5.5 5.5l5 5")) + stroke("M7.5 13.5h6"))
 icon("refresh", "Refresh", [], ["font-catalog", "automation-manager"],
      stroke("M2.5 8a5.5 5.5 0 0 1 9.75-3.5") + stroke("M12.5 1.5v3h-3")
@@ -694,7 +701,7 @@ icon("find-in-files", "Find in subtitles", [], [SEARCH], FOLDER_CUT + accent(cir
                                                                              stroke("M13 13l1.5 1.5")))
 icon("show-in-folder", "Open the containing folder", [], [TABMENU],
      FOLDER_CUT + accent(stroke("M10 14.5l4.5-4.5M11.5 10h3v3")))
-icon("compare", "Subtitle comparison", [], [TABMENU],
+icon("compare", "Subtitle comparison", [], [TABMENU, "dock-headers"],
      rect(1.5, 2.5, 6, 11, 1) + rect(8.5, 2.5, 6, 11, 1) + stroke("M3.5 5.5h2M3.5 8h2M3.5 10.5h2M10.5 5.5h2M10.5 8h2")
      + accent(stroke("M10.5 10.5h2")))
 icon("reference", "Show subtitles preview", [], [GRIDMENU],
@@ -751,6 +758,188 @@ icon("audio-video-sync", "Sync the video and audio cursors", [], [AUDIOBOX],
      rect(1.5, 1.5, 13, 5, 1) + stroke("M2.5 11.25v1.5M4.5 10v4M6.5 10.75v2.5M10.5 10.5v3M12.5 11.25v1.5")
      + accent(stroke("M8.5 1v14")))
 
+# IC1 (#226): every menu and context-menu item that runs a command has an
+# icon (docs/qt/ux/menu-icon-gaps.md lists the items and the ones left
+# without: check items, entries named by their data). The rules above hold:
+# an open/add badge is the plus, recent and timed the clock, a removal the
+# cross; a list's rows are lines, the Grid's tree a parent row with
+# indented children.
+PANELS = "dock-headers"
+ROWS3 = stroke("M1.5 3.5h7M1.5 8h7M1.5 12.5h7")
+EYE = stroke("M1.5 8C3 5 5.25 3.5 8 3.5s5 1.5 6.5 4.5c-1.5 3-3.75 4.5-6.5 4.5S3 11 1.5 8z")
+TRASH_CUT = (stroke("M1.5 3.5h9M4.5 3.5V2h3v1.5") + stroke("M2.5 4.5l.75 9a1 1 0 0 0 1 1H8M9.5 4.5l-.25 3.5")
+             + stroke("M5 6.5v5M7 6.5v3"))
+SESSION_CUT = (stroke("M5.5 6.5v-4h9v5") + stroke("M8.5 13.5h-6a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v1")
+               + stroke("M1.5 8.5h11"))
+LAYOUT_CUT = (stroke("M8.5 13.5h-6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v5") + stroke("M1.5 6h13M6 6v7.5"))
+BOOK = "M3.5 13V3a1.5 1.5 0 0 1 1.5-1.5h7.5v10H5a1.5 1.5 0 0 0 0 3h7.5"
+TREE_ROWS = stroke("M1.5 3.5h8M7 8h7.5M7 12.5h7.5")
+TREE_LINKS = stroke("M3.5 5.5v7h2M3.5 8h2")
+LINE_BARS = "M7 4.5H2.5a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1H7M8.5 4.5h5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-5"
+COPY_BACK = stroke("M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2")
+PASTE_BOARD = (stroke("M5.5 2.5h-2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-10a1 1 0 0 0-1-1h-2")
+               + rect(5.5, 1.5, 5, 2, 0.5))
+FPS_FILM = film(1.5, 1.5, 13, 6, 3)
+REFRESH_BADGE = accent(stroke("M14.5 12a2.5 2.5 0 1 1-.75-1.75"), stroke("M14 9v1.5h-1.5"))
+SWAP = accent(stroke("M10.5 12.5v-9M9.5 4.5l1-1 1 1M13.5 3.5v9M12.5 11.5l1 1 1-1"))
+
+# File menu
+icon("autosave", "Open auto save", [], [FILE], floppy(True) + clock_badge())
+icon("remove-temporary", "Remove temporary files", [], [FILE], TRASH_CUT + clock_badge())
+icon("log", "Show / Hide log window", [], [FILE],
+     rect(1.5, 2.5, 13, 11, 1) + stroke("M7 5.5h5M7 8h4M7 10.5h5") + accent(stroke("M4 5.5h1.5M4 8h1.5M4 10.5h1.5")),
+     mirror=True)
+icon("session-open", "Load session from file", [], [FILE], SESSION_CUT + plus_badge())
+icon("session-save", "Save session to file", [], [FILE],
+     floppy(True) + accent(stroke("M11.5 9.5h3v3"), rect(9.5, 11, 3.5, 3.5, 0.5)))
+
+# Automation menu
+icon("rerun-macro", "Rerun last macro", [], [AUTO],
+     SCRIPT_CUT + REFRESH_BADGE)
+icon("automation-manager", "Automation manager", [], [AUTO],
+     stroke("M4.5 3.5v-2h6l3 3v8h-2") + stroke("M10.5 14.5h-9v-10h6l3 3z")
+     + accent(stroke("M5 9L3.75 10.25 5 11.5M7 9l1.25 1.25L7 11.5")))
+
+# Video menu and the video's context menu
+icon("dummy-video", "Open dummy video", [], [VIDEO], video_film() + accent(frect(10, 10, 4.5, 4.5, 0.5)))
+icon("video-streams", "Streams", [], [VIDEO, VIDEOMENU],
+     stroke("M1.5 3.5h6M1.5 7h6M1.5 10.5h3") + accent(note(10.5)))
+icon("chapters", "Chapters", [], [VIDEO, VIDEOMENU],
+     stroke("M1.5 13.5h13M3.5 13.5v-2M12.5 13.5v-2") + accent(stroke("M6.5 13.5v-10h5l-1.5 2 1.5 2h-5")))
+icon("copy-position", "Copy video position", [], [VIDEOMENU],
+     COPY_BACK + rect(2.5, 4.5, 8, 10, 1)
+     + accent(circle(6.5, 9.5, 1.5), stroke("M6.5 6.5v1.5M6.5 11v1.5M3.5 9.5H5M8 9.5h1.5")))
+icon("monitor", "Open in full screen on another monitor", [], [VIDEOMENU, FULLSCREEN],
+     rect(1.5, 2.5, 13, 9, 1) + stroke("M6.5 11.5v2M9.5 11.5v2M4.5 13.5h7")
+     + accent(stroke("M3.5 6v-1.5h2M12.5 6v-1.5h-2M3.5 8v1.5h2M12.5 8v1.5h-2")))
+icon("progress-bar", "Show / hide progress bar", [], [VIDEOMENU, FULLSCREEN],
+     rect(1.5, 2.5, 13, 11, 1) + stroke("M9.5 10.5h3") + accent(stroke("M3.5 10.5h4"), dot(8.5, 10.5, 1.25)))
+icon("aspect-ratio", "Change aspect ratio", [], [VIDEOMENU, FULLSCREEN],
+     rect(1.5, 3.5, 13, 9, 1) + accent(stroke("M4 8h8M5.5 6.5L4 8l1.5 1.5M10.5 6.5L12 8l-1.5 1.5")))
+icon("video-filters", "Filters", [], [VIDEOMENU, FULLSCREEN],
+     rect(1.5, 6, 3.5, 4, 1) + rect(6.25, 6, 3.5, 4, 1) + rect(11, 6, 3.5, 4, 1)
+     + accent(stroke("M5 8h1.25M9.75 8H11")))
+
+# View menu and the panels' menus
+icon("panels", "Panels", [], [VIEW], layout(stroke("M6.5 2.5v11M6.5 8h8")))
+icon("show", "Show", [], [VIEW], EYE + accent(dot(8, 8, 2)))
+icon("hide", "Hide", [], [VIEW, GRIDMENU], EYE + circle(8, 8, 2) + accent(stroke("M2.5 13.5l11-11")))
+icon("panel-float", "Float", [], [VIEW, PANELS],
+     stroke("M8.5 2.5h-5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-5") + accent(stroke("M9.5 6.5l5-5M10.5 1.5h4v4")))
+icon("panel-dock", "Dock", [], [VIEW, PANELS],
+     stroke("M8.5 2.5h-5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-5") + accent(stroke("M14.5 1.5l-5 5M9.5 2.5v4h4")))
+icon("panel-move", "Move panel", [], [VIEW, PANELS],
+     layout(stroke("M6.5 2.5v11")) + accent(stroke("M3.5 8h8M9.5 6l2 2-2 2")))
+icon("tab-move-left", "Move tab left", [], [PANELS],
+     stroke("M1.5 13.5h13M4.5 13.5v-5a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5") + accent(stroke("M11.5 3.5h-8M5.5 1.5l-2 2 2 2")))
+icon("tab-move-right", "Move tab right", [], [PANELS],
+     stroke("M1.5 13.5h13M4.5 13.5v-5a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v5") + accent(stroke("M4.5 3.5h8M10.5 1.5l2 2-2 2")))
+icon("layout-preset", "Layout preset", [], [VIEW],
+     rect(1.5, 1.5, 5, 5, 1) + rect(9.5, 1.5, 5, 5, 1) + rect(1.5, 9.5, 5, 5, 1)
+     + stroke("M1.5 3.5h5M9.5 3.5h5M1.5 11.5h5") + accent(rect(9.5, 9.5, 5, 5, 1), stroke("M9.5 11.5h5")))
+icon("layout-reset", "Reset layout", [], [VIEW],
+     LAYOUT_CUT + REFRESH_BADGE)
+icon("layout-restore", "Restore the previous layout", [], [VIEW],
+     LAYOUT_CUT + accent(stroke("M10.5 9.5L9 11l1.5 1.5"), stroke("M9 11h3.5a1.75 1.75 0 0 1 0 3.5H11")), mirror=True)
+
+# Document tab menu, font catalogs
+icon("tab-close-all", "Close all tabs", [], [TABMENU],
+     stroke("M4.5 3.5v-1a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-1") + rect(1.5, 4.5, 10, 10, 1)
+     + accent(stroke("M4.5 7.5l4 4M8.5 7.5l-4 4")))
+icon("fonts-from-subtitles", "Add fonts from subtitles", [], ["font-catalog"], page(True) + accent(letters("F", 11, 10)))
+
+# Text fields' menu
+icon("dictionary", "Installed languages", [], [TEXTMENU, "settings-dialog"],
+     stroke(BOOK) + accent(stroke("M6.5 4.5h3.5M6.5 6.5h2")))
+icon("dictionary-add", "Add word to dictionary", [], [TEXTMENU],
+     stroke("M3.5 13V3a1.5 1.5 0 0 1 1.5-1.5h7.5v6") + stroke("M8 11.5H5a1.5 1.5 0 0 0 0 3h3")
+     + stroke("M6.5 4.5h3.5M6.5 6.5h2") + plus_badge())
+
+# Grid menu and the tree's menu
+icon("make-tree", "Make tree", [], [GRIDMENU], TREE_ROWS + accent(TREE_LINKS), mirror=True)
+icon("tree-add-lines", "Add lines", [], [GRIDMENU],
+     stroke("M1.5 3.5h8M7 8h7.5M7 12.5h1") + TREE_LINKS + plus_badge(), mirror=True)
+icon("tree-select", "Select tree lines", [], [GRIDMENU],
+     stroke("M4 3.5h7M8.5 8h6M8.5 12.5h6M5.5 5.5v7h1.5M5.5 8h1.5") + accent(stroke("M1.5 2.5v11")), mirror=True)
+icon("insert-before", "Insert before", [], [GRIDMENU],
+     stroke("M1.5 8.5h13M1.5 12.5h13") + accent(stroke("M1.5 3.5h7M12.5 1.5v4M10.5 3.5h4")), mirror=True)
+icon("insert-after", "Insert after", [], [GRIDMENU],
+     stroke("M1.5 3.5h13M1.5 7.5h13") + accent(stroke("M1.5 12.5h7M12.5 10.5v4M10.5 12.5h4")), mirror=True)
+icon("swap-lines", "Swap", [], [GRIDMENU], stroke("M1.5 4h6M1.5 12h6") + SWAP, mirror=True)
+icon("join-lines", "Join lines", [], [GRIDMENU],
+     stroke("M1.5 3.5h3l3.5 4.5M1.5 12.5h3L8 8") + accent(stroke("M8 8h6.5")), mirror=True)
+icon("join-keep-first", "Join lines and keep first", [], [GRIDMENU],
+     stroke("M1.5 12.5h3L8 8") + accent(stroke("M1.5 3.5h3l3.5 4.5h6.5")), mirror=True)
+icon("join-keep-last", "Join lines and keep last", [], [GRIDMENU],
+     stroke("M1.5 3.5h3L8 8") + accent(stroke("M1.5 12.5h3L8 8h6.5")), mirror=True)
+icon("continuous-previous", "Set times as a continuous (previous line)", [], [GRIDMENU],
+     rect(1.5, 4.5, 4, 7, 1) + rect(10.5, 4.5, 4, 7, 1) + accent(stroke("M9.5 8h-3M8 6.5L6.5 8 8 9.5")))
+icon("continuous-next", "Set times as a continuous (next line)", [], [GRIDMENU],
+     rect(1.5, 4.5, 4, 7, 1) + rect(10.5, 4.5, 4, 7, 1) + accent(stroke("M6.5 8h3M8 6.5L9.5 8 8 9.5")))
+icon("split-lines", "Split lines", [], [GRIDMENU], stroke(LINE_BARS) + accent(stroke("M7.75 2v12")))
+icon("split-at-video", "Split line at video time", [], [GRIDMENU],
+     stroke(LINE_BARS) + accent(stroke("M7.75 4v10"), solid("M6.25 1.5h3L7.75 3z")))
+icon("split-frames", "Split lines into frames", [], [GRIDMENU],
+     stroke("M1.5 2.5h13M1.5 13.5h13") + rect(1.5, 4.5, 3, 7, 1) + rect(6.5, 4.5, 3, 7, 1) + rect(11.5, 4.5, 3, 7, 1)
+     + accent(stroke("M5.5 2.5v11M10.5 2.5v11")))
+icon("split-characters", "Split lines into characters", [], [GRIDMENU],
+     letters("A", 2, 5) + letters("S", 10, 5) + accent(stroke("M7.5 2.5v11")))
+icon("split-words", "Split lines into words", [], [GRIDMENU],
+     stroke("M1.5 5.5h4M9.5 5.5h5M1.5 10.5h4M9.5 10.5h3") + accent(stroke("M7.5 2.5v11")), mirror=True)
+icon("split-wraps", "Split lines by wraps", [], [GRIDMENU],
+     stroke("M1.5 3.5h9M1.5 12.5h7") + accent(stroke("M10.5 3.5H12a2.5 2.5 0 0 1 0 5H6.5M8 7L6.5 8.5 8 10")), mirror=True)
+icon("select-visible", "Select all lines visible on video", [], [GRIDMENU],
+     rect(1.5, 1.5, 13, 8, 1) + triangle(6.5, 3.5, 3, 4) + stroke("M5.5 12h9M5.5 14.5h6")
+     + accent(frect(1.5, 11.25, 2.5, 1.5), frect(1.5, 13.75, 2.5, 1.5)), mirror=True)
+icon("paste-translation", "Paste translation text", [], [GRIDMENU],
+     stroke("M5.5 2.5h-2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h5M10.5 2.5h2a1 1 0 0 1 1 1v5") + rect(5.5, 1.5, 5, 2, 0.5)
+     + stroke("M5.5 7.5h5M5.5 10h2.5") + accent(stroke("M10 10.5h4.5M12.25 10.5v4")))
+icon("translation-shift", "Dialogue shifting window", [], [GRIDMENU],
+     ROWS3 + accent(stroke("M11.5 3v10M10 4.5l1.5-1.5L13 4.5M10 11.5l1.5 1.5 1.5-1.5")), mirror=True)
+icon("filter-off", "Turn off filtering", [], [GRIDMENU],
+     stroke("M9.5 8.5l5-6h-13l5 6v5l1.5-.75") + cross_badge())
+icon("columns", "Hide columns", [], [GRIDMENU],
+     rect(1.5, 2.5, 13, 11, 1) + stroke("M1.5 5.5h13M5.5 5.5v8M10.5 5.5v8") + accent(frect(6, 3, 4, 2)))
+icon("columns-copy", "Copy columns", [], [GRIDMENU],
+     COPY_BACK + rect(2.5, 4.5, 8, 10, 1) + accent(stroke("M5.5 4.5v10M7.5 4.5v10")))
+icon("columns-paste", "Paste columns", [], [GRIDMENU], PASTE_BOARD + accent(stroke("M6.5 6v6.5M9.5 6v6.5")))
+icon("fps", "Set new FPS", [], [GRIDMENU, "settings-dialog"], FPS_FILM + accent(letters("FPS", 2, 9)))
+icon("fps-from-video", "Set FPS from video", [], [GRIDMENU],
+     FPS_FILM + letters("FPS", 2, 9) + accent(stroke("M8 2.5v3.5M6.75 4.75L8 6l1.25-1.25")))
+
+# Tab menu's comparison, Subtitles menu
+icon("compare-off", "Turn off comparison", [], [TABMENU],
+     rect(1.5, 2.5, 6, 11, 1) + stroke("M3.5 5.5h2M3.5 8h2M3.5 10.5h2") + stroke("M8.5 8.5v-5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v5")
+     + cross_badge())
+icon("shift-times-run", "Shift times / run time post processor", [], [SUBS],
+     circle(6.5, 6.5, 5) + stroke("M6.5 4v2.5l2 1.5") + accent(solid("M11 10.5v4l3.5-2z")))
+
+# Options: the primary options of each page (PF1 #225 places them; the
+# page list keeps the page icons above, and options shared with a menu take
+# its icon: dictionary, autosave, fps, styles, resample, zoom, lead-in).
+icon("language", "Language", [], ["settings-dialog"],
+     circle(8, 8, 6.5) + stroke("M8 1.5c-2 1.75-3 4-3 6.5s1 4.75 3 6.5c2-1.75 3-4 3-6.5s-1-4.75-3-6.5z")
+     + accent(stroke("M1.5 8h13")))
+icon("ui-font", "Program font", [], ["settings-dialog"],
+     stroke("M1.5 13.5L5 2.5h1l3.5 11M3 9.5h5") + accent(circle(11.5, 11.5, 2), stroke("M13.5 9.5v4")))
+icon("renderer", "Subtitle display filter", [], ["settings-dialog"],
+     rect(1.5, 2.5, 13, 11, 1) + triangle(6.5, 4.5, 3, 3.5) + accent(stroke("M4 9.5h8M5.5 11.5h5")))
+icon("video-seek", "Video seeking method", [], ["settings-dialog"],
+     stroke("M1.5 12.5h13") + stroke("M2.5 7.5h5M5.5 5.5l2 2-2 2") + accent(stroke("M10.5 4.5v8"), solid("M9 2.5h3l-1.5 2z")))
+icon("audio-device", "Audio output", [], ["settings-dialog"],
+     rect(3.5, 1.5, 9, 13, 1) + circle(8, 10, 2.5) + accent(dot(8, 5, 1.25)))
+icon("audio-delay", "Audio delay", [], ["settings-dialog"],
+     stroke("M1.5 7v2M3.5 5v6M5.5 6v4M7.5 4.5v7") + clock_badge())
+icon("theme", "Theme", [], ["settings-dialog"],
+     stroke("M13.5 10A6 6 0 1 1 6 2.5a5 5 0 0 0 7.5 7.5z") + accent(stroke("M11.5 1.5v2M10.5 2.5h2")))
+icon("accent-colour", "Accent color", [], ["settings-dialog"],
+     stroke("M8 1.5c2.5 3.5 5 6 5 8.5a5 5 0 0 1-10 0C3 7.5 5.5 5 8 1.5z") + accent(fill("M4.5 10a3.5 3.5 0 0 0 7 0z")))
+icon("ui-colours", "UI colors", [], ["settings-dialog"],
+     rect(1.5, 2.5, 4, 4, 0.5) + rect(1.5, 9.5, 4, 4, 0.5) + stroke("M8 4.5h6.5M8 11.5h6.5")
+     + accent(frect(2, 3, 3, 3), frect(2, 10, 3, 3)), mirror=True)
+icon("restore-default", "Restore default", [], ["settings-dialog"],
+     stroke("M2.5 8a5.5 5.5 0 1 0 1.75-4") + stroke("M2.5 1.5v3h3") + accent(dot(8, 8, 1.5)), mirror=True)
+
 # The legacy bitmaps the set does not replace, and why (the card's Excluded:
 # the application and file-type icons stay, and controls Qt draws itself).
 NOT_REPLACED = {
@@ -772,11 +961,14 @@ NOT_REPLACED = {
 }
 
 
-# The roles drawn for surfaces a later wave-5 card builds: that card places
+# The roles drawn for surfaces a later card builds: that card places
 # them (written to the manifest as "pending"; the manifest test requires every
 # other role to be named by the QML, and a pending role not to be).
 PENDING = {}
 for card, roles in {
+    # IC1's Options icons, for the primary options of each page
+    "PF1 #225": ["language", "ui-font", "renderer", "video-seek", "audio-device", "audio-delay", "theme",
+                 "accent-colour", "ui-colours", "restore-default"],
 }.items():
     for role in roles:
         PENDING[role] = card

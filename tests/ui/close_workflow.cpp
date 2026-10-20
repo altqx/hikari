@@ -142,8 +142,9 @@ int main(int argc, char **argv)
     if (o.size() == 5) {
         expect(o[0] == "review", "Ctrl+W with unsaved work shows the review");
         expect(o[1].rfind("first.ass - ", 0) == 0, "Cancel keeps the Document open");
-        // P6: legacy DeletePage leaves a new empty tab when the last closes.
-        expect(o[2].rfind("Untitled", 0) == 0, "Discard all closes it (a new Untitled tab)");
+        // SH2-last-tab-home: no Document is left (legacy DeletePage made a
+        // new empty tab), and the Home page shows.
+        expect(o[2] == "HikariSub", "Discard all closes it (no Document left)");
         expect(o[3] == "quit review", "closing the window reviews the quit");
         expect(o[4] == "false", "the window closes after Save all");
     }

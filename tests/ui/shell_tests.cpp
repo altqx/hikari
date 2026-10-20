@@ -2,6 +2,7 @@
 // reference, F6/Shift+F6 panel traversal and focus restoration.
 
 #include "hikari/app/application.h"
+#include "hikari/app/style_manager_controller.h"
 #include "desktop_guard.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/application/options_dialog.h"
@@ -33,10 +34,12 @@
 #include "shape_editor.h"
 #include "theme.h"
 #include "colour_picker_controller.h"
+#include "font_faces.h"
 #include "screen_sampler.h"
 #include "video_presenter.h"
 #include "hikari/app/composition.h"
 #include "next_file_folder.h"
+#include "menu_icon_scan.h"
 
 #include <QAccessible>
 #include <QMimeData>
@@ -69,6 +72,8 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QtQml/qqmlextensionplugin.h>
+#include <QElapsedTimer>
+#include <QFontDatabase>
 #include <QtTest>
 
 #ifndef _WIN32
@@ -425,6 +430,20 @@ class ShellTest : public QObject {
         auto t = std::make_shared<qint64>(0);
         application->hotkeys().setKeyClock([t] { return *t += 1000; });
     }
+    // TS1: opens Shift times, docked, and waits for its form.
+    void showShiftTimes()
+    {
+        QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
+        QTRY_VERIFY(item<QObject>("timingDock")->property("isOpen").toBool());
+        QTRY_VERIFY(item("shiftApply") && item("shiftApply")->isVisible());
+    }
+    void setShift(const char *key, const QVariant &value)
+    {
+        auto map = application->shiftTimesSettings().settingsMap();
+        map.insert(QLatin1String(key), value);
+        application->shiftTimesSettings().setSettingsMap(map);
+    }
+
     void press(Qt::Key key, Qt::KeyboardModifiers mods = Qt::NoModifier)
     {
         QTest::keyClick(window, key, mods);
@@ -536,6 +555,238 @@ private slots:
         QVERIFY(!item<QObject>("referenceDock")->property("isOpen").toBool());
         QCOMPARE(window->title(), QStringLiteral("HikariSub"));
         QCOMPARE(item<QObject>("statusText")->property("text").toString(), QString());
+    }
+
+    // SH2: the Home page covers the panels while no Document is open: at
+    // start, after the last tab closes and after Close all tabs. The Document
+    // tab bar shows only with a Document, keeping its height, so the panels
+    // under Home (which take no input) are not resized when one opens.
+    void homePageShowsWhileNoDocumentIsOpen()
+    {
+        auto *home = item("homePage");
+        auto *bar = item("documentTabBar");
+        QVERIFY(home->isVisible());
+        QVERIFY(!bar->property("shown").toBool());
+        QVERIFY(!item("dockingArea")->isEnabled());
+        QCOMPARE(home->size(), item("dockingArea")->size());
+        const QSizeF area = item("dockingArea")->size();
+        // With no recent file the focus starts on New.
+        QTRY_COMPARE(window->activeFocusItem(), item("homeNew"));
+        QVERIFY(application->openFile(episode));
+        QTRY_VERIFY(!home->isVisible());
+        QVERIFY(bar->property("shown").toBool());
+        QVERIFY(item("dockingArea")->isEnabled());
+        QCOMPARE(item("dockingArea")->size(), area);
+        // The last tab closes: Home comes back, the list (now with the file)
+        // takes the focus.
+        QVERIFY(application->reviewCloseTab(0).isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(home->isVisible());
+        QVERIFY(!bar->property("shown").toBool());
+        QCOMPARE(window->title(), QStringLiteral("HikariSub"));
+        QTRY_VERIFY(item("homeRecentList")->hasActiveFocus()); // its current row
+        // New: an Untitled tab.
+        QVERIFY(QMetaObject::invokeMethod(item("homeNew"), "clicked"));
+        QTRY_VERIFY(!home->isVisible());
+        QCOMPARE(application->tabs().size(), qsizetype(1));
+        QVERIFY(application->targetUntitled());
+        // Close all tabs.
+        application->addPage();
+        QVERIFY(application->reviewCloseAll().isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(home->isVisible());
+        QVERIFY(application->tabs().isEmpty());
+        // F6 stays on the page.
+        item("homeNew")->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_F6);
+        QTRY_VERIFY(item("homeRecentList")->hasActiveFocus());
+    }
+
+    // SH2: the recent subtitles with their last-opened time; a missing file
+    // stays, marked "Missing", cannot be opened and has Remove; the filter
+    // narrows the list by name and path.
+    void homePageListsTheRecentFiles()
+    {
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("home"))));
+        const QString kept = writeFile(dir, "home/kept.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,k\n");
+        const QString gone = writeFile(dir, "home/gone.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,g\n");
+        QVERIFY(application->openFile(gone));
+        QVERIFY(application->openFile(kept));
+        QVERIFY(QFile::remove(gone));
+        QVERIFY(application->reviewCloseAll().isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(item("homePage")->isVisible());
+        auto *list = item("homeRecentList");
+        QTRY_COMPARE(list->property("count").toInt(), 2);
+        QTRY_VERIFY(visualItem("homeRecentRow1"));
+        QVERIFY(visualItem("homeOpened0")->property("text").toString().startsWith(QStringLiteral("Today ")));
+        // The page's clock moves on at midnight: a clock set to just before
+        // a midnight (the times read as a later day's, so as a date) is
+        // brought to now when that midnight passes.
+        auto *home = item("homePage");
+        const QDateTime beforeMidnight(QDate::currentDate().addDays(-1), QTime(23, 59, 59));
+        home->setProperty("now", beforeMidnight);
+        QTRY_VERIFY(!visualItem("homeOpened0")->property("text").toString().startsWith(QStringLiteral("Today ")));
+        QTRY_VERIFY_WITH_TIMEOUT(visualItem("homeOpened0")->property("text").toString().startsWith(QStringLiteral("Today ")), 5000);
+        QVERIFY(!visualItem("homeMissing0")->isVisible());
+        QVERIFY(visualItem("homeMissing1")->isVisible());
+        QVERIFY(visualItem("homeRemove1")->isVisible());
+        QVERIFY(!visualItem("homeRemove0")->isVisible());
+        // A missing file is not opened by Enter.
+        list->setProperty("currentIndex", 1);
+        list->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Return);
+        QVERIFY(application->tabs().isEmpty());
+        // The rows are named for assistive technology.
+        QAccessibleInterface *listFace = QAccessible::queryAccessibleInterface(list);
+        QVERIFY(listFace);
+        QCOMPARE(listFace->text(QAccessible::Name), QStringLiteral("Recent files"));
+        QAccessibleInterface *rowFace = QAccessible::queryAccessibleInterface(visualItem("homeRecentRow1"));
+        QVERIFY(rowFace);
+        QCOMPARE(rowFace->role(), QAccessible::ListItem);
+        QVERIFY(rowFace->text(QAccessible::Name).startsWith(QStringLiteral("gone.ass, ") + QDir::toNativeSeparators(gone)));
+        QVERIFY(rowFace->text(QAccessible::Name).endsWith(QStringLiteral(", missing")));
+        // Filter.
+        auto *filter = item("homeFilter");
+        filter->setProperty("text", QStringLiteral("kept"));
+        QTRY_COMPARE(list->property("count").toInt(), 1);
+        filter->setProperty("text", QStringLiteral("nothing like it"));
+        QTRY_VERIFY(item("homeNoRecent")->isVisible());
+        QCOMPARE(item("homeNoRecent")->property("text").toString(), QStringLiteral("No matching files"));
+        filter->setProperty("text", QString());
+        QTRY_COMPARE(list->property("count").toInt(), 2);
+        // Remove on the missing row.
+        QTRY_VERIFY(visualItem("homeRemove1"));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("homeRemove1"), "clicked"));
+        QTRY_COMPARE(list->property("count").toInt(), 1);
+        QCOMPARE(application->homeRecent().size(), qsizetype(1));
+        // The last one by Delete: the empty list says so, without the filter.
+        list->forceActiveFocus(Qt::TabFocusReason);
+        list->setProperty("currentIndex", 0);
+        press(Qt::Key_Delete);
+        QTRY_VERIFY(item("homeNoRecent")->isVisible());
+        QCOMPARE(item("homeNoRecent")->property("text").toString(), QStringLiteral("No recent files"));
+        QVERIFY(!filter->isVisible());
+    }
+
+    // SH2: keyboard. The list takes the focus with a file in it; Up and Down
+    // move, Enter opens, the Menu key opens the row's menu; Tab goes New →
+    // Open… → Open video… → (Restore) → Filter → the list.
+    void homePageKeyboard()
+    {
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("keys"))));
+        const QString a = writeFile(dir, "keys/a.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        const QString b = writeFile(dir, "keys/b.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,b\n");
+        QVERIFY(application->openFile(a));
+        QVERIFY(application->openFile(b)); // b first
+        QVERIFY(application->reviewCloseAll().isEmpty());
+        application->finishClose();
+        auto *list = item("homeRecentList");
+        QTRY_VERIFY(list->hasActiveFocus());
+        QCOMPARE(list->property("currentIndex").toInt(), 0);
+        QVERIFY(!visualItem("homeRowFocus")->isVisible()); // no ring until the keyboard moves
+        press(Qt::Key_Down);
+        QCOMPARE(list->property("currentIndex").toInt(), 1);
+        QTRY_VERIFY(findItem(visualItem("homeRecentRow1"), QStringLiteral("homeRowFocus"))->isVisible());
+        press(Qt::Key_Home);
+        QCOMPARE(list->property("currentIndex").toInt(), 0);
+        press(Qt::Key_End);
+        QCOMPARE(list->property("currentIndex").toInt(), 1);
+        // The row's menu.
+        press(Qt::Key_Menu);
+        QTRY_VERIFY(item<QObject>("homeRowMenu")->property("visible").toBool());
+        QVERIFY(item<QObject>("homeMenuOpen")->property("enabled").toBool());
+        QVERIFY(!item<QObject>("homeMenuRemoveMissing")->property("enabled").toBool());
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!item<QObject>("homeRowMenu")->property("visible").toBool());
+        // Backwards through the page.
+        list->forceActiveFocus(Qt::TabFocusReason);
+        const QStringList order{QStringLiteral("homeFilter"), QStringLiteral("homeOpenVideo"), QStringLiteral("homeOpen"),
+                                QStringLiteral("homeNew")};
+        for (const QString &name : order) {
+            press(Qt::Key_Tab, Qt::ShiftModifier);
+            QQuickItem *focused = window->activeFocusItem();
+            while (focused && focused->objectName().isEmpty())
+                focused = focused->parentItem();
+            QVERIFY(focused);
+            QCOMPARE(focused->objectName(), name);
+        }
+        // Enter opens the current file.
+        list->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Return);
+        QTRY_VERIFY(!item("homePage")->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("a.ass - HikariSub"));
+    }
+
+    // SH2: Last session with Restore, when the last session has a Document.
+    void homePageRestoresTheLastSession()
+    {
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("home-session"))));
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("home-session/hikari.ini"));
+        options.playbackAudio = false;
+        {
+            app::Application first(options);
+            QVERIFY(first.openFile(episode));
+        } // an orderly end writes the session
+        restartWith(options);
+        QTRY_VERIFY(item("homePage")->isVisible());
+        QTRY_VERIFY(item("homeSession")->isVisible());
+        QCOMPARE(item("homeSessionDocuments")->property("text").toString(), QStringLiteral("1 document · episode.ass"));
+        QVERIFY(QMetaObject::invokeMethod(item("homeRestore"), "clicked"));
+        QTRY_VERIFY(!item("homePage")->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("episode.ass - HikariSub"));
+        // After the last tab closes there is nothing left to restore.
+        QVERIFY(application->reviewCloseTab(0).isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(item("homePage")->isVisible());
+        QTRY_VERIFY(!item("homeSession")->isVisible());
+        restartWith(app::Application::Options());
+    }
+
+    // SH2: the Home page in the four themes, written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (home-<theme>.png), at 1280 ×
+    // 800 with a recent file, a missing one and the last session, and at 900
+    // × 680 (home-narrow-<theme>.png).
+    void homePageScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("shots"))));
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("shots/hikari.ini"));
+        options.playbackAudio = false;
+        const QString gone = writeFile(dir, "shots/Frieren - 26 signs.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,g\n");
+        {
+            app::Application first(options);
+            QVERIFY(first.openFile(gone));
+            QVERIFY(first.openFile(writeFile(dir, "shots/Dandadan OP karaoke.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,d\n")));
+            first.addPage();
+            QVERIFY(first.openFile(writeFile(dir, "shots/Frieren - 26 [1080p].ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,f\n")));
+            first.addPage();
+            QVERIFY(first.openFile(writeFile(dir, "shots/Frieren - 27 [1080p].ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,f\n")));
+        }
+        QVERIFY(QFile::remove(gone));
+        restartWith(options);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        for (const QSize size : {QSize(1280, 800), QSize(900, 680)}) {
+            window->resize(size);
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTRY_VERIFY(item("homeSession")->isVisible());
+                item("homeRecentList")->forceActiveFocus(Qt::TabFocusReason);
+                QTest::qWait(200);
+                const QString name = size.width() < 1000 ? QStringLiteral("/home-narrow-") : QStringLiteral("/home-");
+                QVERIFY(window->grabWindow().save(out + name + ui::theme::codeName(code) + QStringLiteral(".png")));
+            }
+        }
+        restartWith(app::Application::Options());
     }
 
     void labelsNameTheEditingTargetAndTheProtectedReference()
@@ -1502,6 +1753,64 @@ private slots:
         QCOMPARE(grid->rowStateText(0), QStringLiteral("changed, saved"));
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(state(0), 0);
+    }
+
+    // GR2: the Grid row shows the Line editor's draft as it is typed, with a
+    // triangle in place of the changed-Line circle; the Document, its
+    // history and the changed-Line state wait for the commit. Revert brings
+    // the committed text back; Save commits the draft.
+    void draftLinesShowLiveInTheGrid()
+    {
+        const QString copy = dir.filePath(QStringLiteral("draft.ass"));
+        QFile::remove(copy);
+        QVERIFY(QFile::copy(episode, copy));
+        QVERIFY(application->openFile(copy));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        auto *model = grid->model();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto shown = [&](int row) { return model->index(row, ui::LineTableModel::TextColumn).data().toString(); };
+        const auto drafted = [&](int row) { return model->index(row, 0).data(ui::LineTableModel::DraftRole).toBool(); };
+        const auto state = [&](int row) { return model->index(row, 0).data(ui::LineTableModel::LineStateRole).toInt(); };
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        const auto steps = session->historySize();
+        const auto revision = session->revision();
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, '!');
+        QTRY_COMPARE(shown(0), QStringLiteral("first!"));
+        QVERIFY(drafted(0));
+        QCOMPARE(grid->rowStateText(0), QStringLiteral("uncommitted"));
+        QTest::keyClick(window, '?');
+        QTRY_COMPARE(shown(0), QStringLiteral("first!?")); // every keystroke
+        QCOMPARE(session->historySize(), steps);
+        QCOMPARE(session->revision(), revision);
+        QCOMPARE(documentLineText(session, 0), QStringLiteral("first"));
+        QCOMPARE(state(0), 0);
+        QVERIFY(!drafted(1));
+        QCOMPARE(shown(1), QStringLiteral("second"));
+
+        // Revert: the committed text and no triangle.
+        QTest::qWait(separateKeyDelay);
+        press(Qt::Key_Escape);
+        QTRY_COMPARE(application->editor().text(), QStringLiteral("first"));
+        QTRY_VERIFY(!drafted(0));
+        QCOMPARE(shown(0), QStringLiteral("first"));
+        QCOMPARE(session->historySize(), steps);
+
+        // Save commits the draft (accepted policy): one step, the row no
+        // longer a draft, its Line changed and saved.
+        text->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, '!');
+        QTRY_VERIFY(drafted(0));
+        QVERIFY(application->editor().save());
+        application->waitForWrites();
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(documentLineText(session, 0), QStringLiteral("first!"));
+        QTRY_VERIFY(!drafted(0));
+        QCOMPARE(shown(0), QStringLiteral("first!"));
+        QTRY_COMPARE(state(0), 2);
     }
 
     void boldWrapsTheSelectionWithTagsHidden()
@@ -2620,14 +2929,14 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(editor, "closeManager"));
     }
 
-    // Y7: the Style editor's colour buttons (StyleChange::OnAllCols,
-    // StyleChange.cpp:335-399): a left click opens "Choose color" at the
-    // colour and its transparency, a right click the simple "Color picker",
-    // COLORPICKER_SWITCH_CLICKS swaps them; each change sets the button, the
-    // transparency and the preview at once; the type choice moves to another
-    // of the four colours; Cancel puts back the colour shown (lastColor), OK
-    // keeps the changes and adds the colour to the recent ones.
-    void styleEditorColoursUseTheLegacyPickers()
+    // Y7/SY2: the Style editor's colour buttons (StyleChange::OnAllCols,
+    // StyleChange.cpp:335-399) open the colour popover under the button:
+    // a left click at the colour and its transparency, a right click with
+    // the eyedropper started, COLORPICKER_SWITCH_CLICKS swapping them; each
+    // change sets the button, the transparency and the preview at once; Esc
+    // puts back the colour it opened with (lastColor), OK, Enter or a press
+    // outside keep the changes and add the colour to the recent ones.
+    void styleEditorColoursUseThePopover()
     {
         const QString path = dir.filePath(QStringLiteral("style-colours.ass"));
         {
@@ -2656,59 +2965,68 @@ private slots:
             return QList<int>{c.value(QStringLiteral("r")).toInt(), c.value(QStringLiteral("g")).toInt(),
                               c.value(QStringLiteral("b")).toInt(), c.value(QStringLiteral("a")).toInt()};
         };
-        auto *dialog = manager->findChild<QObject *>(QStringLiteral("styleColourDialog"));
-        QVERIFY(dialog);
-        auto *dialogContent = dialog->property("contentItem").value<QQuickItem *>();
+        auto *popover = manager->findChild<QObject *>(QStringLiteral("styleColourPopover"));
+        QVERIFY(popover);
+        auto *popoverContent = popover->property("contentItem").value<QQuickItem *>();
+        const auto inPopover = [&](const char *name) { return findItem(popoverContent, QLatin1String(name)); };
         auto &picker = application->colourPicker();
         picker.setSwitchClicks(false);
         QCOMPARE(colour(1), (QList<int>{0x10, 0x20, 0x30, 0x40}));
 
-        // Left click: "Choose color" at the colour and its transparency.
+        // Left click: the popover under the button, at the colour and its
+        // transparency, named after the colour it edits.
         QVERIFY(QMetaObject::invokeMethod(swatch(1), "click"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(!named("colourDialog")->property("visible").toBool());
-        QCOMPARE(dialog->property("red").toInt(), 0x10);
-        QCOMPARE(dialog->property("green").toInt(), 0x20);
-        QCOMPARE(dialog->property("blue").toInt(), 0x30);
-        QCOMPARE(dialog->property("alpha").toInt(), 0x40);
-        QCOMPARE(findItem(dialogContent, QStringLiteral("colourType"))->property("currentIndex").toInt(), 0);
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QCOMPARE(popover->property("anchor").value<QQuickItem *>(), swatch(1));
+        auto *frame = popover->property("background").value<QQuickItem *>();
+        QVERIFY(frame->mapToScene(QPointF(0, 0)).y() >= swatch(1)->mapToScene(QPointF(0, swatch(1)->height())).y());
+        QCOMPARE(QAccessible::queryAccessibleInterface(popoverContent)->text(QAccessible::Name), QStringLiteral("First"));
+        QVERIFY(!named("colourPopover")->property("visible").toBool());
+        QCOMPARE(popover->property("red").toInt(), 0x10);
+        QCOMPARE(popover->property("green").toInt(), 0x20);
+        QCOMPARE(popover->property("blue").toInt(), 0x30);
+        QCOMPARE(popover->property("alpha").toInt(), 0x40);
+        QVERIFY(inPopover("alpha")->isVisible());
+        QVERIFY(!popover->property("dropping").toBool());
         // COLOR_CHANGED: the button, the transparency and the preview at once.
         const int key = application->styleManager().previewKey();
-        QVERIFY(QMetaObject::invokeMethod(dialog, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
         QTRY_COMPARE(colour(1), (QList<int>{255, 0, 0, 0x40}));
         QVERIFY(application->styleManager().previewKey() > key);
-        auto *alpha = findItem(dialogContent, QStringLiteral("alpha"));
+        auto *alpha = inPopover("alpha");
         alpha->setProperty("value", 0x60);
         QVERIFY(QMetaObject::invokeMethod(alpha, "valueModified"));
         QTRY_COMPARE(findItem(content, QStringLiteral("styleAlpha1"))->property("value").toInt(), 0x60);
-        // COLOR_TYPE_CHANGED: the border colour with its transparency.
-        choose(findItem(dialogContent, QStringLiteral("colourType")), 2);
-        QCOMPARE(dialog->property("red").toInt(), 0);
-        QCOMPARE(dialog->property("alpha").toInt(), 0);
-        QVERIFY(QMetaObject::invokeMethod(dialog, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 255), Q_ARG(QVariant, 0)));
-        QTRY_COMPARE(colour(3), (QList<int>{0, 255, 0, 0}));
-        // Cancel puts back lastColor, the border's since the switch: the
-        // primary keeps its change.
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-        QTRY_COMPARE(colour(3), (QList<int>{0, 0, 0, 0}));
-        QCOMPARE(colour(1), (QList<int>{255, 0, 0, 0x60}));
-        // OK keeps the change and adds the colour to the recent ones.
+        // Esc puts back the colour it opened with.
+        QTest::keyClick(manager, Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTRY_COMPARE(colour(1), (QList<int>{0x10, 0x20, 0x30, 0x40}));
+        QCOMPARE(findItem(content, QStringLiteral("styleAlpha1"))->property("value").toInt(), 0x40);
+        QTRY_VERIFY(swatch(1)->hasActiveFocus()); // the keyboard back on the button
+
+        // Enter keeps the change and adds the colour to the recent ones.
         QVERIFY(QMetaObject::invokeMethod(swatch(4), "click"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialog->property("alpha").toInt(), 0x80);
-        QVERIFY(QMetaObject::invokeMethod(dialog, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 0), Q_ARG(QVariant, 255)));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(colour(4), (QList<int>{0, 0, 255, 0x80}));
-        const QVariantMap recent = picker.recent().first().toMap();
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QCOMPARE(popover->property("alpha").toInt(), 0x80);
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 0), Q_ARG(QVariant, 255)));
+        QTest::keyClick(manager, Qt::Key_Return);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTRY_COMPARE(colour(4), (QList<int>{0, 0, 255, 0x80}));
+        QVariantMap recent = picker.recent().first().toMap();
         QCOMPARE(recent.value(QStringLiteral("b")).toInt(), 255);
         QCOMPARE(recent.value(QStringLiteral("a")).toInt(), 0x80);
+        // A press outside keeps it too.
+        QVERIFY(QMetaObject::invokeMethod(swatch(3), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 255), Q_ARG(QVariant, 0)));
+        QTest::mouseClick(manager, Qt::LeftButton, Qt::NoModifier, QPoint(manager->width() - 4, 4));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTRY_COMPARE(colour(3), (QList<int>{0, 255, 0, 0}));
+        QCOMPARE(picker.recent().first().toMap().value(QStringLiteral("g")).toInt(), 255);
 
-        // Right click: the simple "Color picker" at the button's colour and
-        // the alpha the button was last given (0 at load), not the 0x50
-        // typed since (StyleChange.cpp:374); a pick sets the colour at once
-        // with that alpha.
+        // Right click: the popover with the eyedropper started, at the
+        // button's colour and the transparency typed since; a pick sets the
+        // colour at once with that transparency.
         auto *alpha2 = findItem(content, QStringLiteral("styleAlpha2"));
         alpha2->setProperty("value", 0x50);
         QVERIFY(QMetaObject::invokeMethod(alpha2, "valueModified"));
@@ -2721,46 +3039,211 @@ private slots:
             return image;
         });
         QTest::mouseClick(manager, Qt::RightButton, Qt::NoModifier, centreOf(swatch(2)));
-        QQuickWindow *simple = shellWindow("styleSimpleColourPicker");
-        QVERIFY(simple);
-        QTRY_VERIFY(simple->isVisible());
-        QVERIFY(!dialog->property("visible").toBool());
-        auto *hex = findItem(simple->contentItem(), QStringLiteral("hexColour"));
-        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H0000FF&"));
-        QCOMPARE(findItem(simple->contentItem(), QStringLiteral("simpleColourType"))->property("currentIndex").toInt(), 1);
-        sendMouse(simple, QEvent::MouseButtonPress, QPoint(-40, 10), Qt::RightButton, Qt::RightButton);
-        QTRY_COMPARE(colour(2), (QList<int>{0x10, 0x20, 0x30, 0}));
-        sendMouse(simple, QEvent::MouseButtonRelease, QPoint(-40, 10), Qt::RightButton, Qt::NoButton);
-        // The type choice: the primary colour with its transparency, then a
-        // pick sets it.
-        QVERIFY(QMetaObject::invokeMethod(findItem(simple->contentItem(), QStringLiteral("simpleColourType")), "activated",
-                                          Q_ARG(int, 0)));
-        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H0000FF&"));
-        sendMouse(simple, QEvent::MouseMove, QPoint(-40, 12), Qt::NoButton, Qt::RightButton);
-        QTRY_COMPARE(colour(1), (QList<int>{0x10, 0x20, 0x30, 0x60}));
-        // Cancel puts back the primary (lastColor); the secondary keeps its
-        // pick.
-        QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
-        QTRY_VERIFY(!simple->isVisible());
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QCOMPARE(popover->property("anchor").value<QQuickItem *>(), swatch(2));
+        QVERIFY(popover->property("dropping").toBool());
+        QVERIFY(sampler.tracking());
+        QCOMPARE(popover->property("alpha").toInt(), 0x50);
+        sendMouse(manager, QEvent::MouseMove, QPoint(-40, 10), Qt::NoButton, Qt::NoButton);
+        sendMouse(manager, QEvent::MouseButtonRelease, QPoint(-40, 10), Qt::RightButton, Qt::NoButton);
         QVERIFY(!sampler.tracking());
-        QCOMPARE(colour(1), (QList<int>{255, 0, 0, 0x60}));
-        QCOMPARE(colour(2), (QList<int>{0x10, 0x20, 0x30, 0}));
+        QTRY_COMPARE(colour(2), (QList<int>{0x10, 0x20, 0x30, 0x50}));
+        QVERIFY(QMetaObject::invokeMethod(popover, "reject"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTRY_COMPARE(colour(2), (QList<int>{255, 0, 0, 0x50}));
 
-        // Swapped: the left click opens the simple picker, the right click
-        // "Choose color".
+        // Swapped: the left click starts the eyedropper, the right click not.
         picker.setSwitchClicks(true);
         QVERIFY(QMetaObject::invokeMethod(swatch(1), "click"));
-        QTRY_VERIFY(simple->isVisible());
-        QVERIFY(!dialog->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
-        QTRY_VERIFY(!simple->isVisible());
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(popover->property("dropping").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "reject"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QVERIFY(!sampler.tracking());
         QTest::mouseClick(manager, Qt::RightButton, Qt::NoModifier, centreOf(swatch(1)));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(findItem(dialogContent, QStringLiteral("switchClicks"))->property("checked").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(!popover->property("dropping").toBool());
+        QVERIFY(inPopover("switchClicks")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "reject"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
         picker.setSwitchClicks(false);
-        QCOMPARE(colour(1), (QList<int>{255, 0, 0, 0x60}));
+        QCOMPARE(colour(1), (QList<int>{0x10, 0x20, 0x30, 0x40}));
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+    }
+
+    // SY3: the Style editor's font list draws each family in its own face,
+    // a family the font database lacks in the interface font; it makes rows
+    // only for what it shows, so a large font set opens and scrolls at once;
+    // while it is open the sample line shows the family under the keyboard.
+    // The sample line follows every field and its text is kept
+    // (STYLE_PREVIEW_TEXT, legacy StylePreview.cpp:136-141).
+    void styleEditorFontListAndLiveSample()
+    {
+        const QString path = dir.filePath(QStringLiteral("style-fonts.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *root = engine->rootObjects().first();
+        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *content = manager->contentItem();
+        auto &styles = application->styleManager();
+
+        // A large font set: the system's families, then names no font has,
+        // 6000 in all.
+        QStringList installed = QFontDatabase::families();
+        installed.removeIf([](const QString &f) { return QFontDatabase::isPrivateFamily(f); });
+        QVERIFY(!installed.isEmpty());
+        QStringList big = installed.mid(0, 40);
+        while (big.size() < 6000)
+            big << QStringLiteral("Not a font %1").arg(big.size());
+        auto *font = findItem(content, QStringLiteral("styleFont"));
+        const QString typed = font->property("editText").toString();
+        font->setProperty("model", big);
+        font->setProperty("editText", typed);
+        auto *faces = engine->singletonInstance<ui::FontFaces *>("Hikari.Ui", "FontFaces");
+        QVERIFY(faces);
+        const int looked = faces->lookups();
+        auto *popup = font->property("popup").value<QObject *>();
+        QElapsedTimer timer;
+        timer.start();
+        QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+        QTRY_VERIFY(popup->property("opened").toBool());
+        auto *list = popup->property("contentItem").value<QQuickItem *>();
+        QVERIFY(list);
+        // The rows the list made (its delegates, in the item tree).
+        const auto rowItems = [&] {
+            QList<QQuickItem *> found;
+            const std::function<void(QQuickItem *)> walk = [&](QQuickItem *it) {
+                for (auto *child : it->childItems()) {
+                    if (child->objectName() == QLatin1String("styleFontRow")) {
+                        if (child->isVisible())
+                            found << child;
+                    } else {
+                        walk(child);
+                    }
+                }
+            };
+            walk(list);
+            return found;
+        };
+        const auto rows = [&] { return int(rowItems().size()); };
+        QTRY_VERIFY(rows() > 0);
+        const qint64 openMs = timer.elapsed();
+        const int shown = rows();
+        QVERIFY2(shown < 120, qPrintable(QStringLiteral("%1 rows made for %2 families").arg(shown).arg(big.size())));
+        QVERIFY(faces->lookups() - looked < 120);
+        // To the end and back: still a screenful.
+        timer.restart();
+        QVERIFY(QMetaObject::invokeMethod(list, "positionViewAtEnd"));
+        QTRY_VERIFY(rows() > 0);
+        QVERIFY(QMetaObject::invokeMethod(list, "positionViewAtBeginning"));
+        QTRY_VERIFY(rows() > 0);
+        qInfo("SY3 font list: %lld families, %d rows, %lld ms to open, %lld ms to the end and back", qlonglong(big.size()),
+              shown, qlonglong(openMs), qlonglong(timer.elapsed()));
+        QVERIFY(rows() < 120);
+        // Each row in its own face; a name no font has in the interface font.
+        QQuickItem *first = nullptr;
+        QQuickItem *unknown = nullptr;
+        for (auto *row : rowItems()) {
+            const QString family = row->property("family").toString();
+            if (family == big.first())
+                first = row;
+            else if (family.startsWith(QStringLiteral("Not a font")) && !unknown)
+                unknown = row;
+        }
+        QVERIFY(first);
+        const QVariantMap face = faces->face(big.first());
+        auto *name = findItem(first, QStringLiteral("fontFamilyName"));
+        if (face.value(QStringLiteral("sample")).toString().isEmpty())
+            QCOMPARE(name->property("font").value<QFont>().family(), big.first());
+        QCOMPARE(QAccessible::queryAccessibleInterface(first)->text(QAccessible::Name), big.first());
+        QVERIFY(QMetaObject::invokeMethod(list, "positionViewAtIndex", Q_ARG(int, 100), Q_ARG(int, 0)));
+        QTRY_VERIFY([&] {
+            for (auto *row : rowItems())
+                if (row->isVisible() && row->property("family").toString().startsWith(QStringLiteral("Not a font")))
+                    return (unknown = row) != nullptr;
+            return false;
+        }());
+        QCOMPARE(findItem(unknown, QStringLiteral("fontFamilyName"))->property("font").value<QFont>().family(),
+                 unknown->property("font").value<QFont>().family());
+
+        // A refresh of the fonts: the faces asked again.
+        const int revision = faces->revision();
+        application->fontCatalogs().refreshFonts();
+        QTRY_VERIFY(faces->revision() > revision);
+        QTRY_VERIFY(rows() > 0);
+
+        // The open list: the sample line shows the family highlighted.
+        // (With the list open the arrows move the highlight, not the choice.)
+        // No hover: the rows scrolled under a pointer resting over the list
+        // would move the highlight (CI's virtual screens).
+        font->setProperty("hoverEnabled", false);
+        int key = styles.previewKey();
+        QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
+        QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
+        QVERIFY(font->property("highlightedIndex").toInt() >= 0);
+        QTRY_VERIFY(styles.previewKey() > key);
+        QCOMPARE(font->property("editText").toString(), typed); // nothing chosen yet
+        QVariant browsed;
+        QVERIFY(QMetaObject::invokeMethod(font, "browsedFont", Q_RETURN_ARG(QVariant, browsed)));
+        // The list as the refresh above rebuilt it, not `big`.
+        QString highlighted;
+        QVERIFY(QMetaObject::invokeMethod(font, "textAt", Q_RETURN_ARG(QString, highlighted),
+                                          Q_ARG(int, font->property("highlightedIndex").toInt())));
+        QVERIFY(!highlighted.isEmpty());
+        QCOMPARE(browsed.toString(), highlighted);
+        key = styles.previewKey();
+        QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QTRY_VERIFY(styles.previewKey() > key); // back to the typed font
+        QVERIFY(QMetaObject::invokeMethod(font, "browsedFont", Q_RETURN_ARG(QVariant, browsed)));
+        QCOMPARE(browsed.toString(), QString());
+
+        // Every field refreshes the sample line, the margins and the
+        // encoding included.
+        for (const char *field : {"styleSize", "styleOutline", "styleShadow", "styleScaleX", "styleScaleY", "styleAngle",
+                                  "styleSpacing", "styleMarginLeft", "styleMarginRight", "styleMarginVertical", "styleName"}) {
+            auto *f = findItem(content, QLatin1String(field));
+            QVERIFY2(f, field);
+            key = styles.previewKey();
+            QVERIFY2(QMetaObject::invokeMethod(f, "textEdited"), field);
+            QVERIFY2(styles.previewKey() > key, field);
+        }
+        for (const char *box : {"styleBold", "styleOpaqueBox"}) {
+            key = styles.previewKey();
+            QVERIFY2(QMetaObject::invokeMethod(findItem(content, QLatin1String(box)), "toggled"), box);
+            QVERIFY2(styles.previewKey() > key, box);
+        }
+        auto *encoding = findItem(content, QStringLiteral("styleEncoding"));
+        QVERIFY(encoding);
+        key = styles.previewKey();
+        QVERIFY(QMetaObject::invokeMethod(encoding, "activated", Q_ARG(int, 0)));
+        QVERIFY(styles.previewKey() > key);
+
+        // The sample line's text: each keystroke refreshes it, and it is kept.
+        auto *sample = findItem(content, QStringLiteral("stylePreviewText"));
+        QVERIFY(sample);
+        key = styles.previewKey();
+        sample->setProperty("text", QStringLiteral("Sample ąę 日本"));
+        QVERIFY(QMetaObject::invokeMethod(sample, "textEdited"));
+        QVERIFY(styles.previewKey() > key);
+        QVERIFY(QMetaObject::invokeMethod(sample, "editingFinished"));
+        QCOMPARE(application->settingsStore()->text("styles.previewText"), QStringLiteral("Sample ąę 日本"));
+        QCOMPARE(application->fontCatalogs().previewText(), QStringLiteral("Sample ąę 日本"));
         QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
     }
 
@@ -2978,7 +3461,11 @@ private slots:
 #endif
     }
 
-    void colourPickerSetsColourAndAlphaAndRemembersIt()
+    // SY2: the Line editor's colour buttons open the colour popover under
+    // the button; each change tags the text at once, OK, Enter or a press
+    // outside keep it and remember the colour, Esc takes it back, and the
+    // keyboard returns to the text field.
+    void colourPopoverSetsColourAndAlphaAndRemembersIt()
     {
         QVERIFY(application->openFile(episode)); // "first" and "second", no Styles
         auto *session = application->files().session(*application->workspace().editingTarget());
@@ -2987,68 +3474,104 @@ private slots:
         auto *text = item("lineText");
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
         application->editor().setShowTags(true);
-        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("colourDialog"));
-        QVERIFY(dialog);
+        auto *popover = named("colourPopover");
+        QVERIFY(popover);
         text->forceActiveFocus();
         text->setProperty("cursorPosition", 0);
         QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour3"), "click"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialog->property("red").toInt(), 255); // white without a Style
-        QVERIFY(QMetaObject::invokeMethod(dialog, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QCOMPARE(popover->property("anchor").value<QQuickItem *>(), visualItem("changeColour3"));
+        auto *popoverContent = popover->property("contentItem").value<QQuickItem *>();
+        QCOMPARE(QAccessible::queryAccessibleInterface(popoverContent)->text(QAccessible::Name), QStringLiteral("Border color"));
+        QCOMPARE(popover->property("red").toInt(), 255); // white without a Style
+        QCOMPARE(dialogItem("colourPopover", "hexColour")->property("text").toString(), QStringLiteral("#FFFFFF"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\3c&H0000FF&}first"));
-        auto *alpha = dialogItem("colourDialog", "alpha");
+        auto *alpha = dialogItem("colourPopover", "alpha");
         QVERIFY(alpha);
         alpha->setProperty("value", 128);
         QVERIFY(QMetaObject::invokeMethod(alpha, "valueModified"));
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\3a&H80&\\3c&H0000FF&}first"));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-        const auto recent = application->colourPicker().recent();
+        QVERIFY(QMetaObject::invokeMethod(popover, "accept"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTRY_VERIFY(text->hasActiveFocus());
+        auto recent = application->colourPicker().recent();
         QCOMPARE(recent.first().toMap().value(QStringLiteral("r")).toInt(), 255);
         QCOMPARE(recent.first().toMap().value(QStringLiteral("a")).toInt(), 128);
         QCOMPARE(application->colourPicker().storeToString().section(QLatin1Char(' '), 0, 0), QStringLiteral("&H800000FF&"));
 
-        // Several Lines: each change is one step on all of them; Cancel undoes it.
+        // Esc takes the change back.
+        const QString kept = text->property("text").toString();
+        text->setProperty("cursorPosition", 0);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 0), Q_ARG(QVariant, 255)));
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&HFF0000&")));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTRY_COMPARE(text->property("text").toString(), kept);
+        QTRY_VERIFY(text->hasActiveFocus());
+        // The hex field: typed, it sets the colour; Enter there keeps it.
+        text->setProperty("cursorPosition", 0);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        auto *hex = dialogItem("colourPopover", "hexColour");
+        hex->forceActiveFocus();
+        hex->setProperty("text", QStringLiteral("not a colour"));
+        QVERIFY(QMetaObject::invokeMethod(hex, "editingFinished"));
+        QCOMPARE(popover->property("red").toInt(), 255); // unreadable: unchanged
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("#FFFFFF"));
+        hex->setProperty("text", QStringLiteral("#00ff80"));
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H80FF00&")));
+        QCOMPARE(application->colourPicker().recent().first().toMap().value(QStringLiteral("g")).toInt(), 255);
+        // The ASS form is read too, and a press outside keeps the colour.
+        text->setProperty("cursorPosition", 0);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        hex->setProperty("text", QStringLiteral("&H00FFFF&"));
+        QVERIFY(QMetaObject::invokeMethod(hex, "editingFinished"));
+        QCOMPARE(popover->property("red").toInt(), 255);
+        QCOMPARE(popover->property("green").toInt(), 255);
+        QCOMPARE(popover->property("blue").toInt(), 0);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(item("editingGrid")));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H00FFFF&")));
+        QVERIFY(QMetaObject::invokeMethod(item("lineText"), "forceActiveFocus"));
+
+        // Several Lines: each change is one step on all of them; Esc undoes it.
         QVERIFY(application->editor().commit());
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_A, Qt::ControlModifier);
         const auto steps = session->historySize();
         QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 255), Q_ARG(QVariant, 0)));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 255), Q_ARG(QVariant, 0)));
         QTRY_COMPARE(session->historySize(), steps + 1);
         QCOMPARE(session->history().back().name, std::string("Editing multiple lines"));
         const auto lines = session->document().lines();
         QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(lines[1]->text.data()), qsizetype(lines[1]->text.size())),
                  QStringLiteral("{\\1c&H00FF00&}second"));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "reject"));
         QTRY_COMPARE(session->historyCursor(), steps - 1);
         QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->document().lines()[1]->text.data())),
                  QStringLiteral("second"));
     }
 
-    // Y7: a window of the shell by its name.
-    static QQuickWindow *shellWindow(const char *name)
-    {
-        for (QWindow *w : QGuiApplication::allWindows())
-            if (w->objectName() == QLatin1String(name))
-                return qobject_cast<QQuickWindow *>(w);
-        return nullptr;
-    }
     static void sendMouse(QWindow *w, QEvent::Type type, QPoint local, Qt::MouseButton button, Qt::MouseButtons buttons)
     {
         QMouseEvent event(type, QPointF(local), QPointF(w->mapToGlobal(local)), button, buttons, Qt::NoModifier);
         QCoreApplication::sendEvent(w, &event);
     }
-    // Y7: the colour buttons' right click opens the simple "Color picker"
-    // (EditBox::AllColorClick, EditBox.cpp:862-919; SimpleColorPickerDialog,
-    // ColorPicker.cpp:1374-1533): a right press outside it picks the screen
-    // pixel under the pointer into the text at once, the release moves the
-    // window to the pointer, the type choice adds the colour to the recent
-    // ones, OK adds it again through the option text (no "Choose color"
-    // exists yet), Cancel takes the change back; COLORPICKER_SWITCH_CLICKS
-    // swaps the clicks; without a screen route the picker says why.
-    void simpleColourPickerPicksFromTheScreen()
+    // SY2: the colour buttons' right click (legacy's simple "Color picker",
+    // EditBox::AllColorClick, EditBox.cpp:862-919) opens the popover with
+    // the eyedropper started: a move captures the screen around the
+    // pointer, a right release picks its centre into the text at once; Esc
+    // takes it back; COLORPICKER_SWITCH_CLICKS swaps the clicks; without a
+    // screen route the eyedropper is off and says why; on the portal route
+    // the desktop is asked at once.
+    void rightClickPicksFromTheScreen()
     {
         QVERIFY(application->openFile(episode)); // "first" and "second", no Styles
         item("editingGrid")->forceActiveFocus();
@@ -3063,172 +3586,286 @@ private slots:
             image.fill(qRgb(0x10, 0x20, 0x30));
             return image;
         });
-        auto *settings = application->settingsStore();
-        settings->set("colourPicker.recentColours", QStringLiteral("&H000000FF&"));
-        application->colourPicker().loadFromString(QStringLiteral("&H000000FF&"));
+        auto *popover = named("colourPopover");
         text->forceActiveFocus();
         text->setProperty("cursorPosition", 0);
 
         QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour3")));
-        QQuickWindow *simple = shellWindow("simpleColourPicker");
-        QVERIFY(simple);
-        QTRY_VERIFY(simple->isVisible());
-        QVERIFY(!named("colourDialog")->property("visible").toBool());
-        auto *hex = findItem(simple->contentItem(), QStringLiteral("hexColour"));
-        QCOMPARE(hex->property("text").toString(), QStringLiteral("&HFFFFFF&")); // white without a Style
-        QVERIFY(sampler.tracking()); // OnShow: CaptureMouse
-
-        // A right press outside picks the centre pixel at once.
-        sendMouse(simple, QEvent::MouseButtonPress, QPoint(-40, 10), Qt::RightButton, Qt::RightButton);
-        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\3c&H302010&}first"));
-        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
-        // The release moves the window to the pointer (MoveToMousePosition).
-        const QPoint pointer = simple->mapToGlobal(QPoint(-40, 10));
-        sendMouse(simple, QEvent::MouseButtonRelease, QPoint(-40, 10), Qt::RightButton, Qt::NoButton);
-        const QRect area = sampler.availableGeometryAt(pointer.x(), pointer.y());
-        // wxWindow::GetSize and Move: the frame included.
-        const QRect frame = simple->frameGeometry();
-        const int expectedX = std::max(area.x(), std::min(pointer.x() - frame.width() / 2, area.right() + 1 - frame.width()));
-        QTRY_COMPARE(simple->frameGeometry().x(), expectedX);
-        int expectedY = pointer.y() + 15;
-        if (expectedY + frame.height() > area.bottom() + 1) {
-            expectedY -= frame.height() + 30;
-            if (expectedY < area.y())
-                expectedY = area.bottom() + 1 - frame.height();
-        }
-        QCOMPARE(simple->frameGeometry().y(), expectedY);
-        // Events over the window are its own: no pick.
-        sendMouse(simple, QEvent::MouseButtonPress, QPoint(2, 2), Qt::RightButton, Qt::RightButton);
-        sendMouse(simple, QEvent::MouseButtonRelease, QPoint(2, 2), Qt::RightButton, Qt::NoButton);
-        QCOMPARE(text->property("text").toString(), QStringLiteral("{\\3c&H302010&}first"));
-
-        // The type choice: AddRecent (through the option text), then the
-        // shadow colour in effect, alpha included, without a text change.
-        auto *type = findItem(simple->contentItem(), QStringLiteral("simpleColourType"));
-        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 3)));
-        QCOMPARE(settings->text("colourPicker.recentColours"), QStringLiteral("&H00302010& &H000000FF&"));
-        QCOMPARE(hex->property("text").toString(), QStringLiteral("&HFFFFFF&"));
-        QCOMPARE(text->property("text").toString(), QStringLiteral("{\\3c&H302010&}first"));
-        // A pick now tags the shadow colour.
-        sendMouse(simple, QEvent::MouseMove, QPoint(-40, 10), Qt::NoButton, Qt::RightButton);
-        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\4c&H302010&")));
-        // Y7-simple-picker-type: the choice takes the colour in effect as
-        // the reset of later picks. The shadow chosen again is &H302010&; a
-        // white pick now tags it (legacy kept the white the picker opened
-        // with as the reset, saw no change and wrote nothing).
-        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 3)));
-        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
-        // Y7-recent-option-text: the same colour again stays first, one space
-        // apart (legacy left "&H00302010&  &H000000FF&").
-        QCOMPARE(settings->text("colourPicker.recentColours"), QStringLiteral("&H00302010& &H000000FF&"));
-        sampler.setSource([](QPoint) {
-            QImage image(7, 7, QImage::Format_RGB32);
-            image.fill(qRgb(0xff, 0xff, 0xff));
-            return image;
-        });
-        sendMouse(simple, QEvent::MouseMove, QPoint(-40, 12), Qt::NoButton, Qt::RightButton);
-        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\4c&HFFFFFF&\\3c&H302010&}first"));
-        QCOMPARE(hex->property("text").toString(), QStringLiteral("&HFFFFFF&"));
-        QVERIFY(QMetaObject::invokeMethod(simple, "accept"));
-        QTRY_VERIFY(!simple->isVisible());
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QCOMPARE(popover->property("anchor").value<QQuickItem *>(), visualItem("changeColour3"));
+        QVERIFY(popover->property("dropping").toBool());
+        QVERIFY(sampler.tracking());
+        QVERIFY(dialogItem("colourPopover", "screenDropper")->isVisible()); // the 7x7 view while dropping
+        QCOMPARE(dialogItem("colourPopover", "hexColour")->property("text").toString(), QStringLiteral("#FFFFFF"));
+        sendMouse(window, QEvent::MouseMove, QPoint(-40, 10), Qt::NoButton, Qt::NoButton);
+        sendMouse(window, QEvent::MouseButtonRelease, QPoint(-40, 10), Qt::RightButton, Qt::NoButton);
         QVERIFY(!sampler.tracking());
-        QCOMPARE(settings->text("colourPicker.recentColours"), QStringLiteral("&H00FFFFFF& &H00302010& &H000000FF&"));
-        sampler.setSource([](QPoint) {
-            QImage image(7, 7, QImage::Format_RGB32);
-            image.fill(qRgb(0x10, 0x20, 0x30));
-            return image;
-        });
-
-        // Cancel takes the picker's changes back.
-        QVERIFY(application->editor().commit());
-        const QString committed = text->property("text").toString();
-        text->forceActiveFocus();
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\3c&H302010&}first"));
+        QCOMPARE(dialogItem("colourPopover", "hexColour")->property("text").toString(), QStringLiteral("#102030"));
+        // Esc takes the pick back.
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        // A right press (the old window's pick) over the shell does not pick:
+        // the release does.
         text->setProperty("cursorPosition", 0);
         QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
-        QTRY_VERIFY(simple->isVisible());
-        sendMouse(simple, QEvent::MouseButtonPress, QPoint(-40, 10), Qt::RightButton, Qt::RightButton);
-        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H302010&")));
-        QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
-        QTRY_VERIFY(!simple->isVisible());
-        QTRY_COMPARE(text->property("text").toString(), committed);
+        QTRY_VERIFY(sampler.tracking());
+        sendMouse(window, QEvent::MouseButtonPress, QPoint(-40, 10), Qt::RightButton, Qt::RightButton);
+        QCOMPARE(text->property("text").toString(), QStringLiteral("first"));
+        sendMouse(window, QEvent::MouseButtonRelease, QPoint(-40, 10), Qt::RightButton, Qt::NoButton);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\1c&H302010&}first"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "accept"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(application->colourPicker().recent().first().toMap().value(QStringLiteral("r")).toInt(), 0x10);
 
-        // Swapped: the left click opens the simple picker, the right click
-        // "Choose color".
+        // Swapped: the left click starts the eyedropper, the right click not.
         application->colourPicker().setSwitchClicks(true);
         QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
-        QTRY_VERIFY(simple->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
-        QTRY_VERIFY(!simple->isVisible());
-        auto *dialog = named("colourDialog");
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(sampler.tracking());
+        QVERIFY(QMetaObject::invokeMethod(popover, "reject"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QVERIFY(!sampler.tracking());
         QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(dialogItem("colourDialog", "switchClicks")->property("checked").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-
-        // Without a route (Wayland without the portal) nothing is sampled and
-        // the picker says why.
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(!sampler.tracking());
+        QVERIFY(QMetaObject::invokeMethod(popover, "reject"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
         application->colourPicker().setSwitchClicks(false);
+
+        // Without a route (Wayland without the portal) nothing is sampled:
+        // the eyedropper is off, its tooltip and description say why, and
+        // under More… the reason is shown.
         sampler.setRoute(ui::ScreenSampler::routeFor(QStringLiteral("wayland"), true, false));
         QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
-        QTRY_VERIFY(simple->isVisible());
+        QTRY_VERIFY(popover->property("visible").toBool());
         QVERIFY(!sampler.tracking());
-        auto *note = findItem(simple->contentItem(), QStringLiteral("simpleDropperUnavailable"));
-        QVERIFY(note->isVisible());
+        auto *eyedropper = dialogItem("colourPopover", "eyedropper");
+        QVERIFY(!eyedropper->isEnabled());
+        QCOMPARE(QAccessible::queryAccessibleInterface(eyedropper)->text(QAccessible::Description), sampler.unavailableReason());
+        auto *note = dialogItem("colourPopover", "dropperUnavailable");
+        QVERIFY(!note->isVisible());
+        popover->setProperty("expanded", true);
+        QTRY_VERIFY(note->isVisible());
         QCOMPARE(note->property("text").toString(), sampler.unavailableReason());
-        QVERIFY(!findItem(simple->contentItem(), QStringLiteral("moveWindow"))->isEnabled());
-        QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
-        QTRY_VERIFY(!simple->isVisible());
+        popover->setProperty("expanded", false);
+        QVERIFY(QMetaObject::invokeMethod(popover, "reject"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
 
-        // The portal route (Wayland): no pointer capture, the move box off,
-        // and a "Pick a colour from the screen" button asking the desktop,
-        // whose pick tags the text at once; a cancel leaves the picker no
-        // longer waiting, so a later answer to another ask is not its own; a
-        // failure shows until the next ask.
+        // The portal route (Wayland): the right click asks the desktop at
+        // once and takes no pointer; its pick tags the text; a cancel leaves
+        // the popover no longer waiting; a failure shows until the next ask.
         int asked = 0;
         sampler.setPortalRequest([&] { ++asked; });
         sampler.setRoute({QStringLiteral("portal"), {}});
         const QString before = text->property("text").toString();
+        text->setProperty("cursorPosition", 0);
         QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
-        QTRY_VERIFY(simple->isVisible());
-        QVERIFY(!sampler.tracking());
-        QVERIFY(note->property("text").toString().isEmpty());
-        QVERIFY(!findItem(simple->contentItem(), QStringLiteral("moveWindow"))->isEnabled());
-        auto *portalPick = findItem(simple->contentItem(), QStringLiteral("simplePortalPick"));
-        QVERIFY(portalPick->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(portalPick, "clicked"));
+        QTRY_VERIFY(popover->property("visible").toBool());
         QCOMPARE(asked, 1);
-        QVERIFY(!portalPick->isEnabled());
+        QVERIFY(!sampler.tracking());
+        QVERIFY(!eyedropper->isEnabled()); // busy
         sampler.answerPortal(0, 0x20 / 255.0, 0x40 / 255.0, 0x60 / 255.0);
-        QVERIFY(portalPick->isEnabled());
+        QVERIFY(eyedropper->isEnabled());
         QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H604020&")));
-        QVERIFY(QMetaObject::invokeMethod(portalPick, "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "startDropper"));
         sampler.answerPortal(1);
-        QVERIFY(!simple->property("portalAsked").toBool());
-        QVERIFY(QMetaObject::invokeMethod(portalPick, "clicked"));
+        QVERIFY(!popover->property("portalAsked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "startDropper"));
         sampler.failPortalCall(QStringLiteral("No such interface"));
+        QTRY_VERIFY(note->isVisible());
         QCOMPARE(note->property("text").toString(), QStringLiteral("No such interface"));
-        QVERIFY(QMetaObject::invokeMethod(portalPick, "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "startDropper"));
         QVERIFY(note->property("text").toString().isEmpty());
         sampler.answerPortal(1);
         QCOMPARE(asked, 4);
         sampler.setPortalRequest({});
-        QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
-        QTRY_VERIFY(!simple->isVisible());
-        QCOMPARE(text->property("text").toString(), before);
+        QVERIFY(QMetaObject::invokeMethod(popover, "reject"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTRY_COMPARE(text->property("text").toString(), before);
     }
 
-    // Y7-simple-picker-type (approved departure): on a line format (one
-    // colour, no colour types) the simple picker's type choice keeps the
-    // colour it shows, and the recent colour it adds is that colour. Legacy
-    // read the colour into a fresh AssColor that GetColor never sets below
-    // ASS (EditBox.cpp:908-912, 932-953), so the picker turned black and its
-    // next type choice added black to the recent colours.
-    void simpleColourPickerKeepsTheColourOnLineFormats()
+    // SY2: Enter in any of the popover's editors (Hex, ASS, HTML, the
+    // RGB, HSL and HSV values, Alpha) takes the typed value and keeps it,
+    // closing the popover as Enter does anywhere in it.
+    void colourPopoverEnterInEveryEditorKeeps()
     {
-        // MicroDVD: a line format whose colour is markup ({C:BBGGRR}); SRT
-        // takes no colour (E1-nonass-font).
-        const QString path = dir.filePath(QStringLiteral("simple-colour.sub"));
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        application->editor().setShowTags(true);
+        auto *popover = named("colourPopover");
+        const auto in = [&](const char *name) { return dialogItem("colourPopover", name); };
+        popover->setProperty("expanded", true);
+        // The field's own text input: the item that takes the keys.
+        const auto input = [](QQuickItem *field) {
+            QQuickItem *edit = field;
+            const QVariant content = field->property("contentItem");
+            if (auto *c = content.value<QQuickItem *>(); c && c->property("cursorPosition").isValid())
+                edit = c;
+            return edit;
+        };
+        // Each field, what is typed, and the popover value it gives.
+        struct Case { const char *field; const char *typed; const char *property; int value; };
+        const QList<Case> cases{
+            {"hexColour", "#102030", "blue", 0x30},
+            {"assText", "&H405060&", "red", 0x60},
+            {"htmlText", "#708090", "green", 0x80},
+            {"red", "17", "red", 17},
+            {"hslHue", "9", "hslHue", 9},
+            {"hsvValue", "34", "hsvValue", 34},
+            {"alpha", "80", "alpha", 80},
+        };
+        const auto hex2 = [](int v) { return QStringLiteral("%1").arg(v, 2, 16, QLatin1Char('0')).toUpper(); };
+        for (const auto &c : cases) {
+            text->forceActiveFocus();
+            text->setProperty("cursorPosition", 0);
+            QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+            QTRY_VERIFY(popover->property("visible").toBool());
+            const QByteArray field(c.field);
+            if (field.startsWith("hsl"))
+                QVERIFY(QMetaObject::invokeMethod(in("modeHsl"), "click"));
+            else if (field.startsWith("hsv"))
+                QVERIFY(QMetaObject::invokeMethod(in("modeHsv"), "click"));
+            else if (field == "red")
+                QVERIFY(QMetaObject::invokeMethod(in("modeRgb"), "click"));
+            auto *edit = input(in(c.field));
+            QTRY_VERIFY(edit->isVisible());
+            edit->forceActiveFocus();
+            QTRY_VERIFY(edit->hasActiveFocus());
+            edit->setProperty("text", QString::fromLatin1(c.typed));
+            QTest::keyClick(window, Qt::Key_Return);
+            QTRY_VERIFY2(!popover->property("visible").toBool(), c.field);
+            QCOMPARE(popover->property(c.property).toInt(), c.value);
+            // The Line has the colour kept.
+            const int r = popover->property("red").toInt(), g = popover->property("green").toInt(),
+                      b = popover->property("blue").toInt();
+            const QString tag = field == "alpha" ? QStringLiteral("\\1a&H%1&").arg(hex2(c.value))
+                                                 : QStringLiteral("\\1c&H%1%2%3&").arg(hex2(b), hex2(g), hex2(r));
+            QTRY_VERIFY2(text->property("text").toString().contains(tag),
+                         qPrintable(QStringLiteral("%1: %2 lacks %3").arg(field, text->property("text").toString(), tag)));
+        }
+        // Enter on a palette swatch picks it and keeps it, as elsewhere.
+        text->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QCOMPARE(popover->property("popupType").toInt(), 0); // in the main window
+        auto *paletteGrid = in("palette");
+        paletteGrid->forceActiveFocus(Qt::TabFocusReason);
+        paletteGrid->setProperty("current", 5); // red
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(popover->property("red").toInt(), 255);
+        QCOMPARE(popover->property("green").toInt(), 0);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H0000FF&")));
+        QCOMPARE(application->colourPicker().recent().value(0).toMap().value(QStringLiteral("r")).toInt(), 255);
+        // A press outside keeps a value still being typed too.
+        text->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(in("modeRgb"), "click"));
+        auto *green = input(in("green"));
+        green->forceActiveFocus();
+        QTRY_VERIFY(green->hasActiveFocus());
+        green->setProperty("text", QStringLiteral("66"));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(item("editingGrid")));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(popover->property("green").toInt(), 66);
+        const QString kept = QStringLiteral("\\1c&H%1%2%3&").arg(hex2(popover->property("blue").toInt()), hex2(66),
+                                                                 hex2(popover->property("red").toInt()));
+        QTRY_VERIFY2(text->property("text").toString().contains(kept), qPrintable(text->property("text").toString()));
+    }
+
+    // SY2: a colour action while the popover is open (a colour hotkey, or
+    // another Style editor swatch): the colour open before ends, kept, and
+    // only then the next edit begins, so each change reaches its own colour.
+    void colourPopoverReopenedEndsTheOneBefore()
+    {
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        application->editor().setShowTags(true);
+        application->colourPicker().setSwitchClicks(false);
+        auto *root = engine->rootObjects().first();
+        auto *popover = named("colourPopover");
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        // A change still waiting to be applied, then the border colour.
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(root, "colourClick", Q_ARG(QVariant, 3), Q_ARG(QVariant, true),
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(text))));
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H0000FF&")));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QCOMPARE(popover->property("anchor").value<QQuickItem *>(), visualItem("changeColour3"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 255), Q_ARG(QVariant, 0)));
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\3c&H00FF00&")));
+        // Esc takes back the border colour's change only.
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTRY_VERIFY(!text->property("text").toString().contains(QStringLiteral("\\3c")));
+        QVERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H0000FF&")));
+    }
+    // The same in the Style editor: the next swatch's change reaches that
+    // swatch, and Esc takes back that one only.
+    void stylePopoverReopenedEndsTheOneBefore()
+    {
+        auto *root = engine->rootObjects().first();
+        const QString path = dir.filePath(QStringLiteral("reopen.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *content = manager->contentItem();
+        const auto colour = [&](int n) {
+            const QVariantMap c = findItem(content, QStringLiteral("styleColour%1").arg(n))->parentItem()->property("colour").toMap();
+            return QList<int>{c.value(QStringLiteral("r")).toInt(), c.value(QStringLiteral("g")).toInt(),
+                              c.value(QStringLiteral("b")).toInt()};
+        };
+        auto *stylePopover = manager->findChild<QObject *>(QStringLiteral("styleColourPopover"));
+        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("styleColour1")), "click"));
+        QTRY_VERIFY(stylePopover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(stylePopover, "setRgb", Q_ARG(QVariant, 1), Q_ARG(QVariant, 2), Q_ARG(QVariant, 3)));
+        QVERIFY(QMetaObject::invokeMethod(manager, "colourClick", Q_ARG(QVariant, 2), Q_ARG(QVariant, true)));
+        QTRY_COMPARE(colour(1), (QList<int>{1, 2, 3}));
+        QTRY_VERIFY(stylePopover->property("visible").toBool());
+        QCOMPARE(stylePopover->property("red").toInt(), 255); // the second colour, &H000000FF
+        QVERIFY(QMetaObject::invokeMethod(stylePopover, "setRgb", Q_ARG(QVariant, 4), Q_ARG(QVariant, 5), Q_ARG(QVariant, 6)));
+        QTRY_COMPARE(colour(2), (QList<int>{4, 5, 6}));
+        QCOMPARE(colour(1), (QList<int>{1, 2, 3}));
+        QTest::keyClick(manager, Qt::Key_Escape);
+        QTRY_VERIFY(!stylePopover->property("visible").toBool());
+        QTRY_COMPARE(colour(2), (QList<int>{255, 0, 0}));
+        QCOMPARE(colour(1), (QList<int>{1, 2, 3}));
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+    }
+
+    // SY2 on a line format (MicroDVD: one colour, written as {C:BBGGRR};
+    // SRT takes no colour, E1-nonass-font): a change writes the markup at
+    // once and Esc takes it back.
+    void colourPopoverOnLineFormats()
+    {
+        const QString path = dir.filePath(QStringLiteral("popover-colour.sub"));
         {
             QFile f(path);
             QVERIFY(f.open(QIODevice::WriteOnly));
@@ -3240,59 +3877,36 @@ private slots:
         auto *text = item("lineText");
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
         application->editor().setShowTags(true);
-        auto &sampler = *application->colourPicker().sampler();
-        sampler.setRoute({QStringLiteral("grab"), {}});
-        sampler.setSource([](QPoint) {
-            QImage image(7, 7, QImage::Format_RGB32);
-            image.fill(qRgb(0x10, 0x20, 0x30));
-            return image;
-        });
-        auto *settings = application->settingsStore();
-        settings->set("colourPicker.recentColours", QStringLiteral("&H000000FF&"));
-        application->colourPicker().loadFromString(QStringLiteral("&H000000FF&"));
+        auto *popover = named("colourPopover");
         text->forceActiveFocus();
         text->setProperty("cursorPosition", 0);
-
-        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
-        QQuickWindow *simple = shellWindow("simpleColourPicker");
-        QVERIFY(simple);
-        QTRY_VERIFY(simple->isVisible());
-        auto *hex = findItem(simple->contentItem(), QStringLiteral("hexColour"));
-        auto *type = findItem(simple->contentItem(), QStringLiteral("simpleColourType"));
-        const QString opened = hex->property("text").toString();
-        // Before any pick: the choice keeps the colour the picker opened with.
-        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 2)));
-        QCOMPARE(hex->property("text").toString(), opened);
-        QCOMPARE(text->property("text").toString(), QStringLiteral("first"));
-
-        // A pick, then the choice: the picked colour stays in the picker.
-        sendMouse(simple, QEvent::MouseButtonPress, QPoint(-40, 10), Qt::RightButton, Qt::RightButton);
-        QTRY_VERIFY(text->property("text").toString() != QStringLiteral("first"));
-        const QString picked = text->property("text").toString();
-        QCOMPARE(picked, QStringLiteral("{C:302010}first"));
-        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
-        sendMouse(simple, QEvent::MouseButtonRelease, QPoint(-40, 10), Qt::RightButton, Qt::NoButton);
-        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 3)));
-        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
-        QCOMPARE(text->property("text").toString(), picked);
-        QVERIFY(settings->text("colourPicker.recentColours").startsWith(QStringLiteral("&H00302010& ")));
-        // The next choice adds that colour again, not black.
-        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 0)));
-        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
-        QVERIFY(settings->text("colourPicker.recentColours").startsWith(QStringLiteral("&H00302010& ")));
-        QVERIFY(QMetaObject::invokeMethod(simple, "accept"));
-        QTRY_VERIFY(!simple->isVisible());
-        QCOMPARE(text->property("text").toString(), picked);
-        QVERIFY(settings->text("colourPicker.recentColours").startsWith(QStringLiteral("&H00302010& ")));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0x10), Q_ARG(QVariant, 0x20), Q_ARG(QVariant, 0x30)));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{C:302010}first"));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0x10), Q_ARG(QVariant, 0x20), Q_ARG(QVariant, 0x30)));
+        QVERIFY(QMetaObject::invokeMethod(popover, "accept"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(text->property("text").toString(), QStringLiteral("{C:302010}first"));
+        QCOMPARE(application->colourPicker().recent().first().toMap().value(QStringLiteral("b")).toInt(), 0x30);
     }
 
-    // Y7: "Choose color"'s HSL and HSV values (UpdateFromRGB/HSL/HSV through
-    // colorspace.cpp), the type choice's recent colour (GetColor), the ASS
-    // and HTML fields, the screen dropper (OnDropperMouse: a left press on
-    // the icon takes the pointer, a right release picks the centre, a press
-    // on a captured pixel picks it, the alpha kept) and the "swap shortcuts"
-    // box writing COLORPICKER_SWITCH_CLICKS.
-    void colourDialogHslHsvAndTheScreenDropper()
+    // SY2: More… expands the popover in place to the full picker (legacy
+    // "Choose color", Y7): its HSL and HSV values (UpdateFromRGB/HSL/HSV
+    // through colorspace.cpp), one mode shown at a time, the ASS and HTML
+    // fields, the screen dropper (OnDropperMouse: a left press on the icon
+    // takes the pointer, a right release picks the centre, a press on a
+    // captured pixel picks it, the alpha kept), all the recent colours and
+    // the "swap shortcuts" box writing COLORPICKER_SWITCH_CLICKS; the
+    // palette, the recent colours and the colour before; the keyboard in the
+    // swatches, the spectrum and the hue strip; More… is kept for the next
+    // opening.
+    void colourPopoverFullPickerAndTheScreenDropper()
     {
         QVERIFY(application->openFile(episode));
         item("editingGrid")->forceActiveFocus();
@@ -3308,74 +3922,104 @@ private slots:
             image.setPixel(0, 0, qRgb(1, 2, 3));
             return image;
         });
-        auto *dialog = named("colourDialog");
+        auto *popover = named("colourPopover");
+        const auto in = [&](const char *name) { return dialogItem("colourPopover", name); };
         text->forceActiveFocus();
         text->setProperty("cursorPosition", 0);
         QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
+        QTRY_VERIFY(popover->property("visible").toBool());
+        // Compact: the full picker hidden, 16 recent colours.
+        QVERIFY(!in("colourFull")->isVisible());
+        QVERIFY(!in("screenDropper")->isVisible());
+        QCOMPARE(in("recent")->property("colours").toList().size(), 16);
+        QCOMPARE(in("palette")->property("colours").toList().size(), 16);
+        QVERIFY(QMetaObject::invokeMethod(in("colourMore"), "clicked"));
+        QTRY_VERIFY(in("colourFull")->isVisible());
+        QVERIFY(in("screenDropper")->isVisible());
+        QCOMPARE(in("recent")->property("colours").toList().size(), 32);
         // White: HSV saturation 0, value 255; HSL lightness 255.
-        QCOMPARE(dialog->property("hsvSaturation").toInt(), 0);
-        QCOMPARE(dialog->property("hsvValue").toInt(), 255);
-        QCOMPARE(dialog->property("lightness").toInt(), 255);
+        QCOMPARE(popover->property("hsvSaturation").toInt(), 0);
+        QCOMPARE(popover->property("hsvValue").toInt(), 255);
+        QCOMPARE(popover->property("lightness").toInt(), 255);
 
-        QVERIFY(QMetaObject::invokeMethod(dialog, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 128), Q_ARG(QVariant, 0)));
-        QCOMPARE(dialog->property("hsvHue").toInt(), 21);
-        QCOMPARE(dialog->property("hsvSaturation").toInt(), 255);
-        QCOMPARE(dialog->property("hslHue").toInt(), 21);
-        QCOMPARE(dialog->property("lightness").toInt(), 127);
-        QCOMPARE(dialogItem("colourDialog", "assText")->property("text").toString(), QStringLiteral("&H0080FF&"));
-        QCOMPARE(dialogItem("colourDialog", "htmlText")->property("text").toString(), QStringLiteral("#FF8000"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 128), Q_ARG(QVariant, 0)));
+        QCOMPARE(popover->property("hsvHue").toInt(), 21);
+        QCOMPARE(popover->property("hsvSaturation").toInt(), 255);
+        QCOMPARE(popover->property("hslHue").toInt(), 21);
+        QCOMPARE(popover->property("lightness").toInt(), 127);
+        QCOMPARE(in("assText")->property("text").toString(), QStringLiteral("&H0080FF&"));
+        QCOMPARE(in("htmlText")->property("text").toString(), QStringLiteral("#FF8000"));
+        QCOMPARE(in("hexColour")->property("text").toString(), QStringLiteral("#FF8000"));
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\1c&H0080FF&}first"));
 
+        // The modes: RGB first, then HSL and HSV.
+        QVERIFY(in("red")->isVisible());
+        QVERIFY(!in("hsvHue")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(in("modeHsv"), "click"));
+        QTRY_VERIFY(in("hsvHue")->isVisible());
+        QVERIFY(!in("red")->isVisible());
         // The HSV hue field: hsv_to_rgb's special case 171 is blue, the HSL
         // values from hsv_to_hsl.
-        auto *hsvHue = dialogItem("colourDialog", "hsvHue");
+        auto *hsvHue = in("hsvHue");
         hsvHue->setProperty("value", 171);
         QVERIFY(QMetaObject::invokeMethod(hsvHue, "valueModified"));
-        QCOMPARE(dialog->property("blue").toInt(), 255);
-        QCOMPARE(dialog->property("red").toInt(), 0);
-        QCOMPARE(dialog->property("hslHue").toInt(), 171);
-        QCOMPARE(dialog->property("lightness").toInt(), 127);
+        QCOMPARE(popover->property("blue").toInt(), 255);
+        QCOMPARE(popover->property("red").toInt(), 0);
+        QCOMPARE(popover->property("hslHue").toInt(), 171);
+        QCOMPARE(popover->property("lightness").toInt(), 127);
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\1c&HFF0000&}first"));
         // The lightness field: hsl_to_rgb, and the HSV values from hsl_to_hsv.
-        auto *lightness = dialogItem("colourDialog", "lightness");
+        QVERIFY(QMetaObject::invokeMethod(in("modeHsl"), "click"));
+        QTRY_VERIFY(in("lightness")->isVisible());
+        auto *lightness = in("lightness");
         lightness->setProperty("value", 64);
         QVERIFY(QMetaObject::invokeMethod(lightness, "valueModified"));
         const auto rgb = application->colourPicker().hslToRgb(171, 255, 64);
         const auto hsv = application->colourPicker().hslToHsv(171, 255, 64);
-        QCOMPARE(dialog->property("blue").toInt(), rgb.at(2).toInt());
-        QCOMPARE(dialog->property("hsvValue").toInt(), hsv.at(2).toInt());
+        QCOMPARE(popover->property("blue").toInt(), rgb.at(2).toInt());
+        QCOMPARE(popover->property("hsvValue").toInt(), hsv.at(2).toInt());
         // The HTML field reads html_to_color: three digits double up.
-        auto *html = dialogItem("colourDialog", "htmlText");
+        auto *html = in("htmlText");
         html->setProperty("text", QStringLiteral("#f80"));
         QVERIFY(QMetaObject::invokeMethod(html, "editingFinished"));
-        QCOMPARE(dialog->property("green").toInt(), 136);
+        QCOMPARE(popover->property("green").toInt(), 136);
+        // The spectrum and the hue strip take the arrow keys (Shift: 16).
+        in("spectrum")->forceActiveFocus();
+        const int s = popover->property("hsvSaturation").toInt(), v = popover->property("hsvValue").toInt();
+        QTest::keyClick(window, Qt::Key_Left);
+        QTest::keyClick(window, Qt::Key_Down, Qt::ShiftModifier);
+        QCOMPARE(popover->property("hsvSaturation").toInt(), std::max(0, s - 1));
+        QCOMPARE(popover->property("hsvValue").toInt(), std::min(255, v + 16));
+        in("hueStrip")->forceActiveFocus();
+        const int h = popover->property("hsvHue").toInt();
+        QTest::keyClick(window, Qt::Key_Up);
+        QCOMPARE(popover->property("hsvHue").toInt(), std::max(0, h - 1));
 
         // An alpha first: the dropper and the recent colours keep it.
-        auto *alpha = dialogItem("colourDialog", "alpha");
+        auto *alpha = in("alpha");
         alpha->setProperty("value", 0x40);
         QVERIFY(QMetaObject::invokeMethod(alpha, "valueModified"));
         QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1a&H40&")));
 
         // The dropper: the icon's left press takes the pointer; a move
         // anywhere captures, the right release picks the centre and lets go.
-        const QPoint icon = centreOf(dialogItem("colourDialog", "eyedropperArea"));
+        const QPoint icon = centreOf(in("eyedropperArea"));
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, icon);
         QTRY_VERIFY(sampler.tracking());
-        QVERIFY(dialog->property("dropping").toBool());
+        QVERIFY(popover->property("dropping").toBool());
         QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, icon); // the dropper's: a capture only
         QVERIFY(sampler.tracking());
         sendMouse(window, QEvent::MouseMove, QPoint(-30, -30), Qt::NoButton, Qt::NoButton);
         QVERIFY(sampler.tracking());
         sendMouse(window, QEvent::MouseButtonRelease, QPoint(-30, -30), Qt::RightButton, Qt::NoButton);
         QVERIFY(!sampler.tracking());
-        QCOMPARE(dialog->property("red").toInt(), 0x10);
-        QCOMPARE(dialog->property("alpha").toInt(), 0x40);
+        QCOMPARE(popover->property("red").toInt(), 0x10);
+        QCOMPARE(popover->property("alpha").toInt(), 0x40);
         QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H302010&")));
         // A left press on a captured pixel picks it.
-        auto *cells = dialogItem("colourDialog", "dropperCells");
+        auto *cells = in("dropperCells");
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, cells->mapToScene(QPointF(3, 3)).toPoint());
-        QCOMPARE(dialog->property("blue").toInt(), 3);
+        QCOMPARE(popover->property("blue").toInt(), 3);
         QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H030201&")));
         // A second left press on the icon lets go without a pick.
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, icon);
@@ -3384,95 +4028,122 @@ private slots:
         sendMouse(window, QEvent::MouseButtonPress, QPoint(-30, -30), Qt::LeftButton, Qt::LeftButton);
         QVERIFY(!sampler.tracking());
         sendMouse(window, QEvent::MouseButtonRelease, QPoint(-30, -30), Qt::LeftButton, Qt::NoButton);
-        QCOMPARE(dialog->property("blue").toInt(), 3);
+        QCOMPARE(popover->property("blue").toInt(), 3);
+        QVERIFY(popover->property("visible").toBool());
+        // The keyboard starts it too (Space on the icon).
+        in("eyedropper")->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Space);
+        QTRY_VERIFY(sampler.tracking());
+        sendMouse(window, QEvent::MouseButtonPress, QPoint(-30, -30), Qt::LeftButton, Qt::LeftButton);
+        QVERIFY(!sampler.tracking());
+        sendMouse(window, QEvent::MouseButtonRelease, QPoint(-30, -30), Qt::LeftButton, Qt::NoButton);
 
         // A recent colour's tap takes its red, green and blue and keeps the
         // alpha in effect (OnRecentSelect, ColorPicker.cpp:1130-1137:
         // SetColor(color, 0, true, false), setAlpha false at :717).
         application->colourPicker().loadFromString(QStringLiteral("&H80123456&"));
-        auto *swatch = dialogItem("colourDialog", "recent0");
+        auto *swatch = in("recent0");
         QTRY_COMPARE(swatch->property("color").value<QColor>(), QColor(0x56, 0x34, 0x12));
+        QCOMPARE(QAccessible::queryAccessibleInterface(swatch)->text(QAccessible::Name), QStringLiteral("&H80123456&"));
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(swatch));
-        QCOMPARE(dialog->property("red").toInt(), 0x56);
-        QCOMPARE(dialog->property("green").toInt(), 0x34);
-        QCOMPARE(dialog->property("blue").toInt(), 0x12);
-        QCOMPARE(dialog->property("alpha").toInt(), 0x40);
+        QCOMPARE(popover->property("red").toInt(), 0x56);
+        QCOMPARE(popover->property("green").toInt(), 0x34);
+        QCOMPARE(popover->property("blue").toInt(), 0x12);
+        QCOMPARE(popover->property("alpha").toInt(), 0x40);
         QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H123456&")));
         QVERIFY(text->property("text").toString().contains(QStringLiteral("\\1a&H40&")));
-
-        // The type choice puts the colour into the recent ones first.
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("colourDialog", "colourType"), "activated", Q_ARG(int, 1)));
-        const auto recent = application->colourPicker().recent().first().toMap();
-        QCOMPARE(recent.value(QStringLiteral("r")).toInt(), 0x56);
-        QCOMPARE(recent.value(QStringLiteral("a")).toInt(), 0x40);
+        // The palette the same way; the keyboard moves in it and picks.
+        auto *palette = in("palette");
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(in("palette5")));
+        QCOMPARE(popover->property("red").toInt(), 255);
+        QCOMPARE(popover->property("green").toInt(), 0);
+        QCOMPARE(popover->property("alpha").toInt(), 0x40);
+        QCOMPARE(QAccessible::queryAccessibleInterface(in("palette5"))->text(QAccessible::Name), QStringLiteral("Red"));
+        palette->forceActiveFocus(Qt::TabFocusReason);
+        palette->setProperty("current", 0);
+        QTest::keyClick(window, Qt::Key_Right);
+        QTest::keyClick(window, Qt::Key_Down);
+        QCOMPARE(palette->property("current").toInt(), 9);
+        QTest::keyClick(window, Qt::Key_Space);
+        QCOMPARE(popover->property("red").toInt(), 0);
+        QCOMPARE(popover->property("green").toInt(), 255);
+        QCOMPARE(popover->property("blue").toInt(), 255);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&HFFFF00&")));
+        // The colour before stays as it opened (Esc puts it back).
+        QCOMPARE(in("colourBefore")->property("color").value<QColor>(), QColor(Qt::white));
+        QCOMPARE(QAccessible::queryAccessibleInterface(in("colourBefore"))->text(QAccessible::Name),
+                 QStringLiteral("Previous colour #FFFFFF"));
 
         // The swap box writes the option at once.
-        auto *swap = dialogItem("colourDialog", "switchClicks");
+        auto *swap = in("switchClicks");
         QVERIFY(!swap->property("checked").toBool());
         QVERIFY(QMetaObject::invokeMethod(swap, "toggle"));
         QVERIFY(QMetaObject::invokeMethod(swap, "toggled"));
         QVERIFY(application->settingsStore()->boolean("colourPicker.switchClicks"));
+        application->colourPicker().setSwitchClicks(false);
 
         // The portal route (Wayland): the icon's press asks the desktop and
         // takes no pointer; its pick sets the colour with the alpha kept, as
         // the dropper's; a failure shows under the icon until the next ask;
-        // a cancel changes nothing. The type choice above left the second
-        // colour in effect with its own alpha; an alpha for it first.
+        // a cancel changes nothing.
         alpha->setProperty("value", 0x40);
         QVERIFY(QMetaObject::invokeMethod(alpha, "valueModified"));
-        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\2a&H40&")));
         int asked = 0;
         sampler.setPortalRequest([&] { ++asked; });
         sampler.setRoute({QStringLiteral("portal"), {}});
-        auto *note = dialogItem("colourDialog", "dropperUnavailable");
+        auto *note = in("dropperUnavailable");
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, icon);
         QCOMPARE(asked, 1);
         QVERIFY(sampler.portalBusy());
         QVERIFY(!sampler.tracking());
-        QVERIFY(!dialog->property("dropping").toBool());
-        QVERIFY(!dialogItem("colourDialog", "eyedropper")->isEnabled());
+        QVERIFY(!popover->property("dropping").toBool());
+        QVERIFY(!in("eyedropper")->isEnabled());
         sampler.answerPortal(0, 0x20 / 255.0, 0x40 / 255.0, 0x60 / 255.0);
         QVERIFY(!sampler.portalBusy());
-        QVERIFY(!dialog->property("portalAsked").toBool());
-        QCOMPARE(dialog->property("red").toInt(), 0x20);
-        QCOMPARE(dialog->property("green").toInt(), 0x40);
-        QCOMPARE(dialog->property("blue").toInt(), 0x60);
-        QCOMPARE(dialog->property("alpha").toInt(), 0x40);
-        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\2c&H604020&")));
-        QVERIFY(dialogItem("colourDialog", "eyedropper")->isEnabled());
+        QVERIFY(!popover->property("portalAsked").toBool());
+        QCOMPARE(popover->property("red").toInt(), 0x20);
+        QCOMPARE(popover->property("green").toInt(), 0x40);
+        QCOMPARE(popover->property("blue").toInt(), 0x60);
+        QCOMPARE(popover->property("alpha").toInt(), 0x40);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H604020&")));
+        QVERIFY(in("eyedropper")->isEnabled());
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, icon);
         QCOMPARE(asked, 2);
         sampler.failPortalCall(QStringLiteral("No such interface"));
         QCOMPARE(note->property("text").toString(), QStringLiteral("No such interface"));
         QVERIFY(note->isVisible());
-        QVERIFY(!dialog->property("portalAsked").toBool());
+        QVERIFY(!popover->property("portalAsked").toBool());
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, icon);
         QCOMPARE(asked, 3);
         QVERIFY(note->property("text").toString().isEmpty());
         sampler.answerPortal(1);
-        QVERIFY(!dialog->property("portalAsked").toBool());
-        QCOMPARE(dialog->property("red").toInt(), 0x20);
+        QVERIFY(!popover->property("portalAsked").toBool());
+        QCOMPARE(popover->property("red").toInt(), 0x20);
         QVERIFY(note->property("text").toString().isEmpty());
         sampler.setPortalRequest({});
 
-        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "accept"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
 
-        // Unavailable: the icon is disabled and the reason shown.
+        // More… is kept for the next opening; unavailable, the icon is off
+        // and the reason shown.
         sampler.setRoute(ui::ScreenSampler::routeFor(QStringLiteral("wayland"), true, false));
-        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(!dialogItem("colourDialog", "eyedropper")->isEnabled());
-        QCOMPARE(dialogItem("colourDialog", "dropperUnavailable")->property("text").toString(), sampler.unavailableReason());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(in("colourFull")->isVisible());
+        QVERIFY(!in("eyedropper")->isEnabled());
+        QCOMPARE(in("dropperUnavailable")->property("text").toString(), sampler.unavailableReason());
+        QVERIFY(QMetaObject::invokeMethod(in("colourMore"), "clicked"));
+        QTRY_VERIFY(!in("colourFull")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(popover, "reject"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
     }
 
     // Y7 with the sampler's own source (DropFromScreenXY's screen read:
     // QScreen::grabWindow on the grab route), not a stand-in: a window
-    // painted one colour stands where the pointer picks, and the simple
-    // "Color picker"'s right press and "Choose color"'s dropper release each
-    // take that colour. On the windows platform (winix task
+    // painted one colour stands where the pointer picks, and the colour
+    // popover's dropper release, started by the right click (SY2) or by the
+    // eyedropper, takes that colour. On the windows platform (winix task
     // y7-dropper-desktop) that is the desktop's screen; offscreen the same
     // call reads the window's backing store.
     void screenDroppersReadTheScreenItself()
@@ -3516,47 +4187,42 @@ private slots:
         QTRY_VERIFY(showsPatch());
         qInfo().noquote() << "Y7 screen" << QGuiApplication::platformName() << "patch" << place << "shell" << window->frameGeometry();
 
-        // The simple picker: a right press outside it picks at once.
+        // The right click: the popover with the eyedropper started; a right
+        // release over the colour picks the centre of what the screen shows.
+        auto *popover = named("colourPopover");
         text->forceActiveFocus();
         text->setProperty("cursorPosition", 0);
         QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour3")));
-        QQuickWindow *simple = shellWindow("simpleColourPicker");
-        QVERIFY(simple);
-        QTRY_VERIFY(simple->isVisible());
+        QTRY_VERIFY(popover->property("visible").toBool());
         QTRY_VERIFY(sampler.tracking());
-        if (simple->frameGeometry().contains(global))
-            simple->setPosition(area.topLeft() + QPoint(8, 8));
-        const QPoint local = simple->mapFromGlobal(global);
-        sendMouse(simple, QEvent::MouseButtonPress, local, Qt::RightButton, Qt::RightButton);
-        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\3c&HAC6824&}first"));
-        QCOMPARE(findItem(simple->contentItem(), QStringLiteral("hexColour"))->property("text").toString(),
-                 QStringLiteral("&HAC6824&"));
-        sendMouse(simple, QEvent::MouseButtonRelease, local, Qt::RightButton, Qt::NoButton);
-        QVERIFY(QMetaObject::invokeMethod(simple, "accept"));
-        QTRY_VERIFY(!simple->isVisible());
-        QVERIFY(!sampler.tracking());
-
-        // "Choose color": the icon's left press takes the pointer, a right
-        // release over the colour picks the centre of what the screen shows.
-        auto *dialog = named("colourDialog");
-        text->forceActiveFocus();
-        text->setProperty("cursorPosition", 0);
-        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        const QPoint icon = centreOf(dialogItem("colourDialog", "eyedropperArea"));
-        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, icon);
-        QTRY_VERIFY(sampler.tracking());
-        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, icon);
         const QPoint over = window->mapFromGlobal(global);
         sendMouse(window, QEvent::MouseMove, over, Qt::NoButton, Qt::NoButton);
         sendMouse(window, QEvent::MouseButtonRelease, over, Qt::RightButton, Qt::NoButton);
         QVERIFY(!sampler.tracking());
-        QCOMPARE(dialog->property("red").toInt(), 0x24);
-        QCOMPARE(dialog->property("green").toInt(), 0x68);
-        QCOMPARE(dialog->property("blue").toInt(), 0xac);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\3c&HAC6824&}first"));
+        QCOMPARE(dialogItem("colourPopover", "hexColour")->property("text").toString(), QStringLiteral("#2468AC"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "accept"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+
+        // The eyedropper: the icon's left press takes the pointer, a right
+        // release over the colour picks the centre of what the screen shows.
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        const QPoint icon = centreOf(dialogItem("colourPopover", "eyedropperArea"));
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, icon);
+        QTRY_VERIFY(sampler.tracking());
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, icon);
+        sendMouse(window, QEvent::MouseMove, over, Qt::NoButton, Qt::NoButton);
+        sendMouse(window, QEvent::MouseButtonRelease, over, Qt::RightButton, Qt::NoButton);
+        QVERIFY(!sampler.tracking());
+        QCOMPARE(popover->property("red").toInt(), 0x24);
+        QCOMPARE(popover->property("green").toInt(), 0x68);
+        QCOMPARE(popover->property("blue").toInt(), 0xac);
         QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&HAC6824&")));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "reject"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
     }
 
     void pasteTranslationAndTheShiftingWindow()
@@ -3849,9 +4515,103 @@ private slots:
         QVERIFY(files > 1);
     }
 
+    // IC1 (#226): every menu and context-menu item that runs a command shows
+    // an icon of the set: an iconRole on the item, or on the submenu it
+    // opens. A check item needs none: its check mark stands in the icon's
+    // place, as in MuseScore's menus. Nor does an entry named by its data (a
+    // recent file, a macro, a sort key, a panel, a suggestion), whose
+    // submenu has the icon, nor an item a later card removes; those are
+    // exempted here by the text that identifies them, and an exemption that
+    // matches no item fails too. docs/qt/ux/menu-icon-gaps.md lists them.
+    void everyMenuItemHasAnIcon()
+    {
+        using menu_icon_scan::Exemption;
+        const QString main = QStringLiteral("Main.qml");
+        const QString recent = QStringLiteral("a recent file");
+        const QList<Exemption> exemptions{
+            {main, QStringLiteral(R"("recentSubtitles" + index)"), recent},
+            {main, QStringLiteral(R"("recentAudio" + index)"), recent},
+            {main, QStringLiteral(R"(text: qsTr("None"))"), QStringLiteral("the empty list's placeholder")},
+            {QStringLiteral("RecentFilesMenu.qml"), QStringLiteral("menu.prefix + index"), recent},
+            {QStringLiteral("RecentFilesMenu.qml"), QStringLiteral(R"(text: qsTr("None"))"),
+             QStringLiteral("the empty list's placeholder")},
+            {QStringLiteral("VideoContextMenu.qml"), QStringLiteral(R"("RecentSubtitles" + index)"), recent},
+            {QStringLiteral("VideoContextMenu.qml"), QStringLiteral(R"("RecentVideos" + index)"), recent},
+            {QStringLiteral("VideoContextMenu.qml"), QStringLiteral(R"("videoMenuFilter" + index)"),
+             QStringLiteral("a DirectShow filter, under Filters")},
+            {main, QStringLiteral(R"("sortAll_" + modelData.key)"), QStringLiteral("a sort key, under Sort all lines")},
+            {main, QStringLiteral(R"("sortSelected_" + modelData.key)"),
+             QStringLiteral("a sort key, under Sort selected lines")},
+            {main, QStringLiteral(R"("macro_" + modelData.name)"), QStringLiteral("a macro of the loaded scripts")},
+            {main, QStringLiteral(R"("panelMenu" + modelData.uniqueName)"), QStringLiteral("a panel, under Panels")},
+            {main, QStringLiteral("root.app.replaceEditorMisspell"), QStringLiteral("a spelling suggestion")},
+            {main, QStringLiteral(R"("dummyAudioMenuItem")"), QStringLiteral("AV3 #240 removes the dummy audio")},
+        };
+        const QStringList problems = menu_icon_scan::itemsWithoutIcons(QStringLiteral(HIKARI_UI_SOURCE_DIR), exemptions);
+        if (!problems.isEmpty())
+            QFAIL(qPrintable(problems.join(QLatin1Char('\n'))));
+    }
+
+    // The scan behind everyMenuItemHasAnIcon finds an item without an icon
+    // where it stands (one line, several lines, an Instantiator's delegate,
+    // a submenu) and skips the others.
+    void menuIconScanFindsItemsWithoutIcons()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const auto write = [&](const QString &name, const QByteArray &text) {
+            QFile file(dir.filePath(name));
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write(text);
+        };
+        write(QStringLiteral("Probe.qml"), R"(Item {
+    ShellMenu {
+        ShellMenuItem { iconRole: "save"; text: qsTr("Save {x}") }
+        ShellMenuItem { text: qsTr("One line") }
+        ShellMenuItem {
+            // iconRole: "commented out"
+            text: "Several lines"
+            onTriggered: { const iconRole = "in a handler" }
+        }
+        ShellMenuItem { text: qsTr("Checked"); checkable: true }
+        ShellMenuItem { text: qsTr("Not checked"); checkable: false }
+        Instantiator { delegate: ShellMenuItem { text: modelData } }
+        ShellMenu { title: qsTr("Submenu") }
+        ShellMenu { iconRole: "sort"; title: qsTr("Sorted") }
+        ProbeMenu {}
+        ShellMenuItem { objectName: "exempt"; text: "Exempt" }
+    }
+}
+)");
+        write(QStringLiteral("ProbeMenu.qml"), R"(ShellMenu {
+    title: "Derived"
+    delegate: ShellMenuItem {}
+    ShellMenuItem { text: "In the derived menu" }
+})");
+        const QStringList problems = menu_icon_scan::itemsWithoutIcons(
+            dir.path(), {{QStringLiteral("Probe.qml"), QStringLiteral(R"("exempt")"), QString()},
+                         {QStringLiteral("Probe.qml"), QStringLiteral("nothing here"), QString()}});
+        const QStringList expected{
+            QStringLiteral(R"(Probe.qml:4: ShellMenuItem qsTr("One line") has no iconRole)"),
+            QStringLiteral(R"(Probe.qml:5: ShellMenuItem "Several lines" has no iconRole)"),
+            QStringLiteral(R"(Probe.qml:11: ShellMenuItem qsTr("Not checked") has no iconRole)"),
+            QStringLiteral(R"(Probe.qml:12: ShellMenuItem modelData has no iconRole)"),
+            QStringLiteral(R"(Probe.qml:13: ShellMenu qsTr("Submenu") has no iconRole)"),
+            QStringLiteral(R"(Probe.qml:15: ProbeMenu (no text) has no iconRole)"),
+            QStringLiteral(R"(ProbeMenu.qml:4: ShellMenuItem "In the derived menu" has no iconRole)"),
+            QStringLiteral(R"(Probe.qml: the exemption "nothing here" matches no menu item)"),
+        };
+        QStringList sorted = problems;
+        sorted.sort();
+        QStringList want = expected;
+        want.sort();
+        QCOMPARE(sorted, want);
+    }
+
     // D1: the keyboard placement window expresses drag placements and resizes.
     void placementWindowMovesTabsAndResizes()
     {
+        QVERIFY(application->openFile(episode)); // SH2: the panels, not Home
         auto *root = engine->rootObjects().first();
         auto *placement = root->findChild<QQuickWindow *>(QStringLiteral("placementWindow"));
         QVERIFY(placement);
@@ -5580,21 +6340,26 @@ private slots:
                                "Dialogue: 0,0:00:00.20,0:00:00.60,Default,,0,0,0,,Sign one\r\n"
                                "Dialogue: 1,0:00:01.23,0:00:01.73,Default,Actor,0,0,0,,Sign two\r\n");
 
-        // No subtitles open, the file open as the video: the chooser lists
-        // its tracks; OK on the ASS track loads it, unsaved and named after
-        // the file, and the video stays open.
+        // No subtitles open, the file open as the video (SH2: in a new
+        // Untitled Document): the chooser lists its tracks; OK on the ASS
+        // track loads it, unsaved and named after the file, and the video
+        // stays open.
         const QString mkv = nativeFixture("mkvextract.mkv");
         application->video().openVideo(mkv);
         QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready,
                                  30000);
-        QVERIFY(!target().has_value());
+        QVERIFY(target().has_value());
+        QVERIFY(application->targetUntitled());
+        QCOMPARE(tabs(), std::size_t(1));
         QVERIFY(choose(mkv));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
         QVERIFY(!question->property("visible").toBool());
         QCOMPARE(chooser->property("labels").toStringList(),
                  (QStringList{QStringLiteral("1 Signs (eng, ass)"), QStringLiteral("2 Full (pol, srt)")}));
         QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
-        QTRY_VERIFY_WITH_TIMEOUT(target().has_value(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(target().has_value() && application->workspace().title(*target()) &&
+                                     *application->workspace().title(*target()) == "mkvextract.ass",
+                                 20000);
         QTRY_COMPARE(matroska.state(), 0);
         const auto first = *target();
         QCOMPARE(ass(first), signs);
@@ -7415,6 +8180,20 @@ private slots:
         QVERIFY(!application->targetUntitled());
         auto *opened = application->files().session(*application->workspace().editingTarget());
         QCOMPARE(opened->selection().active, std::optional(opened->document().lines()[0]->id));
+        // SH2: from the Home page (no Document open) a file result opens the
+        // file as the editing target, and Home goes.
+        QVERIFY(application->reviewCloseAll().isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(item("homePage")->isVisible());
+        application->runFindReplace(QStringLiteral("findInFiles"),
+                                    {{QStringLiteral("tab"), 2},
+                                     {QStringLiteral("find"), QStringLiteral("a dog")},
+                                     {QStringLiteral("filters"), QStringLiteral("one.ass")},
+                                     {QStringLiteral("folder"), folder.path()}});
+        application->showFindResult(1);
+        QCOMPARE(application->tabs().size(), qsizetype(1));
+        QTRY_VERIFY(!item("homePage")->isVisible());
+        QVERIFY(application->editor().hasLine()); // the editor shows the found Line
         // An invalid folder says so.
         application->runFindReplace(QStringLiteral("findInFiles"),
                                     {{QStringLiteral("tab"), 2},
@@ -7564,10 +8343,10 @@ private slots:
         // The panel starts from the legacy options: 2 s backward (SHIFT_TIMES_TIME
         // 2000, SHIFT_TIMES_OPTIONS unset), storing nothing until it changes.
         QCOMPARE(application->shiftTimesSettings().settings().timeMs, 2000);
-        QVERIFY(item("shiftBackward")->property("checked").toBool());
+        QVERIFY(visualItem("shiftBackward")->property("checked").toBool());
         QVERIFY(!application->settingsStore()->contains("shiftTimes.time"));
         QVERIFY(!application->settingsStore()->contains("shiftTimes.options"));
-        QVERIFY(QMetaObject::invokeMethod(item("shiftForward"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("shiftForward"), "click"));
         QVERIFY(application->shiftTimesSettings().settings().forward);
         auto *time = item("shiftTime");
         time->setProperty("text", QStringLiteral("0:00:01.50"));
@@ -7623,6 +8402,213 @@ private slots:
         QCOMPARE(a->end.value.microseconds() / 1000, 2300);
     }
 
+    // TS1: legacy's two panels come back as the form's two modes (its
+    // "Post processor" / "Shift times" button, POSTPROCESSOR_ON's 16): each
+    // shows its own options, the Lines are shared, and the run button says
+    // what it runs. The postprocessor's features stay set across the switch.
+    void timingPanelSwitchesBetweenItsModes()
+    {
+        QVERIFY(application->openFile(episode));
+        showShiftTimes();
+        auto *apply = item("shiftApply");
+        QVERIFY(item("shiftAmountSection")->isVisible());
+        QVERIFY(item("shiftVideoAudioSection")->isVisible());
+        QVERIFY(item("shiftProfile")->isVisible());
+        QVERIFY(!item("ppLeadSection")->isVisible());
+        QCOMPARE(apply->property("text").toString(), QStringLiteral("Shift"));
+        QVERIFY(visualItem("shiftModeShift")->property("checked").toBool());
+        // Frames need an exact timebase and moving to video time a video
+        // (ShiftTimes::Contents; no video here).
+        QVERIFY(!visualItem("shiftFrames")->property("enabled").toBool());
+        QVERIFY(!item("shiftToVideo")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(visualItem("shiftModePostprocessor"), "click"));
+        QCOMPARE(application->shiftTimesSettings().settings().postprocessor, 16);
+        QTRY_VERIFY(item("ppLeadSection")->isVisible());
+        QVERIFY(item("ppContinuousSection")->isVisible());
+        QVERIFY(item("ppSnapSection")->isVisible());
+        QVERIFY(item("shiftLinesSection")->isVisible());
+        QVERIFY(item("shiftWhichLines")->isVisible());
+        QVERIFY(!item("shiftWhichTimes")->isVisible());
+        QVERIFY(!item("shiftEndCorrection")->isVisible());
+        QVERIFY(!item("shiftAmountSection")->isVisible());
+        QVERIFY(!item("shiftVideoAudioSection")->isVisible());
+        QVERIFY(!item("shiftProfile")->isVisible());
+        QCOMPARE(apply->property("text").toString(), QStringLiteral("Run post processor"));
+        QVERIFY(visualItem("shiftModePostprocessor")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(item("ppLeadIn"), "click"));
+        QCOMPARE(application->shiftTimesSettings().settings().postprocessor, 16 | 1);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("shiftModeShift"), "click"));
+        QCOMPARE(application->shiftTimesSettings().settings().postprocessor, 1);
+        QTRY_VERIFY(item("shiftAmountSection")->isVisible());
+        QCOMPARE(apply->property("text").toString(), QStringLiteral("Shift"));
+    }
+
+    // TS1: a section closes from its header, by click or by Space, and the
+    // panel remembers it (shiftTimes.collapsedSections).
+    void timingPanelSectionsCollapseAndStayCollapsed()
+    {
+        QVERIFY(application->openFile(episode));
+        showShiftTimes();
+        QVERIFY(item("shiftTime")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(item("shiftAmountSectionHeader"), "click"));
+        QTRY_VERIFY(!item("shiftTime")->isVisible());
+        QCOMPARE(application->settingsStore()->list("shiftTimes.collapsedSections"), QStringList{QStringLiteral("amount")});
+        item("shiftAmountSectionHeader")->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Space);
+        QTRY_VERIFY(item("shiftTime")->isVisible());
+        QVERIFY(application->settingsStore()->list("shiftTimes.collapsedSections").isEmpty());
+        application->shiftTimesSettings().setCollapsedSections({QStringLiteral("lines")});
+        QTRY_VERIFY(!item("shiftWhichLines")->isVisible());
+        application->shiftTimesSettings().setCollapsedSections({});
+        QTRY_VERIFY(item("shiftWhichLines")->isVisible());
+    }
+
+    // TS1: legacy's "+" beside the styles (ShiftTimes::OnAddStyles,
+    // GetCheckedElements): the Document's styles, none checked; OK puts the
+    // checked ones in the field and shifts by styles, Cancel empties it.
+    void timingPanelPicksStylesFromTheDocument()
+    {
+        const QString path = dir.filePath(QStringLiteral("styles.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "Style: Sign,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
+        }
+        QVERIFY(application->openFile(path));
+        showShiftTimes();
+        QVERIFY(!item("shiftStylesPick")->isVisible()); // only while shifting by styles
+        setShift("whichLines", 5);
+        QTRY_VERIFY(item("shiftStylesPick")->isVisible());
+        auto *popup = item<QObject>("shiftStylesPopup");
+        const auto choose = [&](const QStringList &names, bool ok) {
+            QVERIFY(QMetaObject::invokeMethod(item("shiftStylesPick"), "click"));
+            QTRY_VERIFY(popup->property("opened").toBool());
+            QCOMPARE(popup->property("names").toStringList(), (QStringList{QStringLiteral("Default"), QStringLiteral("Sign")}));
+            auto *content = popup->property("contentItem").value<QQuickItem *>();
+            std::function<void(QQuickItem *)> walk = [&](QQuickItem *from) {
+                if (from->inherits("QQuickCheckBox")) {
+                    QVERIFY(!from->property("checked").toBool()); // none checked
+                    if (names.contains(from->property("text").toString()))
+                        QVERIFY(QMetaObject::invokeMethod(from, "click"));
+                }
+                for (QQuickItem *child : from->childItems())
+                    walk(child);
+            };
+            walk(content);
+            QVERIFY(QMetaObject::invokeMethod(popup, "finish", Q_ARG(QVariant, ok)));
+            QTRY_VERIFY(!popup->property("visible").toBool());
+        };
+        choose({QStringLiteral("Sign")}, true);
+        QCOMPARE(application->shiftTimesSettings().settings().styles, std::u8string(u8"Sign"));
+        QCOMPARE(item("shiftStyles")->property("text").toString(), QStringLiteral("Sign"));
+        choose({QStringLiteral("Default"), QStringLiteral("Sign")}, true);
+        QCOMPARE(application->shiftTimesSettings().settings().styles, std::u8string(u8"Default,Sign"));
+        choose({QStringLiteral("Default")}, false);
+        QCOMPARE(application->shiftTimesSettings().settings().styles, std::u8string());
+        QCOMPARE(application->shiftTimesSettings().settings().whichLines, 5);
+        // OK with a style switches to shifting by styles (legacy SetSelection(5)).
+        setShift("whichLines", 5);
+        choose({QStringLiteral("Sign")}, true);
+        QCOMPARE(application->shiftTimesSettings().settings().whichLines, 5);
+        // The shift moves only that style's Line.
+        setShift("forward", true);
+        setShift("timeMs", 1000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QTRY_COMPARE(session->history().back().name, std::string("Shifting times"));
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds() / 1000, 2000);
+        QCOMPARE(session->document().lines()[1]->start.value.microseconds() / 1000, 3000);
+    }
+
+    // TS1: a refusal shows over the run button in the danger colour, and the
+    // next run that goes through clears it.
+    void timingPanelShowsARefusalOverItsButton()
+    {
+        QVERIFY(application->openFile(episode));
+        showShiftTimes();
+        auto *message = item("shiftMessage");
+        QVERIFY(!message->isVisible());
+        setShift("whichLines", 5);
+        setShift("styles", QString());
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QTRY_VERIFY(message->isVisible());
+        QCOMPARE(message->property("text").toString(), QStringLiteral("No styles selected for time shifting"));
+        QCOMPARE(message->property("color").value<QColor>(), ui::theme::current().roles.danger);
+        const auto top = [](QQuickItem *it) { return it->mapToScene(QPointF(0, 0)).y(); };
+        QVERIFY(top(message) < top(item("shiftApply")));
+        setShift("whichLines", 0);
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QTRY_VERIFY(!message->isVisible());
+    }
+
+    // TS1: Shift times in its two modes, and with a refusal, in the four
+    // themes, for review: written to HIKARI_SURFACE_SHOT_DIR when it is set
+    // (shift-times-<state>-<theme>.png), the panel floating at its form's size.
+    void shiftTimesScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        QVERIFY(application->openFile(episode));
+        showShiftTimes();
+        auto *dock = item<QObject>("timingDock");
+        dock->setProperty("isFloating", true);
+        QTRY_VERIFY(item("timingPanel")->window() != window);
+        QQuickWindow *floating = item("timingPanel")->window();
+        floating->resize(340, 800);
+        setShift("timeMs", 2350);
+        setShift("whichLines", 1);
+        setShift("correctEndTimes", 1);
+        setShift("tagTimes", true);
+        setShift("postprocessor", 1 | 4);
+        setShift("leadIn", 200);
+        setShift("leadOut", 300);
+        setShift("thresholdStart", 300);
+        setShift("thresholdEnd", 300);
+        auto *root = engine->rootObjects().first();
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const auto shot = [&](const QString &state) {
+                QTest::qWait(300);
+                QVERIFY(floating->grabWindow().save(out + QStringLiteral("/shift-times-") + state + QLatin1Char('-') + theme
+                                                    + QStringLiteral(".png")));
+            };
+            setShift("whichLines", 1);
+            QVERIFY(QMetaObject::invokeMethod(findItem(floating->contentItem(), QStringLiteral("shiftModeShift")), "click"));
+            QTRY_VERIFY(item("shiftAmountSection")->isVisible());
+            item("shiftTime")->forceActiveFocus(Qt::TabFocusReason);
+            shot(QStringLiteral("shift"));
+            QVERIFY(QMetaObject::invokeMethod(findItem(floating->contentItem(), QStringLiteral("shiftModePostprocessor")), "click"));
+            QTRY_VERIFY(item("ppLeadSection")->isVisible());
+            shot(QStringLiteral("postprocessor"));
+            QVERIFY(QMetaObject::invokeMethod(findItem(floating->contentItem(), QStringLiteral("shiftModeShift")), "click"));
+            setShift("whichLines", 5);
+            setShift("styles", QString());
+            QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+            QTRY_VERIFY(item("shiftMessage")->isVisible());
+            shot(QStringLiteral("refusal"));
+            item<QQuickItem>("shiftMessage")->setProperty("text", QString());
+        }
+    }
+
     // F6: a keyframe file opened before the video applies when the video is ready.
     void keyframeFilesReplaceTheVideosKeyframes()
     {
@@ -7648,6 +8634,10 @@ private slots:
 
     void hideColumnsMenuTogglesGridColumns()
     {
+        // Every column of the episode shows (GR3's auto-hide off): this
+        // checks the manual hides.
+        application->shell().setAutoHideColumns(false);
+        auto restoreAutoHide = qScopeGuard([&] { application->shell().setAutoHideColumns(true); });
         QVERIFY(application->openFile(episode));
         auto *root = engine->rootObjects().first();
         auto *grid = item("editingGrid");
@@ -7665,12 +8655,65 @@ private slots:
         application->shell().setHiddenColumns(0);
     }
 
+    // GR3 (Aegisub's convention): with the default on, the columns the
+    // whole Document leaves empty hide themselves and come back as soon as
+    // a committed Line fills one; the Grid's Hide columns > Hide empty
+    // columns and Settings write one setting, and manual hides stay on top.
+    void emptyColumnsHideThemselves()
+    {
+        auto &settings = *application->settingsStore();
+        QCOMPARE(std::get<bool>(application::findSetting("grid.autoHideColumns")->defaultValue), true);
+        QVERIFY(settings.boolean("grid.autoHideColumns"));
+        QVERIFY(application->shell().autoHideColumns());
+        QVERIFY(application->openFile(episode)); // Layer, Actor, margins and Effect all empty
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        const auto titles = [&] {
+            QStringList out;
+            for (int c = 0; c < grid->columnCount(); ++c)
+                out << grid->columnTitle(c);
+            return out;
+        };
+        const QStringList empty{"#", "Start", "End", "Styles", "CPS", "Wraps", "Text"};
+        QTRY_COMPARE(titles(), empty);
+
+        // A committed Actor shows its column, live; Undo hides it again.
+        QTRY_COMPARE(application->editor().text(), QStringLiteral("first"));
+        QVERIFY(application->editor().chooseActor(QStringLiteral("Ann")));
+        QTRY_VERIFY(titles().contains(QStringLiteral("Actor")));
+        QCOMPARE(titles().size(), empty.size() + 1);
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(titles(), empty);
+
+        // The menu's toggle: off shows every column, and the setting follows.
+        QObject *toggle = named("hideEmptyColumns");
+        QVERIFY(toggle);
+        QVERIFY(toggle->property("checked").toBool());
+        toggle->setProperty("checked", false);
+        QVERIFY(QMetaObject::invokeMethod(toggle, "triggered"));
+        QVERIFY(!settings.boolean("grid.autoHideColumns"));
+        QTRY_COMPARE(grid->columnCount(), 13);
+        // Settings writes the same one; the menu shows it.
+        settings.set("grid.autoHideColumns", true);
+        QTRY_COMPARE(titles(), empty);
+        QTRY_VERIFY(toggle->property("checked").toBool());
+        // A manual hide applies on top.
+        application->shell().toggleColumn(512); // CPS
+        QTRY_COMPARE(grid->columnCount(), int(empty.size()) - 1);
+        application->shell().setHiddenColumns(0);
+        QCOMPARE(settings.integer("grid.hideColumns"), 0);
+    }
+
     // The Grid's abbreviated headings name their column on hover (legacy's
     // Hide columns names, SubsGrid.cpp:199-200 and 501-508): the pointer over
     // "L." shows "Layer" below it, in the interface language; a heading that
     // is a word shows nothing.
     void gridHeadingsNameTheirColumnOnHover()
     {
+        // Every column of the episode shows (GR3's auto-hide off): the
+        // abbreviated headings are there to hover.
+        application->shell().setAutoHideColumns(false);
+        auto restoreAutoHide = qScopeGuard([&] { application->shell().setAutoHideColumns(true); });
         QVERIFY(application->openFile(episode));
         auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
         QVERIFY(grid);
@@ -7886,6 +8929,10 @@ private slots:
     // its help. (A Shift+click closes them: hotkeyGestureOnMenus.)
     void checkItemsKeepTheirMenuOpen()
     {
+        // Every column of the episode shows (GR3's auto-hide off): this
+        // checks the manual hides.
+        application->shell().setAutoHideColumns(false);
+        auto restoreAutoHide = qScopeGuard([&] { application->shell().setAutoHideColumns(true); });
         QStyleHints *hints = QGuiApplication::styleHints();
         const bool hoverHint = hints->useHoverEffects();
         auto restoreHover = qScopeGuard([&] { hints->setUseHoverEffects(hoverHint); });
@@ -9125,6 +10172,7 @@ private slots:
               {"translation.hideOriginalOnVideo", "Hide original on video in translator mode"},
               {"grid.duplicationDontChangeSelection", "Do not change selections when duplicating dialogue lines"},
               {"grid.dontCenterActiveLine", "Do not vertically center the active line in the subtitle grid"},
+              {"grid.autoHideColumns", "Hide empty columns in the subtitle grid"}, // GR3
               {"editor.allowNumpadHotkeys", "Use numpad shortcuts in text fields"},
               {"video.visualWarningsOff", "Turn off visual tools warning"},
               {"video.dontAskForBadResolution", "Do not warn about resolution mismatch"},
@@ -9590,6 +10638,7 @@ private slots:
         a.gridFilter().setIgnoreInActions(true);
         a.gridFilter().setInverted(true);
         a.shell().toggleColumn(1);
+        a.shell().setAutoHideColumns(false);
         const QVariantMap red{{QStringLiteral("r"), 255}, {QStringLiteral("g"), 0}, {QStringLiteral("b"), 0}, {QStringLiteral("a"), 0}};
         a.colourPicker().addRecent(red); // no picker yet: the option is the list
 
@@ -9622,6 +10671,10 @@ private slots:
         QVERIFY(!settings.contains("grid.hideColumns"));
         a.shell().toggleColumn(8192);
         QCOMPARE(settings.integer("grid.hideColumns"), 8193);
+        // GR3: empty columns hide themselves again (no legacy owner keeps it),
+        // and the option stays reset: the re-sync does not write it back.
+        QVERIFY(a.shell().autoHideColumns());
+        QVERIFY(!settings.contains("grid.autoHideColumns"));
 
         // Once opened, SelectLines keeps its options and recent searches:
         // the options go back when it closes, the recent searches at the
@@ -12379,11 +13432,16 @@ private slots:
         auto *mark = item<QObject>("setAudioMarkFromVideoMenuItem");
         QVERIFY(position && mark);
         auto &audio = application->audio();
-        audio.openDummy();
-        QVERIFY(audio.ready());
         QVERIFY(!application->workspace().editingTarget());
         QVERIFY(!position->property("enabled").toBool());
         QVERIFY(!mark->property("enabled").toBool());
+        // SH2: audio opened with no Document opens in a new Untitled one (the
+        // tab legacy always had), so the box comes with an editor.
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QVERIFY(application->workspace().editingTarget());
+        QVERIFY(position->property("enabled").toBool());
+        QVERIFY(mark->property("enabled").toBool());
         QVERIFY(application->openFile(episode));
         QVERIFY(position->property("enabled").toBool());
         QVERIFY(mark->property("enabled").toBool());
@@ -12605,10 +13663,34 @@ private slots:
                                  "highContrastPick_appearance.highContrastBlack.text",
                                  "highContrastPick_appearance.highContrastBlack.border"})
             QVERIFY2(dialogItem("settingsDialog", pick), pick);
-        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("appearance.highContrastBlack.accent")),
-                                          Q_ARG(QVariant, QStringLiteral("#00FF00"))));
+        // SY2: "Choose…" opens the colour popover under it, with no alpha;
+        // each change is staged and previewed at once, Esc puts the colour
+        // before back, a pick kept stays staged.
+        auto *themePopover = named("themeColourPopover");
+        QVERIFY(themePopover);
+        const QString accentBefore = settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString();
+        click("highContrastChoose_appearance.highContrastBlack.accent");
+        QTRY_VERIFY(themePopover->property("visible").toBool());
+        QCOMPARE(themePopover->property("anchor").value<QQuickItem *>(),
+                 dialogItem("settingsDialog", "highContrastChoose_appearance.highContrastBlack.accent"));
+        QVERIFY(!dialogItem("themeColourPopover", "alpha")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(themePopover, "setRgb", Q_ARG(QVariant, 0x12), Q_ARG(QVariant, 0x34), Q_ARG(QVariant, 0x56)));
+        QTRY_COMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
+                     QStringLiteral("#123456"));
+        QCOMPARE(accent(), QColor(0x12, 0x34, 0x56));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!themePopover->property("visible").toBool());
+        QVERIFY(dialog->property("visible").toBool()); // Esc was the popover's
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(), accentBefore);
+        click("highContrastChoose_appearance.highContrastBlack.accent");
+        QTRY_VERIFY(themePopover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(themePopover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 255), Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(themePopover, "accept"));
+        QTRY_VERIFY(!themePopover->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("appearance.highContrastBlack.border")),
                                           Q_ARG(QVariant, QStringLiteral("#FF00FF"))));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
+                 QStringLiteral("#00FF00"));
         QCOMPARE(accent(), QColor(0x00, 0xFF, 0x00));
         QCOMPARE(ui::theme::current().roles.line, QColor(0xFF, 0x00, 0xFF));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
@@ -15934,6 +17016,7 @@ private slots:
     void videoTransportIconsFollowTheThemeLive()
     {
         restartWithoutSound(); // play / pause below plays the fixture
+        QVERIFY(application->openFile(episode)); // SH2: the panels, not Home
         auto &settings = *application->settingsStore();
         const auto setTheme = [&](const char *code) {
             settings.setValue(QStringLiteral("appearance.followSystem"), false);
@@ -16417,6 +17500,117 @@ private slots:
             QVERIFY(save(dialogShot.copy(cropOf(dialogRoot, 8).intersected(dialogShot.rect())), QStringLiteral("swatch"), theme));
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
+    }
+
+    // SY2/SY3 review images in the four themes (HIKARI_SURFACE_SHOT_DIR):
+    // the colour popover under a Style editor swatch, compact and with
+    // More…, under a Line editor colour button, and the Style editor's font
+    // list open with the sample line.
+    void colourAndFontScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const QString path = dir.filePath(QStringLiteral("shots.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,DejaVu Sans,48,&H0000D7FF,&H000000FF,&H00402010,&H80000000,0,0,0,0,100,100,0,0,1,3,2,2,"
+                    "10,10,10,1\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n");
+        }
+        QVERIFY(application->openFile(path));
+        app::attachStylePreview(*engine, application->styleManager()); // the sample line, as the program has it
+        for (const auto &[r, g, b] : {std::tuple{255, 215, 0}, {16, 32, 64}, {255, 0, 0}, {0, 128, 255}, {0, 255, 0}})
+            application->colourPicker().addRecent(QVariantMap{{QStringLiteral("r"), r}, {QStringLiteral("g"), g},
+                                                              {QStringLiteral("b"), b}, {QStringLiteral("a"), 0}});
+        auto *root = engine->rootObjects().first();
+        const auto crop = [](QQuickWindow *w, QRectF r) {
+            const qreal dpr = w->effectiveDevicePixelRatio();
+            return w->grabWindow().copy(QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect());
+        };
+        const auto around = [](QQuickItem *a, QQuickItem *b, int margin) {
+            QRectF r = a->mapRectToScene(QRectF(0, 0, a->width(), a->height()));
+            r = r.united(b->mapRectToScene(QRectF(0, 0, b->width(), b->height())));
+            return r.adjusted(-margin, -margin, margin, margin);
+        };
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+
+            // The Line editor's border colour button.
+            item("editingGrid")->forceActiveFocus();
+            press(Qt::Key_Home);
+            item("lineText")->forceActiveFocus();
+            auto *popover = named("colourPopover");
+            popover->setProperty("expanded", false);
+            QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour3"), "click"));
+            QTRY_VERIFY(popover->property("opened").toBool());
+            QTest::qWait(150);
+            auto *frame = popover->property("background").value<QQuickItem *>();
+            QVERIFY(crop(window, around(visualItem("changeColour3"), frame, 16))
+                        .save(out + QStringLiteral("/sy2-editor-popover-") + theme + QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(popover, "reject"));
+            QTRY_VERIFY(!popover->property("visible").toBool());
+
+            // The Style editor: a swatch's popover, compact and with More….
+            auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+            QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+            QTRY_VERIFY(manager->isVisible());
+            const QVariantMap values = application->styleManager().beginEdit(false, 0);
+            QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+            auto *content = manager->contentItem();
+            auto *stylePopover = manager->findChild<QObject *>(QStringLiteral("styleColourPopover"));
+            stylePopover->setProperty("expanded", false);
+            auto *swatch = findItem(content, QStringLiteral("styleColour1"));
+            QVERIFY(QMetaObject::invokeMethod(swatch, "click"));
+            QTRY_VERIFY(stylePopover->property("opened").toBool());
+            QTest::qWait(150);
+            auto *styleFrame = stylePopover->property("background").value<QQuickItem *>();
+            QVERIFY(crop(manager, around(swatch, styleFrame, 16))
+                        .save(out + QStringLiteral("/sy2-style-popover-") + theme + QStringLiteral(".png")));
+            stylePopover->setProperty("expanded", true);
+            QTest::qWait(200);
+            QVERIFY(crop(manager, around(swatch, styleFrame, 16))
+                        .save(out + QStringLiteral("/sy2-style-popover-more-") + theme + QStringLiteral(".png")));
+            stylePopover->setProperty("expanded", false);
+            QVERIFY(QMetaObject::invokeMethod(stylePopover, "reject"));
+            QTRY_VERIFY(!stylePopover->property("visible").toBool());
+
+            // SY3: the font list open, the sample line following the family
+            // under the keyboard.
+            auto *font = findItem(content, QStringLiteral("styleFont"));
+            QStringList families = QFontDatabase::families();
+            families.removeIf([](const QString &f) { return QFontDatabase::isPrivateFamily(f); });
+            font->setProperty("model", families);
+            font->setProperty("editText", values.value(QStringLiteral("fontname")));
+            auto *popup = font->property("popup").value<QObject *>();
+            QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+            QTRY_VERIFY(popup->property("opened").toBool());
+            for (int i = 0; i < 3; ++i)
+                QVERIFY(QMetaObject::invokeMethod(font, "incrementCurrentIndex"));
+            QTest::qWait(250);
+            auto *list = popup->property("contentItem").value<QQuickItem *>();
+            QVERIFY(crop(manager, around(font, list, 12))
+                        .save(out + QStringLiteral("/sy3-font-list-") + theme + QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+            QTRY_VERIFY(!popup->property("visible").toBool());
+            QTest::qWait(150);
+            QVERIFY(manager->grabWindow().save(out + QStringLiteral("/sy3-style-editor-") + theme + QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+            QTRY_VERIFY(!manager->isVisible());
         }
     }
 
@@ -19073,6 +20267,21 @@ private slots:
         dialogItem("dummyVideoDialog", "dummyColour")->setProperty("text", QStringLiteral("&H0000FF&"));
         QCOMPARE(swatch->property("color").value<QColor>(), QColor(255, 0, 0));
         dialogItem("dummyVideoDialog", "dummyColour")->setProperty("text", QStringLiteral("&HFEA32F&"));
+        // SY2: the swatch opens the colour popover at that colour, with no
+        // alpha; a change writes the text, Esc puts it back
+        QVERIFY(QMetaObject::invokeMethod(swatch, "click"));
+        auto *dummyPopover = named("dummyColourPopover");
+        QTRY_VERIFY(dummyPopover->property("visible").toBool());
+        QCOMPARE(dummyPopover->property("anchor").value<QQuickItem *>(), swatch);
+        QCOMPARE(dummyPopover->property("red").toInt(), 47);
+        QCOMPARE(dummyPopover->property("blue").toInt(), 254);
+        QVERIFY(!dialogItem("dummyColourPopover", "alpha")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dummyPopover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
+        QTRY_COMPARE(dialogItem("dummyVideoDialog", "dummyColour")->property("text").toString(), QStringLiteral("&H0000FF&"));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!dummyPopover->property("visible").toBool());
+        QVERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyColour")->property("text").toString(), QStringLiteral("&HFEA32F&"));
         // a preset fills the size (OnResolutionChoose)
         auto *resolution = dialogItem("dummyVideoDialog", "dummyResolution");
         resolution->setProperty("currentIndex", 0);

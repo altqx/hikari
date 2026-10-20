@@ -28,7 +28,6 @@
 // - keypad Enter matches the Return accelerators on Windows only.
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Dialogs
 import QtQuick.Layouts
 import Hikari.Ui
 
@@ -36,6 +35,8 @@ Window {
     color: Theme.panel // K2: a Window draws white unless told
     id: window
     required property AutomationDialogController controller
+    // SY2: the colour controls' popover.
+    required property ColourPickerController colourPicker
     // Which legacy build's keyboard navigation to follow ("windows" or not).
     property string navigationPlatform: Qt.platform.os
 
@@ -462,7 +463,24 @@ Window {
             readonly property var spec: parent ? parent.spec : ({})
             readonly property Item focusTarget: pickButton
             property color value: spec.color
+            readonly property bool alpha: spec.kind === "coloralpha"
             function readValue() { return value; }
+            // SY2: the colour popover at the value; its alpha is the ASS
+            // transparency (255 - the colour's own alpha).
+            function pick() {
+                const row = colorRow
+                let before = null
+                colourPopover.openFor(pickButton, {
+                    changeColour: c => row.value = Qt.rgba(c.r / 255, c.g / 255, c.b / 255, row.alpha ? (255 - c.a) / 255 : 1),
+                    endDialog: accepted => { if (!accepted) row.value = before }
+                }, () => {
+                    // A copy, once the colour open before has ended: `value` reads back live.
+                    before = Qt.rgba(row.value.r, row.value.g, row.value.b, row.value.a)
+                    window.colourPicker.opened("automation")
+                    return { r: Math.round(before.r * 255), g: Math.round(before.g * 255), b: Math.round(before.b * 255),
+                             a: row.alpha ? 255 - Math.round(before.a * 255) : 0 }
+                }, { title: spec.hint || spec.name, alpha: alpha, focus: pickButton })
+            }
             Rectangle {
                 implicitWidth: 28
                 implicitHeight: 20
@@ -476,14 +494,14 @@ Window {
                 text: "…"
                 ToolTip.text: colorRow.spec.hint
                 ToolTip.visible: hovered && colorRow.spec.hint !== ""
-                onClicked: picker.open()
+                onClicked: colorRow.pick()
                 // ButtonColorPicker (a MappedButton): its Return accelerator
                 // is not handled on Windows; wxGTK retries it as a click.
                 Keys.onPressed: function(event) {
                     if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                         event.accepted = true;
                         if (event.key === Qt.Key_Return && window.unmodified(event) && !window.windowsKeys)
-                            picker.open();
+                            colorRow.pick();
                     } else if (event.key === Qt.Key_Escape) {
                         event.accepted = true;
                         if (window.unmodified(event))
@@ -498,12 +516,6 @@ Window {
                     }
                 }
                 Keys.onReleased: function(event) { event.accepted = event.key === Qt.Key_Space; }
-            }
-            ColorDialog {
-                id: picker
-                selectedColor: colorRow.value
-                options: colorRow.spec.kind === "coloralpha" ? ColorDialog.ShowAlphaChannel : 0
-                onAccepted: colorRow.value = selectedColor
             }
         }
     }
@@ -522,5 +534,10 @@ Window {
             Keys.onReleased: function(event) { event.accepted = event.key === Qt.Key_Space; }
             function readValue() { return checked; }
         }
+    }
+    ColourPopover {
+        id: colourPopover
+        objectName: "automationColourPopover"
+        picker: window.colourPicker
     }
 }

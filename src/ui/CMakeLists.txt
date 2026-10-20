@@ -21,8 +21,12 @@ target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
     VERSION 1.0
-    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontDialog.qml ColourPickerDialog.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml MisspellReplacerDialog.qml SpellCheckerDialog.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
+    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontDialog.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml MisspellReplacerDialog.qml SpellCheckerDialog.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
+# TS1: the Shift times panel and the dock-form pieces it is built from.
+qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
+# SH2: the Home page, while no Document is open.
+qt_target_qml_sources(hikari_ui QML_FILES HomePage.qml)
 # E6: the Line editor's tag list.
 qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
 # LE5: the custom tag buttons, as the strip shows them, and their popover.
@@ -133,10 +137,14 @@ qt_target_qml_sources(hikari_ui QML_FILES AudioOutputMenu.qml)
 # Moving tags buttons.
 qt_target_qml_sources(hikari_ui QML_FILES TranslatorModeCheck.qml TranslationToggles.qml)
 # Y7: the colour picker's screen dropper (QScreen grabs on Windows and X11,
-# the desktop's Screenshot portal over D-Bus on Wayland) and the simple
-# "Color picker" window.
+# the desktop's Screenshot portal over D-Bus on Wayland).
 target_sources(hikari_ui PRIVATE screen_sampler.cpp screen_sampler.h)
-qt_target_qml_sources(hikari_ui QML_FILES ScreenDropperView.qml SimpleColourPicker.qml)
+qt_target_qml_sources(hikari_ui QML_FILES ScreenDropperView.qml)
+# SY2: the one colour picker, a popover, and its swatch grids.
+qt_target_qml_sources(hikari_ui QML_FILES ColourPopover.qml ColourSwatchGrid.qml)
+# SY3: font lists drawing each family in its own face.
+target_sources(hikari_ui PRIVATE font_faces.cpp font_faces.h)
+qt_target_qml_sources(hikari_ui QML_FILES FontFamilyRow.qml)
 if(UNIX AND NOT APPLE)
     find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS DBus)
     target_link_libraries(hikari_ui PRIVATE Qt6::DBus)

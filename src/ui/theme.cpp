@@ -323,6 +323,7 @@ Content content(Code code, const Roles &roles)
         c.spellcheck = rgb(0x940000); // GRID_SPELLCHECKER / EDITOR_SPELLCHECKER (config.cpp:432, 449)
         c.gridAlternate = rgb(0x242A31);
         c.gridWarning = rgb(0x7A2E2E);
+        c.gridComment = rgb(0x253A57); // GR4: legacy GRID_COMMENT's #4880D0 hue, toned for the text roles
         // GRID_COMPARISON_* (config.cpp:427-431)
         c.comparison = {rgb(0x2700FF), rgb(0x272B32), rgb(0x3A3E45), rgb(0x003176), rgb(0x3662A1)};
         // EDITOR_CURLY_BRACES .. EDITOR_TEMPLATE_STRINGS (config.cpp:433-442)
@@ -333,6 +334,7 @@ Content content(Code code, const Roles &roles)
         c.spellcheck = rgb(0xFF6968); // legacy's light theme (config.cpp:432, 449)
         c.gridAlternate = rgb(0xF0F2F4);
         c.gridWarning = rgb(0xF4C7C7);
+        c.gridComment = rgb(0xD6E3F5);
         // legacy's light theme (config.cpp:427-431, LoadDefaultColors(false))
         c.comparison = {rgb(0xFFFFFF), rgb(0xFF000C), rgb(0xB7AC00), rgb(0x9C0000), rgb(0x817900)};
         // legacy's light theme (config.cpp:433-442)
@@ -361,6 +363,7 @@ Content content(Code code, const Roles &roles)
         c.spellcheck = rgb(0xFF9C9C);
         c.gridAlternate = rgb(0xFFFFFF);
         c.gridWarning = rgb(0xFFC0C0);
+        c.gridComment = rgb(0xF2E2B0); // amber: the selection is blue, a compared match grey
         c.comparison = {rgb(0xC000C0), rgb(0xFFD0D0), rgb(0xE0E0E0), rgb(0xD0D0FF), rgb(0xD0E8FF)};
         // Legacy's roles, each readable on the field at 4.5:1.
         c.syntax = {QColor(), rgb(0x7A3E00), rgb(0x005A9E), rgb(0x005A9E), rgb(0x006400), rgb(0x595959),
@@ -388,6 +391,7 @@ Content content(Code code, const Roles &roles)
         c.spellcheck = rgb(0xC00000);
         c.gridAlternate = rgb(0x000000);
         c.gridWarning = rgb(0x800000);
+        c.gridComment = rgb(0x403400); // amber: the selection is blue, a compared match grey
         c.comparison = {rgb(0xFF00FF), rgb(0x3A0000), rgb(0x303030), rgb(0x000060), rgb(0x003060)};
         c.syntax = {QColor(), rgb(0xFFB060), rgb(0x60D0FF), rgb(0x60D0FF), rgb(0x7CFC7C), rgb(0xBEBEBE),
                     rgb(0xF0E68C), rgb(0xFF6060), rgb(0x60D0FF), rgb(0xC8A8FF), rgb(0xA0E0A0)};

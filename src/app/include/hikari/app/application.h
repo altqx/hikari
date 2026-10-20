@@ -86,6 +86,9 @@ signals:
     // O1: a changed program font destroyed the Select dialog (DestroyDialogs).
     void selectLinesDestroyed();
     void quitApprovedChanged();
+    // WS5: a quit review ended without the quit (cancelled, a save failed,
+    // or another review took its place).
+    void quitCancelled();
     void saveWithVideoNameChanged();
     void askForBadResolutionChanged();
     // Y4: the open video's size differs from the editing target's PlayRes
@@ -242,6 +245,22 @@ public:
     // first subtitles go into the editing target and it has unsaved work
     // (then finishClose() or cancelClose() carries the rest out).
     Q_INVOKABLE QVariantMap openDropped(const QList<QUrl> &urls);
+    // WS5: the files a later start of the program handed over (SingleInstance),
+    // in new tabs: subtitles as File > Open opens them into a new tab, a
+    // video in a new tab, several as dropped ones but each in a new tab; an
+    // untouched empty tab (P6) takes the first. Nothing is reviewed, so a
+    // tab's work is never replaced. Returns {kind: "video", path} when a
+    // video waits for the shell's openSingleVideo in its tab, else as
+    // openDropped. Call it only while forwardedOpenWaits() is false.
+    QVariantMap openForwarded(const QStringList &files);
+    // True while a review or a startup session question has the next word:
+    // forwarded files wait (legacy hikarisubApp::OnOpen waited while IsBusy).
+    bool forwardedOpenWaits() const;
+    // WS5: the quit is being reviewed or has gone ahead.
+    bool quitting() const { return m_quitApproved || m_closeThen == QLatin1String("quit"); }
+    // WS5: the quit reviews so far, the one going on (or that went ahead)
+    // last: what came during a quit belongs to that one only.
+    int quitReviews() const { return m_quitReviews; }
     // P9: opening a video (legacy OpenFile on a video): subtitles named as
     // the video beside it (FindFile) are offered first, {subtitles} ("" when
     // none, or when the tab already has them). Then openVideo(path), or, on
@@ -260,12 +279,22 @@ public:
     Q_INVOKABLE bool revealRecent(const QString &path);
     // P9: legacy SelectInFolder.
     Q_INVOKABLE void showInFolder(const QString &path);
+    // SH2: the Home page's "Copy path".
+    Q_INVOKABLE void copyText(const QString &text);
     // P9: the "Associated files" question's answer for the editing target
     // (0 load associated, 1 load from directory, 2 no); with Apply to All
     // the same answer goes to the other questions of the same opening.
     void answerAssociation(int answer, bool applyToAll);
-    // GLOBAL_RECENT_SUBS: {path, label} rows, missing local files pruned first.
+    // GLOBAL_RECENT_SUBS: {path, label} rows. Missing local files are left
+    // out but kept in the list, where the Home page shows them (SH2).
     Q_INVOKABLE QVariantList recentSubtitles();
+    // SH2: the Home page's recent files, most recent first: {path, name,
+    // folder, opened (a QDateTime, invalid for an entry carried over from
+    // legacy), missing}.
+    Q_INVOKABLE QVariantList homeRecent();
+    // SH2: Home's Remove (one entry) and "Remove missing files".
+    Q_INVOKABLE void removeRecent(const QString &path);
+    Q_INVOKABLE void removeMissingRecent();
     std::vector<std::string> recentEntries() const { return m_recent.entries(); }
     // The legacy check when the window activates (TabPanel::ReloadSubsIfModified):
     // "modified" when the editing target's file is newer than when it was
@@ -779,6 +808,9 @@ public:
     // characters), title, current, tip (subtitles and video paths)}.
     Q_PROPERTY(QVariantList tabs READ tabs NOTIFY tabsChanged)
     Q_PROPERTY(int currentTab READ currentTab NOTIFY tabsChanged)
+    // SH2: no Document is open, neither a tab nor a protected reference
+    // (whose tray needs the panels): the Home page shows.
+    Q_PROPERTY(bool home READ home NOTIFY tabsChanged)
     // LAST_SESSION_CONFIG (session.restore): 0 nothing, 1 ask, 2 load at start.
     Q_PROPERTY(int sessionRestore READ sessionRestore WRITE setSessionRestore NOTIFY sessionRestoreChanged)
     // Session entries a restore could not resolve (L58 "unresolved restores
@@ -795,6 +827,7 @@ public:
     // HikariSubFrame::HideEditor: the switch flips.
     Q_INVOKABLE void toggleEditor();
     QVariantList tabs() const;
+    bool home() const { return m_workspace.tabs().empty() && !m_workspace.reference(); }
     int currentTab() const;
     int sessionRestore() const;
     void setSessionRestore(int value);
@@ -823,6 +856,13 @@ public:
     // At startup (legacy hikarisubApp::OnInit): "load", "ask" or "crash" (the
     // last session did not end with "[Close session]"), or "".
     Q_INVOKABLE QString startupSession() const;
+    // The shell has carried out what startupSession() asked (loaded the
+    // session, or the prompts were answered).
+    Q_INVOKABLE void startupSessionDecided() { m_startupSessionPending = false; }
+    // SH2: what Load last session would open, for the Home page: {names (each
+    // Document's file name, or its video's for a tab without subtitles)}; no
+    // names when the last session has no Document with a file.
+    Q_INVOKABLE QVariantMap lastSessionSummary() const;
     Q_INVOKABLE bool lastSessionCrashed() const;
     void setStartedWithPaths(bool paths) { m_startedWithPaths = paths; }
     // The unresolved entry `row`: try again, choose another file, or forget it.
@@ -856,7 +896,7 @@ public:
     Q_INVOKABLE qulonglong tabDocument(int index) const;
     // MENU_CHOOSE - 1, "Close all tabs" (after legacy's "All tabs will be
     // closed, continue?"): the close review's rows for every tab; with none,
-    // finishClose() closes them all and leaves one new Untitled tab.
+    // finishClose() closes them all and the Home page shows (SH2).
     Q_INVOKABLE QVariantList reviewCloseAll();
     // P9: GLOBAL_OPEN_AUTO_SAVE's legacy autosaves (the Subs folder, read
     // only): [{name, versions: [{written, file}]}], and the Files list's
@@ -939,7 +979,10 @@ signals:
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
-    void rememberRecent(const std::string &path);
+    // SH2: an open stamps the last-opened time; a save keeps the file's time
+    // (a file first saved there, as by Save As, is stamped then).
+    void rememberRecent(const std::string &path, bool opened = true);
+    void storeRecent();
     // Subtitles opened while the editor is off turn it on (legacy OpenFile
     // and OpenFiles: `if (!tab->editor) HideEditor()`).
     void editorOnForSubtitles();
@@ -994,6 +1037,8 @@ private:
     std::optional<PendingFiles> m_pendingFiles;
     void applyFiles(PendingFiles files, bool skipFirst);
     bool openInNewTab(application::StagedOpen staged, const QString &path);
+    PendingFiles stageFiles(const QStringList &files);
+    bool targetUntouched() const;
     application::GridSelection gridSelection() const;
     bool applySelection(application::Selection next);
 
@@ -1194,6 +1239,7 @@ private:
     };
     QString m_closeThen;
     std::vector<Closing> m_closing;
+    int m_quitReviews = 0; // WS5
     bool m_quitApproved = false;
     // P2: the subtitles waiting for the review to replace the editing target.
     std::optional<application::StagedOpen> m_pendingOpen;
@@ -1334,6 +1380,7 @@ private:
     bool m_tabSeekQueued = false;
     bool m_scrollRestoring = false;
     bool m_startedWithPaths = false;
+    mutable bool m_startupSessionPending = false; // WS5: startupSession() asked, not yet carried out
     int m_tabTextMax = 40; // legacy maxCharPerTab, read once at start
     void leaveTabMedia(std::optional<application::DocumentId> document);
     void enterTabMedia(std::optional<application::DocumentId> previous, std::optional<application::DocumentId> document);

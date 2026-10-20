@@ -387,8 +387,13 @@ public:
             return done(found);
         const auto target = m_app.m_workspace.editingTarget();
         if (!target || !m_app.targetUntitled()) {
-            if (const auto id = m_app.open(name))
+            if (const auto id = m_app.open(name)) {
+                // With no Document open (SH2: from the Home page) it became
+                // the editing target, which showLine then finds unchanged.
+                if (!target)
+                    m_app.refreshViews();
                 return done(id);
+            }
             m_app.newDocument(); // InsertTab came first
             return done(m_app.m_workspace.editingTarget());
         }
@@ -885,7 +890,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     connect(m_shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
             [this] { m_settings->set("grid.hideColumns", m_shell->hiddenColumns()); });
+    // GR3: the Grid menu's and Settings' "Hide empty columns", one setting.
+    m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
+    connect(m_shell.get(), &ui::ShellController::autoHideColumnsChanged, this, [this] {
+        // Only a change: Set default's re-sync leaves the key unset.
+        if (m_settings->boolean("grid.autoHideColumns") != m_shell->autoHideColumns())
+            m_settings->set("grid.autoHideColumns", m_shell->autoHideColumns());
+    });
     m_recent.set(m_settings->settings().list("recent.subtitles"));
+    m_recent.setOpenedRecords(m_settings->settings().list("recent.subtitlesOpened")); // SH2
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
     // An edit refreshes the video once per event-loop turn, however many
@@ -897,6 +910,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_editRefresh->setInterval(0);
     connect(m_editRefresh, &QTimer::timeout, this, &Application::refreshVideo);
     connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] {
+        // GR2: the Grid row shows the draft as it is typed, uncommitted.
+        if (const auto *session = targetSession())
+            m_shell->setDraft(session->draftRecord());
         m_editRefresh->start();
         scheduleAutosave();
     });
@@ -1110,6 +1126,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             });
         });
     });
+    // SH2: media opened while the Home page shows (no Document open) opens
+    // in a new Untitled Document, as legacy's always-present tab held it.
+    const auto documentForMedia = [this] {
+        if (home())
+            newDocument();
+    };
+    m_video->setBeforeOpen(documentForMedia);
+    m_audio->setBeforeOpen(documentForMedia);
     trackTabMedia(); // P6
     trackVideoSources(); // V3
     trackVideoFollow(); // V6
@@ -1377,6 +1401,7 @@ Application::~Application()
     for (const auto &connection : std::as_const(m_audioConnections))
         disconnect(connection);
     m_video->setOpenFilter(nullptr);
+    m_video->setBeforeOpen(nullptr);
     m_audio.reset();
     m_audioRouting.reset(); // H2: no route change after this
     m_audioPlayer.reset(); // A4: the player stops before its output goes
@@ -1569,6 +1594,7 @@ void Application::refreshViews()
                      target ? m_comparison.table(*target) : nullptr,
                      reference ? m_comparison.table(*reference) : nullptr);
     if (targetSession) {
+        m_shell->setDraft(targetSession->draftRecord()); // GR2
         m_shell->setSelection(targetSession->selection());
         m_editor->selectionChanged(); // LE4: the mixed position
     }
@@ -1763,7 +1789,12 @@ void Application::endFindOpen(bool opened)
 QVariantList Application::reviewClose(const QString &then)
 {
     endFindOpen(false); // another review replaces the file result's
+    const bool quitReplaced = m_closeThen == QLatin1String("quit");
     m_closeThen = then;
+    if (quitReplaced)
+        emit quitCancelled(); // WS5
+    if (then == QLatin1String("quit"))
+        ++m_quitReviews; // WS5
     m_closing.clear();
     if (then != QLatin1String("open")) {
         m_pendingOpen.reset();
@@ -1855,7 +1886,7 @@ void Application::writeFinished(const application::WriteResult &result)
         refreshViews();
     // Save As of an Untitled or renamed Document: the title follows the file.
     if (result.outcome == application::WriteOutcome::Written) {
-        rememberRecent(result.destination.value); // legacy SetRecent after a save
+        rememberRecent(result.destination.value, false); // legacy SetRecent after a save
         if (auto *session = m_files->session(result.document); session && !session->isDirty())
             discardRecovery(result.document); // the work is in the file
         if (const auto destination = m_files->destination(result.document);
@@ -1909,6 +1940,8 @@ void Application::finishClose()
     m_closing.clear();
     m_closeThen.clear();
     if (!kept.isEmpty()) {
+        if (then == QLatin1String("quit"))
+            emit quitCancelled(); // WS5
         refreshViews();
         emit closeFinished(false, QCoreApplication::translate("HikariSub.Documents",
                                                               "Not closed, because saving failed or there is newer work: %1")
@@ -1979,7 +2012,10 @@ void Application::cancelClose()
 {
     // Saves already completed stay completed (accepted quit review).
     m_closing.clear();
+    const bool quit = m_closeThen == QLatin1String("quit");
     m_closeThen.clear();
+    if (quit)
+        emit quitCancelled(); // WS5
     m_pendingOpen.reset();
     m_pendingOpenPath.clear();
     m_pendingSession.reset(); // P6
@@ -2205,38 +2241,87 @@ QVariantMap Application::reviewOpen(const QString &path)
     return {{QStringLiteral("ok"), true}, {QStringLiteral("problem"), QString()}, {QStringLiteral("rows"), rows}};
 }
 
-void Application::rememberRecent(const std::string &path)
+namespace {
+
+// Legacy IsMissingLocalFile with this platform's checks.
+bool recentMissing(const std::string &path)
 {
-    m_recent.add(path);
+    return application::isMissingLocalFile(
+        path, [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); },
+        [](char drive) {
+#ifdef _WIN32
+            const wchar_t root[] = {static_cast<wchar_t>(drive), L':', L'\\', 0};
+            return ::GetDriveTypeW(root) == DRIVE_REMOTE;
+#else
+            (void)drive;
+            return false;
+#endif
+        });
+}
+
+} // namespace
+
+void Application::rememberRecent(const std::string &path, bool opened)
+{
+    const auto kept = opened ? std::nullopt : m_recent.opened(path);
+    m_recent.add(path, kept ? *kept : QDateTime::currentMSecsSinceEpoch());
+    storeRecent();
+}
+
+void Application::storeRecent()
+{
     m_settings->settings().set("recent.subtitles", m_recent.entries());
+    m_settings->settings().set("recent.subtitlesOpened", m_recent.openedRecords());
     emit recentChanged();
 }
 
 QVariantList Application::recentSubtitles()
 {
-    const bool pruned = m_recent.prune([](const std::string &path) {
-        return application::isMissingLocalFile(
-            path, [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); },
-            [](char drive) {
-#ifdef _WIN32
-                const wchar_t root[] = {static_cast<wchar_t>(drive), L':', L'\\', 0};
-                return ::GetDriveTypeW(root) == DRIVE_REMOTE;
-#else
-                (void)drive;
-                return false;
-#endif
-            });
-    });
-    if (pruned)
-        m_settings->settings().set("recent.subtitles", m_recent.entries());
+    // SH2: legacy AppendRecent dropped missing local files from the list
+    // here; they stay for the Home page, which marks them and removes them.
     QVariantList rows;
     int n = 0;
     for (const auto &entry : m_recent.entries()) {
+        if (recentMissing(entry))
+            continue;
         const QString path = QString::fromStdString(entry);
         rows << QVariantMap{{QStringLiteral("path"), path},
                             {QStringLiteral("label"), QStringLiteral("%1 %2").arg(++n).arg(QFileInfo(path).fileName())}};
     }
     return rows;
+}
+
+QVariantList Application::homeRecent()
+{
+    QVariantList rows;
+    for (const auto &entry : m_recent.entries()) {
+        const QString path = QString::fromStdString(entry);
+        const QFileInfo info(path);
+        const auto opened = m_recent.opened(entry);
+        rows << QVariantMap{{QStringLiteral("path"), QDir::toNativeSeparators(path)},
+                            {QStringLiteral("name"), info.fileName()},
+                            {QStringLiteral("folder"), QDir::toNativeSeparators(info.path())},
+                            {QStringLiteral("opened"), opened ? QDateTime::fromMSecsSinceEpoch(*opened) : QDateTime()},
+                            {QStringLiteral("missing"), recentMissing(entry)}};
+    }
+    return rows;
+}
+
+void Application::removeRecent(const QString &path)
+{
+    // Home shows native separators; the list keeps the path as it was added.
+    for (const auto &entry : m_recent.entries())
+        if (QDir::toNativeSeparators(QString::fromStdString(entry)) == path) {
+            m_recent.remove(entry);
+            storeRecent();
+            return;
+        }
+}
+
+void Application::removeMissingRecent()
+{
+    if (m_recent.prune(recentMissing))
+        storeRecent();
 }
 
 void Application::recordFileTime(application::DocumentId document)
@@ -4893,6 +4978,8 @@ void Application::settingChanged(const QString &id)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles")); // SubsGridBase autosave
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+    else if (id == QLatin1String("grid.autoHideColumns") && !m_resettingSettings)
+        m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
     else if (id == QLatin1String("video.disableLiveEditing") || id.startsWith(QLatin1String("grid.calcSpaces"))) {
         m_editor->optionsChanged(); // E4: the counters and Duration follow at once
         refreshVideo();             // live editing on or off: the draft or the committed Lines
@@ -5256,7 +5343,7 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     auto &store = m_settings->settings();
     std::vector<std::pair<std::string_view, application::SettingValue>> kept;
     // The appearance is not an option: ResetDefault leaves it, as it left the theme.
-    std::vector<std::string_view> keep{"recent.subtitles", "recent.video", "recent.audio",
+    std::vector<std::string_view> keep{"recent.subtitles", "recent.subtitlesOpened", "recent.video", "recent.audio",
                                        application::kAutomationHotkeysSetting, application::kHotkeysSetting,
                                        application::kAudioHotkeysSetting};
     const auto appearance = appearanceSettings();
@@ -5275,6 +5362,8 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
     m_gridFilter->settingsReset(); // per-grid "ignore filtering" is kept (SubsGrid::ignoreFiltered)
     m_updates->reload();
+    // GR3: empty-column hiding has no legacy owner; both Grids take the default.
+    m_shell->setAutoHideColumns(m_settings->boolean("grid.autoHideColumns"));
     // SelectLines, once created, keeps its controls and recent searches:
     // the options go back at its close (legacy: at exit or DestroyDialogs),
     // the recent searches at its next selection. Before that, the dialog

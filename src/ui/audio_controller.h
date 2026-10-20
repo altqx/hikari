@@ -88,6 +88,9 @@ public:
 
     // GLOBAL_OPEN_AUDIO (a file, or a dummy video's silence), GLOBAL_CLOSE_AUDIO.
     Q_INVOKABLE void openAudio(const QString &path);
+    // SH2: runs as openAudio starts, so that audio opened while no Document
+    // is open first gets one to belong to (VideoController::setBeforeOpen).
+    void setBeforeOpen(std::function<void()> before) { m_beforeOpen = std::move(before); }
     Q_INVOKABLE void openAudioUrl(const QUrl &url) { openAudio(url.toLocalFile()); }
     // Legacy's 2 h 30 min blank audio (the retired GLOBAL_OPEN_DUMMY_AUDIO,
     // AV3), for tests that need audio without a file.
@@ -354,6 +357,7 @@ private:
     void releasePlayer(); // legacy SetFile's unload: Stop, then the player goes
 
     application::AudioBox m_box;
+    std::function<void()> m_beforeOpen;
     std::function<application::AudioCacheSettings()> m_settings;
     QStringList m_trackChoices;
     std::function<void(std::optional<int>)> m_trackAnswer;

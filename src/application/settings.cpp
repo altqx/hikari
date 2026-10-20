@@ -271,16 +271,28 @@ const std::vector<SettingDefinition> &definitions()
         // indexing was off). Chosen here only, never as a fallback; other
         // platforms ignore it.
         {"video.playbackPlayer", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        // SH2: when each recent subtitles file was last opened, for the Home
+        // page: "<ms since the epoch> <path>" per entry of recent.subtitles
+        // (RecentFiles::openedRecords). Legacy kept the paths only.
+        {"recent.subtitlesOpened", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // ADR 0019: "Install updates automatically": an installer, AppImage,
         // deb or rpm copy downloads an update and installs it at the next
         // quit; off, it only says that one exists. Legacy keeps it as
         // UPDATER_AUTO_INSTALL from 0.0.2 on, which the importer does not read.
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
+        // TS1: the Shift times panel's collapsed sections, by section id
+        // ("amount", "lines", "videoAudio", "leadInOut", "continuous", "snap");
+        // all are open by default.
+        {"shiftTimes.collapsedSections", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         // Y4-playres-ask (user decision 2026-10-13): a macro reading the
         // resolution of a Document without PlayResX/PlayResY sets it from the
         // open video's size without asking, both keys (the question's
         // "Always set it from the video"; Settings > Editor).
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
+        // GR3 (wave 6, Aegisub's convention): Grid columns that carry nothing
+        // in the whole Document hide themselves, on top of grid.hideColumns;
+        // the Grid's Hide columns menu and Settings > Editor.
+        {"grid.autoHideColumns", "", Bool, Profile, Mapped, false, true},
         // LE3-tags-shown (owner, 2026-10-18): the Line editor shows ASS
         // override tags unless this is on (Settings > Editor, and the
         // EDITBOX_HIDE_TAGS command); legacy hid them on every start.

@@ -20,6 +20,8 @@ Dialog {
     id: dialog
     objectName: "settingsDialog"
     required property var app
+    // SY2: the Appearance page's colour popover.
+    required property ColourPickerController colourPicker
     property var hotkeys: null // O2: the Hotkeys page's HotkeysController
     property TagButtonsController tagButtons: null // LE5: the Editor page's tag button list
     title: qsTr("Options")
@@ -84,11 +86,19 @@ Dialog {
         if (setting.startsWith("appearance."))
             Theme.preview(values)
     }
-    // The Appearance page's colour picker for a high-contrast colour.
-    function pickThemeColour(setting, colour) {
-        themeColourDialog.setting = setting
-        themeColourDialog.selectedColor = colour
-        themeColourDialog.open()
+    // The Appearance page's colour picker for a high-contrast colour (SY2:
+    // the colour popover at `anchor`). Each change is staged at once as
+    // "#RRGGBB" and previewed; Esc puts the colour before back.
+    function pickThemeColour(setting, colour, anchor, name) {
+        themeColourPopover.openFor(anchor, themeColourTarget, () => {
+            // The staged colour once the one open before has ended.
+            const now = values[setting] ?? colour
+            themeColourTarget.setting = setting
+            themeColourTarget.before = now
+            colourPicker.opened("settings")
+            const c = colourPicker.htmlColour(now)
+            return { r: c.r, g: c.g, b: c.b, a: 0 }
+        }, { title: name, alpha: false, focus: anchor })
     }
     // Apply keeps the controls as they are (legacy does not refresh them).
     function apply() {
@@ -398,6 +408,8 @@ Dialog {
                     SettingCheck { setting: "translation.hideOriginalOnVideo"; text: qsTr("Hide original on video in translator mode") }
                     SettingCheck { setting: "grid.duplicationDontChangeSelection"; text: qsTr("Do not change selections when duplicating dialogue lines") }
                     SettingCheck { setting: "grid.dontCenterActiveLine"; text: qsTr("Do not vertically center the active line in the subtitle grid") }
+                    // GR3: the Grid's Hide columns > Hide empty columns, one setting.
+                    SettingCheck { setting: "grid.autoHideColumns"; text: qsTr("Hide empty columns in the subtitle grid") }
                     SettingCheck { setting: "editor.allowNumpadHotkeys"; text: qsTr("Use numpad shortcuts in text fields") }
                     SettingCheck { setting: "video.visualWarningsOff"; text: qsTr("Turn off visual tools warning") }
                     SettingCheck { setting: "video.dontAskForBadResolution"; text: qsTr("Do not warn about resolution mismatch") }
@@ -1079,12 +1091,23 @@ Dialog {
         }
     }
 
-    ColorDialog {
-        id: themeColourDialog
-        objectName: "themeColourDialog"
+    QtObject {
+        id: themeColourTarget
         property string setting: ""
-        // the picked colour as "#RRGGBB"
-        onAccepted: dialog.put(setting, selectedColor.toString().toUpperCase())
+        property string before: ""
+        function changeColour(c) {
+            dialog.put(setting, dialog.colourPicker.htmlText(c))
+            return true
+        }
+        function endDialog(accepted) {
+            if (!accepted)
+                dialog.put(setting, before)
+        }
+    }
+    ColourPopover {
+        id: themeColourPopover
+        objectName: "themeColourPopover"
+        picker: dialog.colourPicker
     }
 
     HotkeyMapping {
