@@ -322,7 +322,7 @@ float RotationZTool::currentAngle() const
 void RotationZTool::changeVisualLine(std::u16string &text, const core::LineRecord &dial, const Context &ctx)
 {
     // RotationZ::ChangeVisual(txt, dial, numOfSelections) (VisualRotationZ.cpp:296-370).
-    if (m_hasTwoPoints && !m_typedAngle && (!m_visibility[0] || !m_visibility[1]))
+    if (m_hasTwoPoints && !m_typedAngle && !m_isOrg && (!m_visibility[0] || !m_visibility[1]))
         return;
     if (m_isOrg) {
         const PointF d = orgOffset(m_org, m_lastOrg, m_coeffW, m_coeffH, m_zoomScale);
@@ -379,7 +379,7 @@ void RotationZTool::changeVisualLine(std::u16string &text, const core::LineRecor
 std::pair<long, long> RotationZTool::changeVisualEditor(std::u16string &text)
 {
     // RotationZ::ChangeVisual(txt) (VisualRotationZ.cpp:372-420).
-    if (m_hasTwoPoints && !m_typedAngle && (!m_visibility[0] || !m_visibility[1]))
+    if (m_hasTwoPoints && !m_typedAngle && !m_isOrg && (!m_visibility[0] || !m_visibility[1]))
         return {0, 0};
     if (m_isOrg) {
         m_find.findTag(u"org\\(([^\\)]+)\\)", text, 1);
