@@ -3040,7 +3040,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "grid-menu"
+    "grid-menu",
+    "original-panel"
    ]
   },
   {
@@ -3262,6 +3263,61 @@
     "settings-dialog"
    ],
    "pending": "PF1 #225"
+  },
+  {
+   "role": "paste-selection-translation",
+   "file": "paste-selection-translation.svg",
+   "label": "Paste the selected",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "original-panel"
+   ]
+  },
+  {
+   "role": "comment-original",
+   "file": "comment-original.svg",
+   "label": "Comment out original",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "original-panel"
+   ]
+  },
+  {
+   "role": "unconfirmed",
+   "file": "unconfirmed.svg",
+   "label": "Not confirmed",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "original-panel"
+   ]
+  },
+  {
+   "role": "moving-tags",
+   "file": "moving-tags.svg",
+   "label": "Moving tags",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "original-panel"
+   ]
+  },
+  {
+   "role": "translation-mode",
+   "file": "translation-mode.svg",
+   "label": "Translation mode",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "menu:subtitles"
+   ]
   }
  ],
  "notReplaced": {
