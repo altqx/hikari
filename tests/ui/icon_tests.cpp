@@ -286,7 +286,9 @@ private slots:
                                  "match-next", "unload", "run-script", "settings-video", "settings-audio",
                                  "appearance", "hotkeys", "copy-to-storage", "copy-to-ass", "copy-to-all-ass",
                                  // T6's position shifter and all-tags roles
-                                 "shift-position", "shift-origins", "tag-list", "tag-change-option", "tag-edit"})
+                                 "shift-position", "shift-origins", "tag-list", "tag-change-option", "tag-edit",
+                                 // SH1's window buttons
+                                 "window-minimize", "window-maximize", "window-restore", "window-close"})
             QVERIFY2(referenced.contains(QLatin1String(role)), role);
         static const QRegularExpression card(QStringLiteral(R"(^[A-Z]+\d+ #\d+(, [A-Z]+\d+ #\d+)*$)"));
         int pending = 0;
