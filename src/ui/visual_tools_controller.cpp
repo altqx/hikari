@@ -594,7 +594,8 @@ void VisualToolsController::refreshOptions()
                                    {QStringLiteral("enabled"), o.enabled && m_railEnabled},
                                    {QStringLiteral("choices"), choices},
                                    {QStringLiteral("index"), o.index},
-                                   {QStringLiteral("listEnds"), o.listEnds}});
+                                   {QStringLiteral("listEnds"), o.listEnds},
+                                   {QStringLiteral("group"), qs(o.group)}});
         }
     }
     if (out == m_options)
@@ -618,6 +619,18 @@ bool VisualToolsController::setOption(const QString &name, int value)
         openShapeEditor();
         refreshOptions();
         emit optionsChanged(); // the list shows the selection again
+        return true;
+    }
+    if (m_family == Family::Crosshair && name == QStringLiteral("copyPosition")) {
+        // VT1: the bar's Copy video position, the shown position in
+        // VIDEO_COPY_COORDS' text form.
+        const auto *cross = dynamic_cast<const CrosshairTool *>(t);
+        if (!cross || cross->copyText().empty())
+            return false;
+        m_copied = qs(cross->copyText());
+        if (auto *clipboard = QGuiApplication::clipboard())
+            clipboard->setText(m_copied);
+        emit changed();
         return true;
     }
     if (m_family == Family::Hydra && name == QStringLiteral("edit")) {
@@ -823,11 +836,26 @@ QString VisualToolsController::copyCoordinatesAtCursor(QQuickItem *area)
 
 bool VisualToolsController::setValue(const QString &name, const QString &text)
 {
+    // VT1: a typed value (Enter) or a scrub's release: one history step.
     auto *t = tool();
-    if (!t)
+    if (!t || !m_railEnabled)
         return false;
-    const bool done = t->setValue(name.toStdString(), text.toStdU16String(), *this);
+    const bool done = t->setValue(name.toStdString(), text.toStdU16String(), *this, ValueEdit::Commit);
     emit changed();
+    emit overlayChanged();
+    return done;
+}
+
+bool VisualToolsController::scrubValue(const QString &name, const QString &text)
+{
+    // VT1: a scrub's sample, staged on the gesture its first sample opens
+    // (shown on the video); the release commits it, Esc drops it.
+    auto *t = tool();
+    if (!t || !m_railEnabled)
+        return false;
+    const bool done = t->setValue(name.toStdString(), text.toStdU16String(), *this, ValueEdit::Sample);
+    emit changed();
+    emit overlayChanged();
     return done;
 }
 
@@ -991,7 +1019,10 @@ QVariantList VisualToolsController::values() const
         out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(v.name)},
                                {QStringLiteral("label"), qs(v.label)},
                                {QStringLiteral("text"), qs(v.text)},
-                               {QStringLiteral("editable"), v.editable}});
+                               {QStringLiteral("editable"), v.editable},
+                               {QStringLiteral("group"), qs(v.group)},
+                               {QStringLiteral("unit"), qs(v.unit)},
+                               {QStringLiteral("step"), v.step}});
     return out;
 }
 

@@ -168,7 +168,11 @@ public:
     // the cursor's.
     Q_INVOKABLE QString copyCoordinates(qreal x, qreal y);
     Q_INVOKABLE QString copyCoordinatesAtCursor(QQuickItem *area);
+    // VT1: the inspector bar's number fields: a typed value or a scrub's
+    // release commits one step; a scrub's samples are staged until then
+    // (escape() drops them).
     Q_INVOKABLE bool setValue(const QString &name, const QString &text);
+    Q_INVOKABLE bool scrubValue(const QString &name, const QString &text);
     // The batch picker: the Grid's selected Lines, or nothing (the active Line).
     Q_INVOKABLE void pickBatch();
     Q_INVOKABLE void clearBatch();
