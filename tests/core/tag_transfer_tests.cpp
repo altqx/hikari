@@ -416,7 +416,7 @@ TEST(TagTransfer, AnEditedOriginalsRunsAreMatchedByFormattingAndText)
     const auto before = readOriginalTags(u"Say {\\i1}one{\\i0} now");
     ASSERT_EQ(before.runs.size(), 1u);
     // A run put in before it: the italic run is run 2 now.
-    EXPECT_EQ(matchRuns(before, readOriginalTags(u"{\\b1}So{\\b0} say {\\i1}one{\\i0} now")), std::vector<int>{2});
+    EXPECT_EQ(matchRuns(before, readOriginalTags(u"Say {\\b1}so{\\b0} {\\i1}one{\\i0} now")), std::vector<int>{2});
     // Its formatting changed, or its text: still the run in its place.
     EXPECT_EQ(matchRuns(before, readOriginalTags(u"Say {\\b1}one{\\b0} now")), std::vector<int>{1});
     EXPECT_EQ(matchRuns(before, readOriginalTags(u"Say {\\i1}uno{\\i0} now")), std::vector<int>{1});
