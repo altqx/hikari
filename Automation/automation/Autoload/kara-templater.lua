@@ -35,6 +35,8 @@
 -- give the same output as there, byte for byte (tests/backends/karaoke-corpus).
 -- HikariSub's changes (KE1, docs/qt/karaoke-templater.md):
 -- * the macro is offered when any Line is a template, not only one of the first 50
+-- * every problem with a template or code Line names that Line (its number in the
+--   Grid), and the macro selects the Lines that had problems
 
 local tr = aegisub.gettext
 
@@ -47,21 +49,43 @@ script_version = "2.1.7"
 include("karaskel.lua")
 
 
+-- The template and code Lines problems were reported for, by subtitle index
+local problem_lines = {}
+
+-- Reports a problem with a template or code Line: the 2.1.7 message, then the
+-- Line's number in the Grid. `where` is nil for a template the run made up.
+local function problem(level, where, fmt, ...)
+	local message = string.format(fmt, ...)
+	if where then
+		problem_lines[where.index] = true
+		local kind = where.kind == "code" and "Code" or "Template"
+		message = message .. string.format("%s Line: %d\n", kind, where.number)
+	end
+	aegisub.debug.out(level, "%s\n", message)
+end
+
 -- Find and parse/prepare all karaoke template lines
 function parse_templates(meta, styles, subs)
 	local templates = { once = {}, line = {}, syl = {}, char = {}, furi = {}, styles = {} }
 	local i = 1
+	local number = 0 -- the Line's number in the Grid, counting the Lines kept so far
 	while i <= #subs do
 		aegisub.progress.set((i-1) / #subs * 100)
 		local l = subs[i]
 		i = i + 1
+		if l.class == "dialogue" and not (l.effect == "fx" and not l.comment) then
+			number = number + 1
+		end
 		if l.class == "dialogue" and l.comment then
 			local fx, mods = string.headtail(l.effect)
 			fx = fx:lower()
+			-- earlier fx lines are deleted already and nothing is inserted before
+			-- this Line later, so i-1 is where it stays
+			local where = { index = i-1, number = number, kind = fx }
 			if fx == "code" then
-				parse_code(meta, styles, l, templates, mods)
+				parse_code(meta, styles, l, templates, mods, where)
 			elseif fx == "template" then
-				parse_template(meta, styles, l, templates, mods)
+				parse_template(meta, styles, l, templates, mods, where)
 			end
 			templates.styles[l.style] = true
 		elseif l.class == "dialogue" and l.effect == "fx" then
@@ -74,11 +98,12 @@ function parse_templates(meta, styles, subs)
 	return templates
 end
 
-function parse_code(meta, styles, line, templates, mods)
+function parse_code(meta, styles, line, templates, mods, where)
 	local template = {
 		code = line.text,
 		loops = 1,
-		style = line.style
+		style = line.style,
+		where = where
 	}
 	local inserted = false
 
@@ -111,13 +136,13 @@ function parse_code(meta, styles, line, templates, mods)
 			local times, t = string.headtail(rest)
 			template.loops = tonumber(times)
 			if not template.loops then
-				aegisub.debug.out(3, "Failed reading this repeat-count to a number: %s\nIn template code line: %s\nEffect field: %s\n\n", times, line.text, line.effect)
+				problem(3, where, "Failed reading this repeat-count to a number: %s\nIn template code line: %s\nEffect field: %s\n", times, line.text, line.effect)
 				template.loops = 1
 			else
 				rest = t
 			end
 		else
-			aegisub.debug.out(3, "Unknown modifier in code template: %s\nIn template code line: %s\nEffect field: %s\n\n", m, line.text, line.effect)
+			problem(3, where, "Unknown modifier in code template: %s\nIn template code line: %s\nEffect field: %s\n", m, line.text, line.effect)
 		end
 	end
 	
@@ -133,7 +158,7 @@ template_modifiers = {
 	"notext", "keeptags", "noblank", "multi", "fx", "fxgroup"
 }
 
-function parse_template(meta, styles, line, templates, mods)
+function parse_template(meta, styles, line, templates, mods, where)
 	local template = {
 		t = "",
 		pre = "",
@@ -147,7 +172,8 @@ function parse_template(meta, styles, line, templates, mods)
 		multi = false,
 		isline = false,
 		perchar = false,
-		noblank = false
+		noblank = false,
+		where = where
 	}
 	local inserted = false
 	
@@ -188,8 +214,10 @@ function parse_template(meta, styles, line, templates, mods)
 			-- apply text to correct string
 			if m == "line" then
 				template.t = template.t .. line.text
+				template.t_where = template.t_where or where
 			else -- must be pre-line
 				template.pre = template.pre .. line.text
+				template.pre_where = template.pre_where or where
 			end
 		elseif m == "syl" and not template.isline then
 			table.insert(templates.syl, template)
@@ -198,16 +226,16 @@ function parse_template(meta, styles, line, templates, mods)
 			table.insert(templates.furi, template)
 			inserted = true
 		elseif (m == "pre-line" or m == "line") and inserted then
-			aegisub.debug.out(2, "Unable to combine %s class templates with other template classes\n\n", m)
+			problem(2, where, "Unable to combine %s class templates with other template classes\n", m)
 		elseif (m == "syl" or m == "furi") and template.isline then
-			aegisub.debug.out(2, "Unable to combine %s class template lines with line or pre-line classes\n\n", m)
+			problem(2, where, "Unable to combine %s class template lines with line or pre-line classes\n", m)
 		elseif m == "all" then
 			template.style = nil
 		elseif m == "repeat" or m == "loop" then
 			local times, t = string.headtail(rest)
 			template.loops = tonumber(times)
 			if not template.loops then
-				aegisub.debug.out(3, "Failed reading this repeat-count to a number: %s\nIn template line: %s\nEffect field: %s\n\n", times, line.text, line.effect)
+				problem(3, where, "Failed reading this repeat-count to a number: %s\nIn template line: %s\nEffect field: %s\n", times, line.text, line.effect)
 				template.loops = 1
 			else
 				rest = t
@@ -228,7 +256,7 @@ function parse_template(meta, styles, line, templates, mods)
 				template.fx = fx
 				rest = t
 			else
-				aegisub.debug.out(3, "No fx name following fx modifier\nIn template line: %s\nEffect field: %s\n\n", line.text, line.effect)
+				problem(3, where, "No fx name following fx modifier\nIn template line: %s\nEffect field: %s\n", line.text, line.effect)
 				template.fx = nil
 			end
 		elseif m == "fxgroup" then
@@ -237,11 +265,11 @@ function parse_template(meta, styles, line, templates, mods)
 				template.fxgroup = fx
 				rest = t
 			else
-				aegisub.debug.out(3, "No fxgroup name following fxgroup modifier\nIn template linee: %s\nEffect field: %s\n\n", line.text, line.effect)
+				problem(3, where, "No fxgroup name following fxgroup modifier\nIn template linee: %s\nEffect field: %s\n", line.text, line.effect)
 				template.fxgroup = nil
 			end
 		else
-			aegisub.debug.out(3, "Unknown modifier in template: %s\nIn template line: %s\nEffect field: %s\n\n", m, line.text, line.effect)
+			problem(3, where, "Unknown modifier in template: %s\nIn template line: %s\nEffect field: %s\n", m, line.text, line.effect)
 		end
 	end
 	
@@ -579,7 +607,7 @@ function apply_line(meta, styles, subs, line, templates, tenv)
 				newline.layer = t.layer
 				newline.text = ""
 				if t.pre ~= "" then
-					newline.text = newline.text .. run_text_template(t.pre, tenv, varctx)
+					newline.text = newline.text .. run_text_template(t.pre, tenv, varctx, t.pre_where)
 				end
 				if t.t ~= "" then
 					for i = 1, line.kara.n do
@@ -587,7 +615,7 @@ function apply_line(meta, styles, subs, line, templates, tenv)
 						tenv.syl = syl
 						tenv.basesyl = syl
 						set_ctx_syl(varctx, line, syl)
-						newline.text = newline.text .. run_text_template(t.t, tenv, varctx)
+						newline.text = newline.text .. run_text_template(t.t, tenv, varctx, t.t_where)
 						if t.addtext then
 							if t.keeptags then
 								newline.text = newline.text .. syl.text
@@ -639,20 +667,20 @@ end
 function run_code_template(template, tenv)
 	local f, err = loadstring(template.code, "template code")
 	if not f then
-		aegisub.debug.out(2, "Failed to parse Lua code: %s\nCode that failed to parse: %s\n\n", err, template.code)
+		problem(2, template.where, "Failed to parse Lua code: %s\nCode that failed to parse: %s\n", err, template.code)
 	else
 		local pcall = pcall
 		setfenv(f, tenv)
 		for j, maxj in template_loop(tenv, template.loops) do
 			local res, err = pcall(f)
 			if not res then
-				aegisub.debug.out(2, "Runtime error in template code: %s\nCode producing error: %s\n\n", err, template.code)
+				problem(2, template.where, "Runtime error in template code: %s\nCode producing error: %s\n", err, template.code)
 			end
 		end
 	end
 end
 
-function run_text_template(template, tenv, varctx)
+function run_text_template(template, tenv, varctx, where)
 	local res = template
 	aegisub.debug.out(5, "Running text template '%s'\n", res)
 	
@@ -667,7 +695,7 @@ function run_text_template(template, tenv, varctx)
 				return varctx[varname]
 			else
 				aegisub.debug.out(5, "doesn't exist\n")
-				aegisub.debug.out(2, "Unknown variable name: %s\nIn karaoke template: %s\n\n", varname, template)
+				problem(2, where, "Unknown variable name: %s\nIn karaoke template: %s\n", varname, template)
 				return "$" .. varname
 			end
 		end
@@ -679,7 +707,7 @@ function run_text_template(template, tenv, varctx)
 	local function expression_evaluator(expression)
 		f, err = loadstring(string.format("return (%s)", expression))
 		if (err) ~= nil then
-			aegisub.debug.out(2, "Error parsing expression: %s\nExpression producing error: %s\nTemplate with expression: %s\n\n", err, expression, template)
+			problem(2, where, "Error parsing expression: %s\nExpression producing error: %s\nTemplate with expression: %s\n", err, expression, template)
 			return "!" .. expression .. "!"
 		else
 			setfenv(f, tenv)
@@ -687,7 +715,7 @@ function run_text_template(template, tenv, varctx)
 			if res then
 				return val
 			else
-				aegisub.debug.out(2, "Runtime error in template expression: %s\nExpression producing error: %s\nTemplate with expression: %s\n\n", val, expression, template)
+				problem(2, where, "Runtime error in template expression: %s\nExpression producing error: %s\nTemplate with expression: %s\n", val, expression, template)
 				return "!" .. expression .. "!"
 			end
 		end
@@ -806,7 +834,7 @@ function apply_one_syllable_template(syl, line, template, tenv, varctx, subs, sk
 			newline.style = syl.style.name
 			newline.layer = t.layer
 			tenv.line = newline
-			newline.text = run_text_template(t.t, tenv, varctx)
+			newline.text = run_text_template(t.t, tenv, varctx, t.where)
 			if t.keeptags then
 				newline.text = newline.text .. syl.text
 			elseif t.addtext then
@@ -835,9 +863,25 @@ function filter_apply_templates(subs, config)
 	apply_templates(meta, styles, subs, templates)
 end
 
+-- The template and code Lines that had problems, in order, as a new selection
+-- with the first of them active; nothing when there were none.
+local function problem_selection()
+	local lines = {}
+	for index in pairs(problem_lines) do
+		table.insert(lines, index)
+	end
+	if #lines == 0 then
+		return
+	end
+	table.sort(lines)
+	return lines, lines[1]
+end
+
 function macro_apply_templates(subs, sel)
+	problem_lines = {}
 	filter_apply_templates(subs, {ismacro=true, sel=sel})
 	aegisub.set_undo_point("apply karaoke template")
+	return problem_selection()
 end
 
 function macro_can_template(subs)

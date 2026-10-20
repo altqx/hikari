@@ -27,6 +27,7 @@
 #include <cstring>
 #include <functional>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -257,6 +258,63 @@ TEST_F(KaraokeTemplater, MacroIsNotOfferedWithoutATemplate)
     ASSERT_TRUE(host->validate(macro(*host, "Apply karaoke template"), *snapshot));
     ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
     EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+}
+
+
+// KE1-template-problems: each problem with a template or code Line names the
+// Line (its Grid number) after 2.1.7's message, and the macro returns those
+// Lines as the selection, the first active. The output stays 3.2.2's.
+TEST_F(KaraokeTemplater, TemplateProblemsNameAndSelectTheirLines)
+{
+    auto loaded = hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/errors.ass")));
+    hikari::application::EditSession session(std::move(loaded.document));
+    std::vector<hikari::core::LineId> ids;
+    for (const auto *l : session.document().lines())
+        ids.push_back(l->id);
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    // Lines 1-9 each have a problem; 10 and 11 (TT#141's 3.2-era code line
+    // and its template) have none.
+    std::set<hikari::core::LineId> problems(ids.begin(), ids.begin() + 9);
+    EXPECT_EQ(session.selection().selected, problems);
+    EXPECT_EQ(session.selection().active, ids.front());
+    const QString log = run.log.join(QString());
+    EXPECT_TRUE(log.contains(QStringLiteral("Failed to parse Lua code: ")));
+    for (int number = 1; number <= 9; ++number) {
+        const QString name = (number <= 2 ? QStringLiteral("Code Line: %1\n") : QStringLiteral("Template Line: %1\n"))
+                                 .arg(number);
+        EXPECT_TRUE(log.contains(name)) << name.toStdString();
+    }
+    EXPECT_FALSE(log.contains(QStringLiteral("Line: 10\n")));
+    EXPECT_TRUE(log.contains(QStringLiteral("Runtime error in template expression: ")));
+    EXPECT_TRUE(log.contains(QStringLiteral("Expression producing error: nosuch.field\nTemplate with expression: "
+                                            "{\\pos(!nosuch.field!,$y)}\nTemplate Line: 3\n\n")));
+    EXPECT_TRUE(log.contains(QStringLiteral("Unknown variable name: nosuchvar\nIn karaoke template: "
+                                            "{\\pos($x,$nosuchvar)}\nTemplate Line: 5\n\n")));
+}
+
+// Stock 2.1.7 names no Line and leaves the selection as it was.
+TEST_F(KaraokeTemplater, StockTemplaterNamesNoLine)
+{
+    auto loaded = hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/errors.ass")));
+    hikari::application::EditSession session(std::move(loaded.document));
+    const auto last = session.document().lines().back()->id;
+    session.setSelection(hikari::application::Selection{last, {last}});
+    ASSERT_TRUE(apply(session, pristineScript(), "Apply karaoke template"));
+    EXPECT_EQ(session.selection().selected, (std::set<hikari::core::LineId>{last}));
+    EXPECT_FALSE(run.log.join(QString()).contains(QStringLiteral("Line: ")));
+}
+
+// A Document without problems keeps its selection.
+TEST_F(KaraokeTemplater, CleanRunKeepsTheSelection)
+{
+    auto loaded = hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.ass")));
+    hikari::application::EditSession session(std::move(loaded.document));
+    const auto last = session.document().lines().back()->id;
+    session.setSelection(hikari::application::Selection{last, {last}});
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    EXPECT_EQ(session.selection().active, last);
+    EXPECT_EQ(session.selection().selected, (std::set<hikari::core::LineId>{last}));
+    EXPECT_TRUE(run.log.isEmpty()) << run.log.join(QString()).toStdString();
 }
 
 } // namespace
