@@ -651,6 +651,13 @@ bool LineEditorController::showLine(qulonglong id)
     return true;
 }
 
+bool LineEditorController::translationTyped()
+{
+    const auto *s = session();
+    const auto change = s ? s->draftChange() : std::nullopt;
+    return change && change->second.translation && !change->second.translationCarried;
+}
+
 bool LineEditorController::setRaw(int role, std::u8string raw)
 {
     auto *s = session();
@@ -661,22 +668,25 @@ bool LineEditorController::setRaw(int role, std::u8string raw)
         return true;
     const auto real = sessionRecord();
     const auto c = carry(*real);
+    const bool typed = translationTyped();
     application::DraftChange change;
     if (role == 1) {
         change.translation = c ? carried(*c, std::move(raw)) : std::move(raw);
     } else {
         // TM1: the translation takes the Original's new carried tags, in the
-        // same step.
+        // same step; with several Lines selected each keeps its own.
         auto after = *real;
         after.text = raw;
         after.translation.clear();
-        if (const auto next = c && !r->translation.empty() ? carry(after) : std::nullopt)
+        if (const auto next = c && !r->translation.empty() ? carry(after) : std::nullopt) {
             change.translation = recarried(*real, *next);
+            change.translationCarried = true;
+        }
         change.text = std::move(raw);
     }
     if (!s->editDraft(r->id, change))
         return false;
-    m_draftUndo.push_back({real->text, real->translation});
+    m_draftUndo.push_back({real->text, real->translation, typed});
     m_draftRedo.clear();
     m_attempted.clear();
     refresh();
@@ -872,7 +882,17 @@ bool LineEditorController::sendDraft(bool leaving, bool visual)
         return true;
     const auto change = s->draftChange();
     const bool lists = change && (change->second.actor || change->second.effect);
-    if (!s->commitDraftToSelected("Edit Line", leaving)) {
+    // TM1: another selected Line's translation follows its own new text or
+    // Style, as the edited Line's did (setRaw, chooseStyle).
+    const auto companion = [this](const core::LineRecord &before, core::LineRecord &after) {
+        if (before.translation.empty() || !carry(before))
+            return;
+        auto bare = after;
+        bare.translation.clear();
+        if (const auto next = carry(bare))
+            after.translation = recarried(before, *next);
+    };
+    if (!s->commitDraftToSelected("Edit Line", leaving, companion)) {
         if (s->draftLine()) {
             fail(problemText());
             return false;
@@ -1048,10 +1068,12 @@ bool LineEditorController::undo()
     const QString before[2] = {m_shown[0], m_shown[1]};
     const auto line = s->selection().active;
     if (!m_draftUndo.empty() && r) {
-        m_draftRedo.push_back({r->text, r->translation});
+        m_draftRedo.push_back({r->text, r->translation, translationTyped()});
         const Snapshot previous = std::move(m_draftUndo.back());
         m_draftUndo.pop_back();
-        s->editDraft(r->id, application::DraftChange{.text = previous.text, .translation = previous.translation});
+        s->editDraft(r->id, application::DraftChange{.text = previous.text,
+                                                     .translation = previous.translation,
+                                                     .translationCarried = !previous.translationTyped});
         // Back at the committed Line: no draft remains.
         const auto lines = s->document().lines();
         const auto it = std::ranges::find_if(lines, [&](const core::LineRecord *l) { return l->id == r->id; });
@@ -1092,10 +1114,12 @@ bool LineEditorController::redo()
     const QString before[2] = {m_shown[0], m_shown[1]};
     const auto line = s->selection().active;
     if (!m_draftRedo.empty() && r) {
-        m_draftUndo.push_back({r->text, r->translation});
+        m_draftUndo.push_back({r->text, r->translation, translationTyped()});
         const Snapshot next = std::move(m_draftRedo.back());
         m_draftRedo.pop_back();
-        s->editDraft(r->id, application::DraftChange{.text = next.text, .translation = next.translation});
+        s->editDraft(r->id, application::DraftChange{.text = next.text,
+                                                     .translation = next.translation,
+                                                     .translationCarried = !next.translationTyped});
         refresh();
         placeCaretAfterChange(before);
         return true;
@@ -2282,8 +2306,10 @@ bool LineEditorController::chooseStyle(const QString &name)
         auto after = *real;
         after.style = *change.style;
         after.translation.clear();
-        if (const auto next = carry(after))
+        if (const auto next = carry(after)) {
             change.translation = recarried(*real, *next);
+            change.translationCarried = true;
+        }
     }
     session()->editDraft(r->id, change);
     m_attempted.clear();

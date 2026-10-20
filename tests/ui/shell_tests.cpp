@@ -10514,6 +10514,49 @@ private slots:
         QTRY_COMPARE(runText(), QStringLiteral("C"));
     }
 
+    // TM1: with several Lines selected, an Original edit goes to each
+    // selected Line's text (SubsGrid::ChangeLine) and each translation
+    // follows its own Original: the edited Line's is not copied over the
+    // others'. The same for a draft step undone.
+    void tagsFromOriginalKeepEachSelectedTranslation()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-selected.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,{\\an8}Gate\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an8}Brama\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,{\\an8}Tower\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\an8}Wieza\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("{\\an8}Gate"));
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().textEdited(QStringLiteral("{\\an7}Gate"), 10);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an7}Brama"));
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[0]->translation), QStringLiteral("{\\an7}Brama"));
+        QCOMPARE(q8(session->document().lines()[1]->text), QStringLiteral("{\\an7}Gate"));
+        QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("{\\an7}Wieza"));
+
+        // A draft step undone gives the edited Line its translation back,
+        // and only it.
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().textEdited(QStringLiteral("{\\an9}Gate"), 10);
+        application->editor().textEdited(QStringLiteral("{\\an9}Gates"), 11);
+        QVERIFY(application->editor().undo());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an9}Brama"));
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("{\\an9}Wieza"));
+    }
+
     // TM1: a karaoke Line carries its leading tags without its \k timing,
     // and says so under the Translated text.
     void tagsFromOriginalOnAKaraokeLine()

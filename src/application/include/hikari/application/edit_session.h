@@ -71,6 +71,10 @@ struct DraftChange {
     std::optional<std::int64_t> layer;
     std::optional<std::u8string> style, actor, effect;
     std::optional<std::optional<std::int64_t>> startFrame, endFrame;
+    // TM1: the translation cell only follows the text or Style cells (the
+    // Original's carried tags written again), it was not typed. Several
+    // selected Lines then keep their own translations (commitDraftToSelected).
+    bool translationCarried = false;
 };
 
 // A command declares the Lines it touches and mutates a working copy. Returning
@@ -138,8 +142,12 @@ public:
     // goes to each selected Line in one step; otherwise this is
     // commitDraftAs(name). E63-invalid-commit blocks as commitDraft does;
     // `leaving` is the commit on leave's legacy End correction for the edited
-    // Line (EditBox::SetLine on the next Line).
-    bool commitDraftToSelected(std::string name = "Edit Line", bool leaving = false);
+    // Line (EditBox::SetLine on the next Line). A carried translation cell
+    // (DraftChange::translationCarried) is not copied: each other Line keeps
+    // its own, which `companion` may then write again from the Line before
+    // and after.
+    using Companion = std::function<void(const core::LineRecord &before, core::LineRecord &after)>;
+    bool commitDraftToSelected(std::string name = "Edit Line", bool leaving = false, const Companion &companion = {});
     void discardDraft();
 
     std::expected<void, CommandRefusal> run(const Command &command);

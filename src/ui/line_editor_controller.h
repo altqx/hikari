@@ -615,7 +615,11 @@ private:
     // Exact raw snapshots of this draft, both roles.
     struct Snapshot {
         std::u8string text, translation;
+        bool translationTyped = false; // the draft's translation cell was typed then
     };
+    // The draft holds a typed translation cell, not only a carried one
+    // (application::DraftChange::translationCarried).
+    bool translationTyped();
     std::vector<Snapshot> m_draftUndo;
     std::vector<Snapshot> m_draftRedo;
     std::function<void()> m_onCommitted;

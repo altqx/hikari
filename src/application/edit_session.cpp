@@ -26,8 +26,11 @@ void merge(DraftChange &into, const DraftChange &change)
 {
     if (change.text)
         into.text = change.text;
-    if (change.translation)
+    if (change.translation) {
+        // A translation once typed stays the typed one.
+        into.translationCarried = change.translationCarried && (!into.translation || into.translationCarried);
         into.translation = change.translation;
+    }
     if (change.start)
         into.start = change.start;
     if (change.end)
@@ -250,7 +253,7 @@ bool EditSession::commit(bool leaving, std::string name)
     return true;
 }
 
-bool EditSession::commitDraftToSelected(std::string name, bool leaving)
+bool EditSession::commitDraftToSelected(std::string name, bool leaving, const Companion &companion)
 {
     if (!m_draft)
         return false;
@@ -283,7 +286,7 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving)
         core::LineRecord updated = *line;
         if (cells.text)
             updated.text = record->text;
-        if (cells.translation)
+        if (cells.translation && (line->id == edited || !cells.translationCarried))
             updated.translation = record->translation;
         if (cells.start)
             updated.start.value = record->start.value;
@@ -309,6 +312,9 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving)
             updated.startFrame = record->startFrame;
         if (cells.endFrame)
             updated.endFrame = record->endFrame;
+        // TM1: another Line's own translation follows its new text or Style.
+        if (cells.translationCarried && line->id != edited && companion)
+            companion(*line, updated);
         // Leaving under the legacy preference: SetLine sets the edited Line's
         // End before its Start to the Start.
         if (leaving && line->id == edited && m_policy == InvalidCommitPolicy::Legacy &&
