@@ -144,7 +144,9 @@ std::vector<KaraokeProblem> checkKaraoke(const Document &document)
         };
         if (syllables.unclosed)
             problems.push_back(problem(Kind::Unclosed));
-        const std::int64_t duration = (line.end.value.microseconds() - line.start.value.microseconds()) / 1000;
+        // Each end in whole milliseconds, as the audio display's karaoke
+        // reads the Line (Application's audio Lines), then their distance.
+        const std::int64_t duration = line.end.value.microseconds() / 1000 - line.start.value.microseconds() / 1000;
         std::int64_t total = 0;
         KaraokeProblem zero = problem(Kind::ZeroLength);
         KaraokeProblem outside = problem(Kind::OutsideLine);

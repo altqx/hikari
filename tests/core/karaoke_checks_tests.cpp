@@ -118,6 +118,16 @@ TEST(KaraokeChecks, SyllablesAddUpInCentiseconds)
     // one at the end is only zero-length.
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k100}a{\\k0}")),
               (std::vector<Found>{{0, Kind::ZeroLength, 0, 0, {2}}}));
+    // Each end is taken in whole milliseconds before their distance, as the
+    // audio display's karaoke takes them: 999 us to 1.001 s is 0 to 1001 ms.
+    {
+        Document document = oneLine("0:00:00.00,0:00:01.00", "{\\k100}a");
+        ASSERT_TRUE(document.editLine(document.lines().front()->id, [](LineRecord &line) {
+            line.start.value = DocumentTime(999);
+            line.end.value = DocumentTime(1'001'000);
+        }));
+        EXPECT_EQ(found(document), (std::vector<Found>{{0, Kind::TotalNotDuration, 1000, 1001, {}}}));
+    }
     // A syllable that starts inside the Line and ends after it is outside it.
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k80}a{\\k30}b")),
               (std::vector<Found>{{0, Kind::TotalNotDuration, 1100, 1000, {}}, {0, Kind::OutsideLine, 0, 0, {2}}}));
