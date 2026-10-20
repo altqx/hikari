@@ -601,27 +601,55 @@ bool preserves(const XmlNode &node, bool inherited)
     return inherited;
 }
 
-// Under xml:space="preserve", the spaces at a Line's edges as hard spaces
-// (\h): ASS trims a Line's text, so plain spaces there would be lost.
-std::u8string hardEdges(u8sv text, bool leading, bool trailing)
+// A space xml:space="preserve" keeps, until its Line is put together. No
+// text of a well-formed file can hold U+0001, so it stands for one alone.
+constexpr char8_t kKeptSpace = u8'\x01';
+
+bool blank(char8_t c)
+{
+    return isSpace(c) || c == kKeptSpace;
+}
+
+u8sv trimBlankLeft(u8sv text)
+{
+    while (!text.empty() && blank(text.front()))
+        text.remove_prefix(1);
+    return text;
+}
+
+// A Line's text, or a word of it, put together. At the Line's ends
+// (`leading`, `trailing`) ordinary whitespace goes, and kept spaces become
+// hard spaces (\h): ASS trims a Line's text, so plain spaces there would be
+// lost. Inside the Line a kept space is a space.
+std::u8string finished(u8sv text, bool leading, bool trailing)
 {
     std::size_t from = 0, to = text.size();
-    while (leading && from < to && text[from] == u8' ')
+    while (leading && from < to && blank(text[from]))
         ++from;
-    while (trailing && to > from && text[to - 1] == u8' ')
+    while (trailing && to > from && blank(text[to - 1]))
         --to;
     std::u8string out;
-    for (std::size_t i = 0; i < from; ++i)
-        out += u8"\\h";
-    out += text.substr(from, to - from);
-    for (std::size_t i = to; i < text.size(); ++i)
-        out += u8"\\h";
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        const bool edge = i < from || i >= to;
+        if (text[i] == kKeptSpace)
+            out += edge ? u8"\\h" : u8" ";
+        else if (!edge)
+            out += text[i];
+    }
     return out;
 }
 
+// The text as a message shows it: kept spaces as spaces, ends trimmed.
+std::u8string readable(u8sv text)
+{
+    std::u8string out(text);
+    std::ranges::replace(out, kKeptSpace, u8' ');
+    return std::u8string(detail::trim(out));
+}
+
 // A text node's lyrics, literal: whitespace runs as one space (TTML's
-// default), or under xml:space="preserve" as written, a tab a space and a
-// line end a line break.
+// default), or under xml:space="preserve" as written, a space or tab a kept
+// space and a line end a line break.
 std::u8string lyricText(u8sv raw, bool preserve)
 {
     if (!preserve)
@@ -630,7 +658,8 @@ std::u8string lyricText(u8sv raw, bool preserve)
     for (std::size_t from = 0; from <= raw.size();) {
         const auto [end, next] = detail::lineAt(raw, from);
         std::u8string piece(raw.substr(from, end - from));
-        std::ranges::replace(piece, u8'\t', u8' ');
+        std::ranges::replace(piece, u8' ', kKeptSpace);
+        std::ranges::replace(piece, u8'\t', kKeptSpace);
         if (from > 0)
             out += u8"\\N";
         out += detail::literalText(piece);
@@ -781,6 +810,21 @@ private:
         return false;
     }
 
+    // The background vocals inside a word's span, which spanText leaves out;
+    // each is a Line of its own as beside the word.
+    static void backgroundsIn(const XmlNode &node, Backgrounds &backgrounds, bool preserve)
+    {
+        for (const XmlNode &child : node.children) {
+            if (child.isText())
+                continue;
+            const auto role = attribute(child, u8"role");
+            if (role == u8sv(u8"x-bg"))
+                backgrounds.emplace_back(&child, preserve);
+            else if (!role)
+                backgroundsIn(child, backgrounds, preserves(child, preserve));
+        }
+    }
+
     static void addText(Words &into, u8sv text, bool preserve)
     {
         append(into.plain, text, preserve);
@@ -822,9 +866,10 @@ private:
                 const std::int64_t begin = *t->first;
                 const bool kept = preserves(child, preserve);
                 const std::u8string text = spanText(child, preserve);
-                const u8sv word = detail::trimLeft(text);
+                const u8sv word = trimBlankLeft(text);
                 if (word.size() < text.size()) // spaces before a word stay with the text before it
                     addText(into, kept ? u8sv(text).substr(0, text.size() - word.size()) : u8sv(u8" "), kept);
+                backgroundsIn(child, backgrounds, kept);
                 if (word.empty())
                     continue; // a timed span with no lyric is no word; the gaps come from the words
                 if (!into.words.empty() && begin < into.words.back().begin)
@@ -873,11 +918,11 @@ private:
         LyricLine out;
         out.actor = actor;
         if (words.words.empty()) {
-            const bool text = !detail::trim(words.plain).empty();
-            out.text = preserve ? hardEdges(words.plain, true, true) : std::u8string(detail::trim(words.plain));
+            const bool text = !std::ranges::all_of(words.plain, blank);
+            out.text = finished(words.plain, true, true);
             if (text) {
                 if (!begin || !end)
-                    return std::unexpected(LyricsProblem{Kind::MissingTime, node.line, std::u8string(detail::trim(words.plain))});
+                    return std::unexpected(LyricsProblem{Kind::MissingTime, node.line, readable(words.plain)});
                 out.start = *begin;
                 out.end = *end;
                 if (auto ok = add(std::move(out), node.line); !ok)
@@ -894,12 +939,9 @@ private:
             // The text before the first word, joined to it as written:
             // "hello<span>world" stays one word, "hello <span>" two. Kept
             // spaces at the Line's edges are hard spaces.
-            const std::u8string leading = preserve ? hardEdges(words.leading, true, false)
-                                                   : std::u8string(detail::trimLeft(words.leading));
-            if (!leading.empty())
-                words.words.front().text.insert(0, leading);
-            if (preserve)
-                words.words.back().text = hardEdges(words.words.back().text, false, true);
+            words.words.front().text.insert(0, words.leading);
+            for (std::size_t i = 0; i < words.words.size(); ++i)
+                words.words[i].text = finished(words.words[i].text, i == 0, i + 1 == words.words.size());
             out.start = std::min(own->first.value_or(words.words.front().begin), words.words.front().begin);
             out.end = std::max(own->second.value_or(words.words.back().end), words.words.back().end);
             out.words = std::move(words.words);
