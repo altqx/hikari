@@ -33,11 +33,11 @@
     </message>
     <message>
         <source>Horizontal stretching</source>
-        <translation type="vanished">ยืดในแนวนอน</translation>
+        <translation>ยืดในแนวนอน</translation>
     </message>
     <message>
         <source>Vertical stretching</source>
-        <translation type="vanished">ยืดในแนวตั้ง</translation>
+        <translation>ยืดในแนวตั้ง</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -229,6 +229,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Auto-commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next after commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Line</source>
         <translation type="unfinished"></translation>
     </message>
@@ -308,6 +316,34 @@ Output device: %2</source>
     </message>
     <message>
         <source>Volume: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Customise the audio panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show on the panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play around button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to the next line after commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom and volume sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Classic arrangement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default arrangement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4237,6 +4273,34 @@ great help testing HikariSub on a slow computer)
         <source>Installing update...</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Application menu</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -4484,6 +4548,18 @@ when find results window is open</source>
     </message>
     <message>
         <source>%1 (contrast %2:1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use system title bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off by default on Windows, KDE Plasma and GNOME; on by default on tiling window managers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
