@@ -12,7 +12,9 @@
 #include "hikari/application/settings.h"
 
 #include <QDeadlineTimer>
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -298,6 +300,86 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(!refreshed.isEmpty() && row().value(QStringLiteral("note")).toString().isEmpty(), 30'000);
         QCOMPARE(row().value(QStringLiteral("macro")).toString(), QStringLiteral("Add edgeblur"));
         QCOMPARE(row().value(QStringLiteral("accel")).toString(), QStringLiteral("Alt-Ctrl-E")); // legacy's order
+    }
+
+    // Macros unloaded while Settings → Hotkeys is open: an unbound one's row
+    // goes (keys given it would bind nothing), one given keys there stays.
+    void aMacroUnloadedWhileSettingsIsOpenLeavesTheList()
+    {
+        app::Application::Options o = options();
+        o.settingsFile = dir.filePath(QStringLiteral("unloaded.ini"));
+        app::Application a(o);
+        const QString one = dir.filePath(QStringLiteral("one.lua")), two = dir.filePath(QStringLiteral("two.lua"));
+        for (const QString &path : {one, two}) {
+            QFile lua(path);
+            QVERIFY(lua.open(QIODevice::WriteOnly));
+            lua.write("aegisub.register_macro(\"" + QFileInfo(path).baseName().toUtf8() + "\", \"\", function() end)\n");
+            lua.close();
+            a.automation().load(path.toStdString());
+        }
+        auto &macros = a.automationHotkeys();
+        QTRY_VERIFY_WITH_TIMEOUT(std::ranges::count_if(macros.unboundMacros(), [](const std::string &n) {
+                                     return n == "Script one.lua-0" || n == "Script two.lua-0";
+                                 }) == 2,
+                                 30'000);
+        auto &h = a.hotkeys();
+        h.beginOptions();
+        h.filter(7);
+        const auto position = [&](const char *name) {
+            const QString text = QStringLiteral("Global ") + QLatin1String(name);
+            for (int i = 0; i < h.rows().size(); ++i)
+                if (h.rows().at(i).toMap().value(QStringLiteral("text")).toString() == text)
+                    return i;
+            return -1;
+        };
+        QVERIFY(position("Script one.lua-0") >= 0);
+        h.select(position("Script two.lua-0"));
+        h.optionsMap(QStringLiteral("Ctrl-Alt-T"), 0, QStringLiteral("cancel"));
+        a.automation().unload(one.toStdString());
+        a.automation().unload(two.toStdString());
+        QTRY_COMPARE_WITH_TIMEOUT(position("Script one.lua-0"), -1, 30'000);
+        QVERIFY(position("Script two.lua-0") >= 0);
+        QCOMPARE(h.rows().at(h.selected()).toMap().value(QStringLiteral("text")).toString(),
+                 QStringLiteral("Global Script two.lua-0")); // the selection stays on it
+    }
+
+    // A binding of a name two loaded scripts share (S44-macro-alias's
+    // collision) runs neither macro: Settings → Hotkeys does not give it keys,
+    // and Delete hotkey still removes it.
+    void aNameTwoScriptsShareTakesNoKeysInSettings()
+    {
+        app::Application::Options o = options();
+        o.settingsFile = dir.filePath(QStringLiteral("twins.ini"));
+        app::Application a(o);
+        constexpr auto twin = "Script twin.lua-0";
+        auto &macros = a.automationHotkeys();
+        macros.replaceCommitted({{twin, "Ctrl+Alt+T"}});
+        for (const char *sub : {"a", "b"}) {
+            QVERIFY(QDir(dir.path()).mkpath(QLatin1String(sub)));
+            const QString path = dir.filePath(QLatin1String(sub) + QStringLiteral("/twin.lua"));
+            QFile lua(path);
+            QVERIFY(lua.open(QIODevice::WriteOnly));
+            lua.write("aegisub.register_macro(\"Twin " + QByteArray(sub) + "\", \"\", function() end)\n");
+            lua.close();
+            a.automation().load(path.toStdString());
+        }
+        QTRY_VERIFY_WITH_TIMEOUT(!macros.recordingProblem(QLatin1String(twin)).isEmpty(), 30'000);
+        auto &h = a.hotkeys();
+        h.beginOptions();
+        h.filter(7);
+        int row = -1;
+        for (int i = 0; i < h.rows().size(); ++i)
+            if (h.rows().at(i).toMap().value(QStringLiteral("text")).toString() == QStringLiteral("Global ") + QLatin1String(twin))
+                row = i;
+        QVERIFY(row >= 0);
+        h.select(row);
+        QCOMPARE(h.mapProblem(), macros.recordingProblem(QLatin1String(twin)));
+        h.optionsMap(QStringLiteral("Ctrl-Alt-Y"), 0, QStringLiteral("cancel"));
+        h.commitOptions();
+        QCOMPARE(missing(macros, twin).value(QStringLiteral("keys")).toString(), QStringLiteral("Ctrl+Alt+T"));
+        h.optionsDelete();
+        h.commitOptions();
+        QVERIFY(missing(macros, twin).isEmpty());
     }
 
     // A macro given Exit's keys (a carried configuration): Settings says

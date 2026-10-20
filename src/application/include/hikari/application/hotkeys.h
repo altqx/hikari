@@ -21,6 +21,7 @@
 //   item or a mapped button: it changes the live bindings at once.
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -228,6 +229,10 @@ public:
     // at the end and in every step of the history, shown as the filter shows
     // them; the edits, the history and the selection stay.
     void addRows(const HotkeyMap &more);
+    // ...and the rows `gone` names that no step of the history changed (a
+    // macro unloaded meanwhile), from the list and every step; an edited row
+    // stays, as do the selection and the history.
+    void removeUnchangedRows(const std::function<bool(const Row &)> &gone);
 
     std::size_t rowCount() const { return m_rows.size(); }
     const Row &row(int index) const { return *m_rows[std::size_t(index)]; }

@@ -233,7 +233,7 @@ HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::S
     });
     // A script that registers while Settings → Hotkeys is open lists its
     // macros there too, the page's edits kept.
-    connect(&m_scripts, &AutomationHotkeysController::bindingsChanged, this, &HotkeysController::listNewMacros);
+    connect(&m_scripts, &AutomationHotkeysController::bindingsChanged, this, &HotkeysController::relistMacros);
     QCoreApplication::instance()->installEventFilter(this);
 }
 
@@ -506,10 +506,17 @@ void HotkeysController::beginOptions()
     emit rowsChanged();
 }
 
-void HotkeysController::listNewMacros()
+void HotkeysController::relistMacros()
 {
     if (!m_list)
         return;
+    const auto live = bindings();
+    const auto unbound = m_scripts.unboundMacros();
+    const std::set<std::string> registered(unbound.begin(), unbound.end());
+    m_list->removeUnchangedRows([&](const application::HotkeyList::Row &r) {
+        return r.key.id >= application::kFirstScriptHotkey && r.accel.empty() && !live.contains(r.key) &&
+               !registered.contains(r.name);
+    });
     std::set<std::string> listed;
     int next = application::kFirstScriptHotkey;
     for (std::size_t i = 0; i < m_list->rowCount(); ++i) {
@@ -519,11 +526,11 @@ void HotkeysController::listNewMacros()
             next = std::max(next, r.key.id + 1);
         }
     }
-    for (const auto &[key, hotkey] : bindings())
+    for (const auto &[key, hotkey] : live)
         if (key.id >= application::kFirstScriptHotkey)
             next = std::max(next, key.id + 1);
     HotkeyMap more;
-    for (const auto &name : m_scripts.unboundMacros())
+    for (const auto &name : unbound)
         if (!listed.contains(name))
             more[HotkeyId{next++, application::GlobalHotkey}] = application::Hotkey{name, {}};
     if (!more.empty())
@@ -675,9 +682,17 @@ QVariantMap HotkeysController::optionsConflict(const QString &accel, int type)
     return conflictMap(m_list->mapConflict(m_list->selection(), accel.toStdString(), type, bindings()));
 }
 
-void HotkeysController::optionsMap(const QString &accel, int type, const QString &answer)
+QString HotkeysController::mapProblem() const
 {
     if (!m_list || m_list->selection() < 0)
+        return {};
+    const auto &r = m_list->row(m_list->selection());
+    return r.key.id >= application::kFirstScriptHotkey ? m_scripts.recordingProblem(qs(r.name)) : QString();
+}
+
+void HotkeysController::optionsMap(const QString &accel, int type, const QString &answer)
+{
+    if (!m_list || m_list->selection() < 0 || !mapProblem().isEmpty())
         return;
     m_list->map(m_list->selection(), accel.toStdString(), type, answerOf(answer), bindings());
     emit rowsChanged();

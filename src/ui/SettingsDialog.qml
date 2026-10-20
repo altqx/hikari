@@ -153,7 +153,7 @@ Dialog {
     readonly property color warningColour: Theme.warning // WINDOW_WARNING_ELEMENTS
     function mapHotkey() {
         const target = hotkeys.mapTarget()
-        if (target.name === undefined)
+        if (target.name === undefined || hotkeys.mapProblem.length > 0)
             return
         settingsHotkeyMapping.capture(target.name, target.type, target.windows, (accel, window) => {
             const conflict = hotkeys.optionsConflict(accel, window)
@@ -1036,7 +1036,13 @@ Dialog {
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
-                    Button { objectName: "hotkeyMap"; text: qsTr("Map hotkey"); onClicked: dialog.mapHotkey() }
+                    Button {
+                        objectName: "hotkeyMap"
+                        text: qsTr("Map hotkey")
+                        // The row's note says why (AM1: a name two loaded scripts share).
+                        enabled: dialog.hotkeys.mapProblem.length === 0
+                        onClicked: dialog.mapHotkey()
+                    }
                     Button {
                         objectName: "hotkeyRestore"
                         text: qsTr("Restore default hotkey")

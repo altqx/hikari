@@ -65,6 +65,9 @@ class HotkeysController : public QObject {
     // carries its own ("block": 0, 1 "+", 2 "-"; "inBlock": shown from one).
     Q_PROPERTY(bool listFiltered READ listFiltered NOTIFY rowsChanged)
     Q_PROPERTY(int topBlock READ topBlock NOTIFY rowsChanged)
+    // AM1: why the selected row cannot be given keys, "" when it can (a macro
+    // name that several loaded scripts share binds none of their macros).
+    Q_PROPERTY(QString mapProblem READ mapProblem NOTIFY rowsChanged)
 public:
     // `log`: HikariLog (the log window), for GetHKey's 'Shortcut "%s" is invalid'.
     HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
@@ -125,6 +128,7 @@ public:
     // The selected row's "Hotkey mapping" window: {name, windows, type}, or
     // {} without a selection.
     Q_INVOKABLE QVariantMap mapTarget() const;
+    QString mapProblem() const;
     // ItemHotkey::OnMapHotkey: the question first ({} when none: map with
     // any answer), then the answer ("switch", "delete", "anyway", "cancel").
     Q_INVOKABLE QVariantMap optionsConflict(const QString &accel, int type);
@@ -186,8 +190,10 @@ private:
     void split(const application::HotkeyMap &combined);
     // The Options page's list: bindings() and the loaded macros without one.
     application::HotkeyMap listed() const;
-    // The macros registered since the page's list was built, added to it.
-    void listNewMacros();
+    // The page's list follows the registrations while it is open: macros
+    // registered since it was built are added, the unbound rows of macros no
+    // longer registered go unless edited.
+    void relistMacros();
     bool eventFilter(QObject *watched, QEvent *event) override;
 
     AutomationHotkeysController &m_scripts;

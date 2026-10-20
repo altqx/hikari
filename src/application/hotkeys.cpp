@@ -1220,6 +1220,29 @@ void HotkeyList::addRows(const HotkeyMap &more)
     }
 }
 
+void HotkeyList::removeUnchangedRows(const std::function<bool(const Row &)> &gone)
+{
+    const RowPtr selected = m_sel >= 0 && std::size_t(m_sel) < m_filtered.size() ? m_filtered[std::size_t(m_sel)] : nullptr;
+    std::vector<RowPtr> dropped;
+    for (const auto &row : m_rows)
+        if (gone(*row) && std::ranges::all_of(m_history, [&](const auto &step) { return std::ranges::find(step, row) != step.end(); }))
+            dropped.push_back(row);
+    if (dropped.empty())
+        return;
+    // Each step loses the same rows, so the rest stay aligned between steps.
+    for (const auto &row : dropped) {
+        std::erase(m_rows, row);
+        for (auto &step : m_history)
+            std::erase(step, row);
+    }
+    rebuildFiltered();
+    const auto it = selected ? std::ranges::find(m_filtered, selected) : m_filtered.end();
+    if (it != m_filtered.end())
+        m_sel = int(it - m_filtered.begin());
+    else if (m_sel >= int(m_filtered.size()))
+        m_sel = int(m_filtered.size()) - 1;
+}
+
 void HotkeyList::filter(int mode)
 {
     // FilterList(1, mode) with ItemHotkey::OnVisibilityChange.
