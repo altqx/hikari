@@ -190,7 +190,11 @@ Window {
             opacity: fs.controller.barShown && !fs.controller.pinned ? 1 : 0
             visible: opacity > 0
             Behavior on opacity { NumberAnimation { duration: 200 } }
-            HoverHandler { cursorShape: Qt.ArrowCursor }
+            // A move over it keeps the bar, as one over the picture does.
+            HoverHandler {
+                cursorShape: Qt.ArrowCursor
+                onPointChanged: if (hovered) fs.pointerMoved(point.scenePosition)
+            }
             // Its clicks are not the picture's (pause on click, a tool's gesture).
             MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
             Rectangle {
@@ -271,6 +275,12 @@ Window {
             x: 8
             y: titleStrip.visible ? titleStrip.height + 8 : 8
             height: Math.min(implicitHeight, (bar.visible ? bar.y : fs.height) - y - 8)
+            // It stays when the bar hides, and its buttons take the pointer
+            // from the picture (on X11; offscreen the hover goes through): a
+            // move over it wakes the bar as well.
+            HoverHandler {
+                onPointChanged: if (hovered) fs.pointerMoved(point.scenePosition)
+            }
         }
 
         // FS1-exit-button-and-hint: the way out, for two seconds after entering.

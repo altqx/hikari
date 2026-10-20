@@ -22756,6 +22756,16 @@ private slots:
         QTRY_VERIFY(!fs.barShown());
         QTest::mouseMove(fsWindow, onRail + QPoint(0, 2));
         QTRY_VERIFY(fs.barShown());
+        // Moves over the file name's strip keep the bar as well.
+        pause();
+        playFromStart();
+        QTRY_VERIFY(title->isVisible());
+        const QPoint onTitle = title->mapToScene(QPointF(title->width() / 2, title->height() / 2)).toPoint();
+        for (int i = 0; i < 5; ++i) {
+            QTest::mouseMove(fsWindow, onTitle + QPoint(4 * i, 0));
+            QTest::qWait(150);
+            QVERIFY2(fs.barShown(), qPrintable(QString::number(i)));
+        }
         tools.selectFamily(0);
         QTRY_VERIFY(!rail->isVisible());
         QTRY_COMPARE(panel->height(), barHeight); // without the tool's row again
