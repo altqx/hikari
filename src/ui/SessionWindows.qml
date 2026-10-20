@@ -28,10 +28,17 @@ Item {
     function chooseSessionToLoad() { loadDialog.open() }
     function chooseSessionToSave() { saveDialog.open() }
 
+    // WS5: files another start hands over wait until this is settled, so
+    // that the session does not replace their tabs.
+    function startupDecided(load) {
+        if (load)
+            windows.load()
+        windows.app.startupSessionDecided()
+    }
     Component.onCompleted: {
         const kind = windows.app.startupSession()
         if (kind === "load")
-            Qt.callLater(() => windows.load())
+            Qt.callLater(() => windows.startupDecided(true))
         else if (kind === "ask")
             askPrompt.open()
         else if (kind === "crash")
@@ -54,9 +61,16 @@ Item {
         buttons: MessageDialog.Yes | MessageDialog.No
         onButtonClicked: (button, role) => {
             if (button === MessageDialog.Yes)
-                windows.load()
+                windows.startupDecided(true)
             else if (windows.app.lastSessionCrashed())
                 crashPrompt.open()
+            else
+                windows.startupDecided(false)
+        }
+        // Closed without a button (Esc): as No without the crash check.
+        onRejected: {
+            if (!crashPrompt.visible)
+                windows.startupDecided(false)
         }
     }
     MessageDialog {
@@ -65,10 +79,8 @@ Item {
         title: qsTr("Prompt")
         text: qsTr("The program crashed or was closed improperly.\nLoad the last session with the latest autosaved subtitles?")
         buttons: MessageDialog.Yes | MessageDialog.No
-        onButtonClicked: (button, role) => {
-            if (button === MessageDialog.Yes)
-                windows.load()
-        }
+        onButtonClicked: (button, role) => windows.startupDecided(button === MessageDialog.Yes)
+        onRejected: windows.startupDecided(false)
     }
     FileDialog {
         id: loadDialog
