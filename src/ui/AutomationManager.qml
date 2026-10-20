@@ -45,6 +45,9 @@ Pane {
     property string recording: ""
     property var pressed: null
     property string refusal: ""
+    // Why the macro being recorded cannot have a shortcut (its file name is
+    // several loaded scripts'), "" when it can: Enter then saves nothing.
+    property string blocked: ""
     // Section keys folded away; the missing shortcuts start folded.
     property var folded: ({ missing: true })
     // A run that changed nothing (failed, refused, not valid, cancelled,
@@ -101,7 +104,8 @@ Pane {
             return // no loaded macro has it
         recording = legacyName
         pressed = null
-        refusal = ""
+        blocked = macroHotkeys ? macroHotkeys.recordingProblem(legacyName) : ""
+        refusal = blocked
         list.currentIndex = i
         list.positionViewAtIndex(i, ListView.Contain)
         Qt.callLater(() => recorder.forceActiveFocus(Qt.OtherFocusReason))
@@ -109,6 +113,7 @@ Pane {
     function stopRecording() {
         recording = ""
         pressed = null
+        blocked = ""
         refusal = ""
         reassign.close()
         list.forceActiveFocus(Qt.OtherFocusReason)
@@ -116,7 +121,7 @@ Pane {
     // Enter while recording: the shortcut is set through the shortcut
     // editor's gesture path (OnMapHkey), asking first when it is taken.
     function saveRecording() {
-        if (!hotkeys || !pressed)
+        if (!hotkeys || !pressed || blocked.length > 0)
             return
         const target = hotkeys.gestureTarget(recording)
         const conflict = hotkeys.gestureConflict(target.id, pressed.accel, 0)
@@ -919,7 +924,7 @@ Pane {
             const c = root.hotkeys.capture(event.key, event.modifiers, 0)
             if (c.result === "accepted") {
                 root.pressed = { accel: c.accel, keys: c.keys }
-                root.refusal = ""
+                root.refusal = root.blocked
             } else if (c.result === "refused") {
                 root.pressed = null
                 root.refusal = c.message

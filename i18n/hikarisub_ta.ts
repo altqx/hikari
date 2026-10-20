@@ -683,6 +683,10 @@
         <source>Not a macro shortcut</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Several loaded scripts have this file name, so a shortcut cannot tell their macros apart.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Colours</name>

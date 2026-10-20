@@ -166,7 +166,9 @@ std::vector<std::string> AutomationHotkeysController::unboundMacros() const
     std::set<std::string> seen;
     for (const auto &m : m_automation.manager().registry().macros()) {
         const std::string name = application::legacyNameOf(fileNameOf(m.scriptPath).toStdString(), m.ordinal);
-        if (!m_committed.contains(name) && seen.insert(name).second)
+        // A name that several loaded scripts share is not offered for a
+        // binding: it would resolve to none of them.
+        if (!m_committed.contains(name) && seen.insert(name).second && recordingProblem(qs(name)).isEmpty())
             out.push_back(name);
     }
     return out;
@@ -257,6 +259,16 @@ void AutomationHotkeysController::install()
 QString AutomationHotkeysController::legacyNameFor(const QString &scriptPath, int ordinal) const
 {
     return qs(application::legacyNameOf(QFileInfo(scriptPath).fileName().toStdString(), ordinal));
+}
+
+QString AutomationHotkeysController::recordingProblem(const QString &legacyName) const
+{
+    application::MacroBinding binding;
+    binding.legacyName = legacyName.toStdString();
+    if (resolution(binding).problem != application::AliasProblem::BasenameCollision)
+        return {};
+    return QCoreApplication::translate("HikariSub.Automation",
+                                       "Several loaded scripts have this file name, so a shortcut cannot tell their macros apart.");
 }
 
 void AutomationHotkeysController::commitChange()

@@ -269,7 +269,7 @@ ApplicationWindow {
     // (its run status holds Cancel and the log), without taking the focus.
     readonly property bool automationRunning: root.automation.running
     onAutomationRunningChanged: {
-        if (root.automationRunning && !automationDock.isOpen && !root.workspaceLayout.holding) {
+        if (root.automationRunning && !automationDock.isOpen) {
             automationDock.open()
             root.workspaceLayout.keepFloatingPanelsOnScreen()
         }

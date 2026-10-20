@@ -13016,6 +13016,47 @@ private slots:
         QCOMPARE(tipText->property("text").toString(), QString::fromUtf8(markup));
     }
 
+    // AM1: two loaded scripts with the same file name share their macros'
+    // legacy names, which resolve to neither (S44-macro-alias), so recording
+    // one's shortcut is refused and Settings → Hotkeys does not offer it.
+    void automationPanelRefusesAMacroNameTwoScriptsShare()
+    {
+        QVERIFY(application->openFile(episode));
+        QTemporaryDir scripts;
+        for (const char *dir : {"a", "b"}) {
+            QVERIFY(QDir(scripts.path()).mkpath(QLatin1String(dir)));
+            const QString path = scripts.filePath(QLatin1String(dir) + QStringLiteral("/twin.lua"));
+            QFile lua(path);
+            QVERIFY(lua.open(QIODevice::WriteOnly));
+            lua.write("aegisub.register_macro(\"Twin " + QByteArray(dir) + "\", \"\", function() end)\n");
+            lua.close();
+            application->automation().load(QDir::toNativeSeparators(path).toStdString());
+        }
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_Twin a") && named("macro_Twin b"), 30000);
+        const QString legacyName = QStringLiteral("Script twin.lua-0");
+        auto &macros = application->automationHotkeys();
+        QVERIFY(!macros.recordingProblem(legacyName).isEmpty());
+        const auto unbound = macros.unboundMacros(); // Settings → Hotkeys' rows for the loaded macros
+        QVERIFY(std::ranges::find(unbound, legacyName.toStdString()) == unbound.end());
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(dock && QMetaObject::invokeMethod(dock, "open"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *tool = named("automationTool");
+        auto *recorder = visualItem("automationRecorder");
+        QVERIFY(tool && recorder);
+        QVERIFY(QMetaObject::invokeMethod(tool, "record", Q_ARG(QVariant, legacyName)));
+        QTRY_VERIFY(recorder->hasActiveFocus());
+        QVERIFY(tool->property("refusal").toString().contains(QStringLiteral("Several loaded scripts")));
+        keyTo(recorder, Qt::Key_T, Qt::ControlModifier | Qt::AltModifier);
+        QVERIFY(tool->property("refusal").toString().contains(QStringLiteral("Several loaded scripts")));
+        keyTo(recorder, Qt::Key_Return);
+        QCOMPARE(tool->property("recording").toString(), legacyName); // nothing saved
+        QVERIFY(!macros.committedKeys().contains(legacyName.toStdString()));
+        keyTo(recorder, Qt::Key_Escape);
+        QTRY_COMPARE(tool->property("recording").toString(), QString());
+        QVERIFY(!macros.committedKeys().contains(legacyName.toStdString()));
+    }
+
     // AM1 with KB1/KB2's key router: a key being recorded is the recorder's
     // whichever panel the pointer is over (no Grid binding runs, Space does
     // not play), and a macro on Play / Pause's keys, which act from every

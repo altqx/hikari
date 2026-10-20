@@ -57,6 +57,9 @@ public:
     Q_INVOKABLE QString keysOf(int key, int modifiers) const;
     // "Script <file name>-<ordinal>" for a registered macro.
     Q_INVOKABLE QString legacyNameFor(const QString &scriptPath, int ordinal) const;
+    // Why `legacyName` cannot be given a shortcut, "" when it can: a name
+    // that several loaded scripts share would bind none of their macros.
+    Q_INVOKABLE QString recordingProblem(const QString &legacyName) const;
 
     // O2: the script bindings are the script lines of legacy's one hotkey map,
     // which the shortcut editor also edits. The committed keys by legacy name;
