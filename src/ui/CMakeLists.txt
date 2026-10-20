@@ -138,6 +138,8 @@ qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog
 qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)
 # AV1: the audio panel's output device menu.
 qt_target_qml_sources(hikari_ui QML_FILES AudioOutputMenu.qml)
+# AU1: the rows of the audio panel's zoom and speaker popovers.
+qt_target_qml_sources(hikari_ui QML_FILES AudioSliderRow.qml)
 # E5: the Line editor's Translator mode check box and its Not confirmed and
 # Moving tags buttons.
 qt_target_qml_sources(hikari_ui QML_FILES TranslatorModeCheck.qml TranslationToggles.qml)
