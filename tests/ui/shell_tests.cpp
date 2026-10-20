@@ -92,6 +92,7 @@
 #include <functional>
 #include <vector>
 #include <set>
+#include <limits>
 #include <map>
 #include <memory>
 #include <optional>
@@ -15162,9 +15163,14 @@ private slots:
             QTRY_VERIFY(!bar->isVisible());
             window->resize(was);
         }
-        // The crosshair has no options or values to edit and edits no batch:
-        // no tool strip below the video, and no "Targets" readout anywhere.
-        QVERIFY(!visualItem("visualToolValues")->isVisible());
+        // VT1: the inspector bar is there for the crosshair too (the video
+        // does not resize with the tool): its name, Copy video position
+        // (greyed with no position yet), no batch picker, no "Targets"
+        // readout anywhere.
+        QVERIFY(visualItem("visualToolBar")->isVisible());
+        QVERIFY(visualItem("visualToolName")->isVisible());
+        QVERIFY(!visualItem("visualPickBatch")->isVisible());
+        QVERIFY(!visualItem("visualOption_copyPosition")->isEnabled());
         QVERIFY(!visualItem("visualBatch"));
         QVERIFY(tools.overlay().isEmpty()); // no video: no tools (VideoBox state None)
         application->video().openVideo(nativeFixture("cfr.mkv"));
@@ -15195,7 +15201,10 @@ private slots:
         const int dx = view.toDevice(centre.x()), dy = view.toDevice(centre.y());
         const auto script = view.viewToScript({float(dx), float(dy)});
         QVERIFY2(std::abs(xy[0].toInt() - script.x) <= 2 && std::abs(xy[1].toInt() - script.y) <= 2, qPrintable(label));
-        QTRY_COMPARE(visualItem("visualValue_position")->property("text").toString(), label);
+        // The bar reads the label's two numbers, read-only.
+        QTRY_COMPARE(visualItem("visualValue_x")->property("text").toString(), xy[0]);
+        QCOMPARE(visualItem("visualValue_y")->property("text").toString(), xy[1]);
+        QVERIFY(!visualItem("visualValue_x")->inherits("QQuickTextInput"));
 
         // VIDEO_COPY_COORDS at the pointer, in legacy's text form "x,y",
         // through the Video window binding: VideoBox::OnAccelerator takes the
@@ -15223,7 +15232,19 @@ private slots:
         QTRY_COMPARE(QGuiApplication::clipboard()->text(), copied);
         QCOMPARE(tools.copied(), copied);
         // The crosshair's label at the same pointer reads the same position.
-        QCOMPARE(visualItem("visualValue_position")->property("text").toString(), QStringLiteral("%1, %2").arg(sx).arg(sy));
+        QCOMPARE(visualItem("visualValue_x")->property("text").toString(), QString::number(sx));
+        QCOMPARE(visualItem("visualValue_y")->property("text").toString(), QString::number(sy));
+        // VT1: the bar's Copy video position copies the shown position in
+        // the same form, the pointer gone from the video to reach it.
+        QGuiApplication::clipboard()->clear();
+        auto *copyButton = visualItem("visualOption_copyPosition");
+        QTRY_VERIFY(copyButton->isEnabled());
+        QCOMPARE(copyButton->property("iconRole").toString(), QStringLiteral("copy-position"));
+        QCOMPARE(copyButton->property("text").toString(), QStringLiteral("Copy video position"));
+        QTest::mouseClick(window, Qt::LeftButton, {},
+                          copyButton->mapToScene(QPointF(copyButton->width() / 2, copyButton->height() / 2)).toPoint());
+        QTRY_COMPARE(QGuiApplication::clipboard()->text(), copied);
+        QCOMPARE(visualItem("visualValue_x")->property("text").toString(), QString::number(sx));
         const float legacyX = float(view.scriptWidth()) / float(view.clientWidth() - 1);
         const float legacyY = float(view.scriptHeight()) / float(view.clientHeight() - view.panelHeight() - 1);
         QVERIFY(copied != QStringLiteral("%1,%2").arg(int(float(devX) * legacyX)).arg(int(float(devY) * legacyY)));
@@ -15580,6 +15601,9 @@ private slots:
         QVERIFY(pick->property("tip").toString().contains(QStringLiteral("2 line")));
         QTRY_VERIFY(visualItem("visualClearBatch")->isVisible());
         QCOMPARE(visualItem("visualClearBatch")->property("iconRole").toString(), QStringLiteral("clear"));
+        // VT1-picked-count: their number beside the picker.
+        QVERIFY(visualItem("visualPickedCount")->isVisible());
+        QCOMPARE(visualItem("visualPickedCount")->property("text").toString(), QStringLiteral("2 lines"));
         application->selectLine(second.value);
         const std::size_t before = session->historySize();
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
@@ -15591,6 +15615,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualClearBatch"), "click"));
         QCOMPARE(tools.batchCount(), 0);
         QTRY_VERIFY(!visualItem("visualClearBatch")->isVisible());
+        QVERIFY(!visualItem("visualPickedCount")->isVisible());
         QVERIFY(!pick->property("checked").toBool());
 
         // Outside the Line's time: the warning, and the tool takes nothing.
@@ -15926,7 +15951,7 @@ private slots:
         QCOMPARE(session->historySize(), sameSteps);
     }
 
-    // T2: VisualToolOptions.qml names each toggle's K1 role literally (so
+    // T2: VisualToolOption.qml names each toggle's K1 role literally (so
     // icon_tests sees the roles placed); every family's toggles must show the
     // role its tool gives (ToolOption::iconRole), so a new or reordered
     // option without its role in the QML fails here.
@@ -16117,11 +16142,13 @@ private slots:
         const auto &view = tools.videoView();
         const auto thirdText = [&] { return text(session->document().lines()[2]); };
 
-        // The crosshair has no options.
-        QVERIFY(!visualItem("visualToolOptions")->isVisible());
+        // The crosshair's only option is the bar's Copy video position (VT1).
+        QVERIFY(visualItem("visualOption_copyPosition"));
+        QVERIFY(!visualItem("visualOption_rectangle"));
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool3"), "click"));
         QCOMPARE(tools.activeFamily(), 3);
-        QTRY_VERIFY(visualItem("visualToolOptions")->isVisible());
+        QTRY_VERIFY(visualItem("visualOption_rectangle") && visualItem("visualOption_rectangle")->isVisible());
+        QTRY_VERIFY(!visualItem("visualOption_copyPosition"));
         // ScaleItem (VideoToolbar.cpp:83-89, 900-958): width and the aspect
         // ratio on; the rectangle's four options greyed without it.
         const char *names[] = {"rectangle", "scaleX", "aspectRatio", "scaleY", "originalRectangle", "changeAll",
@@ -16379,7 +16406,209 @@ private slots:
         QVERIFY(!(xyTool->firstmove() == xyTool->to()));
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool5"), "click"));
         QCOMPARE(tools.activeFamily(), 0);
-        QTRY_VERIFY(!visualItem("visualToolOptions")->isVisible());
+        QTRY_VERIFY(!option("changeAll"));
+        QVERIFY(option("copyPosition"));
+    }
+
+    // VT1 (#269): the inspector bar's values. Scale's X and Y, the
+    // rotations' angles and Origin and Move's times are fields
+    // (VT1-editable-values): a value typed and Enter is one step, Esc while
+    // typing puts the value back; a drag on a field's label scrubs it (the
+    // field and the video show each sample, nothing reaches the Document),
+    // its release one step, Esc during it none. The options and values sit
+    // in their labelled groups, and a narrow panel wraps the groups onto
+    // more lines, the picker keeping its slot.
+    void visualInspectorBarValues()
+    {
+        QVERIFY(application->openFile(visualDocument(
+            "inspector.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}third\n")));
+        auto &tools = application->visualTools();
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId third = session->document().lines()[2]->id;
+        application->selectLine(third.value);
+        QTRY_VERIFY(session->selection().active == third);
+        const auto thirdText = [&] { return text(session->document().lines()[2]); };
+        const auto field = [&](const char *name) {
+            return visualItem(qPrintable(QStringLiteral("visualValue_") + QLatin1String(name)));
+        };
+        const auto centreOf = [](QQuickItem *item) {
+            return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
+        };
+        const auto type = [&](const char *name, const QString &value, Qt::Key end = Qt::Key_Return) {
+            QQuickItem *f = field(name);
+            QVERIFY2(f, name);
+            f->forceActiveFocus();
+            QVERIFY(QMetaObject::invokeMethod(f, "selectAll"));
+            for (const QChar c : value)
+                QTest::keyClick(window, c.toLatin1()); // digits are bound elsewhere: the field takes them
+            QTest::keyClick(window, end);
+        };
+        // The group a bar item is in, and that group's label.
+        const auto groupOf = [](QQuickItem *item) {
+            while (item && !item->objectName().startsWith(QStringLiteral("visualOptionGroup")) &&
+                   !item->objectName().startsWith(QStringLiteral("visualValueGroup")))
+                item = item->parentItem();
+            return item;
+        };
+        const auto groupLabel = [&](QQuickItem *item) {
+            QQuickItem *group = groupOf(item);
+            if (!group)
+                return QStringLiteral("(none)");
+            for (QQuickItem *child : group->childItems())
+                if (child->inherits("QQuickText"))
+                    return child->isVisible() ? child->property("text").toString() : QString();
+            return QString();
+        };
+
+        // Scale: the tool's name leads; its options in Rectangle and Tags,
+        // its two values after them.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool3"), "click"));
+        QCOMPARE(tools.activeFamily(), 3);
+        QTRY_VERIFY(field("fscx"));
+        QVERIFY(visualItem("visualToolName")->isVisible());
+        QCOMPARE(groupLabel(visualItem("visualOption_rectangle")), QStringLiteral("Rectangle"));
+        QCOMPARE(groupLabel(visualItem("visualOption_originalRectangle")), QStringLiteral("Rectangle"));
+        QCOMPARE(groupLabel(visualItem("visualOption_changeAll")), QStringLiteral("Tags"));
+        QCOMPARE(groupLabel(visualItem("visualOption_preserveProportions")), QStringLiteral("Tags"));
+        QCOMPARE(groupOf(field("fscx")), groupOf(field("fscy")));
+        QCOMPARE(visualItem("visualValueLabel_fscx")->property("text").toString(), QStringLiteral("X"));
+        QVERIFY(field("fscx")->inherits("QQuickTextInput") || field("fscx")->inherits("QQuickTextField"));
+        QCOMPARE(field("fscx")->property("text").toString(), QStringLiteral("100"));
+        QVERIFY(QAccessible::queryAccessibleInterface(field("fscx"))->text(QAccessible::Name).endsWith(QStringLiteral(" X")));
+        QCOMPARE(QAccessible::queryAccessibleInterface(field("fscx"))->text(QAccessible::Description), QStringLiteral("%"));
+
+        // Typed: one "Visual scaling tool" step.
+        std::size_t steps = session->historySize();
+        type("fscx", QStringLiteral("150"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual scaling tool"));
+        QVERIFY2(thirdText().contains(QStringLiteral("\\fscx150")), qPrintable(thirdText()));
+        QTRY_COMPARE(field("fscx")->property("text").toString(), QStringLiteral("150"));
+        // Esc while typing puts the value back, no step.
+        steps = session->historySize();
+        type("fscx", QStringLiteral("90"), Qt::Key_Escape);
+        QTRY_COMPARE(field("fscx")->property("text").toString(), QStringLiteral("150"));
+        QCOMPARE(session->historySize(), steps);
+        QVERIFY(!tools.gestureActive());
+
+        // Scrubbed: a drag on Y's label, one unit a pixel; the field shows
+        // each sample, the Document waits for the release, one step.
+        QQuickItem *scrubY = visualItem("visualValueScrub_fscy");
+        QVERIFY(scrubY);
+        QCOMPARE(scrubY->property("cursorShape").toInt(), int(Qt::SizeHorCursor));
+        const QString beforeScrub = thirdText();
+        const QPoint y0 = centreOf(scrubY);
+        QTest::mouseMove(window, y0);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, y0);
+        QTest::mouseMove(window, y0 + QPoint(5, 0));
+        QTRY_VERIFY(tools.gestureActive());
+        QCOMPARE(field("fscy")->property("text").toString(), QStringLiteral("105"));
+        QTest::mouseMove(window, y0 + QPoint(15, 0));
+        QTRY_COMPARE(field("fscy")->property("text").toString(), QStringLiteral("115"));
+        QCOMPARE(thirdText(), beforeScrub); // nothing reaches the Document yet
+        QCOMPARE(session->historySize(), steps);
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, y0 + QPoint(15, 0));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual scaling tool"));
+        QVERIFY2(thirdText().contains(QStringLiteral("\\fscy115")), qPrintable(thirdText()));
+        QVERIFY(!tools.gestureActive());
+        // Esc during a scrub: no step, the value and the text as they were.
+        steps = session->historySize();
+        const QString beforeEsc = thirdText();
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, y0);
+        QTest::mouseMove(window, y0 + QPoint(8, 0));
+        QTRY_VERIFY(tools.gestureActive());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QVERIFY(!tools.gestureActive());
+        QTest::mouseMove(window, y0 + QPoint(20, 0));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, y0 + QPoint(20, 0));
+        QTest::qWait(50);
+        QCOMPARE(session->historySize(), steps);
+        QCOMPARE(thirdText(), beforeEsc);
+        QTRY_COMPARE(field("fscy")->property("text").toString(), QStringLiteral("115"));
+
+        // A narrow panel wraps the groups onto more lines; the picker stays.
+        // (The window is at least 800 wide, the Video panel all of it here:
+        // the bar is held to a panel's narrower width.)
+        {
+            QQuickItem *groups = visualItem("visualToolGroups");
+            QQuickItem *bar = visualItem("visualToolBar");
+            QQmlProperty maximum(bar, QStringLiteral("Layout.maximumWidth"), qmlContext(bar));
+            const QSize was = window->size();
+            window->resize(1600, 1400); // wide: one line
+            QTRY_VERIFY(groups->height() < 40);
+            QVERIFY(maximum.write(420));
+            QTRY_COMPARE(bar->width(), qreal(420));
+            QTRY_VERIFY2(groups->height() > 40, qPrintable(QString::number(groups->height())));
+            QQuickItem *pick = visualItem("visualPickBatch");
+            QVERIFY(pick->isVisible());
+            QVERIFY(pick->mapToItem(bar, QPointF(pick->width(), 0)).x() <= bar->width());
+            // Every group whole, inside the bar.
+            for (QQuickItem *group : groups->childItems())
+                if (group->isVisible())
+                    QVERIFY2(group->x() + group->width() <= groups->width() + 0.5, qPrintable(group->objectName()));
+            QVERIFY(maximum.write(std::numeric_limits<qreal>::infinity()) /* the Layout default */);
+            QTRY_VERIFY(groups->height() < 40);
+            window->resize(was);
+            QTRY_VERIFY(!tools.videoRect().isEmpty());
+        }
+
+        // Z rotation: its angle, and Origin in its group.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool4"), "click"));
+        QCOMPARE(tools.activeFamily(), 4);
+        QTRY_VERIFY(field("frz"));
+        QCOMPARE(groupLabel(field("orgx")), QStringLiteral("Origin"));
+        QCOMPARE(groupOf(field("orgx")), groupOf(field("orgy")));
+        QVERIFY(groupOf(field("frz")) != groupOf(field("orgx")));
+        steps = session->historySize();
+        type("frz", QStringLiteral("30"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual Z-axis rotation tool"));
+        QVERIFY2(thirdText().contains(QStringLiteral("\\frz30")), qPrintable(thirdText()));
+        QTRY_COMPARE(field("frz")->property("text").toString(), QStringLiteral("30"));
+        steps = session->historySize();
+        type("orgx", QStringLiteral("100"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QVERIFY2(thirdText().contains(QStringLiteral("\\org(100,")), qPrintable(thirdText()));
+        QVERIFY2(thirdText().contains(QStringLiteral("\\frz30")), qPrintable(thirdText()));
+
+        // X/Y rotation: both angles.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool5"), "click"));
+        QCOMPARE(tools.activeFamily(), 5);
+        QTRY_VERIFY(field("fry"));
+        steps = session->historySize();
+        type("fry", QStringLiteral("20"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual X/Y-axis rotation tool"));
+        QVERIFY2(thirdText().contains(QStringLiteral("\\fry20")), qPrintable(thirdText()));
+        type("frx", QStringLiteral("10"));
+        QTRY_COMPARE(session->historySize(), steps + 2);
+        QVERIFY2(thirdText().contains(QStringLiteral("\\frx10")), qPrintable(thirdText()));
+        QVERIFY2(thirdText().contains(QStringLiteral("\\fry20")), qPrintable(thirdText()));
+
+        // Move: Start and End, each with its time from the Line's start.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool2"), "click"));
+        QCOMPARE(tools.activeFamily(), 2);
+        QTRY_VERIFY(field("t1"));
+        QCOMPARE(groupLabel(field("x1")), QStringLiteral("Start"));
+        QCOMPARE(groupLabel(field("t1")), QStringLiteral("Start"));
+        QCOMPARE(groupLabel(field("t2")), QStringLiteral("End"));
+        QCOMPARE(visualItem("visualValueLabel_t1")->property("text").toString(), QStringLiteral("T"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(field("t1"))->text(QAccessible::Description), QStringLiteral("ms"));
+        steps = session->historySize();
+        type("t1", QStringLiteral("100"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual movement tool"));
+        const auto args = moveArguments(thirdText());
+        QVERIFY2(args && args->size() == 6, qPrintable(thirdText()));
+        QCOMPARE(args->at(4), QStringLiteral("100"));
+        QTRY_COMPARE(field("t1")->property("text").toString(), QStringLiteral("100"));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool2"), "click"));
+        QCOMPARE(tools.activeFamily(), 0);
     }
 
     // T1: legacy disables the rail for a Document that is not ASS
@@ -16849,21 +17078,37 @@ private slots:
                               QStringLiteral("rounded square 1"), QStringLiteral("rounded square 2"),
                               QStringLiteral("rounded square 3"), QStringLiteral("Edit")}));
         QCOMPARE(list()->property("currentIndex").toInt(), 0);
-        // The row is icon-only (the user's tool strip rule): the list is an
-        // icon button named by legacy's help text, its menu a ShellMenu.
+        // VT1-choice-text: in the bar's Shape group the list is a dropdown
+        // showing the chosen entry as text (the first entry, legacy's
+        // "Choose", named "Free drawing"), named by legacy's help text, its
+        // menu a ShellMenu; the point modes stay icon-only.
         const auto centreOf = [](QQuickItem *item) {
             return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
         };
+        const auto shown = [&] {
+            return visualItem("visualOption_shape_text")->property("text").toString();
+        };
         QVERIFY(!list()->inherits("QQuickComboBox"));
-        QCOMPARE(list()->property("iconRole").toString(), QStringLiteral("shape-presets"));
-        constexpr int iconOnly = 0; // AbstractButton.IconOnly
-        QCOMPARE(list()->property("display").toInt(), iconOnly);
+        QVERIFY(list()->property("asText").toBool());
+        QCOMPARE(list()->property("role").toString(), QStringLiteral("shape-presets"));
+        QCOMPARE(shown(), QStringLiteral("Free drawing"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(list())->role(), QAccessible::ComboBox);
         QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Name),
                  QStringLiteral("List of ASS drawings with edit option."));
-        QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Description), QStringLiteral("Choose"));
-        QVERIFY(list()->property("tip").toString().startsWith(QStringLiteral("List of ASS drawings with edit option.\n")));
+        QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Description),
+                 QStringLiteral("Free drawing"));
         QVERIFY(!list()->property("checked").toBool());
-        for (QQuickItem *item : visualItem("visualToolOptions")->childItems()) {
+        const auto groupOf = [](QQuickItem *item) {
+            while (item && !item->objectName().startsWith(QStringLiteral("visualOptionGroup")))
+                item = item->parentItem();
+            return item;
+        };
+        QQuickItem *points = groupOf(visualItem("visualOption_mode0"));
+        QVERIFY(points);
+        QVERIFY(groupOf(list()) != points);
+        constexpr int iconOnly = 0; // AbstractButton.IconOnly
+        int modes = 0;
+        for (QQuickItem *item : points->childItems()) {
             if (!item->inherits("QQuickLoader"))
                 continue;
             auto *option = item->property("item").value<QQuickItem *>();
@@ -16872,7 +17117,9 @@ private slots:
             QCOMPARE(option->property("display").toInt(), iconOnly);
             QVERIFY(!option->property("iconRole").toString().isEmpty());
             QVERIFY(!QAccessible::queryAccessibleInterface(option)->text(QAccessible::Name).isEmpty());
+            ++modes;
         }
+        QCOMPARE(modes, 6);
         const auto menu = [&] { return list()->findChild<QObject *>(QStringLiteral("visualOption_shape_menu")); };
         const auto menuItem = [&](int i) {
             QQuickItem *item = nullptr;
@@ -16880,13 +17127,16 @@ private slots:
             return item;
         };
         // The entries in legacy's order, the chosen one checked, "Edit" after
-        // a separator.
+        // a separator; the bar names the ends "Free drawing" and "Edit
+        // shapes…" (legacy's "Choose" and "Edit").
         const auto checkMenu = [&](const QStringList &entries, int chosen) {
             QCOMPARE(menu()->property("count").toInt(), int(entries.size()) + 1);
             for (int i = 0; i < entries.size(); ++i) {
                 QQuickItem *item = menuItem(i < entries.size() - 1 ? i : i + 1);
                 QVERIFY(item);
-                QCOMPARE(item->property("text").toString(), entries[i]);
+                QCOMPARE(item->property("text").toString(),
+                         i == 0 ? QStringLiteral("Free drawing")
+                         : i == entries.size() - 1 ? QStringLiteral("Edit shapes…") : entries[i]);
                 QCOMPARE(item->property("checkable").toBool(), i < entries.size() - 1);
                 QCOMPARE(item->property("checked").toBool(), i == chosen);
             }
@@ -16921,8 +17171,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(menuItem(1), "click"));
         QTRY_VERIFY(!menu()->property("visible").toBool());
         QTRY_COMPARE(list()->property("currentIndex").toInt(), 1);
-        QVERIFY(list()->property("checked").toBool()); // on while a shape is chosen
-        QVERIFY(list()->property("tip").toString().startsWith(QStringLiteral("Shape: rectangle\nList of ASS drawings")));
+        QCOMPARE(shown(), QStringLiteral("rectangle")); // the chosen shape, as text
         QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Description), QStringLiteral("rectangle"));
         QTRY_VERIFY(!visualItem("visualOption_mode1")->property("enabled").toBool());
         QVERIFY(!visualItem("visualOption_mode1")->property("checked").toBool());
@@ -17152,7 +17401,7 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool9"), "click"));
         QCOMPARE(tools.activeFamily(), 9);
-        QTRY_VERIFY(visualItem("visualToolOptions")->isVisible());
+        QTRY_VERIFY(visualItem("visualOption_positions"));
         // MoveAllItem (VideoToolbar.cpp:70-75, 354-414).
         const char *names[] = {"positions", "moveStarts", "moveEnds", "clips", "drawings", "origins"};
         const char *roles[] = {"shift-position", "shift-move-start", "shift-move-end", "shift-clips", "shift-drawings",
@@ -17284,15 +17533,24 @@ private slots:
             QQuickItem *b = option(r.name);
             QVERIFY2(b, r.name);
             QVERIFY(!b->inherits("QQuickComboBox"));
-            QCOMPARE(b->property("iconRole").toString(), QLatin1String(r.role));
-            QCOMPARE(b->property("display").toInt(), iconOnly);
+            // VT1-choice-text: the tag list and the change options are
+            // dropdowns in the bar's Tag and Change groups showing the chosen
+            // entry as text; Edit stays an icon button.
+            if (*r.description) {
+                QVERIFY(b->property("asText").toBool());
+                QCOMPARE(b->property("role").toString(), QLatin1String(r.role));
+                QCOMPARE(visualItem(qPrintable(b->objectName() + QStringLiteral("_text")))->property("text").toString(),
+                         QLatin1String(r.description));
+            } else {
+                QCOMPARE(b->property("iconRole").toString(), QLatin1String(r.role));
+                QCOMPARE(b->property("display").toInt(), iconOnly);
+            }
             QVERIFY(!b->property("checked").toBool());
             QCOMPARE(QAccessible::queryAccessibleInterface(b)->text(QAccessible::Name), QLatin1String(r.accessibleName));
             if (*r.description)
                 QCOMPARE(QAccessible::queryAccessibleInterface(b)->text(QAccessible::Description),
                          QLatin1String(r.description));
         }
-        QVERIFY(option("tag")->property("tip").toString().startsWith(QStringLiteral("blur\nList of tags")));
         // The row's place settles with the panel's layout.
         QRectF lastRow;
         QVERIFY(QTest::qWaitFor([&] {
@@ -17558,6 +17816,116 @@ private slots:
                         .save(out + QStringLiteral("/tags-edition-dialog") + suffix));
             QVERIFY(QMetaObject::invokeMethod(named("tagsCancel"), "click"));
             QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
+    }
+
+    // VT1: the inspector bar in the four themes (with
+    // HIKARI_SURFACE_SHOT_DIR): the Video panel for the crosshair, Scale
+    // with picked Lines and a scrub under way, the Z rotation's Origin, the
+    // drawing's and the all-tags tool's dropdowns, the bar wrapped on a
+    // narrow window, and fullscreen's tool row.
+    void visualInspectorBarScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        window->resize(1280, 1000);
+        auto &tools = application->visualTools();
+        tools.setAllTagsFile({});
+        QVERIFY(application->openFile(visualDocument(
+            "vt1-shots.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)\\blur2}Inspected\n")));
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        const auto crop = [](QQuickItem *item) {
+            const qreal dpr = item->window()->effectiveDevicePixelRatio();
+            const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+        };
+        const auto shoot = [&](const QString &name) {
+            QTest::qWait(300);
+            const QImage shot = window->grabWindow();
+            QVERIFY(shot.copy(crop(visualItem("videoPanel"))).save(out + QLatin1Char('/') + name));
+        };
+        auto *root = engine->rootObjects().first();
+        for (const char *code : {"light", "dark", "highContrastBlack", "highContrastWhite"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + QString::fromLatin1(code) + QStringLiteral(".png");
+            application->selectLine(lines[2]->id.value);
+            // The crosshair with a position.
+            tools.selectFamily(0);
+            QTest::mouseMove(window, videoPoint(tools.videoRect().center() + QPointF(20, -10)));
+            QTRY_VERIFY(visualItem("visualOption_copyPosition") && visualItem("visualOption_copyPosition")->isEnabled());
+            shoot(QStringLiteral("vt1-crosshair") + suffix);
+            QTest::mouseMove(window, QPoint(1, 1));
+            // Scale with two Lines picked, then mid-scrub on X's label.
+            session->setSelection({lines[2]->id, {lines[1]->id, lines[2]->id}, lines[2]->id, {}});
+            tools.selectFamily(3);
+            tools.pickBatch();
+            QTRY_VERIFY(visualItem("visualPickedCount") && visualItem("visualPickedCount")->isVisible());
+            shoot(QStringLiteral("vt1-scale-picked") + suffix);
+            QQuickItem *scrub = visualItem("visualValueScrub_fscx");
+            QVERIFY(scrub);
+            const QPoint at = scrub->mapToScene(QPointF(scrub->width() / 2, scrub->height() / 2)).toPoint();
+            QTest::mouseMove(window, at);
+            QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at);
+            QTest::mouseMove(window, at + QPoint(6, 0));
+            QTest::mouseMove(window, at + QPoint(30, 0));
+            QTRY_VERIFY(tools.gestureActive());
+            shoot(QStringLiteral("vt1-scale-scrubbing") + suffix);
+            QTest::keyClick(window, Qt::Key_Escape);
+            QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at + QPoint(30, 0));
+            QTRY_VERIFY(!tools.gestureActive());
+            QTest::mouseMove(window, QPoint(1, 1)); // no tooltip in the next shots
+            tools.clearBatch();
+            application->selectLine(lines[2]->id.value);
+            // The Z rotation's angle and Origin.
+            tools.selectFamily(4);
+            QTRY_VERIFY(visualItem("visualValue_orgx"));
+            shoot(QStringLiteral("vt1-rotate-z") + suffix);
+            // The drawing's Shape dropdown.
+            tools.selectFamily(8);
+            QTRY_VERIFY(visualItem("visualOption_shape"));
+            shoot(QStringLiteral("vt1-drawing") + suffix);
+            // The all-tags tool's Tag and Change dropdowns.
+            tools.selectFamily(10);
+            QTRY_VERIFY(visualItem("visualOption_tag"));
+            shoot(QStringLiteral("vt1-all-tags") + suffix);
+            // Scale on a narrow window: the groups wrap.
+            tools.selectFamily(3);
+            QTRY_VERIFY(visualItem("visualValue_fscx"));
+            {
+                QQuickItem *bar = visualItem("visualToolBar");
+                QQmlProperty maximum(bar, QStringLiteral("Layout.maximumWidth"), qmlContext(bar));
+                QVERIFY(maximum.write(420));
+                QTRY_VERIFY(visualItem("visualToolGroups")->height() > 40);
+                QTest::qWait(300);
+                const QImage shot = window->grabWindow();
+                QVERIFY(shot.copy(crop(bar)).save(out + QStringLiteral("/vt1-scale-narrow") + suffix));
+                QVERIFY(maximum.write(std::numeric_limits<qreal>::infinity()) /* the Layout default */);
+            }
+            // Fullscreen's tool row: the families' buttons, then the bar.
+            auto &fs = application->videoFullscreen();
+            QVERIFY(fs.toggle(0));
+            QQuickWindow *fsWindow = fullscreenWindow();
+            QTRY_VERIFY(fsWindow->isExposed());
+            QTRY_VERIFY(fullscreenItem("fullscreenToolbar") && fullscreenItem("fullscreenToolbar")->isVisible());
+            QTRY_VERIFY(fullscreenItem("visualValue_fscx"));
+            QTest::qWait(300);
+            const QImage fsShot = fsWindow->grabWindow();
+            QVERIFY(fsShot.copy(crop(fullscreenItem("fullscreenToolbar"))).save(out + QStringLiteral("/vt1-fullscreen") + suffix));
+            QVERIFY(fs.leave());
+            QTRY_VERIFY(!fsWindow->isVisible());
+            tools.selectFamily(0);
         }
     }
 
@@ -22840,6 +23208,13 @@ private slots:
         QTRY_COMPARE(tools.activeFamily(), 3);
         QVERIFY(scale->property("checked").toBool());
         QVERIFY(!fullscreenItem("fullscreenTool0")->property("checked").toBool());
+        // VT1: the same inspector bar after the families' buttons, the tool
+        // not named again (its button is checked beside it).
+        auto *fsBar = fullscreenItem("fullscreenToolBar");
+        QVERIFY(fsBar && fsBar->isVisible());
+        QVERIFY(!fullscreenItem("visualToolName")->isVisible());
+        QTRY_VERIFY(fullscreenItem("visualOption_rectangle"));
+        QTRY_VERIFY(fullscreenItem("visualValue_fscx") && fullscreenItem("visualValue_fscx")->isVisible());
         clickWith(fullscreenItem("fullscreenTool0"), Qt::NoModifier);
         QTRY_COMPARE(tools.activeFamily(), 0);
         // Shift+click on Stop maps VIDEO_STOP in the Video window, and does not stop.

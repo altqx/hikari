@@ -183,15 +183,14 @@ class ViewArrangementsTest : public QObject {
         QTest::keyClick(window, Qt::Key_Exclam, Qt::ShiftModifier);
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first!"));
     }
-    // The Video panel's visual tool items (rail, values, overlay) shown. The
-    // values strip shows only for a tool with options or values (the UI
-    // polish: none for the crosshair), so for it the layout's say counts.
+    // The Video panel's visual tool items (rail, inspector bar, overlay)
+    // shown; for the bar the layout's say counts.
     int visualToolItems(bool shown) const
     {
         int n = 0;
         std::function<void(QQuickItem *)> walk = [&](QQuickItem *item) {
             const QByteArray type = item->metaObject()->className();
-            if (type.startsWith("VisualToolValues")) {
+            if (type.startsWith("VisualToolBar")) {
                 if (item->property("shownInLayout").toBool() == shown)
                     ++n;
             } else if (type.startsWith("VisualOverlay")) {
