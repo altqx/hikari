@@ -288,6 +288,16 @@ ApplicationWindow {
     function openOriginal() {
         if (Docking.hasPlace("Original"))
             originalDock.open()
+        else
+            root.addOriginal()
+    }
+    // Where an arrangement that never had the panel (an older saved layout)
+    // puts it: above the Line editor, in the Line editor's own window when
+    // that floats (placePanel), or on the right without one.
+    function addOriginal() {
+        if (editorDock.isOpen && editorDock.isFloating)
+            editorDock.addDockWidgetToContainingWindow(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock,
+                                                       Qt.size(0, 140))
         else if (editorDock.isOpen)
             dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 140))
         else
@@ -364,7 +374,9 @@ ApplicationWindow {
                 referenceDock.close()
             if (!videoDock.isOpen && root.video.playing)
                 root.video.pause()
-            root.placeOriginal() // TM1
+            // TM1: once the editor is the shown tab's: a tab's arrangement
+            // is swapped in before the editor leaves the tab before.
+            Qt.callLater(root.placeOriginal)
         }
         // TM1: a preset that carries a mode (WorkspaceLayoutController::presetMode).
         // Translation asks to turn the editing target's Translation mode on
@@ -2828,15 +2840,17 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "audioPanel"
                 dockName: "Audio"
-                // With audio open: the button row under a short display.
+                // With audio open: the button row under a short display,
+                // as narrow as the folded row (AU1).
                 minimumBodySize: audioButtons.visible
-                                 ? Qt.size(audioButtons.implicitWidth, 64 + audioScroll.implicitHeight + 4 + audioButtons.implicitHeight)
+                                 ? Qt.size(audioButtons.foldedWidth, 64 + audioScroll.implicitHeight + 4 + audioButtons.implicitHeight)
                                  : Qt.size(audioStatus.implicitWidth, audioStatus.implicitHeight)
                 title: qsTranslate("HikariSub.Audio", "Audio")
                 // The audio box in legacy AudioBox's layout: the display with
-                // the search bar below it (DisplaySizer), the horizontal zoom
-                // and the vertical zoom, volume and link beside them
-                // (TopSizer), the button row across the bottom (ButtonSizer).
+                // the search bar below it (DisplaySizer) and the button row
+                // across the bottom (ButtonSizer). AU1 (#267): the sliders
+                // beside them (TopSizer) moved into the zoom and speaker
+                // popovers, so the display takes the full width.
                 // A1: the waveform with its time ruler and marks (legacy AudioDisplay).
                 AudioDisplay {
                     id: audioDisplay
@@ -2845,7 +2859,7 @@ ApplicationWindow {
                     visible: root.audio.loaded
                     focus: true
                     clip: true
-                    anchors { left: parent.left; right: audioSliders.left; top: parent.top; bottom: audioScroll.top }
+                    anchors { left: parent.left; right: parent.right; top: parent.top; bottom: audioScroll.top }
                     Accessible.role: Accessible.Graphic
                     Accessible.name: qsTranslate("HikariSub.Audio", "Audio display")
                     Accessible.description: root.audio.status
@@ -2858,7 +2872,7 @@ ApplicationWindow {
                     policy: ScrollBar.AlwaysOn
                     focusPolicy: Qt.NoFocus
                     // legacy DisplaySizer: wxBOTTOM 4 under the search bar
-                    anchors { left: parent.left; right: audioSliders.left; bottom: audioButtons.top; bottomMargin: visible ? 4 : 0 }
+                    anchors { left: parent.left; right: parent.right; bottom: audioButtons.top; bottomMargin: visible ? 4 : 0 }
                     height: visible ? implicitHeight : 0
                     size: root.audio.scrollRange > 0 ? Math.min(1, root.audio.scrollPage / root.audio.scrollRange) : 1
                     // A visible track in the boundary colour: the handle alone
@@ -2878,78 +2892,6 @@ ApplicationWindow {
                             root.audio.setScrollPosition(Math.round(position * root.audio.scrollRange))
                     }
                     ToolTip.text: qsTranslate("HikariSub.Audio", "Search bar")
-                }
-                // A2: legacy AudioBox's sliders beside the display: the
-                // horizontal zoom (0 at the top), the vertical zoom and the
-                // volume (1 to 100, 100 at the top) and their link.
-                RowLayout {
-                    id: audioSliders
-                    objectName: "audioSliders"
-                    visible: root.audio.loaded
-                    anchors { right: parent.right; top: parent.top; bottom: audioButtons.top }
-                    width: visible ? implicitWidth : 0
-                    spacing: 0
-                    Slider {
-                        objectName: "audioHorizontalZoom"
-                        orientation: Qt.Vertical
-                        Layout.fillHeight: true
-                        from: 100; to: 0; stepSize: 1
-                        value: root.audio.horizontalZoom
-                        onMoved: root.audio.setHorizontalZoom(Math.round(value))
-                        ToolTip.text: qsTranslate("HikariSub.Audio", "Horizontal stretching")
-                        ToolTip.visible: hovered
-                        Accessible.name: ToolTip.text
-                    }
-                    ColumnLayout {
-                        Layout.fillHeight: true
-                        spacing: 0
-                        RowLayout {
-                            Layout.fillHeight: true
-                            spacing: 0
-                            Slider {
-                                objectName: "audioVerticalZoom"
-                                orientation: Qt.Vertical
-                                Layout.fillHeight: true
-                                from: 1; to: 100; stepSize: 1
-                                value: root.audio.verticalZoom
-                                onMoved: root.audio.setVerticalZoom(Math.round(value))
-                                ToolTip.text: qsTranslate("HikariSub.Audio", "Vertical stretching")
-                                ToolTip.visible: hovered
-                                Accessible.name: ToolTip.text
-                            }
-                            Slider {
-                                objectName: "audioVolume"
-                                orientation: Qt.Vertical
-                                Layout.fillHeight: true
-                                from: 1; to: 100; stepSize: 1
-                                value: root.audio.volume
-                                onMoved: root.audio.setVolume(Math.round(value))
-                                ToolTip.text: qsTranslate("HikariSub.Audio", "Volume")
-                                ToolTip.visible: hovered
-                                Accessible.name: ToolTip.text
-                            }
-                        }
-                        // K1: the set's link icon (legacy VerticalLink's
-                        // button_link bitmap, AudioBox.cpp:123).
-                        ToolButton {
-                            id: audioLink
-                            objectName: "audioLink"
-                            Layout.fillWidth: true
-                            Layout.bottomMargin: 2 // legacy wxBOTTOM 2
-                            text: qsTranslate("HikariSub.Audio", "Link")
-                            display: AbstractButton.IconOnly
-                            contentItem: Icon {
-                                iconRole: "link"
-                            }
-                            checkable: true
-                            checked: root.audio.linked
-                            focusPolicy: Qt.NoFocus
-                            onToggled: root.audio.setLinked(checked)
-                            ToolTip.text: qsTranslate("HikariSub.Audio", "Link the volume and stretch sliders")
-                            ToolTip.visible: hovered
-                            Accessible.name: ToolTip.text
-                        }
-                    }
                 }
                 Label {
                     id: audioStatus
@@ -2973,38 +2915,155 @@ ApplicationWindow {
                         tip += "\n" + qsTranslate("HikariSub.Audio", "Second shortcut can be set using Control + Click")
                     return tip
                 }
-                // The box's buttons (legacy AudioBox's ButtonSizer, in its
-                // order, with its gaps: 2 between buttons, 8 after a group).
+                // AU1 (#267): Play around's plays, in its menu's order, with
+                // legacy's button tips (AudioBox.cpp:149-193). audio.playAround
+                // holds the one the face shows and a click repeats: the last
+                // one chosen from the menu (a hotkey plays its range without
+                // changing it).
+                readonly property var playArounds: [
+                    { symbol: "AUDIO_PLAY_500MS_BEFORE", icon: "play-before-start",
+                      tip: qsTranslate("HikariSub.Audio", "Play 500ms before the start time") },
+                    { symbol: "AUDIO_PLAY_500MS_FIRST", icon: "play-after-start",
+                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms after the start time") },
+                    { symbol: "AUDIO_PLAY_500MS_LAST", icon: "play-before-end",
+                      tip: qsTranslate("HikariSub.Audio", "Play 500ms before the end time") },
+                    { symbol: "AUDIO_PLAY_500MS_AFTER", icon: "play-after-end",
+                      tip: qsTranslate("HikariSub.Audio", "Play 500ms after the end time") },
+                    { symbol: "AUDIO_PLAY_TO_END", icon: "play-to-end",
+                      tip: qsTranslate("HikariSub.Audio", "Play to the end") },
+                    { symbol: "AUDIO_PLAY_BEFORE_MARK", icon: "play-before-mark",
+                      tip: qsTranslate("HikariSub.Audio", "Play before the tag") },
+                    { symbol: "AUDIO_PLAY_AFTER_MARK", icon: "play-after-mark",
+                      tip: qsTranslate("HikariSub.Audio", "Play after the tag") }
+                ]
+                property string playAroundSetting: root.app.settings.value("audio.playAround")
+                readonly property var playAround: playArounds.find(p => p.symbol === playAroundSetting) ?? playArounds[0]
+                function choosePlayAround(symbol) {
+                    root.app.settings.setValue("audio.playAround", symbol)
+                    root.audio.runHotkey(symbol)
+                }
+                // A3: AUDIO_AUTO_COMMIT and AUDIO_NEXT_LINE_ON_COMMIT
+                // (AudioBox::OnAutoCommit / OnNextLineCommit save the option;
+                // legacy's commit never reads the second), now in Commit's menu.
+                property bool autoCommit: root.app.settings.value("audio.autoCommit")
+                property bool nextLineOnCommit: root.app.settings.value("audio.nextLineOnCommit")
+                Connections {
+                    target: root.app.settings
+                    function onChanged(id) {
+                        if (id === "audio.autoCommit")
+                            audioPanel.autoCommit = root.app.settings.value(id)
+                        else if (id === "audio.nextLineOnCommit")
+                            audioPanel.nextLineOnCommit = root.app.settings.value(id)
+                        else if (id === "audio.playAround")
+                            audioPanel.playAroundSetting = root.app.settings.value(id)
+                    }
+                }
+                function setCommitOption(id, on) {
+                    root.app.settings.setValue(id, on)
+                    audioDisplay.forceActiveFocus()
+                }
+                // AU1: the zoom readout, the horizontal stretch against the
+                // default ("1.5×"), whole numbers from 10×.
+                readonly property string magnificationText: {
+                    const m = root.audio.magnification
+                    //: The audio panel's zoom readout; %1 is the magnification
+                    return qsTranslate("HikariSub.Audio", "%1×").arg(m >= 10 ? Math.round(m) : m.toFixed(1))
+                }
+                // AU1: Go to selection's button gave way to this chip, shown
+                // only while none of the current Line's selection is in view,
+                // on the side it lies beyond (AU1-go-to-selection-chip).
+                // AUDIO_GOTO (B) keeps working everywhere.
+                AbstractButton {
+                    id: audioBackToLine
+                    objectName: "audioBackToLine"
+                    readonly property int side: root.audio.lineOutOfView
+                    visible: root.audio.loaded && side !== 0
+                    focusPolicy: Qt.NoFocus
+                    z: 1
+                    x: side < 0 ? audioDisplay.x + 8 : audioDisplay.x + audioDisplay.width - width - 8
+                    y: audioDisplay.y + 26
+                    leftPadding: 6
+                    rightPadding: 8
+                    topPadding: 0
+                    bottomPadding: 0
+                    implicitHeight: 26
+                    implicitWidth: leftPadding + rightPadding + chipRow.implicitWidth
+                    text: qsTranslate("HikariSub.Audio", "Back to line")
+                    Accessible.name: text
+                    ToolTip.text: audioPanel.audioTip(qsTranslate("HikariSub.Audio", "Go to selection"), "AUDIO_GOTO", "")
+                    ToolTip.visible: hovered
+                    background: Rectangle {
+                        radius: height / 2
+                        color: audioBackToLine.down ? Theme.select : audioBackToLine.hovered ? Theme.raised : Theme.panel
+                        border.color: Theme.control
+                    }
+                    contentItem: RowLayout {
+                        id: chipRow
+                        spacing: 6
+                        Icon {
+                            iconRole: "go-to-selection"
+                            // the arrow points to the Line
+                            mirrored: audioBackToLine.side < 0
+                        }
+                        Label {
+                            text: audioBackToLine.text
+                            font.bold: true
+                        }
+                        Label {
+                            readonly property string key: root.boundKeys("AUDIO_GOTO", 4)
+                            visible: key.length > 0
+                            text: key
+                            color: Theme.muted
+                        }
+                    }
+                    onClicked: {
+                        if (root.hotkeyGesture("AUDIO_GOTO", 4, true, false))
+                            return
+                        root.audio.goToSelection()
+                    }
+                }
+                // The box's buttons (legacy AudioBox's ButtonSizer). AU1
+                // (#267): transport, Play around and the timing group on the
+                // left; the mode switches, the toggles, zoom and the speaker
+                // on the right. Below the width the whole row needs, the
+                // switches and toggles fold into a ⋯ menu in their order.
                 RowLayout {
                     id: audioButtons
                     objectName: "audioButtons"
                     visible: root.audio.loaded
                     height: visible ? implicitHeight : 0
-                    spacing: 0
+                    spacing: 2
                     // legacy MainSizer: a 2-pixel spacer under the buttons
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom; bottomMargin: visible ? 2 : 0 }
-                    // Legacy MappedButton's small square buttons; a Shift+click
-                    // maps the action's Audio hotkey instead (Hotkeys::OnMapHkey).
+                    // From the fixed sizes, not the right-hand items' own,
+                    // which change as the row folds.
+                    readonly property bool folded: width < audioTransport.implicitWidth + audioSwitches.fullWidth
+                                                           + audioTail.unfoldedWidth + 3 * spacing
+                    // the row with the switches in ⋯: the panel's least width
+                    readonly property real foldedWidth: audioTransport.implicitWidth + audioTail.unfoldedWidth + 26
+                                                        + 3 * spacing
+                    // Legacy MappedButton's square buttons; a Shift+click maps
+                    // the action's Audio hotkey instead (Hotkeys::OnMapHkey).
                     // K1: each shows the set's icon in place of legacy's
-                    // bitmap (AudioBox.cpp:149-193); its text is not drawn,
-                    // the tip stays its accessible name and tooltip.
+                    // bitmap; its text is not drawn, the tip stays its
+                    // accessible name and tooltip. AU1: a checked button has
+                    // an accent line under it, so its state is not its fill
+                    // alone.
                     component AudioButton: ToolButton {
                         id: audioButton
                         property string symbol: ""
                         property string altSymbol: ""
                         property string tip: ""
                         property string iconRole: ""
-                        property int gap: 2
                         signal run()
                         focusPolicy: Qt.NoFocus
-                        padding: 2
+                        padding: 5
                         display: AbstractButton.IconOnly
                         contentItem: Icon {
                             iconRole: audioButton.iconRole
                         }
-                        implicitHeight: 22
-                        implicitWidth: 22
-                        Layout.rightMargin: gap
+                        implicitHeight: 26
+                        implicitWidth: 26
                         Accessible.name: tip
                         ToolTip.text: symbol.length ? audioPanel.audioTip(tip, symbol, altSymbol) : tip
                         ToolTip.visible: hovered
@@ -3013,239 +3072,646 @@ ApplicationWindow {
                                 return
                             run()
                         }
-                    }
-                    // A3, A4: AUDIO_PREVIOUS, AUDIO_NEXT, AUDIO_PLAY,
-                    // AUDIO_PLAY_LINE (two hotkeys each), AUDIO_STOP
-                    AudioButton {
-                        objectName: "audioPrevious"; text: qsTranslate("HikariSub.Audio", "Previous line")
-                        iconRole: "audio-previous-line"
-                        symbol: "AUDIO_PREVIOUS"; altSymbol: "AUDIO_PREVIOUS_ALT"; tip: qsTranslate("HikariSub.Audio", "Play the previous line")
-                        onRun: root.audio.previousLine()
-                    }
-                    AudioButton {
-                        objectName: "audioNext"; text: qsTranslate("HikariSub.Audio", "Next line")
-                        iconRole: "audio-next-line"
-                        symbol: "AUDIO_NEXT"; altSymbol: "AUDIO_NEXT_ALT"; tip: qsTranslate("HikariSub.Audio", "Play the next line")
-                        onRun: root.audio.nextLine()
-                    }
-                    AudioButton {
-                        objectName: "audioPlay"; text: qsTranslate("HikariSub.Audio", "Play")
-                        iconRole: "audio-play"
-                        symbol: "AUDIO_PLAY"; altSymbol: "AUDIO_PLAY_ALT"; tip: qsTranslate("HikariSub.Audio", "Play the current syllable / line")
-                        onRun: root.audio.runHotkey("AUDIO_PLAY")
-                    }
-                    AudioButton {
-                        objectName: "audioPlayLine"; text: qsTranslate("HikariSub.Audio", "Play line")
-                        iconRole: "play-line"
-                        symbol: "AUDIO_PLAY_LINE"; altSymbol: "AUDIO_PLAY_LINE_ALT"; tip: qsTranslate("HikariSub.Audio", "Play the current line")
-                        onRun: root.audio.runHotkey("AUDIO_PLAY_LINE")
-                    }
-                    AudioButton {
-                        objectName: "audioStop"; text: qsTranslate("HikariSub.Audio", "Stop"); gap: 8
-                        iconRole: "media-stop"
-                        symbol: "AUDIO_STOP"; tip: qsTranslate("HikariSub.Audio", "Stop playback")
-                        onRun: root.audio.runHotkey("AUDIO_STOP")
-                    }
-                    // A4: the mark plays (the ruler's mark, A3)
-                    AudioButton {
-                        objectName: "audioPlayBeforeMark"; text: qsTranslate("HikariSub.Audio", "Before mark")
-                        iconRole: "play-before-mark"
-                        symbol: "AUDIO_PLAY_BEFORE_MARK"; tip: qsTranslate("HikariSub.Audio", "Play before the tag")
-                        onRun: root.audio.runHotkey("AUDIO_PLAY_BEFORE_MARK")
-                    }
-                    AudioButton {
-                        objectName: "audioPlayAfterMark"; text: qsTranslate("HikariSub.Audio", "After mark"); gap: 8
-                        iconRole: "play-after-mark"
-                        symbol: "AUDIO_PLAY_AFTER_MARK"; tip: qsTranslate("HikariSub.Audio", "Play after the tag")
-                        onRun: root.audio.runHotkey("AUDIO_PLAY_AFTER_MARK")
-                    }
-                    // A4: the 500 ms plays and to the end
-                    AudioButton {
-                        objectName: "audioPlay500Before"; text: qsTranslate("HikariSub.Audio", "500 before")
-                        iconRole: "play-before-start"
-                        symbol: "AUDIO_PLAY_500MS_BEFORE"; tip: qsTranslate("HikariSub.Audio", "Play 500ms before the start time")
-                        onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_BEFORE")
-                    }
-                    AudioButton {
-                        objectName: "audioPlay500First"; text: qsTranslate("HikariSub.Audio", "500 first")
-                        iconRole: "play-after-start"
-                        symbol: "AUDIO_PLAY_500MS_FIRST"; tip: qsTranslate("HikariSub.Audio", "Play 500 ms after the start time")
-                        onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_FIRST")
-                    }
-                    AudioButton {
-                        objectName: "audioPlay500Last"; text: qsTranslate("HikariSub.Audio", "500 last")
-                        iconRole: "play-before-end"
-                        symbol: "AUDIO_PLAY_500MS_LAST"; tip: qsTranslate("HikariSub.Audio", "Play 500ms before the end time")
-                        onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_LAST")
-                    }
-                    AudioButton {
-                        objectName: "audioPlay500After"; text: qsTranslate("HikariSub.Audio", "500 after")
-                        iconRole: "play-after-end"
-                        symbol: "AUDIO_PLAY_500MS_AFTER"; tip: qsTranslate("HikariSub.Audio", "Play 500ms after the end time")
-                        onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_AFTER")
-                    }
-                    AudioButton {
-                        objectName: "audioPlayToEnd"; text: qsTranslate("HikariSub.Audio", "To end"); gap: 8
-                        iconRole: "play-to-end"
-                        symbol: "AUDIO_PLAY_TO_END"; tip: qsTranslate("HikariSub.Audio", "Play to the end")
-                        onRun: root.audio.runHotkey("AUDIO_PLAY_TO_END")
-                    }
-                    // A3: AUDIO_LEAD_IN, AUDIO_LEAD_OUT, AUDIO_COMMIT, AUDIO_GOTO
-                    AudioButton {
-                        objectName: "audioLeadIn"; text: qsTranslate("HikariSub.Audio", "In")
-                        iconRole: "lead-in"
-                        symbol: "AUDIO_LEAD_IN"; tip: qsTranslate("HikariSub.Audio", "Add lead-in to the active line")
-                        onRun: root.audio.leadIn()
-                    }
-                    AudioButton {
-                        objectName: "audioLeadOut"; text: qsTranslate("HikariSub.Audio", "Out"); gap: 8
-                        iconRole: "lead-out"
-                        symbol: "AUDIO_LEAD_OUT"; tip: qsTranslate("HikariSub.Audio", "Add lead-out to the active line")
-                        onRun: root.audio.leadOut()
-                    }
-                    AudioButton {
-                        objectName: "audioCommit"; text: qsTranslate("HikariSub.Audio", "Commit")
-                        iconRole: "commit"
-                        symbol: "AUDIO_COMMIT"; altSymbol: "AUDIO_COMMIT_ALT"; tip: qsTranslate("HikariSub.Audio", "Apply changes")
-                        onRun: root.audio.commit()
-                    }
-                    AudioButton {
-                        objectName: "audioGoto"; text: qsTranslate("HikariSub.Audio", "Go"); gap: 8
-                        iconRole: "go-to-selection"
-                        symbol: "AUDIO_GOTO"; tip: qsTranslate("HikariSub.Audio", "Go to selection")
-                        onRun: root.audio.goToSelection()
-                    }
-                    // A5: legacy AudioBox's KaraSwitch and KaraMode (toggle
-                    // buttons, no hotkeys): karaoke mode and its automatic
-                    // splitting; each handler focuses the display.
-                    AudioButton {
-                        objectName: "audioKaraoke"
-                        iconRole: "karaoke"
-                        text: qsTranslate("HikariSub.Audio", "Karaoke")
-                        checkable: true
-                        checked: root.audio.karaoke
-                        tip: qsTranslate("HikariSub.Audio", "Enable / disable karaoke creation")
-                        onToggled: {
-                            root.audio.toggleKaraoke()
-                            checked = Qt.binding(() => root.audio.karaoke)
+                        Rectangle {
+                            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                            height: 2
+                            color: Theme.accent
+                            visible: audioButton.checked
                         }
                     }
-                    AudioButton {
-                        objectName: "audioKaraokeSplit"
-                        iconRole: "karaoke-split"
-                        text: qsTranslate("HikariSub.Audio", "Auto split"); gap: 8
-                        checkable: true
-                        checked: root.audio.karaokeSplitMode
-                        tip: qsTranslate("HikariSub.Audio", "Enable / Disable automatic splitting of syllables")
-                        onToggled: {
-                            root.audio.toggleKaraokeSplitMode()
-                            checked = Qt.binding(() => root.audio.karaokeSplitMode)
-                        }
-                    }
-                    // A3: AUDIO_AUTO_COMMIT and AUDIO_NEXT_LINE_ON_COMMIT
-                    // (AudioBox::OnAutoCommit / OnNextLineCommit save the
-                    // option; legacy's commit never reads the second).
-                    AudioButton {
-                        id: audioAutoCommit
-                        objectName: "audioAutoCommit"
-                        iconRole: "auto-commit"
-                        text: qsTranslate("HikariSub.Audio", "Auto")
-                        checkable: true
-                        checked: root.app.settings.value("audio.autoCommit")
-                        tip: qsTranslate("HikariSub.Audio", "Automatically apply changes")
-                        onToggled: {
-                            root.app.settings.setValue("audio.autoCommit", checked)
-                            audioDisplay.forceActiveFocus()
-                        }
-                        Connections {
-                            target: root.app.settings
-                            function onChanged(id) {
-                                if (id === "audio.autoCommit")
-                                    audioAutoCommit.checked = root.app.settings.value(id)
+                    // A segment of a two-way switch: one of its choices.
+                    component AudioSegment: AudioButton {
+                        id: segment
+                        property bool divider: false
+                        Accessible.role: Accessible.RadioButton
+                        Accessible.checkable: true
+                        Accessible.checked: checked
+                        background: Rectangle {
+                            color: segment.checked ? Theme.select : segment.hovered ? Theme.raised : "transparent"
+                            Rectangle {
+                                width: 1
+                                height: parent.height
+                                color: Theme.line
+                                visible: segment.divider
                             }
                         }
                     }
-                    AudioButton {
-                        id: audioNextCommit
-                        objectName: "audioNextCommit"
-                        iconRole: "next-after-commit"
-                        text: qsTranslate("HikariSub.Audio", "Next")
-                        checkable: true
-                        checked: root.app.settings.value("audio.nextLineOnCommit")
-                        tip: qsTranslate("HikariSub.Audio", "Go to the next line after applying changes")
-                        onToggled: {
-                            root.app.settings.setValue("audio.nextLineOnCommit", checked)
-                            audioDisplay.forceActiveFocus()
+                    // AU1: Line | Karaoke and Waveform | Spectrum
+                    // (AU1-audio-mode-switches).
+                    component AudioSwitch: Rectangle {
+                        default property alias segments: switchRow.data
+                        implicitWidth: switchRow.implicitWidth + 2
+                        implicitHeight: 28
+                        color: "transparent"
+                        radius: 3
+                        border.color: Theme.control
+                        Accessible.role: Accessible.Grouping
+                        Row {
+                            id: switchRow
+                            anchors { fill: parent; margins: 1 }
                         }
-                        Connections {
-                            target: root.app.settings
-                            function onChanged(id) {
-                                if (id === "audio.nextLineOnCommit")
-                                    audioNextCommit.checked = root.app.settings.value(id)
+                    }
+                    // The arrow of a split button and of a menu button.
+                    component AudioArrow: Canvas {
+                        implicitWidth: 8
+                        implicitHeight: 8
+                        readonly property color ink: enabled ? Theme.text : Theme.disabled
+                        onInkChanged: requestPaint()
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            ctx.reset()
+                            ctx.strokeStyle = ink
+                            ctx.lineWidth = 1
+                            ctx.lineCap = "round"
+                            ctx.lineJoin = "round"
+                            ctx.beginPath()
+                            ctx.moveTo(1.5, 3)
+                            ctx.lineTo(4, 5.5)
+                            ctx.lineTo(6.5, 3)
+                            ctx.stroke()
+                        }
+                    }
+                    // AU1: a split button: the face runs its action, the arrow
+                    // opens `menu` under the face.
+                    component AudioSplitButton: Row {
+                        id: split
+                        property string name
+                        property string iconRole
+                        property string symbol
+                        property string altSymbol
+                        property string tip
+                        property string menuTip
+                        property Menu menu
+                        default property alias marks: splitFace.data
+                        signal run()
+                        AudioButton {
+                            id: splitFace
+                            objectName: split.name
+                            text: split.tip
+                            iconRole: split.iconRole
+                            symbol: split.symbol
+                            altSymbol: split.altSymbol
+                            tip: split.tip
+                            onRun: split.run()
+                        }
+                        ToolButton {
+                            objectName: split.name + "Arrow"
+                            focusPolicy: Qt.NoFocus
+                            implicitWidth: 13
+                            implicitHeight: 26
+                            padding: 0
+                            down: split.menu !== null && split.menu.visible
+                            display: AbstractButton.IconOnly
+                            text: split.menuTip
+                            Accessible.name: split.menuTip
+                            Accessible.role: Accessible.ButtonMenu
+                            ToolTip.text: split.menuTip
+                            ToolTip.visible: hovered
+                            contentItem: Item {
+                                AudioArrow {
+                                    anchors.centerIn: parent
+                                }
+                            }
+                            onClicked: split.menu.popup(splitFace, 0, splitFace.height)
+                        }
+                    }
+                    // A mark on Commit's face: an option that is on.
+                    component CommitMark: Rectangle {
+                        property string glyph
+                        width: Math.max(9, markText.implicitWidth + 2)
+                        height: 9
+                        radius: 2
+                        color: Theme.accent
+                        Label {
+                            id: markText
+                            anchors.centerIn: parent
+                            text: parent.glyph
+                            color: Theme.onAccent
+                            font.pixelSize: 8
+                            font.bold: true
+                        }
+                    }
+                    component AudioSeparator: Rectangle {
+                        implicitWidth: 1
+                        implicitHeight: 18
+                        Layout.leftMargin: 2
+                        Layout.rightMargin: 2
+                        color: Theme.line
+                    }
+                    // A play of Play around's menu, its hotkey beside it; a
+                    // Shift+click maps the hotkey (AU1: as the old button did).
+                    component PlayAroundItem: ShellMenuItem {
+                        id: playItem
+                        property string symbol
+                        property string label
+                        text: label + "\t" + root.boundKeys(symbol, 4)
+                        checkable: true
+                        checked: audioPanel.playAround.symbol === symbol
+                        keepsMenuOpen: false
+                        onTriggered: {
+                            checked = Qt.binding(() => audioPanel.playAround.symbol === playItem.symbol)
+                            if (root.hotkeyGesture(symbol, 4, true, false))
+                                return
+                            audioPanel.choosePlayAround(symbol)
+                        }
+                    }
+
+                    RowLayout {
+                        id: audioTransport
+                        spacing: 2
+                        // A3, A4: AUDIO_PREVIOUS, AUDIO_PLAY, AUDIO_PLAY_LINE
+                        // (two hotkeys each), AUDIO_STOP, AUDIO_NEXT
+                        AudioButton {
+                            objectName: "audioPrevious"; text: qsTranslate("HikariSub.Audio", "Previous line")
+                            iconRole: "audio-previous-line"
+                            symbol: "AUDIO_PREVIOUS"; altSymbol: "AUDIO_PREVIOUS_ALT"; tip: qsTranslate("HikariSub.Audio", "Play the previous line")
+                            onRun: root.audio.previousLine()
+                        }
+                        AudioButton {
+                            objectName: "audioPlay"; text: qsTranslate("HikariSub.Audio", "Play")
+                            iconRole: "audio-play"
+                            symbol: "AUDIO_PLAY"; altSymbol: "AUDIO_PLAY_ALT"; tip: qsTranslate("HikariSub.Audio", "Play the current syllable / line")
+                            onRun: root.audio.runHotkey("AUDIO_PLAY")
+                        }
+                        AudioButton {
+                            objectName: "audioPlayLine"; text: qsTranslate("HikariSub.Audio", "Play line")
+                            iconRole: "play-line"
+                            symbol: "AUDIO_PLAY_LINE"; altSymbol: "AUDIO_PLAY_LINE_ALT"; tip: qsTranslate("HikariSub.Audio", "Play the current line")
+                            onRun: root.audio.runHotkey("AUDIO_PLAY_LINE")
+                        }
+                        AudioButton {
+                            objectName: "audioStop"; text: qsTranslate("HikariSub.Audio", "Stop")
+                            iconRole: "media-stop"
+                            symbol: "AUDIO_STOP"; tip: qsTranslate("HikariSub.Audio", "Stop playback")
+                            onRun: root.audio.runHotkey("AUDIO_STOP")
+                        }
+                        AudioButton {
+                            objectName: "audioNext"; text: qsTranslate("HikariSub.Audio", "Next line")
+                            iconRole: "audio-next-line"
+                            symbol: "AUDIO_NEXT"; altSymbol: "AUDIO_NEXT_ALT"; tip: qsTranslate("HikariSub.Audio", "Play the next line")
+                            onRun: root.audio.nextLine()
+                        }
+                        AudioSeparator {}
+                        // A4: the 500 ms, to-end and mark plays in one split
+                        // button (AU1-play-around-split).
+                        AudioSplitButton {
+                            name: "audioPlayAround"
+                            iconRole: audioPanel.playAround.icon
+                            symbol: audioPanel.playAround.symbol
+                            tip: audioPanel.playAround.tip
+                            menuTip: qsTranslate("HikariSub.Audio", "Play around")
+                            menu: audioPlayAroundMenu
+                            onRun: root.audio.runHotkey(audioPanel.playAround.symbol)
+                        }
+                        ShellMenu {
+                            id: audioPlayAroundMenu
+                            objectName: "audioPlayAroundMenu"
+                            PlayAroundItem {
+                                objectName: "audioPlay500Before"; iconRole: "play-before-start"
+                                symbol: "AUDIO_PLAY_500MS_BEFORE"; label: qsTranslate("HikariSub.Audio", "Play 500 ms before the start")
+                            }
+                            PlayAroundItem {
+                                objectName: "audioPlay500First"; iconRole: "play-after-start"
+                                symbol: "AUDIO_PLAY_500MS_FIRST"; label: qsTranslate("HikariSub.Audio", "Play the first 500 ms")
+                            }
+                            PlayAroundItem {
+                                objectName: "audioPlay500Last"; iconRole: "play-before-end"
+                                symbol: "AUDIO_PLAY_500MS_LAST"; label: qsTranslate("HikariSub.Audio", "Play the last 500 ms")
+                            }
+                            PlayAroundItem {
+                                objectName: "audioPlay500After"; iconRole: "play-after-end"
+                                symbol: "AUDIO_PLAY_500MS_AFTER"; label: qsTranslate("HikariSub.Audio", "Play 500 ms after the end")
+                            }
+                            PlayAroundItem {
+                                objectName: "audioPlayToEnd"; iconRole: "play-to-end"
+                                symbol: "AUDIO_PLAY_TO_END"; label: qsTranslate("HikariSub.Audio", "Play to the end")
+                            }
+                            MenuSeparator {}
+                            PlayAroundItem {
+                                objectName: "audioPlayBeforeMark"; iconRole: "play-before-mark"
+                                symbol: "AUDIO_PLAY_BEFORE_MARK"; label: qsTranslate("HikariSub.Audio", "Play before the mark")
+                            }
+                            PlayAroundItem {
+                                objectName: "audioPlayAfterMark"; iconRole: "play-after-mark"
+                                symbol: "AUDIO_PLAY_AFTER_MARK"; label: qsTranslate("HikariSub.Audio", "Play after the mark")
                             }
                         }
-                    }
-                    // A2: legacy AudioBox's AutoScroll, SpectrumMode and
-                    // SpectrumNonLinear switches (each focuses the display, as
-                    // legacy's handlers do).
-                    AudioButton {
-                        objectName: "audioAutoScroll"
-                        iconRole: "auto-scroll"
-                        text: qsTranslate("HikariSub.Audio", "Auto-scroll")
-                        checkable: true
-                        checked: root.audio.autoScroll
-                        tip: qsTranslate("HikariSub.Audio", "Auto-scroll to the active line")
-                        onToggled: { root.audio.setAutoScroll(checked); audioDisplay.forceActiveFocus() }
-                    }
-                    // AV2 (#239): the video and audio cursors follow each
-                    // other while playing (audio.syncVideo, on by default).
-                    AudioButton {
-                        objectName: "audioSyncVideo"
-                        iconRole: "audio-video-sync"
-                        text: qsTranslate("HikariSub.Audio", "Sync with video")
-                        checkable: true
-                        checked: root.audio.syncVideo
-                        tip: qsTranslate("HikariSub.Audio", "Sync the video and audio cursors")
-                        onToggled: root.audio.setSyncVideo(checked)
-                    }
-                    AudioButton {
-                        objectName: "audioSpectrumMode"
-                        iconRole: "spectrum"
-                        text: qsTranslate("HikariSub.Audio", "Spectrum")
-                        checkable: true
-                        checked: root.audio.spectrumOn
-                        tip: qsTranslate("HikariSub.Audio", "Spectrum mode")
-                        onToggled: { root.audio.setSpectrumOn(checked); audioDisplay.forceActiveFocus() }
-                    }
-                    AudioButton {
-                        objectName: "audioSpectrumNonLinear"
-                        iconRole: "spectrum-nonlinear"
-                        text: qsTranslate("HikariSub.Audio", "Speech")
-                        checkable: true
-                        checked: root.audio.spectrumNonLinear
-                        tip: qsTranslate("HikariSub.Audio", "Enhance speech frequencies in the spectrum")
-                        onToggled: { root.audio.setSpectrumNonLinear(checked); audioDisplay.forceActiveFocus() }
+                        AudioSeparator {}
+                        // A3: AUDIO_LEAD_IN, AUDIO_LEAD_OUT, AUDIO_COMMIT
+                        AudioButton {
+                            objectName: "audioLeadIn"; text: qsTranslate("HikariSub.Audio", "In")
+                            iconRole: "lead-in"
+                            symbol: "AUDIO_LEAD_IN"; tip: qsTranslate("HikariSub.Audio", "Add lead-in to the active line")
+                            onRun: root.audio.leadIn()
+                        }
+                        AudioButton {
+                            objectName: "audioLeadOut"; text: qsTranslate("HikariSub.Audio", "Out")
+                            iconRole: "lead-out"
+                            symbol: "AUDIO_LEAD_OUT"; tip: qsTranslate("HikariSub.Audio", "Add lead-out to the active line")
+                            onRun: root.audio.leadOut()
+                        }
+                        // AU1: Commit's arrow holds Auto-commit and Next after
+                        // commit; marks on the face show which are on
+                        // (AU1-commit-split).
+                        AudioSplitButton {
+                            name: "audioCommit"
+                            iconRole: "commit"
+                            symbol: "AUDIO_COMMIT"; altSymbol: "AUDIO_COMMIT_ALT"
+                            tip: qsTranslate("HikariSub.Audio", "Apply changes")
+                            menuTip: qsTranslate("HikariSub.Audio", "Commit options")
+                            menu: audioCommitMenu
+                            onRun: root.audio.commit()
+                            Row {
+                                anchors { right: parent.right; bottom: parent.bottom; rightMargin: 1; bottomMargin: 1 }
+                                spacing: 1
+                                CommitMark {
+                                    objectName: "audioAutoCommitMark"
+                                    glyph: "A"
+                                    visible: audioPanel.autoCommit
+                                }
+                                CommitMark {
+                                    objectName: "audioNextCommitMark"
+                                    glyph: "↓"
+                                    visible: audioPanel.nextLineOnCommit
+                                }
+                            }
+                        }
+                        ShellMenu {
+                            id: audioCommitMenu
+                            objectName: "audioCommitMenu"
+                            ShellMenuItem {
+                                objectName: "audioCommitItem"
+                                iconRole: "commit"
+                                // both of Commit's keys, as the face's tip
+                                text: qsTranslate("HikariSub.Audio", "Commit") + "\t"
+                                      + [root.boundKeys("AUDIO_COMMIT", 4), root.boundKeys("AUDIO_COMMIT_ALT", 4)]
+                                        .filter(k => k.length).join(qsTranslate("HikariSub.Audio", " or "))
+                                onTriggered: if (!root.hotkeyGesture("AUDIO_COMMIT", 4, true, true)) root.audio.commit()
+                            }
+                            MenuSeparator {}
+                            ShellMenuItem {
+                                id: audioAutoCommit
+                                objectName: "audioAutoCommit"
+                                iconRole: "auto-commit"
+                                text: qsTranslate("HikariSub.Audio", "Automatically apply changes")
+                                checkable: true
+                                checked: audioPanel.autoCommit
+                                onToggled: {
+                                    audioPanel.setCommitOption("audio.autoCommit", checked)
+                                    checked = Qt.binding(() => audioPanel.autoCommit)
+                                }
+                            }
+                            ShellMenuItem {
+                                id: audioNextCommit
+                                objectName: "audioNextCommit"
+                                iconRole: "next-after-commit"
+                                text: qsTranslate("HikariSub.Audio", "Go to the next line after applying changes")
+                                checkable: true
+                                checked: audioPanel.nextLineOnCommit
+                                onToggled: {
+                                    audioPanel.setCommitOption("audio.nextLineOnCommit", checked)
+                                    checked = Qt.binding(() => audioPanel.nextLineOnCommit)
+                                }
+                            }
+                        }
                     }
                     Item { Layout.fillWidth: true }
-                    // AV1 (#238): the output device menu, at the strip's end
-                    // (MuseScore's playback device sits beside its mixer).
-                    AudioButton {
-                        id: audioOutputButton
-                        objectName: "audioOutputButton"
-                        iconRole: "audio-output"
-                        text: qsTranslate("HikariSub.Audio", "Output device")
-                        //: The audio panel's speaker button; %1 is the device audio plays through now
-                        tip: root.app.audioOutputName.length
-                             ? qsTranslate("HikariSub.Audio", "Output device: %1").arg(root.app.audioOutputName)
-                             : qsTranslate("HikariSub.Audio", "Output device")
-                        gap: 0
-                        down: audioOutputMenu.visible
-                        onRun: audioOutputMenu.popup(audioOutputButton, 0, audioOutputButton.height)
-                        AudioOutputMenu {
-                            id: audioOutputMenu
-                            objectName: "audioOutputMenu"
-                            app: root.app
-                            onSettingsRequested: settingsDialog.openDialog(4) // the Audio page
+                    // AU1: the mode switches and the toggles. `fullWidth` is
+                    // what they take unfolded, whether shown or not.
+                    RowLayout {
+                        id: audioSwitches
+                        objectName: "audioSwitches"
+                        visible: !audioButtons.folded
+                        spacing: 2
+                        // two switches, a separator and three toggles, and
+                        // Auto split in Karaoke mode
+                        readonly property real fullWidth: 2 * 54 + 5 + 3 * 26 + (root.audio.karaoke ? 26 + 7 * spacing : 6 * spacing)
+                        // A5: legacy AudioBox's KaraSwitch, as a switch
+                        AudioSwitch {
+                            AudioSegment {
+                                objectName: "audioLineMode"
+                                iconRole: "audio-line-mode"
+                                text: qsTranslate("HikariSub.Audio", "Line")
+                                tip: qsTranslate("HikariSub.Audio", "Line timing")
+                                checked: !root.audio.karaoke
+                                onRun: if (root.audio.karaoke) root.audio.toggleKaraoke()
+                            }
+                            AudioSegment {
+                                objectName: "audioKaraoke"
+                                iconRole: "karaoke"
+                                divider: true
+                                text: qsTranslate("HikariSub.Audio", "Karaoke")
+                                tip: qsTranslate("HikariSub.Audio", "Enable / disable karaoke creation")
+                                checked: root.audio.karaoke
+                                onRun: if (!root.audio.karaoke) root.audio.toggleKaraoke()
+                            }
+                        }
+                        // A5: KaraMode, in Karaoke mode only
+                        AudioButton {
+                            objectName: "audioKaraokeSplit"
+                            visible: root.audio.karaoke
+                            iconRole: "karaoke-split"
+                            text: qsTranslate("HikariSub.Audio", "Auto split")
+                            checkable: true
+                            checked: root.audio.karaokeSplitMode
+                            tip: qsTranslate("HikariSub.Audio", "Enable / Disable automatic splitting of syllables")
+                            onToggled: {
+                                root.audio.toggleKaraokeSplitMode()
+                                checked = Qt.binding(() => root.audio.karaokeSplitMode)
+                            }
+                        }
+                        // A2: SpectrumMode, as a switch
+                        AudioSwitch {
+                            AudioSegment {
+                                objectName: "audioWaveformMode"
+                                iconRole: "audio-waveform"
+                                text: qsTranslate("HikariSub.Audio", "Waveform")
+                                tip: qsTranslate("HikariSub.Audio", "Waveform mode")
+                                checked: !root.audio.spectrumOn
+                                onRun: { root.audio.setSpectrumOn(false); audioDisplay.forceActiveFocus() }
+                            }
+                            AudioSegment {
+                                objectName: "audioSpectrumMode"
+                                iconRole: "spectrum"
+                                divider: true
+                                text: qsTranslate("HikariSub.Audio", "Spectrum")
+                                tip: qsTranslate("HikariSub.Audio", "Spectrum mode")
+                                checked: root.audio.spectrumOn
+                                onRun: { root.audio.setSpectrumOn(true); audioDisplay.forceActiveFocus() }
+                            }
+                        }
+                        AudioSeparator {}
+                        // A2: legacy AudioBox's AutoScroll and SpectrumNonLinear
+                        // switches (each focuses the display, as legacy's
+                        // handlers do); AV2 (#239): the video and audio
+                        // cursors follow each other while playing.
+                        AudioButton {
+                            objectName: "audioAutoScroll"
+                            iconRole: "auto-scroll"
+                            text: qsTranslate("HikariSub.Audio", "Auto-scroll")
+                            checkable: true
+                            checked: root.audio.autoScroll
+                            tip: qsTranslate("HikariSub.Audio", "Auto-scroll to the active line")
+                            onToggled: { root.audio.setAutoScroll(checked); audioDisplay.forceActiveFocus() }
+                        }
+                        AudioButton {
+                            objectName: "audioSyncVideo"
+                            iconRole: "audio-video-sync"
+                            text: qsTranslate("HikariSub.Audio", "Sync with video")
+                            checkable: true
+                            checked: root.audio.syncVideo
+                            tip: qsTranslate("HikariSub.Audio", "Sync the video and audio cursors")
+                            onToggled: root.audio.setSyncVideo(checked)
+                        }
+                        AudioButton {
+                            objectName: "audioSpectrumNonLinear"
+                            iconRole: "spectrum-nonlinear"
+                            text: qsTranslate("HikariSub.Audio", "Speech")
+                            checkable: true
+                            checked: root.audio.spectrumNonLinear
+                            tip: qsTranslate("HikariSub.Audio", "Enhance speech frequencies in the spectrum")
+                            onToggled: { root.audio.setSpectrumNonLinear(checked); audioDisplay.forceActiveFocus() }
+                        }
+                    }
+                    RowLayout {
+                        id: audioTail
+                        spacing: 2
+                        // the separator, zoom and the speaker
+                        readonly property real unfoldedWidth: 5 + audioZoomButton.implicitWidth + 26 + 2 * spacing
+                        AudioSeparator {}
+                        // AU1: the switches and toggles of a narrow panel.
+                        AudioButton {
+                            id: audioMoreButton
+                            objectName: "audioMore"
+                            visible: audioButtons.folded
+                            iconRole: "panel-menu"
+                            text: qsTranslate("HikariSub.Audio", "More audio options")
+                            tip: text
+                            down: audioMoreMenu.visible
+                            onRun: audioMoreMenu.popup(audioMoreButton, 0, audioMoreButton.height)
+                            ShellMenu {
+                                id: audioMoreMenu
+                                objectName: "audioMoreMenu"
+                                ShellMenuItem {
+                                    iconRole: "audio-line-mode"
+                                    text: qsTranslate("HikariSub.Audio", "Line timing")
+                                    checkable: true
+                                    keepsMenuOpen: false
+                                    checked: !root.audio.karaoke
+                                    onTriggered: {
+                                        checked = Qt.binding(() => !root.audio.karaoke)
+                                        if (root.audio.karaoke) root.audio.toggleKaraoke()
+                                    }
+                                }
+                                ShellMenuItem {
+                                    objectName: "audioMoreKaraoke"
+                                    iconRole: "karaoke"
+                                    text: qsTranslate("HikariSub.Audio", "Karaoke")
+                                    checkable: true
+                                    keepsMenuOpen: false
+                                    checked: root.audio.karaoke
+                                    onTriggered: {
+                                        checked = Qt.binding(() => root.audio.karaoke)
+                                        if (!root.audio.karaoke) root.audio.toggleKaraoke()
+                                    }
+                                }
+                                ShellMenuItem {
+                                    visible: root.audio.karaoke
+                                    height: visible ? implicitHeight : 0
+                                    iconRole: "karaoke-split"
+                                    text: qsTranslate("HikariSub.Audio", "Auto split")
+                                    checkable: true
+                                    checked: root.audio.karaokeSplitMode
+                                    onTriggered: {
+                                        checked = Qt.binding(() => root.audio.karaokeSplitMode)
+                                        root.audio.toggleKaraokeSplitMode()
+                                    }
+                                }
+                                MenuSeparator {}
+                                ShellMenuItem {
+                                    iconRole: "audio-waveform"
+                                    text: qsTranslate("HikariSub.Audio", "Waveform")
+                                    checkable: true
+                                    keepsMenuOpen: false
+                                    checked: !root.audio.spectrumOn
+                                    onTriggered: {
+                                        checked = Qt.binding(() => !root.audio.spectrumOn)
+                                        root.audio.setSpectrumOn(false)
+                                    }
+                                }
+                                ShellMenuItem {
+                                    objectName: "audioMoreSpectrum"
+                                    iconRole: "spectrum"
+                                    text: qsTranslate("HikariSub.Audio", "Spectrum")
+                                    checkable: true
+                                    keepsMenuOpen: false
+                                    checked: root.audio.spectrumOn
+                                    onTriggered: {
+                                        checked = Qt.binding(() => root.audio.spectrumOn)
+                                        root.audio.setSpectrumOn(true)
+                                    }
+                                }
+                                MenuSeparator {}
+                                ShellMenuItem {
+                                    iconRole: "auto-scroll"
+                                    text: qsTranslate("HikariSub.Audio", "Auto-scroll")
+                                    checkable: true
+                                    checked: root.audio.autoScroll
+                                    onToggled: {
+                                        root.audio.setAutoScroll(checked)
+                                        checked = Qt.binding(() => root.audio.autoScroll)
+                                    }
+                                }
+                                ShellMenuItem {
+                                    iconRole: "audio-video-sync"
+                                    text: qsTranslate("HikariSub.Audio", "Sync with video")
+                                    checkable: true
+                                    checked: root.audio.syncVideo
+                                    onToggled: {
+                                        root.audio.setSyncVideo(checked)
+                                        checked = Qt.binding(() => root.audio.syncVideo)
+                                    }
+                                }
+                                ShellMenuItem {
+                                    iconRole: "spectrum-nonlinear"
+                                    text: qsTranslate("HikariSub.Audio", "Speech (non-linear spectrum)")
+                                    checkable: true
+                                    checked: root.audio.spectrumNonLinear
+                                    onToggled: {
+                                        root.audio.setSpectrumNonLinear(checked)
+                                        checked = Qt.binding(() => root.audio.spectrumNonLinear)
+                                    }
+                                }
+                            }
+                        }
+                        // AU1: the stretches and their link, folded from the
+                        // slider column into one button with a readout
+                        // (AU1-audio-slider-column-folded). Shift+wheel and
+                        // Ctrl+wheel on the waveform still zoom.
+                        ToolButton {
+                            id: audioZoomButton
+                            objectName: "audioZoom"
+                            focusPolicy: Qt.NoFocus
+                            implicitHeight: 26
+                            leftPadding: 4
+                            rightPadding: 6
+                            down: audioZoomMenu.visible
+                            text: qsTranslate("HikariSub.Audio", "Zoom")
+                            Accessible.name: text + " " + audioPanel.magnificationText
+                            ToolTip.text: qsTranslate("HikariSub.Audio", "Zoom: horizontal and vertical stretching")
+                            ToolTip.visible: hovered
+                            contentItem: RowLayout {
+                                spacing: 4
+                                Icon {
+                                    iconRole: "zoom"
+                                }
+                                Label {
+                                    objectName: "audioZoomReadout"
+                                    text: audioPanel.magnificationText
+                                    font.features: ({ "tnum": 1 })
+                                }
+                            }
+                            onClicked: audioZoomMenu.popup(audioZoomButton, 0, audioZoomButton.height)
+                            ShellMenu {
+                                id: audioZoomMenu
+                                objectName: "audioZoomMenu"
+                                // the horizontal slider zooms in to the right
+                                // (legacy's vertical one had 0 at the top)
+                                AudioSliderRow {
+                                    sliderName: "audioHorizontalZoom"
+                                    text: qsTranslate("HikariSub.Audio", "Horizontal")
+                                    from: 100
+                                    to: 0
+                                    value: root.audio.horizontalZoom
+                                    readout: audioPanel.magnificationText
+                                    onMoved: v => root.audio.setHorizontalZoom(v)
+                                }
+                                AudioSliderRow {
+                                    sliderName: "audioVerticalZoom"
+                                    text: qsTranslate("HikariSub.Audio", "Vertical")
+                                    from: 1
+                                    to: 100
+                                    value: root.audio.verticalZoom
+                                    readout: root.audio.verticalZoom
+                                    onMoved: v => root.audio.setVerticalZoom(v)
+                                }
+                                // K1: the set's link icon (legacy VerticalLink's
+                                // button_link bitmap, AudioBox.cpp:123).
+                                ShellMenuItem {
+                                    id: audioLink
+                                    objectName: "audioLink"
+                                    iconRole: "link"
+                                    text: qsTranslate("HikariSub.Audio", "Link the volume and stretch sliders")
+                                    checkable: true
+                                    checked: root.audio.linked
+                                    onToggled: {
+                                        root.audio.setLinked(checked)
+                                        checked = Qt.binding(() => root.audio.linked)
+                                    }
+                                }
+                                MenuSeparator {}
+                                ShellMenuItem {
+                                    objectName: "audioZoomReset"
+                                    iconRole: "zoom-reset"
+                                    text: qsTranslate("HikariSub.Audio", "Reset zoom")
+                                    onTriggered: root.audio.resetZoom()
+                                }
+                                Label {
+                                    leftPadding: 12
+                                    rightPadding: 12
+                                    topPadding: 2
+                                    bottomPadding: 4
+                                    color: Theme.muted
+                                    font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
+                                    text: qsTranslate("HikariSub.Audio", "Shift+wheel and Ctrl+wheel on the waveform zoom too")
+                                }
+                            }
+                        }
+                        // AV1 (#238): the output device menu; AU1: with the
+                        // volume above it, the level shown by the icon, and
+                        // the wheel changing the volume.
+                        AudioButton {
+                            id: audioOutputButton
+                            objectName: "audioOutputButton"
+                            iconRole: root.audio.volume > 66 ? "volume" : root.audio.volume > 20 ? "volume-low" : "volume-quiet"
+                            text: qsTranslate("HikariSub.Audio", "Volume and output device")
+                            //: The audio panel's speaker button; %1 is the volume (1 to 100), %2 the device audio plays through now
+                            tip: root.app.audioOutputName.length
+                                 ? qsTranslate("HikariSub.Audio", "Volume: %1\nOutput device: %2").arg(root.audio.volume).arg(root.app.audioOutputName)
+                                 : qsTranslate("HikariSub.Audio", "Volume: %1").arg(root.audio.volume)
+                            down: audioOutputMenu.visible
+                            onRun: audioOutputMenu.popup(audioOutputButton, 0, audioOutputButton.height)
+                            // 5 a notch of 120. A touchpad or high-resolution
+                            // wheel sends parts of a notch (or only pixels, 15
+                            // a notch): they add up until a whole notch, and a
+                            // turn the other way drops what was left over.
+                            WheelHandler {
+                                id: speakerWheel
+                                property real rest: 0
+                                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                onWheel: event => {
+                                    let delta = event.angleDelta.y !== 0 ? event.angleDelta.y : -event.angleDelta.x
+                                    if (delta === 0)
+                                        delta = 8 * (event.pixelDelta.y !== 0 ? event.pixelDelta.y : -event.pixelDelta.x)
+                                    if (delta === 0)
+                                        return
+                                    if (delta * speakerWheel.rest < 0)
+                                        speakerWheel.rest = 0
+                                    speakerWheel.rest += delta
+                                    const notches = Math.trunc(speakerWheel.rest / 120)
+                                    if (notches === 0)
+                                        return
+                                    speakerWheel.rest -= 120 * notches
+                                    root.audio.setVolume(Math.max(1, Math.min(100, root.audio.volume + 5 * notches)))
+                                }
+                            }
+                            AudioOutputMenu {
+                                id: audioOutputMenu
+                                objectName: "audioOutputMenu"
+                                app: root.app
+                                audio: root.audio
+                                onSettingsRequested: settingsDialog.openDialog(4) // the Audio page
+                            }
                         }
                     }
                 }

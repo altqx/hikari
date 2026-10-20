@@ -482,6 +482,52 @@ private slots:
         stop();
     }
 
+    // An arrangement that never had the Original text panel (an older saved
+    // layout; the default one keeps its place) puts it above the Line
+    // editor, in the Line editor's own window when that floats.
+    void theOriginalJoinsAFloatingLineEditor()
+    {
+        start();
+        openFile("tl.ass", true);
+        QTRY_VERIFY(isOpen("originalDock"));
+        QVERIFY(QMetaObject::invokeMethod(dock("originalDock"), "close"));
+        QTRY_VERIFY(!isOpen("originalDock"));
+        QVERIFY(dock("editorDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(isFloating("editorDock"));
+        QQuickWindow *floating = item("editorPanel")->window();
+        QVERIFY(floating && floating != window());
+        QVERIFY(QMetaObject::invokeMethod(window(), "addOriginal"));
+        QTRY_VERIFY(isOpen("originalDock"));
+        QTRY_COMPARE(item("originalPanel")->window(), floating);
+        QVERIFY(item("originalPanel")->window() != window());
+        QVERIFY(item("originalPanel")->mapToScene({0, 0}).y() < item("editorPanel")->mapToScene({0, 0}).y());
+        stop();
+    }
+
+    // Showing a tab in Translation mode keeps the Original text panel its
+    // arrangement restores, floating here: it is not closed for the mode of
+    // the tab left and opened again.
+    void anotherTabKeepsItsOriginalPanel()
+    {
+        start();
+        openFile("a.ass", false);
+        application->addPage();
+        openFile("tl.ass", true);
+        QTRY_VERIFY(isOpen("originalDock"));
+        QVERIFY(dock("originalDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(isFloating("originalDock"));
+        application->selectTab(0);
+        QTRY_VERIFY(!isOpen("originalDock"));
+        QSignalSpy opened(dock("originalDock"), SIGNAL(isOpenChanged(bool)));
+        application->selectTab(1);
+        QTRY_VERIFY(isOpen("originalDock"));
+        QTest::qWait(200);
+        for (const auto &change : std::as_const(opened))
+            QVERIFY2(change.at(0).toBool(), "closed on the way in");
+        QVERIFY(isFloating("originalDock"));
+        stop();
+    }
+
     // A narrow Original text panel folds its header's buttons into one
     // "More" button whose menu holds them in the same order.
     void aNarrowHeaderFoldsTheButtons()

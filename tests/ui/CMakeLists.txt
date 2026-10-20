@@ -279,6 +279,14 @@ hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_test
 hikari_add_qttest(hikari_ui_update_apply_tests SOURCES update_apply_tests.cpp LIBRARIES hikari_composition)
 # For the compiler and moc alike: moc gets no _WIN32 under MSVC (update_apply_tests.cpp).
 target_compile_definitions(hikari_ui_update_apply_tests PRIVATE HIKARI_UPDATE_APPLY_WINDOWS_TESTS=$<BOOL:${WIN32}>)
+# The stand-in setup that holds the setup mutex: no Qt, so its start does not
+# depend on the runner's load (PowerShell's took over launch's 10 s once).
+if(WIN32)
+    add_executable(hikari_setup_mutex_helper setup_mutex_helper.cpp)
+    target_compile_definitions(hikari_ui_update_apply_tests PRIVATE
+        HIKARI_SETUP_MUTEX_HELPER="$<TARGET_FILE:hikari_setup_mutex_helper>")
+    add_dependencies(hikari_ui_update_apply_tests hikari_setup_mutex_helper)
+endif()
 # F3: the spell checker's Qt adapters and the Grid's marks; the shell tests use the fake backend.
 hikari_add_qttest(hikari_ui_spelling_tests SOURCES spelling_ui_tests.cpp LIBRARIES hikari_ui)
 target_include_directories(hikari_ui_spelling_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
