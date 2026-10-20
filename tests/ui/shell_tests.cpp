@@ -15543,7 +15543,11 @@ private slots:
         shown = window;
 
         QTRY_VERIFY(visualItem("visualToolRail")->isVisible());
-        QTRY_COMPARE_WITH_TIMEOUT(cursorAt(tools.videoRect().center()), Qt::BlankCursor, 2000);
+        // The panel settles after the window comes back (the bar lays its
+        // families out again once shown); a move to the same point is
+        // dropped as no move, so each try moves a pixel.
+        int nudge = 0;
+        QTRY_COMPARE_WITH_TIMEOUT(cursorAt(tools.videoRect().center() + QPointF(++nudge % 2, 0)), Qt::BlankCursor, 2000);
         // Away from the picture: a move to the same point in the next test's
         // window would be dropped as no move.
         QTest::mouseMove(window, QPoint(window->width() - 2, window->height() - 2));
