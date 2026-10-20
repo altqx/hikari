@@ -33,6 +33,7 @@ MacroDialogueLine macroLineOf(const core::LineRecord &l)
 {
     MacroDialogueLine d;
     d.id = l.id.value;
+    d.generatedFrom = l.generatedFrom.value;
     d.comment = l.comment;
     d.layer = static_cast<int>(l.layer.value);
     d.startMs = l.start.value.microseconds() / 1000;
@@ -68,6 +69,7 @@ void assign(core::LineRecord &l, const MacroDialogueLine &d)
     l.marginRight = intOf(d.marginR);
     l.marginVertical = intOf(d.marginV);
     l.effect = wide(d.effect);
+    l.generatedFrom = core::LineId{d.generatedFrom};
     if (d.translation.empty()) {
         l.text = wide(d.text);
         l.translation.clear();

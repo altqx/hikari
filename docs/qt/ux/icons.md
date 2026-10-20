@@ -36,6 +36,8 @@ The roles the polish added: pick-lines and clear (the batch picker); move-to-top
 
 IC1 ([#226](https://github.com/altqx/hikari/issues/226)) gave every main-menu and context-menu item that runs a command an icon. [menu-icon-gaps.md](menu-icon-gaps.md) lists the items, their roles and the items left without one: check items, entries named by their data, and items other cards remove. It drew 58 roles for them, from autosave to fps-from-video, plus ten for the Settings pages' primary options that PF1 ([#225](https://github.com/altqx/hikari/issues/225)) places (language, ui-font, renderer, video-seek, audio-device, audio-delay, theme, accent-colour, ui-colours, restore-default; `pending` in the manifest until then). LE5's tag buttons' context menu, merged after, took move-left and move-right: move-up's arrow turned, unmirrored like tab-move-left, since the items name the direction they read. User approved move-left and move-right on 2026-10-19 (contact sheets le5-moves-light/dark-100.png, beside move-up, move-down and the tab moves). `hikari_ui_shell_tests` everyMenuItemHasAnIcon fails on a menu item or submenu without an `iconRole` that the gap list does not exempt. Its contact sheets are `ic1-<appearance>-<percent>.png` (the icon test's sheets with `HIKARI_ICON_SHEET_ROLES` and `HIKARI_ICON_SHEET_PREFIX=ic1`).
 
+KE1 ([#283](https://github.com/altqx/hikari/issues/283)) drew render-cost for "Show / hide render cost" in the Video menu and the video's context menu: a stopwatch whose accent hand marks the time the frame's subtitles took to draw.
+
 ## Geometry
 
 - **Grid.** A 16 × 16 `viewBox` (`0 0 16 16`). Every coordinate, length and radius is a multiple of 0.25 unit.
