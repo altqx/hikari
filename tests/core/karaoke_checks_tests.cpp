@@ -131,6 +131,10 @@ TEST(KaraokeChecks, SyllablesAddUpInCentiseconds)
     // A syllable that starts inside the Line and ends after it is outside it.
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k80}a{\\k30}b")),
               (std::vector<Found>{{0, Kind::TotalNotDuration, 1100, 1000, {}}, {0, Kind::OutsideLine, 0, 0, {2}}}));
+    // A syllable that runs backward is outside the Line, even when its ends
+    // stay inside and the total still matches.
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k50}a{\\k-20}b{\\k70}c")),
+              (std::vector<Found>{{0, Kind::OutsideLine, 0, 0, {2}}}));
 }
 
 TEST(KaraokeChecks, SignedAndOversizedValuesRead)
