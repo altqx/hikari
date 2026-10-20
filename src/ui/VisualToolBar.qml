@@ -102,6 +102,17 @@ Control {
     function batchFamily(f) {
         return f > 0 && (tools.families[f]?.available ?? false)
     }
+    // Every family's layout without what does not size it (checked,
+    // enabled, the chosen entry, the values' numbers): the unseen copies are
+    // made again only when a family's groups change, not on each toggle.
+    readonly property string layoutShape: JSON.stringify(tools.familyLayouts.map(l => l.options === undefined ? {} : {
+        options: l.options.map(o => ({ name: o.name, kind: o.kind, iconRole: o.iconRole, tooltip: o.tooltip,
+                                       group: o.group, choices: o.choices, listEnds: o.listEnds,
+                                       checked: false, enabled: false, index: 0 })),
+        values: l.values.map(v => ({ name: v.name, label: v.label, text: "", editable: v.editable,
+                                     group: v.group, unit: v.unit, step: v.step }))
+    }))
+    readonly property var measuredLayouts: JSON.parse(layoutShape)
     // The tallest family's groups at the width each would have.
     readonly property real reservedHeight: {
         let h = 0
@@ -256,6 +267,7 @@ Control {
     // Every family's groups, unseen, at the width the bar gives each (less
     // the picker's slot for a batch tool): reservedHeight is the tallest.
     Item {
+        objectName: "visualToolMeasure"
         x: bar.leftPadding
         width: bar.availableWidth
         height: 0
@@ -265,7 +277,7 @@ Control {
         Accessible.ignored: true
         Repeater {
             id: measures
-            model: bar.tools.familyLayouts
+            model: bar.measuredLayouts
             delegate: Flow {
                 required property var modelData
                 required property int index
