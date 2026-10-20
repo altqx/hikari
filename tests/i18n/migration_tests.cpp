@@ -549,9 +549,11 @@ TEST(CheckedIn, ConversionReproducesTheCatalogs)
                 ASSERT_NE(now, nullptr) << language.toStdString() << " " << m.source.toStdString();
                 EXPECT_EQ(now->translations, m.translations) << m.source.toStdString();
                 // A key the sources dropped: lupdate marks it vanished if it
-                // was finished, obsolete if not.
+                // was finished, obsolete if not (DG1 dropped the update
+                // notice's placeholder, unfinished).
+                const bool dropped = m.source == QLatin1String("You have version %1; version %2 is available");
                 EXPECT_TRUE(now->state == m.state || now->state == TsState::Vanished ||
-                            (m.state == TsState::Unfinished && now->state == TsState::Obsolete))
+                            (dropped && m.state == TsState::Unfinished && now->state == TsState::Obsolete))
                     << m.source.toStdString();
             }
     }

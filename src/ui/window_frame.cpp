@@ -157,6 +157,13 @@ bool isWayland()
     return QGuiApplication::platformName().startsWith(QLatin1String("wayland"));
 }
 
+// The windows MainWindowFrame::apply is showing again (WindowFrame::remaking).
+QList<const QWindow *> &remade()
+{
+    static QList<const QWindow *> list;
+    return list;
+}
+
 // The window manager's window menu on X11 (_GTK_SHOW_WINDOW_MENU, which
 // KWin, mutter and xfwm4 answer), sent through the xcb connection Qt's xcb
 // platform already holds. Its functions are looked up in the process
@@ -301,6 +308,11 @@ int WindowFrame::resizeBand()
 bool WindowFrame::usesSystemTitleBar(const QString &setting) const
 {
     return windowframe::usesSystemTitleBar(setting, windowframe::currentDesktop());
+}
+
+bool WindowFrame::remaking(QWindow *window)
+{
+    return window && remade().contains(window);
 }
 
 void WindowFrame::notifyDesktopChanged()
@@ -502,21 +514,27 @@ void MainWindowFrame::apply()
         const Qt::WindowFlags buttons = !m_dialog ? Qt::WindowMinMaxButtonsHint
                                         : m_resizable ? Qt::WindowMaximizeButtonHint
                                                       : Qt::WindowFlags();
-        const Qt::WindowFlags custom = Qt::FramelessWindowHint | Qt::WindowTitleHint | Qt::WindowSystemMenuHint
-                                       | buttons | Qt::WindowCloseButtonHint;
+        // The window system's frame too: a dialog's buttons whichever
+        // frame it first opens with.
+        const Qt::WindowFlags hints = Qt::WindowTitleHint | Qt::WindowSystemMenuHint | buttons | Qt::WindowCloseButtonHint;
         const Qt::WindowFlags dropped = m_dialog ? Qt::WindowMinMaxButtonsHint & ~buttons : Qt::WindowFlags();
-        const Qt::WindowFlags flags = m_custom ? (m_window->flags() & ~dropped) | custom
-                                               : m_window->flags() & ~Qt::FramelessWindowHint;
+        const Qt::WindowFlags flags = m_custom   ? (m_window->flags() & ~dropped) | Qt::FramelessWindowHint | hints
+                                      : m_dialog ? (m_window->flags() & ~dropped & ~Qt::FramelessWindowHint) | hints
+                                                 : m_window->flags() & ~Qt::FramelessWindowHint;
         if (flags != m_window->flags()) {
             // A Wayland toplevel takes its decoration when it is made: the
             // window is shown again, in the state it had.
             const QWindow::Visibility shown = m_window->visibility();
             const bool remake = isWayland() && m_window->isVisible();
-            if (remake)
+            if (remake) {
+                remade().append(m_window);
                 m_window->hide();
+            }
             m_window->setFlags(flags);
-            if (remake)
+            if (remake) {
                 m_window->setVisibility(shown);
+                remade().removeOne(m_window);
+            }
         }
     }
     if (m_native)

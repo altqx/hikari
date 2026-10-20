@@ -71,6 +71,10 @@ class DialogPlacement : public QObject {
     Q_PROPERTY(QString dialogId READ dialogId WRITE setDialogId NOTIFY dialogIdChanged FINAL)
     Q_PROPERTY(hikari::ui::SettingsStore *settings READ settings WRITE setSettings NOTIFY settingsChanged FINAL)
     Q_PROPERTY(bool resizable READ resizable WRITE setResizable NOTIFY resizableChanged FINAL)
+    // The most of the screen the dialog's content can take where it opens
+    // (place()): its free area less the margins and the frame. The
+    // dialog's natural size is its smallest only up to this.
+    Q_PROPERTY(QSize room READ room NOTIFY roomChanged FINAL)
 public:
     explicit DialogPlacement(QObject *parent = nullptr);
 
@@ -82,14 +86,17 @@ public:
     void setSettings(SettingsStore *settings);
     bool resizable() const { return m_resizable; }
     void setResizable(bool resizable);
+    QSize room() const { return m_room; }
 
     // The window a dialog opened now opens from: the one with the keyboard,
     // else the dialog's transient parent.
     Q_INVOKABLE QWindow *opener() const;
     // Sets the dialog's geometry for an open from `opener` (nullptr: the
-    // screen); call it before the dialog is shown.
-    Q_INVOKABLE void place(QWindow *opener);
-    // Keeps where the dialog is and how big (as it is hidden).
+    // screen) at its content's `natural` size; call it before the dialog
+    // is shown.
+    Q_INVOKABLE void place(QWindow *opener, QSize natural);
+    // Keeps where the dialog is and how big (as it is hidden), unless it
+    // was maximised or full screen.
     Q_INVOKABLE void remember();
     // Whether `item` is in a popup (a menu, a popover): the keyboard goes
     // back to the window's own focus item when the popup closes, not to it.
@@ -107,14 +114,16 @@ signals:
     void dialogIdChanged();
     void settingsChanged();
     void resizableChanged();
+    void roomChanged();
 
 private:
-    QSize openSize() const;
-
     QPointer<QQuickWindow> m_window;
     QString m_dialogId;
     QPointer<SettingsStore> m_settings;
     bool m_resizable = false;
+    QSize m_room{16777215, 16777215}; // (QWINDOWSIZE_MAX)
+    // How the dialog was last shown: it is hidden by the time remember() runs.
+    QWindow::Visibility m_shown = QWindow::Windowed;
 };
 
 } // namespace hikari::ui

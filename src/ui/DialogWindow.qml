@@ -41,7 +41,7 @@ Window {
     property alias leadingActions: leading.data
     property alias buttons: closing.contentData
     // The content's natural size, the window's for a fixed-size dialog and
-    // its smallest for a resizable one.
+    // its smallest for a resizable one, up to the screen's room.
     readonly property int naturalWidth: Math.ceil(column.implicitWidth)
     readonly property int naturalHeight: Math.ceil(column.implicitHeight)
     // Where the keyboard goes back to.
@@ -56,10 +56,10 @@ Window {
     flags: Qt.Dialog
     color: Theme.panel
     modality: modal ? Qt.WindowModal : Qt.NonModal
-    minimumWidth: naturalWidth
-    minimumHeight: naturalHeight
-    maximumWidth: resizable ? 16777215 : naturalWidth
-    maximumHeight: resizable ? 16777215 : naturalHeight
+    minimumWidth: Math.min(naturalWidth, placement.room.width)
+    minimumHeight: Math.min(naturalHeight, placement.room.height)
+    maximumWidth: resizable ? 16777215 : minimumWidth
+    maximumHeight: resizable ? 16777215 : minimumHeight
 
     // Shows the dialog (or raises it while shown), opened from the window
     // with the keyboard.
@@ -77,9 +77,7 @@ Window {
         if (opener)
             transientParent = opener
         placement.settle(dialog.contentItem)
-        width = naturalWidth
-        height = naturalHeight
-        placement.place(opener)
+        placement.place(opener, Qt.size(naturalWidth, naturalHeight))
         // (Not show(): a dialog may name a function of its own so.)
         visible = true
         raise()
@@ -142,7 +140,8 @@ Window {
         }
     }
     onVisibleChanged: {
-        if (visible)
+        // (Hidden while its frame is made again is no closing.)
+        if (visible || WindowFrame.remaking(dialog))
             return
         placement.remember()
         startFocus = null
@@ -162,7 +161,8 @@ Window {
         target: dialog.transientParent
         ignoreUnknownSignals: true
         function onVisibleChanged() {
-            if (dialog.visible && dialog.transientParent && !dialog.transientParent.visible)
+            const opener = dialog.transientParent
+            if (dialog.visible && opener && !opener.visible && !WindowFrame.remaking(opener))
                 dialog.close()
         }
     }

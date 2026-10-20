@@ -99,6 +99,9 @@ public:
     // Whether the main window keeps the system's title bar for the
     // setting's value ("auto", "system", "custom").
     Q_INVOKABLE bool usesSystemTitleBar(const QString &setting) const;
+    // Whether `window` is hidden only while its frame is made again (on
+    // Wayland, MainWindowFrame::apply): no closing.
+    Q_INVOKABLE static bool remaking(QWindow *window);
 
     // Tests: the desktop changed (windowframe::overrideDesktop).
     static void notifyDesktopChanged();

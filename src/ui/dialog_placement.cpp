@@ -122,7 +122,16 @@ void DialogPlacement::setWindow(QQuickWindow *window)
 {
     if (m_window == window)
         return;
+    if (m_window)
+        disconnect(m_window, nullptr, this, nullptr);
     m_window = window;
+    m_shown = QWindow::Windowed;
+    if (m_window) {
+        connect(m_window, &QWindow::visibilityChanged, this, [this](QWindow::Visibility visibility) {
+            if (visibility != QWindow::Hidden)
+                m_shown = visibility;
+        });
+    }
     emit windowChanged();
 }
 
@@ -163,39 +172,66 @@ QWindow *DialogPlacement::opener() const
     return m_window ? m_window->transientParent() : nullptr;
 }
 
-void DialogPlacement::place(QWindow *opener)
+void DialogPlacement::place(QWindow *opener, QSize natural)
 {
     if (!m_window)
         return;
     namespace dp = dialogplacement;
-    const QSize size = m_window->size();
+    // Opened as it was before any maximising: the place kept is the normal one.
+    if (m_window->windowStates() & (Qt::WindowMaximized | Qt::WindowFullScreen))
+        m_window->setWindowStates(Qt::WindowNoState);
     std::optional<QRect> saved;
     if (m_settings && !m_dialogId.isEmpty())
         saved = dp::find(m_settings->list(dp::kSetting), m_dialogId);
+    QScreen *screen = opener && opener->isVisible() ? opener->screen() : nullptr;
+    if (!screen)
+        screen = m_window->transientParent() ? m_window->transientParent()->screen() : QGuiApplication::primaryScreen();
+    // The room, before the geometry: the window's minimum follows it, and
+    // a minimum the screen can't hold would undo the fit.
+    const auto fit = [this](QScreen *on, const QMargins &margins) {
+        if (!on)
+            return;
+        const QMargins room(dp::kMargin, dp::kMargin, dp::kMargin, dp::kMargin);
+        const QSize size = on->availableGeometry().size().shrunkBy(room).shrunkBy(margins).expandedTo(QSize(1, 1));
+        if (size != m_room) {
+            m_room = size;
+            emit roomChanged();
+        }
+    };
     if (dp::isWayland()) {
         // The compositor places the window: only a resizable dialog's size.
-        if (saved && m_resizable)
-            m_window->resize(saved->size().expandedTo(m_window->minimumSize()));
+        fit(screen, {});
+        const QSize smallest = natural.boundedTo(m_room);
+        m_window->resize(saved && m_resizable ? saved->size().expandedTo(smallest) : smallest);
         return;
     }
-    const QMargins margins = m_window->frameMargins();
+    // The window system's frame is known once the window is made, and on
+    // X11 only once it is mapped: the opener's until then, which has the
+    // same choice of title bar.
+    m_window->create();
+    QMargins margins = m_window->frameMargins();
+    if (margins.isNull() && !m_window->flags().testFlag(Qt::FramelessWindowHint) && opener
+        && !opener->flags().testFlag(Qt::FramelessWindowHint))
+        margins = opener->frameMargins();
     QList<QRect> screens;
-    for (QScreen *screen : QGuiApplication::screens())
-        screens << screen->availableGeometry();
+    for (QScreen *each : QGuiApplication::screens())
+        screens << each->availableGeometry();
     if (saved) {
-        if (const auto rect = dp::restored(*saved, size, m_window->minimumSize(), m_resizable, screens, margins)) {
+        if (const auto rect = dp::restored(*saved, natural, natural, m_resizable, screens, margins)) {
+            QScreen *on = QGuiApplication::screenAt(rect->center());
+            fit(on ? on : screen, margins);
             m_window->setGeometry(*rect);
             return;
         }
     }
-    QScreen *screen = opener && opener->isVisible() ? opener->screen() : nullptr;
-    if (!screen)
-        screen = m_window->transientParent() ? m_window->transientParent()->screen() : QGuiApplication::primaryScreen();
-    if (!screen)
+    if (!screen) {
+        m_window->resize(natural);
         return;
+    }
     const QRect available = screen->availableGeometry();
     const QRect around = opener && opener->isVisible() ? opener->frameGeometry() : available;
-    m_window->setGeometry(dp::centred(around, size, available, margins));
+    fit(screen, margins);
+    m_window->setGeometry(dp::centred(around, natural, available, margins));
 }
 
 void DialogPlacement::remember()
@@ -203,7 +239,7 @@ void DialogPlacement::remember()
     if (!m_window || !m_settings || m_dialogId.isEmpty())
         return;
     // A maximised or full-screen dialog keeps the place it had before.
-    if (m_window->visibility() == QWindow::Maximized || m_window->visibility() == QWindow::FullScreen)
+    if (m_shown == QWindow::Maximized || m_shown == QWindow::FullScreen)
         return;
     namespace dp = dialogplacement;
     const QStringList rows = m_settings->list(dp::kSetting);

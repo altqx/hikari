@@ -7,7 +7,8 @@
 // Esc closes (rejected), Enter presses the focused button or the default
 // one, the keyboard goes back to the opener's control, a shown dialog is
 // raised again rather than opened twice, modality is per dialog, and a
-// dialog closes with the window it opened from.
+// dialog closes with the window it opened from. A dialog bigger than the
+// screen fits it, and a maximised one keeps its normal place.
 
 #include "dialog_placement.h"
 #include "settings_store.h"
@@ -54,6 +55,7 @@ Window {
         defaultButton: ok
         TextField { objectName: "field"; Layout.preferredWidth: 280 }
         TextArea { objectName: "notes"; Layout.preferredWidth: 280; Layout.preferredHeight: 60 }
+        Item { objectName: "spacer"; implicitHeight: 0 }
         buttons: [
             PrimaryButton { id: ok; objectName: "ok"; text: "OK"; DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole; onClicked: dialog.accept() },
             Button { objectName: "cancel"; text: "Cancel"; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: dialog.reject() }
@@ -141,6 +143,19 @@ private slots:
         QVERIFY(!window.flags().testFlag(Qt::WindowMinimizeButtonHint));
         frame.setCustom(false);
         QVERIFY(!window.flags().testFlag(Qt::FramelessWindowHint));
+        // With the window system's frame from the start, the same buttons.
+        QQuickWindow system;
+        system.setFlags(Qt::Dialog);
+        DialogFrame systemFrame;
+        systemFrame.setResizable(true);
+        systemFrame.setWindow(&system);
+        QVERIFY(!system.flags().testFlag(Qt::FramelessWindowHint));
+        QVERIFY(system.flags().testFlag(Qt::WindowMaximizeButtonHint));
+        QVERIFY(!system.flags().testFlag(Qt::WindowMinimizeButtonHint));
+        QVERIFY(system.flags().testFlag(Qt::WindowCloseButtonHint));
+        systemFrame.setResizable(false);
+        QVERIFY(!system.flags().testFlag(Qt::WindowMaximizeButtonHint));
+        QVERIFY(!ui::WindowFrame::remaking(&system));
         // The main window's frame keeps all three.
         QQuickWindow main;
         ui::MainWindowFrame mainFrame;
@@ -296,6 +311,47 @@ private slots:
         QVERIFY(open(s));
         QCOMPARE(s.dialog->size(), natural + QSize(10, 10));
         QVERIFY(s.dialog->position() != at + QPoint(50, 50));
+    }
+
+    void aDialogBiggerThanTheScreenFitsIt()
+    {
+        Shown s = show();
+        QVERIFY(QTest::qWaitForWindowExposed(s.opener.get()));
+        s.item("spacer")->setProperty("implicitHeight", 5000);
+        QVERIFY(open(s));
+        const int natural = s.dialog->property("naturalHeight").toInt();
+        QVERIFY(natural > 5000);
+        // The window with its frame (none, or the platform's) fills the room.
+        const QRect area = s.dialog->screen()->availableGeometry().marginsRemoved(QMargins(20, 20, 20, 20));
+        QCOMPARE(s.dialog->frameGeometry().height(), area.height());
+        QVERIFY(area.contains(s.dialog->frameGeometry()));
+        // Its smallest and (fixed) biggest are the screen's room, not the content's.
+        QCOMPARE(s.dialog->minimumHeight(), s.dialog->height());
+        QCOMPARE(s.dialog->maximumHeight(), s.dialog->height());
+    }
+
+    void aMaximisedDialogKeepsItsNormalPlace()
+    {
+        Shown s = show();
+        QVERIFY(QTest::qWaitForWindowExposed(s.opener.get()));
+        s.dialog->setProperty("resizable", true);
+        QVERIFY(open(s));
+        const QRect normal = s.dialog->geometry();
+        QMetaObject::invokeMethod(s.dialog, "close");
+        QTRY_VERIFY(!s.dialog->isVisible());
+        QCOMPARE(dp::find(store->list(dp::kSetting), QStringLiteral("test")), normal);
+        QVERIFY(open(s));
+        s.dialog->showMaximized();
+        QTRY_COMPARE(s.dialog->visibility(), QWindow::Maximized);
+        // The window system's own report of it, before closing.
+        QTest::qWait(50);
+        QMetaObject::invokeMethod(s.dialog, "close");
+        QTRY_VERIFY(!s.dialog->isVisible());
+        // The place before maximising is kept, and it opens there, not maximised.
+        QCOMPARE(dp::find(store->list(dp::kSetting), QStringLiteral("test")), normal);
+        QVERIFY(open(s));
+        QCOMPARE(s.dialog->visibility(), QWindow::Windowed);
+        QCOMPARE(s.dialog->geometry(), normal);
     }
 
     void escapeClosesAndTheKeyboardGoesBack()
