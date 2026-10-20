@@ -16631,6 +16631,32 @@ private slots:
         QVERIFY2(args && args->size() == 6, qPrintable(thirdText()));
         QCOMPARE(args->at(4), QStringLiteral("100"));
         QTRY_COMPARE(field("t1")->property("text").toString(), QStringLiteral("100"));
+        // A step the session refuses (Codex on #293: a blocked draft, its
+        // End before its Start), typed or scrubbed: nothing written, and the
+        // fields and the handles back at the text's values.
+        {
+            steps = session->historySize();
+            const QString before = thirdText();
+            const QString x1 = field("x1")->property("text").toString();
+            QVERIFY(session->editDraft(third, application::DraftChange{.end = core::DocumentTime(0)}));
+            type("t1", QStringLiteral("300"));
+            QTest::qWait(50);
+            QCOMPARE(session->historySize(), steps);
+            QCOMPARE(thirdText(), before);
+            QTRY_COMPARE(field("t1")->property("text").toString(), QStringLiteral("100"));
+            const QPoint x0 = centreOf(visualItem("visualValueScrub_x1"));
+            QTest::mouseMove(window, x0);
+            QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, x0);
+            QTest::mouseMove(window, x0 + QPoint(10, 0));
+            QTest::mouseMove(window, x0 + QPoint(20, 0));
+            QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, x0 + QPoint(20, 0));
+            QTest::qWait(50);
+            QCOMPARE(session->historySize(), steps);
+            QCOMPARE(thirdText(), before);
+            QVERIFY(!tools.gestureActive());
+            QTRY_COMPARE(field("x1")->property("text").toString(), x1);
+            session->discardDraft();
+        }
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool2"), "click"));
         QCOMPARE(tools.activeFamily(), 0);
     }

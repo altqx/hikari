@@ -842,12 +842,20 @@ bool VisualToolsController::setValue(const QString &name, const QString &text)
     auto *t = tool();
     if (!t || !m_railEnabled)
         return false;
+    const auto refusedBefore = std::exchange(m_lastRefusal, std::nullopt);
     const bool done = t->setValue(name.toStdString(), text.toStdU16String(), *this, ValueEdit::Commit);
-    // A scrub's release the tool refuses (a value out of its range) leaves
-    // nothing staged behind: its gesture is dropped, as by Esc.
     const bool scrubbed = std::exchange(m_valueScrub, false);
-    if (!done && scrubbed && m_gesture)
+    if (!done && scrubbed && m_gesture) {
+        // A scrub's release the tool refuses (a value out of its range)
+        // leaves nothing staged behind: its gesture is dropped, as by Esc.
         escape();
+    } else if (!done && m_lastRefusal && !m_gesture && t->family() != Family::Crosshair) {
+        // The session refused the step (a blocked draft): the tool reads
+        // its Lines again, its handles and fields back where the text is.
+        resetTool();
+    }
+    if (!m_lastRefusal)
+        m_lastRefusal = refusedBefore;
     emit changed();
     emit overlayChanged();
     return done;
