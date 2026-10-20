@@ -4746,8 +4746,10 @@ ApplicationWindow {
     FileDialog {
         id: openDialog
         objectName: "subtitlesOpenDialog"
-        // Legacy's second filter, "Videos with embedded subtitles".
+        // Legacy's second filter, "Videos with embedded subtitles". KA6:
+        // word-timed lyrics, imported as karaoke Lines, after the subtitles.
         nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
+                      qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.ttml)"),
                       qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)"),
                       qsTranslate("HikariSub.Documents", "All files (*)")]
         onAccepted: root.openChosenSubtitles(root.app.localPath(selectedFile))

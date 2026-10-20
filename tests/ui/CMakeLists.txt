@@ -175,6 +175,8 @@ hikari_add_qttest(hikari_ui_close_review_tests SOURCES close_review_tests.cpp LI
 # K2 / W1: the popups take the theme's palette from the first engine's start.
 hikari_add_qttest(hikari_ui_theme_startup_tests SOURCES theme_startup_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_open_reload_tests PRIVATE
+    HIKARI_LYRICS_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/lyrics")
 hikari_add_qttest(hikari_ui_recovery_tests SOURCES recovery_tests.cpp LIBRARIES hikari_composition)
 # S2: automation hotkeys with real Lua scripts.
 hikari_add_qttest(hikari_ui_automation_hotkeys_tests SOURCES automation_hotkeys_ui_tests.cpp LIBRARIES hikari_composition)

@@ -500,8 +500,7 @@ Application::PendingFiles Application::stageFiles(const QStringList &files)
         const QString &path = pending.subtitlePaths[i];
         auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
         if (!staged) {
-            m_log->log(QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.")
-                           .arg(QFileInfo(path).fileName()));
+            m_log->log(openProblem(path, staged.error()));
             pending.count = i;
             break;
         }
@@ -548,8 +547,7 @@ QVariantMap Application::openForwarded(const QStringList &paths)
             } else if (auto staged = m_files->stageOpen({QFileInfo(file).absoluteFilePath().toStdString()})) {
                 openInNewTab(std::move(*staged), file);
             } else {
-                m_log->log(QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.")
-                               .arg(QFileInfo(file).fileName()));
+                m_log->log(openProblem(file, staged.error()));
             }
             return openResult(QString());
         case application::OpenKind::Video:

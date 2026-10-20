@@ -93,6 +93,43 @@ private slots:
         QVERIFY(target(a)->isDirty());
     }
 
+    // KA6: a lyrics file opens as an Untitled ASS Document of karaoke
+    // Lines, named and saved beside it as ASS; the lyrics stay untouched.
+    void lyricsOpenAsAnUntitledAssDocument()
+    {
+        app::Application a;
+        QVERIFY(a.openFile(writeFile(dir, "kept.ass", "kept")));
+        const QString lrc = dir.filePath(QStringLiteral("enhanced.lrc"));
+        QFile::remove(lrc);
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_LYRICS_FIXTURES "/enhanced.lrc"), lrc));
+        const auto result = a.reviewOpen(lrc);
+        QVERIFY(result.value(QStringLiteral("ok")).toBool());
+        a.finishClose();
+        QCOMPARE(targetTitle(a), std::string("enhanced.ass"));
+        QCOMPARE(targetText(a), std::string("{\\k20}{\\k70}Twinkle, {\\k70}twinkle, {\\k50}little {\\k90}star"));
+        QCOMPARE(target(a)->document().lines().size(), std::size_t(6));
+        QVERIFY(target(a)->isDirty());
+        QVERIFY(a.targetUntitled());
+        const auto values = a.saveDialogValues();
+        QCOMPARE(values.value(QStringLiteral("file")).toUrl().toLocalFile(), dir.filePath(QStringLiteral("enhanced")));
+        QCOMPARE(values.value(QStringLiteral("extension")).toString(), QStringLiteral("ass"));
+    }
+
+    void malformedLyricsNameTheLineAndChangeNothing()
+    {
+        app::Application a;
+        QVERIFY(a.openFile(writeFile(dir, "kept.ass", "kept")));
+        edit(a, u8"unsaved");
+        const auto result = a.reviewOpen(QStringLiteral(HIKARI_LYRICS_FIXTURES "/malformed.lrc"));
+        QVERIFY(!result.value(QStringLiteral("ok")).toBool());
+        QCOMPARE(result.value(QStringLiteral("problem")).toString(),
+                 QStringLiteral("Could not import malformed.lrc: line 3: the word at <00:04.20> starts before the word "
+                                "before it. Nothing was imported."));
+        QCOMPARE(targetTitle(a), std::string("kept.ass"));
+        QCOMPARE(targetText(a), std::string("unsaved"));
+        QCOMPARE(a.workspace().documents().size(), std::size_t(1));
+    }
+
     void aCleanTargetIsReplacedAtOnce()
     {
         app::Application a;

@@ -45,27 +45,36 @@ DocumentFiles::Entry *DocumentFiles::find(DocumentId document)
     return it == m_documents.end() ? nullptr : &it->second;
 }
 
-std::expected<StagedOpen, OpenError> DocumentFiles::stage(const DestinationKey &destination)
+std::expected<StagedOpen, StageFailure> DocumentFiles::stage(const DestinationKey &destination)
 {
     auto bytes = m_reader.read(destination);
     if (!bytes)
-        return std::unexpected(openError(bytes.error()));
-    auto load = core::loadSubtitle(*bytes, extensionOf(destination.value));
+        return std::unexpected(StageFailure{openError(bytes.error()), std::nullopt});
+    const std::u8string extension = extensionOf(destination.value);
+    if (core::isLyricsExtension(extension)) {
+        auto imported = core::importLyrics(*bytes, extension);
+        if (!imported)
+            return std::unexpected(StageFailure{OpenError::MalformedLyrics, imported.error()});
+        StagedOpen staged{destination, std::move(*imported), std::nullopt, 0, 0};
+        staged.imported = true;
+        return staged;
+    }
+    auto load = core::loadSubtitle(*bytes, extension);
     if (!load)
-        return std::unexpected(OpenError::InvalidFormat);
+        return std::unexpected(StageFailure{OpenError::InvalidFormat, std::nullopt});
     return StagedOpen{destination, std::move(*load), std::nullopt, 0, 0};
 }
 
-std::expected<StagedOpen, OpenError> DocumentFiles::stageOpen(const DestinationKey &destination)
+std::expected<StagedOpen, StageFailure> DocumentFiles::stageOpen(const DestinationKey &destination)
 {
     return stage(destination);
 }
 
-std::expected<StagedOpen, OpenError> DocumentFiles::stageReload(DocumentId document)
+std::expected<StagedOpen, StageFailure> DocumentFiles::stageReload(DocumentId document)
 {
     Entry *entry = find(document);
     if (!entry)
-        return std::unexpected(OpenError::UnknownDocument);
+        return std::unexpected(StageFailure{OpenError::UnknownDocument, std::nullopt});
     auto staged = stage(entry->destination);
     if (staged) {
         staged->replaces = document;
@@ -92,6 +101,8 @@ std::expected<DocumentId, OpenError> DocumentFiles::activate(StagedOpen staged)
         entry->lastSave.reset();
         return *staged.replaces;
     }
+    if (staged.imported)
+        return createUnsaved(std::move(staged.load.document));
     const DocumentId id{m_nextDocument++};
     Entry entry;
     entry.session = std::make_unique<EditSession>(std::move(staged.load.document));

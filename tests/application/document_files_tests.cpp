@@ -121,10 +121,40 @@ TEST_F(Files, FailedOpensKeepExistingWork)
 {
     const auto doc = open("/a.ass");
     ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"work"));
-    EXPECT_EQ(service.stageOpen({"/missing.ass"}).error(), OpenError::NotFound);
-    EXPECT_EQ(service.stageOpen({"/denied.ass"}).error(), OpenError::AccessDenied);
+    EXPECT_EQ(service.stageOpen({"/missing.ass"}).error().reason, OpenError::NotFound);
+    EXPECT_EQ(service.stageOpen({"/denied.ass"}).error().reason, OpenError::AccessDenied);
     disk.files["/empty.ass"] = {};
-    EXPECT_EQ(service.stageOpen({"/empty.ass"}).error(), OpenError::InvalidFormat);
+    EXPECT_EQ(service.stageOpen({"/empty.ass"}).error().reason, OpenError::InvalidFormat);
+    EXPECT_EQ(service.session(doc)->draftText(), u8"work");
+}
+
+// KA6: a lyrics file is imported, never associated: saving it asks for a
+// name, so the lyrics are not overwritten with ASS.
+TEST_F(Files, LyricsOpenAsUntitledImports)
+{
+    disk.files["/song.lrc"] = bytesOf("[00:01.00]<00:01.00>Twin<00:01.50>kle<00:02.00>\n");
+    auto staged = service.stageOpen({"/song.lrc"});
+    ASSERT_TRUE(staged);
+    EXPECT_TRUE(staged->imported);
+    const auto doc = service.activate(std::move(*staged));
+    ASSERT_TRUE(doc);
+    EXPECT_TRUE(service.destination(*doc)->value.empty()); // Untitled
+    EXPECT_TRUE(service.session(*doc)->isDirty());
+    ASSERT_EQ(service.session(*doc)->document().lines().size(), 1u);
+    EXPECT_EQ(service.session(*doc)->document().lines()[0]->text, u8"{\\k50}Twin{\\k50}kle");
+    EXPECT_EQ(service.prepareSave(*doc).error(), SaveRefusal::NoDestination);
+    ASSERT_TRUE(service.prepareSave(*doc, DestinationKey{"/song.ass"}));
+}
+
+TEST_F(Files, MalformedLyricsSayWhereAndChangeNothing)
+{
+    const auto doc = open("/a.ass");
+    ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"work"));
+    disk.files["/bad.ttml"] = bytesOf("<tt>\n<body>\n<p>no time</p>\n</body>\n</tt>\n");
+    const auto failed = service.stageOpen({"/bad.ttml"});
+    ASSERT_FALSE(failed);
+    EXPECT_EQ(failed.error().reason, OpenError::MalformedLyrics);
+    EXPECT_EQ(failed.error().lyrics, (core::LyricsProblem{core::LyricsProblem::Kind::MissingTime, 3, u8"no time"}));
     EXPECT_EQ(service.session(doc)->draftText(), u8"work");
 }
 

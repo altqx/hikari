@@ -979,6 +979,9 @@ signals:
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
+    // The log's message for a file that could not be staged (KA6: with the
+    // line at fault in a lyrics file).
+    static QString openProblem(const QString &path, const application::StageFailure &failure);
     // SH2: an open stamps the last-opened time; a save keeps the file's time
     // (a file first saved there, as by Save As, is stamped then).
     void rememberRecent(const std::string &path, bool opened = true);
@@ -1083,9 +1086,10 @@ private:
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;         // Y6: without a settings file
     std::unique_ptr<FontCatalogsController> m_fontCatalogs;   // Y6
     std::unique_ptr<MatroskaController> m_matroska; // Y9
-    // Y9: OnMkvSubs' SubsPath for a loaded track, the Save dialog's name
-    // until the Document has a destination.
-    std::map<std::uint64_t, QString> m_matroskaPaths;
+    // Y9: OnMkvSubs' SubsPath for a loaded track, and KA6: the imported
+    // lyrics' name with ".ass"; the Save dialog's name until the Document
+    // has a destination.
+    std::map<std::uint64_t, QString> m_importPaths;
     bool m_keepVideoOnEnter = false; // replaceTarget(keepMedia) until the tab is entered
     // `newTab`: File > Open's new tab (InsertTab) rather than the editing target.
     void applyMatroska(application::MatroskaLoaded loaded, bool newTab);
