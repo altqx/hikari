@@ -1,0 +1,131 @@
+Running main() from /kache/cc-root/.t3/worktrees/hikari/w6-ws2/out/sdk/vcpkg/buildtrees/gtest/src/v1.18.0-e6987f02b9.clean/googletest/src/gtest_main.cc
+Note: Google Test filter = *InsideEmbeddedData*
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from HikariSection
+[ RUN      ] HikariSection.AValueInsideEmbeddedDataMovesBeforeIt
+/home/altq/.t3/worktrees/hikari/w6-ws2/tests/core/hikari_section_tests.cpp:125: Failure
+Expected equality of these values:
+  setLayout(kHead + "\n" + fonts + "\n[Hikari]\nLayout=old\n")
+    Which is: "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n\n[Fonts]\nfontname: a_0.ttf\n!!!!\n[!!!\n\n[Graphics]\nfilename: b.png\n!!!!\n\n[Hikari]\nLayout=QUJD\n"
+  kHead + layout + fonts + "\n"
+    Which is: "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n\n[Hikari]\nLayout=QUJD\n\n[Fonts]\nfontname: a_0.ttf\n!!!!\n[!!!\n\n[Graphics]\nfilename: b.png\n!!!!\n\n"
+With diff:
+@@ -9,4 +9,7 @@
+ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+ Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one
++
++[Hikari]
++Layout=QUJD
+ 
+ [Fonts]
+@@ -18,5 +21,3 @@
+ filename: b.png
+ !!!!
+-
+-[Hikari]
+-Layout=QUJD\n
++\n
+
+
+/home/altq/.t3/worktrees/hikari/w6-ws2/tests/core/hikari_section_tests.cpp:127: Failure
+Expected equality of these values:
+  setLayout(kHead + "\n" + fonts + "\n[Hikari]\nLayout=old\nOther=1\n")
+    Which is: "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n\n[Fonts]\nfontname: a_0.ttf\n!!!!\n[!!!\n\n[Graphics]\nfilename: b.png\n!!!!\n\n[Hikari]\nLayout=QUJD\nOther=1\n"
+  kHead + layout + fonts + "\n[Hikari]\nOther=1\n"
+    Which is: "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n\n[Hikari]\nLayout=QUJD\n\n[Fonts]\nfontname: a_0.ttf\n!!!!\n[!!!\n\n[Graphics]\nfilename: b.png\n!!!!\n\n[Hikari]\nOther=1\n"
+With diff:
+@@ -9,4 +9,7 @@
+ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+ Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one
++
++[Hikari]
++Layout=QUJD
+ 
+ [Fonts]
+@@ -20,4 +23,3 @@
+ 
+ [Hikari]
+-Layout=QUJD
+ Other=1\n
+
+
+/home/altq/.t3/worktrees/hikari/w6-ws2/tests/core/hikari_section_tests.cpp:131: Failure
+Expected equality of these values:
+  setLayout(kHead + "\n" + fonts + "\n[Hikari]\nLayout=old\n" + events)
+    Which is: "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n\n[Fonts]\nfontname: a_0.ttf\n!!!!\n[!!!\n\n[Graphics]\nfilename: b.png\n!!!!\n\n[Hikari]\nLayout=QUJD\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+  kHead + "\n" + fonts + "\n" + events + "\n[Hikari]\nLayout=QUJD\n"
+    Which is: "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n\n[Fonts]\nfontname: a_0.ttf\n!!!!\n[!!!\n\n[Graphics]\nfilename: b.png\n!!!!\n\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n\n[Hikari]\nLayout=QUJD\n"
+With diff:
+@@ -18,8 +18,9 @@
+ filename: b.png
+ !!!!
++
+ 
+-[Hikari]
+-Layout=QUJD
++[Events]
++Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+ 
+-[Events]
+-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n
++[Hikari]
++Layout=QUJD\n
+
+
+/home/altq/.t3/worktrees/hikari/w6-ws2/tests/core/hikari_section_tests.cpp:134: Failure
+Expected equality of these values:
+  setLayout(kHead + "\n[Hikari]\nLayout=a\n\n" + fonts + "\n[Hikari]\nLayout=b\nOther=1\n")
+    Which is: "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n\n[Hikari]\nLayout=a\n\n[Fonts]\nfontname: a_0.ttf\n!!!!\n[!!!\n\n[Graphics]\nfilename: b.png\n!!!!\n\n[Hikari]\nLayout=QUJD\nOther=1\n"
+  kHead + layout + fonts + "\n[Hikari]\nOther=1\n"
+    Which is: "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n\n[Hikari]\nLayout=QUJD\n\n[Fonts]\nfontname: a_0.ttf\n!!!!\n[!!!\n\n[Graphics]\nfilename: b.png\n!!!!\n\n[Hikari]\nOther=1\n"
+With diff:
+@@ -11,5 +11,5 @@
+ 
+ [Hikari]
+-Layout=a
++Layout=QUJD
+ 
+ [Fonts]
+@@ -23,4 +23,3 @@
+ 
+ [Hikari]
+-Layout=QUJD
+ Other=1\n
+
+
+/home/altq/.t3/worktrees/hikari/w6-ws2/tests/core/hikari_section_tests.cpp:139: Failure
+Expected equality of these values:
+  setLayout(kHead + "\n" + fonts + garbage)
+    Which is: "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n\n[Fonts]\nfontname: a_0.ttf\n!!!!\n[!!!\n\n[Graphics]\nfilename: b.png\n!!!!\n\n[Aegisub Project Garbage]\nLast Style Storage: Default\n\n[Hikari]\nLayout=QUJD\n"
+  kHead + layout + fonts + garbage
+    Which is: "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n\n[Hikari]\nLayout=QUJD\n\n[Fonts]\nfontname: a_0.ttf\n!!!!\n[!!!\n\n[Graphics]\nfilename: b.png\n!!!!\n\n[Aegisub Project Garbage]\nLast Style Storage: Default\n"
+With diff:
+@@ -9,4 +9,7 @@
+ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+ Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one
++
++[Hikari]
++Layout=QUJD
+ 
+ [Fonts]
+@@ -20,6 +23,3 @@
+ 
+ [Aegisub Project Garbage]
+-Last Style Storage: Default
+-
+-[Hikari]
+-Layout=QUJD\n
++Last Style Storage: Default\n
+
+
+[  FAILED  ] HikariSection.AValueInsideEmbeddedDataMovesBeforeIt (0 ms)
+[----------] 1 test from HikariSection (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] HikariSection.AValueInsideEmbeddedDataMovesBeforeIt
+
+ 1 FAILED TEST
