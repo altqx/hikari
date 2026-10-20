@@ -29,14 +29,20 @@ std::int64_t centiseconds(std::int64_t ms)
 }
 
 // A single-line ASS field: control characters become spaces, and the Name
-// field loses its commas (they separate the fields).
+// field loses its commas (they separate the fields). A Name starting with
+// "[" gets a word joiner (U+2060) first: the loader reads "[hidden]",
+// "[bookmark]" and the other markers anywhere in such a Name as Line
+// states, so an agent called "[hidden]Singer" would hide its Lines.
 std::u8string field(std::u8string_view text, bool name)
 {
     std::u8string out;
     for (char8_t c : text)
         if (c != u8',' || !name)
             out += c < 0x20 ? u8' ' : c;
-    return std::u8string(trim(out));
+    out = std::u8string(trim(out));
+    if (name && out.starts_with(u8'['))
+        out.insert(0, u8"\u2060");
+    return out;
 }
 
 } // namespace
