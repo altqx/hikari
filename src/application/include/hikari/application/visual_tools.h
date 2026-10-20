@@ -140,7 +140,9 @@ struct ToolValue {
 };
 
 // A value's text as a number (a plain decimal, spaces around it and a
-// leading '+' allowed); false for anything else.
+// leading '+' allowed, at most kValueLimit either way); false for anything
+// else.
+inline constexpr double kValueLimit = 1e8;
 bool parseValue(const std::u16string &text, double &out);
 
 // VT1: how VisualTool::setValue applies a value. Commit stages it and

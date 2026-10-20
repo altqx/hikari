@@ -38,7 +38,8 @@ const core::LineRecord *findLine(const core::Document &document, core::LineId id
 } // namespace
 
 // A typed or scrubbed value (VT1, T2's typed point): a plain decimal number,
-// spaces around it and a leading '+' allowed.
+// spaces around it and a leading '+' allowed. The limit keeps it a float
+// coordinate and an int of milliseconds (1e100 would be an infinite one).
 bool parseValue(const std::u16string &text, double &out)
 {
     std::string s;
@@ -57,7 +58,7 @@ bool parseValue(const std::u16string &text, double &out)
     if (a >= b)
         return false;
     const auto [end, ec] = std::from_chars(s.data() + a, s.data() + b, out);
-    return ec == std::errc() && end == s.data() + b && std::isfinite(out);
+    return ec == std::errc() && end == s.data() + b && std::abs(out) <= kValueLimit;
 }
 
 const std::array<FamilyInfo, kFamilyCount> &families()

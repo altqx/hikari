@@ -1619,6 +1619,12 @@ TEST(VisualTransformValues, TypedAndScrubbedValuesAreOneStepEach)
         EXPECT_EQ(x.unit, u"%");
         EXPECT_EQ(x.text, u"100");
         EXPECT_FALSE(tool.setValue("fscx", u"abc", host));
+        // Beyond a value's limit (an infinite scale otherwise), and below
+        // zero, refused without a gesture left open.
+        EXPECT_FALSE(tool.setValue("fscx", u"1e100", host));
+        EXPECT_FALSE(tool.setValue("fscx", u"-5", host, ValueEdit::Sample));
+        EXPECT_FALSE(host.g);
+        EXPECT_EQ(host.s->historySize(), steps);
         EXPECT_TRUE(tool.setValue("fscx", u"150", host));
         EXPECT_FALSE(host.g);
         EXPECT_EQ(host.s->historySize(), steps + 1);
@@ -1698,4 +1704,23 @@ TEST(VisualTransformValues, TypedAndScrubbedValuesAreOneStepEach)
         EXPECT_EQ(valueOf(tool, host, "frx").text, u"345");
         EXPECT_EQ(valueOf(tool, host, "fry").text, u"20");
     }
+}
+
+// VT1 (Codex on #293): with "two points" on and its points not both placed,
+// a typed origin still writes \org (only the angle waits for the points).
+TEST(VisualTransformValues, TheOriginIsTypedWithTwoPointsOn)
+{
+    TestHost host;
+    setUp(host, caseNamed("rotz-two-points"));
+    RotationZTool tool;
+    tool.setToggled(1);
+    tool.selected(host);
+    tool.reset(host);
+    ASSERT_TRUE(tool.hasTwoPoints());
+    const std::size_t steps = host.s->historySize();
+    EXPECT_TRUE(tool.setValue("orgx", u"100", host));
+    EXPECT_FALSE(host.g);
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    const std::u8string &t = lineOf(*host.s, *host.activeLine())->text;
+    EXPECT_NE(std::string(t.begin(), t.end()).find("\\org(100,"), std::string::npos) << std::string(t.begin(), t.end());
 }
