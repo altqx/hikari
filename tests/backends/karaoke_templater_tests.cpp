@@ -628,6 +628,78 @@ TEST_F(KaraokeTemplater, RegenerateSelectedRefusesWhenTheRestCannotBeMatched)
     EXPECT_TRUE(run.log.join(QString()).contains(QStringLiteral("Cannot tell which generated lines")));
 }
 
+// Two karaoke Lines that generate the same lines: in a file, the identical
+// generated lines belong to the karaoke Lines in order, as a run made them,
+// so regenerating the second replaces the second's.
+TEST_F(KaraokeTemplater, RegenerateSelectedTellsIdenticalOutputsApartByOrder)
+{
+    const std::string again =
+        "Dialogue: 0,0:00:01.85,0:00:09.06,T1a,,0,0,0,,{\\k32}ha{\\k28}ru{\\k0} {\\k41}no{\\k0} {\\k25}ka{\\k30}ze"
+        "{\\k0} {\\k45}ga{\\k0} {\\k22}fu{\\k60}ku\n";
+    const std::string input = textOf(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.ass")));
+    ASSERT_NE(input.find(again), std::string::npos) << "the first T1a karaoke Line";
+    ASSERT_TRUE(input.ends_with('\n'));
+    hikari::application::EditSession session(
+        hikari::core::loadAss(bytesOf(templatedBytes(bytesOf(input + again), bundledScript()))).document);
+    const hikari::core::LineRecord *second = nullptr;
+    for (const auto *l : session.document().lines())
+        if (l->text == kFirstT1a && l->effect == u8"karaoke")
+            second = l;
+    ASSERT_TRUE(second);
+    ASSERT_NE(second, lineWithText(session.document(), kFirstT1a, u8"karaoke"));
+    std::u8string text(kFirstT1a);
+    text.replace(0, 8, u8"{\\k32}HA");
+    const auto secondId = second->id;
+    ASSERT_TRUE(editText(session, secondId, text));
+    select(session, {secondId});
+    ASSERT_TRUE(apply(session, bundledScript(), kSelected));
+    std::string edited = again;
+    edited.replace(edited.find("{\\k32}ha"), 8, "{\\k32}HA");
+    EXPECT_EQ(saved(session), templatedBytes(bytesOf(input + edited), bundledScript()));
+}
+
+// A TLMode translation is part of a generated line as saved: when a karaoke
+// Line's translation changed, its old generated lines are not what the
+// templates give it now, and a run for another Line is refused.
+TEST_F(KaraokeTemplater, RegenerateSelectedComparesTheTranslationToo)
+{
+    const auto translate = [](hikari::application::EditSession &session, hikari::core::LineId line,
+                              std::u8string translation) {
+        select(session, {line});
+        hikari::application::DraftChange change;
+        change.translation = std::move(translation);
+        return session.editDraft(line, change) && session.commitDraft();
+    };
+    const auto outcome = [&](std::u8string sourceTranslation) {
+        hikari::application::EditSession session(
+            hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.out.ass"))).document);
+        const auto *source = lineWithText(session.document(), kFirstT1a, u8"karaoke");
+        EXPECT_TRUE(source);
+        if (!source)
+            return std::optional<LuaScriptHost::RunOutcome>();
+        // The karaoke Line and its generated lines, translated alike
+        std::vector<hikari::core::LineId> generated;
+        std::optional<hikari::core::LineId> t2c;
+        for (const auto *l : session.document().lines()) {
+            if (l->style == source->style && l->effect == u8"fx" && l->start.value == source->start.value)
+                generated.push_back(l->id);
+            if (l->style == u8"T2c" && l->effect == u8"karaoke")
+                t2c = l->id;
+        }
+        EXPECT_FALSE(generated.empty());
+        EXPECT_TRUE(t2c);
+        const auto sourceId = source->id;
+        for (const auto id : generated)
+            EXPECT_TRUE(translate(session, id, u8"Old"));
+        EXPECT_TRUE(translate(session, sourceId, std::move(sourceTranslation)));
+        select(session, {*t2c});
+        return outcomeOf(session, bundledScript(), kSelected);
+    };
+    EXPECT_EQ(outcome(u8"Old"), LuaScriptHost::RunOutcome::Ok);
+    EXPECT_EQ(outcome(u8"New"), LuaScriptHost::RunOutcome::Cancelled);
+    EXPECT_TRUE(run.log.join(QString()).contains(QStringLiteral("Cannot tell which generated lines")));
+}
+
 // The selected-Lines macro is offered when a karaoke Line or a generated
 // Line is selected, not for a selection of template Lines alone.
 TEST_F(KaraokeTemplater, SelectedLinesMacroNeedsAKaraokeOrGeneratedLine)

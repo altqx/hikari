@@ -1098,7 +1098,7 @@ end
 
 -- A dialogue line as it reads back once saved: the helper keeps numbers as
 -- integers, cut towards zero, and the file loader trims spaces around the
--- actor, effect and text.
+-- actor, effect, text and a TLMode translation.
 local function whole(x)
 	x = tonumber(x) or 0
 	return x >= 0 and math.floor(x) or math.ceil(x)
@@ -1111,7 +1111,7 @@ end
 local function line_key(l)
 	return table.concat({ l.comment and "1" or "0", whole(l.layer), whole(l.start_time), whole(l.end_time),
 		l.style, trim(l.actor), whole(l.margin_l), whole(l.margin_r), whole(l.margin_t), trim(l.effect),
-		trim(l.text) }, "\0")
+		trim(l.text), trim(l.text_translation) }, "\0")
 end
 
 -- Runs the templates over the karaoke Lines up to `last` in order, as a
@@ -1150,26 +1150,35 @@ local function find_generated(subs, outputs, chosen, generated_from, unknown)
 	if #unknown == 0 then
 		return old
 	end
-	local pool = {}
+	-- A run generates in karaoke Line order, so identical generated lines
+	-- belong to their karaoke Lines in file order: each other karaoke Line, in
+	-- order, takes the first of them still free.
+	local pool, taken = {}, {}
 	for _, i in ipairs(unknown) do
 		local key = line_key(subs[i])
-		pool[key] = pool[key] or {}
+		pool[key] = pool[key] or { next = 1 }
 		table.insert(pool[key], i)
 	end
-	for source, lines in pairs(outputs) do
+	local others = {}
+	for source in pairs(outputs) do
 		if not chosen[source] and not known[source] then
-			for _, newline in ipairs(lines) do
-				local list = pool[line_key(newline)]
-				if not list or #list == 0 then
-					return nil
-				end
-				table.remove(list)
+			table.insert(others, source)
+		end
+	end
+	table.sort(others)
+	for _, source in ipairs(others) do
+		for _, newline in ipairs(outputs[source]) do
+			local list = pool[line_key(newline)]
+			if not list or list.next > #list then
+				return nil
 			end
+			taken[list[list.next]] = true
+			list.next = list.next + 1
 		end
 	end
 	local first
-	for _, list in pairs(pool) do
-		for _, i in ipairs(list) do
+	for _, i in ipairs(unknown) do
+		if not taken[i] then
 			table.insert(old, i)
 			first = math.min(first or i, i)
 		end
