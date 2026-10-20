@@ -288,6 +288,16 @@ ApplicationWindow {
     function openOriginal() {
         if (Docking.hasPlace("Original"))
             originalDock.open()
+        else
+            root.addOriginal()
+    }
+    // Where an arrangement that never had the panel (an older saved layout)
+    // puts it: above the Line editor, in the Line editor's own window when
+    // that floats (placePanel), or on the right without one.
+    function addOriginal() {
+        if (editorDock.isOpen && editorDock.isFloating)
+            editorDock.addDockWidgetToContainingWindow(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock,
+                                                       Qt.size(0, 140))
         else if (editorDock.isOpen)
             dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 140))
         else
@@ -364,7 +374,9 @@ ApplicationWindow {
                 referenceDock.close()
             if (!videoDock.isOpen && root.video.playing)
                 root.video.pause()
-            root.placeOriginal() // TM1
+            // TM1: once the editor is the shown tab's: a tab's arrangement
+            // is swapped in before the editor leaves the tab before.
+            Qt.callLater(root.placeOriginal)
         }
         // TM1: a preset that carries a mode (WorkspaceLayoutController::presetMode).
         // Translation asks to turn the editing target's Translation mode on
