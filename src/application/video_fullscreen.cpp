@@ -1,5 +1,7 @@
 #include "hikari/application/video_fullscreen.h"
 
+#include "hikari/core/text_projection.h"
+
 #include <cstdio>
 
 namespace hikari::application {
@@ -71,60 +73,43 @@ bool fullscreenBarShown(FullscreenBarMode mode, const FullscreenBarState &state)
 
 std::string fullscreenLineText(std::string_view text)
 {
-    std::string out;
-    bool drawing = false;
-    bool space = false; // white space waits for the next shown character
-    auto put = [&](std::string_view s) {
-        if (space && !out.empty())
-            out += ' ';
-        space = false;
-        out += s;
+    // What the renderer shows, read as the Line editor's hidden-tag view
+    // reads it (core::project): override blocks and drawings (a top-level
+    // \pN only) show nothing, and an unclosed or nested block hides what it
+    // covers.
+    const std::u16string raw = core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(text.data()), text.size()));
+    std::u16string out;
+    bool space = false; // white space, then a break, wait for the next shown character
+    bool lineBreak = false;
+    const auto put = [&](char16_t c) {
+        if (!out.empty() && lineBreak)
+            out += u" \u21B5 ";
+        else if (!out.empty() && space)
+            out += u' ';
+        space = lineBreak = false;
+        out += c;
     };
-    for (std::size_t i = 0; i < text.size(); ++i) {
-        const char c = text[i];
-        if (c == '{') {
-            const auto end = text.find('}', i);
-            if (end == std::string_view::npos)
-                break; // an unclosed block hides the rest, as the renderer does
-            const auto block = text.substr(i + 1, end - i - 1);
-            // The last \p<n> in the block: drawing from n > 0 to \p0.
-            for (auto p = block.find("\\p"); p != std::string_view::npos; p = block.find("\\p", p + 2)) {
-                std::size_t d = p + 2;
-                if (d < block.size() && block[d] >= '0' && block[d] <= '9') {
-                    int n = 0;
-                    for (; d < block.size() && block[d] >= '0' && block[d] <= '9'; ++d)
-                        n = n * 10 + (block[d] - '0');
-                    drawing = n > 0;
-                }
+    for (const auto &span : core::project(raw).spans) {
+        switch (span.kind) {
+        case core::SpanKind::Text:
+            for (std::size_t i = span.rawStart; i < span.rawEnd; ++i) {
+                const char16_t c = raw[i];
+                if (c == u' ' || c == u'\t' || c == u'\r' || c == u'\n')
+                    space = true;
+                else
+                    put(c);
             }
-            i = end;
-            continue;
+            break;
+        case core::SpanKind::HardBreak:
+        case core::SpanKind::SoftBreak: lineBreak = true; break;
+        case core::SpanKind::HardSpace: space = true; break;
+        case core::SpanKind::HiddenOverride:
+        case core::SpanKind::DrawingPayload:
+        case core::SpanKind::Malformed: break;
         }
-        if (drawing)
-            continue;
-        if (c == '\\' && i + 1 < text.size() && (text[i + 1] == 'N' || text[i + 1] == 'n')) {
-            if (!out.empty() && !out.ends_with("↵")) {
-                space = true;
-                put("↵");
-            }
-            space = true;
-            ++i;
-            continue;
-        }
-        if ((c == '\\' && i + 1 < text.size() && text[i + 1] == 'h') || c == ' ' || c == '\t' || c == '\r' || c == '\n') {
-            space = true;
-            if (c == '\\')
-                ++i;
-            continue;
-        }
-        put(std::string_view(&text[i], 1));
     }
-    // A break at the end shows nothing after it.
-    if (out.ends_with("↵"))
-        out.erase(out.size() - std::string_view("↵").size());
-    while (!out.empty() && out.back() == ' ')
-        out.pop_back();
-    return out;
+    const std::u8string utf8 = core::toUtf8(out);
+    return {reinterpret_cast<const char *>(utf8.data()), utf8.size()};
 }
 
 namespace {

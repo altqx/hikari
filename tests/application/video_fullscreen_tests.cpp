@@ -110,8 +110,13 @@ TEST(VideoFullscreenBar, TheCurrentLinesTextOnOneLine)
     EXPECT_EQ(fullscreenLineText("{\\p1}m 0 0 l 10 0 10 10{\\p0}Sign"), "Sign");
     EXPECT_EQ(fullscreenLineText("{\\p2\\p0}Text"), "Text");
     EXPECT_EQ(fullscreenLineText("{\\pos(1,2)}Kept{\\p1}m 0 0"), "Kept");
-    // An unclosed block hides the rest.
+    // Only a top-level \\pN draws: one inside \\t(...) is not read (core::project).
+    EXPECT_EQ(fullscreenLineText("{\\t(0,1000,\\p1)}Visible text"), "Visible text");
+    EXPECT_EQ(fullscreenLineText("{\\t(\\p1)\\p1}m 0 0{\\p0}After"), "After");
+    // An unclosed block hides the rest; a block inside a block is not text.
     EXPECT_EQ(fullscreenLineText("Shown{\\i1 hidden"), "Shown");
+    EXPECT_EQ(fullscreenLineText("a{b{\\i1}c"), "ac");
+    EXPECT_EQ(fullscreenLineText("caf\u00e9 \u65e5\u672c"), "caf\u00e9 \u65e5\u672c");
     EXPECT_EQ(fullscreenLineText(""), "");
 }
 

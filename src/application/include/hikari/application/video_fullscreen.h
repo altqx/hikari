@@ -77,9 +77,10 @@ bool fullscreenIdle(const FullscreenBarState &state);
 bool fullscreenBarShown(FullscreenBarMode mode, const FullscreenBarState &state);
 
 // FS1-current-line: the bar's read-only label of the current Line's text,
-// on one line: override blocks ({...}) and drawings (\p1 and up, to \p0)
-// left out, \N and \n shown as " ↵ ", \h as a space, runs of white space as
-// one, trimmed.
+// on one line, read as core::project reads it: override blocks ({...}),
+// drawings (a top-level \p1 and up, to \p0) and malformed blocks left out,
+// \N and \n shown as " ↵ ", \h as a space, runs of white space as one,
+// trimmed.
 std::string fullscreenLineText(std::string_view text);
 
 // VideoBox::RefreshTime (VideoBox.cpp:1366-1385): "<time> / <duration>",
