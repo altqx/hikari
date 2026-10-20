@@ -528,6 +528,15 @@ icon("layout-reset", "Reset this layout", [], [VIEW, "status-bar"],
 icon("layout-manage", "Manage layouts", [], [VIEW, "status-bar", "manage-layouts"],
      LAYOUT_CUT + accent(stroke("M10 10.5h4.5M10 12.5h4.5M10 14.5h4.5")))
 
+# The main window's own buttons (SH1 #220: the custom title bar). Legacy had the
+# system's frame; the glyphs are drawn small and plain, as the caption buttons
+# of Windows 11, MuseScore 4 and KDE Breeze are, with no accent layer.
+icon("window-minimize", "Minimise", [], ["title-bar"], stroke("M3.5 8.5h9"))
+icon("window-maximize", "Maximise", [], ["title-bar"], rect(3.5, 3.5, 9, 9, 0.5))
+icon("window-restore", "Restore", [], ["title-bar"],
+     rect(3.5, 5.5, 7, 7, 0.5) + stroke("M5.5 5.5v-2h7v7h-2"))
+icon("window-close", "Close", [], ["title-bar"], stroke("M3.5 3.5l9 9M12.5 3.5l-9 9"))
+
 # Visual tools (the visual tool rail and its sub-toolbars)
 icon("tool-crosshair", "Position pointer", ["Cross.png"], [VISUAL],
      circle(8, 8, 4) + stroke("M8 1.5v3M8 11.5v3M1.5 8h3M11.5 8h3") + accent(dot(8, 8, 1)))

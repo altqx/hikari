@@ -125,6 +125,9 @@ constexpr OptionsBinding kBindings[] = {
     {"editor.timesToFramesSwitch", Check, Editor},
     // LE3-tags-shown: the Line editor's hidden-tag view (shown by default).
     {"editor.hideTags", Check, Editor},
+    // WS2: the panel layout in the subtitle file ([Hikari]), on the
+    // Subtitle properties page with the other things a save writes there.
+    {"subtitles.layoutInFile", Check, SubtitleProperties},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.

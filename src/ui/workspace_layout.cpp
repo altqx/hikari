@@ -21,8 +21,12 @@
 #include <QJsonObject>
 #include <QQuickWindow>
 #include <QSaveFile>
+#include <QSet>
 #include <QScreen>
 #include <QTimer>
+
+#include <cmath>
+#include <utility>
 
 namespace hikari::ui {
 
@@ -219,8 +223,10 @@ QByteArray WorkspaceArrangement::serialise() const
 
 std::optional<WorkspaceArrangement> WorkspaceArrangement::parse(const QByteArray &bytes, QString *problem)
 {
-    // A preset alone has no payload; one with a payload is checked as the saved file is.
-    const QJsonObject o = QJsonDocument::fromJson(bytes).object();
+    // A preset alone has no payload; one with a payload is checked as the
+    // saved file is, its size before it is read.
+    const QJsonObject o = bytes.size() > WorkspaceLayoutController::kMaximumBytes ? QJsonObject()
+                                                                                  : QJsonDocument::fromJson(bytes).object();
     if (!o.isEmpty() && !o.contains(QStringLiteral("payload"))) {
         if (o.value(QStringLiteral("schema")).toInt(-1) == WorkspaceLayoutController::kSchema &&
             WorkspaceLayoutController::presets().contains(o.value(QStringLiteral("preset")).toString()))
@@ -232,6 +238,111 @@ std::optional<WorkspaceArrangement> WorkspaceArrangement::parse(const QByteArray
     if (!payload)
         return std::nullopt;
     arrangement.payload = *payload;
+    return arrangement;
+}
+
+namespace {
+
+// WS2: a saved rectangle ({"x", "y", "width", "height"}) under `key`, moved
+// by `by`; an empty one (a window that never had a place) stays.
+QPoint rectTopLeft(const QJsonObject &holder, const QString &key)
+{
+    const QJsonObject rect = holder.value(key).toObject();
+    return {rect.value(QStringLiteral("x")).toInt(), rect.value(QStringLiteral("y")).toInt()};
+}
+
+void moveRect(QJsonObject &holder, const QString &key, QPoint by)
+{
+    QJsonObject rect = holder.value(key).toObject();
+    if (rect.value(QStringLiteral("width")).toInt() <= 0 || rect.value(QStringLiteral("height")).toInt() <= 0)
+        return;
+    rect.insert(QStringLiteral("x"), rect.value(QStringLiteral("x")).toInt() + by.x());
+    rect.insert(QStringLiteral("y"), rect.value(QStringLiteral("y")).toInt() + by.y());
+    holder.insert(key, rect);
+}
+
+// The Classic main window's top-left in an engine payload.
+QPoint mainWindowPosition(const QJsonObject &payload)
+{
+    for (const auto &w : payload.value(QStringLiteral("mainWindows")).toArray()) {
+        const QJsonObject window = w.toObject();
+        if (window.value(QStringLiteral("uniqueName")).toString() == QStringLiteral("Classic")) {
+            const QJsonObject geometry = window.value(QStringLiteral("geometry")).toObject();
+            return {geometry.value(QStringLiteral("x")).toInt(), geometry.value(QStringLiteral("y")).toInt()};
+        }
+    }
+    return {};
+}
+
+// The payload's windows moved by `by`: the main windows, the floating
+// windows and the places closed panels float again at. `forFile` also
+// leaves out the screens and each window's screen.
+QByteArray moveWindows(const QByteArray &payload, QPoint by, bool forFile)
+{
+    QJsonObject o = QJsonDocument::fromJson(payload).object();
+    const QString screen = QStringLiteral("screenIndex"), screenSize = QStringLiteral("screenSize");
+    auto windows = [&](const QString &key, bool main) {
+        QJsonArray list = o.value(key).toArray();
+        for (qsizetype i = 0; i < list.size(); ++i) {
+            QJsonObject window = list.at(i).toObject();
+            moveRect(window, QStringLiteral("geometry"), by);
+            // A maximized main window's normal place is a screen position of
+            // its own: the file keeps it at the main window's top-left too.
+            const QString normal = QStringLiteral("normalGeometry");
+            moveRect(window, normal, forFile && main ? -rectTopLeft(window, normal) : by);
+            if (forFile) {
+                window.remove(screen);
+                window.remove(screenSize);
+            }
+            list.replace(i, window);
+        }
+        o.insert(key, list);
+    };
+    windows(QStringLiteral("mainWindows"), true);
+    windows(QStringLiteral("floatingWindows"), false);
+    QJsonArray docks = o.value(QStringLiteral("allDockWidgets")).toArray();
+    for (qsizetype i = 0; i < docks.size(); ++i) {
+        QJsonObject dock = docks.at(i).toObject();
+        QJsonObject position = dock.value(QStringLiteral("lastPosition")).toObject();
+        moveRect(position, QStringLiteral("lastFloatingGeometry"), by);
+        dock.insert(QStringLiteral("lastPosition"), position);
+        docks.replace(i, dock);
+    }
+    o.insert(QStringLiteral("allDockWidgets"), docks);
+    if (forFile)
+        o.remove(QStringLiteral("screenInfo"));
+    return QJsonDocument(o).toJson(QJsonDocument::Compact);
+}
+
+} // namespace
+
+QByteArray WorkspaceArrangement::serialiseForFile() const
+{
+    WorkspaceArrangement placed = *this;
+    if (!payload.isEmpty())
+        placed.payload = moveWindows(payload, -mainWindowPosition(QJsonDocument::fromJson(payload).object()), true);
+    return placed.serialise().toBase64();
+}
+
+std::optional<WorkspaceArrangement> WorkspaceArrangement::parseFromFile(QByteArrayView text, QPoint origin,
+                                                                        QString *problem)
+{
+    text = text.trimmed();
+    if (text.size() > (WorkspaceLayoutController::kMaximumBytes + 2) / 3 * 4) {
+        if (problem)
+            *problem = QCoreApplication::translate("HikariSub.Workspace", "the file is larger than %1 bytes")
+                           .arg(WorkspaceLayoutController::kMaximumBytes);
+        return std::nullopt;
+    }
+    const auto decoded = QByteArray::fromBase64Encoding(text.toByteArray(), QByteArray::AbortOnBase64DecodingErrors);
+    if (!decoded || decoded.decoded.isEmpty()) {
+        if (problem)
+            *problem = QCoreApplication::translate("HikariSub.Workspace", "it is not a layout file");
+        return std::nullopt;
+    }
+    auto arrangement = parse(decoded.decoded, problem);
+    if (arrangement && !arrangement->payload.isEmpty())
+        arrangement->payload = moveWindows(arrangement->payload, origin, false);
     return arrangement;
 }
 
@@ -265,6 +376,70 @@ void WorkspaceLayoutController::setPreset(const QString &preset)
     emit changed();
 }
 
+namespace {
+
+// WS2: what the engine reads from a window's layout tree (Item and
+// ItemBoxContainer::fillFromJson, SizingInfo, Rect, Size) it reads outside
+// its own catch, so a value of the wrong type, or null, throws out of
+// restoreLayout halfway through the restore. Each value is absent or of the
+// type the engine reads; a size is a number a window can have (up to Qt's
+// largest, which an unbounded panel's size hint is).
+bool readableNumber(const QJsonValue &v)
+{
+    return v.isUndefined() || (v.isDouble() && std::abs(v.toDouble()) <= 16777215);
+}
+
+bool readableRect(const QJsonValue &v)
+{
+    if (v.isUndefined())
+        return true;
+    const QJsonObject o = v.toObject();
+    return v.isObject() && readableNumber(o.value(QStringLiteral("x"))) && readableNumber(o.value(QStringLiteral("y"))) &&
+           readableNumber(o.value(QStringLiteral("width"))) && readableNumber(o.value(QStringLiteral("height")));
+}
+
+bool readableItem(const QJsonObject &item)
+{
+    auto is = [&](const char *key, bool (QJsonValue::*type)() const) {
+        const QJsonValue v = item.value(QLatin1String(key));
+        return v.isUndefined() || (v.*type)();
+    };
+    const QJsonValue orientation = item.value(QStringLiteral("orientation"));
+    const QJsonValue sizing = item.value(QStringLiteral("sizingInfo"));
+    const QJsonObject s = sizing.toObject();
+    return is("children", &QJsonValue::isArray) && is("isContainer", &QJsonValue::isBool) &&
+           is("isVisible", &QJsonValue::isBool) && is("guestId", &QJsonValue::isString) &&
+           (orientation.isUndefined() || orientation == QJsonValue(Qt::Horizontal) ||
+            orientation == QJsonValue(Qt::Vertical)) &&
+           (sizing.isUndefined() ||
+            (sizing.isObject() && readableRect(s.value(QStringLiteral("geometry"))) &&
+             readableRect(s.value(QStringLiteral("minSize"))) && readableRect(s.value(QStringLiteral("maxSizeHint"))) &&
+             (s.value(QStringLiteral("percentageWithinParent")).isUndefined() ||
+              s.value(QStringLiteral("percentageWithinParent")).isDouble())));
+}
+
+// An index the engine reads into an int: absent, or a whole number from
+// first to last.
+bool readableIndex(const QJsonValue &v, double first, double last)
+{
+    if (v.isUndefined())
+        return true;
+    const double d = v.toDouble();
+    return v.isDouble() && d == std::trunc(d) && d >= first && d <= last;
+}
+
+// Affinities the engine would copy onto Hikari's window and panels, which
+// have none.
+bool noAffinities(const QJsonObject &o)
+{
+    const QJsonValue affinities = o.value(QStringLiteral("affinities"));
+    const QJsonValue name = o.value(QStringLiteral("affinityName"));
+    return (affinities.isUndefined() || affinities == QJsonArray()) &&
+           (name.isUndefined() || name == QJsonValue(QString()));
+}
+
+} // namespace
+
 std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray &file, QString *problem, QString *preset,
                                                                QString *layout)
 {
@@ -296,15 +471,145 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     if (payload.isEmpty())
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no layout"));
     // IDs before the engine sees them: the Classic main window, known panels only.
+    const QJsonArray mainWindows = payload.value(QStringLiteral("mainWindows")).toArray();
     bool classic = false;
-    for (const auto &w : payload.value(QStringLiteral("mainWindows")).toArray())
+    for (const auto &w : mainWindows)
         classic = classic || w.toObject().value(QStringLiteral("uniqueName")).toString() == QStringLiteral("Classic");
     if (!classic)
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no Classic arrangement"));
+    // The engine makes a window, a group or a layout item for every entry it
+    // is given, and a file can come from anyone: no more than Hikari's panels
+    // can fill. One main window; a floating window, a group and each panel
+    // in a group at most once per panel; in each window's layout, a place and
+    // a placeholder per panel and the containers between them.
+    const QJsonArray floatingWindows = payload.value(QStringLiteral("floatingWindows")).toArray();
+    const qsizetype panels = panelIds().size();
+    const QString tooMany =
+        QCoreApplication::translate("HikariSub.Workspace", "it holds more windows or panels than HikariSub has");
+    if (mainWindows.size() > 1 || floatingWindows.size() > panels)
+        return fail(tooMany);
+    qsizetype groups = 0;
+    QSet<QString> grouped;
+    QJsonArray windows = mainWindows;
+    for (const auto &w : floatingWindows)
+        windows.append(w);
+    const QString unreadable = QCoreApplication::translate("HikariSub.Workspace", "it is not a layout file");
+    for (const auto &w : windows) {
+        if (!noAffinities(w.toObject()))
+            return fail(unreadable);
+        // A window's place, which a file's is moved by from the main
+        // window's: a number a window can have, so the move stays an int.
+        if (!readableRect(w.toObject().value(QStringLiteral("geometry"))) ||
+            !readableRect(w.toObject().value(QStringLiteral("normalGeometry"))))
+            return fail(unreadable);
+        const QJsonObject split = w.toObject().value(QStringLiteral("multiSplitterLayout")).toObject();
+        const QJsonObject frames = split.value(QStringLiteral("frames")).toObject();
+        groups += frames.size();
+        for (const auto &frame : frames)
+            for (const auto &dock : frame.toObject().value(QStringLiteral("dockWidgets")).toArray()) {
+                const QString name = dock.isObject() ? dock.toObject().value(QStringLiteral("uniqueName")).toString()
+                                                     : dock.toString();
+                if (!panelIds().contains(name))
+                    return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
+                if (grouped.contains(name))
+                    return fail(tooMany);
+                grouped.insert(name);
+            }
+        // A group is found by its id from its layout item: each one a real
+        // group under its own id, not the central one (Classic has none),
+        // in one layout item of its window.
+        for (auto frame = frames.begin(); frame != frames.end(); ++frame) {
+            const QJsonObject f = frame.value().toObject();
+            if (f.value(QStringLiteral("id")) != QJsonValue(frame.key()) || frame.key().isEmpty() ||
+                f.value(QStringLiteral("isNull")) != QJsonValue(false) ||
+                (f.value(QStringLiteral("options")).toInt() & 2) != 0)
+                return fail(unreadable);
+        }
+        const QJsonValue root = split.value(QStringLiteral("layout"));
+        if (!root.isUndefined() && !root.isObject())
+            return fail(unreadable);
+        qsizetype items = 0;
+        QSet<QString> placed;
+        QList<QJsonObject> pending{root.toObject()};
+        while (!pending.isEmpty()) {
+            if (++items > 4 * panels)
+                return fail(tooMany);
+            const QJsonObject item = pending.takeLast();
+            if (!readableItem(item))
+                return fail(unreadable);
+            const QString guest = item.value(QStringLiteral("guestId")).toString();
+            if (!guest.isEmpty() && (!frames.contains(guest) || placed.contains(guest)))
+                return fail(unreadable);
+            placed.insert(guest);
+            for (const auto &child : item.value(QStringLiteral("children")).toArray()) {
+                if (!child.isObject())
+                    return fail(unreadable);
+                pending.append(child.toObject());
+            }
+        }
+        placed.remove(QString());
+        if (placed.size() != frames.size())
+            return fail(unreadable);
+    }
+    if (groups > panels)
+        return fail(tooMany);
+    // The engine takes a floating window's parent from its own main windows
+    // by this index without a check (LayoutSaver::restoreLayout), and a file
+    // can come from anyone: Hikari's one main window, or none.
+    for (const auto &f : payload.value(QStringLiteral("floatingWindows")).toArray()) {
+        const QJsonValue parent = f.toObject().value(QStringLiteral("parentIndex"));
+        if (!parent.isUndefined() && !(parent.isDouble() && (parent.toDouble() == -1 || parent.toDouble() == 0)))
+            return fail(QCoreApplication::translate("HikariSub.Workspace", "it puts a floating panel in a window that does not exist"));
+    }
+    QSet<QString> docks;
     for (const auto &d : payload.value(QStringLiteral("allDockWidgets")).toArray()) {
         const QString name = d.toObject().value(QStringLiteral("uniqueName")).toString();
         if (!panelIds().contains(name))
             return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
+        if (!noAffinities(d.toObject()))
+            return fail(unreadable);
+        const QJsonObject position = d.toObject().value(QStringLiteral("lastPosition")).toObject();
+        const QJsonArray places = position.value(QStringLiteral("placeholders")).toArray();
+        if (docks.contains(name) || places.size() > 1 + floatingWindows.size())
+            return fail(tooMany);
+        docks.insert(name);
+        // Where a closed panel floats again, moved as the windows are.
+        if (!readableRect(position.value(QStringLiteral("lastFloatingGeometry"))))
+            return fail(unreadable);
+        // The tab a panel goes back to: the engine inserts it at this index
+        // when it is not -1 and the group has no fewer tabs, so one below -1
+        // reaches its tab list unchecked (Layout::restorePlaceholder).
+        if (!readableIndex(position.value(QStringLiteral("tabIndex")), -1, 16777215))
+            return fail(unreadable);
+        // A panel's place: the engine finds a docked one's main window by
+        // name and uses it without a check (Positions::deserialize), and a
+        // floating one's window by index. What it cannot read is a docked
+        // place in no window, or a floating place in a window the file does
+        // not have (-1, as the engine writes for a window being deleted,
+        // is passed over).
+        const QString nowhere =
+            QCoreApplication::translate("HikariSub.Workspace", "it puts a panel in a window that does not exist");
+        for (const auto &place : places) {
+            const QJsonObject p = place.toObject();
+            if (!place.isObject())
+                return fail(nowhere);
+            if (!readableIndex(p.value(QStringLiteral("itemIndex")), -1, 16777215))
+                return fail(unreadable);
+            const QJsonValue index = p.value(QStringLiteral("indexOfFloatingWindow"));
+            if (p.value(QStringLiteral("isFloatingWindow")) == QJsonValue(true)
+                    ? index.isUndefined() || !readableIndex(index, -1, double(floatingWindows.size() - 1))
+                    : p.value(QStringLiteral("mainWindowUniqueName")).toString() != QStringLiteral("Classic"))
+                return fail(nowhere);
+        }
+    }
+    QSet<QString> closed;
+    for (const auto &d : payload.value(QStringLiteral("closedDockWidgets")).toArray()) {
+        const QString name = d.isObject() ? d.toObject().value(QStringLiteral("uniqueName")).toString() : d.toString();
+        if (!panelIds().contains(name))
+            return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
+        if (closed.contains(name))
+            return fail(tooMany);
+        closed.insert(name);
     }
     if (preset) {
         const QString named = o.value(QStringLiteral("preset")).toString();
@@ -348,6 +653,12 @@ bool WorkspaceLayoutController::restoreSaved()
 {
     m_loaded = true;
     const bool restored = restoreSavedFile();
+    // WS2: files opened before this place their windows from the main
+    // window's top-left now.
+    const QPoint origin = mainWindowPosition(QJsonDocument::fromJson(KDDockWidgets::LayoutSaver().serializeLayout()).object());
+    for (auto &[id, t] : m_tabs)
+        if (std::exchange(t.unplaced, false) && t.arrangement && !t.arrangement->payload.isEmpty())
+            t.arrangement->payload = moveWindows(t.arrangement->payload, origin, false);
     // WS1: the current tab's own arrangement (from the Session, or the
     // Translation preset of a TLMode file opened before the first frame);
     // without one the tab takes the arrangement just restored.
@@ -725,12 +1036,42 @@ void WorkspaceLayoutController::setTabArrangement(std::uint64_t tab, const QByte
         keepUnrestored(serialised, problem, title);
         arrangement = WorkspaceArrangement{};
     }
-    // A layout this profile has not saved (a Session from another profile)
-    // is not the tab's origin: one saved later under that name is not it.
-    arrangement->layout = knownLayout(arrangement->layout);
-    m_tabs[tab].arrangement = arrangement;
+    giveTab(tab, *arrangement);
+}
+
+void WorkspaceLayoutController::giveTab(std::uint64_t tab, WorkspaceArrangement arrangement)
+{
+    // A layout this profile has not saved (a Session or a file from another
+    // profile) is not the tab's origin: one saved later under that name is
+    // not it.
+    arrangement.layout = knownLayout(arrangement.layout);
+    Tab &t = m_tabs[tab];
+    t.arrangement = arrangement;
+    t.unplaced = false;
     if (m_tab == tab && m_loaded)
-        showArrangement(*arrangement);
+        showArrangement(arrangement);
+}
+
+QByteArray WorkspaceLayoutController::fileArrangement(std::uint64_t tab) const
+{
+    const auto arrangement = tabArrangement(tab);
+    return arrangement ? arrangement->serialiseForFile() : QByteArray();
+}
+
+bool WorkspaceLayoutController::setFileArrangement(std::uint64_t tab, const QByteArray &text, QString *problem)
+{
+    // Where the main window is now, as the engine would save it. A file
+    // opened before its first arrangement (from the command line, before
+    // the window exists) is placed when restoreSaved has put it somewhere.
+    QPoint origin;
+    if (m_loaded)
+        origin = mainWindowPosition(QJsonDocument::fromJson(KDDockWidgets::LayoutSaver().serializeLayout()).object());
+    const auto arrangement = WorkspaceArrangement::parseFromFile(text, origin, problem);
+    if (!arrangement)
+        return false;
+    giveTab(tab, *arrangement);
+    m_tabs[tab].unplaced = !m_loaded;
+    return true;
 }
 
 QString WorkspaceLayoutController::knownLayout(const QString &name) const

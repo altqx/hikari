@@ -11,6 +11,7 @@
 #include "hikari/backends/simulated_output.h"
 #include "docking.h"
 #include "window_decorations.h"
+#include "window_frame.h"
 #include "line_grid.h"
 #include "line_table_model.h"
 #include "audio_display_item.h"
@@ -716,13 +717,16 @@ private slots:
         // colour scheme; the tests set it themselves (an unknown scheme keeps
         // the chosen theme, Dark by default).
         ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown);
+    }
+    void init()
+    {
+        // The shared files as written, for every function: one that saves
+        // them (KB3 runs every binding, Save included) would hand the next
+        // its Lines and, with WS2, its panel arrangement.
         episode = writeFile(dir, "episode.ass",
                             "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n"
                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
         original = writeFile(dir, "original.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,ref\n");
-    }
-    void init()
-    {
         application = new app::Application;
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);
@@ -1194,6 +1198,241 @@ private slots:
         QCOMPARE(top(bar), qRound(menuBar->height()));
     }
 
+    // SH1 (#220): the title bar, MuseScore 4's: the application icon (the
+    // window menu), the menus, the layout switcher, the window's title and
+    // the window buttons in one 32-pixel row over the Document tabs, on a
+    // frameless window. Its free parts are the caption (a right click asks
+    // for the window menu, a double click maximises); Alt alone and F10 put
+    // the keyboard on the menus. "Use system title bar" keeps the system's
+    // frame and only the menus and the switcher; by default on a tiling
+    // window manager.
+    void titleBarHoldsMenusSwitcherTitleAndWindowButtons()
+    {
+        using ui::MainWindowFrame;
+        namespace wf = ui::windowframe;
+        // The offscreen platform has no desktop: it is KDE Plasma's here.
+        wf::overrideDesktop(wf::Desktop::Kde);
+        auto restore = qScopeGuard([] { wf::overrideDesktop(std::nullopt); });
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        auto *bar = root->property("menuBar").value<QQuickItem *>();
+        QVERIFY(bar);
+        QCOMPARE(bar->objectName(), QStringLiteral("mainTitleBar"));
+        auto *frame = qobject_cast<MainWindowFrame *>(bar->property("frame").value<QObject *>());
+        QVERIFY(frame);
+        QTRY_VERIFY(frame->custom());
+        QVERIFY(window->flags().testFlag(Qt::FramelessWindowHint));
+        QTRY_COMPARE(qRound(bar->height()), 32);
+        QQuickItem *icon = visualItem("titleBarAppIcon");
+        auto *menus = visualItem("appMenus");
+        QQuickItem *switcher = visualItem("layoutSwitcher");
+        QQuickItem *title = visualItem("titleBarTitle");
+        QQuickItem *minimize = visualItem("titleBarMinimize");
+        QQuickItem *maximize = visualItem("titleBarMaximize");
+        QQuickItem *close = visualItem("titleBarClose");
+        for (QQuickItem *i : {icon, menus, switcher, title, minimize, maximize, close}) {
+            QVERIFY(i);
+            QVERIFY2(i->isVisible() && bar->isAncestorOf(i), qPrintable(i->objectName()));
+        }
+        QCOMPARE(title->property("text").toString(), window->title());
+        QVERIFY(!visualItem("statusBar")->findChild<QQuickItem *>(QStringLiteral("layoutSwitcher")));
+        // In a row: the icon, the menus, the switcher, the title, the buttons.
+        const auto rect = [](QQuickItem *i) { return QRectF(i->mapToScene(QPointF()), i->size()); };
+        QVERIFY(rect(icon).right() <= rect(menus).left());
+        QVERIFY(rect(menus).right() < rect(switcher).left());
+        QVERIFY(rect(switcher).right() + 32 <= rect(title).left());
+        QVERIFY(rect(title).right() + 32 <= rect(minimize).left());
+        QCOMPARE(qRound(rect(close).right()), window->width());
+        QCOMPARE(qRound(rect(minimize).width()), 46);
+        // For assistive technology: the bar and each control by name.
+        const auto name = [](QObject *o) {
+            QAccessibleInterface *iface = QAccessible::queryAccessibleInterface(o);
+            return iface ? iface->text(QAccessible::Name) : QString();
+        };
+        QCOMPARE(QAccessible::queryAccessibleInterface(bar)->role(), QAccessible::TitleBar);
+        QCOMPARE(name(bar), window->title());
+        QCOMPARE(name(icon), QStringLiteral("Window menu"));
+        QCOMPARE(name(menus), QStringLiteral("Application menu"));
+        QCOMPARE(name(switcher), QStringLiteral("Layout: %1").arg(switcher->property("text").toString()));
+        QCOMPARE(name(minimize), QStringLiteral("Minimise"));
+        QCOMPARE(name(maximize), QStringLiteral("Maximise"));
+        QCOMPARE(name(close), QStringLiteral("Close"));
+        const auto menuTitle = [&](int index) {
+            QQuickItem *out = nullptr;
+            QMetaObject::invokeMethod(menus, "itemAt", Q_RETURN_ARG(QQuickItem *, out), Q_ARG(int, index));
+            return out;
+        };
+        auto *fileTitle = qobject_cast<QQuickItem *>(named("fileMenuBarItem"));
+        QVERIFY(fileTitle && fileTitle == menuTitle(0));
+        QCOMPARE(name(fileTitle), QStringLiteral("File"));
+
+        // What the window system is told is under the pointer (Windows'
+        // WM_NCHITTEST): the free parts are the caption.
+        const auto centre = [&](QQuickItem *i) { return rect(i).center(); };
+        QCOMPARE(frame->hitAt(centre(title)), MainWindowFrame::Caption);
+        QCOMPARE(frame->hitAt(QPointF(rect(switcher).right() + 8, 16)), MainWindowFrame::Caption);
+        QCOMPARE(frame->hitAt(centre(fileTitle)), MainWindowFrame::Client);
+        QCOMPARE(frame->hitAt(centre(switcher)), MainWindowFrame::Client);
+        QCOMPARE(frame->hitAt(centre(minimize)), MainWindowFrame::Client);
+        QCOMPARE(frame->hitAt(centre(close)), MainWindowFrame::Client);
+        QCOMPARE(frame->hitAt(centre(maximize)), MainWindowFrame::MaximizeButton);
+        QCOMPARE(frame->hitAt(centre(icon)), MainWindowFrame::WindowMenuButton);
+        QCOMPARE(frame->hitAt(QPointF(window->width() / 2.0, bar->height() + 8)), MainWindowFrame::Client);
+
+        // The pointer: a right click on the free part asks for the window
+        // menu, as the icon does; a double click maximises, the maximise
+        // button (then Restore) restores. The drawn edges resize only an
+        // unmaximised window, and none on Windows, whose frame resizes.
+        QSignalSpy windowMenu(frame, &MainWindowFrame::windowMenuRequested);
+        QTest::mouseClick(window, Qt::RightButton, {}, centre(title).toPoint());
+        QCOMPARE(windowMenu.count(), 1);
+        QTest::mouseClick(window, Qt::LeftButton, {}, centre(icon).toPoint());
+        QCOMPARE(windowMenu.count(), 2);
+        const bool drawnEdges = !ui::WindowFrame::nativeResize();
+        QQuickItem *edges = visualItem("mainWindowEdges");
+        QVERIFY(edges);
+        QCOMPARE(edges->isVisible(), drawnEdges);
+        QCOMPARE(edges->size(), QSizeF(window->size()));
+        QTest::mouseDClick(window, Qt::LeftButton, {}, centre(title).toPoint());
+        QTRY_COMPARE(window->visibility(), QWindow::Maximized);
+        QTRY_COMPARE(maximize->property("text").toString(), QStringLiteral("Restore"));
+        QCOMPARE(maximize->property("iconRole").toString(), QStringLiteral("window-restore"));
+        QVERIFY(!edges->isVisible());
+        QTest::mouseClick(window, Qt::LeftButton, {}, centre(maximize).toPoint());
+        QTRY_COMPARE(window->visibility(), QWindow::Windowed);
+        QTRY_COMPARE(maximize->property("text").toString(), QStringLiteral("Maximise"));
+        QCOMPARE(edges->isVisible(), drawnEdges);
+
+        // The keyboard (MS1): F10 rings File and underlines the letters; the
+        // arrows walk the menus and the switcher, round; Esc gives the
+        // keyboard back. Alt alone does as F10, and Alt again ends it.
+        QQuickItem *before = window->activeFocusItem();
+        QVERIFY(before);
+        const auto target = [&] { return bar->property("keyboardTarget").value<QQuickItem *>(); };
+        QVERIFY(!menus->property("showMnemonics").toBool());
+        QTest::keyClick(window, Qt::Key_F10);
+        QTRY_COMPARE(target(), fileTitle);
+        QVERIFY(menus->property("showMnemonics").toBool());
+        QVERIFY(fileTitle->property("keyboardCurrent").toBool());
+        QTest::keyClick(window, Qt::Key_Right);
+        QCOMPARE(target(), menuTitle(1));
+        QTest::keyClick(window, Qt::Key_Left);
+        QTest::keyClick(window, Qt::Key_Left);
+        QCOMPARE(target(), switcher);
+        QVERIFY(switcher->property("keyboardCurrent").toBool());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QCOMPARE(target(), nullptr);
+        QVERIFY(!menus->property("showMnemonics").toBool());
+        QTRY_COMPARE(window->activeFocusItem(), before);
+        QTest::keyPress(window, Qt::Key_Alt);
+        QVERIFY(frame->altHeld());
+        QVERIFY(menus->property("showMnemonics").toBool());
+        QTest::keyRelease(window, Qt::Key_Alt);
+        QTRY_COMPARE(target(), fileTitle);
+        QTest::keyClick(window, Qt::Key_Alt);
+        QCOMPARE(target(), nullptr);
+        QTRY_COMPARE(window->activeFocusItem(), before);
+        // Alt with another key is no tap.
+        QTest::keyPress(window, Qt::Key_Alt);
+        QTest::keyClick(window, Qt::Key_X, Qt::AltModifier);
+        QTest::keyRelease(window, Qt::Key_Alt);
+        QCOMPARE(target(), nullptr);
+        // Down opens the menu the keyboard is on; a letter opens its menu.
+        auto *fileMenu = fileTitle->property("menu").value<QObject *>();
+        QTest::keyClick(window, Qt::Key_F10);
+        QTRY_COMPARE(target(), fileTitle);
+        QTest::keyClick(window, Qt::Key_Down);
+        QTRY_VERIFY(fileMenu->property("opened").toBool());
+        QCOMPARE(target(), nullptr);
+        QMetaObject::invokeMethod(fileMenu, "close");
+        QTRY_VERIFY(!fileMenu->property("visible").toBool());
+        auto *editMenu = menuTitle(1)->property("menu").value<QObject *>();
+        QVERIFY(editMenu);
+        QTest::keyClick(window, Qt::Key_F10);
+        QTRY_COMPARE(target(), fileTitle);
+        QTest::keyClick(window, Qt::Key_E);
+        QTRY_VERIFY(editMenu->property("opened").toBool());
+        QMetaObject::invokeMethod(editMenu, "close");
+        QTRY_VERIFY(!editMenu->property("visible").toBool());
+
+        // A narrow window: the title goes, then the last menus fold into More.
+        const int wide = window->width();
+        window->resize(std::max(window->minimumWidth(), 660), window->height());
+        QTRY_COMPARE(qRound(bar->width()), window->width());
+        if (window->width() <= 700) {
+            QTRY_VERIFY(!title->isVisible());
+            QQuickItem *more = visualItem("titleBarMore");
+            QTRY_VERIFY(more && more->isVisible());
+            const int folded = bar->property("foldFrom").toInt();
+            const int count = menus->property("count").toInt();
+            QVERIFY(folded > 0 && folded < count);
+            QVERIFY(rect(more).right() < rect(switcher).left());
+            QVERIFY(rect(switcher).right() <= rect(minimize).left());
+            QCOMPARE(name(more), QStringLiteral("More menus"));
+            QVERIFY(QMetaObject::invokeMethod(more, "click"));
+            auto *moreMenu = named("titleBarMoreMenu");
+            QTRY_VERIFY(moreMenu && moreMenu->property("opened").toBool());
+            QTRY_COMPARE(moreMenu->property("count").toInt(), count - folded);
+            QMetaObject::invokeMethod(moreMenu, "close");
+            QTRY_VERIFY(!moreMenu->property("visible").toBool());
+        } else {
+            qWarning("the shell's minimum width (%d) leaves no narrow title bar to check", window->minimumWidth());
+        }
+        window->resize(wide, window->height());
+        QTRY_VERIFY(title->isVisible());
+        QTRY_VERIFY(!visualItem("titleBarMore")->isVisible());
+
+        // The system's title bar: the frame is the system's, the row keeps the
+        // menus and the switcher.
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("system"));
+        QTRY_VERIFY(!frame->custom());
+        QVERIFY(!window->flags().testFlag(Qt::FramelessWindowHint));
+        QTRY_COMPARE(qRound(bar->height()), 27);
+        for (QQuickItem *i : {icon, title, minimize, maximize, close})
+            QVERIFY2(!i->isVisible(), qPrintable(i->objectName()));
+        QVERIFY(menus->isVisible() && switcher->isVisible());
+        QVERIFY(!edges->isVisible());
+        QCOMPARE(frame->hitAt(centre(menus)), MainWindowFrame::Client);
+        QCOMPARE(name(bar), QStringLiteral("Menus"));
+        // "auto" is the desktop's: HikariSub's own on KDE Plasma, the
+        // system's on a tiling window manager unless "custom".
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("auto"));
+        QTRY_VERIFY(frame->custom());
+        wf::overrideDesktop(wf::Desktop::Tiling);
+        QTRY_VERIFY(!frame->custom());
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("custom"));
+        QTRY_VERIFY(frame->custom());
+        QVERIFY(window->flags().testFlag(Qt::FramelessWindowHint));
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("auto"));
+        QTRY_VERIFY(!frame->custom());
+
+        // Settings > Appearance > Window: "Use system title bar", its
+        // default the desktop's; choosing the default stores "auto".
+        wf::overrideDesktop(wf::Desktop::Kde);
+        QTRY_VERIFY(frame->custom());
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 6); // Appearance
+        auto *useSystem = dialogItem("settingsDialog", "appearanceSystemTitleBar");
+        QVERIFY(useSystem);
+        QTRY_VERIFY(useSystem->isVisible());
+        QVERIFY(useSystem->isEnabled());
+        QVERIFY(!useSystem->property("checked").toBool());
+        QCOMPARE(name(useSystem), QStringLiteral("Use system title bar"));
+        QVERIFY(QMetaObject::invokeMethod(useSystem, "click"));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.titleBar")).toString(), QStringLiteral("system"));
+        QVERIFY(frame->custom()); // staged until OK or Apply
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QTRY_VERIFY(!frame->custom());
+        QCOMPARE(settings.text("appearance.titleBar"), QStringLiteral("system"));
+        QVERIFY(QMetaObject::invokeMethod(useSystem, "click"));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.titleBar")).toString(), QStringLiteral("auto"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QTRY_VERIFY(frame->custom());
+        QCOMPARE(settings.text("appearance.titleBar"), QStringLiteral("auto"));
+    }
+
     // P10: legacy's nine status fields without and with media: the help
     // field, the subtitles' resolution of an ASS Document, then the video's
     // scale, zoom, duration, FPS, resolution, aspect ratio and file name,
@@ -1289,10 +1528,9 @@ private slots:
         QVERIFY(resolution);
         QCOMPARE(resolution->role(), QAccessible::StaticText);
         QCOMPARE(resolution->text(QAccessible::Description), QStringLiteral("Video resolution"));
-        // Like legacy's (AcceptsFocus false) the strip takes no focus, WS3's
-        // layout switcher included (View > Layout is its keyboard path).
-        // The strip's own items: the switcher's menu is a popup, not the strip.
-        QVERIFY(bar->findChild<QQuickItem *>(QStringLiteral("layoutSwitcher")));
+        // Like legacy's (AcceptsFocus false) the strip takes no focus. WS3's
+        // layout switcher left it for the title bar (SH1).
+        QVERIFY(!bar->findChild<QQuickItem *>(QStringLiteral("layoutSwitcher")));
         std::function<void(QQuickItem *)> noTabStop = [&](QQuickItem *item) {
             for (QQuickItem *f : item->childItems()) {
                 QVERIFY2(!f->activeFocusOnTab(), qPrintable(f->objectName()));
@@ -4794,6 +5032,8 @@ private slots:
             {main, QStringLiteral(R"("macro_" + modelData.name)"), QStringLiteral("a macro of the loaded scripts")},
             {main, QStringLiteral(R"("panelMenu" + modelData.uniqueName)"), QStringLiteral("a panel, under Panels")},
             {main, QStringLiteral("root.app.replaceEditorMisspell"), QStringLiteral("a spelling suggestion")},
+            {QStringLiteral("MainTitleBar.qml"), QStringLiteral("bar.foldFrom + index"),
+             QStringLiteral("a menu of the title bar folded into More (the menus have no icons)")},
         };
         const QStringList problems = menu_icon_scan::itemsWithoutIcons(QStringLiteral(HIKARI_UI_SOURCE_DIR), exemptions);
         if (!problems.isEmpty())
@@ -9585,8 +9825,13 @@ private slots:
         application->waitForWrites();
         QFile saved(ass);
         QVERIFY(saved.open(QIODevice::ReadOnly));
-        // S4: the save adds the active Line's row after TLMode.
-        QCOMPARE(saved.readAll(), QByteArray("[Script Info]\nTLMode: Yes\nActive Line: 0\n\n") + body);
+        // S4: the save adds the active Line's row after TLMode; WS2: and the
+        // tab's arrangement at the end.
+        const QByteArray bytes = saved.readAll();
+        const QByteArray expected = QByteArray("[Script Info]\nTLMode: Yes\nActive Line: 0\n\n") + body + "\n[Hikari]\nLayout=";
+        QCOMPARE(bytes.left(expected.size()), expected);
+        QCOMPARE(bytes.count('\n'), expected.count('\n') + 1);
+        QVERIFY(bytes.endsWith("\n"));
 
         const QString text = dir.filePath(QStringLiteral("e5-plain.txt"));
         {
@@ -10518,7 +10763,9 @@ private slots:
               {"scriptProperties.timingOn", nullptr},
               {"scriptProperties.update", nullptr},
               {"scriptProperties.updateOn", nullptr},
-              {"scriptProperties.askForChange", "Always ask before changing subtitle information"}}},
+              {"scriptProperties.askForChange", "Always ask before changing subtitle information"},
+              // WS2, the rewrite's own
+              {"subtitles.layoutInFile", "Save panel layout in subtitle files"}}},
         };
         std::set<std::string> shown;
         for (const auto &[pageName, controls] : pages) {
@@ -12557,7 +12804,8 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_HISTORY")), QStringLiteral("Ctrl+Shift+H"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_CONVERT_TO_TMP")), QStringLiteral("Ctrl+F12"));
-        QCOMPARE(table().size(), 37); // WS3: GLOBAL_EDITOR's Ctrl+E is no default
+        // WS3: GLOBAL_EDITOR's Ctrl+E is no default; SH1: nor Convert to MDVD's F10.
+        QCOMPARE(table().size(), 36);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));
@@ -13948,6 +14196,10 @@ private slots:
         // and its Ctrl+E reaches nothing anywhere.
         for (const auto &context : contexts)
             departures.append(QStringLiteral("%1 Ctrl-E: nothing, legacy GLOBAL_EDITOR").arg(QLatin1String(context.first)));
+        // SH1-f10-menus (#220): F10 puts the keyboard on the menus, which
+        // runs no command; Convert to MDVD has no default key.
+        for (const auto &context : contexts)
+            departures.append(QStringLiteral("%1 F10: nothing, legacy GLOBAL_CONVERT_TO_MDVD").arg(QLatin1String(context.first)));
         QStringList differences;
         hotkeys.setRehearsing(true);
         auto rehearsing = qScopeGuard([&] { hotkeys.setRehearsing(false); });
@@ -14002,7 +14254,8 @@ private slots:
         }
 
         // Each binding run in its own window's context. Quitting is left out:
-        // it would end the shell under test; so is WS3's retired editor switch.
+        // it would end the shell under test; so is WS3's retired editor switch,
+        // and Convert to MDVD, whose F10 is the menus' (SH1-f10-menus).
         const auto fresh = [&] {
             restartWithoutSound();
             QVERIFY(application->openFile(episode));
@@ -14017,7 +14270,8 @@ private slots:
         bool changed = true; // the shell a command left changed starts again
         for (const auto &b : legacyDefaults()) {
             const QString symbol = QString::fromLatin1(b.symbol);
-            if (symbol == QLatin1String("GLOBAL_QUIT") || symbol == QLatin1String("GLOBAL_EDITOR"))
+            if (symbol == QLatin1String("GLOBAL_QUIT") || symbol == QLatin1String("GLOBAL_EDITOR")
+                || symbol == QLatin1String("GLOBAL_CONVERT_TO_MDVD"))
                 continue;
             if (changed) {
                 fresh();

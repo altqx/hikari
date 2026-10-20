@@ -1099,6 +1099,8 @@ Dialog {
                         }
                     }
                     SettingCheck { setting: "scriptProperties.askForChange"; text: qsTr("Always ask before changing subtitle information") }
+                    // WS2: the tab's panel layout in the ASS file's [Hikari] section.
+                    SettingCheck { setting: "subtitles.layoutInFile"; text: qsTr("Save panel layout in subtitle files") }
                 }
             }
         }

@@ -807,11 +807,66 @@ ApplicationWindow {
         }
     }
 
-    // Classic menus. Commands join through the shared action system as their
-    // cards land. K1: the items legacy drew with a bitmap (HikariSubFrame.cpp's
-    // AppendTool) show the set's icon (ShellMenuItem, ShellMenu).
-    menuBar: MenuBar {
-        MenuBarItem {
+    // SH1 (#220): the window's frame and its title bar (MainTitleBar.qml,
+    // window_frame.h): HikariSub's own (frameless, the menus, the layout
+    // switcher, the title and the window buttons in one row) or the
+    // system's, by the "Use system title bar" setting (appearance.titleBar:
+    // "auto" is the desktop's default, WindowFrame.systemTitleBarByDefault).
+    property string titleBarChoice: root.app.settings.value("appearance.titleBar")
+    Connections {
+        target: root.app.settings
+        function onChanged(id) {
+            if (id === "appearance.titleBar")
+                root.titleBarChoice = root.app.settings.value(id)
+        }
+    }
+    MainWindowFrame {
+        id: windowFrame
+        window: root
+        // (customAvailable is read for its notification: the desktop can change in tests.)
+        custom: WindowFrame.customAvailable && !WindowFrame.usesSystemTitleBar(root.titleBarChoice)
+    }
+    menuBar: MainTitleBar {
+        id: titleBar
+        frame: windowFrame
+        menus: appMenus
+        // WS3: the layout switcher after the menus, where MuseScore 4 puts
+        // its Workspaces button.
+        switcher: LayoutSwitcher {
+            layouts: root.workspaceLayout
+            Layout.leftMargin: titleBar.switcherGap
+            onPresetChosen: name => root.applyPreset(name)
+            onSavedLayoutChosen: name => root.applySavedLayout(name)
+            onSaveRequested: saveLayoutDialog.show()
+            onResetRequested: root.resetLayout()
+            onManageRequested: manageLayoutsDialog.show()
+        }
+    }
+    // The resize band and boundary of the frameless window (Wayland, X11),
+    // over everything but the popups.
+    MainWindowEdges {
+        frame: windowFrame
+        parent: root.contentItem.parent
+        anchors.fill: parent
+        z: 100
+    }
+    // SH1: F10 puts the keyboard on the menus (MS1 §1 "Menu bar"), as Alt
+    // alone does (MainWindowFrame.altTapped); a Global binding of F10 comes
+    // first.
+    Shortcut {
+        objectName: "menusShortcut"
+        sequences: ["F10"]
+        enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes("F10")
+        onActivated: titleBar.keyboardMode ? titleBar.leaveKeyboard(true) : titleBar.enterKeyboard()
+    }
+
+    // Classic menus, in the title bar. Commands join through the shared
+    // action system as their cards land. K1: the items legacy drew with a
+    // bitmap (HikariSubFrame.cpp's AppendTool) show the set's icon
+    // (ShellMenuItem, ShellMenu).
+    TitleBarMenus {
+        id: appMenus
+        TitleBarMenuItem {
             objectName: "fileMenuBarItem"
             menu: ShellMenu {
                 title: qsTr("&File")
@@ -4031,9 +4086,9 @@ ApplicationWindow {
         onTriggered: root.workspaceLayout.save()
     }
 
-    // WS4: the window's top rows under the menu bar (SH1's title bar will sit
-    // above them): the open Documents' tabs, as in MuseScore and IDEs, then
-    // the notices, each shown only while it has something to say.
+    // WS4: the window's top rows under the title bar (SH1): the open
+    // Documents' tabs, as in MuseScore and IDEs, then the notices, each
+    // shown only while it has something to say.
     header: ColumnLayout {
         objectName: "windowTop"
         spacing: 0
@@ -4101,17 +4156,6 @@ ApplicationWindow {
         // The last save's message only: the tab's modified mark says
         // "Modified" (said once, visual-language.md).
         saveText: root.editor.saveStatus
-        // WS3: the layout switcher at the bar's end, where MuseScore 4 puts
-        // its Workspaces button, until SH1 (#220) moves it into the title bar.
-        LayoutSwitcher {
-            layouts: root.workspaceLayout
-            labelFont: statusStrip.statusFont
-            onPresetChosen: name => root.applyPreset(name)
-            onSavedLayoutChosen: name => root.applySavedLayout(name)
-            onSaveRequested: saveLayoutDialog.show()
-            onResetRequested: root.resetLayout()
-            onManageRequested: manageLayoutsDialog.show()
-        }
     }
     // WS3: Save layout as… and Manage layouts… (the switcher's and View > Layout's).
     SaveLayoutDialog {
@@ -5937,8 +5981,8 @@ ApplicationWindow {
                 }
             }
         }
-        for (let i = 0; i < root.menuBar.count; ++i)
-            walk(root.menuBar.menuAt(i))
+        for (let i = 0; i < appMenus.count; ++i)
+            walk(appMenus.menuAt(i))
     }
     Connections {
         target: root.hotkeys

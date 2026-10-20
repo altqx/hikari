@@ -251,6 +251,9 @@ const std::vector<SettingDefinition> &definitions()
         {"appearance.highContrastBlack.accent", "", String, Profile, Mapped, false, std::string("#FFFF00")},
         {"appearance.highContrastBlack.text", "", String, Profile, Mapped, false, std::string("#FFFFFF")},
         {"appearance.highContrastBlack.border", "", String, Profile, Mapped, false, std::string("#FFFFFF")},
+        // SH1 (#220): "Use system title bar" ("system" or "custom"; "auto"
+        // is the desktop's default, the system's on tiling window managers).
+        {"appearance.titleBar", "", String, Profile, Mapped, false, std::string("auto")},
         // The audio output's host API on Windows: 0 WASAPI (default; reports
         // an unplugged device as lost), 1 DirectSound (legacy's player). The
         // user's choice, 2026-10-04 (A4-wasapi-default).
@@ -296,6 +299,12 @@ const std::vector<SettingDefinition> &definitions()
         // override tags unless this is on (Settings > Editor, and the
         // EDITBOX_HIDE_TAGS command); legacy hid them on every start.
         {"editor.hideTags", "", Bool, Profile, Mapped, false, false},
+        // WS2 (owner decision 2026-10-18, #216): "Save panel layout in
+        // subtitle files": an ASS file keeps its Document tab's panel
+        // arrangement in a [Hikari] section, written at each save and taken
+        // when the file opens. Off, the section is neither read nor written
+        // (an existing one is kept as it is).
+        {"subtitles.layoutInFile", "", Bool, Profile, Mapped, false, true},
     };
     return table;
 }
