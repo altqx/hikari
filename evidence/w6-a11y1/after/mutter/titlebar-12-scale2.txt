@@ -1,0 +1,142 @@
+# compositor windows
+Monitors:
+├──Monitor Meta-0 (MetaVendor)
+│  ├──Vendor: MetaVendor
+│  ├──Product: MetaVirtualMonitor
+│  ├──Serial: 0x00
+│  ├──Current mode
+│  │   └──1600x1000@60.000
+│  └──Preferences
+│      └──Backlight: None
+└──Monitor Meta-1 (MetaVendor)
+   ├──Vendor: MetaVendor
+   ├──Product: MetaVirtualMonitor
+   ├──Serial: 0x01
+   ├──Current mode
+   │   └──1600x1000@60.000
+   └──Preferences
+       └──Backlight: None
+
+Logical monitors:
+├──Logical monitor #1
+│  ├──Position: (0, 0)
+│  ├──Scale: 1.0
+│  ├──Transform: normal
+│  ├──Primary: yes
+│  └──Monitors: (1)
+│      └──Meta-0 (MetaVendor)
+└──Logical monitor #2
+   ├──Position: (1600, 0)
+   ├──Scale: 2.0
+   ├──Transform: normal
+   ├──Primary: no
+   └──Monitors: (1)
+       └──Meta-1 (MetaVendor)
+
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "HikariSub",
+   "id": "HikariSub",
+   "active": true,
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 800
+  }
+ ],
+ "panels": [
+  {
+   "name": "Home",
+   "id": "Home",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 64,
+   "w": 1280,
+   "h": 707
+  },
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 551,
+   "w": 1280,
+   "h": 220
+  },
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 99,
+   "w": 640,
+   "h": 408
+  },
+  {
+   "name": "Line editor",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 641,
+   "y": 313,
+   "w": 639,
+   "h": 194
+  },
+  {
+   "name": "Audio",
+   "id": "Audio",
+   "frame": "HikariSub",
+   "x": 641,
+   "y": 99,
+   "w": 639,
+   "h": 178
+  }
+ ],
+ "focus": "[panel] 'Home' <focused,showing,visible,enabled> @0,64 1280x707 actions=",
+ "focusPath": "desktop frame:'main' > application:'HikariSub' > frame:'HikariSub' > filler:'' > panel:'Home'",
+ "texts": {
+  "Line text": "",
+  "Start": "",
+  "End": ""
+ },
+ "labels": [
+  "Editing",
+  "Video times"
+ ]
+}
+# gdctl show
+Monitors:
+├──Monitor Meta-0 (MetaVendor)
+│  ├──Vendor: MetaVendor
+│  ├──Product: MetaVirtualMonitor
+│  ├──Serial: 0x00
+│  ├──Current mode
+│  │   └──1600x1000@60.000
+│  └──Preferences
+│      └──Backlight: None
+└──Monitor Meta-1 (MetaVendor)
+   ├──Vendor: MetaVendor
+   ├──Product: MetaVirtualMonitor
+   ├──Serial: 0x01
+   ├──Current mode
+   │   └──1600x1000@60.000
+   └──Preferences
+       └──Backlight: None
+
+Logical monitors:
+├──Logical monitor #1
+│  ├──Position: (0, 0)
+│  ├──Scale: 1.0
+│  ├──Transform: normal
+│  ├──Primary: yes
+│  └──Monitors: (1)
+│      └──Meta-0 (MetaVendor)
+└──Logical monitor #2
+   ├──Position: (1600, 0)
+   ├──Scale: 2.0
+   ├──Transform: normal
+   ├──Primary: no
+   └──Monitors: (1)
+       └──Meta-1 (MetaVendor)
+

@@ -1,0 +1,13 @@
+17:50:18.203820 - SPEECH OUTPUT: 'Screen reader on.' {'established': False}
+17:50:18.343061 - SPEECH OUTPUT: 'HikariSub' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:50:18.441595 - SPEECH OUTPUT: 'Home' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:50:26.737315 - SPEECH OUTPUT: 'left control' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:50:31.672587 - SPEECH OUTPUT: 'tab' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:50:32.871244 - SPEECH OUTPUT: 'tab' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:50:34.097020 - SPEECH OUTPUT: 'HikariSub' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:50:34.121862 - SPEECH OUTPUT: 'escape' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:50:34.190901 - SPEECH OUTPUT: 'Home' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:50:34.191343 - SPEECH OUTPUT: 'panel' {'established': False}
+17:50:34.203589 - SPEECH OUTPUT: 'New' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:50:34.204035 - SPEECH OUTPUT: 'button.' {'established': False}
+17:50:36.586874 - SPEECH OUTPUT: 'Screen reader off.' {'established': False}

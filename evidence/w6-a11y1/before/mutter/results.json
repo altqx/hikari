@@ -1,0 +1,23 @@
+{
+ "gtkbridge-lookup": {
+  "status": "failed",
+  "detail": "mutter (XDG_CURRENT_DESKTOP=GNOME): platform theme libqgtk3, GTK started True; the process's applications on the bus, in order: 'hikarisub' (gtk 3.24.52, :1.0): 0 windows; 'HikariSub' (Qt 6.11.2, :1.5): 28 windows; the lookup by name finds the main window False and the core panels []",
+  "evidence": [
+   "gtkbridge-apps.json",
+   "gtkbridge-tree.txt"
+  ],
+  "at": "2026-10-20T18:16:42"
+ },
+ "gtkbridge-orca": {
+  "status": "observed",
+  "detail": "Orca with File > Open under theme libqgtk3: the dialog read True, HikariSub read after it True; spoken: ['Screen reader on.', 'HikariSub', 'Home', 'left control', 'file chooser.', 'Files.', 'table with 0 rows 5 columns', 'tab', 'Subtitles ', 'combo box.', 'Select which types of files are shown.', 'tab', 'Cancel', 'button.', 'HikariSub', 'frame', 'escape', 'Home', 'panel', 'New', 'button.', 'Screen reader off.']",
+  "evidence": [
+   [
+    "gtkbridge-open-dialog.png",
+    "gtkbridge-open-dialog.txt"
+   ],
+   "gtkbridge-orca-speech.txt"
+  ],
+  "at": "2026-10-20T18:17:02"
+ }
+}

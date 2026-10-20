@@ -1,0 +1,64 @@
+# compositor windows
+Monitors:
+├──Monitor Meta-0 (MetaVendor)
+│  ├──Vendor: MetaVendor
+│  ├──Product: MetaVirtualMonitor
+│  ├──Serial: 0x00
+│  ├──Current mode
+│  │   └──1600x1000@60.000
+│  └──Preferences
+│      └──Backlight: None
+└──Monitor Meta-1 (MetaVendor)
+   ├──Vendor: MetaVendor
+   ├──Product: MetaVirtualMonitor
+   ├──Serial: 0x01
+   ├──Current mode
+   │   └──1600x1000@60.000
+   └──Preferences
+       └──Backlight: None
+
+Logical monitors:
+├──Logical monitor #1
+│  ├──Position: (0, 0)
+│  ├──Scale: 1.0
+│  ├──Transform: normal
+│  ├──Primary: yes
+│  └──Monitors: (1)
+│      └──Meta-0 (MetaVendor)
+└──Logical monitor #2
+   ├──Position: (1600, 0)
+   ├──Scale: 1.0
+   ├──Transform: normal
+   ├──Primary: no
+   └──Monitors: (1)
+       └──Meta-1 (MetaVendor)
+
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "",
+   "id": "",
+   "active": true,
+   "x": 0,
+   "y": 0,
+   "w": 1283,
+   "h": 1001
+  }
+ ],
+ "panels": [
+  {
+   "name": "Browse Header Revealer",
+   "id": "Browse Header Revealer",
+   "frame": "",
+   "x": 194,
+   "y": 70,
+   "w": 1063,
+   "h": 1
+  }
+ ],
+ "focus": "[table] 'Files' <focused,showing,visible,focusable,enabled> @194,70 1035x855",
+ "focusPath": "desktop frame:'main' > application:'hikarisub' > file chooser:'' > filler:'' > file chooser:'File Chooser Widget' > filler:'' > split pane:'' > filler:'' > filler:'' > panel:'' > filler:'' > scroll pane:'' > table:'Files'",
+ "texts": {},
+ "labels": []
+}

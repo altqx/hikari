@@ -1,0 +1,25 @@
+17:49:02.307758 - SPEECH OUTPUT: 'Screen reader on.' {'established': False}
+17:49:02.456234 - SPEECH OUTPUT: 'HikariSub' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:02.555988 - SPEECH OUTPUT: 'Home' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:04.569895 - SPEECH OUTPUT: 'F6' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:05.522153 - SPEECH OUTPUT: 'F6' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:06.484604 - SPEECH OUTPUT: 'F6' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:07.473997 - SPEECH OUTPUT: 'F6' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:08.518669 - SPEECH OUTPUT: 'left control' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:08.771417 - SPEECH OUTPUT: 'file chooser.' {'established': False}
+17:49:08.838637 - SPEECH OUTPUT: 'Files.' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:08.839895 - SPEECH OUTPUT: 'table with 0 rows 5 columns' {'established': False}
+17:49:11.567487 - SPEECH OUTPUT: 'tab' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:11.660714 - SPEECH OUTPUT: 'Subtitles ' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:11.661632 - SPEECH OUTPUT: 'combo box.' {'established': False}
+17:49:11.698203 - SPEECH OUTPUT: 'Select which types of files are shown.' {'established': False}
+17:49:12.727450 - SPEECH OUTPUT: 'tab' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:12.821662 - SPEECH OUTPUT: 'Cancel' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:12.822725 - SPEECH OUTPUT: 'button.' {'established': False}
+17:49:13.936673 - SPEECH OUTPUT: 'escape' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:14.243479 - SPEECH OUTPUT: 'HikariSub' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:14.393032 - SPEECH OUTPUT: 'Home' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:14.393903 - SPEECH OUTPUT: 'panel' {'established': False}
+17:49:14.421517 - SPEECH OUTPUT: 'New' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+17:49:14.422285 - SPEECH OUTPUT: 'button.' {'established': False}
+17:49:16.474558 - SPEECH OUTPUT: 'Screen reader off.' {'established': False}

@@ -1,0 +1,138 @@
+{
+ "pid": 146,
+ "env": {
+  "XDG_CURRENT_DESKTOP": "GNOME",
+  "XDG_SESSION_DESKTOP": "gnome"
+ },
+ "theme": "libqgtk3",
+ "gtk": true,
+ "apps": [
+  {
+   "name": "hikarisub",
+   "bus": ":1.2",
+   "toolkit": "gtk",
+   "toolkitVersion": "3.24.52",
+   "windows": []
+  },
+  {
+   "name": "HikariSub",
+   "bus": ":1.6",
+   "toolkit": "Qt",
+   "toolkitVersion": "6.11.2",
+   "windows": [
+    {
+     "role": "frame",
+     "name": "HikariSub"
+    },
+    {
+     "role": "frame",
+     "name": "Session entries not restored"
+    },
+    {
+     "role": "frame",
+     "name": "History (0 elements)"
+    },
+    {
+     "role": "frame",
+     "name": "Unsaved changes"
+    },
+    {
+     "role": "frame",
+     "name": ""
+    },
+    {
+     "role": "frame",
+     "name": "Script resolution"
+    },
+    {
+     "role": "frame",
+     "name": "Automation manager"
+    },
+    {
+     "role": "frame",
+     "name": ""
+    },
+    {
+     "role": "frame",
+     "name": ""
+    },
+    {
+     "role": "frame",
+     "name": "Choose new FPS"
+    },
+    {
+     "role": "frame",
+     "name": "Copy columns"
+    },
+    {
+     "role": "frame",
+     "name": "Log window"
+    },
+    {
+     "role": "frame",
+     "name": "Move panel"
+    },
+    {
+     "role": "frame",
+     "name": "Translation matching options"
+    },
+    {
+     "role": "frame",
+     "name": "Style manager"
+    },
+    {
+     "role": "frame",
+     "name": "Hotkey mapping"
+    },
+    {
+     "role": "frame",
+     "name": ""
+    },
+    {
+     "role": "frame",
+     "name": "Warning"
+    },
+    {
+     "role": "frame",
+     "name": "Tree description"
+    },
+    {
+     "role": "frame",
+     "name": "Line group"
+    },
+    {
+     "role": "frame",
+     "name": "Open auto save"
+    },
+    {
+     "role": "frame",
+     "name": "Remove temporary files"
+    },
+    {
+     "role": "frame",
+     "name": "Hotkey mapping"
+    },
+    {
+     "role": "frame",
+     "name": ""
+    },
+    {
+     "role": "frame",
+     "name": "Warning"
+    },
+    {
+     "role": "frame",
+     "name": "List of automation shortcuts"
+    },
+    {
+     "role": "frame",
+     "name": "Hotkey mapping"
+    },
+    {
+     "role": "frame",
+     "name": "Reloading"
+    }
+   ]
+  }
+ ]
+}

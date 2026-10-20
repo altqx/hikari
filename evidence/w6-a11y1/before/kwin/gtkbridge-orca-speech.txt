@@ -1,0 +1,20 @@
+18:17:18.895714 - SPEECH OUTPUT: 'Screen reader on.' {'established': False}
+18:17:19.015597 - SPEECH OUTPUT: 'HikariSub' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+18:17:19.094432 - SPEECH OUTPUT: 'Home' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+18:17:27.246662 - SPEECH OUTPUT: 'left control' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+18:17:27.311767 - SPEECH OUTPUT: 'frame' {'established': False}
+18:17:27.575519 - SPEECH OUTPUT: 'dialog' {'established': False}
+18:17:31.831683 - SPEECH OUTPUT: 'tab' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+18:17:31.869218 - SPEECH OUTPUT: 'Filter Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+18:17:31.869761 - SPEECH OUTPUT: 'combo box.' {'established': False}
+18:17:33.032961 - SPEECH OUTPUT: 'tab' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+18:17:33.082602 - SPEECH OUTPUT: 'Cancel' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+18:17:33.083130 - SPEECH OUTPUT: 'button.' {'established': False}
+18:17:34.307829 - SPEECH OUTPUT: 'HikariSub' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+18:17:34.308435 - SPEECH OUTPUT: 'frame' {'established': False}
+18:17:34.346862 - SPEECH OUTPUT: 'escape' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+18:17:34.479392 - SPEECH OUTPUT: 'Home' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+18:17:34.479892 - SPEECH OUTPUT: 'panel' {'established': False}
+18:17:34.493067 - SPEECH OUTPUT: 'New' {'established': False, 'family': {'name': '', 'gender': None, 'lang': 'C', 'dialect': '', 'variant': None}}
+18:17:34.493797 - SPEECH OUTPUT: 'button.' {'established': False}
+18:17:37.286957 - SPEECH OUTPUT: 'Screen reader off.' {'established': False}

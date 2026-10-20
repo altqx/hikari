@@ -1,0 +1,23 @@
+{
+ "gtkbridge-lookup": {
+  "status": "observed",
+  "detail": "kwin (XDG_CURRENT_DESKTOP=KDE): platform theme built in, GTK started False; the process's applications on the bus, in order: 'HikariSub' (Qt 6.11.2, :1.4): 28 windows; the lookup by name finds the main window True and the core panels ['Audio', 'Grid', 'Line editor', 'Video']",
+  "evidence": [
+   "gtkbridge-apps.json",
+   "gtkbridge-tree.txt"
+  ],
+  "at": "2026-10-20T18:14:56"
+ },
+ "gtkbridge-orca": {
+  "status": "observed",
+  "detail": "Orca with File > Open under theme built in: the dialog read True, HikariSub read after it True; spoken: ['Screen reader on.', 'HikariSub', 'Home', 'left control', 'frame', 'dialog', 'tab', 'Filter Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)', 'combo box.', 'tab', 'Cancel', 'button.', 'HikariSub', 'frame', 'escape', 'Home', 'panel', 'New', 'button.', 'Screen reader off.']",
+  "evidence": [
+   [
+    "gtkbridge-open-dialog.png",
+    "gtkbridge-open-dialog.txt"
+   ],
+   "gtkbridge-orca-speech.txt"
+  ],
+  "at": "2026-10-20T18:15:16"
+ }
+}
