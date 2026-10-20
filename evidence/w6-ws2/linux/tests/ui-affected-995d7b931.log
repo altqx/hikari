@@ -1,0 +1,27 @@
+Test project /home/altq/.t3/worktrees/hikari/w6-ws2/out/build/ws2
+    Start 1492: hikari_ui_shell_tests.visual.offscreen
+    Start 1494: hikari_ui_shell_tests.video.offscreen
+    Start 1572: hikari_ui_file_layouts_tests.refusals.offscreen
+1/9 Test #1572: hikari_ui_file_layouts_tests.refusals.offscreen .......   Passed   18.10 sec
+    Start 1570: hikari_ui_file_layouts_tests.arrangements.offscreen
+2/9 Test #1570: hikari_ui_file_layouts_tests.arrangements.offscreen ...   Passed   15.66 sec
+    Start 1576: hikari_ui_file_layouts_tests.tree.offscreen
+3/9 Test #1576: hikari_ui_file_layouts_tests.tree.offscreen ...........   Passed   13.97 sec
+    Start 1574: hikari_ui_file_layouts_tests.bounds.offscreen
+4/9 Test #1574: hikari_ui_file_layouts_tests.bounds.offscreen .........   Passed   12.47 sec
+    Start 1578: hikari_ui_file_layouts_tests.positions.offscreen
+5/9 Test #1494: hikari_ui_shell_tests.video.offscreen .................   Passed   60.71 sec
+    Start 1545: hikari_ui_recovery_tests.offscreen
+6/9 Test #1545: hikari_ui_recovery_tests.offscreen ....................   Passed    5.68 sec
+    Start 1580: hikari_ui_file_layouts_tests.recovery.offscreen
+7/9 Test #1580: hikari_ui_file_layouts_tests.recovery.offscreen .......   Passed    4.53 sec
+8/9 Test #1578: hikari_ui_file_layouts_tests.positions.offscreen ......   Passed   13.70 sec
+9/9 Test #1492: hikari_ui_shell_tests.visual.offscreen ................   Passed   77.26 sec
+
+100% tests passed out of 9
+
+Label Time Summary:
+offscreen    = 222.08 sec*proc (9 tests)
+qttest       = 222.08 sec*proc (9 tests)
+
+Total Test time (real) =  77.30 sec
