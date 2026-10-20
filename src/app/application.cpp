@@ -4995,6 +4995,7 @@ void Application::settingChanged(const QString &id)
         // KE1-render-cost-overlay: libass counts only while the overlay is
         // shown; the frame is drawn again so it shows the counts at once.
         m_renderer.countCost(m_settings->boolean("video.renderCost"));
+        m_videoRevision.reset();
         m_videoScript.clear();
         refreshVideo();
     }
