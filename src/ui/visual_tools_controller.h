@@ -76,6 +76,11 @@ class VisualToolsController : public QObject, public application::visual::Visual
     // when it changes. And the notice a tool gave, which the shell shows as
     // legacy's modal "Warning" message box until OK.
     Q_PROPERTY(QVariantList options READ options NOTIFY optionsChanged)
+    // VT1: every family's options and values (by Family, empty without a
+    // tool), which the inspector bar lays out unseen to keep the height of
+    // the tallest at its width: the video does not resize as the tool
+    // changes.
+    Q_PROPERTY(QVariantList familyLayouts READ familyLayouts NOTIFY optionsChanged)
     Q_PROPERTY(QString notice READ notice NOTIFY changed)
     // T5: the "Vector shape editing" dialog while the drawing's shape list's
     // "Edit" has it open (null otherwise).
@@ -144,6 +149,7 @@ public:
     bool gestureActive() const { return m_gesture.has_value(); }
     QString copied() const { return m_copied; }
     QVariantList options() const { return m_options; }
+    QVariantList familyLayouts() const;
     QString notice() const { return m_notice; }
     int bells() const { return m_bells; }
 
@@ -246,6 +252,9 @@ private:
     void resetTool();
     // Visuals::Draw with nothing to show: blockevents, and the arrow back.
     void block(application::visual::VisualTool &tool);
+    // A tool's options and values as QML takes them.
+    QVariantList optionMaps(const application::visual::VisualTool &t) const;
+    QVariantList valueMaps(const application::visual::VisualTool &t) const;
     // VT1: setValue and scrubValue's tool call; a refused step resets the tool.
     bool editValue(application::visual::VisualTool &t, const QString &name, const QString &text,
                    application::visual::ValueEdit edit);

@@ -580,30 +580,46 @@ void VisualToolsController::refreshOptions()
     // Its own signal, only when the options change: the row is not rebuilt
     // on every pointer move.
     QVariantList out;
-    if (const auto *t = tool()) {
-        for (const ToolOption &o : t->options(*this)) {
-            QStringList choices;
-            for (const auto &c : o.choices)
-                choices.append(qs(c));
-            const QString kind = o.kind == ToolOption::Kind::Choice   ? QStringLiteral("choice")
-                                 : o.kind == ToolOption::Kind::Action ? QStringLiteral("action")
-                                                                      : QStringLiteral("toggle");
-            out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(o.name)},
-                                   {QStringLiteral("kind"), kind},
-                                   {QStringLiteral("iconRole"), QString::fromStdString(o.iconRole)},
-                                   {QStringLiteral("tooltip"), qs(o.tooltip)},
-                                   {QStringLiteral("checked"), o.checked},
-                                   {QStringLiteral("enabled"), o.enabled && m_railEnabled},
-                                   {QStringLiteral("choices"), choices},
-                                   {QStringLiteral("index"), o.index},
-                                   {QStringLiteral("listEnds"), o.listEnds},
-                                   {QStringLiteral("group"), qs(o.group)}});
-        }
-    }
+    if (const auto *t = tool())
+        out = optionMaps(*t);
     if (out == m_options)
         return;
     m_options = std::move(out);
     emit optionsChanged();
+}
+
+QVariantList VisualToolsController::optionMaps(const VisualTool &t) const
+{
+    QVariantList out;
+    for (const ToolOption &o : t.options(*this)) {
+        QStringList choices;
+        for (const auto &c : o.choices)
+            choices.append(qs(c));
+        const QString kind = o.kind == ToolOption::Kind::Choice   ? QStringLiteral("choice")
+                             : o.kind == ToolOption::Kind::Action ? QStringLiteral("action")
+                                                                  : QStringLiteral("toggle");
+        out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(o.name)},
+                               {QStringLiteral("kind"), kind},
+                               {QStringLiteral("iconRole"), QString::fromStdString(o.iconRole)},
+                               {QStringLiteral("tooltip"), qs(o.tooltip)},
+                               {QStringLiteral("checked"), o.checked},
+                               {QStringLiteral("enabled"), o.enabled && m_railEnabled},
+                               {QStringLiteral("choices"), choices},
+                               {QStringLiteral("index"), o.index},
+                               {QStringLiteral("listEnds"), o.listEnds},
+                               {QStringLiteral("group"), qs(o.group)}});
+    }
+    return out;
+}
+
+QVariantList VisualToolsController::familyLayouts() const
+{
+    QVariantList out;
+    for (const auto &t : m_tools)
+        out.append(t ? QVariantMap{{QStringLiteral("options"), optionMaps(*t)},
+                                   {QStringLiteral("values"), valueMaps(*t)}}
+                     : QVariantMap{});
+    return out;
 }
 
 bool VisualToolsController::setOption(const QString &name, int value)
@@ -1033,11 +1049,14 @@ QVariantList VisualToolsController::overlay() const
 
 QVariantList VisualToolsController::values() const
 {
-    QVariantList out;
     const auto *t = tool();
-    if (!t)
-        return out;
-    for (const ToolValue &v : t->values(*this))
+    return t ? valueMaps(*t) : QVariantList();
+}
+
+QVariantList VisualToolsController::valueMaps(const VisualTool &t) const
+{
+    QVariantList out;
+    for (const ToolValue &v : t.values(*this))
         out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(v.name)},
                                {QStringLiteral("label"), qs(v.label)},
                                {QStringLiteral("text"), qs(v.text)},
