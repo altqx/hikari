@@ -195,3 +195,8 @@ if(UNIX AND NOT APPLE)
     find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS WaylandClientPrivate)
     target_link_libraries(hikari_ui PRIVATE Qt6::WaylandClientPrivate ${CMAKE_DL_LIBS})
 endif()
+qt_target_qml_sources(hikari_ui QML_FILES MainTitleBar.qml MainWindowEdges.qml TitleBarMenus.qml TitleBarMenuItem.qml)
+# The title bar's application icon: the packaged one (qrc:/hikari/ui/app-icon.png).
+set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/linux/icons/hicolor/64x64/apps/hikarisub.png")
+set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.png")
+qt_add_resources(hikari_ui "hikari_app_icon" PREFIX "/hikari/ui" FILES "${hikari_app_icon}")
