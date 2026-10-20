@@ -300,10 +300,10 @@ std::optional<QByteArray> Application::fileArrangement(application::DocumentId d
     const auto layout = session ? session->document().hikariProperty(application::kLayoutKey) : std::nullopt;
     if (!layout)
         return std::nullopt;
-    const QByteArray text(reinterpret_cast<const char *>(layout->data()), static_cast<qsizetype>(layout->size()));
+    const QByteArrayView text(reinterpret_cast<const char *>(layout->data()), static_cast<qsizetype>(layout->size()));
     QString problem;
     if (ui::WorkspaceArrangement::parseFromFile(text, {}, &problem))
-        return text;
+        return text.toByteArray();
     if (report) {
         const std::string *title = m_workspace.title(document);
         m_log->log(QCoreApplication::translate("HikariSub.Workspace", "The panel layout saved in %1 was not used because %2.")

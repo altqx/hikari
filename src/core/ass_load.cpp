@@ -102,15 +102,17 @@ bool Document::removeScriptInfo(std::u8string_view key)
     return removed;
 }
 
-std::optional<std::u8string> Document::hikariProperty(std::u8string_view key) const
+std::optional<std::u8string_view> Document::hikariProperty(std::u8string_view key) const
 {
-    std::optional<std::u8string> value;
+    const PropertyRecord *last = nullptr;
     for (const auto &section : m_sections)
         if (section.kind == SectionKind::Hikari)
             for (const auto &record : section.records)
                 if (const auto *p = std::get_if<PropertyRecord>(&record); p && p->key == key)
-                    value = p->value; // as scriptInfo: the last one wins
-    return value;
+                    last = p; // as scriptInfo: the last one wins
+    if (!last)
+        return std::nullopt;
+    return std::u8string_view(last->value);
 }
 
 bool Document::setHikariProperty(std::u8string_view key, std::u8string value)

@@ -50,7 +50,9 @@ struct WorkspaceArrangement {
     QByteArray serialiseForFile() const;
     // WS2: an arrangement serialiseForFile wrote, validated as parse does,
     // its floating panels placed from `origin` (the main window's top-left).
-    static std::optional<WorkspaceArrangement> parseFromFile(const QByteArray &text, QPoint origin,
+    // Text longer than any layout within kMaximumBytes encodes to is refused
+    // before it is copied or decoded.
+    static std::optional<WorkspaceArrangement> parseFromFile(QByteArrayView text, QPoint origin,
                                                              QString *problem = nullptr);
     bool operator==(const WorkspaceArrangement &) const = default;
 };

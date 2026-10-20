@@ -12,6 +12,7 @@
 
 #include "docking.h"
 #include "log_controller.h"
+#include "qtest_parts.h"
 #include "settings_store.h"
 #include "workspace_layout.h"
 
@@ -550,6 +551,10 @@ private slots:
         newer.insert(QStringLiteral("schema"), 7);
         QTest::newRow("newer") << QJsonDocument(newer).toJson(QJsonDocument::Compact).toBase64()
                                << QStringLiteral("newer version");
+        // Longer than any layout within the limit encodes to: refused by its
+        // length, before it is decoded.
+        constexpr qsizetype longest = (ui::WorkspaceLayoutController::kMaximumBytes + 2) / 3 * 4;
+        QTest::newRow("too long") << QByteArray(longest + 1, '!') << QStringLiteral("larger than");
     }
     void anUnusableFileArrangementFollowsTheNewTabRule()
     {
@@ -612,6 +617,60 @@ private slots:
         QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
         QVERIFY(!isFloating("audioDock"));
         QVERIFY(application->log().history().contains(QStringLiteral("parent.ass")));
+        stop();
+    }
+
+    // The engine takes a docked panel's place in a main window by name and
+    // uses what it finds without a check: a place in a main window Hikari
+    // does not have, or one it cannot read (read as such), is refused.
+    void aPanelPlacedInAMissingMainWindowIsRefused_data()
+    {
+        QTest::addColumn<QJsonValue>("placeholder");
+        QTest::newRow("another window")
+            << QJsonValue(QJsonObject{{"isFloatingWindow", false}, {"itemIndex", 0}, {"mainWindowUniqueName", "Other"}});
+        QTest::newRow("no window") << QJsonValue(QJsonObject{{"itemIndex", 0}});
+        QTest::newRow("floating as text")
+            << QJsonValue(QJsonObject{{"isFloatingWindow", "true"}, {"indexOfFloatingWindow", 0}, {"itemIndex", 0}});
+        QTest::newRow("not an object") << QJsonValue(QStringLiteral("Classic"));
+    }
+    void aPanelPlacedInAMissingMainWindowIsRefused()
+    {
+        QFETCH(QJsonValue, placeholder);
+        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(fileLayout())).object();
+        QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
+        QJsonArray docks = payload.value(QStringLiteral("allDockWidgets")).toArray();
+        bool replaced = false;
+        for (qsizetype i = 0; i < docks.size() && !replaced; ++i) {
+            QJsonObject dock = docks.at(i).toObject();
+            QJsonObject position = dock.value(QStringLiteral("lastPosition")).toObject();
+            QJsonArray places = position.value(QStringLiteral("placeholders")).toArray();
+            for (qsizetype j = 0; j < places.size() && !replaced; ++j) {
+                const QJsonObject place = places.at(j).toObject();
+                if (place.value(QStringLiteral("isFloatingWindow")).toBool())
+                    continue;
+                QCOMPARE(place.value(QStringLiteral("mainWindowUniqueName")).toString(), QStringLiteral("Classic"));
+                places.replace(j, placeholder);
+                position.insert(QStringLiteral("placeholders"), places);
+                dock.insert(QStringLiteral("lastPosition"), position);
+                docks.replace(i, dock);
+                replaced = true;
+            }
+        }
+        QVERIFY(replaced); // a docked panel's place, as Hikari writes it
+        payload.insert(QStringLiteral("allDockWidgets"), docks);
+        envelope.insert(QStringLiteral("payload"), payload);
+        const QByteArray layout = QJsonDocument(envelope).toJson(QJsonDocument::Compact).toBase64();
+        QString problem;
+        QVERIFY(!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem));
+        QVERIFY2(problem.contains(QStringLiteral("window that does not exist")), qPrintable(problem));
+
+        const QString file = write(path("place.ass"), kAss + "\n[Hikari]\nLayout=" + layout + "\n");
+        start();
+        application->addPage();
+        QVERIFY(application->openFile(file));
+        QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
+        QVERIFY(!isFloating("audioDock"));
+        QVERIFY(application->log().history().contains(QStringLiteral("place.ass")));
         stop();
     }
 
@@ -694,6 +753,80 @@ private slots:
         stop();
     }
 
+    // The engine reads a window's layout tree outside its own catch: a value
+    // of another type throws out of the restore and ends the program. A file
+    // with one, or whose groups and layout items do not match, is refused
+    // before the engine sees it.
+    void aLayoutTheEngineCannotReadIsRefused_data()
+    {
+        QTest::addColumn<QString>("change");
+        QTest::newRow("a child not an object") << QStringLiteral("child");
+        QTest::newRow("visibility as text") << QStringLiteral("visible");
+        QTest::newRow("a size as text") << QStringLiteral("size");
+        QTest::newRow("no orientation") << QStringLiteral("orientation");
+        QTest::newRow("a group under another id") << QStringLiteral("id");
+        QTest::newRow("a group in two items") << QStringLiteral("twice");
+        QTest::newRow("the central group") << QStringLiteral("central");
+        QTest::newRow("an affinity") << QStringLiteral("affinity");
+    }
+    void aLayoutTheEngineCannotReadIsRefused()
+    {
+        QFETCH(QString, change);
+        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(fileLayout())).object();
+        QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
+        QJsonObject main = payload.value(QStringLiteral("mainWindows")).toArray().first().toObject();
+        QJsonObject splitter = main.value(QStringLiteral("multiSplitterLayout")).toObject();
+        QJsonObject layout = splitter.value(QStringLiteral("layout")).toObject();
+        QJsonArray children = layout.value(QStringLiteral("children")).toArray();
+        QJsonObject frames = splitter.value(QStringLiteral("frames")).toObject();
+        QVERIFY(!children.isEmpty() && !frames.isEmpty()); // as Hikari writes it
+        QJsonObject frame = frames.begin().value().toObject();
+        QCOMPARE(frame.value(QStringLiteral("id")).toString(), frames.begin().key());
+        if (change == QStringLiteral("child")) {
+            children.replace(0, 1);
+        } else if (change == QStringLiteral("visible")) {
+            QJsonObject child = children.first().toObject();
+            child.insert(QStringLiteral("isVisible"), QStringLiteral("yes"));
+            children.replace(0, child);
+        } else if (change == QStringLiteral("size")) {
+            QJsonObject sizing = layout.value(QStringLiteral("sizingInfo")).toObject();
+            QJsonObject geometry = sizing.value(QStringLiteral("geometry")).toObject();
+            geometry.insert(QStringLiteral("width"), QStringLiteral("800"));
+            sizing.insert(QStringLiteral("geometry"), geometry);
+            layout.insert(QStringLiteral("sizingInfo"), sizing);
+        } else if (change == QStringLiteral("orientation")) {
+            layout.insert(QStringLiteral("orientation"), QJsonValue::Null);
+        } else if (change == QStringLiteral("id")) {
+            frame.insert(QStringLiteral("id"), QStringLiteral("other"));
+        } else if (change == QStringLiteral("twice")) {
+            children.append(QJsonObject{{"isContainer", false}, {"isVisible", true}, {"guestId", frames.begin().key()}});
+        } else if (change == QStringLiteral("central")) {
+            frame.insert(QStringLiteral("options"), 2);
+        } else {
+            main.insert(QStringLiteral("affinities"), QJsonArray{QStringLiteral("other")});
+        }
+        frames.insert(frames.begin().key(), frame);
+        layout.insert(QStringLiteral("children"), children);
+        splitter.insert(QStringLiteral("layout"), layout);
+        splitter.insert(QStringLiteral("frames"), frames);
+        main.insert(QStringLiteral("multiSplitterLayout"), splitter);
+        payload.insert(QStringLiteral("mainWindows"), QJsonArray{main});
+        envelope.insert(QStringLiteral("payload"), payload);
+        const QByteArray text = QJsonDocument(envelope).toJson(QJsonDocument::Compact).toBase64();
+        QString problem;
+        QVERIFY(!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem));
+        QVERIFY2(problem.contains(QStringLiteral("not a layout file")), qPrintable(problem));
+
+        const QString file = write(path("tree.ass"), kAss + "\n[Hikari]\nLayout=" + text + "\n");
+        start();
+        application->addPage();
+        QVERIFY(application->openFile(file));
+        QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
+        QVERIFY(!isFloating("audioDock"));
+        QVERIFY(application->log().history().contains(QStringLiteral("tree.ass")));
+        stop();
+    }
+
     // SRT and the other formats keep the arrangement only in the Session.
     void otherFormatsKeepItOnlyInTheSession()
     {
@@ -712,5 +845,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(FileLayoutsTest)
+HIKARI_QTEST_MAIN_IN_PARTS(FileLayoutsTest)
 #include "file_layouts_tests.moc"

@@ -274,8 +274,10 @@ public:
     // WS2: the [Hikari] section, HikariSub's own data in an ASS file (the
     // Document tab's panel arrangement). Its lines are "key=value": no ':',
     // so legacy LoadASS, which takes any line with one into Script Info,
-    // passes over them. The last value for key in any [Hikari] section.
-    std::optional<std::u8string> hikariProperty(std::u8string_view key) const;
+    // passes over them. The last value for key in any [Hikari] section, as
+    // the Document holds it (no copy: a file's value can be any length),
+    // valid until the Document changes.
+    std::optional<std::u8string_view> hikariProperty(std::u8string_view key) const;
     // The key's (last) value is replaced in place, or the key is added after
     // the last property of the last [Hikari] section. A Document without one
     // gets the section at its end, before the embedded [Fonts]/[Graphics]
