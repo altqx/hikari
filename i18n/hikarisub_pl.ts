@@ -216,6 +216,14 @@
         <translation>Automatyczne przewijanie do aktywnej linijki</translation>
     </message>
     <message>
+        <source>Sync with video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sync the video and audio cursors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Spectrum</source>
         <translation type="unfinished"></translation>
     </message>
@@ -230,6 +238,15 @@
     <message>
         <source>Enhance speech frequencies in the spectrum</source>
         <translation>Uwydatnienie częstotliwości głosu na spektrum</translation>
+    </message>
+    <message>
+        <source>Output device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output device: %1</source>
+        <extracomment>The audio panel&apos;s speaker button; %1 is the device audio plays through now</extracomment>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose audio file</source>
@@ -253,6 +270,20 @@
     </message>
     <message>
         <source>Indexing video %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is not connected. No output device is available.</source>
+        <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is not connected. Audio plays through %2.</source>
+        <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio settings…</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3264,6 +3295,10 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3588,7 +3623,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Open blank 2h30m audio</source>
-        <translation>Otwórz puste audio na 2:30 godziny</translation>
+        <translation type="vanished">Otwórz puste audio na 2:30 godziny</translation>
     </message>
     <message>
         <source>Close audio</source>
@@ -3980,7 +4015,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Opens blank audio 2 hour and 30 minutes long</source>
-        <translation>Otwiera puste audio na 2:30 godziny</translation>
+        <translation type="vanished">Otwiera puste audio na 2:30 godziny</translation>
     </message>
     <message>
         <source>Closes audio</source>

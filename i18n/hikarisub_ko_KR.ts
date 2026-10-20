@@ -216,6 +216,14 @@
         <translation>활성 줄 자동 스크롤</translation>
     </message>
     <message>
+        <source>Sync with video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sync the video and audio cursors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Spectrum</source>
         <translation type="unfinished"></translation>
     </message>
@@ -230,6 +238,15 @@
     <message>
         <source>Enhance speech frequencies in the spectrum</source>
         <translation>스펙트럼 음성 주파수 향상</translation>
+    </message>
+    <message>
+        <source>Output device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output device: %1</source>
+        <extracomment>The audio panel&apos;s speaker button; %1 is the device audio plays through now</extracomment>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose audio file</source>
@@ -253,6 +270,20 @@
     </message>
     <message>
         <source>Indexing video %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is not connected. No output device is available.</source>
+        <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is not connected. Audio plays through %2.</source>
+        <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio settings…</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3239,6 +3270,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3563,7 +3598,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open blank 2h30m audio</source>
-        <translation>빈 2h30m 오디오 열기</translation>
+        <translation type="vanished">빈 2h30m 오디오 열기</translation>
     </message>
     <message>
         <source>Close audio</source>
@@ -3955,7 +3990,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens blank audio 2 hour and 30 minutes long</source>
-        <translation>2시간 30분 길이의 빈 오디오를 엽니다</translation>
+        <translation type="vanished">2시간 30분 길이의 빈 오디오를 엽니다</translation>
     </message>
     <message>
         <source>Closes audio</source>

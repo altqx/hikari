@@ -374,6 +374,31 @@ QStringList HotkeysController::globalSequences() const
     return out;
 }
 
+namespace {
+
+// KB2: the Video window's VIDEO_PLAY_PAUSE acts from every panel.
+bool playsEverywhere(const application::HotkeyId &key)
+{
+    return key.type == application::VideoHotkey && key.id == application::hotkeyIdOf("VIDEO_PLAY_PAUSE");
+}
+
+} // namespace
+
+QStringList HotkeysController::macroTakenSequences() const
+{
+    QStringList out = globalSequences();
+    for (const auto &[key, hotkey] : m_installed) {
+        if (!playsEverywhere(key) || hotkey.accel.empty())
+            continue;
+        const auto seq = application::qtKeysOfAccel(hotkey.accel);
+        const QString keys =
+            seq.empty() ? QString() : QKeySequence::fromString(qs(seq), QKeySequence::PortableText).toString(QKeySequence::PortableText);
+        if (!keys.isEmpty() && !out.contains(keys))
+            out << keys;
+    }
+    return out;
+}
+
 bool HotkeysController::repeatedKey(const QString &action, int interval)
 {
     // config::CheckLastKeyEvent: an ignored key does not move lastCheckedTime.
@@ -521,7 +546,8 @@ QVariantList HotkeysController::rows() const
         // AM1: a macro's row shows its script and macro by name ("script"
         // and "macro"), and a note in the warning colour when the binding
         // does not resolve or a Global command's binding of the same keys
-        // takes them (the static table comes first, as the shell installs it).
+        // takes them (the static table comes first, as the shell installs
+        // it), or the Video window's Play / Pause's does (KB2: every panel).
         if (r.key.id >= application::kFirstScriptHotkey) {
             const QVariantMap macro = m_scripts.describe(r.name);
             row.insert(QStringLiteral("script"), macro.value(QStringLiteral("script")));
@@ -530,7 +556,8 @@ QVariantList HotkeysController::rows() const
             if (note.isEmpty() && !r.accel.empty())
                 for (std::size_t j = 0; j < m_list->rowCount(); ++j) {
                     const auto &other = m_list->row(int(j));
-                    if (other.key.type == application::GlobalHotkey && other.key.id < application::kFirstScriptHotkey &&
+                    if (((other.key.type == application::GlobalHotkey && other.key.id < application::kFirstScriptHotkey) ||
+                         playsEverywhere(other.key)) &&
                         sameChord(other.accel, r.accel)) {
                         note = QCoreApplication::translate("HikariSub.Hotkeys", "%1 takes it").arg(qs(other.name));
                         break;
@@ -823,6 +850,11 @@ QString HotkeysController::globalHolder(const QString &keys) const
             continue;
         return commandName(application::hotkeyIdOf(m.value(QStringLiteral("symbol")).toString().toStdString()));
     }
+    for (const auto &[key, hotkey] : m_installed)
+        if (playsEverywhere(key) && !hotkey.accel.empty() &&
+            QKeySequence::fromString(qs(application::qtKeysOfAccel(hotkey.accel)), QKeySequence::PortableText)
+                    .toString(QKeySequence::PortableText) == keys)
+            return commandName(key.id);
     return {};
 }
 

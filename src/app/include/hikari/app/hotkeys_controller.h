@@ -51,6 +51,10 @@ class HotkeysController : public QObject {
     Q_PROPERTY(QVariantList globalShortcuts READ globalShortcuts NOTIFY installedChanged)
     // Their keys (portable text), for other shortcuts to give way to them.
     Q_PROPERTY(QStringList globalSequences READ globalSequences NOTIFY installedChanged)
+    // AM1: the keys a macro's shortcut gives way to: the Global ones and the
+    // Video window's Play / Pause, which KB2's key router takes from every
+    // panel.
+    Q_PROPERTY(QStringList macroTakenSequences READ macroTakenSequences NOTIFY installedChanged)
     // The Options page: the shown rows {row, text, accel, modified}, the
     // selected shown position and the filter mode.
     Q_PROPERTY(QVariantList rows READ rows NOTIFY rowsChanged)
@@ -70,6 +74,7 @@ public:
     QVariantMap keys() const;
     QVariantList globalShortcuts() const;
     QStringList globalSequences() const;
+    QStringList macroTakenSequences() const;
     QVariantList rows() const;
     bool listFiltered() const;
     int topBlock() const;

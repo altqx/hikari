@@ -11233,7 +11233,7 @@ private slots:
                  nativeFixture("audioonly.mkv"));
         // what the scene graph drew, in whichever renderer this run uses
         // (offscreen: the software adaptation; xvfb: RHI)
-        QTest::mouseMove(window, QPoint(0, 0));
+        QTest::mouseMove(window, QPoint(1, 1));
         QTRY_VERIFY(!audio.cursor().has_value());
         QCoreApplication::processEvents();
         const QImage drawn = window->grabWindow();
@@ -11493,7 +11493,7 @@ private slots:
         const auto scene = audio.scene([](application::AudioShape::Font, std::string_view) { return 30; });
         QCOMPARE(scene.at(1).kind, application::AudioShape::Kind::Image);
         // what the scene graph drew, before the active Line (column 10, 20)
-        QTest::mouseMove(window, QPoint(0, 0));
+        QTest::mouseMove(window, QPoint(1, 1));
         QTRY_VERIFY(!audio.cursor().has_value());
         QCoreApplication::processEvents();
         auto *display = item("audioDisplay");
@@ -12982,6 +12982,68 @@ private slots:
         QVERIFY(!offer->isVisible());
     }
 
+    // AM1 with KB1/KB2's key router: a key being recorded is the recorder's
+    // whichever panel the pointer is over (no Grid binding runs, Space does
+    // not play), and a macro on Play / Pause's keys, which act from every
+    // panel, is named as taken by it and does not run.
+    void automationRecorderKeepsTheKeysFromTheRouter()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const std::size_t lineCount = session->document().lines().size();
+        const QString fixture = QStringLiteral(HIKARI_LUA_FIXTURES "/shell-fixture.lua");
+        application->automation().load(QDir::toNativeSeparators(fixture).toStdString());
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_Prefix from dialog"), 30000);
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(dock && QMetaObject::invokeMethod(dock, "open"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *tool = named("automationTool");
+        auto *recorder = visualItem("automationRecorder");
+        QVERIFY(tool && recorder);
+        const auto hover = [&](const char *name) {
+            QQuickItem *over = item(name);
+            QTest::mouseMove(window, over->mapToScene(QPointF(over->width() / 2, over->height() / 2)).toPoint());
+            QCoreApplication::processEvents();
+        };
+        const auto pressedKeys = [&] {
+            return tool->property("pressed").toMap().value(QStringLiteral("keys")).toString();
+        };
+        const QString legacyName = QStringLiteral("Script shell-fixture.lua-0");
+        QVERIFY(QMetaObject::invokeMethod(tool, "record", Q_ARG(QVariant, legacyName)));
+        QTRY_VERIFY(recorder->hasActiveFocus());
+        hover("gridPanel");
+        QCOMPARE(named("keyRouter")->property("hoveredPanel").value<QQuickItem *>(), item("gridPanel"));
+        press(Qt::Key_D, Qt::ControlModifier); // the Grid's GRID_DUPLICATE_LINES
+        QTRY_COMPARE(pressedKeys(), QStringLiteral("Ctrl+D"));
+        QCOMPARE(session->document().lines().size(), lineCount);
+        // KB2's Play / Pause from every panel: the recorder's, which refuses
+        // it (a macro's shortcut needs a modifier, legacy's capture rule).
+        press(Qt::Key_Space);
+        QTRY_VERIFY(tool->property("refusal").toString().contains(QStringLiteral("must include modifiers")));
+        QCOMPARE(tool->property("recording").toString(), legacyName);
+        press(Qt::Key_Escape);
+        QTRY_COMPARE(tool->property("recording").toString(), QString());
+        QTest::mouseMove(window, QPoint(1, 1));
+        // A macro on Space (a carried-over binding): Play / Pause takes it.
+        auto &macros = application->automationHotkeys();
+        macros.replaceCommitted({{legacyName.toStdString(), "Space"}});
+        macros.install();
+        int script = -1;
+        QTRY_VERIFY([&] {
+            for (int i = 0; i < 10 && script < 0; ++i)
+                if (auto *row = visualItem(qPrintable(QStringLiteral("macro_%1_0").arg(i)));
+                    row && row->property("text").toString() == QStringLiteral("Prefix from dialog"))
+                    script = i;
+            return script >= 0;
+        }());
+        QTRY_COMPARE(visualItem(qPrintable(QStringLiteral("keysNote_%1_0").arg(script)))->property("text").toString(),
+                     QStringLiteral("Play / Pause also uses Space and takes it."));
+        QVERIFY(application->hotkeys().macroTakenSequences().contains(QStringLiteral("Space")));
+        QVERIFY(!application->hotkeys().globalSequences().contains(QStringLiteral("Space")));
+        macros.replaceCommitted({});
+        macros.install();
+    }
+
     // AM1: the Automation panel, closed by default and opened from
     // Automation > Show panel. A macro's shortcut is recorded on its row and
     // applies at once; a taken one asks to reassign; Esc leaves it; a Global
@@ -13486,7 +13548,7 @@ private slots:
         QTest::mouseMove(window, display->mapToScene(QPointF(10, 10)).toPoint());
         QVERIFY(!audio.cursor() || *audio.cursor() != 10.f);
         // (the mouse leaves, or its hover would draw it once playback ends)
-        QTest::mouseMove(window, QPoint(0, 0));
+        QTest::mouseMove(window, QPoint(1, 1));
         QTRY_VERIFY_WITH_TIMEOUT(!audio.playing(), 5000);
         QVERIFY(!audio.cursor());
         QCOMPARE(audio.playback()->lastPositionMs(), 0); // not a Stop
@@ -13519,7 +13581,7 @@ private slots:
                           item("audioDisplay")->mapToScene(QPointF(50, audio.view().height() + 5)).toPoint());
         QVERIFY(audio.hasMark());
         QCOMPARE(audio.markMs(), 1500);
-        QTest::mouseMove(window, QPoint(0, 0));
+        QTest::mouseMove(window, QPoint(1, 1));
         item("audioDisplay")->forceActiveFocus();
         press(Qt::Key_0, Qt::KeypadModifier); // AUDIO_MARK_PLAY_TIME (1000) before
         QCOMPARE(range(), (PlayRange{24000, 48000}));
@@ -13568,7 +13630,7 @@ private slots:
         QCOMPARE(range(), (PlayRange{48000, 48000}));
         press(Qt::Key_H);
         // (the mouse leaves: over the audio the hotkeys follow it, KB1)
-        QTest::mouseMove(window, QPoint(0, 0));
+        QTest::mouseMove(window, QPoint(1, 1));
 
         // from the Grid: the letters and the keypad (not Down and Up, which
         // move there), and the display takes the focus
@@ -13703,7 +13765,7 @@ private slots:
         QCOMPARE(session->historySize(), steps);
         QCOMPARE(session->document().lines().size(), lines.size());
         // Outside the panels: the focused Grid's keys.
-        QTest::mouseMove(window, QPoint(0, 0));
+        QTest::mouseMove(window, QPoint(1, 1));
         QCoreApplication::processEvents();
         QCOMPARE(hovered(), QString());
         press(Qt::Key_Down);
@@ -13721,7 +13783,7 @@ private slots:
         QVERIFY(!audio.playing());
         QVERIFY(hovered() != QStringLiteral("audioPanel"));
         audioPanel->setScale(1);
-        QTest::mouseMove(window, QPoint(0, 0));
+        QTest::mouseMove(window, QPoint(1, 1));
         QCoreApplication::processEvents();
         // Focus in the audio, the pointer over the Grid: the Grid's Ctrl+D.
         item("audioDisplay")->forceActiveFocus();
@@ -13772,7 +13834,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         closeMismatchQuestion();
         keysNeverRepeat();
-        QTest::mouseMove(window, QPoint(0, 0)); // over no panel (KB1)
+        QTest::mouseMove(window, QPoint(1, 1)); // over no panel (KB1); QPoint(0, 0) is null: the centre
         auto &hotkeys = application->hotkeys();
         QStringList reached;
         connect(&hotkeys, &app::HotkeysController::ran, this,
@@ -13857,7 +13919,7 @@ private slots:
             QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
             closeMismatchQuestion();
             keysNeverRepeat();
-            QTest::mouseMove(window, QPoint(0, 0));
+            QTest::mouseMove(window, QPoint(1, 1));
         };
         QList<std::pair<QString, bool>> runs;
         bool changed = true; // the shell a command left changed starts again
@@ -13963,7 +14025,7 @@ private slots:
         if (mismatch && QTest::qWaitFor([&] { return mismatch->property("visible").toBool(); }, 3000))
             QMetaObject::invokeMethod(mismatch, "close");
         QTRY_VERIFY(!mismatch || !mismatch->property("visible").toBool());
-        QTest::mouseMove(window, QPoint(0, 0)); // the pointer away from the display
+        QTest::mouseMove(window, QPoint(1, 1)); // the pointer away from the display
         auto *toggle = qobject_cast<QQuickItem *>(named("audioSyncVideo"));
         QVERIFY(toggle);
         QTRY_VERIFY(toggle->isVisible() && toggle->width() > 0);
@@ -14021,7 +14083,7 @@ private slots:
         QTRY_VERIFY(!audio.syncVideo());
         QVERIFY(!toggle->property("checked").toBool());
         QVERIFY(!application->settingsStore()->boolean("audio.syncVideo"));
-        QTest::mouseMove(window, QPoint(0, 0));
+        QTest::mouseMove(window, QPoint(1, 1));
         const auto viewAt = audio.view().position();
         QVERIFY(video.play());
         QTRY_VERIFY_WITH_TIMEOUT(video.session().tellMs() > 300, 10000);
@@ -14142,7 +14204,7 @@ private slots:
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Z); // AUDIO_PREVIOUS_ALT
         QCOMPARE(editor.text(), QStringLiteral("first"));
-        QTest::mouseMove(window, QPoint(0, 0));
+        QTest::mouseMove(window, QPoint(1, 1));
     }
 
     // A3: legacy AudioDisplay::Commit ran EditBox::OnEdit after an
@@ -14274,7 +14336,7 @@ private slots:
         QCOMPARE(audio.currentSyllable(), 2);
         QCOMPARE(range(), (PlayRange{33600, 24000}));
         press(Qt::Key_H);
-        QTest::mouseMove(window, QPoint(0, 0));
+        QTest::mouseMove(window, QPoint(1, 1));
         // Undo takes the join back
         QVERIFY(editor.undo());
         QVERIFY(editor.text().endsWith(QStringLiteral("{\\k25}o{\\k25}ke")));
@@ -14326,7 +14388,7 @@ private slots:
             QTest::mouseRelease(window, Qt::LeftButton, {}, display->mapToScene(QPointF(endX + 20, 10)).toPoint());
             QVERIFY(!audio.modified()); // committed
             QTRY_VERIFY(video.times() != before); // the video's Line has the new end
-            QTest::mouseMove(window, QPoint(0, 0));
+            QTest::mouseMove(window, QPoint(1, 1));
         }
     }
 

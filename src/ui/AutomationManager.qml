@@ -879,6 +879,9 @@ Pane {
         id: recorder
         objectName: "automationRecorder"
         focus: root.recording.length > 0
+        // KB1's key router stands aside: no hovered panel's binding or
+        // Space's play and pause takes a key being recorded.
+        readonly property bool recordsKeys: root.recording.length > 0
         Accessible.role: Accessible.EditableText
         Accessible.name: qsTr("Shortcut")
         Keys.onShortcutOverride: event => event.accepted = root.recording.length > 0

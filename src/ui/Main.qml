@@ -6474,12 +6474,13 @@ ApplicationWindow {
                 context: Qt.ApplicationShortcut
                 // The scripts' entries follow the static ones in the frame's
                 // table (map order: ids from 30100), so a static Global
-                // binding of the same keys wins.
+                // binding of the same keys wins, as the Video window's
+                // Play / Pause does (KB2: it acts from every panel).
                 // Off with the editor, as the Automation menu's macros
                 // (legacy's OnMenuOpened disables them there), and under a
                 // modal dialog, which keeps the panel's run controls out of reach.
                 enabled: root.app.editorOn && !root.menuHasKeys && !root.workspaceLayout.modalOpen
-                         && !root.hotkeys.globalSequences.includes(modelData.keys)
+                         && !root.hotkeys.macroTakenSequences.includes(modelData.keys)
                 onActivated: root.automationHotkeys.run(modelData.legacyName)
             }
         }
