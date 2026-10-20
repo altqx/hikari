@@ -594,6 +594,24 @@ bool preserves(const XmlNode &node, bool inherited)
     return inherited;
 }
 
+// Under xml:space="preserve", the spaces at a Line's edges as hard spaces
+// (\h): ASS trims a Line's text, so plain spaces there would be lost.
+std::u8string hardEdges(u8sv text, bool leading, bool trailing)
+{
+    std::size_t from = 0, to = text.size();
+    while (leading && from < to && text[from] == u8' ')
+        ++from;
+    while (trailing && to > from && text[to - 1] == u8' ')
+        --to;
+    std::u8string out;
+    for (std::size_t i = 0; i < from; ++i)
+        out += u8"\\h";
+    out += text.substr(from, to - from);
+    for (std::size_t i = to; i < text.size(); ++i)
+        out += u8"\\h";
+    return out;
+}
+
 // A text node's lyrics, literal: whitespace runs as one space (TTML's
 // default), or under xml:space="preserve" as written, a tab a space and a
 // line end a line break.
@@ -829,15 +847,17 @@ private:
                                                  std::u8string(attribute(node, u8"begin").value_or(u8""))});
         Words words;
         Backgrounds backgrounds;
-        if (auto ok = collect(node, words, backgrounds, preserves(node, inherited)); !ok)
+        const bool preserve = preserves(node, inherited);
+        if (auto ok = collect(node, words, backgrounds, preserve); !ok)
             return ok;
         LyricLine out;
         out.actor = actor;
         if (words.words.empty()) {
-            out.text = detail::trim(words.plain);
-            if (!out.text.empty()) {
+            const bool text = !detail::trim(words.plain).empty();
+            out.text = preserve ? hardEdges(words.plain, true, true) : std::u8string(detail::trim(words.plain));
+            if (text) {
                 if (!begin || !end)
-                    return std::unexpected(LyricsProblem{Kind::MissingTime, node.line, out.text});
+                    return std::unexpected(LyricsProblem{Kind::MissingTime, node.line, std::u8string(detail::trim(words.plain))});
                 out.start = *begin;
                 out.end = *end;
                 if (auto ok = add(std::move(out), node.line); !ok)
@@ -852,10 +872,14 @@ private:
                 words.words[i].end = *wordEnd;
             }
             // The text before the first word, joined to it as written:
-            // "hello<span>world" stays one word, "hello <span>" two.
-            const u8sv leading = detail::trimLeft(words.leading);
+            // "hello<span>world" stays one word, "hello <span>" two. Kept
+            // spaces at the Line's edges are hard spaces.
+            const std::u8string leading = preserve ? hardEdges(words.leading, true, false)
+                                                   : std::u8string(detail::trimLeft(words.leading));
             if (!leading.empty())
-                words.words.front().text.insert(0, std::u8string(leading));
+                words.words.front().text.insert(0, leading);
+            if (preserve)
+                words.words.back().text = hardEdges(words.words.back().text, false, true);
             out.start = std::min(own->first.value_or(words.words.front().begin), words.words.front().begin);
             out.end = std::max(own->second.value_or(words.words.back().end), words.words.back().end);
             out.words = std::move(words.words);

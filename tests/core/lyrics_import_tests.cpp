@@ -515,6 +515,16 @@ TEST(LyricsImport, TtmlXmlSpacePreserveKeepsWhitespace)
     EXPECT_EQ(text("><p begin=\"1\" end=\"3\" xml:space=\"preserve\"><span begin=\"1\" end=\"2\">a</span>  "
                    "<span begin=\"2\" end=\"3\">b</span></p>"),
               "{\\k100}a  {\\k100}b");
+    // ASS trims a Line's ends, so kept spaces there are hard spaces.
+    EXPECT_EQ(text("><p begin=\"1\" end=\"2\" xml:space=\"preserve\">  a  </p>"), "\\h\\ha\\h\\h");
+    EXPECT_EQ(text("><p begin=\"1\" end=\"3\" xml:space=\"preserve\">  <span begin=\"1\" end=\"2\">a</span> "
+                   "<span begin=\"2\" end=\"3\">b</span>  </p>"),
+              "{\\k100}\\h\\ha {\\k100}b\\h\\h");
+    // A paragraph of nothing but kept spaces is still no lyric.
+    const auto blank = importTtml(bytes("<tt><body><p begin=\"1\" end=\"2\" xml:space=\"preserve\">   </p>"
+                                        "<p begin=\"2\" end=\"3\">x</p></body></tt>"));
+    ASSERT_TRUE(blank.has_value());
+    EXPECT_EQ(rows(*blank).size(), 1u);
     // Only xml:space counts, not another prefix's "space".
     EXPECT_EQ(text("><p begin=\"1\" end=\"2\" x:space=\"preserve\">a  b</p>"), "a b");
 }
