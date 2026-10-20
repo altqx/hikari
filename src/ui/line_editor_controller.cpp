@@ -272,9 +272,10 @@ bool LineEditorController::translationMode() const
 
 QString LineEditorController::videoText() const
 {
-    // The session's (the draft applied), not E5's split, which is shown
-    // only until an edit makes it the draft.
-    const auto r = sessionRecord();
+    // The session's (the draft applied, as Application::showVideoSubtitles
+    // renders it; without live editing the committed Line), not E5's split,
+    // which is shown only until an edit makes it the draft.
+    const auto r = options().liveEditing ? sessionRecord() : committedRecord();
     if (!r)
         return {};
     // Only the part FS1's label reads, cut before the conversion.

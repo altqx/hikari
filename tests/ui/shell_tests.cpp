@@ -29,6 +29,7 @@
 #include "hikari/application/visual_scale.h"
 #include "hikari/application/visual_shift.h"
 #include "hikari/application/grid_translation.h"
+#include "hikari/application/video_controls.h"
 #include "hikari/application/video_fullscreen.h"
 #include "icon_theme.h"
 #include "all_tags_editor.h"
@@ -22886,6 +22887,11 @@ private slots:
         QTRY_COMPARE(editor.videoText(), QStringLiteral("tl two"));
         editor.translationEdited(QStringLiteral("tl draft"), 8);
         QTRY_COMPARE(editor.videoText(), QStringLiteral("tl draft"));
+        // Without live editing the video shows the committed Line, and so does the label.
+        application->settingsStore()->set("video.disableLiveEditing", true);
+        QTRY_COMPARE(editor.videoText(), QStringLiteral("tl two"));
+        application->settingsStore()->set("video.disableLiveEditing", false);
+        QTRY_COMPARE(editor.videoText(), QStringLiteral("tl draft"));
         // Only what the label reads, cut before the conversion.
         const QString huge(3 * int(application::kFullscreenLineInputBytes), QLatin1Char('a'));
         editor.translationEdited(huge, int(huge.size()));
@@ -23018,6 +23024,40 @@ private slots:
         QCOMPARE(view.volume(), -7);
         // In the zoom mode, which takes the rest of the bar's wheel, the
         // speaker's wheel stays the volume's.
+        // Muted at a loud level, a quieter one is heard at once at its own
+        // level: the player is never given the loud one on the way.
+        {
+            struct Recorder : application::GeneralPlayerPort {
+                std::vector<double> gains;
+                void open(const std::string &, Opened) override {}
+                void seek(std::int64_t, Seeked) override {}
+                void play() override {}
+                void pause() override {}
+                void stop() override {}
+                bool selectAudioTrack(int) override { return false; }
+                bool selectSubtitleTrack(int) override { return false; }
+                application::PlaybackState playbackState() const override { return {}; }
+                application::MediaStatus mediaStatus() const override { return {}; }
+                double bufferProgress() const override { return 0; }
+                application::PlayerClock clock() const override { return {}; }
+                application::MediaDescription description() const override { return {}; }
+                std::uint64_t generation() const override { return 0; }
+                void setVolume(double linear) override { gains.push_back(linear); }
+            } recorder;
+            view.setVolume(0);
+            view.toggleMute();
+            QVERIFY(view.muted());
+            view.setPlayer(&recorder);
+            recorder.gains.clear();
+            view.setVolume(-60);
+            QVERIFY(!view.muted());
+            QVERIFY(!recorder.gains.empty());
+            for (double g : recorder.gains)
+                QVERIFY2(g <= application::videoVolumeGain(-60), qPrintable(QString::number(g)));
+            QCOMPARE(recorder.gains.back(), application::videoVolumeGain(-60));
+            view.setPlayer(&player);
+            view.setVolume(-7);
+        }
         QVERIFY(view.toggleZoom());
         const int zoom = view.zoomPercent();
         QWheelEvent again(over, fsWindow->mapToGlobal(over), QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,

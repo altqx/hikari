@@ -280,14 +280,13 @@ bool VideoViewController::stepVolume(bool up)
 
 void VideoViewController::setVolume(int volume)
 {
-    if (m_muted) { // FS1: a new volume is heard
+    if (volume != this->volume())
+        m_settings.set("video.volume", volume); // applied through the store's change (silent while muted)
+    if (m_muted) { // FS1: a new volume is heard, at its level, never the old one first
         m_muted = false;
         applyVolume();
         emit changed();
     }
-    if (volume == this->volume())
-        return;
-    m_settings.set("video.volume", volume); // applied through the store's change
 }
 
 void VideoViewController::toggleMute()
