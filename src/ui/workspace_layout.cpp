@@ -20,6 +20,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSaveFile>
+#include <QSet>
 #include <QScreen>
 #include <QTimer>
 
@@ -295,11 +296,53 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     if (payload.isEmpty())
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no layout"));
     // IDs before the engine sees them: the Classic main window, known panels only.
+    const QJsonArray mainWindows = payload.value(QStringLiteral("mainWindows")).toArray();
     bool classic = false;
-    for (const auto &w : payload.value(QStringLiteral("mainWindows")).toArray())
+    for (const auto &w : mainWindows)
         classic = classic || w.toObject().value(QStringLiteral("uniqueName")).toString() == QStringLiteral("Classic");
     if (!classic)
         return fail(QCoreApplication::translate("HikariSub.Workspace", "it holds no Classic arrangement"));
+    // The engine makes a window, a group or a layout item for every entry it
+    // is given, and a file can come from anyone: no more than Hikari's panels
+    // can fill. One main window; a floating window, a group and each panel
+    // in a group at most once per panel; in each window's layout, a place and
+    // a placeholder per panel and the containers between them.
+    const QJsonArray floatingWindows = payload.value(QStringLiteral("floatingWindows")).toArray();
+    const qsizetype panels = panelIds().size();
+    const QString tooMany =
+        QCoreApplication::translate("HikariSub.Workspace", "it holds more windows or panels than HikariSub has");
+    if (mainWindows.size() > 1 || floatingWindows.size() > panels)
+        return fail(tooMany);
+    qsizetype groups = 0;
+    QSet<QString> grouped;
+    QJsonArray windows = mainWindows;
+    for (const auto &w : floatingWindows)
+        windows.append(w);
+    for (const auto &w : windows) {
+        const QJsonObject layout = w.toObject().value(QStringLiteral("multiSplitterLayout")).toObject();
+        const QJsonObject frames = layout.value(QStringLiteral("frames")).toObject();
+        groups += frames.size();
+        for (const auto &frame : frames)
+            for (const auto &dock : frame.toObject().value(QStringLiteral("dockWidgets")).toArray()) {
+                const QString name = dock.isObject() ? dock.toObject().value(QStringLiteral("uniqueName")).toString()
+                                                     : dock.toString();
+                if (!panelIds().contains(name))
+                    return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
+                if (grouped.contains(name))
+                    return fail(tooMany);
+                grouped.insert(name);
+            }
+        qsizetype items = 0;
+        QList<QJsonObject> pending{layout.value(QStringLiteral("layout")).toObject()};
+        while (!pending.isEmpty()) {
+            if (++items > 4 * panels)
+                return fail(tooMany);
+            for (const auto &child : pending.takeLast().value(QStringLiteral("children")).toArray())
+                pending.append(child.toObject());
+        }
+    }
+    if (groups > panels)
+        return fail(tooMany);
     // The engine takes a floating window's parent from its own main windows
     // by this index without a check (LayoutSaver::restoreLayout), and a file
     // can come from anyone: Hikari's one main window, or none.
@@ -308,10 +351,25 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
         if (!parent.isUndefined() && !(parent.isDouble() && (parent.toDouble() == -1 || parent.toDouble() == 0)))
             return fail(QCoreApplication::translate("HikariSub.Workspace", "it puts a floating panel in a window that does not exist"));
     }
+    QSet<QString> docks;
     for (const auto &d : payload.value(QStringLiteral("allDockWidgets")).toArray()) {
         const QString name = d.toObject().value(QStringLiteral("uniqueName")).toString();
         if (!panelIds().contains(name))
             return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
+        if (docks.contains(name) ||
+            d.toObject().value(QStringLiteral("lastPosition")).toObject().value(QStringLiteral("placeholders")).toArray().size() >
+                1 + floatingWindows.size())
+            return fail(tooMany);
+        docks.insert(name);
+    }
+    QSet<QString> closed;
+    for (const auto &d : payload.value(QStringLiteral("closedDockWidgets")).toArray()) {
+        const QString name = d.isObject() ? d.toObject().value(QStringLiteral("uniqueName")).toString() : d.toString();
+        if (!panelIds().contains(name))
+            return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
+        if (closed.contains(name))
+            return fail(tooMany);
+        closed.insert(name);
     }
     if (preset) {
         const QString named = o.value(QStringLiteral("preset")).toString();

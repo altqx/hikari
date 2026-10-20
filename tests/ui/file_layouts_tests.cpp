@@ -615,6 +615,85 @@ private slots:
         stop();
     }
 
+    // The engine makes a window, a group or a layout item for every entry a
+    // file gives it: a file asking for more than Hikari's panels can fill is
+    // refused before the engine sees it.
+    void aLayoutLargerThanThePanelsIsRefused_data()
+    {
+        QTest::addColumn<QString>("change");
+        QTest::newRow("floating window clones") << QStringLiteral("floating");
+        QTest::newRow("second main window") << QStringLiteral("main");
+        QTest::newRow("a panel in two groups") << QStringLiteral("group");
+        QTest::newRow("layout items") << QStringLiteral("items");
+        QTest::newRow("a panel listed twice") << QStringLiteral("dock");
+        QTest::newRow("placeholders") << QStringLiteral("placeholders");
+        QTest::newRow("a closed panel twice") << QStringLiteral("closed");
+    }
+    void aLayoutLargerThanThePanelsIsRefused()
+    {
+        QFETCH(QString, change);
+        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(fileLayout())).object();
+        QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
+        const auto many = [](const QJsonValue &value, int count) {
+            QJsonArray array;
+            for (int i = 0; i < count; ++i)
+                array.append(value);
+            return array;
+        };
+        QJsonArray mainWindows = payload.value(QStringLiteral("mainWindows")).toArray();
+        QJsonObject main = mainWindows.first().toObject();
+        QJsonObject splitter = main.value(QStringLiteral("multiSplitterLayout")).toObject();
+        QJsonArray docks = payload.value(QStringLiteral("allDockWidgets")).toArray();
+        if (change == QStringLiteral("floating")) {
+            const QJsonArray floating = payload.value(QStringLiteral("floatingWindows")).toArray();
+            QVERIFY(!floating.isEmpty());
+            payload.insert(QStringLiteral("floatingWindows"), many(floating.first(), 2000));
+        } else if (change == QStringLiteral("main")) {
+            payload.insert(QStringLiteral("mainWindows"), many(main, 2));
+        } else if (change == QStringLiteral("group")) {
+            QJsonObject frames = splitter.value(QStringLiteral("frames")).toObject();
+            QVERIFY(!frames.isEmpty());
+            frames.insert(QStringLiteral("copy"), frames.begin().value());
+            splitter.insert(QStringLiteral("frames"), frames);
+        } else if (change == QStringLiteral("items")) {
+            QJsonObject layout = splitter.value(QStringLiteral("layout")).toObject();
+            QJsonArray children = layout.value(QStringLiteral("children")).toArray();
+            QVERIFY(!children.isEmpty());
+            layout.insert(QStringLiteral("children"), many(children.first(), 2000));
+            splitter.insert(QStringLiteral("layout"), layout);
+        } else if (change == QStringLiteral("dock")) {
+            docks.append(docks.first());
+        } else if (change == QStringLiteral("placeholders")) {
+            QJsonObject dock = docks.first().toObject();
+            QJsonObject last = dock.value(QStringLiteral("lastPosition")).toObject();
+            const QJsonArray placeholders = last.value(QStringLiteral("placeholders")).toArray();
+            QVERIFY(!placeholders.isEmpty());
+            last.insert(QStringLiteral("placeholders"), many(placeholders.first(), 2000));
+            dock.insert(QStringLiteral("lastPosition"), last);
+            docks.replace(0, dock);
+        } else {
+            payload.insert(QStringLiteral("closedDockWidgets"), many(QStringLiteral("Video"), 2));
+        }
+        main.insert(QStringLiteral("multiSplitterLayout"), splitter);
+        if (change != QStringLiteral("main"))
+            payload.insert(QStringLiteral("mainWindows"), QJsonArray{main});
+        payload.insert(QStringLiteral("allDockWidgets"), docks);
+        envelope.insert(QStringLiteral("payload"), payload);
+        const QByteArray layout = QJsonDocument(envelope).toJson(QJsonDocument::Compact).toBase64();
+        QString problem;
+        QVERIFY(!ui::WorkspaceArrangement::parseFromFile(layout, {}, &problem));
+        QVERIFY2(problem.contains(QStringLiteral("more windows or panels")), qPrintable(problem));
+
+        const QString file = write(path("large.ass"), kAss + "\n[Hikari]\nLayout=" + layout + "\n");
+        start();
+        application->addPage();
+        QVERIFY(application->openFile(file));
+        QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
+        QVERIFY(!isFloating("audioDock"));
+        QVERIFY(application->log().history().contains(QStringLiteral("large.ass")));
+        stop();
+    }
+
     // SRT and the other formats keep the arrangement only in the Session.
     void otherFormatsKeepItOnlyInTheSession()
     {
