@@ -8,27 +8,31 @@
 // "Fullscreen video is a separate presentation surface, not a dock group")
 // that the Video panel's picture, visual tools and zoom move into. This
 // controller owns its state: whether it is shown and on which monitor
-// (GetMonitorRect1), the panel at its bottom ("Show toolbar", legacy
-// m_PanelOnFullscreen, and the panel's showing under the pointer), the
-// progress bar's text, and what leaving gives back: the keyboard focus to
-// the item that had it and the activation to its window. The main window's
-// own geometry and state are never touched.
+// (GetMonitorRect1), the bar at its bottom (FS1 #275: its mode and when it
+// and the pointer hide), the progress bar's text, and what leaving gives
+// back: the keyboard focus to the item that had it and the activation to its
+// window. The main window's own geometry and state are never touched.
 
 #include <QObject>
 #include <cstdint>
+#include <QPointF>
 #include <QPointer>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QWindow>
 #include <QRect>
 #include <QString>
+#include <QTimer>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
+
+#include <optional>
 
 class QScreen;
 
 namespace hikari::ui {
 
+class SettingsStore;
 class VideoController;
 class VideoViewController;
 
@@ -43,25 +47,42 @@ class VideoFullscreenController : public QObject {
     // SetFullscreen's argument was another monitor than 0 (legacy
     // m_IsOnAnotherMonitor: the docked video is hidden meanwhile).
     Q_PROPERTY(bool onAnotherMonitor READ onAnotherMonitor NOTIFY activeChanged)
-    // "Show toolbar": the panel stays and the toolbar row shows
-    // (m_PanelOnFullscreen; checked for an indexed video, Fullscreen's
-    // constructor, VideoFullscreen.cpp:39-46, 69, 81).
-    Q_PROPERTY(bool showToolbar READ showToolbar WRITE setShowToolbar NOTIFY panelChanged)
-    // The panel is shown (pinned, or the pointer went below the video).
-    Q_PROPERTY(bool panelShown READ panelShown NOTIFY panelChanged)
+    // FS1 (#275): the bar's mode, application::FullscreenBarMode (0 Auto,
+    // 1 Always, 2 Never), the setting video.fullscreenBar (FS1-bar-mode).
+    Q_PROPERTY(int barMode READ barMode WRITE setBarMode NOTIFY panelChanged)
+    // Always: the bar stays and the picture ends above it (legacy "Show
+    // toolbar", m_PanelOnFullscreen).
+    Q_PROPERTY(bool pinned READ pinned NOTIFY panelChanged)
+    // The bar is shown: pinned, or in Auto while something holds it
+    // (FS1-bar-auto-hide).
+    Q_PROPERTY(bool barShown READ barShown NOTIFY panelChanged)
+    // The pointer is hidden over the picture: nothing held the bar for
+    // kFullscreenBarIdleMs (FS1-cursor-hide), in every mode.
+    Q_PROPERTY(bool cursorHidden READ cursorHidden NOTIFY panelChanged)
+    // What else holds the bar, from the window: one of its menus is open,
+    // the pointer is over the bar.
+    Q_PROPERTY(bool menuOpen READ menuOpen WRITE setMenuOpen NOTIFY panelChanged)
+    Q_PROPERTY(bool pointerOverBar READ pointerOverBar WRITE setPointerOverBar NOTIFY panelChanged)
     // The progress bar's "<time> / <duration>" (RefreshTime).
     Q_PROPERTY(QString progressText READ progressText NOTIFY progressChanged)
     // The video's file name (Fullscreen's Videolabel, tab->VideoName).
     Q_PROPERTY(QString videoName READ videoName NOTIFY progressChanged)
 public:
-    VideoFullscreenController(VideoController &video, VideoViewController &view, QObject *parent = nullptr);
+    VideoFullscreenController(VideoController &video, VideoViewController &view, SettingsStore &settings,
+                              QObject *parent = nullptr);
 
     bool active() const { return m_active; }
     int monitor() const { return m_monitor; }
     bool onAnotherMonitor() const { return m_onAnotherMonitor; }
-    bool showToolbar() const { return m_showToolbar; }
-    void setShowToolbar(bool on);
-    bool panelShown() const { return m_panelShown; }
+    int barMode() const;
+    void setBarMode(int mode);
+    bool pinned() const;
+    bool barShown() const { return m_barShown; }
+    bool cursorHidden() const { return m_cursorHidden; }
+    bool menuOpen() const { return m_menuOpen; }
+    void setMenuOpen(bool open);
+    bool pointerOverBar() const { return m_pointerOverBar; }
+    void setPointerOverBar(bool over);
     QString progressText() const;
     QString videoName() const;
 
@@ -97,10 +118,18 @@ public:
     // shown, or the open failing or cancelled drops it.
     Q_INVOKABLE void enterWhenShown(const QString &path);
 
-    // A pointer move over the fullscreen video at `y` of a `height`-high
-    // window whose panel is `panelHeight` high (VideoBox::OnMouseEvent): the
-    // panel shows or hides. True when hiding gave the video the keyboard.
-    Q_INVOKABLE bool pointerMoved(qreal y, qreal height, qreal panelHeight);
+    // kFullscreenBarIdleMs; tests shorten it.
+    void setIdleInterval(int ms) { m_idle.setInterval(ms); }
+    // VIDEO_FULLSCREEN_BAR: Auto, then Always, then Never, then Auto.
+    Q_INVOKABLE void cycleBarMode();
+    // A pointer move over the fullscreen window with no button held, at
+    // `at` in the window: the bar (in Auto) and the pointer show for
+    // kFullscreenBarIdleMs more. Qt Quick sends a still pointer a hover each
+    // frame the scene changes (a playing video): the same point again is no
+    // move.
+    Q_INVOKABLE void pointerMoved(QPointF at);
+    // FS1-current-line: a Line's text as the bar's label shows it.
+    Q_INVOKABLE QString lineLabel(const QString &text) const;
 
     // RendererVideo::DrawProgressBar's rectangles for a `clientWidth`-wide
     // window and the text's extent: {frame, inner, bar: {x1, x2, y, width},
@@ -117,16 +146,23 @@ private:
     void place(QScreen *screen);
     void restoreFocus();
     void hideWindow();
+    void updateBar();
 
     VideoController &m_video;
     VideoViewController &m_view;
+    SettingsStore &m_settings;
     QPointer<QQuickWindow> m_window;
     QPointer<QWindow> m_main;
     bool m_active = false;
     int m_monitor = -1;
     bool m_onAnotherMonitor = false;
-    bool m_showToolbar = true;
-    bool m_panelShown = true;
+    QTimer m_idle;        // kFullscreenBarIdleMs after the last move
+    bool m_awake = false; // a move less than that ago
+    std::optional<QPointF> m_pointer; // where the last move was, in the window
+    bool m_menuOpen = false;
+    bool m_pointerOverBar = false;
+    bool m_barShown = false;
+    bool m_cursorHidden = false;
     // What had the keyboard before fullscreen (given back on leaving).
     QPointer<QWindow> m_focusWindow;
     QPointer<QQuickItem> m_focusItem;

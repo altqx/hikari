@@ -6,8 +6,8 @@
 //
 // The arithmetic and decisions that do not need a window: which monitor
 // fullscreen takes, the context menu's monitor entries, the fullscreen
-// panel's showing and hiding under the pointer, and the progress bar drawn
-// over the video in the window's top right corner.
+// bar's modes and when it shows (FS1), the current Line's label, and the
+// progress bar drawn over the video in the window's top right corner.
 
 #include <cstdint>
 #include <string>
@@ -48,13 +48,39 @@ bool fullscreenOwnedByMainWindow(std::string_view platformName);
 // %i" in it.
 int fullscreenMonitorEntries(int monitors);
 
-// VideoBox::OnMouseEvent in fullscreen (VideoBox.cpp:571-603): the panel
-// (seek bar, buttons, times, toolbar) shows when the pointer goes below the
-// video, `y` at or past `clientHeight - panelHeight`, and hides when it comes
-// back over the video unless it is pinned ("Show toolbar",
-// m_PanelOnFullscreen); hiding gives the video the keyboard (SetFocus).
-enum class FullscreenPanelChange { None, Show, Hide };
-FullscreenPanelChange fullscreenPanelOnPointer(bool pinned, bool shown, int y, int clientHeight, int panelHeight);
+// FS1 (#275): the fullscreen bar's mode, the setting video.fullscreenBar
+// (FS1-bar-mode; legacy had "Show toolbar", m_PanelOnFullscreen, and showed
+// its panel when the pointer went below the video, VideoBox.cpp:571-603).
+// Auto shows the bar on pointer movement and hides it after
+// kFullscreenBarIdleMs without (FS1-bar-auto-hide); Always keeps it and the
+// picture ends above it (legacy's "Show toolbar" on); Never shows the
+// picture only. The Video hotkey VIDEO_FULLSCREEN_BAR cycles them in order.
+enum class FullscreenBarMode { Auto = 0, Always = 1, Never = 2 };
+inline constexpr int kFullscreenBarIdleMs = 1500;
+// The setting's value as a mode: one out of range is Auto (the default).
+FullscreenBarMode fullscreenBarMode(std::int64_t setting);
+FullscreenBarMode nextFullscreenBarMode(FullscreenBarMode mode);
+
+// What keeps the bar up: a pointer movement less than kFullscreenBarIdleMs
+// ago (`awake`), the video not playing (paused or stopped), a menu of the
+// fullscreen window open, and the pointer over the bar.
+struct FullscreenBarState {
+    bool awake = false;
+    bool playing = false;
+    bool menuOpen = false;
+    bool pointerOverBar = false;
+};
+// Nothing keeps the bar up: in Auto it hides, and in every mode the pointer
+// hides over the picture (FS1-cursor-hide; legacy hid it after a second
+// without moving while the panel was hidden, VideoBox::OnIdle).
+bool fullscreenIdle(const FullscreenBarState &state);
+bool fullscreenBarShown(FullscreenBarMode mode, const FullscreenBarState &state);
+
+// FS1-current-line: the bar's read-only label of the current Line's text,
+// on one line: override blocks ({...}) and drawings (\p1 and up, to \p0)
+// left out, \N and \n shown as " ↵ ", \h as a space, runs of white space as
+// one, trimmed.
+std::string fullscreenLineText(std::string_view text);
 
 // VideoBox::RefreshTime (VideoBox.cpp:1366-1385): "<time> / <duration>",
 // each SubsTime::raw(TMP) ("%02i:%02i:%02i", SubsTime.cpp:96-100).

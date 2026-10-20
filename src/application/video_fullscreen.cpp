@@ -35,14 +35,96 @@ int fullscreenMonitorEntries(int monitors)
     return monitors > 1 ? monitors - 1 : 0;
 }
 
-FullscreenPanelChange fullscreenPanelOnPointer(bool pinned, bool shown, int y, int clientHeight, int panelHeight)
+FullscreenBarMode fullscreenBarMode(std::int64_t setting)
 {
-    const bool onFullVideo = y < clientHeight - panelHeight;
-    if (!onFullVideo && !shown)
-        return FullscreenPanelChange::Show;
-    if (onFullVideo && shown && !pinned)
-        return FullscreenPanelChange::Hide;
-    return FullscreenPanelChange::None;
+    switch (setting) {
+    case 1: return FullscreenBarMode::Always;
+    case 2: return FullscreenBarMode::Never;
+    default: return FullscreenBarMode::Auto;
+    }
+}
+
+FullscreenBarMode nextFullscreenBarMode(FullscreenBarMode mode)
+{
+    switch (mode) {
+    case FullscreenBarMode::Auto: return FullscreenBarMode::Always;
+    case FullscreenBarMode::Always: return FullscreenBarMode::Never;
+    case FullscreenBarMode::Never: break;
+    }
+    return FullscreenBarMode::Auto;
+}
+
+bool fullscreenIdle(const FullscreenBarState &state)
+{
+    return !state.awake && state.playing && !state.menuOpen && !state.pointerOverBar;
+}
+
+bool fullscreenBarShown(FullscreenBarMode mode, const FullscreenBarState &state)
+{
+    switch (mode) {
+    case FullscreenBarMode::Always: return true;
+    case FullscreenBarMode::Never: return false;
+    case FullscreenBarMode::Auto: break;
+    }
+    return !fullscreenIdle(state);
+}
+
+std::string fullscreenLineText(std::string_view text)
+{
+    std::string out;
+    bool drawing = false;
+    bool space = false; // white space waits for the next shown character
+    auto put = [&](std::string_view s) {
+        if (space && !out.empty())
+            out += ' ';
+        space = false;
+        out += s;
+    };
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        const char c = text[i];
+        if (c == '{') {
+            const auto end = text.find('}', i);
+            if (end == std::string_view::npos)
+                break; // an unclosed block hides the rest, as the renderer does
+            const auto block = text.substr(i + 1, end - i - 1);
+            // The last \p<n> in the block: drawing from n > 0 to \p0.
+            for (auto p = block.find("\\p"); p != std::string_view::npos; p = block.find("\\p", p + 2)) {
+                std::size_t d = p + 2;
+                if (d < block.size() && block[d] >= '0' && block[d] <= '9') {
+                    int n = 0;
+                    for (; d < block.size() && block[d] >= '0' && block[d] <= '9'; ++d)
+                        n = n * 10 + (block[d] - '0');
+                    drawing = n > 0;
+                }
+            }
+            i = end;
+            continue;
+        }
+        if (drawing)
+            continue;
+        if (c == '\\' && i + 1 < text.size() && (text[i + 1] == 'N' || text[i + 1] == 'n')) {
+            if (!out.empty() && !out.ends_with("↵")) {
+                space = true;
+                put("↵");
+            }
+            space = true;
+            ++i;
+            continue;
+        }
+        if ((c == '\\' && i + 1 < text.size() && text[i + 1] == 'h') || c == ' ' || c == '\t' || c == '\r' || c == '\n') {
+            space = true;
+            if (c == '\\')
+                ++i;
+            continue;
+        }
+        put(std::string_view(&text[i], 1));
+    }
+    // A break at the end shows nothing after it.
+    if (out.ends_with("↵"))
+        out.erase(out.size() - std::string_view("↵").size());
+    while (!out.empty() && out.back() == ' ')
+        out.pop_back();
+    return out;
 }
 
 namespace {

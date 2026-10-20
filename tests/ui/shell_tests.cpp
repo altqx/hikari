@@ -12085,7 +12085,7 @@ private slots:
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" retired, never listed; LE3's
         // "Hide tags in the line editor" listed.
-        QCOMPARE(hotkeyRows().size(), 226);
+        QCOMPARE(hotkeyRows().size(), 227); // FS1: VIDEO_FULLSCREEN_BAR
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -15454,22 +15454,23 @@ private slots:
         QVERIFY(!viewController.zoomMode());
         QVERIFY(viewController.zoomed());
 
-        // Fullscreen with "Show toolbar" (the panel below the picture),
+        // Fullscreen with the bar Always (the bar below the picture),
         // still zoomed, then the whole frame.
         auto &fs = application->videoFullscreen();
+        fs.setBarMode(1);
         QVERIFY(fs.toggle(0));
         QQuickWindow *fsWindow = fullscreenWindow();
         QVERIFY(fsWindow);
         QTRY_VERIFY(fsWindow->isExposed());
-        QVERIFY(fs.showToolbar());
+        QVERIFY(fs.pinned());
         QTRY_COMPARE(overlay->window(), fsWindow);
         shown = fsWindow;
         QTRY_COMPARE(overlay->height(), qreal(fsWindow->height()) - fullscreenItem("videoFullscreenPanel")->height());
         crosshairOnlyOverThePicture("fullscreen, zoomed");
         if (QTest::currentTestFailed())
             return;
-        controlsTakeTheArrow({"fullscreenSlider", "fullscreenPlayPause", "fullscreenShowToolbar", "fullscreenVolume",
-                              "fullscreenTool1"},
+        controlsTakeTheArrow({"fullscreenSlider", "fullscreenPlayPause", "fullscreenBarMode", "fullscreenVolume",
+                              "fullscreenSpeaker", "fullscreenToolsButton", "fullscreenExit"},
                              true);
         if (QTest::currentTestFailed())
             return;
@@ -22379,14 +22380,23 @@ private slots:
         QVERIFY(application->video().stepFrames(12));
         QTRY_VERIFY(presented.count() > 0);
         QTRY_VERIFY(fsWindow->grabWindow().copy(picture) != before);
-        // An indexed video: "Show toolbar" on, the panel stays and the
-        // picture ends above it (m_PanelOnFullscreen).
+        // FS1: the bar in Auto (the default) shows on entering, over the
+        // picture, which takes the whole window; the hint names Esc, and the
+        // file name's strip is up with the bar.
         auto *panel = fullscreenItem("videoFullscreenPanel");
-        QVERIFY(panel && panel->isVisible());
-        QVERIFY(fullscreenItem("fullscreenShowToolbar")->property("checked").toBool());
-        QVERIFY(fullscreenItem("fullscreenToolbar")->isVisible());
-        QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
+        QCOMPARE(fs.barMode(), 0);
+        QVERIFY(!fs.pinned());
+        QVERIFY(fs.barShown());
+        QTRY_VERIFY(panel && panel->isVisible());
+        QTRY_VERIFY(fullscreenItem("videoFullscreenHint")->isVisible());
+        QCOMPARE(fullscreenItem("videoFullscreenHintText")->property("text").toString(),
+                 QStringLiteral("Press Esc to exit full screen"));
+        QTRY_VERIFY(fullscreenItem("videoFullscreenTitle")->isVisible());
+        QTRY_COMPARE(presenter->height(), qreal(fsWindow->height()));
         QCOMPARE(presenter->width(), qreal(fsWindow->width()));
+        // No tool on: no rail, no tool row.
+        QVERIFY(!fullscreenItem("fullscreenToolRail")->isVisible());
+        QVERIFY(!fullscreenItem("fullscreenInspectorSlot")->isVisible());
         // The 4:3 picture fills the stage's width or height, centred.
         const QRectF shownRect = application->visualTools().videoRect();
         QVERIFY(qAbs(shownRect.width() - presenter->width()) <= 1 || qAbs(shownRect.height() - presenter->height()) <= 1);
@@ -22394,14 +22404,25 @@ private slots:
         QVERIFY(qAbs(shownRect.center().y() - presenter->height() / 2) <= 1);
         // The transport's icon-only buttons name themselves.
         for (const char *name : {"fullscreenPreviousFile", "fullscreenPlayPause", "fullscreenPlayLine", "fullscreenStop",
-                                 "fullscreenNextFile", "fullscreenShowToolbar"}) {
+                                 "fullscreenNextFile", "fullscreenOpenEditor", "fullscreenToolsButton", "fullscreenSpeaker",
+                                 "fullscreenExit"}) {
             auto *button = fullscreenItem(name);
-            QVERIFY2(button, name);
+            QVERIFY2(button && button->isVisible(), name);
             QCOMPARE(button->property("display").toInt(), 0); // AbstractButton.IconOnly
             QVERIFY2(!QAccessible::queryAccessibleInterface(button)->text(QAccessible::Name).isEmpty(), name);
+            QVERIFY2(!button->property("tip").toString().isEmpty(), name);
         }
-        QCOMPARE(fullscreenItem("fullscreenShowToolbar")->property("tip").toString(), QStringLiteral("Show toolbar"));
+        QCOMPARE(fullscreenItem("fullscreenExit")->property("tip").toString(), QStringLiteral("Exit full screen (Escape)"));
+        // The mode button names the mode; its tooltip the binding (Tab).
+        QCOMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Auto"));
+        QVERIFY(fullscreenItem("fullscreenBarMode")->property("tip").toString().startsWith(QStringLiteral("Full screen bar (Tab)")));
         QCOMPARE(fullscreenItem("fullscreenVideoName")->property("text").toString(), QStringLiteral("clip.mkv"));
+        // FS1-current-line: the first Line, read only.
+        QTRY_VERIFY(fullscreenItem("fullscreenLine")->isVisible());
+        QCOMPARE(fullscreenItem("fullscreenLineNumber")->property("text").toString(), QStringLiteral("1"));
+        QCOMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("first"));
+        QCOMPARE(fullscreenItem("fullscreenLineTimes")->property("text").toString(),
+                 application->editor().startText() + QStringLiteral(" – ") + application->editor().endText());
         // The progress bar's times (VIDEO_PROGRESS_BAR is on by default).
         auto *progress = fullscreenItem("videoFullscreenProgress");
         QVERIFY(progress->isVisible());
@@ -22609,57 +22630,143 @@ private slots:
         QCOMPARE(session->selection().active, std::optional(lines[0]->id));
     }
 
-    // "Show toolbar" off: the picture takes the whole window, the panel shows
-    // when the pointer goes below the picture and hides over it (the picture
-    // then has the keyboard), and the pointer hides after a second.
-    void videoFullscreenPanelFollowsThePointer()
+    // FS1-bar-auto-hide, FS1-bar-mode and FS1-cursor-hide: in Auto the bar
+    // and the file name's strip hide with the pointer once nothing holds
+    // them (a movement, a pause, an open menu, the pointer over the bar);
+    // Tab (VIDEO_FULLSCREEN_BAR) cycles Auto, Always (the picture ends above
+    // the bar) and Never, and the mode stays for the next time; in the Video
+    // panel Tab stays the keyboard focus's.
+    void videoFullscreenBarModesAndAutoHide()
     {
         restartWithoutSound();
         QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
+        keysNeverRepeat();
         auto &fs = application->videoFullscreen();
+        auto &settings = *application->settingsStore();
+        auto &video = application->video();
+        fs.setIdleInterval(300);
         QVERIFY(fs.toggle(0));
         QQuickWindow *fsWindow = fullscreenWindow();
         QTRY_VERIFY(fsWindow->isExposed());
+        QVERIFY(becomesFocusWindow(fsWindow));
         auto *panel = fullscreenItem("videoFullscreenPanel");
+        auto *title = fullscreenItem("videoFullscreenTitle");
+        auto *overlay = item("visualOverlay");
         auto *presenter = item("videoPresenter");
-        auto *showToolbar = fullscreenItem("fullscreenShowToolbar");
-        QTest::mouseClick(fsWindow, Qt::LeftButton, Qt::NoModifier,
-                          showToolbar->mapToScene(QPointF(showToolbar->width() / 2, showToolbar->height() / 2)).toPoint());
-        QVERIFY(!fs.showToolbar());
-        QVERIFY(!showToolbar->property("checked").toBool());
-        QTRY_COMPARE(presenter->height(), qreal(fsWindow->height()));
-        QVERIFY(!fullscreenItem("fullscreenToolbar")->isVisible());
-        QVERIFY(panel->isVisible()); // still under the pointer
-        QCOMPARE(item("visualOverlay")->property("cursorOverride").toInt(), int(Qt::ArrowCursor));
-        // Over the picture: hidden, the keyboard to the picture.
-        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() / 3));
+        const auto cursor = [&] { return overlay->property("cursorOverride").toInt(); };
+        // The clip lasts two seconds: each check plays it from its start.
+        const auto playFromStart = [&] {
+            QVERIFY(video.showFrameAt(0));
+            QTRY_COMPARE(video.session().shownFrame().value_or(-1), 0);
+            QVERIFY(video.play());
+            QTRY_VERIFY(video.playing());
+        };
+        const auto pause = [&] {
+            if (video.playing())
+                QVERIFY(video.pause());
+            QTRY_VERIFY(!video.playing());
+        };
+        const QPoint picture(fsWindow->width() / 2, fsWindow->height() / 3);
+        QTest::mouseMove(fsWindow, picture);
+        // Paused: the bar stays past the idle time, and the pointer.
+        QTest::qWait(600);
+        QVERIFY(fs.barShown());
+        QVERIFY(panel->isVisible());
+        QVERIFY(title->isVisible());
+        QCOMPARE(cursor(), -1);
+        // Playing with nothing holding it: the bar, the strip and the pointer go.
+        playFromStart();
+        QTRY_VERIFY(!fs.barShown());
         QTRY_VERIFY(!panel->isVisible());
-        QVERIFY(!fs.panelShown());
+        QTRY_VERIFY(!title->isVisible());
+        QCOMPARE(cursor(), int(Qt::BlankCursor));
         QVERIFY(fullscreenItem("videoFullscreenKeys")->hasActiveFocus());
-        // A second without moving hides the pointer.
-        QTRY_COMPARE_WITH_TIMEOUT(item("visualOverlay")->property("cursorOverride").toInt(), int(Qt::BlankCursor), 3000);
-        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() / 3 + 10));
-        QTRY_COMPARE(item("visualOverlay")->property("cursorOverride").toInt(), int(Qt::ArrowCursor));
-        // Below the picture: shown again.
-        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() - 3));
+        // A hover where the pointer already is, as Qt Quick sends a still
+        // pointer each frame the picture changes, is no move.
+        QTest::mouseMove(fsWindow, picture);
+        QTest::qWait(50);
+        QVERIFY(!fs.barShown());
+        QCOMPARE(cursor(), int(Qt::BlankCursor));
+        // A move brings them back for a while.
+        QTest::mouseMove(fsWindow, picture + QPoint(10, 0));
+        QVERIFY(fs.barShown());
+        QCOMPARE(cursor(), -1);
         QTRY_VERIFY(panel->isVisible());
-        // Left out, the choice stays for the next time (the cached frame's check).
+        QTRY_VERIFY(!fs.barShown());
+        pause();
+        QVERIFY(fs.barShown()); // paused again
+        // The pointer over the bar holds it.
+        QTRY_VERIFY(panel->isVisible());
+        const QPoint onBar = panel->mapToScene(QPointF(panel->width() / 2, 4)).toPoint();
+        QTest::mouseMove(fsWindow, onBar);
+        QTRY_VERIFY(fs.pointerOverBar());
+        playFromStart();
+        QTest::qWait(600);
+        QVERIFY(fs.barShown());
+        QTest::mouseMove(fsWindow, picture);
+        QTRY_VERIFY(!fs.pointerOverBar());
+        QTRY_VERIFY(!fs.barShown());
+        pause();
+        // An open menu holds it.
+        QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, picture);
+        auto *fsMenu = named("videoFullscreenMenu");
+        QTRY_VERIFY(fsMenu->property("opened").toBool());
+        QVERIFY(fs.menuOpen());
+        playFromStart();
+        QTest::qWait(600);
+        QVERIFY(fs.barShown());
+        QMetaObject::invokeMethod(fsMenu, "close");
+        QTRY_VERIFY(!fs.menuOpen());
+        QTRY_VERIFY(!fs.barShown());
+        pause();
+        // Tab: Always, the picture above the bar, which stays while playing;
+        // the pointer still hides.
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("VIDEO_FULLSCREEN_BAR"), 3), QStringLiteral("Tab"));
+        QTest::keyClick(fsWindow, Qt::Key_Tab);
+        QCOMPARE(fs.barMode(), 1);
+        QCOMPARE(settings.integer("video.fullscreenBar"), 1);
+        QVERIFY(fs.pinned());
+        QTRY_VERIFY(panel->isVisible());
+        QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
+        QTRY_VERIFY(!title->isVisible()); // after its fade
+        QCOMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Always"));
+        playFromStart();
+        QTRY_COMPARE(cursor(), int(Qt::BlankCursor));
+        QVERIFY(fs.barShown());
+        QVERIFY(panel->isVisible());
+        pause();
+        // Tab: Never, the picture only, even when the pointer moves.
+        QTest::keyClick(fsWindow, Qt::Key_Tab);
+        QCOMPARE(fs.barMode(), 2);
+        QTRY_VERIFY(!panel->isVisible());
+        QTRY_COMPARE(presenter->height(), qreal(fsWindow->height()));
+        QTest::mouseMove(fsWindow, picture + QPoint(0, 10));
+        QTest::qWait(50);
+        QVERIFY(!fs.barShown());
+        QVERIFY(!title->isVisible());
+        QCOMPARE(cursor(), -1);
+        // Tab: Auto again.
+        QTest::keyClick(fsWindow, Qt::Key_Tab);
+        QCOMPARE(fs.barMode(), 0);
+        QTest::mouseMove(fsWindow, picture);
+        QTRY_VERIFY(panel->isVisible());
+        // The mode button's menu names the three and chooses one.
+        clickWith(fullscreenItem("fullscreenBarMode"), Qt::NoModifier);
+        auto *modeMenu = named("fullscreenBarModeMenu");
+        QTRY_VERIFY(modeMenu->property("opened").toBool());
+        QCOMPARE(named("fullscreenBarAuto")->property("checked").toBool(), true);
+        QCOMPARE(named("fullscreenBarNever")->property("text").toString(), QStringLiteral("Never"));
+        QVERIFY(QMetaObject::invokeMethod(named("fullscreenBarAlways"), "triggered"));
+        QCOMPARE(fs.barMode(), 1);
+        QTRY_VERIFY(!modeMenu->property("visible").toBool());
+        // Left and shown again: the mode stays (the setting).
         QVERIFY(fs.leave());
         QVERIFY(fs.toggle(0));
         QTRY_VERIFY(fsWindow->isExposed());
-        QVERIFY(!fs.showToolbar());
-        QVERIFY(!panel->isVisible()); // `if (!m_PanelOnFullscreen) panel->Hide()`
-        // Pinned again: the picture ends above the panel.
-        fs.setShowToolbar(true);
-        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() - 3));
-        QTRY_VERIFY(panel->isVisible());
+        QVERIFY(fs.pinned());
         QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
-        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, 20));
-        QTest::qWait(50);
-        QVERIFY(panel->isVisible()); // pinned: the pointer never hides it
-        QCOMPARE(item("visualOverlay")->property("cursorOverride").toInt(), -1); // the tool's cursor
-        // The wheel over the panel is the volume's, Ctrl held or not (in
+        // The wheel over the bar is the volume's, Ctrl held or not (in
         // fullscreen; the docked panel ignores Ctrl+wheel, V4-ctrl-wheel).
         const int volume = application->videoView().volume();
         const QPoint below = panel->mapToScene(QPointF(panel->width() / 2, panel->height() / 2)).toPoint();
@@ -22667,6 +22774,17 @@ private slots:
                           Qt::ControlModifier, Qt::NoScrollPhase, false);
         QCoreApplication::sendEvent(fsWindow, &wheel);
         QTRY_COMPARE(application->videoView().volume(), volume - 3);
+        QVERIFY(fs.leave());
+        // In the Video panel Tab is not the bar's: the mode stays.
+        auto *videoPanel = item("videoPanel");
+        window->requestActivate();
+        QVERIFY(becomesFocusWindow(window));
+        videoPanel->forceActiveFocus();
+        press(Qt::Key_Tab);
+        QTest::qWait(50);
+        QCOMPARE(fs.barMode(), 1);
+        QVERIFY(!fs.active());
+        settings.set("video.fullscreenBar", 0);
     }
 
     // V5-volume-slider: the fullscreen panel shows the Video panel's volume
@@ -22688,9 +22806,9 @@ private slots:
         QVERIFY(volume);
         QTRY_VERIFY(volume->isVisible());
         QVERIFY(volume->isEnabled());
-        // At the right of the transport's row, after the file name.
-        auto *name = fullscreenItem("fullscreenVideoName");
-        QVERIFY(volume->mapToScene(QPointF(0, 0)).x() >= name->mapToScene(QPointF(name->width(), 0)).x());
+        // At the right of the bar's row, after the speaker (FS1).
+        auto *speaker = fullscreenItem("fullscreenSpeaker");
+        QVERIFY(volume->mapToScene(QPointF(0, 0)).x() >= speaker->mapToScene(QPointF(speaker->width(), 0)).x());
         QVERIFY(volume->mapToScene(QPointF(volume->width(), 0)).x() <= fsWindow->width());
         // Icon-only: named in the tooltip and to assistive technology.
         QCOMPARE(QAccessible::queryAccessibleInterface(volume)->text(QAccessible::Name), QStringLiteral("Volume"));
@@ -22707,7 +22825,50 @@ private slots:
         // The other way: the main window's change shows here.
         view.setVolume(-10);
         QCOMPARE(volume->property("value").toInt(), -10);
-        QVERIFY(fs.leave());
+        // FS1-speaker-gestures: the speaker's click mutes the player, both
+        // sliders at the bottom, the volume kept; again, unmuted.
+        QCOMPARE(speaker->property("iconRole").toString(), QStringLiteral("volume"));
+        QCOMPARE(speaker->property("tip").toString(), QStringLiteral("Mute · Wheel: volume · Right-click: output device"));
+        clickWith(speaker, Qt::NoModifier);
+        QVERIFY(view.muted());
+        QCOMPARE(player.volume(), 0.0);
+        QCOMPARE(view.volume(), -10);
+        QCOMPARE(volume->property("value").toInt(), -86);
+        QCOMPARE(mainVolume->property("value").toInt(), -86);
+        QCOMPARE(speaker->property("iconRole").toString(), QStringLiteral("volume-muted"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(speaker)->text(QAccessible::Name), QStringLiteral("Unmute"));
+        clickWith(speaker, Qt::NoModifier);
+        QVERIFY(!view.muted());
+        QCOMPARE(player.volume(), std::pow(10.0, -100.0 / 100.0 / 20.0));
+        QCOMPARE(volume->property("value").toInt(), -10);
+        // A new volume unmutes (the wheel over the speaker, here).
+        clickWith(speaker, Qt::NoModifier);
+        QVERIFY(view.muted());
+        const QPoint over = speaker->mapToScene(QPointF(speaker->width() / 2, speaker->height() / 2)).toPoint();
+        QWheelEvent wheel(over, fsWindow->mapToGlobal(over), QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(fsWindow, &wheel);
+        QTRY_VERIFY(!view.muted());
+        QCOMPARE(view.volume(), -7);
+        // Right-click: AV1's output device menu, which holds the bar.
+        QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, over);
+        auto *outputs = named("fullscreenAudioOutputMenu");
+        QTRY_VERIFY(outputs->property("opened").toBool());
+        QVERIFY(fs.menuOpen());
+        // Above the speaker, though its rows came as it showed (its first opening).
+        auto *outputsBox = outputs->property("background").value<QQuickItem *>();
+        QVERIFY(outputsBox);
+        QTRY_VERIFY(outputsBox->mapToScene(QPointF(0, outputsBox->height())).y() <= speaker->mapToScene(QPointF()).y() + 1);
+        auto *audioSettings = outputs->findChild<QObject *>(QStringLiteral("audioOutputSettings"));
+        QVERIFY(audioSettings);
+        QVERIFY(!view.muted()); // the right button does not mute
+        // Its "Audio settings…" leaves fullscreen for the dialog's Audio page.
+        QVERIFY(QMetaObject::invokeMethod(audioSettings, "triggered"));
+        QTRY_VERIFY(!fs.active());
+        auto *settingsDialog = named("settingsDialog");
+        QTRY_VERIFY(settingsDialog->property("visible").toBool());
+        QMetaObject::invokeMethod(settingsDialog, "close");
+        QTRY_VERIFY(!settingsDialog->property("visible").toBool());
     }
 
     // The fullscreen window follows the video: Unload video leaves it, and a
@@ -22792,8 +22953,8 @@ private slots:
     // 1087, 1103: the dialogs' parent is m_FullScreenWindow): the aspect
     // ratio, the previous / next file question, Open video and Open
     // subtitles; after leaving they are the main window's again. The menu key
-    // opens the context menu at the pointer; the toolbar row's buttons choose
-    // the visual tool; Shift+click on a transport button maps its binding
+    // opens the context menu at the pointer; the Visual tools menu chooses
+    // the visual tool (FS1); Shift+click on a transport button maps its binding
     // (Hotkeys::OnMapHkey) in the Video window.
     void videoFullscreenDialogsMenuKeyToolsAndMapping()
     {
@@ -22831,17 +22992,39 @@ private slots:
         QCOMPARE(fsMenu->property("parent").value<QQuickItem *>()->window(), fsWindow);
         QMetaObject::invokeMethod(fsMenu, "close");
         QTRY_VERIFY(!fsMenu->property("visible").toBool());
-        // The toolbar row: each button chooses its family.
+        // FS1-tool-rail-contextual: the Visual tools menu chooses a family;
+        // then the rail shows at the left and the bar's top row is the
+        // tool's (the VT1 slot); the rail's crosshair puts both away.
         auto &tools = application->visualTools();
         QCOMPARE(tools.activeFamily(), 0);
-        auto *scale = fullscreenItem("fullscreenTool3");
-        QVERIFY(scale && scale->isVisible());
-        clickWith(scale, Qt::NoModifier);
+        auto *rail = fullscreenItem("fullscreenToolRail");
+        auto *slot = fullscreenItem("fullscreenInspectorSlot");
+        QVERIFY(!rail->isVisible());
+        QVERIFY(!slot->isVisible());
+        clickWith(fullscreenItem("fullscreenToolsButton"), Qt::NoModifier);
+        auto *toolsMenu = named("fullscreenToolsMenu");
+        QTRY_VERIFY(toolsMenu->property("opened").toBool());
+        QCOMPARE(toolsMenu->property("count").toInt(), application::visual::kFamilyCount);
+        auto *scale = toolsMenu->findChild<QObject *>(QStringLiteral("fullscreenTool3"));
+        QVERIFY(scale);
+        QCOMPARE(scale->property("text").toString(), tools.families().at(3).toMap().value(QStringLiteral("name")).toString());
+        QVERIFY(toolsMenu->findChild<QObject *>(QStringLiteral("fullscreenTool0"))->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(scale, "triggered"));
         QTRY_COMPARE(tools.activeFamily(), 3);
-        QVERIFY(scale->property("checked").toBool());
-        QVERIFY(!fullscreenItem("fullscreenTool0")->property("checked").toBool());
-        clickWith(fullscreenItem("fullscreenTool0"), Qt::NoModifier);
+        QTRY_VERIFY(!toolsMenu->property("visible").toBool());
+        QTRY_VERIFY(rail->isVisible());
+        QVERIFY(slot->isVisible());
+        QVERIFY(fullscreenItem("fullscreenToolOptions"));
+        QCOMPARE(fullscreenItem("fullscreenToolsButton")->property("iconRole").toString(), QStringLiteral("tool-scale"));
+        // The rail is inside the window, beside the picture, above the bar.
+        auto *bar = fullscreenItem("videoFullscreenPanel");
+        QVERIFY(rail->mapToScene(QPointF(0, rail->height())).y() <= bar->mapToScene(QPointF(0, 0)).y());
+        auto *crosshair = findItem(rail, QStringLiteral("visualTool0"));
+        QVERIFY(crosshair && crosshair->isVisible());
+        clickWith(crosshair, Qt::NoModifier);
         QTRY_COMPARE(tools.activeFamily(), 0);
+        QTRY_VERIFY(!rail->isVisible());
+        QVERIFY(!slot->isVisible());
         // Shift+click on Stop maps VIDEO_STOP in the Video window, and does not stop.
         QVERIFY(application->video().play());
         QTRY_VERIFY(application->video().playing());
@@ -22926,11 +23109,13 @@ private slots:
         QVERIFY(!fs.active());
     }
 
-    // V5: screenshots of the fullscreen window for review in the four themes,
-    // written to HIKARI_SURFACE_SHOT_DIR when it is set: the pinned panel with
-    // its toolbar row (video-fullscreen-<theme>.png), the panel shown under the
-    // pointer without the toolbar (video-fullscreen-panel-<theme>.png) and the
-    // fullscreen context menu (video-fullscreen-menu-<theme>.png).
+    // V5, FS1: screenshots of the fullscreen window for review in the four
+    // themes, written to HIKARI_SURFACE_SHOT_DIR when it is set, as
+    // video-fullscreen-<state>-<theme>.png: the bar in Auto with the file
+    // name's strip (auto), Always (always), a visual tool on with the rail
+    // and the tool's row (tool), the output device menu (output), the mode
+    // menu (mode), the Visual tools menu (tools), the context menu (menu) and
+    // the picture alone with the entry hint (hint).
     void videoFullscreenScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -22948,35 +23133,68 @@ private slots:
         QQuickWindow *fsWindow = fullscreenWindow();
         QTRY_VERIFY(fsWindow->isExposed());
         auto *root = engine->rootObjects().first();
-        auto *fsMenu = named("videoFullscreenMenu");
         auto &tools = application->visualTools();
+        const QPoint picture(fsWindow->width() / 2, fsWindow->height() / 3);
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
         for (const auto code : ui::theme::kCodes) {
             settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
             auto *controls = root->property("palette").value<QObject *>();
             QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
             const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
-            fs.setShowToolbar(true);
-            QTRY_VERIFY(fullscreenItem("fullscreenToolbar")->isVisible());
-            QTest::qWait(300);
-            QVERIFY(fsWindow->grabWindow().save(out + QStringLiteral("/video-fullscreen") + suffix));
-            // Unpinned, the pointer below the picture.
-            fs.setShowToolbar(false);
-            QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, 20));
-            QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() - 3));
+            const auto shot = [&](const char *state) {
+                QTest::qWait(400);
+                QVERIFY(fsWindow->grabWindow().save(out + QStringLiteral("/video-fullscreen-") + QLatin1String(state) + suffix));
+            };
+            const auto openAndShoot = [&](const char *button, const char *menuName, const char *state,
+                                          Qt::MouseButton mouse = Qt::LeftButton) {
+                auto *b = fullscreenItem(button);
+                QTest::mouseClick(fsWindow, mouse, Qt::NoModifier, centreOf(b));
+                auto *menu = named(menuName);
+                QTRY_VERIFY(menu->property("opened").toBool());
+                // Above its button, whatever rows came as it showed.
+                auto *box = menu->property("background").value<QQuickItem *>();
+                QVERIFY(box);
+                QTRY_VERIFY(box->mapToScene(QPointF(0, box->height())).y() <= b->mapToScene(QPointF()).y() + 1);
+                shot(state);
+                QMetaObject::invokeMethod(menu, "close");
+                QTRY_VERIFY(!menu->property("visible").toBool());
+            };
+            fs.setBarMode(0);
+            QTest::mouseMove(fsWindow, picture);
             QTRY_VERIFY(fullscreenItem("videoFullscreenPanel")->isVisible());
-            QTest::qWait(300);
-            QVERIFY(fsWindow->grabWindow().save(out + QStringLiteral("/video-fullscreen-panel") + suffix));
+            QTRY_VERIFY(!fullscreenItem("videoFullscreenHint")->isVisible());
+            shot("auto");
+            openAndShoot("fullscreenSpeaker", "fullscreenAudioOutputMenu", "output", Qt::RightButton);
+            openAndShoot("fullscreenBarMode", "fullscreenBarModeMenu", "mode");
+            openAndShoot("fullscreenToolsButton", "fullscreenToolsMenu", "tools");
             // The context menu over the picture.
             const QPoint centre = item("visualOverlay")->mapToScene(tools.videoRect().center()).toPoint();
             QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, centre);
+            auto *fsMenu = named("videoFullscreenMenu");
             QTRY_VERIFY(fsMenu->property("opened").toBool());
-            QTest::qWait(300);
-            QVERIFY(fsWindow->grabWindow().save(out + QStringLiteral("/video-fullscreen-menu") + suffix));
+            shot("menu");
             QMetaObject::invokeMethod(fsMenu, "close");
             QTRY_VERIFY(!fsMenu->property("visible").toBool());
+            // Clip rectangle on: the rail and the tool's row.
+            tools.selectFamily(6);
+            QTRY_VERIFY(fullscreenItem("fullscreenToolRail")->isVisible());
+            QTest::mouseMove(fsWindow, picture + QPoint(4, 0));
+            shot("tool");
+            tools.selectFamily(0);
+            QTRY_VERIFY(!fullscreenItem("fullscreenToolRail")->isVisible());
+            fs.setBarMode(1);
+            QTRY_VERIFY(fs.pinned());
+            shot("always");
+            // Never, entered again: the picture and the hint.
+            fs.setBarMode(2);
+            QVERIFY(fs.leave());
+            QVERIFY(fs.toggle(0));
+            QTRY_VERIFY(fsWindow->isExposed());
+            QTRY_VERIFY(fullscreenItem("videoFullscreenHint")->isVisible());
+            QTest::qWait(250);
+            QVERIFY(fsWindow->grabWindow().save(out + QStringLiteral("/video-fullscreen-hint") + suffix));
         }
-        fs.setShowToolbar(true);
+        fs.setBarMode(0);
         QVERIFY(fs.leave());
     }
 

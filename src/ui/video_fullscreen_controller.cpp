@@ -1,5 +1,6 @@
 #include "video_fullscreen_controller.h"
 
+#include "settings_store.h"
 #include "video_controller.h"
 #include "video_view_controller.h"
 
@@ -33,9 +34,21 @@ bool positionsKnown()
 } // namespace
 
 VideoFullscreenController::VideoFullscreenController(VideoController &video, VideoViewController &view,
-                                                     QObject *parent)
-    : QObject(parent), m_video(video), m_view(view)
+                                                     SettingsStore &settings, QObject *parent)
+    : QObject(parent), m_video(video), m_view(view), m_settings(settings)
 {
+    m_idle.setSingleShot(true);
+    m_idle.setInterval(application::kFullscreenBarIdleMs);
+    connect(&m_idle, &QTimer::timeout, this, [this] {
+        m_awake = false;
+        updateBar();
+    });
+    connect(&m_settings, &SettingsStore::changed, this, [this](const QString &id) {
+        if (id == QLatin1String("video.fullscreenBar")) {
+            updateBar();
+            emit panelChanged(); // the mode itself
+        }
+    });
     connect(&m_video, &VideoController::changed, this, [this] {
         // The video went (Unload video, another editing target): the
         // fullscreen window has nothing left to show.
@@ -57,6 +70,7 @@ VideoFullscreenController::VideoFullscreenController(VideoController &video, Vid
                 m_pendingPath.clear(); // the open failed or was cancelled
             }
         }
+        updateBar(); // played or paused
         emit progressChanged();
     });
 }
@@ -104,18 +118,78 @@ int VideoFullscreenController::monitorFor(int monitor) const
     return application::fullscreenMonitor(monitor, rects, rectOf(program));
 }
 
-void VideoFullscreenController::setShowToolbar(bool on)
+int VideoFullscreenController::barMode() const
 {
-    // The "Show toolbar" check (VideoFullscreen.cpp:82-95): the toolbar row
-    // and m_PanelOnFullscreen follow it; the panel stays shown.
-    if (m_showToolbar == on)
+    return static_cast<int>(application::fullscreenBarMode(m_settings.integer("video.fullscreenBar")));
+}
+
+void VideoFullscreenController::setBarMode(int mode)
+{
+    const auto m = application::fullscreenBarMode(mode);
+    if (static_cast<int>(m) != barMode())
+        m_settings.set("video.fullscreenBar", static_cast<int>(m)); // applied through the store's change
+}
+
+bool VideoFullscreenController::pinned() const
+{
+    return application::fullscreenBarMode(barMode()) == application::FullscreenBarMode::Always;
+}
+
+void VideoFullscreenController::cycleBarMode()
+{
+    setBarMode(static_cast<int>(application::nextFullscreenBarMode(application::fullscreenBarMode(barMode()))));
+}
+
+void VideoFullscreenController::setMenuOpen(bool open)
+{
+    if (m_menuOpen == open)
         return;
-    m_showToolbar = on;
-    // The check is on the panel, so it is shown when the check is clicked;
-    // pinned, it stays shown.
-    if (on && m_active)
-        m_panelShown = true;
+    m_menuOpen = open;
+    if (!open && m_active) { // the bar stays a while after the menu goes
+        m_awake = true;
+        m_idle.start();
+    }
+    updateBar();
+}
+
+void VideoFullscreenController::setPointerOverBar(bool over)
+{
+    if (m_pointerOverBar == over)
+        return;
+    m_pointerOverBar = over;
+    if (!over && m_active) {
+        m_awake = true;
+        m_idle.start();
+    }
+    updateBar();
+}
+
+void VideoFullscreenController::pointerMoved(QPointF at)
+{
+    if (!m_active || m_pointer == at)
+        return;
+    m_pointer = at;
+    m_awake = true;
+    m_idle.start();
+    updateBar();
+}
+
+void VideoFullscreenController::updateBar()
+{
+    const application::FullscreenBarState state{m_awake, m_video.playing(), m_menuOpen, m_pointerOverBar};
+    const auto mode = application::fullscreenBarMode(barMode());
+    const bool shown = m_active && application::fullscreenBarShown(mode, state);
+    const bool hidden = m_active && application::fullscreenIdle(state);
+    if (shown == m_barShown && hidden == m_cursorHidden)
+        return;
+    m_barShown = shown;
+    m_cursorHidden = hidden;
     emit panelChanged();
+}
+
+QString VideoFullscreenController::lineLabel(const QString &text) const
+{
+    return QString::fromStdString(application::fullscreenLineText(text.toStdString()));
 }
 
 QString VideoFullscreenController::progressText() const
@@ -224,11 +298,13 @@ bool VideoFullscreenController::enter(int monitor)
     m_monitor = index;
     // `if (monitor && tab->editor)`: the argument, not where it lands.
     m_onAnotherMonitor = monitor != 0;
-    // `if (!m_PanelOnFullscreen) panel->Hide()`; pinned, it is shown.
-    m_panelShown = m_showToolbar;
+    // FS1: the bar shows on entering, and hides after a while in Auto.
+    m_awake = true;
+    m_idle.start();
     m_view.setFullscreen(true);
     place(screens[index]);
     emit activeChanged();
+    updateBar();
     emit panelChanged();
     emit progressChanged();
     return true;
@@ -244,10 +320,16 @@ bool VideoFullscreenController::leave()
         m_video.pause();
     m_active = false;
     m_onAnotherMonitor = false;
+    m_idle.stop();
+    m_awake = false;
+    m_pointer.reset();
+    m_menuOpen = false;
+    m_pointerOverBar = false;
     m_view.setFullscreen(false);
     if (m_window)
         hideWindow();
     emit activeChanged();
+    updateBar();
     emit panelChanged();
     restoreFocus();
     return true;
@@ -314,20 +396,6 @@ void VideoFullscreenController::restoreFocus()
     }
     m_focusWindow = nullptr;
     m_focusItem = nullptr;
-}
-
-bool VideoFullscreenController::pointerMoved(qreal y, qreal height, qreal panelHeight)
-{
-    if (!m_active)
-        return false;
-    using C = application::FullscreenPanelChange;
-    const C change = application::fullscreenPanelOnPointer(m_showToolbar, m_panelShown, static_cast<int>(y),
-                                                           static_cast<int>(height), static_cast<int>(panelHeight));
-    if (change == C::None)
-        return false;
-    m_panelShown = change == C::Show;
-    emit panelChanged();
-    return change == C::Hide; // ... panel->Show(false); SetFocus();
 }
 
 QVariantMap VideoFullscreenController::progressBar(qreal clientWidth, qreal textWidth, qreal textHeight) const
