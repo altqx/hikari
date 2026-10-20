@@ -174,6 +174,20 @@ TEST(HikariSection, TheRendererScriptLeavesItOut)
     EXPECT_EQ(script, kHead + "\n");
 }
 
+// A Dialogue or Comment in the section is a Line (LoadASS reads events in
+// any section), shown in the Grid: the renderers draw it as the others.
+TEST(HikariSection, TheRendererScriptKeepsItsLines)
+{
+    const std::string lines = "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n"
+                              "Comment: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,note\n";
+    const std::string input = kHead + "\n[Hikari]\nLayout=QUJD\n" + lines + "; a remark\nother\n";
+    const auto loaded = loadAss(bytesOf(input));
+    EXPECT_EQ(loaded.document.lines().size(), 3u);
+    const std::string script = text(encodeAss(loaded.document, AssSaveOptions{.renderer = true}));
+    EXPECT_EQ(script, kHead + "\n" + lines);
+    EXPECT_EQ(text(encodeAss(loaded.document)), input);
+}
+
 namespace {
 
 std::string fixture(const char *name)

@@ -118,15 +118,18 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
         fonts = section.kind == SectionKind::Fonts || (fonts && continuesAttachment(section));
         if (options.renderer && fonts)
             continue;
-        // WS2: the [Hikari] section is the editor's, not the renderers'.
-        if (options.renderer && section.kind == SectionKind::Hikari)
-            continue;
+        // WS2: the [Hikari] section's header and properties are the
+        // editor's, not the renderers'. A Line in it is a Line (LoadASS reads
+        // events in any section), shown and drawn as the others are.
+        const bool editorOnly = options.renderer && section.kind == SectionKind::Hikari;
         // E5-tlmode-needs-script-info: a Script Info section the Document
         // added at the top has no bytes; it is written as legacy's header is
         // (SubsGridBase.cpp:1490-1503): the header, its properties and a
         // blank line before the next section, in the source's line ends.
         const bool added = !section.headerSpan && !section.header.empty();
-        if (section.headerSpan) {
+        if (editorOnly) {
+            // no header: its Lines continue the section before it
+        } else if (section.headerSpan) {
             copy(section.headerSpan->offset, section.headerSpan->length + section.headerSpan->terminatorLength);
             newlines.see(*section.headerSpan);
         } else if (added && section.kind == SectionKind::Hikari) {
@@ -148,6 +151,8 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
             const auto *line = std::get_if<LineRecord>(&record);
             const auto *property = std::get_if<PropertyRecord>(&record);
             const auto *style = std::get_if<StyleRecord>(&record);
+            if (editorOnly && !line)
+                continue;
             const SourceSpan &span = std::visit([](const auto &r) -> const SourceSpan & { return r.span; }, record);
             // Legacy GetSInfos and Styles::GetRaw text for added or changed records.
             std::optional<std::u8string> generated;
@@ -277,7 +282,7 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
         }
         // The added Script Info at the top, and an added [Hikari] before
         // embedded data, end with a blank line before the next section.
-        if (added && (section.kind != SectionKind::Hikari || &section != &document.sections().back()))
+        if (added && !editorOnly && (section.kind != SectionKind::Hikari || &section != &document.sections().back()))
             append(newlines.newline);
     }
     return out;
