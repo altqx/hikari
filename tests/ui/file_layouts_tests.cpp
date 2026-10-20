@@ -827,6 +827,81 @@ private slots:
         stop();
     }
 
+    // A panel's place by index: the engine takes a floating place's window
+    // from the file's floating windows by index, and inserts a panel going
+    // back to its group at its tab index when it is not -1. Each is read
+    // into an int; a window the file does not have, a tab below -1 or a
+    // number no int holds is refused.
+    void aPanelPositionTheEngineCannotReadIsRefused_data()
+    {
+        QTest::addColumn<QString>("key");
+        QTest::addColumn<QJsonValue>("value");
+        QTest::addColumn<QString>("reason");
+        const QString nowhere = QStringLiteral("window that does not exist");
+        const QString unreadable = QStringLiteral("not a layout file");
+        QTest::newRow("far floating window") << QStringLiteral("indexOfFloatingWindow") << QJsonValue(2147483647) << nowhere;
+        QTest::newRow("next floating window") << QStringLiteral("indexOfFloatingWindow") << QJsonValue(1) << nowhere;
+        QTest::newRow("floating window below") << QStringLiteral("indexOfFloatingWindow") << QJsonValue(-2) << nowhere;
+        QTest::newRow("no floating window") << QStringLiteral("indexOfFloatingWindow") << QJsonValue(QJsonValue::Undefined)
+                                            << nowhere;
+        QTest::newRow("floating window as text") << QStringLiteral("indexOfFloatingWindow") << QJsonValue(QStringLiteral("0"))
+                                                 << nowhere;
+        QTest::newRow("tab below") << QStringLiteral("tabIndex") << QJsonValue(-2) << unreadable;
+        QTest::newRow("tab past an int") << QStringLiteral("tabIndex") << QJsonValue(1e20) << unreadable;
+        QTest::newRow("place past an int") << QStringLiteral("itemIndex") << QJsonValue(1e20) << unreadable;
+    }
+    void aPanelPositionTheEngineCannotReadIsRefused()
+    {
+        QFETCH(QString, key);
+        QFETCH(QJsonValue, value);
+        QFETCH(QString, reason);
+        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(fileLayout())).object();
+        QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
+        QCOMPARE(payload.value(QStringLiteral("floatingWindows")).toArray().size(), 1); // Audio's
+        QJsonArray docks = payload.value(QStringLiteral("allDockWidgets")).toArray();
+        bool changed = false;
+        for (qsizetype i = 0; i < docks.size() && !changed; ++i) {
+            QJsonObject dock = docks.at(i).toObject();
+            if (dock.value(QStringLiteral("uniqueName")) != QJsonValue(QStringLiteral("Audio")))
+                continue;
+            QJsonObject position = dock.value(QStringLiteral("lastPosition")).toObject();
+            QJsonArray places = position.value(QStringLiteral("placeholders")).toArray();
+            for (qsizetype j = 0; j < places.size() && !changed; ++j) {
+                QJsonObject place = places.at(j).toObject();
+                if (!place.value(QStringLiteral("isFloatingWindow")).toBool())
+                    continue;
+                QCOMPARE(place.value(QStringLiteral("indexOfFloatingWindow")).toInt(-5), 0); // as Hikari writes it
+                if (key == QStringLiteral("tabIndex"))
+                    position.insert(key, value);
+                else if (value.isUndefined())
+                    place.remove(key);
+                else
+                    place.insert(key, value);
+                places.replace(j, place);
+                position.insert(QStringLiteral("placeholders"), places);
+                dock.insert(QStringLiteral("lastPosition"), position);
+                docks.replace(i, dock);
+                changed = true;
+            }
+        }
+        QVERIFY(changed); // the floating Audio panel's place
+        payload.insert(QStringLiteral("allDockWidgets"), docks);
+        envelope.insert(QStringLiteral("payload"), payload);
+        const QByteArray text = QJsonDocument(envelope).toJson(QJsonDocument::Compact).toBase64();
+        QString problem;
+        QVERIFY(!ui::WorkspaceArrangement::parseFromFile(text, {}, &problem));
+        QVERIFY2(problem.contains(reason), qPrintable(problem));
+
+        const QString file = write(path("position.ass"), kAss + "\n[Hikari]\nLayout=" + text + "\n");
+        start();
+        application->addPage();
+        QVERIFY(application->openFile(file));
+        QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
+        QVERIFY(!isFloating("audioDock"));
+        QVERIFY(application->log().history().contains(QStringLiteral("position.ass")));
+        stop();
+    }
+
     // SRT and the other formats keep the arrangement only in the Session.
     void otherFormatsKeepItOnlyInTheSession()
     {

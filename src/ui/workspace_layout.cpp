@@ -318,6 +318,16 @@ bool readableItem(const QJsonObject &item)
               s.value(QStringLiteral("percentageWithinParent")).isDouble())));
 }
 
+// An index the engine reads into an int: absent, or a whole number from
+// first to last.
+bool readableIndex(const QJsonValue &v, double first, double last)
+{
+    if (v.isUndefined())
+        return true;
+    const double d = v.toDouble();
+    return v.isDouble() && d == std::trunc(d) && d >= first && d <= last;
+}
+
 // Affinities the engine would copy onto Hikari's window and panels, which
 // have none.
 bool noAffinities(const QJsonObject &o)
@@ -452,21 +462,35 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
             return fail(QCoreApplication::translate("HikariSub.Workspace", "it names an unknown panel (%1)").arg(name));
         if (!noAffinities(d.toObject()))
             return fail(unreadable);
-        const QJsonArray places =
-            d.toObject().value(QStringLiteral("lastPosition")).toObject().value(QStringLiteral("placeholders")).toArray();
+        const QJsonObject position = d.toObject().value(QStringLiteral("lastPosition")).toObject();
+        const QJsonArray places = position.value(QStringLiteral("placeholders")).toArray();
         if (docks.contains(name) || places.size() > 1 + floatingWindows.size())
             return fail(tooMany);
         docks.insert(name);
-        // A docked panel's place: the engine finds its main window by name
-        // and uses it without a check (Positions::deserialize). What it
-        // cannot read is a docked place in no window.
+        // The tab a panel goes back to: the engine inserts it at this index
+        // when it is not -1 and the group has no fewer tabs, so one below -1
+        // reaches its tab list unchecked (Layout::restorePlaceholder).
+        if (!readableIndex(position.value(QStringLiteral("tabIndex")), -1, 16777215))
+            return fail(unreadable);
+        // A panel's place: the engine finds a docked one's main window by
+        // name and uses it without a check (Positions::deserialize), and a
+        // floating one's window by index. What it cannot read is a docked
+        // place in no window, or a floating place in a window the file does
+        // not have (-1, as the engine writes for a window being deleted,
+        // is passed over).
+        const QString nowhere =
+            QCoreApplication::translate("HikariSub.Workspace", "it puts a panel in a window that does not exist");
         for (const auto &place : places) {
             const QJsonObject p = place.toObject();
-            if (!place.isObject() ||
-                (p.value(QStringLiteral("isFloatingWindow")) != QJsonValue(true) &&
-                 p.value(QStringLiteral("mainWindowUniqueName")).toString() != QStringLiteral("Classic")))
-                return fail(QCoreApplication::translate("HikariSub.Workspace",
-                                                        "it puts a panel in a window that does not exist"));
+            if (!place.isObject())
+                return fail(nowhere);
+            if (!readableIndex(p.value(QStringLiteral("itemIndex")), -1, 16777215))
+                return fail(unreadable);
+            const QJsonValue index = p.value(QStringLiteral("indexOfFloatingWindow"));
+            if (p.value(QStringLiteral("isFloatingWindow")) == QJsonValue(true)
+                    ? index.isUndefined() || !readableIndex(index, -1, double(floatingWindows.size() - 1))
+                    : p.value(QStringLiteral("mainWindowUniqueName")).toString() != QStringLiteral("Classic"))
+                return fail(nowhere);
         }
     }
     QSet<QString> closed;
