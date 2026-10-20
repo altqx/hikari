@@ -178,6 +178,24 @@ class Session(unittest.TestCase):
         for name in ("gate.py", "atspi_tool.py", "gatelib.py"):
             ast.parse(self.read(name), filename=name)
 
+    def test_the_lookup_finds_qt_s_application(self):
+        # A11Y1 (#298): on GNOME GTK's ATK bridge registered the process a
+        # second time, without windows, ahead of Qt's; the lookup took it
+        self.assertEqual(gatelib.hikarisub_application(["gtk", "Qt"]), 1)
+        self.assertEqual(gatelib.hikarisub_application(["Qt"]), 0)
+        self.assertEqual(gatelib.hikarisub_application(["gtk"]), 0)
+        self.assertIsNone(gatelib.hikarisub_application([]))
+        self.assertIn("hikarisub_application(", self.read("atspi_tool.py"))
+
+    def test_the_gnome_session_keeps_gtk_s_bridge(self):
+        # A11Y1 (#298): NO_AT_BRIDGE=1 would leave the GTK3 theme's file
+        # chooser silent to screen readers; the gate no longer sets it for
+        # HikariSub (the colour patch, a GTK program of the gate's, still may)
+        gate = self.read("gate.py")
+        for fn in ("title_bar_start", "step_gtk_bridge"):
+            body = re.search(r"\ndef " + fn + r"\(.*?(?=\ndef |\n[A-Z_]+ = )", gate, re.S).group(0)
+            self.assertNotIn("NO_AT_BRIDGE\": \"1", body, fn)
+
     def test_kwin_runs_its_qt_quick_windows_in_software(self):
         # KWin aborted in QSGRenderLoop::handleContextCreationFailure when the
         # PickColor prompt opened
