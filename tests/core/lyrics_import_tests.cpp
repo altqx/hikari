@@ -200,6 +200,13 @@ TEST(LyricsImport, MalformedLrcNamesTheLineAtFault)
     EXPECT_EQ(problemOf("[00:01.00][00:05.00]<00:01.00>a <00:02.00>b", u8"lrc"),
               (LyricsProblem{Kind::RepeatedWordLine, 1, u8"[00:01.00][00:05.00]<00:01.00>a <00:02.00>b"}));
     EXPECT_EQ(problemOf("[00:01.00]ok\n[00:02.00]ok\n[00:03.00]\xff\n", u8"lrc"), (LyricsProblem{Kind::NotUtf8, 3, u8""}));
+    // Words before the first stamp start at the line time, so the stamp may
+    // not be earlier.
+    EXPECT_EQ(problemOf("[00:05.00]lead <00:04.00>word", u8"lrc"), (LyricsProblem{Kind::TimeGoesBack, 1, u8"<00:04.00>"}));
+    // Past 100 hours is not a time.
+    EXPECT_EQ(problemOf("[6000:00.01]x", u8"lrc"), (LyricsProblem{Kind::UnreadableTime, 1, u8"[6000:00.01]"}));
+    EXPECT_EQ(problemOf("[00:01.00]<999999999:00.00>x", u8"lrc"),
+              (LyricsProblem{Kind::UnreadableTime, 1, u8"<999999999:00.00>"}));
     EXPECT_EQ(problemOf("[ti:Only tags]\n[ar:Nobody]\n", u8"lrc"), (LyricsProblem{Kind::NoLyrics, 0, u8""}));
     EXPECT_EQ(problemOf("", u8"lrc"), (LyricsProblem{Kind::NoLyrics, 0, u8""}));
 }
@@ -229,6 +236,74 @@ TEST(LyricsImport, MalformedTtmlNamesTheLineAtFault)
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">\xc3\x28</p></body></tt>", u8"ttml"),
               (LyricsProblem{Kind::NotUtf8, 3, u8""}));
     EXPECT_EQ(problemOf(head + "</body></tt>", u8"ttml"), (LyricsProblem{Kind::NoLyrics, 0, u8""}));
+}
+
+TEST(LyricsImport, TtmlMustBeWellFormedXml)
+{
+    const std::string head = "<tt xmlns=\"http://www.w3.org/ns/ttml\">\n<body>\n";
+    const std::string tail = "</p>\n</body></tt>";
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\" begin=\"3\">x" + tail, u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 3, u8"<p begin=\"1\" end=\"2\" begin=\"3\">"}));
+    // Names are compared whole: a local name may repeat under other prefixes.
+    EXPECT_TRUE(importTtml(bytes(head + "<p begin=\"1\" ttm:a=\"1\" end=\"2\" xml:a=\"1\">x" + tail)).has_value());
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\"end=\"2\">x" + tail, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 3, u8"end=\"2\">"}));
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">a ]]> b" + tail, u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 3, u8"]]>"}));
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\"><1x/>" + tail, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 3, u8"<1x/>"}));
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" -end=\"2\">x" + tail, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 3, u8"-end=\"2\">"}));
+}
+
+TEST(LyricsImport, TtmlNestedTooDeepIsRefused)
+{
+    // <tt> and <body> are two levels; 62 <div>s fill the rest.
+    auto nested = [](std::size_t divs) {
+        std::string s = "<tt>\n<body>\n";
+        for (std::size_t i = 0; i < divs; ++i)
+            s += "<div>";
+        s += "<p begin=\"1\" end=\"2\">x</p>";
+        for (std::size_t i = 0; i < divs; ++i)
+            s += "</div>";
+        return s + "</body></tt>";
+    };
+    EXPECT_TRUE(importTtml(bytes(nested(kMaxTtmlDepth - 3))).has_value());
+    EXPECT_EQ(problemOf(nested(kMaxTtmlDepth - 2), u8"ttml"), (LyricsProblem{Kind::TooDeep, 3, u8"<p begin=\"1\" end=\"2\">"}));
+    EXPECT_EQ(problemOf(nested(100000), u8"ttml"), (LyricsProblem{Kind::TooDeep, 3, u8"<div>"}));
+}
+
+TEST(LyricsImport, TtmlTimesPast100HoursAreRefused)
+{
+    const std::string head = "<tt><body>\n";
+    EXPECT_EQ(problemOf(head + "<p begin=\"101h\" end=\"102h\">x</p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::UnreadableTime, 2, u8"101h"}));
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"999999999999999\">x</p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::UnreadableTime, 2, u8"999999999999999"}));
+    EXPECT_TRUE(importTtml(bytes(head + "<p begin=\"99h\" end=\"100h\">x</p></body></tt>")).has_value());
+}
+
+TEST(LyricsImport, LyricsTextStaysLiteral)
+{
+    // Braces become fullwidth; a backslash before N, n or h, or at the end,
+    // gets a word joiner so it starts no ASS escape. Other backslashes stay.
+    const std::string wj = "\u2060";
+    const auto lrc = importLrc(bytes("[00:01.00]<00:01.00>{a}\\N <00:02.00>b\\\n[00:03.00]{\\i1}x\\n\\h\n"));
+    ASSERT_TRUE(lrc.has_value());
+    EXPECT_EQ(rows(*lrc), (std::vector<Row>{{1000, 3000, "", "{\\k100}\uFF5Ba\uFF5D\\" + wj + "N {\\k100}b\\" + wj},
+                                           {3000, 8000, "", "\uFF5B\\i1\uFF5Dx\\" + wj + "n\\" + wj + "h"}}));
+    // A <br/> still breaks the Line.
+    const auto ttml = importTtml(bytes("<tt><body><p begin=\"1\" end=\"3\"><span begin=\"1\" end=\"2\">{x}</span> "
+                                       "<span begin=\"2\" end=\"3\">a\\h</span><br/>c\\</p></body></tt>"));
+    ASSERT_TRUE(ttml.has_value());
+    EXPECT_EQ(rows(*ttml),
+              (std::vector<Row>{{1000, 3000, "", "{\\k100}\uFF5Bx\uFF5D {\\k100}a\\" + wj + "h\\Nc\\" + wj}}));
+}
+
+TEST(LyricsImport, LrcLinesLastUntilTheNextLaterTime)
+{
+    // Lines sharing a time all last until the next later one.
+    const auto result = importLrc(bytes("[00:01.00][00:04.00]a\n[00:01.00]b\n[00:02.00]c\n"));
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(rows(*result), (std::vector<Row>{{1000, 2000, "", "a"}, {1000, 2000, "", "b"}, {2000, 4000, "", "c"},
+                                               {4000, 9000, "", "a"}}));
 }
 
 TEST(LyricsImport, TtmlTimesAndWordEnds)

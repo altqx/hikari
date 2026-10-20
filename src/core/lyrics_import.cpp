@@ -41,6 +41,24 @@ std::u8string field(std::u8string_view text, bool name)
 
 } // namespace
 
+std::u8string literalText(std::u8string_view text)
+{
+    std::u8string out;
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        if (text[i] == u8'{')
+            out += u8"\uFF5B";
+        else if (text[i] == u8'}')
+            out += u8"\uFF5D";
+        else {
+            out += text[i];
+            if (text[i] == u8'\\' &&
+                (i + 1 == text.size() || text[i + 1] == u8'N' || text[i + 1] == u8'n' || text[i + 1] == u8'h'))
+                out += u8"\u2060";
+        }
+    }
+    return out;
+}
+
 std::u8string karaokeText(LyricLine &line)
 {
     const std::int64_t start = centiseconds(line.start);
@@ -163,6 +181,8 @@ std::optional<std::int64_t> lrcTime(u8sv text)
             f *= 10;
         ms += f;
     }
+    if (ms > detail::kLatestLyricsTime)
+        return std::nullopt;
     return ms;
 }
 
@@ -286,7 +306,7 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
             if (!entry.words.empty() && word.size() < pending.size() && !entry.words.back().text.ends_with(u8' '))
                 entry.words.back().text += u8' ';
             if (!word.empty()) {
-                entry.words.push_back(LyricWord{pendingBegin.value_or(-1), end.value_or(0), std::u8string(word)});
+                entry.words.push_back(LyricWord{pendingBegin.value_or(-1), end.value_or(0), detail::literalText(word)});
                 entry.ended.push_back(end.has_value());
             }
             pending.clear();
@@ -299,7 +319,9 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
                 if (!time)
                     return std::unexpected(LyricsProblem{Kind::UnreadableTime, lineNumber,
                                                          std::u8string(rest.substr(i, close == u8sv::npos ? u8sv::npos : close - i + 1))});
-                if (lastStamp && *time < *lastStamp)
+                // Words before the first stamp start at the line time.
+                const bool leadingWords = !lastStamp && !detail::trim(pending).empty() && !entry.times.empty();
+                if ((lastStamp && *time < *lastStamp) || (leadingWords && *time < entry.times.front()))
                     return std::unexpected(LyricsProblem{Kind::TimeGoesBack, lineNumber, std::u8string(rest.substr(i, close - i + 1))});
                 lastStamp = time;
                 entry.timedWords = true;
@@ -319,7 +341,7 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
         } else {
             if (entry.times.empty())
                 return std::unexpected(LyricsProblem{Kind::MissingTime, lineNumber, std::u8string(detail::trim(raw))});
-            entry.text = std::u8string(rest);
+            entry.text = detail::literalText(rest);
         }
         if (entry.times.empty() && entry.words.empty())
             continue; // only stamps, no words: nothing to show
@@ -341,16 +363,17 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
     std::stable_sort(placed.begin(), placed.end(), [](const Placed &a, const Placed &b) { return a.start < b.start; });
 
     // A line lasts until the next line's time; the last line, for the 5 s of a
-    // new Line (legacy Dialogue()).
+    // new Line (legacy Dialogue()). The next later time of each, in one pass
+    // from the end.
     constexpr std::int64_t kLastLine = 5000;
+    std::vector<std::optional<std::int64_t>> nextTimes(placed.size());
+    for (std::size_t i = placed.size(); i-- > 1;)
+        nextTimes[i - 1] = placed[i].start > placed[i - 1].start ? std::optional(placed[i].start) : nextTimes[i];
     for (std::size_t i = 0; i < placed.size(); ++i) {
         const LrcEntry &entry = *placed[i].entry;
         if (entry.words.empty() && entry.text.empty())
             continue;
-        std::optional<std::int64_t> next;
-        for (std::size_t j = i + 1; j < placed.size() && !next; ++j)
-            if (placed[j].start > placed[i].start)
-                next = placed[j].start;
+        const std::optional<std::int64_t> next = nextTimes[i];
         LyricLine line;
         line.start = placed[i].start;
         line.actor = entry.actor;

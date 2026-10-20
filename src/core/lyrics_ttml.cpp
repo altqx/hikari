@@ -59,6 +59,11 @@ bool isSpace(char8_t c)
     return c == u8' ' || c == u8'\t' || c == u8'\r' || c == u8'\n';
 }
 
+bool isDigit(char8_t c)
+{
+    return c >= u8'0' && c <= u8'9';
+}
+
 void appendUtf8(std::u8string &out, std::uint32_t cp)
 {
     if (cp < 0x80) {
@@ -163,9 +168,12 @@ private:
         }
     }
 
+    // A name; it may not start with a digit, '-' or '.'.
     std::optional<std::u8string> name()
     {
         const std::size_t from = m_pos;
+        if (done() || isDigit(m_s[m_pos]) || m_s[m_pos] == u8'-' || m_s[m_pos] == u8'.')
+            return std::nullopt;
         while (!done() && !isSpace(m_s[m_pos]) && u8sv(u8"/>=<\"'").find(m_s[m_pos]) == u8sv::npos)
             advance(1);
         if (m_pos == from)
@@ -222,7 +230,9 @@ private:
     }
 
     // An element and everything in it, from its '<'. Open elements are kept
-    // on a stack, so deep nesting costs no recursion.
+    // on a stack, so reading costs no recursion; nesting past kMaxTtmlDepth
+    // is refused, so the walks over the tree (and its destruction) stay
+    // shallow too.
     std::expected<XmlNode, LyricsProblem> element()
     {
         std::vector<XmlNode> open;
@@ -271,6 +281,11 @@ private:
                 advance(end + 3 - m_pos);
             } else if (at(u8"<")) {
                 const auto start = std::pair{m_pos, m_line};
+                if (open.size() >= kMaxTtmlDepth) {
+                    LyricsProblem problem = broken();
+                    problem.kind = Kind::TooDeep;
+                    return std::unexpected(std::move(problem));
+                }
                 advance(1);
                 XmlNode node;
                 node.line = line;
@@ -311,6 +326,16 @@ private:
                     }
                     node.attributes.emplace_back(*key, *value);
                     advance(end + 1 - m_pos);
+                    if (!done() && !isSpace(m_s[m_pos]) && !at(u8">") && !at(u8"/>"))
+                        return std::unexpected(broken()); // attributes run together
+                }
+                std::vector<u8sv> keys;
+                for (const auto &[key, value] : node.attributes)
+                    keys.emplace_back(key);
+                std::ranges::sort(keys);
+                if (std::ranges::adjacent_find(keys) != keys.end()) {
+                    std::tie(m_pos, m_line) = start;
+                    return std::unexpected(broken()); // an attribute given twice
                 }
                 if (!empty) {
                     open.push_back(std::move(node));
@@ -326,7 +351,12 @@ private:
             } else {
                 const auto start = std::pair{m_pos, m_line};
                 const std::size_t end = std::min(m_s.find(u8'<', m_pos), m_s.size());
-                const auto text = decode(m_s.substr(m_pos, end - m_pos));
+                const u8sv raw = m_s.substr(m_pos, end - m_pos);
+                if (const std::size_t cdataEnd = raw.find(u8"]]>"); cdataEnd != u8sv::npos) {
+                    advance(cdataEnd); // only a CDATA section may end with "]]>"
+                    return std::unexpected(broken());
+                }
+                const auto text = decode(raw);
                 if (!text || open.empty()) {
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken());
@@ -371,12 +401,16 @@ std::optional<std::int64_t> ttmlTime(u8sv text)
         }
         return digit ? std::optional(whole + fraction) : std::nullopt;
     };
-    auto ms = [](double seconds) { return static_cast<std::int64_t>(std::llround(seconds * 1000)); };
+    auto ms = [](double seconds) -> std::optional<std::int64_t> {
+        if (seconds * 1000 > static_cast<double>(detail::kLatestLyricsTime))
+            return std::nullopt;
+        return static_cast<std::int64_t>(std::llround(seconds * 1000));
+    };
     static constexpr std::pair<u8sv, double> kUnits[] = {{u8"ms", 0.001}, {u8"h", 3600.0}, {u8"m", 60.0}, {u8"s", 1.0}};
     for (const auto &[unit, factor] : kUnits)
         if (text.ends_with(unit)) {
             const auto n = decimal(text.substr(0, text.size() - unit.size()));
-            return n ? std::optional(ms(*n * factor)) : std::nullopt;
+            return n ? ms(*n * factor) : std::nullopt;
         }
     std::vector<u8sv> parts;
     for (std::size_t from = 0;;) {
@@ -546,7 +580,7 @@ private:
     {
         for (const XmlNode &child : node.children) {
             if (child.isText()) {
-                addText(into, collapsed(child.text));
+                addText(into, detail::literalText(collapsed(child.text)));
                 continue;
             }
             const u8sv local = localName(child.name);
@@ -569,7 +603,7 @@ private:
                 if (!into.words.empty() && begin < into.words.back().begin)
                     return std::unexpected(LyricsProblem{Kind::TimeGoesBack, child.line,
                                                          std::u8string(*attribute(child, u8"begin"))});
-                const std::u8string text = collapsed(allText(child));
+                const std::u8string text = detail::literalText(collapsed(allText(child)));
                 const u8sv word = detail::trimLeft(text);
                 if (word.size() < text.size())
                     addText(into, u8" ");

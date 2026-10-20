@@ -1496,6 +1496,10 @@ QString Application::openProblem(const QString &path, const application::StageFa
     case Kind::NotTtml:
         what = QCoreApplication::translate("HikariSub.Documents", "%1 is not a TTML document").arg(excerpt);
         break;
+    case Kind::TooDeep:
+        what = QCoreApplication::translate("HikariSub.Documents", "the elements are nested more than %1 deep at \"%2\"")
+                   .arg(QString::number(core::kMaxTtmlDepth), excerpt);
+        break;
     case Kind::NoLyrics: what = QCoreApplication::translate("HikariSub.Documents", "it has no timed lyrics"); break;
     }
     return problem.line > 0

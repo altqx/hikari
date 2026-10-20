@@ -32,6 +32,17 @@ struct LyricSheet {
     std::vector<LyricLine> lines;
 };
 
+// The latest time either format may give (100 hours), so no arithmetic on
+// a time can overflow.
+inline constexpr std::int64_t kLatestLyricsTime = 360'000'000;
+
+// Lyrics text as ASS shows it literally: "{" and "}" would open and close
+// override blocks, so they become "\uFF5B" and "\uFF5D", and a word joiner
+// (U+2060) after a backslash keeps \N, \n and \h from being a line break or a
+// hard space. A backslash at the end gets one too, since a syllable's
+// override block or other text may follow it.
+std::u8string literalText(std::u8string_view text);
+
 // A Line's text with one \k syllable per word, in centiseconds. Each word
 // lasts until it ends or the next word begins, whichever is first; an empty
 // syllable fills each pause, including one before the first word and one

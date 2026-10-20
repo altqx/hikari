@@ -6,7 +6,9 @@
 // ASS Document whose Lines carry one \k syllable per word, with an empty
 // syllable for each pause, so the syllables always add up to the Line's
 // duration. Lines without word times import as plain Lines. A malformed file
-// imports nothing; the problem names the line at fault.
+// imports nothing; the problem names the line at fault. Lyrics text stays
+// literal: braces become their fullwidth forms, and a backslash is kept
+// from starting an ASS escape.
 
 #include "hikari/core/document.h"
 
@@ -28,6 +30,7 @@ struct LyricsProblem {
         RepeatedWordLine, // LRC: a word-timed line with several line times
         NotWellFormed,    // TTML: the XML is broken here
         NotTtml,          // TTML: the root element is not <tt>
+        TooDeep,          // TTML: elements nested past kMaxTtmlDepth
         NoLyrics,         // nothing timed in the whole file
     };
     Kind kind = Kind::NoLyrics;
@@ -35,6 +38,10 @@ struct LyricsProblem {
     std::u8string excerpt; // the text at fault, as written
     bool operator==(const LyricsProblem &) const = default;
 };
+
+// TTML lyrics nest a handful of elements; deeper files are refused, so no
+// walk over the tree can run out of stack.
+inline constexpr std::size_t kMaxTtmlDepth = 64;
 
 // "lrc" or "ttml" (lower-case, without the dot).
 bool isLyricsExtension(std::u8string_view extension);
