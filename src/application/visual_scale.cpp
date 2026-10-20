@@ -305,11 +305,14 @@ void ScaleTool::setVisual(bool dummy, VisualHost &host)
 void ScaleTool::changeVisualLine(std::u16string &text, const core::LineRecord &dial, const Context &ctx)
 {
     // Scale::ChangeVisual(txt, dial, numOfSelections) (VisualScale.cpp:425-516).
+    // Legacy's drags take the larger ratio for both axes. A typed or
+    // scrubbed value (VT1) is written as given: each axis takes its own
+    // ratio, so a value below the press's applies (Codex on #293).
     float Scalex = m_scale.x / m_lastScale.x;
     float Scaley = m_scale.y / m_lastScale.y;
-    if (Scalex > Scaley)
+    if (!m_valueRatios && Scalex > Scaley)
         Scaley = Scalex;
-    else if (Scaley > Scalex)
+    else if (!m_valueRatios && Scaley > Scalex)
         Scalex = Scaley;
     if (m_changeAllTags && m_preserveProportions) {
         const LinePosition lp = linePosition(ctx, dial);
@@ -927,12 +930,16 @@ bool ScaleTool::setValue(const std::string &name, const std::u16string &text, Vi
     }
     m_to.x = m_from.x + (m_scale.x * m_arrowLengths.x);
     m_to.y = m_from.y + (m_scale.y * m_arrowLengths.y);
+    m_valueRatios = true;
     setVisual(true, host);
-    if (edit == ValueEdit::Sample)
+    if (edit == ValueEdit::Sample) {
+        m_valueRatios = false;
         return m_valueEdit = host.gesture() != nullptr;
+    }
     m_valueEdit = false;
     const std::uint64_t before = host.session() ? host.session()->revision() : 0;
     setVisual(false, host);
+    m_valueRatios = false;
     return host.session() && host.session()->revision() != before;
 }
 

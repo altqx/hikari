@@ -115,6 +115,7 @@ private:
     bool m_preserveProportions = false;
     bool m_changeAllTags = false;
     bool m_valueEdit = false; // the open gesture is a scrubbed value's (VT1)
+    bool m_valueRatios = false; // a value is being written: each axis' own ratio (VT1)
 };
 
 } // namespace hikari::application::visual
