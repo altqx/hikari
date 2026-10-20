@@ -193,19 +193,20 @@ private:
             if (GetMonitorInfoW(MonitorFromWindow(hwnd(), MONITOR_DEFAULTTONEAREST), &monitor)) {
                 RECT &client = params->rgrc[0];
                 client = monitor.rcWork;
-                APPBARDATA bar{};
-                bar.cbSize = sizeof(bar);
-                if (SHAppBarMessage(ABM_GETSTATE, &bar) & ABS_AUTOHIDE) {
-                    bar.hWnd = FindWindowW(L"Shell_TrayWnd", nullptr);
-                    if (bar.hWnd && MonitorFromWindow(bar.hWnd, MONITOR_DEFAULTTONEAREST)
-                                        == MonitorFromWindow(hwnd(), MONITOR_DEFAULTTONEAREST)) {
-                        SHAppBarMessage(ABM_GETTASKBARPOS, &bar);
-                        switch (bar.uEdge) {
-                        case ABE_LEFT: client.left += 1; break;
-                        case ABE_RIGHT: client.right -= 1; break;
-                        case ABE_TOP: client.top += 1; break;
-                        default: client.bottom -= 1; break;
-                        }
+                // An auto-hidden taskbar on this monitor's edge, the primary's
+                // or a secondary one's (Shell_SecondaryTrayWnd).
+                for (const UINT edge : {ABE_LEFT, ABE_TOP, ABE_RIGHT, ABE_BOTTOM}) {
+                    APPBARDATA bar{};
+                    bar.cbSize = sizeof(bar);
+                    bar.uEdge = edge;
+                    bar.rc = monitor.rcMonitor;
+                    if (!reinterpret_cast<HWND>(SHAppBarMessage(ABM_GETAUTOHIDEBAREX, &bar)))
+                        continue;
+                    switch (edge) {
+                    case ABE_LEFT: client.left += 1; break;
+                    case ABE_TOP: client.top += 1; break;
+                    case ABE_RIGHT: client.right -= 1; break;
+                    default: client.bottom -= 1; break;
                     }
                 }
             }
