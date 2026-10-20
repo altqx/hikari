@@ -12179,8 +12179,8 @@ private slots:
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" retired, never listed; WS3: the five View
         // arrangements and "Enable / Disable editor" too; LE3's "Hide tags in
-        // the line editor" and TM1's "Translation mode" listed.
-        QCOMPARE(hotkeyRows().size(), 221);
+        // the line editor", TM1's "Translation mode" and its run keys listed.
+        QCOMPARE(hotkeyRows().size(), 231);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -12515,10 +12515,10 @@ private slots:
         h.select(hotkeyPosition(QStringLiteral("Subtitles Swap lines")));
         h.optionsMap(QStringLiteral("Ctrl-Shift-W"), 2, QStringLiteral("cancel"));
         h.select(hotkeyPosition(QStringLiteral("Editor First tag button")));
-        h.optionsMap(QStringLiteral("Alt-1"), 2, QStringLiteral("cancel"));
+        h.optionsMap(QStringLiteral("Ctrl-Alt-1"), 2, QStringLiteral("cancel")); // TM1: Alt-1 places run 1
         h.commitOptions();
         QCOMPARE(h.actionFor(2, Qt::Key_W, Qt::ControlModifier | Qt::ShiftModifier), QString());
-        QCOMPARE(h.actionFor(2, Qt::Key_1, Qt::AltModifier), QString()); // EDITBOX_TAG_BUTTONS is 0
+        QCOMPARE(h.actionFor(2, Qt::Key_1, Qt::ControlModifier | Qt::AltModifier), QString()); // EDITBOX_TAG_BUTTONS is 0
         // Duplicate lines bound for the Video window does nothing in the Grid.
         QVERIFY(application->openFile(episode));
         item<QQuickItem>("editingGrid")->forceActiveFocus();
