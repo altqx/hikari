@@ -272,6 +272,11 @@ const std::vector<SettingDefinition> &definitions()
         // shows and a click repeats, the last one chosen from its menu (an
         // AUDIO_HOTKEY symbol). Starts on 500 ms before the start.
         {"audio.playAround", "", String, Profile, Mapped, false, std::string("AUDIO_PLAY_500MS_BEFORE")},
+        // AU2 (#268): the audio panel's Customise menu: the controls AU1
+        // folded that the row shows ("playAround", the plays, "autoCommit",
+        // "nextCommit", "goto", "sliders"). Starts on AU1's row; legacy has
+        // no such option, so an import leaves it as it is.
+        {"audio.panelControls", "", StringList, Profile, Mapped, false, std::vector<std::string>{"playAround"}},
         // W1: the player that plays video (Windows): 0 the built-in general
         // player, 1 the optional DirectShow adapter (legacy's player when
         // indexing was off). Chosen here only, never as a fallback; other
