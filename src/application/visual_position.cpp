@@ -940,6 +940,8 @@ void MoveTool::selected(VisualHost &host)
 
 void MoveTool::reset(VisualHost &host)
 {
+    if (!host.gesture())
+        m_typedTimes = {}; // a value edit ended (committed or dropped)
     if (m_inGesture && !host.gesture()) {
         m_cancelled = true;
         m_keyNudge = false;
@@ -1041,6 +1043,11 @@ std::u16string MoveTool::changeVisualBatch(const std::u16string &text, const cor
         moveStartTime = atoi16(t1); // wxAtoi
         moveEndTime = atoi16(t2);
     }
+    // VT1: a typed time goes into every target, from its own start.
+    if (m_typedTimes[0])
+        moveStartTime = *m_typedTimes[0];
+    if (m_typedTimes[1])
+        moveEndTime = *m_typedTimes[1];
     const VideoView &view = host.view();
     const float coeffW = view.coeffW(), coeffH = view.coeffH();
     const PointF zoomScale = view.zoomScale();
@@ -1424,12 +1431,10 @@ std::vector<ToolValue> MoveTool::values(const VisualHost &host) const
 
 int MoveTool::activeStart(const VisualHost &host) const
 {
-    const auto *session = host.session();
-    if (session && host.activeLine())
-        for (const auto *l : session->document().lines())
-            if (l->id == *host.activeLine())
-                return zeroit(startMs(*l));
-    return 0;
+    // The active Line as the Line editor holds it (its pending draft's
+    // start), as setVisual and the gesture read it.
+    const ScriptState state = scriptState(host);
+    return state.active ? zeroit(startMs(*state.active)) : 0;
 }
 
 bool MoveTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
@@ -1445,7 +1450,9 @@ bool MoveTool::setValue(const std::string &name, const std::u16string &text, Vis
         return false;
     const bool start = name[1] == '1';
     if (name[0] == 't') {
-        m_moveValues[start ? 4 : 5] = activeStart(host) + std::round(value);
+        const int typed = static_cast<int>(std::lround(value));
+        m_moveValues[start ? 4 : 5] = activeStart(host) + typed;
+        m_typedTimes[start ? 0 : 1] = typed;
     } else {
         PointF script = host.view().viewToScript(start ? m_from : m_to);
         (name[0] == 'x' ? script.x : script.y) = static_cast<float>(value);
@@ -1459,6 +1466,7 @@ bool MoveTool::setValue(const std::string &name, const std::u16string &text, Vis
     const std::uint64_t before = host.session() ? host.session()->revision() : 0;
     setVisual(true, host);
     setVisual(false, host);
+    m_typedTimes = {};
     return host.session() && host.session()->revision() != before;
 }
 

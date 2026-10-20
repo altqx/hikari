@@ -1138,6 +1138,61 @@ TEST(VisualMoveValues, TypedPointsWriteTheMove)
     EXPECT_EQ(tool.values(host)[5].text, u"1500");
 }
 
+// The \move's two times of a Line's text ("t1,t2"), or empty.
+std::u8string moveTimesOf(const std::u8string &t)
+{
+    const auto open = t.find(u8"\\move(");
+    if (open == std::u8string::npos)
+        return {};
+    const auto close = t.find(u8')', open);
+    std::u8string args = t.substr(open + 6, close - open - 6);
+    for (int i = 0; i < 4; i++)
+        args.erase(0, args.find(u8',') + 1);
+    return args;
+}
+
+// VT1 (Codex on #293): with several Lines a typed time goes into every
+// target, each from its own start, not only the Line it was read from.
+TEST(VisualMoveValues, TypedTimesGoIntoEveryPickedLine)
+{
+    TestHost host;
+    standard(host, 1);
+    host.picker.pick({ids(*host.s)[1], ids(*host.s)[2]});
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    EXPECT_TRUE(tool.setValue("t1", u"100", host));
+    EXPECT_EQ(moveTimesOf(text(host, 1)), u8"100,2000");
+    EXPECT_EQ(moveTimesOf(text(host, 2)).substr(0, 4), u8"100,");
+    tool.reset(host);
+    EXPECT_TRUE(tool.setValue("t2", u"1500", host));
+    EXPECT_EQ(moveTimesOf(text(host, 1)), u8"100,1500");
+    EXPECT_EQ(moveTimesOf(text(host, 2)), u8"100,1500");
+    // The edit over, a point's drag keeps each Line's own times.
+    tool.reset(host);
+    EXPECT_TRUE(tool.setValue("x1", u"60", host));
+    EXPECT_EQ(moveTimesOf(text(host, 1)), u8"100,1500");
+}
+
+// VT1 (Codex on #293): the times are read and written from the start the
+// Line editor holds (its pending draft's), as the tag is.
+TEST(VisualMoveValues, TypedTimesAreFromTheDraftsStart)
+{
+    TestHost host;
+    standard(host, 1);
+    const core::LineId active = ids(*host.s)[1];
+    ASSERT_TRUE(host.s->editDraft(active, DraftChange{.start = core::DocumentTime(1'500'000)}));
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    EXPECT_TRUE(tool.setValue("t1", u"100", host));
+    const auto draft = host.s->draftRecord();
+    const std::u8string written = draft && draft->id == active ? draft->text : text(host, 1);
+    EXPECT_EQ(moveTimesOf(written), u8"100,2000");
+}
+
 // VT1: a scrub's samples stage on one gesture (the Document waits), its
 // release commits them as one step; Esc drops them.
 TEST(VisualPositionValues, AScrubIsOneStepAndEscDropsIt)

@@ -176,6 +176,9 @@ private:
     bool m_cancelled = false;
     bool m_keyNudge = false;
     bool m_valueEdit = false; // the open gesture is a scrubbed value's (VT1)
+    // VT1: the times typed for the \move (ms from each Line's start), which
+    // the several-Line path writes into every target until the edit ends.
+    std::array<std::optional<int>, 2> m_typedTimes;
 };
 
 } // namespace hikari::application::visual
