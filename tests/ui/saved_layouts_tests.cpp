@@ -511,6 +511,29 @@ private slots:
         stop();
     }
 
+    // Both files refused at start: each notice names its kept copy, side by
+    // side. A layout chosen answers the panel layout's; the saved layouts'
+    // stays until it is dismissed.
+    void bothRecoveryNoticesAreShown()
+    {
+        start();
+        saveAs(QStringLiteral("Mine"));
+        stop();
+        QVERIFY(writeAll(layoutsFile(), QByteArray("{not json")));
+        QVERIFY(writeAll(dir.filePath(QStringLiteral("layout.json")), QByteArray("{not json")));
+        start();
+        auto &l = layouts();
+        QVERIFY2(l.notice().contains(QStringLiteral("layouts.json.unrestored")), qPrintable(l.notice()));
+        QVERIFY2(l.notice().contains(QStringLiteral("layout.json.unrestored")), qPrintable(l.notice()));
+        QCOMPARE(named("layoutNoticeText")->property("text").toString(), l.notice());
+        trigger(QStringLiteral("viewLayoutPresetTiming"));
+        QVERIFY2(l.notice().contains(QStringLiteral("layouts.json.unrestored")), qPrintable(l.notice()));
+        QVERIFY2(!l.notice().contains(QStringLiteral("panel layout")), qPrintable(l.notice()));
+        l.dismissNotice();
+        QVERIFY(l.notice().isEmpty());
+        stop();
+    }
+
     // A layout the profile has not saved (a saved file or a Session from
     // another profile names it) is not the tab's origin: one saved later
     // under that name, from another tab, is not it, and Reset this layout

@@ -173,7 +173,9 @@ public:
     // diagnosis and says so in the notice, naming `title`.
     void setTabArrangement(std::uint64_t tab, const QByteArray &serialised, const QString &title = {});
 
-    QString notice() const { return m_notice; }
+    // Every notice not dismissed yet, one per line: the panel layout's and
+    // the saved layouts' are kept side by side (both can come at start).
+    QString notice() const { return (m_savedNotices + m_panelNotices).join(QLatin1Char('\n')); }
     QString preset() const { return m_preset; }
     void setPreset(const QString &preset);
     static const QStringList &presets();
@@ -261,7 +263,15 @@ private:
     QString m_file;
     QByteArray m_default;
     QByteArray m_lastSaved;
-    QString m_notice;
+    // The notices of the panel layout (restore failures: a layout chosen
+    // after them answers them) and of the saved layouts (files kept aside,
+    // writes that failed: they stay until dismissed or, for a write, until
+    // one succeeds).
+    QStringList m_panelNotices;
+    QStringList m_savedNotices;
+    void addPanelNotice(const QString &text);
+    void addSavedNotice(const QString &text);
+    void dismissPanelNotice();
     QString m_preset = QStringLiteral("Editing");
     QString m_layout; // WS3: the saved layout the shown arrangement started from
     bool m_restoring = false;

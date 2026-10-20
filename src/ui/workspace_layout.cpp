@@ -335,13 +335,13 @@ bool WorkspaceLayoutController::restoreSavedFile()
         m_lastSaved = KDDockWidgets::LayoutSaver().serializeLayout();
         if (unreadable || !keepAside(m_file, kept)) {
             m_fileLocked = true;
-            m_notice = QCoreApplication::translate("HikariSub.Workspace",
-                                                   "The saved panel layout at %1 could not be read or copied: it is not restored and not changed. The Editing layout is shown.")
-                           .arg(QDir::toNativeSeparators(m_file));
+            addPanelNotice(QCoreApplication::translate("HikariSub.Workspace",
+                                                       "The saved panel layout at %1 could not be read or copied: it is not restored and not changed. The Editing layout is shown.")
+                               .arg(QDir::toNativeSeparators(m_file)));
         } else {
-            m_notice = QCoreApplication::translate("HikariSub.Workspace",
-                                                   "The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.")
-                           .arg(problem, QDir::toNativeSeparators(kept));
+            addPanelNotice(QCoreApplication::translate("HikariSub.Workspace",
+                                                       "The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.")
+                               .arg(problem, QDir::toNativeSeparators(kept)));
         }
         emit changed();
         return false;
@@ -395,7 +395,7 @@ bool WorkspaceLayoutController::resetLayout()
         m_lastSaved.clear();
         emit changed();
     }
-    dismissNotice();
+    dismissPanelNotice();
     save();
     return done;
 }
@@ -424,7 +424,7 @@ bool WorkspaceLayoutController::applyPreset(const QString &name)
     if (!presets().contains(name) || m_default.isEmpty())
         return false;
     const bool done = buildPreset(name, false);
-    dismissNotice();
+    dismissPanelNotice();
     setPreset(name);
     emit arrangementSwapped(); // WS3: the panels the preset leaves closed are closed now
     save();
@@ -455,17 +455,38 @@ bool WorkspaceLayoutController::restoreBackup()
         m_lastSaved.clear(); // the saved file names the other one, panels alike or not
         emit changed();
     }
-    dismissNotice();
+    dismissPanelNotice();
     save();
     return true;
 }
 
 void WorkspaceLayoutController::dismissNotice()
 {
-    if (m_notice.isEmpty())
+    if (m_panelNotices.isEmpty() && m_savedNotices.isEmpty())
         return;
-    m_notice.clear();
+    m_panelNotices.clear();
+    m_savedNotices.clear();
     emit changed();
+}
+
+void WorkspaceLayoutController::dismissPanelNotice()
+{
+    if (m_panelNotices.isEmpty())
+        return;
+    m_panelNotices.clear();
+    emit changed();
+}
+
+void WorkspaceLayoutController::addPanelNotice(const QString &text)
+{
+    if (!m_panelNotices.contains(text))
+        m_panelNotices << text;
+}
+
+void WorkspaceLayoutController::addSavedNotice(const QString &text)
+{
+    if (!m_savedNotices.contains(text))
+        m_savedNotices << text;
 }
 
 namespace {
@@ -544,7 +565,7 @@ void WorkspaceLayoutController::refuseArrangement(const WorkspaceArrangement &ar
 
 void WorkspaceLayoutController::keepUnrestored(const QByteArray &bytes, const QString &problem, const QString &title)
 {
-    m_notice = title.isEmpty()
+    QString notice = title.isEmpty()
                    ? QCoreApplication::translate("HikariSub.Workspace",
                                                  "The panel layout of this tab was not restored because %1. The tab shows the Editing layout.")
                          .arg(problem)
@@ -556,9 +577,10 @@ void WorkspaceLayoutController::keepUnrestored(const QByteArray &bytes, const QS
     if (!m_file.isEmpty()) {
         const QString kept = m_file + QStringLiteral(".tab.unrestored");
         if (writeAtomically(kept, bytes))
-            m_notice += QLatin1Char(' ') + QCoreApplication::translate("HikariSub.Workspace", "The layout is kept at %1.")
-                                               .arg(QDir::toNativeSeparators(kept));
+            notice += QLatin1Char(' ') + QCoreApplication::translate("HikariSub.Workspace", "The layout is kept at %1.")
+                                             .arg(QDir::toNativeSeparators(kept));
     }
+    addPanelNotice(notice);
     emit changed();
 }
 
@@ -708,9 +730,9 @@ void WorkspaceLayoutController::readSavedLayouts()
             lockSavedLayouts();
             return;
         }
-        m_notice = QCoreApplication::translate("HikariSub.Workspace",
-                                               "The saved layouts were not read because %1. The file is kept at %2.")
-                       .arg(problem, QDir::toNativeSeparators(kept));
+        addSavedNotice(QCoreApplication::translate("HikariSub.Workspace",
+                                                   "The saved layouts were not read because %1. The file is kept at %2.")
+                           .arg(problem, QDir::toNativeSeparators(kept)));
         return;
     }
     bool skipped = false;
@@ -741,18 +763,18 @@ void WorkspaceLayoutController::readSavedLayouts()
             lockSavedLayouts();
             return;
         }
-        m_notice = QCoreApplication::translate("HikariSub.Workspace",
-                                               "Some saved layouts were not read: their names cannot name a layout, or were listed before. The file as it was is kept at %1.")
-                       .arg(QDir::toNativeSeparators(kept));
+        addSavedNotice(QCoreApplication::translate("HikariSub.Workspace",
+                                                   "Some saved layouts were not read: their names cannot name a layout, or were listed before. The file as it was is kept at %1.")
+                           .arg(QDir::toNativeSeparators(kept)));
     }
 }
 
 void WorkspaceLayoutController::lockSavedLayouts()
 {
     m_savedLocked = true;
-    m_notice = QCoreApplication::translate("HikariSub.Workspace",
-                                           "The saved layouts at %1 could not be read or copied: they are not used and not changed.")
-                   .arg(QDir::toNativeSeparators(m_savedFile));
+    addSavedNotice(QCoreApplication::translate("HikariSub.Workspace",
+                                               "The saved layouts at %1 could not be read or copied: they are not used and not changed.")
+                       .arg(QDir::toNativeSeparators(m_savedFile)));
 }
 
 bool WorkspaceLayoutController::writeSavedLayouts()
@@ -779,22 +801,20 @@ bool WorkspaceLayoutController::writeSavedLayouts()
     o.insert(QStringLiteral("schema"), kSavedLayoutsSchema);
     o.insert(QStringLiteral("layouts"), layouts);
     const QByteArray bytes = QJsonDocument(o).toJson(QJsonDocument::Indented);
+    // An earlier write's failure is over, or replaced by this one's (the
+    // caller says changed() when it succeeds).
+    m_savedNotices.removeAll(m_writeFailure);
+    m_writeFailure.clear();
     // A file larger than the next start reads would lose every saved layout.
-    if (bytes.size() > kMaximumBytes) {
-        m_notice = QCoreApplication::translate("HikariSub.Workspace",
-                                               "The saved layouts were not changed: together they would be larger than %1 bytes. Delete layouts you no longer use first.")
-                       .arg(kMaximumBytes);
-    } else if (writeAtomically(m_savedFile, bytes)) {
-        // An earlier write's failure is over (the caller says changed()).
-        if (!m_writeFailure.isEmpty() && m_notice == m_writeFailure)
-            m_notice.clear();
-        m_writeFailure.clear();
+    if (bytes.size() <= kMaximumBytes && writeAtomically(m_savedFile, bytes))
         return true;
-    } else {
-        m_notice = QCoreApplication::translate("HikariSub.Workspace", "The saved layouts could not be written to %1.")
-                       .arg(QDir::toNativeSeparators(m_savedFile));
-    }
-    m_writeFailure = m_notice;
+    m_writeFailure = bytes.size() > kMaximumBytes
+                         ? QCoreApplication::translate("HikariSub.Workspace",
+                                                       "The saved layouts were not changed: together they would be larger than %1 bytes. Delete layouts you no longer use first.")
+                               .arg(kMaximumBytes)
+                         : QCoreApplication::translate("HikariSub.Workspace", "The saved layouts could not be written to %1.")
+                               .arg(QDir::toNativeSeparators(m_savedFile));
+    addSavedNotice(m_writeFailure);
     emit changed();
     return false;
 }
@@ -931,7 +951,7 @@ bool WorkspaceLayoutController::applySavedLayout(const QString &name)
     const auto &arrangement = m_saved[static_cast<std::size_t>(index)].arrangement;
     if (!arrangement)
         return false;
-    dismissNotice();
+    dismissPanelNotice();
     // In place, as a tab's arrangement is shown (the main window keeps its
     // geometry); the shell then puts the Reference tray as the comparison has it.
     const bool shown = showArrangement(*arrangement);
