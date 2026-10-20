@@ -1706,6 +1706,95 @@ TEST(VisualTransformValues, TypedAndScrubbedValuesAreOneStepEach)
     }
 }
 
+namespace {
+std::string rowText(const TestHost &host, std::size_t row)
+{
+    const std::u8string &t = lineOf(*host.s, ids(*host.s)[row])->text;
+    return std::string(t.begin(), t.end());
+}
+std::u16string valueText(const VisualTool &tool, const VisualHost &host, const std::string &name)
+{
+    for (const auto &v : tool.values(host))
+        if (v.name == name)
+            return v.text;
+    return {};
+}
+} // namespace
+
+// VT1 (Codex on #293): with "Changing all" tags over several Lines, the
+// fields and the next edit start from the active Line's angle as written,
+// not the batch's first (Z) or last (X/Y) target's.
+TEST(VisualTransformValues, BatchAnglesStartFromTheActiveLine)
+{
+    {
+        SCOPED_TRACE("rotz");
+        TestHost host;
+        setUp(host, caseNamed("rotz-several-preserve"));
+        const auto all = ids(*host.s);
+        host.targets = {all[1], all[0]}; // the active Line not the first
+        RotationZTool tool;
+        tool.setToggled(2);
+        tool.selected(host);
+        tool.reset(host);
+        EXPECT_EQ(valueText(tool, host, "frz"), u"10");
+        EXPECT_TRUE(tool.setValue("frz", u"20", host));
+        EXPECT_NE(rowText(host, 0).find("\\frz20"), std::string::npos) << rowText(host, 0);
+        EXPECT_NE(rowText(host, 1).find("\\frz55"), std::string::npos) << rowText(host, 1);
+        EXPECT_EQ(valueText(tool, host, "frz"), u"20");
+        EXPECT_TRUE(tool.setValue("frz", u"30", host));
+        EXPECT_NE(rowText(host, 0).find("\\frz30"), std::string::npos) << rowText(host, 0);
+        EXPECT_NE(rowText(host, 1).find("\\frz65"), std::string::npos) << rowText(host, 1);
+    }
+    {
+        SCOPED_TRACE("rotxy");
+        TestHost host;
+        setUp(host, caseNamed("rotxy-several"));
+        const auto all = ids(*host.s);
+        host.targets = {all[0], all[1]}; // the active Line not the last
+        RotationXYTool tool;
+        tool.setToggled(0);
+        tool.selected(host);
+        tool.reset(host);
+        EXPECT_EQ(valueText(tool, host, "fry"), u"5");
+        EXPECT_TRUE(tool.setValue("fry", u"15", host));
+        EXPECT_NE(rowText(host, 0).find("\\fry15"), std::string::npos) << rowText(host, 0);
+        EXPECT_NE(rowText(host, 1).find("\\fry50"), std::string::npos) << rowText(host, 1);
+        EXPECT_EQ(valueText(tool, host, "fry"), u"15");
+        EXPECT_TRUE(tool.setValue("fry", u"25", host));
+        EXPECT_NE(rowText(host, 0).find("\\fry25"), std::string::npos) << rowText(host, 0);
+        EXPECT_NE(rowText(host, 1).find("\\fry60"), std::string::npos) << rowText(host, 1);
+    }
+}
+
+// VT1 (Codex on #293): a typed angle of several negative turns is held in
+// 0-360 as one turn's is.
+TEST(VisualTransformValues, AnglesOfSeveralTurnsAreInOneTurn)
+{
+    {
+        TestHost host;
+        setUp(host, caseNamed("rotz-drag"));
+        RotationZTool tool;
+        tool.setToggled(0);
+        tool.selected(host);
+        tool.reset(host);
+        EXPECT_TRUE(tool.setValue("frz", u"-721", host));
+        EXPECT_NE(rowText(host, 0).find("\\frz359"), std::string::npos) << rowText(host, 0);
+        EXPECT_EQ(valueText(tool, host, "frz"), u"359");
+    }
+    {
+        TestHost host;
+        setUp(host, caseNamed("rotxy-left-right-middle"));
+        RotationXYTool tool;
+        tool.setToggled(0);
+        tool.selected(host);
+        tool.reset(host);
+        EXPECT_TRUE(tool.setValue("frx", u"-735", host));
+        EXPECT_NE(rowText(host, 0).find("\\frx345"), std::string::npos) << rowText(host, 0);
+        EXPECT_TRUE(tool.setValue("fry", u"1090", host));
+        EXPECT_NE(rowText(host, 0).find("\\fry10"), std::string::npos) << rowText(host, 0);
+    }
+}
+
 // VT1 (Codex on #293): with "Change all scale tags" a scale is the tags'
 // multiple of the press's, so a value is refused on an axis at zero (no
 // ratio from it) rather than writing nan; a zero itself is written.
