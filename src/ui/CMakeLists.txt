@@ -137,9 +137,11 @@ qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog
 qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)
 # AV1: the audio panel's output device menu.
 qt_target_qml_sources(hikari_ui QML_FILES AudioOutputMenu.qml)
-# E5: the Line editor's Translator mode check box and its Not confirmed and
-# Moving tags buttons.
-qt_target_qml_sources(hikari_ui QML_FILES TranslatorModeCheck.qml TranslationToggles.qml)
+# E5: the Line editor's Not confirmed and Moving tags buttons. TM1: the
+# Original text panel's toolbar, the Translation preset's question and the
+# turn-off confirmation (the Translator mode check box is gone).
+qt_target_qml_sources(hikari_ui QML_FILES TranslationToggles.qml OriginalTextTools.qml TranslationModeQuestion.qml
+    TranslationModeOffConfirm.qml)
 # Y7: the colour picker's screen dropper (QScreen grabs on Windows and X11,
 # the desktop's Screenshot portal over D-Bus on Wayland).
 target_sources(hikari_ui PRIVATE screen_sampler.cpp screen_sampler.h)
