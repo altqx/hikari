@@ -2346,16 +2346,25 @@ ApplicationWindow {
                 // (VT1), so the minimum does not grow with it.
                 minimumBodySize: Qt.size(Math.max(videoTransport.implicitWidth, videoFollow.minimumWidth),
                                          controlsOwnHeight + 72)
-                // Measured when the column lays out (its implicit height then
-                // counts the bar's held height of that pass), not bound: the
-                // held height follows the room this leaves.
+                // Measured, not bound (the held height follows the room this
+                // leaves), whenever the column's height or the held height
+                // changes: a switch to a tool with more lines can leave the
+                // column as tall, holding less (Codex on #293). The bar's
+                // layout and the column are laid out first, so the two
+                // numbers are of one layout.
                 property real controlsOwnHeight: 0
                 function measureControls() {
+                    videoToolBar.contentItem.ensurePolished()
+                    videoControls.ensurePolished()
                     controlsOwnHeight = videoControls.implicitHeight - videoToolBar.held
                 }
                 Connections {
                     target: videoControls
-                    function onImplicitHeightChanged() { videoPanel.measureControls() }
+                    function onImplicitHeightChanged() { Qt.callLater(videoPanel.measureControls) }
+                }
+                Connections {
+                    target: videoToolBar
+                    function onHeldChanged() { Qt.callLater(videoPanel.measureControls) }
                 }
                 Component.onCompleted: measureControls()
                 title: qsTranslate("HikariSub.Video", "Video")
