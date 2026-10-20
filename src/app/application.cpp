@@ -2777,8 +2777,8 @@ bool Application::autosave(application::DocumentId document)
     application::RecoveryContent content;
     // S4: legacy's autosave is SaveFile too, so it writes the active Line
     // into the file and the open Document (SubsGridBase.cpp:1470 at 20d647c4).
-    // WS2: and the tab's panel arrangement, as a save does, so a recovered
-    // copy has it.
+    // WS2: the recovery file has the tab's panel arrangement, as a save
+    // writes it, so a recovered copy has it.
     const auto activeLine = application::activeLineToSave(*session);
     const auto layout = m_files->layoutToSave(document, session->document());
     core::Document saved = application::withActiveLine(session->document(), activeLine);
@@ -2807,8 +2807,8 @@ bool Application::autosave(application::DocumentId document)
         return false;
     if (activeLine)
         session->amendScriptInfo(application::kActiveLineKey, *activeLine);
-    if (layout)
-        session->amendHikariProperty(application::kLayoutKey, *layout);
+    // The arrangement stays the recovery file's: the open Document keeps
+    // its file's section, so a Save with the setting off writes no other.
     return true;
 }
 

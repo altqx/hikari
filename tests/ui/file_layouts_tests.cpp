@@ -905,6 +905,73 @@ private slots:
         stop();
     }
 
+    // A window's place: a file's is moved by the main window's place when
+    // it is read, so a number no window can have (past the int a move adds
+    // to) is refused, in a main or a floating window and where a closed
+    // panel floats again.
+    void aWindowPlaceNoWindowCanHaveIsRefused_data()
+    {
+        QTest::addColumn<QString>("windows");
+        QTest::addColumn<QString>("rect");
+        QTest::addColumn<QString>("field");
+        QTest::addColumn<QJsonValue>("value");
+        QTest::newRow("main window far right") << QStringLiteral("mainWindows") << QStringLiteral("geometry")
+                                               << QStringLiteral("x") << QJsonValue(2147483000);
+        QTest::newRow("main window normal place far down") << QStringLiteral("mainWindows") << QStringLiteral("normalGeometry")
+                                                           << QStringLiteral("y") << QJsonValue(2147483000);
+        QTest::newRow("floating window far down") << QStringLiteral("floatingWindows") << QStringLiteral("geometry")
+                                                  << QStringLiteral("y") << QJsonValue(2147483000);
+        QTest::newRow("floating window far left") << QStringLiteral("floatingWindows") << QStringLiteral("geometry")
+                                                  << QStringLiteral("x") << QJsonValue(-2147483000);
+        QTest::newRow("floats again past an int") << QStringLiteral("allDockWidgets") << QStringLiteral("lastFloatingGeometry")
+                                                  << QStringLiteral("x") << QJsonValue(1e20);
+        QTest::newRow("width as text") << QStringLiteral("floatingWindows") << QStringLiteral("geometry")
+                                       << QStringLiteral("width") << QJsonValue(QStringLiteral("200"));
+    }
+    void aWindowPlaceNoWindowCanHaveIsRefused()
+    {
+        QFETCH(QString, windows);
+        QFETCH(QString, rect);
+        QFETCH(QString, field);
+        QFETCH(QJsonValue, value);
+        QJsonObject envelope = QJsonDocument::fromJson(QByteArray::fromBase64(fileLayout())).object();
+        QJsonObject payload = envelope.value(QStringLiteral("payload")).toObject();
+        QJsonArray list = payload.value(windows).toArray();
+        QVERIFY(!list.isEmpty());
+        QJsonObject window = list.first().toObject();
+        if (windows == QStringLiteral("allDockWidgets")) {
+            QJsonObject position = window.value(QStringLiteral("lastPosition")).toObject();
+            QJsonObject r = position.value(rect).toObject();
+            r.insert(QStringLiteral("width"), 200);
+            r.insert(QStringLiteral("height"), 100);
+            r.insert(field, value);
+            position.insert(rect, r);
+            window.insert(QStringLiteral("lastPosition"), position);
+        } else {
+            QJsonObject r = window.value(rect).toObject();
+            r.insert(QStringLiteral("width"), r.value(QStringLiteral("width")).toInt() > 0 ? r.value(QStringLiteral("width")) : 200);
+            r.insert(QStringLiteral("height"), r.value(QStringLiteral("height")).toInt() > 0 ? r.value(QStringLiteral("height")) : 100);
+            r.insert(field, value);
+            window.insert(rect, r);
+        }
+        list.replace(0, window);
+        payload.insert(windows, list);
+        envelope.insert(QStringLiteral("payload"), payload);
+        const QByteArray text = QJsonDocument(envelope).toJson(QJsonDocument::Compact).toBase64();
+        QString problem;
+        QVERIFY(!ui::WorkspaceArrangement::parseFromFile(text, QPoint(1000, 1000), &problem));
+        QVERIFY2(problem.contains(QStringLiteral("not a layout file")), qPrintable(problem));
+
+        const QString file = write(path("place.ass"), kAss + "\n[Hikari]\nLayout=" + text + "\n");
+        start();
+        application->addPage();
+        QVERIFY(application->openFile(file));
+        QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
+        QVERIFY(!isFloating("audioDock"));
+        QVERIFY(application->log().history().contains(QStringLiteral("place.ass")));
+        stop();
+    }
+
     // An autosave writes the tab's arrangement as a save does, and the open
     // Document takes it (still as modified as it was); the copy recovered
     // after a crash starts with it.
@@ -930,9 +997,11 @@ private slots:
         while (layout.isEmpty() && files.hasNext())
             layout = layoutLine(readAll(files.next()));
         QCOMPARE(layout, application->workspaceLayout().fileArrangement(target.value));
-        const auto taken = session->document().hikariProperty(application::kLayoutKey);
-        QVERIFY(taken && QByteArrayView(reinterpret_cast<const char *>(taken->data()), qsizetype(taken->size())) == layout);
         QVERIFY(!readAll(file).contains("[Hikari]")); // the file itself only on Save
+        // The autosave's copy is the recovery file's alone: the open
+        // Document keeps the file's section (none), so a Save with the
+        // setting off writes none.
+        QVERIFY(!session->document().hikariProperty(application::kLayoutKey));
         // As a crash leaves it: the work kept, the session's lock gone.
         for (QDirIterator it(recovery, QDir::Files, QDirIterator::Subdirectories); it.hasNext();) {
             const QString from = it.next();
@@ -956,6 +1025,29 @@ private slots:
         QTRY_VERIFY(!isOpen("videoDock"));
         QVERIFY(isFloating("audioDock"));
         QCOMPARE(floatingWindows(), 1);
+        stop();
+    }
+
+    // An autosave with the setting on, then the setting off: the Save
+    // writes no section, as the file had none.
+    void anAutosaveLeavesNoSectionForASaveWithTheSettingOff()
+    {
+        const QString file = write(path("off.ass"), kAss);
+        start(path("Recovery-off"));
+        QVERIFY(application->openFile(file));
+        float_("audioDock", true);
+        QTRY_VERIFY(settled());
+        const auto target = *application->workspace().editingTarget();
+        auto *session = application->files().session(target);
+        const auto line = session->document().lines().front()->id;
+        session->run(application::Command{"Set text", session->revision(), {line},
+                                          [&](core::Document &d) { return d.setLineText(line, u8"changed"); }});
+        QVERIFY(application->autosaveNow());
+        setLayoutInFile(false);
+        save(file);
+        const QByteArray bytes = readAll(file);
+        QVERIFY(bytes.contains("changed"));
+        QVERIFY(!bytes.contains("[Hikari]"));
         stop();
     }
 

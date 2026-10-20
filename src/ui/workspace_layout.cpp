@@ -396,6 +396,11 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
     for (const auto &w : windows) {
         if (!noAffinities(w.toObject()))
             return fail(unreadable);
+        // A window's place, which a file's is moved by from the main
+        // window's: a number a window can have, so the move stays an int.
+        if (!readableRect(w.toObject().value(QStringLiteral("geometry"))) ||
+            !readableRect(w.toObject().value(QStringLiteral("normalGeometry"))))
+            return fail(unreadable);
         const QJsonObject layout = w.toObject().value(QStringLiteral("multiSplitterLayout")).toObject();
         const QJsonObject frames = layout.value(QStringLiteral("frames")).toObject();
         groups += frames.size();
@@ -467,6 +472,9 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
         if (docks.contains(name) || places.size() > 1 + floatingWindows.size())
             return fail(tooMany);
         docks.insert(name);
+        // Where a closed panel floats again, moved as the windows are.
+        if (!readableRect(position.value(QStringLiteral("lastFloatingGeometry"))))
+            return fail(unreadable);
         // The tab a panel goes back to: the engine inserts it at this index
         // when it is not -1 and the group has no fewer tabs, so one below -1
         // reaches its tab list unchecked (Layout::restorePlaceholder).
