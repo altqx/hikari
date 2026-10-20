@@ -1085,6 +1085,9 @@ private:
     // lyrics' name with ".ass"; the Save dialog's name until the Document
     // has a destination.
     std::map<std::uint64_t, QString> m_importPaths;
+    // KA6: the imported lyrics among them, whose name stands in for the
+    // destination when the same-named video is looked for (offerAssociations).
+    std::set<std::uint64_t> m_lyricsImports;
     bool m_keepVideoOnEnter = false; // replaceTarget(keepMedia) until the tab is entered
     // `newTab`: File > Open's new tab (InsertTab) rather than the editing target.
     void applyMatroska(application::MatroskaLoaded loaded, bool newTab);

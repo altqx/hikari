@@ -1533,8 +1533,10 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
     // KA6: imported lyrics are named, and saved, as ASS beside their file.
     const QFileInfo file(path);
     const QString saveAs = QDir::toNativeSeparators(file.absolutePath() + u'/' + file.completeBaseName() + QStringLiteral(".ass"));
-    if (imported)
+    if (imported) {
         m_importPaths[id->value] = saveAs;
+        m_lyricsImports.insert(id->value);
+    }
     m_workspace.add(*id, (imported ? QFileInfo(saveAs).fileName() : file.fileName()).toStdString(), asReference);
     recordFileTime(*id);
     if (!asReference)
