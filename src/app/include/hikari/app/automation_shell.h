@@ -22,6 +22,7 @@
 #include "automation_dialog_controller.h"
 #include "automation_manager_controller.h"
 #include "automation_services_qt.h"
+#include "karaoke_report.h"
 #include "line_editor_controller.h"
 #include "script_resolution_prompt.h"
 #include "settings_store.h"
@@ -53,6 +54,9 @@ class AutomationShell : public QObject, public application::AutomationServicePor
     Q_PROPERTY(QString lastOutcome READ lastOutcome NOTIFY progressChanged)
     Q_PROPERTY(bool forceStopOffered READ forceStopOffered NOTIFY progressChanged)
     Q_PROPERTY(bool canRerun READ canRerun NOTIFY progressChanged)
+    // KE1-template-problems: the run ended well but its log names template
+    // problems, so the progress window stays for it to be read.
+    Q_PROPERTY(bool keepLog READ keepLog NOTIFY progressChanged)
 public:
     struct Paths {
         QString helper;        // the Lua helper program
@@ -72,8 +76,9 @@ public:
     // The audio box whose audio aegisub.get_frequency_peaks reads, and whose
     // presence aegisub.get_audio_selection checks (null: none).
     void setAudioBox(std::function<const application::AudioBox *()> box);
-    // The log window (legacy HikariLog) and the settings (AUTOMATION_SCRIPT_EDITOR).
-    void setLog(std::function<void(const QString &)> log) { m_logLine = std::move(log); }
+    // The log window (legacy HikariLog; silent: HikariLogSilent) and the
+    // settings (AUTOMATION_SCRIPT_EDITOR).
+    void setLog(std::function<void(const QString &, bool silent)> log) { m_logLine = std::move(log); }
     void setSettings(ui::SettingsStore *settings) { m_settings = settings; }
 
     // How a run was asked for: legacy validates every run first
@@ -139,6 +144,7 @@ public:
     QString lastOutcome() const { return m_lastOutcome; }
     bool forceStopOffered() const;
     bool canRerun() const { return m_last.has_value() && !m_run; }
+    bool keepLog() const { return m_keepLog; }
 
     ui::AutomationManagerController *managerController() { return m_managerController.get(); }
     ui::AutomationDialogController *dialogs() { return &m_dialogs; }
@@ -183,6 +189,7 @@ private:
     void resolveScriptResolution(const application::ScriptResolutionRequest &request,
                                  std::function<void(std::optional<application::Resolution>)> reply);
     void finished(const QString &path, backends::LuaScriptHost::RunOutcome outcome, const QString &message);
+    void karaokeReport(const ui::KaraokeReport &report);
     application::EditSession *session(application::DocumentId id) { return m_files.session(id); }
     void loadDocumentScript(const std::string &path);
     void continueLastScript();
@@ -211,10 +218,12 @@ private:
     application::DocumentScripts m_documentScripts;
     std::set<std::string> m_readScriptInfo; // the values addFromDocument read
     std::optional<std::string> m_pendingLast; // waiting for this script to load
-    std::function<void(const QString &)> m_logLine;
+    std::function<void(const QString &, bool)> m_logLine;
     ui::SettingsStore *m_settings = nullptr;
     QString m_title, m_task, m_log, m_lastMessage, m_lastOutcome;
     double m_progress = 0;
+    bool m_keepLog = false;
+    std::uint64_t m_statusSerial = 0;
 };
 
 } // namespace hikari::app

@@ -21,6 +21,7 @@
 #include "hikari/application/subtitle_render.h"
 #include "hikari/backends/overlay_blend.h"
 
+#include <atomic>
 #include <memory>
 #include <mutex>
 
@@ -35,6 +36,11 @@ public:
     std::expected<application::OverlayFrame, application::RenderError> render(core::DocumentTime time, int width,
                                                                              int height) override;
 
+    // KE1-render-cost-overlay: render() counts the shown events and what
+    // libass drew into each frame's cost; off by default, as it walks the
+    // whole track every frame.
+    void countCost(bool on) { m_countCost = on; }
+
     // For tests: the tracks kept, and the libass renderer in use (another
     // one after the fonts change).
     std::size_t parsedTracks() const;
@@ -48,6 +54,7 @@ private:
     std::unique_ptr<Engine> m_engine;
     std::uint64_t m_generation = 0;
     bool m_redraw = true;            // the next render draws, whatever libass says changed
+    std::atomic<bool> m_countCost = false;
     OverlayBuffers m_buffers;
     application::PixelRect m_bounds; // what the shown buffer has drawn
 };

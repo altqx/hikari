@@ -1,0 +1,123 @@
+[Script Info]
+; Template errors and warnings: 3.2.2 logs each and continues (the failed !expression! stays in the output); TT#141's 3.2-era template
+Title: KE1 corpus errors
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Old-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: Err-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style:  Err,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  Old,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,code once,function (broken
+Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,code syl,local x = nil + 1
+Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template syl,{\pos(!nosuch.field!,$y)}
+Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template syl,{\fscx!1 +!}
+Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template syl,{\pos($x,$nosuchvar)}
+Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template syl wobble,{\pos($x,$y)}
+Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template syl loop many,{\blur1}
+Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template syl fx,{\bord3}
+Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template line syl,{\be2}
+Comment: 0,0:00:00.00,0:00:05.00,Old,,0,0,0,code line,ci = { 0,0 }; cn = _G.unicode.len(orgline.text_stripped:gsub(" ",""))
+Comment: 0,0:00:00.00,0:00:05.00,Old,,0,0,0,template syl,{\an5\pos($x,$y)\fscx!100+(cn or 0)!}
+Comment: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,karaoke,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku
+Comment: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,karaoke,{\k18}to{\k22}o{\k35}ku{\k0} {\k27}ma{\k31}de{\k0} {\k40}a{\k19}ru{\k24}i{\k35}te{\k50}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\be2}ha{\be2}ru{\be2} {\be2}no{\be2} {\be2}ka{\be2}ze{\be2} {\be2}ga{\be2} {\be2}fu{\be2}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(!nosuch.field!,20)}
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\fscx!1 +!}
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(420,$nosuchvar)}
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(420,20)}
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\blur1}
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\bord3}
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(!nosuch.field!,20)}ha
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\fscx!1 +!}ha
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(442,$nosuchvar)}ha
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(442,20)}ha
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\blur1}ha
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\bord3}ha
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(!nosuch.field!,20)}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\fscx!1 +!}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(486,$nosuchvar)}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(486,20)}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\blur1}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\bord3}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(!nosuch.field!,20)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\fscx!1 +!} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(530,$nosuchvar)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(530,20)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\blur1} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\bord3} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(!nosuch.field!,20)}no
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\fscx!1 +!}no
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(552,$nosuchvar)}no
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(552,20)}no
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\blur1}no
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\bord3}no
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(!nosuch.field!,20)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\fscx!1 +!} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(596,$nosuchvar)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(596,20)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\blur1} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\bord3} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(!nosuch.field!,20)}ka
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\fscx!1 +!}ka
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(618,$nosuchvar)}ka
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(618,20)}ka
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\blur1}ka
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\bord3}ka
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(!nosuch.field!,20)}ze
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\fscx!1 +!}ze
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(662,$nosuchvar)}ze
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(662,20)}ze
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\blur1}ze
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\bord3}ze
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(!nosuch.field!,20)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\fscx!1 +!} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(706,$nosuchvar)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(706,20)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\blur1} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\bord3} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(!nosuch.field!,20)}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\fscx!1 +!}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(728,$nosuchvar)}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(728,20)}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\blur1}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\bord3}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(!nosuch.field!,20)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\fscx!1 +!} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(772,$nosuchvar)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(772,20)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\blur1} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\bord3} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(!nosuch.field!,20)}fu
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\fscx!1 +!}fu
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(794,$nosuchvar)}fu
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(794,20)}fu
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\blur1}fu
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\bord3}fu
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(!nosuch.field!,20)}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\fscx!1 +!}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(838,$nosuchvar)}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\pos(838,20)}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\blur1}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Err,,0,0,0,fx,{\bord3}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,fx,{\an5\pos(431,20)\fscx117}
+Dialogue: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,fx,{\an5\pos(453,20)\fscx117}to
+Dialogue: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,fx,{\an5\pos(486,20)\fscx117}o
+Dialogue: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,fx,{\an5\pos(519,20)\fscx117}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,fx,{\an5\pos(563,20)\fscx117} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,fx,{\an5\pos(585,20)\fscx117}ma
+Dialogue: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,fx,{\an5\pos(629,20)\fscx117}de
+Dialogue: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,fx,{\an5\pos(673,20)\fscx117} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,fx,{\an5\pos(684,20)\fscx117}a
+Dialogue: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,fx,{\an5\pos(717,20)\fscx117}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,fx,{\an5\pos(750,20)\fscx117}i
+Dialogue: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,fx,{\an5\pos(783,20)\fscx117}te
+Dialogue: 0,0:00:01.00,0:00:04.00,Old,,0,0,0,fx,{\an5\pos(827,20)\fscx117}ku

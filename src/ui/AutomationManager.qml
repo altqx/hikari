@@ -55,6 +55,9 @@ Pane {
     property bool keepResult: false
     readonly property string outcome: automation !== null && !running ? automation.lastOutcome : ""
     readonly property bool cancelled: outcome === "cancelled"
+    // KE1-template-problems: a run that applied but whose log names
+    // template problems stays too, its log open to be read.
+    readonly property bool problemsNamed: outcome === "applied" && automation !== null && automation.keepLog
     property bool showLog: false
     property string runTarget: ""
 
@@ -218,9 +221,9 @@ Pane {
         function onRunCompleted(ok, message) {
             // Not when the user declined the resolution question: the
             // macro did not start.
-            root.keepResult = !ok && root.automation.lastOutcome !== "declined"
+            root.keepResult = (!ok && root.automation.lastOutcome !== "declined") || root.problemsNamed
             if (root.keepResult)
-                root.showLog = false
+                root.showLog = root.problemsNamed
         }
     }
 
@@ -278,7 +281,8 @@ Pane {
             implicitHeight: runColumn.implicitHeight + 16
             color: Theme.panel
             border.width: 1
-            border.color: root.keepResult && !root.running && !root.cancelled ? Theme.danger : Theme.line
+            border.color: !root.keepResult || root.running || root.cancelled ? Theme.line
+                          : root.problemsNamed ? Theme.warning : Theme.danger
             Accessible.role: Accessible.Grouping
             Accessible.name: runTitle.text
 
@@ -295,10 +299,11 @@ Pane {
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                         font.bold: true
-                        color: root.running || root.cancelled ? Theme.text : Theme.danger
+                        color: root.running || root.cancelled ? Theme.text : root.problemsNamed ? Theme.warning : Theme.danger
                         text: !root.automation ? ""
                               : root.running ? root.automation.runTitle
                               : root.cancelled ? qsTr("%1 cancelled").arg(root.automation.runTitle)
+                              : root.problemsNamed ? qsTr("%1 named problems").arg(root.automation.runTitle)
                               : qsTr("%1 failed").arg(root.automation.runTitle)
                     }
                     Label {
@@ -312,7 +317,7 @@ Pane {
                     Layout.fillWidth: true
                     visible: text.length > 0
                     wrapMode: Text.Wrap
-                    color: root.running || root.cancelled ? Theme.muted : Theme.danger
+                    color: root.running || root.cancelled || root.problemsNamed ? Theme.muted : Theme.danger
                     font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 1)
                     // Validation says nothing itself (legacy's menu neither);
                     // its error, if any, is in the log.

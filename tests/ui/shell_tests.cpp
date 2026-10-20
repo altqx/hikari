@@ -12674,8 +12674,8 @@ private slots:
         // V3: "Open video with FFMS2" and AM1: "Open shortcut mapping
         // window" retired, never listed; WS3: the five View arrangements and
         // "Enable / Disable editor" too; LE3's "Hide tags in the line editor"
-        // listed.
-        QCOMPARE(hotkeyRows().size(), 219);
+        // and KE1's "Show / hide render cost" listed.
+        QCOMPARE(hotkeyRows().size(), 220);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -13897,6 +13897,33 @@ private slots:
         QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Guarded failed"));
         QCOMPARE(visualItem("automationTask")->property("text").toString(),
                  QStringLiteral("Its validation did not let it run; nothing was changed."));
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY(!run->isVisible());
+        // KE1-template-problems: a run that applied but whose karaoke report
+        // names template problems stays, its log open to be read.
+        const QString templated = QDir::toNativeSeparators(scripts.filePath(QStringLiteral("templated.lua")));
+        {
+            QFile f(templated);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("aegisub.register_macro(\"Templated\", \"\", function(subs)\n"
+                    "  for i = 1, #subs do\n"
+                    "    local l = subs[i]\n"
+                    "    if l.class == \"dialogue\" then l.text = l.text .. \"x\"; subs[i] = l; break end\n"
+                    "  end\n"
+                    "  hikari.report('{\"report\":\"karaoke-templater\",\"version\":1,\"mode\":\"all\",\"seconds\":0.5,'\n"
+                    "    .. '\"prepare_seconds\":0.1,\"karaoke_lines\":1,\"generated\":2,\"problems\":1,\"templates\":['\n"
+                    "    .. '{\"line\":2,\"effect\":\"template syl\",\"style\":\"Default\",\"seconds\":0.4,\"generated\":2}]}')\n"
+                    "end)\n");
+        }
+        application->automation().load(templated.toStdString());
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_Templated"), 30000);
+        QVERIFY(application->automation().run(templated.toStdString(), 0));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
+        QCOMPARE(application->automation().lastOutcome(), QStringLiteral("applied"));
+        QVERIFY(application->automation().keepLog());
+        QTRY_VERIFY(run->isVisible());
+        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Templated named problems"));
+        QCOMPARE(visualItem("automationShowLog")->property("text").toString(), QStringLiteral("Hide log"));
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
         QTRY_VERIFY(!run->isVisible());
     }
@@ -22754,6 +22781,20 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QCoreApplication::processEvents();
     }
+    QStringList renderCostLines()
+    {
+        // The Repeater's lines are the Column's child items, not QObject children.
+        QStringList lines;
+        const std::function<void(QQuickItem *)> walk = [&](QQuickItem *at) {
+            for (auto *child : at->childItems()) {
+                if (child->objectName() == QLatin1String("videoRenderCostLine"))
+                    lines << child->property("text").toString();
+                walk(child);
+            }
+        };
+        walk(item("videoRenderCost"));
+        return lines;
+    }
 
 private slots:
 
@@ -22956,6 +22997,44 @@ private slots:
         settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
         check(true);
         ui::theme::forceSystemScheme(std::nullopt);
+    }
+
+    // KE1-render-cost-overlay: "Show / hide render cost" (Video menu,
+    // GLOBAL_VIDEO_RENDER_COST) draws over the picture what the shown frame's
+    // subtitles cost libass, and hides it again; video.renderCost keeps it.
+    void videoRenderCostOverlayShowsTheFramesCost()
+    {
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(folder.isValid());
+        QVERIFY(v4Open(folder));
+        auto *overlay = item("videoRenderCost");
+        QVERIFY(overlay);
+        QVERIFY(!overlay->isVisible()); // off by default
+        auto *menuItem = qobject_cast<QQuickItem *>(named("renderCostMenuItem"));
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("text").toString(), QStringLiteral("Show / hide render cost"));
+        QCOMPARE(menuItem->property("iconRole").toString(), QStringLiteral("render-cost"));
+        QVERIFY(menuItem->isEnabled());
+        triggerAction("renderCostMenuItem");
+        QVERIFY(application->settingsStore()->boolean("video.renderCost"));
+        QTRY_VERIFY(overlay->isVisible());
+        // The frame shows a Line: its time, then libass's counts.
+        QTRY_COMPARE(renderCostLines().size(), 2);
+        const QStringList lines = renderCostLines();
+        QVERIFY2(QRegularExpression(QStringLiteral("^Subtitles drawn in [0-9.]+ ms$")).match(lines[0]).hasMatch(),
+                 qPrintable(lines[0]));
+        QVERIFY2(QRegularExpression(QStringLiteral("^[1-9][0-9]* event\\(s\\), [1-9][0-9]* bitmap\\(s\\), [0-9.]+ Mpx$"))
+                     .match(lines[1])
+                     .hasMatch(),
+                 qPrintable(lines[1]));
+        // Over the picture's top left corner, in the presenter.
+        auto *presenter = item("videoPresenter");
+        const QPointF corner = overlay->mapToItem(presenter, QPointF(0, 0));
+        QCOMPARE(corner, QPointF(0, 0));
+        QCOMPARE(overlay->size(), presenter->size());
+        triggerAction("renderCostMenuItem");
+        QVERIFY(!application->settingsStore()->boolean("video.renderCost"));
+        QTRY_VERIFY(!overlay->isVisible());
     }
 
     // W1: the video context menu's Filters submenu (legacy VideoBox.cpp:

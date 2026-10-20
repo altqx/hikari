@@ -1,0 +1,69 @@
+[Script Info]
+; Aegisub furigana karaoke page (aegisub.org/docs/latest/furigana_karaoke): templates verbatim, karaoke text authored; break markers < and !, full-width forms
+Title: KE1 corpus stock-furigana
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Default-furigana,Arial,24,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template syl,{\pos(!line.left+syl.center!,!line.middle!)\an5\k!syl.start_time/10!\k$kdur}
+Comment: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,template furi,{\pos(!line.left+syl.center!,!line.middle-line.height!)\an5\k!syl.start_time/10!\k$kdur}
+Comment: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,karaoke,{\k15}空|そ{\k15}#|ら{\k10}を{\k20}見|み{\k25}る{\k5}の{\k8}が
+Comment: 0,0:00:02.00,0:00:04.00,Default,,0,0,0,karaoke,{\k10}明日|あ{\k10}#|し{\k10}#|た{\k10}ま{\k10}た{\k10}会|あ{\k10}う
+Comment: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,karaoke,{\k10}遠|<と{\k10}#|お{\k10}く{\k10}光|ひ{\k10}#|か{\k10}#|り
+Comment: 0,0:00:06.00,0:00:08.00,Default,,0,0,0,karaoke,{\k10}遠|!と{\k10}#|お{\k10}く{\k10}光|ひ{\k10}#|か{\k10}#|り
+Comment: 0,0:00:08.00,0:00:10.00,Default,,0,0,0,karaoke,{\k20}雨｜あ{\k20}＃｜め{\k30}が{\k20}降｜ふ{\k30}る
+Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,fx,{\pos(496,44)\an5\k0\k0}
+Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,fx,{\pos(520,44)\an5\k0\k30}空
+Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,fx,{\pos(568,44)\an5\k30\k10}を
+Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,fx,{\pos(616,44)\an5\k40\k20}見
+Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,fx,{\pos(664,44)\an5\k60\k25}る
+Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,fx,{\pos(712,44)\an5\k85\k5}の
+Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,fx,{\pos(760,44)\an5\k90\k8}が
+Dialogue: 0,0:00:00.00,0:00:02.00,Default-furigana,,0,0,0,fx,{\pos(508,-4)\an5\k0\k15}そ
+Dialogue: 0,0:00:00.00,0:00:02.00,Default-furigana,,0,0,0,fx,{\pos(532,-4)\an5\k15\k15}ら
+Dialogue: 0,0:00:00.00,0:00:02.00,Default-furigana,,0,0,0,fx,{\pos(616,-4)\an5\k40\k20}み
+Dialogue: 0,0:00:02.00,0:00:04.00,Default,,0,0,0,fx,{\pos(496,44)\an5\k0\k0}
+Dialogue: 0,0:00:02.00,0:00:04.00,Default,,0,0,0,fx,{\pos(544,44)\an5\k0\k30}明日
+Dialogue: 0,0:00:02.00,0:00:04.00,Default,,0,0,0,fx,{\pos(616,44)\an5\k30\k10}ま
+Dialogue: 0,0:00:02.00,0:00:04.00,Default,,0,0,0,fx,{\pos(664,44)\an5\k40\k10}た
+Dialogue: 0,0:00:02.00,0:00:04.00,Default,,0,0,0,fx,{\pos(712,44)\an5\k50\k10}会
+Dialogue: 0,0:00:02.00,0:00:04.00,Default,,0,0,0,fx,{\pos(760,44)\an5\k60\k10}う
+Dialogue: 0,0:00:02.00,0:00:04.00,Default-furigana,,0,0,0,fx,{\pos(520,-4)\an5\k0\k10}あ
+Dialogue: 0,0:00:02.00,0:00:04.00,Default-furigana,,0,0,0,fx,{\pos(544,-4)\an5\k10\k10}し
+Dialogue: 0,0:00:02.00,0:00:04.00,Default-furigana,,0,0,0,fx,{\pos(568,-4)\an5\k20\k10}た
+Dialogue: 0,0:00:02.00,0:00:04.00,Default-furigana,,0,0,0,fx,{\pos(712,-4)\an5\k50\k10}あ
+Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,fx,{\pos(568,44)\an5\k0\k0}
+Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,fx,{\pos(592,44)\an5\k0\k20}遠
+Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,fx,{\pos(640,44)\an5\k20\k10}く
+Dialogue: 0,0:00:04.00,0:00:06.00,Default,,0,0,0,fx,{\pos(688,44)\an5\k30\k30}光
+Dialogue: 0,0:00:04.00,0:00:06.00,Default-furigana,,0,0,0,fx,{\pos(580,-4)\an5\k0\k10}と
+Dialogue: 0,0:00:04.00,0:00:06.00,Default-furigana,,0,0,0,fx,{\pos(604,-4)\an5\k10\k10}お
+Dialogue: 0,0:00:04.00,0:00:06.00,Default-furigana,,0,0,0,fx,{\pos(676,-4)\an5\k30\k10}ひ
+Dialogue: 0,0:00:04.00,0:00:06.00,Default-furigana,,0,0,0,fx,{\pos(700,-4)\an5\k40\k10}か
+Dialogue: 0,0:00:04.00,0:00:06.00,Default-furigana,,0,0,0,fx,{\pos(724,-4)\an5\k50\k10}り
+Dialogue: 0,0:00:06.00,0:00:08.00,Default,,0,0,0,fx,{\pos(568,44)\an5\k0\k0}
+Dialogue: 0,0:00:06.00,0:00:08.00,Default,,0,0,0,fx,{\pos(592,44)\an5\k0\k20}遠
+Dialogue: 0,0:00:06.00,0:00:08.00,Default,,0,0,0,fx,{\pos(640,44)\an5\k20\k10}く
+Dialogue: 0,0:00:06.00,0:00:08.00,Default,,0,0,0,fx,{\pos(688,44)\an5\k30\k30}光
+Dialogue: 0,0:00:06.00,0:00:08.00,Default-furigana,,0,0,0,fx,{\pos(580,-4)\an5\k0\k10}と
+Dialogue: 0,0:00:06.00,0:00:08.00,Default-furigana,,0,0,0,fx,{\pos(604,-4)\an5\k10\k10}お
+Dialogue: 0,0:00:06.00,0:00:08.00,Default-furigana,,0,0,0,fx,{\pos(676,-4)\an5\k30\k10}ひ
+Dialogue: 0,0:00:06.00,0:00:08.00,Default-furigana,,0,0,0,fx,{\pos(700,-4)\an5\k40\k10}か
+Dialogue: 0,0:00:06.00,0:00:08.00,Default-furigana,,0,0,0,fx,{\pos(724,-4)\an5\k50\k10}り
+Dialogue: 0,0:00:08.00,0:00:10.00,Default,,0,0,0,fx,{\pos(544,44)\an5\k0\k0}
+Dialogue: 0,0:00:08.00,0:00:10.00,Default,,0,0,0,fx,{\pos(568,44)\an5\k0\k40}雨
+Dialogue: 0,0:00:08.00,0:00:10.00,Default,,0,0,0,fx,{\pos(616,44)\an5\k40\k30}が
+Dialogue: 0,0:00:08.00,0:00:10.00,Default,,0,0,0,fx,{\pos(664,44)\an5\k70\k20}降
+Dialogue: 0,0:00:08.00,0:00:10.00,Default,,0,0,0,fx,{\pos(712,44)\an5\k90\k30}る
+Dialogue: 0,0:00:08.00,0:00:10.00,Default-furigana,,0,0,0,fx,{\pos(556,-4)\an5\k0\k20}あ
+Dialogue: 0,0:00:08.00,0:00:10.00,Default-furigana,,0,0,0,fx,{\pos(580,-4)\an5\k20\k20}め
+Dialogue: 0,0:00:08.00,0:00:10.00,Default-furigana,,0,0,0,fx,{\pos(664,-4)\an5\k70\k20}ふ

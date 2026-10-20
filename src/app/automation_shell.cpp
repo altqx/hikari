@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QTimer>
 #include <QUrl>
 
 #include <algorithm>
@@ -616,6 +617,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     m_lastMessage.clear();
     m_lastOutcome.clear();
     m_progress = 0;
+    m_keepLog = false;
     if (m_documentChanged)
         m_documentChanged();
     emit progressChanged();
@@ -684,6 +686,22 @@ void AutomationShell::resolveScriptResolution(const application::ScriptResolutio
     });
 }
 
+// KE1-template-timing: the karaoke templater's report goes to the status bar
+// (for 10 s) and, per template Line, to the log window without popping it
+// up; a run that named template problems keeps its progress window open.
+void AutomationShell::karaokeReport(const ui::KaraokeReport &report)
+{
+    const QString summary = ui::karaokeReportSummary(report);
+    m_shell.setStatusText(summary);
+    QTimer::singleShot(10'000, Qt::PreciseTimer, this, [this, summary, serial = ++m_statusSerial] {
+        if (serial == m_statusSerial && m_shell.statusText() == summary)
+            m_shell.setStatusText(QString());
+    });
+    if (m_logLine)
+        m_logLine(ui::karaokeReportDetails(report), true);
+    m_keepLog = report.problems > 0;
+}
+
 void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutcome outcome, const QString &message)
 {
     if (!m_run)
@@ -734,6 +752,8 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
             ok = applied.has_value();
             if (!ok)
                 text = refusalText(applied.error());
+            else if (const auto report = ui::readKaraokeReport(host->lastResult()->report))
+                karaokeReport(*report);
         }
         ended = ok ? QStringLiteral("applied") : QStringLiteral("refused");
         break;
@@ -769,7 +789,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
         // A dependency's failed validation is said the same way, naming
         // the dependency (S4-run-validation).
         if (!message.isEmpty() && m_logLine)
-            m_logLine(message);
+            m_logLine(message, false);
         if (run.origin != RunOrigin::Menu)
             emit notice(QCoreApplication::translate("HikariSub.Automation", "Error"),
                         QCoreApplication::translate("HikariSub.Automation", "Validation Lua script '%1' failed")

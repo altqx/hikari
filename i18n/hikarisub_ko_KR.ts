@@ -424,6 +424,10 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1 named problems</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 failed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -756,6 +760,47 @@ Output device: %2</source>
     <message>
         <source>Several loaded scripts have this file name, so a shortcut cannot tell their macros apart.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>A short duration in milliseconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <extracomment>A duration in seconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Karaoke template: %n Line(s) generated from %1 karaoke Line(s) in %2.</source>
+        <extracomment>Status bar after applying karaoke templates; %n is the number of Lines generated, %1 the number of karaoke Lines templated, %2 the time the run took</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n template problem(s): see the log.</source>
+        <extracomment>After the karaoke template status; %n is the number of template problems the log lists</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Measuring the karaoke Lines: %1</source>
+        <extracomment>In the karaoke template report; %1 is the time karaskel took to measure the karaoke Lines</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Code Line %1 (%2, %3): %4</source>
+        <extracomment>In the karaoke template report: a code Line&apos;s number, its effect and style, and the time it took</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Template Line %1 (%2, %3): %4, %n Line(s) generated</source>
+        <extracomment>In the karaoke template report: a template Line&apos;s number, its effect and style, the time it took and %n the number of Lines it generated</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -4065,6 +4110,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Plays / Pauses video</source>
         <translation>영상 재생 / 일시정지</translation>
+    </message>
+    <message>
+        <source>Show / hide render cost</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Opens audio file</source>
@@ -8278,6 +8327,10 @@ Foreign language text will be deleted.</source>
         <translation>진행 표시 줄 보임/ 숨김</translation>
     </message>
     <message>
+        <source>Show / hide render cost</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change aspect ratio</source>
         <translation>가로/세로 비율 변경</translation>
     </message>
@@ -8454,6 +8507,25 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Aspect ratio: %1</source>
         <translation type="unfinished">가로 세로 비율: %1</translation>
+    </message>
+    <message>
+        <source>No subtitles on this frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles drawn in %1 ms</source>
+        <extracomment>Over the video: how long drawing the frame&apos;s subtitles took</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 event(s), %2 bitmap(s), %3 Mpx</source>
+        <extracomment>Over the video: %1 events shown, %2 bitmaps libass drew, %3 their area in megapixels</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 with blur, %2 with a vector clip</source>
+        <extracomment>Over the video: of the shown events, %1 use <byte value="x8"/>lur or <byte value="x8"/>e and %2 a drawing clip or iclip</extracomment>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
