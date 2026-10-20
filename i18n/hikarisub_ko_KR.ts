@@ -33,18 +33,26 @@
     </message>
     <message>
         <source>Horizontal stretching</source>
-        <translation>가로 확대/축소</translation>
+        <translation type="vanished">가로 확대/축소</translation>
     </message>
     <message>
         <source>Vertical stretching</source>
-        <translation>세로 확대/축소</translation>
+        <translation type="vanished">세로 확대/축소</translation>
     </message>
     <message>
         <source>Volume</source>
         <translation>소리</translation>
     </message>
     <message>
-        <source>Link</source>
+        <source>Linked to vertical stretch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio settings…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -88,56 +96,28 @@
         <translation>재생 중지</translation>
     </message>
     <message>
-        <source>Before mark</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play before the tag</source>
         <translation>표시선 이전 재생</translation>
-    </message>
-    <message>
-        <source>After mark</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play after the tag</source>
         <translation>표시선 이후 재생</translation>
     </message>
     <message>
-        <source>500 before</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play 500ms before the start time</source>
         <translation>시작 전 0.5초 재생</translation>
-    </message>
-    <message>
-        <source>500 first</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
         <translation>시작 후 0.5초 재생</translation>
     </message>
     <message>
-        <source>500 last</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play 500ms before the end time</source>
         <translation>종료 전 0.5초 재생</translation>
     </message>
     <message>
-        <source>500 after</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play 500ms after the end time</source>
         <translation>종료 후 0.5초 재생</translation>
-    </message>
-    <message>
-        <source>To end</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -168,10 +148,6 @@
         <translation>적용</translation>
     </message>
     <message>
-        <source>Go</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Go to selection</source>
         <translation>선택 줄로 이동</translation>
     </message>
@@ -192,16 +168,8 @@
         <translation>음절 자동 분할 활성화 / 비활성화</translation>
     </message>
     <message>
-        <source>Auto</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Automatically apply changes</source>
         <translation>변경사항 자동 승인</translation>
-    </message>
-    <message>
-        <source>Next</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Go to the next line after applying changes</source>
@@ -216,20 +184,77 @@
         <translation>활성 줄 자동 스크롤</translation>
     </message>
     <message>
+        <source>Spectrum</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1×</source>
+        <extracomment>The audio panel&apos;s zoom readout; %1 is the magnification</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back to line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play around</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play 500 ms before the start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play the first 500 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play the last 500 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play before the mark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play after the mark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Commit options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waveform mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spectrum mode</source>
+        <translation>스펙트럼 모드/파형 모드</translation>
+    </message>
+    <message>
         <source>Sync with video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Sync the video and audio cursors</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spectrum</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spectrum mode</source>
-        <translation>스펙트럼 모드/파형 모드</translation>
     </message>
     <message>
         <source>Speech</source>
@@ -240,12 +265,49 @@
         <translation>스펙트럼 음성 주파수 향상</translation>
     </message>
     <message>
-        <source>Output device</source>
+        <source>More audio options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Output device: %1</source>
-        <extracomment>The audio panel&apos;s speaker button; %1 is the device audio plays through now</extracomment>
+        <source>Speech (non-linear spectrum)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom: horizontal and vertical stretching</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Horizontal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift+wheel and Ctrl+wheel on the waveform zoom too</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume and output device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume: %1
+Output device: %2</source>
+        <extracomment>The audio panel&apos;s speaker button; %1 is the volume (1 to 100), %2 the device audio plays through now</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -280,10 +342,6 @@
     <message>
         <source>%1 is not connected. Audio plays through %2.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Audio settings…</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4179,6 +4237,34 @@ great help testing HikariSub on a slow computer)
         <source>Installing update...</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Application menu</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -4422,6 +4508,18 @@ when find results window is open</source>
     </message>
     <message>
         <source>%1 (contrast %2:1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use system title bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off by default on Windows, KDE Plasma and GNOME; on by default on tiling window managers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

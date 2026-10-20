@@ -432,13 +432,12 @@ private slots:
         QCOMPARE(WaitForSingleObject(request, 0), DWORD(WAIT_OBJECT_0));
         CloseHandle(request);
 
-        // A stand-in setup that takes the mutex after starting up, then holds
-        // it 8 s: launch returns while it is held, not at once.
-        wchar_t system[MAX_PATH];
-        const UINT length = GetSystemDirectoryW(system, MAX_PATH);
-        const std::wstring powershell = std::wstring(system, length) + L"\\WindowsPowerShell\\v1.0\\powershell.exe";
-        QVERIFY(update_apply::launch(powershell, L"-NoProfile -NonInteractive -Command \"$m = [Threading.Mutex]::new($true, "
-                                                 L"'Global\\io.github.altqx.HikariSub.Installing'); Start-Sleep -Seconds 8\""));
+        // A stand-in setup that takes the mutex 1 s after it starts, then
+        // holds it 8 s: launch returns while it is held, not at once. Not
+        // PowerShell: on a loaded runner its start took longer than launch's
+        // 10 s wait.
+        const std::wstring helper = native(QStringLiteral(HIKARI_SETUP_MUTEX_HELPER));
+        QVERIFY(update_apply::launch(helper, std::wstring(update_apply::kSetupMutex) + L" 1000 8000"));
         QVERIFY(update_apply::setupRunning());
         QTRY_VERIFY_WITH_TIMEOUT(!update_apply::setupRunning(), 20000);
     }
