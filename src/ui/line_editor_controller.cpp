@@ -269,6 +269,14 @@ bool LineEditorController::translationMode() const
     return s && s->document().scriptInfo(u8"TLMode") == u8"Yes";
 }
 
+QString LineEditorController::videoText() const
+{
+    const auto r = record();
+    if (!r)
+        return {};
+    return qs(translationMode() && !r->translation.empty() ? r->translation : r->text);
+}
+
 void LineEditorController::refresh()
 {
     if (const auto real = sessionRecord(); (real ? std::optional(real->id) : std::nullopt) != m_splitEvaluated)

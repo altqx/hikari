@@ -22426,6 +22426,11 @@ private slots:
         QCOMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("first"));
         QCOMPARE(fullscreenItem("fullscreenLineTimes")->property("text").toString(),
                  application->editor().startText() + QStringLiteral(" – ") + application->editor().endText());
+        // The Line editor's draft, as the video shows it, not the stored text.
+        application->editor().textEdited(QStringLiteral("{\\i1}draft\\Nnow"), 5);
+        QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("draft \u21B5 now"));
+        application->editor().discard();
+        QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("first"));
         // The progress bar's times (VIDEO_PROGRESS_BAR is on by default).
         auto *progress = fullscreenItem("videoFullscreenProgress");
         QVERIFY(progress->isVisible());
@@ -22783,6 +22788,35 @@ private slots:
         QCOMPARE(fs.barMode(), 1);
         QVERIFY(!fs.active());
         settings.set("video.fullscreenBar", 0);
+    }
+
+    // FS1-current-line: in translation mode the label reads the translation
+    // when the Line has one (the video shows it), else the original.
+    void videoTextIsWhatTheVideoShows()
+    {
+        const QString path = dir.filePath(QStringLiteral("fs1-tl.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nTLMode: Yes\nTLMode Style: TLmode\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,TLmode,,0,0,0,,orig one\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,tl two\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,untranslated three\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &editor = application->editor();
+        QVERIFY(editor.translationMode());
+        const auto lines = session->document().lines();
+        QCOMPARE(lines.size(), std::size_t(2));
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id}, lines[0]->id, {}});
+        QTRY_COMPARE(editor.videoText(), QStringLiteral("tl two"));
+        editor.translationEdited(QStringLiteral("tl draft"), 8);
+        QTRY_COMPARE(editor.videoText(), QStringLiteral("tl draft"));
+        editor.discard();
+        session->setSelection(application::Selection{lines[1]->id, {lines[1]->id}, lines[1]->id, {}});
+        QTRY_COMPARE(editor.videoText(), QStringLiteral("untranslated three"));
     }
 
     // V5-volume-slider: the fullscreen panel shows the Video panel's volume

@@ -47,6 +47,9 @@ class LineEditorController : public QObject {
     // Translation mode (Script Info "TLMode: Yes"): Original above Translated.
     Q_PROPERTY(bool translationMode READ translationMode NOTIFY changed)
     Q_PROPERTY(QString translationText READ translationText NOTIFY changed)
+    // FS1-current-line: the raw text the video shows for the Line, the
+    // draft applied: in translation mode its translation when it has one.
+    Q_PROPERTY(QString videoText READ videoText NOTIFY changed)
     Q_PROPERTY(QString startText READ startText NOTIFY changed)
     Q_PROPERTY(QString endText READ endText NOTIFY changed)
     Q_PROPERTY(QString marginLeftText READ marginLeftText NOTIFY changed)
@@ -158,6 +161,7 @@ public:
     QString text() const { return m_shown[0]; }
     bool translationMode() const;
     QString translationText() const { return m_shown[1]; }
+    QString videoText() const;
     QString startText() const;
     QString endText() const;
     QString marginLeftText() const;

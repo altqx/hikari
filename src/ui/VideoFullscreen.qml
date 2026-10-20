@@ -477,7 +477,7 @@ Window {
                             objectName: "fullscreenLineText"
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
-                            text: fs.controller.lineLabel(fs.shell.shell.activeLineText)
+                            text: fs.controller.lineLabel(fs.shell.editor.videoText)
                             color: Theme.text
                             elide: Text.ElideRight
                             maximumLineCount: 1
