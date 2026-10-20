@@ -133,6 +133,8 @@ KEYS = {
     "pageup": (104, "Prior", "Prior"), "pagedown": (109, "Next", "Next"),
     # WS3: Manage layouts…' F2 (to the name) and Delete
     "f2": (60, "F2", "F2"), "delete": (111, "Delete", "Delete"),
+    # SH1: F10 to the menus
+    "f10": (68, "F10", "F10"),
 }
 LETTERS = "qwertyuiop asdfghjkl zxcvbnm"
 CODES = {"q": 16, "w": 17, "e": 18, "r": 19, "t": 20, "y": 21, "u": 22, "i": 23, "o": 24, "p": 25,
@@ -316,10 +318,12 @@ class Mutter(EiBackend):
     def client_rect(self, title):
         # mutter without gnome-shell publishes no window geometry. The main
         # window is placed centred on the 1600x1000 monitor with Qt's client
-        # side decoration (30 px) above its 1280x800 client area; floating
-        # panel windows are placed by mutter and cannot be located.
+        # side decoration (30 px) above its 1280x800 client area, or, with
+        # its own title bar (SH1: GNOME's default), frameless at (160, 100);
+        # floating panel windows are placed by mutter and cannot be located.
         if title == "HikariSub":
-            return (160, 115, 1280, 800, "Meta-0")
+            own = bool(where("button", "Window menu", "HikariSub"))
+            return (160, 100 if own else 115, 1280, 800, "Meta-0")
         return None
 
 
@@ -558,7 +562,11 @@ def focus_main_compositor():
         B.focus("HikariSub$")
     else:
         r = B.client_rect("HikariSub")
-        B.pointer(f"move {r[0] + 400} {r[1] - 15}", "wait 150", "down", "wait 50", "up", "wait 400")
+        # Qt's decoration above the client, or (SH1) the window's own title
+        # bar, right of its title
+        y = r[1] + 16 if r[1] == 100 else r[1] - 15
+        B.pointer(f"move {r[0] + 1000 if r[1] == 100 else r[0] + 400} {y}", "wait 150", "down", "wait 50", "up",
+                  "wait 400")
     time.sleep(0.8)
 
 
@@ -1977,7 +1985,7 @@ def menu_names(opener):
 
 
 def switcher_label():
-    """The layout switcher's accessible name ("Layout: NAME") in the status bar."""
+    """The layout switcher's accessible name ("Layout: NAME"), in the title bar since SH1."""
     try:
         bars = json.loads(sh(["python3", f"{GATE}/atspi_tool.py", "statusbar"]) or "[]")
     except ValueError:
@@ -3103,9 +3111,361 @@ def step_edge_tiling():
             ev0 + ev1)
 
 
+# ---------------------------------------------------------------- SH1 title bar
+# SH1 (#220): the main window's own title bar (MainTitleBar.qml): the
+# application icon, the menus, the layout switcher, the title and the window
+# buttons on a frameless window, by default on KDE Plasma and GNOME (the
+# gate's KWin session names no desktop: the app is started with KDE's
+# names) and the system's on sway and on X11 under openbox; "custom" in the
+# profile forces it anywhere. Each item drives the window through the
+# compositor's own input.
+TITLE_BAR = 32
+# Each theme's panel role (the title bar's surface).
+THEME_PANEL = {"light": "#F9FAFB", "dark": "#20262D", "highContrastWhite": "#FFFFFF", "highContrastBlack": "#080808"}
+
+
+def title_bar_start(choice="auto", theme="dark"):
+    """A fresh profile with the title bar's setting and the theme, then the app."""
+    app("fresh")
+    conf = os.path.join(os.environ["XDG_CONFIG_HOME"], "HikariSub", "HikariSub")
+    os.makedirs(conf, exist_ok=True)
+    with open(os.path.join(conf, "hikari.ini"), "w") as f:
+        f.write(f"[registry]\nschema=1\n\n[profile]\nappearance.theme={theme}\nappearance.followSystem=false\n"
+                f"appearance.titleBar={choice}\n")
+    env = {"XDG_CURRENT_DESKTOP": "KDE", "XDG_SESSION_DESKTOP": "KDE"} if B.name == "kwin" else None
+    app("start", env=env)
+    time.sleep(2)
+    dismiss_notices()
+    if B.name == "sway":
+        # sway tiles the main window: floating, it can be moved, maximised and resized.
+        B.msg('[title="HikariSub$"] floating enable, resize set 1280 800, move position center')
+        time.sleep(1.0)
+
+
+def title_bar_controls():
+    """The title bar's controls that show, by name, in window coordinates."""
+    out = {}
+    for role, name in (("button", "Window menu"), ("button", "Minimise"), ("button", "Maximise"),
+                       ("button", "Restore"), ("button", "Close"), ("button", "More menus"),
+                       ("menu bar", "Application menu")):
+        hits = where(role, name, "HikariSub")
+        if hits:
+            out[name] = hits[0]
+    dump = sh(["python3", f"{GATE}/atspi_tool.py", "dump"])
+    out["switcher"] = next((re.search(r"'(Layout: [^']*)'", l).group(1) for l in dump.splitlines()
+                            if "'Layout: " in l and "showing" in l), None)
+    return out
+
+
+def main_size():
+    fr = frames().get("HikariSub")
+    return (fr["w"], fr["h"]) if fr else None
+
+
+def main_at(x, y):
+    """Window coordinates to the screen's (where the compositor says where the window is)."""
+    r = origin("HikariSub")
+    return (r[0] + x, r[1] + y) if r else None
+
+
+def free_part(ctl):
+    """A point of the title bar's free part: just left of Minimise."""
+    m = ctl.get("Minimise")
+    return (m["x"] - 16, TITLE_BAR // 2) if m else (900, TITLE_BAR // 2)
+
+
+def system_frame():
+    """Whether the window system frames the main window (a title bar or
+    border of its own), and what says so."""
+    if B.name == "kwin":
+        r = B.client_rect("HikariSub")
+        line = next((l for l in B.windows().splitlines() if "HikariSub" in l), "")
+        m = re.match(r'\S+ "(.*)" (-?[\d.]+),(-?[\d.]+) (\d+)x(\d+)', line)
+        fr = frames().get("HikariSub")
+        if m and fr:
+            return int(m.group(5)) - fr["h"] > 0, f"KWin frame {m.group(4)}x{m.group(5)}, client {fr['w']}x{fr['h']}"
+        return None, f"no KWin window ({r})"
+    if B.name in ("sway", "sway-activate"):
+        tree = B.windows()
+        line = next((l for l in tree.splitlines() if "HikariSub" in l), "")
+        border = json.loads(B.msg("-t", "get_tree") or "{}")
+
+        def find(n):
+            if (n.get("name") or "").endswith("HikariSub"):
+                return n
+            for c in n.get("nodes", []) + n.get("floating_nodes", []):
+                hit = find(c)
+                if hit:
+                    return hit
+            return None
+        node = find(border) or {}
+        return node.get("border") not in ("csd", "none"), f"sway border {node.get('border')!r}: {line}"
+    if B.name == "x11":
+        w = sh("xdotool search --onlyvisible --name 'HikariSub$'").split()
+        ext = sh(["xprop", "-id", w[0], "_NET_FRAME_EXTENTS"]).strip() if w else ""
+        nums = [int(n) for n in re.findall(r"\d+", ext.split("=")[-1])] if "=" in ext else []
+        return any(nums), f"_NET_FRAME_EXTENTS {ext or 'unset'}"
+    return None, "mutter publishes no frame geometry (see the screenshot)"
+
+
+def panel_colour_at(png, x, y):
+    out = sh(["magick", os.path.join(EVID, png), "-format", f"%[hex:p{{{x},{y}}}]", "info:"]).strip()
+    return "#" + out[:6].upper() if out else ""
+
+
+def step_title_bar():
+    """SH1 (#220) on the session's window system: the default by desktop,
+    then HikariSub's own title bar forced: no frame of the window system's,
+    moved by its free part, maximised by a double click and by Maximise,
+    restored, resized from the edge band, the window menu on a right click,
+    Alt and F10 to the menus, every control named, Minimise and Close; the
+    system's title bar forced; the four themes; mixed DPI."""
+    # The desktop's default.
+    title_bar_start("auto")
+    ctl = title_bar_controls()
+    ev0, _ = B.snap("titlebar-0-default")
+    custom_default = B.name in ("kwin", "mutter")
+    custom_now = "Close" in ctl and "Window menu" in ctl
+    framed, why = system_frame()
+    verdict("titlebar-default", "observed" if custom_now == custom_default and "Application menu" in ctl
+            and ctl.get("switcher") else "failed",
+            f"{B.name}: expected {'HikariSub' if custom_default else 'the system'}'s title bar by default; window "
+            f"buttons shown {custom_now}; menus {('Application menu' in ctl)}; switcher {ctl.get('switcher')!r}; "
+            f"window system frame {framed} ({why})", ev0)
+
+    # HikariSub's own, forced.
+    title_bar_start("custom")
+    ctl = title_bar_controls()
+    ev1, _ = B.snap("titlebar-1-custom")
+    framed, why = system_frame()
+    names = {n: bool(ctl.get(n)) for n in ("Window menu", "Application menu", "Minimise", "Maximise", "Close")}
+    verdict("titlebar-names", "observed" if all(names.values()) and ctl.get("switcher") else "failed",
+            f"AT-SPI: {names}, switcher {ctl.get('switcher')!r}", ev1)
+    verdict("titlebar-frameless", "observed" if framed is False else ("not-observable" if framed is None else "failed"),
+            f"no frame of the window system's round HikariSub's title bar: {why}", ev1)
+
+    # Moving by the free part (Wayland: the compositor's move; X11: the window manager's).
+    size0 = main_size()
+    fx, fy = free_part(ctl)
+    r0 = origin("HikariSub")
+    if r0 and B.name != "mutter":
+        sx, sy = r0[0] + fx, r0[1] + fy
+        drag(sx, sy, sx - 150, sy + 60, steps=drag_steps(150, 60))
+        time.sleep(1.0)
+        r1 = origin("HikariSub")
+        ev2, _ = B.snap("titlebar-2-moved")
+        moved = r1 is not None and abs((r1[0] - r0[0]) + 150) <= 12 and abs((r1[1] - r0[1]) - 60) <= 12
+        verdict("titlebar-move", "observed" if moved else "failed",
+                f"free part ({fx},{fy}) dragged by (-150,+60): window {r0[:4]} -> {r1 and r1[:4]}", ev2)
+    else:
+        verdict("titlebar-move", "not-observable", "mutter publishes no window position")
+
+    # A double click on the free part maximises, again restores; then Maximise and Restore.
+    r = origin("HikariSub")
+
+    def at(x, y):
+        return (r[0] + x, r[1] + y) if r else (x, y)
+    click(*at(fx, fy), double=True, wait=1500)
+    ctl_max = title_bar_controls()
+    size_max = main_size()
+    ev3, _ = B.snap("titlebar-3-maximised")
+    # Maximised the window starts at the output's corner: the free part is at its own place there.
+    rm = origin("HikariSub")
+    mx, my = ((rm[0] if rm else 0) + (ctl_max.get("Minimise", {}).get("x", fx + 16) - 16), (rm[1] if rm else 0) + fy)
+    if B.name == "mutter":
+        mx, my = ctl_max.get("Minimise", {}).get("x", 1600 - 3 * 46) - 16, fy
+    click(mx, my, double=True, wait=1500)
+    ctl_back = title_bar_controls()
+    size_back = main_size()
+    verdict("titlebar-double-click", "observed" if "Restore" in ctl_max and size_max and size0
+            and size_max[0] > size0[0] and "Maximise" in ctl_back and size_back == size0 else "failed",
+            f"double click on the free part: Restore shown {'Restore' in ctl_max}, size {size0} -> {size_max}; "
+            f"again: Maximise shown {'Maximise' in ctl_back}, size {size_back}", ev3)
+    r = origin("HikariSub")
+    mb = ctl_back.get("Maximise") or {}
+    click(*(at(mb.get("x", 0) + 23, 16) if B.name != "mutter" else (160 + mb.get("x", 0) + 23, 100 + 16)), wait=1500)
+    ctl_max2 = title_bar_controls()
+    size_max2 = main_size()
+    ev4, _ = B.snap("titlebar-4-maximise-button")
+    rb = ctl_max2.get("Restore") or {}
+    rm = origin("HikariSub")
+    click((rm[0] if rm and B.name != "mutter" else 0) + rb.get("x", 0) + 23,
+          (rm[1] if rm and B.name != "mutter" else 0) + 16, wait=1500)
+    size_back2 = main_size()
+    verdict("titlebar-maximise-button", "observed" if "Restore" in ctl_max2 and size_max2 and size0
+            and size_max2[0] > size0[0] and size_back2 == size0 else "failed",
+            f"Maximise: Restore shown {'Restore' in ctl_max2}, size {size0} -> {size_max2}; Restore: {size_back2}", ev4)
+
+    # Resizing from the band inside the bottom-right corner.
+    r = origin("HikariSub")
+    if B.name == "mutter":
+        r = (160, 100, size0[0], size0[1], "Meta-0") if size0 else None
+    if r and size0:
+        cx, cy = r[0] + size0[0] - 2, r[1] + size0[1] - 2
+        drag(cx, cy, cx + 120, cy + 80, steps=drag_steps(120, 80))
+        time.sleep(1.0)
+        size1 = main_size()
+        ev5, _ = B.snap("titlebar-5-resized")
+        grown = size1 is not None and size1[0] >= size0[0] + 100 and size1[1] >= size0[1] + 60
+        verdict("titlebar-resize", "observed" if grown else "failed",
+                f"bottom-right band dragged by (+120,+80): size {size0} -> {size1}", ev5)
+    else:
+        verdict("titlebar-resize", "failed", f"the main window cannot be located ({r}, {size0})")
+
+    # The window menu on a right click on the free part.
+    r = origin("HikariSub")
+    if B.name == "mutter":
+        r = (160, 100, 0, 0, "Meta-0")
+    B.snap("titlebar-6-before-menu")
+    rx, ry = (r[0] + fx, r[1] + fy) if r else (fx, fy)
+    rclick(rx, ry, wait=1500)
+    ev6, _ = B.snap("titlebar-6-window-menu", extra=f"# right click at {rx},{ry}\n" + B.windows())
+    before = os.path.join(EVID, "titlebar-6-before-menu.png")
+    after = os.path.join(EVID, "titlebar-6-window-menu.png")
+    box = f"300x300+{max(rx - 20, 0)}+{max(ry, 0)}"
+    try:
+        changed = int(float(subprocess.run(["magick", "compare", "-metric", "AE", "-fuzz", "5%", f"{before}[{box}]",
+                                            f"{after}[{box}]", "null:"], capture_output=True, text=True)
+                            .stderr.split()[0]))
+    except (ValueError, IndexError):
+        changed = 0
+    B.keys("escape", 0.8)
+    if B.name in ("kwin", "x11"):
+        verdict("titlebar-window-menu", "observed" if changed > 2000 else "failed",
+                f"right click on the free part at {rx},{ry}: {changed} pixels changed under it (the window "
+                f"system's window menu; see the screenshot)", ev6)
+    else:
+        verdict("titlebar-window-menu", "not-observable",
+                f"{B.name} has no window menu of its own (sway none; mutter's is gnome-shell's): the request is "
+                f"made ({changed} pixels changed)", ev6)
+
+    # Alt alone and F10 put the keyboard on the menus.
+    focus_main_compositor()
+    park_pointer()
+    B.keys("alt", 0.6, "down", 1.0)
+    file_items = [i["name"] for m in json.loads(sh(["python3", f"{GATE}/atspi_tool.py", "menu"]) or "[]") for i in m]
+    ev7, _ = B.snap("titlebar-7-alt-down")
+    B.keys("escape", 0.5, "escape", 0.5)
+    B.combo("f10")
+    time.sleep(0.6)
+    B.keys("right", 0.5, "down", 1.0)
+    edit_items = [i["name"] for m in json.loads(sh(["python3", f"{GATE}/atspi_tool.py", "menu"]) or "[]") for i in m]
+    ev8, _ = B.snap("titlebar-8-f10-right-down")
+    B.keys("escape", 0.5, "escape", 0.5)
+    file_ok = any(n.startswith("Open") for n in file_items)
+    edit_ok = any(n.startswith("Undo") for n in edit_items)
+    verdict("titlebar-keyboard", "observed" if file_ok and edit_ok else "failed",
+            f"Alt, Down: the File menu ({file_items[:4]}); F10, Right, Down: the Edit menu ({edit_items[:4]})",
+            ev7 + ev8)
+
+    # Minimise, then Close.
+    ctl = title_bar_controls()
+    r = origin("HikariSub")
+    if B.name == "mutter":
+        r = (160, 100, 0, 0, "Meta-0")
+    mn = ctl.get("Minimise") or {}
+    if B.name in ("sway", "sway-activate"):
+        verdict("titlebar-minimise", "not-observable", "sway has no minimised state (xdg_toplevel.set_minimized is ignored)")
+    else:
+        click(r[0] + mn.get("x", 0) + 23, r[1] + 16, wait=1500)
+        st = atspi()
+        shown = "HikariSub" in frames(st)
+        ev9, _ = B.snap("titlebar-9-minimised")
+        verdict("titlebar-minimise", "observed" if not shown else "failed",
+                f"Minimise: the main window still showing (AT-SPI) {shown}", ev9)
+        focus_main_compositor()
+        if B.name == "kwin":
+            B.script('for (const w of workspace.windowList()) if (/HikariSub$/.test(w.caption)) '
+                     '{ w.minimized = false; workspace.activeWindow = w; }')
+        elif B.name == "x11":
+            sh("xdotool search --name 'HikariSub$' windowmap windowactivate")
+        time.sleep(1.5)
+    ctl = title_bar_controls()
+    r = origin("HikariSub")
+    if B.name == "mutter":
+        r = (160, 100, 0, 0, "Meta-0")
+    cl = ctl.get("Close") or {}
+    if cl and r:
+        click(r[0] + cl["x"] + 23, r[1] + 16, wait=2500)
+        alive = app("alive").strip()
+        verdict("titlebar-close", "observed" if alive == "no" else "failed", f"Close: the app still running {alive}")
+    else:
+        verdict("titlebar-close", "failed", f"Close not found after Minimise ({sorted(ctl)})")
+
+    # The system's title bar, forced: the menus and the switcher in the first row, no window buttons.
+    title_bar_start("system")
+    ctl = title_bar_controls()
+    framed, why = system_frame()
+    ev10, _ = B.snap("titlebar-10-system")
+    verdict("titlebar-system", "observed" if "Application menu" in ctl and ctl.get("switcher")
+            and not any(n in ctl for n in ("Close", "Minimise", "Window menu")) and framed is not False else "failed",
+            f"menus {'Application menu' in ctl}, switcher {ctl.get('switcher')!r}, window buttons "
+            f"{[n for n in ('Close', 'Minimise', 'Window menu') if n in ctl]}; window system frame {framed} ({why})",
+            ev10)
+
+    # The four themes.
+    shots, wrong = [], []
+    for theme, panel in THEME_PANEL.items():
+        title_bar_start("custom", theme)
+        ev, _ = B.snap(f"titlebar-11-theme-{theme}")
+        shots += ev
+        r = origin("HikariSub") if B.name != "mutter" else (160, 100, 0, 0, "Meta-0")
+        ctl = title_bar_controls()
+        fx, fy = free_part(ctl)
+        got = panel_colour_at(f"titlebar-11-theme-{theme}.png", r[0] + fx, r[1] + 4) if r else ""
+        if got != panel:
+            wrong.append(f"{theme}: {got} at the free part, expected {panel}")
+    verdict("titlebar-themes", "observed" if not wrong else "failed",
+            "the title bar in each theme's panel colour" + (f": {wrong}" if wrong else ""), shots)
+
+    # Mixed DPI: the window on a scale-2 output.
+    title_bar_start("custom")
+    if B.name in ("sway", "sway-activate"):
+        B.msg('[title="HikariSub$"] move to output HEADLESS-2, move position center')
+        time.sleep(1.5)
+        path = os.path.join(EVID, "titlebar-12-scale2.png")
+        sh(["grim", "-o", "HEADLESS-2", path])
+        r = B.client_rect("HikariSub")
+        ctl = title_bar_controls()
+        on2 = r is not None and r[4] == "HEADLESS-2"
+        verdict("titlebar-mixed-dpi", "observed" if on2 and "Close" in ctl else "failed",
+                f"main window on HEADLESS-2 (scale 2; HEADLESS-1 at 1): {r}; controls {sorted(ctl)} "
+                f"(titlebar-12-scale2.png: native 2x pixels)", ["titlebar-12-scale2.png"])
+        B.msg('[title="HikariSub$"] move to output HEADLESS-1')
+    elif B.name == "kwin":
+        sh("kscreen-doctor output.Virtual-1.scale.2 output.Virtual-0.scale.1")
+        time.sleep(1)
+        B.script('const o = workspace.screens.find(s => s.name === "Virtual-1"); '
+                 'for (const w of workspace.windowList()) if (/HikariSub$/.test(w.caption)) workspace.sendClientToScreen(w, o);')
+        time.sleep(1.5)
+        ev, _ = B.snap("titlebar-12-scale2", extra="# kscreen-doctor\n" + sh("kscreen-doctor -o"))
+        on2 = "output=Virtual-1" in "".join(l for l in B.windows().splitlines() if "HikariSub" in l)
+        ctl = title_bar_controls()
+        verdict("titlebar-mixed-dpi", "observed" if on2 and "Close" in ctl else "failed",
+                f"main window on Virtual-1 (scale 2; Virtual-0 at 1): {on2}; controls {sorted(ctl)}", ev)
+        sh("kscreen-doctor output.Virtual-1.scale.1")
+    elif B.name == "mutter":
+        sh("gdctl set --logical-monitor --primary --monitor Meta-0 --scale 1 "
+           "--logical-monitor --monitor Meta-1 --scale 2 --right-of Meta-0")
+        time.sleep(1.5)
+        focus_main_compositor()
+        B.keys("super+shift+right", 1.5)
+        ev, _ = B.snap("titlebar-12-scale2", extra="# gdctl show\n" + sh("gdctl show"))
+        ctl = title_bar_controls()
+        verdict("titlebar-mixed-dpi", "observed" if "Close" in ctl else "failed",
+                f"main window moved by Super+Shift+Right to Meta-1 (scale 2; Meta-0 at 1): controls {sorted(ctl)} "
+                f"(the screenshot holds Meta-1's physical pixels right of Meta-0's 1600)", ev)
+        sh("gdctl set --logical-monitor --primary --monitor Meta-0 --scale 1")
+    else:
+        verdict("titlebar-mixed-dpi", "not-observable",
+                "X11 has one Xft DPI for the whole screen: Qt's xcb backend has no per-monitor scale to mix")
+    app("kill")
+
+
 SWEEP_STEPS = {"tagspeech": step_tag_list_speech, "statusspeech": step_status_bar_speech,
                "refspeech": step_reference_speech, "icons": step_icon_names, "ime": step_ime,
-               "scheme": step_follow_system, "dropper": step_screen_dropper, "edgetile": step_edge_tiling}
+               "scheme": step_follow_system, "dropper": step_screen_dropper, "edgetile": step_edge_tiling,
+               "titlebar": step_title_bar}
 
 
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
