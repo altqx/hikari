@@ -9989,19 +9989,18 @@ private slots:
         QCOMPARE(session->document().lines()[1]->text, std::u8string(u8"Towers"));
     }
 
-    // E5: "Moving tags" (EditBox::SetTextWithTags): an untranslated Line is
-    // shown split, the Translated field takes the focus, and the first change
-    // makes both fields the draft.
-    void movingTagsSplitsAnUntranslatedLine()
+    // TM1 (#232) "Tags from original" (legacy "Moving tags", now on by
+    // default; departure TM1-original-keeps-tags): the Original text keeps
+    // its tags, an untranslated Line gives the Translated field the focus,
+    // and what is typed there is saved with the Original's carried tags
+    // around it, which the field leaves out.
+    void tagsFromOriginalAreCarriedToTheTranslation()
     {
         QVERIFY(application->openFile(writeTranslationFile("e5-moving.ass")));
         auto *session = application->files().session(*application->workspace().editingTarget());
         application->editor().setShowTags(true);
-        auto *moving = item("originalMovingTags"); // TM1: in the Original text panel's header
+        auto *moving = item("originalMovingTags"); // in the Original text panel's header
         QTRY_VERIFY(moving->isVisible());
-        QVERIFY(!moving->property("checked").toBool());
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
-        QTRY_VERIFY(application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QVERIFY(moving->property("checked").toBool());
         QVERIFY(application->editor().moveTags());
 
@@ -10009,13 +10008,11 @@ private slots:
         press(Qt::Key_End); // the untranslated "{\i1}Wall {\b1}high"
         auto *original = item("lineText");
         auto *translated = item("translationText");
-        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Wall high"));
-        QCOMPARE(translated->property("text").toString(), QStringLiteral("{\\i1}{\\b1}"));
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        QCOMPARE(translated->property("text").toString(), QString());
         QTRY_VERIFY(translated->hasActiveFocus());
-        QCOMPARE(translated->property("cursorPosition").toInt(), 5);
-        // Shown only: the Document and the draft are untouched.
-        QVERIFY(!session->draftLine());
-        QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 0);
+        QVERIFY(!session->draftLine()); // shown only
         // A translated Line is shown whole.
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Up);
@@ -10023,54 +10020,59 @@ private slots:
         QCOMPARE(translated->property("text").toString(), QStringLiteral("Wieza"));
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_End);
-        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Wall high"));
         QTRY_VERIFY(translated->hasActiveFocus());
-        // Typing in the Translated field: both fields become the draft.
+        // Typing: the leading \i1 goes with it; the Original is unchanged.
         QTest::keyClick(window, 'X');
-        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("{\\i1}X{\\b1}"));
-        QVERIFY(session->draftRecord());
-        QCOMPARE(q8(session->draftRecord()->text), QStringLiteral("Wall high"));
-        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}X{\\b1}"));
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("X"));
+        QCOMPARE(q8(session->draftRecord()->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}X"));
         QVERIFY(application->editor().commit());
-        QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("Wall high"));
-        QCOMPARE(q8(session->document().lines()[2]->translation), QStringLiteral("{\\i1}X{\\b1}"));
-        // Undo takes the edit back; turning Moving tags off shows the Line whole.
-        QVERIFY(application->editor().undo());
-        QTRY_COMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        QCOMPARE(q8(session->document().lines()[2]->translation), QStringLiteral("{\\i1}X"));
+        // A line-wide tag goes to the Original, and the translation follows
+        // in the same step.
+        const auto steps = session->historySize();
+        QVERIFY(application->editor().chooseAlignment(7)); // \an8
+        QVERIFY(application->editor().commit());
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\an8\\i1}Wall {\\b1}high"));
+        QCOMPARE(q8(session->document().lines()[2]->translation), QStringLiteral("{\\an8\\i1}X"));
+        QCOMPARE(translated->property("text").toString(), QStringLiteral("X"));
+        // Off, the Translated field holds the whole translation.
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(!application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
-        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
-        QCOMPARE(translated->property("text").toString(), QString());
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("{\\an8\\i1}X"));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("X"));
     }
 
-    // E5: Moving tags splits only with the crosshair (Visual <= CROSS,
-    // EditBox.cpp:1811); another visual tool shows the Line whole.
-    void movingTagsWaitsForTheCrosshair()
+    // TM1: Paste all puts the Original's text in the Translated field with
+    // its runs; a translation whose own tags differ from the Original's is
+    // shown whole and left alone.
+    void tagsFromOriginalPasteAllAndOwnTags()
     {
-        QVERIFY(application->openFile(writeTranslationFile("e5-moving-visual.ass")));
+        QVERIFY(application->openFile(writeTranslationFile("e5-moving-paste.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
         application->editor().setShowTags(true);
-        application->settingsStore()->set("translation.autoMoveTagsFromOriginal", true);
         QTRY_VERIFY(application->editor().moveTags());
-        auto &tools = application->visualTools();
-        QTRY_VERIFY(tools.railEnabled());
-        tools.selectFamily(3);
-        QCOMPARE(tools.activeFamily(), 3);
-        auto *original = item("lineText");
-        auto *translated = item("translationText");
-        item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_End); // the untranslated "{\i1}Wall {\b1}high"
-        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
-        QCOMPARE(translated->property("text").toString(), QString());
-        // Back to the crosshair, the next SetTextWithTags splits it.
-        tools.selectFamily(3);
-        QCOMPARE(tools.activeFamily(), 0);
-        item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_Up);
-        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Tower"));
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_End);
-        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Wall high"));
-        QCOMPARE(translated->property("text").toString(), QStringLiteral("{\\i1}{\\b1}"));
+        auto *translated = item("translationText");
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        QVERIFY(application->editor().pasteAllToTranslation());
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("Wall {\\b1}high"));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        // A translation with its own leading tags is shown whole, and a
+        // change keeps them as they are.
+        QVERIFY(application->editor().commit());
+        application->settingsStore()->set("translation.autoMoveTagsFromOriginal", false);
+        QTRY_VERIFY(!application->editor().moveTags());
+        application->editor().translationEdited(QStringLiteral("{\\an2}Mur"), 10);
+        QVERIFY(application->editor().commit());
+        application->settingsStore()->set("translation.autoMoveTagsFromOriginal", true);
+        QTRY_VERIFY(application->editor().moveTags());
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("{\\an2}Mur"));
+        application->editor().translationEdited(QStringLiteral("{\\an2}MurX"), 11);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an2}MurX"));
     }
 
     // E5: the Grid's "Original text" and "Translation" columns (legacy

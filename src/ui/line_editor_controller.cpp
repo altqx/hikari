@@ -79,40 +79,65 @@ void LineEditorController::setDocument(std::optional<application::DocumentId> do
     m_attempted.clear();
     rebuildLists(); // EditBox::SetGrid
     m_shownLine.reset();
-    m_splitEvaluated.reset();
+    m_carryEvaluated.reset();
     refresh();
 }
 
 std::optional<core::LineRecord> LineEditorController::record() const
 {
     auto r = sessionRecord();
-    if (r && m_split && m_split->line == r->id) {
-        r->text = m_split->original;
-        r->translation = m_split->translation;
+    if (r && !r->translation.empty()) {
+        if (const auto c = carry(*r)) {
+            const auto inner = r->translation.size() - c->leading.size() - c->trailing.size();
+            r->translation = r->translation.substr(c->leading.size(), inner);
+        }
     }
     return r;
 }
 
-void LineEditorController::evaluateSplit()
+std::optional<LineEditorController::Carry> LineEditorController::carry(const core::LineRecord &line) const
 {
-    m_split.reset();
+    if (!m_moveTags || !translationMode())
+        return std::nullopt;
+    Carry c{core::readOriginalTags(core::toUtf16(line.text)), {}, {}};
+    if (c.tags.drawing || c.tags.malformed)
+        return std::nullopt;
+    c.leading = core::toUtf8(c.tags.leading);
+    c.trailing = core::toUtf8(c.tags.trailing);
+    const auto &t = line.translation;
+    if (!t.empty() && (t.size() < c.leading.size() + c.trailing.size() || !t.starts_with(c.leading) ||
+                       !t.ends_with(c.trailing)))
+        return std::nullopt; // the translation's own tags differ: shown whole
+    return c;
+}
+
+std::u8string LineEditorController::carried(const Carry &carry, std::u8string body)
+{
+    return body.empty() ? body : carry.leading + body + carry.trailing;
+}
+
+std::size_t LineEditorController::carriedLead() const
+{
     const auto r = sessionRecord();
-    m_splitEvaluated = r ? std::optional(r->id) : std::nullopt;
-    // EditBox.cpp:1811: grid->hasTLMode && line->TextTl == "" && Moving tags
-    // && Visual <= CROSS.
-    if (!r || !m_moveTags || !translationMode() || !r->translation.empty() ||
-        (m_visualToolActive && m_visualToolActive()))
+    const auto c = r && !r->translation.empty() ? carry(*r) : std::nullopt;
+    return c ? c->tags.leading.size() : 0;
+}
+
+void LineEditorController::evaluateCarry()
+{
+    const auto r = sessionRecord();
+    m_carryEvaluated = r ? std::optional(r->id) : std::nullopt;
+    // Legacy SetTextWithTags (EditBox.cpp:1811-1858) gave an untranslated
+    // Line's Translated field the focus when it split tags off; here the tags
+    // stay with the Original, and the caret starts the translation.
+    if (!r || !r->translation.empty())
         return;
-    const auto moved = application::moveTagsFromOriginal(r->text);
-    if (!moved)
+    const auto c = carry(*r);
+    if (!c || (c->leading.empty() && c->trailing.empty() && c->tags.runs.empty()))
         return;
-    m_split = Split{r->id, moved->original, moved->translation};
-    // TextEdit->SetSelection(pos, pos); TextEdit->SetFocus() (EditBox.cpp:1857-1858).
-    const auto caret = moved->caret;
-    m_selectionStart = m_selectionEnd =
-        static_cast<int>(m_showTags ? caret : core::displayOffset(core::project(core::toUtf16(moved->translation)), caret));
+    m_selectionStart = m_selectionEnd = 0;
     m_selectionRole = 1;
-    m_splitFocus = true;
+    m_carryFocus = true;
 }
 
 void LineEditorController::setMoveTags(bool on)
@@ -120,7 +145,7 @@ void LineEditorController::setMoveTags(bool on)
     if (on == m_moveTags)
         return;
     m_moveTags = on;
-    m_splitEvaluated.reset(); // OnAutoMoveTags: SetTextWithTags(true)
+    m_carryEvaluated.reset(); // OnAutoMoveTags: SetTextWithTags(true)
     refresh();
 }
 
@@ -271,8 +296,8 @@ bool LineEditorController::translationMode() const
 
 void LineEditorController::refresh()
 {
-    if (const auto real = sessionRecord(); (real ? std::optional(real->id) : std::nullopt) != m_splitEvaluated)
-        evaluateSplit(); // legacy SetLine runs SetTextWithTags
+    if (const auto real = sessionRecord(); (real ? std::optional(real->id) : std::nullopt) != m_carryEvaluated)
+        evaluateCarry(); // legacy SetLine runs SetTextWithTags
     const auto r = record();
     if ((r ? std::optional(r->id) : std::nullopt) != m_shownLine)
         lineShown();
@@ -289,7 +314,7 @@ void LineEditorController::refresh()
     if (m_attempted.isEmpty())
         m_problem = problemText();
     emit changed();
-    if (std::exchange(m_splitFocus, false)) {
+    if (std::exchange(m_carryFocus, false)) {
         emit selectionRequested();
         emit fieldFocusRequested(1);
     }
@@ -320,7 +345,7 @@ bool LineEditorController::showLine(qulonglong id)
     m_draftRedo.clear();
     m_attempted.clear();
     m_shownLine.reset(); // EditBox::SetLine shows the Line again
-    m_splitEvaluated.reset(); // E5: SetLine
+    m_carryEvaluated.reset(); // E5: SetLine
     if (s->historySize() != before || s->revision() != revision) {
         if (left && left->value != id)
             emit leftLineCommitted(left->value);
@@ -338,20 +363,23 @@ bool LineEditorController::setRaw(int role, std::u8string raw)
         return false;
     if (raw == roleText(*r, role))
         return true;
-    application::DraftChange change;
-    (role == 0 ? change.text : change.translation) = std::move(raw);
     const auto real = sessionRecord();
-    if (m_split && m_split->line == r->id) {
-        // E5: a split field changed: legacy Send writes both fields
-        // (EditBox.cpp:612-629, splittedTags).
-        if (!change.text)
-            change.text = m_split->original;
-        if (!change.translation)
-            change.translation = m_split->translation;
+    const auto c = carry(*real);
+    application::DraftChange change;
+    if (role == 1) {
+        change.translation = c ? carried(*c, std::move(raw)) : std::move(raw);
+    } else {
+        // TM1: the translation takes the Original's new carried tags, in the
+        // same step.
+        auto after = *real;
+        after.text = raw;
+        after.translation.clear();
+        if (const auto next = c && !r->translation.empty() ? carry(after) : std::nullopt)
+            change.translation = carried(*next, r->translation);
+        change.text = std::move(raw);
     }
     if (!s->editDraft(r->id, change))
         return false;
-    m_split.reset();
     m_draftUndo.push_back({real->text, real->translation});
     m_draftRedo.clear();
     m_attempted.clear();
@@ -1329,7 +1357,7 @@ void LineEditorController::committed()
 {
     m_draftUndo.clear();
     m_draftRedo.clear();
-    m_splitEvaluated.reset(); // DoUndo and the commands show the Line again (SetLine)
+    m_carryEvaluated.reset(); // DoUndo and the commands show the Line again (SetLine)
     if (m_onCommitted)
         m_onCommitted();
     refresh();
@@ -1340,6 +1368,13 @@ bool LineEditorController::pasteAllToTranslation()
     const auto r = record();
     if (!translationMode() || !editable() || !r)
         return false;
+    // TM1: with tags carried, the Translated field takes the Original's text
+    // with its runs placed; the carried tags are added as for typing.
+    if (const auto c = carry(*sessionRecord())) {
+        auto draft = core::draftOfOriginal(core::toUtf16(r->text), c->tags);
+        draft.carried = false;
+        return setRaw(1, core::toUtf8(core::composeTranslation(c->tags, draft)));
+    }
     return setRaw(1, r->text);
 }
 
@@ -1473,6 +1508,11 @@ std::pair<int, int> LineEditorController::displaySpan(int role, int start, int e
         return {start, end};
     const std::u16string raw = core::toUtf16(roleText(*r, role));
     const int size = static_cast<int>(raw.size());
+    if (role == 1) { // TM1: offsets in the whole translation
+        const int lead = static_cast<int>(carriedLead());
+        start -= lead;
+        end -= lead;
+    }
     start = std::clamp(start, 0, size);
     end = std::clamp(end, 0, size);
     if (!m_showTags) {
@@ -1495,6 +1535,11 @@ std::pair<long, long> LineEditorController::rawFieldSelection(int role) const
             to = end == start ? from : static_cast<long>(core::rawOffset(projection, static_cast<std::size_t>(end), false));
         }
     }
+    if (role == 1) { // TM1: offsets in the whole translation
+        const long lead = static_cast<long>(carriedLead());
+        from += lead;
+        to += lead;
+    }
     return {from, to};
 }
 
@@ -1514,7 +1559,7 @@ void LineEditorController::reloadFromSession()
 {
     m_draftUndo.clear();
     m_draftRedo.clear();
-    m_splitEvaluated.reset();
+    m_carryEvaluated.reset();
     refresh();
 }
 
@@ -2182,8 +2227,10 @@ bool LineEditorController::chooseAlignment(int index)
     auto *s = session();
     if (s->selection().selected.size() < 2) {
         // GetEditor/PutTagInText: TextEdit (the translation in translation
-        // mode), or TextEditOrig while the translation is empty.
-        const int role = translationMode() && !r->translation.empty() ? 1 : 0;
+        // mode), or TextEditOrig while the translation is empty. TM1: with
+        // tags carried, \an is the Original's, and the translation follows.
+        const bool follows = r->translation.empty() || carry(*sessionRecord());
+        const int role = translationMode() && !follows ? 1 : 0;
         const auto [from, to] = m_fieldSelection[role];
         return editRaw(role, from, to, [&](core::legacy::EditorText t) {
             core::legacy::TagEditor editor(std::move(t));

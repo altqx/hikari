@@ -396,6 +396,7 @@ private slots:
                 "Comment: 0,0:00:01.00,0:00:02.00,TLMode Original,,0,0,0,,{\\i1}Wall\n"
                 "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
         f.close();
+        application->setMoveTags(false); // TM1: Tags from original starts on
         QVERIFY(application->openFile(f.fileName()));
         QTRY_VERIFY(isOpen("originalDock"));
         QVERIFY(dock("originalDock")->setProperty("isFloating", true));

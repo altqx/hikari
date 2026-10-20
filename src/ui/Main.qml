@@ -1933,7 +1933,8 @@ ApplicationWindow {
                 if (root.editor.selectionRole === field.role)
                     field.select(root.editor.selectionStart, root.editor.selectionEnd)
             }
-            // E5: Moving tags gives the Translated field the focus, in its
+            // E5: an untranslated Line with tags gives the Translated field the
+            // focus (TM1's Tags from original; legacy's Moving tags), in its
             // window (the Original text panel may float in another).
             function onFieldFocusRequested(role) {
                 if (role === field.role)

@@ -17,6 +17,7 @@
 #include "hikari/core/editor_syntax.h"
 #include "hikari/core/editor_font_colour.h"
 #include "hikari/core/style.h"
+#include "hikari/core/tag_transfer.h"
 #include "hikari/core/tag_commands.h"
 #include "tag_list_controller.h"
 
@@ -121,7 +122,8 @@ class LineEditorController : public QObject {
     Q_PROPERTY(int steppedTimes READ steppedTimes NOTIFY changed)
     Q_PROPERTY(int steppedNumbers READ steppedNumbers NOTIFY changed)
     // E5: the active Line's Unconfirmed (legacy DoubtfulTL->SetValue in
-    // SetLine) and the "Moving tags" toggle (AUTO_MOVE_TAGS_FROM_ORIGINAL).
+    // SetLine) and the "Tags from original" toggle (TM1; legacy "Moving tags",
+    // AUTO_MOVE_TAGS_FROM_ORIGINAL).
     Q_PROPERTY(bool unconfirmed READ unconfirmed NOTIFY changed)
     Q_PROPERTY(bool moveTags READ moveTags NOTIFY changed)
     // E4: the edited text field's state (core::syntax::TextState: 0 dialogue,
@@ -387,15 +389,16 @@ public:
     // NextLine): every selected Line's Unconfirmed flips, one step.
     Q_INVOKABLE bool toggleUnconfirmed();
     bool unconfirmed() const;
-    // E5: "Moving tags" (EditBox::SetTextWithTags, EditBox.cpp:1809-1858). With
-    // it on, in translation mode, an untranslated Line whose text holds a '}'
-    // is shown split when the editor shows the Line: its override blocks in
-    // the Translated field (which takes the focus, its caret after a leading
-    // block) and the rest in the Original field, while the Document keeps the
-    // text whole. The first change to either field (a keystroke or an editor
-    // command) makes both fields the Line's draft: the Original without the
-    // tags, the Translated with them. Only while no visual tool but the
-    // crosshair is active (legacy Visual <= CROSS).
+    // TM1 (#232) "Tags from original", legacy's "Moving tags" toggle
+    // (core/tag_transfer.h; departure TM1-original-keeps-tags). With it on in
+    // translation mode the Original text keeps its tags, and the Translated
+    // field holds the translation without the tags carried from the Original:
+    // its leading block (every line-wide tag) and a wrapper's closing tags.
+    // Each change to the Translated text writes them back around it, and a
+    // change to the Original's carries the new ones to the translation. Off,
+    // or for a translation whose own leading or trailing tags differ, the
+    // Translated field holds the whole translation. Showing an untranslated
+    // Line with tags gives the Translated field the focus, as legacy's split did.
     bool moveTags() const { return m_moveTags; }
     void setMoveTags(bool on); // shows the Line again, as OnAutoMoveTags does
     void setVisualToolActive(std::function<bool()> active) { m_visualToolActive = std::move(active); }
@@ -424,19 +427,24 @@ signals:
 
 private:
     application::EditSession *session() const;
-    std::optional<core::LineRecord> record() const; // the active Line, draft applied (and E5's split shown)
+    // The active Line, draft applied, its translation without the carried tags.
+    std::optional<core::LineRecord> record() const;
     std::optional<core::LineRecord> sessionRecord() const; // the active Line, draft applied
-    // E5: the split Moving tags shows, for the Line it was made for.
-    struct Split {
-        core::LineId line;
-        std::u8string original, translation;
+    // TM1: the tags carried from `line`'s Original text to its translation, as
+    // the Translated field leaves them out; nullopt when nothing is carried.
+    struct Carry {
+        core::OriginalTags tags;
+        std::u8string leading, trailing;
     };
-    std::optional<Split> m_split;
-    std::optional<core::LineId> m_splitEvaluated; // the Line SetTextWithTags last ran for
+    std::optional<Carry> carry(const core::LineRecord &line) const;
+    // The translation a Translated field text stands for.
+    static std::u8string carried(const Carry &carry, std::u8string body);
+    std::size_t carriedLead() const; // UTF-16 units of the carried leading block before the field's text
+    std::optional<core::LineId> m_carryEvaluated; // the Line SetLine last showed
     bool m_moveTags = false;
     std::function<bool()> m_visualToolActive;
-    void evaluateSplit(); // legacy SetTextWithTags, from SetLine
-    bool m_splitFocus = false; // the split asks for the Translated field's focus
+    void evaluateCarry(); // what legacy SetTextWithTags did on SetLine
+    bool m_carryFocus = false; // an untranslated Line asks for the Translated field's focus
     void refresh();
     void fail(const QString &problem, const QString &attempted = {});
     bool setRaw(int role, std::u8string raw);
