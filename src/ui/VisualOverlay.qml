@@ -26,9 +26,6 @@ Item {
     // each move reported, and the cursor it asks for over the video (-1: the
     // tool's).
     property int cursorOverride: -1
-    // D2: false in the player layout: no tool takes the pointer or draws
-    // (the view's commands still do, VideoViewController.toolsOff).
-    property bool toolsShown: true
     signal contextMenuRequested(real x, real y)
     signal fullScreenRequested()
     signal pointerMoved(real x, real y)
@@ -46,7 +43,7 @@ Item {
             pointerInside = true
         }
         if (!view)
-            return toolsShown ? tools.pointer(kind, x, y, button, buttons, modifiers, steps ?? 0) : undefined
+            return tools.pointer(kind, x, y, button, buttons, modifiers, steps ?? 0)
         const request = view.pointer(kind, x, y, button, buttons, modifiers, steps ?? 0)
         if (request === VideoViewController.ContextMenuRequest)
             contextMenuRequested(x, y)
@@ -94,7 +91,6 @@ Item {
         cursorShape: overlayItem.view && overlayItem.view.zoomMode
                      ? [Qt.ArrowCursor, Qt.SizeHorCursor, Qt.SizeVerCursor][overlayItem.view.zoomCursor]
                      : overlayItem.cursorOverride >= 0 ? overlayItem.cursorOverride
-                     : !overlayItem.toolsShown ? Qt.ArrowCursor
                      : overlayItem.tools.hideCursor ? Qt.BlankCursor
                      : overlayItem.tools.pointerShape
         onEntered: overlayItem.route(0, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
@@ -119,7 +115,6 @@ Item {
         id: canvas
         objectName: "visualCanvas"
         anchors.fill: parent
-        visible: overlayItem.toolsShown
         property var shapes: overlayItem.tools.overlay
         onShapesChanged: requestPaint()
         onPaint: {
@@ -202,7 +197,7 @@ Item {
     // (DrawWarningWx, Visuals.cpp:479-493).
     Label {
         objectName: "visualWarning"
-        visible: overlayItem.toolsShown && text.length > 0
+        visible: text.length > 0
         text: overlayItem.tools.warning
         // Legacy's text, size and centring; drawn in the theme's danger
         // colour and the application's font on a scrim of the panel colour

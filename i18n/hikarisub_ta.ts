@@ -3068,6 +3068,30 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The shortcut %1 of &quot;View all&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of &quot;View audio and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of &quot;View video and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of &quot;View only video&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of &quot;View only subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of &quot;Enable / Disable editor&quot; was removed: the editor is always shown; hide panels or choose a layout instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3403,6 +3427,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>&amp;Layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;Panels</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3427,28 +3455,12 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Layout &amp;preset</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Editing</source>
-        <translation>புதுப்பித்தார்</translation>
-    </message>
-    <message>
-        <source>Timing</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">புதுப்பித்தார்</translation>
     </message>
     <message>
         <source>Translation</source>
-        <translation>மொழிபெயர்ப்பு</translation>
-    </message>
-    <message>
-        <source>Typesetting</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;Reset layout</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">மொழிபெயர்ப்பு</translation>
     </message>
     <message>
         <source>Restore the previous layout</source>
@@ -3612,23 +3624,23 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>All</source>
-        <translation>அனைத்தும்</translation>
+        <translation type="vanished">அனைத்தும்</translation>
     </message>
     <message>
         <source>Video and subs</source>
-        <translation>வீடியோ மற்றும் சப்ச்</translation>
+        <translation type="vanished">வீடியோ மற்றும் சப்ச்</translation>
     </message>
     <message>
         <source>Audio and subs</source>
-        <translation>ஆடியோ மற்றும் சப்ச்</translation>
+        <translation type="vanished">ஆடியோ மற்றும் சப்ச்</translation>
     </message>
     <message>
         <source>Only video</source>
-        <translation>வீடியோ மட்டுமே</translation>
+        <translation type="vanished">வீடியோ மட்டுமே</translation>
     </message>
     <message>
         <source>Only subtitles</source>
-        <translation>வசன வரிகள் மட்டுமே</translation>
+        <translation type="vanished">வசன வரிகள் மட்டுமே</translation>
     </message>
     <message>
         <source>Open subtitle file</source>
@@ -3788,7 +3800,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Enable / Disable editor</source>
-        <translation>எடிட்டரை இயக்கவும் / முடக்கவும்</translation>
+        <translation type="vanished">எடிட்டரை இயக்கவும் / முடக்கவும்</translation>
     </message>
     <message>
         <source>Shifting subtitle times</source>
@@ -8489,6 +8501,22 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Editing</source>
+        <translation>புதுப்பித்தார்</translation>
+    </message>
+    <message>
+        <source>Timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translation</source>
+        <translation>மொழிபெயர்ப்பு</translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>the file is larger than %1 bytes</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8529,7 +8557,15 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The saved panel layout at %1 could not be read or copied: it is not restored and not changed. The Editing layout is shown.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The panel layout could not be written to %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8543,6 +8579,118 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>The layout is kept at %1.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it is not a layouts file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The saved layouts were not read because %1. The file is kept at %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some saved layouts were not read: their names cannot name a layout, or were listed before. The file as it was is kept at %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The saved layouts at %1 could not be read or copied: they are not used and not changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The saved layouts were not changed: together they would be larger than %1 bytes. Delete layouts you no longer use first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The saved layouts could not be written to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter a name for the layout.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The name is longer than %1 characters.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The name cannot hold line breaks or tabs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is a built-in layout.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A layout named %1 already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layout: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layout of this tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save layout as…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset this layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage layouts…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation type="unfinished">பெயர்:</translation>
+    </message>
+    <message>
+        <source>Saving replaces the layout %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">மாற்று</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">சேமி</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Manage layouts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved layouts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, cannot be used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot be used: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">நீக்கு</translation>
     </message>
 </context>
 <context>

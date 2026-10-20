@@ -88,6 +88,10 @@ qt_target_qml_sources(hikari_ui QML_FILES AllTagsEditionDialog.qml)
 # video dialog.
 qt_target_qml_sources(hikari_ui QML_FILES RecentFilesMenu.qml VideoStreamsMenu.qml VideoChaptersMenu.qml
     VideoIndexingProgress.qml VideoFileQuestion.qml DummyVideoDialog.qml)
+# WS3: the layout switcher, its menu (also View > Layout) and the Save layout
+# and Manage layouts dialogs.
+qt_target_qml_sources(hikari_ui QML_FILES LayoutSwitcher.qml LayoutMenu.qml SaveLayoutDialog.qml
+    ManageLayoutsDialog.qml)
 # P10: the status bar (legacy HikariStatusBar's nine fields) and the help
 # text the menus and tool buttons show in its first field.
 target_sources(hikari_ui PRIVATE status_bar_controller.cpp status_bar_controller.h)

@@ -1162,16 +1162,15 @@
   {
    "role": "editor",
    "file": "editor.svg",
-   "label": "Enable / Disable editor",
+   "label": "Line editor",
    "accent": true,
    "mirror": true,
    "legacy": [
     "editor.png"
    ],
    "surfaces": [
-    "menu:subtitles",
-    "settings-dialog",
-    "video-context-menu"
+    "video-context-menu",
+    "settings-dialog"
    ]
   },
   {
@@ -1442,58 +1441,53 @@
    ]
   },
   {
-   "role": "view-all",
-   "file": "view-all.svg",
-   "label": "All",
+   "role": "layout",
+   "file": "layout.svg",
+   "label": "Layout",
    "accent": true,
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "menu:view"
+    "menu:view",
+    "status-bar"
    ]
   },
   {
-   "role": "view-video-subs",
-   "file": "view-video-subs.svg",
-   "label": "Video and subs",
-   "accent": false,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "menu:view"
-   ]
-  },
-  {
-   "role": "view-audio-subs",
-   "file": "view-audio-subs.svg",
-   "label": "Audio and subs",
+   "role": "layout-save",
+   "file": "layout-save.svg",
+   "label": "Save layout as",
    "accent": true,
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "menu:view"
+    "menu:view",
+    "status-bar",
+    "save-layout"
    ]
   },
   {
-   "role": "view-only-video",
-   "file": "view-only-video.svg",
-   "label": "Only video",
-   "accent": false,
+   "role": "layout-reset",
+   "file": "layout-reset.svg",
+   "label": "Reset this layout",
+   "accent": true,
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "menu:view"
+    "menu:view",
+    "status-bar"
    ]
   },
   {
-   "role": "view-only-subs",
-   "file": "view-only-subs.svg",
-   "label": "Only subtitles",
-   "accent": false,
-   "mirror": true,
+   "role": "layout-manage",
+   "file": "layout-manage.svg",
+   "label": "Manage layouts",
+   "accent": true,
+   "mirror": false,
    "legacy": [],
    "surfaces": [
-    "menu:view"
+    "menu:view",
+    "status-bar",
+    "manage-layouts"
    ]
   },
   {
@@ -2079,6 +2073,17 @@
    "legacy": [],
    "surfaces": [
     "style-manager"
+   ]
+  },
+  {
+   "role": "menu-more",
+   "file": "menu-more.svg",
+   "label": "Layouts",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "status-bar"
    ]
   },
   {
@@ -2784,28 +2789,6 @@
    "legacy": [],
    "surfaces": [
     "dock-headers"
-   ]
-  },
-  {
-   "role": "layout-preset",
-   "file": "layout-preset.svg",
-   "label": "Layout preset",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "menu:view"
-   ]
-  },
-  {
-   "role": "layout-reset",
-   "file": "layout-reset.svg",
-   "label": "Reset layout",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "menu:view"
    ]
   },
   {

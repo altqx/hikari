@@ -139,21 +139,6 @@ class TabLayoutsTest : public QObject {
             QTRY_VERIFY(!mismatch->property("visible").toBool());
         }
     }
-    QString focusedPanel() const
-    {
-        auto *q = qobject_cast<QQuickWindow *>(QGuiApplication::focusWindow());
-        for (QQuickItem *p = q ? q->activeFocusItem() : nullptr; p; p = p->parentItem())
-            if (p->objectName().endsWith(QLatin1String("Panel")))
-                return p->objectName();
-        return {};
-    }
-    bool arrange(const char *symbol)
-    {
-        QVariant applied;
-        return QMetaObject::invokeMethod(window(), "applyArrangement", Q_RETURN_ARG(QVariant, applied),
-                                         Q_ARG(QVariant, QLatin1String(symbol)))
-               && applied.toBool();
-    }
     void loadSession(const QString &path)
     {
         const QVariantMap review = application->reviewSession(QUrl::fromLocalFile(path));
@@ -346,28 +331,6 @@ private slots:
         stop();
     }
 
-    // D2's Timing tool that Only video hid comes back with the next
-    // arrangement showing the Grid in its own tab, after another tab was
-    // shown in between.
-    void theHiddenTimingToolGoesWithItsTab()
-    {
-        start();
-        openVideo();
-        QVERIFY(QMetaObject::invokeMethod(dock("timingDock"), "open"));
-        QTRY_VERIFY(isOpen("timingDock"));
-        QVERIFY(arrange("GLOBAL_VIEW_ONLY_VIDEO"));
-        QTRY_VERIFY(!isOpen("gridDock"));
-        QVERIFY(!isOpen("timingDock"));
-        application->addPage();
-        application->selectTab(0);
-        QVERIFY(!isOpen("timingDock"));
-        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000); // the tab's video again
-        QVERIFY(arrange("GLOBAL_VIEW_ALL"));
-        QTRY_VERIFY(isOpen("gridDock"));
-        QVERIFY(isOpen("timingDock"));
-        stop();
-    }
-
     // The Session writes each tab's arrangement and brings it back; a start
     // without a Session shows the arrangement shown last.
     void theSessionKeepsEachTabsArrangement()
@@ -489,53 +452,6 @@ private slots:
         QVERIFY(!isOpen("videoDock"));
         QVERIFY(isFloating("audioDock"));
         QVERIFY(isOpen("editorDock"));
-        stop();
-    }
-
-    // A tab shown in the player layout (the editor off): its arrangement
-    // from the Session waits for the editor, and one the engine refuses then
-    // shows the Editing layout with the notice and the kept text as well;
-    // the editor comes back to it as to any arrangement (the focus on the Grid).
-    void aTabArrangementRefusedInThePlayerLayoutShowsEditing()
-    {
-        start();
-        const ui::WorkspaceArrangement refused{
-            QStringLiteral("Typesetting"), R"({"serializationVersion":1,"mainWindows":[{"uniqueName":"Classic"}],"allDockWidgets":[]})"};
-        application::SessionTab first, player;
-        first.subtitles = QDir::toNativeSeparators(writeSubtitles(dir.filePath(QStringLiteral("p.ass")))).toStdString();
-        first.layout = refused.serialise().toStdString();
-        // The active tab: a video in the player layout, so the editor stays off.
-        player.subtitles = QDir::toNativeSeparators(writeSubtitles(dir.filePath(QStringLiteral("v.ass")))).toStdString();
-        player.video = QDir::toNativeSeparators(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv")).toStdString();
-        player.editor = false;
-        const QString kls = dir.filePath(QStringLiteral("player.kls"));
-        {
-            QFile f(kls);
-            QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
-            f.write(QByteArray::fromStdString(application::writeSession("HikariSub v1", false, {first, player})));
-        }
-        loadSession(kls);
-        QCOMPARE(application->currentTab(), 1);
-        QTRY_VERIFY(!application->editorOn());
-        QVERIFY(application->workspaceLayout().holding());
-        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
-        dismissMismatch();
-        application->selectTab(0); // shown while the player layout holds it
-        QVERIFY(application->workspaceLayout().notice().isEmpty());
-        window()->requestActivate();
-        QVERIFY(QTest::qWaitForWindowActive(window()));
-        application->toggleEditor();
-        QTRY_VERIFY(application->editorOn());
-        QVERIFY(!application->workspaceLayout().holding());
-        const QString notice = application->workspaceLayout().notice();
-        QVERIFY2(notice.contains(QStringLiteral("could not restore")), qPrintable(notice));
-        QCOMPARE(readAll(layoutFile() + QStringLiteral(".tab.unrestored")), refused.serialise());
-        QCOMPARE(preset(), QStringLiteral("Editing"));
-        for (const char *name : {"videoDock", "audioDock", "editorDock", "gridDock"})
-            QVERIFY2(isOpen(name) && !isFloating(name), name);
-        QTRY_COMPARE(focusedPanel(), QStringLiteral("gridPanel"));
-        QVERIFY(application->saveLastSession());
-        QCOMPARE(layoutOf(readSession(application->lastSessionPath()).tabs.at(0)).preset, QStringLiteral("Editing"));
         stop();
     }
 };

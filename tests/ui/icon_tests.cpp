@@ -931,7 +931,6 @@ Rectangle {
             QStringLiteral("pick-lines"), QStringLiteral("multireplace"), QStringLiteral("edit-paste"),
             // text-line icons
             QStringLiteral("editor"), QStringLiteral("script-properties"), QStringLiteral("spellchecker"),
-            QStringLiteral("view-only-subs"),
             // the session and search arrows
             QStringLiteral("last-session"), QStringLiteral("find-replace"),
             // IC1's list and text-line icons, and its undo-like arrows

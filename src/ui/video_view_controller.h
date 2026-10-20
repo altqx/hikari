@@ -65,11 +65,6 @@ class VideoViewController : public QObject {
     Q_PROPERTY(bool pauseOnClick READ pauseOnClick NOTIFY changed)
     // V5: legacy m_IsFullscreen (the context menu's entries follow it).
     Q_PROPERTY(bool fullscreen READ fullscreen NOTIFY changed)
-    // D2: the player layout has no visual tool (legacy RemoveVisual(false,
-    // true): Visual -1, not even the crosshair); the pointer still zooms,
-    // opens the context menu, goes fullscreen and pauses as legacy's
-    // VideoBox::OnMouseEvent did without a tool.
-    Q_PROPERTY(bool toolsOff READ toolsOff WRITE setToolsOff NOTIFY changed)
 public:
     VideoViewController(VideoController &video, VisualToolsController &tools, SettingsStore &settings,
                         QObject *parent = nullptr);
@@ -119,14 +114,6 @@ public:
     Q_INVOKABLE bool key(int key, int modifiers);
     // V5: whether the video is shown fullscreen (legacy m_IsFullscreen).
     bool fullscreen() const { return m_fullscreen; }
-    bool toolsOff() const { return m_toolsOff; }
-    void setToolsOff(bool off)
-    {
-        if (m_toolsOff == off)
-            return;
-        m_toolsOff = off;
-        emit changed();
-    }
     void setFullscreen(bool on);
 
     // VIDEO_VOLUME_PLUS / VIDEO_VOLUME_MINUS; the slider.
@@ -168,7 +155,6 @@ private:
     int m_zoomCursor = 0;
     QString m_lastSnapshot;
     bool m_fullscreen = false;
-    bool m_toolsOff = false; // D2
 };
 
 } // namespace hikari::ui

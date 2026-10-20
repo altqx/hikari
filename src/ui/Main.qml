@@ -17,17 +17,8 @@ ApplicationWindow {
     width: 1280
     height: 800
     visible: true
-    title: playerVideoName.length > 0 ? qsTr("%1 - HikariSub").arg(playerVideoName)
-         : shell.hasEditingTarget ? qsTr("%1 - HikariSub").arg(shell.editingTitle) : "HikariSub"
+    title: shell.hasEditingTarget ? qsTr("%1 - HikariSub").arg(shell.editingTitle) : "HikariSub"
     color: Theme.background // K2: the application background between panels
-    // D2: with the editor off the window is named after the active tab's
-    // video (HikariSubFrame::Label(0, true), OnPageChanged).
-    readonly property string playerVideoName: {
-        if (root.app.editorOn)
-            return ""
-        const tab = root.app.tabs[root.app.currentTab]
-        return tab ? tab.video : ""
-    }
 
     required property ShellController shell
     required property LineEditorController editor
@@ -261,11 +252,12 @@ ApplicationWindow {
     }
     Connections {
         target: root.shell
+        // The tray is part of the Grid: a comparison opened while the
+        // tab's layout has the Grid closed leaves it closed too.
         function onHasReferenceChanged() {
-            // D2: not into the player layout (the tray is part of the Grid).
-            if (root.shell.hasReference && !root.workspaceLayout.holding)
+            if (root.shell.hasReference && gridDock.isOpen)
                 referenceDock.open()
-            else
+            else if (referenceDock.isOpen)
                 referenceDock.close()
         }
     }
@@ -301,170 +293,44 @@ ApplicationWindow {
         // Before the first frame the default arrangement and the saved
         // layout are not in place yet: settle them first.
         root.settleArrangement()
-        root.workspaceLayout.applyPreset(name)
+        root.keepFocusShown(() => root.workspaceLayout.applyPreset(name))
     }
-    // WS1: another tab's arrangement is shown. The Reference tray follows the
-    // comparison, not the tab (shown with the Grid while there is one); the
-    // Timing tool Only video hid goes with the tab (the controller keeps it).
+    // WS3: a saved layout for the current tab, and Reset this layout (the
+    // saved layout the tab's arrangement started from, else its preset).
+    function applySavedLayout(name) {
+        root.settleArrangement()
+        root.keepFocusShown(() => root.workspaceLayout.applySavedLayout(name))
+    }
+    function resetLayout() {
+        root.settleArrangement()
+        root.keepFocusShown(() => root.workspaceLayout.resetCurrentLayout())
+    }
+    // A panel with the focus that the new layout hides gives it to the
+    // Grid, else to the first shown panel in F6 order (as the retired
+    // arrangements did).
+    function keepFocusShown(apply) {
+        const focused = root.panels.find(p => p.visible && p.activeFocus) ?? null
+        apply()
+        if (!focused || focused.visible)
+            return
+        const shown = root.panels.filter(p => p.visible)
+        const next = shown.includes(gridPanel) ? gridPanel : shown[0]
+        if (next)
+            root.focusPanel(next, Qt.OtherFocusReason)
+    }
+    // WS1: another arrangement is shown (another tab's, a preset, a saved
+    // layout, the backup). The Reference tray follows the comparison, not
+    // the arrangement (shown with the Grid while there is one), and a video
+    // the arrangement hides pauses (no transport shows it playing).
     Connections {
         target: root.workspaceLayout
         function onArrangementSwapped() {
-            if (root.shell.hasReference && !root.workspaceLayout.holding && gridDock.isOpen)
+            if (root.shell.hasReference && gridDock.isOpen)
                 referenceDock.open()
             else if (referenceDock.isOpen)
                 referenceDock.close()
-        }
-    }
-
-    // D2: legacy View menu (HikariSubFrame.cpp:308-312) as named panel
-    // arrangements: label, GLOBAL_VIEW_* id, K1 icon.
-    readonly property var viewArrangements: [
-        { symbol: "GLOBAL_VIEW_ALL", label: qsTr("All"), objectName: "viewAll", iconRole: "view-all" },
-        { symbol: "GLOBAL_VIEW_VIDEO", label: qsTr("Video and subs"), objectName: "viewVideoAndSubs", iconRole: "view-video-subs" },
-        { symbol: "GLOBAL_VIEW_AUDIO", label: qsTr("Audio and subs"), objectName: "viewAudioAndSubs", iconRole: "view-audio-subs" },
-        { symbol: "GLOBAL_VIEW_ONLY_VIDEO", label: qsTr("Only video"), objectName: "viewOnlyVideo", iconRole: "view-only-video" },
-        { symbol: "GLOBAL_VIEW_SUBS", label: qsTr("Only subtitles"), objectName: "viewOnlySubtitles", iconRole: "view-only-subs" }
-    ]
-    // OnMenuOpened's ViewMenu (HikariSubFrame.cpp:2413-2437): Only subtitles
-    // with the editor; All, Video and subs and Only video with a video too,
-    // not while the video is full screen on another monitor (V5's
-    // IsOnAnotherMonitor); Audio and subs with the audio box (ABox != nullptr).
-    function arrangementEnabled(symbol) {
-        if (!root.app.editorOn)
-            return false
-        if (symbol === "GLOBAL_VIEW_AUDIO")
-            return root.audio.hasAudio
-        if (symbol === "GLOBAL_VIEW_SUBS")
-            return true
-        return root.video.hasVideo && !(root.videoFullscreen.active && root.videoFullscreen.onAnotherMonitor)
-    }
-    // HikariSubFrame::OnMenuSelected, GLOBAL_VIEW_ALL..GLOBAL_VIEW_SUBS
-    // (HikariSubFrame.cpp:849-892): the arrangement's core panels are shown
-    // and the others of Video, Audio, Editor and Grid hidden, each opened
-    // panel at its last place in the docked Workspace. The Reference tray is
-    // part of the Grid (legacy's comparison was in it); the Timing tool
-    // (legacy shiftTimes) is hidden by Only video and comes back with the
-    // next arrangement that shows the Grid when it was open. A hidden video
-    // pauses. The focus stays where it is when that panel is still shown,
-    // otherwise it goes to the Grid, or the first shown panel in F6 order.
-    function applyArrangement(symbol) {
-        const shown = root.workspaceLayout.arrangementPanels(symbol)
-        if (shown.length === 0 || !root.arrangementEnabled(symbol))
-            return false
-        const focused = root.panels.find(p => p.visible && p.activeFocus) ?? null
-        if (!shown.includes("Video") && root.video.playing)
-            root.video.pause()
-        const core = [videoDock, audioDock, editorDock, gridDock]
-        // Panels shown again come back at their places and sizes in the
-        // arrangement that last showed all four (legacy laid them out at
-        // their own sizes); the tools stay as they are now.
-        if (core.every(d => d.isOpen)) {
-            root.workspaceLayout.rememberFullArrangement()
-        } else if (core.some(d => shown.includes(d.uniqueName) && !d.isOpen)) {
-            const tools = root.dockList.filter(d => !core.includes(d))
-            const toolsOpen = tools.map(d => d.isOpen)
-            if (root.workspaceLayout.restoreFullArrangement()) {
-                tools.forEach((d, i) => {
-                    if (toolsOpen[i] && !d.isOpen)
-                        d.open()
-                    else if (!toolsOpen[i] && d.isOpen)
-                        d.close()
-                })
-            }
-        }
-        for (const dock of core) {
-            if (shown.includes(dock.uniqueName))
-                dock.open()
-            else if (dock.isOpen)
-                dock.close()
-        }
-        const subs = shown.includes("Grid")
-        if (subs && root.shell.hasReference)
-            referenceDock.open()
-        else if (!subs && referenceDock.isOpen)
-            referenceDock.close()
-        if (!subs && timingDock.isOpen) {
-            timingDock.close()
-            root.workspaceLayout.timingHiddenByArrangement = true
-        } else if (subs && root.workspaceLayout.timingHiddenByArrangement) {
-            timingDock.open()
-            root.workspaceLayout.timingHiddenByArrangement = false
-        }
-        root.keepFocusOnAShownPanel(focused)
-        root.workspaceLayout.save()
-        return true
-    }
-    // The focus after panels were hidden: `focused` if it is still shown,
-    // else the Grid, else the first shown panel in F6 order.
-    function keepFocusOnAShownPanel(focused) {
-        let next = focused && focused.visible ? focused : null
-        if (!next) {
-            const shown = root.panels.filter(p => p.visible)
-            next = shown.includes(gridPanel) ? gridPanel : shown[0]
-            if (next)
-                root.focusPanel(next, Qt.OtherFocusReason)
-        }
-        root.arrangementFocus = next ?? null
-        arrangementFocusTimer.restart()
-    }
-    // The panel an arrangement left the focus on, for a moment (above).
-    property var arrangementFocus: null
-    Timer {
-        id: arrangementFocusTimer
-        interval: 1000
-        onTriggered: root.arrangementFocus = null
-    }
-
-    // D2: GLOBAL_EDITOR (HikariSubFrame::HideEditor, HikariSubFrame.cpp:2009-2091).
-    // Off: the editing arrangement is held (nothing saved until the editor
-    // comes back) and only the Video panel is shown, docked, without the
-    // visual tools' rail and values (HideVideoToolbar, RemoveVisual(false,
-    // true)), with the focus; the Search tool, Select lines and the Style
-    // manager close (FR, SL, StyleStore hidden). The Video panel cannot be
-    // closed meanwhile (legacy's video is the frame's only content, with no
-    // close of its own): the Panels menu and the arrangements that could
-    // bring a panel back are off. On: the held arrangement comes back as it
-    // was, but for the Search tool (FR stays hidden), and the focus goes to
-    // the Grid (or the first shown panel). A draft in the Line editor stays
-    // as it was either way.
-    function applyEditor(on) {
-        if (!on) {
-            if (root.workspaceLayout.holding)
-                return
-            if (root.visualTools.activeFamily !== 0)
-                root.visualTools.selectFamily(root.visualTools.activeFamily) // back to the crosshair
-            if ([videoDock, audioDock, editorDock, gridDock].every(d => d.isOpen))
-                root.workspaceLayout.rememberFullArrangement()
-            root.workspaceLayout.holdArrangement()
-            for (const dock of root.dockList)
-                if (dock !== videoDock && dock.isOpen)
-                    dock.close()
-            if (videoDock.isFloating)
-                videoDock.isFloating = false
-            videoDock.open()
-            videoDock.options = KDDW.KDDockWidgets.DockWidgetOption_NotClosable
-            if (selectLinesDialog.visible)
-                selectLinesDialog.close()
-            if (styleManagerWindow.visible)
-                styleManagerWindow.close()
-            root.focusPanel(videoPanel, Qt.OtherFocusReason)
-        } else {
-            videoDock.options = KDDW.KDDockWidgets.DockWidgetOption_None
-            if (!root.workspaceLayout.releaseArrangement())
-                return
-            // Legacy hid FR when the editor went off and nothing shows it
-            // again: the Search tool stays closed in the arrangement.
-            if (searchDock.isOpen)
-                searchDock.close()
-            if (root.shell.hasReference && gridDock.isOpen)
-                referenceDock.open() // a reference opened meanwhile
-            Qt.callLater(() => root.keepFocusOnAShownPanel(null))
-        }
-    }
-    Connections {
-        target: root.app
-        function onEditorOnChanged() {
-            root.applyEditor(root.app.editorOn)
+            if (!videoDock.isOpen && root.video.playing)
+                root.video.pause()
         }
     }
 
@@ -536,6 +402,13 @@ ApplicationWindow {
     }
 
     // View > Panels > Show: open the panel, bring its window up and focus it.
+    // GLOBAL_EDITOR's VideoBox::OpenEditor (fullscreen's Open editor): out
+    // of fullscreen to the Line editor, shown even where the tab's layout
+    // has it closed (WS3).
+    function openEditorFromFullScreen() {
+        if (root.app.openEditorFromFullScreen())
+            root.showPanel(editorDock)
+    }
     function showPanel(dock) {
         dock.open()
         root.workspaceLayout.keepFloatingPanelsOnScreen()
@@ -660,8 +533,7 @@ ApplicationWindow {
             iconRole: "panel-move"
             objectName: "panelOptionsMove"
             text: qsTranslate("HikariSub.Workspace", "Move panel…")
-            // D2: not in the player layout, as View > Move panel….
-            enabled: panelOptionsMenu.dockable && root.app.editorOn
+            enabled: panelOptionsMenu.dockable
             onTriggered: placementWindow.openFor(panelOptionsMenu.dock)
         }
         // D1 Move before/after: a tab one place along its tab bar, kept
@@ -728,17 +600,6 @@ ApplicationWindow {
     Connections {
         target: root.workspaceLayout
         function onFocusWindowChanged() {
-            // D2: a floating panel window that an arrangement brought back
-            // takes the activation a moment later; the focus stays where
-            // the arrangement put it.
-            const kept = root.arrangementFocus
-            if (kept && kept.visible && root.workspaceLayout.focusWindow !== null
-                    && root.workspaceLayout.focusWindow !== kept.Window.window
-                    && root.panels.some(p => p.visible && p.Window.window === root.workspaceLayout.focusWindow)) {
-                root.arrangementFocus = null
-                root.focusPanel(kept, Qt.OtherFocusReason)
-                return
-            }
             const pending = root.pendingFocus
             if (!pending || root.workspaceLayout.focusWindow !== pending.window) {
                 // The main window activated with nothing to focus (its focused
@@ -973,7 +834,6 @@ ApplicationWindow {
                     action: Action {
                         id: removeSubsAction
                         text: qsTr("Remove subtitles from the &editor")
-                        enabled: root.app.editorOn // D2: OnMenuOpened's FileMenu
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_SUBS")) root.beginClose("new")
                     }
                 }
@@ -1004,7 +864,7 @@ ApplicationWindow {
                     action: Action {
                         id: saveAction
                         text: qsTr("&Save")
-                        enabled: root.app.editorOn && root.editor.editable
+                        enabled: root.editor.editable
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS")) root.saveSubtitles()
                     }
                 }
@@ -1015,7 +875,7 @@ ApplicationWindow {
                     action: Action {
                         id: saveAllAction
                         text: qsTr("Save &all")
-                        enabled: root.app.editorOn && root.shell.hasEditingTarget
+                        enabled: root.shell.hasEditingTarget
                         onTriggered: {
                             if (root.hotkeyGesture("GLOBAL_SAVE_ALL_SUBS"))
                                 return
@@ -1030,7 +890,7 @@ ApplicationWindow {
                     action: Action {
                         id: saveAsAction
                         text: qsTr("Save &as…")
-                        enabled: root.app.editorOn && root.shell.hasEditingTarget
+                        enabled: root.shell.hasEditingTarget
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS_AS")) root.openSaveDialog()
                     }
                 }
@@ -1041,7 +901,7 @@ ApplicationWindow {
                     action: Action {
                         id: saveTranslationAction
                         text: qsTr("Save &translation")
-                        enabled: root.app.editorOn && root.shell.hasEditingTarget && root.editor.translationMode
+                        enabled: root.shell.hasEditingTarget && root.editor.translationMode
                         onTriggered: {
                             if (root.hotkeyGesture("GLOBAL_SAVE_TRANSLATION"))
                                 return
@@ -1204,7 +1064,7 @@ ApplicationWindow {
                 iconRole: "sort"
                 objectName: "sortAllMenu"
                 title: qsTr("So&rt all lines")
-                enabled: root.app.editorOn && root.editor.editable
+                enabled: root.editor.editable
                 id: sortAllMenu
                 Instantiator {
                     model: root.sortKeys
@@ -1224,7 +1084,7 @@ ApplicationWindow {
                 iconRole: "sort-selected"
                 objectName: "sortSelectedMenu"
                 title: qsTr("So&rt selected lines")
-                enabled: root.app.editorOn && root.editor.editable
+                enabled: root.editor.editable
                 id: sortSelectedMenu
                 Instantiator {
                     model: root.sortKeys
@@ -1257,7 +1117,7 @@ ApplicationWindow {
                 action: Action {
                     id: historyAction
                     text: qsTr("&History")
-                    enabled: root.app.editorOn && root.editor.hasLine
+                    enabled: root.editor.hasLine
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) historyWindow.show()
                 }
             }
@@ -1268,7 +1128,6 @@ ApplicationWindow {
                 action: Action {
                     id: misspellAction
                     text: qsTr("Fix minor errors (experimental)")
-                    enabled: root.app.editorOn
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_MISSPELLS_REPLACER")) misspellDialog.toggle()
                 }
             }
@@ -1279,7 +1138,7 @@ ApplicationWindow {
                 action: Action {
                     id: selectLinesAction
                     text: qsTr("Select &lines")
-                    enabled: root.app.editorOn && root.editor.hasLine
+                    enabled: root.editor.hasLine
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SELECT_LINES")) selectLinesDialog.openDialog()
                 }
             }
@@ -1291,7 +1150,7 @@ ApplicationWindow {
                 action: Action {
                     id: findReplaceAction
                     text: qsTr("Find and re&place")
-                    enabled: root.app.editorOn && root.editor.hasLine
+                    enabled: root.editor.hasLine
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_REPLACE")) root.openSearch(1)
                 }
             }
@@ -1302,7 +1161,7 @@ ApplicationWindow {
                 action: Action {
                     id: findAction
                     text: qsTr("&Find")
-                    enabled: root.app.editorOn && root.editor.hasLine
+                    enabled: root.editor.hasLine
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SEARCH")) root.openSearch(0)
                 }
             }
@@ -1314,7 +1173,7 @@ ApplicationWindow {
                     id: findNextAction
                     text: qsTr("Find next")
                     // A question box waits: nothing re-enters the search (legacy's are modal).
-                    enabled: root.app.editorOn && root.editor.hasLine && !root.app.findBusy
+                    enabled: root.editor.hasLine && !root.app.findBusy
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_NEXT")) root.app.findNext()
                 }
             }
@@ -1329,7 +1188,6 @@ ApplicationWindow {
                 id: automationHotkeysAction
                 property string help: qsTr("Open shortcut mapping window") // HikariSubFrame.cpp:355
                 text: qsTr("Open shortcut mapping window")
-                enabled: root.app.editorOn // D2: OnMenuOpened disables m_AutoMenu's items
                 onTriggered: {
                     if (root.hotkeyGesture("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW"))
                         return
@@ -1344,7 +1202,6 @@ ApplicationWindow {
                 action: Action {
                     id: loadScriptAction
                     text: qsTr("&Load script…")
-                    enabled: root.app.editorOn
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_SCRIPT")) scriptDialog.open()
                 }
             }
@@ -1355,7 +1212,6 @@ ApplicationWindow {
                 action: Action {
                     id: reloadAutoloadAction
                     text: qsTr("Refresh autoload scripts")
-                    enabled: root.app.editorOn
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_RELOAD_AUTOLOAD")) root.automation.reloadAutoload()
                 }
             }
@@ -1367,7 +1223,7 @@ ApplicationWindow {
                     text: qsTr("Run the last loaded script")
                     // Legacy's modal progress dialog blocks it while a macro
                     // runs; D2: OnMenuOpened disables m_AutoMenu's items.
-                    enabled: root.app.editorOn && !root.automation.running
+                    enabled: !root.automation.running
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT")) root.automation.runLastLoadedScript()
                 }
             }
@@ -1376,7 +1232,7 @@ ApplicationWindow {
                 objectName: "rerunMenuItem"
                 action: Action {
                     text: qsTr("Rerun last macro")
-                    enabled: root.app.editorOn && root.automation.canRerun
+                    enabled: root.automation.canRerun
                     onTriggered: root.automation.rerunLast()
                 }
             }
@@ -1385,7 +1241,6 @@ ApplicationWindow {
                 objectName: "automationManagerMenuItem"
                 action: Action {
                     text: qsTr("Automation &manager")
-                    enabled: root.app.editorOn
                     onTriggered: automationManagerWindow.show()
                 }
             }
@@ -1396,7 +1251,7 @@ ApplicationWindow {
                     required property var modelData
                     objectName: "macro_" + modelData.name
                     text: modelData.name
-                    enabled: root.app.editorOn && !root.automation.running
+                    enabled: !root.automation.running
                     // Automation.cpp:1376-1379: Shift maps the macro's hotkey
                     // (OnMapHkey(-1, "Script <file>-<n>"), no window choice).
                     onTriggered: {
@@ -1442,7 +1297,7 @@ ApplicationWindow {
                 action: Action {
                     id: openKeyframesAction
                     text: qsTr("Open keyframes")
-                    enabled: root.app.editorOn && root.video.hasVideo
+                    enabled: root.video.hasVideo
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.show()
                 }
             }
@@ -1451,7 +1306,7 @@ ApplicationWindow {
                 objectName: "recentKeyframesMenu"
                 prefix: "recentKeyframes"
                 title: qsTr("Recently opened keyframes")
-                enabled: root.app.editorOn && root.video.hasVideo // D2: OnMenuOpened's VidMenu
+                enabled: root.video.hasVideo // D2: OnMenuOpened's VidMenu
                 load: () => root.app.recentKeyframes()
                 onChosen: path => {
                     const problem = root.app.openKeyframesFile(path)
@@ -1476,7 +1331,7 @@ ApplicationWindow {
                 action: Action {
                     id: setStartTimeAction
                     text: qsTr("Insert start time from video")
-                    enabled: root.app.editorOn && root.video.hasVideo && root.shell.hasEditingTarget
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_START_TIME")) root.app.setTimeFromVideo(false)
                 }
             }
@@ -1486,7 +1341,7 @@ ApplicationWindow {
                 action: Action {
                     id: setEndTimeAction
                     text: qsTr("Insert end time from video")
-                    enabled: root.app.editorOn && root.video.hasVideo && root.shell.hasEditingTarget
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_END_TIME")) root.app.setTimeFromVideo(true)
                 }
             }
@@ -1513,7 +1368,7 @@ ApplicationWindow {
                 iconRole: "video-to-start-time"
                 action: Action {
                     id: goToStartAction
-                    text: qsTr("Go to start time"); enabled: root.app.editorOn && root.video.hasVideo
+                    text: qsTr("Go to start time"); enabled: root.video.hasVideo
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_START_TIME")) root.video.goToLineStart()
                 }
             }
@@ -1522,7 +1377,7 @@ ApplicationWindow {
                 iconRole: "video-to-end-time"
                 action: Action {
                     id: goToEndAction
-                    text: qsTr("Go to end time of line"); enabled: root.app.editorOn && root.video.hasVideo
+                    text: qsTr("Go to end time of line"); enabled: root.video.hasVideo
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_END_TIME")) root.video.goToLineEnd()
                 }
             }
@@ -1539,7 +1394,7 @@ ApplicationWindow {
                 iconRole: "keyframe-previous"
                 action: Action {
                     id: previousKeyframeAction
-                    text: qsTr("Go to previous keyframe"); enabled: root.app.editorOn && root.video.hasVideo
+                    text: qsTr("Go to previous keyframe"); enabled: root.video.hasVideo
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_PREVIOUS_KEYFRAME")) root.video.previousKeyframe()
                 }
             }
@@ -1547,20 +1402,20 @@ ApplicationWindow {
                 iconRole: "keyframe-next"
                 action: Action {
                     id: nextKeyframeAction
-                    text: qsTr("Go to next keyframe"); enabled: root.app.editorOn && root.video.hasVideo
+                    text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_NEXT_KEYFRAME")) root.video.nextKeyframe()
                 }
             }
             // A3: GLOBAL_SET_AUDIO_FROM_VIDEO, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO
-            // (legacy OnMenuOpened: ABox != nullptr && editor; GLOBAL_EDITOR's
-            // switch is D2's, the editor itself the editing target's).
+            // (legacy OnMenuOpened: ABox != nullptr && editor; the editor is
+            // the editing target's).
             ShellMenuItem {
                 iconRole: "audio-to-video-time"
                 objectName: "setAudioFromVideoMenuItem"
                 action: Action {
                     id: setAudioFromVideoAction
                     text: qsTr("Set audio position to video time")
-                    enabled: root.app.editorOn && root.audio.hasAudio && root.shell.hasEditingTarget
+                    enabled: root.audio.hasAudio && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_FROM_VIDEO")) root.app.setAudioFromVideo(false)
                 }
             }
@@ -1570,7 +1425,7 @@ ApplicationWindow {
                 action: Action {
                     id: setAudioMarkFromVideoAction
                     text: qsTr("Set audio marker to video time")
-                    enabled: root.app.editorOn && root.audio.hasAudio && root.shell.hasEditingTarget
+                    enabled: root.audio.hasAudio && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_MARK_FROM_VIDEO")) root.app.setAudioFromVideo(true)
                 }
             }
@@ -1639,7 +1494,6 @@ ApplicationWindow {
                 action: Action {
                     id: openAudioAction
                     text: qsTr("Open audio")
-                    enabled: root.app.editorOn // D2: OnMenuOpened's AudMenu
                     onTriggered: {
                         if (root.hotkeyGesture("GLOBAL_OPEN_AUDIO"))
                             return
@@ -1653,7 +1507,6 @@ ApplicationWindow {
                 id: recentAudioMenu
                 iconRole: "recent-audio"
                 objectName: "recentAudioMenu"
-                enabled: root.app.editorOn
                 title: qsTr("Recently opened audio")
                 property var rows: []
                 onAboutToShow: rows = root.app.recentAudio()
@@ -1685,7 +1538,7 @@ ApplicationWindow {
                 action: Action {
                     id: audioFromVideoAction
                     text: qsTr("Open audio from video")
-                    enabled: root.app.editorOn && root.video.hasVideo
+                    enabled: root.video.hasVideo
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUDIO_FROM_VIDEO")) root.app.openAudioFromVideo()
                 }
             }
@@ -1696,7 +1549,7 @@ ApplicationWindow {
                 action: Action {
                     id: closeAudioAction
                     text: qsTr("Close audio")
-                    enabled: root.app.editorOn && root.audio.hasAudio
+                    enabled: root.audio.hasAudio
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_AUDIO")) root.audio.closeAudio()
                 }
             }
@@ -1707,33 +1560,30 @@ ApplicationWindow {
             // Legacy ViewMenu "View" (HikariSubFrame.cpp:307-313); &w, as
             // Alt+V stays with &Video.
             title: qsTr("Vie&w")
-            // D2: legacy's five views as panel arrangements over the docked
-            // Workspace (applyArrangement), enabled as OnMenuOpened's
-            // ViewMenu (HikariSubFrame.cpp:2413-2437).
-            Instantiator {
-                model: root.viewArrangements
-                delegate: ShellMenuItem {
-                    required property var modelData
-                    objectName: modelData.objectName
-                    iconRole: modelData.iconRole
-                    text: modelData.label
-                    enabled: root.arrangementEnabled(modelData.symbol)
-                    onTriggered: if (!root.hotkeyGesture(modelData.symbol)) root.applyArrangement(modelData.symbol)
-                }
-                onObjectAdded: (index, object) => viewMenu.insertItem(index, object)
-                onObjectRemoved: (index, object) => viewMenu.removeItem(object)
+            // WS3 (#217): legacy's five views (GLOBAL_VIEW_*) are retired;
+            // the current tab's layout is chosen here and in the layout
+            // switcher, the same menu: the presets, the saved layouts, Save
+            // layout as…, Reset this layout and Manage layouts….
+            LayoutMenu {
+                id: viewLayoutMenu
+                objectName: "viewLayoutMenu"
+                iconRole: "layout"
+                title: qsTr("&Layout")
+                prefix: "viewLayout"
+                layouts: root.workspaceLayout
+                onPresetChosen: name => root.applyPreset(name)
+                onSavedLayoutChosen: name => root.applySavedLayout(name)
+                onSaveRequested: saveLayoutDialog.show()
+                onResetRequested: root.resetLayout()
+                onManageRequested: manageLayoutsDialog.show()
             }
             MenuSeparator {}
             // D1: each panel can be shown (and focused), hidden, floated or
-            // docked; Reset layout returns to the Editing arrangement. With
-            // the editor off (the player layout) they are disabled, as
-            // OnMenuOpened disables the View menu's other items (default:
-            // Enable(editor)).
+            // docked.
             ShellMenu {
                 id: panelsMenu
                 iconRole: "panels"
                 objectName: "panelsMenu"
-                enabled: root.app.editorOn
                 title: qsTr("&Panels")
                 Instantiator {
                     model: root.dockList
@@ -1776,50 +1626,14 @@ ApplicationWindow {
             ShellMenuItem {
                 iconRole: "panel-move"
                 objectName: "movePanel"
-                enabled: root.app.editorOn
                 text: qsTr("&Move panel…")
                 onTriggered: placementWindow.openFor(root.focusedDock())
-            }
-            // Built-in starting arrangements (docs/qt/ux/workspaces.md); the
-            // tools they open come with the tool cards.
-            ShellMenu {
-                id: presetMenu
-                iconRole: "layout-preset"
-                objectName: "layoutPresetMenu"
-                enabled: root.app.editorOn
-                title: qsTr("Layout &preset")
-                Instantiator {
-                    model: [
-                        { name: "Editing", label: qsTr("Editing") },
-                        { name: "Timing", label: qsTr("Timing") },
-                        { name: "Translation", label: qsTr("Translation") },
-                        { name: "Typesetting", label: qsTr("Typesetting") }
-                    ]
-                    delegate: ShellMenuItem {
-                        required property var modelData
-                        objectName: "preset" + modelData.name
-                        text: modelData.label
-                        checkable: true
-                        checked: root.workspaceLayout.preset === modelData.name
-                        keepsMenuOpen: false // one choice of several
-                        onTriggered: root.applyPreset(modelData.name)
-                    }
-                    onObjectAdded: (index, object) => presetMenu.insertItem(index, object)
-                    onObjectRemoved: (index, object) => presetMenu.removeItem(object)
-                }
-            }
-            ShellMenuItem {
-                iconRole: "layout-reset"
-                objectName: "resetLayout"
-                enabled: root.app.editorOn
-                text: qsTr("&Reset layout")
-                onTriggered: root.applyPreset(root.workspaceLayout.preset)
             }
             ShellMenuItem {
                 iconRole: "layout-restore"
                 objectName: "restoreLayoutBackup"
                 text: qsTr("Restore the previous layout")
-                enabled: root.app.editorOn && root.workspaceLayout.hasBackup
+                enabled: root.workspaceLayout.hasBackup
                 onTriggered: root.workspaceLayout.restoreBackup()
             }
         }
@@ -1827,24 +1641,11 @@ ApplicationWindow {
         ShellMenu {
             objectName: "subtitlesMenu"
             title: qsTr("&Subtitles")
-            // D2: GLOBAL_EDITOR, SubsMenu's first item (HikariSubFrame.cpp:316-317),
-            // enabled with a DirectShow video or none (OnMenuOpened,
-            // HikariSubFrame.cpp:2377-2379): W1's DirectShow player on
-            // Windows, otherwise no video.
-            ShellMenuItem {
-                id: editorSwitchItem
-                iconRole: "editor"
-                objectName: "editorSwitchMenuItem"
-                text: qsTr("Enable / Disable editor")
-                enabled: !root.video.hasVideo || root.app.directShowPlayback
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_EDITOR")) root.app.toggleEditor()
-            }
             ShellMenuItem {
                 help: qsTr("Shifting subtitle times") // HikariSubFrame.cpp:336
                 id: showShiftTimesItem
                 iconRole: "shift-times"
                 objectName: "showShiftTimes"
-                enabled: root.app.editorOn // D2: OnMenuOpened's SubsMenu
                 text: qsTr("Shift &times...")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
             }
@@ -1853,7 +1654,7 @@ ApplicationWindow {
                 iconRole: "shift-times-run"
                 objectName: "runShiftTimes"
                 text: qsTr("Shift times / run time post processor")
-                enabled: root.app.editorOn && root.shell.hasEditingTarget
+                enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_TIMES")) root.runShiftTimes()
             }
             ShellMenuItem {
@@ -1862,7 +1663,7 @@ ApplicationWindow {
                 iconRole: "styles"
                 objectName: "styleManagerMenuItem"
                 text: qsTr("Style &manager")
-                enabled: root.app.editorOn && root.shell.hasEditingTarget
+                enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_STYLE_MANAGER")) styleManagerWindow.showFor(root.app.activeLineStyle())
             }
             ShellMenuItem {
@@ -1871,7 +1672,7 @@ ApplicationWindow {
                 iconRole: "script-properties"
                 objectName: "assProperties"
                 text: qsTr("ASS file properties")
-                enabled: root.app.editorOn && root.shell.hasEditingTarget
+                enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) scriptPropertiesDialog.openFor()
             }
             ShellMenu {
@@ -1879,7 +1680,6 @@ ApplicationWindow {
                 id: conversionMenu
                 iconRole: "convert"
                 objectName: "conversionMenu"
-                enabled: root.app.editorOn
                 title: qsTr("Conversion")
                 property var targets: []
                 onAboutToShow: targets = root.app.conversionTargets()
@@ -1903,7 +1703,7 @@ ApplicationWindow {
                 objectName: "fontCollectorMenuItem"
                 iconRole: "font-collector"
                 text: qsTr("Font collector")
-                enabled: root.app.editorOn && root.shell.hasEditingTarget && root.shell.assColumns
+                enabled: root.shell.hasEditingTarget && root.shell.assColumns
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
             }
             ShellMenuItem {
@@ -1912,7 +1712,7 @@ ApplicationWindow {
                 iconRole: "resample"
                 objectName: "resampleMenuItem"
                 text: qsTr("Resample subtitles")
-                enabled: root.app.editorOn && root.shell.hasEditingTarget
+                enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS_RESAMPLE")) resampleDialog.openDialog()
             }
             // Legacy HikariSubFrame: after Resample subtitles.
@@ -1922,7 +1722,7 @@ ApplicationWindow {
                 iconRole: "spellchecker"
                 objectName: "checkSpellingMenuItem"
                 text: qsTr("Check spelling")
-                enabled: root.app.editorOn && root.shell.hasEditingTarget
+                enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) spellCheckerDialog.openDialog()
             }
             // E6: legacy SubsMenu's last item, "Hides tags in ASS and MDVD"
@@ -1932,7 +1732,6 @@ ApplicationWindow {
                 iconRole: "hide-tags"
                 objectName: "hideTagsMenuItem"
                 text: qsTr("Hide tags")
-                enabled: root.app.editorOn // D2: OnMenuOpened's SubsMenu
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_HIDE_TAGS")) root.app.toggleHideTags()
             }
             // LE3-tags-shown: the Line editor's hidden-tag view, a setting
@@ -2541,10 +2340,8 @@ ApplicationWindow {
                     z: 1
                 }
                 // T1: the tool rail beside the canvas (layout A).
-                // D2: not in the player layout (HideVideoToolbar).
                 VisualToolRail {
                     id: visualRail
-                    visible: root.app.editorOn
                     tools: root.visualTools
                     anchors { left: parent.left; top: parent.top; bottom: videoControls.top }
                 }
@@ -2572,22 +2369,14 @@ ApplicationWindow {
                     sourceRect: root.visualTools.sourceRect
                     Component.onCompleted: root.video.attachPresenter(presenter)
                 }
-                // D2: no visual tool in the player layout (RemoveVisual(false,
-                // true): legacy's Visual -1, not even the crosshair); the
-                // pointer still reaches the view (zoom, context menu, V5's
-                // double-click fullscreen).
                 VisualOverlay {
                     id: visualOverlay
-                    toolsShown: root.app.editorOn
                     anchors.fill: presenter
                     tools: root.visualTools
                     focusTarget: root.videoFullscreen.active ? videoFullscreenWindow.keyTarget : videoPanel
                     // In fullscreen the pinned panel (m_PanelOnFullscreen) or none.
                     panelHeight: root.videoFullscreen.active ? videoFullscreenWindow.pinnedPanelHeight : videoControls.height
                     view: root.videoView // V4
-                    Binding {
-                        target: root.videoView; property: "toolsOff"; value: !root.app.editorOn
-                    }
                     // V5: without "Show toolbar" the pointer shows (and after
                     // a second hides) over the fullscreen picture.
                     cursorOverride: !root.videoFullscreen.active || root.videoFullscreen.showToolbar ? -1
@@ -2643,7 +2432,6 @@ ApplicationWindow {
                         onWheel: event => root.videoView.panelWheel(Math.round(event.angleDelta.y / 120), event.modifiers)
                     }
                 VisualToolValues { // T1-T4: the family's options, values and batch picker
-                    shownInLayout: root.app.editorOn // D2: part of legacy's video toolbar
                     Layout.fillWidth: true
                     // It wraps rather than widen the column: wider text (a
                     // translation, a larger font) or a narrow panel must not
@@ -4188,9 +3976,6 @@ ApplicationWindow {
         // Decision 63: the window is never smaller than the docked layout's
         // minimum, so no docked panel is cut off past its edge.
         Docking.followLayoutMinimum(dockingArea.uniqueName)
-        // D2: HikariSubFrame's constructor, `if (!EDITOR_ON) HideEditor(false)`.
-        if (!root.app.editorOn)
-            root.applyEditor(false)
     }
     onFrameSwapped: settleArrangement()
     Timer { // without frames (a hidden window)
@@ -4204,12 +3989,7 @@ ApplicationWindow {
         interval: 5000
         running: true
         repeat: true
-        onTriggered: {
-            // D2: the arrangement View > All returns to, while all four show.
-            if ([videoDock, audioDock, editorDock, gridDock].every(d => d.isOpen))
-                root.workspaceLayout.rememberFullArrangement()
-            root.workspaceLayout.save()
-        }
+        onTriggered: root.workspaceLayout.save()
     }
 
     // WS4: the window's top rows under the menu bar (SH1's title bar will sit
@@ -4275,12 +4055,33 @@ ApplicationWindow {
     // "Autosave"), never the editing target, which the Document tab and the
     // window title name.
     footer: StatusBar {
+        id: statusStrip
         shell: root.shell
         fieldsController: root.statusBar
         selectionText: root.shell.selectionStatus
         // The last save's message only: the tab's modified mark says
         // "Modified" (said once, visual-language.md).
         saveText: root.editor.saveStatus
+        // WS3: the layout switcher at the bar's end, where MuseScore 4 puts
+        // its Workspaces button, until SH1 (#220) moves it into the title bar.
+        LayoutSwitcher {
+            layouts: root.workspaceLayout
+            labelFont: statusStrip.statusFont
+            onPresetChosen: name => root.applyPreset(name)
+            onSavedLayoutChosen: name => root.applySavedLayout(name)
+            onSaveRequested: saveLayoutDialog.show()
+            onResetRequested: root.resetLayout()
+            onManageRequested: manageLayoutsDialog.show()
+        }
+    }
+    // WS3: Save layout as… and Manage layouts… (the switcher's and View > Layout's).
+    SaveLayoutDialog {
+        id: saveLayoutDialog
+        layouts: root.workspaceLayout
+    }
+    ManageLayoutsDialog {
+        id: manageLayoutsDialog
+        layouts: root.workspaceLayout
     }
 
     // Legacy HistoryDialog: every step, the current one selected; Set and a
@@ -6153,7 +5954,6 @@ ApplicationWindow {
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHIFT_TIMES: runShiftTimesItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
-        GLOBAL_EDITOR: editorSwitchItem // D2: HideEditor
     }
     }
     // The menu bar's items show their Global binding at the right (legacy
@@ -6224,20 +6024,13 @@ ApplicationWindow {
         // CheckLastKeyEvent (HikariSubFrame.cpp:1005).
         const menuSelected1 = ["GLOBAL_OPEN_SUBS", "GLOBAL_OPEN_VIDEO", "GLOBAL_OPEN_KEYFRAMES", "GLOBAL_OPEN_DUMMY_VIDEO",
                                "GLOBAL_OPEN_AUTO_SAVE", "GLOBAL_DELETE_TEMPORARY_FILES",
-                               "GLOBAL_SETTINGS", "GLOBAL_QUIT", "GLOBAL_EDITOR", "GLOBAL_ABOUT", "GLOBAL_HELPERS",
+                               "GLOBAL_SETTINGS", "GLOBAL_QUIT", "GLOBAL_ABOUT", "GLOBAL_HELPERS",
                                "GLOBAL_HELP", "GLOBAL_ANSI", "GLOBAL_CHECK_FOR_UPDATES", "GLOBAL_SELECT_FROM_VIDEO",
                                "GLOBAL_PLAY_ACTUAL_LINE", "GLOBAL_STYLE_MANAGER_CLEAN_STYLE"]
         const actions = root.globalActions()
         const items = root.globalItems()
         if (menuSelected1.includes(symbol) && root.hotkeys.repeatedKey(symbol))
             return true
-        // V5: in fullscreen the frame's accelerators reach VideoBox::OnAccelerator,
-        // whose GLOBAL_EDITOR is OpenEditor (VideoBox.cpp:1162), not the main
-        // window's editor switch (D2).
-        if (symbol === "GLOBAL_EDITOR" && root.videoFullscreen.active) {
-            root.app.openEditorFromFullScreen()
-            return true
-        }
         if (actions[symbol] !== undefined) {
             actions[symbol].trigger()
             return true
@@ -6248,21 +6041,15 @@ ApplicationWindow {
         }
         const conversion = root.conversionItems.find(c => c[2] === symbol)
         if (conversion) {
-            // OnMenuOpened: the item is enabled for the formats it converts to
-            // (and with the editor, D2).
-            if (root.app.editorOn && root.app.conversionTargets().indexOf(conversion[0]) >= 0)
+            // OnMenuOpened: the item is enabled for the formats it converts to.
+            if (root.app.conversionTargets().indexOf(conversion[0]) >= 0)
                 conversionDialog.openFor(conversion[0], conversion[1])
             return true
         }
         const sort = root.sortKeys.find(k => k.all === symbol || k.selected === symbol)
         if (sort) {
-            if (root.app.editorOn && root.editor.editable)
+            if (root.editor.editable)
                 root.app.sortLines(sort.key, sort.selected === symbol)
-            return true
-        }
-        // D2: OnMenuSelected's GLOBAL_VIEW_* (the item's state is checked first).
-        if (root.workspaceLayout.arrangementPanels(symbol).length > 0) {
-            root.applyArrangement(symbol)
             return true
         }
         const editing = root.shell.hasEditingTarget
@@ -6380,8 +6167,7 @@ ApplicationWindow {
         case "VIDEO_VOLUME_PLUS": root.videoView.stepVolume(true); return true
         case "VIDEO_VOLUME_MINUS": root.videoView.stepVolume(false); return true
         case "VIDEO_HIDE_PROGRESS_BAR": root.videoView.toggleProgressBar(); return true
-        // V5 (VideoBox.cpp:1161-1162): SetFullscreen(), and GLOBAL_EDITOR's
-        // OpenEditor when it reaches the video (in fullscreen).
+        // V5 (VideoBox.cpp:1161-1162): SetFullscreen().
         case "VIDEO_FULL_SCREEN": root.videoFullscreen.toggle(0); return true
         case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openAtCursor(); return true
         case "VIDEO_SAVE_FRAME_TO_PNG":
