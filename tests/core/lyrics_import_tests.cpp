@@ -423,6 +423,13 @@ TEST(LyricsImport, TtmlTimesAndWordEnds)
                                          "</p></body></tt>"));
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(rows(*result), (std::vector<Row>{{1500, 3500, "", "{\\k90}a {\\k50}b{\\k60}"}}));
+    // A decimal point has digits on both sides, in offset and clock times.
+    const std::string p = "<tt><body><p begin=\"";
+    for (const char *bad : {"1.", "1.s", ".5s", "1:02.", "0:.5", "."})
+        EXPECT_EQ(problemOf(p + bad + "\" end=\"9\">x</p></body></tt>", u8"ttml"),
+                  (LyricsProblem{Kind::UnreadableTime, 1, std::u8string(reinterpret_cast<const char8_t *>(bad))}))
+            << bad;
+    EXPECT_TRUE(importTtml(bytes(p + "0.5s\" dur=\"1.0\">x</p></body></tt>")).has_value());
 }
 
 TEST(LyricsImport, ClockMinutesAndSecondsStayUnder60)
@@ -588,6 +595,13 @@ TEST(LyricsImport, TtmlXmlSpacePreserveKeepsWhitespace)
     EXPECT_EQ(text("><p begin=\"1\" end=\"3\"><span begin=\"1\" end=\"2\" xml:space=\"preserve\"> a</span> "
                    "<span begin=\"2\" end=\"3\">b</span></p>"),
               "{\\k100}\\ha {\\k100}b");
+    // So does a kept space a timed word's text starts with from a scope
+    // inside the word's span.
+    EXPECT_EQ(text("><p><span begin=\"1\" end=\"2\"><span xml:space=\"preserve\">  a</span></span></p>"),
+              "{\\k100}\\h\\ha");
+    EXPECT_EQ(text("><p><span begin=\"1\" end=\"2\">a</span><span begin=\"2\" end=\"3\"> <span "
+                   "xml:space=\"preserve\">  b</span></span></p>"),
+              "{\\k100}a   {\\k100}b");
     // Only xml:space counts, not another prefix's "space".
     EXPECT_EQ(text("><p begin=\"1\" end=\"2\" x:space=\"preserve\">a  b</p>"), "a b");
 }

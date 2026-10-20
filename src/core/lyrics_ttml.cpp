@@ -540,13 +540,15 @@ std::optional<std::int64_t> ttmlTime(u8sv text)
     auto decimal = [](u8sv s) -> std::optional<double> {
         if (s.empty() || s.size() > 15)
             return std::nullopt;
-        bool dot = false, digit = false;
+        // Digits, then a "." and digits if there is a fraction ("1.5", not
+        // "1." or ".5").
+        bool dot = false, wholeDigit = false, fractionDigit = false;
         double whole = 0, scale = 1, fraction = 0;
         for (char8_t c : s) {
             if (c == u8'.' && !dot) {
                 dot = true;
             } else if (c >= u8'0' && c <= u8'9') {
-                digit = true;
+                (dot ? fractionDigit : wholeDigit) = true;
                 if (dot)
                     fraction += (c - u8'0') * (scale /= 10);
                 else
@@ -555,7 +557,7 @@ std::optional<std::int64_t> ttmlTime(u8sv text)
                 return std::nullopt;
             }
         }
-        return digit ? std::optional(whole + fraction) : std::nullopt;
+        return wholeDigit && fractionDigit == dot ? std::optional(whole + fraction) : std::nullopt;
     };
     auto ms = [](double seconds) -> std::optional<std::int64_t> {
         if (seconds * 1000 > static_cast<double>(detail::kLatestLyricsTime))
@@ -890,8 +892,10 @@ private:
                 const bool kept = preserves(child, preserve);
                 const std::u8string text = spanText(child, preserve);
                 const u8sv word = trimBlankLeft(text);
-                if (word.size() < text.size()) // spaces before a word stay with the text before it
-                    addText(into, kept ? u8sv(text).substr(0, text.size() - word.size()) : u8sv(u8" "), kept);
+                // Spaces before a word stay with the text before it, kept
+                // ones as whichever scope inside the span kept them.
+                if (word.size() < text.size())
+                    addText(into, u8sv(text).substr(0, text.size() - word.size()), false);
                 backgroundsIn(child, backgrounds, kept);
                 if (word.empty())
                     continue; // a timed span with no lyric is no word; the gaps come from the words
