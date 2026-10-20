@@ -4237,34 +4237,6 @@ great help testing HikariSub on a slow computer)
         <source>Installing update...</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Menus</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Window menu</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>More menus</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Minimise</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Restore</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Maximise</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Application menu</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -4512,18 +4484,6 @@ when find results window is open</source>
     </message>
     <message>
         <source>%1 (contrast %2:1)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Window</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Use system title bar</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Off by default on Windows, KDE Plasma and GNOME; on by default on tiling window managers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

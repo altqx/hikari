@@ -17,7 +17,10 @@ extern "C" {
 static_assert(LIBASS_VERSION >= 0x01705020, "the altqx libass fork is older than the pinned 0x01705020");
 
 #include <algorithm>
+#include <charconv>
+#include <chrono>
 #include <cstring>
+#include <string_view>
 #include <utility>
 
 namespace hikari::backends {
@@ -250,6 +253,84 @@ std::expected<std::uint64_t, RenderError> LibassRenderer::prepare(application::R
     return generation;
 }
 
+namespace {
+
+// Whether `test` holds for a tag in one of the text's override blocks: tags
+// are only read between { and }; the rest is drawn as text. Each tag runs
+// to the next backslash, so a test reads its own tag alone and a long block
+// costs one pass.
+template <class Test> bool anyTag(std::string_view text, Test test)
+{
+    for (std::size_t open = text.find('{'); open != std::string_view::npos; open = text.find('{', open)) {
+        const std::size_t close = text.find('}', open + 1);
+        if (close == std::string_view::npos)
+            return false;
+        const std::string_view block = text.substr(open + 1, close - open - 1);
+        for (std::size_t at = block.find('\\'); at != std::string_view::npos;) {
+            const std::size_t next = block.find('\\', at + 1);
+            if (test(block.substr(at + 1, next == std::string_view::npos ? next : next - at - 1)))
+                return true;
+            at = next;
+        }
+        open = close + 1;
+    }
+    return false;
+}
+
+// The number a tag starts with (0 without one: the style's, which has no blur).
+double tagValue(std::string_view value)
+{
+    while (!value.empty() && (value.front() == ' ' || value.front() == '\t'))
+        value.remove_prefix(1);
+    double number = 0;
+    std::from_chars(value.data(), value.data() + value.size(), number);
+    return number;
+}
+
+// \blur or \be above 0.
+bool blurs(std::string_view tag)
+{
+    if (tag.starts_with("blur"))
+        return tagValue(tag.substr(4)) > 0;
+    return tag.starts_with("be") && tagValue(tag.substr(2)) > 0;
+}
+
+// A drawing \clip or \iclip: its arguments hold a drawing, which starts
+// with a move (m, or n, which leaves the shape open).
+bool clipsToADrawing(std::string_view tag)
+{
+    if (tag.starts_with("i"))
+        tag.remove_prefix(1);
+    if (!tag.starts_with("clip("))
+        return false;
+    const std::size_t end = tag.find(')');
+    const std::string_view args = tag.substr(5, end == std::string_view::npos ? end : end - 5);
+    return std::ranges::any_of(args, [](char c) { return c == 'm' || c == 'M' || c == 'n' || c == 'N'; });
+}
+
+// KE1-render-cost-overlay: what libass drew, and the shown events' costly
+// tags. It walks every event of the track, so it runs only while the
+// overlay is shown (countCost).
+void count(application::RenderCost &cost, const ASS_Track &track, long long ms, const ASS_Image *images)
+{
+    cost.counted = true;
+    for (int i = 0; i < track.n_events; ++i) {
+        const ASS_Event &e = track.events[i];
+        if (e.Start > ms || e.Start + e.Duration <= ms)
+            continue;
+        ++cost.events;
+        const std::string_view text = e.Text ? std::string_view(e.Text) : std::string_view();
+        cost.blurred += anyTag(text, blurs);
+        cost.vectorClips += anyTag(text, clipsToADrawing);
+    }
+    for (const ASS_Image *img = images; img; img = img->next) {
+        ++cost.images;
+        cost.area += static_cast<std::int64_t>(img->w) * img->h;
+    }
+}
+
+} // namespace
+
 std::expected<OverlayFrame, RenderError> LibassRenderer::render(core::DocumentTime time, int width, int height)
 {
     std::lock_guard lock(m_mutex);
@@ -276,6 +357,12 @@ std::expected<OverlayFrame, RenderError> LibassRenderer::render(core::DocumentTi
     frame.height = height;
     frame.stride = width * 4;
     frame.generation = m_generation;
+    if (m_countCost) {
+        const auto started = std::chrono::steady_clock::now();
+        count(frame.cost, *e.current(), ms, images);
+        frame.cost.countMilliseconds =
+            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
+    }
     if (change == 0 && !m_redraw && m_buffers.shown()) {
         // Nothing moved: the shown buffer is still current, handed out again.
         frame.pixels = OverlayPixels(m_buffers.shown()->bytes);
