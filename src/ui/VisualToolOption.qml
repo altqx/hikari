@@ -26,6 +26,10 @@ Loader {
     required property VisualToolsController tools
     // VT1: an unseen copy the bar measures (no names, no focus).
     property bool measuring: false
+    // What changes while the option stays (checked, enabled, the entries
+    // and the chosen one): the bar gives the tool's current state by name,
+    // so a toggle does not make the bar's items again.
+    property var live: modelData
     readonly property string nameOf: measuring ? "" : "visualOption_" + modelData.name
     readonly property bool grouped: modelData.group.length > 0
     // The tools' help texts are legacy's; the bar's own action (VT1's Copy
@@ -45,15 +49,15 @@ Loader {
             text: option.tooltip.split("\n")[0]
             tip: option.tooltip
             checkable: option.modelData.kind === "toggle"
-            checked: option.modelData.checked
-            enabled: option.modelData.enabled && option.tools.railEnabled
+            checked: option.live.checked
+            enabled: option.live.enabled && option.tools.railEnabled
             focusPolicy: Qt.NoFocus
             // The tool decides (a greyed or linked option); the binding then
             // shows what it took, not the click's state.
             onClicked: {
                 option.tools.setOption(option.modelData.name,
                                        option.modelData.kind === "toggle" ? (checked ? 1 : 0) : 1)
-                checked = Qt.binding(() => option.modelData.checked)
+                checked = Qt.binding(() => option.live.checked)
             }
         }
     }
@@ -62,8 +66,8 @@ Loader {
         AbstractButton {
             id: choice
             objectName: option.nameOf
-            readonly property var model: option.modelData.choices
-            readonly property int currentIndex: option.modelData.index
+            readonly property var model: option.live.choices
+            readonly property int currentIndex: option.live.index
             readonly property bool listEnds: option.modelData.listEnds
             readonly property string current: currentIndex >= 0 && currentIndex < model.length ? model[currentIndex] : ""
             // An icon button with its menu outside a group (the tool strip's
@@ -85,7 +89,7 @@ Loader {
             checkable: false
             checked: !asText && listEnds && currentIndex > 0
             down: pressed || choiceMenu.visible
-            enabled: option.modelData.enabled && option.tools.railEnabled
+            enabled: option.live.enabled && option.tools.railEnabled
             focusPolicy: Qt.NoFocus
             hoverEnabled: true
             padding: asText ? 0 : 2
@@ -203,9 +207,9 @@ Loader {
         // T2: a choice without an icon (PositionItem's alignment).
         ComboBox {
             objectName: option.nameOf
-            model: option.modelData.choices
-            currentIndex: option.modelData.index
-            enabled: option.modelData.enabled && option.tools.railEnabled
+            model: option.live.choices
+            currentIndex: option.live.index
+            enabled: option.live.enabled && option.tools.railEnabled
             focusPolicy: Qt.NoFocus
             implicitHeight: 24
             implicitContentWidthPolicy: ComboBox.WidestText

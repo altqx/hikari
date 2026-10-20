@@ -95,7 +95,18 @@ Control {
                 return v
         return { name: name, label: "", text: "", editable: false, group: "", unit: "", step: 1 }
     }
-    readonly property var segments: groupsOf(tools.options, "options", false).concat(valueGroups)
+    // The options' layout likewise: a toggle, a greyed option or the chosen
+    // entry changes no item (each reads its state by name).
+    readonly property string optionShape: JSON.stringify(tools.options.map(o => ({
+        name: o.name, kind: o.kind, iconRole: o.iconRole, tooltip: o.tooltip, group: o.group, listEnds: o.listEnds
+    })))
+    function optionNamed(name, fallback) {
+        for (const o of tools.options)
+            if (o.name === name)
+                return o
+        return fallback
+    }
+    readonly property var segments: groupsOf(JSON.parse(optionShape), "options", false).concat(valueGroups)
     // The picker's slot, which a batch tool's groups give up.
     readonly property real pickerWidth: pick.implicitWidth + 4
                                         + (tools.batchCount > 0 ? picked.implicitWidth + clear.implicitWidth + 8 : 0)
@@ -175,6 +186,7 @@ Control {
                 delegate: VisualToolOption {
                     tools: bar.tools
                     measuring: segment.modelData.measuring
+                    live: measuring ? modelData : bar.optionNamed(modelData.name, modelData)
                 }
             }
             Repeater {
