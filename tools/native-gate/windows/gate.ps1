@@ -9,7 +9,8 @@
 #   -Action fullscreen  GATE_FULLSCREEN=on|left|off: the main window borderless over the whole monitor,
 #                       on the left GATE_LEFT_WIDTH pixels of its work area (frame kept), or back
 #   -Action dpi         GATE_DPI_PERCENT: the display scale of the primary monitor, live (DPI_RESULT line)
-#   -Action theme       GATE_THEME (light|dark|highContrastWhite|highContrastBlack), GATE_FOLLOW (true|false):
+#   -Action theme       GATE_THEME (light|dark|highContrastWhite|highContrastBlack), GATE_FOLLOW (true|false),
+#                       GATE_TITLE_BAR (auto|system|custom, SH1; unset: none written):
 #                       the appearance in the profile's hikari.ini, before HikariSub starts (THEME_RESULT line)
 #   -Action systemtheme GATE_APPS_LIGHT=1|0|status: the system's app colour scheme (Settings > Personalization >
 #                       Colors, AppsUseLightTheme), announced as Settings does (WM_SETTINGCHANGE
@@ -260,9 +261,11 @@ switch ($Action) {
         $follow = if ($env:GATE_FOLLOW) { $env:GATE_FOLLOW } else { 'false' }
         $ini = Join-Path $profileDirs.local 'hikari.ini'
         New-Item -ItemType Directory -Force $profileDirs.local | Out-Null
-        $lines = @('[profile]', "appearance.followSystem=$follow", "appearance.theme=$theme", '', '[registry]', 'schema=1')
+        $lines = @('[profile]', "appearance.followSystem=$follow", "appearance.theme=$theme")
+        if ($env:GATE_TITLE_BAR) { $lines += "appearance.titleBar=$($env:GATE_TITLE_BAR)" }
+        $lines += @('', '[registry]', 'schema=1')
         [IO.File]::WriteAllLines($ini, [string[]]$lines, $utf8)
-        Write-Output ('THEME_RESULT ' + (@{ theme = $theme; followSystem = $follow; ini = $ini } | ConvertTo-Json -Compress))
+        Write-Output ('THEME_RESULT ' + (@{ theme = $theme; followSystem = $follow; titleBar = $env:GATE_TITLE_BAR; ini = $ini } | ConvertTo-Json -Compress))
     }
     'systemtheme' {
         $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
