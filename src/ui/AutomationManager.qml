@@ -389,10 +389,22 @@ Pane {
                         objectName: "documentScriptsOfferText"
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
+                        // The paths are the Document's, so they are shown as
+                        // written: as rich text, markup in one (an image) could
+                        // reach a server before Load is clicked.
+                        textFormat: Text.PlainText
                         text: qsTr("This file names scripts: %1").arg(root.offeredScripts.map(root.fileName).join(", "))
-                        ToolTip.visible: offerHover.hovered
-                        ToolTip.text: root.offeredScripts.join("\n")
                         HoverHandler { id: offerHover }
+                        ToolTip {
+                            id: offerTip
+                            objectName: "documentScriptsOfferToolTip"
+                            visible: offerHover.hovered
+                            text: root.offeredScripts.join("\n")
+                            contentItem: Label {
+                                text: offerTip.text
+                                textFormat: Text.PlainText
+                            }
+                        }
                     }
                     Label {
                         Layout.fillWidth: true

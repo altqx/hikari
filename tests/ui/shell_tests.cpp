@@ -12991,6 +12991,29 @@ private slots:
         QTRY_COMPARE(visualItem("automationTool")->property("documentName").toString(), QStringLiteral("First.ass"));
         QTest::qWait(200);
         QVERIFY(!offer->isVisible());
+        // A path with markup in it is offered as written, the text and its
+        // tooltip plain: as rich text its image would be fetched (from a
+        // server, on Windows) before Load.
+        const QByteArray markup = "<img src=\"file:&#47;&#47;host&#47;share&#47;x\">.lua";
+        const QString third = scripts.filePath(QStringLiteral("Third.ass"));
+        QFile f(third);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nAutomation Scripts: |" + markup +
+                "\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        f.close();
+        QVERIFY(application->openFile(third));
+        application->selectTab(2);
+        QTRY_VERIFY(offer->isVisible());
+        auto *text = visualItem("documentScriptsOfferText");
+        QCOMPARE(text->property("textFormat").toInt(), int(Qt::PlainText));
+        QVERIFY(text->property("text").toString().contains(QLatin1String("<img src=")));
+        auto *tip = text->findChild<QObject *>(QStringLiteral("documentScriptsOfferToolTip"));
+        QVERIFY(tip);
+        auto *tipText = tip->property("contentItem").value<QObject *>();
+        QVERIFY(tipText);
+        QCOMPARE(tipText->property("textFormat").toInt(), int(Qt::PlainText));
+        QCOMPARE(tipText->property("text").toString(), QString::fromUtf8(markup));
     }
 
     // AM1 with KB1/KB2's key router: a key being recorded is the recorder's
