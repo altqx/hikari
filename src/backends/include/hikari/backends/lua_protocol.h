@@ -23,7 +23,9 @@
 //         text). What validation staged is dropped either way. A dependency's
 //         validation before another script's macro runs (S4-run-validation).
 // The ScriptInfo lists the files the script's top level loaded as Lua code
-// (require and include), for S4-run-validation's dependencies.
+// (require and include), for S4-run-validation's dependencies. Each dialogue
+// line carries the Line it was generated from (KE1), and a MacroResult the
+// report the script attached.
 // Progress payloads start with an i32 ProgressEvent: Log (str), Set (f64
 // percent), Task (str), Title (str).
 // Service payloads start with an i32 Service; Dialog carries a DialogRequest
@@ -41,8 +43,9 @@
 
 namespace hikari::backends::lua {
 
-// 3: RunValidated (S4); 4: HostService::Gettext (O5); 5: Validate and ScriptInfo::loadedFiles (S4-run-validation)
-inline constexpr std::uint32_t kProtocolVersion = 5;
+// 3: RunValidated (S4); 4: HostService::Gettext (O5); 5: Validate and ScriptInfo::loadedFiles (S4-run-validation);
+// 6: MacroDialogueLine::generatedFrom and MacroResult::report (KE1)
+inline constexpr std::uint32_t kProtocolVersion = 6;
 inline constexpr char kHelperName[] = "hikari-lua-helper";
 
 enum class Command : std::int32_t { Load = 1, Run = 2, RunValidated = 3, Validate = 4 };
