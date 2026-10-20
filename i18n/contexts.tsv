@@ -16,7 +16,7 @@ HikariSub.Fonts	The font collector, font catalogs, fonts from subtitles and the 
 HikariSub.Grid	The subtitle grid: headings, line states, selection, line groups, copy and paste of columns
 HikariSub.Home	The Home page while no Document is open: New and Open, the last session, the recent files and their menu
 HikariSub.Hotkeys	Hotkey mapping and shortcut hints
-HikariSub.MainWindow	The main window: title, menu bar and menu help, About, Credits, updates, the log and history windows
+HikariSub.MainWindow	The main window: title, its title bar (menus, window buttons, the window menu), menu help, About, Credits, updates, the log and history windows
 HikariSub.Matroska	Subtitles from Matroska files
 HikariSub.MisspellReplacer	Fix minor errors (the misspell replacer) and its rules
 HikariSub.Options	The Options dialog, its Appearance page (themes, accent colours) and the interface language

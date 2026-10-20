@@ -252,6 +252,20 @@ void requestNone(QWindow *window)
         Tracker::ensure(window)->watch();
 }
 
+void release(QWindow *window)
+{
+    delete Tracker::of(window);
+}
+
+QStringList compositorGlobalNames()
+{
+#ifdef HIKARI_WAYLAND_DECORATIONS
+    if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
+        return compositorGlobals();
+#endif
+    return {};
+}
+
 SystemFrame serverSideFrame(const QStringList &globals)
 {
     const bool bordersOnly = std::any_of(globals.begin(), globals.end(), [](const QString &name) {

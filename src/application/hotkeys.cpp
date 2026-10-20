@@ -534,7 +534,8 @@ constexpr DefaultRow kMainDefaults[] = {
         {5030, GlobalHotkey, "Time shift window", "Ctrl-I"}, // GLOBAL_SHOW_SHIFT_TIMES
         {5020, GlobalHotkey, "Convert to ASS", "F9"}, // GLOBAL_CONVERT_TO_ASS
         {5021, GlobalHotkey, "Convert to SRT", "F8"}, // GLOBAL_CONVERT_TO_SRT
-        {5023, GlobalHotkey, "Convert to MDVD", "F10"}, // GLOBAL_CONVERT_TO_MDVD
+        // GLOBAL_CONVERT_TO_MDVD's F10 is no default: F10 puts the keyboard
+        // on the menus (SH1 #220, owner 2026-10-20, SH1-f10-menus).
         {5024, GlobalHotkey, "Convert to MPL2", "F11"}, // GLOBAL_CONVERT_TO_MPL2
         {5022, GlobalHotkey, "Convert to TMP", "Ctrl-F12"}, // GLOBAL_CONVERT_TO_TMP
         {5026, GlobalHotkey, "Style manager", "Ctrl-M"}, // GLOBAL_OPEN_STYLE_MANAGER

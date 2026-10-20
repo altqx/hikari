@@ -170,6 +170,9 @@ TEST(Hotkeys, DefaultsAreLoadDefault)
     // WS3-view-arrangements-retired: the editor switch's Ctrl-E is no default.
     EXPECT_EQ(legacy.at(HotkeyId{ids().at("GLOBAL_EDITOR"), GlobalHotkey}).accel, "Ctrl-E");
     legacy.erase(HotkeyId{ids().at("GLOBAL_EDITOR"), GlobalHotkey});
+    // SH1-f10-menus: F10 reaches the menus; Convert to MDVD has no default.
+    EXPECT_EQ(legacy.at(HotkeyId{ids().at("GLOBAL_CONVERT_TO_MDVD"), GlobalHotkey}).accel, "F10");
+    legacy.erase(HotkeyId{ids().at("GLOBAL_CONVERT_TO_MDVD"), GlobalHotkey});
     // TM1: the run keys are the rewrite's own, Alt-1 to Alt-9 in the editor.
     for (int n = 1; n <= 9; ++n)
         legacy[HotkeyId{3019 + n, EditorHotkey}] = Hotkey{"Place run " + std::to_string(n), "Alt-" + std::to_string(n)};
@@ -177,7 +180,7 @@ TEST(Hotkeys, DefaultsAreLoadDefault)
     HotkeyMap main, audio;
     loadDefaultHotkeys(main, false);
     loadDefaultHotkeys(audio, true);
-    EXPECT_EQ(main.size(), 71u);
+    EXPECT_EQ(main.size(), 70u);
     EXPECT_EQ(audio.size(), 23u);
     for (const auto &[k, h] : audio)
         EXPECT_EQ(k.type, AudioHotkey);
@@ -223,7 +226,7 @@ TEST(Hotkeys, StoredLinesAreSaveHkeys)
     map[HotkeyId{ids().at("AUDIO_PLAY"), GlobalHotkey}] = Hotkey{"", "Ctrl-P"}; // main file: not an Audio binding
     const auto main = hotkeyLines(map, false);
     const auto audio = hotkeyLines(map, true);
-    EXPECT_EQ(main.size(), 71u + 2u - 1u + 1u); // WS3: the defaults bind no Ctrl-E
+    EXPECT_EQ(main.size(), 70u + 2u - 1u + 1u); // WS3: no Ctrl-E; SH1: no F10
     EXPECT_EQ(audio.size(), 23u);
     EXPECT_EQ(main.front(), "AUDIO_PLAY G=Ctrl-P"); // map order: window, then id
     EXPECT_NE(std::ranges::find(main, "GLOBAL_SAVE_SUBS G=Ctrl-S"), main.end());
@@ -417,7 +420,7 @@ TEST(Hotkeys, FilterModesAndSelection)
         list.filter(mode);
         return list.shown().size();
     };
-    EXPECT_EQ(count(1), 93u); // set shortcuts (GLOBAL_QUIT is not listed; WS3: no Ctrl-E)
+    EXPECT_EQ(count(1), 92u); // set shortcuts (GLOBAL_QUIT is not listed; WS3: no Ctrl-E; SH1: no F10)
     EXPECT_EQ(count(3), std::size_t(std::ranges::count_if(hotkeyNames(), [](const auto &n) { return hotkeyType(n.first) == GridHotkey; })));
     EXPECT_EQ(count(6), 23u);
     list.filter(5);
@@ -428,10 +431,10 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     const int first = list.selection();
     list.remove(first, live);
-    EXPECT_EQ(list.shown().size(), 93u);
+    EXPECT_EQ(list.shown().size(), 92u);
     EXPECT_EQ(list.row(first).accel, "");
     list.filter(1);
-    EXPECT_EQ(list.shown().size(), 92u);
+    EXPECT_EQ(list.shown().size(), 91u);
     list.filter(0);
     EXPECT_EQ(list.shown().size(), 231u);
 }

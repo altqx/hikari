@@ -1916,7 +1916,7 @@ def menu_names(opener):
 
 
 def switcher_label(st=None):
-    """The layout switcher's accessible name ("Layout: NAME") in the status bar."""
+    """The layout switcher's accessible name ("Layout: NAME"), in the title bar since SH1."""
     st = st or uia()
     return next((e["n"] for e in st.get("elements") or [] if not e["off"] and (e["n"] or "").startswith("Layout: ")),
                 None)
@@ -2561,13 +2561,435 @@ def step_reference():
             ["reference.json"] + nev + ev)
 
 
+# ---------------------------------------------------------------- SH1 title bar
+THEME_PANEL = {"light": "#F9FAFB", "dark": "#20262D", "highContrastWhite": "#FFFFFF", "highContrastBlack": "#080808"}
+TITLE_CONTROLS = ("Window menu", "Application menu", "Minimise", "Maximise", "Restore", "Close", "More menus")
+
+
+def title_bar_start(choice="auto", theme="dark"):
+    """A fresh profile with SH1's title bar setting (appearance.titleBar) and
+    the theme, then HikariSub with no Document."""
+    app_kill()
+    job, lines = W.task("gate-win-fresh")
+    for l in lines:
+        if l.startswith("set aside"):
+            log(l)
+            if not PROFILE["original"]:
+                PROFILE["original"] = l.split(" -> ", 1)[1].rsplit("\\", 1)[0]
+    if job.get("state") != "succeeded":
+        raise RuntimeError("gate-win-fresh failed (the profile was not set aside): " + " | ".join(lines[-6:]))
+    _, lines = W.task("gate-win-theme", env={"GATE_THEME": theme, "GATE_FOLLOW": "false", "GATE_TITLE_BAR": choice})
+    log("theme:", line_value(lines, "THEME_RESULT "))
+    app_start()
+    time.sleep(1.5)
+
+
+def title_bar_controls(st=None):
+    """The main window's title bar controls by accessible name, and the
+    layout switcher as "switcher" (its "Layout: NAME")."""
+    st = st or uia()
+    out = {}
+    els = st.get("elements") or []
+    for e in els:
+        if e["off"] or frame_id(e["win"]) != MAIN:
+            continue
+        # Windows' own caption buttons (the system's title bar) are under its TitleBar "TitleBar".
+        if any(a["t"] == "TitleBar" and a["id"] == "TitleBar" for a in ancestors(els, e)):
+            continue
+        if e["n"] in TITLE_CONTROLS and e["n"] not in out:
+            out[e["n"]] = e
+        if (e["n"] or "").startswith("Layout: ") and "switcher" not in out:
+            out["switcher"] = e
+    return out
+
+
+def place_on_primary():
+    """The main window on the left 960 pixels of the primary's work area:
+    a fresh window (1280x800) reaches past the 1024-pixel primary, where
+    the tablet does not reach."""
+    return fullscreen("left", width=960)
+
+
+def covers(r, m):
+    """Window rectangle R maximised over monitor M: Windows puts a maximised
+    window's frame outside the monitor, so R covers M's width."""
+    return r is not None and r[0] <= m["x"] and r[0] + r[2] >= m["x"] + m["w"]
+
+
+def free_point(ctl):
+    """A point of the title bar's free part, just left of Minimise."""
+    m = ctl.get("Minimise") or ctl.get("Maximise") or ctl.get("Restore")
+    return (m["x"] - 16, m["y"] + m["h"] // 2) if m else None
+
+
+def main_rect(st=None):
+    f = frames(st or uia()).get(MAIN)
+    return (f["x"], f["y"], f["w"], f["h"]) if f else None
+
+
+def colour_at(png, x, y, mons):
+    """The "#RRGGBB" at screen point X,Y of a whole-desktop screenshot."""
+    from PIL import Image
+    ox, oy = min(m["x"] for m in mons), min(m["y"] for m in mons)
+    img = Image.open(EVID / png).convert("RGB")
+    try:
+        return "#%02X%02X%02X" % img.getpixel((x - ox, y - oy))
+    except IndexError:
+        return None
+
+
+def changed_pixels(a, b, box, mons):
+    """Pixels differing by more than 5 % in BOX (screen x0, y0, x1, y1) between two screenshots."""
+    from PIL import Image, ImageChops
+    ox, oy = min(m["x"] for m in mons), min(m["y"] for m in mons)
+    crop = (box[0] - ox, box[1] - oy, box[2] - ox, box[3] - oy)
+    ia = Image.open(EVID / a).convert("L").crop(crop)
+    ib = Image.open(EVID / b).convert("L").crop(crop)
+    return sum(1 for v in ImageChops.difference(ia, ib).getdata() if v > 13)
+
+
+def centre(e):
+    return e["x"] + e["w"] // 2, e["y"] + e["h"] // 2
+
+
+def step_title_bar():
+    """SH1 (#220) on Windows 11: HikariSub's own title bar by default; every
+    control named; no caption of Windows' above it; moved by its free part;
+    a double click and Maximise maximise and Restore restores; the snap
+    layouts over Maximise; Aero Snap by dragging to the top edge and by
+    Win+Left; resized from the edge; the system menu on a right click and on
+    the icon, Escape closing it and nothing else (Alt+Space recorded); Alt
+    and F10 to the menus (the system's menu mode never takes them);
+    Minimise and Close; the system's title bar chosen; the four themes,
+    Close's hover with no red; the window on a second monitor at 150 %."""
+    mons = monitors()
+    prim = next(m for m in mons if m["primary"])
+
+    # The default: HikariSub's own.
+    title_bar_start("auto")
+    st = uia(dpi=True)
+    ctl = title_bar_controls(st)
+    ev0, _ = snap("titlebar-0-default")
+    main = frames(st).get(MAIN)
+    names = {n: n in ctl for n in ("Window menu", "Application menu", "Minimise", "Maximise", "Close")}
+    verdict("titlebar-default", "observed" if all(names.values()) and ctl.get("switcher") else "failed",
+            f"Windows: HikariSub's title bar by default: {names}, switcher {ctl.get('switcher', {}).get('n')!r}", ev0)
+    icon = ctl.get("Window menu")
+    top_gap = icon["y"] - main["y"] if icon and main else None
+    info = next((w for w in st.get("windowInfo") or [] if w.get("hwnd") == (main or {}).get("hwnd")), {})
+    verdict("titlebar-frameless", "observed" if top_gap is not None and 0 <= top_gap <= 2 else "failed",
+            f"the window menu button {top_gap} px below the window's top (no caption of Windows' above the bar); "
+            f"window style {hex(info.get('style') or 0)} (the caption styles kept for Snap and the system menu)", ev0)
+    named = sorted({e["n"] for e in st.get("elements") or [] if frame_id(e["win"]) == MAIN and not e["off"]
+                    and e["t"] in ("Button", "MenuItem", "MenuBar", "TitleBar", "SplitButton")
+                    and main and e["y"] < main["y"] + 34})
+    unnamed = [e["t"] for e in st.get("elements") or [] if frame_id(e["win"]) == MAIN and not e["off"] and not e["n"]
+               and e["t"] in ("Button", "MenuItem", "SplitButton") and main and e["y"] < main["y"] + 34]
+    verdict("titlebar-names", "observed" if not unnamed and all(names.values()) else "failed",
+            f"UI Automation names in the title bar: {named}; controls with no name {unnamed}", ev0)
+
+    # Move by the free part.
+    log("placed on the primary:", place_on_primary())
+    time.sleep(1.0)
+    focus_main_compositor()
+    st = uia()
+    ctl = title_bar_controls(st)
+    r0 = main_rect(st)
+    fp = free_point(ctl)
+    if r0 and fp:
+        sx, sy = fp
+        try:
+            pointer([(sx, sy)], hold=True)
+            time.sleep(0.25)
+            pointer([(sx, sy), (sx + 40, sy + 30)], button="none", steps=20, delayMs=30)
+            time.sleep(0.4)
+        finally:
+            release()
+            time.sleep(1.0)
+        r1 = main_rect()
+        ev, _ = snap("titlebar-1-moved")
+        moved = r1 and abs(r1[0] - r0[0] - 40) <= 8 and abs(r1[1] - r0[1] - 30) <= 8 and r1[2:] == r0[2:]
+        verdict("titlebar-move", "observed" if moved else "failed",
+                f"free part {fp} dragged by (+40,+30): window {r0} -> {r1}", ev)
+    else:
+        verdict("titlebar-move", "failed", f"no main window or free part ({r0}, {fp})")
+
+    # Double click: maximised, then restored.
+    st = uia()
+    ctl = title_bar_controls(st)
+    r0 = main_rect(st)
+    fp = free_point(ctl)
+    st, how, gaps = double_click_until(*fp, done=lambda s: "Restore" in title_bar_controls(s))
+    rmax = main_rect(st)
+    ev, _ = snap("titlebar-2-double-click-maximised")
+    work_ok = covers(rmax, prim)
+    ctl = title_bar_controls(st)
+    fp2 = free_point(ctl)
+    st2, how2, _ = double_click_until(*fp2, done=lambda s: "Maximise" in title_bar_controls(s)) if fp2 else (uia(), None, [])
+    rback = main_rect(st2)
+    verdict("titlebar-double-click", "observed" if how and how2 and work_ok and rback == r0 else "failed",
+            f"double click on the free part ({how}, gaps {gaps}): window {r0} -> {rmax} (the primary's width "
+            f"{prim['w']}, covered: {work_ok}); again ({how2}): {rback}", ev)
+
+    # Maximise and Restore buttons (HTMAXBUTTON: Windows' own press, handed to the QML button).
+    ctl = title_bar_controls(st2)
+    mb = ctl.get("Maximise")
+    if mb:
+        pointer([centre(mb)])
+        st = wait_for(lambda s: "Restore" in title_bar_controls(s), timeout=4)
+        rmax = main_rect(st)
+        ev, _ = snap("titlebar-3-maximise-button")
+        rb = title_bar_controls(st).get("Restore")
+        if rb:
+            pointer([centre(rb)])
+        st = wait_for(lambda s: "Maximise" in title_bar_controls(s), timeout=4)
+        rback = main_rect(st)
+        verdict("titlebar-maximise-button", "observed" if rb and covers(rmax, prim) and rback == r0
+                else "failed", f"Maximise clicked: {r0} -> {rmax}, Restore shown {bool(rb)}; Restore clicked: {rback}", ev)
+    else:
+        verdict("titlebar-maximise-button", "failed", f"no Maximise ({sorted(ctl)})")
+
+    # Snap layouts: the pointer resting on Maximise.
+    park_pointer()
+    time.sleep(0.8)
+    ctl = title_bar_controls()
+    mb = ctl.get("Maximise")
+    if mb:
+        ev_a, _ = snap("titlebar-4-before-hover")
+        pointer([centre(mb)], button="none")
+        time.sleep(2.0)
+        ev_b, st = snap("titlebar-4-snap-layouts")
+        box = (max(mb["x"] - 260, prim["x"]), mb["y"] + mb["h"] + 4,
+               min(mb["x"] + mb["w"] + 60, prim["x"] + prim["w"]), min(mb["y"] + mb["h"] + 200, prim["y"] + prim["h"]))
+        changed = changed_pixels(ev_a[0], ev_b[0], box, mons)
+        hovered = colour_at(ev_b[0], mb["x"] + 4, mb["y"] + 4, mons)
+        plain = colour_at(ev_a[0], mb["x"] + 4, mb["y"] + 4, mons)
+        park_pointer()
+        keys("escape", 0.5)
+        verdict("titlebar-snap-layouts", "observed" if changed > 4000 and hovered != plain else "failed",
+                f"pointer resting on Maximise 2 s: {changed} pixels changed under it in {box} (Windows 11's snap "
+                f"layouts flyout); the button's background {plain} -> {hovered} (its hover, from WM_NCMOUSEMOVE)",
+                ev_a + ev_b)
+    else:
+        verdict("titlebar-snap-layouts", "failed", f"no Maximise ({sorted(ctl)})")
+
+    # Aero Snap: dragged to the top edge (maximised), Win+Left (the left half).
+    st = uia()
+    r0 = main_rect(st)
+    fp = free_point(title_bar_controls(st))
+    try:
+        pointer([fp], hold=True)
+        time.sleep(0.25)
+        pointer([fp, (fp[0], prim["y"] + 40), (fp[0], prim["y"] + 1)], button="none", steps=25, delayMs=40)
+        time.sleep(1.5)
+    finally:
+        release()
+        time.sleep(1.5)
+    st = uia()
+    rtop = main_rect(st)
+    ev_t, _ = snap("titlebar-5-aero-snap-top")
+    top_max = "Restore" in title_bar_controls(st)
+    focus_main_compositor()
+    combo("win", "down")  # restore from maximised
+    time.sleep(1.2)
+    rrest = main_rect()
+    combo("win", "left")
+    time.sleep(1.5)
+    keys("escape", 0.5)  # Snap Assist offers the other windows for the right half
+    st = uia()
+    rleft = main_rect(st)
+    ev_l, _ = snap("titlebar-5-aero-snap-left")
+    # Snapped into the top-left corner at the work area's height; half the
+    # width, or as narrow as its minimum allows (821 is more than half of 1024).
+    half = rleft is not None and rrest is not None and abs(rleft[0] - prim["x"]) <= 10 \
+        and abs(rleft[1] - prim["y"]) <= 10 and rleft[3] >= prim["h"] - 60 \
+        and (abs(rleft[2] - prim["w"] // 2) <= 24 or prim["w"] // 2 < rleft[2] < rrest[2])
+    verdict("titlebar-aero-snap", "observed" if top_max and half else "failed",
+            f"free part dragged to the primary's top edge: window {r0} -> {rtop}, maximised (Restore shown) "
+            f"{top_max}; Win+Left: {rrest} -> {rleft}, the left half of {prim['w']}x{prim['h']} (or the "
+            f"minimum width): {half}", ev_t + ev_l)
+    combo("win", "right")
+    time.sleep(1.2)
+    keys("escape", 0.5)
+
+    # Resize: the placed window's bottom-right corner, inwards (the window
+    # fills the primary's work area's height: no room to grow).
+    title_bar_start("custom")
+    log("placed on the primary:", place_on_primary())
+    time.sleep(1.0)
+    st = uia()
+    r0 = main_rect(st)
+    if r0:
+        cx, cy = r0[0] + r0[2] - 3, r0[1] + r0[3] - 3
+        try:
+            pointer([(cx, cy)], hold=True)
+            time.sleep(0.25)
+            pointer([(cx, cy), (cx - 120, cy - 80)], button="none", steps=20, delayMs=30)
+            time.sleep(0.4)
+        finally:
+            release()
+            time.sleep(1.0)
+        r1 = main_rect()
+        ev, _ = snap("titlebar-6-resized")
+        resized = r1 is not None and abs(r1[2] - (r0[2] - 120)) <= 8 and abs(r1[3] - (r0[3] - 80)) <= 8 \
+            and r1[:2] == r0[:2]
+        verdict("titlebar-resize", "observed" if resized else "failed",
+                f"bottom-right corner dragged by (-120,-80): {r0} -> {r1}", ev)
+    else:
+        verdict("titlebar-resize", "failed", "no main window")
+
+    # The system menu: a right click on the free part, a click on the icon, Alt+Space.
+    def system_menu(open_it, tag):
+        open_it()
+        time.sleep(1.0)
+        st = uia()
+        items = st["popupMenuItems"]
+        ev, _ = snap(f"titlebar-7-system-menu-{tag}")
+        keys("escape", 0.6)
+        return items, ev
+    ctl = title_bar_controls()
+    fp = free_point(ctl)
+    icon = ctl.get("Window menu")
+    shown, shots = {}, []
+    for tag, opener in (("right-click", lambda: pointer([fp], button="right")),
+                        ("icon", lambda: pointer([centre(icon)]) if icon else None),
+                        ("alt-space", lambda: (focus_main_compositor(), combo("alt", "space")))):
+        items, ev = system_menu(opener, tag)
+        shown[tag] = items
+        shots += ev
+    want = {"Move", "Size", "Minimize", "Close"}
+    ok = all(want <= {i.replace("&", "") for i in shown[k]} for k in ("right-click", "icon"))
+    kept = bool(main_window())
+    verdict("titlebar-window-menu", "observed" if ok and kept else "failed",
+            f"Windows' system menu (Move, Size, Minimize, Close expected) from a right click on the free part and a "
+            f"click on the icon, each closed with Escape: {shown}; the window still open after the Escapes: {kept}. "
+            f"Alt+Space is HikariSub's own (legacy's Play binding), so it opens the menu only where unbound "
+            f"({shown['alt-space']})", shots)
+
+    # Alt alone and F10 to the menus; Windows' menu mode does not take the keys.
+    focus_main_compositor()
+    park_pointer()
+    keys("alt", 0.6, "down", 1.0)
+    file_items = uia()["popupMenuItems"]
+    ev7, _ = snap("titlebar-8-alt-down")
+    keys("escape", 0.4, "escape", 0.4)
+    keys("f10", 0.6, "right", 0.5, "down", 1.0)
+    edit_items = uia()["popupMenuItems"]
+    ev8, _ = snap("titlebar-8-f10-right-down")
+    keys("escape", 0.4, "escape", 0.4)
+    keys("alt+e", 1.0)
+    alt_e = uia()["popupMenuItems"]
+    keys("escape", 0.4)
+    file_ok = any(n.startswith("Open") for n in file_items)
+    edit_ok = any(n.startswith("Undo") for n in edit_items) and any(n.startswith("Undo") for n in alt_e)
+    verdict("titlebar-keyboard", "observed" if file_ok and edit_ok else "failed",
+            f"Alt, Down: {file_items[:4]} (File); F10, Right, Down: {edit_items[:4]} (Edit); Alt+E: {alt_e[:4]}",
+            ev7 + ev8)
+
+    # Minimise, then (a new start) Close.
+    ctl = title_bar_controls()
+    mn = ctl.get("Minimise")
+    if mn:
+        pointer([centre(mn)])
+        time.sleep(1.5)
+        listed = W.ui("windows", pid=APP["pid"])
+        mainw = next((w for w in listed if isinstance(listed, list) and frame_id(w.get("title") or "") == MAIN), {})
+        ev, _ = snap("titlebar-9-minimised")
+        verdict("titlebar-minimise", "observed" if mainw.get("minimized") else "failed",
+                f"Minimise: the main window {json.dumps({k: mainw.get(k) for k in ('title', 'minimized', 'visible')})}", ev)
+    else:
+        verdict("titlebar-minimise", "failed", f"no Minimise ({sorted(ctl)})")
+    title_bar_start("custom")
+    place_on_primary()
+    cl = title_bar_controls().get("Close")
+    if cl:
+        pointer([centre(cl)])
+        time.sleep(3)
+        alive = app_status()["alive"]
+        verdict("titlebar-close", "observed" if not alive else "failed", f"Close: HikariSub still running {alive}")
+        APP["pid"] = None if not alive else APP["pid"]
+    else:
+        verdict("titlebar-close", "failed", "no Close")
+
+    # The system's title bar chosen: the menus and the switcher in a row under Windows' caption.
+    title_bar_start("system")
+    st = uia(dpi=True)
+    ctl = title_bar_controls(st)
+    main = frames(st).get(MAIN)
+    menus = ctl.get("Application menu")
+    gap = menus["y"] - main["y"] if menus and main else None
+    ev, _ = snap("titlebar-10-system")
+    buttons = [n for n in ("Window menu", "Minimise", "Maximise", "Close") if n in ctl]
+    verdict("titlebar-system", "observed" if menus and ctl.get("switcher") and not buttons and gap and gap >= 20
+            else "failed",
+            f"menus {bool(menus)}, switcher {ctl.get('switcher', {}).get('n')!r}, HikariSub's window buttons {buttons}; "
+            f"the menus {gap} px below the window's top (Windows' caption above them)", ev)
+
+    # The four themes: the bar in the panel colour; Close's hover is the theme's, not red.
+    shots, wrong = [], []
+    for theme, colour in THEME_PANEL.items():
+        title_bar_start("custom", theme)
+        mons = monitors()
+        ctl = title_bar_controls()
+        fp, cl = free_point(ctl), ctl.get("Close")
+        ev, _ = snap(f"titlebar-11-theme-{theme}")
+        got = colour_at(ev[0], fp[0], fp[1] - 10, mons) if fp else None
+        hover = None
+        if cl:
+            pointer([centre(cl)], button="none")
+            time.sleep(0.8)
+            evh, _ = snap(f"titlebar-11-theme-{theme}-close-hover")
+            ev += evh
+            hover = colour_at(evh[0], cl["x"] + 4, cl["y"] + 4, mons)
+            park_pointer()
+        shots += ev
+        red = bool(hover) and int(hover[1:3], 16) > 150 and int(hover[3:5], 16) < 90 and int(hover[5:7], 16) < 90
+        if got != colour or red or not hover:
+            wrong.append(f"{theme}: bar {got} (expected {colour}), Close hovered {hover}")
+    verdict("titlebar-themes", "observed" if not wrong else "failed",
+            "the title bar in each theme's panel colour, Close's hover in the theme's (no red)"
+            + (f": {wrong}" if wrong else ""), shots)
+
+    # Mixed DPI: the main window moved (Win+Shift+Right) onto a second monitor at 150 %.
+    d = displays("extend", scale2=150, second=(1920, 1200))
+    mons2 = d.get("monitors") or []
+    try:
+        if len(mons2) < 2:
+            verdict("titlebar-mixed-dpi", "not-observable", f"one monitor after extending ({d.get('steps')})")
+            return
+        sec = next(m for m in mons2 if not m["primary"])
+        title_bar_start("custom")
+        focus_main_compositor()
+        combo("win", "shift", "right")
+        time.sleep(2)
+        st = wait_for(lambda s: MAIN in frames(s) and inside(frames(s)[MAIN], sec), timeout=6)
+        st = uia(dpi=True)
+        fm = frames(st).get(MAIN)
+        ctl = title_bar_controls(st)
+        ev, _ = snap("titlebar-12-scale150", extra="# DISPLAY_RESULT\n" + json.dumps(d))
+        ev += head_shot("titlebar-12-monitor2", 1)
+        bar = ctl.get("Close")
+        on2 = bool(fm) and inside(fm, sec)
+        sized = bool(bar) and abs(bar["h"] - 48) <= 2 and abs(bar["w"] - 69) <= 2
+        verdict("titlebar-mixed-dpi", "observed" if on2 and fm.get("dpi") == 144 and sized else "failed",
+                f"main window {fm and (fm['x'], fm['y'], fm['w'], fm['h'])} on {sec['device']} at {sec['dpi']} dpi: "
+                f"{on2}, GetDpiForWindow {fm and fm.get('dpi')}; Close {bar and (bar['w'], bar['h'])} px (46x32 at 150 %: "
+                f"69x48) ({'titlebar-12-monitor2.png'})", ev)
+        combo("win", "shift", "left")
+        time.sleep(1.5)
+    finally:
+        app_kill()
+        r = displays("extend", scale2=100)
+        log("displays restored:", [(m["device"], m["w"], m["h"], m["dpi"]) for m in r.get("monitors") or []])
+
+
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "outputs": step_outputs, "nvda": step_nvda, "menutext": step_menu_from_text,
          "tests": step_test_executables, "a11y": step_a11y, "header": step_header, "dpi": step_dpi, "dark": step_dark,
          "layouts": step_layouts, "tabs": step_tabs, "videofs": step_video_fullscreen,
          "snap": step_snap, "tags": step_tags, "statusbar": step_statusbar, "dialogs": step_dialogs,
-         "reference": step_reference}
+         "reference": step_reference, "titlebar": step_title_bar}
 
 
 def main():
