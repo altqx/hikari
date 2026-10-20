@@ -217,6 +217,10 @@ class Sway(EiBackend):
     def combo(self, *names):
         mods = [n for n in names if n in ("alt", "ctrl", "shift")]
         keys = [n for n in names if n not in mods]
+        if not keys:
+            # A modifier alone (Alt tapped, SH1): wtype's -M/-m change the
+            # modifier state only, with no key event; -k presses its key.
+            mods, keys = [], mods
         args = ["wtype"]
         for m in mods:
             args += ["-M", {"alt": "alt", "ctrl": "ctrl", "shift": "shift"}[m]]
@@ -3132,7 +3136,13 @@ def title_bar_start(choice="auto", theme="dark"):
     with open(os.path.join(conf, "hikari.ini"), "w") as f:
         f.write(f"[registry]\nschema=1\n\n[profile]\nappearance.theme={theme}\nappearance.followSystem=false\n"
                 f"appearance.titleBar={choice}\n")
-    env = {"XDG_CURRENT_DESKTOP": "KDE", "XDG_SESSION_DESKTOP": "KDE"} if B.name == "kwin" else None
+    # The desktop each compositor stands for: Plasma's KWin, GNOME's mutter
+    # (gnome-shell would set these; the container runs mutter alone).
+    env = {"kwin": {"XDG_CURRENT_DESKTOP": "KDE", "XDG_SESSION_DESKTOP": "KDE"},
+           # NO_AT_BRIDGE: on GNOME Qt's GTK3 platform theme starts GTK, whose
+           # ATK bridge takes the application's accessible root from Qt's
+           # (AT-SPI then lists the application with no windows).
+           "mutter": {"XDG_CURRENT_DESKTOP": "GNOME", "XDG_SESSION_DESKTOP": "gnome", "NO_AT_BRIDGE": "1"}}.get(B.name)
     app("start", env=env)
     time.sleep(2)
     dismiss_notices()
@@ -3277,10 +3287,13 @@ def step_title_bar():
     click(mx, my, double=True, wait=1500)
     ctl_back = title_bar_controls()
     size_back = main_size()
-    verdict("titlebar-double-click", "observed" if "Restore" in ctl_max and size_max and size0
-            and size_max[0] > size0[0] and "Maximise" in ctl_back and size_back == size0 else "failed",
+    # sway has no maximised state: it answers xdg_toplevel.set_maximized with none.
+    no_max = B.name in ("sway", "sway-activate")
+    verdict("titlebar-double-click", "not-observable" if no_max else "observed" if "Restore" in ctl_max and size_max
+            and size0 and size_max[0] > size0[0] and "Maximise" in ctl_back and size_back == size0 else "failed",
             f"double click on the free part: Restore shown {'Restore' in ctl_max}, size {size0} -> {size_max}; "
-            f"again: Maximise shown {'Maximise' in ctl_back}, size {size_back}", ev3)
+            f"again: Maximise shown {'Maximise' in ctl_back}, size {size_back}"
+            + ("; sway has no maximised state (set_maximized is answered with none)" if no_max else ""), ev3)
     r = origin("HikariSub")
     mb = ctl_back.get("Maximise") or {}
     click(*(at(mb.get("x", 0) + 23, 16) if B.name != "mutter" else (160 + mb.get("x", 0) + 23, 100 + 16)), wait=1500)
@@ -3292,11 +3305,15 @@ def step_title_bar():
     click((rm[0] if rm and B.name != "mutter" else 0) + rb.get("x", 0) + 23,
           (rm[1] if rm and B.name != "mutter" else 0) + 16, wait=1500)
     size_back2 = main_size()
-    verdict("titlebar-maximise-button", "observed" if "Restore" in ctl_max2 and size_max2 and size0
-            and size_max2[0] > size0[0] and size_back2 == size0 else "failed",
-            f"Maximise: Restore shown {'Restore' in ctl_max2}, size {size0} -> {size_max2}; Restore: {size_back2}", ev4)
+    verdict("titlebar-maximise-button", "not-observable" if no_max else "observed" if "Restore" in ctl_max2
+            and size_max2 and size0 and size_max2[0] > size0[0] and size_back2 == size0 else "failed",
+            f"Maximise: Restore shown {'Restore' in ctl_max2}, size {size0} -> {size_max2}; Restore: {size_back2}"
+            + ("; sway has no maximised state" if no_max else ""), ev4)
 
-    # Resizing from the band inside the bottom-right corner.
+    # Resizing from the band inside the bottom-right corner, from the window's
+    # first place (the move left it against the output's bottom edge).
+    title_bar_start("custom")
+    size0 = main_size()
     r = origin("HikariSub")
     if B.name == "mutter":
         r = (160, 100, size0[0], size0[1], "Meta-0") if size0 else None
@@ -3330,7 +3347,14 @@ def step_title_bar():
     except (ValueError, IndexError):
         changed = 0
     B.keys("escape", 0.8)
-    if B.name in ("kwin", "x11"):
+    # The window menu on X11 is the window manager's, asked for with
+    # _GTK_SHOW_WINDOW_MENU, which openbox does not take (not in _NET_SUPPORTED).
+    gtk_menu = B.name != "x11" or "_GTK_SHOW_WINDOW_MENU" in sh("xprop -root _NET_SUPPORTED")
+    if B.name == "x11" and not gtk_menu:
+        verdict("titlebar-window-menu", "not-observable",
+                f"openbox does not take _GTK_SHOW_WINDOW_MENU (not in _NET_SUPPORTED), so it has no window menu to "
+                f"show; the request is made ({changed} pixels changed)", ev6)
+    elif B.name in ("kwin", "x11"):
         verdict("titlebar-window-menu", "observed" if changed > 2000 else "failed",
                 f"right click on the free part at {rx},{ry}: {changed} pixels changed under it (the window "
                 f"system's window menu; see the screenshot)", ev6)
@@ -3358,28 +3382,8 @@ def step_title_bar():
             f"Alt, Down: the File menu ({file_items[:4]}); F10, Right, Down: the Edit menu ({edit_items[:4]})",
             ev7 + ev8)
 
-    # Minimise, then Close.
-    ctl = title_bar_controls()
-    r = origin("HikariSub")
-    if B.name == "mutter":
-        r = (160, 100, 0, 0, "Meta-0")
-    mn = ctl.get("Minimise") or {}
-    if B.name in ("sway", "sway-activate"):
-        verdict("titlebar-minimise", "not-observable", "sway has no minimised state (xdg_toplevel.set_minimized is ignored)")
-    else:
-        click(r[0] + mn.get("x", 0) + 23, r[1] + 16, wait=1500)
-        st = atspi()
-        shown = "HikariSub" in frames(st)
-        ev9, _ = B.snap("titlebar-9-minimised")
-        verdict("titlebar-minimise", "observed" if not shown else "failed",
-                f"Minimise: the main window still showing (AT-SPI) {shown}", ev9)
-        focus_main_compositor()
-        if B.name == "kwin":
-            B.script('for (const w of workspace.windowList()) if (/HikariSub$/.test(w.caption)) '
-                     '{ w.minimized = false; workspace.activeWindow = w; }')
-        elif B.name == "x11":
-            sh("xdotool search --name 'HikariSub$' windowmap windowactivate")
-        time.sleep(1.5)
+    # Close, then (a new start) Minimise: mutter alone has nothing that
+    # brings a minimised window back.
     ctl = title_bar_controls()
     r = origin("HikariSub")
     if B.name == "mutter":
@@ -3390,7 +3394,28 @@ def step_title_bar():
         alive = app("alive").strip()
         verdict("titlebar-close", "observed" if alive == "no" else "failed", f"Close: the app still running {alive}")
     else:
-        verdict("titlebar-close", "failed", f"Close not found after Minimise ({sorted(ctl)})")
+        verdict("titlebar-close", "failed", f"Close not found ({sorted(ctl)})")
+    if B.name in ("sway", "sway-activate"):
+        verdict("titlebar-minimise", "not-observable", "sway has no minimised state (xdg_toplevel.set_minimized is ignored)")
+    else:
+        title_bar_start("custom")
+        ctl = title_bar_controls()
+        r = origin("HikariSub") if B.name != "mutter" else (160, 100, 0, 0, "Meta-0")
+        mn = ctl.get("Minimise") or {}
+        fx, fy = free_part(ctl)
+        click(r[0] + mn.get("x", 0) + 23, r[1] + 16, wait=1500)
+        ev9, _ = B.snap("titlebar-9-minimised")
+        # AT-SPI keeps a minimised window's frame "showing": the window system says.
+        if B.name == "kwin":
+            line = next((l for l in B.windows().splitlines() if "HikariSub" in l), "")
+            gone, why = "minimized=true" in line, f"KWin: {line}"
+        elif B.name == "x11":
+            state = sh("for w in $(xdotool search --name 'HikariSub$'); do xprop -id $w _NET_WM_STATE; done")
+            gone, why = "_NET_WM_STATE_HIDDEN" in state, f"_NET_WM_STATE: {state.strip()}"
+        else:
+            got = panel_colour_at("titlebar-9-minimised.png", r[0] + fx, r[1] + 4)
+            gone, why = got != THEME_PANEL["dark"], f"the title bar's free part on screen is {got} (the bar's {THEME_PANEL['dark']})"
+        verdict("titlebar-minimise", "observed" if gone else "failed", f"Minimise: minimised {gone}; {why}", ev9)
 
     # The system's title bar, forced: the menus and the switcher in the first row, no window buttons.
     title_bar_start("system")
