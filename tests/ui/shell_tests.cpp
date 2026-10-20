@@ -15470,9 +15470,12 @@ private slots:
         QVERIFY(viewController.zoomed());
 
         // Fullscreen with the bar Always (the bar below the picture),
-        // still zoomed, then the whole frame.
+        // still zoomed, then the whole frame. The 7:1 picture keeps bars
+        // above and below it on any screen (a 4:3 one fills a 1280x1024
+        // screen's width with 5 px bars beside FS1's one-row bar).
         auto &fs = application->videoFullscreen();
         fs.setBarMode(1);
+        viewController.setAspectFromSlider(100000);
         QVERIFY(fs.toggle(0));
         QQuickWindow *fsWindow = fullscreenWindow();
         QVERIFY(fsWindow);
@@ -15481,6 +15484,7 @@ private slots:
         QTRY_COMPARE(overlay->window(), fsWindow);
         shown = fsWindow;
         QTRY_COMPARE(overlay->height(), qreal(fsWindow->height()) - fullscreenItem("videoFullscreenPanel")->height());
+        QTRY_VERIFY2(tools.videoRect().top() >= 8, qPrintable(QDebug::toString(tools.videoRect())));
         crosshairOnlyOverThePicture("fullscreen, zoomed");
         if (QTest::currentTestFailed())
             return;
@@ -15500,6 +15504,9 @@ private slots:
         QVERIFY(fs.leave());
         QTRY_COMPARE(overlay->window(), window);
         shown = window;
+        viewController.setAspectFromSlider(525000);
+        QTRY_COMPARE(tools.videoView().aspectRatio(), 0.75f);
+        fs.setBarMode(0);
 
         QTRY_VERIFY(visualItem("visualToolRail")->isVisible());
         QTRY_COMPARE_WITH_TIMEOUT(cursorAt(tools.videoRect().center()), Qt::BlankCursor, 2000);
@@ -23065,7 +23072,9 @@ private slots:
         auto *slot = fullscreenItem("fullscreenInspectorSlot");
         QVERIFY(!rail->isVisible());
         QVERIFY(!slot->isVisible());
-        clickWith(fullscreenItem("fullscreenToolsButton"), Qt::NoModifier);
+        auto *toolsButton = fullscreenItem("fullscreenToolsButton");
+        QTRY_VERIFY(toolsButton->isVisible()); // the bar fades in on entering
+        clickWith(toolsButton, Qt::NoModifier);
         auto *toolsMenu = named("fullscreenToolsMenu");
         QTRY_VERIFY(toolsMenu->property("opened").toBool());
         QCOMPARE(toolsMenu->property("count").toInt(), application::visual::kFamilyCount);
