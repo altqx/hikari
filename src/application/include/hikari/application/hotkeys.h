@@ -76,7 +76,7 @@ struct HotkeyAction {
 };
 // IDS in declaration order (243 symbols, kLegacyHotkeyActions), then the
 // rewrite's own commands on ids legacy left unused: GLOBAL_EDITOR_HIDE_TAGS
-// (LE3, 5169) and GLOBAL_TRANSLATION_MODE (TM1, 5170).
+// (LE3, 5169), GLOBAL_VIDEO_RENDER_COST (KE1, 5170) and GLOBAL_TRANSLATION_MODE (TM1, 5171).
 std::span<const HotkeyAction> hotkeyActions();
 // GetIdValue: 0 for an unknown symbol.
 int hotkeyIdOf(std::string_view symbol);

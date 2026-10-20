@@ -250,6 +250,18 @@ void VideoPresenter::present(application::Presentation presentation, Done done)
                                                   PresentStage::Submitted, {}});
     if (window() != m_attached)
         attachWindow(window());
+    QVariantMap cost;
+    if (const auto &o = presentation.overlay) {
+        const auto &c = o->cost;
+        cost = {{QStringLiteral("milliseconds"), c.milliseconds}, {QStringLiteral("counted"), c.counted},
+                {QStringLiteral("events"), c.events},             {QStringLiteral("images"), c.images},
+                {QStringLiteral("area"), qint64(c.area)},         {QStringLiteral("blurred"), c.blurred},
+                {QStringLiteral("vectorClips"), c.vectorClips}};
+    }
+    if (cost != m_renderCost) {
+        m_renderCost = std::move(cost);
+        emit renderCostChanged();
+    }
     m_pending = Submission{std::move(presentation), std::move(done), m_surfaceEpoch.load()};
     update();
 }

@@ -309,6 +309,9 @@ const std::vector<SettingDefinition> &definitions()
         // when the file opens. Off, the section is neither read nor written
         // (an existing one is kept as it is).
         {"subtitles.layoutInFile", "", Bool, Profile, Mapped, false, true},
+        // KE1-render-cost-overlay: what the frame's subtitles cost to draw,
+        // over the video (GLOBAL_VIDEO_RENDER_COST).
+        {"video.renderCost", "", Bool, Profile, Mapped, false, false},
     };
     return table;
 }

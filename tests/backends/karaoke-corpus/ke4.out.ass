@@ -1,0 +1,99 @@
+[Script Info]
+; Kara Effector 3.6 ke4 library (Include/effector-auto4.lua) used from stock templates, as its own usage comments show; R() is left out because it mixes os.time() into its result
+Title: KE1 corpus ke4
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: KEText-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: KEShape-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: KE-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style:  KE,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  KEShape,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  KEText,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,KE,,0,0,0,template syl,!retime("start2syl", _G.ke4.time.mid1($si, $syln, 60), 0)!{\an5\pos($x,$y)\fad(!_G.ke4.time.li($si, $syln, 50)!,0)}
+Comment: 0,0:00:00.00,0:00:05.00,KE,,0,0,0,template syl,!retime("syl2end", 0, _G.ke4.time.lo($si, $syln, 50))!{\an5\pos($x,$y)\fscx!_G.ke4.math.clamp(3, 5, 10)*20!}
+Comment: 0,0:00:00.00,0:00:05.00,KE,,0,0,0,template syl,!retime("start2syl", _G.ke4.time.mid2($si, $syln, 60), 0)!{\an5\pos($x,!$y+_G.ke4.math.round($sdur/7)!)}
+Comment: 0,0:00:00.00,0:00:05.00,KEShape,,0,0,0,template syl notext,{\an5\pos($x,$y)\bord0\shad0\p1}!_G.ke4.shape.rotate(_G.ke4.shape.rectangle, 15)!
+Comment: 0,0:00:00.00,0:00:05.00,KEShape,,0,0,0,template syl notext,{\an7\pos($sleft,$stop)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Comment: 0,0:00:00.00,0:00:05.00,KEText,,0,0,0,template line notext,{\an5\pos($lx,$ly)}!_G.ke4.text.upper(line.text_stripped)!
+Comment: 0,0:00:00.00,0:00:05.00,KEText,,0,0,0,template line notext,{\an5\pos($lx,!$ly+50!)\fs!_G.ke4.string.toval(\"5 + 7\")!\1c!_G.ke4.math.to16(255)!}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!
+Comment: 0,0:00:00.00,0:00:05.00,KEText,,0,0,0,template line notext,!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!
+Comment: 0,0:00:01.00,0:00:05.00,KE,,0,0,0,karaoke,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku
+Comment: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,karaoke,{\k18}to{\k22}o{\k35}ku{\k0} {\k27}ma{\k31}de{\k0} {\k40}a{\k19}ru{\k24}i{\k35}te{\k50}ku
+Comment: 0,0:00:01.00,0:00:05.00,KEText,,0,0,0,karaoke,{\k12}ki{\k14}mi{\k0} {\k20}to{\k0}  {\k33}so{\k21}ra{\k0} {\k45}wo{\k0} {\k38}mi{\k57}ta
+Dialogue: 0,0:00:00.74,0:00:01.00,KE,,0,0,0,fx,{\an5\pos(420,20)\fad(-250,0)}
+Dialogue: 0,0:00:01.00,0:00:04.55,KE,,0,0,0,fx,{\an5\pos(420,20)\fscx100}
+Dialogue: 0,0:00:00.83,0:00:01.00,KE,,0,0,0,fx,{\an5\pos(420,20)}
+Dialogue: 0,0:00:00.80,0:00:01.00,KE,,0,0,0,fx,{\an5\pos(442,20)\fad(-200,0)}ha
+Dialogue: 0,0:00:01.32,0:00:04.60,KE,,0,0,0,fx,{\an5\pos(442,20)\fscx100}ha
+Dialogue: 0,0:00:00.77,0:00:01.00,KE,,0,0,0,fx,{\an5\pos(442,66)}ha
+Dialogue: 0,0:00:00.86,0:00:01.32,KE,,0,0,0,fx,{\an5\pos(486,20)\fad(-150,0)}ru
+Dialogue: 0,0:00:01.60,0:00:04.65,KE,,0,0,0,fx,{\an5\pos(486,20)\fscx100}ru
+Dialogue: 0,0:00:00.71,0:00:01.32,KE,,0,0,0,fx,{\an5\pos(486,60)}ru
+Dialogue: 0,0:00:00.92,0:00:01.60,KE,,0,0,0,fx,{\an5\pos(530,20)\fad(-100,0)} 
+Dialogue: 0,0:00:01.60,0:00:04.70,KE,,0,0,0,fx,{\an5\pos(530,20)\fscx100} 
+Dialogue: 0,0:00:00.65,0:00:01.60,KE,,0,0,0,fx,{\an5\pos(530,20)} 
+Dialogue: 0,0:00:00.98,0:00:01.60,KE,,0,0,0,fx,{\an5\pos(552,20)\fad(-50,0)}no
+Dialogue: 0,0:00:02.01,0:00:04.75,KE,,0,0,0,fx,{\an5\pos(552,20)\fscx100}no
+Dialogue: 0,0:00:00.59,0:00:01.60,KE,,0,0,0,fx,{\an5\pos(552,79)}no
+Dialogue: 0,0:00:01.04,0:00:02.01,KE,,0,0,0,fx,{\an5\pos(596,20)\fad(0,0)} 
+Dialogue: 0,0:00:02.01,0:00:04.80,KE,,0,0,0,fx,{\an5\pos(596,20)\fscx100} 
+Dialogue: 0,0:00:00.53,0:00:02.01,KE,,0,0,0,fx,{\an5\pos(596,20)} 
+Dialogue: 0,0:00:01.10,0:00:02.01,KE,,0,0,0,fx,{\an5\pos(618,20)\fad(50,0)}ka
+Dialogue: 0,0:00:02.26,0:00:04.85,KE,,0,0,0,fx,{\an5\pos(618,20)\fscx100}ka
+Dialogue: 0,0:00:00.47,0:00:02.01,KE,,0,0,0,fx,{\an5\pos(618,56)}ka
+Dialogue: 0,0:00:01.13,0:00:02.26,KE,,0,0,0,fx,{\an5\pos(662,20)\fad(100,0)}ze
+Dialogue: 0,0:00:02.56,0:00:04.90,KE,,0,0,0,fx,{\an5\pos(662,20)\fscx100}ze
+Dialogue: 0,0:00:00.44,0:00:02.26,KE,,0,0,0,fx,{\an5\pos(662,63)}ze
+Dialogue: 0,0:00:01.07,0:00:02.56,KE,,0,0,0,fx,{\an5\pos(706,20)\fad(150,0)} 
+Dialogue: 0,0:00:02.56,0:00:04.95,KE,,0,0,0,fx,{\an5\pos(706,20)\fscx100} 
+Dialogue: 0,0:00:00.50,0:00:02.56,KE,,0,0,0,fx,{\an5\pos(706,20)} 
+Dialogue: 0,0:00:01.01,0:00:02.56,KE,,0,0,0,fx,{\an5\pos(728,20)\fad(200,0)}ga
+Dialogue: 0,0:00:03.01,0:00:05.00,KE,,0,0,0,fx,{\an5\pos(728,20)\fscx100}ga
+Dialogue: 0,0:00:00.56,0:00:02.56,KE,,0,0,0,fx,{\an5\pos(728,84)}ga
+Dialogue: 0,0:00:00.95,0:00:03.01,KE,,0,0,0,fx,{\an5\pos(772,20)\fad(250,0)} 
+Dialogue: 0,0:00:03.01,0:00:05.05,KE,,0,0,0,fx,{\an5\pos(772,20)\fscx100} 
+Dialogue: 0,0:00:00.62,0:00:03.01,KE,,0,0,0,fx,{\an5\pos(772,20)} 
+Dialogue: 0,0:00:00.89,0:00:03.01,KE,,0,0,0,fx,{\an5\pos(794,20)\fad(300,0)}fu
+Dialogue: 0,0:00:03.23,0:00:05.10,KE,,0,0,0,fx,{\an5\pos(794,20)\fscx100}fu
+Dialogue: 0,0:00:00.68,0:00:03.01,KE,,0,0,0,fx,{\an5\pos(794,51)}fu
+Dialogue: 0,0:00:00.83,0:00:03.23,KE,,0,0,0,fx,{\an5\pos(838,20)\fad(350,0)}ku
+Dialogue: 0,0:00:03.83,0:00:05.15,KE,,0,0,0,fx,{\an5\pos(838,20)\fscx100}ku
+Dialogue: 0,0:00:00.74,0:00:03.23,KE,,0,0,0,fx,{\an5\pos(838,106)}ku
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an5\pos(431,20)\bord0\shad0\p1}m 0 0 l 25.88 96.59 l 122.47 70.71 l 96.59 -25.88 l 0 0 
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an7\pos(431,20)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an5\pos(453,20)\bord0\shad0\p1}m 0 0 l 25.88 96.59 l 122.47 70.71 l 96.59 -25.88 l 0 0 
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an7\pos(431,20)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an5\pos(486,20)\bord0\shad0\p1}m 0 0 l 25.88 96.59 l 122.47 70.71 l 96.59 -25.88 l 0 0 
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an7\pos(475,20)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an5\pos(519,20)\bord0\shad0\p1}m 0 0 l 25.88 96.59 l 122.47 70.71 l 96.59 -25.88 l 0 0 
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an7\pos(497,20)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an5\pos(563,20)\bord0\shad0\p1}m 0 0 l 25.88 96.59 l 122.47 70.71 l 96.59 -25.88 l 0 0 
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an7\pos(563,20)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an5\pos(585,20)\bord0\shad0\p1}m 0 0 l 25.88 96.59 l 122.47 70.71 l 96.59 -25.88 l 0 0 
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an7\pos(563,20)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an5\pos(629,20)\bord0\shad0\p1}m 0 0 l 25.88 96.59 l 122.47 70.71 l 96.59 -25.88 l 0 0 
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an7\pos(607,20)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an5\pos(673,20)\bord0\shad0\p1}m 0 0 l 25.88 96.59 l 122.47 70.71 l 96.59 -25.88 l 0 0 
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an7\pos(673,20)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an5\pos(684,20)\bord0\shad0\p1}m 0 0 l 25.88 96.59 l 122.47 70.71 l 96.59 -25.88 l 0 0 
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an7\pos(673,20)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an5\pos(717,20)\bord0\shad0\p1}m 0 0 l 25.88 96.59 l 122.47 70.71 l 96.59 -25.88 l 0 0 
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an7\pos(695,20)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an5\pos(750,20)\bord0\shad0\p1}m 0 0 l 25.88 96.59 l 122.47 70.71 l 96.59 -25.88 l 0 0 
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an7\pos(739,20)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an5\pos(783,20)\bord0\shad0\p1}m 0 0 l 25.88 96.59 l 122.47 70.71 l 96.59 -25.88 l 0 0 
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an7\pos(761,20)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an5\pos(827,20)\bord0\shad0\p1}m 0 0 l 25.88 96.59 l 122.47 70.71 l 96.59 -25.88 l 0 0 
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,fx,{\an7\pos(805,20)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEText,,0,0,0,fx,{\an5\pos(640,20)}KIMI TO  SORA WO MITA{\an5\pos(640,20)}KIMI TO  SORA WO MITA{\an5\pos(640,20)}KIMI TO  SORA WO MITA{\an5\pos(640,20)}KIMI TO  SORA WO MITA{\an5\pos(640,20)}KIMI TO  SORA WO MITA{\an5\pos(640,20)}KIMI TO  SORA WO MITA{\an5\pos(640,20)}KIMI TO  SORA WO MITA{\an5\pos(640,20)}KIMI TO  SORA WO MITA{\an5\pos(640,20)}KIMI TO  SORA WO MITA{\an5\pos(640,20)}KIMI TO  SORA WO MITA{\an5\pos(640,20)}KIMI TO  SORA WO MITA{\an5\pos(640,20)}KIMI TO  SORA WO MITA
+Dialogue: 0,0:00:01.00,0:00:05.00,KEText,,0,0,0,fx,{\an5\pos(640,70)\fs!_G.ke4.string.toval(\"5 + 7\")!\1cFF}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!{\an5\pos(640,70)\fs!_G.ke4.string.toval(\"5 + 7\")!\1cFF}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!{\an5\pos(640,70)\fs!_G.ke4.string.toval(\"5 + 7\")!\1cFF}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!{\an5\pos(640,70)\fs!_G.ke4.string.toval(\"5 + 7\")!\1cFF}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!{\an5\pos(640,70)\fs!_G.ke4.string.toval(\"5 + 7\")!\1cFF}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!{\an5\pos(640,70)\fs!_G.ke4.string.toval(\"5 + 7\")!\1cFF}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!{\an5\pos(640,70)\fs!_G.ke4.string.toval(\"5 + 7\")!\1cFF}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!{\an5\pos(640,70)\fs!_G.ke4.string.toval(\"5 + 7\")!\1cFF}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!{\an5\pos(640,70)\fs!_G.ke4.string.toval(\"5 + 7\")!\1cFF}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!{\an5\pos(640,70)\fs!_G.ke4.string.toval(\"5 + 7\")!\1cFF}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!{\an5\pos(640,70)\fs!_G.ke4.string.toval(\"5 + 7\")!\1cFF}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!{\an5\pos(640,70)\fs!_G.ke4.string.toval(\"5 + 7\")!\1cFF}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KEText,,0,0,0,fx,!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!
