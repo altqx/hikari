@@ -1170,6 +1170,10 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>the elements are nested more than %1 deep at &quot;%2&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>it has no timed lyrics</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3161,6 +3165,77 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
 </context>
 <context>
+    <name>HikariSub.Karaoke</name>
+    <message>
+        <source>Syllable %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unclosed syllable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A karaoke tag has no duration, or its override block is never closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables don&apos;t match the Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The syllables last %1 s; the Line lasts %2 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zero-length syllable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllable outside the Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No karaoke problems found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke problems</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detail</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1: %2. %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Re-check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Zamknij</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.MainWindow</name>
     <message>
         <source>%1 - HikariSub</source>
@@ -3877,6 +3952,14 @@ Nie udało się skopiować %2 czcionek.</translation>
     <message>
         <source>Converts from one format to another</source>
         <translation>Konwersja z jednego formatu napisów na inny</translation>
+    </message>
+    <message>
+        <source>Checks the karaoke syllables of every Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check karaoke</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Hide tags in the line editor</source>
