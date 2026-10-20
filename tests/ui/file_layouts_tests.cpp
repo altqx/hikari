@@ -219,7 +219,7 @@ private slots:
         engine.reset();
         application.reset();
         for (const char *name : {"layout.json", "layout.json.bak", "layout.json.unrestored", "layout.json.tab.unrestored",
-                                 "LastSession.txt", "hikari.ini"})
+                                 "layouts.json", "LastSession.txt", "hikari.ini"})
             QFile::remove(path(name));
     }
 
@@ -1078,6 +1078,48 @@ private slots:
         const auto session = readSession(application->lastSessionPath());
         QCOMPARE(session.tabs.size(), std::size_t(1));
         QVERIFY(!session.tabs[0].layout.empty());
+        stop();
+    }
+
+    // WS3: the section keeps the saved layout the arrangement started from,
+    // as the Session does: a file opened where that layout is saved starts
+    // from it (Reset this layout returns to it); where it is not, from its
+    // preset alone.
+    void aFileKeepsTheSavedLayoutItStartedFrom()
+    {
+        const QString file = write(path("saved.ass"), kAss);
+        start();
+        QVERIFY(application->openFile(file));
+        applyPreset("Timing");
+        QTRY_COMPARE(preset(), QStringLiteral("Timing"));
+        float_("audioDock", true);
+        QVERIFY(application->workspaceLayout().saveLayoutAs(QStringLiteral("Review")));
+        QCOMPARE(application->workspaceLayout().layout(), QStringLiteral("Review"));
+        save(file);
+        const QJsonObject envelope =
+            QJsonDocument::fromJson(QByteArray::fromBase64(layoutLine(readAll(file)))).object();
+        QCOMPARE(envelope.value(QStringLiteral("layout")).toString(), QStringLiteral("Review"));
+        QCOMPARE(envelope.value(QStringLiteral("preset")).toString(), QStringLiteral("Timing"));
+
+        QVERIFY(application->openFile(write(path("copy.ass"), readAll(file))));
+        QCOMPARE(application->tabs().size(), qsizetype(2));
+        application->selectTab(1);
+        QTRY_VERIFY(isFloating("audioDock"));
+        QCOMPARE(application->workspaceLayout().layout(), QStringLiteral("Review"));
+        QCOMPARE(preset(), QStringLiteral("Timing"));
+
+        // Deleted here: the next file opened has the arrangement and preset only.
+        QVERIFY(application->workspaceLayout().deleteSavedLayout(QStringLiteral("Review")));
+        QVERIFY(application->openFile(write(path("elsewhere.ass"), readAll(file))));
+        QCOMPARE(application->tabs().size(), qsizetype(3));
+        application->selectTab(2);
+        QTRY_VERIFY(isFloating("audioDock"));
+        QVERIFY(application->workspaceLayout().layout().isEmpty());
+        QCOMPARE(preset(), QStringLiteral("Timing"));
+        // One saved again under that name is not the earlier tabs' origin.
+        QVERIFY(application->workspaceLayout().saveLayoutAs(QStringLiteral("Review")));
+        application->selectTab(1);
+        QTRY_VERIFY(application->workspaceLayout().layout().isEmpty());
         stop();
     }
 };
