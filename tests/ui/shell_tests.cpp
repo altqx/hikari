@@ -716,13 +716,16 @@ private slots:
         // colour scheme; the tests set it themselves (an unknown scheme keeps
         // the chosen theme, Dark by default).
         ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown);
+    }
+    void init()
+    {
+        // The shared files as written, for every function: one that saves
+        // them (KB3 runs every binding, Save included) would hand the next
+        // its Lines and, with WS2, its panel arrangement.
         episode = writeFile(dir, "episode.ass",
                             "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n"
                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
         original = writeFile(dir, "original.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,ref\n");
-    }
-    void init()
-    {
         application = new app::Application;
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);
