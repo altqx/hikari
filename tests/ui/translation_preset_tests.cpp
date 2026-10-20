@@ -384,6 +384,34 @@ private slots:
         stop();
     }
 
+    // Moving tags turned on from a floating Original text panel gives the
+    // Translated field the focus in the main window, which it activates.
+    void movingTagsFocusReachesTheMainWindow()
+    {
+        start();
+        QFile f(dir.filePath(QStringLiteral("tags.ass")));
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: TLMode Original\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Comment: 0,0:00:01.00,0:00:02.00,TLMode Original,,0,0,0,,{\\i1}Wall\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(f.fileName()));
+        QTRY_VERIFY(isOpen("originalDock"));
+        QVERIFY(dock("originalDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(isFloating("originalDock"));
+        QQuickWindow *floating = item("originalPanel")->window();
+        QVERIFY(floating && floating != window());
+        floating->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), floating);
+        item("lineText")->forceActiveFocus();
+        application->setMoveTags(true);
+        QTRY_COMPARE(QGuiApplication::focusWindow(), window());
+        QTRY_VERIFY(item("translationText")->hasActiveFocus());
+        application->setMoveTags(false);
+        stop();
+    }
+
     // Outside translation mode nothing opens the Original text panel: not
     // View > Panels, not Move panel (its Move button is disabled for it).
     void theOriginalPanelOpensInTranslationModeOnly()

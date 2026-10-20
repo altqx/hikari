@@ -1933,10 +1933,11 @@ ApplicationWindow {
                 if (root.editor.selectionRole === field.role)
                     field.select(root.editor.selectionStart, root.editor.selectionEnd)
             }
-            // E5: Moving tags gives the Translated field the focus.
+            // E5: Moving tags gives the Translated field the focus, in its
+            // window (the Original text panel may float in another).
             function onFieldFocusRequested(role) {
                 if (role === field.role)
-                    field.forceActiveFocus()
+                    root.focusPanel(field, Qt.OtherFocusReason)
             }
         }
         // F3: the spell-checked field (legacy TextEdit: the Translated one in
@@ -2606,7 +2607,7 @@ ApplicationWindow {
                         onClicked: {
                             if (root.hotkeyGesture("GLOBAL_PLAY_ACTUAL_LINE", 0, "bitmap"))
                                 return
-                            lineText.forceActiveFocus()
+                            root.focusPanel(lineText, Qt.OtherFocusReason) // TM1: maybe in a floating panel
                             root.video.playActualLine()
                         }
                     }
@@ -6209,7 +6210,7 @@ ApplicationWindow {
         case "GLOBAL_QUIT": root.close(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE": // the video panel's "Play the current line"
             if (root.video.hasVideo) {
-                lineText.forceActiveFocus()
+                root.focusPanel(lineText, Qt.OtherFocusReason) // TM1: maybe in a floating panel
                 root.video.playActualLine()
             }
             return true
