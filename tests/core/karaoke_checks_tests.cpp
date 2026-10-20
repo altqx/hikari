@@ -149,6 +149,11 @@ TEST(KaraokeChecks, SignedAndOversizedValuesRead)
     // Parentheses as the tag parser reads them; a fraction is dropped, as the
     // karaoke the application plays drops it (50.5 + 49.5 is 99 cs).
     EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k(50)}a{\\kf(+50)}b")).empty());
+    // Inside parentheses, whitespace before the number is skipped, as atoi
+    // skips it; outside them a value starts at once.
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k( 50)}a{\\kf(\t +50)}b")).empty());
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k(  )}a{\\k100}b")),
+              (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}}));
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k50.5}a{\\K49.5}b")),
               (std::vector<Found>{{0, Kind::TotalNotDuration, 990, 1000, {}}}));
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k12.34}a")),

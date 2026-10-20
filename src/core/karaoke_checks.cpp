@@ -89,10 +89,13 @@ Syllables syllablesOf(u8sv text)
             std::size_t j = karaokeValue(block, i);
             if (j == u8sv::npos)
                 continue;
-            // The value: "(" optional, a sign, digits and a fraction.
+            // The value: "(" optional, a sign, digits and a fraction. Inside
+            // parentheses the tag parser hands atoi all up to ")", and atoi
+            // skips leading whitespace ("\k( 100)" is 100).
             const bool parenthesised = j < block.size() && block[j] == u8'(';
             if (parenthesised)
-                ++j;
+                for (++j; j < block.size() && (block[j] == u8' ' || (block[j] >= 9 && block[j] <= 13)); ++j) {
+                }
             const bool negative = j < block.size() && block[j] == u8'-';
             if (j < block.size() && (block[j] == u8'-' || block[j] == u8'+'))
                 ++j;
