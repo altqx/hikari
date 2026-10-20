@@ -165,11 +165,13 @@ std::optional<std::int64_t> lrcTime(u8sv text)
             n = n * 10 + (c - u8'0');
         return n;
     };
+    // The first part may run past 59 ("[75:02.00]"); the others are a
+    // clock's minutes and seconds.
     std::int64_t ms = 0;
-    for (u8sv part : parts) {
-        if (!digits(part))
+    for (std::size_t i = 0; i < parts.size(); ++i) {
+        if (!digits(parts[i]) || (i > 0 && value(parts[i]) >= 60))
             return std::nullopt;
-        ms = ms * 60 + value(part);
+        ms = ms * 60 + value(parts[i]);
     }
     ms *= 1000;
     if (!fraction.empty()) {
@@ -257,9 +259,9 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
     std::vector<LrcEntry> entries;
     std::size_t lineNumber = 0;
     for (std::size_t from = 0; from <= all.size();) {
-        const std::size_t newline = all.find(u8'\n', from);
-        const u8sv raw = all.substr(from, newline == u8sv::npos ? u8sv::npos : newline - from);
-        from = newline == u8sv::npos ? all.size() + 1 : newline + 1;
+        const auto [newline, next] = detail::lineAt(all, from);
+        const u8sv raw = all.substr(from, newline - from);
+        from = next;
         ++lineNumber;
         if (!detail::validUtf8(reinterpret_cast<const std::byte *>(raw.data()), raw.size()))
             return std::unexpected(LyricsProblem{Kind::NotUtf8, lineNumber, {}});

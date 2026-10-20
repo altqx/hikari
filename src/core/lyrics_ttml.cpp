@@ -136,7 +136,8 @@ public:
     {
         if (m_s.starts_with(u8"\xEF\xBB\xBF"))
             m_pos = 3;
-        if (auto skipped = skipMisc(); !skipped)
+        m_start = m_pos;
+        if (auto skipped = skipMisc(true); !skipped)
             return std::unexpected(skipped.error());
         if (at(u8"<") && !at(u8"</"))
             return element();
@@ -149,8 +150,9 @@ private:
 
     void advance(std::size_t n)
     {
+        // A line ends at LF, CRLF or a lone CR, as XML ends lines.
         for (std::size_t end = std::min(m_s.size(), m_pos + n); m_pos < end; ++m_pos)
-            if (m_s[m_pos] == u8'\n')
+            if (m_s[m_pos] == u8'\n' || (m_s[m_pos] == u8'\r' && (m_pos + 1 == m_s.size() || m_s[m_pos + 1] != u8'\n')))
                 ++m_line;
     }
 
@@ -164,7 +166,7 @@ private:
     LyricsProblem broken() const
     {
         u8sv rest = m_s.substr(std::min(m_pos, m_s.size()));
-        std::size_t n = std::min<std::size_t>(rest.find_first_of(u8">\n"), 40);
+        std::size_t n = std::min<std::size_t>(rest.find_first_of(u8">\r\n"), 40);
         if (n < rest.size() && rest[n] == u8'>')
             ++n;
         while (n < rest.size() && n > 0 && (static_cast<unsigned char>(rest[n]) & 0xC0) == 0x80)
@@ -185,6 +187,26 @@ private:
         return true;
     }
 
+    // A processing instruction, from its "<?": a target name, then a space
+    // or "?>". The target "xml" (in any case) is the XML declaration's,
+    // written in lower case at the very start of the file.
+    bool skipPi()
+    {
+        const bool first = m_pos == m_start;
+        advance(2);
+        const auto target = name();
+        if (!target)
+            return false;
+        std::u8string lower = *target;
+        for (char8_t &c : lower)
+            c = c >= u8'A' && c <= u8'Z' ? static_cast<char8_t>(c - u8'A' + u8'a') : c;
+        if (lower == u8"xml" && (!first || *target != u8"xml"))
+            return false;
+        if (!at(u8"?>") && (done() || !isSpace(m_s[m_pos])))
+            return false;
+        return skipPast(u8"?>");
+    }
+
     bool skipPast(u8sv terminator)
     {
         const std::size_t end = m_s.find(terminator, m_pos);
@@ -194,28 +216,52 @@ private:
         return true;
     }
 
-    // Whitespace, comments, processing instructions and a DOCTYPE between
-    // the top-level parts of the file.
-    std::expected<void, LyricsProblem> skipMisc()
+    // Whitespace, comments and processing instructions between the
+    // top-level parts of the file, and in the prolog (before the root
+    // element) one DOCTYPE: "<!DOCTYPE", a space and the root's name, then
+    // anything up to its ">" outside the internal subset's brackets.
+    std::expected<void, LyricsProblem> skipMisc(bool prolog)
     {
         for (;;) {
             skipSpace();
             const auto start = std::pair{m_pos, m_line};
             bool ok = true;
             if (at(u8"<?"))
-                ok = skipPast(u8"?>");
+                ok = skipPi();
             else if (at(u8"<!--"))
                 ok = skipComment();
             else if (at(u8"<!DOCTYPE")) {
-                int depth = 0;
-                for (ok = false; !done(); advance(1)) {
-                    const char8_t c = m_s[m_pos];
-                    depth += c == u8'[' ? 1 : c == u8']' ? -1 : 0;
-                    if (c == u8'>' && depth <= 0) {
-                        advance(1);
-                        ok = true;
+                ok = prolog && !m_doctype;
+                m_doctype = true;
+                if (ok) {
+                    advance(9);
+                    ok = !done() && isSpace(m_s[m_pos]);
+                    skipSpace();
+                    ok = ok && name().has_value();
+                }
+                // Quoted literals (system ids, entity values) and comments
+                // in the internal subset may hold "]" and ">".
+                for (int depth = 0; ok;) {
+                    if (done()) {
+                        ok = false;
                         break;
                     }
+                    const char8_t c = m_s[m_pos];
+                    if (c == u8'"' || c == u8'\'') {
+                        const std::size_t close = m_s.find(c, m_pos + 1);
+                        ok = close != u8sv::npos;
+                        if (ok)
+                            advance(close + 1 - m_pos);
+                        continue;
+                    }
+                    if (depth > 0 && at(u8"<!--")) {
+                        ok = skipComment();
+                        continue;
+                    }
+                    depth += c == u8'[' ? 1 : c == u8']' ? -1 : 0;
+                    advance(1);
+                    if (c == u8'>' && depth <= 0)
+                        break;
                 }
             } else
                 return {};
@@ -314,7 +360,7 @@ private:
                 XmlNode node = std::move(open.back());
                 open.pop_back();
                 if (open.empty()) {
-                    if (auto skipped = skipMisc(); !skipped)
+                    if (auto skipped = skipMisc(false); !skipped)
                         return std::unexpected(skipped.error());
                     if (!done())
                         return std::unexpected(broken());
@@ -323,7 +369,7 @@ private:
                 open.back().children.push_back(std::move(node));
             } else if (at(u8"<!--") || at(u8"<?")) {
                 const auto start = std::pair{m_pos, m_line};
-                if (!(at(u8"<?") ? skipPast(u8"?>") : skipComment())) {
+                if (!(at(u8"<?") ? skipPi() : skipComment())) {
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken());
                 }
@@ -405,7 +451,7 @@ private:
                 if (!empty) {
                     open.push_back(std::move(node));
                 } else if (open.empty()) {
-                    if (auto skipped = skipMisc(); !skipped)
+                    if (auto skipped = skipMisc(false); !skipped)
                         return std::unexpected(skipped.error());
                     if (!done())
                         return std::unexpected(broken());
@@ -451,6 +497,8 @@ private:
     std::size_t m_pos = 0;
     std::size_t m_line = 1;
     std::size_t m_nodesLeft = 0;
+    std::size_t m_start = 0; // after the byte order mark
+    bool m_doctype = false;
 };
 
 // A TTML time: clock time ("hh:mm:ss.fff", and the "mm:ss.fff" and
@@ -506,7 +554,7 @@ std::optional<std::int64_t> ttmlTime(u8sv text)
         if (!last && parts[i].find(u8'.') != u8sv::npos)
             return std::nullopt;
         const auto n = decimal(parts[i]);
-        if (!n)
+        if (!n || (i > 0 && *n >= 60)) // a clock's minutes and seconds
             return std::nullopt;
         seconds = seconds * 60 + *n;
     }
@@ -763,9 +811,11 @@ private:
                     return std::unexpected(LyricsProblem{Kind::MissingTime, words.lines[i], words.words[i].text});
                 words.words[i].end = *wordEnd;
             }
-            const u8sv leading = detail::trim(words.leading);
+            // The text before the first word, joined to it as written:
+            // "hello<span>world" stays one word, "hello <span>" two.
+            const u8sv leading = detail::trimLeft(words.leading);
             if (!leading.empty())
-                words.words.front().text.insert(0, std::u8string(leading) + u8" ");
+                words.words.front().text.insert(0, std::u8string(leading));
             out.start = std::min(own->first.value_or(words.words.front().begin), words.words.front().begin);
             out.end = std::max(own->second.value_or(words.words.back().end), words.words.back().end);
             out.words = std::move(words.words);
@@ -773,9 +823,21 @@ private:
                 return ok;
         }
         for (const XmlNode *background : backgrounds)
-            if (auto ok = line(*background, begin, end, actor); !ok)
+            if (auto ok = line(*background, begin, end, actorOf(*background, actor)); !ok)
                 return ok;
         return {};
+    }
+
+    // The Actor of a <p> or a background span: its agent's name, or the
+    // agent's id when it has no name; without an agent, `inherited` (a
+    // background vocal is its paragraph's singer unless it names its own).
+    std::u8string actorOf(const XmlNode &node, const std::u8string &inherited) const
+    {
+        const auto agent = attribute(node, u8"agent");
+        if (!agent)
+            return inherited;
+        const auto name = m_agents.find(std::u8string(*agent));
+        return name != m_agents.end() && !name->second.empty() ? name->second : std::u8string(*agent);
     }
 
     // A Line, if the budget has room for it.
@@ -804,12 +866,7 @@ private:
             if (child.isText())
                 continue;
             if (localName(child.name) == u8"p") {
-                const auto agent = attribute(child, u8"agent");
-                const auto name = agent ? m_agents.find(std::u8string(*agent)) : m_agents.end();
-                const std::u8string actor = name != m_agents.end() && !name->second.empty() ? name->second
-                                            : agent                                         ? std::u8string(*agent)
-                                                                                            : std::u8string();
-                if (auto ok = line(child, begin, end, actor); !ok)
+                if (auto ok = line(child, begin, end, actorOf(child, {})); !ok)
                     return ok;
             } else if (auto ok = paragraphs(child, begin, end); !ok) {
                 return ok;
@@ -831,7 +888,7 @@ std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> b
     const u8sv text(reinterpret_cast<const char8_t *>(bytes.data()), bytes.size());
     std::size_t line = 1;
     for (std::size_t from = 0; from <= text.size(); ++line) {
-        const std::size_t newline = std::min(text.find(u8'\n', from), text.size());
+        const auto [newline, next] = detail::lineAt(text, from);
         if (!detail::validUtf8(bytes.data() + from, newline - from))
             return std::unexpected(LyricsProblem{Kind::NotUtf8, line, {}});
         // Characters XML forbids, written as they are: control characters
@@ -845,7 +902,7 @@ std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> b
                 return std::unexpected(LyricsProblem{Kind::NotWellFormed, line,
                                                      codePointName(static_cast<unsigned char>(text[i + 2]) == 0xBE ? 0xFFFE : 0xFFFF)});
         }
-        from = newline + 1;
+        from = next;
     }
     const auto root = XmlReader(text).document();
     if (!root)

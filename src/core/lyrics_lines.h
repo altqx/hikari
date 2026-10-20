@@ -6,9 +6,12 @@
 #include "hikari/core/document.h"
 #include "hikari/core/lyrics_import.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 namespace hikari::core::detail {
@@ -52,6 +55,15 @@ inline bool spend(LyricSheet &sheet, std::size_t textBytes, std::size_t actorByt
 // The latest time either format may give (100 hours), so no arithmetic on
 // a time can overflow.
 inline constexpr std::int64_t kLatestLyricsTime = 360'000'000;
+
+// Where the line from `from` ends, and where the next one starts: a line
+// ends at LF, CRLF or a lone CR (as XML ends lines; old Mac LRC files).
+inline std::pair<std::size_t, std::size_t> lineAt(std::u8string_view text, std::size_t from)
+{
+    const std::size_t end = std::min(text.find_first_of(u8"\r\n", from), text.size());
+    const bool crlf = end + 1 < text.size() && text[end] == u8'\r' && text[end + 1] == u8'\n';
+    return {end, end + (crlf ? 2 : 1)};
+}
 
 // Lyrics text as ASS shows it literally: "{" and "}" would open and close
 // override blocks, so they become "\uFF5B" and "\uFF5D", and a word joiner
