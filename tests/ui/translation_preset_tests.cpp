@@ -503,6 +503,37 @@ private slots:
         stop();
     }
 
+    // The same with the Original text panel in front of the Line editor in
+    // one tab group: the Line editor's tab comes to the front.
+    void movingTagsFocusRaisesTheLineEditorTab()
+    {
+        start();
+        QFile f(dir.filePath(QStringLiteral("tags.ass")));
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: TLMode Original\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Comment: 0,0:00:01.00,0:00:02.00,TLMode Original,,0,0,0,,{\\i1}Wall\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(f.fileName()));
+        QTRY_VERIFY(isOpen("originalDock"));
+        QVariant placed;
+        QVERIFY(QMetaObject::invokeMethod(window(), "placePanel", Q_RETURN_ARG(QVariant, placed),
+                                          Q_ARG(QVariant, QVariant::fromValue(dock("originalDock"))), Q_ARG(QVariant, 0),
+                                          Q_ARG(QVariant, QVariant::fromValue(dock("editorDock")))));
+        QVERIFY(placed.toBool());
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        QTRY_VERIFY(original->isVisible());
+        QTRY_VERIFY(!translated->isVisible());
+        original->forceActiveFocus();
+        application->setMoveTags(true);
+        QTRY_VERIFY(translated->isVisible());
+        QTRY_VERIFY(translated->hasActiveFocus());
+        application->setMoveTags(false);
+        stop();
+    }
+
     // Outside translation mode nothing opens the Original text panel: not
     // View > Panels, not Move panel (its Move button is disabled for it).
     void theOriginalPanelOpensInTranslationModeOnly()
