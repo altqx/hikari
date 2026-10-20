@@ -16540,6 +16540,20 @@ private slots:
         QCOMPARE(session->historySize(), steps);
         QCOMPARE(thirdText(), beforeEsc);
         QTRY_COMPARE(field("fscy")->property("text").toString(), QStringLiteral("115"));
+        // A scrub past zero (Codex on #293): the samples below it are
+        // refused, the field and the release keep the last one taken, one
+        // step and no gesture left open.
+        steps = session->historySize();
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, y0);
+        QTest::mouseMove(window, y0 - QPoint(5, 0));
+        QTRY_COMPARE(field("fscy")->property("text").toString(), QStringLiteral("110"));
+        QTest::mouseMove(window, y0 - QPoint(120, 0));
+        QTest::qWait(50);
+        QCOMPARE(field("fscy")->property("text").toString(), QStringLiteral("110"));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, y0 - QPoint(120, 0));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QVERIFY2(thirdText().contains(QStringLiteral("\\fscy110")), qPrintable(thirdText()));
+        QVERIFY(!tools.gestureActive());
 
         // A narrow panel wraps the groups onto more lines; the picker stays.
         // (The window is at least 800 wide, the Video panel all of it here:

@@ -277,6 +277,7 @@ private:
     std::optional<QPointF> m_lastPointer; // the last pointer event's position, until it leaves
     QFont m_labelFont;
     QString m_copied;
+    bool m_valueScrub = false; // a scrub's samples staged the open gesture (VT1)
     qreal m_logicalWidth = 0, m_logicalHeight = 0, m_logicalPanel = 0;
     std::uint64_t m_seenRevision = 0;
     const void *m_seenSession = nullptr;

@@ -86,13 +86,17 @@ RowLayout {
                 lastX = x
                 active = true
                 const step = field.value.step * ((mouse.modifiers & Qt.ShiftModifier) ? 0.1 : 1)
-                current += Math.round(dx) * step
-                const text = field.format(current)
+                const next = current + Math.round(dx) * step
+                const text = field.format(next)
                 if (text === sent)
                     return
+                // A sample the tool refuses (Scale below zero) is not taken:
+                // the field and the release keep the last one it showed.
+                if (!field.tools.scrubValue(field.name, text))
+                    return
+                current = next
                 sent = text
                 input.text = text
-                field.tools.scrubValue(field.name, text)
             }
             onReleased: {
                 if (active && !cancelled && sent.length > 0)
@@ -158,11 +162,15 @@ RowLayout {
             color: Theme.muted
         }
     }
+    // A read-only value keeps a coordinate's width, right-aligned, so the
+    // groups after it do not move as the pointer crosses the video.
     Label {
         objectName: field.editable ? "" : "visualValue_" + field.name
         visible: !field.editable
         text: field.value.text
         font.features: { "tnum": 1 }
+        horizontalAlignment: Text.AlignRight
+        Layout.preferredWidth: Math.max(implicitWidth, Math.ceil(numberWidth.width))
         Layout.rightMargin: 4
         Accessible.name: field.accessibleName
     }

@@ -23,6 +23,7 @@
 #include <QVariantMap>
 
 #include <cmath>
+#include <utility>
 
 namespace hikari::ui {
 
@@ -287,6 +288,7 @@ std::expected<void, application::CommandRefusal> VisualToolsController::commitGe
 
 bool VisualToolsController::escape()
 {
+    m_valueScrub = false;
     if (!m_gesture) {
         // T3: with no gesture open Esc drops a tool's pending step (the
         // first of RotationZ's two points, the card's evidence on #178).
@@ -841,6 +843,11 @@ bool VisualToolsController::setValue(const QString &name, const QString &text)
     if (!t || !m_railEnabled)
         return false;
     const bool done = t->setValue(name.toStdString(), text.toStdU16String(), *this, ValueEdit::Commit);
+    // A scrub's release the tool refuses (a value out of its range) leaves
+    // nothing staged behind: its gesture is dropped, as by Esc.
+    const bool scrubbed = std::exchange(m_valueScrub, false);
+    if (!done && scrubbed && m_gesture)
+        escape();
     emit changed();
     emit overlayChanged();
     return done;
@@ -854,6 +861,7 @@ bool VisualToolsController::scrubValue(const QString &name, const QString &text)
     if (!t || !m_railEnabled)
         return false;
     const bool done = t->setValue(name.toStdString(), text.toStdU16String(), *this, ValueEdit::Sample);
+    m_valueScrub = m_valueScrub || (done && m_gesture);
     emit changed();
     emit overlayChanged();
     return done;
