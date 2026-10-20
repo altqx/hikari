@@ -5,7 +5,7 @@
 #   -Action fresh       set the profile aside (never deleted); a HikariSub left over from
 #                       an earlier run is ended first (the harness ends its own with `winix ui kill`)
 #   -Action restore     GATE_PROFILE_FROM: put a set-aside profile back (the current one is set aside)
-#   -Action status      ALIVE yes|no, the layout files
+#   -Action status      ALIVE yes|no, the layout files (layout.json*, WS3's layouts.json*)
 #   -Action fullscreen  GATE_FULLSCREEN=on|left|off: the main window borderless over the whole monitor,
 #                       on the left GATE_LEFT_WIDTH pixels of its work area (frame kept), or back
 #   -Action dpi         GATE_DPI_PERCENT: the display scale of the primary monitor, live (DPI_RESULT line)
@@ -169,7 +169,7 @@ switch ($Action) {
         Write-Output "ALIVE $(if ($procs.Count) { 'yes' } else { 'no' })"
         $procs | ForEach-Object { Write-Output "process $($_.Id) responding=$($_.Responding) $($_.MainWindowTitle)" }
         Write-Output '== layout files'
-        Get-ChildItem $profileDirs.local -Filter 'layout.json*' -ErrorAction SilentlyContinue |
+        Get-ChildItem $profileDirs.local -Filter 'layout*.json*' -ErrorAction SilentlyContinue |
             ForEach-Object { Write-Output "$($_.FullName) $($_.Length) $($_.LastWriteTime.ToString('s'))" }
         Write-Output '== end'
     }

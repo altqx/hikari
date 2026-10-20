@@ -8,7 +8,7 @@ On 2026-10-18 altqx decided, in the wave-6 review of their UX feedback ([#213](h
 
 - **Switching tabs swaps the arrangement with the content**, the way each tab already gets its own video, audio and position back. Docked, tabbed and floating panels and their sizes are the tab's. The main window keeps its geometry; the engine restores the tab's layout in place, and nothing moves when both tabs show the same arrangement.
 - **A new or opened tab** starts with the Translation preset when its file has `TLMode: Yes`, otherwise with a copy of the current tab's arrangement. Opening a file into the current tab counts as opening it.
-- **Presets, Reset layout, the View arrangements and the layout backup** change only the current tab.
+- **Presets, Reset layout, the View arrangements and the layout backup** change only the current tab. (WS3 later retired the View arrangements; applying a saved layout changes only the current tab too.)
 - **The Session saves each tab's arrangement** on a `Layout:` line of its own (WS1-session-layout in the [compatibility decisions](../qt/compatibility-decisions.md)); legacy skips the line. An invalid arrangement, or one the engine restores only in part, gives that tab the Editing preset with a notice, and the rejected text is kept for diagnosis, as the saved layout file already is.
 - **The saved layout file** beside the settings holds the arrangement shown last. A start without a Session gives it to the first tab.
 
