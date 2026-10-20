@@ -30,6 +30,11 @@
 -- Aegisub Automation 4 Lua karaoke templater tool
 -- Parse and apply a karaoke effect written in ASS karaoke template language
 -- See help file and wiki for more information on this
+--
+-- HikariSub's copy of Karaoke Templater 2.1.7 as Aegisub 3.2.2 shipped it: templates
+-- give the same output as there, byte for byte (tests/backends/karaoke-corpus).
+-- HikariSub's changes (KE1, docs/qt/karaoke-templater.md):
+-- * the macro is offered when any Line is a template, not only one of the first 50
 
 local tr = aegisub.gettext
 
@@ -837,19 +842,12 @@ end
 
 function macro_can_template(subs)
 	-- check if this file has templates in it, don't allow running the macro if it hasn't
-	local num_dia = 0
+	-- (every Line is looked at: 2.1.7 gave up after the first 50 dialogue lines)
 	for i = 1, #subs do
 		local l = subs[i]
-		if l.class == "dialogue" then
-			num_dia = num_dia + 1
-			-- test if the line is a template
-			if (string.headtail(l.effect)):lower() == "template" then
-				return true
-			end
-			-- don't try forever, this has to be fast
-			if num_dia > 50 then
-				return false
-			end
+		-- test if the line is a template
+		if l.class == "dialogue" and (string.headtail(l.effect)):lower() == "template" then
+			return true
 		end
 	end
 	return false

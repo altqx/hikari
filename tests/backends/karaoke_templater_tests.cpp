@@ -222,4 +222,41 @@ TEST_F(KaraokeTemplater, BundledTemplaterMatchesAegisub322ByteForByte)
     }
 }
 
+
+// KE1-no-50-line-gate: stock 2.1.7 offers the macro only when a template is
+// among the first 50 dialogue lines; HikariSub looks at every Line.
+TEST_F(KaraokeTemplater, MacroIsOfferedWhereverTheTemplateIs)
+{
+    const auto validates = [&](const QString &script) {
+        auto loaded = hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/late-template.ass")));
+        hikari::application::EditSession session(std::move(loaded.document));
+        auto host = load(script);
+        const auto snapshot = hikari::application::snapshotForMacro(session);
+        run = {};
+        EXPECT_TRUE(host->validate(macro(*host, "Apply karaoke template"), *snapshot));
+        EXPECT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+        return run.outcome == LuaScriptHost::RunOutcome::Ok;
+    };
+    EXPECT_FALSE(validates(pristineScript())) << "stock refuses a template after the first 50 Lines";
+    EXPECT_TRUE(validates(bundledScript()));
+}
+
+// Without any template the macro is still not offered.
+TEST_F(KaraokeTemplater, MacroIsNotOfferedWithoutATemplate)
+{
+    std::string text = textOf(readBytes(corpusDir() + QStringLiteral("/late-template.ass")));
+    const auto at = text.find("Comment: 0,0:00:00.00,0:00:05.00,Late,,0,0,0,template syl");
+    ASSERT_NE(at, std::string::npos);
+    text.erase(at);
+    std::vector<std::byte> bytes(text.size());
+    std::memcpy(bytes.data(), text.data(), text.size());
+    hikari::application::EditSession session(hikari::core::loadAss(bytes).document);
+    auto host = load(bundledScript());
+    const auto snapshot = hikari::application::snapshotForMacro(session);
+    run = {};
+    ASSERT_TRUE(host->validate(macro(*host, "Apply karaoke template"), *snapshot));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+}
+
 } // namespace
