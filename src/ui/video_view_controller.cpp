@@ -52,9 +52,9 @@ void VideoViewController::setPlayer(application::GeneralPlayerPort *player)
 
 void VideoViewController::applyVolume()
 {
-    // VideoBox::OnVolume / OpenVideo: SetVolume(-(pos * pos)).
+    // VideoBox::OnVolume / OpenVideo: SetVolume(-(pos * pos)); FS1: silent while muted.
     if (m_player)
-        m_player->setVolume(application::videoVolumeGain(volume()));
+        m_player->setVolume(m_muted ? 0.0 : application::videoVolumeGain(volume()));
 }
 
 bool VideoViewController::zoomMode() const
@@ -274,9 +274,21 @@ bool VideoViewController::stepVolume(bool up)
 
 void VideoViewController::setVolume(int volume)
 {
+    if (m_muted) { // FS1: a new volume is heard
+        m_muted = false;
+        applyVolume();
+        emit changed();
+    }
     if (volume == this->volume())
         return;
     m_settings.set("video.volume", volume); // applied through the store's change
+}
+
+void VideoViewController::toggleMute()
+{
+    m_muted = !m_muted;
+    applyVolume();
+    emit changed();
 }
 
 int VideoViewController::aspectSliderValue() const

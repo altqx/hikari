@@ -55,6 +55,10 @@ class VideoViewController : public QObject {
     // The zoom mode's cursor near an edge: 0 arrow, 1 west-east, 2 north-south.
     Q_PROPERTY(int zoomCursor READ zoomCursor NOTIFY changed)
     Q_PROPERTY(int volume READ volume NOTIFY changed)
+    // FS1-speaker-gestures: the player's output is muted (the fullscreen
+    // speaker's click); not saved, the volume kept. A change of the volume
+    // (slider, wheel, keys) unmutes.
+    Q_PROPERTY(bool muted READ muted NOTIFY changed)
     Q_PROPERTY(bool progressBar READ progressBar NOTIFY changed)
     // A paused frame to take a snapshot of (legacy GetState() == Paused).
     Q_PROPERTY(bool canSnapshot READ canSnapshot NOTIFY changed)
@@ -82,6 +86,7 @@ public:
     QRectF zoomBounds() const;
     int zoomCursor() const { return m_zoomCursor; }
     int volume() const;
+    bool muted() const { return m_muted; }
     bool progressBar() const;
     bool canSnapshot() const;
     QString lastSnapshot() const { return m_lastSnapshot; }
@@ -129,6 +134,8 @@ public:
     // VIDEO_VOLUME_PLUS / VIDEO_VOLUME_MINUS; the slider.
     Q_INVOKABLE bool stepVolume(bool up);
     Q_INVOKABLE void setVolume(int volume);
+    // FS1: the speaker's click.
+    Q_INVOKABLE void toggleMute();
 
     // AspectRatioDialog: the slider's value for the current aspect ratio,
     // the label for a value, and a moved slider.
@@ -164,6 +171,7 @@ private:
     QString m_lastSnapshot;
     bool m_fullscreen = false;
     bool m_toolsOff = false; // D2
+    bool m_muted = false;    // FS1
 };
 
 } // namespace hikari::ui
