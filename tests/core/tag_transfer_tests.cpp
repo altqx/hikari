@@ -424,3 +424,39 @@ TEST(TagTransfer, AnEditedOriginalsRunsAreMatchedByFormattingAndText)
     EXPECT_EQ(matchRuns(before, readOriginalTags(u"Say {\\b1}uno{\\b0} now")), std::vector<int>{0});
     EXPECT_EQ(matchRuns(before, readOriginalTags(u"Say one now")), std::vector<int>{0});
 }
+
+TEST(TagTransfer, AResetClosesTheWholeLineWrapper)
+{
+    const auto tags = readOriginalTags(u"{\\i1}Hello{\\r}");
+    EXPECT_EQ(u8(tags.leading), "{\\i1}");
+    EXPECT_EQ(u8(tags.trailing), "{\\r}");
+    EXPECT_EQ(u8(composeTranslation(tags, draft(u"Hola"))), "{\\i1}Hola{\\r}");
+}
+
+TEST(TagTransfer, TheStylesEncodingAndRelativeSizesAreTheBase)
+{
+    StyleValues style;
+    style.name = u8"Default";
+    style.fontsize = u8"20";
+    style.encoding = u8"128";
+    // \fe128 gives the Style's encoding back: one run, on b.
+    const auto encoding = readOriginalTags(u"a{\\fe0}b{\\fe128}c", &style);
+    ASSERT_EQ(encoding.runs.size(), 1u);
+    EXPECT_EQ(u8(encoding.runs[0].text), "b");
+    // libass: \fs+5 is 20 * 1.5, \fs-5 then 30 * 0.5, as \fs15; \fs20 the Style's.
+    const auto sizes = readOriginalTags(u"a {\\fs+5}b {\\fs-5}c {\\fs15}d {\\fs20}e", &style);
+    ASSERT_EQ(sizes.runs.size(), 2u);
+    EXPECT_EQ(u8(sizes.runs[0].text), "b");
+    EXPECT_EQ(u8(sizes.runs[1].text), "c d");
+    // A size not above 0 is the Style's.
+    EXPECT_TRUE(readOriginalTags(u"a {\\fs0}b", &style).runs.empty());
+}
+
+TEST(TagTransfer, NoSuggestionsPastTheLengthBound)
+{
+    const auto tags = readOriginalTags(u"I {\\i1}a{\\i0} b");
+    std::u16string body(kMaxTagTransferUnits, u'x');
+    body += u" a";
+    EXPECT_TRUE(suggestPlacements(tags, draft(body)).empty());
+    EXPECT_EQ(suggestPlacements(tags, draft(u"x a")).size(), 1u);
+}

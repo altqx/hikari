@@ -7,6 +7,7 @@
 #include <charconv>
 #include <cstdint>
 #include <cstdio>
+#include <optional>
 #include <set>
 
 namespace hikari::core {
@@ -295,6 +296,44 @@ std::u16string valueIn(const TagState &state, const std::u16string &component)
     return it == state.end() ? std::u16string() : it->second;
 }
 
+std::optional<double> numberIn(std::u16string_view text)
+{
+    std::string s;
+    if (!narrow(trimmed(text), s))
+        return std::nullopt;
+    const char *first = s.data(), *last = s.data() + s.size();
+    if (first != last && *first == '+')
+        ++first;
+    double n = 0;
+    if (std::from_chars(first, last, n).ec != std::errc{})
+        return std::nullopt;
+    return n;
+}
+
+// \fs as libass reads it (ass_parse.c TAG_FS): a signed size scales the
+// current one by (1 + n / 10), and none, or a size not above 0, is the
+// Style's. Without a current size the spelling is kept.
+std::optional<std::u16string> fontSizeAfter(const TagState &state, const TagState &defaults, std::u16string_view args)
+{
+    const auto arg = trimmed(args);
+    const auto styleSize = valueIn(defaults, u"fs");
+    const auto n = numberIn(arg);
+    if (arg.empty() || !n)
+        return styleSize.empty() ? std::nullopt : std::optional(styleSize);
+    double size = *n;
+    if (arg.front() == u'+' || arg.front() == u'-') {
+        const auto current = numberIn(valueIn(state, u"fs"));
+        if (!current)
+            return std::nullopt;
+        size = *current * (1 + *n / 10);
+    }
+    if (size <= 0)
+        return styleSize.empty() ? std::nullopt : std::optional(styleSize);
+    char buf[32];
+    const auto r = std::to_chars(buf, buf + sizeof buf, size);
+    return ascii(std::string(buf, r.ptr));
+}
+
 TagState defaultsFor(const StyleValues *style)
 {
     TagState d{{u"i", u"0"},    {u"b", u"0"},    {u"u", u"0"},   {u"s", u"0"},   {u"be", u"0"},
@@ -326,6 +365,8 @@ TagState defaultsFor(const StyleValues *style)
         for (const auto &component : field.components)
             d[component] = normalised(field.kind, toUtf16(*value));
     }
+    if (!style->encoding.empty()) // \fe's base
+        d[u"fe"] = normalised(Kind::Number, toUtf16(style->encoding));
     return d;
 }
 
@@ -402,6 +443,13 @@ std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
         break;
     }
     default:
+        if (tag.name == u"fs") {
+            if (const auto size = fontSizeAfter(state, defaults, tag.args))
+                state[u"fs"] = *size;
+            else
+                state[u"fs"] = trimmed(tag.args);
+            break;
+        }
         for (const auto &component : effect.components) {
             if (trimmed(tag.args).empty()) {
                 if (const auto it = defaults.find(component); it != defaults.end())
@@ -648,7 +696,9 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                 for (const auto &component : effect.components)
                     leadingSetters[component] = {tag.order, tag.text};
             } else if (isTrailing) {
-                if (std::ranges::any_of(effect.components, [&](const auto &c) { return leadingSetters.contains(c); }))
+                // A tag that undoes a leading one; a reset undoes them all.
+                if (std::ranges::any_of(effect.components, [&](const auto &c) { return leadingSetters.contains(c); })
+                    || (effect.kind == Kind::Reset && !leadingSetters.empty()))
                     trailing += tag.text;
             }
             if (!budget.spend(apply(state, tag, out.defaults, out.named, &history)))
@@ -941,6 +991,8 @@ int runWithProperty(const OriginalTags &tags, std::span<const RunPlacement> plac
 std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const TranslationDraft &draft)
 {
     std::vector<RunPlacement> out;
+    if (draft.body.size() > kMaxTagTransferUnits) // as readTranslation: no runs past it
+        return out;
     const auto projection = project(draft.body);
     const std::u16string_view text = projection.text;
     auto isWord = [&](std::size_t at, std::size_t length) {
