@@ -717,8 +717,15 @@ private:
         std::u8string leading;                    // text before the first word
         std::u8string plain;                      // all the text, for a Line without words
     };
-    // Background vocal spans, each with whether its parent keeps whitespace.
-    using Backgrounds = std::vector<std::pair<const XmlNode *, bool>>;
+    // A background vocal span: whether its parent keeps whitespace, and the
+    // times of the nearest timed span around it, which time it in place of
+    // its paragraph's.
+    struct Background {
+        const XmlNode *node;
+        bool preserve;
+        std::optional<std::int64_t> begin, end;
+    };
+    using Backgrounds = std::vector<Background>;
 
     // The text of a head element (a title, an agent's name); a <br/> is a space.
     static std::u8string allText(const XmlNode &node)
@@ -836,17 +843,18 @@ private:
     }
 
     // The background vocals inside a word's span, which spanText leaves out;
-    // each is a Line of its own as beside the word.
-    static void backgroundsIn(const XmlNode &node, Backgrounds &backgrounds, bool preserve)
+    // each is a Line of its own as beside the word, timed by the word's span.
+    static void backgroundsIn(const XmlNode &node, Backgrounds &backgrounds, bool preserve,
+                              std::optional<std::int64_t> begin, std::optional<std::int64_t> end)
     {
         for (const XmlNode &child : node.children) {
             if (child.isText())
                 continue;
             const auto role = attribute(child, u8"role");
             if (role == u8sv(u8"x-bg"))
-                backgrounds.emplace_back(&child, preserve);
+                backgrounds.push_back(Background{&child, preserve, begin, end});
             else if (!role)
-                backgroundsIn(child, backgrounds, preserves(child, preserve));
+                backgroundsIn(child, backgrounds, preserves(child, preserve), begin, end);
         }
     }
 
@@ -893,7 +901,7 @@ private:
             const u8sv local = localName(child.name);
             const auto role = attribute(child, u8"role");
             if (role == u8sv(u8"x-bg")) {
-                backgrounds.emplace_back(&child, preserve);
+                backgrounds.push_back(Background{&child, preserve, spanBegin, spanEnd});
                 continue;
             }
             if (role)
@@ -914,7 +922,7 @@ private:
                 // ones as whichever scope inside the span kept them.
                 if (word.size() < text.size())
                     addText(into, u8sv(text).substr(0, text.size() - word.size()), false);
-                backgroundsIn(child, backgrounds, kept);
+                backgroundsIn(child, backgrounds, kept, begin, t->second ? t->second : spanEnd);
                 if (word.empty())
                     continue; // a timed span with no lyric is no word; the gaps come from the words
                 if (!into.words.empty() && begin < into.words.back().begin)
@@ -995,8 +1003,10 @@ private:
             if (auto ok = add(std::move(out), node.line); !ok)
                 return ok;
         }
-        for (const auto &[background, preserve] : backgrounds)
-            if (auto ok = line(*background, begin, end, actorOf(*background, actor), preserve); !ok)
+        for (const Background &background : backgrounds)
+            if (auto ok = line(*background.node, background.begin ? background.begin : begin,
+                               background.end ? background.end : end, actorOf(*background.node, actor), background.preserve);
+                !ok)
                 return ok;
         return {};
     }

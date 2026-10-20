@@ -645,6 +645,18 @@ TEST(LyricsImport, TtmlBackgroundVocalsNameTheirOwnAgent)
     ASSERT_TRUE(nested.has_value());
     ASSERT_EQ(rows(*nested).size(), 2u);
     EXPECT_EQ(rows(*nested)[1].text, "{\\k100}back");
+    // An untimed one takes the times of the span around it, not the paragraph's.
+    const auto timedBy = [](std::string_view p) {
+        const auto result = importTtml(bytes("<tt><body>" + std::string(p) + "</body></tt>"));
+        return result && rows(*result).size() == 2 ? rows(*result)[1] : Row{-1, -1, "", ""};
+    };
+    EXPECT_EQ(timedBy("<p begin=\"0\" end=\"4\"><span begin=\"1\" end=\"2\">lead<span ttm:role=\"x-bg\">back</span></span></p>"),
+              (Row{1000, 2000, "", "back"}));
+    EXPECT_EQ(timedBy("<p begin=\"0\" end=\"4\"><span begin=\"1\" end=\"3\"><span begin=\"1\" end=\"2\">lead</span>"
+                      "<span><span ttm:role=\"x-bg\">back</span></span></span></p>"),
+              (Row{1000, 3000, "", "back"}));
+    EXPECT_EQ(timedBy("<p begin=\"0\" end=\"4\"><span begin=\"1\" end=\"2\">lead</span><span ttm:role=\"x-bg\">back</span></p>"),
+              (Row{0, 4000, "", "back"}));
 }
 
 TEST(LyricsImport, LrcAngleAndSquareBracketsThatAreNotStamps)
