@@ -256,7 +256,9 @@ std::expected<std::uint64_t, RenderError> LibassRenderer::prepare(application::R
 namespace {
 
 // Whether `test` holds for a tag in one of the text's override blocks: tags
-// are only read between { and }; the rest is drawn as text.
+// are only read between { and }; the rest is drawn as text. Each tag runs
+// to the next backslash, so a test reads its own tag alone and a long block
+// costs one pass.
 template <class Test> bool anyTag(std::string_view text, Test test)
 {
     for (std::size_t open = text.find('{'); open != std::string_view::npos; open = text.find('{', open)) {
@@ -264,9 +266,12 @@ template <class Test> bool anyTag(std::string_view text, Test test)
         if (close == std::string_view::npos)
             return false;
         const std::string_view block = text.substr(open + 1, close - open - 1);
-        for (std::size_t at = block.find('\\'); at != std::string_view::npos; at = block.find('\\', at + 1))
-            if (test(block.substr(at + 1)))
+        for (std::size_t at = block.find('\\'); at != std::string_view::npos;) {
+            const std::size_t next = block.find('\\', at + 1);
+            if (test(block.substr(at + 1, next == std::string_view::npos ? next : next - at - 1)))
                 return true;
+            at = next;
+        }
         open = close + 1;
     }
     return false;
@@ -290,16 +295,17 @@ bool blurs(std::string_view tag)
     return tag.starts_with("be") && tagValue(tag.substr(2)) > 0;
 }
 
-// A drawing \clip or \iclip: its arguments hold the drawing's commands.
+// A drawing \clip or \iclip: its arguments hold a drawing, which starts
+// with a move (m, or n, which leaves the shape open).
 bool clipsToADrawing(std::string_view tag)
 {
     if (tag.starts_with("i"))
         tag.remove_prefix(1);
     if (!tag.starts_with("clip("))
         return false;
-    const std::string_view args = tag.substr(5, tag.find(')') == std::string_view::npos ? std::string_view::npos
-                                                                                          : tag.find(')') - 5);
-    return std::ranges::any_of(args, [](char c) { return c == 'm' || c == 'M'; });
+    const std::size_t end = tag.find(')');
+    const std::string_view args = tag.substr(5, end == std::string_view::npos ? end : end - 5);
+    return std::ranges::any_of(args, [](char c) { return c == 'm' || c == 'M' || c == 'n' || c == 'N'; });
 }
 
 // KE1-render-cost-overlay: what libass drew, and the shown events' costly

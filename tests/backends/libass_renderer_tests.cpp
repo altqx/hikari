@@ -887,6 +887,8 @@ TEST(LibassRenderer, FramesCountWhatTheirSubtitlesCost)
                                           "{\\pos(40,10)\\clip(m 0 0 l 50 0 50 50 0 50)}Clip\n"
                                           "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,{\\pos(40,30)\\clip(0,0,90,60)}Box\n"
                                           "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,{\\pos(40,50)\\iclip(1,m 0 0 l 9 9)}I\n"
+                                          // A drawing may start with n, the move that leaves the shape open.
+                                          "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,{\\pos(70,50)\\clip(n 0 0 l 9 0 9 9)}N\n"
                                           // Tags outside an override block are text, and \blur0 or \be0 do not blur.
                                           "Dialogue: 0,0:00:04.00,0:00:05.00,D,,0,0,0,,"
                                           "{\\pos(10,10)}a \\blur2 \\be1 \\clip(m 0 0 l 9 9)\n"
@@ -906,11 +908,11 @@ TEST(LibassRenderer, FramesCountWhatTheirSubtitlesCost)
     EXPECT_GT(two->cost.images, 0);
     EXPECT_GT(two->cost.area, 0);
 
-    const auto five = renderer.render(core::DocumentTime(2'500'000), 96, 64);
-    ASSERT_TRUE(five);
-    EXPECT_EQ(five->cost.events, 5);
-    EXPECT_EQ(five->cost.blurred, 1);
-    EXPECT_EQ(five->cost.vectorClips, 2) << "a rectangle \\clip is not a vector clip";
+    const auto six = renderer.render(core::DocumentTime(2'500'000), 96, 64);
+    ASSERT_TRUE(six);
+    EXPECT_EQ(six->cost.events, 6);
+    EXPECT_EQ(six->cost.blurred, 1);
+    EXPECT_EQ(six->cost.vectorClips, 3) << "a rectangle \\clip is not a vector clip";
 
     const auto text = renderer.render(core::DocumentTime(4'500'000), 96, 64);
     ASSERT_TRUE(text);
@@ -930,6 +932,25 @@ TEST(LibassRenderer, FramesCountWhatTheirSubtitlesCost)
     EXPECT_GT(again->cost.images, 0);
     EXPECT_EQ(again->cost.images, first->cost.images);
     EXPECT_EQ(again->cost.area, first->cost.area);
+}
+
+// Counting reads each tag once: a block of 64,000 unclosed \clip( tags, which
+// took seconds while every tag's test read the rest of the block, counts in
+// one pass.
+TEST(LibassRenderer, ALongMalformedBlockCountsInOnePass)
+{
+    std::string event = "Dialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,{";
+    for (int i = 0; i < 64'000; ++i)
+        event += "\\clip(";
+    event += "}Hi\n";
+    backends::LibassRenderer renderer;
+    renderer.countCost(true);
+    ASSERT_TRUE(renderer.prepare(snapshot(event)));
+    const auto frame = renderer.render(core::DocumentTime(1'500'000), 96, 64);
+    ASSERT_TRUE(frame);
+    EXPECT_EQ(frame->cost.events, 1);
+    EXPECT_EQ(frame->cost.vectorClips, 0);
+    EXPECT_LT(frame->cost.countMilliseconds, 250.0);
 }
 
 // The renderer selection times each render, whichever renderer draws.
