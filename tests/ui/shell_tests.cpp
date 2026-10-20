@@ -37,6 +37,7 @@
 #include "video_presenter.h"
 #include "hikari/app/composition.h"
 #include "next_file_folder.h"
+#include "menu_icon_scan.h"
 
 #include <QAccessible>
 #include <QMimeData>
@@ -4151,6 +4152,99 @@ private slots:
             }
         }
         QVERIFY(files > 1);
+    }
+
+    // IC1 (#226): every menu and context-menu item that runs a command shows
+    // an icon of the set: an iconRole on the item, or on the submenu it
+    // opens. A check item needs none: its check mark stands in the icon's
+    // place, as in MuseScore's menus. Nor does an entry named by its data (a
+    // recent file, a macro, a sort key, a panel, a suggestion), whose
+    // submenu has the icon, nor an item a later card removes; those are
+    // exempted here by the text that identifies them, and an exemption that
+    // matches no item fails too. docs/qt/ux/menu-icon-gaps.md lists them.
+    void everyMenuItemHasAnIcon()
+    {
+        using menu_icon_scan::Exemption;
+        const QString main = QStringLiteral("Main.qml");
+        const QString recent = QStringLiteral("a recent file");
+        const QList<Exemption> exemptions{
+            {main, QStringLiteral(R"("recentSubtitles" + index)"), recent},
+            {main, QStringLiteral(R"("recentAudio" + index)"), recent},
+            {main, QStringLiteral(R"(text: qsTr("None"))"), QStringLiteral("the empty list's placeholder")},
+            {QStringLiteral("RecentFilesMenu.qml"), QStringLiteral("menu.prefix + index"), recent},
+            {QStringLiteral("RecentFilesMenu.qml"), QStringLiteral(R"(text: qsTr("None"))"),
+             QStringLiteral("the empty list's placeholder")},
+            {QStringLiteral("VideoContextMenu.qml"), QStringLiteral(R"("RecentSubtitles" + index)"), recent},
+            {QStringLiteral("VideoContextMenu.qml"), QStringLiteral(R"("RecentVideos" + index)"), recent},
+            {QStringLiteral("VideoContextMenu.qml"), QStringLiteral(R"("videoMenuFilter" + index)"),
+             QStringLiteral("a DirectShow filter, under Filters")},
+            {main, QStringLiteral(R"("sortAll_" + modelData.key)"), QStringLiteral("a sort key, under Sort all lines")},
+            {main, QStringLiteral(R"("sortSelected_" + modelData.key)"),
+             QStringLiteral("a sort key, under Sort selected lines")},
+            {main, QStringLiteral(R"("macro_" + modelData.name)"), QStringLiteral("a macro of the loaded scripts")},
+            {main, QStringLiteral(R"("panelMenu" + modelData.uniqueName)"), QStringLiteral("a panel, under Panels")},
+            {main, QStringLiteral("root.app.replaceEditorMisspell"), QStringLiteral("a spelling suggestion")},
+            {main, QStringLiteral(R"("dummyAudioMenuItem")"), QStringLiteral("AV3 #240 removes the dummy audio")},
+        };
+        const QStringList problems = menu_icon_scan::itemsWithoutIcons(QStringLiteral(HIKARI_UI_SOURCE_DIR), exemptions);
+        if (!problems.isEmpty())
+            QFAIL(qPrintable(problems.join(QLatin1Char('\n'))));
+    }
+
+    // The scan behind everyMenuItemHasAnIcon finds an item without an icon
+    // where it stands (one line, several lines, an Instantiator's delegate,
+    // a submenu) and skips the others.
+    void menuIconScanFindsItemsWithoutIcons()
+    {
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const auto write = [&](const QString &name, const QByteArray &text) {
+            QFile file(dir.filePath(name));
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write(text);
+        };
+        write(QStringLiteral("Probe.qml"), R"(Item {
+    ShellMenu {
+        ShellMenuItem { iconRole: "save"; text: qsTr("Save {x}") }
+        ShellMenuItem { text: qsTr("One line") }
+        ShellMenuItem {
+            // iconRole: "commented out"
+            text: "Several lines"
+            onTriggered: { const iconRole = "in a handler" }
+        }
+        ShellMenuItem { text: qsTr("Checked"); checkable: true }
+        ShellMenuItem { text: qsTr("Not checked"); checkable: false }
+        Instantiator { delegate: ShellMenuItem { text: modelData } }
+        ShellMenu { title: qsTr("Submenu") }
+        ShellMenu { iconRole: "sort"; title: qsTr("Sorted") }
+        ProbeMenu {}
+        ShellMenuItem { objectName: "exempt"; text: "Exempt" }
+    }
+}
+)");
+        write(QStringLiteral("ProbeMenu.qml"), R"(ShellMenu {
+    title: "Derived"
+    delegate: ShellMenuItem {}
+    ShellMenuItem { text: "In the derived menu" }
+})");
+        const QStringList problems = menu_icon_scan::itemsWithoutIcons(
+            dir.path(), {{QStringLiteral("Probe.qml"), QStringLiteral(R"("exempt")"), QString()},
+                         {QStringLiteral("Probe.qml"), QStringLiteral("nothing here"), QString()}});
+        const QStringList expected{
+            QStringLiteral(R"(Probe.qml:4: ShellMenuItem qsTr("One line") has no iconRole)"),
+            QStringLiteral(R"(Probe.qml:5: ShellMenuItem "Several lines" has no iconRole)"),
+            QStringLiteral(R"(Probe.qml:11: ShellMenuItem qsTr("Not checked") has no iconRole)"),
+            QStringLiteral(R"(Probe.qml:12: ShellMenuItem modelData has no iconRole)"),
+            QStringLiteral(R"(Probe.qml:13: ShellMenu qsTr("Submenu") has no iconRole)"),
+            QStringLiteral(R"(Probe.qml:15: ProbeMenu (no text) has no iconRole)"),
+            QStringLiteral(R"(ProbeMenu.qml:4: ShellMenuItem "In the derived menu" has no iconRole)"),
+            QStringLiteral(R"(Probe.qml: the exemption "nothing here" matches no menu item)"),
+        };
+        QStringList sorted = problems;
+        sorted.sort();
+        QStringList want = expected;
+        want.sort();
+        QCOMPARE(sorted, want);
     }
 
     // D1: the keyboard placement window expresses drag placements and resizes.

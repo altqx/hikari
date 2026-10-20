@@ -184,6 +184,7 @@ RowLayout {
         property string targetFont: ""
         property var names: []
         ShellMenuItem {
+            iconRole: "fonts-from-subtitles"
             objectName: "fontsFromSubtitlesItem"
             text: qsTr("Add fonts from subtitles")
             onTriggered: fromSubtitles.openFor(bar.catalogs.catalogNames)
