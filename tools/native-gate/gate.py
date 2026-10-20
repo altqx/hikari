@@ -3139,10 +3139,7 @@ def title_bar_start(choice="auto", theme="dark"):
     # The desktop each compositor stands for: Plasma's KWin, GNOME's mutter
     # (gnome-shell would set these; the container runs mutter alone).
     env = {"kwin": {"XDG_CURRENT_DESKTOP": "KDE", "XDG_SESSION_DESKTOP": "KDE"},
-           # NO_AT_BRIDGE: on GNOME Qt's GTK3 platform theme starts GTK, whose
-           # ATK bridge takes the application's accessible root from Qt's
-           # (AT-SPI then lists the application with no windows).
-           "mutter": {"XDG_CURRENT_DESKTOP": "GNOME", "XDG_SESSION_DESKTOP": "gnome", "NO_AT_BRIDGE": "1"}}.get(B.name)
+           "mutter": {"XDG_CURRENT_DESKTOP": "GNOME", "XDG_SESSION_DESKTOP": "gnome"}}.get(B.name)
     app("start", env=env)
     time.sleep(2)
     dismiss_notices()
@@ -3487,10 +3484,71 @@ def step_title_bar():
     app("kill")
 
 
+def app_pid():
+    with open(os.path.join(os.environ["XDG_RUNTIME_DIR"], "app.pid")) as f:
+        return int(f.read().strip())
+
+
+def step_gtk_bridge():
+    """A11Y1 (#298): HikariSub on the session's desktop with GTK's ATK bridge
+    left on (env.sh's NO_AT_BRIDGE=0). On GNOME Qt loads its GTK3 platform
+    theme, which starts GTK, and GTK's bridge registers the process a second
+    time, ahead of Qt's and without HikariSub's windows; it holds GTK's own
+    dialogs (the theme's file chooser). The bridge stays: turning it off
+    leaves that chooser silent to screen readers. What must hold: the
+    lookup by name finds Qt's application, with the main window and its
+    panels, and Orca reads both the theme's file dialog and HikariSub."""
+    env = {"kwin": {"XDG_CURRENT_DESKTOP": "KDE", "XDG_SESSION_DESKTOP": "KDE"},
+           "mutter": {"XDG_CURRENT_DESKTOP": "GNOME", "XDG_SESSION_DESKTOP": "gnome"}}.get(B.name)
+    desktop = (env or {}).get("XDG_CURRENT_DESKTOP", "unset")
+    app("fresh")
+    app("start", env=env)
+    time.sleep(2)
+    dismiss_notices()
+    pid = app_pid()
+    with open(f"/proc/{pid}/maps") as f:
+        maps = f.read()
+    theme = next((t for t in ("libqgtk3", "libqxdgdesktopportal") if t in maps), "built in")
+    gtk = "libgtk-3.so" in maps
+    registered = json.loads(sh(["python3", f"{GATE}/atspi_tool.py", "apps", str(pid)]) or "[]")
+    with open(os.path.join(EVID, "gtkbridge-apps.json"), "w") as f:
+        json.dump({"pid": pid, "env": env, "theme": theme, "gtk": gtk, "apps": registered}, f, indent=1)
+    listed = "; ".join(f"{a.get('name')!r} ({a.get('toolkit')} {a.get('toolkitVersion')}, {a.get('bus')}): "
+                       f"{len(a.get('windows', []))} windows" for a in registered)
+    with open(os.path.join(EVID, "gtkbridge-tree.txt"), "w") as f:
+        f.write(sh(["python3", f"{GATE}/atspi_tool.py", "dump", "4"]))
+    st = atspi()
+    panels = sorted(core_panels(st))
+    main = "HikariSub" in frames(st)
+    verdict("gtkbridge-lookup", "observed" if main and panels else "failed",
+            f"{B.name} (XDG_CURRENT_DESKTOP={desktop}): platform theme {theme}, GTK started {gtk}; the "
+            f"process's applications on the bus, in order: {listed}; the lookup by name finds the main window "
+            f"{main} and the core panels {panels}", ["gtkbridge-apps.json", "gtkbridge-tree.txt"])
+
+    # Orca: the theme's file dialog (GTK's chooser under the GTK3 theme,
+    # Qt Quick's otherwise), then back to HikariSub.
+    orca, path = orca_start("gtkbridge")
+    focus_main_compositor()
+    B.combo("ctrl", "o")
+    time.sleep(3)
+    ev, _ = B.snap("gtkbridge-open-dialog")
+    B.keys("tab", 0.8, "tab", 0.8)
+    B.combo("escape")
+    time.sleep(1.5)
+    speech, _ = orca_stop(orca, path, "gtkbridge")
+    said = [l.split("SPEECH OUTPUT: ", 1)[-1].split(" {")[0].strip("'") for l in speech]
+    dialog = any(w in said for w in ("Cancel", "file chooser."))
+    back = "HikariSub" in (said[said.index("Cancel") + 1:] if "Cancel" in said else [])
+    verdict("gtkbridge-orca", "observed" if dialog and back else "failed",
+            f"Orca with File > Open under theme {theme}: the dialog read {dialog}, HikariSub read after it "
+            f"{back}; spoken: {said}", [ev, "gtkbridge-orca-speech.txt"])
+    app("kill")
+
+
 SWEEP_STEPS = {"tagspeech": step_tag_list_speech, "statusspeech": step_status_bar_speech,
                "refspeech": step_reference_speech, "icons": step_icon_names, "ime": step_ime,
                "scheme": step_follow_system, "dropper": step_screen_dropper, "edgetile": step_edge_tiling,
-               "titlebar": step_title_bar}
+               "titlebar": step_title_bar, "gtkbridge": step_gtk_bridge}
 
 
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,

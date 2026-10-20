@@ -187,6 +187,15 @@ class Session(unittest.TestCase):
         self.assertIsNone(gatelib.hikarisub_application([]))
         self.assertIn("hikarisub_application(", self.read("atspi_tool.py"))
 
+    def test_the_gnome_session_keeps_gtk_s_bridge(self):
+        # A11Y1 (#298): NO_AT_BRIDGE=1 would leave the GTK3 theme's file
+        # chooser silent to screen readers; the gate no longer sets it for
+        # HikariSub (the colour patch, a GTK program of the gate's, still may)
+        gate = self.read("gate.py")
+        for fn in ("title_bar_start", "step_gtk_bridge"):
+            body = re.search(r"\ndef " + fn + r"\(.*?(?=\ndef |\n[A-Z_]+ = )", gate, re.S).group(0)
+            self.assertNotIn("NO_AT_BRIDGE\": \"1", body, fn)
+
     def test_kwin_runs_its_qt_quick_windows_in_software(self):
         # KWin aborted in QSGRenderLoop::handleContextCreationFailure when the
         # PickColor prompt opened
