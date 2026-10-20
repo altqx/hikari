@@ -24,6 +24,17 @@ QString fileNameOf(const std::string &path)
     return QFileInfo(QString::fromStdString(path)).fileName();
 }
 
+// The keys as Qt writes them ("Ctrl+Alt+K"): legacy recorded modifiers in
+// its own order ("Alt-Ctrl-K"), and the shell compares keys as text (the
+// Global bindings taking a macro's keys). Keys Qt cannot read stay as given.
+std::string canonicalKeys(const std::string &keys)
+{
+    const QKeySequence seq = QKeySequence::fromString(qs(keys), QKeySequence::PortableText);
+    if (seq.count() != 1 || seq[0].key() == Qt::Key_unknown)
+        return keys;
+    return seq.toString(QKeySequence::PortableText).toStdString();
+}
+
 QString problemText(application::AliasProblem problem)
 {
     using application::AliasProblem;
@@ -65,7 +76,7 @@ void AutomationHotkeysController::load()
         const QStringList v = row.split(QLatin1Char('\t'));
         application::MacroBinding b;
         b.legacyName = v.value(0).toStdString();
-        b.keys = v.value(1).toStdString();
+        b.keys = canonicalKeys(v.value(1).toStdString());
         b.macroName = v.value(2).toStdString();
         b.scriptSha256 = v.value(3).toStdString();
         if (!b.keys.empty())
@@ -282,6 +293,7 @@ int AutomationHotkeysController::importLegacy(const QString &path)
     for (auto &b : application::parseLegacyScriptHotkeys(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())))) {
         if (m_committed.contains(b.legacyName))
             continue; // the current binding is kept
+        b.keys = canonicalKeys(b.keys);
         bool taken = false;
         for (const auto &[name, existing] : m_committed)
             taken = taken || existing.keys == b.keys;

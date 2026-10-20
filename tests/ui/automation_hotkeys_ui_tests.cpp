@@ -177,7 +177,8 @@ private slots:
 
     // A binding made for an earlier version of its script is missing until
     // its shortcut is recorded again, with new keys or the same: it is then
-    // made for the macro loaded now.
+    // made for the macro loaded now. Stored keys in legacy's modifier order
+    // (Settings Import) read back in Qt's.
     void rerecordingAChangedMacroBindsItAgain()
     {
         app::Application::Options o = options();
@@ -186,7 +187,7 @@ private slots:
             app::Application a(o);
             a.settingsStore()->set(application::kAutomationHotkeysSetting.data(),
                                    QStringList{QStringLiteral("Script shell-fixture.lua-0\tCtrl+Alt+K\tPrefix from dialog\tearlier"),
-                                               QStringLiteral("Script shell-fixture.lua-1\tCtrl+Alt+L\tWait for cancel\tearlier"),
+                                               QStringLiteral("Script shell-fixture.lua-1\tAlt+Ctrl+L\tWait for cancel\tearlier"),
                                                QStringLiteral("Script macro-1-edgeblur.lua-0\tCtrl+Alt+E\tAdd edgeblur\tearlier")});
         }
         app::Application a(o);
@@ -347,8 +348,8 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly));
             f.write("[HikariSub 0.8.0.1200]\r\n"
                     "Script macro-1-edgeblur.lua-0=Ctrl-Alt-B\r\n" // has a binding: kept
-                    "Script shell-fixture.lua-0=Ctrl-Shift-E\r\n"  // keys taken: skipped
-                    "Script shell-fixture.lua-1=Ctrl-Alt-W\r\n");  // added
+                    "Script shell-fixture.lua-0=Shift-Ctrl-E\r\n"  // keys taken: skipped
+                    "Script shell-fixture.lua-1=Alt-Ctrl-W\r\n");  // added, in Qt's order
         }
         QSignalSpy committed(&hotkeys, &app::AutomationHotkeysController::committed);
         QCOMPARE(hotkeys.importLegacy(legacy), 1);
