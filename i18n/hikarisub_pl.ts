@@ -4821,8 +4821,12 @@ po wyjściu z pełnego ekranu</translation>
         <translation>Przewijaj wykres audio przy odtwarzaniu</translation>
     </message>
     <message>
+        <source>Hotkeys follow the panel under the pointer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Activate the audio when hover</source>
-        <translation>Aktywuj okno audio po najechaniu</translation>
+        <translation type="vanished">Aktywuj okno audio po najechaniu</translation>
     </message>
     <message>
         <source>Snap to keyframe</source>

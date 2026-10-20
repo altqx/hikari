@@ -100,6 +100,16 @@ public:
     Q_INVOKABLE bool repeatedKey(const QString &action, int interval = 100);
     // Tests: the millisecond clock CheckLastKeyEvent reads (timeGetTime).
     void setKeyClock(std::function<qint64()> clock) { m_keyClock = std::move(clock); }
+    // KB3: the shell's run*Hotkey functions report each command a key runs
+    // (ran; the hotkey audit records them) and return `handled`.
+    // Rehearsing (tests), a command is reported and not run.
+    Q_INVOKABLE bool report(const QString &symbol, bool handled)
+    {
+        emit ran(symbol, handled);
+        return handled;
+    }
+    Q_INVOKABLE bool rehearsing() const { return m_rehearsing; }
+    void setRehearsing(bool on) { m_rehearsing = on; }
 
     // The Options page (legacy OptionsDialog's constructor, AddHotkeysOnList).
     Q_INVOKABLE void beginOptions();
@@ -150,6 +160,7 @@ public:
 signals:
     void installedChanged();
     void rowsChanged();
+    void ran(const QString &symbol, bool handled);
 
 private:
     void load();
@@ -172,6 +183,7 @@ private:
     bool m_lastClickShiftHeld = false; // Shift with any other modifiers
     bool m_lastClickCtrlHeld = false;  // Ctrl with any other modifiers
     std::function<void(const QString &)> m_log;
+    bool m_rehearsing = false;
     QStringList m_retiredNotices; // V3: retired bindings dropped by load()
     std::function<qint64()> m_keyClock;
     qint64 m_lastCheckedTime = 0; // Config::lastCheckedTime

@@ -4809,8 +4809,12 @@ after switching from full screen</source>
         <translation>பிளேபேக்கின் போது ஆடியோவைப் பின்தொடரவும்</translation>
     </message>
     <message>
+        <source>Hotkeys follow the panel under the pointer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Activate the audio when hover</source>
-        <translation>சுட்டி மேலே இருக்கும்போது ஆடியோவைச் செயல்படுத்தவும்</translation>
+        <translation type="vanished">சுட்டி மேலே இருக்கும்போது ஆடியோவைச் செயல்படுத்தவும்</translation>
     </message>
     <message>
         <source>Snap to keyframe</source>
