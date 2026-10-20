@@ -9,6 +9,7 @@
 #include <QTimer>
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 
 #include <utility>
@@ -611,6 +612,20 @@ void AudioController::setLinked(bool linked)
     emit boxControlsChanged();
 }
 
+// The view's samples per column go with the cube of the stretch
+// (AudioView::updateSamples), so the readout is (50 / position)^3.
+double AudioController::magnification() const
+{
+    const double position = std::clamp(m_horizontalZoom, 1, 100);
+    return std::pow(50.0 / position, 3);
+}
+
+void AudioController::resetZoom()
+{
+    setHorizontalZoom(50);
+    applyVerticalZoom(50, false);
+}
+
 void AudioController::setAutoScroll(bool on)
 {
     m_autoScroll = on;
@@ -1020,7 +1035,25 @@ void AudioController::previousLine()
     }
 }
 
+// AU1: the range goToSelection brings into view, as timesSelection(true)
+// gives it: in Karaoke the current syllable's, else the Line's.
+int AudioController::lineOutOfView() const
+{
+    if (!m_view.hasSource() || m_view.width() <= 0 || m_active < 0 || m_active >= static_cast<int>(m_lines.size()))
+        return 0;
+    auto [start, end] = std::pair(m_startMs, m_endMs);
+    if (m_hasKara && m_karaoke.count())
+        std::tie(start, end) =
+            m_karaoke.visibleTimes(std::clamp(m_karaoke.current, 0, m_karaoke.count() - 1), m_startMs, m_endMs);
+    if (m_view.xAtMs(end) < 0)
+        return -1;
+    if (m_view.xAtMs(start) > m_view.width())
+        return 1;
+    return 0;
+}
+
 // AudioBox::OnGoto: MakeDialogueVisible(true).
+
 void AudioController::goToSelection()
 {
     emit focusRequested();
