@@ -4,7 +4,8 @@
 // buttons (EDITBOX_PASTE_ALL_TO_TRANSLATION,
 // EDITBOX_PASTE_SELECTION_TO_TRANSLATION, and EDITBOX_HIDE_ORIGINAL as
 // "Comment out original") and its "Not confirmed" and "Moving tags" toggles
-// (EditBox.cpp:248-258), icon-only with their names on hover. They take no
+// (EditBox.cpp:248-258; Moving tags is "Tags from original", TM1's carried
+// tags, line_editor_controller.h moveTags), icon-only with their names on hover. They take no
 // focus, as legacy's, so the text keeps it. A header narrower than the
 // buttons shows one "More" button whose menu holds them in the same order.
 // Until the header takes it, it stays out of sight.
@@ -98,7 +99,8 @@ Item {
         IconToolButton {
             objectName: "originalMovingTags"
             iconRole: "moving-tags"
-            text: qsTr("Moving tags")
+            text: qsTr("Tags from original")
+            tip: qsTr("Tags from original: the translation gets the Original text's tags")
             checkable: true
             focusPolicy: Qt.NoFocus
             checked: tools.editor.moveTags
@@ -162,7 +164,7 @@ Item {
         ShellMenuItem {
             objectName: "originalMovingTagsItem"
             iconRole: "moving-tags"
-            text: qsTr("Moving tags")
+            text: qsTr("Tags from original")
             checkable: true
             checked: tools.editor.moveTags
             onTriggered: {
