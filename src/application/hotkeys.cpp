@@ -259,8 +259,10 @@ constexpr HotkeyAction kActions[] = {
         // unused in its windows' ranges (listed among their neighbours).
         // LE3-tags-shown: the Line editor's hidden-tag view (editor.hideTags).
         {"GLOBAL_EDITOR_HIDE_TAGS", 5169},
+        // KE1-render-cost-overlay: the subtitles' render cost over the video.
+        {"GLOBAL_VIDEO_RENDER_COST", 5170},
         // TM1: Translation mode for the editing target (Subtitles menu).
-        {"GLOBAL_TRANSLATION_MODE", 5170},
+        {"GLOBAL_TRANSLATION_MODE", 5171},
         // TM1 tags from the original: the Translated field places the
         // Original's runs on its selection (core/tag_transfer.h).
         {"EDITBOX_PLACE_RUN_1", 3020},
@@ -505,9 +507,10 @@ constexpr NameRow kNames[] = {
         {2007, "Volume down"}, // VIDEO_VOLUME_MINUS
         {2019, "Save frame with subtitles as PNG"}, // VIDEO_SAVE_SUBBED_FRAME_TO_PNG
         {2001, "Stop"}, // VIDEO_STOP
-        // The rewrite's own (LE3-tags-shown).
+        // The rewrite's own (LE3-tags-shown, KE1-render-cost-overlay).
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
-        {5170, "Translation mode"}, // GLOBAL_TRANSLATION_MODE (TM1)
+        {5170, "Show / hide render cost"}, // GLOBAL_VIDEO_RENDER_COST
+        {5171, "Translation mode"}, // GLOBAL_TRANSLATION_MODE (TM1)
         {3020, "Place run 1"}, // EDITBOX_PLACE_RUN_1 (TM1)
         {3021, "Place run 2"}, // EDITBOX_PLACE_RUN_2 (TM1)
         {3022, "Place run 3"}, // EDITBOX_PLACE_RUN_3 (TM1)

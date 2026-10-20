@@ -1,0 +1,30 @@
+[Script Info]
+; Aegisub karaoke templater tutorials 1-2 (aegisub.org/docs/latest/automation/karaoke_templater/tutorial_1, tutorial_2); karaoke text authored
+Title: KE1 corpus stock-tutorials
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: T1a,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: T1b,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: T2a,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: T2b,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: T2c,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,T1a,,0,0,0,template line,{\r\t($start,$mid,\fscy120)\t($mid,$end,\fscy100)}
+Comment: 0,0:00:00.00,0:00:05.00,T1b,,0,0,0,template line,{\r\k$kdur\t($start,$end,\1c&H00FF00&)\t($start,$mid,\fscy120)\t($mid,$end,\fscy100)}
+Comment: 0,0:00:00.00,0:00:05.00,T2a,,0,0,0,template line,{\r\k$kdur\t($start,$end,\1c&H00FF00&)\t($start,$mid,\fscy120)\t($mid,$end,\fscy100)\t($end,!$end+200!,\alpha&HFF&)}
+Comment: 0,0:00:00.00,0:00:05.00,T2b,,0,0,0,template line,{\r\k$kdur\t($start,$end,\1c&H00FF00&)\t($start,!$start+$dur*0.3!,\fscy120)\t(!$start+$dur*0.3!,$end,\fscy100)}
+Comment: 0,0:00:00.00,0:00:05.00,T2c,,0,0,0,template syl,{\an5\pos($scenter,$smiddle)\t($start,!$end+200!,\alpha&HFF&)}
+Dialogue: 0,0:00:01.85,0:00:09.06,T1a,,0,0,0,,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku
+Dialogue: 0,0:00:09.28,0:00:16.21,T1a,,0,0,0,,{\k18}to{\k22}o{\k35}ku{\k0} {\k27}ma{\k31}de{\k0} {\k40}a{\k19}ru{\k24}i{\k35}te{\k50}ku
+Dialogue: 0,0:00:01.85,0:00:09.06,T1b,,0,0,0,,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku
+Dialogue: 0,0:00:09.28,0:00:16.21,T2a,,0,0,0,,{\k18}to{\k22}o{\k35}ku{\k0} {\k27}ma{\k31}de{\k0} {\k40}a{\k19}ru{\k24}i{\k35}te{\k50}ku
+Dialogue: 0,0:00:20.00,0:00:26.00,T2b,,0,0,0,,{\k12}ki{\k14}mi{\k0} {\k20}to{\k0}  {\k33}so{\k21}ra{\k0} {\k45}wo{\k0} {\k38}mi{\k57}ta
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku

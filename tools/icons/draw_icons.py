@@ -841,6 +841,9 @@ icon("monitor", "Open in full screen on another monitor", [], [VIDEOMENU, FULLSC
      + accent(stroke("M3.5 6v-1.5h2M12.5 6v-1.5h-2M3.5 8v1.5h2M12.5 8v1.5h-2")))
 icon("progress-bar", "Show / hide progress bar", [], [VIDEOMENU, FULLSCREEN],
      rect(1.5, 2.5, 13, 11, 1) + stroke("M9.5 10.5h3") + accent(stroke("M3.5 10.5h4"), dot(8.5, 10.5, 1.25)))
+# KE1-render-cost-overlay: a stopwatch over the picture's subtitles
+icon("render-cost", "Show / hide render cost", [], [VIDEO, VIDEOMENU, FULLSCREEN],
+     circle(8, 9, 5.5) + stroke("M8 3.5V1.5M6.5 1.5h3M12.5 3.5l1 1") + accent(stroke("M8 9l2.5-2.5"), dot(8, 9, 1)))
 icon("aspect-ratio", "Change aspect ratio", [], [VIDEOMENU, FULLSCREEN],
      rect(1.5, 3.5, 13, 9, 1) + accent(stroke("M4 8h8M5.5 6.5L4 8l1.5 1.5M10.5 6.5L12 8l-1.5 1.5")))
 icon("video-filters", "Filters", [], [VIDEOMENU, FULLSCREEN],

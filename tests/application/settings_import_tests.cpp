@@ -441,7 +441,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 247); // 243 less V3's GLOBAL_VIDEO_INDEXING, AV3's GLOBAL_OPEN_DUMMY_AUDIO and WS3's five View arrangements and editor switch, plus LE3's GLOBAL_EDITOR_HIDE_TAGS and TM1's GLOBAL_TRANSLATION_MODE, nine run keys and EDITBOX_PLACE_NEXT_RUN
+    EXPECT_EQ(bound, 248); // 243 less V3's GLOBAL_VIDEO_INDEXING, AV3's GLOBAL_OPEN_DUMMY_AUDIO and WS3's five View arrangements and editor switch, plus LE3's GLOBAL_EDITOR_HIDE_TAGS and KE1's GLOBAL_VIDEO_RENDER_COST, TM1's GLOBAL_TRANSLATION_MODE, nine run keys and EDITBOX_PLACE_NEXT_RUN
 }
 
 // ---- Config.txt / AudioConfig.txt readings

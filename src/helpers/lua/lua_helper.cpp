@@ -43,6 +43,8 @@ extern "C" {
 #include <regex>
 #include <system_error>
 #include <type_traits>
+#include <chrono>
+#include <unordered_map>
 #include <variant>
 #include <fstream>
 #include <iterator>
@@ -687,6 +689,7 @@ void removeSink(lua_State *L)
 }
 
 void installHostServices(lua_State *L);
+void installHikari(lua_State *L);
 
 void installAegisub(lua_State *L)
 {
@@ -702,6 +705,7 @@ void installAegisub(lua_State *L)
     lua_pushinteger(L, 4);
     lua_setfield(L, -2, "lua_automation_version");
     installHostServices(L);
+    installHikari(L);
     lua_setglobal(L, "aegisub");
 }
 
@@ -860,6 +864,7 @@ using hikari::application::MacroStyleLine;
 struct Staged {
     MacroSnapshot lists;
     bool canModify = true;
+    std::string report; // aegisub.hikari.report (KE1)
     int size() const
     {
         return static_cast<int>(lists.info.size() + lists.styles.size() + lists.dialogues.size());
@@ -1319,10 +1324,12 @@ int subsNewIndex(lua_State *L)
     } else if (entry && i >= sinfo && i < styles && std::holds_alternative<MacroStyleLine>(*entry)) {
         l.styles[static_cast<std::size_t>(i - sinfo)] = std::get<MacroStyleLine>(*entry);
     } else if (entry && i >= styles && std::holds_alternative<MacroDialogueLine>(*entry)) {
-        // The slot keeps the identity of the Line it replaces.
+        // The slot keeps the identity of the Line it replaces, and the Line
+        // it was generated from (KE1).
         auto replacement = std::get<MacroDialogueLine>(*entry);
         auto &slotLine = l.dialogues[static_cast<std::size_t>(i - styles)];
         replacement.id = slotLine.id;
+        replacement.generatedFrom = slotLine.generatedFrom;
         replacement.raw = slotLine.raw;
         slotLine = std::move(replacement);
     } else {
@@ -1376,6 +1383,94 @@ void pushSubtitles(lua_State *L)
     lua_pushcfunction(L, subsIPairs);
     lua_setfield(L, -2, "__ipairs");
     lua_setmetatable(L, -2);
+}
+
+// ---- aegisub.hikari (KE1): HikariSub's own additions, which Aegisub lacks --
+//
+// A karaoke templater keeps track of its generated output with these; they
+// work on the running macro's subtitles object.
+//   sources()             { [i] = source } for each dialogue line generated
+//                         from another one still in the object (indices)
+//   set_source(i, source) dialogue line i, which the macro added, was
+//                         generated from dialogue line `source`, which must
+//                         be a Line of the Document
+//   report(text)          attaches text to the run's result, replacing any
+//                         earlier report
+//   clock()               seconds on a steady clock, for timing (os.clock
+//                         counts this process's CPU time only, not the
+//                         waits for the host's answers)
+
+int dialogueSlot(lua_State *L, int arg)
+{
+    const int i = static_cast<int>(luaL_checkinteger(L, arg)) - 1;
+    const int styles = static_cast<int>(g_subs->lists.info.size() + g_subs->lists.styles.size());
+    if (i < styles || i >= g_subs->size())
+        luaL_error(L, "Line %d is not a dialogue line", i + 1);
+    return i - styles;
+}
+
+int hikariSources(lua_State *L)
+{
+    checkLive(L);
+    const auto &d = g_subs->lists.dialogues;
+    const int offset = static_cast<int>(g_subs->lists.info.size() + g_subs->lists.styles.size()) + 1;
+    std::unordered_map<std::uint64_t, int> at;
+    for (std::size_t k = 0; k < d.size(); ++k)
+        if (d[k].id)
+            at.emplace(d[k].id, offset + static_cast<int>(k));
+    lua_newtable(L);
+    for (std::size_t k = 0; k < d.size(); ++k) {
+        if (!d[k].generatedFrom)
+            continue;
+        if (const auto it = at.find(d[k].generatedFrom); it != at.end()) {
+            lua_pushinteger(L, it->second);
+            lua_rawseti(L, -2, offset + static_cast<int>(k));
+        }
+    }
+    return 1;
+}
+
+int hikariSetSource(lua_State *L)
+{
+    checkLive(L);
+    checkAllowModify(L);
+    const int line = dialogueSlot(L, 1), source = dialogueSlot(L, 2);
+    auto &d = g_subs->lists.dialogues;
+    if (d[static_cast<std::size_t>(line)].id)
+        return luaL_error(L, "Line %d is a Line of the Document, not one the macro added",
+                          static_cast<int>(lua_tointeger(L, 1)));
+    if (!d[static_cast<std::size_t>(source)].id)
+        return luaL_error(L, "Line %d is not a Line of the Document", static_cast<int>(lua_tointeger(L, 2)));
+    d[static_cast<std::size_t>(line)].generatedFrom = d[static_cast<std::size_t>(source)].id;
+    return 0;
+}
+
+int hikariReport(lua_State *L)
+{
+    checkLive(L);
+    g_subs->report = checkString(L, 1);
+    return 0;
+}
+
+int hikariClock(lua_State *L)
+{
+    const auto since = std::chrono::steady_clock::now().time_since_epoch();
+    lua_pushnumber(L, std::chrono::duration<double>(since).count());
+    return 1;
+}
+
+void installHikari(lua_State *L)
+{
+    lua_createtable(L, 0, 4);
+    lua_pushcfunction(L, hikariSources);
+    lua_setfield(L, -2, "sources");
+    lua_pushcfunction(L, hikariSetSource);
+    lua_setfield(L, -2, "set_source");
+    lua_pushcfunction(L, hikariReport);
+    lua_setfield(L, -2, "report");
+    lua_pushcfunction(L, hikariClock);
+    lua_setfield(L, -2, "clock");
+    lua_setfield(L, -2, "hikari");
 }
 
 int setUndoPoint(lua_State *)
@@ -2297,6 +2392,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
         result.info = std::move(staged.lists.info);
         result.styles = std::move(staged.lists.styles);
         result.dialogues = std::move(staged.lists.dialogues);
+        result.report = std::move(staged.report);
         if (lua_isnumber(L, -1))
             result.active = static_cast<int>(lua_tointeger(L, -1));
         if (lua_istable(L, -2)) {

@@ -197,7 +197,7 @@ void writeLists(Writer &w, const std::vector<application::MacroInfoLine> &info,
     }
     w.i32(static_cast<std::int32_t>(dialogues.size()));
     for (const auto &d : dialogues)
-        w.i64(static_cast<std::int64_t>(d.id)).u8(d.comment).i32(d.layer).i64(d.startMs).i64(d.endMs).str(d.style)
+        w.i64(static_cast<std::int64_t>(d.id)).i64(static_cast<std::int64_t>(d.generatedFrom)).u8(d.comment).i32(d.layer).i64(d.startMs).i64(d.endMs).str(d.style)
             .str(d.actor).i32(d.marginL).i32(d.marginR).i32(d.marginV).str(d.effect).str(d.text).str(d.translation)
             .str(d.raw);
 }
@@ -232,6 +232,7 @@ bool readLists(Reader &r, std::size_t size, std::vector<application::MacroInfoLi
     for (std::size_t i = 0; i < *nd && r.ok(); ++i) {
         application::MacroDialogueLine d;
         d.id = static_cast<std::uint64_t>(r.i64());
+        d.generatedFrom = static_cast<std::uint64_t>(r.i64());
         d.comment = r.u8() != 0;
         d.layer = r.i32();
         d.startMs = r.i64();
@@ -293,7 +294,7 @@ std::vector<std::byte> encodeMacroResult(const application::MacroResult &result)
             w.i32(i);
     }
     w.u8(result.active.has_value()).i32(result.active.value_or(0));
-    w.u8(result.valid).str(result.validationError);
+    w.u8(result.valid).str(result.validationError).str(result.report);
     return w.take();
 }
 
@@ -318,6 +319,7 @@ std::optional<application::MacroResult> decodeMacroResult(const std::vector<std:
         result.active = active;
     result.valid = r.u8() != 0;
     result.validationError = r.str();
+    result.report = r.str();
     if (!r.ok() || !r.atEnd())
         return std::nullopt;
     return result;
