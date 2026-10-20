@@ -23698,6 +23698,9 @@ private slots:
         auto *audioSettings = outputs->findChild<QObject *>(QStringLiteral("audioOutputSettings"));
         QVERIFY(audioSettings);
         QVERIFY(!view.muted()); // the right button does not mute
+        // The devices only: the audio box's volume (AU1) is not this speaker's.
+        QVERIFY(!outputs->findChild<QQuickItem *>(QStringLiteral("audioVolume")));
+        QVERIFY(!outputs->findChild<QQuickItem *>(QStringLiteral("audioVolumeLinked")));
         // Its "Audio settings…" leaves fullscreen for the dialog's Audio page.
         QVERIFY(QMetaObject::invokeMethod(audioSettings, "triggered"));
         QTRY_VERIFY(!fs.active());
