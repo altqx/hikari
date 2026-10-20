@@ -5,6 +5,7 @@
 
 #include <QGuiApplication>
 #include <QObject>
+#include <QQuickItem>
 #include <QtQml/qqmlregistration.h>
 
 namespace hikari::ui {
@@ -24,6 +25,16 @@ public:
     {
         auto *menu = item ? item->property("menu").value<QObject *>() : nullptr;
         return menu && QObject::disconnect(item, SIGNAL(triggered()), menu, nullptr);
+    }
+    // WS3: `item` before `next` among their parent's items, the order
+    // accessibility lists a menu's items in (QQuickItem::stackBefore, which
+    // QML does not reach). False when they are not siblings.
+    Q_INVOKABLE bool stackBefore(QQuickItem *item, QQuickItem *next) const
+    {
+        if (!item || !next || item == next || item->parentItem() != next->parentItem())
+            return false;
+        item->stackBefore(next);
+        return true;
     }
     // Whether Shift is down for the input event being handled.
     Q_INVOKABLE bool shiftHeld() const

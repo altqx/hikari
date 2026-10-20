@@ -21,6 +21,9 @@ import Hikari.Ui
 // Between the first field and the video fields, the rewrite's selection count
 // (G1, the accepted announcement policy) and save state (V2), auto-sized like
 // legacy's middle fields.
+//
+// WS3: the items the bar is given (the layout switcher) stand after the video
+// file name, at the bar's end.
 Rectangle {
     id: bar
     objectName: "statusBar"
@@ -32,6 +35,8 @@ Rectangle {
     // Legacy WINDOW_WARNING_ELEMENTS on fields 5 and 7 while the subtitles'
     // resolution is not the video's (K2: Theme.warning).
     readonly property color warningColour: Theme.warning
+    // WS3: the bar's own controls, after its fields.
+    default property alias trailing: trailingItems.data
 
     // The status text role (visual-language.md: 10 against the 13 body),
     // kept legible on small base fonts. From the window's font, which
@@ -148,6 +153,12 @@ Rectangle {
             tip: bar.fieldsController.tooltips[8] ?? ""
             stretch: 22
             Layout.horizontalStretchFactor: 22
+        }
+        Row {
+            id: trailingItems
+            objectName: "statusTrailing"
+            visible: children.length > 0
+            Layout.alignment: Qt.AlignVCenter
         }
     }
 }

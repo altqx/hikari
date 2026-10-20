@@ -31,8 +31,9 @@
 // appearance). The wave-5 retirements (user decisions, 2026-10-05) are dropped
 // with a notice: GLOBAL_VIDEO_INDEXING bindings, and TOOLBAR_IDS /
 // TOOLBAR_ALIGNMENT (no main toolbar); so are GLOBAL_OPEN_DUMMY_AUDIO
-// bindings (AV3, owner 2026-10-18). Unknown and invalid records stay
-// visible as unresolved.
+// bindings (AV3, owner 2026-10-18) and WS3's (owner 2026-10-18): the
+// GLOBAL_VIEW_* and GLOBAL_EDITOR bindings and EDITOR_ON. Unknown and invalid
+// records stay visible as unresolved.
 
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/settings.h"
@@ -177,9 +178,12 @@ std::span<const std::string_view> themeColourKeys();
 // The options LoadDefaultConfig and LoadDefaultAudioConfig assign.
 std::span<const std::string_view> mainDefaultKeys();
 std::span<const std::string_view> audioDefaultKeys();
-// Retired by the wave-5 user decisions (2026-10-05).
+// Retired by the wave-5 user decisions (2026-10-05) and by WS3 (#217, owner
+// 2026-10-18); the reason is the plan row's notice (empty: not retired).
 bool isRetiredOption(std::string_view legacyKey);
 bool isRetiredAction(int id);
+std::string_view retiredOptionReason(std::string_view legacyKey);
+std::string_view retiredActionReason(int id);
 
 // ---- The plan
 

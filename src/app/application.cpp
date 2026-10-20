@@ -603,7 +603,6 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // D1: the panel layout beside the settings (none without a settings file).
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"));
-    m_video->setEditorOn(editorOn()); // D2: EDITOR_ON as stored
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
     // T1: the visual tools edit the editing target, never the reference.
     m_visualTools = std::make_unique<ui::VisualToolsController>(*m_video, *m_settings, [this] { return targetSession(); });
@@ -1550,7 +1549,6 @@ bool Application::openFile(const QString &path)
     ++m_openBatch; // P9: the association question (legacy OpenFile's LoadVideo prompt)
     if (emptyTab)
         replaceTarget(*id);
-    editorOnForSubtitles(); // D2: HikariSubFrame::OpenFile
     offerAssociations(*id);
     showAssociationOffer();
     refreshViews();
@@ -1673,18 +1671,6 @@ bool Application::showVideoSubtitles()
 {
     const auto target = m_videoDocument;
     auto *session = target ? m_files->session(*target) : nullptr;
-    if (!editorOn()) {
-        // D2: the player layout shows the video without subtitles (legacy
-        // LoadVideo's OpenSubs(CLOSE_SUBTITLES) with the editor off,
-        // HikariSubFrame.cpp:1416; RendererDirectShow::ChangeVobsub(true)
-        // from HideEditor, and ChangeVobsub() again when it comes back).
-        m_videoRevision.reset();
-        m_videoShowsDraft = false;
-        m_videoScript.clear();
-        if (m_video->session().hasSubtitles())
-            m_video->session().closeSubtitles();
-        return false;
-    }
     if (!session)
         return false;
     // 38c: the script's attached fonts; a script that is the same as shown
@@ -2020,7 +2006,6 @@ void Application::finishClose()
         const bool fromVideo = std::exchange(m_openFromVideo, false);
         if (id) {
             replaceTarget(*id); // P6: loaded into the same tab (legacy OpenFile)
-            editorOnForSubtitles(); // D2: OpenFile's HideEditor (HikariSubFrame.cpp:1402)
             // P9: the folder's video and the Script Info associations are
             // offered (LoadVideo's loadPrompt), but not for subtitles found
             // beside a video, which opens after them.
