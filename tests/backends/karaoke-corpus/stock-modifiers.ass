@@ -1,0 +1,51 @@
+[Script Info]
+; Aegisub template modifiers reference (aegisub.org/docs/latest/automation/karaoke_templater/template_modifiers); karaoke text authored except the page's own examples
+Title: KE1 corpus stock-modifiers
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Mod,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Group,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Chars,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Drop,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Keep,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Multi,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Sword,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Loop,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Mod-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,code once,function setlayer(newlayer) line.layer = newlayer; return ""; end
+Comment: 0,0:00:00.00,0:00:05.00,Group,,0,0,0,code line,fxgroup.funky = line.actor == "funky"
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template line,{\r\t($start,$end,\bord0)}
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template line jumper,{\r\t($start,$mid,\frz-0.1)\t($mid,$end,\frz0}
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template pre-line,{\be1}
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template pre-line jumper,{\org(-10000,$y)}
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template syl,{\pos($x,$y)}!setlayer(2)!
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template furi,{\pos($x,$y)}
+Comment: 0,0:00:00.00,0:00:05.00,Group,,0,0,0,template syl fxgroup funky,{\an5\pos($x,$y)\frz!syl.i*3!}
+Comment: 0,0:00:00.00,0:00:05.00,Chars,,0,0,0,template syl char,{\pos($x,$y)}
+Comment: 1,0:00:00.00,0:00:05.00,Chars,,0,0,0,template syl char,{\pos($x,$y)\bord0}
+Comment: 0,0:00:00.00,0:00:05.00,Drop,,0,0,0,template syl fx drop,{\move($x,$y,$x,!$y+30!,$start,$end)}
+Comment: 0,0:00:00.00,0:00:05.00,Keep,,0,0,0,template line keeptags,{\r\t($start,!$start+1!,\frx40)\t(!$start+1!,$end,\frx0)}
+Comment: 0,0:00:00.00,0:00:05.00,Multi,,0,0,0,template syl multi,{\an5\pos($scenter,$smiddle)\1a&HFF&\t($start,$end,\bord5\3a&HFF&)}
+Comment: 0,0:00:00.00,0:00:05.00,Sword,,0,0,0,code once,sword_shape = "m 0 0 l 5 -5 l 5 -30 l 10 -30 l 10 -32 l 2 -32 l 2 -40 l -2 -40 l -2 -32 l -10 -32 l -10 -30 l -5 -30 l -5 -5 "
+Comment: 0,0:00:00.00,0:00:05.00,Sword,,0,0,0,template syl notext noblank,{\an5\move($scenter,!$smiddle-30!,$scenter,$smiddle,!$start-20!,$start)\p2}!sword_shape!
+Comment: 0,0:00:00.00,0:00:05.00,Loop,,0,0,0,template syl loop 4,{\move($x,$y,!$x+math.random(-30,30)!,!$y+math.random(-30,30)!,$start,$end)\alpha&Hc0&\t($start,$end,\alpha&HFF&)}
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template syl all,{\an5\pos($x,!$y+40!)\alpha&H80&}
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku
+Dialogue: 0,0:00:05.00,0:00:08.00,Mod,,0,0,0,,{\k20}空|そ{\k20}#|ら{\k30}を{\k25}見|み{\k40}る
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,,{\k18}to{\k22}o{\k35}ku{\k0} {\k27}ma{\k31}de{\k0} {\k40}a{\k19}ru{\k24}i{\k35}te{\k50}ku
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,,{\k18}to{\k22}o{\k35}ku{\k0} {\k27}ma{\k31}de{\k0} {\k40}a{\k19}ru{\k24}i{\k35}te{\k50}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Chars,,0,0,0,,{\k50}ab{\k40}cd
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,,{\k40}zu{\k20}t{\k42}to {\k32\-drop}e{\k17}ga{\k45}i {\k24\-drop}yu{\k55}me
+Dialogue: 0,0:00:01.00,0:00:04.00,Keep,,0,0,0,,{\k21}hi{\k10}gu{\k23}ra{\k22}shi {\k38}ga {\k37\1c&H0000FF&}na{\k37}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,,{\k33}風{\k36}#{\k89}の{\k46}花{\k28}#{\k57}よ
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,,{\k12}ki{\k14}mi{\k0} {\k20}to{\k0}  {\k33}so{\k21}ra{\k0} {\k45}wo{\k0} {\k38}mi{\k57}ta
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku

@@ -259,6 +259,8 @@ constexpr HotkeyAction kActions[] = {
         // unused in its windows' ranges (listed among their neighbours).
         // LE3-tags-shown: the Line editor's hidden-tag view (editor.hideTags).
         {"GLOBAL_EDITOR_HIDE_TAGS", 5169},
+        // KE1-render-cost-overlay: the subtitles' render cost over the video.
+        {"GLOBAL_VIDEO_RENDER_COST", 5170},
         // FS1-bar-mode: the fullscreen bar's Auto / Always / Never (video.fullscreenBar).
         {"VIDEO_FULLSCREEN_BAR", 2021},
 };
@@ -493,9 +495,9 @@ constexpr NameRow kNames[] = {
         {2007, "Volume down"}, // VIDEO_VOLUME_MINUS
         {2019, "Save frame with subtitles as PNG"}, // VIDEO_SAVE_SUBBED_FRAME_TO_PNG
         {2001, "Stop"}, // VIDEO_STOP
-        // The rewrite's own (LE3-tags-shown).
+        // The rewrite's own (LE3-tags-shown, KE1-render-cost-overlay, FS1-bar-mode).
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
-        // FS1-bar-mode.
+        {5170, "Show / hide render cost"}, // GLOBAL_VIDEO_RENDER_COST
         {2021, "Full screen bar: Auto / Always / Never"}, // VIDEO_FULLSCREEN_BAR
 };
 

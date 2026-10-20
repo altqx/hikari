@@ -38,7 +38,8 @@ VideoViewController::VideoViewController(VideoController &video, VisualToolsCont
         if (id == QLatin1String("video.volume")) {
             applyVolume();
             emit changed();
-        } else if (id == QLatin1String("video.progressBar") || id == QLatin1String("video.pauseOnClick")) {
+        } else if (id == QLatin1String("video.progressBar") || id == QLatin1String("video.pauseOnClick") ||
+                   id == QLatin1String("video.renderCost")) {
             emit changed();
         }
     });
@@ -100,6 +101,11 @@ int VideoViewController::volume() const
 bool VideoViewController::progressBar() const
 {
     return m_settings.boolean("video.progressBar");
+}
+
+bool VideoViewController::renderCost() const
+{
+    return m_settings.boolean("video.renderCost");
 }
 
 bool VideoViewController::pauseOnClick() const
@@ -325,6 +331,14 @@ bool VideoViewController::toggleProgressBar()
     if (!m_video.hasVideo())
         return false;
     m_settings.set("video.progressBar", !progressBar());
+    return true;
+}
+
+bool VideoViewController::toggleRenderCost()
+{
+    if (!m_video.hasVideo())
+        return false;
+    m_settings.set("video.renderCost", !renderCost());
     return true;
 }
 

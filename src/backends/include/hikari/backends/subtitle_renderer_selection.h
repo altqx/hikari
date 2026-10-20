@@ -74,6 +74,8 @@ public:
     // What draws now: "libass", or the CSRI renderer's name (empty when
     // there is none).
     std::string activeName() const;
+    // KE1-render-cost-overlay: libass counts what it draws (CSRI cannot).
+    void countCost(bool on) { m_libass.countCost(on); }
 
     std::expected<std::uint64_t, application::RenderError> prepare(application::RenderSnapshot snapshot) override;
     std::expected<application::OverlayFrame, application::RenderError> render(core::DocumentTime time, int width,
