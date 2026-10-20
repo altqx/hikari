@@ -505,7 +505,10 @@ private:
     std::function<bool()> m_visualToolActive;
     void evaluateCarry(); // what legacy SetTextWithTags did on SetLine
     bool m_carryFocus = false; // an untranslated Line asks for the Translated field's focus
-    std::optional<core::LineId> m_dismissedFor; // the Line whose suggestions were dismissed
+    // The Line whose suggestions were dismissed, with the Original text and
+    // Style its runs were read from: another Original or Style numbers other
+    // runs, and the dismissals no longer hold.
+    std::optional<std::tuple<core::LineId, std::u8string, std::u8string>> m_dismissedFor;
     std::set<int> m_dismissedRuns;
     // TM1: each Line's placed run numbers in text order (core::relabelRuns),
     // by Document and Line (each Document numbers its own Lines).

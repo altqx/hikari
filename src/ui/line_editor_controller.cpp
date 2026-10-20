@@ -380,7 +380,7 @@ std::vector<core::RunPlacement> LineEditorController::suggestedRuns(const core::
 {
     auto out = core::suggestPlacements(tags, draft);
     const auto real = sessionRecord();
-    if (real && m_dismissedFor == real->id)
+    if (real && m_dismissedFor == std::tuple(real->id, real->text, real->style))
         std::erase_if(out, [&](const core::RunPlacement &p) { return m_dismissedRuns.contains(p.run); });
     return out;
 }
@@ -409,8 +409,8 @@ bool LineEditorController::dismissSuggestedRuns()
     const auto suggested = suggestedRuns(*tags, translationDraft(*tags, *real));
     if (suggested.empty())
         return false;
-    if (m_dismissedFor != real->id) {
-        m_dismissedFor = real->id;
+    if (const auto key = std::tuple(real->id, real->text, real->style); m_dismissedFor != key) {
+        m_dismissedFor = key;
         m_dismissedRuns.clear();
     }
     for (const auto &p : suggested)

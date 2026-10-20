@@ -10399,6 +10399,11 @@ private slots:
         press(Qt::Key_Tab);
         QTRY_VERIFY(!translated->hasActiveFocus());
         QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur high"));
+        // The Original edited, its runs are read again: what was dismissed
+        // was another reading's, and the run is suggested again.
+        application->editor().textEdited(QStringLiteral("Walls high"), 5);
+        QCOMPARE(q8(session->draftRecord()->text), QStringLiteral("{\\i1}Walls {\\b1}high"));
+        QTRY_COMPARE(run().value("suggestedStart").toInt(), 4);
     }
 
     // TM1: the placed runs follow the edits. With tags hidden, deleting a
