@@ -4545,7 +4545,6 @@ private slots:
             {main, QStringLiteral(R"("macro_" + modelData.name)"), QStringLiteral("a macro of the loaded scripts")},
             {main, QStringLiteral(R"("panelMenu" + modelData.uniqueName)"), QStringLiteral("a panel, under Panels")},
             {main, QStringLiteral("root.app.replaceEditorMisspell"), QStringLiteral("a spelling suggestion")},
-            {main, QStringLiteral(R"("dummyAudioMenuItem")"), QStringLiteral("AV3 #240 removes the dummy audio")},
         };
         const QStringList problems = menu_icon_scan::itemsWithoutIcons(QStringLiteral(HIKARI_UI_SOURCE_DIR), exemptions);
         if (!problems.isEmpty())

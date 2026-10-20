@@ -146,7 +146,6 @@ LE5 ([#230](https://github.com/altqx/hikari/issues/230)) replaced the Manage tag
 - **Check items** (checkable): Last session's two startup choices, the Grid's filtering switches, filters and hidden columns, the comparison criteria, the Spellchecker's languages, the tag list's options, the layout presets, streams and chapters, the font catalogs, the reference tray's occurrences, a visual tool's choices, the document tabs in the tab menu. Their check mark stands in the icon's place, as in MuseScore 4's menus. Some check items that had an icon keep it (Save subtitles using the video name, Spellchecker).
 - **Entries named by their data**, under a submenu that has the icon: recent subtitles, videos, keyframes and audio, and the empty list's "None"; the macros of the loaded scripts; the sort keys under Sort all lines and Sort selected lines; the panels under View › Panels; the spelling suggestions; the DirectShow filters under Filters.
 - **Menus themselves**: the menu bar's titles and the context menus that open on their own.
-- **Items another wave-6 card removes**, left for it: Audio › Open blank 2h30m audio, which AV3 [#240](https://github.com/altqx/hikari/issues/240) removes with the dummy audio.
 
 ## Notes for other cards
 
