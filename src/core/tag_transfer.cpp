@@ -407,8 +407,9 @@ const TagRun *runAt(const OriginalTags &tags, int number)
 }
 
 // The tags that change the formatting from run `from` to run `to` (0 is the
-// base), in the order the Original text wrote them.
-std::u16string transition(const OriginalTags &tags, int from, int to)
+// base), in the order the Original text wrote them. At the body's end only
+// the closings the Original wrote are kept: the others change no glyph.
+std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd = false)
 {
     const TagRun *f = runAt(tags, from), *t = runAt(tags, to);
     std::set<std::u16string> components;
@@ -427,7 +428,8 @@ std::u16string transition(const OriginalTags &tags, int from, int to)
         if (valueOf(f, component) == valueOf(t, component))
             continue;
         const auto &setters = t && t->differs.contains(component) ? t->opens : f->closes;
-        if (const auto it = setters.find(component); it != setters.end() && !it->second.tag.empty())
+        if (const auto it = setters.find(component);
+            it != setters.end() && !it->second.tag.empty() && (it->second.written || !atEnd))
             parts.push_back(it->second);
     }
     std::ranges::stable_sort(parts, {}, &TagSetter::order);
@@ -563,6 +565,8 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             --end;
         run.displayStart = start;
         run.displayEnd = end;
+        run.rawStart = firstSegment.rawStart;
+        run.rawEnd = lastSegment.rawEnd;
         run.text = projection.text.substr(start, end - start);
         for (const auto &[component, value] : run.differs) {
             run.opens[component] = lastSetter(history, component, firstSegment.order, value);
@@ -576,9 +580,9 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             }
             if (close.tag.empty()) {
                 if (const auto it = leadingSetters.find(component); it != leadingSetters.end())
-                    close = it->second;
+                    close = {it->second.order, it->second.tag, false};
                 else if (component != u"t" && component != u"r" && baseValue == valueIn(out.defaults, component))
-                    close = {lastSegment.order, u"\\" + component};
+                    close = {lastSegment.order, u"\\" + component, false};
             }
             run.closes[component] = close;
         }
@@ -587,8 +591,33 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
     return out;
 }
 
-std::u16string composeTranslation(const OriginalTags &tags, const TranslationDraft &draft)
+TranslationDraft draftOfOriginal(std::u16string_view original, const OriginalTags &tags)
 {
+    TranslationDraft draft;
+    const auto tokens = tokenize(original);
+    if (tokens.malformed || tags.drawing) {
+        draft.body = original;
+        return draft;
+    }
+    std::map<std::size_t, std::size_t> starts, ends; // raw text piece bounds -> body offsets
+    for (const auto &piece : tokens.pieces) {
+        if (piece.block)
+            continue;
+        starts[piece.rawStart] = draft.body.size();
+        draft.body += original.substr(piece.rawStart, piece.rawEnd - piece.rawStart);
+        ends[piece.rawEnd] = draft.body.size();
+    }
+    for (const auto &run : tags.runs)
+        if (starts.contains(run.rawStart) && ends.contains(run.rawEnd))
+            draft.placements.push_back({starts[run.rawStart], ends[run.rawEnd], run.number});
+    return draft;
+}
+
+std::u16string composeTranslation(const OriginalTags &tags, const TranslationDraft &draft,
+                                  std::vector<RunPlacement> *placed)
+{
+    if (placed)
+        placed->clear();
     if (draft.body.empty())
         return {};
     std::u16string out = draft.carried ? tags.leading : std::u16string();
@@ -597,7 +626,11 @@ std::u16string composeTranslation(const OriginalTags &tags, const TranslationDra
     auto moveTo = [&](std::size_t at, int run) {
         out.append(draft.body, pos, at - pos);
         pos = at;
-        out += braced(transition(tags, current, run));
+        if (placed && current != 0)
+            placed->back().end = out.size();
+        out += braced(transition(tags, current, run, at == draft.body.size()));
+        if (placed && run != 0)
+            placed->push_back({out.size(), out.size(), run});
         current = run;
     };
     for (const auto &p : validPlacements(tags, draft)) {
@@ -662,10 +695,10 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
     TranslationDraft draft;
     std::vector<std::size_t> boundary; // before each segment, and at the end
     std::vector<const Piece *> pending;
-    auto settle = [&](int before, int after) {
+    auto settle = [&](int before, int after, bool atEnd) {
         before = std::max(before, 0);
         after = std::max(after, 0);
-        const auto expected = before != after ? transition(tags, before, after) : std::u16string();
+        const auto expected = before != after ? transition(tags, before, after, atEnd) : std::u16string();
         bool found = expected.empty();
         std::size_t at = draft.body.size();
         for (const Piece *block : pending) {
@@ -688,12 +721,12 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
             pending.push_back(&piece);
             continue;
         }
-        if (!settle(previous, labels[s]))
+        if (!settle(previous, labels[s], false))
             return plain;
         draft.body += inner.substr(piece.rawStart, piece.rawEnd - piece.rawStart);
         previous = labels[s++];
     }
-    if (!settle(previous, 0))
+    if (!settle(previous, 0, true))
         return plain;
     for (const auto &group : groups)
         if (labels[group.first] > 0)

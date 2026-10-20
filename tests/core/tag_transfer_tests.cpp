@@ -94,6 +94,15 @@ TEST(TagTransfer, RunsAreComposedInAnyOrderWithTheOriginalsSpellings)
     EXPECT_EQ(u8(composeTranslation(tags, draft(u"XY", {{0, 1, 2}, {1, 2, 1}}))), "{\\b1}X{\\i1\\b0}Y{\\i0}");
 }
 
+TEST(TagTransfer, ComposingSaysWhereEachRunLanded)
+{
+    const auto tags = readOriginalTags(u"{\\an8}text0{\\i1}text1{\\i0\\b1}text2{\\b0}text3");
+    std::vector<RunPlacement> placed;
+    const auto saved = composeTranslation(tags, draft(u"XY Z", {{0, 1, 1}, {1, 2, 2}, {3, 4, 9}}), &placed);
+    EXPECT_EQ(u8(saved), "{\\an8}{\\i1}X{\\i0\\b1}Y{\\b0} Z"); // run 9 does not exist
+    EXPECT_EQ(placed, (std::vector<RunPlacement>{{11, 12, 1}, {20, 21, 2}}));
+}
+
 TEST(TagTransfer, EachOccurrenceIsItsOwnRun)
 {
     const auto tags = readOriginalTags(u"a {\\i1}b{\\i0} c {\\i1}d{\\i0}");
@@ -132,6 +141,18 @@ TEST(TagTransfer, ARunClosesWithTheLeadingSpellingOrAnEmptyReset)
     const auto coloured = readOriginalTags(u"a {\\1c&H0000FF&}b");
     ASSERT_EQ(coloured.runs.size(), 1u);
     EXPECT_EQ(u8(composeTranslation(coloured, draft(u"x y z", {{2, 3, 1}}))), "x {\\1c&H0000FF&}y{\\1c} z");
+}
+
+TEST(TagTransfer, AtTheEndOnlyTheOriginalsOwnClosingIsWritten)
+{
+    // The Original closes nothing: a run ending the translation needs nothing.
+    const auto open = readOriginalTags(u"Gate {\\i1}keeper");
+    EXPECT_EQ(u8(composeTranslation(open, draft(u"Brama straznik", {{6, 14, 1}}))), "Brama {\\i1}straznik");
+    EXPECT_EQ(u8(composeTranslation(open, draft(u"Brama straznik", {{0, 5, 1}}))), "{\\i1}Brama{\\i} straznik");
+    expectRoundTrip(open, draft(u"Brama straznik", {{6, 14, 1}}));
+    // The Original's own closing stays, as written.
+    const auto closed = readOriginalTags(u"Gate {\\i1}keeper{\\i0}");
+    EXPECT_EQ(u8(composeTranslation(closed, draft(u"Brama straznik", {{6, 14, 1}}))), "Brama {\\i1}straznik{\\i0}");
 }
 
 TEST(TagTransfer, WhitespaceIsNotARunAndRunTextIsTrimmed)
@@ -173,6 +194,21 @@ TEST(TagTransfer, ASavedTranslationReadsBackToItsDraft)
     const auto read = readTranslation(tags, u"");
     EXPECT_TRUE(read.body.empty());
     EXPECT_TRUE(read.carried);
+}
+
+TEST(TagTransfer, TheOriginalAsADraftComposesBackToItself)
+{
+    for (const std::u16string original :
+         {u"{\\an8}text0{\\i1}text1{\\i0\\b1}text2{\\b0}text3", u"{\\i1}Hello {\\b1}world{\\b0}{\\i0}",
+          u"First row\\N{\\i1}second row{\\i0}", u"Plain", u"Gate {\\i1}keeper", u"{\\fs40}a {\\fs60}b"}) {
+        const auto tags = readOriginalTags(original);
+        EXPECT_EQ(u8(composeTranslation(tags, draftOfOriginal(original, tags))), u8(original));
+    }
+    const std::u16string original = u"{\\an8}{TS note}a {\\i1}b{\\i0}";
+    const auto tags = readOriginalTags(original);
+    const auto d = draftOfOriginal(original, tags);
+    EXPECT_EQ(u8(d.body), "a b");
+    EXPECT_EQ(d.placements, (std::vector<RunPlacement>{{2, 3, 1}}));
 }
 
 TEST(TagTransfer, ATranslationWithItsOwnFormattingKeepsIt)

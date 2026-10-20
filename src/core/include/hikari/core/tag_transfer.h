@@ -38,12 +38,16 @@ using TagState = std::map<std::u16string, std::u16string>;
 struct TagSetter {
     std::size_t order = 0; // the tag's position among the Original text's tags
     std::u16string tag;    // its spelling, "\i1"; empty when nothing can undo it
+    // False for a closing the Original did not write after the run (the
+    // leading spelling, or an empty reset): left out at the translation's end.
+    bool written = true;
 };
 
 struct TagRun {
     int number = 0;
     std::u16string text;                          // its visible text, trimmed
     std::size_t displayStart = 0, displayEnd = 0; // in project(original).text, trimmed
+    std::size_t rawStart = 0, rawEnd = 0;         // in the Original text, untrimmed
     TagState differs;                             // where it differs from the base
     std::map<std::u16string, TagSetter> opens;    // the tag that sets each value
     std::map<std::u16string, TagSetter> closes;   // the tag that restores the base
@@ -75,8 +79,14 @@ struct TranslationDraft {
     bool carried = true;
 };
 
-// The saved translation; empty for an empty body.
-std::u16string composeTranslation(const OriginalTags &tags, const TranslationDraft &draft);
+// The Original text as a draft: its text (\N and \h kept, brace comments
+// left out) with each run placed on its own words. Paste all starts from it.
+TranslationDraft draftOfOriginal(std::u16string_view original, const OriginalTags &tags);
+
+// The saved translation; empty for an empty body. `placed`, when given,
+// receives where each placement's text landed in it.
+std::u16string composeTranslation(const OriginalTags &tags, const TranslationDraft &draft,
+                                  std::vector<RunPlacement> *placed = nullptr);
 // The draft that composes back to `translation` exactly. Formatting that
 // matches no run stays in the body as the translator's own tags.
 TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view translation);
