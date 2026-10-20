@@ -11,28 +11,38 @@
 // values and swapped in when their tab is shown. The saved file holds the
 // arrangement shown last, which the first tab of a start without a Session
 // takes.
+//
+// WS3 (#217): the user's saved layouts, named arrangements usable from every
+// tab, are kept in a file of their own beside the saved layout. Applying one
+// changes the current tab only, as a preset does; Reset this layout goes back
+// to the saved layout the tab's arrangement started from, or its preset.
 
 #include <QByteArray>
+#include <QJsonObject>
 #include <QObject>
 #include <QSize>
 #include <QString>
 #include <QStringList>
 #include <QTimer>
+#include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
 #include <cstdint>
 #include <map>
 #include <optional>
+#include <vector>
 
 namespace hikari::ui {
 
 // WS1: one Document tab's panel arrangement, a value apart from the engine
 // (the Session's "Layout: " line, WS2's [Hikari] section): the built-in
 // template it started from and the engine's payload. A value without a
-// payload is the template itself, built when the tab is shown.
+// payload is the template itself, built when the tab is shown. WS3: `layout`
+// names the saved layout it started from, if any.
 struct WorkspaceArrangement {
     QString preset = QStringLiteral("Editing");
     QByteArray payload; // the engine's layout (JSON), or empty: the preset as built in
+    QString layout;     // the saved layout's name, or empty: the preset's
 
     // The envelope in one line (compact JSON).
     QByteArray serialise() const;
@@ -49,8 +59,17 @@ class WorkspaceLayoutController : public QObject {
     Q_PROPERTY(QString notice READ notice NOTIFY changed)
     Q_PROPERTY(bool hasBackup READ hasBackup NOTIFY changed)
     // The built-in template the arrangement started from (Editing, Timing,
-    // Translation, Typesetting); Reset layout returns to it.
+    // Translation, Typesetting); Reset layout returns to it unless the
+    // arrangement started from a saved layout.
     Q_PROPERTY(QString preset READ preset WRITE setPreset NOTIFY changed)
+    // WS3: the saved layout the current tab's arrangement started from, or
+    // empty (a preset, or a layout since deleted); and the name the layout
+    // switcher shows for it (the saved layout's, else the preset's).
+    Q_PROPERTY(QString layout READ layout NOTIFY changed)
+    Q_PROPERTY(QString layoutLabel READ layoutLabel NOTIFY changed)
+    // WS3: the saved layouts, in the order they were saved: {name, usable,
+    // problem}. One this version cannot use is kept, unused, until deleted.
+    Q_PROPERTY(QVariantList savedLayouts READ savedLayouts NOTIFY savedLayoutsChanged)
     // The application's focus window (QWindow::isActive is also true for the
     // parent of an active floating panel, so the shell compares windows).
     Q_PROPERTY(QObject *focusWindow READ focusWindow NOTIFY focusWindowChanged)
@@ -64,13 +83,6 @@ class WorkspaceLayoutController : public QObject {
     // then: a macro started behind it shows its run controls in the
     // Automation panel, which the modal keeps out of reach.
     Q_PROPERTY(bool modalOpen READ modalOpen NOTIFY modalOpenChanged)
-    // D2: the player layout (GLOBAL_EDITOR off) holds the editing
-    // arrangement until the editor comes back; nothing is saved meanwhile,
-    // so the saved layout stays the editing one.
-    Q_PROPERTY(bool holding READ holding NOTIFY changed)
-    // D2: the Timing tool an arrangement without the Grid closed, opened
-    // again by the next one that shows it; the current tab's (WS1).
-    Q_PROPERTY(bool timingHiddenByArrangement MEMBER m_timingHidden NOTIFY changed)
 public:
     // WS1: how a tab shown for the first time starts.
     enum class TabStart { Copy, Translation };
@@ -78,9 +90,12 @@ public:
     static constexpr int kSchema = 1;
     static constexpr int kPanelRegistry = 4; // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1)
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
+    static constexpr int kSavedLayoutsSchema = 1;
+    static constexpr int kMaximumNameLength = 64;
     static const QStringList &panelIds(); // Video, Audio, Editor, Grid, Reference, Timing, Search, Automation
 
-    // `layoutFile` empty: nothing is persisted (tests, a profile without settings).
+    // `layoutFile` empty: nothing is persisted (tests, a profile without
+    // settings). The saved layouts are kept beside it, in layouts.json.
     explicit WorkspaceLayoutController(QString layoutFile = {}, QObject *parent = nullptr);
 
     // After the shell built its default arrangement: what Reset layout returns to.
@@ -100,6 +115,35 @@ public:
     // A built-in template (Editing, Timing, Translation, Typesetting) for the
     // current tab: the default arrangement with the panels it leaves closed.
     Q_INVOKABLE bool applyPreset(const QString &name);
+    // A preset's name as the user reads it.
+    Q_INVOKABLE static QString presetLabel(const QString &name);
+    // A language switch: layoutLabel reads the new language's preset names.
+    void retranslate() { emit changed(); }
+    // WS3: the presets' names in every shipped language, refused as saved
+    // layouts' names (a switch to that language would show two); the saved
+    // layouts are read again under them.
+    void reservePresetNames(const QStringList &names);
+    // WS3: Reset this layout, for the current tab: the saved layout its
+    // arrangement started from, else its preset.
+    Q_INVOKABLE bool resetCurrentLayout();
+    // WS3: the current tab's arrangement saved as `name` (one of that name,
+    // in any case, is replaced); the tab's arrangement now started from it.
+    Q_INVOKABLE bool saveLayoutAs(const QString &name);
+    // WS3: a saved layout for the current tab, in place (the main window
+    // keeps its geometry). One the engine refuses gives the tab the Editing
+    // layout with the notice.
+    Q_INVOKABLE bool applySavedLayout(const QString &name);
+    // WS3: renaming and deleting a saved layout. A tab whose arrangement
+    // started from it keeps the arrangement, under the new name, or its
+    // preset's once the layout is deleted.
+    Q_INVOKABLE bool renameSavedLayout(const QString &from, const QString &to);
+    Q_INVOKABLE bool deleteSavedLayout(const QString &name);
+    // WS3: why `name` (trimmed) cannot name a saved layout, or empty. A name
+    // in use is a problem only for a rename (`renaming`: the layout's
+    // current name); Save layout as… replaces that layout.
+    Q_INVOKABLE QString layoutNameProblem(const QString &name, const QString &renaming = {}) const;
+    // The saved layout called `name`, in any case: its name as saved, or empty.
+    Q_INVOKABLE QString savedLayoutNamed(const QString &name) const;
     Q_INVOKABLE bool restoreBackup();
     Q_INVOKABLE void dismissNotice();
     // Keyboard resize (docs/qt/docking.md): a docked panel's size in its
@@ -110,26 +154,6 @@ public:
     // Floating panel windows whose title bar no screen shows move onto the
     // main window's screen (also done when screens change and after a restore).
     Q_INVOKABLE int keepFloatingPanelsOnScreen();
-    // D2: legacy View menu's arrangements (HikariSubFrame.cpp:849-892), by
-    // their GLOBAL_VIEW_* names: the core panels each one shows (the others
-    // of Video, Audio, Editor and Grid are hidden). Empty for another name.
-    Q_INVOKABLE static QStringList arrangementPanels(const QString &arrangement);
-    static const QStringList &arrangements();
-    // D2: holds the current arrangement (the player layout follows), and
-    // gives it back; false when nothing is held. One the engine refuses
-    // (WS1: a tab's from the Session, held meanwhile) gives the Editing
-    // layout with the notice, and the editor comes back to it all the same.
-    Q_INVOKABLE void holdArrangement();
-    Q_INVOKABLE bool releaseArrangement();
-    bool holding() const { return m_held.has_value(); }
-    // D2: the arrangement as it was when Video, Audio, Editor and Grid were
-    // last all shown (the shell remembers it before an arrangement hides
-    // one, and while they stay shown); an arrangement that shows a hidden
-    // core panel again starts from it, as legacy's views laid the panels
-    // out at their own sizes (VIDEO_WINDOW_SIZE). Reset layout, a preset,
-    // the backup and the saved layout at start forget it.
-    Q_INVOKABLE void rememberFullArrangement();
-    Q_INVOKABLE bool restoreFullArrangement();
 
     // WS1: the Document tab `tab` (its Document's id) is the one shown. The
     // tab shown so far keeps the arrangement it has now; `tab` gets its own
@@ -154,27 +178,37 @@ public:
     // diagnosis and says so in the notice, naming `title`.
     void setTabArrangement(std::uint64_t tab, const QByteArray &serialised, const QString &title = {});
 
-    QString notice() const { return m_notice; }
+    // Every notice not dismissed yet, one per line: the panel layout's and
+    // the saved layouts' are kept side by side (both can come at start).
+    QString notice() const { return (m_savedNotices + m_panelNotices).join(QLatin1Char('\n')); }
     QString preset() const { return m_preset; }
     void setPreset(const QString &preset);
     static const QStringList &presets();
+    QString layout() const;
+    QString layoutLabel() const;
+    QVariantList savedLayouts() const;
+    QString savedLayoutsFile() const { return m_savedFile; }
     QObject *focusWindow() const;
     bool menuHasFocus() const { return m_menuHasFocus; }
     bool modalOpen() const { return m_modalOpen; }
     bool hasBackup() const;
 
     // The envelope around an engine payload, and its validation.
-    static QByteArray envelope(const QByteArray &payload, const QString &preset = QStringLiteral("Editing"));
-    static std::optional<QByteArray> payloadOf(const QByteArray &file, QString *problem, QString *preset = nullptr);
+    static QByteArray envelope(const QByteArray &payload, const QString &preset = QStringLiteral("Editing"),
+                               const QString &layout = {});
+    static std::optional<QByteArray> payloadOf(const QByteArray &file, QString *problem, QString *preset = nullptr,
+                                               QString *layout = nullptr);
 
 signals:
     void changed();
     void focusWindowChanged();
     void menuHasFocusChanged();
     void modalOpenChanged();
-    // WS1: another tab's arrangement replaced the one shown (the shell puts
-    // the panels that follow the application, such as the Reference tray,
-    // back as they must be).
+    void savedLayoutsChanged();
+    // WS1: another arrangement replaced the one shown: another tab's, a
+    // preset, a saved layout, the backup (the shell puts the panels that
+    // follow the application, such as the Reference tray, back as they must
+    // be).
     void arrangementSwapped();
 
 private:
@@ -188,26 +222,70 @@ private:
     void keepUnrestored(const QByteArray &bytes, const QString &problem, const QString &title);
     QString backupFile() const { return m_file + QStringLiteral(".bak"); }
 
+    // WS3: one saved layout; one that does not validate keeps its record as
+    // read, so the file is written back with it.
+    struct SavedLayout {
+        QString name;
+        std::optional<WorkspaceArrangement> arrangement;
+        QString problem;
+        QJsonObject record;
+    };
+    void readSavedLayouts();
+    // The layouts file could not be read or kept aside: nothing writes over
+    // it this session, and the notice says so.
+    void lockSavedLayouts();
+    bool writeSavedLayouts();
+    int savedLayoutIndex(const QString &name) const; // any case; -1: none
+    // Every arrangement (each tab's, the shown one's) that started from
+    // saved layout `from` starts from `to` now (empty: its preset).
+    void renameLayoutOrigin(const QString &from, const QString &to);
+    // `name` as a saved layout of this profile names it, or empty.
+    QString knownLayout(const QString &name) const;
+    QStringList m_reservedNames;
+    std::vector<SavedLayout> m_saved;
+    QString m_savedFile;
+    bool m_savedLocked = false;
+    QString m_writeFailure; // the notice of the last saved-layouts write that failed
+
     struct Tab {
         std::optional<WorkspaceArrangement> arrangement;
-        QByteArray full; // m_full while the tab was shown
-        bool timingHidden = false; // m_timingHidden while the tab was shown
     };
     std::map<std::uint64_t, Tab> m_tabs;
     std::optional<std::uint64_t> m_tab; // the tab the engine shows
     std::optional<WorkspaceArrangement> m_quitArrangement; // shown when the close went ahead
 
+    // WS3: what a change to the saved layouts touches, taken before it. When
+    // the file cannot be written the change is undone, so the saved layouts
+    // stay as the file has them and the change can be made again.
+    struct SavedLayoutsState {
+        std::vector<SavedLayout> saved;
+        std::map<std::uint64_t, Tab> tabs;
+        std::optional<WorkspaceArrangement> quitArrangement;
+        QString layout;
+        QByteArray lastSaved;
+    };
+    SavedLayoutsState savedLayoutsState() const;
+    // The saved layouts written, or `before` put back (with the notice).
+    bool commitSavedLayouts(SavedLayoutsState before);
+
     QString m_file;
     QByteArray m_default;
     QByteArray m_lastSaved;
-    std::optional<WorkspaceArrangement> m_held;
-    QByteArray m_full;
-    bool m_timingHidden = false;
-    QString m_notice;
+    // The notices of the panel layout (restore failures: a layout chosen
+    // after them answers them) and of the saved layouts (files kept aside,
+    // writes that failed: they stay until dismissed or, for a write, until
+    // one succeeds).
+    QStringList m_panelNotices;
+    QStringList m_savedNotices;
+    void addPanelNotice(const QString &text);
+    void addSavedNotice(const QString &text);
+    void dismissPanelNotice();
     QString m_preset = QStringLiteral("Editing");
+    QString m_layout; // WS3: the saved layout the shown arrangement started from
     bool m_restoring = false;
     bool m_loaded = false; // restoreSaved() has run
     bool m_quitting = false; // saveForQuit() has run
+    bool m_fileLocked = false; // the saved file could not be read or copied: never written over
     bool m_menuHasFocus = false;
     bool m_modalOpen = false;
     QTimer m_screenCheck;

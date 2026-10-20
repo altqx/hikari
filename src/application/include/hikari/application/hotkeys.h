@@ -88,14 +88,18 @@ const std::map<int, std::string> &hotkeyNames();
 // HotkeysNaming::GetName: "" when the id has no name (scripts, GLOBAL_QUIT...).
 std::string hotkeyName(int id);
 // V3: GLOBAL_VIDEO_INDEXING ("Open video with FFMS2") is retired (wave-5
-// decision 2026-10-05): the rewrite always indexes. AM1:
-// GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW ("Open shortcut mapping window") is
-// retired with its window (each macro's shortcut is in the Automation
-// panel). AV3 (#240, owner 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO ("Open blank
-// 2h30m audio") is retired: a dummy video brings its own silent audio. Each
-// keeps its IDS symbol, so stored lines naming it are recognised, but has no
-// name (never listed in the Options page) and its bindings are dropped as the
-// lists are read.
+// decision 2026-10-05): the rewrite always indexes. It keeps its IDS symbol,
+// so stored lines naming it are recognised, but has no name (never listed in
+// the Options page) and its bindings are dropped as the lists are read.
+// AM1: GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW ("Open shortcut mapping window")
+// is retired the same way with its window: each macro's shortcut is in the
+// Automation panel. AV3 (#240, owner 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO
+// ("Open blank 2h30m audio") is retired the same way: a dummy video brings
+// its own silent audio. WS3 (#217, owner 2026-10-18): the View arrangements
+// (GLOBAL_VIEW_ALL, GLOBAL_VIEW_VIDEO, GLOBAL_VIEW_AUDIO,
+// GLOBAL_VIEW_ONLY_VIDEO, GLOBAL_VIEW_SUBS) and the editor switch
+// (GLOBAL_EDITOR) are retired the same way: layout presets and saved layouts
+// take their place.
 bool isRetiredHotkey(int id);
 // Removes the retired actions' bindings from `map` and returns them, for the
 // notice the reader gives.

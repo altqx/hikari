@@ -396,7 +396,6 @@ constexpr NameRow kNames[] = {
         {5037, "Refresh autoload scripts"}, // GLOBAL_AUTOMATION_RELOAD_AUTOLOAD
         {5030, "Time shift window"}, // GLOBAL_SHOW_SHIFT_TIMES
         {5019, "Close audio"}, // GLOBAL_CLOSE_AUDIO
-        {5109, "Enable / Disable editor"}, // GLOBAL_EDITOR
         {5010, "Find and replace"}, // GLOBAL_FIND_REPLACE
         {5028, "Font collector"}, // GLOBAL_OPEN_FONT_COLLECTOR
         {5112, "HikariSub website"}, // GLOBAL_HELP
@@ -430,11 +429,9 @@ constexpr NameRow kNames[] = {
         // (wave-5 decision 2026-10-05, V3-indexing-retired): never listed.
         {5043, "Zoom video"}, // GLOBAL_VIDEO_ZOOM
         {5044, "Turn off video zoom"}, // GLOBAL_RESET_VIDEO_ZOOM
-        {5031, "View all"}, // GLOBAL_VIEW_ALL
-        {5032, "View audio and subtitles"}, // GLOBAL_VIEW_AUDIO
-        {5035, "View only subtitles"}, // GLOBAL_VIEW_SUBS
-        {5033, "View video and subtitles"}, // GLOBAL_VIEW_VIDEO
-        {5034, "View only video"}, // GLOBAL_VIEW_ONLY_VIDEO
+        // GLOBAL_VIEW_ALL..GLOBAL_VIEW_SUBS (5031-5035) and GLOBAL_EDITOR
+        // (5109, "Enable / Disable editor") are retired (WS3 #217, owner
+        // 2026-10-18, WS3-view-arrangements-retired): never listed.
         {5301, "Open new tab"}, // GLOBAL_ADD_PAGE
         {5302, "Close current tab"}, // GLOBAL_CLOSE_PAGE
         {5168, "Clean styles of ASS file"}, // GLOBAL_STYLE_MANAGER_CLEAN_STYLE
@@ -517,7 +514,6 @@ constexpr DefaultRow kMainDefaults[] = {
         {5024, GlobalHotkey, "Convert to MPL2", "F11"}, // GLOBAL_CONVERT_TO_MPL2
         {5022, GlobalHotkey, "Convert to TMP", "Ctrl-F12"}, // GLOBAL_CONVERT_TO_TMP
         {5026, GlobalHotkey, "Style manager", "Ctrl-M"}, // GLOBAL_OPEN_STYLE_MANAGER
-        {5109, GlobalHotkey, "Enable / Disable editor", "Ctrl-E"}, // GLOBAL_EDITOR
         {5101, GlobalHotkey, "Open video", "Ctrl-Shift-O"}, // GLOBAL_OPEN_VIDEO
         {5009, GlobalHotkey, "Find", "Ctrl-F"}, // GLOBAL_SEARCH
         {5010, GlobalHotkey, "Find and replace", "Ctrl-H"}, // GLOBAL_FIND_REPLACE
@@ -758,9 +754,11 @@ const std::map<int, std::string> &hotkeyNames()
 
 bool isRetiredHotkey(int id)
 {
-    return id == 5015     // GLOBAL_VIDEO_INDEXING
-           || id == 5039  // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW
-           || id == 5104; // GLOBAL_OPEN_DUMMY_AUDIO (AV3)
+    return id == 5015 // GLOBAL_VIDEO_INDEXING
+           || id == 5039 // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW (AM1)
+           || id == 5104 // GLOBAL_OPEN_DUMMY_AUDIO (AV3)
+           || (id >= 5031 && id <= 5035) // GLOBAL_VIEW_ALL..GLOBAL_VIEW_SUBS (WS3)
+           || id == 5109; // GLOBAL_EDITOR (WS3)
 }
 
 std::vector<std::pair<HotkeyId, Hotkey>> dropRetiredHotkeys(HotkeyMap &map)

@@ -187,6 +187,31 @@ QString commandName(int id)
     return qs(name.empty() ? symbolOf(id) : name);
 }
 
+// The notice for a dropped binding of a retired command (%1: its keys).
+QString retiredNotice(int id)
+{
+    switch (id) {
+    case 5031: // GLOBAL_VIEW_ALL
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View all\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+    case 5032: // GLOBAL_VIEW_AUDIO
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View audio and subtitles\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+    case 5033: // GLOBAL_VIEW_VIDEO
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View video and subtitles\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+    case 5034: // GLOBAL_VIEW_ONLY_VIDEO
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View only video\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+    case 5035: // GLOBAL_VIEW_SUBS
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"View only subtitles\" was removed: the View arrangements are retired; choose a layout from the layout switcher instead.");
+    case 5109: // GLOBAL_EDITOR
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Enable / Disable editor\" was removed: the editor is always shown; hide panels or choose a layout instead.");
+    case 5039: // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Open shortcut mapping window\" was removed: the window is gone and each macro's shortcut is set in the Automation panel.");
+    case 5104: // GLOBAL_OPEN_DUMMY_AUDIO
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Open blank 2h30m audio\" was removed: the command is retired and a dummy video brings its own silent audio.");
+    default: // GLOBAL_VIDEO_INDEXING
+        return QCoreApplication::translate("HikariSub.Hotkeys", "The shortcut %1 of \"Open video with FFMS2\" was removed: the command is retired and videos are always indexed.");
+    }
+}
+
 } // namespace
 
 HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
@@ -233,25 +258,21 @@ void HotkeysController::load()
         application::loadDefaultHotkeys(m_live, true);
     // V3-indexing-retired: a binding of "Open video with FFMS2" (legacy
     // GLOBAL_VIDEO_INDEXING, from a carried-over Hotkeys.txt) is dropped with
-    // a notice, and the list is written without it so the notice is given
-    // once. AM1-hotkeys-window-retired: so is one of "Open shortcut mapping
-    // window" (GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW). AV3: the same for
-    // "Open blank 2h30m audio" (GLOBAL_OPEN_DUMMY_AUDIO).
+    // a notice, and the list is written without it so the notice is given once.
+    // AM1-hotkeys-window-retired: so is one of "Open shortcut mapping window"
+    // (GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW). WS3-view-arrangements-retired:
+    // the same for the View arrangements and the editor switch, and AV3 for
+    // "Open blank 2h30m audio" (GLOBAL_OPEN_DUMMY_AUDIO). A binding for the
+    // Audio window is in the audio list, which is written again too.
     const auto dropped = application::dropRetiredHotkeys(m_live);
-    for (const auto &[key, hotkey] : dropped)
-        m_retiredNotices << (key.id == application::hotkeyIdOf("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW")
-                                 ? QCoreApplication::translate("HikariSub.Hotkeys",
-                                                               "The shortcut %1 of \"Open shortcut mapping window\" was removed: the window is gone and each macro's shortcut is set in the Automation panel.")
-                             : key.id == application::hotkeyIdOf("GLOBAL_OPEN_DUMMY_AUDIO")
-                                 ? QCoreApplication::translate("HikariSub.Hotkeys",
-                                                               "The shortcut %1 of \"Open blank 2h30m audio\" was removed: the command is retired and a dummy video brings its own silent audio.")
-                                 : QCoreApplication::translate("HikariSub.Hotkeys",
-                                                               "The shortcut %1 of \"Open video with FFMS2\" was removed: the command is retired and videos are always indexed."))
-                                .arg(qs(hotkey.accel));
-    if (!dropped.empty())
+    bool main = false, audio = false;
+    for (const auto &[key, hotkey] : dropped) {
+        m_retiredNotices << retiredNotice(key.id).arg(qs(hotkey.accel));
+        (key.type == application::AudioHotkey ? audio : main) = true;
+    }
+    if (main)
         m_settings.set(kMainSetting, qLines(application::hotkeyLines(m_live, false)));
-    // The window's command could be given Audio keys too (Audio's own list).
-    if (std::ranges::any_of(dropped, [](const auto &d) { return d.first.type == application::AudioHotkey; }))
+    if (audio)
         m_settings.set(kAudioSetting, qLines(application::hotkeyLines(m_live, true)));
 }
 

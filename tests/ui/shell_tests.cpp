@@ -120,6 +120,10 @@ QString nativeFixture(const char *name)
     return QDir::toNativeSeparators(QStringLiteral(HIKARI_MEDIA_FIXTURES "/") + QLatin1String(name));
 }
 
+// The pointer over no panel: the menu bar's corner. QTest moves a null
+// point, (0, 0), to the window's centre, which a panel may cover.
+constexpr QPoint kOverNoPanel{1, 1};
+
 // KB3: the hotkey audit. Every key legacy's defaults bind (Hotkeys::
 // LoadDefault, here as its table) is pressed with the focus in each of
 // the five hotkey contexts, rehearsing (the shell reports the command a
@@ -1285,9 +1289,17 @@ private slots:
         QVERIFY(resolution);
         QCOMPARE(resolution->role(), QAccessible::StaticText);
         QCOMPARE(resolution->text(QAccessible::Description), QStringLiteral("Video resolution"));
-        // Like legacy's (AcceptsFocus false) the strip takes no focus.
-        for (QQuickItem *f : bar->findChildren<QQuickItem *>())
-            QVERIFY2(!f->activeFocusOnTab(), qPrintable(f->objectName()));
+        // Like legacy's (AcceptsFocus false) the strip takes no focus, WS3's
+        // layout switcher included (View > Layout is its keyboard path).
+        // The strip's own items: the switcher's menu is a popup, not the strip.
+        QVERIFY(bar->findChild<QQuickItem *>(QStringLiteral("layoutSwitcher")));
+        std::function<void(QQuickItem *)> noTabStop = [&](QQuickItem *item) {
+            for (QQuickItem *f : item->childItems()) {
+                QVERIFY2(!f->activeFocusOnTab(), qPrintable(f->objectName()));
+                noTabStop(f);
+            }
+        };
+        noTabStop(bar);
 
         // The resolution matched (Resample subtitles, SetSubsResolution): no warning.
         QVERIFY(application->resample(1280, 720, 320, 240, false));
@@ -4693,11 +4705,9 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(view, "open"));
         QTRY_VERIFY(view->property("opened").toBool());
         QVERIFY(root->property("menuHasKeys").toBool());
-        // D2: the View menu starts with legacy's arrangements; without a
-        // video or audio only "Only subtitles" is enabled, and Down skips
-        // the others.
+        // WS3: the View menu starts with View > Layout, then the panels.
         press(Qt::Key_Down);
-        QCOMPARE(current(view)->objectName(), QStringLiteral("viewOnlySubtitles"));
+        QCOMPARE(current(view)->property("subMenu").value<QObject *>(), named("viewLayoutMenu"));
         press(Qt::Key_Down); // View > Panels
         QCOMPARE(current(view)->property("subMenu").value<QObject *>(), panels);
         QVERIFY(showsHighlight(current(view)));
@@ -5361,10 +5371,10 @@ private slots:
         QCOMPARE(order(), (QStringList{QStringLiteral("Video"), QStringLiteral("Editor"), QStringLiteral("Audio")}));
 
         // The order is in the layout: a restore brings it back.
-        application->workspaceLayout().holdArrangement(); // the engine's serialized layout
+        QVERIFY(application->workspaceLayout().saveLayoutAs(QStringLiteral("Tab order"))); // WS3: a saved layout
         QVERIFY(docking.moveTab(QStringLiteral("Audio"), -2));
         QTRY_COMPARE(order(), (QStringList{QStringLiteral("Audio"), QStringLiteral("Video"), QStringLiteral("Editor")}));
-        QVERIFY(application->workspaceLayout().releaseArrangement());
+        QVERIFY(application->workspaceLayout().applySavedLayout(QStringLiteral("Tab order")));
         QTRY_COMPARE(order(), (QStringList{QStringLiteral("Video"), QStringLiteral("Editor"), QStringLiteral("Audio")}));
 
         // A lone panel: neither item.
@@ -11233,7 +11243,7 @@ private slots:
                  nativeFixture("audioonly.mkv"));
         // what the scene graph drew, in whichever renderer this run uses
         // (offscreen: the software adaptation; xvfb: RHI)
-        QTest::mouseMove(window, QPoint(1, 1));
+        QTest::mouseMove(window, kOverNoPanel);
         QTRY_VERIFY(!audio.cursor().has_value());
         QCoreApplication::processEvents();
         const QImage drawn = window->grabWindow();
@@ -11493,7 +11503,7 @@ private slots:
         const auto scene = audio.scene([](application::AudioShape::Font, std::string_view) { return 30; });
         QCOMPARE(scene.at(1).kind, application::AudioShape::Kind::Image);
         // what the scene graph drew, before the active Line (column 10, 20)
-        QTest::mouseMove(window, QPoint(1, 1));
+        QTest::mouseMove(window, kOverNoPanel);
         QTRY_VERIFY(!audio.cursor().has_value());
         QCoreApplication::processEvents();
         auto *display = item("audioDisplay");
@@ -12089,9 +12099,10 @@ private slots:
                                      "Hotkeys", "Subtitle properties"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" and AM1: "Open shortcut mapping
-        // window" retired, never listed; LE3's "Hide tags in the line
-        // editor" listed.
-        QCOMPARE(hotkeyRows().size(), 225);
+        // window" retired, never listed; WS3: the five View arrangements and
+        // "Enable / Disable editor" too; LE3's "Hide tags in the line editor"
+        // listed.
+        QCOMPARE(hotkeyRows().size(), 219);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -12546,7 +12557,7 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_HISTORY")), QStringLiteral("Ctrl+Shift+H"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_CONVERT_TO_TMP")), QStringLiteral("Ctrl+F12"));
-        QCOMPARE(table().size(), 38);
+        QCOMPARE(table().size(), 37); // WS3: GLOBAL_EDITOR's Ctrl+E is no default
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));
@@ -13023,7 +13034,7 @@ private slots:
         QCOMPARE(tool->property("recording").toString(), legacyName);
         press(Qt::Key_Escape);
         QTRY_COMPARE(tool->property("recording").toString(), QString());
-        QTest::mouseMove(window, QPoint(1, 1));
+        QTest::mouseMove(window, kOverNoPanel);
         // A macro on Space (a carried-over binding): Play / Pause takes it.
         auto &macros = application->automationHotkeys();
         macros.replaceCommitted({{legacyName.toStdString(), "Space"}});
@@ -13170,15 +13181,6 @@ private slots:
         QCOMPARE(cancel->property("text").toString(), QStringLiteral("Close"));
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
         QTRY_VERIFY(!run->isVisible());
-        // Off with the editor (the player layout has no run status), as the
-        // Automation menu's macros are.
-        QTest::keyClick(window, Qt::Key_E, Qt::ControlModifier);
-        QTRY_VERIFY(!application->editorOn());
-        QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
-        QTest::qWait(200);
-        QVERIFY(!application->automation().running());
-        QTest::keyClick(window, Qt::Key_E, Qt::ControlModifier);
-        QTRY_VERIFY(application->editorOn());
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
         QTRY_VERIFY_WITH_TIMEOUT(application->automation().running(), 30000);
         QTRY_VERIFY(run->isVisible());
@@ -13548,7 +13550,7 @@ private slots:
         QTest::mouseMove(window, display->mapToScene(QPointF(10, 10)).toPoint());
         QVERIFY(!audio.cursor() || *audio.cursor() != 10.f);
         // (the mouse leaves, or its hover would draw it once playback ends)
-        QTest::mouseMove(window, QPoint(1, 1));
+        QTest::mouseMove(window, kOverNoPanel);
         QTRY_VERIFY_WITH_TIMEOUT(!audio.playing(), 5000);
         QVERIFY(!audio.cursor());
         QCOMPARE(audio.playback()->lastPositionMs(), 0); // not a Stop
@@ -13581,7 +13583,7 @@ private slots:
                           item("audioDisplay")->mapToScene(QPointF(50, audio.view().height() + 5)).toPoint());
         QVERIFY(audio.hasMark());
         QCOMPARE(audio.markMs(), 1500);
-        QTest::mouseMove(window, QPoint(1, 1));
+        QTest::mouseMove(window, kOverNoPanel);
         item("audioDisplay")->forceActiveFocus();
         press(Qt::Key_0, Qt::KeypadModifier); // AUDIO_MARK_PLAY_TIME (1000) before
         QCOMPARE(range(), (PlayRange{24000, 48000}));
@@ -13630,7 +13632,7 @@ private slots:
         QCOMPARE(range(), (PlayRange{48000, 48000}));
         press(Qt::Key_H);
         // (the mouse leaves: over the audio the hotkeys follow it, KB1)
-        QTest::mouseMove(window, QPoint(1, 1));
+        QTest::mouseMove(window, kOverNoPanel);
 
         // from the Grid: the letters and the keypad (not Down and Up, which
         // move there), and the display takes the focus
@@ -13765,7 +13767,7 @@ private slots:
         QCOMPARE(session->historySize(), steps);
         QCOMPARE(session->document().lines().size(), lines.size());
         // Outside the panels: the focused Grid's keys.
-        QTest::mouseMove(window, QPoint(1, 1));
+        QTest::mouseMove(window, kOverNoPanel);
         QCoreApplication::processEvents();
         QCOMPARE(hovered(), QString());
         press(Qt::Key_Down);
@@ -13783,7 +13785,7 @@ private slots:
         QVERIFY(!audio.playing());
         QVERIFY(hovered() != QStringLiteral("audioPanel"));
         audioPanel->setScale(1);
-        QTest::mouseMove(window, QPoint(1, 1));
+        QTest::mouseMove(window, kOverNoPanel);
         QCoreApplication::processEvents();
         // Focus in the audio, the pointer over the Grid: the Grid's Ctrl+D.
         item("audioDisplay")->forceActiveFocus();
@@ -13834,7 +13836,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         closeMismatchQuestion();
         keysNeverRepeat();
-        QTest::mouseMove(window, QPoint(1, 1)); // over no panel (KB1); QPoint(0, 0) is null: the centre
+        QTest::mouseMove(window, kOverNoPanel); // over no panel (KB1)
         auto &hotkeys = application->hotkeys();
         QStringList reached;
         connect(&hotkeys, &app::HotkeysController::ran, this,
@@ -13855,7 +13857,11 @@ private slots:
         // KB3-line-text-shift-delete (#244): in legacy the frame's Shift+Delete
         // deleted the Lines from the text field too; the rewrite's field cuts
         // the selection (checked below).
-        const QStringList departures = {QStringLiteral("Editor Shift-Delete: nothing, legacy GLOBAL_REMOVE_LINES")};
+        QStringList departures = {QStringLiteral("Editor Shift-Delete: nothing, legacy GLOBAL_REMOVE_LINES")};
+        // WS3-view-arrangements-retired (#217): the editor switch is retired
+        // and its Ctrl+E reaches nothing anywhere.
+        for (const auto &context : contexts)
+            departures.append(QStringLiteral("%1 Ctrl-E: nothing, legacy GLOBAL_EDITOR").arg(QLatin1String(context.first)));
         QStringList differences;
         hotkeys.setRehearsing(true);
         auto rehearsing = qScopeGuard([&] { hotkeys.setRehearsing(false); });
@@ -13910,7 +13916,7 @@ private slots:
         }
 
         // Each binding run in its own window's context. Quitting is left out:
-        // it would end the shell under test.
+        // it would end the shell under test; so is WS3's retired editor switch.
         const auto fresh = [&] {
             restartWithoutSound();
             QVERIFY(application->openFile(episode));
@@ -13919,13 +13925,13 @@ private slots:
             QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
             closeMismatchQuestion();
             keysNeverRepeat();
-            QTest::mouseMove(window, QPoint(1, 1));
+            QTest::mouseMove(window, kOverNoPanel);
         };
         QList<std::pair<QString, bool>> runs;
         bool changed = true; // the shell a command left changed starts again
         for (const auto &b : legacyDefaults()) {
             const QString symbol = QString::fromLatin1(b.symbol);
-            if (symbol == QLatin1String("GLOBAL_QUIT"))
+            if (symbol == QLatin1String("GLOBAL_QUIT") || symbol == QLatin1String("GLOBAL_EDITOR"))
                 continue;
             if (changed) {
                 fresh();
@@ -13963,7 +13969,7 @@ private slots:
                 application->videoFullscreen().toggle(0);
             window->requestActivate(); // the shell's table acts in the main window
             (void)QTest::qWaitFor([&] { return QGuiApplication::focusWindow() == window; }, 2000); // checked below
-            changed = QGuiApplication::focusWindow() != window || !window->isVisible() || !application->editorOn() || application->tabs().size() != 1 ||
+            changed = QGuiApplication::focusWindow() != window || !window->isVisible() || application->tabs().size() != 1 ||
                       application->video().indexing() || !application->video().hasVideo();
         }
         QVERIFY2(differences.isEmpty(), qPrintable(QLatin1Char('\n') + differences.join(QLatin1Char('\n'))));
@@ -14025,7 +14031,7 @@ private slots:
         if (mismatch && QTest::qWaitFor([&] { return mismatch->property("visible").toBool(); }, 3000))
             QMetaObject::invokeMethod(mismatch, "close");
         QTRY_VERIFY(!mismatch || !mismatch->property("visible").toBool());
-        QTest::mouseMove(window, QPoint(1, 1)); // the pointer away from the display
+        QTest::mouseMove(window, kOverNoPanel); // the pointer away from the display
         auto *toggle = qobject_cast<QQuickItem *>(named("audioSyncVideo"));
         QVERIFY(toggle);
         QTRY_VERIFY(toggle->isVisible() && toggle->width() > 0);
@@ -14083,7 +14089,7 @@ private slots:
         QTRY_VERIFY(!audio.syncVideo());
         QVERIFY(!toggle->property("checked").toBool());
         QVERIFY(!application->settingsStore()->boolean("audio.syncVideo"));
-        QTest::mouseMove(window, QPoint(1, 1));
+        QTest::mouseMove(window, kOverNoPanel);
         const auto viewAt = audio.view().position();
         QVERIFY(video.play());
         QTRY_VERIFY_WITH_TIMEOUT(video.session().tellMs() > 300, 10000);
@@ -14204,7 +14210,7 @@ private slots:
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Z); // AUDIO_PREVIOUS_ALT
         QCOMPARE(editor.text(), QStringLiteral("first"));
-        QTest::mouseMove(window, QPoint(1, 1));
+        QTest::mouseMove(window, kOverNoPanel);
     }
 
     // A3: legacy AudioDisplay::Commit ran EditBox::OnEdit after an
@@ -14336,7 +14342,7 @@ private slots:
         QCOMPARE(audio.currentSyllable(), 2);
         QCOMPARE(range(), (PlayRange{33600, 24000}));
         press(Qt::Key_H);
-        QTest::mouseMove(window, QPoint(1, 1));
+        QTest::mouseMove(window, kOverNoPanel);
         // Undo takes the join back
         QVERIFY(editor.undo());
         QVERIFY(editor.text().endsWith(QStringLiteral("{\\k25}o{\\k25}ke")));
@@ -14388,7 +14394,7 @@ private slots:
             QTest::mouseRelease(window, Qt::LeftButton, {}, display->mapToScene(QPointF(endX + 20, 10)).toPoint());
             QVERIFY(!audio.modified()); // committed
             QTRY_VERIFY(video.times() != before); // the video's Line has the new end
-            QTest::mouseMove(window, QPoint(1, 1));
+            QTest::mouseMove(window, kOverNoPanel);
         }
     }
 
@@ -15663,7 +15669,7 @@ private slots:
     // drawn cross and its position label) only over the picture itself; the
     // arrow over the letterbox and pillarbox bars and over the player's
     // controls, windowed, zoomed (by the wheel and in the zoom mode) and
-    // fullscreen, with every tool and in the player layout. Moving out of the
+    // fullscreen, with every tool. Moving out of the
     // picture and back switches each time.
     void videoPointerIsTheToolsOnlyOverThePicture()
     {
@@ -15901,19 +15907,6 @@ private slots:
         QTRY_COMPARE(overlay->window(), window);
         shown = window;
 
-        // The player layout: no tool, the arrow over the picture and the bars.
-        application->toggleEditor();
-        QTRY_VERIFY(!application->editorOn());
-        QTRY_VERIFY(!visualItem("visualToolRail")->isVisible());
-        {
-            const Points p = points();
-            for (const QPointF &in : p.inside)
-                QTRY_COMPARE_WITH_TIMEOUT(cursorAt(in), Qt::ArrowCursor, 2000);
-            for (const QPointF &bar : p.bars)
-                QTRY_COMPARE_WITH_TIMEOUT(cursorAt(bar), Qt::ArrowCursor, 2000);
-        }
-        application->toggleEditor();
-        QTRY_VERIFY(application->editorOn());
         QTRY_VERIFY(visualItem("visualToolRail")->isVisible());
         QTRY_COMPARE_WITH_TIMEOUT(cursorAt(tools.videoRect().center()), Qt::BlankCursor, 2000);
         // Away from the picture: a move to the same point in the next test's
@@ -18059,6 +18052,7 @@ private slots:
         // With a video they are enabled: the icon colour with its accent.
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        closeMismatchQuestion(); // its modal dim and box would cover the row
         application->video().stepFrames(1); // Previous frame enabled too
         QTRY_COMPARE(colours(), all(QStringLiteral("#202832")));
         QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(),
@@ -22882,12 +22876,16 @@ private slots:
 
     // The context menu in fullscreen: "Exit full screen", "Open editor" and
     // "Show / hide progress bar" enabled, no "Copy video position"; Open
-    // editor pauses, selects the Line shown at the video's time and leaves.
+    // editor pauses, selects the Line shown at the video's time and leaves,
+    // to the Line editor even where the layout has it closed (WS3).
     void videoFullscreenContextMenuAndOpenEditor()
     {
         restartWithoutSound();
         QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
+        QObject *editorDock = named("editorDock");
+        QVERIFY(QMetaObject::invokeMethod(editorDock, "close"));
+        QTRY_VERIFY(!editorDock->property("isOpen").toBool());
         auto &fs = application->videoFullscreen();
         auto *session = v5Session();
         const auto lines = session->document().lines();
@@ -22938,9 +22936,9 @@ private slots:
         QCOMPARE(text("fullscreenMenuFullScreen"), QStringLiteral("Exit full screen\tEscape"));
         QVERIFY(!named("fullscreenMenuCopyCoords")->property("visible").toBool());
         QVERIFY(enabled("fullscreenMenuOpenEditor"));
-        const QString editorKey = application->hotkeys().accelOf(QStringLiteral("GLOBAL_EDITOR"), 0);
-        QCOMPARE(editorKey, QStringLiteral("Ctrl-E"));
-        QCOMPARE(text("fullscreenMenuOpenEditor"), QStringLiteral("Open editor\tCtrl-E"));
+        // WS3 retired GLOBAL_EDITOR: the item has no binding.
+        QVERIFY(application->hotkeys().accelOf(QStringLiteral("GLOBAL_EDITOR"), 0).isEmpty());
+        QCOMPARE(text("fullscreenMenuOpenEditor"), QStringLiteral("Open editor"));
         QVERIFY(enabled("fullscreenMenuProgressBar"));
         // Show / hide progress bar switches VIDEO_PROGRESS_BAR.
         QVERIFY(fullscreenItem("videoFullscreenProgress")->isVisible());
@@ -22960,20 +22958,11 @@ private slots:
         QVERIFY(at >= 24 && at < 48);
         QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, centre);
         QTRY_VERIFY(fsMenu->property("opened").toBool());
-        application->settingsStore()->set("workspace.editorOn", false);
         QVERIFY(QMetaObject::invokeMethod(named("fullscreenMenuOpenEditor"), "triggered"));
         QVERIFY(!fs.active());
-        QVERIFY(application->settingsStore()->boolean("workspace.editorOn"));
         QTRY_COMPARE(session->selection().active, std::optional(lines[1]->id));
-        // Ctrl+E (GLOBAL_EDITOR) in fullscreen is Open editor as well.
-        QVERIFY(application->video().showFrameAt(5));
-        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 5);
-        QVERIFY(fs.toggle(0));
-        QVERIFY(becomesFocusWindow(fsWindow));
-        keysNeverRepeat();
-        QTest::keyClick(fsWindow, Qt::Key_E, Qt::ControlModifier);
-        QTRY_VERIFY(!fs.active());
-        QTRY_COMPARE(session->selection().active, std::optional(lines[0]->id));
+        QTRY_VERIFY(editorDock->property("isOpen").toBool());
+        QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
     }
 
     // A double click on the picture switches fullscreen; leaving that way

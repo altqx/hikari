@@ -350,17 +350,45 @@ std::span<const KnownSource> knownSources()
 
 bool isRetiredOption(std::string_view legacyKey)
 {
+    return !retiredOptionReason(legacyKey).empty();
+}
+
+std::string_view retiredOptionReason(std::string_view legacyKey)
+{
     // User decision 2026-10-05: no main toolbar.
-    return legacyKey == "TOOLBAR_IDS" || legacyKey == "TOOLBAR_ALIGNMENT";
+    if (legacyKey == "TOOLBAR_IDS" || legacyKey == "TOOLBAR_ALIGNMENT")
+        return "retired: the rewrite has no main toolbar (user decision, 2026-10-05)";
+    // WS3 (#217, owner 2026-10-18): no editor switch.
+    if (legacyKey == "EDITOR_ON")
+        return "retired: the editor is always shown, layouts replace the editor switch (owner decision, 2026-10-18)";
+    return {};
 }
 
 bool isRetiredAction(int id)
 {
-    // The commands whose stored bindings the hotkeys drop as they are read
-    // (GLOBAL_VIDEO_INDEXING, user decision 2026-10-05;
-    // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW, AM1 2026-10-19;
-    // GLOBAL_OPEN_DUMMY_AUDIO, AV3 owner 2026-10-18).
-    return isRetiredHotkey(id);
+    return !retiredActionReason(id).empty();
+}
+
+std::string_view retiredActionReason(int id)
+{
+    // User decision 2026-10-05: GLOBAL_VIDEO_INDEXING is retired.
+    if (id == hotkeyIdOf("GLOBAL_VIDEO_INDEXING"))
+        return "retired: the rewrite has no FFMS2 indexing command (user decision, 2026-10-05)";
+    // AM1 (2026-10-19): GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW, as the window is gone.
+    if (id == hotkeyIdOf("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW"))
+        return "retired: the shortcut mapping window is gone; each macro's shortcut is set in the "
+               "Automation panel (user decision, 2026-10-19)";
+    // AV3 (owner 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO, as a dummy video brings its own audio.
+    if (id == hotkeyIdOf("GLOBAL_OPEN_DUMMY_AUDIO"))
+        return "retired: a dummy video brings its own silent audio (owner decision, 2026-10-18)";
+    // WS3 (#217, owner 2026-10-18): the View arrangements and the editor switch.
+    for (const auto *symbol : {"GLOBAL_VIEW_ALL", "GLOBAL_VIEW_VIDEO", "GLOBAL_VIEW_AUDIO", "GLOBAL_VIEW_ONLY_VIDEO",
+                               "GLOBAL_VIEW_SUBS"})
+        if (id == hotkeyIdOf(symbol))
+            return "retired: layout presets and saved layouts replace the View arrangements (owner decision, 2026-10-18)";
+    if (id == hotkeyIdOf("GLOBAL_EDITOR"))
+        return "retired: the editor is always shown, layouts replace the editor switch (owner decision, 2026-10-18)";
+    return {};
 }
 
 bool isPathSetting(std::string_view id)
@@ -990,7 +1018,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
             row.id = "setting:" + record->label;
             row.destination = def ? std::string(def->id) : std::string();
             row.disposition = Disposition::Retired;
-            because("retired: the rewrite has no main toolbar (user decision, 2026-10-05)");
+            because(std::string(retiredOptionReason(record->label)));
             add(std::move(row));
             continue;
         }
@@ -1317,12 +1345,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         row.destination = std::string(symbol) + " (" + std::string(hotkeyWindowName(record->window)) + ")";
         if (isRetiredAction(id)) {
             row.disposition = Disposition::Retired;
-            because(id == hotkeyIdOf("GLOBAL_VIDEO_INDEXING")
-                        ? "retired: the rewrite has no FFMS2 indexing command (user decision, 2026-10-05)"
-                    : id == hotkeyIdOf("GLOBAL_OPEN_DUMMY_AUDIO")
-                        ? "retired: a dummy video brings its own silent audio (owner decision, 2026-10-18)"
-                        : "retired: the shortcut mapping window is gone; each macro's shortcut is set in the "
-                          "Automation panel (user decision, 2026-10-19)");
+            because(std::string(retiredActionReason(id)));
             add(std::move(row));
             continue;
         }
@@ -1370,7 +1393,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
             row.disposition = Disposition::Missing;
             if (isRetiredAction(key.id)) {
                 row.disposition = Disposition::Retired;
-                row.reason = "retired (user decision)";
+                row.reason = std::string(retiredActionReason(key.id));
                 add(std::move(row));
                 continue;
             }

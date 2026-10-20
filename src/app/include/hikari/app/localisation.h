@@ -49,6 +49,9 @@ public:
     // The languages with an interface catalog ("ko_KR", "pl", "ta", "th_TH"),
     // sorted as legacy sorts wxTranslations::GetAvailableTranslations.
     QStringList catalogLanguages() const;
+    // What each catalog makes of `sources` in `context`: every translation
+    // that differs from its source, once.
+    QStringList translationsOf(const char *context, const QStringList &sources) const;
 
     // The catalog a PROGRAM_LANGUAGE value selects among `available`: none
     // (English) for "", "en" and legacy's "0" and "1"; the tag itself; else
