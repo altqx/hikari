@@ -17203,6 +17203,28 @@ private slots:
         QTRY_COMPARE(session->historySize(), steps + 1);
         QVERIFY2(thirdText().contains(QStringLiteral("\\fscy110")), qPrintable(thirdText()));
         QVERIFY(!tools.gestureActive());
+        // The active Line changes under a scrub (Codex on #293): the tools
+        // end its gesture, and its later moves and its release write nothing,
+        // to the new Line or the old one.
+        {
+            steps = session->historySize();
+            const QString beforeThird = thirdText();
+            const QString beforeSecond = text(session->document().lines()[1]);
+            QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, y0);
+            QTest::mouseMove(window, y0 + QPoint(6, 0));
+            QTRY_VERIFY(tools.gestureActive());
+            application->selectLine(session->document().lines()[1]->id.value);
+            QTRY_VERIFY(!tools.gestureActive());
+            QTest::mouseMove(window, y0 + QPoint(12, 0));
+            QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, y0 + QPoint(12, 0));
+            QTest::qWait(50);
+            QVERIFY(!tools.gestureActive());
+            QCOMPARE(session->historySize(), steps);
+            QCOMPARE(thirdText(), beforeThird);
+            QCOMPARE(text(session->document().lines()[1]), beforeSecond);
+            application->selectLine(third.value);
+            QTRY_VERIFY(session->selection().active == third);
+        }
 
         // A narrow panel wraps the groups onto more lines; the picker stays.
         // (The window is at least 800 wide, the Video panel all of it here:
@@ -17229,15 +17251,26 @@ private slots:
             // A tool switch keeps the bar's height (the approved design;
             // Codex on #293): the crosshair, on fewer lines here, keeps the
             // lines the tallest family needs.
+            // The Video panel's minimum follows the tool's own lines, not
+            // the height the bar holds (Codex on #293: the column is as tall
+            // after the switch, holding more, and the minimum must still
+            // change with the lines).
+            QQuickItem *videoPanel = item("videoPanel");
+            const auto minimumHeight = [&] { return videoPanel->property("minimumSize").toSizeF().height(); };
             const qreal wrapped = bar->height();
+            const qreal scaleLines = groups->implicitHeight(), scaleMinimum = minimumHeight();
             QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool3"), "click"));
             QTRY_COMPARE(tools.activeFamily(), 0);
             QTRY_VERIFY2(groups->implicitHeight() < groups->height() - 10,
                          qPrintable(QStringLiteral("%1 %2").arg(groups->implicitHeight()).arg(groups->height())));
             QCOMPARE(bar->height(), wrapped);
+            QTRY_VERIFY2(std::abs((scaleMinimum - minimumHeight()) - (scaleLines - groups->implicitHeight())) <= 1,
+                         qPrintable(QStringLiteral("minimum %1 -> %2, lines %3 -> %4").arg(scaleMinimum).arg(minimumHeight())
+                                        .arg(scaleLines).arg(groups->implicitHeight())));
             QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool3"), "click"));
             QTRY_COMPARE(tools.activeFamily(), 3);
             QCOMPARE(bar->height(), wrapped);
+            QTRY_COMPARE(minimumHeight(), scaleMinimum);
             QVERIFY(maximum.write(std::numeric_limits<qreal>::infinity()) /* the Layout default */);
             QTRY_VERIFY(groups->implicitHeight() < 40);
             window->resize(was);
