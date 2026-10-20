@@ -85,8 +85,7 @@ public:
         case WM_NCCALCSIZE:
             return calculateSize(msg, result);
         case WM_NCHITTEST:
-            *result = hitTest(POINT{GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam)});
-            return true;
+            return answer(result, hitTest(POINT{GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam)}));
         case WM_NCMOUSEMOVE:
             trackMaximizeButton(msg->wParam == HTMAXBUTTON);
             return false;
@@ -100,36 +99,23 @@ public:
                 return false;
             // Windows would draw its own button there.
             m_frame->setMaximizeState(true, true);
-            *result = 0;
-            return true;
+            return answer(result, 0);
         case WM_NCLBUTTONUP:
             if (msg->wParam != HTMAXBUTTON)
                 return false;
             if (m_frame->maximizePressed())
                 m_frame->toggleMaximized();
             m_frame->setMaximizeState(true, false);
-            *result = 0;
-            return true;
+            return answer(result, 0);
         case WM_NCRBUTTONUP:
             if (msg->wParam != HTCAPTION && msg->wParam != HTSYSMENU)
                 return false;
             trackSystemMenu(POINT{GET_X_LPARAM(msg->lParam), GET_Y_LPARAM(msg->lParam)});
-            *result = 0;
-            return true;
-        case WM_SYSCOMMAND:
-            // Alt alone, F10 and an Alt+letter no shortcut took would put the
-            // window in the system's menu mode, which takes the next keys:
-            // the title bar's menus answer those (MainWindowFrame.altTapped,
-            // Main.qml's F10). Alt+Space still opens the system menu.
-            if ((msg->wParam & 0xFFF0) != SC_KEYMENU || msg->lParam == VK_SPACE)
-                return false;
-            *result = 0;
-            return true;
+            return answer(result, 0);
         case WM_ERASEBKGND:
             // No white flash before the scene's first frame.
             eraseBackground();
-            *result = 1;
-            return true;
+            return answer(result, 1);
         default:
             return false;
         }
@@ -148,6 +134,18 @@ public:
     }
 
 private:
+    // Qt hands the filters the posted messages (the mouse's) from its event
+    // loop with no result, and true there drops them; the sent ones come
+    // from the window procedure with one. The window procedure passes none
+    // of the input messages on (WM_SYSCOMMAND, the mouse's), so a sent
+    // WM_SYSCOMMAND never comes here.
+    static bool answer(qintptr *result, qintptr value)
+    {
+        if (result)
+            *result = value;
+        return true;
+    }
+
     HWND hwnd() const
     {
         // handle(), not winId(): winId() would make the native window now.
@@ -183,9 +181,8 @@ private:
     // taskbar can still come up.
     bool calculateSize(const MSG *msg, qintptr *result)
     {
-        *result = 0;
         if (!msg->wParam)
-            return true; // the proposed window rectangle is the client's as it is
+            return answer(result, 0); // the proposed window rectangle is the client's as it is
         auto *params = reinterpret_cast<NCCALCSIZE_PARAMS *>(msg->lParam);
         if (IsZoomed(hwnd())) {
             MONITORINFO monitor{};
@@ -211,8 +208,7 @@ private:
                 }
             }
         }
-        *result = 0;
-        return true;
+        return answer(result, 0);
     }
 
     // The resize band: the sizing frame Windows would draw outside the
