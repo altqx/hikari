@@ -1827,6 +1827,39 @@ TEST(VisualTransformValues, ChangeAllFromAZeroScaleIsRefused)
     EXPECT_EQ(textOf().find("nan"), std::string::npos) << textOf();
 }
 
+// VT1 (Codex on #293): over several Lines with "Change all scale tags" a
+// typed or scrubbed value is written as given, each axis by its own ratio.
+// Legacy's drags take the larger ratio for both axes, so a value below the
+// press's would change nothing.
+TEST(VisualTransformValues, BatchScaleValuesTakeTheirOwnAxisRatio)
+{
+    TestHost host;
+    setUp(host, caseNamed("scale-several-lines"));
+    const auto all = ids(*host.s);
+    host.targets = {all.begin(), all.end()};
+    ScaleTool tool;
+    tool.setToggled(32);
+    tool.selected(host);
+    tool.reset(host);
+    ASSERT_EQ(valueText(tool, host, "fscx"), u"100");
+    const std::size_t steps = host.s->historySize();
+    // X below the press's: halved in every picked Line, Y untouched.
+    EXPECT_TRUE(tool.setValue("fscx", u"50", host));
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    EXPECT_EQ(rowText(host, 0), "{\\fscx50\\pos(960,540)}Active");
+    EXPECT_EQ(rowText(host, 1), "{\\fscx75}Second{\\fscx20}x");
+    EXPECT_EQ(rowText(host, 2), "{\\fscx50\\fscy70}Third");
+    EXPECT_EQ(valueText(tool, host, "fscx"), u"50");
+    // Y scrubbed up: X stays where it was typed.
+    EXPECT_TRUE(tool.setValue("fscy", u"120", host, ValueEdit::Sample));
+    EXPECT_TRUE(tool.setValue("fscy", u"150", host, ValueEdit::Sample));
+    EXPECT_TRUE(tool.setValue("fscy", u"150", host, ValueEdit::Commit));
+    EXPECT_EQ(host.s->historySize(), steps + 2);
+    EXPECT_NE(rowText(host, 0).find("\\fscx50"), std::string::npos) << rowText(host, 0);
+    EXPECT_EQ(rowText(host, 1), "{\\fscy75\\fscx75}Second{\\fscx20}x");
+    EXPECT_NE(rowText(host, 2).find("\\fscx50\\fscy105"), std::string::npos) << rowText(host, 2);
+}
+
 // VT1 (Codex on #293): with "Preserve proportions" each sample is in
 // proportion to the press's scale, so a scrub through zero comes back with
 // both axes.
