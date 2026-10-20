@@ -410,8 +410,11 @@ void AutomationShell::loadScript(const QUrl &file)
     // Automation.cpp:1162-1168: "|<path>" is appended to the Script Info
     // value as a "Changing the subtitle header" step (SetModified(ASS_PROPERTIES)).
     const auto key = wide(application::kAutomationScriptsKey);
-    const std::string value =
-        application::scriptInfoWithScript(narrow(s->document().scriptInfo(key).value_or(std::u8string())), path);
+    const std::string before = narrow(s->document().scriptInfo(key).value_or(std::u8string()));
+    const std::string value = application::scriptInfoWithScript(before, path);
+    // A value read before stays read with the path the user chose added.
+    if (before.empty() || m_readScriptInfo.contains(before))
+        m_readScriptInfo.insert(value);
     s->run(application::Command{"Changing the subtitle header", s->revision(), {},
                                 [&](core::Document &d) { return d.setScriptInfo(key, wide(value)); }});
     if (m_documentChanged)
@@ -424,6 +427,8 @@ void AutomationShell::addFromDocument()
     const auto *s = target ? session(*target) : nullptr;
     const auto value = s ? s->document().scriptInfo(wide(application::kAutomationScriptsKey)) : std::nullopt;
     std::vector<std::string> added;
+    if (value)
+        m_readScriptInfo.insert(narrow(*value));
     m_documentScripts.readScriptInfo(
         value ? narrow(*value) : std::string(),
         [](const std::string &path) { return QFileInfo(QString::fromStdString(path)).isFile(); }, &added);
@@ -437,11 +442,12 @@ QStringList AutomationShell::documentScriptsToLoad()
     const auto *s = target ? session(*target) : nullptr;
     const auto value = s ? s->document().scriptInfo(wide(application::kAutomationScriptsKey)) : std::nullopt;
     QStringList out;
-    if (!value)
+    if (!value || m_readScriptInfo.contains(narrow(*value)))
         return out;
+    // No file check before consent: one would open a UNC path's server.
     const auto &listed = m_documentScripts.scripts();
     for (const std::string &path : application::scriptInfoScriptPaths(narrow(*value)))
-        if (QFileInfo(QString::fromStdString(path)).isFile() && std::ranges::find(listed, path) == listed.end() &&
+        if (!path.empty() && std::ranges::find(listed, path) == listed.end() &&
             !out.contains(QString::fromStdString(path)))
             out << QString::fromStdString(path);
     return out;

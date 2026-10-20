@@ -32,6 +32,7 @@
 #include <QString>
 
 #include <functional>
+#include <set>
 #include <memory>
 #include <optional>
 
@@ -107,9 +108,11 @@ public:
     // S4, legacy Automation::AddFromSubs: the scripts the editing target's
     // Script Info names ("Automation Scripts") load.
     Q_INVOKABLE void addFromDocument();
-    // AM1: what addFromDocument would load now: the existing files the
-    // editing target's Script Info names that are not listed. The panel
-    // offers them; loading a script runs its code, so it waits for the user.
+    // AM1: what addFromDocument would load now: the paths the editing
+    // target's Script Info names that are not listed, until that value has
+    // been read. The panel offers them; loading a script runs its code, so it
+    // waits for the user. Nothing here touches the file system: a named path
+    // (a UNC one on Windows, too) is first opened on Load.
     Q_INVOKABLE QStringList documentScriptsToLoad();
     // The Automation menu opens (legacy BuildMenu): with a Document open, its
     // scripts load and every script whose file changed reloads.
@@ -206,6 +209,7 @@ private:
     std::optional<Run> m_run;
     std::optional<std::pair<std::string, int>> m_last;
     application::DocumentScripts m_documentScripts;
+    std::set<std::string> m_readScriptInfo; // the values addFromDocument read
     std::optional<std::string> m_pendingLast; // waiting for this script to load
     std::function<void(const QString &)> m_logLine;
     ui::SettingsStore *m_settings = nullptr;

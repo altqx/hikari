@@ -12671,7 +12671,7 @@ private slots:
     void automationPanelOffersTheDocumentScripts()
     {
         QTemporaryDir scripts;
-        const auto document = [&](const QString &name) {
+        const auto document = [&](const QString &name, const QByteArray &more = {}) {
             const QString script = QDir::toNativeSeparators(scripts.filePath(name + QStringLiteral(".lua")));
             QFile lua(script);
             if (!lua.open(QIODevice::WriteOnly))
@@ -12681,7 +12681,7 @@ private slots:
             QFile f(ass);
             if (!f.open(QIODevice::WriteOnly))
                 return QString();
-            f.write("[Script Info]\nScriptType: v4.00+\nAutomation Scripts: |" + script.toUtf8() +
+            f.write("[Script Info]\nScriptType: v4.00+\nAutomation Scripts: |" + script.toUtf8() + more +
                     "\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
             return ass;
@@ -12692,7 +12692,10 @@ private slots:
             return std::ranges::find(all, script) != all.end();
         };
         const QString first = document(QStringLiteral("First"));
-        const QString second = document(QStringLiteral("Second"));
+        // A path that is gone (or on a server, on Windows) is offered by name;
+        // it is first looked at on Load, which skips it silently.
+        const QString gone = QDir::toNativeSeparators(scripts.filePath(QStringLiteral("missing/Gone.lua")));
+        const QString second = document(QStringLiteral("Second"), "|" + gone.toUtf8());
         QVERIFY(!first.isEmpty() && !second.isEmpty());
         QVERIFY(application->openFile(first));
         auto *dock = item<QObject>("automationDock");
@@ -12722,11 +12725,12 @@ private slots:
         QTRY_COMPARE(visualItem("automationTool")->property("documentName").toString(), QStringLiteral("Second.ass"));
         QVERIFY(dock->property("isOpen").toBool());
         QTRY_COMPARE(visualItem("documentScriptsOfferText")->property("text").toString(),
-                     QStringLiteral("This file names scripts: Second.lua"));
+                     QStringLiteral("This file names scripts: Second.lua, Gone.lua"));
         QVERIFY(offer->isVisible());
         QVERIFY(!listed("Second"));
         QVERIFY(QMetaObject::invokeMethod(visualItem("documentScriptsLoad"), "clicked"));
         QVERIFY(listed("Second"));
+        QVERIFY(!listed("missing/Gone"));
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_Second"), 30000);
         QTRY_VERIFY(!offer->isVisible());
         // Back on the first tab: its script is loaded, nothing is offered.
