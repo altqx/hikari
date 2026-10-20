@@ -1350,6 +1350,7 @@ private:
         QString path;
         int active = 0;   // subtitles: the session's active row
         int position = 0; // video: the session's position
+        bool layout = false; // subtitles: the session gave the tab its arrangement (WS2)
     };
     struct PendingSession {
         std::vector<application::SessionTab> tabs;
@@ -1391,6 +1392,21 @@ private:
     void replaceTabArrangement(application::DocumentId old, application::DocumentId replacement,
                                ui::WorkspaceLayoutController::TabStart start);
     ui::WorkspaceLayoutController::TabStart tabStart(application::DocumentId document) const;
+    // WS2: each ASS file keeps its tab's arrangement in a [Hikari] section
+    // ("Save panel layout in subtitle files", subtitles.layoutInFile). A
+    // save writes the tab's; an opened file's tab takes the file's, the
+    // Session's taking precedence when a Session is restored.
+    void setUpFileArrangements();
+    // The arrangement the Document's file holds, when the setting is on and
+    // it validates; `report`: one that does not is named in the log.
+    std::optional<QByteArray> fileArrangement(application::DocumentId document, bool report = false);
+    // A tab made from a file's bytes (opened, or recovered from an autosave)
+    // starts with the arrangement the file holds; one that does not
+    // validate is named in the log.
+    void takeFileArrangement(application::DocumentId document);
+    // A file opened into the tab of `old`: the arrangement its file holds,
+    // else WS1's start.
+    void openIntoTabArrangement(application::DocumentId old, application::DocumentId replacement);
 
     // O5 (application_language.cpp): the language from PROGRAM_LANGUAGE at
     // start and whenever the setting changes; the strings the application

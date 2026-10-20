@@ -674,6 +674,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_log->log(QCoreApplication::translate("HikariSub.Video", "Cannot change YCbCr matrix"));
     });
     setUpTranslationControls(); // E5
+    setUpFileArrangements();    // WS2
     // P10: the status bar's fields from the video, its view and the editing target.
     m_statusBar = std::make_unique<ui::StatusBarController>(*m_video, *m_visualTools, [this]() -> const core::Document * {
         auto *session = targetSession();
@@ -1477,6 +1478,10 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
         (void)application::filterLines(*session, settings, {}, true);
     }
     m_workspace.add(*id, QFileInfo(path).fileName().toStdString(), asReference);
+    // WS2: the tab takes the arrangement its file keeps (a Session's, set
+    // after this, takes precedence). A file opened as the reference keeps it
+    // for when it becomes a tab (closeReference, promoteReference).
+    takeFileArrangement(*id);
     recordFileTime(*id);
     if (!asReference)
         rememberRecent(QFileInfo(path).absoluteFilePath().toStdString());
@@ -2776,9 +2781,14 @@ bool Application::autosave(application::DocumentId document)
     application::RecoveryContent content;
     // S4: legacy's autosave is SaveFile too, so it writes the active Line
     // into the file and the open Document (SubsGridBase.cpp:1470 at 20d647c4).
+    // WS2: the recovery file has the tab's panel arrangement, as a save
+    // writes it, so a recovered copy has it.
     const auto activeLine = application::activeLineToSave(*session);
-    content.bytes = core::encodeSubtitle(application::withActiveLine(session->document(), activeLine),
-                                         m_files->saveOptions()); // E5: as SaveFile
+    const auto layout = m_files->layoutToSave(document, session->document());
+    core::Document saved = application::withActiveLine(session->document(), activeLine);
+    if (layout)
+        saved.setHikariProperty(application::kLayoutKey, *layout);
+    content.bytes = core::encodeSubtitle(saved, m_files->saveOptions()); // E5: as SaveFile
     const auto format = session->document().format();
     content.extension = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText ? "ass"
                         : format == core::SubtitleFormat::Srt                                            ? "srt"
@@ -2801,6 +2811,8 @@ bool Application::autosave(application::DocumentId document)
         return false;
     if (activeLine)
         session->amendScriptInfo(application::kActiveLineKey, *activeLine);
+    // The arrangement stays the recovery file's: the open Document keeps
+    // its file's section, so a Save with the setting off writes no other.
     return true;
 }
 
@@ -2936,6 +2948,7 @@ bool Application::recoverBundle(const QString &key, qulonglong generation)
     }
     m_workspace.add(id, QCoreApplication::translate("HikariSub.Session", "%1 (recovered)")
                             .arg(QString::fromStdString(content->title)).toStdString());
+    takeFileArrangement(id); // WS2: the arrangement the autosave kept
     m_workspace.setEditingTarget(id);
     refreshViews();
     return true;
@@ -3015,6 +3028,7 @@ bool Application::openLegacyAutosave(const QString &file)
     if (auto *session = m_files->session(id))
         selectLegacyActiveLine(*session);
     m_workspace.add(id, QCoreApplication::translate("HikariSub.Session", "%1 (recovered)").arg(QFileInfo(file).fileName()).toStdString());
+    takeFileArrangement(id); // WS2
     m_tabMedia[id.value]; // a new tab
     m_workspace.setEditingTarget(id);
     refreshViews();

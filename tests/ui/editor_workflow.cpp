@@ -11,6 +11,7 @@
 #include <QDeadlineTimer>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
+#include <QRegularExpression>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
 #include <Spix/QtQmlBot.h>
@@ -152,9 +153,13 @@ int main(int argc, char **argv)
     // S4: the save also writes the active Line's row after the last property
     // (Undo and Redo make the edited first Line active again).
     expected.replace("YCbCr Matrix: TV.601\r\n", "YCbCr Matrix: TV.601\r\nActive Line: 0\r\n");
-    if (readAll(path) != expected)
-        std::printf("saved bytes:\n%s\n", readAll(path).constData());
-    expect(readAll(path) == expected, "only the edited Line changed on disk");
+    // WS2: and the tab's arrangement in a [Hikari] section at the end.
+    const QByteArray saved = readAll(path);
+    const QRegularExpression hikari(QStringLiteral("\\A\r\n\\[Hikari\\]\r\nLayout=[A-Za-z0-9+/=]+\r\n\\z"));
+    const bool same = saved.startsWith(expected) && hikari.match(QString::fromLatin1(saved.mid(expected.size()))).hasMatch();
+    if (!same)
+        std::printf("saved bytes:\n%s\n", saved.constData());
+    expect(same, "only the edited Line changed on disk");
 
     // Reopen in a fresh composition.
     hikari::app::Application reopened;
