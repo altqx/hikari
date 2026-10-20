@@ -115,20 +115,21 @@ Loader {
                         Layout.fillWidth: true
                         // As wide as the longest entry, so the bar does not
                         // move as the choice changes (up to a limit).
-                        Layout.preferredWidth: Math.min(widest.width, 200)
+                        Layout.preferredWidth: Math.min(widest, 200)
                         text: choice.entryText(choice.currentIndex)
                         elide: Text.ElideRight
                         color: choice.enabled ? Theme.text : Theme.disabled
-                        TextMetrics {
-                            id: widest
-                            font: Qt.application.font
-                            text: {
-                                let w = ""
-                                for (let i = 0; i < choice.model.length; ++i)
-                                    if (choice.entryText(i).length > w.length)
-                                        w = choice.entryText(i)
-                                return w
-                            }
+                        // Each entry as drawn (a translation's fewer, wider
+                        // glyphs can be the widest).
+                        readonly property real widest: {
+                            let w = 0
+                            for (let i = 0; i < choice.model.length; ++i)
+                                w = Math.max(w, entryMetrics.advanceWidth(choice.entryText(i)))
+                            return Math.ceil(w)
+                        }
+                        FontMetrics {
+                            id: entryMetrics
+                            font: parent.font
                         }
                     }
                     ColorImage {
