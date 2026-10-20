@@ -123,6 +123,162 @@ std::size_t LineEditorController::carriedLead() const
     return c ? c->tags.leading.size() : 0;
 }
 
+std::optional<core::OriginalTags> LineEditorController::runTags() const
+{
+    const auto r = sessionRecord();
+    if (!r || !carry(*r))
+        return std::nullopt;
+    const auto style = lineStyle();
+    return core::readOriginalTags(core::toUtf16(r->text), style ? &*style : nullptr);
+}
+
+namespace {
+
+QString qs16(std::u16string_view s)
+{
+    return QString::fromUtf16(s.data(), static_cast<qsizetype>(s.size()));
+}
+
+// What a run changes, in the run strip's words.
+QString runKind(const core::TagRun &run)
+{
+    struct Kind {
+        std::u16string_view component;
+        const char *name;
+    };
+    static constexpr Kind kinds[] = {
+        {u"i", QT_TRANSLATE_NOOP("HikariSub.Translation", "Italic")},
+        {u"b", QT_TRANSLATE_NOOP("HikariSub.Translation", "Bold")},
+        {u"u", QT_TRANSLATE_NOOP("HikariSub.Translation", "Underline")},
+        {u"s", QT_TRANSLATE_NOOP("HikariSub.Translation", "Strikeout")},
+        {u"1c", QT_TRANSLATE_NOOP("HikariSub.Translation", "Colour")},
+        {u"2c", QT_TRANSLATE_NOOP("HikariSub.Translation", "Colour")},
+        {u"3c", QT_TRANSLATE_NOOP("HikariSub.Translation", "Colour")},
+        {u"4c", QT_TRANSLATE_NOOP("HikariSub.Translation", "Colour")},
+        {u"1a", QT_TRANSLATE_NOOP("HikariSub.Translation", "Transparency")},
+        {u"2a", QT_TRANSLATE_NOOP("HikariSub.Translation", "Transparency")},
+        {u"3a", QT_TRANSLATE_NOOP("HikariSub.Translation", "Transparency")},
+        {u"4a", QT_TRANSLATE_NOOP("HikariSub.Translation", "Transparency")},
+        {u"fn", QT_TRANSLATE_NOOP("HikariSub.Translation", "Font")},
+        {u"fs", QT_TRANSLATE_NOOP("HikariSub.Translation", "Size")},
+        {u"fscx", QT_TRANSLATE_NOOP("HikariSub.Translation", "Scale")},
+        {u"fscy", QT_TRANSLATE_NOOP("HikariSub.Translation", "Scale")},
+        {u"fsp", QT_TRANSLATE_NOOP("HikariSub.Translation", "Spacing")},
+        {u"frx", QT_TRANSLATE_NOOP("HikariSub.Translation", "Rotation")},
+        {u"fry", QT_TRANSLATE_NOOP("HikariSub.Translation", "Rotation")},
+        {u"frz", QT_TRANSLATE_NOOP("HikariSub.Translation", "Rotation")},
+        {u"fax", QT_TRANSLATE_NOOP("HikariSub.Translation", "Shear")},
+        {u"fay", QT_TRANSLATE_NOOP("HikariSub.Translation", "Shear")},
+        {u"xbord", QT_TRANSLATE_NOOP("HikariSub.Translation", "Border")},
+        {u"ybord", QT_TRANSLATE_NOOP("HikariSub.Translation", "Border")},
+        {u"xshad", QT_TRANSLATE_NOOP("HikariSub.Translation", "Shadow")},
+        {u"yshad", QT_TRANSLATE_NOOP("HikariSub.Translation", "Shadow")},
+        {u"be", QT_TRANSLATE_NOOP("HikariSub.Translation", "Blur")},
+        {u"blur", QT_TRANSLATE_NOOP("HikariSub.Translation", "Blur")},
+        {u"t", QT_TRANSLATE_NOOP("HikariSub.Translation", "Animation")},
+        {u"r", QT_TRANSLATE_NOOP("HikariSub.Translation", "Style")},
+    };
+    QStringList names;
+    for (const auto &kind : kinds) {
+        const QString name = QCoreApplication::translate("HikariSub.Translation", kind.name);
+        if (run.differs.contains(std::u16string(kind.component)) && !names.contains(name))
+            names << name;
+    }
+    if (names.isEmpty())
+        names << QCoreApplication::translate("HikariSub.Translation", "Formatting");
+    return names.join(QStringLiteral(", "));
+}
+
+// "#rrggbb" for a run that changes the primary colour (stored as BBGGRR).
+QString runColour(const core::TagRun &run)
+{
+    const auto it = run.differs.find(u"1c");
+    if (it == run.differs.end() || it->second.size() != 6)
+        return {};
+    const QString bgr = qs16(it->second);
+    return QLatin1Char('#') + (bgr.mid(4, 2) + bgr.mid(2, 2) + bgr.left(2)).toLower();
+}
+
+} // namespace
+
+QVariantList LineEditorController::tagRuns() const
+{
+    QVariantList out;
+    const auto tags = runTags();
+    const auto real = sessionRecord();
+    if (!tags || !real)
+        return out;
+    // Where each placed run's text is: in the whole translation, then in the field.
+    std::vector<core::RunPlacement> landed;
+    const auto full = core::toUtf16(real->translation);
+    if (!full.empty())
+        core::composeTranslation(*tags, core::readTranslation(*tags, full), &landed);
+    const auto lead = tags->leading.size();
+    const auto inner = core::project(core::toUtf16(record()->translation));
+    const auto original = core::project(core::toUtf16(real->text));
+    for (const auto &run : tags->runs) {
+        auto originalStart = run.displayStart, originalEnd = run.displayEnd;
+        if (m_showTags) {
+            originalStart = core::rawOffset(original, originalStart, true);
+            originalEnd = core::rawOffset(original, originalEnd, false);
+        }
+        int start = -1, end = -1;
+        for (const auto &p : landed) {
+            if (p.run != run.number)
+                continue;
+            start = static_cast<int>(m_showTags ? p.start - lead : core::displayOffset(inner, p.start - lead));
+            end = static_cast<int>(m_showTags ? p.end - lead : core::displayOffset(inner, p.end - lead));
+        }
+        out << QVariantMap{{QStringLiteral("number"), run.number},
+                           {QStringLiteral("text"), qs16(run.text)},
+                           {QStringLiteral("kind"), runKind(run)},
+                           {QStringLiteral("colour"), runColour(run)},
+                           {QStringLiteral("placed"), start >= 0},
+                           {QStringLiteral("originalStart"), static_cast<int>(originalStart)},
+                           {QStringLiteral("originalEnd"), static_cast<int>(originalEnd)},
+                           {QStringLiteral("start"), start},
+                           {QStringLiteral("end"), end}};
+    }
+    return out;
+}
+
+bool LineEditorController::placeRun(int number, int selectionStart, int selectionEnd)
+{
+    const auto tags = runTags();
+    const auto real = sessionRecord();
+    if (!editable() || !tags || !real)
+        return false;
+    // The field's selection as projection offsets: the same text in the
+    // field's raw text and in the draft's body, whose run tags are taken out.
+    const auto inner = core::toUtf16(record()->translation);
+    const auto shown = core::project(inner);
+    auto displayed = [&](int at) {
+        const auto x = static_cast<std::size_t>(std::max(at, 0));
+        return m_showTags ? core::displayOffset(shown, std::min(x, inner.size())) : std::min(x, shown.text.size());
+    };
+    const auto from = displayed(std::min(selectionStart, selectionEnd));
+    const auto to = displayed(std::max(selectionStart, selectionEnd));
+    if (from >= to)
+        return false;
+    auto draft = core::readTranslation(*tags, core::toUtf16(real->translation));
+    if (number == 0)
+        number = core::nextUnplacedRun(*tags, draft.placements);
+    if (number < 1 || number > static_cast<int>(tags->runs.size()))
+        return false;
+    const auto body = core::project(draft.body);
+    if (!core::placeRun(draft.placements, core::rawOffset(body, from, true), core::rawOffset(body, to, false), number))
+        return false;
+    draft.carried = false; // setRaw adds the carried tags
+    if (!setRaw(1, core::toUtf8(core::composeTranslation(*tags, draft))))
+        return false;
+    const auto after = core::project(core::toUtf16(record()->translation));
+    m_selectionStart = static_cast<int>(m_showTags ? core::rawOffset(after, from, true) : from);
+    m_selectionEnd = static_cast<int>(m_showTags ? core::rawOffset(after, to, false) : to);
+    m_selectionRole = 1;
+    emit selectionRequested();
+    return true;
+}
+
 void LineEditorController::evaluateCarry()
 {
     const auto r = sessionRecord();
@@ -838,6 +994,15 @@ bool LineEditorController::toggleTagIn(int role, const QString &tag, int selecti
     const auto r = record();
     if (!editable() || !r || tag.size() != 1 || !QStringLiteral("bius").contains(tag))
         return false;
+    // TM1: over a selection in the Translated field, the Original's run of
+    // that style is placed, as a word processor's Ctrl+I would.
+    if (role == 1 && selectionStart != selectionEnd) {
+        if (const auto tags = runTags()) {
+            const auto draft = core::readTranslation(*tags, core::toUtf16(sessionRecord()->translation));
+            if (const int run = core::runWithProperty(*tags, draft.placements, u16(tag)))
+                return placeRun(run, selectionStart, selectionEnd);
+        }
+    }
     // The Style's value; legacy GetStyle(0, name) takes the first Style of that name.
     bool styleValue = false;
     for (const auto &style : core::decodeStyles(session()->document()))

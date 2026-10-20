@@ -126,6 +126,8 @@ class LineEditorController : public QObject {
     // AUTO_MOVE_TAGS_FROM_ORIGINAL).
     Q_PROPERTY(bool unconfirmed READ unconfirmed NOTIFY changed)
     Q_PROPERTY(bool moveTags READ moveTags NOTIFY changed)
+    // TM1: the Original text's runs while tags are carried (tagRuns()).
+    Q_PROPERTY(QVariantList tagRuns READ tagRuns NOTIFY changed)
     // E4: the edited text field's state (core::syntax::TextState: 0 dialogue,
     // 1 comment, 2 template, 3 code), as legacy TextEditor::SetState gets it
     // from EditBox::SetLine and from a Comment box toggle (OnCommit), not
@@ -313,6 +315,9 @@ public:
     // text field's selection, with the Style's value deciding the direction.
     Q_INVOKABLE bool toggleTag(const QString &tag, int selectionStart, int selectionEnd);
     // The same in a given role: 0 Original, 1 Translated.
+    // TM1: in the Translated field, with a selection and tags carried, the
+    // Original's first run of that style (unplaced ones first) is placed on
+    // it instead (placeRun).
     Q_INVOKABLE bool toggleTagIn(int role, const QString &tag, int selectionStart, int selectionEnd);
     // EDITBOX_SPLIT_LINE (Shift+Enter): a hard break replaces the selection,
     // taking an adjacent space on each side.
@@ -401,6 +406,18 @@ public:
     // Line with tags gives the Translated field the focus, as legacy's split did.
     bool moveTags() const { return m_moveTags; }
     void setMoveTags(bool on); // shows the Line again, as OnAutoMoveTags does
+    // The active Line's runs (core::TagRun) while tags are carried, by
+    // number: number, text, kind (what it changes: "Italic", "Bold, Colour"),
+    // colour ("#rrggbb" for a primary colour run, else empty), placed, and
+    // where it is in each field as the field shows its text: originalStart
+    // and originalEnd, start and end in the Translated field (-1 unplaced).
+    QVariantList tagRuns() const;
+    // Places run `number` (0: the lowest-numbered one not placed) on the
+    // Translated field's [selectionStart, selectionEnd), as a draft change:
+    // core::placeRun moves an earlier placement there, or takes it off the
+    // same selection. The selection stays on the same text. False without
+    // a selection, carried tags or that run.
+    Q_INVOKABLE bool placeRun(int number, int selectionStart, int selectionEnd);
     void setVisualToolActive(std::function<bool()> active) { m_visualToolActive = std::move(active); }
     Q_INVOKABLE bool findNextUnconfirmed();
     Q_INVOKABLE bool findNextUntranslated();
@@ -437,6 +454,9 @@ private:
         std::u8string leading, trailing;
     };
     std::optional<Carry> carry(const core::LineRecord &line) const;
+    // The active Line's Original tags read with its Style, for its runs;
+    // nullopt when nothing is carried.
+    std::optional<core::OriginalTags> runTags() const;
     // The translation a Translated field text stands for.
     static std::u8string carried(const Carry &carry, std::u8string body);
     std::size_t carriedLead() const; // UTF-16 units of the carried leading block before the field's text
