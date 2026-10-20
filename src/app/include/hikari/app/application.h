@@ -1309,6 +1309,7 @@ private:
         QString path;
         int active = 0;   // subtitles: the session's active row
         int position = 0; // video: the session's position
+        bool layout = false; // subtitles: the session gave the tab its arrangement (WS2)
     };
     struct PendingSession {
         std::vector<application::SessionTab> tabs;

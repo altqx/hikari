@@ -401,6 +401,42 @@ private slots:
         stop();
     }
 
+    // A Session's file that was missing, retried or relinked once it is
+    // there: without the Session's arrangement the tab takes the file's (as
+    // the Session's restore would have), and a save writes that one; with
+    // it, the Session's stays.
+    void aRetriedSessionFileTakesItsArrangement()
+    {
+        const QByteArray layout = fileLayout();
+        const QString later = path("later.ass");
+        start();
+        application::SessionTab first, second;
+        first.subtitles = QDir::toNativeSeparators(later).toStdString(); // no Layout line
+        second.subtitles = QDir::toNativeSeparators(path("moved.ass")).toStdString();
+        second.layout = ui::WorkspaceArrangement{QStringLiteral("Timing"), {}}.serialise().toStdString();
+        const QString kls = write(path("missing.kls"), QByteArray::fromStdString(
+                                                           application::writeSession("HikariSub v1", false, {first, second})));
+        loadSession(kls);
+        QCOMPARE(application->unresolvedRestores().size(), qsizetype(2));
+        application->selectTab(0);
+        QTRY_VERIFY(isOpen("videoDock"));
+        QVERIFY(!isFloating("audioDock"));
+
+        write(later, kAss + "\n[Hikari]\nLayout=" + layout + "\n");
+        QVERIFY(application->retryRestore(0));
+        QTRY_VERIFY(!isOpen("videoDock"));
+        QVERIFY(isFloating("audioDock"));
+        save(later);
+        QCOMPARE(payloadOf(layoutLine(readAll(later))).value(QStringLiteral("floatingWindows")).toArray().size(), 1);
+
+        const QString found = write(path("found.ass"), kAss + "\n[Hikari]\nLayout=" + layout + "\n");
+        QVERIFY(application->relinkRestore(0, QUrl::fromLocalFile(found)));
+        application->selectTab(1);
+        QCOMPARE(preset(), QStringLiteral("Timing"));
+        QTRY_VERIFY(!isFloating("audioDock"));
+        stop();
+    }
+
     // A file opened into the untouched tab brings its arrangement there too.
     void aFileOpenedIntoTheCurrentTabTakesItsArrangement()
     {

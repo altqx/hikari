@@ -736,7 +736,7 @@ void Application::applySession()
             id = m_files->createNew();
             m_workspace.add(*id, QCoreApplication::translate("HikariSub.Documents", "Untitled").toStdString());
             if (!subtitles.isEmpty())
-                m_unresolved.push_back({*id, QStringLiteral("subtitles"), subtitles, tab.active, 0});
+                m_unresolved.push_back({*id, QStringLiteral("subtitles"), subtitles, tab.active, 0, !tab.layout.empty()});
         }
         TabMedia media;
         media.scroll = tab.scroll;
@@ -844,7 +844,12 @@ bool Application::retryRestore(int row)
         discardRecovery(entry.document);
         m_files->close(entry.document);
         m_workspace.replace(entry.document, *id);
-        replaceTabArrangement(entry.document, *id, ui::WorkspaceLayoutController::TabStart::Copy); // WS1: the Session's stays
+        // WS1: the Session's arrangement stays. WS2: without one, the file
+        // brings its own, as it would have at the Session's restore.
+        if (entry.layout)
+            replaceTabArrangement(entry.document, *id, ui::WorkspaceLayoutController::TabStart::Copy);
+        else
+            openIntoTabArrangement(entry.document, *id);
         m_comparison.replaced(entry.document, *id); // R1: as replaceTarget
         m_tabMedia.erase(entry.document.value);
         m_originalColumns.erase(entry.document.value); // E5: as forgetTab
