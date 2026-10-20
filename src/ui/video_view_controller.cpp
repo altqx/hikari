@@ -192,7 +192,7 @@ int VideoViewController::pointer(int kind, qreal x, qreal y, int button, int but
         // (`event.ControlDown() && !m_IsFullscreen`) it goes on to the tool.
         if (control && !m_fullscreen)
             return NoRequest;
-        if (!control && (m_toolsOff || !m_tools.hasNonDefaultTool())) {
+        if (!control && !m_tools.hasNonDefaultTool()) {
             const float current = view.zoomPercent();
             const float zoom = application::wheelZoomPercent(current, wheelSteps);
             if (current != zoom) {
@@ -201,13 +201,11 @@ int VideoViewController::pointer(int kind, qreal x, qreal y, int button, int but
             }
         }
     }
-    if (!m_toolsOff) {
-        m_tools.pointer(kind, x, y, button, buttons, modifiers, wheelSteps);
-        // Only the crosshair leaves the other clicks to the video; FS1:
-        // every tool's moves wake the fullscreen bar.
-        if (m_tools.hasNonDefaultTool())
-            return kind == Move && buttons == 0 ? MovedOverVideo : NoRequest;
-    }
+    m_tools.pointer(kind, x, y, button, buttons, modifiers, wheelSteps);
+    // Only the crosshair leaves the other clicks to the video; FS1: every
+    // tool's moves wake the fullscreen bar.
+    if (m_tools.hasNonDefaultTool())
+        return kind == Move && buttons == 0 ? MovedOverVideo : NoRequest;
     if (kind == Release && button == Qt::RightButton)
         return ContextMenuRequest; // ContextMenu(event.GetPosition())
     // V5: LeftDClick with no modifier, SetFullscreen() (VideoBox.cpp:554-569).

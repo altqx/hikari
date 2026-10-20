@@ -56,8 +56,8 @@ Window {
     readonly property bool cursorHidden: controller.cursorHidden
     // The bar's height while it is pinned (the tools' panel height).
     readonly property real pinnedPanelHeight: controller.pinned ? bar.height : 0
-    // A visual tool other than the crosshair is on (D2: none in the player layout).
-    readonly property bool toolOn: shell.app.editorOn && shell.visualTools.railEnabled
+    // A visual tool other than the crosshair is on.
+    readonly property bool toolOn: shell.visualTools.railEnabled
                                    && shell.visualTools.activeFamily > 0
     signal openVideoRequested()
     signal openSubtitlesRequested()
@@ -499,7 +499,6 @@ Window {
                         // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
                         iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags"][Math.max(0, fs.shell.visualTools.activeFamily)] ?? ""
                         text: qsTr("Visual tools")
-                        visible: fs.shell.app.editorOn
                         enabled: fs.shell.visualTools.railEnabled
                         down: toolsMenu.visible
                         focusPolicy: Qt.NoFocus

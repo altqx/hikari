@@ -93,6 +93,10 @@ std::string hotkeyName(int id);
 // the Options page) and its bindings are dropped as the lists are read.
 // AV3 (#240, owner 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO ("Open blank 2h30m
 // audio") is retired the same way: a dummy video brings its own silent audio.
+// WS3 (#217, owner 2026-10-18): the View arrangements (GLOBAL_VIEW_ALL,
+// GLOBAL_VIEW_VIDEO, GLOBAL_VIEW_AUDIO, GLOBAL_VIEW_ONLY_VIDEO,
+// GLOBAL_VIEW_SUBS) and the editor switch (GLOBAL_EDITOR) are retired the
+// same way: layout presets and saved layouts take their place.
 bool isRetiredHotkey(int id);
 // Removes the retired actions' bindings from `map` and returns them, for the
 // notice the reader gives.

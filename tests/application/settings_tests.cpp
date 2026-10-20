@@ -151,8 +151,9 @@ TEST(SettingsRegistry, EveryLegacyOptionHasAStableId)
         }
         EXPECT_EQ(findSetting(s.id), &s);
     }
-    // The 207 rows of the migration map (34 AudioConfig.txt, 173 Config.txt).
-    EXPECT_EQ(legacyCount, 207u);
+    // The 207 rows of the migration map (34 AudioConfig.txt, 173 Config.txt)
+    // less WS3's retired EDITOR_ON.
+    EXPECT_EQ(legacyCount, 206u);
     EXPECT_EQ(findSetting("no.such"), nullptr);
     EXPECT_EQ(findLegacySetting(""), nullptr);
 }
@@ -228,7 +229,8 @@ TEST(SettingsRegistry, NoColourSettingOutsideHighContrast)
     // is dropped by the INI store, settings_store_tests).
     MemorySettingsStorage storage;
     Settings settings(storage);
-    EXPECT_EQ(retiredSettings().size(), 15u);
+    EXPECT_EQ(retiredSettings().size(), 16u); // and WS3's workspace.editorOn
+    EXPECT_EQ(findLegacySetting("EDITOR_ON"), nullptr);
     for (const auto id : retiredSettings()) {
         EXPECT_EQ(findSetting(id), nullptr) << id;
         EXPECT_FALSE(settings.set(id, std::string("#123456"))) << id;
