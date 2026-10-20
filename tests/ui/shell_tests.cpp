@@ -9816,7 +9816,10 @@ private slots:
         const qreal before = panel->height();
         QVERIFY2(minimum > 90 && minimum < before, qPrintable(QString::number(minimum)));
         ui::Docking docking;
-        QVERIFY(docking.resizeInLayout(QStringLiteral("Editor"), 0, 40 - int(before), 0, 0));
+        // Squeezed to its minimum and no further: a move past it goes on to
+        // the next separator out (the engine grows the top row), and the
+        // editor gets that room back.
+        QVERIFY(docking.resizeInLayout(QStringLiteral("Editor"), 0, minimum - int(before), 0, 0));
         QTRY_VERIFY(panel->height() < before);
         QVERIFY2(panel->height() >= minimum, qPrintable(QStringLiteral("%1 < %2").arg(panel->height()).arg(minimum)));
         view->setProperty("contentY", 0);
@@ -9946,8 +9949,10 @@ private slots:
         auto *session = application->files().session(*application->workspace().editingTarget());
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
-        auto *button = item("originalNotConfirmed"); // TM1: in the Original text panel's header
-        QTRY_VERIFY(button->isVisible());
+        // TM1: in the Original text panel's header, in a window once the
+        // panel opens.
+        QTRY_VERIFY(item("originalNotConfirmed") && item("originalNotConfirmed")->isVisible());
+        auto *button = item("originalNotConfirmed");
         QTRY_VERIFY(button->property("checked").toBool()); // the "\fD" pair loads Unconfirmed
         press(Qt::Key_A, Qt::ControlModifier);
         QTRY_COMPARE(session->selection().selected.size(), std::size_t(3));
@@ -10005,8 +10010,10 @@ private slots:
         QVERIFY(application->openFile(writeTranslationFile("e5-moving.ass")));
         auto *session = application->files().session(*application->workspace().editingTarget());
         application->editor().setShowTags(true);
-        auto *moving = item("originalMovingTags"); // TM1: in the Original text panel's header
-        QTRY_VERIFY(moving->isVisible());
+        // TM1: in the Original text panel's header, in a window once the
+        // panel opens.
+        QTRY_VERIFY(item("originalMovingTags") && item("originalMovingTags")->isVisible());
+        auto *moving = item("originalMovingTags");
         QVERIFY(!moving->property("checked").toBool());
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
