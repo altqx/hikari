@@ -216,14 +216,6 @@
         <translation>เลื่อนอัตโนมัติไปยังบรรทัดปัจจุบัน</translation>
     </message>
     <message>
-        <source>Sync with video</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Sync the video and audio cursors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Spectrum</source>
         <translation type="unfinished"></translation>
     </message>
@@ -238,15 +230,6 @@
     <message>
         <source>Enhance speech frequencies in the spectrum</source>
         <translation>เน้นย่านความถี่เสียงพูดในสเปกตรัม</translation>
-    </message>
-    <message>
-        <source>Output device</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Output device: %1</source>
-        <extracomment>The audio panel&apos;s speaker button; %1 is the device audio plays through now</extracomment>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose audio file</source>
@@ -270,20 +253,6 @@
     </message>
     <message>
         <source>Indexing video %1%</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 is not connected. No output device is available.</source>
-        <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 is not connected. Audio plays through %2.</source>
-        <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Audio settings…</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3086,7 +3055,27 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <source>The shortcut %1 of &quot;View all&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of &quot;View audio and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of &quot;View video and subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of &quot;View only video&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of &quot;View only subtitles&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of &quot;Enable / Disable editor&quot; was removed: the editor is always shown; hide panels or choose a layout instead.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3414,7 +3403,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open blank 2h30m audio</source>
-        <translation type="vanished">เปิดเสียงเปล่ายาว 2:30 ชั่วโมง</translation>
+        <translation>เปิดเสียงเปล่ายาว 2:30 ชั่วโมง</translation>
     </message>
     <message>
         <source>Close audio</source>
@@ -3422,6 +3411,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Vie&amp;w</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Layout</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3449,28 +3442,12 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Layout &amp;preset</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Editing</source>
-        <translation>แก้ไข</translation>
-    </message>
-    <message>
-        <source>Timing</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">แก้ไข</translation>
     </message>
     <message>
         <source>Translation</source>
-        <translation>ข้อความแปล</translation>
-    </message>
-    <message>
-        <source>Typesetting</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&amp;Reset layout</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">ข้อความแปล</translation>
     </message>
     <message>
         <source>Restore the previous layout</source>
@@ -3634,23 +3611,23 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>All</source>
-        <translation>ทั้งหมด</translation>
+        <translation type="vanished">ทั้งหมด</translation>
     </message>
     <message>
         <source>Video and subs</source>
-        <translation>วิดีโอและคำบรรยาย</translation>
+        <translation type="vanished">วิดีโอและคำบรรยาย</translation>
     </message>
     <message>
         <source>Audio and subs</source>
-        <translation>เสียงและคำบรรยาย</translation>
+        <translation type="vanished">เสียงและคำบรรยาย</translation>
     </message>
     <message>
         <source>Only video</source>
-        <translation>วิดีโอเท่านั้น</translation>
+        <translation type="vanished">วิดีโอเท่านั้น</translation>
     </message>
     <message>
         <source>Only subtitles</source>
-        <translation>คำบรรยายเท่านั้น</translation>
+        <translation type="vanished">คำบรรยายเท่านั้น</translation>
     </message>
     <message>
         <source>Open subtitle file</source>
@@ -3802,7 +3779,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens blank audio 2 hour and 30 minutes long</source>
-        <translation type="vanished">เปิดเสียงเปล่าที่ยาวเป็นเวลา 2:30 ชั่วโมง</translation>
+        <translation>เปิดเสียงเปล่าที่ยาวเป็นเวลา 2:30 ชั่วโมง</translation>
     </message>
     <message>
         <source>Closes audio</source>
@@ -3810,7 +3787,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Enable / Disable editor</source>
-        <translation>เปิด / ปิดใช้งานตัวแก้ไข</translation>
+        <translation type="vanished">เปิด / ปิดใช้งานตัวแก้ไข</translation>
     </message>
     <message>
         <source>Shifting subtitle times</source>
@@ -8147,66 +8124,8 @@ or codecs or a splitter may be missing</source>
         <translation>แก้ไขแท็กแล้ว</translation>
     </message>
     <message>
-        <source>Rectangle</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Tags</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Points</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Change</source>
-        <translation type="unfinished">เปลี่ยน</translation>
-    </message>
-    <message>
-        <source>Start</source>
-        <translation type="unfinished">เริ่มต้น</translation>
-    </message>
-    <message>
-        <source>End</source>
-        <translation type="unfinished">สิ้นสุด</translation>
-    </message>
-    <message>
-        <source>Origin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>Pick selected lines (%n lines picked: the tools edit them, not the active line)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>1 line picked</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n lines picked</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>1 line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
     </message>
     <message>
         <source>New tag name</source>
@@ -8405,14 +8324,6 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Free drawing</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Edit shapes…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Shape: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8428,9 +8339,21 @@ or codecs or a splitter may be missing</source>
         <source>Pick selected lines</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>Pick selected lines (%n line(s) picked: the tools edit them, not the active line)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>Pick selected lines (the tools edit them, not the active line)</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) picked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Clear picked lines</source>
@@ -8564,6 +8487,22 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Editing</source>
+        <translation>แก้ไข</translation>
+    </message>
+    <message>
+        <source>Timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translation</source>
+        <translation>ข้อความแปล</translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>the file is larger than %1 bytes</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8604,7 +8543,15 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The saved panel layout at %1 could not be read or copied: it is not restored and not changed. The Editing layout is shown.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The panel layout could not be written to %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8618,6 +8565,118 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>The layout is kept at %1.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it is not a layouts file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The saved layouts were not read because %1. The file is kept at %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some saved layouts were not read: their names cannot name a layout, or were listed before. The file as it was is kept at %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The saved layouts at %1 could not be read or copied: they are not used and not changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The saved layouts were not changed: together they would be larger than %1 bytes. Delete layouts you no longer use first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The saved layouts could not be written to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter a name for the layout.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The name is longer than %1 characters.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The name cannot hold line breaks or tabs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is a built-in layout.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A layout named %1 already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layout: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layout of this tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save layout as…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset this layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage layouts…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation type="unfinished">ชื่อ:</translation>
+    </message>
+    <message>
+        <source>Saving replaces the layout %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">แทนที่</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">บันทึก</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Manage layouts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved layouts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, cannot be used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot be used: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">ลบ</translation>
     </message>
 </context>
 <context>

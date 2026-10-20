@@ -25,14 +25,11 @@ Control {
     id: bar
     objectName: "visualToolBar"
     required property VisualToolsController tools
-    // D2: false in the player layout (legacy's video toolbar hidden).
-    property bool shownInLayout: true
     // Fullscreen's tool row shows the families' buttons before the bar.
     property bool showsName: true
     readonly property int family: tools.activeFamily
     readonly property var familyInfo: tools.families[family] ?? ({})
     readonly property bool batchTool: family > 0 && (familyInfo.available ?? false)
-    visible: shownInLayout
     padding: 0
     topPadding: 3
     bottomPadding: 3
